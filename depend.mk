@@ -861,7 +861,8 @@ src/compiler/abstractinstruction2/main/AbstractInstruction.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -950,7 +951,8 @@ src/compiler/abstractinstruction2/main/AbstractInstructionFormatter.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -1039,8 +1041,8 @@ src/compiler/absyn/main/Absyn.ppg.o: src/compiler/absyn/main/Absyn.ppg.sml \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -1122,8 +1124,8 @@ src/compiler/absyn/main/AbsynFormatter.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -1203,9 +1205,10 @@ src/compiler/absyn/main/AbsynInterface.ppg.o: \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -1412,7 +1415,8 @@ src/compiler/aigenerator2/main/AIGenerator.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -1428,16 +1432,16 @@ src/compiler/aigenerator2/main/AIGenerator.o: \
   src/compiler/abstractinstruction2/main/AbstractInstruction.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/systemdef/main/BasicTypeFormatters.smi \
   src/compiler/yaanormal/main/ANormal.ppg.smi \
@@ -1522,7 +1526,8 @@ src/compiler/aigenerator2/main/AIPrimitive.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -1536,7 +1541,7 @@ src/compiler/aigenerator2/main/AIPrimitive.o: \
   src/compiler/targetplatform/main/TargetProperty.smi \
   src/compiler/targetplatform/main/VMTarget.smi \
   src/compiler/abstractinstruction2/main/AbstractInstruction.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/aigenerator2/main/AIPrimitive.smi \
   $(SMLSHARP_DEP)
 src/compiler/aigenerator2/main/BinarySearchCode.o: \
@@ -1613,7 +1618,8 @@ src/compiler/aigenerator2/main/BinarySearchCode.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -1700,9 +1706,9 @@ src/compiler/aigenerator2/main/CallAnalysis.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -1712,18 +1718,18 @@ src/compiler/aigenerator2/main/CallAnalysis.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/systemdef/main/BasicTypes.smi \
   src/compiler/systemdef/main/BasicTypeFormatters.smi \
@@ -1799,8 +1805,9 @@ src/compiler/aigenerator2/main/Simplify.o: \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SEnv.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-map-sig.sml \
   src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
@@ -1812,18 +1819,18 @@ src/compiler/aigenerator2/main/Simplify.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/systemdef/main/BasicTypes.smi \
   src/compiler/systemdef/main/BasicTypeFormatters.smi \
@@ -1904,23 +1911,23 @@ src/compiler/annotatedcalc/main/AnnotatedCalc.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2000,24 +2007,26 @@ src/compiler/annotatedcalc/main/AnnotatedCalcFormatter.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2100,24 +2109,26 @@ src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   $(SMLSHARP_DEP)
 src/compiler/annotatedtypes/main/AnnotatedTypesUtils.o: \
@@ -2194,9 +2205,8 @@ src/compiler/annotatedtypes/main/AnnotatedTypesUtils.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/utils.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
@@ -2204,12 +2214,14 @@ src/compiler/annotatedtypes/main/AnnotatedTypesUtils.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
@@ -2292,23 +2304,23 @@ src/compiler/bitmapanormal/main/BitmapANormal.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2396,22 +2408,23 @@ src/compiler/bitmapanormal/main/TypeCheckBitmapANormal.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2502,23 +2515,25 @@ src/compiler/bitmapanormalization/main/BitmapANormalization.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2604,8 +2619,9 @@ src/compiler/bitmapanormaloptimize/main/BitmapANormalReorder.o: \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
   src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
@@ -2617,14 +2633,14 @@ src/compiler/bitmapanormaloptimize/main/BitmapANormalReorder.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2712,23 +2728,23 @@ src/compiler/bitmapcalc/main/BitmapCalc.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2813,23 +2829,25 @@ src/compiler/bitmapcompilation/main/BitmapCompilation.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -2920,24 +2938,26 @@ src/compiler/bitmapcompilation/main/RecordLayout.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -3026,24 +3046,26 @@ src/compiler/bitmapcompilation/main/SingletonTyEnv.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -3061,71 +3083,9 @@ src/compiler/bitmapcompilation/main/SingletonTyEnv.o: \
   src/compiler/bitmapcompilation/main/RecordLayout.smi \
   src/compiler/bitmapcompilation/main/SingletonTyEnv.smi \
   $(SMLSHARP_DEP)
-src/compiler/builtin/main/BuiltinContextSources.o: \
-  src/compiler/builtin/main/BuiltinContextSources.sml \
-  src/compiler/builtin/main/BuiltinContext_smi.smi \
-  src/compiler/builtin/main/BuiltinContextSources.smi \
-  $(SMLSHARP_DEP)
-src/compiler/builtin/main/BuiltinContext_smi.o: \
-  src/compiler/builtin/main/BuiltinContext_smi.sml \
-  src/compiler/builtin/main/BuiltinContext_smi.smi \
-  $(SMLSHARP_DEP)
-src/compiler/builtin/main/BuiltinName.o: \
-  src/compiler/builtin/main/BuiltinName.sml src/basis/main/GENERAL.sig \
-  src/basis/main/General.smi src/basis/main/OPTION.sig \
-  src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
-  src/basis/main/Array.smi src/basis/main/Vector.smi \
-  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
-  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
-  src/basis/main/CHAR.sig src/basis/main/Char.smi \
-  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
-  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
-  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
-  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
-  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
-  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
-  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
-  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
-  src/basis/main/IntInf.smi src/basis/main/Int.smi \
-  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
-  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
-  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
-  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
-  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
-  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
-  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
-  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
-  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
-  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
-  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
-  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
-  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
-  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
-  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
-  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
-  src/smlnj/Basis/Posix/posix-io.smi \
-  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
-  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
-  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
-  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
-  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
-  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
-  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
-  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
-  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
-  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
-  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
-  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
-  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
-  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
-  src/basis/main/binary-op.smi src/basis.smi \
-  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
-  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  $(SMLSHARP_DEP)
-src/compiler/builtin/main/BuiltinPrimitive.ppg.sml: src/compiler/builtin/main/BuiltinPrimitive.ppg $(SMLFORMAT_DEP)
-src/compiler/builtin/main/BuiltinPrimitive.ppg.o: \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.sml \
+src/compiler/builtin2/main/BuiltinPrimitive.ppg.sml: src/compiler/builtin2/main/BuiltinPrimitive.ppg $(SMLFORMAT_DEP)
+src/compiler/builtin2/main/BuiltinPrimitive.ppg.o: \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
   src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
   src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
@@ -3188,11 +3148,77 @@ src/compiler/builtin/main/BuiltinPrimitive.ppg.o: \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   $(SMLSHARP_DEP)
-src/compiler/builtin/main/BuiltinType.ppg.sml: src/compiler/builtin/main/BuiltinType.ppg $(SMLFORMAT_DEP)
-src/compiler/builtin/main/BuiltinType.ppg.o: \
-  src/compiler/builtin/main/BuiltinType.ppg.sml src/basis/main/GENERAL.sig \
+src/compiler/builtin2/main/BuiltinTypeNames.ppg.sml: src/compiler/builtin2/main/BuiltinTypeNames.ppg $(SMLFORMAT_DEP)
+src/compiler/builtin2/main/BuiltinTypeNames.ppg.o: \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  $(SMLSHARP_DEP)
+src/compiler/builtin2/main/BuiltinTypes.o: \
+  src/compiler/builtin2/main/BuiltinTypes.sml src/basis/main/GENERAL.sig \
   src/basis/main/General.smi src/basis/main/OPTION.sig \
   src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
   src/basis/main/Array.smi src/basis/main/Vector.smi \
@@ -3255,7 +3281,32 @@ src/compiler/builtin/main/BuiltinType.ppg.o: \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/compiler/util/main/utils.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   $(SMLSHARP_DEP)
 src/compiler/closureanormal/main/ClosureANormal.ppg.sml: src/compiler/closureanormal/main/ClosureANormal.ppg $(SMLFORMAT_DEP)
 src/compiler/closureanormal/main/ClosureANormal.ppg.o: \
@@ -3331,23 +3382,23 @@ src/compiler/closureanormal/main/ClosureANormal.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -3434,23 +3485,25 @@ src/compiler/closureconversion/main/ClosureConversion.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -3546,25 +3599,25 @@ src/compiler/constantterm/main/ConstantTerm.ppg.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/utils.smi \
   src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   $(SMLSHARP_DEP)
 src/compiler/control/main/Control.ppg.sml: src/compiler/control/main/Control.ppg $(SMLFORMAT_DEP)
@@ -3753,24 +3806,25 @@ src/compiler/datatypecompilation/main/DatatypeCompilation.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/usererror/main/USER_ERROR.sig \
-  src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
+  src/compiler/usererror/main/USER_ERROR.sig \
+  src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
@@ -3852,7 +3906,8 @@ src/compiler/elaborate/main/ElaborateCore.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -3943,8 +3998,8 @@ src/compiler/elaborate/main/ElaborateError.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -4092,8 +4147,8 @@ src/compiler/elaborate/main/ElaborateInterface.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
@@ -4192,8 +4247,8 @@ src/compiler/elaborate/main/ElaborateModule.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -4287,9 +4342,10 @@ src/compiler/elaborate/main/ElaborateSQL.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
@@ -4369,9 +4425,10 @@ src/compiler/elaborate/main/Elaborator.o: \
   src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -4384,7 +4441,7 @@ src/compiler/elaborate/main/Elaborator.o: \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
   src/compiler/absyn/main/Fixity.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
@@ -4477,8 +4534,8 @@ src/compiler/elaborate/main/ElaboratorUtils.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -4561,8 +4618,8 @@ src/compiler/elaborate/main/UserTvarScope.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -4650,25 +4707,25 @@ src/compiler/fficompilation/main/FFICompilation.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/fficompilation/main/FFICompilation.smi \
   $(SMLSHARP_DEP)
@@ -4745,8 +4802,9 @@ src/compiler/generatemain/main/GenerateMain.o: \
   src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -4899,9 +4957,10 @@ src/compiler/loadfile/main/InterfaceHash.o: \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -4984,9 +5043,9 @@ src/compiler/loadfile/main/LoadFile.o: src/compiler/loadfile/main/LoadFile.sml \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/config/main/Version.smi \
-  src/compiler/toolchain/main/Filename.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/config/main/Version.smi src/compiler/toolchain/main/Filename.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/toolchain/main/CoreUtils.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
@@ -5001,14 +5060,15 @@ src/compiler/loadfile/main/LoadFile.o: src/compiler/loadfile/main/LoadFile.sml \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.grm.smi \
-  src/compiler/parser/main/iml.lex.smi src/compiler/parser/main/Parser.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
-  src/compiler/parser/main/InterfaceParser.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/Parser.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
+  src/compiler/parser2/main/InterfaceParser.smi \
   src/compiler/loadfile/main/SHA1.smi \
   src/compiler/loadfile/main/InterfaceHash.smi \
   src/compiler/loadfile/main/LoadFileError.ppg.smi \
@@ -5260,41 +5320,37 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
   src/compiler/toolchain/main/CoreUtils.smi src/config/main/Config.smi \
   src/compiler/toolchain/main/TempFile.smi \
   src/compiler/toolchain/main/BinUtils.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.grm.smi \
-  src/compiler/parser/main/iml.lex.smi src/compiler/parser/main/Parser.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/Parser.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
-  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/builtin/main/BuiltinContext_smi.smi \
-  src/compiler/builtin/main/BuiltinContextSources.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
   src/compiler/absyn/main/ABSYN_FORMATTER.sig \
   src/compiler/absyn/main/AbsynFormatter.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
-  src/compiler/parser/main/InterfaceParser.smi \
+  src/compiler/types/main/VarMap.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
+  src/compiler/parser2/main/InterfaceParser.smi \
   src/compiler/loadfile/main/SHA1.smi \
   src/compiler/loadfile/main/InterfaceHash.smi \
   src/compiler/loadfile/main/LoadFileError.ppg.smi \
@@ -5314,7 +5370,9 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
-  src/compiler-utils/env/main/PathEnv.smi \
+  src/compiler-utils/env/main/PathEnv.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
   src/compiler/nameevaluation/main/NormalizeTy.smi \
@@ -5336,13 +5394,30 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
   src/compiler/valrecoptimization/main/TransFundecl.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
-  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
-  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.smi \
+  src/compiler/typedcalcoptimization/main/TCSize.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/typedcalcoptimization/main/TCOptimize.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalcUtils.smi \
+  src/compiler/recordcalc/main/RCAlphaRename.smi \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.smi \
+  src/compiler/recordcalcoptimization/main/RCSize.smi \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.smi \
+  src/compiler/recordcalcoptimization/main/RCOptimize.smi \
+  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
+  src/compiler/types/main/IDCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/InferTypes2.smi \
   src/compiler/typeinference2/main/UNCURRYFUNDECL.sig \
   src/compiler/typeinference2/main/UncurryFundecl_ng.smi \
@@ -5352,7 +5427,6 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
   src/compiler/reflection/main/ReifiedTermData.smi \
   src/compiler/reflection/main/Reify.smi \
   src/compiler/reflection/main/PrinterGeneration.smi \
-  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalcFormatter.smi \
   src/compiler/matchcompilation/main/MatchData.smi \
   src/compiler/matchcompilation/main/MatchError.ppg.smi \
@@ -5437,7 +5511,6 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
   src/compiler/rtl/main/RTLASMGEN.sig src/compiler/rtl/main/X86AsmGen.smi \
   src/compiler/generatemain/main/GenerateMainError.ppg.smi \
   src/compiler/generatemain/main/GenerateMain.smi \
-  src/compiler/toplevel2/main/TOP.sig \
   src/compiler/toplevel2/main/TopData.ppg.smi \
   src/compiler/toplevel2/main/NameEvalEnvUtils.smi \
   src/compiler/toplevel2/main/Top.smi src/ffi/main/DynamicLink.smi \
@@ -5526,8 +5599,9 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
   src/compiler/toolchain/main/TempFile.smi \
   src/compiler/toolchain/main/BinUtils.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -5538,30 +5612,27 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.grm.smi \
-  src/compiler/parser/main/iml.lex.smi src/compiler/parser/main/Parser.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/Parser.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
+  src/compiler/parser2/main/InterfaceParser.smi \
   src/compiler/generatemain/main/GenerateMainError.ppg.smi \
   src/compiler/generatemain/main/GenerateMain.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/builtin/main/BuiltinContext_smi.smi \
-  src/compiler/builtin/main/BuiltinContextSources.smi \
   src/compiler/absyn/main/ABSYN_FORMATTER.sig \
   src/compiler/absyn/main/AbsynFormatter.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
-  src/compiler/parser/main/InterfaceParser.smi \
-  src/compiler/loadfile/main/SHA1.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/loadfile/main/SHA1.smi \
   src/compiler/loadfile/main/InterfaceHash.smi \
   src/compiler/loadfile/main/LoadFileError.ppg.smi \
   src/compiler/loadfile/main/LoadFile.smi src/compiler/absyn/main/Fixity.smi \
@@ -5580,7 +5651,9 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
-  src/compiler-utils/env/main/PathEnv.smi \
+  src/compiler-utils/env/main/PathEnv.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
   src/compiler/nameevaluation/main/NormalizeTy.smi \
@@ -5602,13 +5675,30 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
   src/compiler/valrecoptimization/main/TransFundecl.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
-  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
-  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.smi \
+  src/compiler/typedcalcoptimization/main/TCSize.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/typedcalcoptimization/main/TCOptimize.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalcUtils.smi \
+  src/compiler/recordcalc/main/RCAlphaRename.smi \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.smi \
+  src/compiler/recordcalcoptimization/main/RCSize.smi \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.smi \
+  src/compiler/recordcalcoptimization/main/RCOptimize.smi \
+  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
+  src/compiler/types/main/IDCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/InferTypes2.smi \
   src/compiler/typeinference2/main/UNCURRYFUNDECL.sig \
   src/compiler/typeinference2/main/UncurryFundecl_ng.smi \
@@ -5618,7 +5708,6 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
   src/compiler/reflection/main/ReifiedTermData.smi \
   src/compiler/reflection/main/Reify.smi \
   src/compiler/reflection/main/PrinterGeneration.smi \
-  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalcFormatter.smi \
   src/compiler/matchcompilation/main/MatchData.smi \
   src/compiler/matchcompilation/main/MatchError.ppg.smi \
@@ -5701,7 +5790,6 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
   src/compiler/rtl/main/X86Coloring.smi src/compiler/rtl/main/FrameLayout.smi \
   src/compiler/rtl/main/RTLFRAME.sig src/compiler/rtl/main/X86Frame.smi \
   src/compiler/rtl/main/RTLASMGEN.sig src/compiler/rtl/main/X86AsmGen.smi \
-  src/compiler/toplevel2/main/TOP.sig \
   src/compiler/toplevel2/main/TopData.ppg.smi \
   src/compiler/toplevel2/main/NameEvalEnvUtils.smi \
   src/compiler/toplevel2/main/Top.smi src/compiler/main/main/GetOpt.smi \
@@ -5786,7 +5874,8 @@ src/compiler/matchcompilation/main/MatchCompiler.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -5794,16 +5883,16 @@ src/compiler/matchcompilation/main/MatchCompiler.o: \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
@@ -5882,13 +5971,12 @@ src/compiler/matchcompilation/main/MatchData.o: \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
@@ -5896,13 +5984,13 @@ src/compiler/matchcompilation/main/MatchData.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/matchcompilation/main/MatchData.smi \
@@ -5981,26 +6069,26 @@ src/compiler/matchcompilation/main/MatchError.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -6084,8 +6172,9 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
   src/compiler/toolchain/main/TempFile.smi \
   src/compiler/toolchain/main/BinUtils.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -6096,30 +6185,27 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.grm.smi \
-  src/compiler/parser/main/iml.lex.smi src/compiler/parser/main/Parser.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/Parser.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
+  src/compiler/parser2/main/InterfaceParser.smi \
   src/compiler/generatemain/main/GenerateMainError.ppg.smi \
   src/compiler/generatemain/main/GenerateMain.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/builtin/main/BuiltinContext_smi.smi \
-  src/compiler/builtin/main/BuiltinContextSources.smi \
   src/compiler/absyn/main/ABSYN_FORMATTER.sig \
   src/compiler/absyn/main/AbsynFormatter.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
-  src/compiler/parser/main/InterfaceParser.smi \
-  src/compiler/loadfile/main/SHA1.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/loadfile/main/SHA1.smi \
   src/compiler/loadfile/main/InterfaceHash.smi \
   src/compiler/loadfile/main/LoadFileError.ppg.smi \
   src/compiler/loadfile/main/LoadFile.smi src/compiler/absyn/main/Fixity.smi \
@@ -6138,7 +6224,9 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
-  src/compiler-utils/env/main/PathEnv.smi \
+  src/compiler-utils/env/main/PathEnv.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
   src/compiler/nameevaluation/main/NormalizeTy.smi \
@@ -6160,13 +6248,30 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
   src/compiler/valrecoptimization/main/TransFundecl.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
-  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
-  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.smi \
+  src/compiler/typedcalcoptimization/main/TCSize.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/typedcalcoptimization/main/TCOptimize.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalcUtils.smi \
+  src/compiler/recordcalc/main/RCAlphaRename.smi \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.smi \
+  src/compiler/recordcalcoptimization/main/RCSize.smi \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.smi \
+  src/compiler/recordcalcoptimization/main/RCOptimize.smi \
+  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
+  src/compiler/types/main/IDCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/InferTypes2.smi \
   src/compiler/typeinference2/main/UNCURRYFUNDECL.sig \
   src/compiler/typeinference2/main/UncurryFundecl_ng.smi \
@@ -6176,7 +6281,6 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
   src/compiler/reflection/main/ReifiedTermData.smi \
   src/compiler/reflection/main/Reify.smi \
   src/compiler/reflection/main/PrinterGeneration.smi \
-  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalcFormatter.smi \
   src/compiler/matchcompilation/main/MatchData.smi \
   src/compiler/matchcompilation/main/MatchError.ppg.smi \
@@ -6259,7 +6363,6 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
   src/compiler/rtl/main/X86Coloring.smi src/compiler/rtl/main/FrameLayout.smi \
   src/compiler/rtl/main/RTLFRAME.sig src/compiler/rtl/main/X86Frame.smi \
   src/compiler/rtl/main/RTLASMGEN.sig src/compiler/rtl/main/X86AsmGen.smi \
-  src/compiler/toplevel2/main/TOP.sig \
   src/compiler/toplevel2/main/TopData.ppg.smi \
   src/compiler/toplevel2/main/NameEvalEnvUtils.smi \
   src/compiler/toplevel2/main/Top.smi src/compiler/main/main/GetOpt.smi \
@@ -6344,23 +6447,23 @@ src/compiler/multiplevaluecalc/main/MultipleValueCalc.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -6443,23 +6546,23 @@ src/compiler/multiplevaluecalc/main/MultipleValueCalcFormatter.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -6544,23 +6647,23 @@ src/compiler/multiplevaluecalc/main/MultipleValueCalcUtils.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -6570,7 +6673,7 @@ src/compiler/multiplevaluecalc/main/MultipleValueCalcUtils.o: \
   src/compiler/multiplevaluecalc/main/MultipleValueCalc.ppg.smi \
   src/compiler/multiplevaluecalc/main/MultipleValueCalcUtils.smi \
   $(SMLSHARP_DEP)
-src/compiler/name/main/LocalID.o: src/compiler/name/main/LocalID.sml \
+src/compiler/name/main/GenIDFun.o: src/compiler/name/main/GenIDFun.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
   src/basis/main/STRING_CVT.sig src/basis/main/StringCvt.smi \
   src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
@@ -6626,7 +6729,77 @@ src/compiler/name/main/LocalID.o: src/compiler/name/main/LocalID.sml \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
+  src/compiler/name/main/GenIDFun.smi \
+  $(SMLSHARP_DEP)
+src/compiler/name/main/LocalID.o: src/compiler/name/main/LocalID.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-set-sig.sml \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
+  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
   $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/CheckProvide.o: \
   src/compiler/nameevaluation/main/CheckProvide.sml src/basis/main/GENERAL.sig \
@@ -6703,7 +6876,8 @@ src/compiler/nameevaluation/main/CheckProvide.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -6711,18 +6885,18 @@ src/compiler/nameevaluation/main/CheckProvide.o: \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
@@ -6827,25 +7001,26 @@ src/compiler/nameevaluation/main/EvalSig.o: \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
@@ -6946,26 +7121,26 @@ src/compiler/nameevaluation/main/EvalTy.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
@@ -7061,13 +7236,12 @@ src/compiler/nameevaluation/main/FunctorUtils.o: \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/compiler/util/main/utils.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler-utils/env/main/LabelOrd.smi \
-  src/compiler-utils/env/main/LabelEnv.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
@@ -7075,16 +7249,16 @@ src/compiler/nameevaluation/main/FunctorUtils.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
@@ -7187,7 +7361,8 @@ src/compiler/nameevaluation/main/NameEval.o: \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -7195,19 +7370,18 @@ src/compiler/nameevaluation/main/NameEval.o: \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
@@ -7312,17 +7486,17 @@ src/compiler/nameevaluation/main/NameEvalEnv.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
@@ -7410,8 +7584,9 @@ src/compiler/nameevaluation/main/NameEvalError.ppg.o: \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/TermFormat.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -7494,7 +7669,8 @@ src/compiler/nameevaluation/main/NameEvalInterface.o: \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -7502,18 +7678,18 @@ src/compiler/nameevaluation/main/NameEvalInterface.o: \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
@@ -7618,14 +7794,15 @@ src/compiler/nameevaluation/main/NameEvalUtils.o: \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/absyn/main/Fixity.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -7726,19 +7903,22 @@ src/compiler/nameevaluation/main/NormalizeTy.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
@@ -7750,7 +7930,6 @@ src/compiler/nameevaluation/main/NormalizeTy.o: \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/elaborate/main/ELABORATOR.sig \
   src/compiler/elaborate/main/ElaborateError.ppg.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/elaborate/main/ElaboratorUtils.smi \
   src/compiler/elaborate/main/ElaborateErrorSQL.ppg.smi \
   src/compiler/elaborate/main/ElaborateSQL.smi \
@@ -7837,17 +8016,17 @@ src/compiler/nameevaluation/main/SetLiftedTys.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/util/main/GRAPH.sig src/compiler/util/main/Graph.smi \
@@ -7948,8 +8127,8 @@ src/compiler/nameevaluation/main/SigCheck.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
@@ -7963,16 +8142,15 @@ src/compiler/nameevaluation/main/SigCheck.o: \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
-  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler-utils/env/main/PathEnv.smi src/compiler/util/main/utils.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi src/compiler-utils/env/main/PathEnv.smi \
+  src/compiler/util/main/utils.smi src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
@@ -8073,17 +8251,17 @@ src/compiler/nameevaluation/main/Subst.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
@@ -8168,18 +8346,19 @@ src/compiler/nameevaluation/main/TfunVars.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
@@ -8190,8 +8369,8 @@ src/compiler/nameevaluation/main/TfunVars.o: \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   $(SMLSHARP_DEP)
-src/compiler/parser/main/InterfaceParser.o: \
-  src/compiler/parser/main/InterfaceParser.sml src/basis/main/GENERAL.sig \
+src/compiler/parser2/main/InterfaceParser.o: \
+  src/compiler/parser2/main/InterfaceParser.sml src/basis/main/GENERAL.sig \
   src/basis/main/General.smi src/basis/main/OPTION.sig \
   src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
   src/basis/main/Array.smi src/basis/main/Vector.smi \
@@ -8239,8 +8418,8 @@ src/compiler/parser/main/InterfaceParser.o: \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
   src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
   src/smlformat/formatlib/main/FormatExpressionTypes.smi \
@@ -8264,9 +8443,9 @@ src/compiler/parser/main/InterfaceParser.o: \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -8277,13 +8456,14 @@ src/compiler/parser/main/InterfaceParser.o: \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.lex.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/InterfaceParser.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/InterfaceParser.smi \
   $(SMLSHARP_DEP)
-src/compiler/parser/main/Parser.o: src/compiler/parser/main/Parser.sml \
+src/compiler/parser2/main/Parser.o: src/compiler/parser2/main/Parser.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
   src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
   src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
@@ -8331,8 +8511,8 @@ src/compiler/parser/main/Parser.o: src/compiler/parser/main/Parser.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
   src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
   src/smlformat/formatlib/main/FormatExpressionTypes.smi \
@@ -8357,8 +8537,8 @@ src/compiler/parser/main/Parser.o: src/compiler/parser/main/Parser.sml \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -8367,13 +8547,14 @@ src/compiler/parser/main/Parser.o: src/compiler/parser/main/Parser.sml \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.grm.smi \
-  src/compiler/parser/main/iml.lex.smi src/compiler/parser/main/Parser.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/Parser.smi \
   $(SMLSHARP_DEP)
-src/compiler/parser/main/ParserError.ppg.sml: src/compiler/parser/main/ParserError.ppg $(SMLFORMAT_DEP)
-src/compiler/parser/main/ParserError.ppg.o: \
-  src/compiler/parser/main/ParserError.ppg.sml src/basis/main/GENERAL.sig \
+src/compiler/parser2/main/ParserError.ppg.sml: src/compiler/parser2/main/ParserError.ppg $(SMLFORMAT_DEP)
+src/compiler/parser2/main/ParserError.ppg.o: \
+  src/compiler/parser2/main/ParserError.ppg.sml src/basis/main/GENERAL.sig \
   src/basis/main/General.smi src/basis/main/OPTION.sig \
   src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
   src/basis/main/Array.smi src/basis/main/Vector.smi \
@@ -8436,10 +8617,10 @@ src/compiler/parser/main/ParserError.ppg.o: \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
   $(SMLSHARP_DEP)
-src/compiler/parser/main/iml.grm.sml src/compiler/parser/main/iml.grm.sig: src/compiler/parser/main/iml.grm $(MLYACC_DEP)
-src/compiler/parser/main/iml.grm.o: src/compiler/parser/main/iml.grm.sml \
+src/compiler/parser2/main/iml.grm.sml src/compiler/parser2/main/iml.grm.sig: src/compiler/parser2/main/iml.grm $(MLYACC_DEP)
+src/compiler/parser2/main/iml.grm.o: src/compiler/parser2/main/iml.grm.sml \
   src/basis/main/STRING_CVT.sig src/basis/main/StringCvt.smi \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
   src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
@@ -8487,8 +8668,8 @@ src/compiler/parser/main/iml.grm.o: src/compiler/parser/main/iml.grm.sml \
   src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig src/basis.smi \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
   src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
   src/smlformat/formatlib/main/FormatExpressionTypes.smi \
@@ -8513,21 +8694,22 @@ src/compiler/parser/main/iml.grm.o: src/compiler/parser/main/iml.grm.sml \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/parser/main/iml.grm.sig \
-  src/compiler/parser/main/iml.grm.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/parser2/main/iml.grm.sig \
+  src/compiler/parser2/main/iml.grm.smi \
   $(SMLSHARP_DEP)
-src/compiler/parser/main/iml.lex.sml: src/compiler/parser/main/iml.lex $(MLLEX_DEP)
-src/compiler/parser/main/iml.lex.o: src/compiler/parser/main/iml.lex.sml \
-  src/basis/main/GENERAL.sig src/basis/main/General.smi \
-  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
-  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+src/compiler/parser2/main/imlLexFun.lex.sml: src/compiler/parser2/main/imlLexFun.lex $(MLLEX_DEP)
+src/compiler/parser2/main/imlLexFun.lex.o: \
+  src/compiler/parser2/main/imlLexFun.lex.sml src/basis/main/GENERAL.sig \
+  src/basis/main/General.smi src/basis/main/OPTION.sig \
+  src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
+  src/basis/main/Array.smi src/basis/main/Vector.smi \
   src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
   src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
   src/basis/main/CHAR.sig src/basis/main/Char.smi \
@@ -8572,8 +8754,8 @@ src/compiler/parser/main/iml.lex.o: src/compiler/parser/main/iml.lex.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
   src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
   src/smlformat/formatlib/main/FormatExpressionTypes.smi \
@@ -8594,11 +8776,26 @@ src/compiler/parser/main/iml.lex.o: src/compiler/parser/main/iml.lex.sml \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.lex.smi \
+  src/compiler/parser2/main/iml.grm.sig src/smlnj-lib/Util/lib-base-sig.sml \
+  src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-key-sig.sml \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
   $(SMLSHARP_DEP)
-src/compiler/parser/main/interface.grm.sml src/compiler/parser/main/interface.grm.sig: src/compiler/parser/main/interface.grm $(MLYACC_DEP)
-src/compiler/parser/main/interface.grm.o: \
-  src/compiler/parser/main/interface.grm.sml src/basis/main/STRING_CVT.sig \
+src/compiler/parser2/main/interface.grm.sml src/compiler/parser2/main/interface.grm.sig: src/compiler/parser2/main/interface.grm $(MLYACC_DEP)
+src/compiler/parser2/main/interface.grm.o: \
+  src/compiler/parser2/main/interface.grm.sml src/basis/main/STRING_CVT.sig \
   src/basis/main/StringCvt.smi src/basis/main/GENERAL.sig \
   src/basis/main/General.smi src/basis/main/OPTION.sig \
   src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
@@ -8645,8 +8842,8 @@ src/compiler/parser/main/interface.grm.o: \
   src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig src/basis.smi \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
   src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
   src/smlformat/formatlib/main/FormatExpressionTypes.smi \
@@ -8671,8 +8868,8 @@ src/compiler/parser/main/interface.grm.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -8680,8 +8877,8 @@ src/compiler/parser/main/interface.grm.o: \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
   $(SMLSHARP_DEP)
 src/compiler/patterncalc/main/PatternCalc.ppg.sml: src/compiler/patterncalc/main/PatternCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/patterncalc/main/PatternCalc.ppg.o: \
@@ -8761,8 +8958,9 @@ src/compiler/patterncalc/main/PatternCalc.ppg.o: \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/TermFormat.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -8842,8 +9040,8 @@ src/compiler/patterncalc/main/PatternCalcInterface.ppg.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -8851,9 +9049,109 @@ src/compiler/patterncalc/main/PatternCalcInterface.ppg.o: \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
+  $(SMLSHARP_DEP)
+src/compiler/recordcalc/main/RCAlphaRename.o: \
+  src/compiler/recordcalc/main/RCAlphaRename.sml src/basis/main/GENERAL.sig \
+  src/basis/main/General.smi src/basis/main/OPTION.sig \
+  src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
+  src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
+  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
+  src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RCAlphaRename.smi \
   $(SMLSHARP_DEP)
 src/compiler/recordcalc/main/RecordCalc.ppg.sml: src/compiler/recordcalc/main/RecordCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/recordcalc/main/RecordCalc.ppg.o: \
@@ -8929,8 +9227,8 @@ src/compiler/recordcalc/main/RecordCalc.ppg.o: \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler-utils/env/main/SEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -8940,7 +9238,7 @@ src/compiler/recordcalc/main/RecordCalc.ppg.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -9022,16 +9320,16 @@ src/compiler/recordcalc/main/RecordCalcFormatter.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -9039,6 +9337,503 @@ src/compiler/recordcalc/main/RecordCalcFormatter.o: \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalcFormatter.smi \
+  $(SMLSHARP_DEP)
+src/compiler/recordcalc/main/RecordCalcUtils.o: \
+  src/compiler/recordcalc/main/RecordCalcUtils.sml src/basis/main/GENERAL.sig \
+  src/basis/main/General.smi src/basis/main/OPTION.sig \
+  src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
+  src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/compiler/util/main/gensym.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalcUtils.smi \
+  $(SMLSHARP_DEP)
+src/compiler/recordcalcoptimization/main/RCAnalyse.o: \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
+  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.smi \
+  $(SMLSHARP_DEP)
+src/compiler/recordcalcoptimization/main/RCOptimize.o: \
+  src/compiler/recordcalcoptimization/main/RCOptimize.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
+  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
+  src/compiler/typedcalc/main/TypedCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
+  src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalcUtils.smi \
+  src/compiler/recordcalc/main/RCAlphaRename.smi \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.smi \
+  src/compiler/recordcalcoptimization/main/RCSize.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.smi \
+  src/compiler/recordcalcoptimization/main/RCOptimize.smi \
+  $(SMLSHARP_DEP)
+src/compiler/recordcalcoptimization/main/RCRevealTy.o: \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
+  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi src/compiler/types/main/CheckEq.smi \
+  src/compiler/types/main/Unify.smi src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
+  src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/typedcalc/main/TypedCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.smi \
+  $(SMLSHARP_DEP)
+src/compiler/recordcalcoptimization/main/RCSize.o: \
+  src/compiler/recordcalcoptimization/main/RCSize.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/control/main/Control.ppg.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalcoptimization/main/RCSize.smi \
   $(SMLSHARP_DEP)
 src/compiler/recordcompilation/main/OverloadKind.o: \
   src/compiler/recordcompilation/main/OverloadKind.sml \
@@ -9110,11 +9905,12 @@ src/compiler/recordcompilation/main/OverloadKind.o: \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
@@ -9122,16 +9918,16 @@ src/compiler/recordcompilation/main/OverloadKind.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/recordcompilation/main/OverloadKind.smi \
   $(SMLSHARP_DEP)
@@ -9210,8 +10006,8 @@ src/compiler/recordcompilation/main/RecordCompilation.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
@@ -9219,7 +10015,7 @@ src/compiler/recordcompilation/main/RecordCompilation.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -9227,10 +10023,12 @@ src/compiler/recordcompilation/main/RecordCompilation.o: \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalcFormatter.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
   src/compiler/recordcompilation/main/OverloadKind.smi \
   src/compiler/recordcompilation/main/RecordKind.smi \
   src/compiler/recordcompilation/main/UnivKind.smi \
@@ -9310,8 +10108,8 @@ src/compiler/recordcompilation/main/RecordKind.o: \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
@@ -9319,16 +10117,16 @@ src/compiler/recordcompilation/main/RecordKind.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/recordcompilation/main/RecordKind.smi \
   $(SMLSHARP_DEP)
@@ -9402,11 +10200,12 @@ src/compiler/recordcompilation/main/UnivKind.o: \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
@@ -9414,16 +10213,16 @@ src/compiler/recordcompilation/main/UnivKind.o: \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/recordcompilation/main/UnivKind.smi \
   $(SMLSHARP_DEP)
@@ -9501,23 +10300,23 @@ src/compiler/recordunboxing/main/RecordUnboxing.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -9601,7 +10400,7 @@ src/compiler/reflection/main/PrinterGeneration.o: \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi src/compiler/control/main/LOC.sig \
   src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/smlnj-lib/Util/ord-set-sig.sml src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
@@ -9610,9 +10409,10 @@ src/compiler/reflection/main/PrinterGeneration.o: \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
@@ -9626,21 +10426,18 @@ src/compiler/reflection/main/PrinterGeneration.o: \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
   src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
-  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/absyn/main/Fixity.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/elaborate/main/ELABORATOR.sig \
   src/compiler/elaborate/main/ElaborateError.ppg.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/elaborate/main/ElaboratorUtils.smi \
   src/compiler/elaborate/main/ElaborateErrorSQL.ppg.smi \
   src/compiler/elaborate/main/ElaborateSQL.smi \
@@ -9731,27 +10528,28 @@ src/compiler/reflection/main/ReifiedTermData.o: \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/reifiedterm/main/TermPrintUtils.ppg.smi \
   src/reifiedterm/main/ReifiedTerm.ppg.smi src/compiler-utils/env/main/ENV.sig \
-  src/compiler-utils/env/main/SEnv.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
-  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -9831,7 +10629,7 @@ src/compiler/reflection/main/Reify.o: src/compiler/reflection/main/Reify.sml \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/smlnj-lib/Util/ord-set-sig.sml src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler-utils/env/main/IEnv.smi \
@@ -9839,9 +10637,10 @@ src/compiler/reflection/main/Reify.o: src/compiler/reflection/main/Reify.sml \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
@@ -9849,17 +10648,15 @@ src/compiler/reflection/main/Reify.o: src/compiler/reflection/main/Reify.sml \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
   src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
-  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
@@ -9869,7 +10666,6 @@ src/compiler/reflection/main/Reify.o: src/compiler/reflection/main/Reify.sml \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/elaborate/main/ELABORATOR.sig \
   src/compiler/elaborate/main/ElaborateError.ppg.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/elaborate/main/ElaboratorUtils.smi \
   src/compiler/elaborate/main/ElaborateErrorSQL.ppg.smi \
   src/compiler/elaborate/main/ElaborateSQL.smi \
@@ -9957,9 +10753,9 @@ src/compiler/rtl/main/Coloring.o: src/compiler/rtl/main/Coloring.sml \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -10042,9 +10838,10 @@ src/compiler/rtl/main/FrameLayout.o: src/compiler/rtl/main/FrameLayout.sml \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -10172,9 +10969,10 @@ src/compiler/rtl/main/RTL.ppg.o: src/compiler/rtl/main/RTL.ppg.sml \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -10318,9 +11116,9 @@ src/compiler/rtl/main/RTLColoring.o: src/compiler/rtl/main/RTLColoring.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -10404,9 +11202,10 @@ src/compiler/rtl/main/RTLDominate.o: src/compiler/rtl/main/RTLDominate.sml \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -10483,10 +11282,10 @@ src/compiler/rtl/main/RTLEdit.o: src/compiler/rtl/main/RTLEdit.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -10562,9 +11361,10 @@ src/compiler/rtl/main/RTLLiveness.o: src/compiler/rtl/main/RTLLiveness.sml \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -10642,10 +11442,10 @@ src/compiler/rtl/main/RTLRename.o: src/compiler/rtl/main/RTLRename.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -10722,9 +11522,9 @@ src/compiler/rtl/main/RTLStabilize.o: src/compiler/rtl/main/RTLStabilize.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -10806,9 +11606,9 @@ src/compiler/rtl/main/RTLTypeCheck.o: src/compiler/rtl/main/RTLTypeCheck.sml \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -10889,9 +11689,10 @@ src/compiler/rtl/main/RTLTypeCheckError.ppg.o: \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -10968,10 +11769,10 @@ src/compiler/rtl/main/RTLUtils.o: src/compiler/rtl/main/RTLUtils.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -11048,9 +11849,10 @@ src/compiler/rtl/main/X86Asm.ppg.o: src/compiler/rtl/main/X86Asm.ppg.sml \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -11129,10 +11931,10 @@ src/compiler/rtl/main/X86AsmGen.o: src/compiler/rtl/main/X86AsmGen.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -11207,10 +12009,11 @@ src/compiler/rtl/main/X86Coloring.o: src/compiler/rtl/main/X86Coloring.sml \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/control/main/Control.ppg.smi \
@@ -11296,10 +12099,10 @@ src/compiler/rtl/main/X86Constraint.o: src/compiler/rtl/main/X86Constraint.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -11380,9 +12183,9 @@ src/compiler/rtl/main/X86Emit.o: src/compiler/rtl/main/X86Emit.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -11464,10 +12267,10 @@ src/compiler/rtl/main/X86Frame.o: src/compiler/rtl/main/X86Frame.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -11554,8 +12357,8 @@ src/compiler/rtl/main/X86Select.o: src/compiler/rtl/main/X86Select.sml \
   src/compiler/systemdef/main/BasicTypes.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -11648,9 +12451,9 @@ src/compiler/rtl/main/X86Stabilize.o: src/compiler/rtl/main/X86Stabilize.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -11733,10 +12536,10 @@ src/compiler/rtl/main/X86Subst.o: src/compiler/rtl/main/X86Subst.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
@@ -11809,7 +12612,7 @@ src/compiler/runtimetypes/main/RuntimeTypes.ppg.o: \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/runtimetypes/main/RuntimeTypes.ppg.smi \
   $(SMLSHARP_DEP)
 src/compiler/runtimetypes/main/TypeLayout.o: \
@@ -11884,24 +12687,26 @@ src/compiler/runtimetypes/main/TypeLayout.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
   src/compiler/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -11955,8 +12760,8 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
   src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
   src/smlformat/formatlib/main/FormatExpressionTypes.smi \
@@ -11985,8 +12790,9 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/reifiedterm/main/TermPrintUtils.ppg.smi \
-  src/reifiedterm/main/ReifiedTerm.ppg.smi src/prelude.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/reifiedterm/main/ReifiedTerm.ppg.smi src/unix-utils/main/UnixUtils.smi \
+  src/prelude.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IEnv.smi \
   src/compiler/util/main/COUNTER.sig src/compiler/util/main/Counter.smi \
@@ -11996,8 +12802,8 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler/toolchain/main/TempFile.smi \
   src/compiler/toolchain/main/BinUtils.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
@@ -12005,28 +12811,25 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.grm.smi \
-  src/compiler/parser/main/iml.lex.smi src/compiler/parser/main/Parser.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/Parser.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
+  src/compiler/parser2/main/InterfaceParser.smi \
   src/compiler/generatemain/main/GenerateMainError.ppg.smi \
   src/compiler/generatemain/main/GenerateMain.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/builtin/main/BuiltinContext_smi.smi \
-  src/compiler/builtin/main/BuiltinContextSources.smi \
   src/compiler/absyn/main/ABSYN_FORMATTER.sig \
   src/compiler/absyn/main/AbsynFormatter.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
-  src/compiler/parser/main/InterfaceParser.smi \
-  src/compiler/loadfile/main/SHA1.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/loadfile/main/SHA1.smi \
   src/compiler/loadfile/main/InterfaceHash.smi \
   src/compiler/loadfile/main/LoadFileError.ppg.smi \
   src/compiler/loadfile/main/LoadFile.smi src/compiler/absyn/main/Fixity.smi \
@@ -12045,7 +12848,9 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
-  src/compiler-utils/env/main/PathEnv.smi \
+  src/compiler-utils/env/main/PathEnv.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
   src/compiler/nameevaluation/main/NormalizeTy.smi \
@@ -12067,20 +12872,36 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler/valrecoptimization/main/TransFundecl.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
-  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
-  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.smi \
+  src/compiler/typedcalcoptimization/main/TCSize.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/typedcalcoptimization/main/TCOptimize.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalcUtils.smi \
+  src/compiler/recordcalc/main/RCAlphaRename.smi \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.smi \
+  src/compiler/recordcalcoptimization/main/RCSize.smi \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.smi \
+  src/compiler/recordcalcoptimization/main/RCOptimize.smi \
+  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
+  src/compiler/types/main/IDCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/InferTypes2.smi \
   src/compiler/typeinference2/main/UNCURRYFUNDECL.sig \
   src/compiler/typeinference2/main/UncurryFundecl_ng.smi \
   src/compiler/reflection/main/ReifiedTermData.smi \
   src/compiler/reflection/main/Reify.smi \
   src/compiler/reflection/main/PrinterGeneration.smi \
-  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalcFormatter.smi \
   src/compiler/matchcompilation/main/MatchData.smi \
   src/compiler/matchcompilation/main/MatchError.ppg.smi \
@@ -12163,7 +12984,6 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler/rtl/main/X86Coloring.smi src/compiler/rtl/main/FrameLayout.smi \
   src/compiler/rtl/main/RTLFRAME.sig src/compiler/rtl/main/X86Frame.smi \
   src/compiler/rtl/main/RTLASMGEN.sig src/compiler/rtl/main/X86AsmGen.smi \
-  src/compiler/toplevel2/main/TOP.sig \
   src/compiler/toplevel2/main/TopData.ppg.smi \
   src/compiler/toplevel2/main/NameEvalEnvUtils.smi \
   src/compiler/toplevel2/main/Top.smi src/compiler/main/main/GetOpt.smi \
@@ -12245,26 +13065,26 @@ src/compiler/sqlcompilation/main/SQLCompilation.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/sqlcompilation/main/SQLCompilation.smi \
   $(SMLSHARP_DEP)
 src/compiler/staticanalysis/main/ReduceTy.o: \
@@ -12337,26 +13157,26 @@ src/compiler/staticanalysis/main/ReduceTy.o: \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/staticanalysis/main/ReduceTy.smi \
   $(SMLSHARP_DEP)
@@ -12433,23 +13253,25 @@ src/compiler/staticanalysis/main/SAConstraint.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -12537,22 +13359,23 @@ src/compiler/staticanalysis/main/SAContext.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -12636,23 +13459,23 @@ src/compiler/staticanalysis/main/StaticAnalysis.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -13289,14 +14112,15 @@ src/compiler/toplevel2/main/NameEvalEnvUtils.o: \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/absyn/main/Fixity.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -13323,9 +14147,9 @@ src/compiler/toplevel2/main/NameEvalEnvUtils.o: \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
-  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
   src/compiler/toplevel2/main/NameEvalEnvUtils.smi \
@@ -13400,10 +14224,15 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/SEnv.smi \
   src/compiler/util/main/COUNTER.sig src/compiler/util/main/Counter.smi \
+  src/config/main/Version.smi src/compiler/toolchain/main/Filename.smi \
+  src/compiler/toolchain/main/CoreUtils.smi \
+  src/compiler/toolchain/main/TempFile.smi src/config/main/Config.smi \
+  src/compiler/toolchain/main/BinUtils.smi \
+  src/compiler/usererror/main/USER_ERROR.sig \
+  src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/smlnj-lib/Util/ord-map-sig.sml \
   src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
@@ -13413,34 +14242,27 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/config/main/Version.smi src/compiler/toolchain/main/Filename.smi \
-  src/compiler/toolchain/main/CoreUtils.smi \
-  src/compiler/toolchain/main/TempFile.smi src/config/main/Config.smi \
-  src/compiler/toolchain/main/BinUtils.smi \
-  src/compiler/usererror/main/USER_ERROR.sig \
-  src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinContext_smi.smi \
-  src/compiler/builtin/main/BuiltinContextSources.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi \
   src/compiler/absyn/main/ABSYN_FORMATTER.sig \
   src/compiler/absyn/main/AbsynFormatter.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
-  src/ml-yacc/lib/base.sig src/ml-yacc/lib/join.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/ml-yacc/lib/base.sig \
   src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
   src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
-  src/compiler/parser/main/ParserError.ppg.smi \
-  src/compiler/parser/main/iml.grm.sig src/compiler/parser/main/iml.grm.smi \
-  src/compiler/parser/main/iml.lex.smi src/compiler/parser/main/Parser.smi \
-  src/compiler/parser/main/interface.grm.sig \
-  src/compiler/parser/main/interface.grm.smi \
-  src/compiler/parser/main/InterfaceParser.smi \
+  src/compiler/parser2/main/ParserError.ppg.smi \
+  src/compiler/parser2/main/iml.grm.sig src/compiler/parser2/main/iml.grm.smi \
+  src/compiler/parser2/main/imlLexFun.lex.smi \
+  src/compiler/parser2/main/Parser.smi \
+  src/compiler/parser2/main/interface.grm.sig \
+  src/compiler/parser2/main/interface.grm.smi \
+  src/compiler/parser2/main/InterfaceParser.smi \
   src/compiler/loadfile/main/SHA1.smi \
   src/compiler/loadfile/main/InterfaceHash.smi \
   src/compiler/loadfile/main/LoadFileError.ppg.smi \
@@ -13460,7 +14282,9 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
-  src/compiler-utils/env/main/PathEnv.smi \
+  src/compiler-utils/env/main/PathEnv.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
   src/compiler/nameevaluation/main/NormalizeTy.smi \
@@ -13482,13 +14306,30 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
   src/compiler/valrecoptimization/main/TransFundecl.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
-  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
-  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.smi \
+  src/compiler/typedcalcoptimization/main/TCSize.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/typedcalcoptimization/main/TCOptimize.smi \
+  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
+  src/compiler/recordcalc/main/RecordCalcUtils.smi \
+  src/compiler/recordcalc/main/RCAlphaRename.smi \
+  src/compiler/recordcalcoptimization/main/RCAnalyse.smi \
+  src/compiler/recordcalcoptimization/main/RCSize.smi \
+  src/compiler/recordcalcoptimization/main/RCRevealTy.smi \
+  src/compiler/recordcalcoptimization/main/RCOptimize.smi \
+  src/compiler/constantterm/main/ConstantTerm.ppg.smi \
+  src/compiler/types/main/IDCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/InferTypes2.smi \
   src/compiler/typeinference2/main/UNCURRYFUNDECL.sig \
   src/compiler/typeinference2/main/UncurryFundecl_ng.smi \
@@ -13498,7 +14339,6 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
   src/compiler/reflection/main/ReifiedTermData.smi \
   src/compiler/reflection/main/Reify.smi \
   src/compiler/reflection/main/PrinterGeneration.smi \
-  src/compiler/recordcalc/main/RecordCalc.ppg.smi \
   src/compiler/recordcalc/main/RecordCalcFormatter.smi \
   src/compiler/matchcompilation/main/MatchData.smi \
   src/compiler/matchcompilation/main/MatchError.ppg.smi \
@@ -13583,7 +14423,6 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
   src/compiler/rtl/main/RTLASMGEN.sig src/compiler/rtl/main/X86AsmGen.smi \
   src/compiler/generatemain/main/GenerateMainError.ppg.smi \
   src/compiler/generatemain/main/GenerateMain.smi \
-  src/compiler/toplevel2/main/TOP.sig \
   src/compiler/toplevel2/main/TopData.ppg.smi \
   src/compiler/toplevel2/main/NameEvalEnvUtils.smi \
   src/compiler/toplevel2/main/Top.smi \
@@ -13659,9 +14498,9 @@ src/compiler/toplevel2/main/TopData.ppg.o: \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -13673,9 +14512,9 @@ src/compiler/toplevel2/main/TopData.ppg.o: \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/absyn/main/AbsynInterface.ppg.smi src/config/main/Version.smi \
   src/compiler/toolchain/main/Filename.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
@@ -13772,23 +14611,23 @@ src/compiler/toyaanormal/main/NameMangle.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -13876,23 +14715,23 @@ src/compiler/toyaanormal/main/ToYAANormal.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
   src/compiler/annotatedtypes/main/AnnotatedTypes.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
@@ -13914,6 +14753,105 @@ src/compiler/toyaanormal/main/ToYAANormal.o: \
   src/compiler/yaanormal/main/ANormal.ppg.smi \
   src/compiler/toyaanormal/main/NameMangle.smi \
   src/compiler/toyaanormal/main/ToYAANormal.smi \
+  $(SMLSHARP_DEP)
+src/compiler/typedcalc/main/TCAlphaRename.o: \
+  src/compiler/typedcalc/main/TCAlphaRename.sml src/basis/main/GENERAL.sig \
+  src/basis/main/General.smi src/basis/main/OPTION.sig \
+  src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
+  src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
+  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
+  src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
   $(SMLSHARP_DEP)
 src/compiler/typedcalc/main/TypedCalc.ppg.sml: src/compiler/typedcalc/main/TypedCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/typedcalc/main/TypedCalc.ppg.o: \
@@ -13986,7 +14924,7 @@ src/compiler/typedcalc/main/TypedCalc.ppg.o: \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi src/compiler/control/main/LOC.sig \
   src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/smlnj-lib/Util/ord-set-sig.sml src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
@@ -13995,9 +14933,10 @@ src/compiler/typedcalc/main/TypedCalc.ppg.o: \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
@@ -14080,26 +15019,419 @@ src/compiler/typedcalc/main/TypedCalcUtils.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/gensym.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/gensym.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/utils.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
-  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
+  $(SMLSHARP_DEP)
+src/compiler/typedcalcoptimization/main/TCAnalyse.o: \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/control/main/Control.ppg.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.smi \
+  $(SMLSHARP_DEP)
+src/compiler/typedcalcoptimization/main/TCOptimize.o: \
+  src/compiler/typedcalcoptimization/main/TCOptimize.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
+  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
+  src/compiler/typedcalc/main/TypedCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
+  src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  src/compiler/typedcalcoptimization/main/TCAnalyse.smi \
+  src/compiler/typedcalcoptimization/main/TCSize.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  src/compiler/typedcalcoptimization/main/TCOptimize.smi \
+  $(SMLSHARP_DEP)
+src/compiler/typedcalcoptimization/main/TCRevealTy.o: \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/parser-comb-sig.sml \
+  src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi src/compiler/types/main/CheckEq.smi \
+  src/compiler/types/main/Unify.smi src/compiler/types/main/TyRevealTy.smi \
+  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
+  src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/typedcalc/main/TypedCalcUtils.smi \
+  src/compiler/typeinference2/main/TypeInferenceUtils.smi \
+  src/compiler/typedcalcoptimization/main/TCRevealTy.smi \
+  $(SMLSHARP_DEP)
+src/compiler/typedcalcoptimization/main/TCSize.o: \
+  src/compiler/typedcalcoptimization/main/TCSize.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/control/main/Control.ppg.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/typedcalc/main/TypedCalc.ppg.smi \
+  src/compiler/typedcalcoptimization/main/TCSize.smi \
   $(SMLSHARP_DEP)
 src/compiler/typedlambda/main/TypedLambda.ppg.sml: src/compiler/typedlambda/main/TypedLambda.ppg $(SMLFORMAT_DEP)
 src/compiler/typedlambda/main/TypedLambda.ppg.o: \
@@ -14176,26 +15508,27 @@ src/compiler/typedlambda/main/TypedLambda.ppg.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedlambda/main/TypedLambda.ppg.smi \
   $(SMLSHARP_DEP)
@@ -14273,26 +15606,27 @@ src/compiler/typedlambda/main/TypedLambdaFormatter.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/util/main/gensym.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/typedlambda/main/TypedLambda.ppg.smi \
   src/compiler/typedlambda/main/TypedLambdaFormatter.smi \
@@ -14373,23 +15707,24 @@ src/compiler/typeinference2/main/InferTypes2.o: \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/IOrd.smi \
   src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
+  src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/usererror/main/USER_ERROR.sig \
-  src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi \
+  src/compiler/usererror/main/USER_ERROR.sig \
+  src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/absyn/main/Fixity.smi \
@@ -14398,7 +15733,6 @@ src/compiler/typeinference2/main/InferTypes2.o: \
   src/compiler/elaborate/main/ELABORATOR.sig \
   src/compiler/elaborate/main/ElaborateError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
-  src/compiler/util/main/utils.smi \
   src/compiler/elaborate/main/ElaboratorUtils.smi \
   src/compiler/elaborate/main/ElaborateErrorSQL.ppg.smi \
   src/compiler/elaborate/main/ElaborateSQL.smi \
@@ -14414,7 +15748,8 @@ src/compiler/typeinference2/main/InferTypes2.o: \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
-  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
+  src/compiler/types/main/IDCalcUtils.smi src/compiler/types/main/CheckEq.smi \
+  src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
   src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/TypeInferenceUtils.smi \
@@ -14491,16 +15826,16 @@ src/compiler/typeinference2/main/Printers.o: \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
@@ -14511,9 +15846,9 @@ src/compiler/typeinference2/main/Printers.o: \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
   src/compiler/typeinference2/main/Printers.smi \
   $(SMLSHARP_DEP)
@@ -14591,24 +15926,24 @@ src/compiler/typeinference2/main/TypeInferenceContext.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
   $(SMLSHARP_DEP)
@@ -14686,16 +16021,16 @@ src/compiler/typeinference2/main/TypeInferenceError.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -14779,31 +16114,27 @@ src/compiler/typeinference2/main/TypeInferenceUtils.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
   src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
-  src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/usererror/main/USER_ERROR.sig \
-  src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
   src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   $(SMLSHARP_DEP)
 src/compiler/typeinference2/main/UncurryFundecl_ng.o: \
@@ -14880,123 +16211,35 @@ src/compiler/typeinference2/main/UncurryFundecl_ng.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/typedcalc/main/TypedCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   src/compiler/typedcalc/main/TypedCalcUtils.smi \
-  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceContext.ppg.smi \
-  src/compiler/usererror/main/USER_ERROR.sig \
-  src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/typeinference2/main/TypeInferenceError.ppg.smi \
+  src/compiler/typeinference2/main/Printers.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/typedcalc/main/TCAlphaRename.smi \
+  src/compiler/types/main/CheckEq.smi src/compiler/types/main/Unify.smi \
   src/compiler/typeinference2/main/TypeInferenceUtils.smi \
   src/compiler/typeinference2/main/UNCURRYFUNDECL.sig \
   src/compiler/typeinference2/main/UncurryFundecl_ng.smi \
-  $(SMLSHARP_DEP)
-src/compiler/types/main/BuiltinEnv.o: src/compiler/types/main/BuiltinEnv.sml \
-  src/basis/main/GENERAL.sig src/basis/main/General.smi \
-  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
-  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
-  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
-  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
-  src/basis/main/CHAR.sig src/basis/main/Char.smi \
-  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
-  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
-  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
-  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
-  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
-  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
-  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
-  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
-  src/basis/main/IntInf.smi src/basis/main/Int.smi \
-  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
-  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
-  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
-  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
-  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
-  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
-  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
-  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
-  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
-  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
-  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
-  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
-  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
-  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
-  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
-  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
-  src/smlnj/Basis/Posix/posix-io.smi \
-  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
-  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
-  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
-  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
-  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
-  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
-  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
-  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
-  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
-  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
-  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
-  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
-  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
-  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
-  src/basis/main/binary-op.smi src/basis.smi \
-  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
-  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
-  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
-  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
-  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
-  src/smlformat/formatlib/main/FormatExpression.smi \
-  src/smlformat/formatlib/main/PrinterParameter.smi \
-  src/smlformat/formatlib/main/AssocResolver.smi \
-  src/smlformat/formatlib/main/PreProcessedExpression.smi \
-  src/smlformat/formatlib/main/PrettyPrinter.smi \
-  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
-  src/smlformat/formatlib/main/Truncator.smi \
-  src/smlformat/formatlib/main/PreProcessor.smi \
-  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
-  src/smlformat/formatlib/main/BasicFormatters.smi \
-  src/smlformat/formatlib/main/SMLFORMAT.sig \
-  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-key-sig.sml \
-  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
-  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
-  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
-  src/compiler-utils/env/main/LabelOrd.smi \
-  src/compiler-utils/env/main/LabelEnv.smi \
-  src/compiler/util/main/ListSorter.smi \
-  src/compiler/util/main/BigInt_IntInf.smi \
-  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
-  src/compiler-utils/env/main/SSet.smi \
-  src/compiler/util/main/SmlppgUtil.ppg.smi \
-  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
   $(SMLSHARP_DEP)
 src/compiler/types/main/CheckEq.o: src/compiler/types/main/CheckEq.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
@@ -15046,8 +16289,6 @@ src/compiler/types/main/CheckEq.o: src/compiler/types/main/CheckEq.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi \
-  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
-  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
   src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
   src/smlformat/formatlib/main/FormatExpressionTypes.smi \
@@ -15063,32 +16304,33 @@ src/compiler/types/main/CheckEq.o: src/compiler/types/main/CheckEq.sml \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-key-sig.sml \
-  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
-  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
-  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
-  src/compiler/name/main/LocalID.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
   src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
-  src/compiler-utils/env/main/LabelEnv.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/compiler/util/main/utils.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
-  src/compiler/types/main/CheckEq.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi src/compiler/types/main/CheckEq.smi \
   $(SMLSHARP_DEP)
 src/compiler/types/main/EvalIty.o: src/compiler/types/main/EvalIty.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
@@ -15159,18 +16401,18 @@ src/compiler/types/main/EvalIty.o: src/compiler/types/main/EvalIty.sml \
   src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
@@ -15253,19 +16495,109 @@ src/compiler/types/main/IDCalc.ppg.o: src/compiler/types/main/IDCalc.ppg.sml \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
+  $(SMLSHARP_DEP)
+src/compiler/types/main/IDCalcUtils.o: src/compiler/types/main/IDCalcUtils.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/IDCalcUtils.smi \
   $(SMLSHARP_DEP)
 src/compiler/types/main/OPrimInstMap.o: \
   src/compiler/types/main/OPrimInstMap.sml src/basis/main/GENERAL.sig \
@@ -15337,8 +16669,9 @@ src/compiler/types/main/OPrimInstMap.o: \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/types/main/OPrimInstMap.smi \
   $(SMLSHARP_DEP)
@@ -15411,8 +16744,382 @@ src/compiler/types/main/OPrimMap.o: src/compiler/types/main/OPrimMap.sml \
   src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/types/main/OPrimMap.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/types/main/OPrimMap.smi \
+  $(SMLSHARP_DEP)
+src/compiler/types/main/TyAlphaRename.o: \
+  src/compiler/types/main/TyAlphaRename.sml src/basis/main/GENERAL.sig \
+  src/basis/main/General.smi src/basis/main/OPTION.sig \
+  src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
+  src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/parser-comb-sig.sml \
+  src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  $(SMLSHARP_DEP)
+src/compiler/types/main/TyPrinters.o: src/compiler/types/main/TyPrinters.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-key-sig.sml \
+  src/smlnj-lib/Util/ord-set-sig.sml src/smlnj-lib/Util/lib-base-sig.sml \
+  src/smlnj-lib/Util/lib-base.smi src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/TyPrinters.smi \
+  $(SMLSHARP_DEP)
+src/compiler/types/main/TyReduce.o: src/compiler/types/main/TyReduce.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/SEnv.smi src/smlnj-lib/Util/parser-comb-sig.sml \
+  src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/TyPrinters.smi \
+  src/compiler/types/main/TyAlphaRename.smi \
+  src/compiler/types/main/TyReduce.smi \
+  $(SMLSHARP_DEP)
+src/compiler/types/main/TyRevealTy.o: src/compiler/types/main/TyRevealTy.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
+  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/compiler-utils/env/main/LabelOrd.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
+  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
+  src/compiler-utils/env/main/SSet.smi \
+  src/compiler/util/main/SmlppgUtil.ppg.smi \
+  src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/util/main/gensym.smi \
+  src/compiler/patterncalc/main/PatternCalc.ppg.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi src/compiler/types/main/CheckEq.smi \
+  src/compiler/types/main/Unify.smi src/compiler/types/main/TyRevealTy.smi \
   $(SMLSHARP_DEP)
 src/compiler/types/main/Types.ppg.sml: src/compiler/types/main/Types.ppg $(SMLFORMAT_DEP)
 src/compiler/types/main/Types.ppg.o: src/compiler/types/main/Types.ppg.sml \
@@ -15486,14 +17193,15 @@ src/compiler/types/main/Types.ppg.o: src/compiler/types/main/Types.ppg.sml \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
@@ -15550,7 +17258,6 @@ src/compiler/types/main/TypesUtils.o: src/compiler/types/main/TypesUtils.sml \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi \
   src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
-  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
   src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
   src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
@@ -15570,27 +17277,30 @@ src/compiler/types/main/TypesUtils.o: src/compiler/types/main/TypesUtils.sml \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/IEnv.smi \
-  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IOrd.smi \
-  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/LOCAL_ID.sig \
+  src/smlnj-lib/Util/ord-set-sig.sml src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
   src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
   src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler-utils/env/main/SEnv.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi \
+  src/compiler/types/main/OPrimInstMap.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
+  src/compiler/types/main/Types.ppg.smi src/compiler/util/main/utils.smi \
+  src/compiler/util/main/gensym.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
-  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
-  src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/tvarMap.smi src/compiler/types/main/IDCalc.ppg.smi \
+  src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi \
   $(SMLSHARP_DEP)
 src/compiler/types/main/Unify.o: src/compiler/types/main/Unify.sml \
@@ -15666,22 +17376,22 @@ src/compiler/types/main/Unify.o: src/compiler/types/main/Unify.sml \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
+  src/compiler/util/main/utils.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
-  src/compiler/types/main/BuiltinEnv.smi src/compiler/types/main/vars.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
   src/compiler/types/main/TypesUtils.smi src/compiler/types/main/CheckEq.smi \
   src/compiler/types/main/Unify.smi \
   $(SMLSHARP_DEP)
@@ -15754,8 +17464,8 @@ src/compiler/types/main/VarMap.o: src/compiler/types/main/VarMap.sml \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/types/main/VarMap.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/types/main/VarMap.smi \
   $(SMLSHARP_DEP)
 src/compiler/types/main/tvarMap.o: src/compiler/types/main/tvarMap.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
@@ -15826,9 +17536,9 @@ src/compiler/types/main/tvarMap.o: src/compiler/types/main/tvarMap.sml \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler-utils/env/main/SEnv.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
@@ -15909,8 +17619,9 @@ src/compiler/types/main/vars.o: src/compiler/types/main/vars.sml \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/IEnv.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
   src/compiler-utils/env/main/SEnv.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
@@ -15918,8 +17629,8 @@ src/compiler/types/main/vars.o: src/compiler/types/main/vars.sml \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
@@ -16107,26 +17818,74 @@ src/compiler/util/main/BigInt_IntInf.o: \
   $(SMLSHARP_DEP)
 src/compiler/util/main/Counter.o: src/compiler/util/main/Counter.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
-  src/basis/main/STRING_CVT.sig src/basis/main/StringCvt.smi \
   src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
-  src/basis/main/List.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
   src/basis/main/CHAR.sig src/basis/main/Char.smi \
   src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
   src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
   src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
   src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
   src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
-  src/basis/main/IntInf.smi src/basis/main/Int.smi src/basis/main/Word.smi \
-  src/basis/main/Word8.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
   src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
   src/basis/main/RealClass.smi src/basis/main/Substring.smi \
   src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
-  src/basis/main/binary-op.smi src/basis/main/TIME.sig src/basis/main/Time.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi \
   src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
   src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-set-sig.sml \
   src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/ENV.sig \
   src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/SEnv.smi \
-  src/compiler/util/main/COUNTER.sig src/compiler/util/main/Counter.smi \
+  src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
+  src/smlformat/formatlib/main/FORMAT_EXPRESSION.sig \
+  src/smlformat/formatlib/main/FormatExpressionTypes.smi \
+  src/smlformat/formatlib/main/FormatExpression.smi \
+  src/smlformat/formatlib/main/PrinterParameter.smi \
+  src/smlformat/formatlib/main/AssocResolver.smi \
+  src/smlformat/formatlib/main/PreProcessedExpression.smi \
+  src/smlformat/formatlib/main/PrettyPrinter.smi \
+  src/smlformat/formatlib/main/PRINTER_PARAMETER.sig \
+  src/smlformat/formatlib/main/Truncator.smi \
+  src/smlformat/formatlib/main/PreProcessor.smi \
+  src/smlformat/formatlib/main/BASIC_FORMATTERS.sig \
+  src/smlformat/formatlib/main/BasicFormatters.smi \
+  src/smlformat/formatlib/main/SMLFORMAT.sig \
+  src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/compiler/util/main/COUNTER.sig \
+  src/compiler/util/main/Counter.smi \
   $(SMLSHARP_DEP)
 src/compiler/util/main/Graph.o: src/compiler/util/main/Graph.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
@@ -16443,8 +18202,8 @@ src/compiler/util/main/TermFormat.o: src/compiler/util/main/TermFormat.sml \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi \
   $(SMLSHARP_DEP)
@@ -16625,17 +18384,17 @@ src/compiler/valrecoptimization/main/TransFundecl.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/valrecoptimization/main/TRANS_FUNDECL.sig \
@@ -16715,17 +18474,17 @@ src/compiler/valrecoptimization/main/VALREC_Optimizer.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/util/main/GRAPH.sig src/compiler/util/main/Graph.smi \
@@ -16807,17 +18566,17 @@ src/compiler/valrecoptimization/main/utils.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/valrecoptimization/main/utils.smi \
@@ -16896,26 +18655,26 @@ src/compiler/yaanormal/main/ANormal.ppg.o: \
   src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/ListSorter.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
   src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
-  src/compiler/util/main/gensym.smi \
+  src/compiler/util/main/utils.smi src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/systemdef/main/BasicTypes.smi \
   src/compiler/systemdef/main/BasicTypeFormatters.smi \
@@ -16985,7 +18744,7 @@ src/compiler/yaanormalization/main/ANormalOptimization.o: \
   src/smlformat/formatlib/main/BasicFormatters.smi \
   src/smlformat/formatlib/main/SMLFORMAT.sig \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
   src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
   src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
   src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
@@ -16996,24 +18755,24 @@ src/compiler/yaanormalization/main/ANormalOptimization.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/utils.smi \
   src/compiler/util/main/gensym.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/systemdef/main/BasicTypes.smi \
   src/compiler/systemdef/main/BasicTypeFormatters.smi \
@@ -17095,25 +18854,25 @@ src/compiler/yaanormalization/main/StaticAllocation.o: \
   src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
   src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
-  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
-  src/compiler/util/main/BigInt_IntInf.smi \
+  src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/GenIDFun.smi \
+  src/compiler/name/main/LocalID.smi src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
-  src/compiler/builtin/main/BuiltinName.smi \
   src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SSet.smi \
   src/compiler/util/main/SmlppgUtil.ppg.smi \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
-  src/compiler/absyn/main/Absyn.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
+  src/compiler/absyn/main/Absyn.ppg.smi src/compiler/util/main/utils.smi \
   src/compiler/util/main/gensym.smi \
-  src/compiler/builtin/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinPrimitive.ppg.smi \
+  src/compiler/builtin2/main/BuiltinTypeNames.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \
-  src/compiler/types/main/EvalIty.smi src/compiler/types/main/BuiltinEnv.smi \
-  src/compiler/types/main/vars.smi src/compiler/types/main/TypesUtils.smi \
+  src/compiler/types/main/EvalIty.smi \
+  src/compiler/builtin2/main/BuiltinTypes.smi src/compiler/types/main/vars.smi \
+  src/compiler/types/main/TypesUtils.smi \
   src/compiler/constantterm/main/ConstantTerm.ppg.smi \
   src/compiler/systemdef/main/BasicTypes.smi \
   src/compiler/systemdef/main/BasicTypeFormatters.smi \
@@ -17345,56 +19104,6 @@ src/ml-lex/ml-lex.o: src/ml-lex/ml-lex.sml src/basis/main/GENERAL.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-lex/lexgen.smi \
   src/ml-lex/export-lex.smi src/ml-lex/ml-lex.smi \
-  $(SMLSHARP_DEP)
-src/ml-yacc/lib/join.o: src/ml-yacc/lib/join.sml src/basis/main/GENERAL.sig \
-  src/basis/main/General.smi src/basis/main/OPTION.sig \
-  src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
-  src/basis/main/Array.smi src/basis/main/Vector.smi \
-  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
-  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
-  src/basis/main/CHAR.sig src/basis/main/Char.smi \
-  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
-  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
-  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
-  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
-  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
-  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
-  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
-  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
-  src/basis/main/IntInf.smi src/basis/main/Int.smi \
-  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
-  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
-  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
-  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
-  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
-  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
-  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
-  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
-  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
-  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
-  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
-  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
-  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
-  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
-  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
-  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
-  src/smlnj/Basis/Posix/posix-io.smi \
-  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
-  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
-  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
-  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
-  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
-  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
-  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
-  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
-  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
-  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
-  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
-  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
-  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
-  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
-  src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi \
   $(SMLSHARP_DEP)
 src/ml-yacc/lib/lrtable.o: src/ml-yacc/lib/lrtable.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
@@ -17749,16 +19458,16 @@ src/ml-yacc/src/export-yacc.o: src/ml-yacc/src/export-yacc.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi \
-  src/ml-yacc/src/absyn.sig src/ml-yacc/src/absyn.smi \
-  src/ml-yacc/src/utils.sig src/ml-yacc/src/utils.smi src/ml-yacc/src/sigs.sml \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc/src/absyn.sig \
+  src/ml-yacc/src/absyn.smi src/ml-yacc/src/utils.sig \
+  src/ml-yacc/src/utils.smi src/ml-yacc/src/sigs.sml \
   src/ml-yacc/src/grammar.smi src/ml-yacc/src/hdr.smi src/ml-yacc/src/core.smi \
   src/ml-yacc/src/coreutils.smi src/ml-yacc/src/graph.smi \
   src/ml-yacc/src/look.smi src/ml-yacc/src/lalr.smi \
   src/ml-yacc/src/mklrtable.smi src/ml-yacc/src/shrink.smi \
   src/ml-yacc/src/mkprstruct.smi src/ml-yacc/src/yacc.grm.sig \
-  src/ml-yacc/src/yacc.lex.smi src/ml-yacc/src/yacc.grm.smi \
+  src/ml-yacc/src/yacc.grm.smi src/ml-yacc/src/yacc.lex.smi \
   src/ml-yacc/src/parse.smi src/ml-yacc/src/verbose.smi \
   src/ml-yacc/src/yacc.smi src/ml-yacc/src/export-yacc.smi \
   $(SMLSHARP_DEP)
@@ -18181,16 +19890,16 @@ src/ml-yacc/src/ml-yacc.o: src/ml-yacc/src/ml-yacc.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi \
-  src/ml-yacc/src/absyn.sig src/ml-yacc/src/absyn.smi \
-  src/ml-yacc/src/utils.sig src/ml-yacc/src/utils.smi src/ml-yacc/src/sigs.sml \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc/src/absyn.sig \
+  src/ml-yacc/src/absyn.smi src/ml-yacc/src/utils.sig \
+  src/ml-yacc/src/utils.smi src/ml-yacc/src/sigs.sml \
   src/ml-yacc/src/grammar.smi src/ml-yacc/src/hdr.smi src/ml-yacc/src/core.smi \
   src/ml-yacc/src/coreutils.smi src/ml-yacc/src/graph.smi \
   src/ml-yacc/src/look.smi src/ml-yacc/src/lalr.smi \
   src/ml-yacc/src/mklrtable.smi src/ml-yacc/src/shrink.smi \
   src/ml-yacc/src/mkprstruct.smi src/ml-yacc/src/yacc.grm.sig \
-  src/ml-yacc/src/yacc.lex.smi src/ml-yacc/src/yacc.grm.smi \
+  src/ml-yacc/src/yacc.grm.smi src/ml-yacc/src/yacc.lex.smi \
   src/ml-yacc/src/parse.smi src/ml-yacc/src/verbose.smi \
   src/ml-yacc/src/yacc.smi src/ml-yacc/src/export-yacc.smi \
   src/ml-yacc/src/ml-yacc.smi \
@@ -18243,11 +19952,11 @@ src/ml-yacc/src/parse.o: src/ml-yacc/src/parse.sml src/basis/main/GENERAL.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/stream.smi \
-  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/parser2.smi \
-  src/ml-yacc/src/utils.sig src/ml-yacc/src/sigs.sml src/ml-yacc/src/hdr.smi \
-  src/ml-yacc/src/yacc.grm.sig src/ml-yacc/src/yacc.lex.smi \
-  src/ml-yacc/src/yacc.grm.smi src/ml-yacc/src/parse.smi \
+  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/lrtable.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc/src/utils.sig \
+  src/ml-yacc/src/sigs.sml src/ml-yacc/src/hdr.smi \
+  src/ml-yacc/src/yacc.grm.sig src/ml-yacc/src/yacc.grm.smi \
+  src/ml-yacc/src/yacc.lex.smi src/ml-yacc/src/parse.smi \
   $(SMLSHARP_DEP)
 src/ml-yacc/src/shrink.o: src/ml-yacc/src/shrink.sml \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
@@ -18297,8 +20006,8 @@ src/ml-yacc/src/shrink.o: src/ml-yacc/src/shrink.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/src/utils.sig src/ml-yacc/src/sigs.sml \
-  src/ml-yacc/lib/lrtable.smi src/ml-yacc/src/utils.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/src/utils.sig \
+  src/ml-yacc/src/sigs.sml src/ml-yacc/src/utils.smi \
   src/ml-yacc/src/grammar.smi src/ml-yacc/src/core.smi \
   src/ml-yacc/src/coreutils.smi src/ml-yacc/src/graph.smi \
   src/ml-yacc/src/look.smi src/ml-yacc/src/lalr.smi \
@@ -18510,8 +20219,11 @@ src/ml-yacc/src/yacc.lex.o: src/ml-yacc/src/yacc.lex.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/src/utils.sig src/ml-yacc/src/sigs.sml src/ml-yacc/src/hdr.smi \
-  src/ml-yacc/src/yacc.grm.sig src/ml-yacc/src/yacc.lex.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc/src/utils.sig \
+  src/ml-yacc/src/sigs.sml src/ml-yacc/src/hdr.smi \
+  src/ml-yacc/src/yacc.grm.sig src/ml-yacc/src/yacc.grm.smi \
+  src/ml-yacc/src/yacc.lex.smi \
   $(SMLSHARP_DEP)
 src/ml-yacc/src/yacc.o: src/ml-yacc/src/yacc.sml src/basis/main/GENERAL.sig \
   src/basis/main/General.smi src/basis/main/OPTION.sig \
@@ -18561,16 +20273,16 @@ src/ml-yacc/src/yacc.o: src/ml-yacc/src/yacc.sml src/basis/main/GENERAL.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi \
-  src/ml-yacc/src/absyn.sig src/ml-yacc/src/absyn.smi \
-  src/ml-yacc/src/utils.sig src/ml-yacc/src/utils.smi src/ml-yacc/src/sigs.sml \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc/src/absyn.sig \
+  src/ml-yacc/src/absyn.smi src/ml-yacc/src/utils.sig \
+  src/ml-yacc/src/utils.smi src/ml-yacc/src/sigs.sml \
   src/ml-yacc/src/grammar.smi src/ml-yacc/src/hdr.smi src/ml-yacc/src/core.smi \
   src/ml-yacc/src/coreutils.smi src/ml-yacc/src/graph.smi \
   src/ml-yacc/src/look.smi src/ml-yacc/src/lalr.smi \
   src/ml-yacc/src/mklrtable.smi src/ml-yacc/src/shrink.smi \
   src/ml-yacc/src/mkprstruct.smi src/ml-yacc/src/yacc.grm.sig \
-  src/ml-yacc/src/yacc.lex.smi src/ml-yacc/src/yacc.grm.smi \
+  src/ml-yacc/src/yacc.grm.smi src/ml-yacc/src/yacc.lex.smi \
   src/ml-yacc/src/parse.smi src/ml-yacc/src/verbose.smi \
   src/ml-yacc/src/yacc.smi \
   $(SMLSHARP_DEP)
@@ -19352,8 +21064,8 @@ src/smlformat/generator/main/MLParser.o: \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/FormatTemplate.smi \
   src/smlformat/generator/main/AST.sig src/smlformat/generator/main/Ast.smi \
   src/smlformat/generator/main/ASTUTIL.sig \
@@ -19420,8 +21132,8 @@ src/smlformat/generator/main/Main.o: src/smlformat/generator/main/Main.sml \
   src/smlformat/generator/main/FormatterGenerator.smi \
   src/smlformat/generator/main/ErrorQueue.smi \
   src/smlformat/generator/main/Constants_MLton.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/ASTUTIL.sig \
   src/smlformat/generator/main/AstUtil.smi \
   src/smlformat/generator/main/ml.grm.sig \
@@ -19488,8 +21200,8 @@ src/smlformat/generator/main/PPGMain.o: \
   src/smlformat/generator/main/FormatTemplate.smi \
   src/smlformat/generator/main/AST.sig src/smlformat/generator/main/Ast.smi \
   src/smlformat/generator/main/Constants_MLton.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/ASTUTIL.sig \
   src/smlformat/generator/main/AstUtil.smi \
   src/smlformat/generator/main/ml.grm.sig \
@@ -19552,10 +21264,14 @@ src/smlformat/generator/main/TokenTable.o: \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/FormatTemplate.smi \
-  src/smlformat/generator/main/ml.grm.sig \
+  src/smlformat/generator/main/ml.grm.sig src/smlformat/generator/main/AST.sig \
+  src/smlformat/generator/main/Ast.smi \
+  src/smlformat/generator/main/ASTUTIL.sig \
+  src/smlformat/generator/main/AstUtil.smi \
+  src/smlformat/generator/main/ml.grm.smi \
   src/smlformat/generator/main/TokenTable.smi \
   $(SMLSHARP_DEP)
 src/smlformat/generator/main/Utility.o: \
@@ -19665,8 +21381,8 @@ src/smlformat/generator/main/call-main.o: \
   src/smlformat/generator/main/FormatterGenerator.smi \
   src/smlformat/generator/main/ErrorQueue.smi \
   src/smlformat/generator/main/Constants_MLton.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/ASTUTIL.sig \
   src/smlformat/generator/main/AstUtil.smi \
   src/smlformat/generator/main/ml.grm.sig \
@@ -19729,8 +21445,8 @@ src/smlformat/generator/main/ml.grm.o: src/smlformat/generator/main/ml.grm.sml \
   src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig src/basis.smi \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/FormatTemplate.smi \
   src/smlformat/generator/main/AST.sig src/smlformat/generator/main/Ast.smi \
   src/smlformat/generator/main/ASTUTIL.sig \
@@ -19787,10 +21503,14 @@ src/smlformat/generator/main/ml.lex.o: src/smlformat/generator/main/ml.lex.sml \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
   src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
   src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
-  src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
-  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
+  src/ml-yacc/lib/lrtable.smi src/ml-yacc/lib/stream.smi \
+  src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/FormatTemplate.smi \
-  src/smlformat/generator/main/ml.grm.sig \
+  src/smlformat/generator/main/ml.grm.sig src/smlformat/generator/main/AST.sig \
+  src/smlformat/generator/main/Ast.smi \
+  src/smlformat/generator/main/ASTUTIL.sig \
+  src/smlformat/generator/main/AstUtil.smi \
+  src/smlformat/generator/main/ml.grm.smi \
   src/smlformat/generator/main/TokenTable.smi \
   src/smlformat/generator/main/ml.lex.smi \
   $(SMLSHARP_DEP)
@@ -20528,6 +22248,55 @@ src/sql/main/SQLUtils.o: src/sql/main/SQLUtils.sml src/basis/main/GENERAL.sig \
   src/sql/main/SQLBACKEND.sig src/sql/main/PGSQLBackend.smi \
   src/sql/main/Backend.smi src/sql/main/SQLPrim.smi src/sql/main/SQLUtils.smi \
   $(SMLSHARP_DEP)
+src/unix-utils/main/UnixUtils.o: src/unix-utils/main/UnixUtils.sml \
+  src/basis/main/GENERAL.sig src/basis/main/General.smi \
+  src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
+  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/CHAR.sig src/basis/main/Char.smi \
+  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
+  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
+  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
+  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
+  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
+  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
+  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
+  src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
+  src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
+  src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
+  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
+  src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
+  src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
+  src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
+  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
+  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
+  src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
+  src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
+  src/smlnj/Basis/Unix/posix-bin-prim-io.smi src/smlnj/Basis/IO/bin-io.smi \
+  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
+  src/basis/main/BinIO.smi src/basis/main/TEXT.sig src/basis/main/Text.smi \
+  src/basis/main/COMMAND_LINE.sig src/basis/main/CommandLine.smi \
+  src/basis/main/ArraySlice.smi src/basis/main/TIMER.sig \
+  src/smlnj/Basis/internal-timer.smi src/basis/main/Timer.smi \
+  src/basis/main/DATE.sig src/basis/main/Date.smi src/basis/main/ARRAY.sig \
+  src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
+  src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
+  src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
+  src/basis/main/binary-op.smi src/basis.smi src/unix-utils/main/UnixUtils.smi \
+  $(SMLSHARP_DEP)
 src/runtime/heap_cheney.o: src/runtime/heap_cheney.c src/runtime/smlsharp.h \
   src/runtime/object.h src/runtime/objspace.h src/runtime/heap.h
 src/runtime/heap_bitmap.o: src/runtime/heap_bitmap.c config.h src/runtime/smlsharp.h \
@@ -20535,6 +22304,8 @@ src/runtime/heap_bitmap.o: src/runtime/heap_bitmap.c config.h src/runtime/smlsha
 src/runtime/heap_otomo.o: src/runtime/heap_otomo.c src/runtime/smlsharp.h \
   src/runtime/object.h src/runtime/objspace.h src/runtime/heap.h \
   src/runtime/heap_otomo.h
+src/runtime/heap_reppy.o: src/runtime/heap_reppy.c src/runtime/smlsharp.h \
+  src/runtime/object.h src/runtime/objspace.h src/runtime/heap.h
 src/runtime/heap_malloc.o: src/runtime/heap_malloc.c src/runtime/smlsharp.h \
   src/runtime/objspace.h src/runtime/heap.h
 src/runtime/netlib/dtoa.o: src/runtime/netlib/dtoa.c
@@ -20546,13 +22317,13 @@ src/runtime/exn.o: src/runtime/exn.c src/runtime/smlsharp.h src/runtime/object.h
 src/runtime/init.o: src/runtime/init.c src/runtime/smlsharp.h src/runtime/objspace.h \
   src/runtime/control.h src/runtime/heap.h
 src/runtime/object.o: src/runtime/object.c src/runtime/smlsharp.h \
-  src/runtime/intinf.h src/runtime/object.h \
-  src/runtime/objspace.h src/runtime/heap.h
+  src/runtime/intinf.h \
+  src/runtime/object.h src/runtime/objspace.h src/runtime/heap.h
 src/runtime/objspace.o: src/runtime/objspace.c src/runtime/smlsharp.h \
   src/runtime/object.h src/runtime/control.h src/runtime/objspace.h \
   src/runtime/splay.h
 src/runtime/obstack.o: src/runtime/obstack.c src/runtime/smlsharp.h
 src/runtime/prim.o: src/runtime/prim.c config.h src/runtime/smlsharp.h \
-  src/runtime/intinf.h src/runtime/object.h \
-  src/runtime/prim.h
+  src/runtime/intinf.h \
+  src/runtime/object.h src/runtime/prim.h
 src/runtime/splay.o: src/runtime/splay.c src/runtime/smlsharp.h src/runtime/splay.h

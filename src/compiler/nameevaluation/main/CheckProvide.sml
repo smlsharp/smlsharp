@@ -15,7 +15,7 @@ struct
 local
   structure I = IDCalc
   structure V = NameEvalEnv
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
   structure PI = PatternCalcInterface
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
@@ -273,12 +273,12 @@ local
                   (EU.enqueueError
                      (loc, E.ProvideIDType("CP-120", {longid = internalPath}));
                    raise Fail)
-              | SOME (idstatus as I.IDEXVAR {path=exVarPath, ty, used, loc, version, internalId}) =>
+              | SOME (idstatus as I.IDEXVAR {path=exVarPath, ty=internalTy, used, loc, version, internalId}) =>
                 (* bug 069_open *)
                 (* bug 124_open *)
                 let
                   val _ = used := true
-                  val icexp  =I.ICEXVAR ({path=exVarPath,ty=ty},loc)
+                  val icexp  =I.ICEXVAR ({path=exVarPath,ty=internalTy},loc)
                   val newId = VarID.generate()
                   val icpat = I.ICPATVAR ({path=internalPath,id=newId},loc)
                   val valDecl = 
@@ -479,7 +479,7 @@ local
           val ty = Ty.evalTy tvarEnv evalEnv ty handle e => raise e
           val tfunSpec =
               case N.tyForm tvarList ty of
-                N.TYNAME {tfun,...} => tfun
+                N.TYNAME tfun => tfun
               | N.TYTERM ty =>
                 let
                   val iseq = N.admitEq tvarList ty
@@ -660,9 +660,9 @@ local
                            | SOME path => path
           val tySpec =
               case tyOpt of 
-                NONE => BV.exnTy
+                NONE => BT.exnITy
               | SOME ty => I.TYFUNM([Ty.evalTy Ty.emptyTvarEnv evalEnv ty],
-                                    BV.exnTy)
+                                    BT.exnITy)
                 handle e => raise e
         in
           case V.findId (env, [name]) of
@@ -760,18 +760,18 @@ local
                   nil)
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-500", {longid = path}));
+                    (loc, E.ProvideExceptionRepID("CP-500", {longid = path@[name]}));
                   raise Fail)
              | I.IDEXNREP {id=id2,...} => 
                if ExnID.eq(id1, id2) then 
                  (exnSet, V.rebindId(V.emptyEnv, name, defIdstatus),nil)
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-510", {longid = path}));
+                    (loc, E.ProvideExceptionRepID("CP-510", {longid = path@[name]}));
                   raise Fail)
              | _ =>
                (EU.enqueueError
-                  (loc, E.ProvideExceptionRepID("CP-520", {longid = path}));
+                  (loc, E.ProvideExceptionRepID("CP-520", {longid = path@[name]}));
                 raise Fail)
             )
           | I.IDEXEXN {path=path1, ...} =>
@@ -781,11 +781,11 @@ local
                  (exnSet, V.rebindId(V.emptyEnv, name, defIdstatus),nil)
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-530", {longid = path}));
+                    (loc, E.ProvideExceptionRepID("CP-530", {longid = path@[name]}));
                   raise Fail)
              | _ =>
                (EU.enqueueError
-                  (loc, E.ProvideExceptionRepID("CP-540", {longid = path}));
+                  (loc, E.ProvideExceptionRepID("CP-540", {longid = path@[name]}));
                 raise Fail)
             )
           | I.IDEXEXNREP {path=path1, ...} =>
@@ -795,11 +795,30 @@ local
                  (exnSet, V.rebindId(V.emptyEnv, name, defIdstatus),nil)
                else
                  (EU.enqueueError
-                    (loc, E.ProvideExceptionRepID("CP-550", {longid = path}));
+                    (loc, E.ProvideExceptionRepID("CP-550", {longid = path@[name]}));
+                  raise Fail)
+(* 2012-9-25 ohori: added the following case due to the fix of 237_functorExn
+   _require file
+      exception FOO       => IDEXEXN
+      exception BAR = FOO => IDEXEXNREP
+   source:
+     exception Foo = FOO  => IDEXEXNREP
+     exception Bar = BAR  => IDEXEXNREP
+   interface file: 
+     exception Foo = FOO 
+     exception Bar = BAR
+  In this case, Foo = IDEXEXNREP and FOO = IDEXEXN
+*)
+             | I.IDEXEXN {path=path2,...} =>
+               if String.concat path1 = String.concat path2 then 
+                 (exnSet, V.rebindId(V.emptyEnv, name, defIdstatus),nil)
+               else
+                 (EU.enqueueError
+                    (loc, E.ProvideExceptionRepID("CP-550", {longid = path@[name]}));
                   raise Fail)
              | _ =>
                (EU.enqueueError
-                  (loc, E.ProvideExceptionRepID("CP-560", {longid = path}));
+                  (loc, E.ProvideExceptionRepID("CP-560", {longid = path@[name]}));
                 raise Fail)
             )
           | _ => raise bug "impossible"
@@ -992,14 +1011,32 @@ local
                      strE=V.STR (SEnv.singleton(specArgStrName, argStrEntry))
                     }
           val evalEnv = V.topEnvWithEnv (evalTopEnv, argEnv)
-          val (_, specBodyInterfaceEnv, _) =
+          val (_, {env=specBodyInterfaceEnv, strKind}, _) =
               EI.evalPistr [functorName] evalEnv (PathSet.empty, specBodyStr)
+val _ =
+(
+U.print "check provide FUNDEC\n";
+U.print "specBodyInterfaceEnv\n";
+U.printEnv specBodyInterfaceEnv
+)
+
           val specBodyEnv = EI.internalizeEnv specBodyInterfaceEnv
+val _ =
+(
+U.print "after internalize\n";
+U.print "specBodyEnv\n";
+U.printEnv specBodyEnv
+)
           val _ = if EU.isAnyError () then raise Fail 
                   else if FU.eqEnv {specEnv=specBodyEnv, implEnv=bodyEnv} then 
                     ()
                   else 
                     (
+U.print "check provide eqEnv fail\n";
+U.print "specBodyEnv\n";
+U.printEnv specBodyEnv;
+U.print "bodyEnv\n";
+U.printEnv bodyEnv;
                      EU.enqueueError
                        (loc,
                         E.ProvideFunctorMismatch("CP-720",
@@ -1013,11 +1050,11 @@ local
               case var of
                 I.ICEXVAR ({path, ty},_) => ty
               | I.ICEXN ({path, id, ty},_) => ty
-              | I.ICEXN_CONSTRUCTOR ({id, ty, path}, loc) => BV.exntagTy
+              | I.ICEXN_CONSTRUCTOR ({id, ty, path}, loc) => BT.exntagITy
               | _ =>  raise bug "VARTOTY\n"
           val bodyTy =
               case allVars of
-                nil => BV.unitTy
+                nil => BT.unitITy
               | _ => I.TYRECORD (Utils.listToFields (map varToTy allVars))
           val (extraTvars, firstArgTy) = 
               case dummyIdfunArgTy of
@@ -1061,7 +1098,7 @@ local
               case functorTy2 of
                 I.TYPOLY _ => functorTy2
               | I.TYFUNM _ => functorTy2
-              | _ => I.TYFUNM([BV.unitTy], functorTy2)
+              | _ => I.TYFUNM([BT.unitITy], functorTy2)
 
           val decls =
               case bodyVarExp of 
@@ -1096,7 +1133,10 @@ in
      topEnv : the top-level environment of the current declarations 
               to be checked
    *)
-  fun checkPitopdecList evalTopEnv (topEnv, pitopdecList) =
+  fun checkPitopdecList 
+        (evalTopEnv: NameEvalEnv.topEnv)
+        (topEnv:NameEvalEnv.topEnv, pitopdecList:PatternCalcInterface.pitopdec list) 
+       : IDCalc.icdecl list =
       let
         val (exnSet, returnTopEnv, icdecls) =
             foldl

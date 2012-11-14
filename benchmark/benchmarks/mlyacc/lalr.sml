@@ -1,9 +1,6 @@
 (* ML-Yacc Parser Generator (c) 1989 Andrew W. Appel, David R. Tarditi 
  *
- * $Log: lalr.sml,v $
- * Revision 1.1  2005/09/05 13:28:57  kiyoshiy
- * added.
- *
+ * $Log$
  * Revision 1.3  1996/10/03  03:37:12  jhr
  * Qualified identifiers that are no-longer top-level (quot, rem, min, max).
  *

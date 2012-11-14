@@ -68,7 +68,7 @@ fun printValues l =
     | castToWord (VAR (var as {ty,...}, _)) =
       if (case ty of
             T.CONty {tyCon,...} =>
-            TypID.eq (#id tyCon, #id BuiltinEnv.WORDtyCon)
+            TypID.eq (#id tyCon, #id BuiltinTypes.wordTyCon)
           | _ => false)
       then VAR (var, NONE)
       else VAR (var, SOME T.wordty)

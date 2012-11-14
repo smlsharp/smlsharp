@@ -5,9 +5,9 @@ _require "../../../compiler-utils/env/main/PathEnv.smi"
 _require "../../control/main/Control.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
-_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../types/main/BuiltinEnv.smi"
 _require "../../types/main/EvalIty.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
@@ -39,7 +39,7 @@ struct
   val evalPistr : string list
                   -> NameEvalEnv.topEnv
                      -> PathSet.set * PatternCalcInterface.pistrexp
-                        -> PathSet.set * NameEvalEnv.env * IDCalc.icdecl list
+                        -> PathSet.set * NameEvalEnv.strEntry * IDCalc.icdecl list
   val internalizeEnv : NameEvalEnv.env -> NameEvalEnv.env
   val evalInterfaces : NameEvalEnv.topEnv
                        -> PatternCalcInterface.interfaceDec list

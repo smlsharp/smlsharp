@@ -114,7 +114,7 @@ in
            prefixLen <= len andalso equal (prefix, 0, str, beg, prefixLen)
          end
 
-     fun isSuffix suffix (str, beg, len) =
+     fun isSuffix suffix (str:string, beg:int, len:int) =
          let
            val suffixLen = SMLSharp.PrimString.size suffix
          in

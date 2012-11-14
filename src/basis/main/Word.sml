@@ -120,7 +120,11 @@ in
         if n = 0w0 then "0" else loop (n, nil)
       end
 
-  fun scan radix getc strm =
+  (* 2012-8-19 ohori type annotation added *)
+  fun 'a scan 
+         (radix : StringCvt.radix)
+         (getc : (char, 'a) StringCvt.reader)
+         strm  =
       case SMLSharpScanChar.scanWord radix getc strm of
         NONE => NONE
       | SOME ({radix=r, digits}, strm) =>

@@ -3,7 +3,9 @@ _require "../../../basis/main/List.smi"
 _require "../../../smlnj-lib/Util/binary-set-fn.smi"
 
 _require "IOrd.smi"
+structure ISet = BinarySetFn(IOrd)
 
+(*
 structure ISet =
 struct
   structure Key =
@@ -39,3 +41,4 @@ struct
   val exists : (item -> bool) -> set -> bool
   val find : (item -> bool) -> set -> item option
 end
+*)

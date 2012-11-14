@@ -11,14 +11,11 @@ _require "../../typedcalc/main/TypedCalcUtils.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/TypesUtils.smi"
 _require "../../types/main/Unify.smi"
-_require "TypeInferenceContext.ppg.smi"
-_require "TypeInferenceError.ppg.smi"
 
 structure TypeInferenceUtils =
   struct
     val dummyTyId : int ref
     val nextDummyTy : unit -> Types.ty
-    val instOfPolyTy : Types.ty * Types.ty list -> Types.ty
     val freshTopLevelInstTy : Types.ty -> Types.ty * Types.ty list
     val eliminateVacuousTyvars : unit -> unit
 (*

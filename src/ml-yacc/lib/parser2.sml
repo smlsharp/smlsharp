@@ -81,11 +81,13 @@
 *)
 
 signature FIFO = 
-  sig type 'a queue
-      val empty : 'a queue
+  sig 
+      type entry
+      type queue
+      val empty : queue
       exception Empty
-      val get : 'a queue -> 'a * 'a queue
-      val put : 'a * 'a queue -> 'a queue
+      val get : queue -> entry * queue
+      val put : entry * queue -> queue
   end
 
 (* drt (12/15/89) -- the functor should be used in development work, but
@@ -101,20 +103,39 @@ functor ParserGen(structure LrTable : LR_TABLE
    replications of exceptions and types under opaque constraints. *)
 structure LrParser :> LR_PARSER =
 *)
-structure LrParser : LR_PARSER =
-   struct
-      structure LrTable = LrTable
-      structure Stream = Stream
+(* 2012-9-24: ohori
+  This is the top-level library structure.
+  This is changed to a functor that takes
+    type pos
+    type svalue
+    type arg
 
+   changed 'arg => arg
+   eliminated type parameters in token
+   and changed accordingly:
+     (('a,'b) token => token
+     'a => Token.svalue
+     'b => Token.pos
+*)
+functor LrParserFun(type arg type pos type svalue) : LR_PARSER =
+   struct
+      type arg = arg
+      type pos = pos
+      type svalue = svalue
+      structure LrTable = LrTable
       fun eqT (LrTable.T i, LrTable.T i') = i = i'
 
       structure Token : TOKEN =
 	struct
+            type pos = pos
+            type svalue = svalue
 	    structure LrTable = LrTable
-	    datatype ('a,'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
-	    val sameToken = fn (TOKEN(t,_),TOKEN(t',_)) => eqT (t,t')
+	    datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
+	    val sameToken = 
+             fn (TOKEN(t,_) : token,TOKEN(t',_): token) => eqT (t,t')
         end
 
+      structure Stream = StreamFun(type tok = Token.token)
       open LrTable
       open Token
 
@@ -123,9 +144,15 @@ structure LrParser : LR_PARSER =
       exception ParseError
       exception ParseImpossible of int
 
-      structure Fifo :> FIFO =
+      type elem = (state * (svalue * pos * pos))
+      type stack = elem list
+      type lexv = token
+      type lexpair = lexv * Stream.stream
+
+      structure Fifo :> FIFO where type entry = stack * lexpair =
         struct
-	  type 'a queue = ('a list * 'a list)
+          type entry = stack * lexpair
+	  type queue = (entry list * entry list)
 	  val empty = (nil,nil)
 	  exception Empty
 	  fun get(a::x, y) = (a, (x,y))
@@ -134,26 +161,19 @@ structure LrParser : LR_PARSER =
  	  fun put(a,(x,y)) = (x,a::y)
         end
 
-      type ('a,'b) elem = (state * ('a * 'b * 'b))
-      type ('a,'b) stack = ('a,'b) elem list
-      type ('a,'b) lexv = ('a,'b) token
-      type ('a,'b) lexpair = ('a,'b) lexv * (('a,'b) lexv Stream.stream)
-      type ('a,'b) distanceParse =
-		 ('a,'b) lexpair *
-		 ('a,'b) stack * 
-		 (('a,'b) stack * ('a,'b) lexpair) Fifo.queue *
-		 int ->
-		   ('a,'b) lexpair *
-		   ('a,'b) stack * 
-		   (('a,'b) stack * ('a,'b) lexpair) Fifo.queue *
-		   int *
-		   action option
+      type distanceParse =
+	   lexpair * stack * Fifo.queue * int 
+           -> lexpair * stack * Fifo.queue * int * action option
 
-      type ('a,'b) ecRecord =
+      (*  ('a, 'b) ecRecord => ecRecord
+           'a => svalue
+           'b => pos
+      *)
+      type ecRecord =
 	 {is_keyword : term -> bool,
           preferred_change : (term list * term list) list,
-	  error : string * 'b * 'b -> unit,
-	  errtermvalue : term -> 'a,
+	  error : string * pos * pos -> unit,
+	  errtermvalue : term -> svalue,
 	  terms : term list,
 	  showTerminal : term -> string,
 	  noShift : term -> bool}
@@ -163,7 +183,7 @@ structure LrParser : LR_PARSER =
 	 val println = fn s => (print s; print "\n")
 	 val showState = fn (STATE s) => "STATE " ^ (Int.toString s)
       in
-        fun printStack(stack: ('a,'b) stack, n: int) =
+        fun printStack(stack: stack, n: int) =
          case stack
            of (state,_) :: rest =>
                  (print("\t" ^ Int.toString n ^ ": ");
@@ -277,16 +297,16 @@ structure LrParser : LR_PARSER =
 		 | ACCEPT => (lexPair,stack,queue,distance,SOME nextAction)
 	      end
 	   | parseStep _ = raise (ParseImpossible 242)
-	in parseStep : ('_a,'_b) distanceParse 
+	in parseStep : distanceParse 
 	end
 
 (* mkFixError: function to create fixError function which adjusts parser state
    so that parse may continue in the presence of an error *)
 
-fun mkFixError({is_keyword,terms,errtermvalue,
+    fun mkFixError({is_keyword,terms,errtermvalue,
 	      preferred_change,noShift,
-	      showTerminal,error,...} : ('_a,'_b) ecRecord,
-	     distanceParse : ('_a,'_b) distanceParse,
+	      showTerminal,error,...} : ecRecord,
+	     distanceParse : distanceParse,
 	     minAdvance,maxAdvance) 
 
             (lexv as (TOKEN (term,value as (_,leftPos,_)),_),stack,queue) =
@@ -326,9 +346,9 @@ fun mkFixError({is_keyword,terms,errtermvalue,
 	   orig = original terminal * value pair at the point being changed.
 	 *)
 
-	datatype ('a,'b) change = CHANGE of
-	   {pos : int, distance : int, leftPos: 'b, rightPos: 'b,
-	    new : ('a,'b) lexv list, orig : ('a,'b) lexv list}
+	datatype change = CHANGE of
+	   {pos : int, distance : int, leftPos: pos, rightPos: pos,
+	    new : lexv list, orig : lexv list}
 
 
          val showTerms = concat o map (fn TOKEN(t,_) => " " ^ showTerminal t)
@@ -521,8 +541,15 @@ fun mkFixError({is_keyword,terms,errtermvalue,
 			leftPos,leftPos); raise ParseError)
     end
 
-   val parse = fn {arg,table,lexer,saction,void,lookahead,
-		   ec=ec as {showTerminal,...} : ('_a,'_b) ecRecord} =>
+   val parse =
+    fn {arg:arg,
+        table:table,
+        lexer: Stream.stream,
+        saction: int * pos * (state * (svalue * pos * pos)) list * arg 
+                  -> nonterm * (svalue * pos * pos) * (state * (svalue * pos * pos)) list,
+        void:svalue,
+        lookahead:int,
+	ec=ec as {showTerminal,...} : ecRecord} =>
 	let val distance = 15   (* defer distance tokens *)
 	    val minAdvance = 1  (* must parse at least 1 token past error *)
 	    val maxAdvance = Int.max(lookahead,0)(* max distance for parse check *)

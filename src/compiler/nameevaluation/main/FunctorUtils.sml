@@ -32,7 +32,7 @@ local
   structure I = IDCalc
   structure L = SetLiftedTys
   structure N = NormalizeTy
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
   structure Sig = EvalSig
   structure Ty = EvalTy
   structure P = PatternCalc
@@ -71,7 +71,7 @@ in
                              I.TFUN_DTY
                                {id=id,
                                 iseq=iseq,
-				runtimeTy = I.BUILTINty BuiltinType.BOXEDty,
+				runtimeTy = I.BUILTINty BuiltinTypeNames.BOXEDty,
                                 formals=formals,
                                 conSpec=SEnv.empty,
 (* 2012-8-6 ohori bug 062_functorPoly.sml; Bug : nil path
@@ -182,7 +182,7 @@ in
                     val varId = VarID.generate()
                     val idstatus = I.IDVAR varId
                     val varInfo = {path=path@[name],id=varId}
-                    val pat = (varInfo, BV.exntagTy)
+                    val pat = (varInfo, BT.exntagITy)
                     val exnId = ExnID.generate()
                     val exnInfo = {path=path, id=exnId, ty=ty}
                     val idstatus = I.IDEXN {id=exnId, ty=ty}
@@ -292,7 +292,7 @@ val _ = U.print "\n"
                  let
                    val returnTy =
                        I.TYCONSTRUCT
-                         {typ={path=path@[name],tfun=I.TFUN_VAR tfv},
+                         {tfun=I.TFUN_VAR tfv,
 (* FIXME
                           args= map (fn tv=>I.TYWILD) formals}
 *)
@@ -439,7 +439,10 @@ val _ = U.print "\n"
                    Here we change the external name to the effective name.
                    *)
                   let
+                    val exPath = case version of NONE => exPath | SOME i => exPath@[Int.toString i]
+(* 2012-9-21 ohori: bug 235_functor
                     val exPath = case version of NONE => exPath | SOME i => path@[Int.toString i]
+*)
                   in
                     I.ICEXVAR ({path=exPath, ty=ty},loc) :: vars
                   end
@@ -760,7 +763,7 @@ val _ = U.print "\n"
 *)
       | _ => raise Fail
                    
-  fun eqTfun {specTfun=tfun1, implTfun=tfun2} =
+  and eqTfun {specTfun=tfun1, implTfun=tfun2} =
       case (I.derefTfun tfun1, I.derefTfun tfun2) of
       (I.TFUN_DEF {iseq=iseq1, formals=formals1, realizerTy=ty1},
        I.TFUN_DEF {iseq=iseq2, formals=formals2, realizerTy=ty2}) =>
@@ -807,6 +810,12 @@ val _ = U.print "\n"
       in
         tfv := I.REALIZED {id=id, tfun=tfun2}
       end
+    | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=specTfun,...})),
+       implTfun) => 
+      eqTfun {specTfun=specTfun, implTfun=implTfun}
+    | (specTfun,
+       I.TFUN_VAR (ref (I.FUN_DTY {tfun=implTfun,...}))) =>
+      eqTfun {specTfun=specTfun, implTfun=implTfun}
     | (I.TFUN_VAR(ref(tfunKind1)),I.TFUN_VAR(ref(tfunKind2))) => 
       eqTfunkind {specTfunkind=tfunKind1, implTfunkind=tfunKind2}
     | _ => raise Fail

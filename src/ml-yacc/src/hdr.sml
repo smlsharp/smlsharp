@@ -50,11 +50,12 @@ structure Header : HEADER =
         val symbolMake = fn sp => SYMBOL sp
     
 	type ty = string
-        val tyName = fn i => i
-        val tyMake = fn i => i
+        val tyName = fn (i:string) => i
+        val tyMake = fn (i:string) => i
  
 	datatype control = NODEFAULT | VERBOSE | PARSER_NAME of symbol |
 			   FUNCTOR of string  | FOOTER of string  |
+                           DECOMPOSE of string | BLOCKSIZE of string |
                            START_SYM of symbol |
 			   NSHIFT of symbol list | POS of string | PURE |
 			   PARSE_ARG of string * string |
@@ -75,7 +76,7 @@ structure Header : HEADER =
 		                 code : string, prec : symbol option}
 
  	type parseResult = string * declData * rule list
-        val getResult = fn p => p
+        val getResult = fn (p:parseResult) => p
 
 	fun join_decls
 	      (DECL {eop=e,control=c,keyword=k,nonterm=n,prec,
@@ -96,6 +97,8 @@ structure Header : HEADER =
 	  	     of (PARSER_NAME _,PARSER_NAME n1) => (ignore "%name"; l)
 		      | (FUNCTOR _,FUNCTOR _) => (ignore "%header"; l)
 		      | (FOOTER _,FOOTER _) => (ignore "%footer"; l)
+		      | (DECOMPOSE _,DECOMPOSE _) => (ignore "%decompose"; l)
+		      | (BLOCKSIZE _,BLOCKSIZE _) => (ignore "%blockSize"; l)
 		      | (PARSE_ARG _,PARSE_ARG _) => (ignore "%arg"; l)
 		      | (START_SYM _,START_SYM s) => (ignore "%start"; l)
 		      | (POS _,POS _) => (ignore "%pos"; l)

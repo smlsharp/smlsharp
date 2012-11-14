@@ -1,1 +1,20 @@
 This is a ported version of ml-yacc from SML/NJ 110.73 for SML#.
+* 2012-1-13 ohori
+ %footer added for defuncteringing ml.grm.sml
+
+* 2012-9-24: ohori.
+  Made Token monomorphic. To do this, 
+  * In lib/parser2.sml: 
+    LrParser is now a functor LrParserFun that takes arg, pos, and
+    svalue.
+  * xx.grm.sml generates a structure where
+    ParserData contain LrParser specialized to this parser.
+
+* 2012-9-24: ohori.
+ %decompose of string and %blockSize of int added. 
+ If %decompose is defined (ignoring its value) then yacc.sml
+  decomposes the acction table to a sequence of functions 
+  of size specified in %blockSize nnn
+
+* yacc.grm must be compied with ml-yacc/lib with ml-yacc/smlyacc.
+  For this bootstrap purpose we must keen ml-yacc dir.

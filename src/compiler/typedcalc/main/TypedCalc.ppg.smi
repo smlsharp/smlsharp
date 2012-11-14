@@ -3,7 +3,7 @@ _require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 
 _require "../../control/main/Loc.ppg.smi"
-_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../types/main/Types.ppg.smi"
@@ -46,9 +46,11 @@ structure TypedCalc =
       | TPCAST of tpexp * Types.ty * Loc.loc
       | TPCONSTANT of {const:Absyn.constant, loc:Loc.loc, ty:Types.ty}
       | TPDATACONSTRUCT of {argExpOpt:tpexp option, con:Types.conInfo,
+                            argTyOpt:Types.ty option, 
                             instTyList:Types.ty list, loc:Loc.loc}
       | TPERROR
       | TPEXNCONSTRUCT of {argExpOpt:tpexp option, exn:exnCon,
+                           argTyOpt:Types.ty option, 
                            instTyList:Types.ty list, loc:Loc.loc}
       | TPEXN_CONSTRUCTOR of {exnInfo:Types.exnInfo, loc:Loc.loc}
       | TPEXEXN_CONSTRUCTOR of {exExnInfo:Types.exExnInfo, loc:Loc.loc}
@@ -68,13 +70,13 @@ structure TypedCalc =
       | TPMONOLET of {binds:(Types.varInfo * tpexp) list, bodyExp:tpexp,
                       loc:Loc.loc}
       | TPOPRIMAPPLY of {argExp:tpexp, instTyList:Types.ty list, loc:Loc.loc,
-                         oprimOp:Types.oprimInfo}
+                         argTy:Types.ty, oprimOp:Types.oprimInfo}
       | TPPOLY of {btvEnv:Types.btvEnv, exp:tpexp, expTyWithoutTAbs:Types.ty,
                    loc:Loc.loc}
       | TPPOLYFNM of {argVarList:Types.varInfo list, bodyExp:tpexp,
                       bodyTy:Types.ty, btvEnv:Types.btvEnv, loc:Loc.loc}
       | TPPRIMAPPLY of {argExp:tpexp, instTyList:Types.ty list, loc:Loc.loc,
-                        primOp:Types.primInfo}
+                        argTy:Types.ty, primOp:Types.primInfo}
       | TPRAISE of {exp:tpexp, loc:Loc.loc, ty:Types.ty}
       | TPRECFUNVAR of {arity:int, loc:Loc.loc, var:Types.varInfo}
       | TPRECORD of {fields:tpexp LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
@@ -92,7 +94,8 @@ structure TypedCalc =
       = TPEXD of {exnInfo:Types.exnInfo, loc:Loc.loc} list * Loc.loc
       | TPEXNTAGD of {exnInfo:Types.exnInfo, varInfo:Types.varInfo} * Loc.loc
       | TPEXPORTEXN of Types.exnInfo * Loc.loc
-      | TPEXPORTVAR of idstatus * Loc.loc
+      | TPEXPORTRECFUNVAR of {var:Types.varInfo, arity:int, loc:Loc.loc}
+      | TPEXPORTVAR of {internalVar:Types.varInfo, externalVar:Types.exVarInfo, loc:Loc.loc}
       | TPEXTERNEXN of {path:IDCalc.path, ty:Types.ty} * Loc.loc
       | TPEXTERNVAR of {path:IDCalc.path, ty:Types.ty} * Loc.loc
       | TPFUNDECL of {argTyList:Types.ty list, bodyTy:Types.ty,

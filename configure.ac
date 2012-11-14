@@ -187,12 +187,31 @@ AS_HELP_STRING([--enable-fast-build],
                [reuse pre-compiled assembly file to build SML#]),
 [ test "x$enableval" = "xyes" && INCLUDE_FASTBUILD= ])
 
+if test "x$INCLUDE_FASTBUILD" = "x" || test "x$SMLSHARP_DEP" = "xminismlsharp"
+then
+  AC_PATH_PROG(XZ, xz)
+  if test "x$XZ" = "x"; then
+    AC_MSG_ERROR([xz is required to build smlsharp.])
+  fi
+  AC_PATH_PROG(PAX, pax)
+  if test "x$PAX" = "x"; then
+    AC_PATH_PROG(CPIO, cpio)
+    if test "x$CPIO" = "x"; then
+      AC_MSG_ERROR([either pax or cpio is required to build smlsharp.])
+    fi
+    PAX_R="$CPIO -idu"
+  else
+    PAX_R="$PAX -r -pam"
+  fi
+  AC_SUBST(PAX_R)
+fi
+
 # -------- Checks for multithreading --------
 
 AC_ARG_ENABLE(thread,
 AS_HELP_STRING([--enable-thread],
                [enable experimental native thread support [[default=no]]]),
-[ RUNTIME_DEFS="$RUNTIME_DEFS -DMULTITHREAD" ],
+[ test "x$enableval" = "xyes" && RUNTIME_DEFS="$RUNTIME_DEFS -DMULTITHREAD" ],
 [])
 
 # -------- Checks for native compile --------
@@ -216,7 +235,7 @@ AC_MSG_CHECKING([for native code generation target])
 AC_ARG_ENABLE(native,
 AS_HELP_STRING([--enable-native],
                [enable native code generation [[default=yes]]]),
-[ case "x$enable_native" in
+[ case "x$enableval" in
   x|xyes)
     if test "x$NATIVE_TARGET" = "x"; then
       AC_MSG_RESULT([unsupported.])
@@ -225,7 +244,7 @@ AS_HELP_STRING([--enable-native],
   xno)
     NATIVE_TARGET= ;;
   *)
-    NATIVE_TARGET="$enable_native" ;;
+    NATIVE_TARGET="$enableval" ;;
   esac ])
 
 if test "x$NATIVE_TARGET" = "x"; then
@@ -249,7 +268,7 @@ AC_SUBST(SNAPDATE_RULE_)
 AC_ARG_ENABLE(heapimpl,
 AS_HELP_STRING([--enable-heapimpl],
                [select heap management algorithm [[default=bitmap]]]),
-[ HEAPIMPL=$enable_heapimpl ],
+[ HEAPIMPL=$enableval ],
 [ HEAPIMPL=bitmap ])
 
 if test "x$NATIVE_TARGET" = "x"; then

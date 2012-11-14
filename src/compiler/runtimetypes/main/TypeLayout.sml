@@ -27,7 +27,7 @@ struct
   (* ToDo: ad-hoc translation of Types into AnnotatedTypes only for
    * determining runtimeTy. This should be done at StaticAnalysis, or
    * Types and AnnotatedTypes should be integrated. *)
-  val boxedty = AT.CONty {tyCon = BuiltinEnv.BOXEDtyCon, args=[]}
+  val boxedty = AT.CONty {tyCon = BuiltinTypes.boxedTyCon, args=[]}
   fun transformTy subst ty =
       case ty of
         T.SINGLETONty (T.INSTCODEty _) => boxedty

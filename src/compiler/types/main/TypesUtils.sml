@@ -13,7 +13,12 @@ struct
 local 
   structure T = Types 
   structure A = Absyn 
-  structure BE = BuiltinEnv 
+  structure BT = BuiltinTypes
+  type ty = T.ty
+  type path = T.path
+  type varInfo = T.varInfo
+
+  fun bug s = Control.Bug ("TypesUtils: " ^ s)
   fun printType ty = print (Control.prettyPrint (T.format_ty nil ty))
   fun printKind kind = print (Control.prettyPrint (T.format_tvarKind nil kind))
   fun printSubst subst =
@@ -178,6 +183,7 @@ in
   val substBTvarOverloadMatch = fn subst => fn match =>
       substBTvarOverloadMatch emptyVisitEnv subst match
 end
+
   (**
    * Make a fresh instance of a bound type Environment.
    *
@@ -240,6 +246,7 @@ end
         subst
       end
   fun freshSubst boundEnv = makeFreshSubst NONE boundEnv
+
   fun freshRigidSubst boundEnv = 
       let
         val id = TvarID.generate()
@@ -298,13 +305,14 @@ end
   fun derefSubstTy (T.TYVARty(ref (T.SUBSTITUTED ty))) = derefSubstTy ty
     | derefSubstTy ty = ty
 
+(*
   fun pruneTy ty = 
       case ty of
         T.TYVARty (ref(T.SUBSTITUTED ty)) => pruneTy ty
       | T.POLYty {boundtvars, body = T.TYVARty(ref(T.SUBSTITUTED ty))} =>
         pruneTy (T.POLYty {boundtvars = boundtvars, body = ty})
       | _ => ty
-
+*)
   fun EFTV ty =
     let
       fun traverseTy (ty,set) =
@@ -482,20 +490,6 @@ end
       end
 
   (**
-   * Since generalization is done by performing substitution of free type
-   * variables, it is imperative.
-   *
-   * This function should only be used for a fresh instance of a closed
-   * polytype.
-   *)
-  fun generalize ty =
-      let
-          val boundObject = generalizer (ty, T.toplevelDepth)
-      in
-          {boundtvEnv = #boundEnv boundObject, body = ty}
-      end
-
-  (**
    * Perform imperative implace substitutrion.
    *)
   fun performSubst (T.TYVARty (r as ref(T.TVAR _)), ty) = r := T.SUBSTITUTED ty
@@ -517,8 +511,8 @@ end
             | T.FUNMty _ => raise NonEQ 
             | T.RECORDty tySenvMap => LabelEnv.app visit tySenvMap
             | T.CONSTRUCTty {tyCon={id,iseq,...},args} =>
-              if TypID.eq(id, #id BE.ARRAYtyCon) then ()
-              else if TypID.eq(id, #id (BE.REFtyCon())) then ()
+              if TypID.eq(id, #id BT.arrayTyCon) then ()
+              else if TypID.eq(id, #id BT.refTyCon) then ()
               else if iseq then List.app visit args
               else raise NonEQ
             | T.POLYty {boundtvars, body} =>
@@ -611,7 +605,7 @@ end
    * @params  boundEnv
    * @return subst bound type variable substitution
    *)
-  fun copyBoundEnv boundEnv = 
+  fun copyBoundEnv (boundEnv:T.btvEnv) : T.ty BoundTypeVarID.Map.map * T.btvEnv = 
       let
         val newSubst =
             BoundTypeVarID.Map.map
@@ -638,113 +632,6 @@ end
       in
         (newSubst, newBoundEnv)
       end
-
-(* this is buggy and not needed
-  local
-    fun refreshTy subst ty =
-        case derefTy ty of
-          T.SINGLETONty singletonTy =>
-          T.SINGLETONty (refreshTySingletonTy subst singletonTy)
-        | T.ERRORty => ty
-        | T.DUMMYty dummyTyID => ty
-        | T.TYVARty (r as ref (T.SUBSTITUTED ty)) => raise Control.Bug "SUBSTITUTED in refreshTy" 
-        | T.TYVARty (ref (T.TVAR _)) => ty
-        | T.BOUNDVARty n =>
-          (case BoundTypeVarID.Map.find(subst, n) of SOME ty' => ty' | _ => ty)
-        | T.FUNMty (tyList, ty) =>
-          T.FUNMty (map (refreshTy subst) tyList, refreshTy subst ty)
-        | T.RECORDty tySenvMap =>
-          T.RECORDty (LabelEnv.map (refreshTy subst) tySenvMap)
-        | T.CONSTRUCTty {tyCon,args} =>
-          T.CONSTRUCTty {tyCon=refreshTyTyCon subst tyCon,
-                         args = map (refreshTy subst) args}
-        | T.POLYty {boundtvars, body} =>
-         (* This case is buggy *)
-          let
-            val (subst,newBoundtvars) =
-                BoundTypeVarID.Map.foldri
-                  (fn (oldId, btvarKind, (newSubst, newBoundtvars))  => 
-                      let
-                        val newId = BoundTypeVarID.generate ()
-                        val newSubst = BoundTypeVarID.Map.insert(subst, oldId, T.BOUNDVARty newId)
-                        val newBoundtvars = 
-                            BoundTypeVarID.Map.insert(newBoundtvars, 
-                                                      newId, 
-                                                      refreshTyBtvarKind subst btvarKind)
-                      in 
-                        (subst, newBoundtvars)
-                      end
-                  )
-                  (subst, BoundTypeVarID.Map.empty)
-                  boundtvars
-            val newTy = T.POLYty{boundtvars = newBoundtvars, body = refreshTy newSubst body}
-          in
-            newTy
-          end
-    and refreshTySingletonTy subst singletonTy =
-        case singletonTy of
-          T.INSTCODEty {oprimId, path, keyTyList, match, instMap} => 
-          T.INSTCODEty {oprimId = oprimId,
-                        path = path,
-                        keyTyList = map (refreshTy subst) keyTyList,
-                        match = refreshTyOverloadMatch subst match,
-                        instMap = instMap}
-        | T.INDEXty (label, ty) =>
-          T.INDEXty (label, refreshTy subst ty)
-        | T.TAGty ty =>
-          T.TAGty (refreshTy subst ty)
-        | T.SIZEty ty =>
-          T.SIZEty (refreshTy subst ty)
-    and refreshTyTyCon subst ({id, path,iseq,arity,runtimeTy,conSet,extraArgs,dtyKind}) = 
-        {id=id, path=path, iseq=iseq, arity=arity, runtimeTy=runtimeTy, conSet=conSet,
-         extraArgs = map (refreshTy subst) extraArgs,
-         dtyKind=(refreshTyDtyKind subst dtyKind)} 
-    and refreshTyDtyKind subst dtyKind =
-        case dtyKind of
-          T.DTY => T.DTY
-        | T.OPAQUE {opaqueRep, revealKey} =>
-          T.OPAQUE {opaqueRep = refreshTyOpaqueRep subst opaqueRep, revealKey=revealKey}
-        | T.BUILTIN _ => dtyKind
-    and refreshTyOpaqueRep subst opaqueRep =
-        case opaqueRep of
-          T.TYCON tyCon  => T.TYCON (refreshTyTyCon subst tyCon)
-        | T.TFUNDEF {iseq, arity, polyTy} => 
-          T.TFUNDEF {iseq=iseq, arity=arity, polyTy=refreshTy subst polyTy}
-    and refreshTyBtvarKind subst {eqKind, tvarKind} =
-        {eqKind=eqKind, tvarKind = refreshTyTvarKind subst tvarKind}
-    and refreshTyTvarKind subst tvarKind =
-        case tvarKind of
-          T.REC fields => T.REC (LabelEnv.map (refreshTy subst) fields)
-        | T.UNIV => T.UNIV
-        | T.OCONSTkind l => 
-          T.OCONSTkind (map (refreshTy subst) l)
-        | T.OPRIMkind {instances, operators} =>
-          T.OPRIMkind 
-            {instances = map (refreshTy subst) instances,
-             operators =
-             map (fn {oprimId, path, keyTyList, match, instMap} =>
-                     {oprimId = oprimId,
-                      path = path,
-                      keyTyList = map (refreshTy subst) keyTyList,
-                      match = refreshTyOverloadMatch subst match,
-                      instMap = instMap})
-                 operators
-            }
-      and refreshTyOverloadMatch subst match =
-        case match of
-          T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
-          T.OVERLOAD_EXVAR {exVarInfo = exVarInfo,
-                            instTyList = map (refreshTy subst) instTyList}
-        | T.OVERLOAD_PRIM {primInfo, instTyList} =>
-          T.OVERLOAD_PRIM {primInfo = primInfo,
-                           instTyList = map (refreshTy subst) instTyList}
-        | T.OVERLOAD_CASE (ty, matches) =>
-          T.OVERLOAD_CASE (refreshTy subst ty,
-                           TypID.Map.map (refreshTyOverloadMatch subst) matches)
-  in
-    val refreshTy = fn ty => refreshTy BoundTypeVarID.Map.empty ty
-  end
-*)
 
   fun coerceFunM (ty, tyList) =
       case derefTy ty of
@@ -803,6 +690,7 @@ end
         | _ => raise CoerceFun
 
 
+(*
   exception RigidCoerceFunM
   fun rigidCoerceFunM (ty, tyList) =
       case derefTy ty of
@@ -841,214 +729,6 @@ end
         | T.POLYty {boundtvars, body} => raise RigidCoerceFunM
         | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty)
         | _ => raise RigidCoerceFunM
-
-
-(******************************************************************************
-  (**
-   * Substitute bound type variables in a type.
-   * only the monomorphic potion of the target contain the bound type
-   * variables to be substituted.
-   * @params subst type 
-   * @param subst substitution. The domain is an integer interval.
-   * @return
-   *)
-  fun applyMatch subst ty =
-      if BoundTypeVarID.Map.isEmpty subst
-      then ty
-      else 
-        TypeTransducer.mapTyPreOrder
-            (fn (ty as T.BOUNDVARty n) =>
-                ((valOf (BoundTypeVarID.Map.find(subst, n)))
-                 handle Option => ty, true)
-              | (ty as T.POLYty _) => (ty, false)
-              | ty => (ty, true))
-            ty
-
-
-  (**
-   * Substitute bound type variables in a type Environment
-   * this is for boundtyvars in POLYtype only.
-   * bound type variables do not occur in a free type variable context.
-   *)
-  fun substBTvEnv subst tvEnv =
-      BoundTypeVarID.Map.map (substBTvarBTKind subst) tvEnv
-
-
-
-
-(*
-        val _ =
-            BoundTypeVarID.Map.appi
-              (fn (i,
-                   T.TYVARty
-                     (r as ref (T.TVAR {lambdaDepth, id, utvarOpt, ...}))) => 
-                  r := 
-                 (case BoundTypeVarID.Map.find(boundEnv, i) of
-                    SOME {index, tvarKind, eqKind} => 
-                    (case tvarKind of 
-                       T.REC _ =>
-                       T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                     | T.OVERLOADED _ =>
-                       T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                     | _ => ();         
-                     T.TVAR
-                       {
-                        lambdaDepth = lambdaDepth,
-                        id = id, 
-                        tvarKind = substBTvarTvarKind newSubst tvarKind,
-                        eqKind = eqKind,
-                        utvarOpt = utvarOpt
-                       }
-                    )
-                  | _ => raise Control.Bug "fresh Subst")
-                | _ => raise Control.Bug "freshSubst")
-              newSubst
-*)
-
-
-  (**
-   * Complement a bound substitution with fresh instances.
-   * 
-   * @params subst btvenv
-   *)
-  fun complementBSubst BS boundEnv = 
-      let
-        val newSubst = 
-            BoundTypeVarID.Map.foldli 
-              (fn (i, ty, Env) =>
-                  if BoundTypeVarID.Map.inDomain(BS, i)
-                  then Env
-                  else
-                    let
-                      val newTy =
-                          T.newty
-                            {
-                             tvarKind = T.UNIV,
-                             eqKind = A.NONEQ,
-                             utvarOpt = NONE
-                            }
-                    in
-                      BoundTypeVarID.Map.insert (Env, i, newTy)
-                    end)
-              BoundTypeVarID.Map.empty
-              boundEnv
-        val _ =
-            BoundTypeVarID.Map.appi
-              (fn (i,
-                   T.TYVARty
-                     (r as ref (T.TVAR {lambdaDepth, id, utvarOpt, ...}))) => 
-                  r := 
-                     (case BoundTypeVarID.Map.find(boundEnv, i) of
-                        SOME {tvarKind, eqKind} => 
-                        T.TVAR
-                          {
-                           lambdaDepth = lambdaDepth,
-                           id = id, 
-                           tvarKind = substBTvarTvarKind newSubst tvarKind,
-                           eqKind = eqKind,
-                           utvarOpt = utvarOpt
-                          }
-                      | _ => raise Control.Bug "fresh Subst")
-                | _ => raise Control.Bug "complementBSubst")
-              newSubst
-(* 
-       val _ =
-           BoundTypeVarID.Map.appi
-             (fn (i,
-                  T.TYVARty
-                    (r as ref (T.TVAR{lambdaDepth,id,utvarOpt, ...}))) => 
-                 r := 
-                    (case BoundTypeVarID.Map.find(boundEnv, i) of
-                       SOME {index, tvarKind, eqKind} => 
-                       (case tvarKind of 
-                          T.REC _ =>
-                          T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                        | T.OVERLOADED _ =>
-                          T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                        | _ => ();
-                        T.TVAR
-                          {
-                           lambdaDepth = lambdaDepth,
-                           id = id, 
-                           tvarKind = substBTvarTvarKind newSubst tvarKind,
-                           eqKind = eqKind,
-                           utvarOpt = utvarOpt
-                       })
-                     | _ => raise Control.Bug "fresh Subst")
-               | _ => raise Control.Bug "complementBSubst")
-             newSubst
-*)
-      in
-        BoundTypeVarID.Map.unionWith
-          (fn x => raise Control.Bug "complementBSubstSubst") (BS, newSubst)
-      end
-
-  local 
-    exception FALSE 
-  in
-
-  fun adjustDepthInVarPathInfo contextDepth {namePath, ty} = 
-    adjustDepthInTy contextDepth ty;
-  fun adjustDepthInConPathInfo contextDepth ({ty,...}:T.conPathInfo) = 
-    adjustDepthInTy contextDepth ty
-  fun adjustDepthInExnPathInfo contextDepth ({ty,...}:T.exnPathInfo) = 
-    adjustDepthInTy contextDepth ty
-  fun adjustDepthInPrimInfo contextDepth {prim_or_special, ty} = 
-    adjustDepthInTy contextDepth ty
-  fun adjustDepthInOPrimInfo _ _ = 
-      raise (Control.Bug "adjustDepthInOprimInfo should never be called.")
-  fun adjustDepthInVarPathInfo contextDepth {namePath, ty} =
-    adjustDepthInTy contextDepth ty
-  fun adjustDepthInIdstate contextDepth idState = 
-    case idState of
-      T.VARID varPathInfo =>
-        adjustDepthInVarPathInfo contextDepth varPathInfo
-    | T.CONID conPathInfo =>
-        adjustDepthInConPathInfo contextDepth conPathInfo
-    | T.EXNID exnPathInfo =>
-        adjustDepthInExnPathInfo contextDepth exnPathInfo
-    | T.PRIM primInfo =>
-        adjustDepthInPrimInfo contextDepth primInfo
-    | T.OPRIM oprimInfo =>
-        adjustDepthInOPrimInfo contextDepth oprimInfo
-    | T.RECFUNID (varPathInfo,int) =>
-        adjustDepthInVarPathInfo contextDepth varPathInfo
-
-
-
-(*
-  datatype rk = ONE | ZERO | NIL
-
-  fun mergeRank (T.ZERO, _) = T.ZERO
-    | mergeRank (_, ZERO) = T.ZERO
-    | mergeRank (T.NIL, T.NIL) = T.NIL
-    | mergeRank _ = T.ONE
-*)
-
-(*
-  fun dataTag ({displayName, tyCon = {datacon = vEnv, ...}, ...} : T.conInfo) =
-      let val idlist = SEnv.listKeys vEnv
-      in {id = Basics.findIndex displayName idlist, constructorHasArgFlagList}
-      end
-*)
-      
-  fun betaReduceTy ({name, strpath, tyargs, body}:T.tyFun, tyl) =
-      let
-        val argsBtyList = BoundTypeVarID.Map.listItemsi tyargs
-      in
-        if List.length argsBtyList <> List.length tyl then
-          raise Control.Bug "betaReduceTy arity mismatch"
-        else
-          let
-            val subst = 
-              ListPair.foldr
-              (fn ((i, _), ty, S) => BoundTypeVarID.Map.insert(S, i, ty))
-              BoundTypeVarID.Map.empty
-              (argsBtyList, tyl)
-          in 
-            substBTvar subst body
-          end
-      end
 *)
 
   fun tpappTy (ty, nil) = ty
@@ -1075,87 +755,28 @@ end
                         tyl)
              ^ "}")
 
-(*
-  fun polyBodyTy (T.POLYty {body, ...}) = body
-    | polyBodyTy (T.TYVARty (ref (T.SUBSTITUTED ty))) = polyBodyTy ty
-    | polyBodyTy ty =
-      raise Control.Bug ("polyBodyTy:" ^ TypeFormatter.tyToString ty)
+  fun tyConFromConTy ty =
+      case derefTy ty of
+        T.POLYty{body,...} =>
+        (case derefTy body of
+           T.FUNMty(_, ty) =>
+           (case derefTy ty of
+              T.CONSTRUCTty{tyCon,...} => tyCon
+            | _ => raise bug "tyConFromConTy:non con ty"
+           )
+         | ty =>
+           (case derefTy ty of
+              T.CONSTRUCTty{tyCon,...} => tyCon
+            | _ => raise bug "tyConFromConTy:non con ty"
+           )
+        )
+      | T.FUNMty(_,ty) =>
+        (case derefTy ty of
+           T.CONSTRUCTty {tyCon,...} => tyCon
+         | _ => raise bug "tyConFromConTy:non con ty"
+        )
+      | T.CONSTRUCTty{tyCon,...} => tyCon
+      | _ => raise bug "tyConFromConTy:non con ty"
 
-  fun ranTy (T.FUNMty(_, ty)) = ty
-    | ranTy (T.TYVARty (ref (T.SUBSTITUTED ty))) = ranTy ty
-    | ranTy ty = raise Control.Bug ("ranTy:" ^ TypeFormatter.tyToString ty)
-  fun domTy (T.FUNMty(tyList, _)) = tyList
-    | domTy (T.TYVARty (ref (T.SUBSTITUTED ty))) = domTy ty
-    | domTy ty = raise Control.Bug ("domTy:" ^ TypeFormatter.tyToString ty)
-(*
-  fun ranTyI (T.IABSty(ty1, ty2)) = ty2
-    | ranTyI (T.TYVARty (ref (T.SUBSTITUTED ty))) = ranTyI ty
-    | ranTyI ty = raise Control.Bug ("ranTyM:" ^ TypeFormatter.tyToString ty)
-  fun domTyI (T.IABSty(n, ty2)) = n
-    | domTyI (T.TYVARty (ref (T.SUBSTITUTED ty))) = domTyI ty
-    | domTyI ty = raise Control.Bug ("domTyM:" ^ TypeFormatter.tyToString ty)
-*)
-  (* The following are for printer code generation. *)
-  fun substituteBTV (srcBTVID, destTy) ty=
-      substBTvar (BoundTypeVarID.Map.singleton(srcBTVID, destTy)) ty
-
-  fun instantiate {boundtvars : T.btvEnv, body : T.ty} =
-      let 
-          val subst = freshSubst boundtvars
-      in 
-          (substBTvar subst body, subst) 
-      end
-(*
-fun unify (ty1, ty2) = Unify.unify [(ty1,ty2)]
-Unify is imperative; i.e. it performs the unifier by updating the type
-variables. So be careful in using this.
-*)
-
-  (**
-   * Make a fresh instance of a polytype and a term of that type.
-   *)
-  (**
-   * Make a rigid fresh instance of a polytype and a term of that type.
-   *)
-  fun freshRigidInstTy ty =
-      if monoTy ty
-      then ty
-      else
-        case ty 
-         of (T.POLYty{boundtvars,body,...}) =>
-            let 
-              val subst = freshRigidSubst boundtvars
-              val bty = substBTvar subst body
-            in  
-                freshRigidInstTy bty
-            end
-          | T.FUNMty (tyList,ty) => 
-            let
-                val newTy = freshRigidInstTy ty
-            in
-                T.FUNMty(tyList, newTy)
-            end
-          | T.RECORDty fl => 
-            (T.RECORDty  (SEnv.map freshRigidInstTy fl))
-          | ty => ty
-
-  (**
-   * Make a fresh instance of a polytype and a term of that type.
-   *)
-  (**
-   * Make a rigid fresh instance of a polytype and a term of that type.
-   *)
-  fun freshToplevelRigidInstTy ty =
-      case ty of
-        (T.POLYty{boundtvars,body,...}) =>
-          let 
-            val subst = freshRigidSubst boundtvars
-          in  
-            substBTvar subst body
-          end
-      | ty => ty
-
-
-****************************************************************************)
 end
 end

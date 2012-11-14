@@ -8,9 +8,9 @@
 *)
 
 local
-   structure Lex = LexMLYACC(structure Tokens = LrVals.Tokens
-			     structure Hdr = Header)
+  structure Lex = LexMLYACC
   structure ParserData = LrVals.ParserData
+  structure LrParser = ParserData.LrParser
 
 (*  
  structure Parser = JoinWithArg(structure Lex=Lex

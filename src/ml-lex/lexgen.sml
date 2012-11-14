@@ -132,6 +132,10 @@ If we chose the last state in which we made an epsilon transition,
 we'll chose the transition from 3 to 4, and end up with "ab"
 as our token, when we should have "a" as our token.
 
+2012-8-19 ohori:
+  a type annotation added to fun > 
+    fun > ((key,item:string),(key',item')) =
+->  fun > ((key,item:string),(key',item':string)) =
 *)
 
 functor RedBlack(B : sig type key
@@ -875,7 +879,7 @@ structure L =
 	struct
 	  nonfix >
 	  type key = int list * string
-	  fun > ((key,item:string),(key',item')) =
+	  fun > ((key,item:string),(key',item':string)) =
 	    let fun f ((a:int)::a') (b::b') = if Int.> (a,b) then true
 					   else if a=b then f a' b'
 					   else false

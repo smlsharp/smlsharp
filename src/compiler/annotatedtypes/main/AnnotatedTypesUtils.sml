@@ -10,7 +10,7 @@ structure AnnotatedTypesUtils : ANNOTATEDTYPESUTILS = struct
   structure T = Types
   structure AT = AnnotatedTypes
   structure CT = ConstantTerm
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
 
 (*
   (* Types utilities*)
@@ -30,9 +30,9 @@ structure AnnotatedTypesUtils : ANNOTATEDTYPESUTILS = struct
       | CT.STRING _ => AT.stringty
       | CT.CHAR _ => AT.charty
       | CT.UNIT => AT.unitty
-      | CT.NULLPOINTER => AT.CONty {tyCon = BV.PTRtyCon,
+      | CT.NULLPOINTER => AT.CONty {tyCon = BT.ptrTyCon,
                                     args = [AT.unitty]}
-      | CT.NULLBOXED => AT.CONty {tyCon = BV.BOXEDtyCon, args = []}
+      | CT.NULLBOXED => AT.CONty {tyCon = BT.boxedTyCon, args = []}
 
 (*
   fun fieldTypes (AT.RECORDty{fieldTypes,...}) = fieldTypes

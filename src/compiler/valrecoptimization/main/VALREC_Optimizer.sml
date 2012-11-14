@@ -39,9 +39,8 @@ in
       | ICOPRIM (oprimInfo, loc) => icexp
       | ICTYPED (icexp,ty,loc) =>
         ICTYPED (optimizeExp icexp, ty, loc)
-      | ICSIGTYPED {path,icexp,ty,loc,revealKey} =>
-        ICSIGTYPED {path=path,
-                    icexp=optimizeExp icexp,
+      | ICSIGTYPED {icexp,ty,loc,revealKey} =>
+        ICSIGTYPED {icexp=optimizeExp icexp,
                     ty=ty,
                     revealKey=revealKey,
                     loc=loc}

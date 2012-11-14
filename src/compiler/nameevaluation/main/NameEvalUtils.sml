@@ -7,304 +7,404 @@ struct
 val _ = "initializing NameEvalUtils ..."
 local
   structure I = IDCalc
-  structure BT = BuiltinType
+  structure BT = BuiltinTypeNames
   structure PI = PatternCalcInterface
 in  
   fun runtimeTyOfConspec conSpec = if SEnv.isEmpty (SEnv.filter (fn SOME _ => true | NONE => false) conSpec)
-				   then BuiltinType.WORDty else BuiltinType.BOXEDty
+				   then BuiltinTypeNames.WORDty else BuiltinTypeNames.BOXEDty
   val print = fn s => if !Control.debugPrint then print s else ()
   fun printFixEnv fixEnv =
-      SEnv.appi
-      (fn (name, fixity) => 
-          (print name;
-           print " : ";
-           print (Fixity.fixityToString fixity);
-           print "\n")
-      )
-      fixEnv
+      if !Control.debugPrint then 
+        SEnv.appi
+          (fn (name, fixity) => 
+              (print name;
+               print " : ";
+               print (Fixity.fixityToString fixity);
+               print "\n")
+          )
+          fixEnv
+      else ()
   fun printPath path =
-      print (String.concatWith "." path)
+      if !Control.debugPrint then 
+        print (String.concatWith "." path)
+      else ()
   fun printTvar tvar =
-      print (Control.prettyPrint (I.format_tvar tvar))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_tvar tvar))
+      else ()
   fun printTvarId tvarId =
-      print (Control.prettyPrint (I.format_tvarId tvarId))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_tvarId tvarId))
+      else ()
   fun printVarId varId =
-      print (Control.prettyPrint (I.format_varId varId))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_varId varId))
+      else ()
   fun printVarInfo var =
-      print (Control.prettyPrint (I.format_varInfo var))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_varInfo var))
+      else ()
   fun printInterfaceId id = 
-      print (Control.prettyPrint (InterfaceID.format_id id))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (InterfaceID.format_id id))
+      else ()
   fun printTy ty =
-      print (Control.prettyPrint (I.format_ty ty))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_ty ty))
+      else ()
   fun printBuiltinTy ty =
-      print (Control.prettyPrint (BT.format_ty ty))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (BT.format_bty ty))
+      else ()
   fun printPITy ty =
-      print (Control.prettyPrint (PI.format_ty ty))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (PI.format_ty ty))
+      else ()
   fun printTstr tstr =
-      print (Control.prettyPrint (NameEvalEnv.format_tstr tstr))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (NameEvalEnv.format_tstr tstr))
+      else ()
   fun printTyE tyE =
-      print (Control.prettyPrint (NameEvalEnv.format_tyE tyE))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (NameEvalEnv.format_tyE tyE))
+      else ()
   fun printConSpec conSpec =
-      print (Control.prettyPrint (I.format_conSpec conSpec))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_conSpec conSpec))
+      else ()
   fun printTfun tfun =
-      print (Control.prettyPrint (I.format_tfun tfun))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_tfun tfun))
+      else ()
   fun printTfunkind tfunkind =
-      print (Control.prettyPrint (I.format_tfunkind tfunkind))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_tfunkind tfunkind))
+      else ()
   fun printIdstatus idstatus =
-      print (Control.prettyPrint (I.format_idstatus idstatus) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_idstatus idstatus) ^ "\n")
+      else ()
   fun printTypId typId =
-      print (Control.prettyPrint (I.format_typId typId))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_typId typId))
+      else ()
   fun printConId conId =
-      print (Control.prettyPrint (I.format_conId conId))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_conId conId))
+      else ()
   fun printExnId exnId =
-      print (Control.prettyPrint (I.format_exnId exnId))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (I.format_exnId exnId))
+      else ()
   fun printPrimitive primitive =
-      print (Control.prettyPrint (BuiltinPrimitive.format_primitive primitive))
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (BuiltinPrimitive.format_primitive primitive))
+      else ()
   fun printLiftedTys liftedTys =
-      (
-       print "{";
-       TvarSet.app
-         (fn tvar => (printTvar tvar; print ","))
-         liftedTys;
-       print "}"
-      )
+      if !Control.debugPrint then 
+        (
+         print "{";
+         TvarSet.app
+           (fn tvar => (printTvar tvar; print ","))
+           liftedTys;
+         print "}"
+        )
+      else ()
   fun printTypInfo {id,path} =
-      (printPath path; print "("; printTypId id; print ")")
+      if !Control.debugPrint then 
+        (printPath path; print "("; printTypId id; print ")")
+      else ()
 
   fun printTySubst tySubst =
-      (
-       print "{";
-       TypID.Map.appi
-         (fn (i,(typInfo, liftedTys)) =>
-             (printTypId i; print "=> (";
-              printTypInfo typInfo;
-              print ",";
-              printLiftedTys liftedTys;
-              print ")";
-              print "\n"))
-         tySubst;
-       print "}\n"
-      )
+      if !Control.debugPrint then 
+        (
+         print "{";
+         TypID.Map.appi
+           (fn (i,(typInfo, liftedTys)) =>
+               (printTypId i; print "=> (";
+                printTypInfo typInfo;
+                print ",";
+                printLiftedTys liftedTys;
+                print ")";
+                print "\n"))
+           tySubst;
+         print "}\n"
+        )
+      else ()
   fun printTypidSet typidSet =
-      (
-       print "{typidSet\n";
-       TypID.Set.app
-         (fn i => (printTypId i; print "\n,"))
-         typidSet;
-       print "}\n"
-      )
+      if !Control.debugPrint then 
+        (
+         print "{typidSet\n";
+         TypID.Set.app
+           (fn i => (printTypId i; print "\n,"))
+           typidSet;
+         print "}\n"
+        )
+      else ()
   fun printSubst {tvarS, exnIdS, conIdS} =
-      let
-        val _ = print "tvarS\n"
-        val _ =
-            (print "[\n";
-             TvarMap.appi
-               (fn (tvar, ty) =>
-                   (printTvar tvar;
-                    print "=>";
-                    printTy ty;
-                    print "\n")
-               )
-               tvarS;
-             print "\n]\n"
-            )
-        val _ = print "conIdS\n"
-        val _ =
-            (print "[\n";
-             ConID.Map.appi
-               (fn (id, idstatus) =>
-                   (printConId id;
-                    print "=>";
-                    printIdstatus idstatus;
-                    print "\n")
-               )
-               conIdS;
-             print "\n]\n"
-            )
-        val _ = print "exnIdS\n"
-        val _ =
-            (print "[\n";
-             ExnID.Map.appi
-               (fn (id, id') =>
-                   (printExnId id;
-                    print "=>";
-                    printExnId id';
-                    print "\n")
-               )
-               exnIdS;
-             print "\n]\n"
-            )
-      in
-        ()
-      end
+      if !Control.debugPrint then 
+        let
+          val _ = print "tvarS\n"
+          val _ =
+              (print "[\n";
+               TvarMap.appi
+                 (fn (tvar, ty) =>
+                     (printTvar tvar;
+                      print "=>";
+                      printTy ty;
+                      print "\n")
+                 )
+                 tvarS;
+               print "\n]\n"
+              )
+          val _ = print "conIdS\n"
+          val _ =
+              (print "[\n";
+               ConID.Map.appi
+                 (fn (id, idstatus) =>
+                     (printConId id;
+                      print "=>";
+                      printIdstatus idstatus;
+                      print "\n")
+                 )
+                 conIdS;
+               print "\n]\n"
+              )
+          val _ = print "exnIdS\n"
+          val _ =
+              (print "[\n";
+               ExnID.Map.appi
+                 (fn (id, id') =>
+                     (printExnId id;
+                      print "=>";
+                      printExnId id';
+                      print "\n")
+                 )
+                 exnIdS;
+               print "\n]\n"
+              )
+        in
+          ()
+        end
+      else ()
   fun printTfvSubst tfvSubst =
-      (print "[\n";
-       TfvMap.appi
-         (fn (ref tfunkind1, ref tfunkind2) =>
-             (printTfunkind tfunkind1;
-              print "=>";
-              printTfunkind tfunkind2;
-              print "\n")
-         )
-         tfvSubst;
-       print "\n]\n"
-      )
-      handle exn => raise exn
+      if !Control.debugPrint then 
+        (print "[\n";
+         TfvMap.appi
+           (fn (ref tfunkind1, ref tfunkind2) =>
+               (printTfunkind tfunkind1;
+                print "=>";
+                printTfunkind tfunkind2;
+                print "\n")
+           )
+           tfvSubst;
+         print "\n]\n"
+        )
+        handle exn => raise exn
+      else ()
+           
   fun printEnv env =
-      print (Control.prettyPrint (NameEvalEnv.format_env env) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (NameEvalEnv.format_env env) ^ "\n")
+      else ()
   fun printStrEntry strEntry =
-      print (Control.prettyPrint (NameEvalEnv.format_strEntry strEntry) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (NameEvalEnv.format_strEntry strEntry) ^ "\n")
+      else ()
   fun printTopEnv env =
-      print (Control.prettyPrint (NameEvalEnv.format_topEnv env) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (NameEvalEnv.format_topEnv env) ^ "\n")
+      else ()
   fun printFunE funE =
-      print (Control.prettyPrint (NameEvalEnv.format_funE funE) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (NameEvalEnv.format_funE funE) ^ "\n")
+      else ()
   fun printFunEEntry funEEntry =
-      print (Control.prettyPrint (NameEvalEnv.format_funEEntry funEEntry) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (NameEvalEnv.format_funEEntry funEEntry) ^ "\n")
+      else ()
   fun printPat icpat =
-      print (Control.prettyPrint (IDCalc.format_icpat icpat) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (IDCalc.format_icpat icpat) ^ "\n")
+      else ()
   fun printVar var =
-      print (Control.prettyPrint (IDCalc.format_varInfo var) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (IDCalc.format_varInfo var) ^ "\n")
+      else ()
   fun printExp exp =
-      print (Control.prettyPrint (IDCalc.format_icexp exp) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (IDCalc.format_icexp exp) ^ "\n")
+      else ()
   fun printPat pat =
-      print (Control.prettyPrint (IDCalc.format_icpat pat) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (IDCalc.format_icpat pat) ^ "\n")
+      else ()
   fun printDecl dec =
-      print (Control.prettyPrint (IDCalc.format_icdecl dec) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (IDCalc.format_icdecl dec) ^ "\n")
+      else ()
   fun printPlstrDecl dec =
-      print (Control.prettyPrint (PatternCalc.format_plstrdec dec) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (PatternCalc.format_plstrdec dec) ^ "\n")
+      else ()
   fun printPlstrexp strexp =
-      print (Control.prettyPrint (PatternCalc.format_plstrexp strexp) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (PatternCalc.format_plstrexp strexp) ^ "\n")
+      else ()
   fun printPlsigexp sigexp =
-      print (Control.prettyPrint (PatternCalc.format_plsigexp sigexp) ^ "\n")
+      if !Control.debugPrint then 
+        print (Control.prettyPrint (PatternCalc.format_plsigexp sigexp) ^ "\n")
+      else ()
   fun printPitopdec dec =
-      print
-        (Control.prettyPrint
-           (PatternCalcInterface.format_pitopdec dec) ^ "\n")
+      if !Control.debugPrint then 
+        print
+          (Control.prettyPrint
+             (PatternCalcInterface.format_pitopdec dec) ^ "\n")
+      else ()
   fun printCompileUnit compileUnit =
-      print
-        (Control.prettyPrint
-           (PatternCalcInterface.format_compileUnit compileUnit) ^ "\n")
+      if !Control.debugPrint then 
+        print
+          (Control.prettyPrint
+             (PatternCalcInterface.format_compileUnit compileUnit) ^ "\n")
+      else ()
+
   fun printPltopdec dec =
-      print
-        (Control.prettyPrint
-           (PatternCalc.format_pltopdec dec) ^ "\n")
+      if !Control.debugPrint then 
+        print
+          (Control.prettyPrint
+             (PatternCalc.format_pltopdec dec) ^ "\n")
+      else ()
   fun printPidec dec =
-      print
-        (Control.prettyPrint
-           (PatternCalcInterface.format_pidec dec) ^ "\n")
+      if !Control.debugPrint then 
+        print
+          (Control.prettyPrint
+             (PatternCalcInterface.format_pidec dec) ^ "\n")
+      else ()
   fun printCastEnv {tvarEnv, tfunEnv, conIdEnv} =
-      (print "tvarEnv :\n";
-       TvarMap.appi
-         (fn (tvar, ty) =>
-             (printTvar tvar;
-              print "=>";
-              printTy ty;
-              print "\n")
-         )
-         tvarEnv;
-       print "tfunEnv :\n";
-       TypID.Map.app
-         (fn (from, inst, to) =>
-             (printTfun from;
-              print "with (";
-              TvarMap.appi
-                (fn (tvar, ty) =>
-                    (print " ";
-                     printTvar tvar;
-                     print ":";
-                     printTy ty)
-                );
-              print ")";
-              print "=>";
-              printTfun to;
-              print "\n")
-         )
-         tfunEnv;
-       print "conIdEnv : \n"
-      )
+      if !Control.debugPrint then 
+        (print "tvarEnv :\n";
+         TvarMap.appi
+           (fn (tvar, ty) =>
+               (printTvar tvar;
+                print "=>";
+                printTy ty;
+                print "\n")
+           )
+           tvarEnv;
+         print "tfunEnv :\n";
+         TypID.Map.app
+           (fn (from, inst, to) =>
+               (printTfun from;
+                print "with (";
+                TvarMap.appi
+                  (fn (tvar, ty) =>
+                      (print " ";
+                       printTvar tvar;
+                       print ":";
+                       printTy ty)
+                  );
+                print ")";
+                print "=>";
+                printTfun to;
+                print "\n")
+           )
+           tfunEnv;
+         print "conIdEnv : \n"
+        )
+      else ()
       
   fun printReverseMap {ToTy, LiftDown} =
-      (TvarMap.appi
-         (fn (tvar, (typInfo, liftedTys)) =>
-             (printTvar tvar;
-              print "=>";
-              printTypInfo typInfo;
-              print "with";
-              printLiftedTys liftedTys;
-              print "\n")
-         )
-         ToTy;
-       TypID.Map.appi
-         (fn (id, {arity, path, liftedTys}) =>
-             (printPath path;
-              print "(";
-              printTypId id;
-              print ")";
-              print "(";
-              print (Int.toString arity);
-              print ")";
-              print " down with ";
-              printLiftedTys liftedTys;
-              print "\n")
-         )
-         LiftDown)
+      if !Control.debugPrint then 
+        (TvarMap.appi
+           (fn (tvar, (typInfo, liftedTys)) =>
+               (printTvar tvar;
+                print "=>";
+                printTypInfo typInfo;
+                print "with";
+                printLiftedTys liftedTys;
+                print "\n")
+           )
+           ToTy;
+         TypID.Map.appi
+           (fn (id, {arity, path, liftedTys}) =>
+               (printPath path;
+                print "(";
+                printTypId id;
+                print ")";
+                print "(";
+                print (Int.toString arity);
+                print ")";
+                print " down with ";
+                printLiftedTys liftedTys;
+                print "\n")
+           )
+           LiftDown)
+      else ()
   fun printCastMap castMap =
-      TypID.Map.appi
-        (fn (id, {newId, arity, tyname, liftedTys}) =>
-            (print "cast ";
-             print tyname;
-             print "(";
-             printTypId id;
-             print ") with ";
-             printLiftedTys liftedTys;
-             print " down to ";
-             printTypId newId;
-             print "\n")
-        )
-        castMap
+      if !Control.debugPrint then 
+        TypID.Map.appi
+          (fn (id, {newId, arity, tyname, liftedTys}) =>
+              (print "cast ";
+               print tyname;
+               print "(";
+               printTypId id;
+               print ") with ";
+               printLiftedTys liftedTys;
+               print " down to ";
+               printTypId newId;
+               print "\n")
+          )
+          castMap
+      else ()
   fun printTfv tfv =
-      case !tfv of
-        I.TFV_DTY{id, conSpec,...} =>
-        (
-         print "TFV_DTY:\n";
-         printTypId id;
-         print "\n";
-         printConSpec conSpec;
-         print "\n"
-        )
-      | I.TFUN_DTY{id, conSpec,...} =>
-        (print "TFUN_DTY:\n";
-         printTypId id;
-         print "\n";
-         printConSpec conSpec;
-         print "\n"
-        )
-      | _ => ()
+      if !Control.debugPrint then 
+        case !tfv of
+          I.TFV_DTY{id, conSpec,...} =>
+          (
+           print "TFV_DTY:\n";
+           printTypId id;
+           print "\n";
+           printConSpec conSpec;
+           print "\n"
+          )
+        | I.TFUN_DTY{id, conSpec,...} =>
+          (print "TFUN_DTY:\n";
+           printTypId id;
+           print "\n";
+           printConSpec conSpec;
+           print "\n"
+          )
+        | _ => ()
+      else ()
   fun printTfvList tfvList =
-      (print "[\n";
-       map
-         (fn (tfv,path) =>
-             (printPath path;
-              print ":";
-              printTfv tfv;
-              print "\n")
-         )
-         tfvList;
-       print "]\n"
-      )
+      if !Control.debugPrint then 
+        (print "[\n";
+         map
+           (fn (tfv,path) =>
+               (printPath path;
+                print ":";
+                printTfv tfv;
+                print "\n")
+           )
+           tfvList;
+         print "]\n"
+        )
+      else ()
 
   fun printTfvMap tfvMap =
-      (TfvMap.appi
-         (fn (tfv1,path) =>
-             (printTfun (I.TFUN_VAR tfv1);
-              print "=>";
-              printPath path;
-              print "\n"
-             )
-         )
-         tfvMap
-      )
-      handle exn => raise exn
+      if !Control.debugPrint then 
+        (TfvMap.appi
+           (fn (tfv1,path) =>
+               (printTfun (I.TFUN_VAR tfv1);
+                print "=>";
+                printPath path;
+                print "\n"
+               )
+           )
+           tfvMap
+        )
+        handle exn => raise exn
+      else ()
 
   fun evalList {eval: 'elm -> 'env * 'newElm,
                 emptyEnv:'env,

@@ -1,4 +1,4 @@
-structure Main = struct
+structure Main(*: BMARK*) = struct
 
 local
 open Array Math
@@ -186,11 +186,9 @@ fun test np =
 fun loop_np i np = if i > 13 then () else
   (test np; loop_np (i+1) (np*2))
 
-fun doit () = (let val s = (Real.fmt (StringCvt.GEN (SOME 10)) 1.23)
-in loop_np 1 16 end)
+fun doit () = loop_np 1 16
 
 fun testit outstream = doit()
 
 end
 end;
-

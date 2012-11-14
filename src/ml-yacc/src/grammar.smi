@@ -1,6 +1,6 @@
 _require "../../basis.smi"
-_require "../lib/base.sig"
-_require "../lib/lrtable.smi"
+_require "../../ml-yacc/lib/base.sig"
+_require "../../ml-yacc/lib/lrtable.smi"
 _require "utils.smi"
 _require "utils.sig"
 _require "sigs.sml"

@@ -28,7 +28,7 @@ struct
                   | _ => raise Control.Bug "compareIndex")
       | x => x
 
-  fun generateSingletonTy (btv, fields) =
+  fun generateSingletonTy (btv:BoundTypeVarID.id, fields:T.ty LabelEnv.map) =
       map (fn label => T.INDEXty (label, T.BOUNDVARty btv))
           (LabelEnv.listKeys fields)
 

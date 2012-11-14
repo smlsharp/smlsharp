@@ -151,9 +151,11 @@ sml_objspace_init(void)
 static void
 finalize_heap(void *data ATTR_UNUSED)
 {
+#ifndef FAIR_COMPARISON
 	/* To run finalizers forcely, invoke GC with empty root set. */
 	while (finalizer_set.root != NULL)
 		sml_heap_gc();
+#endif /* FAIR_COMPARISON */
 	GIANT_LOCK(NULL);
 	sml_malloc_sweep(MAJOR);  /* free all malloc'ed objects */
 	GIANT_UNLOCK();
@@ -239,10 +241,11 @@ malloc_barrier(void *obj)
 	}
 }
 
-void
+int
 sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode)
 {
 	struct malloc_obj_header *head;
+	int found = 0;
 
 	ASSERT(GIANT_LOCKED());
 
@@ -251,8 +254,10 @@ sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode)
 		while (malloc_stack_top) {
 			head = malloc_stack_top;
 			malloc_stack_top = malloc_stack_top->next;
-			if (head->flags & MALLOC_FLAG_REMEMBER)
+			if (head->flags & MALLOC_FLAG_REMEMBER) {
 				sml_obj_enum_ptr(MALLOC_BODY(head), trace);
+				found = 1;
+			}
 			head->next = NULL;
 			head->flags = 0;
 		}
@@ -262,12 +267,15 @@ sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode)
 			head = malloc_stack_top;
 			malloc_stack_top = malloc_stack_top->next;
 			head->next = NULL;
-			if (head->flags & MALLOC_FLAG_TRACED)
+			if (head->flags & MALLOC_FLAG_TRACED) {
 				sml_obj_enum_ptr(MALLOC_BODY(head), trace);
-			else
+				found = 1;
+			} else {
 				head->flags = 0;
+			}
 		}
 	}
+	return found;
 }
 
 static int
@@ -299,6 +307,19 @@ sml_malloc_sweep(enum sml_gc_mode mode)
 
 	sml_tree_reject(&malloc_heap, malloc_heap_sweep);
 	malloc_count = 0;
+}
+
+static void
+each_malloc(void *item, void *data)
+{
+	void (**trace)(void **) = data;
+	sml_obj_enum_ptr(item, *trace);
+}
+
+void
+sml_malloc_enum_ptr(void (*trace)(void **))
+{
+	sml_tree_each(&malloc_heap, each_malloc, &trace);
 }
 
 /* root set management */

@@ -9,7 +9,7 @@ local
   structure T = Types
   structure A = Absyn
   structure TU = TypesUtils
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
 in
 
   (** raised when checkEq fails *)
@@ -90,8 +90,8 @@ in
       | T.FUNMty _ => raise Eqcheck
       | T.RECORDty fl => LabelEnv.foldr (fn (ty,()) => checkEq ty) () fl
       | T.CONSTRUCTty {tyCon={id,iseq,...},args} =>
-        if TypID.eq(id, #id BE.ARRAYtyCon) then ()
-        else if TypID.eq(id, #id (BE.REFtyCon())) then ()
+        if TypID.eq(id, #id BT.arrayTyCon) then ()
+        else if TypID.eq(id, #id BT.refTyCon) then ()
         else if iseq then List.app checkEq args
         else raise Eqcheck
       | T.POLYty {boundtvars, body} =>

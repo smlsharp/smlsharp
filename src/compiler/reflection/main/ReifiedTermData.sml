@@ -5,7 +5,6 @@
 structure ReifiedTermData =
 struct
 local
-  structure BE = BuiltinEnv
   structure V = NameEvalEnv
   structure ITy = EvalIty
   structure I = IDCalc
@@ -129,7 +128,7 @@ in
                     )
                   | SOME (V.TSTR tfun) => tfun
                   | SOME (V.TSTR_DTY {tfun, ...}) => tfun
-              val ity = I.TYCONSTRUCT {typ={path=path, tfun=tfun}, args=nil}
+              val ity = I.TYCONSTRUCT {tfun=tfun, args=nil}
               val ty = ITy.evalIty ITy.emptyContext ity
             in
               SOME ty
@@ -205,9 +204,19 @@ in
       end
 
   fun mkConTerm (con, exp) =
-      TC.TPDATACONSTRUCT 
-        {con=con, instTyList=nil, argExpOpt=exp, loc= Loc.noloc}
-
+      let
+        val tyOpt =
+            case exp 
+             of NONE => NONE
+              | SOME _ => 
+                (case #ty con of
+                   T.FUNMty ([ty],_) => SOME ty
+                 | _ => raise bug "non function con with arg"
+                )
+      in
+        TC.TPDATACONSTRUCT 
+          {con=con, instTyList=nil, argExpOpt=exp, argTyOpt=tyOpt, loc= Loc.noloc}
+      end
   fun unprintable () = 
       case !UNPRINTABLERep of
         NONE => raise bug "unprintable unavailable"

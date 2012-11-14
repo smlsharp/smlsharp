@@ -182,7 +182,7 @@ in
 (* 
   Added the following function by Atsushi Ohori for optimization.
 *)
-    fun insertWith f (E,x,v) = T{key=x,value=v,cnt=1,left=E,right=E}
+    fun 'a insertWith (f : 'a -> unit) (E,x,v) = T{key=x,value=v,cnt=1,left=E,right=E}
       | insertWith f (T(set as {key,left,right,value,...}),x,v) =
         case K.compare (key,x) of
           GREATER => T'(key,value,insert(left,x,v),right)
@@ -270,7 +270,7 @@ in
       and left (E, rest) = rest
 	| left (t as T{left=l, ...}, rest) = left(l, t::rest)
     in
-    fun collate cmpRng (s1, s2) = let
+    fun 'a collate (cmpRng: 'a * 'a -> order) (s1, s2) = let
 	  fun cmp (t1, t2) = (case (next t1, next t2)
 		 of ((E, _), (E, _)) => EQUAL
 		  | ((E, _), _) => LESS
@@ -289,14 +289,14 @@ in
 	  end
     end (* local *)
 
-    fun appi f d = let
+    fun 'a appi (f:K.ord_key * 'a -> unit) d = let
 	  fun app' E = ()
 	    | app' (T{key,value,left,right,...}) = (
 		app' left; f(key, value); app' right)
 	  in
 	    app' d
 	  end
-    fun app f d = let
+    fun 'a app (f:'a -> unit) d = let
 	  fun app' E = ()
 	    | app' (T{value,left,right,...}) = (
 		app' left; f value; app' right)
@@ -368,7 +368,7 @@ in
 	      else foldli (ins f) m2 m1
 	  end
 
-    fun intersectWith f (m1, m2) = let
+    fun ('a, 'b,'c) intersectWith (f: 'a*'b -> 'c) (m1, m2) = let
 	(* iterate over the elements of m1, checking for membership in m2 *)
 	  fun intersect f (m1, m2) = let
 		fun ins (key, x, m) = (case find(m2, key)
@@ -383,7 +383,7 @@ in
 	      then intersect f (m1, m2)
 	      else intersect (fn (a, b) => f(b, a)) (m2, m1)
 	  end
-    fun intersectWithi f (m1, m2) = let
+    fun ('a, 'b, 'c) intersectWithi (f:K.ord_key * 'a * 'b -> 'c) (m1, m2) = let
 	(* iterate over the elements of m1, checking for membership in m2 *)
 	  fun intersect f (m1, m2) = let
 		fun ins (key, x, m) = (case find(m2, key)

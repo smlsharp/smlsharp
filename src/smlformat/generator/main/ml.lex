@@ -3,26 +3,26 @@
  * Copyright 1989 by AT&T Bell Laboratories
  *)
 
-structure TokTable = TokenTable(Tokens);
+structure Tokens = MLLrVals.Tokens
 type svalue = Tokens.svalue
-type pos = int
-type lexresult = (svalue,pos) Tokens.token
+type pos = Tokens.pos
+type lexresult = Tokens.token
 type lexarg = 
      {
-       brack_stack : int ref list ref,
+       brack_stack : pos ref list ref,
        comLevel : int ref,
        currentLineNumber : int ref,
-       error : (string * int * int) -> unit,
+       error : (string * pos * pos) -> unit,
        inFormatComment : bool ref,
-       lineMap : (int * (int * int)) list ref,
-       lastNewLinePos : int ref,
+       lineMap : (int * (pos * pos)) list ref,
+       lastNewLinePos : pos ref,
        stream : TextIO.instream, 
        stringBuf : string list ref,
        stringStart : pos ref,
        stringType : bool ref
      }
 type arg = lexarg
-type ('a,'b) token = ('a,'b) Tokens.token
+type token = MLLrVals.Tokens.token
 
 fun newline (arg:arg) yypos =
     (#lineMap arg :=
@@ -57,7 +57,9 @@ fun dec (ri as ref i) = (ri := i-1)
 %% 
 %reject
 %s A FC FCC S F Q AQ L LL LLC LLCQ;
-%header (functor MLLexFun(structure Tokens : ML_TOKENS) : ARG_LEXER);
+%header (
+structure MLLex : ARG_LEXER
+);
 %arg (arg as 
 {
   brack_stack,
@@ -127,10 +129,10 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"..."		=> (Tokens.DOTDOTDOT(yypos,yypos+3));
 <INITIAL>"."		=> (Tokens.DOT(yypos,yypos+1));
 <INITIAL>"'"("'"?)("_"|{num})?{id}
-			=> (TokTable.checkTyvar(yytext,yypos));
-<INITIAL>{id}	        => (TokTable.checkId(yytext, yypos));
-<INITIAL>{full_sym}+    => (TokTable.checkSymId(yytext,yypos));
-<INITIAL>{sym}+         => (TokTable.checkSymId(yytext,yypos));
+			=> (TokenTable.checkTyvar(yytext,yypos));
+<INITIAL>{id}	        => (TokenTable.checkId(yytext, yypos));
+<INITIAL>{full_sym}+    => (TokenTable.checkSymId(yytext,yypos));
+<INITIAL>{sym}+         => (TokenTable.checkSymId(yytext,yypos));
 <INITIAL>{quote}        =>
     (error("quotation implementation error", yypos, yypos+1);
      Tokens.BEGINQ(yypos,yypos+1));
@@ -221,6 +223,7 @@ hexnum=[0-9a-fA-F]+;
               of #"L" => FormatTemplate.Left
                | #"R" => FormatTemplate.Right
                | #"N" => FormatTemplate.Neutral
+               | _ => raise Fail "BUG: illeagal direction"
          val strength = atoi (yytext, numStartPos)
        in
          Tokens.ASSOCINDICATOR

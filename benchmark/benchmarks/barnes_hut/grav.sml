@@ -10,7 +10,11 @@ signature GRAV =
 
     structure S : SPACE
     structure V : VECTOR
+(* Ueno (2012-Sep-19): To avoid functor argument restriction of SML#, we
+   need to explicit the implementation of 'a vec.
+
       sharing S.V = V
+*) 
 
     val hackGrav : {body:S.body, root:S.node, rsize:real, tol:real, eps : real}
 	  -> {n2bterm:int, nbcterm:int, skipSelf:bool}

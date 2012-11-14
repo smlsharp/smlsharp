@@ -1,0 +1,79 @@
+_require "basis.smi"
+_require "base.sig"
+_require "utils.sig"
+_require "sigs.sml"
+
+functor mkVerbose(
+  A : sig
+    structure Errs : sig
+      structure LrTable : sig
+        datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+        datatype state = STATE of int
+        datatype term = T of int
+        datatype nonterm = NT of int
+        datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+        type table
+        val numStates : table -> int
+        val numRules : table -> int
+        val describeActions : table -> state -> (term,action) pairlist * action
+        val describeGoto : table -> state -> (nonterm,state) pairlist
+        val action : table -> state * term -> action
+        val goto : table -> state * nonterm -> state
+        val initialState : table -> state
+        exception Goto of state * nonterm
+        val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                         gotos : (nonterm,state) pairlist array,
+                         numStates : int, numRules : int,
+                         initialState : state} -> table
+      end
+      datatype err = RR of LrTable.term * LrTable.state * int * int
+                   | SR of LrTable.term * LrTable.state * int
+                   | NS of LrTable.term * int  
+                   | NOT_REDUCED of int
+                   | START of int
+      val summary : err list -> {rr : int, sr: int,
+                                 not_reduced : int, start : int,nonshift : int}
+      val printSummary : (string -> unit) -> err list -> unit
+    end
+  end
+) =
+struct
+  structure Errs =
+  struct
+    structure LrTable =
+    struct
+      datatype pairlist = datatype A.Errs.LrTable.pairlist
+      datatype state = datatype A.Errs.LrTable.state
+      datatype term = datatype A.Errs.LrTable.term
+      datatype nonterm = datatype A.Errs.LrTable.nonterm
+      datatype action = datatype A.Errs.LrTable.action
+      type table = A.Errs.LrTable.table
+      val numStates : table -> int
+      val numRules : table -> int
+      val describeActions : table -> state -> (term,action) pairlist * action
+      val describeGoto : table -> state -> (nonterm,state) pairlist
+      val action : table -> state * term -> action
+      val goto : table -> state * nonterm -> state
+      val initialState : table -> state
+      exception Goto = A.Errs.LrTable.Goto
+      val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                       gotos : (nonterm,state) pairlist array,
+                       numStates : int, numRules : int,
+                       initialState : state} -> table
+    end
+    datatype err = datatype A.Errs.err
+    val summary : err list -> {rr : int, sr: int,
+                                 not_reduced : int, start : int,nonshift : int}
+    val printSummary : (string -> unit) -> err list -> unit
+  end
+  val printVerbose :
+      {table : Errs.LrTable.table,
+       entries : int,
+       termToString : Errs.LrTable.term -> string,
+       nontermToString : Errs.LrTable.nonterm -> string,
+       stateErrs : Errs.LrTable.state -> Errs.err list,
+       errs : Errs.err list,
+       print: string -> unit,
+       printCores : (string -> unit) -> Errs.LrTable.state -> unit,
+       printRule : (string -> unit) -> int -> unit} -> unit
+end

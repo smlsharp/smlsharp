@@ -16,21 +16,10 @@ structure Interp =
           of SOME c => c
            | NONE => raise NotAChar)
 
-      (* NOTE: Basis manual says thas Real.fromString should not accept "0",
-       * and returns NONE.
-       * But SML/NJ implementation accepts "0" and returns SOME 0.0 .
-       * This strToReal assumes this SML/NJ behavior.
-       * This causes an unexpected exception, if running with our Basis
-       * implementation.
-       * So, we have modified strToReal handle "0" specially.
-       *)
-     fun strToReal s =
+     fun strToReal s = 
       (case Real.fromString s
         of SOME r => r
-        | _ =>
-          case Real.fromString (s ^ ".0") of
-            SOME r => r
-          | _ => raise NotAReal)
+        | _ => raise NotAReal)
 
     fun intToReal x = 
      (strToReal ((Int.toString x) ^ ".0"))
@@ -117,16 +106,10 @@ structure Interp =
                           | _ => ""
 	(* parse one token from inStrm *)
 	  fun toke deferred = let
-(*
-		fun doChar "" = exit 0
-*)
-		fun doChar "" = exit (OS.Process.success)
+		fun doChar "" = exit OS.Process.success
 		  | doChar "%" = let
 		      fun lp "\n" = doChar(getc())
-			| lp "" = exit (OS.Process.success)
-(*
-			| lp "" = exit 0
-*)
+			| lp "" = exit OS.Process.success
 			| lp _ = lp(getc())
 		      in
 			lp(getc())

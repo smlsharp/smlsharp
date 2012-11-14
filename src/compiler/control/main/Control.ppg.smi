@@ -58,11 +58,14 @@ struct
   val debugTrace : bool ref
   val printBinds : bool ref
   val printWarning : bool ref
+  val printInfo : bool ref
   val skipPrinter : bool ref
   val generateExnHistory : bool ref
   val generateDebugInfo : bool ref
   val LARGEFFISWITCH : bool ref
   val doUncurryOptimization : bool ref
+  val doTCOptimization : bool ref
+  val doRCOptimization : bool ref
   val enableUnboxedFloat : bool ref
   val alignRecord : bool ref
   val doSymbolicInstructionsOptimization : bool ref
@@ -105,7 +108,11 @@ struct
   val printUC : bool ref
   val printTP : bool ref
   val printTFP : bool ref
-  val printRC : bool ref
+  val printRCOptimize : bool ref
+  val printMatchComp : bool ref
+  val printSQLComp : bool ref
+  val printFFIComp : bool ref
+  val printRecordComp : bool ref
   val printTL : bool ref
   val printAC : bool ref
   val printMV : bool ref
@@ -123,6 +130,7 @@ struct
   val printAI : bool ref
   val printML : bool ref
   val printOBJ : bool ref
+  val printTimer : bool ref
   val withoutLink : bool ref
   val keepAsm : bool ref
   val debugCodeGen : bool ref

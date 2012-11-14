@@ -104,7 +104,10 @@ struct
         else SOME (SMLSharp.PrimArray.sub_vector (ary, start),
                    (ary, start + 1, length - 1) : 'a slice)
 
-    fun foldli foldFn z ((ary, start, length):'a slice) =
+    fun ('a, 'b) foldli 
+          (foldFn : (int * 'a * 'b -> 'b))
+          (z : 'b)
+          ((ary, start, length):'a slice) =
         let
           val max = start + length
           fun loop (i, z) =
@@ -119,7 +122,10 @@ struct
     fun foldl foldFn z slice =
         foldli (fn (i,x,z) => foldFn (x,z)) z slice
 
-    fun foldri foldFn z ((ary, start, length):'a slice) =
+    fun ('a, 'b) foldri
+          (foldFn : (int * 'a * 'b -> 'b))
+          (z : 'b)
+          ((ary, start, length):'a slice) =
         let
           fun loop (i, z) =
               if i < start then z
@@ -211,7 +217,9 @@ struct
             buf
           end
 
-    fun mapi mapFn ((vec, start, length):'a slice) =
+    fun ('a, 'b) mapi
+        (mapFn : (int * 'a -> 'b))
+        ((vec, start, length):'a slice) =
           let
             val buf = SMLSharp.PrimArray.allocVector length
             val max = start + length

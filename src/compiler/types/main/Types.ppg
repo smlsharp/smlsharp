@@ -139,7 +139,7 @@ struct
 *)
         in
           TermFormat.formatBoundTyvar
-            (fn tyvar => fn {eqKind, tvarKind} => format_eqKind eqKind @ tyvar (* @ id *))
+            (fn tyvar => fn {eqKind, tvarKind} => format_eqKind eqKind @ tyvar (*  @ id *))
             (#btvEnv (unpackEnv env))
             btvId
         end
@@ -193,8 +193,8 @@ struct
   type lambdaDepth = int
   val infiniteDepth = valOf Int.maxInt (* the largest word in SML/NJ *)
   val toplevelDepth = 0
-  fun youngerDepth {contextDepth, tyvarDepth} = contextDepth <= tyvarDepth
-  fun strictlyYoungerDepth {tyvarDepth=tyvarDepth,contextDepth=contextDepth} =
+  fun youngerDepth {contextDepth:int, tyvarDepth:int} = contextDepth <= tyvarDepth
+  fun strictlyYoungerDepth {tyvarDepth=tyvarDepth:int,contextDepth=contextDepth:int} =
       contextDepth < tyvarDepth
 
   (*
@@ -404,7 +404,7 @@ struct
           @format(builtin)
        *)
       (* builtin types *)
-      BUILTIN of BuiltinType.ty
+      BUILTIN of BuiltinTypeNames.bty
 
   and opaqueRep 
     = (*% 
@@ -567,7 +567,7 @@ struct
        path : path,
        iseq : bool,
        arity : int,
-       runtimeTy : BuiltinType.ty,
+       runtimeTy : BuiltinTypeNames.bty,
        conSet : {hasArg:bool} SEnv.map,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -843,7 +843,7 @@ struct
         attributes : Absyn.ffiAttributes
       }
 
-  val univKind = {tvarKind = UNIV, eqKind = A.NONEQ, utvarOpt = NONE}
+  val univKind = {tvarKind = UNIV, eqKind = A.NONEQ, utvarOpt = NONE: utvar option}
 
   val kindedTyvarList =
       ref nil : tvState ref list ref

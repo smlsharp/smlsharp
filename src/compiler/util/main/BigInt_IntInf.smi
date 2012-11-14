@@ -2,7 +2,7 @@ _require "../../../basis.smi"
 
 structure BigInt =
 struct
-  eqtype int (= IntInf_int)
+  eqtype int (= intInf)
   val toLarge : int -> LargeInt.int
   val fromLarge : LargeInt.int -> int
   val toInt : int -> SMLSharp.Int.int

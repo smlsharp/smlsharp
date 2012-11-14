@@ -52,7 +52,7 @@ local
     *)
    Absyn.eq
 
-  fun bug s = Control.Bug ("IDTypes: " ^ s)
+  fun bug s = Control.Bug ("IDCalc: " ^ s)
   val tempVarNamePrefix = "$T_"
 in
 
@@ -411,14 +411,14 @@ in
        if null(opaque) then normalExp else opaqueExp
 
    (*% 
-     @formatter(BuiltinType.ty) BuiltinType.format_ty
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
      @formatter(tvar) format_tvar
     *)
    datatype runtimeTy
      = (*% 
           @format(bty) bty
         *)
-       BUILTINty of BuiltinType.ty
+       BUILTINty of BuiltinTypeNames.bty
      | (*%
           @format(tvar) tvar
        *)
@@ -426,7 +426,7 @@ in
 
    (*%
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
-     @formatter(BuiltinType.ty) BuiltinType.format_ty
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
      @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
      @formatter(TypID.Map.map) formatEnclosedTypEnv
      @formatter(bool) SmlppgUtil.formatBinaryChoice
@@ -443,7 +443,7 @@ in
    (*% @prefix formatWithType_
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
-     @formatter(BuiltinType.ty) BuiltinType.format_ty
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
      @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
      @formatter(TypID.Map.map) formatEnclosedTypEnv
      @formatter(bool) SmlppgUtil.formatBinaryChoice
@@ -460,7 +460,7 @@ in
      @params(mode,name)
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
-     @formatter(BuiltinType.ty) BuiltinType.format_ty
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
      @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
      @formatter(formatSmap) SmlppgUtil.formatSmap
      @formatter(TypID.Map.map) formatEnclosedTypEnv
@@ -522,26 +522,26 @@ in
        *)
       TYRECORD of ty LabelEnv.map
     | (*%
-         @format({typ, args: argTy argTys})
+         @format({tfun, args: argTy argTys})
            1[ argTys:seqList(argTy)("(",",",")")
-              argTys:ifCons()(+1) typ ]
+              argTys:ifCons()(+1) tfun ]
        *)
       (*% @prefix formatWithType_
-         @format({typ, args: argTy argTys})
+         @format({tfun, args: argTy argTys})
            1[ argTys:seqList(argTy)("(",",",")")
-              argTys:ifCons()(+1) typ ]
+              argTys:ifCons()(+1) tfun ]
        *)
       (*% @prefix print_
-         @format({typ, args: argTy argTys})
+         @format({tfun:tfun:tfunOriginalPath, args: argTy argTys})
           L8{
            2[ 
              argTys:seqList(argTy()(,))("(",",",")")
              argTys:ifCons()(+) 
-             typ()(,)
+             tfun
             ]
           }
        *)
-      TYCONSTRUCT of {typ:typInfo, args:ty list}
+      TYCONSTRUCT of {tfun:tfun, args:ty list}
     | (*%
          @format(ty1 tys * ty2)
            1["{" tys(ty1)(",") "}" +1 "->" +d ty2]
@@ -851,7 +851,7 @@ in
          @format(builtin)
        *)
       (* builtin types *)
-      BUILTIN of BuiltinType.ty
+      BUILTIN of BuiltinTypeNames.bty
 
    and idstatus
     = (*%
@@ -899,20 +899,20 @@ in
       (* external variable name *)
       IDEXVAR of {path:path, ty:ty, used:bool ref, loc:loc, version:int option, internalId:varId option}
     | (*%
-         @format({path, id, loc, version, internalId})  "external var to be typed" + path 
+         @format({path, id, loc, version})  "external var to be typed" + path 
        *)
       (*% @prefix formatWithType_
-         @format({path, id, loc, version, internalId})  "external var to be typed" + path 
+         @format({path, id, loc, version})  "external var to be typed" + path 
        *)
       (*% @prefix print_
-         @format({path, id, loc, version, internalId})
+         @format({path, id, loc, version})
           "val" + name
        *)
       (* 2012-1-30 used flag indicate that it is referenced and 
          therefore extern declaration needs to be generated.
        *)
       (* external variable name *)
-      IDEXVAR_TOBETYPED of {path:path, id:varId, loc:loc, version:int option, internalId:varId option}
+      IDEXVAR_TOBETYPED of {path:path, id:varId, loc:loc, version:int option}
     | (*%
          @format({primitive, ty})  "primitive" + primitive
        *)
@@ -1198,17 +1198,17 @@ in
        *)
       ICTYPED of icexp * ty * loc
     | (*%
-         @format({path, icexp, ty, loc,revealKey})
-          1[icexp +1 ":>" ty "("revealKey")" ]
+         @format({icexp, ty, loc,revealKey:key opt})
+          1[icexp +1 ":>" ty "("opt(key)(,)")" ]
        *)
       (*% @prefix formatWithType_
-         @format({path, icexp, ty, loc,revealKey})
-          1[icexp +1 ":>" ty "("revealKey")" ]
+         @format({icexp, ty, loc,revealKey:key opt})
+          1[icexp +1 ":>" ty "("opt(key)(,)")" ]
        *)
       (*% @prefix print_
-         @format({path, icexp, ty, loc,revealKey})
+         @format({icexp, ty, loc,revealKey:key opt})
        *)
-      ICSIGTYPED of {path:path,icexp:icexp,ty:ty,loc:loc,revealKey:revealKey}
+      ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
     | (*%
          @format(funExp * argExp list * loc)
            1[
@@ -1940,9 +1940,11 @@ in
       ICEXPORTEXN of exnInfo * loc
     | (*%
         @format({path, ty} * loc)
+         "extern" +d "var" + path
        *)
       (*% @prefix formatWithType_
         @format({path, ty} * loc)
+         "extern" +d "var" + path + ":" + ty
        *)
       (*% @prefix print_
         @format({path, ty} * loc)
@@ -2089,30 +2091,6 @@ in
          @format(tvar * tvarKind) tvar tvarKind()(,)
        *)
       tvar * tvarKind
-
-  and implTfunkind
-    = (*% 
-         @format({id, iseq, conSpec}) id
-        *)
-      (*% @prefix formatWithType_
-         @format({id, iseq, conSpec}) id
-        *)
-      (*% @prefix print_
-         @format({id, iseq, conSpec})
-        *)
-    {id:typId, iseq:bool, conSpec:(ty option) SEnv.map}
-
-  and typInfo
-    = (*% 
-         @format({path, tfun:tfun}) path
-       *)
-      (*% @prefix formatWithType_
-         @format({path, tfun:tfun}) path "(" tfun ")"
-       *)
-      (*% @prefix print_
-         @format({path, tfun:tfun:tfunOriginalPath}) tfun
-       *)
-      {path: path, tfun: tfun}
 
   and conInfo
     = (*% 
@@ -2284,9 +2262,9 @@ in
       | TYVAR (tvar as {lifted,...}) => 
         if lifted then SOME (LIFTEDty tvar)
         else NONE
-      | TYRECORD _ => SOME (BUILTINty BuiltinType.BOXEDty)
-      | TYCONSTRUCT {typ={path, tfun}, args} => tfunRuntimeTy tfun
-      | TYFUNM _ => SOME (BUILTINty BuiltinType.BOXEDty)
+      | TYRECORD _ => SOME (BUILTINty BuiltinTypeNames.BOXEDty)
+      | TYCONSTRUCT {tfun, args} => tfunRuntimeTy tfun
+      | TYFUNM _ => SOME (BUILTINty BuiltinTypeNames.BOXEDty)
       | TYPOLY _ => NONE
       | INFERREDTY _ => NONE
 
@@ -2389,7 +2367,7 @@ in
     | ICEXEXN ({path, ty}, loc) => loc
     | ICOPRIM (oprimInfo, loc) => loc
     | ICTYPED (icexp, ty, loc) => loc
-    | ICSIGTYPED {path, icexp, ty, loc, revealKey} => loc
+    | ICSIGTYPED {icexp, ty, loc, revealKey} => loc
     | ICAPPM (icexp, icexpList, loc) => loc
     | ICAPPM_NOUNIFY (icexp, icexpList, loc) => loc
     | ICLET (icdeclList, icexpList, loc) => loc

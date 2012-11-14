@@ -6,14 +6,14 @@ _require "../../control/main/Control.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../types/main/BuiltinEnv.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
 _require "../../util/main/utils.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
-_require "../../builtin/main/BuiltinType.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "NameEvalEnv.ppg.smi"
 _require "NameEvalError.ppg.smi"
@@ -41,5 +41,5 @@ struct
   val evalDatatype :
       IDCalc.path -> NameEvalEnv.env
                    -> PatternCalc.datbind list * Loc.loc
-                   -> NameEvalEnv.env * 'a list
+                   -> NameEvalEnv.env * IDCalc.icdecl list
 end

@@ -216,7 +216,7 @@ struct
         (NONE, NONE)
         graph
 
-  fun mergeGraph (graph1, graph2) =
+  fun mergeGraph (graph1:RTL.graph, graph2:RTL.graph) : RTL.graph =
       let
         val graph = I.LabelMap.unionWithi
                       (fn (l,_,_) => raise Bug "mergeGraph: doubled" l)
@@ -434,35 +434,36 @@ struct
       [StartOfIndent 2, Newline] @ I.format_graph graph @ [EndOfIndent]
   end
 
-  fun annotate (graph, ann) = {ann = I.LabelMap.map (fn _ => ann) graph,
-                               graph = graph}
-  fun graph {ann, graph} = graph
-  fun annotations {ann, graph} = ann
-  fun map f {ann, graph} = {ann = I.LabelMap.map f ann, graph = graph}
-  fun fold f z (g as {ann, graph}) =
+  fun 'a annotate (graph :RTL.graph, ann : 'a) = 
+      {ann = I.LabelMap.map (fn _ => ann) graph, graph = graph}
+  fun 'a graph ({ann, graph}:'a annotatedGraph) = graph
+  fun 'a annotations ({ann, graph}: 'a annotatedGraph) = ann
+  fun ('a, 'b) map (f:'a -> 'b) ({ann, graph}:'a annotatedGraph) =
+      {ann = I.LabelMap.map f ann, graph = graph}
+  fun ('a, 'b) fold (f: 'a blockFocus * 'b -> 'b) (z:'b) (g as {ann, graph}) =
       I.LabelMap.foldli
         (fn (label, block, z) => f ({label=label, block=block, graph=g}, z))
         z graph
-  fun rewrite f graph =
+  fun 'a rewrite f (graph:'a annotatedGraph) =
       fold (fn (focus, graph) => mergeGraph (graph, f focus))
            RTL.emptyGraph
            graph
-  fun focusBlock (g as {ann, graph}, label) =
+  fun 'a focusBlock (g as {ann, graph} : 'a annotatedGraph, label) =
       case I.LabelMap.find (graph, label) of
         SOME block => {label=label, block=block, graph=g}
       | NONE => raise Bug "focusBlock: not found" label
-  fun unfocusBlock {label, block, graph} = graph
-  fun annotation {label, block, graph={ann,graph}} =
+  fun 'a unfocusBlock ({label, block, graph}:'a blockFocus) = graph
+  fun 'a annotation ({label, block, graph={ann,graph}}: 'a blockFocus) =
       case I.LabelMap.find (ann, label) of
         SOME x => x
       | NONE => raise Bug "annotation: not found" label
-  fun blockLabel {label, block, graph} = label
-  fun block {label, block, graph} = block
-  fun setAnnotation ({label, block, graph={ann,graph}}, x) =
+  fun 'a blockLabel ({label, block, graph}: 'a blockFocus) = label
+  fun 'a block ({label, block, graph}:'a blockFocus) = block
+  fun 'a setAnnotation ({label, block, graph={ann,graph}}:'a blockFocus, x:'a) =
       {label=label, block=block, graph={ann=I.LabelMap.insert (ann, label, x),
                                         graph=graph}}
 
-  fun foldForward f z {label, block=(first, mid, last), graph} =
+  fun ('a,'b) foldForward f (z:'a) ({label, block=(first, mid, last), graph}:'b blockFocus) =
       let
         val z = f (FIRST first, z)
         val z = foldl (fn (i,z) => f (MIDDLE i, z)) z mid
@@ -471,7 +472,7 @@ struct
         z
       end
 
-  fun foldBackward f z {label, block=(first, mid, last), graph} =
+  fun ('a,'b) foldBackward f (z:'a)  ({label, block=(first, mid, last), graph}:'b blockFocus) =
       let
         val z = f (LAST last, z)
         val z = foldr (fn (i,z) => f (MIDDLE i, z)) z mid
@@ -480,7 +481,9 @@ struct
         z
       end
 
-  fun rewriteForward f (focus as {label, block=(first, mid, last), graph}) =
+  fun 'a rewriteForward
+         (f:node * 'a -> RTL.graph * 'a) 
+         (focus as {label, block=(first, mid, last), graph}) =
       let
         val z = annotation focus
         val (graph, z) = f (FIRST first, z)
@@ -498,7 +501,9 @@ struct
         spliceGraph (graph, g)
       end
 
-  fun rewriteBackward f (focus as {label, block=(first, mid, last), graph}) =
+  fun 'a rewriteBackward
+         (f:node * 'a -> RTL.graph * 'a) 
+         (focus as {label, block=(first, mid, last), graph}) =
       let
         val z = annotation focus
         val (graph, z) = f (LAST last, z)

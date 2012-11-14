@@ -368,7 +368,7 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 	    map' (E, set)
 	  end
 
-    fun app apf =
+    fun app (apf:item -> unit) =
          let fun apply E = ()
                | apply (T{elt,left,right,...}) = 
                    (apply left;apf elt; apply right)

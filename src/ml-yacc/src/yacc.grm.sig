@@ -1,50 +1,53 @@
 signature Mlyacc_TOKENS =
 sig
-type ('a,'b) token
+type pos
+type token
 type svalue
-val BOGUS_VALUE:  'a * 'a -> (svalue,'a) token
-val UNKNOWN: (string) *  'a * 'a -> (svalue,'a) token
-val VALUE:  'a * 'a -> (svalue,'a) token
-val VERBOSE:  'a * 'a -> (svalue,'a) token
-val TYVAR: (string) *  'a * 'a -> (svalue,'a) token
-val TERM:  'a * 'a -> (svalue,'a) token
-val START:  'a * 'a -> (svalue,'a) token
-val SUBST:  'a * 'a -> (svalue,'a) token
-val RPAREN:  'a * 'a -> (svalue,'a) token
-val RBRACE:  'a * 'a -> (svalue,'a) token
-val PROG: (string) *  'a * 'a -> (svalue,'a) token
-val PREFER:  'a * 'a -> (svalue,'a) token
-val PREC_TAG:  'a * 'a -> (svalue,'a) token
-val PREC: (Header.prec) *  'a * 'a -> (svalue,'a) token
-val PERCENT_TOKEN_SIG_INFO:  'a * 'a -> (svalue,'a) token
-val PERCENT_ARG:  'a * 'a -> (svalue,'a) token
-val PERCENT_POS:  'a * 'a -> (svalue,'a) token
-val PERCENT_PURE:  'a * 'a -> (svalue,'a) token
-val PERCENT_EOP:  'a * 'a -> (svalue,'a) token
-val OF:  'a * 'a -> (svalue,'a) token
-val NOSHIFT:  'a * 'a -> (svalue,'a) token
-val NONTERM:  'a * 'a -> (svalue,'a) token
-val NODEFAULT:  'a * 'a -> (svalue,'a) token
-val NAME:  'a * 'a -> (svalue,'a) token
-val LPAREN:  'a * 'a -> (svalue,'a) token
-val LBRACE:  'a * 'a -> (svalue,'a) token
-val KEYWORD:  'a * 'a -> (svalue,'a) token
-val INT: (string) *  'a * 'a -> (svalue,'a) token
-val PERCENT_FOOTER:  'a * 'a -> (svalue,'a) token
-val PERCENT_HEADER:  'a * 'a -> (svalue,'a) token
-val IDDOT: (string) *  'a * 'a -> (svalue,'a) token
-val ID: (string*int) *  'a * 'a -> (svalue,'a) token
-val HEADER: (string) *  'a * 'a -> (svalue,'a) token
-val FOR:  'a * 'a -> (svalue,'a) token
-val EOF:  'a * 'a -> (svalue,'a) token
-val DELIMITER:  'a * 'a -> (svalue,'a) token
-val COMMA:  'a * 'a -> (svalue,'a) token
-val COLON:  'a * 'a -> (svalue,'a) token
-val CHANGE:  'a * 'a -> (svalue,'a) token
-val BAR:  'a * 'a -> (svalue,'a) token
-val BLOCK:  'a * 'a -> (svalue,'a) token
-val ASTERISK:  'a * 'a -> (svalue,'a) token
-val ARROW:  'a * 'a -> (svalue,'a) token
+val BOGUS_VALUE:  pos * pos -> token
+val UNKNOWN: (string) *  pos * pos -> token
+val VALUE:  pos * pos -> token
+val VERBOSE:  pos * pos -> token
+val TYVAR: (string) *  pos * pos -> token
+val TERM:  pos * pos -> token
+val START:  pos * pos -> token
+val SUBST:  pos * pos -> token
+val RPAREN:  pos * pos -> token
+val RBRACE:  pos * pos -> token
+val PROG: (string) *  pos * pos -> token
+val PREFER:  pos * pos -> token
+val PREC_TAG:  pos * pos -> token
+val PREC: (Header.prec) *  pos * pos -> token
+val PERCENT_TOKEN_SIG_INFO:  pos * pos -> token
+val PERCENT_ARG:  pos * pos -> token
+val PERCENT_POS:  pos * pos -> token
+val PERCENT_PURE:  pos * pos -> token
+val PERCENT_EOP:  pos * pos -> token
+val OF:  pos * pos -> token
+val NOSHIFT:  pos * pos -> token
+val NONTERM:  pos * pos -> token
+val NODEFAULT:  pos * pos -> token
+val NAME:  pos * pos -> token
+val LPAREN:  pos * pos -> token
+val LBRACE:  pos * pos -> token
+val KEYWORD:  pos * pos -> token
+val INT: (string) *  pos * pos -> token
+val PERCENT_BLOCKSIZE:  pos * pos -> token
+val PERCENT_DECOMPOSE:  pos * pos -> token
+val PERCENT_FOOTER:  pos * pos -> token
+val PERCENT_HEADER:  pos * pos -> token
+val IDDOT: (string) *  pos * pos -> token
+val ID: (string*int) *  pos * pos -> token
+val HEADER: (string) *  pos * pos -> token
+val FOR:  pos * pos -> token
+val EOF:  pos * pos -> token
+val DELIMITER:  pos * pos -> token
+val COMMA:  pos * pos -> token
+val COLON:  pos * pos -> token
+val CHANGE:  pos * pos -> token
+val BAR:  pos * pos -> token
+val BLOCK:  pos * pos -> token
+val ASTERISK:  pos * pos -> token
+val ARROW:  pos * pos -> token
 end
 signature Mlyacc_LRVALS=
 sig

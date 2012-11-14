@@ -3,12 +3,12 @@ _require "SQLUtils.smi"
 
 structure SQL =
 struct
-  type 'a server = 'a SMLSharp.SQL.server
+  type 'a server = 'a SMLSharp_SQL_Prim.server
+  type ('a,'b) value = ('a,'b) SMLSharp_SQL_Prim.value
   type 'a conn = 'a SMLSharp_SQL_Prim.conn
   type ('a,'b) db = ('a,'b) SMLSharp_SQL_Prim.db
   type ('a,'b) table = ('a,'b) SMLSharp_SQL_Prim.table
   type ('a,'b) row = ('a,'b) SMLSharp_SQL_Prim.row
-  type ('a,'b) value = ('a,'b) SMLSharp_SQL_Prim.value
   type 'a query = 'a SMLSharp_SQL_Prim.query
   type command = SMLSharp_SQL_Prim.command
   type 'a rel = 'a SMLSharp_SQL_Prim.rel

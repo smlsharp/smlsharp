@@ -269,6 +269,7 @@ struct
                             (message, region)
                       | toString (EQ.Error exn) =
                         raise Fail ("BUG: unknown exception:" ^ exnMessage exn)
+                      | toString _ = raise Fail "BUG: impossible exception"
                     val messages = map toString errors
                   in raise Error messages end
 
@@ -292,7 +293,9 @@ struct
             foldl
             (fn ((SOME anchor, code), text) =>
                 let val (_, newText) = U.replaceString anchor code text
-                in newText end)
+                in newText end
+              | _ => raise Fail "BUG: NONE of anchor text"
+            )
             text
             customPositionCodes
         end

@@ -47,25 +47,6 @@ see the COPYRIGHT NOTICE for details and restrictions.
 	05/18/95 (jhr) changed Vector.vector to Vector.fromList
 *
  * $Log: lexgen.sml,v $
- * Revision 1.6  2006/12/09 11:25:51  ohori
- * ""
- *
- * Revision 1.5  2006/12/09 11:17:58  ohori
- * *** empty log message ***
- *
- * Revision 1.4  2005/09/28 05:22:20  kiyoshiy
- * updated.
- *
- * Revision 1.3  2005/09/07 12:48:19  kiyoshiy
- * * improved error handling.
- * * updated benchmark program.
- *
- * Revision 1.2  2005/09/06 12:58:01  kiyoshiy
- * updated.
- *
- * Revision 1.1  2005/09/05 13:28:52  kiyoshiy
- * added.
- *
  * Revision 1.6  1996/10/03  14:57:30  jhr
  * Qualified use of Int.quot, since it is no longer available at top-level; improved
  * the code that prints the tables.
@@ -1316,19 +1297,9 @@ fun lexGen(infile) =
     end
 end
 
-structure Main =
+structure Main (*: BMARK*) =
   struct
-(*
     val s = OS.FileSys.getDir()
-*)
-
-    val s = "."
-(*
-    val s = "../benchmarks/lexgen"
-    val s = "../../../../benchmark/benchmarks/lexgen"
-*)
     fun doit () = LexGen.lexGen (s^"/DATA/ml.lex")
-    fun testit _ = LexGen.lexGen (s^"/DATA/ml.lex")
-  end; (* Main *)
-
-
+    fun testit _ = LexGen.lexGen (s^"DATA/ml.lex")
+  end (* Main *)

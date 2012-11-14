@@ -1,0 +1,166 @@
+_require "basis.smi"
+_require "base.sig"
+_require "utils.smi"
+_require "core.smi"
+_require "coreutils.smi"
+_require "graph.smi"
+_require "look.smi"
+_require "lalr.smi"
+_require "utils.sig"
+_require "sigs.sml"
+
+functor mkMakeLrTable (
+  A : sig
+    structure IntGrammar : sig
+      structure Grammar : sig
+        datatype term = T of int
+        datatype nonterm = NT of int
+        datatype symbol = TERM of term | NONTERM of nonterm
+        datatype grammar =
+                 GRAMMAR of
+                 {rules: {lhs : nonterm, rhs : symbol list,
+                          precedence : int option, rulenum : int} list,
+                  terms: int,
+                  nonterms: int,
+                  start : nonterm,
+                  eop : term list,
+                  noshift : term list,
+                  precedence : term -> int option,
+                  termToString : term -> string,
+                  nontermToString : nonterm -> string}
+      end
+      structure SymbolAssoc : sig
+        type 'a table
+        type key
+        val size : 'a table -> int
+        val empty : 'a table
+        val exists : key * 'a table -> bool
+        val find : key * 'a table -> 'a option
+        val insert : (key * 'a) * 'a table -> 'a table
+        val make_table : (key * 'a) list -> 'a table
+        val make_list : 'a table -> (key * 'a) list
+        val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+      end
+      structure NontermAssoc : sig
+        type 'a table
+        type key
+        val size : 'a table -> int
+        val empty : 'a table
+        val exists : key * 'a table -> bool
+        val find : key * 'a table -> 'a option
+        val insert : (key * 'a) * 'a table -> 'a table
+        val make_table : (key * 'a) list -> 'a table
+        val make_list : 'a table -> (key * 'a) list
+        val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+      end
+      sharing type SymbolAssoc.key = Grammar.symbol
+      sharing type NontermAssoc.key = Grammar.nonterm
+      datatype rule = RULE of
+                      {lhs : Grammar.nonterm,
+                       rhs : Grammar.symbol list,
+                       num : int,
+                       rulenum : int,
+                       precedence : int option}
+      val gtTerm : Grammar.term * Grammar.term -> bool
+      val eqTerm : Grammar.term * Grammar.term -> bool
+      val gtNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+      val eqNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+      val gtSymbol : Grammar.symbol * Grammar.symbol -> bool
+      val eqSymbol : Grammar.symbol * Grammar.symbol -> bool
+      val DEBUG : bool
+      val prRule : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                   (string -> 'b) -> rule -> unit
+      val prGrammar : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                      (string -> unit) -> Grammar.grammar -> unit
+    end
+    structure LrTable : sig
+      datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+      datatype state = STATE of int
+      datatype term = T of int
+      datatype nonterm = NT of int
+      datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+      type table
+      val numStates : table -> int
+      val numRules : table -> int
+      val describeActions : table -> state -> (term,action) pairlist * action
+      val describeGoto : table -> state -> (nonterm,state) pairlist
+      val action : table -> state * term -> action
+      val goto : table -> state * nonterm -> state
+      val initialState : table -> state
+      exception Goto of state * nonterm
+      val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                       gotos : (nonterm,state) pairlist array,
+                       numStates : int, numRules : int,
+                       initialState : state} -> table
+    end
+    sharing type LrTable.term = IntGrammar.Grammar.term
+    sharing type LrTable.nonterm = IntGrammar.Grammar.nonterm
+  end
+) =
+struct
+  structure Grammar =
+  struct
+    datatype term = datatype A.IntGrammar.Grammar.term
+    datatype nonterm = datatype A.IntGrammar.Grammar.nonterm
+    datatype symbol = datatype A.IntGrammar.Grammar.symbol
+    datatype grammar = datatype A.IntGrammar.Grammar.grammar
+  end
+  structure Errs =
+  struct
+    structure LrTable =
+    struct
+      datatype pairlist = datatype A.LrTable.pairlist
+      datatype state = datatype A.LrTable.state
+      datatype term = datatype A.LrTable.term
+      datatype nonterm = datatype A.LrTable.nonterm
+      datatype action = datatype A.LrTable.action
+      type table = A.LrTable.table
+      val numStates : table -> int
+      val numRules : table -> int
+      val describeActions : table -> state -> (term,action) pairlist * action
+      val describeGoto : table -> state -> (nonterm,state) pairlist
+      val action : table -> state * term -> action
+      val goto : table -> state * nonterm -> state
+      val initialState : table -> state
+      exception Goto = A.LrTable.Goto
+      val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                       gotos : (nonterm,state) pairlist array,
+                       numStates : int, numRules : int,
+                       initialState : state} -> table
+    end
+    datatype err = RR of LrTable.term * LrTable.state * int * int
+                 | SR of LrTable.term * LrTable.state * int
+                 | NS of LrTable.term * int  
+                 | NOT_REDUCED of int
+                 | START of int
+    val summary : err list -> {rr : int, sr: int,
+                               not_reduced : int, start : int,nonshift : int}
+    val printSummary : (string -> unit) -> err list -> unit
+  end
+  structure LrTable =
+  struct
+    datatype pairlist = datatype A.LrTable.pairlist
+    datatype state = datatype A.LrTable.state
+    datatype term = datatype A.LrTable.term
+    datatype nonterm = datatype A.LrTable.nonterm
+    datatype action = datatype A.LrTable.action
+    type table = A.LrTable.table
+    val numStates : table -> int
+    val numRules : table -> int
+    val describeActions : table -> state -> (term,action) pairlist * action
+    val describeGoto : table -> state -> (nonterm,state) pairlist
+    val action : table -> state * term -> action
+    val goto : table -> state * nonterm -> state
+    val initialState : table -> state
+    exception Goto = A.LrTable.Goto
+    val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                     gotos : (nonterm,state) pairlist array,
+                     numStates : int, numRules : int,
+                     initialState : state} -> table
+  end
+  val mkTable : Grammar.grammar * bool ->
+                LrTable.table *
+                (LrTable.state -> Errs.err list) *
+                ((string -> unit) -> LrTable.state -> unit) *
+                Errs.err list
+end

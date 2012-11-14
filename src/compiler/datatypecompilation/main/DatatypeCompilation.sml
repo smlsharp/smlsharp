@@ -13,9 +13,10 @@ end =
 struct
 
   structure RC = RecordCalc
+  structure TC = TypedCalc
   structure TL = TypedLambda
   structure CT = ConstantTerm
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
   structure T = Types
 
   fun mapi f l =
@@ -35,8 +36,8 @@ struct
 
   fun exnConTy exnCon =
       case exnCon of
-        RC.EXN {ty,...} => ty
-      | RC.EXEXN {ty,...} => ty
+        TC.EXN {ty,...} => ty
+      | TC.EXEXN {ty,...} => ty
 
   fun PolyTy f =
       let
@@ -48,13 +49,13 @@ struct
       end
 
   fun RefTy elemTy =
-      T.CONSTRUCTty {tyCon = BE.lookupTyCon BuiltinName.refTyName,
+      T.CONSTRUCTty {tyCon = BT.refTyCon,
                      args = [elemTy]}
 
   fun BoolTy () =
-      T.CONSTRUCTty {tyCon = BE.lookupTyCon BuiltinName.boolTyName, args = []}
+      T.CONSTRUCTty {tyCon = BT.boolTyCon, args = []}
 
-  val contagTy = BE.WORDty 
+  val contagTy = BT.wordTy 
 
   fun ConstTermTag const =
       CT.WORD (Word32.fromInt const)
@@ -323,20 +324,20 @@ struct
       end
 
   fun TagConst const =
-      CONST (ConstTermTag const, BE.WORDty)
+      CONST (ConstTermTag const, BT.wordTy)
 
   fun NullConst () =
-      CONST (CT.NULLBOXED, BE.BOXEDty)
+      CONST (CT.NULLBOXED, BT.boxedTy)
 
   fun IsNull term =
       PRIMAPPLY ({primitive = BuiltinPrimitive.IdentityEqual,
-                  ty = T.FUNMty ([BE.BOXEDty, BE.BOXEDty], BoolTy ())},
+                  ty = T.FUNMty ([BT.boxedTy, BT.boxedTy], BoolTy ())},
                  nil,
-                 [CAST (BE.BOXEDty, term), NullConst ()])
+                 [CAST (BT.boxedTy, term), NullConst ()])
 
   fun ExnTagEqual (exp1, exp2) =
       PRIMAPPLY ({primitive = BuiltinPrimitive.IdentityEqual,
-                  ty = T.FUNMty ([BE.EXNTAGty, BE.EXNTAGty], BoolTy ())},
+                  ty = T.FUNMty ([BT.exntagTy, BT.exntagTy], BoolTy ())},
                  nil,
                  [exp1, exp2])
 
@@ -434,14 +435,14 @@ struct
 
   fun checkRepresentation (runtimeTy, layout) =
       case layout of
-        LAYOUT_TAGGED (TAGGED_RECORD _) => runtimeTy = BuiltinType.BOXEDty
-      | LAYOUT_TAGGED (TAGGED_TAGONLY _) => runtimeTy = BuiltinType.WORDty
-      | LAYOUT_TAGGED (TAGGED_OR_NULL _) => runtimeTy = BuiltinType.BOXEDty
-      | LAYOUT_BOOL _ => runtimeTy = BuiltinType.WORDty
-      | LAYOUT_UNIT => runtimeTy = BuiltinType.WORDty
-      | LAYOUT_ARGONLY => runtimeTy = BuiltinType.BOXEDty
-      | LAYOUT_ARG_OR_NULL => runtimeTy = BuiltinType.BOXEDty
-      | LAYOUT_REF => runtimeTy = BuiltinType.BOXEDty
+        LAYOUT_TAGGED (TAGGED_RECORD _) => runtimeTy = BuiltinTypeNames.BOXEDty
+      | LAYOUT_TAGGED (TAGGED_TAGONLY _) => runtimeTy = BuiltinTypeNames.WORDty
+      | LAYOUT_TAGGED (TAGGED_OR_NULL _) => runtimeTy = BuiltinTypeNames.BOXEDty
+      | LAYOUT_BOOL _ => runtimeTy = BuiltinTypeNames.WORDty
+      | LAYOUT_UNIT => runtimeTy = BuiltinTypeNames.WORDty
+      | LAYOUT_ARGONLY => runtimeTy = BuiltinTypeNames.BOXEDty
+      | LAYOUT_ARG_OR_NULL => runtimeTy = BuiltinTypeNames.BOXEDty
+      | LAYOUT_REF => runtimeTy = BuiltinTypeNames.BOXEDty
 
   fun countBool l =
       let
@@ -495,13 +496,13 @@ struct
             case map #hasArg (SEnv.listItems conSet) of
               nil => raise Control.Bug "datatypeLayout: no variant"
             | [true] =>
-              if TypID.eq (id, #id (BE.lookupTyCon BuiltinName.refTyName))
+              if TypID.eq (id, #id BT.refTyCon)
               then LAYOUT_REF
               else LAYOUT_ARGONLY
             | [false] => LAYOUT_UNIT
             | [false, false] =>
               (
-                if TypID.eq (id, #id (BE.lookupTyCon BuiltinName.boolTyName))
+                if TypID.eq (id, #id BT.boolTyCon)
                 then LAYOUT_BOOL {falseName = "false"}
                 else case SEnv.firsti conSet of
                        SOME (name, _) => LAYOUT_BOOL {falseName = name}
@@ -767,38 +768,38 @@ struct
   val emptyEnv =
       {exnMap = ExnID.Map.empty, exExnMap = PathEnv.empty} : env
 
-  fun newLocalExn (env:env, {path, ty, id}:RC.exnInfo) =
+  fun newLocalExn (env:env, {path, ty, id}:T.exnInfo) =
       let
         val vid = VarID.generate ()
-        val varInfo = {path = path, ty = BE.EXNTAGty, id = vid} : TL.varInfo
+        val varInfo = {path = path, ty = BT.exntagTy, id = vid} : TL.varInfo
       in
         ({exnMap = ExnID.Map.insert (#exnMap env, id, varInfo),
           exExnMap = #exExnMap env} : env,
          varInfo)
       end
 
-  fun addExternExn (env:env, {path, ty}:RC.exExnInfo) =
+  fun addExternExn (env:env, {path, ty}:T.exExnInfo) =
       let
-        val exVarInfo = {path = path, ty = BE.EXNTAGty} : TL.exVarInfo
+        val exVarInfo = {path = path, ty = BT.exntagTy} : TL.exVarInfo
       in
         ({exnMap = #exnMap env,
           exExnMap = PathEnv.insert (#exExnMap env, path, exVarInfo)} : env,
          exVarInfo)
       end
 
-  fun findLocalExnTag ({exnMap, ...}:env, {id, ...}:RC.exnInfo) =
+  fun findLocalExnTag ({exnMap, ...}:env, {id, ...}:T.exnInfo) =
       ExnID.Map.find (exnMap, id)
 
-  fun findExternExnTag ({exExnMap, ...}:env, {path,...}:RC.exExnInfo) =
+  fun findExternExnTag ({exExnMap, ...}:env, {path,...}:T.exExnInfo) =
       PathEnv.find (exExnMap, path)
 
   fun findExnTag (env, exnCon) =
       case exnCon of
-        RC.EXN e =>
+        TC.EXN e =>
         (case findLocalExnTag (env, e) of
            SOME var => SOME (VAR var)
          | NONE => NONE)
-      | RC.EXEXN e =>
+      | TC.EXEXN e =>
         (case findExternExnTag (env, e) of
            SOME var => SOME (EXVAR var)
          | NONE => NONE)
@@ -806,13 +807,13 @@ struct
   fun allocExnTag path =
       let
         val name = String.concatWith "." path
-        val nameExp = CONST (CT.STRING name, BE.STRINGty)
+        val nameExp = CONST (CT.STRING name, BT.stringTy)
       in
-        CAST (BE.EXNTAGty, RefAlloc nameExp)
+        CAST (BT.exntagTy, RefAlloc nameExp)
       end
 
   fun extractExnTagName tagTerm =
-      RefDeref (CAST (RefTy BE.STRINGty, tagTerm))
+      RefDeref (CAST (RefTy BT.stringTy, tagTerm))
 
   fun composeExn env (exnCon, argExpOpt) =
       let
@@ -828,15 +829,15 @@ struct
             | NONE => raise Control.Bug "composeExn: tag not found"
       in
         case argTerm of
-          NONE => CAST (BE.EXNty, TUPLE [tagTerm])
-        | SOME term => CAST (BE.EXNty, TUPLE [tagTerm, term])
+          NONE => CAST (BT.exnTy, TUPLE [tagTerm])
+        | SOME term => CAST (BT.exnTy, TUPLE [tagTerm, term])
       end
 
   fun extractExnTag exnTerm =
-      SELECT ("1", CAST (tupleTy [BE.EXNTAGty], exnTerm))
+      SELECT ("1", CAST (tupleTy [BT.exntagTy], exnTerm))
 
   fun decomposeExn exnTerm expectTy =
-      SELECT ("2", CAST (tupleTy [BE.EXNTAGty, expectTy], exnTerm))
+      SELECT ("2", CAST (tupleTy [BT.exntagTy, expectTy], exnTerm))
 
   fun switchExn env (exnTerm, ruleList, defaultExp, loc) =
       let
@@ -938,7 +939,7 @@ struct
         in
           letFn (unpack (term, loc))
         end
-      | RC.RCDATACONSTRUCT {con, instTyList, argExpOpt, loc} =>
+      | RC.RCDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt, loc} =>
         let
           val argExpOpt = Option.map (compileExp env) argExpOpt
           val (letFn, argExpOpt) = splitLetOpt argExpOpt
@@ -1145,8 +1146,8 @@ struct
              loc = loc}])
       | RC.RCVALPOLYREC (btvEnv, bindList, loc) =>
         raise Control.Bug "compileExp: RCVALPOLYREC"
-      | RC.RCEXPORTVAR (varInfo, loc) =>
-        (env, [TL.TLEXPORTVAR (varInfo, loc)])
+      | RC.RCEXPORTVAR {internalVar, externalVar, loc} =>
+        (env, [TL.TLEXPORTVAR ({path = #path externalVar, ty= #ty externalVar, id = #id internalVar},loc)])
       | RC.RCEXTERNVAR (exVarInfo, loc) =>
         (env, [TL.TLEXTERNVAR (exVarInfo, loc)])
       | RC.RCEXD (exnBinds, loc) =>

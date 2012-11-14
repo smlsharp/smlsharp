@@ -1,0 +1,269 @@
+_require "basis.smi"
+_require "base.sig"
+_require "lrtable.smi"
+_require "utils.sig"
+_require "sigs.sml"
+_require "hdr.smi"
+_require "yacc.grm.sig"
+
+functor MlyaccLrValsFun(
+  A : sig
+    structure Hdr : sig
+      type pos = int
+      val lineno : pos ref
+      val text : string list ref
+      type inputSource
+      val newSource : string * TextIO.instream * TextIO.outstream -> inputSource
+      val error : inputSource -> pos -> string -> unit
+      val warn : inputSource -> pos -> string -> unit
+      val errorOccurred : inputSource -> unit -> bool
+      datatype symbol = SYMBOL of string * pos
+      val symbolName : symbol -> string
+      val symbolPos : symbol -> pos
+      val symbolMake : string * int -> symbol
+      type ty
+      val tyName : ty -> string
+      val tyMake : string -> ty
+      datatype prec = LEFT | RIGHT | NONASSOC
+      datatype control = NODEFAULT | VERBOSE | PARSER_NAME of symbol
+                       | FUNCTOR of string  | START_SYM of symbol
+                       | NSHIFT of symbol list | POS of string | PURE
+                       | PARSE_ARG of string * string
+      datatype rule = RULE of {lhs : symbol, rhs : symbol list,
+                               code : string, prec : symbol option}
+      datatype declData = DECL of {eop : symbol list,
+                                   keyword : symbol list,
+                                   nonterm : (symbol * ty option) list option,
+                                   prec : (prec * (symbol list)) list,
+                                   change: (symbol list * symbol list) list,
+                                   term : (symbol * ty option) list option,
+                                   control : control list,
+                                   value : (symbol * string) list}
+      val join_decls : declData * declData * inputSource * pos -> declData
+      type parseResult
+      val getResult : parseResult -> string * declData * rule list
+    end
+    where type prec = Header.prec
+    structure Token : sig
+      structure LrTable : sig
+        datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+        datatype state = STATE of int
+        datatype term = T of int
+        datatype nonterm = NT of int
+        datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+        type table
+        val numStates : table -> int
+        val numRules : table -> int
+        val describeActions : table -> state -> (term,action) pairlist * action
+        val describeGoto : table -> state -> (nonterm,state) pairlist
+        val action : table -> state * term -> action
+        val goto : table -> state * nonterm -> state
+        val initialState : table -> state
+        exception Goto of state * nonterm
+        val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                         gotos : (nonterm,state) pairlist array,
+                         numStates : int, numRules : int,
+                         initialState : state} -> table
+      end
+      datatype ('a,'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
+      val sameToken : ('a,'b) token * ('a,'b) token -> bool
+    end
+  end
+) =
+struct
+  structure ParserData =
+  struct
+    structure Header =
+    struct
+      type pos = A.Hdr.pos
+      val lineno : pos ref
+      val text : string list ref
+      type inputSource = A.Hdr.inputSource
+      val newSource : string * TextIO.instream * TextIO.outstream -> inputSource
+      val error : inputSource -> pos -> string -> unit
+      val warn : inputSource -> pos -> string -> unit
+      val errorOccurred : inputSource -> unit -> bool
+      datatype symbol = datatype A.Hdr.symbol
+      val symbolName : symbol -> string
+      val symbolPos : symbol -> pos
+      val symbolMake : string * int -> symbol
+      type ty = A.Hdr.ty
+      val tyName : ty -> string
+      val tyMake : string -> ty
+      datatype prec = datatype A.Hdr.prec
+      datatype control = datatype A.Hdr.control
+      datatype rule = datatype A.Hdr.rule
+      datatype declData = datatype A.Hdr.declData
+      val join_decls : declData * declData * inputSource * pos -> declData
+      type parseResult = A.Hdr.parseResult
+      val getResult : parseResult -> string * declData * rule list
+    end
+    structure LrTable =
+    struct
+      datatype pairlist = datatype A.Token.LrTable.pairlist
+      datatype state = datatype A.Token.LrTable.state
+      datatype term = datatype A.Token.LrTable.term
+      datatype nonterm = datatype A.Token.LrTable.nonterm
+      datatype action = datatype A.Token.LrTable.action
+      type table = A.Token.LrTable.table
+      val numStates : table -> int
+      val numRules : table -> int
+      val describeActions : table -> state -> (term,action) pairlist * action
+      val describeGoto : table -> state -> (nonterm,state) pairlist
+      val action : table -> state * term -> action
+      val goto : table -> state * nonterm -> state
+      val initialState : table -> state
+      exception Goto = A.Token.LrTable.Goto
+      val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                       gotos : (nonterm,state) pairlist array,
+                       numStates : int, numRules : int,
+                       initialState : state} -> table
+    end
+    structure Token =
+    struct
+      structure LrTable =
+      struct
+        datatype pairlist = datatype A.Token.LrTable.pairlist
+        datatype state = datatype A.Token.LrTable.state
+        datatype term = datatype A.Token.LrTable.term
+        datatype nonterm = datatype A.Token.LrTable.nonterm
+        datatype action = datatype A.Token.LrTable.action
+        type table = A.Token.LrTable.table
+        val numStates : table -> int
+        val numRules : table -> int
+        val describeActions : table -> state -> (term,action) pairlist * action
+        val describeGoto : table -> state -> (nonterm,state) pairlist
+        val action : table -> state * term -> action
+        val goto : table -> state * nonterm -> state
+        val initialState : table -> state
+        exception Goto = A.Token.LrTable.Goto
+        val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                         gotos : (nonterm,state) pairlist array,
+                         numStates : int, numRules : int,
+                         initialState : state} -> table
+      end
+      datatype token = datatype A.Token.token
+      val sameToken : ('a,'b) token * ('a,'b) token -> bool
+    end
+    val table : LrTable.table
+    type pos = int
+    type arg = A.Hdr.inputSource
+    structure MlyValue =
+    struct
+      datatype svalue =
+          BEGIN of unit -> string * A.Hdr.declData * A.Hdr.rule list
+        | CHANGE_DEC of unit -> A.Hdr.symbol list * A.Hdr.symbol list
+        | CHANGE_DECL of unit -> (A.Hdr.symbol list * A.Hdr.symbol list) list
+        | CONSTR_LIST of unit -> (A.Hdr.symbol * A.Hdr.ty option) list
+        | G_RULE of unit -> A.Hdr.rule list
+        | G_RULE_LIST of unit -> A.Hdr.rule list
+        | G_RULE_PREC of unit -> A.Hdr.symbol option
+        | HEADER of unit -> string
+        | ID of unit -> string * int
+        | IDDOT of unit -> string
+        | ID_LIST of unit -> A.Hdr.symbol list
+        | INT of unit -> string
+        | LABEL of unit -> string
+        | MPC_DECL of unit -> A.Hdr.declData
+        | MPC_DECLS of unit -> A.Hdr.declData
+        | PREC of unit -> A.Hdr.prec
+        | PROG of unit -> string
+        | QUAL_ID of unit -> string
+        | RECORD_LIST of unit -> string
+        | RHS_LIST of unit -> {code:string, prec:A.Hdr.symbol option,
+                               rhs:A.Hdr.symbol list} list
+        | SUBST_DEC of unit -> A.Hdr.symbol list * A.Hdr.symbol list
+        | SUBST_DECL of unit -> (A.Hdr.symbol list * A.Hdr.symbol list) list
+        | TY of unit -> string
+        | TYVAR of unit -> string
+        | UNKNOWN of unit -> string
+        | VOID
+        | ntVOID of unit -> unit
+    end
+    type svalue = MlyValue.svalue
+    type result = string * A.Hdr.declData * A.Hdr.rule list
+    structure EC =
+    struct
+      datatype pairlist = datatype LrTable.pairlist
+      datatype state = datatype LrTable.state
+      datatype term = datatype LrTable.term
+      datatype nonterm = datatype LrTable.nonterm
+      datatype action = datatype LrTable.action
+      type table = LrTable.table
+      val numStates : table -> int
+      val numRules : table -> int
+      val describeActions : table -> state -> (term,action) pairlist * action
+      val describeGoto : table -> state -> (nonterm,state) pairlist
+      val action : table -> state * term -> action
+      val goto : table -> state * nonterm -> state
+      val initialState : table -> state
+      exception Goto = A.Token.LrTable.Goto
+      val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                       gotos : (nonterm,state) pairlist array,
+                       numStates : int, numRules : int,
+                       initialState : state} -> table
+      val is_keyword : 'a -> bool
+      val preferred_change : (LrTable.term list * LrTable.term list) list
+      val noShift : LrTable.term -> bool
+      val showTerminal : LrTable.term -> string
+      val errtermvalue : 'a -> svalue
+      val terms : LrTable.term list
+    end
+    structure Actions =
+    struct
+      exception mlyAction of int
+      val actions
+          : int * pos * ('a * (svalue * pos * pos)) list * arg ->
+            LrTable.nonterm * (svalue * pos * pos) *
+            ('a * (svalue * pos * pos)) list
+      val void : svalue
+      val extract : svalue -> string * A.Hdr.declData * A.Hdr.rule list
+    end
+  end
+  structure Tokens =
+  struct
+  type svalue = ParserData.svalue
+  type ('a,'b) token = ('a,'b) ParserData.Token.token
+  val BOGUS_VALUE : 'a * 'a -> (svalue,'a) token
+  val UNKNOWN : string * 'a * 'a -> (svalue,'a) token
+  val VALUE : 'a * 'a -> (svalue,'a) token
+  val VERBOSE : 'a * 'a -> (svalue,'a) token
+  val TYVAR : string * 'a * 'a -> (svalue,'a) token
+  val TERM : 'a * 'a -> (svalue,'a) token
+  val START : 'a * 'a -> (svalue,'a) token
+  val SUBST : 'a * 'a -> (svalue,'a) token
+  val RPAREN : 'a * 'a -> (svalue,'a) token
+  val RBRACE : 'a * 'a -> (svalue,'a) token
+  val PROG : string * 'a * 'a -> (svalue,'a) token
+  val PREFER : 'a * 'a -> (svalue,'a) token
+  val PREC_TAG : 'a * 'a -> (svalue,'a) token
+  val PREC : Header.prec * 'a * 'a -> (svalue,'a) token
+  val PERCENT_ARG : 'a * 'a -> (svalue,'a) token
+  val PERCENT_POS : 'a * 'a -> (svalue,'a) token
+  val PERCENT_PURE : 'a * 'a -> (svalue,'a) token
+  val PERCENT_EOP : 'a * 'a -> (svalue,'a) token
+  val OF : 'a * 'a -> (svalue,'a) token
+  val NOSHIFT : 'a * 'a -> (svalue,'a) token
+  val NONTERM : 'a * 'a -> (svalue,'a) token
+  val NODEFAULT : 'a * 'a -> (svalue,'a) token
+  val NAME : 'a * 'a -> (svalue,'a) token
+  val LPAREN : 'a * 'a -> (svalue,'a) token
+  val LBRACE : 'a * 'a -> (svalue,'a) token
+  val KEYWORD : 'a * 'a -> (svalue,'a) token
+  val INT : string * 'a * 'a -> (svalue,'a) token
+  val PERCENT_HEADER : 'a * 'a -> (svalue,'a) token
+  val IDDOT : string * 'a * 'a -> (svalue,'a) token
+  val ID : (string * int) * 'a * 'a -> (svalue,'a) token
+  val HEADER : string * 'a * 'a -> (svalue,'a) token
+  val FOR : 'a * 'a -> (svalue,'a) token
+  val EOF : 'a * 'a -> (svalue,'a) token
+  val DELIMITER : 'a * 'a -> (svalue,'a) token
+  val COMMA : 'a * 'a -> (svalue,'a) token
+  val COLON : 'a * 'a -> (svalue,'a) token
+  val CHANGE : 'a * 'a -> (svalue,'a) token
+  val BAR : 'a * 'a -> (svalue,'a) token
+  val BLOCK : 'a * 'a -> (svalue,'a) token
+  val ASTERISK : 'a * 'a -> (svalue,'a) token
+  val ARROW : 'a * 'a -> (svalue,'a) token
+ end
+end

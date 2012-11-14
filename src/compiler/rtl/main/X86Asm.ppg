@@ -62,6 +62,8 @@ struct
   (* There may be large number of elements in "lines". To avoid to exceed
    * the limit of the frame stack, this function should be written in
    * tail-recursive style. *)
+  (* 2012-9-30 This is not enough: this is the cause of huge memory usage
+     and the long compile time in some files such as iml.grm.sml *)
   fun formatLines (formatItem,indent,break) lines =
       foldl (fn (h, z) => indent @ formatItem h @ break @ z)
             nil

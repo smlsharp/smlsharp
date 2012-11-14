@@ -4,7 +4,7 @@ _require "../../../compiler-utils/env/main/LabelEnv.smi"
 
 _require "../../control/main/Control.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../types/main/BuiltinEnv.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../constantterm/main/ConstantTerm.ppg.smi"
 _require "ANNOTATEDTYPESUTILS.sig"

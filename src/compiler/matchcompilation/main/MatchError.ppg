@@ -13,7 +13,7 @@ local
   structure C = Control
   structure A = Absyn
   structure MD = MatchData
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
   structure T = Types
   structure UE = UserError
   fun bug s = Control.Bug ("MatchData: " ^ s)
@@ -56,12 +56,10 @@ in
 
   fun raiseBindFailExp resultTy loc = 
       let
-        val bindExn = case BE.findExn BuiltinName.bindExnName of
-                        SOME con => con
-                      | NONE => raise bug "bindExn not found"
+        val bindExn = BT.BindExExn
       in                                 
         RC.RCRAISE
-          {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN bindExn,
+          {exp=RC.RCEXNCONSTRUCT{exn=TC.EXEXN bindExn,
                                  instTyList=nil, 
                                  argExpOpt=NONE, 
                                  loc=loc}, 
@@ -71,12 +69,10 @@ in
 
   fun raiseMatchFailExp resultTy loc = 
       let
-        val matchExn = case BE.findExn BuiltinName.matchExnName of
-                         SOME con => con
-                       | NONE => raise bug "bindExn not found"
+        val matchExn = BT.MatchExExn
       in                                 
         RC.RCRAISE
-          {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN matchExn, 
+          {exp=RC.RCEXNCONSTRUCT{exn=TC.EXEXN matchExn, 
                                  instTyList=nil, 
                                  argExpOpt=NONE, 
                                  loc=loc}, 
@@ -96,25 +92,25 @@ in
                       {ptrExp =
                          RC.RCGLOBALSYMBOL {name = "sml_matchcomp_bug",
                                             kind = A.ForeignCodeSymbol,
-                                            ty = BE.PTRty,
+                                            ty = BT.ptrTy,
                                             loc = loc},
                        ffiTy = TC.FFIFUNTY (NONE, nil, nil, loc)},
-                    T.FUNMty ([BE.UNITty], BE.UNITty),
+                    T.FUNMty ([BT.unitTy], BT.unitTy),
                     loc),
-               funTy = T.FUNMty ([BE.UNITty], BE.UNITty),
+               funTy = T.FUNMty ([BT.unitTy], BT.unitTy),
                argExpList = [RC.RCCONSTANT {const = A.UNITCONST loc,
-                                            ty = BE.UNITty,
+                                            ty = BT.unitTy,
                                             loc = loc}],
                loc = loc},
             RC.RCRAISE
               {exp = RC.RCEXNCONSTRUCT
-                       {exn = RC.EXEXN (BE.lookupExn BuiltinName.matchExnName),
+                       {exn = TC.EXEXN BT.MatchExExn,
                         instTyList = nil, 
                         argExpOpt = NONE,
                         loc = loc},
                ty = resultTy,
                loc = loc}],
-         expTyList = [BE.UNITty, resultTy],
+         expTyList = [BT.unitTy, resultTy],
          loc = loc}
 
   datatype flagKind = Redundant | NotExhaustive

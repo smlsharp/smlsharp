@@ -1,0 +1,13 @@
+_require "../../basis.smi"
+structure UnixUtils =
+struct
+  val cd : string -> unit
+  val pwd : unit -> string
+  val exit : unit -> unit
+  val ls : string -> unit
+end
+val cd : string -> unit
+val pwd : unit -> string
+val exit : unit -> unit
+val ls : string -> unit
+

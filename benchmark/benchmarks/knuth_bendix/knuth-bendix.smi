@@ -2,4 +2,5 @@ _require "basis.smi"
 structure Main =
 struct
   val doit : unit -> unit
+  val testit : TextIO.outstream -> unit
 end

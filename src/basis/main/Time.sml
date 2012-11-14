@@ -31,10 +31,10 @@ struct
   val op - = SMLSharp.Int.sub
   val op + = IntInf.+
 
-  type time = SMLSharp.IntInf.int
+  type time = IntInf.int
   exception Time
 
-  val zeroTime = 0 : SMLSharp.IntInf.int
+  val zeroTime = 0 : IntInf.int
 
   fun fromReal rsec =
       IntInf.fromLarge

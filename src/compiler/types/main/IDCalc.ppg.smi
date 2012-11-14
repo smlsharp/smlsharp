@@ -9,10 +9,10 @@ _require "../../util/main/gensym.smi"
 _require "../../control/main/Control.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
-_require "../../builtin/main/BuiltinType.ppg.smi"
 _require "tvarMap.smi"
 _require "Types.ppg.smi"
 
@@ -35,7 +35,7 @@ struct
   type typesTy = Types.ty
 
   datatype runtimeTy
-    = BUILTINty of BuiltinType.ty
+    = BUILTINty of BuiltinTypeNames.bty
     | LIFTEDty of tvar
 
   datatype ty
@@ -43,7 +43,7 @@ struct
     | TYERROR
     | TYVAR of tvar
     | TYRECORD of ty LabelEnv.map
-    | TYCONSTRUCT of {typ:{path: path, tfun: tfun}, args:ty list}
+    | TYCONSTRUCT of {tfun: tfun, args:ty list}
     | TYFUNM of ty list * ty
     | TYPOLY of (tvar * tvarKind) list * ty
     | INFERREDTY of typesTy
@@ -85,13 +85,13 @@ struct
     | DTY
     | DTY_INTERFACE
     | OPAQUE of {tfun:tfun, revealKey:revealKey}
-    | BUILTIN of BuiltinType.ty
+    | BUILTIN of BuiltinTypeNames.bty
 
    and idstatus
     = IDVAR of varId
     | IDVAR_TYPED of {id:varId, ty:ty}
     | IDEXVAR of {path:path, ty:ty, used:bool ref, loc:Loc.loc, version:int option, internalId:varId option}
-    | IDEXVAR_TOBETYPED of {path:path, id:varId, loc:Loc.loc, version:int option, internalId:varId option}
+    | IDEXVAR_TOBETYPED of {path:path, id:varId, loc:Loc.loc, version:int option}
     | IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty}
     | IDCON of {id:conId, ty:ty}
     | IDEXN of {id:exnId, ty:ty}
@@ -118,7 +118,7 @@ struct
     | ICEXEXN_CONSTRUCTOR of {path:path, ty:ty} * Loc.loc
     | ICOPRIM of oprimInfo * Loc.loc
     | ICTYPED of icexp * ty * Loc.loc
-    | ICSIGTYPED of {path:path,icexp:icexp,ty:ty,loc:Loc.loc,revealKey:revealKey}
+    | ICSIGTYPED of {icexp:icexp,ty:ty,loc:Loc.loc,revealKey:revealKey option}
     | ICAPPM of icexp * icexp list * Loc.loc
     | ICAPPM_NOUNIFY of icexp * icexp list * Loc.loc
     | ICLET of icdecl list * icexp list * Loc.loc
@@ -221,7 +221,6 @@ struct
     | FFIBASETY of ty * Loc.loc
 
   type kindedTvar = tvar * tvarKind
-  type typInfo = {path: path, tfun: tfun}
   type conInfo = {path: path, ty:ty, id: conId}
   type exnInfo = {path: path, id: exnId, ty:ty}
   type conSpec = (ty option) SEnv.map
@@ -279,7 +278,6 @@ struct
   val formatWithType_ty : ty -> TermFormat.format
   val formatWithType_tycast : tycast -> TermFormat.format
   val formatWithType_typId : typId -> TermFormat.format
-  val formatWithType_typInfo : typInfo -> TermFormat.format
   val formatWithType_varE : varE -> TermFormat.format
   val formatWithType_varId : varId -> TermFormat.format
   val formatWithType_varInfo : varInfo -> TermFormat.format
@@ -314,7 +312,6 @@ struct
   val format_ty : ty -> TermFormat.format
   val format_tycast : tycast -> TermFormat.format
   val format_typId : typId -> TermFormat.format
-  val format_typInfo : typInfo -> TermFormat.format
   val format_varE : varE -> TermFormat.format
   val format_varId : varId -> TermFormat.format
   val format_varInfo : varInfo -> TermFormat.format
@@ -367,7 +364,6 @@ struct
   val print_tvarKind : TermFormat.format * TermFormat.format -> tvarKind -> TermFormat.format
   val print_ty : TermFormat.format * TermFormat.format -> ty -> TermFormat.format
   val print_tycast : TermFormat.format * TermFormat.format -> tycast -> TermFormat.format
-  val print_typInfo : TermFormat.format * TermFormat.format -> typInfo -> TermFormat.format
   val print_varE : TermFormat.format * TermFormat.format -> varE -> TermFormat.format
 
   val pruneTfun : tfun -> tfun

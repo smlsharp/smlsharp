@@ -1,0 +1,42 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+structure BuiltinTypeNames =
+struct
+
+  datatype bty 
+    = INTty
+    | INTINFty
+    | WORDty
+    | WORD8ty
+    | CHARty
+    | STRINGty
+    | REALty
+    | REAL32ty
+    | UNITty
+    | PTRty
+    | ARRAYty
+    | VECTORty
+    | EXNty
+    | BOXEDty
+    | EXNTAGty
+    | REFty
+    | BOOLty
+    | LISTty
+    | OPTIONty
+    | ORDERty
+    | SERVERty
+    | DBIty
+    | VALUEty
+    | CONNty
+    | DBty
+    | TABLEty
+    | ROWty
+    | RESULTty
+    | RELty
+    | QUERYty
+    | COMMANDty
+
+  val findType : string -> bty option
+  val format_bty : bty -> SMLFormat.FormatExpression.expression list
+
+end

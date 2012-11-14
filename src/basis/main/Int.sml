@@ -102,7 +102,11 @@ in
         else implode (#"~" :: loop (n, nil))
       end
 
-  fun scan radix getc strm =
+  (* 2012-8-19 ohori type annotation added *)
+  fun 'a scan 
+        (radix : StringCvt.radix)
+        (getc : (char, 'a) StringCvt.reader)
+        strm =
       case SMLSharpScanChar.scanInt radix getc strm of
         NONE => NONE
       | SOME ({neg, radix=r, digits}, strm) =>

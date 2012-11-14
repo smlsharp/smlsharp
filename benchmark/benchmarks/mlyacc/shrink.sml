@@ -1,9 +1,6 @@
 (* ML-Yacc Parser Generator (c) 1991 Andrew W. Appel, David R. Tarditi 
  *
- * $Log: shrink.sml,v $
- * Revision 1.1  2005/09/05 13:28:58  kiyoshiy
- * added.
- *
+ * $Log$
  * Revision 1.2  1996/05/30  17:52:58  dbm
  * Lifted a let to a local in definition of createEquivalences to conform with
  * value restriction.

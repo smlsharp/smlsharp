@@ -11,7 +11,7 @@ _require "../../control/main/Loc.ppg.smi"
 _require "../../constantterm/main/ConstantTerm.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../runtimetypes/main/TypeLayout.smi"
-_require "../../types/main/BuiltinEnv.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "BitmapANormal.ppg.smi"
 
 structure TypeCheckBitmapANormal =

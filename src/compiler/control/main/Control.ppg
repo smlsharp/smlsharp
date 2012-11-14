@@ -96,6 +96,9 @@ struct
   (** true if every warning should be printed. *)
   val printWarning = ref true
 
+  (** true if some temporary information will be printed. *)
+  val printInfo = ref false
+
   (** true if no formatter is generated and no binding information is printed.
    *)
   val skipPrinter = ref false
@@ -124,6 +127,8 @@ struct
   val LARGEFFISWITCH = ref true
 
   val doUncurryOptimization = ref true
+  val doTCOptimization = ref true
+  val doRCOptimization = ref false
 
   val enableUnboxedFloat = ref true
   val alignRecord = ref true
@@ -219,7 +224,12 @@ struct
   val printUC = ref false
   val printTP = ref false
   val printTFP = ref false
-  val printRC = ref false
+  val printRCOptimize = ref false
+  val printMatchComp = ref false
+  val printSQLComp = ref false
+  val printFFIComp = ref false
+  val printRecordComp = ref false
+
   val printTL = ref false
   val printAC = ref false
   val printMV = ref false
@@ -235,7 +245,7 @@ struct
   val checkType = ref false
 
   (** true if detailed type information should b printed. *)
-  val printWithType = ref true
+  val printWithType = ref false
 
   (** switch for abstract instruction generation. *)
   val printAI =  ref false
@@ -245,6 +255,8 @@ struct
   val keepAsm = ref false
   val debugCodeGen = ref false
   val targetPlatform = ref ""  (* cpu-manufacturer-ossys:options *)
+
+  val printTimer = ref false
 
   local
     structure S = Substring
@@ -376,6 +388,8 @@ struct
     ("doUncurryingOptimizeInMatchCompile",
        BoolSwitch doUncurryingOptimizeInMatchCompile),
     ("doUncurryOptimization", BoolSwitch doUncurryOptimization),
+    ("doTCOptimization", BoolSwitch doTCOptimization),
+    ("doRCOptimization", BoolSwitch doRCOptimization),
     ("doUselessCodeElimination", BoolSwitch doUselessCodeElimination),
     ("enableUnboxedFloat", BoolSwitch enableUnboxedFloat),
     ("firstLinePrompt", StringSwitch firstLinePrompt),
@@ -404,7 +418,14 @@ struct
     ("printVR", BoolSwitch printVR),
 
     ("printRBU", BoolSwitch printRBU),
+(*
     ("printRC", BoolSwitch printRC),
+*)
+    ("printRCOptimize",BoolSwitch printRCOptimize),
+    ("printMatchComp",BoolSwitch printMatchComp),
+    ("printSQLComp",BoolSwitch printSQLComp),
+    ("printFFIComp",BoolSwitch printFFIComp),
+    ("printRecordComp",BoolSwitch printRecordComp),
     ("printRTL", BoolSwitch printRTL),
     ("printCode", BoolSwitch printCode),
     ("printSource", BoolSwitch printSource),
@@ -412,8 +433,10 @@ struct
     ("printTFP", BoolSwitch printTFP),
     ("printTL", BoolSwitch printTL),
     ("printTP", BoolSwitch printTP),
+    ("printTimer", BoolSwitch printTimer),
     ("printUC", BoolSwitch printUC),
     ("printWarning", BoolSwitch printWarning),
+    ("printInfo", BoolSwitch printInfo),
     ("printWidth", IntSwitch printWidth),
     ("printWithType", BoolSwitch printWithType),
     ("printCommand", BoolSwitch printCommand),

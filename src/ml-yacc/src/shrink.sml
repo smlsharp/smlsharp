@@ -104,7 +104,7 @@ functor EquivFun(A : EQUIV_ARG) : EQUIV =
 
        type entry = A.entry
              
-       val gt = fn ((a,_),(b,_)) => A.gt(a,b)
+       val gt = fn ((a,_):A.entry * int,(b,_):A.entry * int) => A.gt(a,b)
 
        structure Sort = MergeSortFun(type entry = A.entry * int
      				     val gt = gt)

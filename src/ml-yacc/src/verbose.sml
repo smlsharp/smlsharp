@@ -97,7 +97,7 @@ struct
                         end
        =
       struct
-         val app = fn f =>
+         val ('a, 'b) app = fn (f:'a*'b -> unit) =>
 	     let fun g EMPTY = ()
                    | g (PAIR(a,b,r)) = (f(a,b); g r)
              in g
@@ -110,7 +110,10 @@ struct
       end
    val printVerbose =
 	fn {termToString,nontermToString,table,stateErrs,entries:int,
-	    print,printRule,errs,printCores} =>
+	    print,
+            printRule : (string -> unit) -> int -> unit,
+            errs,
+            printCores} =>
 	   let 
 		val printTerm = print o termToString
 		val printNonterm = print o nontermToString
@@ -119,7 +122,7 @@ struct
 		val printTermAction = mkPrintTermAction(printTerm,print)
 		val printAction = mkPrintAction print
 		val printGoto = mkPrintGoto(printNonterm,print)
-		val printError = mkPrintError(printTerm,printRule print,print)
+		val printError = mkPrintError(printTerm, printRule print, print)
 
 		val gotos = LrTable.describeGoto table
 		val actions = LrTable.describeActions table
@@ -138,7 +141,7 @@ struct
 		  else let val s = STATE i
 		       in (app printError (stateErrs s);
 			   print "\n";
-			   printCore s;
+			   printCore s : unit;
 			   let val (actionList,default) = actions s
 			       val gotoList = gotos s
 			   in (PairList.app printTermAction actionList;

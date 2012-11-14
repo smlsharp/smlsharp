@@ -27,6 +27,7 @@ signature HEADER =
     datatype prec = LEFT | RIGHT | NONASSOC
     datatype control = NODEFAULT | VERBOSE | PARSER_NAME of symbol |
 	               FUNCTOR of string  | FOOTER of string  | 
+                       DECOMPOSE of string | BLOCKSIZE of string |
                        START_SYM of symbol |
 		       NSHIFT of symbol list | POS of string | PURE |
 		       PARSE_ARG of string * string |

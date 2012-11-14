@@ -2,12 +2,12 @@ _require "../../../basis.smi"
 _require "../../annotatedtypes/main/AnnotatedTypes.ppg.smi"
 _require "../../annotatedtypes/main/AnnotatedTypesUtils.smi"
 _require "../../bitmapcalc/main/BitmapCalc.ppg.smi"
-_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../control/main/Control.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../runtimetypes/main/TypeLayout.smi"
-_require "../../types/main/BuiltinEnv.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 
 structure RecordLayout =
 struct

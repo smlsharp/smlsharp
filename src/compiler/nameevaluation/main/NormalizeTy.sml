@@ -12,7 +12,7 @@ sig
          | Type of string list
          | OK
   datatype checkConRes = FAIL of checkConError list | SUCCESS
-  datatype normalForm = TYNAME of IDCalc.typInfo | TYTERM of IDCalc.ty
+  datatype normalForm = TYNAME of IDCalc.tfun | TYTERM of IDCalc.ty
   val admitEq : TvarSet.item list -> IDCalc.ty -> bool
   val checkConSpec : 
       ((TypID.id * TypID.id) -> bool) 
@@ -85,7 +85,7 @@ in
              
   val emptyArgEnv = TvarMap.empty : I.ty TvarMap.map
   
-  datatype normalForm = TYNAME of I.typInfo | TYTERM of I.ty
+  datatype normalForm = TYNAME of I.tfun | TYTERM of I.ty
 
   (* to generate TFUN_DEF in NameEvalInterface, CheckProvide, EvalSig *)
   fun tyForm formals ty  =
@@ -103,11 +103,11 @@ in
         | I.TYERROR => TYTERM ty
         | I.TYVAR _ => TYTERM ty
         | I.TYRECORD _ => TYTERM ty
-        | I.TYCONSTRUCT {typ= typ as {path,...}, args} =>
+        | I.TYCONSTRUCT {tfun, args} =>
           (let
              val tvarList = tyToTvars args
            in
-             if equalTuple (formals, tvarList) then TYNAME typ
+             if equalTuple (formals, tvarList) then TYNAME tfun
              else TYTERM ty
            end
              handle Rigid => TYTERM ty
@@ -116,45 +116,6 @@ in
         | I.TYPOLY _ => TYTERM ty
         | I.INFERREDTY _ => TYTERM ty
       end
-
-  fun admitEqMaker tfuneq tvarList ty =
-      let
-        val set = TvarSet.fromList tvarList
-        fun eqtvar (tvar as {name, eq, id, lifted}) =
-            TvarSet.member(set, tvar) orelse
-            case eq of Absyn.EQ => true | Absyn.NONEQ => false
-        fun eqTy ty =
-            case ty of
-              I.TYWILD => false
-            | I.TYERROR => false
-            | I.TYVAR tvar => eqtvar tvar
-            | I.TYRECORD fields => eqFields fields
-            | I.TYCONSTRUCT {typ={tfun,path}, args} =>
-(*  2011-12-24 ohori:bug 190.
-This is a temporary fix. I am going to re-write BuiltinEnv
-to re-structure builtins.
-*)
-              (case path of
-                 ["ref"] => true
-               | _ => tfuneq tfun andalso eqList args
-              )
-            | I.TYFUNM (tyList,ty2) => false
-            | I.TYPOLY (kindedTvarList, ty) => raise bug "POLYty"
-            | I.INFERREDTY ty => raise bug "INFERREDTY"
-        and eqFields fields =
-            let exception FALSE in
-              (LabelEnv.app
-                (fn ty => if eqTy ty then () else raise FALSE)
-                fields; 
-               true)
-              handle FALSE => false
-            end
-        and eqList nil = true
-          | eqList (ty::rest) = eqTy ty andalso eqList rest
-      in
-        eqTy ty
-      end
-  fun admitEq tvarList ty = admitEqMaker I.tfunIseq tvarList ty
 
   local
     val visitedSet = ref (TfvSet.empty)
@@ -170,11 +131,10 @@ to re-structure builtins.
              NONE => I.TYVAR tvar
            | SOME ty => ty)
         | I.TYRECORD fields => I.TYRECORD (LabelEnv.map (redTy tvarEnv) fields)
-        | I.TYCONSTRUCT {typ=typ as {tfun, path}, args} =>
+        | I.TYCONSTRUCT {tfun, args} =>
           let
             val args = map (redTy tvarEnv) args
             val tfun = redTfun tvarEnv tfun
-            val typ = {tfun=tfun, path=path}
           in
 (*
             case I.derefTfun tfun of
@@ -194,17 +154,17 @@ to re-structure builtins.
               end
             | I.TFUN_VAR(tfv as (ref tfunkind)) => 
               (case tfunkind of
-                 I.TFV_SPEC _ => I.TYCONSTRUCT {typ=typ, args=args}
-               | I.TFV_DTY _ => I.TYCONSTRUCT {typ=typ, args=args}
-               | I.TFUN_DTY _ => I.TYCONSTRUCT {typ=typ, args=args}
+                 I.TFV_SPEC _ => I.TYCONSTRUCT {tfun=tfun, args=args}
+               | I.TFV_DTY _ => I.TYCONSTRUCT {tfun=tfun, args=args}
+               | I.TFUN_DTY _ => I.TYCONSTRUCT {tfun=tfun, args=args}
                | I.REALIZED _ => raise bug "REALIZED tfun"
                | I.INSTANTIATED {tfunkind, tfun} =>
-                 I.TYCONSTRUCT {typ=typ, args=args}
+                 I.TYCONSTRUCT {tfun=tfun, args=args}
                | I.FUN_DTY {tfun,...} => 
                  (* raise bug "FUN_DTY(2)\n"
                     This case happnes when a structure in a functor argument
                     is replicated in the functor body *)
-                 I.TYCONSTRUCT {typ={tfun=tfun, path=path}, args=args}
+                 I.TYCONSTRUCT {tfun=tfun, args=args}
               )
           end
         | I.TYFUNM (tyList,ty2) =>
@@ -233,7 +193,7 @@ to re-structure builtins.
             case res of
               TYTERM ty =>
               I.TFUN_DEF {iseq=iseq, formals=formals,realizerTy=realizerTy}
-            | TYNAME {tfun,...} => tfun
+            | TYNAME tfun => tfun
           end
         | I.TFUN_VAR tfv => 
           case !tfv of
@@ -324,7 +284,7 @@ to re-structure builtins.
                      version=version,
                      internalId = internalId
                     }
-        | I.IDEXVAR_TOBETYPED {path, id, loc, version, internalId} => idstatus
+        | I.IDEXVAR_TOBETYPED {path, id, loc, version} => idstatus
         | I.IDBUILTINVAR {primitive, ty} =>
           I.IDBUILTINVAR {primitive=primitive, ty=redTy TvarMap.empty ty}
         | I.IDCON {id, ty} =>
@@ -435,8 +395,8 @@ to re-structure builtins.
               andalso
               equalTy (typIdEquiv, tvarIdEquiv) (bodyTy1, bodyTy2)
           end
-        | (I.TYCONSTRUCT{typ={tfun=tfun1,...}, args=args1},
-           I.TYCONSTRUCT{typ={tfun=tfun2,...}, args=args2}) =>
+        | (I.TYCONSTRUCT{tfun=tfun1, args=args1},
+           I.TYCONSTRUCT{tfun=tfun2, args=args2}) =>
           (equalTfun typIdEquiv (tfun1, tfun2)
             andalso List.length args1 = List.length args2
             andalso List.all (equalTy (typIdEquiv, tvarIdEquiv)) (ListPair.zip (args1, args2))
@@ -469,6 +429,65 @@ to re-structure builtins.
         handle FALSE => false
       end
 
+  fun admitEqMaker tfuneq tvarList ty =
+      let
+        val set = TvarSet.fromList tvarList
+        fun eqtvar (tvar as {name, eq, id, lifted}) =
+            TvarSet.member(set, tvar) orelse
+            case eq of Absyn.EQ => true | Absyn.NONEQ => false
+        fun eqTfun (tfun, args) =
+            let
+              fun tfunId tfun =
+                  case tfun of
+                    I.TFUN_DEF {formals=formals1,realizerTy=ty1,...} => NONE
+                  | I.TFUN_VAR (ref (I.TFV_SPEC {id,...})) => SOME id
+                  | I.TFUN_VAR (ref (I.TFV_DTY {id,...})) => SOME id
+                  | I.TFUN_VAR (ref (I.TFUN_DTY {id,...})) => SOME id
+                  | I.TFUN_VAR (ref (I.FUN_DTY {tfun,...})) => tfunId tfun
+                  | I.TFUN_VAR(ref(I.REALIZED{tfun,...})) => tfunId tfun
+                  | I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...})) => tfunId tfun
+              val typIdopt = tfunId tfun
+            in
+              case typIdopt of
+                SOME id => TypID.eq(id, #id BuiltinTypes.arrayTyCon)
+                           orelse
+                           TypID.eq(id, #id BuiltinTypes.refTyCon)
+                           orelse (tfuneq tfun andalso eqList args)
+              | _ => tfuneq tfun andalso eqList args
+            end
+        and eqTy ty =
+            case ty of
+              I.TYWILD => false
+            | I.TYERROR => false
+            | I.TYVAR tvar => eqtvar tvar
+            | I.TYRECORD fields => eqFields fields
+            | I.TYCONSTRUCT {tfun, args} => eqTfun (tfun, args)
+(*  2011-12-24 ohori:bug 190.
+This is a temporary fix. I am going to re-write BuiltinEnv
+to re-structure builtins.
+              (case path of
+                 ["ref"] => true
+               | _ => tfuneq tfun andalso eqList args
+              )
+*)
+            | I.TYFUNM (tyList,ty2) => false
+            | I.TYPOLY (kindedTvarList, ty) => raise bug "POLYty"
+            | I.INFERREDTY ty => raise bug "INFERREDTY"
+        and eqFields fields =
+            let exception FALSE in
+              (LabelEnv.app
+                (fn ty => if eqTy ty then () else raise FALSE)
+                fields; 
+               true)
+              handle FALSE => false
+            end
+        and eqList nil = true
+          | eqList (ty::rest) = eqTy ty andalso eqList rest
+      in
+        eqTy ty
+      end
+  fun admitEq tvarList ty = admitEqMaker I.tfunIseq tvarList ty
+
   fun substTy subst ty =
       case ty of
         I.TYWILD => ty
@@ -479,8 +498,8 @@ to re-structure builtins.
          | SOME ty => ty)
       | I.TYRECORD fields => 
         I.TYRECORD (LabelEnv.map (substTy subst) fields)
-      | I.TYCONSTRUCT {typ, args} =>
-        I.TYCONSTRUCT {typ=typ, args=map (substTy subst) args}
+      | I.TYCONSTRUCT {tfun, args} =>
+        I.TYCONSTRUCT {tfun=tfun, args=map (substTy subst) args}
       | I.TYFUNM (tyList1, ty2) =>
         I.TYFUNM (map (substTy subst) tyList1, substTy subst ty2)
       | I.TYPOLY (kindedTvarList, ty) => 

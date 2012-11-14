@@ -59,7 +59,7 @@ local
   structure TCU = TypedCalcUtils
   structure RC = RecordCalc
   structure UE = UserError
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
   structure ME = MatchError
   fun bug s = Control.Bug ("MatchCompiler: " ^ s)
   type path = string list
@@ -157,7 +157,12 @@ local
                 varExpTyEexpList 
             | TC.TPEXD (exnconLocList, loc) => set
             | TC.TPEXNTAGD ({varInfo,...},loc) => VarInfoSet.add(set, varInfo)
-            | TC.TPEXPORTVAR (varInfo, loc) => set
+            | TC.TPEXPORTVAR {internalVar, externalVar, loc} => 
+              VarInfoSet.add(set, internalVar) 
+              (* this case never happen; but this is more correct *)
+            | TC.TPEXPORTRECFUNVAR {var, arity, loc} => 
+              VarInfoSet.add(set, var) 
+              (* this case never happen; but this is more correct *)
             | TC.TPEXPORTEXN (exnInfo , loc) => set
             | TC.TPEXTERNVAR (exVarInfo, loc) => set
             | TC.TPEXTERNEXN (exExnInfo, loc) => set
@@ -220,20 +225,24 @@ in
         | TC.TPDATACONSTRUCT
             {con=conIdInfo,
              instTyList=tyList,
-             argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
+             argExpOpt=NONE, 
+             argTyOpt,
+             loc} => limitCheck itemList (n + 1)
         | TC.TPDATACONSTRUCT
             {con=conIdInfo,
              instTyList=tyList,
              argExpOpt=SOME tpexp1,
+             argTyOpt,
              loc} => 
             limitCheck (Exp tpexp1 :: itemList) (n + 1)
         | TC.TPEXNCONSTRUCT
-            {exn=conIdInfo, instTyList=tyList, argExpOpt=NONE, loc} =>
+            {exn=conIdInfo, instTyList=tyList, argExpOpt=NONE, argTyOpt, loc} =>
           limitCheck itemList (n + 1)
         | TC.TPEXNCONSTRUCT
             {exn=conIdInfo,
              instTyList=tyList,
              argExpOpt=SOME tpexp1,
+             argTyOpt,
              loc} => 
             limitCheck (Exp tpexp1 :: itemList) (n + 1)
         | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} => limitCheck itemList (n + 1)
@@ -247,7 +256,7 @@ in
                itemList
               ) 
             (n + 1)
-        | TC.TPPRIMAPPLY {primOp,instTyList,argExp=tpexp1,loc} => 
+        | TC.TPPRIMAPPLY {primOp,instTyList,argExp=tpexp1,argTy,loc} => 
           limitCheck (Exp tpexp1::itemList) (n + 1)
         | TC.TPOPRIMAPPLY {argExp=tpexp1,...} =>
           limitCheck (Exp tpexp1::itemList) (n + 1)
@@ -329,7 +338,8 @@ in
              @ itemList) (n + 1)
         | TC.TPEXD (exnconLocList, loc) => limitCheck itemList (n + 1)
         | TC.TPEXNTAGD (bind, loc) => limitCheck itemList (n + 1)
-        | TC.TPEXPORTVAR (varInfo, loc) => limitCheck itemList (n + 1)
+        | TC.TPEXPORTVAR {internalVar, externalVar, loc} => limitCheck itemList (n + 1)
+        | TC.TPEXPORTRECFUNVAR {var, arity, loc} => limitCheck itemList (n + 1)
         | TC.TPEXPORTEXN (exnInfo , loc) => limitCheck itemList (n + 1)
         | TC.TPEXTERNVAR (exVarInfo, loc) => limitCheck itemList (n + 1)
         | TC.TPEXTERNEXN (exExnInfo, loc) => limitCheck itemList (n + 1)
@@ -475,12 +485,12 @@ in
          RC.RCFNM
            {
             argVarList =
-            [freshVarWithName (BE.UNITty, "unitExp(" ^ newVarName () ^ ")")],
+            [freshVarWithName (BT.unitTy, "unitExp(" ^ newVarName () ^ ")")],
             bodyTy=bodyTy, 
             bodyExp=body, 
             loc=loc
            },
-         T.FUNMty ([BE.UNITty], bodyTy)
+         T.FUNMty ([BT.unitTy], bodyTy)
         )
       | argList =>
         foldr 
@@ -500,12 +510,12 @@ in
         RC.RCFNM 
           {
            argVarList=[freshVarWithName
-                         (BE.UNITty,"unitExp(" ^ newVarName () ^ ")")], 
+                         (BT.unitTy,"unitExp(" ^ newVarName () ^ ")")], 
            bodyTy=bodyTy, 
            bodyExp=body, 
            loc=loc
           },
-        T.FUNMty ([BE.UNITty], bodyTy)
+        T.FUNMty ([BT.unitTy], bodyTy)
        )
      | argList =>
        (
@@ -580,11 +590,11 @@ in
       | TC.TPPATCONSTANT (A.UNITCONST _, ty, _) => WildPat ty
       | TC.TPPATCONSTANT (con, ty, _) => ConstPat (con, ty)
       | TC.TPPATDATACONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, ...} =>
-        DataConPat (conPat, false, WildPat BE.UNITty, ty)
+        DataConPat (conPat, false, WildPat BT.unitTy, ty)
       | TC.TPPATDATACONSTRUCT{conPat,argPatOpt = SOME argPat,patTy=ty,...}=>
         DataConPat (conPat, true, tppatToPat btvEnv FV argPat, ty)
       | TC.TPPATEXNCONSTRUCT {exnPat, argPatOpt=NONE, patTy=ty, ...} =>
-        ExnConPat (exnPat, false, WildPat BE.UNITty, ty)
+        ExnConPat (exnPat, false, WildPat BT.unitTy, ty)
       | TC.TPPATEXNCONSTRUCT {exnPat,argPatOpt = SOME argPat,patTy=ty,...} =>
         ExnConPat (exnPat, true, tppatToPat btvEnv FV argPat, ty)
       | TC.TPPATRECORD {fields=patRows, recordTy=ty,...} =>
@@ -1205,7 +1215,7 @@ in
            argExpList=map (tpexpToRcexp varEnv btvEnv) argExpList,
            loc=loc
           }
-      | TC.TPDATACONSTRUCT {con, instTyList=tys, argExpOpt, loc} => 
+      | TC.TPDATACONSTRUCT {con, instTyList=tys, argExpOpt, argTyOpt, loc} => 
         RC.RCDATACONSTRUCT
           {
            con=con, 
@@ -1214,9 +1224,10 @@ in
            case argExpOpt of
              NONE => NONE 
            | SOME tpexp => SOME (tpexpToRcexp varEnv btvEnv tpexp),
+           argTyOpt = argTyOpt,
            loc=loc
           }
-      | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt, loc} =>
+      | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt, argTyOpt, loc} =>
         RC.RCEXNCONSTRUCT
           {
            exn=exn, 
@@ -1347,7 +1358,7 @@ in
                   loc=loc
                  }
          end
-      | TC.TPPRIMAPPLY {primOp, instTyList, argExp, loc} =>
+      | TC.TPPRIMAPPLY {primOp, instTyList, argExp, argTy,loc} =>
         RC.RCPRIMAPPLY 
           {
             primOp=primOp,
@@ -1355,7 +1366,7 @@ in
             argExp=tpexpToRcexp varEnv btvEnv argExp,
             loc=loc
            }
-      | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, loc} =>
+      | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, argTy, loc} =>
         RC.RCOPRIMAPPLY 
           {
            oprimOp=oprimOp,
@@ -1506,10 +1517,12 @@ in
          raise bug "TPPOLYFUNDECL: FIXME: not yet"
        | TC.TPEXD (binds, loc) => RC.RCEXD (binds, loc)
        | TC.TPEXNTAGD (bind, loc) => RC.RCEXNTAGD (bind, loc)
-       | TC.TPEXPORTVAR (TC.VARID varInfo, loc) =>
-         RC.RCEXPORTVAR (varInfo, loc)
-       | TC.TPEXPORTVAR (TC.RECFUNID  (varInfo,_), loc) =>
-         RC.RCEXPORTVAR (varInfo, loc)
+       | TC.TPEXPORTVAR {internalVar, externalVar, loc} =>
+(*
+         RC.RCEXPORTVAR ({id=id, path=path, ty=ty}, loc)
+*)
+         RC.RCEXPORTVAR {internalVar=internalVar, externalVar=externalVar,loc=loc}
+       | TC.TPEXPORTRECFUNVAR _ => raise bug "TPEXPORTRECFUNVAR to matchcompiler"
        | TC.TPEXPORTEXN (exnInfo, loc) => RC.RCEXPORTEXN (exnInfo, loc)
        | TC.TPEXTERNVAR (exVarInfo, loc) => RC.RCEXTERNVAR (exVarInfo, loc)
        | TC.TPEXTERNEXN (exExnInfo, loc) => RC.RCEXTERNEXN (exExnInfo, loc)

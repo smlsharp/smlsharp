@@ -3,79 +3,59 @@ _require "base.sig"
 _require "stream.smi"
 _require "lrtable.smi"
 
-structure LrParser =
+(* 2012-9-24: ohori
+  This is the top-level library structure.
+  This is changed to a functor that takes
+    type pos
+    type svalue
+    type arg
+
+   changed 'arg => arg
+   eliminated type parameters in token
+   and changed accordingly:
+     (('a,'b) token => token
+     'a => Token.svalue
+     'b => Token.pos
+*)
+
+functor LrParserFun (A : sig type arg type pos type svalue end) =
 struct
-  structure Stream =
-  struct
-    type 'a stream = 'a Stream.stream
-    val streamify : (unit -> 'a) -> 'a stream
-    val cons : 'a * 'a stream -> 'a stream
-    val get : 'a stream -> 'a * 'a stream
-  end
-  structure LrTable =
-  struct
-    datatype pairlist = datatype LrTable.pairlist
-    datatype state = datatype LrTable.state
-    datatype term = datatype LrTable.term
-    datatype nonterm = datatype LrTable.nonterm
-    datatype action = datatype LrTable.action
-    type table = LrTable.table
-    val numStates : table -> int
-    val numRules : table -> int
-    val describeActions : table -> state -> (term, action) pairlist * action
-    val describeGoto : table -> state -> (nonterm, state) pairlist
-    val action : table -> state * term -> action
-    val goto : table -> state * nonterm -> state
-    val initialState : table -> state
-    exception Goto = LrTable.Goto
-    val mkLrTable : {actions : ((term, action) pairlist * action) array,
-                     gotos : (nonterm, state) pairlist array,
-                     numStates : int, numRules : int,
-                     initialState : state} -> table
-  end
+  type arg = A.arg
+  type pos = A.pos
+  type svalue = A.svalue
+  structure LrTable = LrTable
   structure Token =
   struct
-    structure LrTable =
-    struct
-      datatype pairlist = datatype LrTable.pairlist
-      datatype state = datatype LrTable.state
-      datatype term = datatype LrTable.term
-      datatype nonterm = datatype LrTable.nonterm
-      datatype action = datatype LrTable.action
-      type table = LrTable.table
-      val numStates : table -> int
-      val numRules : table -> int
-      val describeActions : table -> state -> (term, action) pairlist * action
-      val describeGoto : table -> state -> (nonterm, state) pairlist
-      val action : table -> state * term -> action
-      val goto : table -> state * nonterm -> state
-      val initialState : table -> state
-      exception Goto = LrTable.Goto
-      val mkLrTable : {actions : ((term, action) pairlist * action) array,
-                       gotos : (nonterm, state) pairlist array,
-                       numStates : int, numRules : int,
-                       initialState : state} -> table
-    end
-    datatype ('a, 'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
-    val sameToken : ('a, 'b) token * ('a, 'b) token -> bool
+    type svalue = A.svalue
+    type pos = A.pos
+    structure LrTable = LrTable
+    datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
+    val sameToken : token * token -> bool
+  end
+  structure Stream = 
+  struct
+    type tok = Token.token
+    type stream (= boxed)
+    val streamify : (unit -> tok) -> stream
+    val cons : tok * stream -> stream
+    val get : stream -> tok * stream
   end
   exception ParseError
   val parse
       : {table : LrTable.table,
-         lexer : ('b, 'c) Token.token Stream.stream,
-         arg: 'a,
-         saction : int * 'c * (LrTable.state * ('b * 'c * 'c)) list * 'a ->
-                   LrTable.nonterm * ('b * 'c * 'c) *
-                   (LrTable.state * ('b * 'c * 'c)) list,
-         void : 'b,
+         lexer : Stream.stream,
+         arg: arg,
+         saction : int * Token.pos * (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list * arg ->
+                   LrTable.nonterm * (Token.svalue * Token.pos * Token.pos) *
+                   (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list,
+         void : Token.svalue,
          ec : {is_keyword : LrTable.term -> bool,
                noShift : LrTable.term -> bool,
                preferred_change : (LrTable.term list * LrTable.term list)
                                   list,
-               errtermvalue : LrTable.term -> 'b,
+               errtermvalue : LrTable.term -> Token.svalue,
                showTerminal : LrTable.term -> string,
                terms: LrTable.term list,
-               error : string * 'c * 'c -> unit},
-         lookahead : int} ->
-        'b * ('b, 'c) Token.token Stream.stream
+               error : string * Token.pos * Token.pos -> unit},
+         lookahead : int} -> Token.svalue * Stream.stream
 end

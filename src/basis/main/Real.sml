@@ -223,10 +223,10 @@ struct
       | IEEEReal.TO_ZERO => trunc x
       | IEEEReal.TO_NEAREST => round x
 
-  fun toLargeInt mode x =
+  fun toLargeInt (mode:IEEEReal.rounding_mode) (x:real) : LargeInt.int =
       raise Fail "FIXME: Real.toLargeInt: not implemented yet"
   val fromInt = SMLSharp.Real.fromInt
-  fun fromLargeInt x =
+  fun fromLargeInt (x: LargeInt.int) : real =
       raise Fail "FIXME: Real.fromLargeInt: not implemented yet"
   fun toLarge x = x : real
   fun fromLarge (mode:IEEEReal.rounding_mode) x = x : real

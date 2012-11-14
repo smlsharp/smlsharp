@@ -1,9 +1,6 @@
 (* ML-Yacc Parser Generator (c) 1989 Andrew W. Appel, David R. Tarditi 
  *
- * $Log: parser2.sml,v $
- * Revision 1.1  2005/09/05 13:28:58  kiyoshiy
- * added.
- *
+ * $Log$
  * Revision 1.3  1996/10/03  03:36:58  jhr
  * Qualified identifiers that are no-longer top-level (quot, rem, min, max).
  *
@@ -111,7 +108,12 @@ functor ParserGen(structure LrTable : LR_TABLE
 		  structure Stream : STREAM) : LR_PARSER =
 *)
 
+(* Ueno (2011-Nov-30): The signature constraint to LrParser should be
+   transparent since SML# interface file syntax avoids problematic
+   replications of exceptions and types under opaque constraints.
 structure LrParser :> LR_PARSER =
+*)
+structure LrParser : LR_PARSER =
    struct
       structure LrTable = LrTable
       structure Stream = Stream

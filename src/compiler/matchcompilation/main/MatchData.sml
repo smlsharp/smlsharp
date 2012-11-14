@@ -10,7 +10,7 @@ local
   structure T = Types
   structure TC = TypedCalc
   structure RC = RecordCalc
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
 in
   datatype kind = Bind | Match | Handle of T.varInfo
     
@@ -133,7 +133,7 @@ in
   | UnivNode of T.varInfo * tree
 
   val unitExp =
-      RC.RCCONSTANT {const=A.UNITCONST Loc.noloc, ty=BV.UNITty, loc=Loc.noloc}
+      RC.RCCONSTANT {const=A.UNITCONST Loc.noloc, ty=BT.unitTy, loc=Loc.noloc}
 
   val expDummy = unitExp
 end

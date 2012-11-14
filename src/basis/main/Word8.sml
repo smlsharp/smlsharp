@@ -100,7 +100,12 @@ in
   fun fmt radix n =
       LargeWord.fmt radix (toLarge n)
 
-  fun scan radix getc strm =
+  (* 2012-8-19 type annotation added *)
+  fun 'a scan 
+         (radix:StringCvt.radix) 
+         (getc: (char, 'a) StringCvt.reader) 
+         strm
+         =
       case LargeWord.scan radix getc strm of
         NONE => NONE
       | SOME (x, strm) =>

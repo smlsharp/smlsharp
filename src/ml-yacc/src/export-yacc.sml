@@ -3,6 +3,8 @@
  *
  * ML-Yacc Parser Generator (c) 1991 Andrew W. Appel, David R. Tarditi
  *)
+(* 2012-8-19 ohori. Type annotation added to parseGen *) 
+
 structure ExportParseGen : sig
     val parseGen : (string * string list) -> OS.Process.status
 end = struct
@@ -35,7 +37,8 @@ end = struct
 
     val exit = OS.Process.exit
 
-    fun parseGen (_, argv) = let
+    (* 2012 ohori: type annotation added *)
+    fun parseGen (_:string, argv:string list) : OS.Process.status = let
 	fun parse_gen () =
 	    case argv of
 		[file] => (ParseGen.parseGen file; exit OS.Process.success)

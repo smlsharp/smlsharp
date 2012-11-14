@@ -13,10 +13,10 @@ local
   structure TU = TypesUtils
   structure TCU = TypedCalcUtils
   structure TIU = TypeInferenceUtils
+  structure U = Unify
   structure RD = ReifiedTermData
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
   structure V = NameEvalEnv
-  structure BN = BuiltinName
 
   val idstatusWidth = 60
   val tstrWidth = 70
@@ -41,11 +41,11 @@ local
 
   fun makeString string =
       TC.TPCONSTANT {const=Absyn.STRING (string, Loc.noloc),
-                     ty=BuiltinEnv.STRINGty,
+                     ty=BT.stringTy,
                      loc=Loc.noloc}
   fun makeInt int =
       TC.TPCONSTANT {const=Absyn.INT (int, Loc.noloc),
-                     ty=BuiltinEnv.INTty,
+                     ty=BT.intTy,
                      loc=Loc.noloc}
   fun makeMonoApply2 funOptRef arg1 arg2 =
       let
@@ -219,7 +219,7 @@ in
                         expTy=makeTermVarTy,
                         instTyList=[argTy],
                         loc=Loc.noloc}
-           val instTy = TIU.instOfPolyTy(makeTermVarTy, [argTy])
+           val instTy = U.instOfPolyTy(makeTermVarTy, [argTy])
            val termFun =
                TC.TPAPPM
                  {funExp=makeTermVarInst, 
@@ -239,31 +239,31 @@ in
       | _ => raise bug "term tycon arg"
 
   and reifyTyCon (tyCon, args, path, exp) =
-      if eqTyCon(tyCon, BE.INTtyCon) then
+      if eqTyCon(tyCon, BT.intTyCon) then
         RD.mkINTtyRepTerm exp
-      else if eqTyCon(tyCon, BE.lookupTyCon BN.boolTyName) then
+      else if eqTyCon(tyCon, BT.boolTyCon) then
         RD.mkBOOLtyRepTerm exp
-      else if eqTyCon(tyCon, BE.INTINFtyCon) then
+      else if eqTyCon(tyCon, BT.intInfTyCon) then
         RD.mkINTINFtyRepTerm exp
-      else if eqTyCon(tyCon, BE.WORDtyCon) then
+      else if eqTyCon(tyCon, BT.wordTyCon) then
         RD.mkWORDtyRepTerm exp
-      else if eqTyCon(tyCon, BE.WORD8tyCon) then
+      else if eqTyCon(tyCon, BT.word8TyCon) then
         RD.mkWORD8tyRepTerm exp
-      else if eqTyCon(tyCon, BE.CHARtyCon) then
+      else if eqTyCon(tyCon, BT.charTyCon) then
         RD.mkCHARtyRepTerm exp
-      else if eqTyCon(tyCon, BE.PTRtyCon) then
+      else if eqTyCon(tyCon, BT.ptrTyCon) then
         RD.mkPTRtyRepTerm ()
-      else if eqTyCon(tyCon, BE.REALtyCon) then
+      else if eqTyCon(tyCon, BT.realTyCon) then
         RD.mkREALtyRepTerm exp
-      else if eqTyCon(tyCon, BE.REAL32tyCon) then
+      else if eqTyCon(tyCon, BT.real32TyCon) then
         RD.mkREAL32tyRepTerm exp
-      else if eqTyCon(tyCon, BE.STRINGtyCon) then
+      else if eqTyCon(tyCon, BT.stringTyCon) then
         RD.mkSTRINGtyRepTerm exp
-      else if eqTyCon(tyCon, BE.UNITtyCon) then
+      else if eqTyCon(tyCon, BT.unitTyCon) then
         RD.mkUNITtyRepTerm ()
-      else if eqTyCon(tyCon, BE.EXNtyCon) then
+      else if eqTyCon(tyCon, BT.exnTyCon) then
         RD.mkEXNtyRepTerm ()
-      else if eqTyCon(tyCon, BE.LISTtyCon()) then
+      else if eqTyCon(tyCon, BT.listTyCon) then
         (let
            val (makeTermVar, makeTermVarTy) = 
                case !RD.makeListTerm of
@@ -281,7 +281,7 @@ in
                  end
                 )
         )
-      else if eqTyCon(tyCon, BE.ARRAYtyCon) then
+      else if eqTyCon(tyCon, BT.arrayTyCon) then
         let
           val (makeTermVar, makeTermVarTy) = 
               case !RD.makeArrayTerm of
@@ -290,7 +290,7 @@ in
         in
           makePolyReify args (makeTermVar, makeTermVarTy) exp
         end
-      else if eqTyCon(tyCon, BE.EXNtyCon) then
+      else if eqTyCon(tyCon, BT.exnTyCon) then
         RD.mkEXNtyRepTerm ()
       else 
         let

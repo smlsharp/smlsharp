@@ -147,7 +147,9 @@ struct
           loop 0
         end
 
-    fun collate cmpFn (ary1, ary2) =
+    fun 'a collate
+           (cmpFn : ('a * 'a -> order))
+           (ary1:'a vector, ary2:'a vector) =
         let
           val len1 = SMLSharp.PrimArray.length_vector ary1
           val len2 = SMLSharp.PrimArray.length_vector ary2

@@ -6,9 +6,13 @@
 
 structure Main : sig
 
-    val dumpPS : TextIO.outstream -> unit
-
+(*
+    include BMARK
+*)
     val doit : unit -> unit
+    val testit : TextIO.outstream -> unit
+
+    val dumpPS : TextIO.outstream -> unit
 
   end = struct
 
@@ -62,5 +66,5 @@ structure Main : sig
 
     fun doit () = ignore (doit' (!problemSz))
 
-  end;
+  end
 

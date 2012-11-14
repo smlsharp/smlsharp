@@ -136,9 +136,10 @@ struct
         val runtimeTy = 
             case runtimeTy of 
               [name] =>
-              (case BuiltinType.findType name of
+              (case BuiltinTypeNames.findType name of
                  SOME ty => P.BUILTINty ty
-               | NONE => P.LIFTEDty runtimeTy)
+               | NONE => P.LIFTEDty runtimeTy
+              )
             | _ => P.LIFTEDty runtimeTy
       in
         P.PIOPAQUE_TYPE 
@@ -149,7 +150,7 @@ struct
         val runtimeTy = 
             case runtimeTy of 
               [name] => 
-              (case BuiltinType.findType name of
+              (case BuiltinTypeNames.findType name of
                  SOME ty => P.BUILTINty ty
                | NONE => P.LIFTEDty runtimeTy)
             | _ => P.LIFTEDty runtimeTy

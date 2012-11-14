@@ -1,9 +1,6 @@
 (* ML-Yacc Parser Generator (c) 1989, 1990 Andrew W. Appel, David R. Tarditi 
  *
- * $Log: yacc.sml,v $
- * Revision 1.1  2005/09/05 13:28:59  kiyoshiy
- * added.
- *
+ * $Log$
  * Revision 1.3  1996/05/30  18:05:09  dbm
  * Made changes to generate code that conforms to the value restriction by
  * lifting lets to locals in the code generated to define errtermvalue and action.

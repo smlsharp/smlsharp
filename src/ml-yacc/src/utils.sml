@@ -43,7 +43,7 @@ struct
 
  type set = elem list
  exception Select_arb
- val empty = nil
+ val empty : set = nil
 
  val insert = fn (key,s) =>
 	let fun f (l as (h::t)) =
@@ -54,8 +54,9 @@ struct
 	in f s
 	end
 		
- val select_arb = fn nil => raise Select_arb
- 		   | a::b => a
+ val select_arb : set -> elem
+   = fn nil => raise Select_arb
+      | a::b => a
 
  val exists = fn (key,s) =>
 	let fun f (h::t) = if elem_gt(key,h) then f t
@@ -72,9 +73,10 @@ struct
 	in f s
 	end
    
- fun revfold f lst init = List.foldl f init lst
- fun fold f lst init = List.foldr f init lst
- val app = List.app
+ fun 'a revfold (f:elem * 'a -> 'a) (lst:set) init = List.foldl f init lst
+ fun 'a fold (f:elem * 'a -> 'a)  (lst:set) (init:'a) =
+     List.foldr f init lst
+ val app : (elem -> unit) -> set -> unit = List.app
 
 fun set_eq(h::t,h'::t') = 
 	(case elem_eq(h,h')
@@ -99,9 +101,9 @@ fun union(a as (h::t),b as (h'::t')) =
   | union(nil,s) = s
   | union(s,nil) = s
 
-val make_list = fn s => s
+val make_list = fn (s:set) => s
 
-val is_empty = fn nil => true | _ => false
+val is_empty : set -> bool = fn nil => true | _ => false
 
 val make_set = fn l => List.foldr insert [] l
 
@@ -126,9 +128,9 @@ val remove = fn (e,s) =>
 	  else if elem_eq(h',h) then difference(t,t')
 	  else difference(a,t')
 
- fun singleton X = [X]
+ fun singleton (X:elem) : set = [X]
 
- fun card(S) = fold (fn (a,count) => count+1) S 0
+ fun card(S:set) : int = fold (fn (a,count) => count+1) S 0
 
       local
 	    fun closure'(from, f, result) =
@@ -271,7 +273,7 @@ val _ = "initializing RbOrdSet  functror ..."
 	in scan(t,start)
 	end
 
-   fun app f t =
+   fun app (f:elem -> unit) (t:set) =
       let fun scan EMPTY = ()
             | scan(TREE(k,_,l,r)) = (scan l; f k; scan r)
       in scan t
@@ -526,10 +528,10 @@ val _ = "initializing Hash functror ..."
 
     type table = {count : int, table : int HashTable.table}
 
-    val empty = {count=0,table=HashTable.empty}
-    val size = fn {count,table} => count
+    val empty : table = {count=0,table=HashTable.empty}
+    val size = fn ({count,table}:table) => count
     val add = fn (e,{count,table}) =>
 		{count=count+1,table=HashTable.insert((e,count),table)}
-    val find = fn (e,{table,count}) => HashTable.find(e,table)
-    val exists = fn (e,{table,count}) => HashTable.exists(e,table)
+    val find = fn (e:elem,{table,count}:table) => HashTable.find(e,table)
+    val exists = fn (e:elem,{table,count}:table) => HashTable.exists(e,table)
 end

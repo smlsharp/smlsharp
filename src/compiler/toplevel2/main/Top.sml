@@ -8,6 +8,8 @@
 structure Top : TOP =
 struct
 
+  fun bug s = Control.Bug ("CheckProvide: " ^ s)
+
   open TopData
 
   val defaultOptions =
@@ -69,7 +71,7 @@ struct
 
   fun printPhase title =
       if !Control.debugPrint
-      then (printError "start phase: "; printError title; printError "\n")
+      then (printError "phase: "; printError title; printError "\n")
       else ()
 
   fun printCode flag formatter title codes =
@@ -112,8 +114,16 @@ struct
                 )
                 title code
 
-  fun printRecordCalc title code =
-      printCode Control.printRC
+  fun printTP title code =
+      printCode Control.printInfo
+                (if !Control.printWithType
+                 then Control.prettyPrint o (TypedCalc.formatWithType_tpdecl nil)
+                 else Control.prettyPrint o (TypedCalc.format_tpdecl nil)
+                )
+                title code
+
+  fun printRecordCalc controlRef title code =
+      printCode controlRef
                 (if !Control.printWithType
                  then RecordCalcFormatter.rcdecToString
                  else RecordCalcFormatter.rcdecToStringWithoutType)
@@ -169,13 +179,15 @@ struct
       printCode Control.printML (Control.prettyPrint o RTL.format_program)
                 title [code]
 
+
   fun doParse input =
       let
-        val _ = printPhase "Parse"
+        val _ = printPhase "Parse starts"
         val _ = #start Counter.parseTimeCounter()
         val ret = Parser.parse input
-        val _ = #stop Counter.parseTimeCounter()
+        val _ =  #stop Counter.parseTimeCounter()
         val _ = printParseResult "Parsed" [ret]
+        val _ = printPhase "Parse ends"
       in
         case ret of
           Absyn.UNIT unit => unit
@@ -185,14 +197,15 @@ struct
 
   fun doLoadFile (baseName, stdPath, loadPath) absyn =
       let
-        val _ = printPhase "LoadFile"
+        val _ = printPhase "LoadFile starts"
         val _ = #start Counter.loadFileTimeCounter()
         val ({loadedFiles}, abunit) =
             LoadFile.load
               {baseName=baseName, stdPath=stdPath, loadPath=loadPath}
               absyn
-        val _ = #stop Counter.loadFileTimeCounter()
+        val _ =  #stop Counter.loadFileTimeCounter()
         val _ = printAbsyn "File Loaded" [abunit]
+        val _ = printPhase "LoadFile ends"
         val interfaceNames =
             {provide = #interfaceName (#interface abunit),
              requires = map #interfaceName (#decls (#interface abunit)),
@@ -204,11 +217,12 @@ struct
 
   fun doElaboration fixEnv abunit =
       let
-        val _ = printPhase "Elaboration"
+        val _ = printPhase "Elaboration starts"
         val _ = #start Counter.elaborationTimeCounter()
         val (newFixEnv, plunit, warnings) = Elaborator.elaborate fixEnv abunit
-        val _ = #stop Counter.elaborationTimeCounter()
+        val _ =  #stop Counter.elaborationTimeCounter()
         val _ = printWarnings warnings
+        val _ = printPhase "Elaboration ends"
         val _ = printPatternCalc "Elaborated" [plunit]
       in
         (newFixEnv, plunit)
@@ -216,13 +230,14 @@ struct
 
   fun doNameEvaluation (topEnv, version, builtinICDecls) plunit =
       let
-        val _ = printPhase "NameEval"
+        val _ = printPhase "NameEval starts"
         val _ = #start Counter.nameEvaluationTimeCounter()
         val (nameevalTopEnv, icdecls, warnings) =
             NameEval.nameEval {topEnv=topEnv, version=version,
                                systemDecls=builtinICDecls} plunit
-        val _ = #stop Counter.nameEvaluationTimeCounter()
+        val _ =  #stop Counter.nameEvaluationTimeCounter()
         val _ = printWarnings warnings
+        val _ = printPhase "NameEval ends"
         val _ = printIDCalc "Name Evaluation" icdecls
       in
         (nameevalTopEnv, icdecls)
@@ -230,11 +245,12 @@ struct
 
   fun doTypeInference idcalc =
       let
-        val _ = printPhase "TypeInference"
+        val _ = printPhase "TypeInference starts"
         val _ = #start Counter.typeInferenceTimeCounter()
         val (typeinfVarE, tpdecs, warnings) = InferTypes.typeinf idcalc
-        val _ = #stop Counter.typeInferenceTimeCounter()
+        val _ =  #stop Counter.typeInferenceTimeCounter()
         val _ = printWarnings warnings
+        val _ = printPhase "TypeInference ends"
         val _ = printTypedCalc "Type Inference" tpdecs
       in
         (typeinfVarE, tpdecs)
@@ -242,33 +258,60 @@ struct
 
   fun doPrinterGeneration (topEnv, tpdecs) =
       let
-        val _ = printPhase "PrinterGeneration"
+        val _ = printPhase "PrinterGeneration starts"
         val _ = #start Counter.printerGenerationTimeCounter()
         val (topEnv, externDecls, printDecls) = PrinterGeneration.generate topEnv
-        val _ = #stop Counter.printerGenerationTimeCounter()
+        val _ =  #stop Counter.printerGenerationTimeCounter()
         val tpdecs = externDecls @ tpdecs @ printDecls
-        val _ = printTypedCalc "Printer Generated" 
+        val _ = printPhase "PrinterGeneration ends"
+        val _ = printTypedCalc "Printer Generated" tpdecs
       in
         (topEnv, tpdecs)
       end
 
   fun doUncurryOptimization tpdecs =
       let
-        val _ = printPhase "UncurryOptimization"
+        val _ = printPhase "UncurryOptimization starts"
         val _ = #start Counter.UncurryOptimizationTimeCounter()
         val tpdecs = UncurryFundecl.optimize tpdecs
-        val _ = #stop Counter.UncurryOptimizationTimeCounter()
+        val _ =  #stop Counter.UncurryOptimizationTimeCounter()
+        val _ = printPhase "UncurryOptimization ends"
         val _ = printTypedCalc "Uncurrying Optimized" tpdecs
       in
         tpdecs
       end
 
+  fun doTypedCalcOptimization tpdecs =
+      let
+        val _ = printPhase "TypedCalcOptimization starts"
+        val _ = #start Counter.TypedCalcOptimizationTimeCounter()
+        val tpdecs = TPOptimize.optimize tpdecs
+        val _ =  #stop Counter.TypedCalcOptimizationTimeCounter()
+        val _ = printPhase "TypedCalcOptimization ends"
+        val _ = printTypedCalc "TypedCalc Optimized" tpdecs
+      in
+        tpdecs
+      end
+
+  fun doRecordCalcOptimization rcdecs =
+      let
+        val _ = printPhase "RecordCalcOptimization starts"
+        val _ = #start Counter.RecordCalcOptimizationTimeCounter()
+        val rcdecs = RCOptimize.optimize rcdecs
+        val _ =  #stop Counter.RecordCalcOptimizationTimeCounter()
+        val _ = printPhase "RecordCalcOptimization ends"
+        val _ = printRecordCalc Control.printRCOptimize "RecordCalc Optimized" rcdecs
+      in
+        rcdecs
+      end
+
   fun doVALRECOptimization iddecs =
       let
-        val _ = printPhase "VALRECOptimization"
+        val _ = printPhase "VALRECOptimization starts"
         val _ = #start Counter.valRecOptimizationTimeCounter()
         val iddecs = VALREC_Optimizer.optimize iddecs
-        val _ = #stop Counter.valRecOptimizationTimeCounter()
+        val _ =  #stop Counter.valRecOptimizationTimeCounter()
+        val _ = printPhase "VALRECOptimization ends"
         val _ = printVR "VAL REC optimize" iddecs
       in
         iddecs
@@ -276,10 +319,11 @@ struct
 
   fun doFundeclElaboration iddecs =
       let
-        val _ = printPhase "FundeclElaboration"
+        val _ = printPhase "FundeclElaboration starts"
         val _ = #start Counter.fundeclElaborationTimeCounter()
         val iddecs = TransFundecl.transIcdeclList iddecs
-        val _ = #stop Counter.fundeclElaborationTimeCounter()
+        val _ =  #stop Counter.fundeclElaborationTimeCounter()
+        val _ = printPhase "FundeclElaboration ends"
         val _ = printIDCalc "Fundecl Elaboration" iddecs
       in
         iddecs
@@ -288,55 +332,60 @@ struct
 
   fun doMatchCompilation tpdecs =
       let
-        val _ = printPhase "MatchCompilation"
+        val _ = printPhase "MatchCompilation starts"
         val _ = #start Counter.matchCompilationTimeCounter()
         val (rcdecs, warnings) = MatchCompiler.compile tpdecs
-        val _ = #stop Counter.matchCompilationTimeCounter()
-        val _ = printRecordCalc "Match Compiled" rcdecs
+        val _ =  #stop Counter.matchCompilationTimeCounter()
+        val _ = printRecordCalc Control.printMatchComp "Match Compiled" rcdecs
         val _ = printWarnings warnings
+        val _ = printPhase "MatchCompilation ends"
       in
         rcdecs
       end
 
   fun doSQLCompilation rcdecs =
       let
-        val _ = printPhase "SQLCompilation"
+        val _ = printPhase "SQLCompilation starts"
         val _ = #start Counter.sqlCompilationTimeCounter()
         val rcdecs = SQLCompilation.compile rcdecs
-        val _ = #stop Counter.sqlCompilationTimeCounter()
-        val _ = printRecordCalc "SQL Compiled" rcdecs
+        val _ =  #stop Counter.sqlCompilationTimeCounter()
+        val _ = printPhase "SQLCompilation ends"
+        val _ = printRecordCalc Control.printSQLComp "SQL Compiled" rcdecs
       in
         rcdecs
       end
 
   fun doFFICompilation rcdecs =
       let
-        val _ = printPhase "FFICompilation"
+        val _ = printPhase "FFICompilation starts"
         val _ = #start Counter.ffiCompilationTimeCounter()
         val rcdecs = FFICompilation.compile rcdecs
-        val _ = #stop Counter.ffiCompilationTimeCounter()
-        val _ = printRecordCalc "FFI Compiled" rcdecs
+        val _ =  #stop Counter.ffiCompilationTimeCounter()
+        val _ = printPhase "FFICompilation ends"
+        val _ = printRecordCalc Control.printFFIComp "FFI Compiled" rcdecs
       in
         rcdecs
       end
 
   fun doRecordCompilation rcdecs =
       let
-        val _ = printPhase "RecordCompilation"
+        val _ = printPhase "RecordCompilation starts"
         val _ = #start Counter.recordCompilationTimeCounter()
         val rcdecs = RecordCompilation.compile rcdecs
-        val _ = #stop Counter.recordCompilationTimeCounter()
-        val _ = printRecordCalc "Record Compiled" rcdecs
+        val _ =  #stop Counter.recordCompilationTimeCounter()
+        val _ = printPhase "RecordCompilation ends"
+        val _ = printRecordCalc Control.printRecordComp "Record Compiled" rcdecs
       in
         rcdecs
       end
 
   fun doDatatypeCompilation rcdecs =
       let
-        val _ = printPhase "DatatypeCompilation"
+        val _ = printPhase "DatatypeCompilation starts"
         val _ = #start Counter.datatypeCompilationTimeCounter()
         val tldecs = DatatypeCompilation.compile rcdecs
-        val _ = #stop Counter.datatypeCompilationTimeCounter()
+        val _ =  #stop Counter.datatypeCompilationTimeCounter()
+        val _ = printPhase "DatatypeCompilation ends"
         val _ = printTypedLambda "Datatype Compiled" tldecs
       in
         tldecs
@@ -354,10 +403,11 @@ struct
 
   fun doStaticAnalysis tldecs =
       let
-        val _ = printPhase "StaticAnalysis"
+        val _ = printPhase "StaticAnalysis starts"
         val _ = #start Counter.staticAnalysisTimeCounter()
         val acdecs = StaticAnalysis.analyse tldecs
-        val _ = #stop Counter.staticAnalysisTimeCounter()
+        val _ =  #stop Counter.staticAnalysisTimeCounter()
+        val _ = printPhase "StaticAnalysis ends"
         val _ = printAnnotatedCalc "Static Analysis" acdecs
       in
         acdecs
@@ -365,10 +415,11 @@ struct
 
   fun doRecordUnboxing acdecs =
       let
-        val _ = printPhase "RecordUnboxing"
+        val _ = printPhase "RecordUnboxing starts"
         val _ = #start Counter.recordUnboxingTimeCounter()
         val mvdecs =  RecordUnboxing.transform acdecs
-        val _ = #stop Counter.recordUnboxingTimeCounter()
+        val _ =  #stop Counter.recordUnboxingTimeCounter()
+        val _ = printPhase "RecordUnboxing ends"
         val _ = printMultipleValueCalc "Record Unboxing" mvdecs
       in
         mvdecs
@@ -376,10 +427,11 @@ struct
 
   fun doBitmapCompilation mvdecs =
       let
-        val _ = printPhase "BitmapCompilation"
+        val _ = printPhase "BitmapCompilation starts"
         val _ = #start Counter.bitmapCompilationTimeCounter()
         val bcdecs = BitmapCompilation.compile mvdecs
-        val _ = #stop Counter.bitmapCompilationTimeCounter()
+        val _ =  #stop Counter.bitmapCompilationTimeCounter()
+        val _ = printPhase "BitmapCompilation ends"
         val _ = printBitmapCalc "Bitmap Compiled" bcdecs
       in
         bcdecs
@@ -387,10 +439,11 @@ struct
 
   fun doBitmapANormalization bcdecs =
       let
-        val _ = printPhase "BitmapANormalization"
+        val _ = printPhase "BitmapANormalization starts"
         val _ = #start Counter.bitmapANormalizationTimeCounter()
         val baexp = BitmapANormalization.normalize bcdecs
-        val _ = #stop Counter.bitmapANormalizationTimeCounter()
+        val _ =  #stop Counter.bitmapANormalizationTimeCounter()
+        val _ = printPhase "BitmapANormalization ends"
         val _ = printBitmapANormal "Bitmap ANormalized" baexp
       in
         baexp
@@ -398,10 +451,11 @@ struct
 
   fun doBitmapANormalReorder baexp =
       let
-        val _ = printPhase "BitmapANormalReorder"
+        val _ = printPhase "BitmapANormalReorder starts"
         val _ = #start Counter.bitmapANormalReorderTimeCounter()
         val baexp = BitmapANormalReorder.optimize baexp
-        val _ = #stop Counter.bitmapANormalReorderTimeCounter()
+        val _ =  #stop Counter.bitmapANormalReorderTimeCounter()
+        val _ = printPhase "BitmapANormalReorder ends"
         val _ = printBitmapANormal "BitmapANormal Reordered" baexp
       in
         baexp
@@ -409,10 +463,11 @@ struct
 
   fun doClosureConversion baexp =
       let
-        val _ = printPhase "ClosureConversion"
+        val _ = printPhase "ClosureConversion starts"
         val _ = #start Counter.closureConversionTimeCounter()
         val cadecs = ClosureConversion.convert baexp
-        val _ = #stop Counter.closureConversionTimeCounter()
+        val _ =  #stop Counter.closureConversionTimeCounter()
+        val _ = printPhase "ClosureConversion ends"
         val _ = printClosureANormal "Closure Converted" cadecs
       in
         cadecs
@@ -420,10 +475,11 @@ struct
 
   fun toYAANormal cadecs =
       let
-        val _ = printPhase "ToYAANormal"
+        val _ = printPhase "ToYAANormal starts"
         val _ = #start Counter.toYAANormalTimeCounter()
         val ancalc = ToYAANormal.transform cadecs
-        val _ = #stop Counter.toYAANormalTimeCounter()
+        val _ =  #stop Counter.toYAANormalTimeCounter()
+        val _ = printPhase "ToYAANormal ends"
         val _ = printYAANormal "To YAANormal" ancalc
       in
         ancalc
@@ -431,10 +487,11 @@ struct
 
   fun doYAANormalOptimization andecs =
       let
-        val _ = printPhase "YAANormalOptimization"
+        val _ = printPhase "YAANormalOptimization starts"
         val _ = #start Counter.anormalOptimizationTimeCounter()
         val andecs = YAANormalOptimization.optimize andecs
-        val _ = #stop Counter.anormalOptimizationTimeCounter()
+        val _ =  #stop Counter.anormalOptimizationTimeCounter()
+        val _ = printPhase "YAANormalOptimization ends"
         val _ = printYAANormal "A-Normal Optimization" andecs
       in
         andecs
@@ -442,10 +499,11 @@ struct
 
   fun doStaticAllocation andecs =
       let
-        val _ = printPhase "StaticAllocation"
+        val _ = printPhase "StaticAllocation starts"
         val _ = #start Counter.staticAllocationTimeCounter()
         val andecs = StaticAllocation.optimize andecs
-        val _ = #stop Counter.staticAllocationTimeCounter()
+        val _ =  #stop Counter.staticAllocationTimeCounter()
+        val _ = printPhase "StaticAllocation ends"
         val _ = printYAANormal "Static Allocation" andecs
       in
         andecs
@@ -457,7 +515,7 @@ struct
 	val _ = #start Counter.inliningTimeCounter()
 	val (globalInlineEnv, mvdecs) =
 	    Inline.doInlining (#inlineEnv basis) mvdecs
-	val _ = #stop Counter.inliningTimeCounter()
+	val _ =  #stop Counter.inliningTimeCounter()
         val _ = printMultipleValueCalc "Inlining" mvdecs
       in
         (localContext, mvdecs)
@@ -469,7 +527,7 @@ struct
       let
         val _ = #start Counter.mvOptimizationTimeCounter()
         val mvdecs = MVOptimization.optimize mvdecs
-        val _ = #stop Counter.mvOptimizationTimeCounter()
+        val _ =  #stop Counter.mvOptimizationTimeCounter()
         val _ = printMultipleValueCalc "MutipleValue Optimization" mvdecs
       in
         (localContext, mvdecs)
@@ -481,7 +539,7 @@ struct
       let
         val _ = #start Counter.functionLocalizeTimeCounter()
         val mvdecs = FunctionLocalize.localize mvdecs
-        val _ = #stop  Counter.functionLocalizeTimeCounter()
+        val _ =  #stop  Counter.functionLocalizeTimeCounter()
         val _ = printMultipleValueCalc "Function Localization" mvdecs
       in
         (localContext, mvdecs)
@@ -506,10 +564,11 @@ struct
 
   fun doAIGeneration2 andecs =
       let
-        val _ = printPhase "AIGeneration"
+        val _ = printPhase "AIGeneration starts"
         val _ = #start Counter.aigenerationTimeCounter()
         val aicode = AIGenerator2.generate andecs
-        val _ = #stop Counter.aigenerationTimeCounter()
+        val _ =  #stop Counter.aigenerationTimeCounter()
+        val _ = printPhase "AIGeneration ends"
         val _ = printAbstractInstruction2 "AIGeneration2" aicode
       in
         aicode
@@ -517,10 +576,11 @@ struct
 
   fun doRTLTypeCheck params rtl =
       let
-        val _ = printPhase "RTLTypeCheck"
+        val _ = printPhase "RTLTypeCheck starts"
         val _ = #start Counter.rtlTypecheckTimeCounter()
         val res = RTLTypeCheck.check params rtl
-        val _ = #stop Counter.rtlTypecheckTimeCounter()
+        val _ =  #stop Counter.rtlTypecheckTimeCounter()
+        val _ = printPhase "RTLTypeCheck ends"
       in
         case res of
           nil => ()
@@ -532,10 +592,11 @@ struct
 
   fun doRTLX86Select mainSymbol aicode =
       let
-        val _ = printPhase "RTLX86Select"
+        val _ = printPhase "RTLX86Select starts"
         val _ = #start Counter.rtlselectTimeCounter()
         val rtl = X86Select.select (mainSymbol, aicode)
-        val _ = #stop Counter.rtlselectTimeCounter()
+        val _ =  #stop Counter.rtlselectTimeCounter()
+        val _ = printPhase "RTLX86Select ends"
         val _ = printRTL "X86 RTL Select" rtl
       in
         rtl
@@ -543,10 +604,11 @@ struct
 
   fun doRTLX86Stabilize rtl =
       let
-        val _ = printPhase "RTLX86Stabilize"
+        val _ = printPhase "RTLX86Stabilize starts"
         val _ = #start Counter.rtlstabilizeTimeCounter()
         val rtl = X86Stabilize.stabilize rtl
-        val _ = #stop Counter.rtlstabilizeTimeCounter()
+        val _ =  #stop Counter.rtlstabilizeTimeCounter()
+        val _ = printPhase "RTLX86Stabilize ends"
         val _ = printRTL "X86 RTL Stabilize" rtl
       in
         rtl
@@ -554,10 +616,11 @@ struct
 
   fun doRTLRename rtl =
       let
-        val _ = printPhase "RTLRename"
+        val _ = printPhase "RTLRename starts"
         val _ = #start Counter.rtlrenameTimeCounter()
         val rtl = RTLRename.rename rtl
-        val _ = #stop Counter.rtlrenameTimeCounter()
+        val _ =  #stop Counter.rtlrenameTimeCounter()
+        val _ = printPhase "RTLRename ends"
         val _ = printRTL "X86 RTL Rename" rtl
       in
         rtl
@@ -565,10 +628,11 @@ struct
 
   fun doRTLX86Coloring rtl =
       let
-        val _ = printPhase "RTLX86Coloring"
+        val _ = printPhase "RTLX86Coloring starts"
         val _ = #start Counter.rtlcoloringTimeCounter()
         val (rtl, regAlloc) = X86Coloring.regalloc rtl
-        val _ = #stop Counter.rtlcoloringTimeCounter()
+        val _ =  #stop Counter.rtlcoloringTimeCounter()
+        val _ = printPhase "RTLX86Coloring ends"
         val _ = printRTL "X86 RTL Coloring" rtl
       in
         ({regAlloc = regAlloc}, rtl)
@@ -576,10 +640,11 @@ struct
 
   fun doRTLX86Frame ({regAlloc}, rtl) =
       let
-        val _ = printPhase "RTLX86Frame"
+        val _ = printPhase "RTLX86Frame starts"
         val _ = #start Counter.rtlframeTimeCounter()
         val (rtl, layoutMap) = X86Frame.allocate rtl
-        val _ = #stop Counter.rtlframeTimeCounter()
+        val _ =  #stop Counter.rtlframeTimeCounter()
+        val _ = printPhase "RTLX86Frame ends"
         val _ = printRTL "X86 RTL Frame Allocation" rtl
       in
         ({regAlloc = regAlloc, layoutMap = layoutMap}, rtl)
@@ -587,10 +652,11 @@ struct
 
   fun doRTLX86Emit (env, rtl) =
       let
-        val _ = printPhase "RTLX86Emit"
+        val _ = printPhase "RTLX86Emit starts"
         val _ = #start Counter.rtlemitTimeCounter()
         val ret = X86Emit.emit env rtl
-        val _ = #stop Counter.rtlemitTimeCounter()
+        val _ =  #stop Counter.rtlemitTimeCounter()
+        val _ = printPhase "RTLX86Emit ends"
         val _ = printRTL "X86 RTL Frame Allocation" rtl
       in
         ret
@@ -598,29 +664,35 @@ struct
 
   fun doRTLX86AsmGen asmfile code =
       let
-        val _ = printPhase "RTLX86AsmGen"
+        val _ = printPhase "RTLX86AsmGen starts"
         val _ = #start Counter.rtlasmgenTimeCounter()
         val asmout = X86AsmGen.generate code
-        val _ = #stop Counter.rtlasmgenTimeCounter()
+        val _ =  #stop Counter.rtlasmgenTimeCounter()
+        val _ = #start Counter.rtlasmprintTimeCounter()
+        val _ = printPhase "RTLX86AsmGen ends"
+        val _ = printPhase "RTLX86AsmPrint starts"
         val asmfile =
             case asmfile of
               SOME filename => filename
             | NONE => TempFile.create ("."^SMLSharp_Config.ASMEXT())
         val _ = CoreUtils.makeTextFile' (asmfile, asmout)
+        val _ =  #stop Counter.rtlasmprintTimeCounter()
+        val _ = printPhase "RTLX86AsmPrint ends"
       in
         asmfile
       end
 
   fun doRTLX86Assemble flags objfile asmfile =
       let
-        val _ = printPhase "RTLX86Assemble"
+        val _ = printPhase "RTLX86Assemble starts"
         val objfile =
             case objfile of
               NONE => TempFile.create ("."^SMLSharp_Config.OBJEXT())
             | SOME filename => filename
         val _ = #start Counter.assembleTimeCounter()
         val _ = BinUtils.assemble {source=asmfile, flags=flags, object=objfile}
-        val _ = #stop Counter.assembleTimeCounter()
+        val _ =  #stop Counter.assembleTimeCounter()
+        val _ = printPhase "RTLX86Assemble ends"
       in
         FILE objfile
       end
@@ -635,10 +707,9 @@ struct
         val parsed = doParse input
         val (interfaceNames, abunit) =
             doLoadFile (baseName, stdPath, loadPath) parsed
-
         val _ = #start Counter.generateMainTimeCounter()
         val mainSymbol = GenerateMain.mainSymbol abunit
-        val _ = #stop Counter.generateMainTimeCounter()
+        val _ =  #stop Counter.generateMainTimeCounter()
 
         val (newFixEnv, plunit) = doElaboration fixEnv abunit
 
@@ -673,11 +744,11 @@ struct
         val tpcalc = if !Control.doUncurryOptimization
                      then doUncurryOptimization tpcalc
                      else tpcalc
-(*
-        val tpcalc = if !Control.skipPrinter
-                     then tpcalc
-                     else doPrinterGeneration Basis.initialBasis tpcalc
-*)
+
+        val tpcalc = if !Control.doTCOptimization
+                     then doTypedCalcOptimization tpcalc
+                     else tpcalc
+
         val rccalc = doMatchCompilation tpcalc
 
         val _ = if stopAt = ErrorCheck
@@ -688,6 +759,10 @@ struct
         val rccalc = doFFICompilation rccalc
 
         val rccalc = doRecordCompilation rccalc
+
+        val rccalc = if !Control.doRCOptimization
+                     then doRecordCalcOptimization rccalc
+                     else rccalc
 
         val tlcalc = doDatatypeCompilation rccalc
 
@@ -723,7 +798,7 @@ struct
                   (
                    #start Counter.typeCheckBitmapANormalTimeCounter();
                    TypeCheckBitmapANormal.typecheck bacalc;
-                   #stop Counter.typeCheckBitmapANormalTimeCounter()
+                    #stop Counter.typeCheckBitmapANormalTimeCounter()
                   )
                 else ()
 
@@ -779,7 +854,7 @@ struct
 
         val objcode = doRTLX86Assemble asmFlags dstfile asm
 
-        val _ = #stop Counter.compilationTimeCounter()
+        val _ =  #stop Counter.compilationTimeCounter()
 
       in
         (interfaceNames,
@@ -788,6 +863,28 @@ struct
       handle Return return => return
 
   exception Return of interfaceNames * newContext option
+
+  fun loadBuiltin input =
+      let
+        val absyn = InterfaceParser.parse input
+        val topdecs =
+            case absyn of
+              AbsynInterface.INTERFACE {requires=nil, topdecs} => topdecs
+            | _ => raise Control.Bug "loadBuiltin: failed to load builtin"
+        val interface =
+            {decls=nil, interfaceName=NONE, requires=nil, topdecs=topdecs}
+        val abunit =
+            {interface=interface, topdecs=nil}
+        val (fixEnv, plunit, warnings) =
+            Elaborator.elaborateRequire abunit
+        val (topEnv, idcalc) =
+            NameEval.evalBuiltin (#topdecs (#interface plunit))
+        val version = NONE
+      in
+        {topEnv=topEnv, version=version, fixEnv=fixEnv,
+         builtinDecls=idcalc}
+        : toplevelContext
+      end
 
   fun loadInterface {stopAt, stdPath, loadPath}
                     ({topEnv, fixEnv, ...}:toplevelContext) filename =
@@ -798,7 +895,7 @@ struct
             LoadFile.require 
               {stdPath=stdPath, loadPath=loadPath}
               sourceName
-        val _ = #stop Counter.loadFileTimeCounter()
+        val _ =  #stop Counter.loadFileTimeCounter()
         val _ = printAbsyn "File Loaded" [abunit]
 
         val interfaceNames =
@@ -809,7 +906,7 @@ struct
         val _ = #start Counter.elaborationTimeCounter()
         val (newFixEnv, plunit, warnings) =
             Elaborator.elaborateRequire abunit
-        val _ = #stop Counter.elaborationTimeCounter()
+        val _ =  #stop Counter.elaborationTimeCounter()
         val _ = printWarnings warnings
         val _ = printPatternCalc "Elaborated" [plunit]
 
@@ -819,8 +916,8 @@ struct
 
         val _ = #start Counter.nameEvaluationTimeCounter()
         val (topEnv, icdecls, warnings) =
-            NameEval.evalRequire (topEnv, nil) plunit
-        val _ = #stop Counter.nameEvaluationTimeCounter()
+            NameEval.evalRequire topEnv plunit
+        val _ =  #stop Counter.nameEvaluationTimeCounter()
         val _ = printWarnings warnings
         val _ = printIDCalc "Name Evaluation" {decls=icdecls, loc=Loc.noloc}
 

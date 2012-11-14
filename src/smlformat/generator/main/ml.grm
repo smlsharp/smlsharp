@@ -27,8 +27,14 @@ fun markinstance (i as MarkInstance _, _, _) = i
 
 fun qidToString [id] = id
   | qidToString (head::tail) = head ^ "." ^ (qidToString tail)
+  | qidToString _ = raise Fail "BUG:nil to qudToString"
 
 %%
+
+  %decompose (true)
+
+  %blocksize (40)
+
   %term
       EOF | SEMICOLON
     | ID of string | TYVAR of string
@@ -258,13 +264,8 @@ fun qidToString [id] = id
 %value STRING ("")
 %value CHAR ("a")
 
-%header (
-local
-  structure Token = LrParser.Token
-in
-  structure MLLrVals
-)
-%footer (end)
+%header (structure MLLrVals)
+%footer ()
 %%
 
 int : INT (INT)

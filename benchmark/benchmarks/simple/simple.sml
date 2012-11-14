@@ -1,7 +1,7 @@
 (* Simple
  * error: grid_max < 5
  *)
-functor Simple(val grid_max: int val step_count: int) =
+functor Simple(val grid_max: int val step_count: int) (*: BMARK*) =
   struct
 
 fun fold f [] = (fn b => b)
@@ -403,8 +403,8 @@ fun make_viscosity(p,(u',w'),(r',z'), alpha',rho') =
  * Pressure and Energy Polynomial (page 12)
  *)
 
-fun polynomial(G,degree,rho_table,theta_table,rho_value : real,theta_value : real) =
-    let fun table_search (table, value : real) =
+fun polynomial(G,degree,rho_table,theta_table,rho_value,theta_value) =
+    let fun table_search (table, value) =
 	    let val (low, high) = bounds1  table
 		fun search_down  i =  if  value > sub1(table,i-1)  then i
 				      else search_down (i-1)
@@ -878,11 +878,8 @@ fun print_state ((v1,v2),(r,z),alpha,s,rho,p,q,epsilon,theta,deltat,c) = (
 	  val c = Real.trunc (c' * 10000.0)
 	  in
 	    if (c = 6787 andalso delta = ~33093)
-	      then print "Done\n"
-              else print "not expected result\n" (* raise Fail "error" *)
-(*
+	      then ()
 	      else TextIO.output (TextIO.stdErr, "*** ERROR ***\n")
-*)
 	  end
 
   end; (* functor Simple *)

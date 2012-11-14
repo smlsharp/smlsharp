@@ -1,5 +1,5 @@
 _require "../../../basis.smi"
-_require "BuiltinEnv.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "Types.ppg.smi"
 _require "TypesUtils.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"

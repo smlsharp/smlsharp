@@ -12,16 +12,27 @@ struct
   structure Backend = SMLSharp_SQL_Backend
 
   datatype server = datatype SMLSharp.SQL.server
-  datatype 'a conn = CONN of unit ptr * 'a
   datatype dbi = datatype SMLSharp.SQL.dbi
+  datatype value = datatype SMLSharp.SQL.value
+  datatype conn = datatype SMLSharp.SQL.conn
+  datatype db = datatype SMLSharp.SQL.db
+  datatype table = datatype SMLSharp.SQL.table
+  datatype row = datatype SMLSharp.SQL.row
+  datatype result = datatype SMLSharp.SQL.result
+  datatype rel = datatype SMLSharp.SQL.rel
+  datatype query = datatype SMLSharp.SQL.query
+  datatype command = datatype SMLSharp.SQL.command
+
+(*
+  datatype 'a conn = CONN of unit ptr * 'a
   datatype ('a,'b) db = DB of 'a * 'b dbi
   datatype ('a,'b) table = TABLE of (string * 'b dbi) * 'a
   datatype ('a,'b) row = ROW of (string * 'b dbi) * 'a
-  datatype value = datatype SMLSharp.SQL.value
   datatype result = RESULT of unit ptr * int
   datatype 'a rel = REL of result * (result -> 'a)
   datatype 'a query = QUERY of string * 'a * (result -> 'a)
   datatype command = COMMAND of string
+*)
 
   exception Type of string
   exception Format = Backend.Format

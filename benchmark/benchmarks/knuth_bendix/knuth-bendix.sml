@@ -12,8 +12,11 @@ signature KB =
     val kb_complete:
       (term * term -> bool) -> (int * (int * (term * term))) list ->
       ('a * ('b * (term * term))) list -> unit;
-
+(*
+    include BMARK
+*)
     val doit : unit -> unit
+    val testit : TextIO.outstream -> unit
   end;
   
 structure Main : KB = 
@@ -581,9 +584,5 @@ fun Group_precedence op1 op2 =
     fun doit() = kb_complete greater [] Geom_rules
     fun testit _ = ()
 
-  end; (* Main *)
-
-
-
-
+  end (* Main *)
 

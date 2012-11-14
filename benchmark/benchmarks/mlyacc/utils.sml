@@ -1,9 +1,6 @@
 (* ML-Yacc Parser Generator (c) 1989 Andrew W. Appel, David R. Tarditi 
  *
- * $Log: utils.sml,v $
- * Revision 1.1  2005/09/05 13:28:59  kiyoshiy
- * added.
- *
+ * $Log$
  * Revision 1.1.1.1  1996/01/31  16:01:47  george
  * Version 109
  * 

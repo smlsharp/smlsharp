@@ -16,13 +16,14 @@ struct
   fun printRcexp rcexp = print (RecordCalcFormatter.rcexpToString nil rcexp)
   fun printRcdecl rcexp = print (RecordCalcFormatter.rcdecToString rcexp)
   structure RC = RecordCalc
+  structure TC = TypedCalc
   structure T = Types
 
   fun newVar ty =
       let
         val id = VarID.generate ()
       in
-        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : RC.varInfo
+        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : T.varInfo
       end
 
   fun mapi f l =
@@ -120,7 +121,11 @@ struct
          loc)
 
   fun etaExpandPolyCon (conInfo, loc) =
-      case TypesUtils.derefTy (#ty conInfo) of
+      (* 2012-9-12 ohori: This case violates the Barendregt conveiton
+         We alpha-rename boundtvars. *)
+      case TyAlphaRename.copyTy
+             TyAlphaRename.emptyBtvMap 
+             (TypesUtils.derefTy (#ty conInfo)) of
         T.POLYty {boundtvars, body} =>
         let
           val instTyList =
@@ -139,6 +144,7 @@ struct
                              {con = conInfo,
                               instTyList = instTyList,
                               argExpOpt = SOME (RC.RCVAR (newVar, loc)),
+                              argTyOpt = SOME argTy,
                               loc = loc},
                  loc = loc}
             end
@@ -149,6 +155,7 @@ struct
                                {con = conInfo,
                                 instTyList = instTyList,
                                 argExpOpt = NONE,
+                                argTyOpt = NONE,
                                 loc = loc},
                        loc = loc}
         end
@@ -156,6 +163,7 @@ struct
         RC.RCDATACONSTRUCT {con = conInfo,
                             instTyList = nil,
                             argExpOpt = NONE,
+                            argTyOpt = NONE,
                             loc = loc}
 
   structure SingletonTyOrd : ORD_KEY =
@@ -221,8 +229,8 @@ struct
 
   type context =
       {
-        instanceEnv: RC.varInfo SingletonTyMap.map,
-        btvEnv: RC.btvEnv
+        instanceEnv: T.varInfo SingletonTyMap.map,
+        btvEnv: T.btvEnv
       }
 
   fun extendBtvEnv ({instanceEnv, btvEnv}:context) newBtvEnv =
@@ -234,7 +242,7 @@ struct
       {
         instanceEnv =
           foldl
-            (fn (var as {ty = T.SINGLETONty sty, ...} : RC.varInfo,
+            (fn (var as {ty = T.SINGLETONty sty, ...} : T.varInfo,
                  instanceEnv) =>
                 SingletonTyMap.insert (instanceEnv, sty, var)
               | _ => raise Control.Bug "addExtraBinds")
@@ -265,11 +273,11 @@ struct
           T.POLYty {boundtvars = boundtvars,
                     body = T.FUNMty (extraTys, compileTy body)}
 
-  fun compileVarInfo ({path, ty, id} : RC.varInfo) =
-      {path = path, ty = compileTy ty, id = id} : RC.varInfo
+  fun compileVarInfo ({path, ty, id} : T.varInfo) =
+      {path = path, ty = compileTy ty, id = id} : T.varInfo
 
-  fun compileExVarInfo ({path, ty} : RC.exVarInfo) =
-      {path = path, ty = compileTy ty} : RC.exVarInfo
+  fun compileExVarInfo ({path, ty} : T.exVarInfo) =
+      {path = path, ty = compileTy ty} : T.exVarInfo
 
 
   datatype instance =
@@ -514,7 +522,7 @@ struct
            instTyList = instTyList, (* contains no POLYty *)
            argExp = compileExp context argExp,
            loc = loc}
-      | RC.RCDATACONSTRUCT {con, instTyList=nil, argExpOpt=NONE, loc} =>
+      | RC.RCDATACONSTRUCT {con, instTyList=nil, argExpOpt=NONE, argTyOpt, loc} =>
         (
           (* In order to keep consistency of global calling convention,
            * every polymorphic constructor is compiled into a polymorphic
@@ -525,11 +533,12 @@ struct
             exp as RC.RCDATACONSTRUCT _ => exp
           | exp => compileExp context exp
         )
-      | RC.RCDATACONSTRUCT {con, instTyList, argExpOpt, loc} =>
+      | RC.RCDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt, loc} =>
         RC.RCDATACONSTRUCT
           {con = con,
            instTyList = instTyList,  (* contains no POLYty *)
            argExpOpt = Option.map (compileExp context) argExpOpt,
+           argTyOpt = argTyOpt, (* contains no POLYty *)
            loc = loc}
       | RC.RCOPRIMAPPLY {oprimOp={id, ty, path}, instTyList, argExp, loc} =>
         let
@@ -609,8 +618,12 @@ struct
         [RC.RCEXD (exnBinds, loc)]  (* contains no POLYty *)
       | RC.RCEXNTAGD (bind, loc) => (* FIXME check this *)
         [RC.RCEXNTAGD (bind, loc)]  (* contains no POLYty *)
-      | RC.RCEXPORTVAR (varInfo, loc) =>
-        [RC.RCEXPORTVAR (compileVarInfo varInfo, loc)]
+      | RC.RCEXPORTVAR {internalVar, externalVar, loc} =>
+        [RC.RCEXPORTVAR
+           {internalVar=compileVarInfo internalVar, 
+            externalVar=compileExVarInfo externalVar,
+            loc=loc}
+        ]
       | RC.RCEXPORTEXN (exnInfo, loc) =>
         [RC.RCEXPORTEXN (exnInfo, loc)]  (* contains no POLYty *)
       | RC.RCEXTERNVAR (exVarInfo, loc) =>
@@ -627,6 +640,40 @@ struct
                                exp = compileExp context exp})
                           bindList,
                       loc)]
+      | RC.RCVALPOLYREC (btvEnv, {var as {path, ty, id}, expTy, exp}::nil, loc) =>
+        (* to suppress redundant onl-element record creation *)
+        let
+          val extraArgs = generateExtraArgVars btvEnv
+          val newContext = extendBtvEnv context btvEnv
+        in
+          case extraArgs of
+            nil =>
+            [RC.RCVALPOLYREC (btvEnv,
+                              [{var = compileVarInfo var,
+                                expTy = compileTy expTy,
+                                exp = compileExp newContext exp}],
+                              loc)]
+          | _::_ =>
+            let
+              val newContext = addExtraBinds newContext extraArgs
+              val localVar = var
+              val var = {path = path,
+                         ty = compileTy (T.POLYty {boundtvars = btvEnv,
+                                                   body = ty}),
+                         id = id} : T.varInfo
+              val expTy = compileTy expTy
+              val exp = compileExp newContext exp
+              val recExp =
+                  POLYFNM
+                    (btvEnv, extraArgs,
+                     LET (VALRECDEC [(localVar, Exp (exp, expTy))],
+                          Var localVar)
+                    )
+            in
+              [VALDEC [(var, recExp)] loc]
+            end
+        end
+
       | RC.RCVALPOLYREC (btvEnv, bindList, loc) =>
         let
           val extraArgs = generateExtraArgVars btvEnv
@@ -662,11 +709,14 @@ struct
                * variables, we need to manipulate all occurrance of f_1,
                * ..., f_n in this program in order to replace type
                * information. This does not make sense.
+               * 
+               * 2012-9-10 Ohori. Changed to maintain Barendregt condition.
+               * In order to keep the uniqueness we have only to introduce 
+               * new 'a's and the corresponding A's for each f_i to form:
+               *   val f_i = ['a#K. fn A => #i (F {'a} A)]
+               * This is local and simple, and does not introduce overhead. 
                *)
               val newContext = addExtraBinds newContext extraArgs
-              val instTyList =
-                  map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv)
-
               val recBinds =
                   mapi
                     (fn ({var as {path, ty, id}, expTy, exp}, i) =>
@@ -692,13 +742,23 @@ struct
               val localRecVar = newVar (#2 localRecExp)
 
               val bodyBinds =
-                  map (fn {var, label, ...} =>
+                  map 
+                    (fn {var, label, ...} =>
+                        let
+                          val (_, btvEnv) = TyAlphaRename.newBtvEnv TyAlphaRename.emptyBtvMap btvEnv
+                          val extraArgs = generateExtraArgVars btvEnv
+                          val instTyList =
+                              map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv)
+                        in
                           (var,
                            POLYFNM
-                             (btvEnv, extraArgs,
+                             (btvEnv, 
+                              extraArgs,
                               SELECT (label,
                                       APPM (TAPP (Var localRecVar, instTyList),
-                                            map Var extraArgs)))))
+                                            map Var extraArgs))))
+                        end
+                    )
                       recBinds
                       handle e => raise e
             in

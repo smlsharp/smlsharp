@@ -1,0 +1,12 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "Types.ppg.smi"
+
+structure TyPrinters =
+  struct
+    val print : string -> unit
+    val printPath : string list -> unit
+    val printTy : Types.ty -> unit
+    val printTpVarInfo : {id:VarID.id, path:string list, ty:Types.ty} -> unit
+  end

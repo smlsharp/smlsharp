@@ -1,4 +1,4 @@
-structure Main =
+structure Main (*: BMARK*) = 
   struct
 
     fun map f [] = []
@@ -134,9 +134,8 @@ structure Main =
     fun show pr = (app (fn s => (pr s; pr "\n"))) o plot o alive
 
     fun doit () = show (fn _ => ()) (nthgen gun 50)
-(*
-    fun testit strm = show (fn c => TextIO.output (strm, c)) (nthgen gun 50)
-*)
-  end; (* Life *)
 
+    fun testit strm = show (fn c => TextIO.output (strm, c)) (nthgen gun 50)
+
+  end (* Life *)
 

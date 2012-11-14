@@ -65,8 +65,8 @@ fun makeSEQdec (SeqDec a, SeqDec b) = SeqDec(a@b)
   | makeSEQdec (a,b) = SeqDec[a,b]
 
 
-fun QuoteExp s = ()
-fun AntiquoteExp e = ()
+fun QuoteExp (s:string) = ()
+fun AntiquoteExp (e:exp) = ()
 
 end (* structure *)
 

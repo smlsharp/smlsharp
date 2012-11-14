@@ -15,7 +15,7 @@ local
   structure TF = TfunVars
   structure TFR = TfunVarsRefresh
   structure V = NameEvalEnv
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
   structure L = SetLiftedTys
   structure Ty = EvalTy
   structure S = Subst
@@ -388,7 +388,7 @@ local
                     | NONE => raise Undef
                 val realizerTfun =
                     case N.tyForm tvarList ty of
-                      N.TYNAME {tfun,path} => getTfunTfun tfun
+                      N.TYNAME tfun => getTfunTfun tfun
                     | N.TYTERM ty =>
                       I.TFUN_DEF {iseq=N.admitEq tvarList ty,
                                    (* eq attrib of extras is inherited
@@ -683,7 +683,7 @@ local
           val formals = tvarList
           val tfun =
               case N.tyForm formals ty of
-                N.TYNAME {path, tfun} => tfun
+                N.TYNAME tfun => tfun
               | N.TYTERM ty =>
                 I.TFUN_DEF {iseq=iseq,formals=formals,realizerTy=ty}
         in
@@ -862,10 +862,10 @@ local
                     let
                       val ty =
                           case tyOption of
-                            NONE => BV.exnTy
+                            NONE => BT.exnITy
                           | SOME ty => 
                             I.TYFUNM([Ty.evalTy Ty.emptyTvarEnv env ty],
-                                     BV.exnTy)
+                                     BT.exnITy)
                     in
                       V.bindId loc (specEnv,string,I.IDSPECEXN ty)
                     end

@@ -6,15 +6,15 @@ structure Nucleic : sig
 
   end = struct
 
-    type float = real;
-    type intg = int;
+    type float = real
+    type intg = int
 
 (* -- MATH UTILITIES --------------------------------------------------------*)
 
-    val constant_pi        =  3.14159265358979323846;
-    val constant_minus_pi  = ~3.14159265358979323846;
-    val constant_pi2       =  1.57079632679489661923;
-    val constant_minus_pi2 = ~1.57079632679489661923;
+    val constant_pi        =  3.14159265358979323846
+    val constant_minus_pi  = ~3.14159265358979323846
+    val constant_pi2       =  1.57079632679489661923
+    val constant_minus_pi2 = ~1.57079632679489661923
 
 fun math_atan2 y x =
       if (x > 0.0)

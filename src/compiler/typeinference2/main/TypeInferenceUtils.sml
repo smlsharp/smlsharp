@@ -12,9 +12,7 @@ local
     structure T = Types
     structure TPC = TypedCalc
     structure TCU = TypedCalcUtils
-    structure TIC = TypeInferenceContext
     structure TU = TypesUtils
-    structure E = TypeInferenceError
   fun bug s = Control.Bug ("TypeInferenceUtils: " ^ s)
 
 in
@@ -22,25 +20,6 @@ in
   val dummyTyId = ref 0
   fun nextDummyTy () =
       T.DUMMYty (!dummyTyId) before dummyTyId := !dummyTyId + 1
-
-  fun instOfPolyTy (polyTy, tyList) =
-      case TU.derefTy polyTy of
-        T.POLYty {boundtvars, body} =>
-        let 
-          val subst1 = TU.freshSubst boundtvars
-          val body = TU.substBTvar subst1 body
-          val instTyList = BoundTypeVarID.Map.listItems subst1
-          val tyPairs = 
-              if length tyList = length instTyList then 
-                ListPair.zip (instTyList, tyList)
-              else raise bug "arity mismatch in instOfPoly"
-          val _ = U.unify tyPairs
-        in
-          body
-        end
-      | _ => 
-        raise bug "nonpolyty in TFUNDEF in instOfPoly"
-
 
   (*
    * make a fresh instance of ty by instantiating the top-level type
@@ -80,139 +59,6 @@ in
         )
       end
 
-(*
-  exception NONEQ
-  fun eqTy btvEquiv (ty1, ty2) = 
-      let
-        val ty1 = TU.derefTy ty1
-        val ty2 = TU.derefTy ty2
-        fun btvEq (id1, id2) = 
-            BoundTypeVarID.eq(id1, id2) orelse 
-            (case BoundTypeVarID.Map.find(btvEquiv, id1) of
-               SOME id11 => BoundTypeVarID.eq(id11, id2)
-             | NONE => 
-               (case BoundTypeVarID.Map.find(btvEquiv, id2) of
-                  SOME id21 => BoundTypeVarID.eq(id1, id21)
-                | NONE => false))
-        fun eq (ty1, ty2) = eqTy btvEquiv (ty1, ty2)
-        fun eqList (tyL1, tyL2) = eqTyList btvEquiv (tyL1, tyL2)
-      in
-        case (ty1, ty2) of
-          (T.BOUNDVARty bid1, T.BOUNDVARty bid2) => btvEq(bid1, bid2)
-        | (T.SINGLETONty sty1, T.SINGLETONty sty2) =>
-          eqSTy btvEquiv (sty1, sty2)
-        | (T.POLYty {boundtvars=btv1, body=body1},
-           T.POLYty {boundtvars=btv2, body=body2}) =>
-          (let
-             val idkindPairs1 = BoundTypeVarID.Map.listItemsi btv1
-             val idkindPairs2 = BoundTypeVarID.Map.listItemsi btv2
-             val _= if length idkindPairs1 = length idkindPairs2 
-                    then () else raise NONEQ
-             val kindPairs = ListPair.zip(idkindPairs1,idkindPairs2)
-             val _ = 
-                 app (fn ((_,kind1), (_,kind2)) =>
-                         if eqKind btvEquiv (kind1, kind2) then ()
-                         else raise NONEQ)
-                     kindPairs
-             val btvMap =
-                 foldl
-                   (fn (((i1,_),(i2,_)), btvMap) =>
-                       BoundTypeVarID.Map.insert(btvMap, i1, i2)
-                   )
-                   BoundTypeVarID.Map.empty
-                   kindPairs
-           in
-             eqTy btvMap (body1, body2)
-           end
-           handle NONEQ => false
-          )
-        | (T.FUNMty (tyList1, ty1),T.FUNMty (tyList2, ty2))  =>
-          (eqTyList btvEquiv (tyList1, tyList2) andalso eq(ty1, ty2)
-           handle NONEQ => false)
-        | (T.RECORDty tyMap1,T.RECORDty tyMap2)  =>
-          eqSMap btvEquiv (tyMap1, tyMap2)
-        | (T.CONSTRUCTty {tyCon=tyCon1,args=args1},
-           T.CONSTRUCTty {tyCon=tyCon2,args=args2}) =>
-          TypID.eq(#id tyCon1, #id tyCon2) andalso
-          eqTyList btvEquiv (args1, args2)
-        | (T.ERRORty, _) => true
-        | (_, T.ERRORty) => true
-        | (T.DUMMYty _, _) => (U.unify [(ty1, ty2)]; true)
-        | (_, T.DUMMYty _) => (U.unify [(ty1, ty2)]; true)
-        | (T.TYVARty tv1, _) => (U.unify [(ty1, ty2)]; true)
-        | (_, T.TYVARty tv1) => (U.unify [(ty1, ty2)]; true)
-        | _ => false
-      end
-      handle U.Unify => false
-  and eqSMap btvEquiv (smap1, smap2) =
-      let
-        val tyL1 = LabelEnv.listItems smap1
-        val tyL2 = LabelEnv.listItems smap2
-      in
-        eqTyList btvEquiv (tyL1, tyL2)
-      end
-  and eqTyList btvEquiv (tyList1, tyList2) = 
-      length tyList1 = length tyList2 andalso
-      let
-        val tyPairs = ListPair.zip(tyList1, tyList2)
-      in
-        (app 
-           (fn (ty1, ty2) =>
-               if eqTy btvEquiv (ty1, ty2) then () else raise NONEQ
-           )
-           tyPairs;
-         true
-        )
-        handle NONEQ => false
-      end
-  and eqSTy btvEquiv (sty1, sty2) =
-      case (sty1, sty2) of
-      (T.INSTCODEty oprimSelector11,T.INSTCODEty oprimSelector2) =>
-      eqOprimSelector btvEquiv (oprimSelector11,oprimSelector2)
-    | (T.INDEXty (string1, ty1),T.INDEXty (string2, ty2)) =>
-      string1 = string2 andalso eqTy btvEquiv (ty1, ty2)
-    | (T.TAGty ty1, T.TAGty ty2) => eqTy btvEquiv (ty1, ty2)
-    | (T.SIZEty ty1, T.SIZEty ty2) => eqTy btvEquiv (ty1, ty2)
-    | _ => false
-  and eqOprimSelector
-        btvEquiv 
-        ({oprimId=id1,path=path1,keyTyList=ktyL1,match=m1,instMap=IM1},
-         {oprimId=id2,path=path2,keyTyList=ktyL2,match=m2,instMap=IM2})
-      =
-      OPrimID.eq(id1,id2) andalso
-      String.concat path1 = String.concat path2 andalso
-      eqTyList btvEquiv (ktyL1, ktyL2)
-  and eqOprimSelectorList btvEquiv (opList1, opList2) =
-      length opList1 = length opList2 andalso
-      let
-        val opPairs = ListPair.zip (opList1, opList2)
-      in
-        (app
-           (fn x => if eqOprimSelector btvEquiv x then () else raise NONEQ)
-           opPairs;
-         true)
-        handle NONEQ => false
-      end
-  and eqKind btvEquiv ({eqKind=eqK1, tvarKind=tvK1},
-                       {eqKind=eqK2, tvarKind=tvK2}) =
-      (case (eqK1, eqK2) of
-         (Absyn.EQ, Absyn.EQ) => true
-       | (Absyn.NONEQ, Absyn.NONEQ) => true
-       | _ => false) andalso
-      eqTvarKind btvEquiv (tvK1, tvK2)
-  and eqTvarKind btvEquiv (tvK1, tvK2) =
-      case (tvK1, tvK2) of
-      (T.OCONSTkind tyL1,T.OCONSTkind tyL2) => eqTyList btvEquiv (tyL1, tyL2)
-    | (T.OPRIMkind {instances = tyL1, operators = opL1},
-       T.OPRIMkind {instances = tyL2, operators = opL2})
-       =>
-       eqTyList btvEquiv (tyL1, tyL2) andalso
-       eqOprimSelectorList btvEquiv (opL1, opL2)
-    | (T.UNIV, T.UNIV) => true
-    | (T.REC smap1, T.REC smap2) => eqSMap btvEquiv (smap1, smap2)
-    | _ => false
-*)
-
   exception CoerceTy
   fun coerceTy (tpexp, fromTy, toTy, loc) =
       if TU.monoTy toTy then 
@@ -249,10 +95,10 @@ in
                val argVarList = map TCU.newTCVarInfo tyList
                val argExpList = map (fn x => TPC.TPVAR (x,loc)) argVarList
                val bodyExp = 
-                   TPC.TPAPPM{funExp=tpexp,
-                             funTy=T.FUNMty(tyList, fromBodyTy),
-                             argExpList=argExpList,
-                             loc=loc}
+                   TPC.TPAPPM {funExp=tpexp,
+                               funTy=T.FUNMty(tyList, fromBodyTy),
+                               argExpList=argExpList,
+                               loc=loc}
                val bodyEvp = coerceTy (bodyExp, fromBodyTy, bodyTy, loc)
              in 
                TPC.TPFNM
@@ -275,66 +121,77 @@ in
                val _ = List.app
                          (fn (l1,l2) => if l1 = l2 then () else raise CoerceTy)
                          (ListPair.zip (labels, fromLabels))
-               val (makeRecord, expFields) =
+               val (extraBindsRev, expFields) =
                    case tpexp of
                      TPC.TPRECORD {fields, recordTy=_, loc=loc} => 
-                     (fn (fields, ty) => TPC.TPRECORD{fields=fields,
-                                                      recordTy=ty,
-                                                      loc=loc},
-                      fields)
+                     (nil, fields)
                    | _ => 
                      let
                        val var = TCU.newTCVarInfo fromTy
                        val varExp = TPC.TPVAR (var, loc)
-                       val expFields = 
-                           LabelEnv.foldri 
-                             (fn (label,fieldTy,expFields) =>
-                                 let
-                                   val litem =
-                                       TPC.TPSELECT
-                                         {label=label,
-                                          exp=varExp,
-                                          expTy=fromTy,
-                                          resultTy=fieldTy,
-                                          loc=loc}
-                                 in
-                                   LabelEnv.insert(expFields,label,litem)
-                                 end
-                             )
-                             LabelEnv.empty
-                             fromTyFields
-                       fun makeRecord (expFields, recordTy) =
-                           TPC.TPLET
-                             {decls = [TPC.TPVAL ([(var, tpexp)], loc)],
-                              body = [TPC.TPRECORD
-                                        {fields=expFields,
-                                         recordTy=recordTy,
-                                         loc=loc}],
-                              tys = [recordTy],
-                              loc = loc
-                             }
                      in
-                       (makeRecord, expFields)
+                       LabelEnv.foldli
+                         (fn (label,fieldTy,(extraBindsRev, expFields)) =>
+                             let
+                               val fieldVar = TCU.newTCVarInfo fieldTy
+                               val fieldExp = TPC.TPVAR(fieldVar, loc)
+                               val newBind =
+                                   (fieldVar,
+                                    TPC.TPSELECT
+                                      {label=label,
+                                       exp=varExp,
+                                       expTy=fromTy,
+                                       resultTy=fieldTy,
+                                       loc=loc}
+                                   )
+                             in
+                               (newBind::extraBindsRev,
+                                LabelEnv.insert(expFields,label,fieldExp)
+                               )
+                             end
+                         )
+                         ([(var, tpexp)], LabelEnv.empty)
+                         fromTyFields
                      end
                fun getItem (map, label) =
                    case LabelEnv.find(map, label) of
                      SOME item => item
                    | NONE => raise bug "impossible"
-               val newExpFields =
-                   LabelEnv.mapi
-                   (fn (label, exp) =>
+               val (extraBindsRev, newExpFields) =
+                   LabelEnv.foldli
+                   (fn (label, exp, (extraBindsRev,newExpFields)) =>
                        let
                          val fromTy = getItem(fromTyFields, label)
                          val toTy = getItem(tyFields, label)
                          val newExp = coerceTy(exp, fromTy, toTy, loc)
                        in
-                        newExp
+                         if TCU.isAtom newExp then
+                           (extraBindsRev, LabelEnv.insert(newExpFields, label, newExp))
+                         else
+                           let
+                             val fieldVar = TCU.newTCVarInfo toTy
+                             val fieldExp = TPC.TPVAR(fieldVar, loc)
+                             val newBind = (fieldVar, newExp)
+                           in
+                             ((fieldVar, newExp)::extraBindsRev,
+                              LabelEnv.insert(newExpFields, label, fieldExp)
+                             )
+                           end
                        end
                    )
+                   (extraBindsRev, LabelEnv.empty)
                    expFields
-               val newExp = makeRecord (newExpFields, toTy)
+               val resultExp =
+                   TPC.TPMONOLET
+                     {binds = List.rev extraBindsRev,
+                      bodyExp = TPC.TPRECORD
+                               {fields=newExpFields,
+                                recordTy=toTy,
+                                loc=loc},
+                      loc = loc
+                     }
              in
-               newExp
+               resultExp
              end
            | _ => raise CoerceTy
           )

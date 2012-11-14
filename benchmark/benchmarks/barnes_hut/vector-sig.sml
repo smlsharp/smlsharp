@@ -7,7 +7,12 @@
 
 signature VECTOR =
   sig
+(* Ueno (2012-Sep-19): To avoid functor argument restriction of SML#, we
+   need to explicit the implementation of 'a vec.
+
     type 'a vec
+*)
+    type 'a vec = {x: 'a, y: 'a, z: 'a}
 
     val dim : int	(* dimension of the vectors *)
 
