@@ -1,0 +1,6 @@
+_require "../../../basis.smi"
+
+structure Repl = struct
+  val inputLine : string -> string option
+  val homePath : string -> string
+end

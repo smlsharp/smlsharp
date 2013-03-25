@@ -1053,6 +1053,7 @@ MINISMLSHARP_OBJECTS = src/compiler/minismlsharp.o \
 src/compiler/main/main/SimpleMain.o \
 src/compiler/main/main/ExecutablePath.o \
 src/compiler/main/main/RunLoop.o \
+src/compiler/main/main/Repl.o \
 src/sql/main/SQLPrim.o \
 src/sql/main/Backend.o \
 src/sql/main/PGSQLBackend.o \
@@ -1328,6 +1329,7 @@ src/compiler/minismlsharp.sml \
 src/compiler/main/main/SimpleMain.sml \
 src/compiler/main/main/ExecutablePath.sml \
 src/compiler/main/main/RunLoop.sml \
+src/compiler/main/main/Repl.sml \
 src/sql/main/SQLPrim.sml \
 src/sql/main/Backend.sml \
 src/sql/main/PGSQLBackend.sml \
@@ -1690,6 +1692,7 @@ COMPILER_LIB_OBJECTS = src/compiler/smlsharp.o \
 src/compiler/main/main/SimpleMain.o \
 src/compiler/main/main/ExecutablePath.o \
 src/compiler/main/main/RunLoop.o \
+src/compiler/main/main/Repl.o \
 src/compiler/main/main/SMLofNJ.o \
 src/compiler/main/main/GetOpt.o \
 src/compiler/toplevel2/main/Top.o \
@@ -1967,6 +1970,7 @@ src/compiler/smlsharp.sml \
 src/compiler/main/main/SimpleMain.sml \
 src/compiler/main/main/ExecutablePath.sml \
 src/compiler/main/main/RunLoop.sml \
+src/compiler/main/main/Repl.sml \
 src/compiler/main/main/SMLofNJ.sml \
 src/compiler/main/main/GetOpt.sml \
 src/compiler/toplevel2/main/Top.sml \
@@ -3013,6 +3017,8 @@ src/compiler/main/main/GetOpt.o \
 src/compiler/main/main/GetOpt.smi \
 src/compiler/main/main/RunLoop.o \
 src/compiler/main/main/RunLoop.smi \
+src/compiler/main/main/Repl.o \
+src/compiler/main/main/Repl.smi \
 src/compiler/main/main/SMLofNJ.o \
 src/compiler/main/main/SMLofNJ.smi \
 src/compiler/main/main/SimpleMain.o \
@@ -3503,6 +3509,7 @@ src/compiler/loadfile/main/SHA1.o \
 src/compiler/main/main/ExecutablePath.o \
 src/compiler/main/main/GetOpt.o \
 src/compiler/main/main/RunLoop.o \
+src/compiler/main/main/Repl.o \
 src/compiler/main/main/SMLofNJ.o \
 src/compiler/main/main/SimpleMain.o \
 src/compiler/matchcompilation/main/MatchCompiler.o \
