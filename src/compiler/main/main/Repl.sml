@@ -123,8 +123,9 @@ structure Repl = struct
     val rc = loop("",0,""::readHistory(file),0)
     val _ = writeHistory(file, rc)
     val _ = OS.Process.system("stty echo -icanon min 1 time 0")
+    val rc2 = rc ^ "\n"
   in
-    SOME(rc)
+    if(rc2="") then NONE else SOME(rc2)
   end
 
   fun homePath(f) = 

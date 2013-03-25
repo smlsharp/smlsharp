@@ -206,7 +206,8 @@ struct
               val prompt = if isFirst then "# " else "> "
               val _ = TextIO.output (TextIO.stdOut, prompt)
               val _ = TextIO.flushOut TextIO.stdOut
-              val line = TextIO.inputLine TextIO.stdIn
+(*              val line = TextIO.inputLine TextIO.stdIn*)
+              val line = Repl.inputLine(Repl.homePath ".sml_history")
               val _ = lineCount := !lineCount + 1
             in
               case line of NONE => (eof := true; "") | SOME s => s
