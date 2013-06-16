@@ -11,8 +11,6 @@ struct
     structure T = Types
     structure TU = TypesUtils
     structure TC = TypedCalc
-    fun bug s = Control.Bug ("TypeInferenceContext: " ^ s)
-
     (*% @formatter(TC.typInfo) TC.format_typInfo *)
     type idstatus = TC.idstatus
 
@@ -103,10 +101,10 @@ struct
        oprimEnv = OPrimMap.empty
        } : context
 
-  fun bindVar  (lambdaDepth,
-                {oprimEnv,tvarEnv,varEnv},
-                var,
-                idstatus:idstatus) =
+  fun bindVar (lambdaDepth:int,
+               ({oprimEnv,tvarEnv,varEnv} : context),
+               (var:IDCalc.varInfo),
+               idstatus:idstatus) =
     (
      TU.adjustDepthInTy lambdaDepth (case idstatus of
                                        TC.VARID {ty,...} => ty
@@ -116,54 +114,68 @@ struct
       tvarEnv = tvarEnv,
       varEnv = VarMap.insert(varEnv, var, idstatus),
       oprimEnv = oprimEnv
-     }
+     } : context
     )
 
-  fun bindOPrim ({tvarEnv,varEnv,oprimEnv},
-                 oprimInfo as {path, ty, id}) =
+  fun bindOPrim ({tvarEnv,varEnv,oprimEnv} : context,
+                 oprimInfo:T.oprimInfo as {path, ty, id}) =
       {
         tvarEnv = tvarEnv,
         varEnv = varEnv,
         oprimEnv = OPrimMap.insert (oprimEnv, {path=path,id=id}, oprimInfo)
-      }
+      } : context
       
-  fun extendContextWithVarEnv({oprimEnv, tvarEnv, varEnv}, newVarEnv) = 
+  fun extendContextWithVarEnv
+        ({oprimEnv, tvarEnv, varEnv} : context, newVarEnv :varEnv) = 
       {
        tvarEnv = tvarEnv,
        varEnv = VarMap.unionWith #2 (varEnv, newVarEnv),
        oprimEnv = oprimEnv
-      }
+      } : context
 
-  fun extendContextWithTvarEnv ({oprimEnv,tvarEnv,varEnv}, newTvarEnv) =
+(*
+  fun extendContextWithTvarEnv
+        ({oprimEnv,tvarEnv,varEnv}: context, newTvarEnv:tvarEnv) =
     {
      tvarEnv = SEnv.unionWith #1 (newTvarEnv, tvarEnv),
      varEnv = varEnv,
      oprimEnv = oprimEnv
-    }
+    } : context
+*)
 
   fun extendContextWithContext
-      ({oprimEnv, tvarEnv, varEnv},
+      ({oprimEnv, tvarEnv, varEnv} : context,
        {oprimEnv=newOPrimEnv,
         tvarEnv=newTvarEnv,
-        varEnv=newVarEnv}) =
+        varEnv=newVarEnv} : context) =
       {
        oprimEnv = OPrimMap.unionWith #2 (oprimEnv, newOPrimEnv),
        tvarEnv = TvarMap.unionWith #2 (tvarEnv, newTvarEnv),
        varEnv = VarMap.unionWith #2 (varEnv, newVarEnv)
-      }
+      } : context
 
-  fun overrideContextWithTvarEnv ({oprimEnv,tvarEnv,varEnv},newTvarEnv) =
+  fun overrideContextWithTvarEnv
+        ({oprimEnv,tvarEnv,varEnv} : context,
+         newTvarEnv : tvarEnv) =
     {oprimEnv=oprimEnv,
      tvarEnv = newTvarEnv,
      varEnv = varEnv
-    }
+    } : context
 
-  fun lookupTvarInContext ({oprimEnv, tvarEnv,varEnv}, string) =
+(*
+  fun lookupTvarInContext
+        ({oprimEnv, tvarEnv,varEnv} : context, string) 
+      : T.ty option =
       case SEnv.find(tvarEnv, string) of
         SOME tvStateRef => SOME(T.TYVARty tvStateRef)
       | NONE => NONE
-
-  fun addUtvar lambdaDepth {oprimEnv,tvarEnv,varEnv} kindedTvarList loc =
+*)
+  fun addUtvar 
+        (lambdaDepth:int)
+        ({oprimEnv,tvarEnv,varEnv}:context)
+        (kindedTvarList:(T.utvar * IDCalc.tvarKind) list) 
+        (loc:Loc.loc) 
+       : context * (Types.tvState ref * IDCalc.tvarKind) TvarMap.map =
       let
         val (newTvarEnv, addedUtvars) = 
             foldl

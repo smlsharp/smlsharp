@@ -26,23 +26,18 @@ struct
   val compare = FreeTypeVarID.compare
 end
    
-
 structure TEnv = BinaryMapFn(TidOrd)
-
 structure OTSet = BinarySetFn(TvOrd)
 
-(*********************************************************)
 structure varInfoOrd : ORD_KEY =
 struct
   type ord_key = Types.varInfo
-  fun compare ({path = p1, ty = ty1, id = varId1}, 
-	       {path = p2, ty = ty2, id = varId2}) =
+  fun compare ({path = p1, ty = ty1, id = varId1} : ord_key, 
+	       {path = p2, ty = ty2, id = varId2} : ord_key) =
       VarID.compare (varId1, varId2)
 end
 structure VarInfoEnv = BinaryMapFn(varInfoOrd)
 structure VarInfoSet = BinarySetFn(varInfoOrd)
-
-(*********************************************************)
 
 (*
 structure VarIdOrd : ORD_KEY =

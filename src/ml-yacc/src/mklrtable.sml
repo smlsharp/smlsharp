@@ -39,8 +39,8 @@ structure MakeTable =
 	structure GotoList = ListOrdSet
 		(struct
 		   type elem = Grammar.nonterm * LrTable.state
-		   val eq = fn ((Grammar.NT a,_),(Grammar.NT b,_)) => a=b
-		   val gt = fn ((Grammar.NT a,_),(Grammar.NT b,_)) => a>b
+		   val eq = fn ((Grammar.NT a,_:LrTable.state),(Grammar.NT b,_:LrTable.state)) => a=b
+		   val gt = fn ((Grammar.NT a,_:LrTable.state),(Grammar.NT b,_:LrTable.state)) => a>b
 		end)
 	structure Errs : LR_ERRS =
 	    struct

@@ -1,6 +1,6 @@
 (* main.sml *)
 
-structure Main =
+structure Main (*: BMARK*) = 
   struct
     val name = "Logic"
 
@@ -13,5 +13,3 @@ structure Main =
 	  handle Done => ()
 
   end; (* Main *)
-
-

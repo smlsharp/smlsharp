@@ -5,7 +5,7 @@
  * Main structure for running raytracer as benchmark.
  *)
 
-structure Main =
+structure Main (*: BMARK*) =
   struct
 
     fun doit () = let
@@ -18,6 +18,8 @@ structure Main =
 	    Interface.rtInit();
 	    Interp.parse strm
 	  end
+
+    fun testit _ = ()
 
   end;
 

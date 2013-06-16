@@ -17,8 +17,12 @@
 structure Rand : RAND =
   struct
 
-    type rand = Word.word
+(* SML# have native data representation.
+    type rand = Word31.word
     type rand' = Int32.int  (* internal representation *)
+*)
+    type rand = Word.word
+    type rand' = int  (* internal representation *)
 
     val a : rand' = 48271
     val m : rand' = 2147483647  (* 2^31 - 1 *)
@@ -26,8 +30,12 @@ structure Rand : RAND =
     val q = m div a
     val r = m mod a
 
-    val extToInt = Int32.fromLarge o Word.toLargeInt
-    val intToExt = Word.fromLargeInt o Int32.toLarge
+(* SML# have native data representation.
+    val extToInt = Int32.fromLarge o Word31.toLargeInt
+    val intToExt = Word31.fromLargeInt o Int32.toLarge
+*)
+    val extToInt = Word.toInt
+    val intToExt = Word.fromInt
 
     val randMin : rand = 0w1
     val randMax : rand = intToExt m_1
@@ -52,17 +60,28 @@ structure Rand : RAND =
             fn () => (seed := random' (!seed); intToExt (!seed))
           end
 
+(* SML# have native data representation.
     val real_m = Real.fromLargeInt (Int32.toLarge m)
-    fun norm s = (Real.fromLargeInt (Word.toLargeInt s)) / real_m
+    fun norm s = (Real.fromLargeInt (Word31.toLargeInt s)) / real_m
+*)
+    val real_m = Real.fromInt m
+    fun norm s = (Real.fromInt (Word.toInt s)) / real_m
 
     fun range (i,j) = 
           if j < i 
             then LibBase.failure{module="Random",func="range",msg="hi < lo"}
           else if j = i then fn _ => i
           else let 
+(* SML# have native data representation.
             val R = Int32.fromInt j - Int32.fromInt i
-            val cvt = Word.toIntX o Word.fromLargeInt o Int32.toLarge
+            val cvt = Word31.toIntX o Word31.fromLargeInt o Int32.toLarge
+*)
+            val R = j - i
+            val cvt = Word.toIntX o Word.fromInt
             in
+(* SML# have native data representation.
+              if R = m then Word31.toIntX
+*)
               if R = m then Word.toIntX
               else fn s => i + cvt ((extToInt s) mod (R+1))
             end

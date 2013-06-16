@@ -23,13 +23,13 @@ SML_TARGETS = \
 
 ALL_GEN_SOURCES = \
     $(GEN_SOURCES) \
-    src/compiler/builtin/main/BuiltinContext_smi.sml \
     src/config/main/Version.sml
 
 HEAPIMPL_SOURCES = \
     src/runtime/heap_cheney.c \
     src/runtime/heap_bitmap.c \
     src/runtime/heap_otomo.c \
+    src/runtime/heap_reppy.c \
     src/runtime/heap_malloc.c
 HEAP_SOURCE = src/runtime/heap_$(HEAPIMPL).c
 NETLIB_CFLAGS = $(CFLAGS) -DIEEE_8087 -DMALLOC=xmalloc
@@ -44,10 +44,12 @@ RUNTIME_SOURCES = \
     src/runtime/obstack.c \
     src/runtime/prim.c \
     src/runtime/splay.c
-LIBSMLSHARP_OBJECTS = \
+LIBSMLSHARP_OBJECTS_COMMON = \
     $(NETLIB_SOURCES:.c=.$(OBJEXT)) \
-    $(HEAP_SOURCE:.c=.$(OBJEXT)) \
     $(RUNTIME_SOURCES:.c=.$(OBJEXT))
+LIBSMLSHARP_OBJECTS = \
+    $(HEAP_SOURCE:.c=.$(OBJEXT)) \
+    $(LIBSMLSHARP_OBJECTS_COMMON)
 RUNTIME_TARGETS = \
     src/runtime/libsmlsharp.$(LIBEXT) \
     src/runtime/smlsharp_entry.$(OBJEXT)
@@ -62,7 +64,8 @@ all: $(ALL_TARGETS)
 
 clean: PHONY
 	-rm -f $(RUNTIME_TARGETS) $(SML_TARGETS)
-	-rm -f $(LIBSMLSHARP_OBJECTS)
+	-rm -f $(LIBSMLSHARP_OBJECTS_COMMON)
+	-rm -f $(HEAPIMPL_SOURCES:.c=.$(OBJEXT))
 	-rm -f $(ALL_OBJECTS)
 	-rm -f $(ALL_GEN_SOURCES) $(CLEAN_FILES)
 	-rm -f minismlsharp
@@ -72,11 +75,8 @@ distclean: clean
 	-grep '[a-f]' RELEASE_DATE > /dev/null 2>&1 && rm -f RELEASE_DATE
 	-rm -rf autom4te.cache config.h config.log config.status
 	-rm -f Makefile config.mk src/config.mk stamp-h
-	-rm -rf precompiled/$(NATIVE_TARGET) \
-	        precompiled/fastbuild1 \
-	        precompiled/fastbuild2 \
-	        precompiled/fastbuild3 \
-	        precompiled/minismlsharp-files
+	-rm -f precompiled/fastbuild precompiled/minismlsharp-files
+	-rm -rf precompiled/$(NATIVE_TARGET)
 
 sources: PHONY $(ALL_GEN_SOURCES)
 runtime: PHONY $(RUNTIME_TARGETS)
@@ -90,8 +90,10 @@ install: $(ALL_TARGETS)
 	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
 	$(INSTALL_PROGRAM) -m 644 src/runtime/smlsharp_entry.$(OBJEXT) \
 	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/compiler'
+	$(INSTALL_PROGRAM) -m 644 src/builtin.smi \
+	  '$(DESTDIR)$(libdir_smlsharp)/builtin.smi'
 	if test -f src/compiler/smlsharp.lib; then \
+	  $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/compiler'; \
 	  $(INSTALL_PROGRAM) -m 644 src/compiler/smlsharp.lib \
 	    '$(DESTDIR)$(libdir_smlsharp)/compiler'; else :; fi
 	@copy () { \
@@ -161,8 +163,8 @@ src/compiler/smlsharp: $(COMPILER_LIB_OBJECTS) $(RUNTIME_TARGETS)
 src/compiler/minismlsharp: $(MINISMLSHARP_OBJECTS) $(RUNTIME_TARGETS)
 	$(SMLSHARP) -Bsrc $(RDYNAMIC_LDFLAGS) src/compiler/minismlsharp.smi -o $@
 
-minismlsharp: $(RUNTIME_TARGETS) precompiled/$(NATIVE_TARGET).tar.xz
-	(cd precompiled && xz -cd $(NATIVE_TARGET).tar.xz | tar xf -)
+minismlsharp: $(RUNTIME_TARGETS) precompiled/$(NATIVE_TARGET).xz
+	(cd precompiled && $(XZ) -cd $(NATIVE_TARGET).xz | $(PAX_R))
 	(cd precompiled/$(NATIVE_TARGET) \
 	 && $(CC) $(LDFLAGS) ../../src/runtime/smlsharp_entry.$(OBJEXT) \
 	          `cat ../minismlsharp-files` \
@@ -170,12 +172,6 @@ minismlsharp: $(RUNTIME_TARGETS) precompiled/$(NATIVE_TARGET).tar.xz
 	          $(LIBS) -o ../../$@)
 
 # -------- source code generation --------
-
-src/compiler/builtin/main/BuiltinContext_smi.sml: \
-    src/compiler/builtin/main/embed.sh \
-    src/compiler/builtin/main/BuiltinContext.smi
-	$(SHELL) src/compiler/builtin/main/embed.sh \
-	src/compiler/builtin/main/BuiltinContext.smi
 
 SNAPDATE = \
     snapdate () { \

@@ -21,25 +21,32 @@ struct
       case idstatus of
       I.IDVAR varId => raise bug "IDVAR not found"
     | I.IDVAR_TYPED {id, ty} => raise bug "IDVAR not found"
-    | I.IDEXVAR_TOBETYPED {path, id, loc, version, internalId} => 
+    | I.IDEXVAR_TOBETYPED {path, id, loc, version} =>
       (case VarMap.find(tyVarE, {id=id, path=nil}) of
          NONE => raise bug "varId not found"
        | SOME (TypedCalc.VARID {ty,...})  => 
-           I.IDEXVAR {path=path, 
-                      version=version, 
-                      used = ref false, 
-                      internalId=internalId,
-                      ty=I.INFERREDTY ty, 
-                      loc=loc}
+         I.IDEXVAR {path=path, 
+                    version=version, 
+                    used = ref false, 
+                    internalId= SOME id,
+                    ty=I.INFERREDTY ty, 
+                    loc=loc}
        | SOME (TypedCalc.RECFUNID ({ty,...},_))  => 
-           I.IDEXVAR {path=path, 
-                      version=version, 
-                      used = ref false, 
-                      internalId=internalId,
-                      ty=I.INFERREDTY ty, 
-                      loc=loc}
+         I.IDEXVAR {path=path, 
+                    version=version, 
+                    used = ref false, 
+                    internalId= SOME id,
+                    ty=I.INFERREDTY ty, 
+                    loc=loc}
       )
-    | I.IDEXVAR {path, ty, used, loc, version, internalId} => idstatus
+    | I.IDEXVAR {path, ty, used, loc, version, internalId=SOME id} =>
+      I.IDEXVAR {path=path, 
+                 ty=ty, 
+                 used=used, 
+                 loc=loc, 
+                 version=version, 
+                 internalId=SOME id}
+    | I.IDEXVAR {path, ty, used, loc, version, internalId=NONE} => idstatus
     | I.IDBUILTINVAR  {primitive, ty} => idstatus
     | I.IDCON {id, ty} => idstatus
     | I.IDEXN {id, ty} => idstatus
@@ -108,16 +115,19 @@ struct
       )
       funE
 
-  fun setTy (env as {FunE, SigE, Env}) tyVarE =
+  fun setTy tyVarE (env as {FunE, SigE, Env}) =
       let
-        val FunE = setTyFunE tyVarE  FunE
-        val Env = setTyEnv tyVarE  Env
+        val FunE = setTyFunE tyVarE FunE
+        val Env = setTyEnv tyVarE Env
       in
         {FunE=FunE, SigE=SigE, Env=Env}
       end
 
-  fun mergeTypeEnv (topEnv, tyEnv) =
-      setTy topEnv tyEnv
+  fun mergeTypeEnv 
+        (topEnv:NameEvalEnv.topEnv, 
+         tyVarE: TypeInferenceContext.varEnv)
+    : NameEvalEnv.topEnv =
+      setTy tyVarE topEnv
 
   fun resetInternalIdIdstatus idstatus =
       case idstatus of

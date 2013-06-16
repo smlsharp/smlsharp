@@ -1,9 +1,6 @@
 (* ML-Yacc Parser Generator (c) 1989 Andrew W. Appel, David R. Tarditi 
  *
- * $Log: mklrtable.sml,v $
- * Revision 1.1  2005/09/05 13:28:57  kiyoshiy
- * added.
- *
+ * $Log$
  * Revision 1.3  1996/05/31  14:05:01  dbm
  * Rewrote definition of convert_to_pairlist to conform to value restriction.
  *

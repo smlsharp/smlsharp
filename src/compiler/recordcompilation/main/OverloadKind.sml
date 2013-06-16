@@ -108,7 +108,7 @@ struct
   fun generateInstance (selector as {oprimId, match, ...}:T.oprimSelector) loc =
       evalMatch (match, T.INSTCODEty selector, loc)
 
-  fun generateSingletonTy btvEnv {instances:T.ty list, operators} =
+  fun generateSingletonTy (btvEnv:Types.btvEnv) {instances:T.ty list, operators} =
       map (fn operator as {keyTyList, match, ...} =>
               (app (fn ty => case TypesUtils.derefTy ty of
                                T.BOUNDVARty t =>

@@ -8,6 +8,7 @@ _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
 _require "NameEvalEnv.ppg.smi"
 _require "NameEvalError.ppg.smi"
@@ -22,7 +23,7 @@ struct
          | Type of string list
          | OK
   datatype checkConRes = FAIL of checkConError list | SUCCESS
-  datatype normalForm = TYNAME of IDCalc.typInfo | TYTERM of IDCalc.ty
+  datatype normalForm = TYNAME of IDCalc.tfun | TYTERM of IDCalc.ty
   val admitEq : TvarSet.item list -> IDCalc.ty -> bool
   val checkConSpec :
       ((TypID.id * TypID.id) -> bool)

@@ -10,6 +10,9 @@
 signature RAND =
   sig
 
+(* SML# have native data representation.
+    type rand = Word31.word
+*)
     type rand = word
 
     val randMin : rand

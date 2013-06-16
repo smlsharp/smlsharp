@@ -15,7 +15,7 @@ struct
   structure R = RecordCalc
   structure T = Types
   structure A = Absyn
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
 
   fun mapi f l =
       let
@@ -29,34 +29,34 @@ struct
       let
         val id = VarID.generate ()
       in
-        {id = id, path = ["$" ^ VarID.toString id], ty = ty} : R.varInfo
+        {id = id, path = ["$" ^ VarID.toString id], ty = ty} : T.varInfo
       end
 
   fun StringConst (const, loc) =
-      (R.RCCONSTANT {const = A.STRING (const, loc), ty = BE.STRINGty,
+      (R.RCCONSTANT {const = A.STRING (const, loc), ty = BT.stringTy,
                      loc = loc},
-       BE.STRINGty)
+       BT.stringTy)
   fun IntConst (const, loc) =
       (R.RCCONSTANT {const = A.INT ({radix=StringCvt.DEC,
                                      digits=Int.toString const}, loc),
-                     ty = BE.INTty, loc = loc},
-       BE.INTty)
+                     ty = BT.intTy, loc = loc},
+       BT.intTy)
   fun WordConst (const, loc) =
       (R.RCCONSTANT {const = A.WORD ({radix=StringCvt.DEC,
                                       digits=Word.toString const}, loc),
-                     ty = BE.WORDty, loc = loc},
-       BE.WORDty)
+                     ty = BT.wordTy, loc = loc},
+       BT.wordTy)
   fun CharConst (const, loc) =
-      (R.RCCONSTANT {const = A.CHAR (const, loc), ty = BE.CHARty, loc = loc},
-       BE.CHARty)
+      (R.RCCONSTANT {const = A.CHAR (const, loc), ty = BT.charTy, loc = loc},
+       BT.charTy)
   fun RealConst (const, loc) =
-      (R.RCCONSTANT {const = A.REAL (const, loc), ty = BE.REALty, loc = loc},
-       BE.REALty)
+      (R.RCCONSTANT {const = A.REAL (const, loc), ty = BT.realTy, loc = loc},
+       BT.realTy)
   fun UnitConst loc =
-      (R.RCCONSTANT {const = A.UNITCONST loc, ty = BE.UNITty, loc = loc},
-       BE.UNITty)
+      (R.RCCONSTANT {const = A.UNITCONST loc, ty = BT.unitTy, loc = loc},
+       BT.unitTy)
 
-  fun Var (varInfo as {path, id, ty}:R.varInfo, loc) =
+  fun Var (varInfo as {path, id, ty}:T.varInfo, loc) =
       (R.RCVAR (varInfo, loc), ty)
 
   fun Seq (exps, loc) =
@@ -96,7 +96,7 @@ struct
         (R.RCRECORD {fields = fieldExps, recordTy = ty, loc = loc}, ty)
       end
 
-  fun RecordTy nil = BE.UNITty
+  fun RecordTy nil = BT.unitTy
     | RecordTy fields =
       let
         fun fromList list = 
@@ -114,23 +114,30 @@ struct
   fun List (exps, elemTy, loc) =
       let
         val (exps, tys) = ListPair.unzip exps
-        val listTyCon = BE.lookupTyCon BuiltinName.listTyName
+        val listTyCon = BT.listTyCon
         val listTy = T.CONSTRUCTty {tyCon = listTyCon, args = [elemTy]}
-        val consConInfo = BE.lookupCon BuiltinName.consConName
-        val nilConInfo = BE.lookupCon BuiltinName.nilConName
+        val consConInfo = BT.consTPConInfo
+        val nilConInfo = BT.nilTPConInfo
       in
         foldr
           (fn (exp, z) =>
-              (R.RCDATACONSTRUCT
-                 {con = consConInfo,
-                  instTyList = [elemTy],
-                  argExpOpt = SOME (#1 (Tuple ([(exp, elemTy), z], loc))),
-                  loc = loc},
-                 listTy))
+              let
+                val tupleTermTy = (Tuple ([(exp, elemTy), z], loc))
+              in
+                (R.RCDATACONSTRUCT
+                   {con = consConInfo,
+                    instTyList = [elemTy],
+                    argExpOpt = SOME (#1 tupleTermTy),
+                    argTyOpt = SOME (#2 tupleTermTy),
+                    loc = loc},
+                 listTy)
+              end
+          )
           (R.RCDATACONSTRUCT
              {con = nilConInfo,
               instTyList = [elemTy],
               argExpOpt = NONE,
+              argTyOpt = NONE,
               loc = loc},
              listTy)
           exps
@@ -138,7 +145,7 @@ struct
 
   fun ListTy elemTy =
       let
-        val listTyCon = BE.lookupTyCon BuiltinName.listTyName
+        val listTyCon = BT.listTyCon
       in
         T.CONSTRUCTty {tyCon = listTyCon, args = [elemTy]}
       end
@@ -158,19 +165,19 @@ struct
 
   fun IntAdd (arg1, arg2, loc) =
       MonoPrimApply (BuiltinPrimitive.Int_add BuiltinPrimitive.NoOverflowCheck,
-                     BE.INTty, [arg1, arg2], loc)
+                     BT.intTy, [arg1, arg2], loc)
 
   fun StringSize ((R.RCCONSTANT {const=A.STRING (s1,_), ...}, _), loc) =
       IntConst (size s1, loc)
     | StringSize (arg, loc) =
-      MonoPrimApply (BuiltinPrimitive.String_size, BE.INTty, [arg], loc)
+      MonoPrimApply (BuiltinPrimitive.String_size, BT.intTy, [arg], loc)
 
   fun StringAlloc (arg, loc) =
-      MonoPrimApply (BuiltinPrimitive.String_allocArray, BE.STRINGty,
+      MonoPrimApply (BuiltinPrimitive.String_allocArray, BT.stringTy,
                      [arg], loc)
 
   fun StringCopy {src, si, dst, di, len, loc} =
-      MonoPrimApply (BuiltinPrimitive.String_copy_unsafe, BE.UNITty,
+      MonoPrimApply (BuiltinPrimitive.String_copy_unsafe, BT.unitTy,
                      [src, si, dst, di, len], loc)
 
   fun StringConcat ((R.RCCONSTANT {const=A.STRING (s1,_), ...}, _),
@@ -212,25 +219,25 @@ struct
 
   fun BoolConst (b, loc) =
       let
-        val name = if b then BuiltinName.trueConName
-                   else BuiltinName.falseConName
-        val conInfo = BE.lookupCon name
+        val conInfo = if b then BT.trueTPConInfo
+                      else BT.falseTPConInfo
       in
         (R.RCDATACONSTRUCT {con = conInfo,
                             instTyList = nil,
                             argExpOpt = NONE,
+                            argTyOpt = NONE,
                             loc = loc},
          #ty conInfo)
       end
 
   fun BoolTy () =
       T.CONSTRUCTty
-        {tyCon = BE.lookupTyCon BuiltinName.boolTyName,
+        {tyCon = BT.boolTyCon,
          args = []}
 
   fun Some ((argExp, argTy), loc) =
       let
-        val conInfo = BE.lookupCon BuiltinName.someConName
+        val conInfo = BT.SOMETPConInfo
         val monoTy = TypesUtils.tpappTy (#ty conInfo, [argTy])
         val retTy = case TypesUtils.derefTy monoTy of
                       T.FUNMty (args, retTy) => retTy
@@ -239,6 +246,7 @@ struct
         (R.RCDATACONSTRUCT {con = conInfo,
                             instTyList = [argTy],
                             argExpOpt = SOME argExp,
+                            argTyOpt = SOME argTy,
                             loc = loc},
          retTy)
       end
@@ -248,21 +256,21 @@ struct
         fun compile ty =
             case TypesUtils.derefTy ty of
               T.CONSTRUCTty {tyCon={id,...}, args=nil} =>
-              if TypID.eq (id, #id BE.INTtyCon)
+              if TypID.eq (id, #id BT.intTyCon)
               then ("int", false, IntConst (0, loc))
-              else if TypID.eq (id, #id BE.WORDtyCon)
+              else if TypID.eq (id, #id BT.wordTyCon)
               then ("word", false, WordConst (0w0, loc))
-              else if TypID.eq (id, #id BE.CHARtyCon)
+              else if TypID.eq (id, #id BT.charTyCon)
               then ("char", false, CharConst (#"\000", loc))
-              else if TypID.eq (id, #id BE.STRINGtyCon)
+              else if TypID.eq (id, #id BT.stringTyCon)
               then ("string", false, StringConst ("", loc))
-              else if TypID.eq (id, #id BE.REALtyCon)
+              else if TypID.eq (id, #id BT.realTyCon)
               then ("real", false, RealConst ("0.0", loc))
-              else if TypID.eq (id, #id (BE.lookupTyCon BuiltinName.boolTyName))
+              else if TypID.eq (id, #id BT.boolTyCon)
               then ("bool", false, BoolConst (false, loc))
               else raise Control.Bug "compileColumn"
             | T.CONSTRUCTty {tyCon={id,...}, args=[argTy]} =>
-              if TypID.eq (id, #id (BE.lookupTyCon BuiltinName.optionTyName))
+              if TypID.eq (id, #id BT.optionTyCon)
               then
                 let
                   val (tyname, null, witness) = compile argTy
@@ -285,8 +293,8 @@ struct
         val columns =
             map (fn (label, ty) => compileColumn (label, ty, loc))
                 (LabelEnv.listItemsi columnTyMap)
-        val elemTy = RecordTy [("colname", BE.STRINGty),
-                               ("typename", BE.STRINGty),
+        val elemTy = RecordTy [("colname", BT.stringTy),
+                               ("typename", BT.stringTy),
                                ("isnull", BoolTy ())]
       in
         {table = Record ([("1", StringConst (tableName, loc)),
@@ -301,9 +309,9 @@ struct
             map (fn (label, table) => compileTable (label, table, loc))
                 (LabelEnv.listItemsi tableTyMap)
         val elemTy =
-            RecordTy [("1", BE.STRINGty),
-                      ("2", ListTy (RecordTy [("colname", BE.STRINGty),
-                                              ("typename", BE.STRINGty),
+            RecordTy [("1", BT.stringTy),
+                      ("2", ListTy (RecordTy [("colname", BT.stringTy),
+                                              ("typename", BT.stringTy),
                                               ("isnull", BoolTy ())]))]
       in
         {schema = List (map #table tables, elemTy, loc),
@@ -314,15 +322,17 @@ struct
       let
         val server = StringConst (server, loc)
         val {schema, witness} = compileSchema (schema, loc)
-        val conInfo = BE.lookupCon BuiltinName.sqlServerConName
+        val conInfo = BT.SERVERTPConInfo
         val instTyList = case TypesUtils.derefTy resultTy of
                            T.CONSTRUCTty {tyCon, args} => args
                          | _ => raise Control.Bug "compileSQLServer"
+        val tupleTermTy = (Tuple ([server, schema, witness], loc))
       in
         R.RCDATACONSTRUCT
           {con = conInfo,
            instTyList = instTyList,
-           argExpOpt = SOME (#1 (Tuple ([server, schema, witness], loc))),
+           argExpOpt = SOME (#1 tupleTermTy),
+           argTyOpt = SOME (#2 tupleTermTy),
            loc = loc}
       end
 
@@ -370,11 +380,12 @@ struct
            instTyList = instTyList,
            argExp = compileExp argExp,
            loc = loc}
-      | R.RCDATACONSTRUCT {con, instTyList, argExpOpt, loc} =>
+      | R.RCDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt, loc} =>
         R.RCDATACONSTRUCT
           {con = con,
            instTyList = instTyList,
            argExpOpt = Option.map compileExp argExpOpt,
+           argTyOpt = argTyOpt,
            loc = loc}
       | R.RCEXNCONSTRUCT {exn, instTyList, argExpOpt, loc} =>
         R.RCEXNCONSTRUCT
@@ -511,8 +522,8 @@ struct
         R.RCEXD (binds, loc)
       | R.RCEXNTAGD (bind, loc) => (* FIXME check this *)
         R.RCEXNTAGD (bind, loc)
-      | R.RCEXPORTVAR (varInfo, loc) =>
-        R.RCEXPORTVAR (varInfo, loc)
+      | R.RCEXPORTVAR {externalVar, internalVar, loc} =>
+        R.RCEXPORTVAR {externalVar=externalVar, internalVar=internalVar, loc=loc}
       | R.RCEXPORTEXN (exnInfo, loc) =>
         R.RCEXPORTEXN (exnInfo, loc)
       | R.RCEXTERNVAR (exVarInfo, loc) =>

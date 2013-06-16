@@ -8,9 +8,12 @@
  *)
 _interface "IntInf.smi"
 
-structure IntInf : sig
+structure IntInf 
+(*
+: 
+sig
   (* same as INTEGER except IntInf.int *)
-  type int = SMLSharp.IntInf.int
+  type int = intInf
   val toLarge : int -> int
   val fromLarge : int -> int
   val toInt : int -> SMLSharp.Int.int
@@ -56,7 +59,9 @@ structure IntInf : sig
   val << : int * SMLSharp.Word.word -> int
   val ~>> : int * SMLSharp.Word.word -> int
 
-end =
+end
+*)
+=
 struct
 local
   infix 7 * / div mod
@@ -66,7 +71,7 @@ local
   val minInt = ~0x80000000
   val maxInt = 0x7fffffff
 in
-  type int = SMLSharp.IntInf.int
+  type int = intInf
 
   val abs =
       _import "prim_IntInf_abs"
@@ -146,9 +151,9 @@ in
       then raise Overflow
       else toInt_unsafe int
 
-  val precision = NONE
-  val minInt = NONE
-  val maxInt = NONE
+  val precision : SMLSharp.Int.int option = NONE
+  val minInt : int option = NONE
+  val maxInt : int option = NONE
 
   fun op div (x, y) =
       if y = 0 then raise Div else div_unsafe (x, y)
@@ -211,7 +216,10 @@ in
   fun toString n =
       fmt StringCvt.DEC n
 
-  fun scan radix getc strm =
+  fun 'a scan 
+        (radix : StringCvt.radix)
+        (getc : (char, 'a) StringCvt.reader)
+        strm =
       case SMLSharpScanChar.scanInt radix getc strm of
         NONE => NONE
       | SOME ({neg, radix, digits}, strm) =>

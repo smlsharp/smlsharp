@@ -32,7 +32,7 @@ local
             (fn (ty, set) => dtys (ty, set))
             set
             fields
-        | I.TYCONSTRUCT {typ={tfun,...}, args} =>
+        | I.TYCONSTRUCT {tfun, args} =>
           let
             val set =
                 case I.derefTfun tfun of
@@ -156,7 +156,7 @@ local
           (fn (ty, liftedTys) => liftedTysTy (ty, liftedTys))
           liftedTys
           fields
-      | I.TYCONSTRUCT {typ={tfun,...}, args} =>
+      | I.TYCONSTRUCT {tfun, args} =>
         liftedTysTyList (args, liftedTysTfun (tfun,liftedTys))
       | I.TYFUNM (tyList, ty2) => 
         liftedTysTyList(tyList, liftedTysTy (ty2, liftedTys))

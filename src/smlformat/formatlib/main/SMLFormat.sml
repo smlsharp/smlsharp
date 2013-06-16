@@ -4,7 +4,16 @@
  * @copyright 2010, Tohoku University.
  * @version $Id: SMLFormat.sml,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-structure SMLFormat : SMLFORMAT = 
+(*
+  2012-11-5 ohori
+  deleted signature constraint.
+  With the constraint, one cannot specify structure replication in
+  the interface file, since signature constraint in general generate
+  code and therefore cannot be identical to the original.
+  Also, for the top-level file with smi specificatinon, signature 
+  constraint is not important.
+*)
+structure SMLFormat (* : SMLFORMAT *) = 
 struct
 
   (***************************************************************************)

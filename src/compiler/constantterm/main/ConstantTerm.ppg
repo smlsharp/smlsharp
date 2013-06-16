@@ -10,7 +10,7 @@ struct
 (*
   structure PT = PredefinedTypes
 *)
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
   structure T = Types
   structure TU = TypesUtils
   structure UE = UserError
@@ -157,7 +157,7 @@ struct
           val btv = BoundTypeVarID.generate ()
           val btvKind = {tvarKind = T.UNIV, eqKind = A.NONEQ}
           val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv, btvKind)
-          val tyCon = BE.lookupTyCon BuiltinName.sqlValueTyName
+          val tyCon = BT.valueTyCon
         in
           T.POLYty {boundtvars = btvEnv,
                     body = T.CONSTRUCTty {tyCon = tyCon,
@@ -167,7 +167,7 @@ struct
     fun optionTy elemTy =
         let
           val (btvEnv, elemTy) = decomposePolyTy elemTy
-          val tyCon = BE.lookupTyCon BuiltinName.optionTyName
+          val tyCon = BT.optionTyCon
         in
           polyTy (btvEnv, T.CONSTRUCTty {tyCon = tyCon, args = [elemTy]})
         end
@@ -175,53 +175,49 @@ struct
     fun intType () =
         overloadTy
         [
-          BE.INTty,
-          BE.INTINFty,
-          sqlValueTy (overloadTy [BE.INTty, optionTy BE.INTty])
+          BT.intTy,
+          BT.intInfTy,
+          sqlValueTy (overloadTy [BT.intTy, optionTy BT.intTy])
         ]
 
     fun wordType () =
         overloadTy
         [
-          BE.WORDty,
-          BE.WORD8ty,
-          sqlValueTy (overloadTy [BE.WORDty, optionTy BE.WORDty])
+          BT.wordTy,
+          BT.word8Ty,
+          sqlValueTy (overloadTy [BT.wordTy, optionTy BT.wordTy])
         ]
 
     fun stringType () =
         overloadTy
         [
-          BE.STRINGty,
-          sqlValueTy (overloadTy [BE.STRINGty, optionTy BE.STRINGty])
+          BT.stringTy,
+          sqlValueTy (overloadTy [BT.stringTy, optionTy BT.stringTy])
         ]
 
     fun realType () =
         overloadTy
         [
-          BE.REALty,
-          BE.REAL32ty,
-(*
-          BE.REAL64ty,
-          BE.LARGEREALty,
-*)
-          sqlValueTy (overloadTy [BE.REALty, optionTy BE.REALty])
+          BT.realTy,
+          BT.real32Ty,
+          sqlValueTy (overloadTy [BT.realTy, optionTy BT.realTy])
         ]
 
     fun charType () =
         overloadTy
         [
-          BE.CHARty,
-          sqlValueTy (overloadTy [BE.CHARty, optionTy BE.CHARty])
+          BT.charTy,
+          sqlValueTy (overloadTy [BT.charTy, optionTy BT.charTy])
         ]
 
     fun unitType () =
-        BE.UNITty
+        BT.unitTy
 
     fun nullType () =
         overloadTy
         [
-          BE.PTRty,
-          BE.BOXEDty
+          BT.ptrTy,
+          BT.boxedTy
         ]
   in
     fun constTy const =
@@ -260,29 +256,29 @@ struct
         fun constTy ty =
             case TU.derefTy ty of
               T.CONSTRUCTty {tyCon={id,...}, args=[]} =>
-              if TypID.eq (id, #id BE.INTtyCon) then INTty
-              else if TypID.eq (id, #id BE.WORDtyCon) then WORDty
-              else if TypID.eq (id, #id BE.CHARtyCon) then CHARty
-              else if TypID.eq (id, #id BE.STRINGtyCon) then STRINGty
-              else if TypID.eq (id, #id BE.REALtyCon) then REALty
-              else if TypID.eq (id, #id BE.REAL32tyCon) then FLOATty
-              else if TypID.eq (id, #id BE.INTINFtyCon) then LARGEINTty
-              else if TypID.eq (id, #id BE.WORD8tyCon) then BYTEty
-              else if TypID.eq (id, #id BE.UNITtyCon) then UNITty
-              else if TypID.eq (id, #id BE.BOXEDtyCon) then BOXEDty
+              if TypID.eq (id, #id BT.intTyCon) then INTty
+              else if TypID.eq (id, #id BT.wordTyCon) then WORDty
+              else if TypID.eq (id, #id BT.charTyCon) then CHARty
+              else if TypID.eq (id, #id BT.stringTyCon) then STRINGty
+              else if TypID.eq (id, #id BT.realTyCon) then REALty
+              else if TypID.eq (id, #id BT.real32TyCon) then FLOATty
+              else if TypID.eq (id, #id BT.intInfTyCon) then LARGEINTty
+              else if TypID.eq (id, #id BT.word8TyCon) then BYTEty
+              else if TypID.eq (id, #id BT.unitTyCon) then UNITty
+              else if TypID.eq (id, #id BT.boxedTyCon) then BOXEDty
               else
                 (printType ty;
                  raise Control.Bug "castConst"
                 )
             | T.CONSTRUCTty {tyCon={id,...}, args=[arg]} =>
-              if TypID.eq (id, #id BE.PTRtyCon)
+              if TypID.eq (id, #id BT.ptrTyCon)
               then PTRty
               else if TypID.eq (id,
-                                #id (BE.lookupTyCon BuiltinName.optionTyName))
+                                #id (BT.optionTyCon))
               then OPTIONty (constTy arg)
               else (printType ty; raise Control.Bug "castConst")
             | T.CONSTRUCTty {tyCon={id,...}, args=[arg1, arg2]} =>
-              if TypID.eq (id, #id (BE.lookupTyCon BuiltinName.sqlValueTyName))
+              if TypID.eq (id, #id BT.valueTyCon)
               then SQLVALUEty (constTy arg1, arg2)
               else (printType ty; raise Control.Bug "castConst")
             | _ =>
@@ -299,26 +295,26 @@ struct
               (exp, ty)
             end
         fun stringDBIPairTerm (string, dbiTy) =
-            pairTerm ((constTerm (STRING string), BE.STRINGty),
-                      (conTerm {con = BE.lookupCon BuiltinName.sqlDBIConName,
+            pairTerm ((constTerm (STRING string), BT.stringTy),
+                      (conTerm {con = BT.DBITPConInfo,
                                 instTyList = [dbiTy],
                                 arg = NONE},
                        T.CONSTRUCTty
-                         {tyCon = BE.lookupTyCon BuiltinName.sqlDBITyName,
+                         {tyCon = BT.dbiTyCon,
                           args = [dbiTy]}))
 
         fun sqlValue (string as (_, dbiTy)) (exp, valueTy) =
-            conTerm {con = BE.lookupCon BuiltinName.sqlValueConName,
+            conTerm {con = BT.VALUETPConInfo,
                      instTyList = [valueTy, dbiTy],
                      arg = SOME (#1 (pairTerm (stringDBIPairTerm string,
                                                (exp, valueTy))))}
         fun sqlOptionValue string (exp, valueTy) =
             sqlValue string
-                     (conTerm {con = BE.lookupCon BuiltinName.someConName,
+                     (conTerm {con = BT.SOMETPConInfo,
                                instTyList = [valueTy],
                                arg = SOME exp},
                       T.CONSTRUCTty
-                        {tyCon = BE.lookupTyCon BuiltinName.optionTyName,
+                        {tyCon = BT.optionTyCon,
                          args = [valueTy]})
 
         fun scanInt scanFn ({radix, digits}, loc) =
@@ -342,10 +338,10 @@ struct
           constTerm (LARGEINT (scanInt BigInt.scan x))
         | (A.INT x, SQLVALUEty (INTty, dbi)) =>
            sqlValue (sqlInt (scanInt Int32.scan x), dbi)
-                    (constTerm (INT (scanInt Int32.scan x)), BE.INTty)
+                    (constTerm (INT (scanInt Int32.scan x)), BT.intTy)
         | (A.INT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
           sqlOptionValue (sqlInt (scanInt Int32.scan x), dbi)
-                         (constTerm (INT (scanInt Int32.scan x)), BE.INTty)
+                         (constTerm (INT (scanInt Int32.scan x)), BT.intTy)
         | (A.INT _, _) => raise Control.Bug "fixConst: INT"
         | (A.WORD x, WORDty) =>
           constTerm (WORD (scanInt Word32.scan x))
@@ -353,29 +349,29 @@ struct
           constTerm (BYTE (scanInt Word8.scan x))
         | (A.WORD x, SQLVALUEty (WORDty, dbi)) =>
           sqlValue (sqlWord (scanInt Word32.scan x), dbi)
-                   (constTerm (WORD (scanInt Word32.scan x)), BE.WORDty)
+                   (constTerm (WORD (scanInt Word32.scan x)), BT.wordTy)
         | (A.WORD x, SQLVALUEty (OPTIONty WORDty, dbi)) =>
           sqlOptionValue (sqlWord (scanInt Word32.scan x), dbi)
-                         (constTerm (WORD (scanInt Word32.scan x)), BE.WORDty)
+                         (constTerm (WORD (scanInt Word32.scan x)), BT.wordTy)
         | (A.WORD _, _) => raise Control.Bug "fixConst: WORD"
         | (A.STRING (x, loc), STRINGty) => constTerm (STRING x)
         | (A.STRING (x, loc), SQLVALUEty (STRINGty, dbi)) =>
-          sqlValue (sqlString x, dbi) (constTerm (STRING x), BE.STRINGty)
+          sqlValue (sqlString x, dbi) (constTerm (STRING x), BT.stringTy)
         | (A.STRING (x, loc), SQLVALUEty (OPTIONty STRINGty, dbi)) =>
-          sqlOptionValue (sqlString x, dbi) (constTerm (STRING x), BE.STRINGty)
+          sqlOptionValue (sqlString x, dbi) (constTerm (STRING x), BT.stringTy)
         | (A.STRING _, _) => raise Control.Bug "fixConst: STRING"
         | (A.REAL (x, loc), REALty) => constTerm (REAL x)
         | (A.REAL (x, loc), FLOATty) => constTerm (FLOAT x)
         | (A.REAL (x, loc), SQLVALUEty (REALty, dbi)) =>
-          sqlValue (sqlReal x, dbi) (constTerm (REAL x), BE.REALty)
+          sqlValue (sqlReal x, dbi) (constTerm (REAL x), BT.realTy)
         | (A.REAL (x, loc), SQLVALUEty (OPTIONty REALty, dbi)) =>
-          sqlOptionValue (sqlReal x, dbi) (constTerm (REAL x), BE.REALty)
+          sqlOptionValue (sqlReal x, dbi) (constTerm (REAL x), BT.realTy)
         | (A.REAL _, _) => raise Control.Bug "fixConst: REAL"
         | (A.CHAR (x, loc), CHARty) => constTerm (CHAR x)
         | (A.CHAR (x, loc), SQLVALUEty (CHARty, dbi)) =>
-          sqlValue (sqlChar x, dbi) (constTerm (CHAR x), BE.CHARty)
+          sqlValue (sqlChar x, dbi) (constTerm (CHAR x), BT.charTy)
         | (A.CHAR (x, loc), SQLVALUEty (OPTIONty CHARty, dbi)) =>
-          sqlOptionValue (sqlChar x, dbi) (constTerm (CHAR x), BE.CHARty)
+          sqlOptionValue (sqlChar x, dbi) (constTerm (CHAR x), BT.charTy)
         | (A.CHAR _, _) => raise Control.Bug "fixConst: CHAR"
         | (A.UNITCONST (_, loc), UNITty) => constTerm UNIT
         | (A.UNITCONST _, _) => raise Control.Bug "fixConst: UNITCONST"

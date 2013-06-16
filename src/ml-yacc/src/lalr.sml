@@ -54,8 +54,10 @@ structure Lalr : LALR_GRAPH =
 	structure ItemList = ListOrdSet
 		(struct
 		   type elem = item * term list ref
-		   val eq = fn ((a,_),(b,_)) => eqItem(a,b)
-		   val gt = fn ((a,_),(b,_)) => gtItem(a,b)
+		   val eq = fn ((a,_:term list ref),(b,_:term list ref)) 
+                               => eqItem(a,b)
+		   val gt = fn ((a,_:term list ref),(b,_:term list ref))
+                               => gtItem(a,b)
 		 end)
 
 	structure NontermSet = ListOrdSet
@@ -70,8 +72,10 @@ structure Lalr : LALR_GRAPH =
 	structure NTL = RbOrdSet
 		(struct
 		   type elem = nonterm * term list
-		   val gt = fn ((i,_),(j,_)) => gtNonterm(i,j)
-		   val eq = fn ((i,_),(j,_)) => eqNonterm(i,j)
+		   val gt = fn ((i,_:term list),(j,_:term list)) 
+                               => gtNonterm(i,j)
+		   val eq = fn ((i,_:term list),(j,_:term list))
+                               => eqNonterm(i,j)
 		 end)
 
 	val DEBUG = false

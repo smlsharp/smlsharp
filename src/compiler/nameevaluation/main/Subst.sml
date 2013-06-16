@@ -35,11 +35,11 @@ in
   type subst = {tvarS:tvarSubst,
                 exnIdS:exnIdSubst,
                 conIdS:conIdSubst}
-  val emptyTvarSubst = TvarMap.empty
-  val emptyTfvSubst = TfvMap.empty
-  val emptyConIdSubst = ConID.Map.empty
-  val emptyExnIdSubst = ExnID.Map.empty
-  val emptySubst = {tvarS=emptyTvarSubst,
+  val emptyTvarSubst : tvarSubst = TvarMap.empty
+  val emptyTfvSubst : tfvSubst = TfvMap.empty
+  val emptyConIdSubst : conIdSubst = ConID.Map.empty
+  val emptyExnIdSubst : exnIdSubst = ExnID.Map.empty
+  val emptySubst : subst = {tvarS=emptyTvarSubst,
                     exnIdS=emptyExnIdSubst,
                     conIdS=emptyConIdSubst}
   local
@@ -163,9 +163,9 @@ in
           )
         | I.TYRECORD fields =>
           I.TYRECORD (LabelEnv.map (substTy subst) fields)
-        | I.TYCONSTRUCT {typ, args} =>
+        | I.TYCONSTRUCT {tfun, args} =>
           I.TYCONSTRUCT
-            {typ=substTypInfo subst typ,
+            {tfun=substTfun subst tfun,
              args=map (substTy subst) args
             }
         | I.TYFUNM (tyList, ty2) =>
@@ -177,8 +177,6 @@ in
         | I.TYERROR => I.TYERROR
         | I.INFERREDTY _ => ty
 
-    and substTypInfo (subst:subst) {path, tfun} =
-        {path=path, tfun=substTfun subst tfun}
     and substKindedTvar subst  (tvar, tvarKind) =
         (tvar, substKind subst tvarKind)
     and substKind subst tvarKind
@@ -204,7 +202,7 @@ in
         | I.IDEXVAR {path, ty, used, loc, version, internalId} => 
           I.IDEXVAR {path=path, ty=substTy subst ty, used=used, loc=loc, 
                      version=version, internalId=internalId}
-        | I.IDEXVAR_TOBETYPED {path, id, loc, version, internalId} => idstatus
+        | I.IDEXVAR_TOBETYPED {path, id, loc, version} => idstatus
         | I.IDBUILTINVAR {primitive, ty} =>
           I.IDBUILTINVAR {primitive=primitive, ty=substTy subst ty}
         | I.IDCON {id, ty} => 
@@ -285,9 +283,9 @@ in
       | I.TYVAR tvar => ty
       | I.TYRECORD fields =>
         I.TYRECORD (LabelEnv.map (substTfvTy tfvSubst) fields)
-      | I.TYCONSTRUCT {typ, args} =>
+      | I.TYCONSTRUCT {tfun, args} =>
         I.TYCONSTRUCT
-          {typ=substTfvTypInfo tfvSubst typ,
+          {tfun=substTfvTfun tfvSubst tfun,
            args=map (substTfvTy tfvSubst) args
           }
       | I.TYFUNM (tyList, ty2) =>
@@ -298,9 +296,6 @@ in
                  )
       | I.TYERROR => I.TYERROR
       | I.INFERREDTY _ => ty
-
-  and substTfvTypInfo (tfvSubst:tfvSubst) {path, tfun} =
-      {path=path, tfun=substTfvTfun tfvSubst tfun}
 
   and substTfvKindedTvar tfvSubst  (tvar, tvarKind) =
       (tvar, substTfvKind tfvSubst tvarKind)

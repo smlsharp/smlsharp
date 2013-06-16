@@ -3,6 +3,16 @@ _require "../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
 
+structure VarOrd = 
+struct
+  type ord_key = {path:string list,id:VarID.id}
+  val compare : ord_key * ord_key -> order
+end
+
+structure VarMap = BinaryMapFn (VarOrd)
+structure VarSet = BinarySetFn (VarOrd)
+
+(*
 structure VarMap = 
 struct
   structure Key =
@@ -15,6 +25,7 @@ struct
   val isEmpty : 'a map -> bool
   val singleton : Key.ord_key * 'a -> 'a map
   val insert : 'a map * Key.ord_key * 'a -> 'a map
+  val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
   val insert' : (Key.ord_key * 'a) * 'a map -> 'a map
   val find : 'a map * Key.ord_key -> 'a option
   val lookup : 'a map * Key.ord_key -> 'a
@@ -85,3 +96,4 @@ struct
   val exists : (item -> bool) -> set -> bool
   val find : (item -> bool) -> set -> item option
 end
+*)

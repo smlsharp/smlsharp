@@ -1048,8 +1048,10 @@ sml_heap_gc(void)
   clear_heap();
 #endif /* CHECK */
 
+#ifndef FAIR_COMPARISON
   /* check finalization */
   sml_check_finalizer(mark_all, MAJOR);
+#endif /* FAIR_COMPARISON */
 
   /* sweep malloc heap */
   sml_malloc_sweep(MAJOR);
@@ -1098,8 +1100,10 @@ sml_heap_gc(void)
   }
 #endif /* PRINT_ALLOC_TIME */
   
+#ifndef FAIR_COMPARISON
   /* start finalizers */
   sml_run_finalizer(NULL);
+#endif /* FAIR_COMPARISON */
 }
 
 #ifdef GCSTAT

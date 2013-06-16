@@ -7,7 +7,7 @@ _require "../../control/main/Control.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
-_require "../../types/main/BuiltinEnv.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/TypesUtils.smi"
 

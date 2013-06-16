@@ -9,7 +9,7 @@ local
   structure tfvkey =
     struct
       type ord_key = I.tfunkind ref
-      fun compare (tfv1, tfv2) = 
+      fun compare (tfv1:ord_key, tfv2:ord_key) = 
           let
             val id1 = 
                 case !tfv1 of
@@ -52,7 +52,7 @@ local
   structure tfvKey = 
     struct
       type ord_key = I.tfunkind ref * string list
-      fun compare ((tfv1,_), (tfv2,_)) = 
+      fun compare ((tfv1,_):ord_key, (tfv2,_):ord_key) = 
           let
             val id1 = case !tfv1 of
                         I.TFV_DTY {id,...} => id

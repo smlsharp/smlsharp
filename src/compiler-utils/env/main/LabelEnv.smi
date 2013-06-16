@@ -1,6 +1,9 @@
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "LabelOrd.smi"
 
+structure LabelEnv = BinaryMapFn(LabelOrd)
+
+(*
 structure LabelEnv =
 struct
   structure Key =
@@ -47,3 +50,4 @@ struct
   val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
   val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
 end
+*)

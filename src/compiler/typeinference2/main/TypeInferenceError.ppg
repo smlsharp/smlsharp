@@ -294,7 +294,7 @@ struct
    * @format(code * {domTy, argTy}) "(type inference" +d code ")" +d  
    * "operator" +d "and" +d "operand" +d "don't" +d "agree"
    *        +1  "operator domain:" + {domTy}
-   *        +1  "operand:" + {argTy}
+   *        +1  "        operand:" + {argTy}
    *)
   TyConMismatch of string * {domTy: Types.ty, argTy:Types.ty}
 
@@ -309,7 +309,7 @@ struct
       "(type inference" +d code ")" +d  
       "operator" +d "and" +d "operand" +d "don't" +d "agree"
            +1  "operator domain:" + {dtys(dty)(","+1)}
-           +1  "operand:" + {atys(aty)(","+1)}
+           +1  "        operand:" + {atys(aty)(","+1)}
    *)
   TyConListMismatch of string *
                        {domTyList: Types.ty list, argTyList:Types.ty list}
@@ -324,7 +324,7 @@ struct
    * @format(code * {funTy, argTy}) "(type inference" +d code ")" +d  
    * "operator" +d "and" +d "operand" +d "don't" +d "agree"
    *        +1  "operator:" + {funTy}
-   *        +1  "operand:" + {argTy}
+   *        +1  " operand:" + {argTy}
    *)
   FunTyConMismatch of string * {funTy: Types.ty, argTy:Types.ty}
 
@@ -338,7 +338,7 @@ struct
    * @format(code * {patTy, expTy}) "(type inference" +d code ")" +d  
    * "types" +d "of" +d "pattern" +d "and" +d "expression" +d "don't"
    * +d "agree" +d "in" +d "declaration"
-   *        +1  "pattern type:" + {patTy}
+   *        +1  "   pattern type:" + {patTy}
    *        +1  "expression type:" + {expTy}
    *)
   PatternExpMismatch of string * {patTy: Types.ty, expTy:Types.ty}
@@ -354,7 +354,7 @@ struct
    * @format(code * {thisRule, otherRules}) "(type inference" +d code ")" +d   
    * "type" +d "of" +d "a" +d "rule" +d "does" +d "not" +d "agree" +d
    * "with" +d "other" +d "rules"
-   *        +1  "this rule:" + {thisRule}
+   *        +1  "  this rule:" + {thisRule}
    *        +1  "other rules:" + {otherRules}
    *)
   RuleTypeMismatch of string * {thisRule: Types.ty, otherRules:Types.ty}
@@ -370,7 +370,7 @@ struct
    *  "handler" +d "type" +d "does" +d "not" +d "agree" +d "with" +d
    * "expression"
    *        +1  "expression type:" + {expTy}
-   *        +1  "handler type:" + {handlerTy}
+   *        +1  "   handler type:" + {handlerTy}
    *)
   HandlerTy of string * {expTy: Types.ty, handlerTy:Types.ty}
 
@@ -958,7 +958,7 @@ struct
    * @format(code * specTy * expTy) "(type inference" +d code ")" +d  
    * "FFI" +d "type" +d "mismatch"
    *    +1 "expression:" + {expTy}
-   *    +1 "spec:"  + {specTy}
+   *    +1 "      spec:"  + {specTy}
    *)
   FFIStubMismatch of string * Types.ty * Types.ty
 

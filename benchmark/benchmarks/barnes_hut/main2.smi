@@ -1,0 +1,8 @@
+_require "main.smi"
+_require "vector3.smi"
+
+structure Main =
+struct
+  val doit : unit -> unit
+  val testit : 'a -> unit
+end

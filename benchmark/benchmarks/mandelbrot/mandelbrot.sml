@@ -1,6 +1,6 @@
 (* mandelbrot.sml *)
 
-structure Main =
+structure Main (*: BMARK*) =
   struct
     val x_base = ~2.0
     val y_base = 1.25
@@ -20,7 +20,11 @@ structure Main =
             fun loop2 j = if (j >= sz)
 		  then ()
 		  else let
-                    val c_re = x_base * (delta + real j)
+		  (* NOTE: older versions of the benchmark had the following
+		   * incorrect code:
+		    val c_re = x_base * (delta + real_j)
+		   *)
+                    val c_re = x_base + (delta * real j)
 		    fun loop3 (count, z_re : real, z_im : real) = if (count < maxCount)
 			  then let
                             val z_re_sq = z_re * z_re
@@ -54,7 +58,7 @@ structure Main =
 	  loop1 0;
 	  TextIO.output (outstrm, Int.toString(!sum_iterations) ^ " iterations\n"))
 
-  end; (* Mandelbrot *)
+  end (* Mandelbrot *)
 
 
 

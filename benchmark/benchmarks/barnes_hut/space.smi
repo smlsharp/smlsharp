@@ -1,0 +1,73 @@
+_require "basis.smi"
+_require "vector-sig.sml"
+
+functor Space(
+  V : sig
+    type 'a vec = {x: 'a, y: 'a, z: 'a}
+    val dim : int
+    val tabulate : (int -> 'a) -> 'a vec
+    val equal : real vec * real vec -> bool
+    val zerov : real vec
+    val addv : real vec * real vec -> real vec
+    val subv : real vec * real vec -> real vec
+    val dotvp : real vec * real vec -> real
+    val crossvp : real vec * real vec -> real vec
+    val addvs : real vec * real -> real vec
+    val mulvs : real vec * real -> real vec
+    val divvs : real vec * real -> real vec
+    val mapv : ('a -> 'b) -> 'a vec -> 'b vec
+    val map3v : ('a * 'b * 'c -> 'd) -> 'a vec * 'b vec * 'c vec -> 'd vec
+    val foldv : ('a * 'b -> 'b) -> 'a vec -> 'b -> 'b
+    val format : {cvt:'a -> string, lp:string, rp:string, sep:string}
+                 -> 'a vec -> string
+    val explode : 'a vec -> 'a list
+    val implode : 'a list -> 'a vec
+    type matrix
+    val zerom : matrix
+    val addm : matrix * matrix -> matrix
+    val outvp : real vec * real vec -> matrix
+  end
+) =
+struct
+  structure V =
+  struct
+    type 'a vec = 'a V.vec
+    val dim : int
+    val tabulate : (int -> 'a) -> 'a vec
+    val equal : real vec * real vec -> bool
+    val zerov : real vec
+    val addv : real vec * real vec -> real vec
+    val subv : real vec * real vec -> real vec
+    val dotvp : real vec * real vec -> real
+    val crossvp : real vec * real vec -> real vec
+    val addvs : real vec * real -> real vec
+    val mulvs : real vec * real -> real vec
+    val divvs : real vec * real -> real vec
+    val mapv : ('a -> 'b) -> 'a vec -> 'b vec
+    val map3v : ('a * 'b * 'c -> 'd) -> 'a vec * 'b vec * 'c vec -> 'd vec
+    val foldv : ('a * 'b -> 'b) -> 'a vec -> 'b -> 'b
+    val format : {cvt:'a -> string, lp:string, rp:string, sep:string}
+                 -> 'a vec -> string
+    val explode : 'a vec -> 'a list
+    val implode : 'a list -> 'a vec
+    type matrix = V.matrix
+    val zerom : matrix
+    val addm : matrix * matrix -> matrix
+    val outvp : real vec * real vec -> matrix
+  end
+  datatype body = Body of {acc:real V.vec ref, mass:real, phi:real ref,
+                           pos:real V.vec ref, vel:real V.vec ref}
+  datatype cell = BodyCell of body | Cell of node array
+  and node = Empty | Node of {cell:cell, mass:real ref, pos:real V.vec ref}
+  datatype space = Space of {rmin:real V.vec, root:node, rsize:real}
+  val nsub : int
+  val putCell : cell * int * node -> unit
+  val getCell : cell * int -> node
+  val mkCell : unit -> cell
+  val mkBodyNode : body -> node
+  val mkCellNode : cell -> node
+  val eqBody : body * body -> bool
+  val dumpTree : node -> unit
+  val prBody : body -> string
+  val prNode : node -> string
+end

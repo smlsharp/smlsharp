@@ -13,7 +13,7 @@ struct
     structure FG = FormatterGenerator
   in
 
-  fun main(programName, commandLineArgs) =
+  fun main(programName:string, commandLineArgs:string list) =
       let
         (* ToDo : use GetOpt library to process commandline arguments. *)
         val (options, sourceFileNames) =

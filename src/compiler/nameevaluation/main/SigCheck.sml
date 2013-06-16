@@ -21,11 +21,9 @@ end
 struct
 local
   structure I = IDCalc
-  structure BV = BuiltinEnv
   structure Ty = EvalTy
   structure ITy = EvalIty
   structure V = NameEvalEnv
-  structure BV = BuiltinEnv
   structure L = SetLiftedTys
   structure S = Subst
   structure TF = TfunVars
@@ -161,7 +159,13 @@ in
                        (loc,
                         E.SIGDtyMismatch("220",{longid=path@[name]}))
                     )
-                | _ => 
+                | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=specTfun,...})),
+                   strTfun) =>
+                  checkTfun name (specTfun, strTfun)
+                | (specTfun,
+                   I.TFUN_VAR (ref (I.FUN_DTY {tfun=strTfun,...}))) =>
+                  checkTfun name (specTfun, strTfun)
+                | _ =>
                   (
                    EU.enqueueError
                      (loc,E.SIGDtyMismatch("230",{longid=path@[name]}))
@@ -267,7 +271,7 @@ in
                     | I.TYVAR _  => ()
                     | I.TYRECORD tyLabelenvMap =>
                       LabelEnv.app trace tyLabelenvMap
-                    | I.TYCONSTRUCT {typ={path, tfun}, args} =>
+                    | I.TYCONSTRUCT {tfun, args} =>
                       (traceTfun tfun; List.app trace args)
                     | I.TYFUNM (tyList, ty) =>
                       (List.app trace tyList; trace ty)
@@ -299,9 +303,10 @@ in
                       let
                         fun makeDecl icexp =
                             let
+                              val revealKey = 
+                                  case mode of Trans => NONE | Opaque => SOME revealKey
                               val icexp = I.ICSIGTYPED
-                                            {path=path@[name],
-                                             icexp=icexp,
+                                            {icexp=icexp,
                                              revealKey=revealKey,
                                              ty=specTy,
                                              loc=loc}
@@ -645,7 +650,7 @@ U.print "\n";
                            val _ = tfv := newTfunkind
                            val returnTy =
                                I.TYCONSTRUCT
-                                 {typ={path=path@[name],tfun=tfun},
+                                 {tfun=tfun,
                                   args= map (fn tv=>I.TYVAR tv) formals}
                            val (varE, conbind) =
                                SEnv.foldri

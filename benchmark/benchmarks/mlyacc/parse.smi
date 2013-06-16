@@ -1,0 +1,122 @@
+_require "basis.smi"
+_require "base.sig"
+_require "utils.sig"
+_require "sigs.sml"
+_require "hdr.smi"
+
+functor ParseGenParserFun(
+  A : sig
+    structure Header : sig
+      type pos = int
+      val lineno : pos ref
+      val text : string list ref
+      type inputSource
+      val newSource : string * TextIO.instream * TextIO.outstream -> inputSource
+      val error : inputSource -> pos -> string -> unit
+      val warn : inputSource -> pos -> string -> unit
+      val errorOccurred : inputSource -> unit -> bool
+      datatype symbol = SYMBOL of string * pos
+      val symbolName : symbol -> string
+      val symbolPos : symbol -> pos
+      val symbolMake : string * int -> symbol
+      type ty
+      val tyName : ty -> string
+      val tyMake : string -> ty
+      datatype prec = LEFT | RIGHT | NONASSOC
+      datatype control = NODEFAULT | VERBOSE | PARSER_NAME of symbol
+                       | FUNCTOR of string | START_SYM of symbol
+                       | NSHIFT of symbol list | POS of string | PURE
+                       | PARSE_ARG of string * string
+      datatype rule = RULE of {lhs : symbol, rhs : symbol list,
+                               code : string, prec : symbol option}
+      datatype declData = DECL of {eop : symbol list,
+                                   keyword : symbol list,
+                                   nonterm : (symbol * ty option) list option,
+                                   prec : (prec * (symbol list)) list,
+                                   change: (symbol list * symbol list) list,
+                                   term : (symbol * ty option) list option,
+                                   control : control list,
+                                   value : (symbol * string) list}
+      val join_decls : declData * declData * inputSource * pos -> declData
+      type parseResult
+      val getResult : parseResult -> string * declData * rule list
+    end
+    structure Parser : sig
+      structure Token : sig
+        structure LrTable : sig
+          datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+          datatype state = STATE of int
+          datatype term = T of int
+          datatype nonterm = NT of int
+          datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+          type table
+          val numStates : table -> int
+          val numRules : table -> int
+          val describeActions : table -> state ->
+                                (term,action) pairlist * action
+          val describeGoto : table -> state -> (nonterm,state) pairlist
+          val action : table -> state * term -> action
+          val goto : table -> state * nonterm -> state
+          val initialState : table -> state
+          exception Goto of state * nonterm
+          val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                           gotos : (nonterm,state) pairlist array,
+                           numStates : int, numRules : int,
+                           initialState : state} -> table
+        end
+        datatype ('a,'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
+        val sameToken : ('a,'b) token * ('a,'b) token -> bool
+      end
+      structure Stream : sig
+        type 'a stream
+        val streamify : (unit -> 'a) -> 'a stream
+        val cons : 'a * 'a stream -> 'a stream
+        val get : 'a stream -> 'a * 'a stream
+      end
+      exception ParseError
+      type arg
+      type lexarg
+      type pos
+      type result
+      type svalue
+      val makeLexer : (int -> string) -> lexarg ->
+                      (svalue,pos) Token.token Stream.stream
+      val parse : int * ((svalue,pos) Token.token Stream.stream) *
+                  (string * pos * pos -> unit) * arg ->
+                  result * (svalue,pos) Token.token Stream.stream
+      val sameToken : (svalue,pos) Token.token * (svalue,pos) Token.token ->
+                      bool
+    end
+    where type pos = Header.pos
+    sharing type Parser.result = Header.parseResult
+    sharing type Parser.arg = Header.inputSource = Parser.lexarg
+  end
+) =
+struct
+  structure Header =
+  struct
+    type pos = A.Header.pos
+    val lineno : pos ref
+    val text : string list ref
+    type inputSource = A.Header.inputSource
+    val newSource : string * TextIO.instream * TextIO.outstream -> inputSource
+    val error : inputSource -> pos -> string -> unit
+    val warn : inputSource -> pos -> string -> unit
+    val errorOccurred : inputSource -> unit -> bool
+    datatype symbol = datatype A.Header.symbol
+    val symbolName : symbol -> string
+    val symbolPos : symbol -> pos
+    val symbolMake : string * int -> symbol
+    type ty = A.Header.ty
+    val tyName : ty -> string
+    val tyMake : string -> ty
+    datatype prec = datatype A.Header.prec
+    datatype control = datatype A.Header.control
+    datatype rule = datatype A.Header.rule
+    datatype declData = datatype A.Header.declData
+    val join_decls : declData * declData * inputSource * pos -> declData
+    type parseResult = A.Header.parseResult
+    val getResult : parseResult -> string * declData * rule list
+  end
+  val parse : string -> Header.parseResult * Header.inputSource
+end

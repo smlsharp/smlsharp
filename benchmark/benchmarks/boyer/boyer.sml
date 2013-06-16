@@ -52,7 +52,7 @@ fun tautologyp (x, true_lst, false_lst) =
   end; (* Boyer *)
 
 (* the benchmark *)
-structure Main =
+structure Main (*: BMARK*) =
   struct
 
     open Terms;
@@ -107,12 +107,11 @@ val term =
                    [Prop (get "implies",[Var 25, Var 20]),
                     Prop (get "implies",[Var 20, Var 22])])])]),
               Prop (get "implies",[Var 23, Var 22])])
-(*
+
     fun testit outstrm = if tautp (apply_subst subst term)
 	  then TextIO.output (outstrm, "Proved!\n")
 	  else TextIO.output (outstrm, "Cannot prove!\n")
-*)
+
     fun doit () = (tautp (apply_subst subst term); ())
 
   end; (* Main *)
-

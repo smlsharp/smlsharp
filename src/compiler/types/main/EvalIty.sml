@@ -42,7 +42,10 @@ in
     | evalKindedTvar _ = raise bug "non univ kind"
   fun evalKindedTvarList context kindedTvarList =
       foldl evalKindedTvar (context, BoundTypeVarID.Map.empty) kindedTvarList
+(*
   fun evalDtyKind context path dtyKind = 
+*)
+  fun evalDtyKind context dtyKind = 
       case dtyKind of
         I.DTY => T.DTY
       | I.DTY_INTERFACE => T.DTY
@@ -50,7 +53,7 @@ in
       | I.OPAQUE {tfun, revealKey} =>
         let
           val opaqueRep = 
-              T.TYCON (evalTfun context path tfun)
+              T.TYCON (evalTfun context tfun)
               handle
               EVALTFUN{iseq, formals, realizerTy} =>
               let
@@ -69,7 +72,10 @@ in
           T.OPAQUE {opaqueRep=opaqueRep, revealKey=revealKey}
         end
       | I.BUILTIN builtinTy => T.BUILTIN builtinTy
+(*
   and evalTfun context path tfun = 
+*)
+  and evalTfun context tfun = 
       case tfun of
         I.TFUN_DEF {iseq, formals, realizerTy} =>
         raise EVALTFUN {iseq=iseq, formals=formals, realizerTy=realizerTy}
@@ -87,7 +93,7 @@ in
              val runtimeTy = 
                  case runtimeTy of
                    I.BUILTINty ty => ty
-                 | I.LIFTEDty _ => BuiltinType.BOXEDty
+                 | I.LIFTEDty _ => BuiltinTypeNames.BOXEDty
            in
               {id = id,
              (* 2012-7-15 ohori: bug 207_printer.sml. 
@@ -101,13 +107,11 @@ in
                          (fn NONE => {hasArg=false} | SOME ity => {hasArg=true})
                          conSpec,
                extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
-               dtyKind = evalDtyKind context path dtyKind
+               dtyKind = evalDtyKind context dtyKind
               }
            end
          | ref(I.TFV_SPEC {name, id, iseq, formals}) =>
            (debugPrint "****** evalTfun ******\n";
-            printPath path;
-            debugPrint "\n";
             debugPrint "tfun\n";
             printTfun tfun;
             debugPrint "\n";
@@ -115,16 +119,14 @@ in
            )
          | ref(I.TFV_DTY {name, id,iseq,formals,conSpec,liftedTys}) =>
            (debugPrint "****** evalTfun ******\n";
-            printPath path;
-            debugPrint "\n";
             debugPrint "tfun\n";
             printTfun tfun;
             debugPrint "\n";
             raise bug "TFV_DTY in evalTfun"
            )
-         | ref(I.REALIZED{tfun,...}) => evalTfun context path tfun
-         | ref(I.INSTANTIATED{tfun,...}) => evalTfun context path tfun
-         | ref(I.FUN_DTY{tfun,...}) => evalTfun context path tfun
+         | ref(I.REALIZED{tfun,...}) => evalTfun context tfun
+         | ref(I.INSTANTIATED{tfun,...}) => evalTfun context tfun
+         | ref(I.FUN_DTY{tfun,...}) => evalTfun context tfun
         )
   and evalIty context ity =
        case ity of
@@ -140,10 +142,10 @@ in
             )
          )
        | I.TYRECORD tyMap => T.RECORDty (LabelEnv.map (evalIty context) tyMap)
-       | I.TYCONSTRUCT {typ={path, tfun}, args} =>
+       | I.TYCONSTRUCT {tfun, args} =>
          (let
             val args = map (evalIty context) args
-            val tyCon = evalTfun context path tfun
+            val tyCon = evalTfun context tfun
                 handle e => raise e
           in
             T.CONSTRUCTty{tyCon=tyCon, args=args}

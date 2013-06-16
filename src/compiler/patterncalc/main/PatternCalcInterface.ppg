@@ -50,13 +50,13 @@ struct
   type datbind = AbsynInterface.datbind
 
   (*%
-   * @formatter(BuiltinType.ty) BuiltinType.format_ty
+   * @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
    *)
   datatype runtimeTy 
    = (*%
        @format(ty) ty
       *)
-     BUILTINty of BuiltinType.ty
+     BUILTINty of BuiltinTypeNames.bty
    |  (*%
        @format(path) path
       *)
@@ -66,7 +66,7 @@ struct
    * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(declist) TermFormat.formatDeclList
    * @formatter(PatternCalc.plsigexp) PatternCalc.format_plsigexp
-   * @formatter(BuiltinType.ty) BuiltinType.format_ty
+   * @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
    * @formatter(seq) TermFormat.formatSeqList
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(bool) SmlppgUtil.formatBinaryChoice

@@ -5,8 +5,8 @@ _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../control/main/Control.ppg.smi"
 _require "../../util/main/TermFormat.smi"
-_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
-_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "OPrimInstMap.smi"
 
@@ -37,7 +37,7 @@ struct
          path : path,
          iseq : bool,
          arity : int,
-         runtimeTy : BuiltinType.ty,
+         runtimeTy : BuiltinTypeNames.bty,
          conSet : {hasArg:bool} SEnv.map,
          extraArgs : ty list,
          dtyKind : dtyKind
@@ -70,7 +70,7 @@ struct
   and dtyKind
     = DTY
     | OPAQUE of {opaqueRep:opaqueRep, revealKey:revealKey}
-    | BUILTIN of BuiltinType.ty
+    | BUILTIN of BuiltinTypeNames.bty
 
   and opaqueRep 
     = TYCON of 
@@ -78,7 +78,7 @@ struct
        path : path,
        iseq : bool,
        arity : int,
-       runtimeTy : BuiltinType.ty,
+       runtimeTy : BuiltinTypeNames.bty,
        conSet : {hasArg:bool} SEnv.map,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -136,7 +136,7 @@ struct
        path : path,
        iseq : bool,
        arity : int,
-       runtimeTy : BuiltinType.ty,
+       runtimeTy : BuiltinTypeNames.bty,
        conSet : {hasArg:bool} SEnv.map,
        extraArgs : ty list,
        dtyKind : dtyKind

@@ -32,15 +32,9 @@ in
         T.CONSTRUCTty {tyCon = {id, ...}, args} => id
       | _ => raise TyConId
 
-  fun checkKind ty 
-                {
-                 utvarOpt,
-                 eqKind,
-                 lambdaDepth,
-                 tvarKind,
-                 id
-                }
-                =
+  fun checkKind 
+        ty 
+        ({utvarOpt,eqKind,lambdaDepth,tvarKind,id}: T.tvKind) =
       let
         val _ = 
             case utvarOpt of NONE => () | SOME _ => raise Unify
@@ -103,7 +97,7 @@ in
           tvarKind = tvarKind2,
           id = id2
          } : T.tvKind
-        ) =
+        ) : T.tvKind * (T.ty * T.ty) list=
       let 
         fun lubTyList(tyList1, tyList2) = 
             let
@@ -488,7 +482,10 @@ in
                    (fn (((i1,_),(i2,_)), btvMap) =>
                        BoundTypeVarID.Map.insert(btvMap, i1, i2)
                    )
+(*  2012-8-11 ohori
                    BoundTypeVarID.Map.empty
+*)
+                   btvEquiv
                    kindPairs
            in
              eqTy btvMap (body1, body2)
@@ -581,6 +578,23 @@ in
     | (T.REC smap1, T.REC smap2) => eqSMap btvEquiv (smap1, smap2)
     | _ => false
 
+  fun instOfPolyTy (polyTy, tyList) =
+      case TU.derefTy polyTy of
+        T.POLYty {boundtvars, body} =>
+        let 
+          val subst1 = TU.freshSubst boundtvars
+          val body = TU.substBTvar subst1 body
+          val instTyList = BoundTypeVarID.Map.listItems subst1
+          val tyPairs = 
+              if length tyList = length instTyList then 
+                ListPair.zip (instTyList, tyList)
+              else raise bug "arity mismatch in instOfPoly"
+          val _ = unify tyPairs
+        in
+          body
+        end
+      | _ => 
+        raise bug "nonpolyty in TFUNDEF in instOfPoly"
 
 end
 end

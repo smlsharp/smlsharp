@@ -36,7 +36,8 @@
 /*#define GCSTAT*/
 /*#define GCTIME*/
 /*#define NULL_IS_NOT_ZERO*/
-/*#define MINOR_GC*/
+#define MINOR_GC
+/*#define CONFIGURABLE_MINOR_COUNT*/
 /*#define DEBUG_USE_MMAP */
 
 #ifdef MULTITHREAD
@@ -82,7 +83,12 @@ typedef struct bitptr bitptr_t;
 } while (0)
 #define BITPTR_NEXT_FAILED(b)  ((b).mask == 0)
 
-static bitptr_t
+#define BITPTR_NEXT2(b,dst) do {				 \
+	unsigned int tmp__ = *(b).ptr | ((b).mask - 1U); \
+	dst = (tmp__ + 1U) & ~tmp__;		 \
+} while (0)
+
+static NOINLINE bitptr_t
 bitptr_linear_search(unsigned int *start, const unsigned int *limit)
 {
 	bitptr_t b = {start, 0};
@@ -179,9 +185,10 @@ bsf(unsigned int m)
 
 /* segments */
 
-#ifndef SEGMENT_SIZE
-#define SEGMENT_SIZE  131072  /* 128k */
-#endif /* SEGMENT_SIZE */
+#ifndef SEGMENT_SIZE_LOG2
+#define SEGMENT_SIZE_LOG2  17   /* 128k */
+#endif /* SEGMENT_SIZE_LOG2 */
+#define SEGMENT_SIZE (1U << SEGMENT_SIZE_LOG2)
 #ifndef SEG_RANK
 #define SEG_RANK  3
 #endif /* SEG_RANK */
@@ -190,6 +197,21 @@ bsf(unsigned int m)
 #define BLOCKSIZE_MIN       (1U << BLOCKSIZE_MIN_LOG2)
 #define BLOCKSIZE_MAX_LOG2  12U  /* 2^4 = 16 */
 #define BLOCKSIZE_MAX       (1U << BLOCKSIZE_MAX_LOG2)
+
+#ifdef MINOR_GC
+#ifndef DEFAULT_MINOR_THRESHOLD_RATIO
+#define DEFAULT_MINOR_THRESHOLD_RATIO  0.5
+#endif /* MINOR_THRESHOLD_RATIO */
+static double minor_threshold_ratio = DEFAULT_MINOR_THRESHOLD_RATIO;
+#ifdef CONFIGURABLE_MINOR_COUNT
+#define MINOR_COUNT minor_count
+static unsigned int minor_count = 0;
+#else
+#ifndef MINOR_COUNT
+#define MINOR_COUNT  0  /* must be a positive number. 0 means infinity */
+#endif /* MINOR_COUNT */
+#endif /* CONFIGURABLE_MINOR_COUNT */
+#endif /* MINOR_GC */
 
 struct segment_layout {
 	size_t blocksize;
@@ -250,193 +272,19 @@ struct segment {
  * filled (1) or not (0).
  */
 
-#define WORDBITS BITPTR_WORDBITS
+#define CEIL(x,y)         ((((x) + (y) - 1) / (y)) * (y))
+#define BITS_TO_WORDS(n)  (((n) + BITPTR_WORDBITS - 1) / BITPTR_WORDBITS)
+#define WORDS_TO_BITS(n)  ((n) * BITPTR_WORDBITS)
+#define WORDS_TO_BYTES(n) ((n) * sizeof(unsigned int))
 
-#define CEIL_(x,y)         ((((x) + (y) - 1) / (y)) * (y))
-#define BITS_TO_WORDS_(n)  (((n) + WORDBITS - 1) / WORDBITS)
-#define WORDS_TO_BYTES_(n) ((n) * sizeof(unsigned int))
+#define SEG_INITIAL_OFFSET CEIL(sizeof(struct segment), MAXALIGN)
+#define SEG_BITMAP0_OFFSET SEG_INITIAL_OFFSET
 
-#define APPLY_(f,a)    f a
-#define REPEAT_0(f,z)  z
-#define REPEAT_1(f,z)  APPLY_(f, REPEAT_0(f,z))
-#define REPEAT_2(f,z)  APPLY_(f, REPEAT_1(f,z))
-#define REPEAT_3(f,z)  APPLY_(f, REPEAT_2(f,z))
-#define REPEAT_4(f,z)  APPLY_(f, REPEAT_3(f,z))
-#define REPEAT_(i,f,z) REPEAT__(i,f,z)
-#define REPEAT__(i,f,z) REPEAT_##i(f,z)
-
-#define INC_0    1
-#define INC_1    2
-#define INC_2    3
-#define INC_3    4
-#define INC_4    5
-#define INC__(n) INC_##n
-#define INC_(n)  INC__(n)
-
-#define LIST_1(f,n)   f(0,n)
-#define LIST_2(f,n)   LIST_1(f,n), f(1,n)
-#define LIST_3(f,n)   LIST_2(f,n), f(2,n)
-#define LIST_4(f,n)   LIST_3(f,n), f(3,n)
-#define LIST_5(f,n)   LIST_4(f,n), f(4,n)
-#define LIST_(i,f,n)  LIST_##i(f,n)
-#define ARRAY_(i,f,n) {LIST_(i,f,n)}
-#define DUMMY_(x,y)   y
-
-#define SEL1_(a,b,c)  a
-#define SEL2_(a,b,c)  b
-#define SEL3_(a,b,c)  c
-
-#define SEG_INITIAL_OFFSET CEIL_(sizeof(struct segment), MAXALIGN)
-
-#define SEG_BITMAP0_OFFSET   SEG_INITIAL_OFFSET
-#define SEG_BITMAP_BOTTOM(n)					\
-	(/* offset */ SEG_BITMAP0_OFFSET,			\
-	 /* bits */   n,					\
-	 /* words */  BITS_TO_WORDS_((n) + 1))
-#define SEG_BITMAP_ITERATE(offset,bits,words)			\
-	(/* offset */ (offset) + WORDS_TO_BYTES_(words),	\
-	 /* bits */   BITS_TO_WORDS_(bits),			\
-	 /* words */  BITS_TO_WORDS_((words) + 1))
-
-#define SEG_BITMAP_(i,n) \
-	REPEAT_(i, SEG_BITMAP_ITERATE, SEG_BITMAP_BOTTOM(n))
-
-#define SEG_BITMAP_OFFSET_(i,n) (APPLY_(SEL1_,SEG_BITMAP_(i,n)))
-#define SEG_BITMAP_BITS_(i,n)   (APPLY_(SEL2_,SEG_BITMAP_(i,n)))
-#define SEG_BITMAP_WORDS_(i,n)  (APPLY_(SEL3_,SEG_BITMAP_(i,n)))
-#define SEG_BITMAP_SIZE_(i,n)   WORDS_TO_BYTES(SEG_BITMAP_WORDS_(i,n))
-#define SEG_BITMAP_LIMIT_(i,n)  SEG_BITMAP_OFFSET_(INC_(i), n)
-#define SEG_BITMAP_SENTINEL_BITS_(i,n) \
-	(SEG_BITMAP_WORDS_(i,n) * WORDBITS - SEG_BITMAP_BITS_(i,n))
-
-#define SEG_STACK_OFFSET_(n) \
-	CEIL_(SEG_BITMAP_OFFSET_(SEG_RANK, n), sizeof(struct stack_slot))
-#define SEG_STACK_SIZE_(n) \
-	((n) * sizeof(struct stack_slot))
-#define SEG_STACK_LIMIT_(n) \
-	(SEG_STACK_OFFSET_(n) + SEG_STACK_SIZE_(n))
-#define SEG_BLOCK_OFFSET_(n,s) \
-	CEIL_(SEG_STACK_LIMIT_(n) + OBJ_HEADER_SIZE, MAXALIGN)
-#define SEG_TOTAL_SIZE_(numblocks,blocksize) \
-	(SEG_BLOCK_OFFSET_(numblocks,blocksize) + (numblocks) * (blocksize))
-
-#define SEG_NUM_BLOCKS_ESTIMATE(blocksize)		\
-	((size_t)(((double)SEGMENT_SIZE			\
-		   - (double)SEG_INITIAL_OFFSET		\
-		   - (double)SEG_RANK / CHAR_BIT)	\
-		  / ((double)(blocksize)		\
-		     + (1.f				\
-			+ 1.f / WORDBITS		\
-			+ 1.f / WORDBITS / WORDBITS)	\
-		     / CHAR_BIT				\
-		     + sizeof(void*))))
-
-#define SEG_OVERFLOW_BYTES(blocksize) \
-	((signed)(SEG_TOTAL_SIZE_(SEG_NUM_BLOCKS_ESTIMATE(blocksize),	\
-				  blocksize) - SEGMENT_SIZE))
-#define SEG_OVERFLOW_BLOCKS(blocksize) \
-	((SEG_OVERFLOW_BYTES(blocksize) + (blocksize) - 1) \
-	 / (signed)(blocksize))
-#define SEG_NUM_BLOCKS(blocksize) \
-	(SEG_NUM_BLOCKS_ESTIMATE(blocksize) - SEG_OVERFLOW_BLOCKS(blocksize))
-
-#define SEG_BITMAP_OFFSET(level, blocksize) \
-	SEG_BITMAP_OFFSET_(level, SEG_NUM_BLOCKS(blocksize))
-#define SEG_BITMAP_LIMIT(level, blocksize) \
-	SEG_BITMAP_LIMIT_(level, SEG_NUM_BLOCKS(blocksize))
-#define SEG_BITMAP_SIZE(blocksize) \
-	/* aligning in MAXALIGN makes memset faster. \
-	 * It is safe since stack area is bigger than MAXALIGN and \
-	 * memset never reach both object header and content. */ \
-	CEIL_(SEG_BITMAP_OFFSET(SEG_RANK, blocksize) - SEG_BITMAP0_OFFSET, \
-	      MAXALIGN)
-#define SEG_BITMAP_SENTINEL_BITS(level, blocksize) \
-	SEG_BITMAP_SENTINEL_BITS_(level, SEG_NUM_BLOCKS(blocksize))
-#define SEG_BITMAP_SENTINEL(level, blocksize) \
-	(~0U << (WORDBITS - SEG_BITMAP_SENTINEL_BITS(level, blocksize)))
-#define SEG_STACK_OFFSET(blocksize) \
-	SEG_STACK_OFFSET_(SEG_NUM_BLOCKS(blocksize))
-#define SEG_STACK_SIZE(blocksize) \
-	SEG_STACK_SIZE_(SEG_NUM_BLOCKS(blocksize))
-#define SEG_STACK_LIMIT(blocksize) \
-	SEG_STACK_LIMIT_(SEG_NUM_BLOCKS(blocksize))
-#define SEG_BLOCK_OFFSET(blocksize) \
-	SEG_BLOCK_OFFSET_(SEG_NUM_BLOCKS(blocksize), blocksize)
-
-#ifdef MINOR_GC
-#ifndef MINOR_THRESHOLD_RATIO
-#define MINOR_THRESHOLD_RATIO  0.5
-#endif /* MINOR_THRESHOLD_RATIO */
-#ifndef MINOR_COUNT
-#define MINOR_COUNT  0  /* must be a positive number. 0 means infinity */
-#endif /* MINOR_COUNT */
-#define SEGMENT_LAYOUT(blocksize) \
-	{/*blocksize*/       blocksize, \
-	 /*bitmap_offset*/   ARRAY_(SEG_RANK, SEG_BITMAP_OFFSET, blocksize), \
-	 /*bitmap_limit*/    ARRAY_(SEG_RANK, SEG_BITMAP_LIMIT, blocksize), \
-	 /*sentinel*/        ARRAY_(SEG_RANK, SEG_BITMAP_SENTINEL, blocksize),\
-	 /*bitmap_size*/     SEG_BITMAP_SIZE(blocksize), \
-	 /*stack_offset*/    SEG_STACK_OFFSET(blocksize), \
-	 /*stack_limit*/     SEG_STACK_LIMIT(blocksize), \
-	 /*block_offset*/    SEG_BLOCK_OFFSET(blocksize), \
-	 /*num_blocks*/      SEG_NUM_BLOCKS(blocksize),	\
-	 /*minor_threshold*/ (size_t)(SEG_NUM_BLOCKS(blocksize) \
-				      * MINOR_THRESHOLD_RATIO)}
-
-#define SEGMENT_LAYOUT_DUMMY \
-	{/*blocksize*/       0, \
-	 /*bitmap_offset*/   ARRAY_(SEG_RANK, DUMMY_, SEG_BITMAP0_OFFSET), \
-	 /*bitmap_limit*/    ARRAY_(SEG_RANK, DUMMY_, SEGMENT_SIZE), \
-	 /*sentinel*/        ARRAY_(SEG_RANK, DUMMY_, 0), \
-	 /*bitmap_size*/     SEGMENT_SIZE - SEG_BITMAP0_OFFSET, \
-	 /*stack_offset*/    SEGMENT_SIZE, \
-	 /*stack_limit*/     SEGMENT_SIZE, \
-	 /*block_offset*/    SEGMENT_SIZE, \
-	 /*num_blocks*/      SEGMENT_SIZE, \
-	 /*minor_threshold*/ 0}
-#else
-#define SEGMENT_LAYOUT(blocksize) \
-	{/*blocksize*/       blocksize,\
-	 /*bitmap_offset*/   ARRAY_(SEG_RANK, SEG_BITMAP_OFFSET, blocksize), \
-	 /*bitmap_limit*/    ARRAY_(SEG_RANK, SEG_BITMAP_LIMIT, blocksize), \
-	 /*sentinel*/        ARRAY_(SEG_RANK, SEG_BITMAP_SENTINEL, blocksize),\
-	 /*bitmap_size*/     SEG_BITMAP_SIZE(blocksize), \
-	 /*stack_offset*/    SEG_STACK_OFFSET(blocksize), \
-	 /*stack_limit*/     SEG_STACK_LIMIT(blocksize), \
-	 /*block_offset*/    SEG_BLOCK_OFFSET(blocksize), \
-	 /*num_blocks*/      SEG_NUM_BLOCKS(blocksize)}
-
-#define SEGMENT_LAYOUT_DUMMY \
-	{/*blocksize*/       0, \
-	 /*bitmap_offset*/   ARRAY_(SEG_RANK, DUMMY_, SEG_BITMAP0_OFFSET), \
-	 /*bitmap_limit*/    ARRAY_(SEG_RANK, DUMMY_, SEGMENT_SIZE), \
-	 /*sentinel*/        ARRAY_(SEG_RANK, DUMMY_, 0), \
-	 /*bitmap_size*/     SEGMENT_SIZE - SEG_BITMAP0_OFFSET, \
-	 /*stack_offset*/    SEGMENT_SIZE, \
-	 /*stack_limit*/     SEGMENT_SIZE, \
-	 /*block_offset*/    SEGMENT_SIZE, \
-	 /*num_blocks*/      0}
-#endif /* MINOR_GC */
-
-const struct segment_layout segment_layout[BLOCKSIZE_MAX_LOG2 + 1] = {
-	SEGMENT_LAYOUT_DUMMY,     /* 2^0 = 1 */
-	SEGMENT_LAYOUT_DUMMY,     /* 2^1 = 2 */
-	SEGMENT_LAYOUT_DUMMY,     /* 2^2 = 4 */
-	SEGMENT_LAYOUT(1 << 3),   /* 2^3 = 8 == BLOCKSIZE_MIN  */
-	SEGMENT_LAYOUT(1 << 4),   /* 2^4 = 16 */
-	SEGMENT_LAYOUT(1 << 5),   /* 2^5 = 32 */
-	SEGMENT_LAYOUT(1 << 6),   /* 2^6 = 64 */
-	SEGMENT_LAYOUT(1 << 7),   /* 2^7 = 128 */
-	SEGMENT_LAYOUT(1 << 8),   /* 2^8 = 256 */
-	SEGMENT_LAYOUT(1 << 9),   /* 2^9 = 512 */
-	SEGMENT_LAYOUT(1 << 10),  /* 2^10 = 1024 */
-	SEGMENT_LAYOUT(1 << 11),  /* 2^11 = 2048 */
-	SEGMENT_LAYOUT(1 << 12),  /* 2^12 = 4096 == BLOCKSIZE_MIN */
-};
+static struct segment_layout segment_layout[BLOCKSIZE_MAX_LOG2 + 1];
 
 #ifdef DEBUG
-void
-sml_heap_dump_layout()
+static void
+dump_layout()
 {
 	unsigned int i, j;
 	const struct segment_layout *l;
@@ -464,6 +312,96 @@ sml_heap_dump_layout()
 	}
 }
 #endif /* DEBUG */
+
+static void
+calc_layout(unsigned int blocksize_log2)
+{
+	struct segment_layout *layout;
+	unsigned int num_blocks, i;
+	double estimate_bits;
+
+	layout = &segment_layout[blocksize_log2];
+	layout->blocksize = 1 << blocksize_log2;
+
+	estimate_bits = 1.0;
+	for (i = 0; i < SEG_RANK; i++)
+		estimate_bits = 1.0 + estimate_bits / (double)BITPTR_WORDBITS;
+
+	num_blocks = (double)(SEGMENT_SIZE - SEG_INITIAL_OFFSET)
+		/ (layout->blocksize + estimate_bits / CHAR_BIT
+		   + sizeof(void*));
+
+	for (;;) {
+		unsigned int filled, bitmap_start, num_bits, stack_size, i;
+		unsigned int bitmap_words, sentinel_bits;
+		filled = SEG_BITMAP0_OFFSET;
+		bitmap_start = filled;
+		num_bits = num_blocks;
+		sentinel_bits = 1;
+		for (i = 0; i < SEG_RANK; i++) {
+			layout->bitmap_offset[i] = filled;
+			bitmap_words = BITS_TO_WORDS(num_bits + sentinel_bits);
+			sentinel_bits = WORDS_TO_BITS(bitmap_words) - num_bits;
+			layout->bitmap_sentinel[i] =
+				~0U << (BITPTR_WORDBITS - sentinel_bits);
+			filled += WORDS_TO_BYTES(bitmap_words);
+			layout->bitmap_limit[i] = filled;
+			num_bits = BITS_TO_WORDS(num_bits);
+			sentinel_bits = 1 + sentinel_bits / BITPTR_WORDBITS;
+		}
+		/* aligning bitmap_size in MAXALIGN makes memset faster.
+		 * It is safe since stack area is bigger than MAXALIGN
+		 * and memset never reach both object header and
+		 * content. */
+		layout->bitmap_size = CEIL(filled - bitmap_start, MAXALIGN);
+		filled = CEIL(filled, sizeof(void*));
+		layout->stack_offset = filled;
+		stack_size = num_blocks * sizeof(struct stack_slot);
+		layout->stack_limit = filled + stack_size;
+		filled += stack_size;
+		filled = CEIL(filled + OBJ_HEADER_SIZE, MAXALIGN);
+		layout->block_offset = filled;
+		filled += num_blocks * layout->blocksize;
+
+		ASSERT(bitmap_start + layout->bitmap_size
+		       < layout->block_offset - OBJ_HEADER_SIZE);
+
+		if (filled <= SEGMENT_SIZE)
+			break;
+		num_blocks--;
+	}
+	layout->num_blocks = num_blocks;
+
+#ifdef MINOR_GC
+	layout->minor_threshold =
+		(double)layout->num_blocks * minor_threshold_ratio;
+#endif /* MINOR_GC */
+}
+
+static void
+init_segment_layout()
+{
+	unsigned int i;
+
+	/* segment_layout[0] is used for fresh segments. */
+	segment_layout[0].blocksize = 0;
+	for (i = 0; i < SEG_RANK; i++) {
+		segment_layout[0].bitmap_offset[i] = SEG_BITMAP0_OFFSET;
+		segment_layout[0].bitmap_limit[i] = SEGMENT_SIZE;
+		segment_layout[0].bitmap_sentinel[i] = 0;
+	}
+	segment_layout[0].bitmap_size = SEGMENT_SIZE - SEG_BITMAP0_OFFSET;
+	segment_layout[0].stack_offset = SEGMENT_SIZE;
+	segment_layout[0].stack_limit = SEGMENT_SIZE;
+	segment_layout[0].block_offset = SEGMENT_SIZE;
+	segment_layout[0].num_blocks = 0;
+
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++)
+		calc_layout(i);
+#ifdef DEBUG
+	dump_layout();
+#endif /* DEBUG */
+}
 
 #define ADD_OFFSET(p,n)  ((void*)((char*)(p) + (n)))
 
@@ -708,12 +646,14 @@ static struct {
 	struct gcstat_gc minor_gc;
 #endif /* MINOR_GC */
 	unsigned long total_alloc_count;
+	double last_probe_time;
+	double probe_interval;
 	struct {
 		unsigned int trigger;
 		struct {
 			unsigned int fast[BLOCKSIZE_MAX_LOG2 + 1];
-			unsigned int find[BLOCKSIZE_MAX_LOG2 + 1];
 			unsigned int next[BLOCKSIZE_MAX_LOG2 + 1];
+			unsigned int find[BLOCKSIZE_MAX_LOG2 + 1];
 			unsigned int new[BLOCKSIZE_MAX_LOG2 + 1];
 			unsigned int malloc;
 		} alloc_count;
@@ -764,15 +704,15 @@ print_alloc_count()
 	stat_notice("count:");
 	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
 		if (gcstat.last.alloc_count.fast[i] != 0
-		    || gcstat.last.alloc_count.find[i] != 0
 		    || gcstat.last.alloc_count.next[i] != 0
+		    || gcstat.last.alloc_count.find[i] != 0
 		    || gcstat.last.alloc_count.new[i] != 0)
-			stat_notice(" %u: {fast: %u, find: %u, next: %u,"
+			stat_notice(" %u: {fast: %u, next: %u, find: %u,"
 				    " new: %u}",
 				    1U << i,
 				    gcstat.last.alloc_count.fast[i],
-				    gcstat.last.alloc_count.find[i],
 				    gcstat.last.alloc_count.next[i],
+				    gcstat.last.alloc_count.find[i],
 				    gcstat.last.alloc_count.new[i]);
 	}
 	if (gcstat.last.alloc_count.malloc > 0)
@@ -983,7 +923,7 @@ check_subheap_consistent(struct subheap *subheap, unsigned int blocksize_log2)
 	if (subheap->minor_space == p)
 		minor_start = num_segments;
 	ASSERT(minor_start >= 0 && minor_start <= unreserved_start);
-#if MINOR_COUNT > 0
+#if defined CONFIGURABLE_MINOR_COUNT || MINOR_COUNT > 0
 	ASSERT(subheap->minor_count <= MINOR_COUNT);
 #endif /* MINOR_COUNT */
 #endif /* MINOR_GC */
@@ -1015,26 +955,37 @@ check_heap_consistent()
 #endif /* DEBUG */
 
 #ifdef GCSTAT
+struct occupancy_accum {
+	unsigned int total_objects;
+	unsigned int total_object_bytes;
+	unsigned int total_blocks;
+	unsigned int total_block_bytes;
+};
+
 static void
 print_segment_occupancy(struct segment *seg, size_t filled_index,
-			struct subheap *subheap)
+			struct subheap *subheap, struct occupancy_accum *a)
 {
 	size_t count, filled;
 
 	count = segment_filled(seg, filled_index, &filled);
-	stat_notice("  - {filled: %lu, count: %lu, used: %lu}%s",
+	stat_notice("  - {bytes: %lu, blocks: %lu}%s",
 		    (unsigned long)filled,
 		    (unsigned long)count,
-		    (unsigned long)count << seg->blocksize_log2,
-		    (seg == *subheap->unreserved) ? " # ^^^"
+		    (&seg->next == subheap->unreserved) ? " # ^^^"
 #ifdef MINOR_GC
 		    : (seg == *subheap->minor_space) ? " # ---"
 #endif /* MINOR_GC */
 		    : "");
+	a->total_objects += count;
+	a->total_object_bytes += filled;
+	a->total_blocks += seg->layout->num_blocks;
+	a->total_block_bytes += count << seg->blocksize_log2;
 }
 
 static void
-print_subheap_occupancy(struct subheap *subheap, unsigned int blocksize_log2)
+print_subheap_occupancy(struct subheap *subheap, unsigned int blocksize_log2,
+			struct occupancy_accum *a)
 {
 	struct segment *seg;
 #ifdef MINOR_GC
@@ -1043,6 +994,7 @@ print_subheap_occupancy(struct subheap *subheap, unsigned int blocksize_log2)
 	size_t filled = 0;
 #endif /* MINOR_GC */
 
+	filled = SEGMENT_SIZE;
 	for (seg = subheap->seglist; seg; seg = seg->next) {
 #ifdef MINOR_GC
 		if (seg == *subheap->minor_space)
@@ -1050,12 +1002,12 @@ print_subheap_occupancy(struct subheap *subheap, unsigned int blocksize_log2)
 #endif /* MINOR_GC */
 		if (seg == *subheap->unreserved)
 			filled = 0;
-		if (&seg->next == subheap->unreserved) {
+		else if (&seg->next == subheap->unreserved) {
 			struct alloc_ptr *ptr;
 			ptr = &ALLOC_PTR_SET()->alloc_ptr[blocksize_log2];
 			filled = BITPTR_INDEX(ptr->freebit, BITMAP0_BASE(seg));
 		}
-		print_segment_occupancy(seg, filled, subheap);
+		print_segment_occupancy(seg, filled, subheap, a);
 	}
 }
 
@@ -1064,6 +1016,7 @@ print_heap_occupancy()
 {
 	unsigned int i;
 	struct subheap *subheap;
+	struct occupancy_accum a = {0, 0, 0, 0};
 
 	if (gcstat.verbose < GCSTAT_VERBOSE_HEAP)
 		return;
@@ -1074,9 +1027,17 @@ print_heap_occupancy()
 
 		if (subheap->seglist) {
 			stat_notice(" %u:", 1U << i);
-			print_subheap_occupancy(subheap, i);
+			print_subheap_occupancy(subheap, i, &a);
 		}
 	}
+
+	stat_notice("  # using %u / %u blocks, %u / %u / %u bytes, occ %.2f %%",
+		    a.total_objects, a.total_blocks,
+		    a.total_object_bytes, a.total_block_bytes,
+		    heap_space.num_committed * SEGMENT_SIZE,
+		    (double)a.total_object_bytes
+		    / ((double)heap_space.num_committed * SEGMENT_SIZE)
+		    * 100.0);
 }
 #endif /* GCSTAT */
 
@@ -1356,7 +1317,7 @@ init_subheaps()
 		subheap->seglist = NULL;
 		subheap->unreserved = &subheap->seglist;
 #ifdef MINOR_GC
-#if MINOR_COUNT > 0
+#if defined CONFIGURABLE_MINOR_COUNT || MINOR_COUNT > 0
 		subheap->minor_count = MINOR_COUNT;
 #endif /* MINOR_COUNT */
 		subheap->minor_space = &subheap->seglist;
@@ -1470,9 +1431,11 @@ destroy_free_ptr_list()
 void
 sml_heap_init(size_t min_size, size_t max_size)
 {
+#if defined GCSTAT || defined MINOR_GC
+	const char *env;
+#endif /* GCSTAT || MINOR_GC */
 #ifdef GCSTAT
 	unsigned int i;
-	const char *env;
 	env = getenv("SMLSHARP_GCSTAT_FILE");
 	if (env) {
 		gcstat.file = fopen(env, "w");
@@ -1489,18 +1452,40 @@ sml_heap_init(size_t min_size, size_t max_size)
 		gcstat.verbose = GCSTAT_VERBOSE_MAX;
 	env = getenv("SMLSHARP_GCSTAT_PROBE");
 	if (env) {
-		gcstat.probe_threshold = strtol(env, NULL, 10);
+		if (env[0] != '\0' && env[strlen(env)-1] == 's') {
+			gcstat.probe_interval = strtod(env, NULL);
+		} else {
+			gcstat.probe_threshold = strtol(env, NULL, 10);
+		}
 		if (gcstat.probe_threshold == 0)
 			gcstat.probe_threshold = min_size;
 	} else {
 		gcstat.probe_threshold = SEGMENT_SIZE * 4;
 	}
 #endif /* GCSTAT */
+#ifdef MINOR_GC
+	env = getenv("SMLSHARP_GC_FILLRATIO");
+	if (env)
+		minor_threshold_ratio = strtod(env, NULL);
+#endif /* MINOR_GC */
+#if defined MINOR_GC && defined CONFIGURABLE_MINOR_COUNT
+	env = getenv("SMLSHARP_GC_MINORCOUNT");
+	if (env) {
+		if (env[0] != '\0' && env[strlen(env)-1] == '%') {
+			minor_count = strtod(env, NULL) / 100.0
+				* min_size / SEGMENT_SIZE;
+		} else {
+			minor_count = strtol(env, NULL, 10);
+		}
+	}
+	stat_notice("minor_count : %u", minor_count);
+#endif /* MINOR_GC && CONFIGURABLE_MINOR_COUNT */
 
 #ifdef GCTIME
 	sml_timer_now(gcstat.exec_begin);
 #endif /* GCTIME */
 
+	init_segment_layout();
 	init_heap_space(min_size, max_size);
 	init_subheaps();
 #ifndef MULTITHREAD
@@ -1681,6 +1666,23 @@ void stacklist(){
 	     && OBJ_BITMAP(obj)[0] == 0		\
 	     && OBJ_NUM_BITMAPS(obj) == 1))
 
+#if SEG_RANK == 3
+#define MARKBIT(b, index, seg) do {					\
+	ASSERT(BITPTR_INDEX((b), BITMAP0_BASE(seg)) == index);		\
+	(seg)->live_count++;						\
+	BITPTR_SET(b);							\
+	if (~BITPTR_WORD(b) == 0U) {					\
+		unsigned int index__ = (index) / BITPTR_WORDBITS;	\
+		BITPTR_INIT(b, BITMAP_BASE(seg, 1), index__);		\
+		BITPTR_SET(b);						\
+		if (~BITPTR_WORD(b) == 0U) {				\
+			index__ /= BITPTR_WORDBITS;			\
+			BITPTR_INIT(b, BITMAP_BASE(seg, 2), index__);	\
+			BITPTR_SET(b);					\
+		}							\
+	}								\
+} while(0)
+#else
 #define MARKBIT(b, index, seg) do {					\
 	unsigned int index__ = (index);					\
 	ASSERT(BITPTR_INDEX((b), BITMAP0_BASE(seg)) == index__);	\
@@ -1699,6 +1701,9 @@ void stacklist(){
 		}							\
 	}								\
 } while (0)
+#endif /* SEG_RANK == 3 */
+
+#define STACK_IS_EMPTY() (stack_top == &stack_last)
 
 #define STACK_TOP() (stack_top == &stack_last ? NULL : stack_top)
 #define STACK_PUSH(obj, seg, index) do {				\
@@ -1884,11 +1889,11 @@ mark(void **block)
 
 	for (;;) {
 		sml_obj_enum_ptr(obj, push);
-		obj = STACK_TOP();
-		if (obj == NULL) {
+		if (STACK_IS_EMPTY()) {
 			DBG(("MARK END"));
 			break;
 		}
+		obj = stack_top;
 		STACK_POP(obj);
 		DBG(("POP: %p", obj));
 	}
@@ -1945,7 +1950,7 @@ sweep()
 		*unfilled_tail = NULL;
 		subheap->unreserved = filled_tail;
 #ifdef MINOR_GC
-#if MINOR_COUNT > 0
+#if defined CONFIGURABLE_MINOR_COUNT || MINOR_COUNT > 0
 		subheap->minor_count = MINOR_COUNT;
 #endif /* MINOR_COUNT */
 		subheap->minor_space = subheap->unreserved;
@@ -1996,7 +2001,7 @@ sweep_minor()
 		*filled_tail = unfilled;
 		*unfilled_tail = NULL;
 		subheap->unreserved = filled_tail;
-#if MINOR_COUNT > 0
+#if defined CONFIGURABLE_MINOR_COUNT || MINOR_COUNT > 0
 		subheap->minor_count = MINOR_COUNT;
 #endif /* MINOR_COUNT */
 		subheap->minor_space = subheap->unreserved;
@@ -2200,8 +2205,10 @@ do_gc(enum sml_gc_mode mode)
 	sml_rootset_enum_ptr(mark, mode);
 	sml_malloc_pop_and_mark(mark, mode);
 
+#ifndef FAIR_COMPARISON
 	/* check finalization */
 	sml_check_finalizer(mark, mode);
+#endif /* FAIR_COMPARISON */
 
 #ifdef MINOR_GC
 	if (mode == MINOR)
@@ -2257,6 +2264,7 @@ do_gc(enum sml_gc_mode mode)
 #endif /* MINOR_GC */
 		sml_timer_dif(gcstat.exec_begin, b_end, t);
 		stat_notice("time: "TIMEFMT, TIMEARG(t));
+		gcstat.last_probe_time = TIMEFLOAT(t);
 		stat_notice("duration: "TIMEFMT, TIMEARG(gctime));
 #ifdef MINOR_GC
 		if (mode != MINOR) {
@@ -2282,7 +2290,9 @@ sml_heap_gc()
 	GIANT_LOCK(NULL);
 	do_gc(MAJOR);
 	GIANT_UNLOCK();
+#ifndef FAIR_COMPARISON
 	sml_run_finalizer(NULL);
+#endif /* FAIR_COMPARISON */
 }
 
 #ifdef DEBUG
@@ -2338,18 +2348,30 @@ gcstat_alloc_count(size_t offset, size_t size)
 	sml_time_t t;
 
 	gcstat.last.alloc_bytes += size;
-	if (gcstat.last.alloc_bytes > gcstat.probe_threshold
-	    && gcstat.verbose >= GCSTAT_VERBOSE_PROBE) {
-		sml_timer_now(b);
-		sml_timer_dif(gcstat.exec_begin, b, t);
-		stat_notice("---");
-		stat_notice("event: probe");
-		stat_notice("time: "TIMEFMT, TIMEARG(t));
-		print_alloc_count();
-		print_heap_occupancy();
-		clear_last_counts();
-	}
 	((unsigned int*)&gcstat.last)[offset]++;
+
+	if (gcstat.verbose < GCSTAT_VERBOSE_PROBE)
+		return;
+
+	sml_timer_now(b);
+	sml_timer_dif(gcstat.exec_begin, b, t);
+
+	if (gcstat.probe_interval > 0) {
+		double f = TIMEFLOAT(t);
+		if (gcstat.last_probe_time + gcstat.probe_interval > f)
+			return;
+		gcstat.last_probe_time = f;
+	} else {
+		if (gcstat.last.alloc_bytes < gcstat.probe_threshold)
+			return;
+	}
+
+	stat_notice("---");
+	stat_notice("event: probe");
+	stat_notice("time: "TIMEFMT, TIMEARG(t));
+	print_alloc_count();
+	print_heap_occupancy();
+	clear_last_counts();
 }
 #define GCSTAT_ALLOC_COUNT(counter, offset, size) \
 	gcstat_alloc_count((unsigned int*)&gcstat.last.alloc_count.counter \
@@ -2368,10 +2390,49 @@ gcstat_alloc_count(size_t offset, size_t size)
 static NOINLINE void *
 find_bitmap(struct alloc_ptr *ptr)
 {
-	unsigned int i, index, *base, *limit, *p;
+	unsigned int index;
 	struct segment *seg;
 	bitptr_t b = ptr->freebit;
 	void *obj;
+
+#if SEG_RANK == 3
+	unsigned int *base0, *base1, *base2, *limit, *p;
+
+	ASSERT(ptr->freebit.ptr != &dummy_bitmap);
+	seg = ALLOC_PTR_TO_SEGMENT(ptr);
+
+	base0 = BITMAP_BASE(seg, 0);
+	BITPTR_NEXT(b);
+	if (BITPTR_NEXT_FAILED(b)) {
+		index = BITPTR_WORDINDEX(b, base0) + 1;
+		base1 = BITMAP_BASE(seg, 1);
+		BITPTR_INIT(b, base1, index);
+		BITPTR_NEXT(b);
+		if (BITPTR_NEXT_FAILED(b)) {
+			index = BITPTR_WORDINDEX(b, base1) + 1;
+			base2 = BITMAP_BASE(seg, 2);
+			BITPTR_INIT(b, base2, index);
+			BITPTR_NEXT(b);
+			if (BITPTR_NEXT_FAILED(b)) {
+				p = &BITPTR_WORD(b) + 1;
+				limit = BITMAP_LIMIT(seg, SEG_RANK - 1);
+				b = bitptr_linear_search(p, limit);
+				if (BITPTR_NEXT_FAILED(b))
+					return NULL;
+			}
+			index = BITPTR_INDEX(b, base2);
+			BITPTR_INIT(b, base1 + index, 0);
+			BITPTR_NEXT(b);
+			ASSERT(!BITPTR_NEXT_FAILED(b));
+		}
+		index = BITPTR_INDEX(b, base1);
+		BITPTR_INIT(b, base0 + index, 0);
+		BITPTR_NEXT(b);
+		ASSERT(!BITPTR_NEXT_FAILED(b));
+	}
+	index = BITPTR_INDEX(b, base0);
+#else
+	unsigned int i, *base, *limit, *p;
 
 	ASSERT(ptr->freebit.ptr != &dummy_bitmap);
 	seg = ALLOC_PTR_TO_SEGMENT(ptr);
@@ -2407,6 +2468,8 @@ find_bitmap(struct alloc_ptr *ptr)
 	}
 
 	index = BITPTR_INDEX(b, base);
+#endif /* SEG_RANK == 3 */
+
 	obj = BLOCK_BASE(seg) + (index << seg->blocksize_log2);
 	ASSERT(OBJ_TO_SEGMENT(obj) == seg);
 
@@ -2429,9 +2492,14 @@ find_segment(struct alloc_ptr *ptr)
 	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
 	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 
-#if defined MINOR_GC && MINOR_COUNT > 0
+#ifdef MINOR_GC
+#if defined CONFIGURABLE_MINOR_COUNT
+	if (minor_count > 0 && subheap->minor_count-- == 0)
+		return NULL;
+#elif MINOR_COUNT > 0
 	if (subheap->minor_count-- == 0)
 		return NULL;
+#endif /* MINOR_COUNT > 0 */
 #endif /* MINOR_GC */
 
 	UNRESERVED_NEXT(subheap->unreserved, seg);
@@ -2459,6 +2527,23 @@ find_segment(struct alloc_ptr *ptr)
 	}
 
 	return NULL;
+}
+
+static NOINLINE void *
+fast_find_bitmap(struct alloc_ptr *ptr, unsigned int newmask)
+{
+	unsigned int index;
+	struct segment *seg = ALLOC_PTR_TO_SEGMENT(ptr);
+	char *obj;
+	ptr->freebit.mask = newmask;
+	index = BITPTR_INDEX(ptr->freebit, BITMAP0_BASE(seg));
+	obj = BLOCK_BASE(seg) + (index << seg->blocksize_log2);
+	BITPTR_INC(ptr->freebit);
+	ptr->free = obj + ptr->blocksize_bytes;
+
+	ASSERT(check_newobj(obj));
+	OBJ_HEADER(obj) = 0;
+	return obj;
 }
 
 SML_PRIMITIVE void *
@@ -2496,6 +2581,15 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 		goto alloced;
 	}
 
+	if (ptr->free != NULL) {
+		unsigned int newmask;
+		BITPTR_NEXT2(ptr->freebit, newmask);
+		if (newmask != 0) {
+			GCSTAT_ALLOC_COUNT(next, blocksize_log2, alloc_size);
+			return fast_find_bitmap(ptr, newmask);
+		}
+	}
+
 	sml_save_frame_pointer(frame_pointer);
 
 	if (ptr->free != NULL) {
@@ -2524,7 +2618,9 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 	obj = find_segment(ptr);
 	if (obj) goto alloced_major;
 
+#ifndef FAIR_COMPARISON
 	extend_heap(heap_space.extend_step);
+#endif /* FAIR_COMPARISON */
 	obj = find_segment(ptr);
 	if (obj) goto alloced_major;
 
@@ -2542,8 +2638,10 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
  alloced_major:
 	ASSERT(check_newobj(obj));
 	GIANT_UNLOCK();
+#ifndef FAIR_COMPARISON
 	/* NOTE: sml_run_finalizer may cause garbage collection. */
 	obj = sml_run_finalizer(obj);
+#endif /* FAIR_COMPARISON */
 	goto finished;
 #if defined MULTITHREAD || defined MINOR_GC
  alloced_unlock:
@@ -2552,6 +2650,8 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
  alloced:
 	ASSERT(check_newobj(obj));
  finished:
+#ifndef FAIR_COMPARISON
 	OBJ_HEADER(obj) = 0;
+#endif /* FAIR_COMPARISON */
 	return obj;
 }

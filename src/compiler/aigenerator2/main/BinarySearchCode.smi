@@ -1,6 +1,7 @@
 _require "../../../basis.smi"
 _require "../../abstractinstruction2/main/AbstractInstruction.ppg.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../control/main/Control.ppg.smi"
 
 structure BinarySearchCode =
 struct

@@ -15,7 +15,7 @@ struct
   structure TC = TypedCalc
   structure A = Absyn
   structure T = Types
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
 
   fun getLocExp rcexp =
       case rcexp of
@@ -95,7 +95,7 @@ struct
       let
         val id = VarID.generate ()
       in
-        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : R.varInfo
+        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : T.varInfo
       end
 
   fun tupleLabels l =
@@ -134,13 +134,13 @@ struct
       {ty = ty, exp = R.RCVAR (var, loc)}
 
   fun composeArg (nil, loc) =
-      {ty = BV.UNITty,
-       exp = R.RCCONSTANT {const=A.UNITCONST loc, ty=BV.UNITty,
+      {ty = BT.unitTy,
+       exp = R.RCCONSTANT {const=A.UNITCONST loc, ty=BT.unitTy,
                            loc=loc}}
     | composeArg ([exp], loc) = exp
     | composeArg (exps, loc) = implodeRecord (tupleLabels exps, loc)
 
-  fun decomposeArg (nil, loc) = (newVar BV.UNITty, nil)
+  fun decomposeArg (nil, loc) = (newVar BT.unitTy, nil)
     | decomposeArg ([ty], loc) =
       let val var = newVar ty
       in (var, [varExp loc var])
@@ -182,7 +182,7 @@ struct
                         handle e => (print "hoge3\n"; raise e)
           val retExp = composeArg (retExps, loc)
         in
-          (BV.PTRty,
+          (BT.ptrTy,
            fn funExp =>
               {ty = T.FUNMty ([#ty argVar], #ty retExp),
                exp = R.RCFNM
@@ -237,7 +237,7 @@ struct
         in
           (T.FUNMty ([#ty argExp], #ty retVar),
            fn funExp =>
-              {ty = BV.PTRty,
+              {ty = BT.ptrTy,
                exp = R.RCEXPORTCALLBACK
                        {loc = loc,
                         foreignFunTy =
@@ -284,9 +284,9 @@ struct
   fun compileImport (ptrExp, ffiTy, resultTy, loc) =
       let
         val exp = compileExp ptrExp
-        val var = newVar BV.PTRty
+        val var = newVar BT.ptrTy
         val (_, importFn) = stubImport ffiTy
-        fun stub exp = #exp (importFn {ty = BV.PTRty, exp = exp})
+        fun stub exp = #exp (importFn {ty = BT.ptrTy, exp = exp})
       in
         if isSimpleExp exp
         then infectPoly (resultTy, stub exp)
@@ -340,11 +340,12 @@ struct
            instTyList = instTyList,
            argExp = compileExp argExp,
            loc = loc}
-      | R.RCDATACONSTRUCT {con, instTyList, argExpOpt, loc} =>
+      | R.RCDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt, loc} =>
         R.RCDATACONSTRUCT
           {con = con,
            instTyList = instTyList,
            argExpOpt = Option.map compileExp argExpOpt,
+           argTyOpt = argTyOpt,
            loc = loc}
       | R.RCEXNCONSTRUCT {exn, instTyList, argExpOpt, loc} =>
         R.RCEXNCONSTRUCT
@@ -480,8 +481,8 @@ struct
         R.RCEXD (binds, loc)
       | R.RCEXNTAGD (bind, loc) => (* FIXME check this *)
         R.RCEXNTAGD (bind, loc)
-      | R.RCEXPORTVAR (varInfo, loc) =>
-        R.RCEXPORTVAR (varInfo, loc)
+      | R.RCEXPORTVAR {externalVar, internalVar, loc} =>
+        R.RCEXPORTVAR {externalVar=externalVar, internalVar=internalVar, loc=loc}
       | R.RCEXPORTEXN (exnInfo, loc) =>
         R.RCEXPORTEXN (exnInfo, loc)
       | R.RCEXTERNVAR (exVarInfo, loc) =>

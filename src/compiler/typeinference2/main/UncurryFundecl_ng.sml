@@ -199,6 +199,7 @@ in
             val newPoyTyBody = T.FUNMty(argTyList, newBodyTy)
             val newPolyTy =
                 T.POLYty{boundtvars = boundtvars, body = newPoyTyBody}
+            val newPolyTy = TyAlphaRename.copyTy TyAlphaRename.emptyBtvMap newPolyTy
             val newPolyTtermBody =
                 grabAndApply 
                   (TC.TPTAPP
@@ -275,29 +276,31 @@ in
                    spine,
                    loc)
       end
-    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = SOME exp, loc} =>
+    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = SOME exp, argTyOpt, loc} =>
       let
         val newTpexp = TC.TPDATACONSTRUCT
                          {con=con, 
                           instTyList=instTyList, 
                           argExpOpt = SOME (uncurryExp nil exp), 
+                          argTyOpt = argTyOpt,
                           loc = loc}
       in
         makeApply (newTpexp, spine, loc)
       end
-    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = NONE, loc} =>
+    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = NONE, argTyOpt, loc} =>
       makeApply (tpexp, spine, loc)
-    | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt = SOME exp, loc} =>
+    | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt = SOME exp, argTyOpt, loc} =>
       let
         val newTpexp = TC.TPEXNCONSTRUCT
                          {exn=exn, 
                           instTyList=instTyList, 
                           argExpOpt = SOME (uncurryExp nil exp), 
+                          argTyOpt=argTyOpt,
                           loc = loc}
       in
          makeApply (newTpexp, spine, loc)
       end
-    | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt = NONE, loc} =>
+    | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt = NONE, argTyOpt, loc} =>
       makeApply (tpexp, spine, loc)
     | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} =>
       makeApply (tpexp, spine, loc)
@@ -320,21 +323,23 @@ in
                   spine,
                   loc)
       end
-    | TC.TPPRIMAPPLY {primOp, instTyList, argExp = exp, loc} => 
+    | TC.TPPRIMAPPLY {primOp, instTyList, argExp = exp, argTy, loc} => 
       let
         val newTpexp = TC.TPPRIMAPPLY {primOp=primOp, 
                                        instTyList=instTyList, 
                                        argExp = uncurryExp nil exp, 
+                                       argTy = argTy,
                                        loc = loc}
        in
         makeApply (newTpexp, spine, loc)
       end
     | TC.TPOPRIMAPPLY
-        {oprimOp, instTyList, argExp = exp, loc} => 
+        {oprimOp, instTyList, argExp = exp, argTy, loc} => 
       let
         val newTpexp = TC.TPOPRIMAPPLY {oprimOp = oprimOp,
                                         instTyList = instTyList, 
                                         argExp = uncurryExp nil exp, 
+                                        argTy=argTy,
                                         loc = loc}
       in
         makeApply (newTpexp, spine, loc)
@@ -547,14 +552,14 @@ in
       | TC.TPEXTERNVAR  _ => [tpdecl]
       | TC.TPEXTERNEXN  _ => [tpdecl]
       | TC.TPEXPORTEXN  _ => [tpdecl]
-      | TC.TPEXPORTVAR (TC.VARID var,loc) => [tpdecl]
-      | TC.TPEXPORTVAR (TC.RECFUNID (var as {ty,path,...}, arity),loc) => 
+      | TC.TPEXPORTVAR _ => [tpdecl]
+      | TC.TPEXPORTRECFUNVAR {var=var as {ty, path,...}, arity,loc} => 
         let
           val tpexp =
               uncurryExp nil (TC.TPRECFUNVAR{var=var,arity=arity,loc=loc})
           val newVar = {path=path,id=VarID.generate(), ty=ty}
           val decl = TC.TPVAL([(newVar,tpexp)], loc)
-          val newExport = TC.TPEXPORTVAR (TC.VARID newVar,loc)
+          val newExport = TC.TPEXPORTVAR {internalVar=newVar,externalVar={path=path, ty=ty},loc=loc} 
         in
           [decl, newExport]
         end

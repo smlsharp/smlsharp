@@ -28,7 +28,7 @@ structure Look : LOOK =
 	val union = TermSet.union
 	val make_set = TermSet.make_set
 
-	val prLook = fn (termToString,print) =>
+	val prLook = fn (termToString:term->string,print:string -> unit) =>
 		let val printTerm = print o termToString
 		    fun f nil = print " "
 		      | f (a :: b) = (printTerm a; print " "; f b)

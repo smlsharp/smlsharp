@@ -4,13 +4,17 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: TokenTable.sml,v 1.4 2006/12/31 07:44:27 kiyoshiy Exp $
  *)
-functor TokenTable (Tokens:ML_TOKENS) : sig
 
-    val checkId : (string * int) -> (Tokens.svalue,int) Tokens.token
-    val checkSymId : (string * int) -> (Tokens.svalue,int) Tokens.token
-    val checkTyvar : (string * int) -> (Tokens.svalue,int) Tokens.token
-
-  end = struct
+local
+  structure Tokens = MLLrVals.Tokens
+in  
+structure TokenTable 
+: sig
+    val checkId : (string * Tokens.pos) -> Tokens.token
+    val checkSymId : (string * Tokens.pos) -> Tokens.token
+    val checkTyvar : (string * Tokens.pos) -> Tokens.token
+  end  = 
+struct
 
     exception NotToken
 
@@ -97,3 +101,4 @@ functor TokenTable (Tokens:ML_TOKENS) : sig
 
   end
 
+end

@@ -1,2 +1,3 @@
 _require "basis.smi"
 _require "boyer.smi"
+_require "rules.smi"

@@ -16,7 +16,7 @@ local
   structure TC = TypedCalc
   structure R = Reify
   structure RD = ReifiedTermData
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
   val externals =
       [
        RD.makeArrayTerm,
@@ -70,7 +70,7 @@ in
         val (topEnv, term) = R.reifyTopEnv topEnv
         val printTerm = R.makeMonoApply RD.printTopEnv term
         val id = VarID.generate ()
-        val newVar = {path = ["_PrinterGeneration"], ty = BE.UNITty, id = id} : T.varInfo
+        val newVar = {path = ["_PrinterGeneration"], ty = BT.unitTy, id = id} : T.varInfo
       in
         (topEnv,
          externDecls,

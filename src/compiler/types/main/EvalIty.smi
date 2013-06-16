@@ -3,7 +3,7 @@ _require "../../control/main/Control.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "IDCalc.ppg.smi"
 _require "tvarMap.smi"
 _require "VarMap.smi"
@@ -32,10 +32,10 @@ struct
            * Types.btvEnv
   val evalDtyKind
       : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
-        -> IDCalc.path -> IDCalc.dtyKind -> Types.dtyKind
+        -> IDCalc.dtyKind -> Types.dtyKind
   val evalTfun
       : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
-        -> IDCalc.path -> IDCalc.tfun -> Types.tyCon
+        -> IDCalc.tfun -> Types.tyCon
   val evalIty
       : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
         -> IDCalc.ty -> Types.ty

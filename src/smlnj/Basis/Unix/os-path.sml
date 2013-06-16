@@ -66,7 +66,7 @@ structure SMLSharpSMLNJ_OS_Path = SMLSharpSMLNJ_OS_PathFn (
 	    CharVector.all ok arc
 	  end
 
-    fun validVolume (_, vol)= Substring.isEmpty vol
+    fun validVolume (_:bool, vol:substring)= Substring.isEmpty vol
 
     val volSS = Substring.full ""
 

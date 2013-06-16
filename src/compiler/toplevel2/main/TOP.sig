@@ -64,6 +64,7 @@ sig
                       -> Filename.filename
                       -> interfaceNames * newContext option
 
+  val loadBuiltin : InterfaceParser.input -> toplevelContext
 (*
   val debugPrint : string -> unit
   val printStopAt : stopAt -> unit

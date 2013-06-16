@@ -1,3 +1,21 @@
+SML# version 1.2.0 (released on 2012-11-14)
+
+Improvements:
+* Functor applications and structure replications in interface files
+  are supported.
+* Tuned up the non-moving garbage collector.
+* SML# compiler code is optimized, achieving fast compilation.
+* Refined type and value printers and error messages.
+* Inlining optimization is implemented.
+* Modified ml-yacc command and libraries to be suitable for SML#.
+* Implemented some optimizations to smlformat.
+* Added interface files for benchmarks.
+
+Fixed bugs:
+* Fixed several bugs related to functor.
+* Fixed a bug of polymorphic record pattern.
+
+-----------------------------------------------------------------------------
 SML# version 1.1.0 (released on 2012-08-08)
 
 Improvements:

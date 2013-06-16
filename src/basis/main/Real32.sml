@@ -275,7 +275,7 @@ struct
   fun fromLargeInt x =
       SMLSharp.Real32.fromReal (Real.fromLargeInt x)
   val toLarge = SMLSharp.Real32.toReal
-  fun fromLarge mode x =
+  fun fromLarge (mode:IEEEReal.rounding_mode) (x:LargeReal.real) : real =
       raise Fail "FIXME: Real32.fromLarge: not implemented yet"
   fun fmt format x =
       Real.fmt format (SMLSharp.Real32.toReal x)

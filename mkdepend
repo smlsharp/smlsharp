@@ -35,6 +35,7 @@ CLEAN_FILES=
 read_smi () { \
   obj=`dep_objfiles "$2"`
   ALL_OBJECTS="$ALL_OBJECTS $obj"
+  obj=`echo "$obj" | awk '{a[NR]=$0}END{for(i=NR;i>0;i--)print a[i]}'`
   echo "$1""_OBJECTS = $obj" | sed '$q;s,$, \\,' >> $files_mk
   src=`dep_srcfiles "$2"`
   case "$1" in
@@ -70,6 +71,8 @@ for i in `echo "$ALL_OBJECTS" | sed "s,\.$OBJEXT\$,,"`; do
   case "$i" in
     src/ml-yacc/src/yacc.lex) ;;
     src/ml-yacc/src/yacc.grm) ;;
+    src/ml-yacc2/src/yacc.lex) ;;
+    src/ml-yacc2/src/yacc.grm) ;;
     *.ppg)
       GEN_SOURCES="$GEN_SOURCES $i.sml"
       echo "$i.sml: $i \$(SMLFORMAT_DEP)" >> $depend_mk

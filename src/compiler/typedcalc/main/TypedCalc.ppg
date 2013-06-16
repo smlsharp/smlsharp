@@ -65,7 +65,7 @@ local
    *)
   (*% @prefix formatWithType_
      @params(btvEnv)
-     @formatter(T.btvEnv) T.format_btvEnv
+     @formatter(T.btvEnv) T.format_btvEnvWithType
    *)
   type btvEnv 
     = (*% 
@@ -573,8 +573,6 @@ in
           1
           1[
             exp1()(btvEnv)
-            +1 
-            ":" +d ty()(btvEnv)
            ]
           +1
           exps(exp2()(btvEnv))(",","{","}")
@@ -587,7 +585,7 @@ in
     | (*%
          @format({con:con,
                   instTyList:ty tys:formatListWithEnclosure,
-                  argExpOpt:exp opt, loc:loc}) 
+                  argExpOpt:exp opt, argTyOpt, loc:loc}) 
         1[
           con()(btvEnv)
           +d
@@ -598,7 +596,7 @@ in
       (*% @prefix formatWithType_
          @format({con:con,
                   instTyList:ty tys:formatListWithEnclosure,
-                  argExpOpt:exp opt, loc:loc}) 
+                  argExpOpt:exp opt, argTyOpt, loc:loc}) 
         1[
           con()(btvEnv)
           +d
@@ -609,7 +607,7 @@ in
      (*
          @format({con:con,
                   instTyList:ty tys:formatListWithEnclosure,
-                  argExpOpt:exp opt, loc:loc}) 
+                  argExpOpt:exp opt, argTyOpt, loc:loc}) 
       1[
         con()(btvEnv)
         +1
@@ -624,12 +622,13 @@ in
        con: conInfo,
        instTyList: ty list,
        argExpOpt: tpexp option,
+       argTyOpt: ty option,
        loc: loc
       }
     | (*%
          @format({exn:exn,
                   instTyList:ty tys:formatListWithEnclosure,
-                  argExpOpt:exp opt, loc:loc}) 
+                  argExpOpt:exp opt, argTyOpt, loc:loc}) 
           R1{
               exn !N0{tys(ty()(btvEnv))(",","{","}")}
                   opt( exp )
@@ -639,7 +638,7 @@ in
       (*% @prefix formatWithType_
          @format({exn:exn,
                   instTyList:ty tys:formatListWithEnclosure,
-                  argExpOpt:exp opt, loc:loc}) 
+                  argExpOpt:exp opt, argTyOpt, loc:loc}) 
           R1{
               exn !N0{tys(ty()(btvEnv))(",","{","}")}
                   opt( exp )
@@ -651,6 +650,7 @@ in
        exn: exnCon,
        instTyList: ty list,
        argExpOpt: tpexp option,
+       argTyOpt:ty option,
        loc: loc
       }
     | (*%
@@ -742,6 +742,7 @@ in
        @format({primOp:prim,
                 instTyList:ty tys:formatListWithEnclosure,
                 argExp:exp,
+                argTy:ty,
                 loc:loc})
           prim exp()(btvEnv)
      *)
@@ -749,6 +750,7 @@ in
        @format({primOp:prim,
                 instTyList:ty tys:formatListWithEnclosure,
                 argExp:exp,
+                argTy:ty,
                 loc:loc})
          1[
            prim()(btvEnv)
@@ -763,13 +765,15 @@ in
       {
        primOp: primInfo, 
        instTyList: ty list, 
-       argExp: tpexp, 
+       argExp: tpexp,
+       argTy:ty,
        loc: loc
       }
     | (*%
        @format({oprimOp:oprim,
                 instTyList:ty tys:formatListWithEnclosure,
                 argExp:exp,
+                argTy:ty,
                 loc:loc})
            oprim exp()(btvEnv)
        *)
@@ -777,6 +781,7 @@ in
        @format({oprimOp:oprim,
                 instTyList:ty tys:formatListWithEnclosure,
                 argExp:exp,
+                argTy:ty,
                 loc:loc})
        R1{
            oprim !N0{tys(ty()(btvEnv))(",","{","}")}
@@ -789,6 +794,7 @@ in
        oprimOp: oprimInfo,
        instTyList: ty list,
        argExp: tpexp, 
+       argTy:ty,
        loc: loc
       }
     | (*%
@@ -1067,14 +1073,7 @@ in
       TPPOLY of {btvEnv: btvEnv, expTyWithoutTAbs: ty, exp : tpexp, loc : loc}
     | (*%
        @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
-        1[
           exp()(btvEnv)
-          1[
-            "{"
-              1[tys(ty2()(btvEnv))("," +d)]
-            "}"
-           ]
-         ]
       *)
       (*% @prefix formatWithType_
        @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
@@ -1109,7 +1108,7 @@ in
         }
     | (*%
          @format(exp * ty * loc)
-          "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
+          "cast(" exp()(btvEnv) ")"
        *)
       (*% @prefix formatWithType_
          @format(exp * ty * loc)
@@ -1322,15 +1321,25 @@ in
        *)
       TPEXNTAGD of {exnInfo: exnInfo, varInfo:varInfo} * loc
     | (*%
-         @format(var * loc)
-         "export" +d "variable" + var
+         @format({var, arity,  loc})
+         "export" +d "rec fun var" + var
        *)
       (*% @prefix formatWithType_
-         @format(var * loc)
-         "export" +d "variable" + var()(btvEnv)
+         @format({var, arity,  loc})
+         "export" +d "rec fun var" +  var()(btvEnv)
        *)
-      (* export variable declaration specified in  _interface *)
-      TPEXPORTVAR of idstatus * loc
+      (* This is changed to TPEXPORT in uncurry optimization *)
+      TPEXPORTRECFUNVAR of {var:varInfo, arity:int, loc:loc}
+    | (*%
+         @format({internalVar, externalVar,loc})
+         "export" + internalVar +d "as" + externalVar
+       *)
+      (*% @prefix formatWithType_
+         @format({internalVar, externalVar,loc})
+         "export" + internalVar()(btvEnv) +d "as" + externalVar()(btvEnv)
+       *)
+      (* This is changed to TPEXPORT in uncurry optimization *)
+      TPEXPORTVAR of {internalVar:varInfo, externalVar:exVarInfo, loc:loc}
     | (*%
          @format(exn * loc)
          "export" +d "exception" + exn
@@ -1347,7 +1356,7 @@ in
        *)
       (*% @prefix formatWithType_
         @format({path, ty} * loc)
-         "extern" + "var" + path + ":" + ty()(btvEnv)
+         2["extern" + "var" + path +1 ":" + ty()(btvEnv)]
        *)
      (* import variable declaration specified in  _interface *)
       TPEXTERNVAR of {path:path, ty:ty} * loc

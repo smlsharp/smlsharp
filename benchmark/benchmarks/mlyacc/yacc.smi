@@ -1,0 +1,226 @@
+_require "basis.smi"
+_require "base.sig"
+_require "lrtable.smi"
+_require "utils.smi"
+_require "utils.sig"
+_require "sigs.sml"
+_require "absyn.sig"
+
+functor ParseGenFun(
+  A : sig
+    structure ParseGenParser : sig
+      structure Header : sig
+        type pos = int
+        val lineno : pos ref
+        val text : string list ref
+        type inputSource
+        val newSource : string * TextIO.instream * TextIO.outstream ->
+                        inputSource
+        val error : inputSource -> pos -> string -> unit
+        val warn : inputSource -> pos -> string -> unit
+        val errorOccurred : inputSource -> unit -> bool
+        datatype symbol = SYMBOL of string * pos
+        val symbolName : symbol -> string
+        val symbolPos : symbol -> pos
+        val symbolMake : string * int -> symbol
+        type ty
+        val tyName : ty -> string
+        val tyMake : string -> ty
+        datatype prec = LEFT | RIGHT | NONASSOC
+        datatype control = NODEFAULT | VERBOSE | PARSER_NAME of symbol
+                         | FUNCTOR of string | START_SYM of symbol
+                         | NSHIFT of symbol list | POS of string | PURE
+                         | PARSE_ARG of string * string
+        datatype rule = RULE of {lhs : symbol, rhs : symbol list,
+                                 code : string, prec : symbol option}
+        datatype declData = DECL of {eop : symbol list,
+                                     keyword : symbol list,
+                                     nonterm : (symbol * ty option) list option,
+                                     prec : (prec * (symbol list)) list,
+                                     change: (symbol list * symbol list) list,
+                                     term : (symbol * ty option) list option,
+                                     control : control list,
+                                     value : (symbol * string) list}
+        val join_decls : declData * declData * inputSource * pos -> declData
+        type parseResult
+        val getResult : parseResult -> string * declData * rule list
+      end
+      val parse : string -> Header.parseResult * Header.inputSource
+    end
+    structure MakeTable : sig
+      structure Grammar : sig
+        datatype term = T of int
+        datatype nonterm = NT of int
+        datatype symbol = TERM of term | NONTERM of nonterm
+        datatype grammar =
+                 GRAMMAR of
+                 {rules: {lhs : nonterm, rhs : symbol list,
+                          precedence : int option, rulenum : int} list,
+                  terms: int,
+                  nonterms: int,
+                  start : nonterm,
+                  eop : term list,
+                  noshift : term list,
+                  precedence : term -> int option,
+                  termToString : term -> string,
+                  nontermToString : nonterm -> string}
+      end
+      structure Errs : sig
+        structure LrTable : sig
+          datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+          datatype state = STATE of int
+          datatype term = T of int
+          datatype nonterm = NT of int
+          datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+          type table
+          val numStates : table -> int
+          val numRules : table -> int
+          val describeActions : table -> state ->
+                                (term,action) pairlist * action
+          val describeGoto : table -> state -> (nonterm,state) pairlist
+          val action : table -> state * term -> action
+          val goto : table -> state * nonterm -> state
+          val initialState : table -> state
+          exception Goto of state * nonterm
+          val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                           gotos : (nonterm,state) pairlist array,
+                           numStates : int, numRules : int,
+                           initialState : state} -> table
+        end
+        datatype err = RR of LrTable.term * LrTable.state * int * int
+                     | SR of LrTable.term * LrTable.state * int
+                     | NS of LrTable.term * int
+                     | NOT_REDUCED of int
+                     | START of int
+        val summary : err list ->
+                      {rr : int, sr: int,
+                       not_reduced : int, start : int,nonshift : int}
+        val printSummary : (string -> unit) -> err list -> unit
+      end
+      structure LrTable : sig
+        datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+        datatype state = STATE of int
+        datatype term = T of int
+        datatype nonterm = NT of int
+        datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+        type table
+        val numStates : table -> int
+        val numRules : table -> int
+        val describeActions : table -> state -> (term,action) pairlist * action
+        val describeGoto : table -> state -> (nonterm,state) pairlist
+        val action : table -> state * term -> action
+        val goto : table -> state * nonterm -> state
+        val initialState : table -> state
+        exception Goto of state * nonterm
+        val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                         gotos : (nonterm,state) pairlist array,
+                         numStates : int, numRules : int,
+                         initialState : state} -> table
+      end
+      sharing Errs.LrTable = LrTable
+      sharing type LrTable.term = Grammar.term
+      sharing type LrTable.nonterm = Grammar.nonterm
+      val mkTable : Grammar.grammar * bool ->
+                    LrTable.table *
+                    (LrTable.state -> Errs.err list) *
+                    ((string -> unit) -> LrTable.state -> unit) *
+                    Errs.err list
+    end
+    structure Verbose : sig
+      structure Errs : sig
+        structure LrTable : sig
+          datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+          datatype state = STATE of int
+          datatype term = T of int
+          datatype nonterm = NT of int
+          datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+          type table
+          val numStates : table -> int
+          val numRules : table -> int
+          val describeActions : table -> state ->
+                                (term,action) pairlist * action
+          val describeGoto : table -> state -> (nonterm,state) pairlist
+          val action : table -> state * term -> action
+          val goto : table -> state * nonterm -> state
+          val initialState : table -> state
+          exception Goto of state * nonterm
+          val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                           gotos : (nonterm,state) pairlist array,
+                           numStates : int, numRules : int,
+                           initialState : state} -> table
+        end
+        datatype err = RR of LrTable.term * LrTable.state * int * int
+                     | SR of LrTable.term * LrTable.state * int
+                     | NS of LrTable.term * int
+                     | NOT_REDUCED of int
+                     | START of int
+        val summary : err list -> {rr : int, sr: int,
+                                   not_reduced : int, start : int,
+                                   nonshift : int}
+        val printSummary : (string -> unit) -> err list -> unit
+      end
+      val printVerbose :
+          {table : Errs.LrTable.table,
+           entries : int,
+           termToString : Errs.LrTable.term -> string,
+           nontermToString : Errs.LrTable.nonterm -> string,
+           stateErrs : Errs.LrTable.state -> Errs.err list,
+           errs : Errs.err list,
+           print: string -> unit,
+           printCores : (string -> unit) -> Errs.LrTable.state -> unit,
+           printRule : (string -> unit) -> int -> unit} -> unit
+    end
+    structure PrintStruct : sig
+      structure LrTable : sig
+        datatype ('a,'b) pairlist = EMPTY | PAIR of 'a * 'b * ('a,'b) pairlist
+        datatype state = STATE of int
+        datatype term = T of int
+        datatype nonterm = NT of int
+        datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
+        type table
+        val numStates : table -> int
+        val numRules : table -> int
+        val describeActions : table -> state -> (term,action) pairlist * action
+        val describeGoto : table -> state -> (nonterm,state) pairlist
+        val action : table -> state * term -> action
+        val goto : table -> state * nonterm -> state
+        val initialState : table -> state
+        exception Goto of state * nonterm
+        val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                         gotos : (nonterm,state) pairlist array,
+                         numStates : int, numRules : int,
+                         initialState : state} -> table
+      end
+      val makeStruct : {table : LrTable.table,
+                        name : string,
+                        print: string -> unit,
+                        verbose : bool} -> int
+    end
+    sharing MakeTable.LrTable = PrintStruct.LrTable
+    sharing MakeTable.Errs = Verbose.Errs
+    structure Absyn : sig
+      datatype exp = EVAR of string
+                   | EAPP of exp * exp
+                   | ETUPLE of exp list
+                   | EINT of int
+                   | FN of pat * exp
+                   | LET of decl list * exp
+                   | UNIT
+                   | SEQ of exp * exp
+                   | CODE of string
+      and pat = PVAR of string
+              | PAPP of string * pat
+              | PTUPLE of pat list
+              | PLIST of pat list
+              | PINT of int
+              | WILD
+              | AS of pat * pat
+      and decl = VB of pat * exp
+      and rule = RULE of pat * exp
+      val printRule : ((string -> unit) * (string -> unit)) -> rule -> unit
+    end
+  end
+) =
+struct
+  val parseGen : string -> unit
+end

@@ -68,8 +68,9 @@ void sml_trace_ptr(void *ptr);
  * Garbage collector must call this function at tracing phase.
  * Before leaving tracing phase, make sure that the mark stack of malloc heap
  * is empty.
+ * It returns true if there is some malloc'ed object poped.
  */
-void sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode);
+int sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode);
 
 /*
  * sweep malloc'ed objects.
@@ -77,6 +78,11 @@ void sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode);
  * Garbage collector must call this function at collection phase.
  */
 void sml_malloc_sweep(enum sml_gc_mode);
+
+/*
+ * enumerate pointers in all malloc'ed objects.
+ */
+void sml_malloc_enum_ptr(void (*trace)(void **));
 
 /*
  * register a finalizer function for an malloc'ed object.

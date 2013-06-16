@@ -13,7 +13,7 @@ _require "TIME.sig"
 
 structure Time =
 struct
-  eqtype time (= IntInf_int)
+  eqtype time (= intInf)
   exception Time
   val zeroTime : time
   val fromReal : LargeReal.real -> time

@@ -3,11 +3,12 @@
 (* Stream: a structure implementing a lazy stream.  The signature STREAM
    is found in base.sig *)
 
-structure Stream :> STREAM =
+functor StreamFun(A: sig type tok end) :> STREAM where type tok = A.tok =
 struct
-   datatype 'a str = EVAL of 'a * 'a str ref | UNEVAL of (unit->'a)
+   type tok = A.tok
+   datatype str = EVAL of tok * str ref | UNEVAL of (unit->tok)
 
-   type 'a stream = 'a str ref
+   type stream = str ref
 
    fun get(ref(EVAL t)) = t
      | get(s as ref(UNEVAL f)) = 

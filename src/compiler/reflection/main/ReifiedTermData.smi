@@ -3,7 +3,6 @@ _require "../../../reifiedterm/main/ReifiedTerm.ppg.smi"
 _require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 
-_require "../../types/main/BuiltinEnv.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/EvalIty.smi"

@@ -2,7 +2,15 @@ _require "../../../basis.smi"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
 
-structure OPrimMap = 
+structure OPrimOrd =
+  struct
+    type ord_key = {path:string list, id:OPrimID.id}
+    val compare : ord_key * ord_key -> order
+  end
+
+structure OPrimMap = BinaryMapFn (OPrimOrd)
+
+(*
 struct
   structure Key =
   struct
@@ -48,3 +56,4 @@ struct
   val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
   val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
 end
+*)

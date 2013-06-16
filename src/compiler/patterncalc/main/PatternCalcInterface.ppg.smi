@@ -5,7 +5,7 @@ _require "../../util/main/TermFormat.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "PatternCalc.ppg.smi"
 
 structure PatternCalcInterface =
@@ -40,7 +40,7 @@ structure PatternCalcInterface =
                           tycon:string, tyvars:tvar list}
                          -> SMLFormat.FormatExpression.expression list
   datatype runtimeTy 
-   = BUILTINty of BuiltinType.ty
+   = BUILTINty of BuiltinTypeNames.bty
    | LIFTEDty of longid
 
     datatype pidec

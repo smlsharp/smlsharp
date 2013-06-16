@@ -1,4 +1,4 @@
-structure Main =
+structure Main (*: BMARK*) =
   struct
     structure M3 = Main(Vector3);
 

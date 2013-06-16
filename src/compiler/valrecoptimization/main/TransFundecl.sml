@@ -102,9 +102,8 @@ in
       | ICEXEXN_CONSTRUCTOR (exnInfo, loc) => icexp
       | ICOPRIM (oprimInfo, loc) => icexp
       | ICTYPED (icexp, ty, loc) => ICTYPED (transExp icexp, ty, loc)
-      | ICSIGTYPED {path,icexp,ty,loc, revealKey} =>
-        ICSIGTYPED {path=path,
-                    icexp=transExp icexp,
+      | ICSIGTYPED {icexp,ty,loc, revealKey} =>
+        ICSIGTYPED {icexp=transExp icexp,
                     ty=ty,
                     revealKey=revealKey,
                     loc=loc}
@@ -193,9 +192,11 @@ in
       | ICEXPORTEXN (exnInfo, loc) => icdecl
       | ICEXTERNVAR ({path, ty}, loc) => icdecl
       | ICEXTERNEXN ({path, ty}, loc) => icdecl
-      | ICTYCASTDECL (tycastList, icdeclList, loc) => icdecl
+      | ICTYCASTDECL (tycastList, icdeclList, loc) => 
+        ICTYCASTDECL (tycastList, map transDecl icdeclList, loc) 
       | ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} => icdecl
                                                     
-  fun transIcdeclList {decls, loc} = {decls=map transDecl decls, loc=loc}
+  fun transIcdeclList ({decls, loc}:IDCalc.topdecl) = 
+      {decls=map transDecl decls, loc=loc}
 end
 end

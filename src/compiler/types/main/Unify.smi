@@ -44,4 +44,5 @@ structure Unify =
     val eqTyList : BoundTypeVarID.id BoundTypeVarID.Map.map
                    -> Types.ty list * Types.ty list -> bool
 
+    val instOfPolyTy : Types.ty * Types.ty list -> Types.ty
   end

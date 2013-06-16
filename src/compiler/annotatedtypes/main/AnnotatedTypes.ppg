@@ -13,7 +13,7 @@ struct
 
   structure FE = SMLFormat.FormatExpression
   structure BF = SMLFormat.BasicFormatters
-  structure BE = BuiltinEnv
+  structure BT = BuiltinTypes
 
   fun formatBtvEnv (formatter, sep) map =
       TermFormat.formatDeclList
@@ -451,7 +451,7 @@ struct
          | (*% @format(builtin) *)
            (*% @prefix formatSimple_
                @format(builtin) *)
-           BUILTIN of BuiltinType.ty
+           BUILTIN of BuiltinTypeNames.bty
 
        and opaqueRep 
          = (*% 
@@ -498,7 +498,7 @@ struct
        path :IDCalc.path,
        iseq : bool,
        arity : int,
-       runtimeTy : BuiltinType.ty,
+       runtimeTy : BuiltinTypeNames.bty,
        conSet : {hasArg:bool} SEnv.map,
        extraArgs : Types.ty list,
        dtyKind : Types.dtyKind
@@ -569,18 +569,18 @@ struct
       {name : BuiltinPrimitive.primitive, ty : ty}
 *)
 
- val intty = CONty {tyCon = BE.INTtyCon, args = []}
- val largeIntty = CONty {tyCon = BE.INTINFtyCon, args = []}
- val wordty = CONty {tyCon = BE.WORDtyCon, args = []}
- val bytety = CONty {tyCon = BE.WORD8tyCon, args = []}
- val realty = CONty {tyCon = BE.REALtyCon, args = []}
- val floatty = CONty {tyCon = BE.REAL32tyCon, args = []}
- val stringty = CONty {tyCon = BE.STRINGtyCon, args = []}
- val charty = CONty {tyCon = BE.CHARtyCon, args = []}
- val unitty = CONty {tyCon = BE.UNITtyCon, args = []}
- val exnty = CONty {tyCon = BE.EXNtyCon, args = []}
- fun boolty () = CONty {tyCon = BE.lookupTyCon BuiltinName.boolTyName, args=[]}
- val foreignfunty = CONty {tyCon = BE.PTRtyCon, args = [unitty]}
+ val intty = CONty {tyCon = BT.intTyCon, args = []}
+ val largeIntty = CONty {tyCon = BT.intInfTyCon, args = []}
+ val wordty = CONty {tyCon = BT.wordTyCon, args = []}
+ val bytety = CONty {tyCon = BT.word8TyCon, args = []}
+ val realty = CONty {tyCon = BT.realTyCon, args = []}
+ val floatty = CONty {tyCon = BT.real32TyCon, args = []}
+ val stringty = CONty {tyCon = BT.stringTyCon, args = []}
+ val charty = CONty {tyCon = BT.charTyCon, args = []}
+ val unitty = CONty {tyCon = BT.unitTyCon, args = []}
+ val exnty = CONty {tyCon = BT.exnTyCon, args = []}
+ fun boolty () = CONty {tyCon = BT.boolTyCon, args=[]}
+ val foreignfunty = CONty {tyCon = BT.ptrTyCon, args = [unitty]}
 (*
  val arrayindexty = wordty
  val exntagty = CONty {tyCon = PT.exntagTyCon, args = []}

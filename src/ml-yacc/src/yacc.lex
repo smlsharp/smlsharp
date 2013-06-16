@@ -6,19 +6,19 @@
   %footer added for defuncteringing ml.grm.sml
  *)
 
-structure Tokens = Tokens
+structure Tokens = LrVals.Tokens
 type svalue = Tokens.svalue
 type pos = int
-type ('a,'b) token = ('a,'b) Tokens.token
-type lexresult = (svalue,pos) token
+type token = Tokens.token
+type lexresult = token
 
-type lexarg = Hdr.inputSource
+type lexarg = Header.inputSource
 type arg = lexarg
 
 open Tokens
-val error = Hdr.error
-val lineno = Hdr.lineno
-val text = Hdr.text
+val error = Header.error
+val lineno = Header.lineno
+val text = Header.text
 
 val pcount = ref 0
 val commentLevel = ref 0
@@ -48,6 +48,8 @@ local val dict =
    ("%noshift",NOSHIFT),
    ("%header",PERCENT_HEADER),
    ("%footer",PERCENT_FOOTER), 
+   ("%decompose",PERCENT_DECOMPOSE),
+   ("%blocksize",PERCENT_BLOCKSIZE),
    ("%pure",PERCENT_PURE),
    ("%token_sig_info",PERCENT_TOKEN_SIG_INFO),
    ("%arg",PERCENT_ARG),
@@ -66,10 +68,7 @@ fun dec (ri as ref i) = (ri := i-1)
 
 %%
 %header (
-functor LexMLYACC(structure Tokens : Mlyacc_TOKENS
-		  structure Hdr : HEADER (* = Header *)
-		    where type prec = Header.prec
-		      and type inputSource = Header.inputSource) : ARG_LEXER
+structure LexMLYACC
 );
 %arg (inputSource);
 %s A CODE F COMMENT STRING EMPTYCOMMENT;
@@ -99,9 +98,9 @@ qualid ={id}".";
 <A>","		=> (COMMA(!lineno,!lineno));
 <A>"*"		=> (ASTERISK(!lineno,!lineno));
 <A>"->"		=> (ARROW(!lineno,!lineno));
-<A>"%left"	=> (PREC(Hdr.LEFT,!lineno,!lineno));
-<A>"%right"	=> (PREC(Hdr.RIGHT,!lineno,!lineno));
-<A>"%nonassoc" 	=> (PREC(Hdr.NONASSOC,!lineno,!lineno));
+<A>"%left"	=> (PREC(Header.LEFT,!lineno,!lineno));
+<A>"%right"	=> (PREC(Header.RIGHT,!lineno,!lineno));
+<A>"%nonassoc" 	=> (PREC(Header.NONASSOC,!lineno,!lineno));
 <A>"%"[a-z_]+	=> (lookup(yytext,!lineno,!lineno));
 <A>{tyvar}	=> (TYVAR(yytext,!lineno,!lineno));
 <A>{qualid}	=> (IDDOT(yytext,!lineno,!lineno));

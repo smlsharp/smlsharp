@@ -52,10 +52,17 @@ fun newLocalId () = VarID.generate ()
         val leftNodeId = nodeId * 2 + 1
         val rightNodeId = nodeId * 2 + 2
 
-        val (leftTree, choice::choices) =
-            if leftNodeId >= numNodes
-            then (LEAF, choices)
-            else makeTree choices numNodes leftNodeId
+        val (leftTree, choice, choices) =
+            let
+              val (leftTree, choiceChoices) = 
+                  if leftNodeId >= numNodes
+                  then (LEAF, choices)
+                  else makeTree choices numNodes leftNodeId
+            in
+              case choiceChoices of
+                choice::choices => (leftTree, choice, choices)
+              | _ => raise Control.Bug "impossibe:nil choices in makeTree"
+            end
         val (rightTree, choices) =
             if rightNodeId >= numNodes
             then (LEAF, choices)
@@ -67,7 +74,24 @@ fun newLocalId () = VarID.generate ()
   fun makeBinaryTree nil = LEAF
     | makeBinaryTree choices = #1 (makeTree choices (length choices) 0)
 
-  fun generate f (context, code, env, choices) =
+  fun generate 
+        (f : (
+              'context                             (* global context *)
+              * 'code                              (* code accumulator *)
+              * 'env                               (* environment *)
+              * 'choice                            (* a choice branch *)
+              * AbstractInstruction2.label option  (* label of this node *)
+              * AbstractInstruction2.label option  (* left child label *)
+              * AbstractInstruction2.label option  (* right child label *)
+            ->
+            'context                             (* new global context *)
+            * 'code                              (* code accumulator *)
+            * 'env                               (* env for choice *)
+            * 'env                               (* env for left child *)
+            * 'env                               (* env for right child *)
+         )
+        )
+        (context, code, env, choices) =
       let
         fun visit context code env label LEAF = (context, code, nil)
           | visit context code env label (NODE (choice, leftTree, rightTree)) =

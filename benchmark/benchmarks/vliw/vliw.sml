@@ -1,8 +1,9 @@
+(*
+local 
 
-
-
+local
+*)
 open Array (* List *)
-val map = List.map
 infix 9 sub
 
 fun fold f x y = List.foldr f y x
@@ -73,7 +74,9 @@ struct
   val dec = fn x => (x := !x - 1)
 end
  
-
+(*
+in
+*)
 (* stringmap.sml *)
 
 signature STRINGMAP =
@@ -3664,10 +3667,8 @@ fun main(s:string list, env:string list) =
 	doitx(!ifile, !ofile, !c_ofile, !ws)
     end
 
-(*
 val s = OS.FileSys.getDir()
-*)
-val s = "../benchmarks/vliw" (* relative path from bin *)
+
 fun doit() = main(["foobar", "-ws9", 
 		   s^"/DATA/ndotprod.s", 
 		   s^"/DATA/tmp.s", 
@@ -3675,10 +3676,16 @@ fun doit() = main(["foobar", "-ws9",
 		  nil)
 fun testit _ = ()
 end 
+(*
+end (* toplevel local *)
+*)
 
-
-
-structure Main = Main
-
+(*
+in
+*)
+structure Main (*: BMARK*) = Main
+(*
+end
+*)
 
  

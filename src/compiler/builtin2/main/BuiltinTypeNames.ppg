@@ -1,0 +1,107 @@
+structure BuiltinTypeNames =
+struct
+
+  (*% *)
+  datatype bty 
+    = (*% @format "int" *)
+      INTty
+    | (*% @format "intInf" *)
+      INTINFty
+    | (*% @format "word" *)
+      WORDty
+    | (*% @format "word8" *)
+      WORD8ty
+    | (*% @format "char" *)
+      CHARty
+    | (*% @format "string" *)
+      STRINGty
+    | (*% @format "real" *)
+      REALty
+    | (*% @format "real32" *)
+      REAL32ty
+    | (*% @format "unit" *)
+      UNITty
+    | (*% @format "ptr" *)
+      PTRty      (* 'a ptr *)
+    | (*% @format "array" *)
+      ARRAYty    (* 'a array *)
+    | (*% @format "vector" *)
+      VECTORty   (* 'a vector *)
+    | (*% @format "exn" *)
+      EXNty
+    | (*% @format "boxed" *)
+      BOXEDty    (* pointer to some ML object *)
+    | (*% @format "exntag" *)
+      EXNTAGty   (* the type of x in exception E = x *)
+    | (*% @format "ref" *)
+      REFty      (* the ref type constructor *)
+    | (*% @format "bool" *)
+      BOOLty
+    | (*% @format "list" *)
+      LISTty
+    | (*% @format "option" *)
+      OPTIONty
+    | (*% @format "order" *)
+      ORDERty
+    (* the following are for SQL *)
+    | (*% @format "server" *)
+      SERVERty   (* database servser *)
+    | (*% @format "dbi" *)
+      DBIty      (* database witness *)
+    | (*% @format "value" *)
+      VALUEty      (* database values *)
+    | (*% @format "conn" *)
+      CONNty
+    | (*% @format "db" *)
+      DBty
+    | (*% @format "table" *)
+      TABLEty
+    | (*% @format "row" *)
+      ROWty
+    | (*% @format "result" *)
+      RESULTty
+    | (*% @format "rel" *)
+      RELty
+    | (*% @format "query" *)
+      QUERYty
+    | (*% @format "command" *)
+      COMMANDty
+
+  fun findType name =
+      case name of
+        "int" => SOME INTty
+      | "intInf" => SOME INTINFty
+      | "word" => SOME WORDty
+      | "word8" => SOME WORD8ty
+      | "char" => SOME CHARty
+      | "string" => SOME STRINGty
+      | "real" => SOME REALty
+      | "real32" => SOME REAL32ty
+      | "unit" => SOME UNITty
+      | "ptr" => SOME PTRty
+      | "array" => SOME ARRAYty
+      | "vector" => SOME VECTORty
+      | "exn" => SOME EXNty
+      | "boxed" => SOME BOXEDty
+      | "exntag" => SOME EXNTAGty
+      | "ref" => SOME REFty
+      | "bool" => SOME BOOLty
+      | "list" => SOME LISTty
+      | "option" => SOME OPTIONty
+      | "order" => SOME ORDERty
+
+      | "server" => SOME SERVERty
+      | "dbi" => SOME DBIty
+      | "value" => SOME VALUEty
+      | "conn" => SOME CONNty
+      | "db" => SOME DBty
+      | "table" => SOME TABLEty
+      | "row" => SOME ROWty
+      | "result" => SOME RESULTty
+      | "rel" => SOME RELty
+      | "query" => SOME QUERYty
+      | "command" => SOME COMMANDty
+      | _ => NONE
+
+
+end

@@ -32,6 +32,10 @@ end
  *
  *)
 
+(* 2012-8-19 ohori
+   type annotations added to mkReader and mkWriter
+*)
+
 local
     structure SysWord = SysWordImp
     structure Int = IntImp
@@ -268,7 +272,8 @@ structure SMLSharpSMLNJ_POSIX_IO =
 	else { pos = ref (Position.fromInt 0),
 	       getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE }
 
-    fun mkReader { mkRD, cvtVec, cvtArrSlice } { fd, name, initBlkMode } =
+    (* 2012-8-19 ohori type annotations added *)
+    fun mkReader { mkRD, cvtVec, cvtArrSlice } { fd:int, name:string, initBlkMode:bool } =
 	let val closed = ref false
             val {pos, getPos, setPos, endPos, verifyPos} = posFns (closed, fd)
 (*
@@ -335,8 +340,9 @@ structure SMLSharpSMLNJ_POSIX_IO =
 		   ioDesc = SOME (FS.fdToIOD fd) }
 	end
 
+    (* 2012-8-19 ohori type annotations added *)
     fun mkWriter { mkWR, cvtVecSlice, cvtArrSlice }
-		 { fd, name, initBlkMode, appendMode, chunkSize } =
+		 { fd:int, name:string, initBlkMode:bool, appendMode:bool, chunkSize:int } =
 	let val closed = ref false
             val {pos, getPos, setPos, endPos, verifyPos} = posFns (closed, fd)
 	    fun incPos k = (pos := Position.+(!pos, Position.fromInt k); k)

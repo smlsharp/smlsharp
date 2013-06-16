@@ -11,7 +11,7 @@ struct
 
   structure T = AnnotatedTypes
   structure A = BitmapANormal
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
   
   val dummyAnnotation =
       ref {labels = T.LE_LABELS AnnotationLabelID.Set.empty,
@@ -441,9 +441,9 @@ struct
       | ConstantTerm.CHAR _ => T.charty
       | ConstantTerm.UNIT => T.unitty
       | ConstantTerm.NULLPOINTER =>
-        T.CONty {tyCon = BV.PTRtyCon, args = [T.unitty]}
+        T.CONty {tyCon = BT.ptrTyCon, args = [T.unitty]}
       | ConstantTerm.NULLBOXED =>
-        T.CONty {tyCon = BV.BOXEDtyCon, args = []}
+        T.CONty {tyCon = BT.boxedTyCon, args = []}
 
   fun typecheckConst loc env baconst =
       case baconst of

@@ -3,6 +3,16 @@ _require "../../../smlnj-lib/Util/ord-key-sig.sml"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../smlnj-lib/Util/binary-set-fn.smi"
 
+structure pathOrd = 
+struct
+  type ord_key = string list
+  val compare : ord_key * ord_key -> order
+end
+
+structure PathEnv = BinaryMapFn(pathOrd)
+structure PathSet = BinarySetFn(pathOrd)
+
+(*
 structure PathEnv =
 struct
   structure Key =
@@ -85,3 +95,4 @@ struct
   val exists : (item -> bool) -> set -> bool
   val find : (item -> bool) -> set -> item option
 end
+*)

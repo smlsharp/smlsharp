@@ -143,7 +143,7 @@ struct
           T.BOUNDVARty tid =>
           (
             case BoundTypeVarID.Map.find (sizeEnv, tid) of
-              NONE => raise Control.Bug "sizeSize"
+              NONE => raise Control.Bug ("sizeSize btvId:" ^ BoundTypeVarID.toString tid)
             | SOME var => RecordLayout.VAR (var, NONE)
           )
         | _ => raise Control.Bug "findSize"

@@ -5,7 +5,7 @@
 
 signature TERMS =
   sig
-    eqtype head;
+    type head;
     datatype term =
       Var of int
     | Prop of head * term list;

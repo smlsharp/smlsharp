@@ -5,8 +5,8 @@ _require "../../../compiler-utils/env/main/SSet.smi"
 _require "../../control/main/Control.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/Fixity.smi"
-_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
-_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
@@ -29,7 +29,7 @@ structure NameEvalUtils =
     val printVarId : VarID.id -> unit
     val printVarInfo : {id:VarID.id, path:string list} -> unit
     val printInterfaceId : InterfaceID.id -> unit
-    val printBuiltinTy : BuiltinType.ty -> unit
+    val printBuiltinTy : BuiltinTypeNames.bty -> unit
     val printTy : IDCalc.ty -> unit
     val printPITy : Absyn.ty -> unit
     val printTstr : NameEvalEnv.tstr -> unit
@@ -92,5 +92,5 @@ structure NameEvalUtils =
     val evalTailList : {env:'a, eval:'a -> 'b -> 'a * 'c}
                        -> 'b list -> 'a * 'c list
     val SEnvToSSet : 'a SEnv.map -> SSet.set
-    val runtimeTyOfConspec : 'a option SEnv.map -> BuiltinType.ty
+    val runtimeTyOfConspec : 'a option SEnv.map -> BuiltinTypeNames.bty
   end

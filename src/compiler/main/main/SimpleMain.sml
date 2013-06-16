@@ -11,8 +11,18 @@ structure Main : sig
 
 end =
 struct
-  structure BV = BuiltinEnv
   exception Error of string list
+
+  val defaultSystemBaseDir =
+      case ExecutablePath.getPath () of
+        NONE => Filename.fromString SMLSharp_Version.DefaultSystemBaseDir
+      | SOME path =>
+        Filename.concatPath
+          (Filename.dirname (Filename.fromString path),
+           Filename.fromString "../lib/smlsharp")
+
+  (* Moved this to top-level; this is needed to initBuiltin *)
+  val systemBaseDir = ref defaultSystemBaseDir
 
   fun optionToList NONE = nil
     | optionToList (SOME x) = [x]
@@ -49,6 +59,9 @@ struct
       | UserError.UserErrorsWithoutLoc errs =>
         app (fn (k,e) => printErr (userErrorToString (Loc.noloc,k,e) ^ "\n"))
             errs
+      | IO.Io {name, function, cause} =>
+        (printErr ("System IO failure:" ^ "file name: " ^ name ^ " I/O function: " ^ function ^ "\n");
+         printExnHistory e)
       | Control.Bug msg =>
         (printErr ("[BUG] " ^ msg ^ "\n"); printExnHistory e)
       | Control.BugWithLoc (msg, loc) =>
@@ -85,6 +98,7 @@ struct
     | Help
     | ControlSwitch of string
     | NoStdPath
+    | NoStdLib
     | Verbose
 
   fun splitComma "" = nil
@@ -129,6 +143,7 @@ struct
           DLONG ("sha1", NOARG (Mode SHA1Sum)),
           SLONG ("target", REQUIRED Target),
           SLONG ("nostdpath", NOARG NoStdPath),
+          SLONG ("nostdlib", NOARG NoStdLib),
           DLONG ("help", NOARG Help),
           SHORT (#"d", REQUIRED ControlSwitch)
         ]
@@ -191,7 +206,7 @@ struct
 
   type linkOptions =
        {dryRun: bool,
-        systemBaseDir: Filename.filename,
+        noStdLib: bool,
         LDFLAGS: string list,
         LIBS: string list,
         outputFilename: Filename.filename}
@@ -213,6 +228,24 @@ struct
     | PrintHelp of {progname: string}
     | PrintVersion
     | Interactive of RunLoop.options                   
+
+  type compileResult =
+      {
+        (* generated object file by given mainExp *)
+        code : Filename.filename option,
+        (* interface which should be provided by the code *)
+        interface : AbsynInterface.interfaceName option
+      }
+
+  type mainExpResult =
+      {
+        (* result of interpretation of given mainExp *)
+        result : compileResult,
+        (* loaded require interfaces during interpreting given mainExp *)
+        requires : compileResult list,
+        (* loaded files during interpreting given mainExp *)
+        loaded : (AbsynInterface.filePlace * string) list
+      }
 
   fun setExtraOption src =
       let
@@ -250,16 +283,8 @@ struct
 
   fun compileArgs (progname, args) =
       let
-        val defaultSystemBaseDir =
-            case ExecutablePath.getPath () of
-              NONE => Filename.fromString SMLSharp_Version.DefaultSystemBaseDir
-            | SOME path =>
-              Filename.concatPath
-                (Filename.dirname (Filename.fromString path),
-                 Filename.fromString "../lib/smlsharp")
-
-        val systemBaseDir = ref defaultSystemBaseDir
         val noStdPath = ref false
+        val noStdLib = ref false
         val loadPath = ref nil
         val LDFLAGS = ref nil
         val CFLAGS = ref nil
@@ -295,6 +320,8 @@ struct
               extraOptions := pair :: !extraOptions
             | NoStdPath =>
               noStdPath := true
+            | NoStdLib =>
+              noStdLib := true
             | Verbose =>
               verbose := true
             | Help =>
@@ -380,7 +407,7 @@ struct
              map (fn src =>
                      Link
                        ({dryRun = true,
-                         systemBaseDir = !systemBaseDir,
+                         noStdLib = false,
                          LDFLAGS = !LDFLAGS,
                          LIBS = !LIBS,
                          outputFilename = toExeTarget src},
@@ -419,7 +446,8 @@ struct
                      PrintHash
                        (LoadSMI ({stopAt = Top.SyntaxCheck,
                                   stdPath = stdPath,
-                                  loadPath = !loadPath}, src)))
+                                  loadPath = !loadPath}, 
+                                 src)))
                  sources)
         | (false, SOME SHA1Sum, SOME _, _) =>
           raise Error ["cannot specify -o with --sha1"]
@@ -449,7 +477,7 @@ struct
                 | NONE => Filename.fromString "a.out"
             val options =
                 {dryRun = false,
-                 systemBaseDir = !systemBaseDir,
+                 noStdLib = !noStdLib,
                  LDFLAGS = !LDFLAGS,
                  LIBS = !LIBS,
                  outputFilename = outputFilename}
@@ -458,47 +486,27 @@ struct
           end
       end
 
-  fun parseBuiltin {name, body} =
+  fun loadBuiltin () =
       let
-        val src = TextIO.openString body
-        val input = InterfaceParser.setup
-                      {read = fn n => TextIO.inputN (src, n),
-                       sourceName = name}
-        val absyn = InterfaceParser.parse input
+        val src = Filename.concatPath
+                    (!systemBaseDir, Filename.fromString "builtin.smi")
+        val builtin_smi = "builtin.smi"
+        val io = Filename.TextIO.openIn src
       in
-        case absyn of
-          AbsynInterface.INTERFACE {requires=nil, topdecs} => topdecs
-        | _ => raise Control.Bug "parseBuiltin"
+        Top.loadBuiltin
+          (InterfaceParser.setup
+             {read = fn n => TextIO.inputN (io, n),
+              sourceName = Filename.toString src})
+        handle e => (TextIO.closeIn io; raise e)
       end
 
-  val initBuiltin =
-      let
-        val absyns = map parseBuiltin BuiltinContextSources.sources
-        val topdecs = List.concat absyns
-        val interface =
-            {decls=nil, interfaceName=NONE, requires=nil, topdecs=topdecs}
-        val abunit =
-            {interface=interface, topdecs=nil}
-        val (fixEnv, plunit, warnings) =
-            Elaborator.elaborateRequire abunit
-        val (topEnv, builtinEnv, idcalc) =
-            NameEval.evalBuiltin (#topdecs (#interface plunit))
-        val version = NONE
-      in
-        BV.init builtinEnv;
-        fn () => {topEnv=topEnv, version=version, fixEnv=fixEnv,
-                  builtinDecls=idcalc}
-                 : Top.toplevelContext
-      end
-  
-  fun compileFile options (io, sourceName) =
+  fun compileFile context options (io, sourceName) =
       let
         val input =
             Parser.setup {mode = Parser.File,
                           read = fn (_,n) => TextIO.inputN (io, n),
                           sourceName = sourceName,
                           initialLineno = 1}
-        val context = initBuiltin ()
         val (depends, result) = Top.compile options context input
       in
         case result of
@@ -560,7 +568,7 @@ struct
 
   end (* local *)
 
-  fun evalMain exp =
+  fun evalMain exp : mainExpResult =
       case exp of
         PrintHelp {progname} =>
         (
@@ -576,24 +584,23 @@ struct
         )
       | Interactive options =>
         let
-          val context = initBuiltin ()
           val _ = #start Counter.loadInterfaceTimeCounter()
+          val builtinContext = loadBuiltin ()
           val (_, result) =
               Top.loadInterface
                 {stopAt = Top.NoStop,
                  stdPath = #stdPath options, 
                  loadPath = #loadPath options}
-                context
+                builtinContext
                 (Filename.concatPath
-                   (#systemBaseDir options,
-                    Filename.fromString "prelude.smi"))
+                   (!systemBaseDir, Filename.fromString "prelude.smi"))
           val _ = #stop Counter.loadInterfaceTimeCounter()
           val context =
               case result of
                 SOME newContext =>
                 let
                   val {fixEnv, topEnv, version, builtinDecls} =
-                      Top.extendContext (context, newContext)
+                      Top.extendContext (builtinContext, newContext)
                   val version = IDCalc.incVersion version
                   val builtinDecls =
                       builtinDecls
@@ -614,10 +621,14 @@ struct
         end
       | CompileSML (options, filename) =>
         let
+          val _ = #start Counter.loadInterfaceTimeCounter()
+          val builtinContext = loadBuiltin ()
+          val _ = #stop Counter.loadInterfaceTimeCounter()
+
           val io = Filename.TextIO.openIn filename
           val _ = #start Counter.compileFileTimeCounter()
           val (code, {requires, provide, depends}) =
-              compileFile options (io, Filename.toString filename)
+              compileFile builtinContext options (io, Filename.toString filename)
               handle e => (TextIO.closeIn io; raise e)
           val _ = #stop Counter.compileFileTimeCounter()
           val _ = TextIO.closeIn io
@@ -630,9 +641,11 @@ struct
       | LoadSMI (options, filename) =>
         let
           val _ = #start Counter.loadSMITimeCounter()
-          val context = initBuiltin ()
+          val builtinContext = loadBuiltin ()
+          val _ = #stop Counter.loadInterfaceTimeCounter()
+
           val ({requires, provide, depends}, _) =
-              Top.loadInterface options context filename
+              Top.loadInterface options builtinContext filename
           val _ = #stop Counter.loadSMITimeCounter()
         in
           {result = {code = NONE, interface = provide},
@@ -648,12 +661,16 @@ struct
           val mainSymbols = List.mapPartial #interface requires
         in
           case mainSymbols of
-            nil => results
+            nil => 
+            (#stop Counter.generateMainTimeCounter();
+             results)
           | _ =>
             let
+              val builtinContext = loadBuiltin ()
+              val _ = #stop Counter.loadInterfaceTimeCounter()
               val mainCode = GenerateMain.generate mainSymbols
               val io = TextIO.openString mainCode
-              val (code, _) = compileFile options (io, "(main)")
+              val (code, _) = compileFile builtinContext options (io, "(main)")
               val _ = #stop Counter.generateMainTimeCounter()
             in
               {result = {code = code, interface = NONE},
@@ -667,7 +684,7 @@ struct
       | Link (options, exps) =>
         let
           val _ = #start Counter.linkTimeCounter()
-          val {dryRun, systemBaseDir, LDFLAGS, LIBS, outputFilename} = options
+          val {dryRun, noStdLib, LDFLAGS, LIBS, outputFilename} = options
           val results = map evalMain exps
           val objfiles =
               List.concat
@@ -683,16 +700,20 @@ struct
                        end)
                    results)
           val runtimeDir = Filename.fromString "runtime"
-          val runtimeDir = Filename.concatPath (systemBaseDir, runtimeDir)
+          val runtimeDir = Filename.concatPath (!systemBaseDir, runtimeDir)
           val libsmlsharp = Filename.fromString "libsmlsharp.a"
           val libsmlsharp = Filename.concatPath (runtimeDir, libsmlsharp)
           val smlsharpEntry = Filename.fromString "smlsharp_entry.o"
           val smlsharpEntry = Filename.concatPath (runtimeDir, smlsharpEntry)
+          val libs = (if noStdLib then nil else [Filename.toString libsmlsharp])
+                     @ LIBS
+          val objects = (if noStdLib then nil else [smlsharpEntry])
+                        @ map #2 objfiles
         in
           if dryRun then ()
           else BinUtils.link {flags = LDFLAGS,
-                              libs = Filename.toString libsmlsharp :: LIBS,
-                              objects = smlsharpEntry :: map #2 objfiles,
+                              libs = libs,
+                              objects = objects,
                               dst = outputFilename,
                               quiet = false};
           #stop Counter.linkTimeCounter();

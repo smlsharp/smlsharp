@@ -188,6 +188,11 @@ struct
           val _ = (ListPair.app CST.unify (argTyList, newArgTyList) )
               handle CST.Unify =>
                        (printTlexp tlexp;
+                        print "argTyList\n";
+                        map (fn ty => (printATty ty; print "\n")) argTyList;
+                        print "newArgTyList\n";
+                        map (fn ty => (printATty ty; print "\n")) newArgTyList;
+                        print "\n";
                         raise bug "unification fail(3)")
         in
           (
@@ -456,7 +461,16 @@ struct
           val newInstTyList = map CST.convertSingleValueType instTyList
           val tvars = case newExpTy of
                         AT.POLYty {boundtvars,...} => boundtvars
-                      | _ => raise Control.Bug "polytype is expected"
+                      | _ =>
+let
+val _ = print "polytype is expected bug\n"
+val _ = printTlexp tlexp
+val _ = print "expTy\n"
+val _ = T.printTy expTy
+val _ = print "\n"
+in
+                        raise Control.Bug "polytype is expected"
+end
 (*
           val _ = CST.addInstances (tvars, newInstTyList)
 *)

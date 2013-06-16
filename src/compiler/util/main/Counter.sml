@@ -13,7 +13,7 @@ struct
 
   datatype counterSetOrder = ORDER_BY_NAME | ORDER_OF_ADDITION | ORDER_BY_TIME
 
- type accumulationCounter =
+  type accumulationCounter =
    {
     name : string,
     toString : counterSetOrder -> string -> string,
@@ -126,7 +126,7 @@ struct
     fun dec counter () = sub counter 1
     fun reset counter () = counter := INITIAL_VALUE
     fun getValue counter () = !counter
-    fun toString name counter order indent =
+    fun toString name counter (order:counterSetOrder) indent =
         indent ^ name ^ " = " ^ (Int.toString (!counter))
   in
     fun createAccumulationCounter name =
@@ -160,7 +160,7 @@ struct
           then max := value
           else ()
     fun reset {min, max} () = (min := INITIAL_VALUE; max := INITIAL_VALUE)
-    fun toString name {min, max} order indent =
+    fun toString name {min, max} (order:counterSetOrder) indent =
         indent ^ name ^ " = "
         ^ "{min = " ^ (Int.toString (!min))
         ^ ", max = " ^ (Int.toString (!max)) ^ "}"
@@ -189,21 +189,29 @@ struct
     type counterRep = {time : Time.time ref, start : Time.time option ref}
     val INITIAL_VALUE = Time.zeroTime
     fun getTime ({time, ...} : counterRep) () = !time
-    fun start ({start, ...} : counterRep) () = 
-        start := SOME(Time.now ())
-    fun stop ({time, start, ...} : counterRep) () =
+    fun start name ({start, ...} : counterRep) () = 
+        (
+          if !Control.printTimer
+          then print ("start timer " ^ name ^ "\n") else ();
+          start := SOME(Time.now ())
+        )
+    fun stop name ({time, start, ...} : counterRep) () =
         case !start of
           NONE => () (* ignore *)
         | SOME startTime =>
           (
             time := (Time.+(!time, Time.-(Time.now (), startTime)));
-            start := NONE
+            start := NONE;
+            if !Control.printTimer
+            then print ("stop timer " ^ name ^ " : "
+                        ^ Time.toString (!time) ^ " sec\n")
+            else ()
           )
           handle Time.Time => () (* ignore error *)
                | General.Overflow => ()
     fun reset ({time, start} : counterRep) () =
         (time := INITIAL_VALUE; start := NONE)
-    fun toString name ({time, ...} : counterRep) order indent =
+    fun toString name ({time, ...} : counterRep) (order:counterSetOrder) indent =
         let 
           fun toString f = LargeInt.toString(f (!time)) handle _ => "-"
           val name = titleColumn name
@@ -226,8 +234,8 @@ struct
           {
             toString = toString name counter,
             name = name,
-            start = start counter,
-            stop = stop counter,
+            start = start name counter,
+            stop = stop name counter,
             reset = reset counter,
             getTime = getTime counter
           }
@@ -246,6 +254,17 @@ struct
           SEnv.insert (counterMap, name, counter),
           IEnv.insert (indexMap, IEnv.numItems indexMap, name)
         )
+    fun addCounter1 counters (name, counter) =
+        let
+          val counterMap = #1 (!counters)
+          val indexMap = #2 (!counters)
+        in
+        counters :=
+        (
+          SEnv.insert (counterMap, name, counter),
+          IEnv.insert (indexMap, IEnv.numItems indexMap, name)
+        )
+        end
     fun findCounter (ref (counterMap, _)) name =
         SEnv.find (counterMap, name) : counter option
     fun listCounters (ref (counterMap, indexMap)) order =
@@ -318,7 +337,7 @@ struct
           newElapsedTimeCounter
         end
     fun find counters name = Option.map #counterInternal (findCounter counters name)
-    fun toString name counters order indent =
+    fun toString name counters (order:counterSetOrder) indent =
         let
           val INDENT_UNIT = "  "
           fun toStr ({toString, counterInternal = CounterSet _, ...} : counter) =
@@ -403,8 +422,12 @@ struct
       #addElapsedTime ElapsedCounterSet "printer generation"
   val UncurryOptimizationTimeCounter =
       #addElapsedTime ElapsedCounterSet "uncurry optimize"
+  val TypedCalcOptimizationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "typedcalc optimize"
   val matchCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "match compilation"
+  val RecordCalcOptimizationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "recordcalc optimize"
   val sqlCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "SQL compilation"
   val ffiCompilationTimeCounter =
@@ -461,6 +484,8 @@ struct
       #addElapsedTime ElapsedCounterSet "rtl emit"
   val rtlasmgenTimeCounter =
       #addElapsedTime ElapsedCounterSet "rtl asmgen"
+  val rtlasmprintTimeCounter =
+      #addElapsedTime ElapsedCounterSet "rtl asmprint"
   val assembleTimeCounter =
       #addElapsedTime ElapsedCounterSet "assemble"
   val compilationTimeCounter =

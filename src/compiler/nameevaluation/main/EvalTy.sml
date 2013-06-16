@@ -21,7 +21,7 @@ sig
   val evalDatatype :
       IDCalc.path -> NameEvalEnv.env
                    -> PatternCalc.datbind list * Loc.loc
-                   -> NameEvalEnv.env * 'a list
+                   -> NameEvalEnv.env * IDCalc.icdecl list
   val evalRuntimeTy : 
       Loc.loc -> tvarEnv -> NameEvalEnv.env -> PatternCalcInterface.runtimeTy -> IDCalc.runtimeTy
   val compatRuntimeTy : 
@@ -34,7 +34,7 @@ local
   structure P = PatternCalc
   structure V = NameEvalEnv
   structure N = NormalizeTy
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
@@ -71,7 +71,7 @@ in
     case ty of
       A.TYWILD loc => I.TYWILD
     | A.TYID (tvar, loc) => I.TYVAR (evalTvar loc tvarEnv tvar)
-    | A.TYRECORD (nil, loc) => BV.unitTy
+    | A.TYRECORD (nil, loc) => BT.unitITy
     | A.TYRECORD (tyFields, loc) =>
       (EU.checkNameDuplication
          #1 tyFields loc 
@@ -109,7 +109,7 @@ in
                     newTy
                   end
                 | I.TFUN_VAR _ =>
-                  I.TYCONSTRUCT {typ={path=path, tfun=tfun}, args=tyList}
+                  I.TYCONSTRUCT {tfun=tfun, args=tyList}
               end
         in
           case V.lookupTstr env path handle e => raise e
@@ -127,7 +127,7 @@ in
                )
 
       end
-    | A.TYTUPLE(nil, loc) => BV.unitTy
+    | A.TYTUPLE(nil, loc) => BT.unitITy
     | A.TYTUPLE(tyList, loc) =>
       evalTy tvarEnv env (A.TYRECORD (Utils.listToTuple tyList, loc))
     | A.TYFUN(ty1,ty2, loc) =>
@@ -179,7 +179,7 @@ in
         (I.LIFTEDty {id=id1,...}, I.LIFTEDty {id=id2,...}) =>
         TvarID.eq(id1,id2) 
       | (I.BUILTINty bty1, I.BUILTINty bty2) => 
-        BuiltinType.compatTy {absTy=bty1, implTy=bty2}
+        BuiltinTypes.compatTy {absTy=bty1, implTy=bty2}
       | _ => false
 
   fun evalRuntimeTy loc tvarEnv evalEnv runtimeTy =
@@ -288,7 +288,12 @@ in
   fun evalScopedTvars loc (tvarEnv:tvarEnv) (env:V.env) (tvars:P.scopedTvars) =
       evalKindedTvarList loc tvarEnv env tvars
  
-  fun evalDatatype (path:I.path) (env:V.env) (datbindList, loc) =
+  fun evalDatatype 
+        (path:I.path) 
+        (env:V.env) 
+        (datbindList:PatternCalc.datbind list, loc:Loc.loc) 
+       : NameEvalEnv.env * IDCalc.icdecl list
+       =
       let
         val _ = EU.checkNameDuplication
                   (fn {tyvars, tycon, conbind} => tycon)
@@ -346,7 +351,7 @@ in
                   let
                     val returnTy =
                         I.TYCONSTRUCT
-                          {typ={path=path@[name],tfun=tfun},
+                          {tfun=tfun,
                            args= map (fn tv=>I.TYVAR tv) args
                           }
                     val (conVarE, conSpec, conbindRev) =

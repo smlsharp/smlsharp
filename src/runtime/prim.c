@@ -1934,7 +1934,7 @@ prim_executable_path()
 	memcpy(obj, path, len + 1);
 	return obj;
 #else
-	char *obj = sml_obj_alloc(OBJTYPE_UNBOXED_ARRAY, 1);
+	char *obj = sml_obj_alloc(OBJTYPE_UNBOXED_VECTOR, 1);
 	obj[0] = '\0';
 	return obj;
 #endif /* MINGW32 */

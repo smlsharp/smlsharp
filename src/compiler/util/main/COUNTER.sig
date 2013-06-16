@@ -52,6 +52,8 @@ sig
   val typeInferenceTimeCounter : elapsedTimeCounter
   val printerGenerationTimeCounter : elapsedTimeCounter
   val UncurryOptimizationTimeCounter : elapsedTimeCounter
+  val TypedCalcOptimizationTimeCounter : elapsedTimeCounter
+  val RecordCalcOptimizationTimeCounter : elapsedTimeCounter
   val matchCompilationTimeCounter : elapsedTimeCounter
   val sqlCompilationTimeCounter : elapsedTimeCounter
   val ffiCompilationTimeCounter : elapsedTimeCounter
@@ -76,6 +78,7 @@ sig
   val rtlframeTimeCounter : elapsedTimeCounter
   val rtlemitTimeCounter : elapsedTimeCounter
   val rtlasmgenTimeCounter : elapsedTimeCounter
+  val rtlasmprintTimeCounter : elapsedTimeCounter
   val assembleTimeCounter : elapsedTimeCounter
   val compilationTimeCounter : elapsedTimeCounter
   val parseArgsTimeCounter : elapsedTimeCounter

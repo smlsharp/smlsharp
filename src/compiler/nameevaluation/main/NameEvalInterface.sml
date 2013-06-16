@@ -12,7 +12,7 @@ sig
   val evalPistr : string list
                   -> NameEvalEnv.topEnv
                      -> PathSet.set * PatternCalcInterface.pistrexp
-                        -> PathSet.set * NameEvalEnv.env * IDCalc.icdecl list
+                        -> PathSet.set * NameEvalEnv.strEntry * IDCalc.icdecl list
   val internalizeEnv : NameEvalEnv.env -> NameEvalEnv.env
   val evalInterfaces : NameEvalEnv.topEnv
                        -> PatternCalcInterface.interfaceDec list
@@ -24,7 +24,7 @@ local
   structure I = IDCalc
   structure T = Types
   structure V = NameEvalEnv
-  structure BV = BuiltinEnv
+  structure BT = BuiltinTypes
   structure PI = PatternCalcInterface
   structure PC = PatternCalc
   structure U = NameEvalUtils
@@ -55,6 +55,59 @@ in
                        source: PatternCalcInterface.pitopdec list,
                        topEnv: NameEvalEnv.topEnv} InterfaceID.Map.map
 
+  (* change exception status to EXREP; copied from NameEval.sml *)
+  fun exceptionRepVarE varE =
+      SEnv.map
+      (fn (I.IDEXN info) => I.IDEXNREP info
+(* 2012-9-25 ohori added to fixe 241_functorExn bug *)
+        | (I.IDEXEXN info) => I.IDEXEXNREP info
+        | (idstatus as I.IDEXVAR {used, ...}) =>
+          (used := true; idstatus)
+        | idstatus => idstatus)
+      varE
+  fun exceptionRepStrEntry {env=V.ENV {varE, tyE, strE}, strKind} = 
+      let
+        val varE = exceptionRepVarE varE
+        val strE = exceptionRepStrE strE
+      in
+        {env=V.ENV{varE = varE, tyE = tyE, strE=strE}, strKind=strKind}
+      end
+  and exceptionRepStrE (V.STR envMap) =
+      let
+        val envMap = SEnv.map exceptionRepStrEntry envMap
+      in
+        V.STR envMap
+      end
+
+  (* bug 245 *)
+  fun exceptionExternVarE loc path varE =
+      SEnv.mapi
+      (fn (name, I.IDEXN {id, ty}) => 
+          I.IDEXEXN {path=path@[name], ty=ty, used=ref false, loc=loc, version=NONE}
+        | (name, I.IDEXNREP {id, ty}) => 
+          I.IDEXEXNREP {path=path@[name], ty=ty, used=ref false, loc=loc, version=NONE}
+        | (name, idstatus) => idstatus)
+      varE
+  fun exceptionExternEnv loc path (V.ENV {varE, tyE, strE}) = 
+      let
+        val varE = exceptionExternVarE loc path varE
+        val strE = exceptionExternStrE loc path strE
+      in
+        V.ENV{varE = varE, tyE = tyE, strE=strE}
+      end
+  and exceptionExternStrEntry loc path {env, strKind} = 
+      {env=exceptionExternEnv loc path env, strKind=strKind}
+  and exceptionExternStrE loc path (V.STR envMap) =
+      let
+        val envMap = 
+            SEnv.mapi 
+              (fn (name, strEntry) => exceptionExternStrEntry loc (path @ [name]) strEntry
+              )
+              envMap
+      in
+        V.STR envMap
+      end
+
   fun evalRuntimeTy loc tvarEnv evalEnv runtimeTy =
       case runtimeTy of
         PI.BUILTINty ty => I.BUILTINty ty
@@ -70,7 +123,12 @@ in
           | _ => 
             (case I.runtimeTyOfIty ity of
                SOME ty =>  ty
-             | NONE => raise bug "no runtimeTy in evalRuntimeTy"
+             | NONE => 
+               (U.print "no runtimeTy :";
+                U.printPath path;
+                U.print "\n";
+                raise bug "no runtimeTy in evalRuntimeTy"
+               )
             )
         end
 
@@ -334,7 +392,7 @@ in
           val ty = Ty.evalTy tvarEnv env ty
           val tfun =
               case N.tyForm tvarList ty of
-                N.TYNAME {tfun,...} => tfun
+                N.TYNAME tfun => tfun
               | N.TYTERM ty =>
                 let
                   val iseq = N.admitEq tvarList ty
@@ -368,7 +426,8 @@ in
                                 formals=tvarList,
                                 runtimeTy= runtimeTy,
                                 conSpec=SEnv.empty,
-                                originalPath=[tycon],
+                                originalPath= path@[tycon], 
+                                (* bug foud in asai zemi *)
                                 liftedTys=I.emptyLiftedTys,
                                 dtyKind= I.DTY_INTERFACE
                                 }
@@ -396,7 +455,8 @@ in
                              formals=tvarList,
                              runtimeTy= runtimeTy,
                              conSpec=SEnv.empty,
-                             originalPath=[tycon],
+                             originalPath= path@[tycon],
+                             (* bug foud in asai zemi *)
                              liftedTys=I.emptyLiftedTys,
                              dtyKind= I.DTY_INTERFACE
                              }
@@ -407,15 +467,21 @@ in
         end
 
       | PI.PITYPEBUILTIN {tycon, builtinName, loc} =>
-        (case BV.findTfun builtinName of
-           SOME tfun =>
-             (externSet, V.rebindTstr (V.emptyEnv, tycon, V.TSTR tfun), nil)
-         | NONE =>
+        (case BuiltinTypes.findTstrInfo builtinName of
+           NONE => 
            (EU.enqueueError
               (loc, E.BuiltinTyNotFound("EI-100", {name = builtinName}));
-            (externSet, V.emptyEnv, nil))
+            (externSet, V.emptyEnv, nil)
+           )
+         | SOME (tstrInfo as {varE, ...}) => 
+           let
+             val tstr = V.TSTR_DTY tstrInfo
+             val env = V.rebindTstr (V.emptyEnv, tycon, tstr)
+             val env = V.envWithVarE (env, varE)
+           in
+             (externSet, env, nil)
+           end
         )
-
       | PI.PIDATATYPE {datbind, loc} => 
         let
           val (env, icdecls) = Ty.evalDatatype path env (datbind, loc)
@@ -453,10 +519,10 @@ in
         let
           val ty =
               case tyOpt of
-                NONE => BV.exnTy
+                NONE => BT.exnITy
               | SOME ty => 
                 I.TYFUNM([Ty.evalTy Ty.emptyTvarEnv env ty],
-                          BV.exnTy)
+                          BT.exnITy)
           val externPath = case externPath of NONE => path@[name]
                                             | SOME path => path
           val idstatus = I.IDEXEXN {path=externPath, 
@@ -523,9 +589,8 @@ in
 
       | PI.PISTRUCTURE {strid, strexp, loc} =>
         let
-          val (externSet, newEnv, icdecls) = evalPistr (path@[strid]) topEnv (externSet, strexp)
-          val strKind = V.STRENV (StructureID.generate())
-          val env = V.rebindStr (V.emptyEnv, strid, {env=newEnv, strKind=strKind})
+          val (externSet, strEntry, icdecls) = evalPistr (path@[strid]) topEnv (externSet, strexp)
+          val env = V.rebindStr (V.emptyEnv, strid, strEntry)
         in
           (externSet, env, icdecls)
         end
@@ -534,6 +599,7 @@ in
       case pistrexp of
         PI.PISTRUCT {decs, loc} =>
         let
+          val strKind = V.STRENV (StructureID.generate())
           val (externSet, env, icdecls) = 
               foldl
                 (fn (decl, (externSet, env, icdecls)) =>
@@ -547,7 +613,7 @@ in
                 (externSet, V.emptyEnv, nil)
                 decs
         in
-          (externSet, env, icdecls)
+          (externSet, {env=env, strKind=strKind}, icdecls)
         end
       | PI.PISTRUCTREP{strPath, loc} => 
         let
@@ -558,10 +624,16 @@ in
             (
              EU.enqueueError
                (loc, E.ExceptionNameUndefined("EI-140", {longid = path}));
-             (externSet, V.emptyEnv, nil)
+             (externSet, 
+              {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())},
+              nil)
             )
-          | SOME {env, strKind} => 
-            (externSet, env, nil)
+          | SOME strEntry => 
+            let
+              val strEntry = exceptionRepStrEntry strEntry
+            in
+              (externSet, strEntry, nil)
+            end
         end
       | PI.PIFUNCTORAPP{functorName, argumentPath, loc} => 
         let
@@ -572,15 +644,26 @@ in
             (NONE, _) => 
             (EU.enqueueError
                (loc, E.FunctorNameUndefined("EI-140", {string = functorName}));
-             (externSet, V.emptyEnv, nil))
+             (externSet, 
+              {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())},
+              nil)
+            )
           | (_, NONE) => 
             (EU.enqueueError
                (loc, E.StructureNameUndefined("EI-140", {longid = argumentPath}));
-             (externSet, V.emptyEnv, nil))
+             (externSet, 
+              {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())},
+              nil))
           | (SOME funEEntry, SOME {env=argStrEnv, strKind}) =>
             let
-              val {id,version, used,argSig,argStrName,argStrEntry,dummyIdfunArgTy,polyArgTys,
+              val {id=funId,version, used,argSig,argStrName,argStrEntry,dummyIdfunArgTy,polyArgTys,
                    typidSet,exnIdSet,bodyEnv,bodyVarExp} = funEEntry
+              val argId = case strKind of
+                            V.STRENV id => id
+                          | V.FUNAPP{id,...} => id
+                          | _ => raise bug "non strenv in functor arg"
+              val structureId = StructureID.generate()
+              val strKind = V.FUNAPP {id=structureId, funId=funId, argId=argId}
               fun instVarE (varE,actualVarE) {tvarS, conIdS, exnIdS} =
                 let
                   val conIdS =
@@ -627,7 +710,7 @@ in
                       )
                     | I.TFUN_DEF{iseq, formals=nil, realizerTy= I.TYVAR tvar} =>
                       let
-                        val ty =I.TYCONSTRUCT{typ={tfun=actualTfun,path=path},args=nil}
+                        val ty =I.TYCONSTRUCT{tfun=actualTfun,args=nil}
                         val ty = N.reduceTy TvarMap.empty ty
                       in
                         {tvarS=TvarMap.insert(tvarS,tvar,ty),
@@ -701,6 +784,54 @@ in
                     )
                     subst
                     envMap
+
+              fun setPathIdstatus copyPath idstatus =
+                  case idstatus of
+                    I.IDVAR varId => idstatus
+                  | I.IDVAR_TYPED  {id, ty} => idstatus
+                  | I.IDEXVAR {path,ty,used,loc,version,internalId} =>
+                    I.IDEXVAR 
+                      {path=copyPath@path,
+                       ty=ty,
+                       used=used,
+                       loc=loc,
+                       version=version,
+                       internalId=internalId}
+                  | I.IDEXVAR_TOBETYPED {path, id, loc, version} =>
+                    I.IDEXVAR_TOBETYPED
+                      {path=copyPath@path, id=id, loc=loc, version=version}
+                  | I.IDBUILTINVAR {primitive, ty} => idstatus
+                  | I.IDCON {id, ty} => idstatus
+                  | I.IDEXN {id, ty} => idstatus
+                  | I.IDEXNREP {id, ty} => idstatus
+                  | I.IDEXEXN  {path, ty, used, loc, version} =>
+                    I.IDEXEXN  
+                      {path=copyPath@path, ty=ty, used=used, loc=loc, version=version}
+                  | I.IDEXEXNREP {path, ty, used, loc, version} =>
+                    I.IDEXEXNREP
+                      {path=copyPath@path, ty=ty, used=used, loc=loc, version=version}
+                  | I.IDOPRIM {id, overloadDef, used, loc} => idstatus
+                  | I.IDSPECVAR ty => idstatus
+                  | I.IDSPECEXN ty => idstatus
+                  | I.IDSPECCON => idstatus
+              fun setPathVarE copyPath varE =
+                  SEnv.map (setPathIdstatus copyPath) varE
+              fun setPathEnv copyPath (V.ENV{tyE, strE, varE}) =
+                  let
+                    val strE = setPathStrE copyPath strE
+                    val varE = setPathVarE copyPath varE
+                  in
+                    V.ENV{tyE=tyE, strE=strE, varE=varE}
+                  end
+              and setPathStrE copyPath (V.STR envMap) =
+                  V.STR
+                    (
+                     SEnv.map
+                       (fn {env, strKind} => 
+                           {env=setPathEnv copyPath env, strKind=strKind})
+                       envMap
+                    )
+
               val ((actualArgEnv, actualArgDecls), argId) =
                   let
                     val argSig = #2 (Sig.refreshSpecEnv argSig)
@@ -779,11 +910,20 @@ in
                   handle e => raise e
               val bodyEnv = N.reduceEnv bodyEnv 
                   handle e => raise e
+
+              val bodyEnv = exceptionExternEnv loc nil bodyEnv
+              val bodyEnv = setPathEnv copyPath bodyEnv
+
+              (* bug 243? *)
+              val pathTfvListList = L.setLiftedTysEnv bodyEnv
+                  handle e => raise e
+
               val (externSet, bodyEnv, icdecls) = genTypedExternVarsEnv loc path bodyEnv (externSet, nil)
+
             in
-              (externSet, bodyEnv, icdecls)
+              (externSet, {env=bodyEnv, strKind=strKind}, icdecls)
             end
-            handle SC.SIGCHECK => (externSet, V.emptyEnv, nil)
+            handle SC.SIGCHECK => (externSet, {env=V.emptyEnv, strKind=V.STRENV (StructureID.generate())}, nil)
         end (* end of pidec *)
       handle exn => raise bug "uncaught exception in evalPistr"
 
@@ -859,7 +999,7 @@ in
 
         val startTypid = TypID.generate()
 
-        val (_, bodyInterfaceEnv,_) = evalPistr nil evalEnv (PathSet.empty, bodyStr)
+        val (_, {env=bodyInterfaceEnv,strKind},_) = evalPistr nil evalEnv (PathSet.empty, bodyStr)
 (*
         val (_, bodyInterfaceEnv,_) = evalPistr [functorName] evalEnv (PathSet.empty, bodyStr)
 *)
@@ -885,7 +1025,7 @@ in
             case var of
               I.ICEXVAR ({path, ty},_) => ty
             | I.ICEXN ({path, id, ty},_) => ty
-            | I.ICEXN_CONSTRUCTOR ({id, ty, path}, loc) => BV.exntagTy
+            | I.ICEXN_CONSTRUCTOR ({id, ty, path}, loc) => BT.exntagITy
             | _ => 
               (
                raise bug "*** VARTOTY ***"
@@ -893,7 +1033,7 @@ in
 
         val bodyTy =
             case allVars of
-              nil => BV.unitTy
+              nil => BT.unitITy
             | _ => I.TYRECORD (Utils.listToFields (map varToTy allVars))
         val polyArgTys = map (fn (x,ty) => ty) polyArgPats 
         val firstArgTy =
@@ -914,7 +1054,7 @@ in
             case functorTy2 of
               I.TYPOLY _ => functorTy2
             | I.TYFUNM _ => functorTy2
-            | _ => I.TYFUNM([BV.unitTy], functorTy2)
+            | _ => I.TYFUNM([BT.unitITy], functorTy2)
 
         val decl =
             I.ICEXTERNVAR ({path=[FUNCORPREFIX,functorName], ty=functorTy},
@@ -973,7 +1113,8 @@ in
          (externSet, V.emptyTopEnv, nil)
          pitopdecList
       )
-      handle exn => raise bug "uncaught exception in evalPitopdecList"
+      handle exn => raise exn
+             (* raise bug "uncaught exception in evalPitopdecList" *)
 
   fun evalInterfaceDec env ({interfaceId,requires=idLocList,topdecs,...}
                             :PI.interfaceDec, IntEnv) =
@@ -1005,6 +1146,7 @@ in
 
   fun evalInterfaces env interfaceDecList =
       foldl (evalInterfaceDec env) InterfaceID.Map.empty interfaceDecList
-      handle exn => raise bug "uncaught exception in evalInterfaces"
+      handle exn => raise exn
+             (* raise bug "uncaught exception in evalInterfaces" *)
 end
 end

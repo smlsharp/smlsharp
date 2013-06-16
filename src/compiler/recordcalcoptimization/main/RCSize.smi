@@ -1,0 +1,19 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+
+structure RCSize =
+struct
+  val sizeExp : RecordCalc.rcexp -> int
+  val sizeDecl : RecordCalc.rcdecl -> int
+  val sizeDeclList : RecordCalc.rcdecl list -> int
+  val isSmallerExp : RecordCalc.rcexp * int -> bool
+  val isSmallerDecl : RecordCalc.rcdecl * int -> bool
+  val isSmallerDeclList : RecordCalc.rcdecl list * int -> bool
+end

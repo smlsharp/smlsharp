@@ -293,16 +293,25 @@ print_heap_occupancy()
 		return;
 
 	stat_notice("heap:");
-	count = heap_filled(&sml_heap_from_space, &filled);
-	stat_notice(" from:");
-	stat_notice("  - {filled: %lu, count: %lu, used: %lu}",
-		    (unsigned long)filled, (unsigned long)count,
-		    (unsigned long)HEAP_USED(sml_heap_from_space));
 	count = heap_filled(&sml_heap_to_space, &filled);
 	stat_notice(" to:");
 	stat_notice("  - {filled: %lu, count: %lu, used: %lu}",
 		    (unsigned long)filled, (unsigned long)count,
 		    (unsigned long)HEAP_USED(sml_heap_to_space));
+	count = heap_filled(&sml_heap_from_space, &filled);
+	stat_notice(" from:");
+	stat_notice("  - {filled: %lu, count: %lu, used: %lu}",
+		    (unsigned long)filled, (unsigned long)count,
+		    (unsigned long)HEAP_USED(sml_heap_from_space));
+	stat_notice("  # using %lu blocks, %lu / %lu bytes, occ %.2f %%",
+		    (unsigned long)count, (unsigned long)filled, 
+		    (unsigned long)
+		    (sml_heap_to_space.limit - sml_heap_to_space.base)
+		    + (sml_heap_from_space.limit - sml_heap_from_space.base),
+		    (double)filled /
+		    ((sml_heap_to_space.limit - sml_heap_to_space.base)
+		     + (sml_heap_from_space.limit - sml_heap_from_space.base))
+		    * 100.0);
 }
 #endif /* GCSTAT */
 
@@ -413,6 +422,10 @@ sml_heap_free()
 	stat_notice("total copy bytes    :%10lu #bytes, avg:%8.2f bytes",
 		    gcstat.gc.total_copy_bytes,
 		    (double)gcstat.gc.total_copy_bytes
+		    / (double)gcstat.gc.count);
+	stat_notice("total copy count    :%10lu #times, avg:%8.2f times",
+		    gcstat.gc.total_copy_count,
+		    (double)gcstat.gc.total_copy_count
 		    / (double)gcstat.gc.count);
 	stat_notice("total forward count :%10lu #times, avg:%8.2f times",
 		    gcstat.gc.total_forward_count,
@@ -567,8 +580,10 @@ do_gc(void)
 
 	sml_malloc_pop_and_mark(forward_deep, MAJOR);
 
+#ifndef FAIR_COMPARISON
 	/* check finalization */
 	sml_check_finalizer(forward_deep, MAJOR);
+#endif /* FAIR_COMPARISON */
 
 	/* clear from-space, and swap two spaces. */
 	heap_space_clear(&sml_heap_from_space);
@@ -618,7 +633,9 @@ sml_heap_gc(void)
 	GIANT_LOCK(NULL);
 	do_gc();
 	GIANT_UNLOCK();
+#ifndef FAIR_COMPARISON
 	sml_run_finalizer(NULL);
+#endif /* FAIR_COMPARISON */
 }
 
 #ifdef GCSTAT
@@ -672,7 +689,9 @@ slow_alloc(size_t obj_size)
 	}
 
 	GIANT_UNLOCK();
+#ifndef FAIR_COMPARISON
 	obj = sml_run_finalizer(obj);
+#endif /* FAIR_COMPARISON */
 	return obj;
 }
 
@@ -704,6 +723,8 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 		obj = slow_alloc(inc);
 	}
 
+#ifndef FAIR_COMPARISON
 	OBJ_HEADER(obj) = 0;
+#endif /* FAIR_COMPARISON */
 	return obj;
 }

@@ -1,7 +1,7 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
 
-_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 
 structure RuntimeTypes =
 struct
@@ -15,5 +15,5 @@ struct
     | UCHARty
     | UINTty
   val format_ty : ty -> SMLFormat.FormatExpression.expression list
-  val runtimeTyOfBuiltinTy : BuiltinType.ty -> ty
+  val runtimeTyOfBuiltinTy : BuiltinTypeNames.bty -> ty
 end

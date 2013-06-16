@@ -1,9 +1,6 @@
 (* ML-Yacc Parser Generator (c) 1989, 1991 Andrew W. Appel, David R. Tarditi 
  *
- * $Log: sigs.sml,v $
- * Revision 1.1  2005/09/05 13:28:58  kiyoshiy
- * added.
- *
+ * $Log$
  * Revision 1.2  1996/02/26  15:02:38  george
  *    print no longer overloaded.
  *    use of makestring has been removed and replaced with Int.toString ..

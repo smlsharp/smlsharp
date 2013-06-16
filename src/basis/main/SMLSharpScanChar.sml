@@ -51,21 +51,21 @@ struct
   val ord = SMLSharp.Char.ord
   val chr_unsafe = SMLSharp.Char.chr_unsafe
 
-  fun scanDigit getc strm =
+  fun 's scanDigit (getc:(char, 's) StringCvt.reader) strm =
       case getc strm of
         NONE => NONE
       | SOME (c, strm) =>
         if #"0" <= c andalso c <= #"9"
         then SOME (ord c - 0x30, strm) else NONE
 
-  fun scanOctDigit getc strm =
+  fun 's scanOctDigit (getc:(char, 's) StringCvt.reader) strm =
       case getc strm of
         NONE => NONE
       | SOME (c, strm) =>
         if #"0" <= c andalso c <= #"8"
         then SOME (ord c - 0x30, strm) else NONE
 
-  fun scanHexDigit getc strm =
+  fun 's scanHexDigit (getc:(char, 's) StringCvt.reader) strm =
       case getc strm of
         NONE => NONE
       | SOME (c, strm) =>
@@ -74,7 +74,7 @@ struct
         else if #"a" <= c andalso c <= #"f" then SOME (ord c - 0x61 + 10, strm)
         else NONE
 
-  fun scanBinDigit getc strm =
+  fun 's scanBinDigit (getc:(char, 's) StringCvt.reader) strm =
       case getc strm of
         NONE => NONE
       | SOME (#"0", strm) => SOME (0, strm)
@@ -237,7 +237,10 @@ struct
       | SOME (c, strm) =>
         if #"\032" <= c andalso c <= #"\126" then SOME (c, strm) else NONE
 
-  fun scanRepeat0 scan (getc:(char,'a) StringCvt.reader) strm =
+  fun ('a, 'b) scanRepeat0 
+        (scan : ((char, 'a) StringCvt.reader -> ('b, 'a) StringCvt.reader))
+        (getc : (char,'a) StringCvt.reader) 
+        strm =
       let
         fun loop (z, strm) =
             case scan getc strm of
@@ -247,7 +250,10 @@ struct
         loop (nil, strm)
       end
 
-  fun scanRepeat1 scan getc strm =
+  fun ('a, 'b) scanRepeat1 
+      (scan : ((char, 'a) StringCvt.reader -> ('b, 'a) StringCvt.reader))
+      (getc : (char,'a) StringCvt.reader) 
+      strm =
       case scan getc strm of
         NONE => NONE
       | SOME (c, strm) =>
@@ -285,7 +291,10 @@ struct
             SOME ({radix=16, digits=digits}, strm)
         )
 
-  fun scanInt radix getc strm =
+  fun 's scanInt 
+         (radix : StringCvt.radix)
+         (getc : (char, 's) StringCvt.reader)
+         strm =
       let
         val strm = skipSpaces getc strm
         val (neg, strm) =
@@ -312,7 +321,10 @@ struct
           SOME ({neg = neg, radix = radix, digits = digits}, strm)
       end
 
-  fun scanWord radix getc strm =
+  fun 's scanWord 
+         (radix : StringCvt.radix)
+         (getc : (char, 's) StringCvt.reader)
+         strm =
       let
         val strm = skipSpaces getc strm
       in

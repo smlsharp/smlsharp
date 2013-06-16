@@ -1,8 +1,5 @@
 
-functor LexMLYACC(structure Tokens : Mlyacc_TOKENS
-		  structure Hdr : HEADER (* = Header *)
-		    where type prec = Header.prec
-		      and type inputSource = Header.inputSource) : ARG_LEXER
+structure LexMLYACC
 =
    struct
     structure UserDeclarations =
@@ -15,19 +12,19 @@ functor LexMLYACC(structure Tokens : Mlyacc_TOKENS
   %footer added for defuncteringing ml.grm.sml
  *)
 
-structure Tokens = Tokens
+structure Tokens = LrVals.Tokens
 type svalue = Tokens.svalue
 type pos = int
-type ('a,'b) token = ('a,'b) Tokens.token
-type lexresult = (svalue,pos) token
+type token = Tokens.token
+type lexresult = token
 
-type lexarg = Hdr.inputSource
+type lexarg = Header.inputSource
 type arg = lexarg
 
 open Tokens
-val error = Hdr.error
-val lineno = Hdr.lineno
-val text = Hdr.text
+val error = Header.error
+val lineno = Header.lineno
+val text = Header.text
 
 val pcount = ref 0
 val commentLevel = ref 0
@@ -57,6 +54,8 @@ local val dict =
    ("%noshift",NOSHIFT),
    ("%header",PERCENT_HEADER),
    ("%footer",PERCENT_FOOTER), 
+   ("%decompose",PERCENT_DECOMPOSE),
+   ("%blocksize",PERCENT_BLOCKSIZE),
    ("%pure",PERCENT_PURE),
    ("%token_sig_info",PERCENT_TOKEN_SIG_INFO),
    ("%arg",PERCENT_ARG),
@@ -818,15 +817,15 @@ let fun continue() : Internal.result =
 		    end
 | 117 => let val yytext=yymktext() in Add yytext; inc commentLevel; continue() end
 | 120 => let val yytext=yymktext() in Add yytext; continue() end
-| 122 => (continue())
-| 125 => (dec commentLevel;
+| 122 => let val yytext=yymktext() in continue() end
+| 125 => let val yytext=yymktext() in dec commentLevel;
 		          if !commentLevel=0 then YYBEGIN A else ();
-			  continue ())
-| 128 => (inc commentLevel; continue())
-| 131 => (continue())
+			  continue () end
+| 128 => let val yytext=yymktext() in inc commentLevel; continue() end
+| 131 => let val yytext=yymktext() in continue() end
 | 133 => let val yytext=yymktext() in Add yytext; YYBEGIN CODE; continue() end
 | 135 => let val yytext=yymktext() in Add yytext; continue() end
-| 14 => (YYBEGIN A; HEADER (concat (rev (!text)),!lineno,!lineno))
+| 14 => let val yytext=yymktext() in YYBEGIN A; HEADER (concat (rev (!text)),!lineno,!lineno) end
 | 140 => let val yytext=yymktext() in Add yytext; error inputSource (!lineno) "unclosed string";
  	            inc lineno; YYBEGIN CODE; continue() end
 | 143 => let val yytext=yymktext() in Add yytext; continue() end
@@ -841,31 +840,31 @@ let fun continue() : Internal.result =
 | 2 => let val yytext=yymktext() in Add yytext; YYBEGIN COMMENT; commentLevel := 1;
 		    continue(); YYBEGIN INITIAL; continue() end
 | 21 => let val yytext=yymktext() in Add yytext; continue() end
-| 26 => (inc lineno; continue ())
-| 31 => (continue())
-| 34 => (OF(!lineno,!lineno))
-| 38 => (FOR(!lineno,!lineno))
-| 40 => (LBRACE(!lineno,!lineno))
-| 42 => (RBRACE(!lineno,!lineno))
-| 44 => (COMMA(!lineno,!lineno))
-| 46 => (ASTERISK(!lineno,!lineno))
-| 49 => (ARROW(!lineno,!lineno))
-| 5 => (YYBEGIN EMPTYCOMMENT; commentLevel := 1; continue())
-| 55 => (PREC(Hdr.LEFT,!lineno,!lineno))
-| 62 => (PREC(Hdr.RIGHT,!lineno,!lineno))
-| 72 => (PREC(Hdr.NONASSOC,!lineno,!lineno))
+| 26 => let val yytext=yymktext() in inc lineno; continue () end
+| 31 => let val yytext=yymktext() in continue() end
+| 34 => let val yytext=yymktext() in OF(!lineno,!lineno) end
+| 38 => let val yytext=yymktext() in FOR(!lineno,!lineno) end
+| 40 => let val yytext=yymktext() in LBRACE(!lineno,!lineno) end
+| 42 => let val yytext=yymktext() in RBRACE(!lineno,!lineno) end
+| 44 => let val yytext=yymktext() in COMMA(!lineno,!lineno) end
+| 46 => let val yytext=yymktext() in ASTERISK(!lineno,!lineno) end
+| 49 => let val yytext=yymktext() in ARROW(!lineno,!lineno) end
+| 5 => let val yytext=yymktext() in YYBEGIN EMPTYCOMMENT; commentLevel := 1; continue() end
+| 55 => let val yytext=yymktext() in PREC(Header.LEFT,!lineno,!lineno) end
+| 62 => let val yytext=yymktext() in PREC(Header.RIGHT,!lineno,!lineno) end
+| 72 => let val yytext=yymktext() in PREC(Header.NONASSOC,!lineno,!lineno) end
 | 76 => let val yytext=yymktext() in lookup(yytext,!lineno,!lineno) end
 | 79 => let val yytext=yymktext() in TYVAR(yytext,!lineno,!lineno) end
 | 8 => let val yytext=yymktext() in Add yytext; YYBEGIN COMMENT; commentLevel := 1;
 		    continue(); YYBEGIN CODE; continue() end
 | 83 => let val yytext=yymktext() in IDDOT(yytext,!lineno,!lineno) end
 | 86 => let val yytext=yymktext() in INT (yytext,!lineno,!lineno) end
-| 89 => (DELIMITER(!lineno,!lineno))
-| 91 => (COLON(!lineno,!lineno))
-| 93 => (BAR(!lineno,!lineno))
+| 89 => let val yytext=yymktext() in DELIMITER(!lineno,!lineno) end
+| 91 => let val yytext=yymktext() in COLON(!lineno,!lineno) end
+| 93 => let val yytext=yymktext() in BAR(!lineno,!lineno) end
 | 96 => let val yytext=yymktext() in ID ((yytext,!lineno),!lineno,!lineno) end
-| 98 => (pcount := 1; actionstart := (!lineno);
-		    text := nil; YYBEGIN CODE; continue() before YYBEGIN A)
+| 98 => let val yytext=yymktext() in pcount := 1; actionstart := (!lineno);
+		    text := nil; YYBEGIN CODE; continue() before YYBEGIN A end
 | _ => raise Internal.LexerError
 
 		) end )
