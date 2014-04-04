@@ -1,6 +1,3 @@
-include "General.smi"
-include "Vector.smi"
-
 signature VECTOR_SLICE =
 sig
   type 'a slice

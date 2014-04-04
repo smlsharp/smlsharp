@@ -1,15 +1,6 @@
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/binary-op.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/StringCvt.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/Substring.smi"
-_require "../../../basis/main/OS.smi"
-_require "../../../basis/main/General.smi"
-
-_require "Filename.smi"
-_require "CoreUtils.smi"
+_require "basis.smi"
+_require "./Filename.smi"
+_require "./CoreUtils.smi"
 
 structure TempFile =
 struct

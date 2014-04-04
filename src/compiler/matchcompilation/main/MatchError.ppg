@@ -10,13 +10,12 @@ local
   structure TCU = TypedCalcUtils
   structure RC = RecordCalc
   structure BF = SMLFormat.BasicFormatters
-  structure C = Control
   structure A = Absyn
   structure MD = MatchData
   structure BT = BuiltinTypes
   structure T = Types
   structure UE = UserError
-  fun bug s = Control.Bug ("MatchData: " ^ s)
+  fun bug s = Bug.Bug ("MatchData: " ^ s)
 in
   fun format_flag x = 
       if !x = 0
@@ -42,7 +41,7 @@ in
    *)
   exception
   (*%
-   * @format(message * rule rules) message \n rules(rule)(+1)
+   * @format(message * rule rules) message \n rules(rule)(\n)
    *)
   MatchError of string * rule list
   end
@@ -54,33 +53,30 @@ in
   val matchNotExhaustiveMessage = "match nonexhaustive"
   val matchBothMessage = "match redundant and nonexhaustive"
 
+  fun toRCExExn {longsymbol, ty} =
+      {path=Symbol.longsymbolToLongid longsymbol,
+       ty=ty}
+
   fun raiseBindFailExp resultTy loc = 
-      let
-        val bindExn = BT.BindExExn
-      in                                 
-        RC.RCRAISE
-          {exp=RC.RCEXNCONSTRUCT{exn=TC.EXEXN bindExn,
-                                 instTyList=nil, 
-                                 argExpOpt=NONE, 
-                                 loc=loc}, 
-           ty=resultTy,
-           loc=loc}
-      end
+      RC.RCRAISE
+        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN (toRCExExn BT.BindExExn),
+                               instTyList=nil, 
+                               argExpOpt=NONE, 
+                               loc=loc}, 
+         ty=resultTy,
+         loc=loc}
 
   fun raiseMatchFailExp resultTy loc = 
-      let
-        val matchExn = BT.MatchExExn
-      in                                 
-        RC.RCRAISE
-          {exp=RC.RCEXNCONSTRUCT{exn=TC.EXEXN matchExn, 
-                                 instTyList=nil, 
-                                 argExpOpt=NONE, 
-                                 loc=loc}, 
-           ty=resultTy, 
-           loc=loc}
-      end
+      RC.RCRAISE
+        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN (toRCExExn BT.MatchExExn), 
+                               instTyList=nil, 
+                               argExpOpt=NONE, 
+                               loc=loc}, 
+         ty=resultTy, 
+         loc=loc}
+
   fun handleFail v resultTy loc =
-      RC.RCRAISE {exp=RC.RCVAR (v, loc), ty=resultTy, loc=loc}
+      RC.RCRAISE {exp=RC.RCVAR v, ty=resultTy, loc=loc}
 
   fun raiseMatchCompBugExp resultTy loc =
       RC.RCSEQ
@@ -89,12 +85,8 @@ in
               {funExp =
                  RC.RCFFI
                    (RC.RCFFIIMPORT
-                      {ptrExp =
-                         RC.RCGLOBALSYMBOL {name = "sml_matchcomp_bug",
-                                            kind = A.ForeignCodeSymbol,
-                                            ty = BT.ptrTy,
-                                            loc = loc},
-                       ffiTy = TC.FFIFUNTY (NONE, nil, nil, loc)},
+                      {funExp = RC.RCFFIEXTERN "sml_matchcomp_bug",
+                       ffiTy = TC.FFIFUNTY (NONE, nil, NONE, nil, loc)},
                     T.FUNMty ([BT.unitTy], BT.unitTy),
                     loc),
                funTy = T.FUNMty ([BT.unitTy], BT.unitTy),
@@ -104,7 +96,7 @@ in
                loc = loc},
             RC.RCRAISE
               {exp = RC.RCEXNCONSTRUCT
-                       {exn = TC.EXEXN BT.MatchExExn,
+                       {exn = RC.EXEXN (toRCExExn BT.MatchExExn),
                         instTyList = nil, 
                         argExpOpt = NONE,
                         loc = loc},

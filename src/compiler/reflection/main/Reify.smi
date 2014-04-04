@@ -1,27 +1,32 @@
-_require "../../../basis.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "smlnj-lib/Util/binary-set-fn.smi"
+_require "../../../reifiedterm/main/ReflectionControl.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-_require "../../../smlformat-lib.smi"
-
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
 _require "../../typedcalc/main/TypedCalcUtils.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../types/main/EvalIty.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
-_require "../../types/main/TypesUtils.smi"
+_require "../../types/main/TypesBasics.smi"
 _require "../../types/main/Unify.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../typeinference2/main/TypeInferenceUtils.smi"
+_require "../../typeinference2/main/InferTypes2.smi"
+_require "../../nameevaluation/main/NameEval.smi"
 _require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
 _require "../../nameevaluation/main/NameEvalUtils.smi"
 _require "../../nameevaluation/main/NormalizeTy.smi"
 _require "../../reflection/main/ReifiedTermData.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../util/main/SmlppgUtil.ppg.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
 
 structure Reify =
 struct
@@ -30,5 +35,7 @@ struct
   val reifyEnv : NameEvalEnv.env -> NameEvalEnv.env * TypedCalc.tpexp
   val reifySigE : NameEvalEnv.sigE -> TypedCalc.tpexp
   val reifyFunE : NameEvalEnv.funE -> TypedCalc.tpexp
-  val reifyTopEnv : NameEvalEnv.topEnv -> NameEvalEnv.topEnv * TypedCalc.tpexp
+  val reifyTopEnv : NameEval.exnCon list -> NameEvalEnv.topEnv -> NameEvalEnv.topEnv * TypedCalc.tpexp
+  val reifyExn : TypedCalc.tpexp -> TypedCalc.tpexp
+  val exnToString : unit ->  TypedCalc.tpexp
 end

@@ -2,7 +2,6 @@
  * prim.c
  * @copyright (c) 2007-2010, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: prim.c,v 1.12 2008/12/11 10:22:51 katsu Exp $
  */
 
 #include <stdlib.h>
@@ -32,6 +31,9 @@
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_TIMES_H)
 #include <sys/times.h>
 #endif /* HAVE_SYS_TIMES_H */
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_RESOURCE_H)
+#include <sys/resource.h>
+#endif /* HAVE_SYS_RESOURCE_H */
 #if defined(HAVE_CONFIG_H) && !defined(HAVE_UTIMES) && defined(HAVE_UTIME_H)
 #include <utime.h>
 #endif /* HAVE_UTIME_H */
@@ -284,6 +286,23 @@ int prim_fegetround()
 #else
 	return fegetround();
 #endif /* !HAVE_FEGETROUND */
+}
+
+int
+sml_memcmp(const char *s1, int i1, const char *s2, int i2, int len)
+{
+	s1 += i1;
+	s2 += i2;
+	if (s1 == s2)
+		return 0;
+	while (len > 0) {
+		unsigned char c1 = *s1;
+		unsigned char c2 = *s2;
+		if (c1 != c2)
+			return (int)c1 - (int)c2;
+		len--, s1++, s2++;
+	}
+	return 0;
 }
 
 int
@@ -577,6 +596,13 @@ prim_IntInf_toWord(sml_intinf_t *obj)
 	return n;
 }
 
+double
+prim_IntInf_toReal(sml_intinf_t *obj)
+{
+	ASSERT(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+	return sml_intinf_get_d(obj);
+}
+
 sml_intinf_t *
 prim_IntInf_fromInt(int x)
 {
@@ -590,6 +616,14 @@ prim_IntInf_fromWord(unsigned int x)
 {
 	sml_intinf_t *n = sml_intinf_new();
 	sml_intinf_set_ui(n, x);
+	return n;
+}
+
+sml_intinf_t *
+prim_IntInf_fromReal(double x)
+{
+	sml_intinf_t *n = sml_intinf_new();
+	sml_intinf_set_d(n, x);
 	return n;
 }
 
@@ -816,7 +850,22 @@ prim_Time_gettimeofday(int *ret)
 int
 prim_Timer_getTimes(int *ret)
 {
-#ifdef HAVE_TIMES
+#if defined HAVE_GETRUSAGE
+	struct rusage r;
+	int err;
+
+	err = getrusage(RUSAGE_SELF, &r);
+	if (err == 0) {
+		ret[0] = r.ru_stime.tv_sec;
+		ret[1] = r.ru_stime.tv_usec;
+		ret[2] = r.ru_utime.tv_sec;
+		ret[3] = r.ru_utime.tv_usec;
+		/* FIXME: do we put GC time still here? */
+		ret[4] = 0;  /* GC seconds */
+		ret[5] = 0;  /* GC microseconds */
+	}
+	return err;
+#elif defined HAVE_TIMES
 	struct tms tms;
 	static long clocks_per_sec = 0;
 	clock_t clk;
@@ -856,6 +905,24 @@ prim_Timer_getTimes(int *ret)
 #endif /* HAVE_TIMES */
 }
 
+int
+prim_Date_localOffset(int *ret)
+{
+	time_t t1, t2;
+	struct tm *tm;
+
+	t1 = time(NULL);
+	tm = gmtime(&t1);
+	if (tm == NULL)
+		return -1;
+	t2 = mktime(tm);
+	if (t2 == -1)
+		return -1;
+
+	*ret = (int)difftime(t1, t2);
+	return 0;
+}
+
 unsigned int
 prim_Date_strfTime(char *buf, unsigned int maxsize, const char *format,
 		   int sec, int min, int hour, int mday, int month,
@@ -872,6 +939,30 @@ prim_Date_strfTime(char *buf, unsigned int maxsize, const char *format,
 	tm.tm_yday = yday;
 	tm.tm_isdst = isdst;
 	return strftime(buf, maxsize, format, &tm);
+}
+
+
+#include <locale.h>
+char *
+prim_set_lctime (const char *locale)
+{
+  setlocale(LC_TIME, locale);
+}
+
+unsigned int
+prim_time_to_string(time_t tm, char * buf, const char *format)
+{
+  struct tm *now;
+  now = localtime(&tm);
+  return strftime(buf, 255, format, now);
+}
+
+time_t
+prim_string_to_time(char * buf, const char *format)
+{
+  struct tm now;
+  strptime(buf, format, &now);
+  return mktime(&now);
 }
 
 char *
@@ -1044,41 +1135,29 @@ prim_StandardC_errno()
 	return errno;
 }
 
-int
-prim_cconst_int(const char *name)
-{
+#define PRIM_CONST_FUNC(ty, const) \
+	ty prim_const_##const() { return const; }
+#define PRIM_CONST_FUNC_DUMMY(ty, const) \
+	ty prim_const_##const() { return 0; }
+
 #ifdef HAVE_DLOPEN
-	if (strcmp(name, "RTLD_LAZY") == 0)
-		return RTLD_LAZY;
-	if (strcmp(name, "RTLD_NOW") == 0)
-		return RTLD_NOW;
-	if (strcmp(name, "RTLD_GLOBAL") == 0)
-		return RTLD_GLOBAL;
-	if (strcmp(name, "RTLD_LOCAL") == 0)
-		return RTLD_LOCAL;
+PRIM_CONST_FUNC(int, RTLD_LAZY)
+PRIM_CONST_FUNC(int, RTLD_NOW)
+PRIM_CONST_FUNC(int, RTLD_LOCAL)
+PRIM_CONST_FUNC(int, RTLD_GLOBAL)
+#else
+PRIM_CONST_FUNC_DUMMY(int, RTLD_LAZY)
+PRIM_CONST_FUNC_DUMMY(int, RTLD_NOW)
+PRIM_CONST_FUNC_DUMMY(int, RTLD_LOCAL)
+PRIM_CONST_FUNC_DUMMY(int, RTLD_GLOBAL)
 #endif /* HAVE_DLOPEN */
-	if (strcmp(name, "SEEK_SET") == 0)
-		return SEEK_SET;
-	if (strcmp(name, "SEEK_CUR") == 0)
-		return SEEK_CUR;
-#ifdef FE_TONEAREST
-	if (strcmp(name, "FE_TONEAREST") == 0)
-		return FE_TONEAREST;
-#endif /* FE_TONEAREST */
-#ifdef FE_DOWNWARD
-	if (strcmp(name, "FE_DOWNWARD") == 0)
-		return FE_DOWNWARD;
-#endif /* FE_DOWNWARD */
-#ifdef FE_UPWARD
-	if (strcmp(name, "FE_UPWARD") == 0)
-		return FE_UPWARD;
-#endif /* FE_UPWARD */
-#ifdef FE_TOWARDZERO
-	if (strcmp(name, "FE_TOWARDZERO") == 0)
-		return FE_TOWARDZERO;
-#endif /* FE_TOWARDZERO */
-	return 0;
-}
+
+PRIM_CONST_FUNC(int, SEEK_SET)
+PRIM_CONST_FUNC(int, SEEK_CUR)
+PRIM_CONST_FUNC(int, FE_TONEAREST)
+PRIM_CONST_FUNC(int, FE_DOWNWARD)
+PRIM_CONST_FUNC(int, FE_UPWARD)
+PRIM_CONST_FUNC(int, FE_TOWARDZERO)
 
 static struct {
 	int errnum;
@@ -1396,37 +1475,20 @@ prim_GenericOS_lseek(int fd, /*off_t*/ int offset, int whence)
 	return lseek(fd, offset, whence);
 }
 
-
-#define ML_S_IFIFO  0x1000
-#define ML_S_IFCHR  0x2000
-#define ML_S_IFDIR  0x4000
-#define ML_S_IFBLK  0x6000
-#define ML_S_IFREG  0x8000
-#define ML_S_IFLNK  0xa000
-#define ML_S_IFSOCK 0xc000
-#define ML_S_ISUID  0x0800
-#define ML_S_ISGID  0x0400
-#define ML_S_ISVTX  0x0200
-#define ML_S_IRUSR  0x0100
-#define ML_S_IWUSR  0x0080
-#define ML_S_IXUSR  0x0040
-#define ML_S_IFMT   0xf000
-
-#ifndef S_IFLNK
-#define S_IFLNK  0
-#endif /* S_IFLNK */
-#ifndef S_IFSOCK
-#define S_IFSOCK  0
-#endif /* S_IFSOCK */
-#ifndef S_ISUID
-#define S_ISUID  0
-#endif /* S_ISUID */
-#ifndef S_ISGID
-#define S_ISGID  0
-#endif /* S_ISGID */
-#ifndef S_ISVTX
-#define S_ISVTX  0
-#endif /* S_ISVTX */
+PRIM_CONST_FUNC(unsigned int, S_IFMT)
+PRIM_CONST_FUNC(unsigned int, S_IFIFO)
+PRIM_CONST_FUNC(unsigned int, S_IFCHR)
+PRIM_CONST_FUNC(unsigned int, S_IFDIR)
+PRIM_CONST_FUNC(unsigned int, S_IFBLK)
+PRIM_CONST_FUNC(unsigned int, S_IFREG)
+PRIM_CONST_FUNC(unsigned int, S_IFLNK)
+PRIM_CONST_FUNC(unsigned int, S_IFSOCK)
+PRIM_CONST_FUNC(unsigned int, S_ISUID)
+PRIM_CONST_FUNC(unsigned int, S_ISGID)
+PRIM_CONST_FUNC(unsigned int, S_ISVTX)
+PRIM_CONST_FUNC(unsigned int, S_IRUSR)
+PRIM_CONST_FUNC(unsigned int, S_IWUSR)
+PRIM_CONST_FUNC(unsigned int, S_IXUSR)
 
 static void
 set_stat(struct stat *st, unsigned int *ret)
@@ -1436,43 +1498,10 @@ set_stat(struct stat *st, unsigned int *ret)
 
 	ret[0] = st->st_dev;
 	ret[1] = st->st_ino;
+	ret[2] = st->st_mode;
 	ret[3] = st->st_atime;
 	ret[4] = st->st_mtime;
 	ret[5] = st->st_size;
-
-#if S_IFIFO == ML_S_IFIFO \
-	&& S_IFCHR == ML_S_IFCHR \
-	&& S_IFDIR == ML_S_IFDIR \
-	&& S_IFBLK == ML_S_IFBLK \
-	&& S_IFREG == ML_S_IFREG \
-	&& S_IFLNK == ML_S_IFLNK \
-	&& S_IFSOCK == ML_S_IFSOCK \
-	&& S_ISUID == ML_S_ISUID \
-	&& S_ISGID == ML_S_ISGID \
-	&& S_ISVTX == ML_S_ISVTX \
-	&& S_IRUSR == ML_S_IRUSR \
-	&& S_IWUSR == ML_S_IWUSR \
-	&& S_IXUSR == ML_S_IXUSR
-	ret[2] = st->st_mode;
-#else
-	{
-		unsigned int mode = 0;
-		mode |= (st->st_mode & S_IFIFO) ? ML_S_IFIFO : 0;
-		mode |= (st->st_mode & S_IFCHR) ? ML_S_IFCHR : 0;
-		mode |= (st->st_mode & S_IFDIR) ? ML_S_IFDIR : 0;
-		mode |= (st->st_mode & S_IFBLK) ? ML_S_IFBLK : 0;
-		mode |= (st->st_mode & S_IFREG) ? ML_S_IFREG : 0;
-		mode |= (st->st_mode & S_IFLNK) ? ML_S_IFLNK : 0;
-		mode |= (st->st_mode & S_IFSOCK) ? ML_S_IFSOCK : 0;
-		mode |= (st->st_mode & S_ISUID) ? ML_S_ISUID : 0;
-		mode |= (st->st_mode & S_ISGID) ? ML_S_ISGID : 0;
-		mode |= (st->st_mode & S_ISVTX) ? ML_S_ISVTX : 0;
-		mode |= (st->st_mode & S_IRUSR) ? ML_S_IRUSR : 0;
-		mode |= (st->st_mode & S_IWUSR) ? ML_S_IWUSR : 0;
-		mode |= (st->st_mode & S_IXUSR) ? ML_S_IXUSR : 0;
-		ret[2] = mode;
-	}
-#endif
 }
 
 int
@@ -1494,6 +1523,18 @@ prim_GenericOS_stat(const char *filename, unsigned int *ret)
 	struct stat st;
 
 	err = stat(filename, &st);
+	if (err == 0)
+		set_stat(&st, ret);
+	return err;
+}
+
+int
+prim_GenericOS_lstat(const char *filename, unsigned int *ret)
+{
+	int err;
+	struct stat st;
+
+	err = lstat(filename, &st);
 	if (err == 0)
 		set_stat(&st, ret);
 	return err;
@@ -1750,26 +1791,6 @@ prim_GenericOS_poll(int *fdary, unsigned int *evary, int timeout_sec,
 #endif /* HAVE_SELECT | HAVE_POLL */
 }
 
-int
-prim_Platform_isBigEndian()
-{
-#ifdef WORDS_BIGENDIAN
-	return 1;
-#else
-	return 0;
-#endif /* WORDS_BIGENDIAN */
-}
-
-STRING
-prim_Platform_getPlatform()
-{
-#ifdef SMLSHARP_PLATFORM
-	return sml_str_new(SMLSHARP_PLATFORM);
-#else
-	return sml_str_new("");  /* dummy */
-#endif /* SMLSHARP_PLATFORM */
-}
-
 void
 prim_CopyMemory(void *dst, unsigned int doff,
 		const void *src, unsigned int soff,
@@ -1820,6 +1841,12 @@ prim_UnmanagedMemory_subReal(void *p)
 	return *(double*)p;
 }
 
+float
+prim_UnmanagedMemory_subFloat(void *p)
+{
+	return *(float*)p;
+}
+
 unsigned int
 prim_UnmanagedMemory_subWord(void *p)
 {
@@ -1841,7 +1868,11 @@ prim_UnmanagedMemory_subPtr(void *p)
 STRING
 prim_UnmanagedMemory_import(void *ptr, unsigned int len)
 {
-	return sml_str_new2(ptr, len);
+	void *obj;
+
+	obj = sml_obj_alloc(OBJTYPE_UNBOXED_VECTOR, len);
+	memcpy(obj, ptr, len);
+	return obj;
 }
 
 void *
@@ -1887,6 +1918,12 @@ void
 prim_UnmanagedMemory_updateReal(void *address, double value)
 {
 	*(double *)address = value;
+}
+
+void
+prim_UnmanagedMemory_updateFloat(void *address, float value)
+{
+	*(float *)address = value;
 }
 
 void

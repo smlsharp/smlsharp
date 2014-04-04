@@ -8,28 +8,34 @@
 structure AbsynSQL =
 struct
 
+  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
+  type symbol = Symbol.symbol
+
+  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
+  type longsymbol = Symbol.longsymbol
+
   (*% *)
   datatype 'exp command =
     (*% *)
     SQLSELECT of {selectListExps: 'exp list,
                   selectLabels: string list option,
-                  selectName: string option,
+                  selectName: symbol option,
                   fromClause: (string * 'exp) list,
                   whereClause: 'exp option,
                   orderByClause: {keyExp:'exp, orderAsc:bool} list,
                   loc: Loc.loc}
   | (*% *)
-    SQLINSERT of {table: string * string,
+    SQLINSERT of {table: symbol * string,
                   insertRows: 'exp option list list, (* NONE = DEFAULT *)
                   insertLabels: string list,
                   loc: Loc.loc}
   | (*% *)
-    SQLDELETE of {table: string * string,
+    SQLDELETE of {table: symbol * string,
                   tableName: string option,
                   whereClause: 'exp option,
                   loc: Loc.loc}
   | (*% *)
-    SQLUPDATE of {table: string * string,
+    SQLUPDATE of {table: symbol * string,
                   tableName: string option,
                   setListExps: 'exp list,
                   setLabels: string list,
@@ -52,10 +58,10 @@ struct
        *)
       SQLFN of 'pat * 'exp command * Loc.loc
     | (*%
-       * @format(str * ty * loc)
-       * N0{ "_sqlserver" +d "\"" str "\"" +1 ":" +d ty }
+       * @format(exp * ty * loc)
+       * N0{ "_sqlserver" +d exp +1 ":" +d ty }
        *)
-      SQLSERVER of string * 'ty * Loc.loc
+      SQLSERVER of 'exp * 'ty * Loc.loc
     | (*%
        * @format(exp * loc) "_sqlexec" +d exp
        *)

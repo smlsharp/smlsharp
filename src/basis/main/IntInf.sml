@@ -1,77 +1,25 @@
 (**
- * IntInf and its alias LargeInt 
- * @author YAMATODANI Kiyoshi
+ * IntInf, LargeInt
  * @author UENO Katsuhiro
- *
- * @author Atsushi Ohori (refactored from IntStructure)
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @author Atsushi Ohori
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "IntInf.smi"
 
-structure IntInf 
-(*
-: 
-sig
-  (* same as INTEGER except IntInf.int *)
-  type int = intInf
-  val toLarge : int -> int
-  val fromLarge : int -> int
-  val toInt : int -> SMLSharp.Int.int
-  val fromInt : SMLSharp.Int.int -> int
-  val toWord : int -> SMLSharp.Word.word
-  val fromWord : SMLSharp.Word.word -> int
-  val precision : SMLSharp.Int.int option
-  val minInt : int option
-  val maxInt : int option
-  val + : int * int -> int
-  val - : int * int -> int
-  val * : int * int -> int
-  val div : int * int -> int
-  val mod : int * int -> int
-  val quot : int * int -> int
-  val rem : int * int -> int
-  val compare : int * int -> order
-  val < : int * int -> bool
-  val <= : int * int -> bool
-  val > : int * int -> bool
-  val >= : int * int -> bool
-  val ~ : int -> int
-  val abs : int -> int
-  val min : int * int -> int
-  val max : int * int -> int
-  val sign : int -> SMLSharp.Int.int
-  val sameSign : int * int -> bool
-  val fmt : StringCvt.radix -> int -> string
-  val toString : int -> string
-  val scan : StringCvt.radix
-             -> (char, 'a) StringCvt.reader
-             -> (int, 'a) StringCvt.reader
-  val fromString : string -> int option
+infix 7 * / div mod
+infix 6 + -
+infixr 5 ::
+infix 4 = <> > >= < <=
+structure Int = SMLSharp_Builtin.Int
+structure Word = SMLSharp_Builtin.Word
 
-  val divMod : int * int -> int * int
-  val quotRem : int * int -> int * int
-  val pow : int * SMLSharp.Int.int -> int
-  val log2 : int -> SMLSharp.Int.int
-  val orb : int * int -> int
-  val xorb : int * int -> int
-  val andb : int * int -> int
-  val notb : int -> int
-  val << : int * SMLSharp.Word.word -> int
-  val ~>> : int * SMLSharp.Word.word -> int
+val minInt = ~0x80000000   (* 32 bit *)
+val maxInt = 0x7fffffff    (* 32 bit *)
 
-end
-*)
-=
+structure IntInf =
 struct
-local
-  infix 7 * / div mod
-  infix 6 + -
-  infixr 5 ::
-  infix 4 = <> > >= < <=
-  val minInt = ~0x80000000
-  val maxInt = 0x7fffffff
-in
-  type int = intInf
+
+  type int = SMLSharp_Builtin.IntInf.int
 
   val abs =
       _import "prim_IntInf_abs"
@@ -96,19 +44,13 @@ in
       : __attribute__((pure,no_callback,alloc)) (int, int) -> int
   val cmp =
       _import "prim_IntInf_cmp"
-      : __attribute__((pure,no_callback,alloc)) (int, int) -> SMLSharp.Int.int
+      : __attribute__((pure,no_callback)) (int, int) -> Int.int
   val toInt_unsafe =
       _import "prim_IntInf_toInt"
-      : __attribute__((pure,no_callback)) int -> SMLSharp.Int.int
-  val toWord =
-      _import "prim_IntInf_toWord"
-      : __attribute__((pure,no_callback)) int -> word
+      : __attribute__((pure,no_callback)) int -> Int.int
   val fromInt =
       _import "prim_IntInf_fromInt"
-      : __attribute__((pure,no_callback,alloc)) SMLSharp.Int.int -> int
-  val fromWord =
-      _import "prim_IntInf_fromWord"
-      : __attribute__((pure,no_callback,alloc)) word -> int
+      : __attribute__((pure,no_callback,alloc)) Int.int -> int
   val quot_unsafe =
       _import "prim_IntInf_quot"
       : __attribute__((pure,no_callback,alloc)) (int, int) -> int
@@ -117,10 +59,10 @@ in
       : __attribute__((pure,no_callback,alloc)) (int, int) -> int
   val pow_unsafe =
       _import "prim_IntInf_pow"
-      : __attribute__((pure,no_callback,alloc)) (int, SMLSharp.Int.int) -> int
+      : __attribute__((pure,no_callback,alloc)) (int, Int.int) -> int
   val log2_unsafe =
       _import "prim_IntInf_log2"
-      : __attribute__((pure,no_callback)) int -> SMLSharp.Int.int
+      : __attribute__((pure,no_callback)) int -> Int.int
   val orb =
       _import "prim_IntInf_orb"
       : __attribute__((pure,no_callback,alloc)) (int, int) -> int
@@ -136,12 +78,13 @@ in
 
   fun compare (x, y) =
       case cmp (x, y) of
-        0 => EQUAL
-      | n => if SMLSharp.Int.gt(n, 0) then GREATER else LESS
-  fun op <= (x, y) = SMLSharp.Int.lteq (cmp (x, y), 0)
-  fun op < (x, y) = SMLSharp.Int.lt (cmp (x, y), 0)
-  fun op >= (x, y) = SMLSharp.Int.gteq (cmp (x, y), 0)
-  fun op > (x, y) = SMLSharp.Int.gt (cmp (x, y), 0)
+        0 => General.EQUAL
+      | n => if Int.gt (n, 0) then General.GREATER else General.LESS
+
+  fun op <= (x, y) = Int.lteq (cmp (x, y), 0)
+  fun op < (x, y) = Int.lt (cmp (x, y), 0)
+  fun op >= (x, y) = Int.gteq (cmp (x, y), 0)
+  fun op > (x, y) = Int.gt (cmp (x, y), 0)
 
   fun toLarge n = n : int
   fun fromLarge n = n : int
@@ -151,7 +94,7 @@ in
       then raise Overflow
       else toInt_unsafe int
 
-  val precision : SMLSharp.Int.int option = NONE
+  val precision : Int.int option = NONE
   val minInt : int option = NONE
   val maxInt : int option = NONE
 
@@ -177,21 +120,22 @@ in
   fun quotRem (x, y) = (quot (x, y), rem (x, y))
 
   fun pow (x, y) =
-      if SMLSharp.Int.gt (y, 0)
+      if Int.gt (y, 0)
       then pow_unsafe (x, y)
       else if y = 0 then 1
       else if x = 0 then raise Div
       else if x = 1 then 1
-      else if x = ~1 then if SMLSharp.Int.mod (y, 2) = 0 then 1 else ~1
+      else if x = ~1
+      then if Word.andb (Word.fromInt y, 0w1) = 0w0 then 1 else ~1
       else 0
 
   fun log2 x =
       if x <= 0 then raise Domain else log2_unsafe x
 
   fun << (x, 0w0) = x
-    | << (x, width) = << (x * 2, SMLSharp.Word.sub (width, 0w1))
+    | << (x, width) = << (x + x, Word.sub (width, 0w1))
   fun ~>> (x, 0w0) = x
-    | ~>> (x, width) = ~>> (x div 2, SMLSharp.Word.sub (width, 0w1))
+    | ~>> (x, width) = ~>> (quot_unsafe (x, 2), Word.sub (width, 0w1))
 
   fun min (x, y) = if x < y then x else y
   fun max (x, y) = if x < y then y else x
@@ -200,27 +144,24 @@ in
 
   fun fmt radix n =
       let
-        val r = fromInt (SMLSharpScanChar.radixToInt radix)
+        val r = fromInt (SMLSharp_ScanChar.radixToInt radix)
         fun loop (n, z) =
             if n <= 0 then z
             else let val m = toInt_unsafe (mod_unsafe (n, r))
                      val n = div_unsafe (n, r)
-                 in loop (n, SMLSharpScanChar.intToDigit m :: z)
+                 in loop (n, SMLSharp_ScanChar.intToDigit m :: z)
                  end
       in
         if n = 0 then "0"
-        else if n < 0 then implode (#"~" :: loop (~n, nil))
-        else implode (loop (n, nil))
+        else if n < 0 then String.implode (#"~" :: loop (~n, nil))
+        else String.implode (loop (n, nil))
       end
 
   fun toString n =
       fmt StringCvt.DEC n
 
-  fun 'a scan 
-        (radix : StringCvt.radix)
-        (getc : (char, 'a) StringCvt.reader)
-        strm =
-      case SMLSharpScanChar.scanInt radix getc strm of
+  fun scan radix (getc : (char, 'a) StringCvt.reader) strm =
+      case SMLSharp_ScanChar.scanInt radix getc strm of
         NONE => NONE
       | SOME ({neg, radix, digits}, strm) =>
         let
@@ -236,7 +177,5 @@ in
       StringCvt.scanString (scan StringCvt.DEC) string
 
 end
-end (* IntInf *)
 
 structure LargeInt = IntInf
-

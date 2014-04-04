@@ -3,6 +3,9 @@
  *
  * @copyright (c) 2011, Tohoku University.
  * @author UENO Katsuhiro
+ *
+ * 2012-10-13 ohori:
+   Changed string id and longids to symbols and long symbols
  *)
 structure PatternCalcInterface =
 struct
@@ -13,8 +16,11 @@ struct
   (*% @formatter(Absyn.ty) Absyn.format_ty *)
   type ty = Absyn.ty
 
-  (*% @formatter(Absyn.longid) Absyn.format_longid *)
-  type longid = Absyn.longid
+  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
+  type symbol = Symbol.symbol
+
+  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
+  type longsymbol = Symbol.longsymbol
 
   (*% @formatter(Absyn.tvar) Absyn.format_tvar *)
   type tvar = Absyn.tvar
@@ -27,11 +33,13 @@ struct
    *)
   type overloadCase = AbsynInterface.overloadCase
 
+(*
   (*%
    * @formatter(AbsynInterface.overloadMatch)
    * AbsynInterface.format_overloadMatch
    *)
   type overloadMatch = AbsynInterface.overloadMatch
+*)
 
   (*%
    * @formatter(AbsynInterface.overloadInstance)
@@ -60,7 +68,7 @@ struct
    |  (*%
        @format(path) path
       *)
-     LIFTEDty of longid
+     LIFTEDty of longsymbol
 
   (*%
    * @formatter(option) TermFormat.formatOptionalOption
@@ -73,22 +81,22 @@ struct
    *)
   datatype pidec =
       (*%
-         @format({scopedTvars, vid, body, loc})
-           "val" + scopedTvars body()(vid)
+         @format({scopedTvars, symbol, body, loc})
+           "val" + scopedTvars body()(symbol)
        *)
       PIVAL of
       {
         scopedTvars: scopedTvars,
-        vid: string,
+        symbol: symbol,
         body: valbindBody,
         loc: loc
       }
     | (*%
-        @format({tyvars: tv tvs, tycon, ty, loc})
+        @format({tyvars: tv tvs, symbol, ty, loc})
           "type" +d 
             tvs:seq(tv)("(",",",")")
             tvs:ifCons()(+)
-            tycon +d "="
+            symbol +d "="
         2[ +1 ty ]
        *)
       (*
@@ -97,16 +105,16 @@ struct
       PITYPE of
       {
         tyvars: tvar list,
-        tycon: string,
+        symbol: symbol,
         ty: ty,
         loc: loc
       }
     | (*%
-         @format({tyvars: tv tvs, tycon, runtimeTy, loc})
+         @format({tyvars: tv tvs, symbol, runtimeTy, loc})
           "type" +d 
            tvs:seq(tv)("(",",",")") 
            tvs:ifCons()(+)
-           tycon +d "(=" +d runtimeTy +d ")"
+           symbol +d "(=" +d runtimeTy +d ")"
        *)
       (*
        * type 'a foo ( = runtimeTy ) 
@@ -114,16 +122,16 @@ struct
       PIOPAQUE_TYPE of
       {
         tyvars: tvar list,
-        tycon: string,
+        symbol: symbol,
 	runtimeTy: runtimeTy,
         loc: loc
       }
     | (*%
-         @format({tyvars: tv tvs, tycon, runtimeTy, loc})
+         @format({tyvars: tv tvs, symbol, runtimeTy, loc})
          "eqtype" +d 
           tvs:seq(tv)("(",",",")") 
           tvs:ifCons()(+)
-          tycon +d "(=" +d runtimeTy +d ")"
+          symbol +d "(=" +d runtimeTy +d ")"
        *)
       (*
        * eqtype 'a foo ( = runtimeTy ) 
@@ -131,14 +139,14 @@ struct
       PIOPAQUE_EQTYPE of
       {
         tyvars: tvar list,
-        tycon: string,
+        symbol: symbol,
 	runtimeTy: runtimeTy,
         loc: loc
       }
     | (*%
-       * @format({tycon, builtinName, loc})
-       * "datatype" +d tycon +d "="
-       * 2[ +1 "_builtin" +d "datatype" +d builtinName ]
+       * @format({symbol, builtinSymbol, loc})
+       * "datatype" +d symbol +d "="
+       * 2[ +1 "_builtin" +d "datatype" +d builtinSymbol ]
       *)
       (*
        *                syntax                               
@@ -146,8 +154,8 @@ struct
        *)
       PITYPEBUILTIN of
       {
-        tycon: string,
-        builtinName: string,
+        symbol: symbol,
+        builtinSymbol: symbol,
         loc: loc
       }
     | (*%
@@ -156,33 +164,32 @@ struct
        *)
       PIDATATYPE of {datbind: datbind list, loc: loc}
     | (*%
-       * @format({tycon, origTycon: id ids, loc})
-       * "datatype" +d tycon +d "="
-       * 2[ +1 "datatype" +d ids(id)(".") ]
+       * @format({symbol, longsymbol, loc})
+       * "datatype" +d symbol +d "="
+       * 2[ +1 "datatype" +d longsymbol ]
        *)
       (*
-       *                syntax                           
+       *                syntax
        * datatype foo = datatype bar
        *)
-      PITYPEREP of {tycon: string, origTycon: string list, loc: loc}
+      PITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
     | (*%
-         @format({vid, ty: ty tyopt, externPath:path opt, loc})
-         "exception" +d vid opt(path)(+,+) 2[ tyopt(ty)("of" +1,) ]
+         @format({symbol, ty: ty tyopt, loc})
+         "exception" +d symbol 2[ tyopt(ty)("of" +1,) ]
        *)
-      PIEXCEPTION of {vid: string, 
+      PIEXCEPTION of {symbol: symbol,
                       ty: ty option, 
-                      externPath:longid option, 
                       loc: loc}
     | (*%
-       * @format({vid, origId: id ids, loc})
-       * "exception" +d vid +d 2[ "=" ids(id)(".") ]
+       * @format({symbol, longsymbol, loc})
+       * "exception" +d symbol +d 2[ "=" longsymbol ]
        *)
-      PIEXCEPTIONREP of {vid: string, origId: string list, loc: loc}
+      PIEXCEPTIONREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
     | (*%
-       * @format({strid, strexp, loc})
-       * "structure" +d strid +d "=" 2[ +1 strexp ]
+       * @format({symbol, strexp, loc})
+       * "structure" +d symbol +d "=" 2[ +1 strexp ]
        *)
-      PISTRUCTURE of {strid: string, strexp: pistrexp, loc: loc}
+      PISTRUCTURE of {symbol: symbol, strexp: pistrexp, loc: loc}
 
   and pistrexp =
       (*%
@@ -196,36 +203,26 @@ struct
        *)
       PISTRUCT of {decs: pidec list, loc: loc}
     | (*%
-         @format({strPath, loc}) strPath
+         @format({longsymbol, loc}) longsymbol
        *)
-      PISTRUCTREP of {strPath:longid, loc: loc}
+      PISTRUCTREP of {longsymbol:longsymbol, loc: loc}
     | (*%
-         @format({functorName, argumentPath, loc}) functorName "(" argumentPath ")"
+         @format({functorSymbol, argument, loc}) functorSymbol "(" argument ")"
        *)
-      PIFUNCTORAPP of {functorName:string, argumentPath:longid, loc:loc}
-
-  (*%
-   * @formatter(PatternCalc.plsigexp) PatternCalc.format_plsigexp
-   *)
-  type sigbind =
-      (*%
-       * @format({sigid, sigexp, loc})
-       * sigid +d "=" 2[ +1 sigexp ]
-       *)
-      {sigid: string, sigexp: PatternCalc.plsigexp, loc:loc}
+      PIFUNCTORAPP of {functorSymbol:symbol, argument:longsymbol, loc:loc}
 
   (*%
    * @formatter(PatternCalc.plsigexp) PatternCalc.format_plsigexp
    *)
   type funbind =
       (*%
-       * @format({funid, param, strexp, loc})
-       * funid "(" param ")" +d "=" 2[ +1 strexp ]
-       * @format:param({strid, sigexp})
-          strid +1 ":" +d sigexp
+       * @format({functorSymbol, param, strexp, loc})
+       * functorSymbol "(" param ")" +d "=" 2[ +1 strexp ]
+       * @format:param({strSymbol, sigexp})
+          strSymbol +1 ":" +d sigexp
        *)
-      {funid: string,
-       param: {strid: string, sigexp: PatternCalc.plsigexp},
+      {functorSymbol: symbol,
+       param: {strSymbol: symbol, sigexp: PatternCalc.plsigexp},
        strexp: pistrexp,
        loc:loc}
 
@@ -250,72 +247,98 @@ struct
   type interfaceName = (*% @format(x) x *) AbsynInterface.interfaceName
 
   (*%
-   * @formatter(InterfaceID.id) InterfaceID.format_id
-   * @formatter(optlist) TermFormat.formatOptionalList
-   * @formatter(declist) TermFormat.formatDeclList
+   * @formatter(decList) TermFormat.formatDeclList
    *)
   type interfaceDec =
       (*%
-       * @format({interfaceId, interfaceName, requires: req reqs, topdecs: dec decs})
-       * "_interface" interfaceId +d interfaceName +d "="
-       * 2[ +1 "local" 2[ reqs:optlist(req)(+1 "_require" +1,,) ]
-       *    +1 "in" 2[ decs:declist(dec)(+1,+1) ]
-       *    +1 "end" ]
-       * @format:req({id,loc}) id
+       * @format({interfaceId, requiredIds: req reqs, provideTopdecs: dec decs})
+       * "interface" +d interfaceId
+       * 2[ reqs:decList(req)(+1, +1) ]
+       * +1 "in"
+       * 2[ decs:decList(dec)(+1, +1) ]
+       * +1 "end"
+       * @format:req({id, loc})
+       * "require:" +d id
        *)
       {
         interfaceId: interfaceId,
-        interfaceName: interfaceName,
-        requires: {id: interfaceId, loc: loc} list,
-        topdecs: pitopdec list
-      }
-
-  (*% 
-   * @formatter(declist) TermFormat.formatDeclList
-   * @formatter(optlist) TermFormat.formatOptionalList
-   *)
-  type interface =
-      (*%
-       * @format({decls: i is, requires: r rs, interfaceName: name nameopt,
-                  topdecs: dec decs})
-       *  nameopt(name)
-       * 2[ +1 "local" 2[ is:declist(i)(+1,+1) ]
-       *    +1 "in"
-       *    2[ rs:optlist(r)(+1 "_require" +d, +1,)
-       *       decs:declist(dec)(+1,+1) ]
-       *    +1 "end" ]
-       * +1 "end"
-       * @format:r({id, loc}) id
-       *)
-      {
-        decls : interfaceDec list,
-        interfaceName: interfaceName option,
-        requires : {id: interfaceId, loc: loc} list,
-        topdecs : pitopdec list
+        requiredIds: {id: interfaceId, loc: loc} list,
+        provideTopdecs: pitopdec list
       }
 
   (*%
-   * @formatter(declist) TermFormat.formatDeclList
-   * @formatter(optlist) TermFormat.formatOptionalList
-   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(decList) TermFormat.formatDeclList
+   *)
+  type interface =
+      (*%
+       * @format({interfaceDecs: bind binds,
+       *          requiredIds: req reqs,
+       *          provideTopdecs: pdec pdecs})
+       * "local"
+       * 2[ binds:decList(bind)(+1, +1) ]
+       * +1 "provide"
+       * 2[ pdecs:decList(pdec)(+1, +1) ]
+       * +1 "in"
+       * 2[ reqs:decList(req)(+1, +1) ]
+       * @format:req({id, loc})
+       * "require" +d id
+       *)
+      {
+        interfaceDecs : interfaceDec list,
+        requiredIds : {id: interfaceId, loc: loc} list,
+        provideTopdecs : pitopdec list
+      }
+
+  (*%
    * @formatter(PatternCalc.pltopdec) PatternCalc.format_pltopdec
-   * @formatter(InterfaceID.id) InterfaceID.format_id
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(decList) TermFormat.formatDeclList
    *)
   type compileUnit =
       (*%
-       * @format({interface, topdecs: dec decs})
-         "{"
-          1[
-            1["interface:" +1 interface]
-           +1
-            1["topdecs:" decs:declist(dec)(+1,+1)]
-           ]
-          1
-         "}"
+       * @format({interface:interface interfaceOpt, topdecsSource: dec decs, topdecsInclude:inc incs})
+       * interfaceOpt(interface)(,)
+       * 2[ incs:decList(inc)(+1, +1) ]
+       * 2[ decs:decList(dec)(+1, +1) ]
+       * +1 "end"
+       *)
+      {
+        interface : interface option,
+        topdecsSource : PatternCalc.pltopdec list,
+        topdecsInclude : PatternCalc.pltopdec list
+      }
+
+  (*%
+   * @formatter(PatternCalc.pltopdec) PatternCalc.format_pltopdec
+   * @formatter(decList) TermFormat.formatDeclList
+   *)
+  type interactiveUnit =
+      (*%
+       * @format({interface, interfaceDecls: dec decs, topdecsInclude:inc incs})
+       * interface
+       * 2[ decs:decList(dec)(+1, +1) ]
+       * 2[ incs:decList(inc)(+1, +1) ]
+       * +1 "end"
        *)
       {
         interface : interface,
-        topdecs : PatternCalc.pltopdec list
+        interfaceDecls : pitopdec list,
+        topdecsInclude : PatternCalc.pltopdec list
+      }
+
+  datatype topdec
+    = TOPDECSTR of PatternCalc.plstrdec * loc
+    | TOPDECSIG of (symbol * PatternCalc.plsigexp ) list * loc 
+    | TOPDECFUN of
+      {pltopdec: {name:symbol, argStrName:symbol, argSig:PatternCalc.plsigexp, body:PatternCalc.plstrexp, loc:loc},
+       pitopdec: funbind option}
+        list * loc 
+
+  type source =
+      {
+        interface : interface option,
+        topdecsInclude : topdec list,
+        topdecsSource : topdec list
       }
 
   fun pitopdecLoc pitopdec =

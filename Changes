@@ -1,3 +1,32 @@
+-----------------------------------------------------------------------------
+SML# version 2.0.0 (released on 2014-04-04)
+
+This is the brand new release of the SML# language system.  The most
+notable change is that the SML# compiler now works with the LLVM
+Compiler Infrastructure.  The new SML# compiler generates LLVM IR code
+and produces native code through LLVM.  More than half of compilation
+phases and library modules has been rewritten for the LLVM support.
+These changes also greatly speed up the compilation processes.
+
+The following compile options are added:
+ * Optimization options such as -O1, -O2, -O3, -Os and -Oz.  These
+   options enables LLVM's code-level optimization.
+ * -emit-llvm.  If this option is specified, SML# compiler produces
+   LLVM IR code or LLVM bitcode instead of native code.
+
+While LLVM supports multiple target platforms, this version of SML#
+supports only x86 target.  At least x86-64 support will be available
+in near future.
+
+For the details, see the SML# 2.0.0 documentations.
+ * The Japanese version:
+   http://www.pllab.riec.tohoku.ac.jp/smlsharp/docs/2.0/ja/index.xhtml
+ * The English version:
+   http://www.pllab.riec.tohoku.ac.jp/smlsharp/docs/2.0/en/index.xhtml
+
+Enjoy!
+
+-----------------------------------------------------------------------------
 SML# version 1.2.0 (released on 2012-11-14)
 
 Improvements:

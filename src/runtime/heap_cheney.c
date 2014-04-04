@@ -630,7 +630,7 @@ do_gc(void)
 void
 sml_heap_gc(void)
 {
-	GIANT_LOCK(NULL);
+	GIANT_LOCK();
 	do_gc();
 	GIANT_UNLOCK();
 #ifndef FAIR_COMPARISON
@@ -695,8 +695,8 @@ slow_alloc(size_t obj_size)
 	return obj;
 }
 
-SML_PRIMITIVE void *
-sml_alloc(unsigned int objsize, void *frame_pointer)
+SML_PRIMITIVE NOINLINE void *
+sml_alloc(unsigned int objsize)
 {
 	/* objsize = payload_size + bitmap_size */
 	void *obj;
@@ -704,12 +704,12 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 
 #ifdef FAIR_COMPARISON
 	if (inc > 4096) {
-		sml_save_frame_pointer(frame_pointer);
+		SAVE_FP();
 		return sml_obj_malloc(inc);
 	}
 #endif /* FAIR_COMPARISON */
 
-	GIANT_LOCK(frame_pointer);
+	GIANT_LOCK();
 
 	obj = sml_heap_from_space.free;
 	if ((size_t)(sml_heap_from_space.limit - (char*)obj) >= inc) {
@@ -719,7 +719,7 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 #endif /* GC_STAT */
 		GIANT_UNLOCK();
 	} else {
-		sml_save_frame_pointer(frame_pointer);
+		SAVE_FP();
 		obj = slow_alloc(inc);
 	}
 

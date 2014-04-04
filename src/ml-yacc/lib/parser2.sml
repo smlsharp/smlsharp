@@ -135,6 +135,11 @@ functor LrParserFun(type arg type pos type svalue) : LR_PARSER =
              fn (TOKEN(t,_) : token,TOKEN(t',_): token) => eqT (t,t')
         end
 
+      type actions = 
+           int * pos * (LrTable.state * (svalue * pos * pos)) list * arg ->
+           LrTable.nonterm * (svalue * pos * pos) *
+           ((LrTable.state *(svalue * pos * pos)) list)
+
       structure Stream = StreamFun(type tok = Token.token)
       open LrTable
       open Token
@@ -545,8 +550,7 @@ functor LrParserFun(type arg type pos type svalue) : LR_PARSER =
     fn {arg:arg,
         table:table,
         lexer: Stream.stream,
-        saction: int * pos * (state * (svalue * pos * pos)) list * arg 
-                  -> nonterm * (svalue * pos * pos) * (state * (svalue * pos * pos)) list,
+        saction: actions,
         void:svalue,
         lookahead:int,
 	ec=ec as {showTerminal,...} : ecRecord} =>

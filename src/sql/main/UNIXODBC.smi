@@ -1,0 +1,88 @@
+_require "../../basis.smi"
+_require "../../config/main/Config.smi"
+_require "../../ffi.smi"
+_require "../../ffi/main/Pointer.smi"
+
+structure UNIXODBC = struct
+
+type SQLHANDLE = unit ptr
+type SQLHENV = SQLHANDLE
+type SQLHDBC = SQLHANDLE
+type SQLHSTMT = SQLHANDLE
+type SQLSMALLINT = int (* TODO: should be singed short int *)
+type SQLUSMALLINT = word (* TODO: typedef unsigned short SQLUSMALLINT *)
+type SQLINTEGER = int (* maybe 32 bit integer on any platform *)
+eqtype SQLRETURN (= int)
+type SQLCHAR_PTR = string (* typedef unsigned char SQLCHAR *)
+type SQLPOINTER = Word8Array.array (* typedef void * SQLPOINTER *)
+type SQLPOINTER_AS_INT = int (* typedef void * SQLPOINTER *)
+type SQLLEN = int (* maybe integer of same size as pointer *)
+type SQLSETPOSIROW = SQLUSMALLINT
+type SQLCHAR_array = Word8Array.array
+
+val SQL_HANDLE_ENV : SQLSMALLINT
+val SQL_HANDLE_DBC : SQLSMALLINT
+val SQL_HANDLE_DESC : SQLSMALLINT
+val SQL_HANDLE_STMT : SQLSMALLINT
+
+val NULL_HANDLE : SQLHANDLE
+val ATTR_ODBC_VERSION : SQLINTEGER
+val OV_ODBC3 : SQLPOINTER_AS_INT
+val NTS : SQLSMALLINT
+val NULL_DATA : SQLLEN
+val C_CHAR : SQLSMALLINT
+val POSITION : SQLUSMALLINT
+val REFRESH : SQLUSMALLINT
+val LOCK_NO_CHANGE : SQLUSMALLINT
+val ATTR_ROW_ARRAY_SIZE : SQLINTEGER
+val COLUMN_NAME : SQLUSMALLINT
+val DATA_TYPE : SQLUSMALLINT
+val NULLABLE : SQLUSMALLINT
+
+val SQL_SUCCESS : SQLRETURN
+val SQL_SUCCESS_WITH_INFO : SQLRETURN
+val SQL_INALID_HANDLE : SQLRETURN
+val SQL_ERROR : SQLRETURN
+val SQL_STILL_EXECUTING : SQLRETURN
+val SQL_NEED_DATA : SQLRETURN
+val SQL_NO_DATA : SQLRETURN
+
+(* Connecting to data source *)
+val AllocHandle : unit -> SQLSMALLINT * SQLHANDLE * SQLHANDLE ref -> SQLRETURN
+val Connect : unit -> SQLHDBC * SQLCHAR_PTR * SQLSMALLINT *
+			        SQLCHAR_PTR * SQLSMALLINT *
+			        SQLCHAR_PTR * SQLSMALLINT -> SQLRETURN
+(* Setting and retrieving driver attributes *)
+val SetEnvAttr : unit -> SQLHENV * SQLINTEGER * SQLPOINTER_AS_INT * SQLINTEGER
+		 -> SQLRETURN
+val SetStmtAttr : unit -> SQLHSTMT * SQLINTEGER * SQLPOINTER_AS_INT * SQLINTEGER
+		  -> SQLRETURN
+(* Submitting requests *)
+val ExecDirect : unit -> SQLHSTMT * SQLCHAR_PTR * SQLINTEGER -> SQLRETURN
+(* Retrieving results and information about results *)
+val RowCount : unit -> SQLHSTMT * SQLLEN ref -> SQLRETURN
+val NumResultCols : unit -> SQLHSTMT * SQLSMALLINT ref -> SQLRETURN
+val Fetch : unit -> SQLHSTMT -> SQLRETURN
+val GetData : unit -> SQLHSTMT * SQLUSMALLINT * SQLSMALLINT *
+		      SQLPOINTER * SQLLEN * SQLLEN ref -> SQLRETURN
+val SetPos : unit -> SQLHSTMT * SQLSETPOSIROW * SQLUSMALLINT * SQLUSMALLINT
+	     -> SQLRETURN
+val Columns : unit -> SQLHSTMT * SQLCHAR_PTR * SQLSMALLINT *
+			         SQLCHAR_PTR * SQLSMALLINT *
+			         SQLCHAR_PTR * SQLSMALLINT *
+			         SQLCHAR_PTR * SQLSMALLINT -> SQLRETURN
+val Tables : unit -> SQLHSTMT * SQLCHAR_PTR * SQLSMALLINT *
+			        SQLCHAR_PTR * SQLSMALLINT *
+			        SQLCHAR_PTR * SQLSMALLINT *
+			        SQLCHAR_PTR * SQLSMALLINT -> SQLRETURN
+(* Terminationg a connection *)
+val Disconnect : unit -> SQLHDBC -> SQLRETURN
+val FreeHandle : unit -> SQLSMALLINT * SQLHANDLE -> SQLRETURN
+
+val GetDiagRec : unit
+                 -> SQLSMALLINT * SQLHANDLE * SQLSMALLINT * SQLCHAR_array
+                    * SQLINTEGER ref * SQLCHAR_array * SQLSMALLINT
+                    * SQLSMALLINT ref
+                 -> SQLRETURN
+
+end

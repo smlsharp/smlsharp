@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "smlunit-lib.smi"
+
+structure TestAssert =
+struct
+  exception TestException of string
+  val runTest : unit -> unit
+end
+

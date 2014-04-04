@@ -9,14 +9,19 @@
 structure PatternCalc = 
 struct
 local
-  type loc = Loc.loc
   type constant = Absyn.constant
-  type ty =  Absyn.ty
-  type longid = Absyn.longid
-  type tvar = Absyn.tvar
-  type kindedTvar = Absyn.kindedTvar
-  type ffiAttributes = Absyn.ffiAttributes
+  type ffiAttributes = FFIAttributes.attributes
 in
+  type kindedTvar = Absyn.kindedTvar
+  type tvar = Absyn.tvar
+  type loc = Loc.loc
+  type ty =  Absyn.ty
+
+  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
+  type symbol = Symbol.symbol
+
+  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
+  type longsymbol = Symbol.longsymbol
 
   (*
    * formatting lists:
@@ -87,33 +92,36 @@ in
 
   (*%
    * @formatter(ty) Absyn.format_ty
-   * @formatter(longid) Absyn.format_longid
    * @formatter(option) SmlppgUtil.formatPrependedOpt
    *)
   datatype plexbind =
     (*%
-     * @format(string * ty option * loc)
-     *    string option(ty)(+ "of" +)
+     * @format(symbol * ty option * loc)
+     *    symbol option(ty)(+ "of" +)
      *)            
-    PLEXBINDDEF of string * ty option * loc
+    PLEXBINDDEF of symbol * ty option * loc
   | (*%
-     * @format(string1 * string2 * loc)
-     *  string1 + "=" + string2
+     * @format(symbol * longsymbol * loc)
+     *  symbol + "=" + longsymbol
      *)
-    PLEXBINDREP of string * longid * loc
+    PLEXBINDREP of symbol * longsymbol * loc
 
   (*%
    * @formatter(ty) Absyn.format_ty
    * @formatter(tyConArgTys) SmlppgUtil.formatTyConArgumentTypes
    * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(appList) TermFormat.formatAppList
+   * @formatter(option) TermFormat.formatOptionalOption
    *)
   datatype ffiTy =
       (*%
-       * @format(attr * dom doms * ret rets * loc)
-       *           R1{ "(" doms(dom)("," + ) ")" +d "->"
-       *               2[ +1 "(" rets(ret)("," + ) ")" ] }
+       * @format(attr * dom doms * var vars varsOpt * ret rets * loc)
+       *           R1{ doms:appList(dom)("(",",",")")
+       *               varsOpt(vars:appList(var)("(",",",")"))("...",)
+       *               +d "->"
+       *               2[ +1 rets:appList(ret)("(",",",")") ] }
        *)
-      FFIFUNTY of Absyn.ffiAttributes option * ffiTy list * ffiTy list * loc
+      FFIFUNTY of ffiAttributes option * ffiTy list * ffiTy list option * ffiTy list * loc
     | (*%
        * @format(tvar * loc) tvar
        *)
@@ -125,10 +133,10 @@ in
        *)
       FFIRECORDTY of (string * ffiTy) list * loc
     | (*%
-       * @format(arg args:tyConArgTys * tyCon tyCons * loc)
-       *                !N0{args(arg)("," +, "(", ")" +) tyCons(tyCon)(".") }
+       * @format(arg args:tyConArgTys * longsymbol * loc)
+            !N0{args(arg)("," +, "(", ")" +) longsymbol }
        *)
-      FFICONTY of ffiTy list * string list * loc
+      FFICONTY of ffiTy list * longsymbol * loc
 
   (*%
    * @formatter(kindedTvar) Absyn.format_kindedTvar
@@ -165,7 +173,6 @@ in
   (*%
    * @formatter(constant) Absyn.format_constant
    * @formatter(ty) Absyn.format_ty
-   * @formatter(longid) Absyn.format_longid
    * @formatter(tvar) Absyn.format_tvar
    * @formatter(option) SmlppgUtil.formatPrependedOpt
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
@@ -176,17 +183,13 @@ in
    *)
   datatype plexp = 
     (*%
-     * @format(const * loc) const
+     * @format(const) const
      *)
-    PLCONSTANT of constant * loc
+    PLCONSTANT of constant
   | (*%
-     * @format(name * gk * loc) {name}
+     * @format(longsymbol) longsymbol
      *)
-    PLGLOBALSYMBOL of string * Absyn.globalSymbolKind * loc
-  | (*%
-     * @format(longid * loc) {longid}
-     *)
-    PLVAR of longid  * loc
+    PLVAR of longsymbol
   | (*%
      * @format(plexp * ty * loc)
      * L2{ plexp + ":" ty }
@@ -264,7 +267,7 @@ in
   | (*%
      * @format(selector * loc)  {"#"{selector}}
      *)
-    PLRECORD_SELECTOR of string * loc 
+    PLRECORD_SELECTOR of symbol * loc 
   | (*%
      * @format(selector * exp * loc)
      * L10{"#"{selector} + {exp}}
@@ -276,40 +279,40 @@ in
      *)
     PLSEQ of plexp list * loc
   | (*%
-     * @format(exp * loc) "_cast" "(" exp ")"
-     *)
-    PLCAST of plexp * loc
-  | (*%
      * @format(exp * ty * loc)
      *     N0{ exp
      *         + ":" +1 "_import" +2 {ty} }
      *)
-    PLFFIIMPORT of plexp * ffiTy * loc
+    PLFFIIMPORT of ffiFun * ffiTy * loc
   | (*%
-     * @format(exp * ty * loc)
-     *     N0{ exp
-     *         + ":" +1 "_export" +2 {ty} }
-     *)
-    PLFFIEXPORT of plexp * ffiTy * loc
-  | (*%
-     * @format(cconv * exp * arg args * ty * loc)
+     * @format(cconv * exp * arg args * ret rets * loc)
      *     N0{ "_ffiapply" + exp
      *         + "(" args(arg)("," +) ")"
-     *         + ":" + ty}
+     *         + ":" + "(" rets(ret)("," +) ")"}
      *)
-    PLFFIAPPLY of ffiAttributes option * plexp * ffiArg list * ffiTy * loc
+    PLFFIAPPLY of ffiAttributes option * ffiFun * ffiArg list * ffiTy list * loc
 
   | (*%
-     * @format(str * ty * loc)
-     *   N0{ "_sqlserver" + str + ":" + ty }
+     * @format({columnInfoFnExp, ty, loc})
+     *   N0{ "_sqlschema" + ":" + ty }
      *)
-    PLSQLSERVER of string * ty * loc
+    PLSQLSCHEMA of
+    {
+      columnInfoFnExp : plexp,
+      ty : ty,
+      loc : loc
+    }
   | (*%
      * @format(pat * exp * loc)
      * "_sqldbi" + pat
      * + "in" + exp
      *)
     PLSQLDBI of plpat * plexp * loc
+  | (*%
+      @format(exp1 * exp2 * loc) 
+        "JOIN(" exp1 + "," + exp2 ")"
+     *)
+    PLJOIN of plexp * plexp * loc
 
   and ffiArg =
     (*%
@@ -321,6 +324,12 @@ in
      *   "_sizeof(" ty ")" {opt(exp)(+d "*" +)}
      *)
     PLFFIARGSIZEOF of ty * plexp option * loc
+
+  and ffiFun =
+    (*% @format(x) x *)
+    PLFFIFUN of plexp
+  | (*% @format(x) x *)
+    PLFFIEXTERN of string
 
   and pdecl = 
     (*%
@@ -339,14 +348,14 @@ in
          "fun" + scope
            binds(dec)(~1[ +1 "and"] +)
         ]
-      @format:dec(fid * rules)  fid + rules
+      @format:dec({fdecl:fid * rules, loc})  fid + rules
       @format:rules(rule rules) rules(rule)( +1 "|" +)
       @format:rule(pat pats:appList *  exp)
          pats(pat)("{", ",", "}") +d "=" 
          +1 
          exp
      *)
-    PDDECFUN of scopedTvars * (plpat * (plpat list * plexp) list) list*loc 
+    PDDECFUN of scopedTvars * {fdecl:(plpat * (plpat list * plexp) list), loc:loc} list*loc 
   | (*%
        @format(scope * bind binds * loc)
         1[
@@ -358,6 +367,16 @@ in
      *)
     PDVALREC of scopedTvars * (plpat * plexp ) list * loc
   | (*%
+       @format(bind binds * loc)
+        1[
+           "val" 
+           "_polyrec" +d binds(bind)(~1[ +1 "and"] +)
+         ]
+      @format:bind(symbol * ty * exp)
+         1[symbol + ":" + ty +d "=" +1 exp ]
+     *)
+    PDVALPOLYREC of (symbol * ty * plexp ) list * loc
+  | (*%
       @format(bind binds * loc)
         1[ "type" + binds(bind)(~1[ +1 "and"] +) ]
      *)
@@ -368,10 +387,10 @@ in
      *)
     PDDATATYPE of datbind list * loc
   | (*%  
-     * @format(tyCon * longid * loc)
-     *     "datatype" + tyCon + "=" + "datatype" + longid
+     * @format(symbol * longsymbol * loc)
+     *     "datatype" + symbol + "=" + "datatype" + longsymbol
      *)
-    PDREPLICATEDAT of string * longid * loc (* replication *)
+    PDREPLICATEDAT of symbol * longsymbol * loc (* replication *)
   | (*%
       @format(bind binds * decl decls * loc) 
            1[ "abstype" + binds(bind)(~1[ +1 "and" ] +) ]
@@ -394,24 +413,24 @@ in
      *)
     PDLOCALDEC of pdecl list * pdecl list * loc
   | (*%
-      * @format(longid list * loc)
-      *                "open" +  list(longid)(5[+1])
+       @format(longsymbol list * loc)
+         "open" +  list(longsymbol)(5[+1])
       *)
-     PDOPEN of longid list * loc
+     PDOPEN of longsymbol list * loc
   | (*%
       * @format(int * name list * loc)
       *                   "infix" +d {int} +d list(name)(+d)
       *)
-     PDINFIXDEC of int * string list * loc
+     PDINFIXDEC of int * symbol list * loc
   | (*%
       * @format(int * name list * loc)
       *                   "infixr" +d {int} +d list(name)(+d)
       *)
-     PDINFIXRDEC of int * string list * loc
+     PDINFIXRDEC of int * symbol list * loc
   | (*%
      * @format(name list * loc) "nonfix" +d list(name)(+d)
      *)
-     PDNONFIXDEC of string list * loc
+     PDNONFIXDEC of symbol list * loc
   | (*%
      * @format ""
      *)
@@ -423,13 +442,13 @@ in
      *)
     PLPATWILD of loc
   | (*%
-     * @format(longid * loc) longid
+     * @format(longid) longid
      *)
-    PLPATID of longid * loc
+    PLPATID of longsymbol
   | (*%
-     * @format(const * loc) const
+     * @format(const) const
      *)
-    PLPATCONSTANT of constant * loc
+    PLPATCONSTANT of constant
   | (*%
      * @format(pat1 * pat2 * loc)
      * R1{d
@@ -447,7 +466,7 @@ in
      * @format(id * ty opt * pat2 * loc)
      * {id} +d "as" +d {pat2}
      *)
-    PLPATLAYERED of string * ty option * plpat * loc
+    PLPATLAYERED of symbol * ty option * plpat * loc
   | (*%
      * @format(pat * ty * loc)
      * {pat} + ":" +d {ty}
@@ -463,10 +482,10 @@ in
       @format(strbind list * loc)
         1[ "structure" +d list(strbind)(~1[ +1 "and"] +) 
          ] 
-      @format:strbind(strid * strexp)
-        strid + "=" +1 strexp
+      @format:strbind(symbol * strexp)
+        symbol + "=" +1 strexp
      *)
-    PLSTRUCTBIND of (string * plstrexp) list * loc
+    PLSTRUCTBIND of (symbol * plstrexp) list * loc
   | (*%
      * @format(localstrdec list1  * strdec list2 * loc)
      * "local"
@@ -484,9 +503,9 @@ in
      *)
     PLSTREXPBASIC of plstrdec list * loc (*basic*)
   | (*%
-     * @format(longid * loc) longid
+     * @format(longsymbol) longsymbol
      *)
-     PLSTRID of longid * loc (*structure identifier*)
+     PLSTRID of longsymbol
   | (*%
      * @format(strexp * sigexp * loc)
      * strexp +
@@ -499,12 +518,12 @@ in
      * strexp +
      * ":>" + sigexp
      *)
-     PLSTROPAQCONSTRAINT of plstrexp * plsigexp * loc (*opaque constraint*)
+     PLSTROPAQCONSTRAINT of plstrexp * plsigexp * loc
   | (*%
-     * @format(functorid * longid * loc)
-     * {functorid} {+d "(" longid ")"}
+     * @format(functorsymbol * longsymbol * loc)
+     * functorsymbol {+d "(" longsymbol ")"}
      *)
-     PLFUNCTORAPP of string * longid * loc (* functor application*)
+     PLFUNCTORAPP of symbol * longsymbol * loc
   | (*%
      * @format(strdec list * strexp * loc) 
      * !N0{
@@ -518,36 +537,37 @@ in
     (*%
        @format(spec * loc)
        "sig" 
-          1[+1 spec] 
+          1[+1 spec]
+       1
        "end"
      *)
     PLSIGEXPBASIC of plspec * loc (*basic*)
   | (*%
-     * @format(sigid * loc) {sigid} 
+     * @format(symbol) symbol 
      *)
-    PLSIGID of string * loc (*signature identifier*)
+    PLSIGID of symbol (*signature identifier*)
   | (*%
-       @format(sigexp * rlstn list1 * loc)
+       @format(sigexp * rlstn * loc)
          sigexp +1
-         "where" + "type" + list1(rlstn)(+1 "where" + "type")
-       @format:rlstn(tyvarseq * longid * ty)
-         1[ tyvarseq longid + "=" +1 ty ]
+         "where" + "type" + rlstn
+       @format:rlstn(tyvarseq * longsymbol * ty)
+         1[ tyvarseq longsymbol + "=" +1 ty ]
        @format:tyvarseq(tyvar list2)
         list2:seqList(tyvar)("(", ",", ")")
         list2:ifCons()(+)
      *)
-    PLSIGWHERE of plsigexp * (tvar list * longid * ty) list * loc
+    PLSIGWHERE of plsigexp * (tvar list * longsymbol * ty) * loc
    (* type realisation *) 
 
   and plspec =
     (*%
-       @format(scope * vid * ty * loc)
+       @format(scope * symbol * ty * loc)
         1[
-           "val" + scope vid + ":" 
+           "val" + scope symbol + ":" 
            +1 ty
          ]
      *)
-    PLSPECVAL of scopedTvars * string * ty * loc (* value *)
+    PLSPECVAL of scopedTvars * symbol * ty * loc (* value *)
   | (*%
        @format({tydecls:typdesc list1, iseq, loc})
          1[
@@ -559,7 +579,7 @@ in
          list2:ifCons()(+)
          tyCon
      *)
-    PLSPECTYPE of {tydecls:(tvar list * string) list, iseq:bool, loc:loc}
+    PLSPECTYPE of {tydecls:(tvar list * symbol) list, iseq:bool, loc:loc}
   | (*%
       @format(derivedtyp * loc)  derivedtyp
       @format:derivedtyp(tyvar tyvars * tyCon * ty)
@@ -569,7 +589,7 @@ in
         tyCon + "=" 
         +1 ty
      *)
-    PLSPECTYPEEQUATION of (tvar list * string * ty) * loc
+    PLSPECTYPEEQUATION of (tvar list * symbol * ty) * loc
   | (*%
       @format(datdesc list1 * loc)
         1[
@@ -581,31 +601,31 @@ in
         1[ tyCon + "=" +1
            condescs(condesc)(~1[ +1 "|" ] +)
          ]
-      @format:condesc(vid * ty option)
-         vid option(ty)(+d "of" +)
+      @format:condesc(symbol * ty option)
+         symbol option(ty)(+d "of" +)
      *)
     PLSPECDATATYPE of
-      (tvar list * string * (string * ty option) list ) list * loc
+      (tvar list * symbol * (symbol * ty option) list ) list * loc
     (* datatype*)
   | (*%
-       @format(tyCon * longid * loc)
-       "datatype" + tyCon + "=" + "datatype" + longid
+       @format(tyCon * longsymbol * loc)
+       "datatype" + tyCon + "=" + "datatype" + longsymbol
      *)
-    PLSPECREPLIC of string * longid * loc (* replication *)
+    PLSPECREPLIC of symbol * longsymbol * loc (* replication *)
   | (*%
        @format(exdesc list * loc)
          1[ "exception" + list(exdesc)(~1[ +1 "and" ]+) ]
-      @format:exdesc(vid * ty option)
-         vid option(ty)(+d "of" +)
+      @format:exdesc(symbol * ty option)
+         symbol option(ty)(+d "of" +)
      *)
-    PLSPECEXCEPTION of (string * ty option) list * loc (* exception *)
+    PLSPECEXCEPTION of (symbol * ty option) list * loc (* exception *)
   | (*%
        @format(strdesc list * loc)
          1[ "structure" + list(strdesc)(~1[ +1 "and" ] +) ]
        @format:strdesc(strid * sigexp)
          1[ strid ":" +1 sigexp ]
      *)
-    PLSPECSTRUCT of (string * plsigexp) list * loc (* structure *)
+    PLSPECSTRUCT of (symbol * plsigexp) list * loc (* structure *)
   | (*%
        @format(sigexp * loc)
          "include" + sigexp
@@ -617,24 +637,24 @@ in
      *)
     PLSPECSEQ of plspec * plspec * loc 
   | (*%
-       @format(spec * longid longids * loc)
+       @format(spec * longsymbol longsymbols * loc)
         1[
            spec 
            +1
            "sharing type" +
-           longids(longid)(1[+1 "="] +)
+           longsymbols(longsymbol)(1[+1 "="] +)
         ]
      *)
-    PLSPECSHARE of plspec * longid list * loc 
+    PLSPECSHARE of plspec * longsymbol list * loc
   | (*%
-       @format(spec * longid list * loc)
+       @format(spec * longsymbol list * loc)
        1[
          spec +
           "sharing" + 
-          list(longid)(1[ +1 "="] +)
+          list(longsymbol)(1[ +1 "="] +)
        ]
      *)
-    PLSPECSHARESTR of plspec * longid list * loc 
+    PLSPECSHARESTR of plspec * longsymbol list * loc 
   | (*%
      * @format 
      *)
@@ -654,7 +674,7 @@ in
        @format:sigdec(sigid * sigexp)
          1[ sigid +d "=" +1 sigexp]
      *)
-    PLTOPDECSIG of (string * plsigexp ) list * loc 
+    PLTOPDECSIG of (symbol * plsigexp ) list * loc 
   | (*%
        @format(funbind list * loc)
         1[ "functor" + list(funbind)(~1[ +1 "and"] +) ]
@@ -670,7 +690,7 @@ in
        ]
      *)
     PLTOPDECFUN of
-      {name:string, argStrName:string, argSig:plsigexp, body:plstrexp, loc:loc}
+      {name:symbol, argStrName:symbol, argSig:plsigexp, body:plstrexp, loc:loc}
         list * loc 
 
   withtype expfield =
@@ -706,16 +726,16 @@ in
          tvars:ifCons()(+)
          name +d "=" +1 ty
        *)
-      tvar list * string * ty
+      tvar list * symbol * ty
   and conbind =
       (*%
-       * @format({vid: conname, ty: ty opt})
+       * @format({symbol: conname, ty: ty opt})
        *   conname opt(ty)(+d "of" +d)
        *)
-      {vid: string, ty: ty option}
+      {symbol: symbol, ty: ty option}
   and datbind =
       (*%
-       * @format({tyvars: tyvar tyvars, tycon: tyCon, conbind: valcon valcons})
+       * @format({tyvars: tyvar tyvars, symbol: tyCon, conbind: valcon valcons})
        * 2[  
              tyvars:seqList(tyvar)("(", "," +, ")" +) 
              tyvars:ifCons()(+)
@@ -723,25 +743,21 @@ in
              +1 "=" + 
              valcons(valcon)(+1"|" +)
        *  ]
-       * @format:valcon({vid: conname, ty: ty opt})
+       * @format:valcon({symbol: conname, ty: ty opt})
        *   conname opt(ty)(+d "of" +d)
        *)
-      {tyvars: tvar list, tycon: string,
-       conbind: {vid: string, ty: ty option} list}
+      {tyvars: tvar list, symbol: symbol,
+       conbind: {symbol: symbol, ty: ty option} list}
 
   fun getLeftPosExp plexp =
       case plexp of
-     PLCONSTANT x => #1 (#2 x)
-   | PLGLOBALSYMBOL x => #1 (#3 x)
-   | PLVAR x => #1 (#2 x)
+     PLCONSTANT x => Absyn.getLeftLocConstant x
+   | PLVAR x => #1 (Symbol.longsymbolToLoc x)
    | PLTYPED x => #1 (#3 x)
    | PLAPPM x => #1 (#3 x)
    | PLLET x => #1 (#3 x)
    | PLRECORD x => #1 (#2 x)
    | PLRECORD_UPDATE x => #1 (#3 x)
-(*
-   | PLLIST x => #1 (#2 x)
-*)
    | PLRAISE x => #1 (#2 x)
    | PLHANDLE x => #1 (#3 x)
    | PLFNM x => #1 (#2 x)
@@ -749,26 +765,21 @@ in
    | PLRECORD_SELECTOR x => #1 (#2 x)
    | PLSELECT x => #1 (#3 x)
    | PLSEQ x => #1 (#2 x)
-   | PLCAST x => #1 (#2 x)
    | PLFFIIMPORT x => #1 (#3 x)
-   | PLFFIEXPORT x => #1 (#3 x)
    | PLFFIAPPLY x => #1 (#5 x)
-   | PLSQLSERVER (_,_,loc) => #1 loc
+   | PLSQLSCHEMA {loc,...} => #1 loc
    | PLSQLDBI (_,_,loc) => #1 loc
+   | PLJOIN (_,_,loc) => #1 loc
 
   fun getRightPosExp plexp =
       case plexp of
-     PLCONSTANT x => #2 (#2 x)
-   | PLGLOBALSYMBOL x => #2 (#3 x)
-   | PLVAR x => #2 (#2 x)
+     PLCONSTANT x => Absyn.getRightLocConstant x
+   | PLVAR x => #2 (Symbol.longsymbolToLoc x)
    | PLTYPED x => #2 (#3 x)
    | PLAPPM x => #2 (#3 x)
    | PLLET x => #2 (#3 x)
    | PLRECORD x => #2 (#2 x)
    | PLRECORD_UPDATE x => #2 (#3 x)
-(*
-   | PLLIST x => #2 (#2 x)
-*)
    | PLRAISE x => #2 (#2 x)
    | PLHANDLE x => #2 (#3 x)
    | PLFNM x => #2 (#2 x)
@@ -776,20 +787,19 @@ in
    | PLRECORD_SELECTOR x => #2 (#2 x)
    | PLSELECT x => #2 (#3 x)
    | PLSEQ x => #2 (#2 x)
-   | PLCAST x => #2 (#2 x)
    | PLFFIIMPORT x => #2 (#3 x)
-   | PLFFIEXPORT x => #2 (#3 x)
    | PLFFIAPPLY x => #2 (#5 x)
-   | PLSQLSERVER (_,_,loc) => #2 loc
+   | PLSQLSCHEMA {loc,...} => #2 loc
    | PLSQLDBI (_,_,loc) => #2 loc
+   | PLJOIN (_,_,loc) => #2 loc
 
   fun getLocExp exp = (getLeftPosExp exp, getRightPosExp exp)
 
   fun getLeftPosPat pat =
       case pat of
      PLPATWILD x => #1 x
-   | PLPATID x => #1 (#2 x)
-   | PLPATCONSTANT x => #1 (#2 x)
+   | PLPATID x => #1 (Symbol.longsymbolToLoc x)
+   | PLPATCONSTANT x => Absyn.getLeftLocConstant x
    | PLPATCONSTRUCT x => #1 (#3 x)
    | PLPATRECORD x => #1 (#3 x)
    | PLPATLAYERED x => #1 (#4 x)
@@ -797,9 +807,9 @@ in
         
   fun getRightPosPat pat =
       case pat of
-     PLPATWILD x => #2 x
-   | PLPATID x => #2 (#2 x)
-   | PLPATCONSTANT x => #2 (#2 x)
+     PLPATWILD loc => #2 loc
+   | PLPATID x => #2 (Symbol.longsymbolToLoc x)
+   | PLPATCONSTANT x => Absyn.getRightLocConstant x
    | PLPATCONSTRUCT x => #2 (#3 x)
    | PLPATRECORD x => #2 (#3 x)
    | PLPATLAYERED x => #2 (#4 x)
@@ -812,6 +822,7 @@ in
      PDVAL (_, _, loc) => loc
    | PDDECFUN (_, _, loc) => loc
    | PDVALREC (_, _, loc) => loc
+   | PDVALPOLYREC ( _, loc) => loc
    | PDTYPE (_, loc) => loc
    | PDABSTYPE (_, _, loc) => loc
    | PDDATATYPE (_, loc) => loc

@@ -5,8 +5,8 @@
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori 
  * @author Liu Bochao
- *)
-structure ElaborateModule : sig
+
+sig
 
   val elabSigExp : Absyn.sigexp -> PatternCalc.plsigexp
   val elabSpec : Absyn.spec -> PatternCalc.plspec
@@ -14,16 +14,19 @@ structure ElaborateModule : sig
                     -> Absyn.topdec list
                     -> PatternCalc.pltopdec list * Fixity.fixity SEnv.map
 
-end =
+end
+ *)
+structure ElaborateModule =
 struct
-
-  val checkNameDuplication = UserErrorUtils.checkNameDuplication
-  val checkNameDuplication' = UserErrorUtils.checkNameDuplication'
-
-  structure C = Control
-  structure A = Absyn
+  structure EU = UserErrorUtils
   structure E = ElaborateError
-  structure UE = UserError
+
+  val checkNameDuplication = EU.checkNameDuplication
+  val checkNameDuplication' = EU.checkNameDuplication'
+  val checkSymbolDuplication = EU.checkSymbolDuplication
+  val checkSymbolDuplication' = EU.checkSymbolDuplication'
+
+  structure A = Absyn
   structure PC = PatternCalc
 
   (**
@@ -55,7 +58,7 @@ struct
 
   fun specListToSpecSeq loc specList =
       let
-        fun makeSeqSpec [] = raise Control.Bug "nilspec found in elaborate"
+        fun makeSeqSpec [] = raise Bug.Bug "nilspec found in elaborate"
           | makeSeqSpec [spec] = spec
           | makeSeqSpec (spec :: specs) =
             PC.PLSPECSEQ(spec, makeSeqSpec specs, loc)
@@ -70,8 +73,14 @@ struct
           PC.PLSPECSEQ(elabSpec spec1, elabSpec spec2, loc)
       | A.SPECVAL(valBinds, loc) =>
           let
-            val _ = checkNameDuplication
-                        #1 valBinds loc E.DuplicateValDesc
+            val _ = checkSymbolDuplication
+                        #1
+                        valBinds E.DuplicateValDesc
+            val _ =
+                app (fn (vid, ty) =>
+                        ElaborateCore.checkReservedNameForValBind
+                          vid)
+                    valBinds
             val specs =
                 map (fn (vid, ty) => PC.PLSPECVAL (emptyTvars, vid, ty, loc))
                     valBinds
@@ -81,8 +90,8 @@ struct
       | A.SPECTYPE(tydescs, loc) => 
           let
             val _ =
-                UserErrorUtils.checkNameDuplication
-                  #2 tydescs loc E.DuplicateTypDesc
+                UserErrorUtils.checkSymbolDuplication
+                  #2 tydescs E.DuplicateTypDesc
           in
             PC.PLSPECTYPE {tydecls=tydescs, iseq=false, loc=loc}
           end
@@ -99,17 +108,20 @@ struct
       | A.SPECDERIVEDTYPE(maniftypedescs, loc) =>
           let 
             val _ =
-              checkNameDuplication
-                  #2 maniftypedescs loc E.DuplicateTypDesc
-            fun elabTypeEquation m = PC.PLSPECTYPEEQUATION (m, loc)
+              checkSymbolDuplication
+                  #2
+                  maniftypedescs E.DuplicateTypDesc
+            fun elabTypeEquation (tvars, symbol, ty) = 
+                PC.PLSPECTYPEEQUATION ((tvars, symbol, ty), loc)
           in 
             specListToSpecSeq loc (map elabTypeEquation maniftypedescs)
           end
       | A.SPECEQTYPE(tydescs, loc) => 
           let
             val _ =
-                UserErrorUtils.checkNameDuplication
-                  #2 tydescs loc E.DuplicateTypDesc
+                UserErrorUtils.checkSymbolDuplication
+                  #2
+                  tydescs E.DuplicateTypDesc
           in
             PC.PLSPECTYPE{tydecls=tydescs, iseq=true, loc=loc}
           end
@@ -126,13 +138,18 @@ struct
       | A.SPECDATATYPE(dataDescs, loc) =>
           let
             val _ =
-              checkNameDuplication
-                  #2 dataDescs loc E.DuplicateTypDesc
+              checkSymbolDuplication
+                  #2
+                  dataDescs E.DuplicateTypDesc
             fun check (tvar, name, conDescs) = 
                 (
-                 UserErrorUtils.checkNameDuplication
+                 UserErrorUtils.checkSymbolDuplication
                    (fn (con, ty) => con)
-                   conDescs loc E.DuplicateConstructorNameInDatatype;
+                   conDescs E.DuplicateConstructorNameInDatatype;
+                 app (fn (con, ty) =>
+                         ElaborateCore.checkReservedNameForConstructorBind
+                           con)
+                   conDescs;
                  ()
                 )
             val _ = map check dataDescs
@@ -144,8 +161,16 @@ struct
       | A.SPECEXCEPTION(exnDescs, loc) =>
           let
             val _ = 
-              checkNameDuplication
-                  #1 exnDescs loc E.DuplicateConstructorNameInException
+              checkSymbolDuplication
+                  #1
+                  exnDescs E.DuplicateConstructorNameInException
+            val _ =
+              app (fn (con, ty) =>
+                      ElaborateCore.checkReservedNameForConstructorBind
+                        con)
+                  exnDescs;
+            val exnDescs =
+                map (fn (symbol, tyOpt) => (symbol, tyOpt)) exnDescs
           in
             PC.PLSPECEXCEPTION(exnDescs, loc)
           end
@@ -153,7 +178,7 @@ struct
           let
             val _ = 
               checkNameDuplication
-                  #1 strdescs loc E.DuplicateStrDesc
+                  (fn x => Symbol.symbolToString (#1 x)) strdescs loc E.DuplicateStrDesc
           in
             PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs, 
                              loc)
@@ -163,7 +188,7 @@ struct
       | A.SPECDERIVEDINCLUDE(sigids, loc) => 
           let
             fun elabSigID sigid =
-                PC.PLSPECINCLUDE(PC.PLSIGID(sigid, loc), loc)
+                PC.PLSPECINCLUDE(PC.PLSIGID sigid, loc)
           in
             specListToSpecSeq loc (map elabSigID sigids)
           end
@@ -177,9 +202,9 @@ struct
     and elabSigExp sigexp =
       case sigexp of 
         A.SIGEXPBASIC(spec, loc) => PC.PLSIGEXPBASIC(elabSpec spec, loc)
-      | A.SIGID(sigid,loc) => PC.PLSIGID(sigid, loc)
-      | A.SIGWHERE(sigexp, whtypes, loc) =>
-        PC.PLSIGWHERE(elabSigExp sigexp, whtypes, loc)
+      | A.SIGID(sigid,loc) => PC.PLSIGID sigid
+      | A.SIGWHERE(sigexp, whtype, loc) =>
+        PC.PLSIGWHERE(elabSigExp sigexp, whtype, loc)
 
     and elabStrExp env strexp =
       case strexp of
@@ -187,7 +212,7 @@ struct
           let val (plstrdecs, env') = elabStrDecs env strdecs
           in PC.PLSTREXPBASIC(plstrdecs, loc)
           end
-      | A.STRID(longid, loc) => PC.PLSTRID(longid, loc)
+      | A.STRID(longid, loc) => PC.PLSTRID longid
       | A.STRTRANCONSTRAINT(strexp, sigexp, loc) =>
           PC.PLSTRTRANCONSTRAINT
           (elabStrExp env strexp, elabSigExp sigexp, loc)
@@ -199,9 +224,11 @@ struct
         | A.FUNCTORAPP(funid, strexp, loc) => 
             let
               val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+              val newStrLong = Symbol.mkLongsymbol [newStrid] loc
+              val newStrSymbol = Symbol.mkSymbol newStrid loc
               val plstrexp = elabStrExp env strexp
-              val plstrbody = PC.PLFUNCTORAPP(funid, [newStrid],loc)
-              val plstrDecs =[PC.PLSTRUCTBIND([(newStrid,plstrexp)],loc)]
+              val plstrbody = PC.PLFUNCTORAPP(funid, newStrLong, loc)
+              val plstrDecs =[PC.PLSTRUCTBIND([(newStrSymbol,plstrexp)],loc)]
             in
               PC.PLSTRUCTLET(plstrDecs, plstrbody, loc)
             end
@@ -283,13 +310,13 @@ struct
           val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
           val newStrexp =
               A.STRUCTLET
-                ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], 
+                ([A.COREDEC(A.DECOPEN([ Symbol.mkLongsymbol [newStrid] loc], loc), loc)], 
                  A.STRTRANCONSTRAINT(strexp,resSigexp,loc),
                  loc)
           val argSigExp = A.SIGEXPBASIC(spec, loc)
           val newFunBind =
               A.FUNBINDNONOBSERV
-                (funid, newStrid, argSigExp, newStrexp, loc)
+                (funid, Symbol.mkSymbol newStrid loc, argSigExp, newStrexp, loc)
         in
           elabFunBind env newFunBind
         end
@@ -301,13 +328,13 @@ struct
           val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
           val newStrexp =
               A.STRUCTLET
-                ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], 
+                ([A.COREDEC(A.DECOPEN([Symbol.mkLongsymbol [newStrid] loc], loc), loc)], 
                  A.STROPAQCONSTRAINT(strexp,resSigexp,loc),
                  loc)
           val argSigExp = A.SIGEXPBASIC(spec, loc)
           val newFunBind =
               A.FUNBINDNONOBSERV
-                (funid, newStrid, argSigExp, newStrexp, loc)
+                (funid, Symbol.mkSymbol newStrid loc, argSigExp, newStrexp, loc)
         in
           elabFunBind env newFunBind
         end
@@ -319,10 +346,10 @@ struct
           val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
           val newStrexp =
               A.STRUCTLET
-                ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], strexp, loc)
+                ([A.COREDEC(A.DECOPEN([Symbol.mkLongsymbol [newStrid] loc], loc), loc)], strexp, loc)
           val newFunBind =
               A.FUNBINDNONOBSERV
-                (funid, newStrid, A.SIGEXPBASIC(spec, loc), newStrexp, loc)
+                (funid, Symbol.mkSymbol newStrid loc, A.SIGEXPBASIC(spec, loc), newStrexp, loc)
         in
           elabFunBind env newFunBind
         end
@@ -333,8 +360,8 @@ struct
           val newArgSigexp = elabSigExp argSigexp
           val newStrexp = elabStrExp env strexp
         in
-          {name=funid,
-           argStrName=strid,
+          {name = funid,
+           argStrName = strid,
            argSig=newArgSigexp,
            body=newStrexp,
            loc=loc}

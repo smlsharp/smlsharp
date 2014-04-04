@@ -1,17 +1,4 @@
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/Word.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/Real.smi"
-_require "../../../basis/main/Char.smi"
-_require "../../../basis/main/Substring.smi"
-_require "../../../basis/main/Array.smi"
-_require "../../../basis/main/Vector.smi"
-_require "../../../basis/main/Bool.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/binary-op.smi"
-
+_require "../../../basis.smi"
 _require "BASIC_FORMATTERS.sig"
 _require "FormatExpression.smi"
 

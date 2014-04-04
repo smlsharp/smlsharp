@@ -1,5 +1,3 @@
-include "STREAM_IO.sig"
-
 signature IMPERATIVE_IO =
 sig
   structure StreamIO : STREAM_IO

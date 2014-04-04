@@ -1,0 +1,8 @@
+_require "smlunit-lib.smi"
+_require "basis.smi"
+_require "MutableSequenceSlice001.smi"
+
+structure ArraySlice001 =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

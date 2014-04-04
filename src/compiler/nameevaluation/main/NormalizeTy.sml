@@ -4,42 +4,8 @@
  *)
 (* the initial error code of this file : N-001 
  *)
-structure NormalizeTy :
-sig
-  datatype checkConError =
-           Arity
-         | Name of (string list * string list)
-         | Type of string list
-         | OK
-  datatype checkConRes = FAIL of checkConError list | SUCCESS
-  datatype normalForm = TYNAME of IDCalc.tfun | TYTERM of IDCalc.ty
-  val admitEq : TvarSet.item list -> IDCalc.ty -> bool
-  val checkConSpec : 
-      ((TypID.id * TypID.id) -> bool) 
-      -> (IDCalc.formals * IDCalc.conSpec) *
-         (IDCalc.formals * IDCalc.conSpec)
-      -> checkConRes
-  val eqTydef : ((TypID.id * TypID.id) -> bool) 
-               -> (IDCalc.formals * IDCalc.ty) * (IDCalc.formals * IDCalc.ty)
-               -> bool
-  val equalTfun : ((TypID.id * TypID.id) -> bool) -> IDCalc.tfun * IDCalc.tfun -> bool
-  val reduceEnv : NameEvalEnv.env -> NameEvalEnv.env
-  val reduceTfun : IDCalc.tfun -> IDCalc.tfun
-  val reduceTy : IDCalc.ty TvarMap.map -> IDCalc.ty -> IDCalc.ty
-  val tyForm : {eq:Absyn.eq, id:TvarID.id, lifted:bool, name:string} list
-               -> IDCalc.ty -> normalForm
-  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SEnv.map,
-               id:TypID.id, iseqRef:bool ref} list
-              -> unit
-  val equalTy :
-      ((TypID.id * TypID.id -> bool) * (IDCalc.tvarId TvarID.Map.map))
-      -> IDCalc.ty * IDCalc.ty -> bool
-  val makeTypIdEquiv : TypID.id list list -> (TypID.id * TypID.id) -> bool
-  val emptyTypIdEquiv : (TypID.id * TypID.id) -> bool
-end
-=
+structure NormalizeTy =
 struct
-val _ = "initializing NormalizeTy ..."
 local
   structure I = IDCalc
   structure V = NameEvalEnv
@@ -48,7 +14,7 @@ local
   structure EU = UserErrorUtils
   structure A = Absyn
   exception Rigid
-  fun bug s = Control.Bug ("NormalizeTy: " ^ s)
+  fun bug s = Bug.Bug ("NormalizeTy: " ^ s)
 in
   fun emptyTypIdEquiv (id1, id2) = TypID.eq(id1, id2)
   (* makes an equivalence relation on type ids for 
@@ -93,8 +59,8 @@ in
         fun tyToTvars tyList =
             map (fn (I.TYVAR tvar) => tvar | _ => raise Rigid) tyList
         fun equalTuple (nil,nil) = true
-          | equalTuple ({id=id1, name=_, eq=_, lifted=_}::tvarList1,
-                        {id=id2, name=_, eq=_, lifted=_}::tvarList2) =
+          | equalTuple ({id=id1, symbol=_, eq=_, lifted=_}::tvarList1,
+                        {id=id2, symbol=_, eq=_, lifted=_}::tvarList2) =
             TvarID.eq(id1,id2) andalso equalTuple (tvarList1, tvarList2) 
           | equalTuple _ =  false
       in
@@ -185,21 +151,21 @@ in
     and redTyField tvarEnv (l,ty) = (l, redTy tvarEnv ty)
     and redTfun tvarEnv tfun =
         case tfun of
-          I.TFUN_DEF {iseq, formals, realizerTy} =>
+          I.TFUN_DEF {longsymbol, iseq, formals, realizerTy} =>
           let
             val realizerTy = redTy tvarEnv realizerTy
             val res = tyForm formals realizerTy
           in
             case res of
               TYTERM ty =>
-              I.TFUN_DEF {iseq=iseq, formals=formals,realizerTy=realizerTy}
+              I.TFUN_DEF {longsymbol=longsymbol, iseq=iseq, formals=formals,realizerTy=realizerTy}
             | TYNAME tfun => tfun
           end
         | I.TFUN_VAR tfv => 
           case !tfv of
             I.TFV_SPEC _ => tfun
-          | I.TFUN_DTY {id, iseq, formals, runtimeTy, originalPath,
-                        conSpec, liftedTys, dtyKind} =>
+          | I.TFUN_DTY {id, iseq, formals, runtimeTy, longsymbol,
+                        conSpec, conIDSet, liftedTys, dtyKind} =>
             if isVisited tfv then tfun 
             else
             let
@@ -212,14 +178,15 @@ in
 				   runtimeTy=runtimeTy,
                                    formals=formals,
                                    conSpec=conSpec,
-                                   originalPath=originalPath,
+                                   conIDSet = conIDSet,
+                                   longsymbol=longsymbol,
                                    liftedTys=liftedTys,
                                    dtyKind=dtyKind
                                   }
             in
               tfun
             end
-          | I.TFV_DTY {name, id, iseq, formals, conSpec, liftedTys} =>
+          | I.TFV_DTY {longsymbol, id, iseq, formals, conSpec, liftedTys} =>
             if isVisited tfv then tfun 
             else
               let
@@ -227,7 +194,7 @@ in
                 val conSpec = redConSpec tvarEnv conSpec
                 val _ = 
                     tfv := I.TFV_DTY{id=id,
-                                     name=name,
+                                     longsymbol=longsymbol,
                                      iseq=iseq,
                                      formals=formals,
                                      conSpec=conSpec,
@@ -252,7 +219,7 @@ in
           | _ => tfun
 
     and redConSpec tvarEnv conSpec =
-        SEnv.mapi
+        SymbolEnv.mapi
           (fn (name, tyOpt) => (Option.map (redTy tvarEnv) tyOpt)
           )
           conSpec
@@ -273,41 +240,41 @@ in
 
     fun redIdstatus idstatus =
         case idstatus of
-          I.IDVAR varId => idstatus
-        | I.IDVAR_TYPED {id, ty} => 
-          I.IDVAR_TYPED {id=id, ty= redTy TvarMap.empty ty}
-        | I.IDEXVAR {path, ty, used, loc, version, internalId} =>
-          I.IDEXVAR {path=path, 
-                     ty= redTy TvarMap.empty ty, 
+          I.IDVAR _ => idstatus
+        | I.IDVAR_TYPED {id, longsymbol, ty} => 
+          I.IDVAR_TYPED {id=id, longsymbol=longsymbol, ty= redTy TvarMap.empty ty}
+        | I.IDEXVAR {exInfo={longsymbol, version, ty}, used, internalId} =>
+          I.IDEXVAR {exInfo={longsymbol=longsymbol, version=version, ty=redTy TvarMap.empty ty},
                      used=used, 
-                     loc=loc, 
-                     version=version,
                      internalId = internalId
                     }
-        | I.IDEXVAR_TOBETYPED {path, id, loc, version} => idstatus
+        | I.IDEXVAR_TOBETYPED {longsymbol, id, version} => idstatus
         | I.IDBUILTINVAR {primitive, ty} =>
           I.IDBUILTINVAR {primitive=primitive, ty=redTy TvarMap.empty ty}
-        | I.IDCON {id, ty} =>
-          I.IDCON {id=id, ty=redTy TvarMap.empty ty}
-        | I.IDEXN {id, ty} =>
-          I.IDEXN {id=id, ty=redTy TvarMap.empty ty}
-        | I.IDEXNREP {id, ty} =>
-          I.IDEXNREP {id=id, ty=redTy TvarMap.empty ty}
-        | I.IDEXEXN {path, ty, used, loc, version} =>
-          I.IDEXEXN {path=path, ty=redTy TvarMap.empty ty, used=used, loc=loc, version=version}
-        | I.IDEXEXNREP {path, ty, used, loc, version} =>
-          I.IDEXEXNREP {path=path, ty=redTy TvarMap.empty ty, used=used, loc=loc, version=version}
+        | I.IDCON {id, longsymbol, ty} =>
+          I.IDCON {id=id, longsymbol=longsymbol, ty=redTy TvarMap.empty ty}
+        | I.IDEXN {id, longsymbol, ty} =>
+          I.IDEXN {id=id, longsymbol=longsymbol,ty=redTy TvarMap.empty ty}
+        | I.IDEXNREP {id, longsymbol, ty} =>
+          I.IDEXNREP {id=id, longsymbol=longsymbol, ty=redTy TvarMap.empty ty}
+        | I.IDEXEXN ({longsymbol, ty, version}, used) =>
+          I.IDEXEXN ({longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}, used)
+        | I.IDEXEXNREP ({longsymbol, ty, version}, used) =>
+          I.IDEXEXNREP ({longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}, used)
         | I.IDOPRIM _ => idstatus
-        | I.IDSPECVAR ty => I.IDSPECVAR (redTy TvarMap.empty ty)
-        | I.IDSPECEXN ty => I.IDSPECEXN (redTy TvarMap.empty ty)
-        | I.IDSPECCON => idstatus
+        | I.IDSPECVAR {ty, symbol} => I.IDSPECVAR {ty=redTy TvarMap.empty ty, symbol=symbol}
+        | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=redTy TvarMap.empty ty, symbol=symbol}
+        | I.IDSPECCON {symbol} => I.IDSPECCON {symbol=symbol}
 
     fun redEnv env =
         let
           val V.ENV{tyE, varE, strE=V.STR envMap} = env
-          val tyE = SEnv.map redTstr tyE
-          val envMap = SEnv.map (fn {env, strKind} => {env=redEnv env, strKind=strKind}) envMap
-          val varE = SEnv.map redIdstatus varE
+          val tyE = SymbolEnv.map redTstr tyE
+          val envMap = 
+              SymbolEnv.map
+                (fn {env, strKind} => 
+                    {env=redEnv env, strKind=strKind}) envMap
+          val varE = SymbolEnv.map redIdstatus varE
         in
           V.ENV{tyE=tyE, varE=varE, strE=V.STR envMap} 
         end
@@ -333,7 +300,7 @@ in
         (I.TFUN_VAR(ref(I.REALIZED{tfun,...})),_) => equalTfun typIdEquiv (tfun, tfun2)
       | (_, I.TFUN_VAR(ref(I.REALIZED{tfun,...}))) => equalTfun typIdEquiv (tfun1, tfun) 
       | (I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...})),_)=> equalTfun typIdEquiv (tfun, tfun2)
-      | (_,I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...}))) =>equalTfun typIdEquiv (tfun1,tfun) 
+      | (_,I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...}))) => equalTfun typIdEquiv (tfun1,tfun) 
       | (I.TFUN_DEF {formals=formals1,realizerTy=ty1,...},
          I.TFUN_DEF {formals=formals2,realizerTy=ty2,...})=>
         eqTydef typIdEquiv ((formals1, ty1),(formals2, ty2))
@@ -343,14 +310,22 @@ in
          I.TFUN_VAR (ref (I.TFV_DTY {id=id2,...}))) =>  typIdEquiv(id1,id2)
       | (I.TFUN_VAR (ref (I.TFUN_DTY {id=id1,...})),
          I.TFUN_VAR (ref (I.TFUN_DTY {id=id2,...}))) =>  typIdEquiv(id1,id2)
+(* 2012-12-24
+     tfun may be functor arguments.
+  2013-4-3 we must check the equality of the actual tfuns in FUN_DTY
+      | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun1,...})),
+         I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun2,...}))) => equalTfun typIdEquiv (tfun1,tfun2) 
+*)
+      | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun,...})), _) => equalTfun typIdEquiv (tfun,tfun2) 
+      | (_, I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun,...}))) => equalTfun typIdEquiv (tfun1,tfun) 
       | _ => false
 
   and eqTydef typIdEquiv ((formals1, ty1), (formals2, ty2)) =
       let
         val tvarIdEquiv =
             foldl
-            (fn (({id=tv1,name=_,eq=_,lifted=_},
-                  {id=tv2,name=_,eq=_,lifted=_}),
+            (fn (({id=tv1,symbol=_,eq=_,lifted=_},
+                  {id=tv2,symbol=_,eq=_,lifted=_}),
                  equiv) =>
                 TvarID.Map.insert(equiv, tv1, tv2))
             TvarID.Map.empty
@@ -432,7 +407,7 @@ in
   fun admitEqMaker tfuneq tvarList ty =
       let
         val set = TvarSet.fromList tvarList
-        fun eqtvar (tvar as {name, eq, id, lifted}) =
+        fun eqtvar (tvar as {symbol, eq, id, lifted}) =
             TvarSet.member(set, tvar) orelse
             case eq of Absyn.EQ => true | Absyn.NONEQ => false
         fun eqTfun (tfun, args) =
@@ -515,7 +490,7 @@ to re-structure builtins.
                    {id=id,
                     iseqRef=iseqRef,
                     args=args,
-                    conSpec=SEnv.listItems conSpec}
+                    conSpec=SymbolEnv.listItems conSpec}
                    :: datadeclList
                   )
               )
@@ -561,10 +536,11 @@ to re-structure builtins.
       in
         ()
       end
+
   datatype checkConError =
            Arity
-         | Name of (string list * string list)
-         | Type of string list
+         | Name of (Symbol.symbol list * Symbol.symbol list)
+         | Type of Symbol.symbol list
          | OK
   datatype checkConRes =
            SUCCESS
@@ -581,10 +557,10 @@ to re-structure builtins.
             TvarID.Map.empty
             (ListPair.zip (formals1,formals2))
         val (tyerrors, nameList1, conSpec2) =
-            SEnv.foldli
+            SymbolEnv.foldli
             (fn (name, tyopt1, (tyerrors, nameList1, conSpec2)) =>
                 let
-                  val (conSpec2, tyopt2) = SEnv.remove(conSpec2, name)
+                  val (conSpec2, tyopt2) = SymbolEnv.remove(conSpec2, name)
                 in
                   case (tyopt1,tyopt2) of
                     (NONE, NONE) => (tyerrors, nameList1, conSpec2)
@@ -600,7 +576,7 @@ to re-structure builtins.
             )
             (nil, nil, conSpec2)
             conSpec1
-        val nameList2 = SEnv.listKeys conSpec2
+        val nameList2 = SymbolEnv.listKeys conSpec2
         val errors = case tyerrors of
                        nil => errors
                      | _ => Type tyerrors :: errors

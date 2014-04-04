@@ -1,0 +1,8 @@
+_require "basis.smi"
+_require "smlunit-lib.smi"
+structure TestTest =
+struct
+  exception TestFail
+  val runTest : unit -> unit
+end
+

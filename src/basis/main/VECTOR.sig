@@ -1,6 +1,3 @@
-include "General.smi"
-include "Vector.smi"
-
 signature VECTOR =
 sig
   type 'a vector = 'a Vector.vector

@@ -1,8 +1,7 @@
-include "General.smi"
-
 signature LIST =
 sig
-  datatype 'a list = nil | :: of 'a * 'a list
+  (* datatype 'a list = nil | :: of 'a * 'a list *)
+  type 'a list = 'a list
   exception Empty
   val null : 'a list -> bool
   val length : 'a list -> int

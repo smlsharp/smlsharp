@@ -1,58 +1,29 @@
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/StringCvt.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/IO.smi"
-_require "../../../basis/main/CharVector.smi"
-_require "../../../basis/main/CharVectorSlice.smi"
 _require "../../../basis/main/CharArray.smi"
-_require "../../../basis/main/String.smi"
+_require "../../../basis/main/CharVector.smi"
+_require "../../../basis/main/CharArraySlice.smi"
+_require "../../../basis/main/CharVectorSlice.smi"
 _require "../../../basis/main/Substring.smi"
+_require "../../../basis/main/IO.smi"
+_require "../../../basis/main/OS.smi"
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/StringCvt.smi"
+_require "../../../basis/main/Substring.smi"
+_require "../../../basis/main/SMLSharp_OSProcess.smi"
 _require "../IO/prim-io-text.smi"
-_require "../IO/clean-io.smi"
-_require "../IO/os-prim-io.sig"
 _require "../Unix/posix-text-prim-io.smi"
 
-structure SMLSharpSMLNJ_TextIO =
+structure TextIO =
 struct
   structure StreamIO =
   struct
-    type elem = SMLSharpSMLNJ_PosixTextPrimIO.PrimIO.elem
-    type vector = SMLSharpSMLNJ_PosixTextPrimIO.PrimIO.vector
-    type reader = SMLSharpSMLNJ_PosixTextPrimIO.PrimIO.reader
-    type writer = SMLSharpSMLNJ_PosixTextPrimIO.PrimIO.writer
-    type pos = SMLSharpSMLNJ_PosixTextPrimIO.PrimIO.pos
-    datatype instream =
-        ISTRM of in_buffer * int
-    and in_buffer =
-        IBUF of {basePos : pos option,
-                 more : more ref,
-                 data : vector,
-                 info : info}
-    and more =
-        MORE of in_buffer
-      | EOS of in_buffer
-      | NOMORE
-      | TERMINATED
-    and info =
-        INFO of {reader : reader,
-                 readVec : int -> vector,
-                 readVecNB : (int -> vector) option,
-                 closed : bool ref,
-                 getPos : unit -> pos option,
-                 tail : more ref ref,
-                 cleanTag : SMLSharpSMLNJ_CleanIO.tag}
-    datatype outstream =
-        OSTRM of {buf : CharArray.array,
-                  pos : int ref,
-                  closed : bool ref,
-                  bufferMode : IO.buffer_mode ref,
-                  writer : writer,
-                  writeArr : CharArraySlice.slice -> unit,
-                  writeVec : CharVectorSlice.slice -> unit,
-                  cleanTag : SMLSharpSMLNJ_CleanIO.tag}
-    datatype out_pos =
-        OUTP of {pos : pos, strm : outstream}
+    type elem = char
+    type vector = string
+    type instream (= boxed)
+    type outstream (= boxed)
+    type out_pos (= boxed)
+    type reader = TextPrimIO.reader
+    type writer = TextPrimIO.writer
+    type pos = TextPrimIO.pos
     val input : instream -> vector * instream
     val input1 : instream -> (elem * instream) option
     val inputN : instream * int -> vector * instream
@@ -75,12 +46,12 @@ struct
     val setPosOut : out_pos -> outstream
     val filePosOut : out_pos -> pos
     val inputLine : instream -> (string * instream) option
-    val outputSubstr : outstream * substring -> unit
+    val outputSubstr : outstream * Substring.substring -> unit
   end
   type vector = StreamIO.vector
   type elem = StreamIO.elem
-  type instream = StreamIO.instream ref
-  type outstream = StreamIO.outstream ref
+  type instream (= boxed)
+  type outstream (= boxed)
   val input : instream -> vector
   val input1 : instream -> elem option
   val inputN : instream * int -> vector
@@ -101,8 +72,9 @@ struct
   val setOutstream : outstream * StreamIO.outstream -> unit
   val getPosOut : outstream -> StreamIO.out_pos
   val setPosOut : outstream * StreamIO.out_pos -> unit
+
   val inputLine : instream -> string option
-  val outputSubstr : outstream * substring -> unit
+  val outputSubstr : outstream * Substring.substring -> unit
   val openIn : string -> instream
   val openOut : string -> outstream
   val openAppend : string -> outstream
@@ -111,7 +83,7 @@ struct
   val stdOut : outstream
   val stdErr : outstream
   val print : string -> unit
-  val scanStream : ((SMLSharp.Char.char, StreamIO.instream) StringCvt.reader
+  val scanStream : ((char, StreamIO.instream) StringCvt.reader
                     -> ('a, StreamIO.instream) StringCvt.reader)
                    -> instream
                    -> 'a option

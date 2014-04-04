@@ -3,18 +3,18 @@ struct
 local
   structure U = Unify
   structure T = Types
-  structure TU = TypesUtils
+  structure TU = TypesBasics
   type ty = T.ty
-  type path = T.path
+  type longsymbol = Symbol.longsymbol
   type varInfo = T.varInfo
-  fun bug s = Control.Bug ("TyRevealTy: " ^ s)
+  fun bug s = Bug.Bug ("TyRevealTy: " ^ s)
 in
   fun revealSingletonTy (singletonTy:T.singletonTy) : T.singletonTy =
       case singletonTy of
         T.INSTCODEty
           {
            oprimId,
-           path,
+           longsymbol,
            keyTyList : ty list,
            match : T.overloadMatch,
            instMap : T.overloadMatch OPrimInstMap.map
@@ -22,7 +22,7 @@ in
         T.INSTCODEty
           {
            oprimId=oprimId,
-           path=path,
+           longsymbol=longsymbol,
            keyTyList = map revealTy keyTyList,
            match = revealOverloadMatch match,
            instMap = OPrimInstMap.map revealOverloadMatch instMap
@@ -46,34 +46,36 @@ in
        | T.OVERLOAD_CASE (ty, map:T.overloadMatch TypID.Map.map) =>
          T.OVERLOAD_CASE
            (revealTy ty, TypID.Map.map revealOverloadMatch map)
-  and revealExVarInfo {path:path,ty:ty} : T.exVarInfo =
-      {path=path, ty=revealTy ty}
+  and revealExVarInfo {longsymbol:longsymbol,ty:ty} : T.exVarInfo =
+      {longsymbol=longsymbol, ty=revealTy ty}
   and revealPrimInfo ({primitive, ty}:T.primInfo) : T.primInfo =
       {primitive=primitive, ty=revealTy ty}
-  and revealOprimInfo ({ty, path, id}:T.oprimInfo) : T.oprimInfo =
-      {ty=revealTy ty, path=path, id=id}
-  and revealConInfo ({path, ty, id}:T.conInfo) : T.conInfo =
-      {path=path, ty=revealTy ty, id=id}
-  and revealExnInfo ({path, ty, id}:T.exnInfo) : T.exnInfo =
-      {path=path, ty=revealTy ty, id=id}
-  and revealExExnInfo ({path, ty}:T.exExnInfo) : T.exExnInfo =
-      {path=path, ty=revealTy ty}
+  and revealOprimInfo ({ty, longsymbol, id}:T.oprimInfo) : T.oprimInfo =
+      {ty=revealTy ty, longsymbol=longsymbol, id=id}
+  and revealConInfo ({longsymbol, ty, id}:T.conInfo) : T.conInfo =
+      {longsymbol=longsymbol, ty=revealTy ty, id=id}
+  and revealExnInfo ({longsymbol, ty, id}:T.exnInfo) : T.exnInfo =
+      {longsymbol=longsymbol, ty=revealTy ty, id=id}
+  and revealExExnInfo ({longsymbol, ty}:T.exExnInfo) : T.exExnInfo =
+      {longsymbol=longsymbol, ty=revealTy ty}
   and revealTyCon
         {id : T.typId,
-         path : path,
+         longsymbol : longsymbol,
          iseq : bool,
          arity : int,
          runtimeTy : BuiltinTypeNames.bty,
          conSet : {hasArg:bool} SEnv.map,
+         conIDSet,
          extraArgs : ty list,
          dtyKind : T.dtyKind
         } =
         {id = id,
-         path = path,
+         longsymbol = longsymbol,
          iseq = iseq,
          arity = arity,
          runtimeTy = runtimeTy,
          conSet = conSet,
+         conIDSet = conIDSet,
          extraArgs = map revealTy extraArgs,
          dtyKind = revealDtyKind dtyKind
         }
@@ -95,6 +97,8 @@ in
       case TU.derefTy ty of
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (revealSingletonTy singletonTy)
+      | T.BACKENDty backendTy =>
+        raise Bug.Bug "revealTy: BACKENDty"
       | T.ERRORty => ty
       | T.DUMMYty dummyTyID => ty
       | T.TYVARty _ => raise bug "TYVARty in Optimize"
@@ -108,11 +112,12 @@ in
           val tyCon
                 as 
                 {id : T.typId,
-                 path : path,
+                 longsymbol : longsymbol,
                  iseq : bool,
                  arity : int,
                  runtimeTy : BuiltinTypeNames.bty,
                  conSet : {hasArg:bool} SEnv.map,
+                 conIDSet,
                  extraArgs : ty list,
                  dtyKind : T.dtyKind
                 } = revealTyCon tyCon
@@ -145,7 +150,7 @@ in
            operators:
            {
             oprimId : OPrimID.id,
-            path : path,
+            longsymbol : longsymbol,
             keyTyList : ty list,
             match : T.overloadMatch,
             instMap : T.overloadMatch OPrimInstMap.map
@@ -155,9 +160,9 @@ in
           {instances = map revealTy instances,
            operators =
            map
-             (fn {oprimId, path, keyTyList, match, instMap} =>
+             (fn {oprimId, longsymbol, keyTyList, match, instMap} =>
                  {oprimId=oprimId,
-                  path=path,
+                  longsymbol=longsymbol,
                   keyTyList = map revealTy keyTyList,
                   match = revealOverloadMatch match,
                   instMap = OPrimInstMap.map revealOverloadMatch instMap}
@@ -167,7 +172,9 @@ in
       | T.UNIV => T.UNIV
       | T.REC (fields:ty LabelEnv.map) =>
         T.REC (LabelEnv.map revealTy fields)
-  fun revealVar ({id, ty, path}:varInfo) =
-      {id=id, path=path, ty=revealTy ty}
+      | T.JOIN (fields:ty LabelEnv.map, ty1, ty2, loc) =>
+        T.JOIN (LabelEnv.map revealTy fields, revealTy ty1, revealTy ty2, loc)
+  fun revealVar ({id, ty, longsymbol, opaque}:varInfo) =
+      {id=id, longsymbol=longsymbol, ty=revealTy ty, opaque=opaque}
 end
 end

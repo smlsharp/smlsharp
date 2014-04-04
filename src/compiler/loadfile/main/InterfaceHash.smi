@@ -1,11 +1,14 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../util/main/BigInt_IntInf.smi"
 _require "../../util/main/ListSorter.smi"
 _require "../../toolchain/main/Filename.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
-_require "SHA1.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "./SHA1.smi"
 
 structure InterfaceHash =
 struct
-  val generate : string * string list * AbsynInterface.itopdec list -> string
+  val generate
+      : AbsynInterface.source * string list * AbsynInterface.itopdec list
+        -> string
 end

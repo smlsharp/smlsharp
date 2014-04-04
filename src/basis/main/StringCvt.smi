@@ -1,5 +1,3 @@
-_require "STRING_CVT.sig"
-
 structure StringCvt =
 struct
   datatype radix = BIN | OCT | DEC | HEX
@@ -9,7 +7,7 @@ struct
     | GEN of int option
     | EXACT
   type ('a,'b) reader = 'b -> ('a * 'b) option
-  val padLeft  : char -> int -> string -> string
+  val padLeft : char -> int -> string -> string
   val padRight : char -> int -> string -> string
   val splitl : (char -> bool) -> (char, 'a) reader -> 'a -> string * 'a
   val takel : (char -> bool) -> (char, 'a) reader -> 'a -> string
@@ -17,5 +15,6 @@ struct
   val skipWS : (char, 'a) reader -> 'a -> 'a
   type cs (= int)
   val scanString : ((char, cs) reader -> ('a, cs) reader)
-                   -> string -> 'a option 
+                   -> string
+                   -> 'a option
 end

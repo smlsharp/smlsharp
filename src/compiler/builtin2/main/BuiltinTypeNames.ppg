@@ -23,6 +23,8 @@ struct
       UNITty
     | (*% @format "ptr" *)
       PTRty      (* 'a ptr *)
+    | (*% @format "codeptr" *)
+      CODEPTRty  (* codeptr *)
     | (*% @format "array" *)
       ARRAYty    (* 'a array *)
     | (*% @format "vector" *)
@@ -33,39 +35,10 @@ struct
       BOXEDty    (* pointer to some ML object *)
     | (*% @format "exntag" *)
       EXNTAGty   (* the type of x in exception E = x *)
+    | (*% @format "contag" *)
+      CONTAGty   (* the type of data constructor tag *)
     | (*% @format "ref" *)
-      REFty      (* the ref type constructor *)
-    | (*% @format "bool" *)
-      BOOLty
-    | (*% @format "list" *)
-      LISTty
-    | (*% @format "option" *)
-      OPTIONty
-    | (*% @format "order" *)
-      ORDERty
-    (* the following are for SQL *)
-    | (*% @format "server" *)
-      SERVERty   (* database servser *)
-    | (*% @format "dbi" *)
-      DBIty      (* database witness *)
-    | (*% @format "value" *)
-      VALUEty      (* database values *)
-    | (*% @format "conn" *)
-      CONNty
-    | (*% @format "db" *)
-      DBty
-    | (*% @format "table" *)
-      TABLEty
-    | (*% @format "row" *)
-      ROWty
-    | (*% @format "result" *)
-      RESULTty
-    | (*% @format "rel" *)
-      RELty
-    | (*% @format "query" *)
-      QUERYty
-    | (*% @format "command" *)
-      COMMANDty
+      REFty      (* 'a ref *)
 
   fun findType name =
       case name of
@@ -79,29 +52,43 @@ struct
       | "real32" => SOME REAL32ty
       | "unit" => SOME UNITty
       | "ptr" => SOME PTRty
+      | "codeptr" => SOME CODEPTRty
       | "array" => SOME ARRAYty
       | "vector" => SOME VECTORty
       | "exn" => SOME EXNty
       | "boxed" => SOME BOXEDty
-      | "exntag" => SOME EXNTAGty
+(* ohori 2013-06-16 contag added *)
+      | "contag" => SOME CONTAGty
       | "ref" => SOME REFty
-      | "bool" => SOME BOOLty
-      | "list" => SOME LISTty
-      | "option" => SOME OPTIONty
-      | "order" => SOME ORDERty
-
-      | "server" => SOME SERVERty
-      | "dbi" => SOME DBIty
-      | "value" => SOME VALUEty
-      | "conn" => SOME CONNty
-      | "db" => SOME DBty
-      | "table" => SOME TABLEty
-      | "row" => SOME ROWty
-      | "result" => SOME RESULTty
-      | "rel" => SOME RELty
-      | "query" => SOME QUERYty
-      | "command" => SOME COMMANDty
       | _ => NONE
 
+  fun runtimeTy ty =
+      case ty of
+        INTty => RuntimeTypes.INTty
+      | INTINFty => RuntimeTypes.BOXEDty
+      | WORDty => RuntimeTypes.UINTty
+      | WORD8ty => RuntimeTypes.UCHARty
+      | CHARty => RuntimeTypes.UCHARty
+      | STRINGty => RuntimeTypes.BOXEDty
+      | REALty => RuntimeTypes.DOUBLEty
+      | REAL32ty => RuntimeTypes.FLOATty
+      | UNITty => RuntimeTypes.UINTty
+      | PTRty => RuntimeTypes.POINTERty
+      | CODEPTRty => RuntimeTypes.SOME_CODEPTRty
+      | ARRAYty => RuntimeTypes.BOXEDty
+      | VECTORty => RuntimeTypes.BOXEDty
+      | EXNty => RuntimeTypes.BOXEDty
+      | BOXEDty => RuntimeTypes.BOXEDty
+      | EXNTAGty => RuntimeTypes.BOXEDty
+      | CONTAGty => RuntimeTypes.UINTty
+      | REFty => RuntimeTypes.BOXEDty
+
+ (* Ohori: This is used to check the compatibility of runtimeTy of TFV_DTY
+    against that of TFUN_DTY at signature checking *)
+  fun compatTy {absTy, implTy} =
+      absTy = implTy orelse
+      case absTy of
+        BOXEDty => runtimeTy implTy = RuntimeTypes.BOXEDty
+      | _ => false
 
 end

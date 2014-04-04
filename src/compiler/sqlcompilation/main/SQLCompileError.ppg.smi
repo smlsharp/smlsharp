@@ -1,0 +1,11 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+
+structure SQLCompileError =
+struct
+
+  exception InvalidSQLSchemaTy of IDCalc.ty
+  and InvalidSQLTableTy of string * IDCalc.ty
+
+end

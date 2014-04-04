@@ -3,7 +3,7 @@ struct
 local
   structure RC = RecordCalc
   structure BT = BuiltinTypes
-  structure TU = TypesUtils
+  structure TB = TypesBasics
   val tempVarNamePrefix = "$R_"
 in
   fun newRCVarName () =  tempVarNamePrefix ^ Gensym.gensym()
@@ -17,22 +17,21 @@ in
   fun expansive tpexp =
       case tpexp of
         RC.RCCONSTANT _ => false
-      | RC.RCGLOBALSYMBOL _ => false
+      | RC.RCFOREIGNSYMBOL _ => false
       | RC.RCVAR _ => false
-      | RC.RCEXVAR (exVarInfo, loc) => false
+      | RC.RCEXVAR exVarInfo => false
       | RC.RCFNM {argVarList, bodyTy, bodyExp, loc} => false
       | RC.RCEXNCONSTRUCT {argExpOpt=NONE, exn, instTyList, loc} => false
       | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} => false
       | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} => false
       | RC.RCPOLYFNM _ => false
-      | RC.RCSQL _ => false
       | RC.RCINDEXOF _ => false
       | RC.RCTAGOF _ => false
       | RC.RCSIZEOF _ => false
       | RC.RCDATACONSTRUCT {argExpOpt=NONE, argTyOpt, con, instTyList, loc} => false
       | RC.RCDATACONSTRUCT {con={path, id, ty}, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
         let
-          val tyCon = TU.tyConFromConTy ty
+          val tyCon = TB.tyConFromConTy ty
         in
           TypID.eq (#id tyCon, #id BT.refTyCon)
           orelse expansive tpexp
@@ -58,9 +57,11 @@ in
       | RC.RCLET {decls, body, tys,loc} => true
       | RC.RCPOLY {exp=tpexp,...} => expansive tpexp
       | RC.RCTAPP {exp, ...} => expansive exp
-      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy, ptrExp}, ty, loc) =>
+      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy, funExp=RC.RCFFIFUN ptrExp}, ty, loc) =>
         expansive ptrExp
-      | RC.RCCAST (rcexp, ty, loc) => expansive rcexp 
+      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy, funExp=RC.RCFFIEXTERN _}, ty, loc) =>
+        false
+      | RC.RCCAST ((rcexp, expTy), ty, loc) => expansive rcexp 
       | RC.RCAPPM _ => true
       | RC.RCCASE _ => true
       | RC.RCPRIMAPPLY _ => true
@@ -69,16 +70,16 @@ in
       | RC.RCRAISE _ => true
       | RC.RCHANDLE _ => true
       | RC.RCEXNCASE _ => true
-      | RC.RCEXPORTCALLBACK _ => true
+      | RC.RCCALLBACKFN _ => true
       | RC.RCFOREIGNAPPLY _ => true
       | RC.RCSWITCH _ => true
 
   fun isAtom tpexp =
       case tpexp of
         RC.RCCONSTANT {const, loc, ty} => true
-      | RC.RCGLOBALSYMBOL {kind, loc, name, ty} => true
-      | RC.RCVAR (var, loc) => true
-      | RC.RCEXVAR (exVarInfo, loc) => true
+      | RC.RCFOREIGNSYMBOL {loc, name, ty} => true
+      | RC.RCVAR var => true
+      | RC.RCEXVAR exVarInfo => true
       | _ => false
 end
 end

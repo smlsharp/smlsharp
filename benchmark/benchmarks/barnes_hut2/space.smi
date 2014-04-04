@@ -1,0 +1,22 @@
+_require "basis.smi"
+_require "vector.smi"
+_require "vector-sig.sml"
+
+structure Space =
+struct
+  datatype body = Body of {acc:real VectorN.vec ref, mass:real, phi:real ref,
+                           pos:real VectorN.vec ref, vel:real VectorN.vec ref}
+  datatype cell = BodyCell of body | Cell of node array
+  and node = Empty | Node of {cell:cell, mass:real ref, pos:real VectorN.vec ref}
+  datatype space = Space of {rmin:real VectorN.vec, root:node, rsize:real}
+  val nsub : int
+  val putCell : cell * int * node -> unit
+  val getCell : cell * int -> node
+  val mkCell : unit -> cell
+  val mkBodyNode : body -> node
+  val mkCellNode : cell -> node
+  val eqBody : body * body -> bool
+  val dumpTree : node -> unit
+  val prBody : body -> string
+  val prNode : node -> string
+end

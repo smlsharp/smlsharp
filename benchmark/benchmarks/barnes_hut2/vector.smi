@@ -1,0 +1,2 @@
+_require "vector3.smi"
+structure VectorN = Vector3

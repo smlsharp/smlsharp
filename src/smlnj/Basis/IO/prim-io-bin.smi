@@ -1,13 +1,13 @@
-_require "../../../basis/main/OS.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/IO.smi"
-_require "../../../basis/main/Int.smi"
 _require "../../../basis/main/General.smi"
-_require "../../../basis/main/PRIM_IO.sig"
-_require "../../../basis/main/Word8.smi"
 _require "../../../basis/main/Word8Vector.smi"
 _require "../../../basis/main/Word8VectorSlice.smi"
 _require "../../../basis/main/Word8Array.smi"
+_require "../../../basis/main/Word8ArraySlice.smi"
+_require "../../../basis/main/OS.smi"
+_require "../../../basis/main/IO.smi"
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/Word8.smi"
 
 structure BinPrimIO =
 struct
@@ -17,7 +17,7 @@ struct
   type array = Word8Array.array
   type array_slice = Word8ArraySlice.slice
   type pos = Position.int
-  val compare : pos * pos -> order
+  val compare : pos * pos -> General.order
   datatype reader =
       RD of {name : string,
              chunkSize : int,

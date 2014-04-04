@@ -1,5 +1,3 @@
-include "IO.smi"
-
 signature STREAM_IO =
 sig
   type elem

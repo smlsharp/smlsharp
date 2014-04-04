@@ -1,7 +1,3 @@
-include "StringCvt.smi"
-include "../../smlnj/Basis/IO/prim-io-text.smi"
-include "TEXT_STREAM_IO.sig"
-
 signature TEXT_IO =
 sig
   structure StreamIO : TEXT_STREAM_IO
@@ -43,7 +39,7 @@ sig
   val stdOut : outstream
   val stdErr : outstream
   val print : string -> unit
-  val scanStream : ((SMLSharp.Char.char, StreamIO.instream) StringCvt.reader
+  val scanStream : ((Char.char, StreamIO.instream) StringCvt.reader
                     -> ('a, StreamIO.instream) StringCvt.reader)
                    -> instream
                    -> 'a option

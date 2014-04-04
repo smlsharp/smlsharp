@@ -1,25 +1,27 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../util/main/gensym.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesUtils.smi"
+_require "../../types/main/TypesBasics.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
-_require "TypedCalc.ppg.smi"
+_require "./TypedCalc.ppg.smi"
 
 structure TypedCalcUtils =
   struct
     val newTCVarName : unit -> string
-    val newTCVarInfo : Types.ty -> Types.varInfo
-    val newTCVarInfoWithPath : Types.path * Types.ty -> Types.varInfo
+    val newTCVarInfo : Loc.loc -> Types.ty -> Types.varInfo
+    val newTCVarInfoWithLongsymbol : Symbol.longsymbol * Types.ty -> Types.varInfo
     val getLocOfExp : TypedCalc.tpexp -> Loc.loc
     val freshInst : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
     val freshToplevelInst
         : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
+    val toplevelInstWithInstTy
+        : Types.ty * TypedCalc.tpexp * Types.ty -> Types.ty * TypedCalc.tpexp
     val expansive : TypedCalc.tpexp  -> bool
     val isAtom : TypedCalc.tpexp  -> bool
   end

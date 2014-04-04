@@ -1,8 +1,17 @@
+include "basis/main/SMLSharp_OSFileSys.smi"
+include "basis/main/SMLSharp_OSIO.smi"
+include "basis/main/SMLSharp_OSProcess.smi"
+include "basis/main/SMLSharp_Runtime.smi"
+include "smlnj/Basis/Unix/os-path.smi"
+
 include "basis.smi"
 include "ml-yacc-lib.smi"
 include "smlformat-lib.smi"
-(* include "smlnj-lib.smi" *)
+include "smlnj-lib.smi"
 include "ffi.smi"
 include "sql.smi"
 include "reifiedterm/main/ReifiedTerm.ppg.smi"
 include "unix-utils/main/UnixUtils.smi"
+include "compiler-utils/env/main/SEnv.smi"
+include "compiler/control/main/Control.ppg.smi"
+include "smlunit-lib.smi"

@@ -1,44 +1,45 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
+_require "./Symbol.ppg.smi"
 
 structure AbsynSQL =
 struct
+  type symbol = Symbol.symbol
   datatype 'exp command =
-      SQLSELECT of {selectListExps: 'exp list,
-                    selectLabels: string list option,
-                    selectName: string option,
-                    fromClause: (string * 'exp) list,
-                    whereClause: 'exp option,
-                    orderByClause: {keyExp:'exp, orderAsc:bool} list,
-                    loc: Loc.loc}
-    | SQLINSERT of {table: string * string,
-                    insertRows: 'exp option list list, (* NONE = DEFAULT *)
-                    insertLabels: string list,
-                    loc: Loc.loc}
-    | SQLDELETE of {table: string * string,
-                    tableName: string option,
-                    whereClause: 'exp option,
-                    loc: Loc.loc}
-    | SQLUPDATE of {table: string * string,
-                    tableName: string option,
-                    setListExps: 'exp list,
-                    setLabels: string list,
-                    fromClause: (string * 'exp) list,
-                    whereClause: 'exp option,
-                    loc: Loc.loc}
-    | SQLBEGIN of Loc.loc
-    | SQLCOMMIT of Loc.loc
-    | SQLROLLBACK of Loc.loc
-  val format_command
-      : ('a -> SMLFormat.FormatExpression.expression list)
-        -> 'a command -> SMLFormat.FormatExpression.expression list
+    SQLSELECT of {selectListExps: 'exp list,
+                  selectLabels: string list option,
+                  selectName: symbol option,
+                  fromClause: (string * 'exp) list,
+                  whereClause: 'exp option,
+                  orderByClause: {keyExp:'exp, orderAsc:bool} list,
+                  loc: Loc.loc}
+  |  SQLINSERT of {table: symbol * string,
+                  insertRows: 'exp option list list, (* NONE = DEFAULT *)
+                  insertLabels: string list,
+                  loc: Loc.loc}
+  | SQLDELETE of {table: symbol * string,
+                  tableName: string option,
+                  whereClause: 'exp option,
+                  loc: Loc.loc}
+  | SQLUPDATE of {table: symbol * string,
+                  tableName: string option,
+                  setListExps: 'exp list,
+                  setLabels: string list,
+                  fromClause: (string * 'exp) list,
+                  whereClause: 'exp option,
+                  loc: Loc.loc}
+  | SQLBEGIN of Loc.loc
+  | SQLCOMMIT of Loc.loc
+  | SQLROLLBACK of Loc.loc
+
   datatype ('exp, 'pat, 'ty) exp =
       SQLFIELDSELECT of string * 'exp * Loc.loc
     | SQLFN of 'pat * 'exp command * Loc.loc
-    | SQLSERVER of string * 'ty * Loc.loc
+    | SQLSERVER of 'exp * 'ty * Loc.loc
     | SQLEXEC of 'exp * Loc.loc
     | SQLEVAL of 'exp * Loc.loc
+
   val format_exp
       : ('a -> SMLFormat.FormatExpression.expression list)
         * ('b -> SMLFormat.FormatExpression.expression list)

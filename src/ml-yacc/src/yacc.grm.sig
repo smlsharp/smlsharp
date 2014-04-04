@@ -52,7 +52,6 @@ end
 signature Mlyacc_LRVALS=
 sig
 structure Tokens : Mlyacc_TOKENS
-structure ParserData:PARSER_DATA
-sharing type ParserData.Token.token = Tokens.token
-sharing type ParserData.svalue = Tokens.svalue
+structure Parser : PARSER
+sharing type Parser.token = Tokens.token
 end

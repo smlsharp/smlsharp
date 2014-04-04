@@ -56,7 +56,7 @@ struct
             fun getElem id = 
                 case Graph.getNodeInfo graph id of
                   SOME elem => elem
-                | NONE => raise Control.Bug "undefined id"
+                | NONE => raise Bug.Bug "undefined id"
             val idListList = Graph.scc graph
           in
             map (fn idlist => map getElem idlist) idListList

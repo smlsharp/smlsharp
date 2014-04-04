@@ -1,5 +1,3 @@
-include "Time.smi"
-
 signature TIMER =
 sig
   type cpu_timer

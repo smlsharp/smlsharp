@@ -1,9 +1,8 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../../compiler-utils/env/main/ISet.smi"
-
-_require "../../control/main/Control.ppg.smi"
-_require "GRAPH.sig"
+_require "../../control/main/Bug.ppg.smi"
+_require "./GRAPH.sig"
 
 structure Graph =
 struct

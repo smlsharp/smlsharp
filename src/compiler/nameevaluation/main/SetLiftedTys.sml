@@ -7,14 +7,14 @@ structure SetLiftedTys :
 sig
   val getId : IDCalc.tfunkind ref -> IDCalc.typId
   val setLiftedTysEnv : NameEvalEnv.env
-                        -> (string list * IDCalc.tfunkind ref) list list
+                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
   val setLiftedTysSpecEnv : NameEvalEnv.env
-                        -> (string list * IDCalc.tfunkind ref) list list
+                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
 end
 =
 struct
 local
-  fun bug s = Control.Bug ("SetLiftedTys: " ^ s)
+  fun bug s = Bug.Bug ("SetLiftedTys: " ^ s)
   structure I = IDCalc
   structure IV = NameEvalEnv
   structure TF = TfunVars
@@ -49,7 +49,7 @@ local
         | I.INFERREDTY _ => set
       end
   fun dtysConSpec tfvKind (conSpec, set) =
-      SEnv.foldl
+      SymbolEnv.foldl
         (fn (tyOpt, set) => 
             case tyOpt of
               NONE => set
@@ -130,9 +130,9 @@ local
 
   fun liftedTysTfun (tfun, liftedTys) =
       case I.derefTfun tfun of
-        I.TFUN_DEF {iseq, formals=nil, realizerTy=I.TYVAR tvar} =>
+        I.TFUN_DEF {longsymbol, iseq, formals=nil, realizerTy=I.TYVAR tvar} =>
         TvarSet.add(liftedTys, tvar)
-      | I.TFUN_DEF {iseq, formals, realizerTy} => liftedTys
+      | I.TFUN_DEF {longsymbol, iseq, formals, realizerTy} => liftedTys
       | I.TFUN_VAR (ref tfunkind) => liftedTysTfunkind (tfunkind, liftedTys)
   and liftedTysTfunkind (tfunkind, liftedTys) =
       case tfunkind of
@@ -165,7 +165,7 @@ local
       | I.INFERREDTY _ => liftedTys
   and liftedTysTyList (tyList, liftedTys) = foldr liftedTysTy liftedTys tyList
   fun liftedTysConSpec (conSpec, liftedTys) =
-      SEnv.foldl
+      SymbolEnv.foldl
         (fn (tyOpt, liftedTys) => 
             case tyOpt of
               NONE => liftedTys
@@ -189,20 +189,22 @@ local
         val liftedTys = foldr liftedTysConSpec I.emptyLiftedTys conSpecList
       in
         app
-          (fn (tfv as (ref (I.TFV_DTY{name, id, iseq, formals, conSpec,...}))) =>
-              tfv := I.TFV_DTY{name=name,id=id, iseq=iseq, formals=formals,
+          (fn (tfv as (ref (I.TFV_DTY{longsymbol, id, iseq, formals, conSpec,...}))) =>
+              tfv := I.TFV_DTY{longsymbol=longsymbol,id=id, iseq=iseq, formals=formals,
                                conSpec=conSpec, liftedTys=liftedTys}
             |  (tfv as (ref (I.TFUN_DTY{id,iseq,formals,
                                         dtyKind,
 					runtimeTy,
-                                        originalPath,
+                                        longsymbol,
+                                        conIDSet,
                                         conSpec,...}))) =>
                tfv := I.TFUN_DTY{id=id,
                                  iseq=iseq,
 				 runtimeTy=runtimeTy,
                                  formals=formals,
-                                 originalPath=originalPath,
+                                 longsymbol=longsymbol,
                                  conSpec=conSpec,
+                                 conIDSet = conIDSet,
                                  dtyKind=dtyKind,
                                  liftedTys=liftedTys
                                 }
@@ -217,22 +219,23 @@ local
         val freeTfvs = TF.tfvsEnv tfvKind nil (env, TfvMap.empty)
         val _ = 
             TfvMap.appi
-              (fn (tfv as (ref (I.TFV_DTY{name, id,iseq,formals,conSpec,...})),
+              (fn (tfv as (ref (I.TFV_DTY{longsymbol, id,iseq,formals,conSpec,...})),
                    path) =>
                    tfv := I.TFV_DTY{id=id,
-                                    name=name,
+                                    longsymbol=longsymbol,
                                     iseq=iseq,
                                     formals=formals,
                                     conSpec=conSpec,
                                     liftedTys=I.emptyLiftedTys}
                 |  (tfv as (ref (I.TFUN_DTY{id,iseq,runtimeTy, formals,
-                                            dtyKind,originalPath,
+                                            dtyKind,longsymbol,conIDSet,
                                             conSpec,...})),path) =>
                    tfv := I.TFUN_DTY{id=id,
                                      iseq=iseq,
                                      formals=formals,
                                      conSpec=conSpec,
-                                     originalPath=originalPath,
+                                     conIDSet = conIDSet,
+                                     longsymbol=longsymbol,
 				     runtimeTy=runtimeTy,
                                      dtyKind=dtyKind,
                                      liftedTys=I.emptyLiftedTys

@@ -1,8 +1,3 @@
-include "OS_FILE_SYS.sig"
-include "OS_IO.sig"
-include "OS_PATH.sig"
-include "OS_PROCESS.sig"
-
 signature OS =
 sig
   structure FileSys : OS_FILE_SYS

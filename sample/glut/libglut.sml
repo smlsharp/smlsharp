@@ -14,43 +14,43 @@ structure GLUT =
 struct
   val glutInit =
       _import "glutInit"
-      : (int ref, string array) -> unit
+      : (int ref, string array) -> ()
   val glutInitDisplayMode =
       _import "glutInitDisplayMode"
-      : word -> unit
+      : word -> ()
   val glutInitWindowSize =
       _import "glutInitWindowSize"
-      : (int, int) -> unit
+      : (int, int) -> ()
   val glutCreateWindow =
       _import "glutCreateWindow"
-      : string -> unit
+      : string -> ()
   val glutDisplayFunc =
       _import "glutDisplayFunc"
-      : (()->unit) -> unit
+      : (()->()) -> ()
   val glutReshapeFunc =
       _import "glutReshapeFunc"
-      : ((int, int)->unit) -> unit
+      : ((int, int)->()) -> ()
   val glutMouseFunc =
       _import "glutMouseFunc"
-      : (()->unit) -> unit
+      : (()->()) -> ()
   val glutKeyboardFunc =
       _import "glutKeyboardFunc"
-      : ((int, int, int)->unit) -> unit
+      : ((int, int, int)->()) -> ()
   val glutTimerFunc =
       _import "glutTimerFunc"
-      : (int, int->unit, int) -> unit
+      : (int, int->(), int) -> ()
   val glutIdleFunc =
       _import "glutIdleFunc"
-      : (()->unit) -> unit
+      : (()->()) -> ()
   val glutMainLoop =
       _import "glutMainLoop"
-      : () -> unit
+      : () -> ()
   val glutSwapBuffers =
       _import "glutSwapBuffers"
-      : () -> unit
+      : () -> ()
   val glutPostRedisplay =
       _import "glutPostRedisplay"
-      : () -> unit
+      : () -> ()
 
   val GLUT_RGBA = 0wx0
   val GLUT_DOUBLE = 0wx2
@@ -62,82 +62,82 @@ structure GL =
 struct
   val glClearColor =
       _import "glClearColor"
-      : (float, float, float, float) -> unit
+      : (float, float, float, float) -> ()
   val glEnable =
       _import "glEnable"
-      : word -> unit
+      : word -> ()
   val glFrontFace =
       _import "glFrontFace"
-      : word -> unit
+      : word -> ()
   val glLightfv =
       _import "glLightfv"
-      : (word, word, float * float * float * float) -> unit
+      : (word, word, float * float * float * float) -> ()
   val glClear =
       _import "glClear"
-      : word -> unit
+      : word -> ()
   val glFlush =
       _import "glFlush"
-      : () -> unit
+      : () -> ()
   val glViewport =
       _import "glViewport"
-      : (int, int, int, int) -> unit
+      : (int, int, int, int) -> ()
   val glMatrixMode =
       _import "glMatrixMode"
-      : word -> unit
+      : word -> ()
   val glLoadIdentity =
       _import "glLoadIdentity"
-      : () -> unit
+      : () -> ()
   val glPushMatrix =
       _import "glPushMatrix"
-      : () -> unit
+      : () -> ()
   val glPopMatrix =
       _import "glPopMatrix"
-      : () -> unit
+      : () -> ()
   val glRotated =
       _import "glRotated"
-      : (real, real, real, real) -> unit
+      : (real, real, real, real) -> ()
   val glTranslated =
       _import "glTranslated"
-      : (real, real, real) -> unit
+      : (real, real, real) -> ()
   val glMaterialfv =
       _import "glMaterialfv"
-      : (word, word, float * float * float * float) -> unit
+      : (word, word, float * float * float * float) -> ()
   val glMaterialiv =
       _import "glMaterialiv"
-      : (word, word, int * int * int * int) -> unit
+      : (word, word, int * int * int * int) -> ()
   val glBegin =
       _import "glBegin"
-      : word -> unit
+      : word -> ()
   val glEnd =
       _import "glEnd"
-      : () -> unit
+      : () -> ()
   val glNormal3dv =
       _import "glNormal3dv"
-      : (real * real * real) -> unit
+      : (real * real * real) -> ()
   val glVertex3dv =
       _import "glVertex3dv"
-      : (real * real * real) -> unit
+      : (real * real * real) -> ()
   val glVertex2d =
       _import "glVertex2d"
-      : (real, real) -> unit
+      : (real, real) -> ()
   val glVertex3d =
       _import "glVertex3d"
-      : (real, real, real) -> unit
+      : (real, real, real) -> ()
   val glCullFace =
       _import "glCullFace"
-      : word -> unit
+      : word -> ()
   val glColor4i =
       _import "glColor4i"
-      : (word, word, word, word) -> unit
+      : (word, word, word, word) -> ()
   val glColor3d =
       _import "glColor3d"
-      : (real, real, real) -> unit
+      : (real, real, real) -> ()
   val glBlendFunc =
       _import "glBlendFunc"
-      : (word, word) -> unit
+      : (word, word) -> ()
   val glOrtho =
       _import "glOrtho"
-      : (real, real, real, real, real, real) -> unit
+      : (real, real, real, real, real, real) -> ()
 
   val GL_PROJECTION = 0wx1701
   val GL_DEPTH_TEST = 0wxB71
@@ -175,31 +175,31 @@ struct
 
   val gluPerspective =
       _import "gluPerspective"
-      : (real, real, real, real) -> unit
+      : (real, real, real, real) -> ()
   val gluLookAt =
       _import "gluLookAt"
-      : (real, real, real, real, real, real, real, real, real) -> unit
+      : (real, real, real, real, real, real, real, real, real) -> ()
   val gluNewQuadric =
       _import "gluNewQuadric"
       : () -> gluQuadricObj
   val gluDeleteQuadric =
       _import "gluDeleteQuadric"
-      : gluQuadricObj -> unit
+      : gluQuadricObj -> ()
   val gluQuadricDrawStyle =
       _import "gluQuadricDrawStyle"
-      : (gluQuadricObj, word) -> unit
+      : (gluQuadricObj, word) -> ()
   val gluQuadricNormals =
       _import "gluQuadricNormals"
-      : (gluQuadricObj, word) -> unit
+      : (gluQuadricObj, word) -> ()
   val gluQuadricOrientation =
       _import "gluQuadricOrientation"
-      : (gluQuadricObj, word) -> unit
+      : (gluQuadricObj, word) -> ()
   val gluCylinder =
       _import "gluCylinder"
-      : (gluQuadricObj, real, real, real, int, int) -> unit
+      : (gluQuadricObj, real, real, real, int, int) -> ()
   val gluDisk =
       _import "gluDisk"
-      : (gluQuadricObj, real, real, int, int) -> unit
+      : (gluQuadricObj, real, real, int, int) -> ()
 
   val GLU_FILL = 0w100012
   val GLU_SMOOTH = 0w100000

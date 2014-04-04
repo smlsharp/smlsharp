@@ -3,10 +3,11 @@
  * @author Atsushi Ohori
  *)
 local
-  fun bug s = Control.Bug ("tfvkey: " ^ s)
+  fun bug s = Bug.Bug ("TfvKey: " ^ s)
   structure I = IDCalc
   structure IV = NameEvalEnv
-  structure tfvkey =
+in
+  structure TfvKey =
     struct
       type ord_key = I.tfunkind ref
       fun compare (tfv1:ord_key, tfv2:ord_key) = 
@@ -21,9 +22,12 @@ local
                      I.TFV_SPEC {id,...} => id
                    | I.TFV_DTY {id,...} => id
                    | I.TFUN_DTY {id,...} => id
-                   | _ =>  raise bug "ord_key (1)"
+                   | I.INSTANTIATED _ => raise bug "ord_key (1)"
+                   | I.REALIZED _ =>  raise bug "ord_key (2)"
+                   | I.FUN_DTY _ =>  raise bug "ord_key (3)"
                   )
-                | _ =>  raise bug "ord_key (1)"
+                | I.REALIZED _ =>  raise bug "ord_key (4)"
+                | I.FUN_DTY _ =>  raise bug "ord_key (5)"
             val id2 = 
                 case !tfv2 of
                   I.TFV_SPEC {id,...} => id
@@ -34,22 +38,26 @@ local
                      I.TFV_SPEC {id,...} => id
                    | I.TFV_DTY {id,...} => id
                    | I.TFUN_DTY {id,...} => id
-                   | _ =>  raise bug "ord_key (1)"
+                   | I.INSTANTIATED _ => raise bug "ord_key (6)"
+                   | I.REALIZED _ =>  raise bug "ord_key (7)"
+                   | I.FUN_DTY _ =>  raise bug "ord_key (8)"
                   )
-                | _ => raise bug "ord_key (1)"
+                | I.REALIZED _ =>  raise bug "ord_key (9)"
+                | I.FUN_DTY _ =>  raise bug "ord_key (10)"
           in
             TypID.compare(id1, id2)
           end
     end
-in
-  structure TfvMap = BinaryMapFn(tfvkey)
-  structure TfvSet = BinarySetFn(tfvkey)
+  structure TfvMap = BinaryMapFn(TfvKey)
+  structure TfvSet = BinarySetFn(TfvKey)
 end
 
+(*
 local
   structure I = IDCalc
-  fun bug s = Control.Bug ("tfvPathkey: " ^ s)
-  structure tfvKey = 
+  fun bug s = Bug.Bug ("DtyKey: " ^ s)
+in
+  structure DtyKey = 
     struct
       type ord_key = I.tfunkind ref * string list
       fun compare ((tfv1,_):ord_key, (tfv2,_):ord_key) = 
@@ -66,10 +74,10 @@ local
             TypID.compare(id1, id2)
           end
     end
-in
-  structure DtyPathMap = BinaryMapFn(tfvKey)
-  structure DtyPathSet = BinarySetFn(tfvKey)
+  structure DtyPathMap = BinaryMapFn(DtyKey)
+  structure DtyPathSet = BinarySetFn(DtyKey)
 end
+*)
 
 structure TfunVars =
 struct
@@ -101,10 +109,11 @@ in
       | IV.TSTR_DTY {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
 
   fun tfvsTyE tfvKind path (tyE, set) =
-      SEnv.foldri (tfvsTstr tfvKind path) set tyE
+      SymbolEnv.foldri (tfvsTstr tfvKind path) set tyE
   fun tfvsStrE tfvKind path (IV.STR envMap, set) = 
-      SEnv.foldri
-        (fn (name, {env, strKind}, set) => tfvsEnv tfvKind (path@[name]) (env, set))
+      SymbolEnv.foldri
+        (fn (name, {env, strKind}, set) => 
+            tfvsEnv tfvKind (path@[name]) (env, set))
         set
         envMap 
 
@@ -167,9 +176,9 @@ in
         IV.TSTR tfun => tfvsTfun tfvKind path (name, tfun, set)
       | IV.TSTR_DTY {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
   fun tfvsTyE tfvKind path (tyE, set) =
-      SEnv.foldri (tfvsTstr tfvKind path) set tyE
+      SymbolEnv.foldri (tfvsTstr tfvKind path) set tyE
   fun tfvsStrE tfvKind path (IV.STR envMap, set) = 
-      SEnv.foldri
+      SymbolEnv.foldri
         (fn (name, {env, strKind}, set) => tfvsEnv tfvKind (path@[name]) (env, set))
         set
         envMap

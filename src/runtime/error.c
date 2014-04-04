@@ -2,7 +2,6 @@
  * error.c
  * @copyright (c) 2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: error.c,v 1.4 2008/01/23 08:20:07 katsu Exp $
  */
 
 #include <stdlib.h>

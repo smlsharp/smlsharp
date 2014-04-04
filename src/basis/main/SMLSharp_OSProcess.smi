@@ -1,0 +1,24 @@
+_require "./SMLSharp_Runtime.smi"
+_require "./Time.smi"
+_require "./IntInf.smi"
+_require "./Word.smi"
+
+structure SMLSharp_OSProcess =
+struct
+  type status = int
+  val success : status
+  val failure : status
+  val isSuccess : status -> bool
+  val system : string -> status
+  val atExit : (unit -> unit) -> unit
+  val exit : status -> 'a
+  val terminate : status -> 'a
+  val getEnv : string -> string option
+  val sleep : Time.time -> unit
+
+  (* utilities for other structures in Basis Library *)
+  type atexit_tag (= boxed)
+  val atExit' : (unit -> unit) -> atexit_tag
+  val cancelAtExit : atexit_tag -> unit
+  val rebindAtExit : atexit_tag * (unit -> unit) -> unit
+end

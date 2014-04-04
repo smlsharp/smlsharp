@@ -36,7 +36,7 @@
 /*#define GCSTAT*/
 /*#define GCTIME*/
 /*#define NULL_IS_NOT_ZERO*/
-#define MINOR_GC
+/*#define MINOR_GC*/
 /*#define CONFIGURABLE_MINOR_COUNT*/
 /*#define DEBUG_USE_MMAP */
 
@@ -329,7 +329,7 @@ calc_layout(unsigned int blocksize_log2)
 
 	num_blocks = (double)(SEGMENT_SIZE - SEG_INITIAL_OFFSET)
 		/ (layout->blocksize + estimate_bits / CHAR_BIT
-		   + sizeof(void*));
+		   + sizeof(struct stack_slot));
 
 	for (;;) {
 		unsigned int filled, bitmap_start, num_bits, stack_size, i;
@@ -354,7 +354,7 @@ calc_layout(unsigned int blocksize_log2)
 		 * and memset never reach both object header and
 		 * content. */
 		layout->bitmap_size = CEIL(filled - bitmap_start, MAXALIGN);
-		filled = CEIL(filled, sizeof(void*));
+		filled = CEIL(filled, sizeof(struct stack_slot));
 		layout->stack_offset = filled;
 		stack_size = num_blocks * sizeof(struct stack_slot);
 		layout->stack_limit = filled + stack_size;
@@ -455,7 +455,12 @@ static const bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
 
 #ifdef MULTITHREAD
 static union alloc_ptr_set *global_free_ptr_list;
+#ifdef THREAD_LOCAL_STORAGE
+static __thread union alloc_ptr_set *current_alloc_ptr_set;
+#define ALLOC_PTR_SET() current_alloc_ptr_set
+#else
 #define ALLOC_PTR_SET() ((union alloc_ptr_set *)sml_current_thread_heap())
+#endif /* THREAD_LOCAL_STORAGE */
 #else
 static union alloc_ptr_set global_alloc_ptr_set;
 #define ALLOC_PTR_SET() (&global_alloc_ptr_set)
@@ -488,11 +493,12 @@ static struct {
 #define ALLOC_PTR_TO_SEGMENT(ptr)					\
 	(ASSERT(IS_IN_HEAP((ptr)->freebit.ptr)),			\
 	 ((struct segment*)                                             \
-	  (((uintptr_t)(ptr)->freebit.ptr) & ~(SEGMENT_SIZE - 1U))))
+	  ((uintptr_t)((ptr)->freebit.ptr) & ~((uintptr_t)SEGMENT_SIZE - 1U))))
 
 #define OBJ_TO_SEGMENT(objaddr) \
 	(ASSERT(IS_IN_HEAP(objaddr)), \
-	 ((struct segment*)((uintptr_t)(objaddr) & ~(SEGMENT_SIZE - 1U))))
+	 (struct segment*) \
+	 ((uintptr_t)(objaddr) & ~((uintptr_t)SEGMENT_SIZE - 1U)))
 
 #define OBJ_TO_INDEX(seg, objaddr)					\
 	(ASSERT(OBJ_TO_SEGMENT(objaddr) == (seg)),			\
@@ -545,7 +551,8 @@ static pthread_mutex_t free_ptr_list_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif /* MULTITHREAD */
 
 #ifdef MULTITHREAD
-#if defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
+#if 0 && defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
+/* this seems buggy... */
 #define FREELIST_NEXT(freelist, seg) do { \
 	struct segment *new__ ATTR_UNUSED; \
 	__asm__ volatile ("movl %0, %1\n" \
@@ -646,6 +653,7 @@ static struct {
 	struct gcstat_gc minor_gc;
 #endif /* MINOR_GC */
 	unsigned long total_alloc_count;
+	double max_wait_time;
 	double last_probe_time;
 	double probe_interval;
 	struct {
@@ -802,7 +810,7 @@ check_segment_consistent(struct segment *seg, size_t filled_index)
 	       && seg->blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 
 	/* check alignment */
-	ASSERT((uintptr_t)seg & ~(SEGMENT_SIZE - 1U));
+	ASSERT((uintptr_t)seg & ~((uintptr_t)SEGMENT_SIZE - 1U));
 
 	/* check layout */
 	layout = &segment_layout[seg->blocksize_log2];
@@ -1278,7 +1286,7 @@ init_heap_space(size_t min_size, size_t max_size)
 	if (p == ReservePageError)
 		sml_fatal(0, "failed to alloc virtual memory.");
 
-	freesize_post = (uintptr_t)p & (SEGMENT_SIZE - 1);
+	freesize_post = (uintptr_t)p & ((uintptr_t)SEGMENT_SIZE - 1);
 	if (freesize_post == 0) {
 		ReleasePage(p + reserve_size, SEGMENT_SIZE);
 	} else {
@@ -1551,6 +1559,7 @@ sml_heap_free()
 		    / TIMEFLOAT(gcstat.exec_time) * 100.0f,
 		    TIMEFLOAT(gcstat.gc.total_time)
 		    / (double)gcstat.gc.count);
+	stat_notice("max wait time  : %.6f #sec", gcstat.max_wait_time);
 #else
 	t = gcstat.gc.total_time;
 	sml_time_accum(gcstat.minor_gc.total_time, t);
@@ -1561,6 +1570,7 @@ sml_heap_free()
 		    TIMEFLOAT(t) / TIMEFLOAT(gcstat.exec_time) * 100.0f,
 		    TIMEFLOAT(t)
 		    / (double)(gcstat.gc.count + gcstat.minor_gc.count));
+	stat_notice("max wait time  : %.6f #sec", gcstat.max_wait_time);
 	stat_notice("major count    : %u #times", gcstat.gc.count);
 	stat_notice("major time     : "TIMEFMT" #sec (%4.2f%%), avg: %.6f sec",
 		    TIMEARG(gcstat.gc.total_time),
@@ -1617,7 +1627,11 @@ void *
 sml_heap_thread_init()
 {
 #ifdef MULTITHREAD
-	return new_alloc_ptr_set();
+	union alloc_ptr_set *ptr_set = new_alloc_ptr_set();
+#ifdef THREAD_LOCAL_STORAGE
+	current_alloc_ptr_set = ptr_set;
+#endif /* THREAD_LOCAL_STORAGE */
+	return ptr_set;
 #else
 	return NULL;
 #endif /* MULTITHREAD */
@@ -1634,7 +1648,7 @@ sml_heap_thread_free(void *data ATTR_UNUSED)
 
 #ifdef MULTITHREAD
 void
-sml_heap_thread_stw_hook(void *data)
+sml_heap_thread_gc_hook(void *data)
 {
 	unsigned int i;
 	union alloc_ptr_set *ptr_set = data;
@@ -1751,8 +1765,7 @@ sml_write(void *objaddr, void **writeaddr, void *new_value)
 
 		if (!IS_IN_HEAP(new_value))
 			return;
-
-		GIANT_LOCK(NULL);
+		GIANT_LOCK();
 
 		seg = OBJ_TO_SEGMENT(new_value);
 		index = OBJ_TO_INDEX(seg, new_value);
@@ -1772,7 +1785,7 @@ sml_write(void *objaddr, void **writeaddr, void *new_value)
 		STACK_PUSH(new_value, seg, index);
 		GIANT_UNLOCK();
 	} else {
-		GIANT_LOCK(NULL);
+		GIANT_LOCK();
 		/* objaddr is destructively updated.
 		 * if it is marked, it must be barriered. */
 		seg = OBJ_TO_SEGMENT(objaddr);
@@ -1909,8 +1922,6 @@ sweep()
 	struct segment *unfilled, **unfilled_tail;
 	struct segment *free, **free_tail;
 
-	ASSERT(GIANT_LOCKED());
-
 	/*
 	 * The order of segments in a sub-heap and the free list may be
 	 * significant for performace.
@@ -1974,8 +1985,6 @@ sweep_minor()
 	struct segment **filled_tail;
 	struct segment *unfilled, **unfilled_tail;
 	struct segment *free, **free_tail;
-
-	ASSERT(GIANT_LOCKED());
 
 	free = NULL, free_tail = &free;
 	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
@@ -2146,7 +2155,9 @@ do_gc(enum sml_gc_mode mode)
 #endif /* GCSTAT */
 #ifdef GCTIME
 	sml_timer_t b_start, b_end;
-	sml_time_t gctime;
+	sml_timer_t wait_start, wait_end;
+	sml_time_t gctime, waittime;
+	double waittime_f;
 	struct gcstat_gc *gcstat_gc = &gcstat.gc;
 #ifdef MINOR_GC
 	if (mode == MINOR)
@@ -2154,7 +2165,9 @@ do_gc(enum sml_gc_mode mode)
 #endif /* MINOR_GC */
 #endif /* GCTIME */
 
-	STOP_THE_WORLD();
+#ifdef GCTIME
+	sml_timer_now(wait_start);
+#endif /* GCTIME */
 
 #ifdef GCSTAT
 	if (gcstat.verbose >= GCSTAT_VERBOSE_COUNT) {
@@ -2202,7 +2215,9 @@ do_gc(enum sml_gc_mode mode)
 	if (mode == MINOR)
 		pop();
 #endif /* MINOR_GC */
-	sml_rootset_enum_ptr(mark, mode);
+
+	if (!sml_gc_initiate(mark, mode, NULL))
+		return;
 	sml_malloc_pop_and_mark(mark, mode);
 
 #ifndef FAIR_COMPARISON
@@ -2281,15 +2296,21 @@ do_gc(enum sml_gc_mode mode)
 	}
 #endif /* GCSTAT */
 
-	RUN_THE_WORLD();
+#ifdef GCTIME
+	sml_timer_now(wait_end);
+	sml_timer_dif(wait_start, wait_end, waittime);
+	waittime_f = TIMEFLOAT(waittime);
+	if (gcstat.max_wait_time < waittime_f)
+		gcstat.max_wait_time = waittime_f;
+#endif /* GCTIME */
+
+	sml_gc_done();
 }
 
 void
 sml_heap_gc()
 {
-	GIANT_LOCK(NULL);
 	do_gc(MAJOR);
-	GIANT_UNLOCK();
 #ifndef FAIR_COMPARISON
 	sml_run_finalizer(NULL);
 #endif /* FAIR_COMPARISON */
@@ -2547,7 +2568,7 @@ fast_find_bitmap(struct alloc_ptr *ptr, unsigned int newmask)
 }
 
 SML_PRIMITIVE void *
-sml_alloc(unsigned int objsize, void *frame_pointer)
+sml_alloc(unsigned int objsize)
 {
 	size_t alloc_size;
 	unsigned int blocksize_log2;
@@ -2563,7 +2584,7 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 
 	if (alloc_size > BLOCKSIZE_MAX) {
 		GCSTAT_ALLOC_COUNT(malloc, 0, alloc_size);
-		sml_save_frame_pointer(frame_pointer);
+		sml_save_fp(CALLER_FRAME_END_ADDRESS());
 		return sml_obj_malloc(alloc_size);
 	}
 
@@ -2581,6 +2602,8 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 		goto alloced;
 	}
 
+	sml_save_fp(CALLER_FRAME_END_ADDRESS());
+
 	if (ptr->free != NULL) {
 		unsigned int newmask;
 		BITPTR_NEXT2(ptr->freebit, newmask);
@@ -2590,21 +2613,12 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 		}
 	}
 
-	sml_save_frame_pointer(frame_pointer);
-
 	if (ptr->free != NULL) {
 		obj = find_bitmap(ptr);
 		if (obj) goto alloced;
 	}
 	obj = find_segment(ptr);
 	if (obj) goto alloced;
-
-	GIANT_LOCK(NULL);
-
-#ifdef MULTITHREAD
-	obj = find_segment(ptr);
-	if (obj) goto alloced_unlock;
-#endif /* MULTITHREAD */
 
 #ifdef MINOR_GC
 	GCSTAT_TRIGGER(blocksize_log2);
@@ -2637,7 +2651,6 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 
  alloced_major:
 	ASSERT(check_newobj(obj));
-	GIANT_UNLOCK();
 #ifndef FAIR_COMPARISON
 	/* NOTE: sml_run_finalizer may cause garbage collection. */
 	obj = sml_run_finalizer(obj);
@@ -2645,7 +2658,6 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 	goto finished;
 #if defined MULTITHREAD || defined MINOR_GC
  alloced_unlock:
-	GIANT_UNLOCK();
 #endif /* MULTITHREAD || MINOR_GC */
  alloced:
 	ASSERT(check_newobj(obj));

@@ -1,7 +1,5 @@
-_require "StringCvt.smi"
-_require "SMLSharpScanChar.smi"
-_require "Char.smi"
-_require "BOOL.sig"
+_require "./StringCvt.smi"
+_require "./SMLSharp_ScanChar.smi"
 
 structure Bool =
 struct
@@ -9,9 +7,5 @@ struct
   val not : bool -> bool
   val toString : bool -> string
   val scan : (char, 'a) StringCvt.reader -> (bool, 'a) StringCvt.reader
-  val fromString : string -> bool option 
+  val fromString : string -> bool option
 end
-
-(* toplevel *)
-val not = Bool.not
-

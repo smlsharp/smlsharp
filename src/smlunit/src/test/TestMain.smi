@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "smlunit-lib.smi"
+_require "TestAssert.smi"
+_require "TestTest.smi"
+_require "TestTextUITestRunner.smi"
+structure TestMain =
+struct
+  val test : unit -> unit
+end

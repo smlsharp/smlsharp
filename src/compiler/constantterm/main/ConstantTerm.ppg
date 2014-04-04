@@ -12,13 +12,22 @@ struct
 *)
   structure BT = BuiltinTypes
   structure T = Types
-  structure TU = TypesUtils
+  structure RC = RecordCalc
+  structure TU = TypesBasics
   structure UE = UserError
   structure A = Absyn
 
+  fun toRC {longsymbol, id, ty} =
+      {path=Symbol.longsymbolToLongid longsymbol,
+       id = id,
+       ty = ty}
+  fun toRCEx {longsymbol, ty} =
+      {path=Symbol.longsymbolToLongid longsymbol,
+       ty = ty}
+
  (* for debugging *)
   fun printType ty =
-      print (Control.prettyPrint (Types.format_ty nil ty) ^ "\n")
+      print (Bug.prettyPrint (Types.format_ty nil ty) ^ "\n")
 
   (*%
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
@@ -73,6 +82,10 @@ struct
        * @format "NULLBOXED"
        *)
       NULLBOXED     (* null pointer (boxed type) *)
+    | (*%
+       * @format(x) "contag(" x ")"
+       *)
+      CONTAG of Word32.word
 
   (*% *)
   exception
@@ -96,6 +109,7 @@ struct
             | UNIT => 8
             | NULLPOINTER => 9
             | NULLBOXED => 10
+            | CONTAG _ => 11
       in
         case (x, y) of
           (INT x, INT y) => Int32.compare (x, y)
@@ -120,6 +134,8 @@ struct
         | (NULLPOINTER, _) => Int.compare (order x, order y)
         | (NULLBOXED, NULLBOXED) => EQUAL
         | (NULLBOXED, _) => Int.compare (order x, order y)
+        | (CONTAG x, CONTAG y) => Word32.compare (x, y)
+        | (CONTAG _, _) => Int.compare (order x, order y)
       end
 
   local
@@ -135,7 +151,7 @@ struct
         let
           val (btvEnvs, tys) = ListPair.unzip (map decomposePolyTy tys)
           val btvEnv = foldl (BoundTypeVarID.Map.unionWith
-                                (fn _ => raise Control.Bug "unionTys"))
+                                (fn _ => raise Bug.Bug "unionTys"))
                              BoundTypeVarID.Map.empty
                              btvEnvs
         in
@@ -170,6 +186,16 @@ struct
           val tyCon = BT.optionTyCon
         in
           polyTy (btvEnv, T.CONSTRUCTty {tyCon = tyCon, args = [elemTy]})
+        end
+
+    fun polyPtrTy () =
+        let
+          val btv = BoundTypeVarID.generate ()
+          val btvKind = {tvarKind = T.UNIV, eqKind = A.NONEQ}
+          val btvEnv = BoundTypeVarID.Map.singleton (btv, btvKind)
+        in
+          polyTy (btvEnv, T.CONSTRUCTty {tyCon = BT.ptrTyCon,
+                                         args = [T.BOUNDVARty btv]})
         end
 
     fun intType () =
@@ -216,7 +242,10 @@ struct
     fun nullType () =
         overloadTy
         [
-          BT.ptrTy,
+(*
+          polyPtrTy (),
+*)
+          T.CONSTRUCTty {tyCon = BT.ptrTyCon, args = [BT.unitTy]},
           BT.boxedTy
         ]
   in
@@ -230,6 +259,21 @@ struct
         | A.UNITCONST _ => unitType ()
         | A.NULLCONST _ => nullType ()
   end
+
+  fun typeOf const =
+      case const of
+        INT _ => BT.intTy
+      | LARGEINT _ => BT.intInfTy
+      | WORD _ => BT.wordTy
+      | BYTE _ => BT.word8Ty
+      | STRING _ => BT.stringTy
+      | REAL _ => BT.realTy
+      | FLOAT _ => BT.real32Ty
+      | CHAR _ => BT.charTy
+      | UNIT => BT.unitTy
+      | NULLPOINTER => T.CONSTRUCTty {tyCon = BT.ptrTyCon, args = []}
+      | NULLBOXED => BT.boxedTy
+      | CONTAG _ => BT.contagTy
 
   local
     fun sqlInt x =
@@ -245,7 +289,7 @@ struct
    *)
   fun fixConst {constTerm : constant -> 'exp,
                 recordTerm : 'exp LabelEnv.map * Types.ty -> 'exp,
-                conTerm : {con: Types.conInfo, instTyList: Types.ty list,
+                conTerm : {con: RC.conInfo, instTyList: Types.ty list,
                            arg: 'exp option} -> 'exp}
                (const, ty) =
       let
@@ -268,7 +312,7 @@ struct
               else if TypID.eq (id, #id BT.boxedTyCon) then BOXEDty
               else
                 (printType ty;
-                 raise Control.Bug "castConst"
+                 raise Bug.Bug "castConst"
                 )
             | T.CONSTRUCTty {tyCon={id,...}, args=[arg]} =>
               if TypID.eq (id, #id BT.ptrTyCon)
@@ -276,14 +320,14 @@ struct
               else if TypID.eq (id,
                                 #id (BT.optionTyCon))
               then OPTIONty (constTy arg)
-              else (printType ty; raise Control.Bug "castConst")
+              else (printType ty; raise Bug.Bug "castConst")
             | T.CONSTRUCTty {tyCon={id,...}, args=[arg1, arg2]} =>
               if TypID.eq (id, #id BT.valueTyCon)
               then SQLVALUEty (constTy arg1, arg2)
-              else (printType ty; raise Control.Bug "castConst")
+              else (printType ty; raise Bug.Bug "castConst")
             | _ =>
               (printType ty;
-               raise Control.Bug "castConst")
+               raise Bug.Bug "castConst")
 
         fun pairTerm ((e1,t1), (e2,t2)) =
             let
@@ -296,7 +340,7 @@ struct
             end
         fun stringDBIPairTerm (string, dbiTy) =
             pairTerm ((constTerm (STRING string), BT.stringTy),
-                      (conTerm {con = BT.DBITPConInfo,
+                      (conTerm {con = toRC BT.DBITPConInfo,
                                 instTyList = [dbiTy],
                                 arg = NONE},
                        T.CONSTRUCTty
@@ -304,13 +348,17 @@ struct
                           args = [dbiTy]}))
 
         fun sqlValue (string as (_, dbiTy)) (exp, valueTy) =
-            conTerm {con = BT.VALUETPConInfo,
+            conTerm {con = toRC BT.VALUETPConInfo,
+(* 2013-08-31 ohori bug 266_SQLInsertOption.sml; SQL.Som 1 がbug例外を起こす．
+   このハンドコードは，脆弱．型変数の抽象の順序は，型に現れる順．
                      instTyList = [valueTy, dbiTy],
+*)
+                     instTyList = [dbiTy,valueTy],
                      arg = SOME (#1 (pairTerm (stringDBIPairTerm string,
                                                (exp, valueTy))))}
         fun sqlOptionValue string (exp, valueTy) =
             sqlValue string
-                     (conTerm {con = BT.SOMETPConInfo,
+                     (conTerm {con = toRC BT.SOMETPConInfo,
                                instTyList = [valueTy],
                                arg = SOME exp},
                       T.CONSTRUCTty
@@ -321,13 +369,11 @@ struct
             let
               val r =
                   StringCvt.scanString (scanFn radix) digits
-                  handle Overflow =>
-                         (UE.UserErrors [(loc, UE.Error, TooLargeConstant)];
-                          StringCvt.scanString (scanFn radix) "0")
+                  handle Overflow => raise TooLargeConstant
             in
               case r of
                 SOME x => x
-              | NONE => raise Control.Bug "scanInt"
+              | NONE => raise Bug.Bug "scanInt"
             end
 
       in
@@ -342,7 +388,7 @@ struct
         | (A.INT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
           sqlOptionValue (sqlInt (scanInt Int32.scan x), dbi)
                          (constTerm (INT (scanInt Int32.scan x)), BT.intTy)
-        | (A.INT _, _) => raise Control.Bug "fixConst: INT"
+        | (A.INT _, _) => raise Bug.Bug "fixConst: INT"
         | (A.WORD x, WORDty) =>
           constTerm (WORD (scanInt Word32.scan x))
         | (A.WORD x, BYTEty) =>
@@ -353,31 +399,31 @@ struct
         | (A.WORD x, SQLVALUEty (OPTIONty WORDty, dbi)) =>
           sqlOptionValue (sqlWord (scanInt Word32.scan x), dbi)
                          (constTerm (WORD (scanInt Word32.scan x)), BT.wordTy)
-        | (A.WORD _, _) => raise Control.Bug "fixConst: WORD"
+        | (A.WORD _, _) => raise Bug.Bug "fixConst: WORD"
         | (A.STRING (x, loc), STRINGty) => constTerm (STRING x)
         | (A.STRING (x, loc), SQLVALUEty (STRINGty, dbi)) =>
           sqlValue (sqlString x, dbi) (constTerm (STRING x), BT.stringTy)
         | (A.STRING (x, loc), SQLVALUEty (OPTIONty STRINGty, dbi)) =>
           sqlOptionValue (sqlString x, dbi) (constTerm (STRING x), BT.stringTy)
-        | (A.STRING _, _) => raise Control.Bug "fixConst: STRING"
+        | (A.STRING _, _) => raise Bug.Bug "fixConst: STRING"
         | (A.REAL (x, loc), REALty) => constTerm (REAL x)
         | (A.REAL (x, loc), FLOATty) => constTerm (FLOAT x)
         | (A.REAL (x, loc), SQLVALUEty (REALty, dbi)) =>
           sqlValue (sqlReal x, dbi) (constTerm (REAL x), BT.realTy)
         | (A.REAL (x, loc), SQLVALUEty (OPTIONty REALty, dbi)) =>
           sqlOptionValue (sqlReal x, dbi) (constTerm (REAL x), BT.realTy)
-        | (A.REAL _, _) => raise Control.Bug "fixConst: REAL"
+        | (A.REAL _, _) => raise Bug.Bug "fixConst: REAL"
         | (A.CHAR (x, loc), CHARty) => constTerm (CHAR x)
         | (A.CHAR (x, loc), SQLVALUEty (CHARty, dbi)) =>
           sqlValue (sqlChar x, dbi) (constTerm (CHAR x), BT.charTy)
         | (A.CHAR (x, loc), SQLVALUEty (OPTIONty CHARty, dbi)) =>
           sqlOptionValue (sqlChar x, dbi) (constTerm (CHAR x), BT.charTy)
-        | (A.CHAR _, _) => raise Control.Bug "fixConst: CHAR"
+        | (A.CHAR _, _) => raise Bug.Bug "fixConst: CHAR"
         | (A.UNITCONST (_, loc), UNITty) => constTerm UNIT
-        | (A.UNITCONST _, _) => raise Control.Bug "fixConst: UNITCONST"
+        | (A.UNITCONST _, _) => raise Bug.Bug "fixConst: UNITCONST"
         | (A.NULLCONST _, PTRty) => constTerm NULLPOINTER
         | (A.NULLCONST _, BOXEDty) => constTerm NULLBOXED
-        | (A.NULLCONST _, _) => raise Control.Bug "fixConst: NULLCONST"
+        | (A.NULLCONST _, _) => raise Bug.Bug "fixConst: NULLCONST"
       end
   end
 

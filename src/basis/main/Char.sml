@@ -1,27 +1,23 @@
 (**
  * Char structure.
- * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "Char.smi"
 
-structure Char :> CHAR
-  where type char = char
-  where type string = string
-=
+infix 7 * / div mod
+infix 6 + - ^
+infix 4 = <> > >= < <=
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op >= = SMLSharp_Builtin.Int.gteq
+structure String = SMLSharp_Builtin.String
+structure Array = SMLSharp_Builtin.Array
+structure Char = SMLSharp_Builtin.Char
+structure Word8 = SMLSharp_Builtin.Word8
+
+structure Char =
 struct
-
-  infix 7 * / div mod
-  infix 6 + -
-  infix 4 = <> > >= < <=
-  val op + = SMLSharp.Int.add
-  val op - = SMLSharp.Int.sub
-  val op mod = SMLSharp.Int.mod
-  val op div = SMLSharp.Int.div
-  val op >= = SMLSharp.Int.gteq
-  val op < = SMLSharp.Int.lt
-  fun not false = true | not true = false
 
   type char = char
   type string = string
@@ -31,42 +27,37 @@ struct
   val maxChar = #"\255"
   val maxOrd = 255
 
-  val ord = SMLSharp.Char.ord
-
-  fun chr index =
-      if index < 0 orelse maxOrd < index
-      then raise General.Chr
-      else SMLSharp.Char.chr_unsafe index
-
-  val op < = SMLSharp.Char.lt
-  val op <= = SMLSharp.Char.lteq
-  val op > = SMLSharp.Char.gt
+  val ord = Char.ord
+  val chr = Char.chr
+  val op < = Char.lt
+  val op <= = Char.lteq
+  val op > = Char.gt
 
   fun succ char =
-      if maxChar <= char then raise General.Chr
-      else SMLSharp.Char.chr_unsafe (ord char + 1)
+      if maxChar <= char then raise Chr
+      else Word8.castToChar (Word8.add (Char.castToWord8 char, 0w1))
   fun pred char =
-      if char <= minChar then raise General.Chr
-      else SMLSharp.Char.chr_unsafe (ord char - 1)
+      if char <= minChar then raise Chr
+      else Word8.castToChar (Word8.sub (Char.castToWord8 char, 0w1))
 
-  fun compare (left : char, right) =
+  fun compare (left, right) =
       if left < right then General.LESS
       else if left = right then General.EQUAL
       else General.GREATER
 
   fun contains string char =
       let
-        val len = SMLSharp.PrimString.size string
+        val len = String.size string
         fun loop i =
             if i >= len then false
-            else SMLSharp.PrimString.sub_unsafe (string, i) = char
+            else Array.sub_unsafe (String.castToArray string, i) = char
                  orelse loop (i + 1)
       in
         loop 0
       end
 
   fun notContains string char =
-      not (contains string char)
+      if contains string char then false else true
 
   fun isUpper c = #"A" <= c andalso c <= #"Z"
   fun isLower c = #"a" <= c andalso c <= #"z"
@@ -85,54 +76,58 @@ struct
   fun isCntrl c = (#"\000" <= c andalso c <= #"\031") orelse c = #"\127"
   fun isSpace c = (#"\t" <= c andalso c <= #"\r") orelse c = #" "
   fun isAscii c = #"\000" <= c andalso c <= #"\127"
-  fun toLower c = if isUpper c then SMLSharp.Char.chr_unsafe (ord c + 32) else c
-  fun toUpper c = if isLower c then SMLSharp.Char.chr_unsafe (ord c - 32) else c
+  fun toLower c =
+      if isUpper c
+      then Word8.castToChar (Word8.add (Char.castToWord8 c, 0w32))
+      else c
+  fun toUpper c =
+      if isLower c
+      then Word8.castToChar (Word8.sub (Char.castToWord8 c, 0w32))
+      else c
 
   local
 
-    fun escapeChar divmod ch =
+    fun escapeChar radix ch =
         let
-          val buf = SMLSharp.PrimString.allocVector 4
-          val _ = SMLSharp.PrimString.update_unsafe (buf, 0, #"\\")
+          val buf = String.alloc 4
+          val _ = Array.update_unsafe (String.castToArray buf, 0, #"\\")
           fun loop (0, n) = ()
             | loop (i, n) =
-              if 0 >= n then
-                (SMLSharp.PrimString.update_unsafe (buf, i, #"0");
+              if Word8.lteq (n, 0w0) then
+                (Array.update_unsafe (String.castToArray buf, i, #"0");
                  loop (i - 1, n))
               else
                 let
-                  val (n, m) = divmod n
-                  val digit = SMLSharp.Char.chr_unsafe (0x30 + m)
+                  val m = Word8.mod_unsafe (n, radix)
+                  val digit = Word8.castToChar (Word8.add (m, 0wx30))
                 in
-                  SMLSharp.PrimString.update_unsafe (buf, i, digit);
-                  loop (i - 1, n)
+                  Array.update_unsafe (String.castToArray buf, i, digit);
+                  loop (i - 1, Word8.div_unsafe (n, radix))
                 end
-          val _ = loop (3, ord ch)
+          val _ = loop (3, Char.castToWord8 ch)
         in
           buf
         end
 
-    fun escapeCharDec ch =
-        escapeChar (fn x => (x div 10, x mod 10)) ch
-    fun escapeCharHex ch =
-        escapeChar (fn x => (x div 8, x mod 8)) ch
+    fun escapeCharDec ch = escapeChar 0w10 ch
+    fun escapeCharHex ch = escapeChar 0w8 ch
 
     fun escapeControl n =
         let
-          val c = SMLSharp.Char.chr_unsafe (n + 64)
-          val buf = SMLSharp.PrimString.allocVector 3
+          val buf = String.alloc_unsafe 3
+          val c = Word8.castToChar (Word8.add (n, 0w64))
         in
-          SMLSharp.PrimString.update_unsafe (buf, 0, #"\\");
-          SMLSharp.PrimString.update_unsafe (buf, 1, #"^");
-          SMLSharp.PrimString.update_unsafe (buf, 2, c);
+          Array.update_unsafe (String.castToArray buf, 0, #"\\");
+          Array.update_unsafe (String.castToArray buf, 1, #"^");
+          Array.update_unsafe (String.castToArray buf, 2, c);
           buf
         end
 
     fun str c =
         let
-          val buf = SMLSharp.PrimString.allocVector 1
+          val buf = String.alloc 1
         in
-          SMLSharp.PrimString.update_unsafe (buf, 0, c);
+          Array.update_unsafe (String.castToArray buf, 0, c);
           buf
         end
 
@@ -150,9 +145,24 @@ struct
       | #"\012" => "\\f"
       | #"\013" => "\\r"
       | _ =>
-        if c < #"\032" then escapeControl (ord c)
+        if c < #"\032" then escapeControl (Char.castToWord8 c)
         else if #"\127" <= c then escapeCharDec c
         else str c   (* c < 256 *)
+
+  fun toRawString c =
+      case c of
+        #"\\" => "\\\\"
+      | #"\"" => "\\\""
+      | #"\007" => "\\a"
+      | #"\008" => "\\b"
+      | #"\009" => "\\t"
+      | #"\010" => "\\n"
+      | #"\011" => "\\v"
+      | #"\012" => "\\f"
+      | #"\013" => "\\r"
+      | _ =>
+        if c < #"\032" then escapeControl (Char.castToWord8 c)
+        else str c 
 
   fun toCString c =
       case c of
@@ -174,16 +184,13 @@ struct
 
   end (* local *)
 
-  val scan = SMLSharpScanChar.scanChar
+  val scan = SMLSharp_ScanChar.scanChar
 
   fun fromString string =
       StringCvt.scanString scan string
   fun fromCString string =
-      StringCvt.scanString SMLSharpScanChar.scanCChar string
+      StringCvt.scanString SMLSharp_ScanChar.scanCChar string
 
-  val op >= = SMLSharp.Char.gteq
+  val op >= = Char.gteq
 
 end
-
-val chr = Char.chr
-val ord = Char.ord

@@ -23,7 +23,7 @@ local
             (case eqTyConId(h1, h2) of
                EQUAL => compare (tail1, tail2)
              | x => x)
-          | _ => raise Control.Bug "OPRIMinstOrd: OPrim key length"
+          | _ => raise Bug.Bug "OPRIMinstOrd: OPrim key length"
         end
   end
 in

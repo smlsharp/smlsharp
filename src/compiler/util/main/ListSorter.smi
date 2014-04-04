@@ -1,7 +1,4 @@
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/Array.smi"
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/binary-op.smi"
+_require "basis.smi"
 
 structure ListSorter =
 struct

@@ -1,31 +1,46 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/SSet.smi"
+_require "../../../compiler-utils/env/main/IEnv.smi"
 
 _require "../../name/main/LocalID.smi"
 _require "../../toolchain/main/Filename.smi"
 _require "../../toolchain/main/CoreUtils.smi"
 _require "../../usererror/main/UserError.ppg.smi"
 _require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
 _require "../../parser2/main/Parser.smi"
 _require "../../parser2/main/InterfaceParser.smi"
-_require "InterfaceHash.smi"
-_require "LoadFileError.ppg.smi"
+_require "./InterfaceHash.smi"
+_require "./LoadFileError.ppg.smi"
 
 structure LoadFile =
 struct
-  val load : {baseName: Filename.filename option,
-              stdPath: Filename.filename list,
-              loadPath: Filename.filename list}
-             -> Absyn.unit
-             -> {loadedFiles: (AbsynInterface.filePlace * string) list}
-                * AbsynInterface.compileUnit
-  val require : {stdPath: Filename.filename list,
-                 loadPath: Filename.filename list}
-                -> string
-                -> {loadedFiles: (AbsynInterface.filePlace * string) list}
-                   * AbsynInterface.compileUnit
+  type dependency =
+      {interfaceNameOpt : AbsynInterface.interfaceName option,
+       link : AbsynInterface.interfaceName list,
+       compile : AbsynInterface.source list}
+
+  val load
+      : {baseFilename: Filename.filename option,
+         stdPath: Filename.filename list,
+         loadPath: Filename.filename list}
+        -> Absyn.unit
+        -> dependency * AbsynInterface.compileUnit
+
+  val generateDependency
+      : {stdPath: Filename.filename list,
+         loadPath: Filename.filename list}
+        -> Filename.filename
+        -> dependency
+
+  val loadInteractiveEnv
+      : {stdPath: Filename.filename list,
+         loadPath: Filename.filename list}
+        -> Filename.filename
+        -> AbsynInterface.interactiveUnit
 end

@@ -1,24 +1,17 @@
-_require "../../basis/main/Int.smi"
-_require "../../basis/main/IntInf.smi"
-_require "../../basis/main/Word8.smi"
-_require "../../basis/main/Real32.smi"
-_require "../../basis/main/List.smi"
-_require "../../basis/main/String.smi"
-_require "../../basis/main/Array.smi"
-_require "../../basis/main/binary-op.smi"
-_require "../../basis/main/TextIO.smi"
-_require "TermPrintUtils.ppg.smi"
-_require "../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../compiler-utils/env/main/LabelEnv.smi"
+_require "./TermPrintUtils.ppg.smi"
 
 structure ReifiedTerm =
 struct
   type path = string list
   val format_path : string list -> SMLFormat.FormatExpression.expression list
   datatype reifiedTerm
-    = ARRAYtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
+    = DATATYPEtyRepNOARG of string
+    | DATATYPEtyRepWITHARG of string * reifiedTerm
+    | ARRAYtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
     | CHARtyRep of char
-    | CONSTRUCTtyRep of string
     | EXNtyRep
     | FUNtyRep
     | INTINFtyRep of IntInf.int
@@ -33,11 +26,14 @@ struct
     | STRINGtyRep of string
     | UNITtyRep
     | UNPRINTABLERep
+    | ELIPSISRep
     | BUILTINRep
     | WORD8tyRep of Word8.word
     | WORDtyRep of word
   val format_reifiedTerm 
     : reifiedTerm -> SMLFormat.FormatExpression.expression list
+  val makeDATATYPEtyRepNOARG : string -> reifiedTerm
+  val makeDATATYPEtyRepWITHARG : string -> reifiedTerm -> reifiedTerm
   val makeArrayTerm 
     : ('a -> reifiedTerm) -> 'a array -> reifiedTerm
   val makeListTerm 
@@ -103,4 +99,8 @@ struct
   val makeReifiedTopenv 
     : env -> funE -> string -> {Env:env, FunE:funE, SigE:string}
   val printTopEnv : topEnv -> unit
+  val termToString : reifiedTerm -> string
+  val exnMessage : exn -> string
+  val exnToStringFunRef : (exn -> string) ref
+  val updateExnToString : (exn -> string) -> unit
 end

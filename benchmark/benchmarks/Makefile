@@ -3,6 +3,7 @@ DOIT_SUFFIX =
 LIBS =
 
 all: \
+    barnes_hut2/doit$(DOIT_SUFFIX) \
     barnes_hut/doit$(DOIT_SUFFIX) \
     boyer/doit$(DOIT_SUFFIX) \
     coresml/doit$(DOIT_SUFFIX) \
@@ -18,7 +19,9 @@ all: \
     logic/doit$(DOIT_SUFFIX) \
     mandelbrot/doit$(DOIT_SUFFIX) \
     mlyacc/doit$(DOIT_SUFFIX) \
+    smlyacc/doit$(DOIT_SUFFIX) \
     nucleic/doit$(DOIT_SUFFIX) \
+    nqueen/doit$(DOIT_SUFFIX) \
     perm9/doit$(DOIT_SUFFIX) \
     puzzle/doit$(DOIT_SUFFIX) \
     ratio_regions/doit$(DOIT_SUFFIX) \

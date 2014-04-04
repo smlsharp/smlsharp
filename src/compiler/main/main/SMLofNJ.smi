@@ -1,4 +1,0 @@
-structure SMLofNJ =
-struct
-  val exnHistory : exn -> string list
-end

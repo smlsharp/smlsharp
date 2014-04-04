@@ -1,45 +1,42 @@
-_require "General.smi"
-_require "StringCvt.smi"
-_require "SMLSharpScanChar.smi"
-_require "IntInf.smi"
-_require "String.smi"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./SMLSharp_ScanChar.smi"
+_require "./IntInf.smi"
+_require "./String.smi"
 
 structure Int =
 struct
-  type int = SMLSharp.Int.int
-  val toInt : int -> SMLSharp.Int.int
-  val fromInt : SMLSharp.Int.int -> int
-  val toLarge : int -> IntInf.int
-  val fromLarge : IntInf.int -> int
-
-  val precision : SMLSharp.Int.int option
+  type int = int
+  val toLarge = LargeInt.fromInt
+  val fromLarge = LargeInt.toInt
+  val toInt : int -> SMLSharp_Builtin.Int.int
+  val fromInt : SMLSharp_Builtin.Int.int -> int
+  val precision : SMLSharp_Builtin.Int.int option
   val minInt : int option
   val maxInt : int option
-
-  val + = SMLSharp.Int.add
-  val - = SMLSharp.Int.sub
-  val * = SMLSharp.Int.mul
-  val div = SMLSharp.Int.div
-  val mod = SMLSharp.Int.mod
-  val quot = SMLSharp.Int.quot
-  val rem = SMLSharp.Int.rem
-  val < = SMLSharp.Int.lt
-  val > = SMLSharp.Int.gt
-  val <= = SMLSharp.Int.lteq
-  val >= = SMLSharp.Int.gteq
-  val ~ = SMLSharp.Int.neg
-  val abs = SMLSharp.Int.abs
-
-  val compare : int * int -> order
+  val + = SMLSharp_Builtin.Int.add_unsafe
+  val - = SMLSharp_Builtin.Int.sub_unsafe
+  val * = SMLSharp_Builtin.Int.mul_unsafe
+  val div = SMLSharp_Builtin.Int.div
+  val mod = SMLSharp_Builtin.Int.mod
+  val quot = SMLSharp_Builtin.Int.quot
+  val rem = SMLSharp_Builtin.Int.rem
+  val compare : int * int -> General.order
+  val < = SMLSharp_Builtin.Int.lt
+  val <= = SMLSharp_Builtin.Int.lteq
+  val > = SMLSharp_Builtin.Int.gt
+  val >= = SMLSharp_Builtin.Int.gteq
+  val ~ = SMLSharp_Builtin.Int.neg
+  val abs = SMLSharp_Builtin.Int.abs
   val min : int * int -> int
   val max : int * int -> int
-  val sign : int -> SMLSharp.Int.int
+  val sign : int -> SMLSharp_Builtin.Int.int
   val sameSign : int * int -> bool
   val fmt : StringCvt.radix -> int -> string
+  val toString : int -> string
   val scan : StringCvt.radix
              -> (char, 'a) StringCvt.reader
              -> (int, 'a) StringCvt.reader
-  val toString : int -> string
   val fromString : string -> int option
 end
 

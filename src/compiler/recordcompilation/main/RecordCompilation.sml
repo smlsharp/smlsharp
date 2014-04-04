@@ -13,6 +13,10 @@ structure RecordCompilation : sig
 
 end =
 struct
+  val pos = Loc.makePos {fileName="RecordCompilation.sml", line=0, col=0}
+  val loc = (pos,pos)
+  fun mkLongsymbol path = Symbol.mkLongsymbol path loc
+
   fun printRcexp rcexp = print (RecordCalcFormatter.rcexpToString nil rcexp)
   fun printRcdecl rcexp = print (RecordCalcFormatter.rcdecToString rcexp)
   structure RC = RecordCalc
@@ -23,7 +27,7 @@ struct
       let
         val id = VarID.generate ()
       in
-        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : T.varInfo
+        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : RC.varInfo
       end
 
   fun mapi f l =
@@ -46,7 +50,7 @@ struct
       (fn loc => exp, expTy)
 
   fun Var (var as {ty,...}) =
-      (fn loc => RC.RCVAR (var, loc), ty)
+      (fn loc => RC.RCVAR var, ty)
 
   fun SELECT (label, (exp, expTy)) =
       let
@@ -55,8 +59,8 @@ struct
               T.RECORDty fields =>
               (case LabelEnv.find (fields, label) of
                  SOME ty => ty
-               | NONE => raise Control.Bug ("SELECT " ^ label))
-            | _ => raise Control.Bug "SELECT (not record)"
+               | NONE => raise Bug.Bug ("SELECT " ^ label))
+            | _ => raise Bug.Bug "SELECT (not record)"
       in
         (fn loc => RC.RCSELECT {indexExp = RC.RCINDEXOF (label, expTy, loc),
                                 label = label,
@@ -83,9 +87,9 @@ struct
                             funTy = expTy,
                             argExpList = map (fn (exp,ty) => exp loc) args,
                             loc = loc},
-       case TypesUtils.derefTy expTy of
+       case TypesBasics.derefTy expTy of
          T.FUNMty (argTys, retTy) => retTy
-       | _ => raise Control.Bug "APPM")
+       | _ => raise Bug.Bug "APPM")
 
   fun POLYFNM (btvEnv, args, (bodyExp, bodyTy)) =
       (fn loc => RC.RCPOLYFNM {btvEnv = btvEnv,
@@ -100,7 +104,7 @@ struct
                             expTy = expTy,
                             instTyList = instTyList,
                             loc = loc},
-       TypesUtils.tpappTy (expTy, instTyList))
+       TypesBasics.tpappTy (expTy, instTyList))
       handle e => raise e
 
   fun LET (dec, (exp, expTy)) =
@@ -125,13 +129,13 @@ struct
          We alpha-rename boundtvars. *)
       case TyAlphaRename.copyTy
              TyAlphaRename.emptyBtvMap 
-             (TypesUtils.derefTy (#ty conInfo)) of
+             (TypesBasics.derefTy (#ty conInfo)) of
         T.POLYty {boundtvars, body} =>
         let
           val instTyList =
               map T.BOUNDVARty (BoundTypeVarID.Map.listKeys boundtvars)
         in
-          case TypesUtils.derefTy body of
+          case TypesBasics.derefTy body of
             T.FUNMty ([argTy], ranTy) =>
             let
               val newVar = newVar argTy
@@ -143,7 +147,7 @@ struct
                  bodyExp = RC.RCDATACONSTRUCT
                              {con = conInfo,
                               instTyList = instTyList,
-                              argExpOpt = SOME (RC.RCVAR (newVar, loc)),
+                              argExpOpt = SOME (RC.RCVAR newVar),
                               argTyOpt = SOME argTy,
                               loc = loc},
                  loc = loc}
@@ -206,7 +210,7 @@ struct
         UnivKind.generateSingletonTy btv
         @ OverloadKind.generateSingletonTy btvEnv k
       | T.REC r => RecordKind.generateSingletonTy (btv, r)
-
+      | T.JOIN (r,_,_, _) => RecordKind.generateSingletonTy (btv, r)
   fun generateExtraArgs btvEnv =
       let
         val args =
@@ -229,7 +233,7 @@ struct
 
   type context =
       {
-        instanceEnv: T.varInfo SingletonTyMap.map,
+        instanceEnv: RC.varInfo SingletonTyMap.map,
         btvEnv: T.btvEnv
       }
 
@@ -242,10 +246,10 @@ struct
       {
         instanceEnv =
           foldl
-            (fn (var as {ty = T.SINGLETONty sty, ...} : T.varInfo,
+            (fn (var as {ty = T.SINGLETONty sty, ...} : RC.varInfo,
                  instanceEnv) =>
                 SingletonTyMap.insert (instanceEnv, sty, var)
-              | _ => raise Control.Bug "addExtraBinds")
+              | _ => raise Bug.Bug "addExtraBinds")
             instanceEnv
             vars,
         btvEnv = btvEnv
@@ -254,6 +258,7 @@ struct
   fun compileTy ty =
       case ty of
         T.SINGLETONty _ => ty
+      | T.BACKENDty _ => ty
       | T.ERRORty => ty
       | T.DUMMYty id => ty
       | T.TYVARty tv => ty  (* what used to be tyvar contains no POLYty. *)
@@ -273,29 +278,30 @@ struct
           T.POLYty {boundtvars = boundtvars,
                     body = T.FUNMty (extraTys, compileTy body)}
 
-  fun compileVarInfo ({path, ty, id} : T.varInfo) =
-      {path = path, ty = compileTy ty, id = id} : T.varInfo
+  fun compileVarInfo ({path, ty, id} : RC.varInfo) =
+      {path = path, ty = compileTy ty, id = id} : RC.varInfo
 
-  fun compileExVarInfo ({path, ty} : T.exVarInfo) =
-      {path = path, ty = compileTy ty} : T.exVarInfo
+  fun compileExVarInfo ({path, ty} : RC.exVarInfo) =
+      {path = path, ty = compileTy ty} : RC.exVarInfo
 
 
   datatype instance =
-      APP of {appExp: RC.rcexp -> RC.rcexp, argTy: T.ty, bodyTy: T.ty,
-              singletonTy: T.singletonTy, loc: Loc.loc}
-    | EXP of RC.rcexp
+      INST_APP of {appExp: RC.rcexp -> RC.rcexp, argTy: T.ty, bodyTy: T.ty,
+                   singletonTy: T.singletonTy, loc: Loc.loc}
+    | INST_EXP of RC.rcexp
 
   fun toExp instance =
       case instance of
-        EXP exp => exp
-      | APP {appExp, argTy, bodyTy, singletonTy, loc} =>
+        INST_EXP exp => exp
+      | INST_APP {appExp, argTy, bodyTy, singletonTy, loc} =>
         let
           val arg = newVar argTy
         in
-          RC.RCCAST (RC.RCFNM {argVarList = [arg],
-                               bodyTy = bodyTy,
-                               bodyExp = appExp (RC.RCVAR (arg, loc)),
-                               loc = loc},
+          RC.RCCAST ((RC.RCFNM {argVarList = [arg],
+                                bodyTy = bodyTy,
+                                bodyExp = appExp (RC.RCVAR arg),
+                                loc = loc},
+                      T.FUNMty ([#ty arg], bodyTy)),
                      T.SINGLETONty singletonTy,
                      loc)
         end
@@ -303,46 +309,49 @@ struct
   fun generateConcreteInstance (context as {btvEnv,...}:context) sty loc =
       case sty of
         T.INDEXty index =>
-        Option.map EXP (RecordKind.generateInstance index loc)
+        Option.map INST_EXP (RecordKind.generateInstance index loc)
       | T.TAGty ty =>
-        Option.map EXP (UnivKind.generateTagInstance btvEnv ty loc)
+        Option.map INST_EXP (UnivKind.generateTagInstance btvEnv ty loc)
       | T.SIZEty ty =>
-        Option.map EXP (UnivKind.generateSizeInstance btvEnv ty loc)
+        Option.map INST_EXP (UnivKind.generateSizeInstance btvEnv ty loc)
       | T.INSTCODEty operator =>
         case OverloadKind.generateInstance operator loc of
           NONE => NONE
-        | SOME (OverloadKind.APP app) => SOME (APP app)
+        | SOME (OverloadKind.APP app) => SOME (INST_APP app)
         | SOME (OverloadKind.EXP exp) =>
           (* may contain RCTAPP. need more type-directed compilation *)
-          SOME (EXP (compileExp context exp))
+          SOME (INST_EXP (compileExp context exp))
 
   and generateInstance (context as {instanceEnv,...}) sty loc =
       case generateConcreteInstance context sty loc of
         SOME inst => inst
       | NONE =>
         case SingletonTyMap.find (instanceEnv, sty) of
-          SOME var => EXP (RC.RCVAR (var, loc))
-        | NONE => (print (Control.prettyPrint
+          SOME var => INST_EXP (RC.RCVAR var)
+        | NONE => (print (Bug.prettyPrint
                             (T.format_ty nil (T.SINGLETONty sty)) ^ "\n");
-                   raise Control.Bug "generateInstance")
+                   raise Bug.Bug "generateInstance")
 
   and generateInstances context tys loc =
       map (fn ty as T.SINGLETONty sty => generateInstance context sty loc
-            | _ => raise Control.Bug "generateExtraInstExps")
+            | _ => raise Bug.Bug "generateExtraInstExps")
           tys
 
   and compileExp context rcexp =
       case rcexp of
-        RC.RCFOREIGNAPPLY {funExp, foreignFunTy, argExpList, loc} =>
+        RC.RCFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
         RC.RCFOREIGNAPPLY
           {funExp = compileExp context funExp,
            argExpList = map (compileExp context) argExpList,
-           foreignFunTy = foreignFunTy,  (* contains no POLYty *)
+           attributes = attributes,
+           resultTy = resultTy,  (* contains no POLYty *)
            loc = loc}
-      | RC.RCEXPORTCALLBACK {funExp, foreignFunTy, loc} =>
-        RC.RCEXPORTCALLBACK
-          {funExp = compileExp context funExp,
-           foreignFunTy = foreignFunTy,
+      | RC.RCCALLBACKFN {argVarList, bodyExp, attributes, resultTy, loc} =>
+        RC.RCCALLBACKFN
+          {argVarList = map compileVarInfo argVarList,
+           bodyExp = compileExp context bodyExp,
+           attributes = attributes,
+           resultTy = resultTy,  (* contains no POLYty *)
            loc = loc}
       | RC.RCTAGOF (ty, loc) =>
         (* contains no POLYty *)
@@ -359,13 +368,13 @@ struct
         end
       | RC.RCCONSTANT {const, ty, loc} =>
         RC.RCCONSTANT {const=const, ty=ty, loc=loc}
-      | RC.RCGLOBALSYMBOL symbol =>
+      | RC.RCFOREIGNSYMBOL symbol =>
         (* contains no POLYty *)
-        RC.RCGLOBALSYMBOL symbol
-      | RC.RCVAR (varInfo, loc) =>
-        RC.RCVAR (compileVarInfo varInfo, loc)
-      | RC.RCEXVAR (exVarInfo, loc) =>
-        RC.RCEXVAR (compileExVarInfo exVarInfo, loc)
+        RC.RCFOREIGNSYMBOL symbol
+      | RC.RCVAR varInfo =>
+        RC.RCVAR (compileVarInfo varInfo)
+      | RC.RCEXVAR exVarInfo =>
+        RC.RCEXVAR (compileExVarInfo exVarInfo)
       | RC.RCAPPM {funExp, funTy, argExpList, loc} =>
         RC.RCAPPM
           {funExp = compileExp context funExp,
@@ -374,7 +383,8 @@ struct
            loc = loc}
       | RC.RCMONOLET {binds, bodyExp, loc} =>
         RC.RCMONOLET
-          {binds = map (fn (v,e) => (v, compileExp context e)) binds,
+          {binds = map (fn (v,e) => (compileVarInfo v, compileExp context e))
+                       binds,
            bodyExp = compileExp context bodyExp,
            loc = loc}
       | RC.RCLET {decls, body, tys, loc} =>
@@ -417,13 +427,14 @@ struct
         RC.RCRAISE {exp = compileExp context exp,
                     ty = compileTy ty,
                     loc = loc}
-      | RC.RCHANDLE {exp, exnVar, handler, loc} =>
+      | RC.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         RC.RCHANDLE
           {exp = compileExp context exp,
            exnVar = exnVar, (* contains no POLYty *)
            handler = compileExp context handler,
+           resultTy = compileTy resultTy,
            loc = loc}
-      | RC.RCCASE {exp, expTy, ruleList, defaultExp, loc} =>
+      | RC.RCCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         RC.RCCASE
           {exp = compileExp context exp,
            expTy = expTy, (* contains no POLYty *)
@@ -432,8 +443,9 @@ struct
                                           compileExp context e))
                           ruleList,
            defaultExp = compileExp context defaultExp,
+           resultTy = compileTy resultTy,
            loc = loc}
-      | RC.RCEXNCASE {exp, expTy, ruleList, defaultExp, loc} =>
+      | RC.RCEXNCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         RC.RCEXNCASE
           {exp = compileExp context exp,
            expTy = expTy, (* contains no POLYty *)
@@ -442,13 +454,15 @@ struct
                                           compileExp context e))
                           ruleList,
            defaultExp = compileExp context defaultExp,
+           resultTy = compileTy resultTy,
            loc = loc}
-      | RC.RCSWITCH {switchExp, expTy, branches, defaultExp, loc} =>
+      | RC.RCSWITCH {switchExp, expTy, branches, defaultExp, resultTy, loc} =>
         RC.RCSWITCH
           {switchExp = compileExp context switchExp,
            expTy = expTy, (* contains no POLYty *)
            branches = map (fn (c,e) => (c, compileExp context e)) branches,
            defaultExp = compileExp context defaultExp,
+           resultTy = compileTy resultTy,
            loc = loc}
       | RC.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
         (* argVarList may contain POLYty due to functor *)
@@ -544,7 +558,7 @@ struct
         let
           val argExp = compileExp context argExp
           val primTy = compileTy ty
-          val primTy = TypesUtils.tpappTy (primTy, instTyList)
+          val primTy = TypesBasics.tpappTy (primTy, instTyList)
                        handle e => raise e
           val extraArgTys =
               case primTy of T.FUNMty (argTys, retTy) => argTys | _ => nil
@@ -554,17 +568,18 @@ struct
                          id = oprimId
                        | _ => false) extraArgTys of
                 SOME (T.SINGLETONty sty) => sty
-              | _ => raise Control.Bug "compileExp: RCTAPP: RCOPRIM"
+              | _ => raise Bug.Bug "compileExp: RCTAPP: RCOPRIM"
           val primInst = generateInstance context singletonTy loc
         in
           case primInst of
-            APP {appExp, ...} => appExp argExp
-          | EXP exp =>
+            INST_APP {appExp, ...} => appExp argExp
+          | INST_EXP exp =>
             let
-              val funTy = TypesUtils.tpappTy (ty, instTyList)
+              val funTy = TypesBasics.tpappTy (ty, instTyList)
                           handle e => raise e
             in
-              RC.RCAPPM {funExp = RC.RCCAST (exp, funTy, loc),
+              RC.RCAPPM {funExp = RC.RCCAST ((exp, T.SINGLETONty singletonTy),
+                                             funTy, loc),
                          funTy = funTy,
                          argExpList = [argExp],
                          loc = loc}
@@ -575,7 +590,7 @@ struct
           val newExp = compileExp context exp
           val newExpTy = compileTy expTy
           val newInstTyList = instTyList (* contains no POLYty *)
-          val funTy = TypesUtils.tpappTy (newExpTy, newInstTyList)
+          val funTy = TypesBasics.tpappTy (newExpTy, newInstTyList)
                       handle e => raise e
           val extraArgs =
               case funTy of
@@ -605,12 +620,11 @@ struct
           {expList = map (compileExp context) expList,
            expTyList = map compileTy expTyList,
            loc = loc}
-      | RC.RCCAST (rcexp, ty, loc) =>
-        RC.RCCAST (compileExp context rcexp, compileTy ty, loc)
-      | RC.RCSQL exp =>
-        raise Control.Bug "RCSQL"
+      | RC.RCCAST ((rcexp, expTy), ty, loc) =>
+        RC.RCCAST ((compileExp context rcexp, compileTy expTy),
+                   compileTy ty, loc)
       | RC.RCFFI exp =>
-        raise Control.Bug "RCFFI"
+        raise Bug.Bug "RCFFI"
 
   and compileDecl context rcdecl =
       case rcdecl of
@@ -618,18 +632,14 @@ struct
         [RC.RCEXD (exnBinds, loc)]  (* contains no POLYty *)
       | RC.RCEXNTAGD (bind, loc) => (* FIXME check this *)
         [RC.RCEXNTAGD (bind, loc)]  (* contains no POLYty *)
-      | RC.RCEXPORTVAR {internalVar, externalVar, loc} =>
-        [RC.RCEXPORTVAR
-           {internalVar=compileVarInfo internalVar, 
-            externalVar=compileExVarInfo externalVar,
-            loc=loc}
-        ]
-      | RC.RCEXPORTEXN (exnInfo, loc) =>
-        [RC.RCEXPORTEXN (exnInfo, loc)]  (* contains no POLYty *)
-      | RC.RCEXTERNVAR (exVarInfo, loc) =>
-        [RC.RCEXTERNVAR (compileExVarInfo exVarInfo, loc)]
-      | RC.RCEXTERNEXN (exExnInfo, loc) =>
-        [RC.RCEXTERNEXN (exExnInfo, loc)]  (* contains no POLYty *)
+      | RC.RCEXPORTVAR varInfo =>
+        [RC.RCEXPORTVAR (compileVarInfo varInfo)]
+      | RC.RCEXPORTEXN exnInfo =>
+        [RC.RCEXPORTEXN exnInfo]  (* contains no POLYty *)
+      | RC.RCEXTERNVAR exVarInfo =>
+        [RC.RCEXTERNVAR (compileExVarInfo exVarInfo)]
+      | RC.RCEXTERNEXN exExnInfo =>
+        [RC.RCEXTERNEXN exExnInfo]  (* contains no POLYty *)
       | RC.RCVAL (bindList, loc) =>
         [RC.RCVAL (map (fn (v,e) => (compileVarInfo v, compileExp context e))
                        bindList, loc)]
@@ -660,7 +670,7 @@ struct
               val var = {path = path,
                          ty = compileTy (T.POLYty {boundtvars = btvEnv,
                                                    body = ty}),
-                         id = id} : T.varInfo
+                         id = id} : RC.varInfo
               val expTy = compileTy expTy
               val exp = compileExp newContext exp
               val recExp =
@@ -724,7 +734,7 @@ struct
                          var = {path = path,
                                 ty = compileTy (T.POLYty {boundtvars = btvEnv,
                                                           body = ty}),
-                                id = id} : T.varInfo,
+                                id = id} : RC.varInfo,
                          label = Int.toString (i + 1),
                          expTy = compileTy expTy,
                          exp = compileExp newContext exp})

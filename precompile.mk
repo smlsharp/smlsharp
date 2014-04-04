@@ -4,97 +4,55 @@
 include ./files.mk
 
 SMLSHARP_ENV = SMLSHARP_HEAPSIZE=128M:1G
-SMLSHARP = src/compiler/smlsharp
-SMLSHARP_DEP =
+SMLSHARP_STAGE2 = src/compiler/smlsharp
+MLLEX_DEP = src/ml-lex/smllex
+MLYACC_DEP = src/ml-yacc/smlyacc
+SMLFORMAT_DEP = src/smlformat/smlformat
+SMLSHARP_DEP = $(SMLSHARP_STAGE2)
 
-all: precompiled/x86-darwin.xz \
-     precompiled/x86-linux.xz \
-     precompiled/x86-mingw.xz
+LLVM_LINK = llvm-link
+LLVM_DIS = llvm-dis
+OPT = opt
+XZ = xz
 
-OBJECTS = $(MINISMLSHARP_OBJECTS) \
-	  src/compiler/minismlsharp.smi.o
-SMIFILES = $(patsubst %.o,%.smi,$(patsubst %.smi.o,%.smi,$(OBJECTS)))
-SMLFILES = $(patsubst %.o,%.sml,$(patsubst %.smi.o,%.smi,$(OBJECTS)))
+OBJECTS = $(MINISMLSHARP_OBJECTS:.o=.bc) \
+	  src/compiler/minismlsharp.smi.bc
 
-precompiled/ids: $(SMIFILES) precompile.mk
-	$(SMLSHARP) -Bsrc -nostdpath -fprint-main-ids \
-	  src/compiler/minismlsharp.smi \
-	| sed 's,\.smi$$,.sml,' > $@
+all: precompiled/x86.ll.xz
 
-precompiled/sums: $(SMLFILES) precompile.mk
-	$(SMLSHARP) -Bsrc --sha1 $(SMLFILES) > $@
+clean:
+	-rm -f $(OBJECTS)
+	-rm -f precompile.dep precompiled/x86.ll precompiled/x86.ll.xz
 
-precompiled/files: precompiled/map precompiled/ids precompiled/sums \
-	           precompile.mk
-	awk 'BEGIN{while((getline < "precompiled/ids"))id[$$2]=$$1; \
-	           while((getline < "precompiled/sums"))sum[$$2]=$$1} \
-	     /\.smi\.o$$/{next} \
-	     {sub("\\.o$$",".sml",$$2); \
-	      printf "compile %s %s:%s %s\n",$$1,id[$$2],sum[$$2],$$2}' \
-	  precompiled/map > $@
+src/compiler/minismlsharp.smi.bc: $(MINISMLSHARP_OBJECTS:.o=.smi)
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE2) -Bsrc -emit-llvm -c -o $@ src/compiler/minismlsharp.smi
 
-precompiled/minismlsharp-files: files.mk precompiled/map
-	for i in src/compiler/minismlsharp.smi.o $(MINISMLSHARP_OBJECTS); do \
-	  fgrep " $$i" precompiled/map; \
-	done | cut -d\  -f1 > $@
+.SUFFIXES: .sml .bc .ppg .ppg.sml .lex .lex.sml .grm .grm.sml .grm.sig
 
-precompiled/fastbuild1: files.mk precompiled/files
-	{ echo 'check src/ml-lex/ml-lex.smi'; \
-	  for i in $(BASIS_LIB_OBJECTS:.o=.sml); do \
-	    fgrep " $$i" precompiled/files; \
-	  done; } > $@
+.sml.bc:
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE2) -Bsrc -emit-llvm -c -o $@ $<
+.ppg.ppg.sml:
+        $(SMLFORMAT) --output=$@ $<
+.lex.lex.sml:
+        SMLLEX_OUTPUT=$@ $(MLLEX) $<
+.grm.grm.sml:
+        SMLYACC_OUTPUT=$@ $(MLYACC) $<
 
-precompiled/fastbuild2: files.mk precompiled/files
-	{ echo 'check src/compiler/minismlsharp.smi'; \
-	  for i in $(MINISMLSHARP_OBJECTS:.o=.sml); do \
-	    fgrep " $$i" precompiled/files; \
-	  done; } > $@
+./precompile.dep: depend.mk precompile.mk
+	sed 's/\.o:/.bc:/' depend.mk > $@
 
-src/compiler/minismlsharp.smi.x86-darwin.s: $(MINISMLSHARP_OBJECTS:.o=.smi)
-	$(SMLSHARP_ENV) $(SMLSHARP) -Bsrc -nostdpath -dtarget=x86-darwin -S -o $@ src/compiler/minismlsharp.smi
-src/compiler/minismlsharp.smi.x86-linux.s: $(MINISMLSHARP_OBJECTS:.o=.smi)
-	$(SMLSHARP_ENV) $(SMLSHARP) -Bsrc -nostdpath -dtarget=x86-linux -S -o $@ src/compiler/minismlsharp.smi
-src/compiler/minismlsharp.smi.x86-mingw.s: $(MINISMLSHARP_OBJECTS:.o=.smi)
-	$(SMLSHARP_ENV) $(SMLSHARP) -Bsrc -nostdpath -dtarget=x86-mingw -S -o $@ src/compiler/minismlsharp.smi
+precompiled/x86_orig.bc: $(OBJECTS)
+	$(LLVM_LINK) -o=$@ $(OBJECTS)
 
-%.x86-darwin.s: %.sml
-	$(SMLSHARP_ENV) $(SMLSHARP) -Bsrc -nostdpath -dtarget=x86-darwin -S -o $@ $<
-%.x86-linux.s: %.sml
-	$(SMLSHARP_ENV) $(SMLSHARP) -Bsrc -nostdpath -dtarget=x86-linux -S -o $@ $<
-%.x86-mingw.s: %.sml
-	$(SMLSHARP_ENV) $(SMLSHARP) -Bsrc -nostdpath -dtarget=x86-mingw -S -o $@ $<
+precompiled/x86.ll: precompiled/x86_orig.bc
+	$(OPT) -disable-internalize -std-link-opts -internalize-public-api-list=_SMLmain -internalize -O2 -S -o $@ precompiled/x86_orig.bc
 
-COPYASM = \
-  copy () { \
-    [ -d `dirname "$$2"` ] || mkdir -p `dirname "$$2"`; \
-    cp "$$1" "$$2" && chmod 644 "$$2"; \
-  }; copy
-
-precompiled/map: files.mk precompile.mk
-	c=001; \
-	inc () { echo 00`expr $$1 + 1` | sed 's,.*\(...\)$$,\1,'; }; \
-	echo $(OBJECTS) | awk '{gsub(" ","\n");print}' | sort | uniq \
-	| while read i; do \
-	    echo "$$c.s $$i"; \
-	    c=`inc $$c`; \
-	  done > $@
-
-./precompile.dep: precompiled/map depend.mk precompile.mk
-	for t in x86-darwin x86-linux x86-mingw; do \
-	  { \
-	    sed "/MLLEX_DEP/d;/MLYACC_DEP/d;/SMLFORMAT_DEP/d;s/\.o:/.$$t.s:/" \
-	      depend.mk; \
-	    files=; \
-	    while read i; do \
-	      set -- $$i; \
-	      asm=`echo $$2 | sed "s,\\.o\$$,.$$t.s,"`; \
-	      echo "precompiled/$$t/$$1: $$asm precompiled/map"; \
-	      echo "	\$$(COPYASM) $$asm \$$@"; \
-	      files="$$files precompiled/$$t/$$1"; \
-	    done; \
-	    echo "precompiled/$$t.xz: precompiled/minismlsharp-files precompiled/fastbuild1 precompiled/fastbuild2 $$files"; \
-	    echo "	pax -w -s ',^precompiled/,,' -x cpio $$files precompiled/minismlsharp-files precompiled/fastbuild1 precompiled/fastbuild2 | xz -c > \$$@"; \
-	  } < precompiled/map; \
-	done > $@
+precompiled/x86.ll.xz: precompiled/x86.ll
+	{ echo "; ModuleID = 'precompiled'" && \
+	  sed 's,;[^"]*$$,,;s,^ *,,;s, *$$,,;/^$$/d;/^target triple =/d' precompiled/x86.ll && \
+	  echo '@_SML_bprecompiled = external global i8' && \
+	  echo '@_SML_rprecompiled = external global i8' && \
+	  echo '@_SMLstackmap = constant [3 x i8*] [i8* @_SML_rprecompiled, i8* @_SML_bprecompiled, i8* null]'; \
+	} | $(XZ) -c > $@
 
 include ./precompile.dep

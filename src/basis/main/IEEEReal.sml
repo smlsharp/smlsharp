@@ -1,22 +1,24 @@
 (**
- * IEEEReal structure.
- * @author YAMATODANI Kiyoshi
+ * IEEEReal
  * @author UENO Katsuhiro
- * @copyright 2010, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "IEEEReal.smi"
 
-structure IEEEReal (*:> IEEE_REAL*) =
+infix 7 * / div mod
+infix 6 + - ^
+infixr 5 :: @
+infix 4 = <> > >= < <=
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op * = SMLSharp_Builtin.Int.mul_unsafe
+val op ~ = SMLSharp_Builtin.Int.neg
+val op ^ = String.^
+val op @ = List.@
+structure Word = SMLSharp_Builtin.Word
+
+structure IEEEReal =
 struct
-
-  infix 7 * / div mod
-  infix 6 + - ^
-  infixr 5 :: @
-  infix 4 = <> > >= < <=
-  val op + = SMLSharp.Int.add
-  val op - = SMLSharp.Int.sub
-  val op * = SMLSharp.Int.mul
-  val op ~ = SMLSharp.Int.neg
 
   datatype real_order = LESS | EQUAL | GREATER | UNORDERED
   datatype float_class = NAN | INF | ZERO | NORMAL | SUBNORMAL
@@ -33,28 +35,41 @@ struct
       _import "prim_fegetround"
       : __attribute__((pure,no_callback)) () -> int
 
+  val FE_TONEAREST =
+      _import "prim_const_FE_TONEAREST"
+      : __attribute__((pure,no_callback)) () -> int
+  val FE_DOWNWARD =
+      _import "prim_const_FE_DOWNWARD"
+      : __attribute__((pure,no_callback)) () -> int
+  val FE_UPWARD =
+      _import "prim_const_FE_UPWARD"
+      : __attribute__((pure,no_callback)) () -> int
+  val FE_TOWARDZERO =
+      _import "prim_const_FE_TOWARDZERO"
+      : __attribute__((pure,no_callback)) () -> int
+
   fun setRoundingMode roundingMode =
       let
         val mode =
             case roundingMode of
-              TO_NEAREST => SMLSharpRuntime.cconstInt "FE_TONEAREST"
-            | TO_NEGINF => SMLSharpRuntime.cconstInt "FE_DOWNWARD"
-            | TO_POSINF => SMLSharpRuntime.cconstInt "FE_UPWARD"
-            | TO_ZERO => SMLSharpRuntime.cconstInt "FE_TOWARDZERO"
+              TO_NEAREST => FE_TONEAREST ()
+            | TO_NEGINF => FE_DOWNWARD ()
+            | TO_POSINF => FE_UPWARD ()
+            | TO_ZERO => FE_TOWARDZERO ()
         val err = fesetround mode
       in
-        if err = 0 then () else raise SMLSharpRuntime.OS_SysErr ()
+        if err = 0 then () else raise SMLSharp_Runtime.OS_SysErr ()
       end
 
   fun getRoundingMode () =
       let
         val mode = fegetround ()
       in
-        if mode = SMLSharpRuntime.cconstInt "FE_TONEAREST" then TO_NEAREST
-        else if mode = SMLSharpRuntime.cconstInt "FE_DOWNWARD" then TO_NEGINF
-        else if mode = SMLSharpRuntime.cconstInt "FE_UPWARD" then TO_POSINF
-        else if mode = SMLSharpRuntime.cconstInt "FE_TOWARDZERO" then TO_ZERO
-        else raise SMLSharpRuntime.SysErr
+        if mode = FE_TONEAREST () then TO_NEAREST
+        else if mode = FE_DOWNWARD () then TO_NEGINF
+        else if mode = FE_UPWARD () then TO_POSINF
+        else if mode = FE_TOWARDZERO () then TO_ZERO
+        else raise SMLSharp_Runtime.SysErr
                      ("getRoundingMode: unknown rounding mode", NONE)
       end
 
@@ -62,10 +77,10 @@ struct
       let
         fun digitsToString () =
             let
-              val digits = map SMLSharpScanChar.intToDigit digits
+              val digits = List.map SMLSharp_ScanChar.intToDigit digits
               val str = #"0" :: #"." :: digits
               val str = if sign then #"~" :: str else str
-              val str = implode str
+              val str = String.implode str
             in
               if exp = 0 then str else str ^ "E" ^ Int.toString exp
             end
@@ -120,18 +135,6 @@ struct
          | _ => NONE)
       | _ => NONE
 
-  fun scanSign getc strm =
-      case getc strm of
-        SOME (#"+", strm) => (false, strm)
-      | SOME (#"~", strm) => (true, strm)
-      | SOME (#"-", strm) => (true, strm)
-      | _ => (false, strm)
-
-  fun scanDigits getc strm =
-      case SMLSharpScanChar.scanRepeat1 SMLSharpScanChar.scanDigit getc strm of
-        NONE => (nil, strm)
-      | SOME x => x
-
   fun removeLeadingZeroes (0::t) = removeLeadingZeroes t
     | removeLeadingZeroes l = l
 
@@ -139,65 +142,59 @@ struct
     | removeTrailingZeroes (h::t) =
       case (h, removeTrailingZeroes t) of (0, nil) => nil | (h, t) => h::t
 
-  (* ToDo: overflow *)
   fun toInt (sign, digits) =
       let
-        val n = foldl (fn (x,z) => z * 10 + x) 0 digits
+        (* FIXME : assume 32 bit *)
+        val op * = Word.mul
+        val op + = Word.add
+        val op - = Word.sub
+        val op > = Word.gt
+        fun loop (z, nil) = z
+          | loop (z, h::t) =
+            if z > 0wxccccccc orelse Word.fromInt h > 0wx80000000 - z * 0w10
+            then raise Overflow
+            else loop (z * 0w10 + Word.fromInt h, t)
+        val n = loop (0w0, digits)
       in
-        if sign then ~n else n
+        if sign then ~(Word.toIntX n)
+        else if n = 0wx80000000 then raise Overflow
+        else Word.toIntX n
       end
 
-  fun scanExp getc strm =
-      case toLower (getc strm) of
-        SOME (#"e", strm) =>
-        let
-          val (sign, strm) = scanSign getc strm
-        in
-          case scanDigits getc strm of
-            (nil, strm) => (0, strm)
-          | (digits, strm) => (toInt (sign, digits), strm)
-        end
-      | _ => (0, strm)
-
+  (* ([0-9]+(\.[0-9]+)?|\.[0-9]+)([eE][+~-]?[0-9]* )? *)
   fun scan getc strm =
       let
-        val strm = SMLSharpScanChar.skipSpaces getc strm
-        val (sign, strm) = scanSign getc strm
+        val strm = SMLSharp_ScanChar.skipSpaces getc strm
+        val (sign, strm) = SMLSharp_ScanChar.scanSign getc strm
       in
-       case scanInf sign getc strm of
+        case scanInf sign getc strm of
           SOME (x, strm) => SOME (x, strm)
         | NONE =>
-          let
-            (* scan ([0-9]+(\.[0-9]+)?|\.[0-9]+)([eE][+~-]?[0-9]* )? *)
-            val (il, strm) = scanDigits getc strm
-            val (fl, strm) =
-                case getc strm of
-                  SOME (#".", strm) => scanDigits getc strm
-                | _ => (nil, strm)
-          in
-            case (il, fl) of
-              (nil, nil) => NONE
-            | _ =>
-              let
-                val (exp, strm) = scanExp getc strm
-              in
-                case (removeLeadingZeroes il, removeTrailingZeroes fl) of
-                  (il as _::_, fl) =>
-                  SOME ({class = NORMAL, sign = sign,
-                         digits = removeTrailingZeroes (il @ fl),
-                         exp = exp + length il}, strm)
-                | (nil, nil) =>
-                  SOME ({class=ZERO, sign=sign, digits=nil, exp=0}, strm)
-                | (nil, fl) =>
-                  let
-                    val len = length fl
-                    val fl' = removeLeadingZeroes fl
-                  in
-                    SOME ({class = NORMAL, sign = sign, digits = fl',
-                           exp = exp - (len - length fl')}, strm)
-                  end
-              end
-          end
+          case SMLSharp_ScanChar.scanMantissa getc strm of
+            NONE => NONE
+          | SOME ((il, fl), strm) =>
+            let
+              val (exp, strm) =
+                  case SMLSharp_ScanChar.scanExponent getc strm of
+                    NONE => (0, strm)
+                  | SOME (x, strm) => (toInt x, strm)
+            in
+              case (removeLeadingZeroes il, removeTrailingZeroes fl) of
+                (il as _::_, fl) =>
+                SOME ({class = NORMAL, sign = sign,
+                       digits = removeTrailingZeroes (il @ fl),
+                       exp = exp + List.length il}, strm)
+              | (nil, nil) =>
+                SOME ({class=ZERO, sign=sign, digits=nil, exp=0}, strm)
+              | (nil, fl) =>
+                let
+                  val len = List.length fl
+                  val fl' = removeLeadingZeroes fl
+                in
+                  SOME ({class = NORMAL, sign = sign, digits = fl',
+                         exp = exp - (len - List.length fl')}, strm)
+                end
+            end
       end
 
   fun fromString str =

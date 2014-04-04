@@ -1,0 +1,4 @@
+structure TestTextUITestRunner =
+struct
+  val runTest : unit -> unit
+end

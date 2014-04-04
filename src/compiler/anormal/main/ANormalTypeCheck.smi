@@ -1,0 +1,19 @@
+_require "basis.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../anormal/main/ANormal.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesBasics.smi"
+_require "../../types/main/Unify.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../runtimetypes/main/TypeLayout2.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../name/main/ExternSymbol.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+
+structure ANormalTypeCheck =
+struct
+  val check : ANormal.program -> unit
+end

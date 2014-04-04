@@ -1,0 +1,33 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+
+structure FFIAttributes =
+struct
+
+  datatype callingConvention =
+      FFI_CDECL
+    | FFI_STDCALL
+    | FFI_FASTCC
+ 
+  type attributes =
+       {
+         isPure: bool,
+         noCallback: bool,
+         allocMLValue: bool,
+         suspendThread: bool,
+         callingConvention: callingConvention option
+       }
+
+  val defaultFFIAttributes : attributes
+
+  val format_attributes
+      : attributes -> SMLFormat.FormatExpression.expression list
+
+  datatype globalSymbolKind = 
+      ForeignCodeSymbol
+
+  val format_globalSymbolKind
+      : globalSymbolKind -> SMLFormat.FormatExpression.expression list
+
+end

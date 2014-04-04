@@ -1,0 +1,53 @@
+(* -*- sml -*- *)
+(**
+ * FFI attributes
+ *
+ * @copyright (c) 2011, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+structure FFIAttributes =
+struct
+
+  (*% *)
+  datatype callingConvention =
+      (*% @format "cdecl" *) FFI_CDECL
+    | (*% @format "stdcall" *) FFI_STDCALL
+    | (*% @format "fastcc" *) FFI_FASTCC
+
+  (*%
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  type attributes =
+      (*%
+       * @format({isPure, noCallback, allocMLValue, suspendThread,
+       *          callingConvention: cc ccopt})
+       * "__attr__(("
+       * isPure()("pure,",)
+       * noCallback()("no_callback,",)
+       * allocMLValue()("alloc,",)
+       * suspendThread()("suspend_thread,",)
+       * ccopt(cc)
+       * "))"
+       *)
+      {
+        isPure: bool,
+        noCallback: bool,
+        allocMLValue: bool,
+        suspendThread: bool,
+        callingConvention: callingConvention option
+      }
+
+  val defaultFFIAttributes =
+      {
+        isPure = false,
+        noCallback = false,
+        allocMLValue = false,
+        callingConvention = NONE,
+        suspendThread = false
+      }
+
+  (*% *)
+  datatype globalSymbolKind =
+      ForeignCodeSymbol
+
+end

@@ -11,82 +11,117 @@ struct
   structure KeyValuePair = SMLSharp_SQL_KeyValuePair
 
   type conn = MySQL.MYSQL
-  type res = MySQL.MYSQL_RES
-  type sqltype = string
+  type res = {result: MySQL.MYSQL_RES, rowIndex: int, numRows: int}
+  type value = string
 
-  exception Exec of string
-  exception Connect of string
-  exception Format
-
-  fun eof (r,rowIndex)=
-      rowIndex >= (MySQL.mysql_num_rows () r)
+  exception Exec = SMLSharp_SQL_Errors.Exec
+  exception Connect = SMLSharp_SQL_Errors.Connect
+  exception Format = SMLSharp_SQL_Errors.Format
 
   fun execQuery (mysql, queryString) =
       let
         val r = MySQL.mysql_query () (mysql, queryString)
+        val _ =
+            if r = 0
+            then ()
+            else raise Exec (Int.toString (MySQL.mysql_errno () mysql)
+                             ^ ": " ^ SMLSharp_Runtime.str_new
+                                        (MySQL.mysql_error () mysql) ^"\n")
+        val result = MySQL.mysql_store_result () mysql
       in
-        if r = 0
-        then MySQL.mysql_store_result () mysql
-        else raise Exec (Int.toString (MySQL.mysql_errno () mysql)
-                         ^ ": " ^ SMLSharpRuntime.str_new
-                                    (MySQL.mysql_error () mysql) ^"\n")
+        {result = result,
+         rowIndex = ~1,
+         numRows = MySQL.mysql_num_rows () result}
       end
+
+  fun fetch (r as {result, rowIndex, numRows}:res) =
+      if rowIndex + 1 < numRows
+      then SOME (r # {rowIndex = rowIndex + 1})
+      else NONE
 
   fun closeConn conn = (MySQL.mysql_close () conn; ())
 
-  fun closeRel r = (MySQL.mysql_free_result () r; ())
+  fun closeRel ({result,...}:res) = (MySQL.mysql_free_result () result; ())
 
-  fun numOfRows r = MySQL.mysql_num_rows () r
-
-  fun getValue convFn (result, rowIndex:int, colIndex:int) =
+  fun getValue ({result, rowIndex, ...}:res, colIndex:int) =
       let
         val _ = MySQL.mysql_data_seek () (result,rowIndex)
         val row = MySQL.mysql_fetch_row () result
-        val value = SMLSharp.Pointer.deref_ptr
-                      (SMLSharp.Pointer.advance (row, colIndex))
+        val value = SMLSharp_Builtin.Pointer.deref
+                      (SMLSharp_Builtin.Pointer.advance (row, colIndex))
       in
         if value = _NULL
         then NONE
-        else
-          case convFn (SMLSharpRuntime.str_new
-                         (SMLSharp.Pointer.fromUnitPtr value)) of
-            SOME x => SOME x
-          | NONE => raise Format
+        else SOME (SMLSharp_Runtime.str_new
+                     (SMLSharp_Builtin.Pointer.fromUnitPtr value))
       end
 
-  fun readInt x = Int.fromString x
-  fun readWord x = StringCvt.scanString (Word.scan StringCvt.DEC) x
-  fun readReal x = Real.fromString x
-  fun readString (x:string) = SOME x
-  fun readChar x = SOME (String.sub (x, 0)) handle Subscript => NONE
-  fun readBool x = (print x; raise Exec "MySQL does'nt support boolean")
-
-  fun getInt x = getValue readInt x
-  fun getWord x = getValue readWord x
-  fun getReal x = getValue readReal x
-  fun getString x = getValue readString x
-  fun getChar x = getValue readChar x
-  fun getBool x = getValue readBool x
+  fun intValue x = Int.fromString x
+  fun intInfValue x = IntInf.fromString x
+  fun wordValue x = StringCvt.scanString (Word.scan StringCvt.DEC) x
+  fun realValue x = Real.fromString x
+  fun stringValue (x:string) = SOME x
+  fun charValue x = SOME (String.sub (x, 0)) handle Subscript => NONE
+  fun boolValue x = (print x; raise Fail "MySQL does'nt support boolean")
+  fun timestampValue x = SOME (SMLSharp_SQL_TimeStamp.fromString x)
+  fun decimalValue x = SOME (SMLSharp_SQL_Decimal.fromString x)
+  fun floatValue x = SOME (SMLSharp_SQL_Float.fromString x)
 
   local
+
+    fun valof (SOME x) = x
+      | valof NONE = raise Format
+
+    fun getString x = valof (stringValue (valof (getValue x)))
+    fun getBool x =
+        case getValue x of SOME "NO" => false
+                        | SOME "YES" => true
+                        | _ => raise Format
+
+    (* TODO: how to deal with time, date, binary,blob... *)
+    fun translateType dbTypeName =
+        case dbTypeName of
+          "tinyint" => SMLSharp_SQL_BackendTy.INT
+        | "smallint" => SMLSharp_SQL_BackendTy.INT
+        | "mediumint" => SMLSharp_SQL_BackendTy.INT
+        | "int" => SMLSharp_SQL_BackendTy.INT
+        | "float" => SMLSharp_SQL_BackendTy.REAL32
+        | "double" => SMLSharp_SQL_BackendTy.REAL
+        | "varchar" => SMLSharp_SQL_BackendTy.STRING
+        | "tinytext" => SMLSharp_SQL_BackendTy.STRING
+        | "text" => SMLSharp_SQL_BackendTy.STRING
+(*
+        | "bigint" => NONE
+        | "date" => NONE
+        | "datetime" => NONE
+        | "timestamp" => NONE
+        | "time" => NONE
+        | "year2" => NONE
+        | "year4" => NONE
+        | "char" => NONE
+        | "binary" => NONE
+        | "varbinary" => NONE
+        | "mediumtext" => NONE
+        | "longtext" => NONE
+        | "tinyblob" => NONE
+        | "blob" => NONE
+        | "mediumblob" =>NONE
+        | "longblob" => NONE
+        | "enum" => NONE
+        | "set" => NONE
+        | "bool" => NONE
+*)
+        | _ => SMLSharp_SQL_BackendTy.UNSUPPORTED dbTypeName
 
     fun evalQuery (query, fetchFn, conn) =
         let
           val r = execQuery (conn, query)
           val tuples =
-              List.tabulate (numOfRows r, fn i => fetchFn i r)
+              List.tabulate (#numRows r, fn i => fetchFn (r # {rowIndex=i}))
               handle e => (closeRel r; raise e)
         in
           closeRel r; tuples
         end
-
-    fun readIsnull x =
-        case x of "NO" => false
-                | "YES" => true
-                | _ => raise Format
-
-    fun nonnull (SOME x) = x
-      | nonnull NONE = raise Format
 
     fun getTableSchema conn {tabname, dbname} =
         let
@@ -96,11 +131,10 @@ struct
                       \WHERE columns.table_name = '" ^ tabname ^ "' \
                       \AND schemata.schema_name = '" ^ dbname ^ "' \
                       \ORDER BY columns.column_name"
-          fun fetchFn r conn =
-              {colname = nonnull (getString (conn, r, 0)),
-               isnull = readIsnull (valOf (getString (conn, r, 1)))
-               handle Option => raise Format,
-               typename = nonnull (getString (conn, r, 2))}
+          fun fetchFn res =
+              {colname = getString (res, 0),
+               nullable = getBool (res, 1),
+               ty = translateType (getString (res, 2))}
         in
           (tabname, evalQuery (query, fetchFn, conn))
         end
@@ -110,8 +144,9 @@ struct
       let
         val query = "SELECT tables.table_name, tables.table_schema \
                     \FROM information_schema.tables"
-        fun fetchFn r conn = {tabname = nonnull (getString (conn, r, 0)),
-                              dbname = nonnull (getString (conn, r, 1))}
+        fun fetchFn res =
+            {tabname = getString (res, 0),
+             dbname = getString (res, 1)}
         val tableDBList = evalQuery (query, fetchFn, conn)
       in
         map (getTableSchema conn) tableDBList
@@ -189,7 +224,7 @@ struct
             val conn = real_connect mysql connInfo
           in
             if conn = _NULL
-            then raise Connect (SMLSharpRuntime.str_new
+            then raise Connect (SMLSharp_Runtime.str_new
                                   (MySQL.mysql_error () mysql)
                                   ^ " (errno:"
                                   ^ Int.toString (MySQL.mysql_errno () mysql)
@@ -199,38 +234,5 @@ struct
       end
 
   end (* local *)
-
-  (* TODO: how to deal with time, date, binary,blob... *)
-  fun translateType dbTypeName =
-      case dbTypeName of
-        "tinyint" => SOME "int"
-      | "smallint" => SOME "int"
-      | "mediumint" => SOME "int"
-      | "int" => SOME "int"
-      | "bigint" => NONE
-      | "float" => SOME "real"
-      | "double" => SOME "real"
-      | "date" => NONE
-      | "datetime" => NONE
-      | "timestamp" => NONE
-      | "time" => NONE
-      | "year2" => NONE
-      | "year4" => NONE
-      | "varchar" => SOME "string"
-      | "char" => NONE
-      | "binary" => NONE
-      | "varbinary" => NONE
-      | "tinytext" => SOME "string"
-      | "text" => SOME "string"
-      | "mediumtext" => NONE
-      | "longtext" => NONE
-      | "tinyblob" => NONE
-      | "blob" => NONE
-      | "mediumblob" =>NONE
-      | "longblob" => NONE
-      | "enum" => NONE
-      | "set" => NONE
-      | "bool" => NONE
-      | _ => NONE
 
 end

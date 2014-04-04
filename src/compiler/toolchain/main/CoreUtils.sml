@@ -16,7 +16,7 @@ structure CoreUtils : sig
   val rm_f : Filename.filename -> unit
   val mkdir : Filename.filename -> unit
   val rmdir_f : Filename.filename -> unit
-  val system : string -> unit
+  val system : {command : string, quiet : bool} -> unit
 
   val makeTextFile : Filename.filename * string -> unit
   val makeBinFile : Filename.filename * Word8Vector.vector -> unit
@@ -29,10 +29,8 @@ struct
 
   exception Failed of {command: string, message: string}
 
-  fun join [x] = x
-    | join (""::t) = join t
-    | join (h::t) = h ^ " " ^ join t
-    | join nil = ""
+  fun join args =
+      String.concatWith " " args
 
   fun quote "" = "\"\""
     | quote x = x (* FIXME *)
@@ -96,14 +94,21 @@ struct
         OS.FileSys.rmDir filename handle e => ignoreSysErr e
       end
 
-  fun system command =
-      (
+  fun system {command, quiet} =
+      let
+        val command =
+            case (quiet, SMLSharp_Config.HOST_OS_TYPE ()) of
+              (true, SMLSharp_Config.Unix) => command ^ " > /dev/null 2>&1"
+            | (true, SMLSharp_Config.Cygwin) => command ^ " > /dev/null 2>&1"
+            | (true, SMLSharp_Config.Mingw) => command ^ " > nul 2>&1"
+            | (false, _) => command
+      in
         log command;
         if OS.Process.isSuccess (OS.Process.system command)
         then ()
         else (log ("FAILED: command: " ^ command);
               raise Failed {command=command, message="command failed"})
-      )
+      end
 
   fun makeTextFile (filename, content) =
       let
@@ -126,8 +131,8 @@ struct
   fun makeTextFile' (filename, contentFn) =
       let
         val f = Filename.TextIO.openOut filename
-        val _ = contentFn (fn s => TextIO.output (f, s))
-                handle e => (TextIO.closeOut f; rm_f filename; raise e)
+        val () = contentFn (fn s => TextIO.output (f, s))
+                 handle e => (TextIO.closeOut f; rm_f filename; raise e)
       in
         TextIO.closeOut f
       end

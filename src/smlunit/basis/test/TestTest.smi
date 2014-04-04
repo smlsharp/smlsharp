@@ -1,0 +1,8 @@
+_require "basis.smi"
+_require "smlunit-lib.smi"
+_require "Bool001.smi"
+
+structure TestTest =
+struct
+  val test : unit -> unit
+end

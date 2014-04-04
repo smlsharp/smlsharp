@@ -2,7 +2,6 @@ _require "../../../basis.smi"
 _require "../../../ml-yacc-lib.smi"
 _require "FormatTemplate.smi"
 _require "TokenTable.smi"
-_require "ml.grm.sig"
 _require "ml.grm.smi"
 
 structure MLLex
@@ -12,7 +11,6 @@ struct
   struct
     type token = MLLrVals.Tokens.token
     type pos = MLLrVals.Tokens.pos
-    type svalue = MLLrVals.Tokens.svalue
     type arg = 
          {
           brack_stack : pos ref list ref,

@@ -11,7 +11,23 @@
  * This is unsatisfactory situation. We will consider a better
  * organization later.
 
+ * Ohori: 2012/10/9
+   id, longid are systematically changed to symbol and longsymbol 
+   having location information.
+
+ * Ohori: 2012/12/28
+   Format comments are added. They are largely copied from 
+   in src/smlformat/generate/main/ml.grm.
+
+
+ * Ohori: 2013/06/29
+   Changed id to represent symbols.
+
 *)
+
+fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
+    (tyvars, tyConSymbol, ty)
+
 %%
 
 %decompose (yes)
@@ -27,7 +43,6 @@
 
 %term EOF
     | ABSTYPE
-    | ABSNAMESPACE
     | AND
     | ANDALSO 
     | ARROW
@@ -38,8 +53,6 @@
     | BAR
     | BUILTIN
     | CASE
-    | CAST
-    | CDECL
     | CHAR of string
     | COLON
     | COMMA
@@ -52,8 +65,6 @@
     | EQTYPE
     | EQTYVAR of string 
     | EXCEPTION
-    | EXTERNAL
-    | EXPORT
     | FFIAPPLY
     | FN 
     | FUN
@@ -70,6 +81,8 @@
     | INT of {radix:StringCvt.radix, digits:string}
     | INTLAB of string
     | INTERFACE
+(* temporary *)
+    | JOIN
     | LBRACE
     | LBRACKET
     | LET
@@ -81,13 +94,12 @@
     | OPAQUE
     | OPEN
     | ORELSE
-    | NAMESPACE 
     | NULL
     | PERIOD
     | PERIODS
-    | PRIVATE
     | RAISE 
     | REC
+    | POLYREC
     | REQUIRE
     | RBRACE
     | RBRACKET
@@ -99,7 +111,6 @@
     | SIGNATURE
     | SIZEOF
     | SPECIAL of string
-    | STDCALL
     | STRING of string
     | STRUCT
     | STRUCTURE
@@ -109,7 +120,6 @@
     | UNDERBAR
     | USE
     | USE'
-    | USEOBJ
     | VAL
     | WHILE 
     | WHERE
@@ -138,8 +148,57 @@
     | COMMIT
     | ROLLBACK
 
+    | DITTOTAG
+    | PREFIXTAG
+    | DESTINATIONTAG 
+    | HEADERTAG
+    | FORMATCOMMENTSTART 
+    | FORMATCOMMENTEND
+    | FORMATTERTAG 
+    | FORMATPARAMSTAG 
+    | FORMATTAG 
+    | LOCALFORMATTAG of string
+    | NEWLINE
+    | STARTOFINDENT of int
+    | FORMATINDICATOR of
+      {
+        space : bool,
+        newline : {priority : FormatTemplate.priority} option
+      }
+    | ASSOCINDICATOR of
+      {cut : bool, strength : int, direction : FormatTemplate.assocDirection}
 
-%nonterm absnamespace of string list
+
+%nonterm id of Symbol.symbol
+       | id_noEQ of Symbol.symbol
+       | id_noEQSTAR of Symbol.symbol
+       | id_noSQL of Symbol.symbol
+
+       | longid of Symbol.longsymbol
+       | longid_noSQL of Symbol.longsymbol
+       | tylongid of Symbol.longsymbol
+
+       | label of string
+
+(*
+       | longtyconid of Symbol.longsymbol
+       | expid of Symbol.longsymbol
+       | symbol of Symbol.symbol
+       | symbol_noEQSTAR of Symbol.symbol
+       | symbol_noSQL of Symbol.symbol
+       | longsymbol of Symbol.longsymbol
+       | longtycon of Symbol.longsymbol
+       | explongsymbol of Symbol.longsymbol
+       | explongsymbol_noSQL of Symbol.longsymbol
+       | tylongsymbol of Symbol.longsymbol
+       | symbolseq of Symbol.symbol list
+       | longsymbolseq of Symbol.longsymbol list
+       | longsymboleqrow of Symbol.longsymbol list
+*)
+       | idseq of Symbol.symbol list
+       | longidseq of Symbol.longsymbol list
+       | longideqrow of Symbol.longsymbol list
+
        | appexp of Absyn.exp
        | appexp_noSQL of Absyn.exp
        | atexp of Absyn.exp
@@ -147,63 +206,65 @@
        | atexp_noSQL of Absyn.exp
        | atpat of Absyn.pat
        | apppat of Absyn.pat list
-       | atty of Absyn.ty
        | atomicspec of Absyn.spec
        | constant of Absyn.constant
-       | condec of bool * string * Absyn.ty option
-       | combind of (bool * string * Absyn.ty option) list
-       | component of string list
-       | condesc of (string * Absyn.ty option) list
+       | condec of 
+          {opFlag:bool,
+           conSymbol:Symbol.symbol,
+           tyOpt:Absyn.ty option,
+           formatComments:Absyn.definingFormatComment list
+           }
+       | exndec of bool * Symbol.symbol * Absyn.ty option
+       | combind of
+          {opFlag:bool,
+           conSymbol:Symbol.symbol,
+           tyOpt:Absyn.ty option,
+           formatComments:Absyn.definingFormatComment list
+           } list
+       | condesc of (Symbol.symbol * Absyn.ty option) list
        | dec of Absyn.dec
        | decs of Absyn.dec list
        | decseq_semicolon of Absyn.dec list
        | datbind of
-         (
-           Absyn.tvar list *
-           string *
-           (bool * string * Absyn.ty option) list
-         )
-         list
+         {
+          tyvars : Absyn.tvar list, 
+          tyConSymbol:Symbol.symbol,
+          rhs : {opFlag:bool,
+                 conSymbol:Symbol.symbol,
+                 tyOpt:Absyn.ty option,
+                 formatComments:Absyn.definingFormatComment list
+                } list
+
+         } list
        | datdesc of
-         (Absyn.tvar list * string * (string * Absyn.ty option) list) list
+         (Absyn.tvar list * Symbol.symbol * (Symbol.symbol * Absyn.ty option) list) list
        | exprow of (string * Absyn.exp) list
        | expseq_comma of Absyn.exp list
        | expseq_semicolon of Absyn.exp list
-       | expid of string list
-       | expid_noSQL of string list
        | exp of Absyn.exp
        | expOrSQL of Absyn.exp
-       | export of string list
+       | export of Symbol.longsymbol
        | exbinds of Absyn.exbind list
        | exbind of Absyn.exbind
-       | exdesc of (string * Absyn.ty option) list
+       | exdesc of (Symbol.symbol * Absyn.ty option) list
        | fields of bool * (Absyn.patrow list)
        | followpatrow of Absyn.patrow list
-       | fvalbind of (Absyn.pat list * Absyn.ty option * Absyn.exp) list list
+       | fvalbind of {fdecl:(Absyn.pat list * Absyn.ty option * Absyn.exp) list, loc:Loc.loc} list
        | frule of Absyn.pat list * Absyn.ty option * Absyn.exp
        | frules of (Absyn.pat list * Absyn.ty option * Absyn.exp) list
        | funbind of Absyn.funbind
        | funbindand of Absyn.funbind
        | funbindseq of Absyn.funbind list
-       | id of string
-       | id_noEQ of string
-       | id_noEQSTAR of string
-       | id_noSQL of string
-       | idseq of string list
        | int of {radix:StringCvt.radix, digits:string}
-       | label of string
-       | longid of Absyn.longid
-       | longtycon of Absyn.longTyCon
-       | longtyconeqrow of Absyn.longTyCon list
-       | longidseq of Absyn.longid list
-       | longideqrow of Absyn.longid list
+       | longtyconeqrow of Symbol.longsymbol list
        | match of (Absyn.pat * Absyn.exp) list
        | mrule of Absyn.pat * Absyn.exp
        | optaspat of Absyn.pat option
        | optop of bool
        | optty of Absyn.ty option
        | patseq_comma of Absyn.pat list
-       | patid of string list
+       | patlongid of Absyn.longsymbol
+       | patlongsymbol of Symbol.longsymbol
        | pat of Absyn.pat
        | start of Absyn.unitparseresult
        | strexpbasic of Absyn.strexp
@@ -215,21 +276,20 @@
        | strdecseq_semicolon of Absyn.strdec list
        | strbind of Absyn.strbind
        | strbindand of Absyn.strbind
-       | sigbind of (string * Absyn.sigexp) list
+       | sigbind of (Symbol.symbol * Absyn.sigexp) list
        | spec of Absyn.spec
-       | strdesc of (string * Absyn.sigexp) list
+       | strdesc of (Symbol.symbol * Absyn.sigexp) list
        | strbindseq of Absyn.strbind list
-       | sigidseq of string list
-       | sharespec of Absyn.longTyCon list
+       | sigidseq of Symbol.symbol list
+       | sharespec of Symbol.longsymbol list
        | sigexpbasic of Absyn.sigexp
        | sigexpwhere of Absyn.sigexp
        | sigexp of Absyn.sigexp
        | sigexpand of Absyn.sigexp
        | ty of Absyn.ty
        | ty0 of Absyn.ty
-       | tyid of string list
        | ty1 of Absyn.ty
-       | tycon of string
+       | tycon of Symbol.symbol
        | tyseq_comma of Absyn.ty list
        | tyseq of Absyn.ty list
        | tyrow of (string * Absyn.ty) list
@@ -237,35 +297,35 @@
        | tyvar of Absyn.tvar
        | tyvarseq of Absyn.tvar list
        | tyvarseq_comma of Absyn.tvar list
-(*
-  Ohori: poly_ty, poly_ty1, poly_tyrow, poly_tytuple are added
+
+(* poly ty stuff 
+  Ohori: poly_ty, poly_ty1, poly_tyrow, poly_tytuple  are added
   for rank1 type specification.
   2007/11/11
+  Need to extend with other kinds
 *)
        | poly_ty of Absyn.ty
        | poly_ty1 of Absyn.ty
        | poly_tyrow of (string * Absyn.ty) list
        | poly_tytuple of Absyn.ty list
-(*
-  Ohori: from kinded_tyvar to kinded_tyvarseq_comma are added
-  for kinded type specification.
-  2007/11/11
-*)
        | kinded_tyvar of Absyn.tvar * Absyn.tvarKind
        | kinded_tyvarseq of (Absyn.tvar * Absyn.tvarKind) list
        | kinded_tyvarseq_without_paren of (Absyn.tvar * Absyn.tvarKind) list
        | kinded_tyvarseq_comma of (Absyn.tvar * Absyn.tvarKind) list
+(* end of poly ty stuff *)
+
        | ffiApplyArg of Absyn.ffiArg
        | ffiApplyArgs of Absyn.ffiArg list
        | ffiApplyArgSeq of Absyn.ffiArg list
        | ffityrow of (string * Absyn.ffiTy) list
        | ffityseq of Absyn.ffiTy list
-       | ffiArgs of Absyn.ffiTy list
+       | ffiVarArgs of Absyn.ffiTy list
+       | ffiArgs of Absyn.ffiTy list * Absyn.ffiTy list option
        | ffiContyArg of Absyn.ffiTy list
        | ffiAtty of Absyn.ffiTy
        | ffitupleseq of Absyn.ffiTy list
        | ffiTupleTy of Absyn.ffiTy
-       | ffiFunArg of Absyn.ffiTy list
+       | ffiFunArg of Absyn.ffiTy list * Absyn.ffiTy list option
        | ffiFunRet of Absyn.ffiTy list
        | ffiFunty of Absyn.ffiTy
        | ffiattrseq of string list
@@ -281,16 +341,25 @@
        | old_ffiFunty of Absyn.ty list * Absyn.ty
        | old_ffity of Absyn.ty
 *)
-       | typbind of (Absyn.tvar list * string * Absyn.ty) list
-       | typdesc of (Absyn.tvar list * string) list
+       | typbind of
+         {
+           tyvars : Absyn.tvar list,
+           tyConSymbol : Symbol.symbol,
+           ty : Absyn.ty,
+           formatComments : Absyn.definingFormatComment list
+         } list
+       | typdesc of (Absyn.tvar list * Symbol.symbol) list
        | useFile of Absyn.top
        | tops of Absyn.top list
        | topdecs of Absyn.topdec list
        | topdec of Absyn.topdec
        | interface of Absyn.interface
        | unit of Absyn.unit
-       | valdesc of (string * Absyn.ty) list
+       | valdesc of (Symbol.symbol * Absyn.ty) list
        | valbind of (Absyn.pat * Absyn.exp) list
+
+(* polymorphic recursion *)
+       | pvalbind of (Symbol.symbol * Absyn.ty * Absyn.exp) list
 
        | sql of Absyn.exp AbsynSQL.command
        | sqlExp of Absyn.exp
@@ -302,7 +371,7 @@
        | sqlInsertRowList of Absyn.exp option list list
        | selectList of string list option * Absyn.exp list
        | asNameOpt of string option 
-       | intoClause of string option 
+       | intoClause of Symbol.symbol option 
        | fromClause of (string * Absyn.exp) list
        | whereClause of Absyn.exp option
        | orderbyClause of {keyExp: Absyn.exp, orderAsc: bool} list
@@ -310,6 +379,39 @@
        | sqlorder of bool
        | setClause of string list * Absyn.exp list
        | sqlserver of (string * Absyn.exp) list
+
+       (* SMLFormat extension *)
+       | selector of string
+       | header_format_comment_list of Absyn.headerFormatComment list
+       | header_format_specs of Absyn.headerFormatComment
+       | ditto_spec of string
+       | prefix_spec of string
+       | prefix_spec_opt of string
+       | destination_spec of string
+       | funheader_spec of string
+       | formatter_spec of Symbol.longsymbol * Symbol.longsymbol
+       | formatparams_spec of Symbol.symbol list
+       | formatparam_list of Symbol.symbol list
+       | defining_format_comment of Absyn.definingFormatComment
+       | defining_format_comment_list of Absyn.definingFormatComment list
+       | formattag of FormatTemplate.formattag
+       | localformattags of FormatTemplate.formattag list
+       | localformattag of FormatTemplate.formattag
+       | typepat of FormatTemplate.typepat
+       | typepat' of FormatTemplate.typepat
+       | tuple_typepat of FormatTemplate.typepat list
+       | typepat_rows of (string * FormatTemplate.typepat) list * bool
+       | typepat_field of string * FormatTemplate.typepat
+       | atypepat of FormatTemplate.typepat
+       | atypepat_list of FormatTemplate.typepat list
+       | templates of FormatTemplate.template list
+       | template of FormatTemplate.template
+       | inst of FormatTemplate.instance
+       | opt_typed of Symbol.symbol option
+       | insts of FormatTemplate.instance list
+       | templates_comma_list of FormatTemplate.template list list
+
+       | noReduce1 of unit
 
 %name ML
 %header (
@@ -343,7 +445,9 @@ start : unit (Absyn.UNIT unit)
                              (Absyn.DECVAL
                                   (nil,
                                    [
-                                    (Absyn.PATID {opPrefix=false,id=["it"],loc=(Loc.nopos,Loc.nopos)}, 
+                                    (Absyn.PATID {opPrefix=false,
+                                                  longsymbol=Symbol.mkLongsymbol ["it"] (Loc.nopos,Loc.nopos),
+                                                  loc=(Loc.nopos,Loc.nopos)}, 
                                      expOrSQL)
                                     ],
                                    (expOrSQLleft,expOrSQLright)),
@@ -368,50 +472,93 @@ constant : int (Absyn.INT(int,(intleft,intright)))
          | NULL (Absyn.NULLCONST(NULLleft,NULLright))
 (* end of constant *)
 
-(**************** expression ***************************)
+(*** raw id ***)
 
-id_noEQSTAR : ID (ID)
-            | SELECT ("select")
-            | FROM ("from")
-            | ORDER ("order")
-            | BY ("by")
-            | INSERT ("insert")
-            | INTO ("into")
-            | VALUES ("values")
-            | DELETE ("delete")
-            | ASC ("asc")
-            | DESC ("desc")
-            | UPDATE ("update")
-            | SET ("set")
-            | DEFAULT ("default")
-            | BEGIN ("begin")
-            | COMMIT ("commit")
-            | ROLLBACK ("rollback")
+id_noEQSTAR : ID (Symbol.mkSymbol ID (IDleft, IDright))
+            | SELECT (Symbol.mkSymbol "select" (SELECTleft, SELECTright))
+            | FROM (Symbol.mkSymbol "from" (FROMleft, FROMright))
+            | ORDER (Symbol.mkSymbol "order" (ORDERleft, ORDERright))
+            | BY (Symbol.mkSymbol "by" (BYleft, BYright))
+            | INSERT (Symbol.mkSymbol "insert" (INSERTleft, INSERTright))
+            | INTO (Symbol.mkSymbol "into" (INTOleft, INTOright))
+            | VALUES (Symbol.mkSymbol "values" (VALUESleft, VALUESright))
+            | DELETE (Symbol.mkSymbol "delete" (DELETEleft, DELETEright))
+            | ASC (Symbol.mkSymbol "asc" (ASCleft, ASCright))
+            | DESC (Symbol.mkSymbol "desc" (DESCleft, DESCright))
+            | UPDATE (Symbol.mkSymbol "update" (UPDATEleft, UPDATEright))
+            | SET (Symbol.mkSymbol "set" (SETleft, SETright))
+            | DEFAULT (Symbol.mkSymbol "default" (DEFAULTleft, DEFAULTright))
+            | BEGIN (Symbol.mkSymbol "begin" (BEGINleft, BEGINright))
+            | COMMIT (Symbol.mkSymbol "commit" (COMMITleft, COMMITright))
+            | ROLLBACK (Symbol.mkSymbol "rollback" (ROLLBACKleft, ROLLBACKright))
 
 id_noEQ     : id_noEQSTAR (id_noEQSTAR)
-            | ASTERISK ("*")
+            | ASTERISK (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
 
 id          : id_noEQ (id_noEQ)
-            | EQ ("=")
+            | EQ (Symbol.mkSymbol "=" (EQleft,EQright))
 
-id_noSQL    : ID (ID)
-            | ASTERISK ("*")
-            | EQ ("=")
+id_noSQL    : ID (Symbol.mkSymbol ID (IDleft, IDright))
+            | ASTERISK (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
+            | EQ (Symbol.mkSymbol "=" (EQleft,EQright))
 
-expid : longid (longid)
+longid : id ([id])
+       | id PERIOD longid (id::longid)
 
-expid_noSQL : id_noSQL ([id_noSQL])
-            | id_noSQL PERIOD longid (id_noSQL :: longid)
+(*
+longtyconid : id ([id])
+            | id PERIOD longtyconid (id::longtyconid)
+*)
+
+longid_noSQL : id_noSQL ([id_noSQL])
+            | id_noSQL PERIOD longid (id_noSQL::longid)
+
+tylongid : id_noEQSTAR ([id_noEQSTAR])
+         | id_noEQSTAR PERIOD longid (id_noEQSTAR :: longid)
+
+patlongid : id_noEQ ([id_noEQ])
+          | id_noEQ PERIOD longid (id_noEQ :: longid)
+   
+
+(*** symbols
+
+ expid : longid (longid)
+
+ symbol_noEQSTAR     : id_noEQSTAR (Symbol.mkSymbol id_noEQSTAR (id_noEQSTARleft, id_noEQSTARright))
+ symbol              : id (Symbol.mkSymbol id (idleft,idright))
+ longsymbol          : longid (Symbol.mkLongsymbol longid (longidleft,longidright))
+ longtycon           : longtyconid (Symbol.mkLongsymbol longtyconid (longtyconidleft,longtyconidright))
+ explongsymbol       : expid (Symbol.mkLongsymbol expid (expidleft,expidright))
+ explongsymbol_noSQL : expid_noSQL (Symbol.mkLongsymbol expid_noSQL (expid_noSQLleft,expid_noSQLright))
+ tylongsymbol        : tylongid (Symbol.mkLongsymbol tylongid (tylongidleft,tylongidright))
+ patlongsymbol       : patlongid (Symbol.mkLongsymbol patlongid (patlongidleft,patlongidright))
+
+ symbolseq : symbol ([symbol])
+           | symbol symbolseq (symbol::symbolseq)
+
+ longsymbolseq : longsymbol ([longsymbol])
+           | longsymbol longsymbolseq (longsymbol::longsymbolseq)
+
+***)
+
+idseq : id ([id])
+          | id idseq (id::idseq)
+
+longidseq : longid ([longid])
+          | longid longidseq (longid::longidseq)
+
+(*** expressions ***)
 
 atexp_noVAR
-      : constant (Absyn.EXPCONSTANT(constant,(constantleft,constantright)))
-      | OP expid (Absyn.EXPOPID(expid,(OPleft,expidright)))
+      : constant (Absyn.EXPCONSTANT constant)
+      | JOIN LPAREN exp COMMA exp RPAREN (Absyn.EXPJOIN(exp1, exp2, (JOINleft, RPARENright)))
+      | OP longid (Absyn.EXPOPID(longid,(OPleft,longidright)))
       | LBRACE exprow RBRACE (Absyn.EXPRECORD(exprow,(LBRACEleft,RBRACEright)))
-      | LBRACE RBRACE (Absyn.EXPCONSTANT(Absyn.UNITCONST(LBRACEleft,RBRACEright),(LBRACEleft,RBRACEright)))
+      | LBRACE RBRACE (Absyn.EXPCONSTANT(Absyn.UNITCONST(LBRACEleft,RBRACEright)))
       | HASH id (Absyn.EXPRECORD_SELECTOR(id,(HASHleft,idright)))
       | HASH INTLAB
-        (Absyn.EXPRECORD_SELECTOR(INTLAB,(HASHleft,INTLABright)))
-      | LPAREN RPAREN (Absyn.EXPCONSTANT(Absyn.UNITCONST(LPARENleft,RPARENright), (LPARENleft,RPARENright)))
+        (Absyn.EXPRECORD_SELECTOR(Symbol.mkSymbol INTLAB (INTLABleft,INTLABright),(HASHleft,INTLABright)))
+      | LPAREN RPAREN (Absyn.EXPCONSTANT(Absyn.UNITCONST(LPARENleft,RPARENright)))
       | LPAREN expseq_comma RPAREN
                 (Absyn.EXPTUPLE(expseq_comma,(LPARENleft,RPARENright)))
       | LBRACKET RBRACKET (Absyn.EXPLIST([],(LBRACKETleft,RBRACKETright)))
@@ -428,7 +575,7 @@ atexp_noVAR
       | HASH id PERIOD label
         (Absyn.EXPSQL
           (AbsynSQL.SQLFIELDSELECT
-             (label, Absyn.EXPID ([id], (idleft, idright)),
+             (label, Absyn.EXPID (Symbol.mkLongsymbol  [Symbol.symbolToString id] (idleft, idright)),
               (HASHleft, labelright)),
            (HASHleft, labelright)))
 (*
@@ -441,13 +588,13 @@ atexp_noVAR
 *)
 
 atexp : atexp_noVAR (atexp_noVAR)
-      | expid (Absyn.EXPID(expid,(expidleft,expidright)))
+      | longid (Absyn.EXPID(longid))
 
 atexp_noSQL : atexp_noVAR (atexp_noVAR)
-            | expid_noSQL
-                (Absyn.EXPID(expid_noSQL,(expid_noSQLleft, expid_noSQLright)))
+            | longid_noSQL
+                (Absyn.EXPID(longid_noSQL))
 
-label : id (id)
+label : id (Symbol.symbolToString id)
       | INTLAB (INTLAB)
 
 (* equal or more than 1 *)
@@ -519,26 +666,17 @@ appexp_noSQL : atexp_noSQL
 exp : appexp (appexp)
     | exp COLON ty (Absyn.EXPTYPED(exp,ty,(expleft,tyright)))
     | exp COLON IMPORT ffity
-          (Absyn.EXPFFIIMPORT(exp,ffity,(expleft,ffityright)))
+          (Absyn.EXPFFIIMPORT(Absyn.FFIFUN exp,ffity,(expleft,ffityright)))
     | IMPORT STRING COLON ffity
           (Absyn.EXPFFIIMPORT
-             (Absyn.EXPGLOBALSYMBOL(STRING,Absyn.ForeignCodeSymbol,
-                                    (IMPORTleft,STRINGright)),
-              ffity, (IMPORTleft,ffityright)))
-(*
-    | exp COLON EXPORT ffity
-          (Absyn.EXPFFIEXPORT(exp,ffity,(expleft,ffityright)))
-*)
-    | FFIAPPLY ffiattropt atexp LPAREN ffiApplyArgs RPAREN COLON ffity
-          (Absyn.EXPFFIAPPLY(ffiattropt, atexp, ffiApplyArgs, ffity,
-                             (FFIAPPLYleft,ffityright)))
-    | FFIAPPLY ffiattropt IMPORT STRING LPAREN ffiApplyArgs RPAREN COLON ffity
-          (Absyn.EXPFFIAPPLY(ffiattropt,
-                             Absyn.EXPGLOBALSYMBOL (STRING,
-                                                    Absyn.ForeignCodeSymbol,
-                                                    (IMPORTleft, STRINGright)),
-                             ffiApplyArgs, ffity,
-                             (FFIAPPLYleft,ffityright)))
+             (Absyn.FFIEXTERN STRING, ffity, (IMPORTleft,ffityright)))
+    | FFIAPPLY ffiattropt atexp LPAREN ffiApplyArgs RPAREN COLON ffiFunRet
+          (Absyn.EXPFFIAPPLY(ffiattropt, Absyn.FFIFUN atexp, ffiApplyArgs,
+                             ffiFunRet, (FFIAPPLYleft,ffiFunRetright)))
+    | FFIAPPLY ffiattropt IMPORT STRING LPAREN ffiApplyArgs RPAREN COLON ffiFunRet
+          (Absyn.EXPFFIAPPLY
+             (ffiattropt, Absyn.FFIEXTERN STRING, ffiApplyArgs, ffiFunRet,
+              (FFIAPPLYleft,ffiFunRetright)))
     | exp ANDALSO exp (Absyn.EXPCONJUNCTION(exp1,exp2,(exp1left,exp2right)))
     | exp ORELSE exp (Absyn.EXPDISJUNCTION(exp1,exp2,(exp1left,exp2right)))
     | exp HANDLE match (Absyn.EXPHANDLE(exp,match,(expleft,matchright)))
@@ -547,14 +685,15 @@ exp : appexp (appexp)
     | WHILE exp DO exp (Absyn.EXPWHILE(exp1,exp2,(WHILEleft,exp2right)))
     | CASE exp OF match (Absyn.EXPCASE(exp,match,(CASEleft,matchright)))
     | FN match (Absyn.EXPFN(match,(FNleft,matchright)))
-    | CAST LPAREN exp RPAREN (Absyn.EXPCAST(exp,(CASTleft,RPARENright)))
     | SQLSERVER COLON ty
         (Absyn.EXPSQL
-           (AbsynSQL.SQLSERVER("",ty,(SQLSERVERleft,tyright)),
+           (AbsynSQL.SQLSERVER
+              (Absyn.EXPCONSTANT(Absyn.STRING("",(COLONleft,COLONleft))),
+               ty,(SQLSERVERleft,tyright)),
             (SQLSERVERleft,tyright)))
-    | SQLSERVER STRING COLON ty
+    | SQLSERVER appexp COLON ty
         (Absyn.EXPSQL
-           (AbsynSQL.SQLSERVER(STRING,ty,(SQLSERVERleft,tyright)),
+           (AbsynSQL.SQLSERVER(appexp,ty,(SQLSERVERleft,tyright)),
             (SQLSERVERleft,tyright)))
 
 expOrSQL : exp (exp)
@@ -627,14 +766,14 @@ sqlExp : appexp_noSQL (appexp_noSQL)
            (Absyn.EXPDISJUNCTION(sqlExp1,sqlExp2,(sqlExp1left,sqlExp2right)))
 
 asNameOpt : (* none *) (NONE)
-          | AS id (SOME id)
+          | AS label (SOME label)
 
 intoClause : (* none *) (NONE)
            | INTO id (SOME id)
 
-sqlExpAsList : sqlExp AS id (([id], [sqlExp]))
-             | sqlExp AS id COMMA sqlExpAsList
-                 ((id :: #1 sqlExpAsList, sqlExp :: #2 sqlExpAsList))
+sqlExpAsList : sqlExp AS label (([label], [sqlExp]))
+             | sqlExp AS label COMMA sqlExpAsList
+                 ((label :: #1 sqlExpAsList, sqlExp :: #2 sqlExpAsList))
 
 sqlExpList : sqlExp ([sqlExp])
            | sqlExp COMMA sqlExpList (sqlExp::sqlExpList)
@@ -699,30 +838,63 @@ decseq_semicolon : ([])
   2007/11/11
 *)
 
+(* 160 *)
+
 dec : VAL valbind (Absyn.DECVAL(nil,valbind,(VALleft,valbindright)))
     | VAL kinded_tyvarseq valbind
                 (Absyn.DECVAL(kinded_tyvarseq,valbind,(VALleft,valbindright)))
     | VAL REC valbind (Absyn.DECREC(nil,valbind,(VALleft,valbindright)))
     | VAL REC kinded_tyvarseq valbind
                 (Absyn.DECREC(kinded_tyvarseq,valbind,(VALleft,valbindright)))
+(* polymorphic recursion *)
+    | VAL POLYREC pvalbind (Absyn.DECPOLYREC(pvalbind,(VALleft,pvalbindright)))
     | FUN fvalbind (Absyn.DECFUN(nil,fvalbind,(FUNleft,fvalbindright)))
     | FUN kinded_tyvarseq fvalbind
                 (Absyn.DECFUN(kinded_tyvarseq,fvalbind,(FUNleft,fvalbindright)))
-    | TYPE typbind (Absyn.DECTYPE(typbind,(TYPEleft,typbindright)))
-    | DATATYPE datbind
-                (Absyn.DECDATATYPE(datbind,[],(DATATYPEleft,datbindright)))
-    | DATATYPE datbind WITHTYPE typbind
-      (Absyn.DECDATATYPE(datbind,typbind,(DATATYPEleft,typbindright)))
-    | DATATYPE tycon EQ DATATYPE longtycon
+    | header_format_comment_list TYPE typbind
+                (Absyn.DECTYPE {formatComments=header_format_comment_list,
+                                tbs=typbind,
+                                loc=(TYPEleft,typbindright)
+                               })
+    | header_format_comment_list DATATYPE datbind
+                (Absyn.DECDATATYPE
+                   {formatComments=header_format_comment_list,
+                    datatys=datbind,
+                    withtys=[],
+                    loc=(DATATYPEleft,datbindright)}
+                )
+    | header_format_comment_list DATATYPE datbind WITHTYPE typbind
+                (Absyn.DECDATATYPE
+                   {formatComments=header_format_comment_list,
+                    datatys=datbind,
+                    withtys=typbind,
+                    loc=(DATATYPEleft,typbindright)}
+                )
+    | header_format_comment_list DATATYPE tycon EQ DATATYPE longid
                 (Absyn.DECREPLICATEDAT
-                     (tycon1,longtycon, (DATATYPEleft,longtyconright)))
-    | ABSTYPE datbind WITH decseq_semicolon END
+                   {formatComments = header_format_comment_list,
+                    defSymbol=tycon,
+                    refLongsymbol = longid,
+                    loc=(DATATYPEleft,longidright)})
+    | header_format_comment_list ABSTYPE datbind WITH decseq_semicolon END
       (Absyn.DECABSTYPE
-           (datbind, [], decseq_semicolon, (ABSTYPEleft, ENDright)))
-    | ABSTYPE datbind WITHTYPE typbind WITH decseq_semicolon END
+           {formatComments=header_format_comment_list,
+            abstys=datbind, 
+            withtys=[], 
+            body=decseq_semicolon, 
+            loc=(ABSTYPEleft, ENDright)})
+    | header_format_comment_list ABSTYPE datbind WITHTYPE typbind WITH decseq_semicolon END
       (Absyn.DECABSTYPE
-           (datbind, typbind, decseq_semicolon, (ABSTYPEleft, ENDright)))
-    | EXCEPTION exbinds (Absyn.DECEXN(exbinds,(EXCEPTIONleft,exbindsright)))
+           {formatComments=header_format_comment_list,
+            abstys=datbind, 
+            withtys=typbind,
+            body=decseq_semicolon, 
+            loc=(ABSTYPEleft, ENDright)})
+    | header_format_comment_list EXCEPTION exbinds 
+                (Absyn.DECEXN
+                   {formatComments=header_format_comment_list,
+                    exbinds=exbinds,
+                    loc=(EXCEPTIONleft,exbindsright)})
 (*    
     | LOCAL decseq_semicolon IN decseq_semicolon END                
       (Absyn.LOCALDEC(decseq_semicolon1,decseq_semicolon2,(LOCALleft,ENDright)))
@@ -754,53 +926,184 @@ dec : VAL valbind (Absyn.DECVAL(nil,valbind,(VALleft,valbindright)))
                       (VALleft,old_ffiFuntyright)))
 *)
 
-idseq : id ([id])
-      | id idseq (id::idseq)
 (*
  In this version, we ignore kind constraint in type bind.
    type ('a, 'b#{a:'a}) foo = 'b -> 'a
  is interpreted as
    type ('a, 'b) foo = 'b -> 'a
 *)
-typbind : tycon EQ ty ([(nil,tycon,ty)])
-        | tyvarseq tycon EQ ty ([(tyvarseq,tycon,ty)])
-        | tycon EQ ty AND typbind ((nil,tycon,ty)::typbind)
-        | tyvarseq tycon EQ ty AND typbind ((tyvarseq,tycon,ty)::typbind)
+typbind : tycon EQ defining_format_comment_list ty 
+                ([
+                 {tyvars=nil,
+                  tyConSymbol=tycon,
+                  ty=ty,
+                  formatComments = defining_format_comment_list
+                 }
+                ])
+        | tyvarseq tycon EQ defining_format_comment_list ty 
+                ([
+                 {tyvars=tyvarseq,
+                  tyConSymbol=tycon,
+                  ty=ty,
+                  formatComments = defining_format_comment_list
+                 }
+                ])
+        | tycon EQ defining_format_comment_list ty AND typbind 
+                (
+                 {tyvars=nil,
+                  tyConSymbol=tycon,
+                  ty=ty,
+                  formatComments = defining_format_comment_list
+                 }
+                 ::typbind
+                )
+        | tyvarseq tycon EQ defining_format_comment_list ty AND typbind
+                (
+                 {tyvars=tyvarseq,
+                  tyConSymbol=tycon,
+                  ty=ty,
+                  formatComments = defining_format_comment_list
+                 }
+                 ::typbind)
 
-datbind : tycon EQ combind ([(nil,tycon,combind)])
-        | tyvarseq tycon EQ combind ([(tyvarseq,tycon,combind)])
-        | tycon EQ combind AND datbind ((nil,tycon,combind)::datbind)
+datbind : tycon EQ combind 
+                ([
+                 {
+                  tyvars=nil,
+                  tyConSymbol=tycon,
+                  rhs=combind
+                 }])
+        | tyvarseq tycon EQ combind 
+                ([
+                 {
+                  tyvars=tyvarseq,
+                  tyConSymbol=tycon,
+                  rhs=combind
+                 }
+                ])
+        | tycon EQ combind AND datbind
+                (
+                 {
+                  tyvars=nil,
+                  tyConSymbol=tycon,
+                  rhs=combind
+                 }
+                 ::datbind
+                )
         | tyvarseq tycon EQ combind AND datbind
-                ((tyvarseq,tycon,combind)::datbind)
+                (
+                 {
+                  tyvars=tyvarseq,
+                  tyConSymbol=tycon,
+                  rhs=combind
+                 }
+                 ::datbind)
 
 combind : condec ([condec])
         | condec BAR combind (condec::combind)
 
-condec : tycon ((false,tycon,NONE))
-       | OP tycon ((true,tycon,NONE))
-       | tycon OF ty ((false,tycon,SOME ty))
-       | OP tycon OF ty ((true,tycon,SOME ty))
+condec : defining_format_comment_list tycon 
+         (
+          {opFlag=false,
+           conSymbol=tycon,
+           tyOpt=NONE,
+           formatComments=defining_format_comment_list
+           }
+         )
+       | defining_format_comment_list OP tycon 
+         (
+          {opFlag=true,
+           conSymbol=tycon,
+           tyOpt=NONE,
+           formatComments=defining_format_comment_list
+           }
+         )
+       | defining_format_comment_list tycon OF ty 
+         (
+          {opFlag=false,
+           conSymbol=tycon,
+           tyOpt=SOME ty,
+           formatComments=defining_format_comment_list
+           }
+         )
+       | defining_format_comment_list OP tycon OF ty 
+         (
+          {opFlag=true,
+           conSymbol=tycon,
+           tyOpt=SOME ty,
+           formatComments=defining_format_comment_list
+           }
+         )
 
 exbinds : exbind ([exbind])
         | exbind AND exbinds (exbind :: exbinds)
 
-exbind : condec
-         (let val (isOp, name, tyOpt) = condec
-          in Absyn.EXBINDDEF(isOp, name, tyOpt, (condecleft, condecright))
+exbind : defining_format_comment_list exndec
+         (let val (isOp, name, tyOpt) = exndec
+          in Absyn.EXBINDDEF
+               {opFlag=isOp, 
+                conSymbol=name, 
+                tyOpt=tyOpt, 
+                formatComments=defining_format_comment_list,
+                loc=(exndecleft, exndecright)
+               }
           end)
-       | id EQ longid
-                (Absyn.EXBINDREP
-                     (false,id,false,longid,(idleft,longidright))) 
-       | id EQ OP longid
-                (Absyn.EXBINDREP
-                     (false,id,true,longid,(idleft,longidright))) 
-       | OP id EQ longid
-                (Absyn.EXBINDREP(true,id,false,longid,(idleft,longidright)))
-       | OP id EQ OP longid
-                (Absyn.EXBINDREP(true,id,true,longid,(idleft,longidright)))
+       | defining_format_comment_list id EQ longid
+         (Absyn.EXBINDREP
+            {
+             opFlag1=false,
+             conSymbol=id, 
+             refLongsymbol=longid,
+             opFlag2=false,
+             loc=(idleft,longidright),
+             formatComments=defining_format_comment_list
+            }
+         )
+       | defining_format_comment_list id EQ OP longid
+         (Absyn.EXBINDREP
+            {
+             opFlag1=false,
+             conSymbol=id, 
+             opFlag2=true,
+             refLongsymbol=longid,
+             loc=(idleft,longidright),
+             formatComments=defining_format_comment_list
+            }
+         )
+       | defining_format_comment_list OP id EQ longid
+         (Absyn.EXBINDREP
+            {
+             opFlag1=true,
+             conSymbol=id, 
+             opFlag2=false,
+             refLongsymbol=longid,
+             loc=(idleft,longidright),
+             formatComments=defining_format_comment_list
+            }
+         )
+       | defining_format_comment_list OP id EQ OP longid
+         (Absyn.EXBINDREP
+            {
+             opFlag1=true,
+             conSymbol=id,
+             opFlag2=true,
+             refLongsymbol=longid,
+             loc=(idleft,longidright),
+             formatComments=defining_format_comment_list
+            }
+         )
 
-tyvar : TYVAR ({name=TYVAR, eq=Absyn.NONEQ})
-      | EQTYVAR ({name=EQTYVAR,eq=Absyn.EQ})
+exndec : tycon ((false,tycon,NONE))
+       | OP tycon ((true,tycon,NONE))
+       | tycon OF ty ((false,tycon,SOME ty))
+       | OP tycon OF ty ((true,tycon,SOME ty))
+
+(* 200 *)
+
+tyvar : TYVAR ({symbol=Symbol.mkSymbol TYVAR (TYVARleft,TYVARright),
+                eq=Absyn.NONEQ})
+      | EQTYVAR ({symbol=Symbol.mkSymbol EQTYVAR (EQTYVARleft,EQTYVARright),
+                  eq=Absyn.EQ})
 
 tyvarseq : tyvar ([tyvar])
          | LPAREN tyvar RPAREN ([tyvar])
@@ -809,33 +1112,15 @@ tyvarseq : tyvar ([tyvar])
 tyvarseq_comma : tyvar COMMA tyvar ([tyvar1,tyvar2])
                | tyvar COMMA tyvarseq_comma (tyvar::tyvarseq_comma)
 
-(*
-   Ohori: kinded tyvar added 2007/11/11 ohori
-*)
-kinded_tyvar : tyvar ((tyvar, Absyn.UNIV))
-             | TYVAR HASH LBRACE tyrow RBRACE
-               (({name=TYVAR,eq=Absyn.NONEQ},
-                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
-             | EQTYVAR HASH LBRACE tyrow RBRACE
-               (({name=EQTYVAR,eq=Absyn.EQ},
-                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
-
-kinded_tyvarseq : kinded_tyvar ([kinded_tyvar])
-         | LPAREN kinded_tyvar RPAREN ([kinded_tyvar])
-         | LPAREN kinded_tyvarseq_comma RPAREN (kinded_tyvarseq_comma)
-
-kinded_tyvarseq_comma : kinded_tyvar COMMA kinded_tyvar ([kinded_tyvar1,kinded_tyvar2])
-            | kinded_tyvar COMMA kinded_tyvarseq_comma (kinded_tyvar::kinded_tyvarseq_comma)
-
-kinded_tyvarseq_without_paren : kinded_tyvar ([kinded_tyvar])
-                | kinded_tyvar COMMA kinded_tyvarseq_without_paren (kinded_tyvar::kinded_tyvarseq_without_paren)
-(* kinded tyvar end *)
 
 valbind : pat EQ expOrSQL ([(pat,expOrSQL)])
         | pat EQ expOrSQL AND valbind  ((pat,expOrSQL)::valbind)
 
-fvalbind : frules ([frules])
-         | frules AND fvalbind (frules::fvalbind)
+pvalbind : id COLON poly_ty EQ expOrSQL ([(id, poly_ty, expOrSQL)])
+         | id COLON poly_ty EQ expOrSQL AND pvalbind ((id, poly_ty, expOrSQL)::pvalbind)
+
+fvalbind : frules ([{fdecl=frules, loc=(frulesleft, frulesright)}])
+         | frules AND fvalbind ({fdecl=frules, loc=(frulesleft, frulesright)} :: fvalbind)
 
 frules : frule ([frule])
       | frule BAR frules (frule::frules)
@@ -844,18 +1129,15 @@ frule : apppat EQ expOrSQL (apppat, NONE, expOrSQL)
       | apppat COLON ty EQ expOrSQL (apppat, SOME ty, expOrSQL)
 
 (*****************  pattern ***********************)
-patid : id_noEQ ([id_noEQ])
-      | id_noEQ PERIOD longid (id_noEQ :: longid)
-   
 atpat : UNDERBAR (Absyn.PATWILD((UNDERBARleft,UNDERBARright)))
-      | patid
-          (Absyn.PATID({opPrefix=false,id=patid,loc=(patidleft,patidright)}))
-      | OP patid
-          (Absyn.PATID({opPrefix=true, id=patid, loc=(patidleft,patidright)}))
-      | constant (Absyn.PATCONSTANT (constant,(constantleft,constantright)))
+      | patlongid
+          (Absyn.PATID({opPrefix=false,longsymbol=patlongid,loc=(patlongidleft,patlongidright)}))
+      | OP patlongid
+          (Absyn.PATID({opPrefix=true, longsymbol=patlongid, loc=(patlongidleft,patlongidright)}))
+      | constant (Absyn.PATCONSTANT constant)
       | LBRACE RBRACE
           (Absyn.PATCONSTANT
-            (Absyn.UNITCONST(LBRACEleft,RBRACEright),(LBRACEleft,RBRACEright)))
+            (Absyn.UNITCONST(LBRACEleft,RBRACEright)))
       | LBRACE fields RBRACE
           (Absyn.PATRECORD
             ({
@@ -865,7 +1147,7 @@ atpat : UNDERBAR (Absyn.PATWILD((UNDERBARleft,UNDERBARright)))
              }))
       | LPAREN RPAREN
           (Absyn.PATCONSTANT
-            (Absyn.UNITCONST(LPARENleft,RPARENright),(LPARENleft,RPARENright)))
+            (Absyn.UNITCONST(LPARENleft,RPARENright)))
       | LPAREN patseq_comma RPAREN
                 (Absyn.PATTUPLE(patseq_comma,(LPARENleft,RPARENright)))
       | LBRACKET RBRACKET (Absyn.PATLIST([],(LBRACKETleft,RBRACKETright)))
@@ -914,7 +1196,7 @@ patseq_comma : pat COMMA pat ([pat1,pat2])
 
 (****************  types *********************)
 tycon : id_noEQSTAR (id_noEQSTAR)
-      | EQ ("=")
+      | EQ (Symbol.mkSymbol "=" (EQleft,EQright))
 
 tyrow : label COLON ty ([(label,ty)])
       | label COLON ty COMMA tyrow ((label,ty)::tyrow)
@@ -925,19 +1207,15 @@ ty0 : UNDERBAR (Absyn.TYWILD((UNDERBARleft,UNDERBARright)))
     | LBRACE RBRACE (Absyn.TYRECORD([],(LBRACEleft,RBRACEright)))
     | LPAREN ty RPAREN (ty)
 
-(* check the following *)
+ty1 : ty0 (ty0)
+    | tyseq tylongid (Absyn.TYCONSTRUCT(tyseq,tylongid,(tyseqleft,tylongidright)))
+
 tyseq : ty1 ([ty1]) 
       | LPAREN tyseq_comma RPAREN (tyseq_comma)
       | (nil)
 
 tyseq_comma : ty COMMA ty ([ty1,ty2])
             | ty COMMA tyseq_comma (ty::tyseq_comma)
-
-tyid : id_noEQSTAR ([id_noEQSTAR])
-     | id_noEQSTAR PERIOD longid (id_noEQSTAR :: longid)
-
-ty1 : ty0 (ty0)
-    | tyseq tyid (Absyn.TYCONSTRUCT(tyseq,tyid,(tyseqleft,tyidright)))
 
 tytuple : ty1 ASTERISK tytuple (ty1::tytuple)
         | ty1 ASTERISK ty1 ([ty11,ty12])
@@ -978,6 +1256,26 @@ poly_ty
    | poly_tytuple (Absyn.TYTUPLE(poly_tytuple,(poly_tytupleleft,poly_tytupleright)))
    | poly_ty1 (poly_ty1)
 
+(* Ohori: kinded tyvar added 2007/11/11 ohori *)
+kinded_tyvar : tyvar ((tyvar, Absyn.UNIV))
+             | TYVAR HASH LBRACE tyrow RBRACE
+               (({symbol=Symbol.mkSymbol TYVAR (TYVARleft,TYVARright), eq=Absyn.NONEQ},
+                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
+             | EQTYVAR HASH LBRACE tyrow RBRACE
+               (({symbol=Symbol.mkSymbol EQTYVAR (EQTYVARleft,EQTYVARright),eq=Absyn.EQ},
+                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
+
+kinded_tyvarseq : kinded_tyvar ([kinded_tyvar])
+         | LPAREN kinded_tyvar RPAREN ([kinded_tyvar])
+         | LPAREN kinded_tyvarseq_comma RPAREN (kinded_tyvarseq_comma)
+
+kinded_tyvarseq_comma : kinded_tyvar COMMA kinded_tyvar ([kinded_tyvar1,kinded_tyvar2])
+            | kinded_tyvar COMMA kinded_tyvarseq_comma (kinded_tyvar::kinded_tyvarseq_comma)
+
+kinded_tyvarseq_without_paren : kinded_tyvar ([kinded_tyvar])
+                | kinded_tyvar COMMA kinded_tyvarseq_without_paren (kinded_tyvar::kinded_tyvarseq_without_paren)
+(* kinded tyvar end *)
+
 (****************  end of types *********************)
 
 (*********** foreign function interface *************)
@@ -996,6 +1294,7 @@ ffiApplyArg : appexp COLON ffity
 ffiApplyArgSeq : ffiApplyArg ([ffiApplyArg])
                | ffiApplyArg COMMA ffiApplyArgSeq (ffiApplyArg::ffiApplyArgSeq)
 
+(* 300 *)
 ffiApplyArgs : ([])
              | ffiApplyArgSeq (ffiApplyArgSeq)
 
@@ -1007,16 +1306,25 @@ ffityrow : label COLON ffity ([(label,ffity)])
 ffityseq : ffity COMMA ffity ([ffity1,ffity2])
          | ffity COMMA ffityseq (ffity::ffityseq)
 
-ffiArgs : ffiAtty ([ffiAtty])
-        | LPAREN ffityseq RPAREN (ffityseq)
+ffiVarArgs : ([])
+           | ffity ([ffity])
+           | ffity COMMA ffiVarArgs (ffity::ffiVarArgs)
+ 
+ffiArgs : ffiAtty (([ffiAtty], NONE))
+        | LPAREN ffityseq RPAREN ((ffityseq, NONE))
+        | LPAREN ffity COMMA PERIODS LPAREN ffiVarArgs RPAREN RPAREN
+          ([ffity], SOME ffiVarArgs)
+        | LPAREN ffityseq COMMA PERIODS LPAREN ffiVarArgs RPAREN RPAREN
+          (ffityseq, SOME ffiVarArgs)
 
 ffiContyArg : (nil)
-            | ffiArgs (ffiArgs)
+            | ffiAtty ([ffiAtty])
+            | LPAREN ffityseq RPAREN (ffityseq)
 
 ffiAtty : LPAREN ffity RPAREN (ffity)
         | tyvar (Absyn.FFITYVAR(tyvar,(tyvarleft,tyvarright)))
-        | ffiContyArg tyid
-          (Absyn.FFICONTY(ffiContyArg,tyid,(ffiContyArgleft,tyidright)))
+        | ffiContyArg tylongid
+          (Absyn.FFICONTY(ffiContyArg,tylongid,(ffiContyArgleft,tylongidright)))
         | LBRACE ffityrow RBRACE
           (Absyn.FFIRECORDTY(ffityrow,(LBRACEleft,RBRACEright)))
         | LBRACE RBRACE (Absyn.FFIRECORDTY([],(LBRACEleft,RBRACEright)))
@@ -1027,27 +1335,25 @@ ffitupleseq : ffiAtty ASTERISK ffiAtty ([ffiAtty1,ffiAtty2])
 ffiTupleTy : ffitupleseq
              (Absyn.FFITUPLETY(ffitupleseq,(ffitupleseqleft,ffitupleseqright)))
 
-ffiFunArg : LPAREN RPAREN ([])
+ffiFunArg : LPAREN RPAREN (([], NONE))
           | ffiArgs (ffiArgs)
-          | ffiTupleTy ([ffiTupleTy])
+          | ffiTupleTy (([ffiTupleTy], NONE))
 
 ffiFunRet : LPAREN RPAREN ([])
           | ffity ([ffity])
           | LPAREN ffityseq RPAREN (ffityseq)
 
 ffiFunty : ffiFunArg ARROW ffiFunRet
-           (Absyn.FFIFUNTY(nil,ffiFunArg,ffiFunRet,
+           (Absyn.FFIFUNTY(nil,#1 ffiFunArg,#2 ffiFunArg,ffiFunRet,
                            (ffiFunArgleft,ffiFunRetright)))
          | ffiattr ffiFunArg ARROW ffiFunRet
-           (Absyn.FFIFUNTY(ffiattr,ffiFunArg,ffiFunRet,
+           (Absyn.FFIFUNTY(ffiattr,#1 ffiFunArg,#2 ffiFunArg,ffiFunRet,
                            (ffiFunArgleft,ffiFunRetright)))
 
-ffiattrseq : id ([id])
-           | id COMMA ffiattrseq (id::ffiattrseq)
+ffiattrseq : ID ([ID])
+           | ID COMMA ffiattrseq (ID::ffiattrseq)
 
-ffiattr : CDECL      (["cdecl"])
-        | STDCALL    (["stdcall"])
-        | ATTRIBUTE LPAREN LPAREN ffiattrseq RPAREN RPAREN (ffiattrseq)
+ffiattr : ATTRIBUTE LPAREN LPAREN ffiattrseq RPAREN RPAREN (ffiattrseq)
 
 ffiattropt : (nil)
            | ffiattr  (ffiattr)
@@ -1080,12 +1386,6 @@ old_ffity : old_ffiAtty (old_ffiAtty)
 *)
 
 (**************** structure and signature************)
-
-longid : id ([id])
-       | longid PERIOD id (longid @ [id])
-
-longidseq : longid ([longid])
-          | longid longidseq (longid::longidseq)
 
 (*----strexp---*)
 strexpbasic : STRUCT strdecseq_semicolon END
@@ -1147,27 +1447,23 @@ strbindand : id EQ strexpand
 
 strbindseq : strbind ([strbind])
            | strbindand strbindseq (strbindand::strbindseq)      (*TEST*)
-(*-----------------*)               
-
-longtycon : id ([id])
-          | id PERIOD longtycon (id::longtycon)
 
 (*---sigexp-----*)
 sigexpbasic : SIG spec END (Absyn.SIGEXPBASIC(spec,(SIGleft,ENDright)))
             | id (Absyn.SIGID(id,(idleft,idright)))
 
-sigexpwhere : sigexp WHERE TYPE tyvarseq longtycon EQ ty
+sigexpwhere : sigexp WHERE TYPE tyvarseq longid EQ ty
                 (Absyn.SIGWHERE
-                     (sigexp,[(tyvarseq,longtycon,ty)],(sigexpleft,tyright)))
-            | sigexp WHERE TYPE longtycon EQ ty
+                     (sigexp,(tyvarseq,longid,ty),(sigexpleft,tyright)))
+            | sigexp WHERE TYPE longid EQ ty
                 (Absyn.SIGWHERE
-                     (sigexp,[(nil,longtycon,ty)],(sigexpleft,tyright)))
-            | sigexpwhere AND TYPE tyvarseq longtycon EQ ty
+                     (sigexp,(nil,longid,ty),(sigexpleft,tyright)))
+            | sigexpwhere AND TYPE tyvarseq longid EQ ty
                 (Absyn.SIGWHERE
-                     (sigexpwhere,[(tyvarseq,longtycon,ty)],(sigexpwhereleft,tyright)))
-            | sigexpwhere AND TYPE longtycon EQ ty
+                     (sigexpwhere,(tyvarseq,longid,ty),(sigexpwhereleft,tyright)))
+            | sigexpwhere AND TYPE longid EQ ty
                 (Absyn.SIGWHERE
-                     (sigexpwhere,[(nil,longtycon,ty)],(sigexpwhereleft,tyright)))
+                     (sigexpwhere,(nil,longid,ty),(sigexpwhereleft,tyright)))
 
 
 sigexp : sigexpbasic (sigexpbasic)
@@ -1183,8 +1479,8 @@ sigbind :id EQ sigexp ([(id,sigexp)])
             
 (***********************specifications******************************)
 
-longtyconeqrow : longtycon EQ longtycon ([longtycon1,longtycon2])
-               | longtycon EQ longtyconeqrow (longtycon::longtyconeqrow)
+longtyconeqrow : longid EQ longid ([longid1,longid2])
+               | longid EQ longtyconeqrow (longid::longtyconeqrow)
 
 longideqrow : longid EQ longid ([longid1,longid2])
             | longid EQ longid EQ longid ([longid1,longid2,longid3])
@@ -1206,14 +1502,16 @@ atomicspec : VAL valdesc
            | TYPE typdesc
                 (Absyn.SPECTYPE(typdesc,(TYPEleft,typdescright)))
            | TYPE typbind
-                (Absyn.SPECDERIVEDTYPE(typbind,(TYPEleft,typbindright)))
+                (Absyn.SPECDERIVEDTYPE
+                   (map stripComment typbind, (TYPEleft,typbindright))
+                )
            | EQTYPE typdesc
                 (Absyn.SPECEQTYPE(typdesc,(EQTYPEleft,typdescright)))
            | DATATYPE datdesc
                 (Absyn.SPECDATATYPE(datdesc,(DATATYPEleft,datdescright)))
-           | DATATYPE tycon EQ DATATYPE longtycon
+           | DATATYPE tycon EQ DATATYPE longid
                 (Absyn.SPECREPLIC
-                     (tycon,longtycon,(DATATYPE1left,longtyconright)))
+                     (tycon,longid,(DATATYPE1left,longidright)))
            | EXCEPTION exdesc
                 (Absyn.SPECEXCEPTION(exdesc,(EXCEPTIONleft,exdescright)))
            | STRUCTURE strdesc
@@ -1227,7 +1525,7 @@ atomicspec : VAL valdesc
                      (sigidseq,(INCLUDEleft,sigidseqright)))
 
 sigidseq : id ([id1])
-         | id sigidseq (id1::sigidseq)
+             | id sigidseq (id1::sigidseq)
                          
 (*
   Ohori: valdesc now take poly_ty
@@ -1237,6 +1535,7 @@ valdesc : id COLON poly_ty ([(id,poly_ty)])
         | id COLON ty ([(id,ty)])
         | id COLON poly_ty AND valdesc ((id,poly_ty)::valdesc)
         | id COLON ty AND valdesc ((id,ty)::valdesc)
+(* 401 *)
 
 typdesc : tyvarseq tycon ([(tyvarseq, tycon)])
         | tycon ([(nil,tycon)])
@@ -1315,8 +1614,8 @@ topdec : strdec
        | FUNCTOR funbindseq
                 (Absyn.TOPDECFUN(funbindseq,(FUNCTORleft,funbindseqright)))
 
-useFile : USE STRING (Absyn.USE (STRING,(USEleft,STRINGright)))
-        | USE' STRING (Absyn.USE (STRING,(USE'left,STRINGright)))
+useFile : USE STRING (Absyn.USE (Symbol.mkSymbol STRING (USEleft,STRINGright)))
+        | USE' STRING (Absyn.USE (Symbol.mkSymbol STRING (USE'left,STRINGright)))
 
 tops : topdecs ([Absyn.TOPDEC topdecs])
      | useFile ([useFile])
@@ -1326,7 +1625,7 @@ tops : topdecs ([Absyn.TOPDEC topdecs])
 interface : (* none *)
               (Absyn.NOINTERFACE)
           | INTERFACE STRING interface
-              (Absyn.INTERFACE {name=STRING, loc=(INTERFACEleft, STRINGright)})
+              (Absyn.INTERFACE (Symbol.mkSymbol STRING (INTERFACEleft, STRINGright)))
 
 unit : interface
          ({interface = interface, tops = nil,
@@ -1334,3 +1633,306 @@ unit : interface
      | interface tops
          ({interface = interface, tops = tops,
            loc = (interfaceleft, topsright)})
+
+
+(***************** SMLFormat specific rules. *************
+ The top-level nonterminals:
+  1 header_format_comment_list before "type foo = ...", "datatype foo = ...", "exception ..."
+  3 defining_format_comment_list before each element; eg. "type foo = *** ty"
+ The following is deleted from the original; this is subsumed by header_format_comment_list
+  1. inner_header_format_comment_list between "type" and "foo" or "datatype" and "foo"
+  2. defining_format_comment_list_with_inners
+ The following tags are not imported
+  1. prefix
+  2. ditto
+  3. funheader
+  4. destination
+*)
+(* The toplevel format comments for 
+   "type foo = ...", 
+   "datatype foo = ..." 
+   "abstype ..."
+   "exception ..."
+  449
+*)
+header_format_comment_list 
+    : ([])
+    | FORMATCOMMENTSTART header_format_specs FORMATCOMMENTEND header_format_comment_list
+      (header_format_specs :: header_format_comment_list)
+
+header_format_specs 
+     :
+       ({
+        formatters = [],
+        params = []
+       })
+     | ditto_spec header_format_specs  (* dummy *)
+       ({
+        formatters = #formatters header_format_specs,
+        params = #params header_format_specs
+       })
+     | prefix_spec header_format_specs (* dummy *)
+       ({
+        formatters = #formatters header_format_specs,
+        params = #params header_format_specs
+       })
+     | destination_spec header_format_specs (* dummy *)
+       ({
+        formatters = #formatters header_format_specs,
+        params = #params header_format_specs
+       })
+     | funheader_spec header_format_specs  (* dummy *)
+       ({
+        formatters = #formatters header_format_specs,
+        params = #params header_format_specs
+       })
+     | formatter_spec header_format_specs
+       ({
+        formatters = formatter_spec :: (#formatters header_format_specs),
+        params = #params header_format_specs
+       })
+     | formatparams_spec header_format_specs
+       ({
+        formatters = #formatters header_format_specs,
+        params = formatparams_spec @ (#params header_format_specs)
+       })
+
+formatter_spec : FORMATTERTAG LPAREN patlongid RPAREN patlongid
+                 (patlongid1, patlongid2)
+
+formatparams_spec : FORMATPARAMSTAG LPAREN formatparam_list RPAREN
+                    (formatparam_list)
+
+formatparam_list : id_noEQSTAR ([id_noEQSTAR])
+                 | id_noEQSTAR COMMA formatparam_list (id_noEQSTAR :: formatparam_list)
+
+destination_spec : DESTINATIONTAG STRING (STRING)
+
+funheader_spec : HEADERTAG STRING (STRING)
+
+prefix_spec : PREFIXTAG ID (ID)
+
+ditto_spec : DITTOTAG ID (ID)
+
+prefix_spec_opt : ("")
+                | prefix_spec (prefix_spec)
+
+
+
+defining_format_comment : FORMATCOMMENTSTART
+                          prefix_spec_opt formattag
+                          localformattags
+                          FORMATCOMMENTEND
+                          ({
+                             primaryTag = formattag,
+                             localTags = localformattags
+                           })
+
+defining_format_comment_list 
+  : ([])
+  | defining_format_comment_list defining_format_comment
+    (defining_format_comment_list  @ [defining_format_comment])
+  | defining_format_comment_list FORMATCOMMENTSTART FORMATCOMMENTEND
+    (defining_format_comment_list)
+  | defining_format_comment_list  (* dummy *)
+    FORMATCOMMENTSTART
+    prefix_spec_opt DITTOTAG
+    FORMATCOMMENTEND
+    (defining_format_comment_list)
+
+formattag : FORMATTAG LPAREN typepat RPAREN templates
+            ({id = NONE, typepat = typepat, templates = templates})
+          | FORMATTAG templates (* typepat is dummy *)
+            ({id = NONE, 
+              typepat = FormatTemplate.VarTyPat {id=Symbol.mkSymbol "_" (FORMATTAGleft,templatesright),loc=(FORMATTAGleft,templatesright)},
+              templates = templates})
+
+localformattags : ([])
+                | localformattag localformattags
+                  (localformattag :: localformattags)
+
+localformattag : FORMATTAG COLON id_noEQSTAR LPAREN typepat RPAREN templates
+                ({
+                   id = SOME(id_noEQSTAR),
+                   typepat = typepat,
+                   templates = templates
+                 })
+
+typepat : tuple_typepat
+          (FormatTemplate.TupleTyPat
+             {elements=tuple_typepat, 
+              loc=(tuple_typepatleft, tuple_typepatright)}
+            )
+        | typepat' (typepat')
+
+tuple_typepat : typepat' ASTERISK tuple_typepat (typepat' :: tuple_typepat)
+              | typepat' ASTERISK typepat' ([typepat'1, typepat'2])
+
+typepat' : LBRACE typepat_rows RBRACE
+           (FormatTemplate.RecordTyPat
+              {fields = #1 typepat_rows,
+               flex = #2 typepat_rows,
+               loc=(LBRACEleft, RBRACEright)
+              }
+           )
+         | LBRACE RBRACE
+           (FormatTemplate.RecordTyPat
+              {fields=[], 
+               flex=false, 
+               loc=(LBRACEleft, RBRACEright)})
+         | LPAREN typepat RPAREN
+           (typepat)
+         | atypepat 
+           (atypepat)
+
+atypepat : LPAREN atypepat_list RPAREN id_noEQSTAR
+           (FormatTemplate.TyConTyPat
+              {conid=id_noEQSTAR, 
+               args=atypepat_list, 
+               loc=(LPARENleft, id_noEQSTARright)}
+           )
+         | LPAREN atypepat_list RPAREN id_noEQSTAR COLON id_noEQSTAR
+           (FormatTemplate.TypedTyConTyPat
+              {conid=id_noEQSTAR1, 
+               args=atypepat_list,
+               typid=id_noEQSTAR2, 
+               loc=(LPARENleft,id_noEQSTARright)}
+           )
+         | atypepat id_noEQSTAR
+           (FormatTemplate.TyConTyPat
+              {conid = id_noEQSTAR, 
+               args=[atypepat],
+               loc=(atypepatleft,id_noEQSTARright)
+              }
+           )
+         | atypepat id_noEQSTAR COLON id_noEQSTAR 
+           (FormatTemplate.TypedTyConTyPat
+              {conid=id_noEQSTAR1, 
+               args=[atypepat],
+               typid=id_noEQSTAR2,
+               loc=(atypepatleft,id_noEQSTARright)}
+           )
+         | id_noEQSTAR 
+            (FormatTemplate.VarTyPat {id=id_noEQSTAR, 
+                                      loc=(id_noEQSTARleft, id_noEQSTARright)}
+             )
+         | id_noEQSTAR COLON id_noEQSTAR
+            (FormatTemplate.TypedVarTyPat
+              {conid=id_noEQSTAR1, 
+               typid=id_noEQSTAR2, 
+               loc=(id_noEQSTAR1left,id_noEQSTAR2right)}
+            )
+         | UNDERBAR 
+            (FormatTemplate.WildTyPat {loc=(UNDERBARleft,UNDERBARright)})
+
+atypepat_list : atypepat COMMA atypepat_list (atypepat :: atypepat_list)
+              | atypepat COMMA atypepat ([atypepat1, atypepat2])
+
+typepat_rows : typepat_field COMMA typepat_rows
+               ((typepat_field :: (#1 typepat_rows), #2 typepat_rows))
+             | typepat_field (([typepat_field], false))
+             | PERIODS (([], true))
+
+typepat_field : label (label, (FormatTemplate.VarTyPat {id=Symbol.mkSymbol label (labelleft,labelright), loc=(labelleft,labelright)}))
+              | label COLON typepat (label, typepat)
+
+templates : template templates (template :: templates)
+          | STARTOFINDENT templates RBRACKET templates
+             (
+              FormatTemplate.StartOfIndent 
+                {indent=STARTOFINDENT,
+                 loc=(STARTOFINDENTleft, templatesright)
+                }
+              ::
+              templates1
+              @
+              FormatTemplate.EndOfIndent {loc=(RBRACKETleft, RBRACKETright)}
+              ::
+              templates2
+             )
+          | ([])
+
+template : STRING 
+           (FormatTemplate.Term {string=STRING, loc=(STRINGleft, STRINGright)})
+         | NEWLINE
+           (FormatTemplate.Newline {loc=(NEWLINEleft, NEWLINEright)})
+         | ASSOCINDICATOR LBRACE templates RBRACE
+           (
+            FormatTemplate.Guard
+              {assocOpt = SOME(ASSOCINDICATOR), 
+               templates=templates,
+               loc= (ASSOCINDICATORleft, RBRACEright)
+              }
+           )
+         | LBRACE templates RBRACE
+           (FormatTemplate.Guard
+              {assocOpt = NONE, 
+               templates=templates,
+               loc= (LBRACEleft, RBRACEright)
+              }
+           )
+         | FORMATINDICATOR
+           (
+            FormatTemplate.Indicator
+             {
+              space = #space FORMATINDICATOR,
+              newline = #newline FORMATINDICATOR,
+              loc=(FORMATINDICATORleft,FORMATINDICATORright)
+             }
+           )
+         | inst
+           (FormatTemplate.Instance inst)
+(* 500 *)
+
+inst : id_noEQSTAR opt_typed
+       (FormatTemplate.Atom {id=id_noEQSTAR, optId=opt_typed, loc=(id_noEQSTARleft, opt_typedright)})
+     | id_noEQSTAR opt_typed LPAREN insts RPAREN LPAREN templates_comma_list RPAREN
+       (FormatTemplate.App 
+          {id=id_noEQSTAR, 
+           optId=opt_typed, 
+           args=insts, 
+           templates=templates_comma_list,
+           loc=(id_noEQSTARleft, RPARENright)
+          }
+       )
+     | id_noEQSTAR opt_typed LPAREN RPAREN LPAREN templates_comma_list RPAREN
+       (FormatTemplate.App 
+          {id=id_noEQSTAR, 
+           optId=opt_typed, 
+           args=[], 
+           templates=templates_comma_list,
+           loc=(id_noEQSTARleft, RPARENright)
+          }
+       )
+     | id_noEQSTAR opt_typed LPAREN insts RPAREN
+       (
+        FormatTemplate.App
+          {id=id_noEQSTAR, 
+           optId=opt_typed, 
+           args=insts, 
+           templates=[],
+           loc=(id_noEQSTARleft, RPARENright)
+          }
+        )
+     | id_noEQSTAR opt_typed LPAREN RPAREN
+       (
+        FormatTemplate.App
+          {id=id_noEQSTAR,
+           optId=opt_typed,
+           args=[], 
+           templates=[],
+           loc=(id_noEQSTARleft, RPARENright)
+          }
+       )
+
+opt_typed : (NONE)
+          | COLON id_noEQSTAR
+            (SOME(id_noEQSTAR))
+
+insts : inst COMMA insts (inst :: insts)
+      | inst ([inst])
+
+templates_comma_list : templates COMMA templates_comma_list
+                       (templates :: templates_comma_list)
+                     | templates ([templates])
+

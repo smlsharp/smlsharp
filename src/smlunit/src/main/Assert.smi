@@ -1,0 +1,285 @@
+_require "basis.smi"
+_require "ASSERT.sig"
+
+structure Assert =
+struct
+  type 'a assertEqual = 'a -> 'a -> unit
+  type 'a valueFormatter = 'a -> string
+  datatype failure =
+           GeneralFailure of string
+         | NotEqualFailure of string * string
+  exception Fail of failure
+  val assertEqual :
+      (('a * 'a) -> bool) -> 'a valueFormatter -> 'a assertEqual
+  val assertEqualByCompare :
+      (('a * 'a) -> General.order) -> 'a valueFormatter -> 'a assertEqual
+  val assertEqualAlternatives : 
+      'a assertEqual -> 'a list -> 'a -> unit
+  val assert : string -> bool -> unit
+  val fail : string -> 'a
+  val failByNotEqual : (string * string) -> 'a
+  val convertAssertEqual : ('a -> 'b) -> 'b assertEqual -> 'a assertEqual
+  val assertEqualContainer :
+      (('a -> int) * (('a * int) -> 'b) * ('b assertEqual)) -> 'a assertEqual
+  val assertEqualUnit : unit assertEqual
+  val assertEqualInt : int assertEqual
+  val assertEqualWord : word assertEqual
+  val assertEqualWord8 : Word8.word assertEqual
+  val assertEqualWord32 : Word32.word assertEqual
+  val assertEqualReal : real assertEqual
+  val assertEqualReal_epsilon : real -> real assertEqual
+  val assertEqualChar : char assertEqual
+  val assertEqualString : string assertEqual
+  val assertEqualSubstring : substring assertEqual
+  val assertEqualExceptionName : exn assertEqual
+  val assertEqualRef : 'a assertEqual -> 'a ref assertEqual
+  val assertSameRef : 'a ref assertEqual
+  val assertEqualBool : bool assertEqual
+  val assertTrue : bool -> unit
+  val assertFalse : bool -> unit
+  val assertEqualOption : 'a assertEqual -> 'a option assertEqual
+  val assertEqualIntOption : int option assertEqual
+  val assertEqualWordOption : word option assertEqual
+  val assertEqualWord8Option : Word8.word option assertEqual
+  val assertEqualWord32Option : Word32.word option assertEqual
+  val assertEqualRealOption : real option assertEqual
+  val assertEqualCharOption : char option assertEqual
+  val assertEqualStringOption : string option assertEqual
+  val assertEqualSubstringOption : substring option assertEqual
+  val assertSome : 'a option -> unit
+  val assertNone : 'a option -> unit
+  val assertEqualOrder : order assertEqual
+  val assertEqual2Tuple :
+      ('a assertEqual * 'b assertEqual) -> ('a * 'b) assertEqual
+  val assertEqual3Tuple :
+      ('a assertEqual * 'b assertEqual * 'c assertEqual) ->
+      ('a * 'b * 'c) assertEqual
+  val assertEqual4Tuple :
+      ('a assertEqual * 'b assertEqual * 'c assertEqual * 'd assertEqual) ->
+      ('a * 'b * 'c * 'd) assertEqual
+  val assertEqual5Tuple :
+      (
+        'a assertEqual
+      * 'b assertEqual
+      * 'c assertEqual
+      * 'd assertEqual
+      * 'e assertEqual
+      ) ->
+      ('a * 'b * 'c * 'd * 'e) assertEqual
+  val assertEqual6Tuple :
+      (
+        'a assertEqual
+      * 'b assertEqual
+      * 'c assertEqual
+      * 'd assertEqual
+      * 'e assertEqual
+      * 'f assertEqual
+      ) ->
+      ('a * 'b * 'c * 'd * 'e * 'f) assertEqual
+  val assertEqual7Tuple :
+      (
+        'a assertEqual
+      * 'b assertEqual
+      * 'c assertEqual
+      * 'd assertEqual
+      * 'e assertEqual
+      * 'f assertEqual
+      * 'g assertEqual
+      ) ->
+      ('a * 'b * 'c * 'd * 'e * 'f * 'g) assertEqual
+  val assertEqual8Tuple :
+      (
+        'a assertEqual
+      * 'b assertEqual
+      * 'c assertEqual
+      * 'd assertEqual
+      * 'e assertEqual
+      * 'f assertEqual
+      * 'g assertEqual
+      * 'h assertEqual
+      ) ->
+      ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) assertEqual
+  val assertEqual9Tuple :
+      (
+        'a assertEqual
+      * 'b assertEqual
+      * 'c assertEqual
+      * 'd assertEqual
+      * 'e assertEqual
+      * 'f assertEqual
+      * 'g assertEqual
+      * 'h assertEqual
+      * 'i assertEqual
+      ) ->
+      ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) assertEqual
+  val assertEqual10Tuple :
+      (
+        'a assertEqual
+      * 'b assertEqual
+      * 'c assertEqual
+      * 'd assertEqual
+      * 'e assertEqual
+      * 'f assertEqual
+      * 'g assertEqual
+      * 'h assertEqual
+      * 'i assertEqual
+      * 'j assertEqual
+      ) ->
+      ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i * 'j) assertEqual
+  val assertEqualVector : ('a assertEqual) -> 'a vector assertEqual
+  val assertEqualWord8Vector : Word8Vector.vector assertEqual
+  val assertEqualCharVector : CharVector.vector assertEqual
+  val assertEqualArray : ('a assertEqual) -> 'a array assertEqual
+  val assertSameArray : 'a array assertEqual
+  val assertEqualWord8Array : Word8Array.array assertEqual
+  val assertEqualCharArray : CharArray.array assertEqual
+  val assertEqualList : ('a assertEqual) -> 'a list assertEqual
+  val assertEqualIntList : int list assertEqual
+  val assertEqualWordList : word list assertEqual
+  val assertEqualWord8List : Word8.word list assertEqual
+  val assertEqualWord32List : Word32.word list assertEqual
+  val assertEqualRealList : real list assertEqual
+  val assertEqualCharList : char list assertEqual
+  val assertEqualStringList : string list assertEqual
+  val assertEqualSubstringList : substring list assertEqual
+  structure AssertArray =
+  struct
+    val assertEqualArray : 'a assertEqual -> 'a Array.array assertEqual
+    val assertSameArray : 'a Array.array assertEqual
+  end
+  structure AssertArraySlice =
+  struct
+    val assertEqualSlice : 'a assertEqual -> 'a ArraySlice.slice assertEqual
+    val assertSameSlice : 'a ArraySlice.slice assertEqual
+  end
+  structure AssertBool =
+  struct
+    val assertEqualBool : Bool.bool assertEqual
+  end
+  structure AssertChar =
+  struct
+    val assertEqualChar : Char.char assertEqual
+  end
+  structure AssertDate =
+  struct
+    val assertEqualWeekday : Date.weekday assertEqual
+    val assertEqualMonth : Date.month assertEqual
+    val assertEqualDate : Date.date assertEqual
+  end
+  structure AssertGeneral =
+  struct
+    val assertEqualUnit : General.unit assertEqual
+    val assertEqualExceptionName : General.exn assertEqual
+    val assertEqualOrder : General.order assertEqual
+  end
+  structure AssertIEEEReal =
+  struct
+    val assertEqualRealOrder : IEEEReal.real_order assertEqual
+    val assertEqualFloatClass : IEEEReal.float_class assertEqual
+    val assertEqualRoundingMode : IEEEReal.rounding_mode assertEqual
+    val assertEqualDecimalApprox : IEEEReal.decimal_approx assertEqual
+  end
+  structure AssertInt =
+  struct
+    val assertEqualInt : Int.int assertEqual
+  end
+  structure AssertLargeInt =
+  struct
+    val assertEqualInt : LargeInt.int assertEqual
+  end
+  structure AssertPosition =
+  struct
+    val assertEqualInt : Position.int assertEqual
+  end
+  structure AssertList =
+  struct
+    val assertEqualList : 'a assertEqual -> 'a List.list assertEqual
+  end
+  structure AssertWord8Array =
+  struct
+    val assertEqualArray : Word8Array.array assertEqual
+    val assertSameArray : Word8Array.array assertEqual
+  end
+  structure AssertCharArray =
+  struct
+    val assertEqualArray : CharArray.array assertEqual
+    val assertSameArray : CharArray.array assertEqual
+  end
+  structure AssertWord8ArraySlice =
+  struct
+    val assertEqualSlice : Word8ArraySlice.slice assertEqual
+    val assertSameSlice : Word8ArraySlice.slice assertEqual
+  end
+  structure AssertCharArraySlice =
+  struct
+    val assertEqualSlice : CharArraySlice.slice assertEqual
+    val assertSameSlice : CharArraySlice.slice assertEqual
+  end
+  structure AssertWord8Vector =
+  struct
+    val assertEqualVector : Word8Vector.vector assertEqual
+  end
+  structure AssertCharVector =
+  struct
+    val assertEqualVector : CharVector.vector assertEqual
+  end
+  structure AssertWord8VectorSlice =
+  struct
+    val assertEqualSlice : Word8VectorSlice.slice assertEqual
+  end
+  structure AssertCharVectorSlice =
+  struct
+    val assertEqualSlice : CharVectorSlice.slice assertEqual
+  end
+  structure AssertOption =
+  struct
+    val assertEqualOption : 'a assertEqual -> 'a Option.option assertEqual
+  end
+  structure AssertReal =
+  struct
+    val assertEqualReal : Real.real assertEqual
+    val assertEqualReal_epsilon : Real.real -> Real.real assertEqual
+  end
+  structure AssertLargeReal =
+  struct
+    val assertEqualReal : LargeReal.real assertEqual
+    val assertEqualReal_epsilon : LargeReal.real -> LargeReal.real assertEqual
+  end
+  structure AssertString =
+  struct
+    val assertEqualString : String.string assertEqual
+  end
+  structure AssertStringCvt =
+  struct
+    val assertEqualRadix : StringCvt.radix assertEqual
+    val assertEqualRealfmt : StringCvt.realfmt assertEqual
+  end
+  structure AssertSubstring =
+  struct
+    val assertEqualSubstring : Substring.substring assertEqual
+  end
+  structure AssertTime =
+  struct
+    val assertEqualTime : Time.time assertEqual
+  end
+  structure AssertVector =
+  struct
+    val assertEqualVector : 'a assertEqual -> 'a Vector.vector assertEqual
+  end
+  structure AssertVectorSlice =
+  struct
+    val assertEqualSlice : 'a assertEqual -> 'a VectorSlice.slice assertEqual
+  end
+  structure AssertWord =
+  struct
+    val assertEqualWord : Word.word assertEqual
+  end
+  structure AssertWord8 =
+  struct
+    val assertEqualWord : Word8.word assertEqual
+  end
+  structure AssertLargeWord =
+  struct
+    val assertEqualWord : LargeWord.word assertEqual
+  end
+end

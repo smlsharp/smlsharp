@@ -9,6 +9,7 @@ sig
     =  TSTR of IDCalc.tfun
     |  TSTR_DTY of {tfun:IDCalc.tfun, varE:IDCalc.varE, formals:IDCalc.formals, conSpec:IDCalc.conSpec}
   type tyE
+  type strEntryWithSymbol
   type strEntry
   datatype strKind 
     = SIGENV 
@@ -16,12 +17,14 @@ sig
     | FUNAPP of {id:StructureID.id, funId:FunctorID.id, argId:StructureID.id}
 
   datatype strE
-    = STR of strEntry SEnv.map
+    = STR of strEntryWithSymbol SEnv.map
   and env
     = ENV of {varE: IDCalc.varE, tyE: tyE, strE: strE}
+  type funEEntryWithSymbol
   type funEEntry
   type funE
   type sigE
+  type sigEEntry
   type sigEList
   type topEnv
 
@@ -32,7 +35,7 @@ sig
   val printTy_env : env -> TermFormat.format
   val printTy_sigE : sigE -> TermFormat.format
   val printTy_sigEList : sigEList -> TermFormat.format
-  val format_strEntry : strEntry -> TermFormat.format
+  val format_strEntryWithSymbol : strEntryWithSymbol -> TermFormat.format
   val format_funEEntry : funEEntry -> SMLFormat.FormatExpression.expression list
   val printTy_funEEntry : funEEntry -> SMLFormat.FormatExpression.expression list
   val format_funE : funE -> SMLFormat.FormatExpression.expression list
@@ -59,15 +62,15 @@ sig
   val lookupTstr : env -> string list -> tstr
   val findId : env * string list -> IDCalc.idstatus option
   val lookupId : env -> string list -> IDCalc.idstatus
-  val findStr : env * string list -> strEntry option
-  val lookupStr : env -> string list -> strEntry
+  val findStr : env * Symbol.longsymbol -> strEntryWithSymbol option
+  val lookupStr : env -> Symbol.longsymbol -> strEntryWithSymbol
   val rebindIdLongid : env * string list * IDCalc.idstatus -> env
-  val bindStr : Loc.loc -> env * string * strEntry -> env
   val rebindTstr : env * string * tstr -> env
   val rebindTstrLongid : env * string list * tstr -> env
   val rebindId : env * string * IDCalc.idstatus -> env
-  val rebindStr : env * string * strEntry -> env
-  val singletonStr : string * strEntry -> env
+  val bindStr : Loc.loc -> env * Symbol.symbol * strEntry -> env
+  val rebindStr : env * Symbol.symbol * strEntry -> env
+  val singletonStr : Symbol.symbol * strEntry -> env
   val varEWithVarE : IDCalc.varE * IDCalc.varE -> IDCalc.varE
   val tyEWithTyE : tyE * tyE -> tyE
   val strEWithStrE : strE * strE -> strE

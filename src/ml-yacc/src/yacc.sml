@@ -1,9 +1,10 @@
 (* ML-Yacc Parser Generator (c) 1989, 1990 Andrew W. Appel, David R. Tarditi *)
-(*
-2012-3-12 ohori defunctorize.
- link.sml and yacc.sml
+(* 2012-3-12 ohori defunctorize.
+   link.sml and yacc.sml
 *)
-
+(* 2012-9-30 ohori:
+   action table is decomposed into a set of functions.
+*)
  structure ParseGen : PARSE_GEN =
   struct
     open Array List
@@ -111,6 +112,7 @@
      in sayln "local open Header in";
 	sayln ("type pos = " ^ pos_type);
 	sayln ("type arg = " ^ arg_type);
+	sayln ("type lexarg = " ^ arg_type);
 	sayln ("structure " ^ valueStruct ^ " = ");
 	sayln "struct";
 	say ("datatype svalue = " ^ termvoid ^ " | " ^ ntvoid ^ " of" ^
@@ -138,7 +140,9 @@
 		 (case tokenInfo of
 		      NONE => ()
 		    | _ => sayln ("open "^dataStruct^".Header"));
+(*
 	         sayln ("type svalue = " ^ dataStruct ^ ".svalue");
+*)
 	         sayln ("type pos = " ^ dataStruct ^ ".pos");
 		 sayln ("type token = " ^ dataStruct ^ ".Token.token");
 		 let val f = fn term as T i =>
@@ -170,7 +174,10 @@
 			say) =>
           say  ("signature " ^ tokenSig ^ " =\nsig\n"^
 		(case tokenInfo of NONE => "" | SOME s => (s^"\n"))^
+(*
 		 "type pos\ntype token\ntype svalue\n" ^
+*)
+		 "type pos\ntype token\n" ^
 		 (List.foldr (fn ((s,ty),r) => String.concat [
 		    "val ", symbolName s,
 		    (case ty
@@ -179,10 +186,8 @@
 		    " pos * pos -> token\n", r]) "" term) ^
 		 "end\nsignature " ^ miscSig ^
 		  "=\nsig\nstructure Tokens : " ^ tokenSig ^
-		  "\nstructure " ^ dataStruct ^ ":" ^ dataSig ^
-		  "\nsharing type " ^ dataStruct ^
-		  ".Token.token = Tokens.token\nsharing type " ^
-		  dataStruct ^ ".svalue = Tokens.svalue\nend\n")
+		  "\nstructure Parser : PARSER" ^
+		  "\nsharing type Parser.token = Tokens.token\nend\n")
 		
     (* function to print structure for error correction *)
 
@@ -864,10 +869,25 @@ precedences of the rule and the terminal are equal.
 
         val entries = ref 0 (* save number of action table entries here *)
 	
+(* Ueno (2013-05-29): specify output file by environment variable
     in  let val result = TextIO.openOut (spec ^ ".sml")
  	    val sigs = TextIO.openOut (spec ^ ".sig")
 	    val pos = ref 0
 	    val pr = fn s => TextIO.output(result,s)
+*)
+        val (spec, pr, sigs, closeResult) =
+            case OS.Process.getEnv "SMLYACC_OUTPUT" of
+              NONE => let val result = TextIO.openOut (spec ^ ".sml")
+                          val sigs = TextIO.openOut (spec ^ ".sig")
+                          val pr = fn s => TextIO.output (result, s)
+                      in (spec, pr, sigs, fn () => TextIO.closeOut result) end
+            | SOME spec =>
+              let val buf = ref nil
+                  val sigs = TextIO.openOut spec
+                  fun p s = TextIO.output (sigs, s)
+                  fun close () = (app p (rev (!buf)); TextIO.closeOut sigs)
+              in (spec, fn s => buf := s :: !buf, sigs, close) end
+    in  let val pos = ref 0
 	    val say = fn s => let val l = String.size s
 			           val newPos = (!pos) + l
 			      in if newPos > lineLength 
@@ -927,14 +947,50 @@ precedences of the rule and the terminal are equal.
 	    sayln "end";
 	    printEC (keyword,change,noshift,value,values,names);
 	    printAction(rules,values,names);
-	    sayln "end";
+	    sayln "end"; (* ParserData *)
+            sayln 
+"structure Parser =\n\
+\ struct\n\
+\   type token = ParserData.LrParser.Token.token\n\
+\   type stream = ParserData.LrParser.Stream.stream\n\
+\   type result = ParserData.result\n\
+\   type pos = ParserData.pos\n\
+\   type arg = ParserData.arg\n\
+\   exception ParseError= ParserData.LrParser.ParseError\n\
+\   fun makeStream {lexer: unit -> token} : stream\n\
+\     = ParserData.LrParser.Stream.streamify lexer\n\
+\   val consStream = ParserData.LrParser.Stream.cons\n\
+\   val getStream = ParserData.LrParser.Stream.get\n\
+\   val sameToken = ParserData.Token.sameToken\n\
+\   fun parse {lookahead:int, stream:stream, error: (string * pos * pos -> unit),arg:arg} =\n\
+\      (fn (a,b) => (ParserData.Actions.extract a,b))\n\
+\      (ParserData.LrParser.parse\n\
+\         {table = ParserData.table,\n\
+\          lexer=stream,\n\
+\          lookahead=lookahead,\n\
+\          saction = ParserData.Actions.actions,\n\
+\          arg=arg,\n\
+\          void= ParserData.Actions.void,\n\
+\          ec = {is_keyword = ParserData.EC.is_keyword,\n\
+\                noShift = ParserData.EC.noShift,\n\
+\                preferred_change = ParserData.EC.preferred_change,\n\
+\                errtermvalue = ParserData.EC.errtermvalue,\n\
+\                error=error,\n\
+\                showTerminal = ParserData.EC.showTerminal,\n\
+\                terms = ParserData.EC.terms}}\n\
+\      )\n\
+\ end";
 	    sayln ("structure Token = " ^ dataStruct ^ ".LrParser.Token");
 	    printTokenStruct(values,names);
 	    sayln "end";
             case footer_decl of SOME s => sayln s | NONE => ();
 	    printSigs(values,names,fn s => TextIO.output(sigs,s));    
+(* Ueno (2013-05-29): specify output file by environment variable
 	    TextIO.closeOut sigs;
 	    TextIO.closeOut result;
+*)
+	    closeResult ();
+	    TextIO.closeOut sigs;
 	    MakeTable.Errs.printSummary (fn s => TextIO.output(TextIO.stdOut,s)) errs
 	end;
         if verbose then

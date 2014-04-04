@@ -1,11 +1,27 @@
 structure SMLSharp_Version =
 struct
-
   val Version : string
   val ReleaseDate : string
   val DefaultSystemBaseDir : string
-
-  datatype os = Windows | Unix
-  val HostOS : os ref
-
+  datatype host_os = Mingw | Cygwin | Unix
+  structure DefaultConfig =
+  struct
+    val CC : string
+    val CXX : string
+    val LD : string
+    val AR : string
+    val RANLIB : string
+    val LDFLAGS : string
+    val LIBS : string
+    val DLLEXT : string
+    val LIBEXT : string
+    val ASMEXT : string
+    val OBJEXT : string
+    val A_OUT : string
+    val HOST_OS_TYPE : host_os
+    val TARGET_TRIPLE : string
+    val CMDLINE_MAXLEN : int option
+    val PIC_DEFAULT : bool
+    val RUNLOOP_DLDFLAGS : string
+  end
 end

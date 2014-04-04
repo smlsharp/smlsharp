@@ -1,0 +1,28 @@
+(**
+ * bug exception
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori
+ *)
+
+structure Bug =
+struct
+
+  (*% @formatter(Loc.loc) Loc.format_loc *)
+  exception
+    (*% @format(s) "Bug:" + s *)
+    Bug of string
+
+  and
+    (*% @format(s * l) "Bug at" + l ":" + s *)
+    BugWithLoc of string * Loc.loc
+
+  (** true if binding informations are to be printed. *)
+  val debugPrint = ref false
+
+  (** true if some temporary information will be printed. *)
+  val printInfo = ref false
+
+  fun prettyPrint expressions =
+      SMLFormat.prettyPrint [SMLFormat.Columns 80] expressions
+
+end

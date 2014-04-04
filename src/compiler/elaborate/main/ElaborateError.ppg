@@ -12,6 +12,8 @@ struct
    * @formatter(Absyn.ffiTy) Absyn.format_ffiTy
    * @formatter(Absyn.tvar) Absyn.format_tvar
    * @formatter(Loc.loc) Loc.format_loc
+   * @formatter(Symbol.symbol) Symbol.format_symbol
+   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
   exception
 
@@ -32,7 +34,7 @@ struct
    * @format(id) "expression" +d "or" +d "pattern" +d "begins" +d
    *            "with" +d "infix" +d "identifier" +d ":" +d id
    *)
-  BeginWithInfixID of string
+  BeginWithInfixID of Symbol.longsymbol
 
   and
   (**
@@ -44,7 +46,7 @@ struct
   (*%
    * @format(name) "Binding" +d "reserved" +d "name:" + name
    *)
-  BindReservedName of string
+  BindReservedName of Symbol.symbol
 
   and
   (**
@@ -56,7 +58,7 @@ struct
    * @format(name) "Duplicate" +d  "constructor" +d "name" +d "in" +d
    *      "datatype:" + name
    *)
-  DuplicateConstructorNameInDatatype of string
+  DuplicateConstructorNameInDatatype of Symbol.symbol
 
   and
   (**
@@ -68,7 +70,7 @@ struct
    * @format(name) "Duplicate" +d  "constructor" +d "name" +d "in" +d
    *      "exception:" + name
    *)
-  DuplicateConstructorNameInException of string
+  DuplicateConstructorNameInException of Symbol.symbol
 					 
   and
   (**
@@ -79,7 +81,7 @@ struct
   (*%
    * @format(name) "Duplicate" +d  "type" +d "constructor:" + name
    *)
-  DuplicateTypDesc of string
+  DuplicateTypDesc of Symbol.symbol
 
   and
   (**
@@ -90,7 +92,7 @@ struct
   (*%
    * @format(name) "Duplicate" +d  "type" +d "parameter:" + name
    *)
-  DuplicateTypParam of string
+  DuplicateTypParam of Symbol.symbol
 
   and
   (**
@@ -158,7 +160,7 @@ struct
   (*%
    * @format(name) "Duplicate" +d  "type" +d "name" +d "in" +d "type:" + name
    *)
-  DuplicateTypeNameInType of string
+  DuplicateTypeNameInType of Symbol.symbol
 
   and
   (**
@@ -170,7 +172,7 @@ struct
    * @format(name) "Duplicate" +d  "type" +d "name" +d "in" +d
    *             "datatype:" + name
    *)
-  DuplicateTypeNameInDatatype of string
+  DuplicateTypeNameInDatatype of Symbol.symbol
 
   and 
   (**
@@ -181,7 +183,7 @@ struct
   (*%
    * @format(name) "Duplicate" +d  "value" +d "identifier:" + name
    *)
-  DuplicateValDesc of string
+  DuplicateValDesc of Symbol.symbol
 
   and
   (**
@@ -193,20 +195,20 @@ struct
    * @format(var)
    *   "duplicate" +d "name" +d "in" +d "val rec:" +d var
    *)
-  DuplicateVarNameInValRec of string
+  DuplicateVarNameInValRec of Symbol.symbol
 
   and
   (*%
    * @format(id) "expression" +d "or" +d "pattern" +d "ends" +d
    *            "with" +d "infix" +d "identifier" +d ":" +d id
    *)
-  EndWithInfixID of string
+  EndWithInfixID of Symbol.longsymbol
 
   and
   (*%
    * @format(id) "non-fix" +d "identifier" +d "expected" +d ":" +d id
    *)
- ArgWithInfixID of string
+ ArgWithInfixID of Symbol.longsymbol
 
   and
   (*%
@@ -404,7 +406,7 @@ struct
    * "operators" +d "of" +d "same" +d "precedence" +d "with" +d "mixed" +d
    * "associativities:" +d id
    *)
-  InvalidOpAssociativity of string
+  InvalidOpAssociativity of Symbol.longsymbol
 
   and
   (*%

@@ -1,16 +1,15 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
 _require "../../util/main/gensym.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesUtils.smi"
+_require "../../types/main/TypesBasics.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
-_require "RecordCalc.ppg.smi"
+_require "./RecordCalc.ppg.smi"
 
 structure RecordCalcUtils =
 struct
-  val newRCVarInfo : Types.ty -> Types.varInfo
+  val newRCVarInfo : Types.ty -> RecordCalc.varInfo
   val expansive : RecordCalc.rcexp -> bool
   val isAtom : RecordCalc.rcexp -> bool
 end

@@ -1,11 +1,10 @@
-_interface "posix-text-prim-io.smi"
-infix 7 *
-infix 6 + -
-infixr 5 ::
-infix 4 = < >
-infix 3 :=
-val op + = SMLSharp.Int.add
-val op - = SMLSharp.Int.sub
+infix 7 * / div mod
+infix 6 + - ^
+infixr 5 :: @
+infix 4 = <> > >= < <=
+infix 3 := o
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
 val op > = Position.>
 val op < = Position.<
 structure StringImp = String
@@ -14,8 +13,8 @@ structure PositionImp = Position
 structure PosixBinPrimIO = struct end (* dummy *)
 structure Posix =
 struct
-  structure FileSys = SMLSharpSMLNJ_POSIX_IO
-  structure IO = SMLSharpSMLNJ_POSIX_IO
+  structure FileSys = SMLSharp_SMLNJ_POSIX_IO
+  structure IO = SMLSharp_SMLNJ_POSIX_IO
 end
 (* posix-text-prim-io.sml
  *
@@ -35,7 +34,7 @@ in
 (*
 structure PosixTextPrimIO : sig
 *)
-structure SMLSharpSMLNJ_PosixTextPrimIO : sig
+structure SMLSharp_SMLNJ_PosixTextPrimIO (*: sig
 
     include OS_PRIM_IO
 
@@ -45,7 +44,7 @@ structure SMLSharpSMLNJ_PosixTextPrimIO : sig
 
     val strReader : string -> PrimIO.reader
 
-  end = struct
+  end*) = struct
 
     structure PF = Posix.FileSys
     structure PIO = Posix.IO

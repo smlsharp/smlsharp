@@ -1,6 +1,4 @@
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../smlnj-lib/Util/ord-key-sig.sml"
+_require "basis.smi"
 
 structure LabelOrd =
 struct 

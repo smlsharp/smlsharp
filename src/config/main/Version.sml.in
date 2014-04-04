@@ -2,27 +2,34 @@
 (**
  * version information and default settings
  *
- * @copyright (c) 2012, Tohoku University.
+ * @copyright (c) 2012, 2013, Tohoku University.
  * @author UENO Katsuhiro
  *)
 
-structure SMLSharp_Version : sig
-
-  val Version : string
-  val ReleaseDate : string
-  val DefaultSystemBaseDir : string
-
-  datatype os = Windows | Unix
-  val HostOS : os ref  (* overwritable *)
-
-end =
+structure SMLSharp_Version =
 struct
-
   val Version = "%VERSION%"
   val ReleaseDate = "%RELEASE_DATE%"
   val DefaultSystemBaseDir = "%LIBDIR_SMLSHARP%"
-
-  datatype os = Windows | Unix
-  val HostOS = ref %HOST_OS%
-
+  datatype host_os = Mingw | Cygwin | Unix
+  structure DefaultConfig =
+  struct
+    val CC = "%CC%"
+    val CXX = "%CXX%"
+    val LD = "%LD%"
+    val AR = "%AR%"
+    val RANLIB = "%RANLIB%"
+    val LDFLAGS = "%LDFLAGS%"
+    val LIBS = "%LIBS%"
+    val DLLEXT = "%DLLEXT%"
+    val LIBEXT = "%LIBEXT%"
+    val ASMEXT = "%ASMEXT%"
+    val OBJEXT = "%OBJEXT%"
+    val A_OUT = "%A_OUT%"
+    val HOST_OS_TYPE = %HOST_OS_TYPE%
+    val TARGET_TRIPLE = "%TARGET_TRIPLE%"
+    val CMDLINE_MAXLEN = %CMDLINE_MAXLEN%
+    val PIC_DEFAULT = %PIC_DEFAULT%
+    val RUNLOOP_DLDFLAGS = "%RUNLOOP_DLDFLAGS%"
+  end
 end

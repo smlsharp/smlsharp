@@ -1,12 +1,13 @@
 (**
- * ListPair structure.
- * @author YAMATODANI Kiyoshi
+ * ListPair
  * @author UENO Katsuhiro
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "ListPair.smi"
 
-structure ListPair :> LIST_PAIR =
+infixr 5 ::
+
+structure ListPair =
 struct
 
   exception UnequalLengths
@@ -14,7 +15,7 @@ struct
   fun zip (l1, l2) =
       let
         fun loop (h1::t1, h2::t2, z) = loop (t1, t2, (h1,h2)::z)
-          | loop (_, _, z) = rev z
+          | loop (_, _, z) = List.rev z
       in
         loop (l1, l2, nil)
       end
@@ -22,7 +23,7 @@ struct
   fun zipEq (l1, l2) =
       let
         fun loop (h1::t1, h2::t2, z) = loop (t1, t2, (h1,h2)::z)
-          | loop (nil, nil, z) = rev z
+          | loop (nil, nil, z) = List.rev z
           | loop _ = raise UnequalLengths
       in
         loop (l1, l2, nil)
@@ -30,7 +31,7 @@ struct
 
   fun unzip pairs =
       let
-        fun loop (nil, l, r) = (rev l, rev r)
+        fun loop (nil, l, r) = (List.rev l, List.rev r)
           | loop ((h1, h2)::t, l, r) = loop (t, h1::l, h2::r)
       in
         loop (pairs, nil, nil)
@@ -39,7 +40,7 @@ struct
   fun map mapFn (l1, l2) =
       let
         fun loop (h1::t1, h2::t2, z) = loop (t1, t2, mapFn (h1, h2) :: z)
-          | loop (_, _, z) = rev z
+          | loop (_, _, z) = List.rev z
       in
         loop (l1, l2, nil)
       end
@@ -47,7 +48,7 @@ struct
   fun mapEq mapFn (l1, l2) =
       let
         fun loop (h1::t1, h2::t2, z) = loop (t1, t2, mapFn (h1, h2) :: z)
-          | loop (nil, nil, z) = rev z
+          | loop (nil, nil, z) = List.rev z
           | loop _ = raise UnequalLengths
       in
         loop (l1, l2, nil)
@@ -116,7 +117,7 @@ struct
       let
         fun loop (h1::t1, h2::t2) = predicate (h1, h2) andalso loop (t1, t2)
           | loop (nil, nil) = true
-          | loop _ = raise UnequalLengths
+          | loop _ = false
       in
         loop (l1, l2)
       end

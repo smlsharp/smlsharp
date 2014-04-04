@@ -14,14 +14,14 @@ struct
 
   (* ANSI *)
   val fopen   = _import "fopen" : (string, string) -> c_file
-  val fclose  = _import "fclose" : (c_file) -> unit
+  val fclose  = _import "fclose" : (c_file) -> ()
   fun fread (a,len,c_file) =
       _ffiapply _import "fread"
         (a:'a array, _sizeof('a), len:int, c_file:c_file) : int
 
   fun memcpy (dst,src,len) =
       _ffiapply _import "memcpy"
-        (dst:unit ptr, src:'a array, _sizeof('a) * len) : unit
+        (dst:unit ptr, src:'a array, _sizeof('a) * len) : ()
 
   (* POSIX.1 *)
   val fdopen  = _import "fdopen" : (int, string) -> c_file

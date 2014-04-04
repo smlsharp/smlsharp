@@ -1,0 +1,11 @@
+_require "../../../../basis.smi"
+_require "../../SQLErrors.smi"
+
+structure SMLSharp_SQL_Float =
+struct
+  type float (= boxed)
+  val toString : float -> string
+  val fromString : string -> float
+  val toReal : float -> real
+  val toDecimal : float -> IEEEReal.decimal_approx
+end

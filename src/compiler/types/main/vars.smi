@@ -1,10 +1,10 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/ord-key-sig.sml"
-_require "../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "basis.smi"
+_require "smlnj-lib/Util/ord-key-sig.sml"
+_require "smlnj-lib/Util/binary-set-fn.smi"
+_require "smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../control/main/Control.ppg.smi"
-_require "Types.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "./Types.ppg.smi"
 
 structure TvOrd =
 struct
@@ -23,7 +23,7 @@ structure OTSet = BinarySetFn(TvOrd)
 
 structure varInfoOrd =
 struct
-  type ord_key = Types.varInfo
+  type ord_key = {path:string list, id:VarID.id, ty:Types.ty}
   val compare : ord_key * ord_key -> order
 end
 

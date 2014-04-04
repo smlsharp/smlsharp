@@ -1,13 +1,8 @@
-_require "../../../basis/main/Word8Vector.smi"
-_require "../../../basis/main/BinIO.smi"
-_require "../../../basis/main/TextIO.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/OS.smi"
-_require "../../../basis/main/List.smi"
-
+_require "basis.smi"
+_require "../../../config/main/Config.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../control/main/Control.ppg.smi"
-_require "Filename.smi"
+_require "./Filename.smi"
 
 structure CoreUtils =
 struct
@@ -20,7 +15,7 @@ struct
   val rm_f : Filename.filename -> unit
   val mkdir : Filename.filename -> unit
   val rmdir_f : Filename.filename -> unit
-  val system : string -> unit
+  val system : {command : string, quiet : bool} -> unit
   val makeTextFile : Filename.filename * string -> unit
   val makeBinFile : Filename.filename * Word8Vector.vector -> unit
   val makeTextFile' : Filename.filename * ((string -> unit) -> unit) -> unit

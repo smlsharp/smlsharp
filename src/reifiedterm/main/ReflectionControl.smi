@@ -1,8 +1,10 @@
-_require "../../smlformat-lib.smi"
+_require "smlformat-lib.smi"
 
 structure ReflectionControl =
 struct
-  val max : int
-  val ellipsis : SMLFormat.FormatExpression.expression list
+  val maxDepth : int ref
+  val maxNestLevel : int ref
+  val maxExnNestLevel : int ref
   val printWidth : int ref
+  val ellipsis : SMLFormat.FormatExpression.expression list
 end

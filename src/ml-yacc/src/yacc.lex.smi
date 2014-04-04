@@ -5,7 +5,6 @@ _require "../../ml-yacc/lib/parser2.smi"
 _require "utils.sig"
 _require "sigs.sml"
 _require "hdr.smi"
-_require "yacc.grm.sig"
 _require "yacc.grm.smi"
 structure LexMLYACC 
 =
@@ -14,7 +13,6 @@ struct
   struct
     type token = LrVals.Tokens.token
     type pos = int
-    type svalue = LrVals.Tokens.svalue
     type arg = Header.inputSource
   end
   val makeLexer

@@ -1,7 +1,6 @@
-_require "../../../basis/main/List.smi"
+_require "../../../basis.smi"
 _require "FormatExpression.smi"
 _require "PrinterParameter.smi"
-_require "../../../basis/main/binary-op.smi"
 
 structure AssocResolver =
 struct

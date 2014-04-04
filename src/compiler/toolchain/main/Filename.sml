@@ -5,11 +5,12 @@
  *)
 structure Filename :> sig
 
-  type filename
+  eqtype filename
 
   (* "/" is used as directory separator on any platform. *)
   val toString : filename -> string
   val fromString : string -> filename
+  val format_filename : filename -> SMLFormat.FormatExpression.expression list
 
   val basename : filename -> filename
   val dirname : filename -> filename
@@ -37,6 +38,8 @@ struct
 
   fun toString x = x : string
   fun fromString x = x : filename
+
+  val format_filename = SMLFormat.BasicFormatters.format_string
 
   fun basename filename =
       #file (OS.Path.splitDirFile filename)
@@ -71,33 +74,7 @@ struct
       OS.Path.isAbsolute filename
 
   fun realPath filename =
-      let
-        val maxLinks = 64
-        fun toFilename (root, cur) =
-            String.concatWith "/" (rev root @ rev cur)
-        fun readlink name =
-            SOME (OS.FileSys.readLink name) handle _ => NONE
-        fun walk (0, _, _, _) = raise OS.SysErr ("too many symlinks", NONE)
-          | walk (n, root, cur, nil) = toFilename (root, cur)
-          | walk (n, root, cur, ""::path) = walk (n, root, cur, path)
-          | walk (n, root, cur, "."::path) = walk (n, root, cur, path)
-          | walk (n, root, _::cur, ".."::path) = walk (n, root, cur, path)
-          | walk (n, root, nil, ".."::path) =
-            (case root of
-               ""::_ => walk (n, root, nil, path)
-             | _ => walk (n, ".."::root, nil, path))
-          | walk (n, root, cur, name::path) =
-            case readlink (toFilename (root, name::cur)) of
-              NONE => walk (n, root, name::cur, path)
-            | SOME filename =>
-              case String.fields (fn c => c = #"/") filename of
-                ""::lpath => walk (n-1, [""], nil, lpath)
-              | lpath => walk (n-1, root, cur, lpath @ path)
-      in
-        case String.fields (fn c => c = #"/") filename of
-          ""::path => walk (maxLinks, [""], nil, path)
-        | path => walk (maxLinks, nil, nil, path)
-      end
+      OS.FileSys.realPath filename
 
   structure TextIO =
   struct

@@ -1,156 +1,173 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../util/main/TermFormat.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 
 structure PatternCalc =
-  struct
-    datatype caseKind = BIND | HANDLE | MATCH
-    val format_caseKind
-        : caseKind -> SMLFormat.FormatExpression.expression list
-    datatype plexbind
-      = PLEXBINDDEF of string * Absyn.ty option * Loc.loc
-      | PLEXBINDREP of string * Absyn.longid * Loc.loc
-    val format_plexbind : plexbind -> SMLFormat.BasicFormatters.expression list
-    datatype ffiTy
-      = FFICONTY of ffiTy list * string list * Loc.loc
-      | FFIFUNTY of Absyn.ffiAttributes option * ffiTy list * ffiTy list * 
-                    Loc.loc
-      | FFIRECORDTY of (string * ffiTy) list * Loc.loc
-      | FFITYVAR of Absyn.tvar * Loc.loc
-    val format_ffiTy : ffiTy -> SMLFormat.BasicFormatters.expression list
-    type scopedTvars = Absyn.kindedTvar list
-    val format_scopedTvars : Absyn.kindedTvar list
-                             -> SMLFormat.FormatExpression.expression list
-    type datbind =
-      {conbind:{ty:Absyn.ty option, vid:string} list, tycon:string,
-       tyvars:Absyn.tvar list}
-    type typbind = Absyn.tvar list * string * Absyn.ty
-    datatype plexp
-      = PLAPPM of plexp * plexp list * Loc.loc
-      | PLCASEM of plexp list * (plpat list * plexp) list * caseKind * Loc.loc
-      | PLCAST of plexp * Loc.loc
-      | PLCONSTANT of Absyn.constant * Loc.loc
-      | PLFFIAPPLY of Absyn.ffiAttributes option * plexp * ffiArg list * ffiTy
-                      * Loc.loc
-      | PLFFIEXPORT of plexp * ffiTy * Loc.loc
-      | PLFFIIMPORT of plexp * ffiTy * Loc.loc
-      | PLFNM of (plpat list * plexp) list * Loc.loc
-      | PLGLOBALSYMBOL of string * Absyn.globalSymbolKind * Loc.loc
-      | PLHANDLE of plexp * (plpat * plexp) list * Loc.loc
-      | PLLET of pdecl list * plexp list * Loc.loc
-      | PLRAISE of plexp * Loc.loc
-      | PLRECORD of (string * plexp) list * Loc.loc
-      | PLRECORD_SELECTOR of string * Loc.loc
-      | PLRECORD_UPDATE of plexp * (string * plexp) list * Loc.loc
-      | PLSELECT of string * plexp * Loc.loc
-      | PLSEQ of plexp list * Loc.loc
-      | PLSQLDBI of plpat * plexp * Loc.loc
-      | PLSQLSERVER of string * Absyn.ty * Loc.loc
-      | PLTYPED of plexp * Absyn.ty * Loc.loc
-      | PLVAR of Absyn.longid * Loc.loc
-    and ffiArg
-      = PLFFIARG of plexp * ffiTy * Loc.loc
-      | PLFFIARGSIZEOF of Absyn.ty * plexp option * Loc.loc
-    and pdecl
-      = PDABSTYPE of datbind list * pdecl list * Loc.loc
-      | PDDATATYPE of datbind list * Loc.loc
-      | PDDECFUN of scopedTvars * (plpat * (plpat list * plexp) list) list * 
-                    Loc.loc
-      | PDEMPTY
-      | PDEXD of plexbind list * Loc.loc
-      | PDINFIXDEC of int * string list * Loc.loc
-      | PDINFIXRDEC of int * string list * Loc.loc
-      | PDLOCALDEC of pdecl list * pdecl list * Loc.loc
-      | PDNONFIXDEC of string list * Loc.loc
-      | PDOPEN of Absyn.longid list * Loc.loc
-      | PDREPLICATEDAT of string * Absyn.longid * Loc.loc
-      | PDTYPE of typbind list * Loc.loc
-      | PDVAL of scopedTvars * (plpat * plexp) list * Loc.loc
-      | PDVALREC of scopedTvars * (plpat * plexp) list * Loc.loc
-    and plpat
-      = PLPATCONSTANT of Absyn.constant * Loc.loc
-      | PLPATCONSTRUCT of plpat * plpat * Loc.loc
-      | PLPATID of Absyn.longid * Loc.loc
-      | PLPATLAYERED of string * Absyn.ty option * plpat * Loc.loc
-      | PLPATRECORD of bool * (string * plpat) list * Loc.loc
-      | PLPATTYPED of plpat * Absyn.ty * Loc.loc
-      | PLPATWILD of Loc.loc
-    and plstrdec
-      = PLCOREDEC of pdecl * Loc.loc
-      | PLSTRUCTBIND of (string * plstrexp) list * Loc.loc
-      | PLSTRUCTLOCAL of plstrdec list * plstrdec list * Loc.loc
-    and plstrexp
-      = PLFUNCTORAPP of string * Absyn.longid * Loc.loc
-      | PLSTREXPBASIC of plstrdec list * Loc.loc
-      | PLSTRID of Absyn.longid * Loc.loc
-      | PLSTROPAQCONSTRAINT of plstrexp * plsigexp * Loc.loc
-      | PLSTRTRANCONSTRAINT of plstrexp * plsigexp * Loc.loc
-      | PLSTRUCTLET of plstrdec list * plstrexp * Loc.loc
-    and plsigexp
-      = PLSIGEXPBASIC of plspec * Loc.loc
-      | PLSIGID of string * Loc.loc
-      | PLSIGWHERE of plsigexp * 
-                      (Absyn.tvar list * Absyn.longid * Absyn.ty) list * 
-                      Loc.loc
-    and plspec
-      = PLSPECDATATYPE of (Absyn.tvar list * string * 
-                           (string * Absyn.ty option) list) list * Loc.loc
-      | PLSPECEMPTY
-      | PLSPECEXCEPTION of (string * Absyn.ty option) list * Loc.loc
-      | PLSPECINCLUDE of plsigexp * Loc.loc
-      | PLSPECREPLIC of string * Absyn.longid * Loc.loc
-      | PLSPECSEQ of plspec * plspec * Loc.loc
-      | PLSPECSHARE of plspec * Absyn.longid list * Loc.loc
-      | PLSPECSHARESTR of plspec * Absyn.longid list * Loc.loc
-      | PLSPECSTRUCT of (string * plsigexp) list * Loc.loc
-      | PLSPECTYPE of {iseq:bool, loc:Loc.loc,
-                       tydecls:(Absyn.tvar list * string) list}
-      | PLSPECTYPEEQUATION of (Absyn.tvar list * string * Absyn.ty) * Loc.loc
-      | PLSPECVAL of scopedTvars * string * Absyn.ty * Loc.loc
-    and pltopdec
-      = PLTOPDECFUN of {argSig:plsigexp, argStrName:string, body:plstrexp,
-                        loc:Loc.loc, name:string} list * Loc.loc
-      | PLTOPDECSIG of (string * plsigexp) list * Loc.loc
-      | PLTOPDECSTR of plstrdec * Loc.loc
-    type fundecl = plpat * (plpat list * plexp) list
-    type conbind = {ty:Absyn.ty option, vid:string}
-    val format_plexp
-        : plexp -> SMLFormat.FormatExpression.expression list
-    val format_ffiArg
-        : ffiArg -> SMLFormat.BasicFormatters.expression list
-    val format_pdecl
-        : pdecl -> SMLFormat.BasicFormatters.expression list
-    val format_plpat
-        : plpat -> SMLFormat.FormatExpression.expression list
-    val format_plstrdec
-        : plstrdec -> SMLFormat.BasicFormatters.expression list
-    val format_plstrexp
-        : plstrexp -> SMLFormat.FormatExpression.expression list
-    val format_plsigexp
-        : plsigexp -> SMLFormat.FormatExpression.expression list
-    val format_plspec
-        : plspec -> SMLFormat.FormatExpression.expression list
-    val format_pltopdec
-        : pltopdec -> SMLFormat.BasicFormatters.expression list
-    val format_expfield : string * plexp -> TermFormat.format
-    val format_patfield : string * plpat -> TermFormat.format
-    val format_rule
-        : plpat list * plexp -> SMLFormat.BasicFormatters.expression list
-    val format_fundecl : plpat * (plpat list * plexp) list
-                         -> SMLFormat.FormatExpression.expression list
-    val format_typbind : typbind -> SMLFormat.BasicFormatters.expression list
-    val format_conbind : {ty:Absyn.ty option, vid:string}
-                         -> SMLFormat.BasicFormatters.expression list
-    val format_datbind : datbind -> SMLFormat.BasicFormatters.expression list
-    val getLeftPosExp : plexp -> Loc.pos
-    val getRightPosExp : plexp -> Loc.pos
-    val getLocExp : plexp -> Loc.pos * Loc.pos
-    val getLeftPosPat : plpat -> Loc.pos
-    val getRightPosPat : plpat -> Loc.pos
-    val getLocPat : plpat -> Loc.pos * Loc.pos
-    val getLocDec : pdecl -> Loc.loc
-    val getLocTopDec : pltopdec -> Loc.loc
-  end
+struct
+  type loc = Loc.loc
+  type ty =  Absyn.ty
+  type tvar = Absyn.tvar
+  type kindedTvar = Absyn.kindedTvar
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
+
+  datatype caseKind 
+    = BIND
+    | MATCH
+    | HANDLE
+
+  datatype plexbind 
+    = PLEXBINDDEF of symbol * ty option * loc
+    | PLEXBINDREP of symbol * longsymbol * loc
+
+  datatype ffiTy 
+    = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
+    | FFITYVAR of Absyn.tvar * loc
+    | FFIRECORDTY of (string * ffiTy) list * loc
+    | FFICONTY of ffiTy list * longsymbol * loc
+
+  type scopedTvars 
+    = kindedTvar list
+
+  datatype plexp
+    = PLCONSTANT of Absyn.constant
+    | PLVAR of longsymbol
+    | PLTYPED of plexp *  ty * loc
+    | PLAPPM of plexp * plexp list * loc
+    | PLLET of pdecl list * plexp list * loc
+    | PLRECORD of (string * plexp) list * loc
+    | PLRECORD_UPDATE of plexp * (string * plexp) list * loc
+    | PLRAISE of plexp * loc
+    | PLHANDLE of plexp * (plpat * plexp) list * loc
+    | PLFNM of (plpat list * plexp) list * loc 
+    | PLCASEM of plexp list * (plpat list * plexp) list * caseKind * loc
+    | PLRECORD_SELECTOR of symbol * loc 
+    | PLSELECT of string * plexp * loc  (* this must be kept as a primitive *)
+    | PLSEQ of plexp list * loc
+    | PLFFIIMPORT of ffiFun * ffiTy * loc
+    | PLFFIAPPLY of FFIAttributes.attributes option * ffiFun * ffiArg list * ffiTy list * loc
+    | PLSQLSCHEMA of {columnInfoFnExp : plexp, ty : ty, loc : loc}
+    | PLSQLDBI of plpat * plexp * loc
+    | PLJOIN of plexp * plexp * loc
+
+  and ffiArg 
+    = PLFFIARG of plexp * ffiTy * loc
+    | PLFFIARGSIZEOF of ty * plexp option * loc
+
+  and ffiFun
+    = PLFFIFUN of plexp
+    | PLFFIEXTERN of string
+
+  and pdecl 
+    = PDVAL of scopedTvars * (plpat * plexp ) list * loc 
+    | PDDECFUN of scopedTvars * {fdecl:(plpat * (plpat list * plexp) list), loc:loc} list*loc 
+    | PDVALREC of scopedTvars * (plpat * plexp ) list * loc
+    | PDVALPOLYREC of (symbol * ty * plexp ) list * loc
+    | PDTYPE of (tvar list * symbol * ty) list * loc
+    | PDDATATYPE of {tyvars: tvar list, symbol: symbol,
+                     conbind: {symbol: symbol, ty: ty option} list} list * loc
+    | PDREPLICATEDAT of symbol * longsymbol * loc (* replication *)
+    | PDABSTYPE of {tyvars: tvar list, symbol: symbol,
+                    conbind: {symbol: symbol, ty: ty option} list} list
+                   * pdecl list * loc
+    | PDEXD of plexbind list * loc
+    | PDLOCALDEC of pdecl list * pdecl list * loc
+    | PDOPEN of longsymbol list * loc
+    | PDINFIXDEC of int * symbol list * loc
+    | PDINFIXRDEC of int * symbol list * loc
+    | PDNONFIXDEC of symbol list * loc
+    | PDEMPTY 
+
+  and plpat 
+    = PLPATWILD of loc
+    | PLPATID of longsymbol
+    | PLPATCONSTANT of Absyn.constant
+    | PLPATCONSTRUCT of plpat * plpat * loc
+    | PLPATRECORD of bool * (string * plpat) list * loc
+    | PLPATLAYERED of symbol * ty option * plpat * loc
+    | PLPATTYPED of plpat * ty * loc
+ 
+  and plstrdec 
+    = PLCOREDEC of pdecl * loc
+    | PLSTRUCTBIND of (symbol * plstrexp) list * loc
+    | PLSTRUCTLOCAL of plstrdec list * plstrdec list * loc
+
+  and plstrexp 
+    = PLSTREXPBASIC of plstrdec list * loc (*basic*)
+    | PLSTRID of longsymbol
+    | PLSTRTRANCONSTRAINT of plstrexp * plsigexp * loc
+    | PLSTROPAQCONSTRAINT of plstrexp * plsigexp * loc
+    | PLFUNCTORAPP of symbol * longsymbol * loc
+    | PLSTRUCTLET  of plstrdec list * plstrexp * loc (*local declaration*)
+
+  and plsigexp 
+    = PLSIGEXPBASIC of plspec * loc (*basic*)
+    | PLSIGID of symbol
+    | PLSIGWHERE of plsigexp * (tvar list * longsymbol * ty) * loc
+
+  and plspec 
+    = PLSPECVAL of scopedTvars * symbol * ty * loc (* value *)
+    | PLSPECTYPE of {tydecls:(tvar list * symbol) list, iseq:bool, loc:loc}
+    | PLSPECTYPEEQUATION of (tvar list * symbol * ty) * loc
+    | PLSPECDATATYPE of
+      (tvar list * symbol * (symbol * ty option) list ) list * loc
+    | PLSPECREPLIC of symbol * longsymbol * loc (* replication *)
+    | PLSPECEXCEPTION of (symbol * ty option) list * loc (* exception *)
+    | PLSPECSTRUCT of (symbol * plsigexp) list * loc (* structure *)
+    | PLSPECINCLUDE of plsigexp * loc (* include *)
+    | PLSPECSEQ of plspec * plspec * loc 
+    | PLSPECSHARE of plspec * longsymbol list * loc 
+    | PLSPECSHARESTR of plspec * longsymbol list * loc 
+    | PLSPECEMPTY
+
+  and pltopdec 
+    = PLTOPDECSTR of plstrdec * loc (* structure-level declaration *)
+    | PLTOPDECSIG of (symbol * plsigexp ) list * loc 
+    | PLTOPDECFUN of
+      {name:symbol, argStrName:symbol, argSig:plsigexp, body:plstrexp, loc:loc}
+        list * loc 
+
+  type conbind  = {symbol: symbol, ty: ty option}
+  type datbind 
+    = {tyvars: tvar list, symbol: symbol,
+       conbind: {symbol: symbol, ty: ty option} list}
+
+  val format_caseKind
+      : caseKind -> SMLFormat.FormatExpression.expression list
+  val format_scopedTvars
+      : scopedTvars -> SMLFormat.FormatExpression.expression list
+  val format_plexp
+      : plexp -> SMLFormat.FormatExpression.expression list
+  val format_ffiArg
+      : ffiArg -> SMLFormat.BasicFormatters.expression list
+  val format_ffiTy
+      : ffiTy -> SMLFormat.BasicFormatters.expression list
+  val format_pdecl
+      : pdecl -> SMLFormat.BasicFormatters.expression list
+  val format_plpat
+      : plpat -> SMLFormat.FormatExpression.expression list
+  val format_plstrdec
+      : plstrdec -> SMLFormat.BasicFormatters.expression list
+  val format_plstrexp
+      : plstrexp -> SMLFormat.FormatExpression.expression list
+  val format_plsigexp
+      : plsigexp -> SMLFormat.FormatExpression.expression list
+  val format_plspec
+      : plspec -> SMLFormat.FormatExpression.expression list
+  val format_pltopdec
+      : pltopdec -> SMLFormat.BasicFormatters.expression list
+
+  val getLeftPosExp : plexp -> Loc.pos
+  val getRightPosExp : plexp -> Loc.pos
+  val getLocExp : plexp -> Loc.pos * Loc.pos
+  val getLeftPosPat : plpat -> Loc.pos
+  val getRightPosPat : plpat -> Loc.pos
+  val getLocPat : plpat -> Loc.pos * Loc.pos
+  val getLocDec : pdecl -> Loc.loc
+  val getLocTopDec : pltopdec -> Loc.loc
+end

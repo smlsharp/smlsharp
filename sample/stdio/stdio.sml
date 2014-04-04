@@ -9,7 +9,7 @@
 type c_file = unit ptr
 
 val fopen = _import "fopen" : (string, string) -> c_file
-val fclose = _import "fclose" : c_file -> unit
+val fclose = _import "fclose" : c_file -> ()
 
 fun fread (dst, len, file) =
     _ffiapply _import "fread"

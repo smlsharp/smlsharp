@@ -22,10 +22,10 @@ struct
 
   fun compareIndex ((l1, t1), (l2, t2)) =
       case String.compare (l1, l2) of
-        EQUAL => (case (TypesUtils.derefTy t1, TypesUtils.derefTy t2) of
+        EQUAL => (case (TypesBasics.derefTy t1, TypesBasics.derefTy t2) of
                     (T.BOUNDVARty t1, T.BOUNDVARty t2) =>
                     BoundTypeVarID.compare (t1, t2)
-                  | _ => raise Control.Bug "compareIndex")
+                  | _ => raise Bug.Bug "compareIndex")
       | x => x
 
   fun generateSingletonTy (btv:BoundTypeVarID.id, fields:T.ty LabelEnv.map) =
@@ -33,7 +33,7 @@ struct
           (LabelEnv.listKeys fields)
 
   fun generateInstance (label, ty) loc =
-      case TypesUtils.derefTy ty of
+      case TypesBasics.derefTy ty of
         ty as T.RECORDty _ => SOME (RC.RCINDEXOF (label, ty, loc))
       | _ => NONE
 

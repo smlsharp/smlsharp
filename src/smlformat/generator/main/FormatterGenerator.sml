@@ -8,12 +8,8 @@
 structure FormatterGenerator : FORMATTER_GENERATOR =
 struct
 
-  (***************************************************************************)
-
-  open FormatTemplate
+  structure F = FormatTemplate
   structure U = Utility
-
-  (***************************************************************************)
 
   datatype listElement
     = LIST of string list
@@ -97,25 +93,25 @@ struct
   val newline = "\n"
 
   (** with space, no newline *)
-  val spaceIndicator = Indicator{space = true, newline = NONE}
+  val spaceIndicator = F.Indicator{space = true, newline = NONE}
 
   (** no space, newline priority 1 *)
   val ns_1_Indicator =
-      Indicator
-      {space = false, newline = SOME{priority = Preferred 1}}
+      F.Indicator
+      {space = false, newline = SOME{priority = F.Preferred 1}}
 
   (** with space, newline priority 1 *)
   val s_1_Indicator =
-      Indicator
-      {space = true, newline = SOME{priority = Preferred 1}}
+      F.Indicator
+      {space = true, newline = SOME{priority = F.Preferred 1}}
 
   (** with space, deferred newline priority *)
   val s_d_Indicator =
-      Indicator
-      {space = true, newline = SOME{priority = Deferred}}
+      F.Indicator
+      {space = true, newline = SOME{priority = F.Deferred}}
 
   (** used to group tyCon and its argument type expressions *)
-  val assocOfTyConApp = {cut = false, strength = 10, direction = Left}
+  val assocOfTyConApp = {cut = false, strength = 10, direction = F.Left}
 
   val unknownRegion = (~1, ~1)
 
@@ -209,6 +205,8 @@ struct
   fun getTyVarName (Ast.Tyv name) = name
     | getTyVarName (Ast.MarkTyv (tyv, _)) = getTyVarName tyv
 
+  exception GetTyConName
+
   (**
    * get the name of the type constructor used to build a type expression.
    * @params ty
@@ -221,7 +219,7 @@ struct
         Ast.VarTy tv => getTyVarName tv
       | Ast.ConTy (ids, _) => U.interleaveString "." ids
       | Ast.MarkTy (ty, _) => getTyConName ty
-      | _ => raise Fail "Bug: non VarTy or ConTy to getTyConName"
+      | _ => raise GetTyConName
 
   (****************************************)
 
@@ -364,7 +362,7 @@ struct
    *)
   fun translateTemplate
       (F : formatterEnv, T : typeEnv, P : parameterSet, prefix : string) 
-    : bool -> template -> listElement
+    : bool -> F.template -> listElement
     =
       let
         fun codeOfIndicator {space, newline} =
@@ -376,7 +374,7 @@ struct
                       let
                         val priorityCode =
                             case priority
-                             of Preferred int =>
+                             of F.Preferred int =>
                                 prefixOfFormatExpressionName ^ "Preferred" ^
                                 "(" ^ Int.toString int ^ ")"
                               | Deferred =>
@@ -399,9 +397,9 @@ struct
               val directionCode =
                   prefixOfFormatExpressionName ^
                   (case direction
-                    of Left => "Left"
-                     | Right => "Right"
-                     | Neutral => "Neutral")
+                    of F.Left => "Left"
+                     | F.Right => "Right"
+                     | F.Neutral => "Neutral")
             in
               "SOME{" ^
               "cut = " ^ Bool.toString cut ^ ", " ^
@@ -412,22 +410,23 @@ struct
 
         fun translate isDefault template =
             case template of
-              Term arg =>
+              F.Term arg =>
               let
                 val code = 
                     prefixOfFormatExpressionName ^ "Term" ^
                     "(" ^ (Int.toString (size arg)) ^ ","^
                     "\"" ^ (escapeString arg) ^ "\")"
+                val conLongid = prefixOfFormatExpressionName ^ "Term"
               in
                 LIST [code]
               end
-            | Newline =>
+            | F.Newline =>
               let
                 val code =  prefixOfFormatExpressionName ^ "Newline"
               in
                 LIST [code]
               end
-            | Guard (assoc, templates) =>
+            | F.Guard (assoc, templates) =>
               let
                 val templateCodes = map (translate isDefault) templates
                 val templateCode = expListToCode templateCodes
@@ -439,7 +438,7 @@ struct
               in
                 LIST[code]
               end
-            | Indicator arg =>
+            | F.Indicator arg =>
               let
                 val code = 
                     prefixOfFormatExpressionName ^ "Indicator" ^
@@ -447,7 +446,7 @@ struct
               in
                 LIST[code]
               end
-            | StartOfIndent indent =>
+            | F.StartOfIndent indent =>
               let
                 val code = 
                     prefixOfFormatExpressionName ^ "StartOfIndent" ^
@@ -455,27 +454,27 @@ struct
               in
                 LIST[code]
               end
-            | EndOfIndent =>
+            | F.EndOfIndent =>
               let
                 val code = 
                     prefixOfFormatExpressionName ^ "EndOfIndent"
               in
                 LIST[code]
               end
-            | Instance instance =>
+            | F.Instance instance =>
               let
                 val code = 
                     codeOfInstantiation false isDefault instance
               in
                 ATOM code
               end
-            | MarkTemplate(template, region) =>
+            | F.MarkTemplate(template, region) =>
               (translate isDefault template
                handle error => raise translateError(error, region))
 
         and codeOfInstantiation isArgPosition isDefault instance =
             (case instance of
-               (Atom (id, tyid)) =>
+               (F.Atom (id, tyid)) =>
                ((* first, try formatting by using bound formatter *)
                 let
                   val formatter =
@@ -490,8 +489,11 @@ struct
                   (* When any error occurs, check whether additional parameter
                    * of the same name is declared. *)
                   handle exn as (InternalError _) =>
-                         if P(id) then id else raise exn)
-             | (App(id, tyid, instances, templates)) =>
+                         if P(id) then id else raise exn
+                       | GetTyConName => 
+                         raise InternalError (FormatterOfTypeNotFound (prefix, id))
+               )
+             | (F.App(id, tyid, instances, templates)) =>
                let
                  val formatter =
                      (case tyid of
@@ -499,6 +501,8 @@ struct
                       | SOME tyid => F(prefix, Ast.VarTy(Ast.Tyv tyid)))
                      handle exn as (InternalError _) =>
                             if P(id) then id else raise exn
+                          | GetTyConName => 
+                            raise InternalError (FormatterOfTypeNotFound (prefix, id))
                  val instanceCodes =
                      map (codeOfInstantiation true isDefault) instances
                  val templateCodes =
@@ -518,7 +522,7 @@ struct
                  ")" ^
                  (if isArgPosition then "" else id)
                end
-             | (MarkInstance(instance, region)) =>
+             | (F.MarkInstance(instance, region)) =>
                (codeOfInstantiation isArgPosition isDefault instance
                 handle error => raise (translateError(error, region))))
             handle exn as (InternalError _) =>
@@ -555,11 +559,11 @@ struct
    * @return a new type environment extended by the bindings generated by
    *      pattern match.
    *)
-  fun matchTyPat T (ty, (VarTyPat id)) = addToTypeEnv T (id, ty)
-    | matchTyPat T (ty, WildTyPat) = T
-    | matchTyPat T (ty, (TypedVarTyPat (id, typeID))) = (* ignore ty *)
+  fun matchTyPat T (ty, (F.VarTyPat id)) = addToTypeEnv T (id, ty)
+    | matchTyPat T (ty, F.WildTyPat) = T
+    | matchTyPat T (ty, (F.TypedVarTyPat (id, typeID))) = (* ignore ty *)
       addToTypeEnv T (id, Ast.VarTy (Ast.Tyv typeID))
-    | matchTyPat T (Ast.RecordTy fieldTypes, RecordTyPat(fieldPats, flexible))
+    | matchTyPat T (Ast.RecordTy fieldTypes, F.RecordTyPat(fieldPats, flexible))
       =
       foldl
       (fn ((label, typat), T) =>
@@ -571,13 +575,13 @@ struct
             | SOME(_, ty) => matchTyPat T (ty, typat))
       T
       fieldPats
-    | matchTyPat T (Ast.TupleTy tys, TupleTyPat typats) =
+    | matchTyPat T (Ast.TupleTy tys, F.TupleTyPat typats) =
       (foldl (fn (pair, T) => matchTyPat T pair) T (zipEq (tys, typats))
        handle
        UnequalLengths =>
        raise InternalError
                  (UnMatchPatternAndType("the number of elements mismatch.")))
-    | matchTyPat T (ty as Ast.ConTy(_, tys), TyConTyPat(id, typats)) =
+    | matchTyPat T (ty as Ast.ConTy(_, tys), F.TyConTyPat(id, typats)) =
       (foldl
        (fn (pair, T) => matchTyPat T pair)
        (addToTypeEnv T (id, ty))
@@ -587,7 +591,7 @@ struct
        raise InternalError
                  (UnMatchPatternAndType("the number of arguments mismatch.")))
     | matchTyPat
-      T (ty as Ast.ConTy(_, tys), TypedTyConTyPat(id, typats, typeID)) =
+      T (ty as Ast.ConTy(_, tys), F.TypedTyConTyPat(id, typats, typeID)) =
       (foldl
        (fn (pair, T) => matchTyPat T pair)
        (addToTypeEnv T (id, Ast.VarTy (Ast.Tyv typeID)))
@@ -597,7 +601,7 @@ struct
        raise InternalError
                  (UnMatchPatternAndType("the number of arguments mismatch.")))
     | matchTyPat T (Ast.MarkTy(ty, _), typat) = matchTyPat T (ty, typat)
-    | matchTyPat T (ty, MarkTyPat(typat, region)) =
+    | matchTyPat T (ty, F.MarkTyPat(typat, region)) =
       (matchTyPat T (ty, typat)
        handle error => raise (translateError(error, region)))
     | matchTyPat T _ =
@@ -609,10 +613,10 @@ struct
    * @param tyPat a type pattern
    * @return a text of SML code of pattern
    *)
-  fun translateTyPatToExpPat (VarTyPat id) = id
-    | translateTyPatToExpPat WildTyPat = "_"
-    | translateTyPatToExpPat (TypedVarTyPat (id, _)) = id
-    | translateTyPatToExpPat (RecordTyPat(fieldPats, flexible)) =
+  fun translateTyPatToExpPat (F.VarTyPat id) = id
+    | translateTyPatToExpPat F.WildTyPat = "_"
+    | translateTyPatToExpPat (F.TypedVarTyPat (id, _)) = id
+    | translateTyPatToExpPat (F.RecordTyPat(fieldPats, flexible)) =
       "{" ^
       (U.interleaveString
        ", "
@@ -621,11 +625,11 @@ struct
          fieldPats) @
         (if flexible then ["..."] else []))) ^
       "}"
-    | translateTyPatToExpPat (TupleTyPat typats) =
+    | translateTyPatToExpPat (F.TupleTyPat typats) =
       "(" ^ (U.interleaveString ", " (map translateTyPatToExpPat typats)) ^ ")"
-    | translateTyPatToExpPat (TyConTyPat(id, typats)) = id
-    | translateTyPatToExpPat (TypedTyConTyPat(id, typats, _)) = id
-    | translateTyPatToExpPat (MarkTyPat(typat, _)) =
+    | translateTyPatToExpPat (F.TyConTyPat(id, typats)) = id
+    | translateTyPatToExpPat (F.TypedTyConTyPat(id, typats, _)) = id
+    | translateTyPatToExpPat (F.MarkTyPat(typat, _)) =
       translateTyPatToExpPat typat
 
   (**
@@ -648,8 +652,8 @@ struct
   fun translateType
           (F, P, prefix)
           (
-            formatTag : formattag,
-            localFormatTags : formattag list,
+            formatTag : F.formattag,
+            localFormatTags : F.formattag list,
             isDefault,
             id,
             ty
@@ -805,8 +809,8 @@ struct
                 (
                   {
                     id = NONE,
-                    typepat = VarTyPat varName,
-                    templates = [Guard(NONE, [Instance(Atom(varName, NONE))])]
+                    typepat = F.VarTyPat varName,
+                    templates = [F.Guard(NONE, [F.Instance(F.Atom(varName, NONE))])]
                   },
                   []
                 )
@@ -815,12 +819,12 @@ struct
             | Ast.ConTy (["->"], [t1, t2]) =>
               let
                 val varName = getNewID ()
-                val templates = [Term "<<fn>>"]
+                val templates = [F.Term "<<fn>>"]
               in
                 (
                   {
                     id = NONE,
-                    typepat = VarTyPat varName,
+                    typepat = F.VarTyPat varName,
                     templates = templates
                   },
                   []
@@ -830,18 +834,18 @@ struct
             | Ast.ConTy (qid, []) =>
               let
                 val varName = getNewID ()
-                val template = Instance(Atom(varName, NONE))
+                val template = F.Instance(F.Atom(varName, NONE))
                 val templates =
                     case qid of
-                      ["string"] => [Term "\"", template, Term "\""]
-                    | ["String", "string"] => [Term "\"", template, Term "\""]
+                      ["string"] => [F.Term "\"", template, F.Term "\""]
+                    | ["String", "string"] => [F.Term "\"", template, F.Term "\""]
                     | _ => [template]
               in
                 (
                   {
                     id = NONE,
-                    typepat = VarTyPat varName,
-                    templates = [Guard(NONE, templates)]
+                    typepat = F.VarTyPat varName,
+                    templates = [F.Guard(NONE, templates)]
                   },
                   []
                 )
@@ -867,33 +871,33 @@ struct
                          end)
                      idTypePairs)
                 val typePat =
-                    TyConTyPat
-                    (tyconVarName, map (fn (id, _) => VarTyPat id) idTypePairs)
+                    F.TyConTyPat
+                    (tyconVarName, map (fn (id, _) => F.VarTyPat id) idTypePairs)
                 val inst =
-                    Instance
-                    (App
+                    F.Instance
+                    (F.App
                      (
                        tyconVarName,
                        NONE,
-                       map (fn (id, _) => Atom (id, NONE)) idTypePairs,
+                       map (fn (id, _) => F.Atom (id, NONE)) idTypePairs,
                        if tyconIsList ty
-                       then [[Term ",", s_1_Indicator]]
+                       then [[F.Term ",", s_1_Indicator]]
                        else []
                      ))
                 val templates =
-                    [Guard
+                    [F.Guard
                      (
                        NONE,
                        if tyconIsList ty
                        then
                          [
-                           Term "[",
-                           StartOfIndent 2,
+                           F.Term "[",
+                           F.StartOfIndent 2,
                            ns_1_Indicator,
                            inst,
-                           EndOfIndent,
+                           F.EndOfIndent,
                            ns_1_Indicator,
-                           Term "]"
+                           F.Term "]"
                          ]
                        else [inst]
                      )]
@@ -928,10 +932,10 @@ struct
                          end)
                      labelVarTyTuples)
                 val typePat =
-                    RecordTyPat
+                    F.RecordTyPat
                     (
                       map
-                      (fn (label, id, _) => (label, VarTyPat id))
+                      (fn (label, id, _) => (label, F.VarTyPat id))
                       labelVarTyTuples,
                       false
                     )
@@ -942,32 +946,32 @@ struct
                       List.rev
                       (foldl
                        (fn ((label, id, _), fieldTemps) =>
-                           (Guard
+                           (F.Guard
                             (
                               NONE,
                               [
-                                (Term label),
+                                (F.Term label),
                                 s_d_Indicator,
-                                (Term "="),
+                                (F.Term "="),
                                 s_1_Indicator,
-                                Guard(NONE, [Instance(Atom (id, NONE))])
+                                F.Guard(NONE, [F.Instance(F.Atom (id, NONE))])
                               ]
                             )::
                             s_1_Indicator::
-                            (Term ",")::
+                            (F.Term ",")::
                             fieldTemps))
                        (case hd labelVarTyTuples of
                           (label, id, _) =>
                           [
-                            Guard
+                            F.Guard
                             (
                               NONE,
                               [
-                                Term label,
+                                F.Term label,
                                 s_d_Indicator,
-                                Term ("="),
+                                F.Term ("="),
                                 s_1_Indicator,
-                                (Guard(NONE, [Instance(Atom(id, NONE))]))
+                                (F.Guard(NONE, [F.Instance(F.Atom(id, NONE))]))
                               ]
                             )
                           ])
@@ -978,12 +982,12 @@ struct
                     id = NONE,
                     typepat = typePat,
                     templates =
-                    [Guard
+                    [F.Guard
                      (
                        NONE,
-                       [Term "{", StartOfIndent 2, ns_1_Indicator] @
+                       [F.Term "{", F.StartOfIndent 2, ns_1_Indicator] @
                        templateRows @
-                       [EndOfIndent, ns_1_Indicator, Term "}"]
+                       [F.EndOfIndent, ns_1_Indicator, F.Term "}"]
                      )]
                   },
                   localTags
@@ -1013,7 +1017,7 @@ struct
                          end)
                      varTyTuples)
                 val typePat =
-                    TupleTyPat (map (fn (id, _) => VarTyPat id) varTyTuples)
+                    F.TupleTyPat (map (fn (id, _) => F.VarTyPat id) varTyTuples)
                 val templateRows =
                     if List.null varTyTuples
                     then []
@@ -1021,12 +1025,12 @@ struct
                       List.rev
                       (foldl
                        (fn ((id, _), temps) =>
-                           (Guard(NONE, [Instance(Atom (id, NONE))]))::
+                           (F.Guard(NONE, [F.Instance(F.Atom (id, NONE))]))::
                            s_1_Indicator::
-                           (Term ",")::
+                           (F.Term ",")::
                            temps)
                        (case hd varTyTuples of
-                          (id, _) => [Guard(NONE, [Instance(Atom(id, NONE))])])
+                          (id, _) => [F.Guard(NONE, [F.Instance(F.Atom(id, NONE))])])
                        (tl varTyTuples))
               in
                 (
@@ -1034,12 +1038,12 @@ struct
                     id = NONE,
                     typepat = typePat,
                     templates =
-                    [Guard
+                    [F.Guard
                      (
                        NONE,
-                       [Term "(", StartOfIndent 2, ns_1_Indicator] @
+                       [F.Term "(", F.StartOfIndent 2, ns_1_Indicator] @
                        templateRows @
-                       [EndOfIndent, ns_1_Indicator, Term ")"]
+                       [F.EndOfIndent, ns_1_Indicator, F.Term ")"]
                      )]
                   },
                   localTags
@@ -1134,10 +1138,10 @@ struct
                     id = id,
                     typepat = typepat,
                     templates =
-                    [Guard
+                    [F.Guard
                      (
                        SOME assocOfTyConApp,
-                       Term(valConName) :: s_1_Indicator :: templates
+                       F.Term(valConName) :: s_1_Indicator :: templates
                      )]
                   }
             in

@@ -74,6 +74,9 @@ structure TermFormat :> sig
   val formatEnclosedSEnvPlain
       : 'a formatter * format * format -> 'a SEnv.map formatter
 
+  val formatEnclosedSymbolEnvPlain
+      : 'a formatter * format * format -> 'a SymbolEnv.map formatter
+
 
   (* formatting records and tuples *)
   val isTuple : 'a LabelEnv.map -> bool
@@ -92,12 +95,19 @@ structure TermFormat :> sig
   (* for fine-tuning *)
   val formatIfEmpty : format -> 'a SEnv.map formatter
 
+  (* for fine-tuning *)
+  val formatIfNonEmptySymbolMap : format -> 'a SymbolEnv.map formatter
+
+  (* for fine-tuning *)
+  val formatIfEmptySymbolMap : format -> 'a SymbolEnv.map formatter
+
   val formatIfEmptyFormat : (format * format) -> format -> format
 
   (* formatting bound type variables *)
   type 'kind btvEnv'
   type 'kind btvEnv = 'kind btvEnv' formatParam
   val emptyBtvEnv : 'k btvEnv
+  val makeBtvEnv : 'k BoundTypeVarID.Map.map -> 'k btvEnv
   val extendBtvEnv : 'k btvEnv -> 'k BoundTypeVarID.Map.map -> 'k btvEnv
   val extendBtvEnvWithOrder :
       'k btvEnv -> 'k BoundTypeVarID.Map.map * BoundTypeVarID.id list
@@ -349,6 +359,21 @@ struct
          comma
         )
         (SEnv.listItemsi senv)
+
+  fun formatEnclosedSymbolEnvPlain (formatter, comma, mapsto) senv =
+      formatDeclList
+        (fn (symbol, value) =>
+            begin_
+              nest_ 1
+                 $(Symbol.format_symbol symbol)
+                 $mapsto
+                 $(formatter value)
+              end_
+            end_,
+         comma,
+         comma
+        )
+        (SymbolEnv.listItemsi senv)
      
   structure FormatComb =
   struct
@@ -421,6 +446,14 @@ struct
   fun formatIfEmpty exp smap = 
       if SEnv.isEmpty(smap) then exp else nil
 
+  (**** for fine-tuning ****)
+  fun formatIfNonEmptySymbolMap exp smap = 
+      if SymbolEnv.isEmpty(smap) then nil else exp
+
+  (**** for fine-tuning ****)
+  fun formatIfEmptySymbolMap exp smap = 
+      if SymbolEnv.isEmpty(smap) then exp else nil
+
   fun formatIfEmptyFormat (emptyFormat, nonEmptyFormat) exp =
       if null(exp) then emptyFormat else nonEmptyFormat
 
@@ -442,7 +475,7 @@ struct
   fun getBtvEnv nil = emptyBtvEnv'
     | getBtvEnv [btvEnv] = btvEnv
     | getBtvEnv _ =
-      raise Control.Bug "TermFormat.getBtvEnv: illgal btvEnv parameter"
+      raise Bug.Bug "TermFormat.getBtvEnv: illgal btvEnv parameter"
 
   fun listItemsiWithOrder (map, order) =
       let
@@ -462,6 +495,8 @@ struct
   fun extendBtvEnv env btvMap =
       [BoundTypeVarID.Map.foldli (fn (k, v, env) => add env (k, v))
                                  (getBtvEnv env) btvMap]
+
+  fun makeBtvEnv btvMap = extendBtvEnv emptyBtvEnv btvMap
 
   fun extendBtvEnvWithOrder env pair =
       [foldl (fn (x, env) => add env x)
@@ -667,7 +702,7 @@ struct
     fun tuple4 (f1, f2, f3, f4) (x1, x2, x3, x4) =
         tuple (fn x => x) [f1 x1, f2 x2, f3 x3, f4 x4]
     fun puts (A (fmt, last)) k =
-        k (A (fmt, fn t => TextIO.print (Control.prettyPrint t ^ "\n")))
+        k (A (fmt, fn t => TextIO.print (Bug.prettyPrint t ^ "\n")))
     val term = fn x => [term x]
   end
 

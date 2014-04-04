@@ -3,32 +3,38 @@
  * @copyright (c) 2011, Tohoku University.
  * @author UENO Katsuhiro
  *)
-
-structure ElaborateInterface : sig
-
+(*
+sig
   type fixEnv
-
   val elaborate
-      : AbsynInterface.interface
-        -> {requireFixEnv: fixEnv, provideFixEnv: fixEnv}
-           * PatternCalcInterface.interface
-
-end =
+    : AbsynInterface.interface
+       -> {requireFixEnv: fixEnv, provideFixEnv: fixEnv}
+          * PatternCalcInterface.interface
+end
+*)
+structure ElaborateInterface =
 struct
 
+  structure EU = UserErrorUtils
+  structure E = ElaborateError
 
   structure I = AbsynInterface
   structure P = PatternCalcInterface
   structure PC = PatternCalc
+  val symbolToString = Symbol.symbolToString
+  val longsymbolToLongid = Symbol.longsymbolToLongid
+  val symbolToLoc = Symbol.symbolToLoc
+  val mkSymbol = Symbol.mkSymbol
 
   type fixEnv = Fixity.fixity SEnv.map
 
   fun checkSigexp sigexp =
       case sigexp of
         PC.PLSIGEXPBASIC (spec, loc) => checkSpec spec
-      | PC.PLSIGID (sigid, loc) =>
-        ElaboratorUtils.enqueueError
-          (loc, ElaborateError.SigIDFoundInInterface sigid)
+      | PC.PLSIGID symbol =>
+        EU.enqueueError
+          (symbolToLoc symbol, 
+           E.SigIDFoundInInterface (symbolToString symbol))
       | PC.PLSIGWHERE (sigexp, typbinds, loc) => checkSigexp sigexp
 
   and checkSpec spec =
@@ -40,7 +46,7 @@ struct
       | PC.PLSPECREPLIC _ => ()
       | PC.PLSPECEXCEPTION _ => ()
       | PC.PLSPECSTRUCT (strdecs, loc) =>
-        app (fn (strid, sigexp) => checkSigexp sigexp) strdecs
+        app (fn (symbol, sigexp) => checkSigexp sigexp) strdecs
       | PC.PLSPECINCLUDE (sigexp, loc) => checkSigexp sigexp
       | PC.PLSPECSEQ (spec1, spec2, loc) =>
         (checkSpec spec1; checkSpec spec2)
@@ -51,18 +57,21 @@ struct
   fun elabSigexp sigexp =
       let
         val sigexp = ElaborateModule.elabSigExp sigexp
+(*
         val sigexp = UserTvarScope.decideSigexp sigexp
+*)
         val _ = checkSigexp sigexp
       in
         sigexp
       end
 
+(*
   fun tyvarsOverloadInstance inst =
       case inst of
         P.INST_OVERLOAD overloadCase => tyvarsOverloadCase overloadCase
-      | P.INST_LONGVID {vid} => UserTvarScope.empty
+      | P.INST_LONGVID {longsymbol} => UserTvarScope.empty
 
-  and tyvarsOverloadMatch ({instTy, instance}:P.overloadMatch) =
+  and tyvarsOverloadMatch {instTy, instance} =
       UserTvarScope.union (UserTvarScope.ftv instTy,
                             tyvarsOverloadInstance instance)
   and tyvarsOverloadCase ({tyvar, expTy, matches, loc}:P.overloadCase) =
@@ -74,9 +83,8 @@ struct
   fun tyvarsValbindBody body =
       case body of
         P.VAL_EXTERN {ty} => UserTvarScope.ftv ty
-      | P.VAL_EXTERN_WITHNAME {ty, externPath} => UserTvarScope.ftv ty
-      | P.VALALIAS_EXTERN {path} => UserTvarScope.empty
-      | P.VAL_BUILTIN {builtinName, ty} => UserTvarScope.ftv ty
+      | P.VALALIAS_EXTERN longsymbol => UserTvarScope.empty
+      | P.VAL_BUILTIN {builtinSymbol, ty} => UserTvarScope.ftv ty
       | P.VAL_OVERLOAD overloadCase => tyvarsOverloadCase overloadCase
 
   fun checkUniqueOverloadTvars used ({tyvar, expTy, matches, loc}
@@ -84,8 +92,8 @@ struct
       let
         val _ =
             if UserTvarScope.member (used, tyvar)
-            then (ElaboratorUtils.enqueueError
-                   (loc, ElaborateError.UserTvarScopedAtOuterDecl
+            then (EU.enqueueError
+                   (loc, E.UserTvarScopedAtOuterDecl
                            {tvar = tyvar}))
             else ()
         val set =
@@ -100,41 +108,44 @@ struct
                 | P.INST_LONGVID _ => ())
             matches
       end
-
   fun elabValbindBody body =
       case body of
         P.VAL_EXTERN _ => body
-      | P.VAL_EXTERN_WITHNAME _ => body
       | P.VALALIAS_EXTERN _ => body
       | P.VAL_BUILTIN _ => body
       | P.VAL_OVERLOAD c =>
         (checkUniqueOverloadTvars UserTvarScope.empty c; body)
 
-  fun elabValbind ({vid, body, loc}:I.valbind) =
+*)
+  fun elabValbind ({symbol, body, loc}:I.valbind) =
       let
+        val _ = ElaborateCore.checkReservedNameForValBind symbol
+(*
         val body = elabValbindBody body
         val tvset = tyvarsValbindBody body
         val tvars = UserTvarScope.toTvarList tvset
+*)
       in
-        P.PIVAL {scopedTvars = tvars, vid = vid, body = body, loc = loc}
+        P.PIVAL {scopedTvars = nil, symbol = symbol, body = body, loc = loc}
       end
 
   fun elabExbind exbind =
       case exbind of
-        I.EXNDEF {vid, ty, loc} => 
-        P.PIEXCEPTION {vid=vid, ty=ty, externPath=NONE, loc=loc}
-      | I.EXNDEF_WITHNAME {vid, ty, externPath, loc} => 
-        P.PIEXCEPTION {vid=vid, ty=ty, externPath=SOME externPath, loc=loc}
-      | I.EXNREP {vid, longvid, loc} =>
-        P.PIEXCEPTIONREP {vid=vid, origId=longvid, loc=loc}
+        I.EXNDEF {symbol, ty, loc} => 
+        (ElaborateCore.checkReservedNameForConstructorBind symbol;
+         P.PIEXCEPTION {symbol= symbol, ty=ty, loc=loc})
+      | I.EXNREP {symbol, longsymbol, loc} =>
+        (ElaborateCore.checkReservedNameForConstructorBind symbol;
+         P.PIEXCEPTIONREP {symbol= symbol, longsymbol= longsymbol, loc=loc})
 
   fun elabTypbind typbind =
       case typbind of 
-      I.TRANSPARENT tyconInfo => P.PITYPE tyconInfo
-    | I.OPAQUE_NONEQ {tyvars, tycon, runtimeTy, loc} =>
+      I.TRANSPARENT {tyvars, symbol, ty, loc} => 
+      P.PITYPE {tyvars=tyvars, symbol = symbol, ty=ty, loc=loc}
+    | I.OPAQUE_NONEQ {tyvars, symbol, runtimeTy, loc} =>
       let
         val runtimeTy = 
-            case runtimeTy of 
+            case longsymbolToLongid runtimeTy of 
               [name] =>
               (case BuiltinTypeNames.findType name of
                  SOME ty => P.BUILTINty ty
@@ -143,12 +154,12 @@ struct
             | _ => P.LIFTEDty runtimeTy
       in
         P.PIOPAQUE_TYPE 
-          {tyvars=tyvars, tycon=tycon, runtimeTy=runtimeTy, loc=loc}
+          {tyvars=tyvars, symbol= symbol, runtimeTy=runtimeTy, loc=loc}
       end
-    | I.OPAQUE_EQ {tyvars, tycon, runtimeTy, loc} =>
+    | I.OPAQUE_EQ {tyvars, symbol, runtimeTy, loc} =>
       let
         val runtimeTy = 
-            case runtimeTy of 
+            case longsymbolToLongid runtimeTy of 
               [name] => 
               (case BuiltinTypeNames.findType name of
                  SOME ty => P.BUILTINty ty
@@ -156,21 +167,33 @@ struct
             | _ => P.LIFTEDty runtimeTy
       in
         P.PIOPAQUE_EQTYPE 
-          {tyvars=tyvars, tycon=tycon, runtimeTy=runtimeTy, loc=loc}
+          {tyvars=tyvars, symbol= symbol, runtimeTy=runtimeTy, loc=loc}
       end
 
   fun elabDec dec =
       case dec of
         I.IVAL valbind => map elabValbind valbind
       | I.ITYPE typbindList => map elabTypbind typbindList
-      | I.IDATATYPE bind => [P.PIDATATYPE bind]
-      | I.ITYPEREP bind => [P.PITYPEREP bind]
-      | I.ITYPEBUILTIN bind => [P.PITYPEBUILTIN bind]
+      | I.IDATATYPE {datbind, loc} =>
+        (app (fn {tyvars, symbol, conbind} =>
+                 (EU.checkSymbolDuplication
+                    (fn {symbol, ty} => symbol)
+                    conbind
+                    E.DuplicateConstructorNameInDatatype;
+                  app (fn {symbol, ty} =>
+                          ElaborateCore.checkReservedNameForValBind symbol)
+                      conbind))
+             datbind;
+         [P.PIDATATYPE {datbind=datbind, loc=loc}])
+      | I.ITYPEREP {loc, longsymbol, symbol} => 
+        [P.PITYPEREP {loc=loc, longsymbol = longsymbol, symbol= symbol}]
+      | I.ITYPEBUILTIN {builtinSymbol, loc, symbol} => 
+        [P.PITYPEBUILTIN {builtinSymbol= builtinSymbol, loc=loc, symbol= symbol}]
       | I.IEXCEPTION exbind => map elabExbind exbind
       | I.ISTRUCTURE strbind => [elabStrbind strbind]
 
-  and elabStrbind ({strid, strexp, loc}:I.strbind) =
-      P.PISTRUCTURE {strid = strid,
+  and elabStrbind ({symbol, strexp, loc}:I.strbind) =
+      P.PISTRUCTURE {symbol = symbol,
                      strexp = elabStrexp strexp,
                      loc = loc}
 
@@ -178,23 +201,28 @@ struct
       case strexp of
         I.ISTRUCT {decs, loc} =>
         P.PISTRUCT {decs = List.concat (map elabDec decs), loc = loc}
-      | I.ISTRUCTREP{strPath, loc} => P.PISTRUCTREP{strPath=strPath, loc=loc}
-      | I.IFUNCTORAPP{functorName, argumentPath, loc} => 
-        P.PIFUNCTORAPP{functorName=functorName, argumentPath=argumentPath, loc=loc}
+      | I.ISTRUCTREP{longsymbol, loc} => P.PISTRUCTREP{longsymbol= longsymbol, loc=loc}
+      | I.IFUNCTORAPP{functorSymbol, argument, loc} => 
+        P.PIFUNCTORAPP{functorSymbol= functorSymbol, argument= argument, loc=loc}
 
-  fun elabFunbind ({funid, param, strexp, loc}:I.funbind) =
+  fun elabFunbind ({functorSymbol, param, strexp, loc}:I.funbind) =
       let
         val strexp = elabStrexp strexp
         val param =
             case param of
-              I.FUNPARAM_FULL {strid, sigexp} =>
-              {strid = strid, sigexp = elabSigexp sigexp}
+              I.FUNPARAM_FULL {symbol, sigexp} =>
+              {strSymbol = symbol, sigexp = elabSigexp sigexp}
             | I.FUNPARAM_SPEC spec =>
-              (ElaboratorUtils.enqueueError
-                 (loc, ElaborateError.DerivedFormFunArg);
-               {strid = "", sigexp = PatternCalc.PLSIGID ("", loc)})
+              let
+                val dummySym = mkSymbol "" loc
+              in
+                (EU.enqueueError
+                   (loc, E.DerivedFormFunArg);
+                 {strSymbol = dummySym, sigexp = PatternCalc.PLSIGID dummySym}
+                )
+              end
       in
-        P.PIFUNDEC {funid = funid,
+        P.PIFUNDEC {functorSymbol = functorSymbol,
                     param = param,
                     strexp = strexp,
                     loc = loc}
@@ -206,34 +234,34 @@ struct
       (SEnv.empty, map P.PIDEC (elabDec dec))
     | I.IFUNDEC funbind =>
       (SEnv.empty, [elabFunbind funbind])
-    | I.IINFIX {fixity, vids, loc} =>
+    | I.IINFIX {fixity, symbols, loc} =>
       let
         val fixity =
             case fixity of
               I.INFIXL NONE => Fixity.INFIX 0
             | I.INFIXL (SOME n) =>
-              Fixity.INFIX (ElaboratorUtils.elabInfixPrec (n, loc))
+              Fixity.INFIX (ElaborateCore.elabInfixPrec (n, loc))
             | I.INFIXR NONE => Fixity.INFIXR 0
             | I.INFIXR (SOME n) =>
-              Fixity.INFIXR (ElaboratorUtils.elabInfixPrec (n, loc))
+              Fixity.INFIXR (ElaborateCore.elabInfixPrec (n, loc))
             | I.NONFIX => Fixity.NONFIX
 
         (* check duplicate declarations *)
         val _ =
-            app (fn vid =>
-                    case SEnv.find (fixEnv, vid) of
+            app (fn symbol =>
+                    case SEnv.find (fixEnv, symbolToString symbol) of
                       SOME (fixity1, loc1) =>
                       if fixity = fixity1 then ()
-                      else ElaboratorUtils.enqueueError
-                             (loc, ElaborateError.MultipleInfixInInterface
-                                     (vid, loc1))
+                      else EU.enqueueError
+                             (loc, E.MultipleInfixInInterface
+                                     (symbolToString symbol, loc))
                     | NONE => ())
-                vids
+                symbols
 
         val fixEnv =
-            foldl (fn (vid,z) => SEnv.insert (z, vid, (fixity, loc)))
+            foldl (fn (symbol,z) => SEnv.insert (z, symbolToString symbol, (fixity, loc)))
                   SEnv.empty
-                  vids
+                  symbols
       in
         (fixEnv, nil)
       end
@@ -248,16 +276,15 @@ struct
         (SEnv.unionWith #2 (newFixEnv1, newFixEnv2), dec @ decs)
       end
 
-  fun elabInterfaceDec fixEnv ({interfaceId, interfaceName, requires, topdecs}
+  fun elabInterfaceDec fixEnv ({interfaceId, interfaceName, requiredIds, provideTopdecs}
                                :I.interfaceDec) =
       let
-        val (newFixEnv, topdecs) = elabTopdecList fixEnv topdecs
+        val (newFixEnv, provideTopdecs) = elabTopdecList fixEnv provideTopdecs
       in
         (newFixEnv,
          {interfaceId = interfaceId,
-          interfaceName = interfaceName,
-          requires = requires,
-          topdecs = topdecs} : P.interfaceDec)
+          requiredIds = requiredIds,
+          provideTopdecs = provideTopdecs} : P.interfaceDec)
       end
 
   fun elabInterfaceDecs fixEnv nil = (InterfaceID.Map.empty, nil)
@@ -275,19 +302,18 @@ struct
   fun toFixEnv env =
       SEnv.map (fn (x, _:I.loc) => x) env : fixEnv
 
-  fun elaborate ({decls, interfaceName, requires, topdecs}:I.interface) =
+  fun elaborate ({interfaceDecs, provideInterfaceNameOpt, requiredIds, provideTopdecs}:I.interface) =
       let
         val (fixEnvMap, newDecls) =
-            elabInterfaceDecs SEnv.empty decls
+            elabInterfaceDecs SEnv.empty interfaceDecs
         val allFixEnv =
             InterfaceID.Map.foldl (SEnv.unionWith #2) SEnv.empty fixEnvMap
-        val (provideFixEnv, topdecs) = elabTopdecList allFixEnv topdecs
+        val (provideFixEnv, provideTopdecs) = elabTopdecList allFixEnv provideTopdecs
         val interface =
             {
-              decls = newDecls,
-              interfaceName = interfaceName,
-              requires = requires,
-              topdecs = topdecs
+              interfaceDecs = newDecls,
+              requiredIds = requiredIds,
+              provideTopdecs = provideTopdecs
             }
             : P.interface
 
@@ -295,14 +321,18 @@ struct
             foldl (fn ({id, loc}, z) =>
                       case InterfaceID.Map.find (fixEnvMap, id) of
                         SOME env => SEnv.unionWith #2 (z, env)
-                      | NONE =>
-                        raise Control.Bug "elaborate: interface not found")
+                      | NONE => raise Bug.Bug "elaborate: interface not found")
                   SEnv.empty
-                  requires
+                  requiredIds
       in
-        ({requireFixEnv = toFixEnv requireFixEnv,
-          provideFixEnv = toFixEnv provideFixEnv},
-         interface)
+        (toFixEnv requireFixEnv, interface)
+      end
+
+  fun elaborateTopdecList decs =
+      let
+        val (fixEnv, decs) = elabTopdecList SEnv.empty decs
+      in
+        (toFixEnv fixEnv, decs)
       end
 
 end

@@ -1,10 +1,12 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "basis.smi"
+_require "smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "./Types.ppg.smi"
 
 structure OPrimOrd =
   struct
-    type ord_key = {path:string list, id:OPrimID.id}
+    type ord_key = {longsymbol:Symbol.longsymbol, id:OPrimID.id}
     val compare : ord_key * ord_key -> order
   end
 

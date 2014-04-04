@@ -1,9 +1,4 @@
-_require "../../basis/main/String.smi"
-_require "../../basis/main/Substring.smi"
-_require "../../basis/main/StringCvt.smi"
-_require "../../basis/main/List.smi"
-_require "../../basis/main/binary-op.smi"
-
+_require "../../basis.smi"
 _require "parser-comb-sig.sml"
 
 structure ParserComb =

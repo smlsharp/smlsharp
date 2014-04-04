@@ -1,7 +1,11 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
 
 structure GenerateMainError =
 struct
-  exception HashConflict of string * string * string
+  exception HashConflict of AbsynInterface.source option
+                            * AbsynInterface.source option
+                            * string
 end

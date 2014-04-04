@@ -1,8 +1,13 @@
 _require "SQLPrim.smi"
 _require "SQLUtils.smi"
+_require "Backend.smi"
+_require "builtintypes/timestamp/TimeStamp.smi"
+_require "builtintypes/decimal/Decimal.smi"
+_require "builtintypes/float/Float.smi"
 
 structure SQL =
 struct
+  type backend = SMLSharp_SQL_Prim.backend
   type 'a server = 'a SMLSharp_SQL_Prim.server
   type ('a,'b) value = ('a,'b) SMLSharp_SQL_Prim.value
   type 'a conn = 'a SMLSharp_SQL_Prim.conn
@@ -12,13 +17,22 @@ struct
   type 'a query = 'a SMLSharp_SQL_Prim.query
   type command = SMLSharp_SQL_Prim.command
   type 'a rel = 'a SMLSharp_SQL_Prim.rel
-  type result = SMLSharp_SQL_Prim.result
+  type decimal = SMLSharp_SQL_Prim.decimal
+  type timestamp = SMLSharp_SQL_Prim.timestamp
+  type float = SMLSharp_SQL_Prim.float
 
-  exception Type = SMLSharp_SQL_Prim.Type
+  structure TimeStamp = SMLSharp_SQL_TimeStamp
+  structure Decimal = SMLSharp_SQL_Decimal
+  structure Float = SMLSharp_SQL_Float
+
   exception Format = SMLSharp_SQL_Prim.Format
   exception Exec = SMLSharp_SQL_Prim.Exec
   exception Connect = SMLSharp_SQL_Prim.Connect
   exception Link = SMLSharp_SQL_Prim.Link
+
+  val postgresql : string -> backend
+  val mysql : string -> backend
+  val odbc : string -> backend
 
   val connect : 'a server -> 'a conn
   val fetch : 'a rel -> ('a * 'a rel) option
@@ -36,238 +50,266 @@ struct
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.add_int
-      | word => SMLSharp_SQL_Prim.add_word
-      | real => SMLSharp_SQL_Prim.add_real
+        int => SMLSharp_SQL_Prim.add
+      | intInf => SMLSharp_SQL_Prim.add
+      | word => SMLSharp_SQL_Prim.add
+      | real => SMLSharp_SQL_Prim.add
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.add_intOption
-        | word => SMLSharp_SQL_Prim.add_wordOption
-        | real => SMLSharp_SQL_Prim.add_realOption
+          int => SMLSharp_SQL_Prim.add
+        | intInf => SMLSharp_SQL_Prim.add
+        | word => SMLSharp_SQL_Prim.add
+        | real => SMLSharp_SQL_Prim.add
 
   val - =
       case 'a in ('a, 'b) value * ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.sub_int
-      | word => SMLSharp_SQL_Prim.sub_word
-      | real => SMLSharp_SQL_Prim.sub_real
+        int => SMLSharp_SQL_Prim.sub
+      | intInf => SMLSharp_SQL_Prim.sub
+      | word => SMLSharp_SQL_Prim.sub
+      | real => SMLSharp_SQL_Prim.sub
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.sub_intOption
-        | word => SMLSharp_SQL_Prim.sub_wordOption
-        | real => SMLSharp_SQL_Prim.sub_realOption
+          int => SMLSharp_SQL_Prim.sub
+        | intInf => SMLSharp_SQL_Prim.sub
+        | word => SMLSharp_SQL_Prim.sub
+        | real => SMLSharp_SQL_Prim.sub
 
   val * =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.mul_int
-      | word => SMLSharp_SQL_Prim.mul_word
-      | real => SMLSharp_SQL_Prim.mul_real
+        int => SMLSharp_SQL_Prim.mul
+      | intInf => SMLSharp_SQL_Prim.mul
+      | word => SMLSharp_SQL_Prim.mul
+      | real => SMLSharp_SQL_Prim.mul
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.mul_intOption
-        | word => SMLSharp_SQL_Prim.mul_wordOption
-        | real => SMLSharp_SQL_Prim.mul_realOption
+          int => SMLSharp_SQL_Prim.mul
+        | intInf => SMLSharp_SQL_Prim.mul
+        | word => SMLSharp_SQL_Prim.mul
+        | real => SMLSharp_SQL_Prim.mul
 
   val / =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.div_int
-      | word => SMLSharp_SQL_Prim.div_word
-      | real => SMLSharp_SQL_Prim.div_real
+        int => SMLSharp_SQL_Prim.div
+      | intInf => SMLSharp_SQL_Prim.div
+      | word => SMLSharp_SQL_Prim.div
+      | real => SMLSharp_SQL_Prim.div
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.div_intOption
-        | word => SMLSharp_SQL_Prim.div_wordOption
-        | real => SMLSharp_SQL_Prim.div_realOption
+          int => SMLSharp_SQL_Prim.div
+        | intInf => SMLSharp_SQL_Prim.div
+        | word => SMLSharp_SQL_Prim.div
+        | real => SMLSharp_SQL_Prim.div
 
   val div =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.div_int
-      | word => SMLSharp_SQL_Prim.div_word
+        int => SMLSharp_SQL_Prim.div
+      | intInf => SMLSharp_SQL_Prim.div
+      | word => SMLSharp_SQL_Prim.div
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.div_intOption
-        | word => SMLSharp_SQL_Prim.div_wordOption
+          int => SMLSharp_SQL_Prim.div
+        | intInf => SMLSharp_SQL_Prim.div
+        | word => SMLSharp_SQL_Prim.div
 
   val mod =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.mod_int
-      | word => SMLSharp_SQL_Prim.mod_word
+        int => SMLSharp_SQL_Prim.mod
+      | intInf => SMLSharp_SQL_Prim.mod
+      | word => SMLSharp_SQL_Prim.mod
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.mod_intOption
-        | word => SMLSharp_SQL_Prim.mod_wordOption
+          int => SMLSharp_SQL_Prim.mod
+        | intInf => SMLSharp_SQL_Prim.mod
+        | word => SMLSharp_SQL_Prim.mod
 
   val neg =
       case 'a in
         ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.neg_int
-      | word => SMLSharp_SQL_Prim.neg_real
+        int => SMLSharp_SQL_Prim.neg
+      | intInf => SMLSharp_SQL_Prim.neg
+      | word => SMLSharp_SQL_Prim.neg
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.neg_intOption
-        | word => SMLSharp_SQL_Prim.neg_realOption
+          int => SMLSharp_SQL_Prim.neg
+        | intInf => SMLSharp_SQL_Prim.neg
+        | word => SMLSharp_SQL_Prim.neg
 
   val abs =
       case 'a in
         ('a, 'b) value -> ('a, 'b) value
       of
-        int => SMLSharp_SQL_Prim.abs_int
-      | word => SMLSharp_SQL_Prim.abs_real
+        int => SMLSharp_SQL_Prim.abs
+      | intInf => SMLSharp_SQL_Prim.abs
+      | word => SMLSharp_SQL_Prim.abs
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value -> ('c option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.abs_intOption
-        | word => SMLSharp_SQL_Prim.abs_realOption
+          int => SMLSharp_SQL_Prim.abs
+        | intInf => SMLSharp_SQL_Prim.abs
+        | word => SMLSharp_SQL_Prim.abs
 
   val < =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
       of
-        int => SMLSharp_SQL_Prim.lt_int
-      | word => SMLSharp_SQL_Prim.lt_word
-      | char => SMLSharp_SQL_Prim.lt_char
-      | string => SMLSharp_SQL_Prim.lt_string
-      | real => SMLSharp_SQL_Prim.lt_real
+        int => SMLSharp_SQL_Prim.lt
+      | intInf => SMLSharp_SQL_Prim.lt
+      | word => SMLSharp_SQL_Prim.lt
+      | char => SMLSharp_SQL_Prim.lt
+      | string => SMLSharp_SQL_Prim.lt
+      | real => SMLSharp_SQL_Prim.lt
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value
           -> (bool option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.lt_intOption
-        | word => SMLSharp_SQL_Prim.lt_wordOption
-        | char => SMLSharp_SQL_Prim.lt_charOption
-        | bool => SMLSharp_SQL_Prim.lt_boolOption
-        | string => SMLSharp_SQL_Prim.lt_stringOption
-        | real => SMLSharp_SQL_Prim.lt_realOption
+          int => SMLSharp_SQL_Prim.lt
+        | intInf => SMLSharp_SQL_Prim.lt
+        | word => SMLSharp_SQL_Prim.lt
+        | char => SMLSharp_SQL_Prim.lt
+        | bool => SMLSharp_SQL_Prim.lt
+        | string => SMLSharp_SQL_Prim.lt
+        | real => SMLSharp_SQL_Prim.lt
 
   val <= =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
       of
-        int => SMLSharp_SQL_Prim.le_int
-      | word => SMLSharp_SQL_Prim.le_word
-      | char => SMLSharp_SQL_Prim.le_char
-      | string => SMLSharp_SQL_Prim.le_string
-      | real => SMLSharp_SQL_Prim.le_real
+        int => SMLSharp_SQL_Prim.le
+      | intInf => SMLSharp_SQL_Prim.le
+      | word => SMLSharp_SQL_Prim.le
+      | char => SMLSharp_SQL_Prim.le
+      | string => SMLSharp_SQL_Prim.le
+      | real => SMLSharp_SQL_Prim.le
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value
           -> (bool option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.le_intOption
-        | word => SMLSharp_SQL_Prim.le_wordOption
-        | char => SMLSharp_SQL_Prim.le_charOption
-        | bool => SMLSharp_SQL_Prim.le_boolOption
-        | string => SMLSharp_SQL_Prim.le_stringOption
-        | real => SMLSharp_SQL_Prim.le_realOption
+          int => SMLSharp_SQL_Prim.le
+        | intInf => SMLSharp_SQL_Prim.le
+        | word => SMLSharp_SQL_Prim.le
+        | char => SMLSharp_SQL_Prim.le
+        | bool => SMLSharp_SQL_Prim.le
+        | string => SMLSharp_SQL_Prim.le
+        | real => SMLSharp_SQL_Prim.le
 
   val > =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
       of
-        int => SMLSharp_SQL_Prim.gt_int
-      | word => SMLSharp_SQL_Prim.gt_word
-      | char => SMLSharp_SQL_Prim.gt_char
-      | string => SMLSharp_SQL_Prim.gt_string
-      | real => SMLSharp_SQL_Prim.gt_real
+        int => SMLSharp_SQL_Prim.gt
+      | intInf => SMLSharp_SQL_Prim.gt
+      | word => SMLSharp_SQL_Prim.gt
+      | char => SMLSharp_SQL_Prim.gt
+      | string => SMLSharp_SQL_Prim.gt
+      | real => SMLSharp_SQL_Prim.gt
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value
           -> (bool option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.gt_intOption
-        | word => SMLSharp_SQL_Prim.gt_wordOption
-        | char => SMLSharp_SQL_Prim.gt_charOption
-        | bool => SMLSharp_SQL_Prim.gt_boolOption
-        | string => SMLSharp_SQL_Prim.gt_stringOption
-        | real => SMLSharp_SQL_Prim.gt_realOption
+          int => SMLSharp_SQL_Prim.gt
+        | intInf => SMLSharp_SQL_Prim.gt
+        | word => SMLSharp_SQL_Prim.gt
+        | char => SMLSharp_SQL_Prim.gt
+        | bool => SMLSharp_SQL_Prim.gt
+        | string => SMLSharp_SQL_Prim.gt
+        | real => SMLSharp_SQL_Prim.gt
 
   val >= =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
       of
-        int => SMLSharp_SQL_Prim.ge_int
-      | word => SMLSharp_SQL_Prim.ge_word
-      | char => SMLSharp_SQL_Prim.ge_char
-      | string => SMLSharp_SQL_Prim.ge_string
-      | real => SMLSharp_SQL_Prim.ge_real
+        int => SMLSharp_SQL_Prim.ge
+      | intInf => SMLSharp_SQL_Prim.ge
+      | word => SMLSharp_SQL_Prim.ge
+      | char => SMLSharp_SQL_Prim.ge
+      | string => SMLSharp_SQL_Prim.ge
+      | real => SMLSharp_SQL_Prim.ge
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value
           -> (bool option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.ge_intOption
-        | word => SMLSharp_SQL_Prim.ge_wordOption
-        | char => SMLSharp_SQL_Prim.ge_charOption
-        | bool => SMLSharp_SQL_Prim.ge_boolOption
-        | string => SMLSharp_SQL_Prim.ge_stringOption
-        | real => SMLSharp_SQL_Prim.ge_realOption
+          int => SMLSharp_SQL_Prim.ge
+        | intInf => SMLSharp_SQL_Prim.ge
+        | word => SMLSharp_SQL_Prim.ge
+        | char => SMLSharp_SQL_Prim.ge
+        | bool => SMLSharp_SQL_Prim.ge
+        | string => SMLSharp_SQL_Prim.ge
+        | real => SMLSharp_SQL_Prim.ge
 
   val == =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
       of
-        int => SMLSharp_SQL_Prim.eq_int
-      | word => SMLSharp_SQL_Prim.eq_word
-      | char => SMLSharp_SQL_Prim.eq_char
-      | string => SMLSharp_SQL_Prim.eq_string
-      | real => SMLSharp_SQL_Prim.eq_real
+        int => SMLSharp_SQL_Prim.eq
+      | intInf => SMLSharp_SQL_Prim.eq
+      | word => SMLSharp_SQL_Prim.eq
+      | char => SMLSharp_SQL_Prim.eq
+      | string => SMLSharp_SQL_Prim.eq
+      | real => SMLSharp_SQL_Prim.eq
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value
           -> (bool option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.eq_intOption
-        | word => SMLSharp_SQL_Prim.eq_wordOption
-        | char => SMLSharp_SQL_Prim.eq_charOption
-        | bool => SMLSharp_SQL_Prim.eq_boolOption
-        | string => SMLSharp_SQL_Prim.eq_stringOption
-        | real => SMLSharp_SQL_Prim.eq_realOption
+          int => SMLSharp_SQL_Prim.eq
+        | intInf => SMLSharp_SQL_Prim.eq
+        | word => SMLSharp_SQL_Prim.eq
+        | char => SMLSharp_SQL_Prim.eq
+        | bool => SMLSharp_SQL_Prim.eq
+        | string => SMLSharp_SQL_Prim.eq
+        | real => SMLSharp_SQL_Prim.eq
 
   val <> =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
       of
-        int => SMLSharp_SQL_Prim.neq_int
-      | word => SMLSharp_SQL_Prim.neq_word
-      | char => SMLSharp_SQL_Prim.neq_char
-      | string => SMLSharp_SQL_Prim.neq_string
-      | real => SMLSharp_SQL_Prim.neq_real
+        int => SMLSharp_SQL_Prim.neq
+      | intInf => SMLSharp_SQL_Prim.neq
+      | word => SMLSharp_SQL_Prim.neq
+      | char => SMLSharp_SQL_Prim.neq
+      | string => SMLSharp_SQL_Prim.neq
+      | real => SMLSharp_SQL_Prim.neq
       | 'c option =>
         case 'c in
           ('c option, 'b) value * ('c option, 'b) value
           -> (bool option, 'b) value
         of
-          int => SMLSharp_SQL_Prim.neq_intOption
-        | word => SMLSharp_SQL_Prim.neq_wordOption
-        | char => SMLSharp_SQL_Prim.neq_charOption
-        | bool => SMLSharp_SQL_Prim.neq_boolOption
-        | string => SMLSharp_SQL_Prim.neq_stringOption
-        | real => SMLSharp_SQL_Prim.neq_realOption
+          int => SMLSharp_SQL_Prim.neq
+        | intInf => SMLSharp_SQL_Prim.neq
+        | word => SMLSharp_SQL_Prim.neq
+        | char => SMLSharp_SQL_Prim.neq
+        | bool => SMLSharp_SQL_Prim.neq
+        | string => SMLSharp_SQL_Prim.neq
+        | real => SMLSharp_SQL_Prim.neq
 
   val ^ : (string, 'a) value * (string, 'a) value -> (string, 'a) value
 
@@ -285,25 +327,36 @@ struct
   val isNotNull
       : ('a option, 'a) value -> (bool option, 'a) value
 
+  val like =
+      case 'a in
+        ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
+      of
+        string => SMLSharp_SQL_Prim.likeString
+      | string option => SMLSharp_SQL_Prim.likeStringOption
+
   val toSQL =
       case 'a in
         'a -> ('a, 'b) value
       of
         int => SMLSharp_SQL_Prim.toSQL_int
+      | intInf => SMLSharp_SQL_Prim.toSQL_intInf
       | word => SMLSharp_SQL_Prim.toSQL_word
       | char => SMLSharp_SQL_Prim.toSQL_char
       | string => SMLSharp_SQL_Prim.toSQL_string
       | real => SMLSharp_SQL_Prim.toSQL_real
+      | timestamp => SMLSharp_SQL_Prim.toSQL_timestamp
       | 'c option =>
         case 'c in
           'c option -> ('c option, 'b) value
         of
           int => SMLSharp_SQL_Prim.toSQL_intOption
+        | intInf => SMLSharp_SQL_Prim.toSQL_intInfOption
         | word => SMLSharp_SQL_Prim.toSQL_wordOption
         | char => SMLSharp_SQL_Prim.toSQL_charOption
         | bool => SMLSharp_SQL_Prim.toSQL_boolOption
         | string => SMLSharp_SQL_Prim.toSQL_stringOption
         | real => SMLSharp_SQL_Prim.toSQL_realOption
+        | timestamp => SMLSharp_SQL_Prim.toSQL_timestampOption
 
   exception NotOne = SMLSharp_SQL_Utils.NotOne
   val fetchAll : 'a rel -> 'a list

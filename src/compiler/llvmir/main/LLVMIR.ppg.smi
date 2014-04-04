@@ -1,0 +1,312 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+
+structure LLVMIR =
+struct
+
+  type loc = Loc.loc
+  type label = FunLocalLabel.id
+  type landingPadLabel = HandlerLabel.id
+  type var = VarID.id
+  type symbol = string
+
+  datatype calling_convention =
+      CCC
+    | FASTCC
+    | COLDCC
+    | X86STDCALLCC
+
+  datatype linkage =
+      INTERNAL
+    | LINKER_PRIVATE
+    | EXTERNAL
+
+  datatype parameter_attribute =
+      ZEROEXT
+    | SIGNEXT
+    | INREG
+    | BYVAL
+    | SRET
+    | NOALIAS
+    | NOCAPTURE
+    | NEST
+
+  datatype function_attribute =
+      ALWAYSINLINE
+    | NONLAZYBIND
+    | INLINEHINT
+    | NAKED
+    | NOIMPLICITFLOAT
+    | NOINLINE
+    | NOREDZONE
+    | NORETURN
+    | NOUNWIND
+    | OPTSIZE
+    | READNONE
+    | READONLY
+    | RETURNS_TWICE
+    | SSP
+    | SSPREQ
+    | UWTABLE
+
+  datatype ty =
+      I1
+    | I8
+    | I32
+    | I64
+    | PTR of ty
+    | FLOAT
+    | DOUBLE
+    | VOID
+    | FPTR of ty * ty list * bool
+    | ARRAY of Word32.word * ty
+    | STRUCT of ty list * {packed: bool}
+
+  datatype const =
+      INTCONST of Word32.word
+    | FLOATCONST of real
+    | NULL
+    | SYMBOL of symbol
+    | CONST_BITCAST of (ty * const) * ty
+    | CONST_INTTOPTR of (ty * const) * ty
+    | CONST_PTRTOINT of (ty * const) * ty
+    | CONST_SUB of (ty * const) * (ty * const)
+    | CONST_GETELEMENTPTR of
+      {
+        inbounds : bool,
+        ptr : ty * const,
+        indices : (ty * const) list
+      }
+
+  datatype value =
+      CONST of const
+    | VAR of var
+
+  type operand = ty * value
+
+  datatype icmp =
+      EQ
+    | NE
+    | UGT
+    | UGE
+    | ULT
+    | ULE
+    | SGT
+    | SGE
+    | SLT
+    | SLE
+
+  datatype fcmp =
+      F_FALSE
+    | F_OEQ
+    | F_OGT
+    | F_OGE
+    | F_OLT
+    | F_OLE
+    | F_ONE
+    | F_ORD
+    | F_UEQ
+    | F_UGT
+    | F_UGE
+    | F_ULT
+    | F_ULE
+    | F_UNE
+    | F_UNO
+    | F_TRUE
+
+  datatype noWrap =
+      WRAP
+    | NUW
+    | NSW
+
+  datatype op2 =
+      OR
+    | ADD of noWrap
+    | FADD
+    | SUB of noWrap
+    | FSUB
+    | MUL of noWrap
+    | FMUL
+    | UDIV
+    | SDIV
+    | FDIV
+    | UREM
+    | SREM
+    | FREM
+    | SHL
+    | LSHR
+    | ASHR
+    | AND
+    | XOR
+
+  datatype conv =
+      BITCAST
+    | TRUNC
+    | SITOFP
+    | FPTOSI
+    | FPTRUNC
+    | FPEXT
+    | ZEXT
+    | SEXT
+
+  datatype insn =
+      LOAD of var * operand
+    | STORE of {value: operand, dst: operand}
+    | ALLOCA of var * ty
+    | CALL of
+      {
+        result: var option,
+        tail: bool,
+        cconv: calling_convention option,
+        retAttrs: parameter_attribute list,
+        fnPtr: operand,
+        args: (parameter_attribute list * operand) list,
+        fnAttrs: function_attribute list
+      }
+    | GETELEMENTPTR of
+      {
+        result: var,
+        inbounds: bool,
+        ptr: operand,
+        indices: operand list
+      }
+    | EXTRACTVALUE of var * operand * int
+    | CONV of var * conv * operand * ty
+    | OP2 of var * op2 * operand * operand
+    | ICMP of var * icmp * operand * operand
+    | FCMP of var * fcmp * operand * operand
+
+  type destination =
+      label * operand list
+
+  datatype phi =
+      PHI of ty * var
+
+  datatype last =
+      BLOCK of
+      {
+        label: label,
+        phis: phi list,
+        body: insn list * last,
+        next: insn list * last
+      }
+    | LANDINGPAD of
+      {
+        label: landingPadLabel,
+        argVar : var * ty,
+        personality : operand,
+        catch : operand list,
+        cleanup : bool,
+        body: insn list * last,
+        next: insn list * last
+      }
+    | RET of operand
+    | RET_VOID
+    | BR of destination
+    | BR_C of operand * destination * destination
+    | INVOKE of 
+      {
+        cconv: calling_convention option,
+        retAttrs: parameter_attribute list,
+        fnPtr: operand,
+        args: (parameter_attribute list * operand) list,
+        fnAttrs: function_attribute list,
+        to: label,
+        unwind: landingPadLabel
+      }
+    | RESUME of operand
+    | SWITCH of
+      {value: operand,
+       default: destination,
+       branches: ((ty * const) * destination) list}
+    | UNREACHABLE
+
+  type body =
+      insn list * last
+
+  datatype initializer =
+      ZEROINITIALIZER
+    | INIT_STRING of string
+    | INIT_CONST of const
+    | INIT_STRUCT of (ty * initializer) list * {packed: bool}
+    | INIT_ARRAY of (ty * initializer) list
+
+  datatype topdec =
+      DEFINE of
+      {
+        linkage : linkage option,
+        cconv : calling_convention option,
+        retAttrs : parameter_attribute list,
+        retTy : ty,
+        name : symbol,
+        parameters : (ty * parameter_attribute list * var) list,
+        fnAttrs : function_attribute list,
+        gcname : string option,
+        body : body
+      }
+    | DECLARE of
+      {
+        linkage : linkage option,
+        cconv : calling_convention option,
+        retAttrs : parameter_attribute list,
+        retTy : ty,
+        name : symbol,
+        arguments : (ty * parameter_attribute list) list,
+        varArg : bool,
+        fnAttrs : function_attribute list,
+        gcname : string option
+      }
+    | GLOBALVAR of
+      {
+        name : symbol,
+        linkage : linkage option,
+        constant : bool,
+        ty : ty,
+        initializer : initializer,
+        align : int option
+      }
+    | EXTERN of
+      {
+        name : symbol,
+        ty : ty
+      }
+
+  type program =
+      {moduleName : string,
+       datalayout : string option,
+       triple : string option,
+       topdecs : topdec list}
+
+  val format_label : label -> SMLFormat.FormatExpression.expression list
+  val format_var : var -> SMLFormat.FormatExpression.expression list
+  val format_symbol : symbol -> SMLFormat.FormatExpression.expression list
+  val format_calling_convention
+      : calling_convention -> SMLFormat.FormatExpression.expression list
+  val format_linkage : linkage -> SMLFormat.FormatExpression.expression list
+  val format_parameter_attribute
+      : parameter_attribute -> SMLFormat.FormatExpression.expression list
+  val format_function_attribute
+      : function_attribute -> SMLFormat.FormatExpression.expression list
+  val format_ty : ty -> SMLFormat.FormatExpression.expression list
+  val format_const : const -> SMLFormat.FormatExpression.expression list
+  val format_value : value -> SMLFormat.FormatExpression.expression list
+  val format_operand
+      : operand -> SMLFormat.FormatExpression.expression list
+  val format_phi : phi -> SMLFormat.FormatExpression.expression list
+  val format_icmp : icmp -> SMLFormat.FormatExpression.expression list
+  val format_fcmp : fcmp -> SMLFormat.FormatExpression.expression list
+  val format_noWrap : noWrap -> SMLFormat.FormatExpression.expression list
+  val format_insn : insn -> SMLFormat.FormatExpression.expression list
+  val format_last : last -> SMLFormat.FormatExpression.expression list
+  val format_body : body -> SMLFormat.FormatExpression.expression list
+  val format_initializer
+      : initializer -> SMLFormat.FormatExpression.expression list
+  val format_topdec : topdec -> SMLFormat.FormatExpression.expression list
+  val format_program : program -> SMLFormat.FormatExpression.expression list
+
+end

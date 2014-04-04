@@ -1,0 +1,41 @@
+_require "basis.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../../compiler-utils/env/main/IEnv.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "./OPrimInstMap.smi"
+_require "./Types.ppg.smi"
+_require "./vars.smi"
+
+structure TypesBasics =
+struct
+  exception CoerceFun 
+  exception CoerceTvarKindToEQ 
+  val derefTy : Types.ty -> Types.ty
+  val substBTvar : Types.ty BoundTypeVarID.Map.map -> Types.ty -> Types.ty
+  val freshSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
+  val freshRigidSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
+  val monoTy : Types.ty -> bool
+  val freshRigidInstTy : Types.ty -> Types.ty
+  val derefSubstTy : Types.ty -> Types.ty
+  val EFTV : Types.ty -> int * OTSet.set * (Types.tvState ref) IEnv.map
+  val adjustDepthInTy : Types.lambdaDepth -> Types.ty -> unit
+  val adjustDepthInTvarKind : Types.lambdaDepth -> Types.tvarKind -> unit
+  val generalizer : Types.ty * Types.lambdaDepth
+                    -> {boundEnv: Types.btvEnv, removedTyIds: OTSet.set}
+  val performSubst : Types.ty * Types.ty -> unit
+  val copyBoundEnv
+      : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map * Types.btvEnv
+  val coerceFunM
+      : Types.ty * Types.ty list -> Types.ty list * Types.ty * Types.ty list
+  val tpappTy : Types.ty * Types.ty list -> Types.ty
+  val tyConFromConTy : Types.ty -> Types.tyCon
+  val tpappPrimTy :
+      {boundtvars: Types.btvEnv, argTyList: Types.ty list, resultTy: Types.ty}
+      * Types.ty list
+      -> {argTyList: Types.ty list, resultTy: Types.ty}
+  val tupleTy : Types.ty list -> Types.ty
+end

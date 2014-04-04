@@ -17,17 +17,27 @@ struct
   structure T = Types
   structure BT = BuiltinTypes
 
+  fun split l n =
+      let
+        fun loop (nil, r, i) =
+            (rev r, if i > 0 then NONE else SOME nil)
+          | loop (h::l, r, i) =
+            if i > 0 then loop (l, h::r, i - 1) else (rev r, SOME (h::l))
+      in
+        loop (l, nil, n)
+      end
+
   fun getLocExp rcexp =
       case rcexp of
         R.RCFOREIGNAPPLY {loc,...} => loc
-      | R.RCEXPORTCALLBACK {loc,...} => loc
+      | R.RCCALLBACKFN {loc,...} => loc
       | R.RCTAGOF (_,loc) => loc
       | R.RCSIZEOF (_,loc) => loc
       | R.RCINDEXOF (_,_,loc) => loc
       | R.RCCONSTANT {loc,...} => loc
-      | R.RCGLOBALSYMBOL {loc,...} => loc
-      | R.RCVAR (_,loc) => loc
-      | R.RCEXVAR (_, loc) => loc
+      | R.RCFOREIGNSYMBOL {loc,...} => loc
+      | R.RCVAR _ => Loc.noloc
+      | R.RCEXVAR _ => Loc.noloc
       | R.RCPRIMAPPLY {loc,...} => loc
       | R.RCOPRIMAPPLY {loc,...} => loc
       | R.RCDATACONSTRUCT {loc,...} => loc
@@ -51,20 +61,19 @@ struct
       | R.RCTAPP {loc,...} => loc
       | R.RCSEQ {loc,...} => loc
       | R.RCCAST (_,_,loc) => loc
-      | R.RCSQL (_,_,loc) => loc
       | R.RCFFI (_,_,loc) => loc
 
   fun isSimpleExp rcexp =
       case rcexp of
         R.RCFOREIGNAPPLY _ => false
-      | R.RCEXPORTCALLBACK _ => false
+      | R.RCCALLBACKFN _ => false
       | R.RCTAGOF _ => true
       | R.RCSIZEOF _ => true
       | R.RCINDEXOF _ => true
       | R.RCCONSTANT _ => true
-      | R.RCGLOBALSYMBOL _ => true
-      | R.RCVAR (_,loc) => true
-      | R.RCEXVAR (_, loc) => true
+      | R.RCFOREIGNSYMBOL _ => true
+      | R.RCVAR _ => true
+      | R.RCEXVAR _ => true
       | R.RCPRIMAPPLY _ => false
       | R.RCOPRIMAPPLY _ => false
       | R.RCDATACONSTRUCT _ => false
@@ -87,16 +96,35 @@ struct
       | R.RCPOLY _ => false
       | R.RCTAPP _ => false
       | R.RCSEQ _ => false
-      | R.RCCAST (exp,_,_) => isSimpleExp exp
-      | R.RCSQL _ => false
+      | R.RCCAST ((exp,_),_,_) => isSimpleExp exp
       | R.RCFFI _ => false
 
   fun newVar ty =
       let
         val id = VarID.generate ()
       in
-        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : T.varInfo
+        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : R.varInfo
       end
+
+  fun toSimpleExp ({ty, exp}, loc) =
+      if isSimpleExp exp
+      then (fn x => x, {ty=ty, exp=exp})
+      else
+        let
+          val var = newVar ty
+        in
+          (fn body => R.RCMONOLET {binds=[(var,exp)], bodyExp=body, loc=loc},
+           {ty = ty, exp = R.RCVAR var})
+        end
+
+  fun BitCast ({ty, exp}, ty2, loc) =
+      {ty = ty2,
+       exp = R.RCPRIMAPPLY
+               {primOp = {primitive = BuiltinPrimitive.BitCast,
+                          ty = T.FUNMty ([ty], ty2)},
+                instTyList = nil,
+                argExp = exp,
+                loc = loc}}
 
   fun tupleLabels l =
       let
@@ -116,7 +144,7 @@ struct
                                  resultTy = fieldTy,
                                  loc = loc}})
           (LabelEnv.listItemsi tys)
-    | explodeRecord _ = raise Control.Bug "explodeRecord"
+    | explodeRecord _ = raise Bug.Bug "explodeRecord"
 
   fun LabelEnvFromList list =
       List.foldl (fn ((key, item), m) => LabelEnv.insert (m, key, item)) LabelEnv.empty list
@@ -131,7 +159,7 @@ struct
       end
 
   fun varExp loc (var as {ty, ...}) =
-      {ty = ty, exp = R.RCVAR (var, loc)}
+      {ty = ty, exp = R.RCVAR var}
 
   fun composeArg (nil, loc) =
       {ty = BT.unitTy,
@@ -158,31 +186,47 @@ struct
         List.exists (fn (k,v) => hasFunTy v) fields
 
   fun hasSortedField fields =
-      map #1 fields = SEnv.listKeys (SEnv.fromList fields)
+      map #1 fields = 
+      SEnv.listKeys 
+        (List.foldl (fn ((key, item), m) => SEnv.insert (m, key, item)) SEnv.empty fields)
 
   fun zipApp nil nil = nil
     | zipApp (f::ft) (h::t) = f h :: zipApp ft t
-    | zipApp _ _ = raise Control.Bug "zipApp"
+    | zipApp _ _ = raise Bug.Bug "zipApp"
 
   fun stubImport ffity =
       case ffity of
         TC.FFIBASETY (ty, loc) => (ty, fn x => x)
       | TC.FFIRECORDTY (fields, loc) =>
-        raise Control.Bug "stubImport: FFIRECORDTY"
-      | TC.FFIFUNTY (attributes, argTys, retTys, loc) =>
+        raise Bug.Bug "stubImport: FFIRECORDTY"
+      | TC.FFIFUNTY (attributes, argTys, varTys, retTys, loc) =>
         let
-          val attributes = getOpt (attributes, Absyn.defaultFFIAttributes)
-          val (argTys, exportFns) = ListPair.unzip (map stubExport argTys)
+          val attributes = getOpt (attributes, FFIAttributes.defaultFFIAttributes)
+          val (argTys1, exportFns1) = ListPair.unzip (map stubExport argTys)
+          val (argTys2, exportFns2) =
+              case varTys of
+                NONE => (nil, nil)
+              | SOME varTys => ListPair.unzip (map stubExport varTys)
+          val (argVar, argExps) = decomposeArg (argTys1 @ argTys2, loc)
+          val ffiArgExps = zipApp (exportFns1 @ exportFns2) argExps
+          val (ffiArgTyList, ffiVarArgTyList) =
+              case varTys of
+                NONE => (map #ty ffiArgExps, NONE)
+              | SOME _ => split (map #ty ffiArgExps) (length exportFns1)
           val (ffiRetTys, importFns) = ListPair.unzip (map stubImport retTys)
-          val (argVar, argExps) = decomposeArg (argTys, loc)
-          val ffiArgExps = zipApp exportFns argExps
-                        handle e => (print "hoge4\n"; raise e)
+          val ffiRetTy =
+              case ffiRetTys of
+                nil => NONE
+              | [ty] => SOME ty
+              | _ => raise Bug.Bug "stubImport: FFIFUNTY"
           val (ffiRetVar, ffiRetExps) = decomposeArg (ffiRetTys, loc)
           val retExps = zipApp importFns ffiRetExps
-                        handle e => (print "hoge3\n"; raise e)
           val retExp = composeArg (retExps, loc)
         in
-          (BT.ptrTy,
+          (T.BACKENDty (T.FOREIGNFUNPTRty {argTyList = ffiArgTyList,
+                                           varArgTyList = ffiVarArgTyList,
+                                           resultTy = ffiRetTy,
+                                           attributes = attributes}),
            fn funExp =>
               {ty = T.FUNMty ([#ty argVar], #ty retExp),
                exp = R.RCFNM
@@ -198,10 +242,8 @@ struct
                                    {loc = loc,
                                     funExp = #exp funExp,
                                     argExpList = map #exp ffiArgExps,
-                                    foreignFunTy =
-                                      {argTyList = map #ty ffiArgExps,
-                                       resultTy = #ty ffiRetVar,
-                                       attributes = attributes}})],
+                                    attributes = attributes,
+                                    resultTy = ffiRetTy})],
                                bodyExp = #exp retExp}}})
         end
 
@@ -221,49 +263,53 @@ struct
            else fn exp =>
                    implodeRecord (stubFields (explodeRecord (exp, loc)), loc))
         end
-      | TC.FFIFUNTY (attributes, argTys, retTys, loc) =>
+      | TC.FFIFUNTY (attributes, argTys, NONE, retTys, loc) =>
         let
-          val attributes = getOpt (attributes, Absyn.defaultFFIAttributes)
-          val (ffiArgTys, importFns) = ListPair.unzip (map stubImport argTys)
-          val (retTys, exportFns) = ListPair.unzip (map stubExport retTys)
-          val ffiArgVars = map newVar ffiArgTys
+          val attributes = getOpt (attributes, FFIAttributes.defaultFFIAttributes)
+          val (argTys, importFns) = ListPair.unzip (map stubImport argTys)
+          val ffiArgVars = map newVar argTys
           val argExps = zipApp importFns (map (varExp loc) ffiArgVars)
-                        handle e => (print "hoge1\n"; raise e)
           val argExp = composeArg (argExps, loc)
+          val ffiArgTyList = map #ty ffiArgVars
+          val (retTys, exportFns) = ListPair.unzip (map stubExport retTys)
           val (retVar, retExps) = decomposeArg (retTys, loc)
           val ffiRetExps = zipApp exportFns retExps
-              handle e => (print "hoge2\n"; raise e)
           val ffiRetExp = composeArg (ffiRetExps, loc)
+          val ffiRetTy =
+              case ffiRetExps of
+                nil => NONE
+              | [{ty,...}] => SOME ty
+              | _ => raise Bug.Bug "stubExport: FFIFUNTY"
         in
           (T.FUNMty ([#ty argExp], #ty retVar),
            fn funExp =>
-              {ty = BT.ptrTy,
-               exp = R.RCEXPORTCALLBACK
+              {ty = T.BACKENDty (T.FOREIGNFUNPTRty
+                                   {argTyList = ffiArgTyList,
+                                    varArgTyList = NONE,
+                                    resultTy = ffiRetTy,
+                                    attributes = attributes}),
+               exp = R.RCCALLBACKFN
                        {loc = loc,
-                        foreignFunTy =
-                          {argTyList = map #ty ffiArgVars,
-                           resultTy = #ty ffiRetExp,
-                           attributes = attributes},
-                        funExp =
-                          R.RCFNM
+                        attributes = attributes,
+                        resultTy = ffiRetTy,
+                        argVarList = ffiArgVars,
+                        bodyExp =
+                          R.RCMONOLET
                             {loc = loc,
-                             argVarList = ffiArgVars,
-                             bodyTy = #ty ffiRetExp,
-                             bodyExp =
-                               R.RCMONOLET
-                                 {loc = loc,
-                                  binds =
-                                    [(retVar,
-                                      R.RCAPPM
-                                        {loc = loc,
-                                         funExp = #exp funExp,
-                                         funTy = #ty funExp,
-                                         argExpList = [#exp argExp]})],
-                                  bodyExp = #exp ffiRetExp}}}})
+                             binds =
+                               [(retVar,
+                                 R.RCAPPM
+                                   {loc = loc,
+                                    funExp = #exp funExp,
+                                    funTy = #ty funExp,
+                                    argExpList = [#exp argExp]})],
+                             bodyExp = #exp ffiRetExp}}})
         end
+      | TC.FFIFUNTY (attributes, argTys, SOME _, retTys, loc) =>
+        raise Bug.Bug "stubExport: FFIFUNTY"
 
   fun infectPoly (ty, exp) =
-      case TypesUtils.derefTy ty of
+      case TypesBasics.derefTy ty of
         T.POLYty {boundtvars, body} =>
         (
           case exp of
@@ -281,38 +327,42 @@ struct
         )
       | _ => exp
 
-  fun compileImport (ptrExp, ffiTy, resultTy, loc) =
-      let
-        val exp = compileExp ptrExp
-        val var = newVar BT.ptrTy
-        val (_, importFn) = stubImport ffiTy
-        fun stub exp = #exp (importFn {ty = BT.ptrTy, exp = exp})
-      in
-        if isSimpleExp exp
-        then infectPoly (resultTy, stub exp)
-        else R.RCMONOLET
-               {binds = [(var, exp)],
-                bodyExp = infectPoly (resultTy, stub (R.RCVAR (var, loc))),
-                loc = loc}
-      end
-
   and compileFFIexp (rcffiexp, resultTy, loc) =
       case rcffiexp of
-        R.RCFFIIMPORT {ptrExp, ffiTy} =>
-        compileImport (ptrExp, ffiTy, resultTy, loc)
+        R.RCFFIIMPORT {funExp = R.RCFFIFUN ptrExp, ffiTy} =>
+        let
+          val ptrExp = {ty = BT.codeptrTy, exp = compileExp ptrExp}
+          val (letFn, ptrExp) = toSimpleExp (ptrExp, loc)
+          val (funptrTy, importExpFn) = stubImport ffiTy
+          val ptrExp = BitCast (ptrExp, funptrTy, loc)
+        in
+          letFn (infectPoly (resultTy, #exp (importExpFn ptrExp)))
+        end
+      | R.RCFFIIMPORT {funExp = R.RCFFIEXTERN name, ffiTy} =>
+        let
+          val (funptrTy, importExpFn) = stubImport ffiTy
+          val symbolExp =
+              {ty = funptrTy,
+               exp = R.RCFOREIGNSYMBOL {name=name, ty=funptrTy, loc=loc}}
+        in
+          infectPoly (resultTy, #exp (importExpFn symbolExp))
+        end
 
   and compileExp rcexp =
       case rcexp of
-        R.RCFOREIGNAPPLY {funExp, foreignFunTy, argExpList, loc} =>
+        R.RCFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
         R.RCFOREIGNAPPLY
           {funExp = compileExp funExp,
-           foreignFunTy = foreignFunTy,
            argExpList = map compileExp argExpList,
+           attributes = attributes,
+           resultTy = resultTy,
            loc = loc}
-      | R.RCEXPORTCALLBACK {funExp, foreignFunTy, loc} =>
-        R.RCEXPORTCALLBACK
-          {funExp = compileExp funExp,
-           foreignFunTy = foreignFunTy,
+      | R.RCCALLBACKFN {argVarList, bodyExp, attributes, resultTy, loc} =>
+        R.RCCALLBACKFN
+          {argVarList = argVarList,
+           bodyExp = compileExp bodyExp,
+           attributes = attributes,
+           resultTy = resultTy,
            loc = loc}
       | R.RCTAGOF (ty, loc) =>
         R.RCTAGOF (ty, loc)
@@ -322,12 +372,12 @@ struct
         R.RCINDEXOF (label, recordTy, loc)
       | R.RCCONSTANT {const, ty, loc} =>
         R.RCCONSTANT {const=const, ty=ty, loc=loc}
-      | R.RCGLOBALSYMBOL symbol =>
-        R.RCGLOBALSYMBOL symbol
-      | R.RCVAR (varInfo, loc) =>
-        R.RCVAR (varInfo, loc)
-      | R.RCEXVAR (exVarInfo, loc) =>
-        R.RCEXVAR (exVarInfo, loc)
+      | R.RCFOREIGNSYMBOL symbol =>
+        R.RCFOREIGNSYMBOL symbol
+      | R.RCVAR varInfo =>
+        R.RCVAR varInfo
+      | R.RCEXVAR exVarInfo =>
+        R.RCEXVAR exVarInfo
       | R.RCPRIMAPPLY {primOp, instTyList, argExp, loc} =>
         R.RCPRIMAPPLY
           {primOp = primOp,
@@ -398,32 +448,36 @@ struct
            loc = loc}
       | R.RCRAISE {exp, ty, loc} =>
         R.RCRAISE {exp = compileExp exp, ty = ty, loc = loc}
-      | R.RCHANDLE {exp, exnVar, handler, loc} =>
+      | R.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         R.RCHANDLE
           {exp = compileExp exp,
            exnVar = exnVar,
            handler = compileExp handler,
+           resultTy = resultTy,
            loc = loc}
-      | R.RCCASE {exp, expTy, ruleList, defaultExp, loc} =>
+      | R.RCCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         R.RCCASE
           {exp = compileExp exp,
            expTy = expTy,
            ruleList = map (fn (c,v,e) => (c, v, compileExp e)) ruleList,
            defaultExp = compileExp defaultExp,
+           resultTy = resultTy,
            loc = loc}
-      | R.RCEXNCASE {exp, expTy, ruleList, defaultExp, loc} =>
+      | R.RCEXNCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         R.RCEXNCASE
           {exp = compileExp exp,
            expTy = expTy,
            ruleList = map (fn (c,v,e) => (c, v, compileExp e)) ruleList,
            defaultExp = compileExp defaultExp,
+           resultTy = resultTy,
            loc = loc}
-      | R.RCSWITCH {switchExp, expTy, branches, defaultExp, loc} =>
+      | R.RCSWITCH {switchExp, expTy, branches, defaultExp, resultTy, loc} =>
         R.RCSWITCH
           {switchExp = compileExp switchExp,
            expTy = expTy,
            branches = map (fn (c,e) => (c, compileExp e)) branches,
            defaultExp = compileExp defaultExp,
+           resultTy = resultTy,
            loc = loc}
       | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
         R.RCFNM
@@ -455,10 +509,8 @@ struct
           {expList = map compileExp expList,
            expTyList = expTyList,
            loc = loc}
-      | R.RCCAST (rcexp, ty, loc) =>
-        R.RCCAST (compileExp rcexp, ty, loc)
-      | R.RCSQL exp =>
-        raise Control.Bug "FFICompilation.compileExp: RCSQL"
+      | R.RCCAST ((rcexp, expTy), ty, loc) =>
+        R.RCCAST ((compileExp rcexp, expTy), ty, loc)
       | R.RCFFI (exp, ty, loc) =>
         compileFFIexp (exp, ty, loc)
 
@@ -481,14 +533,14 @@ struct
         R.RCEXD (binds, loc)
       | R.RCEXNTAGD (bind, loc) => (* FIXME check this *)
         R.RCEXNTAGD (bind, loc)
-      | R.RCEXPORTVAR {externalVar, internalVar, loc} =>
-        R.RCEXPORTVAR {externalVar=externalVar, internalVar=internalVar, loc=loc}
-      | R.RCEXPORTEXN (exnInfo, loc) =>
-        R.RCEXPORTEXN (exnInfo, loc)
-      | R.RCEXTERNVAR (exVarInfo, loc) =>
-        R.RCEXTERNVAR (exVarInfo, loc)
-      | R.RCEXTERNEXN (exExnInfo, loc) =>
-        R.RCEXTERNEXN (exExnInfo, loc)
+      | R.RCEXPORTVAR varInfo =>
+        R.RCEXPORTVAR varInfo 
+      | R.RCEXPORTEXN exnInfo =>
+        R.RCEXPORTEXN exnInfo
+      | R.RCEXTERNVAR exVarInfo =>
+        R.RCEXTERNVAR exVarInfo
+      | R.RCEXTERNEXN exExnInfo =>
+        R.RCEXTERNEXN exExnInfo
 
   fun compile decls =
       map compileDecl decls

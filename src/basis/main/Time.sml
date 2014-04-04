@@ -1,38 +1,31 @@
 (**
- * Time structure.
+ * Time
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
- * @version $Id: Time.sml,v 1.8 2007/07/25 13:28:07 kiyoshiy Exp $
+ * @author UENO Katsuhiro
+ * @copyright 2010, 2013, Tohoku University.
  *)
-_interface "Time.smi"
 
-structure Time :> TIME =
+infix 7 * / quot
+infix 6 + - ^
+infixr 5 ::
+infix 4 = < >=
+val op quot = IntInf.quot
+val op * = IntInf.*
+val op + = IntInf.+
+val op / = LargeReal./
+val op < = SMLSharp_Builtin.Int.lt
+val op >= = SMLSharp_Builtin.Int.gteq
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op ^ = String.^
+structure Word = SMLSharp_Builtin.Word
+
+structure Time =
 struct
-
-  infix 7 * / quot
-  infix 6 + -
-  infixr 5 ::
-  infix 4 = < >=
-(*
-  infix 6 + -
-  infix 4 = <> > >= < <=
-  val op + = SMLSharp.Int.add
-  val op - = SMLSharp.Int.sub
-  val op > = SMLSharp.Int.gt
-  val op < = SMLSharp.Int.lt
-  val op <= = SMLSharp.Int.gteq
-  val op >= = SMLSharp.Int.lteq
-*)
-  val op quot = IntInf.quot
-  val op * = IntInf.*
-  val op / = LargeReal./
-  val op < = SMLSharp.Int.lt
-  val op >= = SMLSharp.Int.gteq
-  val op - = SMLSharp.Int.sub
-  val op + = IntInf.+
 
   type time = IntInf.int
   exception Time
+
+  val op + = IntInf.+
 
   val zeroTime = 0 : IntInf.int
 
@@ -44,9 +37,6 @@ struct
       LargeReal.fromLargeInt (IntInf.toLarge nsec) / Real.toLarge 1E9
 
 (* To round towards ZERO, use quot, not div. *)
-(* 2012-1-1 ohori.
-  fun toSeconds nsec = IntInf.toLarge (nsec quot 100000000)
-*)
   fun toSeconds nsec      = IntInf.toLarge (nsec quot 1000000000)
   fun toMilliseconds nsec = IntInf.toLarge (nsec quot 1000000)
   fun toMicroseconds nsec = IntInf.toLarge (nsec quot 1000)
@@ -63,11 +53,11 @@ struct
   (* number of seconds from UNIX epoch without leap seconds in UTC. *)
   fun now () =
       let
-        val ret = SMLSharp.PrimArray.allocArray 2
+        val ret = SMLSharp_Builtin.Array.alloc 2
         val err = prim_gettimeofday ret
-        val _ = if err < 0 then raise SMLSharpRuntime.OS_SysErr () else ()
-        val sec = SMLSharp.PrimArray.sub (ret, 0)
-        val usec = SMLSharp.PrimArray.sub (ret, 1)
+        val _ = if err < 0 then raise SMLSharp_Runtime.OS_SysErr () else ()
+        val sec = SMLSharp_Builtin.Array.sub_unsafe (ret, 0)
+        val usec = SMLSharp_Builtin.Array.sub_unsafe (ret, 1)
       in
         IntInf.fromInt sec * 1000000000 + IntInf.fromInt usec * 1000
       end
@@ -99,42 +89,32 @@ struct
   fun toString nsec =
       fmt 3 nsec
 
-  fun scanSign getc strm =
-      case getc strm of
-        SOME (#"+", strm) => (false, strm)
-      | SOME (#"~", strm) => (true, strm)
-      | SOME (#"-", strm) => (true, strm)
-      | _ => (false, strm)
-
-  fun scanDigits getc strm =
-      case SMLSharpScanChar.scanRepeat1 SMLSharpScanChar.scanDigit getc strm of
-        NONE => (nil, strm)
-      | SOME x => x
-
-  fun digitsToTime (il, fl, limit, z) =
-      case (il, fl, limit) of
-        (h::t, fl, _) => digitsToTime (t, fl, limit, z * 10 + IntInf.fromInt h)
-      | (nil, 0::t, 0) => digitsToTime (il, t, limit, z)
-      | (nil, h::t, 0) => raise Time
-      | (nil, h::t, limit) =>
-        digitsToTime (il, t, limit - 1, z * 10 + IntInf.fromInt h)
-      | (nil, nil, 0) => z
-      | (nil, nil, limit) => digitsToTime (il, fl, limit - 1, z * 10)
+  fun toInt digits =
+      let
+        fun loop (nil, z) = z
+          | loop (h::t, z) = loop (t, z * 10 + IntInf.fromInt h)
+      in
+        loop (digits, 0)
+      end
 
   fun scan getc strm =
       let
-        val strm = SMLSharpScanChar.skipSpaces getc strm
-        (* scan [+~-]?([0-9]+\.[0-9]*|\.[0-9]+) *)
-        val (sign, strm) = scanSign getc strm
-        val (il, strm) = scanDigits getc strm
-        val (fl, strm) =
-            case getc strm of
-              SOME (#".", strm) => scanDigits getc strm
-            | _ => (nil, strm)
+        val strm = SMLSharp_ScanChar.skipSpaces getc strm
+        (* scan [+~-]?([0-9]+(\.[0-9]+)?|\.[0-9]+) *)
+        val (sign, strm) = SMLSharp_ScanChar.scanSign getc strm
       in
-        case (il, fl) of
-          (nil, nil) => NONE
-        | _ => SOME (digitsToTime (il, fl, 9, 0), strm)
+        case SMLSharp_ScanChar.scanMantissa getc strm of
+          NONE => NONE
+        | SOME ((il, fl), strm) =>
+          let
+            fun pad (nil, 0w0) = nil
+              | pad (nil, n) = 0 :: pad (nil, Word.sub (n, 0w1))
+              | pad (h::t, 0w0) = raise Time
+              | pad (h::t, n) = h :: pad (t, Word.sub (n, 0w1))
+            val n = toInt il * 1000000000 + toInt (pad (fl, 0w9))
+          in
+            SOME (if sign then IntInf.~ n else n, strm)
+          end
       end
 
   fun fromString s =

@@ -1,13 +1,12 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "VarMap.smi"
-_require "Types.ppg.smi"
-_require "IDCalc.ppg.smi"
+_require "./VarMap.smi"
+_require "./Types.ppg.smi"
+_require "./IDCalc.ppg.smi"
 
 structure IDCalcUtils =
 struct

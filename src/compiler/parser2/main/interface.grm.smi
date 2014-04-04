@@ -1,207 +1,161 @@
-_require "../../../basis/main/StringCvt.smi"
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/Char.smi"
-_require "../../../basis/main/Array.smi"
-_require "../../../basis/main/ListPair.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/binary-op.smi"
-(*
-_require "../../../basis.smi"
-*)
-_require "../../../ml-yacc-lib.smi"
+_require "basis.smi"
+_require "ml-yacc-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
-_require "interface.grm.sig"
+_require "../../absyn/main/FormatTemplate.ppg.smi"
 
 structure InterfaceLrVals =
 struct
-  structure ParserData =
+  structure Parser =
   struct
-    type pos = Loc.pos
-    type svalue (= boxed)
-    type arg = unit
+    type token (= boxed)
+    type stream (= boxed)
     type result = AbsynInterface.itop
-    structure LrParser = 
-      struct
-        type arg = arg
-        type pos = pos
-        type svalue = svalue
-        structure LrTable = LrTable
-        structure Token =
-        struct
-          type svalue = svalue
-          type pos = pos
-          structure LrTable = LrTable
-          datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
-          val sameToken : token * token -> bool
-        end
-        structure Stream = 
-        struct
-          type tok = Token.token
-          type stream (= boxed)
-          val streamify : (unit -> tok) -> stream
-          val cons : tok * stream -> stream
-          val get : stream -> tok * stream
-        end
-        exception ParseError
-        val parse
-            : {table : LrTable.table,
-               lexer : Stream.stream,
-               arg: arg,
-               saction : int * Token.pos * (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list * arg ->
-                         LrTable.nonterm * (Token.svalue * Token.pos * Token.pos) *
-                         (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list,
-               void : Token.svalue,
-               ec : {is_keyword : LrTable.term -> bool,
-                     noShift : LrTable.term -> bool,
-                     preferred_change : (LrTable.term list * LrTable.term list)
-                                        list,
-                     errtermvalue : LrTable.term -> Token.svalue,
-                     showTerminal : LrTable.term -> string,
-                     terms: LrTable.term list,
-                     error : string * Token.pos * Token.pos -> unit},
-               lookahead : int} -> Token.svalue * Stream.stream
-      end
-    structure Token = LrParser.Token
-    structure LrTable = LrParser.LrTable
-    structure Actions =
-    struct
-      val actions : int * pos *
-                    (LrTable.state * (svalue * pos * pos)) list * arg ->
-                    LrTable.nonterm * (svalue * pos * pos) *
-                    (LrTable.state *(svalue * pos * pos)) list
-      val void : svalue
-      val extract : svalue -> result
-    end
-    structure EC =
-    struct
-      val is_keyword : LrTable.term -> bool
-      val noShift : LrTable.term -> bool
-      val preferred_change : (LrTable.term list * LrTable.term list) list
-      val errtermvalue : LrTable.term -> svalue
-      val showTerminal : LrTable.term -> string
-      val terms: LrTable.term list
-    end
-    val table : LrTable.table
+    type pos = Loc.pos
+    type arg = unit
+    exception ParseError
+    val makeStream : {lexer:unit -> token} -> stream
+    val consStream : token * stream -> stream
+    val getStream : stream -> token * stream
+    val sameToken : token * token -> bool
+    val parse : {lookahead:int,
+                 stream:stream,
+                 error: (string * pos * pos -> unit),
+                 arg: arg}
+                -> result * stream
   end
   structure Tokens =
   struct
-    type pos = ParserData.pos
-    type svalue = ParserData.svalue
-    type token = ParserData.Token.token
-    val ROLLBACK : pos * pos -> token
-    val COMMIT : pos * pos -> token
-    val BEGIN : pos * pos -> token
-    val DEFAULT : pos * pos -> token
-    val SET : pos * pos -> token
-    val UPDATE : pos * pos -> token
-    val BY : pos * pos -> token
-    val ORDER : pos * pos -> token
-    val DELETE : pos * pos -> token
-    val VALUES : pos * pos -> token
-    val INTO : pos * pos -> token
-    val INSERT : pos * pos -> token
-    val FROM : pos * pos -> token
-    val SELECT : pos * pos -> token
-    val DESC : pos * pos -> token
-    val ASC : pos * pos -> token
-    val SQL : pos * pos -> token
-    val SQLEXEC : pos * pos -> token
-    val SQLEVAL : pos * pos -> token
-    val SQLSERVER : pos * pos -> token
-    val WORD : {radix:StringCvt.radix, digits:string} *  pos * pos -> token
-    val WITHTYPE : pos * pos -> token
-    val WITH : pos * pos -> token
-    val WHERE : pos * pos -> token
-    val WHILE : pos * pos -> token
-    val VAL : pos * pos -> token
-    val USEOBJ : pos * pos -> token
-    val USE' : pos * pos -> token
-    val USE : pos * pos -> token
-    val UNDERBAR : pos * pos -> token
-    val TYVAR : (string) *  pos * pos -> token
-    val TYPE : pos * pos -> token
-    val THEN : pos * pos -> token
-    val STRUCTURE : pos * pos -> token
-    val STRUCT : pos * pos -> token
-    val STRING : (string) *  pos * pos -> token
-    val STDCALL : pos * pos -> token
-    val SPECIAL : (string) *  pos * pos -> token
-    val SIZEOF : pos * pos -> token
-    val SIGNATURE : pos * pos -> token
-    val SIG : pos * pos -> token
-    val SHARING : pos * pos -> token
-    val SEMICOLON : pos * pos -> token
-    val RPAREN : pos * pos -> token
-    val REAL : (string) *  pos * pos -> token
-    val RBRACKET : pos * pos -> token
-    val RBRACE : pos * pos -> token
-    val REQUIRE : pos * pos -> token
-    val REC : pos * pos -> token
-    val RAISE : pos * pos -> token
-    val PRIVATE : pos * pos -> token
-    val PERIODS : pos * pos -> token
-    val PERIOD : pos * pos -> token
-    val NULL : pos * pos -> token
-    val NAMESPACE : pos * pos -> token
-    val ORELSE : pos * pos -> token
-    val OPEN : pos * pos -> token
-    val OPAQUE : pos * pos -> token
-    val OP : pos * pos -> token
-    val OF : pos * pos -> token
-    val NONFIX : pos * pos -> token
-    val LPAREN : pos * pos -> token
-    val LOCAL : pos * pos -> token
-    val LET : pos * pos -> token
-    val LBRACKET : pos * pos -> token
-    val LBRACE : pos * pos -> token
-    val INTERFACE : pos * pos -> token
-    val INT : {radix:StringCvt.radix, digits:string} *  pos * pos -> token
-    val INTLAB : string *  pos * pos -> token
-    val INFIXR : pos * pos -> token
-    val INFIX : pos * pos -> token
-    val INCLUDE : pos * pos -> token
-    val IMPORT : pos * pos -> token
-    val IN : pos * pos -> token
-    val IF : pos * pos -> token
-    val ID : (string) *  pos * pos -> token
-    val HASH : pos * pos -> token
-    val HANDLE : pos * pos -> token
-    val FUNCTOR : pos * pos -> token
-    val FUN : pos * pos -> token
-    val FN : pos * pos -> token
-    val FFIAPPLY : pos * pos -> token
-    val EXPORT : pos * pos -> token
-    val EXTERNAL : pos * pos -> token
-    val EXCEPTION : pos * pos -> token
-    val EQTYVAR : (string) *  pos * pos -> token
-    val EQTYPE : pos * pos -> token
-    val EQ : pos * pos -> token
-    val END : pos * pos -> token
-    val ELSE : pos * pos -> token
-    val DO : pos * pos -> token
-    val DATATYPE : pos * pos -> token
-    val DARROW : pos * pos -> token
-    val COMMA : pos * pos -> token
-    val COLON : pos * pos -> token
-    val CHAR : (string) *  pos * pos -> token
-    val CDECL : pos * pos -> token
-    val CAST : pos * pos -> token
-    val CASE : pos * pos -> token
-    val BUILTIN : pos * pos -> token
-    val BAR : pos * pos -> token
-    val ATTRIBUTE : pos * pos -> token
-    val AT : pos * pos -> token
-    val ASTERISK : pos * pos -> token
-    val AS : pos * pos -> token
-    val ARROW : pos * pos -> token
-    val ANDALSO : pos * pos -> token
-    val AND : pos * pos -> token
-    val ABSNAMESPACE : pos * pos -> token
-    val ABSTYPE : pos * pos -> token
-    val EOF : pos * pos -> token
+    type pos = Parser.pos
+    type token = Parser.token
+val ASSOCINDICATOR: ({ cut:bool,strength:int,direction:FormatTemplate.assocDirection } ) *  pos * pos -> token
+val FORMATINDICATOR: ({ space:bool,newline:{ priority:FormatTemplate.priority }  option } ) *  pos * pos -> token
+val STARTOFINDENT: (int) *  pos * pos -> token
+val NEWLINE:  pos * pos -> token
+val LOCALFORMATTAG: (string) *  pos * pos -> token
+val FORMATTAG:  pos * pos -> token
+val HEADERTAG:  pos * pos -> token
+val DESTINATIONTAG:  pos * pos -> token
+val FORMATPARAMSTAG:  pos * pos -> token
+val FORMATTERTAG:  pos * pos -> token
+val PREFIXTAG:  pos * pos -> token
+val DITTOTAG:  pos * pos -> token
+val FORMATCOMMENTEND:  pos * pos -> token
+val FORMATCOMMENTSTART:  pos * pos -> token
+val ROLLBACK:  pos * pos -> token
+val COMMIT:  pos * pos -> token
+val BEGIN:  pos * pos -> token
+val DEFAULT:  pos * pos -> token
+val SET:  pos * pos -> token
+val UPDATE:  pos * pos -> token
+val BY:  pos * pos -> token
+val ORDER:  pos * pos -> token
+val DELETE:  pos * pos -> token
+val VALUES:  pos * pos -> token
+val INTO:  pos * pos -> token
+val INSERT:  pos * pos -> token
+val FROM:  pos * pos -> token
+val SELECT:  pos * pos -> token
+val DESC:  pos * pos -> token
+val ASC:  pos * pos -> token
+val SQL:  pos * pos -> token
+val SQLEXEC:  pos * pos -> token
+val SQLEVAL:  pos * pos -> token
+val SQLSERVER:  pos * pos -> token
+val WORD: ({ radix:StringCvt.radix,digits:string } ) *  pos * pos -> token
+val WITHTYPE:  pos * pos -> token
+val WITH:  pos * pos -> token
+val WHERE:  pos * pos -> token
+val WHILE:  pos * pos -> token
+val VAL:  pos * pos -> token
+val USEOBJ:  pos * pos -> token
+val USE':  pos * pos -> token
+val USE:  pos * pos -> token
+val UNDERBAR:  pos * pos -> token
+val TYVAR: (string) *  pos * pos -> token
+val TYPE:  pos * pos -> token
+val THEN:  pos * pos -> token
+val STRUCTURE:  pos * pos -> token
+val STRUCT:  pos * pos -> token
+val STRING: (string) *  pos * pos -> token
+val STDCALL:  pos * pos -> token
+val SPECIAL: (string) *  pos * pos -> token
+val SIZEOF:  pos * pos -> token
+val SIGNATURE:  pos * pos -> token
+val SIG:  pos * pos -> token
+val SHARING:  pos * pos -> token
+val SEMICOLON:  pos * pos -> token
+val RPAREN:  pos * pos -> token
+val REAL: (string) *  pos * pos -> token
+val RBRACKET:  pos * pos -> token
+val RBRACE:  pos * pos -> token
+val REQUIRE:  pos * pos -> token
+val REC:  pos * pos -> token
+val POLYREC:  pos * pos -> token
+val RAISE:  pos * pos -> token
+val PRIVATE:  pos * pos -> token
+val PERIODS:  pos * pos -> token
+val PERIOD:  pos * pos -> token
+val NULL:  pos * pos -> token
+val NAMESPACE:  pos * pos -> token
+val ORELSE:  pos * pos -> token
+val OPEN:  pos * pos -> token
+val OPAQUE:  pos * pos -> token
+val OP:  pos * pos -> token
+val OF:  pos * pos -> token
+val NONFIX:  pos * pos -> token
+val LPAREN:  pos * pos -> token
+val LOCAL:  pos * pos -> token
+val LET:  pos * pos -> token
+val LBRACKET:  pos * pos -> token
+val LBRACE:  pos * pos -> token
+val INTERFACE:  pos * pos -> token
+val JOIN:  pos * pos -> token
+val INTLAB: (string) *  pos * pos -> token
+val INT: ({ radix:StringCvt.radix,digits:string } ) *  pos * pos -> token
+val INFIXR:  pos * pos -> token
+val INFIX:  pos * pos -> token
+val INCLUDE:  pos * pos -> token
+val IMPORT:  pos * pos -> token
+val IN:  pos * pos -> token
+val IF:  pos * pos -> token
+val ID: (string) *  pos * pos -> token
+val HASH:  pos * pos -> token
+val HANDLE:  pos * pos -> token
+val FUNCTOR:  pos * pos -> token
+val FUN:  pos * pos -> token
+val FN:  pos * pos -> token
+val FFIAPPLY:  pos * pos -> token
+val EXPORT:  pos * pos -> token
+val EXTERNAL:  pos * pos -> token
+val EXCEPTION:  pos * pos -> token
+val EQTYVAR: (string) *  pos * pos -> token
+val EQTYPE:  pos * pos -> token
+val EQ:  pos * pos -> token
+val END:  pos * pos -> token
+val ELSE:  pos * pos -> token
+val DO:  pos * pos -> token
+val DATATYPE:  pos * pos -> token
+val DARROW:  pos * pos -> token
+val COMMA:  pos * pos -> token
+val COLON:  pos * pos -> token
+val CHAR: (string) *  pos * pos -> token
+val CDECL:  pos * pos -> token
+val CAST:  pos * pos -> token
+val CASE:  pos * pos -> token
+val BUILTIN:  pos * pos -> token
+val BAR:  pos * pos -> token
+val ATTRIBUTE:  pos * pos -> token
+val AT:  pos * pos -> token
+val ASTERISK:  pos * pos -> token
+val AS:  pos * pos -> token
+val ARROW:  pos * pos -> token
+val ANDALSO:  pos * pos -> token
+val AND:  pos * pos -> token
+val ABSNAMESPACE:  pos * pos -> token
+val ABSTYPE:  pos * pos -> token
+val EOF:  pos * pos -> token
   end
 end

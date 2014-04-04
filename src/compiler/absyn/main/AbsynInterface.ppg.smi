@@ -1,168 +1,221 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../util/main/BigInt_IntInf.smi"
-_require "Absyn.ppg.smi"
+_require "../../toolchain/main/Filename.smi"
+_require "./Symbol.ppg.smi"
+_require "./Absyn.ppg.smi"
 
 structure AbsynInterface =
 struct
   datatype constraint =
       SIG_TRANSPARENT
     | SIG_OPAQUE
-  val format_constraint
-      : constraint -> SMLFormat.FormatExpression.expression list
+
   type ty = Absyn.ty
-  val format_ty : ty -> SMLFormat.FormatExpression.expression list
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
   type loc = Loc.loc
-  val format_loc : loc -> SMLFormat.FormatExpression.expression list
   datatype overloadInstance =
-      INST_OVERLOAD of 
-        {tyvar: Absyn.tvar,
-         expTy: ty,
-         matches: {instTy: ty, instance: overloadInstance} list,
-         loc: loc}
-    | INST_LONGVID of {vid: string list}
-  val format_overloadInstance
-      : overloadInstance -> SMLFormat.FormatExpression.expression list
-  type overloadMatch =
-      {instTy: ty, instance: overloadInstance}
-  val format_overloadMatch
-      : overloadMatch -> SMLFormat.FormatExpression.expression list
+      INST_OVERLOAD of {tyvar: Absyn.tvar,
+                        expTy: ty,
+                        matches: {instTy: ty, instance: overloadInstance} list,
+                        loc: loc}
+    | INST_LONGVID of {longsymbol: longsymbol}
+
   type overloadCase =
       {tyvar: Absyn.tvar,
        expTy: ty,
        matches: {instTy: ty, instance: overloadInstance} list,
        loc: loc}
-  val format_overloadCase
-      : overloadCase -> SMLFormat.FormatExpression.expression list
+
   datatype valbindBody =
       VAL_EXTERN of {ty: ty}
-    | VAL_EXTERN_WITHNAME of {ty: ty, externPath:string list}
-    | VALALIAS_EXTERN of {path:string list}
-    | VAL_BUILTIN of {builtinName: string, ty: ty}
+    | VALALIAS_EXTERN of longsymbol
+    | VAL_BUILTIN of {builtinSymbol: symbol, ty: ty}
     | VAL_OVERLOAD of overloadCase
-  val format_valbindBody
-      : SMLFormat.FormatExpression.expression list
-        -> valbindBody -> SMLFormat.FormatExpression.expression list
+
   type valbind =
-      {vid: string, body: valbindBody, loc: loc}
-  val format_valbind
-      : valbind -> SMLFormat.FormatExpression.expression list
+      {symbol: symbol, body: valbindBody, loc: loc}
+
   datatype typbind =
-      TRANSPARENT of {tyvars: Absyn.tvar list, tycon: string, ty: ty, loc: loc}
-    | OPAQUE_NONEQ of {tyvars: Absyn.tvar list, tycon: string,
-                       runtimeTy: string list, loc: loc}
-    | OPAQUE_EQ of {tyvars: Absyn.tvar list, tycon: string,
-                    runtimeTy: string list, loc: loc}
-  val format_typbind
-      : typbind -> SMLFormat.FormatExpression.expression list
+      TRANSPARENT of {tyvars: Absyn.tvar list, symbol: symbol, ty: ty, loc: loc}
+    | OPAQUE_NONEQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
+    | OPAQUE_EQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
+
   type conbind =
-      {vid: string, ty: ty option}
-  val format_conbind
-      : conbind -> SMLFormat.FormatExpression.expression list
+      {symbol: symbol, ty: ty option}
+
   type datbind =
-      {tyvars: Absyn.tvar list, tycon: string, conbind: conbind list}
-  val format_datbind
-      : datbind -> SMLFormat.FormatExpression.expression list
+      {tyvars: Absyn.tvar list, symbol: symbol, conbind: conbind list}
+
   datatype exbind =
-      EXNDEF of {vid: string, ty: ty option, loc: loc}
-    | EXNDEF_WITHNAME of {vid: string, ty: ty option, externPath:string list, loc: loc}
-    | EXNREP of {vid: string, longvid: string list, loc: loc}
-  val format_exbind
-      : exbind -> SMLFormat.FormatExpression.expression list
+      EXNDEF of {symbol: symbol, ty: ty option, loc: loc}
+    | EXNREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
+
   datatype idec =
       IVAL of valbind list
     | ITYPE of typbind list
     | IDATATYPE of {datbind: datbind list, loc: loc}
-    | ITYPEREP of {tycon: string, origTycon: string list, loc: loc}
-    | ITYPEBUILTIN of {tycon: string, builtinName: string,loc: loc}
+    | ITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
+    | ITYPEBUILTIN of {symbol: symbol, builtinSymbol: symbol,loc: loc}
     | IEXCEPTION of exbind list
-    | ISTRUCTURE of {strid: string, strexp: istrexp, loc: loc}
+    | ISTRUCTURE of {symbol: symbol, strexp: istrexp, loc: loc}
+
+
   and istrexp =
       ISTRUCT of {decs: idec list, loc: loc}
-    | ISTRUCTREP of {strPath:string list, loc: loc}
-    | IFUNCTORAPP of {functorName:string, argumentPath:string list, loc: loc}
-  val format_idec
-      : idec -> SMLFormat.FormatExpression.expression list
-  val format_istrexp
-      : istrexp -> SMLFormat.FormatExpression.expression list
-  type strbind = {strid: string, strexp: istrexp, loc: loc}
-  val format_strbind
-      : strbind -> SMLFormat.FormatExpression.expression list
-  type sigbind = {sigid: string, sigexp: Absyn.sigexp, loc: loc}
-  val format_sigbind
-      : sigbind -> SMLFormat.FormatExpression.expression list
+    | ISTRUCTREP of {longsymbol:longsymbol, loc: loc}
+    | IFUNCTORAPP of {functorSymbol:symbol, argument:longsymbol, loc: loc}
+
+  type strbind =
+      {
+        symbol: symbol,
+        strexp: istrexp,
+        loc: loc
+      }
+
+  type sigbind =
+      {symbol: symbol, sigexp: Absyn.sigexp, loc: loc}
+
   datatype funParam =
-      FUNPARAM_FULL of {strid: string, sigexp: Absyn.sigexp}
+      FUNPARAM_FULL of {symbol: symbol, sigexp: Absyn.sigexp}
     | FUNPARAM_SPEC of Absyn.spec
-  val format_funParam
-      : funParam -> SMLFormat.FormatExpression.expression list
-  type funbind = {funid: string, param: funParam, strexp: istrexp, loc: loc}
-  val format_funbind
-      : funbind -> SMLFormat.FormatExpression.expression list
+
+  type funbind =
+      {
+        functorSymbol: symbol,
+        param: funParam,
+        strexp: istrexp,
+        loc: loc
+      }
+
   datatype fixity =
       INFIXL of string option
     | INFIXR of string option
     | NONFIX
-  val format_fixity
-      : fixity -> SMLFormat.FormatExpression.expression list
+
   datatype itopdec =
       IDEC of idec
     | IFUNDEC of funbind
-    | IINFIX of {fixity: fixity, vids: string list, loc: loc}
-  val format_itopdec
-      : itopdec -> SMLFormat.FormatExpression.expression list
+    | IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
+
   datatype itop =
       INTERFACE of
       {
-        requires: {name: string, loc: loc} list,
-        topdecs: itopdec list
+        requires: Symbol.symbol list,
+        provide: itopdec list
       }
     | INCLUDES of
       {
-        includes: {name: string, loc: loc} list,
+        includes: Symbol.symbol list,
         topdecs: Absyn.topdec list
       }
-  val format_itop
-      : itop -> SMLFormat.FormatExpression.expression list
+
   datatype filePlace =
       STDPATH
     | LOCALPATH
-  val format_filePlace
-      : filePlace -> SMLFormat.FormatExpression.expression list
+  
+(*
+  datatype source =
+      LOADED of filePlace * Filename.filename
+    | GENERATED
+*)
+  type source = filePlace * Filename.filename
+  
   type interfaceName =
       {
         hash: string,
-        sourceName: string,
-        place: filePlace
-      }
-  val format_interfaceName
-      : interfaceName -> SMLFormat.FormatExpression.expression list
+        source: source
+      } 
+
   type interfaceDec =
       {
         interfaceId: InterfaceID.id,
-        interfaceName: interfaceName,
-        requires: {id: InterfaceID.id, loc: loc} list,
-        topdecs: itopdec list
+        interfaceName : interfaceName,
+        requiredIds: {id: InterfaceID.id, loc: loc} list,
+        provideTopdecs: itopdec list
       }
-  val format_interfaceDec
-      : interfaceDec -> SMLFormat.FormatExpression.expression list
+
   type interface =
       {
-        decls: interfaceDec list,
-        interfaceName: interfaceName option,
-        requires: {id: InterfaceID.id, loc: loc} list,
-        topdecs: itopdec list
-      }
-  val format_interface
-      : interface -> SMLFormat.FormatExpression.expression list
+        interfaceDecs : interfaceDec list,
+        provideInterfaceNameOpt : interfaceName option,
+        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        provideTopdecs : itopdec list
+      } 
+
   type compileUnit =
       {
-        interface : interface,
-        topdecs : Absyn.topdec list
+        interface : interface option,
+        topdecsInclude : Absyn.topdec list,
+        topdecsSource : Absyn.topdec list
       }
+
+  type interactiveUnit =
+      {
+        interface : interface,
+        interfaceDecls : itopdec list,
+        topdecsInclude : Absyn.topdec list
+      }
+
+  val format_constraint
+      : constraint -> SMLFormat.FormatExpression.expression list
+  val format_ty : ty -> SMLFormat.FormatExpression.expression list
+  val format_loc : loc -> SMLFormat.FormatExpression.expression list
+  val format_overloadInstance
+      : overloadInstance -> SMLFormat.FormatExpression.expression list
+(*
+  val format_overloadMatch
+      : overloadMatch -> SMLFormat.FormatExpression.expression list
+*)
+  val format_overloadCase
+      : overloadCase -> SMLFormat.FormatExpression.expression list
+  val format_valbindBody
+      : SMLFormat.FormatExpression.expression list
+        -> valbindBody -> SMLFormat.FormatExpression.expression list
+  val format_valbind
+      : valbind -> SMLFormat.FormatExpression.expression list
+  val format_typbind
+      : typbind -> SMLFormat.FormatExpression.expression list
+  val format_conbind
+      : conbind -> SMLFormat.FormatExpression.expression list
+  val format_datbind
+      : datbind -> SMLFormat.FormatExpression.expression list
+  val format_exbind
+      : exbind -> SMLFormat.FormatExpression.expression list
+  val format_idec
+      : idec -> SMLFormat.FormatExpression.expression list
+  val format_istrexp
+      : istrexp -> SMLFormat.FormatExpression.expression list
+  val format_strbind
+      : strbind -> SMLFormat.FormatExpression.expression list
+  val format_sigbind
+      : sigbind -> SMLFormat.FormatExpression.expression list
+  val format_funParam
+      : funParam -> SMLFormat.FormatExpression.expression list
+  val format_funbind
+      : funbind -> SMLFormat.FormatExpression.expression list
+  val format_fixity
+      : fixity -> SMLFormat.FormatExpression.expression list
+  val format_itopdec
+      : itopdec -> SMLFormat.FormatExpression.expression list
+  val format_itop
+      : itop -> SMLFormat.FormatExpression.expression list
+  val format_filePlace
+      : filePlace -> SMLFormat.FormatExpression.expression list
+  val format_source
+      : source -> SMLFormat.FormatExpression.expression list
+  val format_interfaceName
+      : interfaceName -> SMLFormat.FormatExpression.expression list
+  val format_interfaceDec
+      : interfaceDec -> SMLFormat.FormatExpression.expression list
+  val format_interface
+      : interface -> SMLFormat.FormatExpression.expression list
   val format_compileUnit
       : compileUnit -> SMLFormat.FormatExpression.expression list
+  val format_interactiveUnit
+      : interactiveUnit -> SMLFormat.FormatExpression.expression list
 end

@@ -1,38 +1,36 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 
 structure BigInt =
 struct
-  eqtype int (= intInf)
-  val toLarge : int -> LargeInt.int
-  val fromLarge : LargeInt.int -> int
-  val toInt : int -> SMLSharp.Int.int
-  val fromInt : SMLSharp.Int.int -> int
-  val precision : SMLSharp.Int.int option
-  val minInt : int option
-  val maxInt : int option
-  val + : int * int -> int
-  val - : int * int -> int
-  val * : int * int -> int
-  val div : int * int -> int
-  val mod : int * int -> int
-  val quot : int * int -> int
-  val rem : int * int -> int
-  val compare : int * int -> order
-  val < : int * int -> bool
-  val <= : int * int -> bool
-  val > : int * int -> bool
-  val >= : int * int -> bool
-  val ~ : int -> int
-  val abs : int -> int
-  val min : int * int -> int
-  val max : int * int -> int
-  val sign : int -> SMLSharp.Int.int
-  val sameSign : int * int -> bool
-  val fmt : StringCvt.radix -> int -> string
-  val toString : int -> string
-  val scan : StringCvt.radix
-             -> (char, 'a) StringCvt.reader
-             -> (int, 'a) StringCvt.reader
-  val fromString : string -> int option
+  type int = IntInf.int
+  val toLarge = IntInf.toLarge
+  val fromLarge = IntInf.fromLarge
+  val toInt = IntInf.toInt
+  val fromInt = IntInf.fromInt
+  val precision = IntInf.precision
+  val minInt = IntInf.minInt
+  val maxInt = IntInf.maxInt
+  val + = IntInf.+
+  val - = IntInf.-
+  val * = IntInf.*
+  val div = IntInf.div
+  val mod = IntInf.mod
+  val quot = IntInf.quot
+  val rem = IntInf.rem
+  val compare = IntInf.compare
+  val < = IntInf.<
+  val <= = IntInf.<=
+  val > = IntInf.>
+  val >= = IntInf.>=
+  val ~ = IntInf.~
+  val abs = IntInf.abs
+  val min = IntInf.min
+  val max = IntInf.max
+  val sign = IntInf.sign
+  val sameSign = IntInf.sameSign
+  val fmt = IntInf.fmt
+  val toString = IntInf.toString
+  val scan = IntInf.scan
+  val fromString = IntInf.fromString
   val toCString : int -> string
 end

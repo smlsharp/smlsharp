@@ -1,40 +1,35 @@
-_require "SMLSharpRuntime.smi"
-_require "General.smi"
-_require "StringCvt.smi"
-_require "Int.smi"
-_require "String.smi"
-_require "Substring.smi"
-_require "IntInf.smi"
-_require "IEEEReal.smi"
-_require "MATH.sig"
-_require "RealClass.smi"
-
-structure Math =
-struct
-  type real = real
-  val pi : real
-  val e : real
-  val sqrt : real -> real
-  val sin : real -> real
-  val cos : real -> real
-  val tan : real -> real
-  val asin : real -> real
-  val acos : real -> real
-  val atan : real -> real
-  val atan2 : real * real -> real
-  val exp : real -> real
-  val pow : real * real -> real
-  val ln : real -> real
-  val log10 : real -> real
-  val sinh : real -> real
-  val cosh : real -> real
-  val tanh : real -> real
-end
+_require "./SMLSharp_Runtime.smi"
+_require "./SMLSharp_RealClass.smi"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./String.smi"
+_require "./Int.smi"
+_require "./IEEEReal.smi"
 
 structure Real =
 struct
-  type real = SMLSharp.Real.real
-  structure Math = Math
+  type real = real
+  structure Math =
+  struct
+    type real = real
+    val pi : real
+    val e : real
+    val sqrt : real -> real
+    val sin : real -> real
+    val cos : real -> real
+    val tan : real -> real
+    val asin : real -> real
+    val acos : real -> real
+    val atan : real -> real
+    val atan2 : real * real -> real
+    val exp : real -> real
+    val pow : real * real -> real
+    val ln : real -> real
+    val log10 : real -> real
+    val sinh : real -> real
+    val cosh : real -> real
+    val tanh : real -> real
+  end
   val radix : int
   val precision : int
   val maxFinite : real
@@ -42,35 +37,35 @@ struct
   val minNormalPos : real
   val posInf : real
   val negInf : real
-  val + = SMLSharp.Real.add
-  val - = SMLSharp.Real.sub
-  val * = SMLSharp.Real.mul
-  val / = SMLSharp.Real.div
-  val rem = SMLSharp.Real.rem
+  val + = SMLSharp_Builtin.Real.add
+  val - = SMLSharp_Builtin.Real.sub
+  val * = SMLSharp_Builtin.Real.mul
+  val / = SMLSharp_Builtin.Real.div
+  val rem = SMLSharp_Builtin.Real.rem
   val *+ : real * real * real -> real
   val *- : real * real * real -> real
-  val ~ = SMLSharp.Real.neg
-  val abs = SMLSharp.Real.abs
+  val ~ = SMLSharp_Builtin.Real.neg
+  val abs = SMLSharp_Builtin.Real.abs
+  val min : real * real -> real
+  val max : real * real -> real
   val sign : real -> int
   val signBit : real -> bool
   val sameSign : real * real -> bool
   val copySign : real * real -> real
+  val compare : real * real -> General.order
   val compareReal : real * real -> IEEEReal.real_order
-  val compare : real * real -> order
-  val < = SMLSharp.Real.lt
-  val <= = SMLSharp.Real.lteq
-  val > = SMLSharp.Real.gt
-  val >= = SMLSharp.Real.gteq
-  val == = SMLSharp.Real.equal
-  val != : real * real -> bool
-  val ?= = SMLSharp.Real.unorderedOrEqual
-  val isFinite : real -> bool
-  val isNan : real -> bool
+  val < = SMLSharp_Builtin.Real.lt
+  val <= = SMLSharp_Builtin.Real.lteq
+  val > = SMLSharp_Builtin.Real.gt
+  val >= = SMLSharp_Builtin.Real.gteq
+  val == = SMLSharp_Builtin.Real.equal
+  val != = SMLSharp_Builtin.Real.notEqual
+  val ?= = SMLSharp_Builtin.Real.ueq
   val unordered : real * real -> bool
+  val isFinite : real -> bool
+  val isNan = SMLSharp_Builtin.Real.isNan
   val isNormal : real -> bool
   val class : real -> IEEEReal.float_class
-  val min : real * real -> real
-  val max : real * real -> real
   val toManExp : real -> {man : real, exp : int}
   val fromManExp : {man : real, exp : int} -> real
   val split : real -> {whole : real, frac : real}
@@ -79,31 +74,26 @@ struct
   val checkFloat : real -> real
   val realFloor : real -> real
   val realCeil : real -> real
-  val realRound : real -> real
   val realTrunc : real -> real
+  val realRound : real -> real
   val floor : real -> int
   val ceil : real -> int
-  val trunc : real -> int
+  val trunc = SMLSharp_Builtin.Real.trunc
   val round : real -> int
   val toInt : IEEEReal.rounding_mode -> real -> int
-  val toLargeInt : IEEEReal.rounding_mode -> real -> LargeInt.int
-  val fromInt = SMLSharp.Real.fromInt
-  val fromLargeInt : LargeInt.int -> real
-  val toLarge : real -> real
-  val fromLarge : IEEEReal.rounding_mode -> real -> real
+  val toLargeInt : IEEEReal.rounding_mode -> real -> SMLSharp_Builtin.IntInf.int
+  val fromInt = SMLSharp_Builtin.Real.fromInt_unsafe
+  val fromLargeInt : SMLSharp_Builtin.IntInf.int -> real
+  val toLarge : real -> SMLSharp_Builtin.Real.real
+  val fromLarge : IEEEReal.rounding_mode -> SMLSharp_Builtin.Real.real -> real
+  val fmt : StringCvt.realfmt -> real -> string
+  val toString : real -> string
+  val scan : (char, 'a) StringCvt.reader -> (real, 'a) StringCvt.reader
+  val fromString : string -> real option
   val toDecimal : real -> IEEEReal.decimal_approx
   val fromDecimal : IEEEReal.decimal_approx -> real option
-  val fmt : StringCvt.realfmt -> real -> string
-  val scan : (char, 'a) StringCvt.reader -> (real, 'a) StringCvt.reader
-  val toString : real -> string
-  val fromString : string -> real option
 end
 
 structure LargeReal = Real
 structure Real64 = Real
-
-val real = Real.fromInt
-val ceil = Real.ceil
-val floor = Real.floor
-val round = Real.round
-val trunc = Real.trunc
+structure Math = Real.Math

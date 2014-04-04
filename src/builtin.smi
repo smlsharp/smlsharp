@@ -1,5 +1,4 @@
-(* If you change this file, edit BuiltinName.sml with respect to the change
- * of this file. *)
+(* see also BuiltinPrimitive.ppg and BuiltinTypes.sml *)
 
 datatype int    = _builtin datatype int
 datatype word   = _builtin datatype word
@@ -8,25 +7,23 @@ datatype string = _builtin datatype string
 datatype real   = _builtin datatype real
 datatype unit   = _builtin datatype unit
 datatype ptr    = _builtin datatype ptr
+datatype codeptr = _builtin datatype codeptr
 datatype exn    = _builtin datatype exn
 datatype array  = _builtin datatype array
 datatype vector = _builtin datatype vector
 datatype bool   = _builtin datatype bool
+datatype list   = _builtin datatype list
+datatype option = _builtin datatype option
+datatype ref    = _builtin datatype ref
+
+(* 2013-09-21 ohori moved tintInf, word8, real32, boxed to toplevel *)
 datatype intInf = _builtin datatype intInf
 datatype word8  = _builtin datatype word8
 datatype real32 = _builtin datatype real32
 datatype boxed  = _builtin datatype boxed
-datatype list   = _builtin datatype list
-datatype option = _builtin datatype option
-datatype order  = _builtin datatype order
-datatype ref    = _builtin datatype ref
-(*
-datatype server = _builtin datatype server
-datatype dbi    = _builtin datatype dbi
-datatype value  = _builtin datatype value
-*)
-exception Bind 
-exception Match 
+
+exception Bind
+exception Match
 exception Subscript
 exception Size
 exception Overflow
@@ -34,252 +31,262 @@ exception Div
 exception Domain
 exception Fail of string
 exception Chr
-exception Span
-exception Empty
-exception Option
 
 val = = _builtin val Equal : ''a * ''a -> bool
+val <> = _builtin val NotEqual : ''a * ''a -> bool
 val := = _builtin val Ref_assign : 'a ref * 'a -> unit
 val ! = _builtin val Ref_deref : 'a ref -> 'a
-
+val o = _builtin val Compose : ('a -> 'b) * ('c -> 'a) -> ('c -> 'b)
 val exnName = _builtin val Exn_Name : exn -> string
+val before = _builtin val Before : 'a * unit -> 'a
+val ignore = _builtin val Ignore : 'a -> unit
 
-
-structure SMLSharp =
+(* The followings are provided for defining the Basis Library. *)
+structure SMLSharp_Builtin =
 struct
-  val identityEqual = _builtin val IdentityEqual : boxed * boxed -> bool
+  val exnMessage = _builtin val Exn_Message : exn -> string * string
 
-  (* The followings are provided for defining the Basis Library. *)
-
-  structure PrimArray =
+  structure Array =
   struct
-    val allocArray = _builtin val Array_allocArray : int -> 'a array
-    val sub = _builtin val Array_sub : 'a array * int -> 'a
-    val update = _builtin val Array_update : 'a array * int * 'a -> unit
-    val length = _builtin val Array_length : 'a array -> int
-
-(* 2012-1-7 ohori: the followingaliases are for defining vector 
-   efficiently.
-*)
-    val allocVector = _builtin val Array_allocVector : int -> 'a vector
-    val sub_vector = _builtin val Array_sub : 'a vector * int -> 'a
-    val update_vector = _builtin val Array_update : 'a vector * int * 'a -> unit
-    val length_vector = _builtin val Array_length : 'a vector -> int
-    val copy_unsafe_array_to_array =
+    val turnIntoVector =
+        _builtin val Array_turnIntoVector
+        : 'a array -> 'a vector
+    val alloc_unsafe =
+        _builtin val Array_alloc_unsafe
+        : int -> 'a array
+    val copy_unsafe =
         _builtin val Array_copy_unsafe
         : 'a array * int * 'a array * int * int -> unit
-    val copy_unsafe_array_to_vector =
-        _builtin val Array_copy_unsafe
-        : 'a array * int * 'a vector * int * int -> unit
-    val copy_unsafe_vector_to_array =
-        _builtin val Array_copy_unsafe
-        : 'a vector * int * 'a array * int * int -> unit
-    val copy_unsafe_vector_to_vector =
-        _builtin val Array_copy_unsafe
-        : 'a vector * int * 'a vector * int * int -> unit
+    val sub_unsafe =
+        _builtin val Array_sub_unsafe
+        : 'a array * int -> 'a
+    val update_unsafe =
+        _builtin val Array_update_unsafe
+        : 'a array * int * 'a -> unit
+    val alloc =
+        _builtin val Array_alloc
+        : int -> 'a array
+    val copy =
+        _builtin val Array_copy
+        : {src: 'a array, dst: 'a array, di: int} -> unit
+    val length =
+        _builtin val Array_length
+        : 'a array -> int
+    val sub =
+        _builtin val Array_sub
+        : 'a array * int -> 'a
+    val update =
+        _builtin val Array_update
+        : 'a array * int * 'a -> unit
+
+    val castToWord8Array = _builtin val Cast : char array -> word8 array
   end
 
-  structure PrimString =
+  structure Vector =
   struct
-    val allocArray = _builtin val String_allocArray : int -> string
-    val copy_unsafe =
-        _builtin val String_copy_unsafe
-        : string * int * string * int * int -> unit
-    val size = _builtin val String_size : string -> int
-    val allocVector = _builtin val String_allocVector : int -> string
+    val length =
+        _builtin val Vector_length
+        : 'a vector -> int
+    val sub =
+        _builtin val Vector_sub
+        : 'a vector * int -> 'a
 
-    val compare = _builtin val String_compare : string * string -> int
-    val toBoxed = _builtin val Cast : string -> boxed
+    val castToArray = _builtin val Cast : 'a vector -> 'a array
+  end
 
-    val sub_unsafe = _builtin val String_sub : string * int -> char
-    val update_unsafe = _builtin val String_update : string * int * char -> unit
+  structure String =
+  struct
+    val alloc =
+        _builtin val String_alloc
+        : int -> string
+    val alloc_unsafe =
+        _builtin val String_alloc
+        : int -> string
+    val size =
+        _builtin val String_size
+        : string -> int
+    val sub =
+        _builtin val String_sub
+        : string * int -> char
+    val identityEqual =
+        _builtin val IdentityEqual
+        : string * string -> bool
+
+    val castToArray = _builtin val Cast : string -> char array
+    val castToWord8Array = _builtin val Cast : string -> word8 array
+    val castToBoxed = _builtin val Cast : string -> boxed
   end
 
   structure Real =
   struct
     type real = real
-    val equal = _builtin val Real_equal : real * real -> bool
-    val unorderedOrEqual =
-        _builtin val Real_unorderedOrEqual : real * real -> bool
-    val fromInt = _builtin val Real_fromInt : int -> real
-    val trunc_unsafe = _builtin val Real_trunc_unsafe_noov : real -> int
     val abs = _builtin val Real_abs : real -> real
     val add = _builtin val Real_add : real * real -> real
     val div = _builtin val Real_div : real * real -> real
+    val equal = _builtin val Real_equal : real * real -> bool
+    val notEqual = _builtin val Real_notEqual : real * real -> bool
+    val ueq = _builtin val Real_unorderedOrEqual : real * real -> bool
+    val fromInt_unsafe = _builtin val Real_fromInt_unsafe : int -> real
     val gt = _builtin val Real_gt : real * real -> bool
     val gteq = _builtin val Real_gteq : real * real -> bool
+    val isNan = _builtin val Real_isNan : real -> bool
     val lt = _builtin val Real_lt : real * real -> bool
     val lteq = _builtin val Real_lteq : real * real -> bool
     val mul = _builtin val Real_mul : real * real -> real
-    val rem = _builtin val Float_rem : real * real -> real
-    val neg = _builtin val Real_neg : real -> real
+    val rem = _builtin val Real_rem : real * real -> real
     val sub = _builtin val Real_sub : real * real -> real
+    val trunc_unsafe = _builtin val Real_trunc_unsafe : real -> int
+    val neg = _builtin val Real_neg : real -> real
+    val trunc = _builtin val Real_trunc : real -> int
   end
 
   structure Real32 =
   struct
     type real = real32
-    val equal = _builtin val Float_equal : real * real -> bool
-    val unorderedOrEqual =
-        _builtin val Float_unorderedOrEqual : real * real -> bool
-    val fromInt = _builtin val Float_fromInt : int -> real
-    val fromReal = _builtin val Float_fromReal : Real.real -> real
-    val toReal = _builtin val Float_toReal : real -> Real.real
-    val trunc_unsafe = _builtin val Float_trunc_unsafe_noov : real -> int
     val abs = _builtin val Float_abs : real -> real
     val add = _builtin val Float_add : real * real -> real
     val div = _builtin val Float_div : real * real -> real
+    val equal = _builtin val Float_equal : real * real -> bool
+    val notEqual = _builtin val Float_notEqual : real * real -> bool
+    val ueq = _builtin val Float_unorderedOrEqual : real * real -> bool
+    val fromInt_unsafe = _builtin val Float_fromInt_unsafe : int -> real
+    val fromReal_unsafe = _builtin val Float_fromReal_unsafe : Real.real -> real
     val gt = _builtin val Float_gt : real * real -> bool
     val gteq = _builtin val Float_gteq : real * real -> bool
+    val isNan = _builtin val Float_isNan : real -> bool
     val lt = _builtin val Float_lt : real * real -> bool
     val lteq = _builtin val Float_lteq : real * real -> bool
     val mul = _builtin val Float_mul : real * real -> real
     val rem = _builtin val Float_rem : real * real -> real
-    val neg = _builtin val Float_neg : real -> real
     val sub = _builtin val Float_sub : real * real -> real
+    val toReal = _builtin val Float_toReal : real -> Real.real
+    val trunc_unsafe = _builtin val Float_trunc_unsafe : real -> int
+    val neg = _builtin val Float_neg : real -> real
+    val trunc = _builtin val Float_trunc : real -> int
   end
 
   structure Char =
   struct
     type char = char
-    val chr_unsafe = _builtin val Char_chr_unsafe : int -> char
-    val ord = _builtin val Char_ord : char -> int
+    val chr = _builtin val Char_chr : int -> char
     val gt = _builtin val Char_gt : char * char -> bool
     val gteq = _builtin val Char_gteq : char * char -> bool
     val lt = _builtin val Char_lt : char * char -> bool
     val lteq = _builtin val Char_lteq : char * char -> bool
+    val ord = _builtin val Char_ord : char -> int
+
+    val castToWord8 = _builtin val Cast : char -> word8
   end
 
   structure Int =
   struct
     type int = int
-    val quot = _builtin val Int_quot_noov : int * int -> int
-    val rem = _builtin val Int_rem_noov : int * int -> int
-    val abs = _builtin val Int_abs_noov : int -> int
-    val add = _builtin val Int_add_noov : int * int -> int
-    val div = _builtin val Int_div_noov : int * int -> int
+    val add_unsafe = _builtin val Int_add_unsafe : int * int -> int
     val gt = _builtin val Int_gt : int * int -> bool
     val gteq = _builtin val Int_gteq : int * int -> bool
     val lt = _builtin val Int_lt : int * int -> bool
     val lteq = _builtin val Int_lteq : int * int -> bool
-    val mod = _builtin val Int_mod_noov : int * int -> int
-    val mul = _builtin val Int_mul_noov : int * int -> int
-    val neg = _builtin val Int_neg_noov : int -> int
-    val sub = _builtin val Int_sub_noov : int * int -> int
+    val mul_unsafe = _builtin val Int_mul_unsafe : int * int -> int
+    val quot_unsafe = _builtin val Int_quot_unsafe : int * int -> int
+    val rem_unsafe = _builtin val Int_rem_unsafe : int * int -> int
+    val sub_unsafe = _builtin val Int_sub_unsafe : int * int -> int
+    val abs = _builtin val Int_abs : int -> int
+    val add = _builtin val Int_add : int * int -> int
+    val div = _builtin val Int_div : int * int -> int
+    val mod = _builtin val Int_mod : int * int -> int
+    val mul = _builtin val Int_mul : int * int -> int
+    val neg = _builtin val Int_neg : int -> int
+    val quot = _builtin val Int_quot : int * int -> int
+    val rem = _builtin val Int_rem : int * int -> int
+    val sub = _builtin val Int_sub : int * int -> int
   end
 
   structure Word =
   struct
     type word = word
-    val andb = _builtin val Word_andb : word * word -> word
-    val arshift = _builtin val Word_arshift : word * word -> word
-    val fromInt = _builtin val Word_fromInt : int -> word
-    val lshift = _builtin val Word_lshift : word * word -> word
-    val notb = _builtin val Word_notb : word -> word
-    val neg = _builtin val Word_neg : word -> word
-    val orb = _builtin val Word_orb : word * word -> word
-    val rshift = _builtin val Word_rshift : word * word -> word
-    val toIntX = _builtin val Word_toIntX : word -> int
-    val xorb = _builtin val Word_xorb : word * word -> word
     val add = _builtin val Word_add : word * word -> word
-    val div = _builtin val Word_div : word * word -> word
+    val andb = _builtin val Word_andb : word * word -> word
+    val arshift_unsafe = _builtin val Word_arshift_unsafe : word * word -> word
+    val div_unsafe = _builtin val Word_div_unsafe : word * word -> word
     val gt = _builtin val Word_gt : word * word -> bool
     val gteq = _builtin val Word_gteq : word * word -> bool
+    val lshift_unsafe = _builtin val Word_lshift_unsafe : word * word -> word
     val lt = _builtin val Word_lt : word * word -> bool
     val lteq = _builtin val Word_lteq : word * word -> bool
-    val mod = _builtin val Word_mod : word * word -> word
+    val mod_unsafe = _builtin val Word_mod_unsafe : word * word -> word
     val mul = _builtin val Word_mul : word * word -> word
+    val orb = _builtin val Word_orb : word * word -> word
+    val rshift_unsafe = _builtin val Word_rshift_unsafe : word * word -> word
     val sub = _builtin val Word_sub : word * word -> word
+    val xorb = _builtin val Word_xorb : word * word -> word
+    val arshift = _builtin val Word_arshift : word * word -> word
+    val div = _builtin val Word_div : word * word -> word
+    val fromInt = _builtin val RuntimeTyCast : int -> word
+    val lshift = _builtin val Word_lshift : word * word -> word
+    val mod = _builtin val Word_mod : word * word -> word
+    val neg = _builtin val Word_neg : word -> word
+    val notb = _builtin val Word_notb : word -> word
+    val rshift = _builtin val Word_rshift : word * word -> word
+    val toInt = _builtin val Word_toInt : word -> int
+    val toIntX = _builtin val RuntimeTyCast : word -> int
   end
 
   structure Word8 =
   struct
     type word = word8
-    val fromWord = _builtin val Byte_fromWord : Word.word -> word
-    val toWord = _builtin val Byte_toWord : word -> Word.word
-    val fromInt = _builtin val Byte_fromInt : int -> word
-    val toInt = _builtin val Byte_toIntX : word -> int
-    val toIntX = _builtin val Byte_toIntX : word -> int
     val add = _builtin val Byte_add : word * word -> word
-    val div = _builtin val Byte_div : word * word -> word
+    val andb = _builtin val Byte_andb : word * word -> word
+    val arshift_unsafe = _builtin val Byte_arshift_unsafe : word * word -> word
+    val div_unsafe = _builtin val Byte_div_unsafe : word * word -> word
+    val fromWord = _builtin val Byte_fromWord : Word.word -> word
     val gt = _builtin val Byte_gt : word * word -> bool
     val gteq = _builtin val Byte_gteq : word * word -> bool
+    val lshift_unsafe = _builtin val Byte_lshift_unsafe : word * word -> word
     val lt = _builtin val Byte_lt : word * word -> bool
     val lteq = _builtin val Byte_lteq : word * word -> bool
-    val mod = _builtin val Byte_mod : word * word -> word
+    val mod_unsafe = _builtin val Byte_mod_unsafe : word * word -> word
     val mul = _builtin val Byte_mul : word * word -> word
+    val orb = _builtin val Byte_orb : word * word -> word
+    val rshift_unsafe = _builtin val Byte_rshift_unsafe : word * word -> word
     val sub = _builtin val Byte_sub : word * word -> word
-    val fromChar = _builtin val Cast : char -> word
-    val toChar = _builtin val Cast : word -> char
+    val xorb = _builtin val Byte_xorb : word * word -> word
+    val toIntX = _builtin val Byte_toIntX : word -> int
+    val toWord = _builtin val Byte_toWord : word -> Word.word
+    val toWordX = _builtin val Byte_toWordX : word -> Word.word
+    val arshift = _builtin val Byte_arshift : word * Word.word -> word
+    val div = _builtin val Byte_div : word * word -> word
+    val fromInt = _builtin val Byte_fromInt : int -> word
+    val lshift = _builtin val Byte_lshift : word * Word.word -> word
+    val mod = _builtin val Byte_mod : word * word -> word
+    val neg = _builtin val Byte_neg : word -> word
+    val notb = _builtin val Byte_notb : word -> word
+    val rshift = _builtin val Byte_rshift : word * Word.word -> word
+    val toInt = _builtin val Byte_toInt : word -> int
 
-    val sub_unsafe = _builtin val String_sub : string * int -> word
-    val update_unsafe = _builtin val String_update : string * int * word -> unit
+    val castToChar = _builtin val Cast : word -> char
+  end
+
+  structure IntInf =
+  struct
+    type int = intInf
   end
 
   structure Pointer =
   struct
+    val identityEqual = _builtin val IdentityEqual : boxed * boxed -> bool
+    val advance = _builtin val Ptr_advance : 'a ptr * int -> 'a ptr
+    val deref = _builtin val Ptr_deref : 'a ptr -> 'a
+    val store = _builtin val Ptr_store : 'a ptr * 'a -> unit
+
     val toUnitPtr = _builtin val Cast : 'a ptr -> unit ptr
     val fromUnitPtr = _builtin val Cast : unit ptr -> 'a ptr
-    val advance = _builtin val Ptr_advance : 'a ptr * int -> 'a ptr
-    val deref_char = _builtin val Ptr_deref_char : char ptr -> char
-    val deref_int = _builtin val Ptr_deref_int : int ptr -> int
-    val deref_ptr = _builtin val Ptr_deref_ptr : 'b ptr ptr -> 'b ptr
-    val deref_real = _builtin val Ptr_deref_real : real ptr -> real
-    val deref_real32 =
-        _builtin val Ptr_deref_real32 : Real32.real ptr -> Real32.real
-    val deref_word = _builtin val Ptr_deref_word : word ptr -> word
-    val deref_word8 =
-        _builtin val Ptr_deref_word8 : Word8.word ptr -> Word8.word
-    val store_char = _builtin val Ptr_store_char : char ptr * char -> unit
-    val store_int = _builtin val Ptr_store_int : int ptr * int -> unit
-    val store_ptr = _builtin val Ptr_store_ptr : 'b ptr ptr * 'b ptr -> unit
-    val store_real = _builtin val Ptr_store_real : real ptr * real -> unit
-    val store_real32 =
-        _builtin val Ptr_store_real32 : Real32.real ptr * Real32.real -> unit
-    val store_word = _builtin val Ptr_store_word : word ptr * word -> unit
-    val store_word8 =
-        _builtin val Ptr_store_word8 : Word8.word ptr * Word8.word -> unit
+    val toCodeptr = _builtin val BitCast : unit ptr -> codeptr
   end
-
-(*
-  (* for SQL integration. compiler translates SQL terms into data construction
-   * terms of the following datatypes. *)
-  structure SQL =
-  struct
-    datatype 'a server =
-      SERVER of
-        string
-        * (string * {colname: string, typename: string, isnull: bool} list) list
-        * 'a
-    datatype 'a dbi = DBI
-    datatype ('a,'b) value = VALUE of (string * 'b dbi) * 'a
-  end
-*)
 
   structure SQL =
   struct
-    datatype server  = _builtin datatype server
     datatype dbi     = _builtin datatype dbi
     datatype value   = _builtin datatype value
-    datatype conn    = _builtin datatype conn
-    datatype db      = _builtin datatype db
-    datatype table   = _builtin datatype table
-    datatype row     = _builtin datatype row
-    datatype result  = _builtin datatype result
-    datatype rel     = _builtin datatype rel
-    datatype query   = _builtin datatype query
-    datatype command = _builtin datatype command
-(*
-    datatype 'a conn = CONN of unit ptr * 'a
-    datatype ('a,'b) db = DB of 'a * 'b dbi
-    datatype ('a,'b) table = TABLE of (string * 'b dbi) * 'a
-    datatype ('a,'b) row = ROW of (string * 'b dbi) * 'a
-    datatype result = RESULT of unit ptr * int
-    datatype 'a rel = REL of result * (result -> 'a)
-    datatype 'a query = QUERY of string * 'a * (result -> 'a)
-    datatype command = COMMAND of string
-*)
   end
 
 end
-

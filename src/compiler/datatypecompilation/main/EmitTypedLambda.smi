@@ -1,0 +1,128 @@
+_require "basis.smi"
+_require "../../constantterm/main/ConstantTerm.ppg.smi"
+_require "../../typedlambda/main/TypedLambda.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesBasics.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+
+structure EmitTypedLambda =
+struct
+
+  type vid (= VarID.id)
+  val newId : unit -> vid
+
+  datatype exp =
+      Exp of TypedLambda.tlexp * Types.ty
+    | Int of int
+    | Word of int
+    | Word8 of int
+    | Char of int
+    | ConTag of int
+    | Real of int
+    | Float of int
+    | String of string
+    | Unit
+    | Null
+    | True
+    | False
+    | SizeOf of Types.ty
+    | ExVar of RecordCalc.exVarInfo
+    | Cast of exp * Types.ty
+    | RuntimeTyCast of exp * Types.ty
+    | BitCast of exp * Types.ty
+    | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
+    | If of exp * exp * exp
+    | Andalso of exp list
+    | Switch of exp * (ConstantTerm.constant * exp) list * exp
+    | Raise of RecordCalc.exExnInfo * Types.ty
+    | Fn of vid * Types.ty * exp
+    | App of exp * exp
+    | Let of (vid * exp) list * exp
+    | Var of vid
+    | TLLet of decl list * exp
+    | TLVar of TypedLambda.varInfo
+    | Record of string list * exp list
+    | Select of string * exp
+  and decl =
+      Decl of TypedLambda.tldecl * TypedLambda.loc
+    | Bind of TypedLambda.varInfo * exp
+
+  val tupleTy : Types.ty list -> Types.ty
+  val arrayTy : Types.ty -> Types.ty
+
+  val Tuple : exp list -> exp
+  val Ref_alloc : Types.ty * exp -> exp
+  val Ref_deref : Types.ty * exp -> exp
+  val Ref_assign : Types.ty * exp * exp -> exp
+  val Array_length : Types.ty * exp -> exp
+  val Array_sub_unsafe : Types.ty * exp * exp -> exp
+  val Array_turnIntoVector : Types.ty * exp -> exp
+  val Array_alloc_unsafe : Types.ty * exp -> exp
+  val Array_alloc_init : Types.ty * exp list -> exp
+  val Array_update_unsafe : Types.ty * exp * exp * exp -> exp
+  val Array_copy_unsafe : Types.ty * exp * exp * exp * exp * exp -> exp
+  val String_alloc_unsafe : exp -> exp
+  val String_size : exp -> exp
+  val String_sub_unsafe : exp * exp -> exp
+  val String_update_unsafe : exp * exp * exp -> exp
+  val String_copy_unsafe : exp * exp * exp * exp * exp -> exp
+  val IdentityEqual : Types.ty * exp * exp -> exp
+  val IsNull : exp -> exp
+  val Int_eq : exp * exp -> exp
+  val Int_gteq : exp * exp -> exp
+  val Int_lt : exp * exp -> exp
+  val Int_lteq : exp * exp -> exp
+  val Int_quot_unsafe : exp * exp -> exp
+  val Int_rem_unsafe : exp * exp -> exp
+  val Int_sub_unsafe : exp * exp -> exp
+  val Int_add_unsafe : exp * exp -> exp
+  val Word_add : exp * exp -> exp
+  val Word_sub : exp * exp -> exp
+  val Word_div_unsafe : exp * exp -> exp
+  val Word_orb : exp * exp -> exp
+  val Word_andb : exp * exp -> exp
+  val Word_xorb : exp * exp -> exp
+  val Word_lt : exp * exp -> exp
+  val Word_fromInt : exp -> exp
+  val Word_toIntX : exp -> exp
+  val Float_isNan : exp -> exp
+  val Float_equal : exp * exp -> exp
+  val Float_gteq : exp * exp -> exp
+  val Float_lteq : exp * exp -> exp
+  val Float_sub : exp * exp -> exp
+  val Real_isNan : exp -> exp
+  val Real_equal : exp * exp -> exp
+  val Real_gteq : exp * exp -> exp
+  val Real_lteq : exp * exp -> exp
+  val Real_sub : exp * exp -> exp
+  val Byte_fromWord : exp -> exp
+  val Byte_toIntX : exp -> exp
+  val Byte_toWord : exp -> exp
+  val Byte_gt : exp * exp -> exp
+  val Byte_gteq : exp * exp -> exp
+  val Byte_lt : exp * exp -> exp
+  val Byte_lteq : exp * exp -> exp
+  val Byte_xorb : exp * exp -> exp
+  val Byte_sub : exp * exp -> exp
+  val Byte_arshift_unsafe : exp * exp -> exp
+  val Byte_lshift_unsafe : exp * exp -> exp
+  val Byte_rshift_unsafe : exp * exp -> exp
+  val allocExnTag : RecordCalc.exnInfo -> exp
+  val extractExnTagName : exp -> exp
+  val extractExnMsgFn : exp -> exp
+  val extractExnTag : exp -> exp
+  val extractExnLoc : exp -> exp
+  val extractExnArg : exp * Types.ty -> exp
+  val composeExn : exp * Loc.loc * exp option -> exp
+  val emit : TypedLambda.loc -> exp -> TypedLambda.tlexp
+
+end
+
+

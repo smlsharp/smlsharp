@@ -1,0 +1,756 @@
+(* -*- sml -*- *)
+(**
+ * @copyright (c) 2012, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+structure LLVMIR =
+struct
+
+  type loc = Loc.loc
+
+  (*% @formatter(FunLocalLabel.id) FunLocalLabel.format_id *)
+  type label =
+       (*% @format(id) id *)
+       FunLocalLabel.id
+
+  (*% @formatter(HandlerLabel.id) HandlerLabel.format_id *)
+  type landingPadLabel =
+       (*% @format(id) id *)
+       HandlerLabel.id
+
+  (*% @formatter(VarID.id) VarID.format_id *)
+  type var =
+       (*% @format(id) "%v" id *)
+       VarID.id
+
+  (*% *)
+  type symbol =
+       (*% @format(x) "@" x *)
+       string
+
+  (*% *)
+  datatype calling_convention =
+      (*% @format "ccc" *)
+      CCC
+    | (*% @format "fastcc" *)
+      FASTCC
+    | (*% @format "coldcc" *)
+      COLDCC
+    | (*% @format "x86_stdcallcc" *)
+      X86STDCALLCC
+(*
+    | (*% @format(n) "cc" + n *)
+      CC of int
+*)
+
+  (*% *)
+  datatype linkage =
+      (*% @format "internal" *)
+      INTERNAL
+    | (*% @format "linker_private" *)
+      LINKER_PRIVATE
+    | (*% @format "external" *)
+      EXTERNAL
+
+  (*% *)
+  datatype parameter_attribute =
+      (*% @format "zeroext" *)
+      ZEROEXT
+    | (*% @format "signext" *)
+      SIGNEXT
+    | (*% @format "inreg" *)
+      INREG
+    | (*% @format "byval" *)
+      BYVAL
+    | (*% @format "sret" *)
+      SRET
+    | (*% @format "noalias" *)
+      NOALIAS
+    | (*% @format "nocapture" *)
+      NOCAPTURE
+    | (*% @format "nest" *)
+      NEST
+
+  (*% *)
+  datatype function_attribute =
+(*
+      (*% @format(n) "alignstack(" n ")" *)
+      ALIGNSTACK of int
+    |
+*)
+      (*% @format "alwaysinline" *)
+      ALWAYSINLINE
+(*
+    | (*% @format "cold" *)
+      COLD
+*)
+    | (*% @format "nonlazybind" *)
+      NONLAZYBIND
+    | (*% @format "inlinehint" *)
+      INLINEHINT
+    | (*% @format "naked" *)
+      NAKED
+(*
+    | (*% @format "nobuiltin" *)
+      NOBUILTIN
+    | (*% @format "noduplicate" *)
+      NODUPLICATE
+*)
+    | (*% @format "noimplicitfloat" *)
+      NOIMPLICITFLOAT
+    | (*% @format "noinline" *)
+      NOINLINE
+    | (*% @format "noredzone" *)
+      NOREDZONE
+    | (*% @format "noreturn" *)
+      NORETURN
+    | (*% @format "nounwind" *)
+      NOUNWIND
+    | (*% @format "optsize" *)
+      OPTSIZE
+    | (*% @format "readnone" *)
+      READNONE
+    | (*% @format "readonly" *)
+      READONLY
+    | (*% @format "returns_twice" *)
+      RETURNS_TWICE
+(*
+    | (*% @format "sanitize_address" *)
+      SANITIZE_ADDRESS
+    | (*% @format "sanitize_memory" *)
+      SANITIZE_MEMORY
+    | (*% @format "sanitize_thread" *)
+      SANITIZE_THREAD
+*)
+    | (*% @format "ssp" *)
+      SSP
+    | (*% @format "sspreq" *)
+      SSPREQ
+(*
+    | (*% @format "sspstrong" *)
+      SSPSTRONG
+*)
+    | (*% @format "uwtable" *)
+      UWTABLE
+
+  fun dec x =
+      TermFormat.FormatComb.term (Word32.fmt StringCvt.DEC x)
+  fun hex8 x =
+      [SMLFormat.FormatExpression.Term
+         (8, StringCvt.padLeft #"0" 8 (Word32.fmt StringCvt.HEX x))]
+  fun realExact x =
+      TermFormat.FormatComb.term
+        (CharVector.map (fn #"~" => #"-" | c => c) (Real.fmt StringCvt.EXACT x))
+
+  (*%
+   * @formatter(dec) dec
+   * @formatter(ifCons) TermFormat.formatIfCons
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  datatype ty =
+      (*% @format "i1" *)
+      I1
+    | (*% @format "i8" *)
+      I8
+    | (*% @format "i32" *)
+      I32
+    | (*% @format "i64" *)
+      I64
+    | (*% @format(ty) ty "*" *)
+      PTR of ty 
+    | (*% @format "float" *)
+      FLOAT
+    | (*% @format "double" *)
+      DOUBLE
+    | (*% @format "void" *)
+      VOID
+    | (*%
+       * @format(retTy * argTy argTys * vararg)
+       * retTy " (" argTys(argTy)(", ")
+       *            vararg()(argTys:ifCons()(", ") "...", ) ")*"
+       *)
+      FPTR of ty * ty list * bool
+    | (*% @format(len * ty) "[" len:dec " x " ty "]" *)
+      ARRAY of Word32.word * ty
+    | (*% @format(ty tys * {packed})
+       * packed()("<{","{") tys(ty)(", ") packed()("}>","}")
+       *)
+      STRUCT of ty list * {packed: bool}
+
+  (*%
+   * @formatter(dec) dec
+   * @formatter(hex8) hex8 
+   * @formatter(real) realExact
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(decList) TermFormat.formatDeclList
+   *)
+  datatype const =
+      (*% @format(w) w:dec *)
+      INTCONST of Word32.word
+    | (*% @format(r) r *)
+      FLOATCONST of real
+    | (*% @format "null" *)
+      NULL
+    | (*% @format(s) s *)
+      SYMBOL of symbol
+    | (*% @format((ty1 * c) * ty2) "bitcast (" ty1 " " c " to " ty2 ")" *)
+      CONST_BITCAST of (ty * const) * ty
+    | (*% @format((ty1 * c) * ty2) "inttoptr (" ty1 " " c " to " ty2 ")" *)
+      CONST_INTTOPTR of (ty * const) * ty
+    | (*% @format((ty1 * c) * ty2) "ptrtoint (" ty1 " " c " to " ty2 ")" *)
+      CONST_PTRTOINT of (ty * const) * ty
+    | (*% @format((ty1 * c1) * (ty2 * c2)) "sub ("ty1" "c1", "ty2" "c2")" *)
+      CONST_SUB of (ty * const) * (ty * const)
+    | (*%
+       * @format({inbounds, ptr, indices: index indices})
+       * "getelementptr "
+       * inbounds()("inbounds ",)
+       * "("
+       * ptr
+       * indices:decList(index)(", ",", ")
+       * ")"
+       * @format:ptr(ty * c)
+       * ty " " c
+       * @format:index(ty * c)
+       * ty " " c
+       *)
+      CONST_GETELEMENTPTR of
+      {
+        inbounds : bool,
+        ptr : ty * const,
+        indices : (ty * const) list
+      }
+
+  (*% *)
+  datatype value =
+      (*% @format(c) c *)
+      CONST of const
+    | (*% @format(v) v *)
+      VAR of var
+
+  (*% *)
+  (*% @prefix formatAsValue_
+   * @formatter(value) format_value
+   *)
+  type operand =
+      (*% @format(ty * v) ty " " v *)
+      (*% @prefix formatAsValue_ @format(ty * v) v *)
+       ty * value
+
+  (*% *)
+  datatype icmp =
+      (*% @format "eq" *)
+      EQ
+    | (*% @format "ne" *)
+      NE
+    | (*% @format "ugt" *)
+      UGT
+    | (*% @format "uge" *)
+      UGE
+    | (*% @format "ult" *)
+      ULT
+    | (*% @format "ule" *)
+      ULE
+    | (*% @format "sgt" *)
+      SGT
+    | (*% @format "sge" *)
+      SGE
+    | (*% @format "slt" *)
+      SLT
+    | (*% @format "sle" *)
+      SLE
+
+  (*% *)
+  datatype fcmp =
+      (*% @format "false" *)
+      F_FALSE
+    | (*% @format "oeq" *)
+      F_OEQ
+    | (*% @format "ogt" *)
+      F_OGT
+    | (*% @format "oge" *)
+      F_OGE
+    | (*% @format "olt" *)
+      F_OLT
+    | (*% @format "ole" *)
+      F_OLE
+    | (*% @format "one" *)
+      F_ONE
+    | (*% @format "ord" *)
+      F_ORD
+    | (*% @format "ueq" *)
+      F_UEQ
+    | (*% @format "ugt" *)
+      F_UGT
+    | (*% @format "uge" *)
+      F_UGE
+    | (*% @format "ult" *)
+      F_ULT
+    | (*% @format "ule" *)
+      F_ULE
+    | (*% @format "une" *)
+      F_UNE
+    | (*% @format "uno" *)
+      F_UNO
+    | (*% @format "true" *)
+      F_TRUE
+
+  (*% *)
+  datatype noWrap =
+      (*% @format *)
+      WRAP
+    | (*% @format "nuw" *)
+      NUW
+    | (*% @format "nsw" *)
+      NSW
+(*
+    | (*% @format "nuw nsw" *)
+      NUW_NSW
+*)
+
+(*
+  (*% *)
+  datatype fastMathFlag =
+      (*% @format *)
+      PIYO
+*)
+
+(*
+  (*% @formatter(bool) SmlppgUtil.formatBinaryChoice *)
+  type exact =
+      (*% @format(x) x()("exact ",) *)
+      bool
+*)
+
+  (*% *)
+  datatype op2 =
+      (*% @format "or" *)
+      OR
+    | (*% @format(w) "add " w *)
+      ADD of noWrap
+    | (*% @format "fadd" *)
+      FADD (*of fastMathFlag list*)
+    | (*% @format(w) "sub " w *)
+      SUB of noWrap
+    | (*% @format "fsub" *)
+      FSUB (*of fastMathFlag list*)
+    | (*% @format(w) "mul " w *)
+      MUL of noWrap
+    | (*% @format "fmul" *)
+      FMUL (*of fastMathFlag list*)
+    | (*% @format "udiv" *)
+      UDIV (*of exact*)
+    | (*% @format "sdiv" *)
+      SDIV (*of exact*)
+    | (*% @format "fdiv" *)
+      FDIV (*of fastMathFlag list*)
+    | (*% @format "urem" *)
+      UREM
+    | (*% @format "srem" *)
+      SREM
+    | (*% @format "frem" *)
+      FREM (*of fastMathFlag list*)
+    | (*% @format "shl" *)
+      SHL (*of noWrap*)
+    | (*% @format "lshr" *)
+      LSHR (*of exact*)
+    | (*% @format "ashr" *)
+      ASHR (*of exact*)
+    | (*% @format "and" *)
+      AND
+    | (*% @format "xor" *)
+      XOR
+
+  (*% *)
+  datatype conv =
+      (*% @format "bitcast" *)
+      BITCAST
+    | (*% @format "trunc" *)
+      TRUNC
+    | (*% @format "sitofp" *)
+      SITOFP
+    | (*% @format "fptosi" *)
+      FPTOSI
+    | (*% @format "fptrunc" *)
+      FPTRUNC
+    | (*% @format "fpext" *)
+      FPEXT
+    | (*% @format "zext" *)
+      ZEXT
+    | (*% @format "sext" *)
+      SEXT
+
+  (*%
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(ifCons) TermFormat.formatIfCons
+   * @formatter(asValue) formatAsValue_operand
+   * @formatter(decList) TermFormat.formatDeclList
+   *)
+  datatype insn =
+      (*% @format(v * x) v " = load " x *)
+      LOAD of var * operand
+(*
+              {volatile: bool,
+               align: int option, 
+               nontemporal: index option,
+               invaliantLoad: index option}
+*)
+    | (*% @format({value, dst}) "store " value ", " dst *)
+      STORE of {value: operand, dst: operand}
+(*
+ align: int option,
+ nontemporal: index option}
+*)
+    | (*% @format(v * ty) v " = alloca " ty *)
+      ALLOCA of var * ty
+(** {numElements : (ty * value) option, align : int option}*)
+    | (*%
+       * @format({result: result resultOpt, tail, cconv: cconv cconvOpt,
+       *          retAttrs: retAttr retAttrs, fnPtr, args: arg args,
+       *          fnAttrs: fnAttr fnAttrs})
+       * resultOpt(result)(, " = ")
+       * tail()("tail ", )
+       * "call "
+       * cconvOpt(cconv)(, " ")
+       * retAttrs:ifCons()( retAttrs(retAttr)(" ") " " )
+       * fnPtr
+       * " (" args(arg)(", ") ")"
+       * fnAttrs:ifCons()( " " fnAttrs(fnAttr)(" ") )
+       * @format:arg(attr attrs * a)
+       * attrs:ifCons()( attrs(attr)(" ") " " ) a
+       *)
+      CALL of 
+      {
+        result: var option,
+        tail: bool,
+        cconv: calling_convention option,
+        retAttrs: parameter_attribute list,
+        fnPtr: operand,
+        args: (parameter_attribute list * operand) list,
+        fnAttrs: function_attribute list
+      }
+    | (*%
+       * @format({result, inbounds, ptr, indices: index indices})
+       * result " = getelementptr "
+       * inbounds()("inbounds ",)
+       * ptr
+       * indices:decList(index)(", ",", ")
+       *)
+      GETELEMENTPTR of
+      {
+        result: var,
+        inbounds: bool,
+        ptr: operand,
+        indices: operand list
+      }
+    | (*% @format(v * op1 * i) v " = extractvalue " op1 ", " i *)
+      EXTRACTVALUE of var * operand * int
+    | (*% @format(v * conv * x * ty) v " = " conv " " x ", " ty *)
+      CONV of var * conv * operand * ty
+    | (*% @format(v * op2 * x * y) v " = " op2 " " x ", " y:asValue *)
+      OP2 of var * op2 * operand * operand
+    | (*% @format(v * cmp * x * y) v " = icmp " cmp " " x ", " y:asValue *)
+      ICMP of var * icmp * operand * operand
+    | (*% @format(v * cmp * x * y) v " = fcmp " cmp " " x ", " y:asValue *)
+      FCMP of var * fcmp * operand * operand
+
+  (*% *)
+  type destination =
+      (*% @format(l * p ps) "label %" l " (" ps(p)(", ") ")" *)
+      label * operand list
+
+  (*% *)
+  datatype phi =
+      (*%
+       * @format(ty * var)
+       * ty " " var
+       *)
+      PHI of ty * var
+
+  (*%
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(ifCons) TermFormat.formatIfCons
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  datatype last =
+      (*%
+       * @format({label, phis: phi phis, body, next})
+       * "; available " label
+       * next 
+       * 0[ \n label ": (" phis(phi)(", ") ")" ]
+       * body
+       *)
+      BLOCK of
+      {
+        label: label,
+        phis: phi list,
+        body: body,
+        next: body
+      }
+    | (*%
+       * @format({label, argVar: arg * argTy, personality,
+       *          catch: catch catches, cleanup, body, next})
+       * "; available " label
+       * next 
+       * 0[ \n label ":" ]
+       * \n arg " = landingpad " argTy
+       *      " personality " personality
+       *      catches:decList(catch)("catch ","catch ")
+       *      cleanup()(" cleanup",)
+       * body
+       *)
+      LANDINGPAD of
+      {
+        label: landingPadLabel,
+        argVar : var * ty,
+        personality : operand,
+        catch : operand list,
+        cleanup : bool,
+        body: body,
+        next: body
+      }
+    | (*% @format(x) "ret " x *)
+      RET of operand
+    | (*% @format(x) "ret void" *)
+      RET_VOID
+    | (*% @format(x) "br " x *)
+      BR of destination
+    | (*%
+       * @format(x * l1 * l2)
+       * "br " x ", " { l1 "," \n l2 }
+       *)
+      BR_C of operand * destination * destination
+    | (*%
+       * @format({cconv: cconv cconvOpt,
+       *          retAttrs: retAttr retAttrs, fnPtr, args: arg args,
+       *          fnAttrs: fnAttr fnAttrs, to, unwind})
+       * "invoke "
+       * cconvOpt(cconv)(, " ")
+       * retAttrs:ifCons()( retAttrs(retAttr)(" ") " " )
+       * fnPtr
+       * " (" args(arg)(", ") ")"
+       * fnAttrs:ifCons()( " " fnAttrs(fnAttr)(" ") )
+       * " to " to
+       * " unwind " unwind
+       * @format:arg(attr attrs * a)
+       * attrs:ifCons()( attrs(attr)(" ") " " ) a
+       *)
+      INVOKE of 
+      {
+        cconv: calling_convention option,
+        retAttrs: parameter_attribute list,
+        fnPtr: operand,
+        args: (parameter_attribute list * operand) list,
+        fnAttrs: function_attribute list,
+        to: label,
+        unwind: landingPadLabel
+      }
+    | (*% @format(x) "resume " x *)
+      RESUME of operand
+    | (*%
+       * @format({value, default, branches: branch branches})
+       * "switch " value ", " default " ["
+       * 1[ branches:decList(branch)(\n, \n) ]
+       * \n "]"
+       * @format:branch((ty * const) * label)
+       * ty " " const ", " label
+       *)
+      SWITCH of
+      {value: operand,
+       default: destination,
+       branches: ((ty * const) * destination) list}
+    | (*% @format "unreachable" *)
+      UNREACHABLE
+
+  withtype body =
+      (*%
+       * @format(insn insns * last)
+       * insns:decList(insn)(\n, \n)
+       * \n last
+       *)
+      insn list * last
+  
+  fun formatStringLiteral s =
+      TermFormat.FormatComb.term
+        (String.translate
+           (fn c =>
+               if Char.isAlphaNum c orelse c = #" " then str c
+               else "\\" ^ StringCvt.padLeft #"0" 2
+                                             (Int.fmt StringCvt.HEX (ord c)))
+           s)
+
+  (*%
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(string) formatStringLiteral
+   *)
+  datatype initializer =
+      (*% @format "zeroinitializer" *)
+      ZEROINITIALIZER
+    | (*% @format(x) "c\"" x "\"" *)
+      INIT_STRING of string
+    | (*% @format(c) c *)
+      INIT_CONST of const
+    | (*%
+       * @format(field fields * {packed})
+       * packed()("<{","{") fields(field)(", ") packed()("}>","}")
+       * @format:field(ty * init)
+       * ty " " init
+       *)
+      INIT_STRUCT of (ty * initializer) list * {packed: bool}
+    | (*%
+       * @format(field fields)
+       * "[" fields(field)(", ") "]"
+       * @format:field(ty * init)
+       * ty " " init
+       *)
+      INIT_ARRAY of (ty * initializer) list
+
+  (*%
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(ifCons) TermFormat.formatIfCons
+   *)
+  datatype topdec =
+      (*%
+       * @format({linkage: linkage linkageOpt,
+       *          cconv: cconv cconvOpt,
+       *          retAttrs: retAttr retAttrs, retTy,
+       *          name, parameters: arg args,
+       *          fnAttrs: fnAttr fnAttrs,
+       *          gcname: gcname gcnameOpt,
+       *          body})
+       * "define "
+       * linkageOpt(linkage)(, " ")
+       * cconvOpt(cconv)(, " ")
+       * retAttrs:ifCons()( retAttrs(retAttr)(" ") " " )
+       * retTy
+       * " " name
+       * " (" args(arg)(", ") ")"
+       * fnAttrs:ifCons()( " " fnAttrs(fnAttr)(" ") )
+       * gcnameOpt(gcname)(" gc \"", "\"")
+       * "{"
+       * 1[ body ]
+       * \n "}"
+       * @format:arg(ty * attr attrs * v)
+       * attrs:ifCons()( attrs(attr)(" ") " " ) ty " " v
+       *)
+      DEFINE of
+      {
+        linkage : linkage option,
+(*
+        visibility : visibility option,
+*)
+        cconv : calling_convention option,
+        retAttrs : parameter_attribute list,
+        retTy : ty,
+        name : symbol,
+        parameters : (ty * parameter_attribute list * var) list,
+        fnAttrs : function_attribute list,
+(*
+        section : string option,
+        align : int option,
+*)
+        gcname : string option,
+        body : body
+      }
+    | (*%
+       * @format({linkage: linkage linkageOpt,
+       *          cconv: cconv cconvOpt,
+       *          retAttrs: retAttr retAttrs, retTy,
+       *          name, arguments: arg args, varArg,
+       *          fnAttrs: fnAttr fnAttrs,
+       *          gcname: gcname gcnameOpt})
+       * "declare "
+       * linkageOpt(linkage)(, " ")
+       * cconvOpt(cconv)(, " ")
+       * retAttrs:ifCons()( retAttrs(retAttr)(" ") " " )
+       * retTy " "
+       * name
+       * "(" args(arg)(", ")
+       *     varArg()(args:ifCons()(", ") "...", )
+       * ")"
+       * fnAttrs:ifCons()( " " fnAttrs(fnAttr)(" ") )
+       * gcnameOpt(gcname)(" gc \"", "\"")
+       * @format:arg(ty * attr attrs)
+       * ty attrs:ifCons()( attrs(attr)(" ") " " )
+       *)
+      DECLARE of
+      {
+        linkage : linkage option,
+(*
+        visibility : visibility option,
+*)
+        cconv : calling_convention option,
+(*
+        unnamed_addr : bool,
+*)
+        retAttrs : parameter_attribute list,
+        retTy : ty,
+        name : symbol,
+        arguments : (ty * parameter_attribute list) list,
+        varArg : bool,
+        fnAttrs : function_attribute list,
+        gcname : string option
+      }
+    | (*%
+       * @format({name, linkage: linkage linkageOpt, constant, ty, initializer,
+       *          align: align alignOpt})
+       * name " = "
+       * linkageOpt(linkage)(," ")
+       * constant()("constant ","global ")
+       * ty " " initializer
+       * alignOpt(align)(", align ",)
+       *)
+      GLOBALVAR of
+      {
+        name : symbol,
+(*
+        thread_local : tls_model option,
+        addrspace : int option,
+*)
+        linkage : linkage option,
+        constant : bool,
+(*
+        unnamed_addr : bool,
+*)
+        ty : ty,
+        initializer : initializer,
+(*
+        section : string option,
+*)
+        align : int option
+      }
+    | (*%
+       * @format({name, ty}) 
+       * name " = external global " ty
+       *)
+      EXTERN of
+      {
+        name : symbol,
+        ty : ty
+      }
+(*
+    | ALIAS of alias
+*)
+
+  (*%
+   * @formatter(option) TermFormat.formatOptionalOption
+   *)
+  type program =
+      (*%
+       * @format({moduleName,
+       *          datalayout: layout layoutOpt,
+       *          triple: triple tripleOpt,
+       *          topdecs: dec decs})
+       * layoutOpt(layout)("target datalayout = \"", "\"" \n)
+       * tripleOpt(triple)("target triple = \"", "\"" \n)
+       * decs(dec)(\n)
+       *)
+      {moduleName : string,
+       datalayout : string option,
+       triple : string option,
+       topdecs : topdec list}
+
+end

@@ -26,11 +26,22 @@ struct
             List.exists (fn option => option = "--stdout") options
         val withLineDirective =
             List.exists (fn option => option = "--with-line-directive") options
+        val outputFilename =
+            case List.find (String.isPrefix "--output=") options of
+              SOME s => SOME (String.substring (s, 9, size s - 9))
+            | NONE => NONE
 
         val (openOut, closeOut, removeOut) =
-            if toStandardOut
-            then (fn _ => TextIO.stdOut, fn _ => (), fn _ => ())
-            else
+            case (toStandardOut, outputFilename) of
+              (true, _) => 
+              (fn _ => TextIO.stdOut, fn _ => (), fn _ => ())
+            | (false, SOME filename) =>
+              (
+                fn _ => TextIO.openOut filename,
+                TextIO.closeOut,
+                fn _ => OS.FileSys.remove filename
+              )
+            | (false, NONE) =>
               (
                 fn sourceFileName => TextIO.openOut (sourceFileName ^ ".sml"),
                 TextIO.closeOut,
@@ -74,7 +85,9 @@ struct
                      | _ => [General.exnMessage e]
                in
                  (
-                   app (fn message => print (message ^ "\n")) errorMessages;
+                   app (fn message =>
+                           TextIO.output (TextIO.stdErr, message ^ "\n"))
+                       errorMessages;
 (*
                    app
                        (fn history => print ("  " ^ history ^ "\n"))

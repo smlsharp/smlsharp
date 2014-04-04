@@ -1,128 +1,111 @@
-_require "General.smi"
-_require "Time.smi"
-_require "Int.smi"
-_require "SMLSharpOSFileSys.smi"
-_require "SMLSharpOSProcess.smi"
-_require "SMLSharpRuntime.smi"
-_require "../../smlnj/Basis/Unix/os-filesys.smi"
+_require "./SMLSharp_OSFileSys.smi"
 _require "../../smlnj/Basis/Unix/os-path.smi"
-_require "../../smlnj/Basis/Unix/os-io.smi"
-_require "OS.sig"
+_require "./SMLSharp_OSIO.smi"
+_require "./SMLSharp_OSProcess.smi"
+_require "./SMLSharp_Runtime.smi"
 
 structure OS =
 struct
-
+  (* substructures of OS may have internal functions to implement Basis
+   * Library.  Do not use structure replication and write down replications
+   * for each identifiers appearing in the OS signatures *)
   structure FileSys =
   struct
-    type dirstream (= boxed)
-    val openDir : string -> dirstream
-    val readDir : dirstream -> string option
-    val rewindDir : dirstream -> unit
-    val closeDir : dirstream -> unit
-    val chDir : string -> unit
-    val getDir : unit -> string
-    val mkDir : string -> unit
-    val rmDir : string -> unit
-    val isDir : string -> bool
-    val isLink : string -> bool
-    val readLink : string -> string
-    val fullPath : string -> string
-    val realPath : string -> string
-    val modTime : string -> Time.time
-    val fileSize : string -> Position.int
-    val setTime : string * Time.time option -> unit
-    val remove : string -> unit
-    val rename : {old : string, new : string} -> unit
-    datatype access_mode = A_READ | A_WRITE | A_EXEC
-    val access : string * access_mode list -> bool
-    val tmpName : unit -> string
-    eqtype file_id (= boxed)
-    val fileId : string -> file_id
-    val hash : file_id -> word
-    val compare : file_id * file_id -> order
+    type dirstream = SMLSharp_OSFileSys.dirstream
+    val openDir = SMLSharp_OSFileSys.openDir
+    val readDir = SMLSharp_OSFileSys.readDir
+    val rewindDir = SMLSharp_OSFileSys.rewindDir
+    val closeDir = SMLSharp_OSFileSys.closeDir
+    val chDir = SMLSharp_OSFileSys.chDir
+    val getDir = SMLSharp_OSFileSys.getDir
+    val mkDir = SMLSharp_OSFileSys.mkDir
+    val rmDir = SMLSharp_OSFileSys.rmDir
+    val isDir = SMLSharp_OSFileSys.isDir
+    val isLink = SMLSharp_OSFileSys.isLink
+    val readLink = SMLSharp_OSFileSys.readLink
+    val fullPath = SMLSharp_OSFileSys.fullPath
+    val realPath = SMLSharp_OSFileSys.realPath
+    val modTime = SMLSharp_OSFileSys.modTime
+    val fileSize = SMLSharp_OSFileSys.fileSize
+    val setTime = SMLSharp_OSFileSys.setTime
+    val remove = SMLSharp_OSFileSys.remove
+    val rename = SMLSharp_OSFileSys.rename
+    datatype access_mode = datatype SMLSharp_OSFileSys.access_mode
+    val access = SMLSharp_OSFileSys.access
+    val tmpName = SMLSharp_OSFileSys.tmpName
+    type file_id = SMLSharp_OSFileSys.file_id
+    val fileId = SMLSharp_OSFileSys.fileId
+    val hash = SMLSharp_OSFileSys.hash
+    val compare = SMLSharp_OSFileSys.compare
   end
-
   structure IO =
   struct
-    type iodesc = SMLSharpSMLNJ_OS_IO.iodesc
-    val hash : iodesc -> word
-    val compare : iodesc * iodesc -> order
-    eqtype iodesc_kind (= boxed)
-    val kind : iodesc -> iodesc_kind
-    structure Kind =
-    struct
-      val file : iodesc_kind
-      val dir : iodesc_kind
-      val symlink : iodesc_kind
-      val tty : iodesc_kind
-      val pipe : iodesc_kind
-      val socket : iodesc_kind
-      val device : iodesc_kind
-    end
-    eqtype poll_desc (= boxed)
-    type poll_info (= boxed)
-    val pollDesc : iodesc -> poll_desc option
-    val pollToIODesc : poll_desc -> iodesc
-    exception Poll = SMLSharpSMLNJ_OS_IO.Poll
-    val pollIn : poll_desc -> poll_desc
-    val pollOut : poll_desc -> poll_desc
-    val pollPri : poll_desc -> poll_desc
-    val poll : poll_desc list * Time.time option -> poll_info list
-    val isIn : poll_info -> bool
-    val isOut : poll_info -> bool
-    val isPri : poll_info -> bool
-    val infoToPollDesc : poll_info -> poll_desc
+    type iodesc = SMLSharp_OSIO.iodesc
+    val hash = SMLSharp_OSIO.hash
+    val compare = SMLSharp_OSIO.compare
+    type iodesc_kind = SMLSharp_OSIO.iodesc_kind
+    val kind = SMLSharp_OSIO.kind
+    structure Kind = SMLSharp_OSIO.Kind
+    type poll_desc = SMLSharp_OSIO.poll_desc
+    type poll_info = SMLSharp_OSIO.poll_info
+    val pollDesc = SMLSharp_OSIO.pollDesc
+    val pollToIODesc = SMLSharp_OSIO.pollToIODesc
+    exception Poll = SMLSharp_OSIO.Poll
+    val pollIn = SMLSharp_OSIO.pollIn
+    val pollOut = SMLSharp_OSIO.pollOut
+    val pollPri = SMLSharp_OSIO.pollPri
+    val poll = SMLSharp_OSIO.poll
+    val isIn = SMLSharp_OSIO.isIn
+    val isOut = SMLSharp_OSIO.isOut
+    val isPri = SMLSharp_OSIO.isPri
+    val infoToPollDesc = SMLSharp_OSIO.infoToPollDesc
   end
-
   structure Path =
   struct
-    exception Path = SMLSharpSMLNJ_OS_Path.Path
-    exception InvalidArc = SMLSharpSMLNJ_OS_Path.InvalidArc
-    val parentArc : string
-    val currentArc : string
-    val fromString : string -> {isAbs : bool, vol : string, arcs : string list}
-    val toString : {isAbs : bool, vol : string, arcs : string list} -> string
-    val validVolume : {isAbs : bool, vol : string} -> bool
-    val getVolume : string -> string
-    val getParent : string -> string
-    val splitDirFile : string -> {dir : string, file : string}
-    val joinDirFile : {dir : string, file : string} -> string
-    val dir : string -> string
-    val file : string -> string
-    val splitBaseExt : string -> {base : string, ext : string option}
-    val joinBaseExt : {base : string, ext : string option} -> string
-    val base : string -> string
-    val ext : string -> string option
-    val mkCanonical : string -> string
-    val isCanonical : string -> bool
-    val mkAbsolute : {path : string, relativeTo : string} -> string
-    val mkRelative : {path : string, relativeTo : string} -> string
-    val isAbsolute : string -> bool
-    val isRelative : string -> bool
-    val isRoot : string -> bool
-    val concat : string * string -> string
-    val fromUnixPath : string -> string
-    val toUnixPath : string -> string
+    exception Path = SMLSharp_SMLNJ_OS_Path.Path
+    exception InvalidArc = SMLSharp_SMLNJ_OS_Path.InvalidArc
+    val parentArc = SMLSharp_SMLNJ_OS_Path.parentArc
+    val currentArc = SMLSharp_SMLNJ_OS_Path.currentArc
+    val fromString = SMLSharp_SMLNJ_OS_Path.fromString
+    val toString = SMLSharp_SMLNJ_OS_Path.toString
+    val validVolume = SMLSharp_SMLNJ_OS_Path.validVolume
+    val getVolume = SMLSharp_SMLNJ_OS_Path.getVolume
+    val getParent = SMLSharp_SMLNJ_OS_Path.getParent
+    val splitDirFile = SMLSharp_SMLNJ_OS_Path.splitDirFile
+    val joinDirFile = SMLSharp_SMLNJ_OS_Path.joinDirFile
+    val dir = SMLSharp_SMLNJ_OS_Path.dir
+    val file = SMLSharp_SMLNJ_OS_Path.file
+    val splitBaseExt = SMLSharp_SMLNJ_OS_Path.splitBaseExt
+    val joinBaseExt = SMLSharp_SMLNJ_OS_Path.joinBaseExt
+    val base = SMLSharp_SMLNJ_OS_Path.base
+    val ext = SMLSharp_SMLNJ_OS_Path.ext
+    val mkCanonical = SMLSharp_SMLNJ_OS_Path.mkCanonical
+    val isCanonical = SMLSharp_SMLNJ_OS_Path.isCanonical
+    val mkAbsolute = SMLSharp_SMLNJ_OS_Path.mkAbsolute
+    val mkRelative = SMLSharp_SMLNJ_OS_Path.mkRelative
+    val isAbsolute = SMLSharp_SMLNJ_OS_Path.isAbsolute
+    val isRelative = SMLSharp_SMLNJ_OS_Path.isRelative
+    val isRoot = SMLSharp_SMLNJ_OS_Path.isRoot
+    val concat = SMLSharp_SMLNJ_OS_Path.concat
+    val fromUnixPath = SMLSharp_SMLNJ_OS_Path.fromUnixPath
+    val toUnixPath = SMLSharp_SMLNJ_OS_Path.toUnixPath
   end
-
   structure Process =
   struct
-    type status (= int)
-    val success : status
-    val failure : status
-    val isSuccess : status -> bool
-    val system : string -> status
-    val atExit : (unit -> unit) -> unit
-    val exit : status -> 'a
-    val terminate : status -> 'a
-    val getEnv : string -> string option
-    val sleep : Time.time -> unit
+    type status = SMLSharp_OSProcess.status
+    val success = SMLSharp_OSProcess.success
+    val failure = SMLSharp_OSProcess.failure
+    val isSuccess = SMLSharp_OSProcess.isSuccess
+    val system = SMLSharp_OSProcess.system
+    val atExit = SMLSharp_OSProcess.atExit
+    val exit = SMLSharp_OSProcess.exit
+    val terminate = SMLSharp_OSProcess.terminate
+    val getEnv = SMLSharp_OSProcess.getEnv
+    val sleep = SMLSharp_OSProcess.sleep
   end
-
-  type syserror = SMLSharpRuntime.syserror
-  exception SysErr = SMLSharpRuntime.SysErr
-  val errorMsg : syserror -> string
-  val errorName : syserror -> string
-  val syserror : string -> syserror option
-
+  type syserror = SMLSharp_Runtime.syserror
+  exception SysErr = SMLSharp_Runtime.SysErr
+  val errorMsg = SMLSharp_Runtime.errorMsg
+  val errorName = SMLSharp_Runtime.errorName
+  val syserror = SMLSharp_Runtime.syserror
 end

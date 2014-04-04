@@ -1,14 +1,12 @@
-_require "../../../basis.smi"
-
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/TyRevealTy.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
-_require "../../typedcalcoptimization/main/TCRevealTy.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
 
 structure RCRevealTy =

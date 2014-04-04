@@ -1,0 +1,11 @@
+_require "basis.smi"
+_require "gettime.smi"
+_require "ffi.smi"
+_require "pthread.smi"
+_require "count_graphs.smi"
+_require "fft.smi"
+_require "gcbench.smi"
+structure Main =
+struct
+  val doit : unit -> unit
+end

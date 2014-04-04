@@ -1,8 +1,5 @@
-_require "General.smi"
-_require "List.smi"
-_require "Array.smi"
-_require "Vector.smi"
-_require "VectorSlice.smi"
+_require "./General.smi"
+_require "./VectorSlice.smi"
 
 structure ArraySlice =
 struct
@@ -10,13 +7,13 @@ struct
   val length : 'a slice -> int
   val sub : 'a slice * int -> 'a
   val update : 'a slice * int * 'a -> unit
-  val full : 'a Array.array -> 'a slice
-  val slice : 'a Array.array * int * int option -> 'a slice
+  val full : 'a array -> 'a slice
+  val slice : 'a array * int * int option -> 'a slice
   val subslice : 'a slice * int * int option -> 'a slice
-  val base : 'a slice -> 'a Array.array * int * int
-  val vector : 'a slice -> 'a Vector.vector
-  val copy : {src : 'a slice, dst : 'a Array.array, di : int} -> unit
-  val copyVec : {src : 'a VectorSlice.slice, dst : 'a Array.array, di : int}
+  val base : 'a slice -> 'a array * int * int
+  val vector : 'a slice -> 'a vector
+  val copy : {src : 'a slice, dst : 'a array, di : int} -> unit
+  val copyVec : {src : 'a VectorSlice.slice, dst : 'a array, di : int}
                 -> unit
   val isEmpty : 'a slice -> bool
   val getItem : 'a slice -> ('a * 'a slice) option
@@ -32,6 +29,6 @@ struct
   val find : ('a -> bool) -> 'a slice -> 'a option
   val exists : ('a -> bool) -> 'a slice -> bool
   val all : ('a -> bool) -> 'a slice -> bool
-  val collate : ('a * 'a -> order) -> 'a slice * 'a slice -> order
+  val collate : ('a * 'a -> General.order) -> 'a slice * 'a slice
+                -> General.order
 end
-

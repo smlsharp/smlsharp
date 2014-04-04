@@ -11,7 +11,7 @@ fun qsort (a, f) =
       (a : 'a array,
        Array.length a : int,
        _sizeof('a),
-       f : ('a ptr, 'a ptr) -> int) : unit
+       f : ('a ptr, 'a ptr) -> int) : ()
 
 fun printIntAry x = (Array.app (fn x => print (" " ^ Int.toString x)) x;
                      print "\n")

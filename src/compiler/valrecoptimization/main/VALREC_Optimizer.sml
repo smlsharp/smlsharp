@@ -24,19 +24,18 @@ in
     
   fun optimizeExp icexp =
       case icexp of
-	ICERROR loc => icexp
-      | ICCONSTANT (const, loc) => icexp
-      | ICGLOBALSYMBOL (str, symbol, loc) => icexp
-      | ICVAR (varInfo, loc) => icexp
-      | ICEXVAR ({path, ty}, loc) => icexp 
-      | ICEXVAR_TOBETYPED ({path, id}, loc) => icexp 
-      | ICBUILTINVAR {primitive, ty, loc} => icexp
-      | ICCON (conInfo, loc) => icexp
-      | ICEXN (exnInfo, loc) => icexp
-      | ICEXEXN ({path, ty}, loc) => icexp
-      | ICEXN_CONSTRUCTOR (exnInfo, loc) => icexp
-      | ICEXEXN_CONSTRUCTOR (_, loc) => icexp
-      | ICOPRIM (oprimInfo, loc) => icexp
+	ICERROR => icexp
+      | ICCONSTANT _ => icexp
+      | ICVAR _ => icexp
+      | ICEXVAR _ => icexp 
+      | ICEXVAR_TOBETYPED _ => icexp 
+      | ICBUILTINVAR _ => icexp
+      | ICCON _ => icexp
+      | ICEXN _ => icexp
+      | ICEXEXN _ => icexp
+      | ICEXN_CONSTRUCTOR _ => icexp
+      | ICEXEXN_CONSTRUCTOR _ => icexp
+      | ICOPRIM _ => icexp
       | ICTYPED (icexp,ty,loc) =>
         ICTYPED (optimizeExp icexp, ty, loc)
       | ICSIGTYPED {icexp,ty,loc,revealKey} =>
@@ -109,16 +108,12 @@ in
         ICSELECT (label, optimizeExp icexp, loc)
       | ICSEQ (icexpList, loc) =>
         ICSEQ (map optimizeExp icexpList, loc)
-      | ICCAST (icexp, loc) =>
-        ICCAST (optimizeExp icexp, loc)
       | ICFFIIMPORT (icexp,ty,loc) =>
-        ICFFIIMPORT (optimizeExp icexp, ty, loc)
-      | ICFFIEXPORT (icexp,ty,loc) =>
-        ICFFIEXPORT (optimizeExp icexp, ty, loc)
+        ICFFIIMPORT (optimizeFFIFun icexp, ty, loc)
       | ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
         ICFFIAPPLY
             (cconv,
-             optimizeExp funExp,
+             optimizeFFIFun funExp,
              map (fn ICFFIARG (icexp, ty, loc) =>
                      ICFFIARG (optimizeExp icexp, ty, loc)
                    | ICFFIARGSIZEOF (ty, SOME icexp, loc) =>
@@ -128,9 +123,19 @@ in
                      ICFFIARGSIZEOF (ty, NONE, loc))
 		 args,
              retTy, loc)
-      | ICSQLSERVER (str, schema, loc) => icexp
+      | ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
+        ICSQLSCHEMA {columnInfoFnExp = optimizeExp columnInfoFnExp,
+                     ty = ty,
+                     loc = loc}
       | ICSQLDBI (icpat, icexp, loc) =>
         ICSQLDBI (icpat, optimizeExp icexp, loc)
+      | ICJOIN (icexp1, icexp2, loc) =>
+        ICJOIN (optimizeExp icexp1, optimizeExp icexp2, loc)
+
+  and optimizeFFIFun ffiFun =
+      case ffiFun of
+        ICFFIFUN exp => ICFFIFUN (optimizeExp exp)
+      | ICFFIEXTERN _ => ffiFun
   
   and optimizeRule patListExpList =
       map (fn {args,body} => {args=args, body=optimizeExp body})
@@ -193,12 +198,12 @@ in
           map 
               (fn nidList =>
                   case nidList of 
-                    [] => raise Control.Bug "recval"
+                    [] => raise Bug.Bug "recval"
                   | [nid] =>
                     let
                       val {functionId,dependentIds,functionDecl} =
                           case Graph.getNodeInfo g nid of
-                            NONE => raise Control.Bug "val rec"
+                            NONE => raise Bug.Bug "val rec"
                           | SOME info => info
                     in
                       if VarID.Set.member(dependentIds,functionId)
@@ -220,7 +225,7 @@ in
                           foldr 
                               (fn (nid,S) =>
                                   case Graph.getNodeInfo g nid of
-                                    NONE => raise Control.Bug "val rec"
+                                    NONE => raise Bug.Bug "val rec"
                                   | SOME info => (#functionDecl info)::S)
                               []
                               nidList
@@ -231,7 +236,7 @@ in
               sccRevRev
         end 
       | ICNONRECFUN {guard, funVarInfo, tyList, rules, loc} =>
-	raise Control.Bug "invalid declaration"
+	raise Bug.Bug "invalid declaration"
       | ICVALREC {guard, recbinds, loc} =>
         let
           val boundIDList = 
@@ -281,12 +286,12 @@ in
 	  map 
 	      (fn nidList =>
 		  case nidList of 
-		    [] => raise Control.Bug "recval"
+		    [] => raise Bug.Bug "recval"
 		  | [nid] =>
 		    let
 		      val {functionId,dependentIds,functionDecl} =
 			  case Graph.getNodeInfo g nid of
-			    NONE => raise Control.Bug "val rec"
+			    NONE => raise Bug.Bug "val rec"
 			  | SOME info => info
 		    in
 		      if VarID.Set.member(dependentIds,functionId)
@@ -298,7 +303,7 @@ in
                           val pat = 
                               foldr
                                 (fn (ty, pat) => ICPATTYPED(pat, ty, loc))
-                                (ICPATVAR (#varInfo functionDecl,loc))
+                                (ICPATVAR_TRANS (#varInfo functionDecl))
                                 (#tyList functionDecl)
                         in
                           ICVAL (guard,
@@ -312,7 +317,7 @@ in
 			  foldr 
 			      (fn (nid,S) =>
 				  case Graph.getNodeInfo g nid of
-				    NONE => raise Control.Bug "val rec"
+				    NONE => raise Bug.Bug "val rec"
 				  | SOME info => (#functionDecl info)::S)
 			      []
 			      nidList
@@ -322,24 +327,29 @@ in
 	      )
 	      sccRevRev
 	end
+      | ICVALPOLYREC (polyrecbinds, loc) =>
+        [ICVALPOLYREC 
+           (map (fn {varInfo, ty, body} => {varInfo=varInfo, ty=ty, body=optimizeExp body}) polyrecbinds, 
+            loc)
+        ]
       | ICEXND (_, loc) => [icdecl]
       | ICEXNTAGD (_, loc) => [icdecl]
-      | ICEXPORTVAR (varInfo, ty, loc) => [icdecl]
-      | ICEXPORTTYPECHECKEDVAR (varInfo, loc) => [icdecl]
+      | ICEXPORTVAR _ => [icdecl]
+      | ICEXPORTTYPECHECKEDVAR _ => [icdecl]
       | ICEXPORTFUNCTOR _ => [icdecl]
-      | ICEXPORTEXN (exnInfo, loc) => [icdecl]
-      | ICEXTERNVAR ({path, ty}, loc) => [icdecl]
-      | ICEXTERNEXN ({path, ty}, loc) => [icdecl]
+      | ICEXPORTEXN _ => [icdecl]
+      | ICEXTERNVAR _ => [icdecl]
+      | ICEXTERNEXN _ => [icdecl]
       | ICTYCASTDECL (tycastList, icdeclList, loc) => [icdecl]
-      | ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} => [icdecl]
+      | ICOVERLOADDEF _ => [icdecl]
 
   and optimizeDeclList icdeclList = List.concat (map optimizeDecl icdeclList)
 
-  fun optimize {decls, loc} =
+  fun optimize decls =
       let 
 	val newTopdecs = optimizeDeclList decls
       in
-	{decls=newTopdecs, loc=loc}
+	newTopdecs
       end
 end
 end

@@ -1,12 +1,11 @@
 (**
- * IO structure.
- * @author YAMATODANI Kiyoshi
+ * IO
  * @author UENO Katsuhiro
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "IO.smi"
 
-structure IO :> IO =
+structure IO =
 struct
   datatype buffer_mode = NO_BUF | LINE_BUF | BLOCK_BUF
   exception Io of {name : string, function : string, cause : exn}

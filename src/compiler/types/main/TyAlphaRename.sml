@@ -2,15 +2,15 @@ structure TyAlphaRename =
 struct
 local
   structure T = Types
-  structure TU = TypesUtils
+  structure TU = TypesBasics
   structure P = TyPrinters
 
-  fun bug s = Control.Bug ("AlphaRename: " ^ s)
+  fun bug s = Bug.Bug ("AlphaRename: " ^ s)
 
   exception DuplicateBtv
 
   type ty = T.ty
-  type path = T.path
+  type longsymbol = Symbol.longsymbol
   type btvKind = {tvarKind : T.tvarKind, eqKind : T.eqKind}
   type btvEnv = btvKind BoundTypeVarID.Map.map
 
@@ -19,6 +19,7 @@ local
 
   fun printBtvMap btvMap =
       let
+        val _ = P.print "printBtvMap\n"
         fun pr (id, id2) = 
             (P.print "(";
              P.print (BoundTypeVarID.toString id);
@@ -48,6 +49,11 @@ local
       end
   fun newBtvEnv (btvMap:btvMap) btvEnv =
       let
+        val _ = P.print "newBtvEnv\n"
+        val _ = printBtvMap emptyBtvMap
+        val _ = P.print "print emptyBtvMap\n"
+        val _ = printBtvMap btvMap
+        val _ = P.print "print newBtvMap\n"
         val (btvMap, btvEnv) =
             BoundTypeVarID.Map.foldli  
             (* we cannot use foldri here; we must preserve the order of btv *)
@@ -70,7 +76,7 @@ local
         T.INSTCODEty
           {
            oprimId,
-           path,
+           longsymbol,
            keyTyList : ty list,
            match : T.overloadMatch,
            instMap : T.overloadMatch OPrimInstMap.map
@@ -78,7 +84,7 @@ local
         T.INSTCODEty
           {
            oprimId=oprimId,
-           path=path,
+           longsymbol=longsymbol,
            keyTyList = map (copyTy btvMap) keyTyList,
            match = copyOverloadMatch btvMap match,
            instMap = OPrimInstMap.map (copyOverloadMatch btvMap) instMap
@@ -104,14 +110,20 @@ local
          (copyTy btvMap ty,
          TypID.Map.map (copyOverloadMatch btvMap) map
          )
-  and copyExVarInfo btvMap {path:path, ty:ty} =
-      {path=path, ty=copyTy btvMap ty}
+  and copyExVarInfo btvMap {longsymbol:longsymbol, ty:ty} =
+      {longsymbol=longsymbol, ty=copyTy btvMap ty}
   and copyPrimInfo btvMap {primitive : BuiltinPrimitive.primitive, ty : ty} =
       {primitive=primitive, ty=copyTy btvMap ty}
   and copyTy (btvMap:btvMap) ty =
+      let
+        val _ = P.print "*** copyTy ***"
+        val _ = P.printTy ty
+      in
       case TU.derefTy ty of
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (copySingletonTy btvMap singletonTy)
+      | T.BACKENDty backendTy =>
+        raise Bug.Bug "copyTy: BACKENDty"
       | T.ERRORty => 
          ty
       | T.DUMMYty dummyTyID => 
@@ -127,11 +139,12 @@ local
           {
            tyCon =
            {id : T.typId,
-            path : path,
+            longsymbol : longsymbol,
             iseq : bool,
             arity : int,
             runtimeTy : BuiltinTypeNames.bty,
             conSet : {hasArg:bool} SEnv.map,
+            conIDSet,
             extraArgs : ty list,
             dtyKind : T.dtyKind
            },
@@ -141,11 +154,12 @@ local
           {
            tyCon =
            {id = id,
-            path = path,
+            longsymbol = longsymbol,
             iseq = iseq,
             arity = arity,
             runtimeTy = runtimeTy,
             conSet = conSet,
+            conIDSet = conIDSet,
             extraArgs = map (copyTy btvMap) extraArgs,
             dtyKind = copyDtyKind btvMap dtyKind
            },
@@ -157,7 +171,9 @@ local
            body : ty
           } =>
         let
+          val _ = P.print "polyTy\n"
           val (btvMap, boundtvars) = newBtvEnv btvMap boundtvars
+          val _ = P.print "newBtvEnv\n"
         in
           T.POLYty
             {
@@ -165,7 +181,7 @@ local
              body =  copyTy btvMap body
             }
         end
-
+      end
   and copyBtvkind btvMap {tvarKind, eqKind} =
       let
         val tvarKind = copyTvarKind btvMap tvarKind
@@ -181,7 +197,7 @@ local
            operators:
            {
             oprimId : OPrimID.id,
-            path : path,
+            longsymbol : longsymbol,
             keyTyList : ty list,
             match : T.overloadMatch,
             instMap : T.overloadMatch OPrimInstMap.map
@@ -191,9 +207,9 @@ local
           {instances = map (copyTy btvMap) instances,
            operators =
            map
-             (fn {oprimId, path, keyTyList, match, instMap} =>
+             (fn {oprimId, longsymbol, keyTyList, match, instMap} =>
                  {oprimId=oprimId,
-                  path=path,
+                  longsymbol=longsymbol,
                   keyTyList = map (copyTy btvMap) keyTyList,
                   match = copyOverloadMatch btvMap match,
                   instMap = OPrimInstMap.map (copyOverloadMatch btvMap) instMap}
@@ -203,6 +219,8 @@ local
       | T.UNIV => T.UNIV
       | T.REC (fields:ty LabelEnv.map) =>
         T.REC (LabelEnv.map (copyTy btvMap) fields)
+      | T.JOIN (fields:ty LabelEnv.map, ty1, ty2, loc) =>
+        T.JOIN (LabelEnv.map (copyTy btvMap) fields, copyTy btvMap ty1, copyTy btvMap ty2, loc)
   and copyDtyKind btvMap dtyKind =
       case dtyKind of
         T.DTY => dtyKind
@@ -214,21 +232,23 @@ local
       case opaueRep of
         T.TYCON
           {id : T.typId,
-           path : path,
+           longsymbol : longsymbol,
            iseq : bool,
            arity : int,
            runtimeTy : BuiltinTypeNames.bty,
            conSet : {hasArg:bool} SEnv.map,
+           conIDSet,
            extraArgs : ty list,
            dtyKind : T.dtyKind
           } =>
         T.TYCON
           {id = id,
-           path = path,
+           longsymbol = longsymbol,
            iseq = iseq,
            arity = arity,
            runtimeTy = runtimeTy,
            conSet = conSet,
+           conIDSet = conIDSet,
            extraArgs = map (copyTy btvMap) extraArgs,
            dtyKind = copyDtyKind btvMap dtyKind
           }

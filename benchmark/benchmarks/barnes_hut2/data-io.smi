@@ -1,0 +1,19 @@
+_require "basis.smi"
+_require "vector.smi"
+_require "space.smi"
+_require "vector-sig.sml"
+_require "space.sig"
+
+structure DataIO =
+struct
+  val inputData : string
+                  -> {bodies:Space.body list, headline:string, nbody:int, tnow:real}
+  val initOutput : {dtime:real, dtout:real, eps:real,
+                    headline:string, nbody:int, outfile:string,
+                    tnow:real, tol:real, tstop:real}
+                   -> unit
+  val output : {bodies:Space.body list, n2bcalc:int, nbccalc:int,
+                nbody:int, selfint:int, tnow:real}
+               -> unit
+  val stopOutput : unit -> unit
+end

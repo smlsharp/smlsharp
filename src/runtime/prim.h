@@ -2,7 +2,6 @@
  * prim.h
  * @copyright (c) 2007-2010, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: prim.h,v 1.1 2007/12/17 12:11:16 katsu Exp $
  */
 #ifndef SMLSHARP__PRIM_H__
 #define SMLSHARP__PRIM_H__
@@ -38,6 +37,8 @@ struct sml_intinf;
 typedef struct sml_intinf sml_intinf_t;
 #endif /* SMLSHARP__SMLSHARP_H__ */
 
+int sml_memcmp(const char *s1, int i1, const char *s2, int i2, int len);
+
 /* compiler builtin primitives */
 int prim_fesetround(int x);
 int prim_fegetround(void);
@@ -71,8 +72,10 @@ STRING prim_Int_toString(int);
 STRING prim_IntInf_toString(sml_intinf_t *);
 int prim_IntInf_toInt(sml_intinf_t *);
 unsigned int prim_IntInf_toWord(sml_intinf_t *);
+double prim_IntInf_toReal(sml_intinf_t *);
 sml_intinf_t *prim_IntInf_fromInt(int);
 sml_intinf_t *prim_IntInf_fromWord(unsigned int);
+sml_intinf_t *prim_IntInf_fromReal(double);
 sml_intinf_t *prim_IntInf_quot(sml_intinf_t *, sml_intinf_t *);
 sml_intinf_t *prim_IntInf_rem(sml_intinf_t *, sml_intinf_t *);
 sml_intinf_t *prim_IntInf_pow(sml_intinf_t *, int);
@@ -110,6 +113,7 @@ STRING prim_GenericOS_errorName(int);
 int prim_GenericOS_syserror(const char *);
 int prim_Time_gettimeofday(int[]);
 int prim_Timer_getTimes(int[]);
+int prim_Date_localOffset(int[]);
 unsigned int prim_Date_strfTime(char *, unsigned int, const char *,
 				int, int, int, int, int, int, int, int, int);
 char *prim_Date_ascTime(int, int, int, int, int, int, int, int, int);
@@ -137,8 +141,6 @@ void prim_UnmanagedMemory_updateInt(void *, int);
 void prim_UnmanagedMemory_updateReal(void *, double);
 void prim_UnmanagedMemory_updatePtr(void *, void *);
 int prim_StandardC_errno(void);
-int prim_Platform_isBigEndian(void);
-STRING prim_Platform_getPlatform(void);
 int prim_CommandLine_argc(void);
 char **prim_CommandLine_argv(int);
 void *prim_xmalloc(int size);

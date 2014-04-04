@@ -1,8 +1,0 @@
-_require "../../../basis.smi"
-_require "MULTIPLEVALUECALCUTILS.sig"
-_require "MultipleValueCalc.ppg.smi"
-
-structure MultipleValueCalcUtils =
-struct
-  val getLocOfExp : MultipleValueCalc.mvexp -> MultipleValueCalc.loc
-end

@@ -1,4 +1,4 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 
 structure GetOpt =
 struct

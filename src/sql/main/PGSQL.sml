@@ -65,8 +65,11 @@ struct
       lazy (fn _ =>
                DynamicLink.dlopen
                  (case OS.Process.getEnv "SMLSHARP_LIBPQ" of
-                    NONE => "libpq.5." ^ SMLSharp_Config.DLLEXT ()
-                  | SOME x => x))
+                    SOME x => x
+                  | NONE =>
+                    case SMLSharp_Config.DLLEXT () of
+                      "so" => "libpq.so.5"
+                    | dll => "libpq.5." ^ dll))
 
   type conn = unit ptr
   type result = unit ptr
@@ -86,60 +89,65 @@ struct
 
   val PQconnectdb =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQconnectdb")
-                    : _import string -> unit ptr)
+                    : _import string -> conn)
   val PQstatus =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQstatus")
-                    : _import unit ptr -> int)
+                    : _import conn -> int)
   val PQfinish =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQfinish")
-                    : _import unit ptr -> unit)
+                    : _import conn -> ())
   val PQexec =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQexec")
-                    : _import (unit ptr, string) -> unit ptr)
+                    : _import (result, string) -> result)
   val PQgetvalue =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQgetvalue")
-                    : _import (unit ptr, int, int) -> Word8.word ptr)
+                    : _import (result, int, int) -> Word8.word ptr)
   val PQgetlength =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQgetlength")
-                    : _import (unit ptr, int, int) -> int)
+                    : _import (result, int, int) -> int)
   val PQgetisnull =
-      lazy (fn _ => DynamicLink.dlsym (lib (), "PQgetisnull")
-                    : _import (unit ptr, int, int) -> bool)
+      lazy (fn _ =>
+               let
+                 val PQgetisnull = DynamicLink.dlsym (lib (), "PQgetisnull")
+                                   : _import (result, int, int) -> int
+               in
+                 fn x => PQgetisnull x <> 0
+               end)
   val PQntuples =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQntuples")
-                    : _import unit ptr -> int)
+                    : _import result -> int)
   val PQnfields =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQnfields")
-                    : _import unit ptr -> int)
+                    : _import result -> int)
   val PQresultStatus =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQresultStatus")
-                    : _import unit ptr -> int)
+                    : _import result -> int)
   val PQerrorMessage =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQerrorMessage")
-                    : _import unit ptr -> char ptr)
+                    : _import conn -> char ptr)
   val PQresultErrorMessage =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQresultErrorMessage")
-                    : _import unit ptr -> char ptr)
+                    : _import result -> char ptr)
   val PQdb =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQdb")
-                    : _import unit ptr -> char ptr)
+                    : _import conn -> char ptr)
   val PQuser =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQuser")
-                    : _import unit ptr -> char ptr)
+                    : _import conn -> char ptr)
   val PQclear =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQclear")
-                    : _import unit ptr -> unit)
+                    : _import result -> ())
 
   fun getErrorMessage conn =
-      SMLSharpRuntime.str_new (PQerrorMessage () conn)
+      SMLSharp_Runtime.str_new (PQerrorMessage () conn)
 
   fun getResErrorMessage res =
-      SMLSharpRuntime.str_new (PQresultErrorMessage () res)
+      SMLSharp_Runtime.str_new (PQresultErrorMessage () res)
 
   fun getDBname conn =
-      SMLSharpRuntime.str_new (PQdb () conn)
+      SMLSharp_Runtime.str_new (PQdb () conn)
 
   fun getDBuser conn =
-      SMLSharpRuntime.str_new (PQuser () conn)
+      SMLSharp_Runtime.str_new (PQuser () conn)
 
 end

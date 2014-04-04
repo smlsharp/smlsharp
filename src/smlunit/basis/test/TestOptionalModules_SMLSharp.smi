@@ -1,0 +1,18 @@
+_require "basis.smi"
+_require "smlunit-lib.smi"
+_require "IntInf001.smi"
+_require "IntInf101.smi"
+(*
+_require "Array2001.smi"
+_require "CharArray2001.smi"
+_require "RealArray001.smi"
+_require "RealArray101.smi"
+_require "RealVector001.smi"
+_require "RealVector101.smi"
+_require "Word8Array2001.smi"
+*)
+
+structure TestOptionalModules =
+struct
+  val tests : unit -> SMLUnit.Test.test list
+end

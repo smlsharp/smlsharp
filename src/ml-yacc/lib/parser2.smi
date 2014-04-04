@@ -32,6 +32,10 @@ struct
     datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
     val sameToken : token * token -> bool
   end
+  type actions = 
+       int * pos * (LrTable.state * (svalue * pos * pos)) list * arg ->
+       LrTable.nonterm * (svalue * pos * pos) *
+       ((LrTable.state *(svalue * pos * pos)) list)
   structure Stream = 
   struct
     type tok = Token.token
@@ -45,9 +49,7 @@ struct
       : {table : LrTable.table,
          lexer : Stream.stream,
          arg: arg,
-         saction : int * Token.pos * (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list * arg ->
-                   LrTable.nonterm * (Token.svalue * Token.pos * Token.pos) *
-                   (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list,
+         saction : actions,
          void : Token.svalue,
          ec : {is_keyword : LrTable.term -> bool,
                noShift : LrTable.term -> bool,

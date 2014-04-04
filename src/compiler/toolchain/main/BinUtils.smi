@@ -1,21 +1,17 @@
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/binary-op.smi"
-_require "../../../basis/main/List.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "basis.smi"
 _require "../../../config/main/Config.smi"
-_require "../../../config/main/Version.smi"
-_require "Filename.smi"
-_require "CoreUtils.smi"
-_require "TempFile.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "./Filename.smi"
+_require "./CoreUtils.smi"
+_require "./TempFile.smi"
 
 structure BinUtils =
 struct
   val assemble : {source: Filename.filename, flags: string list,
                   object: Filename.filename} -> unit
   val link : {flags: string list, objects: Filename.filename list,
-              libs: string list, dst: Filename.filename, quiet: bool} -> unit
+              libs: string list, dst: Filename.filename,
+              useCXX: bool, quiet: bool} -> unit
   val partialLink : {objects: Filename.filename list, dst: Filename.filename}
                     -> unit
   val archive : {objects: Filename.filename list, archive: Filename.filename}

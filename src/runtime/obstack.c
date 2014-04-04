@@ -2,7 +2,6 @@
  * obstack.c - naive obstack implementation
  * @copyright (c) 2007-2009, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: $
  */
 
 #include <stdlib.h>

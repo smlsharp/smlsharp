@@ -1,4 +1,4 @@
-_require "../../../basis/main/List.smi"
+_require "../../../basis.smi"
 
 structure PrinterParameter =
 struct

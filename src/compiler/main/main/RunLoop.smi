@@ -1,35 +1,31 @@
 _require "../../../basis.smi"
-_require "../../../basis/main/SMLSharpRuntime.smi"
+_require "../../../config/main/Config.smi"
+_require "../../../llvm/main/LLVM.smi"
+_require "../../../ffi/main/DynamicLink.smi"
+_require "../../../sql/main/SQLErrors.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../util/main/Counter.smi"
 _require "../../usererror/main/UserError.ppg.smi"
 _require "../../toolchain/main/Filename.smi"
+_require "../../toolchain/main/TempFile.smi"
 _require "../../toolchain/main/CoreUtils.smi"
 _require "../../toolchain/main/BinUtils.smi"
-_require "../../toolchain/main/TempFile.smi"
 _require "../../parser2/main/Parser.smi"
-_require "../../types/main/IDCalc.ppg.smi"
 _require "../../toplevel2/main/Top.smi"
-_require "../../../config/main/Config.smi"
-_require "../../../config/main/Version.smi"
-_require "../../../sql/main/SQLPrim.smi"
+_require "../../generatemain/main/GenerateMain.smi"
+_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
 
 structure RunLoop =
 struct
   type options =
-       {asmFlags : string list,
-        systemBaseDir : Filename.filename,
+       {systemBaseDir : Filename.filename,
         stdPath : Filename.filename list,
         loadPath : Filename.filename list,
         LDFLAGS : string list,
         LIBS : string list,
+        llvmOptions : LLVM.compile_options,
         errorOutput : TextIO.outstream}
-  datatype result = SUCCESS | FAILED
-  val available : unit -> bool
-  val run : options
-            -> Top.toplevelContext
-            -> Parser.input
-            -> result * Top.newContext
   val interactive : options -> Top.toplevelContext -> unit
 end

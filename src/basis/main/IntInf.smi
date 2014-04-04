@@ -1,55 +1,53 @@
-_require "General.smi"
-_require "StringCvt.smi"
-_require "SMLSharpScanChar.smi"
-_require "String.smi"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./SMLSharp_ScanChar.smi"
+_require "./String.smi"
 
 structure IntInf =
 struct
-  val toLarge : intInf -> intInf
-  val fromLarge : intInf -> intInf
-  val toInt : intInf -> int
-  val fromInt : int -> intInf
-  val toWord : intInf -> word
-  val fromWord : word -> intInf
-  val precision : int option
-  val minInt : intInf option
-  val maxInt : intInf option
-  val + : intInf * intInf -> intInf
-  val - : intInf * intInf -> intInf
-  val * : intInf * intInf -> intInf
-  val div : intInf * intInf -> intInf
-  val mod : intInf * intInf -> intInf
-  val quot : intInf * intInf -> intInf
-  val rem : intInf * intInf -> intInf
-  val compare : intInf * intInf -> order
-  val < : intInf * intInf -> bool
-  val <= : intInf * intInf -> bool
-  val > : intInf * intInf -> bool
-  val >= : intInf * intInf -> bool
-  val ~ : intInf -> intInf
-  val abs : intInf -> intInf
-  val min : intInf * intInf -> intInf
-  val max : intInf * intInf -> intInf
-  val sign : intInf -> int
-  val sameSign : intInf * intInf -> bool
-  val fmt : StringCvt.radix -> intInf -> string
-  val toString : intInf -> string
+  type int = SMLSharp_Builtin.IntInf.int
+  val toLarge : int -> SMLSharp_Builtin.IntInf.int
+  val fromLarge : SMLSharp_Builtin.IntInf.int -> int
+  val toInt : int -> SMLSharp_Builtin.Int.int
+  val fromInt : SMLSharp_Builtin.Int.int -> int
+  val precision : SMLSharp_Builtin.Int.int option
+  val minInt : int option
+  val maxInt : int option
+  val + : int * int -> int
+  val - : int * int -> int
+  val * : int * int -> int
+  val div : int * int -> int
+  val mod : int * int -> int
+  val quot : int * int -> int
+  val rem : int * int -> int
+  val compare : int * int -> General.order
+  val < : int * int -> bool
+  val <= : int * int -> bool
+  val > : int * int -> bool
+  val >= : int * int -> bool
+  val ~ : int -> int
+  val abs : int -> int
+  val min : int * int -> int
+  val max : int * int -> int
+  val sign : int -> SMLSharp_Builtin.Int.int
+  val sameSign : int * int -> bool
+  val fmt : StringCvt.radix -> int -> string
+  val toString : int -> string
   val scan : StringCvt.radix
              -> (char, 'a) StringCvt.reader
-             -> (intInf, 'a) StringCvt.reader
-  val fromString : string -> intInf option
+             -> (int, 'a) StringCvt.reader
+  val fromString : string -> int option
 
-  val divMod : intInf * intInf -> intInf * intInf
-  val quotRem : intInf * intInf -> intInf * intInf
-  val pow : intInf * int -> intInf
-  val log2 : intInf -> int
-  val orb : intInf * intInf -> intInf
-  val xorb : intInf * intInf -> intInf
-  val andb : intInf * intInf -> intInf
-  val notb : intInf -> intInf
-  val << : intInf * word -> intInf
-  val ~>> : intInf * word -> intInf
-  type int = intInf
+  val divMod : int * int -> int * int
+  val quotRem : int * int -> int * int
+  val pow : int * SMLSharp_Builtin.Int.int -> int
+  val log2 : int -> SMLSharp_Builtin.Int.int
+  val orb : int * int -> int
+  val xorb : int * int -> int
+  val andb : int * int -> int
+  val notb : int -> int
+  val << : int * word -> int
+  val ~>> : int * word -> int
 end
 
 structure LargeInt = IntInf

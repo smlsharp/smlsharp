@@ -1,0 +1,20 @@
+_require "basis.smi"
+_require "DICTIONARY.sig"
+
+structure Dictionary =
+struct
+  type (''key, 'value) dict (= boxed)
+  exception NotFound
+  val create  : [''a, 'b. unit -> (''a, 'b) dict]
+  val exists   : [''a, 'b. (''a, 'b) dict -> ''a -> bool]
+  val lookup   : [''a, 'b. (''a, 'b) dict -> ''a -> 'b]
+  val size     : [''a, 'b. (''a, 'b) dict -> int]
+  val isEmpty  : [''a, 'b. (''a, 'b) dict -> bool]
+  val update   : [''a, 'b. (''a, 'b) dict -> ''a -> 'b -> (''a, 'b) dict]
+  val remove   : [''a, 'b. (''a, 'b) dict -> ''a -> (''a, 'b) dict]
+  val aslist   : [''a, 'b. (''a, 'b) dict -> (''a * 'b) list ]
+  val keys     : [''a, 'b. (''a, 'b) dict -> ''a list]
+  val items    : [''a, 'b. (''a, 'b) dict -> 'b list]
+  val mapkeys  : [''a, 'b, ''c. (''a, 'b) dict -> (''a -> ''c) -> (''c, 'b) dict]
+  val mapitems : [''a, 'b, 'c. (''a, 'b) dict -> ('b -> 'c) -> (''a, 'c) dict]
+end

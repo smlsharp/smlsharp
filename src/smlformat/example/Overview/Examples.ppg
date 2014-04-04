@@ -333,7 +333,7 @@ struct
   struct
 
   (*%
-   * @destination "(* FORMAT_TY *)"
+   * @destination "FORMAT_TY"
    * @header "and"
    * @formatter(polyTy) format_polyTy
    * @params(env)
@@ -357,7 +357,7 @@ struct
         tyFormat @
         [(FE.Term (1, "]"))]
       end
-  (* FORMAT_TY *)
+  FORMAT_TY
   end
 
   end

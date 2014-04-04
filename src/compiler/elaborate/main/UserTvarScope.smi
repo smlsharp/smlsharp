@@ -1,24 +1,20 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-
 _require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
 _require "../../util/main/ListSorter.smi"
-_require "ElaborateError.ppg.smi"
+_require "./ElaborateError.ppg.smi"
 
 structure UserTvarScope =
   struct
+    (* an ordered set of user type varaibles *)
+    type tvset (= boxed)
     val decide : PatternCalc.pltopdec list -> PatternCalc.pltopdec list
     val decideSigexp : PatternCalc.plsigexp -> PatternCalc.plsigexp
-    val decideSpec : PatternCalc.plspec -> PatternCalc.plspec
-    type tvset (= boxed)
-    val ftv : Absyn.ty -> tvset
-    val empty : tvset
-    val singleton : Absyn.tvar * Loc.loc -> tvset
-    val member : tvset * Absyn.tvar -> bool
-    val union : tvset * tvset -> tvset
-    val tyvarsList : ('a -> tvset) -> 'a list -> tvset
-    val toTvarList : tvset -> Absyn.kindedTvar list
+    val decideInterface : PatternCalcInterface.interface -> PatternCalcInterface.interface
+    val decidePitopdecs :  PatternCalcInterface.pitopdec list -> PatternCalcInterface.pitopdec list
   end

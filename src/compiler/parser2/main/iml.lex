@@ -9,45 +9,170 @@
  * @version $Id: iml.lex,v 1.42.6.6 2010/01/22 09:19:06 hiro-en Exp $
  *)
 
-structure T = MLLrVals.Tokens
+structure T =
+struct
+  type pos = Loc.pos
+  datatype token =
+      ASSOCINDICATOR of
+      {cut: bool, strength: int, direction: FormatTemplate.assocDirection}
+      * pos * pos
+    | FORMATINDICATOR of
+      {space: bool, newline: {priority: FormatTemplate.priority} option}
+      * pos * pos
+    | STARTOFINDENT of int * pos * pos
+    | NEWLINE of pos * pos
+    | LOCALFORMATTAG of string * pos * pos
+    | FORMATTAG of pos * pos
+    | FORMATPARAMSTAG of pos * pos
+    | FORMATTERTAG of pos * pos
+    | FORMATCOMMENTEND of pos * pos
+    | FORMATCOMMENTSTART of pos * pos
+    | HEADERTAG of pos * pos
+    | DESTINATIONTAG of pos * pos
+    | PREFIXTAG of pos * pos
+    | DITTOTAG of pos * pos
+    | ROLLBACK of pos * pos
+    | COMMIT of pos * pos
+    | BEGIN of pos * pos
+    | DEFAULT of pos * pos
+    | SET of pos * pos
+    | UPDATE of pos * pos
+    | BY of pos * pos
+    | ORDER of pos * pos
+    | DELETE of pos * pos
+    | VALUES of pos * pos
+    | INTO of pos * pos
+    | INSERT of pos * pos
+    | FROM of pos * pos
+    | SELECT of pos * pos
+    | DESC of pos * pos
+    | ASC of pos * pos
+    | SQL of pos * pos
+    | SQLEXEC of pos * pos
+    | SQLEVAL of pos * pos
+    | SQLSERVER of pos * pos
+    | WORD of {radix: StringCvt.radix, digits: string} * pos * pos
+    | WITHTYPE of pos * pos
+    | WITH of pos * pos
+    | WHERE of pos * pos
+    | WHILE of pos * pos
+    | VAL of pos * pos
+    | USE' of pos * pos
+    | USE of pos * pos
+    | UNDERBAR of pos * pos
+    | TYVAR of string * pos * pos
+    | TYPE of pos * pos
+    | THEN of pos * pos
+    | STRUCTURE of pos * pos
+    | STRUCT of pos * pos
+    | STRING of string * pos * pos
+    | SPECIAL of string * pos * pos
+    | SIZEOF of pos * pos
+    | SIGNATURE of pos * pos
+    | SIG of pos * pos
+    | SHARING of pos * pos
+    | SEMICOLON of pos * pos
+    | RPAREN of pos * pos
+    | REAL of string * pos * pos
+    | RBRACKET of pos * pos
+    | RBRACE of pos * pos
+    | REQUIRE of pos * pos
+    | REC of pos * pos
+    | POLYREC of pos * pos
+    | RAISE of pos * pos
+    | PERIODS of pos * pos
+    | PERIOD of pos * pos
+    | NULL of pos * pos
+    | ORELSE of pos * pos
+    | OPEN of pos * pos
+    | OPAQUE of pos * pos
+    | OP of pos * pos
+    | OF of pos * pos
+    | NONFIX of pos * pos
+    | LPAREN of pos * pos
+    | LOCAL of pos * pos
+    | LET of pos * pos
+    | LBRACKET of pos * pos
+    | LBRACE of pos * pos
+    | INTERFACE of pos * pos
+    | JOIN of pos * pos
+    | INTLAB of string * pos * pos
+    | INT of {radix: StringCvt.radix, digits: string} * pos * pos
+    | INFIXR of pos * pos
+    | INFIX of pos * pos
+    | INCLUDE of pos * pos
+    | IMPORT of pos * pos
+    | IN of pos * pos
+    | IF of pos * pos
+    | ID of string * pos * pos
+    | HASH of pos * pos
+    | HANDLE of pos * pos
+    | FUNCTOR of pos * pos
+    | FUN of pos * pos
+    | FN of pos * pos
+    | FFIAPPLY of pos * pos
+    | EXCEPTION of pos * pos
+    | EQTYVAR of string * pos * pos
+    | EQTYPE of pos * pos
+    | EQ of pos * pos
+    | END of pos * pos
+    | ELSE of pos * pos
+    | DO of pos * pos
+    | DATATYPE of pos * pos
+    | DARROW of pos * pos
+    | COMMA of pos * pos
+    | COLON of pos * pos
+    | CHAR of string * pos * pos
+    | CASE of pos * pos
+    | BUILTIN of pos * pos
+    | BAR of pos * pos
+    | ATTRIBUTE of pos * pos
+    | AT of pos * pos
+    | ASTERISK of pos * pos
+    | AS of pos * pos
+    | ARROW of pos * pos
+    | ANDALSO of pos * pos
+    | AND of pos * pos
+    | ABSTYPE of pos * pos
+    | EOF of pos * pos
+end
+
 structure UE = UserError
 structure SS = Substring
 
 (* if you use ml-lex of SML/NJ, you need to specify this to 2. *)
 val INITIAL_POS_OF_LEXER = 0
-
-type svalue = T.svalue
-
-(*  type pos = Loc.pos *)
-type pos = T.pos
 type lexresult = T.token
-type token = T.token
 
 exception Error
 
 datatype stringType = STRING | CHAR | NOSTR
-
 type arg =
 {
+  inFormatComment : bool ref,
   fileName : string,
   isPrelude : bool,
   enableMeta : bool,
-  lexError : (string * pos * pos) -> unit,
+  lexError : (string * T.pos * T.pos) -> unit,
   stringBuf : string list ref,
-  stringStart : pos ref,
+  stringStart : T.pos ref,
   stringType : stringType ref,
-  commentStart : Loc.pos list ref,
+  commentStart : T.pos list ref,
   lineMap : {lineCount : int, beginPos : int} list ref,
   lineCount : int ref,
   charCount : int ref,
-  initialCharCount : int
+  initialCharCount : int,
+  allow8bitId : bool
 }
 
-fun initArg {sourceName, isPrelude, enableMeta, lexErrorFn, initialLineno} =
+
+fun initArg {sourceName, isPrelude, enableMeta, lexErrorFn, initialLineno, allow8bitId} : arg =
     let
       val startPos = Loc.makePos {fileName = sourceName, line = 0, col = 0}
     in
-      {fileName = sourceName,
+      {
+       inFormatComment = ref false,
+       fileName = sourceName,
        isPrelude = isPrelude,
        enableMeta = enableMeta,
        lexError = lexErrorFn,
@@ -59,7 +184,9 @@ fun initArg {sourceName, isPrelude, enableMeta, lexErrorFn, initialLineno} =
                        beginPos = INITIAL_POS_OF_LEXER}],
        lineCount = ref initialLineno,
        charCount = ref INITIAL_POS_OF_LEXER,
-       initialCharCount = 0} : arg
+       initialCharCount = 0,
+       allow8bitId = allow8bitId
+      } : arg
     end
 
 fun isINITIAL ({commentStart = ref nil, stringType = ref NOSTR, ...}:arg) = true
@@ -118,7 +245,7 @@ fun currentPos (pos, offset, arg : arg) =
         in
           #lexError arg (message, Loc.nopos, Loc.nopos); Loc.nopos
       (*
-          raise Control.Bug message
+          raise Bug.Bug message
        *)
         end
             
@@ -150,29 +277,40 @@ fun eof ({commentStart, stringStart, stringType, lexError,
 
 fun isSuffix char string =
     0 < size string andalso String.sub (string, size string - 1) = char
+
+fun pushComment (commentStart, yypos, arg) =
+    commentStart := left(yypos, arg) :: !commentStart
+fun popComment (commentStart) =
+    case !commentStart of
+      _::t => commentStart := t
+    | nil => raise Bug.Bug "unmatched closing comment"
+fun commentLevel (commentStart) =
+    List.length (!commentStart)
+local
+  fun cvt radix (s, i) =
+	#1(valOf(Int.scan radix Substring.getc (Substring.triml i (Substring.full s))))
+in
+val atoi = cvt StringCvt.DEC
+val xtoi = cvt StringCvt.HEX
+end (* local *)
+
+fun check8bitId (arg:arg) (yytext, yypos) =
+    if #allow8bitId arg orelse CharVector.all (fn x => ord x < 128) yytext
+    then ()
+    else #lexError arg ("8 bit characters in ID is not permitted",
+                        left (yypos, arg),
+                        right (yypos, size yytext, arg))
+
 %%
-%s A S F;
+
+%full
+%s A S F FC FCC;
 %header (
-structure MLLex 
-: sig
-  structure UserDeclarations : sig
-    type token
-    type pos
-    type svalue
-    type arg
-    val isINITIAL : arg -> bool
-    val initArg : {sourceName : string,
-                   isPrelude : bool,
-                   enableMeta : bool,
-                   lexErrorFn : (string * pos * pos) -> unit,
-                   initialLineno : int} -> arg
-  end
-  val makeLexer
-      : (int -> string) -> UserDeclarations.arg -> unit -> UserDeclarations.token
-end
+structure MLLex
 );
 %arg (arg as 
       {
+        inFormatComment,
         fileName,
         isPrelude,
         enableMeta,
@@ -184,12 +322,13 @@ end
         lineMap,
         lineCount,
         charCount,
-        initialCharCount
+        initialCharCount,
+        ...
       });
 
 quote="'";
 underscore="\_";
-alpha=[A-Za-z];
+alpha=[A-Za-z\127-\255];
 digit=[0-9];
 idchars={alpha}|{digit}|{quote}|{underscore};
 id=({alpha}|{quote}){idchars}*;
@@ -198,6 +337,7 @@ eol=("\013\010"|"\010"|"\013");
 sym=[!%&$+/:<=>?@~`|#*]|\-|\^;
 symbol={sym}|\\;
 num=[0-9]+;
+positive=[1-9][0-9]*;
 frac="."{num};
 exp=[eE](~?){num};
 real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
@@ -205,7 +345,6 @@ hexnum=[0-9a-fA-F]+;
 %%
 <INITIAL>{ws} => (continue());
 <INITIAL>{eol} => (newLine(yypos, yytext, arg); continue ());
-<INITIAL>"_absnamespace" => (T.ABSNAMESPACE (left(yypos,arg),right(yypos,13,arg)));
 <INITIAL>"abstype" => (T.ABSTYPE (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"andalso" => (T.ANDALSO (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"and" => (T.AND (left(yypos,arg),right(yypos,3,arg)));
@@ -213,16 +352,12 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"__attribute__" => (T.ATTRIBUTE (left(yypos,arg),right(yypos,13,arg)));
 <INITIAL>"_builtin" => (T.BUILTIN (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"case" => (T.CASE (left(yypos,arg),right(yypos,4,arg)));
-<INITIAL>"_cast" => (T.CAST (left(yypos,arg),right(yypos,5,arg)));
-<INITIAL>"_cdecl" => (T.CDECL (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"datatype" => (T.DATATYPE (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"do" => (T.DO (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"else" => (T.ELSE (left(yypos,arg),right(yypos,4,arg)));
 <INITIAL>"end" => (T.END (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"eqtype" => (T.EQTYPE (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"exception" => (T.EXCEPTION (left(yypos,arg),right(yypos,9,arg)));
-<INITIAL>"_export" => (T.EXPORT (left(yypos,arg),right(yypos,7,arg)));
-<INITIAL>"_external" => (T.EXTERNAL (left(yypos,arg),right(yypos,9,arg)));
 <INITIAL>"_ffiapply" => (T.FFIAPPLY (left(yypos,arg),right(yypos,9,arg)));
 <INITIAL>"fn" => (T.FN (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"fun" => (T.FUN (left(yypos,arg),right(yypos,3,arg)));
@@ -235,6 +370,7 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"infix" => (T.INFIX (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"infixr" => (T.INFIXR (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"_interface" => (T.INTERFACE (left(yypos,arg),right(yypos,10,arg)));
+<INITIAL>"_join" => (T.JOIN (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"nonfix" => (T.NONFIX (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"let" => (T.LET (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"local" => (T.LOCAL (left(yypos,arg),right(yypos,5,arg)));
@@ -242,17 +378,15 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"op" => (T.OP (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"open" => (T.OPEN(left(yypos,arg),right(yypos,4,arg)));
 <INITIAL>"orelse" => (T.ORELSE (left(yypos,arg),right(yypos,6,arg)));
-<INITIAL>"_namespace" => (T.NAMESPACE (left(yypos,arg),right(yypos,10,arg)));
 <INITIAL>"_NULL" => (T.NULL (left(yypos,arg),right(yypos,5,arg)));
-<INITIAL>"_private" => (T.PRIVATE (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"raise" => (T.RAISE (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"rec" => (T.REC (left(yypos,arg),right(yypos,3,arg)));
+<INITIAL>"_polyrec" => (T.POLYREC (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"_require" => (T.REQUIRE (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"sharing" => (T.SHARING (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"sig"=> (T.SIG (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"signature" => (T.SIGNATURE (left(yypos,arg),right(yypos,9,arg)));
 <INITIAL>"_sizeof" => (T.SIZEOF (left(yypos,arg),right(yypos,7,arg)));
-<INITIAL>"_stdcall" => (T.STDCALL (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"struct" => (T.STRUCT (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"structure" => (T.STRUCTURE (left(yypos,arg),right(yypos,9,arg)));
 <INITIAL>"then" => (T.THEN (left(yypos,arg),right(yypos,4,arg)));
@@ -261,7 +395,6 @@ hexnum=[0-9a-fA-F]+;
                    then T.USE (left(yypos,arg),right(yypos,3,arg))
                    else T.ID (yytext,left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"_use" => (T.USE' (left(yypos,arg),right(yypos,4,arg)));
-<INITIAL>"_useobj" => (T.USEOBJ (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"val" => (T.VAL (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"where" => (T.WHERE (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"while" => (T.WHILE (left(yypos,arg),right(yypos,5,arg)));
@@ -310,6 +443,7 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"}" => (T.RBRACE(left(yypos,arg),right(yypos,1,arg)));
 <INITIAL>{id} =>
     (let
+       val _ = check8bitId arg (yytext, yypos)
        val loc = strToLoc(yytext, yypos, arg)
        val textSize = String.size yytext
      in
@@ -369,11 +503,17 @@ hexnum=[0-9a-fA-F]+;
                     continue()
                   );
 <INITIAL>"(*" => (YYBEGIN A;
-                  commentStart := left(yypos, arg) :: !commentStart;
+                  pushComment(commentStart, yypos, arg);
                   continue()
  (* Unlike "(*", unmatched "*)" should not cause parse error. It should
   * be regarded as two tokens "*" and ")". *)
                  );
+<INITIAL>"(*%"	=> (YYBEGIN FC; 
+                    inFormatComment := true; 
+                    stringStart := left(yypos, arg); 
+                    pushComment(commentStart, yypos, arg);
+                    T.FORMATCOMMENTSTART(left(yypos, arg), right(yypos, size yytext, arg)));
+
 <INITIAL>\h => (
                  lexError
                  (
@@ -388,17 +528,136 @@ hexnum=[0-9a-fA-F]+;
                 ("illegal token", left(yypos, arg), right(yypos, 1, arg));
                 continue()
               );
-<A>"(*"  => (commentStart := left(yypos, arg) :: !commentStart;
+<FC>"(*" => (YYBEGIN FCC; 
+             pushComment(commentStart, yypos, arg);
              continue());
-<A>{eol} => (newLine(yypos, yytext, arg); continue ());
+
+<A,FCC>"(*"  => (
+                 pushComment(commentStart, yypos, arg);
+                 continue());
+
+<A,FC,FCC>{eol} => (newLine(yypos, yytext, arg); continue ());
+
 <A>"*)" => (
-            case !commentStart of
-              _::nil => (commentStart := nil; YYBEGIN INITIAL)
-            | _::t => commentStart := t
-            | nil => raise Control.Bug "unmatched close comment";
+            popComment(commentStart);
+            if commentLevel(commentStart) = 0 then
+              (inFormatComment := false; YYBEGIN INITIAL)
+            else ();
             continue()
            );
-<A>. => (continue());
+<FCC>"*)" => (
+              popComment(commentStart);
+              if commentLevel(commentStart) = 1 then YYBEGIN FC else (); 
+              continue()
+             );
+<FC>"*)" => (
+             popComment(commentStart);
+             if commentLevel(commentStart) = 0
+             then
+               (inFormatComment := false;
+                YYBEGIN INITIAL;
+                T.FORMATCOMMENTEND(left(yypos, arg), right(yypos, size yytext, arg)))
+             else raise Bug.Bug "unmatched opening comment"
+             );
+<A,FCC>. => (continue());
+
+<FC>^{ws}*"*)" =>
+    (popComment(commentStart);
+     if commentLevel(commentStart) = 0
+     then
+       (inFormatComment := false;
+        YYBEGIN INITIAL;
+        T.FORMATCOMMENTEND(left(yypos, arg), right(yypos, size yytext, arg)))
+     else continue());
+<FC>^{ws}*"*" => (continue());
+<FC>\"          => (stringBuf := [""]; stringStart := left(yypos, arg);
+                    stringType := STRING; YYBEGIN S; continue());
+<FC>"@ditto"  => (T.DITTOTAG(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"@prefix"   => (T.PREFIXTAG(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"@formatter"   => (T.FORMATTERTAG(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"@params"   => (T.FORMATPARAMSTAG(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"@format"   => (T.FORMATTAG(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"@destination" => (T.DESTINATIONTAG(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"@header" => (T.HEADERTAG(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"\\n" => (T.NEWLINE(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>("~")?{num}"["    => (T.STARTOFINDENT(atoi(yytext, 0), left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"+"         => (T.FORMATINDICATOR({space = true, newline = NONE}, left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"+"?("d"|{positive}) => 
+   (let
+      val space = String.sub (yytext, 0) = #"+"
+      val priorityText =
+          if space then String.extract (yytext, 1, NONE) else yytext
+      val priority =
+          if priorityText = "d"
+          then FormatTemplate.Deferred
+          else FormatTemplate.Preferred (atoi(priorityText, 0))
+      val indicatorArg =
+          {space = space, newline = SOME{priority = priority}}
+    in
+      T.FORMATINDICATOR
+      (indicatorArg, left(yypos, arg), right(yypos, String.size yytext, arg))
+    end);
+<FC>"!"?[LRN]("~")?{num}         => 
+      (let
+         val (cut, directionCharPos, numStartPos) =
+             if #"!" = String.sub (yytext, 0)
+             then (true, 1, 2)
+             else (false, 0, 1)
+         val direction =
+             case String.sub (yytext, directionCharPos)
+              of #"L" => FormatTemplate.Left
+               | #"R" => FormatTemplate.Right
+               | #"N" => FormatTemplate.Neutral
+               | _ => raise Fail "BUG: illeagal direction"
+         val strength = atoi (yytext, numStartPos)
+       in
+         T.ASSOCINDICATOR
+         ({
+            cut = cut,
+            strength = strength,
+            direction = direction
+          },
+          left(yypos, arg), right(yypos, String.size yytext, arg))
+       end);
+<FC>{id}        => (check8bitId arg (yytext, yypos); T.ID(yytext,left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"'"({id}|{num})"'"  =>
+        (check8bitId arg (yytext, yypos);
+         T.ID(String.substring(yytext,1,(size yytext)-2),
+                   left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"*"         => (T.ASTERISK(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>":"         => (T.COLON(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>","	        => (T.COMMA(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"..."	=> (T.PERIODS(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"."		=> (T.PERIOD(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"{"	        => (T.LBRACE(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"}"	        => (T.RBRACE(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"]"	        => (T.RBRACKET(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"("	        => (T.LPAREN(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>")"	        => (T.RPAREN(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>"_"         => (T.UNDERBAR(left(yypos, arg), right(yypos, String.size yytext, arg)));
+<FC>{ws}	=> (continue());
+<FC>{eol}	=> (newLine(yypos, yytext, arg); continue());
+<FC>.           =>
+   (lexError("ml lexer: bad character in format comment:"^yytext, left(yypos, arg), right(yypos, 1, arg));
+    continue());
+
+<S>\"	        =>
+    (let
+       val s = makeString stringBuf
+       val s = if size s <> 1 andalso  !stringType = CHAR
+               then
+                 (lexError("character constant not length 1", !stringStart, left(yypos, arg));
+                  substring(s^"x",0,1))
+               else s
+       val t = (s,!stringStart, right(yypos, 1, arg))
+     in
+       if !inFormatComment then YYBEGIN FC else YYBEGIN INITIAL;
+       case !stringType before stringType := NOSTR of
+         STRING => T.STRING t
+       | CHAR => T.CHAR t
+       | NOSTR => raise Bug.Bug "close string"
+     end);
+
 <S>\" => (
            let
              val s = makeString stringBuf
@@ -416,11 +675,11 @@ hexnum=[0-9a-fA-F]+;
                      else s
              val t = (s, !stringStart, right(yypos, 1, arg))
            in
-             YYBEGIN INITIAL;
+             if !inFormatComment then YYBEGIN FC else YYBEGIN INITIAL;
              case !stringType before stringType := NOSTR of
                STRING => T.STRING t
              | CHAR => T.CHAR t
-             | NOSTR => raise Control.Bug "close string"
+             | NOSTR => raise Bug.Bug "close string"
 
            end
          );

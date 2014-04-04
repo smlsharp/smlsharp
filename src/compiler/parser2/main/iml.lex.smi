@@ -1,28 +1,155 @@
-_require "../../../basis.smi"
-_require "../../../ml-yacc-lib.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "basis.smi"
+_require "ml-yacc-lib.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../usererror/main/UserError.ppg.smi"
 _require "../../util/main/BigInt_IntInf.smi"
-_require "iml.grm.sig"
-_require "iml.grm.smi"
+_require "../../absyn/main/FormatTemplate.ppg.smi"
 
-structure MLLex
-=
+structure MLLex =
 struct
   structure UserDeclarations =
   struct
-    type token = MLLrVals.Tokens.token
-    type pos = MLLrVals.Tokens.pos
-    type svalue = MLLrVals.Tokens.svalue
+    structure T =
+    struct
+      type pos = Loc.pos
+
+
+      datatype token =
+          ASSOCINDICATOR of
+          {cut: bool, strength: int, direction: FormatTemplate.assocDirection}
+          * pos * pos
+        | FORMATINDICATOR of
+          {space: bool, newline: {priority: FormatTemplate.priority} option}
+          * pos * pos
+        | STARTOFINDENT of int * pos * pos
+        | NEWLINE of pos * pos
+        | LOCALFORMATTAG of string * pos * pos
+        | FORMATTAG of pos * pos
+        | FORMATPARAMSTAG of pos * pos
+        | FORMATTERTAG of pos * pos
+        | FORMATCOMMENTEND of pos * pos
+        | FORMATCOMMENTSTART of pos * pos
+        | HEADERTAG of pos * pos
+        | DESTINATIONTAG of pos * pos
+        | PREFIXTAG of pos * pos
+        | DITTOTAG of pos * pos
+        | ROLLBACK of pos * pos
+        | COMMIT of pos * pos
+        | BEGIN of pos * pos
+        | DEFAULT of pos * pos
+        | SET of pos * pos
+        | UPDATE of pos * pos
+        | BY of pos * pos
+        | ORDER of pos * pos
+        | DELETE of pos * pos
+        | VALUES of pos * pos
+        | INTO of pos * pos
+        | INSERT of pos * pos
+        | FROM of pos * pos
+        | SELECT of pos * pos
+        | DESC of pos * pos
+        | ASC of pos * pos
+        | SQL of pos * pos
+        | SQLEXEC of pos * pos
+        | SQLEVAL of pos * pos
+        | SQLSERVER of pos * pos
+        | WORD of {radix: StringCvt.radix, digits: string} * pos * pos
+        | WITHTYPE of pos * pos
+        | WITH of pos * pos
+        | WHERE of pos * pos
+        | WHILE of pos * pos
+        | VAL of pos * pos
+        | USE' of pos * pos
+        | USE of pos * pos
+        | UNDERBAR of pos * pos
+        | TYVAR of string * pos * pos
+        | TYPE of pos * pos
+        | THEN of pos * pos
+        | STRUCTURE of pos * pos
+        | STRUCT of pos * pos
+        | STRING of string * pos * pos
+        | SPECIAL of string * pos * pos
+        | SIZEOF of pos * pos
+        | SIGNATURE of pos * pos
+        | SIG of pos * pos
+        | SHARING of pos * pos
+        | SEMICOLON of pos * pos
+        | RPAREN of pos * pos
+        | REAL of string * pos * pos
+        | RBRACKET of pos * pos
+        | RBRACE of pos * pos
+        | REQUIRE of pos * pos
+        | REC of pos * pos
+        | POLYREC of pos * pos
+        | RAISE of pos * pos
+        | PERIODS of pos * pos
+        | PERIOD of pos * pos
+        | NULL of pos * pos
+        | ORELSE of pos * pos
+        | OPEN of pos * pos
+        | OPAQUE of pos * pos
+        | OP of pos * pos
+        | OF of pos * pos
+        | NONFIX of pos * pos
+        | LPAREN of pos * pos
+        | LOCAL of pos * pos
+        | LET of pos * pos
+        | LBRACKET of pos * pos
+        | LBRACE of pos * pos
+        | INTERFACE of pos * pos
+        | JOIN of pos * pos
+        | INTLAB of string * pos * pos
+        | INT of {radix: StringCvt.radix, digits: string} * pos * pos
+        | INFIXR of pos * pos
+        | INFIX of pos * pos
+        | INCLUDE of pos * pos
+        | IMPORT of pos * pos
+        | IN of pos * pos
+        | IF of pos * pos
+        | ID of string * pos * pos
+        | HASH of pos * pos
+        | HANDLE of pos * pos
+        | FUNCTOR of pos * pos
+        | FUN of pos * pos
+        | FN of pos * pos
+        | FFIAPPLY of pos * pos
+        | EXCEPTION of pos * pos
+        | EQTYVAR of string * pos * pos
+        | EQTYPE of pos * pos
+        | EQ of pos * pos
+        | END of pos * pos
+        | ELSE of pos * pos
+        | DO of pos * pos
+        | DATATYPE of pos * pos
+        | DARROW of pos * pos
+        | COMMA of pos * pos
+        | COLON of pos * pos
+        | CHAR of string * pos * pos
+        | CASE of pos * pos
+        | BUILTIN of pos * pos
+        | BAR of pos * pos
+        | ATTRIBUTE of pos * pos
+        | AT of pos * pos
+        | ASTERISK of pos * pos
+        | AS of pos * pos
+        | ARROW of pos * pos
+        | ANDALSO of pos * pos
+        | AND of pos * pos
+        | ABSTYPE of pos * pos
+        | EOF of pos * pos
+    end
+
     type arg (= boxed)
     val isINITIAL : arg -> bool
     val initArg : {sourceName : string,
                    isPrelude : bool,
                    enableMeta : bool,
-                   lexErrorFn : (string * pos * pos) -> unit,
-                   initialLineno : int} -> arg
+                   lexErrorFn : (string * T.pos * T.pos) -> unit,
+                   initialLineno : int,
+                   allow8bitId : bool} -> arg
   end
   val makeLexer
-      : (int -> string) -> UserDeclarations.arg -> unit -> UserDeclarations.token
+      : (int -> string) -> UserDeclarations.arg -> unit
+        -> UserDeclarations.T.token
 end

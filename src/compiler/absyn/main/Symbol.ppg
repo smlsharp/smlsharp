@@ -1,0 +1,106 @@
+structure Symbol =
+struct
+local
+  type loc = Loc.loc
+in
+  (*% *)
+  type symbol =
+    (*%
+       @format({string:string, loc}) string
+     *)
+    {string:string, loc:loc}
+
+  (*% *)
+  type longsymbol =
+    (*%
+       @format(symbol symbols) symbols(symbol)(".")
+     *)
+    symbol list
+
+  fun symbolToString (s:symbol) = #string s
+  fun symbolToLoc (s:symbol) = #loc s
+  fun longsymbolToString (s:longsymbol) = String.concatWith "." (map symbolToString s)
+  fun longsymbolToLoc (s:longsymbol) =
+      let
+        val head = List.hd s
+        val (pos1,_) = symbolToLoc head
+        val last = List.last s
+        val (_, pos2) = symbolToLoc last
+      in
+        (pos1, pos2)
+      end
+      handle List.Empty => Loc.noloc
+        
+  fun longsymbolToLastLoc (s:longsymbol) =
+      let
+        val last = List.last s
+      in
+        symbolToLoc last
+      end
+      handle List.Empty => Loc.noloc
+        
+  fun longsymbolToLongid (s:longsymbol) = map symbolToString s
+
+  fun mkSymbol string loc = {string=string, loc=loc}
+  fun mkLongsymbol stringList loc = map (fn s => mkSymbol s loc) stringList
+
+  fun setVersion (longsymbol, version) =
+      case version of 
+        NONE => longsymbol
+      | SOME i => longsymbol @ [mkSymbol (Int.toString i) (longsymbolToLoc longsymbol)]
+  fun symbolCompare (s1:symbol, s2:symbol) = 
+      String.compare(symbolToString s1, symbolToString s2)
+  fun longsymbolCompare (s1:longsymbol, s2:longsymbol) = 
+      String.compare(longsymbolToString s1, longsymbolToString s2)
+  fun eqSymbol (s1:symbol, s2:symbol) = 
+      case symbolCompare(s1,s2) of
+        EQUAL => true
+      | _ => false
+  fun eqLongsymbol (s1:longsymbol, s2:longsymbol) = 
+      longsymbolToString s1 = longsymbolToString s2
+
+  fun replaceLocSymbol loc {string, loc=_} = {string=string, loc=loc}
+  fun replaceLocLongsymbol loc longsymbol = map (replaceLocSymbol loc) longsymbol
+
+  fun prefixPath (path, symbol) =
+      let
+        val loc = symbolToLoc symbol
+        val path = replaceLocLongsymbol loc path
+      in
+        path@[symbol]
+      end
+  fun concatPath (path, longsymbol) =
+      let
+        val loc = longsymbolToLoc longsymbol
+        val path = replaceLocLongsymbol loc path
+      in
+        path @ longsymbol
+      end
+
+end
+
+end
+structure SymbolOrd =
+struct
+  type ord_key = Symbol.symbol
+  val compare = Symbol.symbolCompare
+end
+structure SymbolEnv = BinaryMapFn(SymbolOrd)
+structure SymbolSet = BinarySetFn(SymbolOrd)
+
+structure LongsymbolOrd = 
+struct
+  type ord_key = Symbol.symbol list
+  fun compare (path1,path2) =
+      case (path1, path2) of
+        (nil,nil) => EQUAL
+      | (nil, _) => LESS
+      | (_,nil) =>  GREATER
+      | (h1::t1, h2::t2) => 
+        (case Symbol.symbolCompare(h1,h2) of
+           EQUAL => compare(t1,t2)
+         | x => x)
+end
+
+structure LongsymbolEnv = BinaryMapFn(LongsymbolOrd)
+structure LongsymbolSet = BinarySetFn(LongsymbolOrd)

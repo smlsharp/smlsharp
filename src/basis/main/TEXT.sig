@@ -1,11 +1,3 @@
-include "CHAR.sig"
-include "STRING.sig"
-include "SUBSTRING.sig"
-include "MONO_VECTOR.sig"
-include "MONO_ARRAY.sig"
-include "MONO_VECTOR_SLICE.sig"
-include "MONO_ARRAY_SLICE.sig"
-
 signature TEXT =
 sig
   structure Char : CHAR

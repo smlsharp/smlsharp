@@ -4,9 +4,9 @@ local
   exception DuplicateVar
   structure IC = IDCalc
   type varMap = VarID.id VarID.Map.map
-  val print = fn s => if !Control.debugPrint then print s else ()
+  val print = fn s => if !Bug.debugPrint then print s else ()
   fun printPath path = print (String.concatWith "." path)
-  fun bug s = Control.Bug ("IDCalcUtils: " ^ s)
+  fun bug s = Bug.Bug ("IDCalcUtils: " ^ s)
   fun newId varMap id =
       let
         val newId = VarID.generate()
@@ -15,17 +15,14 @@ local
            (fn _ => raise DuplicateVar)
            (varMap, id, newId), newId)
       end
-  fun newVar varMap {path,id} =
+  fun newVar varMap {longsymbol,id} =
       let
         val (varMap, newId) = 
             newId varMap id
             handle DuplicateVar => 
-                   (printPath path;
-                    print "\n";
                     raise bug "duplicate id in IDCalcUtils"
-                   )
       in
-        (varMap, {path=path, id=newId})
+        (varMap, {longsymbol=longsymbol, id=newId})
       end
   fun newVars varMap vars =
       let
@@ -45,13 +42,19 @@ local
       end
   fun copyPat varMap icpat =
       case icpat of
-        IC.ICPATERROR _ => (varMap, icpat)
+        IC.ICPATERROR => (varMap, icpat)
       | IC.ICPATWILD _ => (varMap, icpat)
-      | IC.ICPATVAR (var, loc) =>
+      | IC.ICPATVAR_TRANS var =>
         let
           val (varMap, newVar) = newVar varMap var
         in
-          (varMap, IC.ICPATVAR (newVar, loc))
+          (varMap, IC.ICPATVAR_TRANS newVar)
+        end
+      | IC.ICPATVAR_OPAQUE var =>
+        let
+          val (varMap, newVar) = newVar varMap var
+        in
+          (varMap, IC.ICPATVAR_OPAQUE newVar)
         end
       | IC.ICPATCON _ => (varMap, icpat)
       | IC.ICPATEXN _ => (varMap, icpat)
@@ -109,22 +112,33 @@ local
       in
         (varMap, List.rev patsRev)
       end
-  fun evalVar varMap {path, id} =
+  fun evalVar varMap {longsymbol, id} =
       case VarID.Map.find(varMap, id) of
-        SOME id => {path=path, id=id}
-      | NONE => {path=path, id=id}
+        SOME id => {longsymbol=longsymbol, id=id}
+      | NONE => {longsymbol=longsymbol, id=id}
+  fun evalId varMap id =
+      case VarID.Map.find(varMap, id) of
+        SOME id => id
+      | NONE => id
   fun copyExp varMap exp =
       let
         fun copy exp = copyExp varMap exp
       in
         case exp of
-          IC.ICERROR _ => exp
+          IC.ICERROR => exp
         | IC.ICCONSTANT _ => exp
-        | IC.ICGLOBALSYMBOL _ => exp
-        | IC.ICVAR (var,loc) => IC.ICVAR (evalVar varMap var,loc)
+        | IC.ICVAR var => IC.ICVAR (evalVar varMap var)
         | IC.ICEXVAR _ => exp
-        | IC.ICEXVAR_TOBETYPED (var,loc) =>
-          IC.ICEXVAR_TOBETYPED (evalVar varMap var,loc)
+        | IC.ICEXVAR_TOBETYPED {longsymbol, id, exInfo} =>
+          let
+            val id =
+                case VarID.Map.find(varMap, id) of
+                  SOME id => id
+                | NONE => id
+          in
+            IC.ICEXVAR_TOBETYPED 
+            {longsymbol=longsymbol, id=id, exInfo=exInfo}
+          end
         | IC.ICBUILTINVAR _ => exp
         | IC.ICCON _ => exp
         | IC.ICEXN  _ => exp
@@ -203,25 +217,26 @@ local
           IC.ICSELECT (string, copy icexp, loc)
         | IC.ICSEQ (icexpList, loc) =>
           IC.ICSEQ (map copy icexpList, loc)
-        | IC.ICCAST (icexp, loc) =>
-          IC.ICCAST (copy icexp, loc)
         | IC.ICFFIIMPORT (icexp, ffiTy, loc) =>
-          IC.ICFFIIMPORT (copy icexp, ffiTy, loc)
-        | IC.ICFFIEXPORT (icexp, ffiTy, loc) =>
-          IC.ICFFIEXPORT (copy icexp, ffiTy, loc)
+          IC.ICFFIIMPORT (copyFfiFun varMap icexp, ffiTy, loc)
         | IC.ICFFIAPPLY (ffiAttributesOption, icexp, ffiArgList, ffiTy, loc) =>
           IC.ICFFIAPPLY (ffiAttributesOption,
-                         copy icexp,
+                         copyFfiFun varMap icexp,
                          map (copyFfiArg varMap) ffiArgList,
                          ffiTy,
                          loc)
-        | IC.ICSQLSERVER (string, ty, loc) => exp
+        | IC.ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
+          IC.ICSQLSCHEMA {columnInfoFnExp = copyExp varMap columnInfoFnExp,
+                          ty = ty,
+                          loc = loc}
         | IC.ICSQLDBI (icpat, icexp, loc) =>
           let
             val (varMap, icpat) = copyPat varMap icpat
           in
             IC.ICSQLDBI (icpat, copyExp varMap icexp, loc)
           end
+        | IC.ICJOIN (icexp1, icexp2, loc) =>
+          IC.ICJOIN (copy icexp1, copy icexp2, loc)
       end
   and copyFfiArg varMap ffiArg =
       case ffiArg of
@@ -229,6 +244,10 @@ local
         IC.ICFFIARG  (copyExp varMap icexp, ffiTy, loc)
       | IC.ICFFIARGSIZEOF (ty, icexpOption, loc) =>
         IC.ICFFIARGSIZEOF (ty, Option.map (copyExp varMap) icexpOption, loc)
+  and copyFfiFun varMap ffiFun =
+      case ffiFun of
+        IC.ICFFIFUN exp => IC.ICFFIFUN (copyExp varMap exp)
+      | IC.ICFFIEXTERN _ => ffiFun
   and copyRule varMap {args, body} =
       let
         val (varMap, args) = copyPats varMap args
@@ -338,6 +357,19 @@ local
          IC.ICVALREC {guard=guard, recbinds=recbinds, loc=loc}
         )
       end
+    | IC.ICVALPOLYREC (recbinds, loc) =>
+      let
+        val vars = map #varInfo recbinds
+        val (varMap, vars) = newVars varMap vars
+        val recbinds =
+            ListPair.mapEq
+              (fn (var, {ty, body, ...}) =>
+                  {varInfo = var, ty = ty, body = copyExp varMap body})
+              (vars, recbinds)
+      in
+        (varMap,
+         IC.ICVALPOLYREC (recbinds, loc))
+      end
     | IC.ICEXND _ => (varMap, icdecl)
     | IC.ICEXNTAGD ({exnInfo, varInfo}, loc) =>
       (varMap, 
@@ -345,17 +377,18 @@ local
                       varInfo=evalVar varMap varInfo}, 
                      loc)
       )
-    | IC.ICEXPORTVAR (varInfo, ty, loc) =>
+    | IC.ICEXPORTVAR {exInfo, id} =>
       (varMap, 
-       IC.ICEXPORTVAR (evalVar varMap varInfo, ty, loc)
+       IC.ICEXPORTVAR {exInfo=exInfo, id=evalId varMap id}
       )
-    | IC.ICEXPORTTYPECHECKEDVAR (varInfo, loc) =>
+    | IC.ICEXPORTTYPECHECKEDVAR {longsymbol, version, id} =>
       (varMap, 
-       IC.ICEXPORTTYPECHECKEDVAR (evalVar varMap varInfo, loc)
+       IC.ICEXPORTTYPECHECKEDVAR 
+         {longsymbol=longsymbol, version=version, id=evalId varMap id}
       )
-    | IC.ICEXPORTFUNCTOR (varInfo, ty, loc) =>
+    | IC.ICEXPORTFUNCTOR {exInfo, id} =>
       (varMap, 
-       IC.ICEXPORTFUNCTOR (evalVar varMap varInfo, ty, loc)
+       IC.ICEXPORTFUNCTOR {exInfo=exInfo, id=evalId varMap id}
       )
     | IC.ICEXPORTEXN _ => (varMap, icdecl)
     | IC.ICEXTERNVAR  _ => (varMap, icdecl)
@@ -379,6 +412,10 @@ local
       in
         (varMap, List.rev declListRev)
       end
+(*  re-set location in semantic objects
+  fun setLocTstr (tsrt, loc) =
+ *)
+
 in
   val copyExp = fn exp => copyExp VarID.Map.empty exp
   val copyDecl = fn decl => #2 (copyDecl VarID.Map.empty decl)

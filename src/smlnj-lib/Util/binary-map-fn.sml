@@ -43,20 +43,23 @@
 (*
 Modification made by Atsushi Ohori, 2011-09-12.
 
-This file contain one extra function 
- insertWith
-after insrt' for optimization.
+The following functions are added
+  val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+  val insertWithi : (Key.ord_key * 'a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+  val findi : 'a map * Key.ord_key -> (Key.ord_key * 'a) option
+  val removei : 'a map * Key.ord_key -> Key.ord_key * 'a map * 'a
+  val unionWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'a) -> (Key.ord_key * 'a))
+                     -> ('a map * 'a map) -> 'a map
+  val intersectWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'b) -> (Key.ord_key * 'c))
+                        -> 'a map * 'b map -> 'c map
+  val mergeWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'b) -> (Key.ord_key * 'c))
+                    -> 'a map * 'b map -> 'c map
+  val mapi2 : (Key.ord_key * 'a -> Key.ord_key * 'b) -> 'a map -> 'b map
+
 *)
 
 
-(*
 functor BinaryMapFn (K : ORD_KEY) : ORD_MAP =
-*)
-functor BinaryMapFn (K : ORD_KEY) : sig
-  include ORD_MAP
-  val insertWith  : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
-  (* Insert an item with invoking a function when there is an old item.*)
-end =
   struct
 
     structure Key = K
@@ -179,15 +182,21 @@ in
           | _ => T{key=x,value=v,left=left,right=right,cnt= #cnt set}
     fun insert' ((k, x), m) = insert(m, k, x)
 
-(* 
-  Added the following function by Atsushi Ohori for optimization.
-*)
+    (* Added the following function by Atsushi Ohori.*)
     fun 'a insertWith (f : 'a -> unit) (E,x,v) = T{key=x,value=v,cnt=1,left=E,right=E}
       | insertWith f (T(set as {key,left,right,value,...}),x,v) =
         case K.compare (key,x) of
           GREATER => T'(key,value,insert(left,x,v),right)
         | LESS => T'(key,value,left,insert(right,x,v))
         | _ => (f value; T{key=x,value=v,left=left,right=right,cnt= #cnt set})
+
+    (* Added the following function by Atsushi Ohori.*)
+    fun 'a insertWithi (f : K.ord_key * 'a -> unit) (E,x,v) = T{key=x,value=v,cnt=1,left=E,right=E}
+      | insertWithi f (T(set as {key,left,right,value,...}),x,v) =
+        case K.compare (key,x) of
+          GREATER => T'(key,value,insert(left,x,v),right)
+        | LESS => T'(key,value,left,insert(right,x,v))
+        | _ => (f (key, value); T{key=x,value=v,left=left,right=right,cnt= #cnt set})
 (* 
   The end of the addition.
 *)
@@ -208,6 +217,18 @@ in
 	    | mem (T(n as {key,left,right,...})) = (case K.compare (x,key)
 		 of GREATER => mem right
 		  | EQUAL => SOME(#value n)
+		  | LESS => mem left
+		(* end case *))
+	  in
+	    mem set
+	  end
+
+    (* Added the following function by Atsushi Ohori. *)
+    fun findi (set, x) = let 
+	  fun mem E = NONE
+	    | mem (T(n as {key,left,right,...})) = (case K.compare (x,key)
+		 of GREATER => mem right
+		  | EQUAL => SOME(key, #value n)
 		  | LESS => mem left
 		(* end case *))
 	  in
@@ -240,6 +261,24 @@ in
 		end
             | _ => (delete'(left,right),value)
 	  (* end case *))
+
+
+    (* Added the following function by Atsushi Ohori.*)
+    fun removei (E,x) = raise LibBase.NotFound
+      | removei (set as T{key,left,right,value,...},x) = (
+          case K.compare (key,x)
+	   of GREATER => let
+		val (key', left', v) = removei(left, x)
+		in
+		  (key', T'(key, value, left', right), v)
+		end
+            | LESS => let
+		val (key', right', v) = removei (right, x)
+		in
+		  (key', T'(key, value, left, right'), v)
+		end
+            | _ => (key, delete'(left,right),value))
+(* end of addition *)
 
     fun listItems d = let
 	  fun d2l (E, l) = l
@@ -316,6 +355,20 @@ in
 	  in
 	    map' d
 	  end
+
+    (* Added the following function by Atsushi Ohori.*)
+    fun mapi2 f d = let
+	  fun map' E = E
+	    | map' (T{key,value,left,right,cnt}) = let
+		val left' = map' left
+		val (key', value') = f(key, value)
+		val right' = map' right
+		in
+		  T{cnt=cnt, key=key', value=value', left = left', right = right'}
+		end
+	  in
+	    map' d
+	  end
     fun map f d = mapi (fn (_, x) => f x) d
 
     fun foldli f init d = let
@@ -348,55 +401,122 @@ in
  * representations at some point.
  *)
     fun unionWith f (m1, m2) = let
-	  fun ins  f (key, x, m) = (case find(m, key)
-		 of NONE => insert(m, key, x)
-		  | (SOME x') => insert(m, key, f(x, x'))
+	  fun ins  f (key2, x2, m1) = (case find(m1, key2)
+		 of NONE => insert(m1, key2, x2)
+		  | (SOME x1) => insert(m1, key2, f(x1, x2))
 		(* end case *))
 	  in
 	    if (numItems m1 > numItems m2)
-	      then foldli (ins (fn (a, b) => f (b, a))) m1 m2
-	      else foldli (ins f) m2 m1
+	      then foldli (ins f) m1 m2
+	      else foldli (ins (fn (a, b) => f (b, a))) m2 m1
 	  end
     fun unionWithi f (m1, m2) = let
-	  fun ins f (key, x, m) = (case find(m, key)
-		 of NONE => insert(m, key, x)
-		  | (SOME x') => insert(m, key, f(key, x, x'))
+	  fun ins f (key2, x2, m1) = (case find(m1, key2)
+		 of NONE => insert(m1, key2, x2)
+		  | (SOME x1) => insert(m1, key2, f(key2, x1, x2))
 		(* end case *))
 	  in
 	    if (numItems m1 > numItems m2)
-	      then foldli (ins (fn (k, a, b) => f (k, b, a))) m1 m2
-	      else foldli (ins f) m2 m1
+	      then foldli (ins f) m1 m2
+	      else foldli (ins (fn (k, a, b) => f (k, b, a))) m2 m1
 	  end
 
+    (* Added the following function by Atsushi Ohori.*)
+    fun unionWithi2 f (m1, m2) = let
+	  fun ins f (key2, x2, m1) = (case findi(m1, key2)
+		 of NONE => insert(m1, key2, x2)
+		  | (SOME (key1,x1)) =>
+                    let
+                       val (key, value) = f ((key1, x1), (key2, x2))
+                    in
+                      insert(m1, key, value)
+                    end
+		(* end case *))
+	  in
+	    if (numItems m1 > numItems m2)
+	      then foldli (ins f) m1 m2
+	      else foldli (ins (fn (X,Y) => f (Y,X))) m2 m1
+	  end
+
+    (* Added the following function by Atsushi Ohori.*)
+    fun unionWithi3 f (m1, m2) = let
+	  fun ins f (key2, x2, m1) = (case findi(m1, key2)
+		 of NONE => 
+                    let
+                       val (key, value) = f (NONE, SOME (key2, x2))
+                    in
+                      insert(m1, key, value)
+                    end
+		  | (SOME (key1,x1)) => 
+                    let
+                       val (key, value) = f (SOME (key1, x1), SOME (key2, x2))
+                    in
+                      insert(m1, key, value)
+                    end
+		(* end case *))
+	  in
+	    if (numItems m1 > numItems m2)
+	      then foldli (ins f) m1 m2
+	      else foldli (ins (fn (X,Y) => f (Y,X))) m2 m1
+	  end
+
+    (* The original one has a bug (in efficiency); I have swaped m1 and m2
+       so that it iterates the smaller map.  *)
     fun ('a, 'b,'c) intersectWith (f: 'a*'b -> 'c) (m1, m2) = let
-	(* iterate over the elements of m1, checking for membership in m2 *)
+	(* iterate over the elements of m2, checking for membership in m1 *)
 	  fun intersect f (m1, m2) = let
-		fun ins (key, x, m) = (case find(m2, key)
+		fun ins (key2, x2, m) = (case find(m1, key2)
 		       of NONE => m
-			| (SOME x') => insert(m, key, f(x, x'))
+			| (SOME x1) => insert(m, key2, f(x1, x2))
 		      (* end case *))
 		in
-		  foldli ins empty m1
+		  foldli ins empty m2
 		end
 	  in
 	    if (numItems m1 > numItems m2)
 	      then intersect f (m1, m2)
 	      else intersect (fn (a, b) => f(b, a)) (m2, m1)
 	  end
+
+    (* The original one has a bug (in efficiency); I have swaped m1 and m2
+       so that it iterates the smaller map.  *)
     fun ('a, 'b, 'c) intersectWithi (f:K.ord_key * 'a * 'b -> 'c) (m1, m2) = let
-	(* iterate over the elements of m1, checking for membership in m2 *)
+	(* iterate over the elements of m2, checking for membership in m1 *)
 	  fun intersect f (m1, m2) = let
-		fun ins (key, x, m) = (case find(m2, key)
+		fun ins (key2, x2, m) = (case find(m1, key2)
 		       of NONE => m
-			| (SOME x') => insert(m, key, f(key, x, x'))
+			| (SOME x1) => insert(m, key2, f(key2, x1, x2))
 		      (* end case *))
 		in
-		  foldli ins empty m1
+		  foldli ins empty m2
 		end
 	  in
 	    if (numItems m1 > numItems m2)
 	      then intersect f (m1, m2)
 	      else intersect (fn (k, a, b) => f(k, b, a)) (m2, m1)
+	  end
+
+
+    (* Added the following function by Atsushi Ohori.*)
+    fun ('a, 'b, 'c) intersectWithi2 (f:(Key.ord_key * 'a) * (Key.ord_key * 'b) -> (Key.ord_key * 'c)) (m1, m2) = let
+	(* iterate over the elements of m2, checking for membership in m1 *)
+	  fun intersect f (m1, m2) = let
+		fun ins (key2, x2, m) = (case findi(m1, key2)
+		       of NONE => m
+			| (SOME (key1,x1)) => 
+                          let
+                            val (newKey, newX) = f ((key1, x1), (key2, x2))
+                          in
+                            insert(m, newKey, newX)
+                          end
+		      (* end case *))
+		in
+		  foldli ins empty m2
+		end
+	  in
+	    if (numItems m1 > numItems m2)
+	      then intersect f (m1, m2)
+	      else intersect (fn (X,Y) => f(Y,X)) (m2, m1)
 	  end
 
     fun mergeWith f (m1, m2) = let
@@ -429,6 +549,25 @@ in
 	  and mergef (k, x1, x2, r1, r2, m) = (case f (k, x1, x2)
 		 of NONE => merge (r1, r2, m)
 		  | SOME y => merge (r1, r2, insert(m, k, y))
+		(* end case *))
+	  in
+	    merge (listItemsi m1, listItemsi m2, empty)
+	  end
+
+    (* Added the following function by Atsushi Ohori.*)
+    fun mergeWithi2 f (m1, m2) = let
+	  fun merge ([], [], m) = m
+	    | merge ((k1, x1)::r1, [], m) = mergef (SOME (k1,x1), NONE, r1, [], m)
+	    | merge ([], (k2, x2)::r2, m) = mergef (NONE, SOME (k2,x2), [], r2, m)
+	    | merge (m1 as ((k1, x1)::r1), m2 as ((k2, x2)::r2), m) = (
+		case Key.compare (k1, k2)
+		 of LESS => mergef (SOME (k1,x1), NONE, r1, m2, m)
+		  | EQUAL => mergef (SOME (k1,x1), SOME (k2,x2), r1, r2, m)
+		  | GREATER => mergef (NONE, SOME (k2,x2), m1, r2, m)
+		(* end case *))
+	  and mergef (x1, x2, r1, r2, m) = (case f (x1, x2)
+		 of NONE => merge (r1, r2, m)
+		  | SOME (k,y) => merge (r1, r2, insert(m, k, y))
 		(* end case *))
 	  in
 	    merge (listItemsi m1, listItemsi m2, empty)

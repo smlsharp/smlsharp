@@ -7,7 +7,6 @@
  *)
 
 structure Tokens = LrVals.Tokens
-type svalue = Tokens.svalue
 type pos = int
 type token = Tokens.token
 type lexresult = token

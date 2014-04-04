@@ -1,10 +1,9 @@
-_interface "os-path-fn.smi"
-infixr 5 ::
-infix 4 = <> <=
-infix 3 o
-fun op <> (x:char, y) = if x = y then false else true
-val op <= = SMLSharp.Int.lteq
-fun op o (f, g) = fn x => f (g x)
+infixr 5 :: @
+infix 4 = <> > >= < <=
+infix 3 := o
+val not = Bool.not
+val map = List.map
+val op <= = SMLSharp_Builtin.Int.lteq
 (* os-path-fn.sml
  *
  * COPYRIGHT (c) 2007 The Fellowship of SML/NJ (http://smlnj.org)
@@ -24,7 +23,7 @@ local
 in
 functor OS_PathFn (OSPathBase : sig
 *)
-functor SMLSharpSMLNJ_OS_PathFn (OSPathBase : sig
+functor SMLSharp_SMLNJ_OS_PathFn (OSPathBase : sig
 
     exception Path
 
@@ -45,7 +44,7 @@ functor SMLSharpSMLNJ_OS_PathFn (OSPathBase : sig
 	(* the character used to separate arcs (e.g., #"/" on UNIX) *)
     val sameVol : string * string -> bool
 
-  end) : OS_PATH = struct
+  end) (*: OS_PATH*) = struct
 
     structure P = OSPathBase
     structure SS = Substring

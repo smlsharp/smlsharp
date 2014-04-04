@@ -1,0 +1,28 @@
+(**
+ * user errors detected in SQL compilation
+ * @copyright (c) 2014, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+structure SQLCompileError =
+struct
+
+  (*%
+   * @formatter(IDCalc.ty) IDCalc.format_ty
+   *)
+  exception
+    (*%
+     * @format(ty) 
+     * "record" +d "type" +d "is" +d "expected" +d "for" +d "_sqlserver:" +d ty
+     *)
+    InvalidSQLSchemaTy of IDCalc.ty
+
+  and
+    (*%
+     * @format(name * ty)
+     * "record" +d "type" +d "is" +d "expected" +d "for" +d "SQL" +d "table"
+     * +d "`" name "'" +d "declaration:" +d ty
+     *)
+    InvalidSQLTableTy of string * IDCalc.ty
+
+end

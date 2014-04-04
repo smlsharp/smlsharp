@@ -1,0 +1,10 @@
+_require "basis.smi"
+_require "vector-sig.sml"
+_require "space.smi"
+_require "vector.smi"
+_require "space.sig"
+
+structure Load =
+struct
+  val makeTree : (Space.body list * real VectorN.vec * real) -> Space.space
+end

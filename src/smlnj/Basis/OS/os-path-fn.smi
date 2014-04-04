@@ -3,9 +3,8 @@ _require "../../../basis/main/Bool.smi"
 _require "../../../basis/main/CharVector.smi"
 _require "../../../basis/main/String.smi"
 _require "../../../basis/main/Substring.smi"
-_require "../../../basis/main/OS_PATH.sig"
 
-functor SMLSharpSMLNJ_OS_PathFn (OSPathBase : sig
+functor SMLSharp_SMLNJ_OS_PathFn (OSPathBase : sig
   exception Path
   datatype arc_kind = Null | Parent | Current | Arc of string
   val classify : string -> arc_kind

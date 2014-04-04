@@ -1,17 +1,18 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../util/main/BigInt_IntInf.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../usererror/main/UserError.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesUtils.smi"
+_require "../../types/main/TypesBasics.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
 
 structure ConstantTerm =
 struct
@@ -27,15 +28,17 @@ struct
     | UNIT 
     | NULLPOINTER
     | NULLBOXED
+    | CONTAG of Word32.word
   val format_constant
       : constant -> SMLFormat.FormatExpression.expression list
   exception TooLargeConstant
   val compare : constant * constant -> order
   val constTy : Absyn.constant -> Types.ty
+  val typeOf : constant -> Types.ty
   val fixConst
       : {constTerm : constant -> 'a,
          recordTerm : 'a LabelEnv.map * Types.ty -> 'a,
-         conTerm : {con: Types.conInfo, instTyList: Types.ty list,
+         conTerm : {con: RecordCalc.conInfo, instTyList: Types.ty list,
                     arg: 'a option} -> 'a}
         -> Absyn.constant * Types.ty
         -> 'a

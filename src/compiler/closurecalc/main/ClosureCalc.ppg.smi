@@ -1,0 +1,324 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../util/main/BigInt_IntInf.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../typedlambda/main/TypedLambda.ppg.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../name/main/ExternSymbol.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+
+structure ClosureCalc =
+struct
+  type loc = Loc.loc
+  type ty = Types.ty
+  type varInfo = RecordCalc.varInfo
+  type exVarInfo = RecordCalc.exVarInfo
+  type primInfo = TypedLambda.primInfo
+
+  datatype ccconst =
+      CVINT of Int32.int
+    | CVWORD of Word32.word
+    | CVCONTAG of Word32.word
+    | CVBYTE of Word8.word
+    | CVREAL of string
+    | CVFLOAT of string
+    | CVCHAR of Char.char
+    | CVUNIT
+    | CVNULLPOINTER
+    | CVNULLBOXED
+    | CVFOREIGNSYMBOL of
+      {
+        name : string,
+        ty : ty
+      }
+    | CVFUNENTRY of {id: FunEntryLabel.id, codeEntryTy: Types.codeEntryTy}
+    | CVFUNWRAPPER of {id: FunEntryLabel.id, codeEntryTy: Types.codeEntryTy}
+    | CVCALLBACKENTRY of
+      {
+        id: CallbackEntryLabel.id,
+        callbackEntryTy: Types.callbackEntryTy
+      }
+    | CVTOPDATA of {id : DataLabel.id, ty : ty}
+    | CVEXTRADATA of ExtraDataLabel.id
+    | CVCAST of
+      {
+        value : ccconst,
+        valueTy : ty,
+        targetTy : ty,
+        runtimeTyCast : bool,
+        bitCast : bool
+      }
+    | CVTAG of {tag : RuntimeTypes.tag, ty : ty}
+    | CVCCONVTAG of Types.codeEntryTy
+
+  datatype cconv =
+      STATICCALL of Types.codeEntryTy
+    | DYNAMICCALL of
+      {
+        cconvTag: ccexp,
+        wrapper: ccexp
+      }
+
+  and ccexp =
+      CCFOREIGNAPPLY of
+      {
+        funExp : ccexp,
+        argExpList : ccexp list,
+        attributes : FFIAttributes.attributes,
+        resultTy : ty option,
+        loc : loc
+      }
+    | CCEXPORTCALLBACK of
+      {
+        codeExp : ccexp,
+        closureEnvExp : ccexp,
+        instTyvars : Types.btvEnv,
+        resultTy : ty,
+        loc : loc
+      }
+    | CCCONST of {const: ccconst, ty: ty, loc: loc}
+    | CCLARGEINT of {srcLabel: ExtraDataLabel.id, loc: loc}
+    | CCVAR of {varInfo : varInfo, loc : loc}
+    | CCEXVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        loc : loc
+      }
+    | CCPRIMAPPLY of
+      {
+        primInfo : primInfo,
+        argExpList : ccexp list,
+        instTyList : ty list,
+        instTagList : ccexp list,
+        instSizeList : ccexp list,
+        loc : loc
+      }
+    | CCCALL of
+      {
+        codeExp : ccexp,
+	closureEnvExp : ccexp,
+	argExpList : ccexp list,
+	cconv : cconv,
+	funTy : ty,
+        loc : loc
+      }
+    | CCLET of
+      {
+        boundVar : varInfo,
+        boundExp : ccexp,
+        mainExp : ccexp,
+        loc : loc
+      }
+    | CCRECORD of
+      {
+        fieldList : {fieldExp : ccexp,
+                     fieldTy : ty,
+                     fieldLabel : string,
+                     fieldSize : ccexp,
+                     fieldTag : ccexp,
+                     fieldIndex : ccexp} list,
+        recordTy : ty,
+        isMutable : bool,
+        clearPad : bool,
+        allocSizeExp : ccexp,
+        bitmaps : {bitmapIndex : ccexp,
+                   bitmapExp : ccexp} list,
+        loc : loc
+      }
+    | CCSELECT of
+      {
+        recordExp : ccexp,
+        indexExp : ccexp,
+        label : string,
+        recordTy : ty,
+        resultTy : ty,
+        resultSize : ccexp,
+        resultTag : ccexp,
+        loc : loc
+      }
+    | CCMODIFY of
+      {
+        recordExp : ccexp,
+        recordTy : ty,
+        indexExp : ccexp,
+        label : string,
+        valueExp : ccexp,
+        valueTy : ty,
+        valueTag : ccexp,
+        valueSize : ccexp,
+        loc : loc
+      }
+    | CCRAISE of
+      {
+        argExp : ccexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | CCHANDLE of
+      {
+        tryExp : ccexp,
+        exnVar : varInfo,
+        handlerExp : ccexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | CCSWITCH of
+      {
+        switchExp : ccexp,
+        expTy : ty,
+        branches : {constant : ccconst, branchExp : ccexp} list,
+        defaultExp : ccexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | CCLOCALCODE of
+      {
+        codeLabel : FunLocalLabel.id,
+        argVarList : varInfo list,
+        codeBodyExp : ccexp,
+        mainExp : ccexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | CCGOTO of
+      {
+        destinationLabel : FunLocalLabel.id,
+        argExpList : ccexp list,
+        resultTy : ty,
+        loc : loc
+      }
+    | CCCAST of
+      {
+        exp : ccexp,
+        expTy : ty,
+        targetTy : ty,
+        runtimeTyCast : bool,
+        bitCast : bool,
+        loc : loc
+      }
+    | CCEXPORTVAR of
+      {
+        id : ExternSymbol.id,
+	ty : ty,
+	valueExp : ccexp,
+	loc : loc
+      }
+
+  type topconst = ccconst * ty
+
+  datatype topdec =
+      CTFUNCTION of
+      {
+        id : FunEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        bodyExp : ccexp,
+        retTy : ty,
+        loc : loc
+      }
+    | CTCALLBACKFUNCTION of
+      {
+        id : CallbackEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        bodyExp : ccexp,
+        attributes : FFIAttributes.attributes,
+        retTy : ty option,
+        loc : loc
+      }
+
+  datatype topdata =
+      CTEXTERNVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        loc : loc
+      } 
+    | CTEXPORTVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        value : topconst option,
+        loc : loc
+      }
+    | CTSTRING of
+      {
+        id : DataLabel.id,
+        string : string,
+        loc : loc
+      }
+    | CTLARGEINT of
+      {
+        id : ExtraDataLabel.id,
+        value : BigInt.int,
+        loc : loc
+      }
+    | CTRECORD of
+      {
+        id : DataLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        fieldList : {fieldExp : topconst,
+                     fieldTy : ty,
+                     fieldLabel : string,
+                     fieldSize : topconst,
+                     fieldIndex : topconst} list,
+        recordTy : ty,
+        isMutable : bool,
+        clearPad : bool,
+        bitmaps : {bitmapIndex : topconst,
+                   bitmapExp : topconst} list,
+        loc : loc
+      }
+    | CTARRAY of
+      {
+        id : DataLabel.id,
+        elemTy : ty,
+        isMutable : bool,
+        clearPad : bool,
+        numElements : topconst,
+        initialElements : topconst list,
+        elemSizeExp : topconst,
+        tagExp : topconst,
+        loc : loc
+      }
+  type program =
+      {
+        topdata : topdata list,
+        topdecs : topdec list,
+        topExp : ccexp
+      }
+
+  val format_varInfo
+      : varInfo -> SMLFormat.FormatExpression.expression list
+  val format_exVarInfo
+      : exVarInfo -> SMLFormat.FormatExpression.expression list
+  val format_primInfo
+      : primInfo -> SMLFormat.FormatExpression.expression list
+  val format_ccconst
+      : Types.btvKind TermFormat.btvEnv
+        -> ccconst -> SMLFormat.FormatExpression.expression list
+  val format_cconv
+      : Types.btvKind TermFormat.btvEnv
+        -> cconv -> SMLFormat.FormatExpression.expression list
+  val format_ccexp
+      : Types.btvKind TermFormat.btvEnv
+        -> ccexp -> SMLFormat.FormatExpression.expression list
+  val format_topdec
+      : topdec -> SMLFormat.FormatExpression.expression list
+  val format_topdata
+      : topdata -> SMLFormat.FormatExpression.expression list
+  val format_program : program -> SMLFormat.FormatExpression.expression list
+  val formatWithType_program
+      : program -> SMLFormat.FormatExpression.expression list
+
+end

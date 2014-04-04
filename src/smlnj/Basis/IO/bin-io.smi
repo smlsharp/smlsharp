@@ -1,53 +1,25 @@
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/Word8.smi"
+_require "../../../basis/main/SMLSharp_OSProcess.smi"
 _require "../../../basis/main/Word8Vector.smi"
 _require "../../../basis/main/Word8VectorSlice.smi"
 _require "../../../basis/main/Word8Array.smi"
+_require "../../../basis/main/Word8ArraySlice.smi"
+_require "../../../basis/main/Int.smi"
 _require "../../../basis/main/IO.smi"
-_require "clean-io.smi"
+_require "./prim-io-bin.smi"
 _require "../Unix/posix-bin-prim-io.smi"
 
-structure SMLSharpSMLNJ_BinIO =
+structure BinIO =
 struct
   structure StreamIO =
   struct
-    type elem = SMLSharp.Word8.word
+    type elem = SMLSharp_Builtin.Word8.word
     type vector = Word8Vector.vector
-    type reader = SMLSharpSMLNJ_PosixBinPrimIO.PrimIO.reader
-    type writer = SMLSharpSMLNJ_PosixBinPrimIO.PrimIO.writer
-    type pos = SMLSharpSMLNJ_PosixBinPrimIO.PrimIO.pos
-    datatype instream =
-        ISTRM of in_buffer * int
-    and in_buffer =
-        IBUF of {basePos : pos option,
-                 more : more ref,
-                 data : vector,
-                 info : info}
-    and more =
-        MORE of in_buffer
-      | EOS of in_buffer
-      | NOMORE
-      | TERMINATED
-    and info =
-        INFO of {reader : reader,
-                 readVec : int -> vector,
-                 readVecNB : (int -> vector) option,
-                 closed : bool ref,
-                 getPos : unit -> pos option,
-                 tail : more ref ref,
-                 cleanTag : SMLSharpSMLNJ_CleanIO.tag}
-    datatype outstream =
-        OSTRM of {buf : Word8Array.array,
-	          pos : int ref,
-	          closed : bool ref,
-	          bufferMode : IO.buffer_mode ref,
-	          writer : writer,
-	          writeArr : Word8ArraySlice.slice -> unit,
-	          writeVec : Word8VectorSlice.slice -> unit,
-	          cleanTag : SMLSharpSMLNJ_CleanIO.tag}
-    datatype out_pos =
-        OUTP of {pos : pos, strm : outstream}
+    type instream (= boxed)
+    type outstream (= boxed)
+    type out_pos (= boxed)
+    type reader = BinPrimIO.reader
+    type writer = BinPrimIO.writer
+    type pos = BinPrimIO.pos
     val input : instream -> vector * instream
     val input1 : instream -> (elem * instream) option
     val inputN : instream * int -> vector * instream
@@ -72,8 +44,8 @@ struct
   end
   type vector = StreamIO.vector
   type elem = StreamIO.elem
-  type instream = StreamIO.instream ref
-  type outstream = StreamIO.outstream ref
+  type instream (= boxed)
+  type outstream (= boxed)
   val input : instream -> vector
   val input1 : instream -> elem option
   val inputN : instream * int -> vector

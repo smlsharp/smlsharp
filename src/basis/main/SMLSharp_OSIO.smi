@@ -1,0 +1,81 @@
+_require "./SMLSharp_Runtime.smi"
+_require "./General.smi"
+_require "./IntInf.smi"
+_require "./Time.smi"
+_require "./Word8ArraySlice.smi"
+_require "./Word8VectorSlice.smi"
+
+structure SMLSharp_OSIO =
+struct
+  type iodesc (= int)
+  val hash : iodesc -> word
+  val compare : iodesc * iodesc -> General.order
+  eqtype iodesc_kind (= word)
+  val kind : iodesc -> iodesc_kind
+  structure Kind =
+  struct
+    val file : iodesc_kind
+    val dir : iodesc_kind
+    val symlink : iodesc_kind
+    val tty : iodesc_kind
+    val pipe : iodesc_kind
+    val socket : iodesc_kind
+    val device : iodesc_kind
+  end
+  eqtype poll_desc (= boxed)
+  type poll_info (= boxed)
+  val pollDesc : iodesc -> poll_desc option
+  val pollToIODesc : poll_desc -> iodesc
+  exception Poll
+  val pollIn : poll_desc -> poll_desc
+  val pollOut : poll_desc -> poll_desc
+  val pollPri : poll_desc -> poll_desc
+  val poll : poll_desc list * Time.time option -> poll_info list
+  val isIn : poll_info -> bool
+  val isOut : poll_info -> bool
+  val isPri : poll_info -> bool
+  val infoToPollDesc : poll_info -> poll_desc
+
+  (* The followings are utility functions for other OS structures.
+   * They are hidden from users *)
+  val S_IFMT : word
+  val S_IFIFO : word
+  val S_IFCHR : word
+  val S_IFDIR : word
+  val S_IFBLK : word
+  val S_IFREG : word
+  val S_IFLNK : word
+  val S_IFSOCK : word
+  val S_ISUID : word
+  val S_ISGID : word
+  val S_ISVTX : word
+  val S_IRUSR : word
+  val S_IWUSR : word
+  val S_IXUSR : word
+  type stat =
+      {dev: word, ino: word, mode: word, atime: word, mtime: word, size: word}
+  val stat : string -> stat
+  val lstat : string -> stat
+  val fstat : iodesc -> stat
+
+  (* The followings are needed for SML/NJ Posix IO *)
+  type whence (= int)
+  structure ST =
+  struct
+    val isReg : stat -> bool
+    val size : stat -> int
+  end
+  val SEEK_SET : whence
+  val SEEK_CUR : whence
+  val close : iodesc -> unit
+  val openf : string * string -> iodesc
+  val lseek : iodesc * int * whence -> int
+  val readVec : iodesc * int -> SMLSharp_Builtin.Word8.word vector
+  val readArr : iodesc * Word8ArraySlice.slice -> int
+  val writeVec : iodesc * Word8VectorSlice.slice -> int
+  val writeArr : iodesc * Word8ArraySlice.slice -> int
+  val stdin : iodesc
+  val stdout : iodesc
+  val stderr : iodesc
+
+end

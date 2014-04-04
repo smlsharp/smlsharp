@@ -1,10 +1,7 @@
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/binary-op.smi"
-_require "../../../basis/main/General.smi"
-_require "../../../smlformat-lib.smi"
-
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
-_require "USER_ERROR.sig"
+_require "./USER_ERROR.sig"
 
 structure UserError =
 struct

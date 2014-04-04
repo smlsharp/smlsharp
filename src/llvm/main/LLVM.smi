@@ -1,0 +1,536 @@
+_require "basis.smi"
+_require "ffi/main/Pointer.smi"
+
+structure LLVM =
+struct
+  val ASMEXT : string
+  val OBJEXT : string
+
+  type LLVMBool = int
+
+  exception LLVMError of string
+
+  val getVersion : unit -> string
+
+  type LLVMMemoryBufferRef (= ptr)
+  val LLVMCreateMemoryBufferWithContentsOfFile
+      : string -> LLVMMemoryBufferRef
+  val LLVMDisposeMemoryBuffer
+      : LLVMMemoryBufferRef -> unit
+
+  type LLVMContextRef (= ptr)
+  val LLVMGetGlobalContext
+      : unit -> LLVMContextRef
+  val LLVMContextCreate
+      : unit -> LLVMContextRef
+  val LLVMContextDispose
+      : LLVMContextRef -> unit
+
+  type LLVMModuleRef (= ptr)
+  val LLVMModuleCreateWithNameInContext
+      : string * LLVMContextRef -> LLVMModuleRef
+  val LLVMDisposeModule
+      : LLVMModuleRef -> unit
+  val LLVMDumpModule
+      : LLVMModuleRef -> unit
+  val LLVMGetModuleContext
+      : LLVMModuleRef -> LLVMContextRef
+(*
+  val LLVMPrintModuleToFile
+      : LLVMModuleRef * string -> unit
+  val LLVMWriteBitcodeToFile
+      : LLVMModuleRef * string -> unit
+*)
+  val LLVMParseBitcodeInContext
+      : LLVMContextRef * LLVMMemoryBufferRef -> LLVMModuleRef
+
+  type LLVMBasicBlockRef (= ptr)
+  val LLVMDeleteBasicBlock
+      : LLVMBasicBlockRef -> unit
+
+  type LLVMBuilderRef (= ptr)
+  val LLVMCreateBuilderInContext
+      : LLVMContextRef -> LLVMBuilderRef
+  val LLVMDisposeBuilder
+      : LLVMBuilderRef -> unit
+  val LLVMPositionBuilderAtEnd
+      : LLVMBuilderRef * LLVMBasicBlockRef -> unit
+  val LLVMSetDataLayout
+      : LLVMModuleRef * string -> unit
+  val LLVMSetTarget
+      : LLVMModuleRef * string -> unit
+  val LLVMGetTarget
+      : LLVMModuleRef -> string
+
+  type LLVMTypeRef (= ptr)
+  type LLVMTypeRef_Struct (= ptr)
+  val castStruct
+      : LLVMTypeRef_Struct -> LLVMTypeRef
+  val LLVMFloatTypeInContext
+      : LLVMContextRef -> LLVMTypeRef
+  val LLVMDoubleTypeInContext
+      : LLVMContextRef -> LLVMTypeRef
+  val LLVMInt1TypeInContext
+      : LLVMContextRef -> LLVMTypeRef
+  val LLVMInt8TypeInContext
+      : LLVMContextRef -> LLVMTypeRef
+  val LLVMInt32TypeInContext
+      : LLVMContextRef -> LLVMTypeRef
+  val LLVMInt64TypeInContext
+      : LLVMContextRef -> LLVMTypeRef
+  val LLVMFunctionType
+      : LLVMTypeRef * LLVMTypeRef vector * word * LLVMBool -> LLVMTypeRef
+  val LLVMPointerType
+      : LLVMTypeRef * word -> LLVMTypeRef
+  val LLVMVoidTypeInContext
+      : LLVMContextRef -> LLVMTypeRef
+  val LLVMStructTypeInContext
+      : LLVMContextRef * LLVMTypeRef vector * word * LLVMBool -> LLVMTypeRef
+  val LLVMArrayType
+      : LLVMTypeRef * word -> LLVMTypeRef
+
+  type LLVMValueRef (= ptr)
+  val LLVMDumpValue
+      : LLVMValueRef -> unit
+  val LLVMConstNull
+      : LLVMTypeRef -> LLVMValueRef
+  val LLVMConstReal
+      : LLVMTypeRef * real -> LLVMValueRef
+  val LLVMConstRealOfString
+      : LLVMTypeRef * string -> LLVMValueRef
+  val LLVMConstIntOfString
+      : LLVMTypeRef * string * Word8.word -> LLVMValueRef
+  val LLVMConstBitCast
+      : LLVMValueRef * LLVMTypeRef -> LLVMValueRef
+  val LLVMConstIntToPtr
+      : LLVMValueRef * LLVMTypeRef -> LLVMValueRef
+  val LLVMConstPtrToInt
+      : LLVMValueRef * LLVMTypeRef -> LLVMValueRef
+  val LLVMConstSub
+      : LLVMValueRef * LLVMValueRef -> LLVMValueRef
+  val LLVMConstGEP
+      : LLVMValueRef * LLVMValueRef vector * word -> LLVMValueRef
+  val LLVMConstInBoundsGEP
+      : LLVMValueRef * LLVMValueRef vector * word -> LLVMValueRef
+  val LLVMConstStringInContext
+      : LLVMContextRef * string * word * LLVMBool -> LLVMValueRef
+  val LLVMConstStructInContext
+      : LLVMContextRef * LLVMValueRef vector * word * LLVMBool -> LLVMValueRef
+  val LLVMConstArray
+      : LLVMTypeRef * LLVMValueRef vector * word -> LLVMValueRef
+
+  type LLVMAttribute (= word)
+  val LLVMZExtAttribute : LLVMAttribute
+  val LLVMSExtAttribute : LLVMAttribute
+  val LLVMNoReturnAttribute : LLVMAttribute
+  val LLVMInRegAttribute : LLVMAttribute
+  val LLVMStructRetAttribute : LLVMAttribute
+  val LLVMNoUnwindAttribute : LLVMAttribute
+  val LLVMNoAliasAttribute : LLVMAttribute
+  val LLVMByValAttribute : LLVMAttribute
+  val LLVMNestAttribute : LLVMAttribute
+  val LLVMReadNoneAttribute : LLVMAttribute
+  val LLVMReadOnlyAttribute : LLVMAttribute
+  val LLVMNoInlineAttribute : LLVMAttribute
+  val LLVMAlwaysInlineAttribute : LLVMAttribute
+  val LLVMOptimizeForSizeAttribute : LLVMAttribute
+  val LLVMStackProtectAttribute : LLVMAttribute
+  val LLVMStackProtectReqAttribute : LLVMAttribute
+  val LLVMAlignment : LLVMAttribute
+  val LLVMNoCaptureAttribute : LLVMAttribute
+  val LLVMNoRedZoneAttribute : LLVMAttribute
+  val LLVMNoImplicitFloatAttribute : LLVMAttribute
+  val LLVMNakedAttribute : LLVMAttribute
+  val LLVMInlineHintAttribute : LLVMAttribute
+  val LLVMStackAlignment : LLVMAttribute
+  val LLVMReturnsTwice : LLVMAttribute
+  val LLVMUWTable : LLVMAttribute
+  val LLVMNonLazyBind : LLVMAttribute
+
+  type LLVMLinkage (= int)
+  val LLVMExternalLinkage : LLVMLinkage
+  val LLVMAvailableExternallyLinkage : LLVMLinkage
+  val LLVMLinkOnceAnyLinkage : LLVMLinkage
+  val LLVMLinkOnceODRLinkage : LLVMLinkage
+  val LLVMLinkOnceODRAutoHideLinkage : LLVMLinkage
+  val LLVMWeakAnyLinkage : LLVMLinkage
+  val LLVMWeakODRLinkage : LLVMLinkage
+  val LLVMAppendingLinkage : LLVMLinkage
+  val LLVMInternalLinkage : LLVMLinkage
+  val LLVMPrivateLinkage : LLVMLinkage
+  val LLVMDLLImportLinkage : LLVMLinkage
+  val LLVMDLLExportLinkage : LLVMLinkage
+  val LLVMExternalWeakLinkage : LLVMLinkage
+  val LLVMGhostLinkage : LLVMLinkage
+  val LLVMCommonLinkage : LLVMLinkage
+  val LLVMLinkerPrivateLinkage : LLVMLinkage
+  val LLVMLinkerPrivateWeakLinkage : LLVMLinkage
+
+  type LLVMCallConv (= word)
+  val LLVMCCallConv : LLVMCallConv
+  val LLVMFastCallConv : LLVMCallConv
+  val LLVMColdCallConv : LLVMCallConv
+  val LLVMX86StdcallCallConv : LLVMCallConv
+  val LLVMX86FastcallCallConv : LLVMCallConv
+
+  type LLVMValueRef_Function (= ptr)
+  type LLVMValueRef_Arg (= ptr)
+  val castFunc
+      : LLVMValueRef_Function -> LLVMValueRef
+  val castArg
+      : LLVMValueRef_Arg -> LLVMValueRef
+  val LLVMAddFunction
+      : LLVMModuleRef * string * LLVMTypeRef -> LLVMValueRef_Function
+(*
+  val LLVMAddFunctionAttr
+      : LLVMValueRef_Function * LLVMAttribute list -> unit
+*)
+  val addFunctionAttribute
+      : LLVMValueRef_Function * word * LLVMAttribute list -> unit
+  val LLVMSetLinkage_Function
+      : LLVMValueRef_Function * LLVMLinkage -> unit
+  val LLVMSetFunctionCallConv
+      : LLVMValueRef_Function * LLVMCallConv -> unit
+  val LLVMSetGC
+      : LLVMValueRef_Function * string -> unit
+  val LLVMCountParams
+      : LLVMValueRef_Function -> word
+  val LLVMGetParams
+      : LLVMValueRef_Function -> LLVMValueRef_Arg array
+(*
+  val LLVMAddAttribute
+      : LLVMValueRef_Arg * LLVMAttribute -> unit
+*)
+  val LLVMSetValueName
+      : LLVMValueRef_Arg * string -> unit
+  val LLVMAppendBasicBlockInContext
+      : LLVMContextRef * LLVMValueRef_Function * string -> LLVMBasicBlockRef
+
+  type LLVMValueRef_GlobalVariable (= ptr)
+  val castGlobalVar
+      : LLVMValueRef_GlobalVariable -> LLVMValueRef
+  val LLVMAddGlobal
+      : LLVMModuleRef * LLVMTypeRef * string -> LLVMValueRef_GlobalVariable
+  val LLVMSetInitializer
+      : LLVMValueRef_GlobalVariable * LLVMValueRef -> unit
+  val LLVMSetGlobalConstant
+      : LLVMValueRef_GlobalVariable * LLVMBool -> unit
+  val LLVMSetLinkage_GlobalVar
+      : LLVMValueRef_GlobalVariable * LLVMLinkage -> unit
+  val LLVMSetAlignment
+      : LLVMValueRef_GlobalVariable * word -> unit
+
+  type LLVMIntPredicate (= int)
+  val LLVMIntEQ : LLVMIntPredicate
+  val LLVMIntNE : LLVMIntPredicate
+  val LLVMIntUGT : LLVMIntPredicate
+  val LLVMIntUGE : LLVMIntPredicate
+  val LLVMIntULT : LLVMIntPredicate
+  val LLVMIntULE : LLVMIntPredicate
+  val LLVMIntSGT : LLVMIntPredicate
+  val LLVMIntSGE : LLVMIntPredicate
+  val LLVMIntSLT : LLVMIntPredicate
+  val LLVMIntSLE : LLVMIntPredicate
+
+  type LLVMRealPredicate (= int)
+  val LLVMRealPredicateFalse : LLVMRealPredicate
+  val LLVMRealOEQ : LLVMRealPredicate
+  val LLVMRealOGT : LLVMRealPredicate
+  val LLVMRealOGE : LLVMRealPredicate
+  val LLVMRealOLT : LLVMRealPredicate
+  val LLVMRealOLE : LLVMRealPredicate
+  val LLVMRealONE : LLVMRealPredicate
+  val LLVMRealORD : LLVMRealPredicate
+  val LLVMRealUNO : LLVMRealPredicate
+  val LLVMRealUEQ : LLVMRealPredicate
+  val LLVMRealUGT : LLVMRealPredicate
+  val LLVMRealUGE : LLVMRealPredicate
+  val LLVMRealULT : LLVMRealPredicate
+  val LLVMRealULE : LLVMRealPredicate
+  val LLVMRealUNE : LLVMRealPredicate
+  val LLVMRealPredicateTrue : LLVMRealPredicate
+
+  type LLVMValueRef_Switch (= ptr)
+  type LLVMValueRef_Phi (= ptr)
+  type LLVMValueRef_Call (= ptr)
+  type LLVMValueRef_LandingPad (= ptr)
+  val castPhi
+      : LLVMValueRef_Phi -> LLVMValueRef
+  val castCall
+      : LLVMValueRef_Call -> LLVMValueRef
+  val castLandingPad
+      : LLVMValueRef_LandingPad -> LLVMValueRef
+  val LLVMBuildRetVoid
+      : LLVMBuilderRef -> LLVMValueRef
+  val LLVMBuildRet
+      : LLVMBuilderRef * LLVMValueRef -> LLVMValueRef
+  val LLVMBuildBr
+      : LLVMBuilderRef * LLVMBasicBlockRef -> LLVMValueRef
+  val LLVMBuildCondBr
+      : LLVMBuilderRef * LLVMValueRef * LLVMBasicBlockRef * LLVMBasicBlockRef
+        -> LLVMValueRef
+  val LLVMBuildSwitch
+      : LLVMBuilderRef * LLVMValueRef * LLVMBasicBlockRef * word
+        -> LLVMValueRef_Switch
+  val LLVMAddCase
+      : LLVMValueRef_Switch * LLVMValueRef * LLVMBasicBlockRef -> unit
+  val LLVMBuildResume
+      : LLVMBuilderRef * LLVMValueRef -> LLVMValueRef
+  val LLVMBuildUnreachable
+      : LLVMBuilderRef -> LLVMValueRef
+  val LLVMBuildAdd
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNSWAdd
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNUWAdd
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildFAdd
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildSub
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNSWSub
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNUWSub
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildFSub
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildMul
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNSWMul
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNUWMul
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildFMul
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildUDiv
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildSDiv
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildExactSDiv
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildFDiv
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildURem
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildSRem
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildFRem
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildShl
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildLShr
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildAShr
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildAnd
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildOr
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildXor
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNeg
+      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNSWNeg
+      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNUWNeg
+      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildFNeg
+      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildNot
+      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildAlloca
+      : LLVMBuilderRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildLoad
+      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef
+  val LLVMBuildStore
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef -> LLVMValueRef
+  val LLVMBuildGEP
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef vector * word * string
+        -> LLVMValueRef
+  val LLVMBuildInBoundsGEP
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef vector * word * string
+        -> LLVMValueRef
+  val LLVMBuildStructGEP
+      : LLVMBuilderRef * LLVMValueRef * word * string -> LLVMValueRef
+  val LLVMBuildExtractValue
+      : LLVMBuilderRef * LLVMValueRef * word * string -> LLVMValueRef
+  val LLVMBuildTrunc
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildZExt
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildSExt
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildFPToUI
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildFPToSI
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildUIToFP
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildSIToFP
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildFPTrunc
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildFPExt
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildPtrToInt
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildIntToPtr
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildBitCast
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildZExtOrBitCast
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildSExtOrBitCast
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildTruncOrBitCast
+      : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
+  val LLVMBuildICmp
+      : LLVMBuilderRef * LLVMIntPredicate * LLVMValueRef * LLVMValueRef
+        * string
+        -> LLVMValueRef
+  val LLVMBuildFCmp
+      : LLVMBuilderRef * LLVMRealPredicate * LLVMValueRef * LLVMValueRef
+        * string
+        -> LLVMValueRef
+  val LLVMBuildPhi
+      : LLVMBuilderRef * LLVMTypeRef * string -> LLVMValueRef_Phi
+  val LLVMAddIncoming
+      : LLVMValueRef_Phi * LLVMValueRef vector * LLVMBasicBlockRef vector * word
+        -> unit
+  val LLVMBuildLandingPad
+      : LLVMBuilderRef * LLVMTypeRef * LLVMValueRef * word * string
+        -> LLVMValueRef_LandingPad
+  val LLVMAddClause : LLVMValueRef_LandingPad * LLVMValueRef -> unit
+  val LLVMSetCleanup : LLVMValueRef_LandingPad * LLVMBool -> unit
+  val LLVMBuildInvoke
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef vector * word
+        * LLVMBasicBlockRef * LLVMBasicBlockRef * string
+        -> LLVMValueRef_Call
+  val LLVMBuildCall
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef vector * word * string
+        -> LLVMValueRef_Call
+  val LLVMSetTailCall
+      : LLVMValueRef_Call * LLVMBool -> unit
+  val LLVMSetInstructionCallConv
+      : LLVMValueRef_Call * LLVMCallConv -> unit
+  val LLVMAddInstrAttribute
+      : LLVMValueRef_Call * word * LLVMAttribute list -> unit
+
+  type LLVMLinkerMode (= int)
+  val LLVMLinkerDestroySource : LLVMLinkerMode
+  val LLVMLinkerPreserveSource : LLVMLinkerMode
+  val LLVMLinkModules
+      : LLVMModuleRef * LLVMModuleRef * LLVMLinkerMode -> unit
+
+  type OptLevel (= word)
+  val OptNone : OptLevel
+  val OptLess : OptLevel
+  val OptDefault : OptLevel
+  val OptAggressive : OptLevel
+
+  type SizeLevel (= word)
+  val SizeDefault : SizeLevel
+  val SizeSmall : SizeLevel
+  val SizeVerySmall : SizeLevel
+
+  type RelocModel (= word)
+  val RelocDefault : RelocModel
+  val RelocStatic : RelocModel
+  val RelocPIC : RelocModel
+  val RelocDynamicNoPIC : RelocModel
+
+  type CodeModel (= word)
+  val CodeModelDefault : CodeModel
+  val CodeModelJITDefault : CodeModel
+  val CodeModelSmall : CodeModel
+  val CodeModelKernel : CodeModel
+  val CodeModelMedium : CodeModel
+  val CodeModelLarge : CodeModel
+
+  type FileType (= word)
+  val NullFile : FileType
+  val AssemblyFile : FileType
+  val ObjectFile : FileType
+  val IRFile : FileType
+  val BitcodeFile : FileType
+
+  type compile_options =
+      {arch : string,
+       cpu : string,
+       attrs : string list,
+       optLevel : OptLevel,
+       sizeLevel : SizeLevel,
+       relocModel : RelocModel,
+       codeModel : CodeModel}
+
+  val compile : compile_options -> LLVMModuleRef * FileType * string -> unit
+
+(*
+  type LLVMTargetRef (= ptr)
+  val LLVMGetFirstTarget
+      : unit -> LLVMTargetRef
+  val LLVMGetNextTarget
+      : LLVMTargetRef -> LLVMTargetRef option
+  val LLVMGetTargetName
+      : LLVMTargetRef -> string
+  val LLVMGetTargetDescription
+      : LLVMTargetRef -> string
+  val LLVMTargetHasJIT
+      : LLVMTargetRef -> LLVMBool
+  val LLVMTargetHasTargetMachine
+      : LLVMTargetRef -> LLVMBool
+  val LLVMTargetHasAsmBackend
+      : LLVMTargetRef -> LLVMBool
+  val lookupTarget
+      : string * string -> LLVMTargetRef
+
+  type LLVMCodeGenOptLevel (= int)
+  val LLVMCodeGenLevelNone : LLVMCodeGenOptLevel
+  val LLVMCodeGenLevelLess : LLVMCodeGenOptLevel
+  val LLVMCodeGenLevelDefault : LLVMCodeGenOptLevel
+  val LLVMCodeGenLevelAggressive : LLVMCodeGenOptLevel
+
+  type LLVMRelocMode (= int)
+  val LLVMRelocDefault : LLVMRelocMode
+  val LLVMRelocStatic : LLVMRelocMode
+  val LLVMRelocPIC : LLVMRelocMode
+  val LLVMRelocDynamicNoPic : LLVMRelocMode
+
+  type LLVMCodeModel (= int)
+  val LLVMCodeModelDefault : LLVMCodeModel
+  val LLVMCodeModelJITDefault : LLVMCodeModel
+  val LLVMCodeModelSmall : LLVMCodeModel
+  val LLVMCodeModelKernel : LLVMCodeModel
+  val LLVMCodeModelMedium : LLVMCodeModel
+  val LLVMCodeModelLarge : LLVMCodeModel
+
+  type LLVMCodeGenFileType (= int)
+  val LLVMAssemblyFile : LLVMCodeGenFileType
+  val LLVMObjectFile : LLVMCodeGenFileType
+
+  type LLVMTargetMachineRef (= ptr)
+  val LLVMCreateTargetMachine
+      : LLVMTargetRef * string * string * string * LLVMCodeGenOptLevel
+        * LLVMRelocMode * LLVMCodeModel -> LLVMTargetMachineRef
+  val LLVMDisposeTargetMachine
+      : LLVMTargetMachineRef -> unit
+  val LLVMTargetMachineEmitToFile
+      : LLVMTargetMachineRef * LLVMModuleRef * string * LLVMCodeGenFileType
+        -> unit
+
+  type LLVMExecutionEngineRef (= ptr)
+  type LLVMGenericValueRef (= ptr)
+  val LLVMCreateExecutionEngineForModule
+      : LLVMModuleRef -> LLVMExecutionEngineRef
+  val LLVMDisposeExecutionEngine
+      : LLVMExecutionEngineRef -> unit
+  val LLVMAddModule
+      : LLVMExecutionEngineRef * LLVMModuleRef -> unit
+  val LLVMFindFunction
+      : LLVMExecutionEngineRef * string -> LLVMValueRef_Function option
+  val LLVMRunFunction
+      : LLVMExecutionEngineRef * LLVMValueRef_Function * word
+        * LLVMGenericValueRef vector -> LLVMBool
+*)
+
+end

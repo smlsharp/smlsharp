@@ -1,13 +1,13 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 
 structure ElaborateError =
   struct
     exception RuntimeTyNotFound of string
-    exception InvalidOpAssociativity of string
+    exception InvalidOpAssociativity of Symbol.longsymbol
     exception AbstypeNotSupported
     exception SigIDFoundInInterface of string
     exception DerivedFormFunArg
@@ -32,23 +32,23 @@ structure ElaborateError =
     exception InfixUsedWithoutOP of string
     exception IllegalFunctionSymbol
     exception FunctionParameterNotFound
-    exception ArgWithInfixID of string
-    exception EndWithInfixID of string
-    exception DuplicateVarNameInValRec of string
-    exception DuplicateValDesc of string
-    exception DuplicateTypeNameInDatatype of string
-    exception DuplicateTypeNameInType of string
+    exception ArgWithInfixID of Symbol.longsymbol
+    exception EndWithInfixID of Symbol.longsymbol
+    exception DuplicateVarNameInValRec of Symbol.symbol
+    exception DuplicateValDesc of Symbol.symbol
+    exception DuplicateTypeNameInDatatype of Symbol.symbol
+    exception DuplicateTypeNameInType of Symbol.symbol
     exception DuplicateRecordLabelInRawType of string
     exception DuplicateRecordLabelInPat of string
     exception DuplicateRecordLabel of string
     exception DuplicateFunctorDesc of string
     exception DuplicateStrDesc of string
-    exception DuplicateTypParam of string
-    exception DuplicateTypDesc of string
-    exception DuplicateConstructorNameInException of string
-    exception DuplicateConstructorNameInDatatype of string
-    exception BindReservedName of string
-    exception BeginWithInfixID of string
+    exception DuplicateTypParam of Symbol.symbol
+    exception DuplicateTypDesc of Symbol.symbol
+    exception DuplicateConstructorNameInException of Symbol.symbol
+    exception DuplicateConstructorNameInDatatype of Symbol.symbol
+    exception BindReservedName of Symbol.symbol
+    exception BeginWithInfixID of Symbol.longsymbol
     exception ArityMismatchInTypeDeclaration of {given:int, tyCon:string,
                                                  wants:int}
   end

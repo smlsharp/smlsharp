@@ -5,20 +5,10 @@
 
 The following softwares are required to build and install SML#:
 
-  * GNU Compiler Collection (version 3.4.0 or higher)
+  * C/C++ compiler: GNU Compiler Collection or Clang.
   * GNU make or BSD make
-  * Standard ML compiler (one of the following)
-    * Standard ML of New Jersey (version 110.65 or higher), or
-    * MLton version 20100608
   * GNU MP library
-
-It is required that Standard ML of New Jersey is built with target
-options enabling legacy ml-lex in CM.
-
-The following tool is used to build documents, but they are not
-required to build compiler and runtime.
-
-  * doxygen
+  * LLVM 3.4
 
 == Quick Start
 
@@ -30,11 +20,6 @@ Things will be installed under /usr/local/bin and /usr/local/lib/smlsharp.
 
 == Configurations
 
-If you use MLton as a Standard ML compiler, specify --with-mlton option.
-Otherwise, the build system intends to use SML/NJ to compile SML#.
-
-  $ ./configure --with-mlton.
-
 If you meet some troubles caused by C compiler, rerun configure
 to try to compile with another compiler.
 
@@ -45,12 +30,6 @@ system, you need to specify CPPFLAGS and LDFLAGS so that compiler can
 find them. For example:
 
   $ ./configure CPPFLAGS=-I/opt/pkg/include LDFLAGS=-L/opt/pkg/lib
-
-On Solaris, not only -L but -R option is needed to notice the library path
-to dynamic linker:
-
-  $ ./configure CPPFLAGS=-I/opt/pkg/include \
-    LDFLAGS="-L/opt/pkg/lib -Wl,-R/opt/pkg/lib"
 
 You will see all build-time configurations by invoking configure with
 --help option.
@@ -65,8 +44,7 @@ If the --prefix option is omitted, /usr/local is assumed as PREFIX.
 Things are installed in those locations:
 
   <PREFIX>/bin/smlsharp          SML# compiler
-  <PREFIX>/bin/smlsharprun       SML# runtime
-  <PREFIX>/bin/smlsharp2exe.sh   Standalone executable maker
-  <PREFIX>/bin/smldoc            SMLDoc
   <PREFIX>/bin/smlformat         SMLFormat
+  <PREFIX>/bin/smllex            SML# variant of ML-lex
+  <PREFIX>/bin/smlyacc           SML# variant of ML-yacc
   <PREFIX>/lib/smlsharp/         Directory for libraries of SML#

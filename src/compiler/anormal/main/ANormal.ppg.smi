@@ -1,0 +1,309 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../name/main/ExternSymbol.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../runtimecalc/main/RuntimeCalc.ppg.smi"
+
+structure ANormal =
+struct
+
+  type loc = Loc.loc
+
+  type ty =
+      RuntimeCalc.ty
+
+  type varInfo =
+      RuntimeCalc.varInfo
+
+  datatype anconst = datatype RuntimeCalc.ncconst
+
+  datatype anvalue =
+      ANCONST of {const: anconst, ty: ty}
+    | ANVAR of varInfo
+    | ANCAST of
+      {
+        exp : anvalue,
+        expTy : ty,
+        targetTy : ty,
+        runtimeTyCast : bool
+      }
+    | ANBOTTOM
+
+  datatype address =
+      AARECORDFIELD of
+      {
+        recordExp : anvalue,
+        fieldIndex : anvalue
+      }
+    | AAARRAYELEM of
+      {
+        arrayExp : anvalue,
+        elemSize : anvalue,
+        elemIndex : anvalue
+      }
+
+  datatype initField =
+      INIT_VALUE of anvalue
+    | INIT_COPY of {srcExp: anvalue, fieldSize: anvalue}
+    | INIT_IF of {tagExp: anvalue, tagOfTy: Types.ty,
+                  ifBoxed: initField, ifUnboxed: initField}
+
+  datatype anexp =
+      ANLARGEINT of
+      {
+        resultVar: varInfo,
+        dataLabel: ExtraDataLabel.id,
+        nextExp: anexp,
+        loc : loc
+      }
+    | ANFOREIGNAPPLY of
+      {
+        resultVar : varInfo option,
+        funExp : anvalue,
+        argExpList : anvalue list,
+        attributes : FFIAttributes.attributes,
+        handler : HandlerLabel.id option,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANEXPORTCALLBACK of
+      {
+        resultVar : varInfo,
+        instTyvars : Types.btvEnv,
+        codeExp : anvalue,
+        closureEnvExp : anvalue,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANEXVAR of
+      {
+        resultVar : varInfo,
+        id: ExternSymbol.id,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANPACK of
+      {
+        resultVar : varInfo,
+        exp : anvalue,
+        expTy: ty,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANUNPACK of
+      {
+        resultVar : varInfo,
+        exp : anvalue,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANDUP of
+      {
+        resultVar : varInfo,
+        srcAddr : address,
+        valueSize : anvalue,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANLOAD of
+      {
+        resultVar : varInfo,
+        srcAddr: address,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANPRIMAPPLY of
+      {
+        resultVar : varInfo,
+        primInfo : RuntimeCalc.primInfo,
+        argExpList : anvalue list,
+        argTyList : ty list,
+        resultTy : ty,
+        instTyList : ty list,
+        instTagList : anvalue list,
+        instSizeList : anvalue list,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANBITCAST of
+      {
+        resultVar : varInfo,
+        exp : anvalue,
+        expTy : ty,
+        targetTy : ty,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANCALL of
+      {
+        resultVar : varInfo,
+        codeExp : anvalue,
+        closureEnvExp : anvalue option,
+        argExpList : anvalue list,
+        handler : HandlerLabel.id option,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANTAILCALL of
+      {
+        resultTy : ty,
+        codeExp : anvalue,
+        closureEnvExp : anvalue option,
+        argExpList : anvalue list,
+        loc : loc
+      }
+    | ANRECORD of
+      {
+        resultVar : varInfo,
+        fieldList : {fieldExp : initField,
+                     fieldTy : ty,
+                     fieldIndex : anvalue} list,
+        isMutable : bool,
+        clearPad : bool,
+        allocSizeExp : anvalue,
+        bitmaps : {bitmapIndex : anvalue,
+                   bitmapExp : anvalue} list,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANMODIFY of
+      {
+        resultVar : varInfo,
+        recordExp : anvalue,
+        indexExp : anvalue,
+        valueExp : initField,
+        valueTy : ty,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANRETURN of
+      {
+        value : anvalue,
+        loc : loc
+      }
+    | ANCOPY of
+      {
+        srcExp : anvalue,
+        dstAddr : address,
+        valueSize : anvalue,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANSTORE of
+      {
+        srcExp : anvalue,
+        srcTy : ty,
+        dstAddr : address,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANEXPORTVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        valueExp : anvalue,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANRAISE of
+      {
+        argExp : anvalue,
+        loc : loc
+      }
+    | ANHANDLER of
+      {
+        nextExp : anexp,
+        exnVar : varInfo,
+        id : HandlerLabel.id,
+        handlerExp : anexp,
+        loc : loc
+      }
+    | ANSWITCH of
+      {
+        switchExp : anvalue,
+        expTy : ty,
+        branches : (anconst * FunLocalLabel.id) list,
+        default : FunLocalLabel.id,
+        loc : loc
+      }
+    | ANLOCALCODE of
+      {
+        id : FunLocalLabel.id,
+        recursive : bool,
+        argVarList : varInfo list,
+        bodyExp : anexp,
+        nextExp : anexp,
+        loc : loc
+      }
+    | ANGOTO of
+      {
+        id : FunLocalLabel.id,
+        argList : anvalue list,
+        loc : loc
+      }
+    | ANUNREACHABLE
+
+  datatype topdata = datatype RuntimeCalc.topdata
+
+  datatype topdec =
+      ATFUNCTION of
+      {
+        id : FunEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        bodyExp : anexp,
+        retTy : ty,
+        loc : loc
+      }
+    | ATCALLBACKFUNCTION of
+      {
+        id : CallbackEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        bodyExp : anexp,
+        attributes : FFIAttributes.attributes,
+        retTy : ty option,
+        cleanupHandler : HandlerLabel.id,
+        loc : loc
+      }
+
+  type program =
+      {
+        topdata : topdata list,
+        topdecs : topdec list,
+        topExp : anexp
+      }
+
+  val format_ty
+      : ty -> SMLFormat.FormatExpression.expression list
+  val formatWithType_ty
+      : Types.btvKind TermFormat.btvEnv
+        -> ty -> SMLFormat.FormatExpression.expression list
+  val format_varInfo
+      : varInfo -> SMLFormat.FormatExpression.expression list
+  val format_anconst : anconst -> SMLFormat.FormatExpression.expression list
+  val format_anvalue : anvalue -> SMLFormat.FormatExpression.expression list
+  val formatWithType_anvalue :
+      Types.btvKind TermFormat.btvEnv
+      -> anvalue -> SMLFormat.FormatExpression.expression list
+  val format_anexp : anexp -> SMLFormat.FormatExpression.expression list
+  val format_address : address -> SMLFormat.FormatExpression.expression list
+  val format_initField : initField -> SMLFormat.FormatExpression.expression list
+  val format_topdata : topdata -> SMLFormat.FormatExpression.expression list
+  val format_topdec : topdec -> SMLFormat.FormatExpression.expression list
+  val format_program : program -> SMLFormat.FormatExpression.expression list
+  val formatWithType_program
+      : program -> SMLFormat.FormatExpression.expression list
+
+end

@@ -1,18 +1,7 @@
-_require "../../basis/main/Int.smi"
-_require "../../basis/main/IntInf.smi"
-_require "../../basis/main/Word.smi"
-_require "../../basis/main/Word8.smi"
-_require "../../basis/main/Real32.smi"
-_require "../../basis/main/List.smi"
-_require "../../basis/main/Char.smi"
-_require "../../basis/main/String.smi"
-_require "../../basis/main/StringCvt.smi"
-_require "../../basis/main/Real.smi"
-_require "../../basis/main/binary-op.smi"
-_require "../../basis/main/TextIO.smi"
-_require "ReflectionControl.smi"
-_require "../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../compiler-utils/env/main/LabelEnv.smi"
+_require "./ReflectionControl.smi"
 
 structure TermPrintUtils =
 struct

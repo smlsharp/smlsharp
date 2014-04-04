@@ -1,6 +1,6 @@
 structure VarOrd = 
   struct
-     type ord_key = {path:string list,id:VarID.id}
+     type ord_key = {longsymbol:Symbol.longsymbol,id:VarID.id}
      fun compare ({id=id1,...}:ord_key, {id=id2,...}:ord_key)
          = VarID.compare (id1,id2)
    end

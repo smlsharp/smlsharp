@@ -1,7 +1,7 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
@@ -11,8 +11,6 @@ _require "../../usererror/main/UserError.ppg.smi"
 structure TypeInferenceError =
   struct
     exception InvalidSQLDBI of string * Types.ty
-    exception IncompatibleWithSQL of string * Types.ty
-    exception InvalidSQLTableDecl of string * Types.ty
     exception ForceImportForeignFunction of string * IDCalc.ffiTy
     exception FFIInvalidTyvar of string * Types.ty
     exception FFIStubMismatch of string * Types.ty * Types.ty
@@ -87,10 +85,10 @@ structure TypeInferenceError =
     exception NonFunction of string * {ty:Types.ty}
     exception NonConstruct of string * {pat:IDCalc.icpat}
     exception DuplicateTargsInTypeDef of string * {tvars:string list}
-    exception DuplicatePatternVar of string * {vars:string list}
+    exception DuplicatePatternVar of string * {longsymbol:Symbol.longsymbol}
     exception RecDefinitionAndOccurrenceNotAgree
               of string * {definition:Types.ty,
-                           id:string,
+                           longsymbol:Symbol.longsymbol,
                            occurrence:Types.ty}
     exception InconsistentEQInDatatype of string * {tyvar:string}
     exception DifferentOrPatternTypes of string * {ty1:Types.ty, ty2:Types.ty}
@@ -101,15 +99,20 @@ structure TypeInferenceError =
     exception DuplicateTvarNameInDatatypeArgs of string * {tyvar:string}
     exception NotBoundTyvar of string * {tyvar:string}
     exception ConstantConApplied of string * {con:string}
-    exception ConRequireArg of string * {longid:Absyn.longid}
-    exception ValueRestriction of string * {dummyTyPaths:Absyn.longid list}
-    exception ConstructorPathNotFound of string * Absyn.longid
+    exception ConRequireArg of string * {longsymbol:Symbol.longsymbol}
+    exception ValueRestriction of string * {dummyTyPaths:Symbol.longsymbol list}
+    exception ConstructorPathNotFound of string * Symbol.longsymbol
     exception InconsistentListElementType
               of string * {nextTy:Types.ty, prevTy:Types.ty}
     exception CyclicTvarkindSpec of string * string
-    exception NonConstructorPathInPat of string * Absyn.longid
+    exception NonConstructorPathInPat of string * Symbol.longsymbol
     exception ArityMismatchInTypeDeclaration
               of string * {given:int, tyCon:string, wants:int}
+
+    exception JoinNonRecord of string * Types.ty * Types.ty
+    exception  JoinInconsistent of string * {label:string, ty1:Types.ty, ty2:Types.ty}
+    exception  JoinMissingTy of string * string
+
     val isAnyError : bool ref
     val initializeTypeinfError : unit -> unit
     val getErrorsAndWarnings : unit -> UserError.errorInfo list

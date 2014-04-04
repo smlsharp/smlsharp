@@ -1,5 +1,3 @@
-include "General.smi"
-
 signature SUBSTRING =
 sig
   type substring

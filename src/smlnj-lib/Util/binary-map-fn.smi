@@ -1,9 +1,11 @@
-_require "../../basis/main/List.smi"
-_require "../../basis/main/binary-op.smi"
-
+_require "../../basis.smi"
 _require "lib-base.smi"
 _require "ord-key-sig.sml"
 _require "ord-map-sig.sml"
+
+(* 2013-07-7 ohori
+  The function with comments are added to the NJ implementation
+*)
 
 functor BinaryMapFn (
   K : sig
@@ -23,10 +25,24 @@ struct
   val singleton : Key.ord_key * 'a -> 'a map
   val insert : 'a map * Key.ord_key * 'a -> 'a map
   val insert' : (Key.ord_key * 'a) * 'a map -> 'a map
+
+  (* same as insert except that it invokes a function when there is an old item.*)
+  val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+  (* same as insertWith except that the extra function takes the key in the map.*)
+  val insertWithi : (Key.ord_key * 'a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+
   val find : 'a map * Key.ord_key -> 'a option
+
+  (* Same as find except that it retruns the key in the map.  *)
+  val findi : 'a map * Key.ord_key -> (Key.ord_key * 'a) option
+
   val lookup : 'a map * Key.ord_key -> 'a
   val inDomain : 'a map * Key.ord_key -> bool
   val remove : 'a map * Key.ord_key -> 'a map * 'a
+
+  (* same as remove except that it returns that removed key in the map. *)
+  val removei : 'a map * Key.ord_key -> Key.ord_key * 'a map * 'a
+
   val first : 'a map -> 'a option
   val firsti : 'a map -> (Key.ord_key * 'a) option
   val numItems : 'a map -> int
@@ -36,17 +52,38 @@ struct
   val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
   val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
   val unionWithi : (Key.ord_key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+
+  (* same as unionWithi except that the extra function takes two pairs of key and value in the map
+     and the key and the value that should be inserted.   *)
+  val unionWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'a) -> (Key.ord_key * 'a))
+                     -> ('a map * 'a map) -> 'a map
+  val unionWithi3 : ((Key.ord_key * 'a) option * (Key.ord_key * 'a) option -> (Key.ord_key * 'a))
+                     -> ('a map * 'a map) -> 'a map
   val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
   val intersectWithi : (Key.ord_key * 'a * 'b -> 'c)
                        -> 'a map * 'b map -> 'c map
+
+  (* same as intersectWithi except that the extra function takes two pairs of key and value in the map 
+     and the key and the value that should be inserted.   *)
+  val intersectWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'b) -> (Key.ord_key * 'c))
+                        -> 'a map * 'b map -> 'c map
   val mergeWith : ('a option * 'b option -> 'c option)
                   -> 'a map * 'b map -> 'c map
   val mergeWithi : (Key.ord_key * 'a option * 'b option -> 'c option)
+                   -> 'a map * 'b map -> 'c map
+
+  (* same as mergeWithi except that the extra function takes two pairs of key and value in the map 
+     and the key and the value that should be inserted.   *)
+  val mergeWithi2 : ((Key.ord_key * 'a) option * (Key.ord_key * 'b) option -> (Key.ord_key * 'c) option)
                    -> 'a map * 'b map -> 'c map
   val app : ('a -> unit) -> 'a map -> unit
   val appi : (Key.ord_key * 'a -> unit) -> 'a map -> unit
   val map : ('a -> 'b) -> 'a map -> 'b map
   val mapi : (Key.ord_key * 'a -> 'b) -> 'a map -> 'b map
+
+  (* same as mapi except that it returns the removed key in the map.   *)
+  val mapi2 : (Key.ord_key * 'a -> Key.ord_key * 'b) -> 'a map -> 'b map
+
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldli : (Key.ord_key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
@@ -55,5 +92,5 @@ struct
   val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
   val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
   val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
-  val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+
 end

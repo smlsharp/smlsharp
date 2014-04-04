@@ -1,16 +1,18 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
 _require "../../typedcalc/main/TypedCalcUtils.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../types/main/Types.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../usererror/main/UserError.ppg.smi"
-_require "MatchData.smi"
+_require "./MatchData.smi"
 
 structure MatchError = 
 struct
@@ -36,7 +38,7 @@ struct
   val raiseMatchFailExp
       : Types.ty -> Loc.loc -> RecordCalc.rcexp
   val handleFail
-      : Types.varInfo -> Types.ty -> Loc.loc -> RecordCalc.rcexp
+      : RecordCalc.varInfo -> Types.ty -> Loc.loc -> RecordCalc.rcexp
   val raiseMatchCompBugExp
       : Types.ty -> Loc.loc -> RecordCalc.rcexp
 

@@ -42,13 +42,13 @@ struct
         ty1 :: List.concat (map matchToKeyList (TypID.Map.listItems matches))
 
   fun compareKeyTy (ty1, ty2) =
-      case (TypesUtils.derefTy ty1, TypesUtils.derefTy ty2) of
+      case (TypesBasics.derefTy ty1, TypesBasics.derefTy ty2) of
         (T.BOUNDVARty t1, T.BOUNDVARty t2) => BoundTypeVarID.compare (t1, t2)
       | (T.BOUNDVARty _, T.CONSTRUCTty _) => LESS
       | (T.CONSTRUCTty _, T.BOUNDVARty _) => GREATER
       | (T.CONSTRUCTty {tyCon={id=id1,...},...},
          T.CONSTRUCTty {tyCon={id=id2,...},...}) => TypID.compare (id1, id2)
-      | _ => raise Control.Bug "compareKeyTy"
+      | _ => raise Bug.Bug "compareKeyTy"
 
   fun compareKeyTyList (nil, nil) = EQUAL
     | compareKeyTyList (nil, _::_) = LESS
@@ -59,9 +59,9 @@ struct
       | x => x
 
   fun compareSelector
-        ({oprimId=id1, path=_, keyTyList=_, match=match1, instMap=_}
+        ({oprimId=id1, longsymbol=_, keyTyList=_, match=match1, instMap=_}
          :T.oprimSelector,
-         {oprimId=id2, path=_, keyTyList=_, match=match2, instMap=_}
+         {oprimId=id2, longsymbol=_, keyTyList=_, match=match2, instMap=_}
          :T.oprimSelector) =
       case OPrimID.compare (id1, id2) of
         EQUAL => compareKeyTyList (matchToKeyList match1, matchToKeyList match2)
@@ -69,23 +69,25 @@ struct
 
   fun evalMatch (match, sty, loc) =
       case match of
-        T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
+        T.OVERLOAD_EXVAR {exVarInfo={longsymbol, ty}, instTyList} =>
         let
-          val varExp = RC.RCEXVAR (exVarInfo, loc)
-          val retExp =
+          val varExp = RC.RCEXVAR {path=Symbol.longsymbolToLongid longsymbol,
+                                   ty=ty}
+          val (retExp, retTy) =
               case instTyList of
-                nil => varExp
-              | _::_ => RC.RCTAPP {exp = varExp, expTy = #ty exVarInfo,
-                                   instTyList = instTyList, loc = loc}
+                nil => (varExp, ty)
+              | _::_ => (RC.RCTAPP {exp = varExp, expTy = ty,
+                                    instTyList = instTyList, loc = loc},
+                         TypesBasics.tpappTy (ty, instTyList))
         in
-          SOME (EXP (RC.RCCAST (retExp, T.SINGLETONty sty, loc)))
+          SOME (EXP (RC.RCCAST ((retExp, retTy), T.SINGLETONty sty, loc)))
         end
       | T.OVERLOAD_PRIM {primInfo, instTyList} =>
         let
           val (argTy, retTy) =
-              case TypesUtils.tpappTy (#ty primInfo, instTyList) of
+              case TypesBasics.tpappTy (#ty primInfo, instTyList) of
                 T.FUNMty ([argTy], retTy) => (argTy, retTy)
-              | _ => raise Control.Bug "evalMatch: OVERLOAD_PRIM"
+              | _ => raise Bug.Bug "evalMatch: OVERLOAD_PRIM"
         in
           SOME (APP {appExp = fn argExp =>
                                  RC.RCPRIMAPPLY {primOp = primInfo,
@@ -98,7 +100,7 @@ struct
                      loc = loc})
         end
       | T.OVERLOAD_CASE (caseTy, matches) =>
-        case TypesUtils.derefTy caseTy of
+        case TypesBasics.derefTy caseTy of
           T.CONSTRUCTty {tyCon={id,...},...} =>
           (case TypID.Map.find (matches, id) of
              SOME match => evalMatch (match, sty, loc)
@@ -110,11 +112,11 @@ struct
 
   fun generateSingletonTy (btvEnv:Types.btvEnv) {instances:T.ty list, operators} =
       map (fn operator as {keyTyList, match, ...} =>
-              (app (fn ty => case TypesUtils.derefTy ty of
+              (app (fn ty => case TypesBasics.derefTy ty of
                                T.BOUNDVARty t =>
                                if BoundTypeVarID.Map.inDomain (btvEnv, t)
                                then ()
-                               else raise Control.Bug "generateSingletonTy"
+                               else raise Bug.Bug "generateSingletonTy"
                              | _ => ())
                    (keyTyList @ matchToKeyList match);
                T.INSTCODEty operator))

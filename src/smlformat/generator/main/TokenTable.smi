@@ -1,7 +1,6 @@
 _require "../../../basis.smi"
 _require "../../../ml-yacc-lib.smi"
 _require "FormatTemplate.smi"
-_require "ml.grm.sig"
 _require "ml.grm.smi"
 
 structure TokenTable = 

@@ -1,17 +1,21 @@
-_require "SMLSharpRuntime.smi"
-_require "General.smi"
-_require "StringCvt.smi"
+(*
 _require "Int.smi"
 _require "IntInf.smi"
 _require "String.smi"
-_require "IEEEReal.smi"
 _require "MATH.sig"
 _require "RealClass.smi"
-_require "Real.smi"
+*)
+
+_require "./SMLSharp_Runtime.smi" (* Bug *)
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./SMLSharp_RealClass.smi"
+_require "./IEEEReal.smi"
+_require "./Real.smi"
 
 structure Real32 =
 struct
-  type real = SMLSharp.Real32.real
+  type real = SMLSharp_Builtin.Real32.real
   structure Math =
   struct
     type real = real
@@ -40,35 +44,35 @@ struct
   val minNormalPos : real
   val posInf : real
   val negInf : real
-  val + = SMLSharp.Real32.add
-  val - = SMLSharp.Real32.sub
-  val * = SMLSharp.Real32.mul
-  val / = SMLSharp.Real32.div
-  val rem = SMLSharp.Real32.rem
+  val + = SMLSharp_Builtin.Real32.add
+  val - = SMLSharp_Builtin.Real32.sub
+  val * = SMLSharp_Builtin.Real32.mul
+  val / = SMLSharp_Builtin.Real32.div
+  val rem = SMLSharp_Builtin.Real32.rem
   val *+ : real * real * real -> real
   val *- : real * real * real -> real
-  val ~ = SMLSharp.Real32.neg
-  val abs = SMLSharp.Real32.abs
+  val ~ = SMLSharp_Builtin.Real32.neg
+  val abs = SMLSharp_Builtin.Real32.abs
+  val min : real * real -> real
+  val max : real * real -> real
   val sign : real -> int
   val signBit : real -> bool
   val sameSign : real * real -> bool
   val copySign : real * real -> real
+  val compare : real * real -> General.order
   val compareReal : real * real -> IEEEReal.real_order
-  val compare : real * real -> order
-  val < = SMLSharp.Real32.lt
-  val <= = SMLSharp.Real32.lteq
-  val > = SMLSharp.Real32.gt
-  val >= = SMLSharp.Real32.gteq
-  val == = SMLSharp.Real32.equal
-  val != : real * real -> bool
-  val ?= : real * real -> bool
-  val isFinite : real -> bool
-  val isNan : real -> bool
+  val < = SMLSharp_Builtin.Real32.lt
+  val <= = SMLSharp_Builtin.Real32.lteq
+  val > = SMLSharp_Builtin.Real32.gt
+  val >= = SMLSharp_Builtin.Real32.gteq
+  val == = SMLSharp_Builtin.Real32.equal
+  val != = SMLSharp_Builtin.Real32.notEqual
+  val ?= = SMLSharp_Builtin.Real32.ueq
   val unordered : real * real -> bool
+  val isFinite : real -> bool
+  val isNan = SMLSharp_Builtin.Real32.isNan
   val isNormal : real -> bool
   val class : real -> IEEEReal.float_class
-  val min : real * real -> real
-  val max : real * real -> real
   val toManExp : real -> {man : real, exp : int}
   val fromManExp : {man : real, exp : int} -> real
   val split : real -> {whole : real, frac : real}
@@ -77,17 +81,17 @@ struct
   val checkFloat : real -> real
   val realFloor : real -> real
   val realCeil : real -> real
-  val realRound : real -> real
   val realTrunc : real -> real
+  val realRound : real -> real
   val floor : real -> int
   val ceil : real -> int
+  val trunc = SMLSharp_Builtin.Real32.trunc
   val round : real -> int
-  val trunc : real -> int
   val toInt : IEEEReal.rounding_mode -> real -> int
-  val toLargeInt : IEEEReal.rounding_mode -> real -> LargeInt.int
-  val fromInt : int -> real
-  val fromLargeInt : LargeInt.int -> real
-  val toLarge : real -> LargeReal.real
+  val toLargeInt : IEEEReal.rounding_mode -> real -> SMLSharp_Builtin.IntInf.int
+  val fromInt = SMLSharp_Builtin.Real32.fromInt_unsafe
+  val fromLargeInt : SMLSharp_Builtin.IntInf.int -> real
+  val toLarge = SMLSharp_Builtin.Real32.toReal
   val fromLarge : IEEEReal.rounding_mode -> LargeReal.real -> real
   val fmt : StringCvt.realfmt -> real -> string
   val toString : real -> string

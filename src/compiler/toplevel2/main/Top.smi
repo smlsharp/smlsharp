@@ -1,6 +1,12 @@
+_require "basis.smi"
+_require "../../../config/main/Config.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../llvm/main/LLVM.smi"
 _require "../../../basis.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../util/main/Counter.smi"
 _require "../../toolchain/main/Filename.smi"
 _require "../../toolchain/main/TempFile.smi"
@@ -11,6 +17,7 @@ _require "../../name/main/LocalID.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
 _require "../../absyn/main/AbsynFormatter.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/VarMap.smi"
@@ -24,85 +31,74 @@ _require "../../nameevaluation/main/NameEvalUtils.smi"
 _require "../../valrecoptimization/main/VALREC_Optimizer.smi"
 _require "../../valrecoptimization/main/TransFundecl.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
-_require "../../typedcalcoptimization/main/TCOptimize.smi"
+_require "../../typedcalcoptimization2/main/TCOptimize.smi"
 _require "../../recordcalcoptimization/main/RCOptimize.smi"
 _require "../../typeinference2/main/InferTypes2.smi"
 _require "../../typeinference2/main/UncurryFundecl_ng.smi"
 _require "../../reflection/main/PrinterGeneration.smi"
 _require "../../recordcalc/main/RecordCalcFormatter.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
 _require "../../matchcompilation/main/MatchCompiler.smi"
 _require "../../sqlcompilation/main/SQLCompilation.smi"
 _require "../../fficompilation/main/FFICompilation.smi"
 _require "../../recordcompilation/main/RecordCompilation.smi"
 _require "../../typedlambda/main/TypedLambdaFormatter.smi"
 _require "../../datatypecompilation/main/DatatypeCompilation.smi"
-_require "../../annotatedcalc/main/AnnotatedCalcFormatter.smi"
-_require "../../staticanalysis/main/StaticAnalysis.smi"
-_require "../../multiplevaluecalc/main/MultipleValueCalcFormatter.smi"
-_require "../../recordunboxing/main/RecordUnboxing.smi"
-_require "../../bitmapcalc/main/BitmapCalc.ppg.smi"
-_require "../../bitmapcompilation/main/BitmapCompilation.smi"
-_require "../../bitmapanormal/main/BitmapANormal.ppg.smi"
-_require "../../bitmapanormal/main/TypeCheckBitmapANormal.smi"
-_require "../../bitmapanormalization/main/BitmapANormalization.smi"
-_require "../../bitmapanormaloptimize/main/BitmapANormalReorder.smi"
-_require "../../closureanormal/main/ClosureANormal.ppg.smi"
-_require "../../closureconversion/main/ClosureConversion.smi"
-_require "../../yaanormal/main/ANormal.ppg.smi"
-_require "../../toyaanormal/main/ToYAANormal.smi"
-_require "../../yaanormalization/main/ANormalOptimization.smi"
-_require "../../yaanormalization/main/StaticAllocation.smi"
-_require "../../abstractinstruction2/main/AbstractInstructionFormatter.smi"
-_require "../../aigenerator2/main/AIGenerator.smi"
-_require "../../rtl/main/RTL.ppg.smi"
-_require "../../rtl/main/RTLTypeCheck.smi"
-_require "../../rtl/main/RTLTypeCheckError.ppg.smi"
-_require "../../rtl/main/X86Select.smi"
-_require "../../rtl/main/X86Stabilize.smi"
-_require "../../rtl/main/RTLRename.smi"
-_require "../../rtl/main/X86Coloring.smi"
-_require "../../rtl/main/X86Frame.smi"
-_require "../../rtl/main/X86Emit.smi"
-_require "../../rtl/main/X86AsmGen.smi"
+_require "../../bitmapcalc/main/BitmapCalc2.ppg.smi"
+_require "../../bitmapcompilation2/main/BitmapCompilation.smi"
+_require "../../closurecalc/main/ClosureCalc.ppg.smi"
+_require "../../closureconversion/main/ClosureConversion2.smi"
+_require "../../runtimecalc/main/RuntimeCalc.ppg.smi"
+_require "../../cconvcompile/main/CallingConventionCompile.smi"
+_require "../../anormal/main/ANormal.ppg.smi"
+_require "../../anormal/main/ANormalTypeCheck.smi"
+_require "../../anormalize/main/ANormalize.smi"
+_require "../../machinecode/main/MachineCode.ppg.smi"
+_require "../../machinecodegen/main/MachineCodeGen.smi"
+_require "../../concurrencysupport/main/ConcurrencySupport.smi"
+_require "../../stackallocation/main/StackAllocation.smi"
+_require "../../llvmir/main/LLVMIR.ppg.smi"
+_require "../../llvmgen/main/LLVMGen.smi"
+_require "../../llvmemit/main/LLVMEmit.smi"
 _require "../../generatemain/main/GenerateMain.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../../config/main/Config.smi"
-_require "TOP.sig"
-_require "TopData.ppg.smi"
-_require "NameEvalEnvUtils.smi"
+_require "./TopData.ppg.smi"
+_require "./NameEvalEnvUtils.smi"
 
 structure Top =
 struct
   datatype stopAt = datatype TopData.stopAt
-  datatype code = datatype TopData.code
-  type interfaceNames = TopData.interfaceNames
   datatype result = datatype TopData.result
-  type toplevelOptions = TopData.toplevelOptions
+  type options = TopData.options
   type toplevelContext = TopData.toplevelContext
   type newContext = TopData.newContext
-  val defaultOptions : toplevelOptions
+
+  val defaultOptions : options
+
   val extendContext : toplevelContext * newContext -> toplevelContext
   val emptyNewContext : newContext
-  val compile : toplevelOptions
-                -> toplevelContext
-                -> Parser.input
-                -> interfaceNames * result
-  val loadInterface : {stopAt: stopAt,
-                       stdPath: Filename.filename list,
-                       loadPath: Filename.filename list}
-                      -> toplevelContext
-                      -> Filename.filename
-                      -> interfaceNames * newContext option
-  val loadBuiltin : InterfaceParser.input -> toplevelContext
-(*
-  val debugPrint : string -> unit
-  val printStopAt : stopAt -> unit
-  val printInterfaceNames : interfaceNames -> unit
-  val printInterfaceName : AbsynInterface.interfaceName -> unit
-  val printFileName : Filename.filename -> unit
-  val printInterfaceNameList : AbsynInterface.interfaceName list -> unit
-  val printResult : result -> unit
-  val printToplevelOptions : toplevelOptions -> unit
-  val printCompileUnit : AbsynInterface.compileUnit -> unit
-*)
+  val incVersion : toplevelContext -> toplevelContext
+
+  val compile
+      : options
+        -> toplevelContext
+        -> Parser.input
+        -> LoadFile.dependency * result
+
+  val generateMain
+      : toplevelContext
+        -> AbsynInterface.interfaceName option list
+        -> LLVM.LLVMModuleRef
+
+  type load_interface_options =
+       {stdPath: Filename.filename list,
+        loadPath: Filename.filename list}
+
+  val loadInteractiveEnv : {stopAt: stopAt,
+                            stdPath: Filename.filename list,
+                            loadPath: Filename.filename list}
+                           -> toplevelContext
+                           -> Filename.filename
+                           -> newContext
+  val loadBuiltin : Filename.filename -> toplevelContext
+
 end

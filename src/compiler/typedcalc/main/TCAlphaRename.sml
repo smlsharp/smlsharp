@@ -4,15 +4,16 @@ local
   structure TC = TypedCalc
   structure T = Types
   structure P = Printers
-  fun bug s = Control.Bug ("AlphaRename: " ^ s)
+  fun bug s = Bug.Bug ("AlphaRename: " ^ s)
 
   exception DuplicateVar
   exception DuplicateBtv
 
   type ty = T.ty
-  type path = T.path
+  type longsymbol = Symbol.longsymbol
   type btvKind = {tvarKind : T.tvarKind, eqKind : T.eqKind}
   type btvEnv = btvKind BoundTypeVarID.Map.map
+  type varInfo = T.varInfo
 
   type btvMap = BoundTypeVarID.id BoundTypeVarID.Map.map
   val emptyBtvMap = BoundTypeVarID.Map.empty
@@ -29,18 +30,18 @@ local
       in
         ({btvMap=btvMap, varMap=varMap}, btvEnv)
       end
-  fun copyExVarInfo context {path:path, ty:ty} =
-      {path=path, ty=copyTy context ty}
+  fun copyExVarInfo context {longsymbol:longsymbol, ty:ty} =
+      {longsymbol=longsymbol, ty=copyTy context ty}
   fun copyPrimInfo context {primitive : BuiltinPrimitive.primitive, ty : ty} =
       {primitive=primitive, ty=copyTy context ty}
-  fun copyOprimInfo context {ty : ty, path : path, id: OPrimID.id} =
-      {ty=copyTy context ty, path=path,id=id}
-  fun copyConInfo context {path: path, ty: ty, id: ConID.id} =
-      {path=path, ty=copyTy context ty, id=id}
-  fun copyExnInfo context {path: path, ty: ty, id: ExnID.id} =
-      {path=path, ty=copyTy context ty, id=id}
-  fun copyExExnInfo context {path: path, ty: ty} =
-      {path=path, ty=copyTy context ty}
+  fun copyOprimInfo context {ty : ty, longsymbol, id: OPrimID.id} =
+      {ty=copyTy context ty, longsymbol=longsymbol,id=id}
+  fun copyConInfo context {longsymbol, ty: ty, id: ConID.id} =
+      {longsymbol=longsymbol, ty=copyTy context ty, id=id}
+  fun copyExnInfo context {longsymbol, ty: ty, id: ExnID.id} =
+      {longsymbol=longsymbol, ty=copyTy context ty, id=id}
+  fun copyExExnInfo context {longsymbol, ty: ty} =
+      {longsymbol=longsymbol, ty=copyTy context ty}
   fun copyExnCon context exnCon =
       case exnCon of
         TC.EXEXN exExnInfo => TC.EXEXN (copyExExnInfo context exExnInfo)
@@ -51,10 +52,12 @@ local
         TC.FFIBASETY (copyTy context ty, loc)
       | TC.FFIFUNTY (attribOpt (* Absyn.ffiAttributes option *),
                      ffiTyList1,
-                     ffiTyList2,loc) =>
+                     ffiTyList2,
+                     ffiTyList3,loc) =>
         TC.FFIFUNTY (attribOpt,
                      map (copyFfiTy context) ffiTyList1,
-                     map (copyFfiTy context) ffiTyList2,
+                     Option.map (map (copyFfiTy context)) ffiTyList2,
+                     map (copyFfiTy context) ffiTyList3,
                      loc)
       | TC.FFIRECORDTY (fields:(string * TC.ffiTy) list,loc) =>
         TC.FFIRECORDTY
@@ -63,7 +66,6 @@ local
   val emptyVarIdMap = VarID.Map.empty : VarID.id VarID.Map.map
   val varIdMapRef = ref emptyVarIdMap : (VarID.id VarID.Map.map) ref
   fun addSubst (oldId, newId) = varIdMapRef := VarID.Map.insert(!varIdMapRef, oldId, newId)
-  type varInfo = {path:path, id:VarID.id, ty:ty}
   (* alpha-rename terms *)
   fun newId ({varMap, btvMap}:context) id =
       let
@@ -76,18 +78,14 @@ local
       in
         ({varMap=varMap, btvMap=btvMap}, newId)
       end
-  fun newVar (context:context) ({path, id, ty}:varInfo) =
+  fun newVar (context:context) ({longsymbol, id, ty, opaque}:varInfo) =
       let
         val ty = copyTy context ty
-        val (context, newId) =
-            newId context id
+        val (context, newId) = newId context id
             handle DuplicateVar =>
-                   (P.printPath path;
-                    P.print "\n";
-                    raise bug "duplicate id in IDCalcUtils"
-                   )
+                   raise bug "duplicate id in IDCalcUtils"
       in
-        (context, {path=path, id=newId, ty=ty})
+        (context, {longsymbol=longsymbol, id=newId, ty=ty, opaque=opaque})
       end
   fun newVars (context:context) (vars:varInfo list) =
       let
@@ -191,11 +189,11 @@ local
         in
           (context, TC.TPPATRECORD {fields=fields, loc=loc, recordTy=recordTy})
         end
-      | TC.TPPATVAR (varInfo, loc) =>
+      | TC.TPPATVAR varInfo =>
         let
           val (context, varInfo) = newVar context varInfo
         in
-          (context, TC.TPPATVAR (varInfo, loc))
+          (context, TC.TPPATVAR varInfo)
         end
       | TC.TPPATWILD (ty, loc) => 
         (context, TC.TPPATWILD (copyTy context ty, loc))
@@ -216,7 +214,7 @@ local
       in
         (context, List.rev patsRev)
       end
-  fun evalVar (context as {varMap, btvMap}:context) ({path, id, ty}:varInfo) =
+  fun evalVar (context as {varMap, btvMap}:context) ({longsymbol, id, ty, opaque}:varInfo) =
       let
         val ty = copyTy context ty
         val id =
@@ -224,11 +222,11 @@ local
               SOME id => id
             | NONE => id
       in
-        {path=path, id=id, ty=ty}
+        {longsymbol=longsymbol, id=id, ty=ty, opaque=opaque}
       end
       handle DuplicateBtv =>
              (P.print "DuplicateBtv in evalVar\n";
-              P.printPath path;
+              (* P.printPath path; *)
               P.print "\n";
               P.printTy ty;
               P.print "\n";
@@ -254,8 +252,8 @@ local
              ruleBodyTy = copyT ruleBodyTy,
              ruleList = map (copyRule context) ruleList
             }
-        | TC.TPCAST (tpexp, ty, loc) =>
-          TC.TPCAST (copy tpexp, copyT ty, loc)
+        | TC.TPCAST ((tpexp, expTy), ty, loc) =>
+          TC.TPCAST ((copy tpexp, copyT expTy), copyT ty, loc)
         | TC.TPCONSTANT {const, loc, ty} =>
           TC.TPCONSTANT {const=const, loc = loc, ty=copyT ty}
         | TC.TPDATACONSTRUCT {argExpOpt, argTyOpt, con:T.conInfo, instTyList, loc} =>
@@ -281,13 +279,20 @@ local
           TC.TPEXEXN_CONSTRUCTOR
             {exExnInfo=copyExExnInfo context exExnInfo,
              loc= loc}
-        | TC.TPEXVAR ({path, ty}, loc) =>
-          TC.TPEXVAR ({path=path, ty=copyT ty}, loc)
-        | TC.TPFFIIMPORT {ffiTy, loc, ptrExp, stubTy} =>
+        | TC.TPEXVAR {longsymbol, ty} =>
+          TC.TPEXVAR {longsymbol=longsymbol, ty=copyT ty}
+        | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} =>
           TC.TPFFIIMPORT
             {ffiTy = copyFfiTy context ffiTy,
              loc = loc,
-             ptrExp = copy ptrExp,
+             funExp = TC.TPFFIFUN (copy ptrExp),
+             stubTy = copyT stubTy
+            }
+        | TC.TPFFIIMPORT {ffiTy, loc, funExp as TC.TPFFIEXTERN _, stubTy} =>
+          TC.TPFFIIMPORT
+            {ffiTy = copyFfiTy context ffiTy,
+             loc = loc,
+             funExp = funExp,
              stubTy = copyT stubTy
             }
         | TC.TPFNM {argVarList, bodyExp, bodyTy, loc} =>
@@ -303,9 +308,7 @@ local
                loc = loc
               }
           end
-        | TC.TPGLOBALSYMBOL {kind, loc, name, ty} =>
-          TC.TPGLOBALSYMBOL {kind=kind, loc=loc, name=name, ty=copyT ty}
-        | TC.TPHANDLE {exnVar, exp, handler, loc} =>
+        | TC.TPHANDLE {exnVar, exp, handler, resultTy, loc} =>
           let
             val (context, exnVar) = newVar context exnVar
           in
@@ -313,6 +316,7 @@ local
               {exnVar=exnVar, 
                exp=copy exp, 
                handler=copyExp context handler, 
+               resultTy = copyT resultTy,
                loc=loc}
           end
         | TC.TPLET {body:TC.tpexp list, decls, loc, tys} =>
@@ -423,31 +427,16 @@ local
             }
         | TC.TPSIZEOF (ty, loc) =>
           TC.TPSIZEOF (copyT ty, loc)
-        | TC.TPSQLSERVER
-            {loc,
-             resultTy,
-             schema:Types.ty LabelEnv.map LabelEnv.map,
-             server:string
-            } =>
-            TC.TPSQLSERVER
-              {loc=loc,
-               resultTy=copyT resultTy,
-               schema=
-               LabelEnv.map
-                 (LabelEnv.map copyT)
-                 schema,
-               server=server
-              }
         | TC.TPTAPP {exp, expTy, instTyList, loc} =>
           TC.TPTAPP {exp=copy exp,
                      expTy = copyT expTy,
                      instTyList=map copyT instTyList,
                      loc = loc
                     }
-        | TC.TPVAR (varInfo, loc) =>
-          TC.TPVAR (evalVar context varInfo, loc)
+        | TC.TPVAR varInfo =>
+          TC.TPVAR (evalVar context varInfo)
         (* the following should have been eliminate *)
-        | TC.TPRECFUNVAR {arity, loc, var} =>
+        | TC.TPRECFUNVAR {arity, var} =>
           raise bug "TPRECFUNVAR in copy"
         )
           handle DuplicateBtv =>
@@ -479,25 +468,23 @@ local
                         varInfo=evalVar context varInfo},
                        loc)
         )
-      | TC.TPEXPORTEXN (exnInfo, loc) =>
+      | TC.TPEXPORTEXN exnInfo =>
         (context,
-         TC.TPEXPORTEXN (copyExnInfo context exnInfo, loc)
+         TC.TPEXPORTEXN (copyExnInfo context exnInfo)
         )
-      | TC.TPEXPORTVAR {internalVar, externalVar, loc} =>
+      | TC.TPEXPORTVAR varInfo =>
         (context,
-         TC.TPEXPORTVAR {internalVar= evalVar context internalVar,
-                         externalVar= copyExVarInfo context externalVar,
-                         loc=loc}
+         TC.TPEXPORTVAR (evalVar context varInfo)
         )
       | TC.TPEXPORTRECFUNVAR _ =>
         raise bug "TPEXPORTRECFUNVAR to AlphaRename"
-      | TC.TPEXTERNEXN ({path, ty}, loc) =>
+      | TC.TPEXTERNEXN {longsymbol, ty} =>
         (context,
-         TC.TPEXTERNEXN ({path=path, ty=copyTy context ty}, loc)
+         TC.TPEXTERNEXN {longsymbol=longsymbol, ty=copyTy context ty}
         )
-      | TC.TPEXTERNVAR ({path, ty}, loc) =>
+      | TC.TPEXTERNVAR {longsymbol, ty} =>
         (context,
-         TC.TPEXTERNVAR ({path=path, ty=copyTy context ty}, loc)
+         TC.TPEXTERNVAR {longsymbol=longsymbol, ty=copyTy context ty}
         )
       | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
         let

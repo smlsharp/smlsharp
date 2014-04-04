@@ -1,9 +1,7 @@
-_require "OPTION.sig"
-
 structure Option =
 struct
   datatype option = datatype option
-  exception Option = Option
+  exception Option
   val getOpt : 'a option * 'a -> 'a
   val isSome : 'a option -> bool
   val valOf : 'a option -> 'a
@@ -13,10 +11,5 @@ struct
   val map : ('a -> 'b) -> 'a option -> 'b option
   val mapPartial : ('a -> 'b option) -> 'a option -> 'b option
   val compose : ('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option
-  val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option 
+  val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
 end
-
-(* toplevel *)
-val getOpt : ('a option * 'a) -> 'a
-val isSome : 'a option -> bool
-val valOf : 'a option -> 'a

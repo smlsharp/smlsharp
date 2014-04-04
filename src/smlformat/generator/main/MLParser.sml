@@ -10,55 +10,13 @@
 1 inlined joinWith
 2 parser-gen creates MLLrVals
 *)
-structure MLParser : MLPARSER =
+structure MLParser =
 struct
 
 (*
   structure MLLrVals = MLLrValsFun(structure Token = LrParser.Token)
 *)
-  structure ParserData = MLLrVals.ParserData
-  structure MLParser : ARG_PARSER  =
-  struct
-    structure Token = ParserData.Token
-    structure LrParser = ParserData.LrParser
-    structure Stream = LrParser.Stream
-
-    exception ParseError = LrParser.ParseError
-
-    type arg = ParserData.arg
-    type lexarg = MLLex.UserDeclarations.arg
-    type pos = ParserData.pos
-    type result = ParserData.result
-    type svalue = ParserData.svalue
-
-    val makeLexer = 
-     fn s => 
-     fn arg =>
-	LrParser.Stream.streamify (MLLex.makeLexer s arg)
-    val parse = 
-     fn (lookahead,lexer,error,arg) =>
-	(fn (a,b) => (ParserData.Actions.extract a,b))
-          (LrParser.parse {table = ParserData.table,
-	                   lexer=lexer,
-		           lookahead=lookahead,
-		           saction = ParserData.Actions.actions,
-		           arg=arg,
-		           void= ParserData.Actions.void,
-	                   ec = {is_keyword = ParserData.EC.is_keyword,
-		                 noShift = ParserData.EC.noShift,
-		                 preferred_change = ParserData.EC.preferred_change,
-		                 errtermvalue = ParserData.EC.errtermvalue,
-		                 error=error,
-		                 showTerminal = ParserData.EC.showTerminal,
-		                 terms = ParserData.EC.terms}}
-          )
-(* 2012-8-19 ohori: type annotation added.
-    val sameToken = Token.sameToken
-*)
-    fun sameToken 
-          (tokenPair: Token.token * Token.token) =
-        Token.sameToken tokenPair
-  end
+  structure Parser = MLLrVals.Parser
 
   (***************************************************************************)
 
@@ -157,29 +115,30 @@ struct
           val dummyEOF = MLLrVals.Tokens.EOF (0, 0)
           val dummySEMICOLON = MLLrVals.Tokens.SEMICOLON (0, 0)
         in
-        fun oneParse lexer =
+        fun oneParse stream =
 	    let 
-	      val (nextToken, lexer') = MLParser.Stream.get lexer
+	      val (nextToken, stream') = Parser.getStream stream
 	    in
-	      if MLParser.sameToken(nextToken, dummyEOF)
+	      if Parser.sameToken(nextToken, dummyEOF)
               then raise EndOfParse
 	      else
-                if MLParser.sameToken(nextToken, dummySEMICOLON)
-                then oneParse lexer'
-	        else MLParser.parse(0, lexer, onParseError, ())
+                if Parser.sameToken(nextToken, dummySEMICOLON)
+                then oneParse stream'
+	        else Parser.parse {lookahead=0, stream=stream, error=onParseError, arg=()}
 	    end
         end
 
-        fun untilEOF lexer results =
-            let val (ast, lexer') = oneParse lexer
-            in untilEOF lexer' (ast :: results) end
+        fun untilEOF stream results =
+            let val (ast, stream') = oneParse stream
+            in untilEOF stream' (ast :: results) end
               handle EndOfParse => List.rev results
 
         fun getLine length = case TextIO.inputLine sourceStream of SOME x => x
 								 | NONE => "" 
 
-        val asts =
-            untilEOF (MLParser.makeLexer getLine initialArg) []
+        val lexer = MLLex.makeLexer getLine initialArg
+        val stream = Parser.makeStream {lexer=lexer}
+        val asts = untilEOF stream []
       in
         (asts, posToLocation)
       end

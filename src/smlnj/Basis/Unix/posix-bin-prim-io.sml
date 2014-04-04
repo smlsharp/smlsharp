@@ -3,9 +3,10 @@ structure OSImp = OS
 structure PositionImp = Position
 structure Posix =
 struct
-  structure FileSys = SMLSharpSMLNJ_POSIX_IO
-  structure IO = SMLSharpSMLNJ_POSIX_IO
+  structure FileSys = SMLSharp_SMLNJ_POSIX_IO
+  structure IO = SMLSharp_SMLNJ_POSIX_IO
 end
+structure Word8Vector = struct end
 (* posix-bin-prim-io.sml
  *
  * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
@@ -23,7 +24,7 @@ in
 (*
 structure PosixBinPrimIO : OS_PRIM_IO = 
 *)
-structure SMLSharpSMLNJ_PosixBinPrimIO : OS_PRIM_IO = 
+structure SMLSharp_SMLNJ_PosixBinPrimIO (*: OS_PRIM_IO*) = 
   struct
 
     structure PrimIO = BinPrimIO

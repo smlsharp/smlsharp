@@ -1,11 +1,3 @@
-include "General.smi"
-include "RealClass.smi"
-include "Real.smi"
-include "Real32.smi"
-include "Int.smi"
-include "IntInf.smi"
-include "StringCvt.smi"
-
 signature TIME =
 sig
   eqtype time

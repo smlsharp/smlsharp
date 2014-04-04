@@ -1,4 +1,4 @@
-(**
+ (**
  * SML# match compiler.
  This code is based on the following works.
  * Atsushi Ohori and Satoshi Osaka
@@ -50,33 +50,55 @@ structure MatchCompiler : sig
 end =
 struct
 local
-  structure A = Absyn
   structure C = Control
+  structure A = Absyn
   structure T = Types
   structure PC = PatternCalc
   structure TC = TypedCalc
-  structure TU = TypesUtils
+  structure TB = TypesBasics
   structure TCU = TypedCalcUtils
   structure RC = RecordCalc
   structure UE = UserError
   structure BT = BuiltinTypes
   structure ME = MatchError
-  fun bug s = Control.Bug ("MatchCompiler: " ^ s)
+  fun bug s = Bug.Bug ("MatchCompiler: " ^ s)
   type path = string list
   type constant = Absyn.constant
   type conInfo = T.conInfo
+
+  val pos = Loc.makePos {fileName="MatchCompiler.sml", line=0, col=0}
+  val loc = (pos,pos)
+  fun mkSymbol string = Symbol.mkSymbol string loc
+  fun mkLongsymbol path = Symbol.mkLongsymbol path loc
+
   fun newLocalId () = VarID.generate ()
   fun newVarName () = TCU.newTCVarName()
   fun newVarPath () = [TCU.newTCVarName()]
   fun freshVarWithName (ty,name) =
-      {path = [name],ty=ty,id=newLocalId()} : T.varInfo
+      {path = [name],ty=ty,id=newLocalId()} : RC.varInfo
   fun freshVarWithPath (ty,path) =
-      {path =path,ty=ty,id=newLocalId()} : T.varInfo
-  fun makeVar (id,path,ty) = {path=path,ty=ty,id=id} : T.varInfo
+      {path= path,ty=ty,id=newLocalId()} : RC.varInfo
+  fun makeVar (id, path, ty) = {path = path,ty=ty,id=id} : RC.varInfo
   fun printVarInfo var =
-      print (Control.prettyPrint (Types.format_varInfo var))
+      print (Bug.prettyPrint (RC.format_varInfo var))
 
   open MatchData
+
+  fun toRC {longsymbol, id, ty, opaque} =
+      {path=Symbol.longsymbolToLongid longsymbol,
+       id = id,
+       ty = ty}
+  fun toRCcon {longsymbol, id, ty} =
+      {path=Symbol.longsymbolToLongid longsymbol,
+       id = id,
+       ty = ty}
+  fun toRCEx {longsymbol, ty} =
+      {path=Symbol.longsymbolToLongid longsymbol,
+       ty = ty}
+
+  fun toRCExn (TC.EXN exnInfo) = RC.EXN (toRCcon exnInfo)
+    | toRCExn (TC.EXEXN exExn) =  
+      RC.EXEXN (toRCEx exExn)
 
   (* this function collects all the variables free or bound.
      This is used to optimize variable pattern to wild pattern
@@ -88,10 +110,9 @@ local
             case tpexp  of
               TC.TPERROR => set
             | TC.TPCONSTANT {const,ty,loc} => set
-            | TC.TPGLOBALSYMBOL {name,kind,ty,loc} => set
-            | TC.TPVAR (varInfo,loc) => VarInfoSet.add(set, varInfo)
-            | TC.TPEXVAR (exVarInfo, loc) => set
-            | TC.TPRECFUNVAR {var, arity, loc} => VarInfoSet.add(set, var)
+            | TC.TPVAR varInfo => VarInfoSet.add(set, toRC varInfo)
+            | TC.TPEXVAR exVarInfo => set
+            | TC.TPRECFUNVAR {var, arity} => VarInfoSet.add(set, toRC var)
             | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} => get (bodyExp,set)
             | TC.TPAPPM {funExp, funTy, argExpList, loc} =>
               foldl get (get (funExp, set)) argExpList
@@ -119,16 +140,16 @@ local
             | TC.TPLET {decls, body, tys, loc} =>
               foldl get (foldl getDecl set decls) body
             | TC.TPRAISE {exp, ty, loc} => get(exp, set)
-            | TC.TPHANDLE {exp, exnVar, handler, loc} =>
+            | TC.TPHANDLE {exp, exnVar, handler, resultTy, loc} =>
               get(handler, get(exp, set))
             | TC.TPPOLYFNM {btvEnv, argVarList, bodyTy, bodyExp, loc} =>
               get(bodyExp, set)
             | TC.TPPOLY {btvEnv, expTyWithoutTAbs, exp, loc} => get(exp, set)
             | TC.TPTAPP {exp, expTy, instTyList, loc} => get(exp, set)
-            | TC.TPFFIIMPORT {ptrExp, ffiTy, stubTy, loc} => get(ptrExp, set)
-            | TC.TPCAST (tpexp, ty, loc) => get(tpexp, set)
+            | TC.TPFFIIMPORT {funExp=TC.TPFFIFUN ptrExp, ffiTy, stubTy, loc} => get(ptrExp, set)
+            | TC.TPFFIIMPORT {funExp=TC.TPFFIEXTERN _, ffiTy, stubTy, loc} => set
+            | TC.TPCAST ((tpexp, expTy), ty, loc) => get(tpexp, set)
             | TC.TPSIZEOF (ty, loc) => set
-            | TC.TPSQLSERVER {server, schema, resultTy, loc} => set
         and getDecl (decl, set) =
             case decl of
               TC.TPVAL (valIdTpexpList, loc) =>
@@ -156,16 +177,16 @@ local
                 set
                 varExpTyEexpList 
             | TC.TPEXD (exnconLocList, loc) => set
-            | TC.TPEXNTAGD ({varInfo,...},loc) => VarInfoSet.add(set, varInfo)
-            | TC.TPEXPORTVAR {internalVar, externalVar, loc} => 
-              VarInfoSet.add(set, internalVar) 
+            | TC.TPEXNTAGD ({varInfo,...},loc) => VarInfoSet.add(set, toRC varInfo)
+            | TC.TPEXPORTVAR varInfo => 
+              VarInfoSet.add(set, toRC varInfo) 
               (* this case never happen; but this is more correct *)
-            | TC.TPEXPORTRECFUNVAR {var, arity, loc} => 
-              VarInfoSet.add(set, var) 
+            | TC.TPEXPORTRECFUNVAR {var, arity} => 
+              VarInfoSet.add(set, toRC var) 
               (* this case never happen; but this is more correct *)
-            | TC.TPEXPORTEXN (exnInfo , loc) => set
-            | TC.TPEXTERNVAR (exVarInfo, loc) => set
-            | TC.TPEXTERNEXN (exExnInfo, loc) => set
+            | TC.TPEXPORTEXN exnInfo => set
+            | TC.TPEXTERNVAR exVarInfo => set
+            | TC.TPEXTERNEXN exExnInfo => set
       in
         get (tpexp, VarInfoSet.empty)
       end
@@ -214,10 +235,9 @@ in
         case tpexp of
           TC.TPERROR => limitCheck itemList (n + 1)
         | TC.TPCONSTANT {const, ty, loc} => limitCheck itemList (n + 1)
-        | TC.TPGLOBALSYMBOL _ => limitCheck itemList (n + 1)
-        | TC.TPVAR (varIdInfo,loc) => limitCheck itemList (n + 1)
-        | TC.TPEXVAR (exVarInfo, loc) => limitCheck itemList (n + 1)
-        | TC.TPRECFUNVAR {var, arity, loc} => limitCheck itemList (n + 1)
+        | TC.TPVAR varIdInfo => limitCheck itemList (n + 1)
+        | TC.TPEXVAR exVarInfo => limitCheck itemList (n + 1)
+        | TC.TPRECFUNVAR {var, arity} => limitCheck itemList (n + 1)
         | TC.TPFNM {argVarList=varIdInfoList, bodyTy, bodyExp, loc} => 
             limitCheck (Exp tpexp :: itemList) (n + 1)
         | TC.TPAPPM {funExp=tpexp1, funTy=ty, argExpList=tpexpList, loc} => 
@@ -291,7 +311,8 @@ in
           limitCheck ((map Decl decls) @ (map Exp body) @ itemList) (n + 1)
         | TC.TPRAISE {exp, ty, loc} =>
           limitCheck (Exp exp :: itemList) (n + 1)
-        | TC.TPHANDLE {exp=tpexp1,  exnVar=varIdInfo, handler=tpexp2, loc} =>
+        | TC.TPHANDLE {exp=tpexp1,  exnVar=varIdInfo, handler=tpexp2,
+                       resultTy, loc} =>
             limitCheck (Exp tpexp1 :: Exp tpexp2 :: itemList) (n + 1)
         | TC.TPPOLYFNM {btvEnv=btvKindIEnvMap, 
                       argVarList=varIdInfoList, 
@@ -309,15 +330,15 @@ in
             limitCheck (Exp tpexp :: itemList) (n + 1)
         | TC.TPFFIIMPORT
             {
-             ptrExp=tpexp1, 
+             funExp=TC.TPFFIFUN tpexp1, 
              ...
             } => 
             limitCheck (Exp tpexp1 :: itemList) (n + 1)
+        | TC.TPFFIIMPORT {funExp=TC.TPFFIEXTERN _, ...} =>
+          limitCheck itemList (n + 1)
         | TC.TPSIZEOF _ => limitCheck itemList (n + 1)
-        | TC.TPCAST (tpexp, ty, loc) =>
+        | TC.TPCAST ((tpexp, expTy), ty, loc) =>
           limitCheck (Exp tpexp :: itemList) (n + 1)
-        | TC.TPSQLSERVER {server, schema, resultTy, loc} =>
-            limitCheck itemList (n + 1)
 
 
       and limitCheckDecl tfpdecl itemList n = 
@@ -338,11 +359,11 @@ in
              @ itemList) (n + 1)
         | TC.TPEXD (exnconLocList, loc) => limitCheck itemList (n + 1)
         | TC.TPEXNTAGD (bind, loc) => limitCheck itemList (n + 1)
-        | TC.TPEXPORTVAR {internalVar, externalVar, loc} => limitCheck itemList (n + 1)
-        | TC.TPEXPORTRECFUNVAR {var, arity, loc} => limitCheck itemList (n + 1)
-        | TC.TPEXPORTEXN (exnInfo , loc) => limitCheck itemList (n + 1)
-        | TC.TPEXTERNVAR (exVarInfo, loc) => limitCheck itemList (n + 1)
-        | TC.TPEXTERNEXN (exExnInfo, loc) => limitCheck itemList (n + 1)
+        | TC.TPEXPORTVAR varInfo => limitCheck itemList (n + 1)
+        | TC.TPEXPORTRECFUNVAR {var, arity} => limitCheck itemList (n + 1)
+        | TC.TPEXPORTEXN exnInfo => limitCheck itemList (n + 1)
+        | TC.TPEXTERNVAR exVarInfo => limitCheck itemList (n + 1)
+        | TC.TPEXTERNEXN exExnInfo => limitCheck itemList (n + 1)
     in
       limitCheck [(Exp tpexp)] 0
     end
@@ -370,7 +391,7 @@ in
     end
 
   fun getFieldsOfTy (btvEnv : T.btvEnv) ty =
-      case TU.derefTy ty of
+      case TB.derefTy ty of
         T.RECORDty fields => fields
       | T.TYVARty(ref(T.TVAR{tvarKind = T.REC fields, ...})) => fields
       | T.BOUNDVARty index =>
@@ -378,21 +399,21 @@ in
            SOME{tvarKind = T.REC fields, ...} => fields
          | _ =>
            raise
-             C.Bug
+             Bug.Bug
              ("getFieldsOfTy found invalid BTV("
               ^ BoundTypeVarID.toString index ^ ")"))
       | ty =>
         raise
-          C.Bug
+          Bug.Bug
               ("getFieldsOfTy found unexpected:"
                ^ T.tyToString ty)
 
   fun getTagNums {ty, path, id} = 
       let
         val tyCon = 
-            case TU.derefTy ty of
+            case TB.derefTy ty of
               T.FUNMty(args, ty) =>
-              (case TU.derefTy ty of
+              (case TB.derefTy ty of
                  T.CONSTRUCTty{tyCon, ...} => tyCon
                | _ => 
                  (print "getTagNums\n";
@@ -402,9 +423,9 @@ in
                  )
               )
             | T.POLYty{body,...} =>
-              (case TU.derefTy body of
+              (case TB.derefTy body of
                  T.FUNMty(args, ty) =>
-                 (case TU.derefTy ty of
+                 (case TB.derefTy ty of
                     T.CONSTRUCTty{tyCon, ...} => tyCon
                   | _ => 
                     (print "getTagNums\n";
@@ -430,7 +451,7 @@ in
               )
       in
         case SEnv.listItems (#conSet tyCon) of
-          nil => raise Control.Bug "NON span field in userdefined type"
+          nil => raise Bug.Bug "NON span field in userdefined type"
         | L => List.length L
       end
 
@@ -442,7 +463,7 @@ in
       | (ExnConNode (path, _, _)) => path
       | (RecNode (path, _, _)) => path
       | (UnivNode (path, _)) => path
-      | _ => raise C.Bug "match comp, getPath bug"
+      | _ => raise Bug.Bug "match comp, getPath bug"
 
   (* ADDED for type preservation *)
   fun getTyInPat pat =
@@ -472,7 +493,7 @@ in
       case IEnv.find(branchEnv, branchId) of
         SOME {useCount, ...} => useCount := !useCount + 1
       | NONE =>
-        raise C.Bug "incrementUseCount in MatchCompiler: BranchId not found"
+        raise Bug.Bug "incrementUseCount in MatchCompiler: BranchId not found"
 
   fun canInlineBranch ({isSmall, useCount, ...} : branchData) =
       (!C.doInlineCaseBranch)
@@ -585,18 +606,18 @@ in
       case tppat of
         TC.TPPATERROR (ty, loc) => WildPat ty
       | TC.TPPATWILD (ty, _) => WildPat ty
-      | TC.TPPATVAR (x, _) =>
-        if VarInfoSet.member (FV, x) then VarPat x else WildPat (#ty x)
+      | TC.TPPATVAR x =>
+        if VarInfoSet.member (FV, toRC x) then VarPat (toRC x) else WildPat (#ty x)
       | TC.TPPATCONSTANT (A.UNITCONST _, ty, _) => WildPat ty
       | TC.TPPATCONSTANT (con, ty, _) => ConstPat (con, ty)
       | TC.TPPATDATACONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, ...} =>
-        DataConPat (conPat, false, WildPat BT.unitTy, ty)
+        DataConPat (toRCcon conPat, false, WildPat BT.unitTy, ty)
       | TC.TPPATDATACONSTRUCT{conPat,argPatOpt = SOME argPat,patTy=ty,...}=>
-        DataConPat (conPat, true, tppatToPat btvEnv FV argPat, ty)
+        DataConPat (toRCcon conPat, true, tppatToPat btvEnv FV argPat, ty)
       | TC.TPPATEXNCONSTRUCT {exnPat, argPatOpt=NONE, patTy=ty, ...} =>
-        ExnConPat (exnPat, false, WildPat BT.unitTy, ty)
+        ExnConPat (toRCExn exnPat, false, WildPat BT.unitTy, ty)
       | TC.TPPATEXNCONSTRUCT {exnPat,argPatOpt = SOME argPat,patTy=ty,...} =>
-        ExnConPat (exnPat, true, tppatToPat btvEnv FV argPat, ty)
+        ExnConPat (toRCExn exnPat, true, tppatToPat btvEnv FV argPat, ty)
       | TC.TPPATRECORD {fields=patRows, recordTy=ty,...} =>
         let
           (*  The match compilation algorithm assumes that every record
@@ -676,7 +697,7 @@ in
   		  (ConstMap.map (fn REs => RE :: REs) branches,
                    RE :: defBranch)
   		end
-  	      | _ => raise C.Bug "match comp, in makeEqTree")
+  	      | _ => raise Bug.Bug "match comp, in makeEqTree")
   	    (ConstMap.empty, [])
   	    REs
         in
@@ -686,7 +707,7 @@ in
   		 matchToTree branchEnv paths defBranch
   	       )
         end
-      | makeEqTree _  _ _ = raise C.Bug "match comp, makeEqTree"
+      | makeEqTree _  _ _ = raise Bug.Bug "match comp, makeEqTree"
   
     and makeDataConTree branchEnv spans (path :: paths) REs =
         let
@@ -722,11 +743,11 @@ in
   		  DataConMap.map
   		    (fn (REs as ((pat ++ _, _) :: _)) => 
   		        (WildPat (getTyInPat pat) ++ rule, env) :: REs
-  		      | _ => raise C.Bug "match comp, in makeTagTree")
+  		      | _ => raise Bug.Bug "match comp, in makeTagTree")
   		    branches,
   		  (rule, env) :: defBranch
   		 )
-  	       | _ => raise C.Bug "match comp, in makeTagTree")
+  	       | _ => raise Bug.Bug "match comp, in makeTagTree")
   	        (DataConMap.empty, [])
   	        REs
         in
@@ -740,14 +761,14 @@ in
   		     (freshVarWithPath
                         (getTyInPat pat, getPathInPat pat) :: paths)
   		     REs
-  		 | _ => raise C.Bug "match comp, in makeTagTree")
+  		 | _ => raise Bug.Bug "match comp, in makeTagTree")
   	       branches,
   	     if DataConMap.numItems branches = spans
   	     then EmptyNode
   	     else matchToTree branchEnv paths defBranch
   	    )
         end
-      | makeDataConTree _  _ _ _ = raise C.Bug "match comp, makeTagTree"
+      | makeDataConTree _  _ _ _ = raise Bug.Bug "match comp, makeTagTree"
   
     and makeExnConTree branchEnv (path :: paths) REs =
         let
@@ -783,11 +804,11 @@ in
   		  ExnConMap.map
   		    (fn (REs as ((pat ++ _, _) :: _)) => 
   		        (WildPat (getTyInPat pat) ++ rule, env) :: REs
-  		      | _ => raise C.Bug "match comp, in makeTagTree")
+  		      | _ => raise Bug.Bug "match comp, in makeTagTree")
   		    branches,
   		  (rule, env) :: defBranch
   		 )
-  	       | _ => raise C.Bug "match comp, in makeTagTree")
+  	       | _ => raise Bug.Bug "match comp, in makeTagTree")
   	        (ExnConMap.empty, [])
   	        REs
         in
@@ -801,7 +822,7 @@ in
   		     (freshVarWithPath
                         (getTyInPat pat, getPathInPat pat) :: paths)
   		     REs
-  		 | _ => raise C.Bug "match comp, in makeTagTree")
+  		 | _ => raise Bug.Bug "match comp, in makeTagTree")
   	       branches,
 (*
   The case of exn, spans is infinite, so if branch will never happen.
@@ -812,7 +833,7 @@ in
               matchToTree branchEnv paths defBranch
    	    )
         end
-      | makeExnConTree _ _ _ = raise C.Bug "match comp, makeTagTree"
+      | makeExnConTree _ _ _ = raise Bug.Bug "match comp, makeTagTree"
 
     (*
      * Because unit type has only one value (), pattern match on unit type
@@ -833,10 +854,10 @@ in
   	     (map
   	        (fn (RecPat ([(_, pat)], _) ++ rule, env) => (pat ++ rule, env)
   	          | (WildPat _ ++ rule, env) => (WildPat fieldTy ++ rule, env)
-  	          | _ => raise C.Bug "match comp, in makeNRecTree")
+  	          | _ => raise Bug.Bug "match comp, in makeNRecTree")
   	        REs)
   	  )
-      | makeNRecTree _ _ _ _ = raise C.Bug "match comp, makeNRecTree"
+      | makeNRecTree _ _ _ _ = raise Bug.Bug "match comp, makeNRecTree"
   
     and makeIRecTree
           branchEnv
@@ -855,10 +876,10 @@ in
   		    (pat ++ RecPat (fields, ty) ++ rule, env)
   	          | (WildPat _ ++ rule, env) =>
   		    (WildPat fieldTy ++ WildPat recordTy ++ rule, env)
-  		  | _ => raise C.Bug "match comp, in makeIRecTree")
+  		  | _ => raise Bug.Bug "match comp, in makeIRecTree")
   		REs)
   	  )
-      | makeIRecTree _ _ _ _ = raise C.Bug "match comp, makeIRecTree"
+      | makeIRecTree _ _ _ _ = raise Bug.Bug "match comp, makeIRecTree"
   	
     and makeUnivTree branchEnv (path :: paths) REs = 
         UnivNode
@@ -868,10 +889,10 @@ in
              branchEnv 
   	     paths 
   	     (map (fn (pat ++ rule, env) => (rule, env) 
-  		    | _ => raise C.Bug "makeUnivTree") 
+  		    | _ => raise Bug.Bug "makeUnivTree") 
   		  REs)
   	  )
-      | makeUnivTree _  _ _ = raise C.Bug "match comp, makeUnivTree"
+      | makeUnivTree _  _ _ = raise Bug.Bug "match comp, makeUnivTree"
   
     and decideRootNode branchEnv ruleList =
         case ruleList of
@@ -894,7 +915,7 @@ in
           makeIRecTree
             branchEnv
             (recTy, label, getTyInPat pat, getPathInPat pat)
-        | _ => raise C.Bug "match comp, decideRootNode"
+        | _ => raise Bug.Bug "match comp, decideRootNode"
 
     and matchToTree branchEnv _ [] =
         (ME.setFlag ME.NotExhaustive; EmptyNode )
@@ -921,7 +942,7 @@ in
 *)
 	fun getTagNums (tyCon : Types.tyCon) = 
             case SEnv.listItems (#conSet tyCon) of
-              nil =>  raise Control.Bug "NON span field in userdefined type"
+              nil =>  raise Bug.Bug "NON span field in userdefined type"
             | L => List.length L
               
 	fun toExp EmptyNode = (VarInfoSet.empty, failureExp)
@@ -942,7 +963,7 @@ in
                 = 
                 case IEnv.find(branchEnv, branchId) of
                   SOME branchData => branchData
-                | NONE => raise C.Bug "MatchCompiler toExp: undefined branchId"
+                | NONE => raise Bug.Bug "MatchCompiler toExp: undefined branchId"
             in
               (
 		VarInfoEnv.foldl VarInfoSet.add' VarInfoSet.empty env,
@@ -954,8 +975,7 @@ in
                            {
                             funExp=
                               RC.RCVAR
-                              (makeVar(funVarId, funVarPath, valOf (!funTy)),
-                               funLoc),
+                              (makeVar(funVarId, funVarPath, valOf (!funTy))),
                             funTy=valOf (!funTy), 
                             argExpList=[unitExp], 
                             loc=loc
@@ -968,10 +988,10 @@ in
                             map
                               (fn x => 
                                   case VarInfoEnv.find (env, x) of
-                                    SOME v => RC.RCVAR (v, loc)
+                                    SOME v => RC.RCVAR v
                                   | _ =>
                                     raise
-                                      C.Bug
+                                      Bug.Bug
                                         "match comp, treeToExp, \
                                         \leaf node for fun")
                               funArgs
@@ -980,8 +1000,7 @@ in
                           {
                            funExp =
                            RC.RCVAR
-                             (makeVar(funVarId, funVarPath, valOf (!funTy)),
-                              funLoc),
+                             (makeVar(funVarId, funVarPath, valOf (!funTy))),
                            funTy = valOf(!funTy), 
                            argExpList = funArgs,
                            loc=funLoc
@@ -998,10 +1017,10 @@ in
                                   funTy = T.FUNMty([ty1], ty2),
                                   argExpList =
                                   case VarInfoEnv.find (env, arg) of
-                                    SOME v => [RC.RCVAR (v, loc)]
+                                    SOME v => [RC.RCVAR v]
                                   | _ =>
                                     raise
-                                      C.Bug
+                                      Bug.Bug
                                         "match comp, treeToExp,\
                                         \ leaf node for fun",
                                   loc=loc
@@ -1009,15 +1028,14 @@ in
                               )
                             | _ =>
                               raise
-                                C.Bug "match comp, treeToExp,\
+                                Bug.Bug "match comp, treeToExp,\
                                       \ leaf node for fun"
                            )
                           (valOf (!funTy),
                            RC.RCVAR
-                             (makeVar(funVarId, funVarPath, valOf (!funTy)),
-                              funLoc))
-                          funArgs
-                       )
+                             (makeVar(funVarId, funVarPath, valOf (!funTy))))
+                           funArgs
+                          )
               )
             end
 	  | toExp (EqNode (path as {ty= pty,...}, branches, defBranch)) = 
@@ -1038,10 +1056,11 @@ in
 	        VarInfoSet.add (VarInfoSet.union (vars, defVars), path), 
 		RC.RCSWITCH 
                  {
-                  switchExp = RC.RCVAR (path, loc), 
+                  switchExp = RC.RCVAR path, 
                   expTy = pty, 
                   branches = branches, 
                   defaultExp = defBranch, 
+                  resultTy = resultTy,
                   loc=loc
                   }
 	      )
@@ -1052,11 +1071,11 @@ in
                             defBranch)) = 
 	    let
 	      val tyCon = 
-                case (TU.derefTy pty) of 
+                case (TB.derefTy pty) of 
                   T.CONSTRUCTty {tyCon, ...} => tyCon
                 | _ => 
                   raise 
-                    Control.Bug 
+                    Bug.Bug 
                     "non tyCon in TagNode (1)\
                     \ (matchcompilation/main/MatchCompiler.sml)"
 	      val branchNums = DataConMap.numItems branches
@@ -1094,10 +1113,11 @@ in
 	      ( 
 	        VarInfoSet.add (VarInfoSet.union (vars, defVars), varInfo), 
 		RC.RCCASE
-                  {exp = RC.RCVAR (varInfo, loc), 
+                  {exp = RC.RCVAR varInfo, 
                    expTy = pty, 
                    ruleList=branches, 
                    defaultExp = defBranch, 
+                   resultTy = resultTy,
                    loc= loc
                    }
 	      )
@@ -1105,11 +1125,11 @@ in
 	  | toExp (ExnConNode (var as {ty,...}, branches, defBranch)) = 
 	    let
 	      val tyCon = 
-                  case TU.derefTy ty of 
+                  case TB.derefTy ty of 
                     T.CONSTRUCTty {tyCon, ...} => tyCon
                   | _ => 
                     raise 
-                      Control.Bug 
+                      Bug.Bug 
                         "non tyCon in TagNode (2)\
                         \ (matchcompilation/main/MatchCompiler.sml)"
 	      val branchNums = ExnConMap.numItems branches
@@ -1142,10 +1162,11 @@ in
 	      ( 
 	        VarInfoSet.add (VarInfoSet.union (vars, defVars), var), 
 		RC.RCEXNCASE
-                  {exp = RC.RCVAR (var, loc), 
+                  {exp = RC.RCVAR var, 
                    expTy = ty, 
                    ruleList=branches, 
                    defaultExp = defBranch, 
+                   resultTy = resultTy,
                    loc= loc
                    }
 	      )
@@ -1164,7 +1185,7 @@ in
 		  { 
 		    binds = [(pi, 
                               RC.RCSELECT 
-                              {exp = RC.RCVAR (path, loc), 
+                              {exp = RC.RCVAR path, 
                                indexExp = RC.RCINDEXOF (label, #ty path, loc),
                                label = label,
                                expTy = #ty path, 
@@ -1178,7 +1199,7 @@ in
 	    end
 	  | toExp (UnivNode (path, child)) = toExp child
 (*
-	  | toExp _ = raise C.Bug "match comp, treeToRcexp bug"
+	  | toExp _ = raise Bug.Bug "match comp, treeToRcexp bug"
 *)
         val result = #2 (toExp tree)
       in
@@ -1190,19 +1211,18 @@ in
         TC.TPERROR => raise bug "TPERROR"
       | TC.TPCONSTANT {const,ty,loc} =>
         RC.RCCONSTANT {const=const,ty=ty,loc=loc}
-      | TC.TPGLOBALSYMBOL {name, kind, ty, loc} =>
-        RC.RCGLOBALSYMBOL {name=name, kind=kind, ty=ty, loc=loc}
-      | TC.TPVAR (var, loc) => 
-        (case (VarInfoEnv.find (varEnv, var)) of
-           SOME v => RC.RCVAR(v, loc)
-         | NONE => RC.RCVAR (var, loc))
-      | TC.TPEXVAR (exVarInfo, loc) => RC.RCEXVAR (exVarInfo, loc)
-      | TC.TPRECFUNVAR {var, arity, loc} =>
+      | TC.TPVAR var => 
+        (case (VarInfoEnv.find (varEnv, toRC var)) of
+           SOME v => RC.RCVAR v
+         | NONE => RC.RCVAR (toRC var)
+        )
+      | TC.TPEXVAR exVarInfo => RC.RCEXVAR (toRCEx exVarInfo)
+      | TC.TPRECFUNVAR {var, arity} =>
         raise bug "RECFUNVAR should be eliminated"
       | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} =>
         RC.RCFNM 
           {
-           argVarList= argVarList,
+           argVarList= map toRC argVarList,
            bodyTy=bodyTy,
            bodyExp=tpexpToRcexp varEnv btvEnv bodyExp, 
            loc=loc
@@ -1218,7 +1238,7 @@ in
       | TC.TPDATACONSTRUCT {con, instTyList=tys, argExpOpt, argTyOpt, loc} => 
         RC.RCDATACONSTRUCT
           {
-           con=con, 
+           con= toRCcon con, 
            instTyList=tys, 
            argExpOpt =
            case argExpOpt of
@@ -1230,7 +1250,7 @@ in
       | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt, argTyOpt, loc} =>
         RC.RCEXNCONSTRUCT
           {
-           exn=exn, 
+           exn= toRCExn exn, 
            instTyList=instTyList,
            argExpOpt =
            case argExpOpt of
@@ -1239,19 +1259,19 @@ in
            loc=loc
           }
       | TC.TPEXN_CONSTRUCTOR {exnInfo,loc} =>
-        RC.RCEXN_CONSTRUCTOR {exnInfo = exnInfo,loc=loc}
+        RC.RCEXN_CONSTRUCTOR {exnInfo = toRCcon exnInfo,loc=loc}
       | TC.TPEXEXN_CONSTRUCTOR {exExnInfo,loc} =>
-        RC.RCEXEXN_CONSTRUCTOR {exExnInfo = exExnInfo,loc=loc}
+        RC.RCEXEXN_CONSTRUCTOR {exExnInfo = toRCEx exExnInfo,loc=loc}
       | TC.TPCASEM {expList, expTyList, ruleList, ruleBodyTy, caseKind, loc} =>
 	 let
 	   val (topVarList, topBinds) = 
                foldr
                  (fn ((exp, ty1), (topVarList, topBinds))
                      => case exp of 
-                          TC.TPVAR (var, _) => 
-                          (case (VarInfoEnv.find (varEnv, var)) of
+                          TC.TPVAR var => 
+                          (case (VarInfoEnv.find (varEnv, toRC var)) of
                              SOME v => (v::topVarList, topBinds)
-                           | NONE => (var::topVarList, topBinds)
+                           | NONE => (toRC var::topVarList, topBinds)
                           )
                         | _ => 
                           let
@@ -1274,7 +1294,7 @@ in
                        [v] => (Handle v)
                      | _ =>
                        raise
-                         Control.Bug "non single var in casem for handler"
+                         Bug.Bug "non single var in casem for handler"
                      )
 	   val tpPatListTpexpUseCountList = 
                 map (fn tpRule  => (tpRule, ref 0)) ruleList
@@ -1369,7 +1389,7 @@ in
       | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, argTy, loc} =>
         RC.RCOPRIMAPPLY 
           {
-           oprimOp=oprimOp,
+           oprimOp=toRCcon oprimOp,
            instTyList=instTyList,
            argExp=tpexpToRcexp varEnv btvEnv argExp,
            loc=loc
@@ -1419,7 +1439,7 @@ in
 	RC.RCMONOLET
           {
            binds=
-             map (fn (v, e) =>(v, tpexpToRcexp varEnv btvEnv e)) binds,
+             map (fn (v, e) =>(toRC v, tpexpToRcexp varEnv btvEnv e)) binds,
 	   bodyExp=tpexpToRcexp varEnv btvEnv bodyExp,
            loc=loc
           }
@@ -1433,12 +1453,13 @@ in
 
       | TC.TPRAISE {exp, ty, loc} =>
         RC.RCRAISE {exp=tpexpToRcexp varEnv btvEnv exp, ty=ty, loc=loc}
-      | TC.TPHANDLE {exp=exp1, exnVar, handler=exp2, loc} => 
+      | TC.TPHANDLE {exp=exp1, exnVar, handler=exp2, resultTy, loc} => 
 	RC.RCHANDLE
           {
            exp=tpexpToRcexp varEnv btvEnv exp1, 
-           exnVar= exnVar, 
+           exnVar= toRC exnVar, 
            handler=tpexpToRcexp varEnv btvEnv exp2, 
+           resultTy = resultTy,
            loc=loc
           }
       | TC.TPPOLYFNM
@@ -1450,7 +1471,7 @@ in
         RC.RCPOLYFNM
           {
            btvEnv=localBtvEnv, 
-           argVarList= varList, 
+           argVarList= map toRC varList, 
            bodyTy=ty, 
            bodyExp=
              tpexpToRcexp varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp, 
@@ -1472,39 +1493,40 @@ in
             instTyList=tys, 
             loc=loc
            }
-      | TC.TPFFIIMPORT {ptrExp=tpexp1, ffiTy, stubTy, loc} =>
+      | TC.TPFFIIMPORT {funExp, ffiTy, stubTy, loc} =>
         let
-          val rcexp1 = tpexpToRcexp varEnv btvEnv tpexp1
+          val funExp =
+              case funExp of
+                TC.TPFFIFUN tpexp1 =>
+                RC.RCFFIFUN (tpexpToRcexp varEnv btvEnv tpexp1)
+              | TC.TPFFIEXTERN s => RC.RCFFIEXTERN s
         in
-          RC.RCFFI (RC.RCFFIIMPORT {ptrExp=rcexp1, ffiTy=ffiTy}, stubTy, loc)
+          RC.RCFFI (RC.RCFFIIMPORT {funExp=funExp, ffiTy=ffiTy}, stubTy, loc)
         end
       | TC.TPSIZEOF (ty, loc) => RC.RCSIZEOF (ty, loc)
-      | TC.TPCAST (exp, ty, loc) =>
-         RC.RCCAST(tpexpToRcexp varEnv btvEnv exp, ty, loc)
-      | TC.TPSQLSERVER {server, schema, resultTy, loc} =>
-        RC.RCSQL
-          (RC.RCSQLSERVER {server = server, schema = schema}, resultTy, loc)
+      | TC.TPCAST ((exp, expTy), ty, loc) =>
+         RC.RCCAST((tpexpToRcexp varEnv btvEnv exp, expTy), ty, loc)
 
   and tpdecToRcdec varEnv btvEnv tpdec = 
       case tpdec of
         TC.TPVAL (binds, loc) =>
         let
           fun toRcbind (var, exp) = 
-              (var, tpexpToRcexp varEnv btvEnv exp)
+              (toRC var, tpexpToRcexp varEnv btvEnv exp)
         in
 	  RC.RCVAL (map toRcbind binds, loc)
         end
        | TC.TPVALREC (binds, loc) =>
          let
            fun toRcbind {var, expTy, exp} = 
-             {var=var, expTy=expTy, exp = tpexpToRcexp varEnv btvEnv exp}
+             {var=toRC var, expTy=expTy, exp = tpexpToRcexp varEnv btvEnv exp}
          in
 	   RC.RCVALREC (map toRcbind binds, loc)
          end
        | TC.TPVALPOLYREC (localBtvEnv, binds, loc) =>
          let
            fun toRcbind {var, expTy, exp} =
-               {var=var,
+               {var=toRC var,
                 expTy = expTy,
                 exp = tpexpToRcexp
                         varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp}
@@ -1515,17 +1537,24 @@ in
          raise bug "TPFUNDECL should be eliminated"
        | TC.TPPOLYFUNDECL (btvEnv, funbinds, loc) =>
          raise bug "TPPOLYFUNDECL: FIXME: not yet"
-       | TC.TPEXD (binds, loc) => RC.RCEXD (binds, loc)
-       | TC.TPEXNTAGD (bind, loc) => RC.RCEXNTAGD (bind, loc)
-       | TC.TPEXPORTVAR {internalVar, externalVar, loc} =>
+       | TC.TPEXD (binds, loc) => 
+         RC.RCEXD (map 
+                     (fn {exnInfo, loc} => 
+                         {exnInfo = toRCcon exnInfo, loc = loc}
+                     )
+                     binds, 
+                   loc)
+       | TC.TPEXNTAGD ({exnInfo, varInfo}, loc) => 
+         RC.RCEXNTAGD ({exnInfo=toRCcon exnInfo, varInfo = toRC varInfo}, loc)
+       | TC.TPEXPORTVAR varInfo =>
 (*
          RC.RCEXPORTVAR ({id=id, path=path, ty=ty}, loc)
 *)
-         RC.RCEXPORTVAR {internalVar=internalVar, externalVar=externalVar,loc=loc}
+         RC.RCEXPORTVAR (toRC varInfo)
        | TC.TPEXPORTRECFUNVAR _ => raise bug "TPEXPORTRECFUNVAR to matchcompiler"
-       | TC.TPEXPORTEXN (exnInfo, loc) => RC.RCEXPORTEXN (exnInfo, loc)
-       | TC.TPEXTERNVAR (exVarInfo, loc) => RC.RCEXTERNVAR (exVarInfo, loc)
-       | TC.TPEXTERNEXN (exExnInfo, loc) => RC.RCEXTERNEXN (exExnInfo, loc)
+       | TC.TPEXPORTEXN exnInfo => RC.RCEXPORTEXN (toRCcon exnInfo)
+       | TC.TPEXTERNVAR exVarInfo => RC.RCEXTERNVAR (toRCEx exVarInfo)
+       | TC.TPEXTERNEXN exExnInfo => RC.RCEXTERNEXN (toRCEx exExnInfo)
 
   fun compile tpdecls =
       let

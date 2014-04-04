@@ -1,21 +1,21 @@
 (**
  * String converter structure.
+ * @author UENO Katsuhiro
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
- * @version $Id: StringCvt.sml,v 1.7 2005/04/28 16:35:32 kiyoshiy Exp $
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "StringCvt.smi"
 
-structure StringCvt :> STRING_CVT =
+infix 6 + - ^
+infixr 5 ::
+infix 4 = <> > >= < <=
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op >= = SMLSharp_Builtin.Int.gteq
+structure Array = SMLSharp_Builtin.Array
+structure String = SMLSharp_Builtin.String
+
+structure StringCvt =
 struct
-
-  infix 6 + - ^
-  infixr 5 ::
-  infix 4 = <> > >= < <=
-
-  val op - = SMLSharp.Int.sub
-  val op >= = SMLSharp.Int.gteq
-  val op + = SMLSharp.Int.add
 
   datatype radix = BIN | OCT | DEC | HEX
   datatype realfmt =
@@ -25,57 +25,61 @@ struct
          | EXACT
   type ('a, 'b) reader = 'b -> ('a * 'b) option
 
-  fun fill (buf, beg, last, ch) =
+  fun fill (buf, beg, last, ch : char) =
       let
         fun loop i =
             if i >= last then ()
-            else (SMLSharp.PrimString.update_unsafe (buf, i, ch); loop (i + 1))
+            else (Array.update_unsafe (buf, i, ch); loop (i + 1))
       in
         loop beg
       end
 
   fun padLeft padChar width string =
       let
-        val len = SMLSharp.PrimString.size string
+        val len = String.size string
       in
         if len >= width then string else
         let
-          val buf = SMLSharp.PrimString.allocVector width
+          val buf = String.alloc_unsafe width
+          val padlen = width - len
         in
-          fill (buf, 0, width - len, padChar);
-          SMLSharp.PrimString.copy_unsafe (string, 0, buf, width - len, len);
+          fill (String.castToArray buf, 0, padlen, padChar);
+          Array.copy_unsafe (String.castToArray string, 0,
+                             String.castToArray buf, padlen, len);
           buf
         end
       end
 
   fun padRight padChar width string =
       let
-        val len = SMLSharp.PrimString.size string
+        val len = String.size string
       in
         if len >= width then string else
         let
-          val buf = SMLSharp.PrimString.allocVector width
+          val buf = String.alloc_unsafe width
         in
-          SMLSharp.PrimString.copy_unsafe (string, 0, buf, 0, len);
-          fill (buf, len, width, padChar);
+          Array.copy_unsafe (String.castToArray string, 0,
+                             String.castToArray buf, 0, len);
+          fill (String.castToArray buf, len, width, padChar);
           buf
         end
       end
 
   fun splitl predicate reader source =
       let
-        fun scan source n prefix =
+        fun scan (source, n, prefix) =
             case reader source of
               NONE => (n, prefix, source)
             | SOME (char, source') =>
               if predicate char
-              then scan source' (n+1) (char :: prefix)
+              then scan (source', n+1, char :: prefix)
               else (n, prefix, source)
-        val (len, chars, source') = scan source 0 []
-        val buf = SMLSharp.PrimString.allocVector len
+        val (len, chars, source') = scan (source, 0, [])
+        val buf = String.alloc_unsafe len
         fun loop (i, nil) = ()
           | loop (i, h::t) =
-            (SMLSharp.PrimString.update_unsafe (buf, i, h); loop (i - 1, t))
+            (Array.update_unsafe (String.castToArray buf, i, h);
+             loop (i - 1, t))
         val _ = loop (len - 1, chars)
       in
         (buf, source')
@@ -106,10 +110,10 @@ struct
 
   fun scanString readerConverter string =
       let
-        val stringSize = SMLSharp.PrimString.size string
+        val stringSize = String.size string
         fun reader index =
             if index >= stringSize then NONE
-            else SOME (SMLSharp.PrimString.sub_unsafe (string, index),
+            else SOME (Array.sub_unsafe (String.castToArray string, index),
                        index + 1)
       in
         case readerConverter reader 0 of

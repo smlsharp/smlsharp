@@ -1,0 +1,46 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "smlnj-lib/Util/binary-set-fn.smi"
+_require "smlnj-lib/Util/binary-map-fn.smi"
+_require "../../control/main/Loc.ppg.smi"
+
+structure Symbol =
+struct
+  type symbol (= boxed)
+  type longsymbol = symbol list
+  val symbolToString : symbol -> string
+  val symbolToLoc : symbol -> Loc.loc
+  val longsymbolToString : longsymbol -> string
+  val longsymbolToLoc : longsymbol -> Loc.loc
+  val longsymbolToLastLoc : longsymbol -> Loc.loc
+  val longsymbolToLongid : longsymbol -> string list
+  val mkSymbol : string ->  Loc.loc -> symbol
+  val mkLongsymbol : string list -> Loc.loc -> longsymbol
+  val setVersion : longsymbol * int option -> longsymbol
+  val symbolCompare : symbol * symbol -> order
+  val longsymbolCompare : longsymbol * longsymbol -> order
+  val eqSymbol : symbol * symbol -> bool
+  val eqLongsymbol : longsymbol * longsymbol -> bool
+  val format_symbol : symbol -> SMLFormat.FormatExpression.expression list
+  val format_longsymbol : longsymbol -> SMLFormat.FormatExpression.expression list
+  val replaceLocSymbol : Loc.loc -> symbol -> symbol
+  val replaceLocLongsymbol : Loc.loc -> longsymbol -> longsymbol
+  val prefixPath : longsymbol * symbol -> longsymbol
+  val concatPath : longsymbol * longsymbol -> longsymbol
+end
+
+structure SymbolOrd =
+struct
+  type ord_key = Symbol.symbol
+  val compare : Symbol.symbol * Symbol.symbol -> order
+end
+structure SymbolEnv = BinaryMapFn(SymbolOrd)
+structure SymbolSet = BinarySetFn(SymbolOrd)
+structure LongsymbolOrd = 
+struct
+  type ord_key = Symbol.symbol list
+  val compare : Symbol.longsymbol * Symbol.longsymbol -> order
+end
+
+structure LongsymbolEnv = BinaryMapFn(LongsymbolOrd)
+structure LongsymbolSet = BinarySetFn(LongsymbolOrd)

@@ -1,0 +1,11 @@
+_require "basis.smi"
+
+structure GetParam =
+struct
+  exception EOF
+  val initParam : string list * string list -> unit
+  val getParam : string -> string
+  val getIParam : string -> int
+  val getRParam : string -> real
+  val getBParam : string -> bool
+end

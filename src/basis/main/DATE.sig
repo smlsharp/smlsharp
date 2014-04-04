@@ -1,7 +1,3 @@
-include "General.smi"
-include "StringCvt.smi"
-include "Time.smi"
-
 signature DATE =
 sig
   datatype weekday = Mon | Tue | Wed | Thu | Fri | Sat | Sun

@@ -1,6 +1,6 @@
 /*
- * frame.c
- * @copyright (c) 2007-2010, Tohoku University.
+ * control.c
+ * @copyright (c) 2007-2014, Tohoku University.
  * @author UENO Katsuhiro
  */
 
@@ -13,222 +13,174 @@
 #endif /* MULTITHREAD */
 #include "smlsharp.h"
 #include "object.h"
-#include "frame.h"
 #include "objspace.h"
 #include "heap.h"
-#include "control.h"
+#include "splay.h"
 
-struct sml_control {
-	void *frame_stack_top;
-	void *frame_stack_bottom;
-	void *current_handler;
-	void *heap;
-	enum {RUNNING, SUSPENDED, STOPPED_BY_STW} state;
-	jmp_buf *exn_jmpbuf;          /* longjmp if uncaught exception error */
-	sml_obstack_t *tmp_root;      /* temporary root slots of GC. */
-	struct sml_control *prev, *next;  /* for double-linked list */
-#ifdef DEBUG
-	const char *giant_lock_at;    /* request GIANT_LOCK here. */
-#endif /* DEBUG */
+#ifdef MULTITHREAD
+#define MUTEX_LOCK(m) do { \
+	int err ATTR_UNUSED = pthread_mutex_lock(m); \
+	ASSERT(err == 0); \
+} while (0)
+#define MUTEX_UNLOCK(m) do { \
+	int err ATTR_UNUSED = pthread_mutex_unlock(m); \
+	ASSERT(err == 0); \
+} while (0)
+#define COND_WAIT_WHILE(exp, c, m) do {	\
+	while (exp) { \
+		int err ATTR_UNUSED = pthread_cond_wait(c, m);	\
+		ASSERT(err == 0); \
+	} \
+} while (0)
+#define COND_BROADCAST(c) do { \
+	int err ATTR_UNUSED = pthread_cond_broadcast(c); \
+	ASSERT(err == 0); \
+} while (0)
+#define COND_SIGNAL(c) do { \
+	int err ATTR_UNUSED = pthread_cond_signal(c); \
+	ASSERT(err == 0); \
+} while (0)
+#else
+#define MUTEX_LOCK(m)   ((void)0)
+#define MUTEX_UNLOCK(m) ((void)0)
+#define COND_WAIT_WHILE(e,c,m)  ((void)0)
+#define COND_BROADCAST(c)  ((void)0)
+#define COND_SIGNAL(c)     ((void)0)
+#endif /* MULTITHREAD */
+
+static sml_obstack_t *stack_map_node_obstack = NULL;
+
+static void *
+stack_map_node_alloc(size_t size)
+{
+	return sml_obstack_alloc(&stack_map_node_obstack, size);
+}
+
+struct stack_map_entry {
+	void *codeaddr;
+	short *layout;
 };
 
-static struct sml_control *control_blocks;
+#define FRAME_BEGIN_OFFSET(layout) ((layout)[0])
+#define NUM_ROOTS(layout) (((unsigned short *)(layout))[1])
+#define ROOTS(layout) (&(layout)[2])
+#define LAYOUT_SIZE(layout) (2 + NUM_ROOTS(layout))
 
-#ifdef MULTITHREAD
-static pthread_key_t control_key;
-#else
-static struct sml_control *global_control;
-#endif /* MULTITHREAD */
-
-static struct sml_control *
-get_current_control()
+static int
+entry_cmp(void *x, void *y)
 {
-#ifdef MULTITHREAD
-	return pthread_getspecific(control_key);
-#else
-	return global_control;
-#endif /* MULTITHREAD */
+	struct stack_map_entry *e1 = x, *e2 = y;
+	uintptr_t m = (uintptr_t)e1->codeaddr, n = (uintptr_t)e2->codeaddr;
+	if (m < n) return -1;
+	else if (m > n) return 1;
+	else return 0;
+}
+
+static sml_tree_t stack_map =
+	SML_TREE_INITIALIZER(entry_cmp, stack_map_node_alloc, NULL);
+
+static short *
+lookup_stack_layout(void *retaddr)
+{
+	struct stack_map_entry key = {retaddr, NULL};
+	struct stack_map_entry *e = sml_tree_find(&stack_map, &key);
+	return (e == NULL) ? NULL : e->layout;
+}
+
+void
+sml_register_stackmap(void *src, void *code_begin)
+{
+	char *base = code_begin;
+	uintptr_t points_offset;
+	intptr_t *points;
+	short *cur, *end;
+	unsigned short num_points, i;
+	struct stack_map_entry *entry;
+
+	points_offset = (uintptr_t)((void**)src)[0];
+	cur = (short*)&((void**)src)[1];
+	points = (intptr_t*)((char*)src + points_offset);
+	end = (short*)points;
+
+	while (cur < end) {
+		num_points = *(cur++);
+		if (num_points == 0)
+			continue;
+		for (i = 0; i < num_points; i++) {
+			entry = stack_map_node_alloc(sizeof(*entry));
+			entry->codeaddr = base + *(points++);
+			//sml_notice("%p\n", base + *(points++));
+			entry->layout = cur;
+			sml_tree_insert(&stack_map, entry);
+		}
+		cur += LAYOUT_SIZE(cur);
+	}
 }
 
 static void
-set_current_control(struct sml_control *control)
+init_stack_map()
 {
-#ifdef MULTITHREAD
-	pthread_setspecific(control_key, control);
-#else
-	global_control = control;
-#endif /* MULTITHREAD */
+	extern void *_SMLstackmap;
+	void **src;
+	for (src = &_SMLstackmap; *src; src += 2)
+		sml_register_stackmap(src[0], src[1]);
 }
 
-/* the giant lock */
+struct sml_control {
+	void *heap;
+	enum { PAUSE, RUN } state;
 #ifdef MULTITHREAD
+	pthread_mutex_t state_lock;
+	pthread_cond_t state_cond;
+#ifdef CONCURRENT
+	enum sml_sync_phase phase;
+#endif /* CONCURRENT */
+#endif /* MULTITHREAD */
+	void *tmp_root[2];         /* temporary root slot. */
+	void *exn;
+	void *frame_stack_top_override;
+	void *frame_stack_top;
+	void *frame_stack_bottom;
+	struct sml_control *prev, *next;  /* for double-linked list */
+};
 
-static pthread_mutex_t giant_lock_mutex;
+static struct sml_control *control_blocks;
+#ifdef CONCURRENT
+static unsigned int num_control_blocks;
+#endif /* CONCURRENT */
+
+#ifdef MULTITHREAD
+static pthread_mutex_t control_blocks_lock = PTHREAD_MUTEX_INITIALIZER;
+#ifndef CONCURRENT
 static volatile unsigned int stop_the_world_flag;
+static pthread_mutex_t stop_the_world_flag_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t stop_the_world_flag_cond = PTHREAD_COND_INITIALIZER;
+#endif /* CONCURRENT */
+#endif /* MULTITHREAD */
+
 volatile unsigned int sml_check_gc_flag;
-static pthread_cond_t control_state_changed_cond;
-
-#ifdef DEBUG
-int
-sml_giant_locked()
-{
-	return get_current_control()->giant_lock_at != NULL;
-}
-
-int
-sml_is_no_thread()
-{
-	return control_blocks == NULL;
-}
-#endif /* DEBUG */
-
-void
-#ifdef DEBUG
-sml_giant_lock(void *frame_pointer, const char *lock_at)
-#else
-sml_giant_lock(void *frame_pointer)
-#endif /* DEBUG */
-{
-	struct sml_control *control;
-	int err ATTR_UNUSED;
-
-	ASSERT(get_current_control() != NULL);
-#ifdef DEBUG
-	ASSERT(lock_at);
-	get_current_control()->giant_lock_at = lock_at;
-#endif /* DEBUG */
-
-	err = pthread_mutex_lock(&giant_lock_mutex);
-	ASSERT(err == 0);
-	if (!stop_the_world_flag)
-		return;
-
-	DBG(("STOP THE WORLD RECEIVED: %p", pthread_self()));
-	if (frame_pointer)
-		sml_save_frame_pointer(frame_pointer);
-	control = get_current_control();
-	sml_heap_thread_stw_hook(control->heap);
-	control->state = STOPPED_BY_STW;
-	pthread_cond_broadcast(&control_state_changed_cond);
-	do {
-		pthread_cond_wait(&control_state_changed_cond, &giant_lock_mutex);
-	} while (stop_the_world_flag);
-	control->state = RUNNING;
-}
-
-void
-sml_giant_unlock()
-{
-	int err ATTR_UNUSED;
-	err = pthread_mutex_unlock(&giant_lock_mutex);
-#ifdef DEBUG
-	get_current_control()->giant_lock_at = NULL;
-#endif /* DEBUG */
-	ASSERT(err == 0);
-}
-
-static int
-is_the_world_stopped()
-{
-	struct sml_control *control;
-
-	ASSERT(GIANT_LOCKED());
-
-	for (control = control_blocks; control; control = control->prev) {
-		if (control->state == RUNNING)
-			return 0;
-	}
-	return 1;
-}
-
-void
-sml_stop_the_world()
-{
-	struct sml_control *control, *c;
-
-	ASSERT(GIANT_LOCKED());
-	ASSERT(get_current_control() != NULL);
-
-	stop_the_world_flag = 1;
-	sml_check_gc_flag = 1;
-	DBG(("STOP THE WORLD: %p", pthread_self()));
-	control = get_current_control();
-	sml_heap_thread_stw_hook(control->heap);
-	control->state = STOPPED_BY_STW;
-	while (!is_the_world_stopped()) {
-		pthread_cond_wait(&control_state_changed_cond, &giant_lock_mutex);
-	}
-
-	for (c = control_blocks; c; c = c->prev) {
-		if (c->state == SUSPENDED)
-			sml_heap_thread_stw_hook(c->heap);
-	}
-
-	control->state = RUNNING;
-	DBG(("STOP THE WORLD COMPLETE: %p", pthread_self()));
-}
-
-void
-sml_run_the_world()
-{
-	ASSERT(GIANT_LOCKED());
-
-	stop_the_world_flag = 0;
-	sml_check_gc_flag = 0;
-	pthread_cond_broadcast(&control_state_changed_cond);
-	DBG(("RUN THE WORLD : %p", pthread_self()));
-}
-
-#endif /* MULTITHREAD */
-
-#ifdef MULTITHREAD
-/* GIANT_LOCK without stop-the-world */
-#define GIANT_LOCK_LIGHT() do { \
-	int err ATTR_UNUSED; \
-	err = pthread_mutex_lock(&giant_lock_mutex); \
-	ASSERT(err == 0); \
-} while (0)
-#define GIANT_UNLOCK_LIGHT() do { \
-	int err ATTR_UNUSED; \
-	err = pthread_cond_broadcast(&control_state_changed_cond); \
-	ASSERT(err == 0); \
-	err = pthread_mutex_unlock(&giant_lock_mutex); \
-	ASSERT(err == 0); \
-} while (0)
-#else
-#define GIANT_LOCK_LIGHT()    ((void)0)
-#define GIANT_UNLOCK_LIGHT()  ((void)0)
-#endif /* MULTITHREAD */
-
-#ifdef MULTITHREAD
-SML_PRIMITIVE void
-sml_check_gc(void *frame_pointer)
-{
-	GIANT_LOCK(frame_pointer);
-	GIANT_UNLOCK();
-}
-#endif /* MULTITHREAD */
 
 static void
 attach_control(struct sml_control *control)
 {
-	/* do not use GIANT_LOCK in order to prevent stop-the-world */
-	GIANT_LOCK_LIGHT();
+	MUTEX_LOCK(&control_blocks_lock);
 
 	control->prev = control_blocks;
 	control->next = NULL;
 	if (control->prev)
 		control->prev->next = control;
 	control_blocks = control;
+#ifdef CONCURRENT
+	num_control_blocks++;
+#endif /* CONCURRENT */
 
-	GIANT_UNLOCK_LIGHT();
+	MUTEX_UNLOCK(&control_blocks_lock);
 }
 
 static void
 detach_control(struct sml_control *control)
 {
-	/* do not use GIANT_LOCK in order to prevent stop-the-world */
-	GIANT_LOCK_LIGHT();
+	MUTEX_LOCK(&control_blocks_lock);
 
 	if (control->prev)
 		control->prev->next = control->next;
@@ -236,81 +188,162 @@ detach_control(struct sml_control *control)
 		control->next->prev = control->prev;
 	else
 		control_blocks = control->prev;
+#ifdef CONCURRENT
+	num_control_blocks--;
+#endif /* CONCURRENT */
 
-	GIANT_UNLOCK_LIGHT();
+	MUTEX_UNLOCK(&control_blocks_lock);
 }
 
-static void control_finalize(void *control_ptr);
-
-void
-sml_control_init()
+/* for debug */
+unsigned int
+sml_num_threads()
 {
-#ifdef MULTITHREAD
-	int ret;
-#ifdef DEBUG
-	pthread_mutexattr_t attr;
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-#endif /* DEBUG */
-	ret = pthread_key_create(&control_key, control_finalize);
-	if (ret != 0)
-		sml_sysfatal("pthread_key_create failed");
+	struct sml_control *control;
+	unsigned int n = 0;
 
-#ifdef DEBUG
-	if (pthread_mutex_init(&giant_lock_mutex, &attr) != 0)
-		sml_sysfatal("pthread_mutex_init failed");
-	pthread_mutexattr_destroy(&attr);
+	MUTEX_LOCK(&control_blocks_lock);
+	for (control = control_blocks; control; control = control->next)
+		n++;
+	MUTEX_UNLOCK(&control_blocks_lock);
+
+	return n;
+}
+
+#ifndef MULTITHREAD
+static struct sml_control *global_control;
+#define CONTROL() global_control
+#define SET_CONTROL(c) ((void)(global_control = (c)))
 #else
-	if (pthread_mutex_init(&giant_lock_mutex, NULL) != 0)
-		sml_sysfatal("pthread_mutex_init failed");
-#endif /* DEBUG */
-	if (pthread_cond_init(&control_state_changed_cond, NULL) != 0)
-		sml_sysfatal("pthread_cond_init failed");
+/* we use pthread_key not only for local storage but for thread finalization */
+static pthread_key_t current_control_key;
+#ifndef THREAD_LOCAL_STORAGE
+#define CONTROL() \
+	((struct sml_control *)pthread_getspecific(current_control_key))
+#define SET_CONTROL(c) do { \
+	if (pthread_setspecific(current_control_key, c) != 0) \
+		sml_sysfatal("pthread_setspecific failed"); \
+} while (0)
+#else
+static __thread struct sml_control *current_control;
+#define CONTROL() current_control
+#define SET_CONTROL(c) do { \
+	current_control = (c); \
+	if (pthread_setspecific(current_control_key, current_control) != 0) \
+		sml_sysfatal("pthread_setspecific failed"); \
+} while (0)
+#endif /* THREAD_LOCAL_STORAGE */
 #endif /* MULTITHREAD */
+
+void sml_check_gc_internal(void);
+
+static void
+control_suspend(struct sml_control *control)
+{
+#ifdef CONCURRENT
+	/* Before changing state to PAUSE, mutator must respond to collector's
+	 * request. */
+	sml_check_gc_internal();
+#endif /* CONCURRENT */
+
+	MUTEX_LOCK(&control->state_lock);
+	ASSERT(control->state == RUN);
+	control->state = PAUSE;
+	COND_SIGNAL(&control->state_cond);
+	DBG(("SUSPEND %p", control));
+	MUTEX_UNLOCK(&control->state_lock);
 }
 
-void
-sml_control_free()
+static void
+control_resume(struct sml_control *control)
 {
-#ifdef MULTITHREAD
-	/* FIXME: wait until all SML threads are finished. */
+#if defined MULTITHREAD && !defined CONCURRENT
+	/* wait until stop-the-world phase is over */
+	MUTEX_LOCK(&stop_the_world_flag_lock);
+	COND_WAIT_WHILE(stop_the_world_flag,
+			&stop_the_world_flag_cond,
+			&stop_the_world_flag_lock);
+	MUTEX_UNLOCK(&stop_the_world_flag_lock);
+#endif /* MULTITHREAD && !CONCURRENT */
 
-	pthread_cond_destroy(&control_state_changed_cond);
-	pthread_mutex_destroy(&giant_lock_mutex);
-	pthread_key_delete(control_key);
-#endif /* MULTITHREAD */
+	MUTEX_LOCK(&control->state_lock);
+	COND_WAIT_WHILE(control->state != PAUSE,
+			&control->state_cond, &control->state_lock);
+	control->state = RUN;
+	DBG(("RESUME %p", control));
+	MUTEX_UNLOCK(&control->state_lock);
 }
 
 SML_PRIMITIVE void
-sml_control_start(void *frame_pointer)
+sml_control_suspend()
 {
-	struct sml_control *control = get_current_control();
+	struct sml_control *control = CONTROL();
+	control->frame_stack_top = CALLER_FRAME_END_ADDRESS();
+	control_suspend(control);
+}
 
-	if (control == NULL) {
-		control = xmalloc(sizeof(struct sml_control));
-		control->frame_stack_top = frame_pointer;
-		control->frame_stack_bottom = frame_pointer;
-		control->current_handler = NULL;
-		control->state = RUNNING;
-		control->heap = NULL;
-		control->exn_jmpbuf = NULL;
-		control->tmp_root = NULL;
-#ifdef DEBUG
-		control->giant_lock_at = NULL;
-#endif /* DEBUG */
-		control->heap = sml_heap_thread_init();
-		set_current_control(control);
-		attach_control(control);
-		DBG(("START NEW THREAD : %p %u", pthread_self(),
-		     sml_num_threads()));
-	} else {
-		FRAME_HEADER(frame_pointer) |= FRAME_FLAG_SKIP;
-		FRAME_EXTRA(frame_pointer) =
-			(uintptr_t)control->frame_stack_top;
-		control->frame_stack_top = frame_pointer;
-		control->state = RUNNING;
+SML_PRIMITIVE void
+sml_control_suspend_internal()
+{
+	control_suspend(CONTROL());
+}
+
+SML_PRIMITIVE void
+sml_control_resume()
+{
+	control_resume(CONTROL());
+}
+
+#ifdef MULTITHREAD
+void
+sml_mutex_lock(pthread_mutex_t *m)
+{
+	struct sml_control *control = CONTROL();
+	control_suspend(control);
+	MUTEX_LOCK(m);
+	control_resume(control);
+}
+#endif /* MULTITHREAD */
+
+SML_PRIMITIVE void
+sml_control_start()
+{
+	struct sml_control *control = CONTROL();
+	void **frame_end = CALLER_FRAME_END_ADDRESS();
+	short *layout;
+
+	if (control != NULL) {
+		control_resume(control);
+		layout = lookup_stack_layout(FRAME_CODE_ADDRESS(frame_end));
+		ASSERT(layout != NULL);
+		ASSERT(NUM_ROOTS(layout) > 0);
+		frame_end[ROOTS(layout)[0]] = control->frame_stack_top;
+		control->frame_stack_top = frame_end;
+		return;
 	}
 
+	control = xmalloc(sizeof(struct sml_control));
+	control->state = RUN;
+#ifdef MULTITHREAD
+	if (pthread_mutex_init(&control->state_lock, NULL) != 0)
+		sml_sysfatal("pthread_mutex_init failed");
+	if (pthread_cond_init(&control->state_cond, NULL) != 0)
+		sml_sysfatal("pthread_cond_init failed");
+#ifdef CONCURRENT
+	control->phase = ASYNC;
+#endif /* CONCURRENT */
+#endif /* MULTITHREAD */
+	control->frame_stack_top_override = NULL;
+	control->frame_stack_top = frame_end;
+	control->frame_stack_bottom = frame_end;
+	control->tmp_root[0] = NULL;
+	control->tmp_root[1] = NULL;
+	control->heap = sml_heap_thread_init();
+	control->exn = sml_exn_init();
+	SET_CONTROL(control);
+	attach_control(control);
+
+	DBG(("START THREAD %p", control));
 }
 
 static void
@@ -322,318 +355,441 @@ control_finalize(void *control_ptr)
 		return;
 
 	detach_control(control);
+#ifdef MULTITHREAD
+	pthread_mutex_destroy(&control->state_lock);
+	pthread_cond_destroy(&control->state_cond);
+#endif /* MULTITHREAD */
 	sml_heap_thread_free(control->heap);
-	sml_obstack_free(&control->tmp_root, NULL);
+	sml_exn_free(control->exn);
 	free(control);
-	set_current_control(NULL);
+	SET_CONTROL(NULL);
+
+	DBG(("FINISH THREAD %p", control));
 }
 
 SML_PRIMITIVE void
-sml_control_finish(void *frame_pointer)
+sml_control_finish()
 {
-	struct sml_control *control = get_current_control();
+	struct sml_control *control = CONTROL();
+	void **frame_end = CALLER_FRAME_END_ADDRESS();
+	short *layout;
 
-	if (control->frame_stack_bottom == frame_pointer) {
-		DBG(("FINISH THREAD : %p %u", pthread_self(),
-		     sml_num_threads()));
+	if (control->frame_stack_bottom == frame_end) {
+		DBG(("CONTROL_FINISH %p", control));
+		control_suspend(control);
 		control_finalize(control);
 	} else {
-		ASSERT(FRAME_HEADER(frame_pointer) & FRAME_FLAG_SKIP);
-		control->frame_stack_top = (void*)FRAME_EXTRA(frame_pointer);
+		layout = lookup_stack_layout(FRAME_CODE_ADDRESS(frame_end));
+		ASSERT(layout != NULL);
+		ASSERT(NUM_ROOTS(layout) > 0);
+		control->frame_stack_top = frame_end[ROOTS(layout)[0]];
+		control_suspend(control);
 	}
-}
-
-/*
- * prepares new "num_slots" pointer slots which are part of root set of garbage
- * collection, and returns the address of array of the new pointer slots.
- * These pointer slots are available until sml_pop_tmp_rootset() is called.
- * Returned address is only available in the same thread.
- */
-void **
-sml_push_tmp_rootset(size_t num_slots)
-{
-	struct sml_control *control = get_current_control();
-	void **ret;
-	unsigned int i;
-
-	ret = sml_obstack_alloc(&control->tmp_root, sizeof(void*) * num_slots);
-	for (i = 0; i < num_slots; i++)
-		ret[i] = NULL;
-	return ret;
-}
-
-/*
- * releases last pointer slots allocated by sml_push_tmp_rootset()
- * in the same thread.
- */
-void
-sml_pop_tmp_rootset(void **slots)
-{
-	struct sml_control *control = get_current_control();
-	sml_obstack_free(&control->tmp_root, slots);
-}
-
-SML_PRIMITIVE void
-sml_save_frame_pointer(void *p)
-{
-	get_current_control()->frame_stack_top = p;
-}
-
-void *
-sml_load_frame_pointer()
-{
-	return get_current_control()->frame_stack_top;
 }
 
 void *
 sml_current_thread_heap()
 {
-	return get_current_control()->heap;
+	return CONTROL()->heap;
+}
+
+void *
+sml_current_thread_exn()
+{
+	return CONTROL()->exn;
+}
+
+void
+sml_save_fp(void *frame_pointer)
+{
+	CONTROL()->frame_stack_top = frame_pointer;
 }
 
 SML_PRIMITIVE void
-sml_push_handler(void *handler)
+sml_push_fp()
 {
-	/* The detail of structure of handler is platform-dependent except
-	 * that runtime may use *(void**)handler for handler chain. */
-	struct sml_control *control = get_current_control();
-
-	*((void**)handler) = control->current_handler;
-
-	/* assume that this assignment is atomic so that asynchronous signal
-	 * may raise an exception. */
-	control->current_handler = handler;
-
-	/*DBG(("ip=%p from %p", ((void**)handler)[1],
-	  __builtin_return_address(0)));*/
+	struct sml_control *control = CONTROL();
+	if (control->frame_stack_top_override != NULL)
+		FATAL((0, "sml_push_fp overfull"));
+	control->frame_stack_top_override = CALLER_FRAME_END_ADDRESS();
 }
 
-SML_PRIMITIVE void *
-sml_pop_handler(void *exn)
+SML_PRIMITIVE void
+sml_pop_fp()
 {
-	struct sml_control *control = get_current_control();
-	void *handler = control->current_handler;
-	void *prev;
-	jmp_buf *buf;
-
-	if (handler == NULL) {
-		/* uncaught exception */
-		buf = control->exn_jmpbuf;
-		control_finalize(control);
-		if (buf) {
-			longjmp(*buf, 1);
-		} else {
-			sml_error(0, "uncaught exception: %s",
-				  sml_exn_name(exn));
-			abort();
-		}
-	}
-
-	prev = *((void**)handler);
-
-	/* assume that this assignment is atomic so that asynchronous signal
-	 * may raise an exception. */
-	control->current_handler = prev;
-
-	/*DBG(("ip=%p from %p", ((void**)handler)[1],
-	  __builtin_return_address (0)));*/
-
-	return handler;
+	struct sml_control *control = CONTROL();
+	ASSERT(control->frame_stack_top_override != NULL);
+	control->frame_stack_top_override = NULL;
+	control->tmp_root[0] = NULL;
+	control->tmp_root[1] = NULL;
 }
 
-static void
-frame_enum_ptr(void *frame_info, void (*trace)(void **))
-{
-	void **boxed;
-	unsigned int *sizes, *bitmaps, num_generics, num_boxed;
-	unsigned int i, j, num_slots;
-	ptrdiff_t offset;
-	char *generic;
-
-	num_boxed = FRAME_NUM_BOXED(frame_info);
-	num_generics = FRAME_NUM_GENERIC(frame_info);
-	boxed = FRAME_BOXED_PART(frame_info);
-
-	for (i = 0; i < num_boxed; i++) {
-		if (*boxed)
-			trace(boxed);
-		boxed++;
-	}
-
-	offset = (char*)boxed - (char*)frame_info;
-	offset = ALIGNSIZE(offset, sizeof(unsigned int));
-	sizes = (unsigned int *)(frame_info + offset);
-	bitmaps = sizes + num_generics;
-	generic = frame_info;
-
-	for (i = 0; i < num_generics; i++) {
-		num_slots = sizes[i];
-		if (BITMAP_BIT(bitmaps, i) == TAG_UNBOXED) {
-			generic -= num_slots * SIZEOF_GENERIC;
-		} else {
-			for (j = 0; j < num_slots; j++) {
-				generic -= SIZEOF_GENERIC;
-				trace((void**)generic);
-			}
-		}
-	}
-}
-
-static void
-stack_enum_ptr(void (*trace)(void **), enum sml_gc_mode mode,
-	       void *frame_stack_top, void *frame_stack_bottom)
-{
-	void *fp = frame_stack_top;
-	uintptr_t header;
-	intptr_t offset;
-
-	for (;;) {
-		header = FRAME_HEADER(fp);
-#ifdef DEBUG
-		if (mode != TRY_MAJOR)
-#endif /* DEBUG */
-			FRAME_HEADER(fp) = header | FRAME_FLAG_VISITED;
-
-		offset = FRAME_INFO_OFFSET(header);
-		if (offset != 0)
-			frame_enum_ptr((char*)fp + offset, trace);
-
-		/* When MINOR tracing, we need to trace not only unvisited
-		 * frames but also the first frame of visited frames since
-		 * the first frame may be modified by ML code from the
-		 * previous frame tracing.
-		 */
-		if (mode == MINOR && (header & FRAME_FLAG_VISITED)) {
-			DBG(("%p: visited frame.", fp));
-			break;
-		}
-
-		if (fp == frame_stack_bottom)
-			break;
-
-		if (header & FRAME_FLAG_SKIP)
-			fp = (void*)FRAME_EXTRA(fp);
-		else
-			fp = FRAME_NEXT(fp);
-	}
-
-	DBG(("frame end"));
-}
-
+/* for debug */
 int
-sml_protect(void (*func)(void *), void *data)
+sml_alloc_available()
 {
-	struct sml_control *control = get_current_control();
-	jmp_buf *prev, buf;
-	int ret, need_finish = 0;
-	void *dummy_frame[3];
-
-	if (control == NULL) {
-		FRAME_HEADER(&dummy_frame[1]) = 0;
-		sml_control_start(&dummy_frame[1]);
-		control = get_current_control();
-		need_finish = 1;
-	}
-
-	prev = control->exn_jmpbuf;
-	control->exn_jmpbuf = &buf;
-	ret = setjmp(buf);
-	if (ret == 0)
-		func(data);
-	control->exn_jmpbuf = prev;
-
-	if (need_finish)
-		sml_control_finish(&dummy_frame[1]);
-
-	return ret;
+	return CONTROL()->frame_stack_top_override != NULL;
 }
 
-struct enum_ptr_cls {
-	void (*trace)(void **);
-	enum sml_gc_mode mode;
-};
+void **
+sml_tmp_root()
+{
+	struct sml_control *control = CONTROL();
+
+	if (control->tmp_root[0] == NULL)
+		return &control->tmp_root[0];
+	if (control->tmp_root[1] == NULL)
+		return &control->tmp_root[1];
+
+	FATAL((0, "sml_tmp_root overfull"));
+}
+
+#ifdef CONCURRENT
+enum sml_sync_phase
+sml_current_phase()
+{
+	struct sml_control *control = CONTROL();
+
+	if (control->phase == SYNC2 || control->phase == MARK)
+		if (sml_check_gc_flag != control->phase)
+			control->phase = sml_check_gc_flag;
+	return control->phase;
+}
+#endif /* CONCURRENT */
+
+static void **
+frame_enum_ptr(void **frame_end, void (*trace)(void**))
+{
+	void *codeaddr = FRAME_CODE_ADDRESS(frame_end);
+	void **frame_begin, *header;
+	short *layout = lookup_stack_layout(codeaddr);
+	unsigned short num_roots, i;
+
+	ASSERT(layout != NULL);
+
+	frame_begin = frame_end + FRAME_BEGIN_OFFSET(layout);
+	num_roots = NUM_ROOTS(layout);
+
+	if (num_roots == 0)
+		return NEXT_FRAME(frame_begin);
+
+	header = frame_end[ROOTS(layout)[0]];
+
+	for (i = 1; i < num_roots; i++)
+		trace(frame_end + ROOTS(layout)[i]);
+
+	return header ? header : NEXT_FRAME(frame_begin);
+}
 
 static void
-tmp_root_enum_ptr(void *start, void *end, void *data)
+stack_enum_ptr(struct sml_control *control, void (*trace)(void **))
 {
-	const struct enum_ptr_cls *cls = data;
-	void (*trace)(void **) = cls->trace;
-	void **i;
-	for (i = start; i < (void**)end; i++)
-		trace(i);
+	void **frame_end;
+
+	frame_end = (control->frame_stack_top_override != NULL)
+		? control->frame_stack_top_override
+		: control->frame_stack_top;
+
+	while (frame_end != control->frame_stack_bottom)
+		frame_end = frame_enum_ptr(frame_end, trace);
 }
 
+static void
+control_enum_ptr(struct sml_control *control, void (*trace)(void **),
+		 enum sml_gc_mode mode)
+{
+	stack_enum_ptr(control, trace);
+	sml_exn_enum_ptr(control->exn, trace);
+	if (control->tmp_root[0])
+		trace(&control->tmp_root[0]);
+	if (control->tmp_root[1])
+		trace(&control->tmp_root[1]);
+}
+
+#if !defined MULTITHREAD
+
+/* single thread */
+SML_PRIMITIVE void
+sml_check_gc()
+{
+	/* do nothing */
+}
+
+/* single thread */
+int
+sml_gc_initiate(void (*trace)(void **), enum sml_gc_mode mode,
+                void *data ATTR_UNUSED)
+{
+	control_enum_ptr(CONTROL(), trace, mode);
+	sml_objspace_gc_initiate(trace, mode);
+	return 1;
+}
+
+/* single thread */
 void
-sml_control_enum_ptr(void (*trace)(void **), enum sml_gc_mode mode)
+sml_gc_done()
+{
+	sml_objspace_gc_done();
+}
+
+#elif defined MULTITHREAD && !defined CONCURRENT
+
+/* stop the world */
+SML_PRIMITIVE void
+sml_check_gc()
 {
 	struct sml_control *control;
-	struct enum_ptr_cls arg = {trace, mode};
 
-	ASSERT(GIANT_LOCKED());
-
-	for (control = control_blocks; control; control = control->prev) {
-		stack_enum_ptr(trace, mode, control->frame_stack_top,
-			       control->frame_stack_bottom);
-		sml_obstack_enum_chunk(control->tmp_root,
-				       tmp_root_enum_ptr, &arg);
+	MUTEX_LOCK(&stop_the_world_flag_lock);
+	if (stop_the_world_flag) {
+		MUTEX_UNLOCK(&stop_the_world_flag_lock);
+		control = CONTROL();
+		control->frame_stack_top = CALLER_FRAME_END_ADDRESS();
+		control_suspend(control);
+		control_resume(control);
+	} else {
+		MUTEX_UNLOCK(&stop_the_world_flag_lock);
 	}
 }
 
-/* for debug */
-unsigned int
-sml_num_threads()
+/* stop the world */
+int
+sml_gc_initiate(void (*trace)(void **), enum sml_gc_mode mode,
+                void *data ATTR_UNUSED)
 {
+	struct sml_control *self = CONTROL();
 	struct sml_control *control;
-	unsigned int count = 0;
 
-	/* do not use GIANT_LOCK in order to prevent stop-the-world */
-	GIANT_LOCK_LIGHT();
+	MUTEX_LOCK(&stop_the_world_flag_lock);
+
+	if (stop_the_world_flag) {
+		/* another thread already have control to stop-the-world */
+		MUTEX_UNLOCK(&stop_the_world_flag_lock);
+		control_suspend(self);
+		control_resume(self);
+		return 0;
+	}
+
+	DBG(("STOP THE WORLD by %p", self));
+	stop_the_world_flag = 1;
+	sml_check_gc_flag = 1;
+
+	COND_BROADCAST(&stop_the_world_flag_cond);
+	MUTEX_UNLOCK(&stop_the_world_flag_lock);
+
+	/* prohibit thread creation and termination during GC */
+	MUTEX_LOCK(&control_blocks_lock);
+
+	/* obtain execution lock of all mutator threads and enumerate
+	 * pointers in their root sets */
+	for (control = control_blocks; control; control = control->prev) {
+		MUTEX_LOCK(&control->state_lock);
+		if (control == self) {
+			ASSERT(control->state == RUN);
+		} else {
+			COND_WAIT_WHILE(control->state != PAUSE,
+					&control->state_cond,
+					&control->state_lock);
+			control->state = RUN;
+		}
+		MUTEX_UNLOCK(&control->state_lock);
+		DBG(("CAPTURED %p", control));
+		sml_heap_thread_gc_hook(control->heap);
+	}
+
+	DBG(("DO GC"));
+
+	sml_objspace_gc_initiate(trace, mode);
+
 	for (control = control_blocks; control; control = control->prev)
-		count++;
-	GIANT_UNLOCK_LIGHT();
+		control_enum_ptr(control, trace, mode);
 
-	return count;
+	return 1;
 }
 
-SML_PRIMITIVE
-void sml_state_suspend()
-{
-	int err ATTR_UNUSED;
-
-	/* no need to check STW since this thread is to be suspended. */
-	GIANT_LOCK_LIGHT();
-	get_current_control()->state = SUSPENDED;
-	GIANT_UNLOCK_LIGHT();
-}
-
-SML_PRIMITIVE
-void sml_state_running()
-{
-	GIANT_LOCK(NULL);
-	get_current_control()->state = RUNNING;
-	GIANT_UNLOCK();
-}
-
-/* for debug */
+/* stop the world */
 void
-sml_control_dump()
+sml_gc_done()
 {
+	struct sml_control *self = CONTROL();
 	struct sml_control *control;
 
+	sml_objspace_gc_done();
+
+	DBG(("DONE GC"));
+
+	/* release execution locks of all mutator threads */
 	for (control = control_blocks; control; control = control->prev) {
-		sml_notice("%p: stack=(%p, %p), heap=%p, state=%d"
-#ifdef DEBUG
-			   " lock_at=%s"
-#endif /* DEBUG */
-			   , control,
-			   control->frame_stack_top,
-			   control->frame_stack_bottom,
-			   control->heap,
-			   control->state
-#ifdef DEBUG
-			   , control->giant_lock_at
-			   ? control->giant_lock_at : "(none)"
-#endif /* DEBUG */
-			   );
+		MUTEX_LOCK(&control->state_lock);
+		ASSERT(control->state == RUN);
+		if (control == self)
+			control->state = PAUSE;
+		COND_SIGNAL(&control->state_cond);
+		DBG(("RELEASED %p", control));
+		MUTEX_UNLOCK(&control->state_lock);
 	}
+
+	/* permit thread creation and termination */
+	MUTEX_UNLOCK(&control_blocks_lock);
+
+	/* completed. clear signal flags */
+	MUTEX_LOCK(&stop_the_world_flag_lock);
+	stop_the_world_flag = 0;
+	sml_check_gc_flag = 0;
+	COND_BROADCAST(&stop_the_world_flag_cond);
+	DBG(("RUN THE WORLD by %p", self));
+	MUTEX_UNLOCK(&stop_the_world_flag_lock);
+}
+
+#elif defined MULTITHREAD && defined CONCURRENT
+
+static sml_counter_t *sync_response_counter;
+
+static void (* volatile gc_trace_fn)(void **);
+
+static void
+do_control_enum_ptr(struct sml_control *control)
+{
+	sml_heap_thread_gc_hook(control->heap);
+	control_enum_ptr(control, gc_trace_fn, MAJOR);
+}
+
+/* concurrent garbage collection */
+static void
+check_gc(struct sml_control *control)
+{
+	MUTEX_LOCK(&control->state_lock);
+	ASSERT(control->state == RUN);
+
+	if (control->phase == sml_check_gc_flag) {
+		MUTEX_UNLOCK(&control->state_lock);
+		return;
+	}
+
+	control->phase = sml_check_gc_flag;
+
+	COND_SIGNAL(&control->state_cond);
+	MUTEX_UNLOCK(&control->state_lock);
+
+	if (control->phase == SYNC2) {
+		// enumerate root set
+		// take a snapshot of pointers
+		do_control_enum_ptr(control);
+	}
+
+	if (control->phase == SYNC1 || control->phase == SYNC2)
+		sml_counter_inc(sync_response_counter);
+}
+
+/* concurrent garbage collection */
+void
+sml_check_gc_internal()
+{
+	check_gc(CONTROL());
+}
+
+/* concurrent garbage collection */
+SML_PRIMITIVE void
+sml_check_gc()
+{
+	struct sml_control *control = CONTROL();
+	control->frame_stack_top = CALLER_FRAME_END_ADDRESS();
+	check_gc(CONTROL());
+}
+
+static void
+handshake(enum sml_sync_phase phase)
+{
+	struct sml_control *control;
+	sml_check_gc_flag = phase;
+
+	for (control = control_blocks; control; control = control->prev) {
+		MUTEX_LOCK(&control->state_lock);
+		if (control->state == PAUSE) {
+			control->state = RUN;
+			MUTEX_UNLOCK(&control->state_lock);
+			check_gc(control);
+			MUTEX_LOCK(&control->state_lock);
+			control->state = PAUSE;
+			COND_SIGNAL(&control->state_cond);
+			MUTEX_UNLOCK(&control->state_lock);
+		} else {
+			MUTEX_UNLOCK(&control->state_lock);
+		}
+	}
+
+	sml_counter_wait(sync_response_counter, num_control_blocks);
+}
+
+/* concurrent garbage collection */
+int
+// start trace
+sml_gc_initiate(void (*trace)(void **), enum sml_gc_mode mode, void *data)
+{
+	/* prohibit thread creation and termination during GC initiation. */
+	MUTEX_LOCK(&control_blocks_lock);
+
+	/* phase SYNC1: turn on all the write barriers */
+	handshake(SYNC1);
+	sml_heap_gc_hook(data);
+
+	/* phase SYNC2: enumerate root sets */
+	gc_trace_fn = trace;
+	handshake(SYNC2);
+
+	/* phase MARK */
+	//handshake(MARK);
+	sml_check_gc_flag = MARK;
+
+	/* permit thread creation and termination */
+	MUTEX_UNLOCK(&control_blocks_lock);
+
+	sml_objspace_gc_initiate(trace, mode);
+
+	return 1;
+}
+
+/* concurrent garbage collection */
+void
+// trace end
+sml_gc_done()
+{
+	sml_objspace_gc_done();
+
+	/* go back to phase ASYNC */
+	//MUTEX_LOCK(&control_blocks_lock);
+	//handshake(ASYNC);
+	//MUTEX_UNLOCK(&control_blocks_lock);
+	sml_check_gc_flag = ASYNC;
+}
+
+#endif /* MULTITHREAD */
+
+void
+sml_control_init()
+{
+#ifdef MULTITHREAD
+	int ret ATTR_UNUSED;
+
+	ret = pthread_key_create(&current_control_key, control_finalize);
+	if (ret != 0)
+		sml_sysfatal("pthread_key_create failed");
+#ifdef CONCURRENT
+	sync_response_counter = sml_counter_new();
+#endif /* CONCURRENT */
+#endif /* MULTITHREAD */
+
+	init_stack_map();
+}
+
+void
+sml_control_free()
+{
+#ifdef MULTITHREAD
+	/* TODO: wait all SML threads are terminated here? */
+	pthread_key_delete(current_control_key);
+#ifdef CONCURRENT
+	/* TODO: free sync_response_counter */
+#endif /* CONCURRENT */
+#endif /* MULTITHREAD */
 }

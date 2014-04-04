@@ -1,5 +1,3 @@
-include "StringCvt.smi"
-
 signature IEEE_REAL =
 sig
   exception Unordered

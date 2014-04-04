@@ -1,7 +1,6 @@
-_require "SMLSharpScanChar.smi"
-_require "General.smi"
-_require "StringCvt.smi"
-_require "CHAR.sig"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./SMLSharp_ScanChar.smi"
 
 structure Char =
 struct
@@ -10,15 +9,15 @@ struct
   val minChar : char
   val maxChar : char
   val maxOrd : int
-  val ord = SMLSharp.Char.ord
-  val chr : int -> char
+  val ord = SMLSharp_Builtin.Char.ord
+  val chr = SMLSharp_Builtin.Char.chr
   val succ : char -> char
   val pred : char -> char
-  val compare : char * char -> order
-  val <  = SMLSharp.Char.lt
-  val <= = SMLSharp.Char.lteq
-  val >  = SMLSharp.Char.gt
-  val >= = SMLSharp.Char.gteq
+  val compare : char * char -> General.order
+  val <  = SMLSharp_Builtin.Char.lt
+  val <= = SMLSharp_Builtin.Char.lteq
+  val >  = SMLSharp_Builtin.Char.gt
+  val >= = SMLSharp_Builtin.Char.gteq
   val contains : string -> char -> bool
   val notContains : string -> char -> bool
   val isAscii : char -> bool
@@ -36,13 +35,9 @@ struct
   val isPunct : char -> bool
   val isUpper : char -> bool
   val toString : char -> string
-  val scan : (char, 'a) StringCvt.reader -> (char, 'a) StringCvt.reader
+  val toRawString : char -> string
+  val scan = SMLSharp_ScanChar.scanChar
   val fromString : string -> char option
   val toCString : char -> string
-  val fromCString : string -> char option 
+  val fromCString : string -> char option
 end
-
-(* toplevel *)
-val chr = Char.chr
-val ord = Char.ord
-

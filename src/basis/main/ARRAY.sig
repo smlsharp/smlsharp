@@ -1,7 +1,3 @@
-include "General.smi"
-include "Array.smi"
-include "Vector.smi"
-
 signature ARRAY =
 sig
   type 'a array = 'a Array.array

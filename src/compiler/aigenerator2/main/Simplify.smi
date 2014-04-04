@@ -1,8 +1,0 @@
-_require "../../../basis.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../yaanormal/main/ANormal.ppg.smi"
-
-structure Simplify =
-struct
-  val reduceCluster : YAANormal.clusterDecl -> YAANormal.clusterDecl
-end

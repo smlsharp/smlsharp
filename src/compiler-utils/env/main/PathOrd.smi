@@ -1,0 +1,7 @@
+_require "basis.smi"
+
+structure PathOrd = 
+struct
+  type ord_key = string list
+  val compare : ord_key * ord_key -> order
+end

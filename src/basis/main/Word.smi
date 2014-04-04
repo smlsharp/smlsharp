@@ -1,55 +1,52 @@
-_require "General.smi"
-_require "StringCvt.smi"
-_require "SMLSharpScanChar.smi"
-_require "IntInf.smi"
-_require "Int.smi"
-_require "String.smi"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./SMLSharp_ScanChar.smi"
+_require "./IntInf.smi"
+_require "./String.smi"
 
 structure Word =
 struct
-  type word = SMLSharp.Word.word
+  type word = word
   val wordSize : int
-  val toLarge : word -> word
-  val toLargeX : word -> word
-  val toLargeWord : word -> word
-  val toLargeWordX : word -> word
-  val fromLarge : word -> word
-  val fromLargeWord : word -> word
-  val toLargeInt : word -> IntInf.int
-  val toLargeIntX : word -> IntInf.int
-  val fromLargeInt : IntInf.int -> word
-  val toInt : word -> int
-
-  val toIntX = SMLSharp.Word.toIntX
-  val fromInt = SMLSharp.Word.fromInt
-  val andb = SMLSharp.Word.andb
-  val orb = SMLSharp.Word.orb
-  val xorb = SMLSharp.Word.xorb
-  val notb = SMLSharp.Word.notb
-  val << = SMLSharp.Word.lshift
-  val >> = SMLSharp.Word.rshift
-  val ~>> = SMLSharp.Word.arshift
-  val + = SMLSharp.Word.add
-  val - = SMLSharp.Word.sub
-  val * = SMLSharp.Word.mul
-  val div = SMLSharp.Word.div
-  val mod = SMLSharp.Word.mod
-  val < = SMLSharp.Word.lt
-  val <= = SMLSharp.Word.lteq
-  val > = SMLSharp.Word.gt
-  val >= = SMLSharp.Word.gteq
-  val ~ = SMLSharp.Word.neg
-
-  val compare : word * word -> order
+  val toLarge : word -> SMLSharp_Builtin.Word.word
+  val toLargeX : word -> SMLSharp_Builtin.Word.word
+  val toLargeWord = toLarge
+  val toLargeWordX = toLargeX
+  val fromLarge : SMLSharp_Builtin.Word.word -> word
+  val fromLargeWord = fromLarge
+  val toLargeInt : word -> LargeInt.int
+  val toLargeIntX : word -> LargeInt.int
+  val fromLargeInt : LargeInt.int -> word
+  val toInt = SMLSharp_Builtin.Word.toInt
+  val toIntX = SMLSharp_Builtin.Word.toIntX
+  val fromInt = SMLSharp_Builtin.Word.fromInt
+  val andb = SMLSharp_Builtin.Word.andb
+  val orb = SMLSharp_Builtin.Word.orb
+  val xorb = SMLSharp_Builtin.Word.xorb
+  val notb = SMLSharp_Builtin.Word.notb
+  val << = SMLSharp_Builtin.Word.lshift
+  val >> = SMLSharp_Builtin.Word.rshift
+  val ~>> = SMLSharp_Builtin.Word.arshift
+  val + = SMLSharp_Builtin.Word.add
+  val - = SMLSharp_Builtin.Word.sub
+  val * = SMLSharp_Builtin.Word.mul
+  val div = SMLSharp_Builtin.Word.div
+  val mod = SMLSharp_Builtin.Word.mod
+  val compare : word * word -> General.order
+  val < = SMLSharp_Builtin.Word.lt
+  val <= = SMLSharp_Builtin.Word.lteq
+  val > = SMLSharp_Builtin.Word.gt
+  val >= = SMLSharp_Builtin.Word.gteq
+  val ~ = SMLSharp_Builtin.Word.neg
   val min : word * word -> word
   val max : word * word -> word
   val fmt : StringCvt.radix -> word -> string
+  val toString : word -> string
   val scan : StringCvt.radix
              -> (char, 'a) StringCvt.reader
              -> (word, 'a) StringCvt.reader
-  val toString : word -> string
   val fromString : string -> word option
 end
 
-structure LargeWord = Word
 structure Word32 = Word
+structure LargeWord = Word

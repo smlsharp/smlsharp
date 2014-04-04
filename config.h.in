@@ -43,6 +43,10 @@
    don't. */
 #undef HAVE_DECL_ISNORMAL
 
+/* Define to 1 if you have the declaration of `LLVM_NATIVE_TARGET', and to 0
+   if you don't. */
+#undef HAVE_DECL_LLVM_NATIVE_TARGET
+
 /* Define to 1 if you have the declaration of `signbit', and to 0 if you
    don't. */
 #undef HAVE_DECL_SIGNBIT
@@ -170,6 +174,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strptime' function. */
+#undef HAVE_STRPTIME
+
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
 
@@ -223,9 +230,6 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
-
-/* platform identifier */
-#undef SMLSHARP_PLATFORM
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

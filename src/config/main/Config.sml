@@ -10,8 +10,10 @@ structure SMLSharp_Config : sig
   exception Load
   val loadConfig : Filename.filename -> unit
 
-  exception Unset
+  datatype host_os = datatype SMLSharp_Version.host_os
+
   val CC : unit -> string
+  val CXX : unit -> string
   val LD : unit -> string
   val AR : unit -> string
   val RANLIB : unit -> string
@@ -21,62 +23,96 @@ structure SMLSharp_Config : sig
   val LIBEXT : unit -> string
   val ASMEXT : unit -> string
   val OBJEXT : unit -> string
-  val NATIVE_TARGET : unit -> string
+  val TARGET_TRIPLE : unit -> string
   val A_OUT : unit -> string
+  val HOST_OS_TYPE : unit -> host_os
+  val CMDLINE_MAXLEN : unit -> int option
+  val PIC_DEFAULT : unit -> bool
   val RUNLOOP_DLDFLAGS : unit -> string
+  val EXTRA_OPTIONS : unit -> string list
 
 end =
 struct
 
-  val r_CC = ref NONE : string option ref
-  val r_LD = ref NONE : string option ref
-  val r_AR = ref NONE : string option ref
-  val r_RANLIB = ref NONE : string option ref
-  val r_LDFLAGS = ref NONE : string option ref
-  val r_LIBS = ref NONE : string option ref
-  val r_DLLEXT = ref NONE : string option ref
-  val r_LIBEXT = ref NONE : string option ref
-  val r_ASMEXT = ref NONE : string option ref
-  val r_OBJEXT = ref NONE : string option ref
-  val r_NATIVE_TARGET = ref NONE : string option ref
-  val r_A_OUT = ref NONE : string option ref
-  val r_RUNLOOP_DLDFLAGS = ref NONE : string option ref
+  exception Load
+  datatype host_os = datatype SMLSharp_Version.host_os
+
+  val r_CC = ref SMLSharp_Version.DefaultConfig.CC
+  val r_CXX = ref SMLSharp_Version.DefaultConfig.CXX
+  val r_LD = ref SMLSharp_Version.DefaultConfig.LD
+  val r_AR = ref SMLSharp_Version.DefaultConfig.AR
+  val r_RANLIB = ref SMLSharp_Version.DefaultConfig.RANLIB
+  val r_LDFLAGS = ref SMLSharp_Version.DefaultConfig.LDFLAGS
+  val r_LIBS = ref SMLSharp_Version.DefaultConfig.LIBS
+  val r_DLLEXT = ref SMLSharp_Version.DefaultConfig.DLLEXT
+  val r_LIBEXT = ref SMLSharp_Version.DefaultConfig.LIBEXT
+  val r_ASMEXT = ref SMLSharp_Version.DefaultConfig.ASMEXT
+  val r_OBJEXT = ref SMLSharp_Version.DefaultConfig.OBJEXT
+  val r_TARGET_TRIPLE = ref SMLSharp_Version.DefaultConfig.TARGET_TRIPLE
+  val r_A_OUT = ref SMLSharp_Version.DefaultConfig.A_OUT
+  val r_HOST_OS_TYPE = ref SMLSharp_Version.DefaultConfig.HOST_OS_TYPE
+  val r_CMDLINE_MAXLEN = ref SMLSharp_Version.DefaultConfig.CMDLINE_MAXLEN
+  val r_PIC_DEFAULT = ref SMLSharp_Version.DefaultConfig.PIC_DEFAULT
+  val r_RUNLOOP_DLDFLAGS = ref SMLSharp_Version.DefaultConfig.RUNLOOP_DLDFLAGS
+  val r_EXTRA_OPTIONS = ref nil
+
+  fun stringToHostOS "Mingw" = Mingw
+    | stringToHostOS "Unix" = Unix
+    | stringToHostOS "Cygwin" = Cygwin
+    | stringToHostOS _ = raise Load
+
+  fun stringToMaxLen "NONE" = NONE
+    | stringToMaxLen x =
+      let
+        val _ = if String.isPrefix "SOME " x then () else raise Load
+        val ss = Substring.extract (x, 5, NONE)
+      in
+        case Int.scan StringCvt.DEC Substring.getc ss of
+          NONE => raise Load
+        | SOME (n, ss) => SOME n
+      end
 
   val parameters =
-      [("CC", r_CC),
-       ("LD", r_LD),
-       ("AR", r_AR),
-       ("RANLIB", r_RANLIB),
-       ("LDFLAGS", r_LDFLAGS),
-       ("LIBS", r_LIBS),
-       ("DLLEXT", r_DLLEXT),
-       ("LIBEXT", r_LIBEXT),
-       ("ASMEXT", r_ASMEXT),
-       ("OBJEXT", r_OBJEXT),
-       ("NATIVE_TARGET", r_NATIVE_TARGET),
-       ("A_OUT", r_A_OUT),
-       ("RUNLOOP_DLDFLAGS", r_RUNLOOP_DLDFLAGS)]
+      [("CC", fn x => r_CC := x),
+       ("CXX", fn x => r_CXX := x),
+       ("LD", fn x => r_LD := x),
+       ("AR", fn x => r_AR := x),
+       ("RANLIB", fn x => r_RANLIB := x),
+       ("LDFLAGS", fn x => r_LDFLAGS := x),
+       ("LIBS", fn x => r_LIBS := x),
+       ("DLLEXT", fn x => r_DLLEXT := x),
+       ("LIBEXT", fn x => r_LIBEXT := x),
+       ("ASMEXT", fn x => r_ASMEXT := x),
+       ("OBJEXT", fn x => r_OBJEXT := x),
+       ("TARGET_TRIPLE", fn x => r_TARGET_TRIPLE := x),
+       ("A_OUT", fn x => r_A_OUT := x),
+       ("HOST_OS_TYPE", fn x => r_HOST_OS_TYPE := stringToHostOS x),
+       ("CMDLINE_MAXLEN", fn x => r_CMDLINE_MAXLEN := stringToMaxLen x),
+       ("PIC_DEFAULT", fn x => case StringCvt.scanString Bool.scan x of
+                                 SOME x => r_PIC_DEFAULT := x
+                               | NONE => raise Load),
+       ("RUNLOOP_DLDFLAGS", fn x => r_RUNLOOP_DLDFLAGS := x),
+       ("EXTRA_OPTIONS",
+        fn x => r_EXTRA_OPTIONS := String.tokens Char.isSpace x)]
 
-  exception Unset
-
-  local
-    fun get (ref (SOME x)) = x
-      | get (ref NONE) = raise Unset
-  in
-  fun CC () = get r_CC
-  fun LD () = get r_LD
-  fun AR () = get r_AR
-  fun RANLIB () = get r_RANLIB
-  fun LDFLAGS () = get r_LDFLAGS
-  fun LIBS () = get r_LIBS
-  fun DLLEXT () = get r_DLLEXT
-  fun LIBEXT () = get r_LIBEXT
-  fun ASMEXT () = get r_ASMEXT
-  fun OBJEXT () = get r_OBJEXT
-  fun NATIVE_TARGET () = get r_NATIVE_TARGET
-  fun A_OUT () = get r_A_OUT
-  fun RUNLOOP_DLDFLAGS () = get r_RUNLOOP_DLDFLAGS
-  end
+  fun CC () = !r_CC
+  fun CXX () = !r_CXX
+  fun LD () = !r_LD
+  fun AR () = !r_AR
+  fun RANLIB () = !r_RANLIB
+  fun LDFLAGS () = !r_LDFLAGS
+  fun LIBS () = !r_LIBS
+  fun DLLEXT () = !r_DLLEXT
+  fun LIBEXT () = !r_LIBEXT
+  fun ASMEXT () = !r_ASMEXT
+  fun OBJEXT () = !r_OBJEXT
+  fun TARGET_TRIPLE () = !r_TARGET_TRIPLE
+  fun A_OUT () = !r_A_OUT
+  fun HOST_OS_TYPE () = !r_HOST_OS_TYPE
+  fun CMDLINE_MAXLEN () = !r_CMDLINE_MAXLEN
+  fun PIC_DEFAULT () = !r_PIC_DEFAULT
+  fun RUNLOOP_DLDFLAGS () = !r_RUNLOOP_DLDFLAGS
+  fun EXTRA_OPTIONS () = !r_EXTRA_OPTIONS
 
   fun isSpace #" " = true
     | isSpace #"\t" = true
@@ -145,8 +181,6 @@ struct
         StringCvt.scanString scanFile src
       end
 
-  exception Load
-
   fun loadConfig systemBaseDir =
       let
         val filename = Filename.fromString "config.mk"
@@ -154,12 +188,11 @@ struct
         val conf = parse filename handle _ => raise Load
         val conf = case conf of SOME conf => conf | NONE => raise Load
       in
-        app (fn (key, r) => r := SEnv.find (conf, key)) parameters;
-        case SEnv.find (conf, "OS_TYPE") of
-          SOME "Windows" => SMLSharp_Version.HostOS := SMLSharp_Version.Windows
-        | SOME "Unix" => SMLSharp_Version.HostOS := SMLSharp_Version.Unix
-        | SOME _ => raise Load
-        | NONE => ()
+        app (fn (key, set) =>
+                case SEnv.find (conf, key) of
+                  NONE => raise Load
+                | SOME s => set s)
+            parameters
       end
 
 end

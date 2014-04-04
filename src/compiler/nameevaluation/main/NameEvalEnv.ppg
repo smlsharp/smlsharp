@@ -6,13 +6,13 @@
   The printer prefix "printTy_" is used to print types and signature 
   in the interactive mode.
  *)
-structure NameEvalEnv : NAME_EVAL_ENV =
+structure NameEvalEnv =
 struct
 local
   structure I = IDCalc
   structure E = NameEvalError
   structure EU = UserErrorUtils
-  fun bug s = Control.Bug ("NameEvalEnv: " ^ s)
+  fun bug s = Bug.Bug ("NameEvalEnv: " ^ s)
 
   (*%
       @formatter(I.tfun) I.print_tfun
@@ -30,22 +30,6 @@ local
           @format(x)  x()(mode,name)
        *) 
       I.tfun
-
-  (*%
-      @formatter(I.path) I.print_path
-   *)
-  (*% @prefix printTy_
-      @formatter(I.path) I.print_path
-   *)
-  type path
-    = 
-      (*%
-          @format(x)  x
-       *) 
-      (*% @prefix printTy_
-          @format(x)  x
-       *) 
-      I.path
 
   (*%
       @formatter(I.conSpec) I.print_conSpec
@@ -225,6 +209,13 @@ local
         (format_exnId, lparen, comma, rparen)
         map
 
+  fun preferSecond arg =
+      case arg of
+        (NONE, SOME (key2, v2)) => (key2, v2)
+      | (SOME (key1, v1), NONE) => (key1, v1)
+      | (SOME _, SOME (key2, v2)) => (key2, v2)
+      | (NONE, NONE) => raise bug "none in unionWith3"
+
 in
   (*%
      @formatter(bool) SmlppgUtil.formatBinaryChoice
@@ -270,10 +261,10 @@ in
        TSTR_DTY of {tfun:tfun, varE:varE, formals:formals, conSpec:conSpec}
 
   (*%
-     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
    *)
   (*% @prefix printTy_
-     @formatter(SEnv.map) SmlppgUtil.formatGenericSmap
+     @formatter(SymbolEnv.map) SmlppgUtil.formatGenericSymbolMap
    *)
   (* type environment *)
   type tyE
@@ -291,14 +282,14 @@ in
         @format(tstr senv) 
            senv(tstr)(\n,\n,)
        *)
-      tstr SEnv.map
+      tstr SymbolEnv.map
 
 
   (*%
-     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSsymbolEnvPlain
    *)
   (*% @prefix printTy_
-     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
    *)
   (* structure environment *)
   datatype strKind 
@@ -328,10 +319,10 @@ in
       FUNAPP of {id:structureId, funId:functorId, argId:structureId}
 
   (*%
-     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
    *)
   (*% @prefix printTy_
-     @formatter(SEnv.map) SmlppgUtil.formatSmapWithEnclosure
+     @formatter(SymbolEnv.map) SmlppgUtil.formatSymbolMapWithEnclosure
    *)
   (* structure environment *)
   datatype strE
@@ -349,7 +340,7 @@ in
          @format(strEntry senv)
            senv(strEntry)(+":"+1, ~2[\n "and" +], \n "structure" +,)
        *)
-      STR of strEntry SEnv.map
+      STR of strEntry SymbolEnv.map
 
   and env
     = 
@@ -392,11 +383,13 @@ in
       {env:env, strKind:strKind}
 
   (*%
+     @formatter(Symbol.symbol) Symbol.format_symbol
      @formatter(I.icexp) I.print_icexp
      @formatter(TypID.Set.set) formatEnclosedTypidSet
      @formatter(ExnID.Set.set) formatEnclosedExnIdSet
    *)
   (*% @prefix printTy_
+     @formatter(Symbol.symbol) Symbol.format_symbol
      @formatter(I.icexp) I.print_icexp
      @formatter(TypID.Set.set) formatEnclosedTypidSet
      @formatter(ExnID.Set.set) formatEnclosedExnIdSet
@@ -407,7 +400,7 @@ in
         @format({id,
                  version,
                  used,
-                 argSig,
+                 argSigEnv,
                  argStrEntry,
                  argStrName,
                  dummyIdfunArgTy:dummyId opt,
@@ -418,7 +411,7 @@ in
                  bodyVarExp})
            "(" id ") {"
            1[+1
-             {1["argSig:"+1 argSig]}
+             {1["argSigEnv:"+1 argSigEnv]}
              +1
              {1["argStrEntry:"+1 argStrEntry]}
              +1 "argStrName:" argStrName
@@ -442,7 +435,7 @@ in
         @format({id,
                  version,
                  used,
-                 argSig,
+                 argSigEnv,
                  argStrEntry,
                  argStrName,
                  dummyIdfunArgTy:dummyId opt,
@@ -453,7 +446,7 @@ in
                  bodyVarExp})
               2[
                 \n
-                "(" argSig ")" 
+                "(" argSigEnv ")" 
                  +1
                  "="
                  2[\n bodyEnv]
@@ -462,9 +455,9 @@ in
        {id: functorId,
         version: int option,
         used : bool ref,
-        argSig: env,
+        argSigEnv: env,
         argStrEntry: strEntry,
-        argStrName: string,
+        argStrName: Symbol.symbol,
         dummyIdfunArgTy: ty option,
         polyArgTys: ty list,
         typidSet: TypID.Set.set,
@@ -472,11 +465,13 @@ in
         bodyEnv: env,
         bodyVarExp: I.icexp (* varInfo *)
        }
+
+
   (*%
-    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+    @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
    *)
   (*% @prefix printTy_
-    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+    @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
    *)
   type funE
     = 
@@ -498,30 +493,32 @@ in
            1
           "}"
        *)
-      funEEntry SEnv.map
+      funEEntry SymbolEnv.map
          
   (*%
-    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+    @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
    *)
   (*% @prefix printTy_
-     @formatter(SEnv.map) SmlppgUtil.formatSmap
+     @formatter(SymbolEnv.map) SmlppgUtil.formatSymbolMap
    *)
   type sigE
     = 
       (*%
-         @format(sigentry senv)  senv(sigentry)(+1"and"+, ":")
+         @format(env senv)  senv(env)(+1"and"+, ":")
        *)
       (*% @prefix printTy_
-         @format(sigentry senv)
+         @format(env senv)
           2[
-            senv(sigentry)("signature" + ,+"="+,~2[+1 "and"+],)
+            senv(env)("signature" + ,+"="+,~2[+1 "and"+],)
           ]
        *)
-      env SEnv.map
+      env SymbolEnv.map
 
   (*%
+     @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   (*% @prefix printTy_
+     @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   type sigEList 
     = (*%
@@ -537,7 +534,7 @@ in
             env
            ]
        *)
-    (string * env) list
+    (Symbol.symbol * env) list
 
   (*%
    *)
@@ -572,173 +569,496 @@ in
   fun tstrArity tstr = List.length (tstrFormals tstr)
 
   fun tstrToString tstr =
-      Control.prettyPrint (format_tstr tstr)
+      Bug.prettyPrint (format_tstr tstr)
   fun tyEToString tyE =
-      Control.prettyPrint (format_tyE tyE)
+      Bug.prettyPrint (format_tyE tyE)
   fun envToString env = 
-      Control.prettyPrint (format_env env)
+      Bug.prettyPrint (format_env env)
   fun topEnvToString (env:topEnv) = 
-      Control.prettyPrint (format_topEnv env)
+      Bug.prettyPrint (format_topEnv env)
   fun funEToString funE = 
-      Control.prettyPrint (format_funE funE)
+      Bug.prettyPrint (format_funE funE)
 
-  val emptyTyE = SEnv.empty : tyE
-  val emptyEnv = ENV{varE=SEnv.empty,tyE = emptyTyE,strE=STR SEnv.empty}
-  val emptyTopEnv = {Env=emptyEnv,FunE=SEnv.empty,SigE=SEnv.empty} : topEnv
+  val emptyVarE = SymbolEnv.empty : varE
+  val emptyTyE = SymbolEnv.empty : tyE
+  val emptyEnv = ENV{varE=emptyVarE, tyE = emptyTyE, strE=STR SymbolEnv.empty}
+  val emptyTopEnv = {Env=emptyEnv, FunE=SymbolEnv.empty, SigE=SymbolEnv.empty} : topEnv
 
-  fun findTstr (ENV {varE, tyE, strE = STR envSEnvMap}, path) =
-      case path of 
-      nil => raise bug "*** nil to lookupTy *** "
-    | name :: nil => SEnv.find(tyE, name) 
-    | strname :: path =>
-      (case SEnv.find(envSEnvMap, strname) of
-         NONE => NONE
-       | SOME {env,...} => findTstr (env, path)
-      )
+(*
+   find function : a function that find a definition from a reference.
+                    The argument symbol is a reference occurrence.
+   check function: a function looks up an env to check if there is an entry.
+                   This symbol is not a refence occurrence.
+   bind function: a function that binds a name in an environment.
+                  The argument symbol is a definition occurrence.
+   insert function: a function that insert an entry into an environment.
+                   The argument symbol is a definition occurrence.
+   xxxWithyyy: insert all elements in yyy into  xxx
+   bindXxxWithYyy: bind all elenets in yyy into xxx.
+*)
 
+  (* find function *)
+  fun findTstr (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
+      case longsymbol of 
+        nil => raise bug "*** nil to lookupTy *** "
+      | symbol :: nil => 
+        (case SymbolEnv.findi(tyE, symbol) of
+           NONE => NONE
+         | SOME (key, tstr) => SOME tstr
+        )
+      | strsymbol :: path =>
+        (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
+           NONE => NONE
+         | SOME (symbolInEnv, {env,...}) => findTstr (env, path)
+        )
+
+  (* find function *)
   exception LookupTstr
-  fun lookupTstr env path : tstr =
-      case findTstr (env, path) handle e => raise e
-       of 
+  fun lookupTstr env longsymbol : tstr =
+      case findTstr (env, longsymbol) of 
         NONE => raise LookupTstr
       | SOME tstr => tstr
 
-  fun findId (ENV {varE, tyE, strE = STR envSEnvMap}, longid) =
-      case longid of 
-        nil => raise bug "nil to lookupId"
-      | name :: nil => SEnv.find(varE, name)
-      | strname :: path =>
-        (case SEnv.find(envSEnvMap, strname) of
-           NONE => NONE
-         | SOME {env,...} => findId (env, path)
-        )
-  exception LookupId
-  fun lookupId env longid : I.idstatus =
-      case findId(env, longid) of
-        NONE => raise LookupId
-      | SOME idstatus => idstatus
 
-  fun findStr (ENV {varE, tyE, strE = STR strMap}, stringList) = 
-      case stringList of 
-        nil => raise bug "nil to lookupStrId"
-      | name :: nil =>  SEnv.find(strMap, name) 
-      | strname :: path =>
-        (case SEnv.find(strMap, strname) of
+  (* check function *)
+  fun checkTstr (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
+      case longsymbol of 
+        nil => raise bug "*** nil to lookupTy *** "
+      | symbol :: nil => SymbolEnv.find(tyE, symbol) 
+      | strsymbol :: path =>
+        (case SymbolEnv.find(envSymbolEnvMap, strsymbol) of
            NONE => NONE
-         | SOME {env,...} => findStr (env, path)
+         | SOME {env,...} => checkTstr (env, path)
         )
-  exception LookupStr
-  fun lookupStr env stringList : strEntry = 
-      case findStr (env, stringList) of
-        NONE => raise LookupStr
-      | SOME strEntry => strEntry
 
-  fun rebindIdLongid
+  (* bind function *)
+  fun rebindTstr (ENV{varE,tyE,strE}, symbol, tstr) =
+      ENV
+        {
+         varE = varE,
+         tyE = SymbolEnv.insert(tyE, symbol, tstr),
+         strE = strE
+        }
+
+  (* bind function *)
+  fun bindTstr (env, symbol, tstr) =
+      let
+        val ENV{varE, tyE, strE} = env
+        val _ = 
+            case SymbolEnv.find(tyE, symbol) of
+              NONE => ()
+            | SOME _ =>
+              EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateTypInSpec("055", symbol))
+        val tyE = SymbolEnv.insert(tyE, symbol, tstr)
+      in
+        ENV {tyE=tyE, varE=varE, strE=strE}
+      end
+
+  (* insert function *)
+  fun insertTstr (env, symbol, tstr) =
+      let
+        val ENV{varE, tyE, strE} = env
+        val tyE =
+            SymbolEnv.insertWithi
+            (fn (symbol, _) =>
+                (EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateTypInSpec("055", symbol))))
+            (tyE, symbol, tstr)
+      in
+        ENV {tyE=tyE, varE=varE, strE=strE}
+      end
+
+  (* insert function *)
+  fun reinsertTstr (ENV{varE,tyE,strE}, symbol, tstr) =
+      ENV
+        {
+         varE = varE,
+         tyE = SymbolEnv.insert(tyE, symbol, tstr),
+         strE = strE
+        }
+
+  (* bind function *)
+  fun rebindTstrLongsymbol
         (ENV{varE, tyE, strE = strE as STR envMap},
-         longid,
-         idstatus) : env =
-      case longid of
+         path, tstr) =
+      case path of
         nil => raise bug "nil to rebindTypLongid"
-      | name::nil =>
+      | symbol::nil =>
         ENV
           {
-           varE = SEnv.insert(varE, name, idstatus),
-           tyE = tyE,
+           varE = varE,
+           tyE = SymbolEnv.insert(tyE, symbol, tstr),
            strE = strE
           }
-      | strname::path =>
+      | strsymbol::path =>
         let
           val {env, strKind} = 
-              case SEnv.find(envMap, strname) of
-                SOME strEntry => strEntry
-              | NONE => raise bug "env not found in rebindIdLongid"
-          val newEnv = rebindIdLongid(env, path, idstatus)
+              case SymbolEnv.find(envMap, strsymbol) of
+                SOME strEntry =>strEntry
+              | NONE => raise bug "strenv not found in rebindStrLongsymbol"
+          val newEnv = rebindTstrLongsymbol(env, path, tstr)
         in
           ENV
             {
              varE = varE,
              tyE = tyE,
-             strE = STR (SEnv.insert(envMap, strname, {env=newEnv, strKind=strKind}))
-          }
+             strE = 
+             STR
+               (SymbolEnv.insert
+                  (envMap, strsymbol, {env=newEnv, strKind=strKind}))
+            }
         end
 
-  fun bindStr loc (env, name, strEntry) =
+
+  (* insert function *)
+  fun reinsertTstrLongsymbol
+        (ENV{varE, tyE, strE = strE as STR envMap},
+         path, tstr) =
+      case path of
+        nil => raise bug "nil to rebindTypLongid"
+      | symbol::nil =>
+        ENV
+          {
+           varE = varE,
+           tyE = SymbolEnv.insert(tyE, symbol, tstr),
+           strE = strE
+          }
+      | strsymbol::path =>
+        let
+          val {env, strKind} = 
+              case SymbolEnv.find(envMap, strsymbol) of
+                SOME strEntry =>strEntry
+              | NONE => raise bug "strenv not found in rebindStrLongsymbol"
+          val newEnv = reinsertTstrLongsymbol(env, path, tstr)
+        in
+          ENV
+            {
+             varE = varE,
+             tyE = tyE,
+             strE = 
+             STR
+               (SymbolEnv.insert
+                  (envMap, strsymbol, {env=newEnv, strKind=strKind}))
+            }
+        end
+
+
+  (* find function *)
+  fun findId (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
+      case longsymbol of 
+        nil => raise bug "nil to findId"
+      | symbol :: nil => SymbolEnv.find(varE, symbol)
+      | strsymbol :: path =>
+        (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
+           NONE => NONE
+         | SOME (smbolInEnv, {env,...}) => findId (env, path)
+        )
+
+  (* find function *)
+  exception LookupId
+  fun lookupId env longsymbol : I.idstatus =
+      case findId(env, longsymbol) of
+        NONE => raise LookupId
+      | SOME idstatus => idstatus
+
+  (* find function for those that returns an idstatus *)
+  fun findCon (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
+      case longsymbol of 
+        nil => raise bug "nil to findCon"
+      | symbol :: nil => 
+        let
+          val idstatus = SymbolEnv.find(varE, symbol)
+        in
+          case idstatus of
+            (SOME (I.IDCON _)) => idstatus
+          | (SOME (I.IDEXN _)) => idstatus
+          | (SOME (I.IDEXNREP _)) => idstatus
+          | (SOME (I.IDEXEXN (_, used))) => idstatus
+          | (SOME (I.IDEXEXNREP (_, used))) => idstatus
+          | NONE => NONE
+          | (SOME (I.IDVAR _)) => NONE
+          | (SOME (I.IDVAR_TYPED _)) => NONE
+          | (SOME (I.IDEXVAR {used,...})) => NONE
+          | (SOME (I.IDBUILTINVAR _)) => NONE
+          | (SOME (I.IDOPRIM {used,...})) => NONE
+          | (SOME (I.IDEXVAR_TOBETYPED _)) => raise bug "IDEXVAR_TOBETYPED to findCon"
+          | (SOME (I.IDSPECVAR _)) => raise bug "IDSPECVAR to findCon"
+          | (SOME (I.IDSPECEXN _)) => raise bug "IDSPECEXN to findCon"
+          | (SOME (I.IDSPECCON _)) => raise bug "IDSPECCON to findCon"
+        end
+      | strsymbol :: path =>
+        (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
+           NONE => NONE
+         | SOME (smbolInEnv, {env,...}) => findCon (env, path)
+        )
+
+  (* check function *)
+  fun checkId (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
+      case longsymbol of 
+        nil => raise bug "nil to findId"
+      | symbol :: nil => SymbolEnv.find(varE, symbol)
+      | strsymbol :: path =>
+        (case SymbolEnv.find(envSymbolEnvMap, strsymbol) of
+           NONE => NONE
+         | SOME {env,...} => checkId (env, path)
+        )
+
+(*
+  fun checkId (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
+      case longsymbol of 
+        nil => raise bug "nil to findCon"
+      | symbol :: nil => 
+        let
+          val idstatus = SymbolEnv.find(varE, symbol)
+        in
+          case idstatus of
+            NONE => true
+          | (SOME (I.IDVAR _)) => true
+          | (SOME (I.IDVAR_TYPED _)) => true
+          | (SOME (I.IDEXVAR {used,...})) => true
+          | (SOME (I.IDBUILTINVAR _)) => true
+          | (SOME (I.IDCON _)) => false
+          | (SOME (I.IDEXN _)) => false
+          | (SOME (I.IDEXNREP _)) => false
+          | (SOME (I.IDEXEXN (_, used))) => false
+          | (SOME (I.IDEXEXNREP (_, used))) => false
+          | (SOME (I.IDOPRIM {used,...})) => false
+          | (SOME (I.IDEXVAR_TOBETYPED _)) => raise bug "IDEXVAR_TOBETYPED to findCon"
+          | (SOME (I.IDSPECVAR _)) => raise bug "IDSPECVAR to findCon"
+          | (SOME (I.IDSPECEXN _)) => raise bug "IDSPECEXN to findCon"
+          | (SOME (I.IDSPECCON _)) => raise bug "IDSPECCON to findCon"
+        end
+      | strsymbol :: path => false
+*)
+
+  (* bind function *)
+  fun rebindId (ENV{varE, tyE, strE}, symbol, idstatus) =
+      ENV
+        {varE = SymbolEnv.insert(varE, symbol, idstatus),
+         tyE = tyE,
+         strE = strE
+        }
+
+  (* bind function *)
+  fun bindId (env, symbol, idstate) =
       let
-        val ENV{varE, tyE, strE = STR envMap} = env
+        val ENV{varE, tyE, strE} = env
+        val varE =
+            SymbolEnv.insertWithi
+              (fn (symbol,_) =>
+                  (EU.enqueueError (Symbol.symbolToLoc symbol,E.DuplicateIdInSpec("054",symbol))))
+              (varE, symbol, idstate)
+      in
+        ENV {varE=varE, tyE=tyE, strE=strE}
+      end
+
+  (* insert function *)
+  fun reinsertId (ENV{varE, tyE, strE}, symbol, idstatus) =
+      ENV
+        {varE = SymbolEnv.insert(varE, symbol, idstatus),
+         tyE = tyE,
+         strE = strE
+        }
+
+
+  (* indsert function *)
+  fun insertId (env, symbol, idstate) =
+      let
+        val ENV{varE, tyE, strE} = env
+        val varE =
+            SymbolEnv.insertWithi
+              (fn (symbol,_) =>
+                  (EU.enqueueError (Symbol.symbolToLoc symbol,E.DuplicateIdInSpec("054",symbol))))
+              (varE, symbol, idstate)
+      in
+        ENV {varE=varE, tyE=tyE, strE=strE}
+      end
+
+  (* bind function *)
+  fun rebindIdLongsymbol
+        (ENV{varE, tyE, strE = strE as STR envMap},
+         path, idstatus) : env =
+      case path of
+        nil => raise bug "nil to rebindTypLongid"
+      | symbol::nil =>
+        ENV
+          {
+           varE = SymbolEnv.insert(varE, symbol, idstatus),
+           tyE = tyE,
+           strE = strE
+          }
+      | strsymbol::path =>
+        let
+          val {env, strKind} = 
+              case SymbolEnv.find(envMap, strsymbol) of
+                SOME strEntry => strEntry
+              | NONE => raise bug "env not found in rebindIdLongsymbol"
+          val newEnv = rebindIdLongsymbol(env, path, idstatus)
+        in
+          ENV
+            {
+             varE = varE,
+             tyE = tyE,
+             strE = 
+             STR (SymbolEnv.insert
+                    (envMap, 
+                     strsymbol, 
+                     {env=newEnv, strKind=strKind}))
+            }
+        end
+
+  (* insert function *)
+  fun reinsertIdLongsymbol
+        (ENV{varE, tyE, strE = strE as STR envMap},
+         path, idstatus) : env =
+      case path of
+        nil => raise bug "nil to rebindTypLongid"
+      | symbol::nil =>
+        ENV
+          {
+           varE = SymbolEnv.insert(varE, symbol, idstatus),
+           tyE = tyE,
+           strE = strE
+          }
+      | strsymbol::path =>
+        let
+          val {env, strKind} = 
+              case SymbolEnv.find(envMap, strsymbol) of
+                SOME strEntry => strEntry
+              | NONE => raise bug "env not found in rebindIdLongsymbol"
+          val newEnv = reinsertIdLongsymbol(env, path, idstatus)
+        in
+          ENV
+            {
+             varE = varE,
+             tyE = tyE,
+             strE = 
+             STR (SymbolEnv.insert
+                    (envMap, 
+                     strsymbol, 
+                     {env=newEnv, strKind=strKind}))
+            }
+        end
+
+  (* find function *)
+  fun findStr (ENV {varE, tyE, strE = STR strMap}, longsymbol) = 
+      case longsymbol of 
+          nil => raise bug "nil to lookupStrId"
+        | symbol :: nil =>  SymbolEnv.find(strMap, symbol) 
+        | strsymbol :: path =>
+          (case SymbolEnv.findi(strMap, strsymbol) of
+             NONE => NONE
+           | SOME (symbolInEnv, {env,...}) => 
+             findStr (env, path)
+          )
+
+  (* find function *)
+  exception LookupStr
+  fun lookupStr env longsymbol = 
+      case findStr (env, longsymbol) of
+        NONE => raise LookupStr
+      | SOME strEntry => strEntry
+
+  (* find function *)
+  fun checkStr (ENV {varE, tyE, strE = STR strMap}, longsymbol) = 
+      case longsymbol of 
+          nil => raise bug "nil to lookupStrId"
+        | symbol :: nil =>  SymbolEnv.find(strMap, symbol) 
+        | strsymbol :: path =>
+          (case SymbolEnv.find(strMap, strsymbol) of
+             NONE => NONE
+           | SOME {env,...} => 
+             checkStr (env, path)
+          )
+
+  (* bind function *)
+  fun rebindStr (ENV{varE,tyE,strE=STR envMap}, symbol, {strKind, env=strEnv}) =
+      ENV {varE = varE,
+           tyE = tyE,
+           strE = STR (SymbolEnv.insert(envMap, symbol, {strKind=strKind, env=strEnv}))
+          }
+
+  (* bind function *)
+  fun bindStr (ENV{varE, tyE, strE = STR envMap}, symbol, {strKind, env=strEnv}) =
+      let
         val envMap =
-            case SEnv.find(envMap, name) of
-              NONE => SEnv.insert(envMap, name, strEntry)
-            | SOME _ => 
-              (EU.enqueueError (loc, E.DuplicateIdInSpec("050", name));
+            case SymbolEnv.findi(envMap, symbol) of
+              NONE => SymbolEnv.insert(envMap, symbol, {strKind=strKind, env=strEnv})
+            | SOME (symbol, _) => 
+              (EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateIdInSpec("050", symbol));
                envMap
               )
       in
         ENV {varE=varE, tyE=tyE, strE=STR envMap}
       end
 
-  fun rebindTstr (ENV{varE,tyE,strE}, name, tstr) =
-      ENV
-        {
-         varE = varE,
-         tyE = SEnv.insert(tyE, name, tstr),
-         strE = strE
-        }
-
-  fun rebindTstrLongid
-        (ENV{varE, tyE, strE = strE as STR envMap},
-         longid,
-         tstr) : env =
-      case longid of
-        nil => raise bug "nil to rebindTypLongid"
-      | name::nil =>
-        ENV
-          {
-           varE = varE,
-           tyE = SEnv.insert(tyE, name, tstr),
-           strE = strE
-          }
-      | strname::path =>
-        let
-          val {env, strKind} = case SEnv.find(envMap, strname) of
-                      SOME strEntry =>strEntry
-                    | NONE => raise bug "strenv not found in rebindStrLongid"
-          val newEnv = rebindTstrLongid(env, path, tstr)
-        in
-          ENV
-            {
-             varE = varE,
-             tyE = tyE,
-             strE = STR (SEnv.insert(envMap, strname, {env=newEnv, strKind=strKind}))
-          }
-        end
-  fun rebindId (ENV{varE, tyE, strE}, name, idstatus) =
-      ENV
-        {varE = SEnv.insert(varE, name, idstatus),
-         tyE = tyE,
-         strE = strE
-        }
-
-  fun rebindStr (ENV{varE,tyE,strE=STR envMap}, name, strEntry) =
+  (* insert function *)
+  fun reinsertStr (ENV{varE,tyE,strE=STR envMap}, symbol, {strKind, env=strEnv}) =
       ENV {varE = varE,
            tyE = tyE,
-           strE = STR (SEnv.insert(envMap, name, strEntry))
+           strE = STR (SymbolEnv.insert(envMap, symbol, {strKind=strKind, env=strEnv}))
           }
 
-  fun singletonStr (name, strEntry) = rebindStr(emptyEnv, name, strEntry)
+  (* insert function *)
+  fun insertStr (ENV{varE, tyE, strE = STR envMap}, symbol, {strKind, env=strEnv}) =
+      let
+        val envMap =
+            case SymbolEnv.findi(envMap, symbol) of
+              NONE => SymbolEnv.insert(envMap, symbol, {strKind=strKind, env=strEnv})
+            | SOME (symbol, _) => 
+              (EU.enqueueError (Symbol.symbolToLoc symbol, E.DuplicateIdInSpec("050", symbol));
+               envMap
+              )
+      in
+        ENV {varE=varE, tyE=tyE, strE=STR envMap}
+      end
 
-  fun varEWithVarE (varE1, varE2) = SEnv.unionWith #2 (varE1, varE2)
+  (* bind function *)
+  fun singletonStr (symbol, strEntry) = rebindStr(emptyEnv, symbol, strEntry)
 
-  fun tyEWithTyE (tyE1, tyE2) = SEnv.unionWith #2 (tyE1, tyE2)
+  (* insert function *)
+  fun varEWithVarE (varE1, varE2) = 
+      SymbolEnv.unionWith #2 (varE1, varE2)
 
+  (* bind functions *)
+  fun bindVarEWithVarE (varE1, varE2) = 
+      SymbolEnv.unionWithi3
+        preferSecond
+        (varE1, varE2)
+
+  (* insert functions *)
+  fun tyEWithTyE (tyE1, tyE2) = 
+      SymbolEnv.unionWith #2 (tyE1, tyE2)
+
+  (* binding functions *)
+  fun bindTyEWithTyE (tyE1, tyE2) = 
+      SymbolEnv.unionWithi3
+        preferSecond
+        (tyE1, tyE2)
+
+  (* insert functions *)
   fun strEWithStrE (STR envMap1, STR envMap2) = 
-      STR (SEnv.unionWith #2 (envMap1, envMap2))
+      STR (SymbolEnv.unionWith #2 (envMap1, envMap2))
 
+  (* binding functions *)
+  fun bindStrEWithStrE (STR envMap1, STR envMap2) = 
+      STR (SymbolEnv.unionWithi3
+             preferSecond
+             (envMap1, envMap2)
+          )
+
+  (* insert function *)
   fun envWithVarE (ENV {varE, strE, tyE}, varE1 : I.varE) =
       ENV {varE = varEWithVarE (varE, varE1),
            strE = strE,
            tyE = tyE}
 
-  (* this recursively merge two envs *)
+  (* bind functions *)
+  fun bindEnvWithVarE (ENV {varE, strE, tyE}, varE1 : I.varE) =
+      ENV {varE = bindVarEWithVarE (varE, varE1),
+           strE = strE,
+           tyE = tyE}
+
+  (* insert function *)
   fun envWithEnv (ENV {varE=varE1, strE=strE1, tyE=tyE1},
                   ENV {varE=varE2, strE=strE2, tyE=tyE2}) =
       ENV {varE = varEWithVarE (varE1, varE2),
@@ -746,14 +1066,25 @@ in
            tyE = tyEWithTyE (tyE1,tyE2)
           }
 
+  (* bind function *)
+  fun bindEnvWithEnv (ENV {varE=varE1, strE=strE1, tyE=tyE1},
+                      ENV {varE=varE2, strE=strE2, tyE=tyE2}) =
+      ENV {varE = bindVarEWithVarE (varE1, varE2),
+           strE = bindStrEWithStrE (strE1, strE2),
+           tyE = bindTyEWithTyE (tyE1,tyE2)
+          }
+
+  (* insert function *)
   fun updateStrE (STR envMap1, STR envMap2) = 
       let
-        fun strEWithStrE ({env=env1,strKind}, {env=env2,strKind=_}) =
+        fun strEWithStrE ({env=env1, strKind}, 
+                          {env=env2, strKind=_}) =
             {env=updateEnv(env1,env2), strKind=strKind}
       in
-        STR (SEnv.unionWith strEWithStrE  (envMap1, envMap2))
+        STR (SymbolEnv.unionWith strEWithStrE (envMap1, envMap2))
       end
 
+  (* insert function *)
   and updateEnv (ENV {varE=varE1, strE=strE1, tyE=tyE1},
                   ENV {varE=varE2, strE=strE2, tyE=tyE2}) =
       ENV {varE = varEWithVarE (varE1, varE2),
@@ -761,107 +1092,105 @@ in
            tyE = tyEWithTyE (tyE1,tyE2)
           }
 
-  fun unionVarE code loc (varE1, varE2) =
-      SEnv.unionWithi
-        (fn (name,_,v)=>
-            (EU.enqueueError (loc, E.DuplicateVar(code ^ "v", name));v))
-        (varE1, varE2)
-
-  fun unionTyE code loc (tyE1, tyE2) =
-      SEnv.unionWithi 
-        (fn (name, _, v) =>
-            (EU.enqueueError (loc, E.DuplicateTypName(code ^ "v", name)); v)
-        )
-        (tyE1, tyE2)
-            
-  fun unionStrE code loc (STR map1, STR map2) =
-      STR
-        (
-         SEnv.unionWithi
-           (fn (name, _, v) => 
-               (EU.enqueueError (loc, E.DuplicateStrName(code ^ "v", name)); v)
-           )
-           (map1, map2)
-        )
-            
-  fun unionEnv code loc (ENV {varE=varE1, strE=strE1, tyE=tyE1},
-                         ENV {varE=varE2, strE=strE2, tyE=tyE2})
-      =
-      let
-        val varE = unionVarE code loc (varE1, varE2)
-        val tyE = unionTyE code loc (tyE1, tyE2)
-        val strE = unionStrE code loc (strE1, strE2)
-      in
-        ENV{varE=varE, strE=strE, tyE=tyE}
-      end
-
-  fun bindId loc (env, name, idstate) =
-      let
-        val ENV{varE, tyE, strE} = env
-        val varE =
-            SEnv.insertWith
-              (fn _ =>(EU.enqueueError (loc,E.DuplicateIdInSpec("054",name))))
-              (varE, name, idstate)
-      in
-        ENV {varE=varE, tyE=tyE, strE=strE}
-      end
-
-  fun bindTstr loc (env, name, tstr) =
-      let
-        val ENV{varE, tyE, strE} = env
-        val tyE =
-            SEnv.insertWith
-            (fn _ =>(EU.enqueueError (loc, E.DuplicateTypInSpec("055", name))))
-            (tyE, name, tstr)
-      in
-        ENV {tyE=tyE, varE=varE, strE=strE}
-      end
-
+  (* insert function *)
   fun sigEWithSigE (sigE1, sigE2) =
-      SEnv.foldli
-      (fn (name, entry, sigE1) => SEnv.insert(sigE1, name, entry))
+      SymbolEnv.foldli
+      (fn (symbol, entry, sigE1) => SymbolEnv.insert(sigE1, symbol, entry))
       sigE1
       sigE2
 
+  (* bind function *)
+  fun bindSigEWithSigE (sigE1, sigE2) =
+      SymbolEnv.foldli
+      (fn (symbol, entry, sigE1) => 
+          SymbolEnv.insert(sigE1, symbol, entry))
+      sigE1
+      sigE2
+
+  (* find function *)
+  fun findFunETopEnv ({Env, FunE, SigE}, symbol) =
+      SymbolEnv.find(FunE, symbol) 
+
+  (* check function *)
+  fun checkFunETopEnv ({Env, FunE, SigE}, symbol) =
+      SymbolEnv.find(FunE, symbol) 
+
+  (* bind function *)
+  fun rebindFunE (FunE, symbol, funEEntry) =
+      SymbolEnv.insert(FunE, symbol, funEEntry) 
+
+  (* insert function *)
+  fun reinsertFunE (FunE, symbol, funEEntry) =
+      SymbolEnv.insert(FunE, symbol, funEEntry) 
+
+
+  (* insert function *)
   fun funEWithFunE (funE1, funE2) =
-      SEnv.foldli
-      (fn (name, entry, funE1) => SEnv.insert(funE1, name, entry))
+      SymbolEnv.foldli
+      (fn (symbol, entry, funE1) => SymbolEnv.insert(funE1, symbol, entry))
       funE1
       funE2
 
-  fun unionSigE code loc (sigE1, sigE2) =
-      SEnv.unionWithi
-        (fn (name,_,v) =>
-            (EU.enqueueError
-               (loc, E.DuplicateSigname(code ^ "s", name));
-             v)
-        )
-        (sigE1, sigE2)
+  (* insert function *)
+  fun bindFunEWithFunE (funE1, funE2) =
+      SymbolEnv.foldli
+      (fn (symbol, entry, funE1) => SymbolEnv.insert(funE1, symbol, entry))
+      funE1
+      funE2
 
-  fun unionFunE code loc (funE1, funE2) =
-      SEnv.unionWithi
-        (fn (name,_,v) =>
-            (EU.enqueueError
-               (loc, E.DuplicateFunctor(code ^ "f", name));
-             v)
-        )
-      (funE1, funE2)
+  (* find function *)
+  fun findSigETopEnv ({Env, FunE, SigE}, symbol) =
+      SymbolEnv.find(SigE, symbol) 
 
+  (* check function *)
+  fun checkSigETopEnv ({Env, FunE, SigE}, symbol) =
+      SymbolEnv.find(SigE, symbol) 
+
+  (* bind function *)
+  fun rebindSigE (SigE, symbol, env) =
+      SymbolEnv.insert(SigE, symbol, env) 
+
+  (* insert function *)
+  fun reinsertSigE (SigE, symbol, env) =
+      SymbolEnv.insert(SigE, symbol, env) 
+
+  (* insert function *)
   fun topEnvWithSigE ({Env, FunE, SigE}, sige) : topEnv =
       {Env = Env,
        FunE = FunE,
        SigE = sigEWithSigE (SigE, sige)
       }
 
+  (* bind function *)
+  fun bindTopEnvWithSigE ({Env, FunE, SigE}, sige) : topEnv =
+      {Env = Env,
+       FunE = FunE,
+       SigE = bindSigEWithSigE (SigE, sige)
+      }
+
+  (* insert function *)
   fun topEnvWithFunE ({Env, FunE, SigE}, funE) : topEnv =
       {Env = Env,
        FunE = funEWithFunE (FunE, funE),
        SigE = SigE
       }
 
+  (* bind function *)
+  fun bindTopEnvWithFunE ({Env, FunE, SigE}, funE) : topEnv =
+      {Env = Env,
+       FunE = funEWithFunE (FunE, funE),
+       SigE = SigE
+      }
+
+  (* insert function *)
   fun topEnvWithEnv ({Env, FunE, SigE}, env1) : topEnv =
       {Env = envWithEnv (Env, env1), FunE = FunE, SigE = SigE}
 
+  (* bind function *)
+  fun bindTopEnvWithEnv ({Env, FunE, SigE}, env1) : topEnv =
+      {Env = envWithEnv (Env, env1), FunE = FunE, SigE = SigE}
+
+  (* insert function *)
   fun topEnvWithTopEnv
         ({Env=env1,FunE=funE1,SigE=sige1},{Env=env2,FunE=funE2,SigE=sige2})
       : topEnv
@@ -871,13 +1200,151 @@ in
        SigE = sigEWithSigE (sige1, sige2)
       }
 
-  fun unionTopEnv code loc
+  (* bind function *)
+  fun bindTopEnvWithTopEnv
         ({Env=env1,FunE=funE1,SigE=sige1},{Env=env2,FunE=funE2,SigE=sige2})
       : topEnv
       =
-      {Env = unionEnv code loc (env1, env2),
-       FunE = unionFunE code loc (funE1, funE2),
-       SigE = unionSigE code loc (sige1, sige2)
+      {Env = bindEnvWithEnv (env1, env2),
+       FunE = bindFunEWithFunE (funE1, funE2),
+       SigE = bindSigEWithSigE (sige1, sige2)
       }
+
+(* --------------------------------------------------------------------------------
+ *)
+
+  fun replaceLocTyE loc tyE =
+      SymbolEnv.mapi2 
+      (fn (symbol, tstr) =>
+          (Symbol.replaceLocSymbol loc symbol, tstr))
+      tyE
+
+  fun replaceLocVarE loc varE =
+      SymbolEnv.mapi2
+      (fn (symbol, idstatus) =>
+          (Symbol.replaceLocSymbol loc symbol, idstatus))
+      varE
+          
+  fun replaceLocStrEntry loc {env, strKind} =
+      {env = replaceLocEnv loc env, strKind = strKind}
+
+  and replaceLocEnv loc (ENV {varE, tyE, strE}) =
+      ENV {varE = replaceLocVarE loc varE,
+           tyE =  replaceLocTyE loc tyE,
+           strE = replaceLocStrE loc strE}
+
+  and replaceLocStrE loc (STR strentryMap) =
+      STR (SymbolEnv.mapi2 
+             (fn (symbol, strEntry) =>
+                 (Symbol.replaceLocSymbol loc symbol, 
+                  replaceLocStrEntry loc strEntry))
+             strentryMap)
+
+  fun unionVarE code (varE1, varE2) =
+      SymbolEnv.unionWithi2
+        (fn ((symbol1, v1), (symbol2,v2)) =>
+            (EU.enqueueError 
+               (Symbol.symbolToLoc symbol2, 
+                E.DuplicateVar(code ^ "v", symbol2));
+             (symbol2, v2))
+        )
+        (varE1, varE2)
+
+  fun unionTyE code (tyE1, tyE2) =
+      SymbolEnv.unionWithi2
+        (fn ((symbol1,v1), (symbol2,v2)) =>
+            (EU.enqueueError
+               (Symbol.symbolToLoc symbol2, 
+                E.DuplicateTypName(code ^ "v", symbol2)); 
+             (symbol2, v2))
+        )
+        (tyE1, tyE2)
+            
+  fun unionStrE code (STR map1, STR map2) =
+      STR
+        (
+         SymbolEnv.unionWithi2
+           (fn ((symbol1,v1), (symbol2,v2)) =>
+               (EU.enqueueError
+                  (Symbol.symbolToLoc symbol2, 
+                   E.DuplicateStrName(code ^ "v", symbol2)); 
+                (symbol2, v2))
+           )
+           (map1, map2)
+        )
+            
+  fun unionFunE code (funE1, funE2) =
+      SymbolEnv.unionWithi2
+        (fn ((symbol,v1),(symbol2,v2)) =>
+            (EU.enqueueError
+               (Symbol.symbolToLoc symbol2, 
+                E.DuplicateFunctor(code ^ "f", symbol2));
+             (symbol2, v2))
+        )
+      (funE1, funE2)
+
+  fun unionSigE code (sigE1, sigE2) =
+      SymbolEnv.unionWithi2
+        (fn ((symbol1,v1),(symbol2,v2)) =>
+            (EU.enqueueError
+               (Symbol.symbolToLoc symbol2, 
+                E.DuplicateSigname(code ^ "s", symbol2));
+             (symbol2,v2))
+        )
+        (sigE1, sigE2)
+
+  fun unionEnv code (ENV {varE=varE1, strE=strE1, tyE=tyE1},
+                     ENV {varE=varE2, strE=strE2, tyE=tyE2})
+      =
+      let
+        val varE = unionVarE code (varE1, varE2)
+        val tyE = unionTyE code (tyE1, tyE2)
+        val strE = unionStrE code (strE1, strE2)
+      in
+        ENV{varE=varE, strE=strE, tyE=tyE}
+      end
+
+  fun unionTopEnv code
+        ({Env=env1,FunE=funE1,SigE=sige1},{Env=env2,FunE=funE2,SigE=sige2})
+      : topEnv
+      =
+      {Env = unionEnv code (env1, env2),
+       FunE = unionFunE code (funE1, funE2),
+       SigE = unionSigE code (sige1, sige2)
+      }
+
+  val conEnv = ref (BuiltinTypes.builtinConEnv())
+  fun conEnvAdd (id, conInfo) = 
+      conEnv := ConID.Map.insert(!conEnv, id, conInfo)
+  fun conEnvFind id = 
+      case ConID.Map.find(!conEnv, id) of
+        SOME conInfo => conInfo
+      | NONE => raise bug "conid not found in conEnv"
+
+  datatype exnCon = EXN of I.exnInfo | EXEXN of I.exInfo
+
+  structure ExnConOrd =
+  struct
+    type ord_key = exnCon
+    fun compare (exncon1, exncon2) =
+        case (exncon1, exncon2) of
+          (EXN _, EXEXN _) => LESS
+        | (EXEXN _, EXN _) => GREATER
+        | (EXN {id=id1,...}, EXN {id=id2, ...})  => ExnID.compare(id1,id2)
+        | (EXEXN {longsymbol=longsymbol1,...}, 
+           EXEXN {longsymbol=longsymbol2,...})  =>
+          let
+            val string1 = Symbol.longsymbolToString longsymbol1
+            val string2 = Symbol.longsymbolToString longsymbol2
+          in
+            String.compare(string1, string2)
+          end
+  end
+  structure ExnConSet = BinarySetFn(ExnConOrd)
+  val exnConSetRef = ref ExnConSet.empty
+  fun exnConAdd exnCon = 
+      exnConSetRef := ExnConSet.add (!exnConSetRef, exnCon)
+  fun exnConList () = ExnConSet.listItems (!exnConSetRef)
+  fun intExnConList () = exnConSetRef := ExnConSet.empty
 end
 end
