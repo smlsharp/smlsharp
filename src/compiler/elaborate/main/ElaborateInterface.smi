@@ -1,24 +1,29 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../usererror/main/UserErrorUtils.smi"
 _require "../../util/main/BigInt_IntInf.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
 _require "../../absyn/main/Fixity.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "ElaborateError.ppg.smi"
+_require "ElaborateCore.smi"
 _require "ElaborateModule.smi"
-_require "ElaboratorUtils.smi"
+(*
 _require "UserTvarScope.smi"
+*)
 
 structure ElaborateInterface =
   struct
     type fixEnv = Fixity.fixity SEnv.map
     val elaborate
         : AbsynInterface.interface
-          -> {requireFixEnv: fixEnv, provideFixEnv: fixEnv}
-	     * PatternCalcInterface.interface
+          -> fixEnv * PatternCalcInterface.interface
+    val elaborateTopdecList
+        : AbsynInterface.itopdec list
+          -> fixEnv * PatternCalcInterface.pitopdec list
   end

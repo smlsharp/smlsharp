@@ -1,6 +1,47 @@
-_require "PGSQLBackend.smi"
-structure SMLSharp_SQL_Backend = SMLSharp_SQL_PGSQLBackend
-(*
-_require "MySQLBackend.smi"
-structure SMLSharp_SQL_Backend = SMLSharp_SQL_MySQLBackend
-*)
+_require "../../basis.smi"
+_require "./builtintypes/timestamp/TimeStamp.smi"
+_require "./builtintypes/decimal/Decimal.smi"
+_require "./builtintypes/float/Float.smi"
+_require "./SQLErrors.smi"
+_require "./SQLBackendTy.smi"
+_require "./PGSQLBackend.smi"
+_require "./MySQLBackend.smi"
+_require "./ODBCBackend.smi"
+_require "./SQLBACKEND.sig"
+
+structure SMLSharp_SQL_Backend =
+struct
+  type schema_column =
+       {colname: string, ty: SMLSharp_SQL_BackendTy.ty, nullable: bool}
+  type schema_table = string * schema_column list
+  type schema = schema_table list
+
+  datatype res_impl =
+       R of {closeRel : unit -> unit,
+             fetch : unit -> res_impl option,
+             getInt : int -> int option,
+             getIntInf : int -> IntInf.int option,
+             getWord : int -> word option,
+             getReal : int -> real option,
+             getString : int -> string option,
+             getChar : int -> char option,
+             getBool : int -> bool option,
+             getTimestamp : int -> SMLSharp_SQL_TimeStamp.timestamp option,
+             getDecimal : int -> SMLSharp_SQL_Decimal.decimal option,
+             getFloat : int -> SMLSharp_SQL_Float.float option}
+          
+  type conn_impl =
+       {closeConn : unit -> unit,
+        getDatabaseSchema : unit -> schema,
+        execQuery : string -> res_impl}
+
+  type server_impl =
+       {connect : unit -> conn_impl}
+
+  datatype backend = BACKEND of server_impl
+
+  val postgresql : string -> backend
+  val mysql : string -> backend
+  val odbc : string -> backend
+  val default : string -> backend
+end

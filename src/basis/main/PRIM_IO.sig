@@ -1,6 +1,3 @@
-include "General.smi"
-include "OS.smi"
-
 signature PRIM_IO =
 sig
   type elem

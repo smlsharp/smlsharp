@@ -1,11 +1,12 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "basis.smi"
+_require "smlnj-lib/Util/binary-set-fn.smi"
+_require "smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 
 structure VarOrd = 
 struct
-  type ord_key = {path:string list,id:VarID.id}
+  type ord_key = {longsymbol:Symbol.longsymbol, id:VarID.id}
   val compare : ord_key * ord_key -> order
 end
 

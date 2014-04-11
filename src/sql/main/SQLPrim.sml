@@ -8,70 +8,92 @@
 
 structure SMLSharp_SQL_Prim =
 struct
+  nonfix div mod
 
   structure Backend = SMLSharp_SQL_Backend
+  structure Errors = SMLSharp_SQL_Errors
+  structure TimeStamp = SMLSharp_SQL_TimeStamp
+  structure Decimal = SMLSharp_SQL_Decimal
+  structure Float = SMLSharp_SQL_Float
 
-  datatype server = datatype SMLSharp.SQL.server
-  datatype dbi = datatype SMLSharp.SQL.dbi
-  datatype value = datatype SMLSharp.SQL.value
-  datatype conn = datatype SMLSharp.SQL.conn
-  datatype db = datatype SMLSharp.SQL.db
-  datatype table = datatype SMLSharp.SQL.table
-  datatype row = datatype SMLSharp.SQL.row
-  datatype result = datatype SMLSharp.SQL.result
-  datatype rel = datatype SMLSharp.SQL.rel
-  datatype query = datatype SMLSharp.SQL.query
-  datatype command = datatype SMLSharp.SQL.command
+  datatype ty = datatype SMLSharp_SQL_BackendTy.ty
 
-(*
-  datatype 'a conn = CONN of unit ptr * 'a
+  datatype backend = datatype Backend.backend
+  datatype 'a schema = SCHEMA of Backend.schema * 'a
+  datatype 'a server = SERVER of backend * 'a schema
+  datatype 'a conn = CONN of Backend.conn_impl * 'a
+  datatype 'a rows = 
+      FETCHED of 'a * 'a rel
+    | RES of Backend.res_impl * (Backend.res_impl -> 'a)
+    | EOR
+    | CLOSED
+  withtype 'a rel = 'a rows ref
+  datatype dbi = datatype SMLSharp_Builtin.SQL.dbi
   datatype ('a,'b) db = DB of 'a * 'b dbi
   datatype ('a,'b) table = TABLE of (string * 'b dbi) * 'a
-  datatype ('a,'b) row = ROW of (string * 'b dbi) * 'a
-  datatype result = RESULT of unit ptr * int
-  datatype 'a rel = REL of result * (result -> 'a)
-  datatype 'a query = QUERY of string * 'a * (result -> 'a)
+  datatype ('a,'b) row = ROW of (string * 'b dbi) * 'a 
+  datatype value = datatype SMLSharp_Builtin.SQL.value
+  datatype res_impl = datatype Backend.res_impl
+  datatype 'a query = QUERY of string * 'a * (res_impl -> 'a)
   datatype command = COMMAND of string
-*)
+  type timestamp = TimeStamp.timestamp
+  type decimal = Decimal.decimal
+  type float = Float.float
 
-  exception Type of string
-  exception Format = Backend.Format
-  exception Exec of string
-  exception Connect of string
-  exception Link of string
+  exception Format = Errors.Format
+  exception Exec = Errors.Exec
+  exception Connect = Errors.Connect
+  exception Link = Errors.Link
 
-  fun eof (RESULT (result, rowIndex)) =
-      Backend.eof (result,rowIndex)
+  fun sqlserver_string (desc, schema) =
+      SERVER (Backend.default desc, schema)
 
-  fun next (RESULT (result, rowIndex)) =
-      RESULT (result, rowIndex + 1)
+  fun sqlserver_backend (x, schema) =
+      SERVER (x, schema)
 
-  fun fetch (REL (result, fetchFn)) =
-      if eof result
-      then NONE
-      else SOME (fetchFn result, REL (next result, fetchFn))
+  fun fetch (ref EOR) = NONE
+    | fetch (ref CLOSED) = raise Exec "closed relation"
+    | fetch (ref (FETCHED x)) = SOME x
+    | fetch (r as ref (RES (R res, fetchFn))) =
+      case #fetch res () of
+        NONE =>
+        (r := EOR;
+         #closeRel res ();
+         NONE)
+      | SOME res =>
+        let
+          val row = fetchFn res
+          val ret = (row, ref (RES (res, fetchFn)))
+        in
+          r := FETCHED ret;
+          SOME ret
+        end
 
-  fun closeConn (CONN (conn, _)) = Backend.closeConn conn
+  fun closeConn (CONN (conn, _)) = #closeConn conn ()
 
-  fun closeRel (REL (RESULT (r, _), _)) =
-      Backend.closeRel r
+  fun closeRel (ref EOR) = ()
+    | closeRel (ref CLOSED) = ()
+    | closeRel (ref (FETCHED (_, rel))) = closeRel rel
+    | closeRel (r as ref (RES (R res, _))) =
+      (r := CLOSED; #closeRel res ())
 
   fun eval (dbi, queryFn) (CONN (conn, witness)) =
       let
         val QUERY (query, witness, fetchFn) =
             queryFn (DB (witness, dbi))
-        val r = Backend.execQuery (conn, query)
+        val r = #execQuery conn query
       in
-        REL (RESULT (r, 0), fetchFn)
+        ref (RES (r, fetchFn))
       end
 
   fun exec (dbi, commandFn) (CONN (conn, witness)) =
       let
         val COMMAND query =
             commandFn (DB (witness, dbi))
-        val  r =  Backend.execQuery (conn, query)
+        val R r = #execQuery conn query
+        val () = #closeRel r ()
       in
-        closeRel (REL (RESULT (r, 0), fn x => x)); ()
+        ()
       end
 
   fun subquery queryFn (db as DB (_, dbi)) =
@@ -88,7 +110,7 @@ struct
         VALUE (("(exists (" ^ query ^ "))", dbi), SOME true)
       end
 
-  fun queryString queryFn (SERVER (_, _, witness)) =
+  fun queryString queryFn (SERVER (_, SCHEMA (_, witness))) =
       let
         val QUERY (query, witness, fetchFn) =
             queryFn (DB (witness, DBI))
@@ -96,7 +118,7 @@ struct
         query
       end
 
-  fun commandString commandFn (SERVER (_, _, witness)) =
+  fun commandString commandFn (SERVER (_, SCHEMA (_, witness))) =
       let
         val COMMAND query =
             commandFn (DB (witness, DBI))
@@ -105,50 +127,45 @@ struct
       end
 
   local
-    type column = {colname: string, isnull: bool, typename: string}
-    type sqlcolumn = {colname: string, isnull: bool,
-		      typename: Backend.sqltype}
-    type table = string * column list
-    type schema = table list
-
-    fun columnType ({isnull, typename, ...}:column) =
-        typename ^ (if isnull then " option" else "")
-
-    fun columnTypeSQL ({isnull, typename, ...}:sqlcolumn) =
-        valOf (Backend.translateType typename) ^
-	(if isnull then " option" else "")
-	handle Option => raise Connect "The type is not supported"
-
-    fun isSameName (col1:column) (col2:sqlcolumn) =
-        #colname col1 = #colname col2
-
-    fun isSameNameSQL (col1:sqlcolumn) (col2:column) =
-	#colname col1 = #colname col2
-
-    fun matchColumn ({colname=name1, isnull=isnull1, typename=ty1}:column,
-                     {colname=name2, isnull=isnull2, typename=ty2}:sqlcolumn) =
-        name1 = name2
-        andalso isnull1 = isnull2
-        andalso SOME ty1 = Backend.translateType ty2
+    fun typename ({nullable, ty, ...}:Backend.schema_column) =
+        let
+          fun opt x = if nullable then x ^ " option" else x
+        in
+          case ty of
+            SMLSharp_SQL_BackendTy.INT => opt "int"
+          | SMLSharp_SQL_BackendTy.INTINF => opt "intinf"
+          | SMLSharp_SQL_BackendTy.WORD => opt "word"
+          | SMLSharp_SQL_BackendTy.CHAR => opt "char"
+          | SMLSharp_SQL_BackendTy.STRING => opt "string"
+          | SMLSharp_SQL_BackendTy.REAL => opt "real"
+          | SMLSharp_SQL_BackendTy.REAL32 => opt "real32"
+          | SMLSharp_SQL_BackendTy.BOOL => opt "bool"
+          | SMLSharp_SQL_BackendTy.TIMESTAMP => opt "timestamp"
+          | SMLSharp_SQL_BackendTy.DECIMAL => opt "decimal"
+          | SMLSharp_SQL_BackendTy.FLOAT => opt "float"
+          | SMLSharp_SQL_BackendTy.UNSUPPORTED x => "unsupported (" ^ x ^ ")"
+        end
 
     fun unifyColumns (tableName, expectColumns, actualColumns) =
         (
           app (fn expect =>
-                  case List.find (isSameName expect) actualColumns of
+                  case List.find (fn x => #colname x = #colname expect)
+                       actualColumns of
                     NONE => raise Link ("column `" ^ #colname expect
                                         ^ "' of table `" ^ tableName
                                         ^ "' is not found.")
                   | SOME actual =>
-                    if matchColumn (expect, actual) then ()
+                    if expect = actual then ()
                     else raise Link ("type mismatch of column `"
                                      ^ #colname expect ^ "' of table `"
                                      ^ tableName ^ "': expected `"
-                                     ^ columnType expect
+                                     ^ typename expect
                                      ^ "', but actual `"
-                                     ^ columnTypeSQL actual ^ "'"))
+                                     ^ typename actual ^ "'"))
               expectColumns;
           app (fn actual =>
-                  case List.find (isSameNameSQL actual) expectColumns of
+                  case List.find (fn x => #colname x = #colname actual)
+                       expectColumns of
                     NONE =>
                     raise Link ("table `" ^ tableName ^ "' has column `"
                                 ^ #colname actual ^ "' but not declared.")
@@ -167,16 +184,14 @@ struct
 
   in
 
-  fun link (conn, schema) =
-      unifySchema (schema, (Backend.getDatabaseSchema conn))
-      handle Backend.Connect msg => raise Connect msg
+  fun link (conn:Backend.conn_impl, schema) =
+      unifySchema (schema, (#getDatabaseSchema conn ()))
 
   end (* local *)
 
-  fun connect (SERVER (connInfo, schema, witness)) =
+  fun connect (SERVER (BACKEND backend, SCHEMA (schema, witness))) =
       let
-        val conn = Backend.connect connInfo
-            handle Backend.Connect msg => raise Connect msg
+        val conn = #connect backend ()
         val e = (link (conn, schema); NONE)
             handle e => SOME e
       in
@@ -195,6 +210,76 @@ struct
   fun concatQuery (x:(string * 'a) list) : string =
       case x of nil => "" | (h,_)::t => h ^ concatQuery t
 
+  fun columnInfo_int colname =
+      (0, {colname = colname, ty = INT, nullable = false})
+      : int * Backend.schema_column 
+  fun columnInfo_intInf colname =
+      (0, {colname = colname, ty = INTINF, nullable = false})
+      : IntInf.int * Backend.schema_column
+  fun columnInfo_word colname =
+      (0w0, {colname = colname, ty = WORD, nullable = false})
+      : word * Backend.schema_column
+  fun columnInfo_char colname =
+      (#"\000", {colname = colname, ty = CHAR, nullable = false})
+      : char * Backend.schema_column
+  fun columnInfo_string colname =
+      ("", {colname = colname, ty = STRING, nullable = false})
+      : string * Backend.schema_column
+  fun columnInfo_real colname =
+      (0.0, {colname = colname, ty = REAL, nullable = false})
+      : real * Backend.schema_column
+  fun columnInfo_real32 colname =
+      (0.0, {colname = colname, ty = REAL32, nullable = false})
+      : Real32.real * Backend.schema_column
+  fun columnInfo_bool colname =
+      (false, {colname = colname, ty = BOOL, nullable = false})
+      : bool * Backend.schema_column
+  fun columnInfo_timestamp colname =
+      (TimeStamp.fromString "",
+       {colname = colname, ty = TIMESTAMP, nullable = false})
+      : timestamp * Backend.schema_column
+  fun columnInfo_decimal colname =
+      (Decimal.fromString "",
+       {colname = colname, ty = DECIMAL, nullable = false})
+      : decimal * Backend.schema_column
+  fun columnInfo_float colname =
+      (Float.fromString "",
+       {colname = colname, ty = FLOAT, nullable = false})
+      : float * Backend.schema_column
+  fun columnInfo_int_option colname =
+      (NONE, {colname = colname, ty = INT, nullable = true})
+      : int option * Backend.schema_column
+  fun columnInfo_intInf_option colname =
+      (NONE, {colname = colname, ty = INTINF, nullable = true})
+      : IntInf.int option * Backend.schema_column
+  fun columnInfo_word_option colname =
+      (NONE, {colname = colname, ty = WORD, nullable = true})
+      : word option * Backend.schema_column
+  fun columnInfo_char_option colname =
+      (NONE, {colname = colname, ty = CHAR, nullable = true})
+      : char option * Backend.schema_column
+  fun columnInfo_string_option colname =
+      (NONE, {colname = colname, ty = STRING, nullable = true})
+      : string option * Backend.schema_column
+  fun columnInfo_real_option colname =
+      (NONE, {colname = colname, ty = REAL, nullable = true})
+      : real option * Backend.schema_column
+  fun columnInfo_real32_option colname =
+      (NONE, {colname = colname, ty = REAL32, nullable = true})
+      : Real32.real option * Backend.schema_column
+  fun columnInfo_bool_option colname =
+      (NONE, {colname = colname, ty = BOOL, nullable = true})
+      : bool option * Backend.schema_column
+  fun columnInfo_timestamp_option colname =
+      (NONE, {colname = colname, ty = TIMESTAMP, nullable = true})
+      : timestamp option * Backend.schema_column
+  fun columnInfo_decimal_option colname =
+      (NONE, {colname = colname, ty = DECIMAL, nullable = true})
+      : decimal option * Backend.schema_column
+  fun columnInfo_float_option colname =
+      (NONE, {colname = colname, ty = FLOAT, nullable = true})
+      : float option * Backend.schema_column
+
   local
     fun op1 (oper, (x1,i), w) =
         VALUE (("(" ^ oper ^ x1 ^ ")", i), w)
@@ -204,407 +289,55 @@ struct
         VALUE (("(" ^ x1 ^ " " ^ oper2 ^ " " ^ x2 ^ ")", i1), w)
   in
 
-  fun add_int (VALUE(x1, w1) : (int,'a) value,
-               VALUE(x2, w2) : (int,'a) value)
-              : (int,'a) value =
+  fun add (VALUE(x1, w1) : ('b,'a) value,
+           VALUE(x2, w2) : ('b,'a) value)
+          : ('b,'a) value =
       op2 (x1, "+", x2, w1)
-  fun add_word (VALUE(x1, w1) : (word,'a) value,
-                VALUE(x2, w2) : (word,'a) value)
-               : (word,'a) value =
-      op2 (x1, "+", x2, w1)
-  fun add_real (VALUE(x1, w1) : (real,'a) value,
-                VALUE(x2, w2) : (real,'a) value)
-               : (real,'a) value =
-      op2 (x1, "+", x2, w1)
-  fun add_intOption (VALUE(x1, w1) : (int option,'a) value,
-                     VALUE(x2, w2) : (int option,'a) value)
-                    : (int option,'a) value =
-      op2 (x1, "+", x2, w1)
-  fun add_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                      VALUE(x2, w2) : (word option,'a) value)
-                     : (word option,'a) value =
-      op2 (x1, "+", x2, w1)
-  fun add_realOption (VALUE(x1, w1) : (real option,'a) value,
-                      VALUE(x2, w2) : (real option,'a) value)
-                     : (real option,'a) value =
-      op2 (x1, "+", x2, w1)
-  fun sub_int (VALUE(x1, w1) : (int,'a) value,
-               VALUE(x2, w2) : (int,'a) value)
-              : (int,'a) value =
+  fun sub (VALUE(x1, w1) : ('b,'a) value,
+           VALUE(x2, w2) : ('b,'a) value)
+          : ('b,'a) value =
       op2 (x1, "-", x2, w1)
-  fun sub_word (VALUE(x1, w1) : (word,'a) value,
-                VALUE(x2, w2) : (word,'a) value)
-               : (word,'a) value =
-      op2 (x1, "-", x2, w1)
-  fun sub_real (VALUE(x1, w1) : (real,'a) value,
-                VALUE(x2, w2) : (real,'a) value)
-               : (real,'a) value =
-      op2 (x1, "-", x2, w1)
-  fun sub_intOption (VALUE(x1, w1) : (int option,'a) value,
-                     VALUE(x2, w2) : (int option,'a) value)
-                    : (int option,'a) value =
-      op2 (x1, "-", x2, w1)
-  fun sub_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                      VALUE(x2, w2) : (word option,'a) value)
-                     : (word option,'a) value =
-      op2 (x1, "-", x2, w1)
-  fun sub_realOption (VALUE(x1, w1) : (real option,'a) value,
-                      VALUE(x2, w2) : (real option,'a) value)
-                     : (real option,'a) value =
-      op2 (x1, "-", x2, w1)
-  fun mul_int (VALUE(x1, w1) : (int,'a) value,
-               VALUE(x2, w2) : (int,'a) value)
-              : (int,'a) value =
+  fun mul (VALUE(x1, w1) : ('b,'a) value,
+           VALUE(x2, w2) : ('b,'a) value)
+          : ('b,'a) value =
       op2 (x1, "*", x2, w1)
-  fun mul_word (VALUE(x1, w1) : (word,'a) value,
-                VALUE(x2, w2) : (word,'a) value)
-               : (word,'a) value =
-      op2 (x1, "*", x2, w1)
-  fun mul_real (VALUE(x1, w1) : (real,'a) value,
-                VALUE(x2, w2) : (real,'a) value)
-               : (real,'a) value =
-      op2 (x1, "*", x2, w1)
-  fun mul_intOption (VALUE(x1, w1) : (int option,'a) value,
-                     VALUE(x2, w2) : (int option,'a) value)
-                    : (int option,'a) value =
-      op2 (x1, "*", x2, w1)
-  fun mul_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                      VALUE(x2, w2) : (word option,'a) value)
-                     : (word option,'a) value =
-      op2 (x1, "*", x2, w1)
-  fun mul_realOption (VALUE(x1, w1) : (real option,'a) value,
-                      VALUE(x2, w2) : (real option,'a) value)
-                     : (real option,'a) value =
-      op2 (x1, "*", x2, w1)
-  fun div_int (VALUE(x1, w1) : (int,'a) value,
-               VALUE(x2, w2) : (int,'a) value)
-              : (int,'a) value =
+  fun div (VALUE(x1, w1) : ('b,'a) value,
+           VALUE(x2, w2) : ('b,'a) value)
+          : ('b,'a) value =
       op2 (x1, "/", x2, w1)
-  fun div_word (VALUE(x1, w1) : (word,'a) value,
-                VALUE(x2, w2) : (word,'a) value)
-               : (word,'a) value =
-      op2 (x1, "/", x2, w1)
-  fun div_real (VALUE(x1, w1) : (real,'a) value,
-                VALUE(x2, w2) : (real,'a) value)
-               : (real,'a) value =
-      op2 (x1, "/", x2, w1)
-  fun div_intOption (VALUE(x1, w1) : (int option,'a) value,
-                     VALUE(x2, w2) : (int option,'a) value)
-                    : (int option,'a) value =
-      op2 (x1, "/", x2, w1)
-  fun div_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                      VALUE(x2, w2) : (word option,'a) value)
-                     : (word option,'a) value =
-      op2 (x1, "/", x2, w1)
-  fun div_realOption (VALUE(x1, w1) : (real option,'a) value,
-                      VALUE(x2, w2) : (real option,'a) value)
-                     : (real option,'a) value =
-      op2 (x1, "/", x2, w1)
-  fun mod_int (VALUE(x1, w1) : (int,'a) value,
-               VALUE(x2, w2) : (int,'a) value)
-              : (int,'a) value =
+  fun mod (VALUE(x1, w1) : ('b,'a) value,
+           VALUE(x2, w2) : ('b,'a) value)
+          : ('b,'a) value =
       op2 (x1, "%", x2, w1)
-  fun mod_word (VALUE(x1, w1) : (word,'a) value,
-                VALUE(x2, w2) : (word,'a) value)
-               : (word,'a) value =
-      op2 (x1, "%", x2, w1)
-  fun mod_intOption (VALUE(x1, w1) : (int option,'a) value,
-                     VALUE(x2, w2) : (int option,'a) value)
-                    : (int option,'a) value =
-      op2 (x1, "%", x2, w1)
-  fun mod_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                      VALUE(x2, w2) : (word option,'a) value)
-                     : (word option,'a) value =
-      op2 (x1, "%", x2, w1)
-  fun neg_int (VALUE(x1, w1) : (int,'a) value)
-              : (int,'a) value =
+  fun neg (VALUE(x1, w1) : ('b,'a) value)
+          : ('b,'a) value =
       op1 ("-", x1, w1)
-  fun neg_real (VALUE(x1, w1) : (real,'a) value)
-               : (real,'a) value =
-      op1 ("-", x1, w1)
-  fun neg_intOption (VALUE(x1, w1) : (int option,'a) value)
-                    : (int option,'a) value =
-      op1 ("-", x1, w1)
-  fun neg_realOption (VALUE(x1, w1) : (real option,'a) value)
-                     : (real option,'a) value =
-      op1 ("-", x1, w1)
-  fun abs_int (VALUE(x1, w1) : (int,'a) value)
-              : (int,'a) value =
+  fun abs (VALUE(x1, w1) : ('b,'a) value)
+          : ('b,'a) value =
       op1 ("@", x1, w1)
-  fun abs_real (VALUE(x1, w1) : (real,'a) value)
-               : (real,'a) value =
-      op1 ("@", x1, w1)
-  fun abs_intOption (VALUE(x1, w1) : (int option,'a) value)
-                    : (int option,'a) value =
-      op1 ("@", x1, w1)
-  fun abs_realOption (VALUE(x1, w1) : (real option,'a) value)
-                     : (real option,'a) value =
-      op1 ("@", x1, w1)
-  fun lt_int (VALUE(x1, w1) : (int,'a) value,
-              VALUE(x2, w2) : (int,'a) value)
-             : (bool option,'a) value =
+  fun lt (VALUE(x1, w1) : ('b,'a) value,
+          VALUE(x2, w2) : ('b,'a) value)
+         : (bool option,'a) value =
       op2 (x1, "<", x2, SOME true)
-  fun lt_word (VALUE(x1, w1) : (word,'a) value,
-               VALUE(x2, w2) : (word,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_char (VALUE(x1, w1) : (char,'a) value,
-               VALUE(x2, w2) : (char,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_string (VALUE(x1, w1) : (string,'a) value,
-                 VALUE(x2, w2) : (string,'a) value)
-                : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_real (VALUE(x1, w1) : (real,'a) value,
-               VALUE(x2, w2) : (real,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_intOption (VALUE(x1, w1) : (int option,'a) value,
-                    VALUE(x2, w2) : (int option,'a) value)
-                   : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                     VALUE(x2, w2) : (word option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_charOption (VALUE(x1, w1) : (char option,'a) value,
-                     VALUE(x2, w2) : (char option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_boolOption (VALUE(x1, w1) : (bool option,'a) value,
-                     VALUE(x2, w2) : (bool option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_stringOption (VALUE(x1, w1) : (string option,'a) value,
-                       VALUE(x2, w2) : (string option,'a) value)
-                      : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun lt_realOption (VALUE(x1, w1) : (real option,'a) value,
-                     VALUE(x2, w2) : (real option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<", x2, SOME true)
-  fun le_int (VALUE(x1, w1) : (int,'a) value,
-              VALUE(x2, w2) : (int,'a) value)
-             : (bool option,'a) value =
+  fun le (VALUE(x1, w1) : ('b,'a) value,
+          VALUE(x2, w2) : ('b,'a) value)
+         : (bool option,'a) value =
       op2 (x1, "<=", x2, SOME true)
-  fun le_word (VALUE(x1, w1) : (word,'a) value,
-               VALUE(x2, w2) : (word,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_char (VALUE(x1, w1) : (char,'a) value,
-               VALUE(x2, w2) : (char,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_string (VALUE(x1, w1) : (string,'a) value,
-                 VALUE(x2, w2) : (string,'a) value)
-                : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_real (VALUE(x1, w1) : (real,'a) value,
-               VALUE(x2, w2) : (real,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_intOption (VALUE(x1, w1) : (int option,'a) value,
-                    VALUE(x2, w2) : (int option,'a) value)
-                   : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                     VALUE(x2, w2) : (word option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_charOption (VALUE(x1, w1) : (char option,'a) value,
-                     VALUE(x2, w2) : (char option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_boolOption (VALUE(x1, w1) : (bool option,'a) value,
-                     VALUE(x2, w2) : (bool option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_stringOption (VALUE(x1, w1) : (string option,'a) value,
-                       VALUE(x2, w2) : (string option,'a) value)
-                      : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun le_realOption (VALUE(x1, w1) : (real option,'a) value,
-                     VALUE(x2, w2) : (real option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<=", x2, SOME true)
-  fun gt_int (VALUE(x1, w1) : (int,'a) value,
-              VALUE(x2, w2) : (int,'a) value)
-             : (bool option,'a) value =
+  fun gt (VALUE(x1, w1) : ('b,'a) value,
+          VALUE(x2, w2) : ('b,'a) value)
+         : (bool option,'a) value =
       op2 (x1, ">", x2, SOME true)
-  fun gt_word (VALUE(x1, w1) : (word,'a) value,
-               VALUE(x2, w2) : (word,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_char (VALUE(x1, w1) : (char,'a) value,
-               VALUE(x2, w2) : (char,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_string (VALUE(x1, w1) : (string,'a) value,
-                 VALUE(x2, w2) : (string,'a) value)
-                : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_real (VALUE(x1, w1) : (real,'a) value,
-               VALUE(x2, w2) : (real,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_intOption (VALUE(x1, w1) : (int option,'a) value,
-                    VALUE(x2, w2) : (int option,'a) value)
-                   : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                     VALUE(x2, w2) : (word option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_charOption (VALUE(x1, w1) : (char option,'a) value,
-                     VALUE(x2, w2) : (char option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_boolOption (VALUE(x1, w1) : (bool option,'a) value,
-                     VALUE(x2, w2) : (bool option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_stringOption (VALUE(x1, w1) : (string option,'a) value,
-                       VALUE(x2, w2) : (string option,'a) value)
-                      : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun gt_realOption (VALUE(x1, w1) : (real option,'a) value,
-                     VALUE(x2, w2) : (real option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">", x2, SOME true)
-  fun ge_int (VALUE(x1, w1) : (int,'a) value,
-              VALUE(x2, w2) : (int,'a) value)
-             : (bool option,'a) value =
+  fun ge (VALUE(x1, w1) : ('b,'a) value,
+          VALUE(x2, w2) : ('b,'a) value)
+         : (bool option,'a) value =
       op2 (x1, ">=", x2, SOME true)
-  fun ge_word (VALUE(x1, w1) : (word,'a) value,
-               VALUE(x2, w2) : (word,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_char (VALUE(x1, w1) : (char,'a) value,
-               VALUE(x2, w2) : (char,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_string (VALUE(x1, w1) : (string,'a) value,
-                 VALUE(x2, w2) : (string,'a) value)
-                : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_real (VALUE(x1, w1) : (real,'a) value,
-               VALUE(x2, w2) : (real,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_intOption (VALUE(x1, w1) : (int option,'a) value,
-                    VALUE(x2, w2) : (int option,'a) value)
-                   : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                     VALUE(x2, w2) : (word option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_charOption (VALUE(x1, w1) : (char option,'a) value,
-                     VALUE(x2, w2) : (char option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_boolOption (VALUE(x1, w1) : (bool option,'a) value,
-                     VALUE(x2, w2) : (bool option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_stringOption (VALUE(x1, w1) : (string option,'a) value,
-                       VALUE(x2, w2) : (string option,'a) value)
-                      : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-  fun ge_realOption (VALUE(x1, w1) : (real option,'a) value,
-                     VALUE(x2, w2) : (real option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, ">=", x2, SOME true)
-
-  fun eq_int (VALUE(x1, w1) : (int,'a) value,
-              VALUE(x2, w2) : (int,'a) value)
-             : (bool option,'a) value =
+  fun eq (VALUE(x1, w1) : ('b,'a) value,
+          VALUE(x2, w2) : ('b,'a) value)
+         : (bool option,'a) value =
       op2 (x1, "=", x2, SOME true)
-  fun eq_word (VALUE(x1, w1) : (word,'a) value,
-               VALUE(x2, w2) : (word,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_char (VALUE(x1, w1) : (char,'a) value,
-               VALUE(x2, w2) : (char,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_string (VALUE(x1, w1) : (string,'a) value,
-                 VALUE(x2, w2) : (string,'a) value)
-                : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_real (VALUE(x1, w1) : (real,'a) value,
-               VALUE(x2, w2) : (real,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_intOption (VALUE(x1, w1) : (int option,'a) value,
-                    VALUE(x2, w2) : (int option,'a) value)
-                   : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                     VALUE(x2, w2) : (word option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_charOption (VALUE(x1, w1) : (char option,'a) value,
-                     VALUE(x2, w2) : (char option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_boolOption (VALUE(x1, w1) : (bool option,'a) value,
-                     VALUE(x2, w2) : (bool option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_stringOption (VALUE(x1, w1) : (string option,'a) value,
-                       VALUE(x2, w2) : (string option,'a) value)
-                      : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-  fun eq_realOption (VALUE(x1, w1) : (real option,'a) value,
-                     VALUE(x2, w2) : (real option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "=", x2, SOME true)
-
-  fun neq_int (VALUE(x1, w1) : (int,'a) value,
-               VALUE(x2, w2) : (int,'a) value)
-              : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_word (VALUE(x1, w1) : (word,'a) value,
-                VALUE(x2, w2) : (word,'a) value)
-               : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_char (VALUE(x1, w1) : (char,'a) value,
-                VALUE(x2, w2) : (char,'a) value)
-               : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_string (VALUE(x1, w1) : (string,'a) value,
-                  VALUE(x2, w2) : (string,'a) value)
-                 : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_real (VALUE(x1, w1) : (real,'a) value,
-                VALUE(x2, w2) : (real,'a) value)
-               : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_intOption (VALUE(x1, w1) : (int option,'a) value,
-                     VALUE(x2, w2) : (int option,'a) value)
-                    : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_wordOption (VALUE(x1, w1) : (word option,'a) value,
-                      VALUE(x2, w2) : (word option,'a) value)
-                     : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_charOption (VALUE(x1, w1) : (char option,'a) value,
-                      VALUE(x2, w2) : (char option,'a) value)
-                     : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_boolOption (VALUE(x1, w1) : (bool option,'a) value,
-                      VALUE(x2, w2) : (bool option,'a) value)
-                     : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_stringOption (VALUE(x1, w1) : (string option,'a) value,
-                        VALUE(x2, w2) : (string option,'a) value)
-                       : (bool option,'a) value =
-      op2 (x1, "<>", x2, SOME true)
-  fun neq_realOption (VALUE(x1, w1) : (real option,'a) value,
-                      VALUE(x2, w2) : (real option,'a) value)
-                     : (bool option,'a) value =
+  fun neq (VALUE(x1, w1) : ('b,'a) value,
+           VALUE(x2, w2) : ('b,'a) value)
+          : (bool option,'a) value =
       op2 (x1, "<>", x2, SOME true)
 
   fun strcat (VALUE(x1, w1) : (string,'a) value,
@@ -633,23 +366,37 @@ struct
       : (bool option, 'a) value =
       op1post (x1, " is not null", NONE)
 
+  local
+    fun likeOp (VALUE (x1, w1), VALUE (x2, w2)) = 
+        op2 (x1, "like", x2, SOME true) : (bool option, 'a) value
+    type ('a,'b) t = ('a,'b) value * ('a,'b) value -> (bool option,'b) value
+  in
+  val likeString : (string, 'a) t = likeOp
+  val likeStringOption : (string option, 'a) t = likeOp
+  end (* local *)
+
   end (* local *)
 
   local
-    fun sqlInt x = Int.toString x
+    fun sqlInt x =
+        CharVector.map (fn #"~" => #"-" | c => c) (Int.toString x)
+    fun sqlIntInf x =
+        CharVector.map (fn #"~" => #"-" | c => c) (IntInf.toString x)
     fun sqlWord x = Word.fmt StringCvt.DEC x
     fun sqlReal x =
-        String.translate (fn #"~" => "-" | x => str x)
-                         (Real.fmt StringCvt.EXACT x)
+        CharVector.map (fn #"~" => #"-" | c => c) (Real.fmt StringCvt.EXACT x)
     fun sqlString x =
         "'" ^ String.translate (fn #"'" => "''" | x => str x) x ^ "'"
     fun sqlChar x = sqlString (str x)
     fun sqlBool true = "t" | sqlBool false = "f"
     fun nullValue x = VALUE (("NULL", DBI), x)
+    fun sqlTimestamp x = TimeStamp.toString x
   in
 
   fun toSQL_int (x:int) : (int, 'a) value =
       VALUE ((sqlInt x, DBI), x)
+  fun toSQL_intInf (x:IntInf.int) : (IntInf.int, 'a) value =
+      VALUE ((sqlIntInf x, DBI), x)
   fun toSQL_word (x:word) : (word, 'a) value =
       VALUE ((sqlWord x, DBI), x)
   fun toSQL_char (x:char) : (char, 'a) value =
@@ -658,8 +405,16 @@ struct
       VALUE ((sqlString x, DBI), x)
   fun toSQL_real (x:real) : (real, 'a) value =
       VALUE ((sqlReal x, DBI), x)
+  fun toSQL_timestamp (x:TimeStamp.timestamp) : (TimeStamp.timestamp, 'a) value =
+      VALUE ((sqlTimestamp x, DBI), x)
+  fun toSQL_decimal (x:decimal) : (decimal, 'a) value =
+      VALUE ((Decimal.toString x, DBI), x)
+  fun toSQL_float (x:float) : (float, 'a) value =
+      VALUE ((Float.toString x, DBI), x)
   fun toSQL_intOption (x:int option) : (int option, 'a) value =
       case x of SOME y => VALUE ((sqlInt y, DBI), x) | NONE => nullValue x
+  fun toSQL_intInfOption (x:IntInf.int option) : (IntInf.int option, 'a) value =
+      case x of SOME y => VALUE ((sqlIntInf y, DBI), x) | NONE => nullValue x
   fun toSQL_wordOption (x:word option) : (word option, 'a) value =
       case x of SOME y => VALUE ((sqlWord y, DBI), x) | NONE => nullValue x
   fun toSQL_boolOption (x:bool option) : (bool option, 'a) value =
@@ -670,6 +425,14 @@ struct
       case x of SOME y => VALUE ((sqlString y, DBI), x) | NONE => nullValue x
   fun toSQL_realOption (x:real option) : (real option, 'a) value =
       case x of SOME y => VALUE ((sqlReal y, DBI), x) | NONE => nullValue x
+  fun toSQL_timestampOption (x:TimeStamp.timestamp option) : (TimeStamp.timestamp option, 'a) value =
+      case x of SOME y => VALUE ((sqlTimestamp y, DBI), x) | NONE => nullValue x
+  fun toSQL_decimalOption (x:decimal option) : (decimal option, 'a) value =
+      case x of SOME y => VALUE ((Decimal.toString y, DBI), x)
+              | NONE => nullValue x
+  fun toSQL_floatOption (x:float option) : (float option, 'a) value =
+      case x of SOME y => VALUE ((Float.toString y, DBI), x)
+              | NONE => nullValue x
 
   end (* local *)
 
@@ -679,63 +442,81 @@ struct
       | nonnull NONE = raise Format
   in
 
-  fun fromSQL_int (col, RESULT (r, row), _:int) =
-      nonnull (Backend.getInt (r, row, col))
-  fun fromSQL_word (col, RESULT (r, row), _:word) =
-      nonnull (Backend.getWord (r, row, col))
-  fun fromSQL_char (col, RESULT (r, row), _:char) =
-      nonnull (Backend.getChar (r, row, col))
-  fun fromSQL_real (col, RESULT (r, row), _:real) =
-      nonnull (Backend.getReal (r, row, col))
-  fun fromSQL_intOption (col, RESULT (r, row), _:int option) =
-      Backend.getInt (r, row, col)
-  fun fromSQL_wordOption (col, RESULT (r, row), _:word option) =
-      Backend.getWord (r, row, col)
-  fun fromSQL_charOption (col, RESULT (r, row), _:char option) =
-      Backend.getChar (r, row, col)
-  fun fromSQL_boolOption (col, RESULT (r, row), _:bool option) =
-      Backend.getBool (r, row, col)
-  fun fromSQL_stringOption (col, RESULT (r, row), _:string option) =
-      Backend.getString (r, row, col)
-  fun fromSQL_realOption (col, RESULT (r, row), _:real option) =
-      Backend.getReal (r, row, col)
-  fun fromSQL_string (col, RESULT (r, row), _:string) =
-      nonnull (Backend.getString (r, row, col))
+  fun fromSQL_int (col, R r, _:int) =
+      nonnull (#getInt r col)
+  fun fromSQL_intInf (col, R r, _:IntInf.int) =
+      nonnull (#getIntInf r col)
+  fun fromSQL_word (col, R r, _:word) =
+      nonnull (#getWord r col)
+  fun fromSQL_char (col, R r, _:char) =
+      nonnull (#getChar r col)
+  fun fromSQL_real (col, R r, _:real) =
+      nonnull (#getReal r col)
+  fun fromSQL_string (col, R r, _:string) =
+      nonnull (#getString r col)
+  fun fromSQL_timestamp (col, R r, _:TimeStamp.timestamp) =
+      nonnull (#getTimestamp r col)
+  fun fromSQL_decimal (col, R r, _:decimal) =
+      nonnull (#getDecimal r col)
+  fun fromSQL_float (col, R r, _:float) =
+      nonnull (#getFloat r col)
+  fun fromSQL_intOption (col, R r, _:int option) =
+      #getInt r col
+  fun fromSQL_intInfOption (col, R r, _:IntInf.int option) =
+      #getIntInf r col
+  fun fromSQL_wordOption (col, R r, _:word option) =
+      #getWord r col
+  fun fromSQL_charOption (col, R r, _:char option) =
+      #getChar r col
+  fun fromSQL_boolOption (col, R r, _:bool option) =
+      #getBool r col
+  fun fromSQL_stringOption (col, R r, _:string option) =
+      #getString r col
+  fun fromSQL_realOption (col, R r, _:real option) =
+      #getReal r col
+  fun fromSQL_timestampOption (col, R r, _:TimeStamp.timestamp option) =
+      #getTimestamp r col
+  fun fromSQL_decimalOption (col, R r, _:decimal option) =
+      #getDecimal r col
+  fun fromSQL_floatOption (col, R r, _:float option) =
+      #getFloat r col
 
   end (* local *)
 
 (*
   fun fromSQL_int (col:int, r:result, _:int) : int =
-      SMLSharp.SQLImpl.fromSQL_int (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_int (col, r)
   fun fromSQL_word (col:int, r:result, _:word) : word =
-      SMLSharp.SQLImpl.fromSQL_word (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_word (col, r)
   fun fromSQL_char (col:int, r:result, _:char) : char =
-      SMLSharp.SQLImpl.fromSQL_char (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_char (col, r)
   fun fromSQL_string (col:int, r:result, _:string) : string =
-      SMLSharp.SQLImpl.fromSQL_string (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_string (col, r)
   fun fromSQL_real (col:int, r:result, _:real) : real =
-      SMLSharp.SQLImpl.fromSQL_real (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_real (col, r)
   fun fromSQL_intOption (col:int, r:result, _:int option)
                         : int option =
-      SMLSharp.SQLImpl.fromSQL_intOption (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_intOption (col, r)
   fun fromSQL_wordOption (col:int, r:result, _:word option)
                          : word option =
-      SMLSharp.SQLImpl.fromSQL_wordOption (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_wordOption (col, r)
   fun fromSQL_charOption (col:int, r:result, _:char option)
                          : char option =
-      SMLSharp.SQLImpl.fromSQL_charOption (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_charOption (col, r)
   fun fromSQL_boolOption (col:int, r:result, _:bool option)
                          : bool option =
-      SMLSharp.SQLImpl.fromSQL_boolOption (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_boolOption (col, r)
   fun fromSQL_stringOption (col:int, r:result, _:string option)
                            : string option =
-      SMLSharp.SQLImpl.fromSQL_stringOption (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_stringOption (col, r)
   fun fromSQL_realOption (col:int, r:result, _:real option)
                          : real option =
-      SMLSharp.SQLImpl.fromSQL_realOption (col, r)
+      SMLSharp_Builtin.SQLImpl.fromSQL_realOption (col, r)
 *)
 
   fun default_int () : (int, 'a) value =
+      VALUE (("DEFAULT", DBI), 0)
+  fun default_intInf () : (IntInf.int, 'a) value =
       VALUE (("DEFAULT", DBI), 0)
   fun default_word () : (word, 'a) value =
       VALUE (("DEFAULT", DBI), 0w0)
@@ -745,7 +526,11 @@ struct
       VALUE (("DEFAULT", DBI), "")
   fun default_real () : (real, 'a) value =
       VALUE (("DEFAULT", DBI), 0.0)
+  fun default_timestamp () : (TimeStamp.timestamp, 'a) value =
+      VALUE (("DEFAULT", DBI), TimeStamp.defaultTimestamp)
   fun default_intOption () : (int option, 'a) value =
+      VALUE (("DEFAULT", DBI), SOME 0)
+  fun default_intInfOption () : (IntInf.int option, 'a) value =
       VALUE (("DEFAULT", DBI), SOME 0)
   fun default_wordOption () : (word option, 'a) value =
       VALUE (("DEFAULT", DBI), SOME 0w0)
@@ -757,5 +542,7 @@ struct
       VALUE (("DEFAULT", DBI), SOME "")
   fun default_realOption () : (real option, 'a) value =
       VALUE (("DEFAULT", DBI), SOME 0.0)
+  fun default_timestampOption () : (TimeStamp.timestamp option, 'a) value =
+      VALUE (("DEFAULT", DBI), SOME TimeStamp.defaultTimestamp)
 
 end

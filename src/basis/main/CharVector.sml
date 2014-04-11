@@ -1,213 +1,216 @@
 (**
- * String related structures.
- * @author YAMATODANI Kiyoshi
+ * CharVector
  * @author UENO Katsuhiro
- *
- * @author Atsushi Ohori (refactored from StringStructure)
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @author Atsushi Ohori
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "CharVector.smi"
 
-structure CharVector :> MONO_VECTOR
-  where type vector = string
-  where type elem = char  
-=
+(* NOTE:
+ * CharVector.vector is not "char vector", but "string".
+ * The only difference between "char vector" and "string" is that "string"
+ * value is always terminated by hidden sentinel null character but
+ * "char vector" is not.
+ * Due to this difference, CharVector does not use common implementation
+ * code "Vector_common.sml".
+ *)
+
+infix 7 * / div mod
+infix 6 + - ^
+infixr 5 ::
+infix 4 = <> > >= < <=
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op > = SMLSharp_Builtin.Int.gt
+val op < = SMLSharp_Builtin.Int.lt
+val op <= = SMLSharp_Builtin.Int.lteq
+val op >= = SMLSharp_Builtin.Int.gteq
+structure String = SMLSharp_Builtin.String
+structure Array = SMLSharp_Builtin.Array
+structure Vector = SMLSharp_Builtin.Vector
+
+structure CharVector =
 struct
-local
-  infix 7 * / div mod
-  infix 6 + -
-  infixr 5 ::
-  infix 4 = <> > >= < <=
-  val op + = SMLSharp.Int.add
-  val op - = SMLSharp.Int.sub
-  val op > = SMLSharp.Int.gt
-  val op < = SMLSharp.Int.lt
-  val op <= = SMLSharp.Int.lteq
-  val op >= = SMLSharp.Int.gteq
 
-in
-    type vector = string
-    type elem = char
-    (* object size occupies 28 bits of 32-bit object header. *)
-    val maxLen = 0x0fffffff
+  type vector = string
+  type elem = char
 
-    val length = SMLSharp.PrimString.size
+  (* object size occupies 26 bits of 32-bit object header. In addition,
+   * "string" have sentinel zero character at the end of the char sequence *)
+  val maxLen = 0x03fffffe
 
-    fun sub (ary, index) =
-        if index < 0 orelse SMLSharp.PrimString.size ary <= index
-        then raise Subscript
-        else SMLSharp.PrimString.sub_unsafe (ary, index)
+  val length = String.size
+  val sub = String.sub
 
-    fun foldli foldFn z ary =
-        let
-          val len = SMLSharp.PrimString.size ary
-          fun loop (i, z) =
-              if i >= len then z
-              else let val x = SMLSharp.PrimString.sub_unsafe (ary, i)
-                   in loop (i + 1, foldFn (i, x, z))
-                   end
-        in
-          loop (0, z)
-        end
+  fun foldli foldFn z vec =
+      let
+        val len = String.size vec
+        fun loop (i, z) =
+            if i >= len then z
+            else let val x = Array.sub_unsafe (String.castToArray vec, i)
+                 in loop (i + 1, foldFn (i, x, z))
+                 end
+      in
+        loop (0, z)
+      end
 
-    fun foldl foldFn z ary =
-        foldli (fn (i,x,z) => foldFn (x,z)) z ary
+  fun foldl foldFn z vec =
+      foldli (fn (i,x,z) => foldFn (x,z)) z vec
 
-    fun foldri foldFn z ary =
-        let
-          val len = SMLSharp.PrimString.size ary
-          fun loop (i, z) =
-              if i < 0 then z
-              else let val x = SMLSharp.PrimString.sub_unsafe (ary, i)
-                   in loop (i - 1, foldFn (i, x, z))
-                   end
-        in
-          loop (len - 1, z)
-        end
+  fun foldri foldFn z vec =
+      let
+        val len = String.size vec
+        fun loop (i, z) =
+            if i < 0 then z
+            else let val x = Array.sub_unsafe (String.castToArray vec, i)
+                 in loop (i - 1, foldFn (i, x, z))
+                 end
+      in
+        loop (len - 1, z)
+      end
 
-    fun foldr foldFn z ary =
-        foldri (fn (i,x,z) => foldFn (x,z)) z ary
+  fun foldr foldFn z vec =
+      foldri (fn (i,x,z) => foldFn (x,z)) z vec
 
-    fun appi appFn ary =
-        foldli (fn (i,x,()) => appFn (i,x)) () ary
+  fun appi appFn vec =
+      foldli (fn (i,x,()) => appFn (i,x)) () vec
 
-    fun app appFn ary =
-        foldli (fn (i,x,()) => appFn x) () ary
+  fun app appFn vec =
+      foldli (fn (i,x,()) => appFn x) () vec
 
-    fun findi predicate ary =
-        let
-          val len = SMLSharp.PrimString.size ary
-          fun loop i =
-              if i >= len then NONE
-              else let val x = SMLSharp.PrimString.sub_unsafe (ary, i)
-                   in if predicate (i, x) then SOME (i, x) else loop (i + 1)
-                   end
-        in
-          loop 0
-        end
+  fun findi predicate vec =
+      let
+        val len = String.size vec
+        fun loop i =
+            if i >= len then NONE
+            else let val x = Array.sub_unsafe (String.castToArray vec, i)
+                 in if predicate (i, x) then SOME (i, x) else loop (i + 1)
+                 end
+      in
+        loop 0
+      end
 
-    fun find predicate ary =
-        case findi (fn (i,x) => predicate x) ary of
-          SOME (i,x) => SOME x
-        | NONE => NONE
+  fun find predicate vec =
+      case findi (fn (i,x) => predicate x) vec of
+        SOME (i,x) => SOME x
+      | NONE => NONE
 
-    fun exists predicate ary =
-        case find predicate ary of
-          SOME _ => true
-        | NONE => false
+  fun exists predicate vec =
+      case find predicate vec of
+        SOME _ => true
+      | NONE => false
 
-    fun all predicate ary =
-        let
-          val len = SMLSharp.PrimString.size ary
-          fun loop i =
-              if i >= len then true
-              else predicate (SMLSharp.PrimString.sub_unsafe (ary, i))
-                   andalso loop (i + 1)
-        in
-          loop 0
-        end
+  fun all predicate vec =
+      let
+        val len = String.size vec
+        fun loop i =
+            if i >= len then true
+            else predicate (Array.sub_unsafe (String.castToArray vec, i))
+                 andalso loop (i + 1)
+      in
+        loop 0
+      end
 
-    fun collate cmpFn (ary1, ary2) =
-        let
-          val len1 = SMLSharp.PrimString.size ary1
-          val len2 = SMLSharp.PrimString.size ary2
-          fun loop (i, 0, 0) = EQUAL
-            | loop (i, 0, _) = LESS
-            | loop (i, _, 0) = GREATER
-            | loop (i, rest1, rest2) =
-              let
-                val c1 = SMLSharp.PrimString.sub_unsafe (ary1, i)
-                val c2 = SMLSharp.PrimString.sub_unsafe (ary2, i)
-              in
-                case cmpFn (c1, c2) of
-                  EQUAL => loop (i + 1, rest1 - 1, rest2 - 1)
-                | order => order
-              end
-        in
-          loop (0, len1, len2)
-        end
-
-    fun fromList elems =
-        let
-          fun length (nil : char list, z) = z
-            | length (h::t, z) = length (t, z + 1)
-          val len = length (elems, 0)
-          val buf = SMLSharp.PrimString.allocVector len
-          fun fill (i, nil) = ()
-            | fill (i, h::t) =
-              (SMLSharp.PrimString.update_unsafe (buf, i, h); fill (i + 1, t))
-        in
-          fill (0, elems);
-          buf
-        end
-
-    fun tabulate (len, elemFn) =
-        let
-          val buf = SMLSharp.PrimString.allocVector len
-          fun fill i =
-              if i >= len then ()
-              else (SMLSharp.PrimString.update_unsafe (buf, i, elemFn i);
-                    fill (i + 1))
-        in
-          fill 0;
-          buf
-        end
-
-    fun update (vec, index, value) =
-        let
-          val len = SMLSharp.PrimString.size vec
-        in
-          if index < 0 orelse len <= index
-          then raise Subscript
-          else
+  fun collate cmpFn (vec1, vec2) =
+      let
+        val len1 = String.size vec1
+        val len2 = String.size vec2
+        fun loop (i, 0, 0) = General.EQUAL
+          | loop (i, 0, _) = General.LESS
+          | loop (i, _, 0) = General.GREATER
+          | loop (i, rest1, rest2) =
             let
-              val buf = SMLSharp.PrimString.allocVector len
+              val c1 = Array.sub_unsafe (String.castToArray vec1, i)
+              val c2 = Array.sub_unsafe (String.castToArray vec2, i)
             in
-              SMLSharp.PrimString.copy_unsafe (vec, 0, buf, 0, len);
-              SMLSharp.PrimString.update_unsafe (buf, index, value);
-              buf
+              case cmpFn (c1, c2) of
+                General.EQUAL => loop (i + 1, rest1 - 1, rest2 - 1)
+              | order => order
             end
-        end
+      in
+        loop (0, len1, len2)
+      end
 
-    fun concat vectors =
-        let
-          fun totalLength (nil, z) = z
-            | totalLength (h::t, z) =
-              let val len = SMLSharp.PrimString.size h
-                  val z = len + z
-              in if z > maxLen then raise Size else totalLength (t, z)
+  fun fromList elems =
+      let
+        fun length (nil : char list, z) = z
+          | length (h::t, z) = length (t, z + 1)
+        val len = length (elems, 0)
+        val buf = String.alloc len
+        fun fill (i, nil) = ()
+          | fill (i, h::t) =
+            (Array.update_unsafe (String.castToArray buf, i, h);
+             fill (i + 1, t))
+      in
+        fill (0, elems);
+        buf
+      end
+
+  fun tabulate (len, elemFn) =
+      let
+        val buf = String.alloc len
+        fun fill i =
+            if i >= len then ()
+            else (Array.update_unsafe (String.castToArray buf, i, elemFn i);
+                  fill (i + 1))
+      in
+        fill 0;
+        buf
+      end
+
+  fun update (vec, index, value) =
+      let
+        val len = String.size vec
+        val buf = String.alloc_unsafe len
+      in
+        if index < 0 orelse index >= len then raise Subscript else ();
+        Array.copy_unsafe (String.castToArray vec, 0,
+                           String.castToArray buf, 0, len);
+        Array.update_unsafe (String.castToArray buf, index, value);
+        buf
+      end
+
+  fun concat nil = ""
+    | concat [x] = x
+    | concat vectors =
+      let
+        fun totalLength (nil, z) = z
+          | totalLength (h::t, z) =
+            let val len = String.size h
+                val z = len + z
+            in if z > maxLen then raise Size else totalLength (t, z)
+            end
+        val len = totalLength (vectors, 0)
+        val buf = String.alloc_unsafe len
+        fun loop (i, nil) = ()
+          | loop (i, h::t) =
+            let val len = String.size h
+            in Array.copy_unsafe (String.castToArray h, 0,
+                                  String.castToArray buf, i, len);
+               loop (i + len, t)
+            end
+      in
+        loop (0, vectors);
+        buf
+      end
+
+  fun mapi mapFn vec =
+      let
+        val len = String.size vec
+        val buf = String.alloc_unsafe len
+        fun loop i =
+            if i >= len then ()
+            else
+              let val x = Array.sub_unsafe (String.castToArray vec, i)
+              in Array.update_unsafe (String.castToArray buf, i, mapFn (i, x));
+                 loop (i + 1)
               end
-          val len = totalLength (vectors, 0)
-          val buf = SMLSharp.PrimString.allocVector len
-          fun loop (i, nil) = ()
-            | loop (i, h::t) =
-              let val len = SMLSharp.PrimString.size h
-              in SMLSharp.PrimString.copy_unsafe (h, 0, buf, i, len);
-              loop (i + len, t)
-              end
-        in
-          loop (0, vectors);
-          buf
-        end
+      in
+        loop 0;
+        buf
+      end
 
-    fun mapi mapFn vec =
-        let
-          val len = SMLSharp.PrimString.size vec
-          val buf = SMLSharp.PrimString.allocVector len
-          fun loop i =
-              if i >= len then ()
-              else
-                let val x = SMLSharp.PrimString.sub_unsafe (vec, i)
-                in SMLSharp.PrimString.update_unsafe (buf, i, mapFn (i, x));
-                loop (i + 1)
-                end
-        in
-          loop 0;
-          buf
-        end
+  fun map mapFn vec =
+      mapi (fn (i,x) => mapFn x) vec
 
-    fun map mapFn vec =
-        mapi (fn (i,x) => mapFn x) vec
-
-  end (* CharVector *)
-end (* local *)
+end

@@ -1,6 +1,4 @@
-_require "../basis.smi"
-
-(* provided for users in interactive mode *)
+(* provided the users for interactive mode *)
 _require "../prelude.smi"
 
 _require "main/main/SimpleMain.smi"

@@ -1,17 +1,27 @@
-_require "General.smi"
-_require "StringCvt.smi"
-_require "Time.smi"
-_require "DATE.sig"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./CharArray.smi"
+_require "./CharArraySlice.smi"
+_require "../../ffi/main/Pointer.smi"
+_require "./SMLSharp_Runtime.smi"
+_require "./Time.smi"
+_require "./IntInf.smi"
+_require "./OS.smi"
 
 structure Date =
 struct
   datatype weekday = Mon | Tue | Wed | Thu | Fri | Sat | Sun
   datatype month = Jan | Feb | Mar | Apr | May | Jun
-                   | Jul | Aug | Sep | Oct | Nov | Dec
-  type date (= word)
+                 | Jul | Aug | Sep | Oct | Nov | Dec
+  type date (= boxed)
   exception Date
-  val date : {year : int, month : month, day : int, hour : int, minute : int,
-              second : int, offset : Time.time option} -> date
+  val date : {year : int,
+              month : month,
+              day : int,
+              hour : int,
+              minute : int,
+              second : int,
+              offset : Time.time option} -> date
   val year : date -> int
   val month : date -> month
   val day : date -> int
@@ -26,7 +36,7 @@ struct
   val fromTimeLocal : Time.time -> date
   val fromTimeUniv : Time.time -> date
   val toTime : date -> Time.time
-  val compare : date * date -> order
+  val compare : date * date -> General.order
   val fmt : string -> date -> string
   val toString : date -> string
   val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader

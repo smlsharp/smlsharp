@@ -1,24 +1,24 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../util/main/utils.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/EvalIty.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "BuiltinTypeNames.ppg.smi"
+_require "./BuiltinTypeNames.ppg.smi"
 
 structure BuiltinTypes =
 struct
 
   type tstrInfo =  {tfun:IDCalc.tfun, varE:IDCalc.varE, formals:IDCalc.formals, conSpec:IDCalc.conSpec}
 
-  val equalTy : BuiltinTypeNames.bty * BuiltinTypeNames.bty -> bool
-  val compatTy : {absTy: BuiltinTypeNames.bty, implTy: BuiltinTypeNames.bty} -> bool
+  val runtimeTyOfConspec : 'a option SymbolEnv.map -> IDCalc.runtimeTy
+
   val findTstrInfo : string -> tstrInfo option
 
   val intTstrInfo : tstrInfo
@@ -68,7 +68,10 @@ struct
        
   val ptrTstrInfo : tstrInfo
   val ptrTyCon : Types.tyCon
-  val ptrTy : Types.ty
+
+  val codeptrTstrInfo : tstrInfo
+  val codeptrTyCon : Types.tyCon
+  val codeptrTy : Types.ty
        
   val arrayTstrInfo : tstrInfo
   val arrayTyCon : Types.tyCon
@@ -91,6 +94,11 @@ struct
   val exntagITy : IDCalc.ty
   val exntagTy : Types.ty
        
+  val contagTstrInfo : tstrInfo
+  val contagTyCon : Types.tyCon
+  val contagITy : IDCalc.ty
+  val contagTy : Types.ty
+
   val refTstrInfo : tstrInfo
   val refTyCon : Types.tyCon
   val refICConInfo : IDCalc.conInfo
@@ -113,32 +121,13 @@ struct
 
   val optionTstrInfo : tstrInfo
   val optionTyCon : Types.tyCon
-  val optionITy : IDCalc.ty
-  val optionTy : Types.ty
   val SOMEICConInfo : IDCalc.conInfo
   val SOMETPConInfo : Types.conInfo
   val NONEICConInfo : IDCalc.conInfo
   val NONETPConInfo : Types.conInfo
 
-  val orderTstrInfo : tstrInfo
-  val orderTyCon : Types.tyCon
-  val orderITy : IDCalc.ty
-  val orderTy : Types.ty
-  val EQUALICConInfo : IDCalc.conInfo
-  val EQUALTPConInfo : Types.conInfo
-  val LESSICConInfo : IDCalc.conInfo
-  val LESSTPConInfo : Types.conInfo
-  val GREATERICConInfo : IDCalc.conInfo
-  val GREATERTPConInfo : Types.conInfo
-
-  val serverTstrInfo : tstrInfo
-  val serverTyCon : Types.tyCon
-  val SERVERICConInfo : IDCalc.conInfo
-  val SERVERTPConInfo : Types.conInfo
-
   val dbiTstrInfo : tstrInfo
   val dbiTyCon : Types.tyCon
-  val dbiTy : Types.ty
   val DBIICConInfo : IDCalc.conInfo
   val DBITPConInfo : Types.conInfo
 
@@ -156,8 +145,6 @@ struct
   val DomainExExn : Types.exExnInfo
   val FailExExn : Types.exExnInfo
   val ChrExExn : Types.exExnInfo
-  val SpanExExn : Types.exExnInfo
-  val EmptyExExn : Types.exExnInfo
-  val OptionExExn : Types.exExnInfo
 
+  val builtinConEnv : unit -> IDCalc.conInfo ConID.Map.map
 end

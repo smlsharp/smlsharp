@@ -1,10 +1,11 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/ord-key-sig.sml"
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "smlnj-lib/Util/ord-key-sig.sml"
+_require "smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../control/main/Loc.ppg.smi"
@@ -20,11 +21,11 @@ _require "../../recordcalc/main/RecordCalc.ppg.smi"
 
 structure MatchData = 
 struct
-  datatype kind = Bind | Match | Handle of Types.varInfo
+  datatype kind = Bind | Match | Handle of RecordCalc.varInfo
     
   type const = Absyn.constant
-  type conInfo = Types.conInfo
-  type exnCon = TypedCalc.exnCon
+  type conInfo = RecordCalc.conInfo
+  type exnCon = RecordCalc.exnCon
 
   structure ConstOrd = 
   struct
@@ -59,7 +60,7 @@ struct
 
   datatype pat
   = WildPat of Types.ty
-  | VarPat of Types.varInfo
+  | VarPat of RecordCalc.varInfo
   | ConstPat of const * Types.ty
   | DataConPat of conInfo * bool * pat * Types.ty
   | ExnConPat of exnCon * bool * pat * Types.ty
@@ -73,16 +74,16 @@ struct
     = End of exp
     | ++ of pat * rule
 
-  type env = Types.varInfo VarInfoEnv.map
+  type env = RecordCalc.varInfo VarInfoEnv.map
 
   datatype tree
     = EmptyNode
     | LeafNode of exp * env
-    | EqNode of Types.varInfo * tree ConstMap.map * tree
-    | DataConNode of Types.varInfo * tree DataConMap.map * tree
-    | ExnConNode of Types.varInfo * tree ExnConMap.map * tree
-    | RecNode of Types.varInfo * string * tree
-    | UnivNode of Types.varInfo * tree
+    | EqNode of RecordCalc.varInfo * tree ConstMap.map * tree
+    | DataConNode of RecordCalc.varInfo * tree DataConMap.map * tree
+    | ExnConNode of RecordCalc.varInfo * tree ExnConMap.map * tree
+    | RecNode of RecordCalc.varInfo * string * tree
+    | UnivNode of RecordCalc.varInfo * tree
 
   val unitExp : RecordCalc.rcexp
   val expDummy : RecordCalc.rcexp

@@ -1,28 +1,29 @@
-_interface "posix-io.smi"
-infix 6 -
-infix 4 < =
-infix 3 :=
+infix 6 + - ^
+infix 4 = <> > >= < <=
+infix 3 := o
 val op - = Position.-
-val op < = SMLSharp.Int.lt
-structure SysWordImp = Word
+val op < = SMLSharp_Builtin.Int.lt
+val op ^ = String.^
+fun ignore x = ()
+structure SysWordImp = SMLSharp_Builtin.Word
 structure SysInt = Int
 structure IntImp = Int
 structure PositionImp = Position
 structure POSIX_Error =
 struct
-  val again = case SMLSharpRuntime.syserror "again" of
+  val again = case SMLSharp_Runtime.syserror "again" of
                 SOME x => x | NONE => raise Fail ""
 end
-structure Assembly = SMLSharpRuntime
+structure Assembly = SMLSharp_Runtime
 structure InlineT =
 struct
-  fun cast x = _cast(x : CharArray.array) : Word8Array.array
+  val cast = SMLSharp_Builtin.Array.castToWord8Array
 end
 structure POSIX_FileSys =
 struct
-  open SMLSharpOSFileSys
-  val fdToIOD = SMLSharpOSFileSys.IODesc
-  val lseek = lseek
+  open SMLSharp_OSIO
+  type file_desc = iodesc
+  fun fdToIOD (x:file_desc) = x:iodesc
 end
 (* posix-io.sml
  *
@@ -44,7 +45,7 @@ in
 (*
 structure POSIX_IO =
 *)
-structure SMLSharpSMLNJ_POSIX_IO =
+structure SMLSharp_SMLNJ_POSIX_IO =
   struct
 
     structure FS = POSIX_FileSys
@@ -273,7 +274,7 @@ structure SMLSharpSMLNJ_POSIX_IO =
 	       getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE }
 
     (* 2012-8-19 ohori type annotations added *)
-    fun mkReader { mkRD, cvtVec, cvtArrSlice } { fd:int, name:string, initBlkMode:bool } =
+    fun mkReader { mkRD, cvtVec, cvtArrSlice } { fd:iodesc, name:string, initBlkMode:bool } =
 	let val closed = ref false
             val {pos, getPos, setPos, endPos, verifyPos} = posFns (closed, fd)
 (*
@@ -342,7 +343,7 @@ structure SMLSharpSMLNJ_POSIX_IO =
 
     (* 2012-8-19 ohori type annotations added *)
     fun mkWriter { mkWR, cvtVecSlice, cvtArrSlice }
-		 { fd:int, name:string, initBlkMode:bool, appendMode:bool, chunkSize:int } =
+		 { fd:iodesc, name:string, initBlkMode:bool, appendMode:bool, chunkSize:int } =
 	let val closed = ref false
             val {pos, getPos, setPos, endPos, verifyPos} = posFns (closed, fd)
 	    fun incPos k = (pos := Position.+(!pos, Position.fromInt k); k)

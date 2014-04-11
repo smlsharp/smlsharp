@@ -1,8 +1,0 @@
-_require "../../../basis.smi"
-_require "../../closureanormal/main/ClosureANormal.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
-
-structure NameMangle =
-struct
-  val mangle : ClosureANormal.exVarInfo -> string
-end

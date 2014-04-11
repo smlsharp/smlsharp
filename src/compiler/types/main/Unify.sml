@@ -9,14 +9,20 @@ struct
 local
   structure A = Absyn
   structure T = Types
+  structure TB = TypesBasics
   structure TU = TypesUtils
 in
   exception Unify
   exception EqRawTy
 
-  fun bug s = Control.Bug ("Unify:" ^ s)
+  fun bug s = Bug.Bug ("Unify:" ^ s)
 
-  fun occurres tvarRef ty = OTSet.member (TU.EFTV ty, tvarRef)
+  fun occurres tvarRef ty = 
+      let
+        val (_, set, _) = TB.EFTV ty
+      in
+        OTSet.member (set, tvarRef)
+      end
   fun occurresTyList tvarRef nil = false
     | occurresTyList tvarRef (h::t) = 
       occurres tvarRef h orelse occurresTyList tvarRef t
@@ -28,20 +34,88 @@ in
                                 
   exception TyConId
   fun tyConId ty = 
-      case TU.derefTy ty of
+      case TB.derefTy ty of
         T.CONSTRUCTty {tyCon = {id, ...}, args} => id
       | _ => raise TyConId
 
+  fun coerceKind 
+        (
+         kind1 as
+         {
+          utvarOpt = utvarOpt1,
+          eqKind = eqKind1,
+          lambdaDepth = lambdaDepth1,
+          tvarKind = tvarKind1,
+          occurresIn = occurresIn1,
+          id = id1
+         } : T.tvKind,
+         kind2 as
+         {
+          utvarOpt = utvarOpt2,
+          eqKind = eqKind2,
+          lambdaDepth = lambdaDepth2,
+          tvarKind = tvarKind2,
+          occurresIn = occurresIn2,
+          id = id2
+         } : T.tvKind
+        ) : T.tvKind * (T.ty * T.ty) list =
+    let
+      val utvarOpt = utvarOpt2
+      val eqKind = 
+          case (eqKind1, eqKind2) of
+            (A.EQ, A.NONEQ) => raise Unify
+          | _ => eqKind2
+      val lambdaDepth = 
+          case Int.compare (lambdaDepth1, lambdaDepth2) of
+            LESS => 
+            (
+             TB.adjustDepthInTvarKind lambdaDepth1 tvarKind2;
+             lambdaDepth1
+            )
+          | GREATER =>
+            (
+             TB.adjustDepthInTvarKind lambdaDepth2 tvarKind1;
+             lambdaDepth2
+            )
+          | EQUAL => lambdaDepth1
+      val (tvarKind, newTyEquations) =
+          case (tvarKind1, tvarKind2) of
+            (T.REC fl1, T.REC fl2) =>
+            let 
+              val newTyEquations = 
+                  LabelEnv.foldli
+                    (fn (label, ty, newTyEquations) =>
+                        case LabelEnv.find(fl2, label) of
+                          NONE => raise Unify
+                        | SOME ty' => (ty, ty')::newTyEquations)
+                    nil
+                    fl1
+            in (T.REC fl2, newTyEquations)
+            end
+          | (T.UNIV, _) => (tvarKind2, nil)
+          | _ => raise Unify
+    in
+      (
+       {
+        utvarOpt = utvarOpt,
+        eqKind = eqKind,
+        lambdaDepth = lambdaDepth,
+        tvarKind = tvarKind,
+        occurresIn = occurresIn1 @ occurresIn2,
+        id = id2
+       },
+       newTyEquations)
+    end
   fun checkKind 
         ty 
-        ({utvarOpt,eqKind,lambdaDepth,tvarKind,id}: T.tvKind) =
+        ({utvarOpt,eqKind,lambdaDepth,occurresIn, tvarKind,id}: T.tvKind) =
       let
         val _ = 
             case utvarOpt of NONE => () | SOME _ => raise Unify
         val _ =
             (case eqKind of A.EQ => CheckEq.checkEq ty | _ => ())
             handle CheckEq.Eqcheck => raise Unify
-        val _ = TU.adjustDepthInTy lambdaDepth ty
+        val _ = TB.adjustDepthInTy lambdaDepth ty
         val newTyEquations = 
             case tvarKind of
               T.REC kindFields =>
@@ -77,27 +151,37 @@ in
                  [ty1] => [(ty,ty1)]
                | _ => raise Unify)
             | T.UNIV => nil
+            | T.JOIN _ =>  raise Unify
       in
         newTyEquations
       end
         
   and lubKind 
         (
+         kind1 as
          {
           utvarOpt = utvarOpt1,
           eqKind = eqKind1,
           lambdaDepth = lambdaDepth1,
           tvarKind = tvarKind1,
+          occurresIn = occurresIn1,
           id = id1
          } : T.tvKind,
+         kind2 as
          {
           utvarOpt = utvarOpt2,
           eqKind = eqKind2,
           lambdaDepth = lambdaDepth2,
+          occurresIn = occurresIn2,
           tvarKind = tvarKind2,
           id = id2
          } : T.tvKind
-        ) : T.tvKind * (T.ty * T.ty) list=
+        ) : T.tvKind * (T.ty * T.ty) list =
+      case (utvarOpt1, utvarOpt2) of
+        (SOME _, NONE) => coerceKind (kind2, kind1)
+      | (NONE, SOME _) => coerceKind (kind1, kind2)
+      | (SOME _, SOME _) => raise Unify
+      | _ =>
       let 
         fun lubTyList(tyList1, tyList2) = 
             let
@@ -121,10 +205,7 @@ in
               case tyList of nil => raise Unify
                            | _ => (tyList, newEqs)
             end
-        val utvarOpt =
-            case (utvarOpt1, utvarOpt2) of
-              (NONE, NONE) => NONE
-             | _ =>  raise Unify
+        val utvarOpt = NONE
         val (eqKind, tvarKind1, tvarKind2) =
             (case (eqKind1, eqKind2) of
                (A.NONEQ, A.NONEQ) => (A.NONEQ, tvarKind1, tvarKind2)
@@ -139,12 +220,12 @@ in
             case Int.compare (lambdaDepth1, lambdaDepth2) of
                 LESS => 
                 (
-                 TU.adjustDepthInTvarKind lambdaDepth1 tvarKind2;
+                 TB.adjustDepthInTvarKind lambdaDepth1 tvarKind2;
                  lambdaDepth1
                 )
               | GREATER =>
                 (
-                 TU.adjustDepthInTvarKind lambdaDepth2 tvarKind1;
+                 TB.adjustDepthInTvarKind lambdaDepth2 tvarKind1;
                  lambdaDepth2
                 )
               | EQUAL => lambdaDepth1
@@ -157,6 +238,22 @@ in
                       (LabelEnv.intersectWith (fn x => x) (fl1, fl2))
                 val newTyFields = LabelEnv.unionWith #1 (fl1, fl2)
               in (T.REC newTyFields, newTyEquations)
+              end
+            | (T.REC fl1, T.JOIN (fl2, ty1, ty2, loc)) =>
+              let 
+                val newTyEquations = 
+                    LabelEnv.listItems
+                      (LabelEnv.intersectWith (fn x => x) (fl1, fl2))
+                val newTyFields = LabelEnv.unionWith #1 (fl1, fl2)
+              in (T.JOIN (newTyFields, ty1, ty2, loc), newTyEquations)
+              end
+            | (T.JOIN (fl1, ty1, ty2, loc), T.REC fl2) =>
+              let 
+                val newTyEquations = 
+                    LabelEnv.listItems
+                      (LabelEnv.intersectWith (fn x => x) (fl1, fl2))
+                val newTyFields = LabelEnv.unionWith #1 (fl1, fl2)
+              in (T.JOIN (newTyFields, ty1, ty2, loc), newTyEquations)
               end
             | (T.OCONSTkind L1, T.OCONSTkind L2) => 
               let
@@ -226,6 +323,7 @@ in
           tvarKind = newTvarKind, 
           eqKind = eqKind, 
           utvarOpt = utvarOpt,
+          occurresIn = occurresIn1 @ occurresIn2,
           id = id1
          },
          newTyEquations
@@ -252,9 +350,43 @@ in
             | (_, T.ERRORty) => unifyTy tail
             | (T.DUMMYty n2, T.DUMMYty n1) =>
               if n1 = n2 then unifyTy tail else raise Unify
+            | (T.DUMMYty _,
+               T.TYVARty (ref(T.TVAR
+                                {
+                                 lambdaDepth,
+                                 id,
+                                 tvarKind = T.UNIV,
+                                 eqKind=A.NONEQ,
+                                 occurresIn,
+                                 utvarOpt = NONE
+                                }
+                              ))
+              ) => 
+              (
+               TB.performSubst(ty2, ty1); 
+               unifyTy tail
+              )
+            | (T.TYVARty (ref(T.TVAR
+                                {
+                                 lambdaDepth,
+                                 id,
+                                 tvarKind = T.UNIV,
+                                 eqKind=Absyn.NONEQ,
+                                 occurresIn,
+                                 utvarOpt = NONE
+                                }
+                              )),
+               T.DUMMYty _
+              ) => 
+              (
+               TB.performSubst(ty1, ty2); 
+               unifyTy tail
+              )
             | (T.DUMMYty _, _) => raise Unify
             | (_, T.DUMMYty _) => raise Unify
+
            (* type variables *)
+(*
             | (
                T.TYVARty(tvState1 as ref(T.TVAR {utvarOpt = SOME _,
                                                  eqKind = eqkind1,
@@ -280,8 +412,8 @@ in
 *)
               in
                 (
-                 TU.adjustDepthInTy depth1 ty1;
-                 TU.performSubst(ty2, ty1); 
+                 TB.adjustDepthInTy depth1 ty1;
+                 TB.performSubst(ty2, ty1); 
                  unifyTy  tail
                 )
               end
@@ -310,11 +442,12 @@ in
 *)
               in
                 (
-                 TU.adjustDepthInTy depth1 ty2;
-                 TU.performSubst(ty1, ty2); 
+                 TB.adjustDepthInTy depth1 ty2;
+                 TB.performSubst(ty1, ty2); 
                  unifyTy tail
                 )
               end
+*)
             | (
                T.TYVARty (tvState1 as (ref(T.TVAR tvKind1))),
                T.TYVARty (tvState2 as (ref(T.TVAR tvKind2)))
@@ -328,11 +461,12 @@ in
                   val newTy = T.newtyRaw {utvarOpt = #utvarOpt newKind,
                                           lambdaDepth = #lambdaDepth newKind,
                                           tvarKind = #tvarKind newKind,
+                                          occurresIn = #occurresIn newKind,
                                           eqKind = #eqKind newKind}
                 in
                   unifyTy newTyEquations;
-                  TU.performSubst(ty1, newTy);
-                  TU.performSubst(ty2, newTy);
+                  TB.performSubst(ty1, newTy);
+                  TB.performSubst(ty2, newTy);
                   unifyTy tail
                 end
             | (
@@ -347,7 +481,7 @@ in
                   val _ = unifyTy newTyEquations
                 in
                   (
-                   TU.performSubst(ty1, ty2); 
+                   TB.performSubst(ty1, ty2); 
                    unifyTy tail
                   )
                 end
@@ -364,7 +498,7 @@ in
                   val _ = unifyTy newTyEquations
                 in
                   (
-                   TU.performSubst(ty2, ty1); 
+                   TB.performSubst(ty2, ty1); 
                    unifyTy tail
                   )
                 end
@@ -447,8 +581,8 @@ in
   exception NONEQ
   fun eqTy btvEquiv (ty1, ty2) = 
       let
-        val ty1 = TU.derefTy ty1
-        val ty2 = TU.derefTy ty2
+        val ty1 = TB.derefTy ty1
+        val ty2 = TB.derefTy ty2
         fun btvEq (id1, id2) = 
             BoundTypeVarID.eq(id1, id2) orelse 
             (case BoundTypeVarID.Map.find(btvEquiv, id1) of
@@ -472,11 +606,6 @@ in
              val _= if length idkindPairs1 = length idkindPairs2 
                     then () else raise NONEQ
              val kindPairs = ListPair.zip(idkindPairs1,idkindPairs2)
-             val _ = 
-                 app (fn ((_,kind1), (_,kind2)) =>
-                         if eqKind btvEquiv (kind1, kind2) then ()
-                         else raise NONEQ)
-                     kindPairs
              val btvMap =
                  foldl
                    (fn (((i1,_),(i2,_)), btvMap) =>
@@ -487,6 +616,11 @@ in
 *)
                    btvEquiv
                    kindPairs
+             val _ = 
+                 app (fn ((_,kind1), (_,kind2)) =>
+                         if eqKind btvMap (kind1, kind2) then ()
+                         else raise NONEQ)
+                     kindPairs
            in
              eqTy btvMap (body1, body2)
            end
@@ -512,11 +646,18 @@ in
       handle Unify => false
   and eqSMap btvEquiv (smap1, smap2) =
       let
-        val tyL1 = LabelEnv.listItems smap1
-        val tyL2 = LabelEnv.listItems smap2
+        val tyF1 = LabelEnv.listItemsi smap1
+        val tyF2 = LabelEnv.listItemsi smap2
       in
-        eqTyList btvEquiv (tyL1, tyL2)
+        eqTyFields btvEquiv (tyF1, tyF2)
       end
+  and eqTyFields btvEquiv (nil, nil) = true
+    | eqTyFields btvEquiv ((l1,ty1)::tl1, (l2,ty2)::tl2) = 
+      (case String.compare(l1,l2) of
+         EQUAL => eqTy btvEquiv (ty1, ty2) andalso eqTyFields btvEquiv (tl1, tl2)
+       | _ => false)
+    | eqTyFields btvEquiv (h1::t1, nil) = false
+    | eqTyFields btvEquiv (nil, h2::t2) =  false
   and eqTyList btvEquiv (tyList1, tyList2) = 
       length tyList1 = length tyList2 andalso
       let
@@ -542,11 +683,11 @@ in
     | _ => false
   and eqOprimSelector
         btvEquiv 
-        ({oprimId=id1,path=path1,keyTyList=ktyL1,match=m1,instMap=IM1},
-         {oprimId=id2,path=path2,keyTyList=ktyL2,match=m2,instMap=IM2})
+        ({oprimId=id1,longsymbol=longsymbol1,keyTyList=ktyL1,match=m1,instMap=IM1},
+         {oprimId=id2,longsymbol=longsymbol2,keyTyList=ktyL2,match=m2,instMap=IM2})
       =
       OPrimID.eq(id1,id2) andalso
-      String.concat path1 = String.concat path2 andalso
+      Symbol.eqLongsymbol(longsymbol1, longsymbol2) andalso
       eqTyList btvEquiv (ktyL1, ktyL2)
   and eqOprimSelectorList btvEquiv (opList1, opList2) =
       length opList1 = length opList2 andalso
@@ -579,11 +720,11 @@ in
     | _ => false
 
   fun instOfPolyTy (polyTy, tyList) =
-      case TU.derefTy polyTy of
+      case TB.derefTy polyTy of
         T.POLYty {boundtvars, body} =>
         let 
-          val subst1 = TU.freshSubst boundtvars
-          val body = TU.substBTvar subst1 body
+          val subst1 = TB.freshSubst boundtvars
+          val body = TB.substBTvar subst1 body
           val instTyList = BoundTypeVarID.Map.listItems subst1
           val tyPairs = 
               if length tyList = length instTyList then 

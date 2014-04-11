@@ -7,50 +7,81 @@
  * @author Liu Bochao
  * @version $Id: Elaborator.sml,v 1.105.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
-structure Elaborator : ELABORATOR =
+structure Elaborator =
 struct
+
+  structure UE = UserError
+  structure EU = UserErrorUtils
+
+  structure A = AbsynInterface
+  structure P = PatternCalcInterface
 
   type fixEnv = Fixity.fixity SEnv.map
 
   fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
       SEnv.unionWith #2 (env1, env2)
 
-  fun elaborateCompileUnit fixEnv {interface, topdecs} =
+  fun elaborate fixEnv ({interface, topdecsInclude, topdecsSource}:A.compileUnit) =
       let
-        val _ = ElaboratorUtils.initializeErrorQueue ()
+        val _ = EU.initializeErrorQueue ()
 
-        val ({requireFixEnv, provideFixEnv}, interface) =
-            ElaborateInterface.elaborate interface
-        val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
-        val (ptopdecls, topdecFixEnv) =
-            ElaborateModule.elabTopDecs fixEnv topdecs
-        val ptopdecls = UserTvarScope.decide ptopdecls
-        val plunit = {interface = interface, topdecs = ptopdecls}
+        val (fixEnv, interface) =
+            case interface of
+              NONE => (fixEnv, NONE)
+            | SOME interface => 
+              let
+                val (requireFixEnv, interface) =
+                    ElaborateInterface.elaborate interface
+                val interface = UserTvarScope.decideInterface interface
+              in
+                (extendFixEnv (fixEnv, requireFixEnv), SOME interface)
+              end
+
+        val (ptopdeclsInclude, topdecFixEnvInclude) =
+            ElaborateModule.elabTopDecs fixEnv topdecsInclude
+        val ptopdeclsInclude = UserTvarScope.decide ptopdeclsInclude
+
+        val (ptopdeclsSource, topdecFixEnvSource) =
+            ElaborateModule.elabTopDecs fixEnv topdecsSource
+        val ptopdeclsSource = UserTvarScope.decide ptopdeclsSource
+
+        val topdecFixEnv = extendFixEnv(topdecFixEnvInclude, topdecFixEnvSource)
+
+        val resultFixEnv = topdecFixEnv
+        val plunit = {interface = interface,
+                      topdecsInclude = ptopdeclsInclude,
+                      topdecsSource = ptopdeclsSource}
       in
-        case ElaboratorUtils.getErrors () of
-          nil => (requireFixEnv, provideFixEnv, topdecFixEnv,
-                  plunit, ElaboratorUtils.getWarnings ())
+        case EU.getErrors () of
+          nil => (resultFixEnv, plunit, EU.getWarnings ())
         | _::_ =>
-          raise UserError.UserErrors (ElaboratorUtils.getErrorsAndWarnings ())
+          raise UE.UserErrors (EU.getErrorsAndWarnings ())
       end
 
-  fun elaborate fixEnv abunit =
+  fun elaborateInteractiveEnv
+        fixEnv
+        ({interface, interfaceDecls, topdecsInclude}:A.interactiveUnit) =
       let
-        val (requireFixEnv, provideFixEnv, topdecFixEnv, plunit, warnings) =
-            elaborateCompileUnit fixEnv abunit
+        val _ = EU.initializeErrorQueue ()
+        val (requireFixEnv, interface) =
+            ElaborateInterface.elaborate interface
+        val interface = UserTvarScope.decideInterface interface
+        val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
+        val (ptopdeclsInclude, topdecFixEnvInclude) =
+            ElaborateModule.elabTopDecs fixEnv topdecsInclude
+        val ptopdeclsInclude = UserTvarScope.decide ptopdeclsInclude
+        val (interfaceDeclsFixEnv, interfaceDecls) =
+            ElaborateInterface.elaborateTopdecList interfaceDecls
+        val interfaceDecls = UserTvarScope.decidePitopdecs interfaceDecls
+        val resultFixEnv = extendFixEnv (topdecFixEnvInclude, interfaceDeclsFixEnv)
+        val interactiveUnit = {interface = interface,
+                               topdecsInclude = ptopdeclsInclude,
+                               interfaceDecls = interfaceDecls}
       in
-        (topdecFixEnv, plunit, warnings)
-(*
-        (provideFixEnv, plunit, warnings)
-*)
-      end
-
-  fun elaborateRequire abunit =
-      let
-        val (requireFixEnv, provideFixEnv, topdecFixEnv, plunit, warnings) =
-            elaborateCompileUnit SEnv.empty abunit
-      in
-        (extendFixEnv (requireFixEnv, topdecFixEnv), plunit, warnings)
+        case EU.getErrors () of
+          nil => (resultFixEnv, interactiveUnit, EU.getWarnings ())
+        | _::_ =>
+          raise UE.UserErrors (EU.getErrorsAndWarnings ())
       end
 
 end

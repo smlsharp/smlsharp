@@ -1,5 +1,3 @@
-include "Time.smi"
-
 signature OS_PROCESS =
 sig
   type status

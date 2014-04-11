@@ -2,7 +2,6 @@
  * timer.h - benchmark timer
  * @copyright (c) 2010, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: $
  */
 
 #ifndef SMLSHARP__TIMER_H__

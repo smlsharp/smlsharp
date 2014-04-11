@@ -1,31 +1,37 @@
 _require "../../basis.smi"
+_require "./SQLErrors.smi"
+_require "./SQLBackendTy.smi"
 _require "PGSQL.smi"
 _require "SQLBACKEND.sig"
 _require "../../ffi/main/Pointer.smi"
+_require "builtintypes/timestamp/TimeStamp.smi"
+_require "builtintypes/decimal/Decimal.smi"
+_require "builtintypes/float/Float.smi"
 
 structure SMLSharp_SQL_PGSQLBackend =
 struct
-  type conn = unit ptr
-  type res = unit ptr
-  type sqltype (= string)
-  exception Exec of string
-  exception Connect of string
-  exception Format
-  val eof : res * int -> bool
+  type conn (= ptr)
+  type res (= boxed)
+  type value (= boxed)
+
   val execQuery : conn * string -> res
   val closeConn : conn -> unit
   val closeRel : res -> unit
-  val numOfRows : res -> int
   val getDatabaseSchema : conn -> (string *
                                    {colname: string,
-                                    typename: sqltype,
-                                    isnull: bool} list) list
+                                    ty: SMLSharp_SQL_BackendTy.ty,
+                                    nullable: bool} list) list
   val connect : string -> conn
-  val getInt : res * int * int -> int option
-  val getWord : res * int * int -> word option
-  val getReal : res * int * int -> real option
-  val getString : res * int * int -> string option
-  val getChar : res * int * int -> char option
-  val getBool : res * int * int -> bool option
-  val translateType : sqltype -> string option
+  val fetch : res -> res option
+  val getValue : res * int -> value option
+  val intValue : value -> int option
+  val intInfValue : value -> IntInf.int option
+  val wordValue : value -> word option
+  val realValue : value -> real option
+  val stringValue : value -> string option
+  val charValue : value -> char option
+  val boolValue : value -> bool option
+  val timestampValue : value -> SMLSharp_SQL_TimeStamp.timestamp option
+  val decimalValue : value -> SMLSharp_SQL_Decimal.decimal option
+  val floatValue : value -> SMLSharp_SQL_Float.float option
 end

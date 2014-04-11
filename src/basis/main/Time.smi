@@ -1,15 +1,11 @@
-_require "General.smi"
-_require "RealClass.smi"
-_require "Real.smi"
-_require "Real32.smi"
-_require "IEEEReal.smi"
-_require "Int.smi"
-_require "String.smi"
-_require "IntInf.smi"
-_require "StringCvt.smi"
-_require "SMLSharpRuntime.smi"
-_require "SMLSharpScanChar.smi"
-_require "TIME.sig"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require "./SMLSharp_Runtime.smi"
+_require "./SMLSharp_ScanChar.smi"
+_require "./Real.smi"
+_require "./IntInf.smi"
+_require "./IEEEReal.smi"
+_require "./String.smi"
 
 structure Time =
 struct
@@ -28,7 +24,7 @@ struct
   val fromNanoseconds : LargeInt.int -> time
   val + : time * time -> time
   val - : time * time -> time
-  val compare : time * time -> order
+  val compare : time * time -> General.order
   val < : time * time -> bool
   val <= : time * time -> bool
   val > : time * time -> bool
@@ -37,5 +33,5 @@ struct
   val fmt : int -> time -> string
   val toString : time -> string
   val scan : (char, 'a) StringCvt.reader -> (time, 'a) StringCvt.reader
-  val fromString : string -> time option 
+  val fromString : string -> time option
 end

@@ -1,0 +1,8 @@
+_require "smlunit-lib.smi"
+_require "basis.smi"
+_require "Mutable2DSequence001.smi"
+
+structure Word8Array2001 =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

@@ -4,7 +4,6 @@
  *)
 
 structure Tokens = MLLrVals.Tokens
-type svalue = Tokens.svalue
 type pos = Tokens.pos
 type lexresult = Tokens.token
 type lexarg = 

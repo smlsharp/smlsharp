@@ -1,0 +1,5 @@
+_require "basis.smi"
+structure Control =
+struct
+  val trace : bool ref
+end

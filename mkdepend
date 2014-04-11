@@ -7,11 +7,12 @@ files_mk=files.mk
 depend_mk=depend.mk
 
 dep_objfiles () {
-  echo $SMLSHARP -Bsrc -nostdpath -Ml "$1" 1>&2
-  $SMLSHARP -Bsrc -nostdpath -Ml "$1" \
+  echo $SMLSHARP -Bsrc -nostdpath -Isrc -Ml "$1" 1>&2
+  tmp=`$SMLSHARP -Bsrc -nostdpath -Isrc -Ml "$1"`
+  st=$?; test "$st" = "0" || exit $?
+  echo "$tmp" \
     | awk '{sub(" *\\\\$","");sub("^ *","");gsub("  *","\n");print}' \
-    | sed '1d;$d' \
-  || exit $?
+    | sed '1d'
 }
 
 dep_srcfiles () { \
@@ -20,27 +21,32 @@ dep_srcfiles () { \
   else
     sedscript="1,2d"
   fi
-  echo $SMLSHARP -Bsrc -nostdpath -M "$1" 1>&2
-  $SMLSHARP -Bsrc -nostdpath -M "$1" \
+  echo $SMLSHARP -Bsrc -nostdpath -Isrc -M "$1" 1>&2
+  tmp=`$SMLSHARP -Bsrc -nostdpath -Isrc -M "$1"`
+  st=$?; test "$st" = "0" || exit $?
+  echo "$tmp" \
     | awk '{sub(" *\\\\$","");sub("^ *","");gsub("  *","\n");print}' \
-    | sed "$sedscript" \
-  || exit $?
+    | sed "$sedscript"
 }
 
 ALL_OBJECTS=
-INSTALL_FILES=
+INSTALL_FILES_SRC=
+INSTALL_FILES_OBJ=
 GEN_SOURCES=
 CLEAN_FILES=
 
 read_smi () { \
   obj=`dep_objfiles "$2"`
+  st=$?; test "$st" = "0" || exit $?
   ALL_OBJECTS="$ALL_OBJECTS $obj"
   obj=`echo "$obj" | awk '{a[NR]=$0}END{for(i=NR;i>0;i--)print a[i]}'`
   echo "$1""_OBJECTS = $obj" | sed '$q;s,$, \\,' >> $files_mk
   src=`dep_srcfiles "$2"`
+  st=$?; test "$st" = "0" || exit $?
   case "$1" in
     *_LIB)
-      INSTALL_FILES="$INSTALL_FILES $obj $src $2"
+      INSTALL_FILES_SRC="$INSTALL_FILES_SRC $src $2"
+      INSTALL_FILES_OBJ="$INSTALL_FILES_OBJ $obj"
       ;;
   esac
   { echo "$1"'_SOURCES ='; \
@@ -57,15 +63,17 @@ while [ "x$1" != "x" ] && [ "x$2" != "x" ]; do
   shift 2
 done
 
-INSTALL_FILES=`echo "$INSTALL_FILES" \
-               | awk '{sub("^ *","");gsub("  *","\n");print}' \
-               | sort | uniq`
-echo "INSTALL_FILES = $INSTALL_FILES" | sed '$q;s,$, \\,' >> $files_mk
+print_bind () {
+  tmp=`eval "echo \"\\\$$1\"" \
+       | awk '{sub("^ *","");gsub("  *","\n");print}' \
+       | sort | uniq`
+  eval "$1=\$tmp"
+  echo "$1 = $tmp" | sed '$q;s,$, \\,' >> $files_mk
+}
 
-ALL_OBJECTS=`echo "$ALL_OBJECTS" \
-             | awk '{sub("^ *","");gsub("  *","\n");print}' \
-             | sort | uniq`
-echo "ALL_OBJECTS = $ALL_OBJECTS" | sed '$q;s,$, \\,' >> $files_mk
+print_bind INSTALL_FILES_SRC
+print_bind INSTALL_FILES_OBJ
+print_bind ALL_OBJECTS
 
 for i in `echo "$ALL_OBJECTS" | sed "s,\.$OBJEXT\$,,"`; do
   case "$i" in
@@ -82,18 +90,17 @@ for i in `echo "$ALL_OBJECTS" | sed "s,\.$OBJEXT\$,,"`; do
       echo "$i.sml: $i \$(MLLEX_DEP)" >> $depend_mk
       ;;
     *.grm)
-      GEN_SOURCES="$GEN_SOURCES $i.sml $i.sig"
-      CLEAN_FILES="$CLEAN_FILES $i.desc"
-      echo "$i.sml $i.sig: $i \$(MLYACC_DEP)" >> $depend_mk
+      GEN_SOURCES="$GEN_SOURCES $i.sml"
+      CLEAN_FILES="$CLEAN_FILES $i.sml.desc"
+      echo "$i.sml: $i \$(MLYACC_DEP)" >> $depend_mk
       ;;
   esac
-  echo $SMLSHARP -Bsrc -nostdpath -M "$i.sml" 1>&2
-  $SMLSHARP -Bsrc -nostdpath -M "$i.sml" | sed 's, *\\*$, \\,' \
-  >> $depend_mk || exit $?
+  echo $SMLSHARP -Bsrc -nostdpath -Isrc -M "$i.sml" 1>&2
+  tmp=`$SMLSHARP -Bsrc -nostdpath -Isrc -M "$i.sml"`
+  st=$?; test "$st" = "0" || exit $?
+  echo "$tmp" | sed 's, *\\*$, \\,' >> $depend_mk
   echo '  $(SMLSHARP_DEP)' >> $depend_mk
 done
 
-GEN_SOURCES=`echo "$GEN_SOURCES" | awk '{sub("^ *","");gsub("  *","\n");print}'`
-echo "GEN_SOURCES = $GEN_SOURCES" | sed '$q;s,$, \\,' >> $files_mk
-CLEAN_FILES=`echo "$CLEAN_FILES" | awk '{sub("^ *","");gsub("  *","\n");print}'`
-echo "CLEAN_FILES = $CLEAN_FILES" | sed '$q;s,$, \\,' >> $files_mk
+print_bind GEN_SOURCES
+print_bind CLEAN_FILES

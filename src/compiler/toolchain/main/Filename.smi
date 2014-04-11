@@ -1,16 +1,13 @@
-_require "../../../basis/main/TextIO.smi"
-_require "../../../basis/main/BinIO.smi"
-_require "../../../basis/main/OS.smi"
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/binary-op.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../config/main/Version.smi"
 
 structure Filename =
 struct
-  type filename (= string)
+  eqtype filename (= string)
   val toString : filename -> string
   val fromString : string -> filename
+  val format_filename : filename -> SMLFormat.FormatExpression.expression list
   val basename : filename -> filename
   val dirname : filename -> filename
   val suffix : filename -> string option

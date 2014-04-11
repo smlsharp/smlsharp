@@ -1,12 +1,13 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 
 structure LoadFileError =
 struct
-  exception InvalidTopInterface of string
+  exception InvalidTopInterface of Symbol.symbol
   exception FileNotFound of string
-  exception CircularLoad of string
-  exception UseWithInterface of string
+  exception CircularLoad of Symbol.symbol
+  exception UseWithInterface of Symbol.symbol
   exception EmptyInterface of string
   exception VirtualInterface of string
 end

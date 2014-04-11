@@ -7,11 +7,12 @@ struct
 local
   structure I = IDCalc
   structure T = Types
-  fun bug s = Control.Bug ("EvalITy: " ^ s)
-  val debugPrint = fn s => if !Control.debugPrint then print s else ()
-  fun printTy ty = debugPrint (Control.prettyPrint (I.format_ty ty))
+  structure TB = TypesBasics
+  fun bug s = Bug.Bug ("EvalITy: " ^ s)
+  val debugPrint = fn s => if !Bug.debugPrint then print s else ()
+  fun printTy ty = debugPrint (Bug.prettyPrint (I.format_ty ty))
   fun printTfun tfun =
-      debugPrint (Control.prettyPrint (I.format_tfun tfun))
+      debugPrint (Bug.prettyPrint (I.format_tfun tfun))
   fun printPath path =
       debugPrint (String.concatWith "." path)
 
@@ -25,26 +26,8 @@ in
        tvarEnv=TvarMap.empty,
        varEnv=VarMap.empty
       }
-  exception EVALTFUN of {iseq:bool, formals:I.formals, realizerTy:I.ty}
-  fun evalKindedTvar
-        ((tvar as {eq,...}, I.UNIV),
-         (context as {tvarEnv, varEnv, oprimEnv}, btvEnv)) =
-      let 
-        val btvId = BoundTypeVarID.generate()
-        val btvTy = T.BOUNDVARty btvId
-        val tvarEnv = TvarMap.insert(tvarEnv, tvar, btvTy)
-        val btvEnv = BoundTypeVarID.Map.insert
-                       (btvEnv,btvId,{eqKind=eq,tvarKind=T.UNIV})
-      in
-        ({tvarEnv=tvarEnv, varEnv=varEnv, oprimEnv=oprimEnv},
-         btvEnv)
-      end
-    | evalKindedTvar _ = raise bug "non univ kind"
-  fun evalKindedTvarList context kindedTvarList =
-      foldl evalKindedTvar (context, BoundTypeVarID.Map.empty) kindedTvarList
-(*
-  fun evalDtyKind context path dtyKind = 
-*)
+  exception EVALTFUN of {iseq:bool, formals:I.formals, realizerTy:I.ty, longsymbol:Symbol.longsymbol}
+
   fun evalDtyKind context dtyKind = 
       case dtyKind of
         I.DTY => T.DTY
@@ -55,7 +38,7 @@ in
           val opaqueRep = 
               T.TYCON (evalTfun context tfun)
               handle
-              EVALTFUN{iseq, formals, realizerTy} =>
+              EVALTFUN{iseq, formals, realizerTy, longsymbol} =>
               let
                 val (context, btvEnv) =
                     evalKindedTvarList
@@ -66,7 +49,7 @@ in
                 T.TFUNDEF {iseq=iseq,
                            arity=length formals,
                            polyTy=T.POLYty{boundtvars=btvEnv,body=rty}
-                          }
+                           }
               end
         in
           T.OPAQUE {opaqueRep=opaqueRep, revealKey=revealKey}
@@ -77,11 +60,11 @@ in
 *)
   and evalTfun context tfun = 
       case tfun of
-        I.TFUN_DEF {iseq, formals, realizerTy} =>
-        raise EVALTFUN {iseq=iseq, formals=formals, realizerTy=realizerTy}
+        I.TFUN_DEF {iseq, formals, realizerTy, longsymbol} =>
+        raise EVALTFUN {iseq=iseq, formals=formals, realizerTy=realizerTy, longsymbol=longsymbol}
       | I.TFUN_VAR tfunKindRef =>
         (case tfunKindRef of
-           ref(I.TFUN_DTY{id,iseq,formals,runtimeTy,originalPath,
+           ref(I.TFUN_DTY{id,iseq,formals,runtimeTy, longsymbol, conIDSet,
                            conSpec,liftedTys,dtyKind}) =>
            let
              (* Here we changed LIFTEDty to BOXED.
@@ -99,25 +82,30 @@ in
              (* 2012-7-15 ohori: bug 207_printer.sml. 
                path = path,
               *)
-               path = originalPath,
+               longsymbol = longsymbol,
                iseq = iseq,
 	       runtimeTy = runtimeTy,
                arity = List.length formals,
-               conSet =SEnv.map
-                         (fn NONE => {hasArg=false} | SOME ity => {hasArg=true})
+               conIDSet = conIDSet,
+               conSet =SymbolEnv.foldri
+                         (fn (symbol, NONE, conSet) => 
+                             SEnv.insert(conSet, Symbol.symbolToString symbol, {hasArg=false})
+                           | (symbol, SOME ity, conSet) => 
+                             SEnv.insert(conSet, Symbol.symbolToString symbol, {hasArg=true}))
+                         SEnv.empty
                          conSpec,
                extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
                dtyKind = evalDtyKind context dtyKind
               }
            end
-         | ref(I.TFV_SPEC {name, id, iseq, formals}) =>
+         | ref(I.TFV_SPEC {longsymbol, id, iseq, formals}) =>
            (debugPrint "****** evalTfun ******\n";
             debugPrint "tfun\n";
             printTfun tfun;
             debugPrint "\n";
             raise bug "TFV_SPEC in evalTfun"
            )
-         | ref(I.TFV_DTY {name, id,iseq,formals,conSpec,liftedTys}) =>
+         | ref(I.TFV_DTY {longsymbol, id,iseq,formals,conSpec,liftedTys}) =>
            (debugPrint "****** evalTfun ******\n";
             debugPrint "tfun\n";
             printTfun tfun;
@@ -130,7 +118,7 @@ in
         )
   and evalIty context ity =
        case ity of
-         I.TYWILD => T.ERRORty
+         I.TYWILD => T.newty {tvarKind=T.UNIV, eqKind=Absyn.NONEQ, utvarOpt=NONE}
        | I.TYERROR => T.ERRORty
        | I.TYVAR tvar =>
          (case TvarMap.find(#tvarEnv context, tvar) of
@@ -138,7 +126,7 @@ in
           | NONE => 
             (debugPrint "evalIty tvar not found\n";
              printTy ity;
-             raise bug ("free tvar:" ^(Control.prettyPrint(I.format_ty ity)))
+             raise bug ("free tvar:" ^(Bug.prettyPrint(I.format_ty ity)))
             )
          )
        | I.TYRECORD tyMap => T.RECORDty (LabelEnv.map (evalIty context) tyMap)
@@ -151,7 +139,7 @@ in
             T.CONSTRUCTty{tyCon=tyCon, args=args}
           end
           handle 
-          EVALTFUN {iseq, formals, realizerTy} =>
+          EVALTFUN {iseq, formals, realizerTy, longsymbol} =>
           if length formals = length args then
             let
               val args = map (evalIty context) args
@@ -178,9 +166,82 @@ in
          let
            val (context, btvEnv) = evalKindedTvarList context kindedTvarList
            val ty = evalIty context ty
+           (* the following lines are needed to normalize the order
+              of bound type variables in a polytype. See the comment of EFTV.
+            *)
+           val subst = TB.freshSubst btvEnv
+           val ty = TB.substBTvar subst ty
+           val (_, otset, freeTvs) = TB.EFTV ty
+           val boundOtset = 
+               BoundTypeVarID.Map.foldl
+               (fn (T.TYVARty (r as ref (T.TVAR _)), boundOtset) =>
+                   OTSet.add(boundOtset, r)
+                 | _ => raise bug "not tyvarty"
+               )
+               OTSet.empty
+               subst
+           val tids = 
+               IEnv.filter 
+                 (fn r => OTSet.member(boundOtset, r))
+                 freeTvs
+           val btvs =
+               IEnv.foldl
+                 (fn (r as ref(T.TVAR (k as {id, ...})), btvs) =>
+                     let 
+                       val btvid = BoundTypeVarID.generate ()
+                     in
+                       (
+                        r := T.SUBSTITUTED (T.BOUNDVARty btvid);
+                        (
+                         BoundTypeVarID.Map.insert
+                           (
+                            btvs,
+                            btvid,
+                            {
+                             tvarKind = (#tvarKind k),
+                             eqKind = (#eqKind k)
+                            }
+                           )
+                        )
+                       )
+                     end
+                   | _ => raise Bug.Bug "generalizeTy")
+                 BoundTypeVarID.Map.empty
+                 tids
          in
-           T.POLYty {boundtvars = btvEnv, body = ty}
+           T.POLYty {boundtvars = btvs, body = ty}
          end
        | I.INFERREDTY ty => ty
+  and evalKindedTvarList (context as {tvarEnv, varEnv, oprimEnv}) kindedTvarList =
+      let
+        fun genBtv ((tvar as {eq,...}, kind), (btvKindList, tvarEnv)) = 
+            let
+              val btvId = BoundTypeVarID.generate()
+              val btvTy = T.BOUNDVARty btvId
+            in
+              ((btvId, eq, kind) :: btvKindList, TvarMap.insert(tvarEnv, tvar, btvTy))
+            end
+        (* Below, the use of foldl is essential.
+            btvId must be generated in the order of kindedTvarList *)
+        val (btvKindListRev, tvarEnv) = foldl genBtv (nil, tvarEnv) kindedTvarList
+        val newContext = {tvarEnv = tvarEnv, varEnv=varEnv, oprimEnv=oprimEnv}
+        fun evalTvarKind context kind : T.tvarKind  =
+            case kind of
+              I.UNIV => T.UNIV
+            | I.REC tyFields => T.REC (LabelEnv.map (evalIty newContext) tyFields)
+        val btvEnv =
+            foldl
+            (fn ((btvId, eq, kind), btvEnv) =>
+                let
+                  val kind = evalTvarKind newContext kind
+                in
+                  BoundTypeVarID.Map.insert (btvEnv,btvId,{eqKind=eq,tvarKind=kind})
+                end
+            )
+            BoundTypeVarID.Map.empty
+            btvKindListRev
+      in
+        (newContext, btvEnv)
+      end
 end
 end

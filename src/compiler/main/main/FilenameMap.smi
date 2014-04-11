@@ -1,0 +1,11 @@
+_require "basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../toolchain/main/Filename.smi"
+
+structure FilenameMap =
+struct
+  exception Load
+  type map (= boxed)
+  val load : Filename.filename -> map
+  val find : map * Filename.filename -> Filename.filename option
+end

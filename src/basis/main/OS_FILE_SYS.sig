@@ -1,7 +1,3 @@
-include "General.smi"
-include "Time.smi"
-include "Int.smi"
-
 signature OS_FILE_SYS =
 sig
   type dirstream

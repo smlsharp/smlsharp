@@ -1,4 +1,4 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 
 structure Fixity =

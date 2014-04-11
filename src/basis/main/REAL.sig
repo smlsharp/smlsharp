@@ -1,12 +1,3 @@
-include "General.smi"
-include "IntInf.smi"
-include "RealClass.smi"
-include "Real.smi"
-include "Real32.smi"
-include "IEEEReal.smi"
-include "StringCvt.smi"
-include "MATH.sig"
-
 signature REAL =
 sig
   type real

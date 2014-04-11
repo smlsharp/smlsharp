@@ -1,3 +1,37 @@
+barnes_hut2/data-io.o: barnes_hut2/data-io.sml barnes_hut2/vector-sig.sml \
+  barnes_hut2/vector3.smi barnes_hut2/vector.smi barnes_hut2/space.sig \
+  barnes_hut2/data-io.smi
+barnes_hut2/doit.o: barnes_hut2/doit.sml barnes_hut2/rand-sig.sml \
+  barnes_hut2/rand.smi barnes_hut2/vector-sig.sml barnes_hut2/vector3.smi \
+  barnes_hut2/vector.smi barnes_hut2/space.smi barnes_hut2/space.sig \
+  barnes_hut2/grav.smi barnes_hut2/getparam.smi barnes_hut2/data-io.smi \
+  barnes_hut2/load.smi barnes_hut2/load.sig barnes_hut2/main.smi \
+  barnes_hut2/doit.smi
+barnes_hut2/dump.o: barnes_hut2/dump.sml
+barnes_hut2/getparam.o: barnes_hut2/getparam.sml barnes_hut2/getparam.smi
+barnes_hut2/grav.o: barnes_hut2/grav.sml barnes_hut2/vector-sig.sml \
+  barnes_hut2/vector3.smi barnes_hut2/vector.smi barnes_hut2/space.smi \
+  barnes_hut2/space.sig barnes_hut2/grav.smi
+barnes_hut2/load-all.o: barnes_hut2/load-all.sml
+barnes_hut2/load-dump.o: barnes_hut2/load-dump.sml
+barnes_hut2/load.o: barnes_hut2/load.sml barnes_hut2/vector-sig.sml \
+  barnes_hut2/vector3.smi barnes_hut2/vector.smi barnes_hut2/space.smi \
+  barnes_hut2/space.sig barnes_hut2/load.smi
+barnes_hut2/main.o: barnes_hut2/main.sml barnes_hut2/rand-sig.sml \
+  barnes_hut2/rand.smi barnes_hut2/vector-sig.sml barnes_hut2/vector3.smi \
+  barnes_hut2/vector.smi barnes_hut2/space.smi barnes_hut2/space.sig \
+  barnes_hut2/grav.smi barnes_hut2/getparam.smi barnes_hut2/data-io.smi \
+  barnes_hut2/load.smi barnes_hut2/load.sig barnes_hut2/main.smi
+barnes_hut2/rand-sig.o: barnes_hut2/rand-sig.sml
+barnes_hut2/rand.o: barnes_hut2/rand.sml barnes_hut2/rand-sig.sml \
+  barnes_hut2/rand.smi
+barnes_hut2/space.o: barnes_hut2/space.sml barnes_hut2/vector-sig.sml \
+  barnes_hut2/vector3.smi barnes_hut2/vector.smi barnes_hut2/space.smi
+barnes_hut2/vector-sig.o: barnes_hut2/vector-sig.sml
+barnes_hut2/vector.o: barnes_hut2/vector.sml barnes_hut2/vector-sig.sml \
+  barnes_hut2/vector3.smi barnes_hut2/vector.smi
+barnes_hut2/vector3.o: barnes_hut2/vector3.sml barnes_hut2/vector-sig.sml \
+  barnes_hut2/vector3.smi
 barnes_hut/data-io.o: barnes_hut/data-io.sml barnes_hut/vector-sig.sml \
   barnes_hut/space.sig barnes_hut/data-io.smi
 barnes_hut/doit.o: barnes_hut/doit.sml barnes_hut/rand-sig.sml \
@@ -133,6 +167,8 @@ mlyacc/yacc.lex.o: mlyacc/yacc.lex.sml mlyacc/base.sig mlyacc/utils.sig \
 mlyacc/yacc.o: mlyacc/yacc.sml mlyacc/base.sig mlyacc/lrtable.smi \
   mlyacc/utils.sig mlyacc/utils.smi mlyacc/sigs.sml mlyacc/absyn.sig \
   mlyacc/yacc.smi
+nqueen/doit.o: nqueen/doit.sml nqueen/nqueen.smi nqueen/doit.smi
+nqueen/nqueen.o: nqueen/nqueen.sml nqueen/nqueen.smi
 nucleic/doit.o: nucleic/doit.sml nucleic/nucleic.smi nucleic/main.smi \
   nucleic/doit.smi
 nucleic/main.o: nucleic/main.sml nucleic/nucleic.smi nucleic/main.smi
@@ -162,6 +198,8 @@ simple/main.o: simple/main.sml simple/array2.smi simple/control.smi \
   simple/simple.smi simple/main.smi
 simple/simple.o: simple/simple.sml simple/array2.smi simple/control.smi \
   simple/simple.smi
+smlyacc/doit.o: smlyacc/doit.sml smlyacc/main.smi smlyacc/doit.smi
+smlyacc/main.o: smlyacc/main.sml smlyacc/main.smi
 tsp/build.o: tsp/build.sml tsp/lib-base-sig.sml tsp/lib-base.smi \
   tsp/rand-sig.sml tsp/rand.smi tsp/tree.smi tsp/build.smi
 tsp/doit.o: tsp/doit.sml tsp/tree.smi tsp/lib-base-sig.sml tsp/lib-base.smi \

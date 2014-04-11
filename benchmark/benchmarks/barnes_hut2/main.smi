@@ -1,0 +1,25 @@
+_require "basis.smi"
+_require "rand.smi"
+_require "space.smi"
+_require "grav.smi"
+_require "getparam.smi"
+_require "data-io.smi"
+_require "load.smi"
+_require "vector.smi"
+_require "space.smi"
+_require "vector-sig.sml"
+_require "space.sig"
+_require "load.sig"
+
+structure Main =
+struct
+  val srand : int -> unit
+  val testdata : int -> Space.body list
+  val go : {bodies:Space.body list, dtime:real, eps:real,
+            output:{n2bcalc:int, nbccalc:int, nstep:int,
+                    selfint:int, tnow:real}
+                   -> unit, rmin:real VectorN.vec, rsize:real,
+            tnow:real, tol:real, tstop:real}
+           -> unit
+  val doit : unit -> unit
+end

@@ -1,6 +1,3 @@
-include "General.smi"
-include "Array.smi"
-
 signature ARRAY_SLICE =
 sig
   type 'a slice

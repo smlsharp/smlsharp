@@ -1,7 +1,6 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
 _require "../../toolchain/main/Filename.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
@@ -9,26 +8,24 @@ _require "../../util/main/TermFormat.smi"
 _require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../elaborate/main/Elaborator.smi"
+_require "../../../llvm/main/LLVM.smi"
 
 structure TopData =
 struct
-  datatype stopAt = SyntaxCheck | ErrorCheck | Assembly | NoStop
-  datatype code = FILE of Filename.filename
-  type interfaceNames =
+
+  datatype stopAt =
+      SyntaxCheck                   (* run until syntax check is completed. *)
+    | ErrorCheck                    (* run until error check is completed. *)
+    | NoStop
+
+  type options =
       {
-        provide: AbsynInterface.interfaceName option,
-        requires: AbsynInterface.interfaceName list,
-        depends: (AbsynInterface.filePlace * string) list
+        stopAt: stopAt,                         (* compile will stop here. *)
+        baseFilename: Filename.filename option, (* base name for file search *)
+        stdPath: Filename.filename list,        (* system path for file search *)
+        loadPath: Filename.filename list        (* user path for file search *)
       }
-  type toplevelOptions =
-      {
-        stopAt: stopAt,
-        dstfile: Filename.filename option,
-        baseName: Filename.filename option,
-        stdPath: Filename.filename list,
-        loadPath: Filename.filename list,
-        asmFlags: string list
-      }
+
   type toplevelContext =
       {
         topEnv: NameEvalEnv.topEnv,
@@ -43,16 +40,15 @@ struct
       }
 
   datatype result =
-      STOPPED
-    | RETURN of newContext * code
+      STOPPED                                   (* aborted due to stopAt. *)
+    | RETURN of newContext * LLVM.LLVMModuleRef (* compile completed *)
 
   val debugPrint : string -> unit
   val printStopAt : stopAt -> unit
-  val printInterfaceNames : interfaceNames -> unit
   val printInterfaceName : AbsynInterface.interfaceName -> unit
   val printFileName : Filename.filename -> unit
   val printInterfaceNameList : AbsynInterface.interfaceName list -> unit
   val printResult : result -> unit
-  val printToplevelOptions : toplevelOptions -> unit
+  val printOptions : options -> unit
   val printCompileUnit : AbsynInterface.compileUnit -> unit
 end

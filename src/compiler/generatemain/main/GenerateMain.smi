@@ -1,13 +1,33 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../usererror/main/UserError.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
-_require "GenerateMainError.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/EvalIty.smi"
+_require "../../llvmir/main/LLVMIR.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "./GenerateMainError.ppg.smi"
 
 structure GenerateMain = 
 struct
-  val generate : AbsynInterface.interfaceName list -> string
-  val mainSymbol : AbsynInterface.compileUnit -> {mainSymbol: string}
+  val moduleName
+      : AbsynInterface.interfaceName option * int option
+        -> {source: AbsynInterface.source option,
+            mainSymbol: string,
+            moduleName: string,
+            stackMapSymbol: string,
+            codeBeginSymbol: string}
+
+  val generateBuiltin : IDCalc.icdecl list -> RecordCalc.rcdecl list
+
+  val generateEntryCode
+      : AbsynInterface.interfaceName option list
+        -> {mainFn : LLVMIR.program -> LLVMIR.program,
+            moduleName : {moduleName : string}}
 end

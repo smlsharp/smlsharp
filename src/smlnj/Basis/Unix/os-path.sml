@@ -1,7 +1,8 @@
-_interface "os-path.smi"
-infix 4 <= <> =
-val op <= = SMLSharp.Int.lteq
-fun op <> (x:char,y) = if x = y then false else true
+infix 6 + - ^
+infix 4 = <> > >= < <=
+val op <= = SMLSharp_Builtin.Int.lteq
+val op ^ = String.^
+type substring = Substring.substring
 structure InlineT =
 struct
   structure CharVector = CharVector
@@ -43,46 +44,39 @@ fun splitVolPath s =
 (*
 structure OS_Path = OS_PathFn (
 *)
-structure SMLSharpSMLNJ_OS_Path = SMLSharpSMLNJ_OS_PathFn (
+structure SMLSharp_SMLNJ_PathBase = 
   struct
-
     exception Path
-
     datatype arc_kind = Null | Parent | Current | Arc of string
-
     fun classify "" = Null
       | classify "." = Current
       | classify ".." = Parent
       | classify a = Arc a
-
     val parentArc = ".."
-
     val currentArc = "."
-
     fun validArc arc = let
 	  fun ok #"/" = false
 	    | ok c = Char.isPrint c
 	  in
 	    CharVector.all ok arc
 	  end
-
     fun validVolume (_:bool, vol:substring)= Substring.isEmpty vol
-
     val volSS = Substring.full ""
-
   (* Note: we are guaranteed that this is never called with "" *)
     fun splitVolPath s = if (InlineT.CharVector.sub(s, 0) = #"/")
 	  then (true, volSS, Substring.triml 1 (Substring.full s))
 	  else (false, volSS, Substring.full s)
-
     fun joinVolPath (true, "", "") = "/"
       | joinVolPath (true, "", s) = "/" ^ s
       | joinVolPath (false, "", s) = s
       | joinVolPath _ = raise Path (* invalid volume *)
-
     val arcSepChar = #"/"
-
     fun sameVol (v1, v2: string) = v1 = v2
+  end
 
-  end);
+structure SMLSharp_SMLNJ_OS_Path = SMLSharp_SMLNJ_OS_PathFn (SMLSharp_SMLNJ_PathBase);
+
+
+
+
 

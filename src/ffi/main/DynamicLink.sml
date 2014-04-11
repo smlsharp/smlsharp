@@ -1,28 +1,18 @@
 (**
  * wrapper of libdl.
- * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
 
-structure DynamicLink :> sig
+infix 6 +
+infix 4 < =
+infix 3 :=
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op < = SMLSharp_Builtin.Int.lt
 
-  type lib
-  datatype scope = LOCAL | GLOBAL
-  datatype mode = LAZY | NOW
-
-  val dlopen : string -> lib
-  val dlopen' : string * scope * mode -> lib
-  val dlsym : lib * string -> unit ptr
-  val dlclose : lib -> unit
-
-end =
+structure DynamicLink =
 struct
-
-  infix 6 +
-  infix 4 < =
-  infix 3 :=
-  val op + = SMLSharp.Int.add
-  val op < = SMLSharp.Int.lt
 
   type lib = unit ptr
   datatype scope = LOCAL | GLOBAL
@@ -51,15 +41,28 @@ struct
     val RTLD_NOW = ref 0
     val RTLD_LOCAL = ref 0
     val RTLD_GLOBAL = ref 0
+
+    val const_RTLD_LAZY =
+        _import "prim_const_RTLD_LAZY"
+        : __attribute__((pure,no_callback)) () -> int
+    val const_RTLD_NOW =
+        _import "prim_const_RTLD_NOW"
+        : __attribute__((pure,no_callback)) () -> int
+    val const_RTLD_LOCAL =
+        _import "prim_const_RTLD_LOCAL"
+        : __attribute__((pure,no_callback)) () -> int
+    val const_RTLD_GLOBAL =
+        _import "prim_const_RTLD_GLOBAL"
+        : __attribute__((pure,no_callback)) () -> int
   in
     fun dlopenMode (scope, mode) =
       let
         val _ =
             if !loaded then () else
-            (RTLD_LAZY := SMLSharpRuntime.cconstInt "RTLD_LAZY";
-             RTLD_NOW := SMLSharpRuntime.cconstInt "RTLD_NOW";
-             RTLD_LOCAL := SMLSharpRuntime.cconstInt "RTLD_LOCAL";
-             RTLD_GLOBAL := SMLSharpRuntime.cconstInt "RTLD_GLOBAL";
+            (RTLD_LAZY := const_RTLD_LAZY ();
+             RTLD_NOW := const_RTLD_NOW ();
+             RTLD_LOCAL := const_RTLD_LOCAL ();
+             RTLD_GLOBAL := const_RTLD_GLOBAL ();
              loaded := true)
         val scope = case scope of LOCAL => !RTLD_LOCAL | GLOBAL => !RTLD_GLOBAL
         val mode = case mode of LAZY => !RTLD_LAZY | NOW => !RTLD_NOW
@@ -69,14 +72,14 @@ struct
   end (* local *)
 
   fun dlerror () =
-      SMLSharpRuntime.str_new (c_dlerror ())
+      SMLSharp_Runtime.str_new (c_dlerror ())
 
   fun dlopen' (libname, scope, mode) =
       let
         val lib = c_dlopen (libname, dlopenMode (scope, mode))
       in
         if lib = _NULL
-        then raise SMLSharpRuntime.SysErr (dlerror (), NONE)
+        then raise SMLSharp_Runtime.SysErr (dlerror (), NONE)
         else lib
       end
 
@@ -85,16 +88,19 @@ struct
 
   fun dlclose lib =
       if c_dlclose lib < 0
-      then raise SMLSharpRuntime.SysErr (dlerror (), NONE)
+      then raise SMLSharp_Runtime.SysErr (dlerror (), NONE)
       else ()
 
-  fun dlsym (lib, symbol) =
+  fun dlsym' (lib, symbol) =
       let
         val ptr = c_dlsym (lib, symbol)
       in
-        if lib = _NULL
-        then raise SMLSharpRuntime.SysErr (dlerror (), NONE)
+        if ptr = _NULL
+        then raise SMLSharp_Runtime.SysErr (dlerror (), NONE)
         else ptr
       end
+
+  fun dlsym args =
+      SMLSharp_Builtin.Pointer.toCodeptr (dlsym' args)
 
 end

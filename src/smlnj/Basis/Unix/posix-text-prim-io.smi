@@ -1,16 +1,13 @@
 _require "../../../basis/main/General.smi"
 _require "../../../basis/main/Int.smi"
-_require "../../../basis/main/SMLSharpOSFileSys.smi"
-_require "../../../basis/main/IO.smi"
 _require "../../../basis/main/String.smi"
-_require "../../../basis/main/CharArray.smi"
-_require "../../../basis/main/CharVector.smi"
+_require "../../../basis/main/CharArraySlice.smi"
 _require "../../../basis/main/CharVectorSlice.smi"
-_require "../IO/os-prim-io.sig"
+_require "../../../basis/main/IO.smi"
 _require "../IO/prim-io-text.smi"
 _require "../Posix/posix-io.smi"
 
-structure SMLSharpSMLNJ_PosixTextPrimIO =
+structure SMLSharp_SMLNJ_PosixTextPrimIO =
 struct
   structure PrimIO =
   struct
@@ -20,7 +17,7 @@ struct
     type array = TextPrimIO.array
     type array_slice = TextPrimIO.array_slice
     type pos = TextPrimIO.pos
-    val compare : pos * pos -> order
+    val compare : pos * pos -> General.order
     datatype reader = datatype TextPrimIO.reader
     datatype writer = datatype TextPrimIO.writer
     val openVector : vector -> reader
@@ -29,7 +26,7 @@ struct
     val augmentReader : reader -> reader
     val augmentWriter : writer -> writer
   end
-  type file_desc = SMLSharpSMLNJ_POSIX_IO.file_desc
+  type file_desc = SMLSharp_SMLNJ_POSIX_IO.file_desc
   val openRd  : string -> PrimIO.reader
   val openWr  : string -> PrimIO.writer
   val openApp : string -> PrimIO.writer

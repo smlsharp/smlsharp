@@ -8,7 +8,6 @@ struct
   (***************************************************************************)
 
   local
-    type longid = Absyn.longid
     structure I = IDCalc
     structure UE = UserError
     fun format_ty ty = (Types.format_ty []) ty
@@ -18,11 +17,16 @@ struct
   in
 
   (*%
+     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   *)
+  type longsymbol = Symbol.longsymbol
+
+  (*%
    * @formatter(Types.ty) format_ty
    * @formatter(I.ffiTy) I.format_ffiTy
    * @formatter(Absyn.ty) format_AbsynTy
    * @formatter(path) Path.format_pathWithoutDotend
-   * @formatter(longid) Absyn.format_longid
+   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    * @formatter(I.icpat) I.format_icpat
    *)
   exception
@@ -45,10 +49,10 @@ struct
     where A.c is not a data constructor
    *)
   (*%
-   * @format(code * longid:longid) "(type inference" +d code ")" +d  
-   * "path" +d longid +d "is" +d "not" +d "a" +d "constructor"
+   * @format(code * longsymbol) "(type inference" +d code ")" +d  
+   * "path" +d longsymbol +d "is" +d "not" +d "a" +d "constructor"
    *)
-  NonConstructorPathInPat of string * longid
+  NonConstructorPathInPat of string * longsymbol
 
   and
   (**
@@ -78,10 +82,10 @@ struct
     where A.c is not defined.
    *)
   (*%
-   * @format(code * longid:longid) "(type inference" +d code ")" +d    
-   * "constructor" +d "path" +d longid +d "undefined"
+   * @format(code * longsymbol:longsymbol) "(type inference" +d code ")" +d    
+   * "constructor" +d "path" +d longsymbol +d "undefined"
    *)
-  ConstructorPathNotFound of string * longid
+  ConstructorPathNotFound of string * longsymbol
 
   and
   (**
@@ -95,7 +99,7 @@ struct
     "are" +d "introduced" +d "due" +d "to" +d "value" +d "restriction"
     +d "in:" +d paths(path)(","+d)
    *)
-  ValueRestriction of string * {dummyTyPaths : longid list}
+  ValueRestriction of string * {dummyTyPaths : Symbol.longsymbol list}
 
   and
   (**
@@ -104,11 +108,11 @@ struct
    * </pre>
    *)
   (*%
-   * @format(code * {longid}) "(type inference" +d code ")" +d  
-     "data" +d "constructor" +d {longid} +d "used" +d "without"
+   * @format(code * {longsymbol}) "(type inference" +d code ")" +d  
+     "data" +d "constructor" +d {longsymbol} +d "used" +d "without"
      +d "argument" +d "in" +d "pattern"
    *)
-  ConRequireArg of string * {longid : longid}
+  ConRequireArg of string * {longsymbol : longsymbol}
 
   and
   (**
@@ -199,14 +203,14 @@ struct
    * </pre>
    *)
   (*%
-   * @format(code * {id, definition, occurrence}) "(type inference" +d code ")" +d  
-   *  "definition" +d "and" +d "occurrence" +d "of" +d "\"" {id} "\"" +d
+   * @format(code * {longsymbol, definition, occurrence}) "(type inference" +d code ")" +d  
+   *  "definition" +d "and" +d "occurrence" +d "of" +d "\"" longsymbol "\"" +d
    * "don't" +d "agree." +1
    * "definition:" +d {definition} +1
    * "occurrence:" +d {occurrence}
    *)
   RecDefinitionAndOccurrenceNotAgree of string *
-  {id : string, definition : Types.ty, occurrence : Types.ty}
+  {longsymbol : longsymbol, definition : Types.ty, occurrence : Types.ty}
 
   and
   (**
@@ -215,10 +219,10 @@ struct
    * </pre>
    *)
   (*%
-   * @format(code * {vars : var vars}) "(type inference" +d code ")" +d  
-   *   "duplicate" +d "variables" +d "in" +d "pattern(s):" +d vars(var)("," +d)
+   * @format(code * {longsymbol}) "(type inference" +d code ")" +d  
+   *   "duplicate" +d "variables" +d "in" +d "pattern(s):" +d longsymbol
    *)
-  DuplicatePatternVar of string * {vars : string list}
+  DuplicatePatternVar of string * {longsymbol : longsymbol}
 
   and
   (**
@@ -252,7 +256,9 @@ struct
    * </pre>
    *)
   (*%
-   * @format(code * {ty}) "(type inference" +d code ")" +d   "operator" +d "is" +d "not" +d "a" +d "function:" +d {ty}
+   * @format(code * {ty}) 
+       "(type inference" +d code ")" +d  "operator" +d "is" +d "not" +d "a" +d "function:"
+       +1 {ty}
    *)
   NonFunction of string * {ty : Types.ty}
 
@@ -987,27 +993,34 @@ struct
    *)
   (*%
    * @format(code * ty) "(type inference" +d code ")" +d  
-   * "invalid" +d "type" +d "for" +d "SQL" +d "table" +d "declaration:" +d ty
-   *)
-  InvalidSQLTableDecl of string * Types.ty
-
-  and
-  (**
-   *)
-  (*%
-   * @format(code * ty) "(type inference" +d code ")" +d  
-   * "incompatible" +d "type" +d "with" +d "SQL:" +d ty
-   *)
-  IncompatibleWithSQL of string * Types.ty
-
-  and
-  (**
-   *)
-  (*%
-   * @format(code * ty) "(type inference" +d code ")" +d  
-   * "invalid" +d "database" +d "id" +d "type:" +d ty
+   * "invalid" +d "database" +d "id" +d "type:" ty
    *)
   InvalidSQLDBI of string * Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(code * ty1 * ty2) "(type inference" +d code ")" +d
+   * "record" +d "type" +d "expected" + "ty1:" ty1 +d "ty2:" ty2
+   *)
+  JoinNonRecord of string * Types.ty * Types.ty
+
+  and
+  (*%
+   * @format(code * {label, ty1, ty2}) "(type inference" +d code ")" +d
+   * "inconsistent" +d "natural" +d "join" +d "in" +d "record" +d "field:" label
+       +1 " operand one:" + ty1 
+       +1 " operand two:" + ty2
+   *)
+  JoinInconsistent of string * {label:string, ty1:Types.ty, ty2:Types.ty}
+
+  and
+  (*%
+    @format(code * string) "(type inference" +d code ")" +d
+     "missing" +d "field" +d "in" +d "natural" +d "join:" +d string
+   *)
+  JoinMissingTy of string * string
 
   val isAnyError = ref false
 

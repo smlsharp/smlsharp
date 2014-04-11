@@ -1,14 +1,15 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
 _require "../../control/main/Loc.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 
 structure TypedCalc =
@@ -28,7 +29,7 @@ structure TypedCalc =
     val formatWithType_exnCon : exnCon -> SMLFormat.FormatExpression.expression list
     datatype ffiTy
       = FFIBASETY of Types.ty * Loc.loc
-      | FFIFUNTY of Absyn.ffiAttributes option * ffiTy list * ffiTy list * 
+      | FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list *
                     Loc.loc
       | FFIRECORDTY of (string * ffiTy) list * Loc.loc
     val format_ffiTy
@@ -43,7 +44,7 @@ structure TypedCalc =
       | TPCASEM of {caseKind:PatternCalc.caseKind, expList:tpexp list,
                     expTyList:Types.ty list, loc:Loc.loc, ruleBodyTy:Types.ty,
                     ruleList:{args:tppat list, body:tpexp} list}
-      | TPCAST of tpexp * Types.ty * Loc.loc
+      | TPCAST of (tpexp * Types.ty) * Types.ty * Loc.loc
       | TPCONSTANT of {const:Absyn.constant, loc:Loc.loc, ty:Types.ty}
       | TPDATACONSTRUCT of {argExpOpt:tpexp option, con:Types.conInfo,
                             argTyOpt:Types.ty option, 
@@ -54,15 +55,13 @@ structure TypedCalc =
                            instTyList:Types.ty list, loc:Loc.loc}
       | TPEXN_CONSTRUCTOR of {exnInfo:Types.exnInfo, loc:Loc.loc}
       | TPEXEXN_CONSTRUCTOR of {exExnInfo:Types.exExnInfo, loc:Loc.loc}
-      | TPEXVAR of Types.exVarInfo * Loc.loc
-      | TPFFIIMPORT of {ffiTy:ffiTy, loc:Loc.loc, ptrExp:tpexp,
+      | TPEXVAR of Types.exVarInfo
+      | TPFFIIMPORT of {ffiTy:ffiTy, loc:Loc.loc, funExp:tpffifun,
                         stubTy:Types.ty}
       | TPFNM of {argVarList:Types.varInfo list, bodyExp:tpexp,
                   bodyTy:Types.ty, loc:Loc.loc}
-      | TPGLOBALSYMBOL of {kind:Absyn.globalSymbolKind, loc:Loc.loc,
-                           name:string, ty:Types.ty}
       | TPHANDLE of {exnVar:Types.varInfo, exp:tpexp, handler:tpexp,
-                     loc:Loc.loc}
+                     resultTy:Types.ty, loc:Loc.loc}
       | TPLET of {body:tpexp list, decls:tpdecl list, loc:Loc.loc,
                   tys:Types.ty list}
       | TPMODIFY of {elementExp:tpexp, elementTy:Types.ty, label:string,
@@ -78,26 +77,26 @@ structure TypedCalc =
       | TPPRIMAPPLY of {argExp:tpexp, instTyList:Types.ty list, loc:Loc.loc,
                         argTy:Types.ty, primOp:Types.primInfo}
       | TPRAISE of {exp:tpexp, loc:Loc.loc, ty:Types.ty}
-      | TPRECFUNVAR of {arity:int, loc:Loc.loc, var:Types.varInfo}
+      | TPRECFUNVAR of {arity:int, var:Types.varInfo}
       | TPRECORD of {fields:tpexp LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
       | TPSELECT of {exp:tpexp, expTy:Types.ty, label:string, loc:Loc.loc,
                      resultTy:Types.ty}
       | TPSEQ of {expList:tpexp list, expTyList:Types.ty list, loc:Loc.loc}
       | TPSIZEOF of Types.ty * Loc.loc
-      | TPSQLSERVER of {loc:Loc.loc, resultTy:Types.ty,
-                        schema:Types.ty LabelEnv.map LabelEnv.map,
-                        server:string}
       | TPTAPP of {exp:tpexp, expTy:Types.ty, instTyList:Types.ty list,
                    loc:Loc.loc}
-      | TPVAR of Types.varInfo * Loc.loc
+      | TPVAR of Types.varInfo
+    and tpffifun
+      = TPFFIFUN of tpexp
+      | TPFFIEXTERN of string
     and tpdecl
       = TPEXD of {exnInfo:Types.exnInfo, loc:Loc.loc} list * Loc.loc
       | TPEXNTAGD of {exnInfo:Types.exnInfo, varInfo:Types.varInfo} * Loc.loc
-      | TPEXPORTEXN of Types.exnInfo * Loc.loc
-      | TPEXPORTRECFUNVAR of {var:Types.varInfo, arity:int, loc:Loc.loc}
-      | TPEXPORTVAR of {internalVar:Types.varInfo, externalVar:Types.exVarInfo, loc:Loc.loc}
-      | TPEXTERNEXN of {path:IDCalc.path, ty:Types.ty} * Loc.loc
-      | TPEXTERNVAR of {path:IDCalc.path, ty:Types.ty} * Loc.loc
+      | TPEXPORTEXN of Types.exnInfo
+      | TPEXPORTRECFUNVAR of {var:Types.varInfo, arity:int}
+      | TPEXPORTVAR of Types.varInfo
+      | TPEXTERNEXN of {longsymbol:Symbol.longsymbol, ty:Types.ty}
+      | TPEXTERNVAR of {longsymbol:Symbol.longsymbol, ty:Types.ty}
       | TPFUNDECL of {argTyList:Types.ty list, bodyTy:Types.ty,
                       funVarInfo:Types.varInfo,
                       ruleList:{args:tppat list, body:tpexp} list} list * 
@@ -124,7 +123,7 @@ structure TypedCalc =
                               patTy:Types.ty}
       | TPPATLAYERED of {asPat:tppat, loc:Loc.loc, varPat:tppat}
       | TPPATRECORD of {fields:tppat LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
-      | TPPATVAR of Types.varInfo * Loc.loc
+      | TPPATVAR of Types.varInfo
       | TPPATWILD of Types.ty * Loc.loc 
     val format_tpexp
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list

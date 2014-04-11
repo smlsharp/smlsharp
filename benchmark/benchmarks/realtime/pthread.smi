@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "ffi.smi"
+
+structure Pthread =
+struct
+  type pthread_t (= ptr)
+  val join : pthread_t -> int
+  val create : (unit ptr -> unit ptr) -> pthread_t
+end

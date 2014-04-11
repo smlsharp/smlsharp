@@ -1,0 +1,165 @@
+_require "./Substring.smi"
+_require "./General.smi"
+_require "./List.smi"
+_require "./Option.smi"
+_require "./String.smi"
+_require "./Real.smi"
+_require "./Char.smi"
+_require "./Bool.smi"
+_require "../../smlnj/Basis/IO/text-io.smi"
+_require "./Vector.smi"
+_require "./IntInf.smi"
+_require "./Real32.smi"
+_require "./Word8.smi"
+
+infix 7 * / div mod
+infix 6 + - ^
+infixr 5 :: @
+infix 4 = <> > >= < <=
+infix 3 := o
+infix 0 before
+
+type substring = Substring.substring
+datatype order = datatype General.order
+
+exception Empty = List.Empty
+exception Option = Option.Option
+exception Span = General.Span
+
+val @ = List.@
+val ^ = String.^
+val app = List.app
+val ceil = Real.ceil
+val chr = Char.chr
+val concat = String.concat
+val exnMessage = General.exnMessage
+val explode = String.explode
+val floor = Real.floor
+val foldl = List.foldl
+val foldr = List.foldr
+val getOpt = Option.getOpt
+val hd = List.hd
+val implode = String.implode
+val isSome = Option.isSome
+val length = List.length
+val map = List.map
+val not = Bool.not
+val null = List.null
+val ord = Char.ord
+val print = TextIO.print
+val real = Real.fromInt
+val rev = List.rev
+val round = Real.round
+val size = String.size
+val str = String.str
+val substring = String.substring
+val tl = List.tl
+val trunc = Real.trunc
+val valOf = Option.valOf
+val vector = Vector.fromList
+
+val + =
+    case 'a in 'a * 'a -> 'a of
+      int => SMLSharp_Builtin.Int.add_unsafe  (* FIXME *)
+    | word => SMLSharp_Builtin.Word.add
+    | Word8.word => SMLSharp_Builtin.Word8.add
+    | IntInf.int => IntInf.+
+    | real => SMLSharp_Builtin.Real.add
+    | Real32.real => SMLSharp_Builtin.Real32.add
+
+val - =
+    case 'a in 'a * 'a -> 'a of
+      int => SMLSharp_Builtin.Int.sub_unsafe  (* FIXME *)
+    | word => SMLSharp_Builtin.Word.sub
+    | Word8.word => SMLSharp_Builtin.Word8.sub
+    | IntInf.int => IntInf.-
+    | real => SMLSharp_Builtin.Real.sub
+    | Real32.real => SMLSharp_Builtin.Real32.sub
+
+val * =
+    case 'a in 'a * 'a -> 'a of
+      int => SMLSharp_Builtin.Int.mul_unsafe  (* FIXME *)
+    |  word => SMLSharp_Builtin.Word.mul
+    | Word8.word => SMLSharp_Builtin.Word8.mul
+    | IntInf.int => IntInf.*
+    | real => SMLSharp_Builtin.Real.mul
+    | Real32.real => SMLSharp_Builtin.Real32.mul
+
+val div =
+    case 'a in 'a * 'a -> 'a of
+      int => SMLSharp_Builtin.Int.div
+    | word => SMLSharp_Builtin.Word.div
+    | Word8.word => SMLSharp_Builtin.Word8.div
+    | IntInf.int => IntInf.div
+
+val mod =
+    case 'a in 'a * 'a -> 'a of
+      int => SMLSharp_Builtin.Int.mod
+    | word => SMLSharp_Builtin.Word.mod
+    | Word8.word => SMLSharp_Builtin.Word8.mod
+    | IntInf.int => IntInf.mod
+
+val / =
+    case 'a in 'a * 'a -> 'a of
+      real => SMLSharp_Builtin.Real.div
+    | Real32.real => SMLSharp_Builtin.Real32.div
+
+val ~ =
+    case 'a in 'a -> 'a of
+      int => SMLSharp_Builtin.Int.neg
+    | word => SMLSharp_Builtin.Word.neg
+    | Word8.word => Word8.~
+    | IntInf.int => IntInf.~
+    | real => SMLSharp_Builtin.Real.neg
+    | Real32.real => SMLSharp_Builtin.Real32.neg
+
+val abs =
+    case 'a in 'a -> 'a of
+      int => SMLSharp_Builtin.Int.abs
+    | real => SMLSharp_Builtin.Real.abs
+    | Real32.real => SMLSharp_Builtin.Real32.abs
+    | IntInf.int => IntInf.abs
+
+val < =
+    case 'a in 'a * 'a -> bool of
+      int => SMLSharp_Builtin.Int.lt
+    | word => SMLSharp_Builtin.Word.lt
+    | Word8.word => SMLSharp_Builtin.Word8.lt
+    | IntInf.int => IntInf.<
+    | real => SMLSharp_Builtin.Real.lt
+    | Real32.real => SMLSharp_Builtin.Real32.lt
+    | string => String.<
+    | char => SMLSharp_Builtin.Char.lt
+
+val > =
+    case 'a in 'a * 'a -> bool of
+      int => SMLSharp_Builtin.Int.gt
+    | word => SMLSharp_Builtin.Word.gt
+    | Word8.word => SMLSharp_Builtin.Word8.gt
+    | IntInf.int => IntInf.>
+    | real => SMLSharp_Builtin.Real.gt
+    | Real32.real => SMLSharp_Builtin.Real32.gt
+    | string => String.>
+    | char => SMLSharp_Builtin.Char.gt
+
+val <= =
+    case 'a in 'a * 'a -> bool of
+      int => SMLSharp_Builtin.Int.lteq
+    | word => SMLSharp_Builtin.Word.lteq
+    | Word8.word => SMLSharp_Builtin.Word8.lteq
+    | IntInf.int => IntInf.<=
+    | real => SMLSharp_Builtin.Real.lteq
+    | Real32.real => SMLSharp_Builtin.Real32.lteq
+    | string => String.<=
+    | char => SMLSharp_Builtin.Char.lteq
+
+val >= =
+    case 'a in 'a * 'a -> bool of
+      int => SMLSharp_Builtin.Int.gteq
+    | word => SMLSharp_Builtin.Word.gteq
+    | Word8.word => SMLSharp_Builtin.Word8.gteq
+    | IntInf.int => IntInf.>=
+    | real => SMLSharp_Builtin.Real.gteq
+    | Real32.real => SMLSharp_Builtin.Real32.gteq
+    | string => String.>=
+    | char => SMLSharp_Builtin.Char.gteq

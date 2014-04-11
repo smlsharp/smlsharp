@@ -1,22 +1,22 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../util/main/SCCFun.smi"
-_require "NameEvalEnv.ppg.smi"
-_require "NameEvalUtils.smi"
-_require "TfunVars.smi"
+_require "./NameEvalEnv.ppg.smi"
+_require "./NameEvalUtils.smi"
+_require "./TfunVars.smi"
 
 structure SetLiftedTys =
 struct
   val getId : IDCalc.tfunkind ref -> IDCalc.typId
   val setLiftedTysEnv : NameEvalEnv.env
-                        -> (string list * IDCalc.tfunkind ref) list list
+                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
   val setLiftedTysSpecEnv : NameEvalEnv.env
-                        -> (string list * IDCalc.tfunkind ref) list list
+                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
 end

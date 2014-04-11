@@ -39,14 +39,40 @@ struct
 
     (*************************************************************************)
 
-    val nopos = {fileName = "none", line = 0, col = 0}
+    val nopos = {fileName = "none", line = ~1, col = ~1}
     val noloc = (nopos, nopos)
+    fun isNopos {fileName, line, col} =
+        fileName = "none" andalso line = ~1 andalso col = ~1
+    fun comparePos ({fileName = f1, line = l1, col = c1},
+                    {fileName = f2, line = l2, col = c2}) =
+        case String.compare (f1,f2) of
+          EQUAL => (case Int.compare (l1, l2) of
+                      EQUAL => Int.compare (c1, c2)
+                    | x => x)
+        | x  => x
     fun makePos {fileName, line, col} =
         {fileName = fileName, line = line, col = col}
     fun fileNameOfPos (pos : pos) = #fileName pos
     fun lineOfPos (pos : pos) = #line pos
     fun colOfPos (pos : pos) = #col pos
-    fun mergeLocs ((pos11, pos12), (pos21, pos22)) = (pos11, pos22)
+    fun mergeLocs ((pos11, pos12), (pos21, pos22)) = 
+        if isNopos pos11 orelse isNopos pos12 then 
+          (pos21, pos22)
+        else if isNopos pos21 orelse isNopos pos22 then 
+          (pos11, pos12)
+        else
+          let
+            val pos1 = 
+                case comparePos(pos11, pos21) of
+                  GREATER => pos21
+                | _ => pos11
+            val pos2 = 
+                case comparePos(pos12, pos22) of
+                  LESS => pos22
+                | _ => pos12
+          in
+            (pos1, pos2)
+          end
 
     (*************************************************************************)
 

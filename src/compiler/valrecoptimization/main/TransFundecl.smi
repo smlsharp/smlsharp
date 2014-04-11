@@ -1,8 +1,9 @@
-_require "../../../basis.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "basis.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "TRANS_FUNDECL.sig"
+_require "./TRANS_FUNDECL.sig"
 
 structure TransFundecl =
   struct

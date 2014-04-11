@@ -1,4 +1,4 @@
-structure BigInt :>
+structure BigInt :
           sig
             include INTEGER
             (**

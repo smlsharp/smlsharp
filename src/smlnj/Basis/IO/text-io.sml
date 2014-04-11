@@ -1,115 +1,28 @@
-_interface "text-io.smi"
-infix 7 *
-infix 6 + -
-infixr 5 ::
-infix 4 = >= <
-val op * = SMLSharp.Int.mul
-val op + = SMLSharp.Int.add
-val op - = SMLSharp.Int.sub
-val op >= = SMLSharp.Int.gteq
-val op < = SMLSharp.Int.lt
-structure CleanIO = SMLSharpSMLNJ_CleanIO
-signature TEXT_IO =
-sig
-  structure StreamIO : sig
-    type elem
-    type vector
-    type reader
-    type writer
-    type pos
-    datatype instream =
-        ISTRM of in_buffer * int
-    and in_buffer =
-        IBUF of {basePos : pos option,
-                 more : more ref,
-                 data : vector,
-                 info : info}
-    and more =
-        MORE of in_buffer
-      | EOS of in_buffer
-      | NOMORE 
-      | TERMINATED
-    and info =
-        INFO of {reader : reader,
-                 readVec : int -> vector,
-                 readVecNB : (int -> vector) option,
-                 closed : bool ref,
-                 getPos : unit -> pos option,
-                 tail : more ref ref,
-                 cleanTag : SMLSharpSMLNJ_CleanIO.tag}
-    datatype outstream =
-        OSTRM of {buf : CharArray.array,
-                  pos : int ref,
-                  closed : bool ref,
-                  bufferMode : IO.buffer_mode ref,
-                  writer : writer,
-                  writeArr : CharArraySlice.slice -> unit,
-                  writeVec : CharVectorSlice.slice -> unit,
-                  cleanTag : SMLSharpSMLNJ_CleanIO.tag}
-    datatype out_pos =
-        OUTP of {pos : pos, strm : outstream}
-    val input : instream -> vector * instream
-    val input1 : instream -> (elem * instream) option
-    val inputN : instream * int -> vector * instream
-    val inputAll : instream -> vector * instream
-    val canInput : instream * int -> int option
-    val closeIn : instream -> unit
-    val endOfStream : instream -> bool
-    val output : outstream * vector -> unit
-    val output1 : outstream * elem -> unit
-    val flushOut : outstream -> unit
-    val closeOut : outstream -> unit
-    val mkInstream : reader * vector -> instream
-    val getReader : instream -> reader * vector
-    val filePosIn : instream -> pos
-    val setBufferMode : outstream * IO.buffer_mode -> unit
-    val getBufferMode : outstream -> IO.buffer_mode
-    val mkOutstream : writer * IO.buffer_mode -> outstream
-    val getWriter : outstream -> writer * IO.buffer_mode
-    val getPosOut : outstream -> out_pos
-    val setPosOut : out_pos -> outstream
-    val filePosOut : out_pos -> pos
-    val inputLine : instream -> (string * instream) option
-    val outputSubstr : outstream * substring -> unit
-  end
-  type vector = StreamIO.vector
-  type elem = StreamIO.elem
-  type instream
-  type outstream
-  val input : instream -> vector
-  val input1 : instream -> elem option
-  val inputN : instream * int -> vector
-  val inputAll : instream -> vector
-  val canInput : instream * int -> int option
-  val lookahead : instream -> elem option
-  val closeIn : instream -> unit
-  val endOfStream : instream -> bool
-  val output : outstream * vector -> unit
-  val output1 : outstream * elem -> unit
-  val flushOut : outstream -> unit
-  val closeOut : outstream -> unit
-  val mkInstream : StreamIO.instream -> instream
-  val getInstream : instream -> StreamIO.instream
-  val setInstream : instream * StreamIO.instream -> unit
-  val mkOutstream : StreamIO.outstream -> outstream
-  val getOutstream : outstream -> StreamIO.outstream
-  val setOutstream : outstream * StreamIO.outstream -> unit
-  val getPosOut : outstream -> StreamIO.out_pos
-  val setPosOut : outstream * StreamIO.out_pos -> unit
-  val inputLine : instream -> string option
-  val outputSubstr : outstream * substring -> unit
-  val openIn : string -> instream
-  val openOut : string -> outstream
-  val openAppend : string -> outstream
-  val openString : string -> instream
-  val stdIn : instream
-  val stdOut : outstream
-  val stdErr : outstream
-  val print : string -> unit
-  val scanStream : ((SMLSharp.Char.char, StreamIO.instream) StringCvt.reader
-                    -> ('a, StreamIO.instream) StringCvt.reader)
-                   -> instream
-                   -> 'a option
+infix 7 * / div mod
+infix 6 + - ^
+infixr 5 :: @
+infix 4 = <> > >= < <=
+infix 3 := o
+infix 0 before
+val op * = SMLSharp_Builtin.Int.mul_unsafe
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op >= = SMLSharp_Builtin.Int.gteq
+val op < = SMLSharp_Builtin.Int.lt
+fun op before (x, y:unit) = x
+structure Int =
+struct
+  val quot = SMLSharp_Builtin.Int.quot_unsafe
+end
+structure CleanIO =
+struct
+  type tag = SMLSharp_OSProcess.atexit_tag
+  fun addCleaner {init:unit->unit, flush:unit->unit, close} =
+      SMLSharp_OSProcess.atExit' close
+  val removeCleaner = SMLSharp_OSProcess.cancelAtExit
+  fun rebindCleaner (tag, {init:unit->unit, flush:unit->unit, close}) =
+      SMLSharp_OSProcess.rebindAtExit (tag, close)
+  val stdStrmHook = ref (fn () => ())
 end
 (* text-io-fn.sml
  *
@@ -121,9 +34,9 @@ end
  *)
 
 local
-  structure OSPrimIO = SMLSharpSMLNJ_PosixTextPrimIO
+  structure OSPrimIO = SMLSharp_SMLNJ_PosixTextPrimIO
 in
-structure SMLSharpSMLNJ_TextIO : TEXT_IO = 
+structure TextIO = 
 struct
 
     structure PIO = OSPrimIO.PrimIO

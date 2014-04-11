@@ -1,0 +1,18 @@
+_require "./SMLSharp_Runtime.smi"
+_require "./IEEEReal.smi"
+
+structure SMLSharp_RealClass =
+struct
+  type class (= int)
+  val classReal : real -> class
+  val classFloat : SMLSharp_Builtin.Real32.real -> class
+  val class : class -> IEEEReal.float_class
+  val isFinite : class -> bool
+  val isInf : class -> bool
+  val isNan : class -> bool
+  val isNormal : class -> bool
+  val sign : class -> int
+  val signBit : class -> bool
+  val toInt : class -> int
+  val isZero : class -> bool
+end

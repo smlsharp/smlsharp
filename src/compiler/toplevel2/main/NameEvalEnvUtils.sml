@@ -2,67 +2,60 @@
  * utilities for name eval env.
  * @copyright (c) 2012, Tohoku University.
  *)
-
-structure NameEvalEnvUtils : sig
+(*
+sig
 
   val mergeTypeEnv : NameEvalEnv.topEnv * TypeInferenceContext.varEnv
                      -> NameEvalEnv.topEnv
   val resetInternalId : NameEvalEnv.topEnv -> NameEvalEnv.topEnv
   val externOverloadInstances : NameEvalEnv.topEnv -> IDCalc.icdecl list
 
-end =
+end 
+*)
+structure NameEvalEnvUtils =
 struct
 
   structure I = IDCalc
   structure V = NameEvalEnv
-  fun bug s = Control.Bug ("MergeTypeEnv: " ^ s)
+  fun bug s = Bug.Bug ("MergeTypeEnv: " ^ s)
 
   fun setTyIdstatus tyVarE idstatus =
       case idstatus of
-      I.IDVAR varId => raise bug "IDVAR not found"
-    | I.IDVAR_TYPED {id, ty} => raise bug "IDVAR not found"
-    | I.IDEXVAR_TOBETYPED {path, id, loc, version} =>
-      (case VarMap.find(tyVarE, {id=id, path=nil}) of
+      I.IDVAR _ => raise bug "IDVAR not found"
+    | I.IDVAR_TYPED _ => raise bug "IDVAR not found"
+    | I.IDEXVAR_TOBETYPED {longsymbol, id, version} =>
+      (case VarMap.find(tyVarE, {id=id, longsymbol=longsymbol}) of
          NONE => raise bug "varId not found"
        | SOME (TypedCalc.VARID {ty,...})  => 
-         I.IDEXVAR {path=path, 
-                    version=version, 
-                    used = ref false, 
-                    internalId= SOME id,
-                    ty=I.INFERREDTY ty, 
-                    loc=loc}
+         I.IDEXVAR {exInfo={longsymbol=longsymbol,
+                            version=version,
+                            ty=I.INFERREDTY ty},
+                    used = ref false,
+                    internalId= SOME id}
        | SOME (TypedCalc.RECFUNID ({ty,...},_))  => 
-         I.IDEXVAR {path=path, 
-                    version=version, 
+         I.IDEXVAR {exInfo={longsymbol=longsymbol, 
+                            version=version,
+                            ty=I.INFERREDTY ty},
                     used = ref false, 
-                    internalId= SOME id,
-                    ty=I.INFERREDTY ty, 
-                    loc=loc}
+                    internalId= SOME id}
       )
-    | I.IDEXVAR {path, ty, used, loc, version, internalId=SOME id} =>
-      I.IDEXVAR {path=path, 
-                 ty=ty, 
-                 used=used, 
-                 loc=loc, 
-                 version=version, 
-                 internalId=SOME id}
-    | I.IDEXVAR {path, ty, used, loc, version, internalId=NONE} => idstatus
-    | I.IDBUILTINVAR  {primitive, ty} => idstatus
-    | I.IDCON {id, ty} => idstatus
-    | I.IDEXN {id, ty} => idstatus
-    | I.IDEXNREP {id, ty} => idstatus
-    | I.IDEXEXN {path, ty, used, loc, version} => idstatus
-    | I.IDEXEXNREP {path, ty, used, loc, version} => idstatus
+    | I.IDEXVAR _ => idstatus
+    | I.IDBUILTINVAR _ => idstatus
+    | I.IDCON _ => idstatus
+    | I.IDEXN _ => idstatus
+    | I.IDEXNREP _ => idstatus
+    | I.IDEXEXN _ => idstatus
+    | I.IDEXEXNREP _ => idstatus
 (*
     | I.IDOPRIM _ => raise bug "IDOPRIM in setTy"
 *)
     | I.IDOPRIM _ => idstatus  (* FIXME *)
     | I.IDSPECVAR ty => raise bug "IDSPECVAR in setTy"
     | I.IDSPECEXN ty => raise bug "IDSPECEXN in setTy"
-    | I.IDSPECCON => raise bug "IDSPECCON in setTy"
+    | I.IDSPECCON _ => raise bug "IDSPECCON in setTy"
 
   fun setTyVarE tyVarE varE = 
-      SEnv.map (setTyIdstatus tyVarE) varE
+      SymbolEnv.map (setTyIdstatus tyVarE) varE
 
   fun setTyEnv tyVarE (NameEvalEnv.ENV {varE, tyE, strE}) =
       let
@@ -74,34 +67,38 @@ struct
 
   and setTyStrE tyVarE (NameEvalEnv.STR envMap) =
       NameEvalEnv.STR
-        (SEnv.map
-           (fn {env,strKind} => {env= setTyEnv tyVarE env, strKind=strKind})
+        (SymbolEnv.map
+           (fn {env, strKind} => {env= setTyEnv tyVarE env, strKind=strKind})
            envMap)
 
   fun setTyFunE tyVarE funE =
-      SEnv.map
-      (fn {id, version, used, argSig, argStrEntry, argStrName, dummyIdfunArgTy,
-           polyArgTys, typidSet, exnIdSet, bodyEnv, bodyVarExp} =>
+      SymbolEnv.map
+      (fn {id, version, used, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy,
+                      polyArgTys, typidSet, exnIdSet, bodyEnv, bodyVarExp}
+          =>
           let
             val bodyVarExp =
                 case bodyVarExp of
-                  I.ICEXVAR_TOBETYPED ({path, id=id}, loc) =>
+                  I.ICEXVAR_TOBETYPED {longsymbol=internalPath, id,
+                                       exInfo={version, longsymbol}} =>
                   let
                     val ty =
-                        case VarMap.find(tyVarE, {id=id, path=nil}) of
+                        case VarMap.find(tyVarE, {id=id, longsymbol=longsymbol}) of
                           NONE => raise bug "varId not found"
                         | SOME (TypedCalc.VARID {ty,...}) => I.INFERREDTY ty
                         | SOME (TypedCalc.RECFUNID ({ty,...},_)) =>
                           I.INFERREDTY ty
                   in
-                    I.ICEXVAR ({path=path, ty= ty}, loc)
+                    I.ICEXVAR 
+                      {longsymbol=internalPath,
+                       exInfo={longsymbol=longsymbol, version=version, ty= ty}}
                   end
                 | _ => bodyVarExp
           in
             {id=id,
              version = version,
              used = used,
-             argSig = argSig,
+             argSigEnv = argSigEnv,
              argStrEntry = argStrEntry,
              argStrName = argStrName,
              dummyIdfunArgTy = dummyIdfunArgTy,
@@ -131,13 +128,13 @@ struct
 
   fun resetInternalIdIdstatus idstatus =
       case idstatus of
-      I.IDEXVAR {path, ty, used, loc, version, internalId} =>
-      I.IDEXVAR {path=path, ty=ty, used=used, loc=loc, version=version, internalId=NONE}
+      I.IDEXVAR {exInfo, used, internalId} =>
+      I.IDEXVAR {exInfo=exInfo, used=used, internalId=NONE}
     | idstatus => idstatus
 
   fun resetInternalIdEnv (V.ENV{varE, strE, tyE}) =
       let
-        val varE = SEnv.map resetInternalIdIdstatus varE
+        val varE = SymbolEnv.map resetInternalIdIdstatus varE
         val strE = resetInternalIdStrE strE
       in
         V.ENV{varE=varE, strE=strE, tyE=tyE}
@@ -146,7 +143,7 @@ struct
   and resetInternalIdStrE (V.STR strEmap) =
       let
         val strEmap = 
-            SEnv.map 
+            SymbolEnv.map 
             (fn {env, strKind} =>
                 {env=resetInternalIdEnv env, strKind=strKind}
             )
@@ -161,56 +158,5 @@ struct
       in
         {Env=Env, FunE=FunE, SigE=SigE}
       end
-
-  fun scanOverloadInstance inst =
-      case inst of
-        I.INST_OVERLOAD overloadCase => scanOverloadCase overloadCase
-      | I.INST_EXVAR ({path, used, ty}, loc) =>
-        [I.ICEXTERNVAR ({path=path, ty=ty}, loc)]
-      | I.INST_PRIM _ => nil
-
-  and scanOverloadCase ({tvar, expTy, matches, loc}:I.overloadCase) =
-      foldr (fn ({instTy, instance}, z) => scanOverloadInstance instance @ z)
-            nil
-            matches
-
-  fun scanOverloadDef icdecl =
-      case icdecl of
-        I.ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} =>
-        scanOverloadCase overloadCase
-      | _ => raise Control.Bug "scanOverloadDef"
-
-  fun scanIdStatus idstatus =
-      case idstatus of
-        I.IDVAR _ => nil
-      | I.IDVAR_TYPED _ => nil
-      | I.IDEXVAR _ => nil
-      | I.IDEXVAR_TOBETYPED _ => nil
-      | I.IDBUILTINVAR _ => nil
-      | I.IDCON _ => nil
-      | I.IDEXN _ => nil
-      | I.IDEXNREP _ => nil
-      | I.IDEXEXN _ => nil
-      | I.IDEXEXNREP _ => nil
-      | I.IDOPRIM {id, overloadDef, used, loc} => scanOverloadDef overloadDef
-      | I.IDSPECVAR _ => nil
-      | I.IDSPECEXN _ => nil
-      | I.IDSPECCON => nil
-
-  fun scanVarEnv varEnv =
-      SEnv.foldr (fn (idstatus, z) => scanIdStatus idstatus @ z)
-                 nil
-                 varEnv
-
-  fun scanEnv (V.ENV {varE, tyE, strE}) =
-      scanVarEnv varE @ scanStrEnv strE
-
-  and scanStrEnv (V.STR strEnv) =
-      SEnv.foldr (fn ({env, strKind}, z) => scanEnv env @ z)
-                 nil
-                 strEnv
-
-  fun externOverloadInstances ({Env, FunE, SigE}:V.topEnv) =
-      scanEnv Env
 
 end

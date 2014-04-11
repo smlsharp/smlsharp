@@ -2,7 +2,6 @@
  * object.h - SML# heap object format
  * @copyright (c) 2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: value.h,v 1.6 2008/02/05 08:54:35 katsu Exp $
  */
 #ifndef SMLSHARP__OBJECT_H__
 #define SMLSHARP__OBJECT_H__

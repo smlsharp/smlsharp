@@ -5,14 +5,20 @@
 structure GenerateMainError =
 struct
 
-  (*% *)
+  (*%
+   * @formatter(AbsynInterface.source) AbsynInterface.format_source
+   * @formatter(option) SmlppgUtil.formatOptWithDefault
+   *)
   exception
 
   (*%
-   * @format(file1 * file2 * hash)
+   * @format(file1 opt1 * file2 opt2 * hash)
    * "interface" +d "hash" +d "conflict" +d "between" +d
-   * file1 +d "and" +d file2 "." +d "hash" +d "is" +d hash
+   * opt1(file1)("(empty)") +d "and" +d
+   * opt1(file2)("(empty)") "." +d "hash" +d "is" +d hash
    *)
-  HashConflict of string * string * string
+  HashConflict of AbsynInterface.source option
+                  * AbsynInterface.source option
+                  * string
 
 end

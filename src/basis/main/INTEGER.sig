@@ -1,16 +1,11 @@
-include "General.smi"
-include "Int.smi"
-include "IntInf.smi"
-include "StringCvt.smi"
-
 signature INTEGER =
 sig
   eqtype int
   val toLarge : int -> LargeInt.int
   val fromLarge : LargeInt.int -> int
-  val toInt : int -> SMLSharp.Int.int
-  val fromInt : SMLSharp.Int.int -> int
-  val precision : SMLSharp.Int.int option
+  val toInt : int -> Int.int
+  val fromInt : Int.int -> int
+  val precision : Int.int option
   val minInt : int option
   val maxInt : int option
   val + : int * int -> int
@@ -29,7 +24,7 @@ sig
   val abs : int -> int
   val min : int * int -> int
   val max : int * int -> int
-  val sign : int -> SMLSharp.Int.int
+  val sign : int -> Int.int
   val sameSign : int * int -> bool
   val fmt : StringCvt.radix -> int -> string
   val toString : int -> string

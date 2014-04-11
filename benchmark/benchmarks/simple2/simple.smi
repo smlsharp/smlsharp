@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "array2.smi"
+_require "control.smi"
+_require "param.smi"
+structure Simple =
+struct
+  val testit : unit -> unit
+  val doit : unit -> unit
+end

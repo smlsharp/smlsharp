@@ -1,5 +1,5 @@
-_require "../../../basis.smi"
-_require "GenIDFun.smi"
+_require "basis.smi"
+_require "./GenIDFun.smi"
 
 structure FreeTypeVarID = GenIDFun(Empty)
 structure BoundTypeVarID = GenIDFun(Empty)
@@ -12,6 +12,7 @@ structure PrimID = GenIDFun(Empty)
 structure TvarID = GenIDFun(Empty)
 structure TypID = GenIDFun(Empty)
 structure VarID = GenIDFun(Empty)
+structure SlotID = GenIDFun(Empty)
 structure StructureID = GenIDFun(Empty)
 structure FunctorID = GenIDFun(Empty)
 structure FunctionAnnotationID = GenIDFun(Empty)

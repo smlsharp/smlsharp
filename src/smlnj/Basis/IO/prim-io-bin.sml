@@ -1,29 +1,29 @@
-_interface "prim-io-bin.smi"
 (* prim-io-fn.sml
  *
  * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
  *
  *)
-local
-  infix 6 + -
-  val op + = SMLSharp.Int.add
-  val op - = SMLSharp.Int.sub
-  structure Int31Imp = Int
-  structure Vector = Word8Vector
-  structure Array = Word8Array
-  structure VectorSlice = Word8VectorSlice
-  structure ArraySlice = Word8ArraySlice
-  val someElem = (0w0 : Word8.word)
-  type pos = Position.int
-  val compare = Position.compare
-in
-structure BinPrimIO :> PRIM_IO
+
+infix 6 + - ^
+infix 3 := o
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+structure Int31Imp = Int
+structure Vector = Word8Vector
+structure Array = Word8Array
+structure VectorSlice = Word8VectorSlice
+structure ArraySlice = Word8ArraySlice
+val someElem = (0w0 : Word8.word)
+type pos = Position.int
+val compare = Position.compare
+
+structure BinPrimIO (*:> PRIM_IO
         where type elem = Vector.elem
         where type vector = Vector.vector
 	where type vector_slice = VectorSlice.slice
 	where type array = Array.array
 	where type array_slice = ArraySlice.slice
-	where type pos = pos
+	where type pos = pos*)
 = struct
 
     structure A = Array
@@ -322,4 +322,3 @@ structure BinPrimIO :> PRIM_IO
     end
 
   end (* PrimIO *)
-end (* local *)

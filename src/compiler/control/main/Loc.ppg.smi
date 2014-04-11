@@ -1,5 +1,5 @@
-_require "../../../basis/main/List.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 
 _require "LOC.sig"
 

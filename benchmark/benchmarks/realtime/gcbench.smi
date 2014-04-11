@@ -1,0 +1,5 @@
+_require "basis.smi"
+structure GCBench =
+struct
+  val doit : unit -> unit
+end

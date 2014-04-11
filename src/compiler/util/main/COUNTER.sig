@@ -66,6 +66,14 @@ sig
   val bitmapANormalReorderTimeCounter : elapsedTimeCounter
   val typeCheckBitmapANormalTimeCounter : elapsedTimeCounter
   val closureConversionTimeCounter : elapsedTimeCounter
+  val callingConventionCompileTimeCounter : elapsedTimeCounter
+  val anormalizeTimeCounter : elapsedTimeCounter
+  val machineCodeGenTimeCounter : elapsedTimeCounter
+  val insertCheckGCTimeCounter : elapsedTimeCounter
+  val stackAllocationTimeCounter : elapsedTimeCounter
+  val llvmGenTimeCounter : elapsedTimeCounter
+  val llvmEmitTimeCounter : elapsedTimeCounter
+  val llvmOutputTimeCounter : elapsedTimeCounter
   val toYAANormalTimeCounter : elapsedTimeCounter
   val anormalOptimizationTimeCounter : elapsedTimeCounter
   val staticAllocationTimeCounter : elapsedTimeCounter

@@ -1,0 +1,11 @@
+(*
+include "./smlunit/src/main/Assert.smi"
+include "./smlunit/src/main/Test.smi"
+include "./smlunit/src/main/TextUITestRunner.smi"
+include "./smlunit/src/main/ASSERT.sig"
+include "./smlunit/src/main/TEST.sig"
+include "./smlunit/src/main/TESTRUNNER.sig"
+include "./smlunit/src/main/SMLUNIT.sig"
+*)
+include "smlunit/src/main/SMLUnit.smi"
+

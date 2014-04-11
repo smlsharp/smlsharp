@@ -1,9 +1,9 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../control/main/Control.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "RecordCalc.ppg.smi"
+_require "./RecordCalc.ppg.smi"
 
 structure RecordCalcFormatter =
   struct

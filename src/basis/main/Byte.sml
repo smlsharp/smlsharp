@@ -1,37 +1,78 @@
-_interface "Byte.smi"
+(**
+ * Byte
+ * @author UENO Katsuhiro
+ * @author YAMATODANI Kiyoshi
+ * @author Atsushi Ohori
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
+ *)
 
-structure Byte : sig
-  (* same as BYTE *)
-  val byteToChar : SMLSharp.Word8.word -> char
-  val charToByte : char -> SMLSharp.Word8.word
-  val bytesToString : Word8Vector.vector -> string
-  val stringToBytes : string -> Word8Vector.vector
-  val unpackStringVec : Word8VectorSlice.slice -> string
-  val unpackString : Word8ArraySlice.slice -> string
-  val packString : Word8Array.array * int * Substring.substring -> unit
-end =
+infix 7 * / div mod
+infix 6 + -
+infixr 5 ::
+infix 4 = <> > >= < <=
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op > = SMLSharp_Builtin.Int.gt
+val op < = SMLSharp_Builtin.Int.lt
+val op <= = SMLSharp_Builtin.Int.lteq
+val op >= = SMLSharp_Builtin.Int.gteq
+structure Array = SMLSharp_Builtin.Array
+structure Vector = SMLSharp_Builtin.Vector
+structure String = SMLSharp_Builtin.String
+
+structure Byte =
 struct
-local
-  infix 6 + -
-  infix 4 <
-  val op - = SMLSharp.Int.sub
-  val op < = SMLSharp.Int.lt
-in
-  val byteToChar = SMLSharp.Word8.toChar
-  val charToByte = SMLSharp.Word8.fromChar
-  fun bytesToString x = x : string
-  fun stringToBytes x = x : Word8Vector.vector
-  val unpackStringVec = Word8VectorSlice.vector
-  val unpackString = Word8ArraySlice.vector
+
+  val byteToChar = SMLSharp_Builtin.Word8.castToChar
+  val charToByte = SMLSharp_Builtin.Char.castToWord8
+
+  fun bytesToString vec =
+      let
+        val len = Vector.length vec
+        val buf = String.alloc len   (* raise Size if len = 0x0fffffff *)
+      in
+        Array.copy_unsafe (Vector.castToArray vec, 0,
+                           String.castToWord8Array buf, 0, len);
+        buf
+      end
+
+  fun stringToBytes vec =
+      let
+        val len = String.size vec
+        val buf = Array.alloc_unsafe len
+      in
+        Array.copy_unsafe (String.castToWord8Array vec, 0, buf, 0, len);
+        Array.turnIntoVector buf
+      end
+
+  fun unpackStringVec slice =
+      let
+        val (vec, start, length) = Word8VectorSlice.base slice
+        val buf = String.alloc length  (* raise Size if len = 0x0fffffff *)
+      in
+        Array.copy_unsafe (Vector.castToArray vec, start,
+                           String.castToWord8Array buf, 0, length);
+        buf
+      end
+
+  fun unpackString slice =
+      let
+        val (ary, start, length) = Word8ArraySlice.base slice
+        val buf = String.alloc length  (* raise Size if len = 0x0fffffff *)
+      in
+        Array.copy_unsafe (ary, start, String.castToWord8Array buf, 0, length);
+        buf
+      end
+
   fun packString (dst, di, src) =
       let
-        val (srcary, srcstart, srclen) = Substring.base src
-        val dstlen = Word8Array.length dst
+        val (vec, start, length) = Substring.base src
+        val dlen = Array.length dst
       in
-        if di < 0 orelse dstlen < di orelse dstlen - di < srclen
-        then raise Subscript
-        else SMLSharp.PrimString.copy_unsafe
-               (srcary, srcstart, dst, di, srclen)
+        if di >= 0 andalso dlen >= di andalso dlen - di >= length
+        then Array.copy_unsafe (String.castToWord8Array vec, start,
+                                dst, di, length)
+        else raise Subscript
       end
+
 end
-end (* Byte *)

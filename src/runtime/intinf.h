@@ -2,7 +2,6 @@
  * intinf.h
  * @copyright (c) 2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: intinf.h,v 1.2 2008/02/08 05:17:57 katsu Exp $
  */
 #ifndef SMLSHARP__INTINF_H__
 #define SMLSHARP__INTINF_H__
@@ -19,10 +18,12 @@ struct sml_intinf {
 #define sml_intinf_set_str(v,s,b) mpz_set_str((v)->value, (s), (b))
 #define sml_intinf_set_si(v,n)   mpz_set_si((v)->value, (n))
 #define sml_intinf_set_ui(v,n)   mpz_set_ui((v)->value, (n))
+#define sml_intinf_set_d(v,n)    mpz_set_d((v)->value, (n))
 #define sml_intinf_size(v,b)     mpz_sizeinbase((v)->value, (b))
 #define sml_intinf_fmt(v,b)      mpz_get_str(NULL, (b), (v)->value)
 #define sml_intinf_get_si(v)     mpz_get_si((v)->value)
 #define sml_intinf_get_ui(v)     mpz_get_ui((v)->value)
+#define sml_intinf_get_d(v)      mpz_get_d((v)->value)
 #define sml_intinf_abs(z,x)      mpz_abs((z)->value, (x)->value)
 #define sml_intinf_add(z,x,y)    mpz_add((z)->value, (x)->value, (y)->value)
 #define sml_intinf_sub(z,x,y)    mpz_sub((z)->value, (x)->value, (y)->value)

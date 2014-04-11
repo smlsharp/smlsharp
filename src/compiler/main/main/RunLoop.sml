@@ -7,145 +7,136 @@
 structure RunLoop : sig
 
   type options =
-       {asmFlags : string list,
-        systemBaseDir : Filename.filename,
+       {systemBaseDir : Filename.filename,
         stdPath : Filename.filename list,
         loadPath : Filename.filename list,
         LDFLAGS : string list,
         LIBS : string list,
+        llvmOptions : LLVM.compile_options,
         errorOutput : TextIO.outstream}
 
-  datatype result = SUCCESS | FAILED
-
-  val available : unit -> bool
-  val run : options
-            -> Top.toplevelContext
-            -> Parser.input
-            -> result * Top.newContext
   val interactive : options -> Top.toplevelContext -> unit
 end =
 struct
 
   type options =
-       {asmFlags : string list,
-        systemBaseDir : Filename.filename,
+       {systemBaseDir : Filename.filename,
         stdPath : Filename.filename list,
         loadPath : Filename.filename list,
         LDFLAGS : string list,
         LIBS : string list,
+        llvmOptions : LLVM.compile_options,
         errorOutput : TextIO.outstream}
 
-  datatype result = SUCCESS | FAILED
+  fun userErrorToString e =
+      Bug.prettyPrint (UserError.format_errorInfo e)
 
-  fun available () = true
+  val sml_register_stackmap =
+      _import "sml_register_stackmap"
+      : (unit ptr, unit ptr) -> ()
 
-  val dlopen =
-      _import "dlopen"
-      : __attribute__((no_callback)) (string, int) -> unit ptr
-  val dlsym =
-      _import "dlsym"
-      : __attribute__((no_callback)) (unit ptr, string) -> unit ptr
-  val dlerror =
-      _import "dlerror"
-      : __attribute__((no_callback)) () -> char ptr
-  val str_new =
-      _import "sml_str_new"
-      : __attribute__((no_callback,alloc)) char ptr -> string
+  datatype result =
+      SUCCESS of Top.newContext
+    | FAILED
 
   exception UncaughtException of exn
-  exception DlopenFail of string
-
-(*
-  fun checkDLError (result : unit ptr) =
-      if result = _NULL
-      then raise Control.Bug ("dlopen: " ^ str_new (dlerror ()))
-      else ()
-*)
-  fun checkDLError (result : unit ptr) =
-      if result = _NULL
-      then raise DlopenFail (str_new (dlerror ()))
-      else ()
-
-  fun userErrorToString e =
-      Control.prettyPrint (UserError.format_errorInfo e)
+  exception CompileError
+  exception DLError of string
 
   val loadedFiles = ref nil : Filename.filename list ref
 
-  exception CompileError of Top.newContext
-
-  fun incVersionContext ({fixEnv, topEnv, version,builtinDecls}:Top.toplevelContext) =
-      {fixEnv=fixEnv,
-       topEnv=topEnv,
-       version=IDCalc.incVersion version,
-       builtinDecls=builtinDecls
-      }
-  fun run ({asmFlags, stdPath, loadPath, LDFLAGS, LIBS, errorOutput,
-            ...}:options) context input =
+  fun run ({stdPath, loadPath, LDFLAGS, LIBS, errorOutput, llvmOptions,
+            ...}:options)
+          context input =
       let
         fun puts s = TextIO.output (errorOutput, s ^ "\n")
         val options = {stopAt = Top.NoStop,
-                       dstfile = NONE,
-                       baseName = NONE,
+                       baseFilename = NONE,
                        stdPath = stdPath,
-                       loadPath = loadPath,
-                       asmFlags = asmFlags}
-
-
-        val (_, result) =
-            Top.compile options context input
-            handle e =>
-            (
-             case e of
-               UserError.UserErrors errs =>
-               app (fn e => puts (userErrorToString e)) errs
-             | UserError.UserErrorsWithoutLoc errs =>
-               app (fn (k,e) => puts (userErrorToString (Loc.noloc,k,e))) errs
-             | Control.Bug s => puts ("Compiler bug:" ^ s)
-(*
-             | exn => puts "Compilation failed."
-*)
-             | exn => raise exn
-            ;
-            raise CompileError Top.emptyNewContext
+                       loadPath = loadPath}
+        val ({interfaceNameOpt, ...}, result) =
+             Top.compile options context input
+             handle e =>
+             (
+               case e of
+                 UserError.UserErrors errs =>
+                 app (fn e => puts (userErrorToString e)) errs
+               | UserError.UserErrorsWithoutLoc errs =>
+                 app (fn (k,e) => puts (userErrorToString (Loc.noloc,k,e))) errs
+               | Bug.Bug s => puts ("Compiler bug:" ^ s)
+               | exn => raise exn;
+               raise CompileError
             )
-        val (newContext, code) =
+        val (newContext, module) =
             case result of
-              Top.RETURN (newContext, Top.FILE code) => (newContext, code)
-            | Top.STOPPED => raise Control.Bug "run"
+              Top.RETURN (newContext, module) => (newContext, module)
+            | Top.STOPPED => raise Bug.Bug "run"
       in
         let
-          val sofile = TempFile.create "so"
+          val objfile = TempFile.create ("." ^ SMLSharp_Config.OBJEXT ())
+          val asmfile = TempFile.create ("." ^ SMLSharp_Config.ASMEXT ())
+          val _ = #start Counter.llvmOutputTimeCounter()
+          val _ = LLVM.compile llvmOptions (module, LLVM.AssemblyFile,
+                                            Filename.toString asmfile)
+          val _ = LLVM.compile llvmOptions (module, LLVM.ObjectFile,
+                                            Filename.toString objfile)
+          val _ = #stop Counter.llvmOutputTimeCounter()
+          val _ = LLVM.LLVMDisposeModule module
+          val sofile = TempFile.create (SMLSharp_Config.DLLEXT ())
           val ldflags =
-              case !SMLSharp_Version.HostOS of
-                SMLSharp_Version.Unix => nil
-              | SMLSharp_Version.Windows =>
+              case SMLSharp_Config.HOST_OS_TYPE () of
+                SMLSharp_Config.Unix => nil
+              | SMLSharp_Config.Cygwin =>
+                ["-Wl,-out-implib,"
+                 ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
+              | SMLSharp_Config.Mingw =>
                 ["-Wl,--out-implib="
                  ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
           val libfiles =
-              case !SMLSharp_Version.HostOS of
-                SMLSharp_Version.Unix => nil
-              | SMLSharp_Version.Windows =>
+              case SMLSharp_Config.HOST_OS_TYPE () of
+                SMLSharp_Config.Unix => nil
+              | SMLSharp_Config.Cygwin =>
+                map (fn x => Filename.toString (Filename.replaceSuffix "lib" x))
+                    (!loadedFiles)
+              | SMLSharp_Config.Mingw =>
                 map (fn x => Filename.toString (Filename.replaceSuffix "lib" x))
                     (!loadedFiles)
           val _ = BinUtils.link
                     {flags = SMLSharp_Config.RUNLOOP_DLDFLAGS () :: LDFLAGS
                              @ ldflags,
                      libs = libfiles @ LIBS,
-                     objects = [code],
+                     objects = [objfile],
                      dst = sofile,
+                     useCXX = false,
                      quiet = not (!Control.printCommand)}
-                    
-          val RTLD_GLOBAL = SMLSharpRuntime.cconstInt "RTLD_GLOBAL"
-          val RTLD_NOW = SMLSharpRuntime.cconstInt "RTLD_NOW"
-          val lib = dlopen (Filename.toString sofile, RTLD_GLOBAL + RTLD_NOW)
-          val _ = checkDLError lib
-          val ptr = dlsym (lib, "SMLmain")
-          val _ = checkDLError ptr
-          val mainFn = ptr : _import () -> ()
+          val so = DynamicLink.dlopen' (Filename.toString sofile,
+                                        DynamicLink.GLOBAL,
+                                        DynamicLink.NOW)
+                   handle OS.SysErr (msg, _) => raise DLError msg
+          val {mainSymbol, stackMapSymbol, codeBeginSymbol, ...} =
+              GenerateMain.moduleName (interfaceNameOpt, #version context)
+          val smap = DynamicLink.dlsym' (so, stackMapSymbol)
+                     handle OS.SysErr (msg, _) => raise DLError msg
+          val base = DynamicLink.dlsym' (so, codeBeginSymbol)
+                     handle OS.SysErr (msg, _) => raise DLError msg
+          val _ = sml_register_stackmap (smap, base)
+          val ptr = DynamicLink.dlsym (so, mainSymbol)
+                    handle OS.SysErr (msg, _) => raise DLError msg
+          (*
+           * Note that "ptr" points to an ML toplevel code. This toplevel code
+           * should be called by the calling convention for ML toplevels of
+           * ML object files.  __attribute__((fastcc,no_callback)) is an ad
+           * hoc way of yielding this convention code; no_callback avoids
+           * calling sml_control_suspend.  If we change how to compile
+           * attributes in the future, we should revisit here and update the
+           * __attribute__ annotation.
+           *)
+          val mainFn =
+              ptr : _import __attribute__((fastcc,no_callback)) () -> ()
         in
           loadedFiles := sofile :: !loadedFiles;
           mainFn () handle e => raise UncaughtException e;
-          (SUCCESS, newContext)
+          SUCCESS newContext
         end
         handle e =>
           (
@@ -154,48 +145,17 @@ struct
               app (fn e => puts (userErrorToString e)) errs
             | UserError.UserErrorsWithoutLoc errs =>
               app (fn (k,e) => puts (userErrorToString (Loc.noloc,k,e))) errs
-            | DlopenFail s =>
-              puts ("Dlopen fail. Perhaps incorrect name in _import declaration: " ^ s)
+            | DLError s =>
+              puts ("failed dynamic linking. Perhaps incorrect name in _import declaration: " ^ s)
             | UncaughtException exn =>
-              (case exn of 
-                 SMLSharp_SQL_Prim.Type s =>
-                 puts ("SQL typecheck error: " ^ s)
-               | SMLSharp_SQL_Prim.Exec s =>
-                 puts ("SQL execution error: " ^ s)
-               | SMLSharp_SQL_Prim.Connect s =>
-                 puts ("SQL connection error: " ^ s)
-               | SMLSharp_SQL_Prim.Link s =>
-                 puts ("SQL linking error: " ^ s)
-               | SMLSharp_SQL_Prim.Format =>
-                 puts ("Unsupported SQL values.")
-               | SMLSharpRuntime.SysErr (s, syserrorOption) =>
-                 puts ("OS primitive error: " ^ s)
-               | IO.Io{name, function, cause} => 
-                 let
-                   val prefix = "IO primitive failed: " ^ function ^ " on " ^ name ^ "."
-                   val suffix =
-                       (case cause of
-                          IO.BlockingNotSupported => " Blocking not supported."
-                        | IO.NonblockingNotSupported => " Nonblocking not supported."
-                        | IO.RandomAccessNotSupported => " Random access not supported."
-                        | IO.ClosedStream =>" Closed stream."
-                        | _ => ""
-                       )
-                 in
-                   puts (prefix ^ suffix)
-                 end
-               | Fail s =>
-                 puts ("Runtime system error: " ^ s)
-               | e =>
-                 puts ("uncaught exception: " ^ exnMessage e)
-              )
+              puts ("uncaught exception " ^ exnMessage exn)
             | CoreUtils.Failed {command, message} =>
               (puts ("command failed: " ^ command); puts message)
             | _ => raise e;
-            (FAILED, newContext)
+            FAILED
           )
       end
-      handle CompileError context => (FAILED, context)
+      handle CompileError => FAILED
 
   fun initInteractive () =
       let
@@ -225,9 +185,14 @@ struct
       let
         val _ = Control.interactiveMode := true
         val _ =
-            case !SMLSharp_Version.HostOS of
-              SMLSharp_Version.Unix => ()
-            | SMLSharp_Version.Windows =>
+            case SMLSharp_Config.HOST_OS_TYPE () of
+              SMLSharp_Config.Unix => ()
+            | SMLSharp_Config.Cygwin =>
+              loadedFiles
+                := [Filename.concatPath
+                      (#systemBaseDir options,
+                       Filename.fromString "compiler/smlsharp.lib")]
+            | SMLSharp_Config.Mingw =>
               loadedFiles
                 := [Filename.concatPath
                       (#systemBaseDir options,
@@ -237,19 +202,20 @@ struct
             if !(#eof state) then ()
             else
               (Counter.reset();
+               NameEvalEnv.intExnConList();
                case run options context input of
-                 (SUCCESS, newContext) =>
+                 SUCCESS newContext =>
                  let
                    val context = Top.extendContext (context, newContext)
-                   val context = incVersionContext context
-                   val _ = 
-                       if !Control.doProfile
-                       then (print "Time Profile:\n"; print (Counter.dump ())) else ();
+                   val context = Top.incVersion context
                  in
+                   if !Control.doProfile
+                   then (print "Time Profile:\n"; print (Counter.dump ()))
+                   else ();
                    loop context input
                  end
-               | (FAILED, newContext) =>
-                 loop (incVersionContext context) (interactiveInput state)
+               | FAILED =>
+                 loop (Top.incVersion context) (interactiveInput state)
               )
       in
         loop context (interactiveInput state)

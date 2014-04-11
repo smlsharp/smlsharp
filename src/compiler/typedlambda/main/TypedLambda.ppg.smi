@@ -1,14 +1,15 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../name/main/CodeLabel.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
 _require "../../constantterm/main/ConstantTerm.ppg.smi"
 
 structure TypedLambda =
@@ -18,7 +19,7 @@ structure TypedLambda =
     val format_ty
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
           -> ty -> SMLFormat.FormatExpression.expression list
-    type varInfo = Types.varInfo
+    type varInfo = RecordCalc.varInfo
     val format_varInfo
         : {id:VarID.id, path:string list, ty:ty}
           -> SMLFormat.FormatExpression.expression list
@@ -26,7 +27,7 @@ structure TypedLambda =
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
           -> {id:VarID.id, path:string list, ty:ty}
           -> SMLFormat.FormatExpression.expression list
-    type exVarInfo = Types.exVarInfo
+    type exVarInfo = RecordCalc.exVarInfo
     val format_exVarInfo
         : {path:string list, ty:ty}
           -> SMLFormat.FormatExpression.expression list
@@ -34,12 +35,20 @@ structure TypedLambda =
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
           -> {path:string list, ty:ty}
           -> SMLFormat.FormatExpression.expression list
-    type primInfo = Types.primInfo
-    val format_primInfo : {primitive:BuiltinPrimitive.primitive, ty:ty}
+    type primTy =
+         {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}
+    val format_primTy
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> primTy
+          -> SMLFormat.FormatExpression.expression list
+    type primInfo =
+        {primitive : BuiltinPrimitive.primitiveTypedLambda,
+         ty : {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}}
+    val format_primInfo : primInfo
                           -> SMLFormat.FormatExpression.expression list
     val formatWithType_primInfo
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> {primitive:BuiltinPrimitive.primitive, ty:ty}
+          -> primInfo
           -> SMLFormat.FormatExpression.expression list
     type btvEnv = Types.btvEnv
     val format_btvEnv
@@ -51,22 +60,34 @@ structure TypedLambda =
         : constant -> SMLFormat.FormatExpression.expression list
     datatype tlexp
       = TLAPPM of {argExpList:tlexp list, funExp:tlexp, funTy:ty, loc:loc}
-      | TLCAST of {exp:tlexp, loc:loc, targetTy:ty}
-      | TLCONSTANT of {loc:loc, value:constant}
-      | TLEXPORTCALLBACK of {foreignFunTy:Types.foreignFunTy, funExp:tlexp,
-                             loc:loc}
+      | TLCAST of
+        {
+          exp : tlexp,
+          expTy : ty,
+          targetTy : ty,
+          runtimeTyCast : bool,
+          bitCast : bool,
+          loc : loc
+        }
+      | TLCONSTANT of {loc:loc, ty:ty, const:constant}
+      | TLCALLBACKFN of {attributes:FFIAttributes.attributes,
+                         resultTy: ty option,
+                         argVarList:varInfo list, bodyExp:tlexp,
+                         loc:loc}
       | TLEXVAR of {exVarInfo:exVarInfo, loc:loc}
       | TLFNM of {argVarList:varInfo list, bodyExp:tlexp, bodyTy:ty, loc:loc}
       | TLFOREIGNAPPLY of {argExpList:tlexp list,
-                           foreignFunTy:Types.foreignFunTy, funExp:tlexp,
+                           attributes:FFIAttributes.attributes,
+                           funExp:tlexp,
+                           resultTy:ty option,
                            loc:loc}
-      | TLGLOBALSYMBOL of {kind:Absyn.globalSymbolKind, loc:loc, name:string,
-                           ty:ty}
-      | TLHANDLE of {exnVar:varInfo, exp:tlexp, handler:tlexp, loc:loc}
+      | TLFOREIGNSYMBOL of {loc:loc, name:string, ty:ty}
+      | TLHANDLE of {exnVar:varInfo, exp:tlexp, handler:tlexp,
+                     resultTy:ty, loc:loc}
       | TLINDEXOF of {label:string, loc:loc, recordTy:ty}
-      | TLLET of {loc:loc, localDeclList:tldecl list, mainExp:tlexp}
+      | TLLET of {loc:loc, localDecl:tldecl, mainExp:tlexp}
       | TLMODIFY of {indexExp:tlexp, label:string, loc:loc, recordExp:tlexp,
-                     recordTy:ty, valueExp:tlexp}
+                     recordTy:ty, valueExp:tlexp, valueTy:ty}
       | TLPOLY of {btvEnv:btvEnv, exp:tlexp, expTyWithoutTAbs:ty, loc:loc}
       | TLPRIMAPPLY of {argExpList:tlexp list, instTyList:ty list, loc:loc,
                         primInfo:primInfo}
@@ -77,12 +98,29 @@ structure TypedLambda =
                      recordTy:ty, resultTy:ty}
       | TLSIZEOF of {loc:loc, ty:ty}
       | TLSWITCH of {branches:{constant:constant, exp:tlexp} list,
-                     defaultExp:tlexp, expTy:ty, loc:loc, switchExp:tlexp}
+                     defaultExp:tlexp, expTy:ty, loc:loc, switchExp:tlexp,
+                     resultTy:ty}
       | TLTAGOF of {loc:loc, ty:ty}
       | TLTAPP of {exp:tlexp, expTy:ty, instTyList:ty list, loc:loc}
       | TLVAR of {loc:loc, varInfo:varInfo}
+      | TLLOCALCODE of
+        {
+          codeLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          codeBodyExp : tlexp,
+          mainExp : tlexp,
+          resultTy : ty,
+          loc : loc
+        }
+      | TLGOTO of
+        {
+          destinationLabel : FunLocalLabel.id,
+          argExpList : tlexp list,
+          resultTy : ty,
+          loc : loc
+        }
     and tldecl
-      = TLEXPORTVAR of varInfo * loc
+      = TLEXPORTVAR of exVarInfo * tlexp * loc
       | TLEXTERNVAR of exVarInfo * loc
       | TLVAL of {boundExp:tlexp, boundVar:varInfo, loc:loc}
       | TLVALREC of {loc:loc,

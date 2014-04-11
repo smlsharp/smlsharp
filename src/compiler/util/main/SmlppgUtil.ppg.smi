@@ -1,12 +1,13 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/SSet.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
-_require "BigInt_IntInf.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "./BigInt_IntInf.smi"
 
 structure SmlppgUtil =
 struct
@@ -47,12 +48,21 @@ struct
   val formatSmap 
     : ('a -> format) * format * format * format * format
       -> 'a SEnv.map -> format
+  val formatSymbolMap 
+    : ('a -> format) * format * format * format * format
+      -> 'a SymbolEnv.map -> format
   val formatGenericSmap 
     : (format * format -> 'a -> format) * format * format * format
       -> 'a SEnv.map -> format
+  val formatGenericSymbolMap 
+    : (format * format -> 'a -> format) * format * format * format
+      -> 'a SymbolEnv.map -> format
   val formatSmapWithEnclosure 
     : ('a -> format) * format * format * format * format
       -> 'a SEnv.map -> format
+  val formatSymbolMapWithEnclosure 
+    : ('a -> format) * format * format * format * format
+      -> 'a SymbolEnv.map -> format
   val formatImap 
     : ('a -> format) -> 'a IEnv.map -> format
   val formatPrependedOpt 

@@ -1234,7 +1234,11 @@ val skel_mid2 =
 \"
 
 fun lexGen(infile) =
+(* Ueno (2013-05-29): user can specify output file by environment variable
     let val outfile = infile ^ ".sml"
+*)
+    let val outfile = case OS.Process.getEnv "SMLLEX_OUTPUT" of
+                        NONE => infile ^ ".sml" | SOME x => x
       fun PrintLexer (ends) =
     let val sayln = fn x => (say x; say "\n")
      in case !ArgCode 

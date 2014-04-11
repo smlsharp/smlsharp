@@ -1,14 +1,14 @@
-_require "../../../basis.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../reifiedterm/main/ReifiedTerm.ppg.smi"
-_require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/EvalIty.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
@@ -27,6 +27,8 @@ struct
   val sigE : Types.ty option ref
   val topEnv : Types.ty option ref
   val makeArrayTerm : (TypedCalc.tpexp * Types.ty) option ref
+  val makeDATATYPEtyRepNOARG : (TypedCalc.tpexp * Types.ty) option ref
+  val makeDATATYPEtyRepWITHARG : (TypedCalc.tpexp * Types.ty) option ref
   val makeListTerm : (TypedCalc.tpexp * Types.ty) option ref
   val makeConsTerm : (TypedCalc.tpexp * Types.ty) option ref
   val makeFieldTerm : (TypedCalc.tpexp * Types.ty) option ref
@@ -53,6 +55,9 @@ struct
   val makeReifiedTopenv : (TypedCalc.tpexp * Types.ty) option ref
   val format_topEnv : (TypedCalc.tpexp * Types.ty) option ref
   val printTopEnv : (TypedCalc.tpexp * Types.ty) option ref
+  val termToString : (TypedCalc.tpexp * Types.ty) option ref
+  val exnToStringFunRef : (TypedCalc.tpexp * Types.ty) option ref
+  val updateExnToString : (TypedCalc.tpexp * Types.ty) option ref
   val INTtyRep : Types.conInfo option ref
   val INTINFtyRep : Types.conInfo option ref
   val WORDtyRep : Types.conInfo option ref
@@ -67,7 +72,6 @@ struct
   val TUPLEtyRep : Types.conInfo option ref
   val LISTtyRep : Types.conInfo option ref
   val ARRAYtyRep : Types.conInfo option ref
-  val CONSTRUCTtyRep : Types.conInfo option ref
   val EXNtyRep : Types.conInfo option ref
   val PTRtyRep : Types.conInfo option ref
   val UNPRINTABLERep : Types.conInfo option ref
@@ -79,7 +83,11 @@ struct
   val init : NameEvalEnv.topEnv -> unit
   val mkConTerm : Types.conInfo * TypedCalc.tpexp option -> TypedCalc.tpexp
   val unprintable : unit -> TypedCalc.tpexp
+  val elipsis : unit -> TypedCalc.tpexp
   val builtin : unit -> TypedCalc.tpexp
+(*
+  val mkOPTIONtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
+*)
   val mkINTtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
   val mkBOOLtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
   val mkINTINFtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
@@ -95,7 +103,9 @@ struct
   val mkTUPLEtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
   val mkLISTtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
   val mkARRAYtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
+(*
   val mkCONSTRUCTtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
+*)
   val mkEXNtyRepTerm : unit -> TypedCalc.tpexp
   val mkPTRtyRepTerm : unit -> TypedCalc.tpexp
 end

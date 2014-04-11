@@ -1,8 +1,8 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/SSet.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/Fixity.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
@@ -11,30 +11,30 @@ _require "../../name/main/LocalID.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
-_require "../../elaborate/main/Elaborator.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
-_require "NameEvalEnv.ppg.smi"
-_require "TfunVars.smi"
+_require "./NameEvalEnv.ppg.smi"
+_require "./TfunVars.smi"
 
 structure NameEvalUtils =
   struct
     val print : string -> unit
-    val printFixEnv : Elaborator.fixEnv -> unit
+    val printSymbol : Symbol.symbol -> unit
+    val printLongsymbol : Symbol.longsymbol -> unit
     val printPath : string list -> unit
     val printTvar
-        : {eq:Absyn.eq, id:TvarID.id, lifted:bool, name:string}
+        : {eq:Absyn.eq, id:TvarID.id, lifted:bool, symbol:Symbol.symbol}
           -> unit
     val printTvarId : TvarID.id -> unit
     val printVarId : VarID.id -> unit
-    val printVarInfo : {id:VarID.id, path:string list} -> unit
+    val printVarInfo : IDCalc.varInfo -> unit
     val printInterfaceId : InterfaceID.id -> unit
     val printBuiltinTy : BuiltinTypeNames.bty -> unit
     val printTy : IDCalc.ty -> unit
     val printPITy : Absyn.ty -> unit
     val printTstr : NameEvalEnv.tstr -> unit
-    val printTyE : NameEvalEnv.tstr SEnv.map -> unit
-    val printConSpec : IDCalc.ty option SEnv.map -> unit
+    val printTyE : NameEvalEnv.tstr SymbolEnv.map -> unit
+    val printConSpec : IDCalc.ty option SymbolEnv.map -> unit
     val printTfun : IDCalc.tfun -> unit
     val printTfunkind : IDCalc.tfunkind -> unit
     val printIdstatus : IDCalc.idstatus -> unit
@@ -58,7 +58,7 @@ structure NameEvalUtils =
     val printTopEnv : NameEvalEnv.topEnv -> unit
     val printFunE : NameEvalEnv.funE -> unit
     val printFunEEntry : NameEvalEnv.funEEntry -> unit
-    val printVar : {id:VarID.id, path:string list} -> unit
+    val printVar : IDCalc.varInfo -> unit
     val printExp : IDCalc.icexp -> unit
     val printPat : IDCalc.icpat -> unit
     val printDecl : IDCalc.icdecl -> unit
@@ -91,6 +91,5 @@ structure NameEvalUtils =
                    -> 'b list -> 'a * 'c list
     val evalTailList : {env:'a, eval:'a -> 'b -> 'a * 'c}
                        -> 'b list -> 'a * 'c list
-    val SEnvToSSet : 'a SEnv.map -> SSet.set
-    val runtimeTyOfConspec : 'a option SEnv.map -> BuiltinTypeNames.bty
+    val SymbolEnvToSymbolSet : 'a SymbolEnv.map -> SymbolSet.set
   end

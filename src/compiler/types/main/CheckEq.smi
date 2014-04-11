@@ -1,12 +1,11 @@
-_require "../../../basis.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
-_require "Types.ppg.smi"
-_require "TypesUtils.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
+_require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../name/main/LocalID.smi"
+_require "./Types.ppg.smi"
+_require "./TypesUtils.smi"
 
 structure CheckEq =
   struct

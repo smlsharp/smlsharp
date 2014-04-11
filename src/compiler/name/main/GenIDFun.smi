@@ -1,15 +1,11 @@
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/binary-op.smi"
-_require "../../../smlformat-lib.smi"
-_require "../../../smlnj-lib/Util/ord-key-sig.sml"
-_require "../../../smlnj-lib/Util/ord-set-sig.sml"
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "smlnj-lib/Util/ord-key-sig.sml"
+_require "smlnj-lib/Util/ord-set-sig.sml"
+_require "smlnj-lib/Util/ord-map-sig.sml"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../../compiler-utils/env/main/ISet.smi"
-_require "../../../compiler-utils/env/main/ENV.sig"
-
-_require "LOCAL_ID.sig"
+_require "./LOCAL_ID.sig"
 
 structure Empty = struct end
 functor GenIDFun (A:sig end) = 
@@ -17,45 +13,47 @@ struct
   eqtype id (= int)
   structure Map = 
   struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
     type 'a map (= boxed)
-    type key = id
-    val compare : key * key -> order
     val empty : 'a map
     val isEmpty : 'a map -> bool
-    val singleton : key * 'a -> 'a map
-    val insert : 'a map * key * 'a -> 'a map
-    val insert' : (key * 'a) * 'a map -> 'a map
-    val find : 'a map * key -> 'a option
-    val lookup : 'a map * key -> 'a
-    val inDomain : 'a map * key -> bool
-    val remove : 'a map * key -> 'a map * 'a
+    val singleton : Key.ord_key * 'a -> 'a map
+    val insert : 'a map * Key.ord_key * 'a -> 'a map
+    val insert' : (Key.ord_key * 'a) * 'a map -> 'a map
+    val find : 'a map * Key.ord_key -> 'a option
+    val lookup : 'a map * Key.ord_key -> 'a
+    val inDomain : 'a map * Key.ord_key -> bool
+    val remove : 'a map * Key.ord_key -> 'a map * 'a
     val first : 'a map -> 'a option
-    val firsti : 'a map -> (key * 'a) option
+    val firsti : 'a map -> (Key.ord_key * 'a) option
     val numItems : 'a map -> int
     val listItems : 'a map -> 'a list
-    val listItemsi : 'a map -> (key * 'a) list
-    val listKeys : 'a map -> key list
+    val listItemsi : 'a map -> (Key.ord_key * 'a) list
+    val listKeys : 'a map -> Key.ord_key list
     val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
     val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
-    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (Key.ord_key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
     val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
-    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (Key.ord_key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
     val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
-    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (Key.ord_key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
     val app : ('a -> unit) -> 'a map -> unit
-    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val appi : (Key.ord_key * 'a -> unit) -> 'a map -> unit
     val map : ('a -> 'b) -> 'a map -> 'b map
-    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val mapi : (Key.ord_key * 'a -> 'b) -> 'a map -> 'b map
     val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
-    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (Key.ord_key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
     val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
-    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (Key.ord_key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
     val filter : ('a -> bool) -> 'a map -> 'a map
-    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
-    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
-    val fromList : (key * 'a) list -> 'a map
-    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+    val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
   end
 
   structure Set =

@@ -1,53 +1,32 @@
-_require "General.smi"
-_require "Char.smi"
-_require "List.smi"
-_require "SMLSharpScanChar.smi"
-_require "MONO_ARRAY.sig"
-_require "MONO_VECTOR.sig"
-_require "MONO_ARRAY_SLICE.sig"
-_require "MONO_VECTOR_SLICE.sig"
-_require "STRING.sig"
-_require "SUBSTRING.sig"
-_require "StringBase.smi"
-_require "String.smi"
+_require "./General.smi"
 
 structure Substring =
 struct
   type char = char
   type string = string
   type substring (= boxed)
-  val concatWith : string -> substring list -> string
-  val explode : substring -> char list
-  val isPrefix : string -> substring -> bool
-  val isSubstring : string -> substring -> bool
-  val isSuffix : string -> substring -> bool
-  val translate : (char -> string) -> substring -> string
-
-(* 
-  Since these are opaque, we cannot bind these in this interface.
-  val concatWith = StringBase.concatWith
-  val explode = StringBase.explode
-  val isPrefix = StringBase.isPrefix
-  val isSubstring = StringBase.isSubstring
-  val isSuffix = StringBase.isSuffix
-  val translate = StringBase.translate
-*)
   val sub : substring * int -> char
-  val base : substring -> string * int * int
-  val full : string -> substring
   val size : substring -> int
-  val isEmpty : substring -> bool
-  val concat : substring list -> string
+  val base : substring -> string * int * int
   val extract : string * int * int option -> substring
   val substring : string * int * int -> substring
+  val full : string -> substring
   val string : substring -> string
+  val isEmpty : substring -> bool
   val getc : substring -> (char * substring) option
   val first : substring -> char option
   val triml : int -> substring -> substring
   val trimr : int -> substring -> substring
   val slice : substring * int * int option -> substring
-  val collate : (char * char -> order) -> substring * substring -> order
-  val compare : substring * substring -> order
+  val concat : substring list -> string
+  val concatWith : string -> substring list -> string
+  val explode : substring -> char list
+  val isPrefix : string -> substring -> bool
+  val isSubstring : string -> substring -> bool
+  val isSuffix : string -> substring -> bool
+  val compare : substring * substring -> General.order
+  val collate : (char * char -> General.order) -> substring * substring
+                -> General.order
   val splitl : (char -> bool) -> substring -> substring * substring
   val splitr : (char -> bool) -> substring -> substring * substring
   val splitAt : substring * int -> substring * substring
@@ -57,11 +36,10 @@ struct
   val taker : (char -> bool) -> substring -> substring
   val position : string -> substring -> substring * substring
   val span : substring * substring -> substring
+  val translate : (char -> string) -> substring -> string
   val tokens : (char -> bool) -> substring -> substring list
   val fields : (char -> bool) -> substring -> substring list
   val app : (char -> unit) -> substring -> unit
   val foldl : (char * 'a -> 'a) -> 'a -> substring -> 'a
   val foldr : (char * 'a -> 'a) -> 'a -> substring -> 'a
 end
-
-type substring = Substring.substring

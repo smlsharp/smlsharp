@@ -11,15 +11,13 @@ struct
   structure PGSQL = SMLSharp_SQL_PGSQL
 
   type conn = PGSQL.conn
-  type res = PGSQL.result
+  type res = {result: PGSQL.result, rowIndex: int, numRows: int}
   type sqltype = string
+  type value = string
 
-  exception Exec of string
-  exception Connect of string
-  exception Format
-
-  fun eof (result,rowIndex) =
-      rowIndex >= PGSQL.PQntuples () result
+  exception Exec = SMLSharp_SQL_Errors.Exec
+  exception Connect = SMLSharp_SQL_Errors.Connect
+  exception Format = SMLSharp_SQL_Errors.Format
 
   fun execQuery (conn, queryString) =
       let
@@ -29,17 +27,21 @@ struct
                 else PGSQL.PQresultStatus () r
       in
         if s = PGSQL.PGRES_COMMAND_OK orelse s = PGSQL.PGRES_TUPLES_OK
-        then r
+        then ()
         else raise Exec (if r = _NULL then "NULL"
                          else (PGSQL.PQclear () r;
-                               PGSQL.getErrorMessage conn))
+                               PGSQL.getErrorMessage conn));
+        {result = r, rowIndex = ~1, numRows = PGSQL.PQntuples () r}
       end
+
+  fun fetch (r as {result, rowIndex, numRows}:res) =
+      if rowIndex + 1 < numRows
+      then SOME (r # {rowIndex = rowIndex + 1})
+      else NONE
 
   fun closeConn conn = (PGSQL.PQfinish () conn; ())
 
-  fun closeRel r = (PGSQL.PQclear () r; ())
-
-  fun numOfRows r = PGSQL.PQntuples () r
+  fun closeRel ({result,...}:res) = (PGSQL.PQclear () result; ())
 
   fun connect connInfo =
       let
@@ -51,25 +53,26 @@ struct
         else conn
       end
 
-  fun getValue convFn (result:unit ptr, rowIndex:int, colIndex:int) =
+  fun getValue ({result, rowIndex, ...}:res, colIndex:int) =
       if PGSQL.PQgetisnull () (result, rowIndex, colIndex)
       then NONE
       else
         let
           val p = PGSQL.PQgetvalue () (result, rowIndex, colIndex)
           val len = PGSQL.PQgetlength () (result, rowIndex, colIndex)
-          val s = Byte.bytesToString (Pointer.importBytes (p, len))
         in
-          case convFn s of
-            SOME x => SOME x
-          | NONE => raise Format
+          SOME (Byte.bytesToString (Pointer.importBytes (p, len)))
         end
 
-  fun readInt x = Int.fromString x
-  fun readWord x = StringCvt.scanString (Word.scan StringCvt.DEC) x
-  fun readReal x = Real.fromString x
-  fun readString (x:string) = SOME x
-  fun readChar x = SOME (String.sub (x, 0)) handle Subscript => NONE
+  fun intValue x = Int.fromString x
+  fun intInfValue x = IntInf.fromString x
+  fun wordValue x = StringCvt.scanString (Word.scan StringCvt.DEC) x
+  fun realValue x = Real.fromString x
+  fun stringValue (x:string) = SOME x
+  fun charValue x = SOME (String.sub (x, 0)) handle Subscript => NONE
+  fun timestampValue x = SOME (SMLSharp_SQL_TimeStamp.fromString x)
+  fun decimalValue x = SOME (SMLSharp_SQL_Decimal.fromString x)
+  fun floatValue x = SOME (SMLSharp_SQL_Float.fromString x)
 
   (* The boolean output conversion function of PostgreSQL-9.0.3, boolout,
    * returns "t" or "f".
@@ -80,31 +83,37 @@ struct
    * See postgresql-version/src/backend/utils/adt/bool.c.
    *)
 
-  fun readBool x = case x of "t" => SOME true | "f" => SOME false
-                           | _ => raise Format
-
-  fun getInt x = getValue readInt x
-  fun getWord x = getValue readWord x
-  fun getReal x = getValue readReal x
-  fun getString x = getValue readString x
-  fun getChar x = getValue readChar x
-  fun getBool x = getValue readBool x
+  fun boolValue x = case x of "t" => SOME true | "f" => SOME false | _ => NONE
 
   local
+
+    fun valof (SOME x) = x
+      | valof NONE = raise Format
+
+    fun getString x = valof (stringValue (valof (getValue x)))
+    fun getBool x = valof (boolValue (valof (getValue x)))
+
+    fun translateType dbTypeName =
+        case dbTypeName of
+          "int4" => SMLSharp_SQL_BackendTy.INT
+        | "float4" => SMLSharp_SQL_BackendTy.REAL32
+        | "float8" => SMLSharp_SQL_BackendTy.REAL
+        | "text" => SMLSharp_SQL_BackendTy.STRING
+        | "varchar" => SMLSharp_SQL_BackendTy.STRING
+        | "bool" => SMLSharp_SQL_BackendTy.BOOL
+        | "timestamp" => SMLSharp_SQL_BackendTy.TIMESTAMP
+        | _ => SMLSharp_SQL_BackendTy.UNSUPPORTED dbTypeName
 
     fun evalQuery (query, fetchFn, conn) =
         let
           val r = execQuery (conn, query)
           val tuples =
-              List.tabulate (numOfRows r,
-                          fn i => fetchFn i r)
+              List.tabulate (#numRows r, fn i => fetchFn (r # {rowIndex=i}))
               handle e => (closeRel r; raise e)
         in
-            closeRel r; tuples
+            closeRel r;
+            tuples
         end
-
-    fun nonnull (SOME x) = x
-      | nonnull NONE = raise Format
 
     fun getTableSchema conn {relname, oid} =
         let
@@ -116,11 +125,10 @@ struct
                       \AND pg_attribute.attnum > 0 \
                       \AND pg_attribute.atttypid = pg_type.oid \
                       \ORDER BY pg_attribute.attname"
-          fun fetchFn r conn =
-              {colname = nonnull (getString (conn, r, 0)),
-               isnull = not (nonnull (getBool (conn, r, 1)))
-               handle Option => raise Format,
-               typename = nonnull (getString (conn, r, 2))}
+          fun fetchFn res =
+              {colname = getString (res, 0),
+               nullable = not (getBool (res, 1)),
+               ty = translateType (getString (res, 2))}
         in
           (relname, evalQuery (query, fetchFn, conn))
         end
@@ -132,26 +140,16 @@ struct
                     \FROM pg_namespace, pg_class \
                     \WHERE pg_namespace.oid = pg_class.relnamespace \
                     \AND pg_namespace.nspname = 'public' \
-                    \AND pg_class.relkind = 'r' \
-                    \ORDER BY pg_class.relname"
-        fun fetchFn r conn =
-            {relname = nonnull (getString (conn, r, 0)),
-             oid = nonnull (getString (conn, r, 1))}
+                    \AND pg_class.relkind = 'r' or pg_class.relkind = 'v'\
+                    \ORDER BY pg_class.relname, pg_class.relkind"
+        fun fetchFn res =
+            {relname = getString (res, 0),
+             oid = getString (res, 1)}
         val relOIDList = evalQuery (query, fetchFn, conn)
       in
         map (getTableSchema conn) relOIDList
       end
 
   end (* local *)
-
-  fun translateType dbTypeName =
-      case dbTypeName of
-        "int4" => SOME "int"
-      | "float4" => SOME "float"
-      | "float8" => SOME "real"
-      | "text" => SOME "string"
-      | "varchar" => SOME "string"
-      | "bool" => SOME "bool"
-      | _ => NONE
 
 end

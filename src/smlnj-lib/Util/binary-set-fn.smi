@@ -1,6 +1,4 @@
-_require "../../basis/main/List.smi"
-_require "../../basis/main/binary-op.smi"
-
+_require "../../basis.smi"
 _require "lib-base.smi"
 _require "ord-key-sig.sml"
 _require "ord-set-sig.sml"

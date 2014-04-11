@@ -1,0 +1,2 @@
+_require "basis.smi"
+val x : unit

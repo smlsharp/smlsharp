@@ -2,23 +2,9 @@
  * objspace.h
  * @copyright (c) 2010, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: value.c,v 1.5 2008/02/05 08:54:35 katsu Exp $
  */
 #ifndef SMLSHARP__OBJSPACE_H__
 #define SMLSHARP__OBJSPACE_H__
-
-/*
- * rootset enumeration mode.
- * - MAJOR means enumerating all.
- * - MINOR means enumerating only new ones.
- */
-enum sml_gc_mode {
-	MINOR,
-	MAJOR
-#ifdef DEBUG
-	,TRY_MAJOR  /* same as MAJOR but dry run */
-#endif /* DEBUG */
-};
 
 /*
  * initialize object space management.
@@ -31,9 +17,10 @@ void sml_objspace_init(void);
 void sml_objspace_free(void);
 
 /*
- * enumerate pointer slots in root set.
+ * enumerate pointer slots in objspace.
  */
-void sml_rootset_enum_ptr(void (*callback)(void **), enum sml_gc_mode);
+void sml_objspace_gc_initiate(void (*callback)(void **), enum sml_gc_mode);
+void sml_objspace_gc_done(void);
 
 /*
  * allocate an ML object by malloc.
@@ -81,8 +68,8 @@ void sml_malloc_sweep(enum sml_gc_mode);
 
 /*
  * enumerate pointers in all malloc'ed objects.
- */
 void sml_malloc_enum_ptr(void (*trace)(void **));
+ */
 
 /*
  * register a finalizer function for an malloc'ed object.

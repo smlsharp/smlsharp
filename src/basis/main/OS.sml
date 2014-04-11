@@ -1,22 +1,15 @@
 (**
- * OS structure.
- * @author YAMATODANI Kiyoshi
+ * OS
  * @author UENO Katsuhiro
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "OS.smi"
 
-structure OS :> OS
-  where type syserror = SMLSharpRuntime.syserror
-  where type IO.iodesc = SMLSharpSMLNJ_OS_IO.iodesc
-=
+structure OS =
 struct
-
-  structure FileSys = SMLSharpSMLNJ_OS_FileSys
-  structure IO = SMLSharpSMLNJ_OS_IO
-  structure Path = SMLSharpSMLNJ_OS_Path
-  structure Process = SMLSharpOSProcess
-
-  open SMLSharpRuntime
-
+  structure FileSys = SMLSharp_OSFileSys
+  structure IO = SMLSharp_OSIO
+  structure Path = SMLSharp_SMLNJ_OS_Path
+  structure Process = SMLSharp_OSProcess
+  open SMLSharp_Runtime
 end

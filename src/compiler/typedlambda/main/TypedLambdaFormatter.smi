@@ -1,6 +1,6 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../control/main/Control.ppg.smi"
-_require "TypedLambda.ppg.smi"
+_require "./TypedLambda.ppg.smi"
 
 structure TypedLambdaFormatter =
   struct

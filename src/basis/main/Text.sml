@@ -1,22 +1,11 @@
 (**
- * Text structure.
- * @author YAMATODANI Kiyoshi
+ * Text
  * @author UENO Katsuhiro
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "Text.smi"
 
-structure Text :> TEXT
-  where type Char.char = Char.char
-  where type String.string = String.string
-  where type Substring.substring = Substring.substring
-(*
-  where type CharVector.vector = CharVector.vector
-*)
-  where type CharArray.array = CharArray.array
-  where type CharVectorSlice.slice = CharVectorSlice.slice
-  where type CharArraySlice.slice = CharArraySlice.slice
-=
+structure Text =
 struct
   structure Char = Char
   structure String = String

@@ -1,8 +1,8 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-
 _require "../../control/main/Loc.ppg.smi"
-_require "UserError.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "./UserError.ppg.smi"
 
 structure UserErrorUtils =
 struct
@@ -17,4 +17,8 @@ struct
                              -> 'a list -> Loc.loc -> (string -> exn) -> unit
   val checkNameDuplication : ('a -> string)
                              -> 'a list -> Loc.loc -> (string -> exn) -> unit
+  val checkSymbolDuplication' : ('a -> Symbol.symbol option)
+                             -> 'a list -> (Symbol.symbol -> exn) -> unit
+  val checkSymbolDuplication : ('a -> Symbol.symbol)
+                             -> 'a list -> (Symbol.symbol -> exn) -> unit
 end

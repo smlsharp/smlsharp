@@ -1,8 +1,9 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/PathEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
@@ -16,17 +17,17 @@ _require "../../usererror/main/UserErrorUtils.smi"
 _require "../../util/main/utils.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
-_require "EvalSig.smi"
-_require "EvalTy.smi"
-_require "FunctorUtils.smi"
-_require "NameEvalEnv.ppg.smi"
-_require "NameEvalError.ppg.smi"
-_require "NameEvalUtils.smi"
-_require "NormalizeTy.smi"
-_require "SigCheck.smi"
-_require "SetLiftedTys.smi"
-_require "Subst.smi"
-_require "TfunVars.smi"
+_require "./EvalSig.smi"
+_require "./EvalTy.smi"
+_require "./FunctorUtils.smi"
+_require "./NameEvalEnv.ppg.smi"
+_require "./NameEvalError.ppg.smi"
+_require "./NameEvalUtils.smi"
+_require "./NormalizeTy.smi"
+_require "./SigCheck.smi"
+_require "./SetLiftedTys.smi"
+_require "./Subst.smi"
+_require "./TfunVars.smi"
 
 structure NameEvalInterface =
 struct
@@ -34,12 +35,12 @@ struct
                        source: PatternCalcInterface.pitopdec list,
                        topEnv: NameEvalEnv.topEnv} InterfaceID.Map.map
   val evalPitopdecList : NameEvalEnv.topEnv
-                         -> PathSet.set * PatternCalcInterface.pitopdec list
-                         -> PathSet.set * NameEvalEnv.topEnv * IDCalc.icdecl list
-  val evalPistr : string list
+                         -> LongsymbolSet.set * PatternCalcInterface.pitopdec list
+                         -> LongsymbolSet.set * NameEvalEnv.topEnv * IDCalc.icdecl list
+  val evalPistr : Symbol.longsymbol
                   -> NameEvalEnv.topEnv
-                     -> PathSet.set * PatternCalcInterface.pistrexp
-                        -> PathSet.set * NameEvalEnv.strEntry * IDCalc.icdecl list
+                     -> LongsymbolSet.set * PatternCalcInterface.pistrexp
+                        -> LongsymbolSet.set * NameEvalEnv.strEntry * IDCalc.icdecl list
   val internalizeEnv : NameEvalEnv.env -> NameEvalEnv.env
   val evalInterfaces : NameEvalEnv.topEnv
                        -> PatternCalcInterface.interfaceDec list

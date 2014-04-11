@@ -2,13 +2,13 @@ structure TyReduce =
 struct
 local
   structure T = Types
-  structure TU = TypesUtils
+  structure TU = TypesBasics
   structure P = TyPrinters
   type ty = T.ty
   type varInfo = T.varInfo
-  type path = T.path
+  type longsymbol = Symbol.longsymbol
   type btv = BoundTypeVarID.id
-  fun bug s = Control.Bug ("TyReduce: " ^ s)
+  fun bug s = Bug.Bug ("TyReduce: " ^ s)
 in
   type btvMap = ty BoundTypeVarID.Map.map
   val emptyBtvMap = BoundTypeVarID.Map.empty : btvMap
@@ -24,7 +24,7 @@ in
         T.INSTCODEty
           {
            oprimId,
-           path,
+           longsymbol,
            keyTyList : ty list,
            match : T.overloadMatch,
            instMap : T.overloadMatch OPrimInstMap.map
@@ -32,7 +32,7 @@ in
         T.INSTCODEty
           {
            oprimId=oprimId,
-           path=path,
+           longsymbol=longsymbol,
            keyTyList = map (evalTy btvMap) keyTyList,
            match = evalOverloadMatch btvMap match,
            instMap = OPrimInstMap.map (evalOverloadMatch btvMap) instMap
@@ -59,22 +59,24 @@ in
            (evalTy btvMap ty,
             TypID.Map.map (evalOverloadMatch btvMap) map
            )
-  and evalExVarInfo (btvMap:btvMap) {path:path,ty:ty} : T.exVarInfo =
-      {path=path, ty=evalTy btvMap ty}
+  and evalExVarInfo (btvMap:btvMap) {longsymbol:longsymbol,ty:ty} : T.exVarInfo =
+      {longsymbol=longsymbol, ty=evalTy btvMap ty}
   and evalPrimInfo (btvMap:btvMap) ({primitive, ty}:T.primInfo) : T.primInfo =
       {primitive=primitive, ty=evalTy btvMap ty}
-  and evalOprimInfo (btvMap:btvMap) ({ty, path, id}:T.oprimInfo) : T.oprimInfo =
-      {ty=evalTy btvMap ty, path=path,id=id}
-  and evalConInfo (btvMap:btvMap) ({path, ty, id}:T.conInfo) : T.conInfo =
-      {path=path, ty=evalTy btvMap ty, id=id}
-  and evalExnInfo (btvMap:btvMap) ({path, ty, id}:T.exnInfo) : T.exnInfo =
-      {path=path, ty=evalTy btvMap ty, id=id}
-  and evalExExnInfo (btvMap:btvMap) ({path, ty}:T.exExnInfo) : T.exExnInfo =
-      {path=path, ty=evalTy btvMap ty}
+  and evalOprimInfo (btvMap:btvMap) ({ty, longsymbol, id}:T.oprimInfo) : T.oprimInfo =
+      {ty=evalTy btvMap ty, longsymbol=longsymbol,id=id}
+  and evalConInfo (btvMap:btvMap) ({longsymbol, ty, id}:T.conInfo) : T.conInfo =
+      {longsymbol=longsymbol, ty=evalTy btvMap ty, id=id}
+  and evalExnInfo (btvMap:btvMap) ({longsymbol, ty, id}:T.exnInfo) : T.exnInfo =
+      {longsymbol=longsymbol, ty=evalTy btvMap ty, id=id}
+  and evalExExnInfo (btvMap:btvMap) ({longsymbol, ty}:T.exExnInfo) : T.exExnInfo =
+      {longsymbol=longsymbol, ty=evalTy btvMap ty}
   and evalTy (btvMap:btvMap) (ty:ty) : ty =
       case TU.derefTy ty of
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (evalSingletonTy btvMap singletonTy)
+      | T.BACKENDty backendTy =>
+        raise Bug.Bug "evalTy: BACKENDty"
       | T.ERRORty => 
         ty
       | T.DUMMYty dummyTyID => 
@@ -90,11 +92,12 @@ in
           {
            tyCon =
            {id : T.typId,
-            path : path,
+            longsymbol : longsymbol,
             iseq : bool,
             arity : int,
             runtimeTy : BuiltinTypeNames.bty,
             conSet : {hasArg:bool} SEnv.map,
+            conIDSet,
             extraArgs : ty list,
             dtyKind : T.dtyKind
            },
@@ -104,11 +107,12 @@ in
           {
            tyCon =
            {id = id,
-            path = path,
+            longsymbol = longsymbol,
             iseq = iseq,
             arity = arity,
             runtimeTy = runtimeTy,
             conSet = conSet,
+            conIDSet = conIDSet,
             extraArgs = map (evalTy btvMap) extraArgs,
             dtyKind = evalDtyKind btvMap dtyKind
            },
@@ -142,7 +146,7 @@ in
            operators:
            {
             oprimId : OPrimID.id,
-            path : path,
+            longsymbol : longsymbol,
             keyTyList : ty list,
             match : T.overloadMatch,
             instMap : T.overloadMatch OPrimInstMap.map
@@ -152,9 +156,9 @@ in
           {instances = map (evalTy btvMap) instances,
            operators =
            map
-             (fn {oprimId, path, keyTyList, match, instMap} =>
+             (fn {oprimId, longsymbol, keyTyList, match, instMap} =>
                  {oprimId=oprimId,
-                  path=path,
+                  longsymbol=longsymbol,
                   keyTyList = map (evalTy btvMap) keyTyList,
                   match = evalOverloadMatch btvMap match,
                   instMap = OPrimInstMap.map (evalOverloadMatch btvMap) instMap}
@@ -164,6 +168,8 @@ in
       | T.UNIV => T.UNIV
       | T.REC (fields:ty LabelEnv.map) =>
         T.REC (LabelEnv.map (evalTy btvMap) fields)
+      | T.JOIN (fields:ty LabelEnv.map, ty1, ty2, loc) =>
+        T.JOIN (LabelEnv.map (evalTy btvMap) fields, evalTy btvMap ty1, evalTy btvMap ty2, loc)
   and evalDtyKind btvMap dtyKind =
       case dtyKind of
         T.DTY => dtyKind
@@ -175,21 +181,23 @@ in
       case opaueRep of
         T.TYCON
           {id : T.typId,
-           path : path,
+           longsymbol : longsymbol,
            iseq : bool,
            arity : int,
            runtimeTy : BuiltinTypeNames.bty,
            conSet : {hasArg:bool} SEnv.map,
+           conIDSet,
            extraArgs : ty list,
            dtyKind : T.dtyKind
           } =>
         T.TYCON
           {id = id,
-           path = path,
+           longsymbol = longsymbol,
            iseq = iseq,
            arity = arity,
            runtimeTy = runtimeTy,
            conSet = conSet,
+           conIDSet = conIDSet,
            extraArgs = map (evalTy btvMap) extraArgs,
            dtyKind = evalDtyKind btvMap dtyKind
           }
@@ -198,8 +206,8 @@ in
                    arity=arity,
                    polyTy = evalTy btvMap polyTy}
 
-  fun evalTyVar (btvMap:btvMap) ({id, ty, path}:varInfo) =
-      {id=id, path=path, ty=evalTy btvMap ty}
+  fun evalTyVar (btvMap:btvMap) ({id, ty, longsymbol, opaque}:varInfo) =
+      {id=id, longsymbol=longsymbol, ty=evalTy btvMap ty, opaque=opaque}
 
   fun applyTys (btvMap:btvMap) (btvEnv:T.btvEnv, instTyList:ty list) : btvMap =
       let

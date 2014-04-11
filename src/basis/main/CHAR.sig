@@ -1,6 +1,3 @@
-include "General.smi"
-include "StringCvt.smi"
-
 signature CHAR =
 sig
   eqtype char
@@ -34,8 +31,7 @@ sig
   val isPunct : char -> bool
   val isUpper : char -> bool
   val toString : char -> string
-  val scan : (SMLSharp.Char.char, 'a) StringCvt.reader
-             -> (char, 'a) StringCvt.reader
+  val scan : (Char.char, 'a) StringCvt.reader -> (char, 'a) StringCvt.reader
   val fromString : string -> char option
   val toCString : char -> string
   val fromCString : string -> char option

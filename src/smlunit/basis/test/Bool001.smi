@@ -1,0 +1,7 @@
+_require "smlunit-lib.smi"
+_require "basis.smi"
+
+structure Bool001 =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

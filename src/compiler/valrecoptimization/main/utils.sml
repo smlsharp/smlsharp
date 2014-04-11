@@ -17,10 +17,9 @@ local
 in
   fun getFreeIdsInExp icexp =
       case icexp of
-	ICERROR _ => VarID.Set.empty
-      | ICCONSTANT (const, loc) => VarID.Set.empty
-      | ICGLOBALSYMBOL (str, globalSymbolKind, loc) => VarID.Set.empty
-      | ICVAR (varInfo, loc) => VarID.Set.singleton(#id varInfo)
+	ICERROR => VarID.Set.empty
+      | ICCONSTANT const => VarID.Set.empty
+      | ICVAR varInfo => VarID.Set.singleton(#id varInfo)
       | ICEXVAR _ => VarID.Set.empty
       | ICEXVAR_TOBETYPED _ => VarID.Set.empty
       | ICBUILTINVAR _ => VarID.Set.empty
@@ -106,20 +105,26 @@ in
       | ICRECORD_SELECTOR _ => VarID.Set.empty
       | ICSELECT (label,exp, loc) => getFreeIdsInExp exp
       | ICSEQ (expList,loc) => getFreeIdsInExpList expList
-      | ICCAST (exp,loc) => getFreeIdsInExp exp
-      | ICFFIIMPORT (exp,ty,loc) => getFreeIdsInExp exp
-      | ICFFIEXPORT (exp,ty,loc) => getFreeIdsInExp exp
+      | ICFFIIMPORT (exp,ty,loc) => getFreeIdsInFFIFun exp
       | ICFFIAPPLY (cconv,funExp,args,retTy,loc) =>
         foldl (fn (ICFFIARG (exp, ty, loc), z) =>
                   VarID.Set.union (z, getFreeIdsInExp exp)
                 | (ICFFIARGSIZEOF (ty, SOME exp, loc), z) =>
                   VarID.Set.union (z, getFreeIdsInExp exp)
                 | (ICFFIARGSIZEOF (ty, NONE, loc), z) => z)
-              (getFreeIdsInExp funExp)
+              (getFreeIdsInFFIFun funExp)
               args
-      | ICSQLSERVER (server, schema, loc) => VarID.Set.empty
+      | ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
+        getFreeIdsInExp columnInfoFnExp
       | ICSQLDBI (pat, exp, loc) =>
         VarID.Set.difference(getFreeIdsInExp exp, getFreeIdsInPat pat)
+      | ICJOIN (exp1, exp2, loc) =>
+        VarID.Set.union(getFreeIdsInExp exp1, getFreeIdsInExp exp2)
+
+  and getFreeIdsInFFIFun ffiFun =
+      case ffiFun of
+        ICFFIFUN exp => getFreeIdsInExp exp
+      | ICFFIEXTERN _ => VarID.Set.empty
 
   and getFreeIdsInExpList icexpList =
       foldl 
@@ -164,9 +169,10 @@ in
 
   and getFreeIdsInPat icpat = 
       case icpat of 
-        ICPATERROR _ => VarID.Set.empty
+        ICPATERROR => VarID.Set.empty
       | ICPATWILD _ => VarID.Set.empty
-      | ICPATVAR (varInfo, loc) => VarID.Set.singleton(#id varInfo)
+      | ICPATVAR_TRANS varInfo => VarID.Set.singleton(#id varInfo)
+      | ICPATVAR_OPAQUE varInfo => VarID.Set.singleton(#id varInfo)
       | ICPATCON _ => VarID.Set.empty
       | ICPATEXN _ => VarID.Set.empty
       | ICPATEXEXN _ => VarID.Set.empty
@@ -188,10 +194,13 @@ in
       case icdecl of 
         ICVAL (tvarList, bindList, loc) => getFreeIdsInBindList bindList
       | ICDECFUN  {guard, funbinds, loc} => getFreeIdsInFundeclList funbinds
-      | ICNONRECFUN  _ => raise Control.Bug "invalid declaration"
+      | ICNONRECFUN  _ => raise Bug.Bug "invalid declaration"
       | ICVALREC {guard, recbinds, loc} =>
         VarID.Set.difference(getFreeIdsInRecBinds recbinds,
                              getBoundIdsInRecBinds recbinds)
+      | ICVALPOLYREC (recbinds, loc) =>
+        VarID.Set.difference(getFreeIdsInPolyRecBinds recbinds,
+                             getBoundIdsInPolyRecBinds recbinds)
       | ICEXND (_, loc) => VarID.Set.empty
       | ICEXNTAGD ({exnInfo, varInfo}, loc) =>
         VarID.Set.singleton (#id varInfo)
@@ -220,8 +229,9 @@ in
       case icdecl of
         ICVAL (tvarList, bindList, loc) => getBoundIdsInBindList bindList 
       | ICDECFUN {guard, funbinds, loc} => getBoundIdsInFundeclList funbinds
-      | ICNONRECFUN _ => raise Control.Bug "invalid declaration"
+      | ICNONRECFUN _ => raise Bug.Bug "invalid declaration"
       | ICVALREC {guard, recbinds, loc} => getBoundIdsInRecBinds recbinds
+      | ICVALPOLYREC (recbinds, loc) => getBoundIdsInPolyRecBinds recbinds
       | ICEXND _ => VarID.Set.empty
       | ICEXNTAGD _ => VarID.Set.empty
       | ICEXPORTVAR _ => VarID.Set.empty
@@ -259,6 +269,16 @@ in
 	      (VarID.Set.empty,VarID.Set.empty)
 	      bindList)
       
+  and getFreeIdsInPolyRecBinds bindList =
+      #1 (foldl
+              (fn ({varInfo,ty,body},(freeIds,boundIds)) =>
+                  (VarID.Set.union(freeIds,
+				   VarID.Set.difference
+				       (getFreeIdsInExp body,boundIds)),
+                   VarID.Set.add(boundIds,#id varInfo)))
+	      (VarID.Set.empty,VarID.Set.empty)
+	      bindList)
+      
   and getBoundIdsInBindList bindList =
       foldl
           (fn ((pat,exp),S) => VarID.Set.union(getFreeIdsInPat pat,S))
@@ -268,6 +288,13 @@ in
   and getBoundIdsInRecBinds bindList =
       foldl
           (fn ({varInfo,tyList,body},S) => 
+	      VarID.Set.add(S,#id varInfo))
+          VarID.Set.empty
+          bindList
+	  
+  and getBoundIdsInPolyRecBinds bindList =
+      foldl
+          (fn ({varInfo,ty,body},S) => 
 	      VarID.Set.add(S,#id varInfo))
           VarID.Set.empty
           bindList

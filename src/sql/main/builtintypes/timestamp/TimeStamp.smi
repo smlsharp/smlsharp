@@ -1,0 +1,10 @@
+_require "../../../../basis.smi"
+_require "../../../../ffi.smi"
+structure SMLSharp_SQL_TimeStamp =
+struct
+  type timestamp (= boxed)
+  val now : unit -> timestamp
+  val toString : timestamp -> string
+  val fromString : string -> timestamp
+  val defaultTimestamp : timestamp
+end

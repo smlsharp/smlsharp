@@ -1,0 +1,22 @@
+_require "basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesBasics.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../typedlambda/main/TypedLambda.ppg.smi"
+_require "../../bitmapcalc/main/BitmapCalc2.ppg.smi"
+_require "../../constantterm/main/ConstantTerm.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../runtimetypes/main/TypeLayout2.smi"
+_require "./RecordLayout.smi"
+_require "./SingletonTyEnv.smi"
+
+structure BitmapCompilation2 =
+struct
+  val compile : TypedLambda.tldecl list -> BitmapCalc2.bcdecl list
+end

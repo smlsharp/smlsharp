@@ -29,6 +29,23 @@ fun qidToString [id] = id
   | qidToString (head::tail) = head ^ "." ^ (qidToString tail)
   | qidToString _ = raise Fail "BUG:nil to qudToString"
 
+type pos = int
+type lexarg = 
+   {
+       brack_stack : pos ref list ref,
+       comLevel : int ref,
+       currentLineNumber : int ref,
+       error : (string * pos * pos) -> unit,
+       inFormatComment : bool ref,
+       lineMap : (int * (pos * pos)) list ref,
+       lastNewLinePos : pos ref,
+       stream : TextIO.instream, 
+       stringBuf : string list ref,
+       stringStart : pos ref,
+       stringType : bool ref
+     }
+
+
 %%
 
   %decompose (true)

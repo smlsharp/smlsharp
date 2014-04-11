@@ -1,0 +1,38 @@
+_require "basis.smi"
+_require "../../../compiler-utils/env/main/IEnv.smi"
+_require "../../typedlambda/main/TypedLambda.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../constantterm/main/ConstantTerm.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../util/main/BigInt_IntInf.smi"
+_require "./EmitTypedLambda.smi"
+
+structure SwitchCompile =
+struct
+
+  val compileStringSwitch
+      : {switchExp : TypedLambda.tlexp,
+         expTy : Types.ty,
+         branches :
+           {constant : ConstantTerm.constant, exp : TypedLambda.tlexp} list,
+         defaultExp : TypedLambda.tlexp,
+         resultTy : Types.ty,
+         loc : TypedLambda.loc}
+        -> TypedLambda.tlexp
+
+  val compileIntInfSwitch
+      : {switchExp : TypedLambda.tlexp,
+         expTy : Types.ty,
+         branches :
+           {constant : ConstantTerm.constant, exp : TypedLambda.tlexp} list,
+         defaultExp : TypedLambda.tlexp,
+         resultTy : Types.ty,
+         loc : TypedLambda.loc}
+        -> TypedLambda.tlexp
+
+end

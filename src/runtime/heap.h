@@ -2,7 +2,6 @@
  * heap.h
  * @copyright (c) 2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: heap.h,v 1.11 2008/12/10 03:23:23 katsu Exp $
  */
 #ifndef SMLSHARP__HEAP_H__
 #define SMLSHARP__HEAP_H__
@@ -41,15 +40,23 @@ void *sml_heap_thread_init(void);
 void sml_heap_thread_free(void *thread_heap);
 
 /*
- * this function is called when a mutator thread is to be suspended
- * due to stop-the-world.
+ * this function is called typically from sml_gc_check when a mutator
+ * thread is to be suspended due to stop-the-world.
  * Note that this function is called for every thread-local storage,
  * not for every mutator. If the mutator A is already suspended at STW
  * signal, another running thread may call this function with A's data.
  */
 #ifdef MULTITHREAD
-void sml_heap_thread_stw_hook(void *data);
+void sml_heap_thread_gc_hook(void *data);
 #endif /* MULTITHREAD */
+
+/*
+ * this function is called from sml_gc_initiate when a collector begin
+ * to start a collection.
+ */
+#ifdef CONCURRENT
+int sml_heap_gc_hook(void *data);
+#endif /* CONCURRENT */
 
 /*
  * Forcely start garbage collection.
@@ -59,7 +66,7 @@ void sml_heap_gc(void);
 /*
  * allocate an arbitrary heap object of current thread.
  */
-SML_PRIMITIVE void *sml_alloc(unsigned int objsize, void *frame_pointer);
+SML_PRIMITIVE void *sml_alloc(unsigned int objsize);
 
 /*
  * update a pointer field of "obj" indicated by "writeaddr" with "new_value".

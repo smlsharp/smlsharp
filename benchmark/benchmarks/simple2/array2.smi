@@ -1,0 +1,10 @@
+_require "basis.smi"
+structure Array2 =
+struct
+  type 'a array2 = {size:int * int, value:'a array}
+  exception Subscript = Subscript
+  val array : (int * int) * 'a -> 'a array2
+  val sub : 'a array2 * (int * int) -> 'a
+  val update : 'a array2 * (int * int) * 'a -> unit
+  val length : 'a array2 -> int * int
+end

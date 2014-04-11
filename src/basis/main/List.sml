@@ -1,26 +1,23 @@
 (**
  * List structure.
- * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "List.smi"
 
-structure List :> LIST
-  where type 'a list = 'a list
-=
+infix  6 + - ^
+infixr 5 :: @
+infix  4 = <> > >= < <=
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op >= = SMLSharp_Builtin.Int.gteq
+val op < = SMLSharp_Builtin.Int.lt
+
+structure List =
 struct
 
-  infix  6 + - ^
-  infixr 5 :: @
-  infix  4 = <> > >= < <=
-  val op + = SMLSharp.Int.add
-  val op - = SMLSharp.Int.sub
-  val op >= = SMLSharp.Int.gteq
-  val op < = SMLSharp.Int.lt
-
   datatype list = datatype list
-  exception Empty = Empty
+  exception Empty
 
   fun null nil = true
     | null _ = false
@@ -172,26 +169,15 @@ struct
 
   fun collate cmpFn (l1, l2) =
       let
-        fun loop (nil, _::_) = LESS
-          | loop (nil, nil) = EQUAL
-          | loop (_::_, nil) = GREATER
+        fun loop (nil, _::_) = General.LESS
+          | loop (nil, nil) = General.EQUAL
+          | loop (_::_, nil) = General.GREATER
           | loop (h1::t1, h2::t2) =
             case cmpFn (h1, h2) of
-              EQUAL => loop (t1, t2)
+              General.EQUAL => loop (t1, t2)
             | order => order
       in
         loop (l1, l2)
       end
 
 end
-
-val op @ = List.@
-val app = List.app
-val foldl = List.foldl
-val foldr = List.foldr
-val hd = List.hd
-val length = List.length
-val map = List.map
-val null = List.null
-val rev = List.rev
-val tl = List.tl

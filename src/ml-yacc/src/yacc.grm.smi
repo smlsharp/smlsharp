@@ -8,41 +8,28 @@ _require "yacc.grm.sig"
 
 structure LrVals =
 struct
-  structure ParserData =
+  structure Parser =
   struct
+    type token (= boxed)
+    type stream (= boxed)
     type pos = int
-    type svalue (= boxed)
     type arg = Header.inputSource
     type result = string * Header.declData * (Header.rule list)
-    structure ParserArg = struct type pos = pos type svalue = svalue type arg = arg end
-    structure LrParser = LrParserFun(ParserArg)
-    structure Token = LrParser.Token
-    structure LrTable = LrParser.LrTable
-    structure Actions =
-    struct
-      val actions : int * pos *
-                    (LrTable.state * (svalue * pos * pos)) list * arg ->
-                    LrTable.nonterm * (svalue * pos * pos) *
-                    (LrTable.state *(svalue * pos * pos)) list
-      val void : svalue
-      val extract : svalue -> result
-    end
-    structure EC =
-    struct
-      val is_keyword : LrTable.term -> bool
-      val noShift : LrTable.term -> bool
-      val preferred_change : (LrTable.term list * LrTable.term list) list
-      val errtermvalue : LrTable.term -> svalue
-      val showTerminal : LrTable.term -> string
-      val terms: LrTable.term list
-    end
-    val table : LrTable.table
+    exception ParseError
+    val makeStream : {lexer:unit -> token} -> stream
+    val consStream : token * stream -> stream
+    val getStream : stream -> token * stream
+    val sameToken : token * token -> bool
+    val parse : {lookahead:int,
+                 stream:stream,
+                 error: (string * pos * pos -> unit),
+                 arg: arg}
+                -> result * stream
   end
   structure Tokens =
   struct
-    type pos = ParserData.pos
-    type svalue = ParserData.svalue
-    type token = ParserData.Token.token
+    type pos = Parser.pos
+    type token = Parser.token
     val BOGUS_VALUE : pos * pos -> token
     val UNKNOWN : string * pos * pos -> token
     val VALUE : pos * pos -> token

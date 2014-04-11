@@ -1,0 +1,24 @@
+_require "basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../config/main/Config.smi"
+_require "../../machinecode/main/MachineCode.ppg.smi"
+_require "../../llvmir/main/LLVMIR.ppg.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../runtimetypes/main/TypeLayout2.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../name/main/ExternSymbol.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../types/main/TypesBasics.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../machinecode/main/MachineCodeRename.smi"
+_require "../../util/main/BigInt_IntInf.smi"
+_require "../../util/main/ListSorter.smi"
+
+structure LLVMGen =
+struct
+  val compile : {moduleName : string} -> MachineCode.program -> LLVMIR.program
+end

@@ -1,3 +1,8 @@
+barnes_hut2/doit$(DOIT_SUFFIX): barnes_hut2/doit.o barnes_hut2/main.o barnes_hut2/load.o \
+  barnes_hut2/data-io.o barnes_hut2/getparam.o barnes_hut2/grav.o \
+  barnes_hut2/space.o barnes_hut2/vector.o barnes_hut2/vector3.o \
+  barnes_hut2/rand.o 
+	$(SMLSHARP) -o $@ barnes_hut2/doit.smi $(LIBS)
 barnes_hut/doit$(DOIT_SUFFIX): barnes_hut/doit.o barnes_hut/main2.o \
   barnes_hut/vector3.o barnes_hut/main.o barnes_hut/load.o \
   barnes_hut/data-io.o barnes_hut/getparam.o barnes_hut/grav.o \
@@ -37,6 +42,8 @@ mlyacc/doit$(DOIT_SUFFIX): mlyacc/doit.o mlyacc/main.o mlyacc/link.o \
   mlyacc/utils.o mlyacc/parse.o mlyacc/yacc.lex.o mlyacc/yacc.grm.o \
   mlyacc/hdr.o mlyacc/parser2.o mlyacc/stream.o mlyacc/join.o mlyacc/lrtable.o
 	$(SMLSHARP) -o $@ mlyacc/doit.smi $(LIBS)
+nqueen/doit$(DOIT_SUFFIX): nqueen/doit.o nqueen/nqueen.o
+	$(SMLSHARP) -o $@ nqueen/doit.smi $(LIBS)
 nucleic/doit$(DOIT_SUFFIX): nucleic/doit.o nucleic/main.o nucleic/nucleic.o
 	$(SMLSHARP) -o $@ nucleic/doit.smi $(LIBS)
 perm9/doit$(DOIT_SUFFIX): perm9/doit.o perm9/perm9.o
@@ -52,6 +59,8 @@ ray/doit$(DOIT_SUFFIX): ray/doit.o ray/main.o ray/interface.o ray/interp.o \
 simple/doit$(DOIT_SUFFIX): simple/doit.o simple/main.o simple/simple.o \
   simple/control.o simple/array2.o
 	$(SMLSHARP) -o $@ simple/doit.smi $(LIBS)
+smlyacc/doit$(DOIT_SUFFIX): smlyacc/doit.o smlyacc/main.o
+	$(SMLSHARP) -o $@ smlyacc/doit.smi $(LIBS)
 tsp/doit$(DOIT_SUFFIX): tsp/doit.o tsp/main.o tsp/tsp.o tsp/build.o tsp/rand.o \
   tsp/lib-base.o tsp/tree.o
 	$(SMLSHARP) -o $@ tsp/doit.smi $(LIBS)

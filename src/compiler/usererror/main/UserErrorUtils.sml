@@ -1,25 +1,4 @@
-structure UserErrorUtils : sig
-
-  val initializeErrorQueue : unit -> unit
-  val getErrorsAndWarnings : unit -> UserError.errorInfo list
-  val getErrors : unit -> UserError.errorInfo list
-  val isAnyError : unit -> bool
-  val getWarnings : unit -> UserError.errorInfo list
-  val enqueueError : Loc.loc * exn -> unit
-  val enqueueWarning : Loc.loc * exn -> unit
-
-  val checkNameDuplication' : ('a -> string option)
-                             -> 'a list
-                             -> Loc.loc
-                             -> (string -> exn)
-                             -> unit
-
-  val checkNameDuplication : ('a -> string)
-                             -> 'a list
-                             -> Loc.loc
-                             -> (string -> exn)
-                             -> unit
-end =
+structure UserErrorUtils =
 struct
   local
     val errorQueue = UserError.createQueue ()
@@ -69,5 +48,28 @@ struct
    *)      
   fun checkNameDuplication getName elements loc makeExn =
       checkNameDuplication' (SOME o getName) elements loc makeExn
+
+  fun checkSymbolDuplication' getName elements makeExn =
+    let
+      fun collectDuplication names duplicates [] = SymbolEnv.listItems duplicates
+        | collectDuplication names duplicates (element :: elements) =
+          case getName element of
+            SOME name =>
+              let
+                val newDuplicates =
+                  case SymbolEnv.find(names, name) of
+                    SOME _ => SymbolEnv.insert(duplicates, name, name)
+                  | NONE => duplicates
+                val newNames = SymbolEnv.insert(names, name, name)
+              in collectDuplication newNames newDuplicates elements
+              end
+          | NONE => collectDuplication names duplicates elements
+      val duplicateNames = collectDuplication SymbolEnv.empty SymbolEnv.empty elements
+    in
+      app (fn name => enqueueError(Symbol.symbolToLoc name, makeExn name)) duplicateNames
+    end
+
+  fun checkSymbolDuplication getName elements makeExn =
+      checkSymbolDuplication' (SOME o getName) elements makeExn
 
 end

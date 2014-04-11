@@ -11,12 +11,12 @@ struct
   in
   type ord_key = T.tvState ref
   val compare =
-      fn (
+     fn (
            ref(T.TVAR {id = id1, ...}) : T.tvState ref,
            ref(T.TVAR {id = id2, ...}) : T.tvState ref
          ) =>
          FreeTypeVarID.compare (id1, id2)
-       | _ => raise Control.Bug "TvordCompare"
+       | _ => raise Bug.Bug "TvordCompare"
   end
 end
    
@@ -31,9 +31,9 @@ structure OTSet = BinarySetFn(TvOrd)
 
 structure varInfoOrd : ORD_KEY =
 struct
-  type ord_key = Types.varInfo
-  fun compare ({path = p1, ty = ty1, id = varId1} : ord_key, 
-	       {path = p2, ty = ty2, id = varId2} : ord_key) =
+  type ord_key = {path:string list, id:VarID.id, ty:Types.ty}
+  fun compare ({path = _, ty = _, id = varId1} : ord_key, 
+	       {path = _, ty = _, id = varId2} : ord_key) =
       VarID.compare (varId1, varId2)
 end
 structure VarInfoEnv = BinaryMapFn(varInfoOrd)

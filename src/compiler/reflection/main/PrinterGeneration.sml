@@ -2,16 +2,12 @@
  * @copyright (c) 2012- Tohoku University.
  * @author Atsushi Ohori
  *)
-structure PrinterGeneration  : 
-sig
-  val generate
-    : NameEvalEnv.topEnv
-      -> NameEvalEnv.topEnv * TypedCalc.tpdecl list * TypedCalc.tpdecl list
-end
-=
+structure PrinterGeneration =
 struct
 local
-  fun bug s = Control.Bug ("PrinterGeneration:" ^ s)
+  fun bug s = Bug.Bug ("PrinterGeneration:" ^ s)
+  val pos = Loc.makePos {fileName="PrinterGeneration.sml", line=0, col=0}
+  val loc = (pos,pos)
   structure T = Types
   structure TC = TypedCalc
   structure R = Reify
@@ -19,6 +15,8 @@ local
   structure BT = BuiltinTypes
   val externals =
       [
+       RD.makeDATATYPEtyRepNOARG,
+       RD.makeDATATYPEtyRepWITHARG,
        RD.makeArrayTerm,
        RD.makeListTerm,
        RD.makeConsTerm,
@@ -45,7 +43,10 @@ local
        RD.sigentryCons,
        RD.makeReifiedTopenv,
        RD.format_topEnv,
-       RD.printTopEnv
+       RD.printTopEnv,
+       RD.termToString,
+       RD.exnToStringFunRef,
+       RD.updateExnToString
       ]
 
   fun externDecls() =
@@ -64,17 +65,41 @@ local
         )
         externals 
 in
-  fun generate topEnv = 
+  fun setControlParams () =
+      (ReflectionControl.maxDepth := !Control.printMaxDepth;
+       ReflectionControl.maxNestLevel := !Control.printMaxNestLevel;
+       ReflectionControl.maxExnNestLevel := !Control.printMaxExnNestLevel;
+       ReflectionControl.printWidth := !Control.printWidth
+      )
+       
+  fun generate exnConList topEnv = 
       let
+        val _ = setControlParams()
         val externDecls = externDecls()
-        val (topEnv, term) = R.reifyTopEnv topEnv
+        val (topEnv, term) = R.reifyTopEnv exnConList topEnv
         val printTerm = R.makeMonoApply RD.printTopEnv term
         val id = VarID.generate ()
-        val newVar = {path = ["_PrinterGeneration"], ty = BT.unitTy, id = id} : T.varInfo
+        val newVar = {longsymbol = Symbol.mkLongsymbol ["_PrinterGeneration"] loc, 
+                      ty = BT.unitTy,
+                      opaque = false,
+                      id = id} : T.varInfo
+        val decls = [TC.TPVAL ([(newVar, printTerm)], loc)]
+        val decls =
+            if !Control.generateExnMessage then
+              let
+                val exnToStringId = VarID.generate ()
+                val exnToStringVar = {longsymbol = Symbol.mkLongsymbol ["_exnToString"] loc, 
+                                      ty = BT.unitTy,
+                                      opaque = false,
+                                      id = exnToStringId} : T.varInfo
+              in
+                TC.TPVAL ([(exnToStringVar, R.exnToString())], loc) :: decls
+              end
+            else decls
       in
         (topEnv,
          externDecls,
-         [TC.TPVAL ([(newVar, printTerm)], Loc.noloc)]
+         decls
         )
       end
 end

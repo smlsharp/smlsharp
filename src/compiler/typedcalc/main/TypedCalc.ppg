@@ -13,25 +13,18 @@ local
   type loc = Loc.loc
 
   (*% 
-     @formatter(I.path) I.format_path
+    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
   (*% @prefix formatWithType_
-     @formatter(I.path) I.format_path
+    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
-  type path 
-    = (*% 
-         @format(x)  x 
-       *)
-      (*% @prefix formatWithType_
-         @format(x)  x 
-       *) 
-      I.path
+  type longsymbol = Symbol.longsymbol
 
   (*% 
-     @formatter(Absyn.ffiAttributes) Absyn.format_ffiAttributes
+     @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
    *)
   (*% @prefix formatWithType_
-     @formatter(Absyn.ffiAttributes) Absyn.format_ffiAttributes
+     @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
    *)
   type ffiAttributes 
     = (*%
@@ -40,7 +33,7 @@ local
       (*% @prefix formatWithType_
          @format(x) x
        *)
-      Absyn.ffiAttributes
+      FFIAttributes.attributes
         
   (*%
      @params(btvEnv)
@@ -408,16 +401,18 @@ in
   *)
  datatype ffiTy =
      (*%
-        @format(attr * dom doms * ran rans * loc)
+        @format(attr * dom doms * var vars varsOpt * ran rans * loc)
         R4{ doms:appList(dom()(btvEnv))("(",",",")")
+            varsOpt(vars:appList(var()(btvEnv))("(",",",")"))
            +1 "->" +d rans:appList(ran()(btvEnv))("(",",",")") }
       *)
      (*% @prefix formatWithType_
-        @format(attr * dom doms * ran rans * loc)
+        @format(attr * dom doms * var vars varsOpt * ran rans * loc)
         R4{ doms:appList(dom()(btvEnv))("(",",",")")
+            varsOpt(vars:appList(var()(btvEnv))("(",",",")"))
            +1 "->" +d rans:appList(ran()(btvEnv))("(",",",")") }
       *)
-     FFIFUNTY of Absyn.ffiAttributes option * ffiTy list * ffiTy list * loc
+     FFIFUNTY of ffiAttributes option * ffiTy list * ffiTy list option * ffiTy list * loc
    | (*%
         @format(field fields * loc)
           fields:recordList(field)("{",",","}")
@@ -492,34 +487,27 @@ in
        *)
       TPCONSTANT of {const:constant, ty:ty, loc:loc}
     | (*% 
-         @format({name, kind, ty,loc}) name 
+         @format(var)  var
        *)
       (*% @prefix formatWithType_
-         @format({name, kind, ty,loc}) name 
+         @format(var)  var()(btvEnv)
        *)
-      TPGLOBALSYMBOL of {name:string,kind:Absyn.globalSymbolKind,ty:ty,loc:loc}
+      TPVAR of varInfo
     | (*% 
-         @format(var * loc)  var
+         @format(var)  var
        *)
       (*% @prefix formatWithType_
-         @format(var * loc)  var()(btvEnv)
-       *)
-      TPVAR of varInfo * loc
-    | (*% 
-         @format(var * loc)  var
-       *)
-      (*% @prefix formatWithType_
-         @format(var * loc)  var()(btvEnv)
+         @format(var)  var()(btvEnv)
        *)
       (* extnernal variable imported through _require *)
-      TPEXVAR of exVarInfo * loc
+      TPEXVAR of exVarInfo
     | (*% 
-         @format({var, arity, loc}) var
+         @format({var, arity}) var
        *)
       (*% @prefix formatWithType_
-         @format({var, arity, loc}) var()(btvEnv) + "reffunvar"
+         @format({var, arity}) var()(btvEnv) + "reffunvar"
        *)
-      TPRECFUNVAR of {var:varInfo, arity:int, loc:loc}
+      TPRECFUNVAR of {var:varInfo, arity:int}
     | (*%
          @format({argVarList:id:varInfo ids:enclosedListIfMoreThanOne,
                  bodyTy:ty, bodyExp:exp, loc:loc}) 
@@ -941,7 +929,7 @@ in
        *)
       TPRAISE of {exp:tpexp, ty:ty, loc:loc}
     | (*%
-        @format({exp:exp1, exnVar:id:varInfo, handler:exp2, loc:loc})
+        @format({exp:exp1, exnVar:id:varInfo, handler:exp2, resultTy, loc:loc})
         "handle"
          1[
           +1
@@ -959,7 +947,7 @@ in
          ]
        *)
       (*% @prefix formatWithType_
-        @format({exp:exp1, exnVar:id:varInfo, handler:exp2, loc:loc})
+        @format({exp:exp1, exnVar:id:varInfo, handler:exp2, resultTy, loc:loc})
         "handle"
          1[
           +1
@@ -982,7 +970,8 @@ in
               x variable to received exception value 
            exp2 the handler body using x 
        *)
-      TPHANDLE of {exp:tpexp, exnVar:varInfo, handler:tpexp, loc:loc}
+      TPHANDLE of {exp:tpexp, exnVar:varInfo, handler:tpexp, resultTy:ty,
+                   loc:loc}
     | (*%
          @format({btvEnv:btv,
                   argVarList:var:varInfo vars, 
@@ -1092,30 +1081,30 @@ in
       (* TPTAPP(ex,ty1,tyl) : ty1 is the polytype, tyl are type args *)
       TPTAPP of {exp:tpexp, expTy:ty, instTyList:ty list, loc:loc}
     | (*%
-         @format ({ptrExp, ffiTy, stubTy, loc})
-         L10{ "FFI(" ptrExp()(btvEnv) ")" }
+         @format ({funExp, ffiTy, stubTy, loc})
+         L10{ "FFI(" funExp()(btvEnv) ")" }
       *)
       (*% @prefix formatWithType_
-         @format ({ptrExp, ffiTy, stubTy, loc})
-         L10{ "FFI(" ptrExp()(btvEnv) ")" }
+         @format ({funExp, ffiTy, stubTy, loc})
+         L10{ "FFI(" funExp()(btvEnv) +d ":" +1 ffiTy()(btvEnv) ")" }
       *)
       TPFFIIMPORT of
         {
-          ptrExp : tpexp,
+          funExp : tpffifun,
           ffiTy : ffiTy,
           stubTy : ty,
           loc : loc
         }
     | (*%
-         @format(exp * ty * loc)
+         @format((exp * expTy) * ty * loc)
           "cast(" exp()(btvEnv) ")"
        *)
       (*% @prefix formatWithType_
-         @format(exp * ty * loc)
+         @format((exp * expTy) * ty * loc)
           "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
        *)
       (* cast e to some type ty; used to coerce con type to a record type *)
-      TPCAST of tpexp * ty * loc
+      TPCAST of (tpexp * ty) * ty * loc
     | (*%
         @format(ty * loc)
         "_sizeof(" ty()(btvEnv) ")"
@@ -1125,26 +1114,14 @@ in
         "_sizeof(" ty()(btvEnv) ")"
        *)
       TPSIZEOF of ty * loc
-    | (*%
-         @format({server,
-                  schema:schema schemas:genericLmapTy, resultTy, loc})
-            N0{ "_sqlserver" + server
-                + ":"
-                + "{" schemas(schema)(":", ",", "*") "}" }
-         @format:schema(ty tys:genericLmapTy)
-         "{" tys(ty()(btvEnv))(":", ",", "*") "}"
-       *)
-      (*% @prefix formatWithType_
-         @format({server,
-                  schema:schema schemas:genericLmapTy, resultTy, loc})
-            N0{ "_sqlserver" + server + ":"
-                + "{" schemas(schema)(":", ",", "*") "}" }
-         @format:schema(ty tys:genericLmapTy)
-         "{" tys(ty()(btvEnv))(":", ",", "*") "}"
-       *)
-       TPSQLSERVER of {server: string,
-                       schema: ty LabelEnv.map LabelEnv.map,
-                       resultTy: ty, loc: loc}
+
+ and tpffifun
+   = (*% @format(x) x()(btvEnv) *)
+     (*% @prefix formatWithType_ @format(x) x()(btvEnv) *)
+     TPFFIFUN of tpexp
+   | (*% @format(x) x *)
+     (*% @prefix formatWithType_ @format(x) x *)
+     TPFFIEXTERN of string
 
  and tpdecl 
    = (*%
@@ -1321,55 +1298,60 @@ in
        *)
       TPEXNTAGD of {exnInfo: exnInfo, varInfo:varInfo} * loc
     | (*%
-         @format({var, arity,  loc})
+         @format({var, arity})
          "export" +d "rec fun var" + var
        *)
       (*% @prefix formatWithType_
-         @format({var, arity,  loc})
+         @format({var, arity})
          "export" +d "rec fun var" +  var()(btvEnv)
        *)
       (* This is changed to TPEXPORT in uncurry optimization *)
-      TPEXPORTRECFUNVAR of {var:varInfo, arity:int, loc:loc}
+      TPEXPORTRECFUNVAR of {var:varInfo, arity:int}
     | (*%
-         @format({internalVar, externalVar,loc})
-         "export" + internalVar +d "as" + externalVar
+         @format(var)
+         "export" + var
        *)
       (*% @prefix formatWithType_
-         @format({internalVar, externalVar,loc})
-         "export" + internalVar()(btvEnv) +d "as" + externalVar()(btvEnv)
+         @format(var)
+         "export" + var()(btvEnv)
        *)
       (* This is changed to TPEXPORT in uncurry optimization *)
-      TPEXPORTVAR of {internalVar:varInfo, externalVar:exVarInfo, loc:loc}
+      TPEXPORTVAR of varInfo
     | (*%
-         @format(exn * loc)
+         @format(exn)
          "export" +d "exception" + exn
        *)
       (*% @prefix formatWithType_
-         @format(exn * loc)
+         @format(exn)
          "export" +d "exception" + exn
        *)
      (* export exception declaration specified in  _interface *)
-      TPEXPORTEXN of exnInfo * loc
+      TPEXPORTEXN of exnInfo
     | (*%
-        @format({path, ty} * loc)
-         "extern" + "var" + path
+        @format({longsymbol, ty})
        *)
       (*% @prefix formatWithType_
-        @format({path, ty} * loc)
-         2["extern" + "var" + path +1 ":" + ty()(btvEnv)]
+        @format({longsymbol, ty})
        *)
-     (* import variable declaration specified in  _interface *)
-      TPEXTERNVAR of {path:path, ty:ty} * loc
+     (* temporary disable extern printint
+         "extern" + "var" + longsymbol
+       formatWithType_
+         2["extern" + "var" + longsymbol +1 ":" + ty()(btvEnv)]
+      *)
+      TPEXTERNVAR of {longsymbol:longsymbol, ty:ty}
     | (*%
-        @format({path, ty:ty} * loc)
-         "extern" + "exception" + path
+        @format({longsymbol, ty:ty})
        *)
       (*% @prefix formatWithType_
-        @format({path, ty:ty} * loc)
-         "extern" + "exception" + path + ":" + ty()(btvEnv)
+        @format({longsymbol, ty:ty})
        *)
+     (* temporary disable extern printint
+         "extern" + "exception" + longsymbol
+       formatWithType_
+         "extern" + "exception" + longsymbol + ":" + ty()(btvEnv)
+      *)
      (* import exception declaration specified in  _interface *)
-      TPEXTERNEXN of {path:path, ty:ty} * loc
+      TPEXTERNEXN of {longsymbol:longsymbol, ty:ty}
 
  and tppat
    = (*% 
@@ -1387,12 +1369,12 @@ in
       *)
      TPPATWILD of ty * loc
    | (*% 
-        @format(var * loc) var
+        @format(var) var
       *)
      (*% @prefix formatWithType_
-        @format(var * loc) var()(btvEnv) 
+        @format(var) var()(btvEnv) 
       *)
-     TPPATVAR of varInfo * loc
+     TPPATVAR of varInfo
    | (*%
         @format(const * ty * loc) const
       *)

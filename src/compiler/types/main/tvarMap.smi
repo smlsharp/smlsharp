@@ -1,13 +1,13 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
-
+_require "basis.smi"
+_require "smlnj-lib/Util/binary-set-fn.smi"
+_require "smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 
 structure TvarOrd =
 struct
-  type ord_key = {name:string,id:TvarID.id,eq:Absyn.eq,lifted:bool}
+  type ord_key = {symbol:Symbol.symbol,id:TvarID.id,eq:Absyn.eq,lifted:bool}
   val compare : ord_key * ord_key -> order
 end
 structure TvarMap = BinaryMapFn(TvarOrd)

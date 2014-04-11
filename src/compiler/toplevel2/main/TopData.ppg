@@ -16,7 +16,6 @@ in
   datatype stopAt 
     = (*% @format "SyntaxCheck" *) SyntaxCheck
     | (*% @format "ErrorCheck" *)  ErrorCheck
-    | (*% @format "Assembly" *) Assembly
     | (*% @format "NoStop" *) NoStop
 
   (*%  @formatter(Filename.filename) format_filename *)
@@ -24,75 +23,34 @@ in
     = (*%  @format(filename) filename *)
       FILE of Filename.filename
 
-  (*% 
-     @formatter(option) TermFormat.formatOptionalOption
-   *)
-  type interfaceNames 
-   = (*% 
-        @format({provide:provide opt, 
-                 requires:require requires,
-                 depends:depend depends})
-         "{"
-          1[
-            +1
-            1["provide:" + opt(provide)("SOME"+1,) ]
-            +1
-            1["requires:"
-               +1
-              requires(require)(+1)
-             ]
-            +1
-            1["depends:" 
-              +1 
-              1[depends(depend)(+1)]
-             ]
-           ]
-          1
-         "}"
-       @format:depend(place * string) string "(" place ")"
-     *)
-      {
-        provide: interfaceName option,
-        requires:interfaceName list,
-        depends: (filePlace * string) list
-      }
-
   (*%
      @formatter(Filename.filename) format_filename 
      @formatter(option) TermFormat.formatOptionalOption
   *)
-  type toplevelOptions 
+  type options 
     = (*%
          @format({stopAt,
-                  dstfile: dist distopt, 
-                  baseName: bas basopt, 
+                  baseFilename: bas basopt, 
                   stdPath: std stds, 
-                  loadPath: load loads, 
-                  asmFlags: asm asms})
+                  loadPath: load loads})
           "{"
            1[
               1[  "stopAt:" +d stopAt ]
                +1
-              1["distfile:" +d distopt(dist)("SOME","NONE") ]
-               +1
-              1["baseName:" +d basopt(bas)("SOME","NONE") ]
+              1["baseFilename:" +d basopt(bas)("SOME","NONE") ]
                +1
               1[ "stdPath:" +d stds(std)(",") ]
                +1
               1["loadPath:" +d loads(load)(".")]
-               +1
-              1["asmFlags:" +d asms(asm)(+)]
             ]
            1
            "}"
        *)
       {
         stopAt: stopAt,
-        dstfile: Filename.filename option,
-        baseName: Filename.filename option,
+        baseFilename: Filename.filename option,
         stdPath: Filename.filename list,
-        loadPath: Filename.filename list,
-        asmFlags: string list
+        loadPath: Filename.filename list
       }
 
   type toplevelContext =
@@ -116,9 +74,9 @@ in
        *)
       STOPPED
     | (*% 
-         @format(env * code) "return" + code 
+         @format(env * code) "return"
        *)
-      RETURN of newContext * code
+      RETURN of newContext * LLVM.LLVMModuleRef
 
 (*
 
@@ -140,27 +98,25 @@ in
     ({loadedFiles: (filePlace * string) list} * AbsynInterface.compileUnit)
 *)
 
-  val debugPrint = fn s => if !Control.debugPrint then print s else ()
+  val debugPrint = fn s => if !Bug.debugPrint then print s else ()
   fun printStopAt stopAt =
-      debugPrint (Control.prettyPrint (format_stopAt stopAt))
+      debugPrint (Bug.prettyPrint (format_stopAt stopAt))
 (*
   fun printCode code =
-      debugPrint (Control.prettyPrint (format_code code))
+      debugPrint (Bug.prettyPrint (format_code code))
 *)
-  fun printInterfaceNames interfaceNames =
-      debugPrint (Control.prettyPrint (format_interfaceNames interfaceNames))
   fun printInterfaceName interfaceName =
-      debugPrint (Control.prettyPrint (format_interfaceName interfaceName))
+      debugPrint (Bug.prettyPrint (format_interfaceName interfaceName))
   fun printFileName fileName =
-      debugPrint (Control.prettyPrint (format_filename fileName))
+      debugPrint (Bug.prettyPrint (format_filename fileName))
   fun printInterfaceNameList interfaceNameList =
       app (fn i => (printInterfaceName i; debugPrint "\n")) interfaceNameList
   fun printResult result =
-      debugPrint (Control.prettyPrint (format_result result))
-  fun printToplevelOptions toplevelOptions =
-      debugPrint (Control.prettyPrint (format_toplevelOptions toplevelOptions))
+      debugPrint (Bug.prettyPrint (format_result result))
+  fun printOptions options =
+      debugPrint (Bug.prettyPrint (format_options options))
 
   fun printCompileUnit unit =
-      debugPrint (Control.prettyPrint (AbsynInterface.format_compileUnit unit))
+      debugPrint (Bug.prettyPrint (AbsynInterface.format_compileUnit unit))
   end
 end

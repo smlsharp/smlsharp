@@ -1,99 +1,33 @@
-_require "../../../basis/main/StringCvt.smi"
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/Char.smi"
-_require "../../../basis/main/Array.smi"
-_require "../../../basis/main/ListPair.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/binary-op.smi"
-(*
 _require "../../../basis.smi"
-*)
-
 _require "../../../ml-yacc-lib.smi"
 _require "Ast.smi"
 _require "AstUtil.smi"
 _require "FormatTemplate.smi"
-_require "ml.grm.sig"
 
 structure MLLrVals = 
 struct
-  structure ParserData =
+  structure Parser =
   struct
-    type pos = int
-    type svalue (= boxed)
-    type arg = unit
+    type token (= boxed)
+    type stream (= boxed)
     type result = Ast.dec
-    structure LrParser = 
-      struct
-        type arg = arg
-        type pos = pos
-        type svalue = svalue
-        structure LrTable = LrTable
-        structure Token =
-        struct
-          type svalue = svalue
-          type pos = pos
-          structure LrTable = LrTable
-          datatype token = TOKEN of LrTable.term * (svalue * pos * pos)
-          val sameToken : token * token -> bool
-        end
-        structure Stream = 
-        struct
-          type tok = Token.token
-          type stream (= boxed)
-          val streamify : (unit -> tok) -> stream
-          val cons : tok * stream -> stream
-          val get : stream -> tok * stream
-        end
-        exception ParseError
-        val parse
-            : {table : LrTable.table,
-               lexer : Stream.stream,
-               arg: arg,
-               saction : int * Token.pos * (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list * arg ->
-                         LrTable.nonterm * (Token.svalue * Token.pos * Token.pos) *
-                         (LrTable.state * (Token.svalue * Token.pos * Token.pos)) list,
-               void : Token.svalue,
-               ec : {is_keyword : LrTable.term -> bool,
-                     noShift : LrTable.term -> bool,
-                     preferred_change : (LrTable.term list * LrTable.term list)
-                                        list,
-                     errtermvalue : LrTable.term -> Token.svalue,
-                     showTerminal : LrTable.term -> string,
-                     terms: LrTable.term list,
-                     error : string * Token.pos * Token.pos -> unit},
-               lookahead : int} -> Token.svalue * Stream.stream
-      end
-    structure Token = LrParser.Token
-    structure LrTable = LrParser.LrTable
-    structure Actions =
-    struct
-      val actions : int * pos *
-                    (LrTable.state * (svalue * pos * pos)) list * arg ->
-                    LrTable.nonterm * (svalue * pos * pos) *
-                    (LrTable.state *(svalue * pos * pos)) list
-      val void : svalue
-      val extract : svalue -> result
-    end
-    structure EC =
-    struct
-      val is_keyword : LrTable.term -> bool
-      val noShift : LrTable.term -> bool
-      val preferred_change : (LrTable.term list * LrTable.term list) list
-      val errtermvalue : LrTable.term -> svalue
-      val showTerminal : LrTable.term -> string
-      val terms: LrTable.term list
-    end
-    val table : LrTable.table
+    type pos = int
+    type arg = unit
+    exception ParseError
+    val makeStream : {lexer:unit -> token} -> stream
+    val consStream : token * stream -> stream
+    val getStream : stream -> token * stream
+    val sameToken : token * token -> bool
+    val parse : {lookahead:int,
+                 stream:stream,
+                 error: (string * pos * pos -> unit),
+                 arg: arg}
+                -> result * stream
   end
   structure Tokens =
   struct
-    type pos = ParserData.pos
-
-    type svalue = ParserData.svalue
-    type token = ParserData.Token.token
+    type pos = Parser.pos
+    type token = Parser.token
     val ASSOCINDICATOR : {cut:bool, direction: FormatTemplate.assocDirection,
                           strength:int} * pos * pos
                          ->  token

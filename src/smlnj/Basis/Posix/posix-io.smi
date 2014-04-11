@@ -1,25 +1,24 @@
 _require "../../../basis/main/General.smi"
 _require "../../../basis/main/IO.smi"
 _require "../../../basis/main/Int.smi"
-_require "../../../basis/main/Word.smi"
 _require "../../../basis/main/CharVector.smi"
 _require "../../../basis/main/CharVectorSlice.smi"
 _require "../../../basis/main/CharArray.smi"
+_require "../../../basis/main/CharArraySlice.smi"
 _require "../../../basis/main/Word8Vector.smi"
 _require "../../../basis/main/Word8VectorSlice.smi"
 _require "../../../basis/main/Word8Array.smi"
-_require "../../../basis/main/StringBase.smi"
+_require "../../../basis/main/Word8ArraySlice.smi"
 _require "../../../basis/main/String.smi"
-_require "../../../basis/main/Substring.smi"
 _require "../../../basis/main/Byte.smi"
-_require "../../../basis/main/SMLSharpOSFileSys.smi"
-_require "../../../basis/main/SMLSharpRuntime.smi"
+_require "../../../basis/main/SMLSharp_Runtime.smi"
+_require "../../../basis/main/SMLSharp_OSIO.smi"
 _require "../IO/prim-io-bin.smi"
 _require "../IO/prim-io-text.smi"
 
-structure SMLSharpSMLNJ_POSIX_IO =
+structure SMLSharp_SMLNJ_POSIX_IO =
 struct
-  type file_desc = SMLSharpOSFileSys.file_desc
+  type file_desc = SMLSharp_OSIO.iodesc
   val openf : string * string -> file_desc
   val stdin : file_desc
   val stdout : file_desc

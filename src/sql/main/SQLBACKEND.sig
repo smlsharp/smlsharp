@@ -1,37 +1,36 @@
 (**
  * common interface for database backends.
  * @author SATO Hiroyuki
+ * @author UENO Katsuhiro
  * @copyright (c) 2010, Tohoku University.
  *)
 
 signature SMLSharp_SQL_SQLBACKEND =
 sig
 
-  (* Compilar requres that both conn and res are unit ptr. *)
-  type conn = unit ptr
-  type res = unit ptr
-  type sqltype
+  type conn
+  type res
+  type value
 
-  exception Exec of string
-  exception Connect of string
-  exception Format
-
-  val eof : res * int -> bool
   val execQuery : conn * string -> res
   val closeConn : conn -> unit
   val closeRel : res -> unit
-  val numOfRows : res -> int
   val getDatabaseSchema : conn -> (string *
                                    {colname: string,
-                                    typename: sqltype,
-                                    isnull: bool} list) list
+                                    ty: SMLSharp_SQL_BackendTy.ty,
+                                    nullable: bool} list) list
   val connect : string -> conn
-  val getInt : res * int * int -> int option
-  val getWord : res * int * int -> word option
-  val getReal : res * int * int -> real option
-  val getString : res * int * int -> string option
-  val getChar : res * int * int -> char option
-  val getBool : res * int * int -> bool option
-  val translateType : sqltype -> string option
+  val fetch : res -> res option
+  val getValue : res * int -> value option
+  val intValue : value -> int option
+  val intInfValue : value -> IntInf.int option
+  val wordValue : value -> word option
+  val realValue : value -> real option
+  val stringValue : value -> string option
+  val charValue : value -> char option
+  val boolValue : value -> bool option
+  val timestampValue : value -> SMLSharp_SQL_TimeStamp.timestamp option
+  val decimalValue : value -> SMLSharp_SQL_Decimal.decimal option
+  val floatValue : value -> SMLSharp_SQL_Float.float option
 
 end

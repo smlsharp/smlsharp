@@ -9,9 +9,9 @@ local
   structure T = Types
   type rcexp = RC.rcexp
   type ty = T.ty
-  type varInfo = T.varInfo
+  type varInfo = RC.varInfo
 
-  fun bug s = Control.Bug ("RCAnalyse: " ^ s)
+  fun bug s = Bug.Bug ("RCAnalyse: " ^ s)
   fun countAdd (INF,_ ) = INF
     | countAdd (_, INF) = INF
     | countAdd (FIN i, FIN j) = FIN (i+j)
@@ -45,16 +45,17 @@ local
            exp:rcexp, 
            expTy:Types.ty, 
            loc:Loc.loc,
-           ruleList:(T.conInfo * varInfo option * rcexp) list} =>
+           ruleList:(RC.conInfo * varInfo option * rcexp) list,
+           resultTy} =>
          (visitExp defaultExp;
           visitExp exp;
           visitExpList (map #3 ruleList))
-      | RC.RCCAST (rcexp, ty, loc) => visitExp rcexp
+      | RC.RCCAST ((rcexp, expTy), ty, loc) => visitExp rcexp
       | RC.RCCONSTANT {const, loc, ty} => ()
       | RC.RCDATACONSTRUCT
           {argExpOpt = NONE,
            argTyOpt,
-           con:T.conInfo, 
+           con:RC.conInfo, 
            instTyList, 
            loc
           } => 
@@ -62,26 +63,27 @@ local
       | RC.RCDATACONSTRUCT
           {argExpOpt = SOME exp,
            argTyOpt,
-           con:T.conInfo, 
+           con:RC.conInfo, 
            instTyList, 
            loc
           } =>
         visitExp exp
       | RC.RCEXNCASE {defaultExp:rcexp, exp:rcexp, expTy:ty, loc:Loc.loc,
-                      ruleList:(TC.exnCon * varInfo option * rcexp) list} =>
+                      ruleList:(RC.exnCon * varInfo option * rcexp) list,
+                      resultTy} =>
         (visitExp defaultExp;
          visitExp exp;
          visitExpList (map #3 ruleList))
       | RC.RCEXNCONSTRUCT
           {argExpOpt = NONE,
-           exn:TC.exnCon,
+           exn:RC.exnCon,
            instTyList,
            loc
           } =>
         ()
       | RC.RCEXNCONSTRUCT
           {argExpOpt = SOME exp,
-           exn:TC.exnCon,
+           exn:RC.exnCon,
            instTyList,
            loc
           } =>
@@ -90,14 +92,16 @@ local
         ()
       | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
         ()
-      | RC.RCEXVAR ({path, ty}, loc) => ()
-      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, ptrExp:rcexp}, ty, loc) =>
+      | RC.RCEXVAR {path, ty} => ()
+      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIFUN ptrExp}, ty, loc) =>
         visitExp ptrExp
+      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIEXTERN _}, ty, loc) =>
+        ()
       | RC.RCFNM {argVarList, bodyExp, bodyTy, loc} =>
         visitExp bodyExp
-      | RC.RCGLOBALSYMBOL {kind, loc, name, ty} =>
+      | RC.RCFOREIGNSYMBOL {loc, name, ty} =>
         ()
-      | RC.RCHANDLE {exnVar, exp, handler, loc} =>
+      | RC.RCHANDLE {exnVar, exp, handler, resultTy, loc} =>
         (visitExp exp; visitExp handler)
       | RC.RCLET {body:rcexp list, decls, loc, tys} =>
         (visitExpList body;
@@ -106,10 +110,10 @@ local
         (visitExp elementExp;
          visitExp indexExp;
          visitExp recordExp)
-      | RC.RCMONOLET {binds:(T.varInfo * rcexp) list, bodyExp, loc} =>
+      | RC.RCMONOLET {binds:(varInfo * rcexp) list, bodyExp, loc} =>
         (visitExpList (map #2 binds);
          visitExp bodyExp)
-      | RC.RCOPRIMAPPLY {argExp, instTyList, loc, oprimOp:T.oprimInfo} =>
+      | RC.RCOPRIMAPPLY {argExp, instTyList, loc, oprimOp:RC.oprimInfo} =>
         visitExp argExp
       | RC.RCPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
         visitExp exp
@@ -126,27 +130,21 @@ local
       | RC.RCSEQ {expList, expTyList, loc} =>
         visitExpList expList
       | RC.RCSIZEOF (ty, loc) => ()
-      | RC.RCSQL (RC.RCSQLSERVER 
-                    {schema:Types.ty LabelEnv.map LabelEnv.map,
-                     server:string}, 
-                  ty, 
-                  loc) =>
-        ()
       | RC.RCTAPP {exp, expTy, instTyList, loc} =>
         visitExp exp
-      | RC.RCVAR (varInfo, loc) =>
+      | RC.RCVAR varInfo =>
         inc (#id varInfo)
-      | RC.RCEXPORTCALLBACK {foreignFunTy:Types.foreignFunTy, funExp:rcexp,
-                             loc:Loc.loc} =>
-        visitExp funExp
+      | RC.RCCALLBACKFN {attributes, resultTy, argVarList, bodyExp:rcexp,
+                         loc:Loc.loc} =>
+        visitExp bodyExp
       | RC.RCFOREIGNAPPLY {argExpList:rcexp list,
-                           foreignFunTy:Types.foreignFunTy, funExp:rcexp,
+                           attributes, resultTy, funExp:rcexp,
                            loc:Loc.loc} =>
         (visitExpList argExpList;
          visitExp funExp)
       | RC.RCINDEXOF (string, ty, loc) => ()
       | RC.RCSWITCH {branches:(Absyn.constant * rcexp) list, defaultExp:rcexp,
-                     expTy:Types.ty, loc:Loc.loc, switchExp:rcexp} =>
+                     expTy:Types.ty, loc:Loc.loc, switchExp:rcexp, resultTy} =>
         (visitExpList (map #2 branches);
          visitExp defaultExp;
          visitExp switchExp)
@@ -154,33 +152,33 @@ local
   and visitRecordField exp =
       case exp of
         RC.RCCONSTANT {const, loc, ty} => ()
-      | RC.RCVAR (var, loc) => incInf (#id var)
-      | RC.RCEXVAR (exVarInfo, loc) => ()
-      | RC.RCGLOBALSYMBOL {kind, loc, name, ty} => ()
+      | RC.RCVAR var => incInf (#id var)
+      | RC.RCEXVAR exVarInfo => ()
+      | RC.RCFOREIGNSYMBOL {loc, name, ty} => ()
       | _ => visitExp exp
   and visitExpList expList = List.app visitExp expList
   and visitDecl tpdecl =
       case tpdecl of
-         RC.RCEXD (exbinds:{exnInfo:Types.exnInfo, loc:Loc.loc} list, loc) =>
+         RC.RCEXD (exbinds:{exnInfo:RC.exnInfo, loc:Loc.loc} list, loc) =>
          ()
        | RC.RCEXNTAGD ({exnInfo, varInfo}, loc) =>
          ()
-       | RC.RCEXPORTEXN (exnInfo, loc) =>
+       | RC.RCEXPORTEXN exnInfo =>
          ()
-       | RC.RCEXPORTVAR {internalVar, externalVar, loc} =>
-         incInf (#id internalVar)
-       | RC.RCEXTERNEXN ({path, ty}, loc) =>
+       | RC.RCEXPORTVAR varInfo =>
+         incInf (#id varInfo)
+       | RC.RCEXTERNEXN {path, ty} =>
          ()
-       | RC.RCEXTERNVAR ({path, ty}, loc) =>
+       | RC.RCEXTERNVAR {path, ty} =>
          ()
-       | RC.RCVAL (binds:(T.varInfo * rcexp) list, loc) =>
+       | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>
          visitExpList (map #2 binds)
        | RC.RCVALPOLYREC
            (btvEnv,
-            recbinds:{exp:rcexp, expTy:ty, var:T.varInfo} list,
+            recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,
             loc) =>
          visitExpList (map #exp recbinds)
-       | RC.RCVALREC (recbinds:{exp:rcexp, expTy:ty, var:T.varInfo} list,loc) =>
+       | RC.RCVALREC (recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,loc) =>
          visitExpList (map #exp recbinds)
   and visitDeclList declList = List.app visitDecl declList
 in

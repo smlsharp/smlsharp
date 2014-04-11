@@ -1,0 +1,15 @@
+_require "basis.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../runtimecalc/main/RuntimeCalc.ppg.smi"
+_require "../../anormal/main/ANormal.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
+
+structure ANormalize =
+struct
+  val compile : RuntimeCalc.program -> ANormal.program
+end

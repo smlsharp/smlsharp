@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "rand-sig.sml"
+
+structure Rand =
+struct
+  val randMin : real
+  val randMax : real
+  val random : real -> real
+  val mkRandom : real -> unit -> real
+  val norm : real -> real
+  val range : int * int -> real -> int
+end

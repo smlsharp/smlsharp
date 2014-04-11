@@ -1,0 +1,7 @@
+_require "basis.smi"
+_require "../../machinecode/main/MachineCode.ppg.smi"
+
+structure ConcurrencySupport =
+struct
+  val insertCheckGC : MachineCode.program -> MachineCode.program
+end

@@ -25,12 +25,13 @@ in
   fun checkEq ty =
       case ty of
         T.SINGLETONty _ => raise Eqcheck
+      | T.BACKENDty _ => raise Eqcheck
       | T.ERRORty  => raise Eqcheck
       | T.DUMMYty _  => raise Eqcheck
       | T.TYVARty
           (r
              as
-             ref(T.TVAR {lambdaDepth,id,tvarKind,eqKind,utvarOpt = NONE}))
+             ref(T.TVAR {lambdaDepth,id,tvarKind,eqKind,occurresIn, utvarOpt = NONE}))
         => 
         (case eqKind  of
            A.NONEQ =>
@@ -40,6 +41,7 @@ in
                   id = id, 
                   tvarKind = tvarKind, 
                   eqKind = A.EQ, 
+                  occurresIn = occurresIn,
                   utvarOpt = NONE
                   }
            | A.EQ => ();
@@ -57,6 +59,7 @@ in
                          id = id, 
                          tvarKind = T.OCONSTkind newL,
                          eqKind = A.EQ, 
+                         occurresIn = occurresIn,
                          utvarOpt = NONE
                          }
               end
@@ -73,6 +76,7 @@ in
                          id = id, 
                          tvarKind = T.OPRIMkind {instances = instances,
                                                  operators = operators},
+                         occurresIn = occurresIn,
                          eqKind = A.EQ, 
                          utvarOpt = NONE
                          }

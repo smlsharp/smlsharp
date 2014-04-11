@@ -6,8 +6,8 @@
  * @version $Id: callback.sml,v 1.4 2007/04/02 09:42:29 katsu Exp $
  *)
 
-val f1 = _import "f1" : (((((()->unit)->unit)->unit)->unit)->unit)->unit
-val g1 = _import "g1" : ()->()->()->()->unit
+val f1 = _import "f1" : (((((()->())->())->())->())->())->()
+val g1 = _import "g1" : ()->()->()->()->()
 
 val () =
     f1 (fn h1 =>

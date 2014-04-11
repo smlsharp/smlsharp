@@ -1,157 +1,86 @@
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/Substring.smi"
-_require "../../../basis/main/TextIO.smi"
-_require "../../../basis/main/binary-op.smi"
-_require "../../../smlformat-lib.smi"
-_require "Loc.ppg.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "./Bug.ppg.smi"
+_require "./Loc.ppg.smi"
 
 structure Control =
 struct
-  val Elab : int
-  val Name : int
-  val Module : int
-  val FunOpt : int
-  val TVar : int
-  val TyInf : int
-
-  val Print : int
-  val UniqueID : int
-  val MatchComp : int
-  val SQLComp : int
-  val FFIComp : int
-  val OverloadComp : int
-  val Lambda : int
-  val Static : int
-  val Unbox : int
-  val Inline : int
-  val RefElim : int
-  val DeadCode : int
-  val Localize : int
-  val Functor : int
-  val Cluster : int
-  val RBUComp : int
-  val Anormal : int
-  val SI : int
-  val SIOpt : int
-  val AI : int
-  val AIOpt : int
-  val Assem : int
-  val Code : int
-  val Run : int
-  val doUntil : int ref
-  val doNameEval : bool ref
-  val doPhase : int -> bool
-  datatype switch =
-           IntSwitch of int ref
-         | BoolSwitch of bool ref
-         | StringSwitch of string ref
-  type switchTable = (string * switch) list
-  exception Bug of string
-  exception BugWithLoc of string * Loc.loc
+  type switch (= boxed)
+  type switchTable = (string * string * switch) list
+  val profileMaxPhases : int ref
   val printWidth : int ref
+  val printMaxDepth : int ref
+  val printMaxNestLevel : int ref
+  val printMaxExnNestLevel : int ref
+  val importAllExceptions : bool ref
+  val generateExnMessage : bool ref
+
   val prettyPrint : SMLFormat.FormatExpression.expression list -> string
+  val interactiveMode : bool ref
+  val doProfile : bool ref
+  val printTimer : bool ref
   val printCommand : bool ref
-  val debugPrint : bool ref
-  val debugTrace : bool ref
-  val printBinds : bool ref
+  val traceFileLoad : bool ref
   val printWarning : bool ref
-  val printInfo : bool ref
-  val skipPrinter : bool ref
-  val generateExnHistory : bool ref
-  val generateDebugInfo : bool ref
-  val LARGEFFISWITCH : bool ref
+  val printParse : bool ref
+  val printLoadFile : bool ref
+  val printElab : bool ref
+  val printNameEval : bool ref
+  val printTypeInf : bool ref
+  val printPrinterGen : bool ref
+  val printUncurryOpt : bool ref
+  val printTCOpt : bool ref
+  val printRCOpt : bool ref
+  val printVALRECOpt : bool ref
+  val printFundeclElab : bool ref
+  val printMatchCompile : bool ref
+  val printSQLCompile : bool ref
+  val printFFICompile : bool ref
+  val printRecordCompile : bool ref
+  val printDatatypeCompile : bool ref
+  val printStaticAnalysis : bool ref
+  val printRecordUnboxing : bool ref
+  val printBitmapCompile : bool ref
+  val printBitmapANormal : bool ref
+  val printBitmapANormalReorder : bool ref
+  val printClosureConversion : bool ref
+  val printCConvCompile : bool ref
+  val printANormal : bool ref
+  val printANormalOpt : bool ref
+  val printStaticAlloc : bool ref
+  val printAIGeneration : bool ref
+  val printRTLSelect : bool ref
+  val printRTLStabilize : bool ref
+  val printRTLRename : bool ref
+  val printRTLColoring : bool ref
+  val printRTLFrame : bool ref
+  val printRTLEmit : bool ref
+  val printMachineCodeGen : bool ref
+  val printInsertCheckGC : bool ref
+  val printStackAllocation : bool ref
+  val printLLVMGen : bool ref
+  val printLLVMEmit : bool ref
+  val printGenerateMain : bool ref
+  val printWithType : bool ref
+  val printDiagnosis : bool ref
+  val allow8bitId : bool ref
+  val checkType : bool ref
+  val doBitmapANormalReorder : bool ref
+  val doRecordUnboxing : bool ref
   val doUncurryOptimization : bool ref
   val doTCOptimization : bool ref
   val doRCOptimization : bool ref
-  val enableUnboxedFloat : bool ref
-  val alignRecord : bool ref
-  val doSymbolicInstructionsOptimization : bool ref
-  val doConstantFolding : bool ref
-  val doFunctionCallSpecialization : bool ref
-  val limitOfBlockFields : int ref
-  val doTailCallOptimize : bool ref
-  val doRecursiveCallOptimize : bool ref
-  val doSelfRecursiveCallOptimize : bool ref
+  val skipPrinter : bool ref
+  val doListExpressionOptimization : bool ref
+  val doUncurryingOptimizeInMatchCompile : bool ref
   val doInlineCaseBranch : bool ref
   val limitOfInlineCaseBranch : int ref
-  val doUncurryingOptimizeInMatchCompile : bool ref
-  val doRecordUnboxing : bool ref
-  val doInlining : bool ref
-  val inlineThreshold : int ref
-  val doMultipleValueOptimization : bool ref
-  val doFunctionLocalize : bool ref
-  val doCommonSubexpressionElimination : bool ref
-  val doRepresentationAnalysis : bool ref
-  val doUselessCodeElimination : bool ref
-  val doStackReallocation : bool ref
-  val doStaticAllocation : bool ref
-  val doRegisterCoalescing : bool ref
-  val doFrameCompaction : bool ref
-  val doBitmapANormalReorder : bool ref
-  val insertCheckGC : bool ref
-  val pageSizeOfGlobalArray : int ref
-  val doPreludeLazyUnpickling : bool ref
-  val VMHeapSize : int ref
-  val VMStackSize : int ref
-  val switchTrace : bool ref
-  val traceFileLoad : bool ref
-  val tracePrelude : bool ref
-  val printSource : bool ref
-  val printEL : bool ref
-  val printNE : bool ref
-  val printMC : bool ref
-  val printVR : bool ref
-  val printPL : bool ref
-  val printUC : bool ref
-  val printTP : bool ref
-  val printTFP : bool ref
-  val printRCOptimize : bool ref
-  val printMatchComp : bool ref
-  val printSQLComp : bool ref
-  val printFFIComp : bool ref
-  val printRecordComp : bool ref
-  val printTL : bool ref
-  val printAC : bool ref
-  val printMV : bool ref
-  val printCC : bool ref
-  val printRBU : bool ref
-  val printAN : bool ref
-  val printIL : bool ref
-  val printLS : bool ref
-  val printIS : bool ref
-  val printSR : bool ref
-  val printRTL : bool ref
-  val printCode : bool ref
-  val checkType : bool ref
-  val printWithType : bool ref
-  val printAI : bool ref
-  val printML : bool ref
-  val printOBJ : bool ref
-  val printTimer : bool ref
-  val withoutLink : bool ref
-  val keepAsm : bool ref
   val debugCodeGen : bool ref
-  val targetPlatform : string ref
-  val targetInfo : unit -> {cpu: string, manufacturer: string, ossys: string,
-                            options: (bool * string) list}
-  val nativeGen : unit -> bool
-  val printDiagnosis : bool ref
-  val interactiveMode : bool ref
-  val doProfile : bool ref
-  val doCompileObj : bool ref
-  val doFunctorCompile : bool ref
-  val doLinking : bool ref
-  val traceSMLFormat : int ref
-  val firstLinePrompt : string ref
-  val secondLinePrompt : string ref
-  val skipShebang : bool ref
-  val newRBU : bool ref
+  val doFrameCompaction : bool ref
+  val doRegisterCoalescing : bool ref
+  val enableUnboxedFloat : bool ref
+  val insertCheckGC : bool ref
   val switchTable : switchTable
   val switchToString : switch -> string
   val interpretControlOption : string * switch * string ->  unit
-  val setControlOptions : string -> (string -> string option) -> unit
-  val listSwitches : unit -> switchTable
 end

@@ -9,10 +9,19 @@ structure TypeInferenceContext =
 struct
   local
     structure T = Types
-    structure TU = TypesUtils
+    structure IC = IDCalc
+    structure TU = TypesBasics
     structure TC = TypedCalc
-    (*% @formatter(TC.typInfo) TC.format_typInfo *)
-    type idstatus = TC.idstatus
+
+    (*% 
+       @params(btvEnv)
+       @formatter(TC.idstatus) TC.formatWithType_idstatus
+     *)
+    type idstatus 
+     = (*%
+          @format(x) x()(btvEnv)
+        *)
+       TC.idstatus
 
   in
 
@@ -57,7 +66,7 @@ struct
    *)
   type varEnv =
       (*%
-         @format(var map) map(var)(":",+2)
+         @format(var map) map(var()())(":",+2)
        *)
       idstatus VarMap.map
 
@@ -118,11 +127,13 @@ struct
     )
 
   fun bindOPrim ({tvarEnv,varEnv,oprimEnv} : context,
-                 oprimInfo:T.oprimInfo as {path, ty, id}) =
+                 oprimInfoKey:IC.oprimInfo,
+                 oprimInfo:T.oprimInfo) 
+                   =
       {
         tvarEnv = tvarEnv,
         varEnv = varEnv,
-        oprimEnv = OPrimMap.insert (oprimEnv, {path=path,id=id}, oprimInfo)
+        oprimEnv = OPrimMap.insert (oprimEnv, oprimInfoKey, oprimInfo)
       } : context
       
   fun extendContextWithVarEnv
@@ -181,7 +192,7 @@ struct
             foldl
               (fn
                (
-                (utvar as {name, id, eq, lifted}, tvarKind),
+                (utvar as {symbol, id, eq, lifted}, tvarKind),
                 (newTvarEnv, addedUtvars)
                ) =>
                let 

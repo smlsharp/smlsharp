@@ -1,0 +1,14 @@
+structure SMLSharp_Runtime =
+struct
+  exception Bug of string
+  eqtype syserror (= int)
+  exception SysErr of string * syserror option
+  val str_new : char ptr -> string
+  val str_new_option : char ptr -> string option
+  val errno : unit -> syserror
+  val errorMsg : syserror -> string
+  val errorName : syserror -> string
+  val syserror : string -> syserror option
+  val OS_SysErr : unit -> exn
+  val free : 'a ptr -> unit
+end

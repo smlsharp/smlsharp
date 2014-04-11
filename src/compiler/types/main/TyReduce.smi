@@ -1,16 +1,16 @@
-_require "../../../basis.smi"
-
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
-_require "TyAlphaRename.smi"
-_require "Types.ppg.smi"
-_require "TypesUtils.smi"
-_require "OPrimInstMap.smi"
-_require "TyPrinters.smi"
+_require "./TyAlphaRename.smi"
+_require "./Types.ppg.smi"
+_require "./TypesBasics.smi"
+_require "./OPrimInstMap.smi"
+_require "./TyPrinters.smi"
 
 structure TyReduce =
 struct

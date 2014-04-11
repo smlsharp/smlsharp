@@ -20,7 +20,7 @@ in
         val pat =
             foldr
             (fn (ty, pat) => ICPATTYPED(pat, ty, loc))
-            (ICPATVAR (varInfo, loc))
+            (ICPATVAR_TRANS varInfo)
             tyList
       in
         (pat, body)
@@ -54,10 +54,9 @@ in
                        list)
               val newIds = map (fn x => newVarId()) args
               val newVars =
-                  map (fn id=>ICVAR({path=nil,id=id},loc)) newIds
+                  map (fn id=>ICVAR {longsymbol=Symbol.mkLongsymbol nil loc,id=id}) newIds
               val newVarPats =
-                  map (fn id => ICPATVAR({path=nil,id=id},
-                                         loc)) newIds
+                  map (fn id => ICPATVAR_TRANS {longsymbol=Symbol.mkLongsymbol nil loc,id=id}) newIds
               val argRecord = ICRECORD (listToTuple newVars, loc)
               val funRules =
                   map
@@ -84,23 +83,22 @@ in
       in
         (funVarInfo, tyList, funBody)
       end
-    | transFunDeclInner _ _ = raise Control.Bug "illegal fun decl "
+    | transFunDeclInner _ _ = raise Bug.Bug "illegal fun decl "
        
   and transExp icexp =
       case icexp of
-        ICERROR (vaInfo, loc) => icexp
-      | ICCONSTANT (constant, loc) => icexp
-      | ICGLOBALSYMBOL _ => icexp
-      | ICVAR (_, loc) => icexp
-      | ICEXVAR ({path, ty}, loc) => icexp
-      | ICEXVAR_TOBETYPED ({path, id}, loc) => icexp
-      | ICBUILTINVAR {primitive, ty, loc} => icexp
-      | ICCON (conInfo, loc) => icexp
-      | ICEXN (exnInfo, loc) => icexp
-      | ICEXEXN ({path, ty}, loc) => icexp
-      | ICEXN_CONSTRUCTOR (exnInfo, loc) => icexp
-      | ICEXEXN_CONSTRUCTOR (exnInfo, loc) => icexp
-      | ICOPRIM (oprimInfo, loc) => icexp
+        ICERROR  => icexp
+      | ICCONSTANT constant => icexp
+      | ICVAR _ => icexp
+      | ICEXVAR _ => icexp
+      | ICEXVAR_TOBETYPED _ => icexp
+      | ICBUILTINVAR _ => icexp
+      | ICCON _ => icexp
+      | ICEXN _ => icexp
+      | ICEXEXN _ => icexp
+      | ICEXN_CONSTRUCTOR exnInfo => icexp
+      | ICEXEXN_CONSTRUCTOR exnInfo => icexp
+      | ICOPRIM oprimInfo => icexp
       | ICTYPED (icexp, ty, loc) => ICTYPED (transExp icexp, ty, loc)
       | ICSIGTYPED {icexp,ty,loc, revealKey} =>
         ICSIGTYPED {icexp=transExp icexp,
@@ -147,21 +145,27 @@ in
       | ICSELECT (string, icexp, loc) =>
         ICSELECT (string, transExp icexp, loc)
       | ICSEQ (icexpList, loc) => ICSEQ (map transExp icexpList, loc)
-      | ICCAST (icexp, loc) => ICCAST (transExp icexp, loc)
-      | ICFFIIMPORT (icexp, ty, loc) => ICFFIIMPORT (transExp icexp, ty, loc)
-      | ICFFIEXPORT (icexp, ty, loc) => ICFFIEXPORT (transExp icexp, ty, loc)
+      | ICFFIIMPORT (icexp, ty, loc) => ICFFIIMPORT (transFFIFun icexp, ty, loc)
       | ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
-        ICFFIAPPLY (cconv, transExp funExp,
+        ICFFIAPPLY (cconv, transFFIFun funExp,
                     map (fn ICFFIARG (exp, ty, loc) =>
-                            ICFFIARG (transExp funExp, ty, loc)
+                            ICFFIARG (transExp exp, ty, loc)
                           | ICFFIARGSIZEOF (ty, SOME exp, loc) =>
                             ICFFIARGSIZEOF (ty, SOME (transExp exp), loc)
                           | ICFFIARGSIZEOF (ty, NONE, loc) =>
                             ICFFIARGSIZEOF (ty, NONE, loc))
                         args,
                     retTy, loc)
-      | ICSQLSERVER (str, schema, loc) => icexp
+      | ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
+        ICSQLSCHEMA {columnInfoFnExp = transExp columnInfoFnExp,
+                     ty = ty,
+                     loc = loc}
       | ICSQLDBI (icpat, icexp, loc) => ICSQLDBI (icpat, transExp icexp, loc)
+      | ICJOIN (icexp1, icexp2, loc) => ICJOIN (transExp icexp1, transExp icexp2, loc)
+  and transFFIFun ffiFun =
+      case ffiFun of
+        ICFFIFUN exp => ICFFIFUN (transExp exp)
+      | ICFFIEXTERN _ => ffiFun
   and transDecl icdecl =
       case icdecl of
         ICVAL (tvarList, icpatIcexpList, loc) =>
@@ -184,19 +188,24 @@ in
                                       body = transExp body})
                                  recbinds,
                   loc = loc}
+      | ICVALPOLYREC (polyrecbinds, loc) =>
+        ICVALPOLYREC 
+          (map (fn {varInfo, ty, body} => {varInfo=varInfo, ty=ty, body=transExp body})
+               polyrecbinds,
+           loc)
       | ICEXND ( exdList, loc) => icdecl
       | ICEXNTAGD (_, loc) => icdecl
-      | ICEXPORTVAR (varInfo, ty, loc) => icdecl
-      | ICEXPORTTYPECHECKEDVAR (varInfo, loc) => icdecl 
+      | ICEXPORTVAR _ => icdecl
+      | ICEXPORTTYPECHECKEDVAR _ => icdecl 
       | ICEXPORTFUNCTOR _ => icdecl
-      | ICEXPORTEXN (exnInfo, loc) => icdecl
-      | ICEXTERNVAR ({path, ty}, loc) => icdecl
-      | ICEXTERNEXN ({path, ty}, loc) => icdecl
+      | ICEXPORTEXN _ => icdecl
+      | ICEXTERNVAR _ => icdecl
+      | ICEXTERNEXN _ => icdecl
       | ICTYCASTDECL (tycastList, icdeclList, loc) => 
         ICTYCASTDECL (tycastList, map transDecl icdeclList, loc) 
-      | ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} => icdecl
+      | ICOVERLOADDEF _ => icdecl
                                                     
-  fun transIcdeclList ({decls, loc}:IDCalc.topdecl) = 
-      {decls=map transDecl decls, loc=loc}
+  fun transIcdeclList (decls:IDCalc.topdecl) = 
+      map transDecl decls
 end
 end

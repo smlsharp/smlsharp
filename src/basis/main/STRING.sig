@@ -1,6 +1,3 @@
-include "General.smi"
-include "StringCvt.smi"
-
 signature STRING =
 sig
   eqtype string

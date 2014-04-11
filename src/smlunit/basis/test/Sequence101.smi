@@ -1,0 +1,33 @@
+_require "smlunit-lib.smi"
+_require "basis.smi"
+_require "SEQUENCE.sig"
+
+functor Sequence101(
+  A : sig
+    type elem
+    type sequence
+    val maxLen : int
+    val fromList : elem list -> sequence
+    val tabulate : int * (int -> elem) -> sequence
+    val length : sequence -> int
+    val sub : sequence * int -> elem
+    val appi : (int * elem -> unit) -> sequence -> unit
+    val app : (elem -> unit) -> sequence -> unit
+    val foldli : (int * elem * 'b -> 'b) -> 'b -> sequence -> 'b
+    val foldri : (int * elem * 'b -> 'b) -> 'b -> sequence -> 'b
+    val foldl : (elem * 'b -> 'b) -> 'b -> sequence -> 'b
+    val foldr : (elem * 'b -> 'b) -> 'b -> sequence -> 'b
+    val findi : (int * elem -> bool) -> sequence -> (int * elem) option
+    val find : (elem -> bool) -> sequence -> elem option
+    val exists : (elem -> bool) -> sequence -> bool
+    val all : (elem -> bool) -> sequence -> bool
+    val collate : (elem * elem -> order) -> sequence * sequence -> order
+    val intToElem : int -> elem
+    val nextElem : elem -> elem
+    val elemToString : elem -> string
+    val compareElem : (elem * elem) -> General.order
+  end
+) =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

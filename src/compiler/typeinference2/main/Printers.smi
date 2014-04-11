@@ -1,26 +1,29 @@
-_require "../../../basis.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "basis.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/OPrimMap.smi"
 _require "../../types/main/VarMap.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
-_require "TypeInferenceContext.ppg.smi"
+_require "./TypeInferenceContext.ppg.smi"
 
 structure Printers =
   struct
     val print : string -> unit
     val printPath : string list -> unit
     val printTy : Types.ty -> unit
+    val printITy : IDCalc.ty -> unit
     val printTpdecl : TypedCalc.tpdecl -> unit
     val printContext
         : TypeInferenceContext.context -> unit
     val printTpexp : TypedCalc.tpexp -> unit
-    val printTpVarInfo : {id:VarID.id, path:string list, ty:Types.ty} -> unit
+    val printVarEnv : TypeInferenceContext.varEnv -> unit
+    val printTpVarInfo : Types.varInfo -> unit
     val printIcexp : IDCalc.icexp -> unit
     val printIcpat : IDCalc.icpat -> unit
     val printIcdecl : IDCalc.icdecl -> unit
-    val printIcVarInfo : {id:VarID.id, path:string list} -> unit
+    val printIcVarInfo : {id:VarID.id, longsymbol:Symbol.longsymbol} -> unit
   end

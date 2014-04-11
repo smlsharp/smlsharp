@@ -1,0 +1,4 @@
+_require "basis.smi"
+val gettime : unit -> {sec:int, nsec:int}
+val difftime : {sec:int, nsec:int} * {sec:int, nsec:int} -> {sec:int,nsec:int}
+val timestr : {sec:int,nsec:int} -> string

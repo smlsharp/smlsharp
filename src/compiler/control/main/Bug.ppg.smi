@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "./Loc.ppg.smi"
+
+structure Bug =
+struct
+  exception Bug of string
+  exception BugWithLoc of string * Loc.loc
+  val debugPrint : bool ref
+  val printInfo : bool ref
+  val prettyPrint : SMLFormat.FormatExpression.expression list -> string
+end

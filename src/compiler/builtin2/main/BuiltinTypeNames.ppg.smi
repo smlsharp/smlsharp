@@ -1,5 +1,7 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+
 structure BuiltinTypeNames =
 struct
 
@@ -14,29 +16,18 @@ struct
     | REAL32ty
     | UNITty
     | PTRty
+    | CODEPTRty
     | ARRAYty
     | VECTORty
     | EXNty
     | BOXEDty
     | EXNTAGty
+    | CONTAGty
     | REFty
-    | BOOLty
-    | LISTty
-    | OPTIONty
-    | ORDERty
-    | SERVERty
-    | DBIty
-    | VALUEty
-    | CONNty
-    | DBty
-    | TABLEty
-    | ROWty
-    | RESULTty
-    | RELty
-    | QUERYty
-    | COMMANDty
 
   val findType : string -> bty option
   val format_bty : bty -> SMLFormat.FormatExpression.expression list
+  val runtimeTy : bty -> RuntimeTypes.ty
+  val compatTy : {absTy : bty, implTy : bty} -> bool
 
 end

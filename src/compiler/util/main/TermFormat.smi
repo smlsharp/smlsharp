@@ -1,12 +1,12 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "basis.smi"
+_require "smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "ListSorter.smi"
-_require "BigInt_IntInf.smi"
+_require "./ListSorter.smi"
+_require "./BigInt_IntInf.smi"
 
 structure TermFormat =
 struct
@@ -41,6 +41,8 @@ struct
         -> 'a LabelEnv.map formatter
   val formatEnclosedSEnvPlain
       : 'a formatter * format * format -> 'a SEnv.map formatter
+  val formatEnclosedSymbolEnvPlain
+      : 'a formatter * format * format -> 'a SymbolEnv.map formatter
   val isTuple : 'a LabelEnv.map -> bool
   val formatRecordExp : 'a formatter -> 'a LabelEnv.map formatter
   val formatRecordTy : 'a formatter -> 'a LabelEnv.map formatter
@@ -48,10 +50,13 @@ struct
   val formatIfList : format -> 'a list formatter
   val formatIfNonEmpty : format -> 'a SEnv.map formatter
   val formatIfEmpty : format -> 'a SEnv.map formatter
+  val formatIfNonEmptySymbolMap : format -> 'a SymbolEnv.map formatter
+  val formatIfEmptySymbolMap : format -> 'a SymbolEnv.map formatter
   val formatIfEmptyFormat : (format * format) -> format -> format
   type 'kind btvEnv' (= boxed)
   type 'kind btvEnv = 'kind btvEnv' formatParam
   val emptyBtvEnv : 'k btvEnv
+  val makeBtvEnv : 'k BoundTypeVarID.Map.map -> 'k btvEnv
   val extendBtvEnv : 'k btvEnv -> 'k BoundTypeVarID.Map.map -> 'k btvEnv
   val extendBtvEnvWithOrder :
       'k btvEnv -> 'k BoundTypeVarID.Map.map * BoundTypeVarID.id list

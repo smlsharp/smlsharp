@@ -1,4 +1,4 @@
-_require "../../basis/main/SMLSharpRuntime.smi"
+_require "../../basis/main/SMLSharp_Runtime.smi"
 
 structure DynamicLink =
 struct
@@ -7,6 +7,7 @@ struct
   datatype mode = LAZY | NOW
   val dlopen : string -> lib
   val dlopen' : string * scope * mode -> lib
-  val dlsym : lib * string -> unit ptr
+  val dlsym : lib * string -> codeptr
+  val dlsym' : lib * string -> unit ptr
   val dlclose : lib -> unit
 end

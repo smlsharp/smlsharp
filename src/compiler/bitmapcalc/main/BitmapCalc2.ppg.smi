@@ -1,0 +1,215 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../typedlambda/main/TypedLambda.ppg.smi"
+_require "../../constantterm/main/ConstantTerm.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+
+structure BitmapCalc2 =
+struct
+  type loc = Loc.loc
+  type ty = Types.ty
+  type varInfo = RecordCalc.varInfo
+  type exVarInfo = RecordCalc.exVarInfo
+  type primInfo = TypedLambda.primInfo
+  type btvEnv = Types.btvEnv
+
+  datatype bcexp =
+      BCFOREIGNAPPLY of
+      {
+        funExp : bcexp,
+        attributes : FFIAttributes.attributes,
+        argExpList : bcexp list,
+        resultTy : ty option,
+        loc : loc
+      }
+    | BCCALLBACKFN of
+      {
+        attributes : FFIAttributes.attributes,
+        argVarList : varInfo list,
+        resultTy : ty option,
+        bodyExp : bcexp,
+        loc: loc
+      }
+    | BCCONSTANT of {const : ConstantTerm.constant, ty : ty, loc : loc}
+    | BCTAG of {tag : RuntimeTypes.tag, ty : ty, loc : loc}
+    | BCFOREIGNSYMBOL of
+      {
+        name : string,
+        ty : ty,
+        loc : loc
+      }
+    | BCVAR of {varInfo : varInfo, loc : loc}
+    | BCEXVAR of {exVarInfo : exVarInfo, loc : loc}
+    | BCPRIMAPPLY of
+      {
+        primInfo : primInfo,
+        argExpList : bcexp list,
+        instTyList : ty list,
+        instTagList : bcexp list,
+        instSizeList : bcexp list,
+        loc : loc
+      }
+    | BCAPPM of
+      {
+        funExp : bcexp,
+        argExpList : bcexp list,
+        funTy : ty,
+        loc : loc
+      }
+    | BCLET of
+      {
+        localDecl : bcdecl,
+        mainExp : bcexp,
+        loc : loc
+      }
+    | BCRECORD of
+      {
+        fieldList : {fieldExp : bcexp,
+                     fieldTy : ty,
+                     fieldLabel : string,
+                     fieldSize : bcexp,
+                     fieldTag : bcexp,
+                     fieldIndex : bcexp} list,
+        recordTy : ty,
+        isMutable : bool,
+        clearPad : bool,
+        allocSizeExp : bcexp,
+        bitmaps : {bitmapIndex : bcexp,
+                   bitmapExp : bcexp} list,
+        loc : loc
+      }
+    | BCSELECT of
+      {
+        recordExp : bcexp,
+        indexExp : bcexp,
+        label : string,
+        recordTy : ty,
+        resultTy : ty,
+        resultSize : bcexp,
+        resultTag : bcexp,
+        loc : loc
+      }
+    | BCMODIFY of
+      {
+        recordExp : bcexp,
+        recordTy : ty,
+        indexExp : bcexp,
+        label : string,
+        valueExp : bcexp,
+        valueTy : ty,
+        valueTag : bcexp,
+        valueSize : bcexp,
+        loc : loc
+      }
+    | BCRAISE of
+      {
+        argExp : bcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | BCHANDLE of
+      {
+        tryExp : bcexp,
+        exnVar : varInfo,
+        handlerExp : bcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | BCLOCALCODE of
+      {
+        codeLabel : FunLocalLabel.id,
+        argVarList : varInfo list,
+        codeBodyExp : bcexp,
+        mainExp : bcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | BCGOTO of
+      {
+        destinationLabel : FunLocalLabel.id,
+        argExpList : bcexp list,
+        resultTy : ty,
+        loc : loc
+      }
+    | BCFNM of
+      {
+        argVarList : varInfo list,
+        bodyExp : bcexp,
+        retTy : ty,
+        loc : loc
+      }
+    | BCPOLY of
+      {
+        btvEnv : btvEnv,
+        expTyWithoutTAbs : ty,
+        exp : bcexp,
+        loc : loc
+      }
+    | BCTAPP of
+      {
+        exp : bcexp,
+        expTy : ty,
+        instTyList : ty list,
+        loc : loc
+      }
+    | BCSWITCH of
+      {
+        switchExp : bcexp,
+        expTy : ty,
+        branches : {constant : ConstantTerm.constant, branchExp : bcexp} list,
+        defaultExp : bcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | BCCAST of
+      {
+        exp : bcexp,
+        expTy : ty,
+        targetTy : ty,
+        runtimeTyCast : bool,
+        bitCast : bool,
+        loc : loc
+      }
+
+  and bcdecl =
+      BCVAL of
+      {
+        boundVar : varInfo,
+        boundExp : bcexp,
+        loc : loc
+      }
+    | BCVALREC of
+      {
+        recbindList : {boundVar : varInfo, boundExp: bcexp } list,
+        loc : loc
+      }
+    | BCEXTERNVAR of
+      {
+        exVarInfo: exVarInfo,
+        loc: loc
+      }
+    | BCEXPORTVAR of
+      {
+        exVarInfo : exVarInfo,
+        exp : bcexp,
+        loc : loc
+      }
+
+  val format_bcexp
+      : bcexp -> SMLFormat.FormatExpression.expression list
+  val format_bcdecl
+      : bcdecl -> SMLFormat.FormatExpression.expression list
+
+  val formatWithType_bcexp
+      : bcexp -> SMLFormat.FormatExpression.expression list
+  val formatWithType_bcdecl
+      : bcdecl -> SMLFormat.FormatExpression.expression list
+
+end

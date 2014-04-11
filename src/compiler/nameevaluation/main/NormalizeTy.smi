@@ -1,26 +1,26 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/lib-base.smi"
+_require "basis.smi"
+_require "smlnj-lib/Util/lib-base.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
-_require "NameEvalEnv.ppg.smi"
-_require "NameEvalError.ppg.smi"
-_require "NameEvalUtils.smi"
-_require "TfunVars.smi"
+_require "./NameEvalEnv.ppg.smi"
+_require "./NameEvalError.ppg.smi"
+_require "./NameEvalUtils.smi"
+_require "./TfunVars.smi"
 
 structure NormalizeTy =
 struct
   datatype checkConError =
            Arity
-         | Name of (string list * string list)
-         | Type of string list
+         | Name of (Symbol.symbol list * Symbol.symbol list)
+         | Type of Symbol.symbol list
          | OK
   datatype checkConRes = FAIL of checkConError list | SUCCESS
   datatype normalForm = TYNAME of IDCalc.tfun | TYTERM of IDCalc.ty
@@ -38,9 +38,8 @@ struct
   val reduceEnv : NameEvalEnv.env -> NameEvalEnv.env
   val reduceTfun : IDCalc.tfun -> IDCalc.tfun
   val reduceTy : IDCalc.ty TvarMap.map -> IDCalc.ty -> IDCalc.ty
-  val tyForm : {eq:Absyn.eq, id:TvarID.id, lifted:bool, name:string} list
-               -> IDCalc.ty -> normalForm
-  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SEnv.map,
+  val tyForm : IDCalc.tvar list -> IDCalc.ty -> normalForm
+  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SymbolEnv.map,
                id:TypID.id, iseqRef:bool ref} list
               -> unit
   val equalTy :

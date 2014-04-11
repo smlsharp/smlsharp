@@ -1,53 +1,69 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/ord-key-sig.sml"
-_require "../../../smlnj-lib/Util/ord-map-sig.sml"
-_require "../../control/main/Control.ppg.smi"
-_require "Graph.smi"
+_require "basis.smi"
+_require "smlnj-lib/Util/ord-key-sig.sml"
+_require "smlnj-lib/Util/ord-map-sig.sml"
+_require "../../control/main/Bug.ppg.smi"
+_require "./Graph.smi"
 
-functor SCCFun(IMap : sig
-  structure Key : sig
-    type ord_key
-    val compare : ord_key * ord_key -> order
+functor SCCFun(IMap :
+  sig
+    structure Key :
+      sig
+        type ord_key
+        val compare : ord_key * ord_key -> order
+      end
+    type 'a map
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : (Key.ord_key * 'a) -> 'a map
+    val insert  : 'a map * Key.ord_key * 'a -> 'a map
+    val insert' : ((Key.ord_key * 'a) * 'a map) -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+    val insertWithi : (Key.ord_key * 'a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+    val find : 'a map * Key.ord_key -> 'a option
+    val findi : 'a map * Key.ord_key -> (Key.ord_key * 'a) option
+    val lookup : 'a map * Key.ord_key -> 'a
+    val inDomain : ('a map * Key.ord_key) -> bool
+    val remove : 'a map * Key.ord_key -> 'a map * 'a
+    val removei : 'a map * Key.ord_key -> Key.ord_key * 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (Key.ord_key * 'a) option
+    val numItems : 'a map ->  int
+    val listItems  : 'a map -> 'a list
+    val listItemsi : 'a map -> (Key.ord_key * 'a) list
+    val listKeys : 'a map -> Key.ord_key list
+    val collate : ('a * 'a -> order) -> ('a map * 'a map) -> order
+    val unionWith  : ('a * 'a -> 'a) -> ('a map * 'a map) -> 'a map
+    val unionWithi : (Key.ord_key * 'a * 'a -> 'a) -> ('a map * 'a map) -> 'a map
+    val unionWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'a) -> (Key.ord_key * 'a))
+                       -> ('a map * 'a map) -> 'a map
+    val unionWithi3 : ((Key.ord_key * 'a) option * (Key.ord_key * 'a) option -> (Key.ord_key * 'a))
+                       -> ('a map * 'a map) -> 'a map
+    val intersectWith  : ('a * 'b -> 'c) -> ('a map * 'b map) -> 'c map
+    val intersectWithi : (Key.ord_key * 'a * 'b -> 'c) -> ('a map * 'b map) -> 'c map
+    val intersectWithi2 : ((Key.ord_key * 'a) * (Key.ord_key * 'b) -> (Key.ord_key * 'c))
+                          -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option)
+	  -> ('a map * 'b map) -> 'c map
+    val mergeWithi : (Key.ord_key * 'a option * 'b option -> 'c option)
+	  -> ('a map * 'b map) -> 'c map
+    val mergeWithi2 : ((Key.ord_key * 'a) option * (Key.ord_key * 'b) option -> (Key.ord_key * 'c) option)
+                     -> 'a map * 'b map -> 'c map
+    val app  : ('a -> unit) -> 'a map -> unit
+    val appi : ((Key.ord_key * 'a) -> unit) -> 'a map -> unit
+    val map  : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (Key.ord_key * 'a -> 'b) -> 'a map -> 'b map
+    val mapi2 : (Key.ord_key * 'a -> Key.ord_key * 'b) -> 'a map -> 'b map
+    val foldl  : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (Key.ord_key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr  : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (Key.ord_key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter  : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial  : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
   end
-  type 'a map
-  val empty : 'a map
-  val isEmpty : 'a map -> bool
-  val singleton : Key.ord_key * 'a -> 'a map
-  val insert : 'a map * Key.ord_key * 'a -> 'a map
-  val insert' : (Key.ord_key * 'a) * 'a map -> 'a map
-  val find : 'a map * Key.ord_key -> 'a option
-  val lookup : 'a map * Key.ord_key -> 'a
-  val inDomain : 'a map * Key.ord_key -> bool
-  val remove : 'a map * Key.ord_key -> 'a map * 'a
-  val first : 'a map -> 'a option
-  val firsti : 'a map -> (Key.ord_key * 'a) option
-  val numItems : 'a map -> int
-  val listItems : 'a map -> 'a list
-  val listItemsi : 'a map -> (Key.ord_key * 'a) list
-  val listKeys : 'a map -> Key.ord_key list
-  val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
-  val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
-  val unionWithi : (Key.ord_key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
-  val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
-  val intersectWithi : (Key.ord_key * 'a * 'b -> 'c)
-                       -> 'a map * 'b map -> 'c map
-  val mergeWith : ('a option * 'b option -> 'c option)
-                  -> 'a map * 'b map -> 'c map
-  val mergeWithi : (Key.ord_key * 'a option * 'b option -> 'c option)
-                   -> 'a map * 'b map -> 'c map
-  val app : ('a -> unit) -> 'a map -> unit
-  val appi : (Key.ord_key * 'a -> unit) -> 'a map -> unit
-  val map : ('a -> 'b) -> 'a map -> 'b map
-  val mapi : (Key.ord_key * 'a -> 'b) -> 'a map -> 'b map
-  val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
-  val foldli : (Key.ord_key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
-  val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
-  val foldri : (Key.ord_key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
-  val filter : ('a -> bool) -> 'a map -> 'a map
-  val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
-  val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
-  val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
-end) =
+)
+ =
 struct
   type elem = IMap.Key.ord_key
   type graph (= boxed)

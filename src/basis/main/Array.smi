@@ -1,5 +1,5 @@
-_require "General.smi"
-_require "List.smi"
+_require "./General.smi"
+_require "./List.smi"
 
 structure Array =
 struct
@@ -9,23 +9,24 @@ struct
   val array : int * 'a -> 'a array
   val fromList : 'a list -> 'a array
   val tabulate : int * (int -> 'a) -> 'a array
-  val length = SMLSharp.PrimArray.length
-  val sub = SMLSharp.PrimArray.sub
-  val update = SMLSharp.PrimArray.update
-  val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
-  val foldl : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
-  val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
-  val foldr : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
+  val length = SMLSharp_Builtin.Array.length
+  val sub = SMLSharp_Builtin.Array.sub
+  val update = SMLSharp_Builtin.Array.update
+  val vector : 'a array -> 'a vector
+  val copy = SMLSharp_Builtin.Array.copy
+  val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
   val appi : (int * 'a -> unit) -> 'a array -> unit
   val app : ('a -> unit) -> 'a array -> unit
+  val modifyi : (int * 'a -> 'a) -> 'a array -> unit
+  val modify : ('a -> 'a) -> 'a array -> unit
+  val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
+  val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
+  val foldr : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
   val findi : (int * 'a -> bool) -> 'a array -> (int * 'a) option
   val find : ('a -> bool) -> 'a array -> 'a option
   val exists : ('a -> bool) -> 'a array -> bool
   val all : ('a -> bool) -> 'a array -> bool
-  val collate : ('a * 'a -> order) -> 'a array * 'a array -> order
-  val vector : 'a array -> 'a vector
-  val copy : {src : 'a array, dst : 'a array, di : int} -> unit
-  val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
-  val modifyi : (int * 'a -> 'a) -> 'a array -> unit
-  val modify : ('a -> 'a) -> 'a array -> unit
+  val collate : ('a * 'a -> General.order) -> 'a array * 'a array
+                -> General.order
 end

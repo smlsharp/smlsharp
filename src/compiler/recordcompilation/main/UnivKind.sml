@@ -22,10 +22,10 @@ struct
   structure T = Types
 
   fun compare (ty1, ty2) =
-      case (TypesUtils.derefTy ty1, TypesUtils.derefTy ty2) of
+      case (TypesBasics.derefTy ty1, TypesBasics.derefTy ty2) of
         (T.BOUNDVARty t1, T.BOUNDVARty t2) =>
         BoundTypeVarID.compare (t1, t2)
-      | _ => raise Control.Bug "UnivKind.compare"
+      | _ => raise Bug.Bug "UnivKind.compare"
 
   val compareTagTy = compare
   val compareSizeTy = compare
@@ -34,7 +34,7 @@ struct
       [T.SIZEty (T.BOUNDVARty btv), T.TAGty (T.BOUNDVARty btv)]
 
   fun generateTagInstance (btvEnv:T.btvEnv) ty loc =
-      case TypesUtils.derefTy ty of
+      case TypesBasics.derefTy ty of
         ty as T.BOUNDVARty tid =>
         (case BoundTypeVarID.Map.find (btvEnv, tid) of
            SOME {tvarKind=T.REC _, ...} =>
@@ -43,7 +43,7 @@ struct
       | _ => SOME (RC.RCTAGOF (ty, loc))
 
   fun generateSizeInstance (btvEnv:T.btvEnv) ty loc =
-      case TypesUtils.derefTy ty of
+      case TypesBasics.derefTy ty of
         ty as T.BOUNDVARty tid =>
         (case BoundTypeVarID.Map.find (btvEnv, tid) of
            SOME {tvarKind=T.REC _, ...} =>

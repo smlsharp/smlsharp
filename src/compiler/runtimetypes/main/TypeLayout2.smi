@@ -1,0 +1,28 @@
+_require "basis.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesBasics.smi"
+_require "../../types/main/Unify.smi"
+_require "./RuntimeTypes.ppg.smi"
+
+structure TypeLayout2 =
+struct
+  val runtimeTy : Types.btvEnv
+                  -> Types.ty
+                  -> RuntimeTypes.ty option
+  val tagOf : RuntimeTypes.ty -> RuntimeTypes.tag
+  val tagValue : RuntimeTypes.tag -> int
+
+  datatype size_assumption =
+      ALL_SIZES_ARE_POWER_OF_2
+  datatype align_computation =
+      ALIGN_EQUAL_SIZE
+
+  val sizeOf : RuntimeTypes.ty -> int
+  val maxSize : int
+  val sizeAssumption : size_assumption
+  val alignComputation : align_computation
+  val charBits : int
+end

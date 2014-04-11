@@ -1,0 +1,7 @@
+structure SMLSharp_SQL_Errors =
+struct
+  exception Format
+  exception Exec of string
+  exception Connect of string
+  exception Link of string
+end

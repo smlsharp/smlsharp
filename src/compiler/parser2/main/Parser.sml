@@ -5,60 +5,133 @@
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
  *)
-structure Parser :> sig
-
-  datatype mode =
-      Prelude        (* for prelude source code *)
-    | Interactive    (* for interactive mode *)
-    | Batch          (* for batch evaluation mode *)
-    | File           (* for separate compilation *)
-
-  type source =
-      {
-        (** parser mode.
-         * If mode is File, the parser reads the entire input at once
-         * and returns single Absyn.UNIT. *)
-        mode : mode,
-        (** read upto "int" bytes. "bool" indicates whether this call is
-         * involved to obtain the first character of a program or not. *)
-        read : bool * int -> string,
-        (** name of this source *)
-        sourceName : string,
-        (** initial line count of this source *)
-        initialLineno : int
-      }
-  type input
-
-  val setup : source -> input
-  val parse : input -> Absyn.unitparseresult
-  val isEOF : input -> bool
-
-end =
+structure Parser =
 struct
-  structure MLLex = MLLexFun(MLLrVals.Tokens)
-  structure ParserData = MLLrVals.ParserData
-  structure LrParser = ParserData.LrParser
-  val makeLexer = 
-   fn s => fn arg => LrParser.Stream.streamify (MLLex.makeLexer s arg)
-  val LrParse = fn (lookahead,lexer,error,arg) =>
-	(fn (a,b) => (MLLrVals.ParserData.Actions.extract a,b))
-     (LrParser.parse {table = ParserData.table,
-	        lexer=lexer,
-		lookahead=lookahead,
-		saction = ParserData.Actions.actions,
-		arg=arg,
-		void= ParserData.Actions.void,
-	        ec = {is_keyword = ParserData.EC.is_keyword,
-		      noShift = ParserData.EC.noShift,
-		      preferred_change = ParserData.EC.preferred_change,
-		      errtermvalue = ParserData.EC.errtermvalue,
-		      error=error,
-		      showTerminal = ParserData.EC.showTerminal,
-		      terms = ParserData.EC.terms}}
-      )
+  structure T = MLLex.UserDeclarations.T
+  structure Parser = MLLrVals.Parser
+  type token = Parser.token
 
+  fun convert t =
+      case t of
+        T.ASSOCINDICATOR x => MLLrVals.Tokens.ASSOCINDICATOR x
+      | T.FORMATINDICATOR x => MLLrVals.Tokens.FORMATINDICATOR x
+      | T.STARTOFINDENT x => MLLrVals.Tokens.STARTOFINDENT x
+      | T.NEWLINE x => MLLrVals.Tokens.NEWLINE x
+      | T.LOCALFORMATTAG x => MLLrVals.Tokens.LOCALFORMATTAG x
+      | T.FORMATTAG x => MLLrVals.Tokens.FORMATTAG x
+      | T.FORMATPARAMSTAG x => MLLrVals.Tokens.FORMATPARAMSTAG x
+      | T.FORMATTERTAG x => MLLrVals.Tokens.FORMATTERTAG x
+      | T.FORMATCOMMENTEND x => MLLrVals.Tokens.FORMATCOMMENTEND x
+      | T.FORMATCOMMENTSTART x => MLLrVals.Tokens.FORMATCOMMENTSTART x
+      | T.HEADERTAG x => MLLrVals.Tokens.HEADERTAG x
+      | T.DESTINATIONTAG x => MLLrVals.Tokens.DESTINATIONTAG x
+      | T.PREFIXTAG x => MLLrVals.Tokens.PREFIXTAG x
+      | T.DITTOTAG x => MLLrVals.Tokens.DITTOTAG x
+      | T.ROLLBACK x => MLLrVals.Tokens.ROLLBACK x
+      | T.COMMIT x => MLLrVals.Tokens.COMMIT x
+      | T.BEGIN x => MLLrVals.Tokens.BEGIN x
+      | T.DEFAULT x => MLLrVals.Tokens.DEFAULT x
+      | T.SET x => MLLrVals.Tokens.SET x
+      | T.UPDATE x => MLLrVals.Tokens.UPDATE x
+      | T.BY x => MLLrVals.Tokens.BY x
+      | T.ORDER x => MLLrVals.Tokens.ORDER x
+      | T.DELETE x => MLLrVals.Tokens.DELETE x
+      | T.VALUES x => MLLrVals.Tokens.VALUES x
+      | T.INTO x => MLLrVals.Tokens.INTO x
+      | T.INSERT x => MLLrVals.Tokens.INSERT x
+      | T.FROM x => MLLrVals.Tokens.FROM x
+      | T.SELECT x => MLLrVals.Tokens.SELECT x
+      | T.DESC x => MLLrVals.Tokens.DESC x
+      | T.ASC x => MLLrVals.Tokens.ASC x
+      | T.SQL x => MLLrVals.Tokens.SQL x
+      | T.SQLEXEC x => MLLrVals.Tokens.SQLEXEC x
+      | T.SQLEVAL x => MLLrVals.Tokens.SQLEVAL x
+      | T.SQLSERVER x => MLLrVals.Tokens.SQLSERVER x
+      | T.WORD x => MLLrVals.Tokens.WORD x
+      | T.WITHTYPE x => MLLrVals.Tokens.WITHTYPE x
+      | T.WITH x => MLLrVals.Tokens.WITH x
+      | T.WHERE x => MLLrVals.Tokens.WHERE x
+      | T.WHILE x => MLLrVals.Tokens.WHILE x
+      | T.VAL x => MLLrVals.Tokens.VAL x
+      | T.USE' x => MLLrVals.Tokens.USE' x
+      | T.USE x => MLLrVals.Tokens.USE x
+      | T.UNDERBAR x => MLLrVals.Tokens.UNDERBAR x
+      | T.TYVAR x => MLLrVals.Tokens.TYVAR x
+      | T.TYPE x => MLLrVals.Tokens.TYPE x
+      | T.THEN x => MLLrVals.Tokens.THEN x
+      | T.STRUCTURE x => MLLrVals.Tokens.STRUCTURE x
+      | T.STRUCT x => MLLrVals.Tokens.STRUCT x
+      | T.STRING x => MLLrVals.Tokens.STRING x
+      | T.SPECIAL x => MLLrVals.Tokens.SPECIAL x
+      | T.SIZEOF x => MLLrVals.Tokens.SIZEOF x
+      | T.SIGNATURE x => MLLrVals.Tokens.SIGNATURE x
+      | T.SIG x => MLLrVals.Tokens.SIG x
+      | T.SHARING x => MLLrVals.Tokens.SHARING x
+      | T.SEMICOLON x => MLLrVals.Tokens.SEMICOLON x
+      | T.RPAREN x => MLLrVals.Tokens.RPAREN x
+      | T.REAL x => MLLrVals.Tokens.REAL x
+      | T.RBRACKET x => MLLrVals.Tokens.RBRACKET x
+      | T.RBRACE x => MLLrVals.Tokens.RBRACE x
+      | T.REQUIRE x => MLLrVals.Tokens.REQUIRE x
+      | T.REC x => MLLrVals.Tokens.REC x
+      | T.POLYREC x => MLLrVals.Tokens.POLYREC x
+      | T.RAISE x => MLLrVals.Tokens.RAISE x
+      | T.PERIODS x => MLLrVals.Tokens.PERIODS x
+      | T.PERIOD x => MLLrVals.Tokens.PERIOD x
+      | T.NULL x => MLLrVals.Tokens.NULL x
+      | T.ORELSE x => MLLrVals.Tokens.ORELSE x
+      | T.OPEN x => MLLrVals.Tokens.OPEN x
+      | T.OPAQUE x => MLLrVals.Tokens.OPAQUE x
+      | T.OP x => MLLrVals.Tokens.OP x
+      | T.OF x => MLLrVals.Tokens.OF x
+      | T.NONFIX x => MLLrVals.Tokens.NONFIX x
+      | T.LPAREN x => MLLrVals.Tokens.LPAREN x
+      | T.LOCAL x => MLLrVals.Tokens.LOCAL x
+      | T.LET x => MLLrVals.Tokens.LET x
+      | T.LBRACKET x => MLLrVals.Tokens.LBRACKET x
+      | T.LBRACE x => MLLrVals.Tokens.LBRACE x
+      | T.INTERFACE x => MLLrVals.Tokens.INTERFACE x
+      | T.JOIN x => MLLrVals.Tokens.JOIN x
+      | T.INTLAB x => MLLrVals.Tokens.INTLAB x
+      | T.INT x => MLLrVals.Tokens.INT x
+      | T.INFIXR x => MLLrVals.Tokens.INFIXR x
+      | T.INFIX x => MLLrVals.Tokens.INFIX x
+      | T.INCLUDE x => MLLrVals.Tokens.INCLUDE x
+      | T.IMPORT x => MLLrVals.Tokens.IMPORT x
+      | T.IN x => MLLrVals.Tokens.IN x
+      | T.IF x => MLLrVals.Tokens.IF x
+      | T.ID x => MLLrVals.Tokens.ID x
+      | T.HASH x => MLLrVals.Tokens.HASH x
+      | T.HANDLE x => MLLrVals.Tokens.HANDLE x
+      | T.FUNCTOR x => MLLrVals.Tokens.FUNCTOR x
+      | T.FUN x => MLLrVals.Tokens.FUN x
+      | T.FN x => MLLrVals.Tokens.FN x
+      | T.FFIAPPLY x => MLLrVals.Tokens.FFIAPPLY x
+      | T.EXCEPTION x => MLLrVals.Tokens.EXCEPTION x
+      | T.EQTYVAR x => MLLrVals.Tokens.EQTYVAR x
+      | T.EQTYPE x => MLLrVals.Tokens.EQTYPE x
+      | T.EQ x => MLLrVals.Tokens.EQ x
+      | T.END x => MLLrVals.Tokens.END x
+      | T.ELSE x => MLLrVals.Tokens.ELSE x
+      | T.DO x => MLLrVals.Tokens.DO x
+      | T.DATATYPE x => MLLrVals.Tokens.DATATYPE x
+      | T.DARROW x => MLLrVals.Tokens.DARROW x
+      | T.COMMA x => MLLrVals.Tokens.COMMA x
+      | T.COLON x => MLLrVals.Tokens.COLON x
+      | T.CHAR x => MLLrVals.Tokens.CHAR x
+      | T.CASE x => MLLrVals.Tokens.CASE x
+      | T.BUILTIN x => MLLrVals.Tokens.BUILTIN x
+      | T.BAR x => MLLrVals.Tokens.BAR x
+      | T.ATTRIBUTE x => MLLrVals.Tokens.ATTRIBUTE x
+      | T.AT x => MLLrVals.Tokens.AT x
+      | T.ASTERISK x => MLLrVals.Tokens.ASTERISK x
+      | T.AS x => MLLrVals.Tokens.AS x
+      | T.ARROW x => MLLrVals.Tokens.ARROW x
+      | T.ANDALSO x => MLLrVals.Tokens.ANDALSO x
+      | T.AND x => MLLrVals.Tokens.AND x
+      | T.ABSTYPE x => MLLrVals.Tokens.ABSTYPE x
+      | T.EOF x => MLLrVals.Tokens.EOF x
 
-  type token =  LrParser.Token.token
   val EOF = MLLrVals.Tokens.EOF (Loc.nopos, Loc.nopos) : token
   val SEMICOLON = MLLrVals.Tokens.SEMICOLON (Loc.nopos, Loc.nopos) : token
 
@@ -77,14 +150,14 @@ struct
         mode : mode,
         lookahead : int,
         atOnce : bool,
-        lex : LrParser.Stream.stream ref,
+        streamRef : Parser.stream ref,
         first : bool ref,
         errors : UserError.errorQueue,
         errorFn : string * Loc.pos * Loc.pos -> unit
       }
 
-  fun parseError errors (msg, lpos, rpos) =
-      UserError.enqueueError errors ((lpos, rpos), ParserError.ParseError msg)
+  fun parseError errors (msg, pos1, pos2) =
+      UserError.enqueueError errors ((pos1,pos2), ParserError.ParseError msg)
 
   fun setup ({mode, read, sourceName, initialLineno}:source) =
       let
@@ -97,7 +170,8 @@ struct
                isPrelude = (mode = Prelude),
                enableMeta = (mode <> File),
                lexErrorFn = errorFn,
-               initialLineno = initialLineno}
+               initialLineno = initialLineno,
+               allow8bitId = !Control.allow8bitId}
         fun input n =
             read (!first andalso MLLex.UserDeclarations.isINITIAL lexarg, n)
         fun inputInteractive n =
@@ -106,13 +180,14 @@ struct
             else raise UserError.UserErrors (UserError.getErrors errors)
 
         val inputFn = if mode = Interactive then inputInteractive else input
-        val lex = makeLexer inputFn lexarg
+        val lexer = convert o MLLex.makeLexer inputFn lexarg
+        val stream = Parser.makeStream {lexer=lexer}
       in
         {
           mode = mode,
           lookahead = if mode = Interactive then 0 else 15,
           atOnce = (mode = File),
-          lex = ref lex,
+          streamRef = ref stream,
           first = first,
           errors = errors,
           errorFn = errorFn
@@ -131,10 +206,14 @@ struct
                 case (unit1, interface) of
                   ({interface,...}, Absyn.NOINTERFACE) => interface
                 | ({tops=nil,interface=Absyn.NOINTERFACE,...}, i) => i
-                | (_, Absyn.INTERFACE {loc=(l,r),...}) =>
-                  (errorFn ("_interface must be at the beginning of a file",
-                            l,r);
-                   Absyn.NOINTERFACE)
+                | (_, Absyn.INTERFACE symbol ) =>
+                  let
+                    val (pos1, pos2) = Symbol.symbolToLoc symbol
+                  in
+                    (errorFn ("_interface must be at the beginning of a file",
+                              pos1, pos2);
+                     Absyn.NOINTERFACE)
+                  end
           in
             (Absyn.UNIT {interface = interface,
                          tops = #tops unit1 @ tops,
@@ -142,47 +221,47 @@ struct
              lex)
           end
 
-  fun parse ({mode, lookahead, atOnce, lex, first, errors, errorFn}:input) =
+  fun parse ({mode, lookahead, atOnce, streamRef, first, errors, errorFn}:input) =
       let
         (* prevent reading this source after parse error occurred. *)
         val _ = if UserError.isEmptyErrorQueue errors
-                then () else raise Control.Bug "parse: aborted stream"
+                then () else raise Bug.Bug "parse: aborted stream"
 
-        fun parseStep lex =
+        fun parseStep stream =
             let
               val _ = first := true
-              val (tok, lex2) = LrParser.Stream.get lex
+              val (tok, stream2) = Parser.getStream stream
               val _ = first := false
             in
-              if ParserData.Token.sameToken (tok, EOF) then (Absyn.EOF, lex)
-              else if ParserData.Token.sameToken (tok, SEMICOLON) then parseStep lex2
-              else LrParse (lookahead, lex, errorFn, ())
+              if Parser.sameToken (tok, EOF) then (Absyn.EOF, stream)
+              else if Parser.sameToken (tok, SEMICOLON) then parseStep stream2
+              else Parser.parse {lookahead=lookahead, stream=stream, error=errorFn, arg=()}
             end
 
-        val lexer = !lex
-        val (result, newLex) =
+        val stream = !streamRef
+        val (result, newStream) =
             (if atOnce
-             then parseWhole errorFn parseStep lexer
-             else parseStep lexer)
-            handle LrParser.ParseError =>
+             then parseWhole errorFn parseStep stream
+             else parseStep stream)
+            handle Parser.ParseError =>
                    raise UserError.UserErrors (UserError.getErrors errors)
-        val _ = lex := newLex
+        val _ = streamRef := newStream
       in
         if UserError.isEmptyErrorQueue errors
         then () else raise UserError.UserErrors (UserError.getErrors errors);
         result
       end
 
-  fun isEOF ({mode, lookahead, atOnce, lex, first, errors, errorFn}:input) =
+  fun isEOF ({mode, lookahead, atOnce, streamRef, first, errors, errorFn}:input) =
       let
         (* prevent reading this source after parse error occurred. *)
         val _ = if UserError.isEmptyErrorQueue errors
-                then () else raise Control.Bug "parse: aborted stream"
+                then () else raise Bug.Bug "parse: aborted stream"
 
         val _ = first := true
-        val (tok, _) = LrParser.Stream.get (!lex)
+        val (tok, _) = Parser.getStream (!streamRef)
         val _ = first := false
       in
-        ParserData.Token.sameToken (tok, EOF)
+        Parser.sameToken (tok, EOF)
       end
 end

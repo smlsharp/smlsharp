@@ -1,0 +1,8 @@
+_require "smlunit-lib.smi"
+_require "basis.smi"
+_require "Sequence101.smi"
+
+structure RealArray101 =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

@@ -1,15 +1,16 @@
-_require "Word8Vector.smi"
-_require "Word8VectorSlice.smi"
-_require "Word8Array.smi"
-_require "Substring.smi"
+_require "./Word8VectorSlice.smi"
+_require "./Word8ArraySlice.smi"
+_require "./Substring.smi"
 
 structure Byte =
 struct
-  val byteToChar = SMLSharp.Word8.toChar
-  val charToByte = SMLSharp.Word8.fromChar
-  val bytesToString : Word8Vector.vector -> string
-  val stringToBytes : string -> Word8Vector.vector
-  val unpackStringVec = Word8VectorSlice.vector
-  val unpackString = Word8ArraySlice.vector
-  val packString : Word8Array.array * int * Substring.substring -> unit
+  val byteToChar = SMLSharp_Builtin.Word8.castToChar
+  val charToByte = SMLSharp_Builtin.Char.castToWord8
+  val bytesToString : SMLSharp_Builtin.Word8.word vector -> string
+  val stringToBytes : string -> SMLSharp_Builtin.Word8.word vector
+  val unpackStringVec : Word8VectorSlice.slice -> string
+  val unpackString : Word8ArraySlice.slice -> string
+  val packString : SMLSharp_Builtin.Word8.word array * int
+                   * Substring.substring
+                   -> unit
 end

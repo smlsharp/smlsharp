@@ -1,0 +1,7 @@
+_require "basis.smi"
+_require "../../control/main/Bug.ppg.smi"
+
+structure NameMangle =
+struct
+  val mangle : string list -> string
+end

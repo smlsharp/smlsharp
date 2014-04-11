@@ -1,40 +1,31 @@
-_require "../../basis/main/Word8.smi"
-_require "../../basis/main/Real32.smi"
-_require "../../basis/main/Word8Vector.smi"
-
 structure Pointer =
 struct
-  val advance = SMLSharp.Pointer.advance
+  val advance = SMLSharp_Builtin.Pointer.advance
 
   val load =
       case 'a in 'a ptr -> 'a of
-        int => SMLSharp.Pointer.deref_int
-      | word => SMLSharp.Pointer.deref_word
-      | Word8.word => SMLSharp.Pointer.deref_word8
-      | char => SMLSharp.Pointer.deref_char
-      | real => SMLSharp.Pointer.deref_real
-      | Real32.real => SMLSharp.Pointer.deref_real32
-      | 'b ptr => SMLSharp.Pointer.deref_ptr
+        int => SMLSharp_Builtin.Pointer.deref
+      | word => SMLSharp_Builtin.Pointer.deref
+      | SMLSharp_Builtin.Word8.word => SMLSharp_Builtin.Pointer.deref
+      | char => SMLSharp_Builtin.Pointer.deref
+      | real => SMLSharp_Builtin.Pointer.deref
+      | SMLSharp_Builtin.Real32.real => SMLSharp_Builtin.Pointer.deref
+      | 'b ptr => SMLSharp_Builtin.Pointer.deref
 
   val store =
       case 'a in 'a ptr * 'a -> unit of
-        int => SMLSharp.Pointer.store_int
-      | word => SMLSharp.Pointer.store_word
-      | SMLSharp.Word8.word => SMLSharp.Pointer.store_word8
-      | char => SMLSharp.Pointer.store_char
-      | real => SMLSharp.Pointer.store_real
-      | SMLSharp.Real32.real => SMLSharp.Pointer.store_real32
-      | 'b ptr => SMLSharp.Pointer.store_ptr
+        int => SMLSharp_Builtin.Pointer.store
+      | word => SMLSharp_Builtin.Pointer.store
+      | SMLSharp_Builtin.Word8.word => SMLSharp_Builtin.Pointer.store
+      | char => SMLSharp_Builtin.Pointer.store
+      | real => SMLSharp_Builtin.Pointer.store
+      | SMLSharp_Builtin.Real32.real => SMLSharp_Builtin.Pointer.store
+      | 'b ptr => SMLSharp_Builtin.Pointer.store
 
   val isNull : 'a ptr -> bool
   val NULL : unit -> 'a ptr
 
-(*
-  val sub : 'a ptr * int -> 'a
-  val update : 'a ptr * int * 'a -> unit
-*)
-
-  val importBytes : Word8.word ptr * int -> Word8Vector.vector
+  val importBytes : SMLSharp_Builtin.Word8.word ptr * int
+                    -> SMLSharp_Builtin.Word8.word vector
   val importString : char ptr -> string
-
 end

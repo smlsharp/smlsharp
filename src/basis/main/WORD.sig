@@ -1,9 +1,3 @@
-include "General.smi"
-include "StringCvt.smi"
-include "Int.smi"
-include "IntInf.smi"
-include "Word.smi"
-
 signature WORD =
 sig
   eqtype word
@@ -24,9 +18,9 @@ sig
   val orb : word * word -> word
   val xorb : word * word -> word
   val notb : word -> word
-  val << : word * SMLSharp.Word.word -> word
-  val >> : word * SMLSharp.Word.word -> word
-  val ~>> : word * SMLSharp.Word.word -> word
+  val << : word * Word.word -> word
+  val >> : word * Word.word -> word
+  val ~>> : word * Word.word -> word
   val + : word * word -> word
   val - : word * word -> word
   val * : word * word -> word

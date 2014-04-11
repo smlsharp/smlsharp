@@ -1,5 +1,3 @@
-include "General.smi"
-
 signature MONO_ARRAY =
 sig
   eqtype array

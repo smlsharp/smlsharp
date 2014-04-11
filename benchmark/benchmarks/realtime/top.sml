@@ -1,0 +1,1 @@
+val x = Main.doit ()

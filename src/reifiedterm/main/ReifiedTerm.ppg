@@ -27,6 +27,15 @@ struct
    *)
   datatype reifiedTerm
     = (*%
+         @format(con:label) con
+       *)
+      DATATYPEtyRepNOARG of string
+    | (*%
+         @format(con:label * term)
+         L8{ 2[con +1 term] }
+       *)
+      DATATYPEtyRepWITHARG of string * reifiedTerm
+    | (*%
          @format(int) int
        *)
       INTtyRep of int
@@ -72,9 +81,9 @@ struct
       FUNtyRep
     | (*%
          @format(field terms)
-         {
+         !N0{
            "{"
-              2[1 terms(field)(","+1)]
+              2[1 terms(field)(","1)]
             1
            "}"
          }
@@ -84,10 +93,10 @@ struct
       RECORDtyRep of (string * reifiedTerm) list
     | (*%
          @format(field terms)
-          {
+         !N0{
            "("
-             { 2[1 terms(field)(","+1)] }
-           1
+            1[1 terms(field)(","1)]
+            1
            ")"
           }
        *)
@@ -96,7 +105,7 @@ struct
          @format(term terms)
           {
            "["
-              2[1 terms(term)(","+1)]
+            1[1 terms(term)(","1)]
             1
            "]"
           }
@@ -106,7 +115,7 @@ struct
          @format(term * lazyArray:lazyArray)
           {
            "<"
-             2[1 lazyArray(term)(","+1)]
+             2[1 lazyArray(term)(","1)]
            1
            ">"
           }
@@ -121,18 +130,22 @@ struct
        *)
       PTRtyRep
     | (*%
-         @format(string)
-            "_"
-       *)
-      CONSTRUCTtyRep of string
-    | (*%
          @format "_"
        *)
       UNPRINTABLERep 
     | (*%
+         @format "..."
+       *)
+      ELIPSISRep 
+    | (*%
          @format "<builtin>"
        *)
       BUILTINRep
+
+  fun makeDATATYPEtyRepNOARG (string:string) =
+      DATATYPEtyRepNOARG string
+  fun makeDATATYPEtyRepWITHARG (string:string) (term:reifiedTerm) =
+      DATATYPEtyRepWITHARG (string, term)
 
   fun makeArrayTerm (reifyFun:'a -> reifiedTerm) (array:'a array) =
       let
@@ -181,9 +194,14 @@ struct
      @formatter(ifMultilines) ifMultilines
    *)
   datatype idstatus 
-    = (*%
+    = (*
          @format({name, term, ty})
-          {2[ "val" + name + "=" + term ty:ifMultilines()(\n,+) ":" + {ty:makeLines} ] }
+          {2[ "val" + name + "=" +1 term ty:ifMultilines()(\n,+) ":" + {ty:makeLines} ] }
+          {2[ "val" + name + "=" +1 term +1 ":" + ty:makeLines ] }
+       *)
+      (*%
+         @format({name, term, ty})
+          {2[ "val" + name + "=" +1 term ty:ifMultilines()(\n,+) ":" + {ty:makeLines}] }
        *)
       EXVAR of {name:string, term:reifiedTerm, ty:string}
     | (*%
@@ -370,4 +388,11 @@ struct
 
   fun printTopEnv topEnv = 
       print (TermPrintUtils.prettyPrint (format_topEnv topEnv))
+
+  fun termToString (exn:reifiedTerm) = 
+      TermPrintUtils.prettyPrint (format_reifiedTerm exn)
+  val exnToStringFunRef = ref (fn (x:exn) => "<exn>")
+  fun updateExnToString (exnToString:exn -> string) = 
+      exnToStringFunRef := exnToString
+  fun exnMessage exn = !exnToStringFunRef exn
 end

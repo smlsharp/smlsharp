@@ -1,16 +1,17 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/lib-base.smi"
+_require "basis.smi"
+_require "smlnj-lib/Util/lib-base.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-
 _require "../../absyn/main/Absyn.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "IDCalc.ppg.smi"
-_require "Types.ppg.smi"
-_require "TypesUtils.smi"
-_require "vars.smi"
-_require "CheckEq.smi"
+_require "./IDCalc.ppg.smi"
+_require "./Types.ppg.smi"
+_require "./vars.smi"
+_require "./CheckEq.smi"
+_require "./TypesBasics.smi"
+_require "./TypesUtils.smi"
 
 structure Unify =
   struct
@@ -26,12 +27,14 @@ structure Unify =
         : Types.ty
           -> {eqKind:Absyn.eq, id:Types.freeTypeVarID,
               lambdaDepth:int, tvarKind:Types.tvarKind,
+              occurresIn:Types.ty list,
               utvarOpt:IDCalc.tvar option}
           -> (Types.ty * Types.ty) list
     val lubKind
         : Types.tvKind * Types.tvKind
           -> {eqKind:Absyn.eq, id:Types.freeTypeVarID,
               lambdaDepth:Types.lambdaDepth, tvarKind:Types.tvarKind,
+              occurresIn:Types.ty list,
               utvarOpt:IDCalc.tvar option}
              * (Types.ty * Types.ty) list
     val unifyTypeEquations : bool -> (Types.ty * Types.ty) list -> unit
@@ -45,4 +48,5 @@ structure Unify =
                    -> Types.ty list * Types.ty list -> bool
 
     val instOfPolyTy : Types.ty * Types.ty list -> Types.ty
+
   end

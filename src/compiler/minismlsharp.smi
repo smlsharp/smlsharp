@@ -1,2 +1,2 @@
-_require "../basis.smi"
-_require "main/main/SimpleMain.smi"
+_require "basis.smi"
+_require "./main/main/MiniMain.smi"

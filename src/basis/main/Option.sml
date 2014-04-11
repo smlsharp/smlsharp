@@ -1,18 +1,15 @@
 (**
  * Option structure.
- * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
- * @copyright 2010, 2011, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
-_interface "Option.smi"
 
-structure Option :> OPTION
-  where type 'a option = 'a option
-=
+structure Option =
 struct
 
   datatype option = datatype option
-  exception Option = Option
+  exception Option
 
   fun getOpt (SOME value, _) = value
     | getOpt (NONE, default) = default
@@ -51,7 +48,3 @@ struct
          | SOME value => f value
 
 end
-
-val getOpt = Option.getOpt
-val isSome = Option.isSome
-val valOf = Option.valOf

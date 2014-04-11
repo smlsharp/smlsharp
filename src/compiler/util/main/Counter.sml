@@ -294,8 +294,13 @@ struct
                   )
                   CounterTimeSet.empty 
                   counterMap
+            val counters = CounterTimeSet.listItems counterTimeSet
+            val counters =
+                if List.length counters > !Control.profileMaxPhases then
+                  List.take(List.rev counters, !Control.profileMaxPhases)
+                else List.rev counters
           in
-            CounterTimeSet.listItems counterTimeSet
+            counters
           end
     fun addAccumulation counters name =
         let
@@ -353,7 +358,7 @@ struct
                 numColumn "micro" 
               | _ => ""
           fun dumpCounter indent counters =
-                concat (map toStr (listCounters counters order))
+              concat (map toStr (listCounters counters order))
         in
           indent ^ name ^ title ^ "\n" ^ 
           (dumpCounter indent counters)
@@ -456,6 +461,22 @@ struct
       #addElapsedTime ElapsedCounterSet "typecheck bitmapAN"
   val closureConversionTimeCounter =
       #addElapsedTime ElapsedCounterSet "closure conversion"
+  val callingConventionCompileTimeCounter =
+      #addElapsedTime ElapsedCounterSet "calling convention compile"
+  val anormalizeTimeCounter =
+      #addElapsedTime ElapsedCounterSet "a-normalize"
+  val machineCodeGenTimeCounter = 
+      #addElapsedTime ElapsedCounterSet "machine code gen"
+  val insertCheckGCTimeCounter = 
+      #addElapsedTime ElapsedCounterSet "insert check gc"
+  val stackAllocationTimeCounter = 
+      #addElapsedTime ElapsedCounterSet "stack allocation"
+  val llvmGenTimeCounter = 
+      #addElapsedTime ElapsedCounterSet "llvmgen"
+  val llvmEmitTimeCounter = 
+      #addElapsedTime ElapsedCounterSet "llvm emit"
+  val llvmOutputTimeCounter = 
+      #addElapsedTime ElapsedCounterSet "llvm output"
   val toYAANormalTimeCounter =
       #addElapsedTime ElapsedCounterSet "toYAANormal"
 (*

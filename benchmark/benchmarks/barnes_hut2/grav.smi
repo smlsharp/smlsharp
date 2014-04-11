@@ -1,0 +1,11 @@
+_require "basis.smi"
+_require "space.smi"
+_require "vector.smi"
+_require "vector-sig.sml"
+_require "space.sig"
+
+structure Grav =
+struct
+  val hackGrav : {body:Space.body, eps:real, root:Space.node, rsize:real, tol:real}
+                 -> {n2bterm:int, nbcterm:int, skipSelf:bool}
+end

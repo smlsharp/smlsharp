@@ -1,0 +1,354 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../util/main/BigInt_IntInf.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../name/main/CodeLabel.smi"
+_require "../../name/main/ExternSymbol.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+
+structure RuntimeCalc =
+struct
+  type loc = Loc.loc
+  type ty = Types.ty * RuntimeTypes.ty
+  type primInfo =
+      {
+        primitive : BuiltinPrimitive.primitiveRuntimeCalc,
+        ty : {boundtvars : Types.btvEnv,
+              argTyList : Types.ty list,
+              resultTy : Types.ty}
+      }
+  type varInfo = {id: VarID.id, ty: ty}
+  datatype ncconst =
+      NVINT of Int32.int
+    | NVWORD of Word32.word
+    | NVCONTAG of Word32.word
+    | NVBYTE of Word8.word
+    | NVREAL of string
+    | NVFLOAT of string
+    | NVCHAR of Char.char
+    | NVUNIT
+    | NVNULLPOINTER
+    | NVNULLBOXED
+    | NVTAG of {tag : RuntimeTypes.tag, ty : Types.ty}
+    | NVFOREIGNSYMBOL of
+      {
+        name : string,
+        ty : ty
+      }
+    | NVFUNENTRY of FunEntryLabel.id
+    | NVCALLBACKENTRY of CallbackEntryLabel.id
+    | NVTOPDATA of DataLabel.id
+    | NVEXTRADATA of ExtraDataLabel.id
+    | NVCAST of
+      {
+        value : ncconst,
+        valueTy : ty,
+        targetTy : ty,
+        runtimeTyCast : bool,
+        bitCast : bool
+      }
+  datatype ncexp =
+      NCFOREIGNAPPLY of
+      {
+        funExp : ncexp,
+        argExpList : ncexp list,
+        attributes : FFIAttributes.attributes,
+        resultTy : ty option,
+        loc : loc
+      }
+    | NCEXPORTCALLBACK of
+      {
+        codeExp : ncexp,
+        closureEnvExp : ncexp,
+        instTyvars : Types.btvEnv,
+        resultTy : ty,
+        loc : loc
+      }
+    | NCCONST of {const: ncconst, ty: ty, loc: loc}
+    | NCLARGEINT of {srcLabel: ExtraDataLabel.id, loc: loc}
+    | NCVAR of {varInfo : varInfo, loc : loc}
+    | NCEXVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        loc : loc
+      }
+    | NCPACK of
+      {
+        exp : ncexp,
+        expTy : ty,
+        loc : loc
+      }
+    | NCUNPACK of
+      {
+        exp : ncexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | NCDUP of
+      {
+        srcAddr : address,
+        resultTy : ty,
+        valueSize : ncexp,
+        loc : loc
+      }
+    | NCCOPY of
+      {
+        srcExp : ncexp,
+        dstAddr : address,
+        valueSize : ncexp,
+        loc : loc
+      }
+    | NCSTORE of
+      {
+        srcExp : ncexp,
+        srcTy : ty,
+        dstAddr : address,
+        loc : loc
+      }
+    | NCLOAD of
+      {
+        srcAddr : address,
+        resultTy : ty,
+        loc : loc
+      }
+    | NCPRIMAPPLY of
+      {
+        primInfo : primInfo,
+        argExpList : ncexp list,
+        argTyList : ty list,
+        resultTy : ty,
+        instTyList : ty list,
+        instTagList : ncexp list,
+        instSizeList : ncexp list,
+        loc : loc
+      }
+    | NCCALL of
+      {
+        codeExp : ncexp,
+        closureEnvExp : ncexp option,
+        argExpList : ncexp list,
+        resultTy : ty,
+        loc : loc
+      }
+    | NCLET of
+      {
+        boundVar: varInfo,
+	boundExp: ncexp,
+        mainExp : ncexp,
+        loc : loc
+      }
+    | NCRECORD of
+      {
+        fieldList : {fieldExp : initField,
+                     fieldTy : ty,
+                     fieldIndex : ncexp} list,
+        recordTy : ty,
+        isMutable : bool,
+        clearPad : bool,
+        allocSizeExp : ncexp,
+        bitmaps : {bitmapIndex : ncexp,
+                   bitmapExp : ncexp} list,
+        loc : loc
+      }
+    | NCMODIFY of
+      {
+        recordExp : ncexp,
+        recordTy : ty,
+        indexExp : ncexp,
+        valueExp : initField,
+        valueTy : ty,
+        loc : loc
+      }
+    | NCRAISE of
+      {
+        argExp : ncexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | NCHANDLE of
+      {
+        tryExp : ncexp,
+        exnVar : varInfo,
+        handlerExp : ncexp,
+	resultTy : ty,
+        loc : loc
+      }
+    | NCSWITCH of
+      {
+        switchExp : ncexp,
+        expTy : ty,
+        branches : {constant : ncconst, branchExp : ncexp} list,
+        defaultExp : ncexp,
+	resultTy : ty,
+        loc : loc
+      }
+    | NCLOCALCODE of
+      {
+        codeLabel : FunLocalLabel.id,
+        argVarList : varInfo list,
+        codeBodyExp : ncexp,
+        mainExp : ncexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | NCGOTO of
+      {
+        destinationLabel : FunLocalLabel.id,
+        argExpList : ncexp list,
+        resultTy : ty,
+        loc : loc
+      }
+    | NCCAST of
+      {
+        exp : ncexp,
+        expTy : ty,
+        targetTy : ty,
+        runtimeTyCast : bool,
+        bitCast : bool,
+        loc : loc
+      }
+    | NCEXPORTVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        valueExp : ncexp,
+        loc : loc
+      }
+  and address =
+      NARECORDFIELD of
+      {
+        recordExp : ncexp,
+        fieldIndex : ncexp
+      }
+    | NAARRAYELEM of
+      {
+        arrayExp : ncexp,
+        elemSize : ncexp,
+        elemIndex : ncexp
+      }
+  and initField =
+      INIT_VALUE of varInfo
+    | INIT_COPY of {srcExp: varInfo, fieldSize: varInfo}
+    | INIT_IF of {tagExp: varInfo, tagOfTy: Types.ty,
+                  ifBoxed: initField, ifUnboxed: initField}
+  type topconst = ncconst * ty
+  datatype topdata =
+      NTEXTERNVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        loc : loc
+      }
+    | NTEXPORTVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        value : topconst option,
+        loc : loc
+      }
+    | NTSTRING of
+      {
+        id : DataLabel.id,
+        string : string,
+        loc : loc
+      }
+    | NTLARGEINT of
+      {
+        id : ExtraDataLabel.id,
+        value : BigInt.int,
+        loc : loc
+      }
+    | NTRECORD of
+      {
+        id : DataLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        fieldList : {fieldExp : topconst,
+                     fieldSize : topconst,
+                     fieldIndex : topconst} list,
+        recordTy : Types.ty,
+        isMutable : bool,
+        clearPad : bool,
+        bitmaps : {bitmapIndex : topconst,
+                   bitmapExp : topconst} list,
+        loc : loc
+      }
+    | NTARRAY of
+      {
+        id : DataLabel.id,
+        elemTy : ty,
+        isMutable : bool,
+        clearPad : bool,
+        numElements : topconst,
+        initialElements : topconst list,
+        elemSizeExp : topconst,
+        tagExp : topconst,
+        loc : loc
+      }
+  datatype topdec =
+      NTFUNCTION of
+      {
+        id : FunEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        bodyExp : ncexp,
+        retTy : ty,
+        loc : loc
+      }
+    | NTCALLBACKFUNCTION of
+      {
+        id : CallbackEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        bodyExp : ncexp,
+        attributes : FFIAttributes.attributes,
+        retTy : ty option,
+        loc : loc
+      }
+  type program =
+      {
+        topdata : topdata list,
+        topdecs : topdec list,
+        topExp : ncexp
+      }
+
+  val format_ty
+      : ty -> SMLFormat.FormatExpression.expression list
+  val formatWithType_ty
+      : Types.btvKind TermFormat.btvEnv
+        -> ty -> SMLFormat.FormatExpression.expression list
+  val format_primInfo
+      : primInfo -> SMLFormat.FormatExpression.expression list
+  val formatWithType_primInfo
+      : Types.btvKind TermFormat.btvEnv
+        -> primInfo -> SMLFormat.FormatExpression.expression list
+  val format_varInfo
+      : varInfo -> SMLFormat.FormatExpression.expression list
+  val formatWithType_varInfo
+      : Types.btvKind TermFormat.btvEnv
+        -> varInfo -> SMLFormat.FormatExpression.expression list
+  val format_ncconst : ncconst -> SMLFormat.FormatExpression.expression list
+  val formatWithType_ncconst
+      : Types.btvKind TermFormat.btvEnv
+        -> ncconst -> SMLFormat.FormatExpression.expression list
+  val format_ncexp : ncexp -> SMLFormat.FormatExpression.expression list
+  val format_address : address -> SMLFormat.FormatExpression.expression list
+  val format_initField : initField -> SMLFormat.FormatExpression.expression list
+  val format_topdata : topdata -> SMLFormat.FormatExpression.expression list
+  val formatWithType_topdata
+      : topdata -> SMLFormat.FormatExpression.expression list
+  val format_topdec : topdec -> SMLFormat.FormatExpression.expression list
+  val format_program : program -> SMLFormat.FormatExpression.expression list
+  val formatWithType_program
+      : program -> SMLFormat.FormatExpression.expression list
+
+end

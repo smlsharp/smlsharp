@@ -13,6 +13,9 @@ in
 
   type format = SMLFormat.FormatExpression.expression list
 
+  fun format_lazy elementFormatter elementFn =
+      elementFormatter(elementFn ())
+
   fun makeLines s =
       let
         val fields = String.fields (fn x => x = #"\n") s
@@ -30,6 +33,7 @@ in
       in
         termList
       end
+
   fun format_int int =
       let 
         val text = Int.toString int
@@ -47,7 +51,7 @@ in
 
   fun format_string string =
       let
-        val text = "\""^ (String.toString string) ^ "\""
+        val text = "\""^ (String.toRawString string) ^ "\""
       in 
         makeToken text 
       end
@@ -111,14 +115,14 @@ in
     let
       val count = List.length list
       val (list, ellipsis) =
-          if count > C.max 
-          then (List.take(list, C.max), true)
+          if count > (!C.maxDepth)
+          then (List.take(list, !C.maxDepth), true)
           else (list, false)
     in
       if ellipsis then 
         (SMLFormat.BasicFormatters.format_list
            (elementFormatter, separator) list) 
-        @
+        @ separator @
         C.ellipsis
       else
         SMLFormat.BasicFormatters.format_list
@@ -128,12 +132,12 @@ in
 
   fun format_lazyArray (elementFormatter, separator) lazyFn =
       let
-        val (list, ellipsis) = lazyFn C.max
+        val (list, ellipsis) = lazyFn (!C.maxDepth)
       in
       if ellipsis then 
         (SMLFormat.BasicFormatters.format_list
            (elementFormatter, separator) list) 
-        @
+        @ separator @
         C.ellipsis
       else
         SMLFormat.BasicFormatters.format_list

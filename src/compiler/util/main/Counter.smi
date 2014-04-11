@@ -1,16 +1,5 @@
-(*
-_require "../../../basis/main/binary-op.smi"
-_require "../../../basis/main/String.smi"
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/General.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/IntInf.smi"
-_require "../../../basis/main/Time.smi"
-_require "../../../basis/main/StringCvt.smi"
-*)
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/binary-set-fn.smi"
+_require "basis.smi"
+_require "smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../control/main/Control.ppg.smi"
@@ -101,6 +90,14 @@ struct
   val bitmapANormalReorderTimeCounter : elapsedTimeCounter
   val typeCheckBitmapANormalTimeCounter : elapsedTimeCounter
   val closureConversionTimeCounter : elapsedTimeCounter
+  val callingConventionCompileTimeCounter : elapsedTimeCounter
+  val anormalizeTimeCounter : elapsedTimeCounter
+  val machineCodeGenTimeCounter : elapsedTimeCounter
+  val insertCheckGCTimeCounter : elapsedTimeCounter
+  val stackAllocationTimeCounter : elapsedTimeCounter
+  val llvmGenTimeCounter : elapsedTimeCounter
+  val llvmEmitTimeCounter : elapsedTimeCounter
+  val llvmOutputTimeCounter : elapsedTimeCounter
   val toYAANormalTimeCounter : elapsedTimeCounter
   val anormalOptimizationTimeCounter : elapsedTimeCounter
   val staticAllocationTimeCounter : elapsedTimeCounter

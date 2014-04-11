@@ -1,5 +1,5 @@
 _require "../../basis.smi"
-_require "../../basis/main/SMLSharpRuntime.smi"
+_require "../../basis/main/SMLSharp_Runtime.smi"
 _require "../../config/main/Config.smi"
 _require "../../ffi.smi"
 

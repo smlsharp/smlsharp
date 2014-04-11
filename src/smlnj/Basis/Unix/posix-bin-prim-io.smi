@@ -1,12 +1,10 @@
+_require "../../../basis/main/General.smi"
 _require "../../../basis/main/Int.smi"
 _require "../../../basis/main/OS.smi"
-_require "../../../basis/main/Word8Vector.smi"
-_require "../../../basis/main/SMLSharpOSFileSys.smi"
 _require "../IO/prim-io-bin.smi"
-_require "../IO/os-prim-io.sig"
 _require "../Posix/posix-io.smi"
 
-structure SMLSharpSMLNJ_PosixBinPrimIO =
+structure SMLSharp_SMLNJ_PosixBinPrimIO =
 struct
   structure PrimIO =
   struct
@@ -16,7 +14,7 @@ struct
     type array = BinPrimIO.array
     type array_slice = BinPrimIO.array_slice
     type pos = BinPrimIO.pos
-    val compare : pos * pos -> order
+    val compare : pos * pos -> General.order
     datatype reader = datatype BinPrimIO.reader
     datatype writer = datatype BinPrimIO.writer
     val openVector : vector -> reader
@@ -25,7 +23,7 @@ struct
     val augmentReader : reader -> reader
     val augmentWriter : writer -> writer
   end
-  type file_desc = SMLSharpSMLNJ_POSIX_IO.file_desc
+  type file_desc = SMLSharp_SMLNJ_POSIX_IO.file_desc
   val openRd  : string -> PrimIO.reader
   val openWr  : string -> PrimIO.writer
   val openApp : string -> PrimIO.writer

@@ -8,32 +8,33 @@ structure TypedCalcUtils = struct
 local 
   structure T = Types 
   structure TC = TypedCalc
-  structure TU = TypesUtils
+  structure TB = TypesBasics
   structure BT = BuiltinTypes
-  fun bug s = Control.Bug ("TypedCalcUtil: " ^ s)
+  fun bug s = Bug.Bug ("TypedCalcUtil: " ^ s)
   val tempVarNamePrefix = "$T_"
 in
   fun newTCVarName () =  tempVarNamePrefix ^ Gensym.gensym()
-  fun newTCVarInfo (ty:T.ty) =
+  fun newTCVarInfo loc (ty:T.ty) =
       let
         val newVarId = VarID.generate()
+        val IdString =  VarID.toString newVarId
+        val longsymbol = Symbol.mkLongsymbol [tempVarNamePrefix ^ IdString] loc
       in
-        {path=[newTCVarName()], id=newVarId, ty = ty}
+        {longsymbol=longsymbol, id=newVarId, ty = ty, opaque=false}
       end
-  fun newTCVarInfoWithPath (path:T.path,ty:T.ty) =
+  fun newTCVarInfoWithLongsymbol (longsymbol:Symbol.longsymbol,ty:T.ty) =
       let
         val newVarId = VarID.generate()
       in
-        {path=path, id=newVarId, ty = ty}
+        {longsymbol=longsymbol, id=newVarId, ty = ty, opaque=false}
       end
   fun getLocOfExp exp =
       case exp of
         TC.TPERROR => Loc.noloc
       | TC.TPCONSTANT {const, ty, loc} => loc
-      | TC.TPGLOBALSYMBOL {name, kind,ty,loc} => loc
-      | TC.TPVAR (_, loc) => loc
-      | TC.TPEXVAR (exVarInfo, loc) => loc
-      | TC.TPRECFUNVAR {loc,...} => loc
+      | TC.TPVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | TC.TPEXVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | TC.TPRECFUNVAR {var={longsymbol,...},...} => Symbol.longsymbolToLoc longsymbol
       | TC.TPFNM  {loc,...} => loc
       | TC.TPAPPM {loc,...} => loc
       | TC.TPDATACONSTRUCT {loc,...} => loc
@@ -57,22 +58,20 @@ in
       | TC.TPCAST (toexo, ty, loc) => loc
       | TC.TPFFIIMPORT {loc,...} => loc
       | TC.TPSIZEOF (_, loc) => loc
-      | TC.TPSQLSERVER {loc,...} => loc
 
   fun isAtom tpexp =
       case tpexp of
         TC.TPCONSTANT {const, loc, ty} => true
-      | TC.TPVAR (var, loc) => true
-      | TC.TPEXVAR (exVarInfo, loc) => true
-      | TC.TPRECFUNVAR {arity, loc, var} => true
-      | TC.TPGLOBALSYMBOL {kind, loc, name, ty} => true
+      | TC.TPVAR var => true
+      | TC.TPEXVAR exVarInfo => true
+      | TC.TPRECFUNVAR {arity, var} => true
       | _ => false
 
   (**
    * Make a fresh instance of a polytype and a term of that type.
    *)
   fun freshInst (ty,exp) =
-      if TU.monoTy ty then (ty,exp)
+      if TB.monoTy ty then (ty,exp)
       else
         let
           val expLoc = getLocOfExp exp
@@ -80,8 +79,8 @@ in
           case ty of
             T.POLYty{boundtvars,body,...} =>
             let 
-              val subst = TU.freshSubst boundtvars
-              val bty = TU.substBTvar subst body
+              val subst = TB.freshSubst boundtvars
+              val bty = TB.substBTvar subst body
               val newExp = 
                   case exp of
                     TC.TPDATACONSTRUCT {con,instTyList=nil,argTyOpt, argExpOpt=NONE,loc}
@@ -105,8 +104,8 @@ in
              NEW:  fn {x1:ty1,...,xn:tyn} => inst(exp {x1,...,xn})
             *)
               let
-                val argVarList = map newTCVarInfo tyList
-                val argExpList = map (fn x => TC.TPVAR (x,expLoc)) argVarList
+                val argVarList = map (newTCVarInfo expLoc) tyList
+                val argExpList = map (fn x => TC.TPVAR x) argVarList
                 val (instBodyTy, instBody) = 
                     freshInst
                       (bodyTy,
@@ -145,8 +144,8 @@ in
                                         (bindsRev, LabelEnv.insert(newFields, l, exp'))
                                       else
                                         let
-                                          val fieldVar = newTCVarInfo ty'
-                                          val fieldExp = TC.TPVAR (fieldVar, loc)
+                                          val fieldVar = newTCVarInfo loc ty'
+                                          val fieldExp = TC.TPVAR fieldVar
                                           val newFields = LabelEnv.insert(newFields, l, fieldExp)
                                           val bindsRev = (fieldVar, exp') :: bindsRev
                                         in
@@ -188,8 +187,8 @@ in
                                                     expTy=ty,
                                                     resultTy=fieldTy,
                                                     loc=expLoc})
-                                 val fieldVar = newTCVarInfo fieldTy
-                                 val fieldExp = TC.TPVAR(fieldVar, expLoc)
+                                 val fieldVar = newTCVarInfo expLoc fieldTy
+                                 val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
                                   LabelEnv.insert(flty,label,fieldTy),
@@ -216,8 +215,8 @@ in
                    end
                  else
                    let 
-                     val var = newTCVarInfo ty
-                     val varExp = TC.TPVAR (var, expLoc)
+                     val var = newTCVarInfo expLoc ty
+                     val varExp = TC.TPVAR var
                      val (bindsRev, flty,flexp) =
                          LabelEnv.foldli
                            (fn (label,fieldTy,(bindsRev, flty,flexp)) =>
@@ -230,8 +229,8 @@ in
                                              expTy=ty,
                                              resultTy=fieldTy,
                                              loc=expLoc})
-                                 val fieldVar = newTCVarInfo fieldTy
-                                 val fieldExp = TC.TPVAR(fieldVar, expLoc)
+                                 val fieldVar = newTCVarInfo expLoc fieldTy
+                                 val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
                                   LabelEnv.insert(flty,label,fieldTy),
@@ -263,13 +262,13 @@ in
    * Make a fresh instance of a polytype and a term of that type.
    *)
   fun freshToplevelInst (ty,exp) =
-      if TU.monoTy ty then (ty,exp)
+      if TB.monoTy ty then (ty,exp)
       else
         case ty of
           T.POLYty{boundtvars,body,...} =>
           let 
-            val subst = TU.freshSubst boundtvars
-            val bty = TU.substBTvar subst body
+            val subst = TB.freshSubst boundtvars
+            val bty = TB.substBTvar subst body
             val newExp = 
                 case exp of
                   TC.TPDATACONSTRUCT {con,instTyList=nil,argTyOpt, argExpOpt=NONE,loc}
@@ -289,22 +288,50 @@ in
           end
         | ty => (ty,exp)
 
+  fun toplevelInstWithInstTy (ty, exp, instTy) =
+      if TB.monoTy ty then (ty,exp)
+      else
+        case ty of
+          T.POLYty{boundtvars,body,...} =>
+          let 
+            val subst =
+                BoundTypeVarID.Map.map
+                  (fn x => instTy)
+                  boundtvars
+            val bty = TB.substBTvar subst body
+            val newExp = 
+                case exp of
+                  TC.TPDATACONSTRUCT {con,instTyList=nil,argTyOpt, argExpOpt=NONE,loc}
+                  => TC.TPDATACONSTRUCT
+                       {con=con,
+                        instTyList=map (fn x => instTy) (BoundTypeVarID.Map.listItems subst),
+                        argExpOpt=NONE, 
+                        argTyOpt = NONE,
+                        loc=loc}
+                | _ => TC.TPTAPP
+                         {exp=exp,
+                          expTy=ty,
+                          instTyList=map (fn x => instTy) (BoundTypeVarID.Map.listItems subst),
+                          loc=getLocOfExp exp}
+          in  
+            (bty,newExp)
+          end
+        | ty => (ty,exp)
+
   fun expansive tpexp =
       case tpexp of
         TC.TPCONSTANT _ => false
       | TC.TPVAR _ => false
-      | TC.TPGLOBALSYMBOL _ => false
-      | TC.TPEXVAR (exVarInfo, loc) => false
+      | TC.TPEXVAR exVarInfo => false
       | TC.TPRECFUNVAR _ => false
       | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} => false
-      | TC.TPSQLSERVER _ => false
       | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} => false
       | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} => false
       | TC.TPDATACONSTRUCT {con, instTyList, argTyOpt, argExpOpt=NONE, loc} => false
       | TC.TPEXNCONSTRUCT {exn, instTyList, argTyOpt, argExpOpt=NONE, loc} => false
-      | TC.TPDATACONSTRUCT {con={path, id, ty}, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
+      | TC.TPDATACONSTRUCT {con={longsymbol, id, ty}, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
         let
-          val tyCon = TU.tyConFromConTy ty
+          val tyCon = TB.tyConFromConTy ty
         in
           TypID.eq (#id tyCon, #id BT.refTyCon)  
           orelse expansive tpexp
@@ -342,8 +369,9 @@ in
           varPathInfoTpexpList
       | TC.TPPOLY {exp=tpexp,...} => expansive tpexp
       | TC.TPTAPP {exp, ...} => expansive exp
-      | TC.TPFFIIMPORT {ffiTy, loc, ptrExp, stubTy} => expansive ptrExp
-      | TC.TPCAST (tpexp, ty, loc) => expansive tpexp 
+      | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} => expansive ptrExp
+      | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIEXTERN _, stubTy} => false
+      | TC.TPCAST ((tpexp, expTy), ty, loc) => expansive tpexp 
       | TC.TPCASEM _ => true
       | TC.TPPRIMAPPLY _ => true
       | TC.TPOPRIMAPPLY _ => true

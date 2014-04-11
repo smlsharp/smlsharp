@@ -11,8 +11,8 @@ structure AbsynInterface =
 struct
 
   (*% *)
-  datatype constraint =
-      (*% @format ":" *)
+  datatype constraint 
+    = (*% @format ":" *)
       SIG_TRANSPARENT
     | (*% @format ":>" *)
       SIG_OPAQUE
@@ -20,27 +20,26 @@ struct
   (*% @formatter(Absyn.ty) Absyn.format_ty *)
   type ty = Absyn.ty
 
+  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
+  type symbol = Symbol.symbol
+
+  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
+  type longsymbol = Symbol.longsymbol
+
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
   (*%
    * @formatter(Absyn.tvar) Absyn.format_tvar
    *)
-  datatype overloadInstance =
-      (*% @format(exp) exp *)
+  datatype overloadInstance 
+    = (*% @format(exp) exp *)
       INST_OVERLOAD of overloadCase
-    | (*% @format({vid: v vs}) vs(v)(".") *)
-      INST_LONGVID of {vid: string list}
+    | (*% @format({longsymbol}) longsymbol *)
+      INST_LONGVID of {longsymbol: longsymbol}
 
-  withtype overloadMatch =
-      (*%
-       * @format({instTy, instance})
-       * instTy +d "=>" 2[ +1 instance ]
-       *)
-      {instTy: ty, instance: overloadInstance}
-
-  and overloadCase =
-      (*%
+  withtype overloadCase 
+    = (*%
        * @format({tyvar, expTy, matches: m ms, loc})
        * "case" +d tyvar +d "in" +d expTy +d "of" +1 ms(m)(+1 "|" +d)
        * @format:m({instTy, instance})
@@ -51,121 +50,111 @@ struct
        matches: {instTy: ty, instance: overloadInstance} list,
        loc: loc}
 
-  (*% @params(vid) *)
-  datatype valbindBody =
-      (*%
+  (*% @params(symbol) *)
+  datatype valbindBody 
+    = (*%
          @format({ty})
-           1[ vid + ":" +1 ty]
+           1[ symbol + ":" +1 ty]
        *)
       VAL_EXTERN of {ty: ty}
     | (*%
-         @format({ty, externPath:p ps})
-           1[ vid + "as" + ps(p)(".") + ":" +1 ty]
-       *)
-      VAL_EXTERN_WITHNAME of {ty: ty, externPath:string list}
-    | (*%
-         @format({path:p ps})
-           1[ vid + "=" + ps(p)(".")]
+         @format(longsymbol)
+           1[ symbol + "=" + symbol]
        *)
       (* 2012-1-4 ohori: variable alias in interface added *)
-      VALALIAS_EXTERN of {path:string list}
+      VALALIAS_EXTERN of longsymbol
     | (*%
-       * @format({builtinName, ty})
-       * R0{ vid +1 "=" +1 L2{ "_builtin" +d builtinName +1 ":" +d ty }}
+       * @format({builtinSymbol, ty})
+       * R0{ symbol +1 "=" +1 L2{ "_builtin" +d builtinSymbol +1 ":" +d ty }}
        *)
-      VAL_BUILTIN of {builtinName: string, ty: ty}
+      VAL_BUILTIN of {builtinSymbol: symbol, ty: ty}
     | (*%
        * @format(cases)
-       * R0{ vid +d "=" +1 cases }
+       * R0{ symbol +d "=" +1 cases }
        *)
       VAL_OVERLOAD of overloadCase
 
   (*% *)
-  type valbind =
-      (*%
-       * @format({vid, body, loc}) body()(vid)
+  type valbind 
+    = (*%
+       * @format({symbol, body, loc}) body()(symbol)
        *)
-      {vid: string, body: valbindBody, loc: loc}
+      {symbol: symbol, body: valbindBody, loc: loc}
 
   (*%
    * @formatter(list) TermFormat.formatSeqList
    * @formatter(Absyn.tvar) Absyn.format_tvar
    *)
-  datatype typbind =
-      (*%
-       * @format({tyvars: tv tvs, tycon, ty, loc})
-       * tvs(tv)("(","," 1,")" +d) tycon +d "="
+  datatype typbind 
+    = (*%
+       * @format({tyvars: tv tvs, symbol, ty, loc})
+       * tvs(tv)("(","," 1,")" +d) symbol +d "="
        * 2[ +1 ty]
        *)
-      TRANSPARENT of {tyvars: Absyn.tvar list, tycon: string, ty: ty, loc: loc}
+      TRANSPARENT of {tyvars: Absyn.tvar list, symbol: symbol, ty: ty, loc: loc}
     | (*%
-       * @format({tyvars: tv tvs, tycon, runtimeTy:name names, loc})
-       * tvs(tv)("(","," 1,")" +d) tycon +d "="
-       * 2[ +1 names(name)(,".",) +1 "as" +d "opaqueNoneq" ]
+       * @format({tyvars: tv tvs, symbol, runtimeTy, loc})
+       * tvs(tv)("(","," 1,")" +d) symbol +d "="
+       * 2[ +1 runtimeTy +1 "as" +d "opaqueNoneq" ]
        *)
-      OPAQUE_NONEQ of {tyvars: Absyn.tvar list, tycon: string, runtimeTy: string list, loc: loc}
+      OPAQUE_NONEQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
     | (*%
-       * @format({tyvars: tv tvs, tycon, runtimeTy:name names, loc})
-       * tvs(tv)("(","," 1,")" +d) tycon +d "="
-       * 2[ +1 names(name)(,".",) +1 "as" +d "opaqueEq" ]
+       * @format({tyvars: tv tvs, symbol, runtimeTy, loc})
+       * tvs(tv)("(","," 1,")" +d) symbol +d "="
+       * 2[ +1 runtimeTy +1 "as" +d "opaqueEq" ]
        *)
-      OPAQUE_EQ of {tyvars: Absyn.tvar list, tycon: string, runtimeTy: string list, loc: loc}
+      OPAQUE_EQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
 
 
   (*%
    * @formatter(option) TermFormat.formatOptionalOption
    *)
-  type conbind =
-      (*%
-       * @format({vid, ty: ty tyopt})
-       * R1{ vid +d 2[ tyopt(ty)("of" +1,) ] }
+  type conbind 
+    = (*%
+       * @format({symbol, ty: ty tyopt})
+       * R1{ symbol +d 2[ tyopt(ty)("of" +1,) ] }
        *)
-      {vid: string, ty: ty option}
+      {symbol: symbol, ty: ty option}
 
   (*%
    * @formatter(seq) TermFormat.formatSeqList
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(Absyn.tvar) Absyn.format_tvar
    *)
-  type datbind =
-      (*%
-         @format({tyvars: tv tvs, tycon, conbind: bind binds})
+  type datbind 
+    = (*%
+         @format({tyvars: tv tvs, symbol, conbind: bind binds})
          1[
            tvs:seq(tv)("(",",",")") 
            tvs:ifCons()(+)
-           tycon +d "="
+           symbol +d "="
            +1 
            binds(bind)(+1 "|" +d)
          ]
        *)
-      {tyvars: Absyn.tvar list, tycon: string, conbind: conbind list}
+      {tyvars: Absyn.tvar list, symbol: symbol, conbind: conbind list}
 
   (*%
    * @formatter(option) TermFormat.formatOptionalOption
    *)
-  datatype exbind =
-      (*%
-       * @format({vid, ty: ty tyopt, loc})
-       * R1{ vid +d 2[ tyopt(ty)("of" +1,) ] }
+  datatype exbind 
+    = (*%
+       * @format({symbol, ty: ty tyopt, loc})
+       * R1{ symbol +d 2[ tyopt(ty)("of" +1,) ] }
        *)
-      EXNDEF of {vid: string, ty: ty option, loc: loc}
+      EXNDEF of {symbol: symbol, ty: ty option, loc: loc}
     | (*%
-       * @format({vid, ty: ty tyopt, externPath:p ps, loc})
-       * R1{ vid +d "as" + ps(p)(".") + 2[ tyopt(ty)("of" +1,) ] }
+       * @format({symbol, longsymbol, loc})
+       * R1{ symbol +d 2[ "=" +d longsymbol ] }
        *)
-      EXNDEF_WITHNAME of {vid: string, ty: ty option, externPath:string list, loc: loc}
-    | (*%
-       * @format({vid, longvid: v vs, loc})
-       * R1{ vid +d 2[ "=" +d vs(v)(".") ] }
-       *)
-      EXNREP of {vid: string, longvid: string list, loc: loc}
+      EXNREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
 
   (*%
    * @formatter(declist) TermFormat.formatDeclList
    * @formatter(Absyn.sigexp) Absyn.format_sigexp
    *)
-  datatype idec =
-      (*%
+  datatype idec 
+    = (*%
        * @format(bind binds)
        * "val" +d binds(bind)(+1 "and" +d)
        *)
@@ -183,17 +172,17 @@ struct
        *)
       IDATATYPE of {datbind: datbind list, loc: loc}
     | (*%
-       * @format({tycon, origTycon: id ids,  loc})
-       * "datatype" +d tycon +d "="
-       * 2[ +1 "datatype" +d ids(id)(".") ]
+       * @format({symbol, longsymbol,  loc})
+       * "datatype" +d symbol +d "="
+       * 2[ +1 "datatype" +d  longsymbol ]
        *)
-      ITYPEREP of {tycon: string, origTycon: string list, loc: loc}
+      ITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
     | (*%
-       * @format({tycon, builtinName, loc})
-       * "datatype" +d tycon +d "="
-       * 2[ +1 "_builtin" +d "datatype" +d builtinName]
+       * @format({symbol, builtinSymbol, loc})
+       * "datatype" +d symbol +d "="
+       * 2[ +1 "_builtin" +d "datatype" +d builtinSymbol]
        *)
-      ITYPEBUILTIN of {tycon: string, builtinName: string,loc: loc}
+      ITYPEBUILTIN of {symbol: symbol, builtinSymbol: symbol,loc: loc}
     | (*%
        * @format(bind binds)
        * "exception" +d binds(bind)(+1 "and" +d)
@@ -205,8 +194,8 @@ struct
        *)
       ISTRUCTURE of strbind
 
-  and istrexp =
-      (*%
+  and istrexp 
+    = (*%
           @format({decs: dec decs, loc})
             "struct"
                1[ decs:declist(dec)(+1,+1) ]
@@ -215,24 +204,24 @@ struct
        *)
       ISTRUCT of {decs: idec list, loc: loc}
     | (*%
-       * @format({strPath:v vs, loc})  vs(v)(".")
+       * @format({longsymbol, loc})  longsymbol
        *)
-      ISTRUCTREP of {strPath:string list, loc: loc}
+      ISTRUCTREP of {longsymbol:longsymbol, loc: loc}
     | (*%
-       * @format({functorName, argumentPath:v vs, loc})  functorName "(" vs(v)(".") ")"
+       * @format({functorSymbol, argument, loc})  functorSymbol "(" argument ")"
        *)
-      IFUNCTORAPP of {functorName:string, argumentPath:string list, loc: loc}
+      IFUNCTORAPP of {functorSymbol:symbol, argument:longsymbol, loc: loc}
 
-  withtype strbind =
-      (*%
-          @format({strid, strexp, loc})
+  withtype strbind 
+    = (*%
+          @format({symbol, strexp, loc})
             1[ 
-              "structure" + strid  +d "=" 
+              "structure" + symbol  +d "=" 
               +1 strexp 
             ]
        *)
       {
-        strid: string,
+        symbol: symbol,
         strexp: istrexp,
         loc: loc
       }
@@ -240,25 +229,25 @@ struct
   (*%
    * @formatter(Absyn.sigexp) Absyn.format_sigexp
    *)
-  type sigbind =
-      (*%
-         @format({sigid, sigexp, loc})
-          1[ sigid +d "=" +1 sigexp]
+  type sigbind 
+    = (*%
+         @format({symbol, sigexp, loc})
+          1[ symbol +d "=" +1 sigexp]
        *)
-      {sigid: string, sigexp: Absyn.sigexp, loc: loc}
+      {symbol: symbol, sigexp: Absyn.sigexp, loc: loc}
 
   (*%
    * @formatter(Absyn.sigexp) Absyn.format_sigexp
    * @formatter(Absyn.spec) Absyn.format_spec
    *)
-  datatype funParam =
-      (*%
-         @format({strid, sigexp})
-           strid + ":" 
+  datatype funParam 
+    = (*%
+         @format({symbol, sigexp})
+           symbol + ":" 
            +1
            sigexp
        *)
-      FUNPARAM_FULL of {strid: string, sigexp: Absyn.sigexp}
+      FUNPARAM_FULL of {symbol: symbol, sigexp: Absyn.sigexp}
     | (*%
        * @format(spec) spec
        *)
@@ -267,17 +256,17 @@ struct
   (*%
    * @formatter(Absyn.sigexp) Absyn.format_sigexp
    *)
-  type funbind =
-      (*%
-         @format({funid, param, strexp, loc})
+  type funbind 
+    = (*%
+         @format({functorSymbol, param, strexp, loc})
            1[ 
-             "functor" + funid
+             "functor" + functorSymbol
              +1 "(" 1[param] ")" +d "=" 
              +1 strexp 
            ]
        *)
       {
-        funid: string,
+        functorSymbol: symbol,
         param: funParam,
         strexp: istrexp,
         loc: loc
@@ -287,8 +276,8 @@ struct
    * @formatter(BigInt.int) TermFormat.format_BigInt_dec_ML
    * @formatter(option) TermFormat.formatOptionalOption
    *)
-  datatype fixity =
-      (*% @format(x xo) "infix" xo(x)(+d,) *)
+  datatype fixity 
+    = (*% @format(x xo) "infix" xo(x)(+d,) *)
       INFIXL of string option
     | (*% @format(x xo) "infixr" xo(x)(+d,) *)
       INFIXR of string option
@@ -296,8 +285,8 @@ struct
       NONFIX
 
   (*% *)
-  datatype itopdec =
-      (*% @format(x) x *)
+  datatype itopdec 
+    = (*% @format(x) x *)
       IDEC of idec
     | (*%
         @format(bind)
@@ -305,127 +294,165 @@ struct
        *)
       IFUNDEC of funbind
     | (*%
-         @format({fixity, vids: vid vids, loc})
-           1[ fixity +d vids(vid)(+d) ]
+         @format({fixity, symbols: symbol symbols, loc})
+           1[ fixity +d symbols(symbol)(+d) ]
        *)
-      IINFIX of {fixity: fixity, vids: string list, loc: loc}
+      IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
   (*%
    * @formatter(Absyn.topdec) Absyn.format_topdec
    * @formatter(dec) TermFormat.formatDeclList
    *)
-  datatype itop =
-      (*%
-       * @format({requires: req reqs, topdecs: x xs})
+  datatype itop 
+    = (*%
+       * @format({requires: req reqs, provide: x xs})
        * reqs:dec(req)(+1,+1) xs(x)(+1)
-       * @format:req({name, loc})
-       * "_require" +d name
+       * @format:req(symbol)
+       * "_require" +d symbol
        *)
       INTERFACE of
       {
-        requires: {name: string, loc: loc} list,
-        topdecs: itopdec list
+        requires: symbol list,
+        provide: itopdec list
       }
     | (*%
        * @format({includes: n ns, topdecs: x xs})
        * ns:dec(n)(+1 "include" +d,+1 "include" +d)
        * xs(x)(+1)
-       * @format:n({name, loc}) name
+       * @format:n(symbol) symbol
        *)
       INCLUDES of
       {
-        includes: {name: string, loc: loc} list,
+        includes: symbol list,
         topdecs: Absyn.topdec list
       }
 
   (*% *)
   datatype filePlace =
-      (*% @format "stdpath" *)
+      (*% *)
       STDPATH
-    | (*% @format "localpath" *)
+    | (*% *)
       LOCALPATH
+
+(*
+  (*% @formatter(Filename.filename) Filename.format_filename *)
+  datatype source =
+      (*% @format(place * name) place +d name *)
+      LOADED of filePlace * Filename.filename
+    | (*% @format "(generated)" *)
+      GENERATED
+*)
+
+  (*% @formatter(Filename.filename) Filename.format_filename *)
+  type source = 
+      (*% @format(place * name) place +d name *)
+       filePlace * Filename.filename
 
   (*% *)
   type interfaceName =
       (*%
-       * @format({hash, sourceName, place})
-         "{"
-          1[
-            "hash:" hash
-            +1
-            "sourceName:" sourceName
-            +1
-            "place:" place
-           ]
-          1
-         "}"
+       * @format({hash, source})
+       * "hash:" +d hash
+       * +1 "source:" +d source
        *)
       {
         hash: string,
-        sourceName: string,
-        place: filePlace
+        source: source
       }
 
   (*%
+   * @formatter(decList) TermFormat.formatDeclList
    * @formatter(InterfaceID.id) InterfaceID.format_id
-   * @formatter(optlist) TermFormat.formatOptionalList
    *)
   type interfaceDec =
       (*%
-         @format({interfaceId, interfaceName, requires: req reqs,
-                  topdecs: dec decs})
-           "_interface" + interfaceId +d interfaceName +d "="
-          2[ +1 {"local" 2[ reqs:optlist(req)(+1 "_require" +d,,) ]}
-           +1 "in" 2[ +1 decs(dec)(+1) ]
-           +1 "end" ]
-         @format:req({id,loc}) id
+       * @format({interfaceId, interfaceName, requiredIds: req reqs, provideTopdecs: dec decs})
+       * "interface" +d interfaceId
+       * 2[+1 interfaceName ]
+       * 2[+1 reqs:decList(req)(+1, +1) ]
+       * +1 "in"
+       * 2[ decs:decList(dec)(+1, +1) ]
+       * +1 "end"
+       * @format:req({id, loc})
+       * "require:" +d id
        *)
       {
         interfaceId: InterfaceID.id,
         interfaceName: interfaceName,
-        requires: {id: InterfaceID.id, loc: loc} list,
-        topdecs: itopdec list
+        requiredIds: {id: InterfaceID.id, loc: loc} list,
+        provideTopdecs: itopdec list
       }
-     
-  (*% 
-   * @formatter(declist) TermFormat.formatDeclList
-   * @formatter(optlist) TermFormat.formatOptionalList
+
+  (*%
    * @formatter(InterfaceID.id) InterfaceID.format_id
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(option) TermFormat.formatOptionalOption
    *)
   type interface =
       (*%
-         @format({decls: i is, requires: r rs, interfaceName: name nameopt,
-                 topdecs: dec decs})
-        "_interface" +d nameopt(name)
-         2[ +1 "local" 2[ is:declist(i)(+1,+1) ]
-            +1 "in"
-              2[ rs:optlist(r)(+1 "_require" +d, +1,)
-                  decs:declist(dec)(+1,+1) ]
-            +1 "end" 
-           ]
-         +1 "end"
-         @format:r({id, loc}) id
+       * @format({interfaceDecs: bind binds,
+       *          provideInterfaceNameOpt:provideName provideNameOpt,
+       *          requiredIds: req reqs,
+       *          provideTopdecs: pdec pdecs})
+       * "local"
+       * 2[ binds:decList(bind)(+1, +1) ]
+       * +1 "provide"
+       * 2[ +1 provideNameOpt(provideName)("provideInterfaceName:","noProvideInterfaceName") ]
+       * 2[ pdecs:decList(pdec)(+1, +1) ]
+       * +1 "in"
+       * 2[ reqs:decList(req)(+1, +1) ]
+       * @format:req({id, loc})
+       * "require" +d id
        *)
       {
-        decls: interfaceDec list,
-        interfaceName: interfaceName option,
-        requires: {id: InterfaceID.id, loc: loc} list,
-        topdecs: itopdec list
+        interfaceDecs : interfaceDec list,
+        provideInterfaceNameOpt : interfaceName option,
+        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        provideTopdecs : itopdec list
       }
- 
+
   (*%
-   * @formatter(declist) TermFormat.formatDeclList
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(Absyn.topdec) Absyn.format_topdec
    *)
   type compileUnit =
       (*%
-       * @format({interface, topdecs: dec decs})
-       * interface
-       * decs:declist(dec)(+1,+1)
+         @format({interface:interface interfaceOpt, topdecsSource: dec decs, topdecsInclude:inc incs})
+         "compileUnit" +1
+         interfaceOpt(interface)("interface" +1,) 
+         "topdecsInclude" +1
+         2[ incs:decList(inc)(+1, +1) ]
+         "topdecsSource" +1
+         2[ decs:decList(dec)(+1, +1) ]
+         +1 "end"
+       *)
+      {
+        interface : interface option,
+        topdecsInclude : Absyn.topdec list,
+        topdecsSource : Absyn.topdec list
+      }
+
+  (*%
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(Absyn.topdec) Absyn.format_topdec
+   *)
+  type interactiveUnit =
+      (*%
+       * @format({interface, interfaceDecls: dec decs, topdecsInclude:inc incs})
+       "compileUnit" +1
+       "interface" +1
+       * interface +1
+       "interfaceDecls" +1
+       * 2[ decs:decList(dec)(+1, +1) ]
+       "topdecsInclude" +1
+       * 2[ incs:decList(inc)(+1, +1) ]
+       * +1 "end"
        *)
       {
         interface : interface,
-        topdecs : Absyn.topdec list
+        interfaceDecls : itopdec list,
+        topdecsInclude : Absyn.topdec list
       }
 
 end

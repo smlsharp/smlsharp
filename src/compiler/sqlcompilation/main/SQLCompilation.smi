@@ -1,30 +1,30 @@
-_require "../../../basis.smi"
+_require "basis.smi"
+(*
 _require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
-
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesUtils.smi"
-_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../types/main/TypesBasics.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../util/main/BigInt_IntInf.smi"
+*)
 
-(*
-SQLCompilation.sml:213.36-213.55 Error:
-  (type inference 007) operator and operand don't agree
-  operator domain: Word32.word(t47[]) * (pos(t177[]) * pos(t177[]))
-  operand: 'MH::{word(t1[]),
-                 SMLSharp.Word8.word(t2[]),
-                 ('MF::{word(t1[]), word(t1[]) option(t16[])}, 'MG) value(t24[])
-}                                                                              
-           * (pos(t177[]) * pos(t177[]))
- *)
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../builtin2/main/BuiltinTypes.smi"
+_require "../../nameevaluation/main/NormalizeTy.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+_require "../../usererror/main/UserErrorUtils.smi"
+_require "./SQLCompileError.ppg.smi"
 
-structure SQLCompilation = 
+structure SQLCompilation =
 struct
-  val compile : RecordCalc.rcdecl list -> RecordCalc.rcdecl list
+  val compile : IDCalc.topdecl -> IDCalc.topdecl
 end

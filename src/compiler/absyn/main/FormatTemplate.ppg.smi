@@ -1,0 +1,41 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+_require "Symbol.ppg.smi"
+
+structure FormatTemplate =
+struct
+  type loc = Loc.loc
+  type srcpos = int
+  type region = srcpos * srcpos
+  datatype priority = Deferred | Preferred of int
+  datatype assocDirection = Left | Neutral | Right
+  type assoc = {cut:bool, direction:assocDirection, strength:int}
+  type id = Symbol.symbol
+
+  datatype template =
+      Guard of {assocOpt:assoc option, templates:template list, loc:loc}
+    | Indicator of {newline:{priority:priority} option, space:bool, loc:loc}
+    | Instance of instance
+    | Newline of {loc:loc}
+    | StartOfIndent of {indent:int, loc:loc}
+    | EndOfIndent of {loc:loc}
+    | Term of {string:string, loc:loc}
+  and instance =
+      App of {id:id, optId:id option, args:instance list, templates:template list list, loc:loc}
+    | Atom of {id:id, optId:id option, loc:loc}
+  datatype typepat =
+      RecordTyPat of {fields:(string * typepat) list, flex:bool, loc:loc}
+    | TupleTyPat of {elements:typepat list, loc:loc}
+    | TyConTyPat of {conid:id, args:typepat list, loc:loc}
+    | TypedTyConTyPat of {conid:id, args:typepat list, typid:id, loc:loc}
+    | TypedVarTyPat of {conid:id, typid:id, loc:loc}
+    | VarTyPat of {id:id, loc:loc}
+    | WildTyPat of {loc:loc}
+  type formattag = {id:id option, templates:template list, typepat:typepat}
+
+  val format_template : template -> SMLFormat.FormatExpression.expression list
+  val format_formattag : formattag -> SMLFormat.FormatExpression.expression list
+  val format_typepat : typepat -> SMLFormat.FormatExpression.expression list
+end

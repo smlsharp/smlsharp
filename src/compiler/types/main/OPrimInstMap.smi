@@ -1,8 +1,7 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
-
+_require "basis.smi"
+_require "smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 
 structure OPrimInstMap =
 struct

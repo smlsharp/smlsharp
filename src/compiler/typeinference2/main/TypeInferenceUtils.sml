@@ -12,8 +12,10 @@ local
     structure T = Types
     structure TPC = TypedCalc
     structure TCU = TypedCalcUtils
-    structure TU = TypesUtils
-  fun bug s = Control.Bug ("TypeInferenceUtils: " ^ s)
+    structure TB = TypesBasics
+    structure P = Printers
+
+  fun bug s = Bug.Bug ("TypeInferenceUtils: " ^ s)
 
 in
   
@@ -29,54 +31,97 @@ in
       case ty of
         (T.POLYty{boundtvars, body, ...}) =>
         let 
-          val subst = TU.freshSubst boundtvars
-          val bty = TU.substBTvar subst body
+          val subst = TB.freshSubst boundtvars
+          val bty = TB.substBTvar subst body
         in  
           (bty, BoundTypeVarID.Map.listItems subst)
         end
       | _ => (ty, nil)
              
-  fun eliminateVacuousTyvars () =
-      let
-        fun instanticateTv tv =
-            case tv of
-              ref(T.TVAR {tvarKind = T.OCONSTkind (h::_), ...}) =>
-              tv := T.SUBSTITUTED h
-            | ref(T.TVAR {tvarKind = T.OPRIMkind
-                                         {instances = (h::_),...},
-                          ...}
-                 )
-              => tv := T.SUBSTITUTED h
-            | ref(T.TVAR {tvarKind = T.REC tyFields, ...}) => 
-              tv := T.SUBSTITUTED (T.RECORDty tyFields)
-            | ref(T.TVAR {tvarKind = T.UNIV, ...}) => 
-              tv := T.SUBSTITUTED (nextDummyTy())
-            | _ => ()
-      in
-        (
-         List.app instanticateTv (!T.kindedTyvarList);
-         T.kindedTyvarList := nil
-        )
-      end
+  fun instantiateTv tv =
+      case tv of
+        ref(T.TVAR {tvarKind = T.OCONSTkind (h::_), ...}) =>
+        tv := T.SUBSTITUTED h
+      | ref(T.TVAR {tvarKind = T.OPRIMkind
+                                 {instances = (h::_),...},
+                    ...}
+           )
+        => tv := T.SUBSTITUTED h
+      | ref(T.TVAR {tvarKind = T.REC tyFields, ...}) => 
+        tv := T.SUBSTITUTED (T.RECORDty tyFields)
+      | ref(T.TVAR {tvarKind = T.JOIN (tyFields,_,_, _), ...}) => 
+        tv := T.SUBSTITUTED (T.RECORDty tyFields)
+      | ref(T.TVAR {tvarKind = T.UNIV, ...}) => 
+        tv := T.SUBSTITUTED (nextDummyTy())
+      | _ => ()
 
+(*
+  fun eliminateVacuousTyvars () =
+      (
+       List.app instanticateTv (!T.kindedTyvarList);
+       T.kindedTyvarList := nil
+      )
+*)
   exception CoerceTy
   fun coerceTy (tpexp, fromTy, toTy, loc) =
-      if TU.monoTy toTy then 
+      if TB.monoTy (TB.derefTy toTy) then 
         let
           val (fromTy, tpexp) = TCU.freshInst(fromTy, tpexp)
         in
           (
-           U.unify [(fromTy, toTy)] handle U.Unify => raise CoerceTy;
+           U.unify [(fromTy, toTy)] 
+           handle U.Unify => raise CoerceTy;
            tpexp
           )
         end
       else
-        case toTy of
+        case (TB.derefTy toTy) of
           T.POLYty{boundtvars,body,...} =>
           let 
-            (* here we rely on unification to with bound tvar *)
+            (* here we rely on unification with bound tvar
+               2013-4-29 With kind constraints in user type spec, this 
+               is no longer valid.
+               Since rigid instance will not be substituted, we can
+               re-generalize in the original order to obtain the same type.
+               bug fixed. 257_recordPolyAnnotation.sml
+             *)
             val (fromBody, tpexp) = TCU.freshToplevelInst(fromTy, tpexp)
+            val subst = TB.freshRigidSubst boundtvars
+            val body = TB.substBTvar subst body
             val tpexp = coerceTy (tpexp, fromBody, body, loc)
+            val boundtvars =
+                BoundTypeVarID.Map.foldl
+                  (fn (ty, btvs) =>
+                      case TB.derefTy ty of
+                        T.TYVARty (r as ref(T.TVAR (k as {id, ...}))) =>
+                        let 
+                          val btvid = BoundTypeVarID.generate ()
+                        in
+                          (
+                           r := T.SUBSTITUTED (T.BOUNDVARty btvid);
+                           (
+                            BoundTypeVarID.Map.insert
+                              (
+                               btvs,
+                               btvid,
+                               {
+                                tvarKind = (#tvarKind k),
+                                eqKind = (#eqKind k)
+                               }
+                              )
+                           )
+                          )
+                        end
+                      | ty => 
+                        (
+                         P.print "POLY in coerceTy\n";
+                         P.printTy ty;
+                         P.print "\n";
+                         raise Bug.Bug "POLY in coerceTy"
+                        )
+                  )
+                  BoundTypeVarID.Map.empty
+                  subst
           in
             TPC.TPPOLY{btvEnv=boundtvars,
                        expTyWithoutTAbs=body,
@@ -92,14 +137,14 @@ in
                        else raise CoerceTy
                val tyPairs = ListPair.zip (tyList, fromTyList)
                val _ = U.unify tyPairs handle U.Unify => raise CoerceTy
-               val argVarList = map TCU.newTCVarInfo tyList
-               val argExpList = map (fn x => TPC.TPVAR (x,loc)) argVarList
+               val argVarList = map (TCU.newTCVarInfo loc) tyList
+               val argExpList = map TPC.TPVAR argVarList
                val bodyExp = 
                    TPC.TPAPPM {funExp=tpexp,
                                funTy=T.FUNMty(tyList, fromBodyTy),
                                argExpList=argExpList,
                                loc=loc}
-               val bodyEvp = coerceTy (bodyExp, fromBodyTy, bodyTy, loc)
+               val bodyExp = coerceTy (bodyExp, fromBodyTy, bodyTy, loc)
              in 
                TPC.TPFNM
                  {argVarList = argVarList,
@@ -127,14 +172,14 @@ in
                      (nil, fields)
                    | _ => 
                      let
-                       val var = TCU.newTCVarInfo fromTy
-                       val varExp = TPC.TPVAR (var, loc)
+                       val var = TCU.newTCVarInfo loc fromTy
+                       val varExp = TPC.TPVAR var
                      in
                        LabelEnv.foldli
                          (fn (label,fieldTy,(extraBindsRev, expFields)) =>
                              let
-                               val fieldVar = TCU.newTCVarInfo fieldTy
-                               val fieldExp = TPC.TPVAR(fieldVar, loc)
+                               val fieldVar = TCU.newTCVarInfo loc fieldTy
+                               val fieldExp = TPC.TPVAR fieldVar
                                val newBind =
                                    (fieldVar,
                                     TPC.TPSELECT
@@ -169,8 +214,8 @@ in
                            (extraBindsRev, LabelEnv.insert(newExpFields, label, newExp))
                          else
                            let
-                             val fieldVar = TCU.newTCVarInfo toTy
-                             val fieldExp = TPC.TPVAR(fieldVar, loc)
+                             val fieldVar = TCU.newTCVarInfo loc toTy
+                             val fieldExp = TPC.TPVAR fieldVar
                              val newBind = (fieldVar, newExp)
                            in
                              ((fieldVar, newExp)::extraBindsRev,

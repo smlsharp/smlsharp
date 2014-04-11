@@ -1,0 +1,8 @@
+_require "smlunit-lib.smi"
+_require "basis.smi"
+_require "SequenceSlice101.smi"
+
+structure Word8VectorSlice101 =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

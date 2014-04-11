@@ -1,5 +1,4 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/ord-key-sig.sml"
+_require "basis.smi"
 
 structure SOrd =
 struct 

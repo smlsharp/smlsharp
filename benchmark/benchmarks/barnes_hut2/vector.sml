@@ -1,0 +1,1 @@
+structure VectorN = Vector3

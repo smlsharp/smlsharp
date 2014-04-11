@@ -1,0 +1,1083 @@
+(* -*- sml -*- *)
+(**
+ * @copyright (c) 2012, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+structure MachineCode =
+struct
+
+  type loc = Loc.loc
+
+  (*%
+   * @formatter(RuntimeCalc.ty) RuntimeCalc.format_ty
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(RuntimeCalc.ty) RuntimeCalc.formatWithType_ty
+   *)
+  type ty =
+      (*% @format(ty) ty *)
+      (*% @prefix formatWithType_ @format(ty) ty()(btvEnv) *)
+      RuntimeCalc.ty
+
+  (*%
+   * @formatter(RuntimeCalc.varInfo) RuntimeCalc.format_varInfo
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(RuntimeCalc.varInfo) RuntimeCalc.formatWithType_varInfo
+   *)
+  type varInfo =
+      (*% @format(x) x *)
+      (*% @prefix formatWithType_ @format(x) x()(btvEnv) *)
+      RuntimeCalc.varInfo
+
+  (*%
+   * @formatter(BuiltinPrimitive.primitiveMachineCode)
+   * BuiltinPrimitive.format_primitiveMachineCode
+   *)
+  (*%
+   * @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(BuiltinPrimitive.primitiveMachineCode)
+   * BuiltinPrimitive.format_primitiveMachineCode
+   * @formatter(Types.btvEnv) Types.format_btvEnv
+   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
+   * @formatter(appList) TermFormat.formatAppList
+   * @formatter(Types.ty) Types.format_ty
+   *)
+  type primInfo =
+      (*%
+       * @format({primitive, ty})
+       * primitive
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({primitive, ty})
+       * L2{ primitive +1 ":" +d ty }
+       * @format:ty({boundtvars, argTyList: argTy argTys, resultTy})
+       * "[" !N0{ 2[
+       *   {boundtvars()(boundtvars:extendBtvEnv()(btvEnv)) "."}
+       *   +1
+       *   argTys:appList
+       *     (argTy()(boundtvars:extendBtvEnv()(btvEnv)))("{",",","}")
+       *   +1 "->" +d resultTy()(boundtvars:extendBtvEnv()(btvEnv))
+       * ] "]" }
+       *)
+      {
+        primitive : BuiltinPrimitive.primitiveMachineCode,
+        ty : {boundtvars : Types.btvEnv,
+              argTyList : Types.ty list,
+              resultTy : Types.ty}
+      }
+
+  (*%
+   * @formatter(RuntimeCalc.ncconst) RuntimeCalc.format_ncconst
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(RuntimeCalc.ncconst) RuntimeCalc.formatWithType_ncconst
+   *)
+  datatype mcconst = datatype RuntimeCalc.ncconst
+
+  (*%
+   * @formatter(ANormal.anvalue) ANormal.format_anvalue
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(ANormal.anvalue) ANormal.formatWithType_anvalue
+   *)
+  datatype mcvalue = datatype ANormal.anvalue
+
+  (*% *)
+  datatype objtype =
+      (*% @format(v) "UNBOXED_VECTOR(" v ")" *)
+      OBJTYPE_VECTOR of mcvalue
+    | (*% @format(v) "UNBOXED_ARRAY(" v ")" *)
+      OBJTYPE_ARRAY of mcvalue
+    | (*% @format "OBJTYPE_UNBOXED_VECTOR" *)
+      OBJTYPE_UNBOXED_VECTOR
+    | (*% @format "RECORD" *)
+      OBJTYPE_RECORD
+    | (*% @format "INTINF" *)
+      OBJTYPE_INTINF
+
+  (*%
+   * @formatter(SlotID.id) SlotID.format_id
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(SlotID.id) SlotID.format_id
+   *)
+  datatype address =
+      (*%
+       * @format(ptrExp)
+       * "[" +d "ptr" +d ptrExp "]"
+       *)
+      (*% @prefix formatWithType_
+       * @format(ptrExp)
+       * "[" +d "ptr" +d ptrExp()(btvEnv) "]"
+       *)
+      MAPTR of mcvalue
+    | (*%
+       * @format(base)
+       * "[" base "]"
+       *)
+      (*% @prefix formatWithType_
+       * @format(base)
+       * "[" base()(btvEnv) "]"
+       *)
+      MAPACKED of mcvalue
+    | (*%
+       * @format({base, offset})
+       * "[" !N0{ offset +1 "+" +d base "]" }
+       *)
+      (*% @prefix formatWithType_
+       * @format({base, offset})
+       * "[" !N0{ offset()(btvEnv) +1 "+" +d base()(btvEnv) "]" }
+       *)
+      MAOFFSET of {base: mcvalue, offset: mcvalue}
+    | (*%
+       * @format({recordExp, fieldIndex})
+       * "[" !N0{
+       *   L2{ "#" +d fieldIndex }
+       *   +1 "of"
+       *   +1 recordExp
+       * } "]"
+       *)
+      (*% @prefix formatWithType_
+       * @format({recordExp, fieldIndex})
+       * "[" !N0{
+       *   L2{ "#" +d fieldIndex()(btvEnv) }
+       *   +1 "of"
+       *   +1 recordExp()(btvEnv)
+       * } "]"
+       *)
+      MARECORDFIELD of
+      {
+        recordExp : mcvalue,
+        fieldIndex : mcvalue
+      }
+    | (*%
+       * @format({arrayExp, elemSize, elemIndex})
+       * "[" !N0{
+       *   elemIndex
+       *   +1 "*s" +d elemSize
+       *   +1 "of"
+       *   +1 arrayExp
+       * } "]"
+       *)
+      (*% @prefix formatWithType_
+       * @format({arrayExp, elemSize, elemIndex})
+       * "[" !N0{
+       *   elemIndex()(btvEnv)
+       *   +1 "*s" +d elemSize()(btvEnv)
+       *   +1 "of"
+       *   +1 arrayExp()(btvEnv)
+       * } "]"
+       *)
+      MAARRAYELEM of
+      {
+        arrayExp : mcvalue,
+        elemSize : mcvalue,
+        elemIndex : mcvalue
+      }
+
+  (*%
+   * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
+   * @formatter(ExternSymbol.id) ExternSymbol.format_id
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
+   * @formatter(appList) TermFormat.formatAppList
+   * @formatter(SlotID.id) SlotID.format_id
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
+   * @formatter(ExternSymbol.id) ExternSymbol.format_id
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
+   * @formatter(appList) TermFormat.formatAppList
+   * @formatter(SlotID.id) SlotID.format_id
+   * @formatter(objtype) format_objtype
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  datatype mcexp_mid =
+      (*%
+       * @format({resultVar, dataLabel, loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "largeint"
+       *   +1 dataLabel
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, dataLabel, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "largeint"
+       *   +1 dataLabel
+       *   ";"
+       * ] }
+       *)
+      MCLARGEINT of
+      {
+        resultVar : varInfo,       (* : (intInfTy, BOXEDty) *)
+        dataLabel : ExtraDataLabel.id,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar: var varOpt, funExp, attributes,
+       *          argExpList: arg args, handler: handle handleOpt, loc})
+       * L8{ varOpt(var)(, +d "=") 1[
+       *   +1 "ffiapply"
+       *   +1 funExp
+       *   +1 args:appList(arg)("(",",",")")
+       *   handleOpt(handle)(+1 "handle" +d,)
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar: var varOpt, funExp, attributes,
+       *          argExpList: arg args, handler: handle handleOpt, loc})
+       * L8{ varOpt(var()(btvEnv))(, +d "=") 1[
+       *   +1 "ffiapply"
+       *   +1 funExp()(btvEnv)
+       *   +1 args:appList(arg()(btvEnv))("(",",",")")
+       *   handleOpt(handle)(+1 "handle" +d,)
+       *   ";"
+       * ] }
+       *)
+      MCFOREIGNAPPLY of
+      {
+        resultVar : varInfo option,
+        funExp : mcvalue,
+        argExpList : mcvalue list,
+        attributes : FFIAttributes.attributes,
+        handler : HandlerLabel.id option,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, codeExp, closureEnvExp, instTyvars, loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "exportcallback"
+       *   +1 codeExp
+       *   +1 closureEnvExp
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, codeExp, closureEnvExp, instTyvars, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "exportcallback"
+       *   +1 codeExp()(btvEnv)
+       *   +1 closureEnvExp()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCEXPORTCALLBACK of
+      {
+        resultVar : varInfo,
+        codeExp : mcvalue,
+        closureEnvExp : mcvalue,
+        instTyvars : Types.btvEnv,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, id, loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "exvar"
+       *   +1 "@ext:" id
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, id, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "exvar"
+       *   +1 "@ext:" id
+       *   ";"
+       * ] }
+       *)
+      MCEXVAR of
+      {
+        resultVar : varInfo,       (* : ty *)
+        id : ExternSymbol.id,
+        loc : loc
+      }
+    | (*%
+       * @format({dstAddr, srcAddr, copySize, loc})
+       * L8{ 1[
+       *   "memcpy_field"
+       *   +1 dstAddr
+       *   +1 srcAddr
+       *   +1 copySize
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({dstAddr, srcAddr, copySize, loc})
+       * L8{ 1[
+       *   "memcpy_field"
+       *   +1 dstAddr()(btvEnv)
+       *   +1 srcAddr()(btvEnv)
+       *   +1 copySize()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCMEMCPY_FIELD of
+      {
+        dstAddr : address,         (* : valueTy addr *)
+        srcAddr : address,         (* : valueTy addr *)
+        copySize : mcvalue,        (* : SIZEOF(valueTy) *)
+        loc : loc
+      }
+    | (*%
+       * @format({dstAddr, srcAddr, numElems, elemSize, loc})
+       * L8{ 1[
+       *   "memmove_unboxed_array"
+       *   +1 dstAddr
+       *   +1 srcAddr
+       *   +1 numElems
+       *   +1 elemSize
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({dstAddr, srcAddr, numElems, elemSize, loc})
+       * L8{ 1[
+       *   "memmove_unboxed_array"
+       *   +1 dstAddr()(btvEnv)
+       *   +1 srcAddr()(btvEnv)
+       *   +1 numElems()(btvEnv)
+       *   +1 elemSize()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCMEMMOVE_UNBOXED_ARRAY of
+      {
+        dstAddr : address,         (* : valueTy addr *)
+        srcAddr : address,         (* : valueTy addr *)
+        numElems : mcvalue,
+        elemSize : mcvalue,        (* : SIZEOF(elemTy) *)
+        loc : loc
+      }
+    | (*%
+       * @format({dstArray, dstIndex, srcArray, srcIndex, numElems, loc})
+       * L8{ 1[
+       *   "memmove_boxed_array"
+       *   +1 dstArray
+       *   +1 dstIndex
+       *   +1 srcArray
+       *   +1 srcIndex
+       *   +1 numElems
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({dstArray, dstIndex, srcArray, srcIndex, numElems, loc})
+       * L8{ 1[
+       *   "memmove_boxed_array"
+       *   +1 dstArray()(btvEnv)
+       *   +1 dstIndex()(btvEnv)
+       *   +1 srcArray()(btvEnv)
+       *   +1 srcIndex()(btvEnv)
+       *   +1 numElems()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCMEMMOVE_BOXED_ARRAY of
+      {
+        srcArray : mcvalue,       (* elemTy array *)
+        dstArray : mcvalue,       (* elemTy array *)
+        srcIndex : mcvalue,
+        dstIndex : mcvalue,
+        numElems : mcvalue,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, objType, payloadSize, allocSize, loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "alloc"
+       *   +1 !N0{ "(" objType "," +1 payloadSize ")" }
+       *   +1 allocSize
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, objType, payloadSize, allocSize, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "alloc"
+       *   +1 !N0{ "(" objType "," +1 payloadSize()(btvEnv) ")" }
+       *   +1 allocSize()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCALLOC of
+      {
+        resultVar : varInfo,       (* : mem *)
+        objType : objtype,
+        payloadSize : mcvalue,
+        allocSize : mcvalue,       (* : SIZEOF(mem) *)
+        loc : loc
+      }
+    | (*%
+       * @format
+       * "disable gc;"
+       *)
+      (*% @prefix formatWithType_
+       * @format
+       * "disable gc;"
+       *)
+      MCDISABLEGC
+    | (*%
+       * @format
+       * "enable gc;"
+       *)
+      (*% @prefix formatWithType_
+       * @format
+       * "enable gc;"
+       *)
+      MCENABLEGC
+    | (*%
+       * @format
+       * "check gc;"
+       *)
+      (*% @prefix formatWithType_
+       * @format
+       * "check gc;"
+       *)
+      MCCHECKGC
+    | (*%
+       * @format({resultVar, recordExp, loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "recorddup"
+       *   +1 recordExp
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, recordExp, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "recorddup"
+       *   +1 recordExp()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCRECORDDUP of
+      {
+        resultVar : varInfo,       (* : mem *)
+        recordExp : mcvalue,
+        loc : loc
+      }
+    | (*%
+       * @format({recordExp, recordSize, loc})
+       * L8{ 1[
+       *   "bzero"
+       *   +1 recordExp
+       *   +1 recordSize
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({recordExp, recordSize, loc})
+       * L8{ 1[
+       *   "bzero"
+       *   +1 recordExp()(btvEnv)
+       *   +1 recordSize()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCBZERO of
+      {
+        recordExp : mcvalue,
+        recordSize : mcvalue,
+        loc : loc
+      }
+    | (*%
+       * @format({slotId, value, loc})
+       * L8{ 1[
+       *   "save" + "slot"
+       *   +1 slotId
+       *   +1 value
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({slotId, value, loc})
+       * L8{ 1[
+       *   "save" + "slot"
+       *   +1 slotId
+       *   +1 value()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCSAVESLOT of
+      {
+        slotId : SlotID.id,        (* : tau slot *)
+        value : mcvalue,           (* : tau *)
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, slotId, loc})
+       * L8{ 1[
+       *   resultVar +d "="
+       *   +1 "load" + "slot"
+       *   +1 slotId
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, slotId, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "load" + "slot"
+       *   +1 slotId
+       *   ";"
+       * ] }
+       *)
+      MCLOADSLOT of
+      {
+        resultVar : varInfo,
+        slotId : SlotID.id,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, srcAddr, loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "load"
+       *   +1 srcAddr
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, srcAddr, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "load"
+       *   +1 srcAddr()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCLOAD of
+      {
+        resultVar : varInfo,
+        srcAddr : address,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, primInfo, argExpList: arg args, argTyList,
+       *          resultTy,
+       *          instTyList, instTagList: tag tags, instSizeList: size sizes,
+       *          loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "prim" +d primInfo
+       *   +1 "/t" +d tags:appList(tag)("(",",",")")
+       *   +1 "/s" +d sizes:appList(size)("(",",",")")
+       *   +1 args:appList(arg)("(",",",")")
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, primInfo, argExpList: arg args, argTyList,
+       *          resultTy,
+       *          instTyList, instTagList: tag tags, instSizeList: size sizes,
+       *          loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "prim" +d primInfo()(btvEnv)
+       *   +1 "/t" +d tags:appList(tag()(btvEnv))("(",",",")")
+       *   +1 "/s" +d sizes:appList(size()(btvEnv))("(",",",")")
+       *   +1 args:appList(arg()(btvEnv))("(",",",")")
+       *   ";"
+       * ] }
+       *)
+      MCPRIMAPPLY of
+      {
+        resultVar : varInfo,
+        primInfo : primInfo,
+        argExpList : mcvalue list,
+        argTyList : ty list,
+        resultTy : ty,
+        instTyList : ty list,
+        instTagList : mcvalue list,
+        instSizeList : mcvalue list,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, exp, expTy, targetTy, loc})
+       * L8{ resultVar +d "=" 1[
+       *   +1 "bitcast"
+       *   +1 exp
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, exp, expTy, targetTy, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   +1 "bitcast"
+       *   +1 exp()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCBITCAST of
+      {
+        resultVar : varInfo,
+        exp : mcvalue,
+        expTy : ty,
+        targetTy : ty,
+        loc : loc
+      }
+    | (*%
+       * @format({resultVar, codeExp, closureEnvExp: clsEnv clsEnvOpt,
+       *          argExpList: arg args, tail, handler: handle handleOpt, loc})
+       * L8{ resultVar +d "=" 1[
+       *   tail()(+1 "tail",)
+       *   +1 "call"
+       *   +1 codeExp
+       *   +1 clsEnvOpt(clsEnv)(,)
+       *   +1 args:appList(arg)("(",",",")")
+       *   handleOpt(handle)(+1 "handle" +d,)
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({resultVar, codeExp, closureEnvExp: clsEnv clsEnvOpt,
+       *          argExpList: arg args, tail, handler: handle handleOpt, loc})
+       * L8{ resultVar()(btvEnv) +d "=" 1[
+       *   tail()(+1 "tail",)
+       *   +1 "call"
+       *   +1 codeExp()(btvEnv)
+       *   +1 clsEnvOpt(clsEnv()(btvEnv))(,)
+       *   +1 args:appList(arg()(btvEnv))("(",",",")")
+       *   handleOpt(handle)(+1 "handle" +d,)
+       *   ";"
+       * ] }
+       *)
+      MCCALL of
+      {
+        resultVar : varInfo,
+        codeExp : mcvalue,
+        closureEnvExp : mcvalue option,
+        argExpList : mcvalue list,
+        handler : HandlerLabel.id option,
+        tail : bool,
+        loc : loc
+      }
+    | (*%
+       * @format({srcExp, srcTy, dstAddr, barrier, loc})
+       * L8{ 1[
+       *   "store"
+       *   +1 barrier()("barrier",)
+       *   +1 dstAddr
+       *   +1 srcExp
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({srcExp, srcTy, dstAddr, barrier, loc})
+       * L8{ 1[
+       *   "store"
+       *   +1 barrier()("barrier",)
+       *   +1 dstAddr()(btvEnv)
+       *   +1 srcExp()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCSTORE of
+      {
+        srcExp : mcvalue,
+        srcTy : ty,
+        dstAddr : address,
+        barrier : bool,
+        loc : loc
+      }
+    | (*%
+       * @format({id, ty, valueExp, loc})
+       * L8{ 1[
+       *   "export"
+       *   +1 "@ext:" id
+       *   +1 valueExp
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({id, ty, valueExp, loc})
+       * L8{ 1[
+       *   "export"
+       *   +1 "@ext:" id
+       *   +1 valueExp()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCEXPORTVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        valueExp : mcvalue,
+        loc : loc
+      }
+
+  (*%
+   * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
+   * @formatter(caseList) TermFormat.formatCaseList
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
+   * @formatter(caseList) TermFormat.formatCaseList
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  datatype mcexp_last =
+      (*%
+       * @format({value, loc})
+       * L8{ 1[
+       *   "ret"
+       *   +1 value
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({value, loc})
+       * L8{ 1[
+       *   "ret"
+       *   +1 value()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCRETURN of
+      {
+        value : mcvalue,
+        loc : loc
+      }
+    | (*%
+       * @format({argExp, loc})
+       * L8{ 1[
+       *   "raise"
+       *   +1 argExp
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({argExp, loc})
+       * L8{ 1[
+       *   "raise"
+       *   +1 argExp()(btvEnv)
+       *   ";"
+       * ] }
+       *)
+      MCRAISE of
+      {
+        argExp : mcvalue,
+        loc : loc
+      }
+    | (*%
+       * @format({nextExp, exnVar, id, handlerExp, loc})
+       * L8{ 1[ "try" +1 id ] }
+       * +1 nextExp
+       * L8{ 1[ "handle" +1 id d +1 exnVar +d "=" ] }
+       * +1 handlerExp 
+       *)
+      (*% @prefix formatWithType_
+       * @format({nextExp, exnVar, id, handlerExp, loc})
+       * L8{ 1[ "try" +1 id ] }
+       * +1 nextExp()(btvEnv)
+       * L8{ 1[ "handle" +1 id d +1 exnVar()(btvEnv) +d "=" ] }
+       * +1 handlerExp()(btvEnv)
+       *)
+      MCHANDLER of
+      {
+        nextExp : mcexp,
+        id : HandlerLabel.id,
+        exnVar : varInfo,
+        handlerExp : mcexp,
+        loc : loc
+      }
+    | (*%
+       * @format({switchExp, expTy, branches: branch branches, default, loc})
+       * L8{ 1[
+       *   "case"
+       *   +1 switchExp
+       *   +1 "of"
+       * ] }
+       * branches:caseList(branch)
+       *   (2[+1], +1 "|" +d, !N0{ "_" +d "=>" +1 "@L:" default })
+       * @format:branch(constant * branch)
+       * !N0{ constant +d "=>" +1 "@L:" branch }
+       *)
+      (*% @prefix formatWithType_
+       * @format({switchExp, expTy, branches: branch branches, default, loc})
+       * L8{ 1[
+       *   "case"
+       *   +1 switchExp()(btvEnv)
+       *   +1 "of"
+       * ] }
+       * branches:caseList(branch)
+       *   (2[+1], +1 "|" +d, !N0{ "_" +d "=>" +1 "@L:" default })
+       * +1 "end;"
+       * @format:branch(constant * branch)
+       * !N0{ constant()(btvEnv) +d "=>" +1 "@L:" branch }
+       *)
+      MCSWITCH of
+      {
+        switchExp : mcvalue,
+        expTy : ty,
+        branches : (mcconst * FunLocalLabel.id) list,
+        default : FunLocalLabel.id,
+        loc : loc
+      }
+    | (*%
+       * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
+       * L8{ 1[
+       *   "available"
+       *   +1 "@L:" id
+       *   ";"
+       * ] }
+       * +1 nextExp
+       * +1
+       * L8{ 1[
+       *   recursive()("rec" +d,)
+       *   "@L:" id
+       *   +1 "(" { args(arg)(+1) ")" }
+       *   +d "="
+       * ] }
+       * +1 bodyExp
+       *)
+      (*% @prefix formatWithType_
+       * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
+       * L8{ 1[
+       *   "available"
+       *   +1 "@L:" id
+       *   ";"
+       * ] }
+       * +1 nextExp()(btvEnv)
+       * +1
+       * L8{ 1[
+       *   recursive()("rec" +d,)
+       *   "@L:" id
+       *   +1 "(" { args(arg()(btvEnv))(+1) ")" }
+       *   +d "="
+       * ] }
+       * +1 bodyExp()(btvEnv)
+       *)
+      MCLOCALCODE of
+      {
+        id : FunLocalLabel.id,
+        recursive : bool,
+        argVarList : varInfo list,
+        bodyExp : mcexp,
+        nextExp : mcexp,
+        loc : loc
+      }
+    | (*%
+       * @format({id, argList: arg args, loc})
+       * L8{ 1[
+       *   "goto"
+       *   +1 "@L:" id
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({id, argList: arg args, loc})
+       * L8{ 1[
+       *   "goto"
+       *   +1 "@L:" id
+       *   +1 "(" !N0{ args(arg()(btvEnv))("," +1) ")" }
+       *   ";"
+       * ] }
+       *)
+      MCGOTO of
+      {
+        id : FunLocalLabel.id,
+        argList : mcvalue list,
+        loc : loc
+      }
+    | (*%
+       * @format
+       * "unreachable;"
+       *)
+      (*% @prefix formatWithType_
+       * @format
+       * "unreachable;"
+       *)
+      MCUNREACHABLE
+
+  withtype mcexp =
+      (*%
+       * @format(mid mids * last)
+       * mids:decList(mid)(+1,+1)
+       * +1 last
+       *)
+      (*% @prefix formatWithType_
+       * @format(mid mids * last)
+       * mids:decList(mid()(btvEnv))(+1,+1)
+       * +1 last()(btvEnv)
+       *)
+      mcexp_mid list * mcexp_last
+
+  (*%
+   * @formatter(RuntimeCalc.topdata) RuntimeCalc.format_topdata
+   *)
+  (*% @prefix formatWithType_
+   * @params(btvEnv)
+   * @formatter(RuntimeCalc.topdata) RuntimeCalc.formatWithType_topdata
+   *)
+  datatype topdata = datatype RuntimeCalc.topdata
+
+  val formatSlotMap =
+      TermFormat.formatEnclosedMap
+        SlotID.format_id
+        SlotID.Map.listItemsi
+
+  (*%
+   * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
+   * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
+   * @formatter(SlotID.Map.map) formatSlotMap
+   * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
+   * @formatter(option) SmlppgUtil.formatOptWithDefault
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(appList) TermFormat.formatAppList
+   *)
+  (*% @prefix formatWithType_
+   * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
+   * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
+   * @formatter(makeBtvEnv) TermFormat.makeBtvEnv
+   * @formatter(SlotID.Map.map) formatSlotMap
+   * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
+   * @formatter(option) SmlppgUtil.formatOptWithDefault
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(appList) TermFormat.formatAppList
+   *)
+  datatype topdec =
+      (*%
+       * @format({symbol, frameSlots: slot slots, bodyExp, loc})
+       * "@top:" symbol
+       * + "="
+       * 1[
+       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
+       *   +1 bodyExp
+       * ]
+       *)
+      (*% @prefix formatWithType_
+       * @format({symbol, frameSlots: slot slots, bodyExp, loc})
+       * "@top:" symbol
+       * + "="
+       * 1[
+       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
+       *   +1 bodyExp()()
+       * ]
+       *)
+      MTTOPLEVEL of
+      {
+        symbol : string,
+        frameSlots : RuntimeTypes.ty SlotID.Map.map,
+        bodyExp : mcexp,
+        loc : loc
+      }
+    | (*%
+       * @format({id, tyvarKindEnv, argVarList: arg args,
+       *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
+       *          retTy, loc})
+       * "@fun:" id
+       * + envOpt(env)("_")
+       * + args:appList(arg)("(",",",")")
+       * + "="
+       * 1[
+       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
+       *   +1 bodyExp
+       * ]
+       *)
+      (*% @prefix formatWithType_
+       * @format({id, tyvarKindEnv, argVarList: arg args,
+       *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
+       *          retTy, loc})
+       * "@fun:" id
+       * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
+       * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
+       * + "="
+       * 1[
+       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
+       *   +1 bodyExp()(tyvarKindEnv:makeBtvEnv)
+       * ]
+       *)
+      MTFUNCTION of
+      {
+        id : FunEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        frameSlots : RuntimeTypes.ty SlotID.Map.map,
+        bodyExp : mcexp,
+        retTy : ty,
+        loc : loc
+      }
+    | (*%
+       * @format({id, tyvarKindEnv, argVarList: arg args,
+       *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
+       *          attributes, retTy, cleanupHandler, loc})
+       * "@callback:" id
+       * + envOpt(env)("_")
+       * + args:appList(arg)("(",",",")")
+       * + "="
+       * 1[
+       *   +1 "cleanup" + cleanupHandler
+       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
+       *   +1 bodyExp
+       * ]
+       *)
+      (*% @prefix formatWithType_
+       * @format({id, tyvarKindEnv, argVarList: arg args,
+       *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
+       *          attributes, retTy, cleanupHandler, loc})
+       * "@callback:" id
+       * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
+       * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
+       * + "="
+       * 1[
+       *   +1 "cleanup" + cleanupHandler
+       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
+       *   +1 bodyExp()(tyvarKindEnv:makeBtvEnv)
+       * ]
+       *)
+      MTCALLBACKFUNCTION of
+      {
+        id : CallbackEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        frameSlots : RuntimeTypes.ty SlotID.Map.map,
+        bodyExp : mcexp,
+        attributes : FFIAttributes.attributes,
+        retTy : ty option,
+        cleanupHandler : HandlerLabel.id,
+        loc : loc
+      }
+
+  (*%
+   * @formatter(decList) TermFormat.formatDeclList
+   *)
+  (*% @prefix formatWithType_
+   * @formatter(decList) TermFormat.formatDeclList
+   *)
+  type program =
+      (*%
+       * @format({topdata: datum data, topdecs: dec decs})
+       * data:decList(datum)(+1,+1)
+       * decs:decList(dec)(+1,+1)
+       *)
+      (*% @prefix formatWithType_
+       * @format({topdata: datum data, topdecs: dec decs})
+       * data:decList(datum)(+1,+1)
+       * decs:decList(dec)(+1,+1)
+       *)
+      {
+        topdata : topdata list,
+        topdecs : topdec list
+      }
+
+end

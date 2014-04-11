@@ -17,7 +17,12 @@ struct
   structure TL = TypedLambda
   structure CT = ConstantTerm
   structure BT = BuiltinTypes
+  structure BP = BuiltinPrimitive
   structure T = Types
+
+  structure E = EmitTypedLambda
+
+  val errors = UserError.createQueue ()
 
   fun mapi f l =
       let
@@ -34,333 +39,61 @@ struct
         {path = ["$" ^ VarID.toString id], ty = ty, id = id} : TL.varInfo
       end
 
+  fun ConTag const =
+      CT.CONTAG (Word32.fromInt const)
+
   fun exnConTy exnCon =
       case exnCon of
-        TC.EXN {ty,...} => ty
-      | TC.EXEXN {ty,...} => ty
+        RC.EXN {ty,...} => ty
+      | RC.EXEXN {ty,...} => ty
 
-  fun PolyTy f =
+  fun extractTyCon ty =
+      case TypesBasics.derefTy ty of
+        T.CONSTRUCTty {tyCon, args} => tyCon
+      | _ => raise Bug.Bug "extractTyCon"
+
+  fun unwrapLet (TL.TLLET {localDecl, mainExp, loc}) =
       let
-        val tid = BoundTypeVarID.generate ()
-        val tvarKind = {eqKind=Absyn.NONEQ, tvarKind=T.UNIV}
+        val (decls, mainExp) = unwrapLet mainExp
       in
-        T.POLYty {boundtvars = BoundTypeVarID.Map.singleton (tid, tvarKind),
-                  body = f (T.BOUNDVARty tid)}
+        (E.Decl (localDecl, loc) :: decls, mainExp)
+      end
+    | unwrapLet mainExp = (nil, mainExp)
+
+  fun explodeRecordExp exp =
+      let
+        val expTy =
+            case exp of
+              E.Exp (_, ty) => ty
+            | E.Cast (_, ty) => ty
+            | _ => raise Bug.Bug "explodeRecordExp"
+        val fieldTys =
+            case TypesBasics.derefTy expTy of
+              T.RECORDty fieldTys => fieldTys
+            | _ => raise Bug.Bug "explodeRecordExp: not a record"
+      in
+        case exp of
+          E.Exp (TL.TLRECORD {isMutable = false, fields, recordTy, ...}, _) =>
+          (nil,
+           map (fn (label, exp) =>
+                   E.Exp (exp, case LabelEnv.find (fieldTys, label) of
+                                 SOME ty => ty
+                               | NONE => raise Bug.Bug "explodeRecordExp"))
+               (LabelEnv.listItemsi fields))
+        | _ =>
+          let
+            val vid = EmitTypedLambda.newId ()
+          in
+            ([(vid, exp)],
+             map (fn (label, ty) => E.Select (label, E.Var vid))
+                 (LabelEnv.listItemsi fieldTys))
+          end
       end
 
-  fun RefTy elemTy =
-      T.CONSTRUCTty {tyCon = BT.refTyCon,
-                     args = [elemTy]}
-
-  fun BoolTy () =
-      T.CONSTRUCTty {tyCon = BT.boolTyCon, args = []}
-
-  val contagTy = BT.wordTy 
-
-  fun ConstTermTag const =
-      CT.WORD (Word32.fromInt const)
-
-  fun If {condExp, thenExp, elseExp, loc} =
-      TL.TLSWITCH
-        {switchExp = TL.TLCAST {exp = condExp,
-                                targetTy = contagTy, (* bool *)
-                                loc = loc},
-         expTy = contagTy,
-         branches = [{constant = ConstTermTag 0, exp = elseExp}],
-         defaultExp = thenExp,
-         loc = loc}
-
-  (* expression term constructors with type computation *)
-  local
-    datatype binds =
-        BIND of (TL.varInfo * (TL.loc -> TL.tlexp)) list
-    datatype expTerm =
-        EXP of (TL.loc -> TL.tlexp) * T.ty
-      | VALUE of binds * (TL.loc -> TL.tlexp) * T.ty
-
-    fun makeLet (BIND nil, exp) = exp
-      | makeLet (BIND binds, exp) =
-        fn loc =>
-           let
-             val binds =
-                 map (fn (v, e) => TL.TLVAL {boundVar = v,
-                                             boundExp = e loc,
-                                             loc = loc})
-                     binds
-           in
-             case exp loc of
-               TL.TLLET {localDeclList=binds2, mainExp, loc} =>
-               TL.TLLET {localDeclList = binds @ binds2,
-                         mainExp = mainExp,
-                         loc = loc}
-             | mainExp =>
-               TL.TLLET {localDeclList = binds,
-                         mainExp = mainExp,
-                         loc = loc}
-           end
-
-    fun asEXP (EXP x) = x
-      | asEXP (VALUE (binds, exp, ty)) = (makeLet (binds, exp), ty)
-
-    fun asVALUE (VALUE x) = x
-      | asVALUE (EXP (exp, ty)) =
-        let
-          val var = newVar ty
-        in
-          (BIND [(var, exp)], fn loc => TL.TLVAR {varInfo=var, loc=loc}, ty)
-        end
-
-    fun isValueExp tlexp =
-        case tlexp of
-          TL.TLFOREIGNAPPLY _ => false
-        | TL.TLEXPORTCALLBACK _ => false
-        | TL.TLCONSTANT _ => true
-        | TL.TLGLOBALSYMBOL _ => true
-        | TL.TLTAGOF _ => true
-        | TL.TLSIZEOF _ => true
-        | TL.TLINDEXOF _ => true
-        | TL.TLVAR _ => true
-        | TL.TLEXVAR _ => true
-        | TL.TLPRIMAPPLY _ => false
-        | TL.TLAPPM _ => false
-        | TL.TLLET _ => false
-        | TL.TLRECORD _ => false
-        | TL.TLSELECT _ => false
-        | TL.TLMODIFY _ => false
-        | TL.TLRAISE _ => false
-        | TL.TLHANDLE _ => false
-        | TL.TLFNM _ => false
-        | TL.TLPOLY _ => false
-        | TL.TLTAPP _ => false
-        | TL.TLSWITCH _ => false
-        | TL.TLCAST {exp,...} => isValueExp exp
-
-  in
-
-  val bindNothing = BIND nil
-
-  fun pack (tlexp, ty) =
-      if isValueExp tlexp
-      then VALUE (BIND nil, fn _ => tlexp, ty)
-      else EXP (fn _ => tlexp, ty)
-
-  fun unpack (term, loc) =
-      #1 (asEXP term) loc
-
-  fun valueForm term =
-      let
-        val (binds, exp, ty) = asVALUE term
-      in
-        (binds, VALUE (BIND nil, exp, ty))
-      end
-
-  fun termTy (EXP (exp, ty)) = ty
-    | termTy (VALUE (binds, exp, ty)) = ty
-
-  fun bind (var, EXP (exp, ty)) =
-      BIND [(var, exp)]
-    | bind (var, VALUE (BIND binds, exp, ty)) =
-      BIND (binds @ [(var, exp)])
-
-  fun Let (binds, tlexp, loc) =
-      makeLet (binds, fn _ => tlexp) loc
-
-  fun LET (binds, EXP (exp, ty)) =
-      EXP (makeLet (binds, exp), ty)
-    | LET (BIND binds2, VALUE (BIND binds1, exp, ty)) =
-      VALUE (BIND (binds1 @ binds2), exp, ty)
-
-  fun CAST (ty, EXP (exp, _)) =
-      EXP (fn loc => TL.TLCAST {exp = exp loc, targetTy = ty, loc = loc}, ty)
-    | CAST (ty, VALUE (binds, exp, _)) =
-      VALUE (binds,
-             fn loc => TL.TLCAST {exp = exp loc, targetTy = ty, loc = loc},
-             ty)
-
-  fun CONST (const, ty) =
-      VALUE (BIND nil, fn loc => TL.TLCONSTANT {value=const, loc=loc}, ty)
-
-  fun VAR varInfo =
-      VALUE (BIND nil, fn loc => TL.TLVAR {varInfo=varInfo, loc=loc},
-             #ty varInfo)
-
-  fun EXVAR exVarInfo =
-      VALUE (BIND nil, fn loc => TL.TLEXVAR {exVarInfo=exVarInfo, loc=loc},
-             #ty exVarInfo)
-
-  fun PRIMAPPLY (primInfo, instTyList, argTermList) =
-      let
-        val args = map (fn x => #1 (asEXP x)) argTermList
-        val retTy = TypesUtils.tpappTy (#ty primInfo, instTyList)
-      in
-        EXP (fn loc =>
-                TL.TLPRIMAPPLY {primInfo = primInfo,
-                                instTyList = instTyList,
-                                argExpList = map (fn e => e loc) args,
-                                loc = loc},
-             retTy)
-      end
-
-  fun IF {condExp, thenExp, elseExp} =
-      let
-        val (condExp, _) = asEXP condExp
-        val (thenExp, retTy) = asEXP thenExp
-        val (elseExp, _) = asEXP elseExp
-      in
-        EXP (fn loc => If {condExp = condExp loc,
-                           thenExp = thenExp loc,
-                           elseExp = elseExp loc,
-                           loc = loc},
-             retTy)
-      end
-
-  fun RECORD (labels, terms) =
-      let
-        val (binds, fields, tys) =
-            ListPair.foldrEq
-              (fn (label, term, (binds, fields, tys)) =>
-                  let
-                    val (BIND binds2, exp, ty) = asVALUE term
-                  in
-                    (binds2 @ binds,
-                     LabelEnv.insert (fields, label, exp),
-                     LabelEnv.insert (tys, label, ty))
-                  end)
-              (nil, LabelEnv.empty, LabelEnv.empty)
-              (labels, terms)
-        val recordTy = T.RECORDty tys
-      in
-        LET (BIND binds,
-             EXP (fn loc => TL.TLRECORD
-                              {isMutable = false,
-                               fields = LabelEnv.map (fn f => f loc) fields,
-                               recordTy = recordTy,
-                               loc = loc},
-                  recordTy))
-      end
-
-  fun TUPLE terms =
-      RECORD (mapi (fn (i,_) => Int.toString i) terms, terms)
-
-  fun SELECT (label, term) =
-      let
-        val (exp, ty) = asEXP term
-        val fields =
-            case TypesUtils.derefTy ty of
-              T.RECORDty fields => fields
-            | _ => raise Control.Bug "SELECT: type error"
-        val fieldTy =
-            case LabelEnv.find (fields, label) of
-              SOME ty => ty
-            | NONE => raise Control.Bug "SELECT: label not found"
-      in
-        EXP (fn loc =>
-                case exp loc of
-                  TL.TLRECORD {isMutable=false, fields, ...} =>
-                  (
-                    case LabelEnv.find (fields, label) of
-                      NONE => raise Control.Bug "SELECT: field not found"
-                    | SOME exp => exp
-                  )
-                | exp =>
-                  TL.TLSELECT
-                    {recordExp = exp,
-                     indexExp = TL.TLINDEXOF {label = label,
-                                              recordTy = ty,
-                                              loc = loc},
-                     label = label,
-                     recordTy = ty,
-                     resultTy = fieldTy,
-                     loc = loc},
-             fieldTy)
-      end
-
-  end (* local *)
-
-  fun explodeRecordExp term =
-      let
-        val (binds, recordTerm) =
-            case unpack (term, Loc.noloc) of
-              TL.TLRECORD {isMutable=false,...} => (bindNothing, term)
-            | _ => valueForm term
-        val fields =
-            case TypesUtils.derefTy (termTy recordTerm) of
-              T.RECORDty tys =>
-              map (fn label => SELECT (label, recordTerm))
-                  (LabelEnv.listKeys tys)
-            | _ => [recordTerm]
-      in
-        (binds, fields)
-      end
-
-  fun explodeRecordTy ty =
-      case TypesUtils.derefTy ty of
+  fun explodeRecordTy recordTy =
+      case TypesBasics.derefTy recordTy of
         T.RECORDty fields => ListPair.unzip (LabelEnv.listItemsi fields)
-      | _ => raise Control.Bug "explodeRecordTy"
-
-  fun tupleTy tys =
-      T.RECORDty 
-        (
-         List.foldl 
-           (fn ((key, item), m) => LabelEnv.insert (m, key, item)) LabelEnv.empty 
-           (mapi (fn (i,ty) => (Int.toString i, ty)) tys)
-        )
-
-  fun splitLet tlexp =
-      case tlexp of
-        TL.TLLET {localDeclList, mainExp, loc} =>
-        (fn mainExp => TL.TLLET {localDeclList = localDeclList,
-                                 mainExp = mainExp,
-                                 loc = loc},
-         mainExp)
-      | _ => (fn exp => exp, tlexp)
-
-  fun splitLetOpt NONE = (fn exp => exp, NONE)
-    | splitLetOpt (SOME exp) =
-      let
-        val (letFn, exp) = splitLet exp
-      in
-        (letFn, SOME exp)
-      end
-
-  fun TagConst const =
-      CONST (ConstTermTag const, BT.wordTy)
-
-  fun NullConst () =
-      CONST (CT.NULLBOXED, BT.boxedTy)
-
-  fun IsNull term =
-      PRIMAPPLY ({primitive = BuiltinPrimitive.IdentityEqual,
-                  ty = T.FUNMty ([BT.boxedTy, BT.boxedTy], BoolTy ())},
-                 nil,
-                 [CAST (BT.boxedTy, term), NullConst ()])
-
-  fun ExnTagEqual (exp1, exp2) =
-      PRIMAPPLY ({primitive = BuiltinPrimitive.IdentityEqual,
-                  ty = T.FUNMty ([BT.exntagTy, BT.exntagTy], BoolTy ())},
-                 nil,
-                 [exp1, exp2])
-
-  fun RefAlloc elemTerm =
-      let
-        val primTy = PolyTy (fn tv => T.FUNMty ([tv], RefTy tv))
-      in
-        PRIMAPPLY ({primitive = BuiltinPrimitive.Ref_alloc, ty = primTy},
-                   [termTy elemTerm],
-                   [elemTerm])
-      end
-
-  fun RefDeref refTerm =
-      let
-        val primTy = PolyTy (fn tv => T.FUNMty ([RefTy tv], tv))
-        val elemTy = case TypesUtils.derefTy (termTy refTerm) of
-                       T.CONSTRUCTty {args=[ty],...} => ty
-                     | _ => raise Control.Bug "RefDeref"
-      in
-        PRIMAPPLY ({primitive = BuiltinPrimitive.Ref_deref, ty = primTy},
-                   [elemTy],
-                   [refTerm])
-      end
+      | ty => raise Bug.Bug "explodeRecordTy"
 
   (*
    * "layout" represents how to implement each data constructor of a datatype.
@@ -376,23 +109,29 @@ struct
    * LAYOUT_TAGGED_TAGONLY:
    * If all variants have no argument, they can be distinguished only by
    * a tag integer.
-   *   datatype foo = Foo                  --> int
-   *                | Bar                  --> int
-   *                | Baz                  --> int
+   *   datatype foo = Foo                  --> contagty
+   *                | Bar                  --> contagty
+   *                | Baz                  --> contagty
    *
    * LAYOUT_BOOL:
    * If there are just two variant and both of them have no argument,
    * these variants can be implemented like "bool";
    * one variant is 0, and another is any integer other than 0.
-   *   datatype bool = false               --> int (0)
-   *                 | true                --> int (other than 0)
+   *   datatype bool = false               --> contagty (0)
+   *                 | true                --> contagty (other than 0)
+   *
+   * (FIXME: if true is implemented as "other than 0", it may collapse
+   *         dynamic bit-by-bit equality check. Currently we allow only
+   *         "1" as the tag of "true".)
    *
    * LAYOUT_UNIT:
    * If there is just one variant with no argument, this can be implemented
    * like "unit"; it can be implemented with an arbitrary integer.
-   *   datatype foo = Foo                  --> int (any integer is OK)
+   *   datatype foo = Foo                  --> contagty (any integer is OK)
    *
-   * (FIXME: LAYOUT_BOOL and LAYOUT_UNIT may make equality check difficult.)
+   * (FIXME: if any tag integer is accepted, it may collapse dynamic
+   *         bit-by-bit equality check. Currently we allow only "0" as
+   *         the tag of this layout.)
    *
    * LAYOUT_ARGONLY:
    * If there is just one variant with an argument, no tag is needed.
@@ -423,7 +162,7 @@ struct
   datatype taggedLayout =
       TAGGED_RECORD of {tagMap: int SEnv.map}
     | TAGGED_TAGONLY of {tagMap: int SEnv.map}
-    | TAGGED_OR_NULL of {tagMap: int SEnv.map}
+    | TAGGED_OR_NULL of {tagMap: int SEnv.map, nullName: string}
 
   datatype layout =
       LAYOUT_TAGGED of taggedLayout
@@ -433,56 +172,40 @@ struct
     | LAYOUT_ARG_OR_NULL
     | LAYOUT_REF
 
-  fun checkRepresentation (runtimeTy, layout) =
+  fun checkRepresentation (ty, layout) =
       case layout of
-        LAYOUT_TAGGED (TAGGED_RECORD _) => runtimeTy = BuiltinTypeNames.BOXEDty
-      | LAYOUT_TAGGED (TAGGED_TAGONLY _) => runtimeTy = BuiltinTypeNames.WORDty
-      | LAYOUT_TAGGED (TAGGED_OR_NULL _) => runtimeTy = BuiltinTypeNames.BOXEDty
-      | LAYOUT_BOOL _ => runtimeTy = BuiltinTypeNames.WORDty
-      | LAYOUT_UNIT => runtimeTy = BuiltinTypeNames.WORDty
-      | LAYOUT_ARGONLY => runtimeTy = BuiltinTypeNames.BOXEDty
-      | LAYOUT_ARG_OR_NULL => runtimeTy = BuiltinTypeNames.BOXEDty
-      | LAYOUT_REF => runtimeTy = BuiltinTypeNames.BOXEDty
+        LAYOUT_TAGGED (TAGGED_RECORD _) => ty = BuiltinTypeNames.BOXEDty
+      | LAYOUT_TAGGED (TAGGED_TAGONLY _) => ty = BuiltinTypeNames.CONTAGty
+      | LAYOUT_TAGGED (TAGGED_OR_NULL _) => ty = BuiltinTypeNames.BOXEDty
+      | LAYOUT_BOOL _ => ty = BuiltinTypeNames.CONTAGty
+      | LAYOUT_UNIT => ty = BuiltinTypeNames.CONTAGty
+      | LAYOUT_ARGONLY => ty = BuiltinTypeNames.BOXEDty
+      | LAYOUT_ARG_OR_NULL => ty = BuiltinTypeNames.BOXEDty
+      | LAYOUT_REF => ty = BuiltinTypeNames.REFty
 
-  fun countBool l =
-      let
-        fun count (t, f, nil) = {t=t, f=f}
-          | count (t, f, true::l) = count (t + 1, f, l)
-          | count (t, f, false::l) = count (t, f + 1, l)
-      in
-        count (0, 0, l)
-      end
+  fun categolizeConSet conSet =
+      SEnv.foldri
+        (fn (name, {hasArg=true}, {hasArg, noArg}) =>
+            {hasArg = name::hasArg, noArg = noArg}
+          | (name, {hasArg=false}, {hasArg, noArg}) =>
+            {hasArg = hasArg, noArg = name::noArg})
+        {hasArg = nil, noArg = nil}
+        conSet
 
   fun decomposeDataconTy ty =
-      case TypesUtils.derefTy ty of
-        T.POLYty {boundtvars, body} => decomposeDataconTy body
-      | T.FUNMty ([argTy], retTy) => (SOME argTy, retTy)
-      | T.FUNMty _ => raise Control.Bug "dataconTy"
+      case TypesBasics.derefTy ty of
+        T.FUNMty ([argTy], retTy) => (SOME argTy, retTy)
       | T.CONSTRUCTty _ => (NONE, ty)
-      | _ => raise Control.Bug "decomposeDataconTy"
+      | _ => raise Bug.Bug "decomposeDataconTy"
 
-  fun dataconArgTy ty =
-      case decomposeDataconTy ty of
-        (SOME argTy, retTy) => argTy
-      | _ => raise Control.Bug "dataconArgTy"
-
-  fun extractDatatypeTyCon ty =
-      (* ty must be the type of either data or data constructor. *)
-      case TypesUtils.derefTy ty of
-        T.POLYty {boundtvars, body} => extractDatatypeTyCon body
-      | T.FUNMty (_, retTy) => extractDatatypeTyCon ty  (* constructor type *)
-      | T.CONSTRUCTty {tyCon, args} =>
-        (
-          case #dtyKind tyCon of
-            T.DTY => tyCon
-          (* 2012-15 ohori: bug 208_constraint.sml
-             tyCon is a datatype if dtykind is either 
-             DTY or OPAQUE.
-           *)
-          | T.OPAQUE _ => tyCon
-          | _ => raise Control.Bug "extractDatatypeTyCon: not a datatype"
-        )
-      | _ => raise Control.Bug "extractTyCon"
+  fun dataconArgTy ({ty, ...}:RecordCalc.conInfo) =
+      case TypesBasics.derefTy ty of
+        T.POLYty {boundtvars, body} =>
+        (case TypesBasics.derefTy body of
+           T.FUNMty ([argTy], retTy) => argTy
+         | _ => raise Bug.Bug "dataconArgTy")
+      | T.FUNMty ([argTy], retTy) => argTy
+      | _ => raise Bug.Bug "dataconArgTy"
 
   fun makeTagMap conSet =
       #2 (SEnv.foldli (fn (key, _, (i, map)) =>
@@ -490,13 +213,13 @@ struct
                       (1, SEnv.empty)
                       conSet)
 
-  fun datatypeLayout ({id, conSet, runtimeTy, ...}:T.tyCon) =
+  fun datatypeLayout (tyCon as {id, conSet, runtimeTy, ...}:T.tyCon) =
       let
         val layout =
             case map #hasArg (SEnv.listItems conSet) of
-              nil => raise Control.Bug "datatypeLayout: no variant"
+              nil => raise Bug.Bug "datatypeLayout: no variant"
             | [true] =>
-              if TypID.eq (id, #id BT.refTyCon)
+              if TypID.eq (#id BT.refTyCon, id)
               then LAYOUT_REF
               else LAYOUT_ARGONLY
             | [false] => LAYOUT_UNIT
@@ -506,190 +229,195 @@ struct
                 then LAYOUT_BOOL {falseName = "false"}
                 else case SEnv.firsti conSet of
                        SOME (name, _) => LAYOUT_BOOL {falseName = name}
-                     | NONE => raise Control.Bug "datatypeLayout: BOOL"
+                     | NONE => raise Bug.Bug "datatypeLayout: BOOL"
               )
-            | hasArgList =>
-              case countBool hasArgList of
-                {t=0, f=_} =>
+            | _ =>
+              case categolizeConSet conSet of
+                {hasArg=nil, noArg=_} =>
                 LAYOUT_TAGGED (TAGGED_TAGONLY {tagMap = makeTagMap conSet})
-              | {t=1, f=1} => LAYOUT_ARG_OR_NULL
-              | {t=_, f=1} =>
-                LAYOUT_TAGGED (TAGGED_OR_NULL {tagMap = makeTagMap conSet})
-              | {t=_, f=_} =>
+              | {hasArg=[_], noArg=[_]} =>
+                LAYOUT_ARG_OR_NULL
+              | {hasArg=_, noArg=[nullName]} =>
+                LAYOUT_TAGGED (TAGGED_OR_NULL {tagMap = makeTagMap conSet,
+                                               nullName = nullName})
+              | {hasArg=_, noArg=_} =>
                 LAYOUT_TAGGED (TAGGED_RECORD {tagMap = makeTagMap conSet})
       in
         if checkRepresentation (runtimeTy, layout)
         then layout
-        else raise Control.Bug "datatypeLayout"
+        else raise Bug.Bug "datatypeLayout"
       end
 
-  fun lookupConTag (taggedLayout, {path, ty, ...}:T.conInfo) =
+  fun lookupConTag (taggedLayout, path) =
       let
-        fun lookup tagMap =
-            case SEnv.find (tagMap, List.last path) of
-              NONE => raise Control.Bug "dataconTag"
-            | SOME tag => tag : int
+        val tagMap =
+            case taggedLayout of
+              TAGGED_TAGONLY {tagMap} => tagMap
+            | TAGGED_RECORD {tagMap} => tagMap
+            | TAGGED_OR_NULL {tagMap, nullName} => tagMap
       in
-        case taggedLayout of
-          TAGGED_TAGONLY {tagMap} => lookup tagMap
-        | TAGGED_RECORD {tagMap} => lookup tagMap
-        | TAGGED_OR_NULL {tagMap} =>
-          case decomposeDataconTy ty of
-            (SOME _, _) => lookup tagMap
-          | (NONE, _) => 0
+        case SEnv.find (tagMap, List.last path) of
+          NONE => raise Bug.Bug ("dataconTag " ^ String.concatWith "." path)
+        | SOME tag => tag : int
       end
 
-  fun extractConTag (layout, term) =
-      case layout of
-        TAGGED_TAGONLY _ => CAST (contagTy, term)
-      | TAGGED_RECORD _ => SELECT ("1", CAST (tupleTy [contagTy], term))
-      | TAGGED_OR_NULL _ =>
+  fun extractConTag (taggedLayout, exp) =
+      case taggedLayout of
+        TAGGED_TAGONLY _ => E.Cast (exp, BT.contagTy)
+      | TAGGED_RECORD _ => E.Select ("1", E.Cast (exp, E.tupleTy [BT.contagTy]))
+      | TAGGED_OR_NULL {tagMap, nullName} =>
         let
-          val (binds, term) = valueForm term
+          val vid = EmitTypedLambda.newId ()
         in
-          LET (binds, 
-               IF {condExp = IsNull term,
-                   thenExp = TagConst 0,
-                   elseExp =
-                     SELECT ("1", CAST (tupleTy [contagTy], term))})
+          E.Let ([(vid, exp)],
+                 E.If (E.IsNull (E.Cast (exp, BT.boxedTy)),
+                       E.ConTag (lookupConTag (taggedLayout, [nullName])),
+                       E.Select ("1", E.Cast (exp, E.tupleTy [BT.contagTy]))))
         end
 
-  fun composeTaggedCon (taggedLayout, conInfo, argTerm) =
+  fun composeTaggedCon (taggedLayout, conInfo, argExpOpt, retTy) =
       let
-        val tag = TagConst (lookupConTag (taggedLayout, conInfo))
+        val tagExp = E.ConTag (lookupConTag (taggedLayout, #path conInfo))
       in
-        case argTerm of
-          NONE => TUPLE [tag]
-        | SOME term =>
+        case argExpOpt of
+          NONE => E.Cast (E.Tuple [tagExp], retTy)
+        | SOME argExp =>
           let
-            val (binds, terms) = explodeRecordExp term
+            val (binds, exps) =
+                case TypesBasics.derefTy (dataconArgTy conInfo) of
+                  T.RECORDty _ => explodeRecordExp argExp
+                | _ => (nil, [argExp])
           in
-            LET (binds, TUPLE (tag::terms))
+            E.Let (binds, E.Cast (E.Tuple (tagExp :: exps), retTy))
           end
       end
 
-  fun decomposeTaggedCon (conInfo:T.conInfo, dataTerm) expectTy =
+  fun extractTaggedConArg (conInfo:RecordCalc.conInfo, dataExp) argTy =
       let
-        val (fieldLabels, fieldTys) =
-            case TypesUtils.derefTy (dataconArgTy (#ty conInfo)) of
-              T.RECORDty _ => explodeRecordTy expectTy
-            | _ => (nil, [expectTy])
-        val fieldTys = contagTy :: fieldTys
-        val dataTerm = CAST (tupleTy fieldTys, dataTerm)
-        val (binds, exps) = explodeRecordExp dataTerm
+        val (labels, fieldTys) =
+            case TypesBasics.derefTy (dataconArgTy conInfo) of
+              T.RECORDty _ => explodeRecordTy argTy
+            | _ => (nil, [argTy])
+        val dataExp = E.Cast (dataExp, E.tupleTy (BT.contagTy :: fieldTys))
+        val (binds, exps) = explodeRecordExp dataExp
       in
-        case (fieldLabels, exps) of
-          (nil, [_, term]) => LET (binds, term)
-        | (nil, _) => raise Control.Bug "decomposeTaggedCon"
-        | (_, _::t) => LET (binds, RECORD (fieldLabels, t))
-        | (_, nil) => raise Control.Bug "decomposeTaggedCon"
+        case (labels, exps) of
+          (nil, [_, exp]) => E.Let (binds, exp)
+        | (nil, _) => raise Bug.Bug "extractTaggedConArg"
+        | (_::_, _::t) => E.Let (binds, E.Record (labels, t))
+        | (_::_, nil) => raise Bug.Bug "extractTaggedConArg"
       end
 
-  fun composeArgOnlyCon (argTerm, conArgTy) =
-      case TypesUtils.derefTy conArgTy of
-        T.RECORDty _ => argTerm
-      | _ => TUPLE [argTerm]
+  fun needPack conInfo =
+      case TypesBasics.derefTy (dataconArgTy conInfo) of
+        T.RECORDty _ => false
+      | T.FUNMty _ => false
+      | T.CONSTRUCTty {tyCon, ...} =>
+        (case BuiltinTypeNames.runtimeTy (#runtimeTy tyCon) of
+           RuntimeTypes.BOXEDty => false
+         | _ => true)
+      | _ => true
 
-  fun decomposeArgOnlyCon (conInfo:T.conInfo, dataTerm) expectTy =
-      case TypesUtils.derefTy (dataconArgTy (#ty conInfo)) of
-        T.RECORDty _ => CAST (expectTy, dataTerm)
-      | _ => SELECT ("1", CAST (tupleTy [expectTy], dataTerm))
+  fun composeArgOnlyCon (conInfo, argExp, retTy) =
+      if needPack conInfo
+      then E.Cast (E.Tuple [argExp], retTy)
+      else E.Cast (argExp, retTy)
 
-  fun composeCon (conInfo:T.conInfo, instTyList, argExpOpt) =
+  fun extractArgOnlyConArg (conInfo, dataExp) argTy =
+      if needPack conInfo
+      then E.Select ("1", E.Cast (dataExp, E.tupleTy [argTy]))
+      else E.Cast (dataExp, argTy)
+
+  fun composeCon (conInfo:RC.conInfo, instTyList, argExpOpt) =
       let
-        val conInstTy = TypesUtils.tpappTy (#ty conInfo, instTyList)
+        val conInstTy = TypesBasics.tpappTy (#ty conInfo, instTyList)
         val (argTy, retTy) = decomposeDataconTy conInstTy
-        val argTerm =
-            case (argTy, argExpOpt) of
+        val argExpOpt =
+            case (argExpOpt, argTy) of
               (NONE, NONE) => NONE
-            | (SOME argTy, SOME argExp) => SOME (pack (argExp, argTy))
-            | _ => raise Control.Bug "composeCon"
-        val (conArgTy, conRetTy) = decomposeDataconTy (#ty conInfo)
-        val tyCon = extractDatatypeTyCon conRetTy
-        val layout = datatypeLayout tyCon
-        val term =
-            case layout of
-              LAYOUT_TAGGED (layout as TAGGED_RECORD _) =>
-              composeTaggedCon (layout, conInfo, argTerm)
-            | LAYOUT_TAGGED (layout as TAGGED_TAGONLY _) =>
-              (
-                case argTerm of
-                  SOME _ => raise Control.Bug "composeCon: TAGGED_TAGONLY"
-                | NONE => TagConst (lookupConTag (layout, conInfo))
-              )
-            | LAYOUT_TAGGED (layout as TAGGED_OR_NULL _) =>
-              (
-                case argTerm of
-                  NONE => NullConst ()
-                | SOME _ => composeTaggedCon (layout, conInfo, argTerm)
-              )
-            | LAYOUT_BOOL {falseName} =>
-              (
-                case argTerm of
-                  SOME _ => raise Control.Bug "composeCon: LAYOUT_BOOL"
-                | NONE =>
-                  if List.last (#path conInfo) = falseName
-                  then TagConst 0 else TagConst 1
-              )
-            | LAYOUT_UNIT =>
-              (
-                case argTerm of
-                  SOME _ => raise Control.Bug "composeCon: LAYOUT_UNIT"
-                | NONE => TagConst 0
-              )
-            | LAYOUT_ARGONLY =>
-              (
-                case (argTerm, conArgTy) of
-                  (SOME term, SOME argTy) => composeArgOnlyCon (term, argTy)
-                | _ => raise Control.Bug "composeCon: LAYOUT_ARGONLY"
-              )
-            | LAYOUT_ARG_OR_NULL =>
-              (
-                case (argTerm, conArgTy) of
-                  (NONE, NONE) => NullConst ()
-                | (SOME term, SOME argTy) => composeArgOnlyCon (term, argTy)
-                | _ => raise Control.Bug "composeCon: LAYOUT_ARG_OR_NULL"
-              )
-            | LAYOUT_REF =>
-              (
-                case argTerm of
-                  NONE => raise Control.Bug "composeCon: LAYOUT_REF"
-                | SOME term => RefAlloc term
-              )
+            | (SOME argExp, SOME argTy) => SOME (E.Exp (argExp, argTy))
+            | _ => raise Bug.Bug "composeCon"
+        val layout = datatypeLayout (extractTyCon retTy)
       in
-        CAST (retTy, term)
+        case layout of
+          LAYOUT_TAGGED (layout as TAGGED_RECORD _) =>
+          composeTaggedCon (layout, conInfo, argExpOpt, retTy)
+        | LAYOUT_TAGGED (layout as TAGGED_TAGONLY _) =>
+          (
+            case argExpOpt of
+              SOME _ => raise Bug.Bug "composeCon: TAGGED_TAGONLY"
+            | NONE =>
+              E.Cast (E.ConTag (lookupConTag (layout, #path conInfo)), retTy)
+          )
+        | LAYOUT_TAGGED (layout as TAGGED_OR_NULL _) =>
+          (
+            case argExpOpt of
+              NONE => E.Cast (E.Null, retTy)
+            | SOME _ => composeTaggedCon (layout, conInfo, argExpOpt, retTy)
+          )
+        | LAYOUT_BOOL {falseName} =>
+          (
+            case argExpOpt of
+              SOME _ => raise Bug.Bug "composeCon: LAYOUT_BOOL"
+            | NONE =>
+              E.Cast (if List.last (#path conInfo) = falseName
+                      then E.ConTag 0 else E.ConTag 1,
+                      retTy)
+          )
+        | LAYOUT_UNIT =>
+          (
+            case argExpOpt of
+              SOME _ => raise Bug.Bug "composeCon: LAYOUT_UNIT"
+            | NONE => E.Cast (E.ConTag 0, retTy)
+          )
+        | LAYOUT_ARGONLY =>
+          (
+            case argExpOpt of
+              SOME exp => composeArgOnlyCon (conInfo, exp, retTy)
+            | _ => raise Bug.Bug "composeCon: LAYOUT_ARGONLY"
+          )
+        | LAYOUT_ARG_OR_NULL =>
+          (
+            case argExpOpt of
+              NONE => E.Cast (E.Null, retTy)
+            | SOME exp => composeArgOnlyCon (conInfo, exp, retTy)
+          )
+        | LAYOUT_REF =>
+          (
+            case (argExpOpt, argTy) of
+              (SOME argExp, SOME argTy) => E.Ref_alloc (argTy, argExp)
+            | _ => raise Bug.Bug "composeCon: LAYOUT_REF"
+          )
       end
 
-  fun makeBranchExp (argTermFn, NONE, branchExp, loc) = branchExp
-    | makeBranchExp (argTermFn, SOME argVar, branchExp, loc) =
-      Let (bind (argVar, argTermFn (#ty argVar)), branchExp, loc)
+  fun makeBranch argFn (NONE, branchExp, resultTy) =
+      E.Exp (branchExp, resultTy)
+    | makeBranch argFn (SOME argVar, branchExp, resultTy) =
+      E.TLLet ([E.Bind (argVar, argFn (#ty argVar))],
+               E.Exp (branchExp, resultTy))
 
-  fun switchCon (dataTerm, ruleList, defaultExp, loc) =
+  fun switchCon (dataExp, dataTy, ruleList, defaultExp, resultTy) =
       let
-        val tyCon = extractDatatypeTyCon (termTy dataTerm)
+        val tyCon = extractTyCon dataTy
         val layout = datatypeLayout tyCon
       in
         case layout of
           LAYOUT_TAGGED layout =>
           let
-            val (binds, dataTerm) = valueForm dataTerm
-            val tagTerm = extractConTag (layout, dataTerm)
-            val branches =
-                map
-                  (fn (conInfo, argVar, exp) =>
-                      {constant = ConstTermTag (lookupConTag (layout, conInfo)),
-                       exp = makeBranchExp
-                               (decomposeTaggedCon (conInfo, dataTerm),
-                                argVar, exp, loc)})
-                  ruleList
+            val dataVid = EmitTypedLambda.newId ()
+            val dataVarExp = E.Var dataVid
           in
-            Let (binds,
-                 TL.TLSWITCH {switchExp = unpack (tagTerm, loc),
-                              expTy = termTy tagTerm,
-                              branches = branches,
-                              defaultExp = defaultExp,
-                              loc = loc},
-                 loc)
+            E.Let ([(dataVid, E.Exp (dataExp, dataTy))],
+                   E.Switch
+                     (extractConTag (layout, dataVarExp),
+                      map
+                        (fn (conInfo as {path, ...}, argVarOpt, exp) =>
+                            (ConTag (lookupConTag (layout, path)),
+                             makeBranch
+                               (extractTaggedConArg (conInfo, dataVarExp))
+                               (argVarOpt, exp, resultTy)))
+                        ruleList,
+                      E.Exp (defaultExp, resultTy)))
           end
         | LAYOUT_BOOL {falseName} =>
           let
@@ -703,27 +431,26 @@ struct
                   if List.last (#path con1) = falseName
                   then (con1, defaultExp, exp1)
                   else (con1, exp1, defaultExp)
-                | _ => raise Control.Bug "switchCon: LAYOUT_BOOL"
+                | _ => raise Bug.Bug "switchCon: LAYOUT_BOOL"
           in
-            If {condExp = unpack (dataTerm, loc),
-                thenExp = ifTrueExp,
-                elseExp = ifFalseExp,
-                loc = loc}
+            E.If (E.Exp (dataExp, dataTy),
+                  E.Exp (ifTrueExp, resultTy),
+                  E.Exp (ifFalseExp, resultTy))
           end
         | LAYOUT_UNIT =>
           (
             case ruleList of
-              [(_, _, branchExp)] => branchExp
-            | _ => raise Control.Bug "compileExp: RCCASE: LAYOUT_UNIT"
+              [(_, _, branchExp)] => E.Exp (branchExp, resultTy)
+            | _ => raise Bug.Bug "compileExp: RCCASE: LAYOUT_UNIT"
           )
         | LAYOUT_ARGONLY =>
           (
             case ruleList of
-              [(conInfo, SOME argVar, branchExp)] =>
-              Let (bind (argVar, decomposeArgOnlyCon (conInfo, dataTerm)
-                                                     (#ty argVar)),
-                   branchExp, loc)
-            | _ => raise Control.Bug "compileExp: RCCASE: LAYOUT_ARGONLY"
+              [(conInfo, argVar as SOME _, branchExp)] =>
+              makeBranch
+                (extractArgOnlyConArg (conInfo, E.Exp (dataExp, dataTy)))
+                (argVar, branchExp, resultTy)
+            | _ => raise Bug.Bug "compileExp: RCCASE: LAYOUT_ARGONLY"
           )
         | LAYOUT_ARG_OR_NULL =>
           let
@@ -737,25 +464,25 @@ struct
                   (con, SOME v, exp1, defaultExp)
                 | [(con, NONE, exp1)] =>
                   (con, NONE, defaultExp, exp1)
-                | _ => raise Control.Bug "switchArgOrNull"
-            val (binds, dataTerm) = valueForm dataTerm
+                | _ => raise Bug.Bug "switchArgOrNull"
+            val dataVid = EmitTypedLambda.newId ()
           in
-            Let (binds,
-                 If {condExp = unpack (IsNull dataTerm, loc),
-                     thenExp = ifNullExp,
-                     elseExp =
-                       makeBranchExp
-                         (decomposeArgOnlyCon (conInfo, dataTerm),
-                          argVar, ifDataExp, loc),
-                     loc = loc},
-                 loc)
+            E.Let ([(dataVid, E.Exp (dataExp, dataTy))],
+                   E.If (E.IsNull (E.Cast (E.Var dataVid, BT.boxedTy)),
+                         E.Exp (ifNullExp, resultTy),
+                         makeBranch
+                           (extractArgOnlyConArg (conInfo, E.Var dataVid))
+                           (argVar, ifDataExp, resultTy)))
           end
         | LAYOUT_REF =>
           (
             case ruleList of
               [(_, SOME argVar, branchExp)] =>
-              Let (bind (argVar, RefDeref dataTerm), branchExp, loc)
-            | _ => raise Control.Bug "compileExp: RCCASE: LAYOUT_ARGONLY"
+              E.TLLet
+                ([E.Bind (argVar,
+                          E.Ref_deref (#ty argVar, E.Exp (dataExp, dataTy)))],
+                 E.Exp (branchExp, resultTy))
+            | _ => raise Bug.Bug "compileExp: RCCASE: LAYOUT_ARGONLY"
           )
       end
 
@@ -768,7 +495,7 @@ struct
   val emptyEnv =
       {exnMap = ExnID.Map.empty, exExnMap = PathEnv.empty} : env
 
-  fun newLocalExn (env:env, {path, ty, id}:T.exnInfo) =
+  fun newLocalExn (env:env, {path, ty, id}:RC.exnInfo) =
       let
         val vid = VarID.generate ()
         val varInfo = {path = path, ty = BT.exntagTy, id = vid} : TL.varInfo
@@ -778,7 +505,7 @@ struct
          varInfo)
       end
 
-  fun addExternExn (env:env, {path, ty}:T.exExnInfo) =
+  fun addExternExn (env:env, {path, ty}:RC.exExnInfo) =
       let
         val exVarInfo = {path = path, ty = BT.exntagTy} : TL.exVarInfo
       in
@@ -787,108 +514,115 @@ struct
          exVarInfo)
       end
 
-  fun findLocalExnTag ({exnMap, ...}:env, {id, ...}:T.exnInfo) =
+  fun findLocalExnTag ({exnMap, ...}:env, {id, ...}:RC.exnInfo) =
       ExnID.Map.find (exnMap, id)
 
-  fun findExternExnTag ({exExnMap, ...}:env, {path,...}:T.exExnInfo) =
+  fun findExternExnTag ({exExnMap, ...}:env, {path,...}:RC.exExnInfo) =
       PathEnv.find (exExnMap, path)
 
+  val puts = _import "puts" : string -> int
   fun findExnTag (env, exnCon) =
       case exnCon of
-        TC.EXN e =>
+        RC.EXN e =>
         (case findLocalExnTag (env, e) of
-           SOME var => SOME (VAR var)
-         | NONE => NONE)
-      | TC.EXEXN e =>
+           SOME v => SOME (E.TLVar v)
+         | NONE => 
+           (puts "findExnTag fail\n";
+            puts (String.concatWith "." (#path e));
+           NONE
+           )
+        )
+      | RC.EXEXN e =>
         (case findExternExnTag (env, e) of
-           SOME var => SOME (EXVAR var)
-         | NONE => NONE)
+           SOME v => SOME (E.ExVar v)
+         | NONE => 
+           (puts "findExnTag fail\n";
+            puts (String.concatWith "." (#path e));
+            NONE
+           )
+        )
 
-  fun allocExnTag path =
-      let
-        val name = String.concatWith "." path
-        val nameExp = CONST (CT.STRING name, BT.stringTy)
-      in
-        CAST (BT.exntagTy, RefAlloc nameExp)
-      end
-
-  fun extractExnTagName tagTerm =
-      RefDeref (CAST (RefTy BT.stringTy, tagTerm))
-
-  fun composeExn env (exnCon, argExpOpt) =
+  fun composeExn env (exnCon, argExpOpt, loc) =
       let
         val (argTy, _) = decomposeDataconTy (exnConTy exnCon)
-        val argTerm =
-            case (argTy, argExpOpt) of
+        val argOpt =
+            case (argExpOpt, argTy) of
               (NONE, NONE) => NONE
-            | (SOME argTy, SOME argExp) => SOME (pack (argExp, argTy))
-            | _ => raise Control.Bug "composeExn"
-        val tagTerm =
+            | (SOME argExp, SOME argTy) => SOME (E.Exp (argExp, argTy))
+            | _ => raise Bug.Bug "composeExn"
+        val tagExp =
             case findExnTag (env, exnCon) of
-              SOME tag => tag
-            | NONE => raise Control.Bug "composeExn: tag not found"
+              SOME tagExp => tagExp
+            | NONE => raise Bug.Bug "composeExn: tag not found"
       in
-        case argTerm of
-          NONE => CAST (BT.exnTy, TUPLE [tagTerm])
-        | SOME term => CAST (BT.exnTy, TUPLE [tagTerm, term])
+        EmitTypedLambda.composeExn (tagExp, loc, argOpt)
       end
 
-  fun extractExnTag exnTerm =
-      SELECT ("1", CAST (tupleTy [BT.exntagTy], exnTerm))
-
-  fun decomposeExn exnTerm expectTy =
-      SELECT ("2", CAST (tupleTy [BT.exntagTy, expectTy], exnTerm))
-
-  fun switchExn env (exnTerm, ruleList, defaultExp, loc) =
+  fun switchExn env (exnExp, expTy, ruleList, defaultExp, resultTy) =
       let
         (* exception match must be performed by linear search. *)
-        val (binds, exnTerm) = valueForm exnTerm
-        val tagTerm = extractExnTag exnTerm
+        val exnVid = EmitTypedLambda.newId ()
+        val tagVid = EmitTypedLambda.newId ()
       in
-        Let (binds,
-             foldr
-               (fn ((exnCon, argVar, branchExp), z) =>
-                   let
-                     val tag = case findExnTag (env, exnCon) of
-                                 SOME tagTerm => tagTerm
-                               | NONE => raise Control.Bug "switchExn"
-                   in
-                     If {condExp = unpack (ExnTagEqual (tagTerm, tag), loc),
-                         thenExp = makeBranchExp
-                                     (decomposeExn exnTerm,
-                                      argVar, branchExp, loc),
-                         elseExp = z,
-                         loc = loc}
-                   end)
-               defaultExp
-               ruleList,
-             loc)
+        E.Let
+          ([(exnVid, E.Exp (exnExp, expTy)),
+            (tagVid, EmitTypedLambda.extractExnTag (E.Var exnVid))],
+           foldr
+             (fn ((exnCon, argVarOpt, branchExp), elseExp) =>
+                 let
+                   val tagExp = case findExnTag (env, exnCon) of
+                                  SOME tagExp => tagExp
+                                | NONE => raise Bug.Bug "switchExn"
+                 in
+                   E.If (E.IdentityEqual (BT.exntagTy, E.Var tagVid, tagExp),
+                         case argVarOpt of
+                           NONE => E.Exp (branchExp, resultTy)
+                         | SOME argVar =>
+                           E.TLLet
+                             ([E.Bind
+                                 (argVar,
+                                  E.extractExnArg (E.Var exnVid, #ty argVar))],
+                              E.Exp (branchExp, resultTy)),
+                         elseExp)
+                 end)
+             (E.Exp (defaultExp, resultTy))
+             ruleList)
       end
 
   fun fixConst (const, ty, loc) =
       ConstantTerm.fixConst
-        {constTerm = fn c => TL.TLCONSTANT {value=c, loc=loc},
+        {constTerm = fn c =>
+                        TL.TLCONSTANT {const = c,
+                                       ty = ConstantTerm.typeOf c,
+                                       loc = loc},
          recordTerm = fn (fields, recordTy) =>
                          TL.TLRECORD {isMutable = false,
                                       fields = fields,
                                       recordTy = recordTy,
                                       loc = loc},
-         conTerm = fn {con, instTyList, arg} =>
-                      unpack (composeCon (con, instTyList, arg), loc)}
+         conTerm =
+           fn {con, instTyList, arg} =>
+              EmitTypedLambda.emit loc (composeCon (con, instTyList, arg))}
         (const, ty)
+      handle e as ConstantTerm.TooLargeConstant =>
+             (UserError.enqueueError errors (loc, e);
+              TL.TLCONSTANT {const=ConstantTerm.UNIT, ty=ty, loc=loc}) (*dummy*)
 
   fun compileExp (env:env) rcexp =
       case rcexp of
-        RC.RCFOREIGNAPPLY {funExp, foreignFunTy, argExpList, loc} =>
+        RC.RCFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
         TL.TLFOREIGNAPPLY
           {funExp = compileExp env funExp,
-           foreignFunTy = foreignFunTy,
            argExpList = map (compileExp env) argExpList,
+           attributes = attributes,
+           resultTy = resultTy,
            loc = loc}
-      | RC.RCEXPORTCALLBACK {funExp, foreignFunTy, loc} =>
-        TL.TLEXPORTCALLBACK
-          {funExp = compileExp env funExp,
-           foreignFunTy = foreignFunTy,
+      | RC.RCCALLBACKFN {attributes, resultTy, argVarList, bodyExp, loc} =>
+        TL.TLCALLBACKFN
+          {attributes = attributes,
+           resultTy = resultTy,
+           argVarList = argVarList,
+           bodyExp = compileExp env bodyExp,
            loc = loc}
       | RC.RCSIZEOF (ty, loc) =>
         TL.TLSIZEOF {ty=ty, loc=loc}
@@ -898,73 +632,63 @@ struct
         TL.TLINDEXOF {label=label, recordTy=recordTy, loc=loc}
       | RC.RCCONSTANT {const, loc, ty} =>
         fixConst (const, ty, loc)
-      | RC.RCGLOBALSYMBOL {name, kind, ty, loc} =>
-        TL.TLGLOBALSYMBOL {name=name, kind=kind, ty=ty, loc=loc}
-      | RC.RCVAR (varInfo, loc) =>
-        TL.TLVAR {varInfo = varInfo, loc = loc}
-      | RC.RCEXVAR (exVarInfo, loc) =>
-        TL.TLEXVAR {exVarInfo = exVarInfo, loc = loc}
+      | RC.RCFOREIGNSYMBOL {name, ty, loc} =>
+        TL.TLFOREIGNSYMBOL {name=name, ty=ty, loc=loc}
+      | RC.RCVAR varInfo =>
+        TL.TLVAR {varInfo = varInfo, loc = Loc.noloc}
+      | RC.RCEXVAR exVarInfo =>
+        TL.TLEXVAR {exVarInfo = exVarInfo, loc = Loc.noloc}
       | RC.RCPRIMAPPLY {primOp={primitive, ty}, instTyList, argExp, loc} =>
         let
           val argExp = compileExp env argExp
-          val (letFn, argExp) = splitLet argExp
           val (argTy, retTy) =
-              case TypesUtils.tpappTy (ty, instTyList) of
+              case TypesBasics.tpappTy (ty, instTyList) of
                 T.FUNMty ([argTy], retTy) => (argTy, retTy)
-              | _ => raise Control.Bug "RCPRIMAPPLY: not a function"
-          val argTerm = pack (argExp, argTy)
-          fun explodeArgTy ty =
-              case TypesUtils.derefTy ty of
-                T.POLYty {boundtvars, body} =>
-                T.POLYty {boundtvars=boundtvars, body=explodeArgTy body}
-              | T.FUNMty ([argTy], retTy) =>
-                (case TypesUtils.derefTy argTy of
-                   T.RECORDty fields => T.FUNMty (LabelEnv.listItems fields, retTy)
-                 | ty => T.FUNMty ([ty], retTy))
-              | _ => raise Control.Bug "RCPRIMAPPLY: explodeArgTy"
-          val term =
-              case primitive of
-                BuiltinPrimitive.Cast => CAST (retTy, argTerm)
-              | BuiltinPrimitive.Exn_Name =>
-                extractExnTagName (extractExnTag argTerm)
-              | _ =>
-                let
-                  val (binds, argTerms) = explodeRecordExp argTerm
-                  val primTy = explodeArgTy ty
-                in
-                  LET (binds,
-                       PRIMAPPLY ({primitive = primitive, ty = primTy},
-                                  instTyList, argTerms))
-                end
+              | _ => raise Bug.Bug "RCPRIMAPPLY: not a function"
+          val (decls, argExp) = unwrapLet argExp
+          val argExp = E.Exp (argExp, argTy)
+          val primTy = PrimitiveTypedLambda.toPrimTy ty
+          val (binds, argExps) =
+              case #argTyList primTy of
+                nil => (nil, nil)
+              | _::nil => (nil, [argExp])
+              | _::_::_ => explodeRecordExp argExp
+          val exp =
+              E.Let (binds,
+                     PrimitiveTypedLambda.compile
+                       {primitive = primitive,
+                        primTy = primTy,
+                        instTyList = instTyList,
+                        resultTy = retTy,
+                        argExpList = argExps,
+                        loc = loc})
         in
-          letFn (unpack (term, loc))
+          EmitTypedLambda.emit loc (E.TLLet (decls, exp))
         end
       | RC.RCDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt, loc} =>
         let
           val argExpOpt = Option.map (compileExp env) argExpOpt
-          val (letFn, argExpOpt) = splitLetOpt argExpOpt
         in
-          letFn (unpack (composeCon (con, instTyList, argExpOpt), loc))
+          EmitTypedLambda.emit loc (composeCon (con, instTyList, argExpOpt))
         end
       | RC.RCEXNCONSTRUCT {exn, instTyList=nil, argExpOpt, loc} =>
         let
           val argExpOpt = Option.map (compileExp env) argExpOpt
-          val (letFn, argExpOpt) = splitLetOpt argExpOpt
         in
-          letFn (unpack (composeExn env (exn, argExpOpt), loc))
+          EmitTypedLambda.emit loc (composeExn env (exn, argExpOpt, loc))
         end
       | RC.RCEXNCONSTRUCT {exn, instTyList=_::_, argExpOpt, loc} =>
-        raise Control.Bug "compileExp: RCEXNCONSTRUCT"
+        raise Bug.Bug "compileExp: RCEXNCONSTRUCT"
       | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} =>
         (
           case findLocalExnTag (env, exnInfo) of
-            NONE => raise Control.Bug "compileExp: RCEXN_CONSTRUCTOR"
+            NONE => raise Bug.Bug "compileExp: RCEXN_CONSTRUCTOR"
           | SOME var => TL.TLVAR {varInfo = var, loc = loc}
         )
       | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
         (
           case findExternExnTag (env, exExnInfo) of
-            NONE => raise Control.Bug "compileExp: RCEXEXN_CONSTRUCTOR"
+            NONE => raise Bug.Bug "compileExp: RCEXEXN_CONSTRUCTOR"
           | SOME var => TL.TLEXVAR {exVarInfo = var, loc = loc}
         )
       | RC.RCAPPM {funExp, funTy, argExpList, loc} =>
@@ -977,22 +701,26 @@ struct
                      loc = loc}
         end
       | RC.RCMONOLET {binds, bodyExp, loc} =>
-        TL.TLLET
-          {localDeclList =
-             map (fn (v,e) => TL.TLVAL {boundVar = v,
-                                        boundExp = compileExp env e,
-                                        loc = loc})
-                 binds,
-           mainExp = compileExp env bodyExp,
-           loc = loc}
+        foldr
+          (fn ((var, exp), mainExp) =>
+              TL.TLLET
+                {localDecl = TL.TLVAL {boundVar = var,
+                                       boundExp = compileExp env exp,
+                                       loc = loc},
+                 mainExp = mainExp,
+                 loc = loc})
+          (compileExp env bodyExp)
+          binds
       | RC.RCLET {decls, body=[rcexp], tys, loc} =>
         let
           val (env, decls) = compileDeclList env decls
           val mainExp = compileExp env rcexp
         in
-          TL.TLLET {localDeclList = decls,
-                    mainExp = mainExp,
-                    loc = loc}
+          foldr
+            (fn (dec, mainExp) =>
+                TL.TLLET {localDecl = dec, mainExp = mainExp, loc = loc})
+            mainExp
+            decls
         end
       | RC.RCLET {decls, body, tys, loc} =>
         compileExp env (RC.RCLET {decls = decls,
@@ -1002,11 +730,13 @@ struct
                                   tys = [List.last tys],
                                   loc = loc})
       | RC.RCRECORD {fields, recordTy, loc} =>
-        TL.TLRECORD
-          {isMutable = false,
-           fields = LabelEnv.map (compileExp env) fields,
-           recordTy = recordTy,
-           loc = loc}
+        if LabelEnv.isEmpty fields
+        then EmitTypedLambda.emit loc (E.Cast (E.Null, recordTy))
+        else TL.TLRECORD
+               {isMutable = false,
+                fields = LabelEnv.map (compileExp env) fields,
+                recordTy = recordTy,
+                loc = loc}
       | RC.RCSELECT {indexExp, label, exp, expTy, resultTy, loc} =>
         TL.TLSELECT
           {recordExp = compileExp env exp,
@@ -1023,19 +753,21 @@ struct
            recordExp = compileExp env recordExp,
            recordTy = recordTy,
            valueExp = compileExp env elementExp,
+           valueTy = elementTy,
            loc = loc}
       | RC.RCRAISE {exp, ty, loc} =>
         TL.TLRAISE
           {argExp = compileExp env exp,
            resultTy = ty,
            loc = loc}
-      | RC.RCHANDLE {exp, exnVar, handler, loc} =>
+      | RC.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         TL.TLHANDLE
           {exp = compileExp env exp,
            exnVar = exnVar,
            handler = compileExp env handler,
+           resultTy = resultTy,
            loc = loc}
-      | RC.RCCASE {exp, expTy, ruleList, defaultExp, loc} =>
+      | RC.RCCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         let
           val exp = compileExp env exp
           val ruleList = map (fn (conInfo, argVar, exp) =>
@@ -1043,9 +775,11 @@ struct
                              ruleList
           val defaultExp = compileExp env defaultExp
         in
-          switchCon (pack (exp, expTy), ruleList, defaultExp, loc)
+          EmitTypedLambda.emit
+            loc
+            (switchCon (exp, expTy, ruleList, defaultExp, resultTy))
         end
-      | RC.RCEXNCASE {exp, expTy, ruleList, defaultExp, loc} =>
+      | RC.RCEXNCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         let
           val exp = compileExp env exp
           val ruleList = map (fn (exnCon, argVar, exp) =>
@@ -1053,26 +787,47 @@ struct
                              ruleList
           val defaultExp = compileExp env defaultExp
         in
-          switchExn env (pack (exp, expTy), ruleList, defaultExp, loc)
+          EmitTypedLambda.emit
+            loc
+            (switchExn env (exp, expTy, ruleList, defaultExp, resultTy))
         end
-      | RC.RCSWITCH {switchExp, expTy, branches, defaultExp, loc} =>
+      | RC.RCSWITCH {switchExp, expTy, branches, defaultExp, resultTy, loc} =>
         let
           val switchExp = compileExp env switchExp
           val branches =
               map (fn (c, e) =>
                       case fixConst (c, expTy, loc) of
-                        TL.TLCONSTANT {value, ...} =>
-                        {constant = value, exp = compileExp env e}
-                      | _ => raise Control.Bug "compileExp: RCSWITCH")
+                        TL.TLCONSTANT {const, ...} =>
+                        {constant = const, exp = compileExp env e}
+                      | _ => raise Bug.Bug "compileExp: RCSWITCH")
                   branches
           val defaultExp = compileExp env defaultExp
         in
-          TL.TLSWITCH
-            {switchExp = switchExp,
-             expTy = expTy,
-             branches = branches,
-             defaultExp = defaultExp,
-             loc = loc}
+          case branches of
+            {constant = CT.LARGEINT _, exp = _}::_ =>
+            SwitchCompile.compileIntInfSwitch
+              {switchExp = switchExp,
+               expTy = expTy,
+               branches = branches,
+               defaultExp = defaultExp,
+               resultTy = resultTy,
+               loc = loc}
+          | {constant = CT.STRING _, exp = _}::_ =>
+            SwitchCompile.compileStringSwitch
+              {switchExp = switchExp,
+               expTy = expTy,
+               branches = branches,
+               defaultExp = defaultExp,
+               resultTy = resultTy,
+               loc = loc}
+          | _ =>
+            TL.TLSWITCH
+              {switchExp = switchExp,
+               expTy = expTy,
+               branches = branches,
+               defaultExp = defaultExp,
+               resultTy = resultTy,
+               loc = loc}
         end
       | RC.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
         TL.TLFNM
@@ -1106,26 +861,27 @@ struct
           val exps = ListPair.zipEq (map (compileExp env) expList, expTyList)
         in
           case rev exps of
-            nil => raise Control.Bug "compileExp: RCLET"
+            nil => raise Bug.Bug "compileExp: RCLET"
           | [exp] => #1 exp
           | lastExp::exps =>
-            TL.TLLET
-              {localDeclList =
-                 map (fn (exp, ty) =>
-                         TL.TLVAL {boundVar = newVar ty,
-                                   boundExp = exp, loc =loc})
-                     (rev exps),
-               mainExp = #1 lastExp,
-               loc = loc}
+            foldl
+              (fn ((exp, ty), mainExp) =>
+                   TL.TLLET {localDecl = TL.TLVAL {boundVar = newVar ty,
+                                                   boundExp = exp,
+                                                   loc = loc},
+                             mainExp = mainExp,
+                             loc = loc})
+              (#1 lastExp)
+              exps
         end
-      | RC.RCCAST (rcexp, ty, loc) =>
-        TL.TLCAST {exp = compileExp env rcexp, targetTy = ty, loc = loc}
+      | RC.RCCAST ((rcexp, expTy), ty, loc) =>
+        TL.TLCAST {exp = compileExp env rcexp, expTy = expTy, targetTy = ty,
+                   runtimeTyCast = false, bitCast = false,
+                   loc = loc}
       | RC.RCOPRIMAPPLY _ =>
-        raise Control.Bug "compileExp: RCOPRIMAPPLY"
-      | RC.RCSQL exp =>
-        raise Control.Bug "RCSQL"
+        raise Bug.Bug "compileExp: RCOPRIMAPPLY"
       | RC.RCFFI exp =>
-        raise Control.Bug "RCFFI"
+        raise Bug.Bug "RCFFI"
 
   and compileDecl env rcdecl =
       case rcdecl of
@@ -1145,11 +901,13 @@ struct
                                bindList,
              loc = loc}])
       | RC.RCVALPOLYREC (btvEnv, bindList, loc) =>
-        raise Control.Bug "compileExp: RCVALPOLYREC"
-      | RC.RCEXPORTVAR {internalVar, externalVar, loc} =>
-        (env, [TL.TLEXPORTVAR ({path = #path externalVar, ty= #ty externalVar, id = #id internalVar},loc)])
-      | RC.RCEXTERNVAR (exVarInfo, loc) =>
-        (env, [TL.TLEXTERNVAR (exVarInfo, loc)])
+        raise Bug.Bug "compileExp: RCVALPOLYREC"
+      | RC.RCEXPORTVAR {path, id, ty} =>
+        (env, [TL.TLEXPORTVAR ({path=path, ty=ty},
+                               TL.TLVAR {varInfo = {path=path, ty=ty, id=id}, loc = Loc.noloc},
+                               Loc.noloc)])
+      | RC.RCEXTERNVAR exVarInfo =>
+        (env, [TL.TLEXTERNVAR (exVarInfo, Loc.noloc)])
       | RC.RCEXD (exnBinds, loc) =>
         let
           fun compileExBind env nil = (env, nil)
@@ -1157,11 +915,13 @@ struct
               let
                 val (env, tagVar) = newLocalExn (env, exnInfo)
                 val (env, decls) = compileExBind env binds
+                val tagExp = EmitTypedLambda.allocExnTag exnInfo
               in
                 (env,
-                 TL.TLVAL {boundVar = tagVar,
-                           boundExp = unpack (allocExnTag (#path exnInfo), loc),
-                           loc = loc}
+                 TL.TLVAL
+                   {boundVar = tagVar,
+                    boundExp = EmitTypedLambda.emit loc tagExp,
+                    loc = loc}
                  :: decls)
               end
         in
@@ -1176,20 +936,22 @@ struct
                       boundExp = TL.TLVAR {varInfo = varInfo, loc = loc},
                       loc = loc}])
         end
-      | RC.RCEXPORTEXN (exnInfo as {path, ...}, loc) =>
+      | RC.RCEXPORTEXN (exnInfo as {path, ...}) =>
         (
           case findLocalExnTag (env, exnInfo) of
-            NONE => raise Control.Bug "compileDecl: RCEXPORTEXN"
-          | SOME (var as {id, ty,...}) => 
-            (* ohori: bug 184. the external name is "path" in exnInfo, 
+            NONE => raise Bug.Bug "compileDecl: RCEXPORTEXN"
+          | SOME (var as {id, ty,...}) =>
+            (* ohori: bug 184. the external name is "path" in exnInfo,
                which must be kept. *)
-            (env, [TL.TLEXPORTVAR ({path=path, id=id, ty=ty}, loc)])
+            (env, [TL.TLEXPORTVAR ({path=path, ty=ty},
+                                   TL.TLVAR {varInfo = var, loc = Loc.noloc},
+                                   Loc.noloc)])
         )
-      | RC.RCEXTERNEXN (exExnInfo, loc) =>
+      | RC.RCEXTERNEXN exExnInfo =>
         let
           val (env, tagVar) = addExternExn (env, exExnInfo)
         in
-          (env, [TL.TLEXTERNVAR (tagVar, loc)])
+          (env, [TL.TLEXTERNVAR (tagVar, Loc.noloc)])
         end
 
   and compileDeclList env nil = (env, nil)
@@ -1203,9 +965,12 @@ struct
 
   fun compile decls =
       let
+        val _ = UserError.clearQueue errors
         val (env, decls) = compileDeclList emptyEnv decls
       in
-        decls
+        case UserError.getErrors errors of
+          [] => decls
+        | errors => raise UserError.UserErrors errors
       end
 
 end

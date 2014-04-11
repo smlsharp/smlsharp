@@ -1,31 +1,31 @@
-_require "../../../basis.smi"
+_require "basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/PathEnv.smi"
-
 _require "../../control/main/Loc.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../util/main/utils.smi"
-_require "EvalSig.smi"
-_require "EvalTy.smi"
-_require "NameEvalEnv.ppg.smi"
-_require "NameEvalUtils.smi"
-_require "NormalizeTy.smi"
-_require "SetLiftedTys.smi"
-_require "TfunVars.smi"
+_require "./EvalSig.smi"
+_require "./EvalTy.smi"
+_require "./NameEvalEnv.ppg.smi"
+_require "./NameEvalUtils.smi"
+_require "./NormalizeTy.smi"
+_require "./SetLiftedTys.smi"
+_require "./TfunVars.smi"
 
 structure FunctorUtils =
 struct
   val evalFunArg : NameEvalEnv.topEnv * PatternCalc.plsigexp * Loc.loc
-                   -> {argStrEntry : NameEvalEnv.strEntry, 
-                       argSig : NameEvalEnv.env,
+                   -> {argStrEntry : NameEvalEnv.strEntry,
+                       argSigEnv : NameEvalEnv.env,
                        dummyIdfunArgTy : IDCalc.ty option,
                        exnTagDecls : IDCalc.icdecl list,
                        extraTvars : IDCalc.tvar list,
@@ -33,10 +33,10 @@ struct
                        polyArgPats : (IDCalc.varInfo * IDCalc.ty) list, 
                        tfvDecls : IDCalc.icdecl list}
   val varsInEnv : NameEvalEnv.env * Loc.loc
-                  -> (string list * IDCalc.icexp) list * ExnID.Set.set
+                  -> (Symbol.longsymbol * IDCalc.icexp) list * ExnID.Set.set
   val typidSet : NameEvalEnv.env -> TypID.Set.set
   val eqEnv : {specEnv:NameEvalEnv.env, implEnv:NameEvalEnv.env} -> bool
   val eqSize : NameEvalEnv.env * NameEvalEnv.env -> bool
   val eqShape : NameEvalEnv.env * NameEvalEnv.env -> bool
-  val makeFunctorArgs : Loc.loc -> string list list -> NameEvalEnv.env -> IDCalc.icexp list
+  val makeFunctorArgs : Loc.loc -> Symbol.longsymbol list -> NameEvalEnv.env -> IDCalc.icexp list
 end

@@ -66,4 +66,7 @@ struct
 
   (***************************************************************************)
 
-end;
+end
+
+type format = SMLFormat.FormatExpression.expression list
+fun prettyPrint exp = SMLFormat.prettyPrint nil exp

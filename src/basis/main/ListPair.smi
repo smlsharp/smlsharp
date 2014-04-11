@@ -1,5 +1,4 @@
-_require "List.smi"
-_require "LIST_PAIR.sig"
+_require "./List.smi"
 
 structure ListPair =
 struct
@@ -17,5 +16,5 @@ struct
   val foldrEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
   val all : ('a * 'b -> bool) -> 'a list * 'b list -> bool
   val exists : ('a * 'b -> bool) -> 'a list * 'b list -> bool
-  val allEq : ('a * 'b -> bool) -> 'a list * 'b list -> bool 
+  val allEq : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 end

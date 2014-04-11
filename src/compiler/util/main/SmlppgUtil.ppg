@@ -166,9 +166,22 @@ struct
      (*%
       * @format(field fields:listWithEncousure)
       *           fields(field)(itemsep, prefixIfNotNull, suffixIfNotNull)
-      * @format:field(label * ty) label bindsep ty
+      * @format:field(string * ty) string bindsep ty
       *)
      (string * 'a) list
+
+ (*%
+  * @params(bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
+  * @formatter(listWithEncousure)  formatListWithEnclosure
+  * @formatter(Symbol.symbol)  Symbol.format_symbol
+  *)
+ type 'a varenvSymbolWithEnclosure =
+     (*%
+      * @format(field fields:listWithEncousure)
+      *           fields(field)(itemsep, prefixIfNotNull, suffixIfNotNull)
+      * @format:field(symbol * ty) symbol bindsep ty
+      *)
+     (Symbol.symbol * 'a) list
 
  (*%
   * @params(itemsep)
@@ -215,7 +228,7 @@ struct
         )
     | formatGenericFieldsTy _ _ =
       raise
-        Control.Bug
+        Bug.Bug
           "SmlppgUtil:formatGenericFieldsTy:empty element formatter"
 
   fun formatGenericFieldsExp ([elementFormatter],bindsep,itemsep) L =
@@ -232,7 +245,7 @@ struct
       end
     | formatGenericFieldsExp _ _ = 
       raise
-        Control.Bug
+        Bug.Bug
           "SmlppgUtil:formatGenericFieldsExp : empty element formatter"
 
 
@@ -285,8 +298,25 @@ struct
       *)
      (string * 'a) list
 
+ (*%
+  * @params(lparen, bindsep,itemsep,rparen)
+  * @formatter(listWithEncousure)  formatListWithEnclosure
+  * @formatter(Symbol.symbol)  Symbol.format_symbol
+  *)
+ type 'a varenvSymbol =
+     (*%
+        @format(field fields)
+          fields:listWithEncousure(field)(itemsep,lparen,rparen) 
+        @format:field(symbol * ty) 
+          { 2[ symbol bindsep ty ] }
+      *)
+     (Symbol.symbol * 'a) list
+
   fun formatSmap (elementFormatter,lparen, bindsep,itemsep, rparen) smap =
       format_varenv(elementFormatter,lparen, bindsep,itemsep, rparen) (SEnv.listItemsi smap)
+
+  fun formatSymbolMap (elementFormatter,lparen, bindsep,itemsep, rparen) smap =
+      format_varenvSymbol(elementFormatter,lparen, bindsep,itemsep, rparen) (SymbolEnv.listItemsi smap)
 
  (*%
   * @params(lparen, itemsep, rparen)
@@ -301,8 +331,26 @@ struct
       *)
      (string * 'a) list
 
+ (*%
+  * @params(lparen, itemsep, rparen)
+  * @formatter(formatListWithEnclosure)  formatListWithEnclosure
+  * @formatter(Symbol.symbol)  Symbol.format_symbol
+  *)
+ type 'a genericSymbolVarenv =
+     (*%
+        @format(field fields)
+          fields:formatListWithEnclosure(field)(itemsep, lparen, rparen) 
+        @format:field(symbol * ty) 
+          ty()(,symbol)
+      *)
+     (Symbol.symbol * 'a) list
+
   fun formatGenericSmap (elementFormatter,lparen, itemsep, rparen) smap =
       format_genericVarenv(elementFormatter,lparen, itemsep, rparen) (SEnv.listItemsi smap)
+
+  fun formatGenericSymbolMap (elementFormatter,lparen, itemsep, rparen) smap =
+      format_genericSymbolVarenv
+        (elementFormatter,lparen, itemsep, rparen) (SymbolEnv.listItemsi smap)
 
   fun formatSmapWithEnclosure
           (
@@ -317,6 +365,20 @@ struct
       format_varenvWithEnclosure
       (elementFormatter, bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
       (SEnv.listItemsi smap)
+
+  fun formatSymbolMapWithEnclosure
+          (
+            elementFormatter,
+            bindsep,
+            itemsep,
+            prefixIfNotNull,
+            suffixIfNotNull
+          )
+          smap
+    =
+      format_varenvSymbolWithEnclosure
+      (elementFormatter, bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
+      (SymbolEnv.listItemsi smap)
 
   fun formatImap (elementFormatter) imap =
       let

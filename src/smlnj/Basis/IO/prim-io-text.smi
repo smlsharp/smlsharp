@@ -1,12 +1,13 @@
-_require "../../../basis/main/OS.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/IO.smi"
-_require "../../../basis/main/Int.smi"
 _require "../../../basis/main/General.smi"
-_require "../../../basis/main/PRIM_IO.sig"
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/Int.smi"
 _require "../../../basis/main/CharVector.smi"
 _require "../../../basis/main/CharVectorSlice.smi"
 _require "../../../basis/main/CharArray.smi"
+_require "../../../basis/main/CharArraySlice.smi"
+_require "../../../basis/main/SMLSharp_OSIO.smi"
+_require "../../../basis/main/OS.smi"
+_require "../../../basis/main/IO.smi"
 
 structure TextPrimIO =
 struct
@@ -16,7 +17,7 @@ struct
   type array = CharArray.array
   type array_slice = CharArraySlice.slice
   type pos = Position.int
-  val compare : pos * pos -> order
+  val compare : pos * pos -> General.order
   datatype reader =
       RD of {name : string,
              chunkSize : int,

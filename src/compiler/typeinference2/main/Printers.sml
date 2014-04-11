@@ -7,29 +7,34 @@ struct
 local
   structure T = Types
   structure TC = TypedCalc
+  structure TIC = TypeInferenceContext
   structure IC = IDCalc
 in
  (* for debugging *)
-  val print = fn s => if !Control.printInfo then print s else ()
+  val print = fn s => if !Bug.debugPrint then print s else ()
   fun printPath path =
       print (String.concatWith "." path)
+  fun printITy ty =
+      print (Bug.prettyPrint (IC.format_ty ty))
   fun printTy ty =
-      print (Control.prettyPrint (T.format_ty nil ty))
+      print (Bug.prettyPrint (T.format_ty nil ty))
   fun printTpdecl tpdecl =
-      print (Control.prettyPrint (TC.format_tpdecl nil tpdecl))
+      print (Bug.prettyPrint (TC.format_tpdecl nil tpdecl))
   fun printTpexp tpexp =
-      print (Control.prettyPrint (TC.formatWithType_tpexp nil tpexp))
+      print (Bug.prettyPrint (TC.formatWithType_tpexp nil tpexp))
+  fun printVarEnv varE =
+      print (Bug.prettyPrint (TIC.format_varEnv varE))
   fun printTpVarInfo var =
-      print (Control.prettyPrint (T.formatWithType_varInfo nil var))
+      print (Bug.prettyPrint (T.formatWithType_varInfo nil var))
   fun printContext context =
-      print (Control.prettyPrint (TypeInferenceContext.format_context context) ^ "\n")
+      print (Bug.prettyPrint (TypeInferenceContext.format_context context) ^ "\n")
   fun printIcexp exp =
-      print (Control.prettyPrint (IC.format_icexp exp) ^ "\n")
+      print (Bug.prettyPrint (IC.format_icexp exp) ^ "\n")
   fun printIcpat pat =
-      print (Control.prettyPrint (IC.format_icpat pat) ^ "\n")
+      print (Bug.prettyPrint (IC.format_icpat pat) ^ "\n")
   fun printIcdecl icdecl =
-      print (Control.prettyPrint (IC.format_icdecl icdecl) ^ "\n")
+      print (Bug.prettyPrint (IC.format_icdecl icdecl) ^ "\n")
   fun printIcVarInfo var =
-      print (Control.prettyPrint (IC.format_varInfo var))
+      print (Bug.prettyPrint (IC.format_varInfo var))
 end
 end

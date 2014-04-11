@@ -1,6 +1,3 @@
-include "General.smi"
-include "Time.smi"
-
 signature OS_IO =
 sig
   eqtype iodesc

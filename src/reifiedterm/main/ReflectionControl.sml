@@ -5,7 +5,9 @@
 structure ReflectionControl =
 struct
   (* max number of elements in lists and arrays to be printed *)
-  val max = 20 
+  val maxDepth = ref 200
+  val maxNestLevel = ref 5
+  val maxExnNestLevel = ref 2
   val ellipsis = [SMLFormat.FormatExpression.Term (3, "...")]
   val printWidth = ref 80
 end

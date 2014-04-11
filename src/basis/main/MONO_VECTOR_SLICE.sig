@@ -1,5 +1,3 @@
-include "General.smi"
-
 signature MONO_VECTOR_SLICE =
 sig
   type elem

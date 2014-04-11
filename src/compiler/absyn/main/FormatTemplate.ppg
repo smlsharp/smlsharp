@@ -1,0 +1,195 @@
+(**
+ * definition of format template
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ * @version $Id: FormatTemplate.sml,v 1.6 2007/06/30 11:04:42 kiyoshiy Exp $
+ *)
+structure FormatTemplate =
+struct
+
+  type loc = Loc.loc
+
+  (***************************************************************************)
+
+  (* to mark positions in files *)
+  type srcpos = int  (* character position from beginning of stream (base 0) *)
+  type region = srcpos * srcpos   (* start and end position of region *)
+
+  fun format_option elementFormatter value =
+      case value of
+        Option.NONE => [SMLFormat.FormatExpression.Term (4, "NONE")]
+      | Option.SOME value => 
+        [SMLFormat.FormatExpression.Term (5, "SOME(")]
+        @ 
+        elementFormatter value
+        @ 
+        [SMLFormat.FormatExpression.Term (1, ")")]
+
+  (**
+   * priority of newline indicators.
+   *)
+  (*% *)
+  datatype priority 
+    = (** preferred priority of the specified priority *)
+      (*% 
+        @format(int) "Preferred" + int
+       *)
+      Preferred of int
+    | (** deferred priority *)
+      (*% 
+        @format "Deferred"
+       *)
+      Deferred
+
+  (**
+   * direction of the associativity between elements in guards
+   *)
+  (*% *)
+  datatype assocDirection 
+    = (** indicates left associativity *)
+      Left
+    | (** indicates right associativity *)
+      Right
+    | (** indicates non-directional associativity *)
+      Neutral
+
+  (**
+   * the associativity between elements in guards.
+   *)
+  (*% *)
+  type assoc 
+   = (*%
+        @format({cut, strength, direction})
+         "{"
+          "cut=" + cut "," 
+          +
+          "strength=" + strength ","
+          +
+          "direction=" + direction
+         "}"
+      *)
+       {
+         (**
+          * true if the inheritance of associativity from the upper guard
+          * is cut.
+          *) 
+         cut : bool,
+         (** the strength of the association. *)
+         strength : int,
+         (** the direction of the association. *)
+         direction : assocDirection
+       }
+
+
+  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
+  type id 
+    = 
+      (*% 
+        @format(symbol) symbol
+       *)
+      Symbol.symbol
+
+  (**
+   * format templates
+   *)
+  (*%
+      @formatter(option) format_option
+   *)
+  datatype template 
+    = (** literal *) 
+      (*% 
+        @format({string, loc}) 
+          "Term(" + string ")"
+       *)
+      Term of {string:string, loc:loc}
+    | (** alwasy newline *) 
+      (*% 
+        @format({loc}) "Newline"
+       *)
+       Newline of {loc:loc}
+    | (** guard *) 
+      (*% 
+        @format({assocOpt:assoc opt, templates:template templates, loc})
+          "Guard("
+           +
+           "{" "assocOpt=" opt(assoc) ","
+               + 
+               "templates=" templates(template)(",")
+            "}"
+          ")"
+       *)
+       Guard of {assocOpt:assoc option, templates:template list, loc:loc}
+    | (** space/newline indicator *)
+      (*% 
+        @format({space, newline:newl opt, loc}) 
+          "Indicator("
+           "{"
+               "space=" space ","
+                +
+               "newline=" opt(newl)
+            "}"
+          ")"
+        @format:newl({priority}) priority
+       *)
+      Indicator of
+      {
+       space : bool,
+       newline : {priority : priority} option,
+       loc:loc
+      }
+    | (** indent push *) 
+      (*%
+        @format({indent, loc}) 
+         "StartOfIndent(" indent ")"
+       *)
+      StartOfIndent of {indent:int, loc:loc}
+    | (** indent pop *) 
+      (*%
+        @format "EndOfIndent"
+       *)
+      EndOfIndent of {loc:loc}
+    | (** template instantiation *) 
+      (*%
+        @format(instance) instance
+       *)
+      Instance of instance
+
+  (** template instantiation *)
+  and instance 
+    = (** instantiation with no argument *)
+      Atom of {id:id, optId:id option, loc:loc}
+    | (** instantiation with arguments *)
+      App of {id:id, optId:id option, args:instance list, templates:template list list, loc:loc}
+
+  (** type patterns *)
+  (*% *)
+  datatype typepat 
+    = (** id *) 
+       VarTyPat of {id:id, loc:loc}
+     | (** id with custom formatter specified *) 
+       TypedVarTyPat of {conid:id, typid:id, loc:loc}
+     | (** dont-care pattern *) 
+       WildTyPat of {loc:loc}
+     | (** record *)
+       RecordTyPat of {fields:(string * typepat) list, flex:bool, loc:loc}
+     | (** tuple *) 
+       TupleTyPat of {elements:typepat list, loc:loc}
+     | (** type constructor application *)
+       TyConTyPat of {conid:id, args:typepat list, loc:loc}
+     | (** type constructor application with custom formatter specified *)
+       TypedTyConTyPat of {conid:id, args:typepat list, typid:id, loc:loc}
+
+  (**
+   * format tag
+   *)
+  (*% 
+      @formatter(option) format_option
+      @formatter(id) format_id
+   *)
+  type formattag 
+    = {id : id option, typepat : typepat, templates : template list}
+
+  (***************************************************************************)
+
+end

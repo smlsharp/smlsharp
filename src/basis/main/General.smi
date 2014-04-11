@@ -1,5 +1,3 @@
-_require "GENERAL.sig"
-
 structure General =
 struct
   type unit = unit
@@ -12,22 +10,14 @@ struct
   exception Fail = Fail
   exception Overflow = Overflow
   exception Size = Size
-  exception Span = Span
+  exception Span
   exception Subscript = Subscript
   val exnName = exnName
   val exnMessage : exn -> string
-  datatype order = datatype order
+  datatype order = EQUAL | GREATER | LESS
   val ! = !
   val := = :=
-  val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
-  val before : 'a * unit -> 'a
-  val ignore : 'a -> unit
+  val o = o
+  val before = before
+  val ignore = ignore
 end
-
-(* toplevel *)
-infix 3 := o
-infix 0 before
-val before = General.before
-val exnMessage = General.exnMessage
-val ignore = General.ignore
-val o = General.o

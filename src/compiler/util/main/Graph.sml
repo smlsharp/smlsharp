@@ -114,7 +114,7 @@ structure Graph :> GRAPH = struct
                       case !st of (n::st')=> (n,st')
                                 | nil => 
                                   raise 
-                                    Control.Bug 
+                                    Bug.Bug 
                                     "nil to getComponent (valrecoptimization/main/Graph.sml)"
                     val _ = st := st'
                     val _ = Array.update (onstack,n,false)

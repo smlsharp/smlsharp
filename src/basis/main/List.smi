@@ -1,11 +1,9 @@
-_require "General.smi"
-_require "Option.smi"
-_require "LIST.sig"
+_require "./General.smi"
 
 structure List =
 struct
   datatype list = datatype list
-  exception Empty = Empty
+  exception Empty
   val null : 'a list -> bool
   val length : 'a list -> int
   val @ : 'a list * 'a list -> 'a list
@@ -30,31 +28,6 @@ struct
   val exists : ('a -> bool) -> 'a list -> bool
   val all : ('a -> bool) -> 'a list -> bool
   val tabulate : int * (int -> 'a) -> 'a list
-  val collate : ('a * 'a -> order) -> 'a list * 'a list -> order 
+  val collate : ('a * 'a -> General.order) -> 'a list * 'a list
+                -> General.order
 end
-
-(* toplevel *)
-infixr 5 :: @
-val @ = List.@
-val app = List.app
-val foldl = List.foldl
-val foldr = List.foldr
-val hd = List.hd
-val length = List.length
-val map = List.map
-val null = List.null
-val rev = List.rev
-val tl = List.tl
-
-(*
-val @ : ('a list * 'a list) -> 'a list
-val app : ('a -> unit) -> 'a list -> unit
-val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
-val foldr : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
-val hd : 'a list -> 'a
-val length : 'a list -> int
-val map : ('a -> 'b) -> 'a list -> 'b list
-val null : 'a list -> bool
-val rev : 'a list -> 'a list
-val tl : 'a list -> 'a list
-*)

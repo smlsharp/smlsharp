@@ -4,15 +4,19 @@
  *)
 structure LoadFileError =
 struct
-
-  (*% *)
+local
+  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
+  type symbol = Symbol.symbol
+in
+  (*%
+   *)
   exception
 
   (*%
    * @format(string)
    * "invalid" +d "top" +d "interface:" +d string
    *)
-  InvalidTopInterface of string
+  InvalidTopInterface of symbol
 
   and
   (*%
@@ -26,14 +30,14 @@ struct
    * @format(string)
    * "detected" +d "circular" +d "file" +d "refrences:" +d string
    *)
-  CircularLoad of string
+  CircularLoad of symbol
 
   and
   (*%
-   * @format(string)
-   * "file" +d "loaded" +d "by" +d "`use'" +d "has" +d "interface:" +d string
+   * @format(symbol)
+   * "file" +d "loaded" +d "by" +d "`use'" +d "has" +d "interface:" +d symbol
    *)
-  UseWithInterface of string
+  UseWithInterface of symbol
 
   and
   (*%
@@ -50,4 +54,5 @@ struct
    *)
   VirtualInterface of string
 
+end
 end

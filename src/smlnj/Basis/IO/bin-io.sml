@@ -1,14 +1,24 @@
-_interface "bin-io.smi"
-infix 7 *
-infix 6 + -
-infixr 5 ::
-infix 4 = >= <
-val op * = SMLSharp.Int.mul
-val op + = SMLSharp.Int.add
-val op - = SMLSharp.Int.sub
-val op >= = SMLSharp.Int.gteq
-val op < = SMLSharp.Int.lt
-structure CleanIO = SMLSharpSMLNJ_CleanIO
+infix 7 * / div mod
+infix 6 + - ^
+infixr 5 :: @
+infix 4 = <> > >= < <=
+infix 3 := o
+val op * = SMLSharp_Builtin.Int.mul_unsafe
+val op + = SMLSharp_Builtin.Int.add_unsafe
+val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op >= = SMLSharp_Builtin.Int.gteq
+val op < = SMLSharp_Builtin.Int.lt
+structure Word8 = SMLSharp_Builtin.Word8
+structure CleanIO =
+struct
+  type tag = SMLSharp_OSProcess.atexit_tag
+  fun addCleaner {init:unit->unit, flush:unit->unit, close} =
+      SMLSharp_OSProcess.atExit' close
+  val removeCleaner = SMLSharp_OSProcess.cancelAtExit
+  fun rebindCleaner (tag, {init:unit->unit, flush:unit->unit, close}) =
+      SMLSharp_OSProcess.rebindAtExit (tag, close)
+  val stdStrmHook = ref (fn () => ())
+end
 (* bin-io-fn.sml
  *
  * COPYRIGHT (c) 1995 AT&T Bell Laboratories.
@@ -19,7 +29,7 @@ structure CleanIO = SMLSharpSMLNJ_CleanIO
  *)
 
 local
-  structure OSPrimIO = SMLSharpSMLNJ_PosixBinPrimIO
+  structure OSPrimIO = SMLSharp_SMLNJ_PosixBinPrimIO
   structure PIO = OSPrimIO.PrimIO
   structure A = Word8Array
   structure AS = Word8ArraySlice
@@ -61,7 +71,7 @@ local
     val arrUpdate = A.update
     val empty = V.fromList[]
 in
-structure SMLSharpSMLNJ_BinIO = 
+structure BinIO = 
 struct
 
 

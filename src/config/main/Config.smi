@@ -1,14 +1,17 @@
-_require "../../basis.smi"
+_require "basis.smi"
 _require "../../compiler-utils/env/main/SEnv.smi"
 _require "../../compiler/toolchain/main/Filename.smi"
-_require "Version.smi"
+_require "./Version.smi"
 
 structure SMLSharp_Config =
 struct
   exception Load
   val loadConfig : Filename.filename -> unit
-  exception Unset
+
+  datatype host_os = datatype SMLSharp_Version.host_os
+
   val CC : unit -> string
+  val CXX : unit -> string
   val LD : unit -> string
   val AR : unit -> string
   val RANLIB : unit -> string
@@ -18,7 +21,11 @@ struct
   val LIBEXT : unit -> string
   val ASMEXT : unit -> string
   val OBJEXT : unit -> string
-  val NATIVE_TARGET : unit -> string
+  val TARGET_TRIPLE : unit -> string
   val A_OUT : unit -> string
+  val HOST_OS_TYPE : unit -> host_os
+  val CMDLINE_MAXLEN : unit -> int option
+  val PIC_DEFAULT : unit -> bool
   val RUNLOOP_DLDFLAGS : unit -> string
+  val EXTRA_OPTIONS : unit -> string list
 end

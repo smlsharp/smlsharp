@@ -83,11 +83,11 @@
 
 #if defined(__GNUC__)
 /* Boland fastcall; %eax, %edx, %ecx */
-#define SML_PRIMITIVE __attribute__((regparm(3)))
+#define SML_PRIMITIVE __attribute__((regparm(3))) NOINLINE
 #else
 /* Microsoft fastcall; %ecx, %edx */
 /* #define SML_PRIMITIVE __attribute__((fastcall)) */
-#define SML_PRIMITIVE
+#define SML_PRIMITIVE NOINLINE
 #endif
 
 /* the number of elements of an array. */
@@ -164,10 +164,10 @@ void sml_debug(const char *format, ...) ATTR_PRINTF(1, 2);
  */
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
 #define DEBUG__(fmt, ...) \
-	sml_debug("%s:%d:%s: "fmt"\n", __FILE__,__LINE__,__func__,__VA_ARGS__)
+	sml_debug("%s:%d:%s: "fmt"\n", __FILE__,__LINE__,__func__,##__VA_ARGS__)
 #define DEBUG_(args) DEBUG__ args
 #define FATAL__(err, fmt, ...) \
-	sml_fatal(err, "%s:%d:%s: "fmt, __FILE__,__LINE__,__func__,__VA_ARGS__)
+	sml_fatal(err, "%s:%d:%s: "fmt, __FILE__,__LINE__,__func__,##__VA_ARGS__)
 #define FATAL(args) FATAL__ args
 #elif defined __GNUC__
 #define DEBUG__(fmt, args...) \
@@ -256,115 +256,128 @@ void sml_obstack_enum_chunk(sml_obstack_t *obstack,
 int sml_obstack_is_empty(sml_obstack_t *obstack);
 
 /*
- * giant lock of SML# runtime
+ * stack frame address
+ * FIXME: platform dependent
  */
-#ifdef MULTITHREAD
-#ifdef DEBUG
-void sml_giant_lock(void *frame_pointer, const char *lock_at);
-#else
-void sml_giant_lock(void *frame_pointer);
-#endif /* DEBUG */
-void sml_giant_unlock(void);
-void sml_stop_the_world(void);
-void sml_run_the_world(void);
-#ifdef DEBUG
-int sml_giant_locked(void);
-#define GIANT_LOCKED()     sml_giant_locked()
-#define GIANT_LOCK(fp)     sml_giant_lock(fp, FILELINE)
-#else
-#define GIANT_LOCKED()     0
-#define GIANT_LOCK(fp)     sml_giant_lock(fp)
-#endif /* DEBUG */
-#define GIANT_UNLOCK()     sml_giant_unlock()
-#define STOP_THE_WORLD()   sml_stop_the_world()
-#define RUN_THE_WORLD()    sml_run_the_world()
-#else /* MULTITHREAD */
-#define GIANT_LOCKED()     1
-#define GIANT_LOCK(fp)     ((void)0)
-#define GIANT_UNLOCK()     ((void)0)
-#define STOP_THE_WORLD()   ((void)0)
-#define RUN_THE_WORLD()    ((void)0)
-#endif /* MULTITHREAD */
+#define CALLER_FRAME_END_ADDRESS() \
+	((void**)__builtin_frame_address(0) + 2)
+#define FRAME_CODE_ADDRESS(frame_end) \
+	(*((void**)(frame_end) - 1))
+#define NEXT_FRAME(frame_begin) \
+	((void**)frame_begin + 1)
 
-#ifdef MULTITHREAD
+/*
+ * gc root management
+ */
+
+/*
+ * rootset enumeration mode.
+ * - MAJOR means enumerating all.
+ * - MINOR means enumerating only new ones.
+ */
+enum sml_gc_mode {
+	MINOR,
+	MAJOR
+#ifdef DEBUG
+	,TRY_MAJOR  /* same as MAJOR but dry run */
+#endif /* DEBUG */
+};
+
+void sml_register_stackmap(void *map_begin, void *code_begin);
+int sml_gc_initiate(void (*trace)(void **), enum sml_gc_mode mode, void *data);
+void sml_gc_done(void);
+
+/*
+ * thread control context
+ */
+SML_PRIMITIVE void sml_control_start(void);
+SML_PRIMITIVE void sml_control_finish(void);
+SML_PRIMITIVE void sml_control_suspend(void);
+SML_PRIMITIVE void sml_control_resume(void);
+
+SML_PRIMITIVE void sml_check_gc(void);
 volatile unsigned int sml_check_gc_flag;
-SML_PRIMITIVE void sml_check_gc(void *frame_pointer);
-#endif /* MULTITHREAD */
+
+void *sml_current_thread_heap(void);
+void *sml_current_thread_exn(void);
+
+void sml_save_fp(void *frame_pointer);
+
+SML_PRIMITIVE void sml_push_fp(void);
+SML_PRIMITIVE void sml_pop_fp(void);
+int sml_alloc_available(void);
+void **sml_tmp_root(void);
+
+void sml_control_init(void);
+void sml_control_free(void);
+
+unsigned int sml_num_threads(void);
+
+
+#ifdef CONCURRENT
+enum sml_sync_phase { ASYNC, SYNC1, SYNC2, MARK };
+enum sml_sync_phase sml_current_phase(void);
+#endif /* CONCURRENT */
+
 
 /*
  * SML# heap object management
  */
+SML_PRIMITIVE void *sml_alloc(unsigned int objsize);
+SML_PRIMITIVE void *sml_load_intinf(const char *hexsrc);
+SML_PRIMITIVE void **sml_find_callback(void *codeaddr, void *env);
+SML_PRIMITIVE void *sml_alloc_code(void);
+
+SML_PRIMITIVE void *sml_obj_dup(void *obj);
+SML_PRIMITIVE int sml_obj_equal(void *obj1, void *obj2);
+SML_PRIMITIVE void sml_write(void *objaddr, void **writeaddr, void *new_value);
+void sml_copyary(void **src, unsigned int si, void **dst, unsigned int di,
+		 unsigned int len);
+
 struct sml_intinf;
 typedef struct sml_intinf sml_intinf_t;
 
-int sml_obj_equal(void *obj1, void *obj2);
-void *sml_obj_dup(void *obj);
 void sml_obj_enum_ptr(void *obj, void (*callback)(void **));
 void *sml_obj_alloc(unsigned int objtype, size_t payload_size);
 void *sml_record_alloc(size_t payload_size);
 char *sml_str_alloc(size_t len);
-char *sml_str_new(const char *str);
+NOINLINE char *sml_str_new(const char *str);
 char *sml_str_new2(const char *str, size_t len);
 sml_intinf_t *sml_intinf_new(void);
-
-SML_PRIMITIVE void *sml_alloc(unsigned int objsize, void *frame_pointer);
-SML_PRIMITIVE void *sml_alloc_callback(unsigned int objsize, void *codeaddr,
-				       void *envaddr);
-SML_PRIMITIVE void *sml_obj_empty(void);
-SML_PRIMITIVE void sml_write(void *objaddr, void **writeaddr, void *new_value);
-
-void sml_heap_gc(void);
-
-/* temporally root slots for C code */
-void **sml_push_tmp_rootset(size_t num_slots);
-void sml_pop_tmp_rootset(void **slots);
-
-/*
- * execution context
- */
-void *sml_load_frame_pointer(void);
-SML_PRIMITIVE void sml_save_frame_pointer(void *p);
-void *sml_current_thread_heap(void);
-
-/* called when SML code is started. */
-SML_PRIMITIVE void sml_control_start(void *frame_pointer);
-/* called when SML code is successfully finished. */
-SML_PRIMITIVE void sml_control_finish(void *frame_pointer);
-
-SML_PRIMITIVE void sml_state_suspend(void);
-SML_PRIMITIVE void sml_state_running(void);
+void *sml_intinf_hex(void *obj);
 
 /*
  * exception support
  */
-SML_PRIMITIVE void sml_push_handler(void *);
-SML_PRIMITIVE void *sml_pop_handler(void *exn);
-int sml_protect(void (*func)(void *), void *data);
-
-struct sml_exntag;
-extern const struct sml_exntag sml_exntag_Bind;
-extern const struct sml_exntag sml_exntag_Match;
-extern const struct sml_exntag sml_exntag_Subscript;
-extern const struct sml_exntag sml_exntag_Size;
-extern const struct sml_exntag sml_exntag_Overflow;
-extern const struct sml_exntag sml_exntag_Div;
-extern const struct sml_exntag sml_exntag_Domain;
-extern const struct sml_exntag sml_exntag_Fail;
-extern const struct sml_exntag sml_exntag_MatchCompBug;
-
-const void *SML4Bind;
-const void *SML5Match;
-const void *SML9Subscript;
-const void *SML4Size;
-const void *SML8Overflow;
-const void *SML3Div;
-const void *SML6Domain;
-const void *SML4Fail;
-const void *SMLN2OS6SysErrE;
-const void *SMLN8SMLSharp12MatchCompBugE;
-
-const char *sml_exn_name(void *exnobj);
+void *sml_exn_init(void);
+void sml_exn_free(void *);
+void sml_exn_enum_ptr(void *,  void (*)(void **));
+void sml_uncaught_exn(void *) ATTR_NORETURN;
 void sml_matchcomp_bug(void) ATTR_NORETURN;
+
+SML_PRIMITIVE void sml_raise(void *exn) ATTR_NORETURN;
+/*
+_Unwind_Reason_Code
+sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
+		struct _Unwind_Exception *exception,
+		struct _Unwind_Context *context);
+*/
+
+/*
+ * synchronizations
+ */
+typedef struct sml_event sml_event_t;
+sml_event_t *sml_event_new(int no_reset, int init);
+void sml_event_free(sml_event_t *event);
+void sml_event_wait(sml_event_t *event);
+void sml_event_signal(sml_event_t *event);
+void sml_event_reset(sml_event_t *event);
+
+typedef struct sml_counter sml_counter_t;
+sml_counter_t *sml_counter_new(void);
+void sml_counter_free(sml_counter_t *c);
+void sml_counter_inc(struct sml_counter *c);
+void sml_counter_wait(struct sml_counter *c, int min);
 
 /*
  * Initialize and finalize SML# runtime

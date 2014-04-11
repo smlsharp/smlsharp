@@ -2,7 +2,6 @@
  * object.c
  * @copyright (c) 2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: value.c,v 1.5 2008/02/05 08:54:35 katsu Exp $
  */
 
 #include <stdlib.h>
@@ -82,13 +81,14 @@ obj_dump__(int indent, void *obj)
 	}
 }
 
+/* for debug */
 void
 sml_obj_dump(void *obj)
 {
 	obj_dump__(0, obj);
 }
 
-int
+SML_PRIMITIVE int
 sml_obj_equal(void *obj1, void *obj2)
 {
 	unsigned int i, tag;
@@ -156,7 +156,7 @@ sml_obj_equal(void *obj1, void *obj2)
 
 		ASSERT(OBJ_NUM_BITMAPS(obj1) == OBJ_NUM_BITMAPS(obj2));
 		ASSERT(OBJ_SIZE(obj1) % sizeof(void*) == 0);
-		
+
 		for (i = 0; i < OBJ_NUM_BITMAPS(obj1); i++) {
 			if (bitmap1[i] != bitmap2[i])
 				return 0;
@@ -177,7 +177,7 @@ sml_obj_equal(void *obj1, void *obj2)
 	}
 }
 
-void *
+SML_PRIMITIVE void *
 sml_obj_dup(void *obj)
 {
 	void **slot, *newobj;
@@ -189,31 +189,31 @@ sml_obj_dup(void *obj)
 	case OBJTYPE_UNBOXED_VECTOR:
 	case OBJTYPE_BOXED_VECTOR:
 		obj_size = OBJ_SIZE(obj);
-		slot = sml_push_tmp_rootset(1);
+		slot = sml_tmp_root();
 		*slot = obj;
 		newobj = sml_obj_alloc(OBJ_TYPE(obj), obj_size);
 		memcpy(newobj, *slot, obj_size);
-		sml_pop_tmp_rootset(slot);
-		return newobj;
+		break;
 
 	case OBJTYPE_RECORD:
 		obj_size = OBJ_SIZE(obj);
-		slot = sml_push_tmp_rootset(1);
+		slot = sml_tmp_root();
 		*slot = obj;
 		newobj = sml_record_alloc(obj_size);
 		memcpy(newobj, *slot,
 		       obj_size + SIZEOF_BITMAP * OBJ_BITMAPS_LEN(obj_size));
-		sml_pop_tmp_rootset(slot);
-		return newobj;
+		break;
 
 	case OBJTYPE_INTINF:
 		newobj = sml_intinf_new();
 		sml_intinf_set((sml_intinf_t*)newobj, (sml_intinf_t*)obj);
-		return newobj;
+		break;
 
 	default:
 		sml_fatal(0, "BUG: invalid object type : %d", OBJ_TYPE(obj));
 	}
+
+	return newobj;
 }
 
 void
@@ -259,9 +259,10 @@ sml_obj_alloc(unsigned int objtype, size_t payload_size)
 {
 	void *obj;
 
+	ASSERT(sml_alloc_available());
 	ASSERT(((unsigned int)payload_size & OBJ_SIZE_MASK) == payload_size);
 
-	obj = sml_alloc(payload_size, sml_load_frame_pointer());
+	obj = sml_alloc(payload_size);
 	OBJ_HEADER(obj) = OBJ_HEADER_WORD(objtype, payload_size);
 
 	ASSERT(OBJ_SIZE(obj) == payload_size);
@@ -281,11 +282,12 @@ sml_record_alloc(size_t payload_size)
 	void *obj;
 	size_t bitmap_size;
 
+	ASSERT(sml_alloc_available());
 	ASSERT(((unsigned int)payload_size & OBJ_SIZE_MASK) == payload_size);
 
 	payload_size = ALIGNSIZE(payload_size, sizeof(void*));
 	bitmap_size = OBJ_BITMAPS_LEN(payload_size) * SIZEOF_BITMAP;
-	obj = sml_alloc(payload_size + bitmap_size, sml_load_frame_pointer());
+	obj = sml_alloc(payload_size + bitmap_size);
 	OBJ_HEADER(obj) = OBJ_HEADER_WORD(OBJTYPE_RECORD, payload_size);
 
 	ASSERT(OBJ_SIZE(obj) == payload_size);
@@ -338,8 +340,42 @@ sml_intinf_new()
 }
 
 SML_PRIMITIVE void *
-sml_obj_empty()
+sml_load_intinf(const char *hexsrc)
 {
-	static const unsigned int emptyobj[2] = {OBJTYPE_UNBOXED_VECTOR, 0};
-	return (void*)&emptyobj[1];
+	sml_intinf_t *obj;
+	obj = sml_intinf_new();
+	sml_intinf_set_str(obj, hexsrc, 16);
+	return obj;
+}
+
+void *
+sml_intinf_hex(void *obj)
+{
+	char *buf;
+	void *ret;
+
+	ASSERT(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+
+	buf = sml_intinf_fmt((sml_intinf_t*)obj, 16);
+	ret = sml_str_new(buf);
+	free(buf);
+	return ret;
+}
+
+void
+sml_copyary(void **src, unsigned int si, void **dst, unsigned int di,
+	    unsigned int len)
+{
+	if (src == dst) {
+		/* source array and dstination array may overlap */
+		while (len > 0) {
+			len--;
+			sml_write(dst, dst + di + len, src[si + len]);
+		}
+	} else {
+		while (len > 0) {
+			sml_write(dst, dst + di, src[si]);
+			di++, si++, len--;
+		}
+	}
 }

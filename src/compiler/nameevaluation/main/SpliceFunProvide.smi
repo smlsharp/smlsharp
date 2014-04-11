@@ -1,0 +1,14 @@
+_require "basis.smi"
+_require "smlnj-lib/Util/lib-base.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../usererror/main/UserErrorUtils.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "./NameEvalError.ppg.smi"
+
+structure SpliceProvicdeFundecl =
+struct
+  val spliceProvideFundecl : PatternCalcInterface.compileUnit -> PatternCalcInterface.source
+end

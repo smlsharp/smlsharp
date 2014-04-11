@@ -7,37 +7,81 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <sys/mman.h>
 #ifdef MULTITHREAD
 #include <pthread.h>
 #endif /* MULTITHREAD */
 #include "smlsharp.h"
 #include "object.h"
-#include "control.h"
 #include "objspace.h"
 #include "splay.h"
+#include "heap.h"
+
+#ifdef MULTITHREAD
+void sml_mutex_lock(pthread_mutex_t *m);
+
+static void
+mutex_lock(pthread_mutex_t *m)
+{
+	if (pthread_mutex_lock(m) != 0)
+		sml_sysfatal("pthread_mutex_lock failed");
+}
+
+static void
+mutex_unlock(pthread_mutex_t *m)
+{
+	if (pthread_mutex_unlock(m) != 0)
+		sml_sysfatal("pthread_mutex_unlock failed");
+}
+#else
+#define sml_mutex_lock(m) ((void)0)
+#define mutex_lock(m)     ((void)0)
+#define mutex_unlock(m)   ((void)0)
+#endif /* MULTITHREAD */
+
+#ifdef MULTITHREAD
+/* lock for global variables, callbacks, and the trampoline heap */
+pthread_mutex_t global_stuffs_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif /* MULTITHREAD */
 
 /* tree node allocator for persistent trees. */
 static sml_obstack_t *persistent_node_obstack = NULL;
 static void *persistent_node_alloc(size_t size);
 
-/* barriered slot */
+/* global variable slots */
 static int voidp_cmp(void *, void *);
 static sml_tree_t global_barrier =
 	SML_TREE_INITIALIZER(voidp_cmp, persistent_node_alloc, NULL);
 
-/* callback closures */
+/* global callback closures */
 static int callback_cmp(void *, void *);
 static sml_tree_t callback_closures =
 	SML_TREE_INITIALIZER(callback_cmp, persistent_node_alloc, NULL);
 
 struct callback_item {
-	void *closure;
-	void *entry;
-	void *env;    /* ML object. global_barrier keeps track here. */
+	void *ptrs[3];  /* {trampoline, env, codeaddr} */
 	struct callback_item *next;
 };
+#define cb_trampoline ptrs[0]
+#define cb_env ptrs[1]
+#define cb_codeaddr ptrs[2]
+
+/* trampoline heap */
+static struct {
+	char *base;
+	char *end;
+} trampoline_heap;
+
+/* For each trampoline, 72 bytes buffer and 16 byte alignemnt is enough for
+ * any platform.  80 is the minimum multiple of 16 greater than 72. */
+#define TRAMPOLINE_SIZE  80
 
 /* malloc heap */
+
+#ifdef MULTITHREAD
+pthread_mutex_t malloc_heap_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif /* MULTITHREAD */
 
 static sml_tree_t malloc_heap =
 	SML_TREE_INITIALIZER(voidp_cmp, xmalloc, free);
@@ -52,7 +96,7 @@ struct malloc_obj_header {
 #define MALLOC_FLAG_TRACED    0x2
 
 /* top of mark stack.
- * mark stark is used not only for collection but also remembered set for
+ * mark stack is used not only for collection but also remembered set for
  * the next minor collection.
  */
 static struct malloc_obj_header *malloc_stack_top = NULL;
@@ -66,6 +110,11 @@ static struct malloc_obj_header *malloc_stack_top = NULL;
 #define MALLOC_LIMIT  (1024 * 1024 * 4)
 
 /* finalizer */
+
+#ifdef MULTITHREAD
+pthread_mutex_t finalizer_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif /* MULTITHREAD */
+
 struct finalizer {
 	struct finalizer *next;   /* for linked list */
 	void *obj;
@@ -84,6 +133,7 @@ persistent_node_alloc(size_t size)
 	return sml_obstack_alloc(&persistent_node_obstack, size);
 }
 
+/* for debug */
 static void
 dump_malloc(void *item, void *data ATTR_UNUSED)
 {
@@ -91,6 +141,7 @@ dump_malloc(void *item, void *data ATTR_UNUSED)
 		   MALLOC_HEAD(item)->flags, (unsigned long)OBJ_SIZE(item));
 }
 
+/* for debug */
 static void
 dump_finalizer(void *item, void *data ATTR_UNUSED)
 {
@@ -99,17 +150,19 @@ dump_finalizer(void *item, void *data ATTR_UNUSED)
 		   final->active, final->obj, final->finalizer);
 }
 
+/* for debug */
 static void
 dump_callback(void *item, void *data ATTR_UNUSED)
 {
 	struct callback_item *cls = item;
 	while (cls) {
-		sml_notice("closure=%p, entry=%p, env=%p",
-			   cls->closure, cls->entry, cls->env);
+		sml_notice("trampoline=%p, codeaddr=%p, env=%p",
+			   cls->cb_trampoline, cls->cb_codeaddr, cls->cb_env);
 		cls = cls->next;
 	}
 }
 
+/* for debug */
 static void
 dump_barrier(void *item, void *data ATTR_UNUSED)
 {
@@ -146,19 +199,7 @@ voidp_cmp(void *x, void *y)
 void
 sml_objspace_init(void)
 {
-}
-
-static void
-finalize_heap(void *data ATTR_UNUSED)
-{
-#ifndef FAIR_COMPARISON
-	/* To run finalizers forcely, invoke GC with empty root set. */
-	while (finalizer_set.root != NULL)
-		sml_heap_gc();
-#endif /* FAIR_COMPARISON */
-	GIANT_LOCK(NULL);
-	sml_malloc_sweep(MAJOR);  /* free all malloc'ed objects */
-	GIANT_UNLOCK();
+	/* currently nothing to do */
 }
 
 void
@@ -166,10 +207,23 @@ sml_objspace_free(void)
 {
 	ASSERT(sml_num_threads() == 0);
 
+	/* free all global stuffs */
 	callback_closures.root = NULL;
 	global_barrier.root = NULL;
+
+#ifndef FAIR_COMPARISON
+//	sml_control_start();
+	/* To run finalizers forcely, invoke GC with empty root set. */
+//	while (finalizer_set.root != NULL)
+//		sml_heap_gc();
+
+	/* free all malloc'ed objects */
+//	sml_malloc_sweep(MAJOR);
+
+//	sml_control_finish();
+#endif /* FAIR_COMPARISON */
+
 	sml_obstack_free(&persistent_node_obstack, NULL);
-	sml_protect(finalize_heap, NULL);
 }
 
 /* malloc heap */
@@ -182,12 +236,12 @@ sml_obj_malloc(size_t objsize)
 	void *obj;
 	size_t alloc_size;
 
-	GIANT_LOCK(NULL);
+	sml_mutex_lock(&malloc_heap_lock);
 
 	if (malloc_count > MALLOC_LIMIT) {
-		GIANT_UNLOCK();
+		mutex_unlock(&malloc_heap_lock);
 		sml_heap_gc();
-		GIANT_LOCK(NULL);
+		sml_mutex_lock(&malloc_heap_lock);
 	}
 
 	alloc_size = MALLOC_PADDING + objsize;
@@ -203,7 +257,7 @@ sml_obj_malloc(size_t objsize)
 	malloc_stack_top = head;
 	head->flags = MALLOC_FLAG_REMEMBER;
 
-	GIANT_UNLOCK();
+	mutex_unlock(&malloc_heap_lock);
 
 	OBJ_HEADER(obj) = 0;
 	return obj;
@@ -212,7 +266,7 @@ sml_obj_malloc(size_t objsize)
 void
 sml_trace_ptr(void *obj)
 {
-	ASSERT(GIANT_LOCKED());
+	/* assume that malloc heap is exclusively locked */
 
 	if (sml_tree_find(&malloc_heap, obj)) {
 		struct malloc_obj_header *head = MALLOC_HEAD(obj);
@@ -230,7 +284,7 @@ malloc_barrier(void *obj)
 {
 	struct malloc_obj_header *head = MALLOC_HEAD(obj);
 
-	ASSERT(GIANT_LOCKED());
+	/* assume that malloc heap is exclusively locked */
 
 	ASSERT(head->flags == MALLOC_FLAG_REMEMBER
 	       || (head->flags == 0 && head->next == NULL));
@@ -247,7 +301,7 @@ sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode)
 	struct malloc_obj_header *head;
 	int found = 0;
 
-	ASSERT(GIANT_LOCKED());
+	/* assume that malloc heap is exclusively locked */
 
 	if (mode == MINOR) {
 		/* check only remembered set */
@@ -275,6 +329,7 @@ sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode)
 			}
 		}
 	}
+
 	return found;
 }
 
@@ -284,7 +339,6 @@ malloc_heap_sweep(void *item)
 	void **obj = item;
 	struct malloc_obj_header *head = MALLOC_HEAD(obj);
 
-	ASSERT(GIANT_LOCKED());
 	ASSERT(head->next == NULL);
 
 	if (head->flags == 0) {   /* unmarked */
@@ -299,7 +353,8 @@ malloc_heap_sweep(void *item)
 void
 sml_malloc_sweep(enum sml_gc_mode mode)
 {
-	ASSERT(GIANT_LOCKED());
+	/* assume that malloc heap is exclusively locked */
+
 	ASSERT(malloc_stack_top == NULL);
 
 	if (mode == MINOR)
@@ -307,19 +362,6 @@ sml_malloc_sweep(enum sml_gc_mode mode)
 
 	sml_tree_reject(&malloc_heap, malloc_heap_sweep);
 	malloc_count = 0;
-}
-
-static void
-each_malloc(void *item, void *data)
-{
-	void (**trace)(void **) = data;
-	sml_obj_enum_ptr(item, *trace);
-}
-
-void
-sml_malloc_enum_ptr(void (*trace)(void **))
-{
-	sml_tree_each(&malloc_heap, each_malloc, &trace);
 }
 
 /* root set management */
@@ -333,16 +375,26 @@ each_barrier(void *item, void *data)
 }
 
 void
-sml_rootset_enum_ptr(void (*trace)(void **), enum sml_gc_mode mode)
+sml_objspace_gc_initiate(void (*trace)(void **), enum sml_gc_mode mode)
 {
-	ASSERT(GIANT_LOCKED());
+	/* monopolize everything during garbage collection */
+	mutex_lock(&global_stuffs_lock);
+	mutex_lock(&finalizer_lock);
+	mutex_lock(&malloc_heap_lock);
 
 	if (mode != MINOR) {
 		/* global_barrier includes every addresses in
 		 * callback_closures where holds an ML object. */
 		sml_tree_each(&global_barrier, each_barrier, &trace);
 	}
-	sml_control_enum_ptr(trace, mode);
+}
+
+void
+sml_objspace_gc_done()
+{
+	mutex_unlock(&malloc_heap_lock);
+	mutex_unlock(&finalizer_lock);
+	mutex_unlock(&global_stuffs_lock);
 }
 
 /* global barrier */
@@ -350,20 +402,20 @@ sml_rootset_enum_ptr(void (*trace)(void **), enum sml_gc_mode mode)
 void
 sml_global_barrier(void **writeaddr, void *obj)
 {
-	/* FIXME: GIANT_LOCK may cause stop-the-world GC.
-         * obj and writeaddr may be moved due to GC. */
-	GIANT_LOCK(NULL);
+	sml_mutex_lock(&malloc_heap_lock);
 
 	/* check whether obj is in malloc heap. */
 	if (sml_tree_find(&malloc_heap, obj)) {
 		malloc_barrier(obj);
+		mutex_unlock(&malloc_heap_lock);
 	} else {
+		mutex_unlock(&malloc_heap_lock);
 		/* There is a reference to an ML object from outside.
 		 * remember the writeaddr as a root set. */
+		sml_mutex_lock(&global_stuffs_lock);
 		sml_tree_insert(&global_barrier, writeaddr);
+		mutex_unlock(&global_stuffs_lock);
 	}
-
-	GIANT_UNLOCK();
 }
 
 /* finalizer */
@@ -380,20 +432,14 @@ void
 sml_set_finalizer(void *obj, void (*finalizer)(void *))
 {
 	struct finalizer *final, key;
-	void **slot;
 
-	/* NOTE: GIANT_LOCK may cause stop-the-world GC.
-	 * To avoid for obj to be collected, store the obj to the root set. */
-	slot = sml_push_tmp_rootset(1);
-	*slot = obj;
+	sml_mutex_lock(&finalizer_lock);
 
-	GIANT_LOCK(NULL);
-
-	key.obj = *slot;
-	sml_pop_tmp_rootset(slot);
+	key.obj = obj;
 
 	if (finalizer == NULL) {
 		sml_tree_delete(&finalizer_set, &key);
+		mutex_unlock(&finalizer_lock);
 		return;
 	}
 
@@ -410,7 +456,7 @@ sml_set_finalizer(void *obj, void (*finalizer)(void *))
 	ASSERT(final->active == 0);
 	final->finalizer = finalizer;
 
-	GIANT_UNLOCK();
+	mutex_unlock(&finalizer_lock);
 }
 
 static void
@@ -419,6 +465,8 @@ each_check_finalizer(void *item, void *data)
 	void (**p_trace_rec)(void **) = data;
 	void (*trace_rec)(void **) = *p_trace_rec;
 	struct finalizer *final = item;
+
+	/* assume that malloc heap and finalizer is exclusively locked */
 
 	if (final->finalizer == NULL)
 		return;
@@ -452,6 +500,8 @@ each_activate_finalizer(void *item)
 {
 	struct finalizer *final = item;
 
+	/* assume that malloc heap and finalizer is exclusively locked */
+
 	if (final->finalizer == NULL)
 		return 1;
 
@@ -468,7 +518,7 @@ each_activate_finalizer(void *item)
 void
 sml_check_finalizer(void (*trace_rec)(void **), enum sml_gc_mode mode)
 {
-	ASSERT(GIANT_LOCKED());
+	/* assume that malloc heap and finalizer is exclusively locked */
 
 	if (mode == MINOR)
 		return;
@@ -481,6 +531,8 @@ static int
 each_run_finalizer(void *item)
 {
 	struct finalizer *final = item;
+
+	/* assume that finalizer is exclusively locked */
 
 	if (final->active) {
 		final->next = active_finalizers;
@@ -502,18 +554,16 @@ sml_run_finalizer(void *reserved_obj)
 	 * garbage collection, we put the new object to root set.
 	 */
 	if (reserved_obj) {
-		slot = sml_push_tmp_rootset(1);
+		slot = sml_tmp_root();
 		*slot = reserved_obj;
 		OBJ_HEADER(reserved_obj) = OBJ_DUMMY_HEADER;
 	}
 
-	GIANT_LOCK(NULL);
+	sml_mutex_lock(&finalizer_lock);
 
 	/* If there is at least one active finalizer, do nothing. */
 	if (active_finalizers != NULL) goto finished;
 	sml_tree_reject(&finalizer_set, each_run_finalizer);
-
-	GIANT_UNLOCK();
 
 	DBG(("run finalizer"));
 
@@ -521,20 +571,21 @@ sml_run_finalizer(void *reserved_obj)
 		next = final->next;
 		if (final->finalizer) {
 			DBG(("start finalizer for %p", final->obj));
+			mutex_unlock(&finalizer_lock);
 			final->finalizer(final->obj);
+			sml_mutex_lock(&finalizer_lock);
 		}
 		free(final);
 	}
 
 	DBG(("finished"));
 
-	GIANT_LOCK(NULL);
 	active_finalizers = NULL;
  finished:
-	GIANT_UNLOCK();
+	mutex_unlock(&finalizer_lock);
 	if (slot) {
 		reserved_obj = *slot;
-		sml_pop_tmp_rootset(slot);
+		*slot = NULL;
 	}
 	return reserved_obj;
 }
@@ -545,55 +596,70 @@ static int
 callback_cmp(void *x, void *y)
 {
 	struct callback_item *item1 = x, *item2 = y;
-	return voidp_cmp(item1->entry, item2->entry);
+	return voidp_cmp(item1->cb_codeaddr, item2->cb_codeaddr);
 }
 
-SML_PRIMITIVE void *
-sml_alloc_callback(unsigned int objsize, void *codeaddr, void *envobj)
+SML_PRIMITIVE void **
+sml_find_callback(void *codeaddr, void *env)
 {
-	/* NOTE: returned object may be stored an ML object pointer
-	 * without write barrier. sml_alloc_callback need to add
-	 * the resulting object to remembered set so that such an
-	 * ML pointer may be traced by the next minor collection. */
-
 	struct callback_item key, *item, *prev;
 
-	key.entry = codeaddr;
+	sml_mutex_lock(&global_stuffs_lock);
 
-	/* FIXME: GIANT_LOCK may cause stop-the-world GC.
-         * envobj may be moved due to GC. */
-	GIANT_LOCK(NULL);
-
+	key.cb_codeaddr = codeaddr;
 	prev = sml_tree_find(&callback_closures, &key);
 	if (prev != NULL) {
-		/* if a same closure is already created, return it. */
 		for (item = prev; item; item = item->next) {
-			if (sml_obj_equal(envobj, item->env)) {
-				malloc_barrier(item->closure);
-				GIANT_UNLOCK();
-				return item->closure;
+			if (sml_obj_equal(env, item->cb_env)) {
+				mutex_unlock(&global_stuffs_lock);
+				return item->ptrs;
 			}
 		}
 	}
 
-	/* using persistent_node_alloc is safe under the assumption that
-	 * sizeof(struct callback_item) == sizeof(struct sml_tree_node). */
+	/* This is safe since sizeof(struct callback_item) is equal to
+	 * sizeof(struct sml_tree_node). */
 	item = persistent_node_alloc(sizeof(struct callback_item));
 
-	item->entry = codeaddr;
+	item->cb_trampoline = NULL;
+	item->cb_env = env;
+	item->cb_codeaddr = codeaddr;
 	item->next = prev;
-	item->env = envobj;
-	item->closure = NULL;
  	sml_tree_insert(&callback_closures, item);
 
-	/* remember callback item as a part of root set. */
-	sml_tree_insert(&global_barrier, &item->env);
-	sml_tree_insert(&global_barrier, &item->closure);
+	/* remember callback closure as a part of root set. */
+	if (item->cb_env)
+		sml_tree_insert(&global_barrier, &item->cb_env);
 
-	GIANT_UNLOCK();
+	mutex_unlock(&global_stuffs_lock);
 
-	/* assume that malloc returns memory with executable permission. */
-	item->closure = sml_obj_malloc(objsize);
+	return item->ptrs;
+}
 
-	return item->closure;
+SML_PRIMITIVE void *
+sml_alloc_code()
+{
+	void *p;
+	size_t pagesize;
+
+	sml_mutex_lock(&global_stuffs_lock);
+
+	if (trampoline_heap.end - trampoline_heap.base < TRAMPOLINE_SIZE) {
+		pagesize = getpagesize();
+		p = mmap(NULL, pagesize,
+			 PROT_READ | PROT_WRITE | PROT_EXEC,
+			 MAP_ANON | MAP_PRIVATE,
+			 -1, 0);
+		if (p == MAP_FAILED)
+			sml_sysfatal("mmap");
+		trampoline_heap.base = p;
+		trampoline_heap.end = (char*)p + pagesize;
+	}
+
+	p = trampoline_heap.base;
+	trampoline_heap.base += TRAMPOLINE_SIZE;
+
+	mutex_unlock(&global_stuffs_lock);
+
+	return p;
 }
