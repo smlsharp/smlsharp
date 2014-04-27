@@ -115,6 +115,7 @@ struct
     | UseCXX
     | EmitLLVM
     | FileMap of string
+    | Version
 
   fun stringToCodeModel model =
       case model of
@@ -139,6 +140,7 @@ struct
           SHORT (#"v", NOARG Verbose),
           SHORT (#"B", REQUIRED SystemBaseDir),
           SHORT (#"M", NOARG (Mode (MakeDependCompile {noStdPath=false}))),
+          SHORT (#"V", NOARG Version),
           SLONG ("O0", NOARG (OptLevel (LLVM.OptNone, LLVM.SizeDefault))),
           SLONG ("O1", NOARG (OptLevel (LLVM.OptLess, LLVM.SizeDefault))),
           SLONG ("O", NOARG (OptLevel (LLVM.OptDefault, LLVM.SizeDefault))),
@@ -191,6 +193,7 @@ struct
     "Usage: " ^ progname ^ " [options] file ...\n\
     \Options:\n\
     \  --help             print this message\n\
+    \  -V                print version and exit\n\
     \  -v                 verbose mode\n\
     \  -o <file>          place the output to <file>\n\
     \  -c                 compile and assemble; do not link\n\
@@ -382,6 +385,7 @@ struct
         val fileMap = ref NONE
         val useCXX = ref false
         val emitLLVM = ref false
+        val printVersion = ref false
 
         fun processArg arg =
             case arg of
@@ -429,6 +433,8 @@ struct
               help := SOME false
             | Verbose =>
               verbose := true
+            | Version =>
+              printVersion := true
             | Mode newMode =>
               case !mode of
                 NONE => mode := SOME newMode
@@ -529,7 +535,7 @@ struct
           (SOME devhelp, _, _, _) =>
           PrintHelp {progname = progname, forDevelopers = devhelp}
         | (NONE, _, _, nil) =>
-          if !verbose
+          if !printVersion
           then PrintVersion
           else Sequence
                  [PrintVersion,
