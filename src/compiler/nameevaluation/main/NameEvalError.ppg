@@ -1064,7 +1064,7 @@ in
      @format((code * {longsymbol}))
      "(name evaluation" +d code ")" +d
      "Provide" + "check" +d "fails" +d
-     "(datatype" + "expceted):" +d
+     "(datatype" + "expected):" +d
      longsymbol
    *)
   ProvideDtyExpected of (code * {longsymbol: longsymbol})
@@ -1074,7 +1074,7 @@ in
      @format((code * {longsymbol}))
      "(name evaluation" +d code ")" +d
      "Provide" +d "check" +d "fails" +d
-     "(opaque" +d "type" +d "expceted):" +d
+     "(opaque" +d "type" +d "expected):" +d
      longsymbol
    *)
   ProvideOpaqueExpected of (code * {longsymbol: longsymbol})
