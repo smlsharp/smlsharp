@@ -9,39 +9,7 @@ _require "./MySQLBackend.smi"
 _require "./ODBCBackend.smi"
 _require "./SQLBACKEND.sig"
 
-functor Backend(B: sig
-
-  type conn
-  type res
-  type value
-
-  val execQuery : conn * string -> res
-  val closeConn : conn -> unit
-  val closeRel : res -> unit
-  val getDatabaseSchema : conn -> (string *
-                                   {colname: string,
-                                    ty: SMLSharp_SQL_BackendTy.ty,
-                                    nullable: bool} list) list
-  val connect : string -> conn
-  val fetch : res -> res option
-  val getValue : res * int -> value option
-  val intValue : value -> int option
-  val intInfValue : value -> IntInf.int option
-  val wordValue : value -> word option
-  val realValue : value -> real option
-  val stringValue : value -> string option
-  val charValue : value -> char option
-  val boolValue : value -> bool option
-  val timestampValue : value -> SMLSharp_SQL_TimeStamp.timestamp option
-  val decimalValue : value -> SMLSharp_SQL_Decimal.decimal option
-  val floatValue : value -> SMLSharp_SQL_Float.float option
-
-end) =
-struct
-val backend: string -> SMLSharp_SQL_Backend.backend
-end
-
-structure SMLSharp_SQL_Backend =
+structure SQLBackendTypes =
 struct
   type schema_column =
        {colname: string, ty: SMLSharp_SQL_BackendTy.ty, nullable: bool}
@@ -71,6 +39,54 @@ struct
        {connect : unit -> conn_impl}
 
   datatype backend = BACKEND of server_impl
+end
+functor Backend(B: sig
+
+  type conn
+  type res
+  type value
+
+  val execQuery : conn * string -> res
+  val closeConn : conn -> unit
+  val closeRel : res -> unit
+  val getDatabaseSchema : conn -> (string *
+                                   {colname: string,
+                                    ty: SMLSharp_SQL_BackendTy.ty,
+                                    nullable: bool} list) list
+  val connect : string -> conn
+  val fetch : res -> res option
+  val getValue : res * int -> value option
+  val intValue : value -> int option
+  val intInfValue : value -> IntInf.int option
+  val wordValue : value -> word option
+  val realValue : value -> real option
+  val stringValue : value -> string option
+  val charValue : value -> char option
+  val boolValue : value -> bool option
+  val timestampValue : value -> SMLSharp_SQL_TimeStamp.timestamp option
+  val decimalValue : value -> SMLSharp_SQL_Decimal.decimal option
+  val floatValue : value -> SMLSharp_SQL_Float.float option
+
+end) =
+struct
+val backend: string -> SQLBackendTypes.backend
+end
+
+
+structure SMLSharp_SQL_Backend =
+struct
+  type schema_column = SQLBackendTypes.schema_column
+  type schema_table = SQLBackendTypes.schema_table
+  type schema = SQLBackendTypes.schema
+
+  datatype res_impl = datatype SQLBackendTypes.res_impl
+
+          
+  type conn_impl = SQLBackendTypes.conn_impl
+
+  type server_impl = SQLBackendTypes.server_impl
+
+  datatype backend = datatype SQLBackendTypes.backend
 
   val postgresql : string -> backend
   val mysql : string -> backend
