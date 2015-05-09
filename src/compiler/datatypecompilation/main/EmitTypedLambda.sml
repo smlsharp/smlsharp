@@ -240,7 +240,7 @@ struct
 
   fun Float_equal (exp1, exp2) =
       monoPrimApp (P.R (P.M P.Float_equal),
-                   [B.realTy, B.realTy], B.boolTy,
+                   [B.real32Ty, B.real32Ty], B.boolTy,
                    [exp1, exp2])
 
   fun Float_gteq (exp1, exp2) =
