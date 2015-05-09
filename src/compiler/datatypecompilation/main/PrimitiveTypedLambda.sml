@@ -114,7 +114,7 @@ struct
       | (P.Real_notEqual, _, _) =>
         raise Bug.Bug "compilePrim: Real_notEqual"
 
-      | (P.Float_notEqual, [arg1, arg2], [_]) =>
+      | (P.Float_notEqual, [arg1, arg2], []) =>
         E.If (E.Float_equal (arg1, arg2), E.False, E.True)
       | (P.Float_notEqual, _, _) =>
         raise Bug.Bug "compilePrim: Float_notEqual"
