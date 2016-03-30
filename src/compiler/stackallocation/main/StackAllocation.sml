@@ -304,10 +304,13 @@ struct
           addEdge (#currentBlock env, #exitBlock env);
           LAST {def = Set.empty, use = useValue value, args = nil, orig = last}
         )
-      | M.MCRAISE {argExp, loc} =>
+      | M.MCRAISE_THROW {raiseAllocResult, argExp, loc} =>
         (
           addEdge (#currentBlock env, #exitBlock env);
-          LAST {def = Set.empty, use = useValue argExp, args = nil, orig = last}
+          LAST {def = Set.empty,
+                use = useValues [raiseAllocResult, argExp],
+                args = nil,
+                orig = last}
         )
       | M.MCHANDLER {nextExp, id, exnVar, handlerExp, loc} =>
         let
@@ -382,16 +385,16 @@ struct
       prepareLast env last
     | prepareExp env (mid::mids, last) =
       case mid of
-        M.MCCALL {resultVar, codeExp, closureEnvExp, argExpList, tail,
+        M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, argExpList, tail,
                   handler, loc} =>
-        CALL {def = Set.singleton resultVar,
+        CALL {def = Set.fromList (optionToList resultVar),
               use = useValues (codeExp :: optionToList closureEnvExp
                                @ argExpList),
-              returnTo = prepareCont env ([resultVar], (mids, last)),
+              returnTo = prepareCont env (optionToList resultVar, (mids, last)),
               unwindTo = unwindTo env handler,
               causeGC = true,
               orig = mid}
-      | M.MCLARGEINT {resultVar, dataLabel, loc} =>
+      | M.MCINTINF {resultVar, dataLabel, loc} =>
         MID {def = Set.singleton resultVar,
              use = Set.empty,
              orig = mid,
@@ -400,8 +403,8 @@ struct
       | M.MCFOREIGNAPPLY {resultVar, funExp, attributes, argExpList,
                           handler, loc} =>
         let
-          val {noCallback, allocMLValue, suspendThread, ...} = attributes
-          val causeGC = not noCallback orelse allocMLValue orelse suspendThread
+          val {causeGC, fast, ...} = attributes
+          val causeGC = causeGC orelse not fast
           val returnTo = prepareCont env (optionToList resultVar, (mids, last))
         in
           CALL {def = Set.fromList (optionToList resultVar),
@@ -452,29 +455,29 @@ struct
              orig = mid,
              causeGC = true,
              next = prepareExp env (mids, last)}
-      | M.MCDISABLEGC =>
+      | M.MCALLOC_COMPLETED =>
         MID {def = Set.empty,
              use = Set.empty,
              orig = mid,
              causeGC = false,
              next = prepareExp env (mids, last)}
-      | M.MCENABLEGC =>
-        MID {def = Set.empty,
-             use = Set.empty,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
-      | M.MCCHECKGC =>
+      | M.MCCHECK =>
         MID {def = Set.empty,
              use = Set.empty,
              orig = mid,
              causeGC = true,
              next = prepareExp env (mids, last)}
-      | M.MCRECORDDUP {resultVar, recordExp, loc} =>
-        MID {def = Set.singleton resultVar,
+      | M.MCRECORDDUP_ALLOC {resultVar, copySizeVar, recordExp, loc} =>
+        MID {def = Set.fromList [resultVar, copySizeVar],
              use = useValue recordExp,
              orig = mid,
              causeGC = true,
+             next = prepareExp env (mids, last)}
+      | M.MCRECORDDUP_COPY {dstRecord, srcRecord, copySize, loc} =>
+        MID {def = Set.empty,
+             use = useValues [dstRecord, srcRecord, copySize],
+             orig = mid,
+             causeGC = false,
              next = prepareExp env (mids, last)}
       | M.MCBZERO {recordExp, recordSize, loc} =>
         MID {def = Set.empty,
@@ -524,6 +527,12 @@ struct
              use = useValue valueExp,
              orig = mid,
              causeGC = false,
+             next = prepareExp env (mids, last)}
+      | M.MCRAISE_ALLOC {resultVar, loc} =>
+        MID {def = Set.singleton resultVar,
+             use = Set.empty,
+             orig = mid,
+             causeGC = true,
              next = prepareExp env (mids, last)}
 
   fun prepare (argVarList, mcexp, cleanupHandler) =
@@ -771,16 +780,7 @@ struct
 
   fun compileTopdec topdec =
       case topdec of
-        M.MTTOPLEVEL {symbol, frameSlots, bodyExp, loc} =>
-        let
-          val (bodyExp, slots) = compileFunc (nil, bodyExp, NONE)
-        in
-          M.MTTOPLEVEL {symbol = symbol,
-                        frameSlots = unionSlotMap (frameSlots, slots),
-                        bodyExp = bodyExp,
-                        loc = loc}
-        end
-      | M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
+        M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
                       frameSlots, bodyExp, retTy, loc} =>
         let
           val params = optionToList closureEnvVar @ argVarList
@@ -800,8 +800,7 @@ struct
                               cleanupHandler, loc} =>
         let
           val params = optionToList closureEnvVar @ argVarList
-          val (bodyExp, slots) =
-              compileFunc (params, bodyExp, SOME cleanupHandler)
+          val (bodyExp, slots) = compileFunc (params, bodyExp, cleanupHandler)
         in
           M.MTCALLBACKFUNCTION {id = id,
                                 tyvarKindEnv = tyvarKindEnv,
@@ -815,11 +814,23 @@ struct
                                 loc = loc}
         end
 
-  fun compile ({topdata, topdecs}:M.program) =
+  fun compileToplevel {dependency, frameSlots, bodyExp, cleanupHandler} =
       let
-        val topdecs = MachineCodeRename.rename topdecs
+        val (bodyExp, slots) = compileFunc (nil, bodyExp, cleanupHandler)
       in
-        {topdata = topdata, topdecs = map compileTopdec topdecs} : M.program
+        {dependency = dependency,
+         frameSlots = unionSlotMap (frameSlots, slots),
+         bodyExp = bodyExp,
+         cleanupHandler = cleanupHandler} : M.toplevel
+      end
+
+  fun compile ({topdata, topdecs, toplevel}:M.program) =
+      let
+        val (topdecs, toplevel) = MachineCodeRename.rename (topdecs, toplevel)
+      in
+        {topdata = topdata,
+         topdecs = map compileTopdec topdecs,
+         toplevel = compileToplevel toplevel} : M.program
       end
 
 end

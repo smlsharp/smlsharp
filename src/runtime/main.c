@@ -4,17 +4,12 @@
  * @author UENO Katsuhiro
  */
 
-#include <stdio.h>
 #include "smlsharp.h"
-
-/* entry point of SML# toplevel */
-void _SMLmain(void);
 
 int
 main(int argc, char **argv)
 {
 	sml_init(argc, argv);
-	_SMLmain();
-	sml_finish();
-	return 0;
+	sml_run();
+	sml_exit(0);
 }

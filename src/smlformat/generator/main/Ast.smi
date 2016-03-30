@@ -1,6 +1,6 @@
 _require "../../../basis.smi"
-_require "FormatTemplate.smi"
-_require "AST.sig"
+_require "./FormatTemplate.smi"
+_require "./AST.sig"
 
 structure Ast =
 struct

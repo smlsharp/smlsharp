@@ -42,18 +42,23 @@ in
       case tv of
         ref(T.TVAR {tvarKind = T.OCONSTkind (h::_), ...}) =>
         tv := T.SUBSTITUTED h
-      | ref(T.TVAR {tvarKind = T.OPRIMkind
-                                 {instances = (h::_),...},
-                    ...}
-           )
-        => tv := T.SUBSTITUTED h
+      | ref(T.TVAR {tvarKind = T.OCONSTkind nil, ...}) =>
+        raise Bug.Bug "instantiateTv OCONSTkind"
+      | ref(T.TVAR {tvarKind = T.OPRIMkind {instances = (h::_),...}, ...}) =>
+        tv := T.SUBSTITUTED h
+      | ref(T.TVAR {tvarKind = T.OPRIMkind {instances = nil,...}, ...}) =>
+        raise Bug.Bug "instantiateTv OPRIMkind"
       | ref(T.TVAR {tvarKind = T.REC tyFields, ...}) => 
         tv := T.SUBSTITUTED (T.RECORDty tyFields)
       | ref(T.TVAR {tvarKind = T.JOIN (tyFields,_,_, _), ...}) => 
         tv := T.SUBSTITUTED (T.RECORDty tyFields)
       | ref(T.TVAR {tvarKind = T.UNIV, ...}) => 
         tv := T.SUBSTITUTED (nextDummyTy())
-      | _ => ()
+      | ref(T.TVAR {tvarKind = T.BOXED, ...}) =>
+        tv := T.SUBSTITUTED (nextDummyTy())
+      | ref(T.TVAR {tvarKind = T.UNBOXED, ...}) =>
+        tv := T.SUBSTITUTED (nextDummyTy())
+      | ref(T.SUBSTITUTED _) => ()
 
 (*
   fun eliminateVacuousTyvars () =

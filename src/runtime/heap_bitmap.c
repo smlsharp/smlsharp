@@ -1675,7 +1675,7 @@ void stacklist(){
 #endif /* GCSTAT */
 
 #define OBJ_HAS_NO_POINTER(obj)			\
-	(!(OBJ_TYPE(obj) & OBJTYPE_BOXED)	\
+	(!(OBJ_HEADER(obj) & OBJ_FLAG_MAY_HAVE_PTR) \
 	 || (OBJ_TYPE(obj) == OBJTYPE_RECORD	\
 	     && OBJ_BITMAP(obj)[0] == 0		\
 	     && OBJ_NUM_BITMAPS(obj) == 1))
@@ -2312,7 +2312,7 @@ sml_heap_gc()
 {
 	do_gc(MAJOR);
 #ifndef FAIR_COMPARISON
-	sml_run_finalizer(NULL);
+	sml_run_finalizer();
 #endif /* FAIR_COMPARISON */
 }
 
@@ -2652,8 +2652,7 @@ sml_alloc(unsigned int objsize)
  alloced_major:
 	ASSERT(check_newobj(obj));
 #ifndef FAIR_COMPARISON
-	/* NOTE: sml_run_finalizer may cause garbage collection. */
-	obj = sml_run_finalizer(obj);
+	sml_run_finalizer();
 #endif /* FAIR_COMPARISON */
 	goto finished;
 #if defined MULTITHREAD || defined MINOR_GC

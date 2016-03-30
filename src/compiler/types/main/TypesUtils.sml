@@ -58,6 +58,8 @@ in
         and visitTvarKind tvarKind =
             case tvarKind of
               T.UNIV => ()
+            | T.BOXED => ()
+            | T.UNBOXED => ()
             | T.REC tySenvMap => LabelEnv.app visit tySenvMap
             | T.JOIN (tySenvMap, ty1, ty2, loc) => 
               (LabelEnv.app visit tySenvMap;
@@ -111,6 +113,8 @@ in
         fun adjustEqKindInTvarKind eqKind kind = 
             case kind of
               T.UNIV => ()
+            | T.BOXED => ()
+            | T.UNBOXED => ()
             | T.REC fields => 
               LabelEnv.app (adjustEqKindInTy eqKind) fields
             | T.JOIN (fields, ty1, ty2, loc) => 
@@ -125,6 +129,8 @@ in
         (adjustEqKindInTvarKind A.EQ tvarKind;
          case tvarKind of
            T.UNIV => T.UNIV
+         | T.BOXED => T.BOXED
+         | T.UNBOXED => T.UNBOXED
          | T.REC fields => T.REC fields
          | T.JOIN (fields, ty1, ty2, loc) => T.JOIN (fields, ty1, ty2, loc)
          | T.OCONSTkind L =>  

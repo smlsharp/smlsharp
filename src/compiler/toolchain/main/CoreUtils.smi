@@ -1,7 +1,7 @@
-_require "basis.smi"
-_require "../../../config/main/Config.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
+_require "../../../basis.smi"
+_require local "../../../config/main/Config.smi"
+_require local "../../control/main/Loc.ppg.smi"
+_require local "../../control/main/Control.ppg.smi"
 _require "./Filename.smi"
 
 structure CoreUtils =
@@ -16,9 +16,11 @@ struct
   val mkdir : Filename.filename -> unit
   val rmdir_f : Filename.filename -> unit
   val system : {command : string, quiet : bool} -> unit
+  val chdir : Filename.filename -> (unit -> 'a) -> 'a
   val makeTextFile : Filename.filename * string -> unit
   val makeBinFile : Filename.filename * Word8Vector.vector -> unit
   val makeTextFile' : Filename.filename * ((string -> unit) -> unit) -> unit
   val readTextFile : Filename.filename -> string
   val readBinFile : Filename.filename -> Word8Vector.vector
+  val cp : Filename.filename -> Filename.filename -> unit
 end

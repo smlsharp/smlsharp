@@ -21,6 +21,8 @@ datatype intInf = _builtin datatype intInf
 datatype word8  = _builtin datatype word8
 datatype real32 = _builtin datatype real32
 datatype boxed  = _builtin datatype boxed
+datatype int64 = _builtin datatype int64
+datatype word64 = _builtin datatype word64
 
 exception Bind
 exception Match
@@ -44,7 +46,6 @@ val ignore = _builtin val Ignore : 'a -> unit
 (* The followings are provided for defining the Basis Library. *)
 structure SMLSharp_Builtin =
 struct
-  val exnMessage = _builtin val Exn_Message : exn -> string * string
 
   structure Array =
   struct
@@ -117,16 +118,14 @@ struct
     val castToBoxed = _builtin val Cast : string -> boxed
   end
 
-  structure Real =
+  structure Real64 =
   struct
     type real = real
     val abs = _builtin val Real_abs : real -> real
     val add = _builtin val Real_add : real * real -> real
     val div = _builtin val Real_div : real * real -> real
     val equal = _builtin val Real_equal : real * real -> bool
-    val notEqual = _builtin val Real_notEqual : real * real -> bool
     val ueq = _builtin val Real_unorderedOrEqual : real * real -> bool
-    val fromInt_unsafe = _builtin val Real_fromInt_unsafe : int -> real
     val gt = _builtin val Real_gt : real * real -> bool
     val gteq = _builtin val Real_gteq : real * real -> bool
     val isNan = _builtin val Real_isNan : real -> bool
@@ -135,8 +134,13 @@ struct
     val mul = _builtin val Real_mul : real * real -> real
     val rem = _builtin val Real_rem : real * real -> real
     val sub = _builtin val Real_sub : real * real -> real
-    val trunc_unsafe = _builtin val Real_trunc_unsafe : real -> int
+    val toInt32_unsafe = _builtin val Real_toInt32_unsafe : real -> int
+    val toInt64_unsafe = _builtin val Real_toInt64_unsafe : real -> int64
+    val toWord32_unsafe = _builtin val Real_toWord32_unsafe : real -> word
+    val toWord64_unsafe = _builtin val Real_toWord64_unsafe : real -> word64
+    val toFloat_unsafe = _builtin val Real_toFloat_unsafe : real -> real32
     val neg = _builtin val Real_neg : real -> real
+    val notEqual = _builtin val Real_notEqual : real * real -> bool
     val trunc = _builtin val Real_trunc : real -> int
   end
 
@@ -147,10 +151,7 @@ struct
     val add = _builtin val Float_add : real * real -> real
     val div = _builtin val Float_div : real * real -> real
     val equal = _builtin val Float_equal : real * real -> bool
-    val notEqual = _builtin val Float_notEqual : real * real -> bool
     val ueq = _builtin val Float_unorderedOrEqual : real * real -> bool
-    val fromInt_unsafe = _builtin val Float_fromInt_unsafe : int -> real
-    val fromReal_unsafe = _builtin val Float_fromReal_unsafe : Real.real -> real
     val gt = _builtin val Float_gt : real * real -> bool
     val gteq = _builtin val Float_gteq : real * real -> bool
     val isNan = _builtin val Float_isNan : real -> bool
@@ -159,9 +160,13 @@ struct
     val mul = _builtin val Float_mul : real * real -> real
     val rem = _builtin val Float_rem : real * real -> real
     val sub = _builtin val Float_sub : real * real -> real
-    val toReal = _builtin val Float_toReal : real -> Real.real
-    val trunc_unsafe = _builtin val Float_trunc_unsafe : real -> int
+    val toInt32_unsafe = _builtin val Float_toInt32_unsafe : real -> int
+    val toInt64_unsafe = _builtin val Float_toInt64_unsafe : real -> int64
+    val toWord32_unsafe = _builtin val Float_toWord32_unsafe : real -> word
+    val toWord64_unsafe = _builtin val Float_toWord64_unsafe : real -> word64
+    val toReal = _builtin val Float_toReal : real -> Real64.real
     val neg = _builtin val Float_neg : real -> real
+    val notEqual = _builtin val Float_notEqual : real * real -> bool
     val trunc = _builtin val Float_trunc : real -> int
   end
 
@@ -178,90 +183,165 @@ struct
     val castToWord8 = _builtin val Cast : char -> word8
   end
 
-  structure Int =
+  structure Int32 =
   struct
     type int = int
-    val add_unsafe = _builtin val Int_add_unsafe : int * int -> int
-    val gt = _builtin val Int_gt : int * int -> bool
-    val gteq = _builtin val Int_gteq : int * int -> bool
-    val lt = _builtin val Int_lt : int * int -> bool
-    val lteq = _builtin val Int_lteq : int * int -> bool
-    val mul_unsafe = _builtin val Int_mul_unsafe : int * int -> int
-    val quot_unsafe = _builtin val Int_quot_unsafe : int * int -> int
-    val rem_unsafe = _builtin val Int_rem_unsafe : int * int -> int
-    val sub_unsafe = _builtin val Int_sub_unsafe : int * int -> int
-    val abs = _builtin val Int_abs : int -> int
-    val add = _builtin val Int_add : int * int -> int
-    val div = _builtin val Int_div : int * int -> int
-    val mod = _builtin val Int_mod : int * int -> int
-    val mul = _builtin val Int_mul : int * int -> int
-    val neg = _builtin val Int_neg : int -> int
-    val quot = _builtin val Int_quot : int * int -> int
-    val rem = _builtin val Int_rem : int * int -> int
-    val sub = _builtin val Int_sub : int * int -> int
+    val add_unsafe = _builtin val Int32_add_unsafe : int * int -> int
+    val gt = _builtin val Int32_gt : int * int -> bool
+    val gteq = _builtin val Int32_gteq : int * int -> bool
+    val lt = _builtin val Int32_lt : int * int -> bool
+    val lteq = _builtin val Int32_lteq : int * int -> bool
+    val mul_unsafe = _builtin val Int32_mul_unsafe : int * int -> int
+    val quot_unsafe = _builtin val Int32_quot_unsafe : int * int -> int
+    val rem_unsafe = _builtin val Int32_rem_unsafe : int * int -> int
+    val sub_unsafe = _builtin val Int32_sub_unsafe : int * int -> int
+    val toReal = _builtin val Int32_toReal : int -> real
+    val toFloat_unsafe = _builtin val Int32_toFloat_unsafe : int -> real32
+    val abs = _builtin val Int32_abs : int -> int
+    val add = _builtin val Int32_add : int * int -> int
+    val div = _builtin val Int32_div : int * int -> int
+    val mod = _builtin val Int32_mod : int * int -> int
+    val mul = _builtin val Int32_mul : int * int -> int
+    val neg = _builtin val Int32_neg : int -> int
+    val quot = _builtin val Int32_quot : int * int -> int
+    val rem = _builtin val Int32_rem : int * int -> int
+    val sub = _builtin val Int32_sub : int * int -> int
   end
 
-  structure Word =
+  structure Int64 =
+  struct
+    type int = int64
+    val add_unsafe = _builtin val Int64_add_unsafe : int * int -> int
+    val gt = _builtin val Int64_gt : int * int -> bool
+    val gteq = _builtin val Int64_gteq : int * int -> bool
+    val lt = _builtin val Int64_lt : int * int -> bool
+    val lteq = _builtin val Int64_lteq : int * int -> bool
+    val mul_unsafe = _builtin val Int64_mul_unsafe : int * int -> int
+    val quot_unsafe = _builtin val Int64_quot_unsafe : int * int -> int
+    val rem_unsafe = _builtin val Int64_rem_unsafe : int * int -> int
+    val sub_unsafe = _builtin val Int64_sub_unsafe : int * int -> int
+    val toReal = _builtin val Int64_toReal_unsafe : int -> real
+    val toFloat_unsafe = _builtin val Int64_toFloat_unsafe : int -> real32
+    val abs = _builtin val Int64_abs : int -> int
+    val add = _builtin val Int64_add : int * int -> int
+    val div = _builtin val Int64_div : int * int -> int
+    val fromInt32 = _builtin val Int64_fromInt32 : Int32.int -> int
+    val mod = _builtin val Int64_mod : int * int -> int
+    val mul = _builtin val Int64_mul : int * int -> int
+    val neg = _builtin val Int64_neg : int -> int
+    val quot = _builtin val Int64_quot : int * int -> int
+    val rem = _builtin val Int64_rem : int * int -> int
+    val sub = _builtin val Int64_sub : int * int -> int
+    val toInt32 = _builtin val Int64_toInt32 : int -> Int32.int
+  end
+
+  structure Word32 =
   struct
     type word = word
-    val add = _builtin val Word_add : word * word -> word
-    val andb = _builtin val Word_andb : word * word -> word
-    val arshift_unsafe = _builtin val Word_arshift_unsafe : word * word -> word
-    val div_unsafe = _builtin val Word_div_unsafe : word * word -> word
-    val gt = _builtin val Word_gt : word * word -> bool
-    val gteq = _builtin val Word_gteq : word * word -> bool
-    val lshift_unsafe = _builtin val Word_lshift_unsafe : word * word -> word
-    val lt = _builtin val Word_lt : word * word -> bool
-    val lteq = _builtin val Word_lteq : word * word -> bool
-    val mod_unsafe = _builtin val Word_mod_unsafe : word * word -> word
-    val mul = _builtin val Word_mul : word * word -> word
-    val orb = _builtin val Word_orb : word * word -> word
-    val rshift_unsafe = _builtin val Word_rshift_unsafe : word * word -> word
-    val sub = _builtin val Word_sub : word * word -> word
-    val xorb = _builtin val Word_xorb : word * word -> word
-    val arshift = _builtin val Word_arshift : word * word -> word
-    val div = _builtin val Word_div : word * word -> word
-    val fromInt = _builtin val RuntimeTyCast : int -> word
-    val lshift = _builtin val Word_lshift : word * word -> word
-    val mod = _builtin val Word_mod : word * word -> word
-    val neg = _builtin val Word_neg : word -> word
-    val notb = _builtin val Word_notb : word -> word
-    val rshift = _builtin val Word_rshift : word * word -> word
-    val toInt = _builtin val Word_toInt : word -> int
-    val toIntX = _builtin val RuntimeTyCast : word -> int
+    val add = _builtin val Word32_add : word * word -> word
+    val andb = _builtin val Word32_andb : word * word -> word
+    val arshift_unsafe = _builtin val Word32_arshift_unsafe : word * word -> word
+    val div_unsafe = _builtin val Word32_div_unsafe : word * word -> word
+    val gt = _builtin val Word32_gt : word * word -> bool
+    val gteq = _builtin val Word32_gteq : word * word -> bool
+    val lshift_unsafe = _builtin val Word32_lshift_unsafe : word * word -> word
+    val lt = _builtin val Word32_lt : word * word -> bool
+    val lteq = _builtin val Word32_lteq : word * word -> bool
+    val mod_unsafe = _builtin val Word32_mod_unsafe : word * word -> word
+    val mul = _builtin val Word32_mul : word * word -> word
+    val orb = _builtin val Word32_orb : word * word -> word
+    val rshift_unsafe = _builtin val Word32_rshift_unsafe : word * word -> word
+    val sub = _builtin val Word32_sub : word * word -> word
+    val toWord8 = _builtin val Word32_toWord8 : word -> word8
+    val toWord64 = _builtin val Word32_toWord64 : word -> word64
+    val toWord64X = _builtin val Word32_toWord64X : word -> word64
+    val xorb = _builtin val Word32_xorb : word * word -> word
+
+    val arshift = _builtin val Word32_arshift : word * word -> word
+    val div = _builtin val Word32_div : word * word -> word
+    val lshift = _builtin val Word32_lshift : word * word -> word
+    val mod = _builtin val Word32_mod : word * word -> word
+    val neg = _builtin val Word32_neg : word -> word
+    val notb = _builtin val Word32_notb : word -> word
+    val rshift = _builtin val Word32_rshift : word * word -> word
+    val toInt32 = _builtin val Word32_toInt32 : word -> int
+
+    val toInt32X = _builtin val RuntimeTyCast : word -> int
+    val fromInt32 = _builtin val RuntimeTyCast : int -> word
+  end
+
+  structure Word64 =
+  struct
+    type word = word64
+    val add = _builtin val Word64_add : word * word -> word
+    val andb = _builtin val Word64_andb : word * word -> word
+    val arshift_unsafe =
+        _builtin val Word64_arshift_unsafe : word * Word32.word -> word
+    val div_unsafe = _builtin val Word64_div_unsafe : word * word -> word
+    val gt = _builtin val Word64_gt : word * word -> bool
+    val gteq = _builtin val Word64_gteq : word * word -> bool
+    val lshift_unsafe =
+        _builtin val Word64_lshift_unsafe : word * Word32.word -> word
+    val lt = _builtin val Word64_lt : word * word -> bool
+    val lteq = _builtin val Word64_lteq : word * word -> bool
+    val mod_unsafe = _builtin val Word64_mod_unsafe : word * word -> word
+    val mul = _builtin val Word64_mul : word * word -> word
+    val orb = _builtin val Word64_orb : word * word -> word
+    val rshift_unsafe =
+        _builtin val Word64_rshift_unsafe : word * Word32.word -> word
+    val sub = _builtin val Word64_sub : word * word -> word
+    val toWord8 = _builtin val Word64_toWord8 : word -> word8
+    val toWord32 = _builtin val Word64_toWord32 : word -> Word32.word
+    val xorb = _builtin val Word64_xorb : word * word -> word
+
+    val arshift = _builtin val Word64_arshift : word * Word32.word -> word
+    val div = _builtin val Word64_div : word * word -> word
+    val fromInt32 = _builtin val Word64_fromInt32 : int -> word
+    val lshift = _builtin val Word64_lshift : word * Word32.word -> word
+    val mod = _builtin val Word64_mod : word * word -> word
+    val neg = _builtin val Word64_neg : word -> word
+    val notb = _builtin val Word64_notb : word -> word
+    val rshift = _builtin val Word64_rshift : word * Word32.word -> word
+    val toInt32 = _builtin val Word64_toInt32 : word -> Int32.int
+    val toInt32X = _builtin val Word64_toInt32X : word -> int
+
+    val toInt64X = _builtin val RuntimeTyCast : word -> int64
+    val fromInt64 = _builtin val RuntimeTyCast : int64 -> word
   end
 
   structure Word8 =
   struct
     type word = word8
-    val add = _builtin val Byte_add : word * word -> word
-    val andb = _builtin val Byte_andb : word * word -> word
-    val arshift_unsafe = _builtin val Byte_arshift_unsafe : word * word -> word
-    val div_unsafe = _builtin val Byte_div_unsafe : word * word -> word
-    val fromWord = _builtin val Byte_fromWord : Word.word -> word
-    val gt = _builtin val Byte_gt : word * word -> bool
-    val gteq = _builtin val Byte_gteq : word * word -> bool
-    val lshift_unsafe = _builtin val Byte_lshift_unsafe : word * word -> word
-    val lt = _builtin val Byte_lt : word * word -> bool
-    val lteq = _builtin val Byte_lteq : word * word -> bool
-    val mod_unsafe = _builtin val Byte_mod_unsafe : word * word -> word
-    val mul = _builtin val Byte_mul : word * word -> word
-    val orb = _builtin val Byte_orb : word * word -> word
-    val rshift_unsafe = _builtin val Byte_rshift_unsafe : word * word -> word
-    val sub = _builtin val Byte_sub : word * word -> word
-    val xorb = _builtin val Byte_xorb : word * word -> word
-    val toIntX = _builtin val Byte_toIntX : word -> int
-    val toWord = _builtin val Byte_toWord : word -> Word.word
-    val toWordX = _builtin val Byte_toWordX : word -> Word.word
-    val arshift = _builtin val Byte_arshift : word * Word.word -> word
-    val div = _builtin val Byte_div : word * word -> word
-    val fromInt = _builtin val Byte_fromInt : int -> word
-    val lshift = _builtin val Byte_lshift : word * Word.word -> word
-    val mod = _builtin val Byte_mod : word * word -> word
-    val neg = _builtin val Byte_neg : word -> word
-    val notb = _builtin val Byte_notb : word -> word
-    val rshift = _builtin val Byte_rshift : word * Word.word -> word
-    val toInt = _builtin val Byte_toInt : word -> int
+    val add = _builtin val Word8_add : word * word -> word
+    val andb = _builtin val Word8_andb : word * word -> word
+    val arshift_unsafe = _builtin val Word8_arshift_unsafe : word * word -> word
+    val div_unsafe = _builtin val Word8_div_unsafe : word * word -> word
+    val gt = _builtin val Word8_gt : word * word -> bool
+    val gteq = _builtin val Word8_gteq : word * word -> bool
+    val lshift_unsafe = _builtin val Word8_lshift_unsafe : word * word -> word
+    val lt = _builtin val Word8_lt : word * word -> bool
+    val lteq = _builtin val Word8_lteq : word * word -> bool
+    val mod_unsafe = _builtin val Word8_mod_unsafe : word * word -> word
+    val mul = _builtin val Word8_mul : word * word -> word
+    val orb = _builtin val Word8_orb : word * word -> word
+    val rshift_unsafe = _builtin val Word8_rshift_unsafe : word * word -> word
+    val sub = _builtin val Word8_sub : word * word -> word
+    val toWord32 = _builtin val Word8_toWord32 : word -> Word32.word
+    val toWord32X = _builtin val Word8_toWord32X : word -> Word32.word
+    val toWord64 = _builtin val Word8_toWord64 : word -> word64
+    val toWord64X = _builtin val Word8_toWord64X : word -> word64
+    val xorb = _builtin val Word8_xorb : word * word -> word
+
+    val arshift = _builtin val Word8_arshift : word * Word32.word -> word
+    val div = _builtin val Word8_div : word * word -> word
+    val fromInt32 = _builtin val Word8_fromInt32 : int -> word
+    val lshift = _builtin val Word8_lshift : word * Word32.word -> word
+    val mod = _builtin val Word8_mod : word * word -> word
+    val neg = _builtin val Word8_neg : word -> word
+    val notb = _builtin val Word8_notb : word -> word
+    val rshift = _builtin val Word8_rshift : word * Word32.word -> word
+    val toInt32 = _builtin val Word8_toInt32 : word -> int
+    val toInt32X = _builtin val Word8_toInt32X : word -> int
 
     val castToChar = _builtin val Cast : word -> char
   end
@@ -271,22 +351,49 @@ struct
     type int = intInf
   end
 
+  structure Exn =
+  struct
+    val exnMessage = _builtin val Exn_Message : exn -> string * word * boxed
+  end
+
   structure Pointer =
   struct
     val identityEqual = _builtin val IdentityEqual : boxed * boxed -> bool
     val advance = _builtin val Ptr_advance : 'a ptr * int -> 'a ptr
     val deref = _builtin val Ptr_deref : 'a ptr -> 'a
     val store = _builtin val Ptr_store : 'a ptr * 'a -> unit
+    val toWord64 = _builtin val Ptr_toWord64 : 'a ptr -> word64
 
     val toUnitPtr = _builtin val Cast : 'a ptr -> unit ptr
     val fromUnitPtr = _builtin val Cast : unit ptr -> 'a ptr
     val toCodeptr = _builtin val BitCast : unit ptr -> codeptr
+
+    val refToBoxed = _builtin val Cast : 'a ref -> boxed
   end
 
   structure SQL =
   struct
     datatype dbi     = _builtin datatype dbi
     datatype value   = _builtin datatype value
+  end
+
+  structure Dynamic =
+  struct
+    val readInt = _builtin val Boxed_deref : boxed * word -> int
+    val readInt64 = _builtin val Boxed_deref : boxed * word -> int64
+    val readChar = _builtin val Boxed_deref : boxed * word -> char
+    val readWord8 = _builtin val Boxed_deref : boxed * word -> word8
+    val readWord = _builtin val Boxed_deref : boxed * word -> word
+    val readWord64 = _builtin val Boxed_deref : boxed * word -> word64
+    val readReal = _builtin val Boxed_deref : boxed * word -> real
+    val readReal32 = _builtin val Boxed_deref : boxed * word -> real32
+    val readBoxed = _builtin val Boxed_deref : boxed * word -> boxed
+    val readPtr = _builtin val Boxed_deref : boxed * word -> unit ptr
+    val readIntInf = _builtin val Boxed_deref : boxed * word -> intInf
+    val readString = _builtin val Boxed_deref : boxed * word -> string
+    val readExn = _builtin val Boxed_deref : boxed * word -> exn
+    val objectSize = _builtin val ObjectSize : boxed -> word
+    val dup = _builtin val Ptr_dup : unit ptr * word * int -> boxed
   end
 
 end

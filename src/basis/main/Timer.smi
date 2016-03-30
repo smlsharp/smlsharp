@@ -1,6 +1,6 @@
 _require "./Time.smi"
-_require "./IntInf.smi"
-_require "./SMLSharp_Runtime.smi"
+_require local "./IntInf.smi"
+_require local "./SMLSharp_Runtime.smi"
 
 structure Timer =
 struct

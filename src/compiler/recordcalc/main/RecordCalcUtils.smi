@@ -1,6 +1,6 @@
-_require "basis.smi"
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-_require "../../util/main/gensym.smi"
+_require "../../util/main/Gensym.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/TypesBasics.smi"

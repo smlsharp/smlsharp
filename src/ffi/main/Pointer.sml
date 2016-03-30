@@ -5,12 +5,14 @@
  *)
 
 infix 4 = <> > >= < <=
-val op < = SMLSharp_Builtin.Int.lt
+val op < = SMLSharp_Builtin.Int32.lt
 
 structure Pointer =
 struct
 
   val advance = SMLSharp_Builtin.Pointer.advance
+  val load = SMLSharp_Builtin.Pointer.deref
+  val store = SMLSharp_Builtin.Pointer.store
 
   fun isNull (ptr : 'a ptr) =
       SMLSharp_Builtin.Pointer.toUnitPtr ptr = _NULL
@@ -19,7 +21,7 @@ struct
 
   val prim_import =
       _import "prim_UnmanagedMemory_import"
-      : __attribute__((no_callback,alloc))
+      : __attribute__((unsafe,fast,gc))
         (unit ptr, int) -> SMLSharp_Builtin.Word8.word vector
 
   fun importBytes (ptr : SMLSharp_Builtin.Word8.word ptr, len) =
@@ -28,7 +30,7 @@ struct
 
   val importString =
       _import "sml_str_new"
-      : __attribute__((no_callback,alloc))
+      : __attribute__((unsafe,fast,gc))
         char ptr -> string
 
 end

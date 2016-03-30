@@ -16,16 +16,16 @@ struct
 
   val prim_exit =
       _import "prim_GenericOS_exit"
-      : __attribute__((no_callback)) int -> ()
+      : int -> ()
   val prim_getenv =
       _import "getenv"
-      : __attribute__((no_callback)) string -> char ptr
+      : string -> char ptr
   val prim_sleep =
       _import "sleep"
-      : __attribute__((no_callback)) word -> word
+      : word -> word
   val prim_system =
       _import "system"
-      : __attribute__((no_callback)) string -> int
+      : string -> int
 
   type status = int
   val success = 0 : status
@@ -36,7 +36,7 @@ struct
       let
         val status = prim_system cmd
       in
-        if SMLSharp_Builtin.Int.lt (status, 0)
+        if SMLSharp_Builtin.Int32.lt (status, 0)
         then raise SMLSharp_Runtime.OS_SysErr ()
         else status
       end
@@ -52,9 +52,9 @@ struct
       let
         val seconds = Time.toSeconds time
       in
-        if SMLSharp_Builtin.Int.lteq (LargeInt.sign seconds, 0)
+        if SMLSharp_Builtin.Int32.lteq (IntInf.sign seconds, 0)
         then ()
-        else (prim_sleep (Word.fromLargeInt seconds); ())
+        else (prim_sleep (Word32.fromLargeInt seconds); ())
       end
 
   datatype exitState = RUN | EXIT

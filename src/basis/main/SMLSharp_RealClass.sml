@@ -6,10 +6,10 @@
  *)
 
 infix 4 = <> > >= < <=
-val op < = SMLSharp_Builtin.Int.lt
-val op > = SMLSharp_Builtin.Int.gt
-val op <= = SMLSharp_Builtin.Int.lteq
-val op >= = SMLSharp_Builtin.Int.gteq
+val op < = SMLSharp_Builtin.Int32.lt
+val op > = SMLSharp_Builtin.Int32.gt
+val op <= = SMLSharp_Builtin.Int32.lteq
+val op >= = SMLSharp_Builtin.Int32.gteq
 
 structure SMLSharp_RealClass =
 struct
@@ -32,11 +32,12 @@ struct
                  
   val classReal =
       _import "prim_Real_class"
-      : __attribute__((pure,no_callback)) real -> class
+      : __attribute__((pure,fast)) real -> class
 
   val classFloat =
       _import "prim_Float_class"
-      : __attribute__((pure,no_callback)) SMLSharp_Builtin.Real32.real -> class
+      : __attribute__((pure,fast))
+        SMLSharp_Builtin.Real32.real -> class
                                                                     
   (* 2014-01-25 以下がruntime/prim.cの実際の定義
     #define IEEEREAL_CLASS_SNAN     1   /* signaling NaN */
@@ -48,7 +49,7 @@ struct
     #define IEEEREAL_CLASS_UNKNOWN  0
   *)
   fun class c =
-      case SMLSharp_Builtin.Int.abs c of
+      case SMLSharp_Builtin.Int32.abs c of
         1 => IEEEReal.NAN
       | 2 => IEEEReal.NAN
       | 3 => IEEEReal.INF

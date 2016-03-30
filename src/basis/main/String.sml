@@ -10,17 +10,17 @@ infix 7 * / div mod
 infix 6 + -
 infixr 5 ::
 infix 4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op > = SMLSharp_Builtin.Int.gt
-val op < = SMLSharp_Builtin.Int.lt
-val op <= = SMLSharp_Builtin.Int.lteq
-val op >= = SMLSharp_Builtin.Int.gteq
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op > = SMLSharp_Builtin.Int32.gt
+val op < = SMLSharp_Builtin.Int32.lt
+val op <= = SMLSharp_Builtin.Int32.lteq
+val op >= = SMLSharp_Builtin.Int32.gteq
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 
 val memcmp = _import "sml_memcmp"
-             : __attribute__ ((no_callback, pure))
+             : __attribute__ ((pure,fast))
                (string, int, string, int, int) -> int
 
 structure String =
@@ -52,7 +52,8 @@ struct
   fun substring (vec, start, length) =
       let
         val len = String.size vec
-        val _ = if start < 0 orelse len < start orelse len - start < length
+        val _ = if start < 0 orelse len < start
+                   orelse length < 0 orelse len - start < length
                 then raise Subscript else ()
       in
         substring_unsafe (vec, start, length)
@@ -227,10 +228,10 @@ struct
         0 => General.EQUAL
       | n => if n < 0 then General.LESS else General.GREATER
 
-  fun op < (x, y) = SMLSharp_Builtin.Int.lt (strcmp (x, y), 0)
-  fun op <= (x, y) = SMLSharp_Builtin.Int.lteq (strcmp (x, y), 0)
-  fun op > (x, y) = SMLSharp_Builtin.Int.gt (strcmp (x, y), 0)
-  fun op >= (x, y) = SMLSharp_Builtin.Int.gteq (strcmp (x, y), 0)
+  fun op < (x, y) = SMLSharp_Builtin.Int32.lt (strcmp (x, y), 0)
+  fun op <= (x, y) = SMLSharp_Builtin.Int32.lteq (strcmp (x, y), 0)
+  fun op > (x, y) = SMLSharp_Builtin.Int32.gt (strcmp (x, y), 0)
+  fun op >= (x, y) = SMLSharp_Builtin.Int32.gteq (strcmp (x, y), 0)
 
   fun toString s =
       translate Char.toString s

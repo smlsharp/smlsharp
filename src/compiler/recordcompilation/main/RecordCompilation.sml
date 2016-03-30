@@ -17,8 +17,6 @@ struct
   val loc = (pos,pos)
   fun mkLongsymbol path = Symbol.mkLongsymbol path loc
 
-  fun printRcexp rcexp = print (RecordCalcFormatter.rcexpToString nil rcexp)
-  fun printRcdecl rcexp = print (RecordCalcFormatter.rcdecToString rcexp)
   structure RC = RecordCalc
   structure TC = TypedCalc
   structure T = Types
@@ -205,6 +203,8 @@ struct
   fun generateExtraArgsOfKind btvEnv (btv, recordKind) =
       case recordKind of
         T.UNIV => UnivKind.generateSingletonTy btv
+      | T.BOXED => nil
+      | T.UNBOXED => UnivKind.generateSingletonTy btv
       | T.OCONSTkind tys => nil
       | T.OPRIMkind k =>
         UnivKind.generateSingletonTy btv
@@ -640,6 +640,8 @@ struct
         [RC.RCEXTERNVAR (compileExVarInfo exVarInfo)]
       | RC.RCEXTERNEXN exExnInfo =>
         [RC.RCEXTERNEXN exExnInfo]  (* contains no POLYty *)
+      | RC.RCBUILTINEXN exExnInfo =>
+        [RC.RCBUILTINEXN exExnInfo]  (* contains no POLYty *)
       | RC.RCVAL (bindList, loc) =>
         [RC.RCVAL (map (fn (v,e) => (compileVarInfo v, compileExp context e))
                        bindList, loc)]

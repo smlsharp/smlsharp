@@ -1,2 +1,2 @@
 _require "../basis.smi"
-_require "export-lex.smi"
+_require "./export-lex.smi"

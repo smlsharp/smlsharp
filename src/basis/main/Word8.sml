@@ -18,18 +18,18 @@ struct
   type word = Word8.word
   val wordSize = 8  (* 8-bit unsigned integer *)
 
-  val toLarge = Word8.toWord
-  val toLargeX = Word8.toWordX
+  val toLarge = Word8.toWord64
+  val toLargeX = Word8.toWord64X
   val toLargeWord = toLarge
   val toLargeWordX = toLargeX
-  val fromLarge = Word8.fromWord
+  val fromLarge = SMLSharp_Builtin.Word64.toWord8
   val fromLargeWord = fromLarge
-  fun toLargeInt x = Word.toLargeInt (Word8.toWord x)
-  fun toLargeIntX x = IntInf.fromInt (Word8.toIntX x)
-  fun fromLargeInt x = Word8.fromWord (Word.fromLargeInt x)
-  val toInt = Word8.toInt
-  val toIntX = Word8.toIntX
-  val fromInt = Word8.fromInt
+  fun toLargeInt x = Word64.toLargeInt (Word8.toWord64 x)
+  fun toLargeIntX x = IntInf.fromInt (Word8.toInt32X x)
+  fun fromLargeInt x = SMLSharp_Builtin.Word64.toWord8 (Word64.fromLargeInt x)
+  val toInt = Word8.toInt32
+  val toIntX = Word8.toInt32X
+  val fromInt = Word8.fromInt32
   val andb = Word8.andb
   val orb = Word8.orb
   val xorb = Word8.xorb
@@ -57,13 +57,13 @@ struct
   fun max (x, y) = if x > y then x else y
 
   fun fmt radix n =
-      LargeWord.fmt radix (toLarge n)
+      Word64.fmt radix (toLarge n)
 
   fun scan radix (getc : (char, 'a) StringCvt.reader) strm =
-      case LargeWord.scan radix getc strm of
+      case Word64.scan radix getc strm of
         NONE => NONE
       | SOME (x, strm) =>
-        if SMLSharp_Builtin.Word.gt (x, 0wxff) then raise Overflow
+        if SMLSharp_Builtin.Word64.gt (x, 0wxff) then raise Overflow
         else SOME (fromLarge x, strm)
 
   fun toString n =

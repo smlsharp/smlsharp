@@ -1,7 +1,7 @@
-_require "basis.smi"
-_require "Assert.smi"
-_require "Test.smi"
-_require "TESTRUNNER.sig"
+_require "../../../basis.smi"
+_require local "./Assert.smi"
+_require "./Test.smi"
+_require local "./TESTRUNNER.sig"
 
 structure TextUITestRunner =
 struct

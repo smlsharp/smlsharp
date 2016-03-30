@@ -53,7 +53,7 @@ sml_heap_gc()
 	sml_malloc_sweep(MAJOR);
 	RUN_THE_WORLD();
 	GIANT_UNLOCK();
-	sml_run_finalizer(NULL);
+	sml_run_finalizer();
 }
 
 SML_PRIMITIVE void *

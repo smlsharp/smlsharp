@@ -109,7 +109,7 @@ struct
   val doTCOptimization = ref true
   val doRCOptimization = ref false
   (** true if no formatter is generated and no binding information is printed *)
-  val skipPrinter = ref false
+  val skipPrinter = ref true
 
   (* switches for parser *)
   val allow8bitId = ref false
@@ -133,7 +133,8 @@ struct
   val doFrameCompaction = ref true
   val doRegisterCoalescing = ref true
   val enableUnboxedFloat = ref true
-  val insertCheckGC = ref false
+  val insertCheckGC = ref true
+  val useMustTail = ref false
 
   (****************************************)
   (* switch table for -x options *)
@@ -283,7 +284,9 @@ struct
         ("skipPrinter", "skip value printer generation",
          BoolSwitch skipPrinter),
         ("traceFileLoad", "print filenames loaded by compiler",
-         BoolSwitch traceFileLoad)
+         BoolSwitch traceFileLoad),
+        ("useMustTail", "use musttail instead of tail as much as possible",
+         BoolSwitch useMustTail)
       ]
 
   fun switchToString (IntSwitch intRef) = Int.toString (!intRef)

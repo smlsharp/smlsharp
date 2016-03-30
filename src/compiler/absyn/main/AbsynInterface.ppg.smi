@@ -1,12 +1,12 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
-_require "../../util/main/BigInt_IntInf.smi"
 _require "../../toolchain/main/Filename.smi"
 _require "./Symbol.ppg.smi"
 _require "./Absyn.ppg.smi"
+_require "./InterfaceName.ppg.smi"
 
 structure AbsynInterface =
 struct
@@ -56,7 +56,7 @@ struct
     | EXNREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
 
   datatype idec =
-      IVAL of valbind list
+      IVAL of valbind
     | ITYPE of typbind list
     | IDATATYPE of {datbind: datbind list, loc: loc}
     | ITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
@@ -102,10 +102,14 @@ struct
     | IFUNDEC of funbind
     | IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
+  datatype irequire =
+      REQUIRE of symbol
+    | LOCAL_REQUIRE of symbol
+
   datatype itop =
       INTERFACE of
       {
-        requires: Symbol.symbol list,
+        requires: irequire list,
         provide: itopdec list
       }
     | INCLUDES of
@@ -114,27 +118,10 @@ struct
         topdecs: Absyn.topdec list
       }
 
-  datatype filePlace =
-      STDPATH
-    | LOCALPATH
-  
-(*
-  datatype source =
-      LOADED of filePlace * Filename.filename
-    | GENERATED
-*)
-  type source = filePlace * Filename.filename
-  
-  type interfaceName =
-      {
-        hash: string,
-        source: source
-      } 
-
   type interfaceDec =
       {
         interfaceId: InterfaceID.id,
-        interfaceName : interfaceName,
+        interfaceName : InterfaceName.interface_name,
         requiredIds: {id: InterfaceID.id, loc: loc} list,
         provideTopdecs: itopdec list
       }
@@ -142,8 +129,9 @@ struct
   type interface =
       {
         interfaceDecs : interfaceDec list,
-        provideInterfaceNameOpt : interfaceName option,
+        provideInterfaceNameOpt : InterfaceName.interface_name option,
         requiredIds : {id: InterfaceID.id, loc: loc} list,
+        locallyRequiredIds : {id: InterfaceID.id, loc: loc} list,
         provideTopdecs : itopdec list
       } 
 
@@ -152,6 +140,13 @@ struct
         interface : interface option,
         topdecsInclude : Absyn.topdec list,
         topdecsSource : Absyn.topdec list
+      }
+
+  type interface_unit =
+      {
+        interfaceDecs : interfaceDec list,
+        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        topdecsInclude : Absyn.topdec list
       }
 
   type interactiveUnit =
@@ -204,18 +199,14 @@ struct
       : itopdec -> SMLFormat.FormatExpression.expression list
   val format_itop
       : itop -> SMLFormat.FormatExpression.expression list
-  val format_filePlace
-      : filePlace -> SMLFormat.FormatExpression.expression list
-  val format_source
-      : source -> SMLFormat.FormatExpression.expression list
-  val format_interfaceName
-      : interfaceName -> SMLFormat.FormatExpression.expression list
   val format_interfaceDec
       : interfaceDec -> SMLFormat.FormatExpression.expression list
   val format_interface
       : interface -> SMLFormat.FormatExpression.expression list
   val format_compileUnit
       : compileUnit -> SMLFormat.FormatExpression.expression list
+  val format_interface_unit
+      : interface_unit -> SMLFormat.FormatExpression.expression list
   val format_interactiveUnit
       : interactiveUnit -> SMLFormat.FormatExpression.expression list
 end

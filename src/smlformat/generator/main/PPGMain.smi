@@ -1,11 +1,11 @@
 _require "../../../basis.smi"
-_require "Utility.smi"
-_require "ErrorQueue.smi"
-_require "Ast.smi"
-_require "Constants_MLton.smi"
-_require "MLParser.smi"
-_require "FormatterGenerator.smi"
-_require "BasicFormattersEnv.smi"
+_require "./Utility.smi"
+_require "./ErrorQueue.smi"
+_require "./Ast.smi"
+_require "./Constants_MLton.smi"
+_require "./MLParser.smi"
+_require "./FormatterGenerator.smi"
+_require "./BasicFormattersEnv.smi"
 
 structure PPGMain =
 struct

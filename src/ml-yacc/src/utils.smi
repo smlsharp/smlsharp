@@ -1,5 +1,5 @@
 _require "../../basis.smi"
-_require "utils.sig"
+_require "./utils.sig"
 
 functor ListOrdSet(
   B : sig

@@ -1,11 +1,11 @@
-_require "basis.smi"
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../control/main/Bug.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/IDCalc.ppg.smi"
-_require "../../types/main/tvarMap.smi"
+_require "../../types/main/TvarMap.smi"
 _require "./NameEvalEnv.ppg.smi"
 _require "./TfunVars.smi"
 

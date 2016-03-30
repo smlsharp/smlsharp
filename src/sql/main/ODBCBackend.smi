@@ -1,12 +1,12 @@
 _require "../../basis.smi"
-_require "../../ffi/main/Pointer.smi"
-_require "./SQLErrors.smi"
+_require local "../../ffi/main/Pointer.smi"
+_require local "./SQLErrors.smi"
 _require "./SQLBackendTy.smi"
-_require "UNIXODBC.smi"
-_require "SQLBACKEND.sig"
-_require "builtintypes/timestamp/TimeStamp.smi"
-_require "builtintypes/decimal/Decimal.smi"
-_require "builtintypes/float/Float.smi"
+_require local "./UNIXODBC.smi"
+_require local "./SQLBACKEND.sig"
+_require "./builtintypes/timestamp/TimeStamp.smi"
+_require "./builtintypes/decimal/Decimal.smi"
+_require "./builtintypes/float/Float.smi"
 
 structure SMLSharp_SQL_ODBCBackend =
 struct

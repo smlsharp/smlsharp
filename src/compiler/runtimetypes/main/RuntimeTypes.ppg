@@ -18,16 +18,25 @@ struct
    * @formatter(optional) TermFormat.formatOptionalOption
    *)
   datatype ty =
-      (*% @format "uchar" *)
-      UCHARty       (* unsigned char *)
-    | (*% @format "int" *)
-      INTty         (* int *)
-    | (*% @format "uint" *)
-      UINTty        (* unsigned int *)
+      (*% @format "unit" *)
+      (* The empty record type.
+       * The unique value of this type is null pointer, which can be regarded
+       * as a record value. *)
+      UNITty
+    | (*% @format "uint8" *)
+      UINT8ty
+    | (*% @format "int32" *)
+      INT32ty
+    | (*% @format "int64" *)
+      INT64ty
+    | (*% @format "uint32" *)
+      UINT32ty
+    | (*% @format "uint64" *)
+      UINT64ty
     | (*% @format "double" *)
-      DOUBLEty      (* double precision floating-point *)
+      DOUBLEty      (* 64-bit double precision floating-point *)
     | (*% @format "float" *)
-      FLOATty       (* single precision floating-point *)
+      FLOATty       (* 32-bit single precision floating-point *)
     | (*% @format "boxed" *)
       BOXEDty       (* heap object pointer *)
     | (*% @format "ptr" *)

@@ -151,6 +151,8 @@ local
          raise bug "TPEXPORTRECFUNVAR to Analyse"
        | TC.TPEXTERNEXN {longsymbol, ty} =>
          ()
+       | TC.TPBUILTINEXN {longsymbol, ty} =>
+         ()
        | TC.TPEXTERNVAR {longsymbol, ty} =>
          ()
        | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>

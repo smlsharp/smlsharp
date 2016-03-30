@@ -1,7 +1,7 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 
-_require "LOC.sig"
+_require local "LOC.sig"
 
 structure Loc =
 struct

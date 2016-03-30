@@ -15,11 +15,23 @@
 #define HAVE_GETTIMEOFDAY
 #endif /* !HAVE_CONFIG_H */
 
-#if defined HAVE_CLOCK_GETTIME && HAVE_DECL_CLOCK_PROCESS_CPUTIME_ID
+#if defined HAVE_CLOCK_GETTIME
 
 #include <time.h>
 typedef struct timespec sml_timer_t;
+#if 0
+#define sml_timer_now(timer)  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &(timer))
+#define TIMERTYPE "clock_gettime CLOCK_THREAD_CPUTIME_ID"
+#elif 0
 #define sml_timer_now(timer)  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(timer))
+#define TIMERTYPE "clock_gettime CLOCK_PROCESS_CPUTIME_ID"
+#elif HAVE_DECL_CLOCK_MONOTONIC
+#define sml_timer_now(timer)  clock_gettime(CLOCK_MONOTONIC, &(timer))
+#define TIMERTYPE "clock_gettime CLOCK_MONOTONIC"
+#else
+#define sml_timer_now(timer)  clock_gettime(CLOCK_REALTIME, &(timer))
+#define TIMERTYPE "clock_gettime CLOCK_REALTIME"
+#endif
 
 struct sml_time { long sec, nsec; };
 typedef struct sml_time sml_time_t;
@@ -52,6 +64,7 @@ typedef struct sml_time sml_time_t;
 #include <sys/time.h>
 typedef struct timeval sml_timer_t;
 #define sml_timer_now(timer)  gettimeofday(&(timer), NULL)
+#define TIMERTYPE "gettimeofday"
 
 struct sml_time { long sec, usec; };
 typedef struct sml_time sml_time_t;
@@ -82,6 +95,7 @@ typedef struct sml_time sml_time_t;
 #include <sys/resource.h>
 typedef struct rusage sml_timer_t;
 #define sml_timer_now(timer)  getrusage(RUSAGE_SELF, &(timer))
+#define TIMERTYPE "getrusage"
 
 struct sml_time { long sec, usec; };
 typedef struct sml_time sml_time_t;
@@ -113,6 +127,7 @@ typedef struct sml_time sml_time_t;
 #include <unistd.h>
 typedef struct tms sml_timer_t;
 #define sml_timer_now(timer)  times(&(timer))
+#define TIMERTYPE "times"
 
 typedef clock_t sml_time_t;
 #define TIMEINIT  0
@@ -132,6 +147,7 @@ typedef clock_t sml_time_t;
 #include <time.h>
 typedef clock_t sml_timer_t;
 #define sml_timer_now(timer)  ((timer) = clock())
+#define TIMERTYPE "clock"
 
 typedef clock_t sml_time_t;
 #define TIMEINIT  0

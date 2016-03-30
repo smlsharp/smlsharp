@@ -1,10 +1,10 @@
 _require "../../basis.smi"
 _require "./SQLErrors.smi"
-_require "./SQLBackendTy.smi"
-_require "Backend.smi"
-_require "builtintypes/timestamp/TimeStamp.smi"
-_require "builtintypes/decimal/Decimal.smi"
-_require "builtintypes/float/Float.smi"
+_require local "./SQLBackendTy.smi"
+_require "./Backend.smi"
+_require "./builtintypes/timestamp/TimeStamp.smi"
+_require "./builtintypes/decimal/Decimal.smi"
+_require "./builtintypes/float/Float.smi"
 
 structure SMLSharp_SQL_Prim =
 struct
@@ -155,9 +155,9 @@ struct
   val not
       : (bool option, 'a) value -> (bool option, 'a) value
   val isNull
-      : ('a option, 'a) value -> (bool option, 'a) value
+      : ('a option, 'b) value -> (bool option, 'b) value
   val isNotNull
-      : ('a option, 'a) value -> (bool option, 'a) value
+      : ('a option, 'b) value -> (bool option, 'b) value
   val likeString
       : (string,'a) value * (string,'a) value -> (bool option, 'a) value
   val likeStringOption

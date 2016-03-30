@@ -7,103 +7,236 @@
 #ifndef SMLSHARP__SMLSHARP_H__
 #define SMLSHARP__SMLSHARP_H__
 
+#if !defined __STDC_VERSION__ || __STDC_VERSION__ < 199901L
+# error C99 is required
+#endif
+#if defined __GNUC__ && __GNUC__ < 4
+#error GCC version 4.0 or later is required
+#endif
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #include <stddef.h>
-
-/* FILELINE : "<filename>:<lineno>(<function>)" for debug */
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
-#define __func__ __func__
-#elif defined __GNUC__ && __GNUC__ >= 2
-#define __func__ __extension__ __FUNCTION__
-#else
-#define __func__ "(unknown)"
-#endif
-#define FILELINE__(x,y) x":"#y
-#define FILELINE_(x,y) FILELINE__(x,y)
-#define FILELINE FILELINE_(__FILE__, __LINE__)
-
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
-#define restrict restrict
-#elif defined __GNUC__ && __GNUC__ >= 3
-#define restrict __restrict__
-#else
-#define restrict
+#include <assert.h>
+#include <inttypes.h>
+#ifndef WITHOUT_MULTITHREAD
+#include <pthread.h>
+#endif /* !WITHOUT_MULTITHREAD */
+#ifdef HAVE_STDATOMIC_H
+# include <stdatomic.h>
 #endif
 
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
-#define inline inline
-#elif defined __GNUC__ && __GNUC__ >= 2
-#define inline __inline__
-#else
-#define inline
-#endif
+#ifndef HAVE_STDATOMIC_H
+# ifdef HAVE_GCC_ATOMIC
+#  define _Atomic(ty) __typeof__(ty)
+#  define memory_order_relaxed __ATOMIC_RELAXED
+#  define memory_order_acquire __ATOMIC_ACQUIRE
+#  define memory_order_release __ATOMIC_RELEASE
+#  define memory_order_acq_rel __ATOMIC_ACQ_REL
+#  define memory_order_seq_cst __ATOMIC_SEQ_CST
+#  define ATOMIC_VAR_INIT(v) (v)
+#  define atomic_init(p, val) (void)(*(p) = (val))
+#  define atomic_load_explicit(p, order) \
+	__atomic_load_n(p, order)
+#  define atomic_store_explicit(p, val, order) \
+	__atomic_store_n(p, val, order)
+#  define atomic_compare_exchange_weak_explicit(p, expect, val, succ, fail) \
+	__atomic_compare_exchange_n(p, expect, val, 1, succ, fail)
+#  define atomic_compare_exchange_strong_explicit(p, expect, val, succ, fail) \
+	__atomic_compare_exchange_n(p, expect, val, 0, succ, fail)
+#  define atomic_exchange_explicit(p, val, order) \
+	__atomic_exchange_n(p, val, order)
+#  define atomic_fetch_add_explicit(p, arg, order) \
+	__atomic_fetch_add(p, arg, order)
+#  define atomic_fetch_sub_explicit(p, arg, order) \
+	__atomic_fetch_sub(p, arg, order)
+#  define atomic_fetch_or_explicit(p, arg, order) \
+	__atomic_fetch_or(p, arg, order)
+#  define atomic_fetch_and_explicit(p, arg, order) \
+	__atomic_fetch_and(p, arg, order)
+#  define atomic_fetch_xor_explicit(p, arg, order) \
+	__atomic_fetch_xor(p, arg, order)
+# else
+#  error atomic builtins are required
+# endif /* HAVE_GCC_ATOMIC */
+#endif /* !HAVE_STDATOMIC_H */
 
-#if defined __GNUC__ && __GNUC__ >= 2
-#define NOINLINE __attribute__((noinline))
-#else
-#define NOINLINE
-#endif
+/* short hands for frequently used synchronization primitives */
+#define load_relaxed(p) \
+	atomic_load_explicit(p, memory_order_relaxed)
+#define load_acquire(p) \
+	atomic_load_explicit(p, memory_order_acquire)
+#define store_relaxed(p,v) \
+	atomic_store_explicit(p, v, memory_order_relaxed)
+#define store_release(p,v) \
+	atomic_store_explicit(p, v, memory_order_release)
+#define cmpswap_relaxed(p,e,v) \
+	atomic_compare_exchange_strong_explicit \
+	  (p, e, v, memory_order_relaxed, memory_order_relaxed)
+#define cmpswap_acquire(p,e,v) \
+	atomic_compare_exchange_strong_explicit \
+	  (p, e, v, memory_order_acquire, memory_order_acquire)
+#define cmpswap_release(p,e,v) \
+	atomic_compare_exchange_strong_explicit \
+	  (p, e, v, memory_order_release, memory_order_relaxed)
+#define cmpswap_acq_rel(p,e,v) \
+	atomic_compare_exchange_strong_explicit \
+	  (p, e, v, memory_order_acq_rel, memory_order_acquire)
+#define cmpswap_weak_relaxed(p,e,v) \
+	atomic_compare_exchange_weak_explicit \
+	  (p, e, v, memory_order_relaxed, memory_order_relaxed)
+#define cmpswap_weak_acquire(p,e,v) \
+	atomic_compare_exchange_weak_explicit \
+	  (p, e, v, memory_order_acquire, memory_order_acquire)
+#define cmpswap_weak_release(p,e,v) \
+	atomic_compare_exchange_weak_explicit \
+	  (p, e, v, memory_order_release, memory_order_relaxed)
+#define cmpswap_weak_acq_rel(p,e,v) \
+	atomic_compare_exchange_weak_explicit \
+	  (p, e, v, memory_order_acq_rel, memory_order_acquire)
+#define swap(order,p,v) \
+	atomic_exchange_explicit(p, v, memory_order_##order)
+#define fetch_add(order,p,v) \
+	atomic_fetch_add_explicit(p, v, memory_order_##order)
+#define fetch_sub(order,p,v) \
+	atomic_fetch_sub_explicit(p, v, memory_order_##order)
+#define fetch_or(order,p,v) \
+	atomic_fetch_or_explicit(p, v, memory_order_##order)
+#define fetch_and(order,p,v) \
+	atomic_fetch_and_explicit(p, v, memory_order_##order)
+#define fetch_xor(order,p,v) \
+	atomic_fetch_xor_explicit(p, v, memory_order_##order)
+#define ASSERT_ERROR_(e) \
+	do { int no_error ATTR_UNUSED = e; assert(no_error == 0); } while (0)
+#ifndef WITHOUT_MULTITHREAD
+#define mutex_init(m) ASSERT_ERROR_(pthread_mutex_init(m, NULL))
+#define mutex_destroy(m) ASSERT_ERROR_(pthread_mutex_destroy(m))
+#define mutex_lock(m) ASSERT_ERROR_(pthread_mutex_lock(m))
+#define mutex_unlock(m) ASSERT_ERROR_(pthread_mutex_unlock(m))
+#define cond_init(c) ASSERT_ERROR_(pthread_cond_init(c, NULL))
+#define cond_destroy(c) ASSERT_ERROR_(pthread_cond_destroy(c))
+#define cond_wait(c, m) ASSERT_ERROR_(pthread_cond_wait(c, m))
+#define cond_broadcast(c) ASSERT_ERROR_(pthread_cond_broadcast(c))
+#define cond_signal(c) ASSERT_ERROR_(pthread_cond_signal(c))
+#else /* !WITHOUT_MULTITHREAD */
+#define mutex_init(m) ((void)0)
+#define mutex_destroy(m) ((void)0)
+#define mutex_lock(m) ((void)0)
+#define mutex_unlock(m) ((void)0)
+#define cond_init(c) ((void)0)
+#define cond_destroy(c) ((void)0)
+#define cond_wait(c, m) ((void)0)
+#define cond_broadcast(c) ((void)0)
+#define cond_signal(c) ((void)0)
+#endif /* !WITHOUT_MULTITHREAD */
 
-/* GNU C extensions */
+/*
+ * support for thread local variable (tlv)
+ */
+#ifndef WITHOUT_MULTITHREAD
+#define tlv_alloc__(ty, k, destructor)	       \
+	static pthread_key_t tlv_key__##k##__; \
+	static pthread_once_t tlv_key__##k##__once__ = PTHREAD_ONCE_INIT; \
+	static void tlv_destruct__##k##__(void *p__) { destructor(p__); } \
+	static void tlv_init__##k##__() { \
+		pthread_key_create(&tlv_key__##k##__, tlv_destruct__##k##__); \
+	}
+#define tlv_init__(k) \
+	pthread_once(&tlv_key__##k##__once__, tlv_init__##k##__)
+#define tlv_set__(k,v) \
+	(tlv_init__(k), pthread_setspecific(tlv_key__##k##__, v))
+#ifdef HAVE_TLS
+/* Even if operating system provides thread local storage (TLS), we use
+ * pthread_key in order to ensure that thread local variables are correctly
+ * destructed even if the thread terminates abnormally.  To ensure this,
+ * tlv_set operation updates both TLS and pthread_key.  This makes tlv_set
+ * slower.  This overhead should be negligible since tlv_set is typically
+ * used only at thread initialization.  In contrast, tlv_get only reads TLS
+ * so it is pretty fast.  In Linux, tlv_get is often compiled to just one
+ * CPU instruction.
+ */
+#define tlv_alloc(ty, k, destructor) \
+	tlv_alloc__(ty, k, destructor) \
+	static _Thread_local ty tlv__##k##__; \
+	static inline void tlv_set__##k##__(ty const arg__) { \
+		tlv_set__(k, arg__); \
+		tlv__##k##__ = arg__; \
+	}
+#define tlv_get(k) (tlv__##k##__)
+#else /* HAVE_TLS */
+#define tlv_alloc(ty, k, destructor) \
+	tlv_alloc__(ty, k, destructor) \
+	static inline void tlv_set__##k##__(ty const arg__) { \
+		tlv_set__(k, arg__); \
+	} \
+	static inline ty tlv_get__##k##__() { \
+		return pthread_getspecific(tlv_key__##k##__); \
+	}
+#define tlv_get(k) (tlv_get__##k##__())
+#endif /* HAVE_TLS */
+#define tlv_get_or_init(k) (tlv_init__(k), tlv_get(k))
+#define tlv_set(k,v) (tlv_set__##k##__(v))
+#else /* !WITHOUT_MULTITHREAD */
+#define tlv_alloc(ty, k, destructor)  static ty tlv__##k##__
+#define tlv_get_or_init(k)  (tlv__##k##__)
+#define tlv_get(k)  (tlv__##k##__)
+#define tlv_set(k,v)  ((void)(tlv__##k##__ = (v)))
+#endif /* !WITHOUT_MULTITHREAD */
 
-#ifndef GCC_VERSION
+/* helpful attributes */
 #ifdef __GNUC__
-#define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
-#endif
-#endif /* GCC_VERSION */
-
-#if defined(__GNUC__) && GCC_VERSION >= 2096
-#define ATTR_MALLOC __attribute__((malloc))
+# define NOINLINE __attribute__((noinline))
+# define ATTR_MALLOC __attribute__((malloc))
+# define ATTR_PURE __attribute__((pure))
+# define ATTR_NONNULL(n) __attribute__((nonnull(n)))
+# define ATTR_PRINTF(m,n) __attribute__((format(printf,m,n))) ATTR_NONNULL(m)
+# define ATTR_NORETURN __attribute__((noreturn))
+# define ATTR_UNUSED __attribute__((unused))
 #else
-#define ATTR_MALLOC
-#endif
+# define NOINLINE
+# define ATTR_MALLOC
+# define ATTR_PURE
+# define ATTR_NONNULL(n)
+# define ATTR_PRINTF(m,n)
+# define ATTR_NORETURN
+# define ATTR_UNUSED
+#endif /* __GNUC__ */
 
-#if defined(__GNUC__) && GCC_VERSION >= 3000
-#define ATTR_PURE __attribute__((pure))
+/*
+ * The calling convention for SML# runtime primitives.
+ * The SML# compiler emits call sequences compliant with this convention
+ * for runtime primitive calls.
+ */
+#ifdef __GNUC__
+/* first three arguments are passed by machine registers */
+# define SML_PRIMITIVE __attribute__((regparm(3))) NOINLINE
 #else
-#define ATTR_PURE
+# error regparm(3) calling convention is not supported
 #endif
 
-#if defined(__GNUC__) && GCC_VERSION >= 3003
-#define ATTR_NONNULL(n) __attribute__((nonnull(n)))
-#else
-#define ATTR_NONNULL(n)
-#endif
-
-#if defined(__GNUC__)
-#define ATTR_PRINTF(m,n) __attribute__((format(printf,m,n))) ATTR_NONNULL(m)
-#endif
-
-#if defined(__GNUC__)
-#define ATTR_NORETURN __attribute__((noreturn))
-#endif
-
-#if defined(__GNUC__)
-#define ATTR_UNUSED __attribute__((unused))
-#endif
-
-#if defined(__GNUC__)
-/* Boland fastcall; %eax, %edx, %ecx */
-#define SML_PRIMITIVE __attribute__((regparm(3))) NOINLINE
-#else
-/* Microsoft fastcall; %ecx, %edx */
-/* #define SML_PRIMITIVE __attribute__((fastcall)) */
-#define SML_PRIMITIVE NOINLINE
-#endif
-
+/*
+ * macros for calculating size
+ */
 /* the number of elements of an array. */
-#define arraysize(a)   (sizeof(a) / sizeof(a[0]))
+#define arraysize(a)    (sizeof(a) / sizeof(a[0]))
+/* CEIL(x,y) : round x upwards to the nearest multiple of y. */
+#define CEILING(x,y)  (((x) + (y) - 1) - ((x) + (y) - 1) % (y))
 
-/* ALIGNSIZE(x,y) : round up x to the multiple of y. */
-#define ALIGNSIZE(x,y)  (((x) + (y) - 1) - ((x) + (y) - 1) % (y))
-
-/* the most conservative memory alignment.
- * It should be differed for each architecture. */
+/*
+ * the most conservative memory alignment.
+ * It should be differed for each architecture.
+ */
 #ifndef MAXALIGN
-union sml__alignment__ {
-	char c; short s; int i; long n;
-	float f; double d; long double x; void *p;
-};
-#define MAXALIGN    (sizeof(union sml__alignment__))
+# if defined HAVE_ALIGNOF && defined HAVE_MAX_ALIGN_T
+#  define MAXALIGN alignof(max_align_t)
+# elif defined HAVE_ALIGNOF
+#  define MAXALIGN \
+	alignof(union { long long n; double d; long double x; void *p; })
+# else
+#  define MAXALIGN \
+	sizeof(union { long long n; double d; long double x; void *p; })
+# endif
 #endif
 
 /*
@@ -113,147 +246,128 @@ union sml__alignment__ {
  * format, ... : standard output format (same as printf)
  */
 void sml_fatal(int err, const char *format, ...)
-     ATTR_PRINTF(2, 3) ATTR_NORETURN;
-
-/*
- * print error message.
- */
+	ATTR_PRINTF(2, 3) ATTR_NORETURN;
+/* print error message. */
 void sml_error(int err, const char *format, ...) ATTR_PRINTF(2, 3);
-
-/*
- * print warning message.
- */
+/* print warning message. */
 void sml_warn(int err, const char *format, ...) ATTR_PRINTF(2, 3);
-
-/*
- * print fatal error message with system error status and abort the program.
- */
+/* print fatal error message with system error status and abort the program. */
 void sml_sysfatal(const char *format, ...) ATTR_PRINTF(1, 2) ATTR_NORETURN;
-
-/*
- * print error message with system error status.
- */
+/* print error message with system error status. */
 void sml_syserror(const char *format, ...) ATTR_PRINTF(1, 2);
-
-/*
- * print warning message with system error status.
- */
+/* print warning message with system error status. */
 void sml_syswarn(const char *format, ...) ATTR_PRINTF(1, 2);
-
-/*
- * print notice message.
- */
+/* print notice message if verbosity >= MSG_NOTICE */
 void sml_notice(const char *format, ...) ATTR_PRINTF(1, 2);
-
-/*
- * print debug message.
- */
+/* print debug message if verbosity >= MSG_DEBUG */
 void sml_debug(const char *format, ...) ATTR_PRINTF(1, 2);
 
-/*
- * DBG((format, ...));
- * print debug message.
- *
- * ASSERT(cond);
- * abort the program if cond is not satisfied.
- *
- * FATAL((err, format, ...));
- * print fatal error message with position and abort the program.
- *
- * DBG and ASSERT are enabled only if the program is compiled in debug mode.
- */
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
-#define DEBUG__(fmt, ...) \
-	sml_debug("%s:%d:%s: "fmt"\n", __FILE__,__LINE__,__func__,##__VA_ARGS__)
-#define DEBUG_(args) DEBUG__ args
-#define FATAL__(err, fmt, ...) \
-	sml_fatal(err, "%s:%d:%s: "fmt, __FILE__,__LINE__,__func__,##__VA_ARGS__)
-#define FATAL(args) FATAL__ args
-#elif defined __GNUC__
-#define DEBUG__(fmt, args...) \
-	sml_debug("%s:%d:%s: "fmt"\n", __FILE__,__LINE__,__func__,##args)
-#define DEBUG_(args) DEBUG__ args
-#define FATAL__(err, fmt, args...) \
-	sml_fatal(err, "%s:%d:%s: "fmt, __FILE__,__LINE__,__func__,##args)
-#define FATAL(args) FATAL__ args
+void sml_msg_init(void);
+
+/* macros for debug print */
+#ifndef NDEBUG
+#define DBGMSG_(fmt) "%s:%d: "fmt"%s\n", __FILE__, __LINE__
+#define DBG_(fmt, ...) sml_debug(DBGMSG_(fmt), __VA_ARGS__)
+#define DBG(...) DBG_(__VA_ARGS__, "")
 #else
-#define DEBUG_(args) \
-	((void)sml_debug("%s:%d: ", __FILE__,__LINE__), \
-	 (void)sml_debug args, \
-	 (void)sml_debug("\n"))
-#define FATAL(args) (sml_fatal args)
+#define DBG(...) ((void)0)
 #endif
 
-#ifdef DEBUG
-#define DBG(args) DEBUG_(args)
+/* pretty alternative to #ifndef NDEBUG ... #endif */
+#ifndef NDEBUG
+#define DEBUG(e) do { e; } while (0)
 #else
-#define DBG(args)
-#endif /* DEBUG */
-
-#if defined DEBUG || defined ENABLE_ASSERT
-#define ASSERT(expr) \
-	((expr) ? (void)0 : (void)FATAL((0, "assertion failed: %s", #expr)))
-#else
-#define ASSERT(expr) ((void)0)
-#endif /* ENABLE_ASSERT */
+#define DEBUG(e) do { } while (0)
+#endif
 
 /*
- * for internal use.
+ * malloc with error checking
+ * If allocation failed, program exits immediately.
  */
-enum sml_msg_level {
-	MSG_FATAL,
-	MSG_ERROR,
-	MSG_WARN,
-	MSG_NOTICE,
-	MSG_DEBUG
+void *sml_xmalloc(size_t size) ATTR_MALLOC;
+void *sml_xrealloc(void *p, size_t size) ATTR_MALLOC;
+#define xmalloc sml_xmalloc
+#define xrealloc sml_xrealloc
+
+/*
+ * stack frame layout information
+ */
+struct sml_frame_layout {
+	uint16_t frame_size;      /* in words */
+	uint16_t num_roots;
+	uint16_t root_offsets[];  /* in words */
 };
-void sml_set_verbose(enum sml_msg_level level);
-#if 0
-void sml_msg_set_hook(FILE *(*start_hook)(enum sml_msg_level level),
-		      void (*end_hook)(FILE *f, enum sml_msg_level level));
-#endif
+/* search for the frame layout at the given code address */
+const struct sml_frame_layout *sml_lookup_frametable(void *);
 
 /*
- * safe malloc and realloc.
+ * top-level management
  */
-void *xmalloc(size_t size) ATTR_MALLOC;
-void *xrealloc(void *p, size_t size) ATTR_MALLOC;
+/* register a top-level.  This is called before entering main. */
+void sml_register_top(const void *, const void *, const void *, const void *);
+/* run the registered top-levels. */
+void sml_run(void);
+/* enumerate pointers in mutable top-level objects */
+void sml_enum_global(void (*trace)(void **, void *), void *);
 
-#if 0
-void xfree(void *);
-#define free xfree
-#ifdef DEBUG
-void *sml_xmem_debug(void *p, const char *prefix, const char *pos);
-#define xmalloc(x) xmem_debug(xmalloc(x), "xmalloc", FILELINE)
-#define xrealloc(x) xmem_debug(xrealloc(x), "xrealloc", FILELINE)
-#define free(x) xmem_debug(x, "free", FILELINE)
-#endif
-#endif
+/* run SML# top-level codes.
+ * topfuncs points to an array of function pointers terminated by NULL. */
+void sml_run_toplevels(void (**topfuncs)(void));
 
 /*
- * naive obstack implementation.
- * Note that this implementation doesn't take care of object alignemnt.
+ * thread management
  */
-typedef struct sml_obstack sml_obstack_t;
-void sml_obstack_blank(sml_obstack_t **obstack, size_t size);
-void *sml_obstack_finish(sml_obstack_t *obstack);
-void *sml_obstack_base(sml_obstack_t *obstack);
-void *sml_obstack_next_free(sml_obstack_t *obstack);
-size_t sml_obstack_object_size(sml_obstack_t *obstack);
-void *sml_obstack_alloc(sml_obstack_t **obstack, size_t size);
-void sml_obstack_free(sml_obstack_t **obstack, void *ptr);
+/* create an SML# execution context for current thread.
+ * This is called when program or a callback starts.
+ * Its argument is 3-pointer-size work area for SML# runtime. */
+SML_PRIMITIVE void sml_start(void *[3]);
+/* destroy current SML# execution context.
+ * This is called when program or a callback exits. */
+SML_PRIMITIVE void sml_end(void);
+/* leave current SML# excecution context temporarily.
+ * This is called before calling a foreign function. */
+SML_PRIMITIVE void sml_leave(void);
+/* reenter current SML# excecution context.
+ * This is called after returning from a foreign function. */
+SML_PRIMITIVE void sml_enter(void);
+/* save current frame pointer to SML# execution context for further root
+ * set enumeration that would be carried out by a runtime primitive.
+ * This is called before calling a primitive function that would allocate an
+ * SML# object. */
+SML_PRIMITIVE void sml_save(void);
+/* clear the saved frame pointer by sml_save.
+ * This is called after returning from an object-allocating runtime primitive
+ * function. */
+SML_PRIMITIVE void sml_unsave(void);
+/* check collector's state and perform synchronization if needed. */
+SML_PRIMITIVE void sml_check(void);
+/* a flag indicating that mutators are requested to be synchronized.
+ * If this is non-zero, mutators must call sml_check at their GC safe point
+ * as soon as possible. */
+_Atomic(unsigned int) sml_check_flag;
+/* the main routine of garbage collection */
+void sml_gc(void);
 
-void sml_obstack_align(sml_obstack_t **obstack, size_t size);
+struct sml_control;
+void sml_stack_enum_ptr(const struct sml_control *, void (*)(void **, void *),
+			void *);
 
-/* use obstack growing object as extensible array */
-void *sml_obstack_extend(sml_obstack_t **obstack, size_t size);
-void sml_obstack_shrink(sml_obstack_t **obstack, void *p);
+enum sml_sync_phase {
+	/* An even-number phases is the pre-phase of its successor phase.
+	 * See control_leave in control.c. */
+	ASYNC = 1,
+	PRESYNC1 = 2,
+	SYNC1 = 3,
+	PRESYNC2 = 4,
+	SYNC2 = 5,
+	MARK = 7
+};
 
-/* enumerate chunks in obstack */
-void sml_obstack_enum_chunk(sml_obstack_t *obstack,
-			    void (*f)(void *start, void *end, void *data),
-			    void *data);
-int sml_obstack_is_empty(sml_obstack_t *obstack);
+void *sml_leave_internal(void *frame_pointer);
+void sml_enter_internal(void *old_top);
+void sml_check_internal(void *frame_pointer);
+enum sml_sync_phase sml_current_phase(void);
+int sml_saved(void); /* for debug */
 
 /*
  * stack frame address
@@ -267,60 +381,6 @@ int sml_obstack_is_empty(sml_obstack_t *obstack);
 	((void**)frame_begin + 1)
 
 /*
- * gc root management
- */
-
-/*
- * rootset enumeration mode.
- * - MAJOR means enumerating all.
- * - MINOR means enumerating only new ones.
- */
-enum sml_gc_mode {
-	MINOR,
-	MAJOR
-#ifdef DEBUG
-	,TRY_MAJOR  /* same as MAJOR but dry run */
-#endif /* DEBUG */
-};
-
-void sml_register_stackmap(void *map_begin, void *code_begin);
-int sml_gc_initiate(void (*trace)(void **), enum sml_gc_mode mode, void *data);
-void sml_gc_done(void);
-
-/*
- * thread control context
- */
-SML_PRIMITIVE void sml_control_start(void);
-SML_PRIMITIVE void sml_control_finish(void);
-SML_PRIMITIVE void sml_control_suspend(void);
-SML_PRIMITIVE void sml_control_resume(void);
-
-SML_PRIMITIVE void sml_check_gc(void);
-volatile unsigned int sml_check_gc_flag;
-
-void *sml_current_thread_heap(void);
-void *sml_current_thread_exn(void);
-
-void sml_save_fp(void *frame_pointer);
-
-SML_PRIMITIVE void sml_push_fp(void);
-SML_PRIMITIVE void sml_pop_fp(void);
-int sml_alloc_available(void);
-void **sml_tmp_root(void);
-
-void sml_control_init(void);
-void sml_control_free(void);
-
-unsigned int sml_num_threads(void);
-
-
-#ifdef CONCURRENT
-enum sml_sync_phase { ASYNC, SYNC1, SYNC2, MARK };
-enum sml_sync_phase sml_current_phase(void);
-#endif /* CONCURRENT */
-
-
-/*
  * SML# heap object management
  */
 SML_PRIMITIVE void *sml_alloc(unsigned int objsize);
@@ -328,7 +388,6 @@ SML_PRIMITIVE void *sml_load_intinf(const char *hexsrc);
 SML_PRIMITIVE void **sml_find_callback(void *codeaddr, void *env);
 SML_PRIMITIVE void *sml_alloc_code(void);
 
-SML_PRIMITIVE void *sml_obj_dup(void *obj);
 SML_PRIMITIVE int sml_obj_equal(void *obj1, void *obj2);
 SML_PRIMITIVE void sml_write(void *objaddr, void **writeaddr, void *new_value);
 void sml_copyary(void **src, unsigned int si, void **dst, unsigned int di,
@@ -337,10 +396,8 @@ void sml_copyary(void **src, unsigned int si, void **dst, unsigned int di,
 struct sml_intinf;
 typedef struct sml_intinf sml_intinf_t;
 
-void sml_obj_enum_ptr(void *obj, void (*callback)(void **));
+void sml_obj_enum_ptr(void *obj, void (*callback)(void **, void *), void *);
 void *sml_obj_alloc(unsigned int objtype, size_t payload_size);
-void *sml_record_alloc(size_t payload_size);
-char *sml_str_alloc(size_t len);
 NOINLINE char *sml_str_new(const char *str);
 char *sml_str_new2(const char *str, size_t len);
 sml_intinf_t *sml_intinf_new(void);
@@ -349,13 +406,9 @@ void *sml_intinf_hex(void *obj);
 /*
  * exception support
  */
-void *sml_exn_init(void);
-void sml_exn_free(void *);
-void sml_exn_enum_ptr(void *,  void (*)(void **));
-void sml_uncaught_exn(void *) ATTR_NORETURN;
 void sml_matchcomp_bug(void) ATTR_NORETURN;
 
-SML_PRIMITIVE void sml_raise(void *exn) ATTR_NORETURN;
+SML_PRIMITIVE void sml_raise(void *work_area, void *exn) ATTR_NORETURN;
 /*
 _Unwind_Reason_Code
 sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
@@ -364,25 +417,106 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 */
 
 /*
- * synchronizations
+ * callback support
  */
-typedef struct sml_event sml_event_t;
-sml_event_t *sml_event_new(int no_reset, int init);
-void sml_event_free(sml_event_t *event);
-void sml_event_wait(sml_event_t *event);
-void sml_event_signal(sml_event_t *event);
-void sml_event_reset(sml_event_t *event);
+void sml_callback_init(void);
+void sml_callback_destroy(void);
+void sml_callback_enum_ptr(void (*trace)(void **, void *), void *data);
+SML_PRIMITIVE void **sml_find_callback(void *codeaddr, void *env);
+SML_PRIMITIVE void *sml_alloc_code(void);
 
-typedef struct sml_counter sml_counter_t;
-sml_counter_t *sml_counter_new(void);
-void sml_counter_free(sml_counter_t *c);
-void sml_counter_inc(struct sml_counter *c);
-void sml_counter_wait(struct sml_counter *c, int min);
+/*
+ * finalizer support
+ */
+void sml_finalize_init(void);
+void sml_finalize_destroy(void);
+void sml_set_finalizer(void *obj, void (*finalizer)(void *));
+void sml_run_finalizer(void);
 
 /*
  * Initialize and finalize SML# runtime
  */
 void sml_init(int argc, char **argv);
 void sml_finish(void);
+ATTR_NORETURN void sml_exit(int status);
+
+/*
+ * bit pointer
+ */
+typedef uint32_t sml_bmword_t;
+struct sml_bitptr { sml_bmword_t *ptr, mask; };
+typedef struct sml_bitptr sml_bitptr_t;
+#define BITPTR_WORDBITS  32U
+#define BITPTR(p,n) \
+	((struct sml_bitptr){.ptr = (p) + (n) / 32U, .mask = 1 << ((n) % 32U)})
+#define BITPTR_TEST(b)   (*(b).ptr & (b).mask)
+#define BITPTR_SET(b)    (*(b).ptr |= (b).mask)
+#define BITPTR_UNSET(b)  (*(b).ptr &= ~(b).mask)
+#define BITPTR_WORD(b)   (*(b).ptr)
+#define BITPTR_WORDINDEX(b,begin) ((b).ptr - (begin))
+#define BITPTR_EQUAL(b1,b2) ((b1).ptr == (b2).ptr && (b1).mask == (b2).mask)
+
+#define BITPTR_NEXTWORD(b) ((b).ptr++, (b).mask = 1U)
+
+/* BITPTR_NEXT: move to next 0 bit in the current word.
+ * mask becomes zero if failed. */
+#define BITPTR_NEXT(b) do { \
+	uint32_t tmp__ = *(b).ptr | ((b).mask - 1U); \
+	(b).mask = (tmp__ + 1U) & ~tmp__; \
+} while (0)
+#define BITPTR_NEXT_FAILED(b)  ((b).mask == 0)
+
+/* BITPTR_NEXT: move to next 1 bit in the current word.
+ * mask becomes zero if failed. */
+#define BITPTR_NEXT1(b) do { \
+	uint32_t tmp__ = *(b).ptr & -((b).mask << 1); \
+	(b).mask = tmp__ & -tmp__; \
+} while (0)
+
+/* BITPTR_INC: move to the next bit */
+#define BITPTR_INC(b) do { \
+	(b).ptr += ((b).mask >> 31); \
+	(b).mask = ((b).mask << 1) | ((b).mask >> 31); \
+} while (0)
+
+/* BITPTR_MASKINDEX: returns the bit index of the mask */
+#define BITPTR_MASKINDEX(b) __builtin_ctz((b).mask)
+
+/* BITPTR_INDEX: returns the bit offset of bitptr b from p */
+#define BITPTR_INDEX(b,p) \
+	(BITPTR_WORDINDEX(b,p) * BITPTR_WORDBITS + BITPTR_MASKINDEX(b))
+
+/* CEIL_LOG2: ceiling the given integer x to the smallest 2^i larger than x.
+ * x must not be 1. */
+#define CEIL_LOG2(x)  (32 - __builtin_clz((uint32_t)(x) - 1))
+
+/*
+ * memory page allocation
+ */
+#ifdef MINGW32
+/* include <windows.h> */
+#define GetPageSize() ({ SYSTEM_INFO si; GetSystemInfo(&si); si.dwPageSize; })
+#define ReservePageError NULL
+#define ReservePage(addr, size)	\
+	VirtualAlloc(addr, size, MEM_RESERVE, PAGE_NOACCESS)
+#define ReleasePage(addr, size) \
+	VirtualFree(addr, size, MEM_RELEASE)
+#define CommitPage(addr, size) \
+	VirtualAlloc(addr, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE)
+#define UncommitPage(addr, size) \
+	VirtualFree(addr, size, MEM_DECOMMIT)
+#else
+/* inclue <sys/mman.h> */
+#define GetPageSize() getpagesize()
+#define ReservePageError MAP_FAILED
+#define ReservePage(addr, size) \
+	mmap(addr, size, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0)
+#define ReleasePage(addr, size) \
+	munmap(addr, size)
+#define CommitPage(addr, size) \
+	mprotect(addr, size, PROT_READ | PROT_WRITE)
+#define UncommitPage(addr, size) \
+	mmap(addr, size, PROT_NONE, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0)
+#endif /* MINGW32 */
 
 #endif /* SMLSHARP__SMLSHARP_H__ */

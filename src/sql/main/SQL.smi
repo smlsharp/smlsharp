@@ -1,9 +1,9 @@
-_require "SQLPrim.smi"
-_require "SQLUtils.smi"
-_require "Backend.smi"
-_require "builtintypes/timestamp/TimeStamp.smi"
-_require "builtintypes/decimal/Decimal.smi"
-_require "builtintypes/float/Float.smi"
+_require "./SQLPrim.smi"
+_require "./SQLUtils.smi"
+_require local "./Backend.smi"
+_require "./builtintypes/timestamp/TimeStamp.smi"
+_require "./builtintypes/decimal/Decimal.smi"
+_require "./builtintypes/float/Float.smi"
 
 structure SQL =
 struct
@@ -323,9 +323,9 @@ struct
       : (bool option, 'a) value -> (bool option, 'a) value
 
   val isNull
-      : ('a option, 'a) value -> (bool option, 'a) value
+      : ('a option, 'b) value -> (bool option, 'b) value
   val isNotNull
-      : ('a option, 'a) value -> (bool option, 'a) value
+      : ('a option, 'b) value -> (bool option, 'b) value
 
   val like =
       case 'a in

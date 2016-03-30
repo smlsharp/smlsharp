@@ -305,117 +305,6 @@ sml_memcmp(const char *s1, int i1, const char *s2, int i2, int len)
 	return 0;
 }
 
-int
-prim_String_size(const char *str)
-{
-	/* used for not only CharVector but CharArray */
-	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR
-	       || OBJ_TYPE(str) == OBJTYPE_UNBOXED_ARRAY);
-	return OBJ_STR_SIZE(str);
-}
-
-void
-prim_String_update(char *str, int index, char ch)
-{
-	/* used for not only CharVector but CharArray */
-	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_ARRAY
-	       || OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(index >= 0 && (size_t)index < OBJ_STR_SIZE(str));
-	str[index] = ch;
-}
-
-char
-prim_String_sub(const char *str, int n)
-{
-	/* used for not only CharVector but CharArray */
-	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_ARRAY
-	       || OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(n >= 0 && (size_t)n < OBJ_STR_SIZE(str));
-	return str[n];
-}
-
-STRING
-prim_String_substring(const char *str, int beg, int len)
-{
-	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(beg >= 0 && len >= 0);
-	ASSERT((size_t)(beg + len) <= OBJ_STR_SIZE(str));
-
-	return sml_str_new2(&str[beg], len);
-}
-
-int
-prim_String_cmp(const char *str1, const char *str2)
-{
-	int len1, len2, len, cmp;
-
-	ASSERT(OBJ_TYPE(str1) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(OBJ_TYPE(str2) == OBJTYPE_UNBOXED_VECTOR);
-	len1 = OBJ_STR_SIZE(str1);
-	len2 = OBJ_STR_SIZE(str2);
-
-	len = len1 < len2 ? len1 : len2;
-	cmp = memcmp(str1, str2, len1);
-
-	if (cmp == 0) {
-		/* this is OK because both len1 and len2 are signed integer
-		 * but never negative. */
-		return len1 - len2;
-	}
-	return cmp;
-}
-
-STRING
-prim_String_allocateMutableNoInit(unsigned int len)
-{
-	char *obj = sml_obj_alloc(OBJTYPE_UNBOXED_ARRAY, len + 1);
-	obj[len] = '\0';
-	return obj;
-}
-
-STRING
-prim_String_allocateImmutableNoInit(unsigned int len)
-{
-	char *obj = sml_obj_alloc(OBJTYPE_UNBOXED_VECTOR, len + 1);
-	obj[len] = '\0';
-	return obj;
-}
-
-STRING
-prim_String_allocateMutable(int len, char ch)
-{
-	void *obj;
-	ASSERT(len >= 0);
-	obj = prim_String_allocateMutableNoInit(len);
-	memset(obj, ch, len);
-	return obj;
-}
-
-STRING
-prim_String_allocateImmutable(int len, char ch)
-{
-	void *obj;
-	ASSERT(len >= 0);
-	obj = prim_String_allocateImmutableNoInit(len);
-	memset(obj, ch, len);
-	return obj;
-}
-
-void
-prim_String_copy(const char *src, int si, char *dst, int di, int len)
-{
-	/* used for not only CharVector but CharArray */
-	ASSERT(OBJ_TYPE(src) == OBJTYPE_UNBOXED_ARRAY
-	       || OBJ_TYPE(src) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(OBJ_TYPE(dst) == OBJTYPE_UNBOXED_ARRAY
-	       || OBJ_TYPE(dst) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(len >= 0);
-	ASSERT(si >= 0 && (size_t)(si + len) <= OBJ_STR_SIZE(src));
-	ASSERT(di >= 0 && (size_t)(di + len) <= OBJ_STR_SIZE(dst));
-
-	memcpy(dst + di, src + si, len);
-}
-
 static unsigned int
 fmt(unsigned int value, unsigned int radix, char *buf, unsigned int index)
 {
@@ -446,28 +335,6 @@ fmt_int(int value, unsigned int radix)
 		buf[--i] = '~';
 
 	return sml_str_new2(&buf[i], sizeof(buf) - i);
-}
-
-static STRING
-fmt_word(unsigned int value, unsigned int radix)
-{
-	char buf[sizeof(unsigned int) * CHAR_BIT + sizeof("")];
-	unsigned int i = sizeof(buf);
-
-	i = fmt(value, radix, buf, i);
-	return sml_str_new2(&buf[i], sizeof(buf) - i);
-}
-
-STRING
-prim_Int_toString(int value)
-{
-	return fmt_int(value, 10);
-}
-
-STRING
-prim_Word_toString(unsigned int value)
-{
-	return fmt_word(value, 16);
 }
 
 #define IEEEREAL_CLASS_SNAN     1   /* signaling NaN */
@@ -563,7 +430,7 @@ prim_IntInf_toString(sml_intinf_t *n)
 {
 	char *buf, *ret;
 
-	ASSERT(OBJ_TYPE(n) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(n) == OBJTYPE_INTINF);
 	buf = sml_intinf_fmt(n, 10);
 	ret = sml_str_new(buf);
 	free(buf);
@@ -573,7 +440,7 @@ prim_IntInf_toString(sml_intinf_t *n)
 int
 prim_IntInf_toInt(sml_intinf_t *obj)
 {
-	ASSERT(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
 	return sml_intinf_get_si(obj);
 }
 
@@ -582,7 +449,7 @@ prim_IntInf_toWord(sml_intinf_t *obj)
 {
 	unsigned long n;
 
-	ASSERT(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
 
 	/* mpz_get_ui(op) returns least significant bits of absolute value
 	 * of "op" but this primitive requires to return least significant
@@ -596,10 +463,46 @@ prim_IntInf_toWord(sml_intinf_t *obj)
 	return n;
 }
 
+long long
+prim_IntInf_toInt64(sml_intinf_t *obj)
+{
+        long long n;
+        unsigned long long tmp = 0;
+        size_t countp = sizeof(tmp);
+
+	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+
+	/* mpz_export exports absolute value. So we take 2's complement
+	 * of the return value of n if "obj" is negative.
+	 */
+        sml_intinf_export (&tmp, &countp, -1, sizeof(tmp), 0, 0, obj);
+	if (sml_intinf_sign(obj) < 0)
+		tmp = ~tmp + 1;
+        memcpy(&n, &tmp, sizeof(n));
+	return n;
+}
+
+unsigned long long
+prim_IntInf_toWord64(sml_intinf_t *obj)
+{
+	unsigned long long n = 0;
+        size_t countp = sizeof(n);
+
+	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+
+	/* mpz_export exports absolute value. So we take 2's complement
+	 * of the return value of n if "obj" is negative.
+	 */
+        sml_intinf_export (&n, &countp, -1, sizeof(n), 0, 0, obj);
+	if (sml_intinf_sign(obj) < 0)
+		n = ~n + 1;
+	return n;
+}
+
 double
 prim_IntInf_toReal(sml_intinf_t *obj)
 {
-	ASSERT(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
 	return sml_intinf_get_d(obj);
 }
 
@@ -620,6 +523,33 @@ prim_IntInf_fromWord(unsigned int x)
 }
 
 sml_intinf_t *
+prim_IntInf_fromInt64(long long x)
+{
+	sml_intinf_t *n = sml_intinf_new();
+
+	/* mpz_import imports absolute value. So we take 2's complement
+	 * of the value of x if "x" is negative.
+	 */
+        if (x < 0) {
+                x = ~x + 1;
+                sml_intinf_import(n, 1, -1, sizeof(x), 0, 0, &x);
+                sml_intinf_neg(n, n);
+        } else {
+                sml_intinf_import(n, 1, -1, sizeof(x), 0, 0, &x);
+        }
+	return n;
+}
+
+sml_intinf_t *
+prim_IntInf_fromWord64(unsigned long long x)
+{
+	sml_intinf_t *n = sml_intinf_new();
+
+        sml_intinf_import(n, 1, -1, sizeof(x), 0, 0, &x);
+	return n;
+}
+
+sml_intinf_t *
 prim_IntInf_fromReal(double x)
 {
 	sml_intinf_t *n = sml_intinf_new();
@@ -628,18 +558,10 @@ prim_IntInf_fromReal(double x)
 }
 
 sml_intinf_t *
-prim_IntInf_load(const char *src)
-{
-	sml_intinf_t *n = sml_intinf_new();
-	sml_intinf_set_str(n, src, 10);
-	return n;
-}
-
-sml_intinf_t *
 prim_IntInf_abs(sml_intinf_t *x)
 {
 	sml_intinf_t xv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
 
 	xv = *x; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -651,8 +573,8 @@ sml_intinf_t *
 prim_IntInf_add(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -664,8 +586,8 @@ sml_intinf_t *
 prim_IntInf_sub(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -677,7 +599,7 @@ sml_intinf_t *
 prim_IntInf_neg(sml_intinf_t *x)
 {
 	sml_intinf_t xv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
 
 	xv = *x; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -689,8 +611,8 @@ sml_intinf_t *
 prim_IntInf_mul(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -702,8 +624,8 @@ sml_intinf_t *
 prim_IntInf_div(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -715,8 +637,8 @@ sml_intinf_t *
 prim_IntInf_mod(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -728,8 +650,8 @@ sml_intinf_t *
 prim_IntInf_quot(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -741,8 +663,8 @@ sml_intinf_t *
 prim_IntInf_rem(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -753,8 +675,8 @@ prim_IntInf_rem(sml_intinf_t *x, sml_intinf_t *y)
 int
 prim_IntInf_cmp(sml_intinf_t *x, sml_intinf_t *y)
 {
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 	return sml_intinf_cmp(x, y);
 }
 
@@ -762,8 +684,8 @@ sml_intinf_t *
 prim_IntInf_orb(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -775,8 +697,8 @@ sml_intinf_t *
 prim_IntInf_xorb(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -788,8 +710,8 @@ sml_intinf_t *
 prim_IntInf_andb(sml_intinf_t *x, sml_intinf_t *y)
 {
 	sml_intinf_t xv, yv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(OBJ_TYPE(y) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(y) == OBJTYPE_INTINF);
 
 	xv = *x, yv = *y; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -801,7 +723,7 @@ sml_intinf_t *
 prim_IntInf_notb(sml_intinf_t *x)
 {
 	sml_intinf_t xv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
 
 	xv = *x; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -813,8 +735,8 @@ sml_intinf_t *
 prim_IntInf_pow(sml_intinf_t *x, int e)
 {
 	sml_intinf_t xv, *z;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
-	ASSERT(e >= 0);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(e >= 0);
 
 	xv = *x; /* rescue from garbage collector */
 	z = sml_intinf_new();
@@ -826,7 +748,7 @@ int
 prim_IntInf_log2(sml_intinf_t *x)
 {
 	sml_intinf_t xv;
-	ASSERT(OBJ_TYPE(x) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(x) == OBJTYPE_INTINF);
 
 	xv = *x; /* rescue from garbage collector */
 	return sml_intinf_log2(&xv);
@@ -838,8 +760,8 @@ prim_Time_gettimeofday(int *ret)
 	struct timeval tv;
 	int err;
 
-	ASSERT(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_SIZE(ret) >= sizeof(int) * 2);
+	assert(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_SIZE(ret) >= sizeof(int) * 2);
 
 	err = gettimeofday(&tv, NULL);
 	ret[0] = tv.tv_sec;
@@ -870,8 +792,8 @@ prim_Timer_getTimes(int *ret)
 	static long clocks_per_sec = 0;
 	clock_t clk;
 
-	ASSERT(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_SIZE(ret) >= sizeof(int) * 6);
+	assert(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_SIZE(ret) >= sizeof(int) * 6);
 
 	if (clocks_per_sec == 0)
 		clocks_per_sec = sysconf(_SC_CLK_TCK);
@@ -890,8 +812,8 @@ prim_Timer_getTimes(int *ret)
 	struct timeval tv;
 	int err;
 
-	ASSERT(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_SIZE(ret) >= sizeof(int) * 6);
+	assert(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_SIZE(ret) >= sizeof(int) * 6);
 
 	err = gettimeofday(&tv, NULL);
 	ret[0] = 0;  /* sys seconds */
@@ -905,97 +827,26 @@ prim_Timer_getTimes(int *ret)
 #endif /* HAVE_TIMES */
 }
 
-int
-prim_Date_localOffset(int *ret)
-{
-	time_t t1, t2;
-	struct tm *tm;
-
-	t1 = time(NULL);
-	tm = gmtime(&t1);
-	if (tm == NULL)
-		return -1;
-	t2 = mktime(tm);
-	if (t2 == -1)
-		return -1;
-
-	*ret = (int)difftime(t1, t2);
-	return 0;
-}
-
 unsigned int
 prim_Date_strfTime(char *buf, unsigned int maxsize, const char *format,
-		   int sec, int min, int hour, int mday, int month,
-		   int year, int wday, int yday, int isdst)
+		   const struct tm *tm)
 {
-	struct tm tm;
-	tm.tm_sec = sec;
-	tm.tm_min = min;
-	tm.tm_hour = hour;
-	tm.tm_mday = mday;
-	tm.tm_mon = month;
-	tm.tm_year = year;
-	tm.tm_wday = wday;
-	tm.tm_yday = yday;
-	tm.tm_isdst = isdst;
-	return strftime(buf, maxsize, format, &tm);
-}
-
-
-#include <locale.h>
-char *
-prim_set_lctime (const char *locale)
-{
-  setlocale(LC_TIME, locale);
-}
-
-unsigned int
-prim_time_to_string(time_t tm, char * buf, const char *format)
-{
-  struct tm *now;
-  now = localtime(&tm);
-  return strftime(buf, 255, format, now);
-}
-
-time_t
-prim_string_to_time(char * buf, const char *format)
-{
-  struct tm now;
-  strptime(buf, format, &now);
-  return mktime(&now);
-}
-
-char *
-prim_Date_ascTime(int sec, int min, int hour, int mday, int month, int year,
-		  int wday, int yday, int isdst)
-{
-	struct tm tm;
-	tm.tm_sec = sec;
-	tm.tm_min = min;
-	tm.tm_hour = hour;
-	tm.tm_mday = mday;
-	tm.tm_mon = month;
-	tm.tm_year = year;
-	tm.tm_wday = wday;
-	tm.tm_yday = yday;
-	tm.tm_isdst = isdst;
-	return asctime(&tm);
+	return strftime(buf, maxsize, format, tm);
 }
 
 int
-prim_Date_mkTime(int sec, int min, int hour, int mday, int month, int year,
-                 int wday, int yday, int isdst)
+prim_Date_mkTime(const struct tm *time)
 {
-	struct tm tm;
-	tm.tm_sec = sec;
-	tm.tm_min = min;
-	tm.tm_hour = hour;
-	tm.tm_mday = mday;
-	tm.tm_mon = month;
-	tm.tm_year = year;
-	tm.tm_wday = wday;
-	tm.tm_yday = yday;
-	tm.tm_isdst = isdst;
+        struct tm tm;
+	tm.tm_sec = time->tm_sec;
+	tm.tm_min = time->tm_min;
+	tm.tm_hour = time->tm_hour;
+	tm.tm_mday = time->tm_mday;
+	tm.tm_mon = time->tm_mon;
+	tm.tm_year = time->tm_year;
+	tm.tm_wday = time->tm_wday;
+	tm.tm_yday = time->tm_yday;
+	tm.tm_isdst = time->tm_isdst;
 	return mktime(&tm);
 }
 
@@ -1037,98 +888,6 @@ prim_Date_gmTime(int time, int *ret)
 	return 0;
 }
 
-double
-prim_Pack_packReal64Little(unsigned char byte0, unsigned char byte1,
-			   unsigned char byte2, unsigned char byte3,
-			   unsigned char byte4, unsigned char byte5,
-			   unsigned char byte6, unsigned char byte7)
-{
-	double result;
-
-#ifdef WORDS_BIGENDIAN
-	char src[8] = {byte7, byte6, byte5, byte4, byte3, byte2, byte1, byte0};
-#else
-	char src[8] = {byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7};
-#endif /* WORDS_BIGENDIAN */
-
-	memcpy(&result, src, sizeof(double) < 8 ? sizeof(double) : 8);
-	return result;
-}
-
-double
-prim_Pack_packReal64Big(unsigned char byte0, unsigned char byte1,
-			unsigned char byte2, unsigned char byte3,
-			unsigned char byte4, unsigned char byte5,
-			unsigned char byte6, unsigned char byte7)
-{
-	double result;
-
-#ifdef WORDS_BIGENDIAN
-	char src[8] = {byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7};
-#else
-	char src[8] = {byte7, byte6, byte5, byte4, byte3, byte2, byte1, byte0};
-#endif /* WORDS_BIGENDIAN */
-
-	memcpy(&result, src, sizeof(double) < 8 ? sizeof(double) : 8);
-	return result;
-}
-
-void
-prim_Pack_unpackReal64Little(double d, unsigned char *buf)
-{
-#ifdef WORDS_BIGENDIAN
-	size_t i, len = sizeof(double) < 8 ? sizeof(double) : 8;
-	for (i = 0; i < len; i++)
-		buf[i] = ((unsigned char *)&d)[len - i - 1];
-#else
-	memcpy(buf, &d, sizeof(double) < 8 ? sizeof(double) : 8);
-#endif /* WORDS_BIGENDIAN */
-}
-
-void
-prim_Pack_packReal32Little(unsigned char byte0, unsigned char byte1,
-			   unsigned char byte2, unsigned char byte3,
-			   float *ret)
-{
-#ifdef WORDS_BIGENDIAN
-	char src[4] = {byte3, byte2, byte1, byte0};
-#else
-	char src[4] = {byte0, byte1, byte2, byte3};
-#endif /* WORDS_BIGENDIAN */
-
-	memcpy(ret, src, sizeof(float) < 4 ? sizeof(float) : 4);
-}
-
-void
-prim_Pack_packReal32Big(unsigned char byte0, unsigned char byte1,
-			unsigned char byte2, unsigned char byte3,
-                        float *ret)
-{
-#ifdef WORDS_BIGENDIAN
-	char src[4] = {byte0, byte1, byte2, byte3};
-#else
-	char src[4] = {byte3, byte2, byte1, byte0};
-#endif /* WORDS_BIGENDIAN */
-
-	memcpy(ret, src, sizeof(float) < 4 ? sizeof(float) : 4);
-}
-
-void
-prim_Pack_unpackReal32Little(float d, unsigned char *buf)
-{
-#ifdef WORDS_BIGENDIAN
-	size_t i, len = sizeof(float) < 4 ? sizeof(float) : 4;
-	for (i = 0; i < len; i++)
-		buf[i] = ((unsigned char *)&d)[len - i - 1];
-#else
-	memcpy(buf, &d, sizeof(float) < 4 ? sizeof(float) : 4);
-#endif /* WORDS_BIGENDIAN */
-}
-
-
-/* HERE */
-
-
 int
 prim_StandardC_errno()
 {
@@ -1151,6 +910,16 @@ PRIM_CONST_FUNC_DUMMY(int, RTLD_NOW)
 PRIM_CONST_FUNC_DUMMY(int, RTLD_LOCAL)
 PRIM_CONST_FUNC_DUMMY(int, RTLD_GLOBAL)
 #endif /* HAVE_DLOPEN */
+#if HAVE_DECL_RTLD_DEFAULT
+PRIM_CONST_FUNC(void *, RTLD_DEFAULT)
+#else
+PRIM_CONST_FUNC_DUMMY(void *, RTLD_DEFAULT)
+#endif /* RTLD_DEFAULT */
+#if HAVE_DECL_RTLD_NEXT
+PRIM_CONST_FUNC(void *, RTLD_NEXT)
+#else
+PRIM_CONST_FUNC_DUMMY(void *, RTLD_NEXT)
+#endif /* RTLD_NEXT */
 
 PRIM_CONST_FUNC(int, SEEK_SET)
 PRIM_CONST_FUNC(int, SEEK_CUR)
@@ -1319,7 +1088,7 @@ prim_GenericOS_syserror(const char *errorname)
 	unsigned int i;
 	int errnum = -1;
 
-	ASSERT(OBJ_TYPE(errorname) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(errorname) == OBJTYPE_UNBOXED_VECTOR);
 
 	/* errorname[0] always exists due to existence of sentinel. */
 	if (isdigit(errorname[0]))
@@ -1337,63 +1106,8 @@ prim_GenericOS_syserror(const char *errorname)
 void
 prim_GenericOS_exit(int status)
 {
-	/* FIXME: finalization is needed? */
-#ifdef HAVE_INTERACTIVE_MODE
-	if (interactive_mode)
-		return interact_prim_exit(status);
-#endif /* HAVE_INTERACTIVE_MODE */
-
-	exit(status);
+	sml_exit(status);
 }
-
-static void
-puts_posix(int fd, const char *buf, size_t len)
-{
-	ssize_t n;
-
-	while (len > 0) {
-		n = write(fd, buf, len);
-		if (n < 0) {
-			if (errno == EINTR)
-				continue;
-			/* give up. */
-			return;
-		}
-		buf += n;
-		len -= n;
-	}
-}
-
-void
-prim_print(const char *str)
-{
-	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR);
-#ifdef HAVE_INTERACTIVE_MODE
-	if (interactive_mode) {
-		interact_prim_print(str);
-		return;
-	}
-#endif /* HAVE_INTERACTIVE_MODE */
-
-	puts_posix(1, str, OBJ_STR_SIZE(str));
-}
-
-#if 0
-void
-prim_printerr(const char *str)
-{
-	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR);
-
-#ifdef HAVE_INTERACTIVE_MODE
-	if (interactive_mode) {
-		interact_prim_printerr(str);
-		return;
-	}
-#endif /* HAVE_INTERACTIVE_MODE */
-
-	puts_posix(2, str, OBJ_STR_SIZE(str));
-}
-#endif
 
 int
 prim_GenericOS_open(const char *filename, const char *fmode)
@@ -1401,8 +1115,8 @@ prim_GenericOS_open(const char *filename, const char *fmode)
 	const char *str;
 	int flags, subflags;
 
-	ASSERT(OBJ_TYPE(filename) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(OBJ_TYPE(fmode) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(filename) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(fmode) == OBJTYPE_UNBOXED_VECTOR);
 
 	str = fmode;
 	switch (*(str++)) {
@@ -1442,8 +1156,8 @@ prim_GenericOS_open(const char *filename, const char *fmode)
 int
 prim_GenericOS_read(int fd, char *buf, unsigned int offset, unsigned int len)
 {
-	ASSERT(OBJ_TYPE(buf) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(offset + len <= OBJ_SIZE(buf));
+	assert(OBJ_TYPE(buf) == OBJTYPE_UNBOXED_ARRAY);
+	assert(offset + len <= OBJ_SIZE(buf));
 
 #ifdef HAVE_INTERACTIVE_MODE
 	if (interactive_mode && fd == 0)
@@ -1457,9 +1171,9 @@ int
 prim_GenericOS_write(int fd, const char *buf,
 		     unsigned int offset, unsigned int len)
 {
-	ASSERT(OBJ_TYPE(buf) == OBJTYPE_UNBOXED_ARRAY
+	assert(OBJ_TYPE(buf) == OBJTYPE_UNBOXED_ARRAY
 	       || OBJ_TYPE(buf) == OBJTYPE_UNBOXED_VECTOR);
-	ASSERT(offset + len <= OBJ_SIZE(buf));
+	assert(offset + len <= OBJ_SIZE(buf));
 
 #ifdef HAVE_INTERACTIVE_MODE
 	if (interactive_mode && fd == 0)
@@ -1493,8 +1207,8 @@ PRIM_CONST_FUNC(unsigned int, S_IXUSR)
 static void
 set_stat(struct stat *st, unsigned int *ret)
 {
-	ASSERT(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_SIZE(ret) >= sizeof(unsigned int) * 6);
+	assert(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_SIZE(ret) >= sizeof(unsigned int) * 6);
 
 	ret[0] = st->st_dev;
 	ret[1] = st->st_ino;
@@ -1548,7 +1262,7 @@ prim_GenericOS_utime(const char *filename, unsigned int atime,
 	struct timeval times[2];
 
 	/* FIXME: untested */
-	ASSERT(OBJ_TYPE(filename) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(filename) == OBJTYPE_UNBOXED_VECTOR);
 	times[0].tv_sec = atime;
 	times[0].tv_usec = 0;
 	times[1].tv_sec = mtime;
@@ -1573,7 +1287,7 @@ prim_GenericOS_readlink(const char *filename)
 	ssize_t n, len;
 	void *obj;
 
-	ASSERT(OBJ_TYPE(filename) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(filename) == OBJTYPE_UNBOXED_VECTOR);
 
 	n = readlink(filename, buf, sizeof(buf));
 	if (n < 0)
@@ -1603,7 +1317,7 @@ prim_GenericOS_readlink(const char *filename)
 int
 prim_GenericOS_chdir(const char *dirname)
 {
-	ASSERT(OBJ_TYPE(dirname) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(dirname) == OBJTYPE_UNBOXED_VECTOR);
 
 #ifdef HAVE_INTERACTIVE_MODE
 	if (interactive_mode)
@@ -1616,7 +1330,7 @@ prim_GenericOS_chdir(const char *dirname)
 int
 prim_GenericOS_mkdir(const char *dirname, /*mode_t*/ int mode)
 {
-	ASSERT(OBJ_TYPE(dirname) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(dirname) == OBJTYPE_UNBOXED_VECTOR);
 #ifdef MINGW32
 	return _mkdir(dirname);
 #else
@@ -1644,7 +1358,7 @@ prim_GenericOS_getcwd()
 /*DIR**/ void *
 prim_GenericOS_opendir(const char *dirname)
 {
-	ASSERT(OBJ_TYPE(dirname) == OBJTYPE_UNBOXED_VECTOR);
+	assert(OBJ_TYPE(dirname) == OBJTYPE_UNBOXED_VECTOR);
 	return opendir(dirname);
 }
 
@@ -1686,9 +1400,9 @@ prim_GenericOS_poll(int *fdary, unsigned int *evary, int timeout_sec,
 	int nfds, err;
 
 	/* FIXME: untested */
-	ASSERT(OBJ_TYPE(fdary) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_TYPE(evary) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_SIZE(fdary) == OBJ_SIZE(evary));
+	assert(OBJ_TYPE(fdary) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_TYPE(evary) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_SIZE(fdary) == OBJ_SIZE(evary));
 
 	FD_ZERO(&infds);
 	FD_ZERO(&outfds);
@@ -1743,9 +1457,9 @@ prim_GenericOS_poll(int *fdary, unsigned int *evary, int timeout_sec,
 	int err;
 
 	/* FIXME: untested */
-	ASSERT(OBJ_TYPE(fdary) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_TYPE(evary) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_SIZE(fdary) == OBJ_SIZE(evary));
+	assert(OBJ_TYPE(fdary) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_TYPE(evary) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_SIZE(fdary) == OBJ_SIZE(evary));
 
 	nfds = OBJ_SIZE(fdary) / sizeof(int);
 	fds = xmalloc(nfds * sizeof(struct pollfd));
@@ -1791,80 +1505,6 @@ prim_GenericOS_poll(int *fdary, unsigned int *evary, int timeout_sec,
 #endif /* HAVE_SELECT | HAVE_POLL */
 }
 
-void
-prim_CopyMemory(void *dst, unsigned int doff,
-		const void *src, unsigned int soff,
-		unsigned int len, unsigned int tag)
-{
-	void **writeaddr, **srcaddr;
-	unsigned int i;
-
-	ASSERT((tag == TAG_UNBOXED
-		&& (OBJ_TYPE(dst) == OBJTYPE_UNBOXED_ARRAY
-		    || OBJ_TYPE(dst) == OBJTYPE_UNBOXED_VECTOR))
-	       || (tag == TAG_BOXED
-		   && (OBJ_TYPE(dst) == OBJTYPE_BOXED_ARRAY
-		       || OBJ_TYPE(dst) == OBJTYPE_BOXED_VECTOR)));
-	ASSERT((tag == TAG_UNBOXED
-		&& (OBJ_TYPE(src) == OBJTYPE_UNBOXED_ARRAY
-		    || OBJ_TYPE(src) == OBJTYPE_UNBOXED_VECTOR))
-	       || (tag == TAG_BOXED
-		   && (OBJ_TYPE(src) == OBJTYPE_BOXED_ARRAY
-		       || OBJ_TYPE(src) == OBJTYPE_BOXED_VECTOR)));
-	ASSERT(doff + len <= OBJ_SIZE(dst));
-	ASSERT(soff + len <= OBJ_SIZE(src));
-
-	if (tag == TAG_UNBOXED) {
-		memmove((char*)dst + doff, (char*)src + soff, len);
-	} else if (src != dst || doff < soff) {
-		writeaddr = (void**)((char*)dst + doff);
-		srcaddr = (void**)((char*)src + soff);
-		for (i = 0; i < len / sizeof(void*); i++)
-			sml_write(dst, writeaddr++, *(srcaddr++));
-	} else {
-		writeaddr = (void**)((char*)dst + doff + len);
-		srcaddr = (void**)((char*)src + soff + len);
-		for (i = 0; i < len / sizeof(void*); i++)
-			sml_write(dst, --writeaddr, *(--srcaddr));
-	}
-}
-
-int
-prim_UnmanagedMemory_subInt(void *p)
-{
-	return *(int*)p;
-}
-
-double
-prim_UnmanagedMemory_subReal(void *p)
-{
-	return *(double*)p;
-}
-
-float
-prim_UnmanagedMemory_subFloat(void *p)
-{
-	return *(float*)p;
-}
-
-unsigned int
-prim_UnmanagedMemory_subWord(void *p)
-{
-	return *(unsigned int*)p;
-}
-
-unsigned char
-prim_UnmanagedMemory_subByte(void *p)
-{
-	return *(unsigned char*)p;
-}
-
-void *
-prim_UnmanagedMemory_subPtr(void *p)
-{
-	return *(void**)p;
-}
-
 STRING
 prim_UnmanagedMemory_import(void *ptr, unsigned int len)
 {
@@ -1873,63 +1513,6 @@ prim_UnmanagedMemory_import(void *ptr, unsigned int len)
 	obj = sml_obj_alloc(OBJTYPE_UNBOXED_VECTOR, len);
 	memcpy(obj, ptr, len);
 	return obj;
-}
-
-void *
-prim_UnmanagedMemory_export(const char *str, unsigned int offset,
-			    unsigned int size)
-{
-	void *p;
-
-	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR
-	       || OBJ_TYPE(str) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(offset < OBJ_STR_SIZE(str) && size < OBJ_STR_SIZE(str) - offset);
-
-	p = xmalloc(size);
-	memcpy(p, str + offset, size);
-	return p;
-}
-
-int
-prim_UnmanagedString_size(void *ptr)
-{
-	return strlen(ptr);
-}
-
-void
-prim_UnmanagedMemory_updateByte(void *address, unsigned char value)
-{
-	*(unsigned char*)address = value;
-}
-
-void
-prim_UnmanagedMemory_updateWord(void *address, unsigned int value)
-{
-	*(unsigned int *)address = value;
-}
-
-void
-prim_UnmanagedMemory_updateInt(void *address, int value)
-{
-	*(int *)address = value;
-}
-
-void
-prim_UnmanagedMemory_updateReal(void *address, double value)
-{
-	*(double *)address = value;
-}
-
-void
-prim_UnmanagedMemory_updateFloat(void *address, float value)
-{
-	*(float *)address = value;
-}
-
-void
-prim_UnmanagedMemory_updatePtr(void *address, void *value)
-{
-	*(void **)address = value;
 }
 
 int
@@ -1944,12 +1527,6 @@ prim_CommandLine_argv(int index)
 {
 	extern char **sml_argv;
 	return sml_argv;
-}
-
-void *
-prim_xmalloc(/*size_t*/ int size)
-{
-	return xmalloc(size);
 }
 
 STRING

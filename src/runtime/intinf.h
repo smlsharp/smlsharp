@@ -41,5 +41,9 @@ struct sml_intinf {
 #define sml_intinf_log2(z)       (mpz_sizeinbase((z)->value, 2) - 1)
 #define sml_intinf_cmp(x,y)      mpz_cmp((x)->value, (y)->value)
 #define sml_intinf_sign(x)       mpz_sgn((x)->value)
+#define sml_intinf_import(rop, count, order, size, endian, nails, op)\
+  mpz_import((rop)->value, count, order, size, endian, nails, op)
+#define sml_intinf_export(rop, countp, order, size, endian, nails, op)\
+  mpz_export(rop, countp, order, size, endian, nails, (op)->value)
 
 #endif /* SMLSHARP__INTINF_H__ */

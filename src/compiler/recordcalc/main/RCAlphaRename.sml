@@ -436,6 +436,10 @@ local
         (context,
          RC.RCEXTERNEXN {path=path, ty=copyTy context ty}
         )
+      | RC.RCBUILTINEXN {path, ty} =>
+        (context,
+         RC.RCBUILTINEXN {path=path, ty=copyTy context ty}
+        )
       | RC.RCEXTERNVAR {path, ty} =>
         (context,
          RC.RCEXTERNVAR {path=path, ty=copyTy context ty}

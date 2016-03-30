@@ -1,199 +1,199 @@
 /*
- * heap_bitmap.c
- * @copyright (c) 2010, Tohoku University.
+ * heap_concurrent.c
+ * @copyright (c) 2015, Tohoku University.
  * @author UENO Katsuhiro
- * @author Yudai Asai
- * @version $Id: $
  */
-#ifndef MULTITHREAD
-#error "concurrent GC requires multithread support"
-#endif /* MULTITHREAD */
-
-#include <stdio.h>
-
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <pthread.h>
-#ifdef DEBUG
-#include <stdio.h>
-#include "splay.h"
-#endif /* DEBUG */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_MMAN_H)
-#include <sys/mman.h>
-#endif /* HAVE_SYS_MMAN_H */
-#ifdef MINGW32
-#include <windows.h>
-#undef OBJ_BITMAP
-#endif /* MINGW32 */
-
-#ifndef __APPLE__
-#define STATIC_THREAD_STORAGE
-#endif /* __APPLE__ */
 
 #include "smlsharp.h"
+#include <stdlib.h>
+#include <string.h>
+#ifdef HAVE_CONFIG_H
+# ifdef HAVE_SYS_MMAN_H
+#  include <unistd.h>
+#  include <sys/mman.h>
+# endif /* HAVE_SYS_MMAN_H */
+# ifdef MINGW32
+#  include <windows.h>
+# endif /* MINGW32 */
+#endif /* HAVE_CONFIG_H */
 #include "object.h"
-#include "objspace.h"
-#include "spinlock.h"
 #include "heap.h"
 
-/* #include "sys/time.h" */
-/* #include "time.h" */
-/* struct timespec th = {0, 200000000}; */
+#define load_add_store_relaxed(p,n)  store_relaxed((p), load_relaxed(p) + (n))
+#define load_sub_store_relaxed(p,n)  store_relaxed((p), load_relaxed(p) - (n))
+
 #ifdef GCTIME
 #include "timer.h"
 static struct {
-	sml_time_t total_time;
-	sml_time_t total_wait_segment;
-	sml_time_t total_initiation;
-	sml_time_t total_mark;
-	sml_time_t total_clear_bitmap;
-	sml_time_t total_reclaim;
-	sml_time_t total_clear_stack;
-	sml_time_t total_remember;
-	unsigned int gc_count;
-	unsigned int write_barrier_count;
-	unsigned int wait_segment_count;
-	double max_wait_segment;
-} gcstat = {TIMEINIT, TIMEINIT, TIMEINIT, TIMEINIT, TIMEINIT, TIMEINIT,
-	    TIMEINIT, TIMEINIT};
-sml_time_t gcstat_total_collector_sync1;
-sml_time_t gcstat_total_collector_sync2;
-extern double gcstat_max_mutators_pause;
-#define stat_notice sml_notice
+	sml_timer_t exec_start, exec_end;
+	sml_time_t exec_time, gc_time, pause_time;
+	unsigned int gc_count, pause_count, full_gc_count;
+	double util_ratio_sum, reclaim_ratio_sum;
+	unsigned int util_under_half;
+	double max_pause_time;
+#ifndef WITHOUT_MULTITHREAD
+	pthread_mutex_t pause_time_lock;
+#endif /* !WITHOUT_MULTITHREAD */
+} gctime = {
+#ifndef WITHOUT_MULTITHREAD
+	.pause_time_lock = PTHREAD_MUTEX_INITIALIZER,
+#endif /* !WITHOUT_MULTITHREAD */
+};
 #endif /* GCTIME */
 
-/* bit pointer */
-struct bitptr {
-	unsigned int *ptr;
-	unsigned int mask;
+/********** linked list and look-free stack **********/
+
+struct list_item {
+	struct list_item *next;
 };
-typedef struct bitptr bitptr_t;
 
-#define BITPTR_WORDBITS  ((unsigned int)(sizeof(unsigned int) * CHAR_BIT))
+/* thread-local use only */
+struct list {
+	struct list_item *head;
+	struct list_item **last;
+};
 
-#define BITPTR_INIT(b,p,n) \
-	((b).ptr = (p) + (n) / BITPTR_WORDBITS, \
-	 (b).mask = 1 << ((n) % BITPTR_WORDBITS))
-#define BITPTR_TEST(b)  (*(b).ptr & (b).mask)
-#define BITPTR_SET(b)   (*(b).ptr |= (b).mask)
-#define BITPTR_CLEAR(b) (*(b).ptr &= ~(b).mask)
-#define BITPTR_WORD(b)  (*(b).ptr)
-#define BITPTR_WORDINDEX(b,p)  ((b).ptr - (p))
-#define BITPTR_EQUAL(b1,b2) \
-	((b1).ptr == (b2).ptr && (b1).mask == (b2).mask)
+/* lock-free stack */
+struct stack {
+	_Atomic(struct list_item *) top;
+};
 
-/* BITPTR_NEXT: find 0 bit in current word after and including
- * pointed bit. */
-#define BITPTR_NEXT(b) do {				 \
-	unsigned int tmp__ = *(b).ptr | ((b).mask - 1U); \
-	(b).mask = (tmp__ + 1U) & ~tmp__;		 \
-} while (0)
-#define BITPTR_NEXT_FAILED(b)  ((b).mask == 0)
-
-static bitptr_t
-bitptr_linear_search(unsigned int *start, const unsigned int *limit)
+static void
+list_init(struct list *l)
 {
-	bitptr_t b = {start, 0};
-	while (b.ptr < limit) {
-		b.mask = (*b.ptr + 1) & ~*b.ptr;
-		if (b.mask) break;
-		b.ptr++;
+	l->head = NULL;
+	l->last = &l->head;
+}
+
+static void
+list_append(struct list *l, struct list_item *item)
+{
+	*l->last = item;
+	l->last = &item->next;
+}
+
+static void *
+list_finish(struct list *l, struct list_item *last)
+{
+	*l->last = last;
+	return l->head;
+}
+
+static struct list_item **
+list_last(struct list_item *l)
+{
+	while (l->next)
+		l = l->next;
+	return &l->next;
+}
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void *
+stack_top(struct stack *s)
+{
+	return load_acquire(&s->top);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD
+static void *
+stack_pop(struct stack *s)
+{
+	struct list_item *item;
+	item = load_relaxed(&s->top);
+	if (item)
+		store_relaxed(&s->top, item->next);
+	return item;
+}
+
+#else /* !WITHOUT_MULTITHREAD */
+static void *
+stack_pop(struct stack *s)
+{
+	struct list_item *item, *next;
+
+	/* ABA problem never occur in our usage since only the collector
+	 * push items with SYNC2 agreements with all mutators.  During
+	 * the CAS loop, the mutator who calls stack_pop never respond
+	 * to SYNC2 request from the collector.
+	 */
+	item = load_acquire(&s->top);
+	do {
+		if (!item) break;
+		next = item->next;
+	} while (!cmpswap_weak_acquire(&s->top, &item, next));
+
+	return item;
+}
+
+#endif /* !WITHOUT_MULTITHREAD */
+
+#if defined WITHOUT_MULTITHREAD
+static void
+stack_push(struct stack *s, struct list_item *item)
+{
+	item->next = load_relaxed(&s->top);
+	store_relaxed(&s->top, item);
+}
+
+#else /* !WITHOUT_MULTITHREAD */
+static void
+stack_push(struct stack *s, struct list_item *item)
+{
+	struct list_item *old = load_relaxed(&s->top);
+	do {
+		item->next = old;
+	} while (!cmpswap_weak_release(&s->top, &old, item));
+}
+
+#endif /* !WITHOUT_MULTITHREAD */
+
+#if defined WITHOUT_MULTITHREAD
+static void
+stack_push_list(struct stack *s, struct list *l)
+{
+	if (l->head) {
+		*l->last = load_relaxed(&s->top);
+		store_relaxed(&s->top, l->head);
 	}
-	return b;
 }
 
-#if defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
-#define BITPTR_INC(b) do {						\
-	unsigned int tmp__;						\
-	__asm__ ("xorl\t%0, %0\n\t"					\
-		 "roll\t%1\n\t"						\
-		 "rcll\t%0"						\
-		 : "=&r" (tmp__), "+r" ((b).mask));			\
-	(b).ptr += tmp__;						\
-} while (0)
-#else
-#define BITPTR_INC(b) \
-	(((b).mask <<= 1) ? (void)0 : (void)((b).mask = 1, (b).ptr++))
-#endif /* !NOASM */
-
-#if defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
-#define bsr(x) ({							\
-	unsigned int tmp__;						\
-	ASSERT((x) > 0);						\
-	__asm__ ("bsrl\t%1, %0" : "=r" (tmp__) : "r" ((unsigned int)(x))); \
-	tmp__;								\
-})
-#define bsf(x) ({							\
-	unsigned int tmp__;						\
-	ASSERT((x) > 0);						\
-	__asm__ ("bsfl\t%1, %0" : "=r" (tmp__) : "r" ((unsigned int)(x))); \
-	tmp__;								\
-})
-#elif defined(SIZEOF_INT) && (SIZEOF_INT == 4)
-static inline unsigned int
-bsr(unsigned int m)
+#else /* !WITHOUT_MULTITHREAD */
+static void
+stack_push_list(struct stack *s, struct list *l)
 {
-	unsigned int x, n = 0;
-	ASSERT(m > 0);
-	x = m >> 16; if (x != 0) n += 16, m = x;
-	x = m >> 8; if (x != 0) n += 8, m = x;
-	x = m >> 4; if (x != 0) n += 4, m = x;
-	x = m >> 2; if (x != 0) n += 2, m = x;
-	return n + (m >> 1);
-}
-static inline unsigned int
-bsf(unsigned int m)
-{
-	unsigned int x, n = 31;
-	ASSERT(m > 0);
-	x = m << 16; if (x != 0) n -= 16, m = x;
-	x = m << 8; if (x != 0) n -= 8, m = x;
-	x = m << 4; if (x != 0) n -= 4, m = x;
-	x = m << 2; if (x != 0) n -= 2, m = x;
-	x = m << 1; if (x != 0) n -= 1;
-	return n;
-}
-#else
-static inline unsigned int
-bsr(unsigned int m)
-{
-	unsigned int x, n = 0, c = BITPTR_WORDBITS / 2;
-	ASSERT(m > 0);
-	do {
-		x = m >> c; if (x != 0) n += c, m = x;
-		c >>= 1;
-	} while (c > 1);
-	return n + (m >> 1);
-}
-static inline unsigned int
-bsf(unsigned int m)
-{
-	unsigned int x, n = 31, c = BITPTR_WORDBITS / 2;
-	ASSERT(m > 0);
-	do {
-		x = m << c; if (x != 0) n -= c, m = x;
-		c >>= 1;
-	} while (c > 0);
-	return n;
-}
-#endif /* NOASM */
+	struct list_item *old;
 
-/* BITPTR_INDEX: bit index of 'b' counting from first bit of 'base'. */
-#define BITPTR_INDEX(b,p) \
-	(((b).ptr - (p)) * BITPTR_WORDBITS + bsf((b).mask))
+	if (l->head) {
+		old = load_relaxed(&s->top);
+		do {
+			*l->last = old;
+		} while (!cmpswap_weak_release(&s->top, &old, l->head));
+	}
+}
 
-#define CEIL_LOG2(x) \
-	(bsr((x) - 1) + 1)
+#endif /* !WITHOUT_MULTITHREAD */
 
-/* segments */
+#if defined WITHOUT_MULTITHREAD
+static void *
+stack_flush(struct stack *s)
+{
+	struct list_item *item = load_relaxed(&s->top);
+	store_relaxed(&s->top, NULL);
+	return item;
+}
+
+#else /* !WITHOUT_MULTITHREAD */
+static void *
+stack_flush(struct stack *s)
+{
+	return swap(acquire, &s->top, NULL);
+}
+
+#endif /* !WITHOUT_MULTITHREAD */
+
+/********** segments ***********/
 
 #ifndef SEGMENT_SIZE_LOG2
 #define SEGMENT_SIZE_LOG2  15   /* 32k */
@@ -208,175 +208,242 @@ bsf(unsigned int m)
 #define BLOCKSIZE_MAX_LOG2  12U  /* 2^4 = 16 */
 #define BLOCKSIZE_MAX       (1U << BLOCKSIZE_MAX_LOG2)
 
-struct segment_layout {
-	size_t blocksize;
-	size_t bitmap_offset[SEG_RANK];
-	size_t bitmap_limit[SEG_RANK];
-	unsigned int bitmap_sentinel[SEG_RANK];
-	size_t bitmap_size;
-	size_t stack_offset;
-	size_t stack_limit;
-	size_t block_offset;
-	size_t num_blocks;
-};
-
-struct segment {
-	struct segment *next;
-	unsigned int live_count;
-	struct stack_slot {
-		void *trace_next;     /* for collector's trace stack */
-		void *barrier_next;   /* for mutators' write barrier */
-		/* "barrier_next" field is shared between mutators and
-		 * collector. Its access contention is resolved by atomic
-		 * compare-and-swap operation. */
-	} *stack;
-	char *block_base;
-	char *free;
-	const struct segment_layout *layout;
-	unsigned int blocksize_log2;
-};
-
 /*
  * segment layout:
  *
- * 00000 +--------------------------+
- *       | struct segment           |
- *       +--------------------------+ SEG_BITMAP_BASE0 (aligned in MAXALIGN)
- *       | bitmap(0)                | ^
- *       :                          : | about N bits + sentinel
- *       |                          | V
- *       +--------------------------+ SEG_BITMAP_BASE1
- *       | bitmap(1)                | ^
- *       :                          : | about N/32 bits + sentinel
- *       |                          | V
- *       +--------------------------+ SEG_BITMAP_BASE2
- *       :                          :
- *       +--------------------------+ SEG_BITMAP_BASEn
- *       | bitmap(n)                | about N/32^n bits + sentinel
- *       |                          |
- *       +--------------------------+ SEG_STACK_BASE
- *       | stack area               | ^
- *       |                          | | N * 2 pointers
- *       |                          | v
- *       +--------------------------+ SEG_BLOCK_BASE (aligned in MAXALIGN)
- *       | obj block area           | ^
- *       |                          | | N blocks
- *       |                          | v
- *       +--------------------------+
- *       :                          :
- * 80000 +--------------------------+
+ * 0000 +------------------------+
+ *      | struct segment         |
+ *      +------------------------+
+ *      | padding (if needed)    |
+ *      +------------------------+ SEG_BITMAP0_OFFSET (aligned in sml_bmword_t)
+ *      | bitmap[0]              | ^
+ *      :                        : | N bits + sentinel bits
+ *      |                        | V
+ *      +------------------------+ bitmap_base[1]
+ *      | bitmap[1]              | ^
+ *      :                        : | ceil(N/32) bits + sentinel bits
+ *      |                        | V
+ *      +------------------------+ bitmap_base[2]
+ *      | bitmap[2]              | ^
+ *      :                        : | ceil(N/32^n) bits + sentinel bits
+ *      |                        | v
+ *      +------------------------+ bitmap_base[3]
+ *      | padding (if needed)    |
+ *      +------------------------+ stack_offset (aligned in void*)
+ *      | stack area             | ^
+ *      |                        | | N pointers
+ *      |                        | v
+ *      +------------------------+ stack_limit
+ *      | padding (if needed)    |
+ *      +------------------------+ block_offset (aligned in MAXALIGN
+ *      | obj block area         | ^                        - OBJ_HEADER_SIZE)
+ *      |                        | | N blocks
+ *      |                        | v
+ *      +------------------------+ block_limit
+ *      : padding                :
+ * 8000 +------------------------+
  *
- * N-th bit of bitmap(0) indicates whether N-th block is used (1) or not (0).
- * N-th bit of bitmap(n) indicates whether N-th word of bitmap(n-1) is
+ * N-th bit of bitmap[0] indicates whether N-th block is used (1) or not (0).
+ * N-th bit of bitmap[n] indicates whether N-th word of bitmap[n-1] is
  * filled (1) or not (0).
  */
+struct segment_layout {
+	unsigned int blocksize_bytes;
+	unsigned int bitmap_base[SEG_RANK + 1];
+	sml_bmword_t bitmap_sentinel[SEG_RANK];
+	unsigned int stack_offset;
+	unsigned int stack_limit;
+	unsigned int block_offset;
+	unsigned int num_blocks;
+	unsigned int block_limit;
+};
 
-#define CEIL(x,y)         ((((x) + (y) - 1) / (y)) * (y))
-#define BITS_TO_WORDS(n)  (((n) + BITPTR_WORDBITS - 1) / BITPTR_WORDBITS)
-#define WORDS_TO_BITS(n)  ((n) * BITPTR_WORDBITS)
-#define WORDS_TO_BYTES(n) ((n) * sizeof(unsigned int))
-
-#define SEG_INITIAL_OFFSET CEIL(sizeof(struct segment), MAXALIGN)
-#define SEG_BITMAP0_OFFSET SEG_INITIAL_OFFSET
-#define WORDBITS BITPTR_WORDBITS
+struct segment {
+	struct list_item as_list;
+	struct stack_slot {
+		_Atomic(void *) next;
+	} *stack;  /* == seg + layout->stack_offset */
+	char *block_base;  /* == seg + layout->block_offset */
+	/* If block_base is null, this segment is in free list */
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	/* do not modify snapshot_free during the collector traces objects. */
+	char *snapshot_free;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+	const struct segment_layout *layout;
+	unsigned int blocksize_log2;
+	int free_count;
+	/* The free_count field not only holds the count (as its name) but
+	 * indicates which set the segment is in.
+	 * If free_count is negative, the segment is in the collect set
+	 * and its absolute value is the count of unmarked blocks.
+	 * If free_count is zero, the segment is in the filled set.
+	 * If free_count is positive, the segment is in the partial set.
+	 */
+};
 
 static struct segment_layout segment_layout[BLOCKSIZE_MAX_LOG2 + 1];
 
-#ifdef DEBUG
-static void
-dump_layout()
+#define SEG_INITIAL_OFFSET \
+	CEILING(sizeof(struct segment), sizeof(sml_bmword_t))
+#define SEG_BITMAP0_OFFSET \
+	SEG_INITIAL_OFFSET
+
+#define BITS_TO_WORDS(n)  (((n) + BITPTR_WORDBITS - 1) / BITPTR_WORDBITS)
+#define WORDS_TO_BYTES(n) ((n) * sizeof(sml_bmword_t))
+#define BITS_TO_BYTES(n)  WORDS_TO_BYTES(BITS_TO_WORDS(n))
+
+#define BITMAP_SENTINEL_WORD(sentinel_bits) \
+	((~(sml_bmword_t)0) << (BITPTR_WORDBITS - (sentinel_bits)))
+
+#define ADD_BYTES(p,n)    ((void*)((char*)(p) + (n)))
+#define DIF_BYTES(p1,p2)  ((uintptr_t)((char*)(p1)) - (uintptr_t)((char*)(p2)))
+
+#define BITMAP_BASE(seg, level) \
+	((sml_bmword_t*)ADD_BYTES(seg, (seg)->layout->bitmap_base[level]))
+#define BITMAP_LIMIT(seg, level) \
+	((sml_bmword_t*)ADD_BYTES(seg, (seg)->layout->bitmap_base[(level)+1]))
+#define BITMAP0_BASE(seg) \
+	((sml_bmword_t*)ADD_BYTES(seg, SEG_BITMAP0_OFFSET))
+#define BLOCK_LIMIT(seg) \
+	((char*)ADD_BYTES((seg)->block_base, (seg)->layout->block_limit))
+
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+#define COLLECT_BITMAP_BASE(seg) \
+	((sml_bmword_t*)ADD_BYTES(seg, (seg)->layout->bitmap_base[SEG_RANK]))
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+
+/* assume that segment address is a multiple of SEGMENT_SIZE */
+static inline struct segment *
+segment_addr(void *p)
 {
-	unsigned int i, j;
-	const struct segment_layout *l;
-	unsigned long total;
-
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		l = &segment_layout[i];
-		total = l->block_offset + l->num_blocks * l->blocksize;
-		sml_notice("---");
-		sml_notice("blocksize: %lu", (unsigned long)l->blocksize);
-		sml_notice("bitmap0 offset: %lu",
-			   (unsigned long)SEG_BITMAP0_OFFSET);
-		for (j = 0; j < SEG_RANK; j++) {
-			sml_notice("bitmap%u limit: %lu",
-				   j, (unsigned long)l->bitmap_limit[j]);
-			sml_notice("bitmap%u sentinel: %08x",
-			       j, l->bitmap_sentinel[j]);
-		}
-		sml_notice("bitmap size: %lu", (unsigned long)l->bitmap_size);
-		sml_notice("stack offset: %lu", (unsigned long)l->stack_offset);
-		sml_notice("stack limit: %lu", (unsigned long)l->stack_limit);
-		sml_notice("block offset: %lu", (unsigned long)l->block_offset);
-		sml_notice("num blocks: %lu", (unsigned long)l->num_blocks);
-		sml_notice("total size: %lu", total);
-	}
+	return (void*)((uintptr_t)p & ~((uintptr_t)(SEGMENT_SIZE - 1)));
 }
-#endif /* DEBUG */
+
+static inline unsigned int
+object_index(struct segment *seg, void *obj)
+{
+	assert(segment_addr(obj) == seg);
+	assert((char*)obj >= seg->block_base);
+	assert((char*)obj < (char*)seg + SEGMENT_SIZE);
+	return DIF_BYTES(obj, seg->block_base) >> seg->blocksize_log2;
+}
+
+static unsigned int
+estimate_num_blocks(unsigned int blocksize_bytes)
+{
+	unsigned int i;
+	double e1, e2;
+
+	/* The num_blocks must be the maximum integer N satisfying
+	 *   F3 < SEGMENT_SIZE
+	 * where
+	 *   b_0 = CEILING(num_blocks + 1, BITMAP_WORDBITS)
+	 *   b_1 = CEILING(BITS_TO_WORDS(b_1) + 1, BITMAP_WORDBITS)
+	 *   b_2 = CEILING(BITS_TO_WORDS(b_2) + 1, BITMAP_WORDBITS)
+	 *   F0 = SEG_INITIAL_OFFSET
+	 *   F1 = F0 + BITS_TO_WORDS(b_0 + b_1 + b_2)
+	 *   F2 = CEILING(F1, sizeof(void*)) + N * sizeof(stack_slot)
+	 *   F3 = CEILING(F2 + OBJ_HEADER_SIZE, MAXALIGN) - OBJ_HEADER_SIZE
+	 *        + N * block_size
+	 *
+	 * This condition can be approximated by
+	 *   SEG_INITIAL_OFFSET
+	 *   + N * \Sigma_{i=0}^2 (1 / BITPTR_WORDBITS^i) / 8
+	 *   + \Sigma_{i=0}^2 \Sigma_{j=0}^i (1 / BITPTR_WORDBITS^j) / 8
+	 *   + N * sizeof(stack_slot)
+	 *   + N * block_size
+	 *   < SEGMENT_SIZE
+	 *
+	 * The following code computes the approximated solution of the above
+	 * inequality.
+	 * The solution may be slightly larger than the exact num_blocks.
+	 */
+	e1 = 1.0, e2 = 1.0;
+	for (i = 1; i < SEG_RANK; i++) {
+		e1 = 1.0 + e1 / (double)BITPTR_WORDBITS;
+		e2 += e1;
+	}
+	return (double)(SEGMENT_SIZE - SEG_INITIAL_OFFSET - e2 / 8.0)
+		/ (sizeof(struct stack_slot) + blocksize_bytes + e1 / 8.0);
+}
 
 static void
-calc_layout(unsigned int blocksize_log2)
+compute_bitmap_layout(struct segment_layout *layout, unsigned int num_blocks)
+{
+	unsigned int num_bits, sentinels, num_words, i, offset;
+
+	offset = SEG_BITMAP0_OFFSET;
+
+	for (i = 0; i < SEG_RANK; i++) {
+		layout->bitmap_base[i] = offset;
+		num_bits = CEILING(num_blocks + 1, BITPTR_WORDBITS);
+		sentinels = num_bits - num_blocks;
+		layout->bitmap_sentinel[i] = BITMAP_SENTINEL_WORD(sentinels);
+		num_words = BITS_TO_WORDS(num_bits);
+		offset += WORDS_TO_BYTES(num_words);
+		/* do not count sentinels if they occupy a word */
+		num_blocks = num_words - (~layout->bitmap_sentinel[i] == 0);
+	}
+	layout->bitmap_base[i] = offset;
+}
+
+static void
+compute_layout(unsigned int blocksize_log2)
 {
 	struct segment_layout *layout;
-	unsigned int num_blocks, i;
-	double estimate_bits;
+	unsigned int stack_offset, stack_size, block_limit;
+
+	assert(blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 
 	layout = &segment_layout[blocksize_log2];
-	layout->blocksize = 1 << blocksize_log2;
+	layout->blocksize_bytes = 1U << blocksize_log2;
+	layout->num_blocks = estimate_num_blocks(layout->blocksize_bytes);
 
-	estimate_bits = 1.0;
-	for (i = 0; i < SEG_RANK; i++)
-		estimate_bits = 1.0 + estimate_bits / (double)BITPTR_WORDBITS;
-
-	num_blocks = (double)(SEGMENT_SIZE - SEG_INITIAL_OFFSET)
-		/ (layout->blocksize + estimate_bits / CHAR_BIT
-		   + sizeof(struct stack_slot));
-
+	/* find the optimal num_blocks from the approximated num_blocks */
 	for (;;) {
-		unsigned int filled, bitmap_start, num_bits, stack_size, i;
-		unsigned int bitmap_words, sentinel_bits;
-		filled = SEG_BITMAP0_OFFSET;
-		bitmap_start = filled;
-		num_bits = num_blocks;
-		sentinel_bits = 1;
-		for (i = 0; i < SEG_RANK; i++) {
-			layout->bitmap_offset[i] = filled;
-			bitmap_words = BITS_TO_WORDS(num_bits + sentinel_bits);
-			sentinel_bits = WORDS_TO_BITS(bitmap_words) - num_bits;
-			layout->bitmap_sentinel[i] =
-				~0U << (BITPTR_WORDBITS - sentinel_bits);
-			filled += WORDS_TO_BYTES(bitmap_words);
-			layout->bitmap_limit[i] = filled;
-			num_bits = BITS_TO_WORDS(num_bits);
-			sentinel_bits = 1 + sentinel_bits / BITPTR_WORDBITS;
-		}
-		/* aligning bitmap_size in MAXALIGN makes memset faster.
-		 * It is safe since stack area is bigger than MAXALIGN
-		 * and memset never reach both object header and
-		 * content. */
-		//layout->bitmap_size = CEIL(filled - bitmap_start, MAXALIGN);
-		layout->bitmap_size = filled - bitmap_start;
-		filled = CEIL(filled, sizeof(struct stack_slot)); 
-		layout->stack_offset = filled;
-		stack_size = num_blocks * sizeof(struct stack_slot);
-		layout->stack_limit = filled + stack_size;
-		filled += stack_size;
-		filled = CEIL(filled + OBJ_HEADER_SIZE, MAXALIGN);
-		layout->block_offset = filled;
-		filled += num_blocks * layout->blocksize;
-
-		ASSERT(bitmap_start + layout->bitmap_size
-		       < layout->block_offset - OBJ_HEADER_SIZE);
-
-		if (filled <= SEGMENT_SIZE)
+		compute_bitmap_layout(layout, layout->num_blocks);
+		stack_offset = layout->bitmap_base[SEG_RANK];
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+		stack_offset += BITS_TO_BYTES(layout->num_blocks);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+		layout->stack_offset = CEILING(stack_offset, sizeof(void*));
+		stack_size = layout->num_blocks * sizeof(struct stack_slot);
+		layout->stack_limit = layout->stack_offset + stack_size;
+		layout->block_offset =
+			CEILING(layout->stack_limit + OBJ_HEADER_SIZE,
+				MAXALIGN);
+		block_limit =
+			layout->block_offset
+			+ layout->num_blocks * layout->blocksize_bytes;
+		if (block_limit <= SEGMENT_SIZE)
 			break;
-		num_blocks--;
+		layout->num_blocks--;
 	}
-	layout->num_blocks = num_blocks;
 
-#ifdef MINOR_GC
-	layout->minor_threshold =
-		(double)layout->num_blocks * minor_threshold_ratio;
-#endif /* MINOR_GC */
+	layout->block_limit =
+		layout->block_offset
+		+ layout->num_blocks * layout->blocksize_bytes;
+
+#if 0 && !defined NDEBUG
+	{
+		unsigned int i;
+		sml_debug("--- %u ---\n", blocksize_log2);
+		sml_debug("block_size = %u\n", layout->blocksize_bytes);
+		sml_debug("num_blocks = %u\n", layout->num_blocks);
+		for (i = 0; i <= SEG_RANK; i++)
+			sml_debug("bitmap_base[%u] = %u\n", i,
+				  layout->bitmap_base[i]);
+		for (i = 0; i < SEG_RANK; i++)
+			sml_debug("bitmap_sentinel[%u] = 0x%08x\n", i,
+				  layout->bitmap_sentinel[i]);
+		sml_debug("stack_offset = %u\n", layout->stack_offset);
+		sml_debug("stack_limit = %u\n", layout->stack_limit);
+		sml_debug("block_offset = %u\n", layout->block_offset);
+		sml_debug("block_limit = %u\n", layout->block_limit);
+	}
+#endif /* NDEBUG */
 }
 
 static void
@@ -384,276 +451,98 @@ init_segment_layout()
 {
 	unsigned int i;
 
-	/* segment_layout[0] is used for fresh segments. */
-	segment_layout[0].blocksize = 0;
-	for (i = 0; i < SEG_RANK; i++) {
-		segment_layout[0].bitmap_offset[i] = SEG_BITMAP0_OFFSET;
-		segment_layout[0].bitmap_limit[i] = SEGMENT_SIZE;
-		segment_layout[0].bitmap_sentinel[i] = 0;
-	}
-	segment_layout[0].bitmap_size = SEGMENT_SIZE - SEG_BITMAP0_OFFSET;
-	segment_layout[0].stack_offset = SEGMENT_SIZE;
-	segment_layout[0].stack_limit = SEGMENT_SIZE;
-	segment_layout[0].block_offset = SEGMENT_SIZE;
-	segment_layout[0].num_blocks = 0;
+	/* dummy layout for fresh segments;
+	 * segment_layout[0] may be used in init_segment.
+	 */
+	compute_layout(0);
 
 	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++)
-		calc_layout(i);
-#ifdef DEBUG
-	dump_layout();
-#endif /* DEBUG */
+		compute_layout(i);
 }
 
-#define ADD_OFFSET(p,n)  ((void*)((char*)(p) + (n)))
-
-#define BITMAP0_BASE(seg) \
-	((unsigned int*)ADD_OFFSET(seg, SEG_BITMAP0_OFFSET))
-#define BITMAP_BASE(seg, level) \
-	((unsigned int*) \
-	 ADD_OFFSET(seg, (seg)->layout->bitmap_offset[level]))
-#define BITMAP_LIMIT_3(seg, layout, level) \
-	((unsigned int*)ADD_OFFSET(seg, (layout)->bitmap_limit[level]))
-#define BITMAP_LIMIT(seg, level) \
-	BITMAP_LIMIT_3(seg, (seg)->layout, level)
-#define BITMAP_SENTINEL(seg, level) \
-	((seg)->layout->bitmap_sentinel[level])
-#define BLOCK_BASE(seg)  ((seg)->block_base)
-#define BLOCK_SIZE(seg)  (1U << (seg)->blocksize_log2)
-
-#ifdef DEBUG
-static unsigned int
-seglist_length(struct segment *seg)
+/* for debug */
+static void ATTR_UNUSED
+scribble_segment(struct segment *seg)
 {
-	unsigned int len = 0;
-	for (; seg; seg = seg->next) len++;
-	return len;
-}
-#endif /* DEBUG */
+	char *block = seg->block_base;
+	sml_bitptr_t b = BITPTR(BITMAP0_BASE(seg), 0);
+	unsigned int i;
 
-/* sub heaps */
-/* The size of struct subheap shoulde be power of 2 for good performance. */
-struct subheap {
-	/*
-	 * Each segment in "partial" has at least one free block.
-	 * "filled" is the list of segments with no free block.
-	 * "partial_last" points to the last segment of the "partial" list.
-	 * If "partial" is empty, "partial_last" is indefinite.
-	 *
-	 * "filled" and "partial" form a zipped list of segments.
-	 */
-	struct segment *partial, *partial_last;
-	struct segment *filled;
-	struct segment *collect;
-	unsigned int num_partial;
-	spinlock_t lock, dummy1__, dummy2__;
-};
-
-#define INITIAL_STARVATION_COUNT  2
-
-/* allocation pointers */
-/*
- * Since allocation pointers are frequently accessed,
- * they should be small so that they can stay in cache as long as possible.
- * And, in order for fast offset computation, sizeof(struct alloc_ptr)
- * should be power of 2.
- */
-struct alloc_ptr {
-	bitptr_t freebit;
-	char *free;
-	unsigned int blocksize_bytes;
-};
-
-union alloc_ptr_set {
-	struct alloc_ptr alloc_ptr[BLOCKSIZE_MAX_LOG2 + 1];
-	/* alloc_ptr[0] is not used. We use there as a pointer member. */
-	struct {
-		union alloc_ptr_set *next;
-		struct segment *seg;
-		struct alloc_ptr_set_sync {
-			pthread_mutex_t mutex;
-			pthread_cond_t cond;
-		} *sync;
-		unsigned int request_blocksize_log2;
-		unsigned int segment_reservation;
-	} head;
-};
-
-static const unsigned int dummy_bitmap = ~0U;
-static const bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
-
-/* list of freed alloc_ptr_set.
- * This variable is shared between mutators and collector. Its access
- * contention is resolved by atomic swap operation. */
-static struct {
-	union alloc_ptr_set *freelist;
-	spinlock_t lock;
-} alloc_ptr_set_pool;
-
-#ifdef STATIC_THREAD_STORAGE
-static __thread union alloc_ptr_set *local_alloc_ptr_set;
-#define ALLOC_PTR_SET() local_alloc_ptr_set
-#else
-#define ALLOC_PTR_SET() ((union alloc_ptr_set *)sml_current_thread_heap())
-#endif
-
-static struct subheap global_subheaps[BLOCKSIZE_MAX_LOG2 + 1];
-
-/* list of stalled threads which waits for finishing current collection.
- * This variable is shared between mutators and collector. Its access
- * contention is resolved by atomic swap operation. */
-union alloc_ptr_set *stalled_threads;
-
-#ifdef DEBUG
-/* for debugger */
-void
-dump_subheaps()
-{
-	unsigned int i, count = 0;
-	struct subheap *subheap;
-	struct segment *seg;
-
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		subheap = &global_subheaps[i];
-		if (subheap->filled == NULL
-		    && subheap->partial == NULL)
-			continue;
-		sml_notice("subheap %d", i);
-		sml_notice("  filled:");
-		for (seg = subheap->filled; seg; seg = seg->next, count++)
-			sml_notice("    %p (%p)", seg, seg->free);
-		sml_notice("  partial:");
-		for (seg = subheap->partial; seg; seg = seg->next, count++)
-			sml_notice("    %p (%p)", seg, seg->free);
+	for (i = 0; i < seg->layout->num_blocks; i++) {
+		if (!BITPTR_TEST(b))
+			memset(block - OBJ_HEADER_SIZE, 0x55,
+			       seg->layout->blocksize_bytes);
+		BITPTR_INC(b);
+		block += seg->layout->blocksize_bytes;
 	}
-	sml_notice("%d segments", count);
 }
-#endif /* DEBUG */
 
-static struct {
-	spinlock_t lock;
-	struct segment *freelist;
-
-	/* the length of freelist */
-	unsigned int num_free;
-	/* the number of free segments which is kept for allowance */
-	unsigned int num_headroom;
-	/* counter of the case that mutator trims the headroom */
-	unsigned int peak_count;
-} segment_pool;
-
-static struct {
-	unsigned int count;
-	unsigned int gc_threshold;
-	unsigned int count_prev;
-	unsigned int optimal_headroom;
-	unsigned int count_dif;
-} segment_usage;
-
-static unsigned int num_segments_reserved;
-//static pthread_t pthread_watch;
-
-static struct {
-	void *begin, *end;
-	unsigned int min_num_segments, max_num_segments, extend_step;
-	unsigned int num_committed;
-	unsigned int *bitmap;
-	pthread_mutex_t bitmap_lock;
-} heap_space;
-
-static const unsigned int nil__;
-#define NIL ((void*)(&nil__))
-
-static struct {
-	void *top;
-	void *visited;
-} trace_stack = { NIL, NIL };
-
-static struct {
-	/* "head" field is shared between mutators and collector.
-	 * Its access contension is resolved by atomic compare-and-swap
-	 * operation. */
-	void *head;
-	void *visited;
-} barrier_list = { NIL, NIL };
-
-#define IS_IN_HEAP(p) \
-	((char*)heap_space.begin <= (char*)(p) \
-		 && (char*)(p) < (char*)heap_space.end)
-
-#define ALLOC_PTR_TO_BLOCKSIZE_LOG2(ptr)				\
-	(ASSERT								\
-	 (BLOCKSIZE_MIN_LOG2 <=						\
-	  (unsigned)((ptr) - &ALLOC_PTR_SET()->alloc_ptr[0])		\
-	  && (unsigned)((ptr) - &ALLOC_PTR_SET()->alloc_ptr[0])		\
-	  <= BLOCKSIZE_MAX_LOG2),					\
-	 (unsigned)((ptr) - &ALLOC_PTR_SET()->alloc_ptr[0]))
-
-/* bit pointer is suitable for computing segment address.
- * bit pointer always points to the address in the middle of segments. */
-#define ALLOC_PTR_TO_SEGMENT(ptr)					\
-	(ASSERT(IS_IN_HEAP((ptr)->freebit.ptr)),			\
-	 ((struct segment*)                                             \
-	  (((uintptr_t)(ptr)->freebit.ptr) & ~(SEGMENT_SIZE - 1U))))
-
-#define OBJ_TO_SEGMENT(objaddr) \
-	(ASSERT(IS_IN_HEAP(objaddr)), \
-	 ((struct segment*)((uintptr_t)(objaddr) & ~(SEGMENT_SIZE - 1U))))
-
-#define OBJ_TO_INDEX(seg, objaddr)					\
-	(ASSERT(OBJ_TO_SEGMENT(objaddr) == (seg)),			\
-	 ASSERT((char*)(objaddr) >= (seg)->block_base),			\
-	 ASSERT((char*)(objaddr)					\
-		< (seg)->block_base + ((seg)->layout->num_blocks	\
-				       << (seg)->blocksize_log2)),	\
-	 ((size_t)((char*)(objaddr) - (seg)->block_base)		\
-	  >> (seg)->blocksize_log2))
-
-#define OBJ_HAS_NO_POINTER(obj)			\
-	(!(OBJ_TYPE(obj) & OBJTYPE_BOXED)	\
-	 || (OBJ_TYPE(obj) == OBJTYPE_RECORD	\
-	     && OBJ_BITMAP(obj)[0] == 0		\
-	     && OBJ_NUM_BITMAPS(obj) == 1))
-
-#ifdef DEBUG
-/* for debugger */
-int
-obj_bit(void *obj)
+/* for debug */
+static int ATTR_UNUSED
+check_filled(const void *buf, unsigned char c, size_t n)
 {
-	struct segment *seg;
-	unsigned int index;
-	bitptr_t b;
-	seg = OBJ_TO_SEGMENT(obj);
-	index = OBJ_TO_INDEX(seg, obj);
-	BITPTR_INIT(b, BITMAP0_BASE(seg), index);
-	return BITPTR_TEST(b) != 0;
-}
-#endif /* DEBUG */
-
-#ifdef DEBUG
-/* for debugger */
-struct stack_slot *
-obj_stack(void *obj)
-{
-	struct segment *seg;
-	unsigned int index;
-	seg = OBJ_TO_SEGMENT(obj);
-	index = OBJ_TO_INDEX(seg, obj);
-	return &seg->stack[index];
-}
-#endif /* DEBUG */
-
-static void
-clear_alloc_ptr(struct alloc_ptr *ptr)
-{
-	ptr->free = NULL;
-	ptr->freebit = dummy_bitptr;
+	const unsigned char *p;
+	for (p = buf; n > 0; p++, n--) {
+		if (*p != c)
+			return 0;
+	}
+	return 1;
 }
 
 static void
-set_alloc_ptr(struct alloc_ptr *ptr, struct segment *seg)
+init_segment(struct segment *seg, unsigned int blocksize_log2)
 {
-	ptr->free = BLOCK_BASE(seg);
-	BITPTR_INIT(ptr->freebit, BITMAP0_BASE(seg), 0);
+	const struct segment_layout *new_layout;
+	unsigned int i;
+	char *old_limit, *new_limit;
+
+	assert(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
+	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
+
+	/* assumption: seg is initialized for some block size with its
+	 * bitmap and stack area (including padding between the two) being
+	 * filled with zero except for bitmap sentinels.
+	 * (We also assume that NULL is equal to zero)
+	 */
+
+	/* if seg is already initialized for blocksize_log2, do nothing. */
+	if (seg->blocksize_log2 == blocksize_log2) {
+		seg->block_base = ADD_BYTES(seg, seg->layout->block_offset);
+		return;
+	}
+
+	new_layout = &segment_layout[blocksize_log2];
+
+	/* clear the bitmap and stack area for the new block size by
+	 * filling the difference between old and new stack_limit with
+	 * zero and removing old bitmap sentinels.
+	 */
+	old_limit = ADD_BYTES(seg, seg->layout->stack_limit);
+	new_limit = ADD_BYTES(seg, new_layout->stack_limit);
+	if (new_limit > old_limit)
+		memset(old_limit, 0, new_limit - old_limit);
+	/* clear old sentinels */
+	for (i = 0; i < SEG_RANK; i++)
+		BITMAP_LIMIT(seg, i)[-1] = 0;
+
+	assert(check_filled(BITMAP0_BASE(seg), 0,
+			    new_layout->stack_limit - SEG_BITMAP0_OFFSET));
+
+	seg->layout = new_layout;
+	seg->blocksize_log2 = blocksize_log2;
+	seg->stack = ADD_BYTES(seg, new_layout->stack_offset);
+	seg->block_base = ADD_BYTES(seg, new_layout->block_offset);
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	seg->snapshot_free = seg->block_base;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+	assert(seg->free_count >= 0);
+	seg->free_count = 0;
+
+	/* set new sentinels */
+	for (i = 0; i < SEG_RANK; i++)
+		BITMAP_LIMIT(seg, i)[-1] = new_layout->bitmap_sentinel[i];
+
+	DEBUG(scribble_segment(seg));
 }
 
 static void
@@ -661,1435 +550,1849 @@ clear_bitmap(struct segment *seg)
 {
 	unsigned int i;
 
-	memset(BITMAP0_BASE(seg), 0, seg->layout->bitmap_size);
-
+	memset(BITMAP0_BASE(seg), 0,
+	       seg->layout->bitmap_base[SEG_RANK] - SEG_BITMAP0_OFFSET);
 	for (i = 0; i < SEG_RANK; i++)
-		BITMAP_LIMIT(seg, i)[-1] = BITMAP_SENTINEL(seg, i);
-	seg->live_count = 0;
+		BITMAP_LIMIT(seg, i)[-1] = seg->layout->bitmap_sentinel[i];
 }
 
 static void
-init_segment(struct segment *seg, unsigned int blocksize_log2)
+mark_bits(struct segment *seg, unsigned int index, sml_bitptr_t b)
 {
-	const struct segment_layout *layout;
 	unsigned int i;
-	void *old_limit, *new_limit;
 
-	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
-	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
+	assert(BITPTR_EQUAL(b, BITPTR(BITMAP0_BASE(seg), index)));
+	assert(index < seg->layout->num_blocks);
 
-	/* if seg is already initialized, do nothing. */
-	if (seg->blocksize_log2 == blocksize_log2) {
-		/* ASSERT(check_segment_consistent(seg, 0) == 0); */
-		return;
+	BITPTR_SET(b);
+	for (i = 1; ~BITPTR_WORD(b) == 0U && i < SEG_RANK; i++) {
+		index /= BITPTR_WORDBITS;
+		b = BITPTR(BITMAP_BASE(seg, i), index);
+		assert(b.ptr < BITMAP_LIMIT(seg, i));
+		BITPTR_SET(b);
 	}
-
-	layout = &segment_layout[blocksize_log2];
-
-	/*
-	 * bitmap and stack area are cleared except bitmap sentinels.
-	 * Under this assumption, we initialize bitmap and stack area
-	 * with accessing least memory.
-	 */
-#if defined NULL_IS_NOT_ZERO
-	old_limit = BITMAP_LIMIT(seg, SEG_RANK - 1);
-	new_limit = BITMAP_LIMIT_L(seg, layout, SEG_RANK - 1);
-#else
-	old_limit = ADD_OFFSET(seg, seg->layout->stack_limit);
-	new_limit = ADD_OFFSET(seg, layout->stack_limit);
-#endif /* NULL_IS_NOT_ZERO */
-	if ((char*)new_limit > (char*)old_limit)
-		memset(old_limit, 0, (char*)new_limit - (char*)old_limit);
-
-	/* clear old sentinel */
-	for (i = 0; i < SEG_RANK; i++)
-		BITMAP_LIMIT(seg, i)[-1] = 0;
-	/* set new sentinel */
-	for (i = 0; i < SEG_RANK; i++)
- 		BITMAP_LIMIT_3(seg,layout,i)[-1] = layout->bitmap_sentinel[i];
-
-	seg->blocksize_log2 = blocksize_log2;
-	seg->layout = layout;
-	seg->stack = ADD_OFFSET(seg, layout->stack_offset);
-	seg->block_base = ADD_OFFSET(seg, layout->block_offset);
-	seg->free = seg->block_base;
-	seg->next = NULL;
-
-#ifdef DEBUG
-	/* scribble allocation blocks */
-	memset(ADD_OFFSET(seg, seg->layout->block_offset - 4),
-	       0x55, SEGMENT_SIZE - (seg->layout->block_offset - 4));
-#endif /* DEBUG */
-
-#ifdef NULL_IS_NOT_ZERO
-	for (i = 0; i < layout->num_blocks; i++)
-		seg->stack[i] = NULL;
-#endif /* NULL_IS_NOT_ZERO */
-
-	/* ASSERT(check_segment_consistent(seg, 0) == 0); */
 }
 
-#ifdef DEBUG
-static void
-scribble_segment(struct segment *seg, size_t filled_index)
-{
-	unsigned int i;
-	bitptr_t b;
-	char *p = BLOCK_BASE(seg);
+struct stat_segment {
+	unsigned int num_marked;
+	unsigned int num_unmarked;
+	unsigned int num_marked_before_free;
+	unsigned int num_unmarked_before_free;
+};
 
-	BITPTR_INIT(b, BITMAP0_BASE(seg), 0);
+static struct stat_segment
+stat_segment(const struct segment *seg)
+{
+	sml_bitptr_t b = BITPTR(BITMAP0_BASE(seg), 0);
+	char *block = seg->block_base;
+	struct stat_segment stat = {0, 0, 0, 0};
+	unsigned int i;
+
 	for (i = 0; i < seg->layout->num_blocks; i++) {
-		size_t objsize = ((i < filled_index || BITPTR_TEST(b))
-				  ? OBJ_TOTAL_SIZE(p) : 0);
-		ASSERT(objsize <= (size_t)(1 << seg->blocksize_log2));
-		memset(p - OBJ_HEADER_SIZE + objsize, 0x55,
-		       BLOCK_SIZE(seg) - objsize);
-		BITPTR_INC(b);
-		p += BLOCK_SIZE(seg);
-	}
-}
-#endif /* DEBUG */
-
-#ifdef MINGW32
-#define GetPageSize()  (64 * 1024)
-#define ReservePageError  NULL
-#define ReservePage(addr, size)	\
-	VirtualAlloc(addr, size, MEM_RESERVE, PAGE_NOACCESS)
-#define ReleasePage(addr, size) \
-	VirtualFree(addr, size, MEM_RELEASE)
-#define CommitPage(addr, size) \
-	VirtualAlloc(addr, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE)
-#define UncommitPage(addr, size) \
-	VirtualFree(addr, size, MEM_DECOMMIT)
-#else
-#define GetPageSize()  getpagesize()
-#define ReservePageError  ((void*)-1)
-#define ReservePage(addr, size) \
-	mmap(addr, size, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0)
-#define ReleasePage(addr, size) \
-	munmap(addr, size)
-#define CommitPage(addr, size) \
-	mprotect(addr, size, PROT_READ | PROT_WRITE)
-#define UncommitPage(addr, size) \
-	mmap(addr, size, PROT_NONE, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0)
-#endif /* MINGW32 */
-
-#if defined(DEBUG) && defined(DEBUG_USE_MMAP)
-#define HEAP_BEGIN_ADDR  (void*)0x2000000
-#else
-#define HEAP_BEGIN_ADDR  NULL
-#endif /* DEBUG && DEBUG_USE_MMAP */
-
-static struct segment **
-extend_heap(unsigned int count, struct segment **freelist)
-{
-	unsigned int i;
-	struct segment *seg;
-	bitptr_t b;
-
-	BITPTR_INIT(b, heap_space.bitmap, 0);
-	seg = heap_space.begin;
-	for (i = 0; count > 0 && i < heap_space.max_num_segments; i++) {
-		if (!BITPTR_TEST(b)) {
-			CommitPage(seg, SEGMENT_SIZE);
-			seg->layout = &segment_layout[0];
-			*freelist = seg;
-			freelist = &seg->next;
-			BITPTR_SET(b);
-			count--;
-			heap_space.num_committed++;
+		if (BITPTR_TEST(b)) {
+			stat.num_marked++;
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+			if (block < seg->snapshot_free)
+				stat.num_marked_before_free++;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+		} else {
+			stat.num_unmarked++;
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+			if (block < seg->snapshot_free)
+				stat.num_unmarked_before_free++;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 		}
 		BITPTR_INC(b);
-		seg = (struct segment *)((char*)seg + SEGMENT_SIZE);
+		block += seg->layout->blocksize_bytes;
 	}
-
-	*freelist = NULL;
-	return freelist;
+	return stat;
 }
 
-static void
-init_heap_space(size_t min_size, size_t max_size)
+/* for debug */
+static ATTR_UNUSED void
+dump_segment(const char *prefix, const struct segment *seg)
 {
-	size_t pagesize, alloc_size, reserve_size, freesize_pre, freesize_post;
-	unsigned int min_num_segments, max_num_segments, bitmap_bits;
+	struct stat_segment stat = stat_segment(seg);
+	sml_debug("%s%p: blksiz=%u, 1/0=%u/%u|%u/%u, fill/total=%u/%u\n",
+		  prefix, seg, seg->layout->blocksize_bytes,
+		  stat.num_marked_before_free,
+		  stat.num_unmarked_before_free,
+		  stat.num_marked - stat.num_marked_before_free,
+		  stat.num_unmarked - stat.num_unmarked_before_free,
+		  stat.num_marked + stat.num_unmarked_before_free,
+		  seg->layout->num_blocks);
+}
+
+/********** heap space ************/
+
+struct heap_space {
+	void *begin, *end;
+	struct segment *free;
+	unsigned int min_num_segments, max_num_segments;
+	unsigned int num_committed;
+};
+
+static void
+init_heap_space(struct heap_space *heap, size_t min_size, size_t max_size)
+{
+	size_t freesize_post;
 	void *p;
 
-	pagesize = GetPageSize();
-
-	if (SEGMENT_SIZE % pagesize != 0)
+	if (SEGMENT_SIZE % GetPageSize() != 0)
 		sml_fatal(0, "SEGMENT_SIZE is not aligned in page size.");
 
-	alloc_size = ALIGNSIZE(min_size, SEGMENT_SIZE);
-	reserve_size = ALIGNSIZE(max_size, SEGMENT_SIZE);
+	min_size = CEILING(min_size, SEGMENT_SIZE);
+	max_size = CEILING(max_size, SEGMENT_SIZE);
 
-	if (alloc_size < SEGMENT_SIZE)
-		alloc_size = SEGMENT_SIZE;
-	if (reserve_size < alloc_size)
-		reserve_size = alloc_size;
-
-	min_num_segments = alloc_size / SEGMENT_SIZE;
-	max_num_segments = reserve_size / SEGMENT_SIZE;
-
-	p = ReservePage(HEAP_BEGIN_ADDR, SEGMENT_SIZE + reserve_size);
+	/* reserve address space of max_size bytes beginning with the
+	 * address of multiple of SEGMENT_SIZE.  To ensure this constraint,
+	 * we first reserve the address space with additional SEGMENT_SIZE
+	 * bytes and then release SEGMENT_SIZE bytes in total from the head
+	 * and end of the space.
+	 */
+	p = ReservePage(NULL, max_size + SEGMENT_SIZE);
 	if (p == ReservePageError)
 		sml_fatal(0, "failed to alloc virtual memory.");
-
 	freesize_post = (uintptr_t)p & (SEGMENT_SIZE - 1);
 	if (freesize_post == 0) {
-		ReleasePage(p + reserve_size, SEGMENT_SIZE);
+		ReleasePage(ADD_BYTES(p, max_size), SEGMENT_SIZE);
 	} else {
-		freesize_pre = SEGMENT_SIZE - freesize_post;
-		ReleasePage(p, freesize_pre);
-		p = (char*)p + freesize_pre;
-		ReleasePage(p + reserve_size, freesize_post);
+		ReleasePage(p, SEGMENT_SIZE - freesize_post);
+		p = ADD_BYTES(p, SEGMENT_SIZE - freesize_post);
+		ReleasePage(ADD_BYTES(p, max_size), freesize_post);
 	}
 
-	heap_space.begin = p;
-	heap_space.end = (char*)p + reserve_size;
-	heap_space.min_num_segments = min_num_segments;
-	heap_space.max_num_segments = max_num_segments;
-	heap_space.extend_step = min_num_segments > 0 ? min_num_segments : 1;
-	heap_space.num_committed = 0;
+	heap->begin = p;
+	heap->end = ADD_BYTES(p, max_size);
+	heap->free = p;
+	heap->min_num_segments = min_size / SEGMENT_SIZE;
+	heap->max_num_segments = max_size / SEGMENT_SIZE;
+	heap->num_committed = 0;
 
-	bitmap_bits = ALIGNSIZE(max_num_segments, BITPTR_WORDBITS);
-	heap_space.bitmap = xmalloc(bitmap_bits / CHAR_BIT);
-	memset(heap_space.bitmap, 0, bitmap_bits / CHAR_BIT);
-
-	pthread_mutex_init(&heap_space.bitmap_lock, NULL);
-	SPIN_INIT(&segment_pool.lock);
-
-	segment_pool.freelist = NULL;
-	extend_heap(min_num_segments, &segment_pool.freelist);
-	segment_pool.num_free = min_num_segments;
-	segment_pool.num_headroom = min_num_segments / 2;
-	segment_pool.peak_count = 0;
-	ASSERT(seglist_length(segment_pool.freelist) == segment_pool.num_free);
-	ASSERT(segment_pool.num_headroom - segment_pool.peak_count
-	       <= segment_pool.num_free);
-
-	segment_usage.count = 0;
-	segment_usage.gc_threshold = min_num_segments / 2;
-	segment_usage.optimal_headroom = min_num_segments / 2;
+#ifdef EAGER_MMAP
+	CommitPage(p, max_size);
+	for (; p < heap->end; p = ADD_BYTES(p, 4096))
+		*(void**)p = NULL;
+#endif /* EAGER_MMAP */
 }
 
 static void
-init_subheaps()
+destroy_heap_space(struct heap_space *heap)
 {
-	unsigned int i;
-	struct subheap *subheap;
+	ReleasePage(heap->begin, (char*)heap->end - (char*)heap->begin);
+}
 
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		subheap = &global_subheaps[i];
-		subheap->partial = NULL;
-		subheap->filled = NULL;
-		subheap->num_partial = 0;
-		SPIN_INIT(&subheap->lock);
+static void
+allocate_segments(struct heap_space *heap, unsigned int count,
+		  struct list *segs)
+{
+	struct segment *seg;
+	unsigned int alloc;
+
+	alloc = (count <= heap->max_num_segments - heap->num_committed)
+		? count : heap->max_num_segments - heap->num_committed;
+	heap->num_committed += alloc;
+	sml_debug("allocate %u segments (total %u segments)\n",
+		  alloc, heap->num_committed);
+#ifndef EAGER_MMAP
+	CommitPage(heap->free, SEGMENT_SIZE * alloc);
+#endif /* EAGER_MMAP */
+
+	for (; alloc > 0; alloc--) {
+		seg = heap->free;
+		/* Memory pages allocated by CommitPage is filled
+		 * with zero.  Set seg->layout for init_segment. */
+		seg->layout = &segment_layout[0];
+		list_append(segs, &seg->as_list);
+		heap->free = ADD_BYTES(seg, SEGMENT_SIZE);
 	}
 
-	ATOMIC_SWAP(&stalled_threads, NULL);
+	/* TODO: deallocate segments */
+}
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+clear_collect_bitmaps(struct heap_space *heap)
+{
+	struct segment *seg;
+
+	for (seg = heap->begin; seg < heap->free;
+	     seg = ADD_BYTES(seg, SEGMENT_SIZE)) {
+		if (!seg->block_base)
+			continue;
+		memset(COLLECT_BITMAP_BASE(seg), 0,
+		       seg->layout->stack_offset
+		       - seg->layout->bitmap_base[SEG_RANK]);
+	}
+}
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+
+/********** segment pool ***********/
+
+static struct {
+	struct stack freelist;
+	struct heap_space heap;
+	unsigned int extend_step;
+} segment_pool;
+
+static void
+init_segment_pool(size_t min_size, size_t max_size)
+{
+	struct list segs;
+
+	init_heap_space(&segment_pool.heap, min_size, max_size);
+
+	segment_pool.extend_step =
+		segment_pool.heap.min_num_segments > 0
+		? segment_pool.heap.min_num_segments : 1;
+
+	list_init(&segs);
+	allocate_segments(&segment_pool.heap,
+			  segment_pool.heap.min_num_segments,
+			  &segs);
+	stack_push_list(&segment_pool.freelist, &segs);
+}
+
+static void
+destroy_segment_pool()
+{
+	destroy_heap_space(&segment_pool.heap);
 }
 
 static struct segment *
-new_segment()
+new_segment(unsigned int blocksize_log2)
 {
 	struct segment *seg;
-
-	SPIN_LOCK(&segment_pool.lock);
-	seg = segment_pool.freelist;
+	seg = stack_pop(&segment_pool.freelist);
 	if (seg) {
-		segment_pool.freelist = seg->next;
-		segment_pool.num_free--;
-		if (segment_pool.num_free < segment_pool.num_headroom)
-			segment_pool.peak_count++;
+		assert((char*)segment_pool.heap.begin <= (char*)seg
+		       && (char*)seg < (char*)segment_pool.heap.end);
+		init_segment(seg, blocksize_log2);
 	}
-	ASSERT(seglist_length(segment_pool.freelist) == segment_pool.num_free);
-	ASSERT(segment_pool.num_headroom - segment_pool.peak_count
-	       <= segment_pool.num_free);
-	SPIN_UNLOCK(&segment_pool.lock);
-
-	if (seg != NULL)
-		seg->next = NULL;
 	return seg;
 }
 
-static void
-free_segment(struct segment *seg)
-{
-	bitptr_t b;
-	unsigned int index;
+/********** sub-heaps ***********/
 
-	index = ((char*)seg - (char*)heap_space.begin) / SEGMENT_SIZE;
-	BITPTR_INIT(b, heap_space.bitmap, index);
-	ASSERT(BITPTR_TEST(b));
-	BITPTR_CLEAR(b);
-	UncommitPage(seg, SEGMENT_SIZE);
-	heap_space.num_committed--;
-	DBG(("free_segment: %p (%d) %d\n", seg, index,
-	     heap_space.num_committed));
+struct subheap {
+	/* segments each of which has at least one free block */
+	struct stack partial;
+	/* segments consumed by mutators */
+	struct stack filled;
+	/* number of segments belonging to this subheap */
+	_Atomic(unsigned int) num_segments;
+	/* number of free blocks in partial */
+	_Atomic(unsigned int) num_free_blocks;
+	/* disallow allocating new segment to this subheap */
+	_Atomic(unsigned int) do_not_extend;
+	/* sizeof(struct subheap) must be power of 2 for performance */
+	unsigned int dummy_;
+};
+
+static struct subheap global_subheaps[BLOCKSIZE_MAX_LOG2 + 1];
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+collect_subheaps_sync1(struct segment **segarray)
+{
+	unsigned int i;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++)
+		segarray[i] = stack_top(&global_subheaps[i].filled);
 }
 
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
 static void
-init_alloc_ptr_set(union alloc_ptr_set *ptr_set)
+collect_subheap(struct subheap *subheap, struct segment **seg_p)
+{
+	struct list filled;
+	struct segment *partial;
+
+	filled.head = stack_flush(&subheap->filled);
+	filled.last = filled.head ? list_last(filled.head) : &filled.head;
+	partial = stack_flush(&subheap->partial);
+	*seg_p = list_finish(&filled, &partial->as_list);
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+static void
+collect_subheap(struct subheap *subheap, struct segment **seg_p)
+{
+	struct segment *seg;
+	struct segment *sync1 = *seg_p;
+	struct list collect, filled;
+
+	list_init(&collect);
+	list_init(&filled);
+	seg = stack_flush(&subheap->filled);
+
+	while (seg != sync1) {
+		assert(seg);
+		if (seg->snapshot_free < BLOCK_LIMIT(seg))
+			list_append(&filled, &seg->as_list);
+		else
+			list_append(&collect, &seg->as_list);
+		seg = (struct segment *)seg->as_list.next;
+	}
+
+	stack_push_list(&subheap->filled, &filled);
+	*seg_p = list_finish(&collect, &seg->as_list);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+static void
+collect_subheaps(struct segment **segarray)
 {
 	unsigned int i;
 
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++)
+		collect_subheap(&global_subheaps[i], &segarray[i]);
+}
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+move_partial_to_filled()
+{
+	unsigned int i;
+	struct segment *seg;
+	struct list l;
+
 	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		ptr_set->alloc_ptr[i].blocksize_bytes = 1U << i;
-		clear_alloc_ptr(&ptr_set->alloc_ptr[i]);
+		struct subheap *subheap = &global_subheaps[i];
+		seg = stack_flush(&subheap->partial);
+		store_relaxed(&subheap->num_free_blocks, 0);
+		if (seg) {
+			l.head = &seg->as_list;
+			l.last = list_last(l.head);
+			stack_push_list(&global_subheaps[i].filled, &l);
+		}
 	}
-	ptr_set->head.next = NULL;
-	ptr_set->head.seg = NULL;
-	ptr_set->head.sync = xmalloc(sizeof(struct alloc_ptr_set_sync));
-	ptr_set->head.segment_reservation = 0;
-	pthread_mutex_init(&ptr_set->head.sync->mutex, NULL);
-	pthread_cond_init(&ptr_set->head.sync->cond, NULL);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+struct stat_subheap {
+	unsigned int num_filled;
+	unsigned int num_partial;
+	struct stat_segment total;
+};
+
+static struct stat_subheap
+stat_subheap(struct subheap *subheap)
+{
+	struct segment *seg;
+	struct stat_subheap st = {0, 0, {0, 0, 0, 0}};
+	struct stat_segment s;
+
+	for (seg = (struct segment *)load_relaxed(&subheap->filled.top); seg;
+	     seg = (struct segment *)seg->as_list.next) {
+		st.num_filled++;
+		s = stat_segment(seg);
+		st.total.num_marked += s.num_marked;
+		st.total.num_unmarked += s.num_unmarked;
+		st.total.num_marked_before_free += s.num_marked;
+		st.total.num_unmarked_before_free += s.num_unmarked;
+	}
+	for (seg = (struct segment *)load_relaxed(&subheap->partial.top); seg;
+	     seg = (struct segment *)seg->as_list.next) {
+		st.num_partial++;
+		s = stat_segment(seg);
+		st.total.num_marked += s.num_marked;
+		st.total.num_unmarked += s.num_unmarked;
+		st.total.num_marked_before_free += s.num_marked_before_free;
+		st.total.num_unmarked_before_free += s.num_unmarked_before_free;
+	}
+
+	return st;
+}
+
+/* for debug */
+static ATTR_UNUSED void
+dump_subheap(struct subheap *subheap)
+{
+	struct stat_subheap st = stat_subheap(subheap);
+	struct segment *seg;
+
+	sml_debug("%u filled / %u partial\n", st.num_filled, st.num_partial);
+	for (seg = (struct segment *)load_relaxed(&subheap->filled.top); seg;
+	     seg = (struct segment *)seg->as_list.next)
+		dump_segment("F ", seg);
+	for (seg = (struct segment *)load_relaxed(&subheap->partial.top); seg;
+	     seg = (struct segment *)seg->as_list.next)
+		dump_segment("P ", seg);
+}
+
+/* for debug */
+static ATTR_UNUSED void
+dump_global_subheaps()
+{
+	unsigned int i;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		sml_debug("subheap %u:\n", i);
+		dump_subheap(&global_subheaps[i]);
+	}
+}
+
+/********** malloc segments *********/
+
+struct malloc_segment {
+	struct list_item as_list;
+	struct stack_slot stack;
+	sml_bmword_t markbit;
+	char dummy_for_objheader[OBJ_HEADER_SIZE];
+};
+
+#define MALLOC_OBJECT_OFFSET \
+	CEILING(sizeof(struct malloc_segment), MAXALIGN)
+#define OBJ_TO_MALLOC_SEGMENT(obj) \
+	((struct malloc_segment *)ADD_BYTES(obj, -MALLOC_OBJECT_OFFSET))
+#define MALLOC_SEGMENT_TO_OBJ(mseg) \
+	ADD_BYTES(mseg, MALLOC_OBJECT_OFFSET)
+#define MALLOC_SEGMENT_SIZE(mseg) \
+	(MALLOC_OBJECT_OFFSET \
+	 + OBJ_TOTAL_SIZE(MALLOC_SEGMENT_TO_OBJ(mseg)) \
+	 - OBJ_HEADER_SIZE)
+
+/* initialized correctly by default */
+static struct stack malloc_segments;
+
+static struct malloc_segment *
+malloc_segment(unsigned int alloc_size)
+{
+	struct malloc_segment *mseg;
+
+	mseg = xmalloc(MALLOC_OBJECT_OFFSET + alloc_size);
+	DEBUG(memset(mseg, 0x55, MALLOC_OBJECT_OFFSET + alloc_size));
+	store_relaxed(&mseg->stack.next, NULL);
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	/* Indicate that this is allocated before SYNC2 */
+	mseg->markbit = (sml_current_phase() >= SYNC2);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+	stack_push(&malloc_segments, &mseg->as_list);
+	return mseg;
 }
 
 static void
-destroy_alloc_ptr_set(union alloc_ptr_set *ptr_set)
+destroy_malloc_segment(struct malloc_segment *mseg)
 {
-	pthread_mutex_destroy(&ptr_set->head.sync->mutex);
-	pthread_cond_destroy(&ptr_set->head.sync->cond);
-	free(ptr_set->head.sync);
-	free(ptr_set);
+	assert(mseg->markbit == 0);
+	DEBUG(memset(mseg, 0x55, MALLOC_SEGMENT_SIZE(mseg)));
+	free(mseg);
 }
 
-void
-sml_heap_set_reservation(unsigned int n)
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+collect_malloc_segments_sync1(struct malloc_segment **collect_msegs)
 {
-	unsigned int old = ALLOC_PTR_SET()->head.segment_reservation;
-	ALLOC_PTR_SET()->head.segment_reservation = n;
-	num_segments_reserved += n - old;
-//pthread_watch = pthread_self();
+	*collect_msegs = stack_top(&malloc_segments);
 }
 
-static union alloc_ptr_set *debug_global_alloc_ptr;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+static void
+collect_malloc_segments(struct malloc_segment **collect_msegs)
+{
+	*collect_msegs = stack_flush(&malloc_segments);
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+static void
+collect_malloc_segments(struct malloc_segment **collect_msegs)
+{
+	struct malloc_segment *mseg;
+	struct malloc_segment *sync1 = *collect_msegs;
+	struct list collect, filled;
+
+	list_init(&collect);
+	list_init(&filled);
+	mseg = stack_flush(&malloc_segments);
+
+	while (mseg != sync1) {
+		assert(mseg);
+		if (!mseg->markbit)
+			list_append(&collect, &mseg->as_list);
+		else
+			list_append(&filled, &mseg->as_list);
+		mseg = (struct malloc_segment *)mseg->as_list.next;
+	}
+
+	stack_push_list(&malloc_segments, &filled);
+	*collect_msegs = list_finish(&collect, &mseg->as_list);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+static void
+destroy_malloc_segments()
+{
+	struct malloc_segment *mseg, *next;
+
+	mseg = stack_flush(&malloc_segments);
+	while (mseg) {
+		next = (struct malloc_segment *)mseg->as_list.next;
+		free(mseg);
+		mseg = next;
+	}
+}
+
+/********** heap summary ***********/
+
+static void
+print_heap_summary()
+{
+	unsigned int i, num_free = 0, num_malloc = 0, num_malloc_bytes = 0;
+	unsigned int num_segments_total = 0;
+	unsigned int num_total_blocks = 0, num_filled_blocks = 0;
+	struct stat_subheap st;
+	struct segment *seg;
+	struct subheap *subheap;
+	struct malloc_segment *mseg;
+
+	sml_notice("heap usage summary:");
+	sml_notice("heap size = %u segments (min %u -- max %u)",
+		   segment_pool.heap.num_committed,
+		   segment_pool.heap.min_num_segments,
+		   segment_pool.heap.max_num_segments);
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		subheap = &global_subheaps[i];
+		st = stat_subheap(subheap);
+		sml_notice("subheap %2u: %4u + %4u / %4u segs, "
+			   "%7u / %7u blocks filled %s",
+			   i, st.num_filled, st.num_partial,
+			   (unsigned)load_relaxed(&subheap->num_segments),
+			   st.total.num_marked
+			   + st.total.num_unmarked_before_free,
+			   st.total.num_marked + st.total.num_unmarked,
+			   load_relaxed(&subheap->do_not_extend) ? "*" : "");
+		num_segments_total += st.num_filled + st.num_partial;
+		num_filled_blocks += st.total.num_marked
+			+ st.total.num_unmarked_before_free;
+		num_total_blocks += st.total.num_marked + st.total.num_unmarked;
+	}
+	sml_notice("block utilization : %u / %u (%6.2f%%)",
+		   num_filled_blocks, num_total_blocks,
+		   (double)num_filled_blocks / num_total_blocks * 100.0);
+
+	for (mseg = (struct malloc_segment *)load_relaxed(&malloc_segments.top);
+	     mseg;
+	     mseg = (struct malloc_segment *)mseg->as_list.next) {
+		num_malloc++;
+		num_malloc_bytes += MALLOC_SEGMENT_SIZE(mseg);
+	}
+	sml_notice("subheap malloc: %5u segments, %8u bytes in total",
+		   num_malloc, num_malloc_bytes);
+
+	for (seg = (struct segment *)load_relaxed(&segment_pool.freelist.top);
+	     seg;
+	     seg = (struct segment *)seg->as_list.next)
+		num_free++;
+	num_segments_total += num_free;
+	sml_notice("%u segments in freelist", num_free);
+	sml_notice("%u segments in total", num_segments_total);
+}
+
+/* for debug */
+static void ATTR_UNUSED
+print_heap_summary_light()
+{
+	unsigned int total_alloc = 0, total_filled = 0;
+	unsigned int i;
+
+	sml_notice("heap usage summary:");
+	sml_debug("heap size = %u segments (min %u -- max %u)\n",
+		   segment_pool.heap.num_committed,
+		   segment_pool.heap.min_num_segments,
+		   segment_pool.heap.max_num_segments);
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		struct subheap *s = &global_subheaps[i];
+		unsigned num_blocks = segment_layout[i].num_blocks;
+		unsigned num_segments = load_relaxed(&s->num_segments);
+		unsigned num_free_blocks = load_relaxed(&s->num_free_blocks);
+		unsigned num_alloc = num_segments * num_blocks;
+		unsigned num_filled = num_alloc - num_free_blocks;
+		total_alloc += num_alloc;
+		total_filled += num_filled;
+		sml_debug("subheap %2u: %4u segs, %7u / %7u blocks filled\n",
+			  i, num_segments, num_filled, num_alloc);
+	}
+	sml_debug("block utilization: %7u / %7u (%6.2f%%)\n",
+		  total_filled, total_alloc,
+		  (double)total_filled / total_alloc * 100.0);
+}
+
+/********** object list ***********/
+
+#define NIL ((void*)1)
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+/* thread-local use only */
+struct object_list {
+	struct stack_slot begin;
+	struct stack_slot *last;
+};
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+static struct stack_slot *
+object_stack_slot(void *obj)
+{
+	struct segment *seg;
+	struct malloc_segment *mseg;
+
+	if (obj == NULL)
+		return NULL;
+	if (OBJ_HEADER(obj) & OBJ_FLAG_SKIP)
+		return NULL;
+	if (OBJ_TOTAL_SIZE(obj) > BLOCKSIZE_MAX) {
+		mseg = OBJ_TO_MALLOC_SEGMENT(obj);
+		return &mseg->stack;
+	} else {
+		seg = segment_addr(obj);
+		assert((char*)segment_pool.heap.begin <= (char*)seg
+		       && (char*)seg < (char*)segment_pool.heap.end);
+		return &seg->stack[object_index(seg, obj)];
+	}
+}
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+object_list_init(struct object_list *l)
+{
+	atomic_init(&l->begin.next, NIL);
+	l->last = &l->begin;
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+object_list_append(struct object_list *l, void *obj)
+{
+	struct stack_slot *slot = object_stack_slot(obj);
+	void *old = NULL;
+
+	/* this may fail if obj already belongs to another list or stack */
+	if (slot
+	    && load_relaxed(&slot->next) == old
+	    && cmpswap_relaxed(&slot->next, &old, NIL)) {
+		store_relaxed(&l->last->next, obj);
+		l->last = slot;
+	}
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+enum_obj_to_list(void **slot, void *data)
+{
+	void *obj = *slot;
+	struct object_list *objs = data;
+	object_list_append(objs, obj);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+/********** object stack ***********/
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+struct object_stack {
+ 	void *top;
+ 	pthread_mutex_t lock;
+};
+#endif /* !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
+
+#define EMPTY_OBJECT_STACK \
+	{.top = ATOMIC_VAR_INIT(NIL), .lock = PTHREAD_MUTEX_INITIALIZER}
+
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+push_object(struct object_stack *stack, void *obj)
+{
+	struct stack_slot *slot = object_stack_slot(obj);
+	void *old = NULL;
+
+	if (!slot)
+		return;
+
+ 	/* ensure that the collector receives all objects whose stack_slot
+ 	 * were occupied by mutators. */
+ 	mutex_lock(&stack->lock);
+
+	/* this may fail if obj already belongs to another list or stack */
+	if (load_relaxed(&slot->next) == old
+ 	    && cmpswap_relaxed(&slot->next, &old, stack->top))
+ 		stack->top = obj;
+ 
+ 	mutex_unlock(&stack->lock);
+}
+
+#endif /* !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+push_objects(struct object_stack *stack, struct object_list *l)
+{
+	void *begin = load_relaxed(&l->begin.next);
+
+	if (begin == NIL)
+		return;
+
+	mutex_lock(&stack->lock);
+	store_relaxed(&l->last->next, stack->top);
+	stack->top = begin;
+	mutex_unlock(&stack->lock);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void *
+flush_object_stack(struct object_stack *stack)
+{
+	void *top;
+
+	mutex_lock(&stack->lock);
+	top = stack->top;
+	stack->top = NIL;
+	mutex_unlock(&stack->lock);
+	return top;
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+/********** allocation pointers ***********/
+
+/* sizeof(struct alloc_ptr) must be power of 2 for performance */
+struct alloc_ptr {
+	sml_bitptr_t freebit;
+	char *free;
+	unsigned int blocksize_bytes;
+};
+
+union alloc_ptr_set {
+	struct alloc_ptr ptr[BLOCKSIZE_MAX_LOG2 + 1]; /* ptr[0] is not used. */
+	struct list_item as_list;
+};
+
+/* use freebit.ptr instead of free because free may point to outside */
+#define ALLOC_PTR_TO_SEGMENT(alloc_ptr)	\
+	segment_addr((alloc_ptr)->freebit.ptr)
+
+/* no need to set a destructor specific to alloc_ptr_set since it is
+ * deallocated correctly when the current control is deallocated. */
+tlv_alloc(union alloc_ptr_set *, alloc_ptr_set, (void));
+
+static const unsigned int dummy_bitmap = ~0U;
+static const sml_bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
+
+/* initialized correctly by default */
+struct {
+	struct stack freelist;
+} alloc_ptr_set_pool;
+
+static void
+destroy_alloc_ptr_set_pool()
+{
+	union alloc_ptr_set *p, *next;
+
+	p = stack_flush(&alloc_ptr_set_pool.freelist);
+	while (p) {
+		next = (union alloc_ptr_set *)p->as_list.next;
+		free(p);
+		p = next;
+	}
+}
+
+static void
+clear_alloc_ptr(struct alloc_ptr *ptr)
+{
+	ptr->freebit = dummy_bitptr;
+	ptr->free = NULL;
+}
+
+static void
+set_alloc_ptr(struct alloc_ptr *ptr, struct segment *seg)
+{
+	ptr->freebit = BITPTR(BITMAP0_BASE(seg), 0);
+	ptr->free = seg->block_base;
+	assert(ptr->blocksize_bytes == (1U << seg->blocksize_log2));
+	DEBUG(seg->as_list.next = (void*)-1);
+	assert(seg->free_count >= 0);
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	assert(seg->snapshot_free == seg->block_base);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+}
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+static struct segment *
+save_alloc_ptr(struct alloc_ptr *ptr)
+{
+	return ALLOC_PTR_TO_SEGMENT(ptr);
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+static struct segment *
+save_alloc_ptr(struct alloc_ptr *ptr)
+{
+	enum sml_sync_phase phase = sml_current_phase();
+	struct segment *seg = ALLOC_PTR_TO_SEGMENT(ptr);
+
+	assert(ptr->free != NULL);
+
+	/* Note that "phase" may differ from the current phase since the
+	 * current phase may be changed after reading it.
+	 * if phase is       then the current phase may be
+	 *  ASYNC              ASYNC or SYNC1
+	 *  PRESYNC1           PRESYNC1
+	 *  SYNC1              SYNC1 or PRESYNC2
+	 *  PRESYNC2           PRESYNC2
+	 *  SYNC2              SYNC2, MARK, ASYNC, or PRESYNC1
+	 *  MARK               MARK, ASYNC, or PRESYNC1
+	 */
+	if (phase <= PRESYNC1) {
+		/* It is ensured that the current phase is ASYNC or PRESYNC1
+		 * and therefore seg is going to be included in the collect
+		 * set.  We do not need to set snapshot_free here. */
+	} else if (phase <= PRESYNC2) {
+		/* The current phase is either SYNC1 or PRESYNC2.
+		 * The collector will decide to include seg in the collect set
+		 * by seg->snapshot_free.  Here, we set snapshot_free to the
+		 * current allocation pointer in order to indicate that all
+		 * blocks are filled before SYNC2. */
+		seg->snapshot_free = ptr->free;
+	} else {
+		/* The current phase is either SYNC2, MARK, ASYNC, or PRESYNC1.
+		 * An allocation pointer has been saved in snapshot_free.
+		 * During SYNC2 and MARK, the saved snapshot_free must be kept
+		 * unchanged.  In ASYNC and PRESYNC1, seg is going to be
+		 * included in the collect set at the next collection
+		 * regardless of snapshot_free.
+		 * Concequently, we do not need to set snapshot_free here. */
+	}
+
+	return seg;
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+save_alloc_ptr_set_sync2(union alloc_ptr_set *ptr_set)
+{
+	struct alloc_ptr *ptr;
+	unsigned int i;
+
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		ptr = &ptr_set->ptr[i];
+		if (ptr->free)
+			ALLOC_PTR_TO_SEGMENT(ptr)->snapshot_free = ptr->free;
+	}
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 
 static union alloc_ptr_set *
 new_alloc_ptr_set()
 {
-	union alloc_ptr_set *ptr_set;
-
-	SPIN_LOCK(&alloc_ptr_set_pool.lock);
-	ptr_set = alloc_ptr_set_pool.freelist;
-	if (ptr_set)
-		alloc_ptr_set_pool.freelist = ptr_set->head.next;
-	SPIN_UNLOCK(&alloc_ptr_set_pool.lock);
-
-	if (ptr_set == NULL) {
-		ptr_set = xmalloc(sizeof(union alloc_ptr_set));
-		init_alloc_ptr_set(ptr_set);
-	}
-
-	debug_global_alloc_ptr = ptr_set;
-	return ptr_set;
-}
-
-static void
-free_alloc_ptr_set(union alloc_ptr_set *ptr_set)
-{
-	SPIN_LOCK(&alloc_ptr_set_pool.lock);
-	ptr_set->head.next = alloc_ptr_set_pool.freelist;
-	alloc_ptr_set_pool.freelist = ptr_set;
-	SPIN_UNLOCK(&alloc_ptr_set_pool.lock);
-	num_segments_reserved -= ptr_set->head.segment_reservation;
-}
-
-static struct segment *
-collect_free_ptr_list(struct segment *tail)
-{
-	union alloc_ptr_set *ptr_set, *next;
-	struct alloc_ptr *ptr;
-	struct segment *seg;
+	union alloc_ptr_set *p;
 	unsigned int i;
 
-	SPIN_LOCK(&alloc_ptr_set_pool.lock);
-	ptr_set = alloc_ptr_set_pool.freelist;
-	alloc_ptr_set_pool.freelist = NULL;
-	SPIN_UNLOCK(&alloc_ptr_set_pool.lock);
+	p = stack_pop(&alloc_ptr_set_pool.freelist);
 
-	while (ptr_set) {
+	if (!p) {
+		p = xmalloc(sizeof(union alloc_ptr_set));
 		for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-			ptr = &ptr_set->alloc_ptr[i];
-			if (ptr->free) {
-				seg = ALLOC_PTR_TO_SEGMENT(ptr);
-				seg->next = tail;
-				tail = seg;
-			}
+			p->ptr[i].blocksize_bytes = 1U << i;
+			clear_alloc_ptr(&p->ptr[i]);
 		}
-		next = ptr_set->head.next;
-		destroy_alloc_ptr_set(ptr_set);
-		ptr_set = next;
 	}
 
-	return tail;
-}
-
-static struct {
-	pthread_t thread;
-	sml_event_t *event;
-	int stop;
-} collector;
-
-static void *
-collector_main(void *data ATTR_UNUSED)
-{
-#ifdef GCTIME
-	sml_timer_t t1, t2;
-	sml_time_t t;
-#endif /* GCTIME */
-
-	for (;;) {
-		sml_event_wait(collector.event);
-#ifdef GCTIME
-		sml_timer_now(t1);
-#endif /* GCTIME */
-		if (collector.stop)
-			return NULL;
-		sml_heap_gc();
-#ifdef GCTIME
-		sml_timer_now(t2);
-		sml_timer_dif(t1, t2, t);
-		//sml_time_accum(t, gcstat.total_collector_exec);
-#endif /* GCTIME */
-	}
+	return p;
 }
 
 static void
-start_collector()
+release_alloc_ptr_set(union alloc_ptr_set *ptr_set)
 {
-	int ret;
-
-	collector.event = sml_event_new(0, 0);
-	collector.stop = 0;
-
-	ret = pthread_create(&collector.thread, NULL, collector_main, NULL);
-	if (ret != 0)
-		sml_sysfatal("sml_start_collector");
-}
-
-static void
-stop_collector()
-{
-	collector.stop = 1;
-	/* nanosleep(&tc, NULL); */
-	sml_event_signal(collector.event);
-	pthread_join(collector.thread, NULL);
-	sml_event_free(collector.event);
-}
-
-static void
-signal_collector()
-{
-	/* nanosleep(&tc, NULL); */
-	sml_event_signal(collector.event);
-}
-
-void
-sml_heap_init(size_t min_size, size_t max_size)
-{
-	init_segment_layout();
-	init_heap_space(min_size, max_size);
-	init_subheaps();
-	SPIN_INIT(&alloc_ptr_set_pool.lock);
-	start_collector();
-}
-
-void
-sml_heap_free()
-{
-	stop_collector();
-
-	collect_free_ptr_list(NULL);
-	ReleasePage(heap_space.begin,
-		    (char*)heap_space.end - (char*)heap_space.begin);
-	SPIN_FREE(&alloc_ptr_set_pool.lock);
-
-#ifdef GCTIME
-	stat_notice("---");
-	stat_notice("# reported by heap_concurrent.c");
-	stat_notice("mutators:");
-	stat_notice("  total wait_segment : "TIMEFMT" #sec, %u times, "
-		    "avg %.6f sec",
-		    TIMEARG(gcstat.total_wait_segment),
-		    gcstat.wait_segment_count,
-		    TIMEFLOAT(gcstat.total_wait_segment)
-		    / gcstat.wait_segment_count);
-	stat_notice("  max wait_segment   : %.6f #sec",
-		    gcstat.max_wait_segment);
-	stat_notice("  write barrier      : %u #times",
-		    gcstat.write_barrier_count);
-	stat_notice("collector:");
-	stat_notice("  count              : %u #times", gcstat.gc_count);
-	stat_notice("  total time         : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat.total_time),
-		    TIMEFLOAT(gcstat.total_time) / gcstat.gc_count);
-	stat_notice("  initiation:");
-	stat_notice("    total sync1      : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat_total_collector_sync1),
-		    TIMEFLOAT(gcstat_total_collector_sync1) / gcstat.gc_count);
-	stat_notice("    total sync2      : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat_total_collector_sync2),
-		    TIMEFLOAT(gcstat_total_collector_sync2) / gcstat.gc_count);
-	stat_notice("    total initiation : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat.total_initiation),
-		    TIMEFLOAT(gcstat.total_initiation) / gcstat.gc_count);
-	stat_notice("  total remember     : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat.total_remember),
-		    TIMEFLOAT(gcstat.total_remember) / gcstat.gc_count);
-	stat_notice("  total mark         : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat.total_mark),
-		    TIMEFLOAT(gcstat.total_mark) / gcstat.gc_count);
-	stat_notice("  total bitmap clear : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat.total_clear_bitmap),
-		    TIMEFLOAT(gcstat.total_clear_bitmap) / gcstat.gc_count);
-	stat_notice("  total reclaim      : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat.total_reclaim),
-		    TIMEFLOAT(gcstat.total_reclaim) / gcstat.gc_count);
-	stat_notice("  total stack clear  : "TIMEFMT" #sec, avg %.6f sec",
-		    TIMEARG(gcstat.total_clear_stack),
-		    TIMEFLOAT(gcstat.total_clear_stack) / gcstat.gc_count);
-	stat_notice("heap usage:");
-	stat_notice("  last # of segments : %u",
-		    heap_space.num_committed);
-	stat_notice("  last num_headroom : %u",
-		    segment_pool.num_headroom);
-#endif /* GCTIME */
-}
-
-void *
-sml_heap_thread_init()
-{
-#ifdef STATIC_THREAD_STORAGE
-	local_alloc_ptr_set = new_alloc_ptr_set();
-	return local_alloc_ptr_set;
-#else
-	return new_alloc_ptr_set();
-#endif /* STATIC_THREAD_STORAGE */
-}
-
-void
-sml_heap_thread_free(void *data ATTR_UNUSED)
-{
-	union alloc_ptr_set *ptr_set = (union alloc_ptr_set *)data;
-	free_alloc_ptr_set(ptr_set);
-}
-
-void
-sml_heap_thread_gc_hook(void *data)
-{
-	union alloc_ptr_set *ptr_set = data;
+	unsigned int i;
 	struct alloc_ptr *ptr;
+
+	/* save allocation pointers to segments as if each segment is
+	 * moved to the filled list */
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		ptr = &ptr_set->ptr[i];
+		if (ptr->free)
+			save_alloc_ptr(ptr);
+	}
+
+	stack_push(&alloc_ptr_set_pool.freelist, &ptr_set->as_list);
+}
+
+static void
+move_to_filled(struct alloc_ptr *ptr, struct subheap *subheap)
+{
 	struct segment *seg;
+	seg = save_alloc_ptr(ptr);
+	assert(subheap == &global_subheaps[seg->blocksize_log2]);
+	assert(seg->as_list.next == (void*)-1);
+	stack_push(&subheap->filled, &seg->as_list);
+}
+
+static void
+move_all_to_filled(union alloc_ptr_set *ptr_set)
+{
 	unsigned int i;
+	struct alloc_ptr *ptr;
 
 	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		ptr = &ptr_set->alloc_ptr[i];
+		ptr = &ptr_set->ptr[i];
 		if (ptr->free) {
-			seg = ALLOC_PTR_TO_SEGMENT(ptr);
-			seg->free = ptr->free;
+			move_to_filled(ptr, &global_subheaps[i]);
+			clear_alloc_ptr(ptr);
 		}
 	}
 }
 
 static void
-push(void **slot)
-{
-	void *obj = *slot;
-	struct segment *seg;
-	unsigned int index;
-	bitptr_t b;
-
-	if (!IS_IN_HEAP(obj)) {
-		if (obj != NULL)
-			sml_trace_ptr(obj);
-		return;
-	}
-
-	seg = OBJ_TO_SEGMENT(obj);
-	index = OBJ_TO_INDEX(seg, obj);
-
-	if (seg->stack[index].trace_next)
-		return;  /* already traced */
-
-	if ((char*)obj >= seg->free) {
-		BITPTR_INIT(b, BITMAP0_BASE(seg), index);
-		if (!BITPTR_TEST(b))
-			return;   /* new object */
-	}
-
-	ASSERT(OBJ_HEADER(obj) != 0x55555555);
-
-	seg->stack[index].trace_next = trace_stack.top;
-	trace_stack.top = obj;
-}
-
-static void
-mark(void *obj)
-{
-	struct segment *seg;
-	unsigned int index;
-	bitptr_t b;
-
-	seg = OBJ_TO_SEGMENT(obj);
-	index = OBJ_TO_INDEX(seg, obj);
-	BITPTR_INIT(b, BITMAP0_BASE(seg), index);
-
-	if ((char*)obj >= seg->free || BITPTR_TEST(b))
-		return;
-
-	seg->live_count++;
-	BITPTR_SET(b);
-	if (~BITPTR_WORD(b) == 0U) {
-		unsigned int i;
-		for(i = 1; i < SEG_RANK; i++) {
-			bitptr_t b;
-			index /= BITPTR_WORDBITS;
-			BITPTR_INIT(b, BITMAP_BASE(seg, i), index);
-			BITPTR_SET(b);
-			if (~BITPTR_WORD(b) != 0U)
-				break;
-		}
-	}
-}
-
-static void
-remember(void **ptr)
-{
-	void *obj = *ptr;
-	struct segment *seg;
-	struct stack_slot *slot;
-	void *head, *next, *new_head;
-#if 0
-#ifdef GCTIME
-	sml_timer_t t1, t2;
-	sml_time_t t;
-	sml_timer_now(t1);
-#endif /* GCTIME */
-#endif
-
-	if (!IS_IN_HEAP(obj))
-		goto end;
-
-	seg = OBJ_TO_SEGMENT(obj);
-	slot = &seg->stack[OBJ_TO_INDEX(seg, obj)];
-
-	/* NOTE: Although it seems a good strategy that it checks whether
-	 * "obj" is a new object (i.e. allocated after root-set enumeration)
-	 * or not here to reduce the size of barriered pointer set
-	 * (barrier_list), it is impossible actually.
-	 * To determine whether obj is new, "free" field of every segment
-	 * must be set collectly, but the "free" field of segments in the
-	 * collect set are managed only by collector in an asynchronous way.
-	 * Hence, mutators should put any obj to barrier_list anyway, and
-	 * deciding how to deal with it is delegated to the collector. */
-
-	head = barrier_list.head;
-	next = ATOMIC_CMPSWAP(&slot->barrier_next, NULL, head);
-	if (next != NULL)
-		goto end;  /* already barriered */
-
-#ifdef GCTIME
-	gcstat.write_barrier_count++;
-#endif
-
-	for (;;) {
-		new_head = ATOMIC_CMPSWAP(&barrier_list.head, head, obj);
-		if (head == new_head)
-			break;
-		head = new_head;
-		ATOMIC_SWAP(&slot->barrier_next, head);
-	}
-end:
-#if 0
-#ifdef GCTIME
-	sml_timer_now(t2);
-	sml_timer_dif(t1, t2, t);
-	sml_time_accum(t, gcstat.total_remember);
-#endif /* GCTIME */
-#endif
-	return;
-}
-
-static void
-clear_stack()
-{
-	struct segment *seg;
-	struct stack_slot *slot;
-	void *obj, *next;
-
-	/* clear trace_next */
-	ASSERT(trace_stack.top == NIL);
-	obj = trace_stack.visited;
-	while (obj != NIL) {
-		seg = OBJ_TO_SEGMENT(obj);
-		slot = &seg->stack[OBJ_TO_INDEX(seg, obj)];
-		next = slot->trace_next;
-		slot->trace_next = NULL;
-		obj = next;
-	}
-	trace_stack.visited = NIL;
-
-	/* clear barrier_next of objects in barrier_list.visited. */
-	obj = barrier_list.visited;
-	while (obj != NIL) {
-		seg = OBJ_TO_SEGMENT(obj);
-		slot = &seg->stack[OBJ_TO_INDEX(seg, obj)];
-		obj = ATOMIC_SWAP(&slot->barrier_next, NULL);
-	}
-	barrier_list.visited = NIL;
-
-	/* clear barrier_next of objects in barrier_list.head.
-	 * Note that mutators may add some objects to barrier_list.head
-	 * even if collector does not need them. */
-	obj = ATOMIC_SWAP(&barrier_list.head, NIL);
-	while (obj != NIL) {
-		seg = OBJ_TO_SEGMENT(obj);
-		slot = &seg->stack[OBJ_TO_INDEX(seg, obj)];
-		obj = ATOMIC_SWAP(&slot->barrier_next, NULL);
-	}
-}
-
-SML_PRIMITIVE void
-sml_write(void *objaddr, void **writeaddr, void *new_value)
-{
-	enum sml_sync_phase phase = sml_current_phase();
-
-	/* snapshot barrier */
-	if (phase != ASYNC && IS_IN_HEAP(*writeaddr))
-		remember(writeaddr);
-	/* snooping barrier */
-	if ((phase == SYNC1 || phase == SYNC2) && IS_IN_HEAP(new_value))
-		remember(&new_value);
-
-	*writeaddr = new_value;
-
-	if (!IS_IN_HEAP(writeaddr)) {
-		/* sml_global_barrier may extend global root-set.
-		 * This extension is performed even during collector's live
-		 * object tracing.
-		 * To ensure new_value is live in any cases, new_value must
-		 * be preserved if write barrier is turned on.
-		 */
-		sml_save_fp(CALLER_FRAME_END_ADDRESS());
-		sml_global_barrier(writeaddr, objaddr);
-	}
-}
-
-static void *
-gather_filled()
-{
-	struct subheap *subheap;
-	unsigned int i;
-	struct segment *filled, *seg;
-	struct segment *head, **last = &head;
-
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		subheap = &global_subheaps[i];
-		SPIN_LOCK(&subheap->lock);
-		filled = subheap->filled;
-		subheap->filled = NULL;
-		SPIN_UNLOCK(&subheap->lock);
-		*last = filled;
-		for (seg = filled; seg; seg = seg->next)
-			last = &seg->next;
-	}
-
-	/* Every segment in alloc_ptr_set_pool has been allocated to some
-	 * thread, so it may have some live objects with bit 0.
-	 * This means that conceptually they should be regarded as segments
-	 * in "filled" list.
-	 *
-	 * Moving segments in alloc_ptr_set_pool to the collect set after
-	 * root-set enumeration is a bad idea because they may have some
-	 * new objects (i.e. objects allocated after root-set enumeration),
-	 * which must not be reclaimed by this collection cycle.
-	 */
-	*last = collect_free_ptr_list(NULL);
-
-	return head;
-}
-
-int
-sml_heap_gc_hook(void *data)
-{
-	struct segment **ret = data;
-	*ret = gather_filled();
-	return 1;
-}
-
-static struct segment *
-gather_collect(struct segment *tail)
-{
-	struct subheap *subheap;
-	unsigned int i;
-	struct segment *collect, *seg;
-	struct segment *head, **last = &head;
-
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		subheap = &global_subheaps[i];
-		SPIN_LOCK(&subheap->lock);
-		collect = subheap->collect;
-		subheap->collect = NULL;
-		SPIN_UNLOCK(&subheap->lock);
-		*last = collect;
-		for (seg = collect; seg; seg = seg->next)
-			last = &seg->next;
-	}
-	*last = tail;
-
-	return head;
-}
-
-static void
-clear_bitmaps(struct segment *collect_set)
-{
-	struct segment *seg;
-
-	for (seg = collect_set; seg; seg = seg->next) {
-		seg->free = (char*)seg + SEGMENT_SIZE;
-		clear_bitmap(seg);
-	}
-}
-
-static void
-mark_loop()
-{
-	struct segment *seg;
-	struct stack_slot *slot;
-	void *obj, *head;
-
-	do {
-		/* consume trace stack */
-		while (trace_stack.top != NIL) {
-			obj = trace_stack.top;
-			seg = OBJ_TO_SEGMENT(obj);
-			slot = &seg->stack[OBJ_TO_INDEX(seg, obj)];
-			trace_stack.top = slot->trace_next;
-			slot->trace_next = trace_stack.visited;
-			trace_stack.visited = obj;
-			mark(obj);
-			sml_obj_enum_ptr(obj, push);
-		}
-
-		/* scan barrier list */
-		head = ATOMIC_SWAP(&barrier_list.head, NIL);
-		while (head != NIL) {
-			obj = head;
-			seg = OBJ_TO_SEGMENT(obj);
-			slot = &seg->stack[OBJ_TO_INDEX(seg, obj)];
-			head = ATOMIC_SWAP(&slot->barrier_next,
-					   barrier_list.visited);
-			barrier_list.visited = obj;
-			/* barrier_list may contain some new objects, which
-			 * should not be traced.
-			 * Call push() to filter out them. */
-			if (slot->trace_next == NULL)
-				push(&obj);
-		}
-
-		sml_malloc_pop_and_mark(push, MAJOR);
-
-		/* If there is no pointer which is needed to be traced in
-		 * the barrier_list, the mark loop is finished. */
-	} while (trace_stack.top != NIL);
-}
-
-#ifdef DEBUG
-/* for debugger */
-void
-dump_segment_sizes(unsigned int *count_collect)
-{
-	unsigned int i, count;
-	struct segment *seg;
-	struct subheap *subheap;
-
-	printf("\n");
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		subheap = &global_subheaps[i];
-		SPIN_LOCK(&subheap->lock);
-	}
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		count = 0;
-		subheap = &global_subheaps[i];
-		for (seg = subheap->partial; seg; seg = seg->next)
-			count++;
-		printf("%u:\t%u partial\t", i, count);
-		count = 0;
-		for (seg = subheap->filled; seg; seg = seg->next)
-			count++;
-		printf("%u filled\t", count);
-		count = 0;
-		printf("%u collect\t", count_collect[i]);
-		if (debug_global_alloc_ptr->alloc_ptr[i].free != NULL)
-			count++;
-		printf("%u mutator\n", count);
-	}
-	SPIN_LOCK(&segment_pool.lock);
-	for (seg = segment_pool.freelist; seg; seg = seg->next)
-		count++;
-	printf("%u free\n", count);
-	SPIN_UNLOCK(&segment_pool.lock);
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		subheap = &global_subheaps[i];
-		SPIN_UNLOCK(&subheap->lock);
-	}
-}
-#endif /* DEBUG */
-
-static void
-reclaim_segments(struct segment *collect_set)
+collect_alloc_ptr_set(union alloc_ptr_set *p, struct segment **segarray)
 {
 	unsigned int i;
-	unsigned int count[BLOCKSIZE_MAX_LOG2 + 1];
-	struct subheap *subheap;
-	struct segment *seg, *next;
-	struct segment *free, **free_last = &free;
-	unsigned int num_free = 0;
-	struct {
-		struct segment *filled, **filled_last;
-		struct segment *partial, *partial_last;
-		unsigned int num_filled, num_partial;
-//unsigned int usage_blocks, usage_lives;
-	} seglists[BLOCKSIZE_MAX_LOG2 + 1], *seglist;
-
-	unsigned int num_partial = 0;
-	unsigned int num_consumed;
-
-	union alloc_ptr_set *wait_list, *ptrs, *ptrs_next;
-	unsigned int num_skipped;
+	struct segment *seg;
 
 	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		count[i] = 0;
-		seglists[i].filled_last = &seglists[i].filled;
-		seglists[i].partial_last = NULL;
-		seglists[i].partial = NULL;
-		seglists[i].num_filled = 0;
-		seglists[i].num_partial = 0;
-//seglists[i].usage_blocks = 0;
-//seglists[i].usage_lives = 0;
-	}
-
-	/* assort segments in collect set */
-	for (seg = collect_set; seg; seg = next) {
-		count[seg->blocksize_log2]++;
-		seglist = &seglists[seg->blocksize_log2];
-#ifdef DEBUG
-		scribble_segment(seg, 0);
-#endif /* DEBUG */
-		seg->free = seg->block_base;
-		next = seg->next;
-		if (seg->live_count == seg->layout->num_blocks) {
-			/* keep the order of segments in filled list */
-			*seglist->filled_last = seg;
-			seglist->filled_last = &seg->next;
-			seglist->num_filled++;
-		} else if (seg->live_count > 0) {
-			seg->next = seglist->partial;
-			if (seglist->partial == NULL)
-				seglist->partial_last = seg;
-			seglist->partial = seg;
-			seglist->num_partial++;
-			num_partial++;
-//seglist->usage_blocks += seg->layout->num_blocks;
-//seglist->usage_lives += seg->live_count;
-		} else {
-			*free_last = seg;
-			free_last = &seg->next;
-			num_free++;
-		}
-	}
-	*free_last = NULL;
-
-	/* allocate segments to stalled threads. */
-	wait_list = ATOMIC_SWAP(&stalled_threads, NULL);
-	num_skipped = 0;
-
-	for (ptrs = wait_list; ptrs; ptrs = ptrs_next) {
-		/* lock is needed to ensure memory access ordering */
-		pthread_mutex_lock(&ptrs->head.sync->mutex);
-		/* keep pointer to the next item before resuming the thread. */
-		ptrs_next = ptrs->head.next;
-		ASSERT(ptrs->head.seg == NULL);
-		seglist = &seglists[ptrs->head.request_blocksize_log2];
-		if (seglist->num_partial + num_free + segment_pool.num_free
-		    + ptrs->head.segment_reservation <= num_segments_reserved) {
-			ATOMIC_APPEND(&stalled_threads, &ptrs->head.next, ptrs);
-			num_skipped++;
-			goto skip;
-		}
-/*
-fprintf(stderr, "%d (%d %d/%d %5.3f%%) segments are left for %d\n",
-	seglist->num_partial + num_free + segment_pool.num_free,
-	seglist->num_partial,
-	seglist->usage_lives, seglist->usage_blocks,
-	(double)seglist->usage_lives / (double)seglist->usage_blocks * 100.0,
-	ptrs->head.request_blocksize_log2);
-*/
-		if (seglist->partial) {
-			ptrs->head.seg = seglist->partial;
-			seglist->partial = seglist->partial->next;
-			seglist->num_partial--;
-			num_partial--;
-		} else if (free) {
-			seg = free;
-			free = free->next;
-			num_free--;
-			ptrs->head.seg = seg;
-			init_segment(seg, ptrs->head.request_blocksize_log2);
-		} else if ((seg = new_segment()) != NULL) {
-			ptrs->head.seg = seg;
-			init_segment(seg, ptrs->head.request_blocksize_log2);
-		} else {
-			free_last = extend_heap(heap_space.extend_step, &free);
-			if (free == NULL) {
-				/* dump_segment_sizes(count); */
-				sml_fatal(0, "heap exceeded (2^%u)",
-					  ptrs->head.request_blocksize_log2);
-			}
-			seg = free;
-			free = free->next;
-			num_free--;
-			ptrs->head.seg = seg;
-			init_segment(seg, ptrs->head.request_blocksize_log2);
-		}
-		pthread_cond_signal(&ptrs->head.sync->cond);
-	skip:
-		pthread_mutex_unlock(&ptrs->head.sync->mutex);
-	}
-
-	if (sml_num_threads() == num_skipped)
-		sml_fatal(0, "failed to schedule segments. all threads are stalled.");
-
-	/* shrink the heap if there are excess segments. */
-	if (heap_space.num_committed > heap_space.min_num_segments && free) {
-		seg = free;
-		free = free->next;
-		num_free--;
-		free_segment(seg);
-	}
-
-	/* reclaim segments */
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-
-		subheap = &global_subheaps[i];
-		seglist = &seglists[i];
-		if (seglist->filled == NULL && seglist->partial == NULL)
+		if (!p->ptr[i].free)
 			continue;
-		SPIN_LOCK(&subheap->lock);
-		*seglist->filled_last = subheap->filled;
-		subheap->filled = seglist->filled;
-		if (subheap->partial)
-			subheap->partial_last->next = seglist->partial;
-		else
-			subheap->partial = seglist->partial;
-		if (seglist->partial)
-			subheap->partial_last = seglist->partial_last;
-		subheap->num_partial += seglist->num_partial;
-		SPIN_UNLOCK(&subheap->lock);
+		seg = ALLOC_PTR_TO_SEGMENT(&p->ptr[i]);
+		assert(seg->blocksize_log2 == i);
+		seg->as_list.next = &segarray[i]->as_list;
+		segarray[i] = seg;
 	}
-
-
-	num_consumed = ATOMIC_COUNTER_SWAP(&segment_usage.count, 0);
-	num_consumed -= segment_usage.count_prev;
-	segment_usage.gc_threshold = heap_space.num_committed;
-
-	SPIN_LOCK(&segment_pool.lock);
-	if (free) {
-		*free_last = segment_pool.freelist;
-		segment_pool.freelist = free;
-		segment_pool.num_free += num_free;
-	}
-
-	//fprintf(stderr, "num_consumed=%u, num_free=%u, peak_count=%u, num_headroom=%u, optimal=%u\n", num_consumed, segment_pool.num_free, segment_pool.peak_count, segment_pool.num_headroom, segment_usage.optimal_headroom);
-
-	/* compute optimal headroom */
-	if (segment_pool.peak_count >= segment_usage.optimal_headroom / 2) {
-		unsigned int n = segment_pool.peak_count * 2;
-		unsigned int m = heap_space.num_committed;
-		n = m < n ? m : n;
-		segment_usage.optimal_headroom = n;
-	}
-	else if (segment_usage.optimal_headroom <= segment_pool.num_free) {
-		unsigned int n = segment_pool.peak_count * 4;
-		unsigned int m = heap_space.num_committed / 2;
-		n = m > n ? m : n;
-		if (segment_usage.optimal_headroom > n)
-			segment_usage.optimal_headroom--;
-	}
-	if (wait_list)
-		segment_usage.optimal_headroom = heap_space.num_committed / 2;
-
-	if (segment_usage.optimal_headroom <= segment_pool.num_free)
-		segment_pool.num_headroom = segment_usage.optimal_headroom;
-	else
-		segment_pool.num_headroom = segment_pool.num_free;
-
-	segment_pool.peak_count = 0;
-
-	segment_usage.gc_threshold -= segment_usage.optimal_headroom;
-	if (segment_usage.gc_threshold > num_consumed)
-		segment_usage.gc_threshold -= num_consumed;
-	else 
-		segment_usage.gc_threshold = 0;
-
-	if (wait_list)
-		segment_usage.gc_threshold = 0;
-	//fprintf(stderr, "-> num_free=%u, num_headroom=%u, gc_threshold=%u, optimal=%u\n", segment_pool.num_free, segment_pool.num_headroom, segment_usage.gc_threshold, segment_usage.optimal_headroom);
-
-
-	ASSERT(seglist_length(segment_pool.freelist) == segment_pool.num_free);
-	ASSERT(segment_pool.num_headroom - segment_pool.peak_count
-	       <= segment_pool.num_free);
-	SPIN_UNLOCK(&segment_pool.lock);
-
-	segment_usage.count_prev = 0;
-	segment_usage.count_dif = 0;
-
-	//if (segment_usage.gc_threshold == 0)
-	//sml_signal_collector();
 }
 
-#ifdef DEBUG
-/* for debugger */
-void
-dump_barrier_list()
+static void
+collect_alloc_ptr_set_pool(struct segment **segarray)
+{
+	union alloc_ptr_set *p, *next;
+
+	p = stack_flush(&alloc_ptr_set_pool.freelist);
+	while (p) {
+		collect_alloc_ptr_set(p, segarray);
+		next = (union alloc_ptr_set *)p->as_list.next;
+		free(p);
+		p = next;
+	}
+}
+
+/********** collect set **********/
+
+union collect_set {
+	struct segment *segments[BLOCKSIZE_MAX_LOG2 + 1];
+	struct malloc_segment *malloc_segments;
+};
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+collect_segments_sync1(union collect_set *c)
+{
+	collect_subheaps_sync1(c->segments);
+	collect_malloc_segments_sync1(&c->malloc_segments);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
+
+static void
+collect_segments(union collect_set *c)
+{
+	collect_subheaps(c->segments);
+	collect_malloc_segments(&c->malloc_segments);
+	collect_alloc_ptr_set_pool(c->segments);
+}
+
+static unsigned int
+clear_collect_set(union collect_set *c)
 {
 	struct segment *seg;
-	unsigned int index;
-	void *obj;
+	struct malloc_segment *mseg;
+	unsigned int i, count = 0;
 
-	obj = barrier_list.head;
-	printf("dump_barrier_list start\n");
-	for (;;) {
-		printf("barrier: %p\n", obj);
-		if (obj == NULL || obj == NIL) break;
-		seg = OBJ_TO_SEGMENT(obj);
-		index = OBJ_TO_INDEX(seg, obj);
-		obj = seg->stack[index].barrier_next;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		seg = c->segments[i];
+		for (; seg; seg = (struct segment *)seg->as_list.next) {
+			clear_bitmap(seg);
+			assert(seg->free_count >= 0);
+			seg->free_count = -seg->layout->num_blocks;
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+			/* Set snapshot_free to the end of the segment since
+			 * all objects in the segment was allocated before
+			 * determining the collect set. */
+			seg->snapshot_free = ADD_BYTES(seg, SEGMENT_SIZE);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+			count++;
+		}
 	}
-	printf("dump_barrier_list end\n");
-	obj = barrier_list.head;
-}
-#endif /* DEBUG */
 
-#ifdef DEBUG
-/* for debugger */
-void
-dump_num_segments()
+	for (mseg = c->malloc_segments; mseg;
+	     mseg = (struct malloc_segment *)mseg->as_list.next) {
+		mseg->markbit = 0;
+		/* count++; */
+	}
+
+	return count;
+}
+
+struct reclaim {
+	struct pre_subheap {
+		struct list partial, filled;
+		unsigned int num_free;
+		unsigned int num_free_blocks;
+	} subheap[BLOCKSIZE_MAX_LOG2 + 1];
+	unsigned int num_filled;
+	struct list freelist;
+	struct list malloc_segments;
+};
+
+static void
+separate_segments(union collect_set *c, struct reclaim *r)
 {
 	unsigned int i;
 	struct segment *seg;
-	struct subheap *subheap;
-	unsigned int filled = 0, partial = 0, mutator = 0, free = 0, n;
+	struct malloc_segment *mseg, *next;
+	struct pre_subheap *s;
+
+	list_init(&r->freelist);
+	r->num_filled = 0;
 
 	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		subheap = &global_subheaps[i];
-		for (n = 0, seg = subheap->filled; seg; seg = seg->next) n++;
-		filled += n;
-		for (n = 0, seg = subheap->partial; seg; seg = seg->next) n++;
-		partial += n;
-	}
-	for (seg = segment_pool.freelist; seg; seg = seg->next)
-		free++;
-
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		if (debug_global_alloc_ptr->alloc_ptr[i].free != NULL)
-			mutator++;
-	}
-	if (debug_global_alloc_ptr->head.seg)
-		mutator++;
-
-	printf("filled=%u partial=%u mutator=%u free=%u total=%u\n",
-	       filled, partial, mutator, free,
-	       filled + partial + mutator + free);
-}
-#endif /* DEBUG */
-
-#ifdef DEBUG
-/* for debugger */
-int
-is_in(struct segment *seg, struct segment *set)
-{
-       int i;
-       struct segment *s;
-       for (s = set, i = 0; s; s = s -> next, i++) {
-               if (s == seg)
-                       return i;
-       }
-       return -1;
-}
-#endif /* DEBUG */
-
-#if defined DEBUG && defined USE_LIVECHECK
-static struct {
-	sml_obstack_t *nodes, *prev_nodes;
-	sml_tree_t set, prev_set;
-	struct livecheck_item {
-		void *obj, **slot;
-		struct livecheck_item *parent, *next;
-		struct livecheck_parents {
-			struct livecheck_parents *next;
-			struct livecheck_item *parent;
-		} *other_parents;
-		int is_collect;
-		int markbit;
-		void *trace_next;
-		void *barrier_next;
-		int is_new;
-	} *top, *parent;
-	struct segment *collect_set;
-} livecheck;
-
-static void *
-livecheck_alloc(size_t n)
-{
-	return sml_obstack_alloc(&livecheck.nodes, n);
-}
-
-static int
-livecheck_cmp(void *x, void *y)
-{
-	uintptr_t m = (uintptr_t)*(void**)x, n = (uintptr_t)*(void**)y;
-	if (m < n) return -1;
-	else if (m > n) return 1;
-	else return 0;
-}
-
-static void
-livecheck_init(struct segment *collect_set)
-{
-	sml_obstack_free(&livecheck.prev_nodes, NULL);
-	livecheck.prev_nodes = livecheck.nodes;
-	livecheck.prev_set = livecheck.set;
-	livecheck.nodes = NULL;
-	livecheck.set.root = NULL;
-	livecheck.set.cmp = livecheck_cmp;
-	livecheck.set.alloc = livecheck_alloc;
-	livecheck.set.free = NULL;
-	livecheck.top = NULL;
-	livecheck.parent = NULL;
-	livecheck.collect_set = collect_set;
-}
-
-static void
-livecheck_push(void **slot)
-{
-	void *obj = *slot;
-	struct livecheck_item *item;
-	struct livecheck_parents *parents;
-
-	if (obj == NULL) return;
-	ASSERT(obj != (void*)0x55555555);
-	item = sml_tree_find(&livecheck.set, &obj);
-	if (item) {
-		if (!livecheck.parent) return;
-		parents = livecheck_alloc(sizeof(struct livecheck_parents));
-		parents->parent = livecheck.parent;
-		parents->next = item->other_parents;
-		item->other_parents = parents;
-		return;
-	}
-	item = livecheck_alloc(sizeof(struct livecheck_item));
-	item->next = livecheck.top;
-	item->obj = obj;
-	item->slot = slot;
-	item->parent = livecheck.parent;
-	item->other_parents = NULL;
-	if (IS_IN_HEAP(obj)) {
-		item->is_collect = is_in(OBJ_TO_SEGMENT(obj),
-					 livecheck.collect_set);
-		item->markbit = obj_bit(obj);
-		item->trace_next = obj_stack(item->obj)->trace_next;
-		item->barrier_next = obj_stack(item->obj)->barrier_next;
-		item->is_new = (!obj_bit(obj)
-			        && (char*)obj >= OBJ_TO_SEGMENT(obj)->free);
-	}
-	sml_tree_insert(&livecheck.set, item);
-	livecheck.top = item;
-}
-
-static void
-livecheck_trace()
-{
-	while (livecheck.top) {
-		livecheck.parent = livecheck.top;
-		livecheck.top = livecheck.top->next;
-		sml_obj_enum_ptr(livecheck.parent->obj, livecheck_push);
-	}
-}
-
-static void
-livecheck_dump_item(struct livecheck_item *item, const char *header)
-{
-	fprintf(stderr, "%s%p @%p ", header, item->obj, item->slot);
-	if (!IS_IN_HEAP(item->obj)) {
-		fprintf(stderr, "(not in heap)\n");
-		return;
-	}
-	fprintf(stderr, "(collect=%d,bit=%d,trace=%p,barrier=%p,new=%d)\n",
-		item->is_collect, item->markbit, item->trace_next,
-		item->barrier_next, item->is_new);
-}
-
-static void
-livecheck_dump(void *obj, int new)
-{
-	struct livecheck_item *item, *i;
-	struct livecheck_parents *p;
-	sml_tree_t *set = new ? &livecheck.set : &livecheck.prev_set;
-
-	item = sml_tree_find(set, &obj);
-	if (item == NULL) {
-		fprintf(stderr, "not found\n");
-		return;
-	}
-	livecheck_dump_item(item, "object: ");
-	for (i = item->parent; i; i = i->parent)
-		livecheck_dump_item(i, "parent: ");
-	fprintf(stderr, "root\n");
-	for (p = item->other_parents; p; p = p->next)
-		livecheck_dump_item(p->parent, "other parent: ");
-}
-
-static void
-livecheck_check()
-{
-	struct segment *seg;
-	void *obj;
-	unsigned int i;
-	bitptr_t b;
-
-	for (seg = livecheck.collect_set; seg; seg = seg->next) {
-		obj = seg->block_base;
-		BITPTR_INIT(b, BITMAP0_BASE(seg), 0);
-		for (i = 0; i < seg->layout->num_blocks; i++) {
-			if (!BITPTR_TEST(b)
-			    && sml_tree_find(&livecheck.set, &obj) != NULL) {
-				livecheck_dump(obj, 1);
-				sml_fatal(0, "[BUG] found unmarked object");
+		s = &r->subheap[i];
+		list_init(&s->partial);
+		list_init(&s->filled);
+		s->num_free = 0;
+		s->num_free_blocks = 0;
+		for (seg = c->segments[i]; seg;
+		     seg = (struct segment *)seg->as_list.next) {
+			assert(seg->free_count <= 0);
+			seg->free_count *= -1;
+			DEBUG(scribble_segment(seg));
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+			seg->snapshot_free = seg->block_base;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+			assert(stat_segment(seg).num_marked
+			       == seg->layout->num_blocks - seg->free_count);
+			if (seg->free_count == 0) {
+				list_append(&s->filled, &seg->as_list);
+				r->num_filled++;
+			} else if (seg->free_count
+				   == (int)seg->layout->num_blocks) {
+				list_append(&r->freelist, &seg->as_list);
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+				seg->block_base = NULL;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+				s->num_free++;
+			} else {
+				list_append(&s->partial, &seg->as_list);
+				s->num_free_blocks += seg->free_count;
 			}
-			obj = (char*)obj + BLOCK_SIZE(seg);
-			BITPTR_INC(b);
+		}
+	}
+
+	list_init(&r->malloc_segments);
+	for (mseg = c->malloc_segments; mseg; mseg = next) {
+		next = (struct malloc_segment *)mseg->as_list.next;
+		if (mseg->markbit) {
+			list_append(&r->malloc_segments, &mseg->as_list);
+			/* r->num_filled++; */
+		} else {
+			destroy_malloc_segment(mseg);
 		}
 	}
 }
 
-void sml_stw_begin(void);
-void sml_stw_end(void);
-void sml_stw_enum_ptr(void(*)(void**));
-#endif /* DEBUG && USE_LIVE_CHECK */
-
-static int
-check_start_gc()
+/* for debug */
+static void ATTR_UNUSED
+print_reclaim_summary(struct reclaim *r)
 {
-	unsigned int count, count_dif;
+	unsigned int i, num_free = 0, num_malloc = 0, num_malloc_bytes = 0;
+	unsigned int num_segments_total = 0;
+	struct stat_subheap st;
+	struct segment *seg;
+	struct malloc_segment *mseg;
+	struct subheap s;
 
-	count = ATOMIC_COUNTER_READ(&segment_usage.count);
-	count_dif = count - segment_usage.count_prev;
-	if (segment_usage.count_dif < count_dif)
-		segment_usage.count_dif = count_dif;
-	segment_usage.count_prev = count;
-
-	if (count + segment_usage.count_dif > segment_usage.gc_threshold
-	    || segment_pool.peak_count > 0
-	    || segment_usage.optimal_headroom > segment_pool.num_headroom
-	    || ATOMIC_LOAD(&stalled_threads)) {
-		segment_usage.count_dif = 0;
-		return 1;
+	sml_notice("heap reclaim summary:");
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		*r->subheap[i].partial.last = NULL;
+		*r->subheap[i].filled.last = NULL;
+		store_relaxed(&s.partial.top, r->subheap[i].partial.head);
+		store_relaxed(&s.filled.top, r->subheap[i].filled.head);
+		st = stat_subheap(&s);
+		sml_notice("subheap %2u: %4u > %4u > %4u segs, "
+			   "%7u / %7u blocks alloced",
+			   i, st.num_filled, st.num_partial,
+			   r->subheap[i].num_free,
+			   st.total.num_marked
+			   + st.total.num_unmarked_before_free,
+			   st.total.num_marked + st.total.num_unmarked);
+		assert(st.total.num_unmarked == r->subheap[i].num_free_blocks);
+		num_segments_total += st.num_filled + st.num_partial;
 	}
 
-	return 0;
+	*r->malloc_segments.last = NULL;
+	for (mseg = (struct malloc_segment *)r->malloc_segments.head; mseg;
+	     mseg = (struct malloc_segment *)mseg->as_list.next) {
+		num_malloc++;
+		num_malloc_bytes += MALLOC_SEGMENT_SIZE(mseg);
+	}
+	sml_notice("subheap malloc: %5u segments, %8u bytes in total",
+		   num_malloc, num_malloc_bytes);
+
+	*r->freelist.last = NULL;
+	for (seg = (struct segment *)r->freelist.head; seg;
+	     seg = (struct segment *)seg->as_list.next)
+		num_free++;
+	num_segments_total += num_free;
+	sml_notice("%u segments in freelist", num_free);
+	sml_notice("%u segments in total", num_segments_total);
+}
+
+static void
+rebalance_subheaps(struct reclaim *r, unsigned int num_request)
+{
+	unsigned int num_committed = segment_pool.heap.num_committed;
+	unsigned int num_free = num_committed;
+	unsigned int num_required = num_request;
+	unsigned int i;
+	unsigned int old_num_blocks = 0, old_num_free = 0;
+	unsigned int new_num_blocks = 0, new_num_free = 0;
+
+	/* Make sure that the free segments are many enough to allocate
+	 * free blocks as many as filled blocks in each subheap.
+	 * If not enough, allocate new free segments by extending the heap. */
+
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		struct subheap *s = &global_subheaps[i];
+		unsigned num_blocks = segment_layout[i].num_blocks;
+		unsigned num_segments = load_relaxed(&s->num_segments);
+		unsigned num_free_blocks = load_relaxed(&s->num_free_blocks);
+		old_num_blocks += num_segments * num_blocks;
+		old_num_free += num_free_blocks;
+
+		num_segments -= r->subheap[i].num_free;
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+		num_free_blocks = r->subheap[i].num_free_blocks;
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+		num_free_blocks += r->subheap[i].num_free_blocks;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+		num_free -= num_segments;
+
+		new_num_blocks += num_segments * num_blocks;
+		new_num_free += num_free_blocks;
+
+		unsigned num_filled_blocks =
+			num_segments * num_blocks - num_free_blocks;
+		unsigned num_need =
+			(num_filled_blocks > num_free_blocks)
+			? (num_filled_blocks - num_free_blocks + num_blocks - 1)
+			/ num_blocks
+			: 0;
+		num_required =
+			(num_required > num_need) ? num_required : num_need;
+
+		/* if this subheap occupies more than 3/4 of the entire
+		 * heap and its free blocks are sufficient, prevent this
+		 * subheap from allocating new segment. */
+		store_relaxed(&s->do_not_extend,
+			      num_need == 0
+			      && num_segments > num_committed * 3 / 4);
+	}
+
+	/* add free segments if less than half of the heap was filled
+	 * before reclaimation. */
+	if (old_num_free > old_num_blocks / 2
+	    && num_required < num_committed / 8)
+		num_required = num_committed / 8;
+
+	if (num_required > num_free) {
+		allocate_segments(&segment_pool.heap,
+				  num_required - num_free,
+				  &r->freelist);
+	}
+
+#ifdef GCTIME
+	unsigned int old_filled = old_num_blocks - old_num_free;
+	unsigned int new_filled = new_num_blocks - new_num_free;
+	double d1 = (double)old_filled / old_num_blocks;
+	gctime.util_ratio_sum += d1;
+	if (d1 < 0.5) gctime.util_under_half++;
+	double d2 = (double)(old_filled - new_filled) / old_num_blocks;
+	gctime.reclaim_ratio_sum += d2;
+#endif /* GCTIME */
+}
+
+static void
+reclaim_segments(struct reclaim *r)
+{
+	unsigned int i;
+	struct subheap *s;
+	struct pre_subheap *p;
+
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		s = &global_subheaps[i];
+		p = &r->subheap[i];
+		stack_push_list(&s->filled, &p->filled);
+		stack_push_list(&s->partial, &p->partial);
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+		store_relaxed(&s->num_free_blocks, p->num_free_blocks);
+		load_sub_store_relaxed(&s->num_segments, p->num_free);
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+		fetch_add(relaxed, &s->num_free_blocks, p->num_free_blocks);
+		fetch_sub(relaxed, &s->num_segments, p->num_free);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+	}
+
+	stack_push_list(&malloc_segments, &r->malloc_segments);
+	stack_push_list(&segment_pool.freelist, &r->freelist);
+}
+
+/********** collector **********/
+
+struct {
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	/* To avoid frequent memory contention between mutators and the
+	 * collector, the tracing stack is separated into two distinct
+	 * object lists: objects_from_mutators for communicating to mutators,
+	 * and trace_queue for local usage in the collector.
+	 */
+	struct object_stack objects_from_mutators;
+	_Atomic(unsigned int) num_filled_total;
+	unsigned int gc_threshold;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+	void *root_objects;
+	union collect_set collect_set;
+	_Atomic(unsigned int) num_request;
+} collector = {
+	.root_objects = NIL,
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	.objects_from_mutators = EMPTY_OBJECT_STACK
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+};
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+static struct stack_slot *
+visit(void *obj)
+{
+	struct stack_slot *slot;
+	struct malloc_segment *mseg;
+	struct segment *seg;
+	unsigned int index;
+	sml_bitptr_t b;
+
+	if (obj == NULL || (OBJ_HEADER(obj) & OBJ_FLAG_SKIP))
+		return NULL;
+	if (OBJ_TOTAL_SIZE(obj) > BLOCKSIZE_MAX) {
+		mseg = OBJ_TO_MALLOC_SEGMENT(obj);
+		if (mseg->markbit)
+			return NULL;
+		mseg->markbit = 1;
+		slot = &mseg->stack;
+	} else {
+		seg = segment_addr(obj);
+		index = object_index(seg, obj);
+		b = BITPTR(BITMAP0_BASE(seg), index);
+		if (BITPTR_TEST(b))
+			return NULL;
+		mark_bits(seg, index, b);
+		seg->free_count++;
+		slot = &seg->stack[object_index(seg, obj)];
+	}
+	return slot;
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+static struct stack_slot *
+visit(void *obj)
+{
+	struct stack_slot *slot;
+	struct malloc_segment *mseg;
+	struct segment *seg;
+	unsigned int index;
+	sml_bitptr_t b;
+
+	if (obj == NULL || (OBJ_HEADER(obj) & OBJ_FLAG_SKIP))
+		return NULL;
+	if (OBJ_TOTAL_SIZE(obj) > BLOCKSIZE_MAX) {
+		mseg = OBJ_TO_MALLOC_SEGMENT(obj);
+		if (mseg->markbit)
+			return NULL;
+		mseg->markbit = 1;
+		slot = &mseg->stack;
+	} else {
+		seg = segment_addr(obj);
+		index = object_index(seg, obj);
+		b = BITPTR(COLLECT_BITMAP_BASE(seg), index);
+		if (BITPTR_TEST(b))
+			return NULL;
+		BITPTR_SET(b);
+		b = BITPTR(BITMAP0_BASE(seg), index);
+		if ((char*)obj >= seg->snapshot_free && !BITPTR_TEST(b))
+			return NULL;
+		if (seg->free_count < 0) {
+			assert(!BITPTR_TEST(b));
+			mark_bits(seg, index, b);
+			seg->free_count++;
+		}
+		slot = &seg->stack[index];
+	}
+	return slot;
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+static void
+push(void **objslot, void *data)
+{
+	void *obj = *objslot;
+	void **top = data;
+	struct stack_slot *slot;
+
+	slot = visit(obj);
+	if (slot) {
+		store_relaxed(&slot->next, *top);
+		*top = obj;
+	}
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+static void
+push(void **objslot, void *data)
+{
+	void *obj = *objslot;
+	void **top = data;
+	struct stack_slot *slot;
+	void *old = NULL;
+
+	slot = visit(obj);
+	if (slot) {
+		if (load_relaxed(&slot->next) == old
+		    && cmpswap_relaxed(&slot->next, &old, *top))
+			*top = obj;
+	}
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+static void *
+pop(void **top)
+{
+	struct stack_slot *slot;
+	void *obj = *top;
+	assert(obj != NIL);
+	slot = object_stack_slot(obj);
+	assert(load_relaxed(&slot->next) != NULL);
+	*top = load_relaxed(&slot->next);
+	store_relaxed(&slot->next, NULL);
+	return obj;
+}
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static void
+visit_all(void *obj)
+{
+	void *next;
+	struct stack_slot *slot;
+
+	while (obj != NIL) {
+		slot = visit(obj);
+		if (!slot)
+			slot = object_stack_slot(obj);
+		obj = load_relaxed(&slot->next);
+	}
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+static void
+trace_all()
+{
+	void *top = collector.root_objects;
+	while (top != NIL)
+		sml_obj_enum_ptr(pop(&top), push, &top);
+	collector.root_objects = NIL;
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+static void
+trace_all()
+{
+	void *top = collector.root_objects;
+	do {
+		while (top != NIL)
+			sml_obj_enum_ptr(pop(&top), push, &top);
+		/* objects_from_mutators contains objects that is visited
+		 * but not enumerated yet due to failure of CAS in push. */
+		top = flush_object_stack(&collector.objects_from_mutators);
+		visit_all(top);
+	} while (top != NIL);
+	collector.root_objects = NIL;
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+void
+sml_heap_collector_sync1()
+{
+	collect_segments_sync1(&collector.collect_set);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+void
+sml_heap_collector_sync2()
+{
+	collect_segments(&collector.collect_set);
+	clear_collect_set(&collector.collect_set);
+	assert(collector.root_objects == NIL);
+	sml_enum_global(push, &collector.root_objects);
+	sml_callback_enum_ptr(push, &collector.root_objects);
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+void
+sml_heap_collector_sync2()
+{
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+void
+sml_heap_collector_mark()
+{
+	trace_all();
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+void
+sml_heap_collector_mark()
+{
+	unsigned int n;
+	collect_segments(&collector.collect_set);
+	/* ToDo: replace clear bitmap with copy from collector bitmap */
+	n = clear_collect_set(&collector.collect_set);
+	fetch_sub(relaxed, &collector.num_filled_total, n);
+	clear_collect_bitmaps(&segment_pool.heap);
+
+	assert(collector.root_objects == NIL);
+	sml_enum_global(push, &collector.root_objects);
+	sml_callback_enum_ptr(push, &collector.root_objects);
+	trace_all();
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+int
+sml_heap_check_alive(void **slot)
+{
+	void *obj = *slot;
+	struct segment *seg;
+	unsigned int index;
+	sml_bitptr_t b;
+
+	if (OBJ_HEADER(obj) & OBJ_FLAG_SKIP)
+		return 1;
+
+	seg = segment_addr(obj);
+	index = object_index(seg, obj);
+	b = BITPTR(BITMAP0_BASE(seg), index);
+	return seg->free_count >= 0 || BITPTR_TEST(b);
+}
+
+void
+sml_heap_collector_async()
+{
+	struct reclaim r;
+	separate_segments(&collector.collect_set, &r);
+	rebalance_subheaps(&r, load_relaxed(&collector.num_request));
+	reclaim_segments(&r);
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	fetch_add(relaxed, &collector.num_filled_total, r.num_filled);
+	collector.gc_threshold =
+		(segment_pool.heap.num_committed + r.num_filled) / 2;
+#endif /* !WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
 }
 
 static void
 do_gc()
 {
-	struct segment *collect_set;
 #ifdef GCTIME
-	sml_timer_t t1, t2, t3, t4, t5, t6;
-	sml_time_t t;
-#endif /* GCTIME */
-
-	if (!check_start_gc())
-		return;
-
-	//fprintf(stderr, "start gc\n");
-
-#ifdef GCTIME
-	gcstat.gc_count++;
+	sml_timer_t t1, t2;
 	sml_timer_now(t1);
 #endif /* GCTIME */
-
-	sml_gc_initiate(remember, MAJOR, &collect_set);
-	collect_set = gather_collect(collect_set);
-
+	sml_gc();
 #ifdef GCTIME
 	sml_timer_now(t2);
-#endif /* GCTIME */
-
-	clear_bitmaps(collect_set);
-
-#ifdef GCTIME
-	sml_timer_now(t3);
-#endif /* GCTIME */
-
-	mark_loop();
-	sml_malloc_sweep(MAJOR);
-
-	/* turn off all write barriers */
-	sml_check_gc_flag = ASYNC;
-
-	sml_gc_done();
-
-#ifdef GCTIME
-	sml_timer_now(t4);
-#endif /* GCTIME */
-
-#if defined DEBUG && defined USE_LIVECHECK
-	sml_stw_begin();
-	livecheck_init(collect_set);
-	sml_stw_enum_ptr(livecheck_push);
-	livecheck_trace();
-	livecheck_check();
-	sml_stw_end();
-#endif /* DEBUG && USE_LIVECHECK */
-
-	reclaim_segments(collect_set);
-
-#ifdef GCTIME
-	sml_timer_now(t5);
-#endif /* GCTIME */
-
-	clear_stack();
-
-#ifdef GCTIME
-	sml_timer_now(t6);
-#endif /* GCTIME */
-
-	//fprintf(stderr, "end gc\n");
-
-#ifdef GCTIME
-	sml_timer_dif(t1, t2, t);
-	sml_time_accum(t, gcstat.total_initiation);
-	sml_timer_dif(t2, t3, t);
-	sml_time_accum(t, gcstat.total_clear_bitmap);
-	sml_timer_dif(t3, t4, t);
-	sml_time_accum(t, gcstat.total_mark);
-	sml_timer_dif(t4, t5, t);
-	sml_time_accum(t, gcstat.total_reclaim);
-	sml_timer_dif(t5, t6, t);
-	sml_time_accum(t, gcstat.total_clear_stack);
-	sml_timer_dif(t1, t6, t);
-	sml_time_accum(t, gcstat.total_time);
-//sml_notice("gc "TIMEFMT" sec", t);
+	sml_timer_accum(t1, t2, gctime.gc_time);
+	gctime.gc_count++;
 #endif /* GCTIME */
 }
 
-void
-sml_heap_gc()
+/********** collector thread **********/
+
+#if defined WITHOUT_MULTITHREAD
+static void
+inc_num_filled_total()
 {
+}
+
+#elif defined WITHOUT_CONCURRENCY
+
+struct collector_control {
+	pthread_mutex_t lock;
+	pthread_cond_t cond_collector;
+	enum { EXIT=1, GC=2} exit;
+	pthread_t collector_thread;
+} collector_control = {
+	.lock = PTHREAD_MUTEX_INITIALIZER,
+	.cond_collector = PTHREAD_COND_INITIALIZER,
+};
+
+static void
+wait_for_gc()
+{
+	mutex_lock(&collector_control.lock);
+	collector_control.exit = GC;
+	cond_signal(&collector_control.cond_collector);
+	while (collector_control.exit)
+		cond_wait(&collector_control.cond_collector,
+			  &collector_control.lock);
+	mutex_unlock(&collector_control.lock);
+}
+
+static void
+inc_num_filled_total()
+{
+}
+
+static void *
+collector_main(void *arg ATTR_UNUSED)
+{
+	mutex_lock(&collector_control.lock);
+	for (;;) {
+		while (!collector_control.exit)
+			cond_wait(&collector_control.cond_collector,
+				  &collector_control.lock);
+		if (collector_control.exit == EXIT)
+			break;
+		do_gc();
+		collector_control.exit = 0;
+		cond_signal(&collector_control.cond_collector);
+	}
+	mutex_unlock(&collector_control.lock);
+}
+
+#else /* !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
+
+struct collector_control {
+	pthread_mutex_t lock;
+	pthread_cond_t cond_collector;
+	pthread_cond_t cond_mutators;
+	unsigned int gc_count;
+	unsigned int num_mutators;
+	unsigned int mutators_stalled;
+	unsigned int vote_continue, vote_abort;
+	unsigned int exit;
+	pthread_t collector_thread;
+} collector_control = {
+	.lock = PTHREAD_MUTEX_INITIALIZER,
+	.cond_collector = PTHREAD_COND_INITIALIZER,
+	.cond_mutators = PTHREAD_COND_INITIALIZER,
+};
+
+static void
+inc_num_filled_total()
+{
+	fetch_add(relaxed, &collector.num_filled_total, 1);
+	mutex_lock(&collector_control.lock);
+	cond_signal(&collector_control.cond_collector);
+	mutex_unlock(&collector_control.lock);
+}
+
+static void
+cleanup_wait_for_gc(void *arg)
+{
+	unsigned int gc_count = (uintptr_t)arg;
+
+	if (collector_control.gc_count == gc_count)
+		collector_control.mutators_stalled--;
+	else if (collector_control.gc_count == gc_count + 1)
+		collector_control.vote_continue++;
+	cond_signal(&collector_control.cond_collector);
+	mutex_unlock(&collector_control.lock);
+}
+
+static unsigned int
+wait_for_gc()
+{
+	uintptr_t gc_count;
+	collector_control.mutators_stalled++;
+	cond_signal(&collector_control.cond_collector);
+	gc_count = collector_control.gc_count;
+	pthread_cleanup_push(cleanup_wait_for_gc, (void*)gc_count);
+	while (!(collector_control.gc_count != gc_count))
+		cond_wait(&collector_control.cond_mutators,
+			  &collector_control.lock);
+	pthread_cleanup_pop(0);
+	return gc_count + 1;
+}
+
+static unsigned int
+wait_for_vote()
+{
+	unsigned int gc_count;
+	mutex_lock(&collector_control.lock);
+	gc_count = wait_for_gc();
+	mutex_unlock(&collector_control.lock);
+	return gc_count;
+}
+
+static unsigned int
+vote_abort(unsigned int gc_count)
+{
+	mutex_lock(&collector_control.lock);
+	if (collector_control.gc_count == gc_count)
+		collector_control.vote_abort++;
+	gc_count = wait_for_gc();
+	mutex_unlock(&collector_control.lock);
+	return gc_count;
+}
+
+static void
+vote_continue(unsigned int gc_count)
+{
+	mutex_lock(&collector_control.lock);
+	if (collector_control.gc_count == gc_count) {
+		collector_control.vote_continue++;
+		cond_signal(&collector_control.cond_collector);
+	}
+	mutex_unlock(&collector_control.lock);
+}
+
+static int
+count_vote(unsigned int num_stalled)
+{
+	struct collector_control * const cc = &collector_control;
+	cc->vote_continue = 0;
+	cc->vote_abort = 0;
+	while (!(cc->num_mutators != num_stalled
+		 || cc->vote_continue > 0
+		 || cc->vote_continue + cc->vote_abort == num_stalled
+		 || cc->exit))
+		cond_wait(&cc->cond_collector, &cc->lock);
+	sml_debug("vote count: %u/%u mutators, continue/abort=%u/%u\n",
+		  num_stalled, cc->num_mutators,
+		  cc->vote_continue, cc->vote_abort);
+	return (cc->num_mutators != num_stalled
+		|| cc->vote_continue > 0
+		|| cc->exit);
+}
+
+static void *
+collector_main(void *arg ATTR_UNUSED)
+{
+	struct collector_control * const cc = &collector_control;
+	unsigned int num_stalled;
+
+	mutex_lock(&cc->lock);
+ loop:
+	while (!(cc->mutators_stalled > 0
+		 || (load_relaxed(&collector.num_filled_total)
+		     >= collector.gc_threshold)
+		 || cc->exit))
+		cond_wait(&cc->cond_collector, &cc->lock);
+	store_relaxed(&collector.num_request, cc->mutators_stalled);
+	mutex_unlock(&cc->lock);
+	if (cc->exit)
+		return NULL;
+
 	do_gc();
+	mutex_lock(&cc->lock);
+
+	cc->gc_count++;
+	if (cc->mutators_stalled == 0) goto loop;
+ retry:
+	/* Some mutators are being stalled due to lack of segments.
+	 * If at least one mutator is working, then the program continues. */
+	sml_debug("%u out of %u threads stalled\n",
+		  cc->mutators_stalled, cc->num_mutators);
+	num_stalled = cc->mutators_stalled;
+	cc->mutators_stalled = 0;
+	cond_broadcast(&cc->cond_mutators);
+	if (count_vote(num_stalled)) goto loop;
+
+	/* All mutators voted for aborting the program and still stalled.
+	 * Try full GC and expect that it recovers the situation. */
+	sml_debug("full gc\n");
+#ifdef GCTIME
+	gctime.full_gc_count++;
+#endif /* GCTIME */
+	mutex_unlock(&cc->lock);
+	move_partial_to_filled();
+	do_gc();
+	mutex_lock(&cc->lock);
+
+	cc->gc_count++;
+	sml_debug("%u out of %u threads still stalled\n",
+		  cc->mutators_stalled, cc->num_mutators);
+	if (cc->mutators_stalled != num_stalled) goto retry;
+	cc->mutators_stalled = 0;
+	cond_broadcast(&cc->cond_mutators);
+	if (count_vote(num_stalled)) goto loop;
+
+	print_heap_summary();
+	sml_fatal(0, "heap exhausted; all threads stalled");
+}
+
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+/********** mutators **********/
+
+void *
+sml_heap_mutator_init()
+{
+	union alloc_ptr_set *p = new_alloc_ptr_set();
+	tlv_set(alloc_ptr_set, p);
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	mutex_lock(&collector_control.lock);
+	collector_control.num_mutators++;
+	cond_signal(&collector_control.cond_collector);
+	mutex_unlock(&collector_control.lock);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+	return p;
+}
+
+void
+sml_heap_mutator_destroy(void *info)
+{
+	union alloc_ptr_set *ptr_set = info;
+	assert(ptr_set == tlv_get(alloc_ptr_set));
+	tlv_set(alloc_ptr_set, NULL);
+	release_alloc_ptr_set(ptr_set);
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	mutex_lock(&collector_control.lock);
+	collector_control.num_mutators--;
+	cond_signal(&collector_control.cond_collector);
+	mutex_unlock(&collector_control.lock);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+}
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+void
+sml_heap_mutator_sync2(const struct sml_control *control ATTR_UNUSED,
+		       void *info)
+{
+	union alloc_ptr_set *ptr_set = info;
+	move_all_to_filled(ptr_set);
+}
+
+void
+sml_heap_mutator_sync2_enum(const struct sml_control *control)
+{
+	sml_stack_enum_ptr(control, push, &collector.root_objects);
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+void
+sml_heap_mutator_sync2(const struct sml_control *control, void *info)
+{
+	/* Do not use tlv_get(alloc_ptr_set) in this function and use
+	 * "info" instead.  This function may be called with "info" of
+	 * another thread, which differs from tlv_get(alloc_ptr_set).
+	 */
+	union alloc_ptr_set *ptr_set = info;
+	struct object_list objs;
+
+	/* enumerate pointers in the stack and send them to the collector */
+	object_list_init(&objs);
+	sml_stack_enum_ptr(control, enum_obj_to_list, &objs);
+	push_objects(&collector.objects_from_mutators, &objs);
+
+	/* save current allocation pointers to segments in ptr_set. */
+	save_alloc_ptr_set_sync2(ptr_set);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+static inline void
+remember(void *obj)
+{
+	push_object(&collector.objects_from_mutators, obj);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
+SML_PRIMITIVE void
+sml_write(void *obj ATTR_UNUSED, void **writeaddr, void *new_value)
+{
+	*writeaddr = new_value;
+}
+
+#else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+SML_PRIMITIVE void
+sml_write(void *obj ATTR_UNUSED, void **writeaddr, void *new_value)
+{
+	enum sml_sync_phase phase = sml_current_phase();
+
+	/* Note that "phase" may differ from the current phase since the
+	 * current phase may be changed after reading it.
+	 * If "phase" is:   Then the current phase may be:
+	 *   ASYNC            ASYNC or PRESYNC1
+	 *   PRESYNC1         PRESYNC1
+	 *   SYNC1            SYNC1 or PRESYNC2
+	 *   PRESYNC2         PRESYNC2
+	 *   SYNC2            SYNC2, MARK, ASYNC, or PRESYNC1
+	 *   MARK             MARK, ASYNC, or PRESYNC1
+	 */
+	if (phase <= PRESYNC1) {
+		/* It is ensured that the current phase is ASYNC or PRESYNC1.
+		 * No write barrier is needed. */
+	} else {
+		/* The current phase is expected to be either SYNC1, PRESYNC2,
+		 * SYNC2, or MARK, but may be artbitrary.  This means that
+		 * write barrier may be performed even in ASYNC and PRESYNC1.
+		 * This should hardly happend but even this is safe. */
+		if (phase <= SYNC2)
+			remember(new_value);  /* snooping barrier */
+		remember(*writeaddr);  /* snapshot barrier */
+	}
+	*writeaddr = new_value;
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+static sml_bitptr_t
+bitptr_linear_search(unsigned int *start, const unsigned int *limit)
+{
+	sml_bitptr_t b = {start, 0};
+	while (b.ptr < limit) {
+		b.mask = 0;
+		BITPTR_NEXT(b);
+		if (!BITPTR_NEXT_FAILED(b)) break;
+		b.ptr++;
+	}
+	return b;
 }
 
 static NOINLINE void *
@@ -2097,47 +2400,45 @@ find_bitmap(struct alloc_ptr *ptr)
 {
 	unsigned int i, index, *base, *limit, *p;
 	struct segment *seg;
-	bitptr_t b = ptr->freebit;
+	sml_bitptr_t b = ptr->freebit;
 	void *obj;
 
 	if (ptr->free == NULL)
 		return NULL;
 
 	seg = ALLOC_PTR_TO_SEGMENT(ptr);
-
-	BITPTR_NEXT(b);
 	base = BITMAP0_BASE(seg);
 
+	BITPTR_NEXT(b);
 	if (BITPTR_NEXT_FAILED(b)) {
 		for (i = 1;; i++) {
-			if (i >= SEG_RANK) {
-				p = &BITPTR_WORD(b) + 1;
-				limit = BITMAP_LIMIT(seg, SEG_RANK - 1);
-				b = bitptr_linear_search(p, limit);
-				if (BITPTR_NEXT_FAILED(b))
-					return NULL;
-				i = SEG_RANK - 1;
-				break;
-			}
 			index = BITPTR_WORDINDEX(b, base) + 1;
 			base = BITMAP_BASE(seg, i);
-			BITPTR_INIT(b, base, index);
+			b = BITPTR(base, index);
 			BITPTR_NEXT(b);
 			if (!BITPTR_NEXT_FAILED(b))
 				break;
+			if (i >= SEG_RANK - 1) {
+				p = &BITPTR_WORD(b) + 1;
+				limit = BITMAP_LIMIT(seg, i);
+				b = bitptr_linear_search(p, limit);
+				if (BITPTR_NEXT_FAILED(b))
+					return NULL;
+				break;
+			}
 		}
-		do {
+		for (; i > 0; i--) {
 			index = BITPTR_INDEX(b, base);
-			base = BITMAP_BASE(seg, --i);
-			BITPTR_INIT(b, base + index, 0);
+			base = BITMAP_BASE(seg, i - 1);
+			b = BITPTR(base + index, 0);
 			BITPTR_NEXT(b);
-			ASSERT(!BITPTR_NEXT_FAILED(b));
-		} while (i > 0);
+			assert(!BITPTR_NEXT_FAILED(b));
+		}
 	}
 
 	index = BITPTR_INDEX(b, base);
-	obj = BLOCK_BASE(seg) + (index << seg->blocksize_log2);
-	ASSERT(OBJ_TO_SEGMENT(obj) == seg);
+	assert(index < seg->layout->num_blocks);
+	obj = seg->block_base + (index << seg->blocksize_log2);
 
 	BITPTR_INC(b);
 	ptr->freebit = b;
@@ -2146,137 +2447,213 @@ find_bitmap(struct alloc_ptr *ptr)
 	return obj;
 }
 
-static NOINLINE void *
-find_segment(struct alloc_ptr *ptr)
+static void *
+try_find_segment(struct subheap *subheap, struct alloc_ptr *ptr,
+		 unsigned int blocksize_log2)
 {
-	unsigned int reservation = ALLOC_PTR_SET()->head.segment_reservation;
-	unsigned int blocksize_log2 = ALLOC_PTR_TO_BLOCKSIZE_LOG2(ptr);
 	struct segment *seg;
-	struct subheap *subheap = &global_subheaps[blocksize_log2];
 	void *obj;
 
-	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
-	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
+	assert(1U << (subheap - &global_subheaps[0]) == ptr->blocksize_bytes);
+	assert(1U << blocksize_log2 == ptr->blocksize_bytes);
 
-	//fprintf(stderr, "%p tries to obtain %d seg; num_partial=%d num_free=%d reservation=%d : %d\n",
-	//	pthread_self(), blocksize_log2, subheap->num_partial, segment_pool.num_free, reservation, num_segments_reserved);
-
-	seg = ptr->free ? ALLOC_PTR_TO_SEGMENT(ptr) : NULL;
-
-	SPIN_LOCK(&subheap->lock);
+	seg = stack_pop(&subheap->partial);
 	if (seg) {
-		if (sml_current_phase() == SYNC1) {
-			seg->next = subheap->collect;
-			subheap->collect = seg;
-		} else {
-			seg->next = subheap->filled;
-			subheap->filled = seg;
-		}
-	}
-	if (subheap->num_partial + segment_pool.num_free + reservation
-	    <= num_segments_reserved) {
-		SPIN_UNLOCK(&subheap->lock);
-		goto fail;
-	}
-	seg = subheap->partial;
-	if (seg) {
-		subheap->partial = seg->next;
-		subheap->num_partial--;
-	}
-	SPIN_UNLOCK(&subheap->lock);
-
-	if (seg) {
-		ATOMIC_COUNTER_INC(&segment_usage.count);
-		signal_collector();
-		ASSERT(blocksize_log2 == seg->blocksize_log2);
-		/* seg have at least one free block. */
+		assert(seg->free_count > 0);
+#if defined WITHOUT_MULTITHREAD
+		load_sub_store_relaxed(&subheap->num_free_blocks,
+				       seg->free_count);
+#else /* !WITHOUT_MULTITHREAD */
+		fetch_sub(relaxed, &subheap->num_free_blocks, seg->free_count);
+#endif /* !WITHOUT_MULTITHREAD */
 		set_alloc_ptr(ptr, seg);
 		obj = find_bitmap(ptr);
-		ASSERT(obj != NULL);
+		assert(obj != NULL);
 		return obj;
 	}
 
-	seg = new_segment();
+	if (load_relaxed(&subheap->do_not_extend)) {
+		sml_debug("do not extend\n");
+		return NULL;
+	}
+
+	seg = new_segment(blocksize_log2);
 	if (seg) {
-		ATOMIC_COUNTER_INC(&segment_usage.count);
-		signal_collector();
-		init_segment(seg, blocksize_log2);
+#if defined WITHOUT_MULTITHREAD
+		load_add_store_relaxed(&subheap->num_segments, 1);
+#else /* !WITHOUT_MULTITHREAD */
+		fetch_add(relaxed, &subheap->num_segments, 1);
+#endif /* !WITHOUT_MULTITHREAD */
 		set_alloc_ptr(ptr, seg);
-		ASSERT(!BITPTR_TEST(ptr->freebit));
+		assert(!BITPTR_TEST(ptr->freebit));
 		BITPTR_INC(ptr->freebit);
 		obj = ptr->free;
 		ptr->free += ptr->blocksize_bytes;
+		assert(obj != NULL);
 		return obj;
 	}
- fail:
-	clear_alloc_ptr(ptr);
+
 	return NULL;
 }
 
-void sml_control_suspend_internal(void);
-void sml_check_gc_internal(void);
+#if defined WITHOUT_MULTITHREAD
+static void *
+request_segment(struct subheap *subheap, struct alloc_ptr *ptr,
+		unsigned int blocksize_log2, void *frame_pointer)
+{
+	void *old_top, *obj;
+
+	assert(1U << (subheap - &global_subheaps[0]) == ptr->blocksize_bytes);
+	assert(1U << blocksize_log2 == ptr->blocksize_bytes);
+
+	sml_debug("no block found in subheap %u\n", blocksize_log2);
+	load_add_store_relaxed(&collector.num_request, 1);
+
+	old_top = sml_leave_internal(frame_pointer);
+	do_gc();
+	sml_enter_internal(old_top);
+
+	obj = try_find_segment(subheap, ptr, blocksize_log2);
+	if (!obj) {
+		print_heap_summary();
+		sml_fatal(0, "heap exhausted; all threads stalled");
+	}
+
+	return obj;
+}
+
+#elif defined WITHOUT_CONCURRENCY
+static void *
+request_segment(struct subheap *subheap, struct alloc_ptr *ptr,
+		unsigned int blocksize_log2, void *frame_pointer)
+{
+	int sml_stop_the_world(void);
+	void sml_run_the_world(void);
+	void *old_top, *obj;
+
+	assert(1U << (subheap - &global_subheaps[0]) == ptr->blocksize_bytes);
+	assert(1U << blocksize_log2 == ptr->blocksize_bytes);
+
+	sml_debug("no block found in subheap %u\n", blocksize_log2);
+	fetch_add(relaxed, &collector.num_request, 1);
+
+	old_top = sml_leave_internal(frame_pointer);
+
+	do {
+		if (sml_stop_the_world()) {
+			wait_for_gc();
+			obj = try_find_segment(subheap, ptr, blocksize_log2);
+			if (!obj) {
+				print_heap_summary();
+				sml_fatal(0, "heap exhausted; "
+					  "all threads stalled");
+			}
+			sml_run_the_world();
+			break;
+		}
+		obj = try_find_segment(subheap, ptr, blocksize_log2);
+	} while (!obj);
+
+	sml_enter_internal(old_top);
+
+	return obj;
+}
+
+#else /* !WITHOUT_MULTITHREAD || !WITHOUT_CONCURRENCY */
+static void *
+request_segment(struct subheap *subheap, struct alloc_ptr *ptr,
+		unsigned int blocksize_log2, void *frame_pointer)
+{
+	void *obj, *old_top;
+	unsigned int gc_count;
+
+	assert(1U << (subheap - &global_subheaps[0]) == ptr->blocksize_bytes);
+	assert(1U << blocksize_log2 == ptr->blocksize_bytes);
+
+	/* request a garbage collection and wait for its completion */
+	old_top = sml_leave_internal(frame_pointer);
+	sml_debug("no block found in subheap %u\n", blocksize_log2);
+	fetch_add(relaxed, &collector.num_request, 1);
+	gc_count = wait_for_vote();
+	for (;;) {
+		obj = try_find_segment(subheap, ptr, blocksize_log2);
+		if (obj) {
+			vote_continue(gc_count);
+			break;
+		}
+		/* release all segments owned by this thread for full GC */
+		move_all_to_filled(tlv_get(alloc_ptr_set));
+		gc_count = vote_abort(gc_count);
+	}
+	sml_enter_internal(old_top);
+
+	assert(obj != NULL);
+	return obj;
+}
+
+#endif /* !WITHOUT_MULTITHREAD || !WITHOUT_CONCURRENCY */
 
 static NOINLINE void *
-wait_segment(struct alloc_ptr *ptr)
+find_segment(struct alloc_ptr *ptr, void *frame_pointer)
 {
-	/* assume frame pointer is already saved */
-
-	union alloc_ptr_set *ptr_set = ALLOC_PTR_SET();
-	unsigned int blocksize_log2 = ptr - &ptr_set->alloc_ptr[0];
-	struct segment *seg;
+	unsigned int blocksize_log2;
+	struct subheap *subheap;
 	void *obj;
-#ifdef GCTIME
-	sml_timer_t t1, t2;
-	sml_time_t t;
-	double dt;
-#endif /* GCTIME */
 
-	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
+#ifndef WITHOUT_MULTITHREAD
+	if (load_relaxed(&sml_check_flag))
+		sml_check_internal(frame_pointer);
+#endif /* !WITHOUT_MULTITHREAD */
+
+	/* calculate blocksize_log2 from ptr instead of taking it as an
+	 * argument.  This is an optimization to minimize the number of
+	 * instructions on the most frequently executed path in sml_alloc.
+	 */
+	blocksize_log2 = ptr - &tlv_get(alloc_ptr_set)->ptr[0];
+	assert(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
 	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
+	subheap = &global_subheaps[blocksize_log2];
+
+	if (ptr->free) {
+		move_to_filled(ptr, subheap);
+		inc_num_filled_total();
+	}
+
+	obj = try_find_segment(subheap, ptr, blocksize_log2);
+	if (obj)
+		return obj;
 
 #ifdef GCTIME
+	sml_timer_t t1;
 	sml_timer_now(t1);
 #endif /* GCTIME */
 
-	ptr_set->head.seg = NULL;
-	ptr_set->head.request_blocksize_log2 = blocksize_log2;
-	ATOMIC_APPEND(&stalled_threads, &ptr_set->head.next, ptr_set);
-
-	/* printf("wait block=%u\n", blocksize_log2); */
-	sml_control_suspend_internal();  /* frame pointer is already saved */
-	signal_collector();
-
-//if (pthread_self() == pthread_watch)
-//fprintf(stderr, "%p waits for %d\n", pthread_self(), blocksize_log2);
-//fprintf(stderr, "wait!! %d\n", blocksize_log2);
-
-	pthread_mutex_lock(&ptr_set->head.sync->mutex);
-	while (ptr_set->head.seg == NULL)
-		pthread_cond_wait(&ptr_set->head.sync->cond,
-				  &ptr_set->head.sync->mutex);
-	pthread_mutex_unlock(&ptr_set->head.sync->mutex);
-
-//fprintf(stderr, "%p resumes\n", pthread_self());
-
-	sml_control_resume();
+	clear_alloc_ptr(ptr);
+	obj = request_segment(subheap, ptr, blocksize_log2, frame_pointer);
 
 #ifdef GCTIME
+	sml_timer_t t2;
+	sml_time_t t;
 	sml_timer_now(t2);
 	sml_timer_dif(t1, t2, t);
-	sml_time_accum(t, gcstat.total_wait_segment);
-	gcstat.wait_segment_count++;
-	dt = TIMEFLOAT(t);
-	if (dt > gcstat.max_wait_segment) gcstat.max_wait_segment = dt;
-	if (dt > gcstat_max_mutators_pause) gcstat_max_mutators_pause = dt;
+	mutex_lock(&gctime.pause_time_lock);
+	sml_time_accum(t, gctime.pause_time);
+	double d = TIMEFLOAT(t);
+	if (d > gctime.max_pause_time) gctime.max_pause_time = d;
+	gctime.pause_count++;
+	mutex_unlock(&gctime.pause_time_lock);
 #endif /* GCTIME */
 
-	seg = ptr_set->head.seg;
-	ptr_set->head.seg = NULL;
-	ASSERT(seg);
-	set_alloc_ptr(ptr, seg);
-	obj = find_bitmap(ptr);
-	ASSERT(obj != NULL);
+	assert(obj != NULL);
 	return obj;
+}
+
+static NOINLINE void *
+malloc_object(size_t alloc_size)
+{
+	struct malloc_segment *mseg = malloc_segment(alloc_size);
+	/* inc_num_filled_total(); */
+	return MALLOC_SEGMENT_TO_OBJ(mseg);
 }
 
 SML_PRIMITIVE void *
@@ -2287,41 +2664,109 @@ sml_alloc(unsigned int objsize)
 	struct alloc_ptr *ptr;
 	void *obj;
 
+	if (objsize > BLOCKSIZE_MAX - OBJ_HEADER_SIZE)
+		return malloc_object(objsize);
+
 	/* ensure that alloc_size is at least BLOCKSIZE_MIN. */
-	alloc_size = ALIGNSIZE(OBJ_HEADER_SIZE + objsize, BLOCKSIZE_MIN);
-
-	if (alloc_size > BLOCKSIZE_MAX) {
-		sml_save_fp(CALLER_FRAME_END_ADDRESS());
-		return sml_obj_malloc(alloc_size);
-	}
-
+	alloc_size = CEILING(OBJ_HEADER_SIZE + objsize, BLOCKSIZE_MIN);
 	blocksize_log2 = CEIL_LOG2(alloc_size);
-	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
+	assert(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
 	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
-
-	ptr = &ALLOC_PTR_SET()->alloc_ptr[blocksize_log2];
+	ptr = &(tlv_get(alloc_ptr_set)->ptr[blocksize_log2]);
 
 	if (!BITPTR_TEST(ptr->freebit)) {
 		BITPTR_INC(ptr->freebit);
 		obj = ptr->free;
 		ptr->free += ptr->blocksize_bytes;
+		assert(obj != NULL);
 		goto alloced;
 	}
 
 	obj = find_bitmap(ptr);
 	if (obj) goto alloced;
 
-	sml_save_fp(CALLER_FRAME_END_ADDRESS());
-	sml_check_gc_internal();
+	obj = find_segment(ptr, CALLER_FRAME_END_ADDRESS());
 
-	obj = find_segment(ptr);
-	if (obj) goto alloced;
-
-	obj = wait_segment(ptr);
-	ASSERT(obj != NULL);
-
- alloced:
-	ASSERT(OBJ_HEADER(obj) == 0x55555555);
-	OBJ_HEADER(obj) = 0;
+alloced:
+	assert(check_filled(OBJ_BEGIN(obj), 0x55, objsize));
 	return obj;
+}
+
+/********** initialize/finalize garbage collection ***********/
+
+void
+sml_heap_init(size_t min_size, size_t max_size)
+{
+	init_segment_layout();
+	init_segment_pool(min_size, max_size);
+
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	collector.gc_threshold = segment_pool.heap.min_num_segments / 2;
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#ifndef WITHOUT_MULTITHREAD
+	if (pthread_create(&collector_control.collector_thread, NULL,
+			   collector_main, NULL) != 0)
+		sml_sysfatal("pthread_create");
+#endif /* WITHOUT_MULTITHREAD */
+
+#ifdef GCTIME
+	sml_timer_now(gctime.exec_start);
+#endif /* GCTIME */
+}
+
+#if !defined WITHOUT_MULTITHREAD
+void
+sml_heap_stop()
+{
+	mutex_lock(&collector_control.lock);
+	collector_control.exit = 1;
+	cond_signal(&collector_control.cond_collector);
+	mutex_unlock(&collector_control.lock);
+	pthread_join(collector_control.collector_thread, NULL);
+}
+
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+void
+sml_heap_destroy()
+{
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	assert(collector_control.exit == 1);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+
+#ifdef GCTIME
+	sml_timer_now(gctime.exec_end);
+	sml_timer_dif(gctime.exec_start, gctime.exec_end, gctime.exec_time);
+	sml_notice("exec time        : "TIMEFMT" #sec",
+		   TIMEARG(gctime.exec_time));
+	sml_notice("gc time total    : "TIMEFMT" #sec",
+		   TIMEARG(gctime.gc_time));
+	sml_notice("gc count         : %u", gctime.gc_count);
+#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
+	sml_notice("full gc count    : %u", gctime.full_gc_count);
+#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
+	sml_notice("pause time total : "TIMEFMT" #sec",
+		   TIMEARG(gctime.pause_time));
+	sml_notice("pause count      : %u", gctime.pause_count);
+	sml_notice("max pause time   : %.6f #sec", gctime.max_pause_time);
+	sml_notice("util ratio avg   : %5.2f #%%",
+		   gctime.util_ratio_sum / gctime.gc_count * 100);
+	sml_notice("reclaim ratio avg: %5.2f #%%",
+		   gctime.reclaim_ratio_sum / gctime.gc_count * 100);
+	sml_notice("num segments     : %u", segment_pool.heap.num_committed);
+	sml_notice("under-half count : %u", gctime.util_under_half);
+	sml_notice("timer type       : %s", TIMERTYPE);
+#if defined WITHOUT_MULTITHREAD
+	sml_notice("gc type          : sequential");
+#elif defined WITHOUT_CONCURRENCY
+	sml_notice("gc type          : stop-the-world");
+#else /* !WITHOUT_MULTITHREAD &&& !WITHOUT_CONCURRENCY */
+	sml_notice("gc type          : concurrent");
+#endif /* !WITHOUT_MULTITHREAD &&& !WITHOUT_CONCURRENCY */
+#endif /* GCTIME */
+
+	destroy_alloc_ptr_set_pool();
+	destroy_segment_pool();
+	destroy_malloc_segments();
 }

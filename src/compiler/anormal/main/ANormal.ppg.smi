@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../name/main/CodeLabel.smi"
@@ -39,7 +39,8 @@ struct
     | ANBOTTOM
 
   datatype address =
-      AARECORDFIELD of
+      AAPTR of anvalue
+    | AARECORDFIELD of
       {
         recordExp : anvalue,
         fieldIndex : anvalue
@@ -58,7 +59,7 @@ struct
                   ifBoxed: initField, ifUnboxed: initField}
 
   datatype anexp =
-      ANLARGEINT of
+      ANINTINF of
       {
         resultVar: varInfo,
         dataLabel: ExtraDataLabel.id,
@@ -188,6 +189,7 @@ struct
     | ANRETURN of
       {
         value : anvalue,
+        ty : ty,
         loc : loc
       }
     | ANCOPY of
@@ -274,7 +276,7 @@ struct
         bodyExp : anexp,
         attributes : FFIAttributes.attributes,
         retTy : ty option,
-        cleanupHandler : HandlerLabel.id,
+        cleanupHandler : HandlerLabel.id option,
         loc : loc
       }
 
@@ -282,7 +284,8 @@ struct
       {
         topdata : topdata list,
         topdecs : topdec list,
-        topExp : anexp
+        topExp : anexp,
+        topCleanupHandler : HandlerLabel.id option
       }
 
   val format_ty

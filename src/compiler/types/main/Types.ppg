@@ -392,6 +392,16 @@ struct
           @format 
        *)
       UNIV
+    | (*% @format "#boxed" *)
+      (*% @prefix formatWithType_ 
+          @format "#boxed"
+       *)
+      BOXED
+    | (*% @format "#unboxed" *)
+      (*% @prefix formatWithType_ 
+          @format "#unboxed"
+       *)
+      UNBOXED
     | (*%
        * @format(ty tys)
        * "#" tys:enclosedLabelEnv(ty()(btvOrdEnv))("{",",",":","}")
@@ -652,7 +662,7 @@ struct
        iseq : bool,
        arity : int,
        runtimeTy : BuiltinTypeNames.bty,
-       conSet : {hasArg:bool} SEnv.map,
+       conSet : (unit -> ty) option SEnv.map,
        conIDSet : ConID.Set.set,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -776,24 +786,33 @@ struct
 
   and foreignFunTy =
       (*%
-       * @format({argTyList: argTy argTys,
+       * @format({tyvars: btvKind imap,
+       *          argTyList: argTy argTys,
        *          varArgTyList: varTy varTys varOpt,
        *          resultTy: retTy retTyOpt, attributes})
-       * L8{ 2[ attributes +1
+       * L8{ 2[
+       *   {imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."}
+       *   attributes +1
        *   R4{ argTys:appList(argTy()(btvOrdEnv))("(",",",")")
        *       varOpt(varTys:appList(varTy()(btvOrdEnv))("(",",",")"))("...",)
        *       +1 "->" +d retTyOpt:withDefault(retTy()(btvOrdEnv))("()") } ] }
+       * @format:btvKind({eqKind, tvarKind}) tvarKind()(btvOrdEnv)
        *)
       (*% @prefix formatWithType_
-       * @format({argTyList: argTy argTys,
+       * @format({tyvars: btvKind imap,
+       *          argTyList: argTy argTys,
        *          varArgTyList: varTy varTys varOpt,
        *          resultTy: retTy retTyOpt, attributes})
-       * L8{ 2[ attributes +1
+       * L8{ 2[
+       *   {imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."}
+       *   attributes +1
        *   R4{ argTys:appList(argTy()(btvOrdEnv))("(",",",")")
        *       varOpt(varTys:appList(varTy()(btvOrdEnv))("(",",",")"))("...",)
        *       +1 "->" +d retTyOpt:withDefault(retTy()(btvOrdEnv))("()") } ] }
+       * @format:btvKind({eqKind, tvarKind}) tvarKind()(btvOrdEnv)
        *)
       {
+        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
         argTyList : ty list,
         varArgTyList : ty list option,
         resultTy : ty option,
@@ -870,7 +889,8 @@ struct
       | SOME_FUNWRAPPERty => nil
       | SOME_CLOSUREENVty => nil
       | SOME_CCONVTAGty => nil
-      | FOREIGNFUNPTRty {argTyList, varArgTyList, resultTy, attributes} =>
+      | FOREIGNFUNPTRty {tyvars, argTyList, varArgTyList, resultTy,
+                         attributes} =>
         List.concat
           (map (btvOrderTy btv)
                (argTyList
@@ -882,6 +902,8 @@ struct
       | OPRIMkind {instances,...} =>
         List.concat (map (btvOrderTy btv) instances)
       | UNIV => nil
+      | BOXED => nil
+      | UNBOXED => nil
       | REC tys => List.concat (map (btvOrderTy btv) (LabelEnv.listItems tys))
       | JOIN (tys, ty1, ty2, loc) => List.concat (map (btvOrderTy btv) (LabelEnv.listItems tys))
   and btvOrder (boundtvars, body) =

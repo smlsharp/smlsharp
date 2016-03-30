@@ -1,9 +1,9 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require local "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
@@ -145,6 +145,7 @@ structure RecordCalc =
       | RCEXPORTEXN of exnInfo
       | RCEXPORTVAR of varInfo
       | RCEXTERNEXN of exExnInfo
+      | RCBUILTINEXN of exExnInfo
       | RCEXTERNVAR of exVarInfo
       | RCVAL of (varInfo * rcexp) list * Loc.loc
       | RCVALPOLYREC of Types.btvEnv * {exp:rcexp, expTy:Types.ty, var:varInfo} list * Loc.loc

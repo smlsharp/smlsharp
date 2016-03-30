@@ -5,20 +5,20 @@
  *)
 structure TempFile : sig
 
-  (* takes a template of filename, and generates a fresh filename based on
-   * the template, and create a file of that name.
-   * The template must be of the form "<base>.<suffix>". ".<suffix>" may be
-   * omitted. If the template is empty string, a random name will be used.
+  (* creates a fresh temporary file whose name is the given file name.
+   * If an empty string is given, this function generates a random name.
+   * If the given file name starts with ".", this function regards the
+   * given name as a suffix and generates a name at random.
    *)
   val create : string -> Filename.filename
-
+                                      
   val cleanup : unit -> unit
 
 end =
 struct
   val mktempRetryCount = 5
   val tmpDir = ref NONE : Filename.filename option ref
-  val tmpFiles = ref nil : Filename.filename list ref
+  val tmpFiles = ref nil : (Filename.filename * Filename.filename) list ref
   val tmpFileCount = ref 0
 
   fun mktemp_d retry =
@@ -86,18 +86,27 @@ struct
         loop ()
       end
 
-  fun create template =
+  fun create name =
       let
-        val filename = freshName template
+        val d = StringCvt.padLeft #"0" 3 (Int.fmt StringCvt.DEC (!tmpFileCount))
+        val _ = tmpFileCount := !tmpFileCount + 1
+        val name = if name = "" orelse String.isPrefix "." name
+                   then "tmp_" ^ d ^ name
+                   else name
+        val tmpDir = tmpDirName ()
+        val dir = Filename.concatPath (tmpDir, Filename.fromString d)
+        val _ = CoreUtils.mkdir dir
+        val tmpfile = Filename.concatPath (dir, Filename.fromString name)
+        val _ = tmpFiles := (dir, tmpfile) :: !tmpFiles
       in
-        CoreUtils.newFile filename;
-        tmpFiles := filename :: !tmpFiles;
-        filename
+        CoreUtils.newFile tmpfile;
+        tmpfile
       end
 
   fun cleanup () =
       (
-        app CoreUtils.rm_f (rev (!tmpFiles));
+        app (fn (dir, file) => (CoreUtils.rm_f file; CoreUtils.rmdir_f dir))
+            (rev (!tmpFiles));
         Option.map CoreUtils.rmdir_f (!tmpDir);
         tmpDir := NONE;
         tmpFiles := nil;

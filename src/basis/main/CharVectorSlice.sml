@@ -18,12 +18,12 @@ infix 7 * / div mod
 infix 6 + -
 infixr 5 ::
 infix 4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op > = SMLSharp_Builtin.Int.gt
-val op < = SMLSharp_Builtin.Int.lt
-val op <= = SMLSharp_Builtin.Int.lteq
-val op >= = SMLSharp_Builtin.Int.gteq
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op > = SMLSharp_Builtin.Int32.gt
+val op < = SMLSharp_Builtin.Int32.lt
+val op <= = SMLSharp_Builtin.Int32.lteq
+val op >= = SMLSharp_Builtin.Int32.gteq
 structure Array = SMLSharp_Builtin.Array
 structure Vector = SMLSharp_Builtin.Vector
 structure String = SMLSharp_Builtin.String
@@ -209,7 +209,7 @@ struct
             else
               let val x = Array.sub_unsafe (String.castToArray vec, i)
                   val x = mapFn (i - start, x)
-              in Array.update_unsafe (String.castToArray buf, i, x);
+              in Array.update_unsafe (String.castToArray buf, i - start, x);
                  loop (i + 1)
               end
       in

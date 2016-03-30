@@ -1,8 +1,8 @@
 _require "../../../basis.smi"
 _require "../../../ml-yacc-lib.smi"
-_require "Ast.smi"
-_require "AstUtil.smi"
-_require "FormatTemplate.smi"
+_require "./Ast.smi"
+_require "./AstUtil.smi"
+_require "./FormatTemplate.smi"
 
 structure MLLrVals = 
 struct

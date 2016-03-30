@@ -242,11 +242,6 @@ struct
        InterfaceID.id
 
   (*%
-     @formatter(AbsynInterface.interfaceName) AbsynInterface.format_interfaceName
-    *)
-  type interfaceName = (*% @format(x) x *) AbsynInterface.interfaceName
-
-  (*%
    * @formatter(decList) TermFormat.formatDeclList
    *)
   type interfaceDec =
@@ -273,6 +268,7 @@ struct
       (*%
        * @format({interfaceDecs: bind binds,
        *          requiredIds: req reqs,
+       *          locallyRequiredIds: lreq lreqs,
        *          provideTopdecs: pdec pdecs})
        * "local"
        * 2[ binds:decList(bind)(+1, +1) ]
@@ -280,12 +276,16 @@ struct
        * 2[ pdecs:decList(pdec)(+1, +1) ]
        * +1 "in"
        * 2[ reqs:decList(req)(+1, +1) ]
+       * 2[ lreqs:decList(lreq)(+1, +1) ]
        * @format:req({id, loc})
        * "require" +d id
+       * @format:lreq({id, loc})
+       * "local require:" +d id
        *)
       {
         interfaceDecs : interfaceDec list,
         requiredIds : {id: interfaceId, loc: loc} list,
+        locallyRequiredIds: {id: interfaceId, loc: loc} list,
         provideTopdecs : pitopdec list
       }
 
@@ -305,6 +305,31 @@ struct
       {
         interface : interface option,
         topdecsSource : PatternCalc.pltopdec list,
+        topdecsInclude : PatternCalc.pltopdec list
+      }
+
+  (* an interface loaded as if it is "_require"-ed *)
+  (*%
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(PatternCalc.pltopdec) PatternCalc.format_pltopdec
+   *)
+  type interface_unit =
+      (*%
+       * @format({interfaceDecs: bind binds,
+       *          requiredIds: req reqs,
+       *          topdecsInclude: inc incs})
+       * "interfaces"
+       * 2[ binds:decList(bind)(+1, +1) ]
+       * +1 "requires"
+       * 2[ reqs:decList(req)(+1, +1) ]
+       * +1 "topdesInclude"
+       * 2[ incs:decList(inc)(+1, +1) ]
+       * @format:req({id, loc})
+       * "require" +d id
+       *)
+      {
+        interfaceDecs : interfaceDec list,
+        requiredIds : {id: interfaceId, loc: loc} list,
         topdecsInclude : PatternCalc.pltopdec list
       }
 

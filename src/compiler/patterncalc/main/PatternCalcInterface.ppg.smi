@@ -1,10 +1,11 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../absyn/main/InterfaceName.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "./PatternCalc.ppg.smi"
@@ -94,8 +95,6 @@ struct
 
   type interfaceId = InterfaceID.id
 
-  type interfaceName = AbsynInterface.interfaceName
-
   type interfaceDec =
       {
         interfaceId: interfaceId,
@@ -107,6 +106,7 @@ struct
       {
         interfaceDecs : interfaceDec list,
         requiredIds : {id: interfaceId, loc: loc} list,
+        locallyRequiredIds : {id: interfaceId, loc: loc} list,
         provideTopdecs : pitopdec list
       } 
 
@@ -116,6 +116,13 @@ struct
         topdecsInclude : PatternCalc.pltopdec list,
         topdecsSource : PatternCalc.pltopdec list
       }
+
+  type interface_unit =
+      {
+        interfaceDecs : interfaceDec list,
+        requiredIds : {id: interfaceId, loc: loc} list,
+        topdecsInclude : PatternCalc.pltopdec list
+      } 
 
   type interactiveUnit =
       {
@@ -141,13 +148,13 @@ struct
 
   val format_pidec : pidec -> SMLFormat.FormatExpression.expression list
   val format_pitopdec : pitopdec -> SMLFormat.FormatExpression.expression list
-  val format_interfaceName : AbsynInterface.interfaceName
-                             -> SMLFormat.FormatExpression.expression list
 
   val format_interfaceDec
       : interfaceDec -> SMLFormat.FormatExpression.expression list
   val format_compileUnit
       : compileUnit -> SMLFormat.FormatExpression.expression list
+  val format_interface_unit
+      : interface_unit -> SMLFormat.FormatExpression.expression list
   val format_interactiveUnit
       : interactiveUnit -> SMLFormat.FormatExpression.expression list
   val pitopdecLoc : pitopdec -> loc

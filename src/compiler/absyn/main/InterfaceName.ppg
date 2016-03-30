@@ -1,0 +1,71 @@
+(* -*- sml -*- *)
+(**
+ * interface name
+ * @copyright (c) 2011, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+structure InterfaceName =
+struct
+
+  type hash = SHA3.digest
+
+  fun read64 (a,i,0) = 0w0
+    | read64 (a,i,j) =
+      Word64.orb (Word64.fromInt (Word8.toInt (Vector.sub (a,i))),
+                  Word64.<< (read64 (a,i+1,j-1), 0w8))
+
+  fun hash s = SHA3.shake128 (Byte.stringToBytes s, 8)
+  fun hashToString h = SHA3.hex h
+  fun hashToWord64 h = read64 (h,0,8)
+
+  fun format_hash x =
+      let
+        val s = hashToString x
+      in
+        [SMLFormat.FormatExpression.Term (size s, s)]
+      end
+
+  (*% *)
+  datatype file_place =
+      (*% *)
+      STDPATH
+    | (*% *)
+      LOCALPATH
+
+  (*% @formatter(Filename.filename) Filename.format_filename *)
+  (*% @prefix formatSimple_
+   *  @formatter(Filename.filename) Filename.format_filename *)
+  type source =
+      (*% @format(place * name) place +d name *)
+      (*% @prefix formatSimple_ @format(place * name) name *)
+      file_place * Filename.filename
+
+  (*% @formatter(hash) format_hash *)
+  (*% @prefix formatSimple_ @formatter(hash) format_hash *)
+  type interface_name =
+      (*%
+       * @format({hash, source})
+       * source +d "(" hash ")"
+       *)
+      (*%
+       * @prefix formatSimple_
+       * @format({hash, source})
+       * source +d "(" hash ")"
+       *)
+      {
+        hash: hash,
+        source: source
+      }
+
+  type dependency =
+      {
+        (* name of this interface *)
+        interfaceNameOpt : interface_name option,
+        (* list of interface files needed to load this *)
+        link : interface_name list,
+        (* list of files loaded during loading this *)
+        compile : source list
+      }
+
+end

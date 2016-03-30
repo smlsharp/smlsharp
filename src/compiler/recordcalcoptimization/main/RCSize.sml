@@ -164,6 +164,8 @@ local
          size (inc n) items 
        | RC.RCEXTERNEXN {path, ty} =>
          size (inc n) items 
+       | RC.RCBUILTINEXN {path, ty} =>
+         size (inc n) items 
        | RC.RCEXTERNVAR {path, ty} =>
          size (inc n) items 
        | RC.RCVAL (binds:(RC.varInfo * rcexp) list, loc) =>

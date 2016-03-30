@@ -99,6 +99,11 @@ struct
       | R.RCCAST ((exp,_),_,_) => isSimpleExp exp
       | R.RCFFI _ => false
 
+  val emptyEnv = BoundTypeVarID.Map.empty : T.btvEnv
+
+  fun addBoundTyvars env1 env2 : T.btvEnv =
+      BoundTypeVarID.Map.unionWith #2 (env1, env2)
+
   fun newVar ty =
       let
         val id = VarID.generate ()
@@ -120,7 +125,8 @@ struct
   fun BitCast ({ty, exp}, ty2, loc) =
       {ty = ty2,
        exp = R.RCPRIMAPPLY
-               {primOp = {primitive = BuiltinPrimitive.BitCast,
+               {primOp = {primitive = BuiltinPrimitive.Cast
+                                        BuiltinPrimitive.BitCast,
                           ty = T.FUNMty ([ty], ty2)},
                 instTyList = nil,
                 argExp = exp,
@@ -194,7 +200,7 @@ struct
     | zipApp (f::ft) (h::t) = f h :: zipApp ft t
     | zipApp _ _ = raise Bug.Bug "zipApp"
 
-  fun stubImport ffity =
+  fun stubImport env ffity =
       case ffity of
         TC.FFIBASETY (ty, loc) => (ty, fn x => x)
       | TC.FFIRECORDTY (fields, loc) =>
@@ -202,18 +208,20 @@ struct
       | TC.FFIFUNTY (attributes, argTys, varTys, retTys, loc) =>
         let
           val attributes = getOpt (attributes, FFIAttributes.defaultFFIAttributes)
-          val (argTys1, exportFns1) = ListPair.unzip (map stubExport argTys)
+          val (argTys1, exportFns1) =
+              ListPair.unzip (map (stubExport env) argTys)
           val (argTys2, exportFns2) =
               case varTys of
                 NONE => (nil, nil)
-              | SOME varTys => ListPair.unzip (map stubExport varTys)
+              | SOME varTys => ListPair.unzip (map (stubExport env) varTys)
           val (argVar, argExps) = decomposeArg (argTys1 @ argTys2, loc)
           val ffiArgExps = zipApp (exportFns1 @ exportFns2) argExps
           val (ffiArgTyList, ffiVarArgTyList) =
               case varTys of
                 NONE => (map #ty ffiArgExps, NONE)
               | SOME _ => split (map #ty ffiArgExps) (length exportFns1)
-          val (ffiRetTys, importFns) = ListPair.unzip (map stubImport retTys)
+          val (ffiRetTys, importFns) =
+              ListPair.unzip (map (stubImport env) retTys)
           val ffiRetTy =
               case ffiRetTys of
                 nil => NONE
@@ -223,7 +231,8 @@ struct
           val retExps = zipApp importFns ffiRetExps
           val retExp = composeArg (retExps, loc)
         in
-          (T.BACKENDty (T.FOREIGNFUNPTRty {argTyList = ffiArgTyList,
+          (T.BACKENDty (T.FOREIGNFUNPTRty {tyvars = env,
+                                           argTyList = ffiArgTyList,
                                            varArgTyList = ffiVarArgTyList,
                                            resultTy = ffiRetTy,
                                            attributes = attributes}),
@@ -247,12 +256,12 @@ struct
                                bodyExp = #exp retExp}}})
         end
 
-  and stubExport ffity =
+  and stubExport env ffity =
       case ffity of
         TC.FFIBASETY (ty, loc) => (ty, fn x => x)
       | TC.FFIRECORDTY (fields, loc) =>
         let
-          val stubs = map (fn (k,ty) => (k, stubExport ty)) fields
+          val stubs = map (fn (k,ty) => (k, stubExport env ty)) fields
           val retTys = map (fn (k,(ty,_)) => (k,ty)) stubs
           fun stubFields exps =
               tupleLabels (zipApp (map (fn (_,(_,f)) => f) stubs) exps)
@@ -266,12 +275,12 @@ struct
       | TC.FFIFUNTY (attributes, argTys, NONE, retTys, loc) =>
         let
           val attributes = getOpt (attributes, FFIAttributes.defaultFFIAttributes)
-          val (argTys, importFns) = ListPair.unzip (map stubImport argTys)
+          val (argTys, importFns) = ListPair.unzip (map (stubImport env) argTys)
           val ffiArgVars = map newVar argTys
           val argExps = zipApp importFns (map (varExp loc) ffiArgVars)
           val argExp = composeArg (argExps, loc)
           val ffiArgTyList = map #ty ffiArgVars
-          val (retTys, exportFns) = ListPair.unzip (map stubExport retTys)
+          val (retTys, exportFns) = ListPair.unzip (map (stubExport env) retTys)
           val (retVar, retExps) = decomposeArg (retTys, loc)
           val ffiRetExps = zipApp exportFns retExps
           val ffiRetExp = composeArg (ffiRetExps, loc)
@@ -284,7 +293,8 @@ struct
           (T.FUNMty ([#ty argExp], #ty retVar),
            fn funExp =>
               {ty = T.BACKENDty (T.FOREIGNFUNPTRty
-                                   {argTyList = ffiArgTyList,
+                                   {tyvars = env,
+                                    argTyList = ffiArgTyList,
                                     varArgTyList = NONE,
                                     resultTy = ffiRetTy,
                                     attributes = attributes}),
@@ -327,20 +337,20 @@ struct
         )
       | _ => exp
 
-  and compileFFIexp (rcffiexp, resultTy, loc) =
+  and compileFFIexp env (rcffiexp, resultTy, loc) =
       case rcffiexp of
         R.RCFFIIMPORT {funExp = R.RCFFIFUN ptrExp, ffiTy} =>
         let
-          val ptrExp = {ty = BT.codeptrTy, exp = compileExp ptrExp}
+          val ptrExp = {ty = BT.codeptrTy, exp = compileExp env ptrExp}
           val (letFn, ptrExp) = toSimpleExp (ptrExp, loc)
-          val (funptrTy, importExpFn) = stubImport ffiTy
+          val (funptrTy, importExpFn) = stubImport env ffiTy
           val ptrExp = BitCast (ptrExp, funptrTy, loc)
         in
           letFn (infectPoly (resultTy, #exp (importExpFn ptrExp)))
         end
       | R.RCFFIIMPORT {funExp = R.RCFFIEXTERN name, ffiTy} =>
         let
-          val (funptrTy, importExpFn) = stubImport ffiTy
+          val (funptrTy, importExpFn) = stubImport env ffiTy
           val symbolExp =
               {ty = funptrTy,
                exp = R.RCFOREIGNSYMBOL {name=name, ty=funptrTy, loc=loc}}
@@ -348,19 +358,19 @@ struct
           infectPoly (resultTy, #exp (importExpFn symbolExp))
         end
 
-  and compileExp rcexp =
+  and compileExp env rcexp =
       case rcexp of
         R.RCFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
         R.RCFOREIGNAPPLY
-          {funExp = compileExp funExp,
-           argExpList = map compileExp argExpList,
+          {funExp = compileExp env funExp,
+           argExpList = map (compileExp env) argExpList,
            attributes = attributes,
            resultTy = resultTy,
            loc = loc}
       | R.RCCALLBACKFN {argVarList, bodyExp, attributes, resultTy, loc} =>
         R.RCCALLBACKFN
           {argVarList = argVarList,
-           bodyExp = compileExp bodyExp,
+           bodyExp = compileExp env bodyExp,
            attributes = attributes,
            resultTy = resultTy,
            loc = loc}
@@ -382,26 +392,26 @@ struct
         R.RCPRIMAPPLY
           {primOp = primOp,
            instTyList = instTyList,
-           argExp = compileExp argExp,
+           argExp = compileExp env argExp,
            loc = loc}
       | R.RCOPRIMAPPLY {oprimOp, instTyList, argExp, loc} =>
         R.RCOPRIMAPPLY
           {oprimOp = oprimOp,
            instTyList = instTyList,
-           argExp = compileExp argExp,
+           argExp = compileExp env argExp,
            loc = loc}
       | R.RCDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt, loc} =>
         R.RCDATACONSTRUCT
           {con = con,
            instTyList = instTyList,
-           argExpOpt = Option.map compileExp argExpOpt,
+           argExpOpt = Option.map (compileExp env) argExpOpt,
            argTyOpt = argTyOpt,
            loc = loc}
       | R.RCEXNCONSTRUCT {exn, instTyList, argExpOpt, loc} =>
         R.RCEXNCONSTRUCT
           {exn = exn,
            instTyList = instTyList,
-           argExpOpt = Option.map compileExp argExpOpt,
+           argExpOpt = Option.map (compileExp env) argExpOpt,
            loc = loc}
       | R.RCEXN_CONSTRUCTOR {exnInfo, loc} => (* FIXME chck this *)
         R.RCEXN_CONSTRUCTOR {exnInfo=exnInfo, loc=loc} 
@@ -409,124 +419,126 @@ struct
         R.RCEXEXN_CONSTRUCTOR {exExnInfo=exExnInfo, loc=loc} 
       | R.RCAPPM {funExp, funTy, argExpList, loc} =>
         R.RCAPPM
-          {funExp = compileExp funExp,
+          {funExp = compileExp env funExp,
            funTy = funTy,
-           argExpList = map compileExp argExpList,
+           argExpList = map (compileExp env) argExpList,
            loc = loc}
       | R.RCMONOLET {binds, bodyExp, loc} =>
         R.RCMONOLET
-          {binds = map (fn (v,e) => (v, compileExp e)) binds,
-           bodyExp = compileExp bodyExp,
+          {binds = map (fn (v,e) => (v, compileExp env e)) binds,
+           bodyExp = compileExp env bodyExp,
            loc = loc}
       | R.RCLET {decls, body, tys, loc} =>
         R.RCLET {decls = map compileDecl decls,
-                 body = map compileExp body,
+                 body = map (compileExp env) body,
                  tys = tys,
                  loc = loc}
       | R.RCRECORD {fields, recordTy, loc} =>
         R.RCRECORD
-          {fields = LabelEnv.map compileExp fields,
+          {fields = LabelEnv.map (compileExp env) fields,
            recordTy = recordTy,
            loc = loc}
       | R.RCSELECT {indexExp, label, exp, expTy, resultTy, loc} =>
         R.RCSELECT
-          {indexExp = compileExp indexExp,
+          {indexExp = compileExp env indexExp,
            label = label,
-           exp = compileExp exp,
+           exp = compileExp env exp,
            expTy = expTy,
            resultTy = resultTy,
            loc = loc}
       | R.RCMODIFY {indexExp, label, recordExp, recordTy, elementExp,
                     elementTy, loc} =>
         R.RCMODIFY
-          {indexExp = compileExp indexExp,
+          {indexExp = compileExp env indexExp,
            label = label,
-           recordExp = compileExp recordExp,
+           recordExp = compileExp env recordExp,
            recordTy = recordTy,
-           elementExp = compileExp elementExp,
+           elementExp = compileExp env elementExp,
            elementTy = elementTy,
            loc = loc}
       | R.RCRAISE {exp, ty, loc} =>
-        R.RCRAISE {exp = compileExp exp, ty = ty, loc = loc}
+        R.RCRAISE {exp = compileExp env exp, ty = ty, loc = loc}
       | R.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         R.RCHANDLE
-          {exp = compileExp exp,
+          {exp = compileExp env exp,
            exnVar = exnVar,
-           handler = compileExp handler,
+           handler = compileExp env handler,
            resultTy = resultTy,
            loc = loc}
       | R.RCCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         R.RCCASE
-          {exp = compileExp exp,
+          {exp = compileExp env exp,
            expTy = expTy,
-           ruleList = map (fn (c,v,e) => (c, v, compileExp e)) ruleList,
-           defaultExp = compileExp defaultExp,
+           ruleList = map (fn (c,v,e) => (c, v, compileExp env e)) ruleList,
+           defaultExp = compileExp env defaultExp,
            resultTy = resultTy,
            loc = loc}
       | R.RCEXNCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
         R.RCEXNCASE
-          {exp = compileExp exp,
+          {exp = compileExp env exp,
            expTy = expTy,
-           ruleList = map (fn (c,v,e) => (c, v, compileExp e)) ruleList,
-           defaultExp = compileExp defaultExp,
+           ruleList = map (fn (c,v,e) => (c, v, compileExp env e)) ruleList,
+           defaultExp = compileExp env defaultExp,
            resultTy = resultTy,
            loc = loc}
       | R.RCSWITCH {switchExp, expTy, branches, defaultExp, resultTy, loc} =>
         R.RCSWITCH
-          {switchExp = compileExp switchExp,
+          {switchExp = compileExp env switchExp,
            expTy = expTy,
-           branches = map (fn (c,e) => (c, compileExp e)) branches,
-           defaultExp = compileExp defaultExp,
+           branches = map (fn (c,e) => (c, compileExp env e)) branches,
+           defaultExp = compileExp env defaultExp,
            resultTy = resultTy,
            loc = loc}
       | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
         R.RCFNM
           {argVarList = argVarList,
            bodyTy = bodyTy,
-           bodyExp = compileExp bodyExp,
+           bodyExp = compileExp env bodyExp,
            loc = loc}
       | R.RCPOLYFNM {btvEnv, argVarList, bodyTy, bodyExp, loc} =>
         R.RCPOLYFNM
           {btvEnv = btvEnv,
            argVarList = argVarList,
            bodyTy = bodyTy,
-           bodyExp = compileExp bodyExp,
+           bodyExp = compileExp (addBoundTyvars env btvEnv) bodyExp,
            loc = loc}
       | R.RCPOLY {btvEnv, expTyWithoutTAbs, exp, loc} =>
         R.RCPOLY
           {btvEnv = btvEnv,
            expTyWithoutTAbs = expTyWithoutTAbs,
-           exp = compileExp exp,
+           exp = compileExp (addBoundTyvars env btvEnv) exp,
            loc = loc}
       | R.RCTAPP {exp, expTy, instTyList, loc} =>
         R.RCTAPP
-          {exp = compileExp exp,
+          {exp = compileExp env exp,
            expTy = expTy,
            instTyList = instTyList,
            loc = loc}
       | R.RCSEQ {expList, expTyList, loc} =>
         R.RCSEQ
-          {expList = map compileExp expList,
+          {expList = map (compileExp env) expList,
            expTyList = expTyList,
            loc = loc}
       | R.RCCAST ((rcexp, expTy), ty, loc) =>
-        R.RCCAST ((compileExp rcexp, expTy), ty, loc)
+        R.RCCAST ((compileExp env rcexp, expTy), ty, loc)
       | R.RCFFI (exp, ty, loc) =>
-        compileFFIexp (exp, ty, loc)
+        compileFFIexp env (exp, ty, loc)
 
   and compileDecl rcdecl =
       case rcdecl of
         R.RCVAL (bindList, loc) =>
-        R.RCVAL (map (fn (v,e) => (v, compileExp e)) bindList, loc)
+        R.RCVAL (map (fn (v,e) => (v, compileExp emptyEnv e)) bindList, loc)
       | R.RCVALREC (bindList, loc) =>
         R.RCVALREC (map (fn {var, expTy, exp} =>
-                            {var=var, expTy=expTy, exp=compileExp exp})
+                            {var=var, expTy=expTy, exp=compileExp emptyEnv exp})
                         bindList,
                     loc)
       | R.RCVALPOLYREC (btvEnv, bindList, loc) =>
         R.RCVALPOLYREC (btvEnv,
                         map (fn {var, expTy, exp} =>
-                                {var=var, expTy=expTy, exp=compileExp exp})
+                                {var=var,
+                                 expTy=expTy,
+                                 exp=compileExp btvEnv exp})
                             bindList,
                         loc)
       | R.RCEXD (binds, loc) =>
@@ -541,6 +553,8 @@ struct
         R.RCEXTERNVAR exVarInfo
       | R.RCEXTERNEXN exExnInfo =>
         R.RCEXTERNEXN exExnInfo
+      | R.RCBUILTINEXN exExnInfo =>
+        R.RCBUILTINEXN exExnInfo
 
   fun compile decls =
       map compileDecl decls

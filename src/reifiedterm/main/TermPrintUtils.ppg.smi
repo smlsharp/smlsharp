@@ -1,7 +1,7 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../basis.smi"
+_require "../../smlformat-lib.smi"
 _require "../../compiler-utils/env/main/LabelEnv.smi"
-_require "./ReflectionControl.smi"
+_require local "../../compiler/control/main/Control.ppg.smi"
 
 structure TermPrintUtils =
 struct
@@ -13,15 +13,18 @@ struct
   val format_label : string -> format
   val format_char : char -> format
   val format_int32 : Int32.int -> format
+  val format_int64 : Int64.int -> format
   val format_real32 : Real32.real -> format
   val format_word32 : Word32.word -> format
+  val format_word64 : Word64.word -> format
   val format_word8 : Word8.word -> format
   val format_IntInf : IntInf.int -> format
   val formatElements 
-    : 'a SMLFormat.BasicFormatters.formatter * format -> 'a list -> format
+    : 'a SMLFormat.BasicFormatters.formatter * format * format -> 'a list -> format
   val format_lazyArray 
-    : 'a SMLFormat.BasicFormatters.formatter * format
+    : 'a SMLFormat.BasicFormatters.formatter * format * format
        -> (int -> 'a list * bool) -> format
+(*
   type 'a record = (string * 'a) list
   val format_record 
     : ('a -> format) * format * format -> (string * 'a) list -> format
@@ -32,6 +35,7 @@ struct
     : ('a -> format) * format * format -> (string * 'a) list -> format
   val formatLmap 
     : ('a -> format) * format * format -> 'a LabelEnv.map -> format
+*)
   val formatPrependedOpt 
     : ('a -> format) * format -> 'a option -> format
   val formatIfCons : format -> 'a list -> format

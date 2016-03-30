@@ -1,10 +1,6 @@
-_require "basis.smi"
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-(*
-_require "../../../compiler-utils/env/main/PathEnv.smi"
-*)
-
 _require "../../control/main/Control.ppg.smi"
 _require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
@@ -17,11 +13,11 @@ _require "../../name/main/LocalID.smi"
 _require "../../types/main/EvalIty.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
-_require "../../types/main/tvarMap.smi"
+_require "../../types/main/TvarMap.smi"
 _require "../../types/main/OPrimInstMap.smi"
 _require "../../usererror/main/UserError.ppg.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
-_require "../../util/main/utils.smi"
+_require "../../util/main/TupleUtils.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "./CheckProvide.smi"
@@ -56,4 +52,9 @@ structure NameEval =
     val evalBuiltin
         : PatternCalcInterface.pitopdec list
           -> NameEvalEnv.topEnv * IDCalc.icdecl list
+
+    val nameEvalInterface
+        : NameEvalEnv.topEnv
+          -> PatternCalcInterface.interface_unit
+          -> NameEvalEnv.topEnv * UserError.errorInfo list
   end

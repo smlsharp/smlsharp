@@ -20,7 +20,8 @@ struct
         stopAt = NoStop,
         baseFilename = NONE,
         stdPath = nil,
-        loadPath = nil
+        loadPath = nil,
+        loadAllInterfaceFiles = false
       } : options
 
   fun extendContext ({topEnv, fixEnv, version, builtinDecls} : toplevelContext,
@@ -81,7 +82,8 @@ struct
       else ()
 
   fun printParseResult flag title code =
-      printCode flag AbsynFormatter.unitParseResultToString title [code]
+      printCode flag (Control.prettyPrint o Absyn.format_unitparseresult)
+                title [code]
 
   fun printAbsyn flag title code =
       printCode flag (Control.prettyPrint o AbsynInterface.format_compileUnit)
@@ -114,18 +116,20 @@ struct
         title code
 
   fun printRecordCalc flag title code =
-      printCode flag
-                (if !Control.printWithType
-                 then RecordCalcFormatter.rcdecToString
-                 else RecordCalcFormatter.rcdecToStringWithoutType)
-                title code
+      printCode
+        flag
+        (if !Control.printWithType
+         then Control.prettyPrint o (RecordCalc.format_rcdecl nil)
+         else Control.prettyPrint o (RecordCalc.formatWithoutType_rcdecl nil))
+        title code
 
   fun printTypedLambda flag title code =
-      printCode flag
-                (if !Control.printWithType
-                 then TypedLambdaFormatter.tldecToStringWithType
-                 else TypedLambdaFormatter.tldecToString)
-                title code
+      printCode
+        flag
+        (if !Control.printWithType
+         then Control.prettyPrint o (TypedLambda.formatWithType_tldecl nil)
+         else Control.prettyPrint o (TypedLambda.format_tldecl nil))
+        title code
 
   fun printBitmapCalc2 flag title code =
       printCode flag
@@ -184,37 +188,21 @@ struct
           {interface = Absyn.NOINTERFACE, tops = nil, loc = Loc.noloc}
       end
 
-  fun doLoadFile ({baseFilename, stdPath, loadPath, ...}:options)
+  fun doLoadFile ({baseFilename, stdPath, loadPath, loadAllInterfaceFiles,
+                   ...}:options)
                  ({version, ...}: toplevelContext)
                  absyn =
       let
         val _ = #start Counter.loadFileTimeCounter()
         val (dependency, abunit) =
             LoadFile.load
-              {baseFilename=baseFilename, stdPath=stdPath, loadPath=loadPath}
+              {baseFilename=baseFilename, stdPath=stdPath, loadPath=loadPath,
+               loadAll=loadAllInterfaceFiles}
               absyn
         val _ = #stop Counter.loadFileTimeCounter()
         val _ = printAbsyn Control.printLoadFile "File Loaded" abunit
       in
         (dependency, abunit)
-      end
-
-  fun provideName ({interface, ...} : AbsynInterface.compileUnit) =
-      case interface of
-        NONE => NONE
-      | SOME {provideInterfaceNameOpt, ...} => provideInterfaceNameOpt
-
-  fun doGenerateModuleName version abunit =
-      let
-        val _ = #start Counter.generateMainTimeCounter()
-        val moduleName = GenerateMain.moduleName (provideName abunit, version)
-        val _ =  #stop Counter.generateMainTimeCounter()
-        val _ = if !Control.printGenerateMain
-                then printError ("Generated module name: "
-                                 ^ #moduleName moduleName ^ "\n")
-                else ()
-      in
-        moduleName
       end
 
   fun doElaboration fixEnv abunit =
@@ -275,12 +263,26 @@ struct
         (typeinfVarE, tpdecs)
       end
 
+(*
   fun doPrinterGeneration exnConList topEnv tpdecs =
       let
         val _ = #start Counter.printerGenerationTimeCounter()
         val (topEnv, externDecls, printDecls) =
             PrinterGeneration.generate exnConList topEnv
         val tpdecs = externDecls @ tpdecs @ printDecls
+        val _ =  #stop Counter.printerGenerationTimeCounter()
+        val _ = printTypedCalc Control.printPrinterGen
+                               "Printer Generated" tpdecs
+      in
+        tpdecs
+      end
+*)
+
+  fun doInstantiate topEnv tpdecs =
+      let
+        val _ = #start Counter.printerGenerationTimeCounter()
+        val newDecls =  Reify.instantiateTopEnv topEnv
+        val tpdecs = tpdecs @ newDecls
         val _ =  #stop Counter.printerGenerationTimeCounter()
         val _ = printTypedCalc Control.printPrinterGen
                                "Printer Generated" tpdecs
@@ -440,11 +442,10 @@ struct
         anprog
       end
 
-  fun doMachineCodeGen moduleName anprog =
+  fun doMachineCodeGen dependency anprog =
       let
         val _ = #start Counter.machineCodeGenTimeCounter()
-        val mainSymbol = {mainSymbol = #mainSymbol moduleName}
-        val mcprog = MachineCodeGen.compile mainSymbol anprog
+        val mcprog = MachineCodeGen.compile dependency anprog
         val _ = #stop Counter.machineCodeGenTimeCounter()
         val _ = printMachineCode Control.printMachineCodeGen
                                  "MachineCodeGen" mcprog
@@ -474,11 +475,10 @@ struct
         mcprog
       end
 
-  fun doLLVMGen moduleName mcprog =
+  fun doLLVMGen ({triple,...}:LLVMUtils.compile_options) mcprog =
       let
         val _ = #start Counter.llvmGenTimeCounter()
-        val moduleName = {moduleName = #moduleName moduleName}
-        val llvmprog = LLVMGen.compile moduleName mcprog
+        val llvmprog = LLVMGen.compile {targetTriple = triple} mcprog
         val _ = #stop Counter.llvmGenTimeCounter()
         val _ = printLLVMIR Control.printLLVMGen "LLVM generated" llvmprog
       in
@@ -539,16 +539,18 @@ struct
   end (* local *)
 *)
 
-  exception Return of LoadFile.dependency * result
+  exception Return of InterfaceName.dependency * result
 
- fun compile (options as {stopAt,baseFilename,stdPath,loadPath}) 
+  fun compile llvmOptions
+              (options as {stopAt,...}:TopData.options)
               (context as {topEnv, fixEnv, version, builtinDecls}) input =
       let
         val _ = #start Counter.compilationTimeCounter()
 
+        val _ = TypeLayout2.init llvmOptions
+
         val parsed = doParse input
         val (dependency, abunit) = doLoadFile options context parsed
-        val moduleName = doGenerateModuleName version abunit
 
         val (newFixEnv, plunit) = doElaboration fixEnv abunit
 
@@ -571,10 +573,18 @@ struct
             if !Control.interactiveMode
             then NameEvalEnvUtils.mergeTypeEnv (nameevalTopEnv, typeinfVarEnv)
             else nameevalTopEnv
+
+(*
         val tpcalc =
             if !Control.interactiveMode andalso not (!Control.skipPrinter)
             then doPrinterGeneration exnConList nameevalTopEnv tpcalc
             else tpcalc
+*)
+        val tpcalc =
+            if !Control.interactiveMode 
+            then doInstantiate nameevalTopEnv tpcalc
+            else tpcalc
+
         val nameevalTopEnv = NameEvalEnvUtils.resetInternalId nameevalTopEnv
 
         val newContext = {topEnv=nameevalTopEnv, fixEnv=newFixEnv}
@@ -606,12 +616,12 @@ struct
         val cccalc = doClosureConversion2 bccalc
         val nccalc = doCallingConventionCompile cccalc
         val ancalc = doANormalize nccalc
-        val mccalc = doMachineCodeGen moduleName ancalc
+        val mccalc = doMachineCodeGen dependency ancalc
         val mccalc = if !Control.insertCheckGC
                      then doInsertCheckGC mccalc
                      else mccalc
         val mccalc = doStackAllocation mccalc
-        val llvmir = doLLVMGen moduleName mccalc
+        val llvmir = doLLVMGen llvmOptions mccalc
         val module = doLLVMEmit llvmir
 
         val _ =  #stop Counter.compilationTimeCounter()
@@ -621,39 +631,12 @@ struct
       handle Return return =>
              (#stop Counter.compilationTimeCounter(); return)
 
-  fun generateMain ({builtinDecls, ...}:toplevelContext) interfaceNames =
-      let
-        val _ = #start Counter.generateMainTimeCounter ()
-        val rccalc = GenerateMain.generateBuiltin builtinDecls
-        val {mainFn, moduleName} = GenerateMain.generateEntryCode interfaceNames
-        val tlcalc = doDatatypeCompilation rccalc
-        val bccalc = doBitmapCompilation2 tlcalc
-        val cccalc = doClosureConversion2 bccalc
-        val nccalc = doCallingConventionCompile cccalc
-        val ancalc = doANormalize nccalc
-        val mccalc = doMachineCodeGen {mainSymbol="dummy"} ancalc
-        val llvmir = mainFn (doLLVMGen moduleName mccalc)
-        val _ = printLLVMIR Control.printGenerateMain "Generate Main" llvmir
-        val module = doLLVMEmit llvmir
-        val _ = #stop Counter.generateMainTimeCounter ()
-      in
-        module
-      end
-
-  type load_interface_options =
-       {stdPath: Filename.filename list,
-        loadPath: Filename.filename list}
-
   fun loadBuiltin filename =
       let
-        val realPath = Filename.realPath filename
-        val sourceName = Filename.toString realPath
-        val file = Filename.TextIO.openIn realPath
-            handle e as IO.Io {cause, function, name} =>
-                   raise Bug.Bug "open fail builtin file"
+        val file = Filename.TextIO.openIn filename
         val input = InterfaceParser.setup
                       {read = fn n => TextIO.inputN (file, n),
-                       sourceName = sourceName}
+                       sourceName = Filename.toString filename}
         val itop = InterfaceParser.parse input
         val abunit =
             case itop of
@@ -662,7 +645,8 @@ struct
                SOME {interfaceDecs = nil,
                      provideInterfaceNameOpt = NONE,
                      provideTopdecs = provide,
-                     requiredIds = nil},
+                     requiredIds = nil,
+                     locallyRequiredIds = nil},
                topdecsInclude = nil,
                topdecsSource = nil}
             | _ => raise Bug.Bug "illeagal builtin file"
@@ -685,7 +669,8 @@ struct
       let
         val _ = #start Counter.loadFileTimeCounter()
         val plinteractive =
-            LoadFile.loadInteractiveEnv {stdPath=stdPath, loadPath=loadPath} filename
+            LoadFile.loadInteractiveEnv {stdPath=stdPath, loadPath=loadPath,
+                                         loadAll=false} filename
         val _ =  #stop Counter.loadFileTimeCounter()
         val (newFixEnv, plinteractive)  = doElaborationInteractiveEnv fixEnv plinteractive
         val newTopEnv = doNameEvaluationInteractiveEnv topEnv plinteractive
@@ -693,50 +678,49 @@ struct
         {topEnv=newTopEnv, fixEnv=newFixEnv}
       end
 
-(*
-  fun loadInterface ({stopAt, stdPath, loadPath}:load_interface_options)
-                    context
+  type load_interface_options =
+       {stopAt : stopAt,
+        stdPath : Filename.filename list,
+        loadPath : Filename.filename list,
+        loadAllInterfaceFiles : bool}
+
+  fun loadInterface ({stopAt, stdPath, loadPath,
+                      loadAllInterfaceFiles}:load_interface_options)
+                    ({topEnv, fixEnv, ...}:toplevelContext)
                     filename =
       let
-        val _ = #start Counter.loadFileTimeCounter()
-        val (dependency, interfaceFileKind, abunit) =
-            LoadFile.loadInterface
-              {stdPath=stdPath, loadPath=loadPath}
+        val _ = #start Counter.loadFileTimeCounter ()
+        val (dependency, abunit) =
+            LoadFile.loadInterfaceFile
+              {stdPath=stdPath, loadPath=loadPath,
+               loadAll=loadAllInterfaceFiles}
               filename
-        val _ =  #stop Counter.loadFileTimeCounter()
+        val _ = #stop Counter.loadFileTimeCounter ()
+        val _ = printCode Control.printLoadFile
+                          (Control.prettyPrint
+                           o AbsynInterface.format_interface_unit)
+                          "File Loaded" [abunit]
 
-        val (newFixEnv, plunit) = doElaboration context abunit
-        val plunit = openProvide plunit
-
-        val _ = if stopAt = SyntaxCheck
-                then raise Return (dependency, interfaceFileKind, NONE)
-                else ()
-
-        val context = context # {version=NONE, builtinDecls=nil}
-        val (newTopEnv, decls) = doNameEvaluation context plunit
-
-        (* all topdecs should be eliminated by NameEval. *)
-        val _ =
-            case decls of
-              nil => ()
-            | _::_ => raise Bug.Bug "loadInterface non nil icdecls"
-
-        val newContext = {topEnv=newTopEnv, fixEnv=newFixEnv}
+        val _ = #start Counter.elaborationTimeCounter ()
+        val (newFixEnv, plunit, warnings) =
+            Elaborator.elaborateInterface fixEnv abunit
+        val _ =  #stop Counter.elaborationTimeCounter()
+        val _ = printWarnings warnings
+        val _ = printCode Control.printElab
+                          (Control.prettyPrint
+                           o PatternCalcInterface.format_interface_unit)
+                          "Elaborated" [plunit]
       in
-        (dependency, interfaceFileKind, SOME newContext)
+        if stopAt = SyntaxCheck then (dependency, NONE) else
+        let
+          val _ = #start Counter.nameEvaluationTimeCounter ()
+          val (newTopEnv, warnings) = NameEval.nameEvalInterface topEnv plunit
+          val _ =  #stop Counter.nameEvaluationTimeCounter ()
+          val _ = printWarnings warnings
+        in
+          (* return newContext for codes requiring this interface *)
+          (dependency, SOME {topEnv=newTopEnv, fixEnv=newFixEnv})
+        end
       end
-      handle Return return => return
 
-  fun loadBuiltin filename =
-      let
-        val (_, _, abunit) =
-            LoadFile.loadInterface {stdPath=nil, loadPath=nil} filename
-        val (fixEnv, plunit, _) = Elaborator.elaborate SEnv.empty abunit
-        val plunit = openProvide plunit
-        val (topEnv, idcalc) = NameEval.evalBuiltin (#openProvide plunit)
-      in
-        {topEnv=topEnv, version=NONE, fixEnv=fixEnv, builtinDecls=idcalc}
-        : context
-      end
-*)
 end

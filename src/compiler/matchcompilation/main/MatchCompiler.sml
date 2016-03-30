@@ -187,6 +187,7 @@ local
             | TC.TPEXPORTEXN exnInfo => set
             | TC.TPEXTERNVAR exVarInfo => set
             | TC.TPEXTERNEXN exExnInfo => set
+            | TC.TPBUILTINEXN exExnInfo => set
       in
         get (tpexp, VarInfoSet.empty)
       end
@@ -364,6 +365,7 @@ in
         | TC.TPEXPORTEXN exnInfo => limitCheck itemList (n + 1)
         | TC.TPEXTERNVAR exVarInfo => limitCheck itemList (n + 1)
         | TC.TPEXTERNEXN exExnInfo => limitCheck itemList (n + 1)
+        | TC.TPBUILTINEXN exExnInfo => limitCheck itemList (n + 1)
     in
       limitCheck [(Exp tpexp)] 0
     end
@@ -1555,6 +1557,7 @@ in
        | TC.TPEXPORTEXN exnInfo => RC.RCEXPORTEXN (toRCcon exnInfo)
        | TC.TPEXTERNVAR exVarInfo => RC.RCEXTERNVAR (toRCEx exVarInfo)
        | TC.TPEXTERNEXN exExnInfo => RC.RCEXTERNEXN (toRCEx exExnInfo)
+       | TC.TPBUILTINEXN exExnInfo => RC.RCBUILTINEXN (toRCEx exExnInfo)
 
   fun compile tpdecls =
       let

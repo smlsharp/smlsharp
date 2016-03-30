@@ -32,6 +32,12 @@ in
       orelse occurres tvarRef h2
       orelse occurresTyEqList tvarRef t
                                 
+  fun isBoxedTy ty =
+      case TypeLayout2.runtimeTy BoundTypeVarID.Map.empty ty of
+        SOME RuntimeTypes.BOXEDty => true
+      | SOME _ => false
+      | NONE => raise bug "isBoxedTy"
+
   exception TyConId
   fun tyConId ty = 
       case TB.derefTy ty of
@@ -151,6 +157,8 @@ in
                  [ty1] => [(ty,ty1)]
                | _ => raise Unify)
             | T.UNIV => nil
+            | T.BOXED => if isBoxedTy ty then nil else raise Unify
+            | T.UNBOXED => if isBoxedTy ty then raise Unify else nil
             | T.JOIN _ =>  raise Unify
       in
         newTyEquations
@@ -313,6 +321,40 @@ in
                      },
                    newEqs)
               end
+            | (T.BOXED, T.OCONSTkind tys) =>
+              (T.OCONSTkind (List.filter isBoxedTy tys), nil)
+            | (T.BOXED, T.OPRIMkind {instances, operators}) =>
+              (T.OPRIMkind {instances = List.filter isBoxedTy instances,
+                            operators = operators},
+               nil)
+            | (T.BOXED, T.BOXED) => (T.BOXED, nil)
+            | (T.BOXED, T.REC x) => (T.REC x, nil)
+            | (T.BOXED, T.JOIN x) => (T.JOIN x, nil)
+            | (T.OCONSTkind tys, T.BOXED) =>
+              (T.OCONSTkind (List.filter isBoxedTy tys), nil)
+            | (T.OPRIMkind {instances, operators}, T.BOXED) =>
+              (T.OPRIMkind {instances = List.filter isBoxedTy instances,
+                            operators = operators},
+               nil)
+            | (T.REC x, T.BOXED) => (T.REC x, nil)
+            | (T.JOIN x, T.BOXED) => (T.JOIN x, nil)
+            | (T.UNBOXED, T.OCONSTkind tys) =>
+              (T.OCONSTkind (List.filter (not o isBoxedTy) tys), nil)
+            | (T.UNBOXED, T.OPRIMkind {instances, operators}) =>
+              (T.OPRIMkind {instances = List.filter (not o isBoxedTy) instances,
+                            operators = operators},
+               nil)
+            | (T.UNBOXED, T.UNBOXED) => (T.UNBOXED, nil)
+            | (T.UNBOXED, T.REC x) => raise Unify
+            | (T.UNBOXED, T.JOIN x) => raise Unify
+            | (T.OCONSTkind tys, T.UNBOXED) =>
+              (T.OCONSTkind (List.filter (not o isBoxedTy) tys), nil)
+            | (T.OPRIMkind {instances, operators}, T.UNBOXED) =>
+              (T.OPRIMkind {instances = List.filter (not o isBoxedTy) instances,
+                            operators = operators},
+               nil)
+            | (T.REC x, T.UNBOXED) => raise Unify
+            | (T.JOIN x, T.UNBOXED) => raise Unify
             | (T.UNIV, x) => (x,nil)
             | (x, T.UNIV) => (x,nil)
             | _ => raise Unify
@@ -716,6 +758,8 @@ in
        eqTyList btvEquiv (tyL1, tyL2) andalso
        eqOprimSelectorList btvEquiv (opL1, opL2)
     | (T.UNIV, T.UNIV) => true
+    | (T.BOXED, T.BOXED) => true
+    | (T.UNBOXED, T.UNBOXED) => true
     | (T.REC smap1, T.REC smap2) => eqSMap btvEquiv (smap1, smap2)
     | _ => false
 

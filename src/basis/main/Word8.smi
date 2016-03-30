@@ -1,24 +1,24 @@
 _require "./General.smi"
 _require "./StringCvt.smi"
-_require "./Word.smi"
+_require local "./Word64.smi"
 _require "./IntInf.smi"
 
 structure Word8 =
 struct
   type word = SMLSharp_Builtin.Word8.word
   val wordSize : int
-  val toLarge = SMLSharp_Builtin.Word8.toWord
-  val toLargeX = SMLSharp_Builtin.Word8.toWordX
-  val toLargeWord = toLarge
-  val toLargeWordX = toLargeX
-  val fromLarge = SMLSharp_Builtin.Word8.fromWord
-  val fromLargeWord = fromLarge
+  val toLarge = SMLSharp_Builtin.Word8.toWord64
+  val toLargeX = SMLSharp_Builtin.Word8.toWord64X
+  val toLargeWord = SMLSharp_Builtin.Word8.toWord64
+  val toLargeWordX = SMLSharp_Builtin.Word8.toWord64X
+  val fromLarge = SMLSharp_Builtin.Word64.toWord8
+  val fromLargeWord = SMLSharp_Builtin.Word64.toWord8
   val toLargeInt : word -> LargeInt.int
   val toLargeIntX : word -> LargeInt.int
   val fromLargeInt : LargeInt.int -> word
-  val toInt = SMLSharp_Builtin.Word8.toInt
-  val toIntX = SMLSharp_Builtin.Word8.toIntX
-  val fromInt = SMLSharp_Builtin.Word8.fromInt
+  val toInt = SMLSharp_Builtin.Word8.toInt32
+  val toIntX = SMLSharp_Builtin.Word8.toInt32X
+  val fromInt = SMLSharp_Builtin.Word8.fromInt32
   val andb = SMLSharp_Builtin.Word8.andb
   val orb = SMLSharp_Builtin.Word8.orb
   val xorb = SMLSharp_Builtin.Word8.xorb

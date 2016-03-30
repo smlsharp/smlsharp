@@ -1,15 +1,6 @@
 structure TopData = 
 struct
 local
-  (*% @formatter(AbsynInterface.interfaceName) AbsynInterface.format_interfaceName *)
-  type interfaceName 
-    = (*% @format(x) x *) AbsynInterface.interfaceName
-
-  (*% @formatter(AbsynInterface.filePlace) AbsynInterface.format_filePlace *)
-  type filePlace 
-    = (*% @format(x) x *) AbsynInterface.filePlace
-
-  fun format_filename filename = TermFormat.FormatComb.term (Filename.toString filename)
   fun format_dummy _ = nil
 in
   (*% *)
@@ -18,13 +9,13 @@ in
     | (*% @format "ErrorCheck" *)  ErrorCheck
     | (*% @format "NoStop" *) NoStop
 
-  (*%  @formatter(Filename.filename) format_filename *)
+  (*%  @formatter(Filename.filename) Filename.format_filename *)
   datatype code 
     = (*%  @format(filename) filename *)
       FILE of Filename.filename
 
   (*%
-     @formatter(Filename.filename) format_filename 
+     @formatter(Filename.filename) Filename.format_filename 
      @formatter(option) TermFormat.formatOptionalOption
   *)
   type options 
@@ -32,7 +23,8 @@ in
          @format({stopAt,
                   baseFilename: bas basopt, 
                   stdPath: std stds, 
-                  loadPath: load loads})
+                  loadPath: load loads,
+                  loadAllInterfaceFiles})
           "{"
            1[
               1[  "stopAt:" +d stopAt ]
@@ -42,6 +34,8 @@ in
               1[ "stdPath:" +d stds(std)(",") ]
                +1
               1["loadPath:" +d loads(load)(".")]
+               +1
+              1["loadAllInterfaceFiles:" +d loadAllInterfaceFiles]
             ]
            1
            "}"
@@ -50,7 +44,8 @@ in
         stopAt: stopAt,
         baseFilename: Filename.filename option,
         stdPath: Filename.filename list,
-        loadPath: Filename.filename list
+        loadPath: Filename.filename list,
+        loadAllInterfaceFiles: bool
       }
 
   type toplevelContext =
@@ -105,18 +100,24 @@ in
   fun printCode code =
       debugPrint (Bug.prettyPrint (format_code code))
 *)
+(*
   fun printInterfaceName interfaceName =
-      debugPrint (Bug.prettyPrint (format_interfaceName interfaceName))
+      debugPrint (Bug.prettyPrint (InterfaceName.format_interface_name interfaceName))
+*)
   fun printFileName fileName =
-      debugPrint (Bug.prettyPrint (format_filename fileName))
+      debugPrint (Bug.prettyPrint (Filename.format_filename fileName))
+(*
   fun printInterfaceNameList interfaceNameList =
       app (fn i => (printInterfaceName i; debugPrint "\n")) interfaceNameList
+*)
   fun printResult result =
       debugPrint (Bug.prettyPrint (format_result result))
   fun printOptions options =
       debugPrint (Bug.prettyPrint (format_options options))
 
+(*
   fun printCompileUnit unit =
       debugPrint (Bug.prettyPrint (AbsynInterface.format_compileUnit unit))
+*)
   end
 end

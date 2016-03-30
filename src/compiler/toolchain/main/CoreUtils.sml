@@ -17,12 +17,15 @@ structure CoreUtils : sig
   val mkdir : Filename.filename -> unit
   val rmdir_f : Filename.filename -> unit
   val system : {command : string, quiet : bool} -> unit
+  val chdir : Filename.filename -> (unit -> 'a) -> 'a
 
   val makeTextFile : Filename.filename * string -> unit
   val makeBinFile : Filename.filename * Word8Vector.vector -> unit
   val makeTextFile' : Filename.filename * ((string -> unit) -> unit) -> unit
   val readTextFile : Filename.filename -> string
   val readBinFile : Filename.filename -> Word8Vector.vector
+
+  val cp : Filename.filename -> Filename.filename -> unit
 
 end =
 struct
@@ -110,6 +113,15 @@ struct
               raise Failed {command=command, message="command failed"})
       end
 
+  fun chdir filename f =
+      let
+        val oldpwd = OS.FileSys.getDir ()
+        val _ = OS.FileSys.chDir (Filename.toString filename)
+      in
+        (f () before OS.FileSys.chDir oldpwd)
+        handle e => (OS.FileSys.chDir oldpwd; raise e)
+      end
+
   fun makeTextFile (filename, content) =
       let
         val f = Filename.TextIO.openOut filename
@@ -154,4 +166,30 @@ struct
         BinIO.closeIn f;
         s
       end
+
+  fun copy s d =
+      let
+        val buf = BinIO.inputN (s, 4094)
+      in
+        if Word8Vector.length buf = 0
+        then ()
+        else (BinIO.output (d, buf); copy s d)
+      end
+        
+  fun cp src dst =
+      let
+        val cmd = "cp " ^ Filename.toString src ^ " " ^ Filename.toString dst
+        val _ = log cmd
+        val s = Filename.BinIO.openIn src
+      in
+        let
+          val d = Filename.BinIO.openOut dst
+        in
+          copy s d handle e => (BinIO.closeOut d; handleSysErr (cmd, e));
+          BinIO.closeOut d
+        end
+        handle e => (BinIO.closeIn s; handleSysErr (cmd, e));
+        BinIO.closeIn s
+      end
+
 end

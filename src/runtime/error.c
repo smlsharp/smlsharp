@@ -4,37 +4,38 @@
  * @author UENO Katsuhiro
  */
 
+#include "smlsharp.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <errno.h>
-#include "smlsharp.h"
 
-#ifdef DEBUG
-#define DEFAULT_VERBOSE_LEVEL  MSG_NOTICE
+enum sml_msg_level {
+	MSG_FATAL,
+	MSG_ERROR,
+	MSG_WARN,
+	MSG_NOTICE,
+	MSG_DEBUG
+};
+
+#ifndef NDEBUG
+#define DEFAULT_VERBOSE_LEVEL  MSG_DEBUG
 #else
-#define DEFAULT_VERBOSE_LEVEL  MSG_WARN
-#endif /* DEBUG */
+#define DEFAULT_VERBOSE_LEVEL  MSG_NOTICE
+#endif /* NDEBUG */
 
-static unsigned int verbose_level = DEFAULT_VERBOSE_LEVEL;
-static FILE *(*msg_start)(enum sml_msg_level) = NULL;
-static void (*msg_end)(FILE *, enum sml_msg_level) = NULL;
+static enum sml_msg_level verbose_level = DEFAULT_VERBOSE_LEVEL;
+static FILE *logfile;
+#ifndef WITHOUT_MULTITHREAD
+static pthread_mutex_t msg_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif /* !WITHOUT_MULTITHREAD */
 
-void sml_set_verbose(enum sml_msg_level level)
+static FILE *
+output()
 {
-	verbose_level = level;
+	return logfile ? logfile : stderr;
 }
-
-void sml_msg_set_hook(FILE *(*start_hook)(enum sml_msg_level),
-		      void (*end_hook)(FILE *f, enum sml_msg_level))
-{
-	msg_start = start_hook;
-	msg_end = end_hook;
-}
-
-#define MSG_START(t) (msg_start ? msg_start(t) : stderr)
-#define MSG_END(f,t) (msg_end ? msg_end(f,t) : (void)0)
 
 static void
 print_syserror(enum sml_msg_level level, int err,
@@ -45,7 +46,8 @@ print_syserror(enum sml_msg_level level, int err,
 	if (verbose_level < level)
 		return;
 
-	out = MSG_START(level);
+	mutex_lock(&msg_lock);
+	out = output();
 	vfprintf(out, format, args);
 
 	if (err > 0)
@@ -54,9 +56,7 @@ print_syserror(enum sml_msg_level level, int err,
 		fprintf(out, ": Success\n");
 	else
 		fprintf(out, ": Failed (%d)\n", err);
-	fflush(out);
-
-	MSG_END(out, level);
+	mutex_unlock(&msg_lock);
 }
 
 static void
@@ -73,11 +73,11 @@ print_error(enum sml_msg_level level, int err,
 		return;
 	}
 
-	out = MSG_START(level);
+	mutex_lock(&msg_lock);
+	out = output();
 	vfprintf(out, format, args);
 	fputs("\n", out);
-	fflush(out);
-	MSG_END(out, level);
+	mutex_unlock(&msg_lock);
 }
 
 void
@@ -154,9 +154,32 @@ sml_debug(const char *format, ...)
 	if (verbose_level < MSG_DEBUG)
 		return;
 
+	out = output();
 	va_start(args, format);
-	out = MSG_START(MSG_DEBUG);
+	mutex_lock(&msg_lock);
 	vfprintf(out, format, args);
-	MSG_END(out, MSG_DEBUG);
+	mutex_unlock(&msg_lock);
 	va_end(args);
+}
+
+void
+sml_msg_init()
+{
+	char *s;
+	FILE *f;
+
+	s = getenv("SMLSHARP_VERBOSE");
+	if (s)
+		verbose_level = strtol(s, NULL, 10);
+
+	s = getenv("SMLSHARP_LOGFILE");
+	if (s) {
+		f = fopen(s, "w");
+		if (f == NULL) {
+			perror(s);
+		} else {
+			setvbuf(f, NULL, _IONBF, 0);
+			logfile = f;
+		}
+	}
 }

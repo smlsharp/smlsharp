@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include "smlsharp.h"
-#include "objspace.h"
 #include "heap.h"
 
 int sml_argc;
@@ -84,19 +83,19 @@ sml_init(int argc, char **argv)
 	if (s)
 		parse_heapsize(s, &heapsize_min, &heapsize_max);
 
-	s = getenv("SMLSHARP_VERBOSE");
-	if (s)
-		sml_set_verbose(strtol(s, NULL, 10));
+	if (heapsize_max < heapsize_min)
+		heapsize_max = heapsize_min;
 
-	sml_control_init();
+	sml_msg_init();
 	sml_heap_init(heapsize_min, heapsize_max);
-	sml_objspace_init();
+	sml_callback_init();
+	sml_finalize_init();
 }
 
 void
 sml_finish()
 {
-	sml_objspace_free();
-	sml_heap_free();
-	sml_control_free();
+	sml_finalize_destroy();
+	sml_callback_destroy();
+	sml_heap_destroy();
 }

@@ -35,10 +35,6 @@ struct
       let val text = Word32.toString word
       in [FE.Term (size text, text)] end
 
-  fun format_BigInt int =
-      let val text = BigInt.toString int
-      in [FE.Term (size text, text)] end
-
   fun format_IntInf int =
       let val text = IntInf.toString int
       in [FE.Term (size text, text)] end

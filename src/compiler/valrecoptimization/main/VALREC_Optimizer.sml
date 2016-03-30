@@ -340,6 +340,7 @@ in
       | ICEXPORTEXN _ => [icdecl]
       | ICEXTERNVAR _ => [icdecl]
       | ICEXTERNEXN _ => [icdecl]
+      | ICBUILTINEXN _ => [icdecl]
       | ICTYCASTDECL (tycastList, icdeclList, loc) => [icdecl]
       | ICOVERLOADDEF _ => [icdecl]
 

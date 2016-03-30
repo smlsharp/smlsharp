@@ -1,7 +1,7 @@
 _require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/parser-comb.smi"
-_require "FORMAT_EXPRESSION.sig"
-_require "FormatExpressionTypes.smi"
+_require local "../../../smlnj-lib/Util/parser-comb.smi"
+_require local "./FORMAT_EXPRESSION.sig"
+_require local "./FormatExpressionTypes.smi"
 
 structure FormatExpression =
 struct

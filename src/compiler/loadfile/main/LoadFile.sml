@@ -5,169 +5,91 @@
  * refactorded by Atsushi Ohori
  *)
 
-(*
-structure LoadFile : sig
-
-  (* if baseName is NONE, all relative filenames immediately appearing
-   * in Absyn.unit indicates files in the current directory. *)
-
-  type dependency =
-      {interfaceName : AbsynInterface.interfaceName,
-       link : AbsynInterface.interfaceName list,
-       compile : (AbsynInterface.filePlace * Filename.filename) list}
-
-  val load
-      : {baseName: Filename.filename option,
-         stdPath: Filename.filename list,
-         loadPath: Filename.filename list,
-         version: int option}
-        -> Absyn.unit
-        -> dependency * AbsynInterface.compileUnit
-
-  datatype interfaceFileKind =
-      COMPILATION
-    | INTERFACE
-
-  val loadInterface
-      : {stdPath: Filename.filename list,
-         loadPath: Filename.filename list}
-        -> Filename.filename
-        -> dependency * interfaceFileKind * AbsynInterface.compileUnit
-
-end =
-*)
 structure LoadFile =
 struct
 
   structure A = Absyn
   structure I = AbsynInterface
+  structure N = InterfaceName
 
   fun printErr x = TextIO.output (TextIO.stdErr, x)
 
   fun raiseUserError (loc, exn) =
       raise UserError.UserErrors [(loc, UserError.Error, exn)]
 
-  structure LoadedMap = IEnv
+  fun raiseLoadFileError exn symbol =
+      raiseUserError (Symbol.symbolToLoc symbol, exn symbol)
 
-  type dependency =
-      {
-        (* name of interface of this *)
-        interfaceNameOpt : I.interfaceName option,
-        (* list of interfaces needed to eval this interface in link order *)
-        link : AbsynInterface.interfaceName list,
-        (* list of files needed to eval this *)
-        compile : I.source list
-      }
+  (* a vairant of SEnv in which the insertion order is significant *)
+  structure Assoc :> sig
+    type 'a assoc
+    type key = Filename.filename
+    val empty : 'a assoc
+    val singleton : key * 'a -> 'a assoc
+    val find : 'a assoc * key -> 'a option
+    val append : 'a assoc * key * 'a -> 'a assoc
+    val concat : 'a assoc * 'a assoc -> 'a assoc
+    val map : ('a -> 'b) -> 'a assoc -> 'b list
+    val gather : ('a -> 'b list) -> 'a assoc -> 'b list
+    val removeLast : 'a assoc -> 'a assoc * 'a option
+  end =
+  struct
+    type 'a assoc = 'a SEnv.map * (Filename.filename * 'a) list
+    type key = Filename.filename
 
-  type env = {baseDir : I.source option, visited : SSet.set}
+    val empty = (SEnv.empty, nil): 'a assoc
 
-  type result =
-      {
-        requiredIdHashes : ({id: InterfaceID.id, loc: I.loc} * string) LoadedMap.map,
-        topdecs : A.topdec list LoadedMap.map
-      }
+    fun singleton (k, v) =
+        (SEnv.singleton (Filename.toString k, v), [(k, v)]) : 'a assoc
 
-  val emptyResult =
-      {requiredIdHashes = LoadedMap.empty, topdecs = LoadedMap.empty} : result
+    fun find ((map, _):'a assoc, key) =
+        SEnv.find (map, Filename.toString key)
 
-  fun appendResult (c1:result, c2:result) =
-      {requiredIdHashes = LoadedMap.unionWith #1 (#requiredIdHashes c1, #requiredIdHashes c2),
-       topdecs = LoadedMap.unionWith #1 (#topdecs c1, #topdecs c2)} : result
+    fun append (assoc as (map, pairs):'a assoc, key, value) =
+        let
+          val s = Filename.toString key
+        in
+          case SEnv.find (map, s) of
+            NONE => (SEnv.insert (map, s, value), (key, value) :: pairs)
+          | SOME _ => assoc
+        end
 
-  type loadAccum =
-      {
-        loadCount : int ref,
-        smiFileMap : result SEnv.map ref,
-        smlFileMap : A.unitparseresult SEnv.map ref,
-        interfaceDecsRev : I.interfaceDec list ref,
-        loadedFiles : I.source list ref
-      }
+    fun concat (assoc, (_, pairs):'a assoc) =
+        foldr (fn ((k,v),z) => append (z, k, v)) assoc pairs
 
-  fun newLoadedKey ({loadCount, ...}:loadAccum) =
-      !loadCount before loadCount := !loadCount + 1
+    fun mapRev f r nil = r
+      | mapRev f r ((_:key,h)::t) = mapRev f (f h :: r) t
+    fun map f ((_,pairs):'a assoc) = mapRev f nil pairs
 
-  fun newLoadAccum () =
-      {loadCount = ref 0,
-       smiFileMap = ref SEnv.empty,
-       smlFileMap = ref SEnv.empty,
-       interfaceDecsRev = ref nil,
-       loadedFiles = ref nil} : loadAccum
+    fun gather f assoc = List.concat (map f assoc)
 
-  fun mkDependency ({interfaceDecsRev, loadedFiles, ...}:loadAccum, interfaceNameOpt) =
-      let
-        val linkDepends = map #interfaceName (!interfaceDecsRev)
-        val compileDepends = rev (!loadedFiles)
-      in
-        {interfaceNameOpt = interfaceNameOpt,
-         link = linkDepends,
-         compile = compileDepends} : dependency
-      end
+    fun removeLast (a as (_,nil):'a assoc) = (a, NONE)
+      | removeLast (map,(k,v)::t) =
+        ((#1 (SEnv.remove (map, Filename.toString k)), t), SOME v)
+  end
 
-  fun findLoaded ({smiFileMap, ...}:loadAccum, sourceString) =
-      SEnv.find (!smiFileMap, sourceString)
-
-  fun addResult ({smiFileMap, loadedFiles, ...}:loadAccum,
-                 source as (_, filename), result) =
-      (smiFileMap := SEnv.insert (!smiFileMap, Filename.toString filename, result);
-       loadedFiles := source :: !loadedFiles)
-
-  fun addInterface ({interfaceDecsRev,...}:loadAccum, dec) =
-      interfaceDecsRev := dec :: !interfaceDecsRev
-
-  fun addUse ({smlFileMap, loadedFiles, ...}:loadAccum,
-              source as (_, filename), result) =
-      (smlFileMap := SEnv.insert (!smlFileMap, Filename.toString filename, result);
-       loadedFiles := source :: !loadedFiles)
-
-  fun appendNewTopdec loaded (r:result, topdecs) =
-      let
-        val key = newLoadedKey loaded
-      in
-        {requiredIdHashes = #requiredIdHashes r,
-         topdecs = LoadedMap.insert (#topdecs r, key, topdecs)} : result
-      end
-
-  fun newRequireEntry loaded (id, hash, loc) =
-      let
-        val key = newLoadedKey loaded
-        val content = ({id=id, loc=loc}, hash)
-      in
-        {requiredIdHashes = LoadedMap.singleton(key, content), 
-         topdecs = LoadedMap.empty} : result
-      end
-
-  fun uniq' set nil = nil
-    | uniq' set (h::t) =
-      if InterfaceID.Set.member (set, #id h)
-      then uniq' set t
-      else h :: uniq' (InterfaceID.Set.add (set, #id h)) t
-
-  fun uniq l = uniq' InterfaceID.Set.empty l
+  type env =
+       {baseDir : N.source option, visited : SSet.set}
 
   fun isENOENT exn =
       case exn of
         OS.SysErr (msg, errno) =>
-        (
-          case OS.syserror "noent" of
-            (* We cannot make sure whether the error is ENOENT.
-             * Assume ENOENT anyway. *)
-            NONE => true
-          | enoent as SOME _ => errno = enoent
-        )
+        (case OS.syserror "noent" of
+           enoent as SOME _ => errno = enoent
+         | NONE =>
+           (* We cannot make sure whether the error is ENOENT.
+            * Assume ENOENT anyway. *)
+           true)
       | _ => false
 
   exception NotFound
 
   fun openFileOnPath nil filename = raise NotFound
-    | openFileOnPath ((place:I.filePlace, baseFilename)::loadPath) filename =
+    | openFileOnPath ((place, dir)::loadPath) filename =
       let
-        val pathFilename = Filename.concatPath (baseFilename, filename)
-        val _ =
-            if !Bug.debugPrint
-            then printErr ("search file " ^ Filename.toString pathFilename ^ "\n")
-            else ()
+        val openName = Filename.concatPath (dir, filename)
         val ret =
-            SOME (Filename.TextIO.openIn pathFilename, place, pathFilename)
+            SOME (Filename.TextIO.openIn openName, (place, openName) : N.source)
             handle e as IO.Io {cause, function, name} =>
                    if isENOENT cause then NONE else raise e
       in
@@ -177,176 +99,300 @@ struct
       end
 
   fun openLocalFile filename =
-      (Filename.TextIO.openIn filename, I.LOCALPATH, filename)
+      (Filename.TextIO.openIn filename, (N.LOCALPATH, filename) : N.source)
       handle e as IO.Io {cause, function, name} =>
              if isENOENT cause then raise NotFound else raise e
 
   (*
-   * How to search files:
+   * How to search for a file:
    * (1) if "filename" is an absolute filename, just open it.
    * (2) if "baseDir" is NONE, "filename" is a relative path from the
-   *     current directory of the process and do not search on "loadPath".
+   *     current directory of the process and do not search in "loadPath".
    * (3) if "filename" begins with ".", "filename" is a relative path
-   *     from "baseDir" and do not search on "loadPath".
+   *     from "baseDir" and do not search in "loadPath".
    * (4) Otherwise, "filename" is a relative path from either "baseDir"
-   *     or a directory on "loadPath".
+   *     or a directory in "loadPath".
    *)
   fun openFile ({baseDir, ...}:env, loadPath) symbol =
       let
-        val name = Symbol.symbolToString symbol
-        val loc =  Symbol.symbolToLoc symbol
-        val filename = Filename.fromString name
+        val filename = Filename.fromString (Symbol.symbolToString symbol)
       in
         (if Filename.isAbsolute filename
          then openLocalFile filename
          else case baseDir of
                 NONE => openLocalFile filename
               | SOME baseDir =>
-                if String.isPrefix "." name
+                if String.isPrefix "." (Filename.toString filename)
                 then openFileOnPath [baseDir] filename
                 else openFileOnPath (baseDir :: loadPath) filename)
-        handle e as IO.Io _ => raiseUserError (loc, e)
-             | NotFound => raiseUserError (loc, LoadFileError.FileNotFound name)
+        handle e as IO.Io _ =>
+               raiseUserError (Symbol.symbolToLoc symbol, e)
+             | NotFound =>
+               raiseLoadFileError LoadFileError.FileNotFound symbol
       end
 
-  datatype parseResult =
-      LOADED of result
-    | PARSED of env * I.source * I.itop
-
-  fun visitFile ({visited, ...}:env) filePlace filename symbol =
+  fun visitFile ({visited, ...}:env) (filePlace, filename) symbol =
       let
-        val loc  = Symbol.symbolToLoc symbol
         val realPath = Filename.realPath filename
-        val sourceName = Filename.toString realPath
+        val key = Filename.toString realPath
         val visited =
-            if SSet.member (visited, sourceName)
-            then raiseUserError (loc, LoadFileError.CircularLoad symbol)
-            else SSet.add (visited, sourceName)
+            if SSet.member (visited, key)
+            then raiseLoadFileError LoadFileError.CircularLoad symbol
+            else SSet.add (visited, key)
       in
         ({baseDir = SOME (filePlace, Filename.dirname realPath),
           visited = visited},
-         (filePlace, realPath),
-         sourceName)
+         (filePlace, realPath) : N.source)
       end
 
-  fun parseInterface loadPath env loaded fileSymbol =
+  datatype 'a parse_result =
+      LOADED of 'a
+    | PARSED of env * N.source * I.itop
+
+  fun parseInterface loaded (env, loadPath) symbol =
       let
-        val (file, filePlace, filename) = openFile (env, loadPath) fileSymbol
+        val (file, source) = openFile (env, loadPath) symbol
       in
         (let
-           val (newEnv, source, sourceName) =
-           visitFile env filePlace filename fileSymbol
+           val (newEnv, source) = visitFile env source symbol
          in
-           case findLoaded (loaded, sourceName) of
+           case Assoc.find (loaded, #2 source) of
              SOME result => LOADED result
            | NONE =>
              let
-               val _ = if !Control.traceFileLoad
-                       then printErr ("require: " ^ sourceName ^ "\n")
-                       else ()
+               val _ =
+                   if !Control.traceFileLoad
+                   then printErr ("require: " ^ Filename.toString (#2 source)
+                                  ^ "\n")
+                   else ()
                val input = InterfaceParser.setup
                              {read = fn n => TextIO.inputN (file, n),
-                              sourceName = sourceName}
+                              sourceName = Filename.toString (#2 source)}
                val itop = InterfaceParser.parse input
-            in
-              PARSED (newEnv, source, itop)
-            end
-         end
-         handle e => (TextIO.closeIn file; raise e))
-         before TextIO.closeIn file
-      end
-
-  fun setupInterface (source, provide, {requiredIdHashes, topdecs}:result) =
-      let
-        val (requiredIds, hashes) = ListPair.unzip (LoadedMap.listItems requiredIdHashes)
-        val hash = InterfaceHash.generate (source, hashes, provide)
-      in
-        ({hash = hash, source = source}, requiredIds)
-      end
-
-  fun loadRequire loadPath env loaded symbol =
-      case parseInterface loadPath env loaded symbol of
-        LOADED result => result
-      | PARSED (env, source, I.INCLUDES {includes, topdecs}) =>
-        let
-          val result = loadRequires loadPath env loaded includes
-          val result = appendNewTopdec loaded (result, topdecs)
-        in
-          addResult (loaded, source, result);
-          result
-        end
-      | PARSED (env, source, I.INTERFACE {requires, provide}) =>
-        let
-          val result = loadRequires loadPath env loaded requires
-          val id = InterfaceID.generate ()
-          val (interfaceName as {hash,...}, requiredIds) =
-              setupInterface (source, provide, result)
-          val interfaceDec =
-              {interfaceId = id,
-               interfaceName = interfaceName,
-               requiredIds = requiredIds,
-               provideTopdecs = provide} : I.interfaceDec
-          val result = newRequireEntry loaded (id, hash, Symbol.symbolToLoc symbol)
-        in
-          addInterface (loaded, interfaceDec);
-          addResult (loaded, source, result);
-          result
-        end
-
-  and loadRequires loadPath env loaded nil = emptyResult
-    | loadRequires loadPath env loaded (symbol::symbols) =
-      let
-        val result1 = loadRequire loadPath env loaded symbol
-        val result2 = loadRequires loadPath env loaded symbols
-      in
-        appendResult (result1, result2)
-      end
-
-
-  fun parseSource env loaded symbol =
-      let
-        val (file, filePlace, filename) = openFile (env, nil) symbol
-      in
-        (let
-           val (newEnv, source, sourceName) =
-               visitFile env filePlace filename symbol
-         in
-           case SEnv.find (!(#smlFileMap loaded), sourceName) of
-             SOME x => x
-           | NONE =>
-             let
-               val input = Parser.setup
-                             {mode = Parser.File,
-                              read = fn (_,n) => TextIO.inputN (file, n),
-                              sourceName = Filename.toString filename,
-                              initialLineno = 1}
-               val result = Parser.parse input
              in
-               addUse (loaded, source, result);
-               result
+               PARSED (newEnv, source, itop)
              end
          end
          handle e => (TextIO.closeIn file; raise e))
          before TextIO.closeIn file
       end
 
-  fun includeUse env loaded top =
+  fun requiredIdOf ({interfaceId,...} : I.interfaceDec, loc : Loc.loc) =
+      {id = interfaceId, loc = loc}
+
+  fun interfaceNameOf ({interfaceName,...} : I.interfaceDec, _ : Loc.loc) =
+      interfaceName
+
+  fun setupInterface (source, requires, provide) =
+      let
+        val id = InterfaceID.generate ()
+        val hash = InterfaceHash.generate
+                     {source = source,
+                      requires = map interfaceNameOf requires,
+                      topdecs = provide}
+      in
+        {interfaceId = id,
+         interfaceName = {hash = hash, source = source},
+         requiredIds = map requiredIdOf requires,
+         provideTopdecs = provide} : I.interfaceDec
+      end
+
+  fun filterLocalRequire l =
+      List.mapPartial (fn I.REQUIRE s => NONE | I.LOCAL_REQUIRE s => SOME s) l
+  fun filterRequire l =
+      List.mapPartial (fn I.REQUIRE s => SOME s | I.LOCAL_REQUIRE s => NONE) l
+
+  fun loadRequire loaded (context as {env, loadPath, loadAll}) symbol =
+      case parseInterface loaded (env, loadPath) symbol of
+        LOADED {ret, ...} => (loaded, ret)
+      | PARSED (env, source, I.INCLUDES {includes, topdecs}) =>
+        let
+          val context = context # {env = env}
+          val (loaded, ret) = loadRequires loaded context includes
+          val ret = Assoc.append (ret, #2 source, {require=[], topdecs=topdecs})
+          val dec = {interfaceDecs = [], loadedFile = source}
+        in
+          (Assoc.append (loaded, #2 source, {dec=dec, ret=ret}), ret)
+        end
+      | PARSED (env, source, I.INTERFACE {requires, provide}) =>
+        let
+          val context = context # {env = env}
+          val reqs = filterRequire requires
+          val (loaded, ret) = loadRequires loaded context reqs
+          val loaded =
+              if loadAll
+              then #1 (loadRequires loaded context
+                                    (filterLocalRequire requires))
+              else loaded
+          val idec = setupInterface (source, Assoc.gather #require ret, provide)
+          val id = (idec, Symbol.symbolToLoc symbol)
+          val ret = Assoc.singleton (#2 source, {require=[id], topdecs=nil})
+          val dec = {interfaceDecs = [id], loadedFile = source}
+        in
+          (Assoc.append (loaded, #2 source, {dec=dec, ret=ret}), ret)
+        end
+
+  and loadRequires loaded context symbols =
+      foldl (fn (symbol, (loaded, ret1)) =>
+                let
+                  val (loaded, ret2) = loadRequire loaded context symbol
+                in
+                  (loaded, Assoc.concat (ret1, ret2))
+                end)
+            (loaded, Assoc.empty)
+            symbols
+
+  fun checkDuplicateHash (decs : (I.interfaceDec * Loc.loc) list) =
+      (foldl
+         (fn (({interfaceName = iname as {hash,...},...}, loc), map) =>
+             let
+               val s = InterfaceName.hashToString hash
+             in
+               case SEnv.find (map, s) of
+                 NONE => SEnv.insert (map, s, (iname, loc))
+               | SOME y =>
+                 raiseUserError (loc, LoadFileError.DuplicateHash (iname, y))
+             end)
+         SEnv.empty
+         decs;
+       ())
+
+  fun removeIds ids1 ids2 =
+      let
+        val set = foldl (fn ({id,loc:Loc.loc},z) => InterfaceID.Set.add (z,id))
+                        InterfaceID.Set.empty
+                        ids2
+      in
+        List.filter (fn {id,loc} => not (InterfaceID.Set.member (set,id))) ids1
+      end
+
+  fun loadINTERFACE context (source, {requires, provide}) =
+      let
+        val (loaded, retReq) =
+            loadRequires Assoc.empty context (filterRequire requires)
+        val (loaded, retLocal) =
+            loadRequires loaded context (filterLocalRequire requires)
+        val decs = Assoc.map #dec loaded
+        val interfaceDecs = List.concat (map #interfaceDecs decs)
+        val _ = checkDuplicateHash interfaceDecs
+        val interfaceDecs = map #1 interfaceDecs
+        val {interfaceName, requiredIds, provideTopdecs, ...} =
+            setupInterface (source, Assoc.gather #require retReq, provide)
+        val retAll = Assoc.concat (retReq, retLocal)
+        val allRequiredIds = map requiredIdOf (Assoc.gather #require retAll)
+      in
+        ({interface =
+            {interfaceDecs = interfaceDecs,
+             provideInterfaceNameOpt = SOME interfaceName,
+             requiredIds = requiredIds,
+             locallyRequiredIds = removeIds allRequiredIds requiredIds,
+             provideTopdecs = provideTopdecs} : I.interface,
+          topdecsInclude = Assoc.gather #topdecs retAll},
+         {interfaceNameOpt = SOME interfaceName,
+          compile = map #loadedFile decs,
+          link = map #interfaceName interfaceDecs} : N.dependency,
+         source)
+      end
+
+  fun loadINCLUDES context (source, {includes, topdecs}) =
+      let
+        val (loaded, ret) = loadRequires Assoc.empty context includes
+        val decs = Assoc.map #dec loaded
+        val interfaceDecs = List.concat (map #interfaceDecs decs)
+        val _ = checkDuplicateHash interfaceDecs
+        val interfaceDecs = map #1 interfaceDecs
+        val includes = map #1 (Assoc.gather #require ret)
+        val requiredIds = 
+            InterfaceID.Map.listItems
+              (foldl (fn (x,z) => InterfaceID.Map.insert (z, #id x, x))
+                     InterfaceID.Map.empty
+                     (List.concat (map #requiredIds includes)))
+      in
+        ({interface =
+            {interfaceDecs = interfaceDecs,
+             provideInterfaceNameOpt = NONE,
+             requiredIds = requiredIds,
+             locallyRequiredIds = nil,
+             provideTopdecs = List.concat (map #provideTopdecs includes)},
+          topdecsInclude = Assoc.gather #topdecs ret},
+         {interfaceNameOpt = NONE,
+          compile = map #loadedFile decs,
+          link = map #interfaceName interfaceDecs} : N.dependency,
+         source)
+      end
+
+  fun loadInterface (context as {env,...}) symbol =
+      case parseInterface Assoc.empty (env, nil) symbol of
+        PARSED (env, source, I.INTERFACE iface) =>
+        loadINTERFACE (context # {env=env}) (source, iface)
+      | PARSED (env, source, I.INCLUDES includes) =>
+        loadINCLUDES (context # {env=env}) (source, includes)
+      | LOADED _ => raise Bug.Bug "loadInterface"
+
+  fun loadTopInterface (context as {env,...}) symbol =
+      case parseInterface Assoc.empty (env, nil) symbol of
+        PARSED (env, source, I.INTERFACE iface) =>
+        loadINTERFACE (context # {env=env}) (source, iface)
+      | PARSED (env, source, I.INCLUDES includes) =>
+        raiseLoadFileError LoadFileError.InvalidTopInterface symbol
+      | LOADED _ => raise Bug.Bug "loadTopInterface"
+
+  fun parseSource loaded env src =
+      let
+        val (file, source) = openFile (env, nil) src
+      in
+        (let
+           val (newEnv, source) = visitFile env source src
+           val _ =
+               if !Control.traceFileLoad
+               then printErr ("use: " ^ Filename.toString (#2 source) ^ "\n")
+               else ()
+         in
+           case Assoc.find (loaded, #2 source) of
+             SOME x => (loaded, newEnv, #ret x)
+           | NONE =>
+             let
+               val input = Parser.setup
+                             {mode = Parser.File,
+                              read = fn (_,n) => TextIO.inputN (file, n),
+                              sourceName = Filename.toString (#2 source),
+                              initialLineno = 1}
+               val ret = Parser.parse input
+             in
+               (Assoc.append (loaded, #2 source, {ret=ret, loadedFile=source}),
+                newEnv, ret)
+             end
+         end
+         handle e => (TextIO.closeIn file; raise e))
+        before TextIO.closeIn file
+      end
+
+  fun evalTop loaded env top =
       case top of
-        A.TOPDEC topdecs => topdecs
+        A.TOPDEC topdecs => (loaded, topdecs)
       | A.USE symbol =>
-        case parseSource env loaded symbol of
-          A.EOF => nil
-        | A.UNIT {interface = A.INTERFACE _, ...} =>
-          raiseUserError (Symbol.symbolToLoc symbol, LoadFileError.UseWithInterface symbol)
-        | A.UNIT {interface = A.NOINTERFACE, tops, ...} =>
-          includeUseFiles env loaded tops
+        case parseSource loaded env symbol of
+          (loaded, env, A.EOF) => (loaded, nil)
+        | (loaded, env, A.UNIT {interface = A.INTERFACE _, ...}) =>
+          raiseLoadFileError LoadFileError.UseWithInterface symbol
+        | (loaded, env, A.UNIT {interface = A.NOINTERFACE, tops, ...}) =>
+          evalTopList loaded env tops
 
-  and includeUseFiles env loaded nil = nil
-    | includeUseFiles env loaded (top::tops) =
-      includeUse env loaded top @ includeUseFiles env loaded tops
+  and evalTopList loaded env nil = (loaded, nil)
+    | evalTopList loaded env (top::tops) =
+      let
+        val (loaded, tops1) = evalTop loaded env top
+        val (loaded, tops2) = evalTopList loaded env tops
+      in
+        (loaded, tops1 @ tops2)
+      end
 
-  fun defaultInterface baseInterfaceName =
-      case baseInterfaceName of
+  fun makeLoadPath (stdPath, loadPath) =
+      map (fn x => (N.STDPATH, x)) stdPath
+      @ map (fn x => (N.LOCALPATH, x)) loadPath
+
+  fun defaultInterface baseFilename =
+      case baseFilename of
         NONE => NONE
       | SOME filename =>
         case Filename.suffix filename of
@@ -355,163 +401,90 @@ struct
             val smifile = Filename.replaceSuffix "smi" filename
           in
             if CoreUtils.testExist smifile
-            then SOME (NONE, Symbol.mkSymbol (Filename.toString smifile) Loc.noloc)
+            then SOME (Symbol.mkSymbol
+                         (Filename.toString (Filename.basename smifile))
+                         Loc.noloc)
             else NONE
           end
         | _ => NONE
 
-  fun dirname baseFilename =
-      case baseFilename of
-        SOME filename => SOME (I.LOCALPATH, Filename.dirname filename)
-      | NONE => NONE
-
-  fun makeLoadPath (stdPath, loadPath) =
-      map (fn x => (I.STDPATH, x)) stdPath
-      @ map (fn x => (I.LOCALPATH, x)) loadPath
-
-  fun addSource ({loadedFiles, ...}:loadAccum, source) =
-      loadedFiles := source :: !loadedFiles
-
-  fun load {baseFilename, stdPath, loadPath} ({interface, tops, loc}:A.unit) =
+  fun load {baseFilename, stdPath, loadPath, loadAll}
+           ({interface, tops, loc}:A.unit) =
       let
-        val _ = if !Control.traceFileLoad
-                then printErr ("load basefilename: " ^ 
-                               (case baseFilename of NONE => "NONE"
-                                                  | SOME baseFilename =>Filename.toString baseFilename )
-                               ^ "\n")
-                else ()
-
-        val baseDir = dirname baseFilename
-        val _ = if !Control.traceFileLoad
-                then printErr ("load baseDir: " ^ 
-                               (case baseDir of NONE => "NONE"
-                                              | SOME (_, baseDir) => Filename.toString baseDir)
-                               ^ "\n")
-                else ()
-
-        val interface = 
+        val loadPath = makeLoadPath (stdPath, loadPath)
+        val interfaceSymbol =
             case interface of
-              A.INTERFACE symbol => SOME (baseDir, symbol)
+              A.INTERFACE symbol => SOME symbol
             | A.NOINTERFACE => defaultInterface baseFilename
-        val loaded = newLoadAccum ()
+        val baseDir =
+            case baseFilename of
+              SOME filename => SOME (N.LOCALPATH, Filename.dirname filename)
+            | NONE => NONE
+        val env = {baseDir = baseDir, visited = SSet.empty} : env
+        val (loaded, topdecsSource) = evalTopList Assoc.empty env tops
+        val loadedFiles1 = Assoc.map #loadedFile loaded
       in
-        case interface of
-          NONE => 
+        case interfaceSymbol of
+          NONE =>
+          ({interfaceNameOpt = NONE,
+            compile = loadedFiles1,
+            link = nil} : N.dependency,
+           {interface = NONE,
+            topdecsInclude = nil,
+            topdecsSource = topdecsSource} : I.compileUnit)
+        | SOME symbol =>
           let
-            val env = {baseDir=baseDir, visited=SSet.empty} : env
-            val topdecs = includeUseFiles env loaded tops
+            val ({interface, topdecsInclude}, dependency, source) =
+                loadTopInterface {env=env, loadPath=loadPath, loadAll=loadAll}
+                                 symbol
           in
-            (mkDependency (loaded, NONE),
-             {interface=NONE, topdecsInclude=nil, topdecsSource=topdecs}
-            )
-          end
-        | SOME (baseDir, symbol) =>
-          let
-            val env = {baseDir=baseDir, visited=SSet.empty} : env
-          in
-            case parseInterface nil env loaded symbol of
-              PARSED (env, source, I.INTERFACE {requires, provide}) =>
-              let
-                val loadPath = makeLoadPath (stdPath, loadPath)
-                val result = loadRequires loadPath env loaded requires
-                val (interfaceName, requires) = setupInterface (source, provide, result)
-                val topdecsInclude = List.concat (LoadedMap.listItems (#topdecs result))
-                val interfaceDecs = rev (! (#interfaceDecsRev loaded))
-                val _ = addSource (loaded, #source interfaceName)
-                val dependency = mkDependency (loaded, SOME interfaceName)
-                val topdecs = includeUseFiles env loaded tops
-              in
-                (dependency, 
-                 {interface = SOME {interfaceDecs = interfaceDecs,
-                                    provideInterfaceNameOpt = SOME interfaceName,
-                                    provideTopdecs = provide,
-                                    requiredIds = requires},
-                  topdecsInclude = topdecsInclude,
-                  topdecsSource=topdecs}
-                )
-              end
-            | PARSED (env, source, I.INCLUDES {includes, topdecs}) =>
-              raiseUserError (Symbol.symbolToLoc symbol, 
-                              LoadFileError.InvalidTopInterface symbol)
-            | LOADED _ => raise Bug.Bug "load"
+            (dependency
+               # {compile = loadedFiles1 @ #compile dependency @ [source]},
+             {interface = SOME interface,
+              topdecsInclude = topdecsInclude,
+              topdecsSource = topdecsSource})
           end
       end
 
-  fun generateDependency {stdPath, loadPath} filename =
+  fun loadInterfaceFile {stdPath, loadPath, loadAll} filename =
       let
         val loadPath = makeLoadPath (stdPath, loadPath)
         val symbol = Symbol.mkSymbol (Filename.toString filename) Loc.noloc
-        val loaded = newLoadAccum ()
         val env = {baseDir = NONE, visited = SSet.empty} : env
-        val interfaceNameOpt =
-            case parseInterface nil env loaded symbol of
-              LOADED _ => raise Bug.Bug "generateDependency"
-            | PARSED (env, source, I.INTERFACE {requires, provide}) =>
-              let 
-                val result = loadRequires loadPath env loaded requires
-                val (interfaceName, requires) = setupInterface (source, provide, result)
-              in
-                SOME interfaceName
-              end
-            | PARSED (env, source, I.INCLUDES {includes, topdecs}) =>
-              (loadRequires loadPath env loaded includes;
-               NONE)
-        val dependency = mkDependency (loaded, interfaceNameOpt)
+        val context = {env = env, loadPath = loadPath, loadAll = loadAll}
+        val (loaded, ret) = loadRequires Assoc.empty context [symbol]
+        val allInterfaceDecs = Assoc.gather (#interfaceDecs o #dec) loaded
+        val _ = checkDuplicateHash allInterfaceDecs
+        val dependency : N.dependency =
+            (* remove myself from dependency *)
+            case Assoc.removeLast loaded of
+              (_, NONE) => raise Bug.Bug "loadInterfaceFile"
+            | (loaded2, SOME me) =>
+              {interfaceNameOpt =
+                 case #interfaceDecs (#dec me) of
+                   [({interfaceName,...},_)] => SOME interfaceName
+                 | _ => NONE,
+               compile = Assoc.map (#loadedFile o #dec) loaded2,
+               link = map (#interfaceName o #1)
+                          (Assoc.gather (#interfaceDecs o #dec) loaded2)}
       in
-        dependency
+        (dependency,
+         {interfaceDecs = map #1 allInterfaceDecs,
+          requiredIds = map requiredIdOf (Assoc.gather #require ret),
+          topdecsInclude = Assoc.gather #topdecs ret} : I.interface_unit)
       end
 
-  fun loadInteractiveEnv {stdPath, loadPath} filename =
+  fun loadInteractiveEnv {stdPath, loadPath, loadAll} filename =
       let
         val loadPath = makeLoadPath (stdPath, loadPath)
         val symbol = Symbol.mkSymbol (Filename.toString filename) Loc.noloc
-        val loaded = newLoadAccum ()
-        val loc = Symbol.symbolToLoc symbol
         val env = {baseDir = NONE, visited = SSet.empty} : env
+        val ({interface, topdecsInclude}, dependency, _) =
+            loadInterface {env=env, loadPath=loadPath, loadAll=loadAll} symbol
       in
-        case parseInterface nil env loaded symbol of
-          LOADED _ => raise Bug.Bug "loadTopInteractive"
-        | PARSED (env, source, I.INTERFACE {requires, provide}) =>
-          let
-            val result = loadRequires loadPath env loaded requires
-            val (interfaceName, requires) = setupInterface (source, provide, result)
-            val topdecs = List.concat (LoadedMap.listItems (#topdecs result))
-            val interfaceDecs = rev (! (#interfaceDecsRev loaded))
-          in
-            {interface = {interfaceDecs = interfaceDecs,
-                          provideInterfaceNameOpt = SOME interfaceName,
-                          provideTopdecs = provide,
-                          requiredIds = requires},
-             interfaceDecls = nil,
-             topdecsInclude = topdecs}
-          end
-        | PARSED (env, source, I.INCLUDES {includes, topdecs}) =>
-          let
-            val result = loadRequires loadPath env loaded includes
-            val interfaceMap =
-                foldl (fn (dec as {interfaceId, ...}, map) =>
-                          InterfaceID.Map.insert (map, interfaceId, dec))
-                      InterfaceID.Map.empty
-                      (!(#interfaceDecsRev loaded))
-            val (requires, provide) =
-                foldr
-                  (fn (({id, ...}, _), (requires2, provide2)) =>
-                      case InterfaceID.Map.find (interfaceMap, id) of
-                        NONE => raise Bug.Bug "loadCompilation"
-                      | SOME {requiredIds, provideTopdecs, ...} =>
-                        (requiredIds @ requires2, provideTopdecs @ provide2))
-                  (nil, nil)
-                  (LoadedMap.listItems (#requiredIdHashes result))
-            val topdecs = List.concat (LoadedMap.listItems (#topdecs result)) @ topdecs
-            val interfaceDecs = rev (! (#interfaceDecsRev loaded))
-          in
-            {interface = {interfaceDecs = interfaceDecs,
-                          provideInterfaceNameOpt = NONE (* interfaceName *),
-                          provideTopdecs = nil,
-                          requiredIds = uniq requires},
-             interfaceDecls = provide,
-             topdecsInclude = topdecs}
-          end
+        {interface = interface # {provideTopdecs = nil},
+         interfaceDecls = #provideTopdecs interface,
+         topdecsInclude = topdecsInclude} : I.interactiveUnit
       end
 
 end

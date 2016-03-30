@@ -1102,7 +1102,7 @@ sml_heap_gc(void)
   
 #ifndef FAIR_COMPARISON
   /* start finalizers */
-  sml_run_finalizer(NULL);
+  sml_run_finalizer();
 #endif /* FAIR_COMPARISON */
 }
 

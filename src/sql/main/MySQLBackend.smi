@@ -1,13 +1,13 @@
 _require "../../basis.smi"
-_require "./SQLErrors.smi"
+_require local "../../basis/main/SMLSharp_Runtime.smi"
+_require local "./SQLErrors.smi"
 _require "./SQLBackendTy.smi"
-_require "MySQL.smi"
-_require "KeyValuePair.smi"
-_require "../../basis/main/SMLSharp_Runtime.smi"
-_require "SQLBACKEND.sig"
-_require "builtintypes/timestamp/TimeStamp.smi"
-_require "builtintypes/decimal/Decimal.smi"
-_require "builtintypes/float/Float.smi"
+_require local "./MySQL.smi"
+_require local "./KeyValuePair.smi"
+_require local "./SQLBACKEND.sig"
+_require "./builtintypes/timestamp/TimeStamp.smi"
+_require "./builtintypes/decimal/Decimal.smi"
+_require "./builtintypes/float/Float.smi"
 
 structure SMLSharp_SQL_MySQLBackend =
 struct

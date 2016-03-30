@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "../../compiler-utils/env/main/SEnv.smi"
+_require local "../../basis.smi"
+_require local "../../compiler-utils/env/main/SEnv.smi"
 _require "../../compiler/toolchain/main/Filename.smi"
 _require "./Version.smi"
 
@@ -15,6 +15,9 @@ struct
   val LD : unit -> string
   val AR : unit -> string
   val RANLIB : unit -> string
+  val LLC : unit -> string
+  val OPT : unit -> string
+  val LLVM_DIS : unit -> string
   val LDFLAGS : unit -> string
   val LIBS : unit -> string
   val DLLEXT : unit -> string

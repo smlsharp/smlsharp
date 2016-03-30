@@ -1,4 +1,4 @@
-_require "basis.smi"
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"

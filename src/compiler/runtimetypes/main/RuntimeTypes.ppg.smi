@@ -1,7 +1,7 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
-_require "../../util/main/TermFormat.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require local "../../util/main/SmlppgUtil.ppg.smi"
+_require local "../../util/main/TermFormat.smi"
 _require "./FFIAttributes.ppg.smi"
 
 structure RuntimeTypes =
@@ -9,13 +9,16 @@ struct
   datatype tag =
       TAG_BOXED
     | TAG_UNBOXED
-  datatype ty
-    = BOXEDty
+  datatype ty =
+      UNITty
+    | UINT8ty
+    | INT32ty
+    | INT64ty
+    | UINT32ty
+    | UINT64ty
     | DOUBLEty
     | FLOATty
-    | INTty
-    | UCHARty
-    | UINTty
+    | BOXEDty
     | POINTERty
     | SOME_CODEPTRty
     | MLCODEPTRty of

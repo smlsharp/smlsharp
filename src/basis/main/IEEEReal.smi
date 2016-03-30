@@ -1,10 +1,10 @@
 _require "./StringCvt.smi"
-_require "./SMLSharp_Runtime.smi"
-_require "./SMLSharp_ScanChar.smi"
-_require "./List.smi"
-_require "./String.smi"
-_require "./Int.smi"
-_require "./Char.smi"
+_require local "./SMLSharp_Runtime.smi"
+_require local "./SMLSharp_ScanChar.smi"
+_require local "./List.smi"
+_require local "./String.smi"
+_require local "./Int32.smi"
+_require local "./Char.smi"
 
 structure IEEEReal =
 struct

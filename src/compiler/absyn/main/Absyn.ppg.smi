@@ -1,11 +1,11 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require local "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../control/main/Loc.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../util/main/TermFormat.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
-_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require local "../../control/main/Bug.ppg.smi"
+_require local "../../util/main/TermFormat.smi"
+_require local "../../util/main/SmlppgUtil.ppg.smi"
+_require local "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "./FormatTemplate.ppg.smi"
 _require "./Symbol.ppg.smi"
 _require "./AbsynSQL.ppg.smi"
@@ -53,6 +53,7 @@ struct
   and tvarKind 
    = UNIV 
    | REC of (string * ty) list * loc
+   | KINDID of string * loc
 
   type tvar = {symbol:symbol, eq:eq}
   type kindedTvar = {symbol:symbol, eq:eq} * tvarKind
@@ -134,6 +135,7 @@ struct
     | EXPFFIAPPLY of string list * ffiFun * ffiArg list * ffiTy list * loc
     | EXPSQL of (exp, pat, ty) AbsynSQL.exp * loc
     | EXPJOIN of exp * exp * loc
+
   and ffiArg 
     = FFIARG of exp * ffiTy * loc
     | FFIARGSIZEOF of ty * exp option * loc

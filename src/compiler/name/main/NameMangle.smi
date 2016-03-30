@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "../../control/main/Bug.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../control/main/Bug.ppg.smi"
 
 structure NameMangle =
 struct

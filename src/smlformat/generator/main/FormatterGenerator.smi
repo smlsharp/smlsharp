@@ -1,8 +1,8 @@
 _require "../../../basis.smi"
-_require "Utility.smi"
-_require "Ast.smi"
-_require "FormatTemplate.smi"
-_require "FORMATTER_GENERATOR.sig"
+_require "./Utility.smi"
+_require "./Ast.smi"
+_require "./FormatTemplate.smi"
+_require "./FORMATTER_GENERATOR.sig"
 
 structure FormatterGenerator =
 struct

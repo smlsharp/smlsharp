@@ -10,7 +10,6 @@
 #include "smlsharp.h"
 #include "intinf.h"
 #include "object.h"
-#include "objspace.h"
 #include "heap.h"
 
 /* for debug */
@@ -118,7 +117,7 @@ sml_obj_equal(void *obj1, void *obj2)
 		else
 			return 0;
 
-		ASSERT(OBJ_SIZE(obj2) % sizeof(void*) == 0);
+		assert(OBJ_SIZE(obj2) % sizeof(void*) == 0);
 		bitmap2 = OBJ_BITMAP(obj2);
 		for (i = 0; i < OBJ_SIZE(obj2) / sizeof(void*); i++) {
 			if (BITMAP_BIT(bitmap2, i) != tag)
@@ -137,7 +136,7 @@ sml_obj_equal(void *obj1, void *obj2)
 	case OBJTYPE_BOXED_VECTOR:
 		p1 = obj1;
 		p2 = obj2;
-		ASSERT(OBJ_SIZE(obj1) % sizeof(void*) == 0);
+		assert(OBJ_SIZE(obj1) % sizeof(void*) == 0);
 		for (i = 0; i < OBJ_SIZE(obj1) / sizeof(void*); i++) {
 			if (!sml_obj_equal(p1[i], p2[i]))
 				return 0;
@@ -154,8 +153,8 @@ sml_obj_equal(void *obj1, void *obj2)
 		p1 = obj1;
 		p2 = obj2;
 
-		ASSERT(OBJ_NUM_BITMAPS(obj1) == OBJ_NUM_BITMAPS(obj2));
-		ASSERT(OBJ_SIZE(obj1) % sizeof(void*) == 0);
+		assert(OBJ_NUM_BITMAPS(obj1) == OBJ_NUM_BITMAPS(obj2));
+		assert(OBJ_SIZE(obj1) % sizeof(void*) == 0);
 
 		for (i = 0; i < OBJ_NUM_BITMAPS(obj1); i++) {
 			if (bitmap1[i] != bitmap2[i])
@@ -177,47 +176,8 @@ sml_obj_equal(void *obj1, void *obj2)
 	}
 }
 
-SML_PRIMITIVE void *
-sml_obj_dup(void *obj)
-{
-	void **slot, *newobj;
-	size_t obj_size;
-
-	switch (OBJ_TYPE(obj)) {
-	case OBJTYPE_UNBOXED_ARRAY:
-	case OBJTYPE_BOXED_ARRAY:
-	case OBJTYPE_UNBOXED_VECTOR:
-	case OBJTYPE_BOXED_VECTOR:
-		obj_size = OBJ_SIZE(obj);
-		slot = sml_tmp_root();
-		*slot = obj;
-		newobj = sml_obj_alloc(OBJ_TYPE(obj), obj_size);
-		memcpy(newobj, *slot, obj_size);
-		break;
-
-	case OBJTYPE_RECORD:
-		obj_size = OBJ_SIZE(obj);
-		slot = sml_tmp_root();
-		*slot = obj;
-		newobj = sml_record_alloc(obj_size);
-		memcpy(newobj, *slot,
-		       obj_size + SIZEOF_BITMAP * OBJ_BITMAPS_LEN(obj_size));
-		break;
-
-	case OBJTYPE_INTINF:
-		newobj = sml_intinf_new();
-		sml_intinf_set((sml_intinf_t*)newobj, (sml_intinf_t*)obj);
-		break;
-
-	default:
-		sml_fatal(0, "BUG: invalid object type : %d", OBJ_TYPE(obj));
-	}
-
-	return newobj;
-}
-
 void
-sml_obj_enum_ptr(void *obj, void (*trace)(void **))
+sml_obj_enum_ptr(void *obj, void (*trace)(void **, void *), void *data)
 {
 	unsigned int i, size;
 	unsigned int *bitmaps;
@@ -225,8 +185,8 @@ sml_obj_enum_ptr(void *obj, void (*trace)(void **))
 	size = OBJ_SIZE(obj);
 
 	/*
-	DBG(("%p: size=%lu, type=%08x",
-	     obj, (unsigned long)OBJ_SIZE(obj), (unsigned int)OBJ_TYPE(obj)));
+	DBG("%p: size=%lu, type=%08x",
+	    obj, (unsigned long)OBJ_SIZE(obj), (unsigned int)OBJ_TYPE(obj));
 	*/
 
 	switch (OBJ_TYPE(obj)) {
@@ -238,14 +198,14 @@ sml_obj_enum_ptr(void *obj, void (*trace)(void **))
 	case OBJTYPE_BOXED_ARRAY:
 	case OBJTYPE_BOXED_VECTOR:
 		for (i = 0; i < OBJ_SIZE(obj) / sizeof(void*); i++)
-			trace((void**)obj + i);
+			trace((void**)obj + i, data);
 		break;
 
 	case OBJTYPE_RECORD:
 		bitmaps = OBJ_BITMAP(obj);
 		for (i = 0; i < OBJ_SIZE(obj) / sizeof(void*); i++) {
 			if (BITMAP_BIT(bitmaps, i) != TAG_UNBOXED)
-				trace((void**)obj + i);
+				trace((void**)obj + i, data);
 		}
 		break;
 
@@ -259,50 +219,19 @@ sml_obj_alloc(unsigned int objtype, size_t payload_size)
 {
 	void *obj;
 
-	ASSERT(sml_alloc_available());
-	ASSERT(((unsigned int)payload_size & OBJ_SIZE_MASK) == payload_size);
+	assert(sml_saved());
+	assert(((unsigned int)payload_size & OBJ_SIZE_MASK) == payload_size);
 
 	obj = sml_alloc(payload_size);
 	OBJ_HEADER(obj) = OBJ_HEADER_WORD(objtype, payload_size);
 
-	ASSERT(OBJ_SIZE(obj) == payload_size);
-	ASSERT(OBJ_TYPE(obj) == OBJTYPE_UNBOXED_VECTOR
+	assert(OBJ_SIZE(obj) == payload_size);
+	assert(OBJ_TYPE(obj) == OBJTYPE_UNBOXED_VECTOR
 	       || OBJ_TYPE(obj) == OBJTYPE_BOXED_VECTOR
 	       || OBJ_TYPE(obj) == OBJTYPE_UNBOXED_ARRAY
 	       || OBJ_TYPE(obj) == OBJTYPE_BOXED_ARRAY
 	       || OBJ_TYPE(obj) == OBJTYPE_INTINF);
-	ASSERT(OBJ_GC1(obj) == 0 && OBJ_GC2(obj) == 0);
 
-	return obj;
-}
-
-void *
-sml_record_alloc(size_t payload_size)
-{
-	void *obj;
-	size_t bitmap_size;
-
-	ASSERT(sml_alloc_available());
-	ASSERT(((unsigned int)payload_size & OBJ_SIZE_MASK) == payload_size);
-
-	payload_size = ALIGNSIZE(payload_size, sizeof(void*));
-	bitmap_size = OBJ_BITMAPS_LEN(payload_size) * SIZEOF_BITMAP;
-	obj = sml_alloc(payload_size + bitmap_size);
-	OBJ_HEADER(obj) = OBJ_HEADER_WORD(OBJTYPE_RECORD, payload_size);
-
-	ASSERT(OBJ_SIZE(obj) == payload_size);
-	ASSERT(OBJ_TYPE(obj) == OBJTYPE_RECORD);
-	ASSERT(OBJ_GC1(obj) == 0 && OBJ_GC2(obj) == 0);
-
-	return obj;
-}
-
-char *
-sml_str_alloc(size_t len)
-{
-	char *obj;
-	obj = sml_obj_alloc(OBJTYPE_UNBOXED_VECTOR, len + 1);
-	obj[len] = '\0';
 	return obj;
 }
 
@@ -332,7 +261,8 @@ sml_intinf_t *
 sml_intinf_new()
 {
 	sml_intinf_t *obj;
-	obj = sml_obj_malloc(sizeof(sml_intinf_t));
+	assert(sml_saved());
+	obj = sml_alloc(sizeof(sml_intinf_t));
 	OBJ_HEADER(obj) = OBJ_HEADER_WORD(OBJTYPE_INTINF, sizeof(sml_intinf_t));
 	sml_set_finalizer(obj, intinf_free);
 	sml_intinf_init(obj);
@@ -354,7 +284,7 @@ sml_intinf_hex(void *obj)
 	char *buf;
 	void *ret;
 
-	ASSERT(OBJ_TYPE(obj) == OBJTYPE_INTINF);
+	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
 
 	buf = sml_intinf_fmt((sml_intinf_t*)obj, 16);
 	ret = sml_str_new(buf);

@@ -40,22 +40,51 @@ struct
         val (ptopdeclsInclude, topdecFixEnvInclude) =
             ElaborateModule.elabTopDecs fixEnv topdecsInclude
         val ptopdeclsInclude = UserTvarScope.decide ptopdeclsInclude
+        val fixEnv = extendFixEnv (fixEnv, topdecFixEnvInclude)
 
         val (ptopdeclsSource, topdecFixEnvSource) =
             ElaborateModule.elabTopDecs fixEnv topdecsSource
         val ptopdeclsSource = UserTvarScope.decide ptopdeclsSource
 
-        val topdecFixEnv = extendFixEnv(topdecFixEnvInclude, topdecFixEnvSource)
-
-        val resultFixEnv = topdecFixEnv
         val plunit = {interface = interface,
                       topdecsInclude = ptopdeclsInclude,
                       topdecsSource = ptopdeclsSource}
       in
         case EU.getErrors () of
-          nil => (resultFixEnv, plunit, EU.getWarnings ())
+          nil => (topdecFixEnvSource, plunit, EU.getWarnings ())
         | _::_ =>
           raise UE.UserErrors (EU.getErrorsAndWarnings ())
+      end
+
+  fun elaborateInterface
+        fixEnv
+        ({interfaceDecs, requiredIds, topdecsInclude}:A.interface_unit) =
+      let
+        val _ = EU.initializeErrorQueue ()
+        val interface = {interfaceDecs = interfaceDecs,
+                         provideInterfaceNameOpt = NONE,
+                         requiredIds = requiredIds,
+                         locallyRequiredIds = nil,
+                         provideTopdecs = nil}
+        val (fixEnvRequire, interface) =
+            ElaborateInterface.elaborate interface
+        val {interfaceDecs, requiredIds, ...} =
+            UserTvarScope.decideInterface interface
+        val fixEnv = extendFixEnv (fixEnv, fixEnvRequire)
+        val (ptopdecsInclude, fixEnvInclude) =
+            ElaborateModule.elabTopDecs fixEnv topdecsInclude
+        val ptopdecsInclude = UserTvarScope.decide ptopdecsInclude
+        val warnings =
+            case EU.getErrors () of
+              nil => EU.getWarnings ()
+            | _::_ => raise UE.UserErrors (EU.getErrorsAndWarnings ())
+      in
+        (* return fixEnv for codes requiring this interface *)
+        (extendFixEnv (fixEnvRequire, fixEnvInclude),
+         {interfaceDecs = interfaceDecs,
+          requiredIds = requiredIds,
+          topdecsInclude = ptopdecsInclude},
+         warnings)
       end
 
   fun elaborateInteractiveEnv

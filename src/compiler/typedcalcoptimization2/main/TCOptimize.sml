@@ -436,6 +436,7 @@ local
       | TC.TPEXPORTRECFUNVAR _ =>
         raise bug "TPEXPORTRECFUNVAR to optimize"
       | TC.TPEXTERNEXN {longsymbol, ty} => (varMap,  tpdecl :: declListRev)
+      | TC.TPBUILTINEXN {longsymbol, ty} => (varMap,  tpdecl :: declListRev)
       | TC.TPEXTERNVAR {longsymbol, ty} => (varMap, tpdecl :: declListRev)
       | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
         let

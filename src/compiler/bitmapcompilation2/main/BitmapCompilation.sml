@@ -42,13 +42,12 @@ struct
 
   fun Cast ((exp, ty), targetTy, loc) =
       B.BCCAST {exp = exp, expTy = ty, targetTy = targetTy,
-                runtimeTyCast = false, bitCast = false,
-                loc = loc}
+                cast = BuiltinPrimitive.TypeCast, loc = loc}
 
   fun valueToBcexp (value, loc) =
       case value of
         SingletonTyEnv2.CONST n =>
-        (B.BCCONSTANT {const = ConstantTerm.WORD n,
+        (B.BCCONSTANT {const = ConstantTerm.WORD32 n,
                        ty = BuiltinTypes.wordTy,
                        loc = loc},
          BuiltinTypes.wordTy)
@@ -59,13 +58,12 @@ struct
          T.SINGLETONty (T.TAGty ty))
       | SingletonTyEnv2.SIZE (ty, n) =>
         (B.BCCAST
-           {exp = B.BCCONSTANT {const = ConstantTerm.WORD (Word32.fromInt n),
+           {exp = B.BCCONSTANT {const = ConstantTerm.WORD32 (Word32.fromInt n),
                                 ty = BuiltinTypes.wordTy,
                                 loc = loc},
             expTy = BuiltinTypes.wordTy,
             targetTy = T.SINGLETONty (T.SIZEty ty),
-            runtimeTyCast = false,
-            bitCast = false,
+            cast = BuiltinPrimitive.TypeCast,
             loc = loc},
          T.SINGLETONty (T.SIZEty ty))
       | SingletonTyEnv2.CAST (v, ty2) =>
@@ -159,6 +157,8 @@ struct
         B.BCCONSTANT {const = const, ty = ty, loc = loc}
       | L.TLFOREIGNSYMBOL {name, ty, loc} =>
         B.BCFOREIGNSYMBOL {name = name, ty = ty, loc = loc}
+      | L.TLDUMP {dump, ty, loc} =>
+        B.BCDUMP {dump = dump, ty = ty, loc = loc}
       | L.TLVAR {varInfo, loc} =>
         B.BCVAR {varInfo = varInfo, loc = loc}
       | L.TLEXVAR {exVarInfo, loc} =>
@@ -339,15 +339,14 @@ struct
                       resultTy = resultTy,
                       loc = loc}
         end
-      | L.TLCAST {exp, expTy, targetTy, runtimeTyCast, bitCast, loc} =>
+      | L.TLCAST {exp, expTy, targetTy, cast, loc} =>
         let
           val exp = compileExp env comp exp
         in
           B.BCCAST {exp = exp,
                     expTy = expTy,
                     targetTy = targetTy,
-                    runtimeTyCast = runtimeTyCast,
-                    bitCast = bitCast,
+                    cast = cast,
                     loc = loc}
         end
       | L.TLFNM {argVarList, bodyExp, bodyTy, loc} =>
@@ -408,8 +407,9 @@ struct
         in
           (env, [B.BCVALREC {recbindList = recbindList, loc = loc}])
         end
-    | L.TLEXPORTVAR (exVarInfo, exp, loc) =>
-      (env, [B.BCEXPORTVAR {exVarInfo = exVarInfo,
+    | L.TLEXPORTVAR {weak, exVarInfo, exp, loc} =>
+      (env, [B.BCEXPORTVAR {weak = weak,
+                            exVarInfo = exVarInfo,
                             exp = compileExp env comp exp,
                             loc = loc}])
     | L.TLEXTERNVAR (exVarInfo, loc) =>

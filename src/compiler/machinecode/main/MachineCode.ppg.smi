@@ -1,6 +1,5 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../util/main/BigInt_IntInf.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../name/main/CodeLabel.smi"
@@ -13,6 +12,7 @@ _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../runtimecalc/main/RuntimeCalc.ppg.smi"
 _require "../../anormal/main/ANormal.ppg.smi"
+_require "../../absyn/main/InterfaceName.ppg.smi"
 
 structure MachineCode =
 struct
@@ -56,7 +56,7 @@ struct
     | OBJTYPE_INTINF
 
   datatype mcexp_mid =
-      MCLARGEINT of
+      MCINTINF of
       {
         resultVar : varInfo,
         dataLabel : ExtraDataLabel.id,
@@ -117,13 +117,20 @@ struct
         allocSize : mcvalue,
         loc : loc
       }
-    | MCDISABLEGC
-    | MCENABLEGC
-    | MCCHECKGC
-    | MCRECORDDUP of
+    | MCALLOC_COMPLETED
+    | MCCHECK
+    | MCRECORDDUP_ALLOC of
       {
         resultVar : varInfo,
-        recordExp : mcvalue,
+        copySizeVar : varInfo,
+        recordExp : mcvalue, 
+        loc : loc
+      } 
+    | MCRECORDDUP_COPY of
+      {
+        dstRecord : mcvalue,
+        srcRecord : mcvalue,
+        copySize : mcvalue,
         loc : loc
       }
     | MCBZERO of
@@ -172,7 +179,8 @@ struct
       }
     | MCCALL of
       {
-        resultVar : varInfo,
+        resultVar : varInfo option,
+        resultTy : ty,
         codeExp : mcvalue,
         closureEnvExp : mcvalue option,
         argExpList : mcvalue list,
@@ -195,6 +203,11 @@ struct
         valueExp : mcvalue,
         loc : loc
       }
+    | MCRAISE_ALLOC of
+      {
+        resultVar : varInfo,
+        loc : loc
+      }
 
   datatype mcexp_last =
       MCRETURN of
@@ -202,8 +215,9 @@ struct
         value : mcvalue,
         loc : loc
       }
-    | MCRAISE of
+    | MCRAISE_THROW of
       {
+        raiseAllocResult : mcvalue,
         argExp : mcvalue,
         loc : loc
       }
@@ -246,14 +260,7 @@ struct
   datatype topdata = datatype RuntimeCalc.topdata
 
   datatype topdec =
-      MTTOPLEVEL of
-      {
-        symbol : string,
-        frameSlots : RuntimeTypes.ty SlotID.Map.map,
-        bodyExp : mcexp,
-	loc : loc
-      }
-    | MTFUNCTION of
+      MTFUNCTION of
       {
         id : FunEntryLabel.id,
         tyvarKindEnv : Types.btvEnv,
@@ -274,14 +281,23 @@ struct
         bodyExp : mcexp,
         attributes : FFIAttributes.attributes,
         retTy : ty option,
-        cleanupHandler : HandlerLabel.id,
+        cleanupHandler : HandlerLabel.id option,
         loc : loc
       }
+
+  type toplevel =
+      {
+        dependency : InterfaceName.dependency,
+        frameSlots : RuntimeTypes.ty SlotID.Map.map,
+        bodyExp : mcexp,
+        cleanupHandler : HandlerLabel.id option
+      } 
 
   type program =
       {
         topdata : topdata list,
-        topdecs : topdec list
+        topdecs : topdec list,
+        toplevel : toplevel
       }
 
   val format_ty : ty -> SMLFormat.FormatExpression.expression list

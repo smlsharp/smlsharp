@@ -260,6 +260,8 @@ local
         RC.RCEXPORTVAR varInfo
       | RC.RCEXTERNEXN {path, ty} =>
         RC.RCEXTERNEXN {path=path, ty=revealTy ty}
+      | RC.RCBUILTINEXN {path, ty} =>
+        RC.RCBUILTINEXN {path=path, ty=revealTy ty}
       | RC.RCEXTERNVAR {path, ty} =>
         RC.RCEXTERNVAR {path=path, ty=revealTy ty}
       | RC.RCVAL (binds:(RC.varInfo * rcexp) list, loc) =>

@@ -7,7 +7,7 @@
 
 infix 6 + - ^
 infix 4 = <> > >= < <=
-val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
 structure Array = SMLSharp_Builtin.Array
 
 structure Timer =
@@ -15,7 +15,7 @@ struct
 
   val prim_getTimes =
       _import "prim_Timer_getTimes"
-      : __attribute__((no_callback)) int array -> int
+      : __attribute__((fast)) int array -> int
 
   fun getTimes () =
       let

@@ -1,5 +1,5 @@
 _require "../../basis.smi"
-_require "parser-comb-sig.sml"
+_require local "./parser-comb-sig.sml"
 
 structure ParserComb =
 struct

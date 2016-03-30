@@ -96,7 +96,7 @@ in
             iseq : bool,
             arity : int,
             runtimeTy : BuiltinTypeNames.bty,
-            conSet : {hasArg:bool} SEnv.map,
+            conSet,
             conIDSet,
             extraArgs : ty list,
             dtyKind : T.dtyKind
@@ -166,6 +166,8 @@ in
              operators
           }
       | T.UNIV => T.UNIV
+      | T.BOXED => T.BOXED
+      | T.UNBOXED => T.UNBOXED
       | T.REC (fields:ty LabelEnv.map) =>
         T.REC (LabelEnv.map (evalTy btvMap) fields)
       | T.JOIN (fields:ty LabelEnv.map, ty1, ty2, loc) =>
@@ -185,7 +187,7 @@ in
            iseq : bool,
            arity : int,
            runtimeTy : BuiltinTypeNames.bty,
-           conSet : {hasArg:bool} SEnv.map,
+           conSet,
            conIDSet,
            extraArgs : ty list,
            dtyKind : T.dtyKind

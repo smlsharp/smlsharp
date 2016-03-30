@@ -1,35 +1,15 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 
 structure BuiltinPrimitive =
 struct
   datatype primitiveMachineCode =
       Array_turnIntoVector
-    | Byte_add
-    | Byte_andb
-    | Byte_arshift_unsafe
-    | Byte_div_unsafe
-    | Byte_fromWord
-    | Byte_gt
-    | Byte_gteq
-    | Byte_lt
-    | Byte_lteq
-    | Byte_lshift_unsafe
-    | Byte_mod_unsafe
-    | Byte_mul
-    | Byte_orb
-    | Byte_rshift_unsafe
-    | Byte_sub
-    | Byte_toIntX
-    | Byte_toWord
-    | Byte_xorb
     | Float_abs
     | Float_add
     | Float_div
     | Float_equal
     | Float_unorderedOrEqual
-    | Float_fromInt_unsafe
-    | Float_fromReal_unsafe
     | Float_gt
     | Float_gteq
     | Float_isNan
@@ -38,26 +18,42 @@ struct
     | Float_mul
     | Float_rem
     | Float_sub
+    | Float_toInt32_unsafe
+    | Float_toInt64_unsafe
+    | Float_toWord32_unsafe
+    | Float_toWord64_unsafe
     | Float_toReal
-    | Float_trunc_unsafe
     | IdentityEqual
-    | Int_add_unsafe
-    | Int_gt
-    | Int_gteq
-    | Int_lt
-    | Int_lteq
-    | Int_mul_unsafe
-    | Int_quot_unsafe
-    | Int_rem_unsafe
-    | Int_sub_unsafe
+    | Int32_add_unsafe
+    | Int32_gt
+    | Int32_gteq
+    | Int32_lt
+    | Int32_lteq
+    | Int32_mul_unsafe
+    | Int32_quot_unsafe
+    | Int32_rem_unsafe
+    | Int32_sub_unsafe
+    | Int32_toReal
+    | Int32_toFloat_unsafe
+    | Int64_add_unsafe
+    | Int64_gt
+    | Int64_gteq
+    | Int64_lt
+    | Int64_lteq
+    | Int64_mul_unsafe
+    | Int64_quot_unsafe
+    | Int64_rem_unsafe
+    | Int64_sub_unsafe
+    | Int64_toReal_unsafe
+    | Int64_toFloat_unsafe
     | ObjectSize
     | Ptr_advance
+    | Ptr_toWord64
     | Real_abs
     | Real_add
     | Real_div
     | Real_equal
     | Real_unorderedOrEqual
-    | Real_fromInt_unsafe
     | Real_gt
     | Real_gteq
     | Real_isNan
@@ -66,34 +62,86 @@ struct
     | Real_mul
     | Real_rem
     | Real_sub
-    | Real_trunc_unsafe
+    | Real_toInt32_unsafe
+    | Real_toInt64_unsafe
+    | Real_toWord32_unsafe
+    | Real_toWord64_unsafe
+    | Real_toFloat_unsafe
     | RuntimePolyEqual
-    | Word_add
-    | Word_andb
-    | Word_arshift_unsafe
-    | Word_div_unsafe
-    | Word_gt
-    | Word_gteq
-    | Word_lshift_unsafe
-    | Word_lt
-    | Word_lteq
-    | Word_mod_unsafe
-    | Word_mul
-    | Word_orb
-    | Word_rshift_unsafe
-    | Word_sub
-    | Word_xorb
+    | Word8_add
+    | Word8_andb
+    | Word8_arshift_unsafe
+    | Word8_div_unsafe
+    | Word8_gt
+    | Word8_gteq
+    | Word8_lshift_unsafe
+    | Word8_lt
+    | Word8_lteq
+    | Word8_mod_unsafe
+    | Word8_mul
+    | Word8_orb
+    | Word8_rshift_unsafe
+    | Word8_sub
+    | Word8_toWord32
+    | Word8_toWord32X
+    | Word8_toWord64
+    | Word8_toWord64X
+    | Word8_xorb
+    | Word32_add
+    | Word32_andb
+    | Word32_arshift_unsafe
+    | Word32_div_unsafe
+    | Word32_gt
+    | Word32_gteq
+    | Word32_lshift_unsafe
+    | Word32_lt
+    | Word32_lteq
+    | Word32_mod_unsafe
+    | Word32_mul
+    | Word32_orb
+    | Word32_rshift_unsafe
+    | Word32_sub
+    | Word32_toWord8
+    | Word32_toWord64
+    | Word32_toWord64X
+    | Word32_xorb
+    | Word64_add
+    | Word64_andb
+    | Word64_arshift_unsafe
+    | Word64_div_unsafe
+    | Word64_gt
+    | Word64_gteq
+    | Word64_lshift_unsafe
+    | Word64_lt
+    | Word64_lteq
+    | Word64_mod_unsafe
+    | Word64_mul
+    | Word64_orb
+    | Word64_rshift_unsafe
+    | Word64_sub
+    | Word64_toWord8
+    | Word64_toWord32
+    | Word64_xorb
   datatype primitiveRuntimeCalc =
       Array_alloc_unsafe
-    | Array_alloc_init
     | Array_copy_unsafe
-    | Ptr_deref
-    | Ptr_store
+    | Boxed_deref
+    | Ptr_dup
+    | Vector_alloc_unsafe
     | M of primitiveMachineCode
   datatype primitiveTypedLambda =
-      Array_sub_unsafe
+      Array_alloc_init
+    | Array_sub_unsafe
     | Array_update_unsafe
+    | Ptr_deref
+    | Ptr_store
+    | Vector_alloc_init
+    | Vector_alloc_init_fresh
     | R of primitiveRuntimeCalc
+  datatype cast =
+      BitCast
+    | RuntimeTyCast
+    | TypeCast
   datatype primitive =
       Array_alloc
     | Array_copy
@@ -101,19 +149,7 @@ struct
     | Array_sub
     | Array_update
     | Before
-    | Byte_arshift
-    | Byte_div
-    | Byte_fromInt
-    | Byte_lshift
-    | Byte_mod
-    | Byte_neg
-    | Byte_notb
-    | Byte_rshift
-    | Byte_toInt
-    | Byte_toWordX
-    | BitCast
-    | RuntimeTyCast
-    | Cast
+    | Cast of cast
     | Char_chr
     | Char_gt
     | Char_gteq
@@ -121,6 +157,7 @@ struct
     | Char_lteq
     | Char_ord
     | Compose
+    | Dynamic
     | Equal
     | NotEqual
     | Exn_Name
@@ -129,15 +166,26 @@ struct
     | Float_notEqual
     | Float_trunc
     | Ignore
-    | Int_abs
-    | Int_add
-    | Int_div
-    | Int_mod
-    | Int_mul
-    | Int_neg
-    | Int_quot
-    | Int_rem
-    | Int_sub
+    | Int32_abs
+    | Int32_add
+    | Int32_div
+    | Int32_mod
+    | Int32_mul
+    | Int32_neg
+    | Int32_quot
+    | Int32_rem
+    | Int32_sub
+    | Int64_abs
+    | Int64_add
+    | Int64_div
+    | Int64_fromInt32
+    | Int64_mod
+    | Int64_mul
+    | Int64_neg
+    | Int64_quot
+    | Int64_rem
+    | Int64_sub
+    | Int64_toInt32
     | Real_neg
     | Real_notEqual
     | Real_trunc
@@ -148,14 +196,34 @@ struct
     | String_sub
     | Vector_length
     | Vector_sub
-    | Word_arshift
-    | Word_div
-    | Word_lshift
-    | Word_mod
-    | Word_neg
-    | Word_notb
-    | Word_rshift
-    | Word_toInt
+    | Word8_arshift
+    | Word8_div
+    | Word8_fromInt32
+    | Word8_lshift
+    | Word8_mod
+    | Word8_neg
+    | Word8_notb
+    | Word8_rshift
+    | Word8_toInt32
+    | Word8_toInt32X
+    | Word32_arshift
+    | Word32_div
+    | Word32_lshift
+    | Word32_mod
+    | Word32_neg
+    | Word32_notb
+    | Word32_rshift
+    | Word32_toInt32
+    | Word64_arshift
+    | Word64_div
+    | Word64_fromInt32
+    | Word64_lshift
+    | Word64_mod
+    | Word64_neg
+    | Word64_notb
+    | Word64_rshift
+    | Word64_toInt32
+    | Word64_toInt32X
     | L of primitiveTypedLambda
   val format_primitiveTypedLambda
       : primitiveTypedLambda -> SMLFormat.FormatExpression.expression list
@@ -165,6 +233,7 @@ struct
       : primitiveMachineCode -> SMLFormat.FormatExpression.expression list
   val format_primitive
       : primitive -> SMLFormat.FormatExpression.expression list
+  val format_cast : cast -> SMLFormat.FormatExpression.expression list
   type sideEffect = {throw: bool, update: bool, read: bool, memory: bool}
   val haveSideEffect : primitive -> sideEffect
   val findPrimitive : string -> primitive option

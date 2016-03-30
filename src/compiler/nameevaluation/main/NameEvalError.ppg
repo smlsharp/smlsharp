@@ -1270,5 +1270,15 @@ in
    *)
   InvalidOverloadInst of (code * {longsymbol: longsymbol})
 
+  and
+  (**
+   *)
+  (*%
+     @format(code * s)
+     "(name evaluation" +d code ")" +d
+     "invalid" +d "kind" +d "name:" +d s
+   *)
+  InvalidKindName of code * string
+
 end
 end

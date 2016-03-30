@@ -10,20 +10,20 @@ infix 7 * / div mod
 infix 6 + - ^
 infixr 5 ::
 infix 4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op > = SMLSharp_Builtin.Int.gt
-val op < = SMLSharp_Builtin.Int.lt
-val op <= = SMLSharp_Builtin.Int.lteq
-val op >= = SMLSharp_Builtin.Int.gteq
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op > = SMLSharp_Builtin.Int32.gt
+val op < = SMLSharp_Builtin.Int32.lt
+val op <= = SMLSharp_Builtin.Int32.lteq
+val op >= = SMLSharp_Builtin.Int32.gteq
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 structure Char = SMLSharp_Builtin.Char
-structure Word = SMLSharp_Builtin.Word
+structure Word32 = SMLSharp_Builtin.Word32
 structure Word8 = SMLSharp_Builtin.Word8
 
 val memcmp = _import "sml_memcmp"
-             : __attribute__ ((no_callback, pure))
+             : __attribute__ ((pure,fast))
                (string, int, string, int, int) -> int
 
 structure Substring =
@@ -117,11 +117,11 @@ struct
             val limit = length - len1 + start
             val base = 0w127
             fun sub (vec, i) =
-                Word8.toWord
+                Word8.toWord32
                   (Char.castToWord8
                      (Array.sub_unsafe (String.castToArray vec, i)))
             fun hash_add (hash, ch) =
-                Word.add (Word.mul (hash, base), ch)
+                Word32.add (Word32.mul (hash, base), ch)
             fun hash1_init (i, hash) =
                 if i < len1
                 then hash1_init (i+1, hash_add (hash, sub (vec1, i)))
@@ -131,13 +131,13 @@ struct
                 then hash2_init (i+1, hash_add (hash, sub (vec2, start+i)))
                 else hash
             fun baseDel_init (0, z) = z
-              | baseDel_init (n, z) = baseDel_init (n - 1, Word.mul (z, base))
+              | baseDel_init (n, z) = baseDel_init (n - 1, Word32.mul (z, base))
             val hash1 = hash1_init (0, 0w0)
             val hash2 = hash2_init (0, 0w0)
             val baseDel = baseDel_init (len1, 0w1)
             fun hash_rot (hash, del, add) =
-                Word.sub (Word.add (Word.mul (hash, base), add),
-                          Word.mul (del, baseDel))
+                Word32.sub (Word32.add (Word32.mul (hash, base), add),
+                            Word32.mul (del, baseDel))
             fun search (i, hash2) =
                 if hash1 = hash2 andalso memcmp (vec1, 0, vec2, i, len1) = 0
                 then i

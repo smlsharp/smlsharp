@@ -20,7 +20,9 @@ struct
   datatype exp =
       Exp of TypedLambda.tlexp * Types.ty
     | Int of int
+    | Int64 of int64
     | Word of int
+    | Word64 of int64
     | Word8 of int
     | Char of int
     | ConTag of int
@@ -32,6 +34,7 @@ struct
     | True
     | False
     | SizeOf of Types.ty
+    | IndexOf of Types.ty * string
     | ExVar of RecordCalc.exVarInfo
     | Cast of exp * Types.ty
     | RuntimeTyCast of exp * Types.ty
@@ -78,8 +81,8 @@ struct
       | L.TLFNM _ => false
       | L.TLPOLY _ => false
       | L.TLTAPP _ => false
-      | L.TLCAST {exp, expTy, targetTy, runtimeTyCast, bitCast, loc} =>
-        isAtomic exp
+      | L.TLCAST {exp, expTy, targetTy, cast, loc} => isAtomic exp
+      | L.TLDUMP _ => false
 
   fun Tuple exps =
       Record (List.tabulate (length exps, fn i => Int.toString (i+1)), exps)
@@ -154,84 +157,208 @@ struct
   fun IsNull exp1 =
       IdentityEqual (B.boxedTy, exp1, Null)
 
-  fun Int_eq (exp1, exp2) =
+  fun Int32_eq (exp1, exp2) =
       IdentityEqual (B.intTy, exp1, exp2)
 
-  fun Int_gteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Int_gteq),
+  fun Int32_gteq (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int32_gteq),
                    [B.intTy, B.intTy], B.boolTy,
                    [exp1, exp2])
 
-  fun Int_lt (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Int_lt),
+  fun Int32_lt (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int32_lt),
                    [B.intTy, B.intTy], B.boolTy,
                    [exp1, exp2])
 
-  fun Int_lteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Int_lteq),
+  fun Int32_lteq (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int32_lteq),
                    [B.intTy, B.intTy], B.boolTy,
                    [exp1, exp2])
 
-  fun Int_quot_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Int_quot_unsafe),
+  fun Int32_quot_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int32_quot_unsafe),
                    [B.intTy, B.intTy], B.intTy,
                    [exp1, exp2])
 
-  fun Int_rem_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Int_rem_unsafe),
+  fun Int32_rem_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int32_rem_unsafe),
                    [B.intTy, B.intTy], B.intTy,
                    [exp1, exp2])
 
-  fun Int_sub_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Int_sub_unsafe),
+  fun Int32_sub_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int32_sub_unsafe),
                    [B.intTy, B.intTy], B.intTy,
                    [exp1, exp2])
 
-  fun Int_add_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Int_add_unsafe),
+  fun Int32_add_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int32_add_unsafe),
                    [B.intTy, B.intTy], B.intTy,
                    [exp1, exp2])
 
-  fun Word_add (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Word_add),
+  fun Int64_eq (exp1, exp2) =
+      IdentityEqual (B.int64Ty, exp1, exp2)
+
+  fun Int64_gteq (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int64_gteq),
+                   [B.int64Ty, B.int64Ty], B.boolTy,
+                   [exp1, exp2])
+
+  fun Int64_lt (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int64_lt),
+                   [B.int64Ty, B.int64Ty], B.boolTy,
+                   [exp1, exp2])
+
+  fun Int64_lteq (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int64_lteq),
+                   [B.int64Ty, B.int64Ty], B.boolTy,
+                   [exp1, exp2])
+
+  fun Int64_quot_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int64_quot_unsafe),
+                   [B.int64Ty, B.int64Ty], B.int64Ty,
+                   [exp1, exp2])
+
+  fun Int64_rem_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int64_rem_unsafe),
+                   [B.int64Ty, B.int64Ty], B.int64Ty,
+                   [exp1, exp2])
+
+  fun Int64_sub_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int64_sub_unsafe),
+                   [B.int64Ty, B.int64Ty], B.int64Ty,
+                   [exp1, exp2])
+
+  fun Int64_add_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Int64_add_unsafe),
+                   [B.int64Ty, B.int64Ty], B.int64Ty,
+                   [exp1, exp2])
+
+  fun Word32_add (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word32_add),
                    [B.wordTy, B.wordTy], B.wordTy,
                    [exp1, exp2])
 
-  fun Word_sub (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Word_sub),
+  fun Word32_sub (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word32_sub),
                    [B.wordTy, B.wordTy], B.wordTy,
                    [exp1, exp2])
 
-  fun Word_div_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Word_div_unsafe),
+  fun Word32_div_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word32_div_unsafe),
                    [B.wordTy, B.wordTy], B.wordTy,
                    [exp1, exp2])
 
-  fun Word_orb (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Word_orb),
+  fun Word32_orb (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word32_orb),
                    [B.wordTy, B.wordTy], B.wordTy,
                    [exp1, exp2])
 
-  fun Word_andb (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Word_andb),
+  fun Word32_andb (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word32_andb),
                    [B.wordTy, B.wordTy], B.wordTy,
                    [exp1, exp2])
 
-  fun Word_xorb (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Word_xorb),
+  fun Word32_xorb (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word32_xorb),
                    [B.wordTy, B.wordTy], B.wordTy,
                    [exp1, exp2])
 
-  fun Word_lt (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Word_lt),
+  fun Word32_lt (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word32_lt),
                    [B.wordTy, B.wordTy], B.boolTy,
                    [exp1, exp2])
 
-  fun Word_fromInt exp =
+  fun Word32_fromInt32 exp =
       RuntimeTyCast (exp, B.wordTy)
 
-  fun Word_toIntX exp =
+  fun Word32_toInt32X exp =
       RuntimeTyCast (exp, B.intTy)
+
+  fun Word32_toWord8 exp1 =
+      monoPrimApp (P.R (P.M P.Word32_toWord8),
+                   [B.wordTy], B.word8Ty,
+                   [exp1])
+
+  fun Word32_toWord64 exp =
+      monoPrimApp (P.R (P.M P.Word32_toWord64),
+                   [B.wordTy], B.word64Ty,
+                   [exp])
+
+  fun Word32_toWord64X exp =
+      monoPrimApp (P.R (P.M P.Word32_toWord64X),
+                   [B.wordTy], B.word64Ty,
+                   [exp])
+
+  fun Word64_arshift_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_arshift_unsafe),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_rshift_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_rshift_unsafe),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_lshift_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_lshift_unsafe),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_add (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_add),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_sub (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_sub),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_div_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_div_unsafe),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_orb (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_orb),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_andb (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_andb),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_xorb (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_xorb),
+                   [B.word64Ty, B.word64Ty], B.word64Ty,
+                   [exp1, exp2])
+
+  fun Word64_lt (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_lt),
+                   [B.word64Ty, B.word64Ty], B.boolTy,
+                   [exp1, exp2])
+
+  fun Word64_lteq (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word64_lteq),
+                   [B.word64Ty, B.word64Ty], B.boolTy,
+                   [exp1, exp2])
+
+  fun Word64_fromInt32 exp =
+      monoPrimApp (P.R (P.M P.Word32_toWord64X),
+                   [B.wordTy], B.word64Ty,
+                   [RuntimeTyCast (exp, B.wordTy)])
+
+  fun Word64_toWord32 exp =
+      monoPrimApp (P.R (P.M P.Word64_toWord32),
+                   [B.word64Ty], B.wordTy,
+                   [exp])
+
+  fun Word64_fromInt64 exp =
+      RuntimeTyCast (exp, B.word64Ty)
+
+  fun Word64_toInt64X exp =
+      RuntimeTyCast (exp, B.int64Ty)
 
   fun Float_isNan exp1 =
       monoPrimApp (P.R (P.M P.Float_isNan),
@@ -240,7 +367,9 @@ struct
 
   fun Float_equal (exp1, exp2) =
       monoPrimApp (P.R (P.M P.Float_equal),
-                   [B.realTy, B.realTy], B.boolTy,
+(* bug 303_Real32NotEqual
+                   [B.realTy, B.realTy], B.boolTy,*)
+                   [B.real32Ty, B.real32Ty], B.boolTy,
                    [exp1, exp2])
 
   fun Float_gteq (exp1, exp2) =
@@ -257,6 +386,11 @@ struct
       monoPrimApp (P.R (P.M P.Float_sub),
                    [B.real32Ty, B.real32Ty], B.real32Ty,
                    [exp1, exp2])
+
+  fun Float_toInt32_unsafe exp =
+      monoPrimApp (P.R (P.M P.Float_toInt32_unsafe),
+                   [B.real32Ty], B.intTy,
+                   [exp])
 
   fun Real_isNan exp1 =
       monoPrimApp (P.R (P.M P.Real_isNan),
@@ -283,63 +417,63 @@ struct
                    [B.realTy, B.realTy], B.realTy,
                    [exp1, exp2])
 
-  fun Byte_sub (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_sub),
+  fun Real_toInt32_unsafe exp =
+      monoPrimApp (P.R (P.M P.Real_toInt32_unsafe),
+                   [B.realTy], B.intTy,
+                   [exp])
+
+  fun Word8_sub (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_sub),
                    [B.word8Ty, B.word8Ty], B.word8Ty,
                    [exp1, exp2])
 
-  fun Byte_xorb (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_xorb),
+  fun Word8_xorb (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_xorb),
                    [B.word8Ty, B.word8Ty], B.word8Ty,
                    [exp1, exp2])
 
-  fun Byte_arshift_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_arshift_unsafe),
+  fun Word8_arshift_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_arshift_unsafe),
                    [B.word8Ty, B.word8Ty], B.word8Ty,
                    [exp1, exp2])
 
-  fun Byte_rshift_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_rshift_unsafe),
+  fun Word8_rshift_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_rshift_unsafe),
                    [B.word8Ty, B.word8Ty], B.word8Ty,
                    [exp1, exp2])
 
-  fun Byte_lshift_unsafe (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_lshift_unsafe),
+  fun Word8_lshift_unsafe (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_lshift_unsafe),
                    [B.word8Ty, B.word8Ty], B.word8Ty,
                    [exp1, exp2])
 
-  fun Byte_lt (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_lt),
+  fun Word8_lt (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_lt),
                    [B.word8Ty, B.word8Ty], B.boolTy,
                    [exp1, exp2])
 
-  fun Byte_lteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_lteq),
+  fun Word8_lteq (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_lteq),
                    [B.word8Ty, B.word8Ty], B.boolTy,
                    [exp1, exp2])
 
-  fun Byte_gt (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_gt),
+  fun Word8_gt (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_gt),
                    [B.word8Ty, B.word8Ty], B.boolTy,
                    [exp1, exp2])
 
-  fun Byte_gteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Byte_gteq),
+  fun Word8_gteq (exp1, exp2) =
+      monoPrimApp (P.R (P.M P.Word8_gteq),
                    [B.word8Ty, B.word8Ty], B.boolTy,
                    [exp1, exp2])
 
-  fun Byte_fromWord exp1 =
-      monoPrimApp (P.R (P.M P.Byte_fromWord),
-                   [B.wordTy], B.word8Ty,
+  fun Word8_toWord32 exp1 =
+      monoPrimApp (P.R (P.M P.Word8_toWord32),
+                   [B.word8Ty], B.wordTy,
                    [exp1])
 
-  fun Byte_toIntX exp1 =
-      monoPrimApp (P.R (P.M P.Byte_toIntX),
-                   [B.word8Ty], B.intTy,
-                   [exp1])
-
-  fun Byte_toWord exp1 =
-      monoPrimApp (P.R (P.M P.Byte_toWord),
+  fun Word8_toWord32X exp1 =
+      monoPrimApp (P.R (P.M P.Word8_toWord32X),
                    [B.word8Ty], B.wordTy,
                    [exp1])
 
@@ -362,15 +496,29 @@ struct
                    [lenExp])
 
   fun Array_alloc_init (elemTy, elems) =
-      polyPrimApp (P.R P.Array_alloc_init,
+      polyPrimApp (P.Array_alloc_init,
+                   fn t => List.tabulate (length elems, fn _ => t),
+                   fn t => arrayTy t,
+                   elemTy,
+                   elems)
+
+  fun Vector_alloc_init (elemTy, elems) =
+      polyPrimApp (P.Vector_alloc_init,
+                   fn t => List.tabulate (length elems, fn _ => t),
+                   fn t => arrayTy t,
+                   elemTy,
+                   elems)
+
+  fun Vector_alloc_init_fresh (elemTy, elems) =
+      polyPrimApp (P.Vector_alloc_init_fresh,
                    fn t => List.tabulate (length elems, fn _ => t),
                    fn t => arrayTy t,
                    elemTy,
                    elems)
 
   fun Array_length (elemTy, exp1) =
-      Word_toIntX (Word_div_unsafe (ObjectSize (arrayTy elemTy, exp1),
-                                    Cast (SizeOf elemTy, B.wordTy)))
+      Word32_toInt32X (Word32_div_unsafe (ObjectSize (arrayTy elemTy, exp1),
+                                          Cast (SizeOf elemTy, B.wordTy)))
 
   fun Array_sub_unsafe (elemTy, arrayExp, indexExp) =
       polyPrimApp (P.Array_sub_unsafe,
@@ -420,15 +568,15 @@ struct
       in
         Let ([(vid1, lenExp),
               (vid2, Array_alloc_unsafe
-                       (B.charTy, Int_add_unsafe (Var vid1, Int 1))),
+                       (B.charTy, Int32_add_unsafe (Var vid1, Int 1))),
               (vid3, Array_update_unsafe
                        (B.charTy, Var vid2, Var vid1, Char 0))],
              Cast (Array_turnIntoVector (B.charTy, Var vid2), B.stringTy))
       end
 
   fun String_size exp1 =
-      Int_sub_unsafe (Array_length (B.charTy, Cast (exp1, arrayTy B.charTy)),
-                      Int 1)
+      Int32_sub_unsafe (Array_length (B.charTy, Cast (exp1, arrayTy B.charTy)),
+                        Int 1)
 
   fun String_sub_unsafe (strExp, indexExp) =
       Cast (Array_sub_unsafe (B.charTy, Cast (strExp, arrayTy B.charTy),
@@ -448,19 +596,29 @@ struct
         T.CONSTRUCTty {tyCon,...} => TypID.eq (#id tyCon, #id B.stringTyCon)
       | _ => false
 
+  fun locToString ((pos1, pos2):Loc.loc) =
+      Loc.fileNameOfPos pos1 ^ ":" ^ Int.toString (Loc.lineOfPos pos1)
+
   (*
-   * An exception tag is implemented as (string * (exn -> string) ref, where
-   * the "string" field is its name and another is the function extracting
-   * messages from exception objects.
-   *
-   * An exception is implemented as either a pair (if it has no argument) or
-   * a triple declared as follows:
-   *
-   * type no_arg_exn = exntag * string
-   * type 'a arg_exn = exntag * string * 'a
-   *
+   * An exception objet is implemented as either
+   * a pair (exntag * string) if it has no argument, or
+   * a triple (exntag * string * \tau) where \tau is the type of the argument
+   * of the exception.
    * The second "string" element indicates the location where the exception
    * object is created.
+   *
+   * An exception tag is implemented as (string * word) ref, where
+   * "string" is the name of the exception and
+   * "word" is a message index that is a value indicating how to extract
+   * a message from an exception object with this tag.
+   * "ref" is required to realize the generativity of exceptions.
+   *
+   * A message index consists of 1-bit flag R and an offset O.
+   * If R is 1, then the argument is an record containing a string.
+   * Otherwise, a message string is directly in the exception object.
+   * O is the offset of the string field in either the argument record or
+   * the exception object.
+   * If message index is 0, there is no exception message.
    *)
 
   fun extractExnTag exnExp =
@@ -472,46 +630,57 @@ struct
   fun extractExnArg (exnExp, argTy) =
       Select ("3", Cast (exnExp, tupleTy [B.exntagTy, B.stringTy, argTy]))
 
-  fun exnMessageFn exnArgTy =
-      let
-        val exnVar = newId ()
-      in
-        (* the first string in the argument record is used as exnMessage *)
-        Fn (exnVar, B.exnTy,
-            case TypesBasics.derefTy exnArgTy of
-              T.FUNMty ([argTy], _) =>
-              let
-                val argVar = newId ()
-              in
-                Let ([(argVar, extractExnArg (Var exnVar, argTy))],
-                     case TypesBasics.derefTy argTy of
-                       T.RECORDty tys =>
-                       (case List.find (isStringTy o #2)
-                                       (LabelEnv.listItemsi tys) of
-                          SOME (label, ty) => Select (label, Var argVar)
-                        | NONE => String "...")
-                     | ty => if isStringTy ty then Var argVar else String "...")
-              end
-            | _ => String "")
-      end
+  fun exnMessageIndex exnConTy =
+      case TypesBasics.derefTy exnConTy of
+        T.FUNMty ([argTy], _) =>
+        (case TypesBasics.derefTy argTy of
+           T.RECORDty tys =>
+           (case List.find (isStringTy o #2) (LabelEnv.listItemsi tys) of
+              SOME (label, _) =>
+              Word32_orb (Cast (IndexOf (argTy, label), B.wordTy), Word 1)
+            | NONE => Word 0)
+         | ty =>
+           if isStringTy ty
+           then Cast
+                  (IndexOf (tupleTy [B.exntagTy, B.stringTy, B.stringTy], "3"),
+                   B.wordTy)
+           else Word 0)
+      | _ => Word 0
 
   val exnTagImplTy =
-      tupleTy [B.stringTy, T.FUNMty ([B.exnTy], B.stringTy)]
+      tupleTy [B.stringTy, B.wordTy]
 
-  fun allocExnTag ({path, ty, ...}:RecordCalc.exnInfo) =
-      Cast (Ref_alloc (exnTagImplTy,
-                       Tuple [String (String.concatWith "." path),
-                              exnMessageFn ty]),
+  fun allocExnTag {builtin, path, ty} =
+      Cast ((if builtin then Vector_alloc_init else Vector_alloc_init_fresh)
+              (exnTagImplTy, [Tuple [String (String.concatWith "." path),
+                                     exnMessageIndex ty]]),
             B.exntagTy)
 
   fun extractExnTagName tagExp =
       Select ("1", Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
 
-  fun extractExnMsgFn tagExp =
+  fun extractExnMsgIndex tagExp =
       Select ("2", Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
 
-  fun locToString ((pos1, pos2):Loc.loc) =
-      Loc.fileNameOfPos pos1 ^ ":" ^ Int.toString (Loc.lineOfPos pos1)
+  fun Exn_Message exnExp =
+      let
+        val vid1 = newId ()
+        val vid2 = newId ()
+      in
+        Let
+          ([(vid1, exnExp),
+            (vid2, extractExnMsgIndex (extractExnTag (Var vid1)))],
+           Tuple
+             [extractExnLoc (Var vid1),
+              Word32_andb (Var vid2, Word ~2),
+              Switch
+                (Var vid2,
+                 [(C.WORD32 0w0, Null)],
+                 Switch
+                   (Word32_andb (Var vid2, Word 1),
+                    [(C.WORD32 0w0, Cast (Var vid1, B.boxedTy))],
+                    extractExnArg (Var vid1, B.boxedTy)))])
+      end
 
   fun composeExn (tagExp, loc, NONE) =
       Cast (Tuple [tagExp, String (locToString loc)], B.exnTy)
@@ -522,17 +691,28 @@ struct
       case exp of
         Exp x => x
       | Int n =>
-        (L.TLCONSTANT {const = C.INT (Int32.fromInt n),
+        (L.TLCONSTANT {const = C.INT32 (Int32.fromInt n),
                        ty = B.intTy,
                        loc = loc},
          B.intTy)
+      | Int64 n =>
+        (L.TLCONSTANT {const = C.INT64 n,
+                       ty = B.int64Ty,
+                       loc = loc},
+         B.int64Ty)
       | Word n =>
-        (L.TLCONSTANT {const = C.WORD (Word32.fromInt n),
+        (L.TLCONSTANT {const = C.WORD32 (Word32.fromInt n),
                        ty = B.wordTy,
                        loc = loc},
          B.wordTy)
+      | Word64 n =>
+        (L.TLCONSTANT {const = C.WORD64 
+                                 (Word64.fromLargeInt (Int64.toLarge n)),
+                       ty = B.word64Ty,
+                       loc = loc},
+         B.word64Ty)
       | Word8 n =>
-        (L.TLCONSTANT {const = C.BYTE (Word8.fromInt n),
+        (L.TLCONSTANT {const = C.WORD8 (Word8.fromInt n),
                        ty = B.word8Ty,
                        loc = loc},
          B.word8Ty)
@@ -567,6 +747,9 @@ struct
       | True => emitExp loc env (Cast (ConTag 1, B.boolTy))
       | SizeOf ty =>
         (L.TLSIZEOF {ty = ty, loc = loc}, T.SINGLETONty (T.SIZEty ty))
+      | IndexOf (ty, label) =>
+        (L.TLINDEXOF {recordTy = ty, label = label, loc = loc},
+         T.SINGLETONty (T.INDEXty (label, ty)))
       | ExVar v =>
         (L.TLEXVAR {exVarInfo = v, loc = loc},
          #ty v)
@@ -575,7 +758,7 @@ struct
           val (exp, expTy) = emitExp loc env exp
         in
           (L.TLCAST {exp = exp, expTy = expTy, targetTy = ty,
-                     runtimeTyCast = false, bitCast = false, loc = loc},
+                     cast = P.TypeCast, loc = loc},
            ty)
         end
       | RuntimeTyCast (exp, ty) =>
@@ -583,7 +766,7 @@ struct
           val (exp, expTy) = emitExp loc env exp
         in
           (L.TLCAST {exp = exp, expTy = expTy, targetTy = ty,
-                     runtimeTyCast = true, bitCast = false, loc = loc},
+                     cast = P.RuntimeTyCast, loc = loc},
            ty)
         end
       | BitCast (exp, ty) =>
@@ -591,7 +774,7 @@ struct
           val (exp, expTy) = emitExp loc env exp
         in
           (L.TLCAST {exp = exp, expTy = expTy, targetTy = ty,
-                     runtimeTyCast = true, bitCast = true, loc = loc},
+                     cast = P.BitCast, loc = loc},
            ty)
         end
       | PrimApply (primInfo, instTyList, retTy, argExpList) =>
@@ -614,8 +797,7 @@ struct
              {switchExp = L.TLCAST {exp = exp1,
                                     expTy = ty1,
                                     targetTy = B.contagTy,
-                                    runtimeTyCast = false,
-                                    bitCast = false,
+                                    cast = P.TypeCast,
                                     loc = loc},
               expTy = B.contagTy,
               branches = [{constant = C.CONTAG 0w0, exp = exp3}],

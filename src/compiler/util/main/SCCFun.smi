@@ -1,6 +1,6 @@
-_require "basis.smi"
-_require "smlnj-lib/Util/ord-key-sig.sml"
-_require "smlnj-lib/Util/ord-map-sig.sml"
+_require "../../../basis.smi"
+_require "../../../smlnj-lib/Util/ord-key-sig.sml"
+_require "../../../smlnj-lib/Util/ord-map-sig.sml"
 _require "../../control/main/Bug.ppg.smi"
 _require "./Graph.smi"
 

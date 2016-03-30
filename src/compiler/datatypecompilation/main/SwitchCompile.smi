@@ -1,4 +1,4 @@
-_require "basis.smi"
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../typedlambda/main/TypedLambda.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
@@ -9,7 +9,6 @@ _require "../../name/main/LocalID.smi"
 _require "../../name/main/CodeLabel.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../util/main/BigInt_IntInf.smi"
 _require "./EmitTypedLambda.smi"
 
 structure SwitchCompile =

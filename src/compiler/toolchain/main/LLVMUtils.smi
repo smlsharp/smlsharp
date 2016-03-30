@@ -1,0 +1,47 @@
+_require local "../../../basis.smi"
+_require local "../../../config/main/Config.smi"
+_require "../../../llvm/main/LLVM.smi"
+_require local "../../control/main/Bug.ppg.smi"
+_require "./Filename.smi"
+_require local "./CoreUtils.smi"
+_require local "./TempFile.smi"
+
+structure LLVMUtils =
+struct
+
+  datatype opt_level =
+      O0
+    | O1
+    | O2
+    | O3
+    | Os
+    | Oz
+
+  datatype reloc_model =
+      RelocDefault
+    | RelocStatic
+    | RelocPIC
+    | RelocDynamicNoPIC
+
+  datatype file_type =
+      AssemblyFile
+    | ObjectFile
+    | IRFile
+    | BitcodeFile
+
+  type compile_options =
+      {systemBaseDir : Filename.filename,
+       triple : string,
+       arch : string,
+       cpu : string,
+       features : string,
+       optLevel : opt_level,
+       relocModel : reloc_model,
+       LLCFLAGS : string list,
+       OPTFLAGS : string list}
+
+  val compile : compile_options
+                -> LLVM.LLVMModuleRef * file_type * Filename.filename
+                -> unit
+
+end

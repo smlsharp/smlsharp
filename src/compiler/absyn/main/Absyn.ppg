@@ -155,6 +155,10 @@ struct
          @format:field(label * ty) {label} +d ":" +d {ty}
        *)
       REC of (string * ty) list * loc
+    | (*%
+        @format(id * loc) "#" id
+       *)
+      KINDID of string * loc
 
   withtype tvar 
     = (*%

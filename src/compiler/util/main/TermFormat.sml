@@ -123,29 +123,21 @@ structure TermFormat :> sig
   val ftvName : int -> string
 
   (* formatting constant literals *)
-  val format_BigInt_dec_ML : BigInt.int -> format
-(*
+  val format_IntInf_dec_ML : IntInf.int -> format
   val format_Int64_dec_ML : Int64.int -> format
-*)
   val format_Int32_dec_ML : Int32.int -> format
   val format_int_dec_ML : int -> format
-(*
   val format_Word64_hex_ML : Word64.word -> format
-*)
   val format_Word32_hex_ML : Word32.word -> format
   val format_Word8_hex_ML : Word8.word -> format
   val format_word_hex_ML : word -> format
   val format_string_ML : string -> format
   val format_char_ML : char -> format
 
-(*
   val format_Int64_dec_C : Int64.int -> format
-*)
   val format_Int32_dec_C : Int32.int -> format
   val format_int_dec_C : int -> format
-(*
   val format_Word64_hex_C : Word64.word -> format
-*)
   val format_Word32_hex_C : Word32.word -> format
   val format_Word8_hex_C : Word8.word -> format
   val format_word_hex_C : word -> format
@@ -621,26 +613,18 @@ struct
   fun format_hex_C fmt x =
       [term (cminus (prepend "0x" (toLower (fmt StringCvt.HEX x))))]
 
-  fun format_BigInt_dec_ML x = format_dec_MLi BigInt.fmt x
-(*
+  fun format_IntInf_dec_ML x = format_dec_MLi IntInf.fmt x
   fun format_Int64_dec_ML x = format_dec_MLi Int64.fmt x
-*)
   fun format_Int32_dec_ML x = format_dec_MLi Int32.fmt x
   fun format_int_dec_ML x = format_dec_MLi Int.fmt x
-(*
   fun format_Word64_hex_ML x = format_hex_MLw Word64.fmt x
-*)
   fun format_Word32_hex_ML x = format_hex_MLw Word32.fmt x
   fun format_Word8_hex_ML x = format_hex_MLw Word8.fmt x
   fun format_word_hex_ML x = format_hex_MLw Word.fmt x
-(*
   fun format_Int64_dec_C x = format_dec_C Int64.fmt x
-*)
   fun format_Int32_dec_C x = format_dec_C Int32.fmt x
   fun format_int_dec_C x = format_dec_C Int.fmt x
-(*
   fun format_Word64_hex_C x = format_hex_C Word64.fmt x
-*)
   fun format_Word32_hex_C x = format_hex_C Word32.fmt x
   fun format_Word8_hex_C x = format_hex_C Word8.fmt x
   fun format_word_hex_C x = format_hex_C Word.fmt x

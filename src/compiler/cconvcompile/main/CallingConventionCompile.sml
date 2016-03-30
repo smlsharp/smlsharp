@@ -150,24 +150,28 @@ struct
       end
     | makeBindList _ = raise Bug.Bug "makeBindList"
 
-  val unitTy = (BuiltinTypes.unitTy, R.UINTty)
-  val intTy = (BuiltinTypes.intTy, R.INTty)
-  val wordTy = (BuiltinTypes.wordTy, R.UINTty)
+  val unitTy = (BuiltinTypes.unitTy, R.UNITty)
+  val intTy = (BuiltinTypes.intTy, R.INT32ty)
+  val wordTy = (BuiltinTypes.wordTy, R.UINT32ty)
   val boxedTy = (BuiltinTypes.boxedTy, R.BOXEDty)
-  val boolTy = (BuiltinTypes.boolTy, R.UINTty)
-  val contagTy = (BuiltinTypes.contagTy, R.UINTty)
+  val boolTy = (BuiltinTypes.boolTy, R.UINT32ty)
+  val contagTy = (BuiltinTypes.contagTy, R.UINT32ty)
   val someFunWrapperTy = (T.BACKENDty T.SOME_FUNWRAPPERty, R.SOME_CODEPTRty)
   val someFunEntryTy = (T.BACKENDty T.SOME_FUNENTRYty, R.SOME_CODEPTRty)
   val someClosureEnvTy = (T.BACKENDty T.SOME_CLOSUREENVty, R.BOXEDty)
-  val someCconvtagTy = (T.BACKENDty T.SOME_CCONVTAGty, R.UINTty)
-  fun cconvtagTy ty = (T.BACKENDty (T.CCONVTAGty ty), R.UINTty)
-  fun tagTy ty = (T.SINGLETONty (T.TAGty ty), R.UINTty)
-  fun sizeTy ty = (T.SINGLETONty (T.SIZEty ty), R.UINTty)
-  fun indexTy x = (T.SINGLETONty (T.INDEXty x), R.UINTty)
+  val someCconvtagTy = (T.BACKENDty T.SOME_CCONVTAGty, R.UINT32ty)
+  fun cconvtagTy ty = (T.BACKENDty (T.CCONVTAGty ty), R.UINT32ty)
+  fun tagTy ty = (T.SINGLETONty (T.TAGty ty), R.UINT32ty)
+  fun sizeTy ty = (T.SINGLETONty (T.SIZEty ty), R.UINT32ty)
+  fun indexTy x = (T.SINGLETONty (T.INDEXty x), R.UINT32ty)
   fun refTy ty =
       (T.CONSTRUCTty {tyCon = BuiltinTypes.refTyCon, args = [ty]}, R.BOXEDty)
   fun arrayTy ty =
       (T.CONSTRUCTty {tyCon = BuiltinTypes.arrayTyCon, args = [ty]}, R.BOXEDty)
+  fun ptrTy ty =
+      (T.CONSTRUCTty {tyCon = BuiltinTypes.ptrTyCon, args = [ty]}, R.POINTERty)
+  fun intConst n loc =
+      N.NCCONST {const = N.NVINT32 n, ty = intTy, loc = loc}
 
   fun isBoxedKind ((_, R.BOXEDty):N.ty) = true
     | isBoxedKind _ = false
@@ -206,8 +210,7 @@ struct
                          [N.NCCAST {exp = exp,
                                     expTy = expTy,
                                     targetTy = boxedTy,
-                                    runtimeTyCast = false,
-                                    bitCast = false,
+                                    cast = BuiltinPrimitive.TypeCast,
                                     loc = loc},
                           N.NCCONST {const=N.NVNULLBOXED, ty=boxedTy, loc=loc}],
                        argTyList = [boxedTy, boxedTy],
@@ -218,8 +221,7 @@ struct
                        loc = loc},
               expTy = boolTy,
               targetTy = contagTy,
-              runtimeTyCast = false,
-              bitCast = false,
+              cast = BuiltinPrimitive.TypeCast,
               loc = loc},
          expTy = contagTy,
          branches = [{constant = N.NVCONTAG 0w0, branchExp = elseExp}],
@@ -233,18 +235,17 @@ struct
                  loc = loc}
 
   fun cconvTagConstWord ({isRigid, ...}:cconv) =
-      N.NVWORD (if isRigid then 0w1 else 0w0)
+      N.NVWORD32 (if isRigid then 0w1 else 0w0)
 
   fun IfRigidCconvTag {cconvTagExp, ifRigid, ifNotRigid, resultTy, loc} =
       N.NCSWITCH
         {switchExp = N.NCCAST {exp = cconvTagExp,
                                expTy = someCconvtagTy,
                                targetTy = wordTy,
-                               runtimeTyCast = false,
-                               bitCast = false,
+                               cast = BuiltinPrimitive.TypeCast,
                                loc = loc},
          expTy = wordTy,
-         branches = [{constant = N.NVWORD 0w0, branchExp = ifNotRigid}],
+         branches = [{constant = N.NVWORD32 0w0, branchExp = ifNotRigid}],
          defaultExp = ifRigid,
          resultTy = resultTy,
          loc = loc}
@@ -301,8 +302,7 @@ struct
                                 {exp = codeExp,
                                  expTy = codeExpTy,
                                  targetTy = funEntryTy (calleeConv, false),
-                                 runtimeTyCast = true,
-                                 bitCast = true,
+                                 cast = BuiltinPrimitive.BitCast,
                                  loc = loc},
                             closureEnvExp = NONE,
                             argExpList = argExpList,
@@ -315,8 +315,7 @@ struct
                                 {exp = codeExp,
                                  expTy = codeExpTy,
                                  targetTy = funEntryTy (calleeConv, true),
-                                 runtimeTyCast = true,
-                                 bitCast = true,
+                                 cast = BuiltinPrimitive.BitCast,
                                  loc = loc},
                             closureEnvExp = SOME closureEnvExp,
                             argExpList = argExpList,
@@ -345,11 +344,13 @@ struct
 
   fun compileConst (env as {btvEnv, wrapperMap}:env) ccvalue =
       case ccvalue of
-        C.CVINT x => N.NVINT x
+        C.CVINT32 x => N.NVINT32 x
+      | C.CVINT64 x => N.NVINT64 x
       | C.CVEXTRADATA x => N.NVEXTRADATA x
-      | C.CVWORD x => N.NVWORD x
+      | C.CVWORD32 x => N.NVWORD32 x
+      | C.CVWORD64 x => N.NVWORD64 x
       | C.CVCONTAG x => N.NVCONTAG x
-      | C.CVBYTE x => N.NVBYTE x
+      | C.CVWORD8 x => N.NVWORD8 x
       | C.CVREAL x => N.NVREAL x
       | C.CVFLOAT x => N.NVFLOAT x
       | C.CVCHAR x => N.NVCHAR x
@@ -371,59 +372,181 @@ struct
             N.NVCAST {value = N.NVFUNENTRY id,
                       valueTy = ty,
                       targetTy = someFunWrapperTy,
-                      runtimeTyCast = true,
-                      bitCast = true}
+                      cast = BuiltinPrimitive.BitCast}
          | NONE => raise Bug.Bug "compileConst: CVFUNWRAPPER"
         end
       | C.CVCALLBACKENTRY {id, callbackEntryTy} =>
         N.NVCALLBACKENTRY id
       | C.CVTOPDATA {id, ty} =>
         N.NVTOPDATA id
-      | C.CVCAST {value, valueTy, targetTy, runtimeTyCast, bitCast} =>
+      | C.CVCAST {value, valueTy, targetTy, cast} =>
         N.NVCAST {value = compileConst env value,
                   valueTy = compileTy btvEnv valueTy,
                   targetTy = compileTy btvEnv targetTy,
-                  runtimeTyCast = runtimeTyCast,
-                  bitCast = bitCast}
+                  cast = cast}
       | C.CVCCONVTAG ty =>
         N.NVCAST
           {value = cconvTagConstWord (compileConvention ty),
            valueTy = wordTy,
            targetTy = cconvtagTy ty,
-           runtimeTyCast = false,
-           bitCast = false}
+           cast = BuiltinPrimitive.TypeCast}
 
   fun compileTopConst env (const, ty) =
       (compileConst env const, compileTy (#btvEnv env) ty)
 
+  fun load {srcAddr, resultTy, valueSize, valueTag, loc} =
+      let
+        val loadExp =
+            N.NCLOAD {srcAddr = srcAddr, resultTy = resultTy, loc = loc}
+      in
+        if isBoxedKind resultTy
+        then switchByTag
+               {tagExp = valueTag,
+                valueTy = #1 resultTy,
+                ifBoxedTag = loadExp,
+                ifUnboxedTag = N.NCDUP {srcAddr = srcAddr,
+                                        resultTy = resultTy,
+                                        valueSize = valueSize,
+                                        loc = loc},
+                resultTy = resultTy,
+                loc = loc}
+        else loadExp
+      end
+
+  fun store {dstAddr, valueExp, valueTy, valueSize, valueTag, loc} =
+      let
+        val storeExp = N.NCSTORE {srcExp = valueExp,
+                                  srcTy = valueTy,
+                                  dstAddr = dstAddr,
+                                  loc = loc}
+      in
+        if isBoxedKind valueTy
+        then switchByTag
+               {tagExp = valueTag,
+                valueTy = #1 valueTy,
+                ifBoxedTag = storeExp,
+                ifUnboxedTag = N.NCCOPY {srcExp = valueExp,
+                                         valueSize = valueSize,
+                                         dstAddr = dstAddr,
+                                         loc = loc},
+                resultTy = unitTy,
+                loc = loc}
+        else storeExp
+      end
+
+  fun polyPrimInfo (prim, argTyFn, retTyFn) =
+      let
+        val t = BoundTypeVarID.generate ()
+        val btvTy = T.BOUNDVARty t
+        val univKind = {eqKind = #eqKind T.univKind,
+                        tvarKind = #tvarKind T.univKind}
+      in
+        {primitive = prim,
+         ty = {boundtvars = BoundTypeVarID.Map.singleton (t, univKind),
+               argTyList = argTyFn btvTy,
+               resultTy = retTyFn btvTy}}
+        : N.primInfo
+      end
+      
+  fun allocArrayWithInit {allocPrim, resultTy, elemTag, elemSize, elemTy,
+                          elemExps, loc} =
+      let
+        val numElems = length elemExps
+        val primInfo =
+            polyPrimInfo (allocPrim, fn _ => [#1 intTy], fn t => #1 (arrayTy t))
+        val allocExp =
+            N.NCPRIMAPPLY
+              {primInfo = primInfo,
+               argExpList = [intConst numElems loc],
+               argTyList = [intTy],
+               resultTy = resultTy,
+               instTyList = [elemTy],
+               instTagList = [elemTag],
+               instSizeList = [elemSize],
+               loc = loc}
+        val (arrayLet, arrayVar) = makeBind (allocExp, resultTy, loc)
+        val addrs =
+            List.tabulate (numElems,
+                           fn i => N.NAARRAYELEM {arrayExp = arrayVar,
+                                                  elemSize = elemSize,
+                                                  elemIndex = intConst i loc})
+        val storeExps =
+            ListPair.mapEq (fn (addr, elem) =>
+                               N.NCSTORE {srcExp = elem,
+                                          srcTy = elemTy,
+                                          dstAddr = addr,
+                                          loc = loc})
+                           (addrs, elemExps)
+        val copyExps =
+            ListPair.mapEq (fn (addr, elem) =>
+                               N.NCCOPY {srcExp = elem,
+                                         valueSize = elemSize,
+                                         dstAddr = addr,
+                                         loc = loc})
+                           (addrs, elemExps)
+        fun seqExp exps =
+            #1 (makeBindList (exps, map (fn _ => unitTy) exps, loc))
+      in
+        if isBoxedKind elemTy
+        then arrayLet
+               (switchByTag {tagExp = elemTag,
+                             valueTy = #1 elemTy,
+                             ifBoxedTag = (seqExp storeExps) arrayVar,
+                             ifUnboxedTag = (seqExp copyExps) arrayVar,
+                             resultTy = resultTy,
+                             loc = loc})
+        else (arrayLet o seqExp storeExps) arrayVar
+      end
+
   fun compilePrim (primitive, primTy, instTyList, instTagList, instSizeList,
                    argTyList, resultTy, argExpList, loc) =
       case (primitive, instTyList, instTagList, instSizeList, argExpList) of
-        (P.Array_sub_unsafe, [ty], [tag], [size], [arrayExp, indexExp]) =>
+        (P.Ptr_deref, [ty], [tag], [size], [ptr]) =>
+        let
+          val (ptrLet, ptrVar) = makeBind (ptr, ptrTy (#1 ty), loc)
+          val (sizeLet, sizeVar) = makeBind (size, sizeTy (#1 ty), loc)
+        in
+          (ptrLet o sizeLet)
+            (load {srcAddr = N.NAPTR ptrVar,
+                   resultTy = ty,
+                   valueSize = sizeVar,
+                   valueTag = tag,
+                   loc = loc})
+        end
+      | (P.Ptr_deref, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Ptr_deref"
+
+      | (P.Ptr_store, [ty], [tag], [size], [ptr, value]) =>
+        let
+          val (ptrLet, ptrVar) = makeBind (ptr, ptrTy (#1 ty), loc)
+          val (valueLet, valueVar) = makeBind (value, ty, loc)
+          val (sizeLet, sizeVar) = makeBind (size, sizeTy (#1 ty), loc)
+        in
+          (ptrLet o valueLet o sizeLet)
+            (store {dstAddr = N.NAPTR ptrVar,
+                    valueExp = valueVar,
+                    valueTy = ty,
+                    valueSize = sizeVar,
+                    valueTag = tag,
+                    loc = loc})
+        end
+      | (P.Ptr_store, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Ptr_store"
+
+      | (P.Array_sub_unsafe, [ty], [tag], [size], [arrayExp, indexExp]) =>
         let
           val (arrayLet, arrayVar) = makeBind (arrayExp, arrayTy (#1 ty), loc)
           val (indexLet, indexVar) = makeBind (indexExp, intTy, loc)
           val (sizeLet, sizeVar) = makeBind (size, sizeTy (#1 ty), loc)
-          val addr = N.NAARRAYELEM {arrayExp = arrayVar,
-                                    elemSize = sizeVar,
-                                    elemIndex = indexVar}
-          val loadExp = N.NCLOAD {srcAddr = addr,
-                                  resultTy = ty,
-                                  loc = loc}
         in
           (arrayLet o indexLet o sizeLet)
-            (if isBoxedKind ty
-             then switchByTag
-                    {tagExp = tag,
-                     valueTy = #1 ty,
-                     ifBoxedTag = loadExp,
-                     ifUnboxedTag = N.NCDUP {srcAddr = addr,
-                                             resultTy = ty,
-                                             valueSize = sizeVar,
-                                             loc = loc},
-                     resultTy = ty,
-                     loc = loc}
-             else loadExp)
+            (load {srcAddr = N.NAARRAYELEM {arrayExp = arrayVar,
+                                            elemSize = sizeVar,
+                                            elemIndex = indexVar},
+                   resultTy = ty,
+                   valueSize = sizeVar,
+                   valueTag = tag,
+                   loc = loc})
         end
       | (P.Array_sub_unsafe, _, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_sub"
@@ -435,30 +558,55 @@ struct
           val (indexLet, indexVar) = makeBind (indexExp, intTy, loc)
           val (argLet, argVar) = makeBind (argExp, ty, loc)
           val (sizeLet, sizeVar) = makeBind (size, sizeTy (#1 ty), loc)
-          val addr = N.NAARRAYELEM {arrayExp = arrayVar,
-                                    elemSize = sizeVar,
-                                    elemIndex = indexVar}
-          val storeExp = N.NCSTORE {srcExp = argVar,
-                                    srcTy = ty,
-                                    dstAddr = addr,
-                                    loc = loc}
         in
           (arrayLet o indexLet o argLet o sizeLet)
-            (if isBoxedKind ty
-             then switchByTag
-                    {tagExp = tag,
-                     valueTy = #1 ty,
-                     ifBoxedTag = storeExp,
-                     ifUnboxedTag = N.NCCOPY {srcExp = argVar,
-                                              valueSize = sizeVar,
-                                              dstAddr = addr,
-                                              loc = loc},
-                     resultTy = unitTy,
-                     loc = loc}
-             else storeExp)
+            (store {dstAddr = N.NAARRAYELEM {arrayExp = arrayVar,
+                                             elemSize = sizeVar,
+                                             elemIndex = indexVar},
+                    valueExp = argVar,
+                    valueTy = ty,
+                    valueTag = tag,
+                    valueSize = sizeVar,
+                    loc = loc})
         end
       | (P.Array_update_unsafe, _, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_update_unsafe"
+
+      | (P.Array_alloc_init, [elemTy], [tag], [size], elems) =>
+        allocArrayWithInit
+          {allocPrim = P.Array_alloc_unsafe,
+           resultTy = resultTy,
+           elemTag = tag,
+           elemSize = size,
+           elemTy = elemTy,
+           elemExps = elems,
+           loc = loc}
+      | (P.Array_alloc_init, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Array_alloc_init"
+
+      | (P.Vector_alloc_init, [elemTy], [tag], [size], elems) =>
+        allocArrayWithInit
+          {allocPrim = P.Vector_alloc_unsafe,
+           resultTy = resultTy,
+           elemTag = tag,
+           elemSize = size,
+           elemTy = elemTy,
+           elemExps = elems,
+           loc = loc}
+      | (P.Vector_alloc_init, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Vector_alloc_init"
+
+      | (P.Vector_alloc_init_fresh, [elemTy], [tag], [size], elems) =>
+        allocArrayWithInit
+          {allocPrim = P.Vector_alloc_unsafe,
+           resultTy = resultTy,
+           elemTag = tag,
+           elemSize = size,
+           elemTy = elemTy,
+           elemExps = elems,
+           loc = loc}
+      | (P.Vector_alloc_init_fresh, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Vector_alloc_init_fresh"
 
       | (P.R prim, _, _, _, _) =>
         N.NCPRIMAPPLY {primInfo = {primitive = prim, ty = primTy},
@@ -491,8 +639,8 @@ struct
         N.NCCONST {const = compileConst env const,
                    ty = compileTy btvEnv ty,
                    loc = loc}
-      | C.CCLARGEINT {srcLabel, loc} =>
-        N.NCLARGEINT {srcLabel = srcLabel, loc = loc}
+      | C.CCINTINF {srcLabel, loc} =>
+        N.NCINTINF {srcLabel = srcLabel, loc = loc}
       | C.CCVAR {varInfo, loc} =>
         N.NCVAR {varInfo = compileVarInfo btvEnv varInfo, loc = loc}
       | C.CCEXVAR {id, ty, loc} =>
@@ -605,25 +753,14 @@ struct
           val (recordLet, recordVar) = makeBind (recordExp, recordTy, loc)
           val (indexLet, indexVar) =
               makeBind (indexExp, indexTy (label, #1 recordTy), loc)
-          val addr = N.NARECORDFIELD {recordExp = recordVar,
-                                      fieldIndex = indexVar}
-          val loadExp = N.NCLOAD {srcAddr = addr,
-                                  resultTy = resultTy,
-                                  loc = loc}
         in
           (recordLet o indexLet)
-            (if isBoxedKind resultTy
-             then switchByTag
-                    {tagExp = resultTag,
-                     valueTy = #1 resultTy,
-                     ifBoxedTag = loadExp,
-                     ifUnboxedTag = N.NCDUP {srcAddr = addr,
-                                             resultTy = resultTy,
-                                             valueSize = resultSize,
-                                             loc = loc},
-                     resultTy = resultTy,
-                     loc = loc}
-             else loadExp)
+            (load {srcAddr = N.NARECORDFIELD {recordExp = recordVar,
+                                              fieldIndex = indexVar},
+                   resultTy = resultTy,
+                   valueTag = resultTag,
+                   valueSize = resultSize,
+                   loc = loc})
         end
       | C.CCMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy,
                     valueTag, valueSize, loc} =>
@@ -681,28 +818,30 @@ struct
                   argExpList = map (compileExp env) argExpList,
                   resultTy = compileTy btvEnv resultTy,
                   loc = loc}
-      | C.CCCAST {exp, expTy, targetTy, runtimeTyCast, bitCast, loc} =>
+      | C.CCCAST {exp, expTy, targetTy, cast, loc} =>
         let
           val expTy as (_, expRty) = compileTy btvEnv expTy
           val targetTy as (_, targetRty) = compileTy btvEnv targetTy
         in
-          if runtimeTyCast then ()
-          else if expRty = targetRty then ()
-          else raise Bug.Bug ("compileExp: CCCAST "
-                              ^ rtyToString expTy
-                              ^ " -> "
-                              ^ rtyToString targetTy);
-          if bitCast andalso expRty = targetRty
-          then raise Bug.Bug ("compileExp: CCCAST bitcast "
-                              ^ rtyToString expTy
-                              ^ " -> "
-                              ^ rtyToString targetTy)
-          else ();
+          case cast of
+            BuiltinPrimitive.TypeCast =>
+            if expRty = targetRty then ()
+            else raise Bug.Bug ("compileExp: CCCAST "
+                                ^ rtyToString expTy
+                                ^ " -> "
+                                ^ rtyToString targetTy)
+          | BuiltinPrimitive.RuntimeTyCast => ()
+          | BuiltinPrimitive.BitCast =>
+            if expRty = targetRty
+            then raise Bug.Bug ("compileExp: CCCAST bitcast "
+                                ^ rtyToString expTy
+                                ^ " -> "
+                                ^ rtyToString targetTy)
+            else ();
           N.NCCAST {exp = compileExp env exp,
                     expTy = expTy,
                     targetTy = targetTy,
-                    runtimeTyCast = runtimeTyCast,
-                    bitCast = bitCast,
+                    cast = cast,
                     loc = loc}
         end
       | C.CCEXPORTVAR {id, ty, valueExp, loc} =>
@@ -838,20 +977,23 @@ struct
       case topdata of
         C.CTEXTERNVAR {id, ty, loc} =>
         N.NTEXTERNVAR {id = id, ty = compileTy emptyBtvEnv ty, loc = loc}
-      | C.CTEXPORTVAR {id, ty, value, loc} =>
+      | C.CTEXPORTVAR {id, weak, ty, value, loc} =>
         let
           val env = {btvEnv = emptyBtvEnv, wrapperMap = wrapperMap}
         in
-          N.NTEXPORTVAR {id = id, ty = compileTy emptyBtvEnv ty,
+          N.NTEXPORTVAR {id = id, weak = weak,
+                         ty = compileTy emptyBtvEnv ty,
                          value = Option.map (compileTopConst env) value,
                          loc = loc}
         end
       | C.CTSTRING {id, string, loc} =>
         N.NTSTRING {id = id, string = string, loc = loc}
-      | C.CTLARGEINT {id, value, loc} =>
-        N.NTLARGEINT {id = id, value = value, loc = loc}
-      | C.CTRECORD {id, tyvarKindEnv, fieldList, recordTy, isMutable, clearPad,
-                    bitmaps, loc} =>
+      | C.CTINTINF {id, value, loc} =>
+        N.NTINTINF {id = id, value = value, loc = loc}
+      | C.CTDUMP {id, dump, ty, loc} =>
+        N.NTDUMP {id = id, dump = dump, ty = ty, loc = loc}
+      | C.CTRECORD {id, tyvarKindEnv, fieldList, recordTy, isMutable,
+                    isCoalescable, clearPad, bitmaps, loc} =>
         let
           val env = {btvEnv = tyvarKindEnv, wrapperMap = wrapperMap}
         in
@@ -867,6 +1009,7 @@ struct
                    fieldList,
              recordTy = recordTy,
              isMutable = isMutable,
+             isCoalescable = isCoalescable,
              clearPad = clearPad,
              bitmaps =
                map (fn {bitmapIndex, bitmapExp} =>
@@ -875,7 +1018,7 @@ struct
                    bitmaps,
              loc = loc}
         end
-      | C.CTARRAY {id, elemTy, isMutable, clearPad, numElements,
+      | C.CTARRAY {id, elemTy, isMutable, isCoalescable, clearPad, numElements,
                    initialElements, elemSizeExp, tagExp, loc} =>
         let
           val env = {btvEnv = emptyBtvEnv, wrapperMap = wrapperMap}
@@ -884,6 +1027,7 @@ struct
             {id = id,
              elemTy = compileTy emptyBtvEnv elemTy,
              isMutable = isMutable,
+             isCoalescable = isCoalescable,
              clearPad = clearPad,
              numElements = compileTopConst env numElements,
              initialElements = map (compileTopConst env) initialElements,

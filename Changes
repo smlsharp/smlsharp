@@ -1,4 +1,49 @@
 -----------------------------------------------------------------------------
+SML# version 3.0.0 (released on 2016-03-31)
+
+This is a major release of the SML# language system with a number of
+improvements and bugfixes.  The notable changes include the following:
+
+* x86_64 support: The SML# compiler now works on 64-bit platform and
+generates 64-bit native code.
+
+* Native multithread support: The multithread support is enabled by
+default.  The user can import POSIX thread APIs through SML#'s foreign
+function interface and enjoy multithread programming in SML#.  For
+example, the "spawn" primitive can be implemented by the following
+user-level code:
+
+  type pthread_t = unit ptr  (* system dependent *)
+  val pthread_create =
+      _import "pthread_create"
+      : (pthread_t ref, unit ptr, unit ptr -> unit ptr, unit ptr)
+        -> int
+  fun spawn f =
+      let
+        val ret = ref (Pointer.NULL ())
+      in
+        pthread_create (ret, Pointer.NULL (), f, Pointer.NULL ());
+        !ret
+      end
+
+* Fully concurrent garbage collection: An unobtrusive concurrent
+non-moving garbage collector has been integrated.  This collector runs
+in a separate thread and never stop any thread due to garbage
+collection.  This colletor improves both response time and throughput
+of SML# programs in most cases.
+
+For the details, see the SML# 3.0.0 documentations.
+ * The Japanese version:
+   http://www.pllab.riec.tohoku.ac.jp/smlsharp/docs/3.0/ja/index.xhtml
+ * The English version:
+   http://www.pllab.riec.tohoku.ac.jp/smlsharp/docs/3.0/en/index.xhtml
+The documents contain an overview of the SML# language and a
+comprehensive tutorial, which provides sufficient information to start
+writing SML# programs.
+
+Enjoy!
+
+-----------------------------------------------------------------------------
 SML# version 2.0.0 (released on 2014-04-04)
 
 This is the brand new release of the SML# language system.  The most

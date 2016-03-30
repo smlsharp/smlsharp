@@ -1,5 +1,5 @@
 _require "./General.smi"
-_require "./StringCvt.smi"
+_require local "./StringCvt.smi"
 _require "./SMLSharp_ScanChar.smi"
 
 structure Char =

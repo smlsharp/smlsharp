@@ -1,7 +1,7 @@
 _require "../../basis.smi"
-_require "../../basis/main/SMLSharp_Runtime.smi"
-_require "../../config/main/Config.smi"
-_require "../../ffi.smi"
+_require local "../../basis/main/SMLSharp_Runtime.smi"
+_require local "../../config/main/Config.smi"
+_require local "../../ffi.smi"
 
 structure SMLSharp_SQL_PGSQL =
 struct

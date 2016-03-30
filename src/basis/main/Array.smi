@@ -1,5 +1,5 @@
 _require "./General.smi"
-_require "./List.smi"
+_require local "./List.smi"
 
 structure Array =
 struct

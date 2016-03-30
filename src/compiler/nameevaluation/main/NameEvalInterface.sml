@@ -1051,7 +1051,7 @@ in
         val bodyTy =
             case allVars of
               nil => BT.unitITy
-            | _ => I.TYRECORD (Utils.listToFields (map varToTy allVars))
+            | _ => I.TYRECORD (TupleUtils.listToFields (map varToTy allVars))
         val polyArgTys = map (fn (x,ty) => ty) polyArgPats 
         val firstArgTy =
             case dummyIdfunArgTy of

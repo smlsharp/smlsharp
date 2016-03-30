@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "ml-yacc-lib.smi"
+_require "../../../basis.smi"
+_require "../../../ml-yacc-lib.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../control/main/Bug.ppg.smi"

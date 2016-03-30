@@ -1,6 +1,6 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require local "../../util/main/SmlppgUtil.ppg.smi"
 
 structure FFIAttributes =
 struct
@@ -13,9 +13,9 @@ struct
   type attributes =
        {
          isPure: bool,
-         noCallback: bool,
-         allocMLValue: bool,
-         suspendThread: bool,
+         fast: bool,
+         unsafe: bool,
+         causeGC: bool,
          callingConvention: callingConvention option
        }
 

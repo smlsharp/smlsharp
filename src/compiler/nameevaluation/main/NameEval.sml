@@ -1848,7 +1848,7 @@ val _ = U.printEnv returnEnv
         val bodyExp =
             case allVars of
               nil => I.ICCONSTANT (A.UNITCONST defLoc)
-            | _ => I.ICRECORD (Utils.listToTuple allVars, defLoc)
+            | _ => I.ICRECORD (TupleUtils.listToTuple allVars, defLoc)
         val functorExp1 =
             case polyArgPats of
               nil => I.ICLET (exnTagDecls @ bodyDecls, [bodyExp], defLoc)
@@ -2233,6 +2233,7 @@ So we change exnSet to path exnMap in genExportIdstatus
             case icdecl of 
               I.ICEXTERNVAR {longsymbol, ...} => longsymbol
             | I.ICEXTERNEXN {longsymbol, ...} => longsymbol
+            | I.ICBUILTINEXN {longsymbol, ...} => longsymbol
             | _ => raise Bug.Bug "clearUsedflagOfSystemDecl"
       in
         clearUsedflagIdstatus (V.lookupId Env longsymbol)
@@ -2243,6 +2244,10 @@ So we change exnSet to path exnMap in genExportIdstatus
             case idstatus of
               I.ICEXTERNEXN (exInfo as {longsymbol,...}) => 
               LongsymbolEnv.insert(externSet, longsymbol, exInfo)
+            | I.ICBUILTINEXN {longsymbol, ty} => 
+              LongsymbolEnv.insert
+                (externSet, longsymbol,
+                 {longsymbol=longsymbol, ty=ty, version=NONE})
             | _ => externSet
         )
         externSet
@@ -2277,6 +2282,8 @@ So we change exnSet to path exnMap in genExportIdstatus
           (app (setUsedflagInTy env) instances;
            app (setUsedflagInOprimSelector env) operators)
         | T.UNIV => ()
+        | T.BOXED => ()
+        | T.UNBOXED => ()
         | T.REC tyMap => LabelEnv.app (setUsedflagInTy env) tyMap
         | T.JOIN (tyMap, ty1, ty2, loc) =>
           (LabelEnv.app (setUsedflagInTy env) tyMap;
@@ -2405,9 +2412,9 @@ So we change exnSet to path exnMap in genExportIdstatus
       (externSet, icdecls)
       funE
 
-  fun genExterndecls {Env, FunE, SigE} = 
+  fun genExterndecls externSet {Env, FunE, SigE} = 
       let
-        val (externSet, icdecls) = genExterndeclsEnv LongsymbolEnv.empty Env nil
+        val (externSet, icdecls) = genExterndeclsEnv externSet Env nil
         val (_, icdecls) = genExterndeclsFunE externSet FunE icdecls
       in
         (externSet, icdecls)
@@ -2456,6 +2463,17 @@ So we change exnSet to path exnMap in genExportIdstatus
 
 in (* local *)
 
+  fun unionRequiredTopEnv interfaceEnv topEnv requiredIds =
+      foldl
+        (fn ({id,loc}, evalTopEnv) =>
+            case InterfaceID.Map.find(interfaceEnv, id) of
+              SOME {topEnv,...} => 
+              V.unionTopEnv "205" (evalTopEnv, topEnv)
+            | NONE => raise bug "unbound interface id"
+        )
+        topEnv
+        requiredIds
+
   datatype exnCon = EXN of I.exnInfo | EXEXN of I.exInfo
   fun nameEval {topEnv, version, systemDecls} compileUnit =
       let
@@ -2464,12 +2482,14 @@ in (* local *)
              topdecsInclude,
              topdecsSource} =
             SpliceProvicdeFundecl.spliceProvideFundecl compileUnit
-        val (decls, requiredIds, provideDecs) =
+        val {interfaceDecs, requiredIds, locallyRequiredIds, provideTopdecs} =
             case interface of
-              NONE => (nil, nil, nil)
-            | SOME {interfaceDecs, requiredIds, provideTopdecs} => 
-              (interfaceDecs, requiredIds, provideTopdecs)
-        val interfaceEnv = EI.evalInterfaces topEnv decls
+              SOME x => x
+            | NONE => {interfaceDecs = nil,
+                       requiredIds = nil,
+                       locallyRequiredIds = nil,
+                       provideTopdecs = nil}
+        val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
         (* for error checking *)
         val _ = 
             InterfaceID.Map.foldl
@@ -2478,21 +2498,11 @@ in (* local *)
             )
             V.emptyTopEnv
             interfaceEnv
+
+        val evalTopEnvProvide =
+            unionRequiredTopEnv interfaceEnv topEnv requiredIds
         val evalTopEnv =
-            foldl
-            (fn ({id,loc}, evalTopEnv) =>
-                case InterfaceID.Map.find(interfaceEnv, id) of
-                  SOME {topEnv,...} => 
-                  let
-                    val evalTopEnv =
-                        V.unionTopEnv "205" (evalTopEnv, topEnv)
-                  in
-                    evalTopEnv
-                  end
-                | NONE => raise bug "unbound interface id"
-            )
-            topEnv
-            requiredIds
+            unionRequiredTopEnv interfaceEnv evalTopEnvProvide locallyRequiredIds
 
         val _ = clearUsedflag evalTopEnv
 
@@ -2514,7 +2524,7 @@ in (* local *)
           else if EU.isAnyError () then (nil, returnTopEnv, nil)
           else 
             let
-              val {exportDecls, bindDecls} = CP.checkPitopdecList evalTopEnv (returnTopEnv, provideDecs)
+              val {exportDecls, bindDecls} = CP.checkPitopdecList evalTopEnvProvide (returnTopEnv, provideTopdecs)
             in
               (nil, returnTopEnv, bindDecls@exportDecls)
             end
@@ -2526,18 +2536,9 @@ in (* local *)
         (* avoid duplicate declarations *)
         val _ = app (clearUsedflagOfSystemDecl evalTopEnv) systemDecls
 
-        val (externSet, interfaceDecls) = genExterndecls evalTopEnv
-        val externSet = externSetSystemdecls systemDecls externSet
-        val systemDecls = 
-            if !Control.importAllExceptions 
-            then 
-              List.filter 
-              (fn decl => 
-                  case decl of
-                    I.ICEXTERNEXN _ => false
-                  | _ => true)
-              systemDecls
-            else systemDecls
+        val externSet = externSetSystemdecls systemDecls LongsymbolEnv.empty
+        val (externSet, interfaceDecls) = genExterndecls externSet evalTopEnv
+
         val topdecs = systemDecls @ interfaceDecls @ topdecListInclude @ topdecListSource @ exportList
 
         val returnDecls = topdecs
@@ -2552,10 +2553,44 @@ in (* local *)
       end
       handle exn as UserError.UserErrors _ => raise exn
 
+  fun nameEvalInterface
+        topEnv
+        ({interfaceDecs, requiredIds, topdecsInclude}:PI.interface_unit) =
+      let
+        val _ = EU.initializeErrorQueue()
+        val topdecsInclude =
+            map (fn P.PLTOPDECSIG x => PI.TOPDECSIG x
+                  | _ => raise Bug.Bug "non sig entry in topdecsInclude")
+                topdecsInclude
+        val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
+        val _ = 
+            InterfaceID.Map.foldl
+              (fn ({topEnv,...}, totalEnv) =>
+                  V.unionTopEnv "204" (totalEnv, topEnv))
+              V.emptyTopEnv
+              interfaceEnv
+        val topEnvRequire = unionRequiredTopEnv interfaceEnv topEnv requiredIds
+        val topEnv = V.topEnvWithTopEnv (topEnv, topEnvRequire)
+        val (topEnvInclude, itopdecsInclude) =
+            evalPltopdecList {topEnv=topEnv, version=NONE} topdecsInclude
+        val _ =
+            case itopdecsInclude of
+              nil => ()
+            | _::_ => raise Bug.Bug "non empty itopdecsInclude"
+        val warnings =
+            case EU.getErrors () of
+              nil => EU.getWarnings ()
+            | _::_ => raise UserError.UserErrors (EU.getErrorsAndWarnings ())
+      in
+        (* return topEnv for codes requiring this interface *)
+        (V.topEnvWithTopEnv (topEnvRequire, topEnvInclude), warnings)
+      end
+
   fun nameEvalInteractiveEnv topEnv interactiveUnit =
       let
         val _ = EU.initializeErrorQueue()
-        val {interface = {interfaceDecs=decls, requiredIds, provideTopdecs=provideDecs},
+        val {interface = {interfaceDecs=decls, requiredIds, locallyRequiredIds,
+                          provideTopdecs=provideDecs},
              topdecsInclude, interfaceDecls} = interactiveUnit
         val topdecsInclude =
             map
@@ -2566,20 +2601,8 @@ in (* local *)
         val interfaceEnv = EI.evalInterfaces topEnv decls
 
         val evalTopEnv =
-            foldl
-            (fn ({id,loc}, evalTopEnv) =>
-                case InterfaceID.Map.find(interfaceEnv, id) of
-                  SOME {topEnv,...} => 
-                  let
-                    val evalTopEnv =
-                        V.unionTopEnv "205" (evalTopEnv, topEnv)
-                  in
-                    evalTopEnv
-                  end
-                | NONE => raise bug "unbound interface id"
-            )
-            topEnv
-            requiredIds
+            unionRequiredTopEnv interfaceEnv topEnv
+                                (requiredIds @ locallyRequiredIds)
 
         val (_, interfaceDeclsTopEnv, _) =
             EI.evalPitopdecList 
@@ -2590,8 +2613,11 @@ in (* local *)
             evalPltopdecList {topEnv=evalTopEnv, version=NONE} topdecsInclude
             handle e => raise e
 
+(*
         val returnTopEnv = V.topEnvWithTopEnv(evalTopEnv, returnTopEnvInclude)
         val returnTopEnv = V.topEnvWithTopEnv (returnTopEnv, interfaceDeclsTopEnv)
+*)
+        val returnTopEnv = V.topEnvWithTopEnv (returnTopEnvInclude, interfaceDeclsTopEnv)
         val returnTopEnv = reduceTopEnv returnTopEnv
       in
         case EU.getErrors () of
@@ -2605,6 +2631,11 @@ in (* local *)
         val _ = EU.initializeErrorQueue()
         val (_, topEnv as {Env, FunE, SigE}, icdecls) =
             EI.evalPitopdecList V.emptyTopEnv (LongsymbolSet.empty, topdecList)
+        val icdecls =
+            map (fn I.ICEXTERNEXN {longsymbol, ty, version} =>
+                    I.ICBUILTINEXN {longsymbol=longsymbol, ty=ty}
+                | x => x)
+                icdecls
       in
         case EU.getErrors () of
           [] => (topEnv, icdecls)

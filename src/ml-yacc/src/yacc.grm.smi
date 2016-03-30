@@ -1,10 +1,10 @@
 _require "../../basis.smi"
 _require "../../ml-yacc/lib/base.sig"
 _require "../../ml-yacc/lib/parser2.smi"
-_require "utils.sig"
-_require "sigs.sml"
-_require "hdr.smi"
-_require "yacc.grm.sig"
+_require "./utils.sig"
+_require "./sigs.sml"
+_require "./hdr.smi"
+_require "./yacc.grm.sig"
 
 structure LrVals =
 struct

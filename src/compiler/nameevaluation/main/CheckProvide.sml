@@ -597,7 +597,8 @@ local
                   (loc, E.ProvideVarIDExpected("CP-230", {longsymbol = internalLongsymbol}));
                 raise Fail)
             )
-          | A.VAL_BUILTIN _ => raise bug "VAL_BUILTIN in provideSpec"
+          | A.VAL_BUILTIN _ =>
+            (exnSet, V.emptyEnv, {exportDecls=nil, bindDecls=nil})
           | A.VAL_OVERLOAD _ => (exnSet, 
                                  V.emptyEnv, 
                                  {exportDecls=nil, bindDecls=nil}
@@ -1264,7 +1265,7 @@ local
           val bodyTy =
               case allVars of
                 nil => BT.unitITy
-              | _ => I.TYRECORD (Utils.listToFields (map varToTy allVars))
+              | _ => I.TYRECORD (TupleUtils.listToFields (map varToTy allVars))
           val (extraTvars, firstArgTy) = 
               case dummyIdfunArgTy of
                 NONE => (nil, NONE)

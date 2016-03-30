@@ -23,16 +23,19 @@
  * Ohori: 2013/06/29
    Changed id to represent symbols.
 
+ * Ohori: 2015/09/24
+   Added SYMBOLICID and ALPHABETICID to restrict
+   structure and functor ids to alphabetic.
+
 *)
 
 fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
     (tyvars, tyConSymbol, ty)
 
 %%
-
 %decompose (yes)
-
 %blocksize (40)
+
 
 %eop EOF SEMICOLON
 
@@ -40,6 +43,11 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
    Each symbol has an associated left and right position. *)
 
 %pos Loc.pos
+
+(* %pos is for user specified argument.
+   The following is the default; no need to specify.
+*)
+%arg (()) : unit
 
 %term EOF
     | ABSTYPE
@@ -71,7 +79,8 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
     | FUNCTOR
     | HANDLE 
     | HASH
-    | ID of string
+    | SYMBOLICID of string
+    | ALPHABETICID of string
     | IF 
     | IN
     | IMPORT
@@ -134,6 +143,8 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
     | ASC
     | DESC
     | SELECT
+    | ALL
+    | DISTINCT
     | FROM
     | INSERT
     | INTO
@@ -173,6 +184,10 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
        | id_noEQ of Symbol.symbol
        | id_noEQSTAR of Symbol.symbol
        | id_noSQL of Symbol.symbol
+       | alphabetic_id of Symbol.symbol
+       | alphabetic_id_noEQ of Symbol.symbol
+       | alphabetic_id_noEQSTAR of Symbol.symbol
+       | alphabetic_id_noSQL of Symbol.symbol
 
        | longid of Symbol.longsymbol
        | longid_noSQL of Symbol.longsymbol
@@ -332,6 +347,8 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
        | ffiattr of string list
        | ffiattropt of string list
        | ffity of Absyn.ffiTy
+       | ffity_COMMA of Absyn.ffiTy
+       | ffityseq_COMMA of Absyn.ffiTy list
 (*
        | old_ffiContyArg of Absyn.ty list
        | old_ffiAtty of Absyn.ty
@@ -370,6 +387,7 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
        | sqlLabelList of string list
        | sqlInsertRowList of Absyn.exp option list list
        | selectList of string list option * Absyn.exp list
+       | distinct of bool
        | asNameOpt of string option 
        | intoClause of Symbol.symbol option 
        | fromClause of (string * Absyn.exp) list
@@ -474,8 +492,10 @@ constant : int (Absyn.INT(int,(intleft,intright)))
 
 (*** raw id ***)
 
-id_noEQSTAR : ID (Symbol.mkSymbol ID (IDleft, IDright))
+alphabetic_id_noEQSTAR : ALPHABETICID (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
             | SELECT (Symbol.mkSymbol "select" (SELECTleft, SELECTright))
+            | ALL (Symbol.mkSymbol "all" (ALLleft, ALLright))
+            | DISTINCT (Symbol.mkSymbol "distinct" (DISTINCTleft, DISTINCTright))
             | FROM (Symbol.mkSymbol "from" (FROMleft, FROMright))
             | ORDER (Symbol.mkSymbol "order" (ORDERleft, ORDERright))
             | BY (Symbol.mkSymbol "by" (BYleft, BYright))
@@ -492,15 +512,27 @@ id_noEQSTAR : ID (Symbol.mkSymbol ID (IDleft, IDright))
             | COMMIT (Symbol.mkSymbol "commit" (COMMITleft, COMMITright))
             | ROLLBACK (Symbol.mkSymbol "rollback" (ROLLBACKleft, ROLLBACKright))
 
-id_noEQ     : id_noEQSTAR (id_noEQSTAR)
+id_noEQSTAR : alphabetic_id_noEQSTAR (alphabetic_id_noEQSTAR)
+            | SYMBOLICID (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
+
+alphabetic_id_noEQ : alphabetic_id_noEQSTAR (alphabetic_id_noEQSTAR)
             | ASTERISK (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
 
-id          : id_noEQ (id_noEQ)
+id_noEQ     : alphabetic_id_noEQ (alphabetic_id_noEQ)
+            | SYMBOLICID (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
+
+alphabetic_id : alphabetic_id_noEQ (alphabetic_id_noEQ)
             | EQ (Symbol.mkSymbol "=" (EQleft,EQright))
 
-id_noSQL    : ID (Symbol.mkSymbol ID (IDleft, IDright))
+id          : alphabetic_id (alphabetic_id)
+            | SYMBOLICID (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
+
+alphabetic_id_noSQL : ALPHABETICID (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
             | ASTERISK (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
             | EQ (Symbol.mkSymbol "=" (EQleft,EQright))
+
+id_noSQL    : alphabetic_id_noSQL (alphabetic_id_noSQL)
+            | SYMBOLICID (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
 
 longid : id ([id])
        | id PERIOD longid (id::longid)
@@ -724,8 +756,9 @@ match : pat DARROW exp                ([(pat,exp)])
 
 (*************************** sql ********************************)
 
-sql : SELECT selectList intoClause fromClause whereClause orderbyClause
-        (AbsynSQL.SQLSELECT {selectListExps = #2 selectList,
+sql : SELECT distinct selectList intoClause fromClause whereClause orderbyClause
+        (AbsynSQL.SQLSELECT {distinct = distinct,
+                             selectListExps = #2 selectList,
                              selectLabels = #1 selectList,
                              selectName = intoClause,
                              fromClause = fromClause,
@@ -797,8 +830,13 @@ selectList : sqlExpAsList ((SOME (#1 sqlExpAsList), #2 sqlExpAsList))
 (*           | LPAREN sqlExpAsList RPAREN (sqlExpAsList)*)
 (*           | LBRACE exprow RBRACE (exprow)*)
 
+distinct : (* none *) (false)
+         | ALL        (false)
+         | DISTINCT   (true)
+
 fromClause : (* none *) ([])
            | FROM sqlExpAsList (ListPair.zip sqlExpAsList)
+
 
 whereClause : (* none *) (NONE)
             | WHERE sqlExp (SOME sqlExp)
@@ -812,7 +850,7 @@ orderbyList : sqlExp sqlorder
                 ({keyExp=sqlExp, orderAsc=sqlorder} :: orderbyList)
 
 sqlorder : (* none *)  (true)
-         | ASC         (false)
+         | ASC         (true)
          | DESC        (false)
 
 setClause : SET label EQ sqlExp
@@ -1258,12 +1296,11 @@ poly_ty
 
 (* Ohori: kinded tyvar added 2007/11/11 ohori *)
 kinded_tyvar : tyvar ((tyvar, Absyn.UNIV))
-             | TYVAR HASH LBRACE tyrow RBRACE
-               (({symbol=Symbol.mkSymbol TYVAR (TYVARleft,TYVARright), eq=Absyn.NONEQ},
-                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
-             | EQTYVAR HASH LBRACE tyrow RBRACE
-               (({symbol=Symbol.mkSymbol EQTYVAR (EQTYVARleft,EQTYVARright),eq=Absyn.EQ},
-                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
+             | tyvar HASH LBRACE tyrow RBRACE
+               ((tyvar, Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
+             | tyvar HASH ALPHABETICID
+               ((tyvar, Absyn.KINDID (ALPHABETICID,
+                                      (ALPHABETICIDleft, ALPHABETICIDright))))
 
 kinded_tyvarseq : kinded_tyvar ([kinded_tyvar])
          | LPAREN kinded_tyvar RPAREN ([kinded_tyvar])
@@ -1309,13 +1346,17 @@ ffityseq : ffity COMMA ffity ([ffity1,ffity2])
 ffiVarArgs : ([])
            | ffity ([ffity])
            | ffity COMMA ffiVarArgs (ffity::ffiVarArgs)
+
+ffity_COMMA: ffity COMMA (ffity)
+ffityseq_COMMA : ffity COMMA ffity COMMA ([ffity1,ffity2])
+         | ffity COMMA ffityseq_COMMA (ffity::ffityseq_COMMA)
  
 ffiArgs : ffiAtty (([ffiAtty], NONE))
         | LPAREN ffityseq RPAREN ((ffityseq, NONE))
-        | LPAREN ffity COMMA PERIODS LPAREN ffiVarArgs RPAREN RPAREN
-          ([ffity], SOME ffiVarArgs)
-        | LPAREN ffityseq COMMA PERIODS LPAREN ffiVarArgs RPAREN RPAREN
-          (ffityseq, SOME ffiVarArgs)
+        | LPAREN ffity_COMMA PERIODS LPAREN ffiVarArgs RPAREN RPAREN
+          ([ffity_COMMA], SOME ffiVarArgs)
+        | LPAREN ffityseq_COMMA PERIODS LPAREN ffiVarArgs RPAREN RPAREN
+          (ffityseq_COMMA, SOME ffiVarArgs)
 
 ffiContyArg : (nil)
             | ffiAtty ([ffiAtty])
@@ -1350,8 +1391,8 @@ ffiFunty : ffiFunArg ARROW ffiFunRet
            (Absyn.FFIFUNTY(ffiattr,#1 ffiFunArg,#2 ffiFunArg,ffiFunRet,
                            (ffiFunArgleft,ffiFunRetright)))
 
-ffiattrseq : ID ([ID])
-           | ID COMMA ffiattrseq (ID::ffiattrseq)
+ffiattrseq : ALPHABETICID ([ALPHABETICID])
+           | ALPHABETICID COMMA ffiattrseq (ALPHABETICID::ffiattrseq)
 
 ffiattr : ATTRIBUTE LPAREN LPAREN ffiattrseq RPAREN RPAREN (ffiattrseq)
 
@@ -1430,27 +1471,27 @@ strdec : dec (Absyn.COREDEC(dec,(decleft,decright)))
                      (strdecseq_semicolon1,strdecseq_semicolon2,(LOCALleft,ENDright)))
 
 (*-----strbind-----*)
-strbind : id EQ strexp (Absyn.STRBINDNONOBSERV(id,strexp,(idleft,strexpright)))
-        | id COLON sigexp EQ strexp
-                (Absyn.STRBINDTRAN(id,sigexp,strexp,(idleft,strexpright)))
-        | id OPAQUE sigexp EQ strexp
-                (Absyn.STRBINDOPAQUE(id,sigexp,strexp,(idleft,strexpright)))
+strbind : alphabetic_id EQ strexp (Absyn.STRBINDNONOBSERV(alphabetic_id,strexp,(alphabetic_idleft,strexpright)))
+        | alphabetic_id COLON sigexp EQ strexp
+                (Absyn.STRBINDTRAN(alphabetic_id,sigexp,strexp,(alphabetic_idleft,strexpright)))
+        | alphabetic_id OPAQUE sigexp EQ strexp
+                (Absyn.STRBINDOPAQUE(alphabetic_id,sigexp,strexp,(alphabetic_idleft,strexpright)))
 
-strbindand : id EQ strexpand
-                (Absyn.STRBINDNONOBSERV(id,strexpand,(idleft,strexpandright)))
-           | id COLON sigexp EQ strexpand
+strbindand : alphabetic_id EQ strexpand
+                (Absyn.STRBINDNONOBSERV(alphabetic_id,strexpand,(alphabetic_idleft,strexpandright)))
+           | alphabetic_id COLON sigexp EQ strexpand
                 (Absyn.STRBINDTRAN
-                     (id,sigexp,strexpand,(idleft,strexpandright)))
-           | id OPAQUE sigexp EQ strexpand
+                     (alphabetic_id,sigexp,strexpand,(alphabetic_idleft,strexpandright)))
+           | alphabetic_id OPAQUE sigexp EQ strexpand
                 (Absyn.STRBINDOPAQUE
-                     (id,sigexp,strexpand,(idleft,strexpandright)))
+                     (alphabetic_id,sigexp,strexpand,(alphabetic_idleft,strexpandright)))
 
 strbindseq : strbind ([strbind])
            | strbindand strbindseq (strbindand::strbindseq)      (*TEST*)
 
 (*---sigexp-----*)
 sigexpbasic : SIG spec END (Absyn.SIGEXPBASIC(spec,(SIGleft,ENDright)))
-            | id (Absyn.SIGID(id,(idleft,idright)))
+            | alphabetic_id (Absyn.SIGID(alphabetic_id,(alphabetic_idleft,alphabetic_idright)))
 
 sigexpwhere : sigexp WHERE TYPE tyvarseq longid EQ ty
                 (Absyn.SIGWHERE
@@ -1474,8 +1515,8 @@ sigexpand : sigexpwhere AND (sigexpwhere)
 
 (*---sigexp-----*)
                    
-sigbind :id EQ sigexp ([(id,sigexp)])
-        |id EQ sigexpand sigbind ((id,sigexpand):: sigbind)        
+sigbind :alphabetic_id EQ sigexp ([(alphabetic_id,sigexp)])
+        |alphabetic_id EQ sigexpand sigbind ((alphabetic_id,sigexpand):: sigbind)        
             
 (***********************specifications******************************)
 
@@ -1624,7 +1665,7 @@ tops : topdecs ([Absyn.TOPDEC topdecs])
 
 interface : (* none *)
               (Absyn.NOINTERFACE)
-          | INTERFACE STRING interface
+          | INTERFACE STRING
               (Absyn.INTERFACE (Symbol.mkSymbol STRING (INTERFACEleft, STRINGright)))
 
 unit : interface
@@ -1710,9 +1751,11 @@ destination_spec : DESTINATIONTAG STRING (STRING)
 
 funheader_spec : HEADERTAG STRING (STRING)
 
-prefix_spec : PREFIXTAG ID (ID)
+prefix_spec : PREFIXTAG ALPHABETICID (ALPHABETICID)
+            | PREFIXTAG SYMBOLICID (SYMBOLICID)
 
-ditto_spec : DITTOTAG ID (ID)
+ditto_spec : DITTOTAG ALPHABETICID (ALPHABETICID)
+           | DITTOTAG SYMBOLICID (SYMBOLICID)
 
 prefix_spec_opt : ("")
                 | prefix_spec (prefix_spec)

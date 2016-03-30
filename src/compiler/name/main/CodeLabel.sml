@@ -64,11 +64,19 @@ local
 
 in
 
+(*
 structure FunEntryLabel :> CODE_LABEL = CodeLabel
 structure CallbackEntryLabel :> CODE_LABEL = CodeLabel
 structure FunLocalLabel :> CODE_LABEL = CodeLabel
 structure HandlerLabel :> CODE_LABEL = CodeLabel
 structure DataLabel :> CODE_LABEL = CodeLabel
 structure ExtraDataLabel :> CODE_LABEL = CodeLabel
+*)
+structure FunEntryLabel = CodeLabel
+structure CallbackEntryLabel = CodeLabel
+structure FunLocalLabel = CodeLabel
+structure HandlerLabel = CodeLabel
+structure DataLabel = CodeLabel
+structure ExtraDataLabel = CodeLabel
 
 end (* local *)

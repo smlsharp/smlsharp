@@ -1,5 +1,5 @@
-_require "../../basis.smi"
-_require "SQLPrim.smi"
+_require local "../../basis.smi"
+_require "./SQLPrim.smi"
 
 structure SMLSharp_SQL_Utils =
 struct

@@ -1,6 +1,6 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../../config/main/Version.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require local "../../../config/main/Version.smi"
 
 structure Filename =
 struct

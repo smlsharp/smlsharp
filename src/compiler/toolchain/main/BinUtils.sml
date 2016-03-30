@@ -150,7 +150,8 @@ struct
            quiet = false}
       end
 
-  fun archive args =
-      invokeAr (SMLSharp_Config.CMDLINE_MAXLEN ()) args
+  fun archive (args as {archive, ...}) =
+      (CoreUtils.rm_f archive;
+       invokeAr (SMLSharp_Config.CMDLINE_MAXLEN ()) args)
 
 end

@@ -7,9 +7,12 @@
 structure InterfaceHash : sig
 
   val generate
-      : AbsynInterface.source * string list * AbsynInterface.itopdec list
-        -> string
- 
+      : {source : InterfaceName.source,
+         requires : InterfaceName.interface_name list,
+         topdecs : AbsynInterface.itopdec list}
+        -> InterfaceName.hash
+  val emptyHash : unit -> InterfaceName.hash
+
 end =
 struct
 
@@ -36,8 +39,8 @@ struct
 
   fun listNamesDec prefix pidec =
       case pidec of
-        A.IVAL valbinds =>
-        List.concat (map (listNamesValbind prefix) valbinds)
+        A.IVAL valbind =>
+        listNamesValbind prefix valbind
       | A.ITYPE typbinds =>
         List.concat (map (listNamesTypbind prefix) typbinds)
       | A.IDATATYPE {datbind, loc} =>
@@ -82,7 +85,7 @@ struct
           map (fn x => prefix ^ symbolToString x) symbols
         end
 
-  fun generate (source as (_, path), requireHashes, topdecs) =
+  fun generate {source as (_, path), requires, topdecs} =
       let
         val sourceName = Filename.toString (Filename.basename path)
 (*
@@ -92,13 +95,18 @@ struct
             | A.LOADED (_, path) => Filename.toString (Filename.basename path)
 *)
         val names1 = ["this " ^ sourceName]
-        val names2 = map (fn x => "req " ^ x) requireHashes
+        val names2 = map (fn {hash, ...} : InterfaceName.interface_name =>
+                             InterfaceName.hashToString hash)
+                         requires
         val names3 = List.concat (map listNamesTopdec topdecs)
         val names = names1 @ names2 @ names3
         val names = ListSorter.sort String.compare names
         val src = String.concatWith "\n" names
       in
-        SHA1.toBase32 (SHA1.digest (Byte.stringToBytes src))
+        InterfaceName.hash src
       end
+
+  fun emptyHash () =
+      InterfaceName.hash ""
 
 end

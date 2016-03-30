@@ -84,7 +84,8 @@ structure InterfaceLrVals
     | FUNCTOR
     | HANDLE 
     | HASH
-    | ID of string
+    | SYMBOLICID of string
+    | ALPHABETICID of string
     | IF 
     | IN
     | IMPORT
@@ -151,6 +152,8 @@ structure InterfaceLrVals
     | ASC
     | DESC
     | SELECT
+    | ALL
+    | DISTINCT
     | FROM
     | INSERT
     | INTO
@@ -202,8 +205,11 @@ structure InterfaceLrVals
   | tyvarCommaList of A.tvar list
   | tyvarseq_noNIL of A.tvar list
   | tyvarseq of A.tvar list
+(*
   | valbind_1 of I.valbind
   | valbind of I.valbind list
+*)
+  | valbind of I.valbind
   | typbind_1 of I.typbind
   | typbind of I.typbind list
   | eqtypbind_1 of I.typbind
@@ -238,7 +244,7 @@ structure InterfaceLrVals
   | topdecs of I.itopdec list
   | sigdec' of A.topdec
   | sigdecs of A.topdec list
-  | requires of Symbol.symbol list
+  | requires of I.irequire list
   | includes of Symbol.symbol list
   | top of I.itop
 
@@ -317,15 +323,19 @@ structure InterfaceLrVals
          INFIX INFIXR NONFIX OF OP OPAQUE REQUIRE SHARING SIG SIGNATURE
         STRUCT STRUCTURE TYPE VAL WHERE
 %value TYVAR ("")
-%value ID ("")
+%value SYMBOLICID ("")
+%value ALPHABETICID ("")
 %change -> VAL | -> LPAREN | -> END | -> SEMICOLON
 
 %%
 
 (******** basic structures ********)
 
-id_noEQSTAR     : ID (ID)
+id_noEQSTAR     : SYMBOLICID (SYMBOLICID)
+                | ALPHABETICID (ALPHABETICID)
                 | SELECT ("select")
+                | ALL ("all")
+                | DISTINCT ("distinct")
                 | FROM ("from")
                 | ORDER ("order")
                 | BY ("by")
@@ -420,6 +430,7 @@ runtimeTy       : id
 
 (******** The Interface Language ********)
 
+(*
 valbind_1       : vid COLON ty
                     ({symbol = vid, body = I.VAL_EXTERN {ty = ty},
                       loc = (vidleft, tyright)})
@@ -442,6 +453,28 @@ valbind         : valbind_1
                     ([valbind_1])
                 | valbind_1 AND valbind
                     (valbind_1 :: valbind)
+*)
+valbind         : vid COLON ty
+                    ({symbol = vid, body = I.VAL_EXTERN {ty = ty},
+                      loc = (vidleft, tyright)})
+                | vid COLON poly_ty
+                    ({symbol = vid, body = I.VAL_EXTERN {ty = poly_ty},
+                      loc = (vidleft, poly_tyright)})
+                | vid EQ longsymbol
+                (* 2012-1-4 ohori: variable alias in interface added *)
+                    ({symbol = vid, body = I.VALALIAS_EXTERN longsymbol,
+                      loc = (vidleft, longsymbolright)})
+                | vid EQ BUILTIN VAL vid COLON ty
+                    ({symbol = vid1,
+                      body = I.VAL_BUILTIN {builtinSymbol = vid2, ty = ty},
+                      loc = (vidleft, tyright)})
+                | vid EQ BUILTIN VAL vid COLON poly_ty
+                    ({symbol = vid1,
+                      body = I.VAL_BUILTIN {builtinSymbol = vid2, ty = poly_ty},
+                      loc = (vidleft, poly_tyright)})
+                | vid EQ overloadExp
+                    ({symbol = vid, body = I.VAL_OVERLOAD overloadExp,
+                      loc = (vidleft, overloadExpright)})
 
 typbind_1       : tyvarseq tycon LPAREN EQ longsymbol RPAREN
                     (I.OPAQUE_NONEQ {tyvars = tyvarseq, symbol = tycon, runtimeTy = longsymbol,
@@ -679,7 +712,12 @@ sigdecs         : (* none *)
 requires        : (* none *)
                     (nil)
                 | REQUIRE STRING requires
-                    (Symbol.mkSymbol STRING (REQUIREleft, STRINGright)
+                    (I.REQUIRE
+                       (Symbol.mkSymbol STRING (REQUIREleft, STRINGright))
+                     :: requires)
+                | REQUIRE LOCAL STRING requires
+                    (I.LOCAL_REQUIRE
+                       (Symbol.mkSymbol STRING (REQUIREleft, STRINGright))
                      :: requires)
                 | SEMICOLON requires
                     (requires)
@@ -968,12 +1006,11 @@ poly_ty
    | poly_ty1 (poly_ty1)
 
 kinded_tyvar : tyvar ((tyvar, A.UNIV))
-             | TYVAR HASH LBRACE tyrow RBRACE
-               (({symbol=Symbol.mkSymbol TYVAR (TYVARleft,TYVARright), eq=A.NONEQ},
-                 A.REC(tyrow, (LBRACEleft, RBRACEright))))
-             | EQTYVAR HASH LBRACE tyrow RBRACE
-               (({symbol=Symbol.mkSymbol EQTYVAR (EQTYVARleft,EQTYVARright),eq=A.EQ},
-                 A.REC(tyrow, (LBRACEleft, RBRACEright))))
+             | tyvar HASH LBRACE tyrow RBRACE
+               ((tyvar, A.REC(tyrow, (LBRACEleft, RBRACEright))))
+             | tyvar HASH ALPHABETICID
+               ((tyvar, A.KINDID (ALPHABETICID,
+                                  (ALPHABETICIDleft, ALPHABETICIDright))))
 
 kinded_tyvarseq_without_paren : kinded_tyvar ([kinded_tyvar])
                 | kinded_tyvar COMMA kinded_tyvarseq_without_paren (kinded_tyvar::kinded_tyvarseq_without_paren)

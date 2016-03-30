@@ -11,6 +11,9 @@ struct
     val LD : string
     val AR : string
     val RANLIB : string
+    val LLC : string
+    val OPT : string
+    val LLVM_DIS : string
     val LDFLAGS : string
     val LIBS : string
     val DLLEXT : string

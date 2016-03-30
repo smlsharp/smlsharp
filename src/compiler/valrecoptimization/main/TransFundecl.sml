@@ -201,6 +201,7 @@ in
       | ICEXPORTEXN _ => icdecl
       | ICEXTERNVAR _ => icdecl
       | ICEXTERNEXN _ => icdecl
+      | ICBUILTINEXN _ => icdecl
       | ICTYCASTDECL (tycastList, icdeclList, loc) => 
         ICTYCASTDECL (tycastList, map transDecl icdeclList, loc) 
       | ICOVERLOADDEF _ => icdecl

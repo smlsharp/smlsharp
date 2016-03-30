@@ -1,16 +1,11 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "smlnj-lib/Util/ord-key-sig.sml"
-_require "smlnj-lib/Util/ord-set-sig.sml"
-_require "smlnj-lib/Util/ord-map-sig.sml"
-_require "../../../compiler-utils/env/main/IEnv.smi"
-_require "../../../compiler-utils/env/main/ISet.smi"
-_require "./LOCAL_ID.sig"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require local "../../../compiler-utils/env/main/IEnv.smi"
+_require local "../../../compiler-utils/env/main/ISet.smi"
 
-structure Empty = struct end
-functor GenIDFun (A:sig end) = 
+structure GenID = 
 struct
-  eqtype id (= int)
+  type id = int
   structure Map = 
   struct
     structure Key =

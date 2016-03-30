@@ -1,5 +1,5 @@
-_require "../../basis.smi"
-_require "base.sig"
+_require local "../../basis.smi"
+_require local "./base.sig"
 
 structure LrTable =
 struct

@@ -1,11 +1,11 @@
 _require "../../basis.smi"
 _require "../../ml-yacc/lib/base.sig"
-_require "utils.smi"
-_require "utils.sig"
-_require "sigs.sml"
-_require "grammar.smi"
-_require "core.smi"
-_require "coreutils.smi"
+_require "./utils.smi"
+_require "./utils.sig"
+_require "./sigs.sml"
+_require "./grammar.smi"
+_require "./core.smi"
+_require "./coreutils.smi"
 
 structure Graph  =
 struct

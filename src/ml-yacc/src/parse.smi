@@ -1,11 +1,11 @@
 _require "../../basis.smi"
 _require "../../ml-yacc/lib/base.sig"
 _require "../../ml-yacc/lib/parser2.smi"
-_require "utils.sig"
-_require "sigs.sml"
-_require "hdr.smi"
-_require "yacc.lex.smi"
-_require "yacc.grm.smi"
+_require "./utils.sig"
+_require "./sigs.sml"
+_require "./hdr.smi"
+_require "./yacc.lex.smi"
+_require "./yacc.grm.smi"
 
 structure ParseGenParser
  =

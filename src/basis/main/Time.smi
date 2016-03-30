@@ -1,11 +1,11 @@
 _require "./General.smi"
 _require "./StringCvt.smi"
-_require "./SMLSharp_Runtime.smi"
-_require "./SMLSharp_ScanChar.smi"
-_require "./Real.smi"
+_require local "./SMLSharp_Runtime.smi"
+_require local "./SMLSharp_ScanChar.smi"
+_require "./Real64.smi"
 _require "./IntInf.smi"
-_require "./IEEEReal.smi"
-_require "./String.smi"
+_require local "./IEEEReal.smi"
+_require local "./String.smi"
 
 structure Time =
 struct

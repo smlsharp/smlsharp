@@ -1,7 +1,7 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../util/main/BigInt_IntInf.smi"
+_require "../../../compiler-utils/heapdump/main/HeapDump.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../typedlambda/main/TypedLambda.ppg.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
@@ -11,6 +11,7 @@ _require "../../util/main/TermFormat.smi"
 _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../name/main/CodeLabel.smi"
 _require "../../name/main/ExternSymbol.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 
@@ -23,10 +24,12 @@ struct
   type primInfo = TypedLambda.primInfo
 
   datatype ccconst =
-      CVINT of Int32.int
-    | CVWORD of Word32.word
+      CVINT32 of Int32.int
+    | CVINT64 of Int64.int
+    | CVWORD32 of Word32.word
+    | CVWORD64 of Word64.word
     | CVCONTAG of Word32.word
-    | CVBYTE of Word8.word
+    | CVWORD8 of Word8.word
     | CVREAL of string
     | CVFLOAT of string
     | CVCHAR of Char.char
@@ -52,8 +55,7 @@ struct
         value : ccconst,
         valueTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool
+        cast : BuiltinPrimitive.cast
       }
     | CVTAG of {tag : RuntimeTypes.tag, ty : ty}
     | CVCCONVTAG of Types.codeEntryTy
@@ -84,7 +86,7 @@ struct
         loc : loc
       }
     | CCCONST of {const: ccconst, ty: ty, loc: loc}
-    | CCLARGEINT of {srcLabel: ExtraDataLabel.id, loc: loc}
+    | CCINTINF of {srcLabel: ExtraDataLabel.id, loc: loc}
     | CCVAR of {varInfo : varInfo, loc : loc}
     | CCEXVAR of
       {
@@ -200,8 +202,7 @@ struct
         exp : ccexp,
         expTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool,
+        cast : BuiltinPrimitive.cast,
         loc : loc
       }
     | CCEXPORTVAR of
@@ -247,6 +248,7 @@ struct
     | CTEXPORTVAR of
       {
         id : ExternSymbol.id,
+        weak : bool,
         ty : ty,
         value : topconst option,
         loc : loc
@@ -257,10 +259,10 @@ struct
         string : string,
         loc : loc
       }
-    | CTLARGEINT of
+    | CTINTINF of
       {
         id : ExtraDataLabel.id,
-        value : BigInt.int,
+        value : IntInf.int,
         loc : loc
       }
     | CTRECORD of
@@ -274,6 +276,7 @@ struct
                      fieldIndex : topconst} list,
         recordTy : ty,
         isMutable : bool,
+        isCoalescable : bool,
         clearPad : bool,
         bitmaps : {bitmapIndex : topconst,
                    bitmapExp : topconst} list,
@@ -284,6 +287,7 @@ struct
         id : DataLabel.id,
         elemTy : ty,
         isMutable : bool,
+        isCoalescable : bool,
         clearPad : bool,
         numElements : topconst,
         initialElements : topconst list,
@@ -291,6 +295,14 @@ struct
         tagExp : topconst,
         loc : loc
       }
+    | CTDUMP of
+      {
+        id : DataLabel.id,
+        dump : HeapDump.dump,
+        ty : ty,
+        loc : loc
+      }
+
   type program =
       {
         topdata : topdata list,

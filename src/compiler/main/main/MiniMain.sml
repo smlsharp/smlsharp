@@ -11,9 +11,9 @@ struct
        {systemBaseDir : Filename.filename,
         stdPath : Filename.filename list,
         loadPath : Filename.filename list,
-        LIBS : string list,
         LDFLAGS : string list,
-        llvmOptions : LLVM.compile_options,
+        LIBS : string list,
+        llvmOptions : LLVMUtils.compile_options,
         errorOutput : TextIO.outstream}
   fun interactive (_:options) (_:Top.toplevelContext) = ()
 end

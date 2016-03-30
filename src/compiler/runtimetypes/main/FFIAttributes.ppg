@@ -19,31 +19,30 @@ struct
    *)
   type attributes =
       (*%
-       * @format({isPure, noCallback, allocMLValue, suspendThread,
-       *          callingConvention: cc ccopt})
+       * @format({isPure, fast, unsafe, causeGC, callingConvention: cc ccopt})
        * "__attr__(("
        * isPure()("pure,",)
-       * noCallback()("no_callback,",)
-       * allocMLValue()("alloc,",)
-       * suspendThread()("suspend_thread,",)
+       * fast()("fast,",)
+       * unsafe()("unsafe,",)
+       * causeGC()("gc,",)
        * ccopt(cc)
        * "))"
        *)
       {
         isPure: bool,
-        noCallback: bool,
-        allocMLValue: bool,
-        suspendThread: bool,
+        fast: bool,
+        unsafe: bool,
+        causeGC: bool,
         callingConvention: callingConvention option
       }
 
   val defaultFFIAttributes =
       {
         isPure = false,
-        noCallback = false,
-        allocMLValue = false,
-        callingConvention = NONE,
-        suspendThread = false
+        fast = false,
+        unsafe = false,
+        causeGC = false,
+        callingConvention = NONE
       }
 
   (*% *)

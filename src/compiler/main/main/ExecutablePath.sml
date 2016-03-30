@@ -7,7 +7,7 @@ struct
 
   val executable_path =
       _import "prim_executable_path"
-      : __attribute__((no_callback,alloc)) () -> string
+      : __attribute__((unsafe,fast,gc)) () -> string
 
   fun getPath () =
       case executable_path () of

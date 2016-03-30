@@ -169,6 +169,8 @@ local
          incInf (#id varInfo)
        | RC.RCEXTERNEXN {path, ty} =>
          ()
+       | RC.RCBUILTINEXN {path, ty} =>
+         ()
        | RC.RCEXTERNVAR {path, ty} =>
          ()
        | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>

@@ -1,6 +1,6 @@
 _require "../../../basis.smi"
-_require "Ast.smi"
-_require "ASTUTIL.sig"
+_require "./Ast.smi"
+_require "./ASTUTIL.sig"
 
 structure AstUtil =
 struct

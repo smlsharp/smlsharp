@@ -4,10 +4,10 @@ _require "../../../basis/main/Word8VectorSlice.smi"
 _require "../../../basis/main/Word8Array.smi"
 _require "../../../basis/main/Word8ArraySlice.smi"
 _require "../../../basis/main/OS.smi"
-_require "../../../basis/main/IO.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/Int.smi"
-_require "../../../basis/main/Word8.smi"
+_require local "../../../basis/main/IO.smi"
+_require local "../../../basis/main/Option.smi"
+_require "../../../basis/main/Int32.smi"
+_require local "../../../basis/main/Word8.smi"
 
 structure BinPrimIO =
 struct

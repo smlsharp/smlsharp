@@ -1,7 +1,7 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "./Bug.ppg.smi"
-_require "./Loc.ppg.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require local "./Bug.ppg.smi"
+_require local "./Loc.ppg.smi"
 
 structure Control =
 struct
@@ -80,6 +80,7 @@ struct
   val doRegisterCoalescing : bool ref
   val enableUnboxedFloat : bool ref
   val insertCheckGC : bool ref
+  val useMustTail : bool ref
   val switchTable : switchTable
   val switchToString : switch -> string
   val interpretControlOption : string * switch * string ->  unit

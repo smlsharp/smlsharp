@@ -22,8 +22,8 @@ _use "./ArraySlice_common.sml"
 
 infix 6 + - ^
 infix 4 = <> > >= < <=
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op >= = SMLSharp_Builtin.Int.gteq
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op >= = SMLSharp_Builtin.Int32.gteq
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 

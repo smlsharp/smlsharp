@@ -656,6 +656,14 @@ in
           "#" tys:recordTy(ty()(,))
        *)
       REC of ty LabelEnv.map
+    | (*% @format "#boxed" *)
+      (*% @prefix formatWithType_ @format "#boxed" *)
+      (*% @prefix print_ @format "#boxed" *)
+      BOXED
+    | (*% @format "#unboxed" *)
+      (*% @prefix formatWithType_ @format "#unboxed" *)
+      (*% @prefix print_ @format "#unboxed" *)
+      UNBOXED
 
   (* type function; there are two varieties.
      TFUN_DEF for a type-level lambda term \'a.ty
@@ -2042,6 +2050,18 @@ in
       (* import exception declaration specified in  _interface *)
       ICEXTERNEXN of exInfo
     | (*%
+         @format({longsymbol, ty})
+          "builtin exception" +d longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, ty})
+          "builtin exception" +d longsymbol + ty
+       *)
+      (*% @prefix print_
+         @format(e)
+       *)
+      ICBUILTINEXN of {longsymbol: longsymbol, ty:ty}
+    | (*%
         @format({boundtvars, id, longsymbol, overloadCase, loc})
          1["overloaded" + "var" + longsymbol + "(" id ")" +d "=" +d
            overloadCase]
@@ -2535,6 +2555,7 @@ in
       | ICEXPORTEXN {exInfo, id} => Symbol.longsymbolToLoc (#longsymbol exInfo)
       | ICEXTERNVAR exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
       | ICEXTERNEXN exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICBUILTINEXN exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
       | ICTYCASTDECL (tycastList, icdeclList, loc) => loc
       | ICOVERLOADDEF {boundtvars, id, longsymbol, overloadCase, loc} => loc
 

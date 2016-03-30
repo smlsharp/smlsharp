@@ -1,18 +1,4 @@
-_require "basis.smi"
-(*
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../recordcalc/main/RecordCalc.ppg.smi"
-_require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesBasics.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
-_require "../../util/main/BigInt_IntInf.smi"
-*)
-
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../absyn/main/Absyn.ppg.smi"

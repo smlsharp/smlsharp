@@ -1,14 +1,14 @@
-_require "basis.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "./OPrimInstMap.smi"
+_require local "../../control/main/Loc.ppg.smi"
+_require local "../../control/main/Bug.ppg.smi"
+_require local "../../absyn/main/Symbol.ppg.smi"
+_require local "../../absyn/main/Absyn.ppg.smi"
+_require local "./OPrimInstMap.smi"
 _require "./Types.ppg.smi"
-_require "./vars.smi"
+_require "./VarInfoEnv.smi"
 
 structure TypesBasics =
 struct
@@ -20,7 +20,6 @@ struct
   val freshRigidSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
   val monoTy : Types.ty -> bool
   val freshRigidInstTy : Types.ty -> Types.ty
-  val derefSubstTy : Types.ty -> Types.ty
   val EFTV : Types.ty -> int * OTSet.set * (Types.tvState ref) IEnv.map
   val adjustDepthInTy : Types.lambdaDepth -> Types.ty -> unit
   val adjustDepthInTvarKind : Types.lambdaDepth -> Types.tvarKind -> unit

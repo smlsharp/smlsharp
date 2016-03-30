@@ -1,12 +1,12 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require local "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../control/main/Bug.ppg.smi"
+_require local "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
+_require local "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
@@ -42,7 +42,7 @@ struct
          iseq : bool,
          arity : int,
          runtimeTy : BuiltinTypeNames.bty,
-         conSet : {hasArg:bool} SEnv.map,
+         conSet : (unit -> ty) option SEnv.map,
          conIDSet : ConID.Set.set,
          extraArgs : ty list,
          dtyKind : dtyKind
@@ -70,6 +70,8 @@ struct
        } list
       }
     | UNIV
+    | BOXED
+    | UNBOXED
     | REC of ty LabelEnv.map
     | JOIN of ty LabelEnv.map * ty * ty * Loc.loc
 
@@ -85,7 +87,7 @@ struct
        iseq : bool,
        arity : int,
        runtimeTy : BuiltinTypeNames.bty,
-       conSet : {hasArg:bool} SEnv.map,
+       conSet : (unit -> ty) option SEnv.map,
        conIDSet : ConID.Set.set,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -149,6 +151,7 @@ struct
     | SOME_CCONVTAGty
     | FOREIGNFUNPTRty of
       {
+        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
         argTyList : ty list,
         varArgTyList : ty list option,
         resultTy : ty option,
@@ -184,7 +187,7 @@ struct
        iseq : bool,
        arity : int,
        runtimeTy : BuiltinTypeNames.bty,
-       conSet : {hasArg:bool} SEnv.map,
+       conSet : (unit -> ty) option SEnv.map,
        conIDSet : ConID.Set.set,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -213,6 +216,7 @@ struct
   type exExnInfo = {longsymbol: Symbol.longsymbol, ty: ty}
   type foreignFunTy 
     = {
+        tyvars : btvEnv,
         argTyList : ty list,
         varArgTyList : ty list option,
         resultTy : ty option,

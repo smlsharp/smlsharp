@@ -1,6 +1,7 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../../compiler-utils/heapdump/main/HeapDump.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../name/main/LocalID.smi"
@@ -65,8 +66,7 @@ structure TypedLambda =
           exp : tlexp,
           expTy : ty,
           targetTy : ty,
-          runtimeTyCast : bool,
-          bitCast : bool,
+          cast : BuiltinPrimitive.cast,
           loc : loc
         }
       | TLCONSTANT of {loc:loc, ty:ty, const:constant}
@@ -119,8 +119,15 @@ structure TypedLambda =
           resultTy : ty,
           loc : loc
         }
+    | TLDUMP of
+      {
+        dump : HeapDump.dump,
+        ty : ty,
+        loc : loc
+      }
     and tldecl
-      = TLEXPORTVAR of exVarInfo * tlexp * loc
+      = TLEXPORTVAR of {weak : bool, exVarInfo : exVarInfo, exp : tlexp,
+                        loc : loc}
       | TLEXTERNVAR of exVarInfo * loc
       | TLVAL of {boundExp:tlexp, boundVar:varInfo, loc:loc}
       | TLVALREC of {loc:loc,

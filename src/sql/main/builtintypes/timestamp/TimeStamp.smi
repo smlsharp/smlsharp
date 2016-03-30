@@ -1,5 +1,5 @@
-_require "../../../../basis.smi"
-_require "../../../../ffi.smi"
+_require local "../../../../basis.smi"
+_require local "../../../../ffi.smi"
 structure SMLSharp_SQL_TimeStamp =
 struct
   type timestamp (= boxed)

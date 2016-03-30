@@ -168,6 +168,8 @@ local
                 loc
                )
       | T.UNIV => T.UNIV
+      | T.BOXED => T.BOXED
+      | T.UNBOXED => T.UNBOXED
       | T.OCONSTkind l => 
         T.OCONSTkind (map (substBTvar tyidEnv subst) l)
       | T.OPRIMkind {instances, operators} =>
@@ -332,17 +334,6 @@ end
   exception CoerceFun 
   exception CoerceTvarKindToEQ 
 
-  fun derefSubstTy (T.TYVARty(ref (T.SUBSTITUTED ty))) = derefSubstTy ty
-    | derefSubstTy ty = ty
-
-(*
-  fun pruneTy ty = 
-      case ty of
-        T.TYVARty (ref(T.SUBSTITUTED ty)) => pruneTy ty
-      | T.POLYty {boundtvars, body = T.TYVARty(ref(T.SUBSTITUTED ty))} =>
-        pruneTy (T.POLYty {boundtvars = boundtvars, body = ty})
-      | _ => ty
-*)
   (* 2013-4-12 Ohori
      This returns the maxmum index, tvstate ref set, and an index map.
      The index map represent the occurrecen order of each type variable.
@@ -420,6 +411,8 @@ end
       and traverseTvarKind (tvarKind, env) =
             case tvarKind of
               T.UNIV=> env
+            | T.BOXED => env
+            | T.UNBOXED => env
             | T.REC fields => 
               LabelEnv.foldl traverseTy env fields
             | T.JOIN (fields, ty1, ty2, loc) =>
@@ -483,6 +476,8 @@ end
   fun adjustDepthInTvarKind contextDepth kind = 
     case kind of
       T.UNIV => ()
+    | T.BOXED => ()
+    | T.UNBOXED => ()
     | T.REC fields => 
         LabelEnv.app (adjustDepthInTy contextDepth) fields
     | T.JOIN (fields, ty1, ty2, loc) => 

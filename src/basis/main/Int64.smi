@@ -1,0 +1,43 @@
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require local "./SMLSharp_ScanChar.smi"
+_require local "./List.smi"
+_require local "./String.smi"
+_require "./IntInf.smi"
+_require local "./Option.smi"
+
+structure Int64 =
+struct
+  type int = SMLSharp_Builtin.Int64.int
+  val toLarge : int -> LargeInt.int
+  val fromLarge : LargeInt.int -> int
+  val toInt = SMLSharp_Builtin.Int64.toInt32
+  val fromInt = SMLSharp_Builtin.Int64.fromInt32
+  val precision : SMLSharp_Builtin.Int32.int option
+  val minInt : int option
+  val maxInt : int option
+  val + = SMLSharp_Builtin.Int64.add_unsafe
+  val - = SMLSharp_Builtin.Int64.sub_unsafe
+  val * = SMLSharp_Builtin.Int64.mul_unsafe
+  val div = SMLSharp_Builtin.Int64.div
+  val mod = SMLSharp_Builtin.Int64.mod
+  val quot = SMLSharp_Builtin.Int64.quot
+  val rem = SMLSharp_Builtin.Int64.rem
+  val compare : int * int -> General.order
+  val < = SMLSharp_Builtin.Int64.lt
+  val <= = SMLSharp_Builtin.Int64.lteq
+  val > = SMLSharp_Builtin.Int64.gt
+  val >= = SMLSharp_Builtin.Int64.gteq
+  val ~ = SMLSharp_Builtin.Int64.neg
+  val abs = SMLSharp_Builtin.Int64.abs
+  val min : int * int -> int
+  val max : int * int -> int
+  val sign : int -> SMLSharp_Builtin.Int32.int
+  val sameSign : int * int -> bool
+  val fmt : StringCvt.radix -> int -> string
+  val toString : int -> string
+  val scan : StringCvt.radix
+             -> (char, 'a) StringCvt.reader
+             -> (int, 'a) StringCvt.reader
+  val fromString : string -> int option
+end

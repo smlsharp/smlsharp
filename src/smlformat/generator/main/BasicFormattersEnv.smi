@@ -1,5 +1,5 @@
 _require "../../../basis.smi"
-_require "FormatterGenerator.smi"
+_require "./FormatterGenerator.smi"
 
 structure BasicFormattersEnv =
 struct

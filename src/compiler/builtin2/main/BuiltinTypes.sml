@@ -68,7 +68,7 @@ struct
              LabelEnv.empty
              fields)
       | TUPLE tys =>
-        evalTy env (RECORD (Utils.listToTuple tys))
+        evalTy env (RECORD (TupleUtils.listToTuple tys))
       | CON ({tfun,...}, args) =>
         I.TYCONSTRUCT {tfun = tfun, args = map (evalTy env) args}
       | SELF args =>
@@ -95,7 +95,7 @@ struct
             case dtyKind of
               BUILTIN x => (I.BUILTIN x, I.BUILTINty x, nil)
             | REF conSpec =>
-              (I.DTY, I.BUILTINty B.REFty, [conSpec])
+              (I.BUILTIN B.REFty, I.BUILTINty B.REFty, [conSpec])
             | DTY conSpec =>
               (I.DTY, 
                runtimeTyOfConspec 
@@ -190,6 +190,13 @@ struct
          formals = nil,
          dtyKind = BUILTIN B.INTty}
 
+  val (int64TstrInfo, int64TyCon, int64ITy, int64Ty, _) =
+      makeTfun
+        {printName = ["int64"],
+         admitsEq = true,
+         formals = nil,
+         dtyKind = BUILTIN B.INT64ty}
+
   val (intInfTstrInfo, intInfTyCon, intInfITy, intInfTy, _) =
       makeTfun
         {printName = ["intInf"],
@@ -203,6 +210,13 @@ struct
          admitsEq = true,
          formals = nil,
          dtyKind = BUILTIN B.WORDty}
+
+  val (word64TstrInfo, word64TyCon, word64ITy, word64Ty, _) =
+      makeTfun
+        {printName = ["word64"],
+         admitsEq = true,
+         formals = nil,
+         dtyKind = BUILTIN B.WORD64ty}
 
   val (word8TstrInfo, word8TyCon, word8ITy, word8Ty, _) =
       makeTfun
@@ -400,8 +414,10 @@ struct
   fun findTstrInfo name =
       case name of
         "int" => SOME intTstrInfo
+      | "int64" => SOME int64TstrInfo
       | "intInf" => SOME intInfTstrInfo
       | "word" => SOME wordTstrInfo
+      | "word64" => SOME word64TstrInfo
       | "word8" => SOME word8TstrInfo
       | "char" => SOME charTstrInfo
       | "string" => SOME stringTstrInfo

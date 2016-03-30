@@ -1,6 +1,6 @@
-_require "./SMLSharp_Runtime.smi"
+_require local "./SMLSharp_Runtime.smi"
 _require "./General.smi"
-_require "./IntInf.smi"
+_require local "./IntInf.smi"
 _require "./Time.smi"
 _require "./Word8ArraySlice.smi"
 _require "./Word8VectorSlice.smi"

@@ -1086,16 +1086,22 @@ struct
       RCEXTERNVAR of exVarInfo
     | (*%
        * @format(exn)
+       * "extern" +d "exception" +d exn()(btvEnv)
        *)
       (*% @prefix formatWithoutType_
        * @format(exn)
-       *)
-      (* temporary disable EXTERN printing
-         "extern" +d "exception" +d exn()(btvEnv)
-        formatWithoutType_
-         "extern" +d "exception" +d exn
+       * "extern" +d "exception" +d exn
        *)
       RCEXTERNEXN of exExnInfo
+    | (*%
+       * @format(exn)
+       * "builtin" +d "exception" +d exn()(btvEnv)
+       *)
+      (*% @prefix formatWithoutType_
+       * @format(exn)
+       * "builtin" +d "exception" +d exn
+       *)
+      RCBUILTINEXN of exExnInfo
 
   val format_rcdecl' = format_rcdecl nil
   val formatWithoutType_rcdecl' = formatWithoutType_rcdecl nil
