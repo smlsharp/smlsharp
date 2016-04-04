@@ -15,10 +15,11 @@ struct
 
   structure M = MachineCode
 
+(*
   fun compileLast last =
       case last of
         M.MCRETURN {value, loc} => last
-      | M.MCRAISE {argExp, loc} => last
+      | M.MCRAISE_THROW {raiseAllocResult, argExp, loc} => last
       | M.MCHANDLER {nextExp, id, exnVar, handlerExp, loc} =>
         M.MCHANDLER {nextExp = compileExp nextExp,
                      id = id,
@@ -43,17 +44,16 @@ struct
       let
         val (mids, last) = compileExp exp
       in
-        (M.MCCHECKGC :: mids, last)
+        (M.MCCHECK :: mids, last)
       end
+*)
+
+  fun compileBody ((mids, last):M.mcexp) =
+      (M.MCCHECK :: mids, last)
 
   fun compileTopdec topdec =
       case topdec of
-        M.MTTOPLEVEL {symbol, frameSlots, bodyExp, loc} =>
-        M.MTTOPLEVEL {symbol = symbol,
-                      frameSlots = frameSlots,
-                      bodyExp = compileBody bodyExp,
-                      loc = loc}
-      | M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
+        M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
                       frameSlots, bodyExp, retTy, loc} =>
         M.MTFUNCTION {id = id,
                       tyvarKindEnv = tyvarKindEnv,
@@ -77,7 +77,15 @@ struct
                               cleanupHandler = cleanupHandler,
                               loc = loc}
 
-  fun insertCheckGC ({topdata, topdecs}:M.program) =
-      {topdata = topdata, topdecs = map compileTopdec topdecs} : M.program
+  fun compileToplevel {dependency, frameSlots, bodyExp, cleanupHandler} =
+      {dependency = dependency,
+       frameSlots = frameSlots,
+       bodyExp = compileBody bodyExp,
+       cleanupHandler = cleanupHandler} : M.toplevel
+
+  fun insertCheckGC ({topdata, topdecs, toplevel}:M.program) =
+      {topdata = topdata,
+       topdecs = map compileTopdec topdecs,
+       toplevel = compileToplevel toplevel} : M.program
 
 end

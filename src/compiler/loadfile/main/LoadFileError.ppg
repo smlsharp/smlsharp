@@ -4,11 +4,12 @@
  *)
 structure LoadFileError =
 struct
-local
-  (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
-  type symbol = Symbol.symbol
-in
+
   (*%
+   * @formatter(Symbol.symbol) Symbol.format_symbol
+   * @formatter(Loc.loc) Loc.format_loc
+   * @formatter(InterfaceName.interface_name)
+   *   InterfaceName.formatSimple_interface_name
    *)
   exception
 
@@ -16,35 +17,35 @@ in
    * @format(string)
    * "invalid" +d "top" +d "interface:" +d string
    *)
-  InvalidTopInterface of symbol
+  InvalidTopInterface of Symbol.symbol
 
   and
   (*%
    * @format(string)
    * "file" +d "not" +d "found" +d "on" +d "load" +d "path:" +d string
    *)
-  FileNotFound of string
+  FileNotFound of Symbol.symbol
 
   and
   (*%
    * @format(string)
    * "detected" +d "circular" +d "file" +d "refrences:" +d string
    *)
-  CircularLoad of symbol
+  CircularLoad of Symbol.symbol
 
   and
   (*%
    * @format(symbol)
    * "file" +d "loaded" +d "by" +d "`use'" +d "has" +d "interface:" +d symbol
    *)
-  UseWithInterface of symbol
+  UseWithInterface of Symbol.symbol
 
   and
   (*%
    * @format(string)
    * "found" +d "an" +d "empty" +d "interface:" +d string
    *)
-  EmptyInterface of string
+  EmptyInterface of Symbol.symbol
 
   and
   (*%
@@ -52,7 +53,17 @@ in
    * "interface" +d "without" +d "variable" +d "specified" +d "as" +d
    * "_interface:" +d string
    *)
-  VirtualInterface of string
+  VirtualInterface of Symbol.symbol
 
-end
+  and
+  (*%
+   * @format(iname1 * il)
+   * "duplicate" +d "interface" +d "found:" +d iname1
+   * +1 "conflict" +d "with" +d il
+   * @format:il(iname2 * loc)
+   * iname2 +d "loaded" +d "at" +d loc
+   *)
+  DuplicateHash of InterfaceName.interface_name
+                   * (InterfaceName.interface_name * Loc.loc)
+
 end

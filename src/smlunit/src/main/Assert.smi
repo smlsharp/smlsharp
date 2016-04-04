@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "ASSERT.sig"
+_require "../../../basis.smi"
+_require local "./ASSERT.sig"
 
 structure Assert =
 struct

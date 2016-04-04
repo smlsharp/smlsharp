@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "./Loc.ppg.smi"
 
 structure Bug =

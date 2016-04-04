@@ -1,14 +1,12 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../llvm/main/LLVM.smi"
+_require local "../../control/main/Bug.ppg.smi"
 _require "../../toolchain/main/Filename.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../util/main/TermFormat.smi"
+_require local "../../util/main/TermFormat.smi"
 _require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../elaborate/main/Elaborator.smi"
-_require "../../../llvm/main/LLVM.smi"
 
 structure TopData =
 struct
@@ -23,7 +21,8 @@ struct
         stopAt: stopAt,                         (* compile will stop here. *)
         baseFilename: Filename.filename option, (* base name for file search *)
         stdPath: Filename.filename list,        (* system path for file search *)
-        loadPath: Filename.filename list        (* user path for file search *)
+        loadPath: Filename.filename list,       (* user path for file search *)
+        loadAllInterfaceFiles: bool         (* load all _requires even local *)
       }
 
   type toplevelContext =
@@ -45,10 +44,7 @@ struct
 
   val debugPrint : string -> unit
   val printStopAt : stopAt -> unit
-  val printInterfaceName : AbsynInterface.interfaceName -> unit
   val printFileName : Filename.filename -> unit
-  val printInterfaceNameList : AbsynInterface.interfaceName list -> unit
   val printResult : result -> unit
   val printOptions : options -> unit
-  val printCompileUnit : AbsynInterface.compileUnit -> unit
 end

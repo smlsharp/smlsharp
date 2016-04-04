@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlnj-lib/Util/binary-set-fn.smi"
+_require "../../../basis.smi"
+_require "../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../control/main/Control.ppg.smi"

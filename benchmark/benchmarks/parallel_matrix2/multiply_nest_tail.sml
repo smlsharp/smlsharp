@@ -62,9 +62,8 @@ local
   fun update (a, i, j, v : real) =
       Array.update (Array.sub (a, i), j, v)
 
-  fun calc start () =
+  fun calc (start, last) () =
       let
-        val last = start + DIM div numThreads
         fun loop3 (i, j, k, z) =
             if k < DIM
             then loop3 (i, j, k+1, z + sub (matrix1,i,k) * sub (matrix2,k,j))
@@ -77,18 +76,34 @@ local
         loop1 start
       end
 
+  fun calc_cps (start, last) () =
+      let
+        fun loop3 (i, j, k, z, K) =
+            if k < DIM
+            then loop3 (i, j, k+1, z + sub (matrix1,i,k) * sub (matrix2,k,j), K)
+            else (update (result, i, j, z); K ())
+        and loop2 (i, j, K) =
+            if j < DIM
+            then loop3 (i, j, 0, 0.0, fn _ => loop2 (i, j+1, K))
+            else K ()
+        and loop1 i =
+            if i < last then loop2 (i, 0, fn _ => loop1 (i+1)) else ()
+      in
+        loop1 start
+      end
+
   fun main () =
       let
-        fun start i =
-            if i < numThreads
-            then spawn (calc (i * (DIM div numThreads))) :: start (i+1)
-            else nil
-        fun joinAll nil = ()
-          | joinAll (h::t) = (join h; joinAll t)
-        val threads = start 1
-        val () = calc 0 ()
+        val d = Int.quot (DIM, numThreads)
+        val m = Int.rem (DIM, numThreads)
+        val widths =
+            List.tabulate (numThreads, fn i => if i < m then d + 1 else d)
+        fun start (w1::w2::t) = spawn (calc (w1, w1+w2)) :: start ((w1+w2)::t)
+          | start _ = nil
+        val threads = start widths
+        val () = calc (0, hd widths) ()
       in
-        joinAll threads
+        app join threads
       end
 
 in

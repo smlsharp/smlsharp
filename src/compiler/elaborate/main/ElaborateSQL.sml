@@ -54,7 +54,7 @@ struct
   val sqlserverFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "sqlserver"]
   val columnInfoFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "columnInfo"]
 
-  val listToTuple = Utils.listToTuple
+  val listToTuple = TupleUtils.listToTuple
   val emptyTvars = nil : P.scopedTvars
 
   fun mapi f l =
@@ -459,7 +459,7 @@ struct
         (bindsToDecls (wherebinds, loc), whereQuery)
       end
 
-  fun elabSelectList elabExp dbiVar selectLabels selectListExps selectName loc =
+  fun elabSelectList elabExp dbiVar distinct selectLabels selectListExps selectName loc =
       let
         val _ = EU.checkNameDuplication
                   (fn x => x) selectLabels loc
@@ -523,6 +523,10 @@ struct
             P.PLRECORD (selectReturnFields, loc)
         val selectQuery =
             stringCon ("SELECT ", dbiVar, loc) ::
+            stringCon (case distinct of
+                         true => "DISTINCT " 
+                       | false => "ALL ",
+                       dbiVar, loc) ::
             asList (map (fn {queryVar, label, ...} =>
                             (label, P.PLVAR (mkLongsymbol [queryVar] loc)))
                         selectList,
@@ -575,7 +579,7 @@ struct
 
   fun elaborateCommand elabExp (dbiVar:string) sql =
       case sql of
-        S.SQLSELECT {selectListExps, selectLabels, selectName,
+        S.SQLSELECT {distinct, selectListExps, selectLabels, selectName,
                      fromClause, whereClause, orderByClause, loc} =>
         let
           val _ = EU.checkNameDuplication
@@ -594,7 +598,7 @@ struct
           val {selectDecls, selectQuery, queryResultVar, resultWitnessExp,
                selectReturnExp} =
               elabSelectList elabExp dbiVar
-                             selectRecordLabels selectListExps (Option.map Symbol.symbolToString selectName) loc
+                             distinct selectRecordLabels selectListExps (Option.map Symbol.symbolToString selectName) loc
           val (fromDecls, fromQuery) =
               elabFromClause elabExp dbiVar fromClause loc
           val (whereDecls, whereQuery) =

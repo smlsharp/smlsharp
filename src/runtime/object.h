@@ -11,7 +11,7 @@
 /*
  * size of a bitmap word in heap objects and stack frames.
  */
-#define SIZEOF_BITMAP     sizeof(unsigned int)
+#define SIZEOF_BITMAP     sizeof(uint32_t)
 #define BITMAP_NUM_BITS   (SIZEOF_BITMAP * CHAR_BIT)
 
 #define BITMAP_BIT(bitmaps, index) \
@@ -21,93 +21,85 @@
 #define TAG_UNBOXED  0
 #define TAG_BOXED    1
 
-#define BITMAP_WORD(offset) \
-	((unsigned int)(1U << ((offset) / sizeof(void*))))
+#define STRUCT_BITMAP(struct, field) \
+	((uint32_t)TAG_BOXED << (offsetof(struct, field) / sizeof(void*)))
 
 /*
- * Object format:
+ * A pointer that the collector need to trace is either a null pointer or
+ * one pointing to an object constructed in the following format:
  *
- *  +------+-----------------------------------+---------------+
- *  |header|            payload                |     bitmap    |
- *--+------+-----------------------------------+---------------+--> addr
- *         ^
- *         |
- *       objptr
+ *    32bit                                      32bit           32bit
+ *  +-------+----------------------------------+-------+- ... -+-------+
+ *  |header |             payload              | bm[1] |       | bm[N] |
+ *  +-------+----------------------------------+-------+- ... -+-------+
+ *          ^
+ *          |
+ *      object pointer
  *
- * header (unsigned int) :
- *   Header of the object. See below.
- * objptr (void*) :
- *   The pointer indicating the object.
- *   This pointer is always aligned for arbitrary type.
- * payload :
- *   Payload data of the object.
- *   Payload may be either
- *   - arbitrary data,
- *   - array of heap object pointers,
- *   - arbitrary data with bitmap, or
- *   - intinf.
- * bitmap (unsigned int[]) :
- *   bitmap indicating the position of pointers in payload.
- *   (exists only if header.type == OBJTYPE_RECORD)
+ * The bitmap words exist only if the object is a record object.
+ * The bitmap indicates the positions of pointers in the payload area.
+ * i-th bit (from LSB) of n-th word corresponds to (n*32+i)-th word of the
+ * payload.  If a bit in the bitmap is set, its corresponding word is a
+ * pointer to be traced.
+ * The bitmap consists of the minimum number of words that covers the whole
+ * of the payload area.
  *
- * Heap object header:
+ * An object header consists of a 28-bit integer SIZE, a 3-bit integer TYPE
+ * and a 1-bit flag I as follows:
  *
- * Heap object header is an "unsigned int" value placed at
- * (objptr - sizeof(unsigned int)).
- * we assume that sizeof(unsigned int) >= 4.
+ *  (MSB)  31 30  28                                   0  (LSB)
+ *        +--+------+-----------------------------------+
+ *        |S | TYPE |              SIZE                 |
+ *        +--+------+-----------------------------------+
  *
- *  MSB                                           LSB
- *  +--------+------+-------------------------------+
- *  |  type  |  gc  |           size                |
- *  +--------+------+-------------------------------+
- *   31    28 27  26 25                            0
+ * SIZE is the size of the payload area in bytes.
+ * TYPE indicates the type of the object, which is one of the following:
  *
- *                          equality        pointer_detection
- * OBJTYPE_UNBOXED_VECTOR   obj_equal       no pointer
- * OBJTYPE_BOXED_VECTOR     obj_equal       pointer array
- * OBJTYPE_UNBOXED_ARRAY    pointer_equal   no pointer
- * OBJTYPE_BOXED_ARRAY      pointer_equal   pointer array
- * OBJTYPE_RECORD           obj_equal       bitmap
- * OBJTYPE_INTINF           intinf_equal    no pointer
+ *   000   UNBOXED_VECTOR     no pointer,    no bitmap,  content equality
+ *   001   BOXED_VECTOR       pointer array, no bitmap,  content equality
+ *   010   UNBOXED_ARRAY      no pointer,    no bitmap,  identity equality
+ *   011   BOXED_ARRAY        pointer array, no bitmap,  identity equality
+ *   100   (unused)
+ *   101   RECORD             record with bitmap words,  content equality
+ *   110   INTINF             no pointer,    no bitmap,  bignum equality
+ *   111   (reserved for forwarding pointers of Cheney's collectors)
  *
- * gc: Flags for garbage collector.
- *     Allocator must be set 0 to these bits.
+ * If TYPE is RECORD, SIZE must be multiple of 4 (32 bit).
  *
- * size: The size of payload part of the object.
+ * S indicates the fact that all objects reachable from the object including
+ * itself are managed by a specific scheme other than GC.
+ * The collector must skip the object during tracing if its S is set to 1.
  */
 
-#define OBJ_HEADER_SIZE  sizeof(unsigned int)
+#define OBJ_HEADER_SIZE  sizeof(uint32_t)
+#define OBJ_TYPE_MASK          0x70000000U
+#define OBJ_SIZE_MASK          0x0fffffffU
+#define OBJ_FLAG_SKIP          0x80000000U
+#define OBJTYPE_UNBOXED_VECTOR 0x00000000U
+#define OBJTYPE_BOXED_VECTOR   0x10000000U
+#define OBJTYPE_UNBOXED_ARRAY  0x20000000U
+#define OBJTYPE_BOXED_ARRAY    0x30000000U
+#define OBJTYPE_RECORD         0x50000000U
+#define OBJTYPE_INTINF         0x60000000U
+#define OBJTYPE_FORWARDED      0x70000000U
 
-#define OBJ_TYPE_MASK    (~0U << 28)
-#define OBJ_GC1_MASK     (1U << 26)
-#define OBJ_GC2_MASK     (1U << 27)
-#define OBJ_SIZE_MASK    (~(OBJ_TYPE_MASK | OBJ_GC1_MASK | OBJ_GC2_MASK))
+#define OBJTYPE_IS_ARRAY(w)    (((w) & 0x60000000U) == 0x20000000U)
 
-#define OBJTYPE_UNBOXED         (0U << 28)
-#define OBJTYPE_BOXED           (1U << 28)
-#define OBJTYPE_VECTOR          (0x0U << 29)
-#define OBJTYPE_ARRAY           (0x1U << 29)
+/* match with OBJTYPE_BOXED_VECTOR, OBJTYPE_BOXED_ARRAY and OBJTYPE_RECORD */
+#define OBJ_FLAG_MAY_HAVE_PTR  0x10000000U
 
-#define OBJTYPE_UNBOXED_VECTOR  (OBJTYPE_VECTOR | OBJTYPE_UNBOXED)
-#define OBJTYPE_BOXED_VECTOR    (OBJTYPE_VECTOR | OBJTYPE_BOXED)
-#define OBJTYPE_UNBOXED_ARRAY   (OBJTYPE_ARRAY | OBJTYPE_UNBOXED)
-#define OBJTYPE_BOXED_ARRAY     (OBJTYPE_ARRAY | OBJTYPE_BOXED)
-#define OBJTYPE_RECORD          ((0x2U << 29) | OBJTYPE_BOXED)
-#define OBJTYPE_INTINF          ((0x3U << 29) | OBJTYPE_UNBOXED)
-
-#define OBJ_DUMMY_HEADER   0  /* valid header for dummy object */
+#define OBJ_DUMMY_HEADER   0U  /* valid header for dummy object */
 
 #define OBJ_HEADER_WORD(objtype, size) \
-	((unsigned int)(objtype) | (unsigned int)(size))
+	((uint32_t)(objtype) | (uint32_t)(size))
 
-#define OBJ_HEADER(obj)  (*(unsigned int*)((char*)(obj) - sizeof(unsigned int)))
+#define OBJ_BEGIN(obj)   ((uint32_t*)(obj) - 1)
+#define OBJ_HEADER(obj)  (*OBJ_BEGIN(obj))
 #define OBJ_TYPE(obj)    (OBJ_HEADER(obj) & OBJ_TYPE_MASK)
 #define OBJ_SIZE(obj)    (OBJ_HEADER(obj) & OBJ_SIZE_MASK)
-#define OBJ_GC1(obj)     (OBJ_HEADER(obj) & OBJ_GC1_MASK)
-#define OBJ_GC2(obj)     (OBJ_HEADER(obj) & OBJ_GC2_MASK)
-#define OBJ_BITMAP(obj)  ((unsigned int*)((char*)(obj) + OBJ_SIZE(obj)))
+#define OBJ_BITMAP(obj)  ((uint32_t*)((char*)(obj) + OBJ_SIZE(obj)))
 
-/* note that object has bitmap only when OBJ_TYPE == OBJTYPE_RECORD. */
+/* OBJ_NUM_BITMAPS works only if the given object is a OBJTYPE_RECORD */
 #define OBJ_BITMAPS_LEN(payload_size) \
 	(((payload_size) / sizeof(void*) + BITMAP_NUM_BITS - 1) \
 	 / BITMAP_NUM_BITS)
@@ -118,7 +110,9 @@
 	 OBJ_SIZE(obj) + (OBJ_TYPE(obj) == OBJTYPE_RECORD \
 			  ? OBJ_NUM_BITMAPS(obj) * SIZEOF_BITMAP : 0))
 
-/* payload of string object includes a sentinel ('\0') */
+/* A string object is a vector object terminated with a null character
+ * sentinel.  OBJ_STR_SIZE returns the length of the string except for
+ * the sentinel. */
 #define OBJ_STR_SIZE(obj)  ((size_t)(OBJ_SIZE(obj) - 1))
 
 #endif /* SMLSHARP__OBJECT_H__ */

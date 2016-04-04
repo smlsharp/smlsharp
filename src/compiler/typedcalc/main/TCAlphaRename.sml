@@ -482,6 +482,10 @@ local
         (context,
          TC.TPEXTERNEXN {longsymbol=longsymbol, ty=copyTy context ty}
         )
+      | TC.TPBUILTINEXN {longsymbol, ty} =>
+        (context,
+         TC.TPBUILTINEXN {longsymbol=longsymbol, ty=copyTy context ty}
+        )
       | TC.TPEXTERNVAR {longsymbol, ty} =>
         (context,
          TC.TPEXTERNVAR {longsymbol=longsymbol, ty=copyTy context ty}

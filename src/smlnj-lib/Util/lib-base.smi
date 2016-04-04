@@ -1,5 +1,5 @@
-_require "../../basis.smi"
-_require "lib-base-sig.sml"
+_require local "../../basis.smi"
+_require local "./lib-base-sig.sml"
 
 structure LibBase =
   struct

@@ -1,13 +1,13 @@
 _require "../../../basis/main/General.smi"
-_require "../../../basis/main/Option.smi"
-_require "../../../basis/main/Int.smi"
+_require local "../../../basis/main/Option.smi"
+_require "../../../basis/main/Int32.smi"
 _require "../../../basis/main/CharVector.smi"
 _require "../../../basis/main/CharVectorSlice.smi"
 _require "../../../basis/main/CharArray.smi"
 _require "../../../basis/main/CharArraySlice.smi"
-_require "../../../basis/main/SMLSharp_OSIO.smi"
+_require local "../../../basis/main/SMLSharp_OSIO.smi"
 _require "../../../basis/main/OS.smi"
-_require "../../../basis/main/IO.smi"
+_require local "../../../basis/main/IO.smi"
 
 structure TextPrimIO =
 struct

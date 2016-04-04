@@ -17,6 +17,9 @@ structure SMLSharp_Config : sig
   val LD : unit -> string
   val AR : unit -> string
   val RANLIB : unit -> string
+  val LLC : unit -> string
+  val OPT : unit -> string
+  val LLVM_DIS : unit -> string
   val LDFLAGS : unit -> string
   val LIBS : unit -> string
   val DLLEXT : unit -> string
@@ -42,6 +45,9 @@ struct
   val r_LD = ref SMLSharp_Version.DefaultConfig.LD
   val r_AR = ref SMLSharp_Version.DefaultConfig.AR
   val r_RANLIB = ref SMLSharp_Version.DefaultConfig.RANLIB
+  val r_LLC = ref SMLSharp_Version.DefaultConfig.LLC
+  val r_OPT = ref SMLSharp_Version.DefaultConfig.OPT
+  val r_LLVM_DIS = ref SMLSharp_Version.DefaultConfig.LLVM_DIS
   val r_LDFLAGS = ref SMLSharp_Version.DefaultConfig.LDFLAGS
   val r_LIBS = ref SMLSharp_Version.DefaultConfig.LIBS
   val r_DLLEXT = ref SMLSharp_Version.DefaultConfig.DLLEXT
@@ -78,6 +84,9 @@ struct
        ("LD", fn x => r_LD := x),
        ("AR", fn x => r_AR := x),
        ("RANLIB", fn x => r_RANLIB := x),
+       ("LLC", fn x => r_LLC := x),
+       ("OPT", fn x => r_OPT := x),
+       ("LLVM_DIS", fn x => r_LLVM_DIS := x),
        ("LDFLAGS", fn x => r_LDFLAGS := x),
        ("LIBS", fn x => r_LIBS := x),
        ("DLLEXT", fn x => r_DLLEXT := x),
@@ -100,6 +109,9 @@ struct
   fun LD () = !r_LD
   fun AR () = !r_AR
   fun RANLIB () = !r_RANLIB
+  fun LLC () = !r_LLC
+  fun OPT () = !r_OPT
+  fun LLVM_DIS () = !r_LLVM_DIS
   fun LDFLAGS () = !r_LDFLAGS
   fun LIBS () = !r_LIBS
   fun DLLEXT () = !r_DLLEXT

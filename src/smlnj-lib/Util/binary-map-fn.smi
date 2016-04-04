@@ -1,7 +1,7 @@
 _require "../../basis.smi"
-_require "lib-base.smi"
-_require "ord-key-sig.sml"
-_require "ord-map-sig.sml"
+_require local "./lib-base.smi"
+_require local "./ord-key-sig.sml"
+_require local "./ord-map-sig.sml"
 
 (* 2013-07-7 ohori
   The function with comments are added to the NJ implementation

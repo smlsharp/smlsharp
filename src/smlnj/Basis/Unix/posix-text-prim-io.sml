@@ -3,12 +3,12 @@ infix 6 + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
 infix 3 := o
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
 val op > = Position.>
 val op < = Position.<
 structure StringImp = String
-structure IntImp = Int
+structure IntImp = Int32
 structure PositionImp = Position
 structure PosixBinPrimIO = struct end (* dummy *)
 structure Posix =

@@ -358,12 +358,12 @@ struct
   fun not (VALUE(x1, w1) : (bool option, 'a) value) =
       op1 ("not", x1, w1)
 
-  fun isNull (VALUE(x1, w1) : ('a option, 'a) value)
-      : (bool option, 'a) value =
+  fun isNull (VALUE(x1, w1) : ('a option, 'b) value)
+      : (bool option, 'b) value =
       op1post (x1, " is null", NONE)
 
-  fun isNotNull (VALUE(x1, w1) : ('a option, 'a) value)
-      : (bool option, 'a) value =
+  fun isNotNull (VALUE(x1, w1) : ('a option, 'b) value)
+      : (bool option, 'b) value =
       op1post (x1, " is not null", NONE)
 
   local

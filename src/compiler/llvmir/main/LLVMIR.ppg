@@ -47,10 +47,27 @@ struct
   datatype linkage =
       (*% @format "internal" *)
       INTERNAL
-    | (*% @format "linker_private" *)
-      LINKER_PRIVATE
+    | (*% @format "private" *)
+      PRIVATE
     | (*% @format "external" *)
       EXTERNAL
+    | (*% @format "appending" *)
+      APPENDING
+    | (*% @format "linkonce" *)
+      LINKONCE
+    | (*% @format "weak" *)
+      WEAK
+    | (*% @format "linkonce_odr" *)
+      LINKONCE_ODR
+    | (*% @format "weak_odr" *)
+      WEAK_ODR
+
+  (*% *)
+  datatype tail =
+      (*% @format "tail" *)
+      TAIL
+    | (*% @format "musttail" *)
+      MUSTTAIL
 
   (*% *)
   datatype parameter_attribute =
@@ -133,8 +150,10 @@ struct
     | (*% @format "uwtable" *)
       UWTABLE
 
-  fun dec x =
+  fun word32Dec x =
       TermFormat.FormatComb.term (Word32.fmt StringCvt.DEC x)
+  fun word64Dec x =
+      TermFormat.FormatComb.term (Word64.fmt StringCvt.DEC x)
   fun hex8 x =
       [SMLFormat.FormatExpression.Term
          (8, StringCvt.padLeft #"0" 8 (Word32.fmt StringCvt.HEX x))]
@@ -142,8 +161,21 @@ struct
       TermFormat.FormatComb.term
         (CharVector.map (fn #"~" => #"-" | c => c) (Real.fmt StringCvt.EXACT x))
 
+  (*% *)
+  datatype noWrap =
+      (*% @format *)
+      WRAP
+    | (*% @format "nuw" *)
+      NUW
+    | (*% @format "nsw" *)
+      NSW
+(*
+    | (*% @format "nuw nsw" *)
+      NUW_NSW
+*)
+
   (*%
-   * @formatter(dec) dec
+   * @formatter(w32dec) word32Dec
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
    *)
@@ -152,6 +184,8 @@ struct
       I1
     | (*% @format "i8" *)
       I8
+    | (*% @format "i16" *)
+      I16
     | (*% @format "i32" *)
       I32
     | (*% @format "i64" *)
@@ -170,7 +204,7 @@ struct
        *            vararg()(argTys:ifCons()(", ") "...", ) ")*"
        *)
       FPTR of ty * ty list * bool
-    | (*% @format(len * ty) "[" len:dec " x " ty "]" *)
+    | (*% @format(len * ty) "[" len:w32dec " x " ty "]" *)
       ARRAY of Word32.word * ty
     | (*% @format(ty tys * {packed})
        * packed()("<{","{") tys(ty)(", ") packed()("}>","}")
@@ -178,15 +212,15 @@ struct
       STRUCT of ty list * {packed: bool}
 
   (*%
-   * @formatter(dec) dec
+   * @formatter(w64dec) word64Dec
    * @formatter(hex8) hex8 
    * @formatter(real) realExact
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
    * @formatter(decList) TermFormat.formatDeclList
    *)
   datatype const =
-      (*% @format(w) w:dec *)
-      INTCONST of Word32.word
+      (*% @format(w) w:w64dec *)
+      INTCONST of Word64.word
     | (*% @format(r) r *)
       FLOATCONST of real
     | (*% @format "null" *)
@@ -199,8 +233,9 @@ struct
       CONST_INTTOPTR of (ty * const) * ty
     | (*% @format((ty1 * c) * ty2) "ptrtoint (" ty1 " " c " to " ty2 ")" *)
       CONST_PTRTOINT of (ty * const) * ty
-    | (*% @format((ty1 * c1) * (ty2 * c2)) "sub ("ty1" "c1", "ty2" "c2")" *)
-      CONST_SUB of (ty * const) * (ty * const)
+    | (*% @format(w * (ty1 * c1) * (ty2 * c2))
+       *  "sub " w " ("ty1" "c1", "ty2" "c2")" *)
+      CONST_SUB of noWrap * (ty * const) * (ty * const)
     | (*%
        * @format({inbounds, ptr, indices: index indices})
        * "getelementptr "
@@ -295,19 +330,6 @@ struct
     | (*% @format "true" *)
       F_TRUE
 
-  (*% *)
-  datatype noWrap =
-      (*% @format *)
-      WRAP
-    | (*% @format "nuw" *)
-      NUW
-    | (*% @format "nsw" *)
-      NSW
-(*
-    | (*% @format "nuw nsw" *)
-      NUW_NSW
-*)
-
 (*
   (*% *)
   datatype fastMathFlag =
@@ -371,6 +393,8 @@ struct
       SITOFP
     | (*% @format "fptosi" *)
       FPTOSI
+    | (*% @format "fptoui" *)
+      FPTOUI
     | (*% @format "fptrunc" *)
       FPTRUNC
     | (*% @format "fpext" *)
@@ -379,6 +403,23 @@ struct
       ZEXT
     | (*% @format "sext" *)
       SEXT
+    | (*% @format "ptrtoint" *)
+      PTRTOINT
+
+  (*% *)
+  datatype atomic_ordering =
+      (*% @format "unordered" *)
+      UNORDERED
+    | (*% @format "monotonic" *)
+      MONOTONIC
+    | (*% @format "acquire" *)
+      ACQUIRE
+    | (*% @format "release" *)
+      RELEASE
+    | (*% @format "acq_rel" *)
+      ACQ_REL
+    | (*% @format "seq_cst" *)
+      SEQ_CST
 
   (*%
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
@@ -396,21 +437,29 @@ struct
                nontemporal: index option,
                invaliantLoad: index option}
 *)
+    | (*% @format(v * x * {order, align})
+       * v " = load atomic " x " " order ", align " align *)
+      LOAD_ATOMIC of var * operand * {order: atomic_ordering, align: word}
     | (*% @format({value, dst}) "store " value ", " dst *)
       STORE of {value: operand, dst: operand}
 (*
  align: int option,
  nontemporal: index option}
 *)
+    | (*% @format({value, dst, order, align})
+       * "store " value " " order ", " dst ", align " align *)
+      STORE_ATOMIC of {value: operand, dst: operand, order: atomic_ordering,
+                       align: word}
     | (*% @format(v * ty) v " = alloca " ty *)
       ALLOCA of var * ty
 (** {numElements : (ty * value) option, align : int option}*)
     | (*%
-       * @format({result: result resultOpt, tail, cconv: cconv cconvOpt,
+       * @format({result: result resultOpt, tail: tail tailOpt,
+       *          cconv: cconv cconvOpt,
        *          retAttrs: retAttr retAttrs, fnPtr, args: arg args,
        *          fnAttrs: fnAttr fnAttrs})
        * resultOpt(result)(, " = ")
-       * tail()("tail ", )
+       * tailOpt(tail)(, " ")
        * "call "
        * cconvOpt(cconv)(, " ")
        * retAttrs:ifCons()( retAttrs(retAttr)(" ") " " )
@@ -423,7 +472,7 @@ struct
       CALL of 
       {
         result: var option,
-        tail: bool,
+        tail: tail option,
         cconv: calling_convention option,
         retAttrs: parameter_attribute list,
         fnPtr: operand,
@@ -446,6 +495,8 @@ struct
       }
     | (*% @format(v * op1 * i) v " = extractvalue " op1 ", " i *)
       EXTRACTVALUE of var * operand * int
+    | (*% @format(v * op1 * op2 * i) v " = insertvalue " op1 ", " op2 ", " i *)
+      INSERTVALUE of var * operand * operand * int
     | (*% @format(v * conv * x * ty) v " = " conv " " x ", " ty *)
       CONV of var * conv * operand * ty
     | (*% @format(v * op2 * x * y) v " = " op2 " " x ", " y:asValue *)
@@ -454,6 +505,8 @@ struct
       ICMP of var * icmp * operand * operand
     | (*% @format(v * cmp * x * y) v " = fcmp " cmp " " x ", " y:asValue *)
       FCMP of var * fcmp * operand * operand
+    | (*% @format(v * b * x * y) v " = select " b ", " x ", " y *)
+      SELECT of var * operand * operand * operand
 
   (*% *)
   type destination =
@@ -490,13 +543,12 @@ struct
         next: body
       }
     | (*%
-       * @format({label, argVar: arg * argTy, personality,
+       * @format({label, argVar: arg * argTy,
        *          catch: catch catches, cleanup, body, next})
        * "; available " label
        * next 
        * 0[ \n label ":" ]
        * \n arg " = landingpad " argTy
-       *      " personality " personality
        *      catches:decList(catch)("catch ","catch ")
        *      cleanup()(" cleanup",)
        * body
@@ -505,7 +557,6 @@ struct
       {
         label: landingPadLabel,
         argVar : var * ty,
-        personality : operand,
         catch : operand list,
         cleanup : bool,
         body: body,
@@ -619,6 +670,7 @@ struct
        *          retAttrs: retAttr retAttrs, retTy,
        *          name, parameters: arg args,
        *          fnAttrs: fnAttr fnAttrs,
+       *          personality: personality personalityOpt,
        *          gcname: gcname gcnameOpt,
        *          body})
        * "define "
@@ -629,12 +681,14 @@ struct
        * " " name
        * " (" args(arg)(", ") ")"
        * fnAttrs:ifCons()( " " fnAttrs(fnAttr)(" ") )
+       * personalityOpt(personality)(" personality ", )
        * gcnameOpt(gcname)(" gc \"", "\"")
        * "{"
        * 1[ body ]
        * \n "}"
        * @format:arg(ty * attr attrs * v)
        * attrs:ifCons()( attrs(attr)(" ") " " ) ty " " v
+       * @format:personality(ty * c) ty " " c 
        *)
       DEFINE of
       {
@@ -648,6 +702,7 @@ struct
         name : symbol,
         parameters : (ty * parameter_attribute list * var) list,
         fnAttrs : function_attribute list,
+        personality : (ty * const) option,
 (*
         section : string option,
         align : int option,
@@ -695,10 +750,11 @@ struct
         gcname : string option
       }
     | (*%
-       * @format({name, linkage: linkage linkageOpt, constant, ty, initializer,
-       *          align: align alignOpt})
+       * @format({name, linkage: linkage linkageOpt, unnamed_addr, constant,
+       *          ty, initializer, align: align alignOpt})
        * name " = "
        * linkageOpt(linkage)(," ")
+       * unnamed_addr()("unnamed_addr ",)
        * constant()("constant ","global ")
        * ty " " initializer
        * alignOpt(align)(", align ",)
@@ -711,16 +767,29 @@ struct
         addrspace : int option,
 *)
         linkage : linkage option,
-        constant : bool,
-(*
         unnamed_addr : bool,
-*)
+        constant : bool,
         ty : ty,
         initializer : initializer,
 (*
         section : string option,
 *)
         align : int option
+      }
+    | (*%
+       * @format({name, linkage: linkage linkageOpt, unnamed_addr, aliasee})
+       * name " = "
+       * linkageOpt(linkage)(," ")
+       * unnamed_addr()("unnamed_addr ",)
+       * "alias " aliasee
+       * @format:aliasee(ty * const) ty " " const
+       *)
+      ALIAS of
+      {
+        name : symbol,
+        linkage : linkage option,
+        unnamed_addr : bool,
+        aliasee : ty * const
       }
     | (*%
        * @format({name, ty}) 
@@ -731,9 +800,6 @@ struct
         name : symbol,
         ty : ty
       }
-(*
-    | ALIAS of alias
-*)
 
   (*%
    * @formatter(option) TermFormat.formatOptionalOption

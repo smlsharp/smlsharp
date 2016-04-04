@@ -2,7 +2,8 @@
 
 structure MachineCodeRename : sig
 
-  val rename : MachineCode.topdec list -> MachineCode.topdec list
+  val rename : MachineCode.topdec list * MachineCode.toplevel
+               -> MachineCode.topdec list * MachineCode.toplevel
 
 end =
 struct
@@ -76,6 +77,14 @@ struct
          : subst)
       end
 
+  fun bindHandlerOption subst NONE = (NONE, subst)
+    | bindHandlerOption subst (SOME label) =
+      let
+        val (label, subst) = bindHandler subst label
+      in
+        (SOME label, subst)
+      end
+
   fun bindVarOption subst NONE = (NONE, subst)
     | bindVarOption subst (SOME var) =
       let
@@ -145,13 +154,13 @@ struct
 
   fun renameMid subst mid =
       case mid of
-        M.MCLARGEINT {resultVar, dataLabel, loc} =>
+        M.MCINTINF {resultVar, dataLabel, loc} =>
         let
           val (resultVar, subst) = bindVar subst resultVar
         in
-          (M.MCLARGEINT {dataLabel = dataLabel,
-                         resultVar = resultVar,
-                         loc = loc},
+          (M.MCINTINF {dataLabel = dataLabel,
+                       resultVar = resultVar,
+                       loc = loc},
            subst)
         end
       | M.MCFOREIGNAPPLY {resultVar, funExp, attributes, argExpList,
@@ -226,6 +235,7 @@ struct
         let
           val allocSize = renameValue subst allocSize
           val payloadSize = renameValue subst payloadSize
+          val objType = renameObjType subst objType
           val (resultVar, subst) = bindVar subst resultVar
         in
           (M.MCALLOC {objType = objType,
@@ -235,20 +245,32 @@ struct
                       loc = loc},
            subst)
         end
-      | M.MCDISABLEGC =>
-        (M.MCDISABLEGC, subst)
-      | M.MCENABLEGC =>
-        (M.MCENABLEGC, subst)
-      | M.MCCHECKGC =>
-        (M.MCCHECKGC, subst)
-      | M.MCRECORDDUP {resultVar, recordExp, loc} =>
+      | M.MCALLOC_COMPLETED =>
+        (M.MCALLOC_COMPLETED, subst)
+      | M.MCCHECK =>
+        (M.MCCHECK, subst)
+      | M.MCRECORDDUP_ALLOC {resultVar, copySizeVar, recordExp, loc} =>
         let
           val recordExp = renameValue subst recordExp
           val (resultVar, subst) = bindVar subst resultVar
+          val (copySizeVar, subst) = bindVar subst copySizeVar
         in
-          (M.MCRECORDDUP {resultVar = resultVar,
-                          recordExp = recordExp,
-                          loc = loc},
+          (M.MCRECORDDUP_ALLOC {resultVar = resultVar,
+                                copySizeVar = copySizeVar,
+                                recordExp = recordExp,
+                                loc = loc},
+           subst)
+        end
+      | M.MCRECORDDUP_COPY {dstRecord, srcRecord, copySize, loc} =>
+        let
+          val dstRecord = renameValue subst dstRecord
+          val srcRecord = renameValue subst srcRecord
+          val copySize = renameValue subst copySize
+        in
+          (M.MCRECORDDUP_COPY {dstRecord = dstRecord,
+                               srcRecord = srcRecord,
+                               copySize = copySize,
+                               loc = loc},
            subst)
         end
       | M.MCBZERO {recordExp, recordSize, loc} =>
@@ -311,18 +333,19 @@ struct
                         loc = loc},
            subst)
         end
-      | M.MCCALL {resultVar, codeExp, closureEnvExp, argExpList, tail,
+      | M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, argExpList, tail,
                   handler, loc} =>
         let
           val codeExp = renameValue subst codeExp
           val closureEnvExp = Option.map (renameValue subst) closureEnvExp
           val argExpList = map (renameValue subst) argExpList
-          val (resultVar, subst) = bindVar subst resultVar
+          val (resultVar, subst) = bindVarOption subst resultVar
         in
           (M.MCCALL {codeExp = codeExp,
                      closureEnvExp = closureEnvExp,
                      argExpList = argExpList,
                      resultVar = resultVar,
+                     resultTy = resultTy, 
                      tail = tail,
                      handler = renameHandler subst handler,
                      loc = loc},
@@ -341,6 +364,13 @@ struct
                         valueExp = renameValue subst valueExp,
                         loc = loc},
          subst)
+      | M.MCRAISE_ALLOC {resultVar, loc} =>
+        let
+          val (resultVar, subst) = bindVar subst resultVar
+        in
+          (M.MCRAISE_ALLOC {resultVar = resultVar, loc = loc},
+           subst)
+        end
 
   fun renameMidList subst nil = (nil, subst)
     | renameMidList subst (mid::mids) =
@@ -356,9 +386,10 @@ struct
         M.MCRETURN {value, loc} =>
         M.MCRETURN {value = renameValue subst value,
                     loc = loc}
-      | M.MCRAISE {argExp, loc} =>
-        M.MCRAISE {argExp = renameValue subst argExp,
-                   loc = loc}
+      | M.MCRAISE_THROW {raiseAllocResult, argExp, loc} =>
+        M.MCRAISE_THROW {raiseAllocResult = renameValue subst raiseAllocResult,
+                         argExp = renameValue subst argExp,
+                         loc = loc}
       | M.MCHANDLER {nextExp, id, exnVar, handlerExp, loc} =>
         let
           val (id, subst2) = bindHandler subst id
@@ -410,13 +441,7 @@ struct
 
   fun renameTopdec topdec =
       case topdec of
-        M.MTTOPLEVEL {symbol, frameSlots, bodyExp, loc} =>
-        M.MTTOPLEVEL
-          {symbol = symbol,
-           frameSlots = frameSlots,
-           bodyExp = renameExp emptySubst bodyExp,
-           loc = loc}
-      | M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, frameSlots,
+        M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, frameSlots,
                       bodyExp, retTy, loc} =>
         let
           val (argVarList, subst) = bindVarList emptySubst argVarList
@@ -439,7 +464,7 @@ struct
         let
           val (argVarList, subst) = bindVarList emptySubst argVarList
           val (closureEnvVar, subst) = bindVarOption subst closureEnvVar
-          val (cleanupHandler, subst) = bindHandler subst cleanupHandler
+          val (cleanupHandler, subst) = bindHandlerOption subst cleanupHandler
           val bodyExp = renameExp subst bodyExp
         in
           M.MTCALLBACKFUNCTION
@@ -455,8 +480,19 @@ struct
              loc = loc}
         end
 
-  fun rename topdecs =
+  fun renameToplevel {dependency, frameSlots, bodyExp, cleanupHandler} =
+      let
+        val (cleanupHandler, subst) =
+            bindHandlerOption emptySubst cleanupHandler
+      in
+        {dependency = dependency,
+         frameSlots = frameSlots,
+         bodyExp = renameExp subst bodyExp,
+         cleanupHandler = cleanupHandler} : M.toplevel
+      end
+
+  fun rename (topdecs, toplevel) =
       (initUsedIds ();
-       map renameTopdec topdecs)
+       (map renameTopdec topdecs, renameToplevel toplevel))
 
 end

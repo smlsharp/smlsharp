@@ -1,4 +1,4 @@
-SMLSHARP = smlsharp
+SMLSHARP = ../../src/compiler/smlsharp -B../../src
 
 pthread_sieve: load.smi pthread.o mvar.o sieve.o load.o
 	$(SMLSHARP) -o $@ load.smi $(LIBS)

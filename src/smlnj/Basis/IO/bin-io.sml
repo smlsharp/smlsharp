@@ -3,11 +3,12 @@ infix 6 + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
 infix 3 := o
-val op * = SMLSharp_Builtin.Int.mul_unsafe
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op >= = SMLSharp_Builtin.Int.gteq
-val op < = SMLSharp_Builtin.Int.lt
+val op * = SMLSharp_Builtin.Int32.mul_unsafe
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op >= = SMLSharp_Builtin.Int32.gteq
+val op < = SMLSharp_Builtin.Int32.lt
+structure Int = Int32
 structure Word8 = SMLSharp_Builtin.Word8
 structure CleanIO =
 struct

@@ -37,7 +37,7 @@ struct
 
   datatype context = TAIL | NONTAIL | BIND of A.varInfo
 
-  val unitTy = (BuiltinTypes.unitTy, R.UINTty)
+  val unitTy = (BuiltinTypes.unitTy, R.UNITty)
   val unitValue =
       A.ANCONST {const = A.NVUNIT, ty = unitTy}
 
@@ -51,16 +51,28 @@ struct
         SOME {const = A.NVCAST {value = const,
                                 valueTy = ty,
                                 targetTy = targetTy,
-                                runtimeTyCast = runtimeTyCast,
-                                bitCast = false},
+                                cast = if runtimeTyCast
+                                       then BuiltinPrimitive.RuntimeTyCast
+                                       else BuiltinPrimitive.TypeCast},
               ty = targetTy}
+
+  datatype handler =
+      HANDLER of HandlerLabel.id option
+    | CLEANUP of HandlerLabel.id option ref
 
   type env =
        {funId : FunEntryLabel.id option,
         loopLabel : FunLocalLabel.id option ref,
         localHandlerLabel : FunLocalLabel.id option,
-        handlerLabel : HandlerLabel.id option,
+        handler : handler,
         varEnv : A.anvalue VarID.Map.map}
+
+  fun getHandlerLabel ({handler,...}:env) =
+      case handler of
+        HANDLER x => x
+      | CLEANUP (ref (x as SOME _)) => x
+      | CLEANUP (r as ref NONE) =>
+        let val x = SOME (HandlerLabel.generate nil) in r := x; x end
 
   fun bindVar (env:env, {id,...}:A.varInfo, value) =
       env # {varEnv = VarID.Map.insert (#varEnv env, id, value)}
@@ -129,7 +141,7 @@ struct
         let
           val var = newVar expTy
           val (proc, ret) =
-              last (A.ANRETURN {value = A.ANVAR var, loc = loc})
+              last (A.ANRETURN {value = A.ANVAR var, ty = expTy, loc = loc})
         in
           (expFn var o proc, ret)
         end
@@ -139,7 +151,7 @@ struct
         BIND _ => (emptyProc, value)
       | NONTAIL => (emptyProc, value)
       | TAIL =>
-        last (A.ANRETURN {value = value, loc = loc})
+        last (A.ANRETURN {value = value, ty = ty, loc = loc})
 
   fun compileVarInfo (env:env) ({id, ty}:N.varInfo) =
       case VarID.Map.find (#varEnv env, id) of
@@ -161,7 +173,7 @@ struct
                                            funExp = funExp,
                                            argExpList = argExpList,
                                            attributes = attributes,
-                                           handler = #handlerLabel env,
+                                           handler = getHandlerLabel env,
                                            nextExp = K,
                                            loc = loc},
                       retTy, loc)
@@ -173,7 +185,7 @@ struct
                                              funExp = funExp,
                                              argExpList = argExpList,
                                              attributes = attributes,
-                                             handler = #handlerLabel env,
+                                             handler = getHandlerLabel env,
                                              nextExp = proc4 K,
                                              loc = loc},
                    ret)
@@ -201,12 +213,12 @@ struct
         end
       | N.NCCONST {const, ty, loc} =>
         return context (A.ANCONST {const = const, ty = ty}, ty, loc)
-      | N.NCLARGEINT {srcLabel, loc} =>
+      | N.NCINTINF {srcLabel, loc} =>
         bind context (fn v => fn K =>
-                         A.ANLARGEINT {resultVar = v,
-                                       dataLabel = srcLabel,
-                                       nextExp = K,
-                                       loc = loc},
+                         A.ANINTINF {resultVar = v,
+                                     dataLabel = srcLabel,
+                                     nextExp = K,
+                                     loc = loc},
                       (BuiltinTypes.intInfTy, R.BOXEDty), loc)
       | N.NCVAR {varInfo, loc} =>
         let
@@ -359,7 +371,7 @@ struct
                                      codeExp = codeExp,
                                      closureEnvExp = closureEnvExp,
                                      argExpList = argExpList,
-                                     handler = #handlerLabel env,
+                                     handler = getHandlerLabel env,
                                      nextExp = K,
                                      loc = loc},
                         resultTy, loc)
@@ -414,19 +426,7 @@ struct
         in
           (proc1 o proc2 o proc3, ret)
         end
-      | N.NCCAST {exp, expTy, targetTy, runtimeTyCast, bitCast=false, loc} =>
-        let
-          val (proc1, exp) = compileExp env NONTAIL exp
-          val (proc2, ret) =
-              return context (A.ANCAST {exp = exp,
-                                        expTy = expTy,
-                                        targetTy = targetTy,
-                                        runtimeTyCast = runtimeTyCast},
-                             targetTy, loc)
-        in
-          (proc1 o proc2, ret)
-        end
-      | N.NCCAST {exp, expTy, targetTy, runtimeTyCast, bitCast=true, loc} =>
+      | N.NCCAST {exp, expTy, targetTy, cast=BuiltinPrimitive.BitCast, loc} =>
         let
           val (proc1, exp) = compileExp env NONTAIL exp
           val (proc2, ret) =
@@ -437,8 +437,7 @@ struct
                           {const = A.NVCAST {value = const,
                                              valueTy = ty,
                                              targetTy = targetTy,
-                                             runtimeTyCast = runtimeTyCast,
-                                             bitCast = true},
+                                             cast = BuiltinPrimitive.BitCast},
                            ty = targetTy},
                         targetTy, loc)
               | NONE => bind context
@@ -449,6 +448,23 @@ struct
                                               targetTy = targetTy,
                                               nextExp = K,
                                               loc = loc},
+                              targetTy, loc)
+        in
+          (proc1 o proc2, ret)
+        end
+      | N.NCCAST {exp, expTy, targetTy, cast, loc} =>
+        let
+          val runtimeTyCast =
+              case cast of
+                BuiltinPrimitive.TypeCast => false
+              | BuiltinPrimitive.RuntimeTyCast => true
+              | BuiltinPrimitive.BitCast => raise Bug.Bug "compileExp: NCCAST"
+          val (proc1, exp) = compileExp env NONTAIL exp
+          val (proc2, ret) =
+              return context (A.ANCAST {exp = exp,
+                                        expTy = expTy,
+                                        targetTy = targetTy,
+                                        runtimeTyCast = runtimeTyCast},
                               targetTy, loc)
         in
           (proc1 o proc2, ret)
@@ -488,7 +504,7 @@ struct
           val handlerLabel = HandlerLabel.generate nil
           val localHandlerLabel = FunLocalLabel.generate nil
           val tryEnv = env # {localHandlerLabel = SOME localHandlerLabel,
-                              handlerLabel = SOME handlerLabel}
+                              handler = HANDLER (SOME handlerLabel)}
           val tryExp = compileBranchExp tryEnv NONTAIL mergeLabel tryExp
           val (env2, exnVar) = addBoundVar (env, exnVar)
           val handlerExp = compileBranchExp env2 context mergeLabel handlerExp
@@ -642,7 +658,14 @@ struct
 
   and compileAddress env address =
       case address of
-        N.NARECORDFIELD {recordExp, fieldIndex} =>
+        N.NAPTR ptrExp =>
+        let
+          val (proc1, ptrExp) = compileExp env NONTAIL ptrExp
+        in
+          (proc1,
+           A.AAPTR ptrExp)
+        end
+      | N.NARECORDFIELD {recordExp, fieldIndex} =>
         let
           val (proc1, recordExp) = compileExp env NONTAIL recordExp
           val (proc2, fieldIndex) = compileExp env NONTAIL fieldIndex
@@ -709,13 +732,13 @@ struct
       end
 
   fun compileFunBody (funId, closureEnvVar, argVarList, bodyExp,
-                      handlerLabel, loc) =
+                      handler, loc) =
       let
         val loopLabel = ref NONE
         val env = {funId = funId,
                    loopLabel = loopLabel,
                    localHandlerLabel = NONE,
-                   handlerLabel = handlerLabel,
+                   handler = handler,
                    varEnv = VarID.Map.empty} : env
         val (env, closureEnvVar) = addBoundVarOpt (env, closureEnvVar)
         val (env, argVarList) = addBoundVars (env, argVarList)
@@ -745,7 +768,7 @@ struct
         let
           val (closureEnvVar, argVarList, bodyExp) =
               compileFunBody (SOME id, closureEnvVar, argVarList, bodyExp,
-                              NONE, loc)
+                              HANDLER NONE, loc)
         in
           A.ATFUNCTION
             {id = id,
@@ -759,10 +782,10 @@ struct
       | N.NTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
                               bodyExp, attributes, retTy, loc} =>
         let
-          val cleanupHandler = HandlerLabel.generate nil
+          val cleanupHandler = ref NONE
           val (closureEnvVar, argVarList, bodyExp) =
               compileFunBody (NONE, closureEnvVar, argVarList, bodyExp,
-                              SOME cleanupHandler, loc)
+                              CLEANUP cleanupHandler, loc)
         in
           A.ATCALLBACKFUNCTION
             {id = id,
@@ -772,7 +795,7 @@ struct
              bodyExp = bodyExp,
              attributes = attributes,
              retTy = retTy,
-             cleanupHandler = cleanupHandler,
+             cleanupHandler = !cleanupHandler,
              loc = loc}
         end
 
@@ -780,10 +803,11 @@ struct
       let
         val _ = initUsedIds ()
         val topdecs = map compileTopdec topdecs
+        val cleanupHandler = ref NONE
         val topEnv = {funId = NONE,
                       loopLabel = ref NONE,
                       localHandlerLabel = NONE,
-                      handlerLabel = NONE,
+                      handler = CLEANUP cleanupHandler,
                       varEnv = VarID.Map.empty} : env
         val (proc, ret) = compileExp topEnv NONTAIL topExp
         val _ =
@@ -791,9 +815,12 @@ struct
               (ref NONE, A.ANCONST {const=A.NVUNIT,...}) => ()
              | _ => raise Bug.Bug "compile: assertion failed"
         val topExp =
-            proc (A.ANRETURN {value=ret, loc=Loc.noloc})
+            proc (A.ANRETURN {value=ret, ty=unitTy, loc=Loc.noloc})
       in
-        {topdata = topdata, topdecs = topdecs, topExp = topExp} : A.program
+        {topdata = topdata,
+         topdecs = topdecs,
+         topExp = topExp,
+         topCleanupHandler = !cleanupHandler} : A.program
       end
 
 end

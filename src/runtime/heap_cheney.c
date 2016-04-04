@@ -634,7 +634,7 @@ sml_heap_gc(void)
 	do_gc();
 	GIANT_UNLOCK();
 #ifndef FAIR_COMPARISON
-	sml_run_finalizer(NULL);
+	sml_run_finalizer();
 #endif /* FAIR_COMPARISON */
 }
 
@@ -690,7 +690,7 @@ slow_alloc(size_t obj_size)
 
 	GIANT_UNLOCK();
 #ifndef FAIR_COMPARISON
-	obj = sml_run_finalizer(obj);
+	sml_run_finalizer();
 #endif /* FAIR_COMPARISON */
 	return obj;
 }

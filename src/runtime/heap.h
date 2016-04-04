@@ -1,82 +1,96 @@
 /*
  * heap.h
- * @copyright (c) 2007, Tohoku University.
+ * @copyright (c) 2015, Tohoku University.
  * @author UENO Katsuhiro
  */
 #ifndef SMLSHARP__HEAP_H__
 #define SMLSHARP__HEAP_H__
 
 /*
- * In order to prevent name conflict, the name of all global symbols
- * defined in heap mangenement implementation must be started with
- * "sml_heap_", and so do macros with "HEAP_".
- */
-
-/*
- * initialize the global heap.
+ * Initialize the SML# heap.
  * min_size : hint of minimum and initial heap size in bytes.
  * max_size : hint of maximum heap size in bytes.
- * Implementation should allocate "size" bytes in total for initial heap.
+ * This must allocate min_size bytes in total for SML# heap.
+ * The size of SML# heap may grow up to max_size during program execution.
  */
 void sml_heap_init(size_t min_size, size_t max_size);
 
 /*
- * finalize the global heap.
+ * Stop collector's thread.
  */
-void sml_heap_free(void);
+void sml_heap_stop(void);
 
 /*
- * setup thread-local heap of current thread.
- * It returns a pointer to thread-local heap structure.
- * NOTE: At the timing calling this function, thread management functions
- * such as sml_save_frame_pointer, sml_current_thread_heap, GIANT_LOCK,
- * and so on, is not available.
+ * Finalize the SML# heap.
  */
-void *sml_heap_thread_init(void);
+void sml_heap_destroy(void);
 
 /*
- * finalize the thread-local heap of current thread.
+ * Initalize thread-local heap of the current thread.
+ * It returns mutator-specific information of the current thread.
  */
-void sml_heap_thread_free(void *thread_heap);
+void *sml_heap_mutator_init(void);
 
 /*
- * this function is called typically from sml_gc_check when a mutator
- * thread is to be suspended due to stop-the-world.
- * Note that this function is called for every thread-local storage,
- * not for every mutator. If the mutator A is already suspended at STW
- * signal, another running thread may call this function with A's data.
+ * Finalize thread-local heap of current thread.
+ * info : mutator-specific information of the current thread
  */
-#ifdef MULTITHREAD
-void sml_heap_thread_gc_hook(void *data);
-#endif /* MULTITHREAD */
+void sml_heap_mutator_destroy(void *info);
 
 /*
- * this function is called from sml_gc_initiate when a collector begin
- * to start a collection.
+ * Called when a mutator switches to SYNC2.
+ * control : control block of the mutator thread
+ * info : mutator-specific information of the thread
+ * Note that control and info may be different from those of the current
+ * thread.
  */
-#ifdef CONCURRENT
-int sml_heap_gc_hook(void *data);
-#endif /* CONCURRENT */
+void sml_heap_mutator_sync2(const struct sml_control *control, void *info);
 
 /*
- * Forcely start garbage collection.
+ * Called when all mutators has switched to SYNC1.
  */
-void sml_heap_gc(void);
+void sml_heap_collector_sync1(void);
 
 /*
- * allocate an arbitrary heap object of current thread.
+ * Called when the collector has switched to SYNC2.
+ */
+void sml_heap_collector_sync2(void);
+
+/*
+ * Called when the collector has switched to MARK.
+ * At this time, all all mutators has switched to SYNC2.
+ */
+void sml_heap_collector_mark(void);
+
+/*
+ * Called when the collector has finished MARK and switched to ASYNC.
+ */
+void sml_heap_collector_async(void);
+
+/*
+ * Allocate an SML# object with objsize-byte payload.
+ * objsize : the number of bytes to be allocated
  */
 SML_PRIMITIVE void *sml_alloc(unsigned int objsize);
 
 /*
- * update a pointer field of "obj" indicated by "writeaddr" with "new_value".
- * The heap implementation may perform additional tasks to keep track of
- * pointer updates.
- *
- * This function will be called with objects at both inside and outside
- * of heap. If "writeaddr" and/or "objaddr" is not in any heap, heap
- * implementation must call sml_global_barrier after update.
+ * Memory update with write barrier.
+ * obj : the object to be altered
+ * writeaddr : the address in obj to be updated with new_value
+ * new_value : the value to be stored in writeaddr
+ * This must perform appropriate write barrier and store new_value
+ * to writeaddr.
  */
 SML_PRIMITIVE void sml_write(void *obj, void **writeaddr, void *new_value);
+
+/*
+ * Check the liveness of the given object.
+ * slot : pointer to a pointer to be checked
+ * If *slot has been marked as live in sml_heap_collector_mark,
+ * this returns true and update obj with its forwarded pointer.
+ * This is called after sml_heap_collector_mark and before
+ * sml_heap_collector_async.
+ */
+int sml_heap_check_alive(void **slot);
 
 #endif /* SMLSHARP__HEAP_H__ */

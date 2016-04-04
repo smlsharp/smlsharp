@@ -117,7 +117,15 @@ structure LrParser :> LR_PARSER =
      'a => Token.svalue
      'b => Token.pos
 *)
+(******************************************* 
+  2015-09-27 ohori
+  temoprary fix to speed up compilation
+  effectiveluy on change; signature constraint is
+  subsumed by interface specification.
+****************************************** 
 functor LrParserFun(type arg type pos type svalue) : LR_PARSER =
+*)
+functor LrParserFun(type arg type pos type svalue)  =
    struct
       type arg = arg
       type pos = pos

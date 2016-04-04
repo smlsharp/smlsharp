@@ -1,12 +1,12 @@
-_require "../../../basis/main/SMLSharp_OSProcess.smi"
+_require local "../../../basis/main/SMLSharp_OSProcess.smi"
 _require "../../../basis/main/Word8Vector.smi"
-_require "../../../basis/main/Word8VectorSlice.smi"
-_require "../../../basis/main/Word8Array.smi"
-_require "../../../basis/main/Word8ArraySlice.smi"
-_require "../../../basis/main/Int.smi"
+_require local "../../../basis/main/Word8VectorSlice.smi"
+_require local "../../../basis/main/Word8Array.smi"
+_require local "../../../basis/main/Word8ArraySlice.smi"
+_require local "../../../basis/main/Int32.smi"
 _require "../../../basis/main/IO.smi"
 _require "./prim-io-bin.smi"
-_require "../Unix/posix-bin-prim-io.smi"
+_require local "../Unix/posix-bin-prim-io.smi"
 
 structure BinIO =
 struct

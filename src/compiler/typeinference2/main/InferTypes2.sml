@@ -123,13 +123,39 @@ local
         recordExp
       end
 
+  fun isTuple fields =
+      let
+        exception NotTuple
+      in
+        (LabelEnv.foldli
+           (fn (label, _, n) =>
+               if Int.toString n = label then n + 1 else raise NotTuple)
+           1
+           fields;
+         true)
+        handle NotTuple => false
+      end
+
+  fun isTupleList fields =
+      let
+        fun check n nil = true
+          | check n ((k,_)::t) = Int.toString n = k andalso check (n + 1) t
+      in
+        check 1 fields
+      end
+
   fun LabelEnv_all f env =
       LabelEnv.foldl (fn (x,z) => z andalso f x) true env
 
-  datatype dir = IMPORT of {force: bool} | EXPORT
+  datatype dir = IMPORT | EXPORT
+  datatype safe = SAFE | UNSAFE
 
-  fun exportOnly (IMPORT {force}) = force
-    | exportOnly EXPORT = true
+  fun exportOnly (IMPORT, SAFE) = false
+    | exportOnly (IMPORT, UNSAFE) = true
+    | exportOnly (EXPORT, _) = true
+
+  fun isUnsafe (_, SAFE) = false
+    | isUnsafe (_, UNSAFE) = true
 
   fun getRuleLocM nil = raise bug "empty rule in getRuleLocM"
     | getRuleLocM [{args=pat::_, body}] =
@@ -198,6 +224,8 @@ local
                  operators = map (oprimSelectorSubst typIdMap) operators
                 }
             | T.UNIV => T.UNIV
+            | T.BOXED => T.BOXED
+            | T.UNBOXED => T.UNBOXED
             | T.REC tySenvMap =>
               T.REC (LabelEnv.map tySubst tySenvMap)
             | T.JOIN (tySenvMap, ty1, ty2, loc) =>
@@ -426,6 +454,8 @@ local
                   operators = map (oprimSelectorSubst typIdMap) operators
                  }
              | T.UNIV => T.UNIV
+             | T.BOXED => T.BOXED
+             | T.UNBOXED => T.UNBOXED
              | T.REC tyMap => T.REC (LabelEnv.map tySubst tyMap)
              | T.JOIN (tyMap, ty1, ty2, loc) => 
                T.JOIN (LabelEnv.map tySubst tyMap, tySubst ty1, tySubst ty2, loc)
@@ -568,6 +598,8 @@ local
             TC.TPEXTERNVAR {longsymbol=longsymbol, ty=tySubst ty}
           | TC.TPEXTERNEXN {longsymbol, ty} =>
             TC.TPEXTERNEXN {longsymbol=longsymbol, ty=tySubst ty}
+          | TC.TPBUILTINEXN {longsymbol, ty} =>
+            TC.TPBUILTINEXN {longsymbol=longsymbol, ty=tySubst ty}
         and ffiTySubst ffiTy =
             case ffiTy of
               TC.FFIFUNTY (ffiAttribOpt, ffiTyList1, ffiTyList2, ffiTyList3, loc) =>
@@ -611,29 +643,52 @@ local
 
 in
 
-  fun isForceImportAttribute (attribute:FFIAttributes.attributes option) =
-      case attribute of
-        SOME {allocMLValue, ...} => allocMLValue
-      | NONE => false
+  local
+    val empty = {import = OTSet.empty, export = OTSet.empty}
+    fun union ({import=i1,export=e1},{import=i2, export=e2}) =
+        {import = OTSet.union (i1, i2), export = OTSet.union (e1, e2)}
+    fun opposite IMPORT = EXPORT
+      | opposite EXPORT = IMPORT
+  in
+  fun ffiFTV dir ffity =
+      case ffity of
+        TC.FFIBASETY (ty, loc) =>
+        let
+          val s = #2 (TB.EFTV ty)
+        in
+          case dir of
+            IMPORT => {import = s, export = OTSet.empty}
+          | EXPORT => {import = OTSet.empty, export = s}
+        end
+      | TC.FFIRECORDTY (fields, loc) =>
+        ffiFTVList dir (map #2 fields)
+      | TC.FFIFUNTY (attr as SOME {unsafe=true,...}, argTys, varTys, retTys,
+                     loc) =>
+        let
+          val tvs as {import, export} =
+              ffiFTV dir (TC.FFIFUNTY (NONE, argTys, varTys, retTys, loc))
+        in
+          (* unsafe function can import an unexported tyvar by assuming
+           * that such tyvars are somehow exported.
+           * FIXME: is this rule consistent?  *)
+          {import = import, export = OTSet.union (import, export)}
+        end
+      | TC.FFIFUNTY (_, argTys, varTys, retTys, loc) =>
+        union (ffiFTVList (opposite dir)
+                          (argTys @ (case varTys of SOME l => l | NONE => [])),
+               ffiFTVList dir retTys)
 
-  fun isInteroperableArgTy dir ty =
-      case TB.derefTy ty of
-        T.TYVARty (ref (T.TVAR ({tvarKind,...}))) =>
-        (
-          case tvarKind of
-            T.UNIV => exportOnly dir
-          | T.REC _ => exportOnly dir
-          | T.JOIN _ => exportOnly dir
-          | T.OCONSTkind _ => false
-          | T.OPRIMkind _ => false
-        )
-      | _ => isInteroperableTy dir ty
+  and ffiFTVList dir l =
+      foldl (fn (x,z) => union (ffiFTV dir x, z)) empty l
+  end (* local *)
 
-  and isInteroperableBuiltinTy dir (ty, args) =
+  fun isInteroperableBuiltinTy dir (ty, args) =
       case ty of
         BuiltinTypeNames.INTty => true
+      | BuiltinTypeNames.INT64ty => true
       | BuiltinTypeNames.INTINFty => exportOnly dir
       | BuiltinTypeNames.WORDty => true
+      | BuiltinTypeNames.WORD64ty => true
       | BuiltinTypeNames.WORD8ty => true
       | BuiltinTypeNames.CHARty => true
       | BuiltinTypeNames.STRINGty => exportOnly dir
@@ -643,21 +698,21 @@ in
       | BuiltinTypeNames.PTRty =>
         List.all (isInteroperableArgTy dir) args orelse
         (
-          (* allow unit ptr and 'a ptr *)
+          (* additionally allow unit ptr *)
           case args of
             [ty] => (case TB.derefTy ty of
                        T.CONSTRUCTty {tyCon, args=[]} =>
                        TypID.eq (#id tyCon, #id BT.unitTyCon)
-                     | T.TYVARty (ref (T.TVAR ({tvarKind=T.UNIV,...}))) =>
-                       true
                      | _ => false)
           | _ => raise bug "non singleton arg in PTRty"
         )
       | BuiltinTypeNames.CODEPTRty => true
       | BuiltinTypeNames.REFty =>
-        exportOnly dir andalso List.all (isInteroperableArgTy dir) args
+        exportOnly dir
+        andalso List.all (isInteroperableArgTy (IMPORT, #2 dir)) args
       | BuiltinTypeNames.ARRAYty =>
-        exportOnly dir andalso List.all (isInteroperableArgTy dir) args
+        exportOnly dir
+        andalso List.all (isInteroperableArgTy (IMPORT, #2 dir)) args
       | BuiltinTypeNames.VECTORty =>
         exportOnly dir andalso List.all (isInteroperableArgTy dir) args
       | BuiltinTypeNames.EXNty => false
@@ -665,39 +720,60 @@ in
       | BuiltinTypeNames.EXNTAGty => false
       | BuiltinTypeNames.CONTAGty => false
 
-  and isInteroperableTycon dir ({id, dtyKind, runtimeTy, ...}:T.tyCon, args) =
-      isInteroperableBuiltinTy dir (runtimeTy, args)
 
-  and isInteroperableTuple dir fields =
-      let
-        exception NotTuple
-      in
-        (LabelEnv.foldli
-           (fn (label, ty, n) =>
-               if Int.toString n = label andalso isInteroperableArgTy dir ty
-               then n + 1
-               else raise NotTuple)
-           1
-           fields;
-         false)
-        handle NotTuple => false
-      end
+  and isInteroperableTycon dir ({id, dtyKind, runtimeTy, ...}:T.tyCon, args) =
+      case dtyKind of
+        T.DTY =>
+        (* FIXME: can we allow exporting datatypes in unsafe mode? *)
+        false
+      | T.OPAQUE {opaqueRep = T.TYCON tycon, revealKey} =>
+        isInteroperableTycon dir (tycon, args)
+      | T.OPAQUE {opaqueRep = T.TFUNDEF _, revealKey} => false
+      | T.BUILTIN runtimeTy =>
+        isInteroperableBuiltinTy dir (runtimeTy, args)
 
   and isInteroperableTy dir ty =
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args} =>
         isInteroperableTycon dir (tyCon, args)
       | T.RECORDty fields =>
-        exportOnly dir andalso isInteroperableTuple dir fields
+        exportOnly dir
+        andalso (isUnsafe dir orelse isTuple fields)
+        andalso LabelEnv_all (isInteroperableArgTy dir) fields
+      | T.TYVARty (ref (T.TVAR ({tvarKind,...}))) =>
+        (
+          case tvarKind of
+            T.UNIV => false
+          | T.BOXED => true
+          | T.UNBOXED => false
+          | T.REC _ => false
+          | T.JOIN _ => false
+          | T.OCONSTkind _ => false
+          | T.OPRIMkind _ => false
+        )
       | _ => false
+
+  and isInteroperableArgTy dir ty =
+      case TB.derefTy ty of
+        T.TYVARty (ref (T.TVAR ({tvarKind,...}))) =>
+        (
+          case tvarKind of
+            T.UNIV => isUnsafe dir
+          | T.BOXED => true
+          | T.UNBOXED => true
+          | T.REC _ => false
+          | T.JOIN _ => false
+          | T.OCONSTkind _ => false
+          | T.OPRIMkind _ => false
+        )
+      | _ => isInteroperableTy dir ty
 
   fun evalForceImportFFIty (context:TIC.context) ffity =
       case ffity of
-        IC.FFIBASETY (ty, loc) =>
-        (ITy.evalIty context ty
-         handle e => (P.print "ity1\n"; raise e))
+        IC.FFIBASETY (ty, loc) => ITy.evalIty context ty
       | IC.FFIFUNTY (_, _, _, _, loc) =>
-        (E.enqueueError "Typeinf 001" (loc, E.ForceImportForeignFunction("001", ffity));
+        (E.enqueueError "Typeinf 001"
+                        (loc, E.ForceImportForeignFunction("001", ffity));
          T.ERRORty)
       | IC.FFIRECORDTY (fields, loc) =>
         T.RECORDty
@@ -708,19 +784,21 @@ in
       case ffity of
         IC.FFIFUNTY (attributes, argTys, varTys, retTys, loc) =>
         let
-          val forceImport = isForceImportAttribute attributes
+          val dir =
+              case attributes of
+                SOME {unsafe, ...} => if unsafe then (#1 dir, UNSAFE) else dir
+              | NONE => dir
           val (argDir, retDir) =
               case dir of
-                IMPORT {force} =>
-                (EXPORT, IMPORT {force = force orelse forceImport})
-              | EXPORT =>
-                (IMPORT {force = forceImport}, EXPORT)
+                (IMPORT, s) => ((EXPORT, s), (IMPORT, s))
+              | (EXPORT, s) => ((IMPORT, s), (EXPORT, s))
           val argTys = map (evalFFIty context argDir) argTys
           val varTys = Option.map (map (evalFFIty context argDir)) varTys
           val retTys = map (evalFFIty context retDir) retTys
         in
           case (dir, varTys) of
-            (EXPORT, SOME _) =>
+            ((EXPORT, _), SOME _) =>
+            (* ML function cannot have any variable-length argument list *)
             E.enqueueError "Typeinf 002"
                            (loc, E.NonInteroperableType ("002", ffity))
           | _ => ();
@@ -728,43 +806,59 @@ in
             nil => ()
           | [ty] => ()
           | _ =>
+            (* multiple return values is not allowed *)
             E.enqueueError "Typeinf 002"
-                           (loc, E.NonInteroperableType ("002",ffity));
+                           (loc, E.NonInteroperableType ("002", ffity));
           TC.FFIFUNTY (attributes, argTys, varTys, retTys, loc)
         end
       | IC.FFIRECORDTY (fields, loc) =>
         (
           case dir of
-            EXPORT =>
-            TC.FFIRECORDTY (map (fn (k,v) => (k, evalFFIty context dir v))
-                                fields, loc)
-          | IMPORT {force=true} =>
+            (EXPORT, _) =>
+            if isUnsafe dir orelse isTupleList fields
+            then TC.FFIRECORDTY
+                   (map (fn (k,v) => (k, evalFFIty context dir v)) fields, loc)
+            else (E.enqueueError "Typeinf 003"
+                                 (loc, E.NonInteroperableType ("003", ffity));
+                  TC.FFIBASETY (T.ERRORty, loc))
+          | (IMPORT, UNSAFE) =>
             TC.FFIBASETY (evalForceImportFFIty context ffity, loc)
-          | IMPORT {force=false} =>
-            (E.enqueueError "Typeinf 003" (loc, E.NonInteroperableType ("003",ffity));
+          | (IMPORT, SAFE) =>
+            (E.enqueueError "Typeinf 003"
+                            (loc, E.NonInteroperableType ("003", ffity));
              TC.FFIBASETY (T.ERRORty, loc))
         )
       | IC.FFIBASETY (ty, loc) =>
         let
           val ty = ITy.evalIty context ty
-                   handle e => (P.print "ity2\n";raise e)
         in
           if isInteroperableTy dir ty
           then TC.FFIBASETY (ty, loc)
-          else (E.enqueueError "Typeinf 004" (loc, E.NonInteroperableType ("004",ffity));
+          else (E.enqueueError "Typeinf 004"
+                               (loc, E.NonInteroperableType ("004",ffity));
                 TC.FFIBASETY (T.ERRORty, loc))
         end
 
   fun evalForeignFunTy (context:TIC.context) ffity =
       let
-        val newFFIty = evalFFIty context (IMPORT {force=false}) ffity
+        val newFFIty = evalFFIty context (IMPORT, SAFE) ffity
       in
-        case newFFIty of
-          TC.FFIFUNTY _ => ()
-        | TC.FFIRECORDTY (_, loc) =>
-          E.enqueueError "Typeinf 005" (loc, E.NonInteroperableType ("005",ffity))
-        | TC.FFIBASETY (_, loc) =>
-          E.enqueueError "Typeinf 006" (loc, E.NonInteroperableType ("006",ffity));
+        if (case newFFIty of
+              TC.FFIFUNTY _ =>
+              let
+                val {import, export} = ffiFTV IMPORT newFFIty
+              in
+                OTSet.isSubset (import, export)
+              end
+            | TC.FFIRECORDTY _ => false
+            | TC.FFIBASETY _ => false)
+        then ()
+        else E.enqueueError "Typeinf 005"
+                            (case newFFIty of
+                               TC.FFIFUNTY (_,_,_,_,loc) => loc
+                             | TC.FFIRECORDTY (_, loc) => loc
+                             | TC.FFIBASETY (_, loc) => loc,
+                             E.NonInteroperableType ("005",ffity));
         newFFIty
       end
 
@@ -780,7 +874,8 @@ in
           T.FUNMty ([makeTupleTy (argTys @ varTys)], makeTupleTy retTys)
         end
       | TC.FFIRECORDTY (fields, loc) =>
-        T.RECORDty (labelEnvFromList (map (fn (k,v) => (k, ffiStubTy v)) fields))
+        T.RECORDty
+          (labelEnvFromList (map (fn (k,v) => (k, ffiStubTy v)) fields))
 
   fun evalTvarKind (context:TIC.context) tvarkind =
     case tvarkind of
@@ -791,10 +886,14 @@ in
             (ITy.evalIty context handle e => (P.print "ity3\n"; raise e))
             fields)
        handle e => raise e)
+    | IC.BOXED => T.BOXED
+    | IC.UNBOXED => T.UNBOXED
 
   fun evalScopedTvars lambdaDepth (context:TIC.context) kindedTvarList loc =
     let
       fun occurresTvarInTvarkind (tvstateRef, T.UNIV) = false
+        | occurresTvarInTvarkind (tvstateRef, T.BOXED) = false
+        | occurresTvarInTvarkind (tvstateRef, T.UNBOXED) = false
         | occurresTvarInTvarkind (tvstateRef, T.OCONSTkind tyList) =
           U.occurresTyList tvstateRef tyList
         | occurresTvarInTvarkind (tvstateRef, T.OPRIMkind {instances,...}) =
@@ -926,12 +1025,12 @@ in
             val newVars = map (fn _ => IC.newICVar ()) patList
             val newVarExps = map (fn var => IC.ICVAR var) newVars
             val newVarPats = map (fn var => IC.ICPATVAR_TRANS var) newVars
-            val argRecord = IC.ICRECORD (Utils.listToTuple newVarExps, loc)
+            val argRecord = IC.ICRECORD (TupleUtils.listToTuple newVarExps, loc)
             val funRules =
               map
               (fn {args, body} =>
                {args=[IC.ICPATRECORD{flex=false,
-                               fields=Utils.listToTuple args,
+                               fields=TupleUtils.listToTuple args,
                                loc=loc}],
                 body=body}
                )
@@ -3086,7 +3185,10 @@ val _ = P.print "\n"
         end
       | IC.ICFFIAPPLY (attributes, ffifun, ffiArgList, ffiRetTy, loc) =>
         let
-          val retDir = IMPORT {force = isForceImportAttribute attributes}
+          val retDir =
+              (IMPORT, case attributes of
+                         SOME {unsafe, ...} => if unsafe then UNSAFE else SAFE
+                       | NONE => SAFE)
           val funExp = typeinfFFIFun lambdaDepth applyDepth context ffifun loc
           val (argFFItys, args) =
               ListPair.unzip
@@ -3633,7 +3735,7 @@ val _ = P.print "\n"
         let
           val (argTy, argExp) =
               TCU.freshInst (typeinfExp lambdaDepth applyDepth context icexp)
-          val ffity = evalFFIty context EXPORT ffity
+          val ffity = evalFFIty context (EXPORT, SAFE) ffity
           val stubTy = ffiStubTy ffity
           val _ =
               U.unify [(argTy, stubTy)]
@@ -3672,7 +3774,7 @@ val _ = P.print "\n"
                 in
                   TC.TPPRIMAPPLY
                     {primOp =
-                       {primitive = BP.L (BP.R (BP.M BP.Word_mul)),
+                       {primitive = BP.L (BP.R (BP.M BP.Word32_mul)),
                         ty = T.FUNMty ([argTy],
                                        BT.wordTy)},
                      instTyList = nil,
@@ -3940,7 +4042,7 @@ val _ = P.print "\n"
                           (
                            TvarMap.appi
                              (fn (utvar, ref (T.SUBSTITUTED ty)) =>
-                                 (case TB.derefSubstTy ty of
+                                 (case TB.derefTy ty of
                                     T.BOUNDVARty _ => ()
                                   | T.TYVARty (tvstateRef
                                                  as ref (T.TVAR {eqKind,...}))
@@ -4137,7 +4239,7 @@ val _ = P.print "\n"
           val _ =
               TvarMap.appi
                 (fn ({symbol, id, eq, lifted}, ref (T.SUBSTITUTED ty)) =>
-                    (case TB.derefSubstTy ty of
+                    (case TB.derefTy ty of
                        T.BOUNDVARty _ => ()
                      | T.TYVARty (tvstateRef as ref (T.TVAR {eqKind,...}))
                        =>
@@ -4329,7 +4431,7 @@ val _ = P.print "\n"
           val _ =
               TvarMap.appi
                 (fn ({symbol,...}, ref (T.SUBSTITUTED ty)) =>
-                    (case TB.derefSubstTy ty of
+                    (case TB.derefTy ty of
                        T.BOUNDVARty _ => ()
                      | T.TYVARty (tvstateRef as ref (T.TVAR {eqKind,...}))
                        =>
@@ -4437,7 +4539,7 @@ val _ = P.print "\n"
                       val _ =
                           TvarMap.appi
                             (fn ({symbol, id, eq, lifted}, ref (T.SUBSTITUTED ty)) =>
-                                (case TB.derefSubstTy ty of
+                                (case TB.derefTy ty of
                                    T.BOUNDVARty _ => ()
                                  | T.TYVARty (tvstateRef as ref (T.TVAR {eqKind,...}))
                                    =>
@@ -4932,6 +5034,15 @@ val _ = P.print "\n"
         in
           (TIC.emptyContext,
            [TC.TPEXTERNEXN {longsymbol=externalLongsymbol, ty=ty}]
+           )
+        end
+      | IC.ICBUILTINEXN {longsymbol, ty=ity} =>
+        let
+          val ty = ITy.evalIty context ity
+              handle e => (P.print "ity38\n"; raise e)
+        in
+          (TIC.emptyContext,
+           [TC.TPBUILTINEXN {longsymbol=longsymbol, ty=ty}]
            )
         end
       | IC.ICTYCASTDECL (tycastList, icdeclList, loc) =>

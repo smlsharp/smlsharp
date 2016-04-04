@@ -1,5 +1,5 @@
 _require "../../basis.smi"
-_require "absyn.sig"
+_require "./absyn.sig"
 
 structure Absyn =
 struct

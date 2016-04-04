@@ -9,10 +9,10 @@ infix  6  + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
 infix 3 := o
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op < = SMLSharp_Builtin.Int.lt
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op < = SMLSharp_Builtin.Int32.lt
 val op @ = List.@
-structure Word = SMLSharp_Builtin.Word
+structure Word32 = SMLSharp_Builtin.Word32
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 structure Pointer = SMLSharp_Builtin.Pointer
@@ -23,16 +23,16 @@ struct
 
   val prim_opendir =
       _import "prim_GenericOS_opendir"
-      : __attribute__((no_callback,suspend)) string -> unit ptr
+      : string -> unit ptr
   val prim_readdir =
       _import "prim_GenericOS_readdir"
-      : __attribute__((no_callback,alloc,suspend)) unit ptr -> char ptr
+      : unit ptr -> char ptr
   val prim_rewinddir =
       _import "prim_GenericOS_rewinddir"
-      : __attribute__((no_callback,suspend)) unit ptr -> ()
+      : unit ptr -> ()
   val prim_closedir =
       _import "prim_GenericOS_closedir"
-      : __attribute__((no_callback,suspend)) unit ptr -> int
+      : unit ptr -> int
 
   type dirstream = {dirHandle : unit ptr, isOpen : bool ref}
 
@@ -59,16 +59,16 @@ struct
 
   val prim_chdir =
       _import "prim_GenericOS_chdir"
-      : __attribute__((no_callback,suspend)) string -> int
+      : string -> int
   val prim_getcwd =
       _import "prim_GenericOS_getcwd"
-      : __attribute__((no_callback,alloc)) () -> char ptr
+      : () -> char ptr
   val prim_mkdir =
       _import "prim_GenericOS_mkdir"
-      : __attribute__((no_callback,suspend)) (string, int) -> int
+      : (string, int) -> int
   val prim_rmdir =
       _import "rmdir"
-      : __attribute__((no_callback,suspend)) string -> int
+      : string -> int
 
   fun chDir dirname =
       if prim_chdir dirname < 0
@@ -102,16 +102,16 @@ struct
                else raise e
 
   fun isDir filename =
-      Word.andb (#mode (SMLSharp_OSIO.stat filename), SMLSharp_OSIO.S_IFMT)
+      Word32.andb (#mode (SMLSharp_OSIO.stat filename), SMLSharp_OSIO.S_IFMT)
       = SMLSharp_OSIO.S_IFDIR
 
   fun isLink filename =
-      Word.andb (#mode (SMLSharp_OSIO.lstat filename), SMLSharp_OSIO.S_IFMT)
+      Word32.andb (#mode (SMLSharp_OSIO.lstat filename), SMLSharp_OSIO.S_IFMT)
       = SMLSharp_OSIO.S_IFLNK
 
   val prim_readlink =
       _import "prim_GenericOS_readlink"
-      : __attribute__((no_callback,alloc,suspend)) string -> string
+      : __attribute__((unsafe)) string -> string
 
   fun readLink filename =
       let
@@ -167,14 +167,15 @@ struct
 
   fun modTime filename =
       Time.fromSeconds
-        (LargeInt.fromInt (Word.toIntX (#mtime (SMLSharp_OSIO.stat filename))))
+        (IntInf.fromInt
+           (Word32.toInt32X (#mtime (SMLSharp_OSIO.stat filename))))
 
   fun fileSize filename =
-      Word.toIntX (#size (SMLSharp_OSIO.stat filename))
+      Word32.toInt32X (#size (SMLSharp_OSIO.stat filename))
 
   val prim_utime =
       _import "prim_GenericOS_utime"
-      : __attribute__((no_callback,suspend)) (string, word, word) -> int
+      : (string, word, word) -> int
 
   fun setTime (filename, timeOpt) =
       let
@@ -182,7 +183,7 @@ struct
             case timeOpt of
               SOME time => time
             | NONE => Time.now ()
-        val t = Word.fromInt (LargeInt.toInt (Time.toSeconds time))
+        val t = Word32.fromInt32 (IntInf.toInt (Time.toSeconds time))
         val err = prim_utime (filename, t, t)
       in
         if err < 0 then raise SMLSharp_Runtime.OS_SysErr () else ()
@@ -190,7 +191,7 @@ struct
 
   val unlink =
       _import "unlink"
-      : __attribute__((no_callback,suspend)) string -> int
+      : string -> int
 
   fun remove filename =
       if unlink filename < 0
@@ -198,7 +199,7 @@ struct
 
   val prim_rename =
       _import "rename"
-      : __attribute__((no_callback,suspend)) (string, string) -> int
+      : (string, string) -> int
 
   fun rename {old, new} =
       if prim_rename (old, new) < 0
@@ -213,17 +214,17 @@ struct
         let
           fun loop (nil, z) = z
             | loop (h::t, z) =
-              Word.orb (z, case h of A_READ => SMLSharp_OSIO.S_IRUSR
-                                   | A_WRITE => SMLSharp_OSIO.S_IWUSR
-                                   | A_EXEC => SMLSharp_OSIO.S_IXUSR)
+              Word32.orb (z, case h of A_READ => SMLSharp_OSIO.S_IRUSR
+                                     | A_WRITE => SMLSharp_OSIO.S_IWUSR
+                                     | A_EXEC => SMLSharp_OSIO.S_IXUSR)
           val mask = loop (modes, 0w0)
         in
-          Word.andb (mode, mask) = mask
+          Word32.andb (mode, mask) = mask
         end
 
   val prim_tmpName =
       _import "prim_tmpName"
-      : __attribute__((no_callback,alloc,suspend)) () -> string
+      : __attribute__((unsafe)) () -> string
 
   fun tmpName () =
       case prim_tmpName () of
@@ -235,10 +236,10 @@ struct
   val fileId = SMLSharp_OSIO.stat
 
   fun hash ({dev, ino, ...}:file_id) =
-      Word.add (Word.lshift (dev, 0w16), ino)
+      Word32.add (Word32.lshift (dev, 0w16), ino)
 
-  val op < = Word.lt
-  val op > = Word.gt
+  val op < = Word32.lt
+  val op > = Word32.gt
 
   fun compare ({dev=dev1, ino=ino1, ...}:file_id,
                {dev=dev2, ino=ino2, ...}:file_id) =

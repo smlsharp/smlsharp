@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "./Symbol.ppg.smi"
 
@@ -7,7 +7,8 @@ structure AbsynSQL =
 struct
   type symbol = Symbol.symbol
   datatype 'exp command =
-    SQLSELECT of {selectListExps: 'exp list,
+    SQLSELECT of {distinct: bool,
+                  selectListExps: 'exp list,
                   selectLabels: string list option,
                   selectName: symbol option,
                   fromClause: (string * 'exp) list,

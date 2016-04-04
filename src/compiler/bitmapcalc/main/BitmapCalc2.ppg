@@ -77,6 +77,7 @@ struct
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(withType) formatWithType_varInfo
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   (*%
    * @prefix formatWithType_
@@ -93,6 +94,7 @@ struct
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   datatype bcexp =
       (*%
@@ -560,21 +562,35 @@ struct
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, targetTy, runtimeTyCast, bitCast, loc})
-       * "cast" "(" exp()(btvEnv) ")"
+       * @format({exp, expTy, targetTy, cast, loc})
+       * cast "(" exp()(btvEnv) ")"
        *)
       (*%
        * @prefix formatWithType_
-       * @format({exp, expTy, targetTy, runtimeTyCast, bitCast, loc})
-       * "cast" "(" !L2{ L2{ exp()(btvEnv) +1 ":" +d expTy()(btvEnv) } +1 ":" +d targetTy()(btvEnv)} ")"
+       * @format({exp, expTy, targetTy, cast, loc})
+       * cast "(" !L2{ L2{ exp()(btvEnv) +1 ":" +d expTy()(btvEnv) } +1 ":" +d targetTy()(btvEnv)} ")"
        *)
       BCCAST of
       {
         exp : bcexp,
         expTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool,
+        cast : BuiltinPrimitive.cast,
+        loc : loc
+      }
+    | (*%
+       * @format({dump, ty, loc})
+       * "<" !N0{ "DUMP:" ty()(btvEnv) } ">"
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({dump, ty, loc})
+       * "<" !N0{ "DUMP:" ty()(btvEnv) } ">"
+       *)
+      BCDUMP of
+      {
+        dump : HeapDump.dump,
+        ty : ty,
         loc : loc
       }
 
@@ -629,18 +645,19 @@ struct
         loc: loc
       }
     | (*%
-       * @format({exVarInfo, exp, loc})
+       * @format({weak, exVarInfo, exp, loc})
        * !R1{ "export" +d "val" +d exVarInfo
        *      2[ +d "=" +1 exp()(btvEnv) ] }
        *)
       (*%
        * @prefix formatWithType_
-       * @format({exVarInfo, exp, loc})
+       * @format({weak, exVarInfo, exp, loc})
        * !R1{ "export" +d "val" +d exVarInfo()(btvEnv)
        *      2[ +d "=" +1 exp()(btvEnv) ] }
        *)
       BCEXPORTVAR of
       {
+        weak : bool,
         exVarInfo : exVarInfo,
         exp : bcexp,
         loc : loc

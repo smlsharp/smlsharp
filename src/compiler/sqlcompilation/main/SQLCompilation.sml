@@ -263,6 +263,7 @@ struct
       | I.ICEXPORTEXN _ => icdecl
       | I.ICEXTERNVAR _ => icdecl
       | I.ICEXTERNEXN _ => icdecl
+      | I.ICBUILTINEXN _ => icdecl
       | I.ICTYCASTDECL (tycastList, decls, loc) =>
         I.ICTYCASTDECL (tycastList, map compileDecl decls, loc)
       | I.ICOVERLOADDEF _ => icdecl

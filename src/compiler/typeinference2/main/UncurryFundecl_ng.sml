@@ -559,6 +559,7 @@ in
       | TC.TPEXNTAGD _ => [tpdecl]
       | TC.TPEXTERNVAR  _ => [tpdecl]
       | TC.TPEXTERNEXN  _ => [tpdecl]
+      | TC.TPBUILTINEXN  _ => [tpdecl]
       | TC.TPEXPORTEXN  _ => [tpdecl]
       | TC.TPEXPORTVAR _ => [tpdecl]
       | TC.TPEXPORTRECFUNVAR {var=var as {ty, longsymbol,...}, arity} => 

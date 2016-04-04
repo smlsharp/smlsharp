@@ -1,6 +1,6 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../util/main/BigInt_IntInf.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/heapdump/main/HeapDump.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../name/main/CodeLabel.smi"
@@ -26,10 +26,12 @@ struct
       }
   type varInfo = {id: VarID.id, ty: ty}
   datatype ncconst =
-      NVINT of Int32.int
-    | NVWORD of Word32.word
+      NVINT32 of Int32.int
+    | NVINT64 of Int64.int
+    | NVWORD32 of Word32.word
+    | NVWORD64 of Word64.word
     | NVCONTAG of Word32.word
-    | NVBYTE of Word8.word
+    | NVWORD8 of Word8.word
     | NVREAL of string
     | NVFLOAT of string
     | NVCHAR of Char.char
@@ -51,8 +53,7 @@ struct
         value : ncconst,
         valueTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool
+        cast : BuiltinPrimitive.cast
       }
   datatype ncexp =
       NCFOREIGNAPPLY of
@@ -72,7 +73,7 @@ struct
         loc : loc
       }
     | NCCONST of {const: ncconst, ty: ty, loc: loc}
-    | NCLARGEINT of {srcLabel: ExtraDataLabel.id, loc: loc}
+    | NCINTINF of {srcLabel: ExtraDataLabel.id, loc: loc}
     | NCVAR of {varInfo : varInfo, loc : loc}
     | NCEXVAR of
       {
@@ -211,8 +212,7 @@ struct
         exp : ncexp,
         expTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool,
+        cast : BuiltinPrimitive.cast,
         loc : loc
       }
     | NCEXPORTVAR of
@@ -223,7 +223,8 @@ struct
         loc : loc
       }
   and address =
-      NARECORDFIELD of
+      NAPTR of ncexp
+    | NARECORDFIELD of
       {
         recordExp : ncexp,
         fieldIndex : ncexp
@@ -250,6 +251,7 @@ struct
     | NTEXPORTVAR of
       {
         id : ExternSymbol.id,
+        weak : bool,
         ty : ty,
         value : topconst option,
         loc : loc
@@ -260,10 +262,10 @@ struct
         string : string,
         loc : loc
       }
-    | NTLARGEINT of
+    | NTINTINF of
       {
         id : ExtraDataLabel.id,
-        value : BigInt.int,
+        value : IntInf.int,
         loc : loc
       }
     | NTRECORD of
@@ -275,6 +277,7 @@ struct
                      fieldIndex : topconst} list,
         recordTy : Types.ty,
         isMutable : bool,
+        isCoalescable : bool,
         clearPad : bool,
         bitmaps : {bitmapIndex : topconst,
                    bitmapExp : topconst} list,
@@ -285,6 +288,7 @@ struct
         id : DataLabel.id,
         elemTy : ty,
         isMutable : bool,
+        isCoalescable : bool,
         clearPad : bool,
         numElements : topconst,
         initialElements : topconst list,
@@ -292,6 +296,14 @@ struct
         tagExp : topconst,
         loc : loc
       }
+    | NTDUMP of
+      {
+        id : DataLabel.id,
+        dump : HeapDump.dump,
+        ty : Types.ty,
+        loc : loc
+      }
+
   datatype topdec =
       NTFUNCTION of
       {

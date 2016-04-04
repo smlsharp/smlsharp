@@ -208,6 +208,8 @@ local
          size (inc n) items 
        | TC.TPEXTERNEXN {longsymbol, ty} =>
          size (inc n) items 
+       | TC.TPBUILTINEXN {longsymbol, ty} =>
+         size (inc n) items 
        | TC.TPEXTERNVAR {longsymbol, ty} =>
          size (inc n) items 
        | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>

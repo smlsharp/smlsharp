@@ -1,8 +1,6 @@
-_require "basis.smi"
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/SSet.smi"
-_require "../../../compiler-utils/env/main/IEnv.smi"
-
 _require "../../name/main/LocalID.smi"
 _require "../../toolchain/main/Filename.smi"
 _require "../../toolchain/main/CoreUtils.smi"
@@ -13,6 +11,7 @@ _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../absyn/main/InterfaceName.ppg.smi"
 _require "../../parser2/main/Parser.smi"
 _require "../../parser2/main/InterfaceParser.smi"
 _require "./InterfaceHash.smi"
@@ -20,27 +19,28 @@ _require "./LoadFileError.ppg.smi"
 
 structure LoadFile =
 struct
-  type dependency =
-      {interfaceNameOpt : AbsynInterface.interfaceName option,
-       link : AbsynInterface.interfaceName list,
-       compile : AbsynInterface.source list}
 
   val load
       : {baseFilename: Filename.filename option,
          stdPath: Filename.filename list,
-         loadPath: Filename.filename list}
+         loadPath: Filename.filename list,
+         loadAll: bool}
         -> Absyn.unit
-        -> dependency * AbsynInterface.compileUnit
+        -> InterfaceName.dependency * AbsynInterface.compileUnit
 
-  val generateDependency
+  (* load an interface file for codes which require the given interface file *)
+  val loadInterfaceFile
       : {stdPath: Filename.filename list,
-         loadPath: Filename.filename list}
+         loadPath: Filename.filename list,
+         loadAll: bool}
         -> Filename.filename
-        -> dependency
+        -> InterfaceName.dependency * AbsynInterface.interface_unit
 
   val loadInteractiveEnv
       : {stdPath: Filename.filename list,
-         loadPath: Filename.filename list}
+         loadPath: Filename.filename list,
+         loadAll: bool}
         -> Filename.filename
         -> AbsynInterface.interactiveUnit
+
 end

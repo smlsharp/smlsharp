@@ -3,7 +3,7 @@ infix 4 = <> > >= < <=
 infix 3 := o
 val not = Bool.not
 val map = List.map
-val op <= = SMLSharp_Builtin.Int.lteq
+val op <= = SMLSharp_Builtin.Int32.lteq
 (* os-path-fn.sml
  *
  * COPYRIGHT (c) 2007 The Fellowship of SML/NJ (http://smlnj.org)

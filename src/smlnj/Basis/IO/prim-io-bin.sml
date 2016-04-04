@@ -6,9 +6,9 @@
 
 infix 6 + - ^
 infix 3 := o
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-structure Int31Imp = Int
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+structure Int31Imp = Int32
 structure Vector = Word8Vector
 structure Array = Word8Array
 structure VectorSlice = Word8VectorSlice

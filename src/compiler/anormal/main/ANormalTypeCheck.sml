@@ -19,7 +19,7 @@ struct
       (TypesBasics.derefTy ty, rty) : A.ty
 
   val errorTy =
-      (T.ERRORty, R.UINTty) : A.ty
+      (T.ERRORty, R.UINT32ty) : A.ty
 
   val unitptrTy =
       T.CONSTRUCTty {tyCon = B.ptrTyCon, args = [B.unitTy]}
@@ -307,20 +307,26 @@ struct
       | (T.SOME_CLOSUREENVty, _) => raise Unify
       | (T.SOME_CCONVTAGty, T.SOME_CCONVTAGty) => ()
       | (T.SOME_CCONVTAGty, _) => raise Unify
-      | (T.FOREIGNFUNPTRty {argTyList=argTyList1, varArgTyList=varArgTyList1,
-                            resultTy=resultTy1, attributes=attributes1},
-         T.FOREIGNFUNPTRty {argTyList=argTyList2, varArgTyList=varArgTyList2,
-                            resultTy=resultTy2, attributes=attributes2}) =>
-        (unifyTyList inst (argTyList1, argTyList2);
-         case (varArgTyList1, varArgTyList2) of
-           (NONE, NONE) => ()
-         | (SOME tys1, SOME tys2) => unifyTyList inst (tys1, tys2)
-         | _ => raise Unify;
-         case (resultTy1, resultTy2) of
-           (NONE, NONE) => ()
-         | (SOME ty1, SOME ty2) => unifyTy inst (ty1, ty2)
-         | _ => raise Unify;
-         if attributes1 = attributes2 then () else raise Unify)
+      | (T.FOREIGNFUNPTRty {tyvars=tyvars1, argTyList=argTyList1,
+                            varArgTyList=varArgTyList1, resultTy=resultTy1,
+                            attributes=attributes1},
+         T.FOREIGNFUNPTRty {tyvars=tyvars2, argTyList=argTyList2,
+                            varArgTyList=varArgTyList2, resultTy=resultTy2,
+                            attributes=attributes2}) =>
+        let
+          val inst = unifyBtvEnv inst (tyvars1, tyvars2)
+        in
+          unifyTyList inst (argTyList1, argTyList2);
+          case (varArgTyList1, varArgTyList2) of
+            (NONE, NONE) => ()
+          | (SOME tys1, SOME tys2) => unifyTyList inst (tys1, tys2)
+          | _ => raise Unify;
+          case (resultTy1, resultTy2) of
+            (NONE, NONE) => ()
+          | (SOME ty1, SOME ty2) => unifyTy inst (ty1, ty2)
+          | _ => raise Unify;
+          if attributes1 = attributes2 then () else raise Unify
+        end
       | (T.FOREIGNFUNPTRty _, _) => raise Unify
 
   and unifyTyList inst (tys1, tys2) =
@@ -366,6 +372,10 @@ struct
       | (T.OPRIMkind _, _) => raise Unify
       | (T.UNIV, T.UNIV) => ()
       | (T.UNIV, _) => raise Unify
+      | (T.BOXED, T.BOXED) => ()
+      | (T.BOXED, _) => raise Unify
+      | (T.UNBOXED, T.UNBOXED) => ()
+      | (T.UNBOXED, _) => raise Unify
       | (T.REC tys1, T.REC tys2) =>
         app (unifyTy inst) (recordFieldTyEq (tys1, tys2))
       | (T.REC _, _) => raise Unify
@@ -446,10 +456,12 @@ struct
 
   fun checkConst (env:env) const =
       case const of
-        A.NVINT _ => tyOf B.intTy
-      | A.NVWORD _ => tyOf B.wordTy
+        A.NVINT32 _ => tyOf B.intTy
+      | A.NVINT64 _ => tyOf B.int64Ty
+      | A.NVWORD32 _ => tyOf B.wordTy
+      | A.NVWORD64 _ => tyOf B.word64Ty
       | A.NVCONTAG _ => tyOf B.contagTy
-      | A.NVBYTE _ => tyOf B.word8Ty
+      | A.NVWORD8 _ => tyOf B.word8Ty
       | A.NVREAL _ => tyOf B.realTy
       | A.NVFLOAT _ => tyOf B.real32Ty
       | A.NVCHAR _ => tyOf B.charTy
@@ -475,12 +487,15 @@ struct
         (case ExtraDataLabel.Map.find (#extraDataEnv env, id) of
            NONE => (printExtraDataNotFound "NVEXTRADATA" id; errorTy)
          | SOME () => tyOf unitptrTy)
-      | A.NVCAST {value, valueTy, targetTy, runtimeTyCast, bitCast} =>
+      | A.NVCAST {value, valueTy, targetTy, cast} =>
         let
           val ty = checkConst env value
         in
           unify "NVCAST" (ty, valueTy);
-          if runtimeTyCast
+          if (case cast of
+                BuiltinPrimitive.TypeCast => false
+              | BuiltinPrimitive.RuntimeTyCast => true
+              | BuiltinPrimitive.BitCast => true)
           then ()
           else unifyBackendTy "NVCAST" (#2 valueTy, #2 targetTy);
           targetTy
@@ -534,9 +549,23 @@ struct
         else (printErr "array type expected\n"; T.ERRORty)
       | _ => (printErr "array type expected\n"; T.ERRORty)
 
+  fun checkPtrTy env ty =
+      case TypesBasics.derefTy ty of
+        T.CONSTRUCTty {tyCon, args=[elemTy]} =>
+        if TypID.eq (#id tyCon, #id B.ptrTyCon)
+        then elemTy
+        else (printErr "ptr type expected\n"; T.ERRORty)
+      | _ => (printErr "ptr type expected\n"; T.ERRORty)
+
   fun checkAddress env address =
       case address of
-        A.AARECORDFIELD {recordExp, fieldIndex} =>
+        A.AAPTR ptrExp =>
+        let
+          val ptrTy = checkValue env ptrExp
+        in
+          checkPtrTy env (#1 ptrTy)
+        end
+      | A.AARECORDFIELD {recordExp, fieldIndex} =>
         let
           val recordTy = checkValue env recordExp
           val indexTy = checkValue env fieldIndex
@@ -590,14 +619,14 @@ struct
 
   fun checkExp env exp =
       case exp of
-        A.ANLARGEINT {resultVar, dataLabel, nextExp, loc} =>
+        A.ANINTINF {resultVar, dataLabel, nextExp, loc} =>
         let
           val _ =
               case ExtraDataLabel.Map.find (#extraDataEnv env, dataLabel) of
                 SOME _ => ()
-              | NONE => printExtraDataNotFound "ANLARGEINT" dataLabel;
+              | NONE => printExtraDataNotFound "ANINTINF" dataLabel;
         in
-          unify "ANLARGEINT" (#ty resultVar, tyOf B.intInfTy);
+          unify "ANINTINF" (#ty resultVar, tyOf B.intInfTy);
           checkExp (bindVar (env, resultVar)) nextExp
         end
       | A.ANFOREIGNAPPLY {resultVar, funExp, argExpList, attributes, nextExp,
@@ -609,20 +638,20 @@ struct
           val (funArgTys, varArgTys, funRetTy, funAttributes) =
               case derefTy funTy of
                 (T.BACKENDty
-                   (T.FOREIGNFUNPTRty
-                      {argTyList, varArgTyList, resultTy, attributes=a1}),
+                   (T.FOREIGNFUNPTRty {tyvars, argTyList, varArgTyList,
+                                       resultTy, attributes=a1}),
                  R.FOREIGNCODEPTRty {argTys,varArgTys,retTy,attributes=a2}) =>
-                 (ListPair.zipEq (argTyList, argTys),
-                  case (varArgTyList, varArgTys) of
-                    (NONE, NONE) => nil
-                  | (SOME tys, SOME rtys) => ListPair.zipEq (tys, rtys)
-                  | _ => raise Bug.Bug "checkExp: ANFOREIGNAPPLY",
-                  case (resultTy, retTy) of
-                    (NONE, NONE) => NONE
-                  | (SOME ty, SOME rty) => SOME (ty, rty)
-                  | _ => raise Bug.Bug "checkExp: ANFOREIGNAPPLY",
-                  if a1 = a2 then a1
-                  else raise Bug.Bug "checkExp: ANFOREIGNAPPLY")
+                (ListPair.zipEq (argTyList, argTys),
+                 case (varArgTyList, varArgTys) of
+                   (NONE, NONE) => nil
+                 | (SOME tys, SOME rtys) => ListPair.zipEq (tys, rtys)
+                 | _ => raise Bug.Bug "checkExp: ANFOREIGNAPPLY",
+                 case (resultTy, retTy) of
+                   (NONE, NONE) => NONE
+                 | (SOME ty, SOME rty) => SOME (ty, rty)
+                 | _ => raise Bug.Bug "checkExp: ANFOREIGNAPPLY",
+                 if a1 = a2 then a1
+                 else raise Bug.Bug "checkExp: ANFOREIGNAPPLY")
               | _ => (printErr "FOREIGNAPPLY: not FOREIGNFUNPTRty\n";
                       (nil, nil, NONE, FFIAttributes.defaultFFIAttributes))
         in
@@ -642,7 +671,8 @@ struct
               case derefTy (#ty resultVar) of
                 (T.BACKENDty
                    (T.FOREIGNFUNPTRty
-                      {argTyList, varArgTyList=NONE, resultTy, attributes=a1}),
+                      {tyvars, argTyList, varArgTyList=NONE, resultTy,
+                       attributes=a1}),
                  R.FOREIGNCODEPTRty
                    {argTys, varArgTys=NONE, retTy, attributes=a2}) =>
                 (T.BACKENDty
@@ -754,7 +784,7 @@ struct
                  R.MLCODEPTRty {haveClsEnv, argTys, retTy=SOME retTy}) =>
                 (haveClsEnv, argTys, retTy)
               | _ => (printErr "ANCALL: not FUNENTRYty\n";
-                      (true, nil, R.UINTty))
+                      (true, nil, R.UINT32ty))
         in
           case (haveClsEnv, closureEnvTy) of
             (false, NONE) => ()
@@ -781,7 +811,7 @@ struct
                  R.MLCODEPTRty {haveClsEnv, argTys, retTy=SOME retTy}) =>
                 (haveClsEnv, argTys, retTy)
               | _ => (printErr "ANTAILCALL: not FUNENTRYty\n";
-                      (true, nil, R.UINTty))
+                      (true, nil, R.UINT32ty))
         in
           case (haveClsEnv, closureEnvTy) of
             (false, NONE) => ()
@@ -858,11 +888,12 @@ struct
           unify "ANMODIFY3" (#ty resultVar, recordTy);
           checkExp (bindVar (env, resultVar)) nextExp
         end
-      | A.ANRETURN {value, loc} =>
+      | A.ANRETURN {value, ty, loc} =>
         let
-          val ty = checkValue env value
+          val valueTy = checkValue env value
         in
-          unify "ANRETURN" (ty, #returnTy env)
+          unify "ANRETURN1" (ty, valueTy);
+          unify "ANRETURN2" (ty, #returnTy env)
         end
       | A.ANCOPY {srcExp, dstAddr, valueSize, nextExp, loc} =>
         let
@@ -956,7 +987,7 @@ struct
         else env
                # {externEnv =
                     ExternSymbol.Map.insert (#externEnv env, id, (ty, EXTERN))}
-      | A.NTEXPORTVAR {id, ty, value, loc} =>
+      | A.NTEXPORTVAR {id, weak, ty, value, loc} =>
         if ExternSymbol.Map.inDomain (#externEnv env, id)
         then (printDoubledExtern "NTEXPORTVAR" id; env)
         else env
@@ -968,26 +999,30 @@ struct
         else env
                # {dataEnv =
                     DataLabel.Map.insert (#dataEnv env, id, tyOf B.stringTy)}
-      | A.NTLARGEINT {id, value, loc} =>
+      | A.NTINTINF {id, value, loc} =>
         if ExtraDataLabel.Map.inDomain (#extraDataEnv env, id)
-        then (printDoubledExtraData "NTLARGEINT" id; env)
+        then (printDoubledExtraData "NTINTINF" id; env)
         else env
                # {extraDataEnv =
                     ExtraDataLabel.Map.insert (#extraDataEnv env, id, ())}
       | A.NTRECORD {id, tyvarKindEnv, fieldList, recordTy,
-                    isMutable, clearPad, bitmaps, loc} =>
+                    isMutable, isCoalescable, clearPad, bitmaps, loc} =>
         if DataLabel.Map.inDomain (#dataEnv env, id)
         then (printDoubledData "NTRECORD" id; env)
         else env
                # {dataEnv =
                     DataLabel.Map.insert (#dataEnv env, id, tyOf recordTy)}
-      | A.NTARRAY {id, elemTy=(elemTy,_), isMutable, clearPad, numElements,
-                   initialElements, elemSizeExp, tagExp, loc} =>
+      | A.NTARRAY {id, elemTy=(elemTy,_), isMutable, isCoalescable, clearPad,
+                   numElements, initialElements, elemSizeExp, tagExp, loc} =>
         if DataLabel.Map.inDomain (#dataEnv env, id)
         then (printDoubledData "NTARRAY" id; env)
         else env
                # {dataEnv = DataLabel.Map.insert (#dataEnv env, id,
                                                   tyOf (arrayTy elemTy))}
+      | A.NTDUMP {id, dump, ty, loc} =>
+        if DataLabel.Map.inDomain (#dataEnv env, id)
+        then (printDoubledData "NTDUMP" id; env)
+        else env # {dataEnv = DataLabel.Map.insert (#dataEnv env, id, tyOf ty)}
 
   fun checkTopConst env (const, ty) =
       (unify "TopConst" (checkConst env const, ty); ty)
@@ -995,11 +1030,11 @@ struct
   fun checkTopdata env topdata =
       case topdata of
         A.NTEXTERNVAR {id, ty, loc} => ()
-      | A.NTEXPORTVAR {id, ty, value, loc} => ()
+      | A.NTEXPORTVAR {id, weak, ty, value, loc} => ()
       | A.NTSTRING {id, string, loc} => ()
-      | A.NTLARGEINT {id, value, loc} => ()
+      | A.NTINTINF {id, value, loc} => ()
       | A.NTRECORD {id, tyvarKindEnv=_, fieldList, recordTy,
-                    isMutable, clearPad, bitmaps, loc} =>
+                    isMutable, isCoalescable, clearPad, bitmaps, loc} =>
         let
           val fields =
               map
@@ -1048,8 +1083,8 @@ struct
              map (fn i => tyOf (T.BACKENDty (T.RECORDBITMAPty (i, recordTy))))
                  (indices bitmaps))
         end
-      | A.NTARRAY {id, elemTy=(elemTy,_), isMutable, clearPad, numElements,
-                   initialElements, elemSizeExp, tagExp, loc} =>
+      | A.NTARRAY {id, elemTy=(elemTy,_), isMutable, isCoalescable, clearPad,
+                   numElements, initialElements, elemSizeExp, tagExp, loc} =>
         let
           val numTy = checkTopConst env numElements
           val sizeTy = checkTopConst env elemSizeExp
@@ -1061,6 +1096,8 @@ struct
           unify "NTARRAY3" (sizeTy, tyOf (T.SINGLETONty (T.SIZEty elemTy)));
           unify "NTARRAY4" (tagTy, tyOf (T.SINGLETONty (T.TAGty elemTy)))
         end
+      | A.NTDUMP {id, dump, ty, loc} =>
+        unifyBackendTy "NTDUMP" (#2 (tyOf ty), R.BOXEDty)
 
   fun makeTopdecEnv (topdec, env:env) =
       case topdec of
@@ -1128,7 +1165,9 @@ struct
                               loc} =>
         let
           val handlerEnv =
-              HandlerLabel.Set.add (#handlerEnv env, cleanupHandler)
+              case cleanupHandler of
+                NONE => #handlerEnv env
+              | SOME h => HandlerLabel.Set.add (#handlerEnv env, h)
           val env = env # {handlerEnv = handlerEnv}
         in
           checkFunctionBody
@@ -1140,15 +1179,20 @@ struct
              | NONE => tyOf B.unitTy)
         end
 
-  fun check ({topdata, topdecs, topExp}:A.program) =
+  fun check ({topdata, topdecs, topExp, topCleanupHandler}:A.program) =
       let
         val env = emptyEnv (tyOf B.unitTy)
         val env = foldl makeTopdataEnv env topdata
         val env = foldl makeTopdecEnv env topdecs
+        val handlerEnv =
+            case topCleanupHandler of
+              NONE => #handlerEnv env
+            | SOME h => HandlerLabel.Set.add (#handlerEnv env, h)
+        val expEnv = env # {handlerEnv = handlerEnv}
       in
         app (checkTopdata env) topdata;
         app (checkTopdec env) topdecs;
-        checkExp env topExp
+        checkExp expEnv topExp
       end
 
 end

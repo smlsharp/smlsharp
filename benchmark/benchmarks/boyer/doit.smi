@@ -1,3 +1,4 @@
 _require "basis.smi"
 _require "boyer.smi"
 _require "rules.smi"
+val add : Rules.cterm -> unit  (* needed to link rules.o *)

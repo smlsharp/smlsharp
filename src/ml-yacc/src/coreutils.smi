@@ -1,9 +1,9 @@
 _require "../../basis.smi"
 _require "../../ml-yacc/lib/base.sig"
-_require "utils.smi"
-_require "utils.sig"
-_require "sigs.sml"
-_require "core.smi"
+_require "./utils.smi"
+_require "./utils.sig"
+_require "./sigs.sml"
+_require "./core.smi"
 
 structure CoreUtils  =
 struct

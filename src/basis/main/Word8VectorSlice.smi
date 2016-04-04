@@ -1,5 +1,5 @@
 _require "./General.smi"
-_require "./Word8Vector.smi"
+_require local "./Word8Vector.smi"
 
 structure Word8VectorSlice =
 struct

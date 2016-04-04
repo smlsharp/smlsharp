@@ -1,5 +1,5 @@
 _require "../../../../basis.smi"
-_require "../../SQLErrors.smi"
+_require local "../../SQLErrors.smi"
 
 structure SMLSharp_SQL_Float =
 struct

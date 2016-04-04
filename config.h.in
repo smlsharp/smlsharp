@@ -3,6 +3,9 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Define if aligonof is available */
+#undef HAVE_ALIGNOF
+
 /* Define to 1 if you have the `ceilf' function. */
 #undef HAVE_CEILF
 
@@ -15,9 +18,9 @@
 /* Define to 1 if you have the `copysignf' function. */
 #undef HAVE_COPYSIGNF
 
-/* Define to 1 if you have the declaration of `CLOCK_PROCESS_CPUTIME_ID', and
-   to 0 if you don't. */
-#undef HAVE_DECL_CLOCK_PROCESS_CPUTIME_ID
+/* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
+   you don't. */
+#undef HAVE_DECL_CLOCK_MONOTONIC
 
 /* Define to 1 if you have the declaration of `fegetround', and to 0 if you
    don't. */
@@ -46,6 +49,14 @@
 /* Define to 1 if you have the declaration of `LLVM_NATIVE_TARGET', and to 0
    if you don't. */
 #undef HAVE_DECL_LLVM_NATIVE_TARGET
+
+/* Define to 1 if you have the declaration of `RTLD_DEFAULT', and to 0 if you
+   don't. */
+#undef HAVE_DECL_RTLD_DEFAULT
+
+/* Define to 1 if you have the declaration of `RTLD_NEXT', and to 0 if you
+   don't. */
+#undef HAVE_DECL_RTLD_NEXT
 
 /* Define to 1 if you have the declaration of `signbit', and to 0 if you
    don't. */
@@ -81,6 +92,9 @@
 /* Define to 1 if you have the `frexpf' function. */
 #undef HAVE_FREXPF
 
+/* Define if __atomic builtins are available */
+#undef HAVE_GCC_ATOMIC
+
 /* Define to 1 if you have the `getrusage' function. */
 #undef HAVE_GETRUSAGE
 
@@ -113,6 +127,12 @@
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
+
+/* Define to 1 if you have the <libunwind.h> header file. */
+#undef HAVE_LIBUNWIND_H
+
+/* Define to 1 if the system has the type `max_align_t'. */
+#undef HAVE_MAX_ALIGN_T
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -162,6 +182,9 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
+/* Define to 1 if you have the <stdatomic.h> header file. */
+#undef HAVE_STDATOMIC_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -198,8 +221,14 @@
 /* Define to 1 if you have the `times' function. */
 #undef HAVE_TIMES
 
+/* Define if _Thread_local is available */
+#undef HAVE_TLS
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `unw_getcontext' function. */
+#undef HAVE_UNW_GETCONTEXT
 
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME
@@ -237,18 +266,11 @@
 /* Define if your processor is big endian */
 #undef WORDS_BIGENDIAN
 
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
+/* alternative to _Thread_local */
+#undef _Thread_local
 
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-#undef inline
-#endif
+/* Alternative to alignof */
+#undef alignof
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
-
-/* Define to empty if the keyword `volatile' does not work. Warning: valid
-   code using `volatile' can become incorrect without. Disable with care. */
-#undef volatile

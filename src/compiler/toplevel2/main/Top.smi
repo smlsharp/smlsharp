@@ -1,68 +1,68 @@
-_require "basis.smi"
-_require "../../../config/main/Config.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../../llvm/main/LLVM.smi"
-_require "../../../basis.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../control/main/Control.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../util/main/Counter.smi"
+_require local "../../../basis.smi"
+_require local "../../../config/main/Config.smi"
+_require local "../../../compiler-utils/env/main/SEnv.smi"
+_require local "../../../llvm/main/LLVM.smi"
+_require local "../../../basis.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+_require local "../../control/main/Loc.ppg.smi"
+_require local "../../control/main/Control.ppg.smi"
+_require local "../../control/main/Bug.ppg.smi"
+_require local "../../util/main/Counter.smi"
 _require "../../toolchain/main/Filename.smi"
-_require "../../toolchain/main/TempFile.smi"
-_require "../../toolchain/main/BinUtils.smi"
-_require "../../toolchain/main/CoreUtils.smi"
-_require "../../usererror/main/UserError.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../absyn/main/AbsynInterface.ppg.smi"
-_require "../../absyn/main/AbsynFormatter.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
-_require "../../types/main/IDCalc.ppg.smi"
-_require "../../types/main/VarMap.smi"
+_require local "../../toolchain/main/TempFile.smi"
+_require local "../../toolchain/main/BinUtils.smi"
+_require local "../../toolchain/main/CoreUtils.smi"
+_require "../../toolchain/main/LLVMUtils.smi"
+_require local "../../usererror/main/UserError.ppg.smi"
+_require local "../../name/main/LocalID.smi"
+_require local "../../absyn/main/AbsynInterface.ppg.smi"
+_require local "../../absyn/main/Absyn.ppg.smi"
+_require local "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/InterfaceName.ppg.smi"
+_require local "../../patterncalc/main/PatternCalcInterface.ppg.smi"
+_require local "../../types/main/IDCalc.ppg.smi"
+_require local "../../types/main/VarMap.smi"
 _require "../../parser2/main/Parser.smi"
-_require "../../parser2/main/InterfaceParser.smi"
-_require "../../loadfile/main/LoadFile.smi"
-_require "../../elaborate/main/Elaborator.smi"
-_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
-_require "../../nameevaluation/main/NameEval.smi"
-_require "../../nameevaluation/main/NameEvalUtils.smi"
-_require "../../valrecoptimization/main/VALREC_Optimizer.smi"
-_require "../../valrecoptimization/main/TransFundecl.smi"
-_require "../../typedcalc/main/TypedCalc.ppg.smi"
-_require "../../typedcalcoptimization2/main/TCOptimize.smi"
-_require "../../recordcalcoptimization/main/RCOptimize.smi"
-_require "../../typeinference2/main/InferTypes2.smi"
-_require "../../typeinference2/main/UncurryFundecl_ng.smi"
-_require "../../reflection/main/PrinterGeneration.smi"
-_require "../../recordcalc/main/RecordCalcFormatter.smi"
-_require "../../recordcalc/main/RecordCalc.ppg.smi"
-_require "../../matchcompilation/main/MatchCompiler.smi"
-_require "../../sqlcompilation/main/SQLCompilation.smi"
-_require "../../fficompilation/main/FFICompilation.smi"
-_require "../../recordcompilation/main/RecordCompilation.smi"
-_require "../../typedlambda/main/TypedLambdaFormatter.smi"
-_require "../../datatypecompilation/main/DatatypeCompilation.smi"
-_require "../../bitmapcalc/main/BitmapCalc2.ppg.smi"
-_require "../../bitmapcompilation2/main/BitmapCompilation.smi"
-_require "../../closurecalc/main/ClosureCalc.ppg.smi"
-_require "../../closureconversion/main/ClosureConversion2.smi"
-_require "../../runtimecalc/main/RuntimeCalc.ppg.smi"
-_require "../../cconvcompile/main/CallingConventionCompile.smi"
-_require "../../anormal/main/ANormal.ppg.smi"
-_require "../../anormal/main/ANormalTypeCheck.smi"
-_require "../../anormalize/main/ANormalize.smi"
-_require "../../machinecode/main/MachineCode.ppg.smi"
-_require "../../machinecodegen/main/MachineCodeGen.smi"
-_require "../../concurrencysupport/main/ConcurrencySupport.smi"
-_require "../../stackallocation/main/StackAllocation.smi"
-_require "../../llvmir/main/LLVMIR.ppg.smi"
-_require "../../llvmgen/main/LLVMGen.smi"
-_require "../../llvmemit/main/LLVMEmit.smi"
-_require "../../generatemain/main/GenerateMain.smi"
+_require local "../../parser2/main/InterfaceParser.smi"
+_require local "../../loadfile/main/LoadFile.smi"
+_require local "../../elaborate/main/Elaborator.smi"
+_require local "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require local "../../nameevaluation/main/NameEval.smi"
+_require local "../../nameevaluation/main/NameEvalUtils.smi"
+_require local "../../valrecoptimization/main/VALREC_Optimizer.smi"
+_require local "../../valrecoptimization/main/TransFundecl.smi"
+_require local "../../typedcalc/main/TypedCalc.ppg.smi"
+_require local "../../typedcalcoptimization2/main/TCOptimize.smi"
+_require local "../../recordcalcoptimization/main/RCOptimize.smi"
+_require local "../../typeinference2/main/InferTypes2.smi"
+_require local "../../typeinference2/main/UncurryFundecl_ng.smi"
+_require local "../../interactivePrinter/main/Reify.smi"
+_require local "../../recordcalc/main/RecordCalc.ppg.smi"
+_require local "../../matchcompilation/main/MatchCompiler.smi"
+_require local "../../sqlcompilation/main/SQLCompilation.smi"
+_require local "../../fficompilation/main/FFICompilation.smi"
+_require local "../../recordcompilation/main/RecordCompilation.smi"
+_require local "../../typedlambda/main/TypedLambda.ppg.smi"
+_require local "../../datatypecompilation/main/DatatypeCompilation.smi"
+_require local "../../bitmapcalc/main/BitmapCalc2.ppg.smi"
+_require local "../../bitmapcompilation2/main/BitmapCompilation.smi"
+_require local "../../closurecalc/main/ClosureCalc.ppg.smi"
+_require local "../../closureconversion/main/ClosureConversion2.smi"
+_require local "../../runtimecalc/main/RuntimeCalc.ppg.smi"
+_require local "../../cconvcompile/main/CallingConventionCompile.smi"
+_require local "../../anormal/main/ANormal.ppg.smi"
+_require local "../../anormal/main/ANormalTypeCheck.smi"
+_require local "../../anormalize/main/ANormalize.smi"
+_require local "../../machinecode/main/MachineCode.ppg.smi"
+_require local "../../machinecodegen/main/MachineCodeGen.smi"
+_require local "../../concurrencysupport/main/ConcurrencySupport.smi"
+_require local "../../stackallocation/main/StackAllocation.smi"
+_require local "../../llvmir/main/LLVMIR.ppg.smi"
+_require local "../../llvmgen/main/LLVMGen.smi"
+_require local "../../llvmemit/main/LLVMEmit.smi"
+_require local "../../runtimetypes/main/TypeLayout2.smi"
 _require "./TopData.ppg.smi"
-_require "./NameEvalEnvUtils.smi"
+_require local "./NameEvalEnvUtils.smi"
 
 structure Top =
 struct
@@ -79,19 +79,11 @@ struct
   val incVersion : toplevelContext -> toplevelContext
 
   val compile
-      : options
+      : LLVMUtils.compile_options
+        -> options
         -> toplevelContext
         -> Parser.input
-        -> LoadFile.dependency * result
-
-  val generateMain
-      : toplevelContext
-        -> AbsynInterface.interfaceName option list
-        -> LLVM.LLVMModuleRef
-
-  type load_interface_options =
-       {stdPath: Filename.filename list,
-        loadPath: Filename.filename list}
+        -> InterfaceName.dependency * result
 
   val loadInteractiveEnv : {stopAt: stopAt,
                             stdPath: Filename.filename list,
@@ -100,5 +92,19 @@ struct
                            -> Filename.filename
                            -> newContext
   val loadBuiltin : Filename.filename -> toplevelContext
+
+  type load_interface_options =
+       {stopAt : stopAt,
+        stdPath : Filename.filename list,
+        loadPath : Filename.filename list,
+        loadAllInterfaceFiles : bool}
+
+  (* Load an interface file and returns a new environment
+   * for evaluating codes which require the given interface file.
+   *)
+  val loadInterface : load_interface_options
+                      -> toplevelContext
+                      -> Filename.filename
+                      -> InterfaceName.dependency * newContext option
 
 end

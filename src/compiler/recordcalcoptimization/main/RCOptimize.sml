@@ -607,6 +607,11 @@ local
          RC.RCEXTERNEXN {path=path, ty=evalTy context ty}
          :: declListRev
         )
+      | RC.RCBUILTINEXN {path, ty} =>
+        (context,
+         RC.RCBUILTINEXN {path=path, ty=evalTy context ty}
+         :: declListRev
+        )
       | RC.RCEXTERNVAR {path, ty} =>
         (context,
          RC.RCEXTERNVAR {path=path, ty=evalTy context ty}

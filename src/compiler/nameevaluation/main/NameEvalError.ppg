@@ -1064,7 +1064,7 @@ in
      @format((code * {longsymbol}))
      "(name evaluation" +d code ")" +d
      "Provide" + "check" +d "fails" +d
-     "(datatype" + "expected):" +d
+     "(datatype" + "expceted):" +d
      longsymbol
    *)
   ProvideDtyExpected of (code * {longsymbol: longsymbol})
@@ -1074,7 +1074,7 @@ in
      @format((code * {longsymbol}))
      "(name evaluation" +d code ")" +d
      "Provide" +d "check" +d "fails" +d
-     "(opaque" +d "type" +d "expected):" +d
+     "(opaque" +d "type" +d "expceted):" +d
      longsymbol
    *)
   ProvideOpaqueExpected of (code * {longsymbol: longsymbol})
@@ -1269,6 +1269,16 @@ in
      "invalid" +d "overload" +d "instance:" +d longsymbol
    *)
   InvalidOverloadInst of (code * {longsymbol: longsymbol})
+
+  and
+  (**
+   *)
+  (*%
+     @format(code * s)
+     "(name evaluation" +d code ")" +d
+     "invalid" +d "kind" +d "name:" +d s
+   *)
+  InvalidKindName of code * string
 
 end
 end

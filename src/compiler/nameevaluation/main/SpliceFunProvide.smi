@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlnj-lib/Util/lib-base.smi"
+_require "../../../basis.smi"
+_require "../../../smlnj-lib/Util/lib-base.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../usererror/main/UserErrorUtils.smi"

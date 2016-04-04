@@ -1,0 +1,31 @@
+_require "../../../basis.smi"
+_require local "../../../smlnj-lib/Util/ord-key-sig.sml"
+_require "../../../smlnj-lib/Util/binary-set-fn.smi"
+_require "../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "../../name/main/LocalID.smi"
+_require local "../../control/main/Bug.ppg.smi"
+_require "./Types.ppg.smi"
+
+structure TvOrd =
+struct
+  type ord_key = Types.tvState ref
+  val compare : ord_key * ord_key -> order
+end
+
+structure TidOrd =
+struct 
+  type ord_key = FreeTypeVarID.id
+  val compare : ord_key * ord_key -> order
+end
+
+structure TEnv = BinaryMapFn(TidOrd)
+structure OTSet = BinarySetFn(TvOrd)
+
+structure varInfoOrd =
+struct
+  type ord_key = {path:string list, id:VarID.id, ty:Types.ty}
+  val compare : ord_key * ord_key -> order
+end
+
+structure VarInfoEnv = BinaryMapFn(varInfoOrd)
+structure VarInfoSet = BinarySetFn(varInfoOrd)

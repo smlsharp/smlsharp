@@ -9,13 +9,13 @@ infix 7 * / div mod
 infix 6 + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op * = SMLSharp_Builtin.Int.mul_unsafe
-val op ~ = SMLSharp_Builtin.Int.neg
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op * = SMLSharp_Builtin.Int32.mul_unsafe
+val op ~ = SMLSharp_Builtin.Int32.neg
 val op ^ = String.^
 val op @ = List.@
-structure Word = SMLSharp_Builtin.Word
+structure Word32 = SMLSharp_Builtin.Word32
 
 structure IEEEReal =
 struct
@@ -30,23 +30,23 @@ struct
 
   val fesetround =
       _import "prim_fesetround"
-      : __attribute__((no_callback)) int -> int
+      : __attribute__((fast)) int -> int
   val fegetround =
       _import "prim_fegetround"
-      : __attribute__((pure,no_callback)) () -> int
+      : __attribute__((pure,fast)) () -> int
 
   val FE_TONEAREST =
       _import "prim_const_FE_TONEAREST"
-      : __attribute__((pure,no_callback)) () -> int
+      : __attribute__((pure,fast)) () -> int
   val FE_DOWNWARD =
       _import "prim_const_FE_DOWNWARD"
-      : __attribute__((pure,no_callback)) () -> int
+      : __attribute__((pure,fast)) () -> int
   val FE_UPWARD =
       _import "prim_const_FE_UPWARD"
-      : __attribute__((pure,no_callback)) () -> int
+      : __attribute__((pure,fast)) () -> int
   val FE_TOWARDZERO =
       _import "prim_const_FE_TOWARDZERO"
-      : __attribute__((pure,no_callback)) () -> int
+      : __attribute__((pure,fast)) () -> int
 
   fun setRoundingMode roundingMode =
       let
@@ -82,7 +82,7 @@ struct
               val str = if sign then #"~" :: str else str
               val str = String.implode str
             in
-              if exp = 0 then str else str ^ "E" ^ Int.toString exp
+              if exp = 0 then str else str ^ "E" ^ Int32.toString exp
             end
       in
         case class of
@@ -145,20 +145,20 @@ struct
   fun toInt (sign, digits) =
       let
         (* FIXME : assume 32 bit *)
-        val op * = Word.mul
-        val op + = Word.add
-        val op - = Word.sub
-        val op > = Word.gt
+        val op * = Word32.mul
+        val op + = Word32.add
+        val op - = Word32.sub
+        val op > = Word32.gt
         fun loop (z, nil) = z
           | loop (z, h::t) =
-            if z > 0wxccccccc orelse Word.fromInt h > 0wx80000000 - z * 0w10
+            if z > 0wxccccccc orelse Word32.fromInt32 h > 0wx80000000 - z * 0w10
             then raise Overflow
-            else loop (z * 0w10 + Word.fromInt h, t)
+            else loop (z * 0w10 + Word32.fromInt32 h, t)
         val n = loop (0w0, digits)
       in
-        if sign then ~(Word.toIntX n)
+        if sign then ~(Word32.toInt32X n)
         else if n = 0wx80000000 then raise Overflow
-        else Word.toIntX n
+        else Word32.toInt32X n
       end
 
   (* ([0-9]+(\.[0-9]+)?|\.[0-9]+)([eE][+~-]?[0-9]* )? *)

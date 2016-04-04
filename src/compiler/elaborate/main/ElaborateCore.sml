@@ -76,7 +76,7 @@ struct
   val getWarnings = EU.getWarnings
   val enqueueError = EU.enqueueError
   val enqueueWarning = EU.enqueueWarning
-  val listToTuple = Utils.listToTuple
+  val listToTuple = TupleUtils.listToTuple
   val checkNameDuplication = UserErrorUtils.checkNameDuplication
   val checkSymbolDuplication = UserErrorUtils.checkSymbolDuplication
   val checkNameDuplication' = UserErrorUtils.checkNameDuplication'
@@ -113,59 +113,15 @@ struct
 
   fun elabFFIAttributes loc attr : F.attributes =
       foldl
-        (fn (attr, attrs as {isPure,noCallback,allocMLValue,suspendThread,
-                             callingConvention}) =>
+        (fn (attr, attrs) =>
             case attr of
-              "cdecl" => {isPure = isPure,
-                          noCallback = noCallback,
-                          allocMLValue = allocMLValue,
-                          suspendThread = suspendThread,
-                          callingConvention = SOME F.FFI_CDECL}
-            | "stdcall" => {isPure = isPure,
-                            noCallback = noCallback,
-                            allocMLValue = allocMLValue,
-                            suspendThread = suspendThread,
-                            callingConvention = SOME F.FFI_STDCALL}
-            | "fastcc" => {isPure = isPure,
-                           noCallback = noCallback,
-                           allocMLValue = allocMLValue,
-                           suspendThread = suspendThread,
-                           callingConvention = SOME F.FFI_FASTCC}
-            | "pure" => {isPure = true,
-                         noCallback = noCallback,
-                         allocMLValue = allocMLValue,
-                         suspendThread = suspendThread,
-                         callingConvention = callingConvention}
-            | "no_callback" => {isPure = isPure,
-                                noCallback = true,
-                                allocMLValue = allocMLValue,
-                                suspendThread = suspendThread,
-                                callingConvention = callingConvention}
-            | "callback" => {isPure = isPure,
-                             noCallback = false,
-                             allocMLValue = allocMLValue,
-                             suspendThread = suspendThread,
-                             callingConvention = callingConvention}
-            | "alloc" => {isPure = isPure,
-                          noCallback = noCallback,
-                          allocMLValue = true,
-                          suspendThread = suspendThread,
-                          callingConvention = callingConvention}
-            | "no_alloc" => {isPure = isPure,
-                             noCallback = noCallback,
-                             allocMLValue = false,
-                             suspendThread = suspendThread,
-                             callingConvention = callingConvention}
-            | "suspend" => {isPure = isPure,
-                            noCallback = noCallback,
-                            allocMLValue = allocMLValue,
-                            suspendThread = true,
-                            callingConvention = callingConvention}
-            | "no_suspend" => {isPure = isPure,
-                               noCallback = noCallback,
-                               allocMLValue = allocMLValue,
-                               suspendThread = false,
-                               callingConvention = callingConvention}
+              "cdecl" => attrs # {callingConvention = SOME F.FFI_CDECL}
+            | "stdcall" => attrs # {callingConvention = SOME F.FFI_STDCALL}
+            | "fastcc" => attrs # {callingConvention = SOME F.FFI_FASTCC}
+            | "pure" => attrs # {isPure = true}
+            | "fast" => attrs # {fast = true}
+            | "unsafe" => attrs # {unsafe = true}
+            | "gc" => attrs # {causeGC = true}
             | _ =>
               (enqueueError (loc, E.UndefinedFFIAttribute {attr=attr});
                attrs))

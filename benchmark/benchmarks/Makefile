@@ -1,4 +1,4 @@
-SMLSHARP = ../../src/compiler/smlsharp -B ../../src
+SMLSHARP = SMLSHARP_HEAPSIZE=32M:2G ../../src/compiler/smlsharp -B ../../src
 DOIT_SUFFIX =
 LIBS =
 
@@ -22,6 +22,7 @@ all: \
     smlyacc/doit$(DOIT_SUFFIX) \
     nucleic/doit$(DOIT_SUFFIX) \
     nqueen/doit$(DOIT_SUFFIX) \
+    parallel_matrix2/doit$(DOIT_SUFFIX) \
     perm9/doit$(DOIT_SUFFIX) \
     puzzle/doit$(DOIT_SUFFIX) \
     ratio_regions/doit$(DOIT_SUFFIX) \

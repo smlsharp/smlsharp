@@ -1,6 +1,6 @@
 infix 6 + - ^
 infix 4 = <> > >= < <=
-val op <= = SMLSharp_Builtin.Int.lteq
+val op <= = SMLSharp_Builtin.Int32.lteq
 val op ^ = String.^
 type substring = Substring.substring
 structure InlineT =

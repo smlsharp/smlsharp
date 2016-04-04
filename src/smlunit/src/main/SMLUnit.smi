@@ -1,11 +1,11 @@
-_require "basis.smi"
-_require "Assert.smi"
-_require "Test.smi"
-_require "TextUITestRunner.smi"
-_require "ASSERT.sig"
-_require "TEST.sig"
-_require "TESTRUNNER.sig"
-_require "SMLUNIT.sig"
+_require "../../../basis.smi"
+_require "./Assert.smi"
+_require local "./Test.smi"
+_require local "./TextUITestRunner.smi"
+_require local "./ASSERT.sig"
+_require local "./TEST.sig"
+_require local "./TESTRUNNER.sig"
+_require local "./SMLUNIT.sig"
 
 structure SMLUnit =
 struct

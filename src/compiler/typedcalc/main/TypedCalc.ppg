@@ -1352,6 +1352,16 @@ in
       *)
      (* import exception declaration specified in  _interface *)
       TPEXTERNEXN of {longsymbol:longsymbol, ty:ty}
+    | (*%
+        @format({longsymbol, ty})
+          "builtin" + "exception" + longsymbol
+       *)
+      (*% @prefix formatWithType_
+        @format({longsymbol, ty})
+          "builtin" + "exception" + longsymbol
+       *)
+     (* builtin exception definition *)
+      TPBUILTINEXN of {longsymbol:longsymbol, ty:ty}
 
  and tppat
    = (*% 

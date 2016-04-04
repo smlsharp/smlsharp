@@ -173,6 +173,8 @@ nucleic/doit.o: nucleic/doit.sml nucleic/nucleic.smi nucleic/main.smi \
   nucleic/doit.smi
 nucleic/main.o: nucleic/main.sml nucleic/nucleic.smi nucleic/main.smi
 nucleic/nucleic.o: nucleic/nucleic.sml nucleic/nucleic.smi
+parallel_matrix2/multiply_cps.o: parallel_matrix2/multiply_cps.sml \
+  parallel_matrix2/multiply_cps.smi
 perm9/doit.o: perm9/doit.sml perm9/perm9.smi perm9/doit.smi
 perm9/perm9.o: perm9/perm9.sml perm9/perm9.smi
 puzzle/doit.o: puzzle/doit.sml puzzle/puzzle.smi puzzle/doit.smi

@@ -133,6 +133,7 @@ struct
    * @formatter(withType) formatWithType_varInfo
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   (*%
    * @prefix formatWithType_
@@ -147,6 +148,7 @@ struct
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(btvEnv) format_btvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   datatype tlexp =
       (*%
@@ -597,21 +599,35 @@ struct
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, targetTy, runtimeTyCast, bitCast, loc})
-       * "cast" "(" !N0{ exp()(btvEnv) } ")"
+       * @format({exp, expTy, targetTy, cast, loc})
+       * cast "(" !N0{ exp()(btvEnv) } ")"
        *)
       (*%
        * @prefix formatWithType_
-       * @format({exp, expTy, targetTy, runtimeTyCast, bitCast, loc})
-       * "cast" "(" !N0{ exp()(btvEnv) +1 ":" +d targetTy()(btvEnv) } ")"
+       * @format({exp, expTy, targetTy, cast, loc})
+       * cast "(" !N0{ exp()(btvEnv) +1 ":" +d targetTy()(btvEnv) } ")"
        *)
       TLCAST of
       {
         exp : tlexp,
         expTy : ty,
         targetTy : ty,
-        runtimeTyCast: bool,
-        bitCast: bool,
+        cast : BuiltinPrimitive.cast,
+        loc : loc
+      }
+    | (*%
+       * @format({dump, ty, loc})
+       * "<" !N0{ "DUMP:" ty()(btvEnv) } ">"
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({dump, ty, loc})
+       * "<" !N0{ "DUMP:" ty()(btvEnv) } ">"
+       *)
+      TLDUMP of
+      {
+        dump : HeapDump.dump,
+        ty : ty,
         loc : loc
       }
 
@@ -653,26 +669,31 @@ struct
         loc : loc
       }
     | (*%
-       * @format(exVarInfo * exp * loc)
-       * "export" +d "val" +d exVarInfo +d "=" 2[ +1 exp()(btvEnv) ]
+       * @format({weak, exVarInfo, exp, loc})
+       * !R1{ "export" +d "val" +d exVarInfo
+       *      2[ +d "=" +1 exp()(btvEnv) ] }
        *)
       (*%
        * @prefix formatWithType_
-       * @format(exVarInfo * exp * loc)
-       * "export" +d "val" +d exVarInfo()(btvEnv) +d "=" 2[ +1 exp()(btvEnv) ]
+       * @format({weak, exVarInfo, exp, loc})
+       * !R1{ "export" +d "val" +d exVarInfo()(btvEnv)
+       *      2[ +d "=" +1 exp()(btvEnv) ] }
        *)
-      TLEXPORTVAR of exVarInfo * tlexp * loc
+      TLEXPORTVAR of
+      {
+        weak : bool,
+        exVarInfo : exVarInfo,
+        exp : tlexp,
+        loc : loc
+      }
     | (*%
-         @format(exVarInfo * loc)
+       * @format(exVarInfo * loc)
+       * "extern" +d "val" +d exVarInfo
        *)
       (*%
-         @prefix formatWithType_
-         @format(exVarInfo * loc)
-       *)
-      (* temporary disable extern printing
-         "extern" +d "val" +d exVarInfo
-       formatWithType_
-         "extern" +d "val" +d exVarInfo()(btvEnv)
+       * @prefix formatWithType_
+       * @format(exVarInfo * loc)
+       * "extern" +d "val" +d exVarInfo()(btvEnv)
        *)
       TLEXTERNVAR of exVarInfo * loc
 

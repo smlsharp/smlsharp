@@ -1,6 +1,6 @@
 _require "../../../basis.smi"
-_require "FormatterGenerator.smi"
-_require "PPGMain.smi"
+_require "./FormatterGenerator.smi"
+_require "./PPGMain.smi"
 
 structure Main =
 struct

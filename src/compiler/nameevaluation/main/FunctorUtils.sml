@@ -376,7 +376,7 @@ val _ = U.print "\n"
               SOME
                 (
                  I.TYRECORD
-                   (Utils.listToFields
+                   (TupleUtils.listToFields
                       (map (fn tvar => I.TYVAR tvar) extraTvars)
                    )
                 )

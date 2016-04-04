@@ -7,7 +7,7 @@
 
 infix 6 + -
 infix 4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
+val op + = SMLSharp_Builtin.Int32.add_unsafe
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 
@@ -37,7 +37,10 @@ struct
   fun exnMessage e =
       let
         val name = exnName e
-        val (msg, loc) = SMLSharp_Builtin.exnMessage e
+        val (loc, index, boxed) = SMLSharp_Builtin.Exn.exnMessage e
+        val msg = if SMLSharp_Builtin.Pointer.identityEqual (boxed, _NULL)
+                  then ""
+                  else SMLSharp_Builtin.Dynamic.readString (boxed, index)
         val len1 = String.size name
         val len2 = String.size msg
         val len3 = String.size loc

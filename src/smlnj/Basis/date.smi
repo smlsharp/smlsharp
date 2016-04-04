@@ -1,0 +1,51 @@
+_require local "../../basis/main/Int32.smi"
+_require local "../../basis/main/String.smi"
+_require local "../../basis/main/Array.smi"
+_require local "../../basis/main/Char.smi"
+_require local "../../basis/main/List.smi"
+_require "../../basis/main/StringCvt.smi"
+_require local "../../basis/main/Substring.smi"
+_require "../../basis/main/Time.smi"
+_require local "../../basis/main/SMLSharp_Runtime.smi"
+_require local "../../basis/main/CharArraySlice.smi"
+_require local "../../basis/main/Word32.smi"
+_require local "../../basis/main/Bool.smi"
+_require local "../../basis/main/CharArray.smi"
+_require local "../../basis/main/IntInf.smi"
+_require "../../basis/main/General.smi"
+_require local "../../basis/main/SMLSharp_ScanChar.smi"
+
+structure Date =
+struct
+  datatype weekday = Mon | Tue | Wed | Thu | Fri | Sat | Sun
+  datatype month = Jan | Feb | Mar | Apr | May | Jun
+                 | Jul | Aug | Sep | Oct | Nov | Dec
+  type date (= boxed)
+  exception Date
+  val date : {year : int,
+              month : month,
+              day : int,
+              hour : int,
+              minute : int,
+              second : int,
+              offset : Time.time option} -> date
+  val year : date -> int
+  val month : date -> month
+  val day : date -> int
+  val hour : date -> int
+  val minute : date -> int
+  val second : date -> int
+  val weekDay : date -> weekday
+  val yearDay : date -> int
+  val offset : date -> Time.time option
+  val isDst : date -> bool option
+  val localOffset : unit -> Time.time
+  val fromTimeLocal : Time.time -> date
+  val fromTimeUniv : Time.time -> date
+  val toTime : date -> Time.time
+  val compare : date * date -> General.order
+  val fmt : string -> date -> string
+  val toString : date -> string
+  val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader
+  val fromString : string -> date option
+end

@@ -5,10 +5,14 @@ struct
   datatype bty 
     = (*% @format "int" *)
       INTty
+    | (*% @format "int64" *)
+      INT64ty
     | (*% @format "intInf" *)
       INTINFty
     | (*% @format "word" *)
       WORDty
+    | (*% @format "word64" *)
+      WORD64ty
     | (*% @format "word8" *)
       WORD8ty
     | (*% @format "char" *)
@@ -43,8 +47,10 @@ struct
   fun findType name =
       case name of
         "int" => SOME INTty
+      | "int64" => SOME INT64ty
       | "intInf" => SOME INTINFty
       | "word" => SOME WORDty
+      | "word64" => SOME WORD64ty
       | "word8" => SOME WORD8ty
       | "char" => SOME CHARty
       | "string" => SOME STRINGty
@@ -64,15 +70,17 @@ struct
 
   fun runtimeTy ty =
       case ty of
-        INTty => RuntimeTypes.INTty
+        INTty => RuntimeTypes.INT32ty
+      | INT64ty => RuntimeTypes.INT64ty
       | INTINFty => RuntimeTypes.BOXEDty
-      | WORDty => RuntimeTypes.UINTty
-      | WORD8ty => RuntimeTypes.UCHARty
-      | CHARty => RuntimeTypes.UCHARty
+      | WORDty => RuntimeTypes.UINT32ty
+      | WORD64ty => RuntimeTypes.UINT64ty
+      | WORD8ty => RuntimeTypes.UINT8ty
+      | CHARty => RuntimeTypes.UINT8ty
       | STRINGty => RuntimeTypes.BOXEDty
       | REALty => RuntimeTypes.DOUBLEty
       | REAL32ty => RuntimeTypes.FLOATty
-      | UNITty => RuntimeTypes.UINTty
+      | UNITty => RuntimeTypes.UNITty
       | PTRty => RuntimeTypes.POINTERty
       | CODEPTRty => RuntimeTypes.SOME_CODEPTRty
       | ARRAYty => RuntimeTypes.BOXEDty
@@ -80,7 +88,7 @@ struct
       | EXNty => RuntimeTypes.BOXEDty
       | BOXEDty => RuntimeTypes.BOXEDty
       | EXNTAGty => RuntimeTypes.BOXEDty
-      | CONTAGty => RuntimeTypes.UINTty
+      | CONTAGty => RuntimeTypes.UINT32ty
       | REFty => RuntimeTypes.BOXEDty
 
  (* Ohori: This is used to check the compatibility of runtimeTy of TFV_DTY

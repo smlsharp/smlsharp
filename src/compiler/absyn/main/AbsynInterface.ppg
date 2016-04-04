@@ -155,10 +155,10 @@ struct
    *)
   datatype idec 
     = (*%
-       * @format(bind binds)
-       * "val" +d binds(bind)(+1 "and" +d)
+       * @format(bind)
+       * "val" +d bind
        *)
-      IVAL of valbind list
+      IVAL of valbind
     | (*%
        * @format(bind binds)
        * "type" +d binds(bind)(+1 "and" +d)
@@ -273,7 +273,7 @@ struct
       }
 
   (*%
-   * @formatter(BigInt.int) TermFormat.format_BigInt_dec_ML
+   * @formatter(IntInf.int) TermFormat.format_IntInf_dec_ML
    * @formatter(option) TermFormat.formatOptionalOption
    *)
   datatype fixity 
@@ -299,6 +299,13 @@ struct
        *)
       IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
+  (*% *)
+  datatype irequire =
+      (*% @format(s) "_require" +d s *)
+      REQUIRE of symbol
+    | (*% @format(s) "local" +d "_require" +d s *)
+      LOCAL_REQUIRE of symbol
+
   (*%
    * @formatter(Absyn.topdec) Absyn.format_topdec
    * @formatter(dec) TermFormat.formatDeclList
@@ -307,12 +314,10 @@ struct
     = (*%
        * @format({requires: req reqs, provide: x xs})
        * reqs:dec(req)(+1,+1) xs(x)(+1)
-       * @format:req(symbol)
-       * "_require" +d symbol
        *)
       INTERFACE of
       {
-        requires: symbol list,
+        requires: irequire list,
         provide: itopdec list
       }
     | (*%
@@ -327,58 +332,26 @@ struct
         topdecs: Absyn.topdec list
       }
 
-  (*% *)
-  datatype filePlace =
-      (*% *)
-      STDPATH
-    | (*% *)
-      LOCALPATH
-
-(*
-  (*% @formatter(Filename.filename) Filename.format_filename *)
-  datatype source =
-      (*% @format(place * name) place +d name *)
-      LOADED of filePlace * Filename.filename
-    | (*% @format "(generated)" *)
-      GENERATED
-*)
-
-  (*% @formatter(Filename.filename) Filename.format_filename *)
-  type source = 
-      (*% @format(place * name) place +d name *)
-       filePlace * Filename.filename
-
-  (*% *)
-  type interfaceName =
-      (*%
-       * @format({hash, source})
-       * "hash:" +d hash
-       * +1 "source:" +d source
-       *)
-      {
-        hash: string,
-        source: source
-      }
-
   (*%
    * @formatter(decList) TermFormat.formatDeclList
    * @formatter(InterfaceID.id) InterfaceID.format_id
+   * @formatter(InterfaceName.interface_name)
+   *    InterfaceName.format_interface_name
    *)
   type interfaceDec =
       (*%
-       * @format({interfaceId, interfaceName, requiredIds: req reqs, provideTopdecs: dec decs})
-       * "interface" +d interfaceId
-       * 2[+1 interfaceName ]
-       * 2[+1 reqs:decList(req)(+1, +1) ]
-       * +1 "in"
+       * @format({interfaceId, interfaceName, requiredIds: req reqs,
+       *          provideTopdecs: dec decs})
+       * "interface" +d interfaceId +d "=" +d "iface"
+       * 2[ reqs:decList(req)(+1, +1) ]
+       * 2[ +1 "provide" +d "<" { interfaceName ">" } ]
        * 2[ decs:decList(dec)(+1, +1) ]
        * +1 "end"
-       * @format:req({id, loc})
-       * "require:" +d id
+       * @format:req({id, loc}) "require" +d id
        *)
       {
         interfaceId: InterfaceID.id,
-        interfaceName: interfaceName,
+        interfaceName: InterfaceName.interface_name,
         requiredIds: {id: InterfaceID.id, loc: loc} list,
         provideTopdecs: itopdec list
       }
@@ -387,50 +360,81 @@ struct
    * @formatter(InterfaceID.id) InterfaceID.format_id
    * @formatter(decList) TermFormat.formatDeclList
    * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(InterfaceName.interface_name)
+   *    InterfaceName.format_interface_name
    *)
   type interface =
       (*%
        * @format({interfaceDecs: bind binds,
-       *          provideInterfaceNameOpt:provideName provideNameOpt,
+       *          provideInterfaceNameOpt: name nameOpt,
        *          requiredIds: req reqs,
+       *          locallyRequiredIds: lreq lreqs,
        *          provideTopdecs: pdec pdecs})
-       * "local"
+       * "interfaces"
        * 2[ binds:decList(bind)(+1, +1) ]
-       * +1 "provide"
-       * 2[ +1 provideNameOpt(provideName)("provideInterfaceName:","noProvideInterfaceName") ]
-       * 2[ pdecs:decList(pdec)(+1, +1) ]
-       * +1 "in"
+       * +1 "requires"
        * 2[ reqs:decList(req)(+1, +1) ]
-       * @format:req({id, loc})
-       * "require" +d id
+       * 2[ lreqs:decList(lreq)(+1, +1) ]
+       * +1 "provide" nameOpt(name)("<",">")
+       * 2[ pdecs:decList(pdec)(+1, +1) ]
+       * +1 "end"
+       * @format:req({id, loc}) "require" +d id
+       * @format:lreq({id, loc}) "local require" +d id
        *)
       {
         interfaceDecs : interfaceDec list,
-        provideInterfaceNameOpt : interfaceName option,
+        provideInterfaceNameOpt : InterfaceName.interface_name option,
         requiredIds : {id: InterfaceID.id, loc: loc} list,
+        locallyRequiredIds : {id: InterfaceID.id, loc: loc} list,
         provideTopdecs : itopdec list
       }
 
   (*%
    * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(Absyn.topdec) Absyn.format_topdec
    *)
   type compileUnit =
       (*%
-         @format({interface:interface interfaceOpt, topdecsSource: dec decs, topdecsInclude:inc incs})
-         "compileUnit" +1
-         interfaceOpt(interface)("interface" +1,) 
-         "topdecsInclude" +1
-         2[ incs:decList(inc)(+1, +1) ]
-         "topdecsSource" +1
-         2[ decs:decList(dec)(+1, +1) ]
-         +1 "end"
+       * @format({interface:interface interfaceOpt, topdecsSource: dec decs,
+       *          topdecsInclude:inc incs})
+       * "interface"
+       * 2[ +1 interfaceOpt(interface) ]
+       * +1 "topdecsInclude"
+       * 2[ incs:decList(inc)(+1, +1) ]
+       * +1 "topdecsSource"
+       * 2[ decs:decList(dec)(+1, +1) ]
+       * +1 "end"
        *)
       {
         interface : interface option,
         topdecsInclude : Absyn.topdec list,
         topdecsSource : Absyn.topdec list
+      }
+
+  (* an interface loaded as if it is "_require"-ed *)
+  (*%
+   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(Absyn.topdec) Absyn.format_topdec
+   * @formatter(InterfaceID.id) InterfaceID.format_id
+   *)
+  type interface_unit =
+      (*%
+       * @format({interfaceDecs: bind binds,
+       *          requiredIds: req reqs,
+       *          topdecsInclude: inc incs})
+       * "interfaces"
+       * 2[ binds:decList(bind)(+1, +1) ]
+       * +1 "requires"
+       * 2[ reqs:decList(req)(+1, +1) ]
+       * +1 "topdecsInclude"
+       * 2[ incs:decList(inc)(+1, +1) ]
+       * +1 "end"
+       * @format:req({id, loc}) "require" +d id
+       *)
+      {
+        interfaceDecs : interfaceDec list,
+        requiredIds : {id: InterfaceID.id, loc: loc} list,
+        topdecsInclude : Absyn.topdec list
       }
 
   (*%
@@ -440,12 +444,11 @@ struct
   type interactiveUnit =
       (*%
        * @format({interface, interfaceDecls: dec decs, topdecsInclude:inc incs})
-       "compileUnit" +1
-       "interface" +1
-       * interface +1
-       "interfaceDecls" +1
+       * "interface"
+       * 2[ +1 interface ]
+       * +1 "interfaceDecls"
        * 2[ decs:decList(dec)(+1, +1) ]
-       "topdecsInclude" +1
+       * +1 "topdecsInclude"
        * 2[ incs:decList(inc)(+1, +1) ]
        * +1 "end"
        *)

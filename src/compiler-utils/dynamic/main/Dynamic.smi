@@ -1,0 +1,57 @@
+_require "../../../basis.smi"
+_require "../../../compiler/types/main/Types.ppg.smi"
+_require local "../../../compiler/types/main/TypesBasics.smi"
+_require local "../../../compiler/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../compiler/builtin2/main/BuiltinTypeNames.ppg.smi"
+_require local "../../../compiler/builtin2/main/BuiltinTypes.smi"
+_require local "../../../compiler/bitmapcompilation2/main/SingletonTyEnv.smi"
+_require local "../../../compiler/bitmapcompilation2/main/RecordLayout.smi"
+_require local "../../../compiler/control/main/Bug.ppg.smi"
+_require local "../../env/main/LabelEnv.smi"
+_require local "../../env/main/SEnv.smi"
+_require local "../../env/main/IEnv.smi"
+_require local "../../../compiler/name/main/LocalID.smi"
+_require local "../../../compiler/datatypecompilation/main/DatatypeLayout.smi"
+
+structure Dynamic =
+struct
+
+  type dyn (= boxed)
+
+  val dynamic = _builtin val Dynamic : 'a -> dyn
+
+  val load : unit ptr * Types.ty -> dyn
+
+  datatype value =
+      WORD8 of Word8.word
+    | CHAR of char
+    | INT32 of Int32.int
+    | INT64 of Int64.int
+    | WORD32 of Word32.word
+    | WORD64 of Word64.word
+    | REAL of real
+    | REAL32 of Real32.real
+    | PTR of unit ptr
+    | RECORD of (string * dyn) list
+    | VARIANT of string * value option
+    | LIST of dyn_list
+    | ARRAY of {length : int, sub : int -> dyn}
+    | VECTOR of {length : int, sub : int -> dyn}
+    | REF of dyn
+    | INTINF of IntInf.int
+    | STRING of string
+    | EXN of exn
+    | FUN
+    | UNIT
+    | OTHER
+  and dyn_list =
+      NIL
+    | CONS of dyn * dyn
+  type dyn_array =
+      {length : int, sub : int -> dyn}
+
+  val read : dyn -> value
+  val readList : dyn_list -> dyn list
+  val readArray : dyn_array -> dyn vector
+
+end

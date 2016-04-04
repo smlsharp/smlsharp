@@ -104,26 +104,28 @@ struct
                      defaultExp)
 
   fun hex n =
-      CharVector.map (fn #"~" => #"-" | c => c) (BigInt.fmt StringCvt.HEX n)
+      CharVector.map (fn #"~" => #"-" | c => Char.toLower c)
+                     (IntInf.fmt StringCvt.HEX n)
 
   fun IntInf_hex (exp, loc) =
       case exp of
-        L.TLCONSTANT {const = C.LARGEINT n, ty, loc} =>
+        L.TLCONSTANT {const = C.INTINF n, ty, loc} =>
         L.TLCONSTANT {const = C.STRING (hex n), ty = B.stringTy, loc = loc}
       | _ =>
         let
           val attributes =
               {isPure = true,
-               noCallback = true,
-               allocMLValue = true,
-               suspendThread = false,
+               fast = true,
+               unsafe = true,
+               causeGC = true,
                callingConvention = NONE}
         in
           L.TLFOREIGNAPPLY
             {funExp = L.TLFOREIGNSYMBOL
                         {name = "sml_intinf_hex",
                          ty = T.BACKENDty (T.FOREIGNFUNPTRty
-                                             {argTyList = [B.intInfTy],
+                                             {tyvars = BoundTypeVarID.Map.empty,
+                                              argTyList = [B.intInfTy],
                                               varArgTyList = NONE,
                                               resultTy = SOME B.stringTy,
                                               attributes = attributes}),
@@ -161,7 +163,7 @@ struct
             E.Let ([(vid, E.Exp (keyExp, keyTy))],
                    E.Switch (E.String_size (E.Var vid),
                              map (fn (len, t) =>
-                                     (C.INT (Int32.fromInt len),
+                                     (C.INT32 (Int32.fromInt len),
                                       emitTree (t, 0, E.Var vid, jumpExp)))
                                  (IEnv.listItemsi trees),
                              jumpExp))
@@ -194,7 +196,7 @@ struct
       let
         val trie =
             foldl
-              (fn ({constant = C.LARGEINT n, exp}, trie) =>
+              (fn ({constant = C.INTINF n, exp}, trie) =>
                   insert (trie, hex n, E.Exp (exp, resultTy))
                 | _ => raise Bug.Bug "compileIntInfSwitch")
               EMPTY

@@ -31,9 +31,11 @@ struct
 
   (*%
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
+   * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
+   * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
    * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
-   * @formatter(BigInt.int) TermFormat.format_BigInt_dec_ML
+   * @formatter(IntInf.int) TermFormat.format_IntInf_dec_ML
    * @formatter(stringLiteral) TermFormat.format_string_ML
    * @formatter(charLiteral) TermFormat.format_char_ML
    *)
@@ -41,19 +43,27 @@ struct
     = (*%
        * @format(value) value
        *)
-      INT of Int32.int
+      INT32 of Int32.int
     | (*%
        * @format(value) value
        *)
-      LARGEINT of BigInt.int
+      INT64 of Int64.int
     | (*%
        * @format(value) value
        *)
-      WORD of Word32.word
+      INTINF of IntInf.int
     | (*%
        * @format(value) value
        *)
-      BYTE of Word8.word
+      WORD32 of Word32.word
+    | (*%
+       * @format(value) value
+       *)
+      WORD64 of Word64.word
+    | (*%
+       * @format(value) value
+       *)
+      WORD8 of Word8.word
     | (*%
        * @format(value) value:stringLiteral
        *)
@@ -98,28 +108,34 @@ struct
       let
         fun order const =
             case const of
-              INT _ => 0
-            | LARGEINT _ => 1
-            | WORD _ => 2
-            | BYTE _ => 3
-            | STRING _ => 4
-            | REAL _ => 5
-            | FLOAT _ => 6
-            | CHAR _ => 7
-            | UNIT => 8
-            | NULLPOINTER => 9
-            | NULLBOXED => 10
-            | CONTAG _ => 11
+              INT32 _ => 0
+            | INT64 _ => 1
+            | INTINF _ => 2
+            | WORD32 _ => 3
+            | WORD64 _ => 4
+            | WORD8 _ => 5
+            | STRING _ => 6
+            | REAL _ => 7
+            | FLOAT _ => 8
+            | CHAR _ => 9
+            | UNIT => 10
+            | NULLPOINTER => 11
+            | NULLBOXED => 12
+            | CONTAG _ => 13
       in
         case (x, y) of
-          (INT x, INT y) => Int32.compare (x, y)
-        | (INT _, _) => Int.compare (order x, order y)
-        | (LARGEINT x, LARGEINT y) => BigInt.compare (x, y)
-        | (LARGEINT _, _) => Int.compare (order x, order y)
-        | (WORD x, WORD y) => Word32.compare (x, y)
-        | (WORD _, _) => Int.compare (order x, order y)
-        | (BYTE x, BYTE y) => Word8.compare (x, y)
-        | (BYTE _, _) => Int.compare (order x, order y)
+          (INT32 x, INT32 y) => Int32.compare (x, y)
+        | (INT32 _, _) => Int.compare (order x, order y)
+        | (INT64 x, INT64 y) => Int64.compare (x, y)
+        | (INT64 _, _) => Int.compare (order x, order y)
+        | (INTINF x, INTINF y) => IntInf.compare (x, y)
+        | (INTINF _, _) => Int.compare (order x, order y)
+        | (WORD32 x, WORD32 y) => Word32.compare (x, y)
+        | (WORD32 _, _) => Int.compare (order x, order y)
+        | (WORD64 x, WORD64 y) => Word64.compare (x, y)
+        | (WORD64 _, _) => Int.compare (order x, order y)
+        | (WORD8 x, WORD8 y) => Word8.compare (x, y)
+        | (WORD8 _, _) => Int.compare (order x, order y)
         | (STRING x, STRING y) => String.compare (x, y)
         | (STRING _, _) => Int.compare (order x, order y)
         | (REAL x, REAL y) => String.compare (x, y)
@@ -202,6 +218,7 @@ struct
         overloadTy
         [
           BT.intTy,
+          BT.int64Ty,
           BT.intInfTy,
           sqlValueTy (overloadTy [BT.intTy, optionTy BT.intTy])
         ]
@@ -210,6 +227,7 @@ struct
         overloadTy
         [
           BT.wordTy,
+          BT.word64Ty,
           BT.word8Ty,
           sqlValueTy (overloadTy [BT.wordTy, optionTy BT.wordTy])
         ]
@@ -262,10 +280,12 @@ struct
 
   fun typeOf const =
       case const of
-        INT _ => BT.intTy
-      | LARGEINT _ => BT.intInfTy
-      | WORD _ => BT.wordTy
-      | BYTE _ => BT.word8Ty
+        INT32 _ => BT.intTy
+      | INT64 _ => BT.int64Ty
+      | INTINF _ => BT.intInfTy
+      | WORD32 _ => BT.wordTy
+      | WORD64 _ => BT.word64Ty
+      | WORD8 _ => BT.word8Ty
       | STRING _ => BT.stringTy
       | REAL _ => BT.realTy
       | FLOAT _ => BT.real32Ty
@@ -294,20 +314,23 @@ struct
                (const, ty) =
       let
         datatype constTy =
-                 INTty | WORDty | CHARty | STRINGty | REALty | FLOATty
-               | LARGEINTty | BYTEty | UNITty | PTRty | BOXEDty
+                 INT32ty | INT64ty | WORD32ty | WORD64ty | CHARty | STRINGty 
+               | REALty | FLOATty
+               | INTINFty | WORD8ty | UNITty | PTRty | BOXEDty
                | OPTIONty of constTy | SQLVALUEty of constTy * T.ty
         fun constTy ty =
             case TU.derefTy ty of
               T.CONSTRUCTty {tyCon={id,...}, args=[]} =>
-              if TypID.eq (id, #id BT.intTyCon) then INTty
-              else if TypID.eq (id, #id BT.wordTyCon) then WORDty
+              if TypID.eq (id, #id BT.intTyCon) then INT32ty
+              else if TypID.eq (id, #id BT.int64TyCon) then INT64ty
+              else if TypID.eq (id, #id BT.wordTyCon) then WORD32ty
+              else if TypID.eq (id, #id BT.word64TyCon) then WORD64ty
               else if TypID.eq (id, #id BT.charTyCon) then CHARty
               else if TypID.eq (id, #id BT.stringTyCon) then STRINGty
               else if TypID.eq (id, #id BT.realTyCon) then REALty
               else if TypID.eq (id, #id BT.real32TyCon) then FLOATty
-              else if TypID.eq (id, #id BT.intInfTyCon) then LARGEINTty
-              else if TypID.eq (id, #id BT.word8TyCon) then BYTEty
+              else if TypID.eq (id, #id BT.intInfTyCon) then INTINFty
+              else if TypID.eq (id, #id BT.word8TyCon) then WORD8ty
               else if TypID.eq (id, #id BT.unitTyCon) then UNITty
               else if TypID.eq (id, #id BT.boxedTyCon) then BOXEDty
               else
@@ -378,27 +401,31 @@ struct
 
       in
         case (const, constTy ty) of
-          (A.INT x, INTty) =>
-          constTerm (INT (scanInt Int32.scan x))
-        | (A.INT x, LARGEINTty) =>
-          constTerm (LARGEINT (scanInt BigInt.scan x))
-        | (A.INT x, SQLVALUEty (INTty, dbi)) =>
+          (A.INT x, INT32ty) =>
+          constTerm (INT32 (scanInt Int32.scan x))
+        | (A.INT x, INT64ty) =>
+          constTerm (INT64 (scanInt Int64.scan x))
+        | (A.INT x, INTINFty) =>
+          constTerm (INTINF (scanInt IntInf.scan x))
+        | (A.INT x, SQLVALUEty (INT32ty, dbi)) =>
            sqlValue (sqlInt (scanInt Int32.scan x), dbi)
-                    (constTerm (INT (scanInt Int32.scan x)), BT.intTy)
-        | (A.INT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
+                    (constTerm (INT32 (scanInt Int32.scan x)), BT.intTy)
+        | (A.INT x, SQLVALUEty (OPTIONty INT32ty, dbi)) =>
           sqlOptionValue (sqlInt (scanInt Int32.scan x), dbi)
-                         (constTerm (INT (scanInt Int32.scan x)), BT.intTy)
+                         (constTerm (INT32 (scanInt Int32.scan x)), BT.intTy)
         | (A.INT _, _) => raise Bug.Bug "fixConst: INT"
-        | (A.WORD x, WORDty) =>
-          constTerm (WORD (scanInt Word32.scan x))
-        | (A.WORD x, BYTEty) =>
-          constTerm (BYTE (scanInt Word8.scan x))
-        | (A.WORD x, SQLVALUEty (WORDty, dbi)) =>
+        | (A.WORD x, WORD32ty) =>
+          constTerm (WORD32 (scanInt Word32.scan x))
+        | (A.WORD x, WORD64ty) =>
+          constTerm (WORD64 (scanInt Word64.scan x))
+        | (A.WORD x, WORD8ty) =>
+          constTerm (WORD8 (scanInt Word8.scan x))
+        | (A.WORD x, SQLVALUEty (WORD32ty, dbi)) =>
           sqlValue (sqlWord (scanInt Word32.scan x), dbi)
-                   (constTerm (WORD (scanInt Word32.scan x)), BT.wordTy)
-        | (A.WORD x, SQLVALUEty (OPTIONty WORDty, dbi)) =>
+                   (constTerm (WORD32 (scanInt Word32.scan x)), BT.wordTy)
+        | (A.WORD x, SQLVALUEty (OPTIONty WORD32ty, dbi)) =>
           sqlOptionValue (sqlWord (scanInt Word32.scan x), dbi)
-                         (constTerm (WORD (scanInt Word32.scan x)), BT.wordTy)
+                         (constTerm (WORD32 (scanInt Word32.scan x)), BT.wordTy)
         | (A.WORD _, _) => raise Bug.Bug "fixConst: WORD"
         | (A.STRING (x, loc), STRINGty) => constTerm (STRING x)
         | (A.STRING (x, loc), SQLVALUEty (STRINGty, dbi)) =>

@@ -71,10 +71,14 @@ void *prim_UnmanagedMemory_subPtr(void *p);
 STRING prim_Int_toString(int);
 STRING prim_IntInf_toString(sml_intinf_t *);
 int prim_IntInf_toInt(sml_intinf_t *);
+long long prim_IntInf_toInt64(sml_intinf_t *);
 unsigned int prim_IntInf_toWord(sml_intinf_t *);
+unsigned long long prim_IntInf_toWord64(sml_intinf_t *);
 double prim_IntInf_toReal(sml_intinf_t *);
 sml_intinf_t *prim_IntInf_fromInt(int);
+sml_intinf_t *prim_IntInf_fromInt64(long long);
 sml_intinf_t *prim_IntInf_fromWord(unsigned int);
+sml_intinf_t *prim_IntInf_fromWord64(unsigned long long);
 sml_intinf_t *prim_IntInf_fromReal(double);
 sml_intinf_t *prim_IntInf_quot(sml_intinf_t *, sml_intinf_t *);
 sml_intinf_t *prim_IntInf_rem(sml_intinf_t *, sml_intinf_t *);
@@ -115,9 +119,9 @@ int prim_Time_gettimeofday(int[]);
 int prim_Timer_getTimes(int[]);
 int prim_Date_localOffset(int[]);
 unsigned int prim_Date_strfTime(char *, unsigned int, const char *,
-				int, int, int, int, int, int, int, int, int);
+				const struct tm *);
 char *prim_Date_ascTime(int, int, int, int, int, int, int, int, int);
-int prim_Date_mkTime(int, int, int, int, int, int, int, int, int);
+int prim_Date_mkTime(const struct tm *);
 int prim_Date_localTime(int, int[]);
 int prim_Date_gmTime(int, int[]);
 double Pack_packReal64Little(unsigned char, unsigned char, unsigned char,

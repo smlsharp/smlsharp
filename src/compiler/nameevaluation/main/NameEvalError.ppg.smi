@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
@@ -152,4 +152,5 @@ structure NameEvalError =
     exception StrNotFound of code * {longsymbol: Symbol.longsymbol}
     exception ProvideFunctorIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
     exception ProvideParamIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
+    exception InvalidKindName of code * string
   end

@@ -93,7 +93,7 @@ struct
   end (* local *)
 
   fun const n =
-      CONST (LargeWord.fromInt n)
+      CONST (Word32.fromInt n)
 
   fun isWordTy ty =
       case TypesBasics.derefTy ty of
@@ -260,13 +260,13 @@ struct
       in
         case exp of
           VALUE v => v
-        | ADD x => search (prim2 (P.R (P.M P.Word_add)) x)
-        | SUB x => search (prim2 (P.R (P.M P.Word_sub)) x)
-        | DIV x => search (prim2 (P.R (P.M P.Word_div_unsafe)) x)
-        | AND x => search (prim2 (P.R (P.M P.Word_andb)) x)
-        | OR x => search (prim2 (P.R (P.M P.Word_orb)) x)
-        | LSHIFT x => search (prim2 (P.R (P.M P.Word_lshift_unsafe)) x)
-        | RSHIFT x => search (prim2 (P.R (P.M P.Word_rshift_unsafe)) x)
+        | ADD x => search (prim2 (P.R (P.M P.Word32_add)) x)
+        | SUB x => search (prim2 (P.R (P.M P.Word32_sub)) x)
+        | DIV x => search (prim2 (P.R (P.M P.Word32_div_unsafe)) x)
+        | AND x => search (prim2 (P.R (P.M P.Word32_andb)) x)
+        | OR x => search (prim2 (P.R (P.M P.Word32_orb)) x)
+        | LSHIFT x => search (prim2 (P.R (P.M P.Word32_lshift_unsafe)) x)
+        | RSHIFT x => search (prim2 (P.R (P.M P.Word32_rshift_unsafe)) x)
       end
 
   end (* local *)
@@ -317,13 +317,17 @@ struct
         (padded, {fieldIndex = fieldIndex, accumSize = accumSize} :: layoutRev)
       end
 
-  fun alignAccumSizeRev comp nil = nil
+  fun alignAccumSizeRev comp nil = (false, nil)
     | alignAccumSizeRev comp ({fieldIndex:value, accumSize}::fieldsRev) =
       let
         (* align accumSize to word boundary *)
-        val accumSize = alignSize comp (accumSize, const (wordSize ()))
+        val accumSize' = alignSize comp (accumSize, const (pointerSize ()))
+	val padded =
+	    case (accumSize, accumSize') of
+		(CONST accumSize, CONST accumSize') => accumSize <> accumSize'
+	      | _ => true
       in
-        {fieldIndex = fieldIndex, accumSize = accumSize}::fieldsRev
+          (padded, {fieldIndex = fieldIndex, accumSize = accumSize'}::fieldsRev)
       end
 
   fun estimateMaxShift value =
@@ -427,7 +431,7 @@ struct
                 fields
         val sizesRev = rev (map (fn {tag,size} => {size=size}) fields)
         val (padded, layoutRev) = computeLayoutRev comp sizesRev
-        val layoutRev = alignAccumSizeRev comp layoutRev
+	val (padded2, layoutRev) = alignAccumSizeRev comp layoutRev
         val bitmapIndex = getAccumSizeRev layoutRev
         val layout = rev layoutRev
         val bits =
@@ -442,7 +446,7 @@ struct
         {allocSize = allocSize,
          fieldIndexes = map #fieldIndex layout,
          bitmaps = bitmaps,
-         padding = padded}
+         padding = padded orelse padded2}
       end
 
   fun computeIndex comp (fields, lastField) =

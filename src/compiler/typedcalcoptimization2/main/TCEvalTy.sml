@@ -258,6 +258,8 @@ in
               raise bug "TPEXPORTRECFUNVAR to AlphaRename"
             | TC.TPEXTERNEXN {longsymbol, ty} =>
               TC.TPEXTERNEXN {longsymbol=longsymbol, ty=evalT ty}
+            | TC.TPBUILTINEXN {longsymbol, ty} =>
+              TC.TPBUILTINEXN {longsymbol=longsymbol, ty=evalT ty}
             | TC.TPEXTERNVAR {longsymbol, ty} =>
               TC.TPEXTERNVAR {longsymbol=longsymbol, ty=evalT ty}
             | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>

@@ -2,12 +2,12 @@ infix 6 + - ^
 infix 4 = <> > >= < <=
 infix 3 := o
 val op - = Position.-
-val op < = SMLSharp_Builtin.Int.lt
+val op < = SMLSharp_Builtin.Int32.lt
 val op ^ = String.^
 fun ignore x = ()
-structure SysWordImp = SMLSharp_Builtin.Word
-structure SysInt = Int
-structure IntImp = Int
+structure SysWordImp = SMLSharp_Builtin.Word32
+structure SysInt = Int32
+structure IntImp = Int32
 structure PositionImp = Position
 structure POSIX_Error =
 struct

@@ -1,7 +1,7 @@
-_require "../../../basis/main/List.smi"
-_require "../../../basis/main/Bool.smi"
-_require "../../../basis/main/CharVector.smi"
-_require "../../../basis/main/String.smi"
+_require local "../../../basis/main/List.smi"
+_require local "../../../basis/main/Bool.smi"
+_require local "../../../basis/main/CharVector.smi"
+_require local "../../../basis/main/String.smi"
 _require "../../../basis/main/Substring.smi"
 
 functor SMLSharp_SMLNJ_OS_PathFn (OSPathBase : sig

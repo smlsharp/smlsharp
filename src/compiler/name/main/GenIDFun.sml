@@ -1,5 +1,4 @@
-structure Empty = struct end
-functor GenIDFun () = 
+structure GenID = 
 struct
 local
   val state = ref 0
@@ -14,4 +13,4 @@ in
   fun toString elementID = Int.toString elementID
   fun toInt id =  id
 end
-end :> LOCAL_ID
+end

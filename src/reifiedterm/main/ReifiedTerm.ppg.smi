@@ -1,21 +1,22 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
-_require "../../compiler-utils/env/main/LabelEnv.smi"
-_require "./TermPrintUtils.ppg.smi"
+_require "../../basis.smi"
+_require "../../smlformat-lib.smi"
+_require local "../../compiler-utils/env/main/LabelEnv.smi"
+_require local "./TermPrintUtils.ppg.smi"
 
 structure ReifiedTerm =
 struct
   type path = string list
-  val format_path : string list -> SMLFormat.FormatExpression.expression list
   datatype reifiedTerm
     = DATATYPEtyRepNOARG of string
     | DATATYPEtyRepWITHARG of string * reifiedTerm
     | ARRAYtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
+    | VECTORtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
     | CHARtyRep of char
     | EXNtyRep
     | FUNtyRep
     | INTINFtyRep of IntInf.int
     | INTtyRep of int
+    | INT64tyRep of int64
     | BOOLtyRep of bool
     | LISTtyRep of reifiedTerm list
     | PTRtyRep
@@ -30,77 +31,37 @@ struct
     | BUILTINRep
     | WORD8tyRep of Word8.word
     | WORDtyRep of word
-  val format_reifiedTerm 
-    : reifiedTerm -> SMLFormat.FormatExpression.expression list
-  val makeDATATYPEtyRepNOARG : string -> reifiedTerm
-  val makeDATATYPEtyRepWITHARG : string -> reifiedTerm -> reifiedTerm
-  val makeArrayTerm 
-    : ('a -> reifiedTerm) -> 'a array -> reifiedTerm
-  val makeListTerm 
-    : ('a -> reifiedTerm) -> 'a list -> reifiedTerm
-  val makeTupleTerm 
-    : ('a -> reifiedTerm) -> 'a list -> reifiedTerm
-  val makeConsTerm 
-    : reifiedTerm -> reifiedTerm list -> reifiedTerm list
-  val makeFieldTerm 
-    : string -> reifiedTerm -> string * reifiedTerm
-  val makeConsField
-    : string * reifiedTerm -> (string * reifiedTerm) list -> (string * reifiedTerm) list
-  val fieldNil :  (string * reifiedTerm) list
-  val reifiedTermNil : reifiedTerm list
+    | WORD64tyRep of Word64.word
   datatype idstatus
     = EXEXN of {name:string, ty:string option}
     | EXEXNREP of {name:string, path:string}
     | EXVAR of {name:string, term:reifiedTerm, ty:string}
-  val format_idstatus 
-    : idstatus -> SMLFormat.FormatExpression.expression list
-  val makeEXVAR 
-    : string -> reifiedTerm -> string -> idstatus
-  val makeEXEXN : string -> string -> idstatus
-  val makeEXEXNREP : string -> string -> idstatus
   type tstr = string * string
-  val format_tstr : string * string -> SMLFormat.FormatExpression.expression list
-  val makeTstr : string -> string -> string * string
   type varE = idstatus list
-  val format_varE 
-    : idstatus list -> SMLFormat.FormatExpression.expression list
-  val idstatusNil : idstatus list
-  val idstatusCons 
-    : idstatus -> idstatus list -> idstatus list
   type tyE = tstr list
-  val format_tyE : (string * string) list -> SMLFormat.FormatExpression.expression list
-  val tstrNil : tstr list
-  val tstrCons : tstr -> tstr list -> tstr list
   datatype env
     = ENV of {strE:(string * env) list, tyE:tyE, varE:varE}
   type strentry = string * env
+  type funE = string list
+  type sigentry = string * string
+  type sigE = sigentry list
+  type topEnv = {Env:env, FunE:funE, SigE:string}
+
+  val format_path : string list -> SMLFormat.FormatExpression.expression list
+  val format_reifiedTerm 
+    : reifiedTerm -> SMLFormat.FormatExpression.expression list
+  val format_tstr : string * string -> SMLFormat.FormatExpression.expression list
+  val format_idstatus 
+    : idstatus -> SMLFormat.FormatExpression.expression list
+  val format_varE 
+    : idstatus list -> SMLFormat.FormatExpression.expression list
+  val format_tyE : (string * string) list -> SMLFormat.FormatExpression.expression list
   val format_env : env -> SMLFormat.FormatExpression.expression list
   val format_strentry : strentry -> SMLFormat.FormatExpression.expression list
-  val makeENV : varE -> tyE -> (strentry list) -> env
-  val makeStrentry : string -> env -> string * env
-  val strentryNil : strentry list
-  val strentryCons : strentry -> strentry list -> strentry list
-  type funE = string list
-  val format_funE : string list -> SMLFormat.FormatExpression.expression list
-  val stringNil : string list
-  val stringCons : string -> string list -> string list
-  type sigentry = string * string
-  val format_sigentry
-    : string * string -> SMLFormat.FormatExpression.expression list
-  type sigE = sigentry list
-  val format_sigE 
-    : (string * string) list -> SMLFormat.FormatExpression.expression list
-  val makeSigentry : string -> string -> string * string
-  val sigentryNil : sigentry list
-  val sigentryCons : sigentry -> sigentry list -> sigentry list
-  type topEnv = {Env:env, FunE:funE, SigE:string}
   val format_topEnv 
     : topEnv -> SMLFormat.FormatExpression.expression list
-  val makeReifiedTopenv 
-    : env -> funE -> string -> {Env:env, FunE:funE, SigE:string}
+  val format_funE : string list -> SMLFormat.FormatExpression.expression list
+
   val printTopEnv : topEnv -> unit
-  val termToString : reifiedTerm -> string
-  val exnMessage : exn -> string
-  val exnToStringFunRef : (exn -> string) ref
-  val updateExnToString : (exn -> string) -> unit
+
 end

@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "ml-yacc-lib.smi"
+_require "../../../basis.smi"
+_require "../../../ml-yacc-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
@@ -57,6 +57,8 @@ val VALUES:  pos * pos -> token
 val INTO:  pos * pos -> token
 val INSERT:  pos * pos -> token
 val FROM:  pos * pos -> token
+val ALL: pos * pos -> token
+val DISTINCT: pos * pos -> token
 val SELECT:  pos * pos -> token
 val DESC:  pos * pos -> token
 val ASC:  pos * pos -> token
@@ -106,8 +108,8 @@ val OPAQUE:  pos * pos -> token
 val OP:  pos * pos -> token
 val OF:  pos * pos -> token
 val NONFIX:  pos * pos -> token
-val LPAREN:  pos * pos -> token
 val LOCAL:  pos * pos -> token
+val LPAREN:  pos * pos -> token
 val LET:  pos * pos -> token
 val LBRACKET:  pos * pos -> token
 val LBRACE:  pos * pos -> token
@@ -121,7 +123,8 @@ val INCLUDE:  pos * pos -> token
 val IMPORT:  pos * pos -> token
 val IN:  pos * pos -> token
 val IF:  pos * pos -> token
-val ID: (string) *  pos * pos -> token
+val SYMBOLICID: (string) *  pos * pos -> token
+val ALPHABETICID: (string) *  pos * pos -> token
 val HASH:  pos * pos -> token
 val HANDLE:  pos * pos -> token
 val FUNCTOR:  pos * pos -> token

@@ -5,7 +5,7 @@
  *)
 
 infix 4 = <> > >= < <=
-val op < = SMLSharp_Builtin.Int.lt
+val op < = SMLSharp_Builtin.Int32.lt
 
 structure OS =
 struct
@@ -21,22 +21,22 @@ struct
 
   val free =
       _import "free"
-      : __attribute__((no_callback)) 'a ptr -> ()
+      : __attribute__((unsafe,fast)) 'a ptr -> ()
   val str_new =
       _import "sml_str_new"
-      : __attribute__((no_callback,alloc)) char ptr -> string
+      : __attribute__((unsafe,fast,gc)) char ptr -> string
   val errno =
       _import "prim_StandardC_errno"
-      : __attribute__((no_callback)) () -> int
+      : __attribute__((fast)) () -> int
   val prim_syserror =
       _import "prim_GenericOS_syserror"
-      : __attribute__((pure,no_callback)) string -> int
+      : __attribute__((pure,fast)) string -> int
   val strerror =
       _import "strerror"
-      : __attribute__((no_callback)) int -> char ptr
+      : __attribute__((fast)) int -> char ptr
   val errorName =
       _import "prim_GenericOS_errorName"
-      : __attribute__((pure,no_callback,alloc)) int -> string
+      : __attribute__((unsafe,pure,fast,gc)) int -> string
 
   open OS
 

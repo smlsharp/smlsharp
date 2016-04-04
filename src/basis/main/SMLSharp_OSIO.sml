@@ -8,11 +8,11 @@
 infix 6 + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op < = SMLSharp_Builtin.Int.lt
-val op > = SMLSharp_Builtin.Int.gt
-structure Word = SMLSharp_Builtin.Word
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op < = SMLSharp_Builtin.Int32.lt
+val op > = SMLSharp_Builtin.Int32.gt
+structure Word32 = SMLSharp_Builtin.Word32
 structure Array = SMLSharp_Builtin.Array
 
 structure OS =
@@ -28,7 +28,7 @@ struct
 
   type iodesc = int
 
-  val hash = Word.fromInt
+  val hash = Word32.fromInt32
 
   fun compare (fd1:iodesc, fd2:iodesc) =
       if fd1 < fd2 then General.LESS
@@ -37,61 +37,58 @@ struct
 
   val prim_stat =
       _import "prim_GenericOS_stat"
-      : __attribute__((no_callback,suspend))
-        (string, word array) -> int
+      : (string, word array) -> int
 
   val prim_lstat =
       _import "prim_GenericOS_lstat"
-      : __attribute__((no_callback,suspend))
-        (string, word array) -> int
+      : (string, word array) -> int
 
   val prim_fstat =
       _import "prim_GenericOS_fstat"
-      : __attribute__((no_callback,suspend))
-        (int, word array) -> int
+      : (int, word array) -> int
 
   val S_IFMT =
       (_import "prim_const_S_IFMT"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IFIFO =
       (_import "prim_const_S_IFIFO"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IFCHR =
       (_import "prim_const_S_IFCHR"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IFDIR =
       (_import "prim_const_S_IFDIR"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IFBLK =
       (_import "prim_const_S_IFBLK"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IFREG =
       (_import "prim_const_S_IFREG"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IFLNK =
       (_import "prim_const_S_IFLNK"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IFSOCK =
       (_import "prim_const_S_IFSOCK"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_ISUID =
       (_import "prim_const_S_ISUID"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_ISGID =
       (_import "prim_const_S_ISGID"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_ISVTX =
       (_import "prim_const_S_ISVTX"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IRUSR =
       (_import "prim_const_S_IRUSR"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IWUSR =
       (_import "prim_const_S_IWUSR"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
   val S_IXUSR =
       (_import "prim_const_S_IXUSR"
-       : __attribute__((pure,no_callback)) () -> word) ()
+       : __attribute__((pure,fast)) () -> word) ()
 
   type stat =
       {dev: word, ino: word, mode: word, atime: word, mtime: word, size: word}
@@ -145,12 +142,11 @@ struct
   end
 
   fun kind fd =
-      Word.andb (#mode (fstat fd), S_IFMT)
+      Word32.andb (#mode (fstat fd), S_IFMT)
 
   val prim_poll =
       _import "prim_GenericOS_poll"
-      : __attribute__((no_callback,suspend))
-        (int array, word array, int, int) -> int
+      : (int array, word array, int, int) -> int
 
   val SML_POLLIN = 0w1
   val SML_POLLOUT = 0w2
@@ -164,12 +160,18 @@ struct
       SOME (fd, 0w0) : poll_desc option
 
   fun pollToIODesc ((fd, _):poll_desc) = fd:iodesc
-  fun pollIn ((fd, ev):poll_desc) = (fd, Word.orb (ev, SML_POLLIN)):poll_desc
-  fun pollOut ((fd, ev):poll_desc) = (fd, Word.orb (ev, SML_POLLOUT)):poll_desc
-  fun pollPri ((fd, ev):poll_desc) = (fd, Word.orb (ev, SML_POLLPRI)):poll_desc
-  fun isIn ((fd, ev):poll_info) = Word.andb (ev, Word.notb SML_POLLIN) <> 0w0
-  fun isOut ((fd, ev):poll_info) = Word.andb (ev, Word.notb SML_POLLOUT) <> 0w0
-  fun isPri ((fd, ev):poll_info) = Word.andb (ev, Word.notb SML_POLLPRI) <> 0w0
+  fun pollIn ((fd, ev):poll_desc) =
+      (fd, Word32.orb (ev, SML_POLLIN)):poll_desc
+  fun pollOut ((fd, ev):poll_desc) =
+      (fd, Word32.orb (ev, SML_POLLOUT)):poll_desc
+  fun pollPri ((fd, ev):poll_desc) =
+      (fd, Word32.orb (ev, SML_POLLPRI)):poll_desc
+  fun isIn ((fd, ev):poll_info) =
+      Word32.andb (ev, Word32.notb SML_POLLIN) <> 0w0
+  fun isOut ((fd, ev):poll_info) =
+      Word32.andb (ev, Word32.notb SML_POLLOUT) <> 0w0
+  fun isPri ((fd, ev):poll_info) =
+      Word32.andb (ev, Word32.notb SML_POLLPRI) <> 0w0
   fun infoToPollDesc (x:poll_info) = x:poll_desc
 
   exception Poll = OS.IO.Poll
@@ -212,10 +214,10 @@ struct
 
   val SEEK_SET =
       _import "prim_const_SEEK_SET"
-      : __attribute__((pure,no_callback)) () -> int
+      : __attribute__((pure,fast)) () -> int
   val SEEK_CUR =
       _import "prim_const_SEEK_CUR"
-      : __attribute__((pure,no_callback)) () -> int
+      : __attribute__((pure,fast)) () -> int
 
   type file_desc = int
   val stdin = 0 : file_desc
@@ -227,19 +229,19 @@ struct
 
   structure ST =
   struct
-    fun isReg ({mode,...}:stat) = Word.andb (mode, S_IFMT) = S_IFDIR
-    fun size ({size,...}:stat) = Word.toIntX size
+    fun isReg ({mode,...}:stat) = Word32.andb (mode, S_IFMT) = S_IFDIR
+    fun size ({size,...}:stat) = Word32.toInt32X size
   end
 
   val prim_close =
       _import "close"
-      : __attribute__((no_callback,suspend)) int -> int
+      : int -> int
   val prim_fopen =
       _import "prim_GenericOS_open"
-      : __attribute__((no_callback,suspend)) (string, string) -> int
+      : (string, string) -> int
   val prim_lseek =
       _import "prim_GenericOS_lseek"
-      : __attribute__((no_callback,suspend)) (int, int, int) -> int
+      : (int, int, int) -> int
 
 
   fun close fd =
@@ -261,18 +263,16 @@ struct
 
   val prim_readAry =
       _import "prim_GenericOS_read"
-      : __attribute__((no_callback,suspend))
-        (int, SMLSharp_Builtin.Word8.word array, word, word) -> int
+      : (int, SMLSharp_Builtin.Word8.word array, word, word) -> int
   val prim_writeAry =
       _import "prim_GenericOS_write"
-      : __attribute__((no_callback,suspend))
-        (int, SMLSharp_Builtin.Word8.word array, word, word) -> int
+      : (int, SMLSharp_Builtin.Word8.word array, word, word) -> int
 
   fun readVec (fd, len) =
       if len < 0 then raise Size else
       let
         val buf = SMLSharp_Builtin.Array.alloc len
-        val n = prim_readAry (fd, buf, 0w0, Word.fromInt len)
+        val n = prim_readAry (fd, buf, 0w0, Word32.fromInt32 len)
       in
         if n < 0 then raise SMLSharp_Runtime.OS_SysErr ()
         else if n = len then SMLSharp_Builtin.Array.turnIntoVector buf
@@ -288,7 +288,8 @@ struct
   fun readArr (fd, slice) =
       let
         val (buf, beg, len) = Word8ArraySlice.base slice
-        val n = prim_readAry (fd, buf, Word.fromInt beg, Word.fromInt len)
+        val n =
+            prim_readAry (fd, buf, Word32.fromInt32 beg, Word32.fromInt32 len)
       in
         if n < 0 then raise SMLSharp_Runtime.OS_SysErr () else n
       end
@@ -297,8 +298,8 @@ struct
       let
         val (buf, beg, len) = Word8VectorSlice.base slice
         val n = prim_writeAry (fd, SMLSharp_Builtin.Vector.castToArray buf,
-                               Word.fromInt beg,
-                               Word.fromInt len)
+                               Word32.fromInt32 beg,
+                               Word32.fromInt32 len)
       in
         if n < 0 then raise SMLSharp_Runtime.OS_SysErr () else n
       end
@@ -307,8 +308,8 @@ struct
       let
         val (buf, beg, len) = Word8ArraySlice.base slice
         val n = prim_writeAry (fd, buf,
-                               Word.fromInt beg,
-                               Word.fromInt len)
+                               Word32.fromInt32 beg,
+                               Word32.fromInt32 len)
       in
         if n < 0 then raise SMLSharp_Runtime.OS_SysErr () else n
       end

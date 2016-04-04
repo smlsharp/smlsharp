@@ -1,11 +1,11 @@
-_require "basis.smi"
+_require "../../../basis.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../util/main/gensym.smi"
+_require "../../util/main/Gensym.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/TypesBasics.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
@@ -20,6 +20,14 @@ structure TypedCalcUtils =
     val freshInst : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
     val freshToplevelInst
         : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
+    val freshToplevelGtoundInst
+        : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
+    val groundInst
+        : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
+    val groundInstTy
+        : Types.ty  -> Types.ty
+    val freshToplevelGtoundTy
+        : Types.ty -> Types.ty
     val toplevelInstWithInstTy
         : Types.ty * TypedCalc.tpexp * Types.ty -> Types.ty * TypedCalc.tpexp
     val expansive : TypedCalc.tpexp  -> bool

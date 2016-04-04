@@ -112,6 +112,7 @@ struct
       | A.REC (rows, loc) =>
         (* sort rows in order to make the "occurrence order" unique *)
         tyvarsList (fn (k,t) => tyvarsTy btvEnv t) (sortTyrows rows)
+      | A.KINDID _ => empty
 
   and tyvarsFFIty btvEnv ty =
       case ty of
@@ -582,9 +583,11 @@ struct
        provideTopdecs = decidePitopdecs provideTopdecs
       }
   fun decideInterfaceDecs interfaceDecs = map decideInterfaceDec interfaceDecs
-  fun decideInterface {interfaceDecs, requiredIds, provideTopdecs} =
+  fun decideInterface {interfaceDecs, requiredIds, locallyRequiredIds,
+                       provideTopdecs} =
       {interfaceDecs = decideInterfaceDecs interfaceDecs, 
        requiredIds = requiredIds, 
+       locallyRequiredIds = locallyRequiredIds,
        provideTopdecs = decidePitopdecs provideTopdecs
       }
 

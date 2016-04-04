@@ -8,8 +8,8 @@
 infix 6 +
 infix 4 < =
 infix 3 :=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op < = SMLSharp_Builtin.Int.lt
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op < = SMLSharp_Builtin.Int32.lt
 
 structure DynamicLink =
 struct
@@ -20,20 +20,17 @@ struct
 
   val c_dlopen =
       _import "dlopen"
-      : __attribute__((no_callback))
-        (string, int) -> lib
+      : (string, int) -> lib
   val c_dlsym =
       _import "dlsym"
-      : __attribute__((no_callback))
-        (lib, string) -> unit ptr
+      : (lib, string) -> unit ptr
   val c_dlerror =
       _import "dlerror"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         () -> char ptr
   val c_dlclose =
       _import "dlclose"
-      : __attribute__((no_callback))
-        lib -> int
+      : lib -> int
 
   local
     val loaded = ref false
@@ -41,34 +38,49 @@ struct
     val RTLD_NOW = ref 0
     val RTLD_LOCAL = ref 0
     val RTLD_GLOBAL = ref 0
+    val RTLD_DEFAULT = ref _NULL
+    val RTLD_NEXT = ref _NULL
 
     val const_RTLD_LAZY =
         _import "prim_const_RTLD_LAZY"
-        : __attribute__((pure,no_callback)) () -> int
+        : __attribute__((pure,fast)) () -> int
     val const_RTLD_NOW =
         _import "prim_const_RTLD_NOW"
-        : __attribute__((pure,no_callback)) () -> int
+        : __attribute__((pure,fast)) () -> int
     val const_RTLD_LOCAL =
         _import "prim_const_RTLD_LOCAL"
-        : __attribute__((pure,no_callback)) () -> int
+        : __attribute__((pure,fast)) () -> int
     val const_RTLD_GLOBAL =
         _import "prim_const_RTLD_GLOBAL"
-        : __attribute__((pure,no_callback)) () -> int
+        : __attribute__((pure,fast)) () -> int
+    val const_RTLD_DEFAULT =
+        _import "prim_const_RTLD_DEFAULT"
+        : __attribute__((pure,fast)) () -> lib
+    val const_RTLD_NEXT =
+        _import "prim_const_RTLD_NEXT"
+        : __attribute__((pure,fast)) () -> lib
+
+    fun load () =
+        if !loaded then () else
+        (RTLD_LAZY := const_RTLD_LAZY ();
+         RTLD_NOW := const_RTLD_NOW ();
+         RTLD_LOCAL := const_RTLD_LOCAL ();
+         RTLD_GLOBAL := const_RTLD_GLOBAL ();
+         RTLD_DEFAULT := const_RTLD_DEFAULT ();
+         RTLD_NEXT := const_RTLD_NEXT ();
+         loaded := true)
+
   in
     fun dlopenMode (scope, mode) =
       let
-        val _ =
-            if !loaded then () else
-            (RTLD_LAZY := const_RTLD_LAZY ();
-             RTLD_NOW := const_RTLD_NOW ();
-             RTLD_LOCAL := const_RTLD_LOCAL ();
-             RTLD_GLOBAL := const_RTLD_GLOBAL ();
-             loaded := true)
+        val _ = load ()
         val scope = case scope of LOCAL => !RTLD_LOCAL | GLOBAL => !RTLD_GLOBAL
         val mode = case mode of LAZY => !RTLD_LAZY | NOW => !RTLD_NOW
       in
         scope + mode
       end
+    fun default () = (load (); !RTLD_DEFAULT)
+    fun next () = (load (); !RTLD_NEXT)
   end (* local *)
 
   fun dlerror () =

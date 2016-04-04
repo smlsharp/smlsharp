@@ -3,11 +3,15 @@
 
 include ./files.mk
 
-SMLSHARP_ENV = SMLSHARP_HEAPSIZE=128M:1G
+SMLSHARP_ENV = SMLSHARP_HEAPSIZE=512M:2G
+
+MLYACC = src/ml-yacc/smlyacc
+MLLEX = src/ml-lex/smllex
+SMLFORMAT = src/smlformat/smlformat
 SMLSHARP_STAGE2 = src/compiler/smlsharp
-MLLEX_DEP = src/ml-lex/smllex
-MLYACC_DEP = src/ml-yacc/smlyacc
-SMLFORMAT_DEP = src/smlformat/smlformat
+MLLEX_DEP = $(MLLEX)
+MLYACC_DEP = $(MLYACC)
+SMLFORMAT_DEP = $(SMLFORMAT)
 SMLSHARP_DEP = $(SMLSHARP_STAGE2)
 
 LLVM_LINK = llvm-link
@@ -15,44 +19,63 @@ LLVM_DIS = llvm-dis
 OPT = opt
 XZ = xz
 
-OBJECTS = $(MINISMLSHARP_OBJECTS:.o=.bc) \
-	  src/compiler/minismlsharp.smi.bc
+ifeq ($(ARCH),x86)
+TRIPLE = i686-apple-darwin
+else ifeq ($(ARCH),x86_64)
+TRIPLE = x86_64-apple-darwin
+else ifdef ARCH
+$(error ARCH must be either x86 or x86_64)
+endif
 
-all: precompiled/x86.ll.xz
+OBJECTS = $(MINISMLSHARP_OBJECTS:.o=.$(ARCH).bc)
+
+top:
+	@echo 'type "make all" to build minismlsharp for all targets, or "make all ARCH=..." to build it for a specific target.'
+	@exit 1
+
+ifndef ARCH
+
+all:
+	$(MAKE) -f precompile.mk all ARCH=x86
+	$(MAKE) -f precompile.mk all ARCH=x86_64
+
+else   # ifdef ARCH
+
+all: precompiled/$(ARCH).ll.xz
 
 clean:
 	-rm -f $(OBJECTS)
-	-rm -f precompile.dep precompiled/x86.ll precompiled/x86.ll.xz
+	-rm -f precompile.dep precompiled/$(ARCH)_orig.bc
+	-rm -f precompiled/$(ARCH)_opt.bc precompiled/$(ARCH).ll.xz
 
-src/compiler/minismlsharp.smi.bc: $(MINISMLSHARP_OBJECTS:.o=.smi)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE2) -Bsrc -emit-llvm -c -o $@ src/compiler/minismlsharp.smi
+.SUFFIXES: .sml .$(ARCH).bc .ppg .ppg.sml .lex .lex.sml .grm .grm.sml .grm.sig
 
-.SUFFIXES: .sml .bc .ppg .ppg.sml .lex .lex.sml .grm .grm.sml .grm.sig
-
-.sml.bc:
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE2) -Bsrc -emit-llvm -c -o $@ $<
+%.$(ARCH).bc: %.sml
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE2) -Bsrc --target=$(TRIPLE) -emit-llvm -c -o $@ $<
 .ppg.ppg.sml:
-        $(SMLFORMAT) --output=$@ $<
+	$(SMLSHARP_ENV) $(SMLFORMAT) --output=$@ $<
 .lex.lex.sml:
-        SMLLEX_OUTPUT=$@ $(MLLEX) $<
+	$(SMLSHARP_ENV) SMLLEX_OUTPUT=$@ $(MLLEX) $<
 .grm.grm.sml:
-        SMLYACC_OUTPUT=$@ $(MLYACC) $<
+	$(SMLSHARP_ENV) SMLYACC_OUTPUT=$@ $(MLYACC) $<
 
 ./precompile.dep: depend.mk precompile.mk
-	sed 's/\.o:/.bc:/' depend.mk > $@
+	sed 's/\.o:/.$$(ARCH).bc:/' depend.mk > $@
 
-precompiled/x86_orig.bc: $(OBJECTS)
-	$(LLVM_LINK) -o=$@ $(OBJECTS)
+precompiled/$(ARCH)_orig.bc: $(OBJECTS)
+	$(LLVM_LINK) -o $@ $(OBJECTS)
 
-precompiled/x86.ll: precompiled/x86_orig.bc
-	$(OPT) -disable-internalize -std-link-opts -internalize-public-api-list=_SMLmain -internalize -O2 -S -o $@ precompiled/x86_orig.bc
+precompiled/$(ARCH)_opt.bc: precompiled/$(ARCH)_orig.bc
+	$(OPT) -std-link-opts -internalize -Oz -o $@ precompiled/$(ARCH)_orig.bc
 
-precompiled/x86.ll.xz: precompiled/x86.ll
-	{ echo "; ModuleID = 'precompiled'" && \
-	  sed 's,;[^"]*$$,,;s,^ *,,;s, *$$,,;/^$$/d;/^target triple =/d' precompiled/x86.ll && \
-	  echo '@_SML_bprecompiled = external global i8' && \
-	  echo '@_SML_rprecompiled = external global i8' && \
-	  echo '@_SMLstackmap = constant [3 x i8*] [i8* @_SML_rprecompiled, i8* @_SML_bprecompiled, i8* null]'; \
-	} | $(XZ) -c > $@
+precompiled/$(ARCH).ll.xz: precompiled/$(ARCH)_opt.bc
+	$(LLVM_DIS) -o - precompiled/$(ARCH)_opt.bc \
+	| (echo "@_SML_ftab = external constant i8"; \
+	   sed -e 's,^@_SML_ftab = .*,@_SML_xftab = internal constant i16 0,' \
+	   -e '1,/@_SML_ftab/!s,@_SML_ftab,bitcast (i16* @_SML_xftab to i8*),' \
+	   -e 's,;[^"]*$$,,;s,^ *,,;s, *$$,,;/^$$/d;/^target triple =/d') \
+	| $(XZ) -c > $@
 
 include ./precompile.dep
+
+endif  # ifdef ARCH

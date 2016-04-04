@@ -8,10 +8,10 @@
 infix  6 + - ^
 infixr 5 :: @
 infix  4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op >= = SMLSharp_Builtin.Int.gteq
-val op < = SMLSharp_Builtin.Int.lt
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op >= = SMLSharp_Builtin.Int32.gteq
+val op < = SMLSharp_Builtin.Int32.lt
 
 structure List =
 struct

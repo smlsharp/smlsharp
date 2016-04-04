@@ -46,6 +46,8 @@ nqueen/doit$(DOIT_SUFFIX): nqueen/doit.o nqueen/nqueen.o
 	$(SMLSHARP) -o $@ nqueen/doit.smi $(LIBS)
 nucleic/doit$(DOIT_SUFFIX): nucleic/doit.o nucleic/main.o nucleic/nucleic.o
 	$(SMLSHARP) -o $@ nucleic/doit.smi $(LIBS)
+parallel_matrix2/doit$(DOIT_SUFFIX): parallel_matrix2/multiply_cps.o
+	$(SMLSHARP) -o $@ parallel_matrix2/multiply_cps.smi $(LIBS)
 perm9/doit$(DOIT_SUFFIX): perm9/doit.o perm9/perm9.o
 	$(SMLSHARP) -o $@ perm9/doit.smi $(LIBS)
 puzzle/doit$(DOIT_SUFFIX): puzzle/doit.o puzzle/puzzle.o

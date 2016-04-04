@@ -1,4 +1,4 @@
-_require "./List.smi"
+_require local "./List.smi"
 
 structure ListPair =
 struct

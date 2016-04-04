@@ -1,10 +1,10 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/CodeLabel.smi"
 _require "../../name/main/LocalID.smi"
-_require "../../util/main/TermFormat.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
+_require local "../../util/main/TermFormat.smi"
+_require local "../../util/main/SmlppgUtil.ppg.smi"
 
 structure LLVMIR =
 struct
@@ -23,8 +23,17 @@ struct
 
   datatype linkage =
       INTERNAL
-    | LINKER_PRIVATE
+    | PRIVATE
     | EXTERNAL
+    | APPENDING
+    | LINKONCE
+    | WEAK
+    | LINKONCE_ODR
+    | WEAK_ODR
+
+  datatype tail =
+      TAIL
+    | MUSTTAIL
 
   datatype parameter_attribute =
       ZEROEXT
@@ -54,9 +63,15 @@ struct
     | SSPREQ
     | UWTABLE
 
+  datatype noWrap =
+      WRAP
+    | NUW
+    | NSW
+
   datatype ty =
       I1
     | I8
+    | I16
     | I32
     | I64
     | PTR of ty
@@ -68,14 +83,14 @@ struct
     | STRUCT of ty list * {packed: bool}
 
   datatype const =
-      INTCONST of Word32.word
+      INTCONST of Word64.word
     | FLOATCONST of real
     | NULL
     | SYMBOL of symbol
     | CONST_BITCAST of (ty * const) * ty
     | CONST_INTTOPTR of (ty * const) * ty
     | CONST_PTRTOINT of (ty * const) * ty
-    | CONST_SUB of (ty * const) * (ty * const)
+    | CONST_SUB of noWrap * (ty * const) * (ty * const)
     | CONST_GETELEMENTPTR of
       {
         inbounds : bool,
@@ -119,11 +134,6 @@ struct
     | F_UNO
     | F_TRUE
 
-  datatype noWrap =
-      WRAP
-    | NUW
-    | NSW
-
   datatype op2 =
       OR
     | ADD of noWrap
@@ -149,19 +159,32 @@ struct
     | TRUNC
     | SITOFP
     | FPTOSI
+    | FPTOUI
     | FPTRUNC
     | FPEXT
     | ZEXT
     | SEXT
+    | PTRTOINT
+
+  datatype atomic_ordering =
+      UNORDERED
+    | MONOTONIC
+    | ACQUIRE
+    | RELEASE
+    | ACQ_REL
+    | SEQ_CST
 
   datatype insn =
       LOAD of var * operand
+    | LOAD_ATOMIC of var * operand * {order: atomic_ordering, align: word}
     | STORE of {value: operand, dst: operand}
+    | STORE_ATOMIC of {value: operand, dst: operand, order: atomic_ordering,
+                       align: word}
     | ALLOCA of var * ty
     | CALL of
       {
         result: var option,
-        tail: bool,
+        tail: tail option,
         cconv: calling_convention option,
         retAttrs: parameter_attribute list,
         fnPtr: operand,
@@ -176,10 +199,12 @@ struct
         indices: operand list
       }
     | EXTRACTVALUE of var * operand * int
+    | INSERTVALUE of var * operand * operand * int
     | CONV of var * conv * operand * ty
     | OP2 of var * op2 * operand * operand
     | ICMP of var * icmp * operand * operand
     | FCMP of var * fcmp * operand * operand
+    | SELECT of var * operand * operand * operand
 
   type destination =
       label * operand list
@@ -199,7 +224,6 @@ struct
       {
         label: landingPadLabel,
         argVar : var * ty,
-        personality : operand,
         catch : operand list,
         cleanup : bool,
         body: insn list * last,
@@ -246,6 +270,7 @@ struct
         name : symbol,
         parameters : (ty * parameter_attribute list * var) list,
         fnAttrs : function_attribute list,
+        personality : (ty * const) option,
         gcname : string option,
         body : body
       }
@@ -265,10 +290,18 @@ struct
       {
         name : symbol,
         linkage : linkage option,
+        unnamed_addr : bool,
         constant : bool,
         ty : ty,
         initializer : initializer,
         align : int option
+      }
+    | ALIAS of
+      {
+        name : symbol,
+        linkage : linkage option,
+        unnamed_addr : bool,
+        aliasee : ty * const
       }
     | EXTERN of
       {

@@ -5,7 +5,7 @@
  *)
 structure FilenameMap : sig
 
-  exception Load
+  exception Load of string
   type map
   val load : Filename.filename -> map
   val find : map * Filename.filename -> Filename.filename option
@@ -13,7 +13,7 @@ structure FilenameMap : sig
 end =
 struct
 
-  exception Load
+  exception Load of string
 
   val getc = TextIO.StreamIO.input1
 
@@ -64,7 +64,7 @@ struct
   fun ensureEOF src =
       case getc (skipSpace src) of
         NONE => ()
-      | SOME _ => raise Load
+      | SOME _ => raise Load "parse error"
 
   fun parseItems src =
       case parseItem (skipSpace src) of
@@ -74,12 +74,13 @@ struct
   type map = Filename.filename SEnv.map
 
   fun makeMap nil = SEnv.empty
-    | makeMap (_::nil) = raise Load
+    | makeMap (_::nil) = raise Load "unexpected EOF"
     | makeMap (h1::h2::t) =
       let
-        val h1 = Filename.toString (Filename.realPath (Filename.fromString h1))
+        val k = Filename.realPath (Filename.fromString h1)
+                handle OS.SysErr (msg, _) => raise Load (h1 ^ ": " ^ msg)
       in
-        SEnv.insert (makeMap t, h1, Filename.fromString h2)
+        SEnv.insert (makeMap t, Filename.toString k, Filename.fromString h2)
       end
 
   fun load filename =

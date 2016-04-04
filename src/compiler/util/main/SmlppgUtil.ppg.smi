@@ -1,13 +1,12 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/env/main/SSet.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/IEnv.smi"
 _require "../../../compiler-utils/env/main/LabelEnv.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
+_require local "../../control/main/Bug.ppg.smi"
+_require local "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
-_require "./BigInt_IntInf.smi"
 
 structure SmlppgUtil =
 struct
@@ -15,7 +14,7 @@ struct
   val makeToken : string -> format
   val format_int32 : Int32.int -> format
   val format_word32 : Word32.word -> format
-  val format_BigInt : BigInt.int -> format
+  val format_IntInf : IntInf.int -> format
   val formatTyConArgumentTypes
     : ('a -> format) * format * format * format -> 'a list -> format
   val formatListWithEnclosureOne 

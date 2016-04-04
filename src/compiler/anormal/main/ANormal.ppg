@@ -70,7 +70,7 @@ struct
         exp : anvalue,
         expTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool
+        runtimeTyCast : bool   (* just for internal type check *)
       }
     | (*% @format "_" *)
       (*% @prefix formatWithType_ @format "_" *)
@@ -83,6 +83,15 @@ struct
    *)
   datatype address =
       (*%
+       * @format(ptrExp)
+       * "[" +d "ptr" +d ptrExp "]"
+       *)
+      (*% @prefix formatWithType_
+       * @format(ptrExp)
+       * "[" +d "ptr" +d ptrExp()(btvEnv) "]"
+       *)
+      AAPTR of anvalue
+    | (*%
        * @format({recordExp, fieldIndex})
        * "[" !N0{
        *   L2{ "#" +d fieldIndex }
@@ -232,7 +241,7 @@ struct
        * ] }
        * +1 nextExp()(btvEnv)
        *)
-      ANLARGEINT of
+      ANINTINF of
       {
         resultVar: varInfo,
         dataLabel: ExtraDataLabel.id,
@@ -669,7 +678,7 @@ struct
         loc : loc
       }
     | (*%
-       * @format({value, loc})
+       * @format({value, ty, loc})
        * L8{ 1[
        *   "return"
        *   +1 value
@@ -677,16 +686,17 @@ struct
        * ] }
        *)
       (*% @prefix formatWithType_
-       * @format({value, loc})
+       * @format({value, ty, loc})
        * L8{ 1[
        *   "return"
-       *   +1 value()(btvEnv)
+       *   +1 L2{ value()(btvEnv) +d ":" +1 ty()(btvEnv) }
        *   ";"
        * ] }
        *)
       ANRETURN of
       {
         value : anvalue,
+        ty : ty,
         loc : loc
       }
     | (*%
@@ -940,6 +950,7 @@ struct
 
   (*%
    * @formatter(option) SmlppgUtil.formatOptWithDefault
+   * @formatter(optional) TermFormat.formatOptionalOption
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
@@ -948,6 +959,7 @@ struct
   (*%
    * @prefix formatWithType_
    * @formatter(option) SmlppgUtil.formatOptWithDefault
+   * @formatter(optional) TermFormat.formatOptionalOption
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
@@ -986,22 +998,22 @@ struct
     | (*%
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, bodyExp, attributes, retTy,
-       *          cleanupHandler, loc})
+       *          cleanupHandler: ch chOpt, loc})
        * "@callback:" id
        * + envOpt(env)("_")
        * + args:appList(arg)("(",",",")")
-       * + "cleanup" + cleanupHandler
+       * + chOpt:optional(ch)("cleanup" +,)
        * + "="
        * 1[ +1 bodyExp ]
        *)
       (*% @prefix formatWithType_
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, bodyExp, attributes, retTy,
-       *          cleanupHandler, loc})
+       *          cleanupHandler: ch chOpt, loc})
        * "@callback:" id
        * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
        * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
-       * + "cleanup" + cleanupHandler
+       * + chOpt:optional(ch)("cleanup" +,)
        * + "="
        * 1[ +1 bodyExp()(tyvarKindEnv:makeBtvEnv) ]
        *)
@@ -1014,37 +1026,46 @@ struct
         bodyExp : anexp,
         attributes : FFIAttributes.attributes,
         retTy : ty option,
-        cleanupHandler : HandlerLabel.id,
+        cleanupHandler : HandlerLabel.id option,
         loc : loc
       }
 
   (*%
    * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
    *)
   (*% @prefix formatWithType_
    * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(HandlerLabel.id) HandlerLabel.format_id
    *)
   type program =
       (*%
-       * @format({topdata: datum data, topdecs: dec decs, topExp})
+       * @format({topdata: datum data, topdecs: dec decs, topExp,
+       *          topCleanupHandler: ch chOpt})
        * "_decl"
        * 1[ data:decList(datum)(+1,+1) ]
        * 1[ decs:decList(dec)(+1,+1) ]
        * +1 "in" 1[ +1 !N0{ topExp } ]
        * +1 "end"
+       * +1 chOpt(ch)("cleanup" +,)
        *)
       (*% @prefix formatWithType_
-       * @format({topdata: datum data, topdecs: dec decs, topExp})
+       * @format({topdata: datum data, topdecs: dec decs, topExp,
+       *          topCleanupHandler: ch chOpt})
        * "_decl"
        * 1[ data:decList(datum)(+1,+1) ]
        * 1[ decs:decList(dec)(+1,+1) ]
        * +1 "in" 1[ +1 !N0{ topExp()() } ]
        * +1 "end"
+       * +1 chOpt(ch)("cleanup" +,)
        *)
       {
         topdata : topdata list,
         topdecs : topdec list,
-        topExp : anexp
+        topExp : anexp,
+        topCleanupHandler : HandlerLabel.id option
       }
 
 end

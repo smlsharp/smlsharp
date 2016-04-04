@@ -1,12 +1,14 @@
-_require "basis.smi"
-_require "ffi/main/Pointer.smi"
+_require "../../basis.smi"
+_require local "../../ffi/main/Pointer.smi"
 
 structure LLVM =
 struct
   val ASMEXT : string
   val OBJEXT : string
 
-  type LLVMBool = int
+  type LLVMBool (= int)
+  val True : LLVMBool
+  val False : LLVMBool
 
   exception LLVMError of string
 
@@ -38,9 +40,9 @@ struct
 (*
   val LLVMPrintModuleToFile
       : LLVMModuleRef * string -> unit
+*)
   val LLVMWriteBitcodeToFile
       : LLVMModuleRef * string -> unit
-*)
   val LLVMParseBitcodeInContext
       : LLVMContextRef * LLVMMemoryBufferRef -> LLVMModuleRef
 
@@ -74,6 +76,8 @@ struct
       : LLVMContextRef -> LLVMTypeRef
   val LLVMInt8TypeInContext
       : LLVMContextRef -> LLVMTypeRef
+  val LLVMInt16TypeInContext
+      : LLVMContextRef -> LLVMTypeRef
   val LLVMInt32TypeInContext
       : LLVMContextRef -> LLVMTypeRef
   val LLVMInt64TypeInContext
@@ -98,6 +102,8 @@ struct
       : LLVMTypeRef * real -> LLVMValueRef
   val LLVMConstRealOfString
       : LLVMTypeRef * string -> LLVMValueRef
+  val LLVMConstInt
+      : LLVMTypeRef * Word64.word * LLVMBool -> LLVMValueRef
   val LLVMConstIntOfString
       : LLVMTypeRef * string * Word8.word -> LLVMValueRef
   val LLVMConstBitCast
@@ -107,6 +113,10 @@ struct
   val LLVMConstPtrToInt
       : LLVMValueRef * LLVMTypeRef -> LLVMValueRef
   val LLVMConstSub
+      : LLVMValueRef * LLVMValueRef -> LLVMValueRef
+  val LLVMConstNSWSub
+      : LLVMValueRef * LLVMValueRef -> LLVMValueRef
+  val LLVMConstNUWSub
       : LLVMValueRef * LLVMValueRef -> LLVMValueRef
   val LLVMConstGEP
       : LLVMValueRef * LLVMValueRef vector * word -> LLVMValueRef
@@ -181,12 +191,10 @@ struct
       : LLVMValueRef_Arg -> LLVMValueRef
   val LLVMAddFunction
       : LLVMModuleRef * string * LLVMTypeRef -> LLVMValueRef_Function
-(*
   val LLVMAddFunctionAttr
       : LLVMValueRef_Function * LLVMAttribute list -> unit
-*)
-  val addFunctionAttribute
-      : LLVMValueRef_Function * word * LLVMAttribute list -> unit
+  val LLVMAddFunctionReturnAttr
+      : LLVMValueRef_Function * LLVMAttribute list -> unit
   val LLVMSetLinkage_Function
       : LLVMValueRef_Function * LLVMLinkage -> unit
   val LLVMSetFunctionCallConv
@@ -196,11 +204,9 @@ struct
   val LLVMCountParams
       : LLVMValueRef_Function -> word
   val LLVMGetParams
-      : LLVMValueRef_Function -> LLVMValueRef_Arg array
-(*
+      : LLVMValueRef_Function -> LLVMValueRef_Arg list
   val LLVMAddAttribute
-      : LLVMValueRef_Arg * LLVMAttribute -> unit
-*)
+      : LLVMValueRef_Arg * LLVMAttribute list -> unit
   val LLVMSetValueName
       : LLVMValueRef_Arg * string -> unit
   val LLVMAppendBasicBlockInContext
@@ -217,8 +223,13 @@ struct
       : LLVMValueRef_GlobalVariable * LLVMBool -> unit
   val LLVMSetLinkage_GlobalVar
       : LLVMValueRef_GlobalVariable * LLVMLinkage -> unit
-  val LLVMSetAlignment
+  val LLVMSetAlignment_GlobalVar
       : LLVMValueRef_GlobalVariable * word -> unit
+  val LLVMSetUnnamedAddr
+      : LLVMValueRef_GlobalVariable * LLVMBool -> unit
+  val LLVMAddAlias
+      : LLVMModuleRef * LLVMTypeRef * LLVMValueRef * string
+        -> LLVMValueRef_GlobalVariable
 
   type LLVMIntPredicate (= int)
   val LLVMIntEQ : LLVMIntPredicate
@@ -250,12 +261,29 @@ struct
   val LLVMRealUNE : LLVMRealPredicate
   val LLVMRealPredicateTrue : LLVMRealPredicate
 
+  type AtomicOrdering (= int)
+  val AtomicOrderingNotAtomic : AtomicOrdering
+  val AtomicOrderingUnordered : AtomicOrdering
+  val AtomicOrderingMonotonic : AtomicOrdering
+  val AtomicOrderingAcquire : AtomicOrdering
+  val AtomicOrderingRelease : AtomicOrdering
+  val AtomicOrderingAcquireRelease : AtomicOrdering
+  val AtomicOrderingSequentiallyConsistent : AtomicOrdering
+
+  type SynchronizationScope (= int)
+  val SingleThread : SynchronizationScope
+  val CrossThread : SynchronizationScope
+
+  type LLVMValueRef_Load (= ptr)
+  type LLVMValueRef_Store (= ptr)
   type LLVMValueRef_Switch (= ptr)
   type LLVMValueRef_Phi (= ptr)
   type LLVMValueRef_Call (= ptr)
   type LLVMValueRef_LandingPad (= ptr)
   val castPhi
       : LLVMValueRef_Phi -> LLVMValueRef
+  val castLoad
+      : LLVMValueRef_Load -> LLVMValueRef
   val castCall
       : LLVMValueRef_Call -> LLVMValueRef
   val castLandingPad
@@ -341,9 +369,9 @@ struct
   val LLVMBuildAlloca
       : LLVMBuilderRef * LLVMTypeRef * string -> LLVMValueRef
   val LLVMBuildLoad
-      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef
+      : LLVMBuilderRef * LLVMValueRef * string -> LLVMValueRef_Load
   val LLVMBuildStore
-      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef -> LLVMValueRef
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef -> LLVMValueRef_Store
   val LLVMBuildGEP
       : LLVMBuilderRef * LLVMValueRef * LLVMValueRef vector * word * string
         -> LLVMValueRef
@@ -354,6 +382,9 @@ struct
       : LLVMBuilderRef * LLVMValueRef * word * string -> LLVMValueRef
   val LLVMBuildExtractValue
       : LLVMBuilderRef * LLVMValueRef * word * string -> LLVMValueRef
+  val LLVMBuildInsertValue
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * word * string
+        -> LLVMValueRef
   val LLVMBuildTrunc
       : LLVMBuilderRef * LLVMValueRef * LLVMTypeRef * string -> LLVMValueRef
   val LLVMBuildZExt
@@ -392,13 +423,18 @@ struct
       : LLVMBuilderRef * LLVMRealPredicate * LLVMValueRef * LLVMValueRef
         * string
         -> LLVMValueRef
+  val LLVMBuildSelect
+      : LLVMBuilderRef * LLVMValueRef * LLVMValueRef * LLVMValueRef * string
+        -> LLVMValueRef
   val LLVMBuildPhi
       : LLVMBuilderRef * LLVMTypeRef * string -> LLVMValueRef_Phi
   val LLVMAddIncoming
       : LLVMValueRef_Phi * LLVMValueRef vector * LLVMBasicBlockRef vector * word
         -> unit
+  val LLVMSetPersonalityFn
+      : LLVMValueRef_Function * LLVMValueRef -> unit
   val LLVMBuildLandingPad
-      : LLVMBuilderRef * LLVMTypeRef * LLVMValueRef * word * string
+      : LLVMBuilderRef * LLVMTypeRef * word * string
         -> LLVMValueRef_LandingPad
   val LLVMAddClause : LLVMValueRef_LandingPad * LLVMValueRef -> unit
   val LLVMSetCleanup : LLVMValueRef_LandingPad * LLVMBool -> unit
@@ -411,10 +447,23 @@ struct
         -> LLVMValueRef_Call
   val LLVMSetTailCall
       : LLVMValueRef_Call * LLVMBool -> unit
+  val SetMustTailCall
+      : LLVMValueRef_Call -> unit
   val LLVMSetInstructionCallConv
       : LLVMValueRef_Call * LLVMCallConv -> unit
   val LLVMAddInstrAttribute
       : LLVMValueRef_Call * word * LLVMAttribute list -> unit
+  val SetAtomic_Load
+      : LLVMValueRef_Load * AtomicOrdering * SynchronizationScope -> unit
+  val SetAtomic_Store
+      : LLVMValueRef_Store * AtomicOrdering * SynchronizationScope -> unit
+  val LLVMSetAlignment_Load
+      : LLVMValueRef_Load * word -> unit
+  val LLVMSetAlignment_Store
+      : LLVMValueRef_Store * word -> unit
+
+  val FunctionIndex : word
+  val ReturnIndex : word
 
   type LLVMLinkerMode (= int)
   val LLVMLinkerDestroySource : LLVMLinkerMode
@@ -427,11 +476,6 @@ struct
   val OptLess : OptLevel
   val OptDefault : OptLevel
   val OptAggressive : OptLevel
-
-  type SizeLevel (= word)
-  val SizeDefault : SizeLevel
-  val SizeSmall : SizeLevel
-  val SizeVerySmall : SizeLevel
 
   type RelocModel (= word)
   val RelocDefault : RelocModel
@@ -447,23 +491,21 @@ struct
   val CodeModelMedium : CodeModel
   val CodeModelLarge : CodeModel
 
-  type FileType (= word)
-  val NullFile : FileType
-  val AssemblyFile : FileType
-  val ObjectFile : FileType
-  val IRFile : FileType
-  val BitcodeFile : FileType
+  type LLVMTargetRef (= ptr)
+  val LLVMGetTargetFromArchAndTriple : string * string -> LLVMTargetRef
 
-  type compile_options =
-      {arch : string,
-       cpu : string,
-       attrs : string list,
-       optLevel : OptLevel,
-       sizeLevel : SizeLevel,
-       relocModel : RelocModel,
-       codeModel : CodeModel}
+  type LLVMTargetMachineRef (= ptr)
+  val LLVMCreateTargetMachine
+      : LLVMTargetRef * string * string * string * OptLevel
+        * RelocModel * CodeModel -> LLVMTargetMachineRef
 
-  val compile : compile_options -> LLVMModuleRef * FileType * string -> unit
+  type LLVMTargetDataRef (= ptr)
+  val LLVMGetTargetMachineData 
+      : LLVMTargetMachineRef -> LLVMTargetDataRef
+  val LLVMPointerSize 
+      : LLVMTargetDataRef -> word
+  val LLVMDisposeTargetMachine
+      : LLVMTargetMachineRef -> unit
 
 (*
   type LLVMTargetRef (= ptr)
@@ -508,12 +550,9 @@ struct
   val LLVMAssemblyFile : LLVMCodeGenFileType
   val LLVMObjectFile : LLVMCodeGenFileType
 
-  type LLVMTargetMachineRef (= ptr)
   val LLVMCreateTargetMachine
       : LLVMTargetRef * string * string * string * LLVMCodeGenOptLevel
         * LLVMRelocMode * LLVMCodeModel -> LLVMTargetMachineRef
-  val LLVMDisposeTargetMachine
-      : LLVMTargetMachineRef -> unit
   val LLVMTargetMachineEmitToFile
       : LLVMTargetMachineRef * LLVMModuleRef * string * LLVMCodeGenFileType
         -> unit

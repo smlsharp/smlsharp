@@ -12,25 +12,27 @@ struct
   val OBJEXT = "bc"
 
   type LLVMBool = int
+  val True = 1 : LLVMBool
+  val False = 0 : LLVMBool
 
   (* error *)
 
   val sml_str_new =
       _import "sml_str_new"
-      : __attribute__((no_callback, alloc)) char ptr -> string
+      : __attribute__((unsafe,fast,gc)) char ptr -> string
 
   exception LLVMError of string
 
   val sml_llvm_version =
       _import "sml_llvm_version"
-      : __attribute__((no_callback, alloc)) () -> char ptr
+      : __attribute__((pure,fast)) () -> char ptr
 
   fun getVersion () =
       sml_str_new (sml_llvm_version ())
 
   val LLVMDisposeMessage =
       _import "LLVMDisposeMessage"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         char ptr -> ()
 
   fun importMessage ptr =
@@ -47,8 +49,7 @@ struct
 
   val LLVMCreateMemoryBufferWithContentsOfFile =
       _import "LLVMCreateMemoryBufferWithContentsOfFile"
-      : __attribute__((no_callback))
-        (string, LLVMMemoryBufferRef ref, char ptr ref) -> LLVMBool
+      : (string, LLVMMemoryBufferRef ref, char ptr ref) -> LLVMBool
                                                                           
   val LLVMCreateMemoryBufferWithContentsOfFile =
    fn filename =>
@@ -64,7 +65,7 @@ struct
         
   val LLVMDisposeMemoryBuffer =
       _import "LLVMDisposeMemoryBuffer"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMMemoryBufferRef -> ()
                                               
   (* context *)
@@ -73,17 +74,17 @@ struct
 
   val LLVMGetGlobalContext =
       _import "LLVMGetGlobalContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         () -> LLVMContextRef
 
   val LLVMContextCreate =
       _import "LLVMContextCreate"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         () -> LLVMContextRef
 
   val LLVMContextDispose =
       _import "LLVMContextDispose"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> ()
 
   (* module *)
@@ -92,28 +93,26 @@ struct
 
   val LLVMModuleCreateWithNameInContext =
       _import "LLVMModuleCreateWithNameInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (string, LLVMContextRef) -> LLVMModuleRef
 
   val LLVMDisposeModule =
       _import "LLVMDisposeModule"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMModuleRef -> ()
 
   val LLVMDumpModule =
       _import "LLVMDumpModule"
-      : __attribute__((no_callback))
-        LLVMModuleRef -> ()
+      : LLVMModuleRef -> ()
 
   val LLVMGetModuleContext =
       _import "LLVMGetModuleContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMModuleRef -> LLVMContextRef
 
   val LLVMPrintModuleToFile =
       _import "LLVMPrintModuleToFile"
-      : __attribute__((no_callback))
-        (LLVMModuleRef, string, char ptr ref) -> LLVMBool
+      : (LLVMModuleRef, string, char ptr ref) -> LLVMBool
 
   val LLVMPrintModuleToFile =
       fn (module, filename) =>
@@ -126,8 +125,7 @@ struct
 
   val LLVMWriteBitcodeToFile =
       _import "LLVMWriteBitcodeToFile"
-      : __attribute__((no_callback))
-        (LLVMModuleRef, string) -> int
+      : (LLVMModuleRef, string) -> int
 
   val LLVMWriteBitcodeToFile =
       fn x =>
@@ -137,8 +135,7 @@ struct
 
   val LLVMParseBitcodeInContext =
       _import "LLVMParseBitcodeInContext"
-      : __attribute__((no_callback))
-        (LLVMContextRef, LLVMMemoryBufferRef, LLVMModuleRef ref, char ptr ref)
+      : (LLVMContextRef, LLVMMemoryBufferRef, LLVMModuleRef ref, char ptr ref)
         -> LLVMBool
 
   val LLVMParseBitcodeInContext =
@@ -158,39 +155,39 @@ struct
 
   val LLVMDeleteBasicBlock =
       _import "LLVMDeleteBasicBlock"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMBasicBlockRef -> ()
 
   type LLVMBuilderRef = unit ptr
 
   val LLVMCreateBuilderInContext =
       _import "LLVMCreateBuilderInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> LLVMBuilderRef
 
   val LLVMDisposeBuilder =
       _import "LLVMDisposeBuilder"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMBuilderRef -> ()
 
   val LLVMPositionBuilderAtEnd =
       _import "LLVMPositionBuilderAtEnd"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMBasicBlockRef) -> ()
 
   val LLVMSetDataLayout =
       _import "LLVMSetDataLayout"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMModuleRef, string) -> ()
 
   val LLVMSetTarget =
       _import "LLVMSetTarget"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMModuleRef, string) -> ()
 
   val LLVMGetTarget =
       _import "LLVMGetTarget"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMModuleRef -> char ptr
 
   val LLVMGetTarget =
@@ -204,57 +201,62 @@ struct
 
   val LLVMFloatTypeInContext =
       _import "LLVMFloatTypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> LLVMTypeRef
 
   val LLVMDoubleTypeInContext =
       _import "LLVMDoubleTypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> LLVMTypeRef
 
   val LLVMInt1TypeInContext =
       _import "LLVMInt1TypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> LLVMTypeRef
 
   val LLVMInt8TypeInContext =
       _import "LLVMInt8TypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
+        LLVMContextRef -> LLVMTypeRef
+
+  val LLVMInt16TypeInContext =
+      _import "LLVMInt16TypeInContext"
+      : __attribute__((fast))
         LLVMContextRef -> LLVMTypeRef
 
   val LLVMInt32TypeInContext =
       _import "LLVMInt32TypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> LLVMTypeRef
 
   val LLVMInt64TypeInContext =
       _import "LLVMInt64TypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> LLVMTypeRef
 
   val LLVMFunctionType =
       _import "LLVMFunctionType"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTypeRef, LLVMTypeRef vector, word, LLVMBool) -> LLVMTypeRef
 
   val LLVMPointerType =
       _import "LLVMPointerType"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTypeRef, word) -> LLVMTypeRef
 
   val LLVMVoidTypeInContext =
       _import "LLVMVoidTypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMContextRef -> LLVMTypeRef
 
   val LLVMStructTypeInContext =
       _import "LLVMStructTypeInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMContextRef, LLVMTypeRef vector, word, LLVMBool) -> LLVMTypeRef
 
   val LLVMArrayType =
       _import "LLVMArrayType"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTypeRef, word) -> LLVMTypeRef
 
   (* value *)
@@ -263,72 +265,86 @@ struct
 
   val LLVMDumpValue =
       _import "LLVMDumpValue"
-      : __attribute__((no_callback))
-        LLVMValueRef -> ()
+      : LLVMValueRef -> ()
 
   val LLVMConstNull =
       _import "LLVMConstNull"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMTypeRef -> LLVMValueRef
 
   val LLVMConstReal =
       _import "LLVMConstReal"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTypeRef, real) -> LLVMValueRef
 
   val LLVMConstRealOfString =
       _import "LLVMConstRealOfString"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTypeRef, string) -> LLVMValueRef
+
+  val LLVMConstInt =
+      _import "LLVMConstInt"
+      : __attribute__((fast))
+        (LLVMTypeRef, Word64.word, LLVMBool) -> LLVMValueRef
 
   val LLVMConstIntOfString =
       _import "LLVMConstIntOfString"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTypeRef, string, Word8.word) -> LLVMValueRef
 
   val LLVMConstBitCast =
       _import "LLVMConstBitCast"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef, LLVMTypeRef) -> LLVMValueRef
 
   val LLVMConstIntToPtr =
       _import "LLVMConstIntToPtr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef, LLVMTypeRef) -> LLVMValueRef
 
   val LLVMConstPtrToInt =
       _import "LLVMConstPtrToInt"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef, LLVMTypeRef) -> LLVMValueRef
 
   val LLVMConstSub =
       _import "LLVMConstSub"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
+        (LLVMValueRef, LLVMValueRef) -> LLVMValueRef
+
+  val LLVMConstNSWSub =
+      _import "LLVMConstNSWSub"
+      : __attribute__((fast))
+        (LLVMValueRef, LLVMValueRef) -> LLVMValueRef
+
+  val LLVMConstNUWSub =
+      _import "LLVMConstSub"
+      : __attribute__((fast))
         (LLVMValueRef, LLVMValueRef) -> LLVMValueRef
 
   val LLVMConstGEP =
       _import "LLVMConstGEP"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef, LLVMValueRef vector, word) -> LLVMValueRef
 
   val LLVMConstInBoundsGEP =
       _import "LLVMConstInBoundsGEP"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef, LLVMValueRef vector, word) -> LLVMValueRef
 
   val LLVMConstStringInContext =
       _import "LLVMConstStringInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMContextRef, string, word, LLVMBool) -> LLVMValueRef
 
   val LLVMConstStructInContext =
       _import "LLVMConstStructInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMContextRef, LLVMValueRef vector, word, LLVMBool) -> LLVMValueRef
 
   val LLVMConstArray =
       _import "LLVMConstArray"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTypeRef, LLVMValueRef vector, word) -> LLVMValueRef
 
   (* function *)
@@ -394,50 +410,51 @@ struct
 
   val LLVMAddFunction =
       _import "LLVMAddFunction"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMModuleRef, string, LLVMTypeRef) -> LLVMValueRef_Function
 
-(*
   val LLVMAddFunctionAttr =
       _import "LLVMAddFunctionAttr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Function, LLVMAttribute) -> ()
 
   val LLVMAddFunctionAttr =
-      fn (func, attrs) => LLVMAddFunctionAttr (func, foldl Word.orb 0w0 attrs)
-*)
+      fn (func, nil) => ()
+       | (func, attrs) => LLVMAddFunctionAttr (func, foldl Word.orb 0w0 attrs)
 
-  val sml_llvm_add_func_attr =
-      _import "sml_llvm_add_func_attr"
-      : __attribute__((no_callback))
-        (LLVMValueRef_Function, word, LLVMAttribute) -> ()
+  val LLVMAddFunctionReturnAttr =
+      _import "sml_LLVMAddFunctionReturnAttr"
+      : __attribute__((fast))
+        (LLVMValueRef_Function, LLVMAttribute) -> ()
 
-  fun addFunctionAttribute (func, index, attrs) =
-      sml_llvm_add_func_attr (func, index, foldl Word.orb 0w0 attrs)
+  val LLVMAddFunctionReturnAttr =
+      fn (func, nil) => ()
+       | (func, attrs) =>
+         LLVMAddFunctionReturnAttr (func, foldl Word.orb 0w0 attrs)
 
   val LLVMSetLinkage_Function =
       _import "LLVMSetLinkage"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Function, LLVMLinkage) -> ()
 
   val LLVMSetFunctionCallConv =
       _import "LLVMSetFunctionCallConv"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Function, LLVMCallConv) -> ()
 
   val LLVMSetGC =
       _import "LLVMSetGC"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Function, string) -> ()
 
   val LLVMCountParams =
       _import "LLVMCountParams"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMValueRef_Function -> word
 
   val LLVMGetParams =
       _import "LLVMGetParams"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Function, LLVMValueRef_Arg array) -> ()
 
   val LLVMGetParams =
@@ -447,24 +464,26 @@ struct
            val buf = Array.array (Word.toInt n, _NULL)
          in
            LLVMGetParams (func, buf);
-           buf
+           List.tabulate (Array.length buf, fn i => Array.sub (buf, i))
          end
 
-(*
   val LLVMAddAttribute =
       _import "LLVMAddAttribute"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Arg, LLVMAttribute) -> ()
-*)
+
+  val LLVMAddAttribute =
+      fn (arg, nil) => ()
+       | (arg, attrs) => LLVMAddAttribute (arg, foldl Word.orb 0w0 attrs)
 
   val LLVMSetValueName =
       _import "LLVMSetValueName"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Arg, string) -> ()
 
   val LLVMAppendBasicBlockInContext =
       _import "LLVMAppendBasicBlockInContext"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMContextRef, LLVMValueRef_Function, string) -> LLVMBasicBlockRef
 
   (* global *)
@@ -474,29 +493,42 @@ struct
 
   val LLVMAddGlobal =
       _import "LLVMAddGlobal"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMModuleRef, LLVMTypeRef, string)
         -> LLVMValueRef_GlobalVariable
 
   val LLVMSetInitializer =
       _import "LLVMSetInitializer"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_GlobalVariable, LLVMValueRef) -> ()
 
   val LLVMSetGlobalConstant =
       _import "LLVMSetGlobalConstant"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_GlobalVariable, LLVMBool) -> ()
 
   val LLVMSetLinkage_GlobalVar =
       _import "LLVMSetLinkage"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_GlobalVariable, LLVMLinkage) -> ()
 
   val LLVMSetAlignment =
       _import "LLVMSetAlignment"
-      : __attribute__((no_callback))
-        (LLVMValueRef_GlobalVariable, word) -> ()
+      : __attribute__((fast))
+        (LLVMValueRef, word) -> ()
+
+  val LLVMSetAlignment_GlobalVar = LLVMSetAlignment
+
+  val LLVMSetUnnamedAddr =
+      _import "LLVMSetUnnamedAddr"
+      : __attribute__((fast))
+        (LLVMValueRef_GlobalVariable, LLVMBool) -> ()
+
+  val LLVMAddAlias =
+      _import "LLVMAddAlias"
+      : __attribute__((fast))
+        (LLVMModuleRef, LLVMTypeRef, LLVMValueRef, string)
+        -> LLVMValueRef_GlobalVariable
 
   (* instructions *)
 
@@ -530,413 +562,478 @@ struct
   val LLVMRealUNE : LLVMRealPredicate = 14
   val LLVMRealPredicateTrue : LLVMRealPredicate = 15
 
+  type AtomicOrdering = int  (* defined in llvm/IR/Instructions.h *)
+  val AtomicOrderingNotAtomic = 0
+  val AtomicOrderingUnordered = 1
+  val AtomicOrderingMonotonic = 2
+  val AtomicOrderingAcquire = 4
+  val AtomicOrderingRelease = 5
+  val AtomicOrderingAcquireRelease = 6
+  val AtomicOrderingSequentiallyConsistent = 7
+
+  type SynchronizationScope = int  (* defined in llvm/IR/Instructions.h *)
+  val SingleThread = 0
+  val CrossThread = 1
+
+  type LLVMValueRef_Load = LLVMValueRef
+  type LLVMValueRef_Store = LLVMValueRef
   type LLVMValueRef_Switch = LLVMValueRef
   type LLVMValueRef_Phi = LLVMValueRef
   type LLVMValueRef_Call = LLVMValueRef
   type LLVMValueRef_LandingPad = LLVMValueRef
   val castPhi : LLVMValueRef_Phi -> LLVMValueRef = fn x => x
+  val castLoad : LLVMValueRef_Load -> LLVMValueRef = fn x => x
   val castCall : LLVMValueRef_Call -> LLVMValueRef = fn x => x
   val castLandingPad : LLVMValueRef_LandingPad -> LLVMValueRef = fn x => x
 
   val LLVMBuildRetVoid =
       _import "LLVMBuildRetVoid"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMBuilderRef -> LLVMValueRef
 
   val LLVMBuildRet =
       _import "LLVMBuildRet"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef) -> LLVMValueRef
 
   val LLVMBuildBr =
       _import "LLVMBuildBr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMBasicBlockRef) -> LLVMValueRef
 
   val LLVMBuildCondBr =
       _import "LLVMBuildCondBr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMBasicBlockRef,
                  LLVMBasicBlockRef) -> LLVMValueRef
 
   val LLVMBuildSwitch =
       _import "LLVMBuildSwitch"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMBasicBlockRef, word)
         -> LLVMValueRef_Switch
 
   val LLVMAddCase =
       _import "LLVMAddCase"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Switch, LLVMValueRef, LLVMBasicBlockRef) -> ()
 
   (*
   val LLVMBuildIndirectBr =
       _import "LLVMBuildIndirectBr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, word) -> LLVMValueRef_IndirectBr
 
   val LLVMAddDestination =
       _import "LLVMAddDestination"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_IndirectBr, LLVMBasicBlockRef) -> ()
   *)
 
   val LLVMBuildResume =
       _import "LLVMBuildResume"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef) -> LLVMValueRef
 
   val LLVMBuildUnreachable =
       _import "LLVMBuildUnreachable"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMBuilderRef -> LLVMValueRef
 
   val LLVMBuildAdd =
       _import "LLVMBuildAdd"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNSWAdd =
       _import "LLVMBuildNSWAdd"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNUWAdd =
       _import "LLVMBuildNUWAdd"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildFAdd =
       _import "LLVMBuildFAdd"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildSub =
       _import "LLVMBuildSub"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNSWSub =
       _import "LLVMBuildNSWSub"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNUWSub =
       _import "LLVMBuildNUWSub"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildFSub =
       _import "LLVMBuildFSub"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildMul =
       _import "LLVMBuildMul"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNSWMul =
       _import "LLVMBuildNSWMul"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNUWMul =
       _import "LLVMBuildNUWMul"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildFMul =
       _import "LLVMBuildFMul"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildUDiv =
       _import "LLVMBuildUDiv"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildSDiv =
       _import "LLVMBuildSDiv"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildExactSDiv =
       _import "LLVMBuildExactSDiv"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildFDiv =
       _import "LLVMBuildFDiv"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildURem =
       _import "LLVMBuildURem"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildSRem =
       _import "LLVMBuildSRem"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildFRem =
       _import "LLVMBuildFRem"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildShl =
       _import "LLVMBuildShl"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildLShr =
       _import "LLVMBuildLShr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildAShr =
       _import "LLVMBuildAShr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildAnd =
       _import "LLVMBuildAnd"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildOr =
       _import "LLVMBuildOr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildXor =
       _import "LLVMBuildXor"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string) -> LLVMValueRef
 
   (*
   val LLVMBuildBinOp =
       _import "LLVMBuildBinOp"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, Opcode, LLVMValueRef, LLVMValueRef, string)
         -> LLVMValueRef
   *)
 
   val LLVMBuildNeg =
       _import "LLVMBuildNeg"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNSWNeg =
       _import "LLVMBuildNSWNeg"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNUWNeg =
       _import "LLVMBuildNUWNeg"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildFNeg =
       _import "LLVMBuildFNeg"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildNot =
       _import "LLVMBuildNot"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildAlloca =
       _import "LLVMBuildAlloca"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildLoad =
       _import "LLVMBuildLoad"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, string) -> LLVMValueRef
 
   val LLVMBuildStore =
       _import "LLVMBuildStore"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef) -> LLVMValueRef
 
   val LLVMBuildGEP =
       _import "LLVMBuildGEP"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef vector, word, string)
         -> LLVMValueRef
 
   val LLVMBuildInBoundsGEP =
       _import "LLVMBuildInBoundsGEP"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef vector, word, string)
         -> LLVMValueRef
 
   val LLVMBuildStructGEP =
       _import "LLVMBuildStructGEP"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, word, string) -> LLVMValueRef
 
   val LLVMBuildExtractValue =
       _import "LLVMBuildExtractValue"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, word, string) -> LLVMValueRef
+
+  val LLVMBuildInsertValue =
+      _import "LLVMBuildInsertValue"
+      : __attribute__((fast))
+        (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, word, string)
+        -> LLVMValueRef
 
   val LLVMBuildTrunc =
       _import "LLVMBuildTrunc"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildZExt =
       _import "LLVMBuildZExt"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildSExt =
       _import "LLVMBuildSExt"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildFPToUI =
       _import "LLVMBuildFPToUI"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildFPToSI =
       _import "LLVMBuildFPToSI"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildUIToFP =
       _import "LLVMBuildUIToFP"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildSIToFP =
       _import "LLVMBuildSIToFP"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildFPTrunc =
       _import "LLVMBuildFPTrunc"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildFPExt =
       _import "LLVMBuildFPExt"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildPtrToInt =
       _import "LLVMBuildPtrToInt"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildIntToPtr =
       _import "LLVMBuildIntToPtr"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildBitCast =
       _import "LLVMBuildBitCast"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildZExtOrBitCast =
       _import "LLVMBuildZExtOrBitCast"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildSExtOrBitCast =
       _import "LLVMBuildSExtOrBitCast"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildTruncOrBitCast =
       _import "LLVMBuildTruncOrBitCast"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMTypeRef, string) -> LLVMValueRef
 
   val LLVMBuildICmp =
       _import "LLVMBuildICmp"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMIntPredicate, LLVMValueRef, LLVMValueRef, string)
         -> LLVMValueRef
 
   val LLVMBuildFCmp =
       _import "LLVMBuildFCmp"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMRealPredicate, LLVMValueRef, LLVMValueRef, string)
+        -> LLVMValueRef
+
+  val LLVMBuildSelect =
+      _import "LLVMBuildSelect"
+      : __attribute__((fast))
+        (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, string)
         -> LLVMValueRef
 
   val LLVMBuildPhi =
       _import "LLVMBuildPhi"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMTypeRef, string) -> LLVMValueRef_Phi
 
   val LLVMAddIncoming =
       _import "LLVMAddIncoming"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Phi, LLVMValueRef vector, LLVMBasicBlockRef vector, word)
         -> ()
 
+  val LLVMSetPersonalityFn =
+      _import "LLVMSetPersonalityFn"
+      : __attribute__((fast))
+        (LLVMValueRef_Function, LLVMValueRef) -> ()
+
   val LLVMBuildLandingPad =
       _import "LLVMBuildLandingPad"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMTypeRef, LLVMValueRef, word, string)
         -> LLVMValueRef_LandingPad
 
+  (* From LLVM 3.7.0, the reference to the personality function is moved
+   * from landingpad instruction to the parent function.  Following this
+   * change, LLVM 3.7.0 removes the third argument (personalityFn) of
+   * LLVMBuildLandingPad and introduces LLVMSetPersonalityFn instead.
+   * For backward compatibility, LLVM 3.7.1 reverts the third argument
+   * as an optional argument that will be propagated to LLVMSetPersonalityFn
+   * if given.  We follow the new mechanism for the personality function,
+   * i.e. we use LLVMSetPersonalityFn and do not set the third argument
+   * of LLVMBuildLandingPad. *)
+  val LLVMBuildLandingPad =
+      fn (b, t, n, s) =>
+         LLVMBuildLandingPad (b, t, Pointer.NULL (), n, s)
+
   val LLVMAddClause =
       _import "LLVMAddClause"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_LandingPad, LLVMValueRef) -> ()
 
   val LLVMSetCleanup =
       _import "LLVMSetCleanup"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_LandingPad, LLVMBool) -> ()
 
   val LLVMBuildInvoke =
       _import "LLVMBuildInvoke"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef vector, word,
          LLVMBasicBlockRef, LLVMBasicBlockRef, string)
         -> LLVMValueRef_Call
 
   val LLVMBuildCall =
       _import "LLVMBuildCall"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef vector, word, string)
         -> LLVMValueRef_Call
 
   val LLVMSetTailCall =
       _import "LLVMSetTailCall"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Call, LLVMBool) -> ()
+
+  val SetMustTailCall =
+      _import "sml_SetMustTailCall"
+      : __attribute__((fast))
+        LLVMValueRef_Call -> ()
 
   val LLVMSetInstructionCallConv =
       _import "LLVMSetInstructionCallConv"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Call, LLVMCallConv) -> ()
 
   val LLVMAddInstrAttribute =
       _import "LLVMAddInstrAttribute"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMValueRef_Call, word, LLVMAttribute) -> ()
 
   val LLVMAddInstrAttribute =
       fn (call, index, attrs) =>
          LLVMAddInstrAttribute (call, index, foldl Word.orb 0w0 attrs)
 
+  val ReturnIndex = 0w0               (* AttributeSet::ReturnIndex *)
+  val FunctionIndex = Word.notb 0w0   (* AttributeSet::FunctionIndex *)
+
+  val SetAtomic =
+      _import "sml_SetAtomic"
+      : __attribute__((fast))
+        (LLVMValueRef, AtomicOrdering, SynchronizationScope) -> ()
+
+  val SetAtomic_Load = SetAtomic
+  val SetAtomic_Store = SetAtomic
+  val LLVMSetAlignment_Load = LLVMSetAlignment
+  val LLVMSetAlignment_Store = LLVMSetAlignment
+
+
   (*
   val LLVMBuildSelect =
       _import "LLVMBuildSelect"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef,
                  string) -> LLVMValueRef
   *)
@@ -949,8 +1046,7 @@ struct
 
   val LLVMLinkModules =
       _import "LLVMLinkModules"
-      : __attribute__((no_callback))
-        (LLVMModuleRef, LLVMModuleRef, LLVMLinkerMode, char ptr ref)
+      : (LLVMModuleRef, LLVMModuleRef, LLVMLinkerMode, char ptr ref)
         -> LLVMBool
 
   val LLVMLinkModules =
@@ -970,11 +1066,6 @@ struct
   val OptDefault : OptLevel = 0w2
   val OptAggressive : OptLevel = 0w3
 
-  type SizeLevel = word
-  val SizeDefault : SizeLevel = 0w0
-  val SizeSmall : SizeLevel = 0w1
-  val SizeVerySmall : SizeLevel = 0w2
-
   type RelocModel = word
   val RelocDefault : RelocModel = 0w0
   val RelocStatic : RelocModel = 0w1
@@ -989,40 +1080,50 @@ struct
   val CodeModelMedium : CodeModel = 0w4
   val CodeModelLarge : CodeModel = 0w5
 
-  type FileType = word
-  val NullFile : FileType = 0w0
-  val AssemblyFile : FileType = 0w1
-  val ObjectFile : FileType = 0w2
-  val IRFile : FileType = 0w3
-  val BitcodeFile : FileType = 0w4
+  type LLVMTargetRef = unit ptr
 
-  type compile_options =
-      {arch : string,
-       cpu : string,
-       attrs : string list,
-       optLevel : OptLevel,
-       sizeLevel : SizeLevel,
-       relocModel : RelocModel,
-       codeModel : CodeModel}
+  val LLVMGetTargetFromArchAndTriple =
+      _import "sml_LLVMGetTargetFromArchAndTriple"
+      : __attribute__((fast))
+        (string, string, LLVMTargetRef ref, char ptr ref) -> LLVMBool
 
-  val sml_llvm_compile_c =
-      _import "sml_llvm_compile_c"
-      : (LLVMModuleRef, string, string, string vector, int, OptLevel, SizeLevel,
-         RelocModel, CodeModel, FileType, string, char ptr ref) -> LLVMBool
+  val LLVMGetTargetFromArchAndTriple =
+      fn (arch, triple) =>
+         let
+           val retTarget = ref (Pointer.NULL ())
+           val retMsg = ref (Pointer.NULL ())
+           val ret = LLVMGetTargetFromArchAndTriple
+                       (arch, triple, retTarget, retMsg)
+         in
+           if ret = 0 then !retTarget
+           else raise LLVMError (importMessage (!retMsg))
+         end
 
-  fun compile {arch, cpu, attrs, optLevel, sizeLevel, relocModel, codeModel}
-              (module, fileType, outputFilename) =
-      let
-        val retMsg = ref (Pointer.NULL ())
-        val attrs = Vector.fromList attrs
-        val ret = sml_llvm_compile_c (module, arch, cpu,
-                                      attrs, Vector.length attrs,
-                                      optLevel, sizeLevel,
-                                      relocModel, codeModel, fileType,
-                                      outputFilename, retMsg)
-      in
-        if ret = 0 then () else raise LLVMError (importMessage (!retMsg))
-      end
+  type LLVMTargetMachineRef = unit ptr
+
+  val LLVMCreateTargetMachine =
+      _import "LLVMCreateTargetMachine"
+      : __attribute__((fast))
+        (LLVMTargetRef, string, string, string, OptLevel,
+         RelocModel, CodeModel) -> LLVMTargetMachineRef
+
+  type LLVMTargetDataRef = unit ptr
+
+  val LLVMGetTargetMachineData =
+      _import "LLVMGetTargetMachineData"
+      : __attribute__((fast))
+	LLVMTargetMachineRef -> LLVMTargetDataRef
+
+  val LLVMPointerSize =
+      _import "LLVMPointerSize"
+      : __attribute__((fast))
+	LLVMTargetDataRef -> word
+
+  val LLVMDisposeTargetMachine =
+      _import "LLVMDisposeTargetMachine"
+      : __attribute__((fast))
+        LLVMTargetMachineRef -> ()
+
 
 (*
   (* target *)
@@ -1031,12 +1132,12 @@ struct
 
   val LLVMGetFirstTarget =
       _import "LLVMGetFirstTarget"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         () -> LLVMTargetRef
 
   val LLVMGetNextTarget =
       _import "LLVMGetNextTarget"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMTargetRef -> LLVMTargetRef
 
   val LLVMGetNextTarget =
@@ -1049,7 +1150,7 @@ struct
 
   val LLVMGetTargetName =
       _import "LLVMGetTargetName"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMTargetRef -> char ptr
 
   val LLVMGetTargetName =
@@ -1057,7 +1158,7 @@ struct
 
   val LLVMGetTargetDescription =
       _import "LLVMGetTargetDescription"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMTargetRef -> char ptr
 
   val LLVMGetTargetDescription =
@@ -1065,22 +1166,22 @@ struct
 
   val LLVMTargetHasJIT =
       _import "LLVMTargetHasJIT"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMTargetRef -> LLVMBool
 
   val LLVMTargetHasTargetMachine =
       _import "LLVMTargetHasTargetMachine"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMTargetRef -> LLVMBool
 
   val LLVMTargetHasAsmBackend =
       _import "LLVMTargetHasAsmBackend"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMTargetRef -> LLVMBool
 
   val sml_llvm_lookup_target =
       _import "sml_llvm_lookup_target"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTargetRef ref, string, string, char ptr ref) -> LLVMBool
 
   fun lookupTarget (arch, triple) =
@@ -1123,19 +1224,13 @@ struct
 
   val LLVMCreateTargetMachine =
       _import "LLVMCreateTargetMachine"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMTargetRef, string, string, string, LLVMCodeGenOptLevel,
          LLVMRelocMode, LLVMCodeModel) -> LLVMTargetMachineRef
 
-  val LLVMDisposeTargetMachine =
-      _import "LLVMDisposeTargetMachine"
-      : __attribute__((no_callback))
-        LLVMTargetMachineRef -> ()
-
   val LLVMTargetMachineEmitToFile =
       _import "LLVMTargetMachineEmitToFile"
-      : __attribute__((no_callback))
-        (LLVMTargetMachineRef, LLVMModuleRef, string, LLVMCodeGenFileType,
+      : (LLVMTargetMachineRef, LLVMModuleRef, string, LLVMCodeGenFileType,
          char ptr ref) -> LLVMBool
 
   val LLVMTargetMachineEmitToFile =
@@ -1155,7 +1250,7 @@ struct
 
   val LLVMCreateExecutionEngineForModule =
       _import "LLVMCreateExecutionEngineForModule"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMExecutionEngineRef ref, LLVMModuleRef, char ptr ref) -> LLVMBool
 
   val LLVMCreateExecutionEngineForModule =
@@ -1173,29 +1268,29 @@ struct
 (*
   val LLVMCreateInterpreterForModule =
       _import "LLVMCreateInterpreterForModule"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMExecutionEngineRef ref, LLVMModuleRef, char ptr ref) -> LLVMBool
 
   val LLVMCreateJITCompilerForModule =
       _import "LLVMCreateJITCompilerForModule"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMExecutionEngineRef ref, LLVMModuleRef, word, char ptr ref)
         -> LLVMBool
 *)
 
   val LLVMDisposeExecutionEngine =
       _import "LLVMDisposeExecutionEngine"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         LLVMExecutionEngineRef -> ()
 
   val LLVMAddModule =
       _import "LLVMAddModule"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMExecutionEngineRef, LLVMModuleRef) -> ()
 
   val LLVMFindFunction =
       _import "LLVMFindFunction"
-      : __attribute__((no_callback))
+      : __attribute__((fast))
         (LLVMExecutionEngineRef, string, LLVMValueRef_Function ref) -> LLVMBool
 
   val LLVMFindFunction =

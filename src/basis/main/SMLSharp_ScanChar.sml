@@ -8,10 +8,10 @@ infix 7 * / div mod
 infix 6 + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
-val op + = SMLSharp_Builtin.Int.add_unsafe
-val op - = SMLSharp_Builtin.Int.sub_unsafe
-val op * = SMLSharp_Builtin.Int.mul_unsafe
-val op < = SMLSharp_Builtin.Int.lt
+val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op * = SMLSharp_Builtin.Int32.mul_unsafe
+val op < = SMLSharp_Builtin.Int32.lt
 val op <= = SMLSharp_Builtin.Char.lteq
 val ord = SMLSharp_Builtin.Char.ord
 structure Word8 = SMLSharp_Builtin.Word8
@@ -144,14 +144,16 @@ struct
                   NONE => NONE
                 | SOME (n, strm) =>
                   if n < 0 orelse 255 < n
-                  then NONE else SOME (Word8.castToChar (Word8.fromInt n), strm)
+                  then NONE
+                  else SOME (Word8.castToChar (Word8.fromInt32 n), strm)
               )
             | SOME _ =>
               (
                 case scanDec3 getc strm of
                   SOME (n, strm) =>
                   if n < 0 orelse 255 < n
-                  then NONE else SOME (Word8.castToChar (Word8.fromInt n), strm)
+                  then NONE
+                  else SOME (Word8.castToChar (Word8.fromInt32 n), strm)
                 | NONE =>
                   case scanSpaces getc strm of
                     NONE => NONE
@@ -187,11 +189,11 @@ struct
                   NONE => if zero then SOME (#"\000", strm) else NONE
                 | SOME (n1, strm) =>
                   case scanHexDigit getc strm of
-                    NONE => SOME (Word8.castToChar (Word8.fromInt n1), strm)
+                    NONE => SOME (Word8.castToChar (Word8.fromInt32 n1), strm)
                   | SOME (n2, strm) =>
                     case scanHexDigit getc strm of
                       NONE =>
-                      SOME (Word8.castToChar (Word8.fromInt (n1 * 16 + n2)),
+                      SOME (Word8.castToChar (Word8.fromInt32 (n1 * 16 + n2)),
                             strm)
                     | SOME _ => NONE
               end
@@ -201,15 +203,15 @@ struct
                   NONE => NONE
                 | SOME (n1, strm) =>
                   case scanOctDigit getc strm of
-                    NONE => SOME (Word8.castToChar (Word8.fromInt n1), strm)
+                    NONE => SOME (Word8.castToChar (Word8.fromInt32 n1), strm)
                   | SOME (n2, strm) =>
                     case scanOctDigit getc strm of
                       NONE =>
-                      SOME (Word8.castToChar (Word8.fromInt (n1 * 8 + n2)),
+                      SOME (Word8.castToChar (Word8.fromInt32 (n1 * 8 + n2)),
                             strm)
                     | SOME (n3, strm) =>
                       SOME (Word8.castToChar
-                              (Word8.fromInt ((n1 * 8 + n2) * 8 + n3)),
+                              (Word8.fromInt32 ((n1 * 8 + n2) * 8 + n3)),
                             strm)
               )
         )
@@ -331,8 +333,8 @@ struct
 
   fun intToDigit n =
       if n < 0 then #"_"
-      else if n < 10 then Word8.castToChar (Word8.fromInt (0x30 + n))
-      else if n < 16 then Word8.castToChar (Word8.fromInt (0x41 + (n - 10)))
+      else if n < 10 then Word8.castToChar (Word8.fromInt32 (0x30 + n))
+      else if n < 16 then Word8.castToChar (Word8.fromInt32 (0x41 + (n - 10)))
       else #"_"
 
   fun fmtInt getc radix num =

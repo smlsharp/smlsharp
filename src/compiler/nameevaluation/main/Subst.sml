@@ -193,6 +193,8 @@ in
       = case tvarKind of
           I.UNIV => I.UNIV
         | I.REC fields => I.REC (LabelEnv.map (substTy subst) fields)
+        | I.BOXED => I.BOXED
+        | I.UNBOXED => I.UNBOXED
     fun substExnId (subst:subst)  id =
         case ExnID.Map.find(#exnIdS subst, id) of
           SOME newId => newId
@@ -318,6 +320,8 @@ in
     = case tvarKind of
         I.UNIV => I.UNIV
       | I.REC fields => I.REC (LabelEnv.map (substTfvTy tfvSubst) fields)
+      | I.BOXED => I.BOXED
+      | I.UNBOXED => I.UNBOXED
 
   fun substTfvIdstatus tfvSubst idstatus = 
       case idstatus of

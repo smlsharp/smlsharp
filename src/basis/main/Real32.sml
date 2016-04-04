@@ -27,49 +27,62 @@ struct
     val e =  2.718281828 : Real32.real
     val sqrt =
         _import "sqrtf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val sin =
         _import "sinf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val cos =
         _import "cosf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val tan =
         _import "tanf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val asin =
         _import "asinf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val acos =
         _import "acosf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val atan =
         _import "atanf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val atan2 =
         _import "atan2f"
-        : __attribute__((pure,no_callback)) (real, real) -> real
+        : __attribute__((pure,fast)) (real, real) -> real
     val exp =
         _import "expf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
+(* 310_Real32MathPow
     val pow =
         _import "powf"
-        : __attribute__((pure,no_callback)) (real, real) -> real
+        : __attribute__((pure,fast)) (real, real) -> real*)
+    val powf =
+        _import "powf"
+        : __attribute__((pure,fast)) (real, real) -> real
+    val posInf = Real32.div (1.0, 0.0)
+    val nan = Real32.mul (0.0, posInf)
+    fun pow (x, y) =
+        if SMLSharp_RealClass.isInf (SMLSharp_RealClass.classFloat y)
+        then 
+          if Real32.equal (x, 1.0) orelse Real32.equal (x, ~1.0)
+          then nan
+          else powf (x, y)
+        else powf (x, y)
     val ln =
         _import "logf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val log10 =
         _import "log10f"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val sinh =
         _import "sinhf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val cosh =
         _import "coshf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
     val tanh =
         _import "tanhf"
-        : __attribute__((pure,no_callback)) real -> real
+        : __attribute__((pure,fast)) real -> real
   end
 
   (* IEEE 754 single precision floating point number *)
@@ -100,16 +113,27 @@ struct
   val == = Real32.equal
   val != = Real32.notEqual
   val ?= = Real32.ueq
-  val isNan = SMLSharp_Builtin.Real32.isNan
+  val isNan = Real32.isNan
   val trunc = Real32.trunc
-  val fromInt = Real32.fromInt_unsafe  (* FIXME *)
+  val fromInt = SMLSharp_Builtin.Int32.toFloat_unsafe  (* FIXME *)
   val toLarge = Real32.toReal
+  val fromReal_unsafe = SMLSharp_Builtin.Real64.toFloat_unsafe
 
   fun *+ (r1, r2, r3) = r1 * r2 + r3
   fun *- (r1, r2, r3) = r1 * r2 - r3
 
-  fun min (x, y) = if Real32.lteq (x, y) then x else if isNan x then y else x
-  fun max (x, y) = if Real32.gteq (x, y) then x else if isNan x then y else x
+(* bug 305_Real32Min
+  fun min (x, y) = if Real32.lteq (x, y) then x else if isNan x then y else x*)
+  fun min (x, y) =
+      if isNan x then y
+      else if isNan y then x
+      else if Real32.lteq (x, y) then x else y
+(* bug 306_Real32Max
+  fun max (x, y) = if Real32.gteq (x, y) then x else if isNan x then y else x*)
+  fun max (x, y) =
+      if isNan x then y
+      else if isNan y then x
+      else if Real32.lteq (x, y) then y else x
   fun sign x = SMLSharp_RealClass.sign (SMLSharp_RealClass.classFloat x)
   fun signBit x = SMLSharp_RealClass.signBit (SMLSharp_RealClass.classFloat x)
   fun sameSign (x, y) = signBit x = signBit y
@@ -120,7 +144,7 @@ struct
 
   val copySign =
       _import "copysignf"
-      : __attribute__((pure,no_callback)) (real, real) -> real
+      : __attribute__((pure,fast)) (real, real) -> real
 
   fun compareReal (x, y) =
       if Real32.lt (x, y) then IEEEReal.LESS
@@ -137,13 +161,13 @@ struct
 
   val frexpf =
       _import "frexpf"
-      : __attribute__((pure,no_callback)) (real, int ref) -> real
+      : __attribute__((pure,fast)) (real, int ref) -> real
   val ldexpf =
       _import "ldexpf"
-      : __attribute__((pure,no_callback)) (real, int) -> real
+      : __attribute__((pure,fast)) (real, int) -> real
   val modff =
       _import "modff"
-      : __attribute__((pure,no_callback)) (real, real ref) -> real
+      : __attribute__((pure,fast)) (real, real ref) -> real
 
   fun toManExp x =
       let val exp = ref 0
@@ -162,9 +186,19 @@ struct
 
   fun realMod x = #frac (split x)
 
+(* bug 307_Real32NextAfter
   val nextAfter =
       _import "nextafterf"
-      : __attribute__((pure,no_callback)) (real, real) -> real
+      : __attribute__((pure,fast)) (real, real) -> real*)
+  val nextafterf = 
+      _import "nextafterf"
+      : __attribute__((pure,fast)) (real, real) -> real
+
+  fun nextAfter (r, t) =
+      case (class r, class t) of
+	(IEEEReal.INF, IEEEReal.NAN) => nextafterf(r, t)
+      | (IEEEReal.INF, _) => r
+      | _ => nextafterf (r, t)
 
   fun checkFloat x =
       case class x of
@@ -174,20 +208,39 @@ struct
 
   val realFloor =
       _import "floorf"
-      : __attribute__((pure,no_callback)) real -> real
+      : __attribute__((pure,fast)) real -> real
   val realCeil =
       _import "ceilf"
-      : __attribute__((pure,no_callback)) real -> real
+      : __attribute__((pure,fast)) real -> real
   val realTrunc =
       _import "truncf"
-      : __attribute__((pure,no_callback)) real -> real
+      : __attribute__((pure,fast)) real -> real
+(* bug 308_Real32RealRound
   val realRound =
       _import "roundf"
-      : __attribute__((pure,no_callback)) real -> real
+      : __attribute__((pure,fast)) real -> real*)
+  fun floorOrCeil r =
+      if signBit r then realFloor r else realCeil r
+
+  fun realRound r =
+      let
+        val {whole, frac} = split r
+        val frac = abs frac
+      in
+        if frac < 0.5
+        then whole
+        else if frac > 0.5
+        then floorOrCeil r
+        else if == (rem (whole, 2.0), 0.0)
+        then whole 
+        else floorOrCeil r
+      end
 
   fun floor x = Real32.trunc (realFloor x)
   fun ceil x = Real32.trunc (realCeil x)
-  fun round x = Real32.trunc (realTrunc x)
+(* bug 309_Real32Round
+  fun round x = Real32.trunc (realTrunc x)*)
+  fun round x = Real32.trunc (realRound x)
 
   fun toInt mode x =
       case mode of
@@ -197,34 +250,34 @@ struct
       | IEEEReal.TO_NEAREST => round x
 
   fun toLargeInt mode x =
-      Real.toLargeInt mode (Real32.toReal x)
+      Real64.toLargeInt mode (Real32.toReal x)
 
   fun fromLargeInt x =
-      Real32.fromReal_unsafe (Real.fromLargeInt x)  (* FIXME *)
+      fromReal_unsafe (Real64.fromLargeInt x)  (* FIXME *)
 
   fun fromLarge (mode:IEEEReal.rounding_mode) (x:LargeReal.real) : real =
       raise SMLSharp_Runtime.Bug "FIXME: Real32.fromLarge: not implemented yet"
 
   fun fmt format x =
-      Real.fmt format (Real32.toReal x)
+      Real64.fmt format (Real32.toReal x)
 
   fun toString x =
-      Real.toString (Real32.toReal x)
+      Real64.toString (Real32.toReal x)
 
   fun scan getc strm =
-      case Real.scan getc strm of
+      case Real64.scan getc strm of
         NONE => NONE
-      | SOME (x, strm) => SOME (Real32.fromReal_unsafe x, strm)  (* FIXME *)
+      | SOME (x, strm) => SOME (fromReal_unsafe x, strm)  (* FIXME *)
 
   fun fromString s =
       StringCvt.scanString scan s
 
   fun toDecimal x =
-      Real.toDecimal (Real32.toReal x)
+      Real64.toDecimal (Real32.toReal x)
 
   fun fromDecimal x =
-      case Real.fromDecimal x of
+      case Real64.fromDecimal x of
         NONE => NONE
-      | SOME x => SOME (Real32.fromReal_unsafe x)  (* FIXME *)
+      | SOME x => SOME (fromReal_unsafe x)  (* FIXME *)
 
 end

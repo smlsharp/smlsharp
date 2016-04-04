@@ -172,7 +172,7 @@ struct
 
   fun elabDec dec =
       case dec of
-        I.IVAL valbind => map elabValbind valbind
+        I.IVAL valbind => [elabValbind valbind]
       | I.ITYPE typbindList => map elabTypbind typbindList
       | I.IDATATYPE {datbind, loc} =>
         (app (fn {tyvars, symbol, conbind} =>
@@ -228,6 +228,8 @@ struct
                     loc = loc}
       end
 
+  fun mustBeDisjoint _ = raise Bug.Bug "must be disjoint"
+
   fun elabTopdec fixEnv itopdec =
       case itopdec of
       I.IDEC dec =>
@@ -270,10 +272,10 @@ struct
     | elabTopdecList fixEnv (dec::decs) =
       let
         val (newFixEnv1, dec) = elabTopdec fixEnv dec
-        val fixEnv = SEnv.unionWith #2 (fixEnv, newFixEnv1)
+        val fixEnv = SEnv.unionWith mustBeDisjoint (fixEnv, newFixEnv1)
         val (newFixEnv2, decs) = elabTopdecList fixEnv decs
       in
-        (SEnv.unionWith #2 (newFixEnv1, newFixEnv2), dec @ decs)
+        (SEnv.unionWith mustBeDisjoint (newFixEnv1, newFixEnv2), dec @ decs)
       end
 
   fun elabInterfaceDec fixEnv ({interfaceId, interfaceName, requiredIds, provideTopdecs}
@@ -302,17 +304,23 @@ struct
   fun toFixEnv env =
       SEnv.map (fn (x, _:I.loc) => x) env : fixEnv
 
-  fun elaborate ({interfaceDecs, provideInterfaceNameOpt, requiredIds, provideTopdecs}:I.interface) =
+  fun elaborate ({interfaceDecs, provideInterfaceNameOpt, requiredIds,
+                  locallyRequiredIds, provideTopdecs}:I.interface) =
       let
         val (fixEnvMap, newDecls) =
             elabInterfaceDecs SEnv.empty interfaceDecs
         val allFixEnv =
-            InterfaceID.Map.foldl (SEnv.unionWith #2) SEnv.empty fixEnvMap
-        val (provideFixEnv, provideTopdecs) = elabTopdecList allFixEnv provideTopdecs
+            InterfaceID.Map.foldl
+              (SEnv.unionWith mustBeDisjoint)
+              SEnv.empty
+              fixEnvMap
+        val (provideFixEnv, provideTopdecs) =
+            elabTopdecList allFixEnv provideTopdecs
         val interface =
             {
               interfaceDecs = newDecls,
               requiredIds = requiredIds,
+              locallyRequiredIds = locallyRequiredIds,
               provideTopdecs = provideTopdecs
             }
             : P.interface
@@ -320,10 +328,10 @@ struct
         val requireFixEnv =
             foldl (fn ({id, loc}, z) =>
                       case InterfaceID.Map.find (fixEnvMap, id) of
-                        SOME env => SEnv.unionWith #2 (z, env)
+                        SOME env => SEnv.unionWith mustBeDisjoint (z, env)
                       | NONE => raise Bug.Bug "elaborate: interface not found")
                   SEnv.empty
-                  requiredIds
+                  (requiredIds @ locallyRequiredIds)
       in
         (toFixEnv requireFixEnv, interface)
       end

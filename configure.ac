@@ -135,17 +135,34 @@ if test "x$LLVM_CONFIG" = "x"; then
   AC_MSG_ERROR([llvm-config is not found.])
 fi
 
-AC_MSG_CHECKING([for llvm version])
-ver=`$LLVM_CONFIG --version`
-AC_MSG_RESULT($ver)
-case "$ver" in
-  [[0-2]]*|3.[[0-3]]*)
-    AC_MSG_ERROR([llvm version 3.4 is required])
-    ;;
-  3.4)
+LLVM_bindir=`"$LLVM_CONFIG" --bindir`
+AC_DEFUN(LLVM_PROG, [
+  AC_PATH_PROG($1, $2, [], $[]LLVM_bindir)
+  if test "x$[]$1" = "x"; then
+    AC_MSG_ERROR([$2 is not found.])
+  fi
+  AC_SUBST($1)
+])
+LLVM_PROG(LLC, llc)
+LLVM_PROG(OPT, opt)
+LLVM_PROG(LLVM_DIS, llvm-dis)
+LLVM_PROG(LLVM_AS, llvm-as)
+
+AC_ARG_WITH(incompatible-llvm,
+AS_HELP_STRING([--with-incompatible-llvm],
+               [skip LLVM version check]))
+
+AC_MSG_CHECKING([for LLVM version])
+LLVM_VERSION=`$LLVM_CONFIG --version`
+AC_MSG_RESULT($LLVM_VERSION)
+case "$LLVM_VERSION" in
+  3.7.[[1-9]])
     ;;
   *)
-    AC_MSG_WARN([LLVM later than 3.4 is found. Since SML[#] is written for LLVM 3.4, build will fail due to library incompatibility.])
+    AC_MSG_WARN([SML[#] requires LLVM 3.7.1 but $LLVM_VERSION is found. Build may fail due to incompatibility.])
+    if test "x$with_incompatible_llvm" != "xyes"; then
+      AC_MSG_ERROR([Specify --with-incompatible-llvm if you really want to build SML[#] with the incompatible LLVM.])
+    fi
     ;;
 esac
 
@@ -156,31 +173,47 @@ AC_DEFUN(LLVM_FLAG, [
   AC_MSG_RESULT($[]LLVM_$1)
   AC_SUBST(LLVM_$1)
 ])
+
+LLVM_FLAG(LIBDIR, libdir)
+LLVM_FLAG(LDFLAGS, ldflags)
+LLVM_FLAG(SYSLIBS, system-libs)
+
+AC_ARG_ENABLE(rpath,
+AS_HELP_STRING([--disable-rpath], [do not specify RPATH]),
+[], [ enable_rpath=yes ])
+
+orig_LDFAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS $LLVM_LDFLAGS"
+libsuffix=`echo "$LLVM_VERSION" | sed 's,\.[[^.]]*$,,'`
+AC_CHECK_LIB(LLVM-$libsuffix, LLVMCreateTargetMachine,
+  [ LLVM_LIBS="-lLLVM-$libsuffix"
+    if test "x$enable_rpath" = "xyes"; then
+      LLVM_LDFLAGS="$LLVM_LDFLAGS -Wl,-rpath,'$LLVM_LIBDIR'"
+    fi
+  ],
+  [ LLVM_FLAG(LIBS, libs) ],
+  [ $LLVM_SYSLIBS ])
+AC_SUBST(LLVM_LIBS)
+LDFLAGS=$orig_LDFLAGS
+
 LLVM_FLAG(CXXFLAGS, cxxflags)
 LLVM_FLAG(CPPFLAGS, cppflags)
-LLVM_FLAG(LDFLAGS, ldflags)
-LLVM_FLAG(LIBS, libs)
 
 LLVM_SMLSHARP_LDFLAGS="-c++"
 AC_SUBST(LLVM_SMLSHARP_LDFLAGS)
 
-ldflags=
 for i in $LLVM_LDFLAGS; do
   case "$i" in
   -L*)
     LLVM_SMLSHARP_LDFLAGS="$LLVM_SMLSHARP_LDFLAGS $i"
     ldflags="$ldflags $i"
     ;;
-  -l*)
-    LLVM_LIBS="$LLVM_LIBS $i"
-    ;;
   *)
-    LLVM_SMLSHARP_LDFLAGS="$LLVM_SMLSHARP_LDFLAGS -Wl,$i"
+    LLVM_SMLSHARP_LDFLAGS="$LLVM_SMLSHARP_LDFLAGS -Xlinker $i"
     ldflags="$ldflags $i"
     ;;
   esac
 done
-LLVM_LDFLAGS=$ldflags
 
 orig_CPPFLAGS=$CPPFLAGS
 CPPFLAGS=$LLVM_CPPFLAGS
@@ -229,39 +262,39 @@ if test "x$SMLSHARP_STAGE1" = "x./minismlsharp"; then
   fi
 fi
 
-# -------- Checks for multithreading --------
-
-AC_ARG_ENABLE(thread,
-AS_HELP_STRING([--enable-thread],
-               [enable experimental native thread support [[default=no]]]),
-[
-  if test "x$enableval" != "xno"; then
-    RUNTIME_DEFS="$RUNTIME_DEFS -DMULTITHREAD"
-    SMLFLAGS="$SMLFLAGS -dinsertCheckGC=yes"
-    EXTRA_OPTIONS="$EXTRA_OPTIONS insertCheckGC=yes"
-  fi
-])
-
 # -------- Checks for native compile --------
 
 TARGET_TRIPLE="$target"
 AC_SUBST(TARGET_TRIPLE)
-MINISMLSHARP_PRECOMPILED=
-AC_SUBST(MINISMLSHARP_PRECOMPILED)
+PRECOMPILED_ARCH=
+AC_SUBST(PRECOMPILED_ARCH)
 
+# workaround to avoid the following warnings caused by linker.
+# ld: warning: object file (xxx.o) was built for newer OSX version (xx.x) than being linked (xx.xx)
 case "$TARGET_TRIPLE" in
-  x86_64-*-linux*)
-    TARGET_TRIPLE=`echo "$TARGET_TRIPLE" | sed 's,^x86_64,i686,'`
+  *-apple-darwin*)
+    TARGET_TRIPLE=`echo "$TARGET_TRIPLE" | sed 's,[[0-9.]]*$,,'`
     ;;
 esac
+
+#case "$TARGET_TRIPLE" in
+#  x86_64-*-linux*)
+#    TARGET_TRIPLE=`echo "$TARGET_TRIPLE" | sed 's,^x86_64,i686,'`
+#    ;;
+#esac
 
 AC_MSG_CHECKING([whether target platform is supported])
 
 case "$TARGET_TRIPLE" in
   i[[3456]]86-*)
     AC_MSG_RESULT([yes])
-    RUNTIME_DEFS="$RUNTIME_DEFS -DHOST_CPU_i386 -DMAXALIGN=16"
-    MINISMLSHARP_PRECOMPILED=x86
+    RUNTIME_DEFS="$RUNTIME_DEFS -DHOST_CPU_i386"
+    PRECOMPILED_ARCH=x86
+    ;;
+  x86_64-*)
+    AC_MSG_RESULT([yes])
+    RUNTIME_DEFS="$RUNTIME_DEFS -DHOST_CPU_i386"
+    PRECOMPILED_ARCH=x86_64
     ;;
   *)
     AC_MSG_RESULT([no])
@@ -276,6 +309,9 @@ case "$TARGET_TRIPLE" in
   *darwin*)
     PIC_DEFAULT=true
     ;;
+  x86_64-*)
+    PIC_DEFAULT=true
+    ;;
 esac
 
 # -------- Extra switches for developers --------
@@ -288,21 +324,6 @@ if test -f "$srcdir/../.hg/dirstate"; then
   fi
 fi
 AC_SUBST(SNAPDATE_RULE_)
-
-HEAPIMPL=bitmap
-AC_SUBST(HEAPIMPL)
-
-AC_ARG_ENABLE(heapimpl,
-AS_HELP_STRING([--enable-heapimpl],
-               [select heap management algorithm [[default=bitmap]]]),
-[ HEAPIMPL=$enableval ])
-
-AC_MSG_CHECKING([for heap management algorithm])
-AC_MSG_RESULT([$HEAPIMPL])
-
-if test ! -f "$srcdir/src/runtime/heap_$HEAPIMPL.c"; then
-  AC_MSG_ERROR([heap implementation \`$HEAPIMPL' is not available.])
-fi
 
 # -------- Checks for Libraries --------
 
@@ -335,18 +356,62 @@ AS_HELP_STRING([--with-rt],[try to use clock_gettime for benchmark]),
   fi
 ])
 
-if test "x$enable_thread" = "xyes"; then
-  AC_CHECK_LIB(pthread, pthread_create)
-  if test "x$ac_cv_lib_pthread_pthread_create" = "xno"; then
-      AC_MSG_ERROR([pthread library is not found.])
-  fi
+AC_CHECK_LIB(pthread, pthread_create)
+if test "x$ac_cv_lib_pthread_pthread_create" = "xno"; then
+    AC_MSG_ERROR([pthread library is not found.])
 fi
+
+AC_CHECK_HEADERS(stdatomic.h, [], [
+  AC_MSG_CHECKING([for GCC __atomic builtins])
+  AC_COMPILE_IFELSE(
+    [ AC_LANG_SOURCE([
+        int foo(void **p1, void **p2, void *p3) {
+          return __atomic_compare_exchange_n
+            (p1, p2, p3, 1, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+        }
+      ])],
+    [ AC_MSG_RESULT([yes])
+      AC_DEFINE(HAVE_GCC_ATOMIC, 1, [Define if __atomic builtins are available])
+    ],
+    [ AC_MSG_RESULT([no])
+      AC_MSG_ERROR([__atomic builtins are not available. Use GCC 4.7 or later])
+    ])
+])
+
+AC_MSG_CHECKING([for alignof])
+AC_COMPILE_IFELSE(
+  [ AC_LANG_SOURCE([ int x = alignof(void *); ]) ],
+  [ AC_MSG_RESULT([yes])
+    AC_DEFINE(HAVE_ALIGNOF, 1, [Define if aligonof is available]) ],
+  [ AC_COMPILE_IFELSE(
+      [ AC_LANG_SOURCE([ int x = __alignof__(void *); ]) ],
+      [ AC_MSG_RESULT([yes])
+        AC_DEFINE(HAVE_ALIGNOF, 1)
+        AC_DEFINE(alignof, __alignof__, [Alternative to alignof]) ],
+      [ AC_MSG_RESULT([no]) ]) ])
+
+AC_CHECK_TYPES([max_align_t])
 
 case "$target_os" in
   *mingw*)
     AC_DEFINE(MINGW32, 1, [Define if your system is Windows])
     ;;
 esac
+
+AC_MSG_CHECKING([for _Thread_local storage class])
+AC_COMPILE_IFELSE(
+  [ AC_LANG_SOURCE([ _Thread_local int hoge; int foo() { return hoge; } ]) ],
+  [ AC_MSG_RESULT([yes])
+    AC_DEFINE(HAVE_TLS, 1, [Define if _Thread_local is available]) ],
+  [ AC_MSG_RESULT([no])
+    AC_MSG_CHECKING([for __thread storage class])
+    AC_COMPILE_IFELSE(
+      [ AC_LANG_SOURCE([ __thread int hoge; int foo() { return hoge; } ]) ],
+      [ AC_MSG_RESULT([yes])
+        AC_DEFINE(_Thread_local, __thread, [alternative to _Thread_local])
+        AC_DEFINE(HAVE_TLS, 1) ]
+      [ AC_MSG_RESULT([no]) ])
+  ])
 
 # FIXME: check for method for dynamic linking.
 
@@ -387,9 +452,7 @@ REQUIRED_HEADER(unistd.h)
 REQUIRED_HEADER(fcntl.h)
 REQUIRED_HEADER(sys/time.h)
 REQUIRED_HEADER(sys/stat.h)
-if test "x$enable_thread" = "xyes"; then
-  REQUIRED_HEADER(pthread.h)
-fi
+REQUIRED_HEADER(pthread.h)
 REQUIRED_HEADER(signal.h)
 case "$target_os" in
   *mingw*)
@@ -412,6 +475,24 @@ esac
 
 # for dlopen etc.
 AC_CHECK_HEADERS(dlfcn.h)
+
+AC_DEFUN(CHECK_DECLS_GNU_SOURCE, [
+  AC_CHECK_DECLS([$1],[$2],[
+    unset ac_cv_have_decl_$1
+    AC_CHECK_DECLS([$1],
+      [ CPPFLAGS="$[]CPPFLAGS -D_GNU_SOURCE" ]
+      [ $2 ],
+      [ $3 ],
+      [ #define _GNU_SOURCE ]
+      [ $4 ])
+  ],[$4])
+])
+
+CHECK_DECLS_GNU_SOURCE(RTLD_DEFAULT,,[
+  AC_ERROR("RTLD_DEFAULT is required")
+],[#include <dlfcn.h>])
+CHECK_DECLS_GNU_SOURCE(RTLD_NEXT,,,[#include <dlfcn.h>])
+
 # for poll
 AC_CHECK_HEADERS(poll.h)
 # for mmap
@@ -432,11 +513,15 @@ AC_CHECK_HEADERS(utime.h)
 
 AC_CHECK_HEADERS([strings.h sys/socket.h])
 
+AC_CHECK_HEADERS(libunwind.h)
+AC_CHECK_FUNCS(unw_getcontext)
+
 # -------- check for C language --------
 
-AC_C_CONST
-AC_C_INLINE
-AC_C_VOLATILE
+AC_PROG_CC_C99
+if test "x$ac_cv_prog_cc_c99" = "xno"; then
+  AC_MSG_ERROR([C99 compiler is required])
+fi
 AC_TYPE_SIZE_T
 
 #AC_TYPE_SIGNAL
@@ -490,7 +575,7 @@ times \
 utime \
 utimes \
 ])
-AC_CHECK_DECLS([CLOCK_PROCESS_CPUTIME_ID],,,[#include <time.h>])
+AC_CHECK_DECLS([CLOCK_MONOTONIC],,,[#include <time.h>])
 AC_CHECK_DECLS([fpclassify, isinf, isnan, isnormal, signbit],,,
                [#include <math.h>])
 
@@ -505,8 +590,8 @@ fi
 
 # -------- Finale --------
 
-AC_CONFIG_FILES([stamp-h config.mk src/config.mk Makefile],
-                [echo timestamp > stamp-h])
+AC_CONFIG_FILES([config.mk src/config.mk Makefile])
+AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
 AC_OUTPUT
 
 if test "x$no_create" != "xyes" && test "x$srcdir" != "x."; then

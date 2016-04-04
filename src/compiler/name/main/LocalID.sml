@@ -1,20 +1,23 @@
-structure FreeTypeVarID = GenIDFun(Empty)
-structure BoundTypeVarID = GenIDFun(Empty)
-structure ClusterID = GenIDFun(Empty)
-structure ConID = GenIDFun(Empty)
-structure ExnID = GenIDFun(Empty)
-structure InterfaceID  = GenIDFun(Empty)
-structure OPrimID = GenIDFun(Empty)
-structure PrimID = GenIDFun(Empty)
-structure TvarID = GenIDFun(Empty)
-structure TypID = GenIDFun(Empty)
-structure VarID = GenIDFun(Empty)
-structure SlotID = GenIDFun(Empty)
-structure StructureID = GenIDFun(Empty)
-structure FunctorID = GenIDFun(Empty)
-structure FunctionAnnotationID = GenIDFun(Empty)
-structure AnnotationLabelID = GenIDFun(Empty)
-structure RevealID = GenIDFun(Empty)
+(* 2015-09-26. Ad-hoc fix to seepd up compilation
+*)
+
+structure FreeTypeVarID = GenID
+structure BoundTypeVarID = GenID
+structure ClusterID = GenID
+structure ConID = GenID
+structure ExnID = GenID
+structure InterfaceID  = GenID
+structure OPrimID = GenID
+structure PrimID = GenID
+structure TvarID = GenID
+structure TypID = GenID
+structure VarID = GenID
+structure SlotID = GenID
+structure StructureID = GenID
+structure FunctorID = GenID
+structure FunctionAnnotationID = GenID
+structure AnnotationLabelID = GenID
+structure RevealID = GenID
 structure VarName = 
 struct
 local

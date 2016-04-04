@@ -12,12 +12,12 @@ infix 4 = < >=
 val op quot = IntInf.quot
 val op * = IntInf.*
 val op + = IntInf.+
-val op / = LargeReal./
-val op < = SMLSharp_Builtin.Int.lt
-val op >= = SMLSharp_Builtin.Int.gteq
-val op - = SMLSharp_Builtin.Int.sub_unsafe
+val op / = Real64./
+val op < = SMLSharp_Builtin.Int32.lt
+val op >= = SMLSharp_Builtin.Int32.gteq
+val op - = SMLSharp_Builtin.Int32.sub_unsafe
 val op ^ = String.^
-structure Word = SMLSharp_Builtin.Word
+structure Word32 = SMLSharp_Builtin.Word32
 
 structure Time =
 struct
@@ -31,10 +31,9 @@ struct
 
   fun fromReal rsec =
       IntInf.fromLarge
-        (LargeReal.toLargeInt IEEEReal.TO_ZERO
-                              (LargeReal.* (rsec, Real.toLarge 1E9)))
+        (Real64.toLargeInt IEEEReal.TO_ZERO (Real64.* (rsec, 1E9)))
   fun toReal nsec =
-      LargeReal.fromLargeInt (IntInf.toLarge nsec) / Real.toLarge 1E9
+      Real64.fromLargeInt (IntInf.toLarge nsec) / 1E9
 
 (* To round towards ZERO, use quot, not div. *)
   fun toSeconds nsec      = IntInf.toLarge (nsec quot 1000000000)
@@ -48,7 +47,7 @@ struct
 
   val prim_gettimeofday =
       _import "prim_Time_gettimeofday"
-      : __attribute__((no_callback)) int array -> int
+      : __attribute__((fast)) int array -> int
 
   (* number of seconds from UNIX epoch without leap seconds in UTC. *)
   fun now () =
@@ -108,9 +107,9 @@ struct
         | SOME ((il, fl), strm) =>
           let
             fun pad (nil, 0w0) = nil
-              | pad (nil, n) = 0 :: pad (nil, Word.sub (n, 0w1))
+              | pad (nil, n) = 0 :: pad (nil, Word32.sub (n, 0w1))
               | pad (h::t, 0w0) = raise Time
-              | pad (h::t, n) = h :: pad (t, Word.sub (n, 0w1))
+              | pad (h::t, n) = h :: pad (t, Word32.sub (n, 0w1))
             val n = toInt il * 1000000000 + toInt (pad (fl, 0w9))
           in
             SOME (if sign then IntInf.~ n else n, strm)

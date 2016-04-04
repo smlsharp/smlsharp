@@ -1,0 +1,51 @@
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require local "./SMLSharp_ScanChar.smi"
+_require "./IntInf.smi"
+_require local "./String.smi"
+
+structure Word32 =
+struct
+  type word = SMLSharp_Builtin.Word32.word
+  val wordSize : int
+  val toLarge = SMLSharp_Builtin.Word32.toWord64
+  val toLargeX = SMLSharp_Builtin.Word32.toWord64X
+  val toLargeWord = SMLSharp_Builtin.Word32.toWord64
+  val toLargeWordX = SMLSharp_Builtin.Word32.toWord64X
+  val fromLarge = SMLSharp_Builtin.Word64.toWord32
+  val fromLargeWord = SMLSharp_Builtin.Word64.toWord32
+  val toLargeInt : word -> LargeInt.int
+  val toLargeIntX : word -> LargeInt.int
+  val fromLargeInt : LargeInt.int -> word
+  val toInt = SMLSharp_Builtin.Word32.toInt32
+  val toIntX = SMLSharp_Builtin.Word32.toInt32X
+  val fromInt = SMLSharp_Builtin.Word32.fromInt32
+  val andb = SMLSharp_Builtin.Word32.andb
+  val orb = SMLSharp_Builtin.Word32.orb
+  val xorb = SMLSharp_Builtin.Word32.xorb
+  val notb = SMLSharp_Builtin.Word32.notb
+  val << = SMLSharp_Builtin.Word32.lshift
+  val >> = SMLSharp_Builtin.Word32.rshift
+  val ~>> = SMLSharp_Builtin.Word32.arshift
+  val + = SMLSharp_Builtin.Word32.add
+  val - = SMLSharp_Builtin.Word32.sub
+  val * = SMLSharp_Builtin.Word32.mul
+  val div = SMLSharp_Builtin.Word32.div
+  val mod = SMLSharp_Builtin.Word32.mod
+  val compare : word * word -> General.order
+  val < = SMLSharp_Builtin.Word32.lt
+  val <= = SMLSharp_Builtin.Word32.lteq
+  val > = SMLSharp_Builtin.Word32.gt
+  val >= = SMLSharp_Builtin.Word32.gteq
+  val ~ = SMLSharp_Builtin.Word32.neg
+  val min : word * word -> word
+  val max : word * word -> word
+  val fmt : StringCvt.radix -> word -> string
+  val toString : word -> string
+  val scan : StringCvt.radix
+             -> (char, 'a) StringCvt.reader
+             -> (word, 'a) StringCvt.reader
+  val fromString : string -> word option
+end
+
+structure Word = Word32

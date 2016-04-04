@@ -2,12 +2,12 @@ _require "../../basis.smi"
 _require "./builtintypes/timestamp/TimeStamp.smi"
 _require "./builtintypes/decimal/Decimal.smi"
 _require "./builtintypes/float/Float.smi"
-_require "./SQLErrors.smi"
+_require local "./SQLErrors.smi"
 _require "./SQLBackendTy.smi"
-_require "./PGSQLBackend.smi"
-_require "./MySQLBackend.smi"
-_require "./ODBCBackend.smi"
-_require "./SQLBACKEND.sig"
+_require local "./PGSQLBackend.smi"
+_require local "./MySQLBackend.smi"
+_require local "./ODBCBackend.smi"
+_require local "./SQLBACKEND.sig"
 
 structure SMLSharp_SQL_Backend =
 struct

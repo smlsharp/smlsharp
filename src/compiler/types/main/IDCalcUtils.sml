@@ -393,6 +393,7 @@ local
     | IC.ICEXPORTEXN _ => (varMap, icdecl)
     | IC.ICEXTERNVAR  _ => (varMap, icdecl)
     | IC.ICEXTERNEXN  _ => (varMap, icdecl)
+    | IC.ICBUILTINEXN  _ => (varMap, icdecl)
     | IC.ICTYCASTDECL (castList, icdeclList, loc) =>
       let
         val (varMap, icdeclList) = copyDeclList varMap icdeclList

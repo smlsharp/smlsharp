@@ -77,6 +77,16 @@ in
                  case runtimeTy of
                    I.BUILTINty ty => ty
                  | I.LIFTEDty _ => BuiltinTypeNames.BOXEDty
+             val (argTyContext, btvEnv) =
+                 evalKindedTvarList
+                   context
+                   (map (fn ty => (ty, I.UNIV)) formals)
+             val argTyFn =
+                 if BoundTypeVarID.Map.isEmpty btvEnv
+                 then fn ity => fn () => evalIty argTyContext ity
+                 else fn ity => fn () =>
+                         T.POLYty {boundtvars = btvEnv,
+                                   body = evalIty argTyContext ity}
            in
               {id = id,
              (* 2012-7-15 ohori: bug 207_printer.sml. 
@@ -87,13 +97,15 @@ in
 	       runtimeTy = runtimeTy,
                arity = List.length formals,
                conIDSet = conIDSet,
-               conSet =SymbolEnv.foldri
-                         (fn (symbol, NONE, conSet) => 
-                             SEnv.insert(conSet, Symbol.symbolToString symbol, {hasArg=false})
-                           | (symbol, SOME ity, conSet) => 
-                             SEnv.insert(conSet, Symbol.symbolToString symbol, {hasArg=true}))
-                         SEnv.empty
-                         conSpec,
+               conSet =
+                 SymbolEnv.foldri
+                   (fn (symbol, ityOpt, conSet) =>
+                       SEnv.insert
+                         (conSet,
+                          Symbol.symbolToString symbol,
+                          Option.map argTyFn ityOpt))
+                   SEnv.empty
+                   conSpec,
                extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
                dtyKind = evalDtyKind context dtyKind
               }
@@ -229,6 +241,8 @@ in
             case kind of
               I.UNIV => T.UNIV
             | I.REC tyFields => T.REC (LabelEnv.map (evalIty newContext) tyFields)
+            | I.BOXED => T.BOXED
+            | I.UNBOXED => T.UNBOXED
         val btvEnv =
             foldl
             (fn ((btvId, eq, kind), btvEnv) =>

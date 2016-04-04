@@ -1,9 +1,9 @@
 _require "./General.smi"
-_require "./Char.smi"
+_require local "./Char.smi"
 _require "./StringCvt.smi"
-_require "./SMLSharp_ScanChar.smi"
+_require local "./SMLSharp_ScanChar.smi"
 _require "./CharVector.smi"
-_require "./Substring.smi"
+_require local "./Substring.smi"
 
 structure String =
 struct

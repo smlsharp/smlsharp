@@ -1,0 +1,99 @@
+_require local "./SMLSharp_Runtime.smi"
+_require local "./SMLSharp_RealClass.smi"
+_require "./General.smi"
+_require "./StringCvt.smi"
+_require local "./String.smi"
+_require local "./Int32.smi"
+_require "./IEEEReal.smi"
+
+structure Real64 =
+struct
+  type real = SMLSharp_Builtin.Real64.real
+  structure Math =
+  struct
+    type real = real
+    val pi : real
+    val e : real
+    val sqrt : real -> real
+    val sin : real -> real
+    val cos : real -> real
+    val tan : real -> real
+    val asin : real -> real
+    val acos : real -> real
+    val atan : real -> real
+    val atan2 : real * real -> real
+    val exp : real -> real
+    val pow : real * real -> real
+    val ln : real -> real
+    val log10 : real -> real
+    val sinh : real -> real
+    val cosh : real -> real
+    val tanh : real -> real
+  end
+  val radix : int
+  val precision : int
+  val maxFinite : real
+  val minPos : real
+  val minNormalPos : real
+  val posInf : real
+  val negInf : real
+  val + = SMLSharp_Builtin.Real64.add
+  val - = SMLSharp_Builtin.Real64.sub
+  val * = SMLSharp_Builtin.Real64.mul
+  val / = SMLSharp_Builtin.Real64.div
+  val rem = SMLSharp_Builtin.Real64.rem
+  val *+ : real * real * real -> real
+  val *- : real * real * real -> real
+  val ~ = SMLSharp_Builtin.Real64.neg
+  val abs = SMLSharp_Builtin.Real64.abs
+  val min : real * real -> real
+  val max : real * real -> real
+  val sign : real -> int
+  val signBit : real -> bool
+  val sameSign : real * real -> bool
+  val copySign : real * real -> real
+  val compare : real * real -> General.order
+  val compareReal : real * real -> IEEEReal.real_order
+  val < = SMLSharp_Builtin.Real64.lt
+  val <= = SMLSharp_Builtin.Real64.lteq
+  val > = SMLSharp_Builtin.Real64.gt
+  val >= = SMLSharp_Builtin.Real64.gteq
+  val == = SMLSharp_Builtin.Real64.equal
+  val != = SMLSharp_Builtin.Real64.notEqual
+  val ?= = SMLSharp_Builtin.Real64.ueq
+  val unordered : real * real -> bool
+  val isFinite : real -> bool
+  val isNan = SMLSharp_Builtin.Real64.isNan
+  val isNormal : real -> bool
+  val class : real -> IEEEReal.float_class
+  val toManExp : real -> {man : real, exp : int}
+  val fromManExp : {man : real, exp : int} -> real
+  val split : real -> {whole : real, frac : real}
+  val realMod : real -> real
+  val nextAfter : real * real -> real
+  val checkFloat : real -> real
+  val realFloor : real -> real
+  val realCeil : real -> real
+  val realTrunc : real -> real
+  val realRound : real -> real
+  val floor : real -> int
+  val ceil : real -> int
+  val trunc = SMLSharp_Builtin.Real64.trunc
+  val round : real -> int
+  val toInt : IEEEReal.rounding_mode -> real -> int
+  val toLargeInt : IEEEReal.rounding_mode -> real -> SMLSharp_Builtin.IntInf.int
+  val fromInt = SMLSharp_Builtin.Int32.toReal
+  val fromLargeInt : SMLSharp_Builtin.IntInf.int -> real
+  val toLarge : real -> SMLSharp_Builtin.Real64.real
+  val fromLarge : IEEEReal.rounding_mode -> SMLSharp_Builtin.Real64.real -> real
+  val fmt : StringCvt.realfmt -> real -> string
+  val toString : real -> string
+  val scan : (char, 'a) StringCvt.reader -> (real, 'a) StringCvt.reader
+  val fromString : string -> real option
+  val toDecimal : real -> IEEEReal.decimal_approx
+  val fromDecimal : IEEEReal.decimal_approx -> real option
+end
+
+structure LargeReal = Real64
+structure Real = Real64
+structure Math = Real.Math

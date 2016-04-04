@@ -1,7 +1,7 @@
-_require "../../basis.smi"
-_require "base.sig"
-_require "stream.smi"
-_require "lrtable.smi"
+_require local "../../basis.smi"
+_require local "./base.sig"
+_require local "./stream.smi"
+_require "./lrtable.smi"
 
 (* 2012-9-24: ohori
   This is the top-level library structure.

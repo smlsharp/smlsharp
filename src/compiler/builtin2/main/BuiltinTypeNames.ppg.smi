@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require local "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 
 structure BuiltinTypeNames =
@@ -7,8 +7,10 @@ struct
 
   datatype bty 
     = INTty
+    | INT64ty
     | INTINFty
     | WORDty
+    | WORD64ty
     | WORD8ty
     | CHARty
     | STRINGty

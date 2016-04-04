@@ -1,5 +1,6 @@
-_require "basis.smi"
-_require "smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/heapdump/main/HeapDump.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
 _require "../../typedlambda/main/TypedLambda.ppg.smi"
@@ -8,6 +9,7 @@ _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../name/main/CodeLabel.smi"
 _require "../../util/main/TermFormat.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 
@@ -173,8 +175,13 @@ struct
         exp : bcexp,
         expTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool,
+        cast : BuiltinPrimitive.cast,
+        loc : loc
+      }
+    | BCDUMP of
+      {
+        dump : HeapDump.dump,
+        ty : ty,
         loc : loc
       }
 
@@ -197,6 +204,7 @@ struct
       }
     | BCEXPORTVAR of
       {
+        weak : bool,
         exVarInfo : exVarInfo,
         exp : bcexp,
         loc : loc

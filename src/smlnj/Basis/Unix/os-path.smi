@@ -1,8 +1,8 @@
 _require "../OS/os-path-fn.smi"
-_require "../../../basis/main/Char.smi"
-_require "../../../basis/main/CharVector.smi"
+_require local "../../../basis/main/Char.smi"
+_require local "../../../basis/main/CharVector.smi"
 _require "../../../basis/main/Substring.smi"
-_require "../../../basis/main/String.smi"
+_require local "../../../basis/main/String.smi"
 
 structure SMLSharp_SMLNJ_PathBase =
 struct

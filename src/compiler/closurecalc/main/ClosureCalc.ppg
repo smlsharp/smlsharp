@@ -59,7 +59,9 @@ struct
   (*%
    * @params(btvEnv)
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
+   * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
+   * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
    * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
    * @formatter(char) TermFormat.format_char_ML
    * @formatter(DataLabel.id) DataLabel.format_id
@@ -68,12 +70,15 @@ struct
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
    * @formatter(Types.codeEntryTy) Types.format_codeEntryTy
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   (*%
    * @prefix formatWithType_
    * @params(btvEnv)
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
+   * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
+   * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
    * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
    * @formatter(char) TermFormat.format_char_ML
    * @formatter(DataLabel.id) DataLabel.format_id
@@ -83,6 +88,7 @@ struct
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
    * @formatter(Types.codeEntryTy) Types.format_codeEntryTy
    * @formatter(Types.callbackEntryTy) Types.format_callbackEntryTy
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    * @formatter(ty) format_ty
    *)
   datatype ccconst =
@@ -92,14 +98,28 @@ struct
       (*% @prefix formatWithType_
        * @format(x) x
        *)
-      CVINT of Int32.int
+      CVINT32 of Int32.int
     | (*%
        * @format(x) x
        *)
       (*% @prefix formatWithType_
        * @format(x) x
        *)
-      CVWORD of Word32.word
+      CVINT64 of Int64.int
+    | (*%
+       * @format(x) x
+       *)
+      (*% @prefix formatWithType_
+       * @format(x) x
+       *)
+      CVWORD32 of Word32.word
+    | (*%
+       * @format(x) x
+       *)
+      (*% @prefix formatWithType_
+       * @format(x) x
+       *)
+      CVWORD64 of Word64.word
     | (*%
        * @format(x) x
        *)
@@ -113,7 +133,7 @@ struct
       (*% @prefix formatWithType_
        * @format(x) x
        *)
-      CVBYTE of Word8.word
+      CVWORD8 of Word8.word
     | (*%
        * @format(x) x "f"
        *)
@@ -221,12 +241,12 @@ struct
        *)
       CVEXTRADATA of ExtraDataLabel.id
     | (*%
-       * @format({value, valueTy, targetTy, runtimeTyCast, bitCast})
-       * "_cast(" !N0{ value()(btvEnv) ")" }
+       * @format({value, valueTy, targetTy, cast})
+       * cast "(" !N0{ value()(btvEnv) ")" }
        *)
       (*% @prefix formatWithType_
-       * @format({value, valueTy, targetTy, runtimeTyCast, bitCast})
-       * L2{ "_cast(" !L2{ value()(btvEnv) +1 ":" +d valueTy()(btvEnv) ")" }
+       * @format({value, valueTy, targetTy, cast})
+       * L2{ cast "(" !L2{ value()(btvEnv) +1 ":" +d valueTy()(btvEnv) ")" }
        *     +1 "to" +d targetTy()(btvEnv) }
        *)
       CVCAST of
@@ -234,8 +254,7 @@ struct
         value : ccconst,
         valueTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool
+        cast : BuiltinPrimitive.cast
       }
     | (*%
        * @format({tag, ty}) tag
@@ -267,6 +286,7 @@ struct
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(withType) formatWithType_varInfo
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   (*%
    * @prefix formatWithType_
@@ -285,6 +305,7 @@ struct
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   datatype cconv =
       (*%
@@ -367,13 +388,13 @@ struct
        *)
       CCCONST of {const: ccconst, ty : ty, loc: loc}
     | (*%
-       * @format({srcLabel, loc}) "LargeInt(" "@ex:" srcLabel ")"
+       * @format({srcLabel, loc}) "IntInf(" "@ex:" srcLabel ")"
        *)
       (*%
        * @prefix formatWithType_
-       * @format({srcLabel, loc}) "LargeInt(" "@ex:" srcLabel ")"
+       * @format({srcLabel, loc}) "IntInf(" "@ex:" srcLabel ")"
        *)
-      CCLARGEINT of {srcLabel: ExtraDataLabel.id, loc: loc}
+      CCINTINF of {srcLabel: ExtraDataLabel.id, loc: loc}
     | (*%
        * @format({varInfo, loc}) varInfo
        *)
@@ -778,14 +799,14 @@ struct
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, targetTy, runtimeTyCast, bitCast, loc})
-       * "cast" "(" !N0{ exp()(btvEnv) ")" }
+       * @format({exp, expTy, targetTy, cast, loc})
+       * cast "(" !N0{ exp()(btvEnv) ")" }
        *)
       (*%
        * @prefix formatWithType_
-       * @format({exp, expTy, targetTy, runtimeTyCast, bitCast, loc})
+       * @format({exp, expTy, targetTy, cast, loc})
        * L2{
-       * "cast(" !L2{ exp()(btvEnv) +1 ":" +d expTy()(btvEnv) ")" }
+       * cast "(" !L2{ exp()(btvEnv) +1 ":" +d expTy()(btvEnv) ")" }
        * +1 ":" +d targetTy()(btvEnv) }
        *)
       CCCAST of
@@ -793,8 +814,7 @@ struct
         exp : ccexp,
         expTy : ty,
         targetTy : ty,
-        runtimeTyCast : bool,
-        bitCast : bool,
+        cast : BuiltinPrimitive.cast,
         loc : loc
       }
     | (*%
@@ -894,6 +914,7 @@ struct
 
   (*%
    * @formatter(option) SmlppgUtil.formatOptWithDefault
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
    * @formatter(enclosedList) TermFormat.formatEnclosedList
    * @formatter(appList) TermFormat.formatAppList
    * @formatter(DataLabel.id) DataLabel.format_id
@@ -902,6 +923,7 @@ struct
    *)
   (*% @prefix formatWithType_
    * @formatter(option) SmlppgUtil.formatOptWithDefault
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
    * @formatter(enclosedList) TermFormat.formatEnclosedList
    * @formatter(appList) TermFormat.formatAppList
    * @formatter(DataLabel.id) DataLabel.format_id
@@ -926,17 +948,20 @@ struct
         loc : loc
       }
     | (*%
-       * @format({id, ty, value: value valueOpt, loc})
+       * @format({id, weak, ty, value: value valueOpt, loc})
+       * weak()("weak" +d,)
        * "@ext:" id + "=" 1[ +1 valueOpt(value)("_undef") ]
        *)
       (*%
        * @prefix formatWithType_
-       * @format({id, ty, value: value valueOpt, loc})
+       * @format({id, weak, ty, value: value valueOpt, loc})
+       * weak()("weak" +d,)
        * "@ext:" id + "=" 1[ +1 valueOpt(value)("_undef") ]
        *)
       CTEXPORTVAR of
       {
         id : ExternSymbol.id,
+        weak : bool,
         ty : ty,
         value : topconst option,
         loc : loc
@@ -957,21 +982,21 @@ struct
       }
     | (*%
        * @format({id, value, loc})
-       * "CTLARGEINT"
+       * "CTINTINF"
        *)
       (*% @prefix formatWithType_
        * @format({id, value, loc})
-       * "CTLARGEINT"
+       * "CTINTINF"
        *)
-      CTLARGEINT of
+      CTINTINF of
       {
         id : ExtraDataLabel.id,
-        value : BigInt.int,
+        value : IntInf.int,
         loc : loc
       }
     | (*%
        * @format({id, tyvarKindEnv, fieldList: field fields,
-       *          recordTy, isMutable, clearPad,
+       *          recordTy, isMutable, isCoalescable, clearPad,
        *          bitmaps: bm bms, loc})
        * "@data:" id +d "=" 1[ +1
        * L2{ fields:enclosedList(field)("{",",","}")
@@ -989,7 +1014,7 @@ struct
       (*%
        * @prefix formatWithType_
        * @format({id, tyvarKindEnv, fieldList: field fields,
-       *          recordTy, isMutable, clearPad,
+       *          recordTy, isMutable, isCoalescable, clearPad,
        *          bitmaps: bm bms, loc})
        * "@data:" id +d "=" 1[ +1
        * L2{
@@ -1017,31 +1042,59 @@ struct
                      fieldIndex : topconst} list,
         recordTy : ty,
         isMutable : bool,
+        isCoalescable : bool,
         clearPad : bool,
         bitmaps : {bitmapIndex : topconst,
                    bitmapExp : topconst} list,
         loc : loc
       }
     | (*%
-       * @format({id, elemTy, isMutable, clearPad, numElements, initialElements,
+       * @format({id, elemTy, isMutable, isCoalescable, clearPad, numElements,
+       *          initialElements : elem elems,
        *          elemSizeExp, tagExp, loc})
-       * "CTARRAY"
+       * "@data:" id +d "=" 1[ +1
+       * L2{ elems:enclosedList(elem)("[",",","]")
+       *     +1 "/b" +d tagExp }
+       * ]
        *)
       (*% @prefix formatWithType_
-       * @format({id, elemTy, isMutable, clearPad, numElements, initialElements,
+       * @format({id, elemTy, isMutable, isCoalescable, clearPad, numElements,
+       *          initialElements : elem elems,
        *          elemSizeExp, tagExp, loc})
-       * "CTARRAY"
+       * "@data:" id +d "=" 1[ +1
+       * L2{
+       * L2{ elems:enclosedList(elem)("[",",","]")
+       *     +1 "/b" +d tagExp }
+       * +1 ":" +d elemTy()() + "array" }
+       * ]
        *)
       CTARRAY of
       {
         id : DataLabel.id,
         elemTy : ty,
         isMutable : bool,
+        isCoalescable : bool,
         clearPad : bool,
         numElements : topconst,
         initialElements : topconst list,
         elemSizeExp : topconst,
         tagExp : topconst,
+        loc : loc
+      }
+    | (*%
+       * @format({id, dump, ty, loc})
+       * "@data:" id +d "=" 1[ +1 "<DUMP>" ]
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({id, dump, ty, loc})
+       * "@data:" id +d "=" 1[ +1 "<" !N0{ "DUMP:" ty()() } ">" ]
+       *)
+      CTDUMP of
+      {
+        id : DataLabel.id,
+        dump : HeapDump.dump,
+        ty : ty,
         loc : loc
       }
 

@@ -1,0 +1,21 @@
+_require "../../../basis.smi"
+_require "../../control/main/Bug.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "./interface.grm.smi"
+
+structure InterfaceLex =
+struct
+  structure UserDeclarations =
+  struct
+    type token = InterfaceLrVals.Tokens.token
+    type pos = InterfaceLrVals.Tokens.pos
+    type arg (= boxed)
+    val initArg : {sourceName : string,
+                   lexErrorFn : (string * pos * pos) -> unit,
+                   initialLineno : int,
+                   allow8bitId : bool} -> arg
+  end
+  val makeLexer
+      : (int -> string) -> UserDeclarations.arg -> unit
+        -> UserDeclarations.token
+end

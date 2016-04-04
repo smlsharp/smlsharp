@@ -57,6 +57,8 @@ in
               (fn (ty, tvarSet) => EFTVty (ty, tvarSet))
               tvarSet
               fields
+            | I.BOXED => tvarSet
+            | I.UNBOXED => tvarSet
         and EFTVty (ty, tvarSet) =
             case ty of
               I.TYWILD => tvarSet
@@ -174,7 +176,7 @@ in
       end
     | A.TYTUPLE(nil, loc) => BT.unitITy
     | A.TYTUPLE(tyList, loc) =>
-      evalTy tvarEnv env (A.TYRECORD (Utils.listToTuple tyList, loc))
+      evalTy tvarEnv env (A.TYRECORD (TupleUtils.listToTuple tyList, loc))
     | A.TYFUN(ty1,ty2, loc) =>
       I.TYFUNM([evalTy tvarEnv env ty1], evalTy tvarEnv env ty2)
     | A.TYPOLY (kindedTvarList, ty, loc) =>
@@ -220,6 +222,11 @@ in
               tyFields
            )
         )
+      | A.KINDID ("boxed", _) => I.BOXED
+      | A.KINDID ("unboxed", _) => I.UNBOXED
+      | A.KINDID (name, loc) =>
+        (EU.enqueueError (loc, E.InvalidKindName("Ty-045", name));
+         I.UNIV)
   and evalKindedTvarList (tvarEnv:tvarEnv) (env:V.env) tvarKindList
       : tvarEnv * I.kindedTvar list =
       let

@@ -12,7 +12,7 @@ structure RunLoop : sig
         loadPath : Filename.filename list,
         LDFLAGS : string list,
         LIBS : string list,
-        llvmOptions : LLVM.compile_options,
+        llvmOptions : LLVMUtils.compile_options,
         errorOutput : TextIO.outstream}
 
   val interactive : options -> Top.toplevelContext -> unit
@@ -25,15 +25,13 @@ struct
         loadPath : Filename.filename list,
         LDFLAGS : string list,
         LIBS : string list,
-        llvmOptions : LLVM.compile_options,
+        llvmOptions : LLVMUtils.compile_options,
         errorOutput : TextIO.outstream}
 
   fun userErrorToString e =
       Bug.prettyPrint (UserError.format_errorInfo e)
 
-  val sml_register_stackmap =
-      _import "sml_register_stackmap"
-      : (unit ptr, unit ptr) -> ()
+  val sml_run = _import "sml_run" : () -> ()
 
   datatype result =
       SUCCESS of Top.newContext
@@ -53,9 +51,10 @@ struct
         val options = {stopAt = Top.NoStop,
                        baseFilename = NONE,
                        stdPath = stdPath,
-                       loadPath = loadPath}
+                       loadPath = loadPath,
+                       loadAllInterfaceFiles = false}
         val ({interfaceNameOpt, ...}, result) =
-             Top.compile options context input
+             Top.compile llvmOptions options context input
              handle e =>
              (
                case e of
@@ -74,15 +73,12 @@ struct
       in
         let
           val objfile = TempFile.create ("." ^ SMLSharp_Config.OBJEXT ())
-          val asmfile = TempFile.create ("." ^ SMLSharp_Config.ASMEXT ())
           val _ = #start Counter.llvmOutputTimeCounter()
-          val _ = LLVM.compile llvmOptions (module, LLVM.AssemblyFile,
-                                            Filename.toString asmfile)
-          val _ = LLVM.compile llvmOptions (module, LLVM.ObjectFile,
-                                            Filename.toString objfile)
+          val _ = LLVMUtils.compile llvmOptions
+                                    (module, LLVMUtils.ObjectFile, objfile)
           val _ = #stop Counter.llvmOutputTimeCounter()
           val _ = LLVM.LLVMDisposeModule module
-          val sofile = TempFile.create (SMLSharp_Config.DLLEXT ())
+          val sofile = TempFile.create ("." ^ SMLSharp_Config.DLLEXT ())
           val ldflags =
               case SMLSharp_Config.HOST_OS_TYPE () of
                 SMLSharp_Config.Unix => nil
@@ -113,29 +109,10 @@ struct
                                         DynamicLink.GLOBAL,
                                         DynamicLink.NOW)
                    handle OS.SysErr (msg, _) => raise DLError msg
-          val {mainSymbol, stackMapSymbol, codeBeginSymbol, ...} =
-              GenerateMain.moduleName (interfaceNameOpt, #version context)
-          val smap = DynamicLink.dlsym' (so, stackMapSymbol)
-                     handle OS.SysErr (msg, _) => raise DLError msg
-          val base = DynamicLink.dlsym' (so, codeBeginSymbol)
-                     handle OS.SysErr (msg, _) => raise DLError msg
-          val _ = sml_register_stackmap (smap, base)
-          val ptr = DynamicLink.dlsym (so, mainSymbol)
-                    handle OS.SysErr (msg, _) => raise DLError msg
-          (*
-           * Note that "ptr" points to an ML toplevel code. This toplevel code
-           * should be called by the calling convention for ML toplevels of
-           * ML object files.  __attribute__((fastcc,no_callback)) is an ad
-           * hoc way of yielding this convention code; no_callback avoids
-           * calling sml_control_suspend.  If we change how to compile
-           * attributes in the future, we should revisit here and update the
-           * __attribute__ annotation.
-           *)
-          val mainFn =
-              ptr : _import __attribute__((fastcc,no_callback)) () -> ()
         in
           loadedFiles := sofile :: !loadedFiles;
-          mainFn () handle e => raise UncaughtException e;
+          sml_run () handle e => raise UncaughtException e;
+          PrintTopEnv.printTopEnv (#topEnv newContext);
           SUCCESS newContext
         end
         handle e =>

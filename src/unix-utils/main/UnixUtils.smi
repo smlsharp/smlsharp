@@ -1,4 +1,4 @@
-_require "../../basis.smi"
+_require local "../../basis.smi"
 structure UnixUtils =
 struct
   val cd : string -> unit

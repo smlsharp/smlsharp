@@ -1,17 +1,20 @@
-_require "basis.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../control/main/Bug.ppg.smi"
+_require local "../../control/main/Loc.ppg.smi"
 _require "../../anormal/main/ANormal.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../name/main/CodeLabel.smi"
+_require local "../../name/main/LocalID.smi"
+_require local "../../name/main/CodeLabel.smi"
 _require "../../machinecode/main/MachineCode.ppg.smi"
-_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
-_require "../../types/main/Types.ppg.smi"
-_require "../../runtimetypes/main/TypeLayout2.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
-_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require local "../../runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../types/main/Types.ppg.smi"
+_require local "../../runtimetypes/main/TypeLayout2.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+_require local "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../absyn/main/InterfaceName.ppg.smi"
 
 structure MachineCodeGen =
 struct
-  val compile : {mainSymbol: string} -> ANormal.program -> MachineCode.program
+  val compile : InterfaceName.dependency
+                -> ANormal.program
+                -> MachineCode.program
 end
