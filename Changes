@@ -1,4 +1,11 @@
 -----------------------------------------------------------------------------
+SML# version 3.0.1 (released on 2016-04-04)
+
+Fixed bugs:
+* Fixed segmentation faults, mysterious type errors, and improper value
+  printing occurred in the interactive mode.
+
+-----------------------------------------------------------------------------
 SML# version 3.0.0 (released on 2016-03-31)
 
 This is a major release of the SML# language system with a number of

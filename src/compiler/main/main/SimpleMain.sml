@@ -461,6 +461,7 @@ struct
   fun Interactive (options, contextFn) () =
       let
         val context = contextFn ()
+(*
         val newContext =
             Top.loadInteractiveEnv
               {stopAt = Top.NoStop,
@@ -469,6 +470,15 @@ struct
               context
               (Filename.concatPath
                  (#systemBaseDir options, Filename.fromString "prelude.smi"))
+*)
+        val newContext =
+            Top.loadInteractiveEnv
+              {stopAt = Top.NoStop,
+               stdPath = [#systemBaseDir options],
+               loadPath = nil}
+              context
+              (Filename.concatPath
+                 (#systemBaseDir options, Filename.fromString "interactive.smi"))
         val context = Top.extendContext (context, newContext)
         val context = Top.incVersion context
       in

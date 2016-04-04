@@ -215,15 +215,15 @@ src/basis/main/toplevel.o: src/basis/main/toplevel.sml \
  src/basis/main/toplevel.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/digest/main/SHA3.o: src/compiler-utils/digest/main/SHA3.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -231,12 +231,12 @@ src/compiler-utils/digest/main/SHA3.o: src/compiler-utils/digest/main/SHA3.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -259,14 +259,14 @@ src/compiler-utils/digest/main/SHA3.o: src/compiler-utils/digest/main/SHA3.sml \
  $(SMLSHARP_DEP)
 src/compiler-utils/dynamic/main/Dynamic.o: \
  src/compiler-utils/dynamic/main/Dynamic.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -275,8 +275,8 @@ src/compiler-utils/dynamic/main/Dynamic.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -337,15 +337,15 @@ src/compiler-utils/dynamic/main/Dynamic.o: \
  src/compiler-utils/dynamic/main/Dynamic.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/IEnv.o: src/compiler-utils/env/main/IEnv.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -353,12 +353,12 @@ src/compiler-utils/env/main/IEnv.o: src/compiler-utils/env/main/IEnv.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -381,15 +381,15 @@ src/compiler-utils/env/main/IEnv.o: src/compiler-utils/env/main/IEnv.sml \
  src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/IEnv.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/IOrd.o: src/compiler-utils/env/main/IOrd.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -397,12 +397,12 @@ src/compiler-utils/env/main/IOrd.o: src/compiler-utils/env/main/IOrd.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -424,15 +424,15 @@ src/compiler-utils/env/main/IOrd.o: src/compiler-utils/env/main/IOrd.sml \
  src/basis/main/WORD.sig src/basis.smi src/compiler-utils/env/main/IOrd.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/ISet.o: src/compiler-utils/env/main/ISet.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -440,12 +440,12 @@ src/compiler-utils/env/main/ISet.o: src/compiler-utils/env/main/ISet.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -469,14 +469,14 @@ src/compiler-utils/env/main/ISet.o: src/compiler-utils/env/main/ISet.sml \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/LabelEnv.o: \
  src/compiler-utils/env/main/LabelEnv.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -485,8 +485,8 @@ src/compiler-utils/env/main/LabelEnv.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -514,14 +514,14 @@ src/compiler-utils/env/main/LabelEnv.o: \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/LabelOrd.o: \
  src/compiler-utils/env/main/LabelOrd.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -530,8 +530,8 @@ src/compiler-utils/env/main/LabelOrd.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -557,15 +557,15 @@ src/compiler-utils/env/main/LabelOrd.o: \
  src/compiler-utils/env/main/LabelOrd.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/PathEnv.o: src/compiler-utils/env/main/PathEnv.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -573,12 +573,12 @@ src/compiler-utils/env/main/PathEnv.o: src/compiler-utils/env/main/PathEnv.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -602,15 +602,15 @@ src/compiler-utils/env/main/PathEnv.o: src/compiler-utils/env/main/PathEnv.sml \
  src/compiler-utils/env/main/PathEnv.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/PathOrd.o: src/compiler-utils/env/main/PathOrd.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -618,12 +618,12 @@ src/compiler-utils/env/main/PathOrd.o: src/compiler-utils/env/main/PathOrd.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -645,15 +645,15 @@ src/compiler-utils/env/main/PathOrd.o: src/compiler-utils/env/main/PathOrd.sml \
  src/basis/main/WORD.sig src/basis.smi src/compiler-utils/env/main/PathOrd.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/SEnv.o: src/compiler-utils/env/main/SEnv.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -661,12 +661,12 @@ src/compiler-utils/env/main/SEnv.o: src/compiler-utils/env/main/SEnv.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -689,15 +689,15 @@ src/compiler-utils/env/main/SEnv.o: src/compiler-utils/env/main/SEnv.sml \
  src/compiler-utils/env/main/SOrd.smi src/compiler-utils/env/main/SEnv.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/SOrd.o: src/compiler-utils/env/main/SOrd.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -705,12 +705,12 @@ src/compiler-utils/env/main/SOrd.o: src/compiler-utils/env/main/SOrd.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -732,15 +732,15 @@ src/compiler-utils/env/main/SOrd.o: src/compiler-utils/env/main/SOrd.sml \
  src/basis/main/WORD.sig src/basis.smi src/compiler-utils/env/main/SOrd.smi \
  $(SMLSHARP_DEP)
 src/compiler-utils/env/main/SSet.o: src/compiler-utils/env/main/SSet.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -748,12 +748,12 @@ src/compiler-utils/env/main/SSet.o: src/compiler-utils/env/main/SSet.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -777,14 +777,14 @@ src/compiler-utils/env/main/SSet.o: src/compiler-utils/env/main/SSet.sml \
  $(SMLSHARP_DEP)
 src/compiler-utils/heapdump/main/HeapDump.o: \
  src/compiler-utils/heapdump/main/HeapDump.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -793,8 +793,8 @@ src/compiler-utils/heapdump/main/HeapDump.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -821,15 +821,15 @@ src/compiler-utils/heapdump/main/HeapDump.o: \
  $(SMLSHARP_DEP)
 src/compiler/absyn/main/Absyn.ppg.sml: src/compiler/absyn/main/Absyn.ppg $(SMLFORMAT_DEP)
 src/compiler/absyn/main/Absyn.ppg.o: src/compiler/absyn/main/Absyn.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -837,12 +837,12 @@ src/compiler/absyn/main/Absyn.ppg.o: src/compiler/absyn/main/Absyn.ppg.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -882,14 +882,14 @@ src/compiler/absyn/main/Absyn.ppg.o: src/compiler/absyn/main/Absyn.ppg.sml \
 src/compiler/absyn/main/AbsynInterface.ppg.sml: src/compiler/absyn/main/AbsynInterface.ppg $(SMLFORMAT_DEP)
 src/compiler/absyn/main/AbsynInterface.ppg.o: \
  src/compiler/absyn/main/AbsynInterface.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -898,8 +898,8 @@ src/compiler/absyn/main/AbsynInterface.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -941,14 +941,14 @@ src/compiler/absyn/main/AbsynInterface.ppg.o: \
 src/compiler/absyn/main/AbsynSQL.ppg.sml: src/compiler/absyn/main/AbsynSQL.ppg $(SMLFORMAT_DEP)
 src/compiler/absyn/main/AbsynSQL.ppg.o: \
  src/compiler/absyn/main/AbsynSQL.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -957,8 +957,8 @@ src/compiler/absyn/main/AbsynSQL.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -990,15 +990,15 @@ src/compiler/absyn/main/AbsynSQL.ppg.o: \
  src/compiler/absyn/main/AbsynSQL.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/absyn/main/Fixity.o: src/compiler/absyn/main/Fixity.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1006,12 +1006,12 @@ src/compiler/absyn/main/Fixity.o: src/compiler/absyn/main/Fixity.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1037,14 +1037,14 @@ src/compiler/absyn/main/Fixity.o: src/compiler/absyn/main/Fixity.sml \
 src/compiler/absyn/main/FormatTemplate.ppg.sml: src/compiler/absyn/main/FormatTemplate.ppg $(SMLFORMAT_DEP)
 src/compiler/absyn/main/FormatTemplate.ppg.o: \
  src/compiler/absyn/main/FormatTemplate.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -1053,8 +1053,8 @@ src/compiler/absyn/main/FormatTemplate.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -1093,14 +1093,14 @@ src/compiler/absyn/main/FormatTemplate.ppg.o: \
 src/compiler/absyn/main/InterfaceName.ppg.sml: src/compiler/absyn/main/InterfaceName.ppg $(SMLFORMAT_DEP)
 src/compiler/absyn/main/InterfaceName.ppg.o: \
  src/compiler/absyn/main/InterfaceName.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -1109,8 +1109,8 @@ src/compiler/absyn/main/InterfaceName.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -1143,15 +1143,15 @@ src/compiler/absyn/main/InterfaceName.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/absyn/main/Symbol.ppg.sml: src/compiler/absyn/main/Symbol.ppg $(SMLFORMAT_DEP)
 src/compiler/absyn/main/Symbol.ppg.o: src/compiler/absyn/main/Symbol.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1159,12 +1159,12 @@ src/compiler/absyn/main/Symbol.ppg.o: src/compiler/absyn/main/Symbol.ppg.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1194,14 +1194,14 @@ src/compiler/absyn/main/Symbol.ppg.o: src/compiler/absyn/main/Symbol.ppg.sml \
 src/compiler/anormal/main/ANormal.ppg.sml: src/compiler/anormal/main/ANormal.ppg $(SMLFORMAT_DEP)
 src/compiler/anormal/main/ANormal.ppg.o: \
  src/compiler/anormal/main/ANormal.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -1210,8 +1210,8 @@ src/compiler/anormal/main/ANormal.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -1268,14 +1268,14 @@ src/compiler/anormal/main/ANormal.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/anormal/main/ANormalTypeCheck.o: \
  src/compiler/anormal/main/ANormalTypeCheck.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -1284,8 +1284,8 @@ src/compiler/anormal/main/ANormalTypeCheck.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -1350,14 +1350,14 @@ src/compiler/anormal/main/ANormalTypeCheck.o: \
  $(SMLSHARP_DEP)
 src/compiler/anormalize/main/ANormalize.o: \
  src/compiler/anormalize/main/ANormalize.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -1366,8 +1366,8 @@ src/compiler/anormalize/main/ANormalize.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -1428,14 +1428,14 @@ src/compiler/anormalize/main/ANormalize.o: \
 src/compiler/bitmapcalc/main/BitmapCalc2.ppg.sml: src/compiler/bitmapcalc/main/BitmapCalc2.ppg $(SMLFORMAT_DEP)
 src/compiler/bitmapcalc/main/BitmapCalc2.ppg.o: \
  src/compiler/bitmapcalc/main/BitmapCalc2.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -1444,8 +1444,8 @@ src/compiler/bitmapcalc/main/BitmapCalc2.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -1500,15 +1500,15 @@ src/compiler/bitmapcalc/main/BitmapCalc2.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/bitmapcompilation2/main/BitmapCompilation.o: \
  src/compiler/bitmapcompilation2/main/BitmapCompilation.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1516,12 +1516,12 @@ src/compiler/bitmapcompilation2/main/BitmapCompilation.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1583,15 +1583,15 @@ src/compiler/bitmapcompilation2/main/BitmapCompilation.o: \
  $(SMLSHARP_DEP)
 src/compiler/bitmapcompilation2/main/RecordLayout.o: \
  src/compiler/bitmapcompilation2/main/RecordLayout.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1599,12 +1599,12 @@ src/compiler/bitmapcompilation2/main/RecordLayout.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1663,15 +1663,15 @@ src/compiler/bitmapcompilation2/main/RecordLayout.o: \
  $(SMLSHARP_DEP)
 src/compiler/bitmapcompilation2/main/SingletonTyEnv.o: \
  src/compiler/bitmapcompilation2/main/SingletonTyEnv.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1679,12 +1679,12 @@ src/compiler/bitmapcompilation2/main/SingletonTyEnv.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1738,15 +1738,15 @@ src/compiler/bitmapcompilation2/main/SingletonTyEnv.o: \
 src/compiler/builtin2/main/BuiltinPrimitive.ppg.sml: src/compiler/builtin2/main/BuiltinPrimitive.ppg $(SMLFORMAT_DEP)
 src/compiler/builtin2/main/BuiltinPrimitive.ppg.o: \
  src/compiler/builtin2/main/BuiltinPrimitive.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1754,12 +1754,12 @@ src/compiler/builtin2/main/BuiltinPrimitive.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1788,15 +1788,15 @@ src/compiler/builtin2/main/BuiltinPrimitive.ppg.o: \
 src/compiler/builtin2/main/BuiltinTypeNames.ppg.sml: src/compiler/builtin2/main/BuiltinTypeNames.ppg $(SMLFORMAT_DEP)
 src/compiler/builtin2/main/BuiltinTypeNames.ppg.o: \
  src/compiler/builtin2/main/BuiltinTypeNames.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1804,12 +1804,12 @@ src/compiler/builtin2/main/BuiltinTypeNames.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1839,14 +1839,14 @@ src/compiler/builtin2/main/BuiltinTypeNames.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/builtin2/main/BuiltinTypes.o: \
  src/compiler/builtin2/main/BuiltinTypes.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -1855,8 +1855,8 @@ src/compiler/builtin2/main/BuiltinTypes.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -1907,15 +1907,15 @@ src/compiler/builtin2/main/BuiltinTypes.o: \
  $(SMLSHARP_DEP)
 src/compiler/cconvcompile/main/CallingConventionCompile.o: \
  src/compiler/cconvcompile/main/CallingConventionCompile.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -1923,12 +1923,12 @@ src/compiler/cconvcompile/main/CallingConventionCompile.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -1993,14 +1993,14 @@ src/compiler/cconvcompile/main/CallingConventionCompile.o: \
 src/compiler/closurecalc/main/ClosureCalc.ppg.sml: src/compiler/closurecalc/main/ClosureCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/closurecalc/main/ClosureCalc.ppg.o: \
  src/compiler/closurecalc/main/ClosureCalc.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -2009,8 +2009,8 @@ src/compiler/closurecalc/main/ClosureCalc.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -2068,15 +2068,15 @@ src/compiler/closurecalc/main/ClosureCalc.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/closureconversion/main/ClosureConversion2.o: \
  src/compiler/closureconversion/main/ClosureConversion2.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2084,12 +2084,12 @@ src/compiler/closureconversion/main/ClosureConversion2.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2152,15 +2152,15 @@ src/compiler/closureconversion/main/ClosureConversion2.o: \
  $(SMLSHARP_DEP)
 src/compiler/concurrencysupport/main/ConcurrencySupport.o: \
  src/compiler/concurrencysupport/main/ConcurrencySupport.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2168,12 +2168,12 @@ src/compiler/concurrencysupport/main/ConcurrencySupport.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2232,15 +2232,15 @@ src/compiler/concurrencysupport/main/ConcurrencySupport.o: \
 src/compiler/constantterm/main/ConstantTerm.ppg.sml: src/compiler/constantterm/main/ConstantTerm.ppg $(SMLFORMAT_DEP)
 src/compiler/constantterm/main/ConstantTerm.ppg.o: \
  src/compiler/constantterm/main/ConstantTerm.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2248,12 +2248,12 @@ src/compiler/constantterm/main/ConstantTerm.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2307,15 +2307,15 @@ src/compiler/constantterm/main/ConstantTerm.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/control/main/Bug.ppg.sml: src/compiler/control/main/Bug.ppg $(SMLFORMAT_DEP)
 src/compiler/control/main/Bug.ppg.o: src/compiler/control/main/Bug.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2323,12 +2323,12 @@ src/compiler/control/main/Bug.ppg.o: src/compiler/control/main/Bug.ppg.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2357,14 +2357,14 @@ src/compiler/control/main/Bug.ppg.o: src/compiler/control/main/Bug.ppg.sml \
 src/compiler/control/main/Control.ppg.sml: src/compiler/control/main/Control.ppg $(SMLFORMAT_DEP)
 src/compiler/control/main/Control.ppg.o: \
  src/compiler/control/main/Control.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -2373,8 +2373,8 @@ src/compiler/control/main/Control.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -2406,15 +2406,15 @@ src/compiler/control/main/Control.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/control/main/Loc.ppg.sml: src/compiler/control/main/Loc.ppg $(SMLFORMAT_DEP)
 src/compiler/control/main/Loc.ppg.o: src/compiler/control/main/Loc.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2422,12 +2422,12 @@ src/compiler/control/main/Loc.ppg.o: src/compiler/control/main/Loc.ppg.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2455,15 +2455,15 @@ src/compiler/control/main/Loc.ppg.o: src/compiler/control/main/Loc.ppg.sml \
  $(SMLSHARP_DEP)
 src/compiler/datatypecompilation/main/DatatypeCompilation.o: \
  src/compiler/datatypecompilation/main/DatatypeCompilation.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2471,12 +2471,12 @@ src/compiler/datatypecompilation/main/DatatypeCompilation.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2544,15 +2544,15 @@ src/compiler/datatypecompilation/main/DatatypeCompilation.o: \
  $(SMLSHARP_DEP)
 src/compiler/datatypecompilation/main/DatatypeLayout.o: \
  src/compiler/datatypecompilation/main/DatatypeLayout.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2560,12 +2560,12 @@ src/compiler/datatypecompilation/main/DatatypeLayout.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2616,15 +2616,15 @@ src/compiler/datatypecompilation/main/DatatypeLayout.o: \
  $(SMLSHARP_DEP)
 src/compiler/datatypecompilation/main/EmitTypedLambda.o: \
  src/compiler/datatypecompilation/main/EmitTypedLambda.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2632,12 +2632,12 @@ src/compiler/datatypecompilation/main/EmitTypedLambda.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2694,15 +2694,15 @@ src/compiler/datatypecompilation/main/EmitTypedLambda.o: \
  $(SMLSHARP_DEP)
 src/compiler/datatypecompilation/main/PrimitiveTypedLambda.o: \
  src/compiler/datatypecompilation/main/PrimitiveTypedLambda.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2710,12 +2710,12 @@ src/compiler/datatypecompilation/main/PrimitiveTypedLambda.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2771,15 +2771,15 @@ src/compiler/datatypecompilation/main/PrimitiveTypedLambda.o: \
  $(SMLSHARP_DEP)
 src/compiler/datatypecompilation/main/SwitchCompile.o: \
  src/compiler/datatypecompilation/main/SwitchCompile.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2787,12 +2787,12 @@ src/compiler/datatypecompilation/main/SwitchCompile.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -2848,14 +2848,14 @@ src/compiler/datatypecompilation/main/SwitchCompile.o: \
  $(SMLSHARP_DEP)
 src/compiler/elaborate/main/ElaborateCore.o: \
  src/compiler/elaborate/main/ElaborateCore.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -2864,8 +2864,8 @@ src/compiler/elaborate/main/ElaborateCore.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -2917,14 +2917,14 @@ src/compiler/elaborate/main/ElaborateCore.o: \
 src/compiler/elaborate/main/ElaborateError.ppg.sml: src/compiler/elaborate/main/ElaborateError.ppg $(SMLFORMAT_DEP)
 src/compiler/elaborate/main/ElaborateError.ppg.o: \
  src/compiler/elaborate/main/ElaborateError.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -2933,8 +2933,8 @@ src/compiler/elaborate/main/ElaborateError.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -2971,15 +2971,15 @@ src/compiler/elaborate/main/ElaborateError.ppg.o: \
 src/compiler/elaborate/main/ElaborateErrorSQL.ppg.sml: src/compiler/elaborate/main/ElaborateErrorSQL.ppg $(SMLFORMAT_DEP)
 src/compiler/elaborate/main/ElaborateErrorSQL.ppg.o: \
  src/compiler/elaborate/main/ElaborateErrorSQL.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -2987,12 +2987,12 @@ src/compiler/elaborate/main/ElaborateErrorSQL.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3020,14 +3020,14 @@ src/compiler/elaborate/main/ElaborateErrorSQL.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/elaborate/main/ElaborateInterface.o: \
  src/compiler/elaborate/main/ElaborateInterface.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -3036,8 +3036,8 @@ src/compiler/elaborate/main/ElaborateInterface.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -3097,14 +3097,14 @@ src/compiler/elaborate/main/ElaborateInterface.o: \
  $(SMLSHARP_DEP)
 src/compiler/elaborate/main/ElaborateModule.o: \
  src/compiler/elaborate/main/ElaborateModule.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -3113,8 +3113,8 @@ src/compiler/elaborate/main/ElaborateModule.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -3165,14 +3165,14 @@ src/compiler/elaborate/main/ElaborateModule.o: \
  $(SMLSHARP_DEP)
 src/compiler/elaborate/main/ElaborateSQL.o: \
  src/compiler/elaborate/main/ElaborateSQL.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -3181,8 +3181,8 @@ src/compiler/elaborate/main/ElaborateSQL.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -3230,14 +3230,14 @@ src/compiler/elaborate/main/ElaborateSQL.o: \
  $(SMLSHARP_DEP)
 src/compiler/elaborate/main/Elaborator.o: \
  src/compiler/elaborate/main/Elaborator.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -3246,8 +3246,8 @@ src/compiler/elaborate/main/Elaborator.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -3310,14 +3310,14 @@ src/compiler/elaborate/main/Elaborator.o: \
  $(SMLSHARP_DEP)
 src/compiler/elaborate/main/UserTvarScope.o: \
  src/compiler/elaborate/main/UserTvarScope.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -3326,8 +3326,8 @@ src/compiler/elaborate/main/UserTvarScope.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -3382,15 +3382,15 @@ src/compiler/elaborate/main/UserTvarScope.o: \
  $(SMLSHARP_DEP)
 src/compiler/fficompilation/main/FFICompilation.o: \
  src/compiler/fficompilation/main/FFICompilation.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3398,12 +3398,12 @@ src/compiler/fficompilation/main/FFICompilation.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3455,15 +3455,15 @@ src/compiler/fficompilation/main/FFICompilation.o: \
  $(SMLSHARP_DEP)
 src/compiler/interactivePrinter/main/DynamicPrinter.o: \
  src/compiler/interactivePrinter/main/DynamicPrinter.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3471,12 +3471,12 @@ src/compiler/interactivePrinter/main/DynamicPrinter.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3520,15 +3520,15 @@ src/compiler/interactivePrinter/main/DynamicPrinter.o: \
  $(SMLSHARP_DEP)
 src/compiler/interactivePrinter/main/PrintTopEnv.o: \
  src/compiler/interactivePrinter/main/PrintTopEnv.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3536,12 +3536,12 @@ src/compiler/interactivePrinter/main/PrintTopEnv.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3616,15 +3616,15 @@ src/compiler/interactivePrinter/main/PrintTopEnv.o: \
 src/compiler/interactivePrinter/main/ReifiedTerm.ppg.sml: src/compiler/interactivePrinter/main/ReifiedTerm.ppg $(SMLFORMAT_DEP)
 src/compiler/interactivePrinter/main/ReifiedTerm.ppg.o: \
  src/compiler/interactivePrinter/main/ReifiedTerm.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3632,12 +3632,12 @@ src/compiler/interactivePrinter/main/ReifiedTerm.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3668,14 +3668,14 @@ src/compiler/interactivePrinter/main/ReifiedTerm.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/interactivePrinter/main/Reify.o: \
  src/compiler/interactivePrinter/main/Reify.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -3684,8 +3684,8 @@ src/compiler/interactivePrinter/main/Reify.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -3757,15 +3757,15 @@ src/compiler/interactivePrinter/main/Reify.o: \
 src/compiler/interactivePrinter/main/TermPrintUtils.ppg.sml: src/compiler/interactivePrinter/main/TermPrintUtils.ppg $(SMLFORMAT_DEP)
 src/compiler/interactivePrinter/main/TermPrintUtils.ppg.o: \
  src/compiler/interactivePrinter/main/TermPrintUtils.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3773,12 +3773,12 @@ src/compiler/interactivePrinter/main/TermPrintUtils.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3808,15 +3808,15 @@ src/compiler/interactivePrinter/main/TermPrintUtils.ppg.o: \
  src/compiler/interactivePrinter/main/TermPrintUtils.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/llvmemit/main/LLVMEmit.o: src/compiler/llvmemit/main/LLVMEmit.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3824,12 +3824,12 @@ src/compiler/llvmemit/main/LLVMEmit.o: src/compiler/llvmemit/main/LLVMEmit.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3860,15 +3860,15 @@ src/compiler/llvmemit/main/LLVMEmit.o: src/compiler/llvmemit/main/LLVMEmit.sml \
  src/compiler/llvmemit/main/LLVMEmit.smi \
  $(SMLSHARP_DEP)
 src/compiler/llvmgen/main/LLVMGen.o: src/compiler/llvmgen/main/LLVMGen.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3876,12 +3876,12 @@ src/compiler/llvmgen/main/LLVMGen.o: src/compiler/llvmgen/main/LLVMGen.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -3951,15 +3951,15 @@ src/compiler/llvmgen/main/LLVMGen.o: src/compiler/llvmgen/main/LLVMGen.sml \
  $(SMLSHARP_DEP)
 src/compiler/llvmir/main/LLVMIR.ppg.sml: src/compiler/llvmir/main/LLVMIR.ppg $(SMLFORMAT_DEP)
 src/compiler/llvmir/main/LLVMIR.ppg.o: src/compiler/llvmir/main/LLVMIR.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -3967,12 +3967,12 @@ src/compiler/llvmir/main/LLVMIR.ppg.o: src/compiler/llvmir/main/LLVMIR.ppg.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4009,14 +4009,14 @@ src/compiler/llvmir/main/LLVMIR.ppg.o: src/compiler/llvmir/main/LLVMIR.ppg.sml \
  $(SMLSHARP_DEP)
 src/compiler/loadfile/main/InterfaceHash.o: \
  src/compiler/loadfile/main/InterfaceHash.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -4025,8 +4025,8 @@ src/compiler/loadfile/main/InterfaceHash.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -4067,15 +4067,15 @@ src/compiler/loadfile/main/InterfaceHash.o: \
  src/compiler/loadfile/main/InterfaceHash.smi \
  $(SMLSHARP_DEP)
 src/compiler/loadfile/main/LoadFile.o: src/compiler/loadfile/main/LoadFile.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4083,12 +4083,12 @@ src/compiler/loadfile/main/LoadFile.o: src/compiler/loadfile/main/LoadFile.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4145,14 +4145,14 @@ src/compiler/loadfile/main/LoadFile.o: src/compiler/loadfile/main/LoadFile.sml \
 src/compiler/loadfile/main/LoadFileError.ppg.sml: src/compiler/loadfile/main/LoadFileError.ppg $(SMLFORMAT_DEP)
 src/compiler/loadfile/main/LoadFileError.ppg.o: \
  src/compiler/loadfile/main/LoadFileError.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -4161,8 +4161,8 @@ src/compiler/loadfile/main/LoadFileError.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -4199,14 +4199,14 @@ src/compiler/loadfile/main/LoadFileError.ppg.o: \
 src/compiler/machinecode/main/MachineCode.ppg.sml: src/compiler/machinecode/main/MachineCode.ppg $(SMLFORMAT_DEP)
 src/compiler/machinecode/main/MachineCode.ppg.o: \
  src/compiler/machinecode/main/MachineCode.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -4215,8 +4215,8 @@ src/compiler/machinecode/main/MachineCode.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -4276,15 +4276,15 @@ src/compiler/machinecode/main/MachineCode.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/machinecode/main/MachineCodeRename.o: \
  src/compiler/machinecode/main/MachineCodeRename.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4292,12 +4292,12 @@ src/compiler/machinecode/main/MachineCodeRename.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4356,15 +4356,15 @@ src/compiler/machinecode/main/MachineCodeRename.o: \
  $(SMLSHARP_DEP)
 src/compiler/machinecodegen/main/MachineCodeGen.o: \
  src/compiler/machinecodegen/main/MachineCodeGen.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4372,12 +4372,12 @@ src/compiler/machinecodegen/main/MachineCodeGen.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4443,15 +4443,15 @@ src/compiler/main/main/ExecutablePath.o: \
  src/compiler/main/main/ExecutablePath.smi \
  $(SMLSHARP_DEP)
 src/compiler/main/main/FilenameMap.o: src/compiler/main/main/FilenameMap.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4459,12 +4459,12 @@ src/compiler/main/main/FilenameMap.o: src/compiler/main/main/FilenameMap.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4493,15 +4493,15 @@ src/compiler/main/main/FilenameMap.o: src/compiler/main/main/FilenameMap.sml \
  src/compiler/main/main/FilenameMap.smi \
  $(SMLSHARP_DEP)
 src/compiler/main/main/GetOpt.o: src/compiler/main/main/GetOpt.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4509,12 +4509,12 @@ src/compiler/main/main/GetOpt.o: src/compiler/main/main/GetOpt.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4537,14 +4537,14 @@ src/compiler/main/main/GetOpt.o: src/compiler/main/main/GetOpt.sml \
  $(SMLSHARP_DEP)
 src/compiler/main/main/MiniMain.o: src/compiler/main/main/MiniMain.sml \
  src/compiler/main/main/SimpleMain.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -4553,8 +4553,8 @@ src/compiler/main/main/MiniMain.o: src/compiler/main/main/MiniMain.sml \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -4645,15 +4645,15 @@ src/compiler/main/main/MiniMain.o: src/compiler/main/main/MiniMain.sml \
  src/compiler/main/main/FilenameMap.smi src/compiler/main/main/MiniMain.smi \
  $(SMLSHARP_DEP)
 src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4661,12 +4661,12 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4756,15 +4756,15 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
  src/compiler/main/main/RunLoop.smi \
  $(SMLSHARP_DEP)
 src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4772,12 +4772,12 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4860,15 +4860,15 @@ src/compiler/main/main/SimpleMain.o: src/compiler/main/main/SimpleMain.sml \
  $(SMLSHARP_DEP)
 src/compiler/matchcompilation/main/MatchCompiler.o: \
  src/compiler/matchcompilation/main/MatchCompiler.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -4876,12 +4876,12 @@ src/compiler/matchcompilation/main/MatchCompiler.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -4940,14 +4940,14 @@ src/compiler/matchcompilation/main/MatchCompiler.o: \
  $(SMLSHARP_DEP)
 src/compiler/matchcompilation/main/MatchData.o: \
  src/compiler/matchcompilation/main/MatchData.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -4956,8 +4956,8 @@ src/compiler/matchcompilation/main/MatchData.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -5012,15 +5012,15 @@ src/compiler/matchcompilation/main/MatchData.o: \
 src/compiler/matchcompilation/main/MatchError.ppg.sml: src/compiler/matchcompilation/main/MatchError.ppg $(SMLFORMAT_DEP)
 src/compiler/matchcompilation/main/MatchError.ppg.o: \
  src/compiler/matchcompilation/main/MatchError.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5028,12 +5028,12 @@ src/compiler/matchcompilation/main/MatchError.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5088,15 +5088,15 @@ src/compiler/matchcompilation/main/MatchError.ppg.o: \
  src/compiler/matchcompilation/main/MatchError.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5104,12 +5104,12 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5198,15 +5198,15 @@ src/compiler/minismlsharp.o: src/compiler/minismlsharp.sml \
  src/compiler/minismlsharp.smi \
  $(SMLSHARP_DEP)
 src/compiler/name/main/CodeLabel.o: src/compiler/name/main/CodeLabel.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5214,12 +5214,12 @@ src/compiler/name/main/CodeLabel.o: src/compiler/name/main/CodeLabel.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5249,15 +5249,15 @@ src/compiler/name/main/CodeLabel.o: src/compiler/name/main/CodeLabel.sml \
  src/compiler/name/main/CodeLabel.smi \
  $(SMLSHARP_DEP)
 src/compiler/name/main/ExternSymbol.o: src/compiler/name/main/ExternSymbol.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5265,12 +5265,12 @@ src/compiler/name/main/ExternSymbol.o: src/compiler/name/main/ExternSymbol.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5302,15 +5302,15 @@ src/compiler/name/main/ExternSymbol.o: src/compiler/name/main/ExternSymbol.sml \
  src/compiler/name/main/NameMangle.smi src/compiler/name/main/ExternSymbol.smi \
  $(SMLSHARP_DEP)
 src/compiler/name/main/GenIDFun.o: src/compiler/name/main/GenIDFun.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5318,12 +5318,12 @@ src/compiler/name/main/GenIDFun.o: src/compiler/name/main/GenIDFun.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5352,15 +5352,15 @@ src/compiler/name/main/GenIDFun.o: src/compiler/name/main/GenIDFun.sml \
  src/compiler-utils/env/main/ISet.smi src/compiler/name/main/GenIDFun.smi \
  $(SMLSHARP_DEP)
 src/compiler/name/main/LocalID.o: src/compiler/name/main/LocalID.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5368,12 +5368,12 @@ src/compiler/name/main/LocalID.o: src/compiler/name/main/LocalID.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5400,15 +5400,15 @@ src/compiler/name/main/LocalID.o: src/compiler/name/main/LocalID.sml \
  src/compiler/name/main/GenIDFun.smi src/compiler/name/main/LocalID.smi \
  $(SMLSHARP_DEP)
 src/compiler/name/main/NameMangle.o: src/compiler/name/main/NameMangle.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5416,12 +5416,12 @@ src/compiler/name/main/NameMangle.o: src/compiler/name/main/NameMangle.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5450,14 +5450,14 @@ src/compiler/name/main/NameMangle.o: src/compiler/name/main/NameMangle.sml \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/CheckProvide.o: \
  src/compiler/nameevaluation/main/CheckProvide.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -5466,8 +5466,8 @@ src/compiler/nameevaluation/main/CheckProvide.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -5547,14 +5547,14 @@ src/compiler/nameevaluation/main/CheckProvide.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/EvalSig.o: \
  src/compiler/nameevaluation/main/EvalSig.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -5563,8 +5563,8 @@ src/compiler/nameevaluation/main/EvalSig.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -5638,14 +5638,14 @@ src/compiler/nameevaluation/main/EvalSig.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/EvalTy.o: \
  src/compiler/nameevaluation/main/EvalTy.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -5654,8 +5654,8 @@ src/compiler/nameevaluation/main/EvalTy.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -5725,14 +5725,14 @@ src/compiler/nameevaluation/main/EvalTy.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/FunctorUtils.o: \
  src/compiler/nameevaluation/main/FunctorUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -5741,8 +5741,8 @@ src/compiler/nameevaluation/main/FunctorUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -5816,14 +5816,14 @@ src/compiler/nameevaluation/main/FunctorUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/NameEval.o: \
  src/compiler/nameevaluation/main/NameEval.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -5832,8 +5832,8 @@ src/compiler/nameevaluation/main/NameEval.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -5917,15 +5917,15 @@ src/compiler/nameevaluation/main/NameEval.o: \
 src/compiler/nameevaluation/main/NameEvalEnv.ppg.sml: src/compiler/nameevaluation/main/NameEvalEnv.ppg $(SMLFORMAT_DEP)
 src/compiler/nameevaluation/main/NameEvalEnv.ppg.o: \
  src/compiler/nameevaluation/main/NameEvalEnv.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -5933,12 +5933,12 @@ src/compiler/nameevaluation/main/NameEvalEnv.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -5991,15 +5991,15 @@ src/compiler/nameevaluation/main/NameEvalEnv.ppg.o: \
 src/compiler/nameevaluation/main/NameEvalError.ppg.sml: src/compiler/nameevaluation/main/NameEvalError.ppg $(SMLFORMAT_DEP)
 src/compiler/nameevaluation/main/NameEvalError.ppg.o: \
  src/compiler/nameevaluation/main/NameEvalError.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -6007,12 +6007,12 @@ src/compiler/nameevaluation/main/NameEvalError.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -6059,15 +6059,15 @@ src/compiler/nameevaluation/main/NameEvalError.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/NameEvalInterface.o: \
  src/compiler/nameevaluation/main/NameEvalInterface.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -6075,12 +6075,12 @@ src/compiler/nameevaluation/main/NameEvalInterface.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -6156,14 +6156,14 @@ src/compiler/nameevaluation/main/NameEvalInterface.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/NameEvalUtils.o: \
  src/compiler/nameevaluation/main/NameEvalUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6172,8 +6172,8 @@ src/compiler/nameevaluation/main/NameEvalUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6236,14 +6236,14 @@ src/compiler/nameevaluation/main/NameEvalUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/NormalizeTy.o: \
  src/compiler/nameevaluation/main/NormalizeTy.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6252,8 +6252,8 @@ src/compiler/nameevaluation/main/NormalizeTy.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6316,14 +6316,14 @@ src/compiler/nameevaluation/main/NormalizeTy.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/SetLiftedTys.o: \
  src/compiler/nameevaluation/main/SetLiftedTys.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6332,8 +6332,8 @@ src/compiler/nameevaluation/main/SetLiftedTys.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6399,14 +6399,14 @@ src/compiler/nameevaluation/main/SetLiftedTys.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/SigCheck.o: \
  src/compiler/nameevaluation/main/SigCheck.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6415,8 +6415,8 @@ src/compiler/nameevaluation/main/SigCheck.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6493,15 +6493,15 @@ src/compiler/nameevaluation/main/SigCheck.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/SpliceFunProvide.o: \
  src/compiler/nameevaluation/main/SpliceFunProvide.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -6509,12 +6509,12 @@ src/compiler/nameevaluation/main/SpliceFunProvide.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -6569,14 +6569,14 @@ src/compiler/nameevaluation/main/SpliceFunProvide.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/Subst.o: \
  src/compiler/nameevaluation/main/Subst.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6585,8 +6585,8 @@ src/compiler/nameevaluation/main/Subst.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6642,14 +6642,14 @@ src/compiler/nameevaluation/main/Subst.o: \
  $(SMLSHARP_DEP)
 src/compiler/nameevaluation/main/TfunVars.o: \
  src/compiler/nameevaluation/main/TfunVars.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6658,8 +6658,8 @@ src/compiler/nameevaluation/main/TfunVars.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6714,14 +6714,14 @@ src/compiler/nameevaluation/main/TfunVars.o: \
  $(SMLSHARP_DEP)
 src/compiler/parser2/main/InterfaceParser.o: \
  src/compiler/parser2/main/InterfaceParser.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6730,8 +6730,8 @@ src/compiler/parser2/main/InterfaceParser.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6780,15 +6780,15 @@ src/compiler/parser2/main/InterfaceParser.o: \
  src/compiler/parser2/main/InterfaceParser.smi \
  $(SMLSHARP_DEP)
 src/compiler/parser2/main/Parser.o: src/compiler/parser2/main/Parser.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -6796,12 +6796,12 @@ src/compiler/parser2/main/Parser.o: src/compiler/parser2/main/Parser.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -6842,14 +6842,14 @@ src/compiler/parser2/main/Parser.o: src/compiler/parser2/main/Parser.sml \
 src/compiler/parser2/main/ParserError.ppg.sml: src/compiler/parser2/main/ParserError.ppg $(SMLFORMAT_DEP)
 src/compiler/parser2/main/ParserError.ppg.o: \
  src/compiler/parser2/main/ParserError.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -6858,8 +6858,8 @@ src/compiler/parser2/main/ParserError.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -6890,15 +6890,15 @@ src/compiler/parser2/main/ParserError.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/parser2/main/iml.grm.sml: src/compiler/parser2/main/iml.grm $(MLYACC_DEP)
 src/compiler/parser2/main/iml.grm.o: src/compiler/parser2/main/iml.grm.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -6906,12 +6906,12 @@ src/compiler/parser2/main/iml.grm.o: src/compiler/parser2/main/iml.grm.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -6947,15 +6947,15 @@ src/compiler/parser2/main/iml.grm.o: src/compiler/parser2/main/iml.grm.sml \
  $(SMLSHARP_DEP)
 src/compiler/parser2/main/iml.lex.sml: src/compiler/parser2/main/iml.lex $(MLLEX_DEP)
 src/compiler/parser2/main/iml.lex.o: src/compiler/parser2/main/iml.lex.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -6963,12 +6963,12 @@ src/compiler/parser2/main/iml.lex.o: src/compiler/parser2/main/iml.lex.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7006,14 +7006,14 @@ src/compiler/parser2/main/iml.lex.o: src/compiler/parser2/main/iml.lex.sml \
 src/compiler/parser2/main/interface.grm.sml: src/compiler/parser2/main/interface.grm $(MLYACC_DEP)
 src/compiler/parser2/main/interface.grm.o: \
  src/compiler/parser2/main/interface.grm.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -7022,8 +7022,8 @@ src/compiler/parser2/main/interface.grm.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -7070,14 +7070,14 @@ src/compiler/parser2/main/interface.grm.o: \
 src/compiler/parser2/main/interface.lex.sml: src/compiler/parser2/main/interface.lex $(MLLEX_DEP)
 src/compiler/parser2/main/interface.lex.o: \
  src/compiler/parser2/main/interface.lex.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -7086,8 +7086,8 @@ src/compiler/parser2/main/interface.lex.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -7136,14 +7136,14 @@ src/compiler/parser2/main/interface.lex.o: \
 src/compiler/patterncalc/main/PatternCalc.ppg.sml: src/compiler/patterncalc/main/PatternCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/patterncalc/main/PatternCalc.ppg.o: \
  src/compiler/patterncalc/main/PatternCalc.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -7152,8 +7152,8 @@ src/compiler/patterncalc/main/PatternCalc.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -7198,15 +7198,15 @@ src/compiler/patterncalc/main/PatternCalc.ppg.o: \
 src/compiler/patterncalc/main/PatternCalcInterface.ppg.sml: src/compiler/patterncalc/main/PatternCalcInterface.ppg $(SMLFORMAT_DEP)
 src/compiler/patterncalc/main/PatternCalcInterface.ppg.o: \
  src/compiler/patterncalc/main/PatternCalcInterface.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -7214,12 +7214,12 @@ src/compiler/patterncalc/main/PatternCalcInterface.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7267,14 +7267,14 @@ src/compiler/patterncalc/main/PatternCalcInterface.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcalc/main/RCAlphaRename.o: \
  src/compiler/recordcalc/main/RCAlphaRename.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -7283,8 +7283,8 @@ src/compiler/recordcalc/main/RCAlphaRename.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -7345,14 +7345,14 @@ src/compiler/recordcalc/main/RCAlphaRename.o: \
 src/compiler/recordcalc/main/RecordCalc.ppg.sml: src/compiler/recordcalc/main/RecordCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/recordcalc/main/RecordCalc.ppg.o: \
  src/compiler/recordcalc/main/RecordCalc.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -7361,8 +7361,8 @@ src/compiler/recordcalc/main/RecordCalc.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -7412,14 +7412,14 @@ src/compiler/recordcalc/main/RecordCalc.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcalc/main/RecordCalcUtils.o: \
  src/compiler/recordcalc/main/RecordCalcUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -7428,8 +7428,8 @@ src/compiler/recordcalc/main/RecordCalcUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -7483,15 +7483,15 @@ src/compiler/recordcalc/main/RecordCalcUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcalcoptimization/main/RCAnalyse.o: \
  src/compiler/recordcalcoptimization/main/RCAnalyse.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -7499,12 +7499,12 @@ src/compiler/recordcalcoptimization/main/RCAnalyse.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7552,15 +7552,15 @@ src/compiler/recordcalcoptimization/main/RCAnalyse.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcalcoptimization/main/RCOptimize.o: \
  src/compiler/recordcalcoptimization/main/RCOptimize.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -7568,12 +7568,12 @@ src/compiler/recordcalcoptimization/main/RCOptimize.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7639,15 +7639,15 @@ src/compiler/recordcalcoptimization/main/RCOptimize.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcalcoptimization/main/RCRevealTy.o: \
  src/compiler/recordcalcoptimization/main/RCRevealTy.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -7655,12 +7655,12 @@ src/compiler/recordcalcoptimization/main/RCRevealTy.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7709,15 +7709,15 @@ src/compiler/recordcalcoptimization/main/RCRevealTy.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcalcoptimization/main/RCSize.o: \
  src/compiler/recordcalcoptimization/main/RCSize.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -7725,12 +7725,12 @@ src/compiler/recordcalcoptimization/main/RCSize.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7778,15 +7778,15 @@ src/compiler/recordcalcoptimization/main/RCSize.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcompilation/main/OverloadKind.o: \
  src/compiler/recordcompilation/main/OverloadKind.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -7794,12 +7794,12 @@ src/compiler/recordcompilation/main/OverloadKind.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7849,15 +7849,15 @@ src/compiler/recordcompilation/main/OverloadKind.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcompilation/main/RecordCompilation.o: \
  src/compiler/recordcompilation/main/RecordCompilation.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -7865,12 +7865,12 @@ src/compiler/recordcompilation/main/RecordCompilation.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -7926,14 +7926,14 @@ src/compiler/recordcompilation/main/RecordCompilation.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcompilation/main/RecordKind.o: \
  src/compiler/recordcompilation/main/RecordKind.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -7942,8 +7942,8 @@ src/compiler/recordcompilation/main/RecordKind.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -7996,14 +7996,14 @@ src/compiler/recordcompilation/main/RecordKind.o: \
  $(SMLSHARP_DEP)
 src/compiler/recordcompilation/main/UnivKind.o: \
  src/compiler/recordcompilation/main/UnivKind.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8012,8 +8012,8 @@ src/compiler/recordcompilation/main/UnivKind.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8067,14 +8067,14 @@ src/compiler/recordcompilation/main/UnivKind.o: \
 src/compiler/runtimecalc/main/RuntimeCalc.ppg.sml: src/compiler/runtimecalc/main/RuntimeCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/runtimecalc/main/RuntimeCalc.ppg.o: \
  src/compiler/runtimecalc/main/RuntimeCalc.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8083,8 +8083,8 @@ src/compiler/runtimecalc/main/RuntimeCalc.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8140,15 +8140,15 @@ src/compiler/runtimecalc/main/RuntimeCalc.ppg.o: \
 src/compiler/runtimetypes/main/FFIAttributes.ppg.sml: src/compiler/runtimetypes/main/FFIAttributes.ppg $(SMLFORMAT_DEP)
 src/compiler/runtimetypes/main/FFIAttributes.ppg.o: \
  src/compiler/runtimetypes/main/FFIAttributes.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -8156,12 +8156,12 @@ src/compiler/runtimetypes/main/FFIAttributes.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -8197,15 +8197,15 @@ src/compiler/runtimetypes/main/FFIAttributes.ppg.o: \
 src/compiler/runtimetypes/main/RuntimeTypes.ppg.sml: src/compiler/runtimetypes/main/RuntimeTypes.ppg $(SMLFORMAT_DEP)
 src/compiler/runtimetypes/main/RuntimeTypes.ppg.o: \
  src/compiler/runtimetypes/main/RuntimeTypes.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -8213,12 +8213,12 @@ src/compiler/runtimetypes/main/RuntimeTypes.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -8255,14 +8255,14 @@ src/compiler/runtimetypes/main/RuntimeTypes.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/runtimetypes/main/TypeLayout2.o: \
  src/compiler/runtimetypes/main/TypeLayout2.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8271,8 +8271,8 @@ src/compiler/runtimetypes/main/TypeLayout2.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8336,12 +8336,12 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/General.smi \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -8399,15 +8399,15 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/General.smi \
  $(SMLSHARP_DEP)
 src/compiler/sqlcompilation/main/SQLCompilation.o: \
  src/compiler/sqlcompilation/main/SQLCompilation.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -8415,12 +8415,12 @@ src/compiler/sqlcompilation/main/SQLCompilation.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -8483,15 +8483,15 @@ src/compiler/sqlcompilation/main/SQLCompilation.o: \
 src/compiler/sqlcompilation/main/SQLCompileError.ppg.sml: src/compiler/sqlcompilation/main/SQLCompileError.ppg $(SMLFORMAT_DEP)
 src/compiler/sqlcompilation/main/SQLCompileError.ppg.o: \
  src/compiler/sqlcompilation/main/SQLCompileError.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -8499,12 +8499,12 @@ src/compiler/sqlcompilation/main/SQLCompileError.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -8549,15 +8549,15 @@ src/compiler/sqlcompilation/main/SQLCompileError.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/stackallocation/main/StackAllocation.o: \
  src/compiler/stackallocation/main/StackAllocation.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -8565,12 +8565,12 @@ src/compiler/stackallocation/main/StackAllocation.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -8630,14 +8630,14 @@ src/compiler/stackallocation/main/StackAllocation.o: \
  $(SMLSHARP_DEP)
 src/compiler/toolchain/main/BinUtils.o: \
  src/compiler/toolchain/main/BinUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8646,8 +8646,8 @@ src/compiler/toolchain/main/BinUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8683,14 +8683,14 @@ src/compiler/toolchain/main/BinUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/toolchain/main/CoreUtils.o: \
  src/compiler/toolchain/main/CoreUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8699,8 +8699,8 @@ src/compiler/toolchain/main/CoreUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8734,14 +8734,14 @@ src/compiler/toolchain/main/CoreUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/toolchain/main/Filename.o: \
  src/compiler/toolchain/main/Filename.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8750,8 +8750,8 @@ src/compiler/toolchain/main/Filename.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8782,14 +8782,14 @@ src/compiler/toolchain/main/Filename.o: \
  $(SMLSHARP_DEP)
 src/compiler/toolchain/main/LLVMUtils.o: \
  src/compiler/toolchain/main/LLVMUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8798,8 +8798,8 @@ src/compiler/toolchain/main/LLVMUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8835,14 +8835,14 @@ src/compiler/toolchain/main/LLVMUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/toolchain/main/TempFile.o: \
  src/compiler/toolchain/main/TempFile.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8851,8 +8851,8 @@ src/compiler/toolchain/main/TempFile.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8885,14 +8885,14 @@ src/compiler/toolchain/main/TempFile.o: \
  $(SMLSHARP_DEP)
 src/compiler/toplevel2/main/NameEvalEnvUtils.o: \
  src/compiler/toplevel2/main/NameEvalEnvUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -8901,8 +8901,8 @@ src/compiler/toplevel2/main/NameEvalEnvUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -8970,15 +8970,15 @@ src/compiler/toplevel2/main/NameEvalEnvUtils.o: \
  src/compiler/toplevel2/main/NameEvalEnvUtils.smi \
  $(SMLSHARP_DEP)
 src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -8986,12 +8986,12 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -9157,14 +9157,14 @@ src/compiler/toplevel2/main/Top.o: src/compiler/toplevel2/main/Top.sml \
 src/compiler/toplevel2/main/TopData.ppg.sml: src/compiler/toplevel2/main/TopData.ppg $(SMLFORMAT_DEP)
 src/compiler/toplevel2/main/TopData.ppg.o: \
  src/compiler/toplevel2/main/TopData.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -9173,8 +9173,8 @@ src/compiler/toplevel2/main/TopData.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -9246,14 +9246,14 @@ src/compiler/toplevel2/main/TopData.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/typedcalc/main/TCAlphaRename.o: \
  src/compiler/typedcalc/main/TCAlphaRename.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -9262,8 +9262,8 @@ src/compiler/typedcalc/main/TCAlphaRename.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -9323,14 +9323,14 @@ src/compiler/typedcalc/main/TCAlphaRename.o: \
 src/compiler/typedcalc/main/TypedCalc.ppg.sml: src/compiler/typedcalc/main/TypedCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/typedcalc/main/TypedCalc.ppg.o: \
  src/compiler/typedcalc/main/TypedCalc.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -9339,8 +9339,8 @@ src/compiler/typedcalc/main/TypedCalc.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -9390,14 +9390,14 @@ src/compiler/typedcalc/main/TypedCalc.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/typedcalc/main/TypedCalcUtils.o: \
  src/compiler/typedcalc/main/TypedCalcUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -9406,8 +9406,8 @@ src/compiler/typedcalc/main/TypedCalcUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -9461,15 +9461,15 @@ src/compiler/typedcalc/main/TypedCalcUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/typedcalcoptimization2/main/TCAnalyse.o: \
  src/compiler/typedcalcoptimization2/main/TCAnalyse.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -9477,12 +9477,12 @@ src/compiler/typedcalcoptimization2/main/TCAnalyse.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -9530,15 +9530,15 @@ src/compiler/typedcalcoptimization2/main/TCAnalyse.o: \
  $(SMLSHARP_DEP)
 src/compiler/typedcalcoptimization2/main/TCEvalTy.o: \
  src/compiler/typedcalcoptimization2/main/TCEvalTy.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -9546,12 +9546,12 @@ src/compiler/typedcalcoptimization2/main/TCEvalTy.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -9603,15 +9603,15 @@ src/compiler/typedcalcoptimization2/main/TCEvalTy.o: \
  $(SMLSHARP_DEP)
 src/compiler/typedcalcoptimization2/main/TCOptimize.o: \
  src/compiler/typedcalcoptimization2/main/TCOptimize.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -9619,12 +9619,12 @@ src/compiler/typedcalcoptimization2/main/TCOptimize.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -9686,15 +9686,15 @@ src/compiler/typedcalcoptimization2/main/TCOptimize.o: \
  $(SMLSHARP_DEP)
 src/compiler/typedcalcoptimization2/main/TCSize.o: \
  src/compiler/typedcalcoptimization2/main/TCSize.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -9702,12 +9702,12 @@ src/compiler/typedcalcoptimization2/main/TCSize.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -9755,14 +9755,14 @@ src/compiler/typedcalcoptimization2/main/TCSize.o: \
 src/compiler/typedlambda/main/TypedLambda.ppg.sml: src/compiler/typedlambda/main/TypedLambda.ppg $(SMLFORMAT_DEP)
 src/compiler/typedlambda/main/TypedLambda.ppg.o: \
  src/compiler/typedlambda/main/TypedLambda.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -9771,8 +9771,8 @@ src/compiler/typedlambda/main/TypedLambda.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -9825,14 +9825,14 @@ src/compiler/typedlambda/main/TypedLambda.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/typeinference2/main/InferTypes2.o: \
  src/compiler/typeinference2/main/InferTypes2.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -9841,8 +9841,8 @@ src/compiler/typeinference2/main/InferTypes2.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -9922,14 +9922,14 @@ src/compiler/typeinference2/main/InferTypes2.o: \
  $(SMLSHARP_DEP)
 src/compiler/typeinference2/main/Printers.o: \
  src/compiler/typeinference2/main/Printers.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -9938,8 +9938,8 @@ src/compiler/typeinference2/main/Printers.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -9996,15 +9996,15 @@ src/compiler/typeinference2/main/Printers.o: \
 src/compiler/typeinference2/main/TypeInferenceContext.ppg.sml: src/compiler/typeinference2/main/TypeInferenceContext.ppg $(SMLFORMAT_DEP)
 src/compiler/typeinference2/main/TypeInferenceContext.ppg.o: \
  src/compiler/typeinference2/main/TypeInferenceContext.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10012,12 +10012,12 @@ src/compiler/typeinference2/main/TypeInferenceContext.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10068,15 +10068,15 @@ src/compiler/typeinference2/main/TypeInferenceContext.ppg.o: \
 src/compiler/typeinference2/main/TypeInferenceError.ppg.sml: src/compiler/typeinference2/main/TypeInferenceError.ppg $(SMLFORMAT_DEP)
 src/compiler/typeinference2/main/TypeInferenceError.ppg.o: \
  src/compiler/typeinference2/main/TypeInferenceError.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10084,12 +10084,12 @@ src/compiler/typeinference2/main/TypeInferenceError.ppg.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10138,15 +10138,15 @@ src/compiler/typeinference2/main/TypeInferenceError.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/typeinference2/main/TypeInferenceUtils.o: \
  src/compiler/typeinference2/main/TypeInferenceUtils.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10154,12 +10154,12 @@ src/compiler/typeinference2/main/TypeInferenceUtils.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10216,15 +10216,15 @@ src/compiler/typeinference2/main/TypeInferenceUtils.o: \
  $(SMLSHARP_DEP)
 src/compiler/typeinference2/main/UncurryFundecl_ng.o: \
  src/compiler/typeinference2/main/UncurryFundecl_ng.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10232,12 +10232,12 @@ src/compiler/typeinference2/main/UncurryFundecl_ng.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10297,15 +10297,15 @@ src/compiler/typeinference2/main/UncurryFundecl_ng.o: \
  src/compiler/typeinference2/main/UncurryFundecl_ng.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/CheckEq.o: src/compiler/types/main/CheckEq.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10313,12 +10313,12 @@ src/compiler/types/main/CheckEq.o: src/compiler/types/main/CheckEq.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10366,15 +10366,15 @@ src/compiler/types/main/CheckEq.o: src/compiler/types/main/CheckEq.sml \
  src/compiler/types/main/TypesUtils.smi src/compiler/types/main/CheckEq.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/EvalIty.o: src/compiler/types/main/EvalIty.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10382,12 +10382,12 @@ src/compiler/types/main/EvalIty.o: src/compiler/types/main/EvalIty.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10435,15 +10435,15 @@ src/compiler/types/main/EvalIty.o: src/compiler/types/main/EvalIty.sml \
  $(SMLSHARP_DEP)
 src/compiler/types/main/IDCalc.ppg.sml: src/compiler/types/main/IDCalc.ppg $(SMLFORMAT_DEP)
 src/compiler/types/main/IDCalc.ppg.o: src/compiler/types/main/IDCalc.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10451,12 +10451,12 @@ src/compiler/types/main/IDCalc.ppg.o: src/compiler/types/main/IDCalc.ppg.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10500,15 +10500,15 @@ src/compiler/types/main/IDCalc.ppg.o: src/compiler/types/main/IDCalc.ppg.sml \
  src/compiler/control/main/Bug.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/IDCalcUtils.o: src/compiler/types/main/IDCalcUtils.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10516,12 +10516,12 @@ src/compiler/types/main/IDCalcUtils.o: src/compiler/types/main/IDCalcUtils.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10569,14 +10569,14 @@ src/compiler/types/main/IDCalcUtils.o: src/compiler/types/main/IDCalcUtils.sml \
  $(SMLSHARP_DEP)
 src/compiler/types/main/OPrimInstMap.o: \
  src/compiler/types/main/OPrimInstMap.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -10585,8 +10585,8 @@ src/compiler/types/main/OPrimInstMap.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -10618,15 +10618,15 @@ src/compiler/types/main/OPrimInstMap.o: \
  src/compiler/types/main/OPrimInstMap.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/OPrimMap.o: src/compiler/types/main/OPrimMap.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10634,12 +10634,12 @@ src/compiler/types/main/OPrimMap.o: src/compiler/types/main/OPrimMap.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10680,15 +10680,15 @@ src/compiler/types/main/OPrimMap.o: src/compiler/types/main/OPrimMap.sml \
  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/OPrimMap.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/TvarMap.o: src/compiler/types/main/TvarMap.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10696,12 +10696,12 @@ src/compiler/types/main/TvarMap.o: src/compiler/types/main/TvarMap.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10734,14 +10734,14 @@ src/compiler/types/main/TvarMap.o: src/compiler/types/main/TvarMap.sml \
  $(SMLSHARP_DEP)
 src/compiler/types/main/TyAlphaRename.o: \
  src/compiler/types/main/TyAlphaRename.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -10750,8 +10750,8 @@ src/compiler/types/main/TyAlphaRename.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -10800,15 +10800,15 @@ src/compiler/types/main/TyAlphaRename.o: \
  src/compiler/types/main/TyAlphaRename.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/TyPrinters.o: src/compiler/types/main/TyPrinters.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10816,12 +10816,12 @@ src/compiler/types/main/TyPrinters.o: src/compiler/types/main/TyPrinters.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10863,15 +10863,15 @@ src/compiler/types/main/TyPrinters.o: src/compiler/types/main/TyPrinters.sml \
  src/compiler/types/main/Types.ppg.smi src/compiler/types/main/TyPrinters.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/TyReduce.o: src/compiler/types/main/TyReduce.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10879,12 +10879,12 @@ src/compiler/types/main/TyReduce.o: src/compiler/types/main/TyReduce.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -10931,15 +10931,15 @@ src/compiler/types/main/TyReduce.o: src/compiler/types/main/TyReduce.sml \
  src/compiler/types/main/TyReduce.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/TyRevealTy.o: src/compiler/types/main/TyRevealTy.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -10947,12 +10947,12 @@ src/compiler/types/main/TyRevealTy.o: src/compiler/types/main/TyRevealTy.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11001,15 +11001,15 @@ src/compiler/types/main/TyRevealTy.o: src/compiler/types/main/TyRevealTy.sml \
  $(SMLSHARP_DEP)
 src/compiler/types/main/Types.ppg.sml: src/compiler/types/main/Types.ppg $(SMLFORMAT_DEP)
 src/compiler/types/main/Types.ppg.o: src/compiler/types/main/Types.ppg.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11017,12 +11017,12 @@ src/compiler/types/main/Types.ppg.o: src/compiler/types/main/Types.ppg.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11066,15 +11066,15 @@ src/compiler/types/main/Types.ppg.o: src/compiler/types/main/Types.ppg.sml \
  src/compiler/types/main/Types.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/TypesBasics.o: src/compiler/types/main/TypesBasics.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11082,12 +11082,12 @@ src/compiler/types/main/TypesBasics.o: src/compiler/types/main/TypesBasics.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11129,15 +11129,15 @@ src/compiler/types/main/TypesBasics.o: src/compiler/types/main/TypesBasics.sml \
  src/compiler/control/main/Bug.ppg.smi src/compiler/types/main/TypesBasics.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/TypesUtils.o: src/compiler/types/main/TypesUtils.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11145,12 +11145,12 @@ src/compiler/types/main/TypesUtils.o: src/compiler/types/main/TypesUtils.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11199,15 +11199,15 @@ src/compiler/types/main/TypesUtils.o: src/compiler/types/main/TypesUtils.sml \
  src/compiler/types/main/TypesUtils.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/Unify.o: src/compiler/types/main/Unify.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11215,12 +11215,12 @@ src/compiler/types/main/Unify.o: src/compiler/types/main/Unify.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11273,15 +11273,15 @@ src/compiler/types/main/Unify.o: src/compiler/types/main/Unify.sml \
  src/compiler/types/main/Unify.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/VarInfoEnv.o: src/compiler/types/main/VarInfoEnv.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11289,12 +11289,12 @@ src/compiler/types/main/VarInfoEnv.o: src/compiler/types/main/VarInfoEnv.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11336,15 +11336,15 @@ src/compiler/types/main/VarInfoEnv.o: src/compiler/types/main/VarInfoEnv.sml \
  src/compiler/control/main/Bug.ppg.smi src/compiler/types/main/VarInfoEnv.smi \
  $(SMLSHARP_DEP)
 src/compiler/types/main/VarMap.o: src/compiler/types/main/VarMap.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11352,12 +11352,12 @@ src/compiler/types/main/VarMap.o: src/compiler/types/main/VarMap.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11388,14 +11388,14 @@ src/compiler/types/main/VarMap.o: src/compiler/types/main/VarMap.sml \
 src/compiler/usererror/main/UserError.ppg.sml: src/compiler/usererror/main/UserError.ppg $(SMLFORMAT_DEP)
 src/compiler/usererror/main/UserError.ppg.o: \
  src/compiler/usererror/main/UserError.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -11404,8 +11404,8 @@ src/compiler/usererror/main/UserError.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -11438,14 +11438,14 @@ src/compiler/usererror/main/UserError.ppg.o: \
  $(SMLSHARP_DEP)
 src/compiler/usererror/main/UserErrorUtils.o: \
  src/compiler/usererror/main/UserErrorUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -11454,8 +11454,8 @@ src/compiler/usererror/main/UserErrorUtils.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -11489,15 +11489,15 @@ src/compiler/usererror/main/UserErrorUtils.o: \
  src/compiler/usererror/main/UserErrorUtils.smi \
  $(SMLSHARP_DEP)
 src/compiler/util/main/Counter.o: src/compiler/util/main/Counter.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11505,12 +11505,12 @@ src/compiler/util/main/Counter.o: src/compiler/util/main/Counter.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11541,15 +11541,15 @@ src/compiler/util/main/Counter.o: src/compiler/util/main/Counter.sml \
  src/compiler/util/main/Counter.smi \
  $(SMLSHARP_DEP)
 src/compiler/util/main/Gensym.o: src/compiler/util/main/Gensym.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11557,12 +11557,12 @@ src/compiler/util/main/Gensym.o: src/compiler/util/main/Gensym.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11584,15 +11584,15 @@ src/compiler/util/main/Gensym.o: src/compiler/util/main/Gensym.sml \
  src/basis/main/WORD.sig src/basis.smi src/compiler/util/main/Gensym.smi \
  $(SMLSHARP_DEP)
 src/compiler/util/main/Graph.o: src/compiler/util/main/Graph.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11600,12 +11600,12 @@ src/compiler/util/main/Graph.o: src/compiler/util/main/Graph.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11635,15 +11635,15 @@ src/compiler/util/main/Graph.o: src/compiler/util/main/Graph.sml \
  src/compiler/util/main/GRAPH.sig src/compiler/util/main/Graph.smi \
  $(SMLSHARP_DEP)
 src/compiler/util/main/ListSorter.o: src/compiler/util/main/ListSorter.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11651,12 +11651,12 @@ src/compiler/util/main/ListSorter.o: src/compiler/util/main/ListSorter.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11678,15 +11678,15 @@ src/compiler/util/main/ListSorter.o: src/compiler/util/main/ListSorter.sml \
  src/basis/main/WORD.sig src/basis.smi src/compiler/util/main/ListSorter.smi \
  $(SMLSHARP_DEP)
 src/compiler/util/main/SCCFun.o: src/compiler/util/main/SCCFun.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11694,12 +11694,12 @@ src/compiler/util/main/SCCFun.o: src/compiler/util/main/SCCFun.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11733,14 +11733,14 @@ src/compiler/util/main/SCCFun.o: src/compiler/util/main/SCCFun.sml \
 src/compiler/util/main/SmlppgUtil.ppg.sml: src/compiler/util/main/SmlppgUtil.ppg $(SMLFORMAT_DEP)
 src/compiler/util/main/SmlppgUtil.ppg.o: \
  src/compiler/util/main/SmlppgUtil.ppg.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -11749,8 +11749,8 @@ src/compiler/util/main/SmlppgUtil.ppg.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -11787,15 +11787,15 @@ src/compiler/util/main/SmlppgUtil.ppg.o: \
  src/compiler/util/main/SmlppgUtil.ppg.smi \
  $(SMLSHARP_DEP)
 src/compiler/util/main/TermFormat.o: src/compiler/util/main/TermFormat.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11803,12 +11803,12 @@ src/compiler/util/main/TermFormat.o: src/compiler/util/main/TermFormat.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11840,15 +11840,15 @@ src/compiler/util/main/TermFormat.o: src/compiler/util/main/TermFormat.sml \
  src/compiler/util/main/ListSorter.smi src/compiler/util/main/TermFormat.smi \
  $(SMLSHARP_DEP)
 src/compiler/util/main/TupleUtils.o: src/compiler/util/main/TupleUtils.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11856,12 +11856,12 @@ src/compiler/util/main/TupleUtils.o: src/compiler/util/main/TupleUtils.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11887,15 +11887,15 @@ src/compiler/util/main/TupleUtils.o: src/compiler/util/main/TupleUtils.sml \
  $(SMLSHARP_DEP)
 src/compiler/valrecoptimization/main/TransFundecl.o: \
  src/compiler/valrecoptimization/main/TransFundecl.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11903,12 +11903,12 @@ src/compiler/valrecoptimization/main/TransFundecl.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -11955,15 +11955,15 @@ src/compiler/valrecoptimization/main/TransFundecl.o: \
  $(SMLSHARP_DEP)
 src/compiler/valrecoptimization/main/VALREC_Optimizer.o: \
  src/compiler/valrecoptimization/main/VALREC_Optimizer.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -11971,12 +11971,12 @@ src/compiler/valrecoptimization/main/VALREC_Optimizer.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12026,15 +12026,15 @@ src/compiler/valrecoptimization/main/VALREC_Optimizer.o: \
  $(SMLSHARP_DEP)
 src/compiler/valrecoptimization/main/VALREC_Utils.o: \
  src/compiler/valrecoptimization/main/VALREC_Utils.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12042,12 +12042,12 @@ src/compiler/valrecoptimization/main/VALREC_Utils.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12092,15 +12092,15 @@ src/compiler/valrecoptimization/main/VALREC_Utils.o: \
  src/compiler/valrecoptimization/main/VALREC_Utils.smi \
  $(SMLSHARP_DEP)
 src/config/main/Config.o: src/config/main/Config.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12108,12 +12108,12 @@ src/config/main/Config.o: src/config/main/Config.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12150,14 +12150,14 @@ src/ffi/main/DynamicLink.o: src/ffi/main/DynamicLink.sml \
 src/ffi/main/Pointer.o: src/ffi/main/Pointer.sml src/ffi/main/Pointer.smi \
  $(SMLSHARP_DEP)
 src/llvm/main/LLVM.o: src/llvm/main/LLVM.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12166,8 +12166,8 @@ src/llvm/main/LLVM.o: src/llvm/main/LLVM.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12193,14 +12193,14 @@ src/llvm/main/LLVM.o: src/llvm/main/LLVM.sml src/basis/main/General.smi \
  src/llvm/main/LLVM.smi \
  $(SMLSHARP_DEP)
 src/ml-lex/export-lex.o: src/ml-lex/export-lex.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12209,8 +12209,8 @@ src/ml-lex/export-lex.o: src/ml-lex/export-lex.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12236,14 +12236,14 @@ src/ml-lex/export-lex.o: src/ml-lex/export-lex.sml src/basis/main/General.smi \
  src/ml-lex/export-lex.smi \
  $(SMLSHARP_DEP)
 src/ml-lex/lexgen.o: src/ml-lex/lexgen.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12252,8 +12252,8 @@ src/ml-lex/lexgen.o: src/ml-lex/lexgen.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12278,14 +12278,14 @@ src/ml-lex/lexgen.o: src/ml-lex/lexgen.sml src/basis/main/General.smi \
  src/basis/main/WORD.sig src/basis.smi src/ml-lex/lexgen.smi \
  $(SMLSHARP_DEP)
 src/ml-lex/ml-lex.o: src/ml-lex/ml-lex.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12294,8 +12294,8 @@ src/ml-lex/ml-lex.o: src/ml-lex/ml-lex.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12321,15 +12321,15 @@ src/ml-lex/ml-lex.o: src/ml-lex/ml-lex.sml src/basis/main/General.smi \
  src/ml-lex/export-lex.smi src/ml-lex/ml-lex.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/lib/lrtable.o: src/ml-yacc/lib/lrtable.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12337,12 +12337,12 @@ src/ml-yacc/lib/lrtable.o: src/ml-yacc/lib/lrtable.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12366,14 +12366,14 @@ src/ml-yacc/lib/lrtable.o: src/ml-yacc/lib/lrtable.sml \
  $(SMLSHARP_DEP)
 src/ml-yacc/lib/parser2.o: src/ml-yacc/lib/parser2.sml \
  src/ml-yacc/lib/lrtable.smi src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12382,8 +12382,8 @@ src/ml-yacc/lib/parser2.o: src/ml-yacc/lib/parser2.sml \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12409,15 +12409,15 @@ src/ml-yacc/lib/parser2.o: src/ml-yacc/lib/parser2.sml \
  src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/lib/stream.o: src/ml-yacc/lib/stream.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12425,12 +12425,12 @@ src/ml-yacc/lib/stream.o: src/ml-yacc/lib/stream.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12453,14 +12453,14 @@ src/ml-yacc/lib/stream.o: src/ml-yacc/lib/stream.sml \
  src/ml-yacc/lib/stream.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/absyn.o: src/ml-yacc/src/absyn.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12469,8 +12469,8 @@ src/ml-yacc/src/absyn.o: src/ml-yacc/src/absyn.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12496,14 +12496,14 @@ src/ml-yacc/src/absyn.o: src/ml-yacc/src/absyn.sml src/basis/main/General.smi \
  src/ml-yacc/src/absyn.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/core.o: src/ml-yacc/src/core.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12512,8 +12512,8 @@ src/ml-yacc/src/core.o: src/ml-yacc/src/core.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12541,15 +12541,15 @@ src/ml-yacc/src/core.o: src/ml-yacc/src/core.sml src/basis/main/General.smi \
  src/ml-yacc/src/core.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/coreutils.o: src/ml-yacc/src/coreutils.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12557,12 +12557,12 @@ src/ml-yacc/src/coreutils.o: src/ml-yacc/src/coreutils.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12587,15 +12587,15 @@ src/ml-yacc/src/coreutils.o: src/ml-yacc/src/coreutils.sml \
  src/ml-yacc/src/core.smi src/ml-yacc/src/coreutils.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/export-yacc.o: src/ml-yacc/src/export-yacc.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12603,12 +12603,12 @@ src/ml-yacc/src/export-yacc.o: src/ml-yacc/src/export-yacc.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12641,15 +12641,15 @@ src/ml-yacc/src/export-yacc.o: src/ml-yacc/src/export-yacc.sml \
  src/ml-yacc/src/yacc.smi src/ml-yacc/src/export-yacc.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/grammar.o: src/ml-yacc/src/grammar.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12657,12 +12657,12 @@ src/ml-yacc/src/grammar.o: src/ml-yacc/src/grammar.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12687,14 +12687,14 @@ src/ml-yacc/src/grammar.o: src/ml-yacc/src/grammar.sml \
  src/ml-yacc/src/grammar.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/graph.o: src/ml-yacc/src/graph.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12703,8 +12703,8 @@ src/ml-yacc/src/graph.o: src/ml-yacc/src/graph.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12733,14 +12733,14 @@ src/ml-yacc/src/graph.o: src/ml-yacc/src/graph.sml src/basis/main/General.smi \
  src/ml-yacc/src/graph.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/hdr.o: src/ml-yacc/src/hdr.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12749,8 +12749,8 @@ src/ml-yacc/src/hdr.o: src/ml-yacc/src/hdr.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12776,14 +12776,14 @@ src/ml-yacc/src/hdr.o: src/ml-yacc/src/hdr.sml src/basis/main/General.smi \
  src/ml-yacc/src/utils.sig src/ml-yacc/src/sigs.sml src/ml-yacc/src/hdr.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/lalr.o: src/ml-yacc/src/lalr.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12792,8 +12792,8 @@ src/ml-yacc/src/lalr.o: src/ml-yacc/src/lalr.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12822,14 +12822,14 @@ src/ml-yacc/src/lalr.o: src/ml-yacc/src/lalr.sml src/basis/main/General.smi \
  src/ml-yacc/src/graph.smi src/ml-yacc/src/look.smi src/ml-yacc/src/lalr.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/look.o: src/ml-yacc/src/look.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -12838,8 +12838,8 @@ src/ml-yacc/src/look.o: src/ml-yacc/src/look.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -12867,15 +12867,15 @@ src/ml-yacc/src/look.o: src/ml-yacc/src/look.sml src/basis/main/General.smi \
  src/ml-yacc/src/look.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/mklrtable.o: src/ml-yacc/src/mklrtable.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12883,12 +12883,12 @@ src/ml-yacc/src/mklrtable.o: src/ml-yacc/src/mklrtable.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12916,15 +12916,15 @@ src/ml-yacc/src/mklrtable.o: src/ml-yacc/src/mklrtable.sml \
  src/ml-yacc/src/mklrtable.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/mkprstruct.o: src/ml-yacc/src/mkprstruct.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12932,12 +12932,12 @@ src/ml-yacc/src/mkprstruct.o: src/ml-yacc/src/mkprstruct.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -12966,15 +12966,15 @@ src/ml-yacc/src/mkprstruct.o: src/ml-yacc/src/mkprstruct.sml \
  src/ml-yacc/src/mkprstruct.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/ml-yacc.o: src/ml-yacc/src/ml-yacc.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -12982,12 +12982,12 @@ src/ml-yacc/src/ml-yacc.o: src/ml-yacc/src/ml-yacc.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13021,14 +13021,14 @@ src/ml-yacc/src/ml-yacc.o: src/ml-yacc/src/ml-yacc.sml \
  src/ml-yacc/src/ml-yacc.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/parse.o: src/ml-yacc/src/parse.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13037,8 +13037,8 @@ src/ml-yacc/src/parse.o: src/ml-yacc/src/parse.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13067,15 +13067,15 @@ src/ml-yacc/src/parse.o: src/ml-yacc/src/parse.sml src/basis/main/General.smi \
  src/ml-yacc/src/yacc.lex.smi src/ml-yacc/src/parse.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/shrink.o: src/ml-yacc/src/shrink.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -13083,12 +13083,12 @@ src/ml-yacc/src/shrink.o: src/ml-yacc/src/shrink.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13116,14 +13116,14 @@ src/ml-yacc/src/shrink.o: src/ml-yacc/src/shrink.sml \
  src/ml-yacc/src/mklrtable.smi src/ml-yacc/src/shrink.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/utils.o: src/ml-yacc/src/utils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13132,8 +13132,8 @@ src/ml-yacc/src/utils.o: src/ml-yacc/src/utils.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13159,15 +13159,15 @@ src/ml-yacc/src/utils.o: src/ml-yacc/src/utils.sml src/basis/main/General.smi \
  src/ml-yacc/src/utils.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/verbose.o: src/ml-yacc/src/verbose.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -13175,12 +13175,12 @@ src/ml-yacc/src/verbose.o: src/ml-yacc/src/verbose.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13208,15 +13208,15 @@ src/ml-yacc/src/verbose.o: src/ml-yacc/src/verbose.sml \
  src/ml-yacc/src/mklrtable.smi src/ml-yacc/src/verbose.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/yacc.grm.o: src/ml-yacc/src/yacc.grm.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -13224,12 +13224,12 @@ src/ml-yacc/src/yacc.grm.o: src/ml-yacc/src/yacc.grm.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13254,15 +13254,15 @@ src/ml-yacc/src/yacc.grm.o: src/ml-yacc/src/yacc.grm.sml \
  src/ml-yacc/src/yacc.grm.sig src/ml-yacc/src/yacc.grm.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/yacc.lex.o: src/ml-yacc/src/yacc.lex.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -13270,12 +13270,12 @@ src/ml-yacc/src/yacc.lex.o: src/ml-yacc/src/yacc.lex.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13301,14 +13301,14 @@ src/ml-yacc/src/yacc.lex.o: src/ml-yacc/src/yacc.lex.sml \
  src/ml-yacc/src/yacc.lex.smi \
  $(SMLSHARP_DEP)
 src/ml-yacc/src/yacc.o: src/ml-yacc/src/yacc.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13317,8 +13317,8 @@ src/ml-yacc/src/yacc.o: src/ml-yacc/src/yacc.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13355,14 +13355,14 @@ src/ml-yacc/src/yacc.o: src/ml-yacc/src/yacc.sml src/basis/main/General.smi \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/AssocResolver.o: \
  src/smlformat/formatlib/main/AssocResolver.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13371,8 +13371,8 @@ src/smlformat/formatlib/main/AssocResolver.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13401,14 +13401,14 @@ src/smlformat/formatlib/main/AssocResolver.o: \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/BasicFormatters.o: \
  src/smlformat/formatlib/main/BasicFormatters.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13417,8 +13417,8 @@ src/smlformat/formatlib/main/BasicFormatters.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13447,14 +13447,14 @@ src/smlformat/formatlib/main/BasicFormatters.o: \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/FormatExpression.o: \
  src/smlformat/formatlib/main/FormatExpression.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13463,8 +13463,8 @@ src/smlformat/formatlib/main/FormatExpression.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13497,15 +13497,15 @@ src/smlformat/formatlib/main/FormatExpressionTypes.o: \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/PreProcessedExpression.o: \
  src/smlformat/formatlib/main/PreProcessedExpression.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -13513,12 +13513,12 @@ src/smlformat/formatlib/main/PreProcessedExpression.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13542,14 +13542,14 @@ src/smlformat/formatlib/main/PreProcessedExpression.o: \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/PreProcessor.o: \
  src/smlformat/formatlib/main/PreProcessor.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13558,8 +13558,8 @@ src/smlformat/formatlib/main/PreProcessor.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13591,14 +13591,14 @@ src/smlformat/formatlib/main/PrettyPrinter.o: \
  src/smlformat/formatlib/main/PrettyPrinter.sml \
  src/smlformat/formatlib/main/PreProcessedExpression.smi \
  src/smlformat/formatlib/main/PrinterParameter.smi src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13607,8 +13607,8 @@ src/smlformat/formatlib/main/PrettyPrinter.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13636,14 +13636,14 @@ src/smlformat/formatlib/main/PrettyPrinter.o: \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/PrinterParameter.o: \
  src/smlformat/formatlib/main/PrinterParameter.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13652,8 +13652,8 @@ src/smlformat/formatlib/main/PrinterParameter.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13680,14 +13680,14 @@ src/smlformat/formatlib/main/PrinterParameter.o: \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/SMLFormat.o: \
  src/smlformat/formatlib/main/SMLFormat.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13696,8 +13696,8 @@ src/smlformat/formatlib/main/SMLFormat.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13736,14 +13736,14 @@ src/smlformat/formatlib/main/SMLFormat.o: \
  $(SMLSHARP_DEP)
 src/smlformat/formatlib/main/Truncator.o: \
  src/smlformat/formatlib/main/Truncator.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13752,8 +13752,8 @@ src/smlformat/formatlib/main/Truncator.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13781,15 +13781,15 @@ src/smlformat/formatlib/main/Truncator.o: \
  src/smlformat/formatlib/main/Truncator.smi \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/Ast.o: src/smlformat/generator/main/Ast.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -13797,12 +13797,12 @@ src/smlformat/generator/main/Ast.o: src/smlformat/generator/main/Ast.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13827,14 +13827,14 @@ src/smlformat/generator/main/Ast.o: src/smlformat/generator/main/Ast.sml \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/AstUtil.o: \
  src/smlformat/generator/main/AstUtil.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13843,8 +13843,8 @@ src/smlformat/generator/main/AstUtil.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13874,15 +13874,15 @@ src/smlformat/generator/main/AstUtil.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/BasicFormattersEnv.o: \
  src/smlformat/generator/main/BasicFormattersEnv.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -13890,12 +13890,12 @@ src/smlformat/generator/main/BasicFormattersEnv.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -13928,14 +13928,14 @@ src/smlformat/generator/main/Constants_MLton.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/ErrorQueue.o: \
  src/smlformat/generator/main/ErrorQueue.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13944,8 +13944,8 @@ src/smlformat/generator/main/ErrorQueue.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -13972,14 +13972,14 @@ src/smlformat/generator/main/ErrorQueue.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/FormatTemplate.o: \
  src/smlformat/generator/main/FormatTemplate.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -13988,8 +13988,8 @@ src/smlformat/generator/main/FormatTemplate.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -14016,15 +14016,15 @@ src/smlformat/generator/main/FormatTemplate.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/FormatterGenerator.o: \
  src/smlformat/generator/main/FormatterGenerator.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14032,12 +14032,12 @@ src/smlformat/generator/main/FormatterGenerator.o: \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14065,14 +14065,14 @@ src/smlformat/generator/main/FormatterGenerator.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/MLParser.o: \
  src/smlformat/generator/main/MLParser.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -14081,8 +14081,8 @@ src/smlformat/generator/main/MLParser.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -14118,15 +14118,15 @@ src/smlformat/generator/main/MLParser.o: \
  src/smlformat/generator/main/MLParser.smi \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/Main.o: src/smlformat/generator/main/Main.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14134,12 +14134,12 @@ src/smlformat/generator/main/Main.o: src/smlformat/generator/main/Main.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14181,14 +14181,14 @@ src/smlformat/generator/main/Main.o: src/smlformat/generator/main/Main.sml \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/PPGMain.o: \
  src/smlformat/generator/main/PPGMain.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -14197,8 +14197,8 @@ src/smlformat/generator/main/PPGMain.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -14242,14 +14242,14 @@ src/smlformat/generator/main/PPGMain.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/TokenTable.o: \
  src/smlformat/generator/main/TokenTable.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -14258,8 +14258,8 @@ src/smlformat/generator/main/TokenTable.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -14293,14 +14293,14 @@ src/smlformat/generator/main/TokenTable.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/Utility.o: \
  src/smlformat/generator/main/Utility.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -14309,8 +14309,8 @@ src/smlformat/generator/main/Utility.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -14337,14 +14337,14 @@ src/smlformat/generator/main/Utility.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/call-main.o: \
  src/smlformat/generator/main/call-main.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -14353,8 +14353,8 @@ src/smlformat/generator/main/call-main.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -14400,15 +14400,15 @@ src/smlformat/generator/main/call-main.o: \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/ml.grm.sml: src/smlformat/generator/main/ml.grm $(MLYACC_DEP)
 src/smlformat/generator/main/ml.grm.o: src/smlformat/generator/main/ml.grm.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14416,12 +14416,12 @@ src/smlformat/generator/main/ml.grm.o: src/smlformat/generator/main/ml.grm.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14451,15 +14451,15 @@ src/smlformat/generator/main/ml.grm.o: src/smlformat/generator/main/ml.grm.sml \
  $(SMLSHARP_DEP)
 src/smlformat/generator/main/ml.lex.sml: src/smlformat/generator/main/ml.lex $(MLLEX_DEP)
 src/smlformat/generator/main/ml.lex.o: src/smlformat/generator/main/ml.lex.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14467,12 +14467,12 @@ src/smlformat/generator/main/ml.lex.o: src/smlformat/generator/main/ml.lex.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14503,15 +14503,15 @@ src/smlformat/generator/main/ml.lex.o: src/smlformat/generator/main/ml.lex.sml \
  src/smlformat/generator/main/ml.lex.smi \
  $(SMLSHARP_DEP)
 src/smlnj-lib/Util/binary-map-fn.o: src/smlnj-lib/Util/binary-map-fn.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14519,12 +14519,12 @@ src/smlnj-lib/Util/binary-map-fn.o: src/smlnj-lib/Util/binary-map-fn.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14548,15 +14548,15 @@ src/smlnj-lib/Util/binary-map-fn.o: src/smlnj-lib/Util/binary-map-fn.sml \
  src/smlnj-lib/Util/binary-map-fn.smi \
  $(SMLSHARP_DEP)
 src/smlnj-lib/Util/binary-set-fn.o: src/smlnj-lib/Util/binary-set-fn.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14564,12 +14564,12 @@ src/smlnj-lib/Util/binary-set-fn.o: src/smlnj-lib/Util/binary-set-fn.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14593,15 +14593,15 @@ src/smlnj-lib/Util/binary-set-fn.o: src/smlnj-lib/Util/binary-set-fn.sml \
  src/smlnj-lib/Util/binary-set-fn.smi \
  $(SMLSHARP_DEP)
 src/smlnj-lib/Util/lib-base.o: src/smlnj-lib/Util/lib-base.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14609,12 +14609,12 @@ src/smlnj-lib/Util/lib-base.o: src/smlnj-lib/Util/lib-base.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14637,15 +14637,15 @@ src/smlnj-lib/Util/lib-base.o: src/smlnj-lib/Util/lib-base.sml \
  src/smlnj-lib/Util/lib-base.smi \
  $(SMLSHARP_DEP)
 src/smlnj-lib/Util/parser-comb.o: src/smlnj-lib/Util/parser-comb.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14653,12 +14653,12 @@ src/smlnj-lib/Util/parser-comb.o: src/smlnj-lib/Util/parser-comb.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14815,15 +14815,15 @@ src/smlnj/Basis/date.o: src/smlnj/Basis/date.sml src/basis/main/StringCvt.smi \
  src/basis/main/Bool.smi src/basis/main/CharArray.smi src/smlnj/Basis/date.smi \
  $(SMLSHARP_DEP)
 src/smlunit/src/main/Assert.o: src/smlunit/src/main/Assert.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14831,12 +14831,12 @@ src/smlunit/src/main/Assert.o: src/smlunit/src/main/Assert.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14859,15 +14859,15 @@ src/smlunit/src/main/Assert.o: src/smlunit/src/main/Assert.sml \
  src/smlunit/src/main/Assert.smi \
  $(SMLSHARP_DEP)
 src/smlunit/src/main/SMLUnit.o: src/smlunit/src/main/SMLUnit.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14875,12 +14875,12 @@ src/smlunit/src/main/SMLUnit.o: src/smlunit/src/main/SMLUnit.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14906,15 +14906,15 @@ src/smlunit/src/main/SMLUnit.o: src/smlunit/src/main/SMLUnit.sml \
  src/smlunit/src/main/SMLUnit.smi \
  $(SMLSHARP_DEP)
 src/smlunit/src/main/Test.o: src/smlunit/src/main/Test.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -14922,12 +14922,12 @@ src/smlunit/src/main/Test.o: src/smlunit/src/main/Test.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -14951,14 +14951,14 @@ src/smlunit/src/main/Test.o: src/smlunit/src/main/Test.sml \
  $(SMLSHARP_DEP)
 src/smlunit/src/main/TextUITestRunner.o: \
  src/smlunit/src/main/TextUITestRunner.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -14967,8 +14967,8 @@ src/smlunit/src/main/TextUITestRunner.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -14995,14 +14995,14 @@ src/smlunit/src/main/TextUITestRunner.o: \
  src/smlunit/src/main/TextUITestRunner.smi \
  $(SMLSHARP_DEP)
 src/sql/main/Backend.o: src/sql/main/Backend.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15011,8 +15011,8 @@ src/sql/main/Backend.o: src/sql/main/Backend.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15043,15 +15043,15 @@ src/sql/main/Backend.o: src/sql/main/Backend.sml src/basis/main/General.smi \
  src/sql/main/SQLBACKEND.sig src/sql/main/Backend.smi \
  $(SMLSHARP_DEP)
 src/sql/main/KeyValuePair.o: src/sql/main/KeyValuePair.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -15059,12 +15059,12 @@ src/sql/main/KeyValuePair.o: src/sql/main/KeyValuePair.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -15086,14 +15086,14 @@ src/sql/main/KeyValuePair.o: src/sql/main/KeyValuePair.sml \
  src/basis/main/WORD.sig src/basis.smi src/sql/main/KeyValuePair.smi \
  $(SMLSHARP_DEP)
 src/sql/main/MySQL.o: src/sql/main/MySQL.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15102,8 +15102,8 @@ src/sql/main/MySQL.o: src/sql/main/MySQL.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15135,15 +15135,15 @@ src/sql/main/MySQL.o: src/sql/main/MySQL.sml src/basis/main/General.smi \
  src/ffi/main/Pointer.smi src/ffi.smi src/sql/main/MySQL.smi \
  $(SMLSHARP_DEP)
 src/sql/main/MySQLBackend.o: src/sql/main/MySQLBackend.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -15151,12 +15151,12 @@ src/sql/main/MySQLBackend.o: src/sql/main/MySQLBackend.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -15183,15 +15183,15 @@ src/sql/main/MySQLBackend.o: src/sql/main/MySQLBackend.sml \
  src/sql/main/SQLBACKEND.sig src/sql/main/MySQLBackend.smi \
  $(SMLSHARP_DEP)
 src/sql/main/ODBCBackend.o: src/sql/main/ODBCBackend.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -15199,12 +15199,12 @@ src/sql/main/ODBCBackend.o: src/sql/main/ODBCBackend.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -15231,14 +15231,14 @@ src/sql/main/ODBCBackend.o: src/sql/main/ODBCBackend.sml \
  src/sql/main/SQLBACKEND.sig src/sql/main/ODBCBackend.smi \
  $(SMLSHARP_DEP)
 src/sql/main/PGSQL.o: src/sql/main/PGSQL.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15247,8 +15247,8 @@ src/sql/main/PGSQL.o: src/sql/main/PGSQL.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15280,15 +15280,15 @@ src/sql/main/PGSQL.o: src/sql/main/PGSQL.sml src/basis/main/General.smi \
  src/ffi/main/Pointer.smi src/ffi.smi src/sql/main/PGSQL.smi \
  $(SMLSHARP_DEP)
 src/sql/main/PGSQLBackend.o: src/sql/main/PGSQLBackend.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -15296,12 +15296,12 @@ src/sql/main/PGSQLBackend.o: src/sql/main/PGSQLBackend.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -15328,14 +15328,14 @@ src/sql/main/PGSQLBackend.o: src/sql/main/PGSQLBackend.sml \
  src/sql/main/PGSQLBackend.smi \
  $(SMLSHARP_DEP)
 src/sql/main/SQL.o: src/sql/main/SQL.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15344,8 +15344,8 @@ src/sql/main/SQL.o: src/sql/main/SQL.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15381,14 +15381,14 @@ src/sql/main/SQLErrors.o: src/sql/main/SQLErrors.sml \
  src/sql/main/SQLErrors.smi \
  $(SMLSHARP_DEP)
 src/sql/main/SQLPrim.o: src/sql/main/SQLPrim.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15397,8 +15397,8 @@ src/sql/main/SQLPrim.o: src/sql/main/SQLPrim.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15427,14 +15427,14 @@ src/sql/main/SQLPrim.o: src/sql/main/SQLPrim.sml src/basis/main/General.smi \
  src/sql/main/Backend.smi src/sql/main/SQLPrim.smi \
  $(SMLSHARP_DEP)
 src/sql/main/SQLUtils.o: src/sql/main/SQLUtils.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15443,8 +15443,8 @@ src/sql/main/SQLUtils.o: src/sql/main/SQLUtils.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15473,14 +15473,14 @@ src/sql/main/SQLUtils.o: src/sql/main/SQLUtils.sml src/basis/main/General.smi \
  src/sql/main/Backend.smi src/sql/main/SQLPrim.smi src/sql/main/SQLUtils.smi \
  $(SMLSHARP_DEP)
 src/sql/main/UNIXODBC.o: src/sql/main/UNIXODBC.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15489,8 +15489,8 @@ src/sql/main/UNIXODBC.o: src/sql/main/UNIXODBC.sml src/basis/main/General.smi \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15523,14 +15523,14 @@ src/sql/main/UNIXODBC.o: src/sql/main/UNIXODBC.sml src/basis/main/General.smi \
  $(SMLSHARP_DEP)
 src/sql/main/builtintypes/decimal/Decimal.o: \
  src/sql/main/builtintypes/decimal/Decimal.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15539,8 +15539,8 @@ src/sql/main/builtintypes/decimal/Decimal.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15567,14 +15567,14 @@ src/sql/main/builtintypes/decimal/Decimal.o: \
  $(SMLSHARP_DEP)
 src/sql/main/builtintypes/float/Float.o: \
  src/sql/main/builtintypes/float/Float.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15583,8 +15583,8 @@ src/sql/main/builtintypes/float/Float.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15611,14 +15611,14 @@ src/sql/main/builtintypes/float/Float.o: \
  $(SMLSHARP_DEP)
 src/sql/main/builtintypes/timestamp/TimeStamp.o: \
  src/sql/main/builtintypes/timestamp/TimeStamp.sml src/basis/main/General.smi \
- src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
- src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
- src/basis/main/IO.smi src/basis/main/Word8VectorSlice.smi \
- src/basis/main/Word8Array.smi src/basis/main/Word8ArraySlice.smi \
  src/basis/main/StringCvt.smi src/basis/main/IEEEReal.smi \
  src/basis/main/Real64.smi src/basis/main/IntInf.smi src/basis/main/Time.smi \
- src/basis/main/Int32.smi src/basis/main/SMLSharp_OSIO.smi \
- src/basis/main/SMLSharp_OSFileSys.smi src/basis/main/Substring.smi \
+ src/basis/main/Int32.smi src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi src/basis/main/Substring.smi \
+ src/basis/main/Array.smi src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
  src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
  src/basis/main/SMLSharp_OSProcess.smi src/basis/main/SMLSharp_Runtime.smi \
  src/basis/main/OS.smi src/smlnj/Basis/IO/prim-io-bin.smi \
@@ -15627,8 +15627,8 @@ src/sql/main/builtintypes/timestamp/TimeStamp.o: \
  src/basis/main/CharArraySlice.smi src/basis/main/SMLSharp_ScanChar.smi \
  src/basis/main/Char.smi src/basis/main/CharVector.smi \
  src/basis/main/CommandLine.smi src/smlnj/Basis/date.smi \
- src/basis/main/Int64.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
- src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/String.smi \
+ src/basis/main/List.smi src/basis/main/ListPair.smi src/basis/main/Option.smi \
+ src/basis/main/Real32.smi src/basis/main/Int64.smi src/basis/main/String.smi \
  src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
  src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
  src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
@@ -15655,15 +15655,15 @@ src/sql/main/builtintypes/timestamp/TimeStamp.o: \
  src/sql/main/builtintypes/timestamp/TimeStamp.smi \
  $(SMLSHARP_DEP)
 src/unix-utils/main/UnixUtils.o: src/unix-utils/main/UnixUtils.sml \
- src/basis/main/General.smi src/basis/main/Array.smi \
- src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
- src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
- src/basis/main/Word8VectorSlice.smi src/basis/main/Word8Array.smi \
- src/basis/main/Word8ArraySlice.smi src/basis/main/StringCvt.smi \
+ src/basis/main/General.smi src/basis/main/StringCvt.smi \
  src/basis/main/IEEEReal.smi src/basis/main/Real64.smi \
  src/basis/main/IntInf.smi src/basis/main/Time.smi src/basis/main/Int32.smi \
- src/basis/main/SMLSharp_OSIO.smi src/basis/main/SMLSharp_OSFileSys.smi \
- src/basis/main/Substring.smi src/smlnj/Basis/OS/os-path-fn.smi \
+ src/basis/main/Word8VectorSlice.smi src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi src/smlnj/Basis/OS/os-path-fn.smi \
  src/smlnj/Basis/Unix/os-path.smi src/basis/main/SMLSharp_OSProcess.smi \
  src/basis/main/SMLSharp_Runtime.smi src/basis/main/OS.smi \
  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/IO/bin-io.smi \
@@ -15671,12 +15671,12 @@ src/unix-utils/main/UnixUtils.o: src/unix-utils/main/UnixUtils.sml \
  src/basis/main/CharVectorSlice.smi src/basis/main/CharArraySlice.smi \
  src/basis/main/SMLSharp_ScanChar.smi src/basis/main/Char.smi \
  src/basis/main/CharVector.smi src/basis/main/CommandLine.smi \
- src/smlnj/Basis/date.smi src/basis/main/Int64.smi src/basis/main/List.smi \
- src/basis/main/ListPair.smi src/basis/main/Option.smi \
- src/basis/main/Real32.smi src/basis/main/String.smi \
- src/smlnj/Basis/IO/prim-io-text.smi src/smlnj/Basis/IO/text-io.smi \
- src/basis/main/Text.smi src/basis/main/Timer.smi src/basis/main/Vector.smi \
- src/basis/main/Word8.smi src/basis/main/Word32.smi src/basis/main/Word64.smi \
+ src/smlnj/Basis/date.smi src/basis/main/List.smi src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi src/basis/main/Real32.smi src/basis/main/Int64.smi \
+ src/basis/main/String.smi src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi src/basis/main/Text.smi \
+ src/basis/main/Timer.smi src/basis/main/Vector.smi src/basis/main/Word8.smi \
+ src/basis/main/Word32.smi src/basis/main/Word64.smi \
  src/basis/main/toplevel.smi src/basis/main/ARRAY.sig \
  src/basis/main/ARRAY_SLICE.sig src/basis/main/STREAM_IO.sig \
  src/basis/main/IMPERATIVE_IO.sig src/basis/main/BIN_IO.sig \
@@ -15727,3 +15727,4 @@ string_to_time_t.o: \
   src/sql/main/builtintypes/timestamp/string_to_time_t.c config.h
 timeval_to_string.o: \
   src/sql/main/builtintypes/timestamp/timeval_to_string.c
+src/runtime/main.o: src/runtime/main.c src/runtime/smlsharp.h config.h

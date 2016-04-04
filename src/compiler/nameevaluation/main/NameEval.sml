@@ -2589,35 +2589,23 @@ in (* local *)
   fun nameEvalInteractiveEnv topEnv interactiveUnit =
       let
         val _ = EU.initializeErrorQueue()
-        val {interface = {interfaceDecs=decls, requiredIds, locallyRequiredIds,
-                          provideTopdecs=provideDecs},
-             topdecsInclude, interfaceDecls} = interactiveUnit
+        val {interface = {interfaceDecs, 
+                          requiredIds, 
+                          locallyRequiredIds,
+                          provideTopdecs},
+             topdecsInclude, 
+             interfaceDecls} = interactiveUnit
         val topdecsInclude =
             map
             (fn P.PLTOPDECSIG (sigdeclList, loc) => PI.TOPDECSIG (sigdeclList, loc)
               | _ => raise bug "non sig entry in topdecsInclude")
             topdecsInclude
-
-        val interfaceEnv = EI.evalInterfaces topEnv decls
-
-        val evalTopEnv =
-            unionRequiredTopEnv interfaceEnv topEnv
-                                (requiredIds @ locallyRequiredIds)
-
-        val (_, interfaceDeclsTopEnv, _) =
-            EI.evalPitopdecList 
-              evalTopEnv
-              (LongsymbolSet.empty, interfaceDecls)
-
-        val (returnTopEnvInclude, topdecListInclude) =
-            evalPltopdecList {topEnv=evalTopEnv, version=NONE} topdecsInclude
+        val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
+        val topEnv =  unionRequiredTopEnv interfaceEnv topEnv requiredIds
+        val (topEnvInclude, topdecListInclude) =
+            evalPltopdecList {topEnv=topEnv, version=NONE} topdecsInclude
             handle e => raise e
-
-(*
-        val returnTopEnv = V.topEnvWithTopEnv(evalTopEnv, returnTopEnvInclude)
-        val returnTopEnv = V.topEnvWithTopEnv (returnTopEnv, interfaceDeclsTopEnv)
-*)
-        val returnTopEnv = V.topEnvWithTopEnv (returnTopEnvInclude, interfaceDeclsTopEnv)
+        val returnTopEnv = V.topEnvWithTopEnv(topEnv, topEnvInclude)
         val returnTopEnv = reduceTopEnv returnTopEnv
       in
         case EU.getErrors () of

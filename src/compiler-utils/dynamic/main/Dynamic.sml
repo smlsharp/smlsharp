@@ -32,7 +32,7 @@ struct
     | LIST of dyn_list
     | ARRAY of dyn_array
     | VECTOR of dyn_array
-    | REF of dyn
+    | REF of value  (*TODO: use value instead of dyn to avoid compiler's bug*)
     | INTINF of IntInf.int
     | STRING of string
     | EXN of exn
@@ -129,32 +129,6 @@ struct
        handle Undetermined => OTHER)
     | readArray _ _ = OTHER
 
-  fun readPrim (p, i, bty, argTys) =
-      case bty of
-        B.INTty => INT32 (Dynamic.readInt (p, i))
-      | B.INT64ty => INT64 (Dynamic.readInt64 (p, i))
-      | B.INTINFty => INTINF (Dynamic.readIntInf (p, i))
-      | B.WORDty => WORD32 (Dynamic.readWord (p, i))
-      | B.WORD64ty => WORD64 (Dynamic.readWord64 (p, i))
-      | B.WORD8ty => WORD8 (Dynamic.readWord8 (p, i))
-      | B.CHARty => CHAR (Dynamic.readChar (p, i))
-      | B.STRINGty => STRING (Dynamic.readString (p, i))
-      | B.REALty => REAL (Dynamic.readReal (p, i))
-      | B.REAL32ty => REAL32 (Dynamic.readReal32 (p, i))
-      | B.UNITty => UNIT
-      | B.PTRty => PTR (Dynamic.readPtr (p, i))
-      | B.CODEPTRty => PTR (Dynamic.readPtr (p, i))
-      | B.ARRAYty => readArray ARRAY (p, i, argTys)
-      | B.VECTORty => readArray VECTOR (p, i, argTys)
-      | B.EXNty => EXN (Dynamic.readExn (p, i))
-      | B.BOXEDty => OTHER
-      | B.EXNTAGty => OTHER
-      | B.CONTAGty => OTHER
-      | B.REFty =>
-        (case argTys of
-           [elemTy] => REF (Dynamic.readBoxed (p, i), 0w0, elemTy)
-         | _ => OTHER)
-
   fun invertTagMap tagMap =
       SEnv.foldli
         (fn (conName, (tag, ty), z) => IEnv.insert (z, tag, (conName, ty)))
@@ -167,11 +141,14 @@ struct
           | _ => raise Bug.Bug "mergeSEnv")
         (map1, map2)
 
-  fun readTag env (p, i) =
+  fun makeConMap (tagMap, conSet) =
+      invertTagMap (mergeSEnv (tagMap, conSet))
+
+  fun readTag conMap (p, i) =
       let
         val tag = Dynamic.readInt (Dynamic.readBoxed (p, i), 0w0)
       in
-        case IEnv.find (invertTagMap (mergeSEnv env), tag) of
+        case IEnv.find (conMap, tag) of
           SOME (conName, NONE) => (conName, NONE)
         | SOME (conName, SOME ty) => (conName, SOME (ty ()))
         | NONE => raise Bug.Bug ("readTag " ^ Int.toString tag)
@@ -197,16 +174,16 @@ struct
          | _ => conArgTy)
       | _ => conArgTy
 
-  fun readTaggedValue env (p, i, argTys) =
-      case readTag env (p, i) of
-        (_, NONE) => raise Bug.Bug "readTaggedValue"
+  fun readTaggedValue conMap (p, i, instTys) =
+      case readTag conMap (p, i) of
+        (conName, NONE) => VARIANT (conName, NONE)
       | (conName, SOME ty) =>
         case inlinedConArgTy ty of
           T.RECORDty fieldTys =>
           let
             val fields =
                 ("", BuiltinTypes.contagTy)
-                :: map (fn (k, ty) => (k, TypesBasics.tpappTy (ty, argTys)))
+                :: map (fn (k, ty) => (k, TypesBasics.tpappTy (ty, instTys)))
                        (LabelEnv.listItemsi fieldTys)
             val record = readRecord (p, i, fields)
           in
@@ -216,7 +193,7 @@ struct
           let
             val fields =
                 [("", BuiltinTypes.contagTy),
-                 ("", TypesBasics.tpappTy (ty, argTys))]
+                 ("", TypesBasics.tpappTy (ty, instTys))]
           in
             case readRecord (p, i, fields) of
               [_, (_, dyn)] => VARIANT (conName, SOME (read dyn))
@@ -224,21 +201,23 @@ struct
           end
 
   (* See also DatatypeCompilation.sml *)
-  and readDty (p, i, tyCon as {conSet, ...}, argTys) =
+  and readDty (p, i, tyCon as {conSet, ...}, instTys) =
       if SEnv.isEmpty conSet then OTHER else
       case DatatypeLayout.datatypeLayout tyCon of
         D.LAYOUT_TAGGED (D.TAGGED_RECORD {tagMap}) =>
-        readTaggedValue (tagMap, conSet) (p, i, argTys)
+        readTaggedValue (makeConMap (tagMap, conSet)) (p, i, instTys)
       | D.LAYOUT_TAGGED (D.TAGGED_OR_NULL {tagMap, nullName}) =>
         if isNull (p, i)
         then VARIANT (nullName, NONE)
-        else readTaggedValue (tagMap, conSet) (p, i, argTys)
+        else readTaggedValue (makeConMap (tagMap, conSet)) (p, i, instTys)
       | D.LAYOUT_TAGGED (D.TAGGED_TAGONLY {tagMap}) =>
-        (
-          case readTag (tagMap, conSet) (p, i) of
-            (conName, NONE) => VARIANT (conName, NONE)
-          | _ => raise Bug.Bug "readDty: LAYOUT_TAGGED"
-        )
+        let
+          val tag = Dynamic.readInt (p, i)
+        in
+          case IEnv.find (makeConMap (tagMap, conSet), tag) of
+            SOME (conName, NONE) => VARIANT (conName, NONE)
+          | _ => raise Bug.Bug "readDty: TAGGED_TAGONLY"
+        end
       | D.LAYOUT_BOOL {falseName} =>
         let
           val trueName =
@@ -260,7 +239,7 @@ struct
            [(con, SOME tyFn)] =>
            let
              val ty = tyFn ()
-             val instTy = TypesBasics.tpappTy (ty, argTys)
+             val instTy = TypesBasics.tpappTy (ty, instTys)
              val arg =
                  if needPack ty
                  then (Dynamic.readBoxed (p, i), 0w0, instTy)
@@ -276,7 +255,7 @@ struct
                 [(c1, SOME ty), (c2, NONE)] => (c1, ty (), c2)
               | [(c1, NONE), (c2, SOME ty)] => (c2, ty (), c1)
               | _ => raise Bug.Bug "readDty: LAYOUT_ARG_OR_NULL"
-          val instTy = TypesBasics.tpappTy (argTy, argTys)
+          val instTy = TypesBasics.tpappTy (argTy, instTys)
         in
           if isNull (p, i)
           then VARIANT (nullCon, NONE)
@@ -285,12 +264,38 @@ struct
         end
       | D.LAYOUT_REF => raise Bug.Bug "readDty: LAYOUT_REF"
 
-  and readCons (p, i, tyCon, argTys) =
-      case readDty (p, i, tyCon, argTys) of
+  and readCons (p, i, tyCon, instTys) =
+      case readDty (p, i, tyCon, instTys) of
         VARIANT ("nil", NONE) => LIST NIL
       | VARIANT ("::", SOME (RECORD [(_, car), (_, cdr)])) =>
         LIST (CONS (car, cdr))
       | _ => raise Bug.Bug "readCons"
+
+  and readPrim (p, i, bty, argTys) =
+      case bty of
+        B.INTty => INT32 (Dynamic.readInt (p, i))
+      | B.INT64ty => INT64 (Dynamic.readInt64 (p, i))
+      | B.INTINFty => INTINF (Dynamic.readIntInf (p, i))
+      | B.WORDty => WORD32 (Dynamic.readWord (p, i))
+      | B.WORD64ty => WORD64 (Dynamic.readWord64 (p, i))
+      | B.WORD8ty => WORD8 (Dynamic.readWord8 (p, i))
+      | B.CHARty => CHAR (Dynamic.readChar (p, i))
+      | B.STRINGty => STRING (Dynamic.readString (p, i))
+      | B.REALty => REAL (Dynamic.readReal (p, i))
+      | B.REAL32ty => REAL32 (Dynamic.readReal32 (p, i))
+      | B.UNITty => UNIT
+      | B.PTRty => PTR (Dynamic.readPtr (p, i))
+      | B.CODEPTRty => PTR (Dynamic.readPtr (p, i))
+      | B.ARRAYty => readArray ARRAY (p, i, argTys)
+      | B.VECTORty => readArray VECTOR (p, i, argTys)
+      | B.EXNty => EXN (Dynamic.readExn (p, i))
+      | B.BOXEDty => OTHER
+      | B.EXNTAGty => OTHER
+      | B.CONTAGty => OTHER
+      | B.REFty =>
+        (case argTys of
+           [elemTy] => REF (read (Dynamic.readBoxed (p, i), 0w0, elemTy))
+         | _ => OTHER)
 
   and read ((p, i, ty):dyn) =
       case ty of

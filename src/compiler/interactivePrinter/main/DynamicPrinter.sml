@@ -57,7 +57,7 @@ struct
       | D.LIST l =>
         R.LISTtyRep (map (formatDyn (depth + 1)) (Dynamic.readList l))
       | D.REF v =>
-        R.DATATYPEtyRepWITHARG ("ref", formatDyn depth v)
+        R.DATATYPEtyRepWITHARG ("ref", formatValue depth v)
       | D.VARIANT (conName, NONE) =>
         R.DATATYPEtyRepNOARG conName
       | D.VARIANT (conName, SOME arg) =>
