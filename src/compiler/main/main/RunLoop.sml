@@ -16,6 +16,7 @@ structure RunLoop : sig
         errorOutput : TextIO.outstream}
 
   val interactive : options -> Top.toplevelContext -> unit
+
 end =
 struct
 
@@ -43,18 +44,61 @@ struct
 
   val loadedFiles = ref nil : Filename.filename list ref
 
-  fun run ({stdPath, loadPath, LDFLAGS, LIBS, errorOutput, llvmOptions,
-            ...}:options)
+  fun load ({LDFLAGS, LIBS, llvmOptions, ...}:options) module =
+      let
+        val objfile = TempFile.create ("." ^ SMLSharp_Config.OBJEXT ())
+        val _ = #start Counter.llvmOutputTimeCounter()
+        val _ = LLVMUtils.compile llvmOptions
+                                  (module, LLVMUtils.ObjectFile, objfile)
+        val _ = #stop Counter.llvmOutputTimeCounter()
+        val _ = LLVM.LLVMDisposeModule module
+        val sofile = TempFile.create ("." ^ SMLSharp_Config.DLLEXT ())
+        val ldflags =
+            case SMLSharp_Config.HOST_OS_TYPE () of
+              SMLSharp_Config.Unix => nil
+            | SMLSharp_Config.Cygwin =>
+              ["-Wl,-out-implib,"
+               ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
+            | SMLSharp_Config.Mingw =>
+              ["-Wl,--out-implib="
+               ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
+        val libfiles =
+            case SMLSharp_Config.HOST_OS_TYPE () of
+              SMLSharp_Config.Unix => nil
+            | SMLSharp_Config.Cygwin =>
+              map (fn x => Filename.toString (Filename.replaceSuffix "lib" x))
+                  (!loadedFiles)
+            | SMLSharp_Config.Mingw =>
+              map (fn x => Filename.toString (Filename.replaceSuffix "lib" x))
+                  (!loadedFiles)
+        val _ = BinUtils.link
+                  {flags = SMLSharp_Config.RUNLOOP_DLDFLAGS () :: LDFLAGS
+                           @ ldflags,
+                   libs = libfiles @ LIBS,
+                   objects = [objfile],
+                   dst = sofile,
+                   useCXX = false,
+                   quiet = not (!Control.printCommand)}
+        val so = DynamicLink.dlopen' (Filename.toString sofile,
+                                      DynamicLink.GLOBAL,
+                                      DynamicLink.NOW)
+      in
+        loadedFiles := sofile :: !loadedFiles;
+        so
+      end
+
+  fun run (options as {stdPath, loadPath, errorOutput, llvmOptions,
+                       ...}:options)
           context input =
       let
         fun puts s = TextIO.output (errorOutput, s ^ "\n")
-        val options = {stopAt = Top.NoStop,
-                       baseFilename = NONE,
-                       stdPath = stdPath,
-                       loadPath = loadPath,
-                       loadAllInterfaceFiles = false}
+        val topOptions = {stopAt = Top.NoStop,
+                          baseFilename = NONE,
+                          stdPath = stdPath,
+                          loadPath = loadPath,
+                          loadAllInterfaceFiles = false}
         val ({interfaceNameOpt, ...}, result) =
-             Top.compile llvmOptions options context input
+             Top.compile llvmOptions topOptions context input
              handle e =>
              (
                case e of
@@ -65,56 +109,18 @@ struct
                | Bug.Bug s => puts ("Compiler bug:" ^ s)
                | exn => raise exn;
                raise CompileError
-            )
+             )
         val (newContext, module) =
             case result of
               Top.RETURN (newContext, module) => (newContext, module)
             | Top.STOPPED => raise Bug.Bug "run"
       in
-        let
-          val objfile = TempFile.create ("." ^ SMLSharp_Config.OBJEXT ())
-          val _ = #start Counter.llvmOutputTimeCounter()
-          val _ = LLVMUtils.compile llvmOptions
-                                    (module, LLVMUtils.ObjectFile, objfile)
-          val _ = #stop Counter.llvmOutputTimeCounter()
-          val _ = LLVM.LLVMDisposeModule module
-          val sofile = TempFile.create ("." ^ SMLSharp_Config.DLLEXT ())
-          val ldflags =
-              case SMLSharp_Config.HOST_OS_TYPE () of
-                SMLSharp_Config.Unix => nil
-              | SMLSharp_Config.Cygwin =>
-                ["-Wl,-out-implib,"
-                 ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
-              | SMLSharp_Config.Mingw =>
-                ["-Wl,--out-implib="
-                 ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
-          val libfiles =
-              case SMLSharp_Config.HOST_OS_TYPE () of
-                SMLSharp_Config.Unix => nil
-              | SMLSharp_Config.Cygwin =>
-                map (fn x => Filename.toString (Filename.replaceSuffix "lib" x))
-                    (!loadedFiles)
-              | SMLSharp_Config.Mingw =>
-                map (fn x => Filename.toString (Filename.replaceSuffix "lib" x))
-                    (!loadedFiles)
-          val _ = BinUtils.link
-                    {flags = SMLSharp_Config.RUNLOOP_DLDFLAGS () :: LDFLAGS
-                             @ ldflags,
-                     libs = libfiles @ LIBS,
-                     objects = [objfile],
-                     dst = sofile,
-                     useCXX = false,
-                     quiet = not (!Control.printCommand)}
-          val so = DynamicLink.dlopen' (Filename.toString sofile,
-                                        DynamicLink.GLOBAL,
-                                        DynamicLink.NOW)
-                   handle OS.SysErr (msg, _) => raise DLError msg
-        in
-          loadedFiles := sofile :: !loadedFiles;
+        (
+          load options module handle OS.SysErr (m, _) => raise DLError m;
           sml_run () handle e => raise UncaughtException e;
           PrintTopEnv.printTopEnv (#topEnv newContext);
           SUCCESS newContext
-        end
+        )
         handle e =>
           (
             case e of

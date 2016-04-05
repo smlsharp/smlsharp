@@ -37,7 +37,7 @@ struct
     | LIST of dyn_list
     | ARRAY of {length : int, sub : int -> dyn}
     | VECTOR of {length : int, sub : int -> dyn}
-    | REF of dyn
+    | REF of value
     | INTINF of IntInf.int
     | STRING of string
     | EXN of exn

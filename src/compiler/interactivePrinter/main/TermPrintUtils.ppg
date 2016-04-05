@@ -97,25 +97,25 @@ in
   (* ?? *)
   fun format_word32 word =
       let 
-        val text = Word32.toString word
+        val text = CharVector.map Char.toLower (Word32.toString word)
       in 
-        makeToken text 
+        makeToken ("0wx" ^ text)
       end
 
   (* ?? *)
   fun format_word64 word =
       let 
-        val text = Word64.toString word
+        val text = CharVector.map Char.toLower (Word64.toString word)
       in 
-        makeToken text 
+        makeToken ("0wx" ^ text)
       end
 
   (* ?? *)
   fun format_word8 word =
       let 
-        val text = Word8.toString word
+        val text = CharVector.map Char.toLower (Word8.toString word)
       in
-        makeToken text 
+        makeToken ("0wx" ^ text)
       end
 
   (* ?? *)

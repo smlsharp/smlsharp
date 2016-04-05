@@ -105,6 +105,8 @@ install: $(ALL_TARGETS)
 	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
 	$(INSTALL_PROGRAM) -m 644 $(srcdir)/src/builtin.smi \
 	  '$(DESTDIR)$(libdir_smlsharp)/builtin.smi'
+	$(INSTALL_PROGRAM) -m 644 $(srcdir)/src/interactive.smi \
+	  '$(DESTDIR)$(libdir_smlsharp)/interactive.smi'
 	if test -f src/compiler/smlsharp.lib; then \
 	  $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/compiler'; \
 	  $(INSTALL_PROGRAM) -m 644 src/compiler/smlsharp.lib \
@@ -291,7 +293,7 @@ depend: PHONY
 	  MINISMLSHARP   src/compiler/minismlsharp.smi \
 	  COMPILER_LIB   src/compiler/smlsharp.smi \
 	  PRELUDE_LIB    src/prelude.smi; \
-	for i in $(RUNTIME_SOURCES); do \
+	for i in $(RUNTIME_SOURCES) src/runtime/main.c; do \
 	  case "$$i" in *.cpp) cpp='$(CXXCPP)';; *) cpp='$(CPP)';; esac; \
 	  echo $$cpp -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i 1>&2; \
 	  $$cpp -E -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i \
