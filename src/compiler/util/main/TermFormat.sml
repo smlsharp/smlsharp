@@ -67,9 +67,9 @@ structure TermFormat :> sig
       : 'a formatter * format * format * format * format
         -> 'a SEnv.map formatter
 
-  val formatEnclosedLabelEnv
+  val formatEnclosedLabelMap
       : 'a formatter * format * format * format * format
-        -> 'a LabelEnv.map formatter
+        -> 'a RecordLabel.Map.map formatter
 
   val formatEnclosedSEnvPlain
       : 'a formatter * format * format -> 'a SEnv.map formatter
@@ -79,9 +79,8 @@ structure TermFormat :> sig
 
 
   (* formatting records and tuples *)
-  val isTuple : 'a LabelEnv.map -> bool
-  val formatRecordExp : 'a formatter -> 'a LabelEnv.map formatter
-  val formatRecordTy : 'a formatter -> 'a LabelEnv.map formatter
+  val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
+  val formatRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
 
   (* for fine-tuning *)
   val formatIfCons : format -> 'a list formatter
@@ -325,8 +324,11 @@ struct
   fun formatEnclosedSEnv args map =
       formatEnclosedMap (fn x => [term x]) SEnv.listItemsi args map
 
-  fun formatEnclosedLabelEnv args map =
-      formatEnclosedMap (fn x => [term x]) LabelEnv.listItemsi args map
+  fun formatEnclosedLabelMap args map =
+      formatEnclosedMap RecordLabel.format_label
+                        RecordLabel.Map.listItemsi
+                        args
+                        map
 
   fun formatEnclosedList (formatter, lparen, comma, rparen) elems =
       begin_
@@ -384,30 +386,19 @@ struct
 
   (**** formatter for records ****)
 
-  fun isTuple smap =
-      let
-        val (n, result) =
-            LabelEnv.foldli
-              (fn (k,v,(n,z)) => (n + 1, z andalso k = Int.toString n))
-              (1, true)
-              smap
-      in
-        n > 2 andalso result
-      end
-
   fun formatRecordExp formatter smap =
-      if isTuple smap
+      if RecordLabel.isTupleMap smap
       then formatEnclosedList
              (formatter, [term "("], [term ","], [term ")"])
-             (LabelEnv.listItems smap)
-      else formatEnclosedLabelEnv
+             (RecordLabel.Map.listItems smap)
+      else formatEnclosedLabelMap
              (formatter, [term "{"], [term ","], [dsp, term "="], [term "}"])
              smap
 
   fun formatRecordTy formatter smap =
-      if isTuple smap
+      if RecordLabel.isTupleMap smap
       then begin_ guard_ tupleAssoc guard_ tupleInnerAssoc
-             $(LabelEnv.foldr
+             $(RecordLabel.Map.foldr
                  (fn (x, nil) => formatter x
                    | (x, z) => begin_
                                  $(formatter x) space text "*" dspace $z
@@ -415,7 +406,7 @@ struct
                  nil
                  smap)
            end_ end_ end_
-      else formatEnclosedLabelEnv
+      else formatEnclosedLabelMap
              (formatter, [term "{"], [term ","], [term ":"], [term "}"])
              smap
 

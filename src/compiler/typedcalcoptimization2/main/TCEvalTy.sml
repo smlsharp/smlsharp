@@ -41,7 +41,7 @@ local
                      Option.map (map (evalFfiTy btvMap)) ffiTyList2,
                      map (evalFfiTy btvMap) ffiTyList3,
                      loc)
-      | TC.FFIRECORDTY (fields:(string * TC.ffiTy) list,loc) =>
+      | TC.FFIRECORDTY (fields:(RecordLabel.label * TC.ffiTy) list,loc) =>
         TC.FFIRECORDTY
           (map (fn (l,ty)=>(l, evalFfiTy btvMap ty)) fields,loc)
 
@@ -78,8 +78,8 @@ in
                 }
             | TC.TPPATLAYERED {asPat, loc, varPat} =>
               TC.TPPATLAYERED {asPat=evalPat asPat, loc=loc, varPat=evalPat varPat}
-            | TC.TPPATRECORD {fields:TC.tppat LabelEnv.map, loc, recordTy} =>
-              TC.TPPATRECORD {fields=LabelEnv.map evalPat fields, loc=loc, recordTy=evalT recordTy}
+            | TC.TPPATRECORD {fields:TC.tppat RecordLabel.Map.map, loc, recordTy} =>
+              TC.TPPATRECORD {fields=RecordLabel.Map.map evalPat fields, loc=loc, recordTy=evalT recordTy}
             | TC.TPPATVAR varInfo => TC.TPPATVAR (evalTyVar btvMap varInfo)
             | TC.TPPATWILD (ty, loc) => TC.TPPATWILD (evalT ty, loc)
 
@@ -204,9 +204,9 @@ in
                 }
             | TC.TPRAISE {exp, loc, ty} =>
               TC.TPRAISE {exp= eval exp, loc=loc, ty = evalT ty}
-            | TC.TPRECORD {fields:TC.tpexp LabelEnv.map, loc, recordTy} =>
+            | TC.TPRECORD {fields:TC.tpexp RecordLabel.Map.map, loc, recordTy} =>
               TC.TPRECORD
-                {fields=LabelEnv.map eval fields,
+                {fields=RecordLabel.Map.map eval fields,
                  loc=loc,
                  recordTy=evalT recordTy}
             | TC.TPSELECT {exp, expTy, label, loc, resultTy} =>

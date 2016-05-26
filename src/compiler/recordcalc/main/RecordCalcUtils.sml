@@ -39,7 +39,7 @@ in
       | RC.RCEXNCONSTRUCT {argExpOpt= SOME tpexp, exn, instTyList, loc} =>
         expansive tpexp
       | RC.RCRECORD {fields, recordTy=ty, loc=loc} =>
-          LabelEnv.foldli
+          RecordLabel.Map.foldli
           (fn (string, tpexp1, isExpansive) =>
            isExpansive orelse expansive tpexp1)
           false
@@ -47,7 +47,7 @@ in
       | RC.RCSELECT {exp, expTy, indexExp, label, loc, resultTy} => 
         expansive exp orelse expansive indexExp
       | RC.RCMODIFY  {elementExp:RC.rcexp, elementTy:Types.ty, indexExp:RC.rcexp,
-                   label:string, loc, recordExp:RC.rcexp, recordTy:Types.ty} =>
+                   label:RecordLabel.label, loc, recordExp:RC.rcexp, recordTy:Types.ty} =>
         expansive recordExp orelse expansive indexExp orelse expansive elementExp
       | RC.RCMONOLET {binds=varPathInfoTpexpList, bodyExp=tpexp, loc} =>
           foldl

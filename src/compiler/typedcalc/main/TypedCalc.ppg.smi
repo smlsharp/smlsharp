@@ -1,6 +1,6 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require local "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require local "../../util/main/SmlppgUtil.ppg.smi"
@@ -31,7 +31,7 @@ structure TypedCalc =
       = FFIBASETY of Types.ty * Loc.loc
       | FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list *
                     Loc.loc
-      | FFIRECORDTY of (string * ffiTy) list * Loc.loc
+      | FFIRECORDTY of (RecordLabel.label * ffiTy) list * Loc.loc
     val format_ffiTy
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
           -> ffiTy TermFormat.formatter
@@ -64,7 +64,7 @@ structure TypedCalc =
                      resultTy:Types.ty, loc:Loc.loc}
       | TPLET of {body:tpexp list, decls:tpdecl list, loc:Loc.loc,
                   tys:Types.ty list}
-      | TPMODIFY of {elementExp:tpexp, elementTy:Types.ty, label:string,
+      | TPMODIFY of {elementExp:tpexp, elementTy:Types.ty, label:RecordLabel.label,
                      loc:Loc.loc, recordExp:tpexp, recordTy:Types.ty}
       | TPMONOLET of {binds:(Types.varInfo * tpexp) list, bodyExp:tpexp,
                       loc:Loc.loc}
@@ -78,8 +78,8 @@ structure TypedCalc =
                         argTy:Types.ty, primOp:Types.primInfo}
       | TPRAISE of {exp:tpexp, loc:Loc.loc, ty:Types.ty}
       | TPRECFUNVAR of {arity:int, var:Types.varInfo}
-      | TPRECORD of {fields:tpexp LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
-      | TPSELECT of {exp:tpexp, expTy:Types.ty, label:string, loc:Loc.loc,
+      | TPRECORD of {fields:tpexp RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty}
+      | TPSELECT of {exp:tpexp, expTy:Types.ty, label:RecordLabel.label, loc:Loc.loc,
                      resultTy:Types.ty}
       | TPSEQ of {expList:tpexp list, expTyList:Types.ty list, loc:Loc.loc}
       | TPSIZEOF of Types.ty * Loc.loc
@@ -123,7 +123,7 @@ structure TypedCalc =
                               instTyList:Types.ty list, loc:Loc.loc,
                               patTy:Types.ty}
       | TPPATLAYERED of {asPat:tppat, loc:Loc.loc, varPat:tppat}
-      | TPPATRECORD of {fields:tppat LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
+      | TPPATRECORD of {fields:tppat RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty}
       | TPPATVAR of Types.varInfo
       | TPPATWILD of Types.ty * Loc.loc 
     val format_tpexp
@@ -137,10 +137,10 @@ structure TypedCalc =
           -> tppat -> SMLFormat.FormatExpression.expression list
     val format_fields
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> tpexp LabelEnv.map -> SMLFormat.FormatExpression.expression list
+          -> tpexp RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
     val format_patfields
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> tppat LabelEnv.map -> SMLFormat.FormatExpression.expression list
+          -> tppat RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
     val formatWithType_tpexp : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
                                  TermFormat.btvEnv' list
                                -> tpexp
@@ -154,8 +154,8 @@ structure TypedCalc =
                                   -> SMLFormat.FormatExpression.expression list
     val formatWithType_fields : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
                                   TermFormat.btvEnv' list
-                                -> tpexp LabelEnv.map -> SMLFormat.FormatExpression.expression list
+                                -> tpexp RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
     val formatWithType_patfields : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
                                      TermFormat.btvEnv' list
-                                   -> tppat LabelEnv.map -> SMLFormat.FormatExpression.expression list
+                                   -> tppat RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
   end

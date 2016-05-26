@@ -14,7 +14,7 @@ _require "../../types/main/Types.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/TvarMap.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
-_require "../../util/main/TupleUtils.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "./EvalSig.smi"
@@ -28,6 +28,7 @@ _require "./SigCheck.smi"
 _require "./SetLiftedTys.smi"
 _require "./Subst.smi"
 _require "./TfunVars.smi"
+_require "./RenameLongsymbol.smi"
 
 structure NameEvalInterface =
 struct

@@ -289,6 +289,7 @@ struct
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(TypedCalc.ffiTy) TypedCalc.format_ffiTy
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   (*% @prefix formatWithoutType_
    * @params(btvEnv)
@@ -305,6 +306,7 @@ struct
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(TypedCalc.ffiTy) TypedCalc.format_ffiTy
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype rcexp =
       (*%
@@ -390,7 +392,7 @@ struct
        * @format(label * ty * loc)
        * "_indexof(" label ")"
        *)
-      RCINDEXOF of string * ty * loc
+      RCINDEXOF of RecordLabel.label * ty * loc
     | (*%
        * @format({const, ty, loc}) const
        *)
@@ -639,7 +641,7 @@ struct
        *)
       RCRECORD of
       {
-        fields : rcexp LabelEnv.map,
+        fields : rcexp RecordLabel.Map.map,
         recordTy : ty,
         loc : loc
       }
@@ -660,7 +662,7 @@ struct
       RCSELECT of
       {
         indexExp : rcexp,
-        label : string,
+        label : RecordLabel.label,
         exp : rcexp,
         expTy : ty,
         resultTy : ty,
@@ -689,7 +691,7 @@ struct
       RCMODIFY of
       {
         indexExp : rcexp,
-        label : string,
+        label : RecordLabel.label,
         recordExp : rcexp,
         recordTy : ty,
         elementExp : rcexp,

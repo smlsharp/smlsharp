@@ -738,26 +738,6 @@ struct
         valueExp : mcvalue,
         loc : loc
       }
-    | (*%
-       * @format({resultVar, loc})
-       * L8{ resultVar +d "=" 1[
-       *   "raise_alloc"
-       *   ";"
-       * ] }
-       *)
-      (*% @prefix formatWithType_
-       * @format({resultVar, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
-       *   "raise_alloc"
-       *   ";"
-       * ] }
-       *)
-      (* GC may not occur between MCRAISE_ALLOC and MCRAISE_THROW *)
-      MCRAISE_ALLOC of
-      {
-        resultVar : varInfo,
-        loc : loc
-      }
 
   (*%
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
@@ -765,6 +745,7 @@ struct
    * @formatter(caseList) TermFormat.formatCaseList
    * @formatter(decList) TermFormat.formatDeclList
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(option) TermFormat.formatOptionalOption
    *)
   (*% @prefix formatWithType_
    * @params(btvEnv)
@@ -773,6 +754,7 @@ struct
    * @formatter(caseList) TermFormat.formatCaseList
    * @formatter(decList) TermFormat.formatDeclList
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(option) TermFormat.formatOptionalOption
    *)
   datatype mcexp_last =
       (*%
@@ -797,42 +779,46 @@ struct
         loc : loc
       }
     | (*%
-       * @format({raiseAllocResult, argExp, loc})
+       * @format({argExp, cleanup: cleanup cleanupOpt, loc})
        * L8{ 1[
        *   "raise_throw"
-       *   +1 raiseAllocResult
        *   +1 argExp
+       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
-       * @format({raiseAllocResult, argExp, loc})
+       * @format({argExp, cleanup: cleanup cleanupOpt, loc})
        * L8{ 1[
        *   "raise_throw"
-       *   +1 raiseAllocResult()(btvEnv)
        *   +1 argExp()(btvEnv)
+       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *   ";"
        * ] }
        *)
-      MCRAISE_THROW of
+      MCRAISE of
       {
-        raiseAllocResult : mcvalue,
         argExp : mcvalue,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | (*%
-       * @format({nextExp, exnVar, id, handlerExp, loc})
+       * @format({nextExp, exnVar, id, handlerExp, cleanup: cleanup cleanupOpt,
+       *          loc})
        * L8{ 1[ "try" +1 id ] }
        * +1 nextExp
-       * L8{ 1[ "handle" +1 id d +1 exnVar +d "=" ] }
+       * +1 L8{ 1[ "handle" +1 id d +1 exnVar +d "=" ] }
        * +1 handlerExp 
+       * cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *)
       (*% @prefix formatWithType_
-       * @format({nextExp, exnVar, id, handlerExp, loc})
+       * @format({nextExp, exnVar, id, handlerExp, cleanup: cleanup cleanupOpt,
+       *          loc})
        * L8{ 1[ "try" +1 id ] }
        * +1 nextExp()(btvEnv)
-       * L8{ 1[ "handle" +1 id d +1 exnVar()(btvEnv) +d "=" ] }
+       * +1 L8{ 1[ "handle" +1 id d +1 exnVar()(btvEnv) +d "=" ] }
        * +1 handlerExp()(btvEnv)
+       * cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *)
       MCHANDLER of
       {
@@ -840,6 +826,7 @@ struct
         id : HandlerLabel.id,
         exnVar : varInfo,
         handlerExp : mcexp,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | (*%
@@ -1043,13 +1030,13 @@ struct
     | (*%
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
-       *          attributes, retTy, cleanupHandler: ch chOpt, loc})
+       *          attributes, retTy, cleanupHandler: cleanup cleanupOpt, loc})
        * "@callback:" id
        * + envOpt(env)("_")
        * + args:appList(arg)("(",",",")")
        * + "="
        * 1[
-       *   chOpt:optional(ch)(+1 "cleanup",)
+       *   cleanupOpt:optional(cleanup)(+1 "cleanup" +d,)
        *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
        *   +1 bodyExp
        * ]
@@ -1057,13 +1044,13 @@ struct
       (*% @prefix formatWithType_
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
-       *          attributes, retTy, cleanupHandler: ch chOpt, loc})
+       *          attributes, retTy, cleanupHandler: cleanup cleanupOpt, loc})
        * "@callback:" id
        * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
        * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
        * + "="
        * 1[
-       *   chOpt:optional(ch)(+1 "cleanup",)
+       *   cleanupOpt:optional(cleanup)(+1 "cleanup" +d,)
        *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
        *   +1 bodyExp()(tyvarKindEnv:makeBtvEnv)
        * ]
@@ -1097,22 +1084,22 @@ struct
   type toplevel =
       (*%
        * @format({dependency, frameSlots: slot slots, bodyExp,
-       *          cleanupHandler: ch chOpt})
+       *          cleanupHandler: cleanup cleanupOpt})
        * "@top:"
        * + "="
        * 1[
-       *   +1 chOpt(ch)(+1 "cleanup",)
+       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
        *   +1 bodyExp
        * ]
        *)
       (*% @prefix formatWithType_
        * @format({dependency, frameSlots: slot slots, bodyExp,
-       *          cleanupHandler: ch chOpt})
+       *          cleanupHandler: cleanup cleanupOpt})
        * "@top:"
        * + "="
        * 1[
-       *   +1 chOpt(ch)(+1 "cleanup",)
+       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
        *   +1 bodyExp()()
        * ]

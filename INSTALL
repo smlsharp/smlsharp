@@ -5,10 +5,11 @@
 
 The following softwares are required to build and install SML#:
 
-  * C/C++ compiler: GNU Compiler Collection or Clang.
+  * C/C++ compiler: GCC (4.7 or above) or Clang
   * GNU make or BSD make
+  * LLVM 3.7.1
   * GNU MP library
-  * LLVM 3.4
+  * YAJL
 
 == Quick Start
 
@@ -25,14 +26,20 @@ to try to compile with another compiler.
 
   $ ./configure CC=<C_COMPILER> CXX=<C++_COMPILER>
 
-If some required libraries are installed in non-standard directory on your
-system, you need to specify CPPFLAGS and LDFLAGS so that compiler can
-find them. For example:
+If LLVM are not installed in a non-standard directory on your system,
+specify the directory by --with-llvm option.  For example:
+
+  $ ./configure --with-llvm=/usr/local/lib/llvm-3.7.1
+
+If other required libraries are in a non-standard directory, specify
+CPPFLAGS and LDFLAGS so that compiler can find them. For example:
 
   $ ./configure CPPFLAGS=-I/opt/pkg/include LDFLAGS=-L/opt/pkg/lib
 
-You will see all build-time configurations by invoking configure with
+You will see all configuration options by invoking configure with
 --help option.
+
+  $ ./configure --help
 
 == Customizing install location
 

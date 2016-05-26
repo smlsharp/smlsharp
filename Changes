@@ -1,4 +1,17 @@
 -----------------------------------------------------------------------------
+SML# version 3.1.0 (released on 2016-05-26)
+
+This version contains the full implementation of JSON support
+described in the forthcoming paper: 
+  A Calculus with Partially Dynamic Records for Typeful Manipulation of
+  JSON Objects" Atsushi Ohori, Katsuhiro Ueno, Tomohiro Sasaki, Daisuke
+  Kikuchi, 
+to appear in ECOOP 2016 Research Track.
+http://2016.ecoop.org/event/ecoop-2016-papers-a-calculus-with-partially-dynamic-records-for-typeful-manipulation-of-json-objects
+
+A pre-version is available on the SML# home page.
+
+-----------------------------------------------------------------------------
 SML# version 3.0.1 (released on 2016-04-04)
 
 Fixed bugs:

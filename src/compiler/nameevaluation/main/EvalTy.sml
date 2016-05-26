@@ -53,10 +53,11 @@ in
             case kind of
               I.UNIV => tvarSet
             | I.REC fields =>
-              LabelEnv.foldl
+              RecordLabel.Map.foldl
               (fn (ty, tvarSet) => EFTVty (ty, tvarSet))
               tvarSet
               fields
+            | I.JSON => tvarSet
             | I.BOXED => tvarSet
             | I.UNBOXED => tvarSet
         and EFTVty (ty, tvarSet) =
@@ -72,7 +73,7 @@ in
                    EFTVkind(kind, TvarSet.add(tvarSet, tvar))
                 )
             | I.TYRECORD fields =>
-              LabelEnv.foldl
+              RecordLabel.Map.foldl
               (fn (ty, tvarSet) => EFTVty (ty, tvarSet))
               tvarSet
               fields
@@ -120,14 +121,14 @@ in
     | A.TYID (tvar, loc) => I.TYVAR (evalTvar tvarEnv tvar)
     | A.TYRECORD (nil, loc) => BT.unitITy
     | A.TYRECORD (tyFields, loc) =>
-      (EU.checkNameDuplication
+      (EU.checkRecordLabelDuplication
          #1 tyFields loc 
          (fn s => E.DuplicateRecordLabelInRawType("Ty-020",s));
        I.TYRECORD
          (foldl
             (fn ((l,ty), fields) =>
-                LabelEnv.insert(fields, l, evalTy tvarEnv env ty))
-            LabelEnv.empty
+                RecordLabel.Map.insert(fields, l, evalTy tvarEnv env ty))
+            RecordLabel.Map.empty
             tyFields
          )
       )
@@ -176,7 +177,7 @@ in
       end
     | A.TYTUPLE(nil, loc) => BT.unitITy
     | A.TYTUPLE(tyList, loc) =>
-      evalTy tvarEnv env (A.TYRECORD (TupleUtils.listToTuple tyList, loc))
+      evalTy tvarEnv env (A.TYRECORD (RecordLabel.tupleList tyList, loc))
     | A.TYFUN(ty1,ty2, loc) =>
       I.TYFUNM([evalTy tvarEnv env ty1], evalTy tvarEnv env ty2)
     | A.TYPOLY (kindedTvarList, ty, loc) =>
@@ -210,18 +211,19 @@ in
       case kind of
         A.UNIV => I.UNIV
       | A.REC (tyFields, loc) =>
-        (EU.checkNameDuplication
+        (EU.checkRecordLabelDuplication
            #1 tyFields loc
            (fn s => E.DuplicateRecordLabelInKind("Ty-050",s));
          I.REC 
            (foldl
               (fn ((l,ty), fields) =>
-                  LabelEnv.insert(fields, l, evalTy tvarEnv env ty)
+                  RecordLabel.Map.insert(fields, l, evalTy tvarEnv env ty)
               )
-              LabelEnv.empty
+              RecordLabel.Map.empty
               tyFields
            )
         )
+      | A.KINDID ("json", _) => I.JSON
       | A.KINDID ("boxed", _) => I.BOXED
       | A.KINDID ("unboxed", _) => I.UNBOXED
       | A.KINDID (name, loc) =>
@@ -333,12 +335,9 @@ in
         )
       | I.TYRECORD fields =>
         let
-          fun isTuple (i, nil) = true
-            | isTuple (i, (k,v)::t) =
-              Int.toString i = k andalso isTuple (i + 1,t)
-          val fields = LabelEnv.listItemsi fields
+          val fields = RecordLabel.Map.listItemsi fields
         in
-          if isTuple (1, fields)
+          if RecordLabel.isOrderedList fields
           then I.FFIRECORDTY
                  (map (fn (label, ty) => (label, tyToFfiTy subst (ty, loc)))
                       fields, loc)

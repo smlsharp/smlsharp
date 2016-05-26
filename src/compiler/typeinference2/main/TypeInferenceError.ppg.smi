@@ -2,6 +2,7 @@ _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
 _require "../../types/main/IDCalc.ppg.smi"
@@ -80,7 +81,7 @@ structure TypeInferenceError =
               of string * {argTyList:Types.ty list,
                            domTyList:Types.ty list}
     exception TyConMismatch of string * {argTy:Types.ty, domTy:Types.ty}
-    exception FieldNotInRecord of string * {label:string}
+    exception FieldNotInRecord of string * {label:RecordLabel.label}
     exception RaiseArgNonExn of string * {ty:Types.ty}
     exception NonFunction of string * {ty:Types.ty}
     exception NonConstruct of string * {pat:IDCalc.icpat}
@@ -110,8 +111,8 @@ structure TypeInferenceError =
               of string * {given:int, tyCon:string, wants:int}
 
     exception JoinNonRecord of string * Types.ty * Types.ty
-    exception  JoinInconsistent of string * {label:string, ty1:Types.ty, ty2:Types.ty}
-    exception  JoinMissingTy of string * string
+    exception  JoinInconsistent of string * {label:RecordLabel.label, ty1:Types.ty, ty2:Types.ty}
+    exception  JoinMissingTy of string * RecordLabel.label
 
     val isAnyError : bool ref
     val initializeTypeinfError : unit -> unit

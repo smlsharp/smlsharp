@@ -346,7 +346,7 @@ in
                   | I.TYERROR => ()
                   | I.TYVAR _  => ()
                   | I.TYRECORD tyLabelenvMap =>
-                    LabelEnv.app trace tyLabelenvMap
+                    RecordLabel.Map.app trace tyLabelenvMap
                   | I.TYCONSTRUCT {tfun, args} =>
                     (traceTfun tfun; List.app trace args)
                   | I.TYFUNM (tyList, ty) =>

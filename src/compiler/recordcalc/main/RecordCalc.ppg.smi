@@ -1,6 +1,6 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require local "../../builtin2/main/BuiltinPrimitive.ppg.smi"
@@ -110,10 +110,10 @@ structure RecordCalc =
                            loc:Loc.loc}
       | RCFOREIGNSYMBOL of {loc:Loc.loc, name:string, ty:Types.ty}
       | RCHANDLE of {exnVar:varInfo, exp:rcexp, handler:rcexp, resultTy:Types.ty, loc:Loc.loc}
-      | RCINDEXOF of string * Types.ty * Loc.loc
+      | RCINDEXOF of RecordLabel.label * Types.ty * Loc.loc
       | RCLET of {body:rcexp list, decls:rcdecl list, loc:Loc.loc, tys:Types.ty list}
       | RCMODIFY of {elementExp:rcexp, elementTy:Types.ty, indexExp:rcexp,
-                     label:string, loc:Loc.loc, recordExp:rcexp, recordTy:Types.ty}
+                     label:RecordLabel.label, loc:Loc.loc, recordExp:rcexp, recordTy:Types.ty}
       | RCMONOLET of {binds:(varInfo * rcexp) list, bodyExp:rcexp, loc:Loc.loc}
       | RCOPRIMAPPLY of {argExp:rcexp, instTyList:Types.ty list, loc:Loc.loc,
                          oprimOp:oprimInfo}
@@ -123,8 +123,8 @@ structure RecordCalc =
       | RCPRIMAPPLY of {argExp:rcexp, instTyList:Types.ty list, loc:Loc.loc,
                         primOp:Types.primInfo}
       | RCRAISE of {exp:rcexp, loc:Loc.loc, ty:Types.ty}
-      | RCRECORD of {fields:rcexp LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
-      | RCSELECT of {exp:rcexp, expTy:Types.ty, indexExp:rcexp, label:string,
+      | RCRECORD of {fields:rcexp RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty}
+      | RCSELECT of {exp:rcexp, expTy:Types.ty, indexExp:rcexp, label:RecordLabel.label,
                      loc:Loc.loc, resultTy:Types.ty}
       | RCSEQ of {expList:rcexp list, expTyList:Types.ty list, loc:Loc.loc}
       | RCSIZEOF of Types.ty * Loc.loc

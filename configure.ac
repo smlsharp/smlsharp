@@ -1,6 +1,6 @@
 # -*- Autoconf -*-
 
-AC_PREREQ(2.61)
+AC_PREREQ(2.69)
 AC_INIT(smlsharp)
 AC_CONFIG_SRCDIR([src/compiler/toplevel2/main/Top.sml])
 AC_CONFIG_HEADER([config.h])
@@ -10,10 +10,14 @@ AC_ARG_PROGRAM
 
 # Checks for programs.
 AC_PROG_CC
-AC_LANG(C)
-
+AC_PROG_CC_C99
+if test "x$ac_cv_prog_cc_c99" = "xno"; then
+  AC_MSG_ERROR([C99 compiler is required])
+fi
 AC_PROG_CXX
-AC_PROG_CXXCPP
+
+AC_LANG(C++)
+AC_LANG(C)
 
 AC_MSG_CHECKING([for gcc version])
 version=`$CC -dumpversion 2> /dev/null || echo \*`
@@ -336,6 +340,9 @@ AC_CHECK_LIB(gmp, __gmpz_init,
 AC_CHECK_LIB(dl, dlopen)
 #AC_CHECK_LIB(dld, shl_load)   # for HP-UX
 
+AC_CHECK_LIB(yajl, yajl_parse,
+  [], [ AC_MSG_ERROR([YAJL library is not found]) ])
+
 ## cygwin has dlopen in libcygwin.dll.
 if test "x$ac_cv_lib_dl_dlopen" = "xno"; then
   case "$target_os" in
@@ -518,10 +525,6 @@ AC_CHECK_FUNCS(unw_getcontext)
 
 # -------- check for C language --------
 
-AC_PROG_CC_C99
-if test "x$ac_cv_prog_cc_c99" = "xno"; then
-  AC_MSG_ERROR([C99 compiler is required])
-fi
 AC_TYPE_SIZE_T
 
 #AC_TYPE_SIGNAL

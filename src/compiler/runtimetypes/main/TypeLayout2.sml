@@ -34,6 +34,7 @@ struct
   fun runtimeTyTvarKind tvarKind =
       case tvarKind of
         T.UNIV => NONE
+      | T.JSON => NONE
       | T.BOXED => SOME R.BOXEDty
       | T.UNBOXED => NONE
       | T.OPRIMkind _ => NONE

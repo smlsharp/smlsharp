@@ -57,22 +57,28 @@ struct
               ty = targetTy}
 
   datatype handler =
-      HANDLER of HandlerLabel.id option
+      NO_HANDLER
+    | HANDLER of {handlerLabel : HandlerLabel.id, localLabel : FunLocalLabel.id}
     | CLEANUP of HandlerLabel.id option ref
 
   type env =
        {funId : FunEntryLabel.id option,
         loopLabel : FunLocalLabel.id option ref,
-        localHandlerLabel : FunLocalLabel.id option,
         handler : handler,
         varEnv : A.anvalue VarID.Map.map}
 
   fun getHandlerLabel ({handler,...}:env) =
       case handler of
-        HANDLER x => x
+        NO_HANDLER => NONE
+      | HANDLER {handlerLabel, ...} => SOME handlerLabel
       | CLEANUP (ref (x as SOME _)) => x
       | CLEANUP (r as ref NONE) =>
         let val x = SOME (HandlerLabel.generate nil) in r := x; x end
+
+  fun getCleanupLabel env =
+      case #handler env of
+        CLEANUP _ => getHandlerLabel env
+      | _ => NONE
 
   fun bindVar (env:env, {id,...}:A.varInfo, value) =
       env # {varEnv = VarID.Map.insert (#varEnv env, id, value)}
@@ -487,13 +493,15 @@ struct
         let
           val (proc1, argExp) = compileExp env NONTAIL argExp
           val (proc2, ret) =
-              case #localHandlerLabel env of
-                NONE =>
-                last (A.ANRAISE {argExp=argExp, loc=loc})
-              | SOME handlerLabel =>
-                last (A.ANGOTO {id = handlerLabel,
+              case #handler env of
+                HANDLER {localLabel, ...} =>
+                last (A.ANGOTO {id = localLabel,
                                 argList = [argExp],
                                 loc = loc})
+              | _ =>
+                last (A.ANRAISE {argExp = argExp,
+                                 cleanup = getCleanupLabel env,
+                                 loc = loc})
         in
           (proc1 o proc2, ret)
         end
@@ -503,8 +511,8 @@ struct
           val mergeLabel = FunLocalLabel.generate nil
           val handlerLabel = HandlerLabel.generate nil
           val localHandlerLabel = FunLocalLabel.generate nil
-          val tryEnv = env # {localHandlerLabel = SOME localHandlerLabel,
-                              handler = HANDLER (SOME handlerLabel)}
+          val tryEnv = env # {handler = HANDLER {handlerLabel = handlerLabel,
+                                                 localLabel = localHandlerLabel}}
           val tryExp = compileBranchExp tryEnv NONTAIL mergeLabel tryExp
           val (env2, exnVar) = addBoundVar (env, exnVar)
           val handlerExp = compileBranchExp env2 context mergeLabel handlerExp
@@ -532,6 +540,7 @@ struct
                                 A.ANGOTO {id = localHandlerLabel,
                                           argList = [A.ANVAR exnVar],
                                           loc = loc},
+                              cleanup = getCleanupLabel env,
                               loc = loc},
                          loc = loc},
                     loc = loc}
@@ -737,7 +746,6 @@ struct
         val loopLabel = ref NONE
         val env = {funId = funId,
                    loopLabel = loopLabel,
-                   localHandlerLabel = NONE,
                    handler = handler,
                    varEnv = VarID.Map.empty} : env
         val (env, closureEnvVar) = addBoundVarOpt (env, closureEnvVar)
@@ -768,7 +776,7 @@ struct
         let
           val (closureEnvVar, argVarList, bodyExp) =
               compileFunBody (SOME id, closureEnvVar, argVarList, bodyExp,
-                              HANDLER NONE, loc)
+                              NO_HANDLER, loc)
         in
           A.ATFUNCTION
             {id = id,
@@ -806,7 +814,6 @@ struct
         val cleanupHandler = ref NONE
         val topEnv = {funId = NONE,
                       loopLabel = ref NONE,
-                      localHandlerLabel = NONE,
                       handler = CLEANUP cleanupHandler,
                       varEnv = VarID.Map.empty} : env
         val (proc, ret) = compileExp topEnv NONTAIL topExp

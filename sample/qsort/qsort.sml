@@ -6,7 +6,7 @@
  * @version $Id: qsort.sml,v 1.9 2007/09/20 09:02:53 matsu Exp $
  *)
 
-fun qsort (a, f) =
+fun 'a#unboxed qsort (a, f) =
     _ffiapply _import "qsort"
       (a : 'a array,
        Array.length a : int,

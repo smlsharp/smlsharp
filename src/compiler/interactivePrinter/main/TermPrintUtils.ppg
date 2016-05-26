@@ -50,6 +50,23 @@ in
         makeToken text 
       end
 
+  fun format_int_json int =
+      let 
+        val text = String.translate (fn #"~" => "-" | x => str x)
+                                    (Int.toString int)
+      in
+        makeToken text 
+      end
+
+  (* ?? *)
+  fun format_real_json real =
+      let
+        val text = String.translate (fn #"~" => "-" | x => str x)
+                                    (Real.fmt (StringCvt.GEN NONE) real)
+      in 
+        makeToken text 
+      end
+
   fun format_string string =
       let
         val text = "\""^ (String.toRawString string) ^ "\""
@@ -73,6 +90,13 @@ in
       end
 
   fun format_int32 int =
+      let
+        val text = Int32.toString int
+      in
+        makeToken text 
+      end
+
+  fun format_int32_c int =
       let
         val text = Int32.toString int
       in
@@ -150,29 +174,29 @@ in
   fun formatElements (elementFormatter, separator, separatorDeffered) list =
     let
       val count = List.length list
-      val (list, hasEllipsis) =
+      val (contents, hasEllipsis) =
           if count > (!C.printMaxDepth)
           then (List.take(list, !C.printMaxDepth), true)
           else (list, false)
     in
       if hasEllipsis then 
-        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) list) 
+        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) 
         @ separator @
         ellipsis
       else
-        format_listWithDeffered (elementFormatter, separator, separatorDeffered) list
+        format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
     end
 
   fun format_lazyArray (elementFormatter, separator, separatorDeffered) lazyFn =
       let
-        val (list, hasEllipsis) = lazyFn (!C.printMaxDepth)
+        val {contents, hasEllipsis} = lazyFn (SOME (!C.printMaxDepth))
       in
       if hasEllipsis then 
-        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) list) 
+        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) 
         @ separator @
         ellipsis
       else
-        format_listWithDeffered (elementFormatter, separator, separatorDeffered) list
+        format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
       end            
 
 

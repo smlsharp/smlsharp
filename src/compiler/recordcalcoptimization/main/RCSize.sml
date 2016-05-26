@@ -123,8 +123,8 @@ local
       | RC.RCPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
         sizeExp (inc n) argExp items
       | RC.RCRAISE {exp, loc, ty} =>sizeExp (inc n) exp items
-      | RC.RCRECORD {fields:rcexp LabelEnv.map, loc, recordTy} =>
-        size (inc n) (EXP (LabelEnv.listItems fields) :: items)
+      | RC.RCRECORD {fields:rcexp RecordLabel.Map.map, loc, recordTy} =>
+        size (inc n) (EXP (RecordLabel.Map.listItems fields) :: items)
       | RC.RCSELECT {exp, expTy, indexExp, label, loc, resultTy} =>
         size (inc n) (EXP [exp, indexExp]::items)
       | RC.RCSEQ {expList, expTyList, loc} =>

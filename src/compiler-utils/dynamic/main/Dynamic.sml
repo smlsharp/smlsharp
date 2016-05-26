@@ -15,7 +15,7 @@ struct
 
   (* along with the data structure constructed by Dynamic primitive.
    * See also PrimitiveTypedLambda.sml. *)
-  type dyn = boxed * word * Types.ty
+  type dynamic = boxed * word * Types.ty
 
   datatype value =
       WORD8 of Word8.word
@@ -27,23 +27,23 @@ struct
     | REAL of real
     | REAL32 of Real32.real
     | PTR of unit ptr
-    | RECORD of (string * dyn) list
-    | VARIANT of string * value option
-    | LIST of dyn_list
-    | ARRAY of dyn_array
-    | VECTOR of dyn_array
-    | REF of value  (*TODO: use value instead of dyn to avoid compiler's bug*)
+    | RECORD of (RecordLabel.label * dynamic) list
+    | VARIANT of Types.typId * string * value option
+    | LIST of dynamic_list
+    | ARRAY of dynamic_array
+    | VECTOR of dynamic_array
+    | REF of value  (*TODO: use value instead of dynamic to avoid compiler's bug*)
     | INTINF of IntInf.int
     | STRING of string
     | EXN of exn
     | FUN
     | UNIT
     | OTHER
-  and dyn_list =
+  and dynamic_list =
       NIL
-    | CONS of dyn * dyn
-  withtype dyn_array =
-      {length : int, sub : int -> dyn}
+    | CONS of dynamic * dynamic
+  withtype dynamic_array =
+      {length : int, sub : int -> dynamic}
 
   exception Undetermined
 
@@ -97,7 +97,7 @@ struct
   fun readRecord (p, i, fields) =
       let
         val fieldSizes =
-            map (fn (label:string, ty) =>
+            map (fn (label:RecordLabel.label, ty) =>
                     {tag = constTag ty, size = constSize ty})
                 fields
         val accum = RecordLayout2.newComputationAccum ()
@@ -168,7 +168,7 @@ struct
         T.POLYty {boundtvars, body} =>
         (case TypesBasics.derefTy body of
            T.RECORDty fieldTys =>
-           T.RECORDty (LabelEnv.map
+           T.RECORDty (RecordLabel.Map.map
                          (fn ty => T.POLYty {boundtvars=boundtvars, body=ty})
                          fieldTys)
          | _ => conArgTy)
@@ -176,46 +176,55 @@ struct
 
   fun readTaggedValue conMap (p, i, instTys) =
       case readTag conMap (p, i) of
-        (conName, NONE) => VARIANT (conName, NONE)
+        (conName, NONE) => (conName, NONE)
       | (conName, SOME ty) =>
         case inlinedConArgTy ty of
           T.RECORDty fieldTys =>
           let
+            val dummyLabel = RecordLabel.fromString ""
             val fields =
-                ("", BuiltinTypes.contagTy)
+                (dummyLabel, BuiltinTypes.contagTy)
                 :: map (fn (k, ty) => (k, TypesBasics.tpappTy (ty, instTys)))
-                       (LabelEnv.listItemsi fieldTys)
+                       (RecordLabel.Map.listItemsi fieldTys)
             val record = readRecord (p, i, fields)
           in
-            VARIANT (conName, SOME (RECORD (tl record)))
+            (conName, SOME (RECORD (tl record)))
           end
         | ty =>
           let
+            val dummyLabel = RecordLabel.fromString ""
             val fields =
-                [("", BuiltinTypes.contagTy),
-                 ("", TypesBasics.tpappTy (ty, instTys))]
+                [(dummyLabel, BuiltinTypes.contagTy),
+                 (dummyLabel, TypesBasics.tpappTy (ty, instTys))]
           in
             case readRecord (p, i, fields) of
-              [_, (_, dyn)] => VARIANT (conName, SOME (read dyn))
+              [_, (_, dynamic)] => (conName, SOME (read dynamic))
             | _ => raise Bug.Bug "readTaggedValue: non-inlined"
           end
 
+  and readTaggedLayout tagMap (tyCon as {id, conSet, ...}:T.tyCon) src =
+      let
+        val (conName, arg) = readTaggedValue (makeConMap (tagMap, conSet)) src
+      in
+        VARIANT (id, conName, arg)
+      end
+
   (* See also DatatypeCompilation.sml *)
-  and readDty (p, i, tyCon as {conSet, ...}, instTys) =
+  and readDty (p, i, tyCon as {id, conSet, ...}, instTys) =
       if SEnv.isEmpty conSet then OTHER else
       case DatatypeLayout.datatypeLayout tyCon of
         D.LAYOUT_TAGGED (D.TAGGED_RECORD {tagMap}) =>
-        readTaggedValue (makeConMap (tagMap, conSet)) (p, i, instTys)
+        readTaggedLayout tagMap tyCon (p, i, instTys)
       | D.LAYOUT_TAGGED (D.TAGGED_OR_NULL {tagMap, nullName}) =>
         if isNull (p, i)
-        then VARIANT (nullName, NONE)
-        else readTaggedValue (makeConMap (tagMap, conSet)) (p, i, instTys)
+        then VARIANT (id, nullName, NONE)
+        else readTaggedLayout tagMap tyCon (p, i, instTys)
       | D.LAYOUT_TAGGED (D.TAGGED_TAGONLY {tagMap}) =>
         let
           val tag = Dynamic.readInt (p, i)
         in
           case IEnv.find (makeConMap (tagMap, conSet), tag) of
-            SOME (conName, NONE) => VARIANT (conName, NONE)
+            SOME (conName, NONE) => VARIANT (id, conName, NONE)
           | _ => raise Bug.Bug "readDty: TAGGED_TAGONLY"
         end
       | D.LAYOUT_BOOL {falseName} =>
@@ -227,12 +236,12 @@ struct
               | _ => raise Bug.Bug "readDty: LAYOUT_BOOL"
         in
           if Dynamic.readInt (p, i) = 0
-          then VARIANT (falseName, NONE)
-          else VARIANT (trueName, NONE)
+          then VARIANT (id, falseName, NONE)
+          else VARIANT (id, trueName, NONE)
         end
       | D.LAYOUT_UNIT =>
         (case SEnv.listItemsi conSet of
-           [(conName, NONE)] => VARIANT (conName, NONE)
+           [(conName, NONE)] => VARIANT (id, conName, NONE)
          | _ => raise Bug.Bug "readDty: LAYOUT_UNIT")
       | D.LAYOUT_ARGONLY =>
         (case SEnv.listItemsi conSet of
@@ -245,7 +254,7 @@ struct
                  then (Dynamic.readBoxed (p, i), 0w0, instTy)
                  else (p, i, instTy)
            in
-             VARIANT (con, SOME (read arg))
+             VARIANT (id, con, SOME (read arg))
            end
          | _ => raise Bug.Bug "readDty: LAYOUT_ARGONLY")
       | D.LAYOUT_ARG_OR_NULL =>
@@ -258,16 +267,16 @@ struct
           val instTy = TypesBasics.tpappTy (argTy, instTys)
         in
           if isNull (p, i)
-          then VARIANT (nullCon, NONE)
-          else VARIANT (argCon,
+          then VARIANT (id, nullCon, NONE)
+          else VARIANT (id, argCon,
                         SOME (read (Dynamic.readBoxed (p, i), 0w0, instTy)))
         end
       | D.LAYOUT_REF => raise Bug.Bug "readDty: LAYOUT_REF"
 
   and readCons (p, i, tyCon, instTys) =
       case readDty (p, i, tyCon, instTys) of
-        VARIANT ("nil", NONE) => LIST NIL
-      | VARIANT ("::", SOME (RECORD [(_, car), (_, cdr)])) =>
+        VARIANT (_, "nil", NONE) => LIST NIL
+      | VARIANT (_, "::", SOME (RECORD [(_, car), (_, cdr)])) =>
         LIST (CONS (car, cdr))
       | _ => raise Bug.Bug "readCons"
 
@@ -297,7 +306,7 @@ struct
            [elemTy] => REF (read (Dynamic.readBoxed (p, i), 0w0, elemTy))
          | _ => OTHER)
 
-  and read ((p, i, ty):dyn) =
+  and read ((p, i, ty):dynamic) =
       case ty of
         T.SINGLETONty _ => OTHER
       | T.BACKENDty _ => OTHER
@@ -331,7 +340,7 @@ struct
             )
         )
       | T.RECORDty fields =>
-        (RECORD (readRecord (p, i, LabelEnv.listItemsi fields))
+        (RECORD (readRecord (p, i, RecordLabel.Map.listItemsi fields))
          handle Undetermined => OTHER)
 
   fun readList NIL = nil
@@ -340,11 +349,11 @@ struct
         LIST cdr => car :: readList cdr
       | _ => raise Bug.Bug "readList"
 
-  fun readArray ({length, sub}:dyn_array) =
+  fun readArray ({length, sub}:dynamic_array) =
       Vector.tabulate (length, sub)
 
   fun load (p, ty) =
-      (Dynamic.dup (p, constTagWord ty, constSize' ty), 0w0, ty) : dyn
+      (Dynamic.dup (p, constTagWord ty, constSize' ty), 0w0, ty) : dynamic
       handle Undetermined => (Dynamic.dup (p, 0w0, 0), 0w0, ty)
 
 end

@@ -267,6 +267,11 @@ struct
       _import "LLVMDumpValue"
       : LLVMValueRef -> ()
 
+  val LLVMGetUndef =
+      _import "LLVMGetUndef"
+      : __attribute__((fast))
+        LLVMTypeRef -> LLVMValueRef
+
   val LLVMConstNull =
       _import "LLVMConstNull"
       : __attribute__((fast))

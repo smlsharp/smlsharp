@@ -134,6 +134,7 @@ struct
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   (*%
    * @prefix formatWithType_
@@ -149,6 +150,7 @@ struct
    * @formatter(btvEnv) format_btvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype tlexp =
       (*%
@@ -234,7 +236,7 @@ struct
        * @format({label, recordTy, loc})
        * "_indexof(" !N0{ label "," +1 recordTy()(btvEnv) ")" }
        *)
-      TLINDEXOF of {label : string, recordTy : ty, loc : loc}
+      TLINDEXOF of {label : RecordLabel.label, recordTy : ty, loc : loc}
     | (*%
        * @format({const, ty, loc}) const
        *)
@@ -352,7 +354,7 @@ struct
       TLRECORD of
       {
         isMutable : bool,
-        fields : tlexp LabelEnv.map,
+        fields : tlexp RecordLabel.Map.map,
         recordTy : ty,
         loc : loc
       }
@@ -376,7 +378,7 @@ struct
       {
         recordExp : tlexp,
         indexExp : tlexp,
-        label : string,
+        label : RecordLabel.label,
         recordTy : ty,
         resultTy : ty,
         loc : loc
@@ -401,7 +403,7 @@ struct
         recordExp : tlexp,
         recordTy : ty,
         indexExp : tlexp,
-        label : string,
+        label : RecordLabel.label,
         valueExp : tlexp,
         valueTy : ty,
         loc : loc

@@ -1,14 +1,15 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
+_require "../../absyn/main/RecordLabel.smi"
 
 structure ElaborateErrorSQL =
   struct
     exception NotAvailableSQLKeyword of string
     exception NumberOfSQLSetLabel
     exception NumberOfSQLInsertLabel
-    exception DuplicateSQLSetLabel of string
-    exception DuplicateSQLInsertLabel of string
-    exception DuplicateSQLSelectLabel of string
-    exception DuplicateSQLTuple of string
-    exception DuplicateSQLRecordLabel of string
+    exception DuplicateSQLSetLabel of RecordLabel.label
+    exception DuplicateSQLInsertLabel of RecordLabel.label
+    exception DuplicateSQLSelectLabel of RecordLabel.label
+    exception DuplicateSQLTuple of RecordLabel.label
+    exception DuplicateSQLRecordLabel of RecordLabel.label
   end

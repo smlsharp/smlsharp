@@ -131,6 +131,9 @@
 /* Define to 1 if you have the <libunwind.h> header file. */
 #undef HAVE_LIBUNWIND_H
 
+/* Define to 1 if you have the `yajl' library (-lyajl). */
+#undef HAVE_LIBYAJL
+
 /* Define to 1 if the system has the type `max_align_t'. */
 #undef HAVE_MAX_ALIGN_T
 

@@ -433,8 +433,8 @@ struct
       #addElapsedTime ElapsedCounterSet "match compilation"
   val RecordCalcOptimizationTimeCounter =
       #addElapsedTime ElapsedCounterSet "recordcalc optimize"
-  val sqlCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "SQL compilation"
+  val typedElaborationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "Typed Elaboration"
   val ffiCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "FFI compilation"
   val recordCompilationTimeCounter =

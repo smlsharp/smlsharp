@@ -23,6 +23,7 @@ struct sml_control {
 		struct frame_stack_range *next;
 	} *frame_stack;
 	void *thread_local_heap;
+	void *exn_object;
 	struct sml_control *prev, *next;  /* double-linked list */
 };
 #define PHASE_MASK       0x0fU
@@ -406,6 +407,15 @@ sml_unsave()
 	control->frame_stack->top = NULL;
 }
 
+void *
+sml_save_exn_internal(void *obj)
+{
+	struct sml_control *control = tlv_get(current_control);
+	void *old = control->exn_object;
+	control->exn_object = obj;
+	return old;
+}
+
 /* for debug */
 int
 sml_saved()
@@ -430,6 +440,7 @@ control_start(struct frame_stack_range *range)
 	control->frame_stack = range;
 	range->next = NULL;
 	control->thread_local_heap = NULL;
+	control->exn_object = NULL;
 	tlv_set(current_control, control);
 	control_register(control);
 
@@ -772,11 +783,14 @@ frame_enum_ptr(void *frame_end, void (*trace)(void **, void *), void *data)
 }
 
 void
-sml_stack_enum_ptr(const struct sml_control *control,
+sml_stack_enum_ptr(struct sml_control *control,
 		   void (*trace)(void **, void *), void *data)
 {
 	const struct frame_stack_range *range;
 	void *fp, *next;
+
+	if (control->exn_object)
+		trace(&control->exn_object, data);
 
 	for (range = control->frame_stack; range; range = range->next) {
 		/* skip dummy ranges */

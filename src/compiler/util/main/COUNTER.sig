@@ -55,7 +55,7 @@ sig
   val TypedCalcOptimizationTimeCounter : elapsedTimeCounter
   val RecordCalcOptimizationTimeCounter : elapsedTimeCounter
   val matchCompilationTimeCounter : elapsedTimeCounter
-  val sqlCompilationTimeCounter : elapsedTimeCounter
+  val typedElaborationTimeCounter : elapsedTimeCounter
   val ffiCompilationTimeCounter : elapsedTimeCounter
   val recordCompilationTimeCounter : elapsedTimeCounter
   val datatypeCompilationTimeCounter : elapsedTimeCounter

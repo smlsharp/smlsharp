@@ -76,10 +76,8 @@ struct
   val getWarnings = EU.getWarnings
   val enqueueError = EU.enqueueError
   val enqueueWarning = EU.enqueueWarning
-  val listToTuple = TupleUtils.listToTuple
-  val checkNameDuplication = UserErrorUtils.checkNameDuplication
+  val checkRecordLabelDuplication = UserErrorUtils.checkRecordLabelDuplication
   val checkSymbolDuplication = UserErrorUtils.checkSymbolDuplication
-  val checkNameDuplication' = UserErrorUtils.checkNameDuplication'
   val checkSymbolDuplication' = UserErrorUtils.checkSymbolDuplication'
   val emptyTvars = nil : PC.scopedTvars
 
@@ -109,7 +107,8 @@ struct
   end
 
   fun getLabelOfPatRow (A.PATROWPAT(label, _, _)) = label
-    | getLabelOfPatRow (A.PATROWVAR(label, _, _, _)) = label
+    | getLabelOfPatRow (A.PATROWVAR(label, _, _, _)) =
+      RecordLabel.fromString (Symbol.symbolToString label)
 
   fun elabFFIAttributes loc attr : F.attributes =
       foldl
@@ -445,14 +444,14 @@ struct
       | A.FFIRECORDTY (labelTys, loc) =>
         let val newLabelTys = elabLabeledSequence elabFFITy labelTys
         in
-          checkNameDuplication
+          checkRecordLabelDuplication
               #1 labelTys loc E.DuplicateRecordLabelInRawType;
           PC.FFIRECORDTY (newLabelTys, loc)
         end
       | A.FFICONTY (argTys, tyConPath, loc) =>
         PC.FFICONTY (map elabFFITy argTys, tyConPath, loc)
       | A.FFITUPLETY (tys, loc) =>
-        PC.FFIRECORDTY (listToTuple (map elabFFITy tys), loc)
+        PC.FFIRECORDTY (RecordLabel.tupleList (map elabFFITy tys), loc)
       | A.FFIFUNTY(attrs, domTys, varTys, ranTys, loc) =>
         PC.FFIFUNTY(case attrs of nil => NONE
                                 | _ => SOME (elabFFIAttributes loc attrs),
@@ -496,7 +495,7 @@ struct
                  let val loc = (PC.getLeftPosExp x, PC.getRightPosExp y)
                  in PC.PLAPPM(
                     lexp,
-                    [PC.PLRECORD(listToTuple [x, y], loc)], loc)
+                    [PC.PLRECORD(RecordLabel.tupleList [x, y], loc)], loc)
                  end
             }
         fun findFixity (env : fixity SEnv.map) lexp = 
@@ -540,7 +539,7 @@ struct
                  let val loc = (PC.getLeftPosPat x, PC.getRightPosPat y)
                  in
                    PC.PLPATCONSTRUCT
-                   (lexp, PC.PLPATRECORD(false, listToTuple [x, y], loc), loc)
+                   (lexp, PC.PLPATRECORD(false, RecordLabel.tupleList [x, y], loc), loc)
                  end
             }
         fun findFixity (env : fixity SEnv.map) lexp = 
@@ -620,8 +619,8 @@ struct
                    ifFlex= false,
                     fields=
                     [
-                      A.PATROWPAT("1", leftPat, leftLoc),
-                      A.PATROWPAT("2", rightPat, rightLoc)
+                      A.PATROWPAT(RecordLabel.fromInt 1, leftPat, leftLoc),
+                      A.PATROWPAT(RecordLabel.fromInt 2, rightPat, rightLoc)
                     ],
                     loc = Loc.mergeLocs (leftLoc, rightLoc)
                   }
@@ -815,13 +814,13 @@ struct
       | A.EXPOPID (x,loc) => PC.PLVAR x
       | A.EXPRECORD (stringExpList, loc) =>
         (
-          checkNameDuplication
+          checkRecordLabelDuplication
               #1 stringExpList loc E.DuplicateRecordLabel;
           PC.PLRECORD (elabLabeledSequence (elabExp env) stringExpList, loc)
         )
       | A.EXPRECORD_UPDATE (exp, stringExpList, loc) =>
         (
-          checkNameDuplication
+          checkRecordLabelDuplication
               #1 stringExpList loc E.DuplicateRecordLabel;
           PC.PLRECORD_UPDATE
           (
@@ -832,7 +831,7 @@ struct
         )
       | A.EXPRECORD_SELECTOR (x, loc) => PC.PLRECORD_SELECTOR(x, loc)
       | A.EXPTUPLE (elist, loc) =>
-        PC.PLRECORD(listToTuple(map (elabExp env) elist), loc)
+        PC.PLRECORD(RecordLabel.tupleList(map (elabExp env) elist), loc)
       | A.EXPLIST (elist, loc) => 
 (*
         if !C.doListExpressionOptimization then
@@ -843,7 +842,7 @@ struct
           fun folder (x, y) =
               PC.PLAPPM
                 (PC.PLVAR(mkLongsymbol ["::"] loc),
-                 [PC.PLRECORD(listToTuple [elabExp env x, y], loc)],
+                 [PC.PLRECORD(RecordLabel.tupleList [elabExp env x, y], loc)],
                  loc)
           val plexp = foldr folder (PC.PLVAR(mkLongsymbol ["nil"] loc)) elist
         in
@@ -1001,6 +1000,145 @@ struct
           sqlexp
       | A.EXPJOIN (exp1, exp2, loc) =>
         PC.PLJOIN (elabExp env exp1, elabExp env exp2, loc)
+      | A.EXPJSON (exp, ty, loc) =>
+        PC.PLJSON (elabExp env exp, ty, loc)
+      | A.EXPJSONCASE (exp, matches, loc) =>
+        let
+          (* FIXME : too crowded! *)
+          val counter = ref 0
+          fun newName () = mkLongsymbol ["$" ^ Int.toString (!counter)] loc
+                           before counter := !counter + 1
+          val exnName = newName ()
+          val dynTyName = mkLongsymbol ["JSON", "dyn"] loc
+          val listTyName = mkLongsymbol ["list"] loc
+          val consConName = mkLongsymbol ["::"] loc
+          val nilConName = mkLongsymbol ["nil"] loc
+          val voidTyName = mkLongsymbol ["JSON", "void"] loc
+          fun dynTy x = A.TYCONSTRUCT ([x], dynTyName, loc)
+          val voidTy = A.TYCONSTRUCT ([], voidTyName, loc)
+          val anyTy = dynTy voidTy
+          fun listTy x = A.TYCONSTRUCT ([x], listTyName, loc)
+          val jsonViewFnExp =
+              PC.PLVAR (mkLongsymbol ["JSON", "view"] loc)
+          fun Json (exp, ty) =
+              PC.PLJSON (exp, ty, loc)
+          fun ConsPat (x, y) =
+              PC.PLPATCONSTRUCT
+                (PC.PLPATID consConName,
+                 PC.PLPATRECORD (false, RecordLabel.tupleList [x, y], loc),
+                 loc)
+          fun Raise () =
+              PC.PLRAISE (PC.PLVAR exnName, loc)
+          fun Case1 (exp, pat) exp2 =
+              PC.PLCASEM ([exp], [([pat], exp2),
+                                  ([PC.PLPATWILD loc], Raise ())],
+                          PC.MATCH, loc)
+          fun Bind (exp, pat) exp2 =
+              PC.PLCASEM ([exp], [([pat], exp2)], PC.MATCH, loc)
+          datatype pat =
+              PATVAR of longsymbol option * A.ty
+            | PATRECORD of (RecordLabel.label * pat) list * bool
+            | PATLIST of patList
+            | PATELSE
+          and patListElem =
+              PATELEM of longsymbol * pat
+            | PATELEMVAR of longsymbol option
+          and patList =
+              PATCONS of patListElem * patList
+            | PATTAIL of longsymbol option
+          exception JsonPat
+          fun toJsonPat plpat =
+              case plpat of
+                PC.PLPATTYPED (PC.PLPATWILD _, ty, _) => PATVAR (NONE, ty)
+              | PC.PLPATTYPED (PC.PLPATID x, ty, _) => PATVAR (SOME x, ty)
+              | PC.PLPATWILD _ => PATELSE
+              | PC.PLPATID x =>
+                if Symbol.eqLongsymbol (x, nilConName)
+                then PATLIST (PATTAIL (SOME nilConName))
+                else raise JsonPat
+              | PC.PLPATRECORD (flex, fields, _) =>
+                PATRECORD (map (fn (l,x) => (l, toJsonPat x)) fields, flex)
+              | PC.PLPATCONSTRUCT
+                  (PC.PLPATID id,
+                   PC.PLPATRECORD (false, fields as [(_, pat1), (_, pat2)], _),
+                   _) =>
+                if Symbol.eqLongsymbol (id, consConName)
+                   andalso RecordLabel.isTupleList fields
+                then PATLIST
+                       (PATCONS (case pat1 of
+                                   PC.PLPATID x => PATELEMVAR (SOME x)
+                                 | PC.PLPATWILD _ => PATELEMVAR NONE
+                                 | _ => PATELEM (newName (), toJsonPat pat1),
+                                 case pat2 of
+                                   PC.PLPATID x => PATTAIL (SOME x)
+                                 | PC.PLPATWILD _ => PATTAIL NONE
+                                 | _ => case toJsonPat pat2 of
+                                          PATLIST p => p
+                                        | _ => raise JsonPat))
+                else raise JsonPat
+              | _ => raise JsonPat
+          fun patListToPat pat =
+              case pat of
+                PATCONS (PATELEM (v, p), t) =>
+                ConsPat (PC.PLPATID v, patListToPat t)
+              | PATCONS (PATELEMVAR NONE, t) =>
+                ConsPat (PC.PLPATWILD loc, patListToPat t)
+              | PATCONS (PATELEMVAR (SOME v), t) =>
+                ConsPat (PC.PLPATID v, patListToPat t)
+              | PATTAIL (SOME v) => PC.PLPATID v
+              | PATTAIL NONE => PC.PLPATWILD loc
+          fun transPatList pat =
+              case pat of
+                PATCONS (PATELEM (v, p), t) =>
+                transPat p (PC.PLVAR v) o transPatList t
+              | PATCONS (PATELEMVAR _, t) => transPatList t
+              | PATTAIL _ => (fn x => x)
+          and transPat pat exp =
+              case pat of
+                PATELSE => (fn x => x)
+              | PATVAR (v, ty) =>
+                Bind (Json (exp, ty),
+                      case v of SOME v => PC.PLPATID v
+                              | NONE => PC.PLPATWILD loc)
+              | PATLIST pats =>
+                Case1 (Json (exp, listTy anyTy), patListToPat pats)
+                o transPatList pats
+              | PATRECORD (fields, flex) =>
+                let
+                  val l = map (fn (s,t) => (s,t,newName())) fields
+                  val ty = A.TYRECORD (map (fn (s,_,_) => (s,anyTy)) l, loc)
+                  val ty = if flex then dynTy ty else ty
+                in
+                  Bind
+                    (if flex
+                     then PC.PLAPPM (jsonViewFnExp, [Json (exp, ty)], loc)
+                     else Json (exp, ty),
+                     PC.PLPATRECORD
+                       (false, map (fn (s,_,v) => (s, PC.PLPATID v)) l, loc))
+                  o foldr (op o)
+                          (fn x => x)
+                          (map (fn (_,t,v) => transPat t (PC.PLVAR v)) l)
+                end
+          fun elabMatch (pat, exp) exp1 =
+              transPat (toJsonPat (elabPat env pat)) exp1 (elabExp env exp)
+              handle JsonPat =>
+                     (enqueueError (A.getLocPat pat,
+                                    E.InvalidPatternForJsonCase);
+                      unitExp loc)
+          fun elabMatches nil exp1 =
+              PC.PLRAISE (PC.PLVAR (mkLongsymbol ["Match"] loc), loc)
+            | elabMatches (h::t) exp1 =
+              PC.PLHANDLE (elabMatch h exp1,
+                           [(PC.PLPATID exnName, elabMatches t exp1)],
+                           loc)
+          val v = newName ()
+        in
+          PC.PLLET
+            ([PC.PDEXD ([PC.PLEXBINDDEF (hd exnName, NONE, loc)], loc),
+              PC.PDVAL (nil, [(PC.PLPATID v, elabExp env exp)], loc)],
+             [elabMatches matches (PC.PLVAR v)],
+             loc)
+        end
 
   and elabFFIFun env ffiFun =
       case ffiFun of
@@ -1021,12 +1159,12 @@ struct
       | A.PATAPPLY (plist, loc) => resolveInfixPat env plist
       | A.PATRECORD {ifFlex=flex, fields=pfields, loc=loc} =>
         (
-          checkNameDuplication
+          checkRecordLabelDuplication
               getLabelOfPatRow pfields loc E.DuplicateRecordLabelInPat;
           PC.PLPATRECORD (flex, map (elabPatRow env) pfields, loc)
         )
       | A.PATTUPLE (plist, loc) =>
-        PC.PLPATRECORD (false, listToTuple (map (elabPat env) plist), loc)
+        PC.PLPATRECORD (false, RecordLabel.tupleList (map (elabPat env) plist), loc)
       | A.PATLIST (elist, loc) =>
         let
           val plexp =
@@ -1035,7 +1173,7 @@ struct
                   PC.PLPATCONSTRUCT
                   (
                     PC.PLPATID(mkLongsymbol ["::"] loc),
-                    PC.PLPATRECORD(false, listToTuple [elabPat env x, y], loc),
+                    PC.PLPATRECORD(false, RecordLabel.tupleList [elabPat env x, y], loc),
                     loc
                   ))
               (PC.PLPATID(mkLongsymbol ["nil"] loc))
@@ -1106,18 +1244,18 @@ struct
           (* label = pat *)
           A.PATROWPAT (string, pat, loc) => (string, elabPat env pat)
         (* label < : ty > < as pat > *)
-        | A.PATROWVAR (string, optTy, optPat, loc) => 
+        | A.PATROWVAR (symbol, optTy, optPat, loc) => 
           let
-            val _ = checkReservedNameForValBind (mkSymbol string loc)
+            val _ = checkReservedNameForValBind symbol
             val pat =
                 case optPat of
                   SOME pat =>
-                  PC.PLPATLAYERED(mkSymbol string loc, optTy, elabPat env pat,loc)
+                  PC.PLPATLAYERED(symbol, optTy, elabPat env pat,loc)
                 | _ =>
                   case optTy of
-                    SOME ty => PC.PLPATTYPED (PC.PLPATID(mkLongsymbol [string] loc), ty, loc)
-                  | _ => PC.PLPATID(mkLongsymbol [string] loc)
-          in (string, pat)
+                    SOME ty => PC.PLPATTYPED (PC.PLPATID [symbol], ty, loc)
+                  | _ => PC.PLPATID [symbol]
+          in (RecordLabel.fromString (Symbol.symbolToString symbol), pat)
           end
 
     and elabDec env dec = 

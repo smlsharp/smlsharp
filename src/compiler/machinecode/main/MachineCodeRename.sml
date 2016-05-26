@@ -364,13 +364,6 @@ struct
                         valueExp = renameValue subst valueExp,
                         loc = loc},
          subst)
-      | M.MCRAISE_ALLOC {resultVar, loc} =>
-        let
-          val (resultVar, subst) = bindVar subst resultVar
-        in
-          (M.MCRAISE_ALLOC {resultVar = resultVar, loc = loc},
-           subst)
-        end
 
   fun renameMidList subst nil = (nil, subst)
     | renameMidList subst (mid::mids) =
@@ -386,11 +379,11 @@ struct
         M.MCRETURN {value, loc} =>
         M.MCRETURN {value = renameValue subst value,
                     loc = loc}
-      | M.MCRAISE_THROW {raiseAllocResult, argExp, loc} =>
-        M.MCRAISE_THROW {raiseAllocResult = renameValue subst raiseAllocResult,
-                         argExp = renameValue subst argExp,
-                         loc = loc}
-      | M.MCHANDLER {nextExp, id, exnVar, handlerExp, loc} =>
+      | M.MCRAISE {argExp, cleanup, loc} =>
+        M.MCRAISE {argExp = renameValue subst argExp,
+                   cleanup = renameHandler subst cleanup,
+                   loc = loc}
+      | M.MCHANDLER {nextExp, id, exnVar, handlerExp, cleanup, loc} =>
         let
           val (id, subst2) = bindHandler subst id
           val nextExp = renameExp subst2 nextExp
@@ -401,6 +394,7 @@ struct
                        id = id,
                        exnVar = exnVar,
                        handlerExp = handlerExp,
+                       cleanup = renameHandler subst cleanup,
                        loc = loc}
         end
       | M.MCSWITCH {switchExp, expTy, branches, default, loc} =>

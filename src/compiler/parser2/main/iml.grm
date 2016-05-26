@@ -92,6 +92,9 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
     | INTERFACE
 (* temporary *)
     | JOIN
+    | JSON
+    | JSONCASE
+    | PREFIXEDLABEL of string
     | LBRACE
     | LBRACKET
     | LET
@@ -193,7 +196,8 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
        | longid_noSQL of Symbol.longsymbol
        | tylongid of Symbol.longsymbol
 
-       | label of string
+       | label_noID of RecordLabel.label
+       | label of RecordLabel.label
 
 (*
        | longtyconid of Symbol.longsymbol
@@ -253,7 +257,7 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
          } list
        | datdesc of
          (Absyn.tvar list * Symbol.symbol * (Symbol.symbol * Absyn.ty option) list) list
-       | exprow of (string * Absyn.exp) list
+       | exprow of (RecordLabel.label * Absyn.exp) list
        | expseq_comma of Absyn.exp list
        | expseq_semicolon of Absyn.exp list
        | exp of Absyn.exp
@@ -307,7 +311,7 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
        | tycon of Symbol.symbol
        | tyseq_comma of Absyn.ty list
        | tyseq of Absyn.ty list
-       | tyrow of (string * Absyn.ty) list
+       | tyrow of (RecordLabel.label * Absyn.ty) list
        | tytuple of Absyn.ty list
        | tyvar of Absyn.tvar
        | tyvarseq of Absyn.tvar list
@@ -321,7 +325,7 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
 *)
        | poly_ty of Absyn.ty
        | poly_ty1 of Absyn.ty
-       | poly_tyrow of (string * Absyn.ty) list
+       | poly_tyrow of (RecordLabel.label * Absyn.ty) list
        | poly_tytuple of Absyn.ty list
        | kinded_tyvar of Absyn.tvar * Absyn.tvarKind
        | kinded_tyvarseq of (Absyn.tvar * Absyn.tvarKind) list
@@ -332,7 +336,7 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
        | ffiApplyArg of Absyn.ffiArg
        | ffiApplyArgs of Absyn.ffiArg list
        | ffiApplyArgSeq of Absyn.ffiArg list
-       | ffityrow of (string * Absyn.ffiTy) list
+       | ffityrow of (RecordLabel.label * Absyn.ffiTy) list
        | ffityseq of Absyn.ffiTy list
        | ffiVarArgs of Absyn.ffiTy list
        | ffiArgs of Absyn.ffiTy list * Absyn.ffiTy list option
@@ -380,22 +384,22 @@ fun stripComment {formatComments, tyvars, tyConSymbol, ty} =
 
        | sql of Absyn.exp AbsynSQL.command
        | sqlExp of Absyn.exp
-       | sqlExpAsList of string list * Absyn.exp list
+       | sqlExpAsList of RecordLabel.label list * Absyn.exp list
        | sqlExpList of Absyn.exp list
        | sqlExpOrDefault of Absyn.exp option
        | sqlExpOrDefaultList of Absyn.exp option list
-       | sqlLabelList of string list
+       | sqlLabelList of RecordLabel.label list
        | sqlInsertRowList of Absyn.exp option list list
-       | selectList of string list option * Absyn.exp list
+       | selectList of RecordLabel.label list option * Absyn.exp list
        | distinct of bool
-       | asNameOpt of string option 
+       | asNameOpt of RecordLabel.label option 
        | intoClause of Symbol.symbol option 
-       | fromClause of (string * Absyn.exp) list
+       | fromClause of (RecordLabel.label * Absyn.exp) list
        | whereClause of Absyn.exp option
        | orderbyClause of {keyExp: Absyn.exp, orderAsc: bool} list
        | orderbyList of {keyExp: Absyn.exp, orderAsc: bool} list
        | sqlorder of bool
-       | setClause of string list * Absyn.exp list
+       | setClause of RecordLabel.label list * Absyn.exp list
        | sqlserver of (string * Absyn.exp) list
 
        (* SMLFormat extension *)
@@ -587,9 +591,9 @@ atexp_noVAR
       | OP longid (Absyn.EXPOPID(longid,(OPleft,longidright)))
       | LBRACE exprow RBRACE (Absyn.EXPRECORD(exprow,(LBRACEleft,RBRACEright)))
       | LBRACE RBRACE (Absyn.EXPCONSTANT(Absyn.UNITCONST(LBRACEleft,RBRACEright)))
-      | HASH id (Absyn.EXPRECORD_SELECTOR(id,(HASHleft,idright)))
-      | HASH INTLAB
-        (Absyn.EXPRECORD_SELECTOR(Symbol.mkSymbol INTLAB (INTLABleft,INTLABright),(HASHleft,INTLABright)))
+      | HASH id (Absyn.EXPRECORD_SELECTOR(RecordLabel.fromString (Symbol.symbolToString id),(HASHleft,idright)))
+      | HASH label_noID
+        (Absyn.EXPRECORD_SELECTOR(label_noID,(HASHleft,label_noIDright)))
       | LPAREN RPAREN (Absyn.EXPCONSTANT(Absyn.UNITCONST(LPARENleft,RPARENright)))
       | LPAREN expseq_comma RPAREN
                 (Absyn.EXPTUPLE(expseq_comma,(LPARENleft,RPARENright)))
@@ -626,8 +630,12 @@ atexp_noSQL : atexp_noVAR (atexp_noVAR)
             | longid_noSQL
                 (Absyn.EXPID(longid_noSQL))
 
-label : id (Symbol.symbolToString id)
-      | INTLAB (INTLAB)
+label_noID : INTLAB (RecordLabel.fromString INTLAB)
+           | STRING (RecordLabel.fromString STRING)
+           | PREFIXEDLABEL (RecordLabel.fromString PREFIXEDLABEL)
+
+label : id (RecordLabel.fromString (Symbol.symbolToString id))
+      | label_noID (label_noID)
 
 (* equal or more than 1 *)
 exprow : label EQ exp ([(label,exp)])
@@ -649,12 +657,11 @@ appexp : atexp (Absyn.EXPAPP([atexp],(atexpleft,atexpright)))
                  | _ => Absyn.EXPAPP([appexp,atexp],(appexpleft,atexpright)))
        | appexp HASH LBRACE exprow RBRACE
          (Absyn.EXPRECORD_UPDATE(appexp,exprow,(appexpleft,RBRACEright)))
+       | appexp HASH LBRACE RBRACE
+         (Absyn.EXPRECORD_UPDATE(appexp,nil,(appexpleft,RBRACEright)))
        | appexp HASH LPAREN expseq_comma RPAREN
          (Absyn.EXPRECORD_UPDATE
-            (appexp,
-             #2 (foldr (fn (exp, (n, exprow)) =>
-                           (n - 1, (Int.toString n, exp)::exprow))
-                       (length expseq_comma, nil) expseq_comma),
+            (appexp, RecordLabel.tupleList expseq_comma,
              (appexpleft, RPARENright)))
        | SQLEXEC atexp
          (Absyn.EXPSQL
@@ -727,6 +734,10 @@ exp : appexp (appexp)
         (Absyn.EXPSQL
            (AbsynSQL.SQLSERVER(appexp,ty,(SQLSERVERleft,tyright)),
             (SQLSERVERleft,tyright)))
+    | JSON exp AS ty
+        (Absyn.EXPJSON (exp, ty, (JSONleft, tyright)))
+    | JSONCASE exp OF match
+        (Absyn.EXPJSONCASE (exp, match, (JSONCASEleft, matchright)))
 
 expOrSQL : exp (exp)
          | SQL pat DARROW sql
@@ -1210,19 +1221,19 @@ optty : COLON ty (SOME(ty))
 
 fields : label EQ pat
                 ((false,[Absyn.PATROWPAT(label,pat,(labelleft,patright))]))
-       | label optty optaspat
-                ((false,[Absyn.PATROWVAR(label,optty,optaspat,(labelleft,optaspatright))]))
+       | id optty optaspat
+                ((false,[Absyn.PATROWVAR(id,optty,optaspat,(idleft,optaspatright))]))
        | PERIODS ((true,nil))
        | label EQ pat COMMA fields
             ((
                #1 fields,
                Absyn.PATROWPAT(label,pat,(labelleft,patright))::(#2 fields)
              ))
-       | label optty optaspat COMMA fields 
+       | id optty optaspat COMMA fields 
             ((
                #1 fields,
                Absyn.PATROWVAR
-                 (label,optty,optaspat,(labelleft,optaspatright))::(#2 fields)
+                 (id,optty,optaspat,(idleft,optaspatright))::(#2 fields)
               ))
 
 optaspat : (NONE)
@@ -1876,8 +1887,8 @@ typepat_rows : typepat_field COMMA typepat_rows
              | typepat_field (([typepat_field], false))
              | PERIODS (([], true))
 
-typepat_field : label (label, (FormatTemplate.VarTyPat {id=Symbol.mkSymbol label (labelleft,labelright), loc=(labelleft,labelright)}))
-              | label COLON typepat (label, typepat)
+typepat_field : label (RecordLabel.toString label, (FormatTemplate.VarTyPat {id=Symbol.mkSymbol (RecordLabel.toString label) (labelleft,labelright), loc=(labelleft,labelright)}))
+              | label COLON typepat (RecordLabel.toString label, typepat)
 
 templates : template templates (template :: templates)
           | STARTOFINDENT templates RBRACKET templates

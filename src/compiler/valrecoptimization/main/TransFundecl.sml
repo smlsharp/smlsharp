@@ -46,23 +46,17 @@ in
       let
         val funBody =
             let
-              fun listToTuple list =
-                  #2
-                    (foldl
-                       (fn (x, (n, y)) => (n + 1, y @ [(Int.toString n, x)]))
-                       (1, nil)
-                       list)
               val newIds = map (fn x => newVarId()) args
               val newVars =
                   map (fn id=>ICVAR {longsymbol=Symbol.mkLongsymbol nil loc,id=id}) newIds
               val newVarPats =
                   map (fn id => ICPATVAR_TRANS {longsymbol=Symbol.mkLongsymbol nil loc,id=id}) newIds
-              val argRecord = ICRECORD (listToTuple newVars, loc)
+              val argRecord = ICRECORD (RecordLabel.tupleList newVars, loc)
               val funRules =
                   map
                   (fn {args, body} =>
                       {args = [ICPATRECORD {flex = false,
-                                            fields = listToTuple args,
+                                            fields = RecordLabel.tupleList args,
                                             loc = loc}],
                        body = transExp body}
                   )
@@ -162,6 +156,7 @@ in
                      loc = loc}
       | ICSQLDBI (icpat, icexp, loc) => ICSQLDBI (icpat, transExp icexp, loc)
       | ICJOIN (icexp1, icexp2, loc) => ICJOIN (transExp icexp1, transExp icexp2, loc)
+      | ICJSON _ => raise Bug.Bug "ICJSON"
   and transFFIFun ffiFun =
       case ffiFun of
         ICFFIFUN exp => ICFFIFUN (transExp exp)

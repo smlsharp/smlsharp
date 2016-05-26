@@ -88,7 +88,7 @@ in
       | TC.TPEXNCONSTRUCT {exn, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
         expansive tpexp
       | TC.TPRECORD {fields, recordTy=ty, loc=loc} =>
-          LabelEnv.foldli
+          RecordLabel.Map.foldli
           (fn (string, tpexp1, isExpansive) =>
            isExpansive orelse expansive tpexp1)
           false
@@ -212,21 +212,21 @@ in
                  TC.TPRECORD {fields, recordTy=_, loc=loc} =>
                  let
                    val (bindsRev, newTyFields, newFields) =
-                       LabelEnv.foldli
+                       RecordLabel.Map.foldli
                          (fn (l, fieldTy, (bindsRev, newTyFields,newFields)) =>
-                             case LabelEnv.find(fields,l) of
+                             case RecordLabel.Map.find(fields,l) of
                                 SOME field =>
                                 let
                                   val (ty',exp') = freshInst (fieldTy, field)
-                                  val newTyFields = LabelEnv.insert(newTyFields, l, ty')
+                                  val newTyFields = RecordLabel.Map.insert(newTyFields, l, ty')
                                   val (bindsRev, newFields) =
                                       if isAtom exp' then 
-                                        (bindsRev, LabelEnv.insert(newFields, l, exp'))
+                                        (bindsRev, RecordLabel.Map.insert(newFields, l, exp'))
                                       else
                                         let
                                           val fieldVar = newTCVarInfo loc ty'
                                           val fieldExp = TC.TPVAR fieldVar
-                                          val newFields = LabelEnv.insert(newFields, l, fieldExp)
+                                          val newFields = RecordLabel.Map.insert(newFields, l, fieldExp)
                                           val bindsRev = (fieldVar, exp') :: bindsRev
                                         in
                                           (bindsRev, newFields)
@@ -236,7 +236,7 @@ in
                                 end
                               | _ => raise bug "freshInst"
                          )
-                         (nil, LabelEnv.empty, LabelEnv.empty)
+                         (nil, RecordLabel.Map.empty, RecordLabel.Map.empty)
                          tyFields
                    val binds = List.rev bindsRev
                    val recordExp =
@@ -256,7 +256,7 @@ in
                  if isAtom exp then
                    let 
                      val (bindsRev, flty, flexp) =
-                         LabelEnv.foldli 
+                         RecordLabel.Map.foldli 
                            (fn (label, fieldTy, (bindsRev, flty,flexp)) =>
                                let
                                  val (fieldTy,instExp) =
@@ -271,11 +271,11 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
-                                  LabelEnv.insert(flty,label,fieldTy),
-                                  LabelEnv.insert(flexp,label,fieldExp)
+                                  RecordLabel.Map.insert(flty,label,fieldTy),
+                                  RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end)
-                           (nil,LabelEnv.empty,LabelEnv.empty)
+                           (nil,RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                      val binds = List.rev bindsRev
                      val recordExp =
@@ -298,7 +298,7 @@ in
                      val var = newTCVarInfo expLoc ty
                      val varExp = TC.TPVAR var
                      val (bindsRev, flty,flexp) =
-                         LabelEnv.foldli
+                         RecordLabel.Map.foldli
                            (fn (label,fieldTy,(bindsRev, flty,flexp)) =>
                                let val (fieldTy,instExp) =
                                        freshInst
@@ -313,12 +313,12 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
-                                  LabelEnv.insert(flty,label,fieldTy),
-                                  LabelEnv.insert(flexp,label,fieldExp)
+                                  RecordLabel.Map.insert(flty,label,fieldTy),
+                                  RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end
                            )
-                           ([(var, exp)], LabelEnv.empty,LabelEnv.empty)
+                           ([(var, exp)], RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                    in 
                      (
@@ -462,21 +462,21 @@ in
                  TC.TPRECORD {fields, recordTy=_, loc=loc} =>
                  let
                    val (bindsRev, newTyFields, newFields) =
-                       LabelEnv.foldli
+                       RecordLabel.Map.foldli
                          (fn (l, fieldTy, (bindsRev, newTyFields,newFields)) =>
-                             case LabelEnv.find(fields,l) of
+                             case RecordLabel.Map.find(fields,l) of
                                 SOME field =>
                                 let
                                   val (ty',exp') = groundInst (fieldTy, field)
-                                  val newTyFields = LabelEnv.insert(newTyFields, l, ty')
+                                  val newTyFields = RecordLabel.Map.insert(newTyFields, l, ty')
                                   val (bindsRev, newFields) =
                                       if isAtom exp' then 
-                                        (bindsRev, LabelEnv.insert(newFields, l, exp'))
+                                        (bindsRev, RecordLabel.Map.insert(newFields, l, exp'))
                                       else
                                         let
                                           val fieldVar = newTCVarInfo loc ty'
                                           val fieldExp = TC.TPVAR fieldVar
-                                          val newFields = LabelEnv.insert(newFields, l, fieldExp)
+                                          val newFields = RecordLabel.Map.insert(newFields, l, fieldExp)
                                           val bindsRev = (fieldVar, exp') :: bindsRev
                                         in
                                           (bindsRev, newFields)
@@ -486,7 +486,7 @@ in
                                 end
                               | _ => raise bug "groundInst"
                          )
-                         (nil, LabelEnv.empty, LabelEnv.empty)
+                         (nil, RecordLabel.Map.empty, RecordLabel.Map.empty)
                          tyFields
                    val binds = List.rev bindsRev
                    val recordExp =
@@ -506,7 +506,7 @@ in
                  if isAtom exp then
                    let 
                      val (bindsRev, flty, flexp) =
-                         LabelEnv.foldli 
+                         RecordLabel.Map.foldli 
                            (fn (label, fieldTy, (bindsRev, flty,flexp)) =>
                                let
                                  val (fieldTy,instExp) =
@@ -521,11 +521,11 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
-                                  LabelEnv.insert(flty,label,fieldTy),
-                                  LabelEnv.insert(flexp,label,fieldExp)
+                                  RecordLabel.Map.insert(flty,label,fieldTy),
+                                  RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end)
-                           (nil,LabelEnv.empty,LabelEnv.empty)
+                           (nil,RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                      val binds = List.rev bindsRev
                      val recordExp =
@@ -548,7 +548,7 @@ in
                      val var = newTCVarInfo expLoc ty
                      val varExp = TC.TPVAR var
                      val (bindsRev, flty,flexp) =
-                         LabelEnv.foldli
+                         RecordLabel.Map.foldli
                            (fn (label,fieldTy,(bindsRev, flty,flexp)) =>
                                let val (fieldTy,instExp) =
                                        groundInst
@@ -563,12 +563,12 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
-                                  LabelEnv.insert(flty,label,fieldTy),
-                                  LabelEnv.insert(flexp,label,fieldExp)
+                                  RecordLabel.Map.insert(flty,label,fieldTy),
+                                  RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end
                            )
-                           ([(var, exp)], LabelEnv.empty,LabelEnv.empty)
+                           ([(var, exp)], RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                    in 
                      (

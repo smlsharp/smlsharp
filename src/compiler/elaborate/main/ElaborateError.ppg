@@ -14,6 +14,7 @@ struct
    * @formatter(Loc.loc) Loc.format_loc
    * @formatter(Symbol.symbol) Symbol.format_symbol
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   exception
 
@@ -126,7 +127,7 @@ struct
    * @format(label)
    *    "duplicate" +d "label" +d "in" +d "record:" label
    *)
-  DuplicateRecordLabel of string
+  DuplicateRecordLabel of RecordLabel.label
 
   and
   (**
@@ -138,7 +139,7 @@ struct
    * @format(label)
    *  "duplicate" +d "label" +d "in" +d "record pattern:" label
    *)
-  DuplicateRecordLabelInPat of string
+  DuplicateRecordLabelInPat of RecordLabel.label
 
   and
   (**
@@ -149,7 +150,7 @@ struct
   (*%
    * @format(label) "duplicate" +d "label" +d "in" +d "a record type:" label
    *)
-  DuplicateRecordLabelInRawType of string
+  DuplicateRecordLabelInRawType of RecordLabel.label
 
   and
   (**
@@ -413,5 +414,11 @@ struct
    * @format(id) "runtime" +d "type" +d "not" +d "found:" +d id
    *)
   RuntimeTyNotFound of string
+
+  and
+  (*%
+   * @format "invalid" +d "pattern" +d "for" +d "_jsoncase"
+   *)
+  InvalidPatternForJsonCase
 
 end

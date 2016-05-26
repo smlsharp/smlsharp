@@ -3,7 +3,7 @@ _require "../../../smlformat-lib.smi"
 _require "../../../smlnj-lib/Util/ord-key-sig.sml"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../name/main/LocalID.smi"
@@ -62,7 +62,7 @@ struct
   | ConstPat of const * Types.ty
   | DataConPat of conInfo * bool * pat * Types.ty
   | ExnConPat of exnCon * bool * pat * Types.ty
-  | RecPat of (string * pat) list * Types.ty
+  | RecPat of (RecordLabel.label * pat) list * Types.ty
   | LayerPat of pat * pat
   | OrPat of pat * pat
 
@@ -80,7 +80,7 @@ struct
     | EqNode of RecordCalc.varInfo * tree ConstMap.map * tree
     | DataConNode of RecordCalc.varInfo * tree DataConMap.map * tree
     | ExnConNode of RecordCalc.varInfo * tree ExnConMap.map * tree
-    | RecNode of RecordCalc.varInfo * string * tree
+    | RecNode of RecordCalc.varInfo * RecordLabel.label * tree
     | UnivNode of RecordCalc.varInfo * tree
 
   val unitExp : RecordCalc.rcexp

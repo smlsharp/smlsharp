@@ -15,7 +15,7 @@ struct
 
   (*% @formatter(HandlerLabel.id) HandlerLabel.format_id *)
   type landingPadLabel =
-       (*% @format(id) id *)
+       (*% @format(id) "H" id *)
        HandlerLabel.id
 
   (*% @formatter(VarID.id) VarID.format_id *)
@@ -225,6 +225,8 @@ struct
       FLOATCONST of real
     | (*% @format "null" *)
       NULL
+    | (*% @format "undef" *)
+      UNDEF
     | (*% @format(s) s *)
       SYMBOL of symbol
     | (*% @format((ty1 * c) * ty2) "bitcast (" ty1 " " c " to " ty2 ")" *)

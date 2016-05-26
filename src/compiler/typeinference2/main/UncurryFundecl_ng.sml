@@ -352,7 +352,7 @@ in
       end
     | TC.TPRECORD {fields, recordTy, loc} =>
       let
-        val newFields = LabelEnv.map (uncurryExp  nil) fields
+        val newFields = RecordLabel.Map.map (uncurryExp  nil) fields
       in
         makeApply
           (TC.TPRECORD {fields = newFields, recordTy = recordTy, loc=loc},

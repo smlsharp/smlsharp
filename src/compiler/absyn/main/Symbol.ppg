@@ -17,6 +17,7 @@ in
      *)
     symbol list
 
+  fun lastSymbol longsymbol = List.last longsymbol
   fun symbolToString (s:symbol) = #string s
   fun symbolToLoc (s:symbol) = #loc s
   fun longsymbolToString (s:longsymbol) = String.concatWith "." (map symbolToString s)

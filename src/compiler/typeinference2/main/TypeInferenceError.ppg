@@ -28,6 +28,7 @@ struct
    * @formatter(path) Path.format_pathWithoutDotend
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    * @formatter(I.icpat) I.format_icpat
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   exception
   (**
@@ -288,7 +289,7 @@ struct
    * "expression" +1
    * "label:" +d {label}
    *)
-  FieldNotInRecord of string * {label : string}
+  FieldNotInRecord of string * {label : RecordLabel.label}
 
   and
   (**
@@ -1013,14 +1014,14 @@ struct
        +1 " operand one:" + ty1 
        +1 " operand two:" + ty2
    *)
-  JoinInconsistent of string * {label:string, ty1:Types.ty, ty2:Types.ty}
+  JoinInconsistent of string * {label:RecordLabel.label, ty1:Types.ty, ty2:Types.ty}
 
   and
   (*%
     @format(code * string) "(type inference" +d code ")" +d
      "missing" +d "field" +d "in" +d "natural" +d "join:" +d string
    *)
-  JoinMissingTy of string * string
+  JoinMissingTy of string * RecordLabel.label
 
   val isAnyError = ref false
 

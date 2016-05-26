@@ -9,6 +9,7 @@ _require local "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "./FormatTemplate.ppg.smi"
 _require "./Symbol.ppg.smi"
 _require "./AbsynSQL.ppg.smi"
+_require "./RecordLabel.smi"
 
 structure Absyn =
 struct
@@ -44,7 +45,7 @@ struct
   datatype ty
     = TYWILD of loc
     | TYID of {symbol:symbol, eq:eq} * loc
-    | TYRECORD of (string * ty) list * loc
+    | TYRECORD of (RecordLabel.label * ty) list * loc
     | TYCONSTRUCT of ty list * longsymbol * loc
     | TYTUPLE of ty list * loc
     | TYFUN of ty * ty * loc
@@ -52,7 +53,7 @@ struct
 
   and tvarKind 
    = UNIV 
-   | REC of (string * ty) list * loc
+   | REC of (RecordLabel.label * ty) list * loc
    | KINDID of string * loc
 
   type tvar = {symbol:symbol, eq:eq}
@@ -62,7 +63,7 @@ struct
     = FFIFUNTY of string list * ffiTy list * ffiTy list option * ffiTy list * loc
     | FFITUPLETY of ffiTy list * loc
     | FFITYVAR of tvar * loc
-    | FFIRECORDTY of (string * ffiTy) list * loc
+    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | FFICONTY of ffiTy list * longsymbol * loc
 
   datatype pat
@@ -76,8 +77,8 @@ struct
     | PATTYPED of pat * ty * loc
     | PATLAYERED of pat * pat * loc
   and patrow 
-    = PATROWPAT of string * pat * loc
-    | PATROWVAR of string * (ty option) * (pat option) * loc
+    = PATROWPAT of RecordLabel.label * pat * loc
+    | PATROWVAR of symbol * (ty option) * (pat option) * loc
 
   datatype exbind 
     = EXBINDDEF of {opFlag:bool, 
@@ -114,9 +115,9 @@ struct
     = EXPCONSTANT of constant
     | EXPID of  longsymbol
     | EXPOPID of longsymbol * loc
-    | EXPRECORD of (string * exp) list * loc
-    | EXPRECORD_UPDATE of exp * (string * exp) list * loc
-    | EXPRECORD_SELECTOR of symbol * loc
+    | EXPRECORD of (RecordLabel.label * exp) list * loc
+    | EXPRECORD_UPDATE of exp * (RecordLabel.label * exp) list * loc
+    | EXPRECORD_SELECTOR of RecordLabel.label * loc
     | EXPTUPLE of exp list * loc
     | EXPLIST of exp list * loc
     | EXPSEQ of exp list * loc
@@ -135,6 +136,8 @@ struct
     | EXPFFIAPPLY of string list * ffiFun * ffiArg list * ffiTy list * loc
     | EXPSQL of (exp, pat, ty) AbsynSQL.exp * loc
     | EXPJOIN of exp * exp * loc
+    | EXPJSON of exp * ty * loc
+    | EXPJSONCASE of exp * (pat * exp) list * loc
 
   and ffiArg 
     = FFIARG of exp * ffiTy * loc

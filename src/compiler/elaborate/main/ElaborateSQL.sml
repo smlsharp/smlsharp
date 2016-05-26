@@ -54,7 +54,6 @@ struct
   val sqlserverFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "sqlserver"]
   val columnInfoFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "columnInfo"]
 
-  val listToTuple = TupleUtils.listToTuple
   val emptyTvars = nil : P.scopedTvars
 
   fun mapi f l =
@@ -63,30 +62,36 @@ struct
       in loop f 0 l
       end
 
+  (* FIXME: labels may include characters that are not allowed in SQL or ML *)
+  fun labelToSQLName label =
+      "\"" ^ RecordLabel.toString label ^ "\""
+  fun labelToVarName label =
+      RecordLabel.toString label
+
   (* varPat(NONE, loc) = _ 
      varPat(SOME v, loc) = v
    *)
   fun varPat (NONE, loc) = P.PLPATWILD loc
-    | varPat (SOME x, loc) = P.PLPATID (mkLongsymbol [x] loc)
+    | varPat (SOME x, loc) = P.PLPATID [x]
 
   (* pairPat(p1, p2, loc) = (p1, p2) *)
   fun pairPat (pat1, pat2, loc) =
-      P.PLPATRECORD (false, [("1", pat1), ("2", pat2)], loc)
+      P.PLPATRECORD (false, RecordLabel.tupleList [pat1, pat2], loc)
 
   (* pairVarPat("v1", "v2", loc) = (v1, v2) *)
   fun pairVarPat (var1, var2, loc) =
-      pairPat (P.PLPATID (mkLongsymbol [var1] loc), P.PLPATID (mkLongsymbol [var2] loc), loc)
+      pairPat (P.PLPATID [var1], P.PLPATID [var2], loc)
 
   (* stringDBIPat("sv", NOLE, loc) = sv
      stringDBIPat("sv", SOME dv, loc) = sv as (_, dv)
    *)
   fun stringDBIPat (stringVar, dbiVar, loc) =
       case dbiVar of
-        NONE => P.PLPATID (mkLongsymbol [stringVar] loc)
+        NONE => P.PLPATID [stringVar]
       | SOME dbiVar =>
         P.PLPATLAYERED
-          (mkSymbol stringVar loc, NONE,
-           pairPat (P.PLPATWILD loc, P.PLPATID (mkLongsymbol [dbiVar] loc), loc),
+          (stringVar, NONE,
+           pairPat (P.PLPATWILD loc, P.PLPATID [dbiVar], loc),
            loc)
 
   (* tablePat(nv, NONE, wv, loc) = (nv, wv) table
@@ -96,7 +101,7 @@ struct
       P.PLPATCONSTRUCT
         (P.PLPATID (SQLTableConName loc),
          pairPat (stringDBIPat (nameVar, dbiVar, loc),
-                  P.PLPATID (mkLongsymbol [witnessVar] loc),
+                  P.PLPATID [witnessVar],
                   loc),
          loc)
   (* boolOptionTy loc = bool option *)
@@ -108,7 +113,7 @@ struct
   fun valuePat (queryVar, witnessVar, witnessTy, loc) =
       P.PLPATCONSTRUCT
         (P.PLPATID (SQLValueConName loc),
-         pairPat (P.PLPATID (mkLongsymbol [queryVar] loc),
+         pairPat (P.PLPATID [queryVar],
                   case witnessTy of
                     NONE => varPat (witnessVar, loc)
                   | SOME ty => P.PLPATTYPED (varPat (witnessVar, loc), ty, loc),
@@ -141,17 +146,17 @@ struct
 
   (* fnExp (v,e) = fn v => e *)
   fun pairCon (exp1, exp2, loc) =
-      P.PLRECORD ([("1", exp1), ("2", exp2)], loc)
+      P.PLRECORD (RecordLabel.tupleList [exp1, exp2], loc)
 
   (* fnExp (v,e) = fn v => e *)
   fun stringCon (s, dbiVar, loc) =
-      pairCon (rawStringCon (s, loc), P.PLVAR (mkLongsymbol [dbiVar] loc), loc)
+      pairCon (rawStringCon (s, loc), P.PLVAR [dbiVar], loc)
 
   (* (rowName as (_, dviVar), witnessVar) raw  *)
   fun rowCon (rowName, dbiVar, witnessVar, loc) =
       appExp (SQLRowConName loc,
-              pairCon (stringCon ("\"" ^ rowName ^ "\"", dbiVar, loc),
-                       P.PLVAR (mkLongsymbol [witnessVar] loc), 
+              pairCon (stringCon (labelToSQLName rowName, dbiVar, loc),
+                       P.PLVAR [witnessVar], 
                        loc),
               loc)
   (* fnExp (v,e) = fn v => e *)
@@ -160,7 +165,7 @@ struct
         fun folder (x, y) =
             P.PLAPPM
               (P.PLVAR(mkLongsymbol ["::"] loc),
-               [P.PLRECORD(listToTuple [x, y], loc)],
+               [P.PLRECORD(RecordLabel.tupleList [x, y], loc)],
                loc)
         val plexp = foldr folder (P.PLVAR(mkLongsymbol ["nil"] loc)) elemList
       in
@@ -171,12 +176,12 @@ struct
   fun queryCon (resultVar, returnExp, witnessExp, queryStrings, loc) =
       appExp (SQLQueryConName loc,
               P.PLRECORD
-                (listToTuple 
+                (RecordLabel.tupleList
                    [appExp (concatQueryFunName loc,
                             makeList (queryStrings, loc), loc),
                     witnessExp,
                     P.PLFNM
-                      ([([P.PLPATID (mkLongsymbol [resultVar] loc)], returnExp)],
+                      ([([P.PLPATID [resultVar]], returnExp)],
                        loc)], loc), loc)
       
  (* (SQL_Prim.concatQuery queryStings) command  *)
@@ -191,7 +196,7 @@ struct
         {ifFlex = true,
          fields = [A.PATROWPAT (label, 
                                 A.PATID {opPrefix = true, 
-                                         longsymbol = mkLongsymbol [var] loc,
+                                         longsymbol = [var],
                                          loc = loc}, loc)],
          loc = loc}
 
@@ -202,7 +207,7 @@ struct
                    A.PATTUPLE
                      ([a_fieldPat (label, witnessVar, loc),
                        A.PATID {opPrefix = true, 
-                                longsymbol = mkLongsymbol [dbiVar] loc, loc = loc}],
+                                longsymbol = [dbiVar], loc = loc}],
                       loc)], loc)
 
   (* ROW (nameVar, {label=witnessVar}) *)
@@ -211,7 +216,7 @@ struct
                             longsymbol = SQLRowConName loc, loc = loc},
                    A.PATTUPLE
                      ([A.PATID {opPrefix=true, 
-                                longsymbol=mkLongsymbol [nameVar] loc, loc=loc},
+                                longsymbol=[nameVar], loc=loc},
                        a_fieldPat (label, witnessVar, loc)],
                       loc)], loc)
 
@@ -233,14 +238,13 @@ struct
 
   (* fnExp (v,e) = fn v => e *)
   fun a_stringCon (s, dbiVar, loc) =
-      a_pairExp (a_rawStringCon (s, loc), A.EXPID (mkLongsymbol [dbiVar] loc),
-                 loc)
+      a_pairExp (a_rawStringCon (s, loc), A.EXPID [dbiVar], loc)
 
   (* fnExp (v,e) = fn v => e *)
   fun a_tableCon (rowName, witnessVar, dbiVar, loc) =
       a_appExp (SQLTableConName loc,
-                a_pairExp (a_stringCon ("\"" ^ rowName ^ "\"", dbiVar, loc),
-                           A.EXPID (mkLongsymbol [witnessVar] loc), loc),
+                a_pairExp (a_stringCon (labelToSQLName rowName, dbiVar, loc),
+                           A.EXPID [witnessVar], loc),
                 loc)
 
   (* fnExp (v,e) = fn v => e *)
@@ -249,11 +253,11 @@ struct
                 a_pairExp
                   (a_appExp
                      (concatDotFunName loc,
-                      a_pairExp (A.EXPID (mkLongsymbol [tableNameVar] loc),
-                                 a_rawStringCon ("\"" ^ columnName ^ "\"", loc),
+                      a_pairExp (A.EXPID [tableNameVar],
+                                 a_rawStringCon (labelToSQLName columnName, loc),
                                  loc),
                       loc),
-                   A.EXPID (mkLongsymbol [witnessVar] loc),
+                   A.EXPID [witnessVar],
                    loc),
                 loc)
 
@@ -265,9 +269,9 @@ struct
   (* fnExp (v,e) = fn v => e *)
   fun asList (nil, dbi, loc) = nil
     | asList ([(l, e)], dbi, loc) =
-      [e, stringCon (" AS \"" ^ l ^ "\"", dbi, loc)]
+      [e, stringCon (" AS " ^ labelToSQLName l, dbi, loc)]
     | asList ((l, e)::t, dbi, loc) =
-      e :: stringCon (" AS \"" ^ l ^ "\", ", dbi, loc) :: asList (t, dbi, loc)
+      e :: stringCon (" AS " ^ labelToSQLName l ^ ", ", dbi, loc) :: asList (t, dbi, loc)
 
   (* fnExp (v,e) = fn v => e *)
   fun bindsToDecls (nil, loc) = nil
@@ -322,6 +326,11 @@ struct
       | A.EXPSQL (S.SQLEVAL _, _) => exp
       | A.EXPJOIN (exp1, exp2, loc) => 
         A.EXPJOIN(substSQLexp f exp1, substSQLexp f exp2, loc)
+      | A.EXPJSON (exp, ty, loc) =>
+        A.EXPJSON (substSQLexp f exp, ty, loc)
+      | A.EXPJSONCASE (exp1, rules, loc) =>
+        A.EXPJSONCASE (substSQLexp f exp1, substSQLmatches f rules, loc)
+
   and substSQLmatches f rules =
       map (fn (p,e) => (p, substSQLexp f e)) rules
   and substSQLrecrules f rules =
@@ -372,12 +381,22 @@ struct
 
   (* case exp of  *)
   fun selectTable (label, exp, loc) =
-      a_caseExp (exp, a_dbPat (label, "_sql_w_", "_sql_i_", loc),
-                 a_tableCon (label, "_sql_w_", "_sql_i_", loc), loc)
+      let
+        val witnessVar = mkSymbol "_sql_w_" loc
+        val dbiVar = mkSymbol "_sql_i_" loc
+      in
+        a_caseExp (exp, a_dbPat (label, witnessVar, dbiVar, loc),
+                   a_tableCon (label, witnessVar, dbiVar, loc), loc)
+      end
 
-  fun selectColumn (label:string, exp:exp, loc) =
-      a_caseExp (exp, a_rowPat ("_sql_n_", label, "_sql_w_", loc),
-                 a_columnCon ("_sql_n_", label, "_sql_w_", loc), loc)
+  fun selectColumn (label, exp, loc) =
+      let
+        val nameVar = mkSymbol "_sql_n_" loc
+        val witnessVar = mkSymbol "_sql_w_" loc
+      in
+        a_caseExp (exp, a_rowPat (nameVar, label, witnessVar, loc),
+                   a_columnCon (nameVar, label, witnessVar, loc), loc)
+      end
 
   fun elabSQLExp_From elabExp exp =
       elabExp (substSQLexp selectTable exp)
@@ -387,7 +406,7 @@ struct
 
   fun elabFromList elabExp dbi fromClause loc =
       let
-        val _ = EU.checkNameDuplication
+        val _ = EU.checkRecordLabelDuplication
                   #1 fromClause loc
                   E.DuplicateSQLTuple
 
@@ -407,21 +426,28 @@ struct
         val fromList =
             map (fn (id, exp) =>
                     {id = id, exp = elabSQLExp_From elabExp exp,
-                     tableNameVar = "_sql_" ^ id ^ "_tabname_"})
+                     tableNameVar = mkSymbol ("_sql_" ^ labelToVarName id ^ "_tabname_") loc})
                 fromClause
         val fromBinds =
             map (fn {id, exp, tableNameVar} =>
-                    (pairVarPat (tableNameVar, id, loc),
+                    (pairVarPat (tableNameVar, mkSymbol (labelToVarName id) loc, loc),
                      caseExp
                        (exp,
-                        tablePat ("_sql_t_", SOME "_sql_i_", "_sql_w_", loc),
-                        pairCon (P.PLVAR (mkLongsymbol ["_sql_t_"] loc),
-                                 rowCon (id, "_sql_i_", "_sql_w_", loc), loc),
+                        tablePat (mkSymbol "_sql_t_" loc,
+                                  SOME (mkSymbol "_sql_i_" loc),
+                                  mkSymbol "_sql_w_" loc,
+                                  loc),
+                        pairCon (P.PLVAR [mkSymbol "_sql_t_" loc],
+                                 rowCon (id,
+                                         mkSymbol "_sql_i_" loc,
+                                         mkSymbol "_sql_w_" loc,
+                                         loc),
+                                 loc),
                         loc)))
                 fromList
         val fromQuery =
             asList (map (fn {id, tableNameVar, ...} =>
-                            (id, P.PLVAR (mkLongsymbol [tableNameVar] loc)))
+                            (id, P.PLVAR [tableNameVar]))
                         fromList,
                     dbi, loc)
       in
@@ -448,20 +474,20 @@ struct
          * (decls) val VALUE (_sql_where_, _ : bool) = exp
          * (query) " WHERE " ^ _sql_where_
          *)
-        val whereVar = "_sql_where_"
+        val whereVar = mkSymbol "_sql_where_" loc
         val wherebinds =
             [(valuePat (whereVar, NONE, SOME (boolOptionTy loc), loc),
               elabSQLExp elabExp exp)]
         val whereQuery =
             [stringCon (" WHERE ", dbi, loc),
-             P.PLVAR (mkLongsymbol [whereVar] loc)]
+             P.PLVAR [whereVar]]
       in
         (bindsToDecls (wherebinds, loc), whereQuery)
       end
 
   fun elabSelectList elabExp dbiVar distinct selectLabels selectListExps selectName loc =
       let
-        val _ = EU.checkNameDuplication
+        val _ = EU.checkRecordLabelDuplication
                   (fn x => x) selectLabels loc
                   E.DuplicateSQLSelectLabel
 
@@ -484,8 +510,8 @@ struct
               (fn (label, exp) =>
                   {exp = elabSQLExp elabExp exp,
                    label = label,
-                   queryVar = "_sql_select_" ^ label ^ "_",
-                   witnessVar = "_sql_select_" ^ label ^ "_witness_"})
+                   queryVar = mkSymbol ("_sql_select_" ^ labelToVarName label ^ "_") loc,
+                   witnessVar = mkSymbol ("_sql_select_" ^ labelToVarName label ^ "_witness_") loc})
               (selectLabels, selectListExps)
         val selectBinds =
             map (fn {exp, label, queryVar, witnessVar} =>
@@ -493,27 +519,33 @@ struct
                 selectList
         val selectResult =
             map (fn {label, witnessVar, ...} =>
-                    (label, P.PLVAR (mkLongsymbol [witnessVar] loc)))
+                    (label, P.PLVAR [witnessVar]))
                 selectList
-        val resultWitnessVar = "_sql_witness_"
-        val resultWitnessExp = P.PLVAR (mkLongsymbol [resultWitnessVar] loc)
-        val queryResultVar = "_sql_result_"
-        val queryResultExp = P.PLVAR (mkLongsymbol [queryResultVar] loc)
+        val resultWitnessVar = mkSymbol "_sql_witness_" loc
+        val resultWitnessExp = P.PLVAR [resultWitnessVar]
+        val queryResultVar = mkSymbol "_sql_result_" loc
+        val queryResultExp = P.PLVAR [queryResultVar]
         val resultWitnessBinds =
-            [(P.PLPATID (mkLongsymbol [resultWitnessVar] loc),
+            [(P.PLPATID [resultWitnessVar],
               P.PLRECORD (selectResult, loc))]
         val resultRowBinds =
             case selectName of
               NONE => nil
-            | SOME var => [(P.PLPATID (mkLongsymbol [var] loc),
-                            rowCon ("", dbiVar, resultWitnessVar, loc))]
+            | SOME var =>
+              let
+                (* FIXME: is it OK? *)
+                val dummy = RecordLabel.fromString ""
+              in
+                [(P.PLPATID [var],
+                  rowCon (dummy, dbiVar, resultWitnessVar, loc))]
+              end
         val selectReturnFields =
             mapi (fn (i, {label, ...}) =>
                      (label,
                       appExp
                         (fromSQLFunName loc,
                          P.PLRECORD
-                           (listToTuple
+                           (RecordLabel.tupleList
                               [intCon (i, loc),
                                queryResultExp,
                                P.PLSELECT (label, resultWitnessExp, loc)],
@@ -528,7 +560,7 @@ struct
                        | false => "ALL ",
                        dbiVar, loc) ::
             asList (map (fn {queryVar, label, ...} =>
-                            (label, P.PLVAR (mkLongsymbol [queryVar] loc)))
+                            (label, P.PLVAR [queryVar]))
                         selectList,
                     dbiVar, loc)
         val selectDecls =
@@ -557,7 +589,7 @@ struct
             mapi (fn (i, {keyExp, orderAsc}) =>
                      {exp = elabSQLExp elabExp keyExp,
                       order = if orderAsc then " ASC" else " DESC",
-                      queryVar = "_sql_orderby_" ^ Int.toString i ^ "_"})
+                      queryVar = mkSymbol ("_sql_orderby_" ^ Int.toString i ^ "_") loc})
                  orderByClause
         val orderByBinds =
             map (fn {exp, order, queryVar} =>
@@ -566,7 +598,7 @@ struct
         val orderByQuery =
             join (stringCon (", ", dbi, loc))
                  (map (fn {order, queryVar, ...} =>
-                          [P.PLVAR (mkLongsymbol [queryVar] loc),
+                          [P.PLVAR [queryVar],
                            stringCon (order, dbi, loc)])
                       orderByList)
         val orderByQuery =
@@ -577,14 +609,14 @@ struct
         (bindsToDecls (orderByBinds, loc), orderByQuery)
       end
 
-  fun elaborateCommand elabExp (dbiVar:string) sql =
+  fun elaborateCommand elabExp dbiVar sql =
       case sql of
         S.SQLSELECT {distinct, selectListExps, selectLabels, selectName,
                      fromClause, whereClause, orderByClause, loc} =>
         let
-          val _ = EU.checkNameDuplication
+          val _ = EU.checkRecordLabelDuplication
                     (fn x => x)
-                    ((case selectName of SOME symbol => [Symbol.symbolToString symbol] | NONE => [])
+                    ((case selectName of SOME symbol => [RecordLabel.fromString (Symbol.symbolToString symbol)] | NONE => [])
                      @ map (fn (string,_) => string) fromClause)
                     loc
                     E.DuplicateSQLTuple
@@ -592,13 +624,12 @@ struct
           val selectRecordLabels =
               case selectLabels of
                 SOME labels => labels
-              | NONE => List.tabulate (length selectListExps,
-                                       fn x => Int.toString (x + 1))
+              | NONE => map #1 (RecordLabel.tupleList selectListExps)
 
           val {selectDecls, selectQuery, queryResultVar, resultWitnessExp,
                selectReturnExp} =
               elabSelectList elabExp dbiVar
-                             distinct selectRecordLabels selectListExps (Option.map Symbol.symbolToString selectName) loc
+                             distinct selectRecordLabels selectListExps selectName loc
           val (fromDecls, fromQuery) =
               elabFromClause elabExp dbiVar fromClause loc
           val (whereDecls, whereQuery) =
@@ -618,7 +649,7 @@ struct
       | S.SQLINSERT {table=(dbVar, tableLabel), insertRows, insertLabels,
                      loc} =>
         let
-          val _ = EU.checkNameDuplication
+          val _ = EU.checkRecordLabelDuplication
                     (fn x => x) insertLabels loc
                     E.DuplicateSQLInsertLabel
 
@@ -634,13 +665,13 @@ struct
            * (query) "INSERT INTO " ^ _tabname_ ^ " (l_1, " ^ ... ^ ", l_n)"
            *         ^ " VALUES (" ^ q_1 ^ ", " ^ ... ^ ", " ^ q_n ^ ")"
            *)
-          val tableNameVar = "_sql_insert_tabname_"
-          val tableWitnessVar = "_sql_insert_witness_"
-          val tableNameExp = P.PLVAR (mkLongsymbol [tableNameVar] loc)
-          val tableWitnessExp = P.PLVAR (mkLongsymbol [tableWitnessVar] loc)
+          val tableNameVar = mkSymbol "_sql_insert_tabname_" loc
+          val tableWitnessVar = mkSymbol "_sql_insert_witness_" loc
+          val tableNameExp = P.PLVAR [tableNameVar]
+          val tableWitnessExp = P.PLVAR [tableWitnessVar]
 
           val tableExp =
-              elabExp (selectTable (tableLabel, A.EXPID (mkLongsymbol [Symbol.symbolToString dbVar] loc),loc))
+              elabExp (selectTable (tableLabel, A.EXPID [dbVar], loc))
           val tableBinds =
               [(tablePat (tableNameVar, NONE, tableWitnessVar, loc), tableExp)]
 
@@ -659,10 +690,10 @@ struct
                                | NONE => appExp (defaultFunName loc,
                                                  unitCon loc, loc),
                              queryVar =
-                               "_sql_insert_" ^ label ^ "_" ^ index ^ "_",
+                               mkSymbol ("_sql_insert_" ^ labelToVarName label ^ "_" ^ index ^ "_") loc,
                              witnessVar =
-                               "_sql_insert_" ^ label ^ "_" ^ index
-                               ^ "_witness_"})
+                               mkSymbol ("_sql_insert_" ^ labelToVarName label ^ "_" ^ index
+                                         ^ "_witness_") loc})
                         (insertLabels, row)
                       handle ListPair.UnequalLengths =>
                              (EU.enqueueError
@@ -680,7 +711,7 @@ struct
           val rowWitnessExps =
               map (fn row =>
                       P.PLRECORD (map (fn {label, witnessVar, ...} =>
-                                          (label, P.PLVAR (mkLongsymbol [witnessVar] loc)))
+                                          (label, P.PLVAR [witnessVar]))
                                       row, loc))
                   insertLists
           val witnessExp =
@@ -693,13 +724,13 @@ struct
               stringCon ("INSERT INTO ", dbiVar, loc) ::
               tableNameExp ::
               stringCon (" (", dbiVar, loc) ::
-              join (map (fn label => [stringCon (label, dbiVar, loc)])
+              join (map (fn label => [stringCon (labelToSQLName label, dbiVar, loc)])
                         insertLabels) @
               (stringCon (") VALUES ", dbiVar, loc) ::
                join (map (fn row =>
                              stringCon ("(", dbiVar, loc) ::
                              join (map (fn {queryVar, ...} =>
-                                           [P.PLVAR (mkLongsymbol [queryVar] loc)])
+                                           [P.PLVAR [queryVar]])
                                        row) @
                              [stringCon (")", dbiVar, loc)])
                          insertLists))
@@ -715,7 +746,7 @@ struct
       | S.SQLUPDATE {table=(dbVar, tableLabel), tableName, setListExps,
                      setLabels, fromClause, whereClause, loc} =>
         let
-          val _ = EU.checkNameDuplication
+          val _ = EU.checkRecordLabelDuplication
                     (fn x => x) setLabels loc
                     E.DuplicateSQLSetLabel
 
@@ -734,22 +765,24 @@ struct
            *         ^ "(" ^ q_1 ^ ", " ^ ... ^ ", " ^ q_n ^ ")"
            *)
 
-          val tableNameVar = "_sql_update_tabname_"
-          val tableWitnessVar = "_sql_update_witness_"
-          val tableDBIVar = "_sql_update_dbi_"
-          val tableNameExp = P.PLVAR (mkLongsymbol [tableNameVar] loc)
-          val tableWitnessExp = P.PLVAR (mkLongsymbol [tableWitnessVar] loc)
+          val tableNameVar = mkSymbol "_sql_update_tabname_" loc
+          val tableWitnessVar = mkSymbol "_sql_update_witness_" loc
+          val tableDBIVar = mkSymbol "_sql_update_dbi_" loc
+          val tableNameExp = P.PLVAR [tableNameVar]
+          val tableWitnessExp = P.PLVAR [tableWitnessVar]
           val tableName =
-              case tableName of NONE => "it" | SOME x => x
+              case tableName of
+                NONE => RecordLabel.fromString "it"
+              | SOME x => x
 
           val tableExp =
-              elabExp (selectTable (tableLabel, A.EXPID (mkLongsymbol [Symbol.symbolToString dbVar] loc), loc))
+              elabExp (selectTable (tableLabel, A.EXPID [dbVar], loc))
           val tableBinds =
               [(tablePat (tableNameVar, SOME tableDBIVar, tableWitnessVar, loc),
                 tableExp)]
 
           val rowBinds =
-              [(P.PLPATID (mkLongsymbol [tableName] loc),
+              [(P.PLPATID (mkLongsymbol [labelToVarName tableName] loc),
                 rowCon (tableName, tableDBIVar, tableWitnessVar, loc))]
           val tableDecls =
               bindsToDecls (tableBinds, loc) @
@@ -760,8 +793,8 @@ struct
                 (fn (label, exp) =>
                     {label = label,
                      exp = elabSQLExp elabExp exp,
-                     queryVar = "_sql_update_" ^ label ^ "_",
-                     witnessVar = "_sql_update_" ^ label ^ "_witness_"})
+                     queryVar = mkSymbol ("_sql_update_" ^ labelToVarName label ^ "_") loc,
+                     witnessVar = mkSymbol ("_sql_update_" ^ labelToVarName label ^ "_witness_") loc})
                 (setLabels, setListExps)
               handle ListPair.UnequalLengths =>
                      (EU.enqueueError
@@ -773,14 +806,14 @@ struct
                   setList
           val setWitnessExp =
               P.PLRECORD (map (fn {label, witnessVar, ...} =>
-                                  (label, P.PLVAR (mkLongsymbol [witnessVar] loc)))
+                                  (label, P.PLVAR [witnessVar]))
                               setList, loc)
 
           val witnessExp =
               P.PLRECORD_UPDATE
                 (tableWitnessExp,
                  map (fn {label, witnessVar, ...} =>
-                         (label, P.PLVAR (mkLongsymbol [witnessVar] loc)))
+                         (label, P.PLVAR [witnessVar]))
                      setList,
                  loc)
           val witnessBinds =
@@ -795,11 +828,11 @@ struct
           val updateQuery =
               stringCon ("UPDATE ", dbiVar, loc) ::
               tableNameExp ::
-              stringCon (" AS \"" ^ tableName ^ "\" SET (" , dbiVar, loc) ::
-              join (map (fn label => [stringCon (label, dbiVar, loc)])
+              stringCon (" AS " ^ labelToSQLName tableName ^ " SET (" , dbiVar, loc) ::
+              join (map (fn label => [stringCon (labelToSQLName label, dbiVar, loc)])
                         setLabels) @
               (stringCon (") = (", dbiVar, loc) ::
-               join (map (fn {queryVar, ...} => [P.PLVAR (mkLongsymbol [queryVar] loc)])
+               join (map (fn {queryVar, ...} => [P.PLVAR [queryVar]])
                          setList) @
                [stringCon (")", dbiVar, loc)]) @
               fromQuery @
@@ -823,15 +856,17 @@ struct
            *                           (t, ROW (("x", i), w))
            * (query) "DELETE FROM " ^ _tabname_ ^ " AS x"
            *)
-          val tableNameVar = "_sql_delete_tabname_"
-          val tableWitnessVar = "_sql_delete_witness_"
-          val tableNameExp = P.PLVAR (mkLongsymbol [tableNameVar] loc)
-          val tableWitnessExp = P.PLVAR (mkLongsymbol [tableWitnessVar] loc)
+          val tableNameVar = mkSymbol "_sql_delete_tabname_" loc
+          val tableWitnessVar = mkSymbol "_sql_delete_witness_" loc
+          val tableNameExp = P.PLVAR [tableNameVar]
+          val tableWitnessExp = P.PLVAR [tableWitnessVar]
 
           val tableName =
-              case tableName of NONE => "it" | SOME x => x
+              case tableName of
+                NONE => RecordLabel.fromString "it"
+              | SOME x => x
           val tableExp =
-              selectTable (tableLabel, A.EXPID (mkLongsymbol [Symbol.symbolToString dbVar] loc), loc)
+              selectTable (tableLabel, A.EXPID [dbVar], loc)
 
           val (fromDecls, fromQuery) =
               elabFromClause elabExp dbiVar [(tableName, tableExp)] loc
@@ -861,17 +896,15 @@ struct
       | S.SQLFN (pat, sql, loc) =>
         let
           val patLoc = A.getLocPat pat
-          val dbiid = "_sqlfn_dbi_"
-          val dbisymbol = mkSymbol dbiid patLoc
-          val dbilongsymbol = mkLongsymbol [dbiid] patLoc
+          val dbiid = mkSymbol "_sqlfn_dbi_" loc
         in
           P.PLFNM
-            ([([P.PLPATLAYERED (dbisymbol, NONE, elabPat pat, loc)],
+            ([([P.PLPATLAYERED (dbiid, NONE, elabPat pat, loc)],
                caseExp
-                 (P.PLVAR dbilongsymbol,
+                 (P.PLVAR [dbiid],
                   P.PLPATCONSTRUCT
                     (P.PLPATID (SQLDBConName loc),
-                     pairPat (P.PLPATWILD loc, P.PLPATID dbilongsymbol, loc),
+                     pairPat (P.PLPATWILD loc, P.PLPATID [dbiid], loc),
                      loc),
                     elaborateCommand elabExp dbiid sql,
                     loc))],
@@ -879,23 +912,23 @@ struct
         end
       | S.SQLEXEC (exp, loc) =>
         let
-          val dbiVar = mkLongsymbol ["_sqlexec_dbi_"]
+          val dbiVar = mkSymbol "_sqlexec_dbi_" loc
         in
           P.PLSQLDBI
-            (P.PLPATID (dbiVar loc),
+            (P.PLPATID [dbiVar],
              appExp (execFunName loc,
-                     pairCon (P.PLVAR (dbiVar loc), elabExp exp, loc),
+                     pairCon (P.PLVAR [dbiVar], elabExp exp, loc),
                      loc),
              loc)
         end
       | S.SQLEVAL (exp, loc) =>
         let
-          val dbiVar = mkLongsymbol ["_sqlexec_dbi_"]
+          val dbiVar = mkSymbol "_sqlexec_dbi_" loc
         in
           P.PLSQLDBI
-            (P.PLPATID (dbiVar loc),
+            (P.PLPATID [dbiVar],
              appExp (evalFunName loc,
-                     pairCon (P.PLVAR (dbiVar loc), elabExp exp, loc),
+                     pairCon (P.PLVAR [dbiVar], elabExp exp, loc),
                      loc),
              loc)
         end

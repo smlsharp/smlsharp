@@ -85,6 +85,7 @@ struct
    * @formatter(NameMap.namePath) NameMap.format_namePath
    * @formatter(seqList) TermFormat.formatSeqList
    * @formatter(ifCons) TermFormat.formatIfCons
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype ty
     = (*%
@@ -105,7 +106,7 @@ struct
          @format:field(label * ty)
            label ":" +d ty
        *)
-      TYRECORD of (string * ty) list * loc
+      TYRECORD of (RecordLabel.label * ty) list * loc
     | (*%
          @format(arg args * longsymbol * loc)
           args:seqList(arg)("(" d, "," d, d ")")
@@ -154,7 +155,7 @@ struct
             "}"
          @format:field(label * ty) {label} +d ":" +d {ty}
        *)
-      REC of (string * ty) list * loc
+      REC of (RecordLabel.label * ty) list * loc
     | (*%
         @format(id * loc) "#" id
        *)
@@ -175,6 +176,7 @@ struct
   (*%
    * @formatter(seqList) TermFormat.formatSeqList
    * @formatter(ifCons) TermFormat.formatIfCons
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype ffiTy 
     = (*%
@@ -196,7 +198,7 @@ struct
        *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
        * @format:field(label * ty) {label} +d ":" +d {ty}
        *)
-      FFIRECORDTY of (string * ffiTy) list * loc
+      FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | (*%
        * @format(arg args * longsymbol * loc)
           args:seqList(arg)("(" d, "," d, d ")") 
@@ -209,6 +211,7 @@ struct
    * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
    * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
    * @formatter(ifList) TermFormat.formatIfList
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype pat
     = (*%
@@ -275,14 +278,14 @@ struct
        * @format(label * pat * loc) 
           1[ label +d "=" +d pat ]
        *)
-      PATROWPAT of string * pat * loc
+      PATROWPAT of RecordLabel.label * pat * loc
     | (*%
          @format(label * ty opt1:prependedOpt * pat opt2:prependedOpt * loc)
             label 
             opt1(ty)(+d ":" +)
             opt2(pat)(+d "as" +)
        *)
-      PATROWVAR of string * (ty option) * (pat option) * loc
+      PATROWVAR of symbol * (ty option) * (pat option) * loc
 
 
   (*%
@@ -398,6 +401,7 @@ struct
    * @formatter(declist) TermFormat.formatDeclList
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(ifList) TermFormat.formatIfList
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype exp
     = (*%
@@ -418,7 +422,7 @@ struct
          @format:field(label * exp) 
            1[ label +d "=" +d exp ]
        *)
-      EXPRECORD of (string * exp) list * loc
+      EXPRECORD of (RecordLabel.label * exp) list * loc
     | (*%
          @format(exp * field fields * loc)
           exp + 
@@ -428,11 +432,11 @@ struct
           "}"
          @format:field(label * exp) {{label} +d "=" +2 {exp}}
        *)
-      EXPRECORD_UPDATE of exp * (string * exp) list * loc
+      EXPRECORD_UPDATE of exp * (RecordLabel.label * exp) list * loc
     | (*%
          @format(selector * loc) "#"selector
        *)
-      EXPRECORD_SELECTOR of symbol * loc
+      EXPRECORD_SELECTOR of RecordLabel.label * loc
     | (*%
          @format(field fields * loc)
            "(" 
@@ -568,6 +572,10 @@ struct
           @format(e1 * e2 * loc) "JOIN(" e1 + "," + e2 ")"
        *)
       EXPJOIN of exp * exp * loc
+    | (*% *)
+      EXPJSON of exp * ty * loc
+    | (*% *)
+      EXPJSONCASE of exp * (pat * exp) list * loc
 
   and ffiArg
     = (*%
@@ -1158,6 +1166,8 @@ struct
     | EXPFFIAPPLY (attrs,symbol,args,ty,_) => EXPFFIAPPLY (attrs,symbol,args,ty,loc)
     | EXPSQL (sql,_) => EXPSQL (sql,loc)
     | EXPJOIN(e1,e2,_) => EXPJOIN(e1,e2, loc)
+    | EXPJSON(e,t,_) => EXPJSON(e,t,loc)
+    | EXPJSONCASE(e,r,_) => EXPJSONCASE (e, r, loc)
   (** used as the prefix of formatter name if no @prefix tag is declared. *)
   val DefaultFormatterPrefix = "format_"
 

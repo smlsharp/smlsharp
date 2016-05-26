@@ -28,20 +28,12 @@ struct
         {path = ["$" ^ VarID.toString id], ty = ty, id = id} : RC.varInfo
       end
 
-  fun mapi f l =
-      let
-        fun loop f i nil = nil
-          | loop f i (h::t) = f (h, i) :: loop f (i + 1) t
-      in
-        loop f 0 l
-      end
-
-  fun mapToLabelEnv f nil = LabelEnv.empty
+  fun mapToLabelEnv f nil = RecordLabel.Map.empty
     | mapToLabelEnv f (h::t) =
       let
         val (label, value) = f h
       in
-        LabelEnv.insert (mapToLabelEnv f t, label, value)
+        RecordLabel.Map.insert (mapToLabelEnv f t, label, value)
       end
 
   fun Exp (exp, expTy) =
@@ -55,9 +47,9 @@ struct
         val resultTy =
             case expTy of
               T.RECORDty fields =>
-              (case LabelEnv.find (fields, label) of
+              (case RecordLabel.Map.find (fields, label) of
                  SOME ty => ty
-               | NONE => raise Bug.Bug ("SELECT " ^ label))
+               | NONE => raise Bug.Bug ("SELECT " ^ RecordLabel.toString label))
             | _ => raise Bug.Bug "SELECT (not record)"
       in
         (fn loc => RC.RCSELECT {indexExp = RC.RCINDEXOF (label, expTy, loc),
@@ -71,10 +63,10 @@ struct
 
   fun RECORD fields =
       let
-        val recordTy = T.RECORDty (LabelEnv.map (fn (exp, expTy) => expTy) fields)
+        val recordTy = T.RECORDty (RecordLabel.Map.map (fn (exp, expTy) => expTy) fields)
       in
         (fn loc => RC.RCRECORD
-                     {fields = LabelEnv.map (fn (exp, expTy) => exp loc) fields,
+                     {fields = RecordLabel.Map.map (fn (exp, expTy) => exp loc) fields,
                       recordTy = recordTy,
                       loc = loc},
          recordTy)
@@ -126,7 +118,7 @@ struct
       (* 2012-9-12 ohori: This case violates the Barendregt conveiton
          We alpha-rename boundtvars. *)
       case TyAlphaRename.copyTy
-             TyAlphaRename.emptyBtvMap 
+             TyAlphaRename.emptyBtvMap
              (TypesBasics.derefTy (#ty conInfo)) of
         T.POLYty {boundtvars, body} =>
         let
@@ -203,6 +195,7 @@ struct
   fun generateExtraArgsOfKind btvEnv (btv, recordKind) =
       case recordKind of
         T.UNIV => UnivKind.generateSingletonTy btv
+      | T.JSON => UnivKind.generateSingletonTy btv
       | T.BOXED => nil
       | T.UNBOXED => UnivKind.generateSingletonTy btv
       | T.OCONSTkind tys => nil
@@ -267,7 +260,7 @@ struct
         (* argTys may contain polyTy due to functor. *)
         T.FUNMty (map compileTy argTys, compileTy retTy)
       | T.RECORDty fields =>
-        T.RECORDty (LabelEnv.map compileTy fields)
+        T.RECORDty (RecordLabel.Map.map compileTy fields)
       | T.CONSTRUCTty {tyCon, args} =>
         T.CONSTRUCTty {tyCon = tyCon, args = map compileTy args}
       | T.POLYty {boundtvars, body} =>
@@ -394,7 +387,7 @@ struct
                   loc = loc}
       | RC.RCRECORD {fields, recordTy, loc} =>
         RC.RCRECORD
-          {fields = LabelEnv.map (compileExp context) fields,
+          {fields = RecordLabel.Map.map (compileExp context) fields,
            recordTy = compileTy recordTy,
            loc = loc}
       | RC.RCSELECT {indexExp, label, exp, expTy, resultTy, loc} =>
@@ -721,26 +714,26 @@ struct
                * variables, we need to manipulate all occurrance of f_1,
                * ..., f_n in this program in order to replace type
                * information. This does not make sense.
-               * 
+               *
                * 2012-9-10 Ohori. Changed to maintain Barendregt condition.
-               * In order to keep the uniqueness we have only to introduce 
+               * In order to keep the uniqueness we have only to introduce
                * new 'a's and the corresponding A's for each f_i to form:
                *   val f_i = ['a#K. fn A => #i (F {'a} A)]
-               * This is local and simple, and does not introduce overhead. 
+               * This is local and simple, and does not introduce overhead.
                *)
               val newContext = addExtraBinds newContext extraArgs
               val recBinds =
-                  mapi
-                    (fn ({var as {path, ty, id}, expTy, exp}, i) =>
+                  map
+                    (fn (label, {var as {path, ty, id}, expTy, exp}) =>
                         {localVar = var,
                          var = {path = path,
                                 ty = compileTy (T.POLYty {boundtvars = btvEnv,
                                                           body = ty}),
                                 id = id} : RC.varInfo,
-                         label = Int.toString (i + 1),
+                         label = label,
                          expTy = compileTy expTy,
                          exp = compileExp newContext exp})
-                    bindList
+                    (RecordLabel.tupleList bindList)
 
               val localRecExp =
                   POLYFNM
@@ -754,7 +747,7 @@ struct
               val localRecVar = newVar (#2 localRecExp)
 
               val bodyBinds =
-                  map 
+                  map
                     (fn {var, label, ...} =>
                         let
                           val (_, btvEnv) = TyAlphaRename.newBtvEnv TyAlphaRename.emptyBtvMap btvEnv
@@ -764,7 +757,7 @@ struct
                         in
                           (var,
                            POLYFNM
-                             (btvEnv, 
+                             (btvEnv,
                               extraArgs,
                               SELECT (label,
                                       APPM (TAPP (Var localRecVar, instTyList),

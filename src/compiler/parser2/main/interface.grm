@@ -97,6 +97,9 @@ structure InterfaceLrVals
     | INTERFACE
 (* temporary *)
     | JOIN
+    | JSON
+    | JSONCASE
+    | PREFIXEDLABEL of string
     | LBRACE
     | LBRACKET
     | LET
@@ -255,7 +258,7 @@ structure InterfaceLrVals
 *)
   | overloadMatch of {instTy: A.ty, instance: I.overloadInstance} list
 
-  | lab of string
+  | lab of RecordLabel.label
   | sigid of Symbol.symbol
   | longstrid of string list
   | longstrsymbol of Symbol.longsymbol
@@ -281,7 +284,7 @@ structure InterfaceLrVals
   | sigexp of A.sigexp
   | sigexp_AND of A.sigexp
   | sigbind of I.sigbind list
-  | tyrow of (string * A.ty) list
+  | tyrow of (RecordLabel.label * A.ty) list
 (*
   | atty of A.ty
   | tyargList of A.ty list
@@ -301,7 +304,7 @@ structure InterfaceLrVals
   | tuplety of A.ty
   | poly_ty of A.ty
   | poly_ty1 of A.ty
-  | poly_tyrow of (string * A.ty) list
+  | poly_tyrow of (RecordLabel.label * A.ty) list
   | poly_tytuple of A.ty list
   | kinded_tyvar of A.tvar * A.tvarKind
   | kinded_tyvarseq of (A.tvar * A.tvarKind) list
@@ -759,10 +762,13 @@ overloadMatch   : ty DARROW overloadInst
 (******** types and signatures: same as The Definition of Standard ML ********)
 
 lab             : id
-                    (id)
+                    (RecordLabel.fromString id)
                 | INTLAB
-                    (INTLAB)
-
+                    (RecordLabel.fromString INTLAB)
+                | PREFIXEDLABEL
+                    (RecordLabel.fromString PREFIXEDLABEL)
+                | STRING
+                    (RecordLabel.fromString STRING)
 
 (*
 constraint      : COLON

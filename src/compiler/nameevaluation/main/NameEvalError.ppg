@@ -28,6 +28,7 @@ in
      @formatter(IDCalc.tvar) IDCalc.format_tvar
      @formatter(PatternCalc.plpat) PatternCalc.format_plpat
      @formatter(PatternCalc.ffiTy) PatternCalc.format_ffiTy
+     @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   exception
   (*%
@@ -178,7 +179,7 @@ in
      "(name evaluation" +d code ")" +d
      "duplicate" +d "record" +d "label" +d "in" +d "type" +d "annotation:" +d name
    *)
-    DuplicateRecordLabelInRawType of (code * string)
+    DuplicateRecordLabelInRawType of (code * RecordLabel.label)
 
   and
   (*%
@@ -186,7 +187,7 @@ in
      "(name evaluation" +d code ")" +d
      "duplicate" +d "record" +d "label" +d "in" +d "expression:" +d name
    *)
-    DuplicateRecordLabelInExp of (code * string)
+    DuplicateRecordLabelInExp of (code * RecordLabel.label)
 
   and
   (*%
@@ -194,7 +195,7 @@ in
      "(name evaluation" +d code ")" +d
      "duplicate" +d "record" +d "label" +d "in" +d "record" +d "update:" +d name
    *)
-    DuplicateRecordLabelInUpdate of (code * string)
+    DuplicateRecordLabelInUpdate of (code * RecordLabel.label)
 
   and
   (*%
@@ -202,7 +203,7 @@ in
      "(name evaluation" +d code ")" +d
      "duplicate" +d "record" +d "label" +d "in" +d "pattern:" +d name
    *)
-    DuplicateRecordLabelInPat of (code * string)
+    DuplicateRecordLabelInPat of (code * RecordLabel.label)
 
   and
   (*%
@@ -210,7 +211,7 @@ in
      "(name evaluation" +d code ")" +d
      "duplicate" +d "record" +d "label" +d "in" +d "kind" +d "annotation:" +d name
    *)
-    DuplicateRecordLabelInKind of (code * string)
+    DuplicateRecordLabelInKind of (code * RecordLabel.label)
 
   and
   (*%

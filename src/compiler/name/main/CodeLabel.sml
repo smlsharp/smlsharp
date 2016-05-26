@@ -75,7 +75,11 @@ structure ExtraDataLabel :> CODE_LABEL = CodeLabel
 structure FunEntryLabel = CodeLabel
 structure CallbackEntryLabel = CodeLabel
 structure FunLocalLabel = CodeLabel
-structure HandlerLabel = CodeLabel
+structure HandlerLabel =
+struct
+  open CodeLabel
+  fun asFunLocalLabel (id:id) : id = id
+end
 structure DataLabel = CodeLabel
 structure ExtraDataLabel = CodeLabel
 

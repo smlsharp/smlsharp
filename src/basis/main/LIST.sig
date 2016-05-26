@@ -27,5 +27,5 @@ sig
   val exists : ('a -> bool) -> 'a list -> bool
   val all : ('a -> bool) -> 'a list -> bool
   val tabulate : int * (int -> 'a) -> 'a list
-  val collate : ('a * 'a -> General.order) -> 'a list * 'a list -> General.order
+  val collate : ('a * 'a -> order) -> 'a list * 'a list -> order
 end

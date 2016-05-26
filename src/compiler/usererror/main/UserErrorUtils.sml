@@ -72,4 +72,27 @@ struct
   fun checkSymbolDuplication getName elements makeExn =
       checkSymbolDuplication' (SOME o getName) elements makeExn
 
+  fun checkRecordLabelDuplication' getName elements loc makeExn =
+    let
+      fun collectDuplication names duplicates [] = RecordLabel.Map.listItems duplicates
+        | collectDuplication names duplicates (element :: elements) =
+          case getName element of
+            SOME name =>
+              let
+                val newDuplicates =
+                  case RecordLabel.Map.find(names, name) of
+                    SOME _ => RecordLabel.Map.insert(duplicates, name, name)
+                  | NONE => duplicates
+                val newNames = RecordLabel.Map.insert(names, name, name)
+              in collectDuplication newNames newDuplicates elements
+              end
+          | NONE => collectDuplication names duplicates elements
+      val duplicateNames = collectDuplication RecordLabel.Map.empty RecordLabel.Map.empty elements
+    in
+      app (fn name => enqueueError(loc, makeExn name)) duplicateNames
+    end
+
+  fun checkRecordLabelDuplication getName elements loc makeExn =
+      checkRecordLabelDuplication' (SOME o getName) elements loc makeExn
+
 end

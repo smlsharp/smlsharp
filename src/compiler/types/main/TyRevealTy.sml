@@ -105,8 +105,8 @@ in
       | T.BOUNDVARty btv => ty
       | T.FUNMty (tyList, ty) =>
         T.FUNMty (map revealTy tyList, revealTy ty)
-      | T.RECORDty (fields:ty LabelEnv.map) =>
-        T.RECORDty (LabelEnv.map revealTy fields)
+      | T.RECORDty (fields:ty RecordLabel.Map.map) =>
+        T.RECORDty (RecordLabel.Map.map revealTy fields)
       | T.CONSTRUCTty {tyCon, args} =>
         let
           val tyCon
@@ -170,12 +170,13 @@ in
              operators
           }
       | T.UNIV => T.UNIV
+      | T.JSON => T.JSON
       | T.BOXED => T.BOXED
       | T.UNBOXED => T.UNBOXED
-      | T.REC (fields:ty LabelEnv.map) =>
-        T.REC (LabelEnv.map revealTy fields)
-      | T.JOIN (fields:ty LabelEnv.map, ty1, ty2, loc) =>
-        T.JOIN (LabelEnv.map revealTy fields, revealTy ty1, revealTy ty2, loc)
+      | T.REC (fields:ty RecordLabel.Map.map) =>
+        T.REC (RecordLabel.Map.map revealTy fields)
+      | T.JOIN (fields:ty RecordLabel.Map.map, ty1, ty2, loc) =>
+        T.JOIN (RecordLabel.Map.map revealTy fields, revealTy ty1, revealTy ty2, loc)
   fun revealVar ({id, ty, longsymbol, opaque}:varInfo) =
       {id=id, longsymbol=longsymbol, ty=revealTy ty, opaque=opaque}
 end

@@ -1265,14 +1265,14 @@ local
           val bodyTy =
               case allVars of
                 nil => BT.unitITy
-              | _ => I.TYRECORD (TupleUtils.listToFields (map varToTy allVars))
+              | _ => I.TYRECORD (RecordLabel.tupleMap (map varToTy allVars))
           val (extraTvars, firstArgTy) = 
               case dummyIdfunArgTy of
                 NONE => (nil, NONE)
               | SOME (ty as I.TYRECORD fields) => 
                 (map (fn (I.TYVAR tvar) => tvar
                        | _ => raise bug "non tvar in dummyIdfunArgTy")
-                     (LabelEnv.listItems fields),
+                     (RecordLabel.Map.listItems fields),
                  SOME (I.TYFUNM([ty],ty)))
               | _ => raise bug "non record ty in dummyIdfunArgTy"
 

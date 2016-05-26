@@ -96,6 +96,8 @@ struct
   type LLVMValueRef (= ptr)
   val LLVMDumpValue
       : LLVMValueRef -> unit
+  val LLVMGetUndef
+      : LLVMTypeRef -> LLVMValueRef
   val LLVMConstNull
       : LLVMTypeRef -> LLVMValueRef
   val LLVMConstReal

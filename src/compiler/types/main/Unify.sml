@@ -89,9 +89,9 @@ in
             (T.REC fl1, T.REC fl2) =>
             let 
               val newTyEquations = 
-                  LabelEnv.foldli
+                  RecordLabel.Map.foldli
                     (fn (label, ty, newTyEquations) =>
-                        case LabelEnv.find(fl2, label) of
+                        case RecordLabel.Map.find(fl2, label) of
                           NONE => raise Unify
                         | SOME ty' => (ty, ty')::newTyEquations)
                     nil
@@ -127,11 +127,11 @@ in
               T.REC kindFields =>
               (case ty of 
                  T.RECORDty tyFields =>
-                 LabelEnv.foldri
+                 RecordLabel.Map.foldri
                    (fn (l, ty, tyEquations) =>
                        (
                         ty, 
-                        case LabelEnv.find(tyFields, l) of
+                        case RecordLabel.Map.find(tyFields, l) of
                           SOME ty' => ty'
                         | NONE => raise Unify
                        ) :: tyEquations)
@@ -157,6 +157,43 @@ in
                  [ty1] => [(ty,ty1)]
                | _ => raise Unify)
             | T.UNIV => nil
+            | T.JSON =>
+              (case TB.derefTy ty of
+                 T.CONSTRUCTty {tyCon = {id, ...}, args=[]} =>
+                 if id = #id BuiltinTypes.intTyCon
+                    orelse id = #id BuiltinTypes.realTyCon
+                    orelse id = #id BuiltinTypes.stringTyCon
+                    orelse id = #id BuiltinTypes.boolTyCon
+                    orelse id = #id BuiltinTypes.unitTyCon
+                 then nil
+                 else raise Unify
+               | T.CONSTRUCTty {tyCon = {id, ...}, args=[argTy]} =>
+                 if id = #id BuiltinTypes.listTyCon
+                 then
+                   [(argTy, T.newtyRaw {utvarOpt = utvarOpt,
+                                        lambdaDepth = lambdaDepth,
+                                        tvarKind = tvarKind,
+                                        occurresIn = occurresIn,
+                                        eqKind = eqKind})]
+                 else raise Unify
+               | T.RECORDty fields =>
+                 RecordLabel.Map.foldr
+                   (fn (x,z) =>
+                     (x, T.newtyRaw {utvarOpt = utvarOpt,
+                                     lambdaDepth = lambdaDepth,
+                                     tvarKind = tvarKind,
+                                     occurresIn = occurresIn,
+                                     eqKind = eqKind})
+                     :: z)
+                   nil
+                   fields
+               | T.TYVARty _ =>
+                 [(ty, T.newtyRaw {utvarOpt = utvarOpt,
+                                   lambdaDepth = lambdaDepth,
+                                   tvarKind = tvarKind,
+                                   occurresIn = occurresIn,
+                                   eqKind = eqKind})]
+               | _ => raise Unify)
             | T.BOXED => if isBoxedTy ty then nil else raise Unify
             | T.UNBOXED => if isBoxedTy ty then raise Unify else nil
             | T.JOIN _ =>  raise Unify
@@ -237,30 +274,30 @@ in
                  lambdaDepth2
                 )
               | EQUAL => lambdaDepth1
-        val (newTvarKind, newTyEquations) = 
+        val (newTvarKind, newTyEquations) =
             case (tvarKind1, tvarKind2) of
               (T.REC fl1, T.REC fl2) =>
               let 
                 val newTyEquations = 
-                    LabelEnv.listItems
-                      (LabelEnv.intersectWith (fn x => x) (fl1, fl2))
-                val newTyFields = LabelEnv.unionWith #1 (fl1, fl2)
+                    RecordLabel.Map.listItems
+                      (RecordLabel.Map.intersectWith (fn x => x) (fl1, fl2))
+                val newTyFields = RecordLabel.Map.unionWith #1 (fl1, fl2)
               in (T.REC newTyFields, newTyEquations)
               end
             | (T.REC fl1, T.JOIN (fl2, ty1, ty2, loc)) =>
               let 
                 val newTyEquations = 
-                    LabelEnv.listItems
-                      (LabelEnv.intersectWith (fn x => x) (fl1, fl2))
-                val newTyFields = LabelEnv.unionWith #1 (fl1, fl2)
+                    RecordLabel.Map.listItems
+                      (RecordLabel.Map.intersectWith (fn x => x) (fl1, fl2))
+                val newTyFields = RecordLabel.Map.unionWith #1 (fl1, fl2)
               in (T.JOIN (newTyFields, ty1, ty2, loc), newTyEquations)
               end
             | (T.JOIN (fl1, ty1, ty2, loc), T.REC fl2) =>
               let 
                 val newTyEquations = 
-                    LabelEnv.listItems
-                      (LabelEnv.intersectWith (fn x => x) (fl1, fl2))
-                val newTyFields = LabelEnv.unionWith #1 (fl1, fl2)
+                    RecordLabel.Map.listItems
+                      (RecordLabel.Map.intersectWith (fn x => x) (fl1, fl2))
+                val newTyFields = RecordLabel.Map.unionWith #1 (fl1, fl2)
               in (T.JOIN (newTyFields, ty1, ty2, loc), newTyEquations)
               end
             | (T.OCONSTkind L1, T.OCONSTkind L2) => 
@@ -321,6 +358,53 @@ in
                      },
                    newEqs)
               end
+            | (T.JSON, T.OCONSTkind tys) =>
+              (case List.mapPartial
+                      (fn ty => SOME (ty, checkKind ty kind1)
+                                handle Unify => NONE)
+                      tys of
+                 nil => raise Unify
+               | l => (T.OCONSTkind (map #1 l), List.concat (map #2 l)))
+            | (T.JSON, T.OPRIMkind {instances, operators}) =>
+              (case List.mapPartial
+                      (fn ty => SOME (ty, checkKind ty kind1)
+                                handle Unify => NONE)
+                      instances of
+                 nil => raise Unify
+               | l => (T.OPRIMkind {instances = map #1 l,
+                                    operators = operators},
+                       List.concat (map #2 l)))
+            | (T.JSON, T.JSON) => (T.JSON, nil)
+            | (T.JSON, T.REC fields) =>
+              (case List.concat
+                      (map (fn ty => checkKind ty kind1 handle Unify => nil)
+                           (RecordLabel.Map.listItems fields)) of
+                 nil => raise Unify
+               | l => (T.REC fields, l))
+            | (T.JSON, T.JOIN x) => raise Unify
+            | (T.OCONSTkind tys, T.JSON) =>
+              (case List.mapPartial
+                      (fn ty => SOME (ty, checkKind ty kind2)
+                                handle Unify => NONE)
+                      tys of
+                 nil => raise Unify
+               | l => (T.OCONSTkind (map #1 l), List.concat (map #2 l)))
+            | (T.OPRIMkind {instances, operators}, T.JSON) =>
+              (case List.mapPartial
+                      (fn ty => SOME (ty, checkKind ty kind2)
+                                handle Unify => NONE)
+                      instances of
+                 nil => raise Unify
+               | l => (T.OPRIMkind {instances = map #1 l,
+                                    operators = operators},
+                       List.concat (map #2 l)))
+            | (T.REC fields, T.JSON) =>
+              (case List.concat
+                      (map (fn ty => checkKind ty kind2 handle Unify => nil)
+                           (RecordLabel.Map.listItems fields)) of
+                 nil => raise Unify
+               | l => (T.REC fields, l))
+            | (T.JOIN x, T.JSON) => raise Unify
             | (T.BOXED, T.OCONSTkind tys) =>
               (T.OCONSTkind (List.filter isBoxedTy tys), nil)
             | (T.BOXED, T.OPRIMkind {instances, operators}) =>
@@ -568,15 +652,15 @@ in
             | (T.RECORDty tyFields1, T.RECORDty tyFields2) =>
               let
                 val (newTyEquations, rest) = 
-                    LabelEnv.foldri 
+                    RecordLabel.Map.foldri 
                       (fn (label, ty1, (newTyEquations, rest)) =>
-                          let val (rest, ty2) = LabelEnv.remove(rest, label)
+                          let val (rest, ty2) = RecordLabel.Map.remove(rest, label)
                           in ((ty1, ty2) :: newTyEquations, rest) end
                           handle LibBase.NotFound => raise Unify)
                       (nil, tyFields2)
                       tyFields1
               in
-                if LabelEnv.isEmpty rest 
+                if RecordLabel.Map.isEmpty rest 
                 then unifyTy (newTyEquations@tail)
                 else raise Unify
               end
@@ -688,14 +772,14 @@ in
       handle Unify => false
   and eqSMap btvEquiv (smap1, smap2) =
       let
-        val tyF1 = LabelEnv.listItemsi smap1
-        val tyF2 = LabelEnv.listItemsi smap2
+        val tyF1 = RecordLabel.Map.listItemsi smap1
+        val tyF2 = RecordLabel.Map.listItemsi smap2
       in
         eqTyFields btvEquiv (tyF1, tyF2)
       end
   and eqTyFields btvEquiv (nil, nil) = true
     | eqTyFields btvEquiv ((l1,ty1)::tl1, (l2,ty2)::tl2) = 
-      (case String.compare(l1,l2) of
+      (case RecordLabel.compare(l1,l2) of
          EQUAL => eqTy btvEquiv (ty1, ty2) andalso eqTyFields btvEquiv (tl1, tl2)
        | _ => false)
     | eqTyFields btvEquiv (h1::t1, nil) = false
@@ -718,8 +802,8 @@ in
       case (sty1, sty2) of
       (T.INSTCODEty oprimSelector11,T.INSTCODEty oprimSelector2) =>
       eqOprimSelector btvEquiv (oprimSelector11,oprimSelector2)
-    | (T.INDEXty (string1, ty1),T.INDEXty (string2, ty2)) =>
-      string1 = string2 andalso eqTy btvEquiv (ty1, ty2)
+    | (T.INDEXty (label1, ty1),T.INDEXty (label2, ty2)) =>
+      label1 = label2 andalso eqTy btvEquiv (ty1, ty2)
     | (T.TAGty ty1, T.TAGty ty2) => eqTy btvEquiv (ty1, ty2)
     | (T.SIZEty ty1, T.SIZEty ty2) => eqTy btvEquiv (ty1, ty2)
     | _ => false
@@ -758,6 +842,7 @@ in
        eqTyList btvEquiv (tyL1, tyL2) andalso
        eqOprimSelectorList btvEquiv (opL1, opL2)
     | (T.UNIV, T.UNIV) => true
+    | (T.JSON, T.JSON) => true
     | (T.BOXED, T.BOXED) => true
     | (T.UNBOXED, T.UNBOXED) => true
     | (T.REC smap1, T.REC smap2) => eqSMap btvEquiv (smap1, smap2)

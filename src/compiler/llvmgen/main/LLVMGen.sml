@@ -44,6 +44,17 @@ struct
   fun insns is = fn (body, last) : L.body => (is @ body, last) : L.body
   fun last l = fn () => (nil, l) : L.body
 
+  fun block (label, args, body) : L.body -> L.body =
+      let
+        val phis = map L.PHI args
+      in
+        fn next : L.body =>
+           (nil, L.BLOCK {label = label,
+                          phis = phis,
+                          body = body (),
+                          next = next})
+      end
+
   fun label (label, args) =
       let
         val phis = map L.PHI args
@@ -187,10 +198,6 @@ struct
   val recordBitmapWordTy = L.I32
   val recordBitmapWordSize = 0w4 : Word64.word
   val recordBitmapWordBits = 0w32 : Word64.word
-
-  (* sml_raise requires a 60-byte work area allocated by sml_alloc.
-   * See also exn.c. *)
-  val SML_RAISE_ALLOC_SIZE = 0w60 : Word64.word
 
   local
     datatype intrinsic =
@@ -398,11 +405,27 @@ struct
   val sml_raise =
       R {name = "sml_raise",
          tail = NONE,
-         argTys = [L.PTR L.I8, L.PTR L.I8],
-         argAttrs = [[L.INREG], [L.INREG]],
+         argTys = [L.PTR L.I8],
+         argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.VOID,
          fnAttrs = [L.NORETURN]}
+  val sml_save_exn =
+      R {name = "sml_save_exn",
+         tail = NONE,
+         argTys = [L.PTR L.I8],
+         argAttrs = [[L.INREG]],
+         varArg = false,
+         retTy = L.VOID,
+         fnAttrs = [L.NOUNWIND]}
+  val sml_unsave_exn =
+      R {name = "sml_unsave_exn",
+         tail = NONE,
+         argTys = [L.PTR L.I8],
+         argAttrs = [[L.INREG]],
+         varArg = false,
+         retTy = L.PTR L.I8,
+         fnAttrs = [L.NOUNWIND]}
   val sml_personality =
       R {name = "sml_personality",
          tail = NONE,
@@ -482,16 +505,17 @@ struct
   fun referIntrinsicVar (V {name, ty}) =
       constToValue (registerForeignEntry name (L.PTR ty) NONE)
 
-  fun callIntrinsic result (r as R {name, tail, fnAttrs, argAttrs, ...}) args =
-      insn1
-        (L.CALL
-           {result = result,
-            tail = tail,
-            cconv = NONE,
-            retAttrs = nil,
-            fnPtr = constToValue (registerIntrinsic r),
-            args = ListPair.zipEq (argAttrs, args),
-            fnAttrs = fnAttrs})
+  fun intrinsicCallOperands result (r as R {name, tail, fnAttrs, argAttrs,
+                                            retTy, ...})
+                            args =
+      {result = Option.map (fn x => (retTy, x)) result : (L.ty * L.var) option,
+       tail = tail,
+       cconv = NONE : L.calling_convention option,
+       retAttrs = nil : L.parameter_attribute list,
+       fnPtr = constToValue (registerIntrinsic r),
+       args = ListPair.zipEq (argAttrs, args : L.operand list),
+       unwind = NONE : HandlerLabel.id option,
+       fnAttrs = fnAttrs}
       handle ListPair.UnequalLengths => raise Bug.Bug ("callIntrinsic " ^ name)
 
   end (* local *)
@@ -620,12 +644,16 @@ struct
       andalso congruentTy (#retTy funTy1, #retTy funTy2)
   end (* local *)
 
+  type handler_kind =
+      {catch : bool, cleanup : bool}
+
   type env =
       {
         slotAddrMap: L.operand SlotID.Map.map,
         aliasMap : alias_map,
         exportMap : ((L.ty * L.const) * {gvr : L.ty * L.value})
                       ExternSymbol.Map.map,
+        handlerMap : handler_kind HandlerLabel.Map.map,
         funTy : funTy,
         personality: (L.ty * L.const) option ref option,
         returnInsns : L.operand -> unit -> L.body
@@ -636,10 +664,21 @@ struct
         slotAddrMap = SlotID.Map.empty,
         aliasMap = emptyAliasMap,
         exportMap = ExternSymbol.Map.empty,
+        handlerMap = HandlerLabel.Map.empty,
         funTy = dummyFunTy,
         personality = NONE,
         returnInsns = fn _ => fn () => (nil, L.UNREACHABLE) (* dummy *)
       } : env
+
+  fun bindHandlerLabel (env as {handlerMap,...}:env) (handlerLabel, kind) =
+      env # {
+        handlerMap = HandlerLabel.Map.insert (handlerMap, handlerLabel, kind)
+      }
+
+  fun getHandlerKind (env as {handlerMap,...}:env) handlerLabel =
+      case HandlerLabel.Map.find (handlerMap, handlerLabel) of
+        SOME x => x
+      | NONE => raise Bug.Bug "getHandlerKind"
 
   fun compileValue (env as {aliasMap, ...}:env) value =
       case value of
@@ -756,11 +795,35 @@ struct
                 (ty, L.INIT_CONST (L.INTCONST (Word64.orb (w, FLAG_SKIP))))
               | _ => raise Bug.Bug "makeHeaderWordStatic"
 
-  datatype landingPadKind =
-      CLEANUP
-    | CATCH of M.varInfo
+  fun jumpIfNull value (thenLabel, args) =
+      let
+        val b = VarID.generate ()
+        val elseLabel = FunLocalLabel.generate nil
+      in
+        scope (insn1 (L.ICMP (b, L.EQ, value, nullOperand))
+               o last (L.SWITCH {value = (L.I1, L.VAR b),
+                                 default = (thenLabel, args),
+                                 branches = [((L.I1, L.INTCONST 0w0),
+                                              (elseLabel, []))]}))
+        o label (elseLabel, [])
+      end
 
-  fun landingPad (env:env) (handlerId, kind, bodyInsn) =
+  val landingPadTy = L.STRUCT ([L.PTR L.I8, L.PTR L.I8], {packed=false})
+
+  fun resumeInsn (ueVar, exnVar) =
+      let
+        val r1 = VarID.generate ()
+        val r2 = VarID.generate ()
+      in
+        insns [L.INSERTVALUE (r1, (landingPadTy, L.CONST L.UNDEF),
+                              (L.PTR L.I8, L.VAR ueVar), 0),
+               L.INSERTVALUE (r2, (landingPadTy, L.VAR r1),
+                              (L.PTR L.I8, L.VAR exnVar), 1)]
+        o last (L.RESUME (landingPadTy, L.VAR r2))
+      end
+
+  fun landingPad (env:env) (handlerId, {catch, cleanup}, ueVar, exnVar,
+                            bodyInsn) =
       let
         val _ = case #personality env of
                   NONE => raise Bug.Bug "landingPad without personality"
@@ -768,54 +831,41 @@ struct
                 | SOME (r as ref NONE) =>
                   r := SOME (registerIntrinsic sml_personality)
         (*
-         * The first return value of landingpad is a foreign pointer to
-         * a low-level exception object, which we ignore currently.
-	 * The second value is a pointer to an ML exn object.
+         * The landingpad instruction returns two pointers {ue, e} where
+         * "ue" for a pointer to _Unwind_Exception and "e" for an SML#'s
+         * exception object.  "uw" may be NULL if this handler is not a
+         * cleanup handler.  "e" may be NULL if current exception is a
+         * foreign exception, i.e. not an SML# exception.
          * See also exn.c for details.
-	 *)
+         *)
         val lpadVar = VarID.generate ()
-        val lpadTy = L.STRUCT ([L.PTR L.I8, L.PTR L.I8], {packed=false})
-        val lpadOperand = (lpadTy, L.VAR lpadVar)
-        val (extractInsn, catch, cleanup) =
-            case kind of
-              CATCH exnVar =>
-              (insn1 (L.EXTRACTVALUE (#id exnVar, lpadOperand, 1)),
-               [nullOperand], false)
-            | CLEANUP =>
-              (* TODO: the second value must be protected from garbage
-               * collection if the cleanup code may cause GC. *)
-              (empty, nil, true)
-        val resumeInsn =
-            fn () =>
-               let
-                 val e1 = VarID.generate ()
-                 val e2 = VarID.generate ()
-                 val cmp = VarID.generate ()
-                 val e = VarID.generate ()
-                 val vec = VarID.generate ()
-               in
-                 (insns
-                    [L.EXTRACTVALUE (e1, lpadOperand, 0),
-                     L.EXTRACTVALUE (e2, lpadOperand, 1),
-                     L.ICMP (cmp, L.EQ, (L.PTR L.I8, L.VAR e2), nullOperand),
-                     L.SELECT (e, (L.I1, L.VAR cmp),
-                               (L.PTR L.I8, L.VAR e1),
-                               (L.PTR L.I8, L.VAR e2)),
-                     L.INSERTVALUE (vec, lpadOperand, (L.PTR L.I8, L.VAR e), 0)]
-                  o last (L.RESUME (lpadTy, L.VAR vec)))
-                   ()
-               end
+        val ue = VarID.generate ()
+        val e = VarID.generate ()
+        val localLabel = HandlerLabel.asFunLocalLabel handlerId
+        val lpadBody =
+            insns [L.EXTRACTVALUE (ue, (landingPadTy, L.VAR lpadVar), 0),
+                   L.EXTRACTVALUE (e, (landingPadTy, L.VAR lpadVar), 1)]
+            o last (L.BR (localLabel, [(L.PTR L.I8, L.VAR ue),
+                                       (L.PTR L.I8, L.VAR e)]))
+        val r1 = VarID.generate ()
+        val r2 = VarID.generate ()
       in
-        fn next =>
-           (nil, L.LANDINGPAD
-                   {label = handlerId,
-                    argVar = (lpadVar, lpadTy),
-                    catch = catch,
-                    cleanup = cleanup,
-                    body = (extractInsn o bodyInsn o resumeInsn) (),
-                    next = next})
-           : L.body
+        block (localLabel, [(L.PTR L.I8, ueVar), (L.PTR L.I8, exnVar)],
+               bodyInsn o resumeInsn (ueVar, exnVar))
+        o (fn next =>
+              (nil,
+               L.LANDINGPAD
+                 {label = handlerId,
+                  argVar = (lpadVar, landingPadTy),
+                  catch = if catch then [nullOperand] else [],
+                  cleanup = cleanup,
+                  body = lpadBody (),
+                  next = next}))
       end
+
+  fun jumpToLandingPad (handlerLabel, ueVar, exnVar) =
+      (HandlerLabel.asFunLocalLabel handlerLabel,
+       [(L.PTR L.I8, L.VAR ueVar), (L.PTR L.I8, L.VAR exnVar)])
 
   fun callInsn {result, tail, cconv, retAttrs, fnPtr, args, unwind, fnAttrs} =
       case unwind of
@@ -840,6 +890,12 @@ struct
                                  unwind = handlerLabel}))
           o label (toLabel, case result of NONE => nil | SOME var => [var])
         end
+
+  fun callIntrinsic result r args =
+      callInsn (intrinsicCallOperands result r args)
+
+  fun invokeIntrinsic result r handler args =
+      callInsn (intrinsicCallOperands result r args # {unwind = handler})
 
   fun objectHeaderAddress (result, obj) =
       let
@@ -1596,25 +1652,58 @@ struct
           val funPtr = compileValue env funExp
           val argList = map (compileValue env) argExpList
           val cconv = compileCallConv callingConvention
-          val (insns1, insns2) =
+          val (leaveInsn, enterInsnOpt) =
               if not fast
               then (callIntrinsic NONE sml_leave nil,
-                    callIntrinsic NONE sml_enter nil)
+                    SOME (callIntrinsic NONE sml_enter nil))
               else if causeGC
               then (callIntrinsic NONE sml_save nil,
-                    callIntrinsic NONE sml_unsave nil)
-              else (empty, empty)
+                    SOME (callIntrinsic NONE sml_unsave nil))
+              else (empty, NONE)
+          val (lpadLabel, lpadInsn) =
+              case (enterInsnOpt, handler) of
+                (NONE, NONE) => (NONE, empty)
+              | (NONE, SOME handlerLabel) => (SOME handlerLabel, empty)
+              | (SOME enterInsn, _) =>
+                let
+                  val lpadLabel = HandlerLabel.generate nil
+                  val ueVar = VarID.generate ()
+                  val exnVar = VarID.generate ()
+                  val exn2Var = VarID.generate ()
+                  val unsaveInsn =
+                      callIntrinsic (SOME exn2Var) sml_unsave_exn
+                                    [(L.PTR L.I8, L.VAR ueVar)]
+                  val kind =
+                      case handler of
+                        NONE => {catch=false, cleanup=true}
+                      | SOME id => getHandlerKind env id # {cleanup=true}
+                  val jumpInsn =
+                      case handler of
+                        NONE => resumeInsn (ueVar, exn2Var)
+                      | SOME id =>
+                        last (L.BR (jumpToLandingPad (id, ueVar, exn2Var)))
+                in
+                  (SOME lpadLabel,
+                   landingPad
+                     env
+                     (lpadLabel, kind, ueVar, exnVar,
+                      enterInsn
+                      o unsaveInsn
+                      o jumpInsn
+                      o ignore))
+                end
         in
-          insns1
+          leaveInsn
+          o lpadInsn
           o callInsn {result = Option.map compileVarInfo resultVar,
                       tail = NONE,
                       cconv = cconv,
                       retAttrs = nil,
                       fnPtr = funPtr,
                       args = map (fn x => (nil, x)) argList,
-                      unwind = handler,
+                      unwind = lpadLabel,
                       fnAttrs = nil}
-          o insns2
+          o (case enterInsnOpt of NONE => empty | SOME x => x)
         end
       | M.MCEXPORTCALLBACK {resultVar, codeExp, closureEnvExp, instTyvars,
                             loc} =>
@@ -1947,25 +2036,36 @@ struct
             | _ =>
               insn1 (L.STORE {dst = (dstTy, L.CONST dst), value = value})
         end
-      | M.MCRAISE_ALLOC {resultVar, loc} =>
-        callIntrinsic (SOME (#id resultVar)) sml_alloc
-                      [(L.I32, L.CONST (L.INTCONST SML_RAISE_ALLOC_SIZE))]
 
   fun compileLast (env:env) mcexp_last =
       case mcexp_last of
         M.MCRETURN {value, loc} =>
         #returnInsns env (compileValue env value)
-      | M.MCRAISE_THROW {raiseAllocResult, argExp, loc} =>
+      | M.MCRAISE {argExp, cleanup, loc} =>
         let
-          val alloc = compileValue env raiseAllocResult
           val argExp = compileValue env argExp
         in
-          callIntrinsic NONE sml_raise [alloc, argExp]
+          invokeIntrinsic NONE sml_raise cleanup [argExp]
           o last L.UNREACHABLE
         end
-      | M.MCHANDLER {nextExp, id, exnVar, handlerExp, loc} =>
-        landingPad env (id, CATCH exnVar, compileExp env handlerExp o ignore)
-        o compileExp env nextExp
+      | M.MCHANDLER {nextExp, id, exnVar, handlerExp, cleanup, loc} =>
+        let
+          val kind = {catch = true, cleanup = isSome cleanup}
+          val nextEnv = bindHandlerLabel env (id, kind)
+          val ueVar = VarID.generate ()
+          val jumpInsn =
+              case cleanup of
+                NONE => empty
+              | SOME cleanupLabel =>
+                jumpIfNull (compileValue env (M.ANVAR exnVar))
+                           (jumpToLandingPad (cleanupLabel, ueVar, #id exnVar))
+        in
+          landingPad env (id, kind, ueVar, #id exnVar,
+                          jumpInsn
+                          o compileExp env handlerExp
+                          o ignore)
+          o compileExp nextEnv nextExp
+        end
       | M.MCSWITCH {switchExp, expTy, branches, default, loc} =>
         let
           val switchValue = compileValue env switchExp
@@ -2044,12 +2144,29 @@ struct
         val env = {slotAddrMap = slotMap,
                    aliasMap = aliasMap,
                    exportMap = exportMap,
+                   handlerMap = HandlerLabel.Map.empty,
                    funTy = {argTys = argTys,
                             varArg = varArg,
                             cconv = cconv,
                             retTy = retTy},
                    personality = SOME personality,
                    returnInsns = goto} : env
+        val (bodyEnv, cleanupInsn) =
+            case cleanupHandler of
+              NONE => (env, empty)
+            | SOME id =>
+              let
+                val ueVar = VarID.generate ()
+                val exnVar = VarID.generate ()
+              in
+                (bindHandlerLabel env (id, {catch=false, cleanup=true}),
+                 landingPad
+                   env
+                   (id, {catch=false, cleanup=true},
+                    ueVar, exnVar,
+                    callIntrinsic NONE sml_save_exn [(L.PTR L.I8, L.VAR ueVar)]
+                    o callIntrinsic NONE sml_end []))
+              end
         val buf1 = VarID.generate ()
         val buf2 = VarID.generate ()
         val body =
@@ -2060,12 +2177,8 @@ struct
                              L.PTR (L.PTR L.I8)))
             o callIntrinsic NONE sml_start
                             [(L.PTR (L.PTR L.I8), L.VAR buf2)]
-            o (case cleanupHandler of
-                 NONE => empty
-               | SOME label =>
-                 landingPad env (label, CLEANUP,
-                                 callIntrinsic NONE sml_end nil))
-            o scope (compileExp env bodyExp)
+            o cleanupInsn
+            o scope (compileExp bodyEnv bodyExp)
             o label (retLabel, retArgs)
             o callIntrinsic NONE sml_end nil
             o last return
@@ -2098,6 +2211,7 @@ struct
                               varArg = false,
                               retTy = retTy,
                               cconv = SOME L.FASTCC},
+                     handlerMap = HandlerLabel.Map.empty,
                      personality = SOME personality,
                      returnInsns = returnInsns}
           val body =

@@ -12,6 +12,7 @@ _require "../../util/main/TermFormat.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
 
 structure BitmapCalc2 =
 struct
@@ -75,7 +76,7 @@ struct
       {
         fieldList : {fieldExp : bcexp,
                      fieldTy : ty,
-                     fieldLabel : string,
+                     fieldLabel : RecordLabel.label,
                      fieldSize : bcexp,
                      fieldTag : bcexp,
                      fieldIndex : bcexp} list,
@@ -91,7 +92,7 @@ struct
       {
         recordExp : bcexp,
         indexExp : bcexp,
-        label : string,
+        label : RecordLabel.label,
         recordTy : ty,
         resultTy : ty,
         resultSize : bcexp,
@@ -103,7 +104,7 @@ struct
         recordExp : bcexp,
         recordTy : ty,
         indexExp : bcexp,
-        label : string,
+        label : RecordLabel.label,
         valueExp : bcexp,
         valueTy : ty,
         valueTag : bcexp,

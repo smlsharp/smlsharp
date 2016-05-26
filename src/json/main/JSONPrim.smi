@@ -1,0 +1,5 @@
+_require "../../compiler-utils/dynamic/main/Dynamic.smi"
+structure JSONPrim =
+struct
+  val toDynamic = _builtin val Dynamic : ['a#json. 'a -> Dynamic.dynamic]
+end

@@ -131,6 +131,7 @@ in
         ICSQLDBI (icpat, optimizeExp icexp, loc)
       | ICJOIN (icexp1, icexp2, loc) =>
         ICJOIN (optimizeExp icexp1, optimizeExp icexp2, loc)
+      | ICJSON _ => raise Bug.Bug "ICJSON"
 
   and optimizeFFIFun ffiFun =
       case ffiFun of

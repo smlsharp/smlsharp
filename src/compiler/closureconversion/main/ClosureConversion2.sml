@@ -570,18 +570,18 @@ struct
               accum
               (map (fn {tag, size, ...} => {tag=tag, size=size}) fields)
         val fieldList =
-            mapi (fn (i, (index, {tag, size, ty, ...})) =>
-                     {fieldLabel = Int.toString (i+1),
-                      fieldIndex = toCcexp loc index,
-                      fieldSize = toCcexp loc size,
-                      fieldTag = #1 (toCcexp loc tag),
-                      fieldTy = ty})
-                 (ListPair.zipEq (fieldIndexes, fields))
+            map (fn (label, (index, {tag, size, ty, ...})) =>
+                    {fieldLabel = label,
+                     fieldIndex = toCcexp loc index,
+                     fieldSize = toCcexp loc size,
+                     fieldTag = #1 (toCcexp loc tag),
+                     fieldTy = ty})
+                (RecordLabel.tupleList (ListPair.zipEq (fieldIndexes, fields)))
         val recordTy =
             T.RECORDty
               (foldl (fn ({fieldLabel, fieldTy, ...},z) =>
-                         LabelEnv.insert (z, fieldLabel, fieldTy))
-                     LabelEnv.empty
+                         RecordLabel.Map.insert (z, fieldLabel, fieldTy))
+                     RecordLabel.Map.empty
                      fieldList)
         val fieldList =
             map

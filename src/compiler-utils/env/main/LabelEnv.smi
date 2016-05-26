@@ -1,4 +1,0 @@
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "./LabelOrd.smi"
-
-structure LabelEnv = BinaryMapFn(LabelOrd)

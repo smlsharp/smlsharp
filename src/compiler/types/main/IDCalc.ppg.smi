@@ -1,7 +1,7 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
 _require local "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../util/main/TermFormat.smi"
 _require local "../../util/main/SmlppgUtil.ppg.smi"
 _require local "../../util/main/Gensym.smi"
@@ -9,6 +9,7 @@ _require local "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
@@ -46,7 +47,7 @@ struct
     = TYWILD
     | TYERROR
     | TYVAR of tvar
-    | TYRECORD of ty LabelEnv.map
+    | TYRECORD of ty RecordLabel.Map.map
     | TYCONSTRUCT of {tfun:tfun, args:ty list}
     | TYFUNM of ty list * ty
     | TYPOLY of (tvar * tvarKind) list * ty
@@ -54,7 +55,8 @@ struct
 
   and tvarKind
     = UNIV
-    | REC of ty LabelEnv.map
+    | REC of ty RecordLabel.Map.map
+    | JSON
     | BOXED
     | UNBOXED
 
@@ -133,7 +135,7 @@ struct
     | ICAPPM_NOUNIFY of icexp * icexp list * loc
     | ICLET of icdecl list * icexp list * loc
     | ICTYCAST of {from:tfun, to:tfun} list * icexp * loc
-    | ICRECORD of (string * icexp) list * loc
+    | ICRECORD of (RecordLabel.label * icexp) list * loc
     | ICRAISE of icexp * loc
     | ICHANDLE of icexp * (icpat * icexp) list * loc
     | ICFNM of {args:icpat list, body:icexp} list * loc 
@@ -143,9 +145,9 @@ struct
                * {args:icpat list, body:icexp} list 
                * PatternCalc.caseKind 
                * loc  (* primitive; caseKind added *)
-    | ICRECORD_UPDATE of icexp * (string * icexp) list * loc
-    | ICRECORD_SELECTOR of string * loc 
-    | ICSELECT of string * icexp * loc
+    | ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
+    | ICRECORD_SELECTOR of RecordLabel.label * loc 
+    | ICSELECT of RecordLabel.label * icexp * loc
     | ICSEQ of icexp list * loc
     | ICFFIIMPORT of ffiFun * ffiTy * loc
     | ICFFIAPPLY of FFIAttributes.attributes option
@@ -153,6 +155,7 @@ struct
     | ICSQLSCHEMA of {columnInfoFnExp : icexp, ty : ty, loc : loc}
     | ICSQLDBI of icpat * icexp * loc
     | ICJOIN of icexp * icexp * loc
+    | ICJSON of icexp * ty * loc
     
   and ffiArg
     = ICFFIARG of icexp * ffiTy * loc
@@ -172,7 +175,7 @@ struct
     | ICPATEXEXN of {longsymbol:longsymbol, exInfo:{longsymbol: longsymbol, version:version, ty:ty}}
     | ICPATCONSTANT of constant
     | ICPATCONSTRUCT of {con: icpat, arg: icpat, loc:loc}
-    | ICPATRECORD of {flex: bool, fields: (string * icpat) list, loc: loc}
+    | ICPATRECORD of {flex: bool, fields: (RecordLabel.label * icpat) list, loc: loc}
     | ICPATLAYERED of {patVar : varInfo, tyOpt: ty option, pat: icpat, loc:loc}
     | ICPATTYPED of icpat * ty * loc
   
@@ -236,7 +239,7 @@ struct
 
   and ffiTy 
     = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
-    | FFIRECORDTY of (string * ffiTy) list * loc
+    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | FFIBASETY of ty * loc
 
   type kindedTvar = tvar * tvarKind
@@ -253,6 +256,7 @@ struct
         loc: Loc.loc}
   type exInfo = {longsymbol: longsymbol, version:version, ty:ty}
   type topdecl = icdecl list
+  type exexnInfo = {longsymbol:longsymbol, ty:ty, version:version}
 
   val derefTfun : tfun -> tfun
   val emptyLiftedTys : liftedTys

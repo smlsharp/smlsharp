@@ -606,23 +606,18 @@ struct
                 valueExp = compileValue subst valueExp,
                 loc = loc})
             (compileExp subst nextExp)
-      | A.ANRAISE {argExp, loc} =>
-        let
-          val v = {id = VarID.generate (), ty = boxedTy}
-          val proc1 = mid (M.MCRAISE_ALLOC {resultVar = v, loc = loc})
-        in
-          proc1
-            (last (M.MCRAISE_THROW
-                    {raiseAllocResult = M.ANVAR v,
-                     argExp = compileValue subst argExp,
-                     loc = loc}))
-        end
-      | A.ANHANDLER {nextExp, exnVar, id, handlerExp, loc} =>
+      | A.ANRAISE {argExp, cleanup, loc} =>
+        last (M.MCRAISE
+               {argExp = compileValue subst argExp,
+                cleanup = cleanup,
+                loc = loc})
+      | A.ANHANDLER {nextExp, exnVar, id, handlerExp, cleanup, loc} =>
         last (M.MCHANDLER
                 {nextExp = compileExp subst nextExp,
                  id = id,
                  exnVar = exnVar,
                  handlerExp = compileExp (mask (subst, [exnVar])) handlerExp,
+                 cleanup = cleanup,
                  loc = loc})
       | A.ANSWITCH {switchExp, expTy, branches, default, loc} =>
         last (M.MCSWITCH

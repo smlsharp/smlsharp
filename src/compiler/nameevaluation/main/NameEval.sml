@@ -26,7 +26,10 @@ local
   structure FU = FunctorUtils
   structure SC = SigCheck
   structure T = Types
- 
+  structure RL = RenameLongsymbol
+  type renameEnv = I.tfun TypID.Map.map
+  val emptyRenameEnv =  TypID.Map.empty : renameEnv
+
   val filePos = Loc.makePos {fileName = "NameEval.sml", line = 0, col = 0}
   val fileLoc = (filePos, filePos)
 
@@ -251,7 +254,7 @@ local
                 in
                   (returnEnv, (l, icpat))
                 end
-            val _ = EU.checkNameDuplication
+            val _ = EU.checkRecordLabelDuplication
                       (fn (label, _) => label)
                       patfieldList
                       loc
@@ -400,18 +403,18 @@ local
       in
         [I.ICTYCASTDECL (castList, icdeclList, loc)]
       end
-        
+
   (* P.PLCOREDEC (pdecl, loc) *)
-  fun evalPdecl (path:Symbol.longsymbol) (tvarEnv:Ty.tvarEnv) (env:V.env) pdecl
-      : V.env * I.icdecl list =
+  fun evalPdecl (renameEnv:renameEnv) (path:Symbol.longsymbol) (tvarEnv:Ty.tvarEnv) (env:V.env) pdecl
+      : renameEnv * V.env * I.icdecl list =
       case pdecl of
         P.PDVAL (scopedTvars, plpatPlexpList, loc) =>
         let
           val (tvarEnv, scopedTvars) =
               Ty.evalScopedTvars tvarEnv env scopedTvars
-          val (returnEnv, icpatIcexpListRev) =
+          val (renameEnv, returnEnv, icpatIcexpListRev) =
               foldl
-                (fn ((plpat, plexp), (returnEnv, icpatIcexpListRev)) =>
+                (fn ((plpat, plexp), (renameEnv, returnEnv, icpatIcexpListRev)) =>
                     let
                       val icexp = evalPlexp tvarEnv env plexp
                       val (newEnv, icpat) =
@@ -423,15 +426,15 @@ local
 (*
                       (returnEnv, (icpat, icexp)::icpatIcexpListRev)
 *)
-                      (returnEnv, icpatIcexpListRev)
+                      (renameEnv, returnEnv, icpatIcexpListRev)
                     end
                 )
-                (V.emptyEnv, nil)
+                (renameEnv, V.emptyEnv, nil)
                 plpatPlexpList
           val icdecls = if List.null icpatIcexpListRev then nil
                         else [I.ICVAL (scopedTvars, List.rev icpatIcexpListRev, loc)]
         in
-          (returnEnv,icdecls)
+          (renameEnv, returnEnv, icdecls)
         end
       | P.PDDECFUN (scopedTvars, fundeclList, loc) =>
         let
@@ -462,7 +465,7 @@ local
                 )
                 declList
         in
-          (returnEnv, [I.ICDECFUN{guard=guard, funbinds=fundeclList, loc=loc}])
+          (renameEnv, returnEnv, [I.ICDECFUN{guard=guard, funbinds=fundeclList, loc=loc}])
         end
       | P.PDVALREC (scopedTvars, plpatPlexpList, loc) =>
         let
@@ -490,7 +493,7 @@ local
                 )
                 recList
         in
-          (returnEnv, [I.ICVALREC {guard=guard, recbinds=recbindList, loc=loc}])
+          (renameEnv, returnEnv, [I.ICVALREC {guard=guard, recbinds=recbindList, loc=loc}])
         end
       | P.PDVALPOLYREC (symbolTyPlexpList, loc) =>
         let
@@ -523,7 +526,7 @@ local
                 )
                 recList
         in
-          (returnEnv, [I.ICVALPOLYREC (recbindList, loc)])
+          (renameEnv, returnEnv, [I.ICVALPOLYREC (recbindList, loc)])
         end
       | P.PDTYPE (typbindList, loc) =>
         let
@@ -531,9 +534,9 @@ local
                     (fn (tvarList, symbol, ty) => symbol)
                     typbindList
                     (fn s => E.DuplicateTypName("120", s))
-          val returnEnv =
+          val (returnEnv, renameEnv:renameEnv) =
               foldl
-                (fn ((tvarList, symbol, ty), returnEnv) =>
+                (fn ((tvarList, symbol, ty), (returnEnv, renameEnv)) =>
                     let
                       val _ = EU.checkSymbolDuplication
                                 (fn {symbol, eq} => symbol)
@@ -541,41 +544,65 @@ local
                                 (fn s => E.DuplicateTypParms("130",s))
                       val (tvarEnv, tvarList) = Ty.genTvarList tvarEnv tvarList
                       val ty = Ty.evalTy tvarEnv env ty
-                      val tfun =
+                      val (tfun, renameEnv) =
                           case N.tyForm tvarList ty of
-                            N.TYNAME tfun => tfun
+                            N.TYNAME tfun => 
+                            RL.replacePathTfun renameEnv path tfun
                           | N.TYTERM ty =>
                             let
                               val longsymbol = Symbol.prefixPath(path, symbol)
                               val iseq = N.admitEq tvarList ty
                             in
-                              I.TFUN_DEF {iseq=iseq,
-                                          longsymbol=longsymbol,
-                                          formals=tvarList,
-                                          realizerTy=ty
-                                         }
+                              (I.TFUN_DEF {iseq=iseq,
+                                           longsymbol=longsymbol,
+                                           formals=tvarList,
+                                           realizerTy=ty
+                                          },
+                               renameEnv)
                             end
                     in
-                      V.rebindTstr (returnEnv,  symbol, V.TSTR tfun)
+                      (V.rebindTstr (returnEnv,  symbol, V.TSTR tfun), renameEnv)
                     end
                 )
-                V.emptyEnv
+                (V.emptyEnv, renameEnv)
                 typbindList
         in
-          (returnEnv, nil)
+          (renameEnv, returnEnv, nil)
         end
 
       | P.PDDATATYPE (datadeclList, loc) =>
-        Ty.evalDatatype path env (datadeclList, loc)
-
+        let
+          val (returnEnv, icdecls) = Ty.evalDatatype path env (datadeclList, loc)
+        in
+          (renameEnv, returnEnv, icdecls)
+        end
       | P.PDREPLICATEDAT (symbol, longsymbol, loc) =>
         (case (V.findTstr (env, longsymbol)) handle e => raise e of
            NONE => (EU.enqueueError
                       (Symbol.longsymbolToLoc longsymbol, 
                        E.DataTypeNameUndefined("140", {longsymbol = longsymbol}));
-                    (V.emptyEnv, nil))
+                    (renameEnv, V.emptyEnv, nil))
          | SOME tstr => 
            let
+             val (tstr, renameEnv) = 
+                 case tstr of 
+                   V.TSTR tfun => 
+                   let
+                     val (tfun, renameEnv) = RL.replacePathTfun renameEnv path tfun
+                   in
+                     (V.TSTR tfun, renameEnv)
+                   end
+                 | V.TSTR_DTY {tfun, varE, formals, conSpec} => 
+                   let
+                     val (tfun, renameEnv) = RL.replacePathTfun renameEnv path tfun
+                   in
+                     (V.TSTR_DTY {tfun= tfun,
+                                  varE= varE,
+                                  conSpec=conSpec, 
+                                  formals=formals},
+                      renameEnv
+                     )
+                   end
              val returnEnv = V.rebindTstr(V.emptyEnv, symbol, tstr)
              val varE = 
                  case tstr of
@@ -583,7 +610,7 @@ local
                  | V.TSTR_DTY {varE,...} => varE
              val returnEnv = V.envWithVarE(returnEnv, varE)
            in
-             (returnEnv, nil)
+             (renameEnv, returnEnv, nil)
            end
         )
       | P.PDABSTYPE (datadeclList, pdeclList, loc) =>
@@ -640,14 +667,14 @@ local
               tyE
           val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype path env (datadeclList, loc)
           val evalEnv = V.envWithEnv (env, env1)
-          val (newEnv, icdeclList) = evalPdeclList path tvarEnv evalEnv pdeclList
+          val (renameEnv, newEnv, icdeclList) = evalPdeclList (renameEnv:renameEnv)  path tvarEnv evalEnv pdeclList
           val absEnv = V.ENV{varE=SymbolEnv.empty, tyE=tyE, strE=V.STR SymbolEnv.empty}
           val returnEnv = V.envWithEnv (absEnv, newEnv)
           val tfvSubst = abstractTyE tyE TfvMap.empty
           val icdeclList = makeCastDec (tfvSubst, icdeclList) loc
           val returnEnv = S.substTfvEnv tfvSubst returnEnv
         in
-          (returnEnv, icdeclList)
+          (renameEnv, returnEnv, icdeclList)
         end
 
       | P.PDEXD (plexbindList, loc) =>
@@ -720,69 +747,71 @@ local
                 (V.emptyEnv, nil)
                 plexbindList
         in
-          (exEnv, [I.ICEXND (exdeclList, loc)])
+          (renameEnv, exEnv, [I.ICEXND (exdeclList, loc)])
         end
       | P.PDLOCALDEC (pdeclList1, pdeclList2, loc) =>
         let
-          val (env1, icdeclList1) = evalPdeclList path tvarEnv env pdeclList1
+          val (renameEnv, env1, icdeclList1) = evalPdeclList (renameEnv:renameEnv) path tvarEnv env pdeclList1
           val evalEnv = V.envWithEnv (env, env1)
-          val (env2, icdeclList2) =
-              evalPdeclList path tvarEnv evalEnv pdeclList2
+          val (renameEnv, env2, icdeclList2) =
+              evalPdeclList (renameEnv:renameEnv) path tvarEnv evalEnv pdeclList2
         in
-          (env2, icdeclList1@icdeclList2)
+          (renameEnv, env2, icdeclList1@icdeclList2)
         end
       | P.PDOPEN (longsymbolList, loc) =>
         let
-          val returnEnv =
+          val (returnEnv, renameEnv) =
               foldl
-                (fn (longsymbol, returnEnv) =>
+                (fn (longsymbol, (returnEnv, renameEnv)) =>
                     let
                       val strEntry = V.lookupStr env longsymbol
                       val {env, strKind} = exceptionrepStrEntry strEntry (* bug 170_open *)
                       val env = V.replaceLocEnv loc env
+                      val (env, renameEnv) = RL.replacePathEnv renameEnv path env
                     in
-                      V.bindEnvWithEnv (returnEnv, env)
+                      (V.bindEnvWithEnv (returnEnv, env), renameEnv)
                     end
                     handle
                     V.LookupStr =>
                     (EU.enqueueError
                        (Symbol.longsymbolToLoc longsymbol,
                         E.StrNotFound("180", {longsymbol = longsymbol}));
-                     returnEnv)
+                     (returnEnv, renameEnv))
                 )
-                V.emptyEnv
+                (V.emptyEnv, renameEnv)
                 longsymbolList
         in
-          (returnEnv, nil)
+          (renameEnv, returnEnv, nil)
         end
-      | P.PDINFIXDEC _ => (V.emptyEnv, nil)
-      | P.PDINFIXRDEC _ => (V.emptyEnv, nil)
-      | P.PDNONFIXDEC _ => (V.emptyEnv, nil)
-      | P.PDEMPTY => (V.emptyEnv, nil)
+      | P.PDINFIXDEC _ => (renameEnv, V.emptyEnv, nil)
+      | P.PDINFIXRDEC _ => (renameEnv, V.emptyEnv, nil)
+      | P.PDNONFIXDEC _ => (renameEnv, V.emptyEnv, nil)
+      | P.PDEMPTY => (renameEnv, V.emptyEnv, nil)
 
-  and evalPdeclList (path:Symbol.longsymbol) (tvarEnv:Ty.tvarEnv) (env:V.env) pdeclList
-      : V.env * I.icdecl list =
+  and evalPdeclList (renameEnv:renameEnv) (path:Symbol.longsymbol) (tvarEnv:Ty.tvarEnv) (env:V.env) pdeclList
+      : renameEnv * V.env * I.icdecl list =
       let
-        val (returnEnv, icdeclList) =
+        val (renameEnv, returnEnv, icdeclList) =
             foldl
-              (fn (pdecl, (returnEnv, icdeclList)) =>
+              (fn (pdecl, (renameEnv, returnEnv, icdeclList)) =>
                   let
                     val evalEnv = V.envWithEnv (env, returnEnv)
-                    val (newEnv, icdeclList1) =
-                        evalPdecl path tvarEnv evalEnv pdecl
+                    val (renameEnv, newEnv, icdeclList1) =
+                        evalPdecl (renameEnv:renameEnv) path tvarEnv evalEnv pdecl
                     val retuernEnv = V.envWithEnv (returnEnv, newEnv)
                   in
-                    (retuernEnv, icdeclList@icdeclList1)
+                    (renameEnv, retuernEnv, icdeclList@icdeclList1)
                   end
               )
-              (V.emptyEnv, nil)
+              (renameEnv, V.emptyEnv, nil)
               pdeclList
       in
-        (returnEnv, icdeclList)
+        (renameEnv, returnEnv, icdeclList)
       end
 
-  and evalPlexp (tvarEnv:Ty.tvarEnv) (env:V.env) plexp : I.icexp =
+  and evalPlexp  (tvarEnv:Ty.tvarEnv) (env:V.env) plexp : I.icexp =
       let
+        val renameEnv = emptyRenameEnv
         val evalExp = evalPlexp tvarEnv env
         val evalPat = evalPlpat nilPath tvarEnv env
         fun evalTy' ty = Ty.evalTy tvarEnv env ty
@@ -871,7 +900,7 @@ local
            end
            handle V.LookupId =>
                   (EU.enqueueError
-                     (Symbol.longsymbolToLoc refLongsymbol, 
+                     (Symbol.longsymbolToLoc refLongsymbol,
                       E.VarNotFound("190",{longsymbol=refLongsymbol}));
                    I.ICVAR {longsymbol=refLongsymbol, id = VarID.generate()}
                   )
@@ -882,8 +911,8 @@ local
           I.ICAPPM (evalExp plexp, map evalExp plexpList, loc)
         | P.PLLET (pdeclList, plexpList, loc) =>
           let
-            val (newEnv, icdeclList) =
-                evalPdeclList nilPath tvarEnv env pdeclList
+            val (renameEnv, newEnv, icdeclList) =
+                evalPdeclList (renameEnv:renameEnv) nilPath tvarEnv env pdeclList
             val evalEnv = V.envWithEnv (env, newEnv)
           in
             I.ICLET (icdeclList,
@@ -892,9 +921,9 @@ local
           end
         | P.PLRECORD (expfieldList, loc) =>
           let
-            val _ = EU.checkNameDuplication
+            val _ = EU.checkRecordLabelDuplication
                       (fn (name, _) => name)
-                      expfieldList
+                       expfieldList
                       loc
                       (fn s => E.DuplicateRecordLabelInExp("192",s))
             val expfieldList = map (fn (l, exp)=>(l,evalExp exp)) expfieldList
@@ -904,7 +933,7 @@ local
         | P.PLRECORD_UPDATE (plexp, expfieldList, loc) =>
           let
             val icexp = evalExp plexp
-            val _ = EU.checkNameDuplication
+            val _ = EU.checkRecordLabelDuplication
                       (fn (name, _) => name)
                       expfieldList
                       loc
@@ -942,12 +971,8 @@ local
              caseKind,
              loc
             )
-        | P.PLRECORD_SELECTOR (symbol,loc) => 
-          let
-            val string = Symbol.symbolToString symbol
-          in
-            I.ICRECORD_SELECTOR (string, loc)
-          end
+        | P.PLRECORD_SELECTOR (label, loc) => 
+          I.ICRECORD_SELECTOR (label, loc)
         | P.PLSELECT (string,plexp,loc) => I.ICSELECT(string,evalExp plexp,loc)
         | P.PLSEQ (plexpList, loc) => I.ICSEQ (map evalExp plexpList, loc)
         | P.PLFFIIMPORT (plexp, ffiTy, loc) =>
@@ -993,6 +1018,8 @@ local
           end
         | P.PLJOIN (plexp1, plexp2, loc) =>
           I.ICJOIN(evalExp plexp1, evalExp plexp2, loc)
+        | P.PLJSON (plexp, ty, loc) =>
+          I.ICJSON (evalPlexp tvarEnv env plexp, evalTy' ty, loc)
       end
 
   and evalFfiFun tvarEnv env ffiFun =
@@ -1013,10 +1040,11 @@ local
         {args=icpatList, body=evalPlexp tvarEnv evalEnv plexp}
       end
 
-  fun evalPlstrdec (topEnv:V.topEnv) path plstrdec : V.env * I.icdecl list =
+  fun evalPlstrdec (renameEnv:renameEnv) (topEnv:V.topEnv) path plstrdec 
+      : renameEnv * V.env * I.icdecl list =
       case plstrdec of
         P.PLCOREDEC (pdecl, loc) => 
-        evalPdecl path Ty.emptyTvarEnv (#Env topEnv) pdecl
+        evalPdecl (renameEnv:renameEnv) path Ty.emptyTvarEnv (#Env topEnv) pdecl
       | P.PLSTRUCTBIND (symbolPlstrexpList, loc) =>
         let
           val _ = EU.checkSymbolDuplication
@@ -1025,64 +1053,66 @@ local
                     (fn s => E.DuplicateStrName("420",s))
         in
           foldl
-            (fn ((symbol, plstrexp), (returnEnv, icdeclList)) =>
+            (fn ((symbol, plstrexp), (renameEnv, returnEnv, icdeclList)) =>
                 let
-                  val (strEntry, icdeclList1) = evalPlstrexp topEnv (path@[symbol]) plstrexp
+                  val (renameEnv, strEntry, icdeclList1) = evalPlstrexp renameEnv topEnv (path@[symbol]) plstrexp
                   val returnEnv = V.rebindStr (returnEnv, symbol, strEntry)
                 in
-                  (returnEnv, icdeclList@icdeclList1)
+                  (renameEnv, returnEnv, icdeclList@icdeclList1)
                 end
             )
-            (V.emptyEnv, nil)
+            (renameEnv, V.emptyEnv, nil)
             symbolPlstrexpList
         end
       | P.PLSTRUCTLOCAL (plstrdecList1, plstrdecList2, loc) =>
         let
           fun evalList topEnv plstrdecList =
               foldl
-                (fn (plstrdec, (returnEnv, icdeclList)) =>
+                (fn (plstrdec, (renameEnv, returnEnv, icdeclList)) =>
                     let
                       val evalEnv = V.topEnvWithEnv (topEnv, returnEnv)
-                      val (newEnv, icdeclList1) =
-                          evalPlstrdec evalEnv path plstrdec
+                      val (renameEnv, newEnv, icdeclList1) =
+                          evalPlstrdec (renameEnv:renameEnv) evalEnv path plstrdec
                     in
-                      (V.envWithEnv (returnEnv, newEnv),
+                      (renameEnv,
+                       V.envWithEnv (returnEnv, newEnv),
                        icdeclList@icdeclList1)
                     end
                 )
-                (V.emptyEnv, nil)
+                (renameEnv, V.emptyEnv, nil)
                 plstrdecList
-          val (returnEnv1,icdeclList1) = evalList topEnv plstrdecList1
+          val (renameEnv, returnEnv1,icdeclList1) = evalList topEnv plstrdecList1
           val evalTopEnv = V.topEnvWithEnv(topEnv, returnEnv1)
-          val (returnEnv2,icdeclList2) = evalList evalTopEnv plstrdecList2
+          val (renameEnv, returnEnv2,icdeclList2) = evalList evalTopEnv plstrdecList2
         in
-          (returnEnv2, icdeclList1 @ icdeclList2)
+          (renameEnv, returnEnv2, icdeclList1 @ icdeclList2)
         end
 
-  and evalPlstrexp (topEnv as {Env = env, FunE, SigE}) path plstrexp
-      : V.strEntry * I.icdecl list =
+  and evalPlstrexp (renameEnv:renameEnv) (topEnv as {Env = env, FunE, SigE}) path plstrexp
+      : renameEnv * V.strEntry * I.icdecl list =
       case plstrexp of
         (* struct ... end *)
         P.PLSTREXPBASIC (plstrdecList, loc) =>
         let
           val strKind = V.STRENV (StructureID.generate())
-          val (returnEnv, icdeclList) =
+          val (renameEnv, returnEnv, icdeclList) =
               foldl
-                (fn (plstrdec, (returnEnv, icdeclList)) =>
+                (fn (plstrdec, (renameEnv, returnEnv, icdeclList)) =>
                     let
                       val evalTopEnv = V.topEnvWithEnv (topEnv, returnEnv)
-                      val (returnEnv1, icdeclList1) =
-                          evalPlstrdec evalTopEnv path plstrdec
+                      val (renameEnv, returnEnv1, icdeclList1) =
+                          evalPlstrdec (renameEnv:renameEnv) evalTopEnv path plstrdec
                     in
-                      (V.envWithEnv(returnEnv, returnEnv1),
+                      (renameEnv,
+                       V.envWithEnv(returnEnv, returnEnv1),
                        icdeclList @ icdeclList1
                       )
                     end
                 )
-                (V.emptyEnv, nil)
+                (renameEnv, V.emptyEnv, nil)
                 plstrdecList
         in
-          ({env=returnEnv, strKind=strKind}, icdeclList)
+          (renameEnv, {env=returnEnv, strKind=strKind}, icdeclList)
         end
       | P.PLSTRID longsymbol =>
         (let
@@ -1091,21 +1121,21 @@ local
            val loc = Symbol.longsymbolToLoc longsymbol
            val env = V.replaceLocEnv loc env
          in
-          ({env=env, strKind=strKind}, nil)
+          (renameEnv, {env=env, strKind=strKind}, nil)
         end
         handle V.LookupStr =>
                let
                  val loc = Symbol.longsymbolToLoc longsymbol
                in
                  (EU.enqueueError (loc, E.StrNotFound("430",{longsymbol = longsymbol}));
-                  ({env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())}, nil)
+                  (renameEnv, {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())}, nil)
                  )
                end
         )
       | P.PLSTRTRANCONSTRAINT (plstrexp, plsigexp, loc) =>
         (
         let
-          val ({env=strEnv,strKind=strKind}, icdeclList1) = evalPlstrexp topEnv path plstrexp
+          val (renameEnv, {env=strEnv,strKind=strKind}, icdeclList1) = evalPlstrexp renameEnv topEnv path plstrexp
           val specEnv = Sig.evalPlsig topEnv plsigexp
           val specEnv = #2 (Sig.refreshSpecEnv specEnv)
           val (returnEnv, specDeclList2) =
@@ -1125,15 +1155,15 @@ local
               then strKind
               else V.STRENV(StructureID.generate())
         in
-          ({env=returnEnv,strKind=strKind}, icdeclList1 @ specDeclList2)
+          (renameEnv, {env=returnEnv,strKind=strKind}, icdeclList1 @ specDeclList2)
         end
-        handle SC.SIGCHECK => ({env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())}, nil)
+        handle SC.SIGCHECK => (renameEnv, {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())}, nil)
         )
 
       | P.PLSTROPAQCONSTRAINT (plstrexp, plsigexp, loc) =>
         (
         let
-           val ({env=strEnv, strKind=_}, icdeclList1) = evalPlstrexp topEnv path plstrexp
+           val (renameEnv, {env=strEnv, strKind=_}, icdeclList1) = evalPlstrexp renameEnv topEnv path plstrexp
            val specEnv = Sig.evalPlsig topEnv plsigexp
            val specEnv = #2 (Sig.refreshSpecEnv specEnv)
            val strKind = V.STRENV (StructureID.generate())
@@ -1147,45 +1177,48 @@ local
                   }
            val returnEnv = V.replaceLocEnv loc returnEnv
         in
-          ({env=returnEnv,strKind=strKind}, icdeclList1 @ specDeclList2)
+          (renameEnv, {env=returnEnv,strKind=strKind}, icdeclList1 @ specDeclList2)
         end
-        handle SC.SIGCHECK => ({env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())}, nil)
+        handle SC.SIGCHECK => (renameEnv, {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())}, nil)
         )
 
       | P.PLFUNCTORAPP (symbol, longsymbol, loc) =>
         let
-          val {env, icdecls, funId, argId} = applyFunctor topEnv (path, symbol, longsymbol, loc)
+          val (renameEnv, {env, icdecls, funId, argId}) = 
+              applyFunctor renameEnv topEnv (path, symbol, longsymbol, loc)
           val structureId = StructureID.generate()
           val strKind = V.FUNAPP {id=structureId, funId=funId, argId=argId}
         in
-          ({env=env, strKind=strKind}, icdecls)
+          (renameEnv, {env=env, strKind=strKind}, icdecls)
         end
 
       | P.PLSTRUCTLET (plstrdecList, plstrexp, loc) =>
         let
-          val (returnEnv1, icdeclList1) =
+          val (renameEnv, returnEnv1, icdeclList1) =
               foldl
-                (fn (plstrdec, (returnEnv1, icdeclList1)) =>
+                (fn (plstrdec, (renameEnv, returnEnv1, icdeclList1)) =>
                     let
                       val evalTopEnv = V.topEnvWithEnv (topEnv, returnEnv1)
-                      val (newReturnEnv, newIcdeclList) =
-                          evalPlstrdec evalTopEnv nilPath plstrdec
+                      val (renameEnv,newReturnEnv, newIcdeclList) =
+                          evalPlstrdec (renameEnv:renameEnv) evalTopEnv nilPath plstrdec
                     in
-                      (V.envWithEnv (returnEnv1, newReturnEnv),
+                      (renameEnv, V.envWithEnv (returnEnv1, newReturnEnv),
                        icdeclList1 @ newIcdeclList)
                     end
                 )
-              (V.emptyEnv, nil)
+              (renameEnv, V.emptyEnv, nil)
               plstrdecList
           val evalEnv = V.topEnvWithEnv(topEnv, returnEnv1)
-          val (strEntry, icdeclList2) = evalPlstrexp evalEnv path plstrexp
+          val (renameEnv, strEntry, icdeclList2) = evalPlstrexp renameEnv evalEnv path plstrexp
         in
-          (strEntry, icdeclList1 @ icdeclList2)
+          (renameEnv, strEntry, icdeclList1 @ icdeclList2)
         end
 
-  and applyFunctor (topEnv as {Env = env, FunE, SigE})
+  and applyFunctor renameEnv
+                   (topEnv as {Env = env, FunE, SigE})
                    (copyPath, funName, argPath, loc)
-      : {env:V.env, 
+      : renameEnv *
+         {env:V.env, 
          icdecls:I.icdecl list, 
          funId:FunctorID.id, 
          argId:StructureID.id} = 
@@ -1357,8 +1390,8 @@ local
             let
               val argSigEnv = #2 (Sig.refreshSpecEnv argSigEnv)
                            handle e => raise e
-              val ({env=argStrEnv,strKind},_) =
-                  evalPlstrexp topEnv nilPath (P.PLSTRID argPath)
+              val (renameEnv, {env=argStrEnv,strKind},_) =
+                  evalPlstrexp renameEnv topEnv nilPath (P.PLSTRID argPath)
                   handle e => raise e
               val argId = case strKind of
                             V.STRENV id => id
@@ -1494,10 +1527,10 @@ val _ = U.print "bodyVarList ******************************************\n"
 val _ = map (fn (path, v) => (U.printPath path; U.print "_"; U.printExp v; U.print "\n")) bodyVarList
 val _ = U.print "\n"
 *)
-        val (_, returnEnv, patFields, exntagDecls) =
+        val (returnEnv, patFields, exntagDecls) =
             foldl
-              (fn ((bindPath, I.ICVAR {longsymbol, id=_}),
-                   (n, returnEnv, patFields, exntagDecls)) =>
+              (fn ((label, (bindPath, I.ICVAR {longsymbol, id=_})),
+                   (returnEnv, patFields, exntagDecls)) =>
                   let
                     val newId = VarID.generate()
                     val varInfo = {id=newId, longsymbol=longsymbol}
@@ -1505,15 +1538,14 @@ val _ = U.print "\n"
                     val newPat = I.ICPATVAR_TRANS varInfo
                     val returnEnv = V.rebindIdLongsymbol(returnEnv, bindPath, newIdstatus)
                   in
-                    (n + 1,
-                     returnEnv,
-                     patFields @[(Int.toString n, newPat)],
+                    (returnEnv,
+                     patFields @[(label, newPat)],
                      exntagDecls
                     )
                   end
                 | (* need to check this case *)
-                  ((bindPath, I.ICEXN {longsymbol, ty, id}),
-                   (n, returnEnv, patFields,exntagDecls)) =>
+                  ((label, (bindPath, I.ICEXN {longsymbol, ty, id})),
+                   (returnEnv, patFields,exntagDecls)) =>
                   let
                     (* FIXME: here we generate env with IDEXN env and
                        exception tag E = x decl.
@@ -1530,15 +1562,14 @@ val _ = U.print "\n"
                     val exntagd =
                         I.ICEXNTAGD({exnInfo=exnInfo, varInfo=varInfo},loc)
                   in
-                    (n + 1,
-                     returnEnv,
-                     patFields @[(Int.toString n, newPat)],
+                    (returnEnv,
+                     patFields @[(label, newPat)],
                      exntagDecls
                     )
                   end
                 | (* see: bug 061_functor.sml *)
-                  ((bindPath, I.ICEXVAR {longsymbol,...}),
-                   (n, returnEnv, patFields, exntagDecls)) =>
+                  ((label, (bindPath, I.ICEXVAR {longsymbol,...})),
+                   (returnEnv, patFields, exntagDecls)) =>
                   let
                     val newId = VarID.generate()
                     val newVarInfo = {id=newId, longsymbol=longsymbol}
@@ -1547,15 +1578,14 @@ val _ = U.print "\n"
                     val returnEnv =
                         V.rebindIdLongsymbol(returnEnv, bindPath, newIdstatus)
                   in
-                    (n + 1,
-                     returnEnv,
-                     patFields @[(Int.toString n, newPat)],
+                    (returnEnv,
+                     patFields @[(label, newPat)],
                      exntagDecls
                     )
                   end
                 | (* see: bug 061_functor.sml *)
-                  ((bindPath, I.ICEXN_CONSTRUCTOR (exnInfo as {longsymbol, ty, ...})),
-                   (n, returnEnv, patFields, exntagDecls)) =>
+                  ((label, (bindPath, I.ICEXN_CONSTRUCTOR (exnInfo as {longsymbol, ty, ...}))),
+                   (returnEnv, patFields, exntagDecls)) =>
                   let
                     val newId = VarID.generate()
                     val newVarInfo = {id=newId, longsymbol = longsymbol}
@@ -1565,13 +1595,12 @@ val _ = U.print "\n"
                         I.ICEXNTAGD ({exnInfo=exnInfo, varInfo=newVarInfo},
                                      loc)
                   in
-                    (n + 1,
-                     returnEnv,
-                     patFields @[(Int.toString n, newPat)],
+                    (returnEnv,
+                     patFields @[(label, newPat)],
                      exntagDecls @ [exntagDecl]
                     )
                   end
-                | ((bindPath, exp), _) =>
+                | ((_, (bindPath, exp)), _) =>
                   (
                    U.print "body var\n";
                    U.printExp  exp;
@@ -1583,8 +1612,8 @@ val _ = U.print "\n"
 CHECKME: bug 119            
               (1, V.emptyEnv, nil, nil)
 *)
-              (1, bodyEnv, nil, nil)
-              bodyVarList
+              (bodyEnv, nil, nil)
+              (RecordLabel.tupleList bodyVarList)
 
         val resultPat =
             case patFields of
@@ -1680,24 +1709,31 @@ CHECKME: bug 119
             I.ICVAL(Ty.emptyScopedTvars,[(resultPat, functorBody)],loc)
 
       in (* applyFunctor *)
+        (renameEnv,
         {funId=functorId, 
          argId=argId,
          env=returnEnv, 
          icdecls=actualArgDecls @ [functorAppDecl] @ exntagDecls
         }
+        )
       end
       handle 
-      SC.SIGCHECK => {funId=FunctorID.generate(),
-                      argId = StructureID.generate(),
-                      env=V.emptyEnv, 
-                      icdecls=nil}
-    | FunIDUndefind  =>
-      (EU.enqueueError
-         (loc, E.FunIdUndefined("450", {symbol = funName}));
+      SC.SIGCHECK => 
+      (renameEnv, 
        {funId=FunctorID.generate(),
         argId = StructureID.generate(),
         env=V.emptyEnv, 
         icdecls=nil}
+      )
+    | FunIDUndefind  =>
+      (EU.enqueueError
+         (loc, E.FunIdUndefined("450", {symbol = funName}));
+       ( renameEnv,
+         {funId=FunctorID.generate(),
+          argId = StructureID.generate(),
+          env=V.emptyEnv, 
+          icdecls=nil}
+       )
       )
 
   fun bindBuiltinIdstatus loc path idstatus declsRev =
@@ -1749,7 +1785,7 @@ CHECKME: bug 119
         (V.ENV{varE=varE, tyE=tyE, strE=V.STR envMap}, declsRev)
       end
 
-  fun evalFunctor {topEnv, version:int option} {pltopdec, pitopdec} =
+  fun evalFunctor renameEnv  {topEnv, version:int option} {pltopdec, pitopdec} =
       let
         val {name=nameSymbol,
              argStrName= argStrNameSymbol, 
@@ -1783,7 +1819,7 @@ val _ = U.printEnv topArgEnv
         val typidSetArg = FU.typidSet (#env argStrEntry)
 
         val evalEnv = V.topEnvWithEnv (topEnv, topArgEnv)
-        val ({env=returnEnv,strKind}, bodyDecls) = evalPlstrexp evalEnv nilPath body
+        val (renameEnv, {env=returnEnv,strKind}, bodyDecls) = evalPlstrexp renameEnv evalEnv nilPath body
 
 val _ = U.print "evalFunctor returnEnv\n"
 val _ = U.printEnv returnEnv
@@ -1848,7 +1884,7 @@ val _ = U.printEnv returnEnv
         val bodyExp =
             case allVars of
               nil => I.ICCONSTANT (A.UNITCONST defLoc)
-            | _ => I.ICRECORD (TupleUtils.listToTuple allVars, defLoc)
+            | _ => I.ICRECORD (RecordLabel.tupleList allVars, defLoc)
         val functorExp1 =
             case polyArgPats of
               nil => I.ICLET (exnTagDecls @ bodyDecls, [bodyExp], defLoc)
@@ -1911,16 +1947,16 @@ val _ = U.printEnv returnEnv
         val funE =  V.rebindFunE(SymbolEnv.empty, nameSymbol, funEEntry)
         val returnTopEnv = V.topEnvWithFunE(V.emptyTopEnv, funE)
       in (* evalFunctor *)
-        (returnTopEnv, tfvDecls@[functorDecl])
+        (renameEnv, returnTopEnv, tfvDecls@[functorDecl])
       end
 
-  fun evalPltopdec {topEnv, version:int option} pltopdec =
+  fun evalPltopdec (renameEnv:renameEnv) {topEnv, version:int option} pltopdec =
       case pltopdec of
         PI.TOPDECSTR (plstrdec, loc) =>
         let
-          val (env, icdeclList) = evalPlstrdec topEnv nilPath plstrdec
+          val (renameEnv, env, icdeclList) = evalPlstrdec (renameEnv:renameEnv) topEnv nilPath plstrdec
         in
-          (V.topEnvWithEnv(V.emptyTopEnv, env), icdeclList)
+          (renameEnv, V.topEnvWithEnv(V.emptyTopEnv, env), icdeclList)
         end
       | PI.TOPDECSIG (symbolPlsigexpList, loc) =>
         let
@@ -1943,7 +1979,7 @@ val _ = U.printEnv returnEnv
                 SymbolEnv.empty
                 symbolPlsigexpList
         in
-          (V.topEnvWithSigE(V.emptyTopEnv, sigE), nil)
+          (renameEnv, V.topEnvWithSigE(V.emptyTopEnv, sigE), nil)
         end
       | PI.TOPDECFUN (functordeclList,loc) =>
         let
@@ -1953,33 +1989,33 @@ val _ = U.printEnv returnEnv
                     (fn s => E.DuplicateFunctor("470",s))
         in
           foldl
-            (fn (functordecl, (returnTopEnv, icdecList)) =>
+            (fn (functordecl, (renameEnv, returnTopEnv, icdecList)) =>
                 let
-                  val (topEnv1, icdecList1) =
-                      evalFunctor {topEnv=topEnv, version=version} functordecl
+                  val (renameEnv, topEnv1, icdecList1) =
+                      evalFunctor renameEnv {topEnv=topEnv, version=version} functordecl
                   val returnTopEnv =
                       V.topEnvWithTopEnv(returnTopEnv, topEnv1)
                 in
-                  (returnTopEnv, icdecList@icdecList1)
+                  (renameEnv, returnTopEnv, icdecList@icdecList1)
                 end
             )
-            (V.emptyTopEnv, nil)
+            (renameEnv, V.emptyTopEnv, nil)
             functordeclList
         end
 
-  fun evalPltopdecList {topEnv, version:int option} pltopdecList =
+  fun evalPltopdecList (renameEnv:renameEnv) {topEnv, version:int option} pltopdecList =
       foldl
-        (fn (pltopdec, (returnTopEnv, icdecList)) =>
+        (fn (pltopdec, (renameEnv, returnTopEnv, icdecList)) =>
           let
             val evalTopEnv = V.topEnvWithTopEnv (topEnv, returnTopEnv)
-            val (returnTopEnv1, icdecList1) =
-                evalPltopdec {topEnv=evalTopEnv, version=version} pltopdec
+            val (renameEnv, returnTopEnv1, icdecList1) =
+                evalPltopdec (renameEnv:renameEnv) {topEnv=evalTopEnv, version=version} pltopdec
             val returnTopEnv = V.topEnvWithTopEnv(returnTopEnv, returnTopEnv1)
           in
-            (returnTopEnv, icdecList @ icdecList1)
+            (renameEnv, returnTopEnv, icdecList @ icdecList1)
           end
         )
-        (V.emptyTopEnv, nil)
+        (renameEnv, V.emptyTopEnv, nil)
         pltopdecList
 
 (*
@@ -2282,11 +2318,12 @@ So we change exnSet to path exnMap in genExportIdstatus
           (app (setUsedflagInTy env) instances;
            app (setUsedflagInOprimSelector env) operators)
         | T.UNIV => ()
+        | T.JSON => ()
         | T.BOXED => ()
         | T.UNBOXED => ()
-        | T.REC tyMap => LabelEnv.app (setUsedflagInTy env) tyMap
+        | T.REC tyMap => RecordLabel.Map.app (setUsedflagInTy env) tyMap
         | T.JOIN (tyMap, ty1, ty2, loc) =>
-          (LabelEnv.app (setUsedflagInTy env) tyMap;
+          (RecordLabel.Map.app (setUsedflagInTy env) tyMap;
            setUsedflagInTy env ty1;
            setUsedflagInTy env ty2)
     and setUsedflagInTy env ty =
@@ -2299,7 +2336,7 @@ So we change exnSet to path exnMap in genExportIdstatus
         | T.TYVARty (ref (T.SUBSTITUTED ty)) => setUsedflagInTy env ty
         | T.BOUNDVARty _ => ()
         | T.FUNMty (argTys, retTy) => app (setUsedflagInTy env) (retTy::argTys)
-        | T.RECORDty tyMap => LabelEnv.app (setUsedflagInTy env) tyMap
+        | T.RECORDty tyMap => RecordLabel.Map.app (setUsedflagInTy env) tyMap
         | T.CONSTRUCTty {tyCon, args} => app (setUsedflagInTy env) args
         | T.POLYty {boundtvars, body} =>
           (BoundTypeVarID.Map.app (setUsedflagInBtvKind env) boundtvars;
@@ -2506,14 +2543,14 @@ in (* local *)
 
         val _ = clearUsedflag evalTopEnv
 
-        val (returnTopEnvInclude, topdecListInclude) =
-            evalPltopdecList {topEnv=evalTopEnv, version=version} topdecsInclude
+        val (renameEnv, returnTopEnvInclude, topdecListInclude) =
+            evalPltopdecList (emptyRenameEnv:renameEnv) {topEnv=evalTopEnv, version=version} topdecsInclude
             handle e => raise e
 
         val evalTopEnv = V.topEnvWithTopEnv(evalTopEnv, returnTopEnvInclude)
 
-        val (returnTopEnvSource, topdecListSource) =
-            evalPltopdecList {topEnv=evalTopEnv, version=version} topdecsSource
+        val (renameEnv, returnTopEnvSource, topdecListSource) =
+            evalPltopdecList (renameEnv:renameEnv) {topEnv=evalTopEnv, version=version} topdecsSource
             handle e => raise e
 
         val returnTopEnv = V.topEnvWithTopEnv(returnTopEnvInclude, returnTopEnvSource)
@@ -2545,7 +2582,7 @@ in (* local *)
 
         val returnTopEnv = reduceTopEnv returnTopEnv
         val exnConList = (map EXN exnInfoList) @ (map EXEXN (LongsymbolEnv.listItems externSet))
-
+        val returnTopEnv = RL.renameLomgsymbolTopEnv renameEnv returnTopEnv
       in
         case EU.getErrors () of
           [] => (exnConList, returnTopEnv, returnDecls, EU.getWarnings())
@@ -2558,6 +2595,7 @@ in (* local *)
         ({interfaceDecs, requiredIds, topdecsInclude}:PI.interface_unit) =
       let
         val _ = EU.initializeErrorQueue()
+        val renameEnv = emptyRenameEnv
         val topdecsInclude =
             map (fn P.PLTOPDECSIG x => PI.TOPDECSIG x
                   | _ => raise Bug.Bug "non sig entry in topdecsInclude")
@@ -2571,8 +2609,8 @@ in (* local *)
               interfaceEnv
         val topEnvRequire = unionRequiredTopEnv interfaceEnv topEnv requiredIds
         val topEnv = V.topEnvWithTopEnv (topEnv, topEnvRequire)
-        val (topEnvInclude, itopdecsInclude) =
-            evalPltopdecList {topEnv=topEnv, version=NONE} topdecsInclude
+        val (renameEnv, topEnvInclude, itopdecsInclude) =
+            evalPltopdecList (renameEnv:renameEnv) {topEnv=topEnv, version=NONE} topdecsInclude
         val _ =
             case itopdecsInclude of
               nil => ()
@@ -2602,11 +2640,12 @@ in (* local *)
             topdecsInclude
         val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
         val topEnv =  unionRequiredTopEnv interfaceEnv topEnv requiredIds
-        val (topEnvInclude, topdecListInclude) =
-            evalPltopdecList {topEnv=topEnv, version=NONE} topdecsInclude
+        val (renameEnv, topEnvInclude, topdecListInclude) =
+            evalPltopdecList (emptyRenameEnv:renameEnv) {topEnv=topEnv, version=NONE} topdecsInclude
             handle e => raise e
         val returnTopEnv = V.topEnvWithTopEnv(topEnv, topEnvInclude)
         val returnTopEnv = reduceTopEnv returnTopEnv
+        val returnTopEnv = RL.renameLomgsymbolTopEnv renameEnv returnTopEnv
       in
         case EU.getErrors () of
           [] => (returnTopEnv, EU.getWarnings())

@@ -13,12 +13,6 @@
 #endif
 #include "object.h"
 
-/*
- * sml_raise requires a 60-byte work area allocated by sml_alloc.
- * See also LLVMGen.sml.
- */
-#define SML_RAISE_ALLOC_SIZE  60
-
 #define LANG_SMLSHARP     (('S'<<24)|('M'<<16)|('L'<<8)|'#')
 #define VENDOR_SMLSHARP   ((uint64_t)LANG_SMLSHARP << 32)
 #define EXNCLASS_SMLSHARP (VENDOR_SMLSHARP | LANG_SMLSHARP)
@@ -28,32 +22,13 @@
 
 /*
  * low-level exception object handled by Itanium C++ ABI.
- * The size of this struct must be smaller than SML_RAISE_ALLOC_SIZE.
- * IA-64 ABI says that struct _Unwind_Exception must be 8 byte aligned;
- * therefore, sizeof(struct exception) should be 60 bytes in any 64-bit
- * platform.
- * NOTE: Linux provides this structure with the maximum alignment.
- * Consequently, the size of this structure is typically 64 bytes in 64-bit
- * Linux. In any case, offsetof(struct exception, found_cleanup) is 48 bytes.
  */
 struct exception {
 	struct _Unwind_Exception header;
 	void *exn_obj;           /* ML's exn object */
 	uintptr_t handler_addr;  /* handler address found in SEARCH phase */
-	int found_cleanup;       /* a cleanup is found in SEARCH phase or not */
+	unsigned int num_cleanup;
 };
-
-/* size of struct exception.  Use offsetof instead of sizeof(struct exception)
- * in order to ignore paddings. */
-#define SIZE_OF_STRUCT_EXCEPTION \
-	(offsetof(struct exception, found_cleanup) + sizeof(int))
-/* size of struct exception as an SML# record object */
-#define EXCEPTION_ALLOC_SIZE \
-	(CEILING(SIZE_OF_STRUCT_EXCEPTION, SIZEOF_BITMAP) + SIZEOF_BITMAP)
-#define EXCEPTION_HEADER \
-	OBJ_HEADER_WORD(OBJTYPE_RECORD, EXCEPTION_ALLOC_SIZE - SIZEOF_BITMAP)
-#define EXCEPTION_BITMAP \
-	STRUCT_BITMAP(struct exception, exn_obj)
 
 /*
  * The internal structure of SML# exception objects.
@@ -103,9 +78,9 @@ sml_matchcomp_bug()
 /* called if an SML# exception is caught by a handler in another language. */
 static void
 cleanup(_Unwind_Reason_Code reason ATTR_UNUSED,
-	struct _Unwind_Exception *exc ATTR_UNUSED)
+	struct _Unwind_Exception *exc)
 {
-	/* nothing to do */
+	free(exc);
 }
 
 static void
@@ -138,27 +113,24 @@ backtrace()
 }
 
 SML_PRIMITIVE void
-sml_raise(void *work_area, void *exn)
+sml_raise(void *exn)
 {
 	struct exception *e;
 	_Unwind_Reason_Code ret;
 
-	/* We allocate an low-level exception object (struct exception)
-	 * in SML# heap.  The low-level object must be kept alive until
-	 * unwinding is completed and control reaches a landing pad.
-	 * Since there is no GC safe point between here to a landing pad,
-	 * the low-level object never be traced and reclaimed by garbage
-	 * collector until a landing pad; therefore we do not need to
-	 * initialize it as an SML# object and add it to the root set. */
-	if (EXCEPTION_ALLOC_SIZE > SML_RAISE_ALLOC_SIZE)
-		sml_fatal(0, "exception is larger than SML_RAISE_ALLOC_SIZE");
-
-	e = work_area;
+	/* The exn object must be kept alive until control reaches an SML#
+	 * exception handler, but must not be in a stack frame.  To protect
+	 * it from GC, we perform unwinding of ML stack frames in SML#
+	 * context.  Before switching to C stack frames, the exn object must
+	 * be saved by sml_save_exn.
+	 */
+	e = xmalloc(sizeof(struct exception));
 	e->header.exception_class = EXNCLASS_SMLSHARP;
 	e->header.exception_cleanup = cleanup;
 	e->exn_obj = exn;
 	e->handler_addr = 0;
-	e->found_cleanup = 0;
+	e->num_cleanup = 0;
+
 	ret = _Unwind_RaiseException(&e->header);
 
 	/* control reaches here if unwinding failed */
@@ -197,15 +169,18 @@ read_udata4(const unsigned char **src_p)
 	return ret;
 }
 
+#define CATCH 0x1
+#define CLEANUP 0x2
+
 struct landing_pad {
 	uintptr_t addr;   /* landing pad address; 0 means no landing pad */
-	int catch;        /* 0 = cleanup; non-zero = catch all */
+	unsigned int catch;
 };
 
 static struct landing_pad
 search_lpad(struct _Unwind_Context *context)
 {
-	const unsigned char *src, *tabend;
+	const unsigned char *src, *actiontab;
 	uintptr_t lpstart, tablen, ip, start, lpad, len;
 	unsigned char action;
 	struct landing_pad ret;
@@ -213,15 +188,16 @@ search_lpad(struct _Unwind_Context *context)
 	/* The language-specific data is organized by LLVM in the following
 	 * structure, which is compatible with GCC's except_tab:
 	 * struct packed {
-	 *   uint8_t  lpstart_enc;  // always DW_EH_PE_omit (0xff)
-	 *   uint8_t  ttype_enc;    // we ignore it
-	 *   uleb128  ttype_off;    // we ignore it
-	 *   uint8_t  callsite_enc; // always DW_EH_PE_udata4 (0x03)
-	 *   uleb128  callsite_len; // length of CallSiteTable in bytes
+	 *   uint8_t   lpstart_enc;  // always DW_EH_PE_omit (0xff)
+	 *   uint8_t   ttype_enc;    // we ignore it
+	 *   uleb128   ttype_off;    // we ignore it
+	 *   uint8_t   callsite_enc; // always DW_EH_PE_udata4 (0x03)
+	 *   uleb128   callsite_len; // length of CallSiteTable in bytes
 	 *   struct {
-	 *     udata4 cs_start;     // start address (relative to RegionStart)
-	 *     udata4 cs_len;       // code range length
-	 *     udata4 cs_lpad;      // landing pad address (ditto)
+	 *     udata4  cs_start;     // start address (relative to RegionStart)
+	 *     udata4  cs_len;       // code range length
+	 *     udata4  cs_lpad;      // landing pad address (ditto)
+	 *     uleb128 action;       // ([index of action] - 1) or 0
 	 *   } CallSiteTable[];
 	 * };
 	 */
@@ -239,11 +215,11 @@ search_lpad(struct _Unwind_Context *context)
 	if (*(src++) != DW_EH_PE_udata4)
 		sml_fatal(0, "call-site table encoding must be udata4");
 	tablen = read_uleb128(&src);
-	tabend = src + tablen;
+	actiontab = src + tablen;
 
 	ip = _Unwind_GetIP(context);
 
-	while (src < tabend) {
+	while (src < actiontab) {
 		start = read_udata4(&src) + lpstart;
 		len = read_udata4(&src);
 		lpad = read_udata4(&src);
@@ -255,11 +231,16 @@ search_lpad(struct _Unwind_Context *context)
 			break;
 
 		if (ip <= start + len) {
-			/* In SML#, "action" is a 1-bit flag indicating that
-			 * this is either an ML exception handler (action != 0)
-			 * or a cleanup (action == 0). */
 			ret.addr = (lpad == 0) ? 0 : lpad + lpstart;
-			ret.catch = action;
+			/* In SML#, there are only three kinds of landing pads:
+			 * cleanup, catch i8* null, and cleanup catch i8* null.
+			 */
+			if (action == 0)
+				ret.catch = CLEANUP;
+			else if (*(actiontab + action) == 0)
+				ret.catch = CATCH;
+			else
+				ret.catch = CLEANUP | CATCH;
 			return ret;
 		}
 	}
@@ -279,17 +260,16 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 		return _URC_FATAL_PHASE1_ERROR;
 
 	if (actions & _UA_SEARCH_PHASE) {
-		if (exnclass != EXNCLASS_SMLSHARP)
-			return _URC_CONTINUE_UNWIND;
 		lpad = search_lpad(context);
-		if (lpad.addr == 0)
-			return _URC_CONTINUE_UNWIND;
-		if (!lpad.catch) {
-			e->found_cleanup = 1;
-			return _URC_CONTINUE_UNWIND;
+		if (exnclass == EXNCLASS_SMLSHARP
+		    && lpad.addr
+		    && (lpad.catch & CATCH)) {
+			e->handler_addr = lpad.addr;
+			return _URC_HANDLER_FOUND;
 		}
-		e->handler_addr = lpad.addr;
-		return _URC_HANDLER_FOUND;
+		if (lpad.catch & CLEANUP)
+			e->num_cleanup++;
+		return _URC_CONTINUE_UNWIND;
 	}
 
 	if (!(actions & _UA_CLEANUP_PHASE))
@@ -300,60 +280,64 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 			return _URC_FATAL_PHASE2_ERROR;
 		lpad.addr = e->handler_addr;
 
-		/* Unwinding is completed and we are going back an SML# code.
-		 * _Unwind_Excetion is no longer needed.  Thus we only pass
-		 * the ML exn object to the SML# code as the second return
-		 * value. */
+		/* Unwinding is completed. */
 		ret1 = NULL;
 		ret2 = e->exn_obj;
+		free(e);
 	} else {
 		/* If no cleanup is found in SEARCH phase, we can safely skip
 		 * searching for a cleanup landing pad. */
-		if (exnclass == EXNCLASS_SMLSHARP && !e->found_cleanup)
+		if (e->num_cleanup == 0)
 			return _URC_CONTINUE_UNWIND;
+
 		lpad = search_lpad(context);
 		if (lpad.addr == 0)
 			return _URC_CONTINUE_UNWIND;
-		assert(lpad.catch == 0);
+		assert(lpad.catch & CLEANUP);
+		e->num_cleanup--;
 
-		/* We are going into an SML# code temprarily; unwinding will
-		 * be resumed with the low-level exception object. */
-		if (exnclass == EXNCLASS_SMLSHARP) {
-			/* To protect the low-level object from garbage
-			 * collection, its header and bitmap must be
-			 * initialized as an SML# record object. */
-			*OBJ_BEGIN(e) = EXCEPTION_HEADER;
-			*OBJ_BITMAP(e) = EXCEPTION_BITMAP;
-			ret1 = NULL;
-			ret2 = e;
-		} else {
-			ret1 = ue;
-			ret2 = NULL;
-		}
+		ret1 = ue;
+		ret2 = (exnclass == EXNCLASS_SMLSHARP) ? e->exn_obj : NULL;
 	}
 
-	/* Return to an SML# code through a landing pad.
-	 * The first return value is the foreign pointer to _Unwind_Exception.
-	 * It may be null if it is no longer needed or it is allocated in
-	 * SML# heap.
-	 * The second return value is an ML object relevant to the landing
-	 * pad.  It may be null if a cleanup handler is invoked with a
-	 * foreign exception.
-	 * If the second value is not null, the cleanup handler must pass
-	 * the second value to _Unwind_Resume.  This means that the cleanup
-	 * must protect the second value from garbage collection.
-	 *
-	 * ToDo: Note that cleanup handlers in other languages may be invoked
-	 *       during unwinding.  We assume that cleanup handlers in other
-	 *       languages never cause SML# GC.  If some of them would cause
-	 *       GC, the low-level exception object would be reclaimed
-	 *       unexpectedly.  We need somehow to put it to root set during
-	 *       unwinding.
+	/* We are going back to SML# code through a landing pad.
+	 * There are two pointers passed to SML# code: "ret1" for a pointer
+	 * to _Unwind_Exception and "ret2" for an SML# exception object.
+	 * "ret1" is NULL when unwinding is finished.  "ret2" may be NULL
+	 * if the exception is a foreign exception, i.e. not an SML#
+	 * exception.  Note that "ret1" is allocated in SML# heap but its
+	 * liveness is not ensured by the runtime; liveness management of
+	 * ret1 and ret2 is the responsibility of the user code.
+	 * To keep _Unwind_Exception alive during unwinding of C frames,
+	 * the runtime provides sml_save_exn feature.
 	 */
+
 	_Unwind_SetIP(context, lpad.addr);
 	_Unwind_SetGR(context, __builtin_eh_return_data_regno(0),
 		      __builtin_extend_pointer(ret1));
 	_Unwind_SetGR(context, __builtin_eh_return_data_regno(1),
 		      __builtin_extend_pointer(ret2));
 	return _URC_INSTALL_CONTEXT;
+}
+
+SML_PRIMITIVE void
+sml_save_exn(void *arg)
+{
+	struct _Unwind_Exception *ue = arg;
+	if (ue && ue->exception_class == EXNCLASS_SMLSHARP)
+		sml_save_exn_internal(((struct exception *)ue)->exn_obj);
+}
+
+SML_PRIMITIVE void *
+sml_unsave_exn(void *arg)
+{
+	struct _Unwind_Exception *ue = arg;
+	void *obj = NULL;
+
+	if (!ue || ue->exception_class == EXNCLASS_SMLSHARP) {
+		obj = sml_save_exn_internal(NULL);
+		if (ue)
+			((struct exception *)ue)->exn_obj = obj;
+	}
+	return obj;
 }

@@ -56,8 +56,6 @@ INSTALL_DATA = @INSTALL_DATA@
 #DOXYGEN = @DOXYGEN@
 #EGREP = @EGREP@
 XZ = @XZ@
-CPP = @CPP@
-CXXCPP = @CXXCPP@
 LLVM_AS = @LLVM_AS@
 
 # comment out the following lines in config.mk (not in config.mk.in!),

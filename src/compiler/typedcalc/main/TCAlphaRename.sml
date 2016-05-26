@@ -59,7 +59,7 @@ local
                      Option.map (map (copyFfiTy context)) ffiTyList2,
                      map (copyFfiTy context) ffiTyList3,
                      loc)
-      | TC.FFIRECORDTY (fields:(string * TC.ffiTy) list,loc) =>
+      | TC.FFIRECORDTY (fields:(RecordLabel.label * TC.ffiTy) list,loc) =>
         TC.FFIRECORDTY
           (map (fn (l,ty)=>(l, copyFfiTy context ty)) fields,loc)
 
@@ -172,19 +172,19 @@ local
         in
           (context, TC.TPPATLAYERED {asPat=asPat, loc=loc, varPat=varPat})
         end
-      | TC.TPPATRECORD {fields:TC.tppat LabelEnv.map, loc, recordTy} =>
+      | TC.TPPATRECORD {fields:TC.tppat RecordLabel.Map.map, loc, recordTy} =>
         let
           val recordTy = copyTy context recordTy
           val (context, fields) =
-              LabelEnv.foldli
+              RecordLabel.Map.foldli
               (fn (label, pat, (context, fields)) =>
                   let
                     val (context, pat) = copyPat context pat
                   in
-                    (context, LabelEnv.insert(fields, label, pat))
+                    (context, RecordLabel.Map.insert(fields, label, pat))
                   end
               )
-              (context, LabelEnv.empty)
+              (context, RecordLabel.Map.empty)
               fields
         in
           (context, TC.TPPATRECORD {fields=fields, loc=loc, recordTy=recordTy})
@@ -406,9 +406,9 @@ local
             }
         | TC.TPRAISE {exp, loc, ty} =>
           TC.TPRAISE {exp= copy exp, loc=loc, ty = copyT ty}
-        | TC.TPRECORD {fields:TC.tpexp LabelEnv.map, loc, recordTy} =>
+        | TC.TPRECORD {fields:TC.tpexp RecordLabel.Map.map, loc, recordTy} =>
           TC.TPRECORD
-            {fields=LabelEnv.map copy fields,
+            {fields=RecordLabel.Map.map copy fields,
              loc=loc,
              recordTy=copyT recordTy}
         | TC.TPSELECT {exp, expTy, label, loc, resultTy} =>

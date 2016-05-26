@@ -393,11 +393,13 @@ in
   * @params(btvEnv)
   * @formatter(appList) TermFormat.formatAppList
   * @formatter(recordList) TermFormat.formatEnclosedList
+  * @formatter(RecordLabel.label) RecordLabel.format_label
   *)
  (*% @prefix formatWithType_
   * @params(btvEnv)
   * @formatter(appList) TermFormat.formatAppList
   * @formatter(recordList) TermFormat.formatEnclosedList
+  * @formatter(RecordLabel.label) RecordLabel.format_label
   *)
  datatype ffiTy =
      (*%
@@ -423,7 +425,7 @@ in
           fields:recordList(field)("{",",","}")
         @format:field(k * ty) { k ":" 2[ +1 ty()(btvEnv) ] }
       *)
-     FFIRECORDTY of (string * ffiTy) list * loc (* order has meaning *)
+     FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc (* order has meaning *)
    | (*%
         @format(ty * loc) ty()(btvEnv)
       *)
@@ -441,8 +443,7 @@ in
    @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
    @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
    @formatter(declList) TermFormat.formatDeclList
-   @formatter(genericLmapExp) SmlppgUtil.formatGenericLmapExp
-   @formatter(genericLmapTy) SmlppgUtil.formatGenericLmapTy
+   @formatter(recordExp) TermFormat.formatRecordExp
    @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    @formatter(tyBindInfo) T.format_tyBindInfo
    @formatter(format_pathdot) Path.format_pathWithDotend
@@ -450,6 +451,7 @@ in
    @formatter(sigBindInfo) T.format_sigBindInfo
    @formatter(format_bmap_int) T.format_bmap_int
    @formatter(optionalList) TermFormat.formatOptionalList
+   @formatter(RecordLabel.label) RecordLabel.format_label
   *)
  (*% @prefix formatWithType_
    @params(btvEnv)
@@ -460,8 +462,7 @@ in
    @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
    @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
    @formatter(declList) TermFormat.formatDeclList
-   @formatter(genericLmapExp) SmlppgUtil.formatGenericLmapExp
-   @formatter(genericLmapTy) SmlppgUtil.formatGenericLmapTy
+   @formatter(recordExp) TermFormat.formatRecordExp
    @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    @formatter(tyBindInfo) T.format_tyBindInfo
    @formatter(format_pathdot) Path.format_pathWithDotend
@@ -469,6 +470,7 @@ in
    @formatter(sigBindInfo) T.format_sigBindInfo
    @formatter(format_bmap_int) T.format_bmap_int
    @formatter(optionalList) TermFormat.formatOptionalList
+   @formatter(RecordLabel.label) RecordLabel.format_label
   *)
   datatype tpexp 
     = (*%  
@@ -811,7 +813,7 @@ in
         L10{ "(""#"{selector} + "("{exp()(btvEnv)2[ +1 ":" ty()(btvEnv) ]}")"")" 
               2[ +1 ":" resultTy()(btvEnv) ] }
        *)
-      TPSELECT of {label:string, exp:tpexp, expTy:ty, resultTy:ty, loc:loc}
+      TPSELECT of {label:RecordLabel.label, exp:tpexp, expTy:ty, resultTy:ty, loc:loc}
     | (*%
           @format({label:label, 
                    recordExp:exp1, 
@@ -838,7 +840,7 @@ in
       *)
       TPMODIFY of 
       {
-       label: string,
+       label: RecordLabel.label,
        recordExp: tpexp, 
        recordTy: ty, 
        elementExp: tpexp, 
@@ -1497,29 +1499,29 @@ in
 
  withtype fields = 
      (*%
-      * @format(exp smap:genericLmapExp)
-        smap(exp()(btvEnv))("=","," +1)
+      * @format(exp smap:recordExp)
+        smap(exp()(btvEnv))
       *)
      (*% @prefix formatWithType_
-      * @format(exp smap:genericLmapExp)
-        smap(exp()(btvEnv))("=","," +1)
+      * @format(exp smap:recordExp)
+        smap(exp()(btvEnv))
       *)
-     tpexp LabelEnv.map
+     tpexp RecordLabel.Map.map
 
  and patfields = 
      (*%
-      * @format(pat smap:genericLmapExp)
+      * @format(pat smap:recordExp)
         1[
-           smap(pat()(btvEnv))("=","," +1)
+           smap(pat()(btvEnv))
          ]
       *)
      (*% @prefix formatWithType_
-      * @format(pat smap:genericLmapExp)
+      * @format(pat smap:recordExp)
         1[
-           smap(pat()(btvEnv))("=","," +1)
+           smap(pat()(btvEnv))
          ]
       *)
-     tppat LabelEnv.map
+     tppat RecordLabel.Map.map
 
 
 end

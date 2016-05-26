@@ -54,7 +54,7 @@ struct
       : (pthread_mutex_t, unit ptr) -> int
   val pthread_mutex_lock =
       _import "pthread_mutex_lock"
-      : __attribute__((suspend)) pthread_mutex_t -> int
+      : pthread_mutex_t -> int
   val pthread_mutex_unlock =
       _import "pthread_mutex_unlock"
       : pthread_mutex_t -> int
@@ -63,8 +63,7 @@ struct
       : (pthread_cond_t, unit ptr) -> int
   val pthread_cond_wait =
       _import "pthread_cond_wait"
-      : __attribute__((suspend))
-        (pthread_cond_t, pthread_mutex_t) -> int
+      : (pthread_cond_t, pthread_mutex_t) -> int
   val pthread_cond_signal =
       _import "pthread_cond_signal"
       : pthread_cond_t -> int

@@ -123,8 +123,8 @@ local
         visitExp argExp
       | RC.RCRAISE {exp, loc, ty} =>
         visitExp exp
-      | RC.RCRECORD {fields:rcexp LabelEnv.map, loc, recordTy} =>
-        LabelEnv.app visitRecordField fields
+      | RC.RCRECORD {fields:rcexp RecordLabel.Map.map, loc, recordTy} =>
+        RecordLabel.Map.app visitRecordField fields
       | RC.RCSELECT {exp, expTy, indexExp, label, loc, resultTy} =>
         (visitExp exp; visitExp indexExp)
       | RC.RCSEQ {expList, expTyList, loc} =>

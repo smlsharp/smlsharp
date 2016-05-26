@@ -23,7 +23,7 @@ local
                      Option.map (map revealFfiTy) ffiTyList2,
                      map revealFfiTy ffiTyList3,
                      loc)
-      | TC.FFIRECORDTY (fields:(string * TC.ffiTy) list,loc) =>
+      | TC.FFIRECORDTY (fields:(RecordLabel.label * TC.ffiTy) list,loc) =>
         TC.FFIRECORDTY
           (map (fn (l,ty)=>(l, revealFfiTy ty)) fields,loc)
 
@@ -170,9 +170,9 @@ local
             }
         | RC.RCRAISE {exp, loc, ty} =>
           RC.RCRAISE {exp=evalExp exp, loc=loc, ty = revealTy ty}
-        | RC.RCRECORD {fields:rcexp LabelEnv.map, loc, recordTy} =>
+        | RC.RCRECORD {fields:rcexp RecordLabel.Map.map, loc, recordTy} =>
           RC.RCRECORD
-            {fields=LabelEnv.map evalExp fields,
+            {fields=RecordLabel.Map.map evalExp fields,
              loc=loc,
              recordTy=revealTy recordTy
             }

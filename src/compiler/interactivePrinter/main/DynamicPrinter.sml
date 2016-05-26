@@ -10,16 +10,8 @@ struct
   structure D = Dynamic
   structure R = ReifiedTerm
 
-  fun isTupleFields fields =
-      let
-        fun check i nil = true
-          | check i ((l,_)::t) = Int.toString i = l andalso check (i+1) t
-      in
-        check 1 fields
-      end
-
-  fun formatDyn depth dyn =
-      formatValue depth (Dynamic.read dyn)
+  fun formatDyn depth dynamic =
+      formatValue depth (Dynamic.read dynamic)
 
   and formatValue depth value =
       case value of
@@ -39,37 +31,50 @@ struct
       | D.CHAR c => R.CHARtyRep c
       | D.PTR p => R.PTRtyRep
       | D.RECORD fields =>
-        if isTupleFields fields
+        if RecordLabel.isTupleList fields
         then R.TUPLEtyRep (map (fn (_,v) => formatDyn (depth+1) v) fields)
-        else R.RECORDtyRep (map (fn (l,v) => (l, formatDyn (depth+1) v)) fields)
+        else R.RECORDtyRep (map (fn (l,v) => (RecordLabel.toString l, formatDyn (depth+1) v)) fields)
       | D.ARRAY {length, sub} =>
         R.ARRAYtyRep
-          (R.UNPRINTABLERep,
-           fn len => (List.tabulate (Int.min (len, length),
-                                     fn i => formatDyn (depth + 1) (sub i)),
-                      len < length))
+          {dummyPrinter = R.UNPRINTABLERep,
+           contentsFn = 
+            fn SOME len => {contents = List.tabulate 
+                                        (Int.min (len, length),
+                                      fn i => formatDyn (depth + 1) (sub i)),
+                           hasEllipsis=len < length}
+             | NONE => {contents = List.tabulate (length, fn i => formatDyn (depth + 1) (sub i)),
+                       hasEllipsis = false}
+          }
       | D.VECTOR {length, sub} =>
         R.VECTORtyRep
-          (R.UNPRINTABLERep,
-           fn len => (List.tabulate (Int.min (len, length),
-                                     fn i => formatDyn (depth + 1) (sub i)),
-                      len < length))
+          {dummyPrinter = R.UNPRINTABLERep,
+           contentsFn =
+             fn SOME len => {contents = List.tabulate
+                                        (Int.min (len, length),
+                                      fn i => formatDyn (depth + 1) (sub i)),
+                           hasEllipsis = len < length}
+              | NONE => {contents = List.tabulate (length, fn i => formatDyn (depth + 1) (sub i)),
+                       hasEllipsis = false}
+          }
       | D.LIST l =>
         R.LISTtyRep (map (formatDyn (depth + 1)) (Dynamic.readList l))
       | D.REF v =>
-        R.DATATYPEtyRepWITHARG ("ref", formatValue depth v)
-      | D.VARIANT (conName, NONE) =>
-        R.DATATYPEtyRepNOARG conName
-      | D.VARIANT (conName, SOME arg) =>
-        R.DATATYPEtyRepWITHARG (conName, formatValue depth arg)
+        R.DATATYPEtyRep ("ref", SOME (formatValue depth v))
+      | D.VARIANT (typId, conName, arg) =>
+        if TypID.eq (typId, IDCalc.tfunId (JSONData.dynTfun()))
+        then R.UNPRINTABLERep
+        else
+          case arg of
+            NONE => R.DATATYPEtyRep (conName, NONE)
+          | SOME arg => R.DATATYPEtyRep (conName, SOME (formatValue depth arg))
 
-  fun dynToReifiedTerm dyn =
-      formatDyn 1 dyn
+  fun dynamicToReifiedTerm dynamic =
+      formatDyn 1 dynamic
 
-  fun format dyn =
-      ReifiedTerm.format_reifiedTerm (dynToReifiedTerm dyn)
+  fun format dynamic =
+      ReifiedTerm.format_reifiedTerm (dynamicToReifiedTerm dynamic)
 
-  fun prettyPrint dyn =
-      print (SMLFormat.prettyPrint [SMLFormat.Columns 80] (format dyn))
+  fun prettyPrint dynamic =
+      print (SMLFormat.prettyPrint [SMLFormat.Columns 80] (format dynamic))
 
 end

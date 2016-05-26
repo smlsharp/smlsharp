@@ -112,6 +112,7 @@ eol=("\013\010"|"\010"|"\013");
 symid=([-!%&$#+/:<=>?@\\~`^|*]+);
 int0=(0{digit}*);
 int=([1-9]{digit}*);
+prefixedlabel={int}"_"({id}|{symid});
 
 %%
 
@@ -172,6 +173,7 @@ int=([1-9]{digit}*);
 <INITIAL>{int0} => (T.INT ({radix=StringCvt.DEC, digits=yytext},
                            left (yypos,arg), right (yypos,size yytext,arg)));
 <INITIAL>{int} => (T.INTLAB (string (yytext, yypos, arg)));
+<INITIAL>{prefixedlabel} => (T.PREFIXEDLABEL (string (yytext, yypos, arg)));
 <INITIAL>\" => (startString (yypos, arg); YYBEGIN STR; continue ());
 <INITIAL>"(*" => (startComment (yypos, arg); YYBEGIN COMM; continue ()
   (* Unlike "(*", unmatched "*)" should not cause parse error. It should

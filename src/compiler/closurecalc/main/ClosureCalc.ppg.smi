@@ -14,6 +14,7 @@ _require "../../name/main/ExternSymbol.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
 
 structure ClosureCalc =
 struct
@@ -123,7 +124,7 @@ struct
       {
         fieldList : {fieldExp : ccexp,
                      fieldTy : ty,
-                     fieldLabel : string,
+                     fieldLabel : RecordLabel.label,
                      fieldSize : ccexp,
                      fieldTag : ccexp,
                      fieldIndex : ccexp} list,
@@ -139,7 +140,7 @@ struct
       {
         recordExp : ccexp,
         indexExp : ccexp,
-        label : string,
+        label : RecordLabel.label,
         recordTy : ty,
         resultTy : ty,
         resultSize : ccexp,
@@ -151,7 +152,7 @@ struct
         recordExp : ccexp,
         recordTy : ty,
         indexExp : ccexp,
-        label : string,
+        label : RecordLabel.label,
         valueExp : ccexp,
         valueTy : ty,
         valueTag : ccexp,
@@ -271,7 +272,7 @@ struct
         tyvarKindEnv : Types.btvEnv,
         fieldList : {fieldExp : topconst,
                      fieldTy : ty,
-                     fieldLabel : string,
+                     fieldLabel : RecordLabel.label,
                      fieldSize : topconst,
                      fieldIndex : topconst} list,
         recordTy : ty,
