@@ -17,6 +17,7 @@ struct
   val longsymbolToLongid : longsymbol -> string list
   val mkSymbol : string ->  Loc.loc -> symbol
   val mkLongsymbol : string list -> Loc.loc -> longsymbol
+  val coerceLongsymbolToSymbol : longsymbol -> symbol
   val setVersion : longsymbol * int option -> longsymbol
   val symbolCompare : symbol * symbol -> order
   val longsymbolCompare : longsymbol * longsymbol -> order
@@ -28,6 +29,8 @@ struct
   val replaceLocLongsymbol : Loc.loc -> longsymbol -> longsymbol
   val prefixPath : longsymbol * symbol -> longsymbol
   val concatPath : longsymbol * longsymbol -> longsymbol
+  val generate : unit -> symbol
+  val generateWithPrefix : string -> symbol
 end
 
 structure SymbolOrd =

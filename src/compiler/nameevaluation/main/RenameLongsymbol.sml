@@ -4,6 +4,65 @@ struct
   structure V = NameEvalEnv
   val emptyRenameEnv = TypID.Map.empty : I.tfun TypID.Map.map
 
+  fun replaceLongsymbolTfun renameEnv newLongsymbol tfun =
+      case tfun of
+        I.TFUN_VAR 
+        (ref (I.TFUN_DTY 
+                {id=newId, iseq, longsymbol, formals, conSpec,
+                 conIDSet, runtimeTy, liftedTys, dtyKind })) =>
+        let
+          val newTfunkind = 
+              ref (I.TFUN_DTY 
+                     {id=newId,
+                      iseq=iseq,
+                      longsymbol=newLongsymbol,
+                      formals=formals,
+                      conSpec=conSpec,
+                      conIDSet=conIDSet,
+		      runtimeTy=runtimeTy,
+                      liftedTys=liftedTys,
+                      dtyKind=dtyKind
+                     })
+              val newTfun = I.TFUN_VAR newTfunkind
+              fun isSelf (I.TFUN_VAR (ref (I.TFUN_DTY {id,...}))) = TypID.eq(id, newId)
+                | isSelf _ = false
+              fun replaceTfunTy ty =
+                  case ty of
+                    I.TYWILD => ty
+                  | I.TYERROR => ty
+                  | I.TYVAR tvar => ty
+                  | I.TYRECORD tyLabelenvMap =>
+                    I.TYRECORD (RecordLabel.Map.map replaceTfunTy tyLabelenvMap)
+                  | I.TYCONSTRUCT {tfun, args} =>
+                    I.TYCONSTRUCT 
+                      {tfun = if isSelf tfun then newTfun else tfun,
+                       args = map replaceTfunTy args}
+                  | I.TYFUNM (tyList,ty) => 
+                    I.TYFUNM (map replaceTfunTy tyList, 
+                              replaceTfunTy ty)
+                  | I.TYPOLY (tvarTvarKindList, ty) =>
+                    I.TYPOLY (tvarTvarKindList, 
+                              replaceTfunTy ty)
+                  | I.INFERREDTY typesTy => ty
+              val newConSpec = SymbolEnv.map (Option.map replaceTfunTy) conSpec
+              val _ = newTfunkind := 
+                      I.TFUN_DTY 
+                        {id=newId,
+                         iseq=iseq,
+                         longsymbol=newLongsymbol,
+                         formals=formals,
+                         conSpec=newConSpec,
+                         conIDSet=conIDSet,
+		         runtimeTy=runtimeTy,
+                         liftedTys=liftedTys,
+                         dtyKind=dtyKind
+                        }
+            in
+              (newTfun, TypID.Map.insert(renameEnv, newId, newTfun))
+        end
+      | _ => (tfun, renameEnv)
+
+
   fun replacePathLongsymbol (longsymbol, path) =
       let
         val symbol = Symbol.lastSymbol longsymbol

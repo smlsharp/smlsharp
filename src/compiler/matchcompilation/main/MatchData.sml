@@ -87,27 +87,15 @@ in
      end
    *)
   struct
-    local
-      fun compPath (path1, path2) =
-          case (path1, path2) of
-            (nil,nil) => EQUAL
-          | (nil, _ :: _) => LESS
-          | (_::_, nil) => GREATER
-          | (h1::tl1, h2::tl2) => 
-            (case String.compare(h1,h2) of
-               EQUAL => compPath(tl1,tl2)
-             | ord => ord)
-    in
-      type ord_key = exnCon * bool
-      fun compare ((exnCon1, _) : ord_key, (exnCon2, _) : ord_key) = 
-          case (exnCon1, exnCon2) of
-            (RC.EXN {id=id1,...}, RC.EXN{id=id2,...}) =>
-            ExnID.compare(id1, id2)
-          | (RC.EXEXN{path=path1,...},RC.EXEXN{path=path2,...}) => 
-            compPath(path1,path2)
-          | (RC.EXEXN _, RC.EXN _) => LESS
-          | (RC.EXN _, RC.EXEXN _) => GREATER
-    end
+    type ord_key = exnCon * bool
+    fun compare ((exnCon1, _) : ord_key, (exnCon2, _) : ord_key) = 
+        case (exnCon1, exnCon2) of
+          (RC.EXN {id=id1,...}, RC.EXN{id=id2,...}) =>
+          ExnID.compare(id1, id2)
+        | (RC.EXEXN{path=path1,...},RC.EXEXN{path=path2,...}) => 
+          Symbol.longsymbolCompare (path1,path2)
+        | (RC.EXEXN _, RC.EXN _) => LESS
+        | (RC.EXN _, RC.EXEXN _) => GREATER
   end
 
   structure SSOrd : ORD_KEY = 

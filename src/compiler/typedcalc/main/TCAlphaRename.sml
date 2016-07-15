@@ -30,18 +30,18 @@ local
       in
         ({btvMap=btvMap, varMap=varMap}, btvEnv)
       end
-  fun copyExVarInfo context {longsymbol:longsymbol, ty:ty} =
-      {longsymbol=longsymbol, ty=copyTy context ty}
+  fun copyExVarInfo context {path:longsymbol, ty:ty} =
+      {path=path, ty=copyTy context ty}
   fun copyPrimInfo context {primitive : BuiltinPrimitive.primitive, ty : ty} =
       {primitive=primitive, ty=copyTy context ty}
-  fun copyOprimInfo context {ty : ty, longsymbol, id: OPrimID.id} =
-      {ty=copyTy context ty, longsymbol=longsymbol,id=id}
-  fun copyConInfo context {longsymbol, ty: ty, id: ConID.id} =
-      {longsymbol=longsymbol, ty=copyTy context ty, id=id}
-  fun copyExnInfo context {longsymbol, ty: ty, id: ExnID.id} =
-      {longsymbol=longsymbol, ty=copyTy context ty, id=id}
-  fun copyExExnInfo context {longsymbol, ty: ty} =
-      {longsymbol=longsymbol, ty=copyTy context ty}
+  fun copyOprimInfo context {ty : ty, path, id: OPrimID.id} =
+      {ty=copyTy context ty, path=path,id=id}
+  fun copyConInfo context {path, ty: ty, id: ConID.id} =
+      {path=path, ty=copyTy context ty, id=id}
+  fun copyExnInfo context {path, ty: ty, id: ExnID.id} =
+      {path=path, ty=copyTy context ty, id=id}
+  fun copyExExnInfo context {path, ty: ty} =
+      {path=path, ty=copyTy context ty}
   fun copyExnCon context exnCon =
       case exnCon of
         TC.EXEXN exExnInfo => TC.EXEXN (copyExExnInfo context exExnInfo)
@@ -78,14 +78,14 @@ local
       in
         ({varMap=varMap, btvMap=btvMap}, newId)
       end
-  fun newVar (context:context) ({longsymbol, id, ty, opaque}:varInfo) =
+  fun newVar (context:context) ({path, id, ty, opaque}:varInfo) =
       let
         val ty = copyTy context ty
         val (context, newId) = newId context id
             handle DuplicateVar =>
                    raise bug "duplicate id in IDCalcUtils"
       in
-        (context, {longsymbol=longsymbol, id=newId, ty=ty, opaque=opaque})
+        (context, {path=path, id=newId, ty=ty, opaque=opaque})
       end
   fun newVars (context:context) (vars:varInfo list) =
       let
@@ -214,7 +214,7 @@ local
       in
         (context, List.rev patsRev)
       end
-  fun evalVar (context as {varMap, btvMap}:context) ({longsymbol, id, ty, opaque}:varInfo) =
+  fun evalVar (context as {varMap, btvMap}:context) ({path, id, ty, opaque}:varInfo) =
       let
         val ty = copyTy context ty
         val id =
@@ -222,7 +222,7 @@ local
               SOME id => id
             | NONE => id
       in
-        {longsymbol=longsymbol, id=id, ty=ty, opaque=opaque}
+        {path=path, id=id, ty=ty, opaque=opaque}
       end
       handle DuplicateBtv =>
              (P.print "DuplicateBtv in evalVar\n";
@@ -279,8 +279,8 @@ local
           TC.TPEXEXN_CONSTRUCTOR
             {exExnInfo=copyExExnInfo context exExnInfo,
              loc= loc}
-        | TC.TPEXVAR {longsymbol, ty} =>
-          TC.TPEXVAR {longsymbol=longsymbol, ty=copyT ty}
+        | TC.TPEXVAR {path, ty} =>
+          TC.TPEXVAR {path=path, ty=copyT ty}
         | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} =>
           TC.TPFFIIMPORT
             {ffiTy = copyFfiTy context ffiTy,
@@ -478,17 +478,17 @@ local
         )
       | TC.TPEXPORTRECFUNVAR _ =>
         raise bug "TPEXPORTRECFUNVAR to AlphaRename"
-      | TC.TPEXTERNEXN {longsymbol, ty} =>
+      | TC.TPEXTERNEXN {path, ty} =>
         (context,
-         TC.TPEXTERNEXN {longsymbol=longsymbol, ty=copyTy context ty}
+         TC.TPEXTERNEXN {path=path, ty=copyTy context ty}
         )
-      | TC.TPBUILTINEXN {longsymbol, ty} =>
+      | TC.TPBUILTINEXN {path, ty} =>
         (context,
-         TC.TPBUILTINEXN {longsymbol=longsymbol, ty=copyTy context ty}
+         TC.TPBUILTINEXN {path=path, ty=copyTy context ty}
         )
-      | TC.TPEXTERNVAR {longsymbol, ty} =>
+      | TC.TPEXTERNVAR {path, ty} =>
         (context,
-         TC.TPEXTERNVAR {longsymbol=longsymbol, ty=copyTy context ty}
+         TC.TPEXTERNVAR {path=path, ty=copyTy context ty}
         )
       | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
         let

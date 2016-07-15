@@ -1,6 +1,7 @@
 _require local "../../../basis.smi"
 _require local "../../../compiler-utils/env/main/SEnv.smi"
 _require local "../../absyn/main/RecordLabel.smi"
+_require local "../../absyn/main/Symbol.ppg.smi"
 
 _require local "../../recordcalc/main/RecordCalc.ppg.smi"
 _require local "../../types/main/Types.ppg.smi"

@@ -4,7 +4,6 @@ _require local "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../absyn/main/RecordLabel.smi"
 _require "../../util/main/TermFormat.smi"
 _require local "../../util/main/SmlppgUtil.ppg.smi"
-_require local "../../util/main/Gensym.smi"
 _require local "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
@@ -153,7 +152,6 @@ struct
     | ICFFIAPPLY of FFIAttributes.attributes option
                     * ffiFun * ffiArg list * ffiTy list * loc
     | ICSQLSCHEMA of {columnInfoFnExp : icexp, ty : ty, loc : loc}
-    | ICSQLDBI of icpat * icexp * loc
     | ICJOIN of icexp * icexp * loc
     | ICJSON of icexp * ty * loc
     

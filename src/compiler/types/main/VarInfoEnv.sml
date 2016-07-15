@@ -31,7 +31,7 @@ structure OTSet = BinarySetFn(TvOrd)
 
 structure varInfoOrd : ORD_KEY =
 struct
-  type ord_key = {path:string list, id:VarID.id, ty:Types.ty}
+  type ord_key = {path:Symbol.longsymbol, id:VarID.id, ty:Types.ty}
   fun compare ({path = _, ty = _, id = varId1} : ord_key, 
 	       {path = _, ty = _, id = varId2} : ord_key) =
       VarID.compare (varId1, varId2)

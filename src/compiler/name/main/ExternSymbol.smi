@@ -6,13 +6,14 @@ _require "../../../smlnj-lib/Util/ord-map-sig.sml"
 _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../../compiler-utils/env/main/SSet.smi"
 _require "../../control/main/Bug.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "./NameMangle.smi"
 
 structure ExternSymbol =
 struct
 
   type id (= boxed)
-  val touch : string list -> id
+  val touch : Symbol.longsymbol -> id
   val toString : id -> string
   val format_id : id -> SMLFormat.FormatExpression.expression list
 

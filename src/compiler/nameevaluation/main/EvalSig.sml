@@ -37,12 +37,7 @@ local
   exception FunIDUndefind
   fun bug s = Bug.Bug ("NameEval: " ^ s)
 
-  val symbolToString = Symbol.symbolToString
   val symbolToLoc = Symbol.symbolToLoc
-  val longsymbolToLongid = Symbol.longsymbolToLongid
-  val longsymbolToLoc = Symbol.longsymbolToLoc
-  val mkSymbol = Symbol.mkSymbol
-  val mkLongsymbol = Symbol.mkLongsymbol
   
  (* the following three functions are copied from IDTypes
     and slightly changed to fix the bug 152

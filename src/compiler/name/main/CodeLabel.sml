@@ -8,7 +8,7 @@
 signature CODE_LABEL =
 sig
   type id
-  val generate : string list -> id
+  val generate : Symbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order
@@ -27,9 +27,11 @@ local
                     
     val counter = ref 0
                       
-    fun generate path =
+    fun generate longsymbol =
         (!counter before counter := !counter + 1,
-         case path of nil => "" | _ => NameMangle.mangle path) : id
+         case longsymbol of
+           nil => ""
+         | _ => NameMangle.mangle (Symbol.longsymbolToLongid longsymbol)) : id
 
     fun derive ((_, name):id) =
         (!counter before counter := !counter + 1, name) : id

@@ -62,17 +62,15 @@ local
   structure BT = BuiltinTypes
   structure ME = MatchError
   fun bug s = Bug.Bug ("MatchCompiler: " ^ s)
-  type path = string list
+  type path = Symbol.longsymbol
   type constant = Absyn.constant
   type conInfo = T.conInfo
 
   val pos = Loc.makePos {fileName="MatchCompiler.sml", line=0, col=0}
   val loc = (pos,pos)
-  fun mkSymbol string = Symbol.mkSymbol string loc
-  fun mkLongsymbol path = Symbol.mkLongsymbol path loc
 
   fun newLocalId () = VarID.generate ()
-  fun newVarName () = TCU.newTCVarName()
+  fun newVarName s = Symbol.generateWithPrefix (s ^ "_T_")
   fun newVarPath () = [TCU.newTCVarName()]
   fun freshVarWithName (ty,name) =
       {path = [name],ty=ty,id=newLocalId()} : RC.varInfo
@@ -84,21 +82,10 @@ local
 
   open MatchData
 
-  fun toRC {longsymbol, id, ty, opaque} =
-      {path=Symbol.longsymbolToLongid longsymbol,
+  fun toRC {path, id, ty, opaque} =
+      {path = path,
        id = id,
        ty = ty}
-  fun toRCcon {longsymbol, id, ty} =
-      {path=Symbol.longsymbolToLongid longsymbol,
-       id = id,
-       ty = ty}
-  fun toRCEx {longsymbol, ty} =
-      {path=Symbol.longsymbolToLongid longsymbol,
-       ty = ty}
-
-  fun toRCExn (TC.EXN exnInfo) = RC.EXN (toRCcon exnInfo)
-    | toRCExn (TC.EXEXN exExn) =  
-      RC.EXEXN (toRCEx exExn)
 
   (* this function collects all the variables free or bound.
      This is used to optimize variable pattern to wild pattern
@@ -452,7 +439,7 @@ in
                raise bug "Non conty in userdefined type"
               )
       in
-        case SEnv.listItems (#conSet tyCon) of
+        case SymbolEnv.listItems (#conSet tyCon) of
           nil => raise Bug.Bug "NON span field in userdefined type"
         | L => List.length L
       end
@@ -508,7 +495,7 @@ in
          RC.RCFNM
            {
             argVarList =
-            [freshVarWithName (BT.unitTy, "unitExp(" ^ newVarName () ^ ")")],
+            [freshVarWithName (BT.unitTy, newVarName "unitExp")],
             bodyTy=bodyTy, 
             bodyExp=body, 
             loc=loc
@@ -533,7 +520,7 @@ in
         RC.RCFNM 
           {
            argVarList=[freshVarWithName
-                         (BT.unitTy,"unitExp(" ^ newVarName () ^ ")")], 
+                         (BT.unitTy,newVarName "unitExp")], 
            bodyTy=bodyTy, 
            bodyExp=body, 
            loc=loc
@@ -613,13 +600,13 @@ in
       | TC.TPPATCONSTANT (A.UNITCONST _, ty, _) => WildPat ty
       | TC.TPPATCONSTANT (con, ty, _) => ConstPat (con, ty)
       | TC.TPPATDATACONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, ...} =>
-        DataConPat (toRCcon conPat, false, WildPat BT.unitTy, ty)
+        DataConPat (conPat, false, WildPat BT.unitTy, ty)
       | TC.TPPATDATACONSTRUCT{conPat,argPatOpt = SOME argPat,patTy=ty,...}=>
-        DataConPat (toRCcon conPat, true, tppatToPat btvEnv FV argPat, ty)
+        DataConPat (conPat, true, tppatToPat btvEnv FV argPat, ty)
       | TC.TPPATEXNCONSTRUCT {exnPat, argPatOpt=NONE, patTy=ty, ...} =>
-        ExnConPat (toRCExn exnPat, false, WildPat BT.unitTy, ty)
+        ExnConPat (exnPat, false, WildPat BT.unitTy, ty)
       | TC.TPPATEXNCONSTRUCT {exnPat,argPatOpt = SOME argPat,patTy=ty,...} =>
-        ExnConPat (toRCExn exnPat, true, tppatToPat btvEnv FV argPat, ty)
+        ExnConPat (exnPat, true, tppatToPat btvEnv FV argPat, ty)
       | TC.TPPATRECORD {fields=patRows, recordTy=ty,...} =>
         let
           (*  The match compilation algorithm assumes that every record
@@ -943,7 +930,7 @@ in
 	    SEnv.numItems ((#datacon tyCon))
 *)
 	fun getTagNums (tyCon : Types.tyCon) = 
-            case SEnv.listItems (#conSet tyCon) of
+            case SymbolEnv.listItems (#conSet tyCon) of
               nil =>  raise Bug.Bug "NON span field in userdefined type"
             | L => List.length L
               
@@ -1218,7 +1205,7 @@ in
            SOME v => RC.RCVAR v
          | NONE => RC.RCVAR (toRC var)
         )
-      | TC.TPEXVAR exVarInfo => RC.RCEXVAR (toRCEx exVarInfo)
+      | TC.TPEXVAR exVarInfo => RC.RCEXVAR exVarInfo
       | TC.TPRECFUNVAR {var, arity} =>
         raise bug "RECFUNVAR should be eliminated"
       | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} =>
@@ -1240,7 +1227,7 @@ in
       | TC.TPDATACONSTRUCT {con, instTyList=tys, argExpOpt, argTyOpt, loc} => 
         RC.RCDATACONSTRUCT
           {
-           con= toRCcon con, 
+           con=con, 
            instTyList=tys, 
            argExpOpt =
            case argExpOpt of
@@ -1252,7 +1239,7 @@ in
       | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt, argTyOpt, loc} =>
         RC.RCEXNCONSTRUCT
           {
-           exn= toRCExn exn, 
+           exn=exn, 
            instTyList=instTyList,
            argExpOpt =
            case argExpOpt of
@@ -1261,9 +1248,9 @@ in
            loc=loc
           }
       | TC.TPEXN_CONSTRUCTOR {exnInfo,loc} =>
-        RC.RCEXN_CONSTRUCTOR {exnInfo = toRCcon exnInfo,loc=loc}
+        RC.RCEXN_CONSTRUCTOR {exnInfo=exnInfo,loc=loc}
       | TC.TPEXEXN_CONSTRUCTOR {exExnInfo,loc} =>
-        RC.RCEXEXN_CONSTRUCTOR {exExnInfo = toRCEx exExnInfo,loc=loc}
+        RC.RCEXEXN_CONSTRUCTOR {exExnInfo=exExnInfo,loc=loc}
       | TC.TPCASEM {expList, expTyList, ruleList, ruleBodyTy, caseKind, loc} =>
 	 let
 	   val (topVarList, topBinds) = 
@@ -1279,7 +1266,7 @@ in
                           let
                             val newVar =
                                 freshVarWithName 
-                                  (ty1, "caseExp(" ^ newVarName () ^ ")")
+                                  (ty1, newVarName "caseExp")
                             val rcexp = tpexpToRcexp varEnv btvEnv exp
                           in
                             (newVar::topVarList, (newVar, rcexp)::topBinds)
@@ -1391,7 +1378,7 @@ in
       | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, argTy, loc} =>
         RC.RCOPRIMAPPLY 
           {
-           oprimOp=toRCcon oprimOp,
+           oprimOp=oprimOp,
            instTyList=instTyList,
            argExp=tpexpToRcexp varEnv btvEnv argExp,
            loc=loc
@@ -1542,22 +1529,22 @@ in
        | TC.TPEXD (binds, loc) => 
          RC.RCEXD (map 
                      (fn {exnInfo, loc} => 
-                         {exnInfo = toRCcon exnInfo, loc = loc}
+                         {exnInfo = exnInfo, loc = loc}
                      )
                      binds, 
                    loc)
        | TC.TPEXNTAGD ({exnInfo, varInfo}, loc) => 
-         RC.RCEXNTAGD ({exnInfo=toRCcon exnInfo, varInfo = toRC varInfo}, loc)
+         RC.RCEXNTAGD ({exnInfo=exnInfo, varInfo = toRC varInfo}, loc)
        | TC.TPEXPORTVAR varInfo =>
 (*
          RC.RCEXPORTVAR ({id=id, path=path, ty=ty}, loc)
 *)
          RC.RCEXPORTVAR (toRC varInfo)
        | TC.TPEXPORTRECFUNVAR _ => raise bug "TPEXPORTRECFUNVAR to matchcompiler"
-       | TC.TPEXPORTEXN exnInfo => RC.RCEXPORTEXN (toRCcon exnInfo)
-       | TC.TPEXTERNVAR exVarInfo => RC.RCEXTERNVAR (toRCEx exVarInfo)
-       | TC.TPEXTERNEXN exExnInfo => RC.RCEXTERNEXN (toRCEx exExnInfo)
-       | TC.TPBUILTINEXN exExnInfo => RC.RCBUILTINEXN (toRCEx exExnInfo)
+       | TC.TPEXPORTEXN exnInfo => RC.RCEXPORTEXN exnInfo
+       | TC.TPEXTERNVAR exVarInfo => RC.RCEXTERNVAR exVarInfo
+       | TC.TPEXTERNEXN exExnInfo => RC.RCEXTERNEXN exExnInfo
+       | TC.TPBUILTINEXN exExnInfo => RC.RCBUILTINEXN exExnInfo
 
   fun compile tpdecls =
       let

@@ -17,11 +17,7 @@ struct
   structure P = BuiltinPrimitive
 
   fun newVar ty =
-      let
-        val id = VarID.generate ()
-      in
-        {id = id, path = ["$" ^ VarID.toString id], ty = ty} : C.varInfo
-      end
+      {id = VarID.generate (), path = [Symbol.generate ()], ty = ty} : C.varInfo
 
   fun mapi f l =
       let
@@ -1328,6 +1324,7 @@ struct
            C.CCCAST {exp = exp,
                      expTy = expTyWithoutTAbs,
                      targetTy = T.POLYty {boundtvars=btvEnv,
+                                          constraints = nil,
                                           body=expTyWithoutTAbs},
                      cast = BuiltinPrimitive.TypeCast,
                      loc = loc})

@@ -28,7 +28,7 @@ struct
     | REAL32 of Real32.real
     | PTR of unit ptr
     | RECORD of (RecordLabel.label * dynamic) list
-    | VARIANT of Types.typId * string * value option
+    | VARIANT of Types.typId * Symbol.symbol * value option
     | LIST of dynamic_list
     | ARRAY of dynamic_array
     | VECTOR of dynamic_array
@@ -38,6 +38,7 @@ struct
     | EXN of exn
     | FUN
     | UNIT
+    | OPAQUE of value
     | OTHER
   and dynamic_list =
       NIL
@@ -48,6 +49,10 @@ struct
   exception Undetermined
 
   fun consL h (t, x) = (h::t, x)
+
+  fun isListTy ({id,...}:Types.tyCon, [argTy]) =
+      if TypID.eq (id, #id BuiltinTypes.listTyCon) then SOME argTy else NONE
+    | isListTy _ = NONE
 
   fun constTag' ty =
       case SingletonTyEnv2.constTag SingletonTyEnv2.emptyEnv ty of
@@ -130,19 +135,19 @@ struct
     | readArray _ _ = OTHER
 
   fun invertTagMap tagMap =
-      SEnv.foldli
+      SymbolEnv.foldli
         (fn (conName, (tag, ty), z) => IEnv.insert (z, tag, (conName, ty)))
         IEnv.empty
         tagMap
 
-  fun mergeSEnv (map1, map2) =
-      SEnv.mergeWith
+  fun mergeSymbolEnv (map1, map2) =
+      SymbolEnv.mergeWith
         (fn (SOME x1, SOME x2) => SOME (x1, x2)
-          | _ => raise Bug.Bug "mergeSEnv")
+          | _ => raise Bug.Bug "mergeSymbolEnv")
         (map1, map2)
 
   fun makeConMap (tagMap, conSet) =
-      invertTagMap (mergeSEnv (tagMap, conSet))
+      invertTagMap (mergeSymbolEnv (tagMap, conSet))
 
   fun readTag conMap (p, i) =
       let
@@ -165,11 +170,11 @@ struct
 
   fun inlinedConArgTy conArgTy =
       case TypesBasics.derefTy conArgTy of
-        T.POLYty {boundtvars, body} =>
+        T.POLYty {boundtvars, constraints, body} =>
         (case TypesBasics.derefTy body of
            T.RECORDty fieldTys =>
            T.RECORDty (RecordLabel.Map.map
-                         (fn ty => T.POLYty {boundtvars=boundtvars, body=ty})
+                         (fn ty => T.POLYty {boundtvars=boundtvars, constraints=constraints, body=ty})
                          fieldTys)
          | _ => conArgTy)
       | _ => conArgTy
@@ -211,7 +216,7 @@ struct
 
   (* See also DatatypeCompilation.sml *)
   and readDty (p, i, tyCon as {id, conSet, ...}, instTys) =
-      if SEnv.isEmpty conSet then OTHER else
+      if SymbolEnv.isEmpty conSet then OTHER else
       case DatatypeLayout.datatypeLayout tyCon of
         D.LAYOUT_TAGGED (D.TAGGED_RECORD {tagMap}) =>
         readTaggedLayout tagMap tyCon (p, i, instTys)
@@ -230,9 +235,9 @@ struct
       | D.LAYOUT_BOOL {falseName} =>
         let
           val trueName =
-              case SEnv.listItemsi conSet of
+              case SymbolEnv.listItemsi conSet of
                 [(c1, NONE), (c2, NONE)] =>
-                if c1 = falseName then c2 else c1
+                if Symbol.eqSymbol (c1, falseName) then c2 else c1
               | _ => raise Bug.Bug "readDty: LAYOUT_BOOL"
         in
           if Dynamic.readInt (p, i) = 0
@@ -240,11 +245,11 @@ struct
           else VARIANT (id, trueName, NONE)
         end
       | D.LAYOUT_UNIT =>
-        (case SEnv.listItemsi conSet of
+        (case SymbolEnv.listItemsi conSet of
            [(conName, NONE)] => VARIANT (id, conName, NONE)
          | _ => raise Bug.Bug "readDty: LAYOUT_UNIT")
       | D.LAYOUT_ARGONLY =>
-        (case SEnv.listItemsi conSet of
+        (case SymbolEnv.listItemsi conSet of
            [(con, SOME tyFn)] =>
            let
              val ty = tyFn ()
@@ -260,7 +265,7 @@ struct
       | D.LAYOUT_ARG_OR_NULL =>
         let
           val (argCon, argTy, nullCon) =
-              case SEnv.listItemsi conSet of
+              case SymbolEnv.listItemsi conSet of
                 [(c1, SOME ty), (c2, NONE)] => (c1, ty (), c2)
               | [(c1, NONE), (c2, SOME ty)] => (c2, ty (), c1)
               | _ => raise Bug.Bug "readDty: LAYOUT_ARG_OR_NULL"
@@ -273,12 +278,29 @@ struct
         end
       | D.LAYOUT_REF => raise Bug.Bug "readDty: LAYOUT_REF"
 
+  (* FIXME: workaround for standalone user programs.
+   * A standalone program cannot access to the conSet of a tyCon since
+   * conSet includes function closures whose code pointers are available
+   * only in the compiler.  To avoid the access to the closures, we assume
+   * the low-level representation of lists here.
+   *)
+  and readCons (p, i, listTy, argTy) =
+      if isNull (p, i)
+      then LIST NIL
+      else case readRecord (Dynamic.readBoxed (p, i), 0w0,
+                            RecordLabel.tupleList [argTy, listTy]) of
+             [(_,car),(_,cdr)] => LIST (CONS (car, cdr))
+           | _ => raise Bug.Bug "readCons"
+(*
   and readCons (p, i, tyCon, instTys) =
       case readDty (p, i, tyCon, instTys) of
-        VARIANT (_, "nil", NONE) => LIST NIL
-      | VARIANT (_, "::", SOME (RECORD [(_, car), (_, cdr)])) =>
-        LIST (CONS (car, cdr))
+        VARIANT (_, symbol, argTy) =>
+        (case (Symbol.symbolToString symbol, argTy) of
+           ("nil", NONE) => LIST NIL
+         | ("::", SOME (RECORD [(_, car), (_, cdr)])) => LIST (CONS (car, cdr))
+         | _ => raise Bug.Bug "readCons")
       | _ => raise Bug.Bug "readCons"
+*)
 
   and readPrim (p, i, bty, argTys) =
       case bty of
@@ -312,11 +334,12 @@ struct
       | T.BACKENDty _ => OTHER
       | T.ERRORty => OTHER
       | T.DUMMYty _ => OTHER
+      | T.DUMMY_RECORDty _ => OTHER
       | T.TYVARty (ref (T.TVAR {tvarKind,...})) => OTHER
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => read (p, i, ty)
       | T.BOUNDVARty _ => OTHER
       | T.FUNMty _ => FUN
-      | T.POLYty {boundtvars, body} =>
+      | T.POLYty {boundtvars, constraints, body} =>
         (
           case TypesBasics.derefTy body of
             T.FUNMty _ => FUN
@@ -327,16 +350,16 @@ struct
           case #dtyKind tyCon of
             T.BUILTIN bty => readPrim (p, i, bty, args)
           | T.DTY =>
-            if TypID.eq (#id tyCon, #id BuiltinTypes.listTyCon)
-            then readCons (p, i, tyCon, args)
-            else readDty (p, i, tyCon, args)
+            (case isListTy (tyCon, args) of
+               SOME argTy => readCons (p, i, ty, argTy)
+             | NONE => readDty (p, i, tyCon, args))
           | T.OPAQUE {opaqueRep, revealKey} =>
             (
               case opaqueRep of
                 T.TYCON tyCon =>
-                read (p, i, T.CONSTRUCTty {tyCon=tyCon, args=args})
+                OPAQUE (read (p, i, T.CONSTRUCTty {tyCon=tyCon, args=args}))
               | T.TFUNDEF {iseq, arity, polyTy} =>
-                read (p, i, TypesBasics.tpappTy (polyTy, args))
+                OPAQUE (read (p, i, TypesBasics.tpappTy (polyTy, args)))
             )
         )
       | T.RECORDty fields =>

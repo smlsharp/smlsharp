@@ -1,17 +1,17 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../toolchain/main/Filename.smi"
 _require "../../absyn/main/InterfaceName.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 
 structure LoadFileError =
 struct
-  exception InvalidTopInterface of Symbol.symbol
-  exception FileNotFound of Symbol.symbol
-  exception CircularLoad of Symbol.symbol
-  exception UseWithInterface of Symbol.symbol
-  exception EmptyInterface of Symbol.symbol
-  exception VirtualInterface of Symbol.symbol
+  exception InvalidTopInterface of Filename.filename
+  exception FileNotFound of Filename.filename
+  exception CircularLoad of Filename.filename
+  exception UseWithInterface of Filename.filename
+  exception EmptyInterface of Filename.filename
+  exception VirtualInterface of Filename.filename
   exception DuplicateHash of InterfaceName.interface_name
                              * (InterfaceName.interface_name * Loc.loc)
 end

@@ -11,30 +11,30 @@ local
   structure TB = TypesBasics
   structure BT = BuiltinTypes
   fun bug s = Bug.Bug ("TypedCalcUtil: " ^ s)
-  val tempVarNamePrefix = "$T_"
+  val tempVarNamePrefix = "T_"
 in
-  fun newTCVarName () =  tempVarNamePrefix ^ Gensym.gensym()
+  fun newTCVarName loc = Symbol.generateWithPrefix tempVarNamePrefix
   fun newTCVarInfo loc (ty:T.ty) =
       let
         val newVarId = VarID.generate()
         val IdString =  VarID.toString newVarId
         val longsymbol = Symbol.mkLongsymbol [tempVarNamePrefix ^ IdString] loc
       in
-        {longsymbol=longsymbol, id=newVarId, ty = ty, opaque=false}
+        {path=longsymbol, id=newVarId, ty = ty, opaque=false}
       end
   fun newTCVarInfoWithLongsymbol (longsymbol:Symbol.longsymbol,ty:T.ty) =
       let
         val newVarId = VarID.generate()
       in
-        {longsymbol=longsymbol, id=newVarId, ty = ty, opaque=false}
+        {path=longsymbol, id=newVarId, ty = ty, opaque=false}
       end
   fun getLocOfExp exp =
       case exp of
         TC.TPERROR => Loc.noloc
       | TC.TPCONSTANT {const, ty, loc} => loc
-      | TC.TPVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-      | TC.TPEXVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-      | TC.TPRECFUNVAR {var={longsymbol,...},...} => Symbol.longsymbolToLoc longsymbol
+      | TC.TPVAR {path,...} => Symbol.longsymbolToLoc path
+      | TC.TPEXVAR {path,...} => Symbol.longsymbolToLoc path
+      | TC.TPRECFUNVAR {var={path,...},...} => Symbol.longsymbolToLoc path
       | TC.TPFNM  {loc,...} => loc
       | TC.TPAPPM {loc,...} => loc
       | TC.TPDATACONSTRUCT {loc,...} => loc
@@ -78,7 +78,7 @@ in
       | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} => false
       | TC.TPDATACONSTRUCT {con, instTyList, argTyOpt, argExpOpt=NONE, loc} => false
       | TC.TPEXNCONSTRUCT {exn, instTyList, argTyOpt, argExpOpt=NONE, loc} => false
-      | TC.TPDATACONSTRUCT {con={longsymbol, id, ty}, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
+      | TC.TPDATACONSTRUCT {con={path, id, ty}, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
         let
           val tyCon = TB.tyConFromConTy ty
         in
@@ -138,13 +138,14 @@ in
    * Make a fresh instance of a polytype and a term of that type.
    *)
   fun freshInst (ty,exp) =
-      if TB.monoTy ty then (ty,exp)
+      (* 2016-06-16 sasaki: インスタンス化した制約を返すよう変更 *)
+      if TB.monoTy ty then (ty,nil,exp)
       else
         let
           val expLoc = getLocOfExp exp
         in
           case ty of
-            T.POLYty{boundtvars,body,...} =>
+            T.POLYty{boundtvars,body,constraints} =>
             let 
               val subst = TB.freshSubst boundtvars
               val bty = TB.substBTvar subst body
@@ -162,8 +163,18 @@ in
                             expTy=ty,
                             instTyList=BoundTypeVarID.Map.listItems subst,
                             loc=expLoc}
+              val bconstraints = 
+                  List.map (fn c =>
+                               case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                 T.JOIN
+                                     {res = TB.substBTvar subst res,
+                                      args = (TB.substBTvar subst arg1,
+                                              TB.substBTvar subst arg2)})
+                           constraints
+              val (freshty, freshconstraints, freshexp) =
+                  freshInst (bty,newExp)
             in  
-              freshInst (bty,newExp)
+              (freshty, bconstraints @ freshconstraints, freshexp)
             end
           | T.FUNMty (tyList, bodyTy) =>
             (* 
@@ -187,7 +198,7 @@ in
                     else (exp, fn x => x)
                 val argVarList = map (newTCVarInfo expLoc) tyList
                 val argExpList = map (fn x => TC.TPVAR x) argVarList
-                val (instBodyTy, instBody) = 
+                val (instBodyTy, instConstraints, instBody) = 
                     freshInst
                       (bodyTy,
                        TC.TPAPPM{funExp=exp,
@@ -201,7 +212,7 @@ in
                      bodyExp = instBody,
                      loc = expLoc}
               in 
-                (T.FUNMty(tyList, instBodyTy), mkNewExp newExp)
+                (T.FUNMty(tyList, instBodyTy), instConstraints, mkNewExp newExp)
               end
           | T.RECORDty tyFields => 
             (* 
@@ -211,13 +222,13 @@ in
               (case exp of
                  TC.TPRECORD {fields, recordTy=_, loc=loc} =>
                  let
-                   val (bindsRev, newTyFields, newFields) =
+                   val (bindsRev, bindConstraints, newTyFields, newFields) =
                        RecordLabel.Map.foldli
-                         (fn (l, fieldTy, (bindsRev, newTyFields,newFields)) =>
+                         (fn (l, fieldTy, (bindsRev,bindConstraints,newTyFields,newFields)) =>
                              case RecordLabel.Map.find(fields,l) of
                                 SOME field =>
                                 let
-                                  val (ty',exp') = freshInst (fieldTy, field)
+                                  val (ty',constraints',exp') = freshInst (fieldTy, field)
                                   val newTyFields = RecordLabel.Map.insert(newTyFields, l, ty')
                                   val (bindsRev, newFields) =
                                       if isAtom exp' then 
@@ -232,11 +243,11 @@ in
                                           (bindsRev, newFields)
                                         end
 
-                                in (bindsRev, newTyFields, newFields)
+                                in (bindsRev, constraints', newTyFields, newFields)
                                 end
                               | _ => raise bug "freshInst"
                          )
-                         (nil, RecordLabel.Map.empty, RecordLabel.Map.empty)
+                         (nil, nil, RecordLabel.Map.empty, RecordLabel.Map.empty)
                          tyFields
                    val binds = List.rev bindsRev
                    val recordExp =
@@ -250,16 +261,16 @@ in
                          TC.TPMONOLET
                            {binds = binds, bodyExp = recordExp, loc=loc}
                  in
-                   (T.RECORDty newTyFields, returnExp)
+                   (T.RECORDty newTyFields, bindConstraints, returnExp)
                  end
                | _ =>
                  if isAtom exp then
                    let 
-                     val (bindsRev, flty, flexp) =
+                     val (bindsRev, bindConstraints, flty, flexp) =
                          RecordLabel.Map.foldli 
-                           (fn (label, fieldTy, (bindsRev, flty,flexp)) =>
+                           (fn (label, fieldTy, (bindsRev,bindConstraints,flty,flexp)) =>
                                let
-                                 val (fieldTy,instExp) =
+                                 val (fieldTy,instConstraints,instExp) =
                                      freshInst
                                        (fieldTy,
                                         TC.TPSELECT{label=label,
@@ -271,11 +282,12 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
+                                  instConstraints @ bindConstraints,
                                   RecordLabel.Map.insert(flty,label,fieldTy),
                                   RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end)
-                           (nil,RecordLabel.Map.empty,RecordLabel.Map.empty)
+                           (nil,nil,RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                      val binds = List.rev bindsRev
                      val recordExp =
@@ -291,16 +303,16 @@ in
                               bodyExp = recordExp,
                               loc=expLoc}
                    in 
-                     (T.RECORDty flty, returnExp)
+                     (T.RECORDty flty, bindConstraints, returnExp)
                    end
                  else
                    let 
                      val var = newTCVarInfo expLoc ty
                      val varExp = TC.TPVAR var
-                     val (bindsRev, flty,flexp) =
+                     val (bindsRev,bindConstraints,flty,flexp) =
                          RecordLabel.Map.foldli
-                           (fn (label,fieldTy,(bindsRev, flty,flexp)) =>
-                               let val (fieldTy,instExp) =
+                           (fn (label,fieldTy,(bindsRev,bindConstraints,flty,flexp)) =>
+                               let val (fieldTy,instConstraints,instExp) =
                                        freshInst
                                          (fieldTy,
                                           TC.TPSELECT
@@ -313,16 +325,18 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
+                                  instConstraints @ bindConstraints,
                                   RecordLabel.Map.insert(flty,label,fieldTy),
                                   RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end
                            )
-                           ([(var, exp)], RecordLabel.Map.empty,RecordLabel.Map.empty)
+                           ([(var, exp)], nil, RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                    in 
                      (
                       T.RECORDty flty, 
+                      bindConstraints,
                       TC.TPMONOLET
                         {binds = List.rev bindsRev,
                          bodyExp =
@@ -335,17 +349,18 @@ in
                      )
                    end
               )
-          | ty => (ty,exp)
+          | ty => (ty,nil,exp)
         end
 
   (**
    * Make a fresh instance of a polytype and a term of that type.
    *)
   fun freshToplevelInst (ty,exp) =
-      if TB.monoTy ty then (ty,exp)
+      (* 2016-06-16 sasaki: インスタンス化した制約を返すよう変更 *)
+      if TB.monoTy ty then (ty,nil,exp)
       else
         case ty of
-          T.POLYty{boundtvars,body,...} =>
+          T.POLYty{boundtvars,body,constraints} =>
           let 
             val subst = TB.freshSubst boundtvars
             val bty = TB.substBTvar subst body
@@ -363,10 +378,18 @@ in
                           expTy=ty,
                           instTyList=BoundTypeVarID.Map.listItems subst,
                           loc=getLocOfExp exp}
+            val constraints = 
+                List.map (fn c =>
+                             case c of T.JOIN {res, args = (arg1, arg2)} =>
+                               T.JOIN
+                                   {res = TB.substBTvar subst res,
+                                    args = (TB.substBTvar subst arg1,
+                                            TB.substBTvar subst arg2)})
+                         constraints
           in  
-            (bty,newExp)
+            (bty,constraints,newExp)
           end
-        | ty => (ty,exp)
+        | ty => (ty,nil,exp)
 
 
 
@@ -385,18 +408,17 @@ in
         => tv := T.SUBSTITUTED h
       | T.TYVARty (tv as ref(T.TVAR {tvarKind = T.REC tyFields, ...})) => 
         tv := T.SUBSTITUTED (T.RECORDty tyFields)
-      | T.TYVARty (tv as ref(T.TVAR {tvarKind = T.JOIN (tyFields,_,_, _), ...})) => 
-        tv := T.SUBSTITUTED (T.RECORDty tyFields)
       | T.TYVARty(tv as ref(T.TVAR {tvarKind = T.UNIV, ...})) => 
         tv := T.SUBSTITUTED BuiltinTypes.unitTy
       | _ => ()
 
   in
     fun freshToplevelGtoundInst (ty,exp) =
-        if TB.monoTy ty then (ty,exp)
+        (* 2016-06-16 sasaki: インスタンス化した制約を返すよう変更 *)
+        if TB.monoTy ty then (ty,nil,exp)
         else
           case ty of
-            T.POLYty{boundtvars,body,...} =>
+            T.POLYty{boundtvars,body,constraints} =>
             let 
               val subst = TB.freshSubst boundtvars
               val _ = BoundTypeVarID.Map.app instantiateTv subst
@@ -415,26 +437,35 @@ in
                             expTy=ty,
                             instTyList=BoundTypeVarID.Map.listItems subst,
                             loc=getLocOfExp exp}
+              val constraints =
+                List.map (fn c =>
+                             case c of T.JOIN {res, args = (arg1, arg2)} =>
+                               T.JOIN 
+                                   {res = TB.substBTvar subst res,
+                                    args = (TB.substBTvar subst arg1,
+                                            TB.substBTvar subst arg2)})
+                         constraints
             in  
-              (bty,newExp)
+              (bty,constraints,newExp)
             end
-          | ty => (ty,exp)
+          | ty => (ty,nil,exp)
 
     fun freshToplevelGtoundTy ty =
         let
-          val (ty, _) = freshToplevelGtoundInst (ty,TC.TPERROR)
+          val (ty, _, _) = freshToplevelGtoundInst (ty,TC.TPERROR)
         in
           ty
         end
 
     fun groundInst (ty,exp) =
-        if TB.monoTy ty then (ty,exp)
+        (* 2016-06-16 sasaki: インスタンス化した制約を返すよう変更 *)
+        if TB.monoTy ty then (ty,nil,exp)
         else
           let
             val expLoc = getLocOfExp exp
           in
             case ty of
-              T.POLYty{boundtvars,body,...} =>
+              T.POLYty{boundtvars,body,constraints} =>
               let 
                 val subst = TB.freshSubst boundtvars
                 val _ = BoundTypeVarID.Map.app instantiateTv subst
@@ -453,40 +484,50 @@ in
                               expTy=ty,
                               instTyList=BoundTypeVarID.Map.listItems subst,
                               loc=expLoc}
+                val instConstraints =
+                List.map (fn c =>
+                             case c of T.JOIN {res, args = (arg1, arg2)} =>
+                               T.JOIN
+                                   {res = TB.substBTvar subst res,
+                                    args = (TB.substBTvar subst arg1,
+                                            TB.substBTvar subst arg2)})
+                         constraints
+                val (gty, gconstraints, newExp) = groundInst (bty,newExp)
               in  
-                groundInst (bty,newExp)
+                (gty, instConstraints @ gconstraints, newExp)
               end
-            | T.FUNMty (tyList, bodyTy) => (ty, exp)
+            | T.FUNMty (tyList, bodyTy) => (ty, nil, exp)
             | T.RECORDty tyFields => 
               (case exp of
                  TC.TPRECORD {fields, recordTy=_, loc=loc} =>
                  let
-                   val (bindsRev, newTyFields, newFields) =
+                   val (bindsRev, instConstraints, newTyFields, newFields) =
                        RecordLabel.Map.foldli
-                         (fn (l, fieldTy, (bindsRev, newTyFields,newFields)) =>
+                         (fn (l, fieldTy, (bindsRev,instConstraints,newTyFields,newFields)) =>
                              case RecordLabel.Map.find(fields,l) of
                                 SOME field =>
                                 let
-                                  val (ty',exp') = groundInst (fieldTy, field)
+                                  val (ty',constraints',exp') = groundInst (fieldTy, field)
                                   val newTyFields = RecordLabel.Map.insert(newTyFields, l, ty')
-                                  val (bindsRev, newFields) =
+                                  val (bindsRev, instConstraints, newFields) =
                                       if isAtom exp' then 
-                                        (bindsRev, RecordLabel.Map.insert(newFields, l, exp'))
+                                        (bindsRev, instConstraints, RecordLabel.Map.insert(newFields, l, exp'))
                                       else
                                         let
                                           val fieldVar = newTCVarInfo loc ty'
                                           val fieldExp = TC.TPVAR fieldVar
                                           val newFields = RecordLabel.Map.insert(newFields, l, fieldExp)
                                           val bindsRev = (fieldVar, exp') :: bindsRev
+                                          val instConstraints = constraints' @ instConstraints
                                         in
-                                          (bindsRev, newFields)
+                                          (bindsRev, instConstraints, newFields)
                                         end
 
-                                in (bindsRev, newTyFields, newFields)
+                                in (bindsRev, instConstraints, newTyFields, newFields)
                                 end
                               | _ => raise bug "groundInst"
                          )
-                         (nil, RecordLabel.Map.empty, RecordLabel.Map.empty)
+                         (nil, nil, RecordLabel.Map.empty, RecordLabel.Map.empty)
                          tyFields
                    val binds = List.rev bindsRev
                    val recordExp =
@@ -500,16 +541,16 @@ in
                          TC.TPMONOLET
                            {binds = binds, bodyExp = recordExp, loc=loc}
                  in
-                   (T.RECORDty newTyFields, returnExp)
+                   (T.RECORDty newTyFields, instConstraints, returnExp)
                  end
                | _ =>
                  if isAtom exp then
                    let 
-                     val (bindsRev, flty, flexp) =
+                     val (bindsRev, instConstraints, flty, flexp) =
                          RecordLabel.Map.foldli 
-                           (fn (label, fieldTy, (bindsRev, flty,flexp)) =>
+                           (fn (label, fieldTy, (bindsRev,instConstraints,flty,flexp)) =>
                                let
-                                 val (fieldTy,instExp) =
+                                 val (fieldTy,fieldConstraints,instExp) =
                                      groundInst
                                        (fieldTy,
                                         TC.TPSELECT{label=label,
@@ -521,11 +562,12 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
+                                  fieldConstraints @ instConstraints,
                                   RecordLabel.Map.insert(flty,label,fieldTy),
                                   RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end)
-                           (nil,RecordLabel.Map.empty,RecordLabel.Map.empty)
+                           (nil,nil,RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                      val binds = List.rev bindsRev
                      val recordExp =
@@ -541,16 +583,16 @@ in
                               bodyExp = recordExp,
                               loc=expLoc}
                    in 
-                     (T.RECORDty flty, returnExp)
+                     (T.RECORDty flty, instConstraints, returnExp)
                    end
                  else
                    let 
                      val var = newTCVarInfo expLoc ty
                      val varExp = TC.TPVAR var
-                     val (bindsRev, flty,flexp) =
+                     val (bindsRev,instConstraints,flty,flexp) =
                          RecordLabel.Map.foldli
-                           (fn (label,fieldTy,(bindsRev, flty,flexp)) =>
-                               let val (fieldTy,instExp) =
+                           (fn (label,fieldTy,(bindsRev,instConstraints,flty,flexp)) =>
+                               let val (fieldTy,fieldConstraints,instExp) =
                                        groundInst
                                          (fieldTy,
                                           TC.TPSELECT
@@ -563,16 +605,18 @@ in
                                  val fieldExp = TC.TPVAR fieldVar
                                in
                                  ((fieldVar, instExp)::bindsRev,
+                                  fieldConstraints @ instConstraints,
                                   RecordLabel.Map.insert(flty,label,fieldTy),
                                   RecordLabel.Map.insert(flexp,label,fieldExp)
                                  )
                                end
                            )
-                           ([(var, exp)], RecordLabel.Map.empty,RecordLabel.Map.empty)
+                           ([(var, exp)], nil, RecordLabel.Map.empty,RecordLabel.Map.empty)
                            tyFields
                    in 
                      (
                       T.RECORDty flty, 
+                      instConstraints,
                       TC.TPMONOLET
                         {binds = List.rev bindsRev,
                          bodyExp =
@@ -585,21 +629,22 @@ in
                      )
                    end
               )
-            | ty => (ty,exp)
+            | ty => (ty,nil,exp)
           end
     fun groundInstTy ty = 
         let
-          val (ty, _) = groundInst (ty, TC.TPERROR)
+          val (ty, _, _) = groundInst (ty, TC.TPERROR)
         in
           ty
         end
   end
 
   fun toplevelInstWithInstTy (ty, exp, instTy) =
-      if TB.monoTy ty then (ty,exp)
+      (* 2016-06-16 sasaki: インスタンス化した制約を返すよう変更 *)
+      if TB.monoTy ty then (ty,nil,exp)
       else
         case ty of
-          T.POLYty{boundtvars,body,...} =>
+          T.POLYty{boundtvars,body,constraints} =>
           let 
             val subst =
                 BoundTypeVarID.Map.map
@@ -620,10 +665,18 @@ in
                           expTy=ty,
                           instTyList=map (fn x => instTy) (BoundTypeVarID.Map.listItems subst),
                           loc=getLocOfExp exp}
+            val constraints = 
+                List.map (fn c =>
+                             case c of T.JOIN {res, args = (arg1, arg2)} =>
+                               T.JOIN
+                                   {res = TB.substBTvar subst res,
+                                    args = (TB.substBTvar subst arg1,
+                                            TB.substBTvar subst arg2)})
+                         constraints
           in  
-            (bty,newExp)
+            (bty,constraints,newExp)
           end
-        | ty => (ty,exp)
+        | ty => (ty,nil,exp)
 
 
 end

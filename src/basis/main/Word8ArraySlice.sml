@@ -6,7 +6,7 @@
  * @copyright 2010, 2011, 2012, 2013 Tohoku University.
  *)
 
-type 'a elem = SMLSharp_Builtin.Word8.word
+type 'a elem = word8
 
 (* object size occupies 26 bits of 32-bit object header. *)
 val maxLen = 0x03ffffff

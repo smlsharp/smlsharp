@@ -17,7 +17,7 @@ structure Int32 = SMLSharp_Builtin.Int32
 structure Int32 =
 struct
 
-  type int = int
+  type int = int32
   fun toInt x = x : int
   fun fromInt x = x : int
 

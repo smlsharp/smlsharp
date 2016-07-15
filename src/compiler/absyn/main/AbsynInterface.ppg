@@ -299,16 +299,19 @@ struct
        *)
       IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
-  (*% *)
+  (*%
+   * @formatter(Filename.filename) Filename.format_filename
+   *)
   datatype irequire =
-      (*% @format(s) "_require" +d s *)
-      REQUIRE of symbol
-    | (*% @format(s) "local" +d "_require" +d s *)
-      LOCAL_REQUIRE of symbol
+      (*% @format(s * l) "_require" +d s *)
+      REQUIRE of Filename.filename * loc
+    | (*% @format(s * l) "local" +d "_require" +d s *)
+      LOCAL_REQUIRE of Filename.filename * loc
 
   (*%
    * @formatter(Absyn.topdec) Absyn.format_topdec
    * @formatter(dec) TermFormat.formatDeclList
+   * @formatter(Filename.filename) Filename.format_filename
    *)
   datatype itop 
     = (*%
@@ -324,11 +327,11 @@ struct
        * @format({includes: n ns, topdecs: x xs})
        * ns:dec(n)(+1 "include" +d,+1 "include" +d)
        * xs(x)(+1)
-       * @format:n(symbol) symbol
+       * @format:n(f * l) f
        *)
       INCLUDES of
       {
-        includes: symbol list,
+        includes: (Filename.filename * loc) list,
         topdecs: Absyn.topdec list
       }
 

@@ -15,7 +15,7 @@ structure Word8 = SMLSharp_Builtin.Word8
 structure Word8 =
 struct
 
-  type word = Word8.word
+  type word = word8
   val wordSize = 8  (* 8-bit unsigned integer *)
 
   val toLarge = Word8.toWord64

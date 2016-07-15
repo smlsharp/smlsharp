@@ -8,24 +8,16 @@ struct
 
   type loc = Loc.loc
 
-  (*% *)
+  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol *)
   (*%
    * @prefix formatWithoutType_
+   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
-  (*% @prefix formatWithType_ *)
+  (*% @prefix formatWithType_
+   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   *)
   type path =
-     (*%
-       @format(name names)  names(name)(".")
-      *)
-     (*%
-      * @prefix formatWithoutType_
-       @format(name names)  names(name)(".")
-      *)
-     (*% 
-        @prefix formatWithType_
-        @format(name names)  names(name)(".")
-      *)
-       string list
+      Symbol.longsymbol
 
   (*%
      @params(btvEnv)
@@ -192,35 +184,15 @@ struct
       {path: path, ty: ty}
 
   (*% 
-     @params(btvEnv)
+     @formatter(TypedCalc.exnCon) TypedCalc.format_exnCon
    *)
   (*% @prefix formatWithType_
-     @params(btvEnv)
+     @formatter(TypedCalc.exnCon) TypedCalc.formatWithType_exnCon
    *)
   (*% @prefix formatWithoutType_
+     @formatter(TypedCalc.exnCon) TypedCalc.format_exnCon
    *)
-  datatype exnCon 
-    = (*% 
-         @format(exn) exn()(btvEnv)
-       *)
-      (*% @prefix formatWithType_
-         @format(exn) exn()(btvEnv)
-       *)
-      (*% @prefix formatWithoutType_
-         @format(exn) exn
-       *)
-      EXN of exnInfo
-    | (*% 
-         @format(exn) exn()(btvEnv)
-       *)
-      (*% @prefix formatWithType_
-         @format(exn) exn()(btvEnv)
-       *)
-      (*% @prefix formatWithoutType_
-         @format(exn) exn
-       *)
-      EXEXN of exExnInfo
-
+  datatype exnCon = datatype TypedCalc.exnCon
 
   (*%
    * @params(btvEnv)
@@ -518,7 +490,7 @@ struct
        *          argExpOpt: arg argOpt,
        *          loc})
        * L8{ 2[
-       *   exn()(btvEnv)
+       *   exn
        *   instTys:optionalList(instTy()(btvEnv))(+1 "{",",","}")
        *   argOpt(arg()(btvEnv))(+1,) ] }
        *)
@@ -771,7 +743,7 @@ struct
        *   rules:ifCons()(+1 "|" +d) 2[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
        * }
        * @format:rule(exn * var varOpt * exp)
-       * 2[ exn()(btvEnv) varOpt(var()(btvEnv))(+d,) +d "=>" +1 exp()(btvEnv) ]
+       * 2[ exn varOpt(var()(btvEnv))(+d,) +d "=>" +1 exp()(btvEnv) ]
        *)
       (*% @prefix formatWithoutType_
        * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})

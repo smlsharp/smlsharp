@@ -53,13 +53,9 @@ in
   val matchNotExhaustiveMessage = "match nonexhaustive"
   val matchBothMessage = "match redundant and nonexhaustive"
 
-  fun toRCExExn {longsymbol, ty} =
-      {path=Symbol.longsymbolToLongid longsymbol,
-       ty=ty}
-
   fun raiseBindFailExp resultTy loc = 
       RC.RCRAISE
-        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN (toRCExExn BT.BindExExn),
+        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN BT.BindExExn,
                                instTyList=nil, 
                                argExpOpt=NONE, 
                                loc=loc}, 
@@ -68,7 +64,7 @@ in
 
   fun raiseMatchFailExp resultTy loc = 
       RC.RCRAISE
-        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN (toRCExExn BT.MatchExExn), 
+        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN BT.MatchExExn,
                                instTyList=nil, 
                                argExpOpt=NONE, 
                                loc=loc}, 
@@ -86,7 +82,13 @@ in
                  RC.RCFFI
                    (RC.RCFFIIMPORT
                       {funExp = RC.RCFFIEXTERN "sml_matchcomp_bug",
-                       ffiTy = TC.FFIFUNTY (NONE, nil, NONE, nil, loc)},
+                       ffiTy = TC.FFIFUNTY
+                                 (SOME {isPure = false,
+                                        fast = true,
+                                        unsafe = false,
+                                        causeGC = false,
+                                        callingConvention = NONE},
+                                  nil, NONE, nil, loc)},
                     T.FUNMty ([BT.unitTy], BT.unitTy),
                     loc),
                funTy = T.FUNMty ([BT.unitTy], BT.unitTy),
@@ -96,7 +98,7 @@ in
                loc = loc},
             RC.RCRAISE
               {exp = RC.RCEXNCONSTRUCT
-                       {exn = RC.EXEXN (toRCExExn BT.MatchExExn),
+                       {exn = RC.EXEXN BT.MatchExExn,
                         instTyList = nil, 
                         argExpOpt = NONE,
                         loc = loc},

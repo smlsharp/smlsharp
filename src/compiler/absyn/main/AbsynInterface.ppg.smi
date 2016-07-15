@@ -103,8 +103,8 @@ struct
     | IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
   datatype irequire =
-      REQUIRE of symbol
-    | LOCAL_REQUIRE of symbol
+      REQUIRE of Filename.filename * loc
+    | LOCAL_REQUIRE of Filename.filename * loc
 
   datatype itop =
       INTERFACE of
@@ -114,7 +114,7 @@ struct
       }
     | INCLUDES of
       {
-        includes: Symbol.symbol list,
+        includes: (Filename.filename * loc) list,
         topdecs: Absyn.topdec list
       }
 

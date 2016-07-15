@@ -126,8 +126,8 @@ in
               TC.TPEXEXN_CONSTRUCTOR
                 {exExnInfo=evalExExnInfo btvMap exExnInfo,
                  loc= loc}
-            | TC.TPEXVAR {longsymbol, ty} =>
-              TC.TPEXVAR {longsymbol=longsymbol, ty=evalT ty}
+            | TC.TPEXVAR {path, ty} =>
+              TC.TPEXVAR {path=path, ty=evalT ty}
             | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} =>
               TC.TPFFIIMPORT
                 {ffiTy = evalFfiTy btvMap ffiTy,
@@ -256,12 +256,12 @@ in
               TC.TPEXPORTVAR (evalTyVar btvMap varInfo)
             | TC.TPEXPORTRECFUNVAR _ =>
               raise bug "TPEXPORTRECFUNVAR to AlphaRename"
-            | TC.TPEXTERNEXN {longsymbol, ty} =>
-              TC.TPEXTERNEXN {longsymbol=longsymbol, ty=evalT ty}
-            | TC.TPBUILTINEXN {longsymbol, ty} =>
-              TC.TPBUILTINEXN {longsymbol=longsymbol, ty=evalT ty}
-            | TC.TPEXTERNVAR {longsymbol, ty} =>
-              TC.TPEXTERNVAR {longsymbol=longsymbol, ty=evalT ty}
+            | TC.TPEXTERNEXN {path, ty} =>
+              TC.TPEXTERNEXN {path=path, ty=evalT ty}
+            | TC.TPBUILTINEXN {path, ty} =>
+              TC.TPBUILTINEXN {path=path, ty=evalT ty}
+            | TC.TPEXTERNVAR {path, ty} =>
+              TC.TPEXTERNVAR {path=path, ty=evalT ty}
             | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
               TC.TPVAL (map evalBind binds, loc)
             | TC.TPVALPOLYREC

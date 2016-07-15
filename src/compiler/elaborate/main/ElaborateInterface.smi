@@ -1,5 +1,4 @@
 _require "../../../basis.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../control/main/Bug.ppg.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
 _require "../../name/main/LocalID.smi"
@@ -15,7 +14,7 @@ _require "./ElaborateModule.smi"
 
 structure ElaborateInterface =
   struct
-    type fixEnv = Fixity.fixity SEnv.map
+    type fixEnv = Fixity.fixity SymbolEnv.map
     val elaborate
         : AbsynInterface.interface
           -> fixEnv * PatternCalcInterface.interface

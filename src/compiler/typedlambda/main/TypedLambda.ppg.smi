@@ -22,19 +22,19 @@ structure TypedLambda =
           -> ty -> SMLFormat.FormatExpression.expression list
     type varInfo = RecordCalc.varInfo
     val format_varInfo
-        : {id:VarID.id, path:string list, ty:ty}
+        : varInfo
           -> SMLFormat.FormatExpression.expression list
     val formatWithType_varInfo
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> {id:VarID.id, path:string list, ty:ty}
+          -> varInfo
           -> SMLFormat.FormatExpression.expression list
     type exVarInfo = RecordCalc.exVarInfo
     val format_exVarInfo
-        : {path:string list, ty:ty}
+        : exVarInfo
           -> SMLFormat.FormatExpression.expression list
     val formatWithType_exVarInfo
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> {path:string list, ty:ty}
+          -> exVarInfo
           -> SMLFormat.FormatExpression.expression list
     type primTy =
          {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}

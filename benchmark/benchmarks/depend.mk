@@ -77,6 +77,8 @@ diviter/diviter.o: diviter/diviter.sml diviter/diviter.smi
 diviter/doit.o: diviter/doit.sml diviter/diviter.smi diviter/doit.smi
 divrec/divrec.o: divrec/divrec.sml divrec/divrec.smi
 divrec/doit.o: divrec/doit.sml divrec/divrec.smi divrec/doit.smi
+fibrepeat/fibrepeat.o: fibrepeat/fibrepeat.sml fibrepeat/fibrepeat.smi
+fibrepeat/doit.o: fibrepeat/doit.sml fibrepeat/doit.smi fibrepeat/fibrepeat.smi
 fft/doit.o: fft/doit.sml fft/fft.smi fft/doit.smi
 fft/fft.o: fft/fft.sml fft/fft.smi
 gcbench/doit.o: gcbench/doit.sml gcbench/gcbench.smi gcbench/doit.smi
@@ -173,8 +175,10 @@ nucleic/doit.o: nucleic/doit.sml nucleic/nucleic.smi nucleic/main.smi \
   nucleic/doit.smi
 nucleic/main.o: nucleic/main.sml nucleic/nucleic.smi nucleic/main.smi
 nucleic/nucleic.o: nucleic/nucleic.sml nucleic/nucleic.smi
-parallel_matrix2/multiply_cps.o: parallel_matrix2/multiply_cps.sml \
-  parallel_matrix2/multiply_cps.smi
+parallel_matrix/multiply_nest_cps.o: parallel_matrix/multiply_nest_cps.sml \
+  parallel_matrix/multiply_nest_cps.smi
+parallel_matrix_tail/multiply_nest_tail.o: parallel_matrix_tail/multiply_nest_tail.sml \
+  parallel_matrix_tail/multiply_nest_tail.smi
 perm9/doit.o: perm9/doit.sml perm9/perm9.smi perm9/doit.smi
 perm9/perm9.o: perm9/perm9.sml perm9/perm9.smi
 puzzle/doit.o: puzzle/doit.sml puzzle/puzzle.smi puzzle/doit.smi

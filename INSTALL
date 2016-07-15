@@ -9,7 +9,7 @@ The following softwares are required to build and install SML#:
   * GNU make or BSD make
   * LLVM 3.7.1
   * GNU MP library
-  * YAJL
+  * YAJL (2.0.0 or above)
 
 == Quick Start
 

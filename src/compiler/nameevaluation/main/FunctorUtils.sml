@@ -235,8 +235,7 @@ in
                   (case formals of
                      nil =>
                      let
-                       val loc = Symbol.longsymbolToLoc path
-                       val tvarName =Symbol.mkSymbol (Symbol.longsymbolToString path) loc
+                       val tvarName = Symbol.coerceLongsymbolToSymbol path
                        val tvar = {symbol=tvarName,
                                    lifted=true,
                                    id = TvarID.generate(),

@@ -8,12 +8,12 @@ _require local "./Option.smi"
 
 structure Int64 =
 struct
-  type int = SMLSharp_Builtin.Int64.int
-  val toLarge : int -> LargeInt.int
-  val fromLarge : LargeInt.int -> int
+  type int = int64
+  val toLarge : int -> largeInt
+  val fromLarge : largeInt -> int
   val toInt = SMLSharp_Builtin.Int64.toInt32
   val fromInt = SMLSharp_Builtin.Int64.fromInt32
-  val precision : SMLSharp_Builtin.Int32.int option
+  val precision : int option
   val minInt : int option
   val maxInt : int option
   val + = SMLSharp_Builtin.Int64.add_unsafe
@@ -32,7 +32,7 @@ struct
   val abs = SMLSharp_Builtin.Int64.abs
   val min : int * int -> int
   val max : int * int -> int
-  val sign : int -> SMLSharp_Builtin.Int32.int
+  val sign : int -> int32
   val sameSign : int * int -> bool
   val fmt : StringCvt.radix -> int -> string
   val toString : int -> string

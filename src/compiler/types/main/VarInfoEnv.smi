@@ -3,6 +3,7 @@ _require local "../../../smlnj-lib/Util/ord-key-sig.sml"
 _require "../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require local "../../control/main/Bug.ppg.smi"
 _require "./Types.ppg.smi"
 
@@ -23,7 +24,7 @@ structure OTSet = BinarySetFn(TvOrd)
 
 structure varInfoOrd =
 struct
-  type ord_key = {path:string list, id:VarID.id, ty:Types.ty}
+  type ord_key = {path:Symbol.longsymbol, id:VarID.id, ty:Types.ty}
   val compare : ord_key * ord_key -> order
 end
 

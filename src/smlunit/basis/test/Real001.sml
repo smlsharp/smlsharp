@@ -2398,192 +2398,195 @@ struct
   fun suite () =
       T.labelTests
       [
-        ("binArith_pos", binArith_pos),
-        ("binArith_neg", binArith_neg),
-        ("binArith_p0", binArith_p0),
-        ("binArith_n0", binArith_n0),
-        ("binArith_pinf", binArith_pinf),
-        ("binArith_ninf", binArith_ninf),
-        ("binArith_pnan", binArith_pnan),
-        ("binArith_nnan", binArith_nnan),
+(*
+         ("binArith_pos", binArith_pos)
+        ,("binArith_neg", binArith_neg)
+        ,("binArith_p0", binArith_p0)
+        ,("binArith_n0", binArith_n0)
+        ,("binArith_pinf", binArith_pinf)
+        ,("binArith_ninf", binArith_ninf)
+        ,("binArith_pnan", binArith_pnan)
+        ,("binArith_nnan", binArith_nnan)
 
-        ("triArith0001", triArith0001),
+        ,("triArith0001", triArith0001)
 
-        ("negation0001", negation0001),
+        ,("negation0001", negation0001)
 
-        ("abs_normal", abs_normal),
-        ("abs_zero", abs_zero),
-        ("abs_inf", abs_inf),
-        ("abs_nan", abs_nan),
+        ,("abs_normal", abs_normal)
+        ,("abs_zero", abs_zero)
+        ,("abs_inf", abs_inf)
+        ,("abs_nan", abs_nan)
 
-        ("min_pos", min_pos),
-        ("min_neg", min_neg),
-        ("min_p0", min_p0),
-        ("min_n0", min_n0),
-        ("min_pinf", min_pinf),
-        ("min_ninf", min_ninf),
-        ("min_pnan", min_pnan),
-        ("min_nnan", min_nnan),
+        ,("min_pos", min_pos)
+        ,("min_neg", min_neg)
+        ,("min_p0", min_p0)
+        ,("min_n0", min_n0)
+        ,("min_pinf", min_pinf)
+        ,("min_ninf", min_ninf)
+        ,("min_pnan", min_pnan)
+        ,("min_nnan", min_nnan)
 
-        ("max_pos", max_pos),
-        ("max_neg", max_neg),
-        ("max_p0", max_p0),
-        ("max_n0", max_n0),
-        ("max_pinf", max_pinf),
-        ("max_ninf", max_ninf),
-        ("max_pnan", max_pnan),
-        ("max_nnan", max_nnan),
+        ,("max_pos", max_pos)
+        ,("max_neg", max_neg)
+        ,("max_p0", max_p0)
+        ,("max_n0", max_n0)
+        ,("max_pinf", max_pinf)
+        ,("max_ninf", max_ninf)
+        ,("max_pnan", max_pnan)
+        ,("max_nnan", max_nnan)
 
-        ("sign_normal", sign_normal),
-        ("sign_zero", sign_zero),
-        ("sign_inf", sign_inf),
-        ("sign_nan", sign_nan),
+        ,("sign_normal", sign_normal)
+        ,("sign_zero", sign_zero)
+        ,("sign_inf", sign_inf)
+        ,("sign_nan", sign_nan)
 
-        ("signBit_normal", signBit_normal),
-        ("signBit_zero", signBit_zero),
-        ("signBit_inf", signBit_inf),
-        ("signBit_nan", signBit_nan),
+        ,("signBit_normal", signBit_normal)
+        ,("signBit_zero", signBit_zero)
+        ,("signBit_inf", signBit_inf)
+        ,("signBit_nan", signBit_nan)
 
-        ("sameSign_normal", sameSign_normal),
-        ("sameSign_zero", sameSign_zero),
-        ("sameSign_inf", sameSign_inf),
-        ("sameSign_nan", sameSign_nan),
+        ,("sameSign_normal", sameSign_normal)
+        ,("sameSign_zero", sameSign_zero)
+        ,("sameSign_inf", sameSign_inf)
+        ,("sameSign_nan", sameSign_nan)
 
-        ("copySign_pos", copySign_pos),
-        ("copySign_neg", copySign_neg),
-        ("copySign_p0", copySign_p0),
-        ("copySign_n0", copySign_n0),
-        ("copySign_pinf", copySign_pinf),
-        ("copySign_ninf", copySign_ninf),
-        ("copySign_pnan", copySign_pnan),
-        ("copySign_nnan", copySign_nnan),
+        ,("copySign_pos", copySign_pos)
+        ,("copySign_neg", copySign_neg)
+        ,("copySign_p0", copySign_p0)
+        ,("copySign_n0", copySign_n0)
+        ,("copySign_pinf", copySign_pinf)
+        ,("copySign_ninf", copySign_ninf)
+        ,("copySign_pnan", copySign_pnan)
+        ,("copySign_nnan", copySign_nnan)
+*)
+         ("compare_pos", compare_pos)
+(*
+        ,("compare_neg", compare_neg)
+        ,("compare_p0", compare_p0)
+        ,("compare_n0", compare_n0)
+        ,("compare_pinf", compare_pinf)
+        ,("compare_ninf", compare_ninf)
+        ,("compare_pnan", compare_pnan)
+        ,("compare_nnan", compare_nnan)
 
-        ("compare_pos", compare_pos),
-        ("compare_neg", compare_neg),
-        ("compare_p0", compare_p0),
-        ("compare_n0", compare_n0),
-        ("compare_pinf", compare_pinf),
-        ("compare_ninf", compare_ninf),
-        ("compare_pnan", compare_pnan),
-        ("compare_nnan", compare_nnan),
+        ,("compareReal_pos", compareReal_pos)
+        ,("compareReal_neg", compareReal_neg)
+        ,("compareReal_p0", compareReal_p0)
+        ,("compareReal_n0", compareReal_n0)
+        ,("compareReal_pinf", compareReal_pinf)
+        ,("compareReal_ninf", compareReal_ninf)
+        ,("compareReal_pnan", compareReal_pnan)
+        ,("compareReal_nnan", compareReal_nnan)
 
-        ("compareReal_pos", compareReal_pos),
-        ("compareReal_neg", compareReal_neg),
-        ("compareReal_p0", compareReal_p0),
-        ("compareReal_n0", compareReal_n0),
-        ("compareReal_pinf", compareReal_pinf),
-        ("compareReal_ninf", compareReal_ninf),
-        ("compareReal_pnan", compareReal_pnan),
-        ("compareReal_nnan", compareReal_nnan),
+        ,("binComp_pos", binComp_pos)
+        ,("binComp_neg", binComp_neg)
+        ,("binComp_p0", binComp_p0)
+        ,("binComp_n0", binComp_n0)
+        ,("binComp_pinf", binComp_pinf)
+        ,("binComp_ninf", binComp_ninf)
+        ,("binComp_pnan", binComp_pnan)
+        ,("binComp_nnan", binComp_nnan)
 
-        ("binComp_pos", binComp_pos),
-        ("binComp_neg", binComp_neg),
-        ("binComp_p0", binComp_p0),
-        ("binComp_n0", binComp_n0),
-        ("binComp_pinf", binComp_pinf),
-        ("binComp_ninf", binComp_ninf),
-        ("binComp_pnan", binComp_pnan),
-        ("binComp_nnan", binComp_nnan),
-
-        ("IEEEEq_pos", IEEEEq_pos),
-        ("IEEEEq_neg", IEEEEq_neg),
-        ("IEEEEq_p0", IEEEEq_p0),
-        ("IEEEEq_n0", IEEEEq_n0),
-        ("IEEEEq_pinf", IEEEEq_pinf),
-        ("IEEEEq_ninf", IEEEEq_ninf),
-        ("IEEEEq_pnan", IEEEEq_pnan),
-        ("IEEEEq_nnan", IEEEEq_nnan),
+        ,("IEEEEq_pos", IEEEEq_pos)
+        ,("IEEEEq_neg", IEEEEq_neg)
+        ,("IEEEEq_p0", IEEEEq_p0)
+        ,("IEEEEq_n0", IEEEEq_n0)
+        ,("IEEEEq_pinf", IEEEEq_pinf)
+        ,("IEEEEq_ninf", IEEEEq_ninf)
+        ,("IEEEEq_pnan", IEEEEq_pnan)
+        ,("IEEEEq_nnan", IEEEEq_nnan)
         
-        ("isFinite001", isFinite001),
-        ("isNan001", isNan001),
-        ("isNormal001", isNormal001),
-        ("class001", class001),
+        ,("isFinite001", isFinite001)
+        ,("isNan001", isNan001)
+        ,("isNormal001", isNormal001)
+        ,("class001", class001)
 
-        ("toManExp001", toManExp001),
-        ("fromManExp001", fromManExp001),
+        ,("toManExp001", toManExp001)
+        ,("fromManExp001", fromManExp001)
 
-        ("split001", split001),
-        ("realMod001", realMod001),
+        ,("split001", split001)
+        ,("realMod001", realMod001)
 
-        ("nextAfter001", nextAfter001),
-        ("checkFloat001", checkFloat001),
+        ,("nextAfter001", nextAfter001)
+        ,("checkFloat001", checkFloat001)
 
-        ("toRealIntConversions0001", toRealIntConversions0001),
-        ("toIntConversions_normal_0001", toIntConversions_normal_0001),
-        ("toIntConversions_normal_1001", toIntConversions_normal_1001),
-        ("toIntConversions_normal_1002", toIntConversions_normal_1002),
-        ("toIntConversions_normal_1003", toIntConversions_normal_1003),
-        ("toIntConversions_inf", toIntConversions_inf),
-        ("toIntConversions_nan", toIntConversions_nan),
+        ,("toRealIntConversions0001", toRealIntConversions0001)
+        ,("toIntConversions_normal_0001", toIntConversions_normal_0001)
+        ,("toIntConversions_normal_1001", toIntConversions_normal_1001)
+        ,("toIntConversions_normal_1002", toIntConversions_normal_1002)
+        ,("toIntConversions_normal_1003", toIntConversions_normal_1003)
+        ,("toIntConversions_inf", toIntConversions_inf)
+        ,("toIntConversions_nan", toIntConversions_nan)
 
-        ("toInt_normal_0001", toInt_normal_0001),
-        ("toInt_normal_0002", toInt_normal_0002),
-        ("toInt_normal_1001", toInt_normal_1001),
-        ("toInt_normal_1002", toInt_normal_1002),
-        ("toInt_normal_1003", toInt_normal_1003),
-        ("toInt_inf_0001", toInt_inf_0001),
-        ("toInt_nan_0001", toInt_nan_0001),
+        ,("toInt_normal_0001", toInt_normal_0001)
+        ,("toInt_normal_0002", toInt_normal_0002)
+        ,("toInt_normal_1001", toInt_normal_1001)
+        ,("toInt_normal_1002", toInt_normal_1002)
+        ,("toInt_normal_1003", toInt_normal_1003)
+        ,("toInt_inf_0001", toInt_inf_0001)
+        ,("toInt_nan_0001", toInt_nan_0001)
 
-        ("toLargeInt_normal_0001", toLargeInt_normal_0001),
-        ("toLargeInt_normal_0002", toLargeInt_normal_0002),
-        ("toLargeInt_normal_0003", toLargeInt_normal_0003),
-        ("toLargeInt_inf_0001", toLargeInt_inf_0001),
-        ("toLargeInt_nan_0001", toLargeInt_nan_0001),
+        ,("toLargeInt_normal_0001", toLargeInt_normal_0001)
+        ,("toLargeInt_normal_0002", toLargeInt_normal_0002)
+        ,("toLargeInt_normal_0003", toLargeInt_normal_0003)
+        ,("toLargeInt_inf_0001", toLargeInt_inf_0001)
+        ,("toLargeInt_nan_0001", toLargeInt_nan_0001)
 
-        ("fromInt0001", fromInt0001),
-        ("fromLargeInt0001", fromLargeInt0001),
+        ,("fromInt0001", fromInt0001)
+        ,("fromLargeInt0001", fromLargeInt0001)
 
-        ("toLarge0001", toLarge0001),
-        ("fromLarge0001", fromLarge0001),
+        ,("toLarge0001", toLarge0001)
+        ,("fromLarge0001", fromLarge0001)
 
-        ("fmt_SCI_normal_0001", fmt_SCI_normal_0001),
-        ("fmt_SCI_normal_0010", fmt_SCI_normal_0010),
-        ("fmt_SCI_normal_0011", fmt_SCI_normal_0011),
-        ("fmt_SCI_normal_0012", fmt_SCI_normal_0012),
-        ("fmt_SCI_normal_0013", fmt_SCI_normal_0013),
-        ("fmt_SCI_normal_0020", fmt_SCI_normal_0020),
-        ("fmt_SCI_normal_0021", fmt_SCI_normal_0021),
-        ("fmt_SCI_normal_0022", fmt_SCI_normal_0022),
-        ("fmt_SCI_normal_0023", fmt_SCI_normal_0023),
-        ("fmt_SCI_abnormal", fmt_SCI_abnormal),
-        ("fmt_FIX_normal_0001", fmt_FIX_normal_0001),
-        ("fmt_FIX_normal_0010", fmt_FIX_normal_0010),
-        ("fmt_FIX_normal_0011", fmt_FIX_normal_0011),
-        ("fmt_FIX_normal_0012", fmt_FIX_normal_0012),
-        ("fmt_FIX_normal_0013", fmt_FIX_normal_0013),
-        ("fmt_FIX_normal_0020", fmt_FIX_normal_0020),
-        ("fmt_FIX_normal_0021", fmt_FIX_normal_0021),
-        ("fmt_FIX_normal_0022", fmt_FIX_normal_0022),
-        ("fmt_FIX_normal_0023", fmt_FIX_normal_0023),
-        ("fmt_FIX_abnormal", fmt_FIX_abnormal),
-        ("fmt_GEN_normal_NONE_posExp", fmt_GEN_normal_NONE_posExp),
-        ("fmt_GEN_normal_NONE_negExp", fmt_GEN_normal_NONE_negExp),
-        ("fmt_GEN_normal_SOME_posExp", fmt_GEN_normal_SOME_posExp),
-        ("fmt_GEN_normal_SOME_negExp", fmt_GEN_normal_SOME_negExp),
-        ("fmt_GEN_abnormal", fmt_GEN_abnormal),
-        ("fmt_error", fmt_error),
-        ("toString001", toString001),
+        ,("fmt_SCI_normal_0001", fmt_SCI_normal_0001)
+        ,("fmt_SCI_normal_0010", fmt_SCI_normal_0010)
+        ,("fmt_SCI_normal_0011", fmt_SCI_normal_0011)
+        ,("fmt_SCI_normal_0012", fmt_SCI_normal_0012)
+        ,("fmt_SCI_normal_0013", fmt_SCI_normal_0013)
+        ,("fmt_SCI_normal_0020", fmt_SCI_normal_0020)
+        ,("fmt_SCI_normal_0021", fmt_SCI_normal_0021)
+        ,("fmt_SCI_normal_0022", fmt_SCI_normal_0022)
+        ,("fmt_SCI_normal_0023", fmt_SCI_normal_0023)
+        ,("fmt_SCI_abnormal", fmt_SCI_abnormal)
+        ,("fmt_FIX_normal_0001", fmt_FIX_normal_0001)
+        ,("fmt_FIX_normal_0010", fmt_FIX_normal_0010)
+        ,("fmt_FIX_normal_0011", fmt_FIX_normal_0011)
+        ,("fmt_FIX_normal_0012", fmt_FIX_normal_0012)
+        ,("fmt_FIX_normal_0013", fmt_FIX_normal_0013)
+        ,("fmt_FIX_normal_0020", fmt_FIX_normal_0020)
+        ,("fmt_FIX_normal_0021", fmt_FIX_normal_0021)
+        ,("fmt_FIX_normal_0022", fmt_FIX_normal_0022)
+        ,("fmt_FIX_normal_0023", fmt_FIX_normal_0023)
+        ,("fmt_FIX_abnormal", fmt_FIX_abnormal)
+        ,("fmt_GEN_normal_NONE_posExp", fmt_GEN_normal_NONE_posExp)
+        ,("fmt_GEN_normal_NONE_negExp", fmt_GEN_normal_NONE_negExp)
+        ,("fmt_GEN_normal_SOME_posExp", fmt_GEN_normal_SOME_posExp)
+        ,("fmt_GEN_normal_SOME_negExp", fmt_GEN_normal_SOME_negExp)
+        ,("fmt_GEN_abnormal", fmt_GEN_abnormal)
+        ,("fmt_error", fmt_error)
+        ,("toString001", toString001)
 
-        ("scan_normal_0001", scan_normal_0001),
-        ("scan_normal_0002", scan_normal_0002),
-        ("scan_normal_0003", scan_normal_0003),
-        ("scan_normal_0010", scan_normal_0010),
-        ("scan_normal_0011", scan_normal_0011),
-        ("scan_normal_0012", scan_normal_0012),
-        ("scan_normal_1001", scan_normal_1001),
-        ("scan_abnormal_0001", scan_abnormal_0001),
-        ("scan_abnormal_0002", scan_abnormal_0002),
-        ("scan_abnormal_0010", scan_abnormal_0010),
-        ("fromString0001", fromString0001),
+        ,("scan_normal_0001", scan_normal_0001)
+        ,("scan_normal_0002", scan_normal_0002)
+        ,("scan_normal_0003", scan_normal_0003)
+        ,("scan_normal_0010", scan_normal_0010)
+        ,("scan_normal_0011", scan_normal_0011)
+        ,("scan_normal_0012", scan_normal_0012)
+        ,("scan_normal_1001", scan_normal_1001)
+        ,("scan_abnormal_0001", scan_abnormal_0001)
+        ,("scan_abnormal_0002", scan_abnormal_0002)
+        ,("scan_abnormal_0010", scan_abnormal_0010)
+        ,("fromString0001", fromString0001)
 
-        ("toDecimal_normal_0001", toDecimal_normal_0001),
-        ("toDecimal_abnormal_0001", toDecimal_abnormal_0001),
+        ,("toDecimal_normal_0001", toDecimal_normal_0001)
+        ,("toDecimal_abnormal_0001", toDecimal_abnormal_0001)
 
-        ("fromDecimal_normal_0001", fromDecimal_normal_0001),
-        ("fromDecimal_normal_0002", fromDecimal_normal_0002),
-        ("fromDecimal_normal_1001", fromDecimal_normal_1001),
-        ("fromDecimal_abnormal_0001", fromDecimal_abnormal_0001),
-        ("fromDecimal_abnormal_0002", fromDecimal_abnormal_0002)
+        ,("fromDecimal_normal_0001", fromDecimal_normal_0001)
+        ,("fromDecimal_normal_0002", fromDecimal_normal_0002)
+        ,("fromDecimal_normal_1001", fromDecimal_normal_1001)
+        ,("fromDecimal_abnormal_0001", fromDecimal_abnormal_0001)
+        ,("fromDecimal_abnormal_0002", fromDecimal_abnormal_0002)
+*)
       ]
 
   (************************************************************)

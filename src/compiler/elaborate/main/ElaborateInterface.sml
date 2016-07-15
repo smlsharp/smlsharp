@@ -21,12 +21,10 @@ struct
   structure I = AbsynInterface
   structure P = PatternCalcInterface
   structure PC = PatternCalc
-  val symbolToString = Symbol.symbolToString
-  val longsymbolToLongid = Symbol.longsymbolToLongid
   val symbolToLoc = Symbol.symbolToLoc
   val mkSymbol = Symbol.mkSymbol
 
-  type fixEnv = Fixity.fixity SEnv.map
+  type fixEnv = Fixity.fixity SymbolEnv.map
 
   fun checkSigexp sigexp =
       case sigexp of
@@ -34,7 +32,7 @@ struct
       | PC.PLSIGID symbol =>
         EU.enqueueError
           (symbolToLoc symbol, 
-           E.SigIDFoundInInterface (symbolToString symbol))
+           E.SigIDFoundInInterface symbol)
       | PC.PLSIGWHERE (sigexp, typbinds, loc) => checkSigexp sigexp
 
   and checkSpec spec =
@@ -145,9 +143,9 @@ struct
     | I.OPAQUE_NONEQ {tyvars, symbol, runtimeTy, loc} =>
       let
         val runtimeTy = 
-            case longsymbolToLongid runtimeTy of 
+            case runtimeTy of 
               [name] =>
-              (case BuiltinTypeNames.findType name of
+              (case BuiltinTypeNames.findType (Symbol.symbolToString name) of
                  SOME ty => P.BUILTINty ty
                | NONE => P.LIFTEDty runtimeTy
               )
@@ -159,9 +157,9 @@ struct
     | I.OPAQUE_EQ {tyvars, symbol, runtimeTy, loc} =>
       let
         val runtimeTy = 
-            case longsymbolToLongid runtimeTy of 
+            case runtimeTy of 
               [name] => 
-              (case BuiltinTypeNames.findType name of
+              (case BuiltinTypeNames.findType (Symbol.symbolToString name) of
                  SOME ty => P.BUILTINty ty
                | NONE => P.LIFTEDty runtimeTy)
             | _ => P.LIFTEDty runtimeTy
@@ -233,9 +231,9 @@ struct
   fun elabTopdec fixEnv itopdec =
       case itopdec of
       I.IDEC dec =>
-      (SEnv.empty, map P.PIDEC (elabDec dec))
+      (SymbolEnv.empty, map P.PIDEC (elabDec dec))
     | I.IFUNDEC funbind =>
-      (SEnv.empty, [elabFunbind funbind])
+      (SymbolEnv.empty, [elabFunbind funbind])
     | I.IINFIX {fixity, symbols, loc} =>
       let
         val fixity =
@@ -251,31 +249,31 @@ struct
         (* check duplicate declarations *)
         val _ =
             app (fn symbol =>
-                    case SEnv.find (fixEnv, symbolToString symbol) of
+                    case SymbolEnv.find (fixEnv, symbol) of
                       SOME (fixity1, loc1) =>
                       if fixity = fixity1 then ()
                       else EU.enqueueError
-                             (loc, E.MultipleInfixInInterface
-                                     (symbolToString symbol, loc))
+                             (loc, E.MultipleInfixInInterface (symbol, loc))
                     | NONE => ())
                 symbols
 
         val fixEnv =
-            foldl (fn (symbol,z) => SEnv.insert (z, symbolToString symbol, (fixity, loc)))
-                  SEnv.empty
+            foldl (fn (symbol,z) =>
+                      SymbolEnv.insert (z, symbol, (fixity, loc)))
+                  SymbolEnv.empty
                   symbols
       in
         (fixEnv, nil)
       end
 
-  and elabTopdecList fixEnv nil = (SEnv.empty, nil)
+  and elabTopdecList fixEnv nil = (SymbolEnv.empty, nil)
     | elabTopdecList fixEnv (dec::decs) =
       let
         val (newFixEnv1, dec) = elabTopdec fixEnv dec
-        val fixEnv = SEnv.unionWith mustBeDisjoint (fixEnv, newFixEnv1)
+        val fixEnv = SymbolEnv.unionWith mustBeDisjoint (fixEnv, newFixEnv1)
         val (newFixEnv2, decs) = elabTopdecList fixEnv decs
       in
-        (SEnv.unionWith mustBeDisjoint (newFixEnv1, newFixEnv2), dec @ decs)
+        (SymbolEnv.unionWith mustBeDisjoint (newFixEnv1, newFixEnv2), dec @ decs)
       end
 
   fun elabInterfaceDec fixEnv ({interfaceId, interfaceName, requiredIds, provideTopdecs}
@@ -294,7 +292,7 @@ struct
       let
         val (newFixEnv, dec) = elabInterfaceDec fixEnv dec
         val fixEnvMap1 = InterfaceID.Map.singleton (#interfaceId dec, newFixEnv)
-        val fixEnv = SEnv.unionWith #2 (fixEnv, newFixEnv)
+        val fixEnv = SymbolEnv.unionWith #2 (fixEnv, newFixEnv)
         val (fixEnvMap2, decs) = elabInterfaceDecs fixEnv decs
         val fixEnvMap = InterfaceID.Map.unionWith #2 (fixEnvMap1, fixEnvMap2)
       in
@@ -302,17 +300,17 @@ struct
       end
 
   fun toFixEnv env =
-      SEnv.map (fn (x, _:I.loc) => x) env : fixEnv
+      SymbolEnv.map (fn (x, _:I.loc) => x) env : fixEnv
 
   fun elaborate ({interfaceDecs, provideInterfaceNameOpt, requiredIds,
                   locallyRequiredIds, provideTopdecs}:I.interface) =
       let
         val (fixEnvMap, newDecls) =
-            elabInterfaceDecs SEnv.empty interfaceDecs
+            elabInterfaceDecs SymbolEnv.empty interfaceDecs
         val allFixEnv =
             InterfaceID.Map.foldl
-              (SEnv.unionWith mustBeDisjoint)
-              SEnv.empty
+              (SymbolEnv.unionWith mustBeDisjoint)
+              SymbolEnv.empty
               fixEnvMap
         val (provideFixEnv, provideTopdecs) =
             elabTopdecList allFixEnv provideTopdecs
@@ -328,9 +326,9 @@ struct
         val requireFixEnv =
             foldl (fn ({id, loc}, z) =>
                       case InterfaceID.Map.find (fixEnvMap, id) of
-                        SOME env => SEnv.unionWith mustBeDisjoint (z, env)
+                        SOME env => SymbolEnv.unionWith mustBeDisjoint (z, env)
                       | NONE => raise Bug.Bug "elaborate: interface not found")
-                  SEnv.empty
+                  SymbolEnv.empty
                   (requiredIds @ locallyRequiredIds)
       in
         (toFixEnv requireFixEnv, interface)
@@ -338,7 +336,7 @@ struct
 
   fun elaborateTopdecList decs =
       let
-        val (fixEnv, decs) = elabTopdecList SEnv.empty decs
+        val (fixEnv, decs) = elabTopdecList SymbolEnv.empty decs
       in
         (toFixEnv fixEnv, decs)
       end

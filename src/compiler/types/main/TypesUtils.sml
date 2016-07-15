@@ -39,6 +39,7 @@ in
             | T.BACKENDty _ => raise NonEQ
             | T.ERRORty => raise NonEQ
             | T.DUMMYty dummyTyID => ()
+            | T.DUMMY_RECORDty {id, fields} => RecordLabel.Map.app visit fields
             | T.TYVARty (ref(T.TVAR {eqKind = A.NONEQ, ...})) => raise NonEQ
             | T.TYVARty (ref(T.TVAR {eqKind = A.EQ, ...})) => ()
             | T.TYVARty (ref(T.SUBSTITUTED ty)) => visit ty
@@ -50,7 +51,7 @@ in
               else if TypID.eq(id, #id BT.refTyCon) then ()
               else if iseq then List.app visit args
               else raise NonEQ
-            | T.POLYty {boundtvars, body} =>
+            | T.POLYty {boundtvars, constraints, body} =>
               (BoundTypeVarID.Map.app 
                  (fn {eqKind, tvarKind} => visitTvarKind tvarKind)
                  boundtvars;
@@ -62,10 +63,6 @@ in
             | T.BOXED => ()
             | T.UNBOXED => ()
             | T.REC tySenvMap => RecordLabel.Map.app visit tySenvMap
-            | T.JOIN (tySenvMap, ty1, ty2, loc) => 
-              (RecordLabel.Map.app visit tySenvMap;
-               visit ty1;
-               visit ty2)
             | T.OCONSTkind tyList => List.app visit tyList
             | T.OPRIMkind {instances, operators} => List.app visit instances
       in
@@ -80,7 +77,7 @@ in
               A.NONEQ => ()
             | A.EQ => 
               let
-                val (_,tyset,_) = TB.EFTV ty
+                val (_,tyset,_) = TB.EFTV (ty, nil)
               in
                 OTSet.app
                   (fn (tyvarRef as (ref (T.TVAR
@@ -119,10 +116,6 @@ in
             | T.UNBOXED => ()
             | T.REC fields => 
               RecordLabel.Map.app (adjustEqKindInTy eqKind) fields
-            | T.JOIN (fields, ty1, ty2, loc) => 
-              (RecordLabel.Map.app (adjustEqKindInTy eqKind) fields;
-               adjustEqKindInTy eqKind ty1;
-               adjustEqKindInTy eqKind ty2)
             | T.OCONSTkind tyList =>
               List.app (adjustEqKindInTy eqKind) tyList
             | T.OPRIMkind {instances = tyList,...} =>
@@ -135,7 +128,6 @@ in
          | T.BOXED => T.BOXED
          | T.UNBOXED => T.UNBOXED
          | T.REC fields => T.REC fields
-         | T.JOIN (fields, ty1, ty2, loc) => T.JOIN (fields, ty1, ty2, loc)
          | T.OCONSTkind L =>  
            let
              val L = List.filter admitEqTy L

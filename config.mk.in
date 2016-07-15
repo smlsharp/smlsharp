@@ -22,6 +22,7 @@ target_vendor = @target_vendor@
 target_os = @target_os@
 host_os = @host_os@
 
+SIZEOF_VOID_P = @SIZEOF_VOID_P@
 EXEEXT = @EXEEXT@
 
 LLVM_LIBDIR = @LLVM_LIBDIR@

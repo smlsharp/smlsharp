@@ -4,9 +4,9 @@ local
   structure RC = RecordCalc
   structure BT = BuiltinTypes
   structure TB = TypesBasics
-  val tempVarNamePrefix = "$R_"
+  val tempVarNamePrefix = "R_"
 in
-  fun newRCVarName () =  tempVarNamePrefix ^ Gensym.gensym()
+  fun newRCVarName () = Symbol.generateWithPrefix tempVarNamePrefix
   fun newRCVarInfo (ty:Types.ty) =
       let
         val newVarId = VarID.generate()

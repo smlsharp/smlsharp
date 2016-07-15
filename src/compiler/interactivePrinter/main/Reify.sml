@@ -19,7 +19,7 @@ in
   fun needInstantiattion ty = 
       not (TB.monoTy ty) andalso
       case TB.derefTy ty of
-        T.POLYty {boundtvars, body} =>
+        T.POLYty {boundtvars, constraints, body} =>
         (case TB.derefTy body 
           of T.FUNMty _ => false
            | _ => true)
@@ -33,6 +33,7 @@ in
   fun instantiatedLongsymbol longsymbol = Symbol.concatPath (instantiatePrefix, longsymbol)
 
   fun instantiateIdstatus (name, idstatus)  decls =
+      (* 2016-06-16 sasaki: FIXME: Do I have to handle constraints? *)
       case idstatus of
       I.IDEXVAR {exInfo=exInfo as {longsymbol, ty=ity, version}, used, internalId = SOME id} =>
       let
@@ -42,8 +43,8 @@ in
           let
             val accessLongsymbol = Symbol.setVersion(longsymbol, version)
             val instantiatedAccessLongsymbol = Symbol.setVersion(instantiatedLongsymbol longsymbol, version)
-            val originalVar = TC.TPVAR {longsymbol=accessLongsymbol, ty=ty, id=id, opaque=false}
-            val (instantiatedTy, originalTpexp) = TCU.groundInst (ty, originalVar)
+            val originalVar = TC.TPVAR {path=accessLongsymbol, ty=ty, id=id, opaque=false}
+            val (instantiatedTy, _, originalTpexp) = TCU.groundInst (ty, originalVar)
             val newVarinfo = TCU.newTCVarInfoWithLongsymbol (instantiatedAccessLongsymbol, instantiatedTy)
           in
             decls @ [TC.TPVAL ([(newVarinfo, originalTpexp)], loc), TC.TPEXPORTVAR newVarinfo]
@@ -58,8 +59,8 @@ in
           let
             val accessLongsymbol = Symbol.setVersion(longsymbol, version)
             val instantiatedAccessLongsymbol = Symbol.setVersion(instantiatedLongsymbol longsymbol, version)
-            val originalVar = TC.TPEXVAR {longsymbol=accessLongsymbol, ty=ty}
-            val (instantiatedTy, originalTpexp) = TCU.groundInst (ty, originalVar)
+            val originalVar = TC.TPEXVAR {path=accessLongsymbol, ty=ty}
+            val (instantiatedTy, _, originalTpexp) = TCU.groundInst (ty, originalVar)
             val newVarinfo = TCU.newTCVarInfoWithLongsymbol (instantiatedAccessLongsymbol, instantiatedTy)
           in
             decls @ [TC.TPVAL ([(newVarinfo, originalTpexp)], loc), TC.TPEXPORTVAR newVarinfo]

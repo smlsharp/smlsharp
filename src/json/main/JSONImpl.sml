@@ -162,7 +162,10 @@ struct
             stringJsontyList
          )
       | (PARTIALRECORDty stringJsontyList, OBJECT stringJsonList) =>
-        (print "makeCoerce to PARTIALRECOEDty; this should not happen\n";
+        (
+(*
+         print "makeCoerce to PARTIALRECOEDty; this should not happen\n";
+*)
          OBJECT 
            (foldr
               (fn ((l,ty), fields) =>

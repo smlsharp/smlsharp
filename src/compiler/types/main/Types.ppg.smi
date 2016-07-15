@@ -30,6 +30,7 @@ struct
     | BACKENDty of backendTy
     | ERRORty
     | DUMMYty of dummyTyID
+    | DUMMY_RECORDty of {id:dummyTyID, fields:ty RecordLabel.Map.map}
     | TYVARty of tvState ref
     | BOUNDVARty of BoundTypeVarID.id
     | FUNMty of ty list * ty
@@ -42,7 +43,7 @@ struct
          iseq : bool,
          arity : int,
          runtimeTy : BuiltinTypeNames.bty,
-         conSet : (unit -> ty) option SEnv.map,
+         conSet : (unit -> ty) option SymbolEnv.map,
          conIDSet : ConID.Set.set,
          extraArgs : ty list,
          dtyKind : dtyKind
@@ -53,8 +54,12 @@ struct
       {
        boundtvars : {eqKind: eqKind, tvarKind: tvarKind}
                       BoundTypeVarID.Map.map,
+       constraints : constraint list,
        body : ty
       }
+
+  and constraint
+    = JOIN of {res : ty, args : ty * ty}
 
   and tvarKind 
     = OCONSTkind of ty list
@@ -74,7 +79,6 @@ struct
     | BOXED
     | UNBOXED
     | REC of ty RecordLabel.Map.map
-    | JOIN of ty RecordLabel.Map.map * ty * ty * Loc.loc
 
   and dtyKind
     = DTY
@@ -88,7 +92,7 @@ struct
        iseq : bool,
        arity : int,
        runtimeTy : BuiltinTypeNames.bty,
-       conSet : (unit -> ty) option SEnv.map,
+       conSet : (unit -> ty) option SymbolEnv.map,
        conIDSet : ConID.Set.set,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -162,7 +166,7 @@ struct
   and overloadMatch 
     = OVERLOAD_EXVAR of
       {
-        exVarInfo: {longsymbol: Symbol.longsymbol, ty: ty},
+        exVarInfo: {path: Symbol.longsymbol, ty: ty},
         instTyList: ty list
       }
     | OVERLOAD_PRIM of
@@ -188,7 +192,7 @@ struct
        iseq : bool,
        arity : int,
        runtimeTy : BuiltinTypeNames.bty,
-       conSet : (unit -> ty) option SEnv.map,
+       conSet : (unit -> ty) option SymbolEnv.map,
        conIDSet : ConID.Set.set,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -208,13 +212,13 @@ struct
         eqKind : eqKind
       }
   type btvEnv = btvKind BoundTypeVarID.Map.map
-  type varInfo = {longsymbol:Symbol.longsymbol, id:VarID.id, ty:ty, opaque:bool}
-  type exVarInfo = {longsymbol:Symbol.longsymbol, ty:ty}
+  type varInfo = {path:Symbol.longsymbol, id:VarID.id, ty:ty, opaque:bool}
+  type exVarInfo = {path:Symbol.longsymbol, ty:ty}
   type primInfo = {primitive : BuiltinPrimitive.primitive, ty : ty}
-  type oprimInfo = {ty : ty, longsymbol : Symbol.longsymbol, id : OPrimID.id}
-  type conInfo = {longsymbol: Symbol.longsymbol, ty: ty, id: ConID.id}
-  type exnInfo = {longsymbol: Symbol.longsymbol, ty: ty, id: ExnID.id}
-  type exExnInfo = {longsymbol: Symbol.longsymbol, ty: ty}
+  type oprimInfo = {ty : ty, path : Symbol.longsymbol, id : OPrimID.id}
+  type conInfo = {path: Symbol.longsymbol, ty: ty, id: ConID.id}
+  type exnInfo = {path: Symbol.longsymbol, ty: ty, id: ExnID.id}
+  type exExnInfo = {path: Symbol.longsymbol, ty: ty}
   type foreignFunTy 
     = {
         tyvars : btvEnv,

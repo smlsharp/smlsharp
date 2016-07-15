@@ -2,7 +2,7 @@ _require "./General.smi"
 
 structure Word8Array =
 struct
-  type elem = SMLSharp_Builtin.Word8.word
+  type elem = word8
   type array = elem array
   type vector = elem vector
   val maxLen : int

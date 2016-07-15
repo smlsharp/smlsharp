@@ -227,7 +227,7 @@ in
       | A.KINDID ("boxed", _) => I.BOXED
       | A.KINDID ("unboxed", _) => I.UNBOXED
       | A.KINDID (name, loc) =>
-        (EU.enqueueError (loc, E.InvalidKindName("Ty-045", name));
+        (EU.enqueueError (loc, E.InvalidKindName("Ty-060", name));
          I.UNIV)
   and evalKindedTvarList (tvarEnv:tvarEnv) (env:V.env) tvarKindList
       : tvarEnv * I.kindedTvar list =
@@ -258,7 +258,7 @@ in
               in
                 (EU.enqueueError
                  (tvarsLoc, 
-                  E.CyclicKind("Ty-045", {tvarList = cyclicTvars}));
+                  E.CyclicKind("Ty-070", {tvarList = cyclicTvars}));
                  map (fn (tvar, kind) => (tvar, I.UNIV)) tvarKindList)
               end
 (*
@@ -309,7 +309,7 @@ in
         P.FFIFUNTY (attributes, [argTy], NONE, [retTy], loc) =>
         A.TYFUN (ffiTyToAbsynTy argTy, ffiTyToAbsynTy retTy, loc)
       | P.FFIFUNTY (attributes, argTys, varargTys, retTys, loc) =>
-        (EU.enqueueError (loc, E.FFIFunTyIsNotAllowedHere("Ty-060", ffiTy));
+        (EU.enqueueError (loc, E.FFIFunTyIsNotAllowedHere("Ty-080", ffiTy));
          A.TYTUPLE (nil, loc))  (* dummy *)
       | P.FFITYVAR (tvar, loc) =>
         A.TYID (tvar, loc)
@@ -371,9 +371,10 @@ in
                 val subst =
                     List.foldl 
                       (fn ((key, item), m) => TvarMap.insert (m, key, item)) TvarMap.empty 
-                      (ListPair.zipEq (formals, argTyList)
-                       handle UnqeualLengths =>
+                      (ListPair.zipEq (formals, argTyList))
+(*
                               raise bug "FIXME: tfun arity mismatch")
+*)
               in
                 tyToFfiTy subst (realizerTy, loc)
               end
@@ -381,8 +382,12 @@ in
           )
           handle V.LookupTstr =>
                  (EU.enqueueError
-                    (loc, E.TypNotFound("Ty-070",{longsymbol = typath}));
+                    (loc, E.TypNotFound("Ty-100",{longsymbol = typath}));
                   I.FFIBASETY (I.TYERROR, loc))
+               | UnqeualLengths =>
+                 (EU.enqueueError (loc, E.TypArity("Ty-110",{longsymbol = typath}));
+                  I.FFIBASETY (I.TYERROR, loc))
+
       end
 
   val emptyScopedTvars = nil : I.scopedTvars
@@ -399,7 +404,7 @@ in
         val _ = EU.checkSymbolDuplication
                   (fn {tyvars, symbol, conbind} => symbol)
                   datbindList
-                  (fn s => E.DuplicateTypInDty("Ty-080",s))
+                  (fn s => E.DuplicateTypInDty("Ty-120",s))
         val _ = EU.checkSymbolDuplication
                   (fn {symbol, ty=tyOption} => symbol)
                   (foldl
@@ -407,7 +412,7 @@ in
                          allCons@conbind)
                      nil
                      datbindList)
-                  (fn s => E.DuplicateConNameInDty("Ty-090",s))
+                  (fn s => E.DuplicateConNameInDty("Ty-130",s))
         val (newEnv, datbindListRev) =
             foldl
               (fn ({tyvars=tvarList,symbol,conbind},
@@ -416,7 +421,7 @@ in
                     val _ = EU.checkSymbolDuplication
                               (fn {symbol, eq} => symbol)
                               tvarList
-                              (fn s => E.DuplicateTypParms("Ty-100",s))
+                              (fn s => E.DuplicateTypParms("Ty-140",s))
                     val (tvarEnv, tvarList)=
                         genTvarList emptyTvarEnv tvarList
                     val id = TypID.generate()

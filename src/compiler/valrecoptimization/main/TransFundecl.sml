@@ -154,7 +154,6 @@ in
         ICSQLSCHEMA {columnInfoFnExp = transExp columnInfoFnExp,
                      ty = ty,
                      loc = loc}
-      | ICSQLDBI (icpat, icexp, loc) => ICSQLDBI (icpat, transExp icexp, loc)
       | ICJOIN (icexp1, icexp2, loc) => ICJOIN (transExp icexp1, transExp icexp2, loc)
       | ICJSON _ => raise Bug.Bug "ICJSON"
   and transFFIFun ffiFun =

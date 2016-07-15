@@ -213,6 +213,8 @@ struct
       | (T.ERRORty, _) => raise Unify  (* never appear *)
       | (T.DUMMYty t1, T.DUMMYty t2) => if t1 = t2 then () else raise Unify
       | (T.DUMMYty _, _) => raise Unify
+      | (T.DUMMY_RECORDty t1, T.DUMMY_RECORDty t2) => if #id t1 = #id t2 then () else raise Unify
+      | (T.DUMMY_RECORDty _, _) => raise Unify
       | (T.BOUNDVARty t1, T.BOUNDVARty t2) =>
         (case (BoundTypeVarID.Map.find (#1 inst, t1),
                BoundTypeVarID.Map.find (#2 inst, t2)) of
@@ -240,8 +242,8 @@ struct
                                   handle UnequalLengths => raise Unify)
         else raise Unify
       | (T.CONSTRUCTty _, _) => raise Unify
-      | (T.POLYty {boundtvars=boundtvars1, body=body1},
-         T.POLYty {boundtvars=boundtvars2, body=body2}) =>
+      | (T.POLYty {boundtvars=boundtvars1, constraints=constraints1, body=body1},
+         T.POLYty {boundtvars=boundtvars2, constraints=constraints2, body=body2}) =>
         let
           val inst = unifyBtvEnv inst (boundtvars1, boundtvars2)
         in
@@ -381,7 +383,6 @@ struct
       | (T.REC tys1, T.REC tys2) =>
         app (unifyTy inst) (recordFieldTyEq (tys1, tys2))
       | (T.REC _, _) => raise Unify
-      | (T.JOIN _, _) => raise Unify  (* never appear *)
 
   fun unifyANormalTy ((ty1, rty1):A.ty, (ty2, rty2):A.ty) =
       if rty1 = rty2

@@ -2,8 +2,8 @@ _require "./General.smi"
 
 structure Word8Vector =
 struct
-  type vector = SMLSharp_Builtin.Word8.word vector
-  type elem = SMLSharp_Builtin.Word8.word
+  type vector = word8 vector
+  type elem = word8
   val maxLen : int
   val length : vector -> int
   val sub : vector * int -> elem

@@ -7,16 +7,16 @@ _require local "./Int64.smi"
 
 structure Word64 =
 struct
-  type word = SMLSharp_Builtin.Word64.word
+  type word = word64
   val wordSize : int
-  val toLarge : word -> SMLSharp_Builtin.Word64.word
-  val toLargeX : word -> SMLSharp_Builtin.Word64.word
+  val toLarge : word -> word64
+  val toLargeX : word -> word64
   val toLargeWord = toLarge
   val toLargeWordX = toLargeX
-  val fromLarge : SMLSharp_Builtin.Word64.word -> word
+  val fromLarge : word64 -> word
   val fromLargeWord = fromLarge
-  val toLargeInt : word -> LargeInt.int
-  val toLargeIntX : word -> LargeInt.int
+  val toLargeInt : word -> largeInt
+  val toLargeIntX : word -> largeInt
   val fromLargeInt : LargeInt.int -> word
   val toInt = SMLSharp_Builtin.Word64.toInt32
   val toIntX = SMLSharp_Builtin.Word64.toInt32X

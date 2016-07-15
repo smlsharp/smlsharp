@@ -75,13 +75,13 @@ struct
    * Special data representation for ref.
    *)
   datatype taggedLayout =
-      TAGGED_RECORD of {tagMap: int SEnv.map}
-    | TAGGED_TAGONLY of {tagMap: int SEnv.map}
-    | TAGGED_OR_NULL of {tagMap: int SEnv.map, nullName: string}
+      TAGGED_RECORD of {tagMap: int SymbolEnv.map}
+    | TAGGED_TAGONLY of {tagMap: int SymbolEnv.map}
+    | TAGGED_OR_NULL of {tagMap: int SymbolEnv.map, nullName: Symbol.symbol}
 
   datatype layout =
       LAYOUT_TAGGED of taggedLayout
-    | LAYOUT_BOOL of {falseName: string}
+    | LAYOUT_BOOL of {falseName: Symbol.symbol}
     | LAYOUT_UNIT
     | LAYOUT_ARGONLY
     | LAYOUT_ARG_OR_NULL
@@ -99,7 +99,7 @@ struct
       | LAYOUT_REF => ty = BuiltinTypeNames.REFty
 
   fun categolizeConSet conSet =
-      SEnv.foldri
+      SymbolEnv.foldri
         (fn (name, SOME _, {hasArg, noArg}) =>
             {hasArg = name::hasArg, noArg = noArg}
           | (name, NONE, {hasArg, noArg}) =>
@@ -108,15 +108,16 @@ struct
         conSet
 
   fun makeTagMap conSet =
-      #2 (SEnv.foldli (fn (key, _, (i, map)) =>
-                          (i + 1, SEnv.insert (map, key, i)))
-                      (1, SEnv.empty)
-                      conSet)
+      #2 (SymbolEnv.foldli
+            (fn (key, _, (i, map)) =>
+                (i + 1, SymbolEnv.insert (map, key, i)))
+            (1, SymbolEnv.empty)
+            conSet)
 
   fun datatypeLayout (tyCon as {id, conSet, runtimeTy, ...}:Types.tyCon) =
       let
         val layout =
-            case map isSome (SEnv.listItems conSet) of
+            case map isSome (SymbolEnv.listItems conSet) of
               nil => raise Bug.Bug "datatypeLayout: no variant"
             | [true] =>
               if TypID.eq (#id BuiltinTypes.refTyCon, id)
@@ -126,8 +127,8 @@ struct
             | [false, false] =>
               (
                 if TypID.eq (id, #id BuiltinTypes.boolTyCon)
-                then LAYOUT_BOOL {falseName = "false"}
-                else case SEnv.firsti conSet of
+                then LAYOUT_BOOL {falseName = Symbol.mkSymbol "false" Loc.noloc}
+                else case SymbolEnv.firsti conSet of
                        SOME (name, _) => LAYOUT_BOOL {falseName = name}
                      | NONE => raise Bug.Bug "datatypeLayout: BOOL"
               )

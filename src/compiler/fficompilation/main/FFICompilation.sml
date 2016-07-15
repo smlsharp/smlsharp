@@ -105,11 +105,7 @@ struct
       BoundTypeVarID.Map.unionWith #2 (env1, env2)
 
   fun newVar ty =
-      let
-        val id = VarID.generate ()
-      in
-        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : R.varInfo
-      end
+      {path = [Symbol.generate ()], ty = ty, id = VarID.generate ()} : R.varInfo
 
   fun toSimpleExp ({ty, exp}, loc) =
       if isSimpleExp exp
@@ -313,7 +309,7 @@ struct
 
   fun infectPoly (ty, exp) =
       case TypesBasics.derefTy ty of
-        T.POLYty {boundtvars, body} =>
+        T.POLYty {boundtvars, constraints, body} =>
         (
           case exp of
             R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>

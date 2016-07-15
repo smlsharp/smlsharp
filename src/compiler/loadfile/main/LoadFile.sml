@@ -17,8 +17,8 @@ struct
   fun raiseUserError (loc, exn) =
       raise UserError.UserErrors [(loc, UserError.Error, exn)]
 
-  fun raiseLoadFileError exn symbol =
-      raiseUserError (Symbol.symbolToLoc symbol, exn symbol)
+  fun raiseLoadFileError exn (filename, loc) =
+      raiseUserError (loc, exn filename)
 
   (* a vairant of SEnv in which the insertion order is significant *)
   structure Assoc :> sig
@@ -113,31 +113,27 @@ struct
    * (4) Otherwise, "filename" is a relative path from either "baseDir"
    *     or a directory in "loadPath".
    *)
-  fun openFile ({baseDir, ...}:env, loadPath) symbol =
-      let
-        val filename = Filename.fromString (Symbol.symbolToString symbol)
-      in
-        (if Filename.isAbsolute filename
-         then openLocalFile filename
-         else case baseDir of
-                NONE => openLocalFile filename
-              | SOME baseDir =>
-                if String.isPrefix "." (Filename.toString filename)
-                then openFileOnPath [baseDir] filename
-                else openFileOnPath (baseDir :: loadPath) filename)
-        handle e as IO.Io _ =>
-               raiseUserError (Symbol.symbolToLoc symbol, e)
-             | NotFound =>
-               raiseLoadFileError LoadFileError.FileNotFound symbol
-      end
+  fun openFile ({baseDir, ...}:env, loadPath) (fileLoc as (filename, loc)) =
+      (if Filename.isAbsolute filename
+       then openLocalFile filename
+       else case baseDir of
+              NONE => openLocalFile filename
+            | SOME baseDir =>
+              if String.isPrefix "." (Filename.toString filename)
+              then openFileOnPath [baseDir] filename
+              else openFileOnPath (baseDir :: loadPath) filename)
+      handle e as IO.Io _ =>
+             raiseUserError (loc, e)
+           | NotFound =>
+             raiseLoadFileError LoadFileError.FileNotFound fileLoc
 
-  fun visitFile ({visited, ...}:env) (filePlace, filename) symbol =
+  fun visitFile ({visited, ...}:env) (filePlace, filename) fileLoc =
       let
         val realPath = Filename.realPath filename
         val key = Filename.toString realPath
         val visited =
             if SSet.member (visited, key)
-            then raiseLoadFileError LoadFileError.CircularLoad symbol
+            then raiseLoadFileError LoadFileError.CircularLoad fileLoc
             else SSet.add (visited, key)
       in
         ({baseDir = SOME (filePlace, Filename.dirname realPath),
@@ -154,12 +150,12 @@ struct
       LOADED of loaded
     | PARSED of env * N.source * I.itop
 
-  fun parseInterface loaded (env, loadPath) symbol =
+  fun parseInterface loaded (env, loadPath) fileLoc =
       let
-        val (file, source) = openFile (env, loadPath) symbol
+        val (file, source) = openFile (env, loadPath) fileLoc
       in
         (let
-           val (newEnv, source) = visitFile env source symbol
+           val (newEnv, source) = visitFile env source fileLoc
          in
            case Assoc.find (loaded, #2 source) of
              SOME result => LOADED result
@@ -207,8 +203,8 @@ struct
   fun filterRequire l =
       List.mapPartial (fn I.REQUIRE s => SOME s | I.LOCAL_REQUIRE s => NONE) l
 
-  fun loadRequire loaded (context as {env, loadPath, loadAll}) symbol =
-      case parseInterface loaded (env, loadPath) symbol of
+  fun loadRequire loaded (context as {env, loadPath, loadAll}) fileLoc =
+      case parseInterface loaded (env, loadPath) fileLoc of
         LOADED {ret, ...} => (loaded, ret)
       | PARSED (env, source, I.INCLUDES {includes, topdecs}) =>
         let
@@ -230,22 +226,22 @@ struct
                                     (filterLocalRequire requires))
               else loaded
           val idec = setupInterface (source, Assoc.gather #require ret, provide)
-          val id = (idec, Symbol.symbolToLoc symbol)
+          val id = (idec, #2 fileLoc)
           val ret = Assoc.singleton (#2 source, {require=[id], topdecs=nil})
           val dec = {interfaceDecs = [id], loadedFile = source}
         in
           (Assoc.append (loaded, #2 source, {dec=dec, ret=ret}), ret)
         end
 
-  and loadRequires loaded context symbols =
-      foldl (fn (symbol, (loaded, ret1)) =>
+  and loadRequires loaded context files =
+      foldl (fn (fileLoc, (loaded, ret1)) =>
                 let
-                  val (loaded, ret2) = loadRequire loaded context symbol
+                  val (loaded, ret2) = loadRequire loaded context fileLoc
                 in
                   (loaded, Assoc.concat (ret1, ret2))
                 end)
             (loaded, Assoc.empty)
-            symbols
+            files
 
   fun checkDuplicateHash (decs : (I.interfaceDec * Loc.loc) list) =
       (foldl
@@ -326,20 +322,20 @@ struct
          source)
       end
 
-  fun loadInterface (context as {env,...}) symbol =
-      case parseInterface Assoc.empty (env, nil) symbol of
+  fun loadInterface (context as {env,...}) fileLoc =
+      case parseInterface Assoc.empty (env, nil) fileLoc of
         PARSED (env, source, I.INTERFACE iface) =>
         loadINTERFACE (context # {env=env}) (source, iface)
       | PARSED (env, source, I.INCLUDES includes) =>
         loadINCLUDES (context # {env=env}) (source, includes)
       | LOADED _ => raise Bug.Bug "loadInterface"
 
-  fun loadTopInterface (context as {env,...}) symbol =
-      case parseInterface Assoc.empty (env, nil) symbol of
+  fun loadTopInterface (context as {env,...}) fileLoc =
+      case parseInterface Assoc.empty (env, nil) fileLoc of
         PARSED (env, source, I.INTERFACE iface) =>
         loadINTERFACE (context # {env=env}) (source, iface)
       | PARSED (env, source, I.INCLUDES includes) =>
-        raiseLoadFileError LoadFileError.InvalidTopInterface symbol
+        raiseLoadFileError LoadFileError.InvalidTopInterface fileLoc
       | LOADED _ => raise Bug.Bug "loadTopInterface"
 
   fun parseSource loaded env src =
@@ -375,11 +371,11 @@ struct
   fun evalTop loaded env top =
       case top of
         A.TOPDEC topdecs => (loaded, topdecs)
-      | A.USE symbol =>
-        case parseSource loaded env symbol of
+      | A.USE fileLoc =>
+        case parseSource loaded env fileLoc of
           (loaded, env, A.EOF) => (loaded, nil)
         | (loaded, env, A.UNIT {interface = A.INTERFACE _, ...}) =>
-          raiseLoadFileError LoadFileError.UseWithInterface symbol
+          raiseLoadFileError LoadFileError.UseWithInterface fileLoc
         | (loaded, env, A.UNIT {interface = A.NOINTERFACE, tops, ...}) =>
           evalTopList loaded env tops
 
@@ -406,9 +402,7 @@ struct
             val smifile = Filename.replaceSuffix "smi" filename
           in
             if CoreUtils.testExist smifile
-            then SOME (Symbol.mkSymbol
-                         (Filename.toString (Filename.basename smifile))
-                         Loc.noloc)
+            then SOME (Filename.basename smifile, Loc.noloc)
             else NONE
           end
         | _ => NONE
@@ -417,9 +411,9 @@ struct
            ({interface, tops, loc}:A.unit) =
       let
         val loadPath = makeLoadPath (stdPath, loadPath)
-        val interfaceSymbol =
+        val interfaceFileLoc =
             case interface of
-              A.INTERFACE symbol => SOME symbol
+              A.INTERFACE fileLoc => SOME fileLoc
             | A.NOINTERFACE => defaultInterface baseFilename
         val baseDir =
             case baseFilename of
@@ -429,7 +423,7 @@ struct
         val (loaded, topdecsSource) = evalTopList Assoc.empty env tops
         val loadedFiles1 = Assoc.map #loadedFile loaded
       in
-        case interfaceSymbol of
+        case interfaceFileLoc of
           NONE =>
           ({interfaceNameOpt = NONE,
             compile = loadedFiles1,
@@ -437,11 +431,11 @@ struct
            {interface = NONE,
             topdecsInclude = nil,
             topdecsSource = topdecsSource} : I.compileUnit)
-        | SOME symbol =>
+        | SOME fileLoc =>
           let
             val ({interface, topdecsInclude}, dependency, source) =
                 loadTopInterface {env=env, loadPath=loadPath, loadAll=loadAll}
-                                 symbol
+                                 fileLoc
           in
             (dependency
                # {compile = loadedFiles1 @ #compile dependency @ [source]},
@@ -454,10 +448,10 @@ struct
   fun loadInterfaceFile {stdPath, loadPath, loadAll} filename =
       let
         val loadPath = makeLoadPath (stdPath, loadPath)
-        val symbol = Symbol.mkSymbol (Filename.toString filename) Loc.noloc
         val env = {baseDir = NONE, visited = SSet.empty} : env
         val context = {env = env, loadPath = loadPath, loadAll = loadAll}
-        val (loaded, ret) = loadRequires Assoc.empty context [symbol]
+        val (loaded, ret) =
+            loadRequires Assoc.empty context [(filename, Loc.noloc)]
         val allInterfaceDecs = Assoc.gather (#interfaceDecs o #dec) loaded
         val _ = checkDuplicateHash allInterfaceDecs
         val dependency : N.dependency =
@@ -482,10 +476,10 @@ struct
   fun loadInteractiveEnv {stdPath, loadPath, loadAll} filename =
       let
         val loadPath = makeLoadPath (stdPath, loadPath)
-        val symbol = Symbol.mkSymbol (Filename.toString filename) Loc.noloc
         val env = {baseDir = NONE, visited = SSet.empty} : env
         val ({interface, topdecsInclude}, dependency, _) =
-            loadInterface {env=env, loadPath=loadPath, loadAll=loadAll} symbol
+            loadInterface {env=env, loadPath=loadPath, loadAll=loadAll}
+                          (filename, Loc.noloc)
       in
         {interface = interface # {provideTopdecs = nil},
          interfaceDecls = #provideTopdecs interface,

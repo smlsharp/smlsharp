@@ -127,8 +127,6 @@ in
         ICSQLSCHEMA {columnInfoFnExp = optimizeExp columnInfoFnExp,
                      ty = ty,
                      loc = loc}
-      | ICSQLDBI (icpat, icexp, loc) =>
-        ICSQLDBI (icpat, optimizeExp icexp, loc)
       | ICJOIN (icexp1, icexp2, loc) =>
         ICJOIN (optimizeExp icexp1, optimizeExp icexp2, loc)
       | ICJSON _ => raise Bug.Bug "ICJSON"

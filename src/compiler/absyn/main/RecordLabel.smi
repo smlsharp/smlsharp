@@ -2,12 +2,15 @@ _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../smlnj-lib/Util/binary-set-fn.smi"
+_require "./Symbol.ppg.smi"
 
 structure RecordLabel =
 struct
 
   eqtype label (= boxed)
 
+  val fromSymbol : Symbol.symbol -> label
+  val fromLongsymbol : Symbol.longsymbol -> label
   val fromInt : int -> label
   val fromString : string -> label
   val toString : label -> string

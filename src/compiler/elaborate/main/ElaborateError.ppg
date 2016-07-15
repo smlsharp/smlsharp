@@ -28,7 +28,7 @@ struct
    *   "type" +d "constructor" +d tyCon +d "given" +d given +d "arguments,"
    *  +d "wants" +d wants
    *)
-  ArityMismatchInTypeDeclaration of {tyCon : string, wants : int, given : int}
+  ArityMismatchInTypeDeclaration of {tyCon : Symbol.symbol, wants : int, given : int}
 
   and
   (*%
@@ -104,7 +104,7 @@ struct
   (*%
    * @format(name) "Duplicate" +d  "structure" +d "identifier:" + name
    *)
-  DuplicateStrDesc of string
+  DuplicateStrDesc of Symbol.symbol
 
   and
   (**
@@ -228,7 +228,7 @@ struct
    * @format(id) "infix" +d "operator" +d id +d "used" +d "without" +d
    *            "\"op\"" +d "in" +d "fun" +d "dec"
    *)
-  InfixUsedWithoutOP of string
+  InfixUsedWithoutOP of Symbol.longsymbol
 
   and
   (*%
@@ -285,7 +285,7 @@ struct
   (*%
    * @format({tyvar}) "free" +d "type" +d "variable:" +d {tyvar}
    *)
-  NotBoundTyvar of {tyvar : string}
+  NotBoundTyvar of {tyvar : Symbol.symbol}
 
   and
   (*%
@@ -376,7 +376,7 @@ struct
    * "with" +d "different" +d "fixity." +1 "Previous" +d "infix"
    * +d "declaratation" +d "is" +d "at:" +d prevLoc
    *)
-  MultipleInfixInInterface of string * Loc.loc
+  MultipleInfixInInterface of Symbol.symbol * Loc.loc
 
   and
   (*%
@@ -392,7 +392,7 @@ struct
    * "signature" +d "is" +d "referenced" +d "by" +d "ID" +d "from" +d
    * "interface:" +d sigid
    *)
-  SigIDFoundInInterface of string
+  SigIDFoundInInterface of Symbol.symbol
 
   and
   (*%

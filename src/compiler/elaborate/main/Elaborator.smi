@@ -1,6 +1,6 @@
 _require "../../../basis.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/Fixity.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../usererror/main/UserError.ppg.smi"
@@ -11,7 +11,7 @@ _require "./UserTvarScope.smi"
 
 structure Elaborator =
 struct
-  type fixEnv = Fixity.fixity SEnv.map
+  type fixEnv = Fixity.fixity SymbolEnv.map
   val extendFixEnv : fixEnv * fixEnv -> fixEnv
   val elaborate :
       fixEnv

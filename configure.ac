@@ -119,6 +119,13 @@ esac
 AC_SUBST(HOST_OS_TYPE)
 AC_SUBST(CMDLINE_MAXLEN)
 
+AC_CHECK_SIZEOF([void *])
+if test "x$ac_cv_sizeof_void_p" = "x0"; then
+  AC_ERROR([failed to determine sizeof(void *)])
+fi
+SIZEOF_VOID_P=$ac_cv_sizeof_void_p
+AC_SUBST(SIZEOF_VOID_P)
+
 # FIXME: check how to make a static library
 
 # -------- Checks for LLVM --------
@@ -186,9 +193,10 @@ AC_ARG_ENABLE(rpath,
 AS_HELP_STRING([--disable-rpath], [do not specify RPATH]),
 [], [ enable_rpath=yes ])
 
-orig_LDFAGS=$LDFLAGS
+orig_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS $LLVM_LDFLAGS"
 libsuffix=`echo "$LLVM_VERSION" | sed 's,\.[[^.]]*$,,'`
+AC_LANG_PUSH(C++)
 AC_CHECK_LIB(LLVM-$libsuffix, LLVMCreateTargetMachine,
   [ LLVM_LIBS="-lLLVM-$libsuffix"
     if test "x$enable_rpath" = "xyes"; then
@@ -197,6 +205,7 @@ AC_CHECK_LIB(LLVM-$libsuffix, LLVMCreateTargetMachine,
   ],
   [ LLVM_FLAG(LIBS, libs) ],
   [ $LLVM_SYSLIBS ])
+AC_LANG_POP(C++)
 AC_SUBST(LLVM_LIBS)
 LDFLAGS=$orig_LDFLAGS
 
@@ -340,8 +349,16 @@ AC_CHECK_LIB(gmp, __gmpz_init,
 AC_CHECK_LIB(dl, dlopen)
 #AC_CHECK_LIB(dld, shl_load)   # for HP-UX
 
-AC_CHECK_LIB(yajl, yajl_parse,
-  [], [ AC_MSG_ERROR([YAJL library is not found]) ])
+AC_ARG_WITH(yajl_s,
+AS_HELP_STRING([--with-yajl_s],[use libyajl_s instead of libyajl]))
+
+if test "x$with_yajl_s" = "xyes"; then
+  AC_CHECK_LIB(yajl_s, yajl_complete_parse,
+    [], [ AC_MSG_ERROR([YAJL library is not found]) ])
+else
+  AC_CHECK_LIB(yajl, yajl_complete_parse,
+    [], [ AC_MSG_ERROR([YAJL library is not found]) ])
+fi
 
 ## cygwin has dlopen in libcygwin.dll.
 if test "x$ac_cv_lib_dl_dlopen" = "xno"; then

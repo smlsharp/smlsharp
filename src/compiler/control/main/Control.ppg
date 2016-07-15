@@ -22,6 +22,8 @@ struct
   (* switches for interactive printing *)
   val printWidth = ref 80
   val printMaxDepth = ref 200
+  val printMaxOverloadInstances = ref 4
+
   val printMaxNestLevel = ref 5
   val printMaxExnNestLevel = ref 1
   val importAllExceptions = ref true
@@ -147,6 +149,8 @@ struct
          IntSwitch printWidth),
         ("printMaxDepth", "maximum depth in printing lists and arrays (default 200)",
          IntSwitch printMaxDepth),
+        ("printMaxOverloadInstances", "maximum overloaded instances to be printed (default 4)",
+         IntSwitch printMaxOverloadInstances),
         ("printMaxNestLevel", "maximum depth in printing recursive datatypes (default 5)",
          IntSwitch printMaxNestLevel),
         ("printMaxExnNestLevel", "maximum depth in printing recursive exceptions",

@@ -45,6 +45,8 @@ local
         raise Bug.Bug "substBTvar: BACKENDty"
       | T.ERRORty => ty
       | T.DUMMYty dummyTyID => ty
+      | T.DUMMY_RECORDty {id, fields} =>
+        T.DUMMY_RECORDty {id=id, fields=RecordLabel.Map.map (substBTvar tyidEnv subst) fields}
       | T.TYVARty (r as ref (T.SUBSTITUTED ty)) => raise Bug.Bug "SUBSTITUTED in substBTvar" 
       | T.TYVARty (ref (T.TVAR _)) => ty
 (*
@@ -84,7 +86,7 @@ local
       | T.CONSTRUCTty {tyCon,args} =>
         T.CONSTRUCTty {tyCon=substBTvarTyCon tyidEnv subst tyCon,
                        args = map (substBTvar tyidEnv subst) args}
-      | T.POLYty {boundtvars, body} =>
+      | T.POLYty {boundtvars, constraints, body} =>
         let
           val boundtvars =
               BoundTypeVarID.Map.map
@@ -92,7 +94,18 @@ local
                     {eqKind=eqKind, tvarKind=substBTvarTvarKind tyidEnv subst tvarKind}
                 )
                 boundtvars
-          val newTy = T.POLYty{boundtvars = boundtvars, body = substBTvar tyidEnv subst body}
+          val constraints = 
+              List.map
+                  (fn c =>
+                      case c of T.JOIN {res, args = (arg1, arg2)} =>
+                        T.JOIN
+                            {res = substBTvar tyidEnv subst res,
+                             args = (substBTvar tyidEnv subst arg1,
+                                     substBTvar tyidEnv subst arg2)})
+                  constraints
+          val newTy = T.POLYty{boundtvars = boundtvars, 
+                               constraints = constraints,
+                               body = substBTvar tyidEnv subst body}
         in
           newTy
         end
@@ -161,12 +174,6 @@ local
   and substBTvarTvarKind tyidEnv subst tvarKind =
       case tvarKind of
         T.REC fields => T.REC (RecordLabel.Map.map (substBTvar tyidEnv subst) fields)
-      | T.JOIN (fields, ty1, ty2, loc) => 
-        T.JOIN (RecordLabel.Map.map (substBTvar tyidEnv subst) fields, 
-                substBTvar tyidEnv subst ty1,
-                substBTvar tyidEnv subst ty2,
-                loc
-               )
       | T.UNIV => T.UNIV
       | T.JSON => T.JSON
       | T.BOXED => T.BOXED
@@ -300,32 +307,62 @@ end
             | T.BACKENDty backendTy => raise PolyTy
             | T.ERRORty => ()
             | T.DUMMYty dummyTyID => ()
+            | T.DUMMY_RECORDty {id, fields} => ()
             | T.TYVARty _ => ()
             | T.BOUNDVARty _ => (* raise PolyTy *) ()  (* this should be ok *)
             | T.FUNMty (_, ty) => visit ty
             | T.RECORDty tySenvMap => RecordLabel.Map.app visit tySenvMap
             | T.CONSTRUCTty _ => ()
-            | T.POLYty {boundtvars, body} => raise PolyTy
+            | T.POLYty {boundtvars, constraints, body} => raise PolyTy
       in
         (visit ty; true)
         handle PolyTy => false
       end
 
   fun makeFreshInstTy makeSubst ty =
-      if monoTy ty then ty
+      (* 2016-06-16 sasaki: constraitsを返すように変更 *)
+      if monoTy ty then (ty, nil)
       else
         case ty of
-          T.POLYty{boundtvars,body,...} =>
+          T.POLYty{boundtvars,body,constraints} =>
           let 
             val subst = makeSubst boundtvars
             val bty = substBTvar subst body
+            val bconstraints = 
+                List.map (fn c =>
+                             case c of T.JOIN {res, args = (arg1, arg2)} =>
+                               T.JOIN
+                                   {res = substBTvar subst res,
+                                    args = (substBTvar subst arg1,
+                                            substBTvar subst arg2)})
+                         constraints
+            val (freshty, freshconstraints) =
+                makeFreshInstTy makeSubst bty
           in  
-             makeFreshInstTy makeSubst bty
+            (freshty, freshconstraints @ bconstraints)
           end
         | T.FUNMty (tyList,ty) =>
-          T.FUNMty(tyList, makeFreshInstTy makeSubst ty)
-        | T.RECORDty fl => T.RECORDty (RecordLabel.Map.map (makeFreshInstTy makeSubst) fl)
-        | ty => ty
+          let
+            val (freshty, constraints) = makeFreshInstTy makeSubst ty
+          in
+            (T.FUNMty(tyList, freshty), constraints)
+          end
+        | T.RECORDty fl => 
+          let
+            val (fl, constraints) =
+                RecordLabel.Map.foldli
+                    (fn (key, ty, (map, constraints)) =>
+                        let val (freshty, freshconstraints) =
+                                makeFreshInstTy makeSubst ty
+                        in (RecordLabel.Map.insert (map, key, freshty),
+                            freshconstraints @ constraints)
+                        end)
+                    (RecordLabel.Map.empty, nil)
+                    fl
+          in 
+            (T.RECORDty fl, constraints)
+          end
+        | ty => (ty, nil)
 
   fun freshInstTy ty = makeFreshInstTy freshSubst ty
   fun freshRigidInstTy ty = makeFreshInstTy freshRigidSubst ty
@@ -342,7 +379,7 @@ end
   (* 2013-7-26 Ohori
      EFTV should not traverse operators in OPRIMkind.
    *)
-  fun EFTV ty =
+  fun EFTV (ty, constraints) =
     let
       fun traverseTy (ty, env as (i, set, indexMap)) =
         case ty of
@@ -356,31 +393,40 @@ end
  *)
         | T.ERRORty => env
         | T.DUMMYty int => env
+        | T.DUMMY_RECORDty {id, fields} => 
+          RecordLabel.Map.foldl traverseTy env fields
         | T.TYVARty (ref(T.SUBSTITUTED ty)) => traverseTy (ty,env)
         | T.TYVARty (ref(T.TVAR {tvarKind=T.OCONSTkind _,...})) => env
         | T.TYVARty (tyvarRef as (ref(T.TVAR tvKind))) =>
             if OTSet.member(set, tyvarRef) then env
-            else traverseTvKind
-                 (tvKind,
-                  (i+1,
-                   OTSet.add(set, tyvarRef),
-                   IEnv.insert(indexMap, i, tyvarRef))
-                 )
+            else traverseConstraints 
+                     (ty, constraints,
+                      traverseTvKind
+                          (tvKind,
+                           (i+1,
+                            OTSet.add(set, tyvarRef),
+                            IEnv.insert(indexMap, i, tyvarRef))
+                          )
+                     )
         | T.BOUNDVARty int => env
         | T.FUNMty (tyList, ty) =>
           traverseTy (ty, foldl traverseTy env tyList)
         | T.RECORDty tyLabelEnvMap => 
           RecordLabel.Map.foldl traverseTy env tyLabelEnvMap
         | T.CONSTRUCTty {tyCon, args = tyList} => foldl traverseTy env tyList
-        | T.POLYty {boundtvars, body=ty} =>
+        | T.POLYty {boundtvars, constraints=conPoly, body=ty} =>
+          (* FIXME: must traverse constraints *)
           traverseTy
             (ty, 
-             BoundTypeVarID.Map.foldl
-               (fn ({eqKind, tvarKind}, env) =>
-                   traverseTvarKind (tvarKind, env)
-               )
-               env
-               boundtvars
+             traverseConstraints
+                 (ty, conPoly @ constraints,
+                  BoundTypeVarID.Map.foldl
+                      (fn ({eqKind, tvarKind}, env) =>
+                          traverseTvarKind (tvarKind, env)
+                      )
+                      env
+                      boundtvars
+                 )
             )
 (* 2013-7-26 ohori 
    These should never occures and they do not make sense;
@@ -417,11 +463,6 @@ end
             | T.UNBOXED => env
             | T.REC fields => 
               RecordLabel.Map.foldl traverseTy env fields
-            | T.JOIN (fields, ty1, ty2, loc) =>
-              RecordLabel.Map.foldl 
-                traverseTy 
-                (traverseTy (ty1, traverseTy (ty2, env)))
-                fields
             | T.OCONSTkind _ =>
               raise Bug.Bug "OCONSTkind to travseTvKind"
             | T.OPRIMkind {instances, operators} =>
@@ -442,13 +483,53 @@ end
           | T.OVERLOAD_CASE (ty, map) =>
             TypID.Map.foldl traverseOverloadMatch (traverseTy (ty, env)) map
 *)
+      and isFTV (T.TYVARty (ref(T.SUBSTITUTED ty)), checkTy) =
+          isFTV (ty, checkTy)
+        | isFTV (T.TYVARty (ref(T.TVAR tvKind1)),
+                 T.TYVARty (ref(T.TVAR tvKind2))) =
+          (* FIXME: Is this OK? *)
+          FreeTypeVarID.eq (#id tvKind1, #id tvKind2)
+        | isFTV (ty, T.FUNMty (args, body)) =
+          isFTV (ty, body) orelse
+          List.exists (fn t => isFTV (ty, t)) args
+        | isFTV (ty, T.RECORDty tyLabelEnvMap) =
+          RecordLabel.Map.foldl (fn (t, b) => b orelse isFTV (ty, t)) false tyLabelEnvMap
+        | isFTV (ty, T.POLYty {boundtvars, constraints, body=t}) =
+          isFTV (ty, t)
+        | isFTV _ = false
+
+      and traverseConstraints (ty, constraints, env) =
+          (* FIXME: This function doesn't move correctly
+           *        if constraints added during computing EFTV.
+           *)
+          let val ty = derefTy ty
+          in List.foldl
+                 (fn (c, env) =>
+                     case c of T.JOIN {res, args = (arg1, arg2)} =>
+                       let val res = derefTy res
+                           val arg1 = derefTy arg1
+                           val arg2 = derefTy arg2
+                       in if isFTV (ty, res) orelse
+                             isFTV (ty, arg1) orelse
+                             isFTV (ty, arg2)
+                          then (traverseTy
+                                    (res,
+                                     traverseTy
+                                         (arg1,
+                                          traverseTy
+                                              (arg2, env))))
+                          else env
+                       end)
+                 env constraints
+          end
+
     in
       traverseTy (ty, (0, OTSet.empty, IEnv.empty))
     end
 
   fun adjustDepthInTy contextDepth ty = 
     let
-      val (_, tyset,_) = EFTV ty
+      val (_, tyset,_) = EFTV (ty, nil)
     in
       OTSet.app
       (fn (tyvarRef as (ref (T.TVAR {
@@ -483,11 +564,6 @@ end
     | T.UNBOXED => ()
     | T.REC fields => 
         RecordLabel.Map.app (adjustDepthInTy contextDepth) fields
-    | T.JOIN (fields, ty1, ty2, loc) => 
-      (adjustDepthInTy contextDepth ty1;
-       adjustDepthInTy contextDepth ty2;
-       RecordLabel.Map.app (adjustDepthInTy contextDepth) fields
-      )
     | T.OCONSTkind tyList => 
         List.app (adjustDepthInTy contextDepth) tyList
     | T.OPRIMkind {instances = tyList,...} => 
@@ -513,9 +589,9 @@ end
    * type variables in the order as that of original bounded type
    * variables.  
   *)
-  fun generalizer (ty, contextLambdaDepth) =
+  fun generalizer (ty, constraints, contextLambdaDepth) =
       let 
-        val (i, freeTvs, indexMap) = EFTV ty
+        val (i, freeTvs, indexMap) = EFTV (ty, constraints)
         val tids = 
             OTSet.filter 
               (fn
@@ -548,6 +624,37 @@ end
                           \ (types/main/TypesUtils)"
               )
               indexMap
+
+        (* 2016-06-20 sasaki: Cでtraverseできるものをfilterする処理を追加 *)
+        fun traverseConstraints tids newIndexMap =
+            let
+              val notBoundTyIds = OTSet.difference (freeTvs, tids)
+              val notBoundIndexMap =
+                  IEnv.filteri
+                      (fn (id, _) => Bool.not (IEnv.inDomain (newIndexMap, id)))
+                      indexMap
+              val (tids', newIndexMap') =
+                  OTSet.foldl
+                    (fn (r, (tids', newIndexMap')) =>
+                        let
+                          val (i, ftv, imap) = EFTV (T.TYVARty r, constraints)
+                        in
+                          if OTSet.isSubset (ftv, notBoundTyIds)
+                          then (tids', newIndexMap')
+                          else (OTSet.difference (tids', ftv),
+                                IEnv.filter
+                                  (fn r => Bool.not (OTSet.member (ftv, r)))
+                                  newIndexMap')
+                        end
+                    )
+                    (tids, newIndexMap)
+                    notBoundTyIds
+            in
+              if OTSet.equal (tids, tids')
+              then (tids, newIndexMap)
+              else traverseConstraints tids' newIndexMap'
+            end
+        val (tids, newIndexMap) = traverseConstraints tids newIndexMap
       in
         if OTSet.isEmpty tids
         then ({boundEnv = BoundTypeVarID.Map.empty, removedTyIds = OTSet.empty})
@@ -653,15 +760,15 @@ end
               val _ = adjustDepthInTy lambdaDepth resTy
               val _ = performSubst (oldTy, resTy)
           in
-              (tyList, ty2, nil)
+              (tyList, ty2, nil, nil)
           end
         | T.TYVARty (ref (T.TVAR {utvarOpt = SOME _,...})) => 
            raise CoerceFun
         | T.TYVARty (ref(T.SUBSTITUTED ty)) => 
           coerceFunM (ty, tyList)
         | T.FUNMty (tyList, ty2) => 
-          (tyList, ty2, nil)
-        | T.POLYty {boundtvars, body} =>
+          (tyList, ty2, nil, nil)
+        | T.POLYty {boundtvars, constraints, body} =>
           (case derefTy body of
              T.FUNMty(tyList,ty2) =>
              let 
@@ -670,13 +777,21 @@ end
                val ranTy = substBTvar subst1 ty2
                val btvInstTyList = BoundTypeVarID.Map.listItemsi subst1
                val instTyList = map #2 btvInstTyList
+               val constraints =
+                   List.map (fn c =>
+                                case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                  T.JOIN
+                                      {res = substBTvar subst1 res,
+                                       args = (substBTvar subst1 arg1,
+                                               substBTvar subst1 arg2)})
+                            constraints
              in
-               (argTyList,ranTy,instTyList)
+               (argTyList,ranTy,instTyList,constraints)
              end
-           | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil)
+           | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil, nil)
            | _ => raise CoerceFun
           )
-        | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil)
+        | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil, nil)
         | _ => raise CoerceFun
 
 

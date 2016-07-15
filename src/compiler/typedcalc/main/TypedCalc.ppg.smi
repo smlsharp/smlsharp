@@ -95,9 +95,9 @@ structure TypedCalc =
       | TPEXPORTEXN of Types.exnInfo
       | TPEXPORTRECFUNVAR of {var:Types.varInfo, arity:int}
       | TPEXPORTVAR of Types.varInfo
-      | TPEXTERNEXN of {longsymbol:Symbol.longsymbol, ty:Types.ty}
-      | TPBUILTINEXN of {longsymbol:Symbol.longsymbol, ty:Types.ty}
-      | TPEXTERNVAR of {longsymbol:Symbol.longsymbol, ty:Types.ty}
+      | TPEXTERNEXN of {path:Symbol.longsymbol, ty:Types.ty}
+      | TPBUILTINEXN of {path:Symbol.longsymbol, ty:Types.ty}
+      | TPEXTERNVAR of {path:Symbol.longsymbol, ty:Types.ty}
       | TPFUNDECL of {argTyList:Types.ty list, bodyTy:Types.ty,
                       funVarInfo:Types.varInfo,
                       ruleList:{args:tppat list, body:tpexp} list} list * 

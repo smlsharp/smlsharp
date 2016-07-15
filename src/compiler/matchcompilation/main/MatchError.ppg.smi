@@ -9,7 +9,6 @@ _require "../../typedcalc/main/TypedCalc.ppg.smi"
 _require "../../typedcalc/main/TypedCalcUtils.smi"
 _require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../usererror/main/UserError.ppg.smi"
 _require "./MatchData.smi"
 

@@ -19,11 +19,7 @@ struct
   type varInfo = RecordCalc.varInfo
 
   fun newVar ty =
-      let
-        val id = VarID.generate ()
-      in
-        {id = id, path = ["$" ^ VarID.toString id], ty = ty} : B.varInfo
-      end
+      {id = VarID.generate (), path = [Symbol.generate ()], ty = ty} : B.varInfo
 
   fun mapi f l =
       let

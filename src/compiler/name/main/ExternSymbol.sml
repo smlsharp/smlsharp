@@ -7,7 +7,7 @@
 structure ExternSymbol :> sig
 
   type id
-  val touch : string list -> id
+  val touch : Symbol.longsymbol -> id
   val toString : id -> string  
   val format_id : id -> SMLFormat.FormatExpression.expression list
   structure Map : ORD_MAP where type Key.ord_key = id
@@ -19,7 +19,7 @@ struct
   type id = string
 
   fun touch path =
-      NameMangle.mangle path
+      NameMangle.mangle (Symbol.longsymbolToLongid path)
 
   fun toString x = x : id
 

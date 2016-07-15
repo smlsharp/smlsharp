@@ -23,20 +23,33 @@ in
   fun nextDummyTy () =
       T.DUMMYty (!dummyTyId) before dummyTyId := !dummyTyId + 1
 
+  fun nextDummyRecordTy fields =
+      T.DUMMY_RECORDty {id = !dummyTyId, fields=fields} 
+      before dummyTyId := !dummyTyId + 1
+
+
   (*
    * make a fresh instance of ty by instantiating the top-level type
    * abstractions (only)
    *)
   fun freshTopLevelInstTy ty =
       case ty of
-        (T.POLYty{boundtvars, body, ...}) =>
+        (T.POLYty{boundtvars, body, constraints}) =>
         let 
           val subst = TB.freshSubst boundtvars
           val bty = TB.substBTvar subst body
+          val constraints =
+              List.map (fn c =>
+                           case c of T.JOIN {res, args = (arg1, arg2)} =>
+                             T.JOIN
+                                 {res = TB.substBTvar subst res,
+                                  args = (TB.substBTvar subst arg1,
+                                          TB.substBTvar subst arg2)})
+                       constraints
         in  
-          (bty, BoundTypeVarID.Map.listItems subst)
+          (bty, BoundTypeVarID.Map.listItems subst, constraints)
         end
-      | _ => (ty, nil)
+      | _ => (ty, nil, nil)
              
   fun instantiateTv tv =
       case tv of
@@ -49,9 +62,7 @@ in
       | ref(T.TVAR {tvarKind = T.OPRIMkind {instances = nil,...}, ...}) =>
         raise Bug.Bug "instantiateTv OPRIMkind"
       | ref(T.TVAR {tvarKind = T.REC tyFields, ...}) => 
-        tv := T.SUBSTITUTED (T.RECORDty tyFields)
-      | ref(T.TVAR {tvarKind = T.JOIN (tyFields,_,_, _), ...}) => 
-        tv := T.SUBSTITUTED (T.RECORDty tyFields)
+        tv := T.SUBSTITUTED (nextDummyRecordTy tyFields)
       | ref(T.TVAR {tvarKind = T.UNIV, ...}) => 
         tv := T.SUBSTITUTED (nextDummyTy())
       | ref(T.TVAR {tvarKind = T.BOXED, ...}) =>
@@ -73,17 +84,17 @@ in
   fun coerceTy (tpexp, fromTy, toTy, loc) =
       if TB.monoTy (TB.derefTy toTy) then 
         let
-          val (fromTy, tpexp) = TCU.freshInst(fromTy, tpexp)
+          val (fromTy, constraints, tpexp) = TCU.freshInst(fromTy, tpexp)
         in
           (
            U.unify [(fromTy, toTy)] 
            handle U.Unify => raise CoerceTy;
-           tpexp
+           {tpexp=tpexp, constraints=constraints}
           )
         end
       else
         case (TB.derefTy toTy) of
-          T.POLYty{boundtvars,body,...} =>
+          T.POLYty{boundtvars,body,constraints} =>
           let 
             (* here we rely on unification with bound tvar
                2013-4-29 With kind constraints in user type spec, this 
@@ -92,10 +103,11 @@ in
                re-generalize in the original order to obtain the same type.
                bug fixed. 257_recordPolyAnnotation.sml
              *)
-            val (fromBody, tpexp) = TCU.freshToplevelInst(fromTy, tpexp)
+            val (fromBody, fromConstraints, tpexp) = TCU.freshToplevelInst(fromTy, tpexp)
+            (* FIXME: fromConstraintsを捨てている問題の確認 *)
             val subst = TB.freshRigidSubst boundtvars
             val body = TB.substBTvar subst body
-            val tpexp = coerceTy (tpexp, fromBody, body, loc)
+            val {tpexp=tpexp, constraints=fromConstraints} = coerceTy (tpexp, fromBody, body, loc)
             val boundtvars =
                 BoundTypeVarID.Map.foldl
                   (fn (ty, btvs) =>
@@ -130,10 +142,11 @@ in
                   BoundTypeVarID.Map.empty
                   subst
           in
-            TPC.TPPOLY{btvEnv=boundtvars,
-                       expTyWithoutTAbs=body,
-                       exp=tpexp,
-                       loc=loc}
+            {tpexp=TPC.TPPOLY{btvEnv=boundtvars,
+                              expTyWithoutTAbs=body,
+                              exp=tpexp,
+                              loc=loc},
+             constraints=nil}
           end
         | T.FUNMty (tyList, bodyTy) =>
           (
@@ -151,13 +164,14 @@ in
                                funTy=T.FUNMty(tyList, fromBodyTy),
                                argExpList=argExpList,
                                loc=loc}
-               val bodyExp = coerceTy (bodyExp, fromBodyTy, bodyTy, loc)
+               val {tpexp=bodyExp, constraints} = coerceTy (bodyExp, fromBodyTy, bodyTy, loc)
              in 
-               TPC.TPFNM
-                 {argVarList = argVarList,
-                  bodyTy = bodyTy,
-                  bodyExp = bodyExp,
-                  loc = loc}
+               {tpexp=TPC.TPFNM
+                          {argVarList = argVarList,
+                           bodyTy = bodyTy,
+                           bodyExp = bodyExp,
+                           loc = loc},
+                constraints=constraints}
              end
            | _ => raise CoerceTy
           )
@@ -209,16 +223,16 @@ in
                    case RecordLabel.Map.find(map, label) of
                      SOME item => item
                    | NONE => raise bug "impossible"
-               val (extraBindsRev, newExpFields) =
+               val (extraBindsRev, newExpFields, newConstraints) =
                    RecordLabel.Map.foldli
-                   (fn (label, exp, (extraBindsRev,newExpFields)) =>
+                   (fn (label, exp, (extraBindsRev,newExpFields,constraints)) =>
                        let
                          val fromTy = getItem(fromTyFields, label)
                          val toTy = getItem(tyFields, label)
-                         val newExp = coerceTy(exp, fromTy, toTy, loc)
+                         val {tpexp=newExp,constraints=newConstraints} = coerceTy(exp, fromTy, toTy, loc)
                        in
                          if TCU.isAtom newExp then
-                           (extraBindsRev, RecordLabel.Map.insert(newExpFields, label, newExp))
+                           (extraBindsRev, RecordLabel.Map.insert(newExpFields, label, newExp), constraints @ newConstraints)
                          else
                            let
                              val fieldVar = TCU.newTCVarInfo loc toTy
@@ -226,12 +240,13 @@ in
                              val newBind = (fieldVar, newExp)
                            in
                              ((fieldVar, newExp)::extraBindsRev,
-                              RecordLabel.Map.insert(newExpFields, label, fieldExp)
+                              RecordLabel.Map.insert(newExpFields, label, fieldExp),
+                              constraints @ newConstraints
                              )
                            end
                        end
                    )
-                   (extraBindsRev, RecordLabel.Map.empty)
+                   (extraBindsRev, RecordLabel.Map.empty, nil)
                    expFields
                val resultExp =
                    TPC.TPMONOLET
@@ -243,7 +258,7 @@ in
                       loc = loc
                      }
              in
-               resultExp
+               {tpexp=resultExp, constraints=newConstraints}
              end
            | _ => raise CoerceTy
           )

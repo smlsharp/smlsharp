@@ -110,8 +110,8 @@ local
          (copyTy btvMap ty,
          TypID.Map.map (copyOverloadMatch btvMap) map
          )
-  and copyExVarInfo btvMap {longsymbol:longsymbol, ty:ty} =
-      {longsymbol=longsymbol, ty=copyTy btvMap ty}
+  and copyExVarInfo btvMap {path:longsymbol, ty:ty} =
+      {path=path, ty=copyTy btvMap ty}
   and copyPrimInfo btvMap {primitive : BuiltinPrimitive.primitive, ty : ty} =
       {primitive=primitive, ty=copyTy btvMap ty}
   and copyTy (btvMap:btvMap) ty =
@@ -128,6 +128,8 @@ local
          ty
       | T.DUMMYty dummyTyID => 
         ty
+      | T.DUMMY_RECORDty {id, fields} =>
+        T.DUMMY_RECORDty {id=id, fields=RecordLabel.Map.map (copyTy btvMap) fields}
       | T.TYVARty _ => raise bug "TYVARty in AlphaRename"
       | T.BOUNDVARty btv => 
         T.BOUNDVARty (evalBtv btvMap btv)
@@ -168,16 +170,26 @@ local
       | T.POLYty
           {
            boundtvars : T.btvEnv,
+           constraints : T.constraint list,
            body : ty
           } =>
         let
           val _ = P.print "polyTy\n"
           val (btvMap, boundtvars) = newBtvEnv btvMap boundtvars
+          val constraints = List.map
+                                (fn c =>
+                                    case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                      T.JOIN
+                                          {res = copyTy btvMap res,
+                                           args = (copyTy btvMap arg1,
+                                                   copyTy btvMap arg2)})
+                                constraints
           val _ = P.print "newBtvEnv\n"
         in
           T.POLYty
             {
              boundtvars = boundtvars,
+             constraints = constraints,
              body =  copyTy btvMap body
             }
         end
@@ -222,8 +234,6 @@ local
       | T.UNBOXED => T.UNBOXED
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map (copyTy btvMap) fields)
-      | T.JOIN (fields:ty RecordLabel.Map.map, ty1, ty2, loc) =>
-        T.JOIN (RecordLabel.Map.map (copyTy btvMap) fields, copyTy btvMap ty1, copyTy btvMap ty2, loc)
   and copyDtyKind btvMap dtyKind =
       case dtyKind of
         T.DTY => dtyKind

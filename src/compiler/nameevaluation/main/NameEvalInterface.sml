@@ -32,9 +32,7 @@ local
   val mkSymbol = Symbol.mkSymbol
   val mkLongsymbol = Symbol.mkLongsymbol
   val symbolToLoc = Symbol.symbolToLoc
-  val symbolToString = Symbol.symbolToString
   val longsymbolToLoc = Symbol.longsymbolToLoc
-  val longsymbolToLongid = Symbol.longsymbolToLongid
 
   fun bug s = Bug.Bug ("NameEvalInterface: " ^ s)
   val nilPath = nil
@@ -328,14 +326,13 @@ in
           | AI.VAL_BUILTIN {builtinSymbol, ty} =>
             let
               val loc = symbolToLoc builtinSymbol
-              val builtinName = symbolToString builtinSymbol
               val ty = Ty.evalTy tvarEnv env ty
               val ty = 
                   case kindedTvars of
                     nil => ty
                   | _ => I.TYPOLY(kindedTvars,ty)
             in
-              case BuiltinPrimitive.findPrimitive builtinName of
+              case BuiltinPrimitive.findPrimitive (Symbol.symbolToString builtinSymbol) of
                 SOME primitive => 
                 let
                   val idstatus = I.IDBUILTINVAR {primitive=primitive, ty=ty}
@@ -372,10 +369,12 @@ in
           val ty = Ty.evalTy tvarEnv env ty
           val (tfun, renameEnv) =
               case N.tyForm tvarList ty of
-(* 2016-04-26 
-                N.TYNAME tfun => tfun
+                N.TYNAME tfun => 
+                RL.replaceLongsymbolTfun renameEnv (Symbol.prefixPath (path, symbol)) tfun
+(*
+                (tfun, renameEnv)
+                RL.replacePathTfun renameEnv path tfun
 *)
-                N.TYNAME tfun => RL.replacePathTfun renameEnv path tfun
               | N.TYTERM ty =>
                 let
                   val iseq = N.admitEq tvarList ty

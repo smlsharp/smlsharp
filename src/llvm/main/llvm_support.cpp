@@ -44,8 +44,8 @@ sml_LLVMAddFunctionReturnAttr(LLVMValueRef fn, LLVMAttribute attr)
 	func->setAttributes
 		(func->getAttributes().addAttributes
 		 (context,
-		  AttributeSet::FunctionIndex,
-		  AttributeSet::get(context, AttributeSet::FunctionIndex, b)));
+		  AttributeSet::ReturnIndex,
+		  AttributeSet::get(context, AttributeSet::ReturnIndex, b)));
 }
 
 extern "C"

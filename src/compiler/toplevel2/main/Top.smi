@@ -1,6 +1,5 @@
 _require local "../../../basis.smi"
 _require local "../../../config/main/Config.smi"
-_require local "../../../compiler-utils/env/main/SEnv.smi"
 _require local "../../../llvm/main/LLVM.smi"
 _require local "../../../basis.smi"
 _require local "../../builtin2/main/BuiltinTypes.smi"
@@ -60,10 +59,11 @@ _require local "../../stackallocation/main/StackAllocation.smi"
 _require local "../../llvmir/main/LLVMIR.ppg.smi"
 _require local "../../llvmgen/main/LLVMGen.smi"
 _require local "../../llvmemit/main/LLVMEmit.smi"
-_require local "../../runtimetypes/main/TypeLayout2.smi"
+_require local "../../runtimetypes/main/InitPointerSize.smi"
 _require local "../../../json/main/JSONData.smi"
 _require "./TopData.ppg.smi"
 _require local "./NameEvalEnvUtils.smi"
+_require local "../../constantterm/main/ConstantTerm.ppg.smi"
 
 structure Top =
 struct

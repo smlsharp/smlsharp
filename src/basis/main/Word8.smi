@@ -5,7 +5,7 @@ _require "./IntInf.smi"
 
 structure Word8 =
 struct
-  type word = SMLSharp_Builtin.Word8.word
+  type word = word8
   val wordSize : int
   val toLarge = SMLSharp_Builtin.Word8.toWord64
   val toLargeX = SMLSharp_Builtin.Word8.toWord64X

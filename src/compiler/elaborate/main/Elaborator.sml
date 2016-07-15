@@ -16,10 +16,10 @@ struct
   structure A = AbsynInterface
   structure P = PatternCalcInterface
 
-  type fixEnv = Fixity.fixity SEnv.map
+  type fixEnv = Fixity.fixity SymbolEnv.map
 
   fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
-      SEnv.unionWith #2 (env1, env2)
+      SymbolEnv.unionWith #2 (env1, env2)
 
   fun elaborate fixEnv ({interface, topdecsInclude, topdecsSource}:A.compileUnit) =
       let

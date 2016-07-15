@@ -1048,7 +1048,9 @@ struct
        *) 
       TOPDECFUN of funbind list * loc (* functor binding *)
 
-  (*% *)
+  (*%
+   * @formatter(Filename.filename) Filename.format_filename
+   *)
   datatype top 
     = (*%
        * @format (dec decs)
@@ -1056,14 +1058,16 @@ struct
        *)
       TOPDEC of topdec list
     | (*%
-       * @format(symbol) "use" + symbol
+       * @format(f * l) "use" + f
        *)
-      USE of symbol
+      USE of Filename.filename * loc
 
-  (*% *)
+  (*%
+   * @formatter(Filename.filename) Filename.format_filename
+   *)
   datatype interface 
-    = (*% @format(symbol) "_interface" +1 symbol *)
-      INTERFACE of symbol
+    = (*% @format(f * l) "_interface" +1 f *)
+      INTERFACE of Filename.filename * loc
     | (*% @format *)
       NOINTERFACE
 

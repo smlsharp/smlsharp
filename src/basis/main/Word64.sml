@@ -16,7 +16,7 @@ structure Word64 = SMLSharp_Builtin.Word64
 structure Word64 =
 struct
 
-  type word = Word64.word
+  type word = word64
   val wordSize = 64  (* 64-bit unsigned integer *)
 
   fun toLarge x = x : word

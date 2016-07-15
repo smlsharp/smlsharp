@@ -21,8 +21,6 @@ struct
   structure EU = UserErrorUtils
   structure E = ElaborateError
 
-  val checkNameDuplication = EU.checkNameDuplication
-  val checkNameDuplication' = EU.checkNameDuplication'
   val checkSymbolDuplication = EU.checkSymbolDuplication
   val checkSymbolDuplication' = EU.checkSymbolDuplication'
 
@@ -47,10 +45,10 @@ struct
     | elabSequence elab env (elem::elems) =
       let
         val (elems1, env1) = elab env elem
-        val env = SEnv.unionWith #2 (env, env1)
+        val env = SymbolEnv.unionWith #2 (env, env1)
         val (elems2, env2) = elabSequence elab env elems
       in
-        (elems1 @ elems2, SEnv.unionWith #2 (env1, env2))
+        (elems1 @ elems2, SymbolEnv.unionWith #2 (env1, env2))
       end
 
   fun elabBinds elaborator elements =
@@ -176,9 +174,7 @@ struct
           end
       | A.SPECSTRUCT(strdescs, loc) => 
           let
-            val _ = 
-              checkNameDuplication
-                  (fn x => Symbol.symbolToString (#1 x)) strdescs loc E.DuplicateStrDesc
+            val _ = checkSymbolDuplication #1 strdescs E.DuplicateStrDesc
           in
             PC.PLSPECSTRUCT (elabBinds elabSigExp strdescs, 
                              loc)
@@ -239,7 +235,7 @@ struct
       | A.STRUCTLET(strdecs, strexp, loc) =>
           let
             val (plstrdecs, env') = elabStrDecs env strdecs
-            val newenv = SEnv.unionWith #1 (env', env)
+            val newenv = SymbolEnv.unionWith #1 (env', env)
           in
             PC.PLSTRUCTLET(plstrdecs, elabStrExp newenv strexp, loc)
           end
@@ -269,12 +265,12 @@ struct
           end
       | A.STRUCTBIND(strbinds,loc) => 
           ([PC.PLSTRUCTBIND(map (elabStrBind env) strbinds, loc)],
-           SEnv.empty)
+           SymbolEnv.empty)
       | A.STRUCTLOCAL(strdecs1, strdecs2, loc) =>
           let
             val (plstrdecs1, env1) = elabStrDecs env strdecs1
             val (plstrdecs2, env2) =
-              elabStrDecs (SEnv.unionWith #1 (env1, env)) strdecs2
+              elabStrDecs (SymbolEnv.unionWith #1 (env1, env)) strdecs2
           in
             ([PC.PLSTRUCTLOCAL(plstrdecs1, plstrdecs2, loc)], env2)
           end
@@ -377,14 +373,14 @@ struct
           end
       | A.TOPDECSIG(sigdecs, loc) => 
           let val plsigdecs = elabBinds elabSigExp sigdecs
-          in ([PC.PLTOPDECSIG(plsigdecs, loc)], SEnv.empty)
+          in ([PC.PLTOPDECSIG(plsigdecs, loc)], SymbolEnv.empty)
           end
       | A.TOPDECFUN(funbinds, loc) =>
           let
             val plfunbinds = map (elabFunBind env) funbinds
           in ([PC.PLTOPDECFUN(plfunbinds, loc)
               ],
-              SEnv.empty)
+              SymbolEnv.empty)
           end
 (*
       | A.TOPDECFUN(funbinds, loc) =>

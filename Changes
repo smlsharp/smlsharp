@@ -1,4 +1,21 @@
 -----------------------------------------------------------------------------
+SML# version 3.1.1 (released on 2016-07-15)
+
+Fixed bugs:
+* Fixed bugs of _jsoncase expression, which did not work unfortunately.
+* Stopped printing the values of opaque types in interactive mode.
+* Type arity check was not performed in foreign function types.
+* Fixed bugs of excpetion handling.
+* Fixed errors in the configure script.
+
+Improvements:
+* Improvements in SQL integration:
+  * added INNER JOIN support.
+  * refined the compilation of SQL queries.
+  * slightly changed the type of SQL queries.
+* Refined type printer in interactive mode.
+
+-----------------------------------------------------------------------------
 SML# version 3.1.0 (released on 2016-05-26)
 
 This version contains the full implementation of JSON support

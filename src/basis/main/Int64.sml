@@ -16,7 +16,7 @@ structure Int64 = SMLSharp_Builtin.Int64
 structure Int64 =
 struct
 
-  type int = Int64.int
+  type int = int64
   val toInt = Int64.toInt32
   val fromInt = Int64.fromInt32
 
@@ -26,7 +26,7 @@ struct
 
   val toLarge = 
       _import "prim_IntInf_fromInt64"
-      : __attribute__((unsafe,pure,fast,gc)) int -> IntInf.int
+      : __attribute__((unsafe,pure,fast,gc)) int -> intInf
 
   val prim_fromLarge =
       _import "prim_IntInf_toInt64"

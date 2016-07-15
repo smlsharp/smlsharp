@@ -1548,9 +1548,3 @@ struct
   val toString : id -> string
   val toInt : id -> int
 end
-
-structure VarName =
-struct
-  val generate : unit -> string
-end
-

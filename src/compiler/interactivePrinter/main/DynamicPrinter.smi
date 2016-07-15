@@ -6,6 +6,7 @@ _require local "../../types/main/IDCalc.ppg.smi"
 _require local "../../../json/main/JSONData.smi"
 _require local "../../name/main/LocalID.smi"
 _require local "../../absyn/main/RecordLabel.smi"
+_require local "../../absyn/main/Symbol.ppg.smi"
 
 structure DynamicPrinter =
 struct

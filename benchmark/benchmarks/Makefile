@@ -11,6 +11,7 @@ all: \
     cpstak/doit$(DOIT_SUFFIX) \
     diviter/doit$(DOIT_SUFFIX) \
     divrec/doit$(DOIT_SUFFIX) \
+    fibrepeat/doit$(DOIT_SUFFIX) \
     fft/doit$(DOIT_SUFFIX) \
     gcbench/doit$(DOIT_SUFFIX) \
     knuth_bendix/doit$(DOIT_SUFFIX) \
@@ -22,7 +23,8 @@ all: \
     smlyacc/doit$(DOIT_SUFFIX) \
     nucleic/doit$(DOIT_SUFFIX) \
     nqueen/doit$(DOIT_SUFFIX) \
-    parallel_matrix2/doit$(DOIT_SUFFIX) \
+    parallel_matrix/doit$(DOIT_SUFFIX) \
+    parallel_matrix_tail/doit$(DOIT_SUFFIX) \
     perm9/doit$(DOIT_SUFFIX) \
     puzzle/doit$(DOIT_SUFFIX) \
     ratio_regions/doit$(DOIT_SUFFIX) \

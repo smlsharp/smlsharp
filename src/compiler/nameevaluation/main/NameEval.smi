@@ -37,14 +37,14 @@ _require "./RenameLongsymbol.smi"
 
 structure NameEval =
   struct
-    datatype exnCon = EXN of IDCalc.exnInfo | EXEXN of IDCalc.exInfo
     val nameEval : {topEnv: NameEvalEnv.topEnv, version: int option,
                     systemDecls: IDCalc.icdecl list}
                     -> PatternCalcInterface.compileUnit
-                    -> exnCon list
-                       * NameEvalEnv.topEnv
-                       * IDCalc.topdecl
-                       * UserError.errorInfo list
+                    -> {requireTopEnv : NameEvalEnv.topEnv,
+                        returnTopEnv : NameEvalEnv.topEnv,
+                        icdecls : IDCalc.topdecl,
+                        warnings : UserError.errorInfo list}
+
     val nameEvalInteractiveEnv :
         NameEvalEnv.topEnv
         -> PatternCalcInterface.interactiveUnit

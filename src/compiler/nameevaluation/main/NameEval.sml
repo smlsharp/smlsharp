@@ -46,15 +46,20 @@ local
  
   fun bug s = Bug.Bug ("NameEval: " ^ s)
 
-  fun addExSet (externSet: I.exInfo LongsymbolEnv.map, 
-                exInfo as {longsymbol, ty, version}:I.exInfo) =
+  fun addExnExSet (externExnSet: I.exInfo LongsymbolEnv.map, 
+                   exInfo as {longsymbol, ty, version}:I.exInfo) =
       (V.exnConAdd (V.EXEXN exInfo);
-       LongsymbolEnv.insert(externSet, longsymbol, exInfo)
+       LongsymbolEnv.insert(externExnSet, longsymbol, exInfo)
       )
 
-  fun exSetMember (externSet:I.exInfo LongsymbolEnv.map, {longsymbol, ty, version}:I.exInfo) =
-      LongsymbolEnv.inDomain(externSet, longsymbol)
+  fun addVarExSet (externVarSet: I.exInfo LongsymbolEnv.map, 
+                   exInfo as {longsymbol, ty, version}:I.exInfo) =
+      LongsymbolEnv.insert(externVarSet, longsymbol, exInfo)
 
+  fun exSetMember (externExnSet:I.exInfo LongsymbolEnv.map, {longsymbol, ty, version}:I.exInfo) =
+      LongsymbolEnv.inDomain(externExnSet, longsymbol)
+
+  val emptyExternVarSet = LongsymbolEnv.empty : I.exInfo LongsymbolEnv.map
 
   val DUMMYIDFUN = mkLongsymbol ["id"]
 
@@ -542,15 +547,23 @@ local
                                 (fn {symbol, eq} => symbol)
                                 tvarList
                                 (fn s => E.DuplicateTypParms("130",s))
+
                       val (tvarEnv, tvarList) = Ty.genTvarList tvarEnv tvarList
                       val ty = Ty.evalTy tvarEnv env ty
                       val (tfun, renameEnv) =
                           case N.tyForm tvarList ty of
                             N.TYNAME tfun => 
+                            RL.replaceLongsymbolTfun renameEnv (Symbol.prefixPath (path, symbol)) tfun
+(*
+                            (tfun, renameEnv)
                             RL.replacePathTfun renameEnv path tfun
+*)
                           | N.TYTERM ty =>
                             let
                               val longsymbol = Symbol.prefixPath(path, symbol)
+(*
+                              val longsymbol = [symbol]
+*)
                               val iseq = N.admitEq tvarList ty
                             in
                               (I.TFUN_DEF {iseq=iseq,
@@ -588,13 +601,21 @@ local
                  case tstr of 
                    V.TSTR tfun => 
                    let
-                     val (tfun, renameEnv) = RL.replacePathTfun renameEnv path tfun
+                     val (tfun, renameEnv) = 
+                         RL.replaceLongsymbolTfun renameEnv (Symbol.prefixPath (path, symbol)) tfun
+(*
+                         RL.replacePathTfun renameEnv path tfun
+*)
                    in
                      (V.TSTR tfun, renameEnv)
                    end
                  | V.TSTR_DTY {tfun, varE, formals, conSpec} => 
                    let
-                     val (tfun, renameEnv) = RL.replacePathTfun renameEnv path tfun
+                     val (tfun, renameEnv) = 
+                         RL.replaceLongsymbolTfun renameEnv (Symbol.prefixPath (path, symbol)) tfun
+(*
+                         RL.replacePathTfun renameEnv path tfun
+*)
                    in
                      (V.TSTR_DTY {tfun= tfun,
                                   varE= varE,
@@ -1009,13 +1030,6 @@ local
             {columnInfoFnExp = evalPlexp tvarEnv env columnInfoFnExp,
              ty = evalTy' ty,
              loc = loc}
-        | P.PLSQLDBI (plpat, plexp, loc) =>
-          let
-            val (newEnv, icpat) = evalPat plpat
-            val evalEnv = V.envWithEnv (env, newEnv)
-          in
-            I.ICSQLDBI(icpat, evalPlexp tvarEnv evalEnv plexp, loc)
-          end
         | P.PLJOIN (plexp1, plexp2, loc) =>
           I.ICJOIN(evalExp plexp1, evalExp plexp2, loc)
         | P.PLJSON (plexp, ty, loc) =>
@@ -2274,26 +2288,26 @@ So we change exnSet to path exnMap in genExportIdstatus
       in
         clearUsedflagIdstatus (V.lookupId Env longsymbol)
       end
-  fun externSetSystemdecls systemDecls externSet =
+  fun externExnSetSystemdecls systemDecls externExnSet =
       foldl
-        (fn (idstatus, externSet) =>
+        (fn (idstatus, externExnSet) =>
             case idstatus of
               I.ICEXTERNEXN (exInfo as {longsymbol,...}) => 
-              LongsymbolEnv.insert(externSet, longsymbol, exInfo)
+              LongsymbolEnv.insert(externExnSet, longsymbol, exInfo)
             | I.ICBUILTINEXN {longsymbol, ty} => 
               LongsymbolEnv.insert
-                (externSet, longsymbol,
+                (externExnSet, longsymbol,
                  {longsymbol=longsymbol, ty=ty, version=NONE})
-            | _ => externSet
+            | _ => externExnSet
         )
-        externSet
+        externExnSet
         systemDecls
   local
     fun setUsedflagInOverloadMatch (env:V.topEnv) match =
         case match of
-          T.OVERLOAD_EXVAR {exVarInfo={longsymbol, ty}, instTyList} =>
+          T.OVERLOAD_EXVAR {exVarInfo={path, ty}, instTyList} =>
           (
-            case V.lookupId (#Env env) longsymbol of
+            case V.lookupId (#Env env) path of
               I.IDEXVAR {used, ...} => used := true
             | _ => raise Bug.Bug "setUsedflagInOverloadMatch"
           )
@@ -2322,23 +2336,21 @@ So we change exnSet to path exnMap in genExportIdstatus
         | T.BOXED => ()
         | T.UNBOXED => ()
         | T.REC tyMap => RecordLabel.Map.app (setUsedflagInTy env) tyMap
-        | T.JOIN (tyMap, ty1, ty2, loc) =>
-          (RecordLabel.Map.app (setUsedflagInTy env) tyMap;
-           setUsedflagInTy env ty1;
-           setUsedflagInTy env ty2)
     and setUsedflagInTy env ty =
         case ty of
           T.SINGLETONty sty => setUsedflagInSingletonTy env sty
         | T.BACKENDty _ => raise Bug.Bug "setUsedflagInTy: BACKENDty"
         | T.ERRORty => raise Bug.Bug "setUsedflagInTy: ERRORty"
         | T.DUMMYty _ => ()
+        | T.DUMMY_RECORDty {id, fields} =>
+          RecordLabel.Map.app (setUsedflagInTy env) fields
         | T.TYVARty (ref (T.TVAR _)) => raise Bug.Bug "setUsedflagInTy: TYVARty"
         | T.TYVARty (ref (T.SUBSTITUTED ty)) => setUsedflagInTy env ty
         | T.BOUNDVARty _ => ()
         | T.FUNMty (argTys, retTy) => app (setUsedflagInTy env) (retTy::argTys)
         | T.RECORDty tyMap => RecordLabel.Map.app (setUsedflagInTy env) tyMap
         | T.CONSTRUCTty {tyCon, args} => app (setUsedflagInTy env) args
-        | T.POLYty {boundtvars, body} =>
+        | T.POLYty {boundtvars, constraints, body} =>
           (BoundTypeVarID.Map.app (setUsedflagInBtvKind env) boundtvars;
            setUsedflagInTy env body)
     fun setUsedflagsExInfo env ({ty, ...}:I.exInfo) =
@@ -2377,84 +2389,84 @@ So we change exnSet to path exnMap in genExportIdstatus
        setUsedflagsFunE topEnv FunE)
   end (* local *)
 
-  fun genExterndeclsIdstatus externSet idstatus icdecls =
+  fun genExterndeclsIdstatus (externExnSet,externVarSet) idstatus icdecls =
       case idstatus of
         I.IDEXVAR {exInfo, used as ref true, internalId}  => 
-        (externSet, I.ICEXTERNVAR exInfo :: icdecls)
+        ((externExnSet, addVarExSet (externVarSet, exInfo)), icdecls)
         before used := false   (* avoid duplicate declarations *)
       | I.IDOPRIM {used as ref true, overloadDef,...} => 
-        (externSet,overloadDef::icdecls)
+        ((externExnSet,externVarSet), overloadDef::icdecls)
         before used := false   (* avoid duplicate declarations *)
       | I.IDEXEXN (exInfo, used) =>
         if !Control.importAllExceptions orelse !used
         then
-          if exSetMember(externSet, exInfo) 
-          then (externSet, icdecls)
+          if exSetMember(externExnSet, exInfo) 
+          then ((externExnSet,externVarSet), icdecls)
           else 
-            (addExSet(externSet, exInfo),
+            ((addExnExSet(externExnSet, exInfo),externVarSet),
              I.ICEXTERNEXN exInfo :: icdecls
             )
             before used := false   (* avoid duplicate declarations *)
-        else (externSet, icdecls)
+        else ((externExnSet,externVarSet), icdecls)
       | I.IDEXEXNREP (exInfo, used) => 
         if !Control.importAllExceptions orelse !used
         then
-          if exSetMember(externSet, exInfo) 
-          then (externSet, icdecls)
+          if exSetMember(externExnSet, exInfo) 
+          then ((externExnSet,externVarSet), icdecls)
           else 
-            (addExSet(externSet, exInfo),
+            ((addExnExSet(externExnSet, exInfo),externVarSet),
              I.ICEXTERNEXN exInfo :: icdecls
             )
             before used := false   (* avoid duplicate declarations *)
-        else (externSet, icdecls)
-      | _ => (externSet, icdecls)
-  fun genExterndeclsVarE externSet varE icdecls =
+        else ((externExnSet,externVarSet), icdecls)
+      | _ => ((externExnSet,externVarSet), icdecls)
+  fun genExterndeclsVarE (externExnSet,externVarSet) varE icdecls =
       SymbolEnv.foldr
-      (fn (idstatus, (externSet, icdecls)) => genExterndeclsIdstatus externSet idstatus icdecls)
-      (externSet,icdecls)
+      (fn (idstatus, ((externExnSet,externVarSet), icdecls)) => genExterndeclsIdstatus (externExnSet,externVarSet) idstatus icdecls)
+      ((externExnSet,externVarSet),icdecls)
       varE
-  fun genExterndeclsEnv externSet (V.ENV {varE, tyE, strE}) icdecls =
+  fun genExterndeclsEnv (externExnSet,externVarSet) (V.ENV {varE, tyE, strE}) icdecls =
       let
-        val (externSet, icdecls) = genExterndeclsVarE externSet varE icdecls
-        val (externSet, icdecls) = genExterndeclsStrE externSet strE icdecls
+        val ((externExnSet,externVarSet), icdecls) = genExterndeclsVarE (externExnSet,externVarSet) varE icdecls
+        val ((externExnSet,externVarSet), icdecls) = genExterndeclsStrE (externExnSet,externVarSet) strE icdecls
       in
-        (externSet, icdecls)
+        ((externExnSet,externVarSet), icdecls)
       end
-  and genExterndeclsStrE externSet (V.STR strEntryMap) icdecls =
+  and genExterndeclsStrE (externExnSet,externVarSet) (V.STR strEntryMap) icdecls =
       SymbolEnv.foldr
-      (fn ({env, strKind}, (externSet, icdecls)) =>
+      (fn ({env, strKind}, ((externExnSet,externVarSet), icdecls)) =>
            case strKind of 
-             V.SIGENV => (externSet,icdecls)
+             V.SIGENV => ((externExnSet,externVarSet),icdecls)
 (* 2012-7-10 ohori : bug 204
-           | V.FUNAPP _ => (externSet, icdecls)
+           | V.FUNAPP _ => ((externExnSet,externVarSet), icdecls)
 *)
-           | V.FUNAPP _ => genExterndeclsEnv externSet env icdecls
-           | V.STRENV _ => genExterndeclsEnv externSet env icdecls)
-      (externSet, icdecls)
+           | V.FUNAPP _ => genExterndeclsEnv (externExnSet,externVarSet) env icdecls
+           | V.STRENV _ => genExterndeclsEnv (externExnSet,externVarSet) env icdecls)
+      ((externExnSet,externVarSet), icdecls)
       strEntryMap
       
-  fun genExterndeclsFunE externSet (funE:V.funE) icdecls =
+  fun genExterndeclsFunE (externExnSet,externVarSet) (funE:V.funE) icdecls =
       SymbolEnv.foldr
-      (fn ({used=ref true,version, bodyVarExp,...}, (externSet, icdecls)) =>
+      (fn ({used=ref true,version, bodyVarExp,...}, ((externExnSet,externVarSet), icdecls)) =>
            (case bodyVarExp of
              I.ICEXVAR {exInfo, longsymbol} =>
-             if exSetMember(externSet, exInfo) 
-             then (externSet, icdecls)
+             if exSetMember(externExnSet, exInfo) 
+             then ((externExnSet,externVarSet), icdecls)
              else 
-               (addExSet(externSet, exInfo), 
+               ((addExnExSet(externExnSet, exInfo), externVarSet),
                 I.ICEXTERNVAR exInfo  :: icdecls)
            | _ => raise bug "nonVAR bodyVarExp in funEEntry")
-        | (_, (externSet, icdecls)) => (externSet, icdecls)
+        | (_, ((externExnSet,externVarSet), icdecls)) => ((externExnSet,externVarSet), icdecls)
       )
-      (externSet, icdecls)
+      ((externExnSet,externVarSet), icdecls)
       funE
 
-  fun genExterndecls externSet {Env, FunE, SigE} = 
+  fun genExterndecls (externExnSet,externVarSet) {Env, FunE, SigE} = 
       let
-        val (externSet, icdecls) = genExterndeclsEnv externSet Env nil
-        val (_, icdecls) = genExterndeclsFunE externSet FunE icdecls
+        val ((externExnSet,externVarSet), icdecls) = genExterndeclsEnv (externExnSet,externVarSet) Env nil
+        val ((externExnSet,externVarSet), icdecls) = genExterndeclsFunE (externExnSet,externVarSet) FunE icdecls
       in
-        (externSet, icdecls)
+        ((externExnSet,externVarSet), icdecls)
       end
 
   fun reduceTopEnv ({Env, FunE, SigE}:V.topEnv) =
@@ -2511,7 +2523,10 @@ in (* local *)
         topEnv
         requiredIds
 
+(*
   datatype exnCon = EXN of I.exnInfo | EXEXN of I.exInfo
+*)
+
   fun nameEval {topEnv, version, systemDecls} compileUnit =
       let
         val _ = EU.initializeErrorQueue()
@@ -2573,19 +2588,26 @@ in (* local *)
         (* avoid duplicate declarations *)
         val _ = app (clearUsedflagOfSystemDecl evalTopEnv) systemDecls
 
-        val externSet = externSetSystemdecls systemDecls LongsymbolEnv.empty
-        val (externSet, interfaceDecls) = genExterndecls externSet evalTopEnv
+        val externExnSet = externExnSetSystemdecls systemDecls LongsymbolEnv.empty
+        val ((externExnSet, externVarSet), interfaceDecls) = genExterndecls (externExnSet, emptyExternVarSet) evalTopEnv
 
-        val topdecs = systemDecls @ interfaceDecls @ topdecListInclude @ topdecListSource @ exportList
+        val externVarDecls = map I.ICEXTERNVAR (LongsymbolEnv.listItems externVarSet)
+
+        val topdecs = systemDecls @ interfaceDecls @ topdecListInclude @ externVarDecls @ topdecListSource @ exportList
 
         val returnDecls = topdecs
 
         val returnTopEnv = reduceTopEnv returnTopEnv
-        val exnConList = (map EXN exnInfoList) @ (map EXEXN (LongsymbolEnv.listItems externSet))
+(*
+        val exnConList = (map EXN exnInfoList) @ (map EXEXN (LongsymbolEnv.listItems externExnSet))
+*)
         val returnTopEnv = RL.renameLomgsymbolTopEnv renameEnv returnTopEnv
       in
         case EU.getErrors () of
-          [] => (exnConList, returnTopEnv, returnDecls, EU.getWarnings())
+          [] => {requireTopEnv = evalTopEnv,
+                 returnTopEnv = returnTopEnv,
+                 icdecls = returnDecls,
+                 warnings = EU.getWarnings()}
         | errors => raise UserError.UserErrors (EU.getErrorsAndWarnings ())
       end
       handle exn as UserError.UserErrors _ => raise exn

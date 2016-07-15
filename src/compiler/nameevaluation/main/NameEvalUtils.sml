@@ -11,8 +11,8 @@ local
   structure PI = PatternCalcInterface
 in  
   val print = fn s => if !Bug.debugPrint then print s else ()
-  fun printSymbol symbol = print (Symbol.symbolToString symbol)
-  fun printLongsymbol longsymbol = print (Symbol.longsymbolToString longsymbol)
+  fun printSymbol symbol = print (Bug.prettyPrint (Symbol.format_symbol symbol))
+  fun printLongsymbol longsymbol = print (Bug.prettyPrint (Symbol.format_longsymbol longsymbol))
 (*
   fun printFixEnv fixEnv =
       if !Bug.debugPrint then 

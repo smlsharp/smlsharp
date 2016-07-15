@@ -16,7 +16,7 @@ structure TypeInferenceUtils =
   struct
     val dummyTyId : int ref
     val nextDummyTy : unit -> Types.ty
-    val freshTopLevelInstTy : Types.ty -> Types.ty * Types.ty list
+    val freshTopLevelInstTy : Types.ty -> Types.ty * Types.ty list * Types.constraint list
     val instantiateTv : Types.tvState ref -> unit
 
 (*
@@ -47,5 +47,5 @@ structure TypeInferenceUtils =
 *)
     exception CoerceTy
     val coerceTy : TypedCalc.tpexp * Types.ty * Types.ty * Loc.loc
-                   -> TypedCalc.tpexp
+                   -> {tpexp:TypedCalc.tpexp, constraints:Types.constraint list}
   end
