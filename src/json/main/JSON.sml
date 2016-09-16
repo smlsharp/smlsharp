@@ -7,6 +7,7 @@ struct
   exception AttemptToReturnVOIDValue
   exception RuntimeTypeError
   exception TypeIsNotJsonKind
+  exception AttemptToViewNull
 
   datatype null = NULL
   datatype void = VOID
@@ -22,6 +23,8 @@ struct
     | PARTIALRECORDty of (string * jsonTy) list
     | REALty
     | STRINGty
+    | OPTIONty of jsonTy
+
 
  (* Typed JSON Objects *)
   datatype json 
@@ -43,7 +46,7 @@ struct
     | BOOLty => print "BOOLty"
     | DYNty => print "DYNty"
     | INTty => print "INTty"
-    | NULLty => print "NULLtyty"
+    | NULLty => print "NULLty"
     | RECORDty stringJsontyList =>
       (print "RECORDty{";
        map (fn (l,jsonTy) =>
@@ -72,6 +75,10 @@ struct
       )
     | REALty => print "REALty"
     | STRINGty => print "STRINGty"
+    | OPTIONty jsonTy =>
+      (print "OPTIONty(";
+       printJsonTy jsonTy;
+       print ")")
 
   datatype 'a dyn 
     = DYN of (json -> 'a) * json
@@ -80,7 +87,13 @@ struct
       if ty1 = ty2 then ty1
       else
         case (ty1, ty2) of
-          (ARRAYty elemTy1, ARRAYty elemTy2) => 
+          (NULLty, OPTIONty _) => ty2
+        | (NULLty, _) => OPTIONty ty2
+        | (OPTIONty _, NULLty) => ty1
+        | (_, NULLty) => OPTIONty ty1
+        | (OPTIONty argTy1, OPTIONty argTy2) => 
+          OPTIONty (glbJsonTy (argTy1, argTy2))
+        | (ARRAYty elemTy1, ARRAYty elemTy2) => 
           ARRAYty (glbJsonTy (elemTy1, elemTy2))
         | (RECORDty fl1, RECORDty fl2) =>
           PARTIALRECORDty (glbFieldTys (fl1, fl2))
@@ -156,38 +169,6 @@ struct
       | REAL _ => REALty
       | STRING  _ => STRINGty
 
-  fun matchTy (realTy, viewTy) = 
-      case (realTy, viewTy) of
-        (_, DYNty) => true
-      | (ARRAYty realTy1, ARRAYty vewTy1) => matchTy (realTy1, vewTy1)
-      | (BOOLty, BOOLty) => true
-      | (INTty, INTty) => true
-      | (NULLty, NULLty) => true
-      | (RECORDty fl1, RECORDty fl2) => matchTyFields (fl1, fl2)
-      | (RECORDty fl1, PARTIALRECORDty fl2) => 
-        matchTyFields (fl1, fl2)
-      | (PARTIALRECORDty fl1, PARTIALRECORDty fl2) => 
-        matchTyFields (fl1, fl2)
-      | (REALty, REALty) => true
-      | (STRINGty, STRINGty) => true
-      | _ => false
-
-  and matchTyFields (fl1, fl2) =
-      let
-        exception MatchTyFieldsFail
-      in
-        (app (fn (l, ty2) =>  
-                 case List.find (fn (l', _) => l' = l) fl1 of
-                   NONE => raise MatchTyFieldsFail
-                 | SOME (_, ty1) =>  
-                   if matchTy (ty1, ty2) then ()
-                   else raise MatchTyFieldsFail
-             ) 
-             fl2;
-         true)
-        handle MatchTyFieldsFail => false
-      end
-
   fun view (DYN (viewFn, json)) = viewFn json
 
   fun import src =
@@ -222,6 +203,8 @@ struct
         in
           ARRAY (jsonList, jsonTy)
         end
+      | R.OPTIONtyRepNONE => NULLObject
+      | R.OPTIONtyRepSOME term => reifiedtermToJson term
       | R.INT64tyRep int64 => raise TypeIsNotJsonKind
       | R.INTINFtyRep int => raise TypeIsNotJsonKind
       | R.REAL32tyRep real => raise TypeIsNotJsonKind
@@ -240,6 +223,7 @@ struct
       | R.UNPRINTABLERep => raise TypeIsNotJsonKind
       | R.ELIPSISRep => raise TypeIsNotJsonKind
       | R.BUILTINRep => raise TypeIsNotJsonKind
+
 
   type dynamic = Dynamic.dynamic
 

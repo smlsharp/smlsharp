@@ -60,6 +60,7 @@ struct
   fun intInfValue x = IntInf.fromString x
   fun wordValue x = StringCvt.scanString (Word.scan StringCvt.DEC) x
   fun realValue x = Real.fromString x
+  fun real32Value x = Real32.fromString x
   fun stringValue (x:string) = SOME x
   fun charValue x = SOME (String.sub (x, 0)) handle Subscript => NONE
   fun boolValue x = (print x; raise Fail "MySQL does'nt support boolean")

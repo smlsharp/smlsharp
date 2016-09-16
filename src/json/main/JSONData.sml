@@ -6,10 +6,7 @@ structure JSONData =
 struct
 local
   structure V = NameEvalEnv
-  structure ITy = EvalIty
   structure I = IDCalc
-  structure T = Types
-  structure TC = TypedCalc
   fun printLongsymbol longsymbol = 
       (print (Symbol.longsymbolToString longsymbol);
        print "\n")
@@ -57,6 +54,8 @@ in
    val jsonTyTfun = ref NONE : I.tfun option ref
    val voidTfun = ref NONE : I.tfun option ref
    val nullTfun = ref NONE : I.tfun option ref
+   val optionTfun = ref NONE : I.tfun option ref
+
 
   (* exception *)
    val RuntimeTypeErrorExp = ref NONE : I.icexp option ref
@@ -65,6 +64,7 @@ in
    val DYNConInfo = ref NONE : I.conInfo option ref
 
    val ARRAYtyConInfo = ref NONE : I.conInfo option ref
+   val OPTIONtyConInfo = ref NONE : I.conInfo option ref
    val BOOLtyConInfo = ref NONE : I.conInfo option ref
    val INTtyConInfo = ref NONE : I.conInfo option ref
    val NULLtyConInfo = ref NONE : I.conInfo option ref
@@ -97,6 +97,7 @@ in
    val checkDyn = ref NONE : I.exInfo option ref
    val checkRecord = ref NONE : I.exInfo option ref
    val mapCoerce = ref NONE : I.exInfo option ref
+   val optionCoerce = ref NONE : I.exInfo option ref
    val makeCoerce = ref NONE : I.exInfo option ref
 
   fun init ({Env, ...}:V.topEnv) =
@@ -138,6 +139,7 @@ in
          jsonTyTfun := findTfun ["JSON","jsonTy"];
          voidTfun :=   findTfun ["JSON","void"];
          nullTfun :=   findTfun ["JSON","null"];
+         optionTfun :=   findTfun ["Option","option"];
 
         (* exception *)
          RuntimeTypeErrorExp :=  findExn ["JSON","RuntimeTypeError"];
@@ -146,6 +148,7 @@ in
          DYNConInfo :=      findCon ["JSON","DYN"];
 
          ARRAYtyConInfo :=  findCon ["JSON","ARRAYty"];
+         OPTIONtyConInfo :=  findCon ["JSON","OPTIONty"];
          BOOLtyConInfo :=   findCon ["JSON","BOOLty"];
          INTtyConInfo :=    findCon ["JSON","INTty"];
          NULLtyConInfo :=   findCon ["JSON","NULLty"];
@@ -163,7 +166,9 @@ in
          REALConInfo :=   findCon ["JSON","REAL"];
          STRINGConInfo := findCon ["JSON","STRING"];
 
+(*
          NULLConInfo := findCon ["JSON","NULL"];
+*)
          VOIDConInfo := findCon ["JSON","VOID"];
 
         (* variables *)
@@ -178,6 +183,7 @@ in
          checkDyn := findVar ["JSONImpl", "checkDyn"]; 
          checkRecord := findVar ["JSONImpl", "checkRecord"]; 
          mapCoerce := findVar ["JSONImpl", "mapCoerce"]; 
+         optionCoerce := findVar ["JSONImpl", "optionCoerce"]; 
          makeCoerce := findVar ["JSONImpl", "makeCoerce"]; 
          ()
       end
@@ -187,6 +193,7 @@ in
    val jsonTyTfun = fn () => get "jsonTyTfun" jsonTyTfun
    val voidTfun = fn () => get "voidTfun" voidTfun
    val nullTfun = fn () => get "nullTfun" nullTfun
+   val optionTfun = fn () => get "optionTfun" optionTfun
 
   (* exception *)
    val RuntimeTypeErrorExp = fn () => get "RuntimeErrorExp" RuntimeTypeErrorExp
@@ -196,6 +203,7 @@ in
    val DYN = fn () => getCon "DYNConInfo" DYNConInfo
 
    val ARRAYty = fn () => getCon "ARRAYtyConInfo" ARRAYtyConInfo
+   val OPTIONty = fn () => getCon "OPTIONtyConInfo" OPTIONtyConInfo
    val BOOLty = fn () => getCon "BOOLtyConInfo" BOOLtyConInfo
    val INTty = fn () => getCon "INTtyConInfo" INTtyConInfo
    val NULLty = fn () => getCon "NULLtyConInfo" NULLtyConInfo
@@ -213,12 +221,15 @@ in
    val REAL = fn () => getCon "REALConInfo" REALConInfo
    val STRING = fn () => getCon "STRINGConInfo" STRINGConInfo
  
+(*
    val NULL = fn () => getCon "NULLConInfo" NULLConInfo
+*)
    val VOID = fn () => getCon "VOIDConInfo" VOIDConInfo
 
   (* constructor *)
    val DYNConInfo = fn () => get "DYNConInfo" DYNConInfo
    val ARRAYtyConInfo = fn () => get "ARRAYtyConInfo" ARRAYtyConInfo
+   val OPTIONtyConInfo = fn () => get "OPTIONtyConInfo" OPTIONtyConInfo
    val BOOLtyConInfo = fn () => get "BOOLtyConInfo" BOOLtyConInfo
    val INTtyConInfo = fn () => get "INTtyConInfo" INTtyConInfo
    val NULLtyConInfo = fn () => get "NULLtyConInfo" NULLtyConInfo
@@ -249,8 +260,8 @@ in
    val checkDyn = fn () => getVar "checkDyn" checkDyn
    val checkRecord = fn () => getVar "checkRecord" checkRecord
    val mapCoerce = fn () => getVar "mapCoerce" mapCoerce
+   val optionCoerce = fn () => getVar "optionCoerce" optionCoerce
    val makeCoerce = fn () => getVar "makeCoerce" makeCoerce
-
 
 end
 end

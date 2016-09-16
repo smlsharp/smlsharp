@@ -23,9 +23,10 @@ sig
   val fetch : res -> res option
   val getValue : res * int -> value option
   val intValue : value -> int option
-  val intInfValue : value -> IntInf.int option
+  val intInfValue : value -> intInf option
   val wordValue : value -> word option
   val realValue : value -> real option
+  val real32Value : value -> real32 option
   val stringValue : value -> string option
   val charValue : value -> char option
   val boolValue : value -> bool option

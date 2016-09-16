@@ -1,5 +1,6 @@
 _require local "../../../../basis.smi"
-_require local "../../../../ffi.smi"
+_require local "../../../../compiler/control/main/Bug.ppg.smi"
+_require "../../../../basis/main/General.smi"
 structure SMLSharp_SQL_TimeStamp =
 struct
   type timestamp (= boxed)
@@ -7,4 +8,5 @@ struct
   val toString : timestamp -> string
   val fromString : string -> timestamp
   val defaultTimestamp : timestamp
+  val compare : timestamp * timestamp -> General.order
 end

@@ -2593,9 +2593,12 @@ in (* local *)
 
         val externVarDecls = map I.ICEXTERNVAR (LongsymbolEnv.listItems externVarSet)
 
+(*
         val topdecs = systemDecls @ interfaceDecls @ topdecListInclude @ externVarDecls @ topdecListSource @ exportList
+*)
 
-        val returnDecls = topdecs
+        val systemDecls = systemDecls @ interfaceDecls @ topdecListInclude @ externVarDecls
+        val icdecls = systemDecls @ topdecListSource @ exportList
 
         val returnTopEnv = reduceTopEnv returnTopEnv
 (*
@@ -2606,7 +2609,7 @@ in (* local *)
         case EU.getErrors () of
           [] => {requireTopEnv = evalTopEnv,
                  returnTopEnv = returnTopEnv,
-                 icdecls = returnDecls,
+                 icdecls = icdecls,
                  warnings = EU.getWarnings()}
         | errors => raise UserError.UserErrors (EU.getErrorsAndWarnings ())
       end

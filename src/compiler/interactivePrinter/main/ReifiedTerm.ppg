@@ -268,6 +268,23 @@ struct
        *)
       PTRtyRep
     | (*%
+         @format(arg) 
+           L8{ 2["SOME" +1 arg] }
+       *)
+      (*%
+         @prefix toJSON_
+         @format(arg) arg
+       *)
+      OPTIONtyRepSOME of reifiedTerm
+    | (*%
+         @format "NONE"
+       *)
+      (*%
+         @prefix toJSON_
+         @format "null"
+       *)
+      OPTIONtyRepNONE
+    | (*%
          @format "_"
        *)
       (*%

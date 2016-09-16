@@ -25,8 +25,9 @@ struct
   fun formatSQLInt x = formatInteger Int.fmt x
   fun formatSQLWord x = formatInteger Word.fmt x
   fun formatSQLReal x = term (fixSign (Real.fmt (StringCvt.FIX (SOME 10)) x))
+  fun formatSQLReal32 x = term (fixSign (Real32.fmt (StringCvt.FIX (SOME 10)) x))
   fun formatSQLChar x = formatSQLString (str x)
-  fun formatTimestamp x = term (SMLSharp_SQL_TimeStamp.toString x)
+  fun formatTimestamp x = term ("'" ^ (SMLSharp_SQL_TimeStamp.toString x) ^ "'")
   fun formatDecimal x = term (SMLSharp_SQL_Decimal.toString x)
   fun formatFloat x = term (SMLSharp_SQL_Float.toString x)
 
@@ -49,9 +50,10 @@ struct
   (*% @prefix format_
    * @formatter(sqlid) formatSQLID
    * @formatter(int) formatSQLInt
-   * @formatter(IntInf.int) formatSQLIntInf
+   * @formatter(intInf) formatSQLIntInf
    * @formatter(word) formatSQLWord
    * @formatter(real) formatSQLReal
+   * @formatter(real32) formatSQLReal32
    * @formatter(sqlstring) formatSQLString
    * @formatter(char) formatSQLChar
    * @formatter(SMLSharp_SQL_TimeStamp.timestamp) formatTimestamp
@@ -72,6 +74,9 @@ struct
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
       REAL of real
+    | (*% @prefix format_ @format(x) x *)
+      (*% @prefix ifInt_ @format *)
+      REAL32 of real32
     | (*% @prefix format_ @format(x) x:sqlstring *)
       (*% @prefix ifInt_ @format *)
       STRING of string
@@ -80,7 +85,7 @@ struct
       CHAR of char
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format(x) "" *)
-      INTINF of IntInf.int
+      INTINF of intInf
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
       TIMESTAMP of SMLSharp_SQL_TimeStamp.timestamp

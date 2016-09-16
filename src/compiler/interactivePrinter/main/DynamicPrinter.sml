@@ -62,8 +62,12 @@ struct
       | D.REF v =>
         R.DATATYPEtyRep ("ref", SOME (formatValue depth v))
       | D.VARIANT (typId, conName, arg) =>
-        if TypID.eq (typId, IDCalc.tfunId (JSONData.dynTfun()))
-        then R.UNPRINTABLERep
+        if TypID.eq (typId, IDCalc.tfunId (JSONData.dynTfun())) then
+          R.UNPRINTABLERep
+        else if TypID.eq (typId, IDCalc.tfunId (#tfun BuiltinTypes.optionTstrInfo)) then
+          (case arg of
+             NONE => R.OPTIONtyRepNONE
+           | SOME v =>  R.OPTIONtyRepSOME (formatValue depth v))
         else
           case arg of
             NONE => R.DATATYPEtyRep (Symbol.symbolToString conName, NONE)

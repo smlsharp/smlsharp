@@ -15,9 +15,10 @@ struct
   val checkBool : JSON.json -> bool
   val checkString : JSON.json -> string
   val checkArray : JSON.json -> JSON.json list
-  val checkNull : JSON.json -> JSON.null
+  val checkNull : JSON.json -> 'a option
   val checkDyn : JSON.json -> JSON.void JSON.dyn
   val checkRecord : JSON.json -> string list -> unit
   val makeCoerce : JSON.json -> JSON.jsonTy -> (JSON.json -> 'a) -> 'a JSON.dyn
   val mapCoerce : (JSON.json -> 'a) -> JSON.json list -> 'a list
+  val optionCoerce : (JSON.json -> 'a) -> JSON.json -> 'a option
 end

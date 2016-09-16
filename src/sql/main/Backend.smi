@@ -23,6 +23,7 @@ struct
              getIntInf : int -> IntInf.int option,
              getWord : int -> word option,
              getReal : int -> real option,
+             getReal32 : int -> real32 option,
              getString : int -> string option,
              getChar : int -> char option,
              getBool : int -> bool option,

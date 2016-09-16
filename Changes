@@ -1,4 +1,44 @@
 -----------------------------------------------------------------------------
+SML# version 3.2.0 (released on 2016-09-16)
+
+This version contains the type system for natural join operations.
+With this, SQL integration is extended to natural join operator, as
+seen in the following example:
+
+# _sql db => 
+  select #t.name, #t.sarary 
+  from (#db.Employees natural join #db.Salary) as t;
+val it = fn
+  : ['a#{Employees: 'b, Salary: 'c},
+     'b#{},
+     'c#{},
+     'd::{int, intInf, word, char,...},
+     'e::{int, intInf, word, char,...},
+     'f::{int, intInf, word, char,...},
+     'g::{int, intInf, word, char,...},
+     'h#{name: 'd, sarary: 'f}.
+       ('h = 'b join 'c) =>
+       'a SQL.db -> ('d * 'f) SQL.query]
+
+Other improvements:
+* Typeful JSON support is extended to null values.  JSON's "null"
+  value can be coerced to "NONE" of an "option" type in SML#, as
+  seen in the following example:
+
+  # val j = JSON.import "{\"foo\":null, \"hoge\":1}";
+  val j = _ : JSON.void JSON.dyn
+  # _json j as {foo: string option, hoge: int option};
+  val it = {foo = NONE, hoge = SOME 1}
+           : {foo: string option, hoge: int option}
+
+* Minor improvements on PostgreSQL's type support.
+* Minor refinements on value printers in interactive session.
+
+Fixed bugs:
+* Fixed a memory allocation bug caused by a combination of a
+  record update expression and a statically-allocated record.
+
+-----------------------------------------------------------------------------
 SML# version 3.1.1 (released on 2016-07-15)
 
 Fixed bugs:

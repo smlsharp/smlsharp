@@ -145,5 +145,7 @@ struct
   val FailExExn : Types.exExnInfo
   val ChrExExn : Types.exExnInfo
 
+(*
   val builtinConEnv : unit -> IDCalc.conInfo ConID.Map.map
+*)
 end

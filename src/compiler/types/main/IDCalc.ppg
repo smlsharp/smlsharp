@@ -1507,10 +1507,10 @@ in
        *)
       ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
     | (*%
-         @format(label * loc) "#>" label
+         @format(label * loc) "#" label
        *)
       (*% @prefix formatWithType_
-         @format(label * loc) "#>" label
+         @format(label * loc) "#" label
        *)
       (*% @prefix print_
          @format(label * loc)

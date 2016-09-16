@@ -7,6 +7,53 @@
 
 structure ElaborateSQL =
 struct
+(* 使用しているSQLライブラリ関数
+aliasTable
+beginTransaction
+chooseAll
+chooseRows
+columnInfo
+commitTransaction
+crossJoin
+dummyJoin
+getDefault
+getTable
+getValue
+innerJoin
+naturalJoin
+openDB
+readRow
+readValue
+rollbackTransaction
+sourceTable
+subquery
+useDual
+useTable
+
+val aliasTable : ('a,'b,'w) table1 * string -> ('a,('a,'w) row,'w) table1
+val beginTransaction : ('d,'w) db' -> command
+val chooseAll : ('a,'b,'w) table2 -> ('a,'b,'w) table3
+val chooseRows : ('a,'b,'w) table2 * ('b -> 'w bool_value) -> ('a,'b,'w) table3
+val columnInfo_int : string -> (unit -> int) * SMLSharp_SQL_Backend.schema_column 
+val commitTransaction : ('d,'w) db' -> command
+val crossJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 -> ('a * 'c, 'b * 'd, 'w) table1
+val dummyJoin : ('a,'b,'w) table1 -> ('a * unit, 'b, 'w) table1
+val getDefault : ('a,'w) table * ('a,'b) selector -> ('b,'w) value
+val getTable : ('a,'w) db' * ('a,'b) selector -> ('b,'w) table
+val getValue : ('a,'w) row * ('a,'b) selector -> ('b,'w) value
+val innerJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 * ('b * 'd -> 'w bool_value) -> ('a * 'c, 'b * 'd, 'w) table1
+val naturalJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 * ('a * 'c -> 'e) -> ('e, 'b * 'd, 'w) table1
+val openDB : ('w -> unit) * 'a db -> ('a,'w) db'
+val readRow : ('a,'w) table5 -> ('a,'w) toy
+val readValue : ('a,'w) value -> qexp * ('a,'w) toy
+val rollbackTransaction : ('d,'w) db' -> command
+val sourceTable : ('a,'b,'w) table1 -> ('a,'b,'w) table2
+val subquery : ('a db -> 'b query) * ('a,'w) db' * string -> ('b,('b,'w) row,'w) table1
+val useDual : unit -> (unit, unit, 'a) table2
+val useTable : ('a,'w) table -> ('a, ('a,'w) row, 'w) table1
+
+*)
+
 
   structure EU = UserErrorUtils
   structure E = ElaborateErrorSQL
@@ -30,7 +77,7 @@ struct
   val sqlserverFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "sqlserver"]
 *)
 
-  val columnInfoFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "columnInfo"]
+  val columnInfoFunName = mkLongsymbol ["SQL", "Prims", "columnInfo"]
 
 (*
   val columnInfoFunName = mkLongsymbol ["SQL", "columnInfo"]
@@ -54,7 +101,8 @@ struct
   fun labelToSymbol label loc =
       Symbol.mkSymbol (RecordLabel.toString label) loc
 
-  fun primName s = mkLongsymbol ["SMLSharp_SQL_Prim", s]
+  fun primName s = mkLongsymbol ["SQL", "Prims", s]
+  fun primNameSQL s = mkLongsymbol ["SQL", s]
 
 (*
   fun primName s = mkLongsymbol ["SQL", s]
@@ -126,6 +174,11 @@ struct
       P.PLAPPM (P.PLVAR (primName name loc), [exp loc], loc)
     | Call (name, exps) loc =
       P.PLAPPM (P.PLVAR (primName name loc), [Tuple exps loc], loc)
+
+  fun Call' (name, [exp]) loc =
+      P.PLAPPM (P.PLVAR (primNameSQL name loc), [exp loc], loc)
+    | Call' (name, exps) loc =
+      P.PLAPPM (P.PLVAR (primNameSQL name loc), [Tuple exps loc], loc)
 
   fun Fn (pat, exp) loc =
       P.PLFNM ([([pat loc], exp loc)], loc)
@@ -367,7 +420,7 @@ struct
 
   (* fromSQL : int * res_impl * (unit -> 'a) -> 'a *)
   fun fromSQL (index, res, label, toy) =
-      Call ("fromSQL",
+      Call' ("fromSQL",
             [Int index, res, FnV (fn x => Select (label, App (toy, x)))])
 
   fun elabFrom (env as {elabExp, db}) from =

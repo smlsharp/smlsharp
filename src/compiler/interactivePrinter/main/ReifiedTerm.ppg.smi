@@ -21,6 +21,8 @@ struct
     | FUNtyRep
     | LISTtyRep of reifiedTerm list
     | PTRtyRep
+    | OPTIONtyRepNONE
+    | OPTIONtyRepSOME of reifiedTerm
     | RECORDtyRep of (string * reifiedTerm) list
     | TUPLEtyRep of reifiedTerm list
     | DATATYPEtyRep of string * reifiedTerm option

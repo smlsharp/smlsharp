@@ -40,6 +40,7 @@ struct
   val printRecordCompile : bool ref
   val printDatatypeCompile : bool ref
   val printStaticAnalysis : bool ref
+  val printSystemDecls : bool ref
   val printRecordUnboxing : bool ref
   val printBitmapCompile : bool ref
   val printBitmapANormal : bool ref

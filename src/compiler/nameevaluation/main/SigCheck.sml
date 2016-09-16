@@ -777,7 +777,9 @@ in
                                        val longsymbol = path@[name]
                                        val conInfo =
                                            {longsymbol=longsymbol, ty=conTy, id=conId}
+(*
                                        val _ = V.conEnvAdd(conId, conInfo)
+*)
                                        val idstatus = I.IDCON conInfo
                                      in
                                        SymbolEnv.insert(varE, name, idstatus)
@@ -1007,7 +1009,9 @@ in
                             let
                               val newId = ConID.generate()
                               val newConInfo = {id=newId, longsymbol=longsymbol, ty=ty}
+(*
                               val _ = V.conEnvAdd (newId, newConInfo)
+*)
                             in
                               (ConID.Map.insert(conIdSubst, id, I.IDCON newConInfo),
                                ConID.Set.map (fn i => if ConID.eq(i, id) then newId else i) conIDSet)

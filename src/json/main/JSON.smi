@@ -12,11 +12,16 @@ struct
   exception AttemptToReturnVOIDValue
   exception RuntimeTypeError
   exception TypeIsNotJsonKind
+  exception AttemptToViewNull
 
+(*
   datatype null = NULL
   datatype void = VOID
+*)
+  type null (= contag)
+  type void (= contag)
 
-  datatype jsonTy 
+  datatype jsonTy
     = ARRAYty of jsonTy
     | BOOLty
     | DYNty
@@ -26,6 +31,7 @@ struct
     | REALty
     | RECORDty of (string * jsonTy) list
     | STRINGty
+    | OPTIONty of jsonTy
 
  (* Typed JSON Objects *)
   datatype json 
@@ -47,5 +53,6 @@ struct
   val importForm : (string * string) list -> void dyn
   val toDynamic = _builtin val Dynamic : ['a#json. 'a -> dynamic]
   val dynamicToJson : dynamic -> {json:void dyn, string:string}
-
+  val typeOf : json -> jsonTy
+  val printJsonTy : jsonTy -> unit
 end
