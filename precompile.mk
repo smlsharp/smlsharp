@@ -2,6 +2,7 @@
 # This file assumes that srcdir and builddir are same ".".
 
 include ./files.mk
+include ./src/config.mk
 
 SMLSHARP_ENV = SMLSHARP_HEAPSIZE=512M:2G
 
@@ -14,9 +15,7 @@ MLYACC_DEP = $(MLYACC)
 SMLFORMAT_DEP = $(SMLFORMAT)
 SMLSHARP_DEP = $(SMLSHARP_STAGE2)
 
-LLVM_LINK = llvm-link
-LLVM_DIS = llvm-dis
-OPT = opt
+LLVM_LINK = $(patsubst %/llvm-dis,%/llvm-link,$(LLVM_DIS))
 XZ = xz
 
 ifeq ($(ARCH),x86)

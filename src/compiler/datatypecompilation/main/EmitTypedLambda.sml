@@ -34,7 +34,7 @@ struct
     | True
     | False
     | SizeOf of Types.ty
-    | IndexOf of Types.ty * string
+    | IndexOf of Types.ty * RecordLabel.label
     | ExVar of RecordCalc.exVarInfo
     | Cast of exp * Types.ty
     | RuntimeTyCast of exp * Types.ty
@@ -50,8 +50,8 @@ struct
     | Var of vid
     | TLLet of decl list * exp
     | TLVar of TypedLambda.varInfo
-    | Record of string list * exp list
-    | Select of string * exp
+    | Record of RecordLabel.label list * exp list
+    | Select of RecordLabel.label * exp
   and decl =
       Decl of TypedLambda.tldecl * TypedLambda.loc
     | Bind of TypedLambda.varInfo * exp
@@ -85,16 +85,10 @@ struct
       | L.TLDUMP _ => false
 
   fun Tuple exps =
-      Record (List.tabulate (length exps, fn i => Int.toString (i+1)), exps)
+      Record (ListPair.unzip (RecordLabel.tupleList exps))
 
-  fun tupleFields fields =
-      let
-        fun loop i nil = LabelEnv.empty
-          | loop i (h::t) =
-            LabelEnv.insert (loop (i+1) t, Int.toString i, h)
-      in
-        loop 1 fields
-      end
+  fun SelectN (n, exp) =
+      Select (RecordLabel.fromInt n, exp)
 
   fun arrayTy ty =
       T.CONSTRUCTty {tyCon = B.arrayTyCon, args = [ty]}
@@ -103,7 +97,7 @@ struct
   fun refTy ty =
       T.CONSTRUCTty {tyCon = B.refTyCon, args = [ty]}
   fun tupleTy tys =
-      T.RECORDty (tupleFields tys)
+      T.RECORDty (RecordLabel.tupleMap tys)
 
   fun primFunTy boundtvars ty =
       case TypesBasics.derefTy ty of
@@ -111,7 +105,7 @@ struct
         (case TypesBasics.derefTy argTy of
            T.RECORDty tys =>
            {boundtvars = boundtvars,
-            argTyList = LabelEnv.listItems tys,
+            argTyList = RecordLabel.Map.listItems tys,
             resultTy = retTy}
          | argTy =>
            {boundtvars = boundtvars,
@@ -622,27 +616,28 @@ struct
    *)
 
   fun extractExnTag exnExp =
-      Select ("1", Cast (exnExp, tupleTy [B.exntagTy]))
+      SelectN (1, Cast (exnExp, tupleTy [B.exntagTy]))
 
   fun extractExnLoc exnExp =
-      Select ("2", Cast (exnExp, tupleTy [B.exntagTy, B.stringTy]))
+      SelectN (2, Cast (exnExp, tupleTy [B.exntagTy, B.stringTy]))
 
   fun extractExnArg (exnExp, argTy) =
-      Select ("3", Cast (exnExp, tupleTy [B.exntagTy, B.stringTy, argTy]))
+      SelectN (3, Cast (exnExp, tupleTy [B.exntagTy, B.stringTy, argTy]))
 
   fun exnMessageIndex exnConTy =
       case TypesBasics.derefTy exnConTy of
         T.FUNMty ([argTy], _) =>
         (case TypesBasics.derefTy argTy of
            T.RECORDty tys =>
-           (case List.find (isStringTy o #2) (LabelEnv.listItemsi tys) of
+           (case List.find (isStringTy o #2) (RecordLabel.Map.listItemsi tys) of
               SOME (label, _) =>
               Word32_orb (Cast (IndexOf (argTy, label), B.wordTy), Word 1)
             | NONE => Word 0)
          | ty =>
            if isStringTy ty
            then Cast
-                  (IndexOf (tupleTy [B.exntagTy, B.stringTy, B.stringTy], "3"),
+                  (IndexOf (tupleTy [B.exntagTy, B.stringTy, B.stringTy],
+                            RecordLabel.fromInt 3),
                    B.wordTy)
            else Word 0)
       | _ => Word 0
@@ -657,10 +652,10 @@ struct
             B.exntagTy)
 
   fun extractExnTagName tagExp =
-      Select ("1", Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
+      SelectN (1, Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
 
   fun extractExnMsgIndex tagExp =
-      Select ("2", Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
+      SelectN (2, Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
 
   fun Exn_Message exnExp =
       let
@@ -910,13 +905,13 @@ struct
         let
           val exps = map (emitExp loc env) exps
           val fields = ListPair.foldlEq
-                         (fn (label, x, z) => LabelEnv.insert (z, label, x))
-                         LabelEnv.empty
+                         (fn (label, x, z) => RecordLabel.Map.insert (z, label, x))
+                         RecordLabel.Map.empty
                          (labels, exps)
-          val recordTy = T.RECORDty (LabelEnv.map #2 fields)
+          val recordTy = T.RECORDty (RecordLabel.Map.map #2 fields)
         in
           (L.TLRECORD {isMutable = false,
-                       fields = LabelEnv.map #1 fields,
+                       fields = RecordLabel.Map.map #1 fields,
                        recordTy = recordTy,
                        loc = loc},
            recordTy)
@@ -927,7 +922,7 @@ struct
           val resultTy =
               case TypesBasics.derefTy recordTy of
                 T.RECORDty fields =>
-                (case LabelEnv.find (fields, label) of
+                (case RecordLabel.Map.find (fields, label) of
                    SOME ty => ty
                  | NONE => raise Bug.Bug "emitExp: Select")
               | _ => raise Bug.Bug "emitExp: Select"

@@ -78,6 +78,7 @@ struct
    * @formatter(withType) formatWithType_varInfo
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   (*%
    * @prefix formatWithType_
@@ -95,6 +96,7 @@ struct
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype bcexp =
       (*%
@@ -303,7 +305,7 @@ struct
       {
         fieldList : {fieldExp : bcexp,
                      fieldTy : ty,
-                     fieldLabel : string,
+                     fieldLabel : RecordLabel.label,
                      fieldSize : bcexp,
                      fieldTag : bcexp,
                      fieldIndex : bcexp} list,
@@ -339,7 +341,7 @@ struct
       {
         recordExp : bcexp,
         indexExp : bcexp,
-        label : string,
+        label : RecordLabel.label,
         recordTy : ty,
         resultTy : ty,
         resultSize : bcexp,
@@ -373,7 +375,7 @@ struct
         recordExp : bcexp,
         recordTy : ty,
         indexExp : bcexp,
-        label : string,
+        label : RecordLabel.label,
         valueExp : bcexp,
         valueTy : ty,
         valueTag : bcexp,

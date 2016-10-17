@@ -9,7 +9,7 @@ _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 
 structure EmitTypedLambda =
@@ -35,7 +35,7 @@ struct
     | True
     | False
     | SizeOf of Types.ty
-    | IndexOf of Types.ty * string
+    | IndexOf of Types.ty * RecordLabel.label
     | ExVar of RecordCalc.exVarInfo
     | Cast of exp * Types.ty
     | RuntimeTyCast of exp * Types.ty
@@ -51,8 +51,8 @@ struct
     | Var of vid
     | TLLet of decl list * exp
     | TLVar of TypedLambda.varInfo
-    | Record of string list * exp list
-    | Select of string * exp
+    | Record of RecordLabel.label list * exp list
+    | Select of RecordLabel.label * exp
   and decl =
       Decl of TypedLambda.tldecl * TypedLambda.loc
     | Bind of TypedLambda.varInfo * exp
@@ -61,6 +61,7 @@ struct
   val arrayTy : Types.ty -> Types.ty
 
   val Tuple : exp list -> exp
+  val SelectN : int * exp -> exp
   val Ref_alloc : Types.ty * exp -> exp
   val Ref_deref : Types.ty * exp -> exp
   val Ref_assign : Types.ty * exp * exp -> exp

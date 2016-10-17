@@ -56,7 +56,7 @@ struct
         (case TypesBasics.derefTy argTy of
            T.RECORDty tys =>
            {boundtvars = boundtvars,
-            argTyList = LabelEnv.listItems tys,
+            argTyList = RecordLabel.Map.listItems tys,
             resultTy = retTy}
          | argTy =>
            {boundtvars = boundtvars,

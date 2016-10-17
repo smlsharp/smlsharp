@@ -5,12 +5,13 @@
  *)
 structure RecordKind : sig
 
-  val compareIndex : (string * Types.ty) * (string * Types.ty) -> order
+  val compareIndex
+      : (RecordLabel.label * Types.ty) * (RecordLabel.label * Types.ty) -> order
 
-  val generateSingletonTy : BoundTypeVarID.id * Types.ty LabelEnv.map
+  val generateSingletonTy : BoundTypeVarID.id * Types.ty RecordLabel.Map.map
                             -> Types.singletonTy list
 
-  val generateInstance : (string * Types.ty)
+  val generateInstance : (RecordLabel.label * Types.ty)
                          -> Loc.loc
                          -> RecordCalc.rcexp option
 
@@ -21,16 +22,16 @@ struct
   structure T = Types
 
   fun compareIndex ((l1, t1), (l2, t2)) =
-      case String.compare (l1, l2) of
+      case RecordLabel.compare (l1, l2) of
         EQUAL => (case (TypesBasics.derefTy t1, TypesBasics.derefTy t2) of
                     (T.BOUNDVARty t1, T.BOUNDVARty t2) =>
                     BoundTypeVarID.compare (t1, t2)
                   | _ => raise Bug.Bug "compareIndex")
       | x => x
 
-  fun generateSingletonTy (btv:BoundTypeVarID.id, fields:T.ty LabelEnv.map) =
+  fun generateSingletonTy (btv:BoundTypeVarID.id, fields:T.ty RecordLabel.Map.map) =
       map (fn label => T.INDEXty (label, T.BOUNDVARty btv))
-          (LabelEnv.listKeys fields)
+          (RecordLabel.Map.listKeys fields)
 
   fun generateInstance (label, ty) loc =
       case TypesBasics.derefTy ty of

@@ -172,7 +172,7 @@ in
            | NONE => ty
           )
         | I.TYRECORD fields =>
-          I.TYRECORD (LabelEnv.map (substTy subst) fields)
+          I.TYRECORD (RecordLabel.Map.map (substTy subst) fields)
         | I.TYCONSTRUCT {tfun, args} =>
           I.TYCONSTRUCT
             {tfun=substTfun subst tfun,
@@ -192,7 +192,8 @@ in
     and substKind subst tvarKind
       = case tvarKind of
           I.UNIV => I.UNIV
-        | I.REC fields => I.REC (LabelEnv.map (substTy subst) fields)
+        | I.REC fields => I.REC (RecordLabel.Map.map (substTy subst) fields)
+        | I.JSON => I.JSON
         | I.BOXED => I.BOXED
         | I.UNBOXED => I.UNBOXED
     fun substExnId (subst:subst)  id =
@@ -298,7 +299,7 @@ in
         I.TYWILD => ty
       | I.TYVAR tvar => ty
       | I.TYRECORD fields =>
-        I.TYRECORD (LabelEnv.map (substTfvTy tfvSubst) fields)
+        I.TYRECORD (RecordLabel.Map.map (substTfvTy tfvSubst) fields)
       | I.TYCONSTRUCT {tfun, args} =>
         I.TYCONSTRUCT
           {tfun=substTfvTfun tfvSubst tfun,
@@ -319,7 +320,8 @@ in
   and substTfvKind tfvSubst tvarKind
     = case tvarKind of
         I.UNIV => I.UNIV
-      | I.REC fields => I.REC (LabelEnv.map (substTfvTy tfvSubst) fields)
+      | I.REC fields => I.REC (RecordLabel.Map.map (substTfvTy tfvSubst) fields)
+      | I.JSON => I.JSON
       | I.BOXED => I.BOXED
       | I.UNBOXED => I.UNBOXED
 

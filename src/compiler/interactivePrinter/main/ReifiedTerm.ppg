@@ -5,20 +5,8 @@
 structure ReifiedTerm =
 struct
 
-  (*% *)
-  type path =
-    (*%
-       @format(name names)  names(name)(".")
-     *)
-    string list
-
-  fun ifMultilines (nl, sp) s =
-      if List.length (String.fields (fn x => x = #"\n") s) > 1 
-         orelse String.size s > 60
-      then nl
-      else sp
-
   (*%
+     @formatter(option) TermPrintUtils.formatPrependedOpt
      @formatter(int) TermPrintUtils.format_int
      @formatter(int64) TermPrintUtils.format_int64
      @formatter(string) TermPrintUtils.format_string
@@ -29,71 +17,139 @@ struct
      @formatter(Word.word) TermPrintUtils.format_word32
      @formatter(Word64.word) TermPrintUtils.format_word64
      @formatter(Real32.real) TermPrintUtils.format_real32
-     @formatter(LabelEnv.map) TermPrintUtils.formatLmap
      @formatter(list) TermPrintUtils.formatElements
      @formatter(lazyArray) TermPrintUtils.format_lazyArray
      @formatter(IntInf.int) TermPrintUtils.format_IntInf
-     @formatter(ifMultilines) ifMultilines
+   *)
+  (*%
+     @formatter(option) TermPrintUtils.formatPrependedOpt
+     @prefix toJSON_
+     @formatter(int) TermPrintUtils.format_int_json
+     @formatter(int64) TermPrintUtils.format_int64
+     @formatter(string) TermPrintUtils.format_string
+     @formatter(label) TermPrintUtils.format_label
+     @formatter(real) TermPrintUtils.format_real_json
+     @formatter(char) TermPrintUtils.format_char
+     @formatter(word) TermPrintUtils.format_word32
+     @formatter(Word8.word) TermPrintUtils.format_word8
+     @formatter(Word64.word) TermPrintUtils.format_word64
+     @formatter(Real32.real) TermPrintUtils.format_real32
+     @formatter(list) TermPrintUtils.formatElements
+     @formatter(lazyArray) TermPrintUtils.format_lazyArray
+     @formatter(IntInf.int) TermPrintUtils.format_IntInf
    *)
   datatype reifiedTerm
     = (*%
-         @format(con:label) con
+         @format(int) int
        *)
-      DATATYPEtyRepNOARG of string
-    | (*%
-         @format(con:label * term)
-         L8{ 2[con +1 term] }
-       *)
-      DATATYPEtyRepWITHARG of string * reifiedTerm
-    | (*%
+      (*%
+         @prefix toJSON_
          @format(int) int
        *)
       INTtyRep of int
     | (*%
-         @format(int) int
+         @format(int64) int64
        *)
-      INTINFtyRep of IntInf.int
-    | (*%
+      (*%
+         @prefix toJSON_
          @format(int64) int64
        *)
       INT64tyRep of int64
     | (*%
+         @format(int) int
+       *)
+      (*%
+         @prefix toJSON_
+         @format(int) int
+       *)
+      INTINFtyRep of IntInf.int
+    | (*%
+         @format(bool) bool
+       *)
+      (*%
+         @prefix toJSON_
          @format(bool) bool
        *)
       BOOLtyRep of bool
     | (*%
          @format(word) word
        *)
+      (*%
+         @prefix toJSON_
+         @format(word) word
+       *)
       WORDtyRep of word
     | (*%
+         @format(word) word
+       *)
+      (*%
+         @prefix toJSON_
          @format(word) word
        *)
       WORD8tyRep of Word8.word
     | (*%
          @format(word64) word64
        *)
+      (*%
+         @prefix toJSON_
+         @format(word64) word64
+       *)
       WORD64tyRep of Word64.word
     | (*%
+         @format(char) char
+       *)
+      (*%
+         @prefix toJSON_
          @format(char) char
        *)
       CHARtyRep of char
     | (*%
          @format(string) string
        *)
+      (*%
+         @prefix toJSON_
+         @format(string) string
+       *)
       STRINGtyRep of string
     | (*%
+         @format(real) real
+       *)
+      (*%
+         @prefix toJSON_
          @format(real) real
        *)
       REALtyRep of real
     | (*%
          @format(real) real
        *)
+      (*%
+         @prefix toJSON_
+         @format(real) real
+       *)
       REAL32tyRep of Real32.real
     | (*%
          @format "()"
        *)
+      (*%
+         @prefix toJSON_
+         @format "{}"
+       *)
       UNITtyRep 
     | (*%
+         @format(con:label * term opt)
+         L8{ 2[con opt(term)(+1)] }
+       *)
+      (*%
+         @prefix toJSON_
+         @format(con:label * term opt)
+         L8{ 2[con +1 opt(term)(+1)] }
+       *)
+      DATATYPEtyRep of string * reifiedTerm option
+    | (*%
+         @format "fn"
+       *)
+      (*%
+         @prefix toJSON_
          @format "fn"
        *)
       FUNtyRep
@@ -108,12 +164,34 @@ struct
          @format:field(name:label * term) 
            { name + "=" + term }
        *)
+      (*%
+         @prefix toJSON_
+         @format(field terms)
+         !N0{
+           "{"
+              2[1 terms(field)(","+1,","+1)]
+            1
+           "}"
+         }
+         @format:field(name:string * term) 
+           { name  ":"  term }
+       *)
       RECORDtyRep of (string * reifiedTerm) list
     | (*%
          @format(field terms)
          !N0{
            "("
             1[1 terms(field)(","+2, ","+d)]
+            1
+           ")"
+          }
+       *)
+      (*%
+         @prefix toJSON_
+         @format(field terms)
+         !N0{
+           "("
+            1[1 terms(field)(","1,","1)]
             1
            ")"
           }
@@ -128,48 +206,104 @@ struct
            "]"
           }
        *)
+      (*%
+         @prefix toJSON_
+         @format(term terms)
+          {
+           "["
+            1[1 terms(term)(","1,","1)]
+            1
+           "]"
+          }
+       *)
       LISTtyRep of reifiedTerm list
     | (*%
-         @format(term * lazyArray:lazyArray)
+         @format({dummyPrinter, contentsFn})
           {
            "<"
-             2[1 lazyArray(term)(","+2, ","+d)]
+             2[1 contentsFn:lazyArray(dummyPrinter)(","+2, ","+d)]
            1
            ">"
           }
        *)
-      ARRAYtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
+      (*%
+         @prefix toJSON_
+         @format({dummyPrinter, contentsFn})
+          {
+           "["
+             2[1 contentsFn:lazyArray(dummyPrinter)(","1,","1)]
+           1
+           "]"
+          }
+       *)
+      ARRAYtyRep of {dummyPrinter:reifiedTerm,
+                     contentsFn:(int option -> {contents:reifiedTerm list, hasEllipsis:bool})
+                    }
     | (*%
-         @format(term * lazyArray:lazyArray)
+         @format({dummyPrinter, contentsFn})
           {
            "<|"
-             2[1 lazyArray(term)(","+2, ","+d)]
+             2[1 contentsFn:lazyArray(dummyPrinter)(","+2, ","+d)]
            1
            "|>"
           }
        *)
-      VECTORtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
+      VECTORtyRep of {dummyPrinter:reifiedTerm,
+                      contentsFn: (int option -> {contents:reifiedTerm list, hasEllipsis:bool})
+                     }
     | (*%
+         @format "exn"
+       *)
+      (*%
+         @prefix toJSON_
          @format "exn"
        *)
       EXNtyRep
     | (*%
          @format "ptr"
        *)
+      (*%
+         @prefix toJSON_
+         @format "ptr"
+       *)
       PTRtyRep
     | (*%
+         @format "_"
+       *)
+      (*%
+         @prefix toJSON_
          @format "_"
        *)
       UNPRINTABLERep 
     | (*%
          @format "..."
        *)
+      (*%
+         @prefix toJSON_
+         @format "..."
+       *)
       ELIPSISRep 
     | (*%
          @format "<builtin>"
        *)
+      (*%
+         @prefix toJSON_
+         @format "<builtin>"
+       *)
       BUILTINRep
 
+  (*% *)
+  type path =
+    (*%
+       @format(name names)  names(name)(".")
+     *)
+    string list
+
+  fun ifMultilines (nl, sp) s =
+      if List.length (String.fields (fn x => x = #"\n") s) > 1 
+         orelse String.size s > 60
+      then nl
+      else sp
 
   (*%
      @formatter(option) TermPrintUtils.formatPrependedOpt

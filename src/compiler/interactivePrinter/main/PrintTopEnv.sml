@@ -58,7 +58,7 @@ in
                      (ty, DynamicLink.dlsym' (lib, externSymbol {longsymbol = longsymbol, version = version}))
              else
                (ty, DynamicLink.dlsym' (lib, externSymbol {longsymbol = longsymbol, version = version}))
-        val reifiedTerm = DynamicPrinter.dynToReifiedTerm (Dynamic.load (ptr, ty))
+        val reifiedTerm = DynamicPrinter.dynamicToReifiedTerm (Dynamic.load (ptr, ty))
       in
         SOME (R.EXVAR{name=name, term=reifiedTerm, ty=tyTerm})
       end

@@ -141,7 +141,7 @@ in
              raise bug ("free tvar:" ^(Bug.prettyPrint(I.format_ty ity)))
             )
          )
-       | I.TYRECORD tyMap => T.RECORDty (LabelEnv.map (evalIty context) tyMap)
+       | I.TYRECORD tyMap => T.RECORDty (RecordLabel.Map.map (evalIty context) tyMap)
        | I.TYCONSTRUCT {tfun, args} =>
          (let
             val args = map (evalIty context) args
@@ -240,7 +240,8 @@ in
         fun evalTvarKind context kind : T.tvarKind  =
             case kind of
               I.UNIV => T.UNIV
-            | I.REC tyFields => T.REC (LabelEnv.map (evalIty newContext) tyFields)
+            | I.REC tyFields => T.REC (RecordLabel.Map.map (evalIty newContext) tyFields)
+            | I.JSON => T.JSON
             | I.BOXED => T.BOXED
             | I.UNBOXED => T.UNBOXED
         val btvEnv =

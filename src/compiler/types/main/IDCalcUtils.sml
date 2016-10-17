@@ -67,7 +67,7 @@ local
         in
           (varMap, IC.ICPATCONSTRUCT {con=con, arg=arg, loc=loc})
         end
-      | IC.ICPATRECORD {flex, fields:(string * IC.icpat) list, loc} =>
+      | IC.ICPATRECORD {flex, fields, loc} =>
         let
           val (varMap, fieldsRev) =
               foldl
@@ -237,6 +237,8 @@ local
           end
         | IC.ICJOIN (icexp1, icexp2, loc) =>
           IC.ICJOIN (copy icexp1, copy icexp2, loc)
+        | IC.ICJSON (icexp, ty, loc) =>
+          IC.ICJSON (copy icexp, ty, loc)
       end
   and copyFfiArg varMap ffiArg =
       case ffiArg of

@@ -80,7 +80,7 @@ local
       | T.FUNMty (tyList, ty) =>
         T.FUNMty (map (substBTvar tyidEnv subst) tyList, substBTvar tyidEnv subst ty)
       | T.RECORDty tySenvMap =>
-        T.RECORDty (LabelEnv.map (substBTvar tyidEnv subst) tySenvMap)
+        T.RECORDty (RecordLabel.Map.map (substBTvar tyidEnv subst) tySenvMap)
       | T.CONSTRUCTty {tyCon,args} =>
         T.CONSTRUCTty {tyCon=substBTvarTyCon tyidEnv subst tyCon,
                        args = map (substBTvar tyidEnv subst) args}
@@ -160,14 +160,15 @@ local
 
   and substBTvarTvarKind tyidEnv subst tvarKind =
       case tvarKind of
-        T.REC fields => T.REC (LabelEnv.map (substBTvar tyidEnv subst) fields)
+        T.REC fields => T.REC (RecordLabel.Map.map (substBTvar tyidEnv subst) fields)
       | T.JOIN (fields, ty1, ty2, loc) => 
-        T.JOIN (LabelEnv.map (substBTvar tyidEnv subst) fields, 
+        T.JOIN (RecordLabel.Map.map (substBTvar tyidEnv subst) fields, 
                 substBTvar tyidEnv subst ty1,
                 substBTvar tyidEnv subst ty2,
                 loc
                )
       | T.UNIV => T.UNIV
+      | T.JSON => T.JSON
       | T.BOXED => T.BOXED
       | T.UNBOXED => T.UNBOXED
       | T.OCONSTkind l => 
@@ -302,7 +303,7 @@ end
             | T.TYVARty _ => ()
             | T.BOUNDVARty _ => (* raise PolyTy *) ()  (* this should be ok *)
             | T.FUNMty (_, ty) => visit ty
-            | T.RECORDty tySenvMap => LabelEnv.app visit tySenvMap
+            | T.RECORDty tySenvMap => RecordLabel.Map.app visit tySenvMap
             | T.CONSTRUCTty _ => ()
             | T.POLYty {boundtvars, body} => raise PolyTy
       in
@@ -323,7 +324,7 @@ end
           end
         | T.FUNMty (tyList,ty) =>
           T.FUNMty(tyList, makeFreshInstTy makeSubst ty)
-        | T.RECORDty fl => T.RECORDty (LabelEnv.map (makeFreshInstTy makeSubst) fl)
+        | T.RECORDty fl => T.RECORDty (RecordLabel.Map.map (makeFreshInstTy makeSubst) fl)
         | ty => ty
 
   fun freshInstTy ty = makeFreshInstTy freshSubst ty
@@ -369,7 +370,7 @@ end
         | T.FUNMty (tyList, ty) =>
           traverseTy (ty, foldl traverseTy env tyList)
         | T.RECORDty tyLabelEnvMap => 
-          LabelEnv.foldl traverseTy env tyLabelEnvMap
+          RecordLabel.Map.foldl traverseTy env tyLabelEnvMap
         | T.CONSTRUCTty {tyCon, args = tyList} => foldl traverseTy env tyList
         | T.POLYty {boundtvars, body=ty} =>
           traverseTy
@@ -411,12 +412,13 @@ end
       and traverseTvarKind (tvarKind, env) =
             case tvarKind of
               T.UNIV=> env
+            | T.JSON => env
             | T.BOXED => env
             | T.UNBOXED => env
             | T.REC fields => 
-              LabelEnv.foldl traverseTy env fields
+              RecordLabel.Map.foldl traverseTy env fields
             | T.JOIN (fields, ty1, ty2, loc) =>
-              LabelEnv.foldl 
+              RecordLabel.Map.foldl 
                 traverseTy 
                 (traverseTy (ty1, traverseTy (ty2, env)))
                 fields
@@ -476,14 +478,15 @@ end
   fun adjustDepthInTvarKind contextDepth kind = 
     case kind of
       T.UNIV => ()
+    | T.JSON => ()
     | T.BOXED => ()
     | T.UNBOXED => ()
     | T.REC fields => 
-        LabelEnv.app (adjustDepthInTy contextDepth) fields
+        RecordLabel.Map.app (adjustDepthInTy contextDepth) fields
     | T.JOIN (fields, ty1, ty2, loc) => 
       (adjustDepthInTy contextDepth ty1;
        adjustDepthInTy contextDepth ty2;
-       LabelEnv.app (adjustDepthInTy contextDepth) fields
+       RecordLabel.Map.app (adjustDepthInTy contextDepth) fields
       )
     | T.OCONSTkind tyList => 
         List.app (adjustDepthInTy contextDepth) tyList
@@ -778,11 +781,7 @@ end
       | _ => raise bug "tyConFromConTy:non con ty"
 
   fun tupleTy tys =
-      T.RECORDty
-        (#2 (List.foldl
-               (fn (ty,(i,z)) => (i+1, LabelEnv.insert (z, Int.toString i, ty)))
-               (1, LabelEnv.empty)
-               tys))
+      T.RECORDty (RecordLabel.tupleMap tys)
 
 end
 end

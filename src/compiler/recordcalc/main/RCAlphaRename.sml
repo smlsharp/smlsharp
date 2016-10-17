@@ -76,7 +76,7 @@ local
                      Option.map (map (copyFfiTy context)) ffiTyList2,
                      map (copyFfiTy context) ffiTyList3,
                      loc)
-      | TC.FFIRECORDTY (fields:(string * TC.ffiTy) list,loc) =>
+      | TC.FFIRECORDTY (fields:(RecordLabel.label * TC.ffiTy) list,loc) =>
         TC.FFIRECORDTY
           (map (fn (l,ty)=>(l, copyFfiTy context ty)) fields,loc)
 
@@ -353,9 +353,9 @@ local
             }
         | RC.RCRAISE {exp, loc, ty} =>
           RC.RCRAISE {exp= copy exp, loc=loc, ty = copyT ty}
-        | RC.RCRECORD {fields:rcexp LabelEnv.map, loc, recordTy} =>
+        | RC.RCRECORD {fields:rcexp RecordLabel.Map.map, loc, recordTy} =>
           RC.RCRECORD
-            {fields=LabelEnv.map copy fields,
+            {fields=RecordLabel.Map.map copy fields,
              loc=loc,
              recordTy=copyT recordTy}
         | RC.RCSELECT {exp, expTy, indexExp, label, loc, resultTy} =>

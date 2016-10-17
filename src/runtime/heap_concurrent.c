@@ -2306,14 +2306,14 @@ sml_heap_mutator_sync2(const struct sml_control *control ATTR_UNUSED,
 }
 
 void
-sml_heap_mutator_sync2_enum(const struct sml_control *control)
+sml_heap_mutator_sync2_enum(struct sml_control *control)
 {
 	sml_stack_enum_ptr(control, push, &collector.root_objects);
 }
 
 #else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 void
-sml_heap_mutator_sync2(const struct sml_control *control, void *info)
+sml_heap_mutator_sync2(struct sml_control *control, void *info)
 {
 	/* Do not use tlv_get(alloc_ptr_set) in this function and use
 	 * "info" instead.  This function may be called with "info" of

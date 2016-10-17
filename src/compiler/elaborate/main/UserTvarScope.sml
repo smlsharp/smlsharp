@@ -69,7 +69,7 @@ struct
             tvset
 
   fun sortTyrows rows =
-      ListSorter.sort (fn ((k1, _), (k2, _)) => String.compare (k1, k2)) rows
+      ListSorter.sort (fn ((k1, _), (k2, _)) => RecordLabel.compare (k1, k2)) rows
 
   fun tyvarsOpt f (SOME x) = f x
     | tyvarsOpt f NONE = empty
@@ -162,7 +162,7 @@ struct
   and tyvarsBind btvEnv (pat, exp) =
       union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
 
-  and tyvarsRow btvEnv (label:string, exp) =
+  and tyvarsRow btvEnv (label, exp) =
       tyvarsExp btvEnv exp
 
   and tyvarsExp btvEnv exp =
@@ -209,6 +209,8 @@ struct
         union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
       | P.PLJOIN (exp1, exp2, loc) =>
         union (tyvarsExp btvEnv exp1, tyvarsExp btvEnv exp2)
+      | P.PLJSON (exp, ty, loc) =>
+        union (tyvarsExp btvEnv exp, tyvarsTy btvEnv ty)
 
   and tyvarsFFIArg btvEnv ffiarg =
       case ffiarg of
@@ -282,7 +284,7 @@ struct
         (btvEnv, scoped)
       end
 
-  fun decideRow btvEnv (label:string, exp) =
+  fun decideRow btvEnv (label, exp) =
       (label, decideExp btvEnv exp)
 
   and decideBind btvEnv (pat:P.plpat, exp) =
@@ -340,6 +342,7 @@ struct
         P.PLSQLDBI (pat, decideExp btvEnv exp, loc)
       | P.PLJOIN (exp1, exp2, loc) =>
         P.PLJOIN (decideExp btvEnv exp1, decideExp btvEnv exp2, loc)
+      | P.PLJSON (exp, ty, loc) => P.PLJSON (decideExp btvEnv exp, ty, loc)
 
   and decideFFIArg btvEnv ffiarg =
       case ffiarg of

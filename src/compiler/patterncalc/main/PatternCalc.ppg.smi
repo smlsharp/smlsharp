@@ -5,6 +5,7 @@ _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 
 structure PatternCalc =
@@ -28,7 +29,7 @@ struct
   datatype ffiTy 
     = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
     | FFITYVAR of Absyn.tvar * loc
-    | FFIRECORDTY of (string * ffiTy) list * loc
+    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | FFICONTY of ffiTy list * longsymbol * loc
 
   type scopedTvars 
@@ -40,20 +41,21 @@ struct
     | PLTYPED of plexp *  ty * loc
     | PLAPPM of plexp * plexp list * loc
     | PLLET of pdecl list * plexp list * loc
-    | PLRECORD of (string * plexp) list * loc
-    | PLRECORD_UPDATE of plexp * (string * plexp) list * loc
+    | PLRECORD of (RecordLabel.label * plexp) list * loc
+    | PLRECORD_UPDATE of plexp * (RecordLabel.label * plexp) list * loc
     | PLRAISE of plexp * loc
     | PLHANDLE of plexp * (plpat * plexp) list * loc
     | PLFNM of (plpat list * plexp) list * loc 
     | PLCASEM of plexp list * (plpat list * plexp) list * caseKind * loc
-    | PLRECORD_SELECTOR of symbol * loc 
-    | PLSELECT of string * plexp * loc  (* this must be kept as a primitive *)
+    | PLRECORD_SELECTOR of RecordLabel.label * loc 
+    | PLSELECT of RecordLabel.label * plexp * loc  (* this must be kept as a primitive *)
     | PLSEQ of plexp list * loc
     | PLFFIIMPORT of ffiFun * ffiTy * loc
     | PLFFIAPPLY of FFIAttributes.attributes option * ffiFun * ffiArg list * ffiTy list * loc
     | PLSQLSCHEMA of {columnInfoFnExp : plexp, ty : ty, loc : loc}
     | PLSQLDBI of plpat * plexp * loc
     | PLJOIN of plexp * plexp * loc
+    | PLJSON of plexp * ty * loc
 
   and ffiArg 
     = PLFFIARG of plexp * ffiTy * loc
@@ -88,7 +90,7 @@ struct
     | PLPATID of longsymbol
     | PLPATCONSTANT of Absyn.constant
     | PLPATCONSTRUCT of plpat * plpat * loc
-    | PLPATRECORD of bool * (string * plpat) list * loc
+    | PLPATRECORD of bool * (RecordLabel.label * plpat) list * loc
     | PLPATLAYERED of symbol * ty option * plpat * loc
     | PLPATTYPED of plpat * ty * loc
  

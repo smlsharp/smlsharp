@@ -3,6 +3,7 @@ _require "../../../smlformat-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
 
 structure ElaborateError =
   struct
@@ -38,9 +39,9 @@ structure ElaborateError =
     exception DuplicateValDesc of Symbol.symbol
     exception DuplicateTypeNameInDatatype of Symbol.symbol
     exception DuplicateTypeNameInType of Symbol.symbol
-    exception DuplicateRecordLabelInRawType of string
-    exception DuplicateRecordLabelInPat of string
-    exception DuplicateRecordLabel of string
+    exception DuplicateRecordLabelInRawType of RecordLabel.label
+    exception DuplicateRecordLabelInPat of RecordLabel.label
+    exception DuplicateRecordLabel of RecordLabel.label
     exception DuplicateFunctorDesc of string
     exception DuplicateStrDesc of string
     exception DuplicateTypParam of Symbol.symbol
@@ -51,4 +52,5 @@ structure ElaborateError =
     exception BeginWithInfixID of Symbol.longsymbol
     exception ArityMismatchInTypeDeclaration of {given:int, tyCon:string,
                                                  wants:int}
+    exception InvalidPatternForJsonCase
   end

@@ -133,8 +133,8 @@ local
         T.BOUNDVARty (evalBtv btvMap btv)
       | T.FUNMty (tyList, ty) =>
         T.FUNMty (map (copyTy btvMap) tyList, copyTy btvMap ty)
-      | T.RECORDty (fields:ty LabelEnv.map) =>
-        T.RECORDty (LabelEnv.map (copyTy btvMap) fields)
+      | T.RECORDty (fields:ty RecordLabel.Map.map) =>
+        T.RECORDty (RecordLabel.Map.map (copyTy btvMap) fields)
       | T.CONSTRUCTty
           {
            tyCon =
@@ -217,12 +217,13 @@ local
              operators
           }
       | T.UNIV => T.UNIV
+      | T.JSON => T.JSON
       | T.BOXED => T.BOXED
       | T.UNBOXED => T.UNBOXED
-      | T.REC (fields:ty LabelEnv.map) =>
-        T.REC (LabelEnv.map (copyTy btvMap) fields)
-      | T.JOIN (fields:ty LabelEnv.map, ty1, ty2, loc) =>
-        T.JOIN (LabelEnv.map (copyTy btvMap) fields, copyTy btvMap ty1, copyTy btvMap ty2, loc)
+      | T.REC (fields:ty RecordLabel.Map.map) =>
+        T.REC (RecordLabel.Map.map (copyTy btvMap) fields)
+      | T.JOIN (fields:ty RecordLabel.Map.map, ty1, ty2, loc) =>
+        T.JOIN (RecordLabel.Map.map (copyTy btvMap) fields, copyTy btvMap ty1, copyTy btvMap ty2, loc)
   and copyDtyKind btvMap dtyKind =
       case dtyKind of
         T.DTY => dtyKind

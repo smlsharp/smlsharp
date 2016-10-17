@@ -101,7 +101,7 @@ struct
       let
         val fields =
             case TypesBasics.derefTy recordTy of
-              T.RECORDty fieldTypes => LabelEnv.listItemsi fieldTypes
+              T.RECORDty fieldTypes => RecordLabel.Map.listItemsi fieldTypes
             | _ => raise Bug.Bug "recordFieldTys"
       in
         map (fn (label, ty) =>
@@ -205,7 +205,7 @@ struct
                           exp = compileExp env comp exp}
                     else raise Bug.Bug "MVRECORD: label mismatch")
                 (recordFieldTys env recordTy,
-                 LabelEnv.listItemsi fields)
+                 RecordLabel.Map.listItemsi fields)
           val {allocSize, fieldIndexes, bitmaps, padding} =
               RecordLayout2.computeRecord
                 comp

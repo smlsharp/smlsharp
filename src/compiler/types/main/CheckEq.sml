@@ -92,7 +92,7 @@ in
       | T.TYVARty (ref(T.SUBSTITUTED ty)) => checkEq ty
       | T.BOUNDVARty tid => ()
       | T.FUNMty _ => raise Eqcheck
-      | T.RECORDty fl => LabelEnv.foldr (fn (ty,()) => checkEq ty) () fl
+      | T.RECORDty fl => RecordLabel.Map.foldr (fn (ty,()) => checkEq ty) () fl
       | T.CONSTRUCTty {tyCon={id,iseq,...},args} =>
         if TypID.eq(id, #id BT.arrayTyCon) then ()
         else if TypID.eq(id, #id BT.refTyCon) then ()

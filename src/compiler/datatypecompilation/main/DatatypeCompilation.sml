@@ -76,23 +76,23 @@ struct
           E.Exp (TL.TLRECORD {isMutable = false, fields, recordTy, ...}, _) =>
           (nil,
            map (fn (label, exp) =>
-                   E.Exp (exp, case LabelEnv.find (fieldTys, label) of
+                   E.Exp (exp, case RecordLabel.Map.find (fieldTys, label) of
                                  SOME ty => ty
                                | NONE => raise Bug.Bug "explodeRecordExp"))
-               (LabelEnv.listItemsi fields))
+               (RecordLabel.Map.listItemsi fields))
         | _ =>
           let
             val vid = EmitTypedLambda.newId ()
           in
             ([(vid, exp)],
              map (fn (label, ty) => E.Select (label, E.Var vid))
-                 (LabelEnv.listItemsi fieldTys))
+                 (RecordLabel.Map.listItemsi fieldTys))
           end
       end
 
   fun explodeRecordTy recordTy =
       case TypesBasics.derefTy recordTy of
-        T.RECORDty fields => ListPair.unzip (LabelEnv.listItemsi fields)
+        T.RECORDty fields => ListPair.unzip (RecordLabel.Map.listItemsi fields)
       | ty => raise Bug.Bug "explodeRecordTy"
 
   fun decomposeDataconTy ty =
@@ -126,7 +126,7 @@ struct
   fun extractConTag (taggedLayout, exp) =
       case taggedLayout of
         TAGGED_TAGONLY _ => E.Cast (exp, BT.contagTy)
-      | TAGGED_RECORD _ => E.Select ("1", E.Cast (exp, E.tupleTy [BT.contagTy]))
+      | TAGGED_RECORD _ => E.SelectN (1, E.Cast (exp, E.tupleTy [BT.contagTy]))
       | TAGGED_OR_NULL {tagMap, nullName} =>
         let
           val vid = EmitTypedLambda.newId ()
@@ -134,7 +134,7 @@ struct
           E.Let ([(vid, exp)],
                  E.If (E.IsNull (E.Cast (exp, BT.boxedTy)),
                        E.ConTag (lookupConTag (taggedLayout, [nullName])),
-                       E.Select ("1", E.Cast (exp, E.tupleTy [BT.contagTy]))))
+                       E.SelectN (1, E.Cast (exp, E.tupleTy [BT.contagTy]))))
         end
 
   fun composeTaggedCon (taggedLayout, conInfo, argExpOpt, retTy) =
@@ -177,14 +177,14 @@ struct
 
   fun extractArgOnlyConArg (conInfo, dataExp) argTy =
       if DatatypeLayout.needPack (dataconArgTy conInfo)
-      then E.Select ("1", E.Cast (dataExp, E.tupleTy [argTy]))
+      then E.SelectN (1, E.Cast (dataExp, E.tupleTy [argTy]))
       else E.Cast (dataExp, argTy)
 
   fun composeArgOrNullCon (conInfo, argExp, retTy) =
       E.Cast (E.Tuple [argExp], retTy)
 
   fun extractArgOrNullConArg (conInfo, dataExp) argTy =
-      E.Select ("1", E.Cast (dataExp, E.tupleTy [argTy]))
+      E.SelectN (1, E.Cast (dataExp, E.tupleTy [argTy]))
 
   fun composeCon (conInfo:RC.conInfo, instTyList, argExpOpt) =
       let
@@ -579,11 +579,11 @@ struct
                                   tys = [List.last tys],
                                   loc = loc})
       | RC.RCRECORD {fields, recordTy, loc} =>
-        if LabelEnv.isEmpty fields
+        if RecordLabel.Map.isEmpty fields
         then EmitTypedLambda.emit loc (E.Cast (E.Null, recordTy))
         else TL.TLRECORD
                {isMutable = false,
-                fields = LabelEnv.map (compileExp env) fields,
+                fields = RecordLabel.Map.map (compileExp env) fields,
                 recordTy = recordTy,
                 loc = loc}
       | RC.RCSELECT {indexExp, label, exp, expTy, resultTy, loc} =>

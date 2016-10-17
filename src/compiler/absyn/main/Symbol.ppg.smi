@@ -8,6 +8,7 @@ structure Symbol =
 struct
   type symbol (= boxed)
   type longsymbol = symbol list
+  val lastSymbol : longsymbol -> symbol
   val symbolToString : symbol -> string
   val symbolToLoc : symbol -> Loc.loc
   val longsymbolToString : longsymbol -> string

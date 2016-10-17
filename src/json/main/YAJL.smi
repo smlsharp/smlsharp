@@ -1,0 +1,41 @@
+_require "../../basis.smi"
+_require "../../ffi.smi"
+
+structure YAJL =
+struct
+
+  type yajl_handle = unit ptr
+  type yajl_status = int
+  type size_t (= int64)
+
+  type 'a ctx = 'a
+
+  val size_tToInt : size_t -> int
+  val intToSize_t : int -> size_t
+
+  val yajl_alloc 
+    : ['a#boxed.
+       ({
+         1_yajl_null: 'a ctx -> int,
+         2_yajl_boolean: 'a ctx * int -> int,
+         3_yajl_integer: 'a ctx * int64 -> int,
+         4_yajl_double: 'a ctx * real -> int,
+         5_yajl_number: unit ptr,
+         6_yajl_string: 'a ctx * char ptr * size_t -> int,
+         7_yajl_start_map: 'a ctx -> int,
+         8_yajl_map_key: 'a ctx * char ptr * size_t -> int,
+         9_yajl_end_map: 'a ctx -> int,
+         10_yajl_start_array: 'a ctx -> int,
+         11_yajl_end_array: 'a ctx -> int
+        } 
+        * unit ptr
+        * 'a ctx
+       )  -> yajl_handle
+      ]
+  val yajl_parse : yajl_handle * string * size_t -> yajl_status
+  val yajl_complete_parse : yajl_handle -> yajl_status
+  val yajl_free : yajl_handle -> unit ptr 
+  val yajl_get_error : yajl_handle * int * string * size_t -> char ptr 
+  val yajl_free_error : yajl_handle * char ptr -> int
+
+end

@@ -229,7 +229,7 @@ precompiled/$(PRECOMPILED_ARCH).$(OBJEXT): $(LLVM_PLUGIN) \
 # -------- source code generation --------
 
 @SNAPDATE_RULE_@RELEASE_DATE: $(srcdir)/../.hg/dirstate
-@SNAPDATE_RULE_@	r=`HGPLAIN=1 hg summary | sed '/^parent:/!d;s/^.*[0-9]://;s/ .*$$//'`; \
+@SNAPDATE_RULE_@	r=`HGPLAIN=1 hg summary | sed -n '/^parent:/!d;s/^.*[0-9]://;s/ .*$$//;1p'`; \
 @SNAPDATE_RULE_@	d=`HGPLAIN=1 hg log -r"$${r:-tip}" --template '{date|isodatesec}' | sed s/+0900/JST/`; \
 @SNAPDATE_RULE_@	echo "$$d $$r" > $@
 
@@ -278,11 +278,17 @@ config.h: stamp-h
 
 # -------- dependencies --------
 
-depend: PHONY
-	@trap 'rm -f depend.mk.tmp files.mk.tmp' EXIT; \
-	set -e; \
-	$(SMLSHARP_ENV) SMLSHARP='$(SMLSHARP_STAGE1)' OBJEXT='$(OBJEXT)' \
-	files_mk=files.mk.tmp depend_mk=depend.mk.tmp \
+depend: files_ml.mk depend_ml.mk depend_c.mk
+	rm -f $(srcdir)/files.mk
+	cp files_ml.mk $(srcdir)/files.mk
+	rm -f $(srcdir)/depend.mk
+	cat depend_ml.mk depend_c.mk > $(srcdir)/depend.mk
+	rm -f files_ml.mk depend_ml.mk depend_c.mk
+
+depend_ml.mk files_ml.mk: PHONY
+	-rm -f depend_ml.mk files_ml.mk
+	@$(SMLSHARP_ENV) SMLSHARP='$(SMLSHARP_STAGE1)' OBJEXT='$(OBJEXT)' \
+	files_mk=files_ml.mk depend_mk=depend_ml.mk \
 	$(SHELL) mkdepend \
 	  MLLEX          src/ml-lex/ml-lex.smi \
 	  MLYACC_LIB     src/ml-yacc-lib.smi \
@@ -292,16 +298,20 @@ depend: PHONY
 	  SMLFORMAT      src/smlformat/generator/main/call-main.smi \
 	  MINISMLSHARP   src/compiler/minismlsharp.smi \
 	  COMPILER_LIB   src/compiler/smlsharp.smi \
-	  PRELUDE_LIB    src/prelude.smi; \
-	for i in $(RUNTIME_SOURCES) src/runtime/main.c; do \
-	  case "$$i" in *.cpp) cpp='$(CXXCPP)';; *) cpp='$(CPP)';; esac; \
-	  echo $$cpp -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i 1>&2; \
-	  $$cpp -E -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i \
-	  | sed 's,^[^:. ]*\(\.[^: ]*: *\)\([^. ]*\)\.c,\2\1\2.c,' \
-	    >> depend.mk.tmp; \
-	done; \
-	mv depend.mk.tmp $(srcdir)/depend.mk; \
-	mv files.mk.tmp $(srcdir)/files.mk
+	  PRELUDE_LIB    src/prelude.smi
+
+depend_c.mk: PHONY
+	-rm -f depend_c.mk
+	@for i in $(RUNTIME_SOURCES) src/runtime/main.c; do \
+	  case "$$i" in *.cpp) cc='$(CXX)';; *) cc='$(CC)';; esac; \
+	  echo $$cc -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i 1>&2; \
+	  $$cc -E -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i \
+	  | perl -0npe 's,\A.*?\.(.*?:(?:\s|\\)*)(.*?)\.c,\2.\1\2.c,; \
+	                s,\s/.*?\.h(?=\s),,g; \
+	                s,^\s*\\\s*$$,,mg; \
+	                s,(?:\s*|\\$$)*\z,\n,m' \
+	    >> depend_c.mk; \
+	done
 
 include @srcdir@/depend.mk
 @INCLUDE_STAGE1@include @srcdir@/stage1.mk

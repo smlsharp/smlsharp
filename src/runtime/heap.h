@@ -44,7 +44,7 @@ void sml_heap_mutator_destroy(void *info);
  * Note that control and info may be different from those of the current
  * thread.
  */
-void sml_heap_mutator_sync2(const struct sml_control *control, void *info);
+void sml_heap_mutator_sync2(struct sml_control *control, void *info);
 
 /*
  * Called when all mutators has switched to SYNC1.

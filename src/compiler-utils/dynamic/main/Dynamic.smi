@@ -7,7 +7,7 @@ _require local "../../../compiler/builtin2/main/BuiltinTypes.smi"
 _require local "../../../compiler/bitmapcompilation2/main/SingletonTyEnv.smi"
 _require local "../../../compiler/bitmapcompilation2/main/RecordLayout.smi"
 _require local "../../../compiler/control/main/Bug.ppg.smi"
-_require local "../../env/main/LabelEnv.smi"
+_require "../../../compiler/absyn/main/RecordLabel.smi"
 _require local "../../env/main/SEnv.smi"
 _require local "../../env/main/IEnv.smi"
 _require local "../../../compiler/name/main/LocalID.smi"
@@ -16,11 +16,11 @@ _require local "../../../compiler/datatypecompilation/main/DatatypeLayout.smi"
 structure Dynamic =
 struct
 
-  type dyn (= boxed)
+  type dynamic (= boxed)
 
-  val dynamic = _builtin val Dynamic : 'a -> dyn
+  val dynamic = _builtin val Dynamic : 'a -> dynamic
 
-  val load : unit ptr * Types.ty -> dyn
+  val load : unit ptr * Types.ty -> dynamic
 
   datatype value =
       WORD8 of Word8.word
@@ -32,11 +32,11 @@ struct
     | REAL of real
     | REAL32 of Real32.real
     | PTR of unit ptr
-    | RECORD of (string * dyn) list
-    | VARIANT of string * value option
-    | LIST of dyn_list
-    | ARRAY of {length : int, sub : int -> dyn}
-    | VECTOR of {length : int, sub : int -> dyn}
+    | RECORD of (RecordLabel.label * dynamic) list
+    | VARIANT of Types.typId * string * value option
+    | LIST of dynamic_list
+    | ARRAY of {length : int, sub : int -> dynamic}
+    | VECTOR of {length : int, sub : int -> dynamic}
     | REF of value
     | INTINF of IntInf.int
     | STRING of string
@@ -44,14 +44,14 @@ struct
     | FUN
     | UNIT
     | OTHER
-  and dyn_list =
+  and dynamic_list =
       NIL
-    | CONS of dyn * dyn
-  type dyn_array =
-      {length : int, sub : int -> dyn}
+    | CONS of dynamic * dynamic
+  type dynamic_array =
+      {length : int, sub : int -> dynamic}
 
-  val read : dyn -> value
-  val readList : dyn_list -> dyn list
-  val readArray : dyn_array -> dyn vector
+  val read : dynamic -> value
+  val readList : dynamic_list -> dynamic list
+  val readArray : dynamic_array -> dynamic vector
 
 end

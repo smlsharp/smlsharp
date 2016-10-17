@@ -349,7 +349,7 @@ _Atomic(unsigned int) sml_check_flag;
 void sml_gc(void);
 
 struct sml_control;
-void sml_stack_enum_ptr(const struct sml_control *, void (*)(void **, void *),
+void sml_stack_enum_ptr(struct sml_control *, void (*)(void **, void *),
 			void *);
 
 enum sml_sync_phase {
@@ -368,6 +368,11 @@ void sml_enter_internal(void *old_top);
 void sml_check_internal(void *frame_pointer);
 enum sml_sync_phase sml_current_phase(void);
 int sml_saved(void); /* for debug */
+
+void *sml_save_exn_internal(void *obj);
+
+SML_PRIMITIVE void sml_save_exn(void *);
+SML_PRIMITIVE void *sml_unsave_exn(void *);
 
 /*
  * stack frame address
@@ -408,7 +413,7 @@ void *sml_intinf_hex(void *obj);
  */
 void sml_matchcomp_bug(void) ATTR_NORETURN;
 
-SML_PRIMITIVE void sml_raise(void *work_area, void *exn) ATTR_NORETURN;
+SML_PRIMITIVE void sml_raise(void *exn) ATTR_NORETURN;
 /*
 _Unwind_Reason_Code
 sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,

@@ -188,7 +188,6 @@ struct
         def : Set.set,
         use : Set.set,
         returnTo : block,
-        unwindTo : block,
         causeGC : bool,
         orig : M.mcexp_mid
       }
@@ -213,6 +212,7 @@ struct
         exnVar : M.varInfo,
         id : HandlerLabel.id,
         handler : block,
+        cleanup : HandlerLabel.id option,
         loc : M.loc
       }
 
@@ -267,12 +267,13 @@ struct
           {defs = Set.union (defs, def),
            uses = Set.union (Set.setMinus (uses, def), use)}
         end
-      | CALL {def, use, returnTo, unwindTo, causeGC, orig} =>
+      | CALL {def, use, returnTo, causeGC, orig} =>
         {defs = def, uses = use}
       | LAST {def, use, args, orig} =>
         {defs = def, uses = use}
       | LOCALCODE {id, recursive, body, next, loc} => defuseExp next
-      | HANDLER {nextExp, id, exnVar, handler, loc} => defuseExp nextExp
+      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
+        defuseExp nextExp
 
   fun setBody (BLOCK r, bodyExp) =
       r := (!r # {bodyExp = bodyExp, defuse = defuseExp bodyExp})
@@ -290,12 +291,12 @@ struct
         NONE => raise Bug.Bug "jumpTo"
       | SOME block => addEdge (currentBlock, block)
 
-  fun unwindTo ({currentBlock, exitBlock, ...}:prepareEnv) NONE =
-      (addEdge (currentBlock, exitBlock); exitBlock)
-    | unwindTo {currentBlock, handlerEnv, ...} (SOME id) =
+  fun addHandlerEdge ({currentBlock, exitBlock, ...}:prepareEnv) NONE =
+      addEdge (currentBlock, exitBlock)
+    | addHandlerEdge {currentBlock, handlerEnv, ...} (SOME id) =
       case HandlerLabel.Map.find (handlerEnv, id) of
-        NONE => raise Bug.Bug "unwindTo"
-      | SOME block => (addEdge (currentBlock, block); block)
+        NONE => raise Bug.Bug "addHandlerEdge"
+      | SOME block => addEdge (currentBlock, block)
 
   fun prepareLast (env:prepareEnv) last =
       case last of
@@ -304,15 +305,16 @@ struct
           addEdge (#currentBlock env, #exitBlock env);
           LAST {def = Set.empty, use = useValue value, args = nil, orig = last}
         )
-      | M.MCRAISE_THROW {raiseAllocResult, argExp, loc} =>
+      | M.MCRAISE {argExp, cleanup, loc} =>
         (
           addEdge (#currentBlock env, #exitBlock env);
+          addHandlerEdge env cleanup;
           LAST {def = Set.empty,
-                use = useValues [raiseAllocResult, argExp],
+                use = useValues [argExp],
                 args = nil,
                 orig = last}
         )
-      | M.MCHANDLER {nextExp, id, exnVar, handlerExp, loc} =>
+      | M.MCHANDLER {nextExp, id, exnVar, handlerExp, cleanup, loc} =>
         let
           val handlerBlock = newBlock (FunLocalLabel.generate nil) nil
           val nextEnv =
@@ -325,10 +327,12 @@ struct
                                 next = prepareExp handlerEnv handlerExp}
           val _ = setBody (handlerBlock, handlerExp)
         in
+          addHandlerEdge env cleanup;
           HANDLER {nextExp = nextExp,
                    id = id,
                    exnVar = exnVar,
                    handler = handlerBlock,
+                   cleanup = cleanup,
                    loc = loc}
         end
       | M.MCLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
@@ -387,13 +391,17 @@ struct
       case mid of
         M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, argExpList, tail,
                   handler, loc} =>
-        CALL {def = Set.fromList (optionToList resultVar),
-              use = useValues (codeExp :: optionToList closureEnvExp
-                               @ argExpList),
-              returnTo = prepareCont env (optionToList resultVar, (mids, last)),
-              unwindTo = unwindTo env handler,
-              causeGC = true,
-              orig = mid}
+        let
+          val returnTo = prepareCont env (optionToList resultVar, (mids, last))
+        in
+          addHandlerEdge env handler;
+          CALL {def = Set.fromList (optionToList resultVar),
+                use = useValues (codeExp :: optionToList closureEnvExp
+                                 @ argExpList),
+                returnTo = returnTo,
+                causeGC = true,
+                orig = mid}
+        end
       | M.MCINTINF {resultVar, dataLabel, loc} =>
         MID {def = Set.singleton resultVar,
              use = Set.empty,
@@ -407,10 +415,10 @@ struct
           val causeGC = causeGC orelse not fast
           val returnTo = prepareCont env (optionToList resultVar, (mids, last))
         in
+          addHandlerEdge env handler;
           CALL {def = Set.fromList (optionToList resultVar),
                 use = useValues (funExp :: argExpList),
                 returnTo = returnTo,
-                unwindTo = unwindTo env handler,
                 causeGC = causeGC,
                 orig = mid}
         end
@@ -528,12 +536,6 @@ struct
              orig = mid,
              causeGC = false,
              next = prepareExp env (mids, last)}
-      | M.MCRAISE_ALLOC {resultVar, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = Set.empty,
-             orig = mid,
-             causeGC = true,
-             next = prepareExp env (mids, last)}
 
   fun prepare (argVarList, mcexp, cleanupHandler) =
       let
@@ -595,7 +597,7 @@ struct
         in
           (load alloc use (orig :: save alloc def mids), last)
         end
-      | CALL {def, use, returnTo, unwindTo, causeGC, orig} =>
+      | CALL {def, use, returnTo, causeGC, orig} =>
         let
           val (_, (mids, last)) = reconstructBlock alloc returnTo
         in
@@ -623,7 +625,7 @@ struct
                                nextExp = reconstructExp alloc next,
                                loc = loc})
         end
-      | HANDLER {nextExp, id, exnVar, handler, loc} =>
+      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         let
           val nextExp = reconstructExp alloc nextExp
           val (_, handlerExp) = reconstructBlock alloc handler
@@ -632,6 +634,7 @@ struct
                              id = id,
                              exnVar = exnVar,
                              handlerExp = handlerExp,
+                             cleanup = cleanup,
                              loc = loc})
         end
 
@@ -645,11 +648,11 @@ struct
       case exp of
         DEF {def, causeGC, next} => blocksInExp next
       | MID {def, use, orig, causeGC, next} => blocksInExp next
-      | CALL {def, use, returnTo, unwindTo, causeGC, orig} => blocks returnTo
+      | CALL {def, use, returnTo, causeGC, orig} => blocks returnTo
       | LAST {def, use, args, orig} => nil
       | LOCALCODE {id, recursive, body, next, loc} =>
         blocksInExp next @ blocks body
-      | HANDLER {nextExp, id, exnVar, handler, loc} =>
+      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         blocksInExp nextExp @ blocks handler
 
   fun liveness nil = ()
@@ -693,13 +696,13 @@ struct
         interferenceStep (interferenceExp z next) (def, Set.empty, causeGC)
       | MID {def, use, orig, causeGC, next} =>
         interferenceStep (interferenceExp z next) (def, use, causeGC)
-      | CALL {def, use, returnTo, unwindTo, causeGC, orig} =>
+      | CALL {def, use, returnTo, causeGC, orig} =>
         interferenceStep z (def, use, causeGC)
       | LAST {def, use, args, orig} =>
         interferenceStep z (def, use, false)
       | LOCALCODE {id, recursive, body, next, loc} =>
         interferenceExp z next
-      | HANDLER {nextExp, id, exnVar, handler, loc} =>
+      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         interferenceExp z nextExp
 
   fun interferenceBlock i (BLOCK (ref (r as {bodyExp, liveOut, ...}))) =

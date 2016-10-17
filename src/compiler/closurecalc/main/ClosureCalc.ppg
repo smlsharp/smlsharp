@@ -287,6 +287,7 @@ struct
    * @formatter(withType) formatWithType_varInfo
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   (*%
    * @prefix formatWithType_
@@ -306,6 +307,7 @@ struct
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype cconv =
       (*%
@@ -556,7 +558,7 @@ struct
       {
         fieldList : {fieldExp : ccexp,
                      fieldTy : ty,
-                     fieldLabel : string,
+                     fieldLabel : RecordLabel.label,
                      fieldSize : ccexp,
                      fieldTag : ccexp,
                      fieldIndex : ccexp} list,
@@ -595,7 +597,7 @@ struct
       {
         recordExp : ccexp,
         indexExp : ccexp,
-        label : string,
+        label : RecordLabel.label,
         recordTy : ty,
         resultTy : ty,
         resultTag : ccexp,
@@ -639,7 +641,7 @@ struct
         recordExp : ccexp,
         recordTy : ty,
         indexExp : ccexp,
-        label : string,
+        label : RecordLabel.label,
         valueExp : ccexp,
         valueTy : ty,
         valueTag : ccexp,
@@ -920,6 +922,7 @@ struct
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(string) TermFormat.format_string_ML
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   (*% @prefix formatWithType_
    * @formatter(option) SmlppgUtil.formatOptWithDefault
@@ -930,6 +933,7 @@ struct
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(string) TermFormat.format_string_ML
    * @formatter(ty) format_ty
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype topdata =
       (*%
@@ -1037,7 +1041,7 @@ struct
         tyvarKindEnv : Types.btvEnv,
         fieldList : {fieldExp : topconst,
                      fieldTy : ty,
-                     fieldLabel : string,
+                     fieldLabel : RecordLabel.label,
                      fieldSize : topconst,
                      fieldIndex : topconst} list,
         recordTy : ty,

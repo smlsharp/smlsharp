@@ -203,11 +203,6 @@ struct
         valueExp : mcvalue,
         loc : loc
       }
-    | MCRAISE_ALLOC of
-      {
-        resultVar : varInfo,
-        loc : loc
-      }
 
   datatype mcexp_last =
       MCRETURN of
@@ -215,10 +210,10 @@ struct
         value : mcvalue,
         loc : loc
       }
-    | MCRAISE_THROW of
+    | MCRAISE of
       {
-        raiseAllocResult : mcvalue,
         argExp : mcvalue,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | MCHANDLER of
@@ -227,6 +222,7 @@ struct
         id : HandlerLabel.id,
         exnVar : varInfo,
         handlerExp : mcexp_mid list * mcexp_last,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | MCSWITCH of

@@ -10,6 +10,7 @@ struct
   
   (*%
    * @formatter(Absyn.ty) Absyn.format_ty
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   exception
 
@@ -20,7 +21,7 @@ struct
    *    "duplicate" +d "label" +d "of" +d "SQL" +d "server"
    *    +d "description:" label
    *)
-  DuplicateSQLRecordLabel of string
+  DuplicateSQLRecordLabel of RecordLabel.label
 
   and
   (*
@@ -30,7 +31,7 @@ struct
    *    "duplicate" +d "tuple" +d "in" +d "from" +d "and/or" +d "into"
    *    +d "clause:" +d label
    *)
-  DuplicateSQLTuple of string
+  DuplicateSQLTuple of RecordLabel.label
 
   and
   (*
@@ -39,7 +40,7 @@ struct
    * @format(label)
    *    "duplicate" +d "label" +d "in" +d "select" +d "clause:" +d label
    *)
-  DuplicateSQLSelectLabel of string
+  DuplicateSQLSelectLabel of RecordLabel.label
 
   and
   (*
@@ -48,7 +49,7 @@ struct
    * @format(label)
    *    "duplicate" +d "label" +d "in" +d "insert" +d "clause:" +d label
    *)
-  DuplicateSQLInsertLabel of string
+  DuplicateSQLInsertLabel of RecordLabel.label
 
   and
   (*
@@ -57,7 +58,7 @@ struct
    * @format(label)
    *    "duplicate" +d "label" +d "in" +d "set" +d "clause:" +d label
    *)
-  DuplicateSQLSetLabel of string
+  DuplicateSQLSetLabel of RecordLabel.label
 
   and
   (*

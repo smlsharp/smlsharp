@@ -475,6 +475,7 @@ in
      @formatter(seqList) TermFormat.formatSeqList
      @formatter(enclosedList) TermFormat.formatEnclosedList
      @formatter(optionalList) TermFormat.formatOptionalList
+     @formatter(RecordLabel.label) RecordLabel.format_label
     *)
    (*% @prefix formatWithType_
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
@@ -491,6 +492,7 @@ in
      @formatter(optionalList) TermFormat.formatOptionalList
      @formatter(recordTy) TermFormat.formatRecordTy
      @formatter(seqList) TermFormat.formatSeqList
+     @formatter(RecordLabel.label) RecordLabel.format_label
    *)
    (*% @prefix print_
      @params(mode,name)
@@ -515,6 +517,7 @@ in
      @formatter(formatGenericSymbolMap) SmlppgUtil.formatGenericSymbolMap
      @formatter(ifOpaque) ifOpaque
      @formatter(tfunOriginalPath) format_tfun
+     @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype ty
     = (*%
@@ -556,7 +559,7 @@ in
       (*% @prefix print_
           @format(ty tys) tys:recordTy(ty()(,))
        *)
-      TYRECORD of ty LabelEnv.map
+      TYRECORD of ty RecordLabel.Map.map
     | (*%
          @format({tfun, args: argTy argTys})
            1[ argTys:seqList(argTy)("(",",",")")
@@ -655,7 +658,11 @@ in
          @format(ty tys)
           "#" tys:recordTy(ty()(,))
        *)
-      REC of ty LabelEnv.map
+      REC of ty RecordLabel.Map.map
+    | (*% @format "#json" *)
+      (*% @prefix formatWithType_ @format "#json" *)
+      (*% @prefix print_ @format "#json" *)
+      JSON
     | (*% @format "#boxed" *)
       (*% @prefix formatWithType_ @format "#boxed" *)
       (*% @prefix print_ @format "#boxed" *)
@@ -1341,7 +1348,7 @@ in
       (*% @prefix print_
          @format(field fields * loc)
        *)
-      ICRECORD of (string * icexp) list * loc
+      ICRECORD of (RecordLabel.label * icexp) list * loc
     | (*%
          @format(exp * loc)
          1[ "raise" +1 exp ]
@@ -1498,7 +1505,7 @@ in
       (*% @prefix print_
          @format(exp * field fields * loc)
        *)
-      ICRECORD_UPDATE of icexp * (string * icexp) list * loc
+      ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
     | (*%
          @format(label * loc) "#>" label
        *)
@@ -1508,7 +1515,7 @@ in
       (*% @prefix print_
          @format(label * loc)
        *)
-      ICRECORD_SELECTOR of string * loc 
+      ICRECORD_SELECTOR of RecordLabel.label * loc 
     | (*%
          @format(label * exp * loc) 
          "#" label  +1 exp
@@ -1520,7 +1527,7 @@ in
       (*% @prefix print_
          @format(label * exp * loc) 
        *)
-      ICSELECT of string * icexp * loc
+      ICSELECT of RecordLabel.label * icexp * loc
     | (*%
          @format(exp list * loc)
          1[
@@ -1609,7 +1616,11 @@ in
          @format(exp1 * exp2 * loc)
        *)
       ICJOIN of icexp * icexp * loc
-    
+    | (*% *)
+      (*% @prefix formatWithType_ @format *)
+      (*% @prefix print_ @format *)
+      ICJSON of icexp * ty * loc
+
   and ffiArg
     = (*%
          @format(exp * ffiTy * loc) exp
@@ -1762,7 +1773,7 @@ in
       (*% @prefix print_
          @format({flex, fields: field fields, loc})
        *)
-      ICPATRECORD of {flex: bool, fields: (string * icpat) list, loc: loc}
+      ICPATRECORD of {flex: bool, fields: (RecordLabel.label * icpat) list, loc: loc}
     | (*%
          @format({patVar, tyOpt:ty opt, pat, loc})
           1[ patVar +1 "as" +1 pat]
@@ -2165,7 +2176,7 @@ in
       (*% @prefix print_
          @format(field fields * loc)
        *)
-      FFIRECORDTY of (string * ffiTy) list * loc
+      FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | (*%
          @format(ty * loc) ty
        *)
@@ -2338,6 +2349,7 @@ in
      a proper error message *)
 
   type topdecl = icdecl list
+  type exexnInfo = {longsymbol:longsymbol, ty:ty, version:version}
 
   fun mkTfv (tfvkind:tfunkind) = ref tfvkind
 
@@ -2500,6 +2512,7 @@ in
     | ICSQLSCHEMA {loc,...} => loc
     | ICSQLDBI (icpat1, icexp2, loc) => loc
     | ICJOIN (icexp1, icexp2, loc) => loc
+    | ICJSON (icexp, ty, loc) => loc
     
   fun getLeftLocExp icexp = #1 (getLocExp icexp)
   fun getRightLocExp icexp = #2 (getLocExp icexp)

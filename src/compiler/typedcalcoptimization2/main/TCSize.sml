@@ -135,8 +135,8 @@ local
       | TC.TPPRIMAPPLY {argExp, argTy, instTyList, loc, primOp} =>
         sizeExp (inc n) argExp items
       | TC.TPRAISE {exp, loc, ty} => sizeExp (inc n) exp items
-      | TC.TPRECORD {fields:TC.tpexp LabelEnv.map, loc, recordTy} =>
-        size (inc n) (EXP (LabelEnv.listItems fields) :: items)
+      | TC.TPRECORD {fields:TC.tpexp RecordLabel.Map.map, loc, recordTy} =>
+        size (inc n) (EXP (RecordLabel.Map.listItems fields) :: items)
       | TC.TPSELECT {exp, expTy, label, loc, resultTy} =>
         sizeExp (inc n) exp items
       | TC.TPSEQ {expList, expTyList, loc} =>
@@ -188,8 +188,8 @@ local
          sizePat (inc n) pat items
       | TC.TPPATLAYERED {asPat, loc, varPat} =>
          size (inc n) (PAT [asPat, varPat] :: items)
-      | TC.TPPATRECORD {fields:TC.tppat LabelEnv.map, loc, recordTy} =>
-        size (inc n) (PAT (LabelEnv.listItems fields) :: items)
+      | TC.TPPATRECORD {fields:TC.tppat RecordLabel.Map.map, loc, recordTy} =>
+        size (inc n) (PAT (RecordLabel.Map.listItems fields) :: items)
       | TC.TPPATVAR varInfo => size (inc n) items 
       | TC.TPPATWILD (ty, loc) => size (inc n) items
       )

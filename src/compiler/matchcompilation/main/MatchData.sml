@@ -132,7 +132,7 @@ in
   | ConstPat of const * T.ty
   | DataConPat of conInfo * bool * pat * T.ty
   | ExnConPat of exnCon * bool * pat * T.ty
-  | RecPat of (string * pat) list * T.ty
+  | RecPat of (RecordLabel.label * pat) list * T.ty
   | LayerPat of pat * pat
   | OrPat of pat * pat
 
@@ -151,7 +151,7 @@ in
   | EqNode of RC.varInfo * tree ConstMap.map * tree
   | DataConNode of RC.varInfo * tree DataConMap.map * tree
   | ExnConNode of RC.varInfo * tree ExnConMap.map * tree
-  | RecNode of RC.varInfo * string * tree
+  | RecNode of RC.varInfo * RecordLabel.label * tree
   | UnivNode of RC.varInfo * tree
 
   val unitExp =

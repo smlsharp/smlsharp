@@ -130,7 +130,7 @@ local
             | TC.TPPRIMAPPLY {argExp=exp,...} => get (exp, set)
             | TC.TPOPRIMAPPLY {argExp=exp,...} => get (exp, set)
             | TC.TPRECORD {fields, recordTy, loc} =>
-              LabelEnv.foldl get set fields
+              RecordLabel.Map.foldl get set fields
             | TC.TPSELECT {label, exp, expTy, resultTy, loc} => get (exp,set)
             | TC.TPMODIFY {recordExp,elementExp,...} =>
               get(elementExp, get(recordExp, set))
@@ -283,7 +283,7 @@ in
           limitCheck (Exp tpexp1::itemList) (n + 1)
         | TC.TPRECORD {fields, recordTy=ty, loc} => 
             limitCheck
-              ((map (fn (l,tpexp) => Exp tpexp) (LabelEnv.listItemsi fields))
+              ((map (fn (l,tpexp) => Exp tpexp) (RecordLabel.Map.listItemsi fields))
                @ itemList) (n + 1)
         | TC.TPSELECT {label=string, exp=tpexp, expTy=ty, resultTy, loc} 
             => limitCheck (Exp tpexp :: itemList) (n + 1)
@@ -641,11 +641,11 @@ in
            *)
           val expectedFields = getFieldsOfTy btvEnv ty
           val augmentedPatRows =
-            LabelEnv.foldri
+            RecordLabel.Map.foldri
             (fn (label, ty, pats) =>
              let
                val pat = 
-                 case LabelEnv.find(patRows, label) of
+                 case RecordLabel.Map.find(patRows, label) of
                    SOME pat => tppatToPat btvEnv FV pat
                  | NONE => WildPat ty
              in (label, pat) :: pats
@@ -1399,7 +1399,7 @@ in
       | TC.TPRECORD {fields, recordTy=ty, loc} =>
         RC.RCRECORD 
           {
-           fields=LabelEnv.map (tpexpToRcexp varEnv btvEnv) fields, 
+           fields=RecordLabel.Map.map (tpexpToRcexp varEnv btvEnv) fields, 
            recordTy=ty, 
            loc=loc
           }

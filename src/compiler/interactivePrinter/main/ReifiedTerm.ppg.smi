@@ -1,37 +1,39 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require local "../../../compiler-utils/env/main/LabelEnv.smi"
 _require local "./TermPrintUtils.ppg.smi"
 
 structure ReifiedTerm =
 struct
   type path = string list
   datatype reifiedTerm
-    = DATATYPEtyRepNOARG of string
-    | DATATYPEtyRepWITHARG of string * reifiedTerm
-    | ARRAYtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
-    | VECTORtyRep of reifiedTerm * (int -> reifiedTerm list * bool)
+    = INTtyRep of int
+    | INT64tyRep of int64
+    | INTINFtyRep of IntInf.int
+    | BOOLtyRep of bool
+    | REALtyRep of real
+    | REAL32tyRep of Real32.real
+    | STRINGtyRep of string
     | CHARtyRep of char
+    | WORDtyRep of word
+    | WORD8tyRep of Word8.word
+    | WORD64tyRep of Word64.word
     | EXNtyRep
     | FUNtyRep
-    | INTINFtyRep of IntInf.int
-    | INTtyRep of int
-    | INT64tyRep of int64
-    | BOOLtyRep of bool
     | LISTtyRep of reifiedTerm list
     | PTRtyRep
-    | REAL32tyRep of Real32.real
-    | REALtyRep of real
     | RECORDtyRep of (string * reifiedTerm) list
     | TUPLEtyRep of reifiedTerm list
-    | STRINGtyRep of string
+    | DATATYPEtyRep of string * reifiedTerm option
+    | ARRAYtyRep of {dummyPrinter:reifiedTerm, 
+                     contentsFn: int option -> {contents:reifiedTerm list,hasEllipsis:bool}
+                    }
+    | VECTORtyRep of {dummyPrinter:reifiedTerm, 
+                      contentsFn: int option -> {contents:reifiedTerm list,hasEllipsis:bool}
+                     }
     | UNITtyRep
     | UNPRINTABLERep
     | ELIPSISRep
     | BUILTINRep
-    | WORD8tyRep of Word8.word
-    | WORDtyRep of word
-    | WORD64tyRep of Word64.word
   datatype idstatus
     = EXEXN of {name:string, ty:string option}
     | EXEXNREP of {name:string, path:string}
@@ -49,6 +51,8 @@ struct
 
   val format_path : string list -> SMLFormat.FormatExpression.expression list
   val format_reifiedTerm 
+    : reifiedTerm -> SMLFormat.FormatExpression.expression list
+  val toJSON_reifiedTerm
     : reifiedTerm -> SMLFormat.FormatExpression.expression list
   val format_tstr : string * string -> SMLFormat.FormatExpression.expression list
   val format_idstatus 

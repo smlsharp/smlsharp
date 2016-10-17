@@ -356,12 +356,12 @@ struct
         rcdecs
       end
 
-  fun doSQLCompilation icdecs =
+  fun doTypedElaboration icdecs =
       let
-        val _ = #start Counter.sqlCompilationTimeCounter()
-        val icdecs = SQLCompilation.compile icdecs
-        val _ =  #stop Counter.sqlCompilationTimeCounter()
-        val _ = printIDCalc Control.printSQLCompile "SQL Compiled" icdecs
+        val _ = #start Counter.typedElaborationTimeCounter()
+        val icdecs = TypedElaboration.elaborate icdecs
+        val _ =  #stop Counter.typedElaborationTimeCounter()
+        val _ = printIDCalc Control.printTypedElaboration "TypedElaborated" icdecs
       in
         icdecs
       end
@@ -559,7 +559,8 @@ struct
                 else ()
 
         val (exnConList, nameevalTopEnv, idcalc) = doNameEvaluation context plunit
-        val idcalc = doSQLCompilation idcalc
+        val _ = JSONData.init (#topEnv context)
+        val idcalc = doTypedElaboration idcalc
         val idcalc = doVALRECOptimization idcalc
 
         val idcalc = if !Control.doUncurryOptimization

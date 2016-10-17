@@ -2,10 +2,14 @@ _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
 _require "../../../compiler-utils/dynamic/main/Dynamic.smi"
 _require "./ReifiedTerm.ppg.smi"
+_require local "../../types/main/IDCalc.ppg.smi"
+_require local "../../../json/main/JSONData.smi"
+_require local "../../name/main/LocalID.smi"
+_require local "../../absyn/main/RecordLabel.smi"
 
 structure DynamicPrinter =
 struct
-  val dynToReifiedTerm : Dynamic.dyn -> ReifiedTerm.reifiedTerm
-  val format : Dynamic.dyn -> SMLFormat.FormatExpression.expression list
-  val prettyPrint : Dynamic.dyn -> unit
+  val dynamicToReifiedTerm : Dynamic.dynamic -> ReifiedTerm.reifiedTerm
+  val format : Dynamic.dynamic -> SMLFormat.FormatExpression.expression list
+  val prettyPrint : Dynamic.dynamic -> unit
 end

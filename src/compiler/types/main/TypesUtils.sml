@@ -44,7 +44,7 @@ in
             | T.TYVARty (ref(T.SUBSTITUTED ty)) => visit ty
             | T.BOUNDVARty boundTypeVarID => ()
             | T.FUNMty _ => raise NonEQ 
-            | T.RECORDty tySenvMap => LabelEnv.app visit tySenvMap
+            | T.RECORDty tySenvMap => RecordLabel.Map.app visit tySenvMap
             | T.CONSTRUCTty {tyCon={id,iseq,...},args} =>
               if TypID.eq(id, #id BT.arrayTyCon) then ()
               else if TypID.eq(id, #id BT.refTyCon) then ()
@@ -58,11 +58,12 @@ in
         and visitTvarKind tvarKind =
             case tvarKind of
               T.UNIV => ()
+            | T.JSON => ()
             | T.BOXED => ()
             | T.UNBOXED => ()
-            | T.REC tySenvMap => LabelEnv.app visit tySenvMap
+            | T.REC tySenvMap => RecordLabel.Map.app visit tySenvMap
             | T.JOIN (tySenvMap, ty1, ty2, loc) => 
-              (LabelEnv.app visit tySenvMap;
+              (RecordLabel.Map.app visit tySenvMap;
                visit ty1;
                visit ty2)
             | T.OCONSTkind tyList => List.app visit tyList
@@ -113,12 +114,13 @@ in
         fun adjustEqKindInTvarKind eqKind kind = 
             case kind of
               T.UNIV => ()
+            | T.JSON => ()
             | T.BOXED => ()
             | T.UNBOXED => ()
             | T.REC fields => 
-              LabelEnv.app (adjustEqKindInTy eqKind) fields
+              RecordLabel.Map.app (adjustEqKindInTy eqKind) fields
             | T.JOIN (fields, ty1, ty2, loc) => 
-              (LabelEnv.app (adjustEqKindInTy eqKind) fields;
+              (RecordLabel.Map.app (adjustEqKindInTy eqKind) fields;
                adjustEqKindInTy eqKind ty1;
                adjustEqKindInTy eqKind ty2)
             | T.OCONSTkind tyList =>
@@ -129,6 +131,7 @@ in
         (adjustEqKindInTvarKind A.EQ tvarKind;
          case tvarKind of
            T.UNIV => T.UNIV
+         | T.JSON => T.JSON
          | T.BOXED => T.BOXED
          | T.UNBOXED => T.UNBOXED
          | T.REC fields => T.REC fields

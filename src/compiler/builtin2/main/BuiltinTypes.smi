@@ -1,7 +1,6 @@
 _require local "../../../basis.smi"
 _require local "../../../smlformat-lib.smi"
-_require local "../../../compiler-utils/env/main/LabelEnv.smi"
-_require local "../../util/main/TupleUtils.smi"
+_require local "../../absyn/main/RecordLabel.smi"
 _require local "../../control/main/Bug.ppg.smi"
 _require local "../../control/main/Loc.ppg.smi"
 _require local "../../absyn/main/Absyn.ppg.smi"

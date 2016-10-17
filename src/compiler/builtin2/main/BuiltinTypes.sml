@@ -23,7 +23,7 @@ struct
     | SELF of ty list
     | CON of tstrInfo * ty list
     | TUPLE of ty list
-    | RECORD of (string * ty) list
+    | RECORD of (RecordLabel.label * ty) list
     | FUN of ty * ty
 
   datatype dtyKind =
@@ -64,11 +64,11 @@ struct
         I.TYRECORD
           (foldl
              (fn ((label, ty), fields) =>
-                 LabelEnv.insert(fields, label, evalTy env ty))
-             LabelEnv.empty
+                 RecordLabel.Map.insert(fields, label, evalTy env ty))
+             RecordLabel.Map.empty
              fields)
       | TUPLE tys =>
-        evalTy env (RECORD (TupleUtils.listToTuple tys))
+        evalTy env (RECORD (RecordLabel.tupleList tys))
       | CON ({tfun,...}, args) =>
         I.TYCONSTRUCT {tfun = tfun, args = map (evalTy env) args}
       | SELF args =>

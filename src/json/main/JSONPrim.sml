@@ -1,0 +1,3 @@
+structure JSONPrim =
+struct
+end

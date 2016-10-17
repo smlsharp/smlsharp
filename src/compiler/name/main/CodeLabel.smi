@@ -290,6 +290,8 @@ struct
   val toString : id -> string
   val format_id : id -> SMLFormat.FormatExpression.expression list
 
+  val asFunLocalLabel : id -> FunLocalLabel.id
+
   structure Map =
   struct
     structure Key =

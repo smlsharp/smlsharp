@@ -233,7 +233,7 @@ struct
   (*%
     @params(btvOrdEnv)
     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
-    @formatter(enclosedLabelEnv) TermFormat.formatEnclosedLabelEnv
+    @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
     @formatter(freeTypeVarID) format_freeTypeVarID
     @formatter(enclosedList) TermFormat.formatEnclosedList
     @formatter(seqList) TermFormat.formatSeqList
@@ -251,12 +251,13 @@ struct
     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
     @formatter(bool) SmlppgUtil.formatBinaryChoice
     @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
+    @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   (*%
     @prefix formatWithType_
     @params(btvOrdEnv)
     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
-    @formatter(enclosedLabelEnv) TermFormat.formatEnclosedLabelEnv
+    @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
     @formatter(freeTypeVarID) format_freeTypeVarID
     @formatter(enclosedList) TermFormat.formatEnclosedList
     @formatter(seqList) TermFormat.formatSeqList
@@ -274,6 +275,7 @@ struct
     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
     @formatter(bool) SmlppgUtil.formatBinaryChoice
     @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
+    @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype ty =
       (*% @format(t) t()(btvOrdEnv)  *)
@@ -329,7 +331,7 @@ struct
       (*% @prefix formatWithType_ 
           @format(ty tys) tys:recordTy(ty()(btvOrdEnv))
        *)
-      RECORDty of ty LabelEnv.map
+      RECORDty of ty RecordLabel.Map.map
     | (*%
        * @format({tyCon, args: argTy argTys})
        * L8{ 2[ argTys:seqList(argTy()(btvOrdEnv))("(",",",")")
@@ -392,6 +394,11 @@ struct
           @format 
        *)
       UNIV
+    | (*% @format "#json" *)
+      (*% @prefix formatWithType_ 
+          @format "#json"
+       *)
+      JSON
     | (*% @format "#boxed" *)
       (*% @prefix formatWithType_ 
           @format "#boxed"
@@ -404,24 +411,24 @@ struct
       UNBOXED
     | (*%
        * @format(ty tys)
-       * "#" tys:enclosedLabelEnv(ty()(btvOrdEnv))("{",",",":","}")
+       * "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
        *)
       (*% @prefix formatWithType_ 
        * @format(ty tys)
-       * "#" tys:enclosedLabelEnv(ty()(btvOrdEnv))("{",",",":","}")
+       * "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
        *)
-      REC of ty LabelEnv.map
+      REC of ty RecordLabel.Map.map
     | (*%
          @format(ty tys * ty1 * ty2 * loc)
-          "#" tys:enclosedLabelEnv(ty()(btvOrdEnv))("{",",",":","}")
+          "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
            "(" ty1()(btvOrdEnv) "," ty2()(btvOrdEnv)  ")"
        *)
       (*% @prefix formatWithType_ 
          @format(ty tys * ty1 * ty2 * loc)
-         "#" tys:enclosedLabelEnv(ty()(btvOrdEnv))("{",",",":","}")
+         "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
          "(" ty1()(btvOrdEnv) "," ty2()(btvOrdEnv)  ")"
        *)
-      JOIN of ty LabelEnv.map * ty * ty * Loc.loc
+      JOIN of ty RecordLabel.Map.map * ty * ty * Loc.loc
 
   and dtyKind
     = (*% @format *)
@@ -492,7 +499,7 @@ struct
       (*% @prefix formatWithType_ 
        * @format(label * ty) "INDEX(" !N0{ label "," +1 ty()(btvOrdEnv) ")" }
        *)
-      INDEXty of string * ty
+      INDEXty of RecordLabel.label * ty
     | (*%
        * @format(ty) "TAG(" !N0{ ty()(btvOrdEnv) ")" }
        *)
@@ -859,7 +866,7 @@ struct
       | BOUNDVARty id => if BoundTypeVarID.Set.member (btv, id)
                          then [id] else nil
       | FUNMty (tys, ty) => List.concat (map (btvOrderTy btv) (tys @ [ty]))
-      | RECORDty tys => List.concat (map (btvOrderTy btv) (LabelEnv.listItems tys))
+      | RECORDty tys => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
       | CONSTRUCTty {tyCon, args} => List.concat (map (btvOrderTy btv) args)
       | POLYty {boundtvars, body} =>
         let
@@ -902,10 +909,11 @@ struct
       | OPRIMkind {instances,...} =>
         List.concat (map (btvOrderTy btv) instances)
       | UNIV => nil
+      | JSON => nil
       | BOXED => nil
       | UNBOXED => nil
-      | REC tys => List.concat (map (btvOrderTy btv) (LabelEnv.listItems tys))
-      | JOIN (tys, ty1, ty2, loc) => List.concat (map (btvOrderTy btv) (LabelEnv.listItems tys))
+      | REC tys => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
+      | JOIN (tys, ty1, ty2, loc) => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
   and btvOrder (boundtvars, body) =
       let
         val btv = BoundTypeVarID.Map.foldli

@@ -86,8 +86,8 @@ in
         evalBtv btvMap btv
       | T.FUNMty (tyList, ty) =>
         T.FUNMty (map (evalTy btvMap) tyList, evalTy btvMap ty)
-      | T.RECORDty (fields:ty LabelEnv.map) =>
-        T.RECORDty (LabelEnv.map (evalTy btvMap) fields)
+      | T.RECORDty (fields:ty RecordLabel.Map.map) =>
+        T.RECORDty (RecordLabel.Map.map (evalTy btvMap) fields)
       | T.CONSTRUCTty
           {
            tyCon =
@@ -166,12 +166,13 @@ in
              operators
           }
       | T.UNIV => T.UNIV
+      | T.JSON => T.JSON
       | T.BOXED => T.BOXED
       | T.UNBOXED => T.UNBOXED
-      | T.REC (fields:ty LabelEnv.map) =>
-        T.REC (LabelEnv.map (evalTy btvMap) fields)
-      | T.JOIN (fields:ty LabelEnv.map, ty1, ty2, loc) =>
-        T.JOIN (LabelEnv.map (evalTy btvMap) fields, evalTy btvMap ty1, evalTy btvMap ty2, loc)
+      | T.REC (fields:ty RecordLabel.Map.map) =>
+        T.REC (RecordLabel.Map.map (evalTy btvMap) fields)
+      | T.JOIN (fields:ty RecordLabel.Map.map, ty1, ty2, loc) =>
+        T.JOIN (RecordLabel.Map.map (evalTy btvMap) fields, evalTy btvMap ty1, evalTy btvMap ty2, loc)
   and evalDtyKind btvMap dtyKind =
       case dtyKind of
         T.DTY => dtyKind

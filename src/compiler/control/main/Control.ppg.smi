@@ -34,7 +34,7 @@ struct
   val printVALRECOpt : bool ref
   val printFundeclElab : bool ref
   val printMatchCompile : bool ref
-  val printSQLCompile : bool ref
+  val printTypedElaboration : bool ref
   val printFFICompile : bool ref
   val printRecordCompile : bool ref
   val printDatatypeCompile : bool ref

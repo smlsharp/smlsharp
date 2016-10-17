@@ -145,8 +145,13 @@ struct
          (filePlace, realPath) : N.source)
       end
 
-  datatype 'a parse_result =
-      LOADED of 'a
+  type require = I.interfaceDec * I.loc
+  type interface = {require : require list, topdecs : Absyn.topdec list}
+  type dec = {interfaceDecs : require list, loadedFile : N.source}
+  type loaded = {dec : dec, ret : interface Assoc.assoc}
+
+  datatype parse_result =
+      LOADED of loaded
     | PARSED of env * N.source * I.itop
 
   fun parseInterface loaded (env, loadPath) symbol =

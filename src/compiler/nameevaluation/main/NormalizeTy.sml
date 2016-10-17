@@ -96,7 +96,7 @@ in
           (case TvarMap.find(tvarEnv, tvar) of
              NONE => I.TYVAR tvar
            | SOME ty => ty)
-        | I.TYRECORD fields => I.TYRECORD (LabelEnv.map (redTy tvarEnv) fields)
+        | I.TYRECORD fields => I.TYRECORD (RecordLabel.Map.map (redTy tvarEnv) fields)
         | I.TYCONSTRUCT {tfun, args} =>
           let
             val args = map (redTy tvarEnv) args
@@ -388,18 +388,18 @@ in
       let exception FALSE in
         let
           val F2 =
-              LabelEnv.foldli
+              RecordLabel.Map.foldli
                 (fn (name, ty1, F2) =>
-                    case LabelEnv.find(fields2, name) of
+                    case RecordLabel.Map.find(fields2, name) of
                       NONE => raise FALSE
                     | SOME ty2 => if equalTy (typIdEquiv,tvarIdEquiv) (ty1,ty2) then 
-                                    (#1 (LabelEnv.remove(F2, name)))
+                                    (#1 (RecordLabel.Map.remove(F2, name)))
                                   else raise FALSE
                 )
                 fields2
                 fields1
         in
-          LabelEnv.isEmpty F2
+          RecordLabel.Map.isEmpty F2
         end
         handle FALSE => false
       end
@@ -450,7 +450,7 @@ to re-structure builtins.
             | I.INFERREDTY ty => raise bug "INFERREDTY"
         and eqFields fields =
             let exception FALSE in
-              (LabelEnv.app
+              (RecordLabel.Map.app
                 (fn ty => if eqTy ty then () else raise FALSE)
                 fields; 
                true)
@@ -472,7 +472,7 @@ to re-structure builtins.
            NONE => I.TYVAR tvar
          | SOME ty => ty)
       | I.TYRECORD fields => 
-        I.TYRECORD (LabelEnv.map (substTy subst) fields)
+        I.TYRECORD (RecordLabel.Map.map (substTy subst) fields)
       | I.TYCONSTRUCT {tfun, args} =>
         I.TYCONSTRUCT {tfun=tfun, args=map (substTy subst) args}
       | I.TYFUNM (tyList1, ty2) =>

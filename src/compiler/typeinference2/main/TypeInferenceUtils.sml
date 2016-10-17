@@ -58,6 +58,8 @@ in
         tv := T.SUBSTITUTED (nextDummyTy())
       | ref(T.TVAR {tvarKind = T.UNBOXED, ...}) =>
         tv := T.SUBSTITUTED (nextDummyTy())
+      | ref(T.TVAR {tvarKind = T.JSON, ...}) => 
+        tv := T.SUBSTITUTED (nextDummyTy())
       | ref(T.SUBSTITUTED _) => ()
 
 (*
@@ -164,8 +166,8 @@ in
            case fromTy of
              T.RECORDty fromTyFields =>
              let
-               val labels = LabelEnv.listKeys tyFields
-               val fromLabels = LabelEnv.listKeys fromTyFields
+               val labels = RecordLabel.Map.listKeys tyFields
+               val fromLabels = RecordLabel.Map.listKeys fromTyFields
                val _ = if length labels = length fromLabels then ()
                        else raise CoerceTy
                val _ = List.app
@@ -180,7 +182,7 @@ in
                        val var = TCU.newTCVarInfo loc fromTy
                        val varExp = TPC.TPVAR var
                      in
-                       LabelEnv.foldli
+                       RecordLabel.Map.foldli
                          (fn (label,fieldTy,(extraBindsRev, expFields)) =>
                              let
                                val fieldVar = TCU.newTCVarInfo loc fieldTy
@@ -196,19 +198,19 @@ in
                                    )
                              in
                                (newBind::extraBindsRev,
-                                LabelEnv.insert(expFields,label,fieldExp)
+                                RecordLabel.Map.insert(expFields,label,fieldExp)
                                )
                              end
                          )
-                         ([(var, tpexp)], LabelEnv.empty)
+                         ([(var, tpexp)], RecordLabel.Map.empty)
                          fromTyFields
                      end
                fun getItem (map, label) =
-                   case LabelEnv.find(map, label) of
+                   case RecordLabel.Map.find(map, label) of
                      SOME item => item
                    | NONE => raise bug "impossible"
                val (extraBindsRev, newExpFields) =
-                   LabelEnv.foldli
+                   RecordLabel.Map.foldli
                    (fn (label, exp, (extraBindsRev,newExpFields)) =>
                        let
                          val fromTy = getItem(fromTyFields, label)
@@ -216,7 +218,7 @@ in
                          val newExp = coerceTy(exp, fromTy, toTy, loc)
                        in
                          if TCU.isAtom newExp then
-                           (extraBindsRev, LabelEnv.insert(newExpFields, label, newExp))
+                           (extraBindsRev, RecordLabel.Map.insert(newExpFields, label, newExp))
                          else
                            let
                              val fieldVar = TCU.newTCVarInfo loc toTy
@@ -224,12 +226,12 @@ in
                              val newBind = (fieldVar, newExp)
                            in
                              ((fieldVar, newExp)::extraBindsRev,
-                              LabelEnv.insert(newExpFields, label, fieldExp)
+                              RecordLabel.Map.insert(newExpFields, label, fieldExp)
                              )
                            end
                        end
                    )
-                   (extraBindsRev, LabelEnv.empty)
+                   (extraBindsRev, RecordLabel.Map.empty)
                    expFields
                val resultExp =
                    TPC.TPMONOLET

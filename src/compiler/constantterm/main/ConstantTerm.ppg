@@ -308,7 +308,7 @@ struct
    * fix the form of constant expression according to its type.
    *)
   fun fixConst {constTerm : constant -> 'exp,
-                recordTerm : 'exp LabelEnv.map * Types.ty -> 'exp,
+                recordTerm : 'exp RecordLabel.Map.map * Types.ty -> 'exp,
                 conTerm : {con: RC.conInfo, instTyList: Types.ty list,
                            arg: 'exp option} -> 'exp}
                (const, ty) =
@@ -354,10 +354,8 @@ struct
 
         fun pairTerm ((e1,t1), (e2,t2)) =
             let
-              fun fromList list =
-                  foldl (fn ((key, item), m) => LabelEnv.insert (m, key, item)) LabelEnv.empty list
-              val ty = T.RECORDty (fromList [("1",t1),("2",t2)])
-              val exp = recordTerm (fromList [("1",e1), ("2",e2)], ty)
+              val ty = T.RECORDty (RecordLabel.tupleMap [t1, t2])
+              val exp = recordTerm (RecordLabel.tupleMap [e1, e2], ty)
             in
               (exp, ty)
             end

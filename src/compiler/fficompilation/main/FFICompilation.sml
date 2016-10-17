@@ -132,14 +132,6 @@ struct
                 argExp = exp,
                 loc = loc}}
 
-  fun tupleLabels l =
-      let
-        fun loop n nil = nil
-          | loop n (h::t) = (Int.toString n, h) :: loop (n+1) t
-      in
-        loop 1 l
-      end
-
   fun explodeRecord ({ty as T.RECORDty tys, exp}, loc) =
       map (fn (label, fieldTy) =>
               {ty = fieldTy,
@@ -149,11 +141,11 @@ struct
                                  expTy = ty,
                                  resultTy = fieldTy,
                                  loc = loc}})
-          (LabelEnv.listItemsi tys)
+          (RecordLabel.Map.listItemsi tys)
     | explodeRecord _ = raise Bug.Bug "explodeRecord"
 
   fun LabelEnvFromList list =
-      List.foldl (fn ((key, item), m) => LabelEnv.insert (m, key, item)) LabelEnv.empty list
+      List.foldl (fn ((key, item), m) => RecordLabel.Map.insert (m, key, item)) RecordLabel.Map.empty list
   fun implodeRecord (fields, loc) =
       let
         val tys = LabelEnvFromList (map (fn (l,{ty,exp}) => (l,ty)) fields)
@@ -172,7 +164,7 @@ struct
        exp = R.RCCONSTANT {const=A.UNITCONST loc, ty=BT.unitTy,
                            loc=loc}}
     | composeArg ([exp], loc) = exp
-    | composeArg (exps, loc) = implodeRecord (tupleLabels exps, loc)
+    | composeArg (exps, loc) = implodeRecord (RecordLabel.tupleList exps, loc)
 
   fun decomposeArg (nil, loc) = (newVar BT.unitTy, nil)
     | decomposeArg ([ty], loc) =
@@ -180,7 +172,7 @@ struct
       in (var, [varExp loc var])
       end
     | decomposeArg (tys, loc) =
-      let val var = newVar (T.RECORDty (LabelEnvFromList (tupleLabels tys)))
+      let val var = newVar (T.RECORDty (RecordLabel.tupleMap tys))
       in (var, explodeRecord (varExp loc var, loc))
       end
 
@@ -191,10 +183,10 @@ struct
       | TC.FFIRECORDTY (fields, loc) =>
         List.exists (fn (k,v) => hasFunTy v) fields
 
-  fun hasSortedField fields =
-      map #1 fields = 
-      SEnv.listKeys 
-        (List.foldl (fn ((key, item), m) => SEnv.insert (m, key, item)) SEnv.empty fields)
+  fun hasSortedField nil = true
+    | hasSortedField [_] = true
+    | hasSortedField ((l1,_)::(t as (l2,_)::_)) =
+      RecordLabel.compare (l1, l2) = LESS andalso hasSortedField t
 
   fun zipApp nil nil = nil
     | zipApp (f::ft) (h::t) = f h :: zipApp ft t
@@ -264,7 +256,8 @@ struct
           val stubs = map (fn (k,ty) => (k, stubExport env ty)) fields
           val retTys = map (fn (k,(ty,_)) => (k,ty)) stubs
           fun stubFields exps =
-              tupleLabels (zipApp (map (fn (_,(_,f)) => f) stubs) exps)
+              RecordLabel.tupleList
+                (zipApp (map (fn (_,(_,f)) => f) stubs) exps)
         in
           (T.RECORDty (LabelEnvFromList retTys),
            if hasSortedField fields andalso not (hasFunTy ffity)
@@ -435,7 +428,7 @@ struct
                  loc = loc}
       | R.RCRECORD {fields, recordTy, loc} =>
         R.RCRECORD
-          {fields = LabelEnv.map (compileExp env) fields,
+          {fields = RecordLabel.Map.map (compileExp env) fields,
            recordTy = recordTy,
            loc = loc}
       | R.RCSELECT {indexExp, label, exp, expTy, resultTy, loc} =>

@@ -1,6 +1,9 @@
 (**
  * Word, LargeWord
  * @author SASAKI Tomohiro
+ * @author UENO Katsuhiro
+ * @author YAMATODANI Kiyoshi
+ * @author Atsushi Ohori
  * @copyright 2014, Tohoku University.
  *)
 

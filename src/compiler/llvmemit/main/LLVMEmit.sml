@@ -208,6 +208,8 @@ struct
         LLVM.LLVMConstReal (emitTy context ty, x)
       | L.NULL =>
         LLVM.LLVMConstNull (emitTy context ty)
+      | L.UNDEF =>
+        LLVM.LLVMGetUndef (emitTy context ty)
       | L.SYMBOL symbol =>
         (
           case SEnv.find (topMap, symbol) of

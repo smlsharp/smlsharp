@@ -167,7 +167,7 @@ local
                      Option.map (map (evalFfiTy context)) ffiTyList2,
                      map (evalFfiTy context) ffiTyList3,
                      loc)
-      | TC.FFIRECORDTY (fields:(string * TC.ffiTy) list,loc) =>
+      | TC.FFIRECORDTY (fields:(RecordLabel.label * TC.ffiTy) list,loc) =>
         TC.FFIRECORDTY
           (map (fn (l,ty)=>(l, evalFfiTy context ty)) fields,loc)
   (* eval terms *)
@@ -352,7 +352,7 @@ local
              RC.RCRECORD {fields, loc, recordTy} =>
              if not (RCU.expansive recordExp) then
                eval 
-                 (RC.RCRECORD {fields=LabelEnv.insert(fields, label, elementExp), 
+                 (RC.RCRECORD {fields=RecordLabel.Map.insert(fields, label, elementExp), 
                                loc=loc, 
                                recordTy=recordTy}
                  )
@@ -407,9 +407,9 @@ local
             }
         | RC.RCRAISE {exp, loc, ty} =>
           RC.RCRAISE {exp=eval exp, loc=loc, ty = evalT ty}
-        | RC.RCRECORD {fields:rcexp LabelEnv.map, loc, recordTy} =>
+        | RC.RCRECORD {fields:rcexp RecordLabel.Map.map, loc, recordTy} =>
           RC.RCRECORD
-            {fields=LabelEnv.map eval fields,
+            {fields=RecordLabel.Map.map eval fields,
              loc=loc,
              recordTy=evalT recordTy
             }
@@ -420,7 +420,7 @@ local
             case exp of
               RC.RCRECORD {fields, loc, recordTy} =>
               if not (RCU.expansive exp) then
-                (case LabelEnv.find (fields, label)  of
+                (case RecordLabel.Map.find (fields, label)  of
                    SOME exp => exp
                  | NONE => raise bug "label not found")
               else raise bug "non value term in a record"

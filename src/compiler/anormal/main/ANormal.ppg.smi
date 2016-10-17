@@ -219,6 +219,7 @@ struct
     | ANRAISE of
       {
         argExp : anvalue,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | ANHANDLER of
@@ -227,6 +228,7 @@ struct
         exnVar : varInfo,
         id : HandlerLabel.id,
         handlerExp : anexp,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | ANSWITCH of

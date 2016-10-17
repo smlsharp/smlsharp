@@ -86,6 +86,7 @@ struct
       INTCONST of Word64.word
     | FLOATCONST of real
     | NULL
+    | UNDEF
     | SYMBOL of symbol
     | CONST_BITCAST of (ty * const) * ty
     | CONST_INTTOPTR of (ty * const) * ty

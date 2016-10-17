@@ -28,7 +28,7 @@ local
           I.TYWILD => set
         | I.TYVAR _ => set
         | I.TYRECORD fields =>
-          LabelEnv.foldl
+          RecordLabel.Map.foldl
             (fn (ty, set) => dtys (ty, set))
             set
             fields
@@ -152,7 +152,7 @@ local
         if lifted then TvarSet.add(liftedTys, tvar)
         else liftedTys
       | I.TYRECORD fields => 
-        LabelEnv.foldl
+        RecordLabel.Map.foldl
           (fn (ty, liftedTys) => liftedTysTy (ty, liftedTys))
           liftedTys
           fields

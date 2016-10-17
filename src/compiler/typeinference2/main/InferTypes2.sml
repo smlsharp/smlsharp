@@ -51,14 +51,6 @@ local
   fun exInfoToLongsymbol {longsymbol, version, ty} =
       Symbol.setVersion(longsymbol, version)
 
-  fun mapi f l =
-      let
-        fun loop (i, nil) = nil
-          | loop (i, h::t) = f (i,h) :: loop (i+1, t)
-      in
-        loop (1, l)
-      end
-
   fun makeTPRecord labelTyTpexpList loc =
       let
         val (tpexpSmap, tySmap, tpbindsRev) =
@@ -69,8 +61,8 @@ local
                   if TCU.isAtom tpexp then
 *)
                     (
-                     LabelEnv.insert (tpexpSmap, label, tpexp),
-                     LabelEnv.insert (tySmap, label, ty),
+                     RecordLabel.Map.insert (tpexpSmap, label, tpexp),
+                     RecordLabel.Map.insert (tySmap, label, ty),
                      tpbindsRev
                     )
                   else
@@ -78,14 +70,14 @@ local
                       val newVarInfo = TCU.newTCVarInfo loc ty
                     in
                       (
-                       LabelEnv.insert
+                       RecordLabel.Map.insert
                          (tpexpSmap, label, TC.TPVAR newVarInfo),
-                       LabelEnv.insert(tySmap, label, ty),
+                       RecordLabel.Map.insert(tySmap, label, ty),
                        (newVarInfo, tpexp) :: tpbindsRev
                       )
                     end
               )
-              (LabelEnv.empty, LabelEnv.empty, nil)
+              (RecordLabel.Map.empty, RecordLabel.Map.empty, nil)
               labelTyTpexpList
         val tpbinds = List.rev tpbindsRev
         val resultTy = T.RECORDty tySmap
@@ -102,15 +94,12 @@ local
         (resultTy, recordExp)
       end
 
-  fun makeTupleFields l =
-      mapi (fn (i,x) => (Int.toString i, x)) l
-
   fun labelEnvFromList list =
-      List.foldl (fn ((key, item), m) => LabelEnv.insert (m, key, item)) LabelEnv.empty list
+      List.foldl (fn ((key, item), m) => RecordLabel.Map.insert (m, key, item)) RecordLabel.Map.empty list
 
   fun makeTupleTy nil = BT.unitTy
     | makeTupleTy [ty] = ty
-    | makeTupleTy tys = T.RECORDty (labelEnvFromList (makeTupleFields tys))
+    | makeTupleTy tys = T.RECORDty (RecordLabel.tupleMap tys)
 
   fun makeTupleExp (nil, loc) =
       TC.TPCONSTANT {const=A.UNITCONST loc, ty=BT.unitTy, loc=loc}
@@ -118,34 +107,13 @@ local
     | makeTupleExp (fields, loc) =
       let
         val (_, recordExp) = 
-            makeTPRecord (makeTupleFields fields) loc
+            makeTPRecord (RecordLabel.tupleList fields) loc
       in
         recordExp
       end
 
-  fun isTuple fields =
-      let
-        exception NotTuple
-      in
-        (LabelEnv.foldli
-           (fn (label, _, n) =>
-               if Int.toString n = label then n + 1 else raise NotTuple)
-           1
-           fields;
-         true)
-        handle NotTuple => false
-      end
-
-  fun isTupleList fields =
-      let
-        fun check n nil = true
-          | check n ((k,_)::t) = Int.toString n = k andalso check (n + 1) t
-      in
-        check 1 fields
-      end
-
   fun LabelEnv_all f env =
-      LabelEnv.foldl (fn (x,z) => z andalso f x) true env
+      RecordLabel.Map.foldl (fn (x,z) => z andalso f x) true env
 
   datatype dir = IMPORT | EXPORT
   datatype safe = SAFE | UNSAFE
@@ -197,7 +165,7 @@ local
             | T.FUNMty (tyList, ty) =>
               T.FUNMty (map tySubst tyList, tySubst ty)
             | T.RECORDty tySenvMap =>
-              T.RECORDty (LabelEnv.map tySubst tySenvMap)
+              T.RECORDty (RecordLabel.Map.map tySubst tySenvMap)
             | T.CONSTRUCTty {tyCon, args} =>
               (case TypID.Map.find(typIdMap, #id tyCon) of
                  NONE => 
@@ -224,12 +192,13 @@ local
                  operators = map (oprimSelectorSubst typIdMap) operators
                 }
             | T.UNIV => T.UNIV
+            | T.JSON => T.JSON
             | T.BOXED => T.BOXED
             | T.UNBOXED => T.UNBOXED
             | T.REC tySenvMap =>
-              T.REC (LabelEnv.map tySubst tySenvMap)
+              T.REC (RecordLabel.Map.map tySubst tySenvMap)
             | T.JOIN (tySenvMap, ty1, ty2, loc) =>
-              T.JOIN (LabelEnv.map tySubst tySenvMap, tySubst ty1, tySubst ty2, loc)
+              T.JOIN (RecordLabel.Map.map tySubst tySenvMap, tySubst ty1, tySubst ty2, loc)
       in
         tySubst ty
       end
@@ -360,7 +329,7 @@ local
                  loc=loc}
             | TC.TPRECORD {fields, recordTy, loc} =>
               TC.TPRECORD
-                {fields = LabelEnv.map expSubst fields,
+                {fields = RecordLabel.Map.map expSubst fields,
                  recordTy = tySubst recordTy,
                  loc = loc
                 }
@@ -454,11 +423,12 @@ local
                   operators = map (oprimSelectorSubst typIdMap) operators
                  }
              | T.UNIV => T.UNIV
+             | T.JSON => T.JSON
              | T.BOXED => T.BOXED
              | T.UNBOXED => T.UNBOXED
-             | T.REC tyMap => T.REC (LabelEnv.map tySubst tyMap)
+             | T.REC tyMap => T.REC (RecordLabel.Map.map tySubst tyMap)
              | T.JOIN (tyMap, ty1, ty2, loc) => 
-               T.JOIN (LabelEnv.map tySubst tyMap, tySubst ty1, tySubst ty2, loc)
+               T.JOIN (RecordLabel.Map.map tySubst tyMap, tySubst ty1, tySubst ty2, loc)
             }
         and patSubst pat =
             case pat of
@@ -510,7 +480,7 @@ local
 
             | TC.TPPATRECORD {fields, recordTy, loc} =>
               TC.TPPATRECORD
-                {fields = LabelEnv.map patSubst fields,
+                {fields = RecordLabel.Map.map patSubst fields,
                  recordTy = tySubst recordTy,
                  loc = loc
                 }
@@ -738,12 +708,13 @@ in
         isInteroperableTycon dir (tyCon, args)
       | T.RECORDty fields =>
         exportOnly dir
-        andalso (isUnsafe dir orelse isTuple fields)
+        andalso (isUnsafe dir orelse RecordLabel.isOrderedMap fields)
         andalso LabelEnv_all (isInteroperableArgTy dir) fields
       | T.TYVARty (ref (T.TVAR ({tvarKind,...}))) =>
         (
           case tvarKind of
             T.UNIV => false
+          | T.JSON => false
           | T.BOXED => true
           | T.UNBOXED => false
           | T.REC _ => false
@@ -759,6 +730,7 @@ in
         (
           case tvarKind of
             T.UNIV => isUnsafe dir
+          | T.JSON => isUnsafe dir
           | T.BOXED => true
           | T.UNBOXED => true
           | T.REC _ => false
@@ -815,7 +787,7 @@ in
         (
           case dir of
             (EXPORT, _) =>
-            if isUnsafe dir orelse isTupleList fields
+            if isUnsafe dir orelse RecordLabel.isOrderedList fields
             then TC.FFIRECORDTY
                    (map (fn (k,v) => (k, evalFFIty context dir v)) fields, loc)
             else (E.enqueueError "Typeinf 003"
@@ -880,9 +852,10 @@ in
   fun evalTvarKind (context:TIC.context) tvarkind =
     case tvarkind of
       IC.UNIV => T.UNIV
+    | IC.JSON => T.JSON
     | IC.REC fields =>
       (T.REC
-         (LabelEnv.map
+         (RecordLabel.Map.map
             (ITy.evalIty context handle e => (P.print "ity3\n"; raise e))
             fields)
        handle e => raise e)
@@ -892,6 +865,7 @@ in
   fun evalScopedTvars lambdaDepth (context:TIC.context) kindedTvarList loc =
     let
       fun occurresTvarInTvarkind (tvstateRef, T.UNIV) = false
+        | occurresTvarInTvarkind (tvstateRef, T.JSON) = false
         | occurresTvarInTvarkind (tvstateRef, T.BOXED) = false
         | occurresTvarInTvarkind (tvstateRef, T.UNBOXED) = false
         | occurresTvarInTvarkind (tvstateRef, T.OCONSTkind tyList) =
@@ -1025,12 +999,12 @@ in
             val newVars = map (fn _ => IC.newICVar ()) patList
             val newVarExps = map (fn var => IC.ICVAR var) newVars
             val newVarPats = map (fn var => IC.ICPATVAR_TRANS var) newVars
-            val argRecord = IC.ICRECORD (TupleUtils.listToTuple newVarExps, loc)
+            val argRecord = IC.ICRECORD (RecordLabel.tupleList newVarExps, loc)
             val funRules =
               map
               (fn {args, body} =>
                {args=[IC.ICPATRECORD{flex=false,
-                               fields=TupleUtils.listToTuple args,
+                               fields=RecordLabel.tupleList args,
                                loc=loc}],
                 body=body}
                )
@@ -1067,13 +1041,13 @@ in
           (case (TB.derefTy ty1, TB.derefTy ty2) of
              (T.RECORDty fields1,T.RECORDty fields2) =>
              let
-               val unionFields = LabelEnv.unionWithi 
+               val unionFields = RecordLabel.Map.unionWithi 
                                    (fn (l, ty1, ty2) => (unify loc (l, ty1,ty2); ty1))
                                    (fields1, fields2)
                val _ = 
-                   LabelEnv.appi 
+                   RecordLabel.Map.appi 
                      (fn (l,ty) => 
-                         case LabelEnv.find (unionFields, l) of
+                         case RecordLabel.Map.find (unionFields, l) of
                            NONE => 
                            (E.enqueueError 
                               "ResoleJoin 001"
@@ -1174,7 +1148,7 @@ in
       | T.BOUNDVARty _ => ty
       | T.FUNMty (tyList,ty) =>
         T.FUNMty (map (revealTy key) tyList, revealTy key ty)
-      | T.RECORDty tyMap => T.RECORDty (LabelEnv.map (revealTy key) tyMap)
+      | T.RECORDty tyMap => T.RECORDty (RecordLabel.Map.map (revealTy key) tyMap)
       | T.CONSTRUCTty
           {tyCon= tyCon as {dtyKind=T.OPAQUE{opaqueRep,revealKey},...},args} =>
         let
@@ -1366,7 +1340,7 @@ in
                 | _ =>
                   let
                     val resTuple =
-                      makeTupleFields
+                      RecordLabel.tupleList
                         (map (fn x => IC.ICVAR x)
                              (VarSet.listItems varSet))
                     val newIcexp =
@@ -1382,24 +1356,25 @@ in
                     val newVarInfo = TCU.newTCVarInfo loc tupleTy
                     val tyList =
                       case tupleTy of
-                        T.RECORDty tyFields => LabelEnv.listItems tyFields
+                        T.RECORDty tyFields => RecordLabel.Map.listItems tyFields
                       | T.ERRORty => map (fn x => T.ERRORty) resTuple
                       | _ => raise bug "decompose"
                     val resBinds =
-                      mapi
-                      (fn (i, ({longsymbol, id}, ty)) =>
+                      map
+                      (fn (label, ({longsymbol, id}, ty)) =>
                         (
                          {longsymbol = longsymbol, id = id, ty = ty, opaque=false},
                          TC.TPSELECT
                          {
-                          label=Int.toString i,
+                          label=label,
                           exp=TC.TPVAR newVarInfo,
                           expTy=tupleTy,
                           resultTy = ty,
                           loc=loc
                           }
                          ))
-                      (ListPair.zip (VarSet.listItems resVarSet, tyList))
+                      (RecordLabel.tupleList
+                         (ListPair.zip (VarSet.listItems resVarSet, tyList)))
                   in
                     (
                      [(newVarInfo, tpexp)],
@@ -1475,21 +1450,21 @@ in
                    val icpatSEnvMap =
                        foldl
                          (fn ((l, icpat), icpatSEnvMap) =>
-                             SEnv.insert(icpatSEnvMap, l, icpat))
-                         SEnv.empty
+                             RecordLabel.Map.insert(icpatSEnvMap, l, icpat))
+                         RecordLabel.Map.empty
                          stringIcpatList
                    val expLabelSet =
                        foldl
-                         (fn ((l, _), lset) => SSet.add(lset, l))
-                         SSet.empty
+                         (fn ((l, _), lset) => RecordLabel.Set.add(lset, l))
+                         RecordLabel.Set.empty
                          stringIcexpList
                    val _ =
                    (* check that the labels of patterns is
                     * included in the labels of expressions
                     *)
-                       SEnv.appi
+                       RecordLabel.Map.appi
                        (fn (l, _) =>
-                           if SSet.member(expLabelSet, l)
+                           if RecordLabel.Set.member(expLabelSet, l)
                            then ()
                            else raise E.RecordLabelSetMismatch "009")
                        icpatSEnvMap
@@ -1498,7 +1473,7 @@ in
                          (fn (label, icexp) =>
                              let
                                val icpat =
-                                   case SEnv.find(icpatSEnvMap, label) of
+                                   case RecordLabel.Map.find(icpatSEnvMap, label) of
                                      SOME icpat => icpat
                                    | NONE =>
                                      if flex
@@ -3018,9 +2993,9 @@ val _ = P.print "\n"
                                     elementExp=tpexp,
                                     elementTy=ty,
                                     loc=loc},
-                       LabelEnv.insert (tySmap, label, ty))
+                       RecordLabel.Map.insert (tySmap, label, ty))
                     end)
-                (tpexp1, LabelEnv.empty)
+                (tpexp1, RecordLabel.Map.empty)
                 stringIcexpList
           val modifierTy =
               T.newtyRaw
@@ -3075,7 +3050,7 @@ val _ = P.print "\n"
           case ty1 of
             T.RECORDty tyFields =>
             (* here we cannot use U.unify, which is for monotype only. *)
-              (case LabelEnv.find(tyFields, label) of
+              (case RecordLabel.Map.find(tyFields, label) of
                  SOME elemTy => (elemTy,
                                  TC.TPSELECT
                                    {
@@ -3099,7 +3074,7 @@ val _ = P.print "\n"
                    T.newtyRaw
                    {
                     lambdaDepth = lambdaDepth,
-                    tvarKind = T.REC (LabelEnv.singleton(label, elemTy)),
+                    tvarKind = T.REC (RecordLabel.Map.singleton(label, elemTy)),
                     eqKind = A.NONEQ,
                     occurresIn = nil,
                     utvarOpt = NONE
@@ -3128,7 +3103,7 @@ val _ = P.print "\n"
                    T.newtyRaw
                     {
                      lambdaDepth = lambdaDepth,
-                     tvarKind = T.REC (LabelEnv.singleton(label, elemTy)),
+                     tvarKind = T.REC (RecordLabel.Map.singleton(label, elemTy)),
                      eqKind = A.NONEQ,
                      occurresIn = nil,
                      utvarOpt = NONE
@@ -3221,6 +3196,7 @@ val _ = P.print "\n"
         end
       | IC.ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
         raise bug "typeinfExp: ICSQLSCHEMA"
+      | IC.ICJSON _ => raise bug "typeinfExp: ICJSON"
       | IC.ICSQLDBI (icpat, icexp, loc) =>
         let
           (*
@@ -3296,14 +3272,14 @@ val _ = P.print "\n"
           val recordTy1 =
               T.newtyRaw
                 {lambdaDepth = lambdaDepth,
-                 tvarKind = T.REC LabelEnv.empty,
+                 tvarKind = T.REC RecordLabel.Map.empty,
                  eqKind = A.NONEQ,
                  occurresIn = [recordTy3],
                  utvarOpt = NONE}
           val recordTy2 =
               T.newtyRaw
                 {lambdaDepth = lambdaDepth,
-                 tvarKind = T.REC LabelEnv.empty,
+                 tvarKind = T.REC RecordLabel.Map.empty,
                  eqKind = A.NONEQ,
                  occurresIn = [recordTy3],
                  utvarOpt = NONE}
@@ -3335,7 +3311,7 @@ val _ = P.print "\n"
                 tv :=
                    T.TVAR {lambdaDepth = lambdaDepth,
                            id = id,
-                           tvarKind = T.JOIN (LabelEnv.empty, recordTy1, recordTy2, loc),
+                           tvarKind = T.JOIN (RecordLabel.Map.empty, recordTy1, recordTy2, loc),
                            occurresIn = occurresIn,
                            eqKind = eqKind,
                            utvarOpt = utvarOpt}
@@ -3660,11 +3636,11 @@ val _ = P.print "\n"
                        VarMap.unionWith
                          (fn _ => raise bug "duplicate id in idcalc")
                          (varEnv2, varEnv1),
-                       LabelEnv.insert(tyFields, label, ty),
-                       LabelEnv.insert(tppatFields, label, tppat)
+                       RecordLabel.Map.insert(tyFields, label, ty),
+                       RecordLabel.Map.insert(tppatFields, label, tppat)
                       )
                     end)
-                (VarMap.empty, LabelEnv.empty, LabelEnv.empty)
+                (VarMap.empty, RecordLabel.Map.empty, RecordLabel.Map.empty)
                 fields
           val ty1 =
               if flex
@@ -4230,8 +4206,8 @@ val _ = P.print "\n"
               T.RECORDty
                 (foldl
                    (fn ({funVarInfo={longsymbol, id, ty, opaque},...}, tyFields) =>
-                       LabelEnv.insert(tyFields, Symbol.longsymbolToString longsymbol, ty))
-                   LabelEnv.empty
+                       RecordLabel.Map.insert(tyFields, RecordLabel.fromString (Symbol.longsymbolToString longsymbol), ty))
+                   RecordLabel.Map.empty
                    funBindList)
 
           val {boundEnv, ...} = generalizer (TypesOfAllElements, lambdaDepth)
@@ -4342,7 +4318,7 @@ val _ = P.print "\n"
                let
                  val firstLoc = IC.getLocPat pat
                  val lastLoc = IC.getLocPat (List.last patList)
-                 val patFields = makeTupleFields patList
+                 val patFields = RecordLabel.tupleList patList
                    val _ =
                      freeVarsInPat
                      (IC.ICPATRECORD
@@ -4423,8 +4399,8 @@ val _ = P.print "\n"
               T.RECORDty
                 (foldl
                    (fn ({var={longsymbol,ty,id, opaque},...}, tyFields) =>
-                       LabelEnv.insert(tyFields, Symbol.longsymbolToString longsymbol, ty))
-                   LabelEnv.empty
+                       RecordLabel.Map.insert(tyFields, RecordLabel.fromString (Symbol.longsymbolToString longsymbol), ty))
+                   RecordLabel.Map.empty
                    varInfoTyTpexpList)
           val {boundEnv, ...} =
               generalizer (TypesOfAllElements, lambdaDepth)
@@ -5088,7 +5064,7 @@ val _ = P.print "\n"
               | T.FUNMty (tyList, ty) =>
                 T.FUNMty (map (substFTvar subst) tyList, substFTvar subst ty)
               | T.RECORDty tySenvMap =>
-                T.RECORDty (LabelEnv.map (substFTvar subst) tySenvMap)
+                T.RECORDty (RecordLabel.Map.map (substFTvar subst) tySenvMap)
               | T.CONSTRUCTty {tyCon,args} =>
                 T.CONSTRUCTty {tyCon=tyCon, args = map (substFTvar subst) args}
               | T.POLYty {boundtvars, body} =>
@@ -5286,7 +5262,7 @@ end
                           | T.BOUNDVARty _ => ()
                           | T.FUNMty (tyList, ty) =>
                             (app visit tyList; visit ty)
-                          | T.RECORDty tySEnvMap => LabelEnv.app visit tySEnvMap
+                          | T.RECORDty tySEnvMap => RecordLabel.Map.app visit tySEnvMap
                           | T.CONSTRUCTty {tyCon, args} => app visit args
                           | T.POLYty {body,...} => visit body
                     in

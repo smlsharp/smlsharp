@@ -786,39 +786,46 @@ struct
         loc : loc
       }
     | (*%
-       * @format({argExp, loc})
+       * @format({argExp, cleanup: cleanup cleanupOpt, loc})
        * L8{ 1[
        *   "raise"
        *   +1 argExp
+       *   +1 cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
-       * @format({argExp, loc})
+       * @format({argExp, cleanup: cleanup cleanupOpt, loc})
        * L8{ 1[
        *   "raise"
        *   +1 argExp()(btvEnv)
+       *   +1 cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *   ";"
        * ] }
        *)
       ANRAISE of
       {
         argExp : anvalue,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | (*%
-       * @format({nextExp, exnVar, id, handlerExp, loc})
+       * @format({nextExp, exnVar, id, handlerExp, cleanup: cleanup cleanupOpt,
+       *          loc})
        * L8{ 1[ "try" +1 id ] }
        * +1 nextExp
-       * L8{ 1[ "handle" +1 id d +1 exnVar +d "=" ] }
+       * +1 L8{ 1[ "handle" +1 id d +1 exnVar +d "=" ] }
        * +1 handlerExp 
+       * cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *)
       (*% @prefix formatWithType_
-       * @format({nextExp, exnVar, id, handlerExp, loc})
+       * @format({nextExp, exnVar, id, handlerExp, cleanup: cleanup cleanupOpt,
+       *          loc})
        * L8{ 1[ "try" +1 id ] }
        * +1 nextExp()(btvEnv)
-       * L8{ 1[ "handle" +1 id d +1 exnVar()(btvEnv) +d "=" ] }
+       * +1 L8{ 1[ "handle" +1 id d +1 exnVar()(btvEnv) +d "=" ] }
        * +1 handlerExp()(btvEnv)
+       * cleanupOpt(cleanup)(+1 "cleanup" +d,)
        *)
       ANHANDLER of
       {
@@ -826,6 +833,7 @@ struct
         id : HandlerLabel.id,
         exnVar : varInfo,
         handlerExp : anexp,
+        cleanup : HandlerLabel.id option,
         loc : loc
       }
     | (*%
@@ -998,22 +1006,22 @@ struct
     | (*%
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, bodyExp, attributes, retTy,
-       *          cleanupHandler: ch chOpt, loc})
+       *          cleanupHandler: cleanup cleanupOpt, loc})
        * "@callback:" id
        * + envOpt(env)("_")
        * + args:appList(arg)("(",",",")")
-       * + chOpt:optional(ch)("cleanup" +,)
+       * + cleanupOpt:optional(cleanup)("cleanup" +,)
        * + "="
        * 1[ +1 bodyExp ]
        *)
       (*% @prefix formatWithType_
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, bodyExp, attributes, retTy,
-       *          cleanupHandler: ch chOpt, loc})
+       *          cleanupHandler: cleanup cleanupOpt, loc})
        * "@callback:" id
        * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
        * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
-       * + chOpt:optional(ch)("cleanup" +,)
+       * + cleanupOpt:optional(cleanup)("cleanup" +,)
        * + "="
        * 1[ +1 bodyExp()(tyvarKindEnv:makeBtvEnv) ]
        *)
@@ -1043,23 +1051,23 @@ struct
   type program =
       (*%
        * @format({topdata: datum data, topdecs: dec decs, topExp,
-       *          topCleanupHandler: ch chOpt})
+       *          topCleanupHandler: cleanup cleanupOpt})
        * "_decl"
        * 1[ data:decList(datum)(+1,+1) ]
        * 1[ decs:decList(dec)(+1,+1) ]
        * +1 "in" 1[ +1 !N0{ topExp } ]
        * +1 "end"
-       * +1 chOpt(ch)("cleanup" +,)
+       * +1 cleanupOpt(cleanup)("cleanup" +,)
        *)
       (*% @prefix formatWithType_
        * @format({topdata: datum data, topdecs: dec decs, topExp,
-       *          topCleanupHandler: ch chOpt})
+       *          topCleanupHandler: cleanup cleanupOpt})
        * "_decl"
        * 1[ data:decList(datum)(+1,+1) ]
        * 1[ decs:decList(dec)(+1,+1) ]
        * +1 "in" 1[ +1 !N0{ topExp()() } ]
        * +1 "end"
-       * +1 chOpt(ch)("cleanup" +,)
+       * +1 cleanupOpt(cleanup)("cleanup" +,)
        *)
       {
         topdata : topdata list,

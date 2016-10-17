@@ -1,6 +1,5 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
 _require local "../../../compiler/control/main/Control.ppg.smi"
 
 structure TermPrintUtils =
@@ -9,6 +8,8 @@ struct
   val makeLines : string -> format
   val format_int : int -> format
   val format_real : real -> format
+  val format_int_json : int -> format
+  val format_real_json : real -> format
   val format_string : string -> format
   val format_label : string -> format
   val format_char : char -> format
@@ -23,7 +24,7 @@ struct
     : 'a SMLFormat.BasicFormatters.formatter * format * format -> 'a list -> format
   val format_lazyArray 
     : 'a SMLFormat.BasicFormatters.formatter * format * format
-       -> (int -> 'a list * bool) -> format
+       -> (int option -> {contents:'a list, hasEllipsis:bool}) -> format
   val formatPrependedOpt 
     : ('a -> format) * format -> 'a option -> format
   val formatIfCons : format -> 'a list -> format

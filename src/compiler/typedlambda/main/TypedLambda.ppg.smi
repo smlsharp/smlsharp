@@ -1,6 +1,6 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../../compiler-utils/heapdump/main/HeapDump.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
@@ -84,17 +84,17 @@ structure TypedLambda =
       | TLFOREIGNSYMBOL of {loc:loc, name:string, ty:ty}
       | TLHANDLE of {exnVar:varInfo, exp:tlexp, handler:tlexp,
                      resultTy:ty, loc:loc}
-      | TLINDEXOF of {label:string, loc:loc, recordTy:ty}
+      | TLINDEXOF of {label:RecordLabel.label, loc:loc, recordTy:ty}
       | TLLET of {loc:loc, localDecl:tldecl, mainExp:tlexp}
-      | TLMODIFY of {indexExp:tlexp, label:string, loc:loc, recordExp:tlexp,
+      | TLMODIFY of {indexExp:tlexp, label:RecordLabel.label, loc:loc, recordExp:tlexp,
                      recordTy:ty, valueExp:tlexp, valueTy:ty}
       | TLPOLY of {btvEnv:btvEnv, exp:tlexp, expTyWithoutTAbs:ty, loc:loc}
       | TLPRIMAPPLY of {argExpList:tlexp list, instTyList:ty list, loc:loc,
                         primInfo:primInfo}
       | TLRAISE of {argExp:tlexp, loc:loc, resultTy:ty}
-      | TLRECORD of {fields:tlexp LabelEnv.map, isMutable:bool, loc:loc,
+      | TLRECORD of {fields:tlexp RecordLabel.Map.map, isMutable:bool, loc:loc,
                      recordTy:ty}
-      | TLSELECT of {indexExp:tlexp, label:string, loc:loc, recordExp:tlexp,
+      | TLSELECT of {indexExp:tlexp, label:RecordLabel.label, loc:loc, recordExp:tlexp,
                      recordTy:ty, resultTy:ty}
       | TLSIZEOF of {loc:loc, ty:ty}
       | TLSWITCH of {branches:{constant:constant, exp:tlexp} list,

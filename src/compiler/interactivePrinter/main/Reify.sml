@@ -24,7 +24,7 @@ in
           of T.FUNMty _ => false
            | _ => true)
       | T.RECORDty tyFields => 
-        LabelEnv.foldl (fn (ty, res) => res orelse needInstantiattion ty) false tyFields
+        RecordLabel.Map.foldl (fn (ty, res) => res orelse needInstantiattion ty) false tyFields
       | T.CONSTRUCTty {tyCon, args} =>
         foldl (fn (ty, res) => res orelse needInstantiattion ty) false args
       | _ => false

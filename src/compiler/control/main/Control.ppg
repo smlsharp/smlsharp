@@ -67,7 +67,7 @@ struct
   val printVALRECOpt = ref false
   val printFundeclElab = ref false
   val printMatchCompile = ref false
-  val printSQLCompile = ref false
+  val printTypedElaboration = ref false
   val printFFICompile = ref false
   val printRecordCompile = ref false
   val printDatatypeCompile = ref false
@@ -215,8 +215,8 @@ struct
          BoolSwitch printFundeclElab),
         ("printMatchCompile", "print result of MatchCompile",
          BoolSwitch printMatchCompile),
-        ("printSQLCompile", "print result of SQLCompilation",
-         BoolSwitch printSQLCompile),
+        ("printTypedElaboration", "print result of TypedElaboration",
+         BoolSwitch printTypedElaboration),
         ("printFFICompile", "print result of FFICompilation",
          BoolSwitch printFFICompile),
         ("printRecordCompile", "print result of RecordCompile",

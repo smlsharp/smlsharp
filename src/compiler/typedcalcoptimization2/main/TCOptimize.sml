@@ -203,7 +203,7 @@ local
              TC.TPRECORD {fields, loc, recordTy} =>
              if not (TCU.expansive recordExp) then
                eval 
-                 (TC.TPRECORD {fields=LabelEnv.insert(fields, label, elementExp), 
+                 (TC.TPRECORD {fields=RecordLabel.Map.insert(fields, label, elementExp), 
                                loc=loc, 
                                recordTy=recordTy}
                  )
@@ -259,9 +259,9 @@ local
             }
         | TC.TPRAISE {exp, loc, ty} =>
           TC.TPRAISE {exp=eval exp, loc=loc, ty = ty}
-        | TC.TPRECORD {fields:TC.tpexp LabelEnv.map, loc, recordTy} =>
+        | TC.TPRECORD {fields:TC.tpexp RecordLabel.Map.map, loc, recordTy} =>
           TC.TPRECORD
-            {fields=LabelEnv.map eval fields,
+            {fields=RecordLabel.Map.map eval fields,
              loc=loc,
              recordTy=recordTy
             }
@@ -272,7 +272,7 @@ local
             case exp of
               TC.TPRECORD {fields, loc, recordTy} =>
               if not (TCU.expansive exp) then
-                (case LabelEnv.find (fields, label)  of
+                (case RecordLabel.Map.find (fields, label)  of
                    SOME exp => exp
                  | NONE => raise bug "label not found")
               else raise bug "non value term in a record"

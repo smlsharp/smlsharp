@@ -19,28 +19,28 @@ struct
     (*% *)
     SQLSELECT of {distinct: bool,
                   selectListExps: 'exp list,
-                  selectLabels: string list option,
+                  selectLabels: RecordLabel.label list option,
                   selectName: symbol option,
-                  fromClause: (string * 'exp) list,
+                  fromClause: (RecordLabel.label * 'exp) list,
                   whereClause: 'exp option,
                   orderByClause: {keyExp:'exp, orderAsc:bool} list,
                   loc: Loc.loc}
   | (*% *)
-    SQLINSERT of {table: symbol * string,
+    SQLINSERT of {table: symbol * RecordLabel.label,
                   insertRows: 'exp option list list, (* NONE = DEFAULT *)
-                  insertLabels: string list,
+                  insertLabels: RecordLabel.label list,
                   loc: Loc.loc}
   | (*% *)
-    SQLDELETE of {table: symbol * string,
-                  tableName: string option,
+    SQLDELETE of {table: symbol * RecordLabel.label,
+                  tableName: RecordLabel.label option,
                   whereClause: 'exp option,
                   loc: Loc.loc}
   | (*% *)
-    SQLUPDATE of {table: symbol * string,
-                  tableName: string option,
+    SQLUPDATE of {table: symbol * RecordLabel.label,
+                  tableName: RecordLabel.label option,
                   setListExps: 'exp list,
-                  setLabels: string list,
-                  fromClause: (string * 'exp) list,
+                  setLabels: RecordLabel.label list,
+                  fromClause: (RecordLabel.label * 'exp) list,
                   whereClause: 'exp option,
                   loc: Loc.loc}
   | (*% *)
@@ -54,7 +54,7 @@ struct
   datatype ('exp, 'pat, 'ty) exp =
       (*%
        *)
-      SQLFIELDSELECT of string * 'exp * Loc.loc
+      SQLFIELDSELECT of RecordLabel.label * 'exp * Loc.loc
     | (*%
        *)
       SQLFN of 'pat * 'exp command * Loc.loc

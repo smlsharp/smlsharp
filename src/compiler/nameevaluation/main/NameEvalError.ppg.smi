@@ -1,6 +1,7 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../usererror/main/UserError.ppg.smi"
@@ -129,11 +130,11 @@ structure NameEvalError =
     exception DuplicateTypName of code * Symbol.symbol
     exception DuplicateFunctor of code * Symbol.symbol
     exception DuplicateStrName of code * Symbol.symbol
-    exception DuplicateRecordLabelInKind of code * string
-    exception DuplicateRecordLabelInRawType of code * string
-    exception DuplicateRecordLabelInExp of code * string
-    exception DuplicateRecordLabelInPat of code * string
-    exception DuplicateRecordLabelInUpdate of code * string
+    exception DuplicateRecordLabelInKind of code * RecordLabel.label
+    exception DuplicateRecordLabelInRawType of code * RecordLabel.label
+    exception DuplicateRecordLabelInExp of code * RecordLabel.label
+    exception DuplicateRecordLabelInPat of code * RecordLabel.label
+    exception DuplicateRecordLabelInUpdate of code * RecordLabel.label
     exception DuplicateSigname of code * Symbol.symbol
     exception ImproperSigshare of code * {longsymbol: Symbol.longsymbol}
     exception ImproperSigwhere of code * {longsymbol: Symbol.longsymbol}

@@ -116,8 +116,8 @@ local
         visitExp argExp
       | TC.TPRAISE {exp, loc, ty} =>
         visitExp exp
-      | TC.TPRECORD {fields:TC.tpexp LabelEnv.map, loc, recordTy} =>
-        LabelEnv.app visitRecordField fields
+      | TC.TPRECORD {fields:TC.tpexp RecordLabel.Map.map, loc, recordTy} =>
+        RecordLabel.Map.app visitRecordField fields
       | TC.TPSELECT {exp, expTy, label, loc, resultTy} =>
         visitExp exp
       | TC.TPSEQ {expList, expTyList, loc} =>

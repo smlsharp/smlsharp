@@ -115,7 +115,7 @@ struct
       printErr (msg ^ ": var not found "
                 ^ VarID.toString id ^ "\n")
   fun printLabelNotFound msg label =
-      printErr (msg ^ ": label not found " ^ label ^ "\n")
+      printErr (msg ^ ": label not found " ^ RecordLabel.toString label ^ "\n")
 
   fun printDoubledFunEntry msg id =
       printErr (msg ^ ": doubled fun entry "
@@ -185,8 +185,8 @@ struct
   exception Unify
 
   fun recordFieldTyEq (tys1, tys2) =
-      LabelEnv.listItems
-        (LabelEnv.mergeWith
+      RecordLabel.Map.listItems
+        (RecordLabel.Map.mergeWith
            (fn (SOME ty1, SOME ty2) => SOME (ty1 : T.ty, ty2 : T.ty)
            | _ => raise Unify)
            (tys1, tys2))
@@ -372,6 +372,8 @@ struct
       | (T.OPRIMkind _, _) => raise Unify
       | (T.UNIV, T.UNIV) => ()
       | (T.UNIV, _) => raise Unify
+      | (T.JSON, T.JSON) => ()
+      | (T.JSON, _) => raise Unify
       | (T.BOXED, T.BOXED) => ()
       | (T.BOXED, _) => raise Unify
       | (T.UNBOXED, T.UNBOXED) => ()
@@ -530,7 +532,8 @@ struct
   fun recordFieldLabel indexTy =
       case TypesBasics.derefTy indexTy of
         T.SINGLETONty (T.INDEXty (label, recordTy)) => label
-      | _ => (printErr "record index type expected\n"; "_ERROR_")
+      | _ => (printErr "record index type expected\n";
+              RecordLabel.fromString "_ERROR_")
 
   fun recordFieldTys (env:env) recordTy =
       case TypesBasics.derefTy recordTy of
@@ -538,8 +541,8 @@ struct
       | T.BOUNDVARty btv =>
         (case BoundTypeVarID.Map.find (#btvEnv env, btv) of
            SOME {tvarKind = T.REC fieldTys, ...} => fieldTys
-         | _ => (printErr "record kind expected\n"; LabelEnv.empty))
-      | _ => (printErr "record type expected\n"; LabelEnv.empty)
+         | _ => (printErr "record kind expected\n"; RecordLabel.Map.empty))
+      | _ => (printErr "record type expected\n"; RecordLabel.Map.empty)
 
   fun checkArrayTy env ty =
       case TypesBasics.derefTy ty of
@@ -575,7 +578,7 @@ struct
           unify "AARECORDFIELD"
                 (indexTy,
                  tyOf (T.SINGLETONty (T.INDEXty (label, #1 recordTy))));
-          case LabelEnv.find (fieldTys, label) of
+          case RecordLabel.Map.find (fieldTys, label) of
             NONE => (printLabelNotFound "AARECORDFIELD" label; T.ERRORty)
           | SOME ty => ty
         end
@@ -837,8 +840,8 @@ struct
                   fieldList
           val recordTy =
               T.RECORDty (foldl (fn ((label, ty, _, _), z) =>
-                                    LabelEnv.insert (z, label, #1 ty))
-                                LabelEnv.empty
+                                    RecordLabel.Map.insert (z, label, #1 ty))
+                                RecordLabel.Map.empty
                                 fields)
           val allocSizeTy = checkValue env allocSizeExp
           val bitmaps =
@@ -878,7 +881,7 @@ struct
           val label = recordFieldLabel (#1 indexTy)
           val ty = checkInitField env valueExp
         in
-          case LabelEnv.find (fields, label) of
+          case RecordLabel.Map.find (fields, label) of
             NONE => printLabelNotFound "ANMODIFY" label
           | SOME fieldTy =>
             unify "ANMODIFY1" (ty, tyOf' "ANMODIFY" env fieldTy);
@@ -928,19 +931,21 @@ struct
           unify "ANEXPORTVAR2" (valueTy, ty);
           checkExp env nextExp
         end
-      | A.ANRAISE {argExp, loc} =>
+      | A.ANRAISE {argExp, cleanup, loc} =>
         let
           val ty = checkValue env argExp
         in
-          unify "ANRAISE" (ty, tyOf B.exnTy)
+          unify "ANRAISE" (ty, tyOf B.exnTy);
+          checkHandler "ANRAISE2" env cleanup
         end
-      | A.ANHANDLER {nextExp, exnVar, id, handlerExp, loc} =>
+      | A.ANHANDLER {nextExp, exnVar, id, handlerExp, cleanup, loc} =>
         let
           val handlerEnv = HandlerLabel.Set.add (#handlerEnv env, id)
         in
           checkExp (env # {handlerEnv = handlerEnv}) nextExp;
           unify "ANHANDLER" (#ty exnVar, tyOf B.exnTy);
-          checkExp (bindVar (env, exnVar)) handlerExp
+          checkExp (bindVar (env, exnVar)) handlerExp;
+          checkHandler "ANHANDLER2" env cleanup
         end
       | A.ANSWITCH {switchExp, expTy, branches, default, loc} =>
         let
@@ -1050,8 +1055,8 @@ struct
                 fieldList
           val recordTy2 =
               T.RECORDty (foldl (fn ((label, ty, _, _), z) =>
-                                    LabelEnv.insert (z, label, #1 ty))
-                                LabelEnv.empty
+                                    RecordLabel.Map.insert (z, label, #1 ty))
+                                RecordLabel.Map.empty
                                 fields)
           val bitmaps =
               map (fn {bitmapIndex, bitmapExp} =>

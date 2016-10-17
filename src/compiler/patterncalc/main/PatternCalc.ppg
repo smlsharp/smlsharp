@@ -112,6 +112,7 @@ in
    * @formatter(Absyn.tvar) Absyn.format_tvar
    * @formatter(appList) TermFormat.formatAppList
    * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype ffiTy =
       (*%
@@ -131,7 +132,7 @@ in
        *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
        * @format:field(label * ty) {label} +d ":" +d {ty}
        *)
-      FFIRECORDTY of (string * ffiTy) list * loc
+      FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | (*%
        * @format(arg args:tyConArgTys * longsymbol * loc)
             !N0{args(arg)("," +, "(", ")" +) longsymbol }
@@ -180,6 +181,7 @@ in
    * @formatter(enclosedList) TermFormat.formatEnclosedList
    * @formatter(appList) TermFormat.formatAppList
    * @formatter(seqList) TermFormat.formatSeqList
+   * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   datatype plexp = 
     (*%
@@ -267,12 +269,12 @@ in
   | (*%
      * @format(selector * loc)  {"#"{selector}}
      *)
-    PLRECORD_SELECTOR of symbol * loc 
+    PLRECORD_SELECTOR of RecordLabel.label * loc 
   | (*%
      * @format(selector * exp * loc)
      * L10{"#"{selector} + {exp}}
      *)
-    PLSELECT of string * plexp * loc  (* this must be kept as a primitive *)
+    PLSELECT of RecordLabel.label * plexp * loc  (* this must be kept as a primitive *)
   | (*%
      * @format(exp exps * loc)
      * !N0{ "(" 2[ 1 exps(exp)(";" +1) ] 1 ")" }
@@ -313,6 +315,8 @@ in
         "JOIN(" exp1 + "," + exp2 ")"
      *)
     PLJOIN of plexp * plexp * loc
+  | (*% *)
+    PLJSON of plexp * ty * loc
 
   and ffiArg =
     (*%
@@ -697,12 +701,12 @@ in
      (*%
       * @format(label*exp) label "=" exp
       *)
-      string * plexp 
+      RecordLabel.label * plexp 
   and patfield =
      (*%
       * @format(label*pat) label "=" pat
       *)
-      string * plpat
+      RecordLabel.label * plpat
   and rule =
      (*%
       * @format(pat pats:appList * exp)
@@ -770,6 +774,7 @@ in
    | PLSQLSCHEMA {loc,...} => #1 loc
    | PLSQLDBI (_,_,loc) => #1 loc
    | PLJOIN (_,_,loc) => #1 loc
+   | PLJSON (_,_,loc) => #1 loc
 
   fun getRightPosExp plexp =
       case plexp of
@@ -792,6 +797,7 @@ in
    | PLSQLSCHEMA {loc,...} => #2 loc
    | PLSQLDBI (_,_,loc) => #2 loc
    | PLJOIN (_,_,loc) => #2 loc
+   | PLJSON (_,_,loc) => #2 loc
 
   fun getLocExp exp = (getLeftPosExp exp, getRightPosExp exp)
 

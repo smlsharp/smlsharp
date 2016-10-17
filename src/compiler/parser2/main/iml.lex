@@ -220,6 +220,7 @@ frac="."{num};
 exp=[eE](~?){num};
 real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 hexnum=[0-9a-fA-F]+;
+prefixedlabel={positive}"_"({alpha}{idchars}*|{symbol}+);
 %%
 <INITIAL>{ws} => (continue());
 <INITIAL>{eol} => (newLine(yypos, yytext, arg); continue ());
@@ -249,6 +250,8 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"infixr" => (T.INFIXR (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"_interface" => (T.INTERFACE (left(yypos,arg),right(yypos,10,arg)));
 <INITIAL>"_join" => (T.JOIN (left(yypos,arg),right(yypos,5,arg)));
+<INITIAL>"_json" => (T.JSON (left(yypos,arg),right(yypos,5,arg)));
+<INITIAL>"_jsoncase" => (T.JSONCASE (left(yypos,arg),right(yypos,9,arg)));
 <INITIAL>"nonfix" => (T.NONFIX (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"let" => (T.LET (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"local" => (T.LOCAL (left(yypos,arg),right(yypos,5,arg)));
@@ -351,6 +354,10 @@ hexnum=[0-9a-fA-F]+;
          in if String.isPrefix "0" yytext
             then T.INT ({radix=StringCvt.DEC, digits=yytext},l,r)
             else T.INTLAB (yytext,l,r)
+         end);
+<INITIAL>{prefixedlabel} =>
+        (let val (l,r) = strToLoc(yytext, yypos, arg)
+         in T.PREFIXEDLABEL (yytext,l,r)
          end);
 <INITIAL>~{num} =>
         (let val (l,r) = strToLoc(yytext, yypos, arg)
