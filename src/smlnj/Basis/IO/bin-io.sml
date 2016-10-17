@@ -39,7 +39,7 @@ local
   structure Pos = Position
 
   (* an element for initializing buffers *)
-    val someElem = (0w0 : Word8.word)
+    val someElem = (0w0 : word8)
 
 (** Fast, but unsafe version (from Word8Vector) **
     val vecSub = InlineT.Word8Vector.sub

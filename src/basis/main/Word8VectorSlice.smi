@@ -3,7 +3,7 @@ _require local "./Word8Vector.smi"
 
 structure Word8VectorSlice =
 struct
-  type elem = SMLSharp_Builtin.Word8.word
+  type elem = word8
   type vector = elem vector
   type slice (= boxed)
   val length : slice -> int

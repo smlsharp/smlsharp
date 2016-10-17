@@ -18,18 +18,3 @@ structure FunctorID = GenID
 structure FunctionAnnotationID = GenID
 structure AnnotationLabelID = GenID
 structure RevealID = GenID
-structure VarName = 
-struct
-local
-  val state = ref 0
-  fun gen () = !state before state := !state + 1
-in
-  fun generate () =
-      let
-        val id = gen ()
-      in
-        "$" ^ (Int.toString id)
-      end
-end
-end
-

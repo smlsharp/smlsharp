@@ -11,6 +11,7 @@ struct
   (*%
    * @formatter(Absyn.ty) Absyn.format_ty
    * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   exception
 
@@ -31,7 +32,7 @@ struct
    *    "duplicate" +d "tuple" +d "in" +d "from" +d "and/or" +d "into"
    *    +d "clause:" +d label
    *)
-  DuplicateSQLTuple of RecordLabel.label
+  DuplicateSQLTuple of Symbol.symbol
 
   and
   (*
@@ -89,5 +90,20 @@ struct
    *    +d "description:" label
    *)
   NotAvailableSQLKeyword of string
+
+  and
+  (*%
+   * @format(name)
+   *    "only" +d "natural" +d "join" +d "can" +d "be" +d "named:" +d name
+   *)
+  OnlyNaturalJoinCanBeNamed of Symbol.symbol
+
+  and
+  (*%
+   * @format
+   *    "natural" +d "join" +d "with" +d "joined" +d "tables" +d "not"
+   *	+d "allowed"
+   *)
+  UnnaturalNaturalJoin
 
 end

@@ -30,6 +30,8 @@ structure TermFormat :> sig
    *)
   val formatEnclosedList
       : 'a formatter * format * format * format -> 'a list formatter
+  val formatEnclosedListWithBound
+      : 'a formatter * format * format * format -> 'a list formatter
   val formatAppList
       : 'a formatter * format * format * format -> 'a list formatter
   val formatSeqList
@@ -81,6 +83,7 @@ structure TermFormat :> sig
   (* formatting records and tuples *)
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
+  val formatDummyRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
 
   (* for fine-tuning *)
   val formatIfCons : format -> 'a list formatter
@@ -278,6 +281,36 @@ struct
       end_
 *)
 
+  (* list format with bound and ellipsis *)
+  val ellipsis = [Term (4, ",...")]
+  fun formatEnclosedListWithBound (formatter, lparen, comma, rparen) elems =
+    let
+      val count = List.length elems
+      val (elems, hasEllipsis) =
+          if count > (!Control.printMaxOverloadInstances)
+          then (List.take(elems, !Control.printMaxOverloadInstances), true)
+          else (elems, false)
+    in
+      if hasEllipsis then 
+        begin_
+          $lparen
+          guard_ cutAssoc
+            $(intersperse (comma @ [sp]) (map formatter elems))
+            $ellipsis
+            $rparen
+          end_
+        end_
+      else
+        begin_
+          $lparen
+          guard_ cutAssoc
+            $(intersperse (comma @ [sp]) (map formatter elems))
+            $rparen
+          end_
+        end_
+    end
+
+
   fun formatAppList (formatter, lparen, comma, rparen) nil = lparen @ rparen
     | formatAppList (formatter, lparen, comma, rparen) [x] = formatter x
     | formatAppList args elems = formatEnclosedList args elems
@@ -409,6 +442,11 @@ struct
       else formatEnclosedLabelMap
              (formatter, [term "{"], [term ","], [term ":"], [term "}"])
              smap
+
+  fun formatDummyRecordTy formatter smap =
+      formatEnclosedLabelMap
+         (formatter, [term "{"], [term ","], [term ":"], [term "...}"])
+         smap
 
   (**** for fine-tuning ****)
 

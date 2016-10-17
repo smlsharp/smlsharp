@@ -28,6 +28,7 @@ struct
       | D.UNIT => R.UNITtyRep
       | D.FUN => R.FUNtyRep
       | D.OTHER => R.UNPRINTABLERep
+      | D.OPAQUE _ => R.UNPRINTABLERep
       | D.CHAR c => R.CHARtyRep c
       | D.PTR p => R.PTRtyRep
       | D.RECORD fields =>
@@ -65,8 +66,9 @@ struct
         then R.UNPRINTABLERep
         else
           case arg of
-            NONE => R.DATATYPEtyRep (conName, NONE)
-          | SOME arg => R.DATATYPEtyRep (conName, SOME (formatValue depth arg))
+            NONE => R.DATATYPEtyRep (Symbol.symbolToString conName, NONE)
+          | SOME arg => R.DATATYPEtyRep (Symbol.symbolToString conName,
+                                         SOME (formatValue depth arg))
 
   fun dynamicToReifiedTerm dynamic =
       formatDyn 1 dynamic

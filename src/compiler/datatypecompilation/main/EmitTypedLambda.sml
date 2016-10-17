@@ -115,7 +115,7 @@ struct
 
   fun toPrimTy ty =
       case TypesBasics.derefTy ty of
-        T.POLYty {boundtvars, body} => primFunTy boundtvars body
+        T.POLYty {boundtvars, constraints, body} => primFunTy boundtvars body
       | ty => primFunTy BoundTypeVarID.Map.empty ty
 
   fun polyPrimApp (prim, argTys, retTy, instTy, args) =
@@ -647,7 +647,7 @@ struct
 
   fun allocExnTag {builtin, path, ty} =
       Cast ((if builtin then Vector_alloc_init else Vector_alloc_init_fresh)
-              (exnTagImplTy, [Tuple [String (String.concatWith "." path),
+              (exnTagImplTy, [Tuple [String (Symbol.longsymbolToString path),
                                      exnMessageIndex ty]]),
             B.exntagTy)
 
@@ -830,7 +830,7 @@ struct
         end
       | Fn (vid, argTy, exp) =>
         let
-          val argVar = {id = vid, ty = argTy, path = ["$" ^ VarID.toString vid]}
+          val argVar = {id = vid, ty = argTy, path = [Symbol.generate ()]}
           val argExp = L.TLVAR {varInfo = argVar, loc = loc}
           val env = VarID.Map.insert (env, vid, (argExp, argTy))
           val (exp, bodyTy) = emitExp loc env exp
@@ -867,7 +867,7 @@ struct
           else
             let
               val varInfo =
-                  {id = vid, ty = ty1, path = ["$" ^ VarID.toString vid]}
+                  {id = vid, ty = ty1, path = [Symbol.generate ()]}
               val varExp = L.TLVAR {varInfo = varInfo, loc = loc}
               val env = VarID.Map.insert (env, vid, (varExp, ty1))
               val (exp2, ty2) = emitExp loc env exp2

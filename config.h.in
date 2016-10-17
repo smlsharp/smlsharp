@@ -134,6 +134,9 @@
 /* Define to 1 if you have the `yajl' library (-lyajl). */
 #undef HAVE_LIBYAJL
 
+/* Define to 1 if you have the `yajl_s' library (-lyajl_s). */
+#undef HAVE_LIBYAJL_S
+
 /* Define to 1 if the system has the type `max_align_t'. */
 #undef HAVE_MAX_ALIGN_T
 
@@ -262,6 +265,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* The size of `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

@@ -1330,40 +1330,40 @@ in
      (* export exception declaration specified in  _interface *)
       TPEXPORTEXN of exnInfo
     | (*%
-        @format({longsymbol, ty})
+        @format({path, ty})
        *)
       (*% @prefix formatWithType_
-        @format({longsymbol, ty})
+        @format({path, ty})
        *)
      (* temporary disable extern printint
-         "extern" + "var" + longsymbol
+         "extern" + "var" + path
        formatWithType_
-         2["extern" + "var" + longsymbol +1 ":" + ty()(btvEnv)]
+         2["extern" + "var" + path +1 ":" + ty()(btvEnv)]
       *)
-      TPEXTERNVAR of {longsymbol:longsymbol, ty:ty}
+      TPEXTERNVAR of {path:longsymbol, ty:ty}
     | (*%
-        @format({longsymbol, ty:ty})
+        @format({path, ty:ty})
        *)
       (*% @prefix formatWithType_
-        @format({longsymbol, ty:ty})
+        @format({path, ty:ty})
        *)
      (* temporary disable extern printint
-         "extern" + "exception" + longsymbol
+         "extern" + "exception" + path
        formatWithType_
-         "extern" + "exception" + longsymbol + ":" + ty()(btvEnv)
+         "extern" + "exception" + path + ":" + ty()(btvEnv)
       *)
      (* import exception declaration specified in  _interface *)
-      TPEXTERNEXN of {longsymbol:longsymbol, ty:ty}
+      TPEXTERNEXN of {path:longsymbol, ty:ty}
     | (*%
-        @format({longsymbol, ty})
-          "builtin" + "exception" + longsymbol
+        @format({path, ty})
+          "builtin" + "exception" + path
        *)
       (*% @prefix formatWithType_
-        @format({longsymbol, ty})
-          "builtin" + "exception" + longsymbol
+        @format({path, ty})
+          "builtin" + "exception" + path
        *)
      (* builtin exception definition *)
-      TPBUILTINEXN of {longsymbol:longsymbol, ty:ty}
+      TPBUILTINEXN of {path:longsymbol, ty:ty}
 
  and tppat
    = (*% 

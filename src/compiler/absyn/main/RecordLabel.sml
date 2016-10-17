@@ -12,6 +12,8 @@ struct
   fun toString x = x : label
   val fromInt = Int.toString
   fun fromString x = x : label
+  val fromSymbol = Symbol.symbolToString
+  val fromLongsymbol = Symbol.longsymbolToString
 
   fun format_label l =
       let

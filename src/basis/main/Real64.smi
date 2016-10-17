@@ -8,7 +8,7 @@ _require "./IEEEReal.smi"
 
 structure Real64 =
 struct
-  type real = SMLSharp_Builtin.Real64.real
+  type real = real
   structure Math =
   struct
     type real = real
@@ -81,11 +81,11 @@ struct
   val trunc = SMLSharp_Builtin.Real64.trunc
   val round : real -> int
   val toInt : IEEEReal.rounding_mode -> real -> int
-  val toLargeInt : IEEEReal.rounding_mode -> real -> SMLSharp_Builtin.IntInf.int
+  val toLargeInt : IEEEReal.rounding_mode -> real -> largeInt
   val fromInt = SMLSharp_Builtin.Int32.toReal
-  val fromLargeInt : SMLSharp_Builtin.IntInf.int -> real
-  val toLarge : real -> SMLSharp_Builtin.Real64.real
-  val fromLarge : IEEEReal.rounding_mode -> SMLSharp_Builtin.Real64.real -> real
+  val fromLargeInt : largeInt -> real
+  val toLarge : real -> real
+  val fromLarge : IEEEReal.rounding_mode -> real -> real
   val fmt : StringCvt.realfmt -> real -> string
   val toString : real -> string
   val scan : (char, 'a) StringCvt.reader -> (real, 'a) StringCvt.reader

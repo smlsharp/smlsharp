@@ -135,16 +135,6 @@ struct
   val NONEICConInfo : IDCalc.conInfo
   val NONETPConInfo : Types.conInfo
 
-  val dbiTstrInfo : tstrInfo
-  val dbiTyCon : Types.tyCon
-  val DBIICConInfo : IDCalc.conInfo
-  val DBITPConInfo : Types.conInfo
-
-  val valueTstrInfo : tstrInfo
-  val valueTyCon : Types.tyCon
-  val VALUEICConInfo : IDCalc.conInfo
-  val VALUETPConInfo : Types.conInfo
-
   val BindExExn : Types.exExnInfo
   val MatchExExn : Types.exExnInfo
   val SubscriptExExn : Types.exExnInfo

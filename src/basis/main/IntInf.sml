@@ -19,7 +19,7 @@ val maxInt32 = 0x7fffffff    (* 32 bit *)
 structure IntInf =
 struct
 
-  type int = SMLSharp_Builtin.IntInf.int
+  type int = intInf
 
   val abs =
       _import "prim_IntInf_abs"
@@ -44,13 +44,13 @@ struct
       : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
   val cmp =
       _import "prim_IntInf_cmp"
-      : __attribute__((pure,fast)) (int, int) -> Int32.int
+      : __attribute__((pure,fast)) (int, int) -> int32
   val toInt_unsafe =
       _import "prim_IntInf_toInt"
-      : __attribute__((pure,fast)) int -> Int32.int
+      : __attribute__((pure,fast)) int -> int32
   val fromInt =
       _import "prim_IntInf_fromInt"
-      : __attribute__((unsafe,pure,fast,gc)) Int32.int -> int
+      : __attribute__((unsafe,pure,fast,gc)) int32 -> int
   val quot_unsafe =
       _import "prim_IntInf_quot"
       : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
@@ -59,10 +59,10 @@ struct
       : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
   val pow_unsafe =
       _import "prim_IntInf_pow"
-      : __attribute__((unsafe,pure,fast,gc)) (int, Int32.int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (int, int32) -> int
   val log2_unsafe =
       _import "prim_IntInf_log2"
-      : __attribute__((pure,fast)) int -> Int32.int
+      : __attribute__((pure,fast)) int -> int32
   val orb =
       _import "prim_IntInf_orb"
       : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
@@ -94,7 +94,7 @@ struct
       then raise Overflow
       else toInt_unsafe int
 
-  val precision : Int32.int option = NONE
+  val precision : int32 option = NONE
   val minInt : int option = NONE
   val maxInt : int option = NONE
 

@@ -7,28 +7,36 @@ _require "./RecordLabel.smi"
 structure AbsynSQL =
 struct
   type symbol = Symbol.symbol
+
+  datatype 'exp from =
+    SQLTABLE of symbol * RecordLabel.label * symbol option
+  | SQLINNERJOIN of 'exp from * 'exp from * 'exp
+  | SQLCROSSJOIN of 'exp from * 'exp from
+  | SQLNATURALJOIN of 'exp from * 'exp from * Loc.loc
+  | SQLAS of 'exp from * symbol * Loc.loc
+  | SQLEXP of 'exp * symbol
+
   datatype 'exp command =
-    SQLSELECT of {distinct: bool,
+    SQLSELECT of {distinct: bool option,
                   selectListExps: 'exp list,
                   selectLabels: RecordLabel.label list option,
-                  selectName: symbol option,
-                  fromClause: (RecordLabel.label * 'exp) list,
+                  fromClause: 'exp from list,
                   whereClause: 'exp option,
                   orderByClause: {keyExp:'exp, orderAsc:bool} list,
                   loc: Loc.loc}
-  |  SQLINSERT of {table: symbol * RecordLabel.label,
-                  insertRows: 'exp option list list, (* NONE = DEFAULT *)
+  | SQLINSERT of {table: symbol * RecordLabel.label,
+                  insertValues: 'exp option list list, (* NONE = DEFAULT *)
                   insertLabels: RecordLabel.label list,
                   loc: Loc.loc}
   | SQLDELETE of {table: symbol * RecordLabel.label,
-                  tableName: RecordLabel.label option,
+                  tableName: symbol option,
                   whereClause: 'exp option,
                   loc: Loc.loc}
   | SQLUPDATE of {table: symbol * RecordLabel.label,
-                  tableName: RecordLabel.label option,
-                  setListExps: 'exp list,
+                  tableName: symbol option,
+                  setListExps: 'exp option list,  (* NONE = DEFAULT *)
                   setLabels: RecordLabel.label list,
-                  fromClause: (RecordLabel.label * 'exp) list,
+                  fromClause: 'exp from list,
                   whereClause: 'exp option,
                   loc: Loc.loc}
   | SQLBEGIN of Loc.loc

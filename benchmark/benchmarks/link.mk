@@ -20,6 +20,8 @@ diviter/doit$(DOIT_SUFFIX): diviter/doit.o diviter/diviter.o
 	$(SMLSHARP) -o $@ diviter/doit.smi $(LIBS)
 divrec/doit$(DOIT_SUFFIX): divrec/doit.o divrec/divrec.o
 	$(SMLSHARP) -o $@ divrec/doit.smi $(LIBS)
+fibrepeat/doit$(DOIT_SUFFIX): fibrepeat/doit.o fibrepeat/fibrepeat.o
+	$(SMLSHARP) -o $@ fibrepeat/doit.smi $(LIBS)
 fft/doit$(DOIT_SUFFIX): fft/doit.o fft/fft.o
 	$(SMLSHARP) -o $@ fft/doit.smi $(LIBS)
 gcbench/doit$(DOIT_SUFFIX): gcbench/doit.o gcbench/gcbench.o
@@ -46,8 +48,10 @@ nqueen/doit$(DOIT_SUFFIX): nqueen/doit.o nqueen/nqueen.o
 	$(SMLSHARP) -o $@ nqueen/doit.smi $(LIBS)
 nucleic/doit$(DOIT_SUFFIX): nucleic/doit.o nucleic/main.o nucleic/nucleic.o
 	$(SMLSHARP) -o $@ nucleic/doit.smi $(LIBS)
-parallel_matrix2/doit$(DOIT_SUFFIX): parallel_matrix2/multiply_cps.o
-	$(SMLSHARP) -o $@ parallel_matrix2/multiply_cps.smi $(LIBS)
+parallel_matrix/doit$(DOIT_SUFFIX): parallel_matrix/multiply_nest_cps.o
+	$(SMLSHARP) -o $@ parallel_matrix/multiply_nest_cps.smi $(LIBS)
+parallel_matrix_tail/doit$(DOIT_SUFFIX): parallel_matrix_tail/multiply_nest_tail.o
+	$(SMLSHARP) -o $@ parallel_matrix_tail/multiply_nest_tail.smi $(LIBS)
 perm9/doit$(DOIT_SUFFIX): perm9/doit.o perm9/perm9.o
 	$(SMLSHARP) -o $@ perm9/doit.smi $(LIBS)
 puzzle/doit$(DOIT_SUFFIX): puzzle/doit.o puzzle/puzzle.o

@@ -5,12 +5,12 @@ _require local "./String.smi"
 
 structure IntInf =
 struct
-  type int = SMLSharp_Builtin.IntInf.int
-  val toLarge : int -> SMLSharp_Builtin.IntInf.int
-  val fromLarge : SMLSharp_Builtin.IntInf.int -> int
-  val toInt : int -> SMLSharp_Builtin.Int32.int
-  val fromInt : SMLSharp_Builtin.Int32.int -> int
-  val precision : SMLSharp_Builtin.Int32.int option
+  type int = intInf
+  val toLarge : int -> largeInt
+  val fromLarge : largeInt -> int
+  val toInt : int -> int32
+  val fromInt : int32 -> int
+  val precision : int32 option
   val minInt : int option
   val maxInt : int option
   val + : int * int -> int
@@ -29,7 +29,7 @@ struct
   val abs : int -> int
   val min : int * int -> int
   val max : int * int -> int
-  val sign : int -> SMLSharp_Builtin.Int32.int
+  val sign : int -> int32
   val sameSign : int * int -> bool
   val fmt : StringCvt.radix -> int -> string
   val toString : int -> string
@@ -40,8 +40,8 @@ struct
 
   val divMod : int * int -> int * int
   val quotRem : int * int -> int * int
-  val pow : int * SMLSharp_Builtin.Int32.int -> int
-  val log2 : int -> SMLSharp_Builtin.Int32.int
+  val pow : int * int32 -> int
+  val log2 : int -> int32
   val orb : int * int -> int
   val xorb : int * int -> int
   val andb : int * int -> int

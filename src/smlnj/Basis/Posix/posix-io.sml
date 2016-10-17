@@ -58,7 +58,7 @@ structure SMLSharp_SMLNJ_POSIX_IO =
 *)
     open FS
 
-    type word = SysWord.word
+    type word = word
     type s_int = SysInt.int
 
     val ++ = SysWord.orb

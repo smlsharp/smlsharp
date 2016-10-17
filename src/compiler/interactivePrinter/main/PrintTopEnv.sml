@@ -33,10 +33,8 @@ in
       let
         (* InferTypes2 *)
         val lsym = Symbol.setVersion (longsymbol, version)
-        (* MacthCompile *)
-        val path = Symbol.longsymbolToLongid lsym
         (* ClosureConversion *)
-        val exid = ExternSymbol.touch path
+        val exid = ExternSymbol.touch lsym
       in
         (* LLVMGen *)
         "_SMLZ" ^ ExternSymbol.toString exid

@@ -1,0 +1,4 @@
+structure SMLSharp_PointerSize =
+struct
+  val pointerSize : int ref
+end

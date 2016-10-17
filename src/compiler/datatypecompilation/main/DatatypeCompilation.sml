@@ -33,11 +33,9 @@ struct
       end
 
   fun newVar ty =
-      let
-        val id = VarID.generate ()
-      in
-        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : TL.varInfo
-      end
+      {path = [Symbol.generate ()],
+       ty = ty,
+       id = VarID.generate ()} : TL.varInfo
 
   fun ConTag const =
       CT.CONTAG (Word32.fromInt const)
@@ -103,7 +101,7 @@ struct
 
   fun dataconArgTy ({ty, ...}:RecordCalc.conInfo) =
       case TypesBasics.derefTy ty of
-        T.POLYty {boundtvars, body} =>
+        T.POLYty {boundtvars, constraints, body} =>
         (case TypesBasics.derefTy body of
            T.FUNMty ([argTy], retTy) => argTy
          | _ => raise Bug.Bug "dataconArgTy")
@@ -118,8 +116,8 @@ struct
             | TAGGED_RECORD {tagMap} => tagMap
             | TAGGED_OR_NULL {tagMap, nullName} => tagMap
       in
-        case SEnv.find (tagMap, List.last path) of
-          NONE => raise Bug.Bug ("dataconTag " ^ String.concatWith "." path)
+        case SymbolEnv.find (tagMap, Symbol.lastSymbol path) of
+          NONE => raise Bug.Bug ("dataconTag " ^ Symbol.longsymbolToString path)
         | SOME tag => tag : int
       end
 
@@ -218,7 +216,8 @@ struct
             case argExpOpt of
               SOME _ => raise Bug.Bug "composeCon: LAYOUT_BOOL"
             | NONE =>
-              E.Cast (if List.last (#path conInfo) = falseName
+              E.Cast (if Symbol.eqSymbol (Symbol.lastSymbol (#path conInfo),
+                                          falseName)
                       then E.ConTag 0 else E.ConTag 1,
                       retTy)
           )
@@ -282,11 +281,11 @@ struct
             val (conInfo, ifTrueExp, ifFalseExp) =
                 case ruleList of
                   [(con1, NONE, exp1), (con2, NONE, exp2)] =>
-                  if List.last (#path con1) = falseName
+                  if Symbol.eqSymbol (Symbol.lastSymbol (#path con1), falseName)
                   then (con1, exp2, exp1)
                   else (con1, exp1, exp2)
                 | [(con1, NONE, exp1)] =>
-                  if List.last (#path con1) = falseName
+                  if Symbol.eqSymbol (Symbol.lastSymbol (#path con1), falseName)
                   then (con1, defaultExp, exp1)
                   else (con1, exp1, defaultExp)
                 | _ => raise Bug.Bug "switchCon: LAYOUT_BOOL"
@@ -347,11 +346,11 @@ struct
   type env =
       {
         exnMap: TL.varInfo ExnID.Map.map,
-        exExnMap: TL.exVarInfo PathEnv.map
+        exExnMap: TL.exVarInfo LongsymbolEnv.map
       }
 
   val emptyEnv =
-      {exnMap = ExnID.Map.empty, exExnMap = PathEnv.empty} : env
+      {exnMap = ExnID.Map.empty, exExnMap = LongsymbolEnv.empty} : env
 
   fun newLocalExn (env:env, {path, ty, id}:RC.exnInfo) =
       let
@@ -368,7 +367,7 @@ struct
         val exVarInfo = {path = path, ty = BT.exntagTy} : TL.exVarInfo
       in
         ({exnMap = #exnMap env,
-          exExnMap = PathEnv.insert (#exExnMap env, path, exVarInfo)} : env,
+          exExnMap = LongsymbolEnv.insert (#exExnMap env, path, exVarInfo)} : env,
          exVarInfo)
       end
 
@@ -376,7 +375,7 @@ struct
       ExnID.Map.find (exnMap, id)
 
   fun findExternExnTag ({exExnMap, ...}:env, {path,...}:RC.exExnInfo) =
-      PathEnv.find (exExnMap, path)
+      LongsymbolEnv.find (exExnMap, path)
 
   fun findExnTag (env, exnCon) =
       case exnCon of

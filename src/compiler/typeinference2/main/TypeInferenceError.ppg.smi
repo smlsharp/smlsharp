@@ -17,7 +17,7 @@ structure TypeInferenceError =
     exception FFIStubMismatch of string * Types.ty * Types.ty
     exception NonInteroperableType of string * IDCalc.ffiTy
     exception EmptyExportInterface of string * {fileName:string}
-    exception UserTvarNotGeneralized of string * {utvarName:string}
+    exception UserTvarNotGeneralized of string * Absyn.tvar
     exception ExnConRequiredInSigMatch of string * {tyConName:string}
     exception DataConRequiredInSigMatch of string * {tyConName:string}
     exception DuplicateTypeNameInDatatypes of string * {tyConName:string}
@@ -105,7 +105,7 @@ structure TypeInferenceError =
     exception ConstructorPathNotFound of string * Symbol.longsymbol
     exception InconsistentListElementType
               of string * {nextTy:Types.ty, prevTy:Types.ty}
-    exception CyclicTvarkindSpec of string * string
+    exception CyclicTvarkindSpec of string * Absyn.tvar
     exception NonConstructorPathInPat of string * Symbol.longsymbol
     exception ArityMismatchInTypeDeclaration
               of string * {given:int, tyCon:string, wants:int}
@@ -113,6 +113,7 @@ structure TypeInferenceError =
     exception JoinNonRecord of string * Types.ty * Types.ty
     exception  JoinInconsistent of string * {label:RecordLabel.label, ty1:Types.ty, ty2:Types.ty}
     exception  JoinMissingTy of string * RecordLabel.label
+    exception JoinResultNotAgree of string * Types.ty * Types.ty
 
     val isAnyError : bool ref
     val initializeTypeinfError : unit -> unit

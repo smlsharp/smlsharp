@@ -252,8 +252,7 @@ struct
 
   val IntInf_fromReal =
       _import "prim_IntInf_fromReal"
-      : __attribute__((unsafe,pure,fast,gc))
-        real -> SMLSharp_Builtin.IntInf.int
+      : __attribute__((unsafe,pure,fast,gc)) real -> intInf
 
   fun toLargeInt mode x =
       case SMLSharp_RealClass.class (SMLSharp_RealClass.classReal x) of
@@ -268,8 +267,7 @@ struct
 
   val fromLargeInt =
       _import "prim_IntInf_toReal"
-      : __attribute__((pure,fast))
-        SMLSharp_Builtin.IntInf.int -> real
+      : __attribute__((pure,fast))  largeInt -> real
 
   fun toLarge x = x : real
   fun fromLarge (mode:IEEEReal.rounding_mode) x = x : real

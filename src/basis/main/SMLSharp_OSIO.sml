@@ -263,10 +263,10 @@ struct
 
   val prim_readAry =
       _import "prim_GenericOS_read"
-      : (int, SMLSharp_Builtin.Word8.word array, word, word) -> int
+      : (int, word8 array, word, word) -> int
   val prim_writeAry =
       _import "prim_GenericOS_write"
-      : (int, SMLSharp_Builtin.Word8.word array, word, word) -> int
+      : (int, word8 array, word, word) -> int
 
   fun readVec (fd, len) =
       if len < 0 then raise Size else

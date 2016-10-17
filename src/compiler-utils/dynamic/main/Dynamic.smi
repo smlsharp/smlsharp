@@ -8,7 +8,7 @@ _require local "../../../compiler/bitmapcompilation2/main/SingletonTyEnv.smi"
 _require local "../../../compiler/bitmapcompilation2/main/RecordLayout.smi"
 _require local "../../../compiler/control/main/Bug.ppg.smi"
 _require "../../../compiler/absyn/main/RecordLabel.smi"
-_require local "../../env/main/SEnv.smi"
+_require "../../../compiler/absyn/main/Symbol.ppg.smi"
 _require local "../../env/main/IEnv.smi"
 _require local "../../../compiler/name/main/LocalID.smi"
 _require local "../../../compiler/datatypecompilation/main/DatatypeLayout.smi"
@@ -33,7 +33,7 @@ struct
     | REAL32 of Real32.real
     | PTR of unit ptr
     | RECORD of (RecordLabel.label * dynamic) list
-    | VARIANT of Types.typId * string * value option
+    | VARIANT of Types.typId * Symbol.symbol * value option
     | LIST of dynamic_list
     | ARRAY of {length : int, sub : int -> dynamic}
     | VECTOR of {length : int, sub : int -> dynamic}
@@ -43,6 +43,7 @@ struct
     | EXN of exn
     | FUN
     | UNIT
+    | OPAQUE of value
     | OTHER
   and dynamic_list =
       NIL

@@ -19,7 +19,7 @@ in
 
   fun occurres tvarRef ty = 
       let
-        val (_, set, _) = TB.EFTV ty
+        val (_, set, _) = TB.EFTV (ty, nil)
       in
         OTSet.member (set, tvarRef)
       end
@@ -99,6 +99,7 @@ in
             in (T.REC fl2, newTyEquations)
             end
           | (T.UNIV, _) => (tvarKind2, nil)
+          | (T.JSON, T.JSON) => (tvarKind2, nil)
           | _ => raise Unify
     in
       (
@@ -196,7 +197,6 @@ in
                | _ => raise Unify)
             | T.BOXED => if isBoxedTy ty then nil else raise Unify
             | T.UNBOXED => if isBoxedTy ty then raise Unify else nil
-            | T.JOIN _ =>  raise Unify
       in
         newTyEquations
       end
@@ -284,22 +284,6 @@ in
                 val newTyFields = RecordLabel.Map.unionWith #1 (fl1, fl2)
               in (T.REC newTyFields, newTyEquations)
               end
-            | (T.REC fl1, T.JOIN (fl2, ty1, ty2, loc)) =>
-              let 
-                val newTyEquations = 
-                    RecordLabel.Map.listItems
-                      (RecordLabel.Map.intersectWith (fn x => x) (fl1, fl2))
-                val newTyFields = RecordLabel.Map.unionWith #1 (fl1, fl2)
-              in (T.JOIN (newTyFields, ty1, ty2, loc), newTyEquations)
-              end
-            | (T.JOIN (fl1, ty1, ty2, loc), T.REC fl2) =>
-              let 
-                val newTyEquations = 
-                    RecordLabel.Map.listItems
-                      (RecordLabel.Map.intersectWith (fn x => x) (fl1, fl2))
-                val newTyFields = RecordLabel.Map.unionWith #1 (fl1, fl2)
-              in (T.JOIN (newTyFields, ty1, ty2, loc), newTyEquations)
-              end
             | (T.OCONSTkind L1, T.OCONSTkind L2) => 
               let
                 val (tyList, newEqs) = lubTyList(L1,L2)
@@ -381,7 +365,6 @@ in
                            (RecordLabel.Map.listItems fields)) of
                  nil => raise Unify
                | l => (T.REC fields, l))
-            | (T.JSON, T.JOIN x) => raise Unify
             | (T.OCONSTkind tys, T.JSON) =>
               (case List.mapPartial
                       (fn ty => SOME (ty, checkKind ty kind2)
@@ -404,7 +387,6 @@ in
                            (RecordLabel.Map.listItems fields)) of
                  nil => raise Unify
                | l => (T.REC fields, l))
-            | (T.JOIN x, T.JSON) => raise Unify
             | (T.BOXED, T.OCONSTkind tys) =>
               (T.OCONSTkind (List.filter isBoxedTy tys), nil)
             | (T.BOXED, T.OPRIMkind {instances, operators}) =>
@@ -413,7 +395,6 @@ in
                nil)
             | (T.BOXED, T.BOXED) => (T.BOXED, nil)
             | (T.BOXED, T.REC x) => (T.REC x, nil)
-            | (T.BOXED, T.JOIN x) => (T.JOIN x, nil)
             | (T.OCONSTkind tys, T.BOXED) =>
               (T.OCONSTkind (List.filter isBoxedTy tys), nil)
             | (T.OPRIMkind {instances, operators}, T.BOXED) =>
@@ -421,7 +402,6 @@ in
                             operators = operators},
                nil)
             | (T.REC x, T.BOXED) => (T.REC x, nil)
-            | (T.JOIN x, T.BOXED) => (T.JOIN x, nil)
             | (T.UNBOXED, T.OCONSTkind tys) =>
               (T.OCONSTkind (List.filter (not o isBoxedTy) tys), nil)
             | (T.UNBOXED, T.OPRIMkind {instances, operators}) =>
@@ -430,7 +410,6 @@ in
                nil)
             | (T.UNBOXED, T.UNBOXED) => (T.UNBOXED, nil)
             | (T.UNBOXED, T.REC x) => raise Unify
-            | (T.UNBOXED, T.JOIN x) => raise Unify
             | (T.OCONSTkind tys, T.UNBOXED) =>
               (T.OCONSTkind (List.filter (not o isBoxedTy) tys), nil)
             | (T.OPRIMkind {instances, operators}, T.UNBOXED) =>
@@ -438,7 +417,6 @@ in
                             operators = operators},
                nil)
             | (T.REC x, T.UNBOXED) => raise Unify
-            | (T.JOIN x, T.UNBOXED) => raise Unify
             | (T.UNIV, x) => (x,nil)
             | (x, T.UNIV) => (x,nil)
             | _ => raise Unify
@@ -724,8 +702,8 @@ in
           (T.BOUNDVARty bid1, T.BOUNDVARty bid2) => btvEq(bid1, bid2)
         | (T.SINGLETONty sty1, T.SINGLETONty sty2) =>
           eqSTy btvEquiv (sty1, sty2)
-        | (T.POLYty {boundtvars=btv1, body=body1},
-           T.POLYty {boundtvars=btv2, body=body2}) =>
+        | (T.POLYty {boundtvars=btv1, constraints = constraints1, body=body1},
+           T.POLYty {boundtvars=btv2, constraints = constraints2, body=body2}) =>
           (let
              val idkindPairs1 = BoundTypeVarID.Map.listItemsi btv1
              val idkindPairs2 = BoundTypeVarID.Map.listItemsi btv2
@@ -850,7 +828,7 @@ in
 
   fun instOfPolyTy (polyTy, tyList) =
       case TB.derefTy polyTy of
-        T.POLYty {boundtvars, body} =>
+        T.POLYty {boundtvars, constraints, body} =>
         let 
           val subst1 = TB.freshSubst boundtvars
           val body = TB.substBTvar subst1 body

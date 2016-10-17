@@ -206,11 +206,11 @@ local
          size (inc n) items 
        | TC.TPEXPORTRECFUNVAR {var, arity} =>
          size (inc n) items 
-       | TC.TPEXTERNEXN {longsymbol, ty} =>
+       | TC.TPEXTERNEXN {path, ty} =>
          size (inc n) items 
-       | TC.TPBUILTINEXN {longsymbol, ty} =>
+       | TC.TPBUILTINEXN {path, ty} =>
          size (inc n) items 
-       | TC.TPEXTERNVAR {longsymbol, ty} =>
+       | TC.TPEXTERNVAR {path, ty} =>
          size (inc n) items 
        | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
          size (inc n) (BIND binds :: items)

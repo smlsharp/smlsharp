@@ -70,12 +70,12 @@ local
   fun isSmallValue tpexp =
       not (TCU.expansive tpexp) andalso TCSize.isSmallerExp (tpexp, limitSize)
 
-  fun isOneUse ({id, ty, longsymbol, opaque}:T.varInfo) =
+  fun isOneUse ({id, ty, path, opaque}:T.varInfo) =
       case VarID.Map.find(!countMapRef, id) of
         SOME (TCAnalyse.FIN 1) => true
       | _ => false
 
-  fun isInfUse ({id, ty, longsymbol, opaque}:T.varInfo) =
+  fun isInfUse ({id, ty, path, opaque}:T.varInfo) =
       case VarID.Map.find(!countMapRef, id) of
         SOME TCAnalyse.INF => true
       | _ => false
@@ -161,7 +161,7 @@ local
         | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
           TC.TPEXEXN_CONSTRUCTOR
             {exExnInfo= exExnInfo, loc= loc}
-        | TC.TPEXVAR {longsymbol, ty} => exp
+        | TC.TPEXVAR {path, ty} => exp
         | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} =>
           TC.TPFFIIMPORT
             {ffiTy = ffiTy,
@@ -416,7 +416,7 @@ local
         end
       | TC.TPEXPORTEXN exnInfo =>
         (varMap, TC.TPEXPORTEXN exnInfo :: declListRev)
-      | TC.TPEXPORTVAR (varInfo as {longsymbol, id, ty, opaque}) =>
+      | TC.TPEXPORTVAR (varInfo as {path, id, ty, opaque}) =>
         let
           val tpexp = evalVar varMap varInfo
           val (id, declListRev) = 
@@ -424,20 +424,20 @@ local
                 TC.TPVAR {id,...} => (id, declListRev)
               | _ => 
                 let
-                  val varInfo = {longsymbol = longsymbol, id = id, ty = ty, opaque=opaque}
+                  val varInfo = {path = path, id = id, ty = ty, opaque=opaque}
                 in
                   (id, TC.TPVAL ([(varInfo, tpexp)],Loc.noloc) :: declListRev)
                 end
         in
           (varMap,
-           TC.TPEXPORTVAR {longsymbol=longsymbol, id = id, ty=ty, opaque=opaque} :: declListRev
+           TC.TPEXPORTVAR {path=path, id = id, ty=ty, opaque=opaque} :: declListRev
           )
         end
       | TC.TPEXPORTRECFUNVAR _ =>
         raise bug "TPEXPORTRECFUNVAR to optimize"
-      | TC.TPEXTERNEXN {longsymbol, ty} => (varMap,  tpdecl :: declListRev)
-      | TC.TPBUILTINEXN {longsymbol, ty} => (varMap,  tpdecl :: declListRev)
-      | TC.TPEXTERNVAR {longsymbol, ty} => (varMap, tpdecl :: declListRev)
+      | TC.TPEXTERNEXN {path, ty} => (varMap,  tpdecl :: declListRev)
+      | TC.TPBUILTINEXN {path, ty} => (varMap,  tpdecl :: declListRev)
+      | TC.TPEXTERNVAR {path, ty} => (varMap, tpdecl :: declListRev)
       | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
         let
           val (varMap, binds) = evalBindsSeq binds (varMap, nil)

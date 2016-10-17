@@ -248,7 +248,7 @@ structure InterfaceLrVals
   | sigdec' of A.topdec
   | sigdecs of A.topdec list
   | requires of I.irequire list
-  | includes of Symbol.symbol list
+  | includes of (Filename.filename * I.loc) list
   | top of I.itop
 
   | overloadExp of I.overloadCase
@@ -716,19 +716,19 @@ requires        : (* none *)
                     (nil)
                 | REQUIRE STRING requires
                     (I.REQUIRE
-                       (Symbol.mkSymbol STRING (REQUIREleft, STRINGright))
+                       (Filename.fromString STRING, (REQUIREleft, STRINGright))
                      :: requires)
                 | REQUIRE LOCAL STRING requires
                     (I.LOCAL_REQUIRE
-                       (Symbol.mkSymbol STRING (REQUIREleft, STRINGright))
+                       (Filename.fromString STRING, (REQUIREleft, STRINGright))
                      :: requires)
                 | SEMICOLON requires
                     (requires)
 
 includes        : INCLUDE STRING
-                    ([Symbol.mkSymbol STRING (INCLUDEleft, STRINGright)])
+                    ([(Filename.fromString STRING, (INCLUDEleft, STRINGright))])
                 | INCLUDE STRING includes
-                    (Symbol.mkSymbol STRING (INCLUDEleft, STRINGright)
+                    ((Filename.fromString STRING, (INCLUDEleft, STRINGright))
                      :: includes)
 
 top             : requires topdec topdecs

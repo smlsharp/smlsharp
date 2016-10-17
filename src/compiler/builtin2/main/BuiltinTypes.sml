@@ -172,7 +172,7 @@ struct
         val conList =
             map (fn I.IDCON (conInfo as {id, ty, longsymbol}) =>
                     (conInfo, {id=id, ty = Ity.evalIty Ity.emptyContext ty,
-                               longsymbol = longsymbol})
+                               path = longsymbol})
                   | _ => raise bug "con not found")
                 (SymbolEnv.listItems varE)
       in
@@ -366,39 +366,13 @@ struct
        (SOMEICConInfo, SOMETPConInfo)) =
       case conList of [x,y] => (x,y) | _ => raise bug "conList option"
 
-  (* datatype 'a dbi = DBI *)
-  val (dbiTstrInfo, dbiTyCon, _, _, conList) =
-      makeTfun
-        {printName = ["SQL", "dbi"],
-         admitsEq = true,
-         formals = ["a"],
-         dtyKind = DTY [("DBI", NONE)]}
-
-  val (DBIICConInfo, DBITPConInfo) =
-      case conList of [x] => x | _ => raise bug "conList dbi"
-
-  (* datatype ('a,'b) value = VALUE of (string * 'b dbi) * 'a *)
-  val (valueTstrInfo, valueTyCon, _, _, conList) =
-      makeTfun
-        {printName = ["SQL", "value"],
-         admitsEq = true,
-         formals = ["a", "b"],
-         dtyKind =
-           DTY [("VALUE",
-                 SOME (TUPLE [TUPLE [CON (stringTstrInfo, nil),
-                                     CON (dbiTstrInfo, [TVAR "b"])],
-                              TVAR "a"]))]}
-
-  val (VALUEICConInfo, VALUETPConInfo) =
-      case conList of [x] => x | _ => raise bug "conList value"
-
   fun evalExn (longid, tyopt) : T.exExnInfo =
       let
         val ty = case tyopt of
                      NONE => exnTy
                    | SOME ty => T.FUNMty([ty], exnTy)
       in
-        {longsymbol= mkLongsymbol longid, ty=ty}
+        {path = mkLongsymbol longid, ty=ty}
       end
 
   val BindExExn = evalExn (["Bind"], NONE)
@@ -435,8 +409,6 @@ struct
       | "bool" => SOME boolTstrInfo
       | "list" => SOME listTstrInfo
       | "option" => SOME optionTstrInfo
-      | "dbi" => SOME dbiTstrInfo
-      | "value" => SOME valueTstrInfo
       | _ => NONE
 
 end

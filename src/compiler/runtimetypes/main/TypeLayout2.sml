@@ -21,8 +21,6 @@ structure TypeLayout2 : sig
   val alignComputation : align_computation
   val charBits : int
 
-  val init : LLVMUtils.compile_options -> unit
-
 end =
 struct
 
@@ -40,7 +38,6 @@ struct
       | T.OPRIMkind _ => NONE
       | T.OCONSTkind _ => NONE
       | T.REC _ => SOME R.BOXEDty
-      | T.JOIN _ => SOME R.BOXEDty
 
   fun runtimeTy btvEnv ty =
       case ty of
@@ -78,11 +75,12 @@ struct
                  attributes = attributes})
       | T.ERRORty => NONE
       | T.DUMMYty _ => SOME R.INT32ty
+      | T.DUMMY_RECORDty _ => SOME R.BOXEDty (* dummy record type is a record ty *)
       | T.TYVARty (ref (T.TVAR {tvarKind,...})) => runtimeTyTvarKind tvarKind
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => runtimeTy btvEnv ty
       | T.FUNMty _ => SOME R.BOXEDty  (* function closure *)
       | T.RECORDty _ => SOME R.BOXEDty
-      | T.POLYty {boundtvars, body} =>
+      | T.POLYty {boundtvars, constraints, body} =>
         runtimeTy (BoundTypeVarID.Map.unionWith #2 (btvEnv, boundtvars)) body
       | T.CONSTRUCTty {tyCon, args} =>
         (
@@ -157,19 +155,7 @@ struct
       ALIGN_UPTO_4
 *)
 
-  val pointerSize = ref 0
-
-  fun init ({triple, arch, cpu, features, ...}:LLVMUtils.compile_options) =
-      let
-        val t = LLVM.LLVMGetTargetFromArchAndTriple (arch, triple)
-        val tm = LLVM.LLVMCreateTargetMachine
-                   (t, triple, cpu, features, LLVM.OptDefault,
-                    LLVM.RelocDefault, LLVM.CodeModelDefault)
-        val tmd = LLVM.LLVMGetTargetMachineData tm
-      in
-        pointerSize := Word.toInt (LLVM.LLVMPointerSize tmd);
-        LLVM.LLVMDisposeTargetMachine tm
-      end
+  val pointerSize = SMLSharp_PointerSize.pointerSize
 
   (* FIXME: ILP32 layout is hard-coded. *)
 

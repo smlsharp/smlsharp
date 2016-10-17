@@ -1,19 +1,10 @@
 (**
  * ElaboratorSQL.sml
- * @copyright (c) 2009, 2010, Tohoku University.
+ * @copyright (c) 2009-2016, Tohoku University.
  * @author UENO Katsuhiro
  * @author ENDO Hiroki
  *)
 
-(* 2012-10-13 changed string ids and longids to symbols and longsymbols *)
-(*
-sig
-  val elaborateExp : {elabExp: Absyn.exp -> PatternCalc.plexp,
-                      elabPat: Absyn.pat -> PatternCalc.plpat}
-                     -> (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.exp
-                     -> PatternCalc.plexp
-end
-*)
 structure ElaborateSQL =
 struct
 
@@ -30,31 +21,21 @@ struct
   type exp = A.exp
   type pat = A.pat
 
-  val mkSymbol = Symbol.mkSymbol
   val mkLongsymbol = Symbol.mkLongsymbol
 
-  val SQLDBConName = mkLongsymbol ["SMLSharp_SQL_Prim", "DB"]
-  val SQLTableConName = mkLongsymbol ["SMLSharp_SQL_Prim", "TABLE"]
-  val SQLRowConName = mkLongsymbol ["SMLSharp_SQL_Prim", "ROW"]
-  val SQLValueConName = mkLongsymbol ["SMLSharp_SQL_Prim", "VALUE"]
-  val SQLQueryConName = mkLongsymbol ["SMLSharp_SQL_Prim", "QUERY"]
-  val SQLCommandConName = mkLongsymbol ["SMLSharp_SQL_Prim", "COMMAND"]
+(*
   val SQLSchemaConName = mkLongsymbol ["SMLSharp_SQL_Prim", "SCHEMA"]
-  (* NOTE: even bool and option are builtin names, user may override them
-   * in interactive mode. Currently, if user overrides these types, SQL
-   * feature does not work. *)
-  val boolTyName = mkLongsymbol ["bool"]
-  val optionTyName = mkLongsymbol ["option"]
-  val concatDotFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "concatDot"]
-  val concatQueryFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "concatQuery"]
   val execFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "exec"]
   val evalFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "eval"]
-  val fromSQLFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "fromSQL"]
-  val defaultFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "default"]
   val sqlserverFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "sqlserver"]
+*)
+
   val columnInfoFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "columnInfo"]
 
-  val emptyTvars = nil : P.scopedTvars
+(*
+  val columnInfoFunName = mkLongsymbol ["SQL", "columnInfo"]
+  val fromSQLFunName = mkLongsymbol ["SMLSharp_SQL_Prim", "fromSQL"]
+*)
 
   fun mapi f l =
       let fun loop f n nil = nil
@@ -64,886 +45,568 @@ struct
 
   (* FIXME: labels may include characters that are not allowed in SQL or ML *)
   fun labelToSQLName label =
-      "\"" ^ RecordLabel.toString label ^ "\""
-  fun labelToVarName label =
       RecordLabel.toString label
 
-  (* varPat(NONE, loc) = _ 
-     varPat(SOME v, loc) = v
-   *)
-  fun varPat (NONE, loc) = P.PLPATWILD loc
-    | varPat (SOME x, loc) = P.PLPATID [x]
+  fun symbolToSQLName sym =
+      labelToSQLName (RecordLabel.fromSymbol sym)
 
-  (* pairPat(p1, p2, loc) = (p1, p2) *)
-  fun pairPat (pat1, pat2, loc) =
-      P.PLPATRECORD (false, RecordLabel.tupleList [pat1, pat2], loc)
+  (* FIXME: labels may include characters that are not allowed in ML vars *)
+  fun labelToSymbol label loc =
+      Symbol.mkSymbol (RecordLabel.toString label) loc
 
-  (* pairVarPat("v1", "v2", loc) = (v1, v2) *)
-  fun pairVarPat (var1, var2, loc) =
-      pairPat (P.PLPATID [var1], P.PLPATID [var2], loc)
+  fun primName s = mkLongsymbol ["SMLSharp_SQL_Prim", s]
 
-  (* stringDBIPat("sv", NOLE, loc) = sv
-     stringDBIPat("sv", SOME dv, loc) = sv as (_, dv)
-   *)
-  fun stringDBIPat (stringVar, dbiVar, loc) =
-      case dbiVar of
-        NONE => P.PLPATID [stringVar]
-      | SOME dbiVar =>
-        P.PLPATLAYERED
-          (stringVar, NONE,
-           pairPat (P.PLPATWILD loc, P.PLPATID [dbiVar], loc),
-           loc)
+(*
+  fun primName s = mkLongsymbol ["SQL", s]
+*)
 
-  (* tablePat(nv, NONE, wv, loc) = (nv, wv) table
-     tablePat(nv, SOME dv, wv, loc) = (nv as (_, dv), wv) table
-   *)
-  fun tablePat (nameVar, dbiVar, witnessVar, loc) =
-      P.PLPATCONSTRUCT
-        (P.PLPATID (SQLTableConName loc),
-         pairPat (stringDBIPat (nameVar, dbiVar, loc),
-                  P.PLPATID [witnessVar],
-                  loc),
-         loc)
-  (* boolOptionTy loc = bool option *)
-  fun boolOptionTy loc =
-      A.TYCONSTRUCT ([A.TYCONSTRUCT (nil, boolTyName loc, loc)],
-                     optionTyName loc, loc)
+  fun Embed x (_:P.loc) = x
 
-  (* valuePat (qv, wv, wTy, loc) = (qv, wv:wTy) value *)
-  fun valuePat (queryVar, witnessVar, witnessTy, loc) =
-      P.PLPATCONSTRUCT
-        (P.PLPATID (SQLValueConName loc),
-         pairPat (P.PLPATID [queryVar],
-                  case witnessTy of
-                    NONE => varPat (witnessVar, loc)
-                  | SOME ty => P.PLPATTYPED (varPat (witnessVar, loc), ty, loc),
-                  loc),
-         loc)
+  fun PatVar var (_:P.loc) =
+      P.PLPATID [var]
 
-  (* fnExp (v,e) = fn v => e *)
-  fun fnExp (var, exp, loc) =
-      P.PLFNM ([([varPat (var, loc)], exp)], loc)
+  fun PatVar' var loc =
+      P.PLPATID [var loc]
 
-  (* fnExp (v,e) = fn v => e *)
-  fun appExp (funName, arg, loc) =
-      P.PLAPPM (P.PLVAR funName, [arg], loc)
+  fun PatWild loc =
+      P.PLPATWILD loc
 
-  (* fnExp (v,e) = fn v => e *)
-  fun caseExp (exp, pat, bodyExp, loc) =
-      P.PLCASEM ([exp], [([pat], bodyExp)], P.MATCH, loc)
+  fun PatRecord nil loc =
+      P.PLPATCONSTANT (A.UNITCONST loc)
+    | PatRecord fields loc =
+      P.PLPATRECORD
+        (false, map (fn (label, pat) => (label, pat loc)) fields, loc)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun intCon (n, loc) =
-      P.PLCONSTANT (A.INT ({radix=StringCvt.DEC, digits=Int.toString n}, loc))
+  fun PatTuple pats =
+      PatRecord (RecordLabel.tupleList pats)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun rawStringCon (s, loc) =
+  fun PatAs (var, pat) loc =
+      P.PLPATLAYERED (var, NONE, pat loc, loc)
+
+  fun PatCon (name, [pat]) loc =
+      P.PLPATCONSTRUCT (P.PLPATID (name loc), pat loc, loc)
+    | PatCon (name, pats) loc =
+      P.PLPATCONSTRUCT (P.PLPATID (name loc), PatTuple pats loc, loc)
+
+  fun PatTyped (pat, ty) loc =
+      P.PLPATTYPED (pat loc, ty loc, loc)
+
+  fun Int n loc =
+      P.PLCONSTANT
+        (A.INT ({radix = StringCvt.DEC, digits = Int.toString n}, loc))
+
+  fun String s loc =
       P.PLCONSTANT (A.STRING (s, loc))
 
-  (* fnExp (v,e) = fn v => e *)
-  fun unitCon loc =
+  fun Var var (_:P.loc) =
+      P.PLVAR [var]
+
+  fun ExVar longid loc =
+      P.PLVAR (primName longid loc)
+
+  fun Record nil loc =
       P.PLCONSTANT (A.UNITCONST loc)
+    | Record fields loc =
+      P.PLRECORD (map (fn (label, exp) => (label, exp loc)) fields, loc)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun pairCon (exp1, exp2, loc) =
-      P.PLRECORD (RecordLabel.tupleList [exp1, exp2], loc)
+  fun Tuple exps =
+      Record (RecordLabel.tupleList exps)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun stringCon (s, dbiVar, loc) =
-      pairCon (rawStringCon (s, loc), P.PLVAR [dbiVar], loc)
+  fun Select (label, exp) loc =
+      P.PLSELECT (label, exp loc, loc)
 
-  (* (rowName as (_, dviVar), witnessVar) raw  *)
-  fun rowCon (rowName, dbiVar, witnessVar, loc) =
-      appExp (SQLRowConName loc,
-              pairCon (stringCon (labelToSQLName rowName, dbiVar, loc),
-                       P.PLVAR [witnessVar], 
-                       loc),
-              loc)
-  (* fnExp (v,e) = fn v => e *)
-  fun makeList (elemList, loc) = 
+  fun Selector label loc =
+      P.PLRECORD_SELECTOR (label, loc)
+
+  fun Modify exp1 fields loc =
+      P.PLRECORD_UPDATE
+        (exp1 loc, map (fn (label, exp) => (label, exp loc)) fields, loc)
+
+  fun Call (name, [exp]) loc =
+      P.PLAPPM (P.PLVAR (primName name loc), [exp loc], loc)
+    | Call (name, exps) loc =
+      P.PLAPPM (P.PLVAR (primName name loc), [Tuple exps loc], loc)
+
+  fun Fn (pat, exp) loc =
+      P.PLFNM ([([pat loc], exp loc)], loc)
+
+  fun App (exp1, exp2) loc =
+      P.PLAPPM (exp1 loc, [exp2 loc], loc)
+
+  fun FnV bodyFn =
       let
-        fun folder (x, y) =
-            P.PLAPPM
-              (P.PLVAR(mkLongsymbol ["::"] loc),
-               [P.PLRECORD(RecordLabel.tupleList [x, y], loc)],
-               loc)
-        val plexp = foldr folder (P.PLVAR(mkLongsymbol ["nil"] loc)) elemList
+        val v = Symbol.generate ()
       in
-        plexp
+        Fn (PatVar v, bodyFn (Var v))
       end
 
- (* (SQL_Prim.concatQuery queryStings, witnessExp, fn resutVar => returnExp) query  *)
-  fun queryCon (resultVar, returnExp, witnessExp, queryStrings, loc) =
-      appExp (SQLQueryConName loc,
-              P.PLRECORD
-                (RecordLabel.tupleList
-                   [appExp (concatQueryFunName loc,
-                            makeList (queryStrings, loc), loc),
-                    witnessExp,
-                    P.PLFNM
-                      ([([P.PLPATID [resultVar]], returnExp)],
-                       loc)], loc), loc)
-      
- (* (SQL_Prim.concatQuery queryStings) command  *)
-  fun commandCon (queryStrings, loc) =
-      appExp (SQLCommandConName loc,
-              appExp (concatQueryFunName loc, makeList (queryStrings, loc), loc),
-              loc)
+  fun Case1 (exp, pat1, exp1) loc =
+      P.PLCASEM ([exp loc], [([pat1 loc], exp1 loc)], P.MATCH, loc)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_fieldPat (label, var, loc) =
-      A.PATRECORD
-        {ifFlex = true,
-         fields = [A.PATROWPAT (label, 
-                                A.PATID {opPrefix = true, 
-                                         longsymbol = [var],
-                                         loc = loc}, loc)],
-         loc = loc}
+  (* use "case" instead of "let" to avoid type generalization. *)
+  fun Let nil body = body
+    | Let ((pat, exp)::t) body = Case1 (exp, pat, Let t body)
 
-  (* DB ({label=witnessVar}, dviVar) *)
-  fun a_dbPat (label, witnessVar, dbiVar, loc) =
-      A.PATAPPLY ([A.PATID {opPrefix = true, 
-                            longsymbol = SQLDBConName loc, loc = loc},
-                   A.PATTUPLE
-                     ([a_fieldPat (label, witnessVar, loc),
-                       A.PATID {opPrefix = true, 
-                                longsymbol = [dbiVar], loc = loc}],
-                      loc)], loc)
+  fun Cons (exp1, exp2) loc =
+      P.PLAPPM
+        (P.PLVAR (mkLongsymbol ["::"] loc), [Tuple [exp1, exp2] loc], loc)
 
-  (* ROW (nameVar, {label=witnessVar}) *)
-  fun a_rowPat (nameVar, label, witnessVar, loc) =
-      A.PATAPPLY ([A.PATID {opPrefix = true, 
-                            longsymbol = SQLRowConName loc, loc = loc},
-                   A.PATTUPLE
-                     ([A.PATID {opPrefix=true, 
-                                longsymbol=[nameVar], loc=loc},
-                       a_fieldPat (label, witnessVar, loc)],
-                      loc)], loc)
+  fun Nil loc =
+      P.PLVAR (mkLongsymbol ["nil"] loc)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_caseExp (exp, pat, bodyExp, loc) =
-      A.EXPCASE (exp, [(pat, bodyExp)], loc)
+  fun List exps =
+      foldr Cons Nil exps
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_appExp (funName, argExp, loc) =
-      A.EXPAPP ([A.EXPID funName, argExp], loc)
+  fun newTvar prefix =
+      ({symbol = Symbol.generateWithPrefix prefix, eq = A.NONEQ}, A.UNIV)
+      : A.kindedTvar
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_pairExp (exp1, exp2, loc) =
-      A.EXPTUPLE ([exp1, exp2], loc)
+  fun Tyvar ((t,_):A.kindedTvar) loc =
+      A.TYID (t, loc)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_rawStringCon (s, loc) =
-      A.EXPCONSTANT (A.STRING (s, loc))
+  fun Join (exp1, exp2) loc =
+      P.PLJOIN (exp1 loc, exp2 loc, loc)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_stringCon (s, dbiVar, loc) =
-      a_pairExp (a_rawStringCon (s, loc), A.EXPID [dbiVar], loc)
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_tableCon (rowName, witnessVar, dbiVar, loc) =
-      a_appExp (SQLTableConName loc,
-                a_pairExp (a_stringCon (labelToSQLName rowName, dbiVar, loc),
-                           A.EXPID [witnessVar], loc),
-                loc)
+  datatype view =
+      TABLE
+    | AS of view * Symbol.symbol
+    | JOIN of view * view
+    | NATURALJOIN of view * view
 
-  (* fnExp (v,e) = fn v => e *)
-  fun a_columnCon (tableNameVar, columnName, witnessVar, loc) =
-      a_appExp (SQLValueConName loc,
-                a_pairExp
-                  (a_appExp
-                     (concatDotFunName loc,
-                      a_pairExp (A.EXPID [tableNameVar],
-                                 a_rawStringCon (labelToSQLName columnName, loc),
-                                 loc),
-                      loc),
-                   A.EXPID [witnessVar],
-                   loc),
-                loc)
+  datatype view2 =
+      MAP of view * RecordLabel.label list
 
-  (* fnExp (v,e) = fn v => e *)
-  fun join s nil = nil
-    | join s [x] = x
-    | join s (h::t) = h @ [s] @ join s t
+  fun viewNames view =
+      case view of
+        TABLE => nil
+      | AS (view, var) => var :: viewNames view
+      | JOIN (view1, view2) => viewNames view1 @ viewNames view2
+      | NATURALJOIN (view1, view2) => viewNames view1 @ viewNames view2
 
-  (* fnExp (v,e) = fn v => e *)
-  fun asList (nil, dbi, loc) = nil
-    | asList ([(l, e)], dbi, loc) =
-      [e, stringCon (" AS " ^ labelToSQLName l, dbi, loc)]
-    | asList ((l, e)::t, dbi, loc) =
-      e :: stringCon (" AS " ^ labelToSQLName l ^ ", ", dbi, loc) :: asList (t, dbi, loc)
+  fun viewToPat view =
+      case view of
+        TABLE => PatWild
+      | AS (view, var) => PatVar var
+      | JOIN (view1, view2) => PatTuple [viewToPat view1, viewToPat view2]
+      | NATURALJOIN (view1, view2) =>
+        PatTuple [viewToPat view1, viewToPat view2]
 
-  (* fnExp (v,e) = fn v => e *)
-  fun bindsToDecls (nil, loc) = nil
-    | bindsToDecls (binds, loc) = [P.PDVAL (emptyTvars, binds, loc)]
+  fun isNatural view =
+      case view of
+        TABLE => true
+      | AS (view, _) => isNatural view
+      | JOIN _ => false
+      | NATURALJOIN _ => true
 
-  fun substSQLexp f exp =
-      case exp of
-        A.EXPCONSTANT constant => A.EXPCONSTANT constant
-      | A.EXPID string => A.EXPID string
-      | A.EXPOPID (string,loc) => A.EXPOPID (string,loc)
-      | A.EXPRECORD (fields,loc) =>
-        A.EXPRECORD (map (fn (l,e) => (l, substSQLexp f e)) fields, loc)
-      | A.EXPRECORD_UPDATE (exp,fields,loc) =>
-        A.EXPRECORD_UPDATE (substSQLexp f exp,
-                            map (fn (l,e) => (l, substSQLexp f e)) fields,
-                            loc)
-      | A.EXPRECORD_SELECTOR (string,loc) => A.EXPRECORD_SELECTOR (string,loc)
-      | A.EXPTUPLE (expList,loc) => A.EXPTUPLE (map (substSQLexp f) expList,loc)
-      | A.EXPLIST (expList,loc) => A.EXPLIST (map (substSQLexp f) expList,loc)
-      | A.EXPSEQ (expList,loc) => A.EXPSEQ (map (substSQLexp f) expList,loc)
-      | A.EXPAPP (expList,loc) => A.EXPAPP (map (substSQLexp f) expList,loc)
-      | A.EXPTYPED (exp,ty,loc) => A.EXPTYPED (substSQLexp f exp,ty,loc)
-      | A.EXPCONJUNCTION (exp1,exp2,loc) =>
-        A.EXPCONJUNCTION (substSQLexp f exp1, substSQLexp f exp2, loc)
-      | A.EXPDISJUNCTION (exp1,exp2,loc) =>
-        A.EXPDISJUNCTION (substSQLexp f exp1, substSQLexp f exp2, loc)
-      | A.EXPHANDLE (exp1, rules,loc) =>
-        A.EXPHANDLE (substSQLexp f exp1, substSQLmatches f rules, loc)
-      | A.EXPRAISE (exp,loc) => A.EXPRAISE (substSQLexp f exp,loc)
-      | A.EXPIF (exp1,exp2,exp3,loc) =>
-        A.EXPIF (substSQLexp f exp1, substSQLexp f exp2, substSQLexp f exp3,
-                 loc)
-      | A.EXPWHILE (exp1,exp2,loc) =>
-        A.EXPWHILE (substSQLexp f exp1, substSQLexp f exp2, loc)
-      | A.EXPCASE (exp1, rules, loc) =>
-        A.EXPCASE (substSQLexp f exp1, substSQLmatches f rules, loc)
-      | A.EXPFN (rules,loc) => A.EXPFN (substSQLmatches f rules, loc)
-      | A.EXPLET (decList,expList,loc) =>
-        A.EXPLET (map (substSQLdec f) decList,
-                  map (substSQLexp f) expList, loc)
-      | A.EXPFFIIMPORT (exp,ty,loc) =>
-        A.EXPFFIIMPORT (substSQLffiFun f exp,ty,loc)
-      | A.EXPFFIAPPLY (attrs,exp,args,ty,loc) =>
-        A.EXPFFIAPPLY (attrs, substSQLffiFun f exp, map (substSQLffiArg f) args,
-                       ty, loc)
-      | A.EXPSQL (S.SQLFIELDSELECT (label, exp, loc), _) =>
-        f (label, substSQLexp f exp, loc)
-      | A.EXPSQL (S.SQLSERVER (desc, schema, loc), loc2) =>
-        A.EXPSQL (S.SQLSERVER (substSQLexp f exp, schema, loc), loc2)
-      | A.EXPSQL (S.SQLFN _, _) => exp
-      | A.EXPSQL (S.SQLEXEC _, _) => exp
-      | A.EXPSQL (S.SQLEVAL _, _) => exp
-      | A.EXPJOIN (exp1, exp2, loc) => 
-        A.EXPJOIN(substSQLexp f exp1, substSQLexp f exp2, loc)
-      | A.EXPJSON (exp, ty, loc) =>
-        A.EXPJSON (substSQLexp f exp, ty, loc)
-      | A.EXPJSONCASE (exp1, rules, loc) =>
-        A.EXPJSONCASE (substSQLexp f exp1, substSQLmatches f rules, loc)
+  fun selector label =
+      Tuple [Selector label, String (labelToSQLName label)]
 
-  and substSQLmatches f rules =
-      map (fn (p,e) => (p, substSQLexp f e)) rules
-  and substSQLrecrules f rules =
-      map (fn (id,ty, e) => (id, ty, substSQLexp f e)) rules
+  (* openDB : ('w -> unit) * 'a db -> ('a,'w) db' *)
+  fun openDB (t, exp) =
+      Call ("openDB", [Fn (PatTyped (PatWild, Tyvar t), Record nil), exp])
 
-  and substSQLffiArg f ffiArg =
-      case ffiArg of
-        A.FFIARG (exp, ty, loc) => A.FFIARG (substSQLexp f exp, ty, loc)
-      | A.FFIARGSIZEOF (ty, expOpt, loc) =>
-        A.FFIARGSIZEOF (ty, Option.map (substSQLexp f) expOpt, loc)
+  (* readRow : ('a,'w) table5 -> ('a,'w) toy *)
+  fun readRow exp =
+      Call ("readRow", [exp])
 
-  and substSQLffiFun f ffiFun =
-      case ffiFun of
-        A.FFIFUN exp => A.FFIFUN (substSQLexp f exp)
-      | A.FFIEXTERN s => ffiFun
+  (* getValue : ('a,'w) row * ('a,'b) selector -> ('b,'w) value *)
+  fun getValue (exp, label) =
+      Call ("getValue", [exp, selector label])
 
-  and substSQLdec f dec =
-      case dec of
-        A.DECVAL (kindedTvarList, rules, loc) =>
-        A.DECVAL (kindedTvarList, substSQLmatches f rules, loc)
-      | A.DECREC (kindedTvarList, rules, loc) =>
-        A.DECREC (kindedTvarList, substSQLmatches f rules, loc)
-      | A.DECPOLYREC (rules, loc) =>
-        A.DECPOLYREC (substSQLrecrules f rules, loc)
-      | A.DECFUN (kindedTvarList, rules, loc) =>
-        A.DECFUN (kindedTvarList,
-                  map 
-                    (fn {fdecl, loc} => {fdecl=map (fn (p,t,e) => (p,t,substSQLexp f e)) fdecl, loc=loc})
-                    rules,
-                  loc)
-      | A.DECTYPE _ => dec
-      | A.DECDATATYPE _ => dec
-      | A.DECABSTYPE {abstys=datbindList, withtys=typbindList, body=decList, loc, formatComments} =>
-        A.DECABSTYPE {abstys=datbindList, 
-                      withtys=typbindList,
-                      body=map (substSQLdec f) decList, 
-                      formatComments=formatComments,
-                      loc=loc}
-      | A.DECOPEN _ => dec
-      | A.DECREPLICATEDAT _ => dec
-      | A.DECEXN _ => dec
-      | A.DECLOCAL (decList1, decList2, loc) =>
-        A.DECLOCAL (map (substSQLdec f) decList1,
-                    map (substSQLdec f) decList2, loc)
-      | A.DECINFIX _ => dec
-      | A.DECINFIXR _ => dec
-      | A.DECNONFIX _ => dec
+  (* readValue : ('a,'w) value -> qexp * ('a,'w) toy *)
+  fun readValue exp =
+      Call ("readValue", [exp])
 
-  (* case exp of  *)
-  fun selectTable (label, exp, loc) =
+  (* getTable : ('a,'w) db' * ('a,'b) selector -> ('b,'w) table *)
+  fun getTable (exp, label) =
+      Call ("getTable", [exp, selector label])
+
+  (* getDefault : ('a,'w) table * ('a,'b option) selector
+                  -> ('b option,'w) value *)
+  fun getDefault (exp, label) =
+      Call ("getDefault", [exp, selector label])
+
+  (* useTable : ('a,'w) table -> ('a, ('a,'w) row, 'w) table1 *)
+  fun useTable exp =
+      (Call ("useTable", [exp]), TABLE)
+
+  (* aliasTable : ('a,'b,'w) table1 -> ('a,('a,'w) row,'w) table1 *)
+  fun aliasTable ((exp, view), var) =
+      (Call ("aliasTable", [exp, String (symbolToSQLName var)]), AS (view, var))
+
+  fun useTableAs (exp, NONE) = useTable exp
+    | useTableAs (exp, SOME var) = aliasTable (useTable exp, var)
+
+  (* crossJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1
+                 -> ('a * 'c, 'b * 'd, 'w) table1 *)
+  fun crossJoin ((exp1, view1), (exp2, view2)) =
+      (Call ("crossJoin", [exp1, exp2]), JOIN (view1, view2))
+
+  (* innerJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 *
+                 ('b * 'd -> 'w bool_value)
+                 -> ('a * 'c, 'b * 'd, 'w) table1 *)
+  fun innerJoin ((exp1, view1), (exp2, view2), condExp) =
       let
-        val witnessVar = mkSymbol "_sql_w_" loc
-        val dbiVar = mkSymbol "_sql_i_" loc
+        val view = JOIN (view1, view2)
       in
-        a_caseExp (exp, a_dbPat (label, witnessVar, dbiVar, loc),
-                   a_tableCon (label, witnessVar, dbiVar, loc), loc)
+        (Call ("innerJoin", [exp1, exp2, Fn (viewToPat view, condExp)]), view)
       end
 
-  fun selectColumn (label, exp, loc) =
+  (* naturalJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 * ('a * 'c -> 'e)
+                   -> ('e, 'b * 'd, 'w) table1 *)
+  fun naturalJoin ((exp1, view1), (exp2, view2)) =
       let
-        val nameVar = mkSymbol "_sql_n_" loc
-        val witnessVar = mkSymbol "_sql_w_" loc
+        val x = Symbol.generate ()
+        val y = Symbol.generate ()
+        val join = Fn (PatTuple [PatVar x, PatVar y], Join (Var x, Var y))
       in
-        a_caseExp (exp, a_rowPat (nameVar, label, witnessVar, loc),
-                   a_columnCon (nameVar, label, witnessVar, loc), loc)
+        (Call ("naturalJoin", [exp1, exp2, join]), NATURALJOIN (view1, view2))
       end
 
-  fun elabSQLExp_From elabExp exp =
-      elabExp (substSQLexp selectTable exp)
+  (* dummyJoin : ('a,'b,'w) table1 -> ('a * unit, 'b, 'w) table1 *)
+  fun dummyJoin (exp, view) =
+      (Call ("dummyJoin", [exp]), view)
 
-  fun elabSQLExp elabExp exp =
-      elabExp (substSQLexp selectColumn exp)
+  (* subquery : ('a db -> 'b query) * ('a,'w) db' * string
+                -> ('b,('b,'w) row,'w) table1 *)
+  fun subquery (exp1, exp2, var) =
+      (Call ("subquery", [exp1, exp2, String (symbolToSQLName var)]),
+       AS (TABLE, var))
 
-  fun elabFromList elabExp dbi fromClause loc =
+  (* sourceTable : ('a,'b,'w) table1 -> ('a,'b,'w) table2 *)
+  fun sourceTable (exp, view) =
+      (Call ("sourceTable", [exp]), view)
+
+  (* useDual : unit -> (unit, unit, 'a) table2 *)
+  fun useDual () =
+      (Call ("useDual", []), TABLE)
+
+  (* chooseRows : ('a,'b,'w) table2 * ('b -> 'w bool_value)
+                  -> ('a,'b,'w) table3 *)
+  fun chooseRows condExp (exp, view) =
+      (Call ("chooseRows", [exp, Fn (viewToPat view, condExp)]), view)
+
+  (* chooseAll : ('a,'b,'w) table2 -> ('a,'b,'w) table3 *)
+  fun chooseAll (exp, view) =
+      (Call ("chooseAll", [exp]), view)
+
+  (* mapTable : ('a,'b,'w) table3 * ('b -> ('c,'w) raw_row)
+                -> ('a * 'c, 'b * ('c,'w) row, 'w) table4 *)
+  fun mapTable (mapExp, selectLabels) (exp, view) =
+      (Call ("mapTable", [exp, Fn (viewToPat view, mapExp)]),
+       MAP (view, selectLabels))
+
+  fun view2ToMatch (MAP (view, labels), exp) =
       let
-        val _ = EU.checkRecordLabelDuplication
-                  #1 fromClause loc
-                  E.DuplicateSQLTuple
-
-        (*
-         * FROM e1 as x1, ..., en as xn
-         * ==>
-         * (decls) val (tableName_1, x_1) =
-         *             case e_1 of TABLE (t as (_,i),w) =>
-         *                         (t, ROW (("x_1", i), w))
-         *         and ...
-         *         and (tableName_n, x_n) =
-         *             case e_n of TABLE (t as (_,i),w) =>
-         *                         (t, ROW (("x_n", i), w))
-         * (query) tableName_1 ^ " AS x_1, " ^ ... ^ ", "
-         *         ^ tableName_n ^ " AS x_n"
-         *)
-        val fromList =
-            map (fn (id, exp) =>
-                    {id = id, exp = elabSQLExp_From elabExp exp,
-                     tableNameVar = mkSymbol ("_sql_" ^ labelToVarName id ^ "_tabname_") loc})
-                fromClause
-        val fromBinds =
-            map (fn {id, exp, tableNameVar} =>
-                    (pairVarPat (tableNameVar, mkSymbol (labelToVarName id) loc, loc),
-                     caseExp
-                       (exp,
-                        tablePat (mkSymbol "_sql_t_" loc,
-                                  SOME (mkSymbol "_sql_i_" loc),
-                                  mkSymbol "_sql_w_" loc,
-                                  loc),
-                        pairCon (P.PLVAR [mkSymbol "_sql_t_" loc],
-                                 rowCon (id,
-                                         mkSymbol "_sql_i_" loc,
-                                         mkSymbol "_sql_w_" loc,
-                                         loc),
-                                 loc),
-                        loc)))
-                fromList
-        val fromQuery =
-            asList (map (fn {id, tableNameVar, ...} =>
-                            (id, P.PLVAR [tableNameVar]))
-                        fromList,
-                    dbi, loc)
+        val x = Symbol.generate ()
       in
-        (bindsToDecls (fromBinds, loc), fromQuery)
+        (PatTuple [viewToPat view, PatVar x],
+         Let (map (fn l => (PatVar' (labelToSymbol l), getValue (Var x, l)))
+                  labels)
+             exp)
       end
 
-  fun elabFromClause elabExp dbi fromClause loc =
+  (* sortTableAsc : ('a,'b,'w) table4 * ('b -> ('c,'w) value)
+                    -> ('a,'b,'w) table4 *)
+  fun sortTableAsc keyExp (exp, view) =
+      (Call ("sortTableAsc", [exp, Fn (view2ToMatch (view, keyExp))]), view)
+
+  (* sortTableDesc : ('a,'b,'w) table4 * ('b -> ('c,'w) value)
+                     -> ('a,'b,'w) table4 *)
+  fun sortTableDesc keyExp (exp, view) =
+      (Call ("sortTableDesc", [exp, Fn (view2ToMatch (view, keyExp))]), view)
+
+  (* selectDistinct : ('a*'b,'c,'w) table4 -> ('b,'w) table5 *)
+  fun selectDistinct (exp, view) =
+      Call ("selectDistinct", [exp])
+
+  (* selectAll : ('a*'b,'c,'w) table4 -> ('b,'w) table5 *)
+  fun selectAll (exp, view) =
+      Call ("selectAll", [exp])
+
+  (* selectDefault : ('a*'b,'c,'w) table4 -> ('b,'w) table5 *)
+  fun selectDefault (exp, view) =
+      Call ("selectDefault", [exp])
+
+  (* makeQuery : ('a,'w) table5 * (SMLSharp_SQL_Backend.res_impl -> 'a)
+                 -> ('d,'w) db' -> ('a,'w) query *)
+  fun makeQuery (exp, recvFn) =
       let
-        val (fromDecls, fromQuery) = elabFromList elabExp dbi fromClause loc
-        val fromQuery =
-            case fromQuery of
-              nil => fromQuery
-            | _::_ => stringCon (" FROM ", dbi, loc) :: fromQuery
+        val arg = Symbol.generate ()
       in
-        (fromDecls, fromQuery)
+        Call ("makeQuery", [exp, Fn (PatVar arg, recvFn (Var arg))])
       end
 
-  fun elabWhereClause elabExp dbi NONE loc = (nil, nil)
-    | elabWhereClause elabExp dbi (SOME exp) loc =
-      let
-        (*
-         * WHERE exp
-         * ==>
-         * (decls) val VALUE (_sql_where_, _ : bool) = exp
-         * (query) " WHERE " ^ _sql_where_
-         *)
-        val whereVar = mkSymbol "_sql_where_" loc
-        val wherebinds =
-            [(valuePat (whereVar, NONE, SOME (boolOptionTy loc), loc),
-              elabSQLExp elabExp exp)]
-        val whereQuery =
-            [stringCon (" WHERE ", dbi, loc),
-             P.PLVAR [whereVar]]
-      in
-        (bindsToDecls (wherebinds, loc), whereQuery)
-      end
+  (* deleteRows : ('a,'b,'w) table3 -> ('d,'w) db' -> 'w command *)
+  fun deleteRows (exp, view) =
+      Call ("deleteRows", [exp])
 
-  fun elabSelectList elabExp dbiVar distinct selectLabels selectListExps selectName loc =
-      let
-        val _ = EU.checkRecordLabelDuplication
-                  (fn x => x) selectLabels loc
-                  E.DuplicateSQLSelectLabel
+  (* updateRows : ('a * 'b, 'c, 'w) table3 * ('c * 'a toy -> ('a,'w) raw_row)
+                  -> ('d,'w) db' -> 'w command *)
+  fun updateRows (defaultVar, setExp) (exp, view) =
+      Call ("updateRows",
+            [exp, Fn (PatTuple [viewToPat view, PatVar defaultVar], setExp)])
 
-        (*
-         * SELECT e_1 as l_1, ..., e_n as l_n into r
-         * ==>
-         * (decls) val VALUE (q_1, w_1) = e_1
-         *         and ...
-         *         and VALUE (q_n, w_n) = e_n
-         *         val w = {l_1 = w_1, ..., l_n = w_n}
-         *         val r = ROW (("", dbi), w)
-         *         query r = {{l_1 = w_1, ..., l_n = w_n}}
-         * (witness) {l_1 = w_1, ..., l_n = w_n}
-         * (query) "SELECT " ^ q_1 ^ " AS l_1, " ^ ... ^ ", "
-         *                   ^ q_n ^ " AS l_n"
-         * (ret) {l_1 = fromSQL(##l_1 r), ..., l_n = fromSQL(##l_n r)}
-         *)
-        val selectList =
-            ListPair.map
-              (fn (label, exp) =>
-                  {exp = elabSQLExp elabExp exp,
-                   label = label,
-                   queryVar = mkSymbol ("_sql_select_" ^ labelToVarName label ^ "_") loc,
-                   witnessVar = mkSymbol ("_sql_select_" ^ labelToVarName label ^ "_witness_") loc})
-              (selectLabels, selectListExps)
-        val selectBinds =
-            map (fn {exp, label, queryVar, witnessVar} =>
-                    (valuePat (queryVar, SOME witnessVar, NONE, loc), exp))
-                selectList
-        val selectResult =
-            map (fn {label, witnessVar, ...} =>
-                    (label, P.PLVAR [witnessVar]))
-                selectList
-        val resultWitnessVar = mkSymbol "_sql_witness_" loc
-        val resultWitnessExp = P.PLVAR [resultWitnessVar]
-        val queryResultVar = mkSymbol "_sql_result_" loc
-        val queryResultExp = P.PLVAR [queryResultVar]
-        val resultWitnessBinds =
-            [(P.PLPATID [resultWitnessVar],
-              P.PLRECORD (selectResult, loc))]
-        val resultRowBinds =
-            case selectName of
-              NONE => nil
-            | SOME var =>
-              let
-                (* FIXME: is it OK? *)
-                val dummy = RecordLabel.fromString ""
-              in
-                [(P.PLPATID [var],
-                  rowCon (dummy, dbiVar, resultWitnessVar, loc))]
-              end
-        val selectReturnFields =
-            mapi (fn (i, {label, ...}) =>
-                     (label,
-                      appExp
-                        (fromSQLFunName loc,
-                         P.PLRECORD
-                           (RecordLabel.tupleList
-                              [intCon (i, loc),
-                               queryResultExp,
-                               P.PLSELECT (label, resultWitnessExp, loc)],
-                            loc), loc)))
-                  selectList
-        val selectReturnExp =
-            P.PLRECORD (selectReturnFields, loc)
-        val selectQuery =
-            stringCon ("SELECT ", dbiVar, loc) ::
-            stringCon (case distinct of
-                         true => "DISTINCT " 
-                       | false => "ALL ",
-                       dbiVar, loc) ::
-            asList (map (fn {queryVar, label, ...} =>
-                            (label, P.PLVAR [queryVar]))
-                        selectList,
-                    dbiVar, loc)
-        val selectDecls =
-            bindsToDecls (selectBinds, loc)
-            @ bindsToDecls (resultWitnessBinds, loc)
-            @ bindsToDecls (resultRowBinds, loc)
-      in
-        {selectDecls = selectDecls,
-         selectQuery = selectQuery,
-         queryResultVar = queryResultVar,
-         resultWitnessExp = resultWitnessExp,
-         selectReturnExp = selectReturnExp}
-      end
+  (* insertRows : ('a,'w) table * ('a,'w) raw_row list
+                  -> ('d,'w) db' -> 'w command *)
+  fun insertRows (exp, valuesExp) =
+      Call ("insertRows", [exp, valuesExp])
 
-  fun elabOrderByClause elabExp dbi orderByClause loc =
-      let
-        (*
-         * ORDER BY exp_1, ..., exp_n
-         * ==>
-         * (decls) val VALUE (q_1, _) = exp_1
-         *         and ...
-         *         and VALUE (q_n, _) = exp_n
-         * (query) " ORDER BY " ^ q_1 ^ ", " ^ ... ^ ", " ^ q_n
-         *)
-        val orderByList =
-            mapi (fn (i, {keyExp, orderAsc}) =>
-                     {exp = elabSQLExp elabExp keyExp,
-                      order = if orderAsc then " ASC" else " DESC",
-                      queryVar = mkSymbol ("_sql_orderby_" ^ Int.toString i ^ "_") loc})
-                 orderByClause
-        val orderByBinds =
-            map (fn {exp, order, queryVar} =>
-                    (valuePat (queryVar, NONE, NONE, loc), exp))
-                orderByList
-        val orderByQuery =
-            join (stringCon (", ", dbi, loc))
-                 (map (fn {order, queryVar, ...} =>
-                          [P.PLVAR [queryVar],
-                           stringCon (order, dbi, loc)])
-                      orderByList)
-        val orderByQuery =
-            case orderByQuery of
-              nil => orderByQuery
-            | _::_ => stringCon (" ORDER BY ", dbi, loc) :: orderByQuery
-      in
-        (bindsToDecls (orderByBinds, loc), orderByQuery)
-      end
+  (* beginTransaction : ('d,'w) db' -> 'w command *)
+  fun beginTransaction () =
+      ExVar "beginTransaction"
 
-  fun elaborateCommand elabExp dbiVar sql =
-      case sql of
-        S.SQLSELECT {distinct, selectListExps, selectLabels, selectName,
-                     fromClause, whereClause, orderByClause, loc} =>
+  (* commitTransaction : ('d,'w) db' -> 'w command *)
+  fun commitTransaction () =
+      ExVar "commitTransaction"
+
+  (* rollbackTransaction : ('d,'w) db' -> 'w command *)
+  fun rollbackTransaction () =
+      ExVar "rollbackTransaction"
+
+  (* fromSQL : int * res_impl * (unit -> 'a) -> 'a *)
+  fun fromSQL (index, res, label, toy) =
+      Call ("fromSQL",
+            [Int index, res, FnV (fn x => Select (label, App (toy, x)))])
+
+  fun elabFrom (env as {elabExp, db}) from =
+      case from of
+        S.SQLTABLE (db, label, var) =>
+        useTableAs (getTable (Var db, label), var)
+      | S.SQLEXP (exp, var) =>
+        subquery (Embed (elabExp exp), db, var)
+      | S.SQLINNERJOIN (from1, from2, sqlexp) =>
+        innerJoin (elabFrom env from1,
+                   elabFrom env from2,
+                   Embed (elabExp sqlexp))
+      | S.SQLCROSSJOIN (from1, from2) =>
+        crossJoin (elabFrom env from1, elabFrom env from2)
+      | S.SQLNATURALJOIN (from1, from2, loc) =>
         let
-          val _ = EU.checkRecordLabelDuplication
-                    (fn x => x)
-                    ((case selectName of SOME symbol => [RecordLabel.fromString (Symbol.symbolToString symbol)] | NONE => [])
-                     @ map (fn (string,_) => string) fromClause)
-                    loc
-                    E.DuplicateSQLTuple
-
-          val selectRecordLabels =
-              case selectLabels of
-                SOME labels => labels
-              | NONE => map #1 (RecordLabel.tupleList selectListExps)
-
-          val {selectDecls, selectQuery, queryResultVar, resultWitnessExp,
-               selectReturnExp} =
-              elabSelectList elabExp dbiVar
-                             distinct selectRecordLabels selectListExps selectName loc
-          val (fromDecls, fromQuery) =
-              elabFromClause elabExp dbiVar fromClause loc
-          val (whereDecls, whereQuery) =
-              elabWhereClause elabExp dbiVar whereClause loc
-          val (orderByDecls, orderByQuery) =
-              elabOrderByClause elabExp dbiVar orderByClause loc
+          val expview1 as (_, view1) = elabFrom env from1
+          val expview2 as (_, view2) = elabFrom env from2
         in
-          P.PLLET
-            (fromDecls @ whereDecls @ selectDecls @ orderByDecls,
-             [queryCon (queryResultVar, selectReturnExp,
-                        resultWitnessExp,
-                        selectQuery @ fromQuery @ whereQuery @ orderByQuery,
-                        loc)],
-             loc)
+          if isNatural view1 andalso isNatural view2
+          then ()
+          else EU.enqueueError (loc, E.UnnaturalNaturalJoin);
+          naturalJoin (elabFrom env from1, elabFrom env from2)
+        end
+      | S.SQLAS (from, var, loc) =>
+        let
+          val expview as (_, view) = elabFrom env from
+        in
+          if isNatural view
+          then ()
+          else EU.enqueueError (loc, E.OnlyNaturalJoinCanBeNamed var);
+          aliasTable (expview, var)
         end
 
-      | S.SQLINSERT {table=(dbVar, tableLabel), insertRows, insertLabels,
+  fun elabFromList env nil = NONE
+    | elabFromList env [from] = SOME (elabFrom env from)
+    | elabFromList env (from1::t) =
+      SOME (foldl (fn (from, z) => crossJoin (elabFrom env from, z))
+                  (elabFrom env from1)
+                  t)
+
+  fun makeRecord con loc fields =
+      let
+        val fields =
+            map (fn (label, exp) =>
+                    {label = label,
+                     query = Symbol.generate (),
+                     toy = Symbol.generate (),
+                     exp = exp})
+                fields
+      in
+        Let
+          (map (fn {query,toy,exp,...} =>
+                   (PatTuple [PatVar query, PatVar toy], readValue exp))
+               fields)
+          (Tuple
+             [List (map (fn {label,query,...} =>
+                            Tuple [String (labelToSQLName label), Var query])
+                        fields),
+              FnV (fn x =>
+                      con x (map (fn {label,toy,...} =>
+                                     (label, App (Var toy, x)))
+                                 fields))])
+      end
+
+  fun elabWhere {elabExp,db} NONE = chooseAll
+    | elabWhere {elabExp,db} (SOME exp) = chooseRows (Embed (elabExp exp))
+
+  fun elabCommand (env as {elabExp, db}) sql =
+      case sql of
+        S.SQLSELECT {distinct, selectListExps, selectLabels,
+                     fromClause, whereClause, orderByClause, loc} =>
+        let
+          val selectList =
+              case selectLabels of
+                NONE => RecordLabel.tupleList selectListExps
+              | SOME labels =>
+                (EU.checkRecordLabelDuplication
+                   (fn x => x)
+                   labels
+                   loc
+                   E.DuplicateSQLSelectLabel;
+                 ListPair.zipEq (labels, selectListExps)
+                 handle ListPair.UnequalLengths =>
+                        raise Bug.Bug "elabCommand: SQLSELECT")
+          val selectList =
+              map (fn (label, exp) => (label, Embed (elabExp exp))) selectList
+          val fromClause =
+              case elabFromList env fromClause of
+                NONE => useDual ()
+              | SOME expview =>
+                let
+                  val _ = EU.checkSymbolDuplication
+                            (fn x => x)
+                            (viewNames (#2 expview))
+                            E.DuplicateSQLTuple
+                in
+                  sourceTable expview
+                end
+          val selectFromWhere =
+              mapTable
+                (makeRecord (fn _ => Record) loc selectList,
+                 map #1 selectList)
+                (elabWhere env whereClause fromClause)
+(*
+          val row = case selectName of
+                      NONE => Symbol.generate ()
+                    | SOME x => x
+*)
+          val result = Symbol.generate ()
+        in
+          Let
+            [(PatVar result,
+              (case distinct of
+                 NONE => selectDefault
+               | SOME true => selectDistinct
+               | SOME false => selectAll)
+                (foldr
+                   (fn ({keyExp, orderAsc}, z) =>
+                       (if orderAsc then sortTableAsc else sortTableDesc)
+                         (Embed (elabExp keyExp))
+                         z)
+                   selectFromWhere
+                   orderByClause))]
+            (makeQuery
+               (Var result,
+                fn res =>
+                   Record
+                     (mapi
+                        (fn (i,(l,_)) =>
+                            (l, fromSQL (i, res, l, readRow (Var result))))
+                        selectList)))
+        end
+      | S.SQLINSERT {table=(dbVar, tableLabel), insertValues, insertLabels,
                      loc} =>
         let
           val _ = EU.checkRecordLabelDuplication
-                    (fn x => x) insertLabels loc
+                    (fn x => x)
+                    insertLabels
+                    loc
                     E.DuplicateSQLInsertLabel
-
-          (*
-           * INSERT INTO #db.t (l_1, ..., l_n) VALUES (e_1, ..., e_n)
-           * ==>
-           * (decls) val TABLE (_tabname_, _tab_witness_) =
-           *             case db of DB ({t=w,...},i) => TABLE ((t,i),w)
-           *         val VALUE (q_1, w_1) = e_1
-           *         and ...
-           *         and VALUE (q_n, w_n) = e_n
-           *         val witness = [_tab_witness_, {l_1 = w_1, ..., l_n = w_n}]
-           * (query) "INSERT INTO " ^ _tabname_ ^ " (l_1, " ^ ... ^ ", l_n)"
-           *         ^ " VALUES (" ^ q_1 ^ ", " ^ ... ^ ", " ^ q_n ^ ")"
-           *)
-          val tableNameVar = mkSymbol "_sql_insert_tabname_" loc
-          val tableWitnessVar = mkSymbol "_sql_insert_witness_" loc
-          val tableNameExp = P.PLVAR [tableNameVar]
-          val tableWitnessExp = P.PLVAR [tableWitnessVar]
-
-          val tableExp =
-              elabExp (selectTable (tableLabel, A.EXPID [dbVar], loc))
-          val tableBinds =
-              [(tablePat (tableNameVar, NONE, tableWitnessVar, loc), tableExp)]
-
-          val insertLists =
-              mapi
-                (fn (rowIndex, row) =>
-                    let
-                      val index = Int.toString rowIndex
-                    in
-                      ListPair.mapEq
-                        (fn (label, exp) =>
-                            {label = label,
-                             exp =
-                               case exp of
-                                 SOME exp => elabSQLExp elabExp exp
-                               | NONE => appExp (defaultFunName loc,
-                                                 unitCon loc, loc),
-                             queryVar =
-                               mkSymbol ("_sql_insert_" ^ labelToVarName label ^ "_" ^ index ^ "_") loc,
-                             witnessVar =
-                               mkSymbol ("_sql_insert_" ^ labelToVarName label ^ "_" ^ index
-                                         ^ "_witness_") loc})
-                        (insertLabels, row)
-                      handle ListPair.UnequalLengths =>
-                             (EU.enqueueError
-                                (loc, E.NumberOfSQLInsertLabel);
-                              nil)
-                    end)
-                insertRows
-          val insertBinds =
-              List.concat
-                (map (map (fn {label, exp, queryVar, witnessVar} =>
-                              (valuePat (queryVar, SOME witnessVar,
-                                         NONE, loc),
-                               exp)))
-                     insertLists)
-          val rowWitnessExps =
+          val into = getTable (Var dbVar, tableLabel)
+          val table = Symbol.generate ()
+          val rows =
               map (fn row =>
-                      P.PLRECORD (map (fn {label, witnessVar, ...} =>
-                                          (label, P.PLVAR [witnessVar]))
-                                      row, loc))
-                  insertLists
-          val witnessExp =
-              makeList (tableWitnessExp :: rowWitnessExps, loc)
-          val witnessBinds =
-              [(P.PLPATWILD loc, witnessExp)]
-
-          val join = join (stringCon (", ", dbiVar, loc))
-          val insertQuery =
-              stringCon ("INSERT INTO ", dbiVar, loc) ::
-              tableNameExp ::
-              stringCon (" (", dbiVar, loc) ::
-              join (map (fn label => [stringCon (labelToSQLName label, dbiVar, loc)])
-                        insertLabels) @
-              (stringCon (") VALUES ", dbiVar, loc) ::
-               join (map (fn row =>
-                             stringCon ("(", dbiVar, loc) ::
-                             join (map (fn {queryVar, ...} =>
-                                           [P.PLVAR [queryVar]])
-                                       row) @
-                             [stringCon (")", dbiVar, loc)])
-                         insertLists))
+                      map (fn (l, NONE) => (l, getDefault (Var table, l))
+                            | (l, SOME e) => (l, Embed (elabExp e)))
+                          (ListPair.zipEq (insertLabels, row)))
+                  insertValues
+              handle ListPair.UnequalLengths =>
+                     (EU.enqueueError (loc, E.NumberOfSQLInsertLabel); nil)
         in
-          P.PLLET
-            (bindsToDecls (tableBinds, loc) @
-             bindsToDecls (insertBinds, loc) @
-             bindsToDecls (witnessBinds, loc),
-             [commandCon (insertQuery, loc)],
-             loc)
+          Let
+            [(PatVar table, getTable (Var dbVar, tableLabel))]
+            (insertRows
+               (Var table, List (map (makeRecord (fn _ => Record) loc) rows)))
         end
-
       | S.SQLUPDATE {table=(dbVar, tableLabel), tableName, setListExps,
                      setLabels, fromClause, whereClause, loc} =>
         let
+          val updatee = getTable (Var dbVar, tableLabel)
+          val updateeVar = Symbol.generate ()
+          val expview1 = useTableAs ((Var updateeVar), tableName)
           val _ = EU.checkRecordLabelDuplication
-                    (fn x => x) setLabels loc
+                    (fn x => x)
+                    setLabels
+                    loc
                     E.DuplicateSQLSetLabel
-
-          (*
-           * UPDATE #db.t AS x SET (l_1, ..., l_n) = (e_1, ..., e_n)
-           * ==>
-           * (decls) val TABLE (_tabname_ as (_,_dbi_), _tab_witness_) =
-           *             case db of DB ({t=w,...},i) => TABLE ((t,i),w)
-           *         val x = ROW (("x", _dbi_), _tab_witness_)
-           *         val VALUE (q_1, w_1) = e_1
-           *         and ...
-           *         and VALUE (q_n, w_n) = e_n
-           *         val witness = [_tab_witness_, {l_1 = w_1, ..., l_n = w_n}]
-           * (query) "UPDATE " ^ _tabname_ ^ " AS x "
-           *         ^ "SET (l_1, " ^ ... ^ ", l_n)" ^ " = " ^
-           *         ^ "(" ^ q_1 ^ ", " ^ ... ^ ", " ^ q_n ^ ")"
-           *)
-
-          val tableNameVar = mkSymbol "_sql_update_tabname_" loc
-          val tableWitnessVar = mkSymbol "_sql_update_witness_" loc
-          val tableDBIVar = mkSymbol "_sql_update_dbi_" loc
-          val tableNameExp = P.PLVAR [tableNameVar]
-          val tableWitnessExp = P.PLVAR [tableWitnessVar]
-          val tableName =
-              case tableName of
-                NONE => RecordLabel.fromString "it"
-              | SOME x => x
-
-          val tableExp =
-              elabExp (selectTable (tableLabel, A.EXPID [dbVar], loc))
-          val tableBinds =
-              [(tablePat (tableNameVar, SOME tableDBIVar, tableWitnessVar, loc),
-                tableExp)]
-
-          val rowBinds =
-              [(P.PLPATID (mkLongsymbol [labelToVarName tableName] loc),
-                rowCon (tableName, tableDBIVar, tableWitnessVar, loc))]
-          val tableDecls =
-              bindsToDecls (tableBinds, loc) @
-              bindsToDecls (rowBinds, loc)
-
-          val setList =
-              ListPair.mapEq
-                (fn (label, exp) =>
-                    {label = label,
-                     exp = elabSQLExp elabExp exp,
-                     queryVar = mkSymbol ("_sql_update_" ^ labelToVarName label ^ "_") loc,
-                     witnessVar = mkSymbol ("_sql_update_" ^ labelToVarName label ^ "_witness_") loc})
-                (setLabels, setListExps)
-              handle ListPair.UnequalLengths =>
-                     (EU.enqueueError
-                        (loc, E.NumberOfSQLSetLabel);
-                      nil)
-          val setBinds =
-              map (fn {label, exp, queryVar, witnessVar} =>
-                      (valuePat (queryVar, SOME witnessVar, NONE, loc), exp))
-                  setList
-          val setWitnessExp =
-              P.PLRECORD (map (fn {label, witnessVar, ...} =>
-                                  (label, P.PLVAR [witnessVar]))
-                              setList, loc)
-
-          val witnessExp =
-              P.PLRECORD_UPDATE
-                (tableWitnessExp,
-                 map (fn {label, witnessVar, ...} =>
-                         (label, P.PLVAR [witnessVar]))
-                     setList,
-                 loc)
-          val witnessBinds =
-              [(P.PLPATWILD loc, witnessExp)]
-
-          val (fromDecls, fromQuery) =
-              elabFromClause elabExp dbiVar fromClause loc
-          val (whereDecls, whereQuery) =
-              elabWhereClause elabExp dbiVar whereClause loc
-
-          val join = join (stringCon (", ", dbiVar, loc))
-          val updateQuery =
-              stringCon ("UPDATE ", dbiVar, loc) ::
-              tableNameExp ::
-              stringCon (" AS " ^ labelToSQLName tableName ^ " SET (" , dbiVar, loc) ::
-              join (map (fn label => [stringCon (labelToSQLName label, dbiVar, loc)])
-                        setLabels) @
-              (stringCon (") = (", dbiVar, loc) ::
-               join (map (fn {queryVar, ...} => [P.PLVAR [queryVar]])
-                         setList) @
-               [stringCon (")", dbiVar, loc)]) @
-              fromQuery @
-              whereQuery
+          val set = ListPair.mapEq
+                      (fn (l, SOME exp) => (l, Embed (elabExp exp))
+                        | (l, NONE) => (l, getDefault (Var updateeVar, l)))
+                      (setLabels, setListExps)
+                    handle ListPair.UnequalLengths =>
+                           (EU.enqueueError (loc, E.NumberOfSQLSetLabel); nil)
+          val expview =
+              case elabFromList env fromClause of
+                NONE => dummyJoin expview1
+              | SOME expview2 => crossJoin (expview1, expview2)
+          val _ = EU.checkSymbolDuplication
+                    (fn x => x)
+                    (viewNames (#2 expview))
+                    E.DuplicateSQLTuple
+          val orig = Symbol.generate ()
         in
-          P.PLLET
-            (tableDecls @ fromDecls @ whereDecls @
-             bindsToDecls (setBinds, loc) @
-             bindsToDecls (witnessBinds, loc),
-             [commandCon (updateQuery, loc)],
-             loc)
+          Let [(PatVar updateeVar, updatee)]
+              (updateRows
+                 (orig, makeRecord (fn x => Modify (App (Var orig, x))) loc set)
+                 ((elabWhere env whereClause)
+                    (sourceTable expview)))
         end
-
       | S.SQLDELETE {table=(dbVar, tableLabel), tableName, whereClause, loc} =>
-        let
-          (*
-           * DELETE FROM #db.t AS x
-           * ==>
-           * (decls) val (_tabname_, x) =
-           *             case #db.t of TABLE (t as (_,i),w) =>
-           *                           (t, ROW (("x", i), w))
-           * (query) "DELETE FROM " ^ _tabname_ ^ " AS x"
-           *)
-          val tableNameVar = mkSymbol "_sql_delete_tabname_" loc
-          val tableWitnessVar = mkSymbol "_sql_delete_witness_" loc
-          val tableNameExp = P.PLVAR [tableNameVar]
-          val tableWitnessExp = P.PLVAR [tableWitnessVar]
-
-          val tableName =
-              case tableName of
-                NONE => RecordLabel.fromString "it"
-              | SOME x => x
-          val tableExp =
-              selectTable (tableLabel, A.EXPID [dbVar], loc)
-
-          val (fromDecls, fromQuery) =
-              elabFromClause elabExp dbiVar [(tableName, tableExp)] loc
-          val (whereDecls, whereQuery) =
-              elabWhereClause elabExp dbiVar whereClause loc
-        in
-          P.PLLET
-            (fromDecls @ whereDecls,
-             [commandCon (stringCon ("DELETE", dbiVar, loc)
-                          :: fromQuery @ whereQuery,
-                          loc)],
-             loc)
-        end
-
+        deleteRows
+          ((elabWhere env whereClause)
+             (sourceTable
+                (useTableAs
+                   (getTable (Var dbVar, tableLabel), tableName))))
       | S.SQLBEGIN loc =>
-        commandCon ([stringCon ("BEGIN", dbiVar, loc)], loc)
+        beginTransaction ()
       | S.SQLCOMMIT loc =>
-        commandCon ([stringCon ("COMMIT", dbiVar, loc)], loc)
+        commitTransaction ()
       | S.SQLROLLBACK loc =>
-        commandCon ([stringCon ("ROLLBACK", dbiVar, loc)], loc)
+        rollbackTransaction ()
 
-  fun elaborateExp {elabExp, elabPat}
-                   (sqlexp : (A.exp,A.pat,A.ty) S.exp) =
+  fun elaborateExp {elabExp, elabPat} (sqlexp : (A.exp,A.pat,A.ty) S.exp) =
       case sqlexp of
         S.SQLFIELDSELECT (label, exp, loc) =>
-        elabExp (selectColumn (label, exp, loc))
+        getValue (Embed (elabExp exp), label) loc
       | S.SQLFN (pat, sql, loc) =>
         let
-          val patLoc = A.getLocPat pat
-          val dbiid = mkSymbol "_sqlfn_dbi_" loc
+          val t = newTvar "_sql'"
+          val db = Symbol.generate ()
+          val db' = Symbol.generate ()
+          val exp =
+              Case1 (openDB (t, Var db),
+                     PatAs (db', Embed (elabPat pat)),
+                     App (elabCommand {elabExp = elabExp, db = Var db'} sql,
+                          Var db'))
+          val x = Symbol.generate ()
         in
-          P.PLFNM
-            ([([P.PLPATLAYERED (dbiid, NONE, elabPat pat, loc)],
-               caseExp
-                 (P.PLVAR [dbiid],
-                  P.PLPATCONSTRUCT
-                    (P.PLPATID (SQLDBConName loc),
-                     pairPat (P.PLPATWILD loc, P.PLPATID [dbiid], loc),
-                     loc),
-                    elaborateCommand elabExp dbiid sql,
-                    loc))],
-             loc)
+          Fn (PatVar db,
+              Embed (P.PLLET
+                       ([P.PDVAL ([t], [(P.PLPATID [x], exp loc)], loc)],
+                        [P.PLVAR [x]],
+                        loc)))
+             loc
         end
       | S.SQLEXEC (exp, loc) =>
-        let
-          val dbiVar = mkSymbol "_sqlexec_dbi_" loc
-        in
-          P.PLSQLDBI
-            (P.PLPATID [dbiVar],
-             appExp (execFunName loc,
-                     pairCon (P.PLVAR [dbiVar], elabExp exp, loc),
-                     loc),
-             loc)
-        end
+        Call ("exec", [Embed (elabExp exp)]) loc
       | S.SQLEVAL (exp, loc) =>
-        let
-          val dbiVar = mkSymbol "_sqlexec_dbi_" loc
-        in
-          P.PLSQLDBI
-            (P.PLPATID [dbiVar],
-             appExp (evalFunName loc,
-                     pairCon (P.PLVAR [dbiVar], elabExp exp, loc),
-                     loc),
-             loc)
-        end
+        Call ("eval", [Embed (elabExp exp)]) loc
       | S.SQLSERVER (exp, schema, loc) =>
-        appExp
-          (sqlserverFunName loc,
-           pairCon
-             (elabExp exp,
-              appExp (SQLSchemaConName loc,
-                      P.PLSQLSCHEMA
-                        {columnInfoFnExp = P.PLVAR (columnInfoFunName loc),
-                         ty = schema,
-                         loc = loc},
-                      loc),
-              loc),
-           loc)
+        Call ("sqlserver",
+             [Embed (elabExp exp),
+              Call ("SCHEMA",
+                    [Embed
+                       (P.PLSQLSCHEMA
+                          {columnInfoFnExp = P.PLVAR (columnInfoFunName loc),
+                           ty = schema,
+                           loc = loc})])])
+             loc
 
 end

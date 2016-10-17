@@ -63,7 +63,7 @@ struct
       let
         val id = VarID.generate ()
       in
-        {id = id, path = ["$" ^ VarID.toString id], ty = BuiltinTypes.wordTy}
+        {id = id, path = [Symbol.generate ()], ty = BuiltinTypes.wordTy}
         : varInfo
       end
 

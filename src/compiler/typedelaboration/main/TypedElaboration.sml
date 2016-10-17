@@ -358,8 +358,6 @@ struct
                       loc)
       | I.ICSQLSCHEMA arg =>
         compileSchema arg
-      | I.ICSQLDBI (icpat, icexp, loc) =>
-        I.ICSQLDBI (icpat, compileExp icexp, loc)
       | I.ICJOIN (icexp1, icexp2, loc) =>
         I.ICJOIN (compileExp icexp1, compileExp icexp2, loc)
       | I.ICJSON arg => elaborateJson arg

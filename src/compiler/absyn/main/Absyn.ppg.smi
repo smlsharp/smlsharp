@@ -6,6 +6,7 @@ _require local "../../control/main/Bug.ppg.smi"
 _require local "../../util/main/TermFormat.smi"
 _require local "../../util/main/SmlppgUtil.ppg.smi"
 _require local "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../toolchain/main/Filename.smi"
 _require "./FormatTemplate.ppg.smi"
 _require "./Symbol.ppg.smi"
 _require "./AbsynSQL.ppg.smi"
@@ -223,10 +224,10 @@ struct
 
   datatype top 
     = TOPDEC of topdec list
-    | USE of Symbol.symbol
+    | USE of Filename.filename * loc
 
   datatype interface 
-    = INTERFACE of Symbol.symbol
+    = INTERFACE of Filename.filename * loc
     | NOINTERFACE
 
   type unit = 

@@ -1,4 +1,5 @@
 _require "../../../basis.smi"
+_require "../../control/main/Bug.ppg.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/RecordLabel.smi"
 _require "../../absyn/main/Symbol.ppg.smi"

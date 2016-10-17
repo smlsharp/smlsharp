@@ -36,8 +36,7 @@ struct
 
   val classFloat =
       _import "prim_Float_class"
-      : __attribute__((pure,fast))
-        SMLSharp_Builtin.Real32.real -> class
+      : __attribute__((pure,fast)) real32 -> class
                                                                     
   (* 2014-01-25 以下がruntime/prim.cの実際の定義
     #define IEEEREAL_CLASS_SNAN     1   /* signaling NaN */

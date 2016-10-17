@@ -5,7 +5,7 @@ structure SMLSharp_RealClass =
 struct
   type class (= int)
   val classReal : real -> class
-  val classFloat : SMLSharp_Builtin.Real32.real -> class
+  val classFloat : real32 -> class
   val class : class -> IEEEReal.float_class
   val isFinite : class -> bool
   val isInf : class -> bool

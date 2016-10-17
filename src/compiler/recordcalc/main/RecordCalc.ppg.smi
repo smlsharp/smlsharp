@@ -1,5 +1,6 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/RecordLabel.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../name/main/LocalID.smi"
@@ -12,14 +13,14 @@ _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 
 structure RecordCalc =
   struct
-    type path = string list
+    type path = Symbol.longsymbol
     val format_path : path -> TermFormat.format
     type varInfo = {path:path, id:VarID.id, ty:Types.ty}
     val format_varInfo
         : varInfo -> SMLFormat.FormatExpression.expression list
     val formatWithType_varInfo
         : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> {id:VarID.id, path:string list, ty:Types.ty}
+          -> varInfo
           -> SMLFormat.FormatExpression.expression list
     type exVarInfo = {path:path, ty:Types.ty}
     val format_exVarInfo
@@ -68,17 +69,11 @@ structure RecordCalc =
           -> oprimInfo
           -> SMLFormat.FormatExpression.expression list
 
-  datatype exnCon 
-    = EXN of exnInfo
-    | EXEXN of exExnInfo
+    datatype exnCon = datatype TypedCalc.exnCon
     val format_exnCon
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> exnCon
-          -> SMLFormat.FormatExpression.expression list
+        : exnCon -> SMLFormat.FormatExpression.expression list
     val formatWithType_exnCon
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> exnCon
-          -> SMLFormat.FormatExpression.expression list
+        : exnCon -> SMLFormat.FormatExpression.expression list
 
     datatype rcexp
       = RCAPPM of {argExpList:rcexp list, funExp:rcexp, funTy:Types.ty, loc:Loc.loc}

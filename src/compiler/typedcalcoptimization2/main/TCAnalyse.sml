@@ -149,11 +149,11 @@ local
         incInf (#id varInfo)
        | TC.TPEXPORTRECFUNVAR _ =>
          raise bug "TPEXPORTRECFUNVAR to Analyse"
-       | TC.TPEXTERNEXN {longsymbol, ty} =>
+       | TC.TPEXTERNEXN {path, ty} =>
          ()
-       | TC.TPBUILTINEXN {longsymbol, ty} =>
+       | TC.TPBUILTINEXN {path, ty} =>
          ()
-       | TC.TPEXTERNVAR {longsymbol, ty} =>
+       | TC.TPEXTERNVAR {path, ty} =>
          ()
        | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
          visitExpList (map #2 binds)

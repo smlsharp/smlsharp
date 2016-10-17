@@ -4,6 +4,7 @@ _require "../../../compiler-utils/env/main/SEnv.smi"
 _require "../../absyn/main/RecordLabel.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require local "../../control/main/Bug.ppg.smi"
+_require local "../../control/main/Control.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require local "./ListSorter.smi"
 
@@ -13,6 +14,8 @@ struct
   type 'a formatter = 'a -> format
   type 'a formatParam = 'a list
   val formatEnclosedList
+      : 'a formatter * format * format * format -> 'a list formatter
+  val formatEnclosedListWithBound
       : 'a formatter * format * format * format -> 'a list formatter
   val formatAppList
       : 'a formatter * format * format * format -> 'a list formatter
@@ -44,6 +47,7 @@ struct
       : 'a formatter * format * format -> 'a SymbolEnv.map formatter
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
+  val formatDummyRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatIfCons : format -> 'a list formatter
   val formatIfList : format -> 'a list formatter
   val formatIfNonEmpty : format -> 'a SEnv.map formatter

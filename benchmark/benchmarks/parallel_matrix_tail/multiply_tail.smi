@@ -1,0 +1,4 @@
+_require "basis.smi"
+val matrix1 : real array array
+val matrix2 : real array array
+val result : real array array

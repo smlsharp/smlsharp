@@ -1,50 +1,68 @@
 _require "../../basis.smi"
+_require "../../smlformat-lib.smi"
 _require "./SQLErrors.smi"
 _require local "./SQLBackendTy.smi"
 _require "./Backend.smi"
 _require "./builtintypes/timestamp/TimeStamp.smi"
 _require "./builtintypes/decimal/Decimal.smi"
 _require "./builtintypes/float/Float.smi"
+_require "./SQLQuery.ppg.smi"
 
 structure SMLSharp_SQL_Prim =
 struct
-
-  datatype backend = datatype SMLSharp_SQL_Backend.backend
-  datatype 'a schema = SCHEMA of SMLSharp_SQL_Backend.schema * 'a
-  type 'a server (= boxed)
-  type 'a conn (= boxed)
-  type 'a rel (= boxed)
-  datatype dbi = datatype SMLSharp_Builtin.SQL.dbi
-  datatype ('a,'b) db = DB of 'a * 'b dbi
-  datatype ('a,'b) table = TABLE of (string * 'b dbi) * 'a
-  datatype ('a,'b) row = ROW of (string * 'b dbi) * 'a
-  datatype value = datatype SMLSharp_Builtin.SQL.value
-  datatype 'a query = QUERY of string * 'a * (SMLSharp_SQL_Backend.res_impl -> 'a)
-  datatype command = COMMAND of string
-  type timestamp = SMLSharp_SQL_TimeStamp.timestamp
-  type decimal = SMLSharp_SQL_Decimal.decimal
-  type float = SMLSharp_SQL_Float.float
 
   exception Format = SMLSharp_SQL_Errors.Format
   exception Exec = SMLSharp_SQL_Errors.Exec
   exception Connect = SMLSharp_SQL_Errors.Connect
   exception Link = SMLSharp_SQL_Errors.Link
 
+  datatype backend = datatype SMLSharp_SQL_Backend.backend
+  datatype 'a schema = SCHEMA of SMLSharp_SQL_Backend.schema * 'a
+  type 'a server (= boxed)
+  type 'a conn (= boxed)
+  type 'a db (= boxed)
+  type 'a rel (= boxed)
+  datatype res_impl = datatype SMLSharp_SQL_Backend.res_impl
+  type timestamp = SMLSharp_SQL_TimeStamp.timestamp
+  type decimal = SMLSharp_SQL_Decimal.decimal
+  type float = SMLSharp_SQL_Float.float
+
+  datatype qconst =
+      CONST_INT of int
+    | CONST_WORD of word
+    | CONST_REAL of real
+    | CONST_STRING of string
+    | CONST_CHAR of char
+
+  type 'w dbi (= contag)
+  type ('a,'w) db' (= boxed)
+  type ('a,'w) table (= boxed)
+  type ('a,'w) row (= boxed)
+  type qexp (= boxed)
+  type ('a,'w) toy = 'w dbi -> 'a
+  type ('a,'b) selector = ('a -> 'b) * string
+  type ('a,'w) raw_row = (string * qexp) list * ('a,'w) toy
+  type ('a,'w) value' (= boxed)
+  datatype ('a,'w) value = VALUE of ('a,'w) value' | CONST of qconst * 'a
+  type 'w bool_value = (bool option, 'w) value
+  type 'a query (= boxed)
+  type command (= boxed)
+
+  val sqlserver_string : string * 'a schema -> 'a server
+  val sqlserver_backend : backend * 'a schema -> 'a server
+  val sqlserver =
+      case 'a in 'a * 'b schema -> 'b server of
+        string => sqlserver_string
+      | backend => sqlserver_backend
+
   val connect : 'a server -> 'a conn
-  val eval : 'a dbi * (('b, 'a) db -> 'c query) -> 'b conn -> 'c rel
-  val exec : 'a dbi * (('b, 'a) db -> command) -> 'b conn -> unit
+  val eval : ('a db -> 'b query) -> 'a conn -> 'b rel
+  val exec : ('a db -> command) -> 'a conn -> unit
   val fetch : 'a rel -> ('a * 'a rel) option
   val closeConn : 'a conn -> unit
   val closeRel : 'a rel -> unit
-  val subquery : (('a,'b) db -> 'c query) -> ('a,'b) db -> ('c,'b) table
-  val exists : (('a,'b) db -> 'c query) -> ('a,'b) db -> (bool option, 'b) value
-  val queryString : (('a,'b) db -> 'c query) -> 'a server -> string
-  val commandString : (('a,'b) db -> command) -> 'a server -> string
-  val Some : ('a, 'b) value -> ('a option, 'b) value
-  val Null : ('a option, 'b) value
-
-  val concatDot : (string * 'a) * string -> string * 'a
-  val concatQuery : (string * 'a) list -> string
+  val queryString : ('a db -> 'b query) -> string
+  val commandString : ('a db -> command) -> string
 
   val columnInfo_int
       : string -> int * SMLSharp_SQL_Backend.schema_column 
@@ -60,8 +78,6 @@ struct
       : string -> real * SMLSharp_SQL_Backend.schema_column
   val columnInfo_real32
       : string -> Real32.real * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_bool
-      : string -> bool * SMLSharp_SQL_Backend.schema_column
   val columnInfo_timestamp
       : string -> timestamp * SMLSharp_SQL_Backend.schema_column
   val columnInfo_decimal
@@ -82,8 +98,6 @@ struct
       : string -> real option * SMLSharp_SQL_Backend.schema_column
   val columnInfo_real32_option
       : string -> Real32.real option * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_bool_option
-      : string -> bool option * SMLSharp_SQL_Backend.schema_column
   val columnInfo_timestamp_option
       : string -> timestamp option * SMLSharp_SQL_Backend.schema_column
   val columnInfo_decimal_option
@@ -100,7 +114,6 @@ struct
       | string => columnInfo_string
       | real => columnInfo_real
       | Real32.real => columnInfo_real32
-      | bool => columnInfo_bool
       | timestamp => columnInfo_timestamp
       | decimal => columnInfo_decimal
       | float => columnInfo_float
@@ -113,179 +126,99 @@ struct
         | string => columnInfo_string_option
         | real => columnInfo_real_option
         | Real32.real => columnInfo_real32_option
-        | bool => columnInfo_bool_option
         | timestamp => columnInfo_timestamp_option
         | decimal => columnInfo_decimal_option
         | float => columnInfo_float_option
 
-  val add
-      : ('b, 'a) value * ('b, 'a) value -> ('b, 'a) value
-  val sub
-      : ('b, 'a) value * ('b, 'a) value -> ('b, 'a) value
-  val mul
-      : ('b, 'a) value * ('b, 'a) value -> ('b, 'a) value
-  val div
-      : ('b, 'a) value * ('b, 'a) value -> ('b, 'a) value
-  val mod
-      : ('b, 'a) value * ('b, 'a) value -> ('b, 'a) value
-  val neg
-      : ('b, 'a) value -> ('b, 'a) value
-  val abs
-      : ('b, 'a) value -> ('b, 'a) value
-  val lt
-      : ('b, 'a) value * ('b, 'a) value -> (bool option, 'a) value
-  val le
-      : ('b, 'a) value * ('b, 'a) value -> (bool option, 'a) value
-  val gt
-      : ('b, 'a) value * ('b, 'a) value -> (bool option, 'a) value
-  val ge
-      : ('b, 'a) value * ('b, 'a) value -> (bool option, 'a) value
-  val eq
-      : ('b, 'a) value * ('b, 'a) value -> (bool option, 'a) value
-  val neq
-      : ('b, 'a) value * ('b, 'a) value -> (bool option, 'a) value
-  val strcat
-      : (string, 'a) value * (string, 'a) value -> (string, 'a) value
-  val andAlso
-      : (bool option, 'a) value * (bool option, 'a) value
-        -> (bool option, 'a) value
-  val orElse
-      : (bool option, 'a) value * (bool option, 'a) value
-        -> (bool option, 'a) value
-  val not
-      : (bool option, 'a) value -> (bool option, 'a) value
-  val isNull
-      : ('a option, 'b) value -> (bool option, 'b) value
-  val isNotNull
-      : ('a option, 'b) value -> (bool option, 'b) value
-  val likeString
-      : (string,'a) value * (string,'a) value -> (bool option, 'a) value
-  val likeStringOption
-      : (string option,'a) value * (string option,'a) value
-        -> (bool option, 'a) value
-  val toSQL_int
-      : int -> (int, 'a) value
-  val toSQL_intInf
-      : IntInf.int -> (IntInf.int, 'a) value
-  val toSQL_word
-      : word -> (word, 'a) value
-  val toSQL_char
-      : char -> (char, 'a) value
-  val toSQL_string
-      : string -> (string, 'a) value
-  val toSQL_real
-      : real -> (real, 'a) value
-  val toSQL_timestamp
-      : timestamp -> (timestamp, 'a) value
-  val toSQL_decimal
-      : decimal -> (decimal, 'a) value
-  val toSQL_float
-      : float -> (float, 'a) value
-  val toSQL_intOption
-      : int option -> (int option, 'a) value
-  val toSQL_intInfOption
-      : IntInf.int option -> (IntInf.int option, 'a) value
-  val toSQL_wordOption
-      : word option -> (word option, 'a) value
-  val toSQL_boolOption
-      : bool option -> (bool option, 'a) value
-  val toSQL_charOption
-      : char option -> (char option, 'a) value
-  val toSQL_stringOption
-      : string option -> (string option, 'a) value
-  val toSQL_realOption
-      : real option -> (real option, 'a) value
-  val toSQL_timestampOption
-      : timestamp option -> (timestamp option, 'a) value
-  val toSQL_decimalOption
-      : decimal option -> (decimal option, 'a) value
-  val toSQL_floatOption
-      : float option -> (float option, 'a) value
-  val fromSQL_int
-      : int * SMLSharp_SQL_Backend.res_impl * int -> int
-  val fromSQL_intInf
-      : int * SMLSharp_SQL_Backend.res_impl * IntInf.int -> IntInf.int
-  val fromSQL_word
-      : int * SMLSharp_SQL_Backend.res_impl * word -> word
-  val fromSQL_char
-      : int * SMLSharp_SQL_Backend.res_impl * char -> char
-  val fromSQL_string
-      : int * SMLSharp_SQL_Backend.res_impl * string -> string
-  val fromSQL_real
-      : int * SMLSharp_SQL_Backend.res_impl * real -> real
-  val fromSQL_timestamp
-      : int * SMLSharp_SQL_Backend.res_impl * timestamp -> timestamp
-  val fromSQL_decimal
-      : int * SMLSharp_SQL_Backend.res_impl * decimal -> decimal
-  val fromSQL_float
-      : int * SMLSharp_SQL_Backend.res_impl * float -> float
-  val fromSQL_intOption
-      : int * SMLSharp_SQL_Backend.res_impl * int option -> int option
-  val fromSQL_intInfOption
-      : int * SMLSharp_SQL_Backend.res_impl * IntInf.int option -> IntInf.int option
-  val fromSQL_wordOption
-      : int * SMLSharp_SQL_Backend.res_impl * word option -> word option
-  val fromSQL_charOption
-      : int * SMLSharp_SQL_Backend.res_impl * char option -> char option
-  val fromSQL_boolOption
-      : int * SMLSharp_SQL_Backend.res_impl * bool option -> bool option
-  val fromSQL_stringOption
-      : int * SMLSharp_SQL_Backend.res_impl * string option -> string option
-  val fromSQL_realOption
-      : int * SMLSharp_SQL_Backend.res_impl * real option -> real option
-  val fromSQL_timestampOption
-      : int * SMLSharp_SQL_Backend.res_impl * timestamp option -> timestamp option
-  val fromSQL_decimalOption
-      : int * SMLSharp_SQL_Backend.res_impl * decimal option -> decimal option
-  val fromSQL_floatOption
-      : int * SMLSharp_SQL_Backend.res_impl * float option -> float option
-  val default_int
-      : unit -> (int, 'a) value
-  val default_intInf
-      : unit -> (IntInf.int, 'a) value
-  val default_word
-      : unit -> (word, 'a) value
-  val default_char
-      : unit -> (char, 'a) value
-  val default_string
-      : unit -> (string, 'a) value
-  val default_real
-      : unit -> (real, 'a) value
-  val default_intOption
-      : unit -> (int option, 'a) value
-  val default_intInfOption
-      : unit -> (IntInf.int option, 'a) value
-  val default_wordOption
-      : unit -> (word option, 'a) value
-  val default_charOption
-      : unit -> (char option, 'a) value
-  val default_boolOption
-      : unit -> (bool option, 'a) value
-  val default_stringOption
-      : unit -> (string option, 'a) value
-  val default_realOption
-      : unit -> (real option, 'a) value
+  val Some : ('a,'w) value -> ('a option,'w) value
+  val Null : ('a option,'w) value
 
-  val default =
-      case 'a in unit -> ('a, 'b) value of
-        int => default_int
-      | IntInf.int => default_intInf
-      | word => default_word
-      | char => default_char
-      | string => default_string
-      | real => default_real
-      | 'c option =>
-        case 'c in unit -> ('c option, 'b) value of
-          int => default_intOption
-        | IntInf.int => default_intInfOption
-        | word => default_wordOption
-        | char => default_charOption
-        | bool => default_boolOption
-        | string => default_stringOption
-        | real => default_realOption
+  val add : ('a,'w) value * ('a,'w) value -> ('a,'w) value
+  val sub : ('a,'w) value * ('a,'w) value -> ('a,'w) value
+  val mul : ('a,'w) value * ('a,'w) value -> ('a,'w) value
+  val div : ('a,'w) value * ('a,'w) value -> ('a,'w) value
+  val mod : ('a,'w) value * ('a,'w) value -> ('a,'w) value
+  val neg : ('a,'w) value -> ('a,'w) value
+  val abs : ('a,'w) value -> ('a,'w) value
+  val lt : ('a,'w) value * ('a,'w) value -> 'w bool_value
+  val le : ('a,'w) value * ('a,'w) value -> 'w bool_value
+  val gt : ('a,'w) value * ('a,'w) value -> 'w bool_value
+  val ge : ('a,'w) value * ('a,'w) value -> 'w bool_value
+  val eq : ('a,'w) value * ('a,'w) value -> 'w bool_value
+  val neq : ('a,'w) value * ('a,'w) value -> 'w bool_value
+  val strcat : (string, 'w) value * (string, 'w) value -> (string, 'w) value
+  val andAlso : 'w bool_value * 'w bool_value -> 'w bool_value
+  val orElse : 'w bool_value * 'w bool_value -> 'w bool_value
+  val not : 'w bool_value -> 'w bool_value
+  val isNull : ('a,'w) value -> 'w bool_value
+  val isNotNull : ('a,'w) value -> 'w bool_value
+  val like_string : (string,'w) value * (string,'w) value -> 'w bool_value
+  val like_stringOption
+      : (string option,'w) value * (string option,'w) value -> 'w bool_value
+  val exists : ('a db -> 'b query) -> ('a,'w) db' -> 'w bool_value
+
+  val toSQL_int : int -> (int,'w) value
+  val toSQL_intInf : IntInf.int -> (IntInf.int,'w) value
+  val toSQL_word : word -> (word,'w) value
+  val toSQL_char : char -> (char,'w) value
+  val toSQL_string : string -> (string,'w) value
+  val toSQL_real : real -> (real,'w) value
+  val toSQL_timestamp : timestamp -> (timestamp,'w) value
+  val toSQL_decimal : decimal -> (decimal,'w) value
+  val toSQL_float : float -> (float,'w) value
+  val toSQL_intOption : int option -> (int option, 'w) value
+  val toSQL_intInfOption : IntInf.int option -> (IntInf.int option,'w) value
+  val toSQL_wordOption : word option -> (word option,'w) value
+  val toSQL_charOption : char option -> (char option,'w) value
+  val toSQL_stringOption : string option -> (string option,'w) value
+  val toSQL_realOption : real option -> (real option,'w) value
+  val toSQL_timestampOption : timestamp option -> (timestamp option,'w) value
+  val toSQL_decimalOption : decimal option -> (decimal option,'w) value
+  val toSQL_floatOption : float option -> (float option,'w) value
+
+  val fromSQL_int
+      : int * SMLSharp_SQL_Backend.res_impl * (int,'w) toy -> int
+  val fromSQL_intInf
+      : int * SMLSharp_SQL_Backend.res_impl * (IntInf.int,'w) toy -> IntInf.int
+  val fromSQL_word
+      : int * SMLSharp_SQL_Backend.res_impl * (word,'w) toy -> word
+  val fromSQL_char
+      : int * SMLSharp_SQL_Backend.res_impl * (char,'w) toy -> char
+  val fromSQL_string
+      : int * SMLSharp_SQL_Backend.res_impl * (string,'w) toy -> string
+  val fromSQL_real
+      : int * SMLSharp_SQL_Backend.res_impl * (real,'w) toy -> real
+  val fromSQL_timestamp
+      : int * SMLSharp_SQL_Backend.res_impl * (timestamp,'w) toy -> timestamp
+  val fromSQL_decimal
+      : int * SMLSharp_SQL_Backend.res_impl * (decimal,'w) toy -> decimal
+  val fromSQL_float
+      : int * SMLSharp_SQL_Backend.res_impl * (float,'w) toy -> float
+  val fromSQL_intOption
+      : int * SMLSharp_SQL_Backend.res_impl * (int option,'w) toy -> int option
+  val fromSQL_intInfOption
+      : int * SMLSharp_SQL_Backend.res_impl * (IntInf.int option,'w) toy
+        -> IntInf.int option
+  val fromSQL_wordOption
+      : int * SMLSharp_SQL_Backend.res_impl * (word option,'w) toy -> word option
+  val fromSQL_charOption
+      : int * SMLSharp_SQL_Backend.res_impl * (char option,'w) toy -> char option
+  val fromSQL_stringOption
+      : int * SMLSharp_SQL_Backend.res_impl * (string option,'w) toy
+        -> string option
+  val fromSQL_realOption
+      : int * SMLSharp_SQL_Backend.res_impl * (real option,'w) toy -> real option
+  val fromSQL_timestampOption
+      : int * SMLSharp_SQL_Backend.res_impl * (timestamp option,'w) toy
+        -> timestamp option
+  val fromSQL_decimalOption
+      : int * SMLSharp_SQL_Backend.res_impl * (decimal option,'w) toy
+        -> decimal option
+  val fromSQL_floatOption
+      : int * SMLSharp_SQL_Backend.res_impl * (float option,'w) toy -> float option
 
   val fromSQL =
-      case 'a in int * SMLSharp_SQL_Backend.res_impl * 'a -> 'a of
+      case 'a in int * res_impl * ('a,'w) toy -> 'a of
         int => fromSQL_int
       | IntInf.int => fromSQL_intInf
       | word => fromSQL_word
@@ -296,66 +229,68 @@ struct
       | decimal => fromSQL_decimal
       | float => fromSQL_float
       | 'c option =>
-        case 'c in int * SMLSharp_SQL_Backend.res_impl * 'c option -> 'c option
-        of
+        case 'c in int * res_impl * ('c option,'w) toy -> 'c option of
           int => fromSQL_intOption
         | IntInf.int => fromSQL_intInfOption
         | word => fromSQL_wordOption
         | char => fromSQL_charOption
-        | bool => fromSQL_boolOption
         | string => fromSQL_stringOption
         | real => fromSQL_realOption
         | timestamp => fromSQL_timestampOption
         | decimal => fromSQL_decimalOption
         | float => fromSQL_floatOption
 
-  val sqlserver_string : string * 'a schema -> 'a server
-  val sqlserver_backend : backend * 'a schema -> 'a server
+  exception InvalidCommand
 
-  val sqlserver =
-      case 'a in 'a * 'b schema -> 'b server of
-        string => sqlserver_string
-      | backend => sqlserver_backend
+  type ('row,'view,'w) table1 (= boxed)
+  type ('row,'view,'w) table2 (= boxed)
+  type ('row,'view,'w) table3 (= boxed)
+  type ('row,'view,'w) table4 (= boxed)
+  type ('row,'w) table5 (= boxed)
 
-(*
-  val op + = '_SQL_add'
-  val op - = '_SQL_sub'
-  val op * = '_SQL_mul'
-  val op div = '_SQL_div'
-  val op mod = '_SQL_mod'
-  val op / = '_SQL_divr'
-  val op ~ = '_SQL_neg'
-  val op abs = '_SQL_abs'
-  val op < = '_SQL_lt'
-  val op <= = '_SQL_le'
-  val op > = '_SQL_gt'
-  val op >= = '_SQL_ge'
-  val op == = '_SQL_eq'
-  val op <> = '_SQL_neq'
-  val op ^ = strcat
-  val toSQL = '_SQL_toSQL'
-  val fromSQL = '_SQL_fromSQL'
-*)
-
-(*
-  val + =
-      case 'a in
-        ('a, 'b) value
-        * ('a, 'b) value
-        -> ('a, 'b) value
-      of
-        int => add_int
-      | word => add_word
-      | real => add_real
-      | 'c option =>
-        case 'd in
-          ('c option, 'b) value
-          * ('c option, 'b) value
-          -> ('c option, 'b) value
-        of
-          int => add_intOption
-          word => add_wordOption
-          real => add_realOption
-*)
+  val openDB : ('w -> unit) * 'a db -> ('a,'w) db'
+  val getValue : ('a,'w) row * ('a,'b) selector -> ('b,'w) value
+  val readValue : ('a,'w) value -> qexp * ('a,'w) toy
+  val getTable : ('a,'w) db' * ('a,'b) selector -> ('b,'w) table
+  val getDefault : ('a,'w) table * ('a,'b) selector -> ('b,'w) value
+  val useTable : ('a,'w) table -> ('a, ('a,'w) row, 'w) table1
+  val aliasTable : ('a,'b,'w) table1 * string -> ('a,('a,'w) row,'w) table1
+  val crossJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1
+                  -> ('a * 'c, 'b * 'd, 'w) table1
+  val innerJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 * 
+                  ('b * 'd -> 'w bool_value)
+                    -> ('a * 'c, 'b * 'd, 'w) table1
+  val naturalJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 * ('a * 'c -> 'e)
+                    -> ('e, 'b * 'd, 'w) table1
+  val dummyJoin : ('a,'b,'w) table1 -> ('a * unit, 'b, 'w) table1
+  val subquery : ('a db -> 'b query) * ('a,'w) db' * string
+                 -> ('b,('b,'w) row,'w) table1
+  val sourceTable : ('a,'b,'w) table1 -> ('a,'b,'w) table2
+  val useDual : unit -> (unit, unit, 'a) table2
+  val chooseRows : ('a,'b,'w) table2 * ('b -> 'w bool_value)
+                   -> ('a,'b,'w) table3
+  val chooseAll : ('a,'b,'w) table2 -> ('a,'b,'w) table3
+  val mapTable : ('a,'b,'w) table3 * ('b -> ('c,'w) raw_row)
+                 -> ('a * 'c, 'b * ('c,'w) row, 'w) table4
+  val sortTableAsc : ('a,'b,'w) table4 * ('b -> ('c,'w) value)
+                     -> ('a,'b,'w) table4
+  val sortTableDesc : ('a,'b,'w) table4 * ('b -> ('c,'w) value)
+                      -> ('a,'b,'w) table4
+  val selectDistinct : ('a * 'b, 'c, 'w) table4 -> ('b,'w) table5
+  val selectAll : ('a * 'b, 'c, 'w) table4 -> ('b,'w) table5
+  val selectDefault : ('a * 'b, 'c, 'w) table4 -> ('b,'w) table5
+  val readRow : ('a,'w) table5 -> ('a,'w) toy
+  val makeQuery : ('a,'w) table5 * (SMLSharp_SQL_Backend.res_impl -> 'a)
+                  -> ('d,'w) db' -> 'a query
+  val deleteRows : ('a,'b,'w) table3
+                   -> ('d,'w) db' -> command
+  val updateRows : ('a * 'b, 'c, 'w) table3
+                   * ('c * ('a,'w) toy -> ('a,'w) raw_row)
+                   -> ('d,'w) db' -> command
+  val insertRows : ('a,'w) table * ('a,'w) raw_row list
+                   -> ('d,'w) db' -> command
+  val beginTransaction : ('d,'w) db' -> command
+  val commitTransaction : ('d,'w) db' -> command
+  val rollbackTransaction : ('d,'w) db' -> command
 
 end

@@ -64,7 +64,7 @@ local
     *)
    Absyn.eq
   fun bug s = Bug.Bug ("IDCalc: " ^ s)
-  val tempVarNamePrefix = "$T_"
+  val tempVarNamePrefix = "T_"
 in
   type loc = Loc.loc
 
@@ -1591,20 +1591,6 @@ in
         loc : loc
       }
     | (*%
-         @format(pat * exp * loc)
-         "_sqldbi" + pat
-         + "in" + exp
-       *)
-      (*% @prefix formatWithType_
-         @format(pat * exp * loc)
-         "_sqldbi" + pat
-         + "in" + exp
-       *)
-      (*% @prefix print_
-         @format(pat * exp * loc)
-       *)
-      ICSQLDBI of icpat * icexp * loc
-    | (*%
          @format(exp1 * exp2 * loc)
          "join(" + exp1 + "," + exp2 ")"
        *)
@@ -2510,7 +2496,6 @@ in
     | ICFFIIMPORT (icexp, ffiTy, loc) => loc
     | ICFFIAPPLY (ffiAttributesOption, icexp, ffiArgList, ffiTy, loc) => loc
     | ICSQLSCHEMA {loc,...} => loc
-    | ICSQLDBI (icpat1, icexp2, loc) => loc
     | ICJOIN (icexp1, icexp2, loc) => loc
     | ICJSON (icexp, ty, loc) => loc
     
@@ -2574,8 +2559,7 @@ in
 
   fun newICVar() =
       let
-        fun gensym () =  tempVarNamePrefix ^ Gensym.gensym()
-        val longsymbol = Symbol.mkLongsymbol [gensym()] Loc.noloc
+        val longsymbol = [Symbol.generateWithPrefix tempVarNamePrefix]
         val newVarId = VarID.generate()
       in
         {longsymbol=longsymbol, id=newVarId}

@@ -43,7 +43,7 @@ struct
   val emptyNewContext =
       {
         topEnv = NameEvalEnv.emptyTopEnv,
-        fixEnv = SEnv.empty
+        fixEnv = SymbolEnv.empty
       } : newContext
 
   val errorOutput = TextIO.stdErr
@@ -231,14 +231,14 @@ struct
   fun doNameEvaluation ({topEnv, version, builtinDecls, ...}:toplevelContext) plunit =
       let
         val _ = #start Counter.nameEvaluationTimeCounter()
-        val (exnConList, nameevalTopEnv, icdecls, warnings) =
+        val {requireTopEnv, returnTopEnv, icdecls, warnings} =
             NameEval.nameEval {topEnv=topEnv, version=version,
                                systemDecls=builtinDecls} plunit
         val _ =  #stop Counter.nameEvaluationTimeCounter()
         val _ = printWarnings warnings
         val _ = printIDCalc Control.printNameEval "Name Evaluation" icdecls
       in
-        (exnConList, nameevalTopEnv, icdecls)
+        (requireTopEnv, returnTopEnv, icdecls)
       end
 
   fun doNameEvaluationInteractiveEnv topEnv plinteractive =
@@ -547,7 +547,7 @@ struct
       let
         val _ = #start Counter.compilationTimeCounter()
 
-        val _ = TypeLayout2.init llvmOptions
+        val _ = InitPointerSize.init llvmOptions
 
         val parsed = doParse input
         val (dependency, abunit) = doLoadFile options context parsed
@@ -558,8 +558,10 @@ struct
                 then raise Return (dependency, STOPPED)
                 else ()
 
-        val (exnConList, nameevalTopEnv, idcalc) = doNameEvaluation context plunit
-        val _ = JSONData.init (#topEnv context)
+        val (requireTopEnv, nameevalTopEnv, idcalc) =
+            doNameEvaluation context plunit
+        val _ = JSONData.init requireTopEnv
+        val _ = ConstantTerm.init requireTopEnv
         val idcalc = doTypedElaboration idcalc
         val idcalc = doVALRECOptimization idcalc
 
@@ -651,7 +653,8 @@ struct
                topdecsInclude = nil,
                topdecsSource = nil}
             | _ => raise Bug.Bug "illeagal builtin file"
-        val (fixEnv, plunit, warnings) = Elaborator.elaborate SEnv.empty abunit
+        val (fixEnv, plunit, warnings) =
+            Elaborator.elaborate SymbolEnv.empty abunit
         val pidecls = 
             case (#interface plunit) of
               SOME {provideTopdecs,...} => provideTopdecs

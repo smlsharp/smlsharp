@@ -48,7 +48,7 @@ in
               in
                 T.TFUNDEF {iseq=iseq,
                            arity=length formals,
-                           polyTy=T.POLYty{boundtvars=btvEnv,body=rty}
+                           polyTy=T.POLYty{boundtvars=btvEnv,constraints = nil, body=rty}
                            }
               end
         in
@@ -86,6 +86,7 @@ in
                  then fn ity => fn () => evalIty argTyContext ity
                  else fn ity => fn () =>
                          T.POLYty {boundtvars = btvEnv,
+                                   constraints = nil,
                                    body = evalIty argTyContext ity}
            in
               {id = id,
@@ -97,15 +98,7 @@ in
 	       runtimeTy = runtimeTy,
                arity = List.length formals,
                conIDSet = conIDSet,
-               conSet =
-                 SymbolEnv.foldri
-                   (fn (symbol, ityOpt, conSet) =>
-                       SEnv.insert
-                         (conSet,
-                          Symbol.symbolToString symbol,
-                          Option.map argTyFn ityOpt))
-                   SEnv.empty
-                   conSpec,
+               conSet = SymbolEnv.map (Option.map argTyFn) conSpec,
                extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
                dtyKind = evalDtyKind context dtyKind
               }
@@ -183,7 +176,7 @@ in
             *)
            val subst = TB.freshSubst btvEnv
            val ty = TB.substBTvar subst ty
-           val (_, otset, freeTvs) = TB.EFTV ty
+           val (_, otset, freeTvs) = TB.EFTV (ty, nil)
            val boundOtset = 
                BoundTypeVarID.Map.foldl
                (fn (T.TYVARty (r as ref (T.TVAR _)), boundOtset) =>
@@ -221,7 +214,7 @@ in
                  BoundTypeVarID.Map.empty
                  tids
          in
-           T.POLYty {boundtvars = btvs, body = ty}
+           T.POLYty {boundtvars = btvs, constraints = nil, body = ty}
          end
        | I.INFERREDTY ty => ty
   and evalKindedTvarList (context as {tvarEnv, varEnv, oprimEnv}) kindedTvarList =

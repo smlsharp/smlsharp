@@ -207,6 +207,7 @@ struct
               argAttrs: L.parameter_attribute list list,
               varArg: bool,
               retTy: L.ty,
+              retAttrs: L.parameter_attribute list,
               fnAttrs: L.function_attribute list}
     datatype intrinsicVar =
         V of {name: string, ty: L.ty}
@@ -221,6 +222,7 @@ struct
          argAttrs = [nil, nil, nil, nil, nil],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_memmove =
       R {name = "llvm.memmove.p0i8.p0i8.i32",
@@ -229,6 +231,7 @@ struct
          argAttrs = [nil, nil, nil, nil, nil],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_memset =
       R {name = "llvm.memset.p0i8.i32",
@@ -237,6 +240,7 @@ struct
          argAttrs = [nil, nil, nil, nil, nil],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_gcroot =
       R {name = "llvm.gcroot",
@@ -245,6 +249,7 @@ struct
          argAttrs = [nil, nil],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_fabs_f32 =
       R {name = "llvm.fabs.f32",
@@ -253,6 +258,7 @@ struct
          argAttrs = [nil],
          varArg = false,
          retTy = L.FLOAT,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_fabs_f64 =
       R {name = "llvm.fabs.f64",
@@ -261,6 +267,7 @@ struct
          argAttrs = [nil],
          varArg = false,
          retTy = L.DOUBLE,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_init_trampoline =
       R {name = "llvm.init.trampoline",
@@ -269,6 +276,7 @@ struct
          argAttrs = [nil, nil, nil],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_adjust_trampoline =
       R {name = "llvm.adjust.trampoline",
@@ -277,6 +285,7 @@ struct
          argAttrs = [nil],
          varArg = false,
          retTy = L.PTR L.I8,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_load_intinf =
       R {name = "sml_load_intinf",
@@ -285,6 +294,7 @@ struct
          argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.PTR L.I8,
+         retAttrs = [L.NOALIAS],
          fnAttrs = [L.NOUNWIND]}
   val sml_register_top =
       R {name = "sml_register_top",
@@ -293,6 +303,7 @@ struct
          argAttrs = [nil, nil, nil, nil],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_start =
       R {name = "sml_start",
@@ -301,6 +312,7 @@ struct
          argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_end =
       R {name = "sml_end",
@@ -309,6 +321,7 @@ struct
          argAttrs = [],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_leave =
       R {name = "sml_leave",
@@ -317,6 +330,7 @@ struct
          argAttrs = [],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_enter =
       R {name = "sml_enter",
@@ -325,6 +339,7 @@ struct
          argAttrs = [],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_save =
       R {name = "sml_save",
@@ -333,6 +348,7 @@ struct
          argAttrs = [],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_unsave =
       R {name = "sml_unsave",
@@ -341,6 +357,7 @@ struct
          argAttrs = [],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_check =
       R {name = "sml_check",
@@ -349,6 +366,7 @@ struct
          argAttrs = [],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_check_flag =
       V {name = "sml_check_flag",
@@ -360,6 +378,7 @@ struct
          argAttrs = [[L.INREG], [L.INREG]],
          varArg = false,
          retTy = L.PTR (L.PTR L.I8),
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_alloc_code =
       R {name = "sml_alloc_code",
@@ -368,6 +387,7 @@ struct
          argAttrs = [],
          varArg = false,
          retTy = L.PTR L.I8,
+         retAttrs = [L.NOALIAS],
          fnAttrs = [L.NOUNWIND]}
   val sml_alloc =
       R {name = "sml_alloc",
@@ -376,6 +396,7 @@ struct
          argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.PTR L.I8,
+         retAttrs = [L.NOALIAS],
          fnAttrs = [L.NOUNWIND]}
   val sml_obj_equal =
       R {name = "sml_obj_equal",
@@ -384,6 +405,7 @@ struct
          argAttrs = [[L.INREG], [L.INREG]],
          varArg = false,
          retTy = L.I32,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_write =
       R {name = "sml_write",
@@ -392,6 +414,7 @@ struct
          argAttrs = [[L.INREG], [L.INREG], [L.INREG]],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_copyary =
       R {name = "sml_copyary",
@@ -401,6 +424,7 @@ struct
          argAttrs = [nil, nil, nil, nil, nil],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_raise =
       R {name = "sml_raise",
@@ -409,6 +433,7 @@ struct
          argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NORETURN]}
   val sml_save_exn =
       R {name = "sml_save_exn",
@@ -417,6 +442,7 @@ struct
          argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.VOID,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_unsave_exn =
       R {name = "sml_unsave_exn",
@@ -425,6 +451,7 @@ struct
          argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.PTR L.I8,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_personality =
       R {name = "sml_personality",
@@ -433,6 +460,7 @@ struct
          argAttrs = [],
          varArg = true,
          retTy = compileRuntimeTy T.INT32ty,
+         retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
 
   local
@@ -454,7 +482,7 @@ struct
 
   fun registerForeignEntry name ty cconv =
       case SEnv.find (!foreignEntries, name) of
-        SOME (oldTy, _) => foreignSymbol ((ty, name), oldTy)
+        SOME (oldTy, _) => foreignSymbol ((oldTy, name), ty)
       | NONE =>
         let
           val dec =
@@ -477,8 +505,8 @@ struct
           (ty, L.SYMBOL name)
         end
 
-  fun registerIntrinsic (R {name, argTys, argAttrs, retTy, varArg, fnAttrs,
-                            ...}) =
+  fun registerIntrinsic (R {name, argTys, argAttrs, retTy, retAttrs, varArg,
+                            fnAttrs, ...}) =
       let
         val ty = L.FPTR (retTy, argTys, varArg)
       in
@@ -490,7 +518,7 @@ struct
                (!foreignEntries, name,
                 (ty, L.DECLARE {linkage = NONE,
                                 cconv = NONE,
-                                retAttrs = nil,
+                                retAttrs = retAttrs,
                                 retTy = retTy,
                                 name = name,
                                 arguments = ListPair.zipEq (argTys, argAttrs),

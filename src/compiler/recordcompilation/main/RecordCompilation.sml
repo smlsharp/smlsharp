@@ -22,11 +22,9 @@ struct
   structure T = Types
 
   fun newVar ty =
-      let
-        val id = VarID.generate ()
-      in
-        {path = ["$" ^ VarID.toString id], ty = ty, id = id} : RC.varInfo
-      end
+      {path = [Symbol.generate ()],
+       ty = ty,
+       id = VarID.generate ()} : RC.varInfo
 
   fun mapToLabelEnv f nil = RecordLabel.Map.empty
     | mapToLabelEnv f (h::t) =
@@ -87,7 +85,7 @@ struct
                                bodyTy = bodyTy,
                                bodyExp = bodyExp loc,
                                loc = loc},
-       T.POLYty {boundtvars = btvEnv, body = T.FUNMty (map #ty args, bodyTy)})
+       T.POLYty {boundtvars = btvEnv, constraints = nil, body = T.FUNMty (map #ty args, bodyTy)})
 
   fun TAPP ((exp, expTy), instTyList) =
       (fn loc => RC.RCTAPP {exp = exp loc,
@@ -120,7 +118,7 @@ struct
       case TyAlphaRename.copyTy
              TyAlphaRename.emptyBtvMap
              (TypesBasics.derefTy (#ty conInfo)) of
-        T.POLYty {boundtvars, body} =>
+        T.POLYty {boundtvars, constraints, body} =>
         let
           val instTyList =
               map T.BOUNDVARty (BoundTypeVarID.Map.listKeys boundtvars)
@@ -203,7 +201,6 @@ struct
         UnivKind.generateSingletonTy btv
         @ OverloadKind.generateSingletonTy btvEnv k
       | T.REC r => RecordKind.generateSingletonTy (btv, r)
-      | T.JOIN (r,_,_, _) => RecordKind.generateSingletonTy (btv, r)
   fun generateExtraArgs btvEnv =
       let
         val args =
@@ -254,6 +251,7 @@ struct
       | T.BACKENDty _ => ty
       | T.ERRORty => ty
       | T.DUMMYty id => ty
+      | T.DUMMY_RECORDty id => ty
       | T.TYVARty tv => ty  (* what used to be tyvar contains no POLYty. *)
       | T.BOUNDVARty tid => ty
       | T.FUNMty (argTys, retTy) =>
@@ -263,12 +261,13 @@ struct
         T.RECORDty (RecordLabel.Map.map compileTy fields)
       | T.CONSTRUCTty {tyCon, args} =>
         T.CONSTRUCTty {tyCon = tyCon, args = map compileTy args}
-      | T.POLYty {boundtvars, body} =>
+      | T.POLYty {boundtvars, constraints, body} =>
         case generateExtraArgs boundtvars of
           nil =>
-          T.POLYty {boundtvars = boundtvars, body = compileTy body}
+          T.POLYty {boundtvars = boundtvars, constraints = constraints, body = compileTy body}
         | extraTys =>
           T.POLYty {boundtvars = boundtvars,
+                    constraints = constraints, 
                     body = T.FUNMty (extraTys, compileTy body)}
 
   fun compileVarInfo ({path, ty, id} : RC.varInfo) =
@@ -664,6 +663,7 @@ struct
               val localVar = var
               val var = {path = path,
                          ty = compileTy (T.POLYty {boundtvars = btvEnv,
+                                                   constraints = nil,
                                                    body = ty}),
                          id = id} : RC.varInfo
               val expTy = compileTy expTy
@@ -728,6 +728,7 @@ struct
                         {localVar = var,
                          var = {path = path,
                                 ty = compileTy (T.POLYty {boundtvars = btvEnv,
+                                                          constraints = nil,
                                                           body = ty}),
                                 id = id} : RC.varInfo,
                          label = label,

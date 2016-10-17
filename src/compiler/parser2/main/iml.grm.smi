@@ -2,6 +2,7 @@ _require "../../../basis.smi"
 _require "../../../ml-yacc-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../toolchain/main/Filename.smi"
 _require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/RecordLabel.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
@@ -46,6 +47,11 @@ val HEADERTAG:  pos * pos -> token
 val DESTINATIONTAG:  pos * pos -> token
 val PREFIXTAG:  pos * pos -> token
 val DITTOTAG:  pos * pos -> token
+val ON:  pos * pos -> token
+val JOIN:  pos * pos -> token
+val CROSS:  pos * pos -> token
+val NATURAL :  pos * pos -> token
+val INNER:  pos * pos -> token
 val ROLLBACK:  pos * pos -> token
 val COMMIT:  pos * pos -> token
 val BEGIN:  pos * pos -> token
@@ -114,7 +120,7 @@ val LBRACE:  pos * pos -> token
 val PREFIXEDLABEL: (string) *  pos * pos -> token
 val JSONCASE:  pos * pos -> token
 val JSON:  pos * pos -> token
-val JOIN:  pos * pos -> token
+val JOINOP:  pos * pos -> token
 val INTERFACE:  pos * pos -> token
 val INTLAB: (string) *  pos * pos -> token
 val INT: ({ radix:StringCvt.radix,digits:string } ) *  pos * pos -> token

@@ -7,7 +7,6 @@ struct
   val isNull : 'a ptr -> bool
   val NULL : unit -> 'a ptr
 
-  val importBytes : SMLSharp_Builtin.Word8.word ptr * int
-                    -> SMLSharp_Builtin.Word8.word vector
+  val importBytes : word8 ptr * int -> word8 vector
   val importString : char ptr -> string
 end

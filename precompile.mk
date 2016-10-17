@@ -15,6 +15,7 @@ MLYACC_DEP = $(MLYACC)
 SMLFORMAT_DEP = $(SMLFORMAT)
 SMLSHARP_DEP = $(SMLSHARP_STAGE2)
 
+LLVM_CONFIG = $(patsubst %/llvm-dis,%/llvm-config,$(LLVM_DIS))
 LLVM_LINK = $(patsubst %/llvm-dis,%/llvm-link,$(LLVM_DIS))
 XZ = xz
 
@@ -61,18 +62,25 @@ clean:
 ./precompile.dep: depend.mk precompile.mk
 	sed 's/\.o:/.$$(ARCH).bc:/' depend.mk > $@
 
+src/llvm/main/anonymize: src/llvm/main/anonymize.cpp
+	$(CXX) -o $@ src/llvm/main/anonymize.cpp `$(LLVM_CONFIG) --cxxflags --ldflags --libs --system-libs`
+
 precompiled/$(ARCH)_orig.bc: $(OBJECTS)
 	$(LLVM_LINK) -o $@ $(OBJECTS)
 
 precompiled/$(ARCH)_opt.bc: precompiled/$(ARCH)_orig.bc
 	$(OPT) -std-link-opts -internalize -Oz -o $@ precompiled/$(ARCH)_orig.bc
 
-precompiled/$(ARCH).ll.xz: precompiled/$(ARCH)_opt.bc
-	$(LLVM_DIS) -o - precompiled/$(ARCH)_opt.bc \
+precompiled/$(ARCH).ll.xz: src/llvm/main/anonymize precompiled/$(ARCH)_opt.bc
+	src/llvm/main/anonymize < precompiled/$(ARCH)_opt.bc \
 	| (echo "@_SML_ftab = external constant i8"; \
-	   sed -e 's,^@_SML_ftab = .*,@_SML_xftab = internal constant i16 0,' \
+	   sed \
+	   -e 's,^@_SML_ftab = .*,@_SML_xftab = internal constant i16 0,' \
 	   -e '1,/@_SML_ftab/!s,@_SML_ftab,bitcast (i16* @_SML_xftab to i8*),' \
-	   -e 's,;[^"]*$$,,;s,^ *,,;s, *$$,,;/^$$/d;/^target triple =/d') \
+	   -e '/^target triple =/d') \
+	| perl \
+	  -ne 's/;.*$$|(".*?")| *([*=,()<>{}\[\]@%]) *|(\d) +(?=x )/$$+/eg; \
+	       s/^ +//;s/ +$$//;print if /\S/' \
 	| $(XZ) -c > $@
 
 include ./precompile.dep

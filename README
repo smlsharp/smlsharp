@@ -1,0 +1,104 @@
+The SML# compiler with natural join
+
+This is a trial version provided for interested readers of
+the paper "SML# with Natural Join."
+This version is not intended for a public release of SML# distribution;
+as such, please do not redistribute this package.
+
+== Quick Start
+
+This version of SML# is available on the following platform.
+
+  - x86_64 Linux
+  - Mac OS X 10.6 or later (64 bit)
+
+The following libraries are required.
+Install them before building SML#.
+
+  - GNU MP library
+  - LLVM 3.7.1
+  - YAJL library
+
+To build SML#, change directory to "smlsharp" directory, and invoke the
+following commands.
+
+  $ ./configure
+  $ make
+
+After "make" is successfully finished, you can try SML# interactive mode
+by typing the following command.
+
+  $ src/compiler/smlsharp -Bsrc
+
+To SML# compiler, do "make install".
+
+  $ make install
+
+Then the SML# compiler will be installed to /usr/local directory.
+
+If you would not like to install SML# to /usr/local, specify --prefix=<dir>
+option to ./configure like the following:
+
+  $ ./configure --prefix=/where/to/install/smlsharp
+
+== Natural join
+
+This extended SML# provides a new form of expressions
+
+  _join( <exp>, <exp> )
+
+and a "natural join" syntax in FROM clauses of SQL SELECT queries.
+
+You can check the polymorphic typing of _join in an interactive session
+as follows:
+
+  # fn (x,y) => _join(x, y);
+  val it = fn : ['a#{}, 'b#{}, 'c#{}. ('c = 'a join 'b) => 'a * 'b -> 'c]
+  # fn x => it ({a=1, b=true}, x);
+  val it = fn : ['a#{}, 'b#{}. ('b = {a: int, b: bool} join 'a) => 'a -> 'b]
+  # fn () => it {b=false, c="foo"};
+  val it = fn : unit -> {a: int, b: bool, c: string}
+
+If _join is executed, an exception will be raised:
+
+  # it ();
+  uncaught exception Fail: Natural Join Executed at none:~1
+
+To test "natural join" in SQL queries, start a PostgreSQL server, create a
+database of your name, and create at least two tables in that database.
+The following is an example of command sequences:
+
+  $ mkdir testdb
+  $ initdb -D $PWD/testdb
+  $ pg_ctl -D $PWD/testdb start
+  $ createdb <YOUR_NAME>
+  $ psql
+  > create table "Employees" (id int not null, name text not null);
+  > create table "Salary" (id int not null, salary int not null);
+
+Then, start SML# interactive session and connect to the database.
+
+  $ smlsharp
+  # val db = _sqlserver "" : {Employees: {id:int, name:string},
+                              Salary: {id:int, salary:int}};
+  # val c = SQL.connect db;
+
+To initialize the tables, execute the following SQL commands:
+
+  # _sqlexec (_sql db => delete from #db.Employees) c;
+  # _sqlexec (_sql db => delete from #db.Salary) c;
+  # _sqlexec (_sql db => insert into #db.Employees (id,name)
+                         values (1,"Amy"),(7,"Dr.C"),(9,"Togetoge")) c;
+  # _sqlexec (_sql db => insert into #db.Salary (id,salary)
+                         values (5,50),(7,100),(9,300)) c;
+
+We are now ready for testing natural join.  Create a query including
+natural join as follows:
+
+  # val q = _sql db => select #t.name, #t.salary
+                       from (#db.Employees natural join #db.Salary) as t;
+
+To execute the query, do the following:
+
+  # val r = _sqleval q c;
+  # SQL.fetchAll r;

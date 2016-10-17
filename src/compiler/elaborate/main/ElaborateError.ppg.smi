@@ -10,9 +10,9 @@ structure ElaborateError =
     exception RuntimeTyNotFound of string
     exception InvalidOpAssociativity of Symbol.longsymbol
     exception AbstypeNotSupported
-    exception SigIDFoundInInterface of string
+    exception SigIDFoundInInterface of Symbol.symbol
     exception DerivedFormFunArg
-    exception MultipleInfixInInterface of string * Loc.loc
+    exception MultipleInfixInInterface of Symbol.symbol * Loc.loc
     exception InvalidFixityPrecedence
     exception MultipleProvide of string
     exception LoadInterfaceFailed of {filename:string, msg:string}
@@ -23,14 +23,14 @@ structure ElaborateError =
     exception NotForeignFunctionType of {ty:Absyn.ffiTy}
     exception RealConstantInPattern
     exception NotFnBoundInValRec
-    exception NotBoundTyvar of {tyvar:string}
+    exception NotBoundTyvar of {tyvar:Symbol.symbol}
     exception NotAllHaveSameNumberPatterns
     exception NotAllHaveFunctionName
     exception NonVariablePatternInValRec
     exception NonfixExpected of string
     exception LeftOfASMustBeVariable
     exception InfixRequired
-    exception InfixUsedWithoutOP of string
+    exception InfixUsedWithoutOP of Symbol.longsymbol
     exception IllegalFunctionSymbol
     exception FunctionParameterNotFound
     exception ArgWithInfixID of Symbol.longsymbol
@@ -43,14 +43,14 @@ structure ElaborateError =
     exception DuplicateRecordLabelInPat of RecordLabel.label
     exception DuplicateRecordLabel of RecordLabel.label
     exception DuplicateFunctorDesc of string
-    exception DuplicateStrDesc of string
+    exception DuplicateStrDesc of Symbol.symbol
     exception DuplicateTypParam of Symbol.symbol
     exception DuplicateTypDesc of Symbol.symbol
     exception DuplicateConstructorNameInException of Symbol.symbol
     exception DuplicateConstructorNameInDatatype of Symbol.symbol
     exception BindReservedName of Symbol.symbol
     exception BeginWithInfixID of Symbol.longsymbol
-    exception ArityMismatchInTypeDeclaration of {given:int, tyCon:string,
+    exception ArityMismatchInTypeDeclaration of {given:int, tyCon:Symbol.symbol,
                                                  wants:int}
     exception InvalidPatternForJsonCase
   end

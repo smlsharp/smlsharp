@@ -84,14 +84,10 @@ struct
                 case (unit1, interface) of
                   ({interface,...}, Absyn.NOINTERFACE) => interface
                 | ({tops=nil,interface=Absyn.NOINTERFACE,...}, i) => i
-                | (_, Absyn.INTERFACE symbol ) =>
-                  let
-                    val (pos1, pos2) = Symbol.symbolToLoc symbol
-                  in
-                    (errorFn ("_interface must be at the beginning of a file",
-                              pos1, pos2);
-                     Absyn.NOINTERFACE)
-                  end
+                | (_, Absyn.INTERFACE (filename, (pos1, pos2))) =>
+                  (errorFn ("_interface must be at the beginning of a file",
+                            pos1, pos2);
+                   Absyn.NOINTERFACE)
           in
             (Absyn.UNIT {interface = interface,
                          tops = #tops unit1 @ tops,

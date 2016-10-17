@@ -28,6 +28,7 @@ in
       | T.BACKENDty _ => raise Eqcheck
       | T.ERRORty  => raise Eqcheck
       | T.DUMMYty _  => raise Eqcheck
+      | T.DUMMY_RECORDty _  => raise Eqcheck
       | T.TYVARty
           (r
              as
@@ -98,7 +99,7 @@ in
         else if TypID.eq(id, #id BT.refTyCon) then ()
         else if iseq then List.app checkEq args
         else raise Eqcheck
-      | T.POLYty {boundtvars, body} =>
+      | T.POLYty {boundtvars, constraints, body} =>
         (
           BoundTypeVarID.Map.app 
               (fn {eqKind, ...} =>

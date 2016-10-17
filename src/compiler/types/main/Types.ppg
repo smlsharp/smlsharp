@@ -174,7 +174,7 @@ struct
           TermFormat.formatBtvEnv formatTyvar btvEnv boundtvars
         end
 
-    fun extendBtvEnv env {boundtvars, body} =
+    fun extendBtvEnv env {boundtvars, constraints, body} =
         let
           val {btvEnv, btvOrder} = unpackEnv env
           val order = btvOrder (boundtvars, body)
@@ -232,15 +232,16 @@ struct
 
   (*%
     @params(btvOrdEnv)
-    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
     @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
     @formatter(freeTypeVarID) format_freeTypeVarID
     @formatter(enclosedList) TermFormat.formatEnclosedList
+    @formatter(enclosedListWithBound) TermFormat.formatEnclosedListWithBound
     @formatter(seqList) TermFormat.formatSeqList
     @formatter(appList) TermFormat.formatAppList
     @formatter(optionalList) TermFormat.formatOptionalList
     @formatter(ifCons) TermFormat.formatIfCons
     @formatter(recordTy) TermFormat.formatRecordTy
+    @formatter(dummyRecordTy) TermFormat.formatDummyRecordTy
     @formatter(option) TermFormat.formatOptionalOption
     @formatter(withDefault) SmlppgUtil.formatOptWithDefault
     @formatter(extendBtvEnv) extendBtvEnv
@@ -256,15 +257,16 @@ struct
   (*%
     @prefix formatWithType_
     @params(btvOrdEnv)
-    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
     @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
     @formatter(freeTypeVarID) format_freeTypeVarID
     @formatter(enclosedList) TermFormat.formatEnclosedList
+    @formatter(enclosedListWithBound) TermFormat.formatEnclosedListWithBound
     @formatter(seqList) TermFormat.formatSeqList
     @formatter(appList) TermFormat.formatAppList
     @formatter(optionalList) TermFormat.formatOptionalList
     @formatter(ifCons) TermFormat.formatIfCons
     @formatter(recordTy) TermFormat.formatRecordTy
+    @formatter(dummyRecordTy) TermFormat.formatDummyRecordTy
     @formatter(option) TermFormat.formatOptionalOption
     @formatter(withDefault) SmlppgUtil.formatOptWithDefault
     @formatter(extendBtvEnv) extendBtvEnv
@@ -298,6 +300,14 @@ struct
          @format(id) id 
        *)
       DUMMYty of dummyTyID
+    | (*% @format({id:id, fields:ty tys}) 
+          id "#" tys:dummyRecordTy(ty()(btvOrdEnv))
+       *)
+      (*% @prefix formatWithType_ 
+          @format({id:id, fields:ty tys}) 
+          id "#" tys:dummyRecordTy(ty()(btvOrdEnv))
+       *)
+      DUMMY_RECORDty of {id:dummyTyID, fields:ty RecordLabel.Map.map}
     | (*% @format(tv tvRef) tvRef(tv()(btvOrdEnv)) *)
       (*% @prefix formatWithType_ 
           @format(tv tvRef) tvRef(tv()(btvOrdEnv))
@@ -360,33 +370,46 @@ struct
        *)
       POLYty of polyTy
 
+  and constraint =
+      (* 2016-07-01 sasaki: 制約を示すデータ型を追加 *)
+      (*%
+       * @format({res, args : (arg1 * arg2)})
+       * res()(btvOrdEnv) +1 "=" + 2[arg1()(btvOrdEnv) +1 "join" +1 arg2()(btvOrdEnv)]
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({res, args : (arg1 * arg2)})
+       * res()(btvOrdEnv) +1 "=" + 2[arg1()(btvOrdEnv) +1 "join" +1 arg2()(btvOrdEnv)]
+       *)
+      JOIN of {res : ty, args : ty * ty}
+
   and tvarKind =
       (*%
        * @format(ty tys)
-       * "::" tys:enclosedList(ty()(btvOrdEnv))("{",",","}")
+       * "::" tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
        *)
       (*% @prefix formatWithType_ 
        * @format(ty tys)
-       * "::" tys:enclosedList(ty()(btvOrdEnv))("{",",","}")
+       * "::" tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
        *)
       (* for overloaded constants *)
       OCONSTkind of ty list
     | (*
        * @format({instances: ty tys,
        *          operators: oper opers})
-       * "::" opers:enclosedList(oper()(btvOrdEnv))("{",",","}")
-       *      tys:enclosedList(ty()(btvOrdEnv))("{",",","}")
+       * "::" opers:enclosedListWithBound(oper()(btvOrdEnv))("{",",","}")
+       *      tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
        *)
       (*%
          @format({instances: ty tys,
                   operators: oper opers})
-         "::" tys:enclosedList(ty()(btvOrdEnv))("{",",","}")
+         "::" tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
        *)
       (*% @prefix formatWithType_ 
        * @format({instances: ty tys,
        *          operators: oper opers})
-       * "::" opers:enclosedList(oper()(btvOrdEnv))("{",",","}")
-       *      tys:enclosedList(ty()(btvOrdEnv))("{",",","}")
+       * "::" opers:enclosedListWithBound(oper()(btvOrdEnv))("{",",","}")
+       *      tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
        *)
       OPRIMkind of {instances : ty list, operators : oprimSelector list}
     | (*%  @format  *)
@@ -418,17 +441,6 @@ struct
        * "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
        *)
       REC of ty RecordLabel.Map.map
-    | (*%
-         @format(ty tys * ty1 * ty2 * loc)
-          "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
-           "(" ty1()(btvOrdEnv) "," ty2()(btvOrdEnv)  ")"
-       *)
-      (*% @prefix formatWithType_ 
-         @format(ty tys * ty1 * ty2 * loc)
-         "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
-         "(" ty1()(btvOrdEnv) "," ty2()(btvOrdEnv)  ")"
-       *)
-      JOIN of ty RecordLabel.Map.map * ty * ty * Loc.loc
 
   and dtyKind
     = (*% @format *)
@@ -566,16 +578,16 @@ struct
       (*%
        * @format({exVarInfo, instTyList: ty tys})
        * L8{ exVarInfo +1 tys:appList(ty()(btvOrdEnv))(+1 "{",",","}") }
-       * @format:exVarInfo({longsymbol, ty}) longsymbol
+       * @format:exVarInfo({path, ty}) path
        *)
       (*% @prefix formatWithType_ 
        * @format({exVarInfo, instTyList: ty tys})
        * L8{ exVarInfo +1 tys:appList(ty()(btvOrdEnv))(+1 "{",",","}") }
-       * @format:exVarInfo({longsymbol, ty}) longsymbol
+       * @format:exVarInfo({path, ty}) path
        *)
       OVERLOAD_EXVAR of
       {
-        exVarInfo: {longsymbol: longsymbol, ty: ty},
+        exVarInfo: {path: longsymbol, ty: ty},
         instTyList: ty list
       }
     | (*%
@@ -669,7 +681,7 @@ struct
        iseq : bool,
        arity : int,
        runtimeTy : BuiltinTypeNames.bty,
-       conSet : (unit -> ty) option SEnv.map,
+       conSet : (unit -> ty) option SymbolEnv.map,
        conIDSet : ConID.Set.set,
        extraArgs : ty list,
        dtyKind : dtyKind
@@ -707,14 +719,14 @@ struct
       }
 *)
 
-
   and polyTy = (* for pretty printing *)
       (*%
-       * @format({boundtvars:btvKind imap, body})
+       * @format({boundtvars:btvKind imap, constraints: con cons, body})
           "[" 
             !N0{
                2[
                  {imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."}
+                 cons:optionalList(con(btvOrdEnv))(+1"(",",",") =>")
                  +1
                  body()(btvOrdEnv) 
                 ]
@@ -724,8 +736,9 @@ struct
           tvarKind()(btvOrdEnv)
        *)
       (*% @prefix formatWithType_
-       * @format({boundtvars:btvKind imap, body})
+       * @format({boundtvars:btvKind imap, constraints: con cons, body})
        * "[" !N0{ imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."
+       *          cons:optionalList(con(btvOrdEnv))(+1"(",",",") =>")
        *          +1 body()(btvOrdEnv) "]" }
        * @format:btvKind({eqKind, tvarKind})
        * tvarKind()(btvOrdEnv)
@@ -737,6 +750,7 @@ struct
       {
         boundtvars : {eqKind: eqKind, tvarKind: tvarKind}
                        BoundTypeVarID.Map.map,
+        constraints : constraint list,
         body : ty
       }
 
@@ -861,6 +875,7 @@ struct
       | BACKENDty bty => btvOrderBackendTy btv bty
       | ERRORty => nil
       | DUMMYty _ => nil
+      | DUMMY_RECORDty _ => nil
       | TYVARty (ref (TVAR _)) => nil
       | TYVARty (ref (SUBSTITUTED ty)) => btvOrderTy btv ty
       | BOUNDVARty id => if BoundTypeVarID.Set.member (btv, id)
@@ -868,7 +883,7 @@ struct
       | FUNMty (tys, ty) => List.concat (map (btvOrderTy btv) (tys @ [ty]))
       | RECORDty tys => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
       | CONSTRUCTty {tyCon, args} => List.concat (map (btvOrderTy btv) args)
-      | POLYty {boundtvars, body} =>
+      | POLYty {boundtvars, constraints, body} =>
         let
           val btv =
               BoundTypeVarID.Set.filter
@@ -913,7 +928,6 @@ struct
       | BOXED => nil
       | UNBOXED => nil
       | REC tys => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
-      | JOIN (tys, ty1, ty2, loc) => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
   and btvOrder (boundtvars, body) =
       let
         val btv = BoundTypeVarID.Map.foldli
@@ -1006,14 +1020,14 @@ struct
    *)
   type varInfo
     = (*%
-       * @format({longsymbol, id, ty, opaque})  longsymbol
+       * @format({path, id, ty, opaque})  path
        *)
       (*%
        * @prefix formatWithType_
-       * @format({longsymbol, id, ty, opaque})
-       * L2{ longsymbol "(" id ")" +1 ":" +d ty()(btvEnv) opaque()("(opaque)",)}
+       * @format({path, id, ty, opaque})
+       * L2{ path "(" id ")" +1 ":" +d ty()(btvEnv) opaque()("(opaque)",)}
        *)
-      {longsymbol:longsymbol, id:VarID.id, ty:ty, opaque:bool}
+      {path:longsymbol, id:VarID.id, ty:ty, opaque:bool}
 
   (*% *)
   (*%
@@ -1024,14 +1038,14 @@ struct
    *)
   type exVarInfo
     = (*%
-       * @format({longsymbol, ty}) longsymbol
+       * @format({path, ty}) path
        *)
       (*%
        * @prefix formatWithType_
-       * @format({longsymbol, ty})
-       * L2{ longsymbol +1 ":" +d ty()(btvEnv) }
+       * @format({path, ty})
+       * L2{ path +1 ":" +d ty()(btvEnv) }
        *)
-      {longsymbol:longsymbol, ty:ty}
+      {path:longsymbol, ty:ty}
 
   (*%
    * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
@@ -1053,34 +1067,34 @@ struct
 
   (*% @formatter(OPrimID.id)  OPrimID.format_id  *)
   type oprimInfo
-    = (*% @format({longsymbol, id, ty}) longsymbol *)
+    = (*% @format({path, id, ty}) path *)
       (* ty is the polytype as a function *)
-      {ty : ty, longsymbol: longsymbol, id : OPrimID.id}
+      {ty : ty, path: longsymbol, id : OPrimID.id}
 
   (*%
      @params(btvEnv)
      @formatter(ConID.id)  ConID.format_id
    *)
   type conInfo
-    = (*% @format({longsymbol, ty, id}) longsymbol *)
-      (* @format({longsymbol, ty, id}) longsymbol "(" id ")" + ":" + ty()(btvEnv) *)
+    = (*% @format({path, ty, id}) path *)
+      (* @format({path, ty, id}) path "(" id ")" + ":" + ty()(btvEnv) *)
       (* ty is the type as a function *)
-      {longsymbol: longsymbol, ty: ty, id: ConID.id}
+      {path: longsymbol, ty: ty, id: ConID.id}
 
   (*% 
       @formatter(ExnID.id)  ExnID.format_id
    *)
   type exnInfo
-    = (*% @format({longsymbol, ty, id})  longsymbol "(" id ")" *)
+    = (*% @format({path, ty, id})  path "(" id ")" *)
       (* ty is the type as a function *)
-      {longsymbol: longsymbol, ty: ty, id: ExnID.id}
+      {path: longsymbol, ty: ty, id: ExnID.id}
 
   (*% 
    *)
   type exExnInfo
-    = (*% @format({longsymbol, ty})  longsymbol  *)
+    = (*% @format({path, ty})  path  *)
       (* ty is the type as a function *)
-      {longsymbol: longsymbol, ty: ty}
+      {path: longsymbol, ty: ty}
 
   val univKind = {tvarKind = UNIV, eqKind = A.NONEQ, utvarOpt = NONE: utvar option}
 

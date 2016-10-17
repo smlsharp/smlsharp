@@ -13,7 +13,7 @@ _require "./TypeInferenceContext.ppg.smi"
 structure Printers =
   struct
     val print : string -> unit
-    val printPath : string list -> unit
+    val printPath : Symbol.longsymbol -> unit
     val printTy : Types.ty -> unit
     val printITy : IDCalc.ty -> unit
     val printTpdecl : TypedCalc.tpdecl -> unit

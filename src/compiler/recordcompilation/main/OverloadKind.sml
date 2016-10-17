@@ -69,10 +69,9 @@ struct
 
   fun evalMatch (match, sty, loc) =
       case match of
-        T.OVERLOAD_EXVAR {exVarInfo={longsymbol, ty}, instTyList} =>
+        T.OVERLOAD_EXVAR {exVarInfo as {ty,...}, instTyList} =>
         let
-          val varExp = RC.RCEXVAR {path=Symbol.longsymbolToLongid longsymbol,
-                                   ty=ty}
+          val varExp = RC.RCEXVAR exVarInfo
           val (retExp, retTy) =
               case instTyList of
                 nil => (varExp, ty)

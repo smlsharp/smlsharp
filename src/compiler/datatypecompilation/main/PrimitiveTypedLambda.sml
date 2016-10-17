@@ -28,16 +28,6 @@ struct
 
   structure E = EmitTypedLambda
 
-  (* transform varInfo *)
-  fun toRC {longsymbol, id, ty} =
-      {path=Symbol.longsymbolToLongid longsymbol,
-       id = id,
-       ty = ty}
-  (* transform exVarInfo *)
-  fun toRCEx {longsymbol, ty} =
-      {path=Symbol.longsymbolToLongid longsymbol,
-       ty = ty}
-
   (* FIXME : we assume 32 bit machine *)
   val maxSize = 0x03ffffff
   val maxArraySize = (maxSize + 1) div 8 - 1
@@ -66,7 +56,7 @@ struct
 
   fun toPrimTy ty =
       case TypesBasics.derefTy ty of
-        T.POLYty {boundtvars, body} => primFunTy boundtvars body
+        T.POLYty {boundtvars, constraints, body} => primFunTy boundtvars body
       | ty => primFunTy BoundTypeVarID.Map.empty ty
 
   fun elabPrim (primitive, primTy, instTyList, retTy, argExpList, loc) =
@@ -127,7 +117,7 @@ struct
               E.PrimApply ({primitive = P.R P.Array_alloc_unsafe,
                             ty = primTy},
                            instTyList, retTy, [size]),
-              E.Raise (toRCEx B.SizeExExn, retTy))
+              E.Raise (B.SizeExExn, retTy))
       | (P.Array_alloc, _, _) =>
         raise Bug.Bug "compilePrim: Array_alloc"
 
@@ -135,7 +125,7 @@ struct
         E.If (E.Andalso [E.Int32_gteq (size, E.Int 0),
                          E.Int32_lteq (size, E.Int (maxSize - 1))],
               E.String_alloc_unsafe size,
-              E.Raise (toRCEx B.SizeExExn, retTy))
+              E.Raise (B.SizeExExn, retTy))
       | (P.String_alloc, _, _) =>
         raise Bug.Bug "compilePrim: String_alloc"
 
@@ -174,7 +164,7 @@ struct
                                         E.Var slen)],
                        E.Array_copy_unsafe
                          (ty, src, E.Int 0, dst, di, E.Var slen),
-                       E.Raise (toRCEx B.SubscriptExExn, retTy)))
+                       E.Raise (B.SubscriptExExn, retTy)))
         end
       | (P.Array_copy, _, _) =>
         raise Bug.Bug "compilePrim: Array_copy"
@@ -185,7 +175,7 @@ struct
               E.PrimApply ({primitive = P.Array_sub_unsafe,
                             ty = primTy},
                            instTyList, retTy, [ary, index]),
-              E.Raise (toRCEx B.SubscriptExExn, retTy))
+              E.Raise (B.SubscriptExExn, retTy))
       | (P.Array_sub, _, _) =>
         raise Bug.Bug "compilePrim: Array_sub"
 
@@ -195,7 +185,7 @@ struct
               E.PrimApply ({primitive = P.Array_update_unsafe,
                             ty = primTy},
                            instTyList, retTy, [ary, index, elem]),
-              E.Raise (toRCEx B.SubscriptExExn, retTy))
+              E.Raise (B.SubscriptExExn, retTy))
       | (P.Array_update, _, _) =>
         raise Bug.Bug "compilePrim: Array_update"
 
@@ -203,7 +193,7 @@ struct
         E.If (E.Andalso [E.Int32_gteq (index, E.Int 0),
                          E.Int32_lt (index, E.String_size ary)],
               E.String_sub_unsafe (ary, index),
-              E.Raise (toRCEx B.SubscriptExExn, retTy))
+              E.Raise (B.SubscriptExExn, retTy))
       | (P.String_sub, _, _) =>
         raise Bug.Bug "compilePrim: String_sub"
 
@@ -231,7 +221,7 @@ struct
 
       | (P.Word8_div, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.WORD8 0w0, E.Raise (toRCEx B.DivExExn, retTy))],
+                  [(C.WORD8 0w0, E.Raise (B.DivExExn, retTy))],
                   E.PrimApply ({primitive = P.R (P.M P.Word8_div_unsafe),
                                 ty = primTy},
                                instTyList, retTy, [arg1, arg2]))
@@ -240,7 +230,7 @@ struct
 
       | (P.Word8_mod, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.WORD8 0w0, E.Raise (toRCEx B.DivExExn, retTy))],
+                  [(C.WORD8 0w0, E.Raise (B.DivExExn, retTy))],
                   E.PrimApply ({primitive = P.R (P.M P.Word8_mod_unsafe),
                                 ty = primTy},
                                instTyList, retTy, [arg1, arg2]))
@@ -249,7 +239,7 @@ struct
 
       | (P.Word32_div, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.WORD32 0w0, E.Raise (toRCEx B.DivExExn, retTy))],
+                  [(C.WORD32 0w0, E.Raise (B.DivExExn, retTy))],
                   E.PrimApply ({primitive = P.R (P.M P.Word32_div_unsafe),
                                 ty = primTy},
                                instTyList, retTy, [arg1, arg2]))
@@ -258,7 +248,7 @@ struct
 
       | (P.Word32_mod, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.WORD32 0w0, E.Raise (toRCEx B.DivExExn, retTy))],
+                  [(C.WORD32 0w0, E.Raise (B.DivExExn, retTy))],
                   E.PrimApply ({primitive = P.R (P.M P.Word32_mod_unsafe),
                                 ty = primTy},
                                instTyList, retTy, [arg1, arg2]))
@@ -267,7 +257,7 @@ struct
 
       | (P.Word64_div, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.WORD64 0w0, E.Raise (toRCEx B.DivExExn, retTy))],
+                  [(C.WORD64 0w0, E.Raise (B.DivExExn, retTy))],
                   E.PrimApply ({primitive = P.R (P.M P.Word64_div_unsafe),
                                 ty = primTy},
                                instTyList, retTy, [arg1, arg2]))
@@ -276,7 +266,7 @@ struct
 
       | (P.Word64_mod, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.WORD64 0w0, E.Raise (toRCEx B.DivExExn, retTy))],
+                  [(C.WORD64 0w0, E.Raise (B.DivExExn, retTy))],
                   E.PrimApply ({primitive = P.R (P.M P.Word64_mod_unsafe),
                                 ty = primTy},
                                instTyList, retTy, [arg1, arg2]))
@@ -286,11 +276,11 @@ struct
       | (P.Int32_quot, [arg1, arg2], []) =>
         E.Switch
           (arg2,
-           [(C.INT32 0, E.Raise (toRCEx B.DivExExn, retTy)),
+           [(C.INT32 0, E.Raise (B.DivExExn, retTy)),
             (C.INT32 ~1,
              E.Switch
                (arg1,
-                [(C.INT32 minInt, E.Raise (toRCEx B.OverflowExExn, retTy))],
+                [(C.INT32 minInt, E.Raise (B.OverflowExExn, retTy))],
                 E.Int32_sub_unsafe (E.Int 0, arg1)))],
            E.Int32_quot_unsafe (arg1, arg2))
       | (P.Int32_quot, _, _) =>
@@ -298,7 +288,7 @@ struct
 
       | (P.Int32_rem, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.INT32 0, E.Raise (toRCEx B.DivExExn, retTy)),
+                  [(C.INT32 0, E.Raise (B.DivExExn, retTy)),
                    (C.INT32 ~1, E.Int 0)],
                   E.Int32_rem_unsafe (arg1, arg2))
       | (P.Int32_rem, _, _) =>
@@ -307,11 +297,11 @@ struct
       | (P.Int32_div, [arg1, arg2], []) =>
         E.Switch
           (arg2,
-           [(C.INT32 0, E.Raise (toRCEx B.DivExExn, retTy)),
+           [(C.INT32 0, E.Raise (B.DivExExn, retTy)),
             (C.INT32 ~1,
              E.Switch (arg1,
                        [(C.INT32 minInt,
-                         E.Raise (toRCEx B.OverflowExExn, retTy))],
+                         E.Raise (B.OverflowExExn, retTy))],
                        E.Int32_sub_unsafe (E.Int 0, arg1)))],
            (*
             * rounding is performed towards negative infinity.
@@ -347,7 +337,7 @@ struct
       | (P.Int32_mod, [arg1, arg2], []) =>
         E.Switch
           (arg2,
-           [(C.INT32 0, E.Raise (toRCEx B.DivExExn, retTy)),
+           [(C.INT32 0, E.Raise (B.DivExExn, retTy)),
             (C.INT32 ~1, E.Int 0)],
            (*
             * rounding is performed towards negative infinity.
@@ -382,7 +372,7 @@ struct
 
       | (P.Int32_abs, [arg], []) =>
         E.Switch (arg,
-                  [(C.INT32 minInt, E.Raise (toRCEx B.OverflowExExn, retTy))],
+                  [(C.INT32 minInt, E.Raise (B.OverflowExExn, retTy))],
                   E.If (E.Int32_gteq (arg, E.Int 0),
                         arg,
                         E.Int32_sub_unsafe (E.Int 0, arg)))
@@ -391,7 +381,7 @@ struct
 
       | (P.Int32_neg, [arg], []) =>
         E.Switch (arg,
-                  [(C.INT32 minInt, E.Raise (toRCEx B.OverflowExExn, retTy))],
+                  [(C.INT32 minInt, E.Raise (B.OverflowExExn, retTy))],
                   E.Int32_sub_unsafe (E.Int 0, arg))
       | (P.Int32_neg, _, _) =>
         raise Bug.Bug "compilePrim: Int32_neg"
@@ -399,11 +389,11 @@ struct
       | (P.Int64_quot, [arg1, arg2], []) =>
         E.Switch
           (arg2,
-           [(C.INT64 0, E.Raise (toRCEx B.DivExExn, retTy)),
+           [(C.INT64 0, E.Raise (B.DivExExn, retTy)),
             (C.INT64 ~1,
              E.Switch (arg1,
                        [(C.INT64 minInt64, 
-                         E.Raise (toRCEx B.OverflowExExn, retTy))],
+                         E.Raise (B.OverflowExExn, retTy))],
                        E.Int64_sub_unsafe (E.Int64 0, arg1)))],
            E.Int64_quot_unsafe (arg1, arg2))
       | (P.Int64_quot, _, _) =>
@@ -411,7 +401,7 @@ struct
 
       | (P.Int64_rem, [arg1, arg2], []) =>
         E.Switch (arg2,
-                  [(C.INT64 0, E.Raise (toRCEx B.DivExExn, retTy)),
+                  [(C.INT64 0, E.Raise (B.DivExExn, retTy)),
                    (C.INT64 ~1, E.Int64 0)],
                   E.Int64_rem_unsafe (arg1, arg2))
       | (P.Int64_rem, _, _) =>
@@ -420,11 +410,11 @@ struct
       | (P.Int64_div, [arg1, arg2], []) =>
         E.Switch
           (arg2,
-           [(C.INT64 0, E.Raise (toRCEx B.DivExExn, retTy)),
+           [(C.INT64 0, E.Raise (B.DivExExn, retTy)),
             (C.INT64 ~1,
              E.Switch (arg1,
                        [(C.INT64 minInt64,
-                         E.Raise (toRCEx B.OverflowExExn, retTy))],
+                         E.Raise (B.OverflowExExn, retTy))],
                        E.Int64_sub_unsafe (E.Int64 0, arg1)))],
            (*
             * rounding is performed towards negative infinity.
@@ -462,7 +452,7 @@ struct
       | (P.Int64_mod, [arg1, arg2], []) =>
         E.Switch
           (arg2,
-           [(C.INT64 0, E.Raise (toRCEx B.DivExExn, retTy)),
+           [(C.INT64 0, E.Raise (B.DivExExn, retTy)),
             (C.INT64 ~1, E.Int64 0)],
            (*
             * rounding is performed towards negative infinity.
@@ -499,7 +489,7 @@ struct
 
       | (P.Int64_abs, [arg], []) =>
         E.Switch (arg,
-                  [(C.INT64 minInt64, E.Raise (toRCEx B.OverflowExExn, retTy))],
+                  [(C.INT64 minInt64, E.Raise (B.OverflowExExn, retTy))],
                   E.If (E.Int64_gteq (arg, E.Int64 0),
                         arg,
                         E.Int64_sub_unsafe (E.Int64 0, arg)))
@@ -508,7 +498,7 @@ struct
 
       | (P.Int64_neg, [arg], []) =>
         E.Switch (arg,
-                  [(C.INT64 minInt64, E.Raise (toRCEx B.OverflowExExn, retTy))],
+                  [(C.INT64 minInt64, E.Raise (B.OverflowExExn, retTy))],
                   E.Int64_sub_unsafe (E.Int64 0, arg))
       | (P.Int64_neg, _, _) =>
         raise Bug.Bug "compilePrim: Int64_neg"
@@ -517,7 +507,7 @@ struct
         E.If (E.Andalso [E.Int64_gteq (arg, E.Int64 (Int64.fromInt minInt)),
                          E.Int64_lteq (arg, E.Int64 (Int64.fromInt maxInt))],
               E.Word32_toInt32X (E.Word64_toWord32 (E.Word64_fromInt64 arg)),
-              E.Raise (toRCEx B.OverflowExExn, retTy))
+              E.Raise (B.OverflowExExn, retTy))
       | (P.Int64_toInt32, _, _) =>
         raise Bug.Bug "compilePrim: Int64_toInt32"
 
@@ -570,7 +560,7 @@ struct
         E.If (E.Andalso [E.Int32_gteq (arg, E.Int 0),
                          E.Int32_lteq (arg, E.Int maxChar)],
               E.Cast (E.Word32_toWord8 (E.Word32_fromInt32 arg), B.charTy),
-              E.Raise (toRCEx B.ChrExExn, retTy))
+              E.Raise (B.ChrExExn, retTy))
       | (P.Char_chr, _, _) =>
         raise Bug.Bug "compilePrim: Char_chr"
 
@@ -601,25 +591,25 @@ struct
 
       | (P.Float_trunc, [arg], []) =>
         E.If (E.Float_isNan arg,
-              E.Raise (toRCEx B.DomainExExn, retTy),
+              E.Raise (B.DomainExExn, retTy),
               E.If (E.Andalso [E.Float_gteq (arg, E.Float minInt),
                                E.Float_lteq (arg, E.Float maxInt)],
                     E.PrimApply ({primitive = P.R (P.M P.Float_toInt32_unsafe),
                                   ty = primTy},
                                  instTyList, retTy, [arg]),
-                    E.Raise (toRCEx B.OverflowExExn, retTy)))
+                    E.Raise (B.OverflowExExn, retTy)))
       | (P.Float_trunc, _, _) =>
         raise Bug.Bug "compilePrim: Float_trunc"
 
       | (P.Real_trunc, [arg], []) =>
         E.If (E.Real_isNan arg,
-              E.Raise (toRCEx B.DomainExExn, retTy),
+              E.Raise (B.DomainExExn, retTy),
               E.If (E.Andalso [E.Real_gteq (arg, E.Real minInt),
                                E.Real_lteq (arg, E.Real maxInt)],
                     E.PrimApply ({primitive = P.R (P.M P.Real_toInt32_unsafe),
                                   ty = primTy},
                                  instTyList, retTy, [arg]),
-                    E.Raise (toRCEx B.OverflowExExn, retTy)))
+                    E.Raise (B.OverflowExExn, retTy)))
       | (P.Real_trunc, _, _) =>
         raise Bug.Bug "compilePrim: Real_trunc"
 
@@ -662,7 +652,7 @@ struct
         in
           E.Let ([(v, E.Word32_toInt32X arg)],
                  E.If (E.Int32_lt (E.Var v, E.Int 0),
-                       E.Raise (toRCEx B.OverflowExExn, retTy),
+                       E.Raise (B.OverflowExExn, retTy),
                        E.Var v))
         end
       | (P.Word32_toInt32, _, _) =>
@@ -671,7 +661,7 @@ struct
       | (P.Word64_toInt32, [arg], []) =>
         E.If (E.Word64_lteq (arg, E.Word64 (Int64.fromInt maxInt)),
               E.Word32_toInt32X (E.Word64_toWord32 arg),
-              E.Raise (toRCEx B.OverflowExExn, retTy))
+              E.Raise (B.OverflowExExn, retTy))
       | (P.Word64_toInt32, _, _) => 
         raise Bug.Bug "compilePrim: Word64_toInt32"
 
@@ -682,7 +672,7 @@ struct
           E.If (E.Andalso [E.Int64_gteq (n, E.Int64 (Int64.fromInt minInt)),
                            E.Int64_lteq (n, E.Int64 (Int64.fromInt maxInt))],
                 E.Word32_toInt32X (E.Word64_toWord32 arg),
-                E.Raise (toRCEx B.OverflowExExn, retTy))
+                E.Raise (B.OverflowExExn, retTy))
         end
       | (P.Word64_toInt32X, _, _) => 
         raise Bug.Bug "compilePrim: Word64_toInt32X"

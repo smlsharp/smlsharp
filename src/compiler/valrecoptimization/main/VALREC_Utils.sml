@@ -116,8 +116,6 @@ in
               args
       | ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
         getFreeIdsInExp columnInfoFnExp
-      | ICSQLDBI (pat, exp, loc) =>
-        VarID.Set.difference(getFreeIdsInExp exp, getFreeIdsInPat pat)
       | ICJOIN (exp1, exp2, loc) =>
         VarID.Set.union(getFreeIdsInExp exp1, getFreeIdsInExp exp2)
       | ICJSON _ => raise Bug.Bug "ICJSON"

@@ -29,6 +29,7 @@ struct
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    * @formatter(I.icpat) I.format_icpat
    * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(Absyn.tvar) Absyn.format_tvar
    *)
   exception
   (**
@@ -60,10 +61,10 @@ struct
     val ('a#{a:'b}, 'b:{b:'a}) x = ...
    *)
   (*%
-   * @format(code * string) "(type inference" +d code ")" +d    
-   * "type" + "variable" + string + "has" + "a" + "cyclic" + "record" + "kind"
+   * @format(code * tvar) "(type inference" +d code ")" +d    
+   * "type" + "variable" + tvar + "has" + "a" + "cyclic" + "record" + "kind"
    *)
-  CyclicTvarkindSpec of string * string
+  CyclicTvarkindSpec of string * Absyn.tvar
 
   and
   (**
@@ -931,11 +932,11 @@ struct
    * </pre>
    *)
   (*%
-   * @format(code * {utvarName}) "(type inference" +d code ")" +d  
+   * @format(code * tvar) "(type inference" +d code ")" +d  
    * "User" +d  "type" +d "variable" +d "cannot" +d "be" +d
-   * "generalized:" + utvarName
+   * "generalized:" + tvar
    *)
-  UserTvarNotGeneralized of string * {utvarName:string}
+  UserTvarNotGeneralized of string * Absyn.tvar
 
   and
   (**
@@ -1022,6 +1023,15 @@ struct
      "missing" +d "field" +d "in" +d "natural" +d "join:" +d string
    *)
   JoinMissingTy of string * RecordLabel.label
+
+  and
+  (*%
+   * @format(code * ty1 * ty2) "(type inference" +d code ")" +d
+   * "natural" +d "join" +d "result" +d "don't" +d "agree" 
+   *   +1 "ty1:" ty1
+   *   +d "ty2:" ty2
+   *)
+  JoinResultNotAgree of string * Types.ty * Types.ty
 
   val isAnyError = ref false
 

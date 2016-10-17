@@ -14,10 +14,6 @@ struct
   val getWarnings : unit -> UserError.errorInfo list
   val enqueueError : Loc.loc * exn -> unit
   val enqueueWarning : Loc.loc * exn -> unit
-  val checkNameDuplication' : ('a -> string option)
-                             -> 'a list -> Loc.loc -> (string -> exn) -> unit
-  val checkNameDuplication : ('a -> string)
-                             -> 'a list -> Loc.loc -> (string -> exn) -> unit
   val checkSymbolDuplication' : ('a -> Symbol.symbol option)
                              -> 'a list -> (Symbol.symbol -> exn) -> unit
   val checkSymbolDuplication : ('a -> Symbol.symbol)

@@ -22,9 +22,9 @@ struct
   val prim_import =
       _import "prim_UnmanagedMemory_import"
       : __attribute__((unsafe,fast,gc))
-        (unit ptr, int) -> SMLSharp_Builtin.Word8.word vector
+        (unit ptr, int) -> word8 vector
 
-  fun importBytes (ptr : SMLSharp_Builtin.Word8.word ptr, len) =
+  fun importBytes (ptr : word8 ptr, len) =
       if len < 0 then raise Size
       else prim_import (SMLSharp_Builtin.Pointer.toUnitPtr ptr, len)
 

@@ -1,0 +1,78 @@
+_require "../../basis.smi"
+_require "../../smlformat-lib.smi"
+_require "./builtintypes/timestamp/TimeStamp.smi"
+_require "./builtintypes/decimal/Decimal.smi"
+_require "./builtintypes/float/Float.smi"
+
+structure SMLSharp_SQL_Query =
+struct
+
+  datatype qexp =
+      INT of int
+    | WORD of word
+    | REAL of real
+    | STRING of string
+    | CHAR of char
+    | INTINF of IntInf.int
+    | TIMESTAMP of SMLSharp_SQL_TimeStamp.timestamp
+    | DECIMAL of SMLSharp_SQL_Decimal.decimal
+    | FLOAT of SMLSharp_SQL_Float.float
+    | NULL
+    | DEFAULT
+    | COLUMN of string option * string
+    | OR of qexp * qexp
+    | AND of qexp * qexp
+    | NOT of qexp
+    | CMPOP of qexp * string * qexp
+    | ADDOP of qexp * string * qexp
+    | MULOP of qexp * string * qexp
+    | UNARYOP of string * qexp
+    | ISNULL of qexp
+    | ISNOTNULL of qexp
+    | EXISTS of qtable5
+
+  and qtable1 =
+      ID of string
+    | AS of qtable1 * string
+    | SUBQUERY of qtable5 * string
+    | CROSSJOIN of qtable1 * qtable1
+    | INNERJOIN of qtable1 * qtable1 * qexp
+    | NATURALJOIN of qtable1 * qtable1
+
+  and qtable2 =
+      FROM of qtable1
+    | FROM_DUAL
+
+  and qtable3 =
+      WHERE of qtable2 * qexp option
+
+  and qtable4 =
+      SELECT of {select : (string * qexp) list,
+                 from : qtable3,
+                 orderBy : {key : qexp, asc : bool} list}
+
+  and qtable5 =
+      SELECT_DISTINCT of qtable4
+    | SELECT_ALL of qtable4
+    | SELECT_DEFAULT of qtable4
+
+  type query = qtable5
+
+  datatype command =
+      DELETE of qtable3
+    | UPDATE of {table : qtable1,
+                 labels : string list,
+                 values: qexp list,
+                 from : qtable1 option,
+                 whereCond : qexp option}
+    | INSERT of {into : string,
+                 labels : string list,
+                 values : qexp list list}
+    | BEGIN
+    | COMMIT
+    | ROLLBACK
+
+  val format_command : command -> SMLFormat.FormatExpression.expression list
+  val format_query : query -> SMLFormat.FormatExpression.expression list
+
+end

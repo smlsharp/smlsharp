@@ -12,15 +12,13 @@ struct
   structure P = PatternCalc
   structure PI = PatternCalcInterface
   structure E = ElaborateError
-  val symbolToString = Symbol.symbolToString
-  val longsymbolToString = Symbol.longsymbolToString
   val eqSymbol = Symbol.eqSymbol
 
   type tvset = (A.tvar * Loc.loc) list
-  type btvEnv = (A.eq * A.tvarKind) SEnv.map
+  type btvEnv = (A.eq * A.tvarKind) SymbolEnv.map
 
   val empty = nil : tvset
-  val emptyEnv = SEnv.empty : btvEnv
+  val emptyEnv = SymbolEnv.empty : btvEnv
 
   fun member (set:tvset, {symbol=s1, eq}:A.tvar) =
       List.exists (fn ({symbol=s2, eq},_) => eqSymbol(s1,s2)) set
@@ -47,24 +45,24 @@ struct
 
   fun toBtvEnv (kindedTvars:A.kindedTvar list, loc) =
       foldl (fn ((tvar as {symbol, eq}, kind), btvEnv) =>
-                (if SEnv.inDomain (btvEnv, symbolToString symbol)
+                (if SymbolEnv.inDomain (btvEnv, symbol)
                  then EU.enqueueError
                         (loc, E.DuplicateUserTvar {tvar = tvar})
                  else ();
-                 SEnv.insert (btvEnv, symbolToString symbol, (eq, kind))))
-            SEnv.empty
+                 SymbolEnv.insert (btvEnv, symbol, (eq, kind))))
+            SymbolEnv.empty
             kindedTvars
             : btvEnv
 
   fun bindKindedTvars btvEnv loc kindedTvars =
-      SEnv.unionWith #2 (btvEnv, toBtvEnv (kindedTvars, loc))
+      SymbolEnv.unionWith #2 (btvEnv, toBtvEnv (kindedTvars, loc))
 
   fun bindTvars btvEnv loc tvars =
       bindKindedTvars btvEnv loc (map (fn tv => (tv, A.UNIV)) tvars)
 
   fun extend (btvEnv:btvEnv, tvset:tvset) =
       foldl (fn (({symbol, eq}, _), btvEnv) =>
-                SEnv.insert (btvEnv, symbolToString symbol, (eq, A.UNIV)))
+                SymbolEnv.insert (btvEnv, symbol, (eq, A.UNIV)))
             btvEnv
             tvset
 
@@ -78,7 +76,7 @@ struct
       foldl (fn (x, z) => union (z, f x)) empty l
 
   fun tyvarsTvar btvEnv (tv as {symbol,...}, loc) =
-      case SEnv.find (btvEnv, symbolToString symbol) of
+      case SymbolEnv.find (btvEnv, symbol) of
         NONE => singleton (tv, loc)
       | SOME (eq, kind) => (checkEqkind (tv, eq, loc); empty)
 
@@ -205,8 +203,6 @@ struct
       | P.PLSQLSCHEMA {columnInfoFnExp, ty, loc} =>
         union (tyvarsExp btvEnv columnInfoFnExp,
                tyvarsTy btvEnv ty)
-      | P.PLSQLDBI (pat, exp, loc) =>
-        union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
       | P.PLJOIN (exp1, exp2, loc) =>
         union (tyvarsExp btvEnv exp1, tyvarsExp btvEnv exp2)
       | P.PLJSON (exp, ty, loc) =>
@@ -269,7 +265,7 @@ struct
   fun decideScope tyvarsFn btvEnv (explicitScope, x, loc) =
       let
         val _ = app (fn (tvar as {symbol,...}, _) =>
-                        if SEnv.inDomain (btvEnv, symbolToString symbol)
+                        if SymbolEnv.inDomain (btvEnv, symbol)
                         then EU.enqueueError
                                (loc, E.UserTvarScopedAtOuterDecl {tvar = tvar})
                         else ())
@@ -338,8 +334,6 @@ struct
         P.PLSQLSCHEMA {columnInfoFnExp = decideExp btvEnv columnInfoFnExp,
                        ty = ty,
                        loc = loc}
-      | P.PLSQLDBI (pat, exp, loc) =>
-        P.PLSQLDBI (pat, decideExp btvEnv exp, loc)
       | P.PLJOIN (exp1, exp2, loc) =>
         P.PLJOIN (decideExp btvEnv exp1, decideExp btvEnv exp2, loc)
       | P.PLJSON (exp, ty, loc) => P.PLJSON (decideExp btvEnv exp, ty, loc)
@@ -489,7 +483,7 @@ struct
   fun decide program =
       map decideTopdec program
 
-  fun ftv ty = tyvarsTy SEnv.empty ty
+  fun ftv ty = tyvarsTy SymbolEnv.empty ty
 
   fun tyvarsOverloadInstance inst =
       case inst of

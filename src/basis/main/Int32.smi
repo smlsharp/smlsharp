@@ -6,12 +6,12 @@ _require local "./String.smi"
 
 structure Int32 =
 struct
-  type int = SMLSharp_Builtin.Int32.int
+  type int = int32
   val toLarge = IntInf.fromInt
   val fromLarge = IntInf.toInt
-  val toInt : int -> SMLSharp_Builtin.Int32.int
-  val fromInt : SMLSharp_Builtin.Int32.int -> int
-  val precision : SMLSharp_Builtin.Int32.int option
+  val toInt : int -> int32
+  val fromInt : int32 -> int
+  val precision : int32 option
   val minInt : int option
   val maxInt : int option
   val + = SMLSharp_Builtin.Int32.add_unsafe
@@ -30,7 +30,7 @@ struct
   val abs = SMLSharp_Builtin.Int32.abs
   val min : int * int -> int
   val max : int * int -> int
-  val sign : int -> SMLSharp_Builtin.Int32.int
+  val sign : int -> int32
   val sameSign : int * int -> bool
   val fmt : StringCvt.radix -> int -> string
   val toString : int -> string

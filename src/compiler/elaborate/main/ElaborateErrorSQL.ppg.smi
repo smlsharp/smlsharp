@@ -1,6 +1,7 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
 _require "../../absyn/main/RecordLabel.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
 
 structure ElaborateErrorSQL =
   struct
@@ -10,6 +11,8 @@ structure ElaborateErrorSQL =
     exception DuplicateSQLSetLabel of RecordLabel.label
     exception DuplicateSQLInsertLabel of RecordLabel.label
     exception DuplicateSQLSelectLabel of RecordLabel.label
-    exception DuplicateSQLTuple of RecordLabel.label
+    exception DuplicateSQLTuple of Symbol.symbol
     exception DuplicateSQLRecordLabel of RecordLabel.label
+    exception OnlyNaturalJoinCanBeNamed of Symbol.symbol
+    exception UnnaturalNaturalJoin
   end

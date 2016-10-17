@@ -229,12 +229,6 @@ local
           IC.ICSQLSCHEMA {columnInfoFnExp = copyExp varMap columnInfoFnExp,
                           ty = ty,
                           loc = loc}
-        | IC.ICSQLDBI (icpat, icexp, loc) =>
-          let
-            val (varMap, icpat) = copyPat varMap icpat
-          in
-            IC.ICSQLDBI (icpat, copyExp varMap icexp, loc)
-          end
         | IC.ICJOIN (icexp1, icexp2, loc) =>
           IC.ICJOIN (copy icexp1, copy icexp2, loc)
         | IC.ICJSON (icexp, ty, loc) =>

@@ -15,16 +15,16 @@ structure Real32 = SMLSharp_Builtin.Real32
 structure Real32 =
 struct
 
-  type real = Real32.real
+  type real = real32
 
   structure Math =
   struct
     type real = real
     (* IEEE 754 single precision floating point number *)
     (* 40 49 0f db *)
-    val pi = 3.141592653 : Real32.real
+    val pi = 3.141592653 : real32
     (* 40 2d f8 54 *)
-    val e =  2.718281828 : Real32.real
+    val e =  2.718281828 : real32
     val sqrt =
         _import "sqrtf"
         : __attribute__((pure,fast)) real -> real
@@ -89,11 +89,11 @@ struct
   val radix = 2
   val precision = 24
   (* 7f 7f ff ff *)
-  val maxFinite = 3.4028234e38 : Real32.real
+  val maxFinite = 3.4028234e38 : real32
   (* 00 00 00 01 *)
-  val minPos = 1.4012984e~45 : Real32.real
+  val minPos = 1.4012984e~45 : real32
   (* 00 80 00 00 *)
-  val minNormalPos = 1.1754943e~38 : Real32.real
+  val minNormalPos = 1.1754943e~38 : real32
   (* 7f 80 00 00 *)
   val posInf = Real32.div (1.0, 0.0)
   (* ff 80 00 00 *)

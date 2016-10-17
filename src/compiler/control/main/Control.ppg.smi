@@ -10,6 +10,7 @@ struct
   val profileMaxPhases : int ref
   val printWidth : int ref
   val printMaxDepth : int ref
+  val printMaxOverloadInstances : int ref
   val printMaxNestLevel : int ref
   val printMaxExnNestLevel : int ref
   val importAllExceptions : bool ref

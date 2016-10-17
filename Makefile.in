@@ -237,11 +237,15 @@ src/config.sed: config.mk src/config.mk Makefile VERSION RELEASE_DATE
 	{ echo 'VERSION = '`cat VERSION`; \
 	  echo 'RELEASE_DATE = '`cat RELEASE_DATE`; \
 	  echo 'LIBDIR_SMLSHARP = $(libdir_smlsharp)'; \
-	  cat src/config.mk; } \
+	  cat src/config.mk; \
+	  sed -n '/^SIZEOF_VOID_P/p' config.mk; } \
 	| sed 's/["\\]/\\\\\\&/g;s/^/s"%/;s/ = /%"/;s/$$/";/' > $@
 
-src/config/main/Version.sml: src/config.sed src/config/main/Version.sml.in
+src/config/main/Version.sml : src/config.sed src/config/main/Version.sml.in
 	sed -f src/config.sed $(srcdir)/src/config/main/Version.sml.in > $@
+src/config/main/PointerSize.sml : src/config.sed \
+                                  src/config/main/PointerSize.sml.in
+	sed -f src/config.sed $(srcdir)/src/config/main/PointerSize.sml.in > $@
 
 # ---- autoconf ----
 

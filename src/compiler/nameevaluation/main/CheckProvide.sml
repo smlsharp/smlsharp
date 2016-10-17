@@ -23,9 +23,7 @@ local
   val nilPath = nil
   fun bug s = Bug.Bug ("CheckProvide: " ^ s)
 
-  val symbolToString = Symbol.symbolToString
   val symbolToLoc = Symbol.symbolToLoc
-  val longsymbolToLongid = Symbol.longsymbolToLongid
   val longsymbolToLoc = Symbol.longsymbolToLoc
 
   exception Fail

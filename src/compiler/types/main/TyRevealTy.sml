@@ -46,18 +46,18 @@ in
        | T.OVERLOAD_CASE (ty, map:T.overloadMatch TypID.Map.map) =>
          T.OVERLOAD_CASE
            (revealTy ty, TypID.Map.map revealOverloadMatch map)
-  and revealExVarInfo {longsymbol:longsymbol,ty:ty} : T.exVarInfo =
-      {longsymbol=longsymbol, ty=revealTy ty}
+  and revealExVarInfo {path:longsymbol,ty:ty} : T.exVarInfo =
+      {path=path, ty=revealTy ty}
   and revealPrimInfo ({primitive, ty}:T.primInfo) : T.primInfo =
       {primitive=primitive, ty=revealTy ty}
-  and revealOprimInfo ({ty, longsymbol, id}:T.oprimInfo) : T.oprimInfo =
-      {ty=revealTy ty, longsymbol=longsymbol, id=id}
-  and revealConInfo ({longsymbol, ty, id}:T.conInfo) : T.conInfo =
-      {longsymbol=longsymbol, ty=revealTy ty, id=id}
-  and revealExnInfo ({longsymbol, ty, id}:T.exnInfo) : T.exnInfo =
-      {longsymbol=longsymbol, ty=revealTy ty, id=id}
-  and revealExExnInfo ({longsymbol, ty}:T.exExnInfo) : T.exExnInfo =
-      {longsymbol=longsymbol, ty=revealTy ty}
+  and revealOprimInfo ({ty, path, id}:T.oprimInfo) : T.oprimInfo =
+      {ty=revealTy ty, path=path, id=id}
+  and revealConInfo ({path, ty, id}:T.conInfo) : T.conInfo =
+      {path=path, ty=revealTy ty, id=id}
+  and revealExnInfo ({path, ty, id}:T.exnInfo) : T.exnInfo =
+      {path=path, ty=revealTy ty, id=id}
+  and revealExExnInfo ({path, ty}:T.exExnInfo) : T.exExnInfo =
+      {path=path, ty=revealTy ty}
   and revealTyCon
         {id : T.typId,
          longsymbol : longsymbol,
@@ -101,6 +101,7 @@ in
         raise Bug.Bug "revealTy: BACKENDty"
       | T.ERRORty => ty
       | T.DUMMYty dummyTyID => ty
+      | T.DUMMY_RECORDty _ => ty
       | T.TYVARty _ => raise bug "TYVARty in Optimize"
       | T.BOUNDVARty btv => ty
       | T.FUNMty (tyList, ty) =>
@@ -134,8 +135,15 @@ in
           | T.DTY => T.CONSTRUCTty{tyCon=tyCon, args= args}
           | T.BUILTIN bty => T.CONSTRUCTty{tyCon=tyCon, args= args}
         end
-      | T.POLYty {boundtvars : T.btvEnv, body : ty } =>
+      | T.POLYty {boundtvars : T.btvEnv, constraints : T.constraint list, body : ty } =>
         T.POLYty {boundtvars = revealBtvEnv boundtvars, 
+                  constraints = List.map (fn c =>
+                                             case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                               T.JOIN
+                                                   {res = revealTy res,
+                                                    args = (revealTy arg1,
+                                                            revealTy arg2)})
+                                         constraints,
                   body =  revealTy body}
   and revealBtvEnv (btvEnv:T.btvEnv) =
       BoundTypeVarID.Map.map revealBtvkind btvEnv
@@ -175,9 +183,7 @@ in
       | T.UNBOXED => T.UNBOXED
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map revealTy fields)
-      | T.JOIN (fields:ty RecordLabel.Map.map, ty1, ty2, loc) =>
-        T.JOIN (RecordLabel.Map.map revealTy fields, revealTy ty1, revealTy ty2, loc)
-  fun revealVar ({id, ty, longsymbol, opaque}:varInfo) =
-      {id=id, longsymbol=longsymbol, ty=revealTy ty, opaque=opaque}
+  fun revealVar ({id, ty, path, opaque}:varInfo) =
+      {id=id, path=path, ty=revealTy ty, opaque=opaque}
 end
 end

@@ -3,7 +3,7 @@ _require "./Word8VectorSlice.smi"
 
 structure Word8ArraySlice =
 struct
-  type elem = SMLSharp_Builtin.Word8.word
+  type elem = word8
   type array = elem array
   type slice (= boxed)
   type vector = elem vector

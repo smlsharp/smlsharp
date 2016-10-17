@@ -42,6 +42,10 @@ in
         
   fun longsymbolToLongid (s:longsymbol) = map symbolToString s
 
+  fun coerceLongsymbolToSymbol longsymbol =
+      {string = longsymbolToString longsymbol,
+       loc = longsymbolToLoc longsymbol}
+
   fun mkSymbol string loc = {string=string, loc=loc}
   fun mkLongsymbol stringList loc = map (fn s => mkSymbol s loc) stringList
 
@@ -77,6 +81,28 @@ in
       in
         path @ longsymbol
       end
+
+  val seed = ref nil : char list ref
+
+  fun gensym () =
+      let
+        fun inc nil = [#"a"]
+          | inc (h::t) =
+            if h >= #"z"
+            then #"a" :: inc t
+            else (chr (ord h + 1)) :: t
+      in
+        seed := inc (!seed);
+        implode (rev (!seed))
+      end
+
+  (* FIXME: how to ensure the generated symbol is fresh? *)
+  fun generateWithPrefix prefix =
+      {string = "$" ^ prefix ^ gensym (), loc = Loc.noloc}
+
+  (* FIXME: how to ensure the generated symbol is fresh? *)
+  fun generate () =
+      {string = "$" ^ gensym (), loc = Loc.noloc}
 
 end
 

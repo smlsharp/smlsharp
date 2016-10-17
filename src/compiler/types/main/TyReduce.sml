@@ -59,18 +59,18 @@ in
            (evalTy btvMap ty,
             TypID.Map.map (evalOverloadMatch btvMap) map
            )
-  and evalExVarInfo (btvMap:btvMap) {longsymbol:longsymbol,ty:ty} : T.exVarInfo =
-      {longsymbol=longsymbol, ty=evalTy btvMap ty}
+  and evalExVarInfo (btvMap:btvMap) {path:longsymbol,ty:ty} : T.exVarInfo =
+      {path=path, ty=evalTy btvMap ty}
   and evalPrimInfo (btvMap:btvMap) ({primitive, ty}:T.primInfo) : T.primInfo =
       {primitive=primitive, ty=evalTy btvMap ty}
-  and evalOprimInfo (btvMap:btvMap) ({ty, longsymbol, id}:T.oprimInfo) : T.oprimInfo =
-      {ty=evalTy btvMap ty, longsymbol=longsymbol,id=id}
-  and evalConInfo (btvMap:btvMap) ({longsymbol, ty, id}:T.conInfo) : T.conInfo =
-      {longsymbol=longsymbol, ty=evalTy btvMap ty, id=id}
-  and evalExnInfo (btvMap:btvMap) ({longsymbol, ty, id}:T.exnInfo) : T.exnInfo =
-      {longsymbol=longsymbol, ty=evalTy btvMap ty, id=id}
-  and evalExExnInfo (btvMap:btvMap) ({longsymbol, ty}:T.exExnInfo) : T.exExnInfo =
-      {longsymbol=longsymbol, ty=evalTy btvMap ty}
+  and evalOprimInfo (btvMap:btvMap) ({ty, path, id}:T.oprimInfo) : T.oprimInfo =
+      {ty=evalTy btvMap ty, path=path,id=id}
+  and evalConInfo (btvMap:btvMap) ({path, ty, id}:T.conInfo) : T.conInfo =
+      {path=path, ty=evalTy btvMap ty, id=id}
+  and evalExnInfo (btvMap:btvMap) ({path, ty, id}:T.exnInfo) : T.exnInfo =
+      {path=path, ty=evalTy btvMap ty, id=id}
+  and evalExExnInfo (btvMap:btvMap) ({path, ty}:T.exExnInfo) : T.exExnInfo =
+      {path=path, ty=evalTy btvMap ty}
   and evalTy (btvMap:btvMap) (ty:ty) : ty =
       case TU.derefTy ty of
         T.SINGLETONty singletonTy =>
@@ -81,6 +81,8 @@ in
         ty
       | T.DUMMYty dummyTyID => 
         ty
+      | T.DUMMY_RECORDty {id, fields} => 
+        T.DUMMY_RECORDty {id=id, fields=RecordLabel.Map.map (evalTy btvMap) fields}
       | T.TYVARty _ => raise bug "TYVARty in Optimize"
       | T.BOUNDVARty btv => 
         evalBtv btvMap btv
@@ -121,14 +123,24 @@ in
       | T.POLYty
           {
            boundtvars : T.btvEnv,
+           constraints : T.constraint list,
            body : ty
           } =>
         let
           val boundtvars = evalBtvEnv btvMap boundtvars
+          val constraints = List.map
+                                (fn c =>
+                                    case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                      T.JOIN
+                                          {res = evalTy btvMap res,
+                                           args = (evalTy btvMap arg1,
+                                                   evalTy btvMap arg2)})
+                                constraints
         in
           T.POLYty
             {
              boundtvars = boundtvars,
+             constraints = constraints,
              body =  evalTy btvMap body
             }
         end
@@ -171,8 +183,6 @@ in
       | T.UNBOXED => T.UNBOXED
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map (evalTy btvMap) fields)
-      | T.JOIN (fields:ty RecordLabel.Map.map, ty1, ty2, loc) =>
-        T.JOIN (RecordLabel.Map.map (evalTy btvMap) fields, evalTy btvMap ty1, evalTy btvMap ty2, loc)
   and evalDtyKind btvMap dtyKind =
       case dtyKind of
         T.DTY => dtyKind
@@ -209,8 +219,8 @@ in
                    arity=arity,
                    polyTy = evalTy btvMap polyTy}
 
-  fun evalTyVar (btvMap:btvMap) ({id, ty, longsymbol, opaque}:varInfo) =
-      {id=id, longsymbol=longsymbol, ty=evalTy btvMap ty, opaque=opaque}
+  fun evalTyVar (btvMap:btvMap) ({id, ty, path, opaque}:varInfo) =
+      {id=id, path=path, ty=evalTy btvMap ty, opaque=opaque}
 
   fun applyTys (btvMap:btvMap) (btvEnv:T.btvEnv, instTyList:ty list) : btvMap =
       let

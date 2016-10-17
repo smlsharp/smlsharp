@@ -13,7 +13,7 @@ in
  (* for debugging *)
   val print = fn s => if !Bug.debugPrint then print s else ()
   fun printPath path =
-      print (String.concatWith "." path)
+      print (Symbol.longsymbolToString path)
   fun printITy ty =
       print (Bug.prettyPrint (IC.format_ty ty))
   fun printTy ty =

@@ -505,7 +505,6 @@ src/compiler/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/types/main/TvarMap.o \
 src/compiler/types/main/OPrimInstMap.o \
 src/compiler/types/main/Types.ppg.o \
-src/compiler/util/main/Gensym.o \
 src/compiler/types/main/IDCalc.ppg.o \
 src/compiler/usererror/main/UserErrorUtils.o \
 src/compiler/types/main/VarMap.o \
@@ -535,8 +534,6 @@ src/compiler-utils/env/main/SSet.o \
 src/compiler/loadfile/main/InterfaceHash.o \
 src/compiler/loadfile/main/LoadFileError.ppg.o \
 src/compiler/loadfile/main/LoadFile.o \
-src/compiler-utils/env/main/PathOrd.o \
-src/compiler-utils/env/main/PathEnv.o \
 src/compiler/nameevaluation/main/TfunVars.o \
 src/compiler/nameevaluation/main/NameEvalUtils.o \
 src/compiler/nameevaluation/main/NormalizeTy.o \
@@ -573,6 +570,7 @@ src/compiler/recordcalc/main/RecordCalcUtils.o \
 src/compiler/recordcalc/main/RCAlphaRename.o \
 src/compiler/recordcalcoptimization/main/RCAnalyse.o \
 src/compiler/recordcalcoptimization/main/RCSize.o \
+src/config/main/PointerSize.o \
 src/compiler/runtimetypes/main/TypeLayout2.o \
 src/compiler/types/main/TypesUtils.o \
 src/compiler/types/main/CheckEq.o \
@@ -627,6 +625,7 @@ src/compiler/stackallocation/main/StackAllocation.o \
 src/compiler/llvmir/main/LLVMIR.ppg.o \
 src/compiler/llvmgen/main/LLVMGen.o \
 src/compiler/llvmemit/main/LLVMEmit.o \
+src/compiler/runtimetypes/main/InitPointerSize.o \
 src/compiler/toplevel2/main/NameEvalEnvUtils.o \
 src/compiler/toplevel2/main/Top.o \
 src/compiler/main/main/GetOpt.o \
@@ -725,19 +724,21 @@ src/sql/main/MySQLBackend.o \
 src/sql/main/UNIXODBC.o \
 src/sql/main/ODBCBackend.o \
 src/sql/main/Backend.o \
+src/sql/main/SQLQuery.ppg.o \
 src/sql/main/SQLPrim.o \
 src/sql/main/SQLUtils.o \
 src/sql/main/SQL.o \
 src/smlnj-lib/Util/binary-set-fn.o \
+src/compiler/control/main/Loc.ppg.o \
+src/compiler/absyn/main/Symbol.ppg.o \
 src/compiler/absyn/main/RecordLabel.o \
 src/compiler-utils/env/main/IOrd.o \
 src/compiler-utils/env/main/IEnv.o \
 src/compiler-utils/env/main/ISet.o \
 src/compiler/name/main/GenIDFun.o \
 src/compiler/name/main/LocalID.o \
-src/compiler/control/main/Loc.ppg.o \
-src/compiler/absyn/main/Symbol.ppg.o \
 src/compiler/control/main/Bug.ppg.o \
+src/compiler/control/main/Control.ppg.o \
 src/compiler/util/main/ListSorter.o \
 src/compiler/util/main/TermFormat.o \
 src/compiler/builtin2/main/BuiltinPrimitive.ppg.o \
@@ -754,7 +755,6 @@ src/compiler/types/main/VarInfoEnv.o \
 src/compiler/types/main/TypesBasics.o \
 src/compiler/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/types/main/TvarMap.o \
-src/compiler/util/main/Gensym.o \
 src/compiler/types/main/IDCalc.ppg.o \
 src/compiler/types/main/VarMap.o \
 src/compiler/types/main/OPrimMap.o \
@@ -762,17 +762,16 @@ src/compiler/types/main/EvalIty.o \
 src/compiler/builtin2/main/BuiltinTypes.o \
 src/compiler/typedcalc/main/TypedCalc.ppg.o \
 src/compiler/recordcalc/main/RecordCalc.ppg.o \
-src/llvm/main/LLVM.o \
-src/compiler/control/main/Control.ppg.o \
-src/compiler/toolchain/main/CoreUtils.o \
-src/compiler/toolchain/main/TempFile.o \
-src/compiler/toolchain/main/LLVMUtils.o \
+src/config/main/PointerSize.o \
 src/compiler/runtimetypes/main/TypeLayout2.o \
 src/compiler/bitmapcompilation2/main/SingletonTyEnv.o \
 src/compiler-utils/heapdump/main/HeapDump.o \
 src/compiler/name/main/NameMangle.o \
 src/compiler/name/main/CodeLabel.o \
 src/compiler/usererror/main/UserError.ppg.o \
+src/compiler/usererror/main/UserErrorUtils.o \
+src/compiler/nameevaluation/main/NameEvalError.ppg.o \
+src/compiler/nameevaluation/main/NameEvalEnv.ppg.o \
 src/compiler/constantterm/main/ConstantTerm.ppg.o \
 src/compiler/typedlambda/main/TypedLambda.ppg.o \
 src/compiler/bitmapcompilation2/main/RecordLayout.o \
@@ -780,9 +779,6 @@ src/compiler/datatypecompilation/main/DatatypeLayout.o \
 src/compiler-utils/dynamic/main/Dynamic.o \
 src/compiler/interactivePrinter/main/TermPrintUtils.ppg.o \
 src/compiler/interactivePrinter/main/ReifiedTerm.ppg.o \
-src/compiler/usererror/main/UserErrorUtils.o \
-src/compiler/nameevaluation/main/NameEvalError.ppg.o \
-src/compiler/nameevaluation/main/NameEvalEnv.ppg.o \
 src/json/main/JSONData.o \
 src/compiler/interactivePrinter/main/DynamicPrinter.o \
 src/json/main/YAJL.o \
@@ -796,8 +792,12 @@ src/smlunit/src/main/Assert.o \
 src/smlunit/src/main/Test.o \
 src/smlunit/src/main/TextUITestRunner.o \
 src/smlunit/src/main/SMLUnit.o \
+src/llvm/main/LLVM.o \
 src/compiler/util/main/Counter.o \
+src/compiler/toolchain/main/CoreUtils.o \
+src/compiler/toolchain/main/TempFile.o \
 src/compiler/toolchain/main/BinUtils.o \
+src/compiler/toolchain/main/LLVMUtils.o \
 src/compiler-utils/digest/main/SHA3.o \
 src/compiler/absyn/main/InterfaceName.ppg.o \
 src/compiler/parser2/main/ParserError.ppg.o \
@@ -822,8 +822,6 @@ src/compiler/parser2/main/InterfaceParser.o \
 src/compiler/loadfile/main/InterfaceHash.o \
 src/compiler/loadfile/main/LoadFileError.ppg.o \
 src/compiler/loadfile/main/LoadFile.o \
-src/compiler-utils/env/main/PathOrd.o \
-src/compiler-utils/env/main/PathEnv.o \
 src/compiler/nameevaluation/main/TfunVars.o \
 src/compiler/nameevaluation/main/NameEvalUtils.o \
 src/compiler/nameevaluation/main/NormalizeTy.o \
@@ -902,6 +900,7 @@ src/compiler/stackallocation/main/StackAllocation.o \
 src/compiler/llvmir/main/LLVMIR.ppg.o \
 src/compiler/llvmgen/main/LLVMGen.o \
 src/compiler/llvmemit/main/LLVMEmit.o \
+src/compiler/runtimetypes/main/InitPointerSize.o \
 src/compiler/toplevel2/main/NameEvalEnvUtils.o \
 src/compiler/toplevel2/main/Top.o \
 src/compiler/main/main/GetOpt.o \
@@ -1002,19 +1001,21 @@ src/sql/main/MySQLBackend.o \
 src/sql/main/UNIXODBC.o \
 src/sql/main/ODBCBackend.o \
 src/sql/main/Backend.o \
+src/sql/main/SQLQuery.ppg.o \
 src/sql/main/SQLPrim.o \
 src/sql/main/SQLUtils.o \
 src/sql/main/SQL.o \
 src/smlnj-lib/Util/binary-set-fn.o \
+src/compiler/control/main/Loc.ppg.o \
+src/compiler/absyn/main/Symbol.ppg.o \
 src/compiler/absyn/main/RecordLabel.o \
 src/compiler-utils/env/main/IOrd.o \
 src/compiler-utils/env/main/IEnv.o \
 src/compiler-utils/env/main/ISet.o \
 src/compiler/name/main/GenIDFun.o \
 src/compiler/name/main/LocalID.o \
-src/compiler/control/main/Loc.ppg.o \
-src/compiler/absyn/main/Symbol.ppg.o \
 src/compiler/control/main/Bug.ppg.o \
+src/compiler/control/main/Control.ppg.o \
 src/compiler/util/main/ListSorter.o \
 src/compiler/util/main/TermFormat.o \
 src/compiler/builtin2/main/BuiltinPrimitive.ppg.o \
@@ -1031,7 +1032,6 @@ src/compiler/types/main/VarInfoEnv.o \
 src/compiler/types/main/TypesBasics.o \
 src/compiler/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/types/main/TvarMap.o \
-src/compiler/util/main/Gensym.o \
 src/compiler/types/main/IDCalc.ppg.o \
 src/compiler/types/main/VarMap.o \
 src/compiler/types/main/OPrimMap.o \
@@ -1039,17 +1039,16 @@ src/compiler/types/main/EvalIty.o \
 src/compiler/builtin2/main/BuiltinTypes.o \
 src/compiler/typedcalc/main/TypedCalc.ppg.o \
 src/compiler/recordcalc/main/RecordCalc.ppg.o \
-src/llvm/main/LLVM.o \
-src/compiler/control/main/Control.ppg.o \
-src/compiler/toolchain/main/CoreUtils.o \
-src/compiler/toolchain/main/TempFile.o \
-src/compiler/toolchain/main/LLVMUtils.o \
+src/config/main/PointerSize.o \
 src/compiler/runtimetypes/main/TypeLayout2.o \
 src/compiler/bitmapcompilation2/main/SingletonTyEnv.o \
 src/compiler-utils/heapdump/main/HeapDump.o \
 src/compiler/name/main/NameMangle.o \
 src/compiler/name/main/CodeLabel.o \
 src/compiler/usererror/main/UserError.ppg.o \
+src/compiler/usererror/main/UserErrorUtils.o \
+src/compiler/nameevaluation/main/NameEvalError.ppg.o \
+src/compiler/nameevaluation/main/NameEvalEnv.ppg.o \
 src/compiler/constantterm/main/ConstantTerm.ppg.o \
 src/compiler/typedlambda/main/TypedLambda.ppg.o \
 src/compiler/bitmapcompilation2/main/RecordLayout.o \
@@ -1057,9 +1056,6 @@ src/compiler/datatypecompilation/main/DatatypeLayout.o \
 src/compiler-utils/dynamic/main/Dynamic.o \
 src/compiler/interactivePrinter/main/TermPrintUtils.ppg.o \
 src/compiler/interactivePrinter/main/ReifiedTerm.ppg.o \
-src/compiler/usererror/main/UserErrorUtils.o \
-src/compiler/nameevaluation/main/NameEvalError.ppg.o \
-src/compiler/nameevaluation/main/NameEvalEnv.ppg.o \
 src/json/main/JSONData.o \
 src/compiler/interactivePrinter/main/DynamicPrinter.o \
 src/json/main/YAJL.o \
@@ -1165,8 +1161,6 @@ src/compiler-utils/dynamic/main/Dynamic.smi \
 src/compiler-utils/env/main/IEnv.smi \
 src/compiler-utils/env/main/IOrd.smi \
 src/compiler-utils/env/main/ISet.smi \
-src/compiler-utils/env/main/PathEnv.smi \
-src/compiler-utils/env/main/PathOrd.smi \
 src/compiler-utils/env/main/SEnv.smi \
 src/compiler-utils/env/main/SOrd.smi \
 src/compiler-utils/env/main/SSet.smi \
@@ -1278,6 +1272,7 @@ src/compiler/recordcompilation/main/RecordKind.smi \
 src/compiler/recordcompilation/main/UnivKind.smi \
 src/compiler/runtimecalc/main/RuntimeCalc.ppg.smi \
 src/compiler/runtimetypes/main/FFIAttributes.ppg.smi \
+src/compiler/runtimetypes/main/InitPointerSize.smi \
 src/compiler/runtimetypes/main/RuntimeTypes.ppg.smi \
 src/compiler/runtimetypes/main/TypeLayout2.smi \
 src/compiler/smlsharp.smi \
@@ -1330,7 +1325,6 @@ src/compiler/usererror/main/UserErrorUtils.smi \
 src/compiler/util/main/COUNTER.sig \
 src/compiler/util/main/Counter.smi \
 src/compiler/util/main/GRAPH.sig \
-src/compiler/util/main/Gensym.smi \
 src/compiler/util/main/Graph.smi \
 src/compiler/util/main/ListSorter.smi \
 src/compiler/util/main/SCCFun.smi \
@@ -1342,6 +1336,7 @@ src/compiler/valrecoptimization/main/VALREC_OPTIMIZER.sig \
 src/compiler/valrecoptimization/main/VALREC_Optimizer.smi \
 src/compiler/valrecoptimization/main/VALREC_Utils.smi \
 src/config/main/Config.smi \
+src/config/main/PointerSize.smi \
 src/config/main/Version.smi \
 src/ffi.smi \
 src/ffi/main/DynamicLink.smi \
@@ -1417,6 +1412,7 @@ src/sql/main/SQLBACKEND.sig \
 src/sql/main/SQLBackendTy.smi \
 src/sql/main/SQLErrors.smi \
 src/sql/main/SQLPrim.smi \
+src/sql/main/SQLQuery.ppg.smi \
 src/sql/main/SQLUtils.smi \
 src/sql/main/UNIXODBC.smi \
 src/sql/main/builtintypes/decimal/Decimal.smi \
@@ -1473,8 +1469,6 @@ src/compiler-utils/dynamic/main/Dynamic.o \
 src/compiler-utils/env/main/IEnv.o \
 src/compiler-utils/env/main/IOrd.o \
 src/compiler-utils/env/main/ISet.o \
-src/compiler-utils/env/main/PathEnv.o \
-src/compiler-utils/env/main/PathOrd.o \
 src/compiler-utils/env/main/SEnv.o \
 src/compiler-utils/env/main/SOrd.o \
 src/compiler-utils/env/main/SSet.o \
@@ -1584,6 +1578,7 @@ src/compiler/recordcompilation/main/RecordKind.o \
 src/compiler/recordcompilation/main/UnivKind.o \
 src/compiler/runtimecalc/main/RuntimeCalc.ppg.o \
 src/compiler/runtimetypes/main/FFIAttributes.ppg.o \
+src/compiler/runtimetypes/main/InitPointerSize.o \
 src/compiler/runtimetypes/main/RuntimeTypes.ppg.o \
 src/compiler/runtimetypes/main/TypeLayout2.o \
 src/compiler/smlsharp.o \
@@ -1632,7 +1627,6 @@ src/compiler/types/main/VarMap.o \
 src/compiler/usererror/main/UserError.ppg.o \
 src/compiler/usererror/main/UserErrorUtils.o \
 src/compiler/util/main/Counter.o \
-src/compiler/util/main/Gensym.o \
 src/compiler/util/main/Graph.o \
 src/compiler/util/main/ListSorter.o \
 src/compiler/util/main/SCCFun.o \
@@ -1642,6 +1636,7 @@ src/compiler/valrecoptimization/main/TransFundecl.o \
 src/compiler/valrecoptimization/main/VALREC_Optimizer.o \
 src/compiler/valrecoptimization/main/VALREC_Utils.o \
 src/config/main/Config.o \
+src/config/main/PointerSize.o \
 src/config/main/Version.o \
 src/ffi/main/DynamicLink.o \
 src/ffi/main/Pointer.o \
@@ -1694,6 +1689,7 @@ src/sql/main/SQL.o \
 src/sql/main/SQLBackendTy.o \
 src/sql/main/SQLErrors.o \
 src/sql/main/SQLPrim.o \
+src/sql/main/SQLQuery.ppg.o \
 src/sql/main/SQLUtils.o \
 src/sql/main/UNIXODBC.o \
 src/sql/main/builtintypes/decimal/Decimal.o \
@@ -1750,8 +1746,6 @@ src/compiler-utils/dynamic/main/Dynamic.o \
 src/compiler-utils/env/main/IEnv.o \
 src/compiler-utils/env/main/IOrd.o \
 src/compiler-utils/env/main/ISet.o \
-src/compiler-utils/env/main/PathEnv.o \
-src/compiler-utils/env/main/PathOrd.o \
 src/compiler-utils/env/main/SEnv.o \
 src/compiler-utils/env/main/SOrd.o \
 src/compiler-utils/env/main/SSet.o \
@@ -1863,6 +1857,7 @@ src/compiler/recordcompilation/main/RecordKind.o \
 src/compiler/recordcompilation/main/UnivKind.o \
 src/compiler/runtimecalc/main/RuntimeCalc.ppg.o \
 src/compiler/runtimetypes/main/FFIAttributes.ppg.o \
+src/compiler/runtimetypes/main/InitPointerSize.o \
 src/compiler/runtimetypes/main/RuntimeTypes.ppg.o \
 src/compiler/runtimetypes/main/TypeLayout2.o \
 src/compiler/smlsharp.o \
@@ -1911,7 +1906,6 @@ src/compiler/types/main/VarMap.o \
 src/compiler/usererror/main/UserError.ppg.o \
 src/compiler/usererror/main/UserErrorUtils.o \
 src/compiler/util/main/Counter.o \
-src/compiler/util/main/Gensym.o \
 src/compiler/util/main/Graph.o \
 src/compiler/util/main/ListSorter.o \
 src/compiler/util/main/SCCFun.o \
@@ -1921,6 +1915,7 @@ src/compiler/valrecoptimization/main/TransFundecl.o \
 src/compiler/valrecoptimization/main/VALREC_Optimizer.o \
 src/compiler/valrecoptimization/main/VALREC_Utils.o \
 src/config/main/Config.o \
+src/config/main/PointerSize.o \
 src/config/main/Version.o \
 src/ffi/main/DynamicLink.o \
 src/ffi/main/Pointer.o \
@@ -2010,6 +2005,7 @@ src/sql/main/SQL.o \
 src/sql/main/SQLBackendTy.o \
 src/sql/main/SQLErrors.o \
 src/sql/main/SQLPrim.o \
+src/sql/main/SQLQuery.ppg.o \
 src/sql/main/SQLUtils.o \
 src/sql/main/UNIXODBC.o \
 src/sql/main/builtintypes/decimal/Decimal.o \
@@ -2064,7 +2060,8 @@ src/compiler/types/main/Types.ppg.sml \
 src/compiler/usererror/main/UserError.ppg.sml \
 src/compiler/util/main/SmlppgUtil.ppg.sml \
 src/smlformat/generator/main/ml.grm.sml \
-src/smlformat/generator/main/ml.lex.sml
+src/smlformat/generator/main/ml.lex.sml \
+src/sql/main/SQLQuery.ppg.sml
 CLEAN_FILES = \
 src/compiler/parser2/main/iml.grm.sml.desc \
 src/compiler/parser2/main/interface.grm.sml.desc \

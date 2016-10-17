@@ -6,11 +6,10 @@ structure Byte =
 struct
   val byteToChar = SMLSharp_Builtin.Word8.castToChar
   val charToByte = SMLSharp_Builtin.Char.castToWord8
-  val bytesToString : SMLSharp_Builtin.Word8.word vector -> string
-  val stringToBytes : string -> SMLSharp_Builtin.Word8.word vector
+  val bytesToString : word8 vector -> string
+  val stringToBytes : string -> word8 vector
   val unpackStringVec : Word8VectorSlice.slice -> string
   val unpackString : Word8ArraySlice.slice -> string
-  val packString : SMLSharp_Builtin.Word8.word array * int
-                   * Substring.substring
+  val packString : word8 array * int * Substring.substring
                    -> unit
 end

@@ -11,7 +11,8 @@ struct
   type 'a server = 'a SMLSharp_SQL_Prim.server
   type ('a,'b) value = ('a,'b) SMLSharp_SQL_Prim.value
   type 'a conn = 'a SMLSharp_SQL_Prim.conn
-  type ('a,'b) db = ('a,'b) SMLSharp_SQL_Prim.db
+  type 'a db = 'a SMLSharp_SQL_Prim.db
+  type ('a,'b) db' = ('a,'b) SMLSharp_SQL_Prim.db'
   type ('a,'b) table = ('a,'b) SMLSharp_SQL_Prim.table
   type ('a,'b) row = ('a,'b) SMLSharp_SQL_Prim.row
   type 'a query = 'a SMLSharp_SQL_Prim.query
@@ -38,13 +39,15 @@ struct
   val fetch : 'a rel -> ('a * 'a rel) option
   val closeConn : 'a conn -> unit
   val closeRel : 'a rel -> unit
-  val subquery : (('a,'b) db -> 'c query) -> ('a,'b) db -> ('c,'b) table
-  val exists : (('a,'b) db -> 'c query) -> ('a,'b) db -> (bool option, 'b) value
+
+  val exists : ('a db -> 'b query) -> ('a,'w) db'
+               -> (bool option,'w) value
+
   val Some : ('a, 'b) value -> ('a option, 'b) value
   val Null : ('a option, 'b) value
 
-  val queryString : (('a,'b) db -> 'c query) -> 'a server -> string
-  val commandString : (('a,'b) db -> command) -> 'a server -> string
+  val queryString : ('a db -> 'b query) -> string
+  val commandString : ('a db -> command) -> string
 
   val + =
       case 'a in
@@ -331,8 +334,8 @@ struct
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> (bool option, 'b) value
       of
-        string => SMLSharp_SQL_Prim.likeString
-      | string option => SMLSharp_SQL_Prim.likeStringOption
+        string => SMLSharp_SQL_Prim.like_string
+      | string option => SMLSharp_SQL_Prim.like_stringOption
 
   val toSQL =
       case 'a in
@@ -353,7 +356,6 @@ struct
         | intInf => SMLSharp_SQL_Prim.toSQL_intInfOption
         | word => SMLSharp_SQL_Prim.toSQL_wordOption
         | char => SMLSharp_SQL_Prim.toSQL_charOption
-        | bool => SMLSharp_SQL_Prim.toSQL_boolOption
         | string => SMLSharp_SQL_Prim.toSQL_stringOption
         | real => SMLSharp_SQL_Prim.toSQL_realOption
         | timestamp => SMLSharp_SQL_Prim.toSQL_timestampOption

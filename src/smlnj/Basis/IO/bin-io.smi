@@ -12,7 +12,7 @@ structure BinIO =
 struct
   structure StreamIO =
   struct
-    type elem = SMLSharp_Builtin.Word8.word
+    type elem = word8
     type vector = Word8Vector.vector
     type instream (= boxed)
     type outstream (= boxed)
