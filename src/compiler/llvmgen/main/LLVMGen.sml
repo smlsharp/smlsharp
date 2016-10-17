@@ -1004,12 +1004,6 @@ struct
                         (objHeaderTy, L.VAR bitmapSize)))
       end
 
-  fun objectTotalSize (result, allocSize) =
-      insn1 (L.OP2 (result, L.ADD L.NUW,
-                    allocSize,
-                    (objHeaderTy,
-                     L.CONST (L.INTCONST (Word32.toLarge objHeaderSize)))))
-
   local
     fun cmpOp (var, varTy, con, cmp, x : L.operand, y : L.operand) =
         let
@@ -1899,23 +1893,23 @@ struct
           val dstRecord = compileValue env dstRecord
           val srcRecord = compileValue env srcRecord
           val copySize = compileValue env copySize
-          val dst' = VarID.generate ()
-          val src' = VarID.generate ()
-          val dst = VarID.generate ()
-          val src = VarID.generate ()
-          val totalSize = VarID.generate ()
+          val srcHeader = VarID.generate ()
+          val dstHeader = VarID.generate ()
+          val dstHeaderAddr = VarID.generate ()
         in
-          objectHeaderAddress (dst', dstRecord)
-          o objectHeaderAddress (src', srcRecord)
-          o objectTotalSize (totalSize, copySize)
-          o insns [L.CONV (dst, L.BITCAST, (L.PTR objHeaderTy, L.VAR dst'),
-                           L.PTR L.I8),
-                   L.CONV (src, L.BITCAST, (L.PTR objHeaderTy, L.VAR src'),
-                           L.PTR L.I8)]
+          objectHeader (srcHeader, srcRecord)
+          (* do not copy FLAG_SKIP from srcRecord to dstRecord *)
+          o insn1 (L.OP2 (dstHeader, L.AND,
+                          (objHeaderTy, L.VAR srcHeader),
+                          (objHeaderTy,
+                           L.CONST (L.INTCONST (Word64.notb FLAG_SKIP)))))
+          o objectHeaderAddress (dstHeaderAddr, dstRecord)
+          o insn1 (L.STORE {dst = (objHeaderTy, L.VAR dstHeaderAddr),
+                            value = (objHeaderTy, L.VAR dstHeader)})
           o callIntrinsic NONE llvm_memcpy
-                          [(L.PTR L.I8, L.VAR dst),
-                           (L.PTR L.I8, L.VAR src),
-                           (L.I32, L.VAR totalSize),
+                          [dstRecord,
+                           srcRecord,
+                           copySize,
                            (L.I32, L.CONST (L.INTCONST 0w1)),
                            (L.I1, L.CONST (L.INTCONST 0w0))]
         end

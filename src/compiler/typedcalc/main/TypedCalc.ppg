@@ -1343,9 +1343,11 @@ in
       TPEXTERNVAR of {path:longsymbol, ty:ty}
     | (*%
         @format({path, ty:ty})
+         "extern" + "exception" + path
        *)
       (*% @prefix formatWithType_
         @format({path, ty:ty})
+         "extern" + "exception" + path + ":" + ty()(btvEnv)
        *)
      (* temporary disable extern printint
          "extern" + "exception" + path
@@ -1356,7 +1358,7 @@ in
       TPEXTERNEXN of {path:longsymbol, ty:ty}
     | (*%
         @format({path, ty})
-          "builtin" + "exception" + path
+         "builtin" + "exception" + path
        *)
       (*% @prefix formatWithType_
         @format({path, ty})

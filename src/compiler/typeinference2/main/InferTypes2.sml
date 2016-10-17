@@ -1096,12 +1096,11 @@ in
  (* type generalization *)
   fun generalizer (ty, lambdaDepth) =
     if E.isError()
-      then {boundEnv = BoundTypeVarID.Map.empty, removedTyIds = OTSet.empty}
+      then {boundEnv = BoundTypeVarID.Map.empty, removedTyIds = OTSet.empty, boundConstraints = nil}
     else
       let
         (* 2016-06-16 sasaki: generalize前に解消可能な制約を解消 *)
         val _ = constraints := resolveJoinConstraints (!constraints)
-        val (_, set, _) = TB.EFTV (ty, !constraints)
         val newTy = TB.generalizer (ty, !constraints, lambdaDepth)
       in
         newTy
@@ -1231,7 +1230,7 @@ in
           (ty, tpexp)
         else
           let
-            val {boundEnv,...} = generalizer (ty, lambdaDepth)
+            val {boundEnv,boundConstraints,...} = generalizer (ty, lambdaDepth)
           in
             if BoundTypeVarID.Map.isEmpty boundEnv then (ty, tpexp)
             else
@@ -1243,7 +1242,7 @@ in
                  (
                   T.POLYty
                     {boundtvars = boundEnv,
-                     constraints = nil,
+                     constraints = boundConstraints,
                      body = ty},
 (*
   2011-09-02 ohori:
@@ -1264,10 +1263,10 @@ in
                            loc=loc1} =>
                  (
                   case ty of
-                    T.POLYty{boundtvars=boundEnv2, constraints, body= ty2} =>
+                    T.POLYty{boundtvars=boundEnv2, constraints=boundConstraints2, body= ty2} =>
                     (T.POLYty
                        {boundtvars = mergeBoundEnvs(boundEnv,boundEnv2),
-                        constraints = nil,
+                        constraints = boundConstraints @ boundConstraints2,
                         body = ty2},
                      TC.TPPOLY{btvEnv=mergeBoundEnvs(boundEnv,boundEnv1),
                                expTyWithoutTAbs=ty1,
@@ -1283,10 +1282,10 @@ in
                                loc=loc1} =>
                  (
                   case ty of
-                    T.POLYty{boundtvars=boundEnv2, constraints, body= ty2} =>
+                    T.POLYty{boundtvars=boundEnv2, constraints=boundConstraints2, body= ty2} =>
                     (T.POLYty
                        {boundtvars = mergeBoundEnvs (boundEnv, boundEnv2),
-                        constraints = nil,
+                        constraints = boundConstraints @ boundConstraints2,
                         body = ty2},
                      TC.TPPOLYFNM
                        {btvEnv=mergeBoundEnvs (boundEnv, boundEnv1),
@@ -1297,7 +1296,7 @@ in
                     )
                   | _ => raise bug "non polyty for TPPOLY"
                  )
-               | _ => (T.POLYty {boundtvars = boundEnv, constraints = nil, body = ty},
+               | _ => (T.POLYty {boundtvars = boundEnv, constraints = boundConstraints, body = ty},
                        TC.TPPOLY {btvEnv=boundEnv,
                                   expTyWithoutTAbs=ty,
                                   exp=tpexp,
@@ -2333,13 +2332,13 @@ val _ = P.print "\n"
                    if iszero applyDepth andalso not (TCU.expansive newTermBody)
                    then
                      let
-                       val {boundEnv, ...} = generalizer (ranty, lambdaDepth)
+                       val {boundEnv, boundConstraints, ...} = generalizer (ranty, lambdaDepth)
                      in
                        if BoundTypeVarID.Map.isEmpty boundEnv
                        then (ranty, newTermBody)
                        else
                          (
-                          T.POLYty{boundtvars = boundEnv, constraints = nil, body = ranty},
+                          T.POLYty{boundtvars = boundEnv, constraints = boundConstraints, body = ranty},
                           TC.TPPOLY
                             {btvEnv=boundEnv,
                              expTyWithoutTAbs=ranty,
@@ -2914,7 +2913,7 @@ val _ = P.print "\n"
            val (ty, tpexp) =
                if iszero applyDepth then
                  let
-                   val {boundEnv, ...} = generalizer (ty, lambdaDepth)
+                   val {boundEnv, boundConstraints, ...} = generalizer (ty, lambdaDepth)
                  in
                    if BoundTypeVarID.Map.isEmpty boundEnv then
                      (ty,
@@ -2925,7 +2924,7 @@ val _ = P.print "\n"
                          loc = loc})
                    else
                      (
-                      T.POLYty{boundtvars = boundEnv, constraints = nil, body = ty},
+                      T.POLYty{boundtvars = boundEnv, constraints = boundConstraints, body = ty},
                       TC.TPPOLYFNM
                         {
                          btvEnv=boundEnv,
@@ -4243,7 +4242,7 @@ val _ = P.print "\n"
                    RecordLabel.Map.empty
                    funBindList)
 
-          val {boundEnv, ...} = generalizer (TypesOfAllElements, lambdaDepth)
+          val {boundEnv, boundConstraints, ...} = generalizer (TypesOfAllElements, lambdaDepth)
 
           val _ =
               TvarMap.appi
@@ -4316,7 +4315,7 @@ val _ = P.print "\n"
                            {path=path,
                             id=id,
                             opaque=opaque,
-                            ty=T.POLYty{boundtvars=boundEnv, constraints = nil, body = ty}},
+                            ty=T.POLYty{boundtvars=boundEnv, constraints = boundConstraints, body = ty}},
                            length argTyList
                           )
                      )
@@ -4428,7 +4427,7 @@ val _ = P.print "\n"
                        RecordLabel.Map.insert(tyFields, RecordLabel.fromLongsymbol path, ty))
                    RecordLabel.Map.empty
                    varInfoTyTpexpList)
-          val {boundEnv, ...} =
+          val {boundEnv, boundConstraints, ...} =
               generalizer (TypesOfAllElements, lambdaDepth)
           val _ =
               TvarMap.appi
@@ -4490,7 +4489,7 @@ val _ = P.print "\n"
                       TC.VARID {path=path,
                                 id=id,
                                 opaque=opaque,
-                                ty= T.POLYty{boundtvars = boundEnv, constraints = nil, body = ty}
+                                ty= T.POLYty{boundtvars = boundEnv, constraints = boundConstraints, body = ty}
                                }
                      )
                )
@@ -4531,7 +4530,7 @@ val _ = P.print "\n"
                           evalScopedTvars lambdaDepth newContext scopedTvars loc
                       val (icexpTy, tpexp) =
                           typeinfExp lambdaDepth inf newContext icexp
-                      val {boundEnv, ...} =
+                      val {boundEnv, boundConstraints, ...} =
                           generalizer (icexpTy, lambdaDepth)
                       val _ =
                           TvarMap.appi
@@ -4568,7 +4567,7 @@ val _ = P.print "\n"
                       val icexpPolyTy = 
                           if BoundTypeVarID.Map.isEmpty boundEnv then
                             icexpTy
-                          else T.POLYty {boundtvars=boundEnv, constraints = nil, body=icexpTy}
+                          else T.POLYty {boundtvars=boundEnv, constraints = boundConstraints, body=icexpTy}
                       val tpexpPoly =
                           if BoundTypeVarID.Map.isEmpty boundEnv then
                             tpexp
@@ -4699,7 +4698,7 @@ val _ = P.print "\n"
                   case ty1 of
                     (* 1. TYPOLY(btvs,TYFUNM([firstArgty],TYFUNM(polyList,body)))*)
                     T.POLYty{boundtvars,
-                             constraints = nil,
+                             constraints,
                              body=
                              toBodyTy
                                as T.FUNMty([first],T.FUNMty(polyTys,bodyTy))} =>
@@ -4782,7 +4781,7 @@ val _ = P.print "\n"
                     end
                   | (* 2. TYPOLY(btvs, TYFUNM([firstArgty], body)) *)
                     T.POLYty{boundtvars,
-                             constraints = nil,
+                             constraints,
                              body =
                              toBodyTy
                                as
@@ -5256,10 +5255,10 @@ end
                               utvarOpt = #utvarOpt tvKind}
                     | _ => raise bug "ICOVERLOADDEF")
                   keyList
-          val {boundEnv, ...} = generalizer (ty, lambdaDepth)
+          val {boundEnv, boundConstraints, ...} = generalizer (ty, lambdaDepth)
           val oprimTy =
               if BoundTypeVarID.Map.isEmpty boundEnv
-              then ty else T.POLYty {boundtvars = boundEnv, constraints = nil, body = ty}
+              then ty else T.POLYty {boundtvars = boundEnv, constraints = boundConstraints, body = ty}
           val oprimInfo =
               {ty = oprimTy, path = longsymbol, id = id}
         in
@@ -5268,6 +5267,7 @@ end
     end (* typeinfDec *)
     handle Fail => (TIC.emptyContext,nil)
 
+(*
 (* 2016-07-01 sasaki: 制約を挿入するための関数群を定義 *)
   fun allBoundTvarID ty =
       let val ty = TB.derefTy ty
@@ -5669,25 +5669,31 @@ end
                               exps,
                      loc)
 (* 定義ここまで *)
+*)
 
-  fun typeinf icdecls =
+  fun typeinfDecls (context, icdecls) =
       let
        (* 2012-7-11 ohori: to fix bug 195_dummtType.sml *)
         val startDummyTyId = ! TIU.dummyTyId
         val _ = E.initializeTypeinfError ()
         val _ = T.kindedTyvarList := nil
         val _ = constraints := nil
+(*
         val ({varEnv,...}, tpdecls) =
             typeinfDeclList T.toplevelDepth TIC.emptyContext icdecls
             handle Fail => (TIC.emptyContext,nil)
-        val (varEnv, tpdecls) =
+*)
+        val (context as {varEnv,...}, tpdecls) =
+            typeinfDeclList T.toplevelDepth context icdecls
+            handle Fail => (TIC.emptyContext,nil)
+        val (context, tpdecls) =
             if E.isError() then
-              (varEnv, tpdecls)
+              (context, tpdecls)
             else
               let
                 (* 2016-06-01 sasaki: ここから自然結合制約の解消のための追加部分 *)
                 val _ = constraints := resolveJoinConstraints (!constraints)
-
+(*
                 val varEnv = 
                     VarMap.map 
                         (fn var => case var of
@@ -5700,7 +5706,7 @@ end
                     List.map
                         (fn tpdecl => insertConstraintsToTpdecl tpdecl (!constraints))
                         tpdecls
-
+*)
                 val _ = constraints := nil
                 (* TODO: tpdeclのための処理を追加 *)
                 (* 2016-06-01 sasaki: 追加部分ここまで *)
@@ -5762,18 +5768,32 @@ end
                                  (!ffiApplyTyvars)
 *)
               in
-                (varEnv, tpdecls)
+                (context, tpdecls)
               end
         val errors = E.getErrors ()
       in
         case errors of
-          [] => (varEnv, tpdecls, E.getWarnings())
+          [] => (context, tpdecls, E.getWarnings())
         | errors =>
           let
             val errorsAndWornings = E.getErrorsAndWarnings ()
           in
             raise UE.UserErrors (errorsAndWornings)
           end
+      end
+
+  fun typeinf icdecls = 
+      let
+        val ({varEnv,...}, icdecls, wrarnings) = typeinfDecls (TIC.emptyContext, icdecls)
+      in
+        (varEnv, icdecls, wrarnings)
+      end
+
+  fun typeinfBody (context, icdecls) = 
+      let
+        val ({varEnv,...}, icdecls, wrarnings) = typeinfDecls (context, icdecls)
+      in
+        (varEnv, icdecls, wrarnings)
       end
 
 end

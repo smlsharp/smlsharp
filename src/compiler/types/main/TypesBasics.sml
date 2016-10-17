@@ -372,6 +372,27 @@ end
   exception CoerceFun 
   exception CoerceTvarKindToEQ 
 
+  (* 2016-07-22 sasaki
+   * isFTV (ty, checkTy)
+   * ty が FTV(checkTy) の要素ならばtrueを返す．
+   *)
+  fun isFTV (T.TYVARty (ref(T.SUBSTITUTED ty)), checkTy) =
+      isFTV (ty, checkTy)
+    | isFTV (ty, T.TYVARty (ref(T.SUBSTITUTED checkTy))) =
+      isFTV (ty, checkTy)
+    | isFTV (T.TYVARty (ref(T.TVAR tvKind1)),
+             T.TYVARty (ref(T.TVAR tvKind2))) =
+      (* FIXME: Is this OK? *)
+      FreeTypeVarID.eq (#id tvKind1, #id tvKind2)
+    | isFTV (ty, T.FUNMty (args, body)) =
+      isFTV (ty, body) orelse
+      List.exists (fn t => isFTV (ty, t)) args
+    | isFTV (ty, T.RECORDty tyLabelEnvMap) =
+      RecordLabel.Map.foldl (fn (t, b) => b orelse isFTV (ty, t)) false tyLabelEnvMap
+    | isFTV (ty, T.POLYty {boundtvars, constraints, body=t}) =
+      isFTV (ty, t)
+    | isFTV _ = false
+
   (* 2013-4-12 Ohori
      This returns the maxmum index, tvstate ref set, and an index map.
      The index map represent the occurrecen order of each type variable.
@@ -483,20 +504,6 @@ end
           | T.OVERLOAD_CASE (ty, map) =>
             TypID.Map.foldl traverseOverloadMatch (traverseTy (ty, env)) map
 *)
-      and isFTV (T.TYVARty (ref(T.SUBSTITUTED ty)), checkTy) =
-          isFTV (ty, checkTy)
-        | isFTV (T.TYVARty (ref(T.TVAR tvKind1)),
-                 T.TYVARty (ref(T.TVAR tvKind2))) =
-          (* FIXME: Is this OK? *)
-          FreeTypeVarID.eq (#id tvKind1, #id tvKind2)
-        | isFTV (ty, T.FUNMty (args, body)) =
-          isFTV (ty, body) orelse
-          List.exists (fn t => isFTV (ty, t)) args
-        | isFTV (ty, T.RECORDty tyLabelEnvMap) =
-          RecordLabel.Map.foldl (fn (t, b) => b orelse isFTV (ty, t)) false tyLabelEnvMap
-        | isFTV (ty, T.POLYty {boundtvars, constraints, body=t}) =
-          isFTV (ty, t)
-        | isFTV _ = false
 
       and traverseConstraints (ty, constraints, env) =
           (* FIXME: This function doesn't move correctly
@@ -657,9 +664,26 @@ end
         val (tids, newIndexMap) = traverseConstraints tids newIndexMap
       in
         if OTSet.isEmpty tids
-        then ({boundEnv = BoundTypeVarID.Map.empty, removedTyIds = OTSet.empty})
+        then ({boundEnv = BoundTypeVarID.Map.empty, removedTyIds = OTSet.empty, boundConstraints = nil})
         else
           let
+            (* 2016-07-22 sasaki:
+             * 束縛する制約を返すための処理を追加
+             *)
+            val bcs =
+                List.filter
+                  (fn (c as T.JOIN {res, args = (ty1, ty2)}) =>
+                      IEnv.foldl
+                        (fn (r, b) =>
+                            b orelse
+                            isFTV (T.TYVARty r, derefTy res) orelse
+                            isFTV (T.TYVARty r, derefTy ty1) orelse
+                            isFTV (T.TYVARty r, derefTy ty2)
+                        )
+                        false
+                        newIndexMap
+                  )
+                  constraints
             val btvs =
                 IEnv.foldl
                   (fn (r as ref(T.TVAR (k as {id, ...})), btvs) =>
@@ -685,7 +709,7 @@ end
                   BoundTypeVarID.Map.empty
                   newIndexMap
           in
-            ({boundEnv = btvs, removedTyIds = tids})
+            ({boundEnv = btvs, removedTyIds = tids, boundConstraints = bcs})
           end
       end
 

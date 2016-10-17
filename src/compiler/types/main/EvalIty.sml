@@ -136,35 +136,79 @@ in
          )
        | I.TYRECORD tyMap => T.RECORDty (RecordLabel.Map.map (evalIty context) tyMap)
        | I.TYCONSTRUCT {tfun, args} =>
-         (let
-            val args = map (evalIty context) args
-            val tyCon = evalTfun context tfun
-                handle e => raise e
-          in
-            T.CONSTRUCTty{tyCon=tyCon, args=args}
-          end
-          handle 
-          EVALTFUN {iseq, formals, realizerTy, longsymbol} =>
-          if length formals = length args then
-            let
-              val args = map (evalIty context) args
-              val tvarTyPairs = ListPair.zip (formals, args)
-              val tvarEnv = #tvarEnv context
-              val tvarEnv = 
-                  foldr
-                    (fn ((tvar, ty), tvarEnv) =>
-                        TvarMap.insert(tvarEnv, tvar, ty))
-                    tvarEnv
-                    tvarTyPairs
-              val context = {tvarEnv = tvarEnv,
-                             varEnv = #varEnv context,
-                             oprimEnv = #oprimEnv context}
-            in
-              evalIty context realizerTy
-            end
-          else
-            raise bug "TYCONSTRUCT ARITY"
-         )
+         (* JSON.nullを'a#json optionに変換; circulr referenceのためbuiltintypesが使えないことに
+            ともない，ad-hocな対応;
+          *)
+         let
+           fun isJsonNullTfun tfun = 
+               (case tfun of
+                  I.TFUN_VAR (ref (I.TFUN_DTY {longsymbol, ...})) =>
+                  if map Symbol.symbolToString longsymbol = ["JSON", "null"] andalso
+                     TypID.eq(I.tfunId tfun, I.tfunId (JSONData.nullTfun())) then
+                    true 
+                  else false
+                | _ => false
+               )
+               handle Bug.Bug _ => false
+         in
+           if isJsonNullTfun tfun then
+             let
+(* 
+ (*
+  NILと同様の扱いで，POLYtyを与える必要があが，ユーザライブラリのapply termであるため
+  このad hocな解決は困難
+ *)
+               val btvid = BoundTypeVarID.generate ()
+               val btvEnv = BoundTypeVarID.Map.insert
+                            (BoundTypeVarID.Map.empty,
+                             btvid,
+                             {tvarKind = T.JSON,
+                              eqKind = Absyn.NONEQ}
+                            )
+                   handle e => raise e
+               val polybody = T.CONSTRUCTty{tyCon = tyCon, args = [T.BOUNDVARty btvid]}
+               val polyty = T.POLYty {boundtvars = btvEnv, constraints = nil, body = polybody}
+*)
+               val arg = T.newtyRaw
+                           {lambdaDepth = T.infiniteDepth,
+                            tvarKind = T.JSON,
+                            eqKind = Absyn.NONEQ,
+                            occurresIn = nil,
+                            utvarOpt = NONE}
+               val tyCon = evalTfun context (JSONData.optionTfun())
+             in
+               T.CONSTRUCTty{tyCon = tyCon, args = [arg]}
+             end
+           else
+             let
+               val args = map (evalIty context) args
+               val tyCon = evalTfun context tfun
+                   handle e => raise e
+             in
+               T.CONSTRUCTty{tyCon=tyCon, args=args}
+             end
+             handle 
+             EVALTFUN {iseq, formals, realizerTy, longsymbol} =>
+             if length formals = length args then
+               let
+                 val args = map (evalIty context) args
+                 val tvarTyPairs = ListPair.zip (formals, args)
+                 val tvarEnv = #tvarEnv context
+                 val tvarEnv = 
+                     foldr
+                       (fn ((tvar, ty), tvarEnv) =>
+                           TvarMap.insert(tvarEnv, tvar, ty))
+                       tvarEnv
+                       tvarTyPairs
+                 val context = {tvarEnv = tvarEnv,
+                                varEnv = #varEnv context,
+                                oprimEnv = #oprimEnv context}
+               in
+                 evalIty context realizerTy
+               end
+             else
+               raise bug "TYCONSTRUCT ARITY"
+         end
        | I.TYFUNM (tyList,ty2) =>
          T.FUNMty (map (evalIty context) tyList, evalIty context ty2)
        | I.TYPOLY (kindedTvarList, ty) =>

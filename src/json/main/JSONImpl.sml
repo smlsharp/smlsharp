@@ -1,99 +1,24 @@
 structure JSONImpl =
 struct
+
   open JSON
 
   structure R = ReifiedTerm
 
-  (* for debugging *)
-  fun printJsonTy jsonTy =
-      case jsonTy of
-     ARRAYty jsonTy =>
-     (print "ARRAYty(";
-      printJsonTy jsonTy;
-      print ")")
-    | BOOLty => print "BOOLty"
-    | DYNty => print "DYNty"
-    | INTty => print "INTty"
-    | NULLty => print "NULLtyty"
-    | RECORDty stringJsontyList =>
-      (print "RECORDty{";
-       map (fn (l,jsonTy) =>
-               (print l;
-                print ":";
-                printJsonTy jsonTy;
-                print ","
-               )
-           )
-       stringJsontyList;
-       ();
-       print "}"
-      )
-    | PARTIALRECORDty stringJsontyList =>
-      (print "PARTIALRECORDty{";
-       map (fn (l,jsonTy) =>
-               (print l;
-                print ":";
-                printJsonTy jsonTy;
-                print ","
-               )
-           )
-       stringJsontyList;
-       ();
-       print "}"
-      )
-    | REALty => print "REALty"
-    | STRINGty => print "STRINGty"
-
-  fun glbJsonTy (ty1, ty2) = 
-      if ty1 = ty2 then ty1
-      else
-        case (ty1, ty2) of
-          (ARRAYty elemTy1, ARRAYty elemTy2) => 
-          ARRAYty (glbJsonTy (elemTy1, elemTy2))
-        | (RECORDty fl1, RECORDty fl2) =>
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | (PARTIALRECORDty fl1, RECORDty fl2) => 
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | (RECORDty fl1, PARTIALRECORDty fl2) => 
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | (PARTIALRECORDty fl1, PARTIALRECORDty fl2) => 
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | _ => DYNty
-
-  and glbFieldTys (fl1, fl2) =
-      List.foldr
-        (fn ((l, ty1), fl) => 
-            case List.find (fn (l',_) => l' = l) fl2 of
-              NONE => fl
-            | SOME (_, ty2) => (l, glbJsonTy (ty1, ty2)) :: fl
-         ) 
-      nil
-      fl1
-
-  fun typeOf v = 
-      case v of
-        ARRAY (_,jsonTy) => ARRAYty jsonTy
-      | BOOL _ => BOOLty
-      | INT _ => INTty
-      | NULLObject => NULLty
-      | OBJECT fieldList => RECORDty (map (fn (l, json) => (l, typeOf json)) fieldList)
-      | REAL _ => REALty
-      | STRING  _ => STRINGty
-
   fun matchTy (realTy, viewTy) = 
       case (realTy, viewTy) of
         (_, DYNty) => true
+      | (NULLty, OPTIONty _) => true
+      | (OPTIONty realArgTy, OPTIONty argTy) => matchTy (realArgTy, argTy)
+      | (_, OPTIONty argTy) => matchTy (realTy, argTy)
       | (ARRAYty realTy1, ARRAYty vewTy1) => matchTy (realTy1, vewTy1)
       | (BOOLty, BOOLty) => true
       | (INTty, INTty) => true
-      | (NULLty, NULLty) => true
-      | (RECORDty fl1, RECORDty fl2) => matchTyFields (fl1, fl2)
-      | (RECORDty fl1, PARTIALRECORDty fl2) => 
-        matchTyFields (fl1, fl2)
-      | (PARTIALRECORDty fl1, PARTIALRECORDty fl2) => 
-        matchTyFields (fl1, fl2)
       | (REALty, REALty) => true
       | (STRINGty, STRINGty) => true
+      | (RECORDty fl1, RECORDty fl2) => matchTyFields (fl1, fl2)
+      | (RECORDty fl1, PARTIALRECORDty fl2) => matchTyFields (fl1, fl2)
+      | (PARTIALRECORDty fl1, PARTIALRECORDty fl2) => matchTyFields (fl1, fl2)
       | _ => false
 
   and matchTyFields (fl1, fl2) =
@@ -122,8 +47,23 @@ struct
   (* JSON compilation primitives used in TypedElaboration *)
   fun getJson (DYN (_, json)) = json
   fun checkTy json viewTy =
-      if matchTy (typeOf json, viewTy) then ()
-      else raise RuntimeTypeError
+      let
+        val jsonTy = typeOf json
+      in
+        if matchTy (jsonTy, viewTy) then ()
+        else 
+          (
+(*
+           print "jsonTy:";
+           printJsonTy jsonTy;
+           print "\n";
+           print "viewTy:";
+           printJsonTy viewTy;
+           print "\n";
+*)
+          raise RuntimeTypeError
+          )
+      end
   fun checkInt (INT int) = int
     | checkInt _ = raise RuntimeTypeError
   fun checkBool (BOOL bool) = bool
@@ -134,22 +74,31 @@ struct
     | checkString _ = raise RuntimeTypeError
   fun checkArray (ARRAY (jsonList, jsonTy)) = jsonList
     | checkArray _ = raise RuntimeTypeError
-  fun checkNull NULLObject = NULL
+  fun checkNull NULLObject = NONE
     | checkNull _ = raise RuntimeTypeError
+  fun optionCoerce checkFn json = 
+      case json of
+        NULLObject => NONE
+      | x => SOME (checkFn x)
   fun mapCoerce checkFn jsonList = map checkFn jsonList
   fun checkDyn json = DYN (fn _ => raise AttemptToReturnVOIDValue, json)
   fun checkRecord (OBJECT fields) labels = 
       (checkLabels (fields, labels);
        ())
     | checkRecord _ _ = raise RuntimeTypeError
+
+  (* ユーザ指定の型の表現を生成 *)
   fun coerceJson jsonTy = 
    fn json => 
       case (jsonTy, json) of
-        (ARRAYty elemTy, ARRAY (jsonList, _)) => ARRAY (map (coerceJson elemTy) jsonList, ARRAYty elemTy)
+        (NULLty, NULLObject) => NULLObject
+      | (OPTIONty _, NULLObject) => NULLObject
       | (BOOLty, BOOL bool) => BOOL bool
-      | (DYNty, _) => json
       | (INTty, INT int) => INT int
-      | (NULLty, NULLObject) => NULLObject
+      | (REALty, REAL real) => REAL real
+      | (STRINGty, STRING string) => STRING string
+      | (ARRAYty elemTy, ARRAY (jsonList, _)) => ARRAY (map (coerceJson elemTy) jsonList, ARRAYty elemTy)
+      | (DYNty, _) => json
       | (RECORDty stringJsontyList, OBJECT stringJsonList) =>
          OBJECT 
          (foldr 
@@ -163,9 +112,6 @@ struct
          )
       | (PARTIALRECORDty stringJsontyList, OBJECT stringJsonList) =>
         (
-(*
-         print "makeCoerce to PARTIALRECOEDty; this should not happen\n";
-*)
          OBJECT 
            (foldr
               (fn ((l,ty), fields) =>
@@ -177,8 +123,6 @@ struct
               stringJsontyList
            )
         )
-      | (REALty, REAL real) => REAL real
-      | (STRINGty, STRING string) => STRING string
       | _ => raise RuntimeTypeError
   fun makeCoerce json jsonTy viewFn =
       case jsonTy of

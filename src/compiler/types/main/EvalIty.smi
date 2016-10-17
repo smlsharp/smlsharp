@@ -14,6 +14,7 @@ _require "./OPrimMap.smi"
 _require "./Types.ppg.smi"
 _require local "./TypesBasics.smi"
 _require local "./VarInfoEnv.smi"
+_require local "../../../json/main/JSONData.smi"
 
 structure EvalIty =
 struct

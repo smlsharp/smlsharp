@@ -176,6 +176,14 @@ in
                                         tvarKind = tvarKind,
                                         occurresIn = occurresIn,
                                         eqKind = eqKind})]
+                 else if id = #id BuiltinTypes.optionTyCon
+                 then
+                   [(argTy, T.newtyRaw {utvarOpt = utvarOpt,
+                                        lambdaDepth = lambdaDepth,
+                                        tvarKind = tvarKind,
+                                        occurresIn = occurresIn,
+                                        eqKind = eqKind})]
+
                  else raise Unify
                | T.RECORDty fields =>
                  RecordLabel.Map.foldr

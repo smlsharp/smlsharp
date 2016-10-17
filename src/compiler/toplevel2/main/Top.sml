@@ -76,96 +76,99 @@ struct
       then printLines title userErrorToString diagnoses
       else ()
 
-  fun printCode flag formatter title codes =
-      if !flag
-      then printLines title formatter codes
+  fun printCode flagList formatter title codes =
+      if List.all (fn x => !x) flagList
+      then 
+        (printError "\n";
+         printLines title formatter codes
+        )
       else ()
 
   fun printParseResult flag title code =
-      printCode flag (Control.prettyPrint o Absyn.format_unitparseresult)
+      printCode [flag] (Control.prettyPrint o Absyn.format_unitparseresult)
                 title [code]
 
   fun printAbsyn flag title code =
-      printCode flag (Control.prettyPrint o AbsynInterface.format_compileUnit)
+      printCode [flag] (Control.prettyPrint o AbsynInterface.format_compileUnit)
                 title [code]
 
   fun printPatternCalc flag title code =
-      printCode flag
+      printCode [flag]
                 (Control.prettyPrint o PatternCalcInterface.format_compileUnit)
                 title [code]
 
-  fun printPatternCalcInteractive flag title code =
-      printCode flag
+  fun printPatternCalcInteractive flagList title code =
+      printCode flagList
                 (Control.prettyPrint o PatternCalcInterface.format_interactiveUnit)
                 title [code]
 
-  fun printIDCalc flag title code =
+  fun printIDCalc flagList title code =
       printCode
-        flag
+        flagList
         (if !Control.printWithType
          then (Control.prettyPrint o IDCalc.formatWithType_icdecl)
          else (Control.prettyPrint o IDCalc.format_icdecl))
         title code
 
-  fun printTypedCalc flag title code =
+  fun printTypedCalc flagList title code =
       printCode
-        flag
+        flagList
         (if !Control.printWithType
          then Control.prettyPrint o (TypedCalc.formatWithType_tpdecl nil)
          else Control.prettyPrint o (TypedCalc.format_tpdecl nil))
         title code
 
-  fun printRecordCalc flag title code =
+  fun printRecordCalc flagList title code =
       printCode
-        flag
+        flagList
         (if !Control.printWithType
          then Control.prettyPrint o (RecordCalc.format_rcdecl nil)
          else Control.prettyPrint o (RecordCalc.formatWithoutType_rcdecl nil))
         title code
 
-  fun printTypedLambda flag title code =
+  fun printTypedLambda flagList title code =
       printCode
-        flag
+        flagList
         (if !Control.printWithType
          then Control.prettyPrint o (TypedLambda.formatWithType_tldecl nil)
          else Control.prettyPrint o (TypedLambda.format_tldecl nil))
         title code
 
   fun printBitmapCalc2 flag title code =
-      printCode flag
+      printCode [flag]
                 (if !Control.printWithType
                  then Control.prettyPrint o BitmapCalc2.formatWithType_bcdecl
                  else Control.prettyPrint o BitmapCalc2.format_bcdecl)
                 title code
 
-  fun printClosureCalc flag title code =
-      printCode flag
+  fun printClosureCalc flagList title code =
+      printCode flagList
                 (if !Control.printWithType
                  then Control.prettyPrint o ClosureCalc.formatWithType_program
                  else Control.prettyPrint o ClosureCalc.format_program)
                 title [code]
 
   fun printRuntimeCalc flag title code =
-      printCode flag
+      printCode [flag]
                 (if !Control.printWithType
                  then Control.prettyPrint o RuntimeCalc.formatWithType_program
                  else Control.prettyPrint o RuntimeCalc.format_program)
                 title [code]
 
   fun printANormal flag title code =
-      printCode flag
+      printCode [flag]
                 (if !Control.printWithType
                  then Control.prettyPrint o ANormal.formatWithType_program
                  else Control.prettyPrint o ANormal.format_program)
                 title [code]
 
   fun printMachineCode flag title code =
-      printCode flag
+      printCode [flag]
                 (Control.prettyPrint o MachineCode.format_program)
                 title [code]
 
   fun printLLVMIR flag title code =
-      printCode flag
+      printCode [flag]
                 (Control.prettyPrint o LLVMIR.format_program)
                 title [code]
 
@@ -223,7 +226,9 @@ struct
             Elaborator.elaborateInteractiveEnv fixEnv interactiveUnit
         val _ =  #stop Counter.elaborationTimeCounter()
         val _ = printWarnings warnings
-        val _ = printPatternCalcInteractive Control.printElab "Elaborated" plinteractievUnit
+        val _ = printPatternCalcInteractive 
+                  [Control.printElab, Control.printSystemDecls] 
+                  "Elaborated" plinteractievUnit
       in
         (newFixEnv, plinteractievUnit)
       end
@@ -236,7 +241,7 @@ struct
                                systemDecls=builtinDecls} plunit
         val _ =  #stop Counter.nameEvaluationTimeCounter()
         val _ = printWarnings warnings
-        val _ = printIDCalc Control.printNameEval "Name Evaluation" icdecls
+        val _ = printIDCalc [Control.printNameEval] "Name Evaluation" icdecls
       in
         (requireTopEnv, returnTopEnv, icdecls)
       end
@@ -252,13 +257,13 @@ struct
         nameevalTopEnv
       end
 
-  fun doTypeInference idcalc =
+  fun doTypeInference icdecls =
       let
         val _ = #start Counter.typeInferenceTimeCounter()
-        val (typeinfVarE, tpdecs, warnings) = InferTypes.typeinf idcalc
+        val (typeinfVarE, tpdecs, warnings) = InferTypes.typeinf icdecls
         val _ =  #stop Counter.typeInferenceTimeCounter()
         val _ = printWarnings warnings
-        val _ = printTypedCalc Control.printTypeInf "Type Inference" tpdecs
+        val _ = printTypedCalc [Control.printTypeInf] "Type Inference" tpdecs
       in
         (typeinfVarE, tpdecs)
       end
@@ -284,8 +289,7 @@ struct
         val newDecls =  Reify.instantiateTopEnv topEnv
         val tpdecs = tpdecs @ newDecls
         val _ =  #stop Counter.printerGenerationTimeCounter()
-        val _ = printTypedCalc Control.printPrinterGen
-                               "Printer Generated" tpdecs
+        val _ = printTypedCalc [Control.printPrinterGen] "Printer Generated" tpdecs
       in
         tpdecs
       end
@@ -295,10 +299,10 @@ struct
         val _ = #start Counter.UncurryOptimizationTimeCounter()
         val tpdecs = UncurryFundecl.optimize tpdecs
         val _ =  #stop Counter.UncurryOptimizationTimeCounter()
-        val _ = printTypedCalc Control.printUncurryOpt
+        val _ = printTypedCalc [Control.printUncurryOpt]
                                "Uncurrying Optimized" tpdecs
       in
-        tpdecs
+       tpdecs
       end
 
   fun doTypedCalcOptimization tpdecs =
@@ -306,7 +310,7 @@ struct
         val _ = #start Counter.TypedCalcOptimizationTimeCounter()
         val tpdecs = TPOptimize.optimize tpdecs
         val _ =  #stop Counter.TypedCalcOptimizationTimeCounter()
-        val _ = printTypedCalc Control.printTCOpt
+        val _ = printTypedCalc [Control.printTCOpt]
                                "TypedCalc Optimized" tpdecs
       in
         tpdecs
@@ -317,31 +321,31 @@ struct
         val _ = #start Counter.RecordCalcOptimizationTimeCounter()
         val rcdecs = RCOptimize.optimize rcdecs
         val _ =  #stop Counter.RecordCalcOptimizationTimeCounter()
-        val _ = printRecordCalc Control.printRCOpt
+        val _ = printRecordCalc [Control.printRCOpt]
                                 "RecordCalc Optimized" rcdecs
       in
         rcdecs
       end
 
-  fun doVALRECOptimization iddecs =
+  fun doVALRECOptimization icdecls =
       let
         val _ = #start Counter.valRecOptimizationTimeCounter()
-        val iddecs = VALREC_Optimizer.optimize iddecs
+        val icdecls = VALREC_Optimizer.optimize icdecls
         val _ =  #stop Counter.valRecOptimizationTimeCounter()
-        val _ = printIDCalc Control.printVALRECOpt "VAL REC optimize" iddecs
+        val _ = printIDCalc [Control.printVALRECOpt] "VAL REC optimize" icdecls
       in
-        iddecs
+        icdecls
       end
 
-  fun doFundeclElaboration iddecs =
+  fun doFundeclElaboration icdecls =
       let
         val _ = #start Counter.fundeclElaborationTimeCounter()
-        val iddecs = TransFundecl.transIcdeclList iddecs
+        val icdecls = TransFundecl.transIcdeclList icdecls
         val _ =  #stop Counter.fundeclElaborationTimeCounter()
-        val _ = printIDCalc Control.printFundeclElab
-                            "Fundecl Elaboration" iddecs
+        val _ = printIDCalc [Control.printFundeclElab]
+                            "Fundecl Elaboration" icdecls
       in
-        iddecs
+       icdecls
       end
 
   fun doMatchCompilation tpdecs =
@@ -349,21 +353,21 @@ struct
         val _ = #start Counter.matchCompilationTimeCounter()
         val (rcdecs, warnings) = MatchCompiler.compile tpdecs
         val _ =  #stop Counter.matchCompilationTimeCounter()
-        val _ = printRecordCalc Control.printMatchCompile
+        val _ = printRecordCalc [Control.printMatchCompile]
                                 "Match Compiled" rcdecs
         val _ = printWarnings warnings
       in
         rcdecs
       end
 
-  fun doTypedElaboration icdecs =
+  fun doTypedElaboration icdecls =
       let
         val _ = #start Counter.typedElaborationTimeCounter()
-        val icdecs = TypedElaboration.elaborate icdecs
+        val icdecls = TypedElaboration.elaborate icdecls
         val _ =  #stop Counter.typedElaborationTimeCounter()
-        val _ = printIDCalc Control.printTypedElaboration "TypedElaborated" icdecs
+        val _ = printIDCalc [Control.printTypedElaboration] "TypedElaborated" icdecls
       in
-        icdecs
+        icdecls
       end
 
   fun doFFICompilation rcdecs =
@@ -371,20 +375,20 @@ struct
         val _ = #start Counter.ffiCompilationTimeCounter()
         val rcdecs = FFICompilation.compile rcdecs
         val _ =  #stop Counter.ffiCompilationTimeCounter()
-        val _ = printRecordCalc Control.printFFICompile "FFI Compiled" rcdecs
+        val _ = printRecordCalc [Control.printFFICompile] "FFI Compiled" rcdecs
       in
         rcdecs
       end
 
   fun doRecordCompilation rcdecs =
       let
-        val _ = #start Counter.recordCompilationTimeCounter()
+       val _ = #start Counter.recordCompilationTimeCounter()
         val rcdecs = RecordCompilation.compile rcdecs
         val _ =  #stop Counter.recordCompilationTimeCounter()
-        val _ = printRecordCalc Control.printRecordCompile
+        val _ = printRecordCalc [Control.printRecordCompile]
                                 "Record Compiled" rcdecs
       in
-        rcdecs
+       rcdecs
       end
 
   fun doDatatypeCompilation rcdecs =
@@ -392,7 +396,7 @@ struct
         val _ = #start Counter.datatypeCompilationTimeCounter()
         val tldecs = DatatypeCompilation.compile rcdecs
         val _ =  #stop Counter.datatypeCompilationTimeCounter()
-        val _ = printTypedLambda Control.printDatatypeCompile
+        val _ = printTypedLambda [Control.printDatatypeCompile]
                                  "Datatype Compiled" tldecs
       in
         tldecs
@@ -409,15 +413,15 @@ struct
         bcdecs
       end
 
-  fun doClosureConversion2 bcexp =
+  fun doClosureConversion2 bcdecs =
       let
         val _ = #start Counter.closureConversionTimeCounter()
-        val ccprog = ClosureConversion2.convert bcexp
+        val cccalc = ClosureConversion2.convert bcdecs
         val _ = #stop Counter.closureConversionTimeCounter()
-        val _ = printClosureCalc Control.printClosureConversion
-                                 "Closure Converted" ccprog
+        val _ = printClosureCalc [Control.printClosureConversion]
+                                 "Closure Converted" cccalc
       in
-        ccprog
+        cccalc
       end
 
   fun doCallingConventionCompile ccprog =
@@ -558,19 +562,19 @@ struct
                 then raise Return (dependency, STOPPED)
                 else ()
 
-        val (requireTopEnv, nameevalTopEnv, idcalc) =
+        val (requireTopEnv, nameevalTopEnv, icdecls) =
             doNameEvaluation context plunit
         val _ = JSONData.init requireTopEnv
         val _ = ConstantTerm.init requireTopEnv
-        val idcalc = doTypedElaboration idcalc
-        val idcalc = doVALRECOptimization idcalc
+        val icdecls = doTypedElaboration icdecls
+        val icdecls = doVALRECOptimization icdecls
 
-        val idcalc = if !Control.doUncurryOptimization
-                     then idcalc
-                     else doFundeclElaboration idcalc
+        val icdecls = if !Control.doUncurryOptimization
+                     then icdecls
+                     else doFundeclElaboration icdecls
 
-        val (typeinfVarEnv, tpcalc) =
-            doTypeInference idcalc handle exn => raise exn
+        val (typeinfVarEnv, tpdecs) = doTypeInference icdecls
+            handle exn => raise exn
 
         val nameevalTopEnv =
             if !Control.interactiveMode
@@ -583,40 +587,40 @@ struct
             then doPrinterGeneration exnConList nameevalTopEnv tpcalc
             else tpcalc
 *)
-        val tpcalc =
+        val tpdecs =
             if !Control.interactiveMode 
-            then doInstantiate nameevalTopEnv tpcalc
-            else tpcalc
+            then doInstantiate nameevalTopEnv tpdecs
+            else tpdecs
 
         val nameevalTopEnv = NameEvalEnvUtils.resetInternalId nameevalTopEnv
 
         val newContext = {topEnv=nameevalTopEnv, fixEnv=newFixEnv}
 
-        val tpcalc = if !Control.doUncurryOptimization
-                     then doUncurryOptimization tpcalc
-                     else tpcalc
+        val tpdecs = if !Control.doUncurryOptimization
+                     then doUncurryOptimization tpdecs
+                     else tpdecs
 
-        val tpcalc =
+        val tpdecs =
             if stopAt <> ErrorCheck andalso !Control.doTCOptimization
-            then doTypedCalcOptimization tpcalc
-            else tpcalc
+            then doTypedCalcOptimization tpdecs
+            else tpdecs
 
-        val rccalc = doMatchCompilation tpcalc
+        val rcdecs = doMatchCompilation tpdecs
 
         val _ = if stopAt = ErrorCheck
                 then raise Return (dependency, STOPPED)
                 else ()
 
-        val rccalc = doFFICompilation rccalc
-        val rccalc = doRecordCompilation rccalc
+        val rcdecs = doFFICompilation rcdecs
+        val rcdecs = doRecordCompilation rcdecs
 
-        val rccalc = if !Control.doRCOptimization
-                     then doRecordCalcOptimization rccalc
-                     else rccalc
+        val rcdecs = if !Control.doRCOptimization
+                     then doRecordCalcOptimization rcdecs
+                     else rcdecs
 
-        val tlcalc = doDatatypeCompilation rccalc
-        val bccalc = doBitmapCompilation2 tlcalc
-        val cccalc = doClosureConversion2 bccalc
+        val tldecs = doDatatypeCompilation rcdecs
+        val bcdecs = doBitmapCompilation2 tldecs
+        val cccalc = doClosureConversion2 bcdecs
         val nccalc = doCallingConventionCompile cccalc
         val ancalc = doANormalize nccalc
         val mccalc = doMachineCodeGen dependency ancalc
@@ -700,7 +704,7 @@ struct
                loadAll=loadAllInterfaceFiles}
               filename
         val _ = #stop Counter.loadFileTimeCounter ()
-        val _ = printCode Control.printLoadFile
+        val _ = printCode [Control.printLoadFile]
                           (Control.prettyPrint
                            o AbsynInterface.format_interface_unit)
                           "File Loaded" [abunit]
@@ -710,7 +714,7 @@ struct
             Elaborator.elaborateInterface fixEnv abunit
         val _ =  #stop Counter.elaborationTimeCounter()
         val _ = printWarnings warnings
-        val _ = printCode Control.printElab
+        val _ = printCode [Control.printElab, Control.printSystemDecls]
                           (Control.prettyPrint
                            o PatternCalcInterface.format_interface_unit)
                           "Elaborated" [plunit]

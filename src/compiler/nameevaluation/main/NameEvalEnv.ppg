@@ -1313,6 +1313,7 @@ in
        SigE = unionSigE code (sige1, sige2)
       }
 
+(*
   val conEnv = ref (BuiltinTypes.builtinConEnv())
   fun conEnvAdd (id, conInfo) = 
       conEnv := ConID.Map.insert(!conEnv, id, conInfo)
@@ -1320,6 +1321,7 @@ in
       case ConID.Map.find(!conEnv, id) of
         SOME conInfo => conInfo
       | NONE => raise bug "conid not found in conEnv"
+*)
 
   datatype exnCon = EXN of I.exnInfo | EXEXN of I.exInfo
 

@@ -10,7 +10,9 @@ _require "../../util/main/SmlppgUtil.ppg.smi"
 _require "../../name/main/LocalID.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../usererror/main/UserErrorUtils.smi"
+(*
 _require "../../builtin2/main/BuiltinTypes.smi"
+*)
 _require "./NameEvalError.ppg.smi"
 _require "./NameEvalEnv.sig"
 
@@ -160,8 +162,10 @@ struct
   val replaceLocStrE : Loc.loc -> strE -> strE
   val replaceLocEnv : Loc.loc -> env -> env
 
+(*
   val conEnvAdd : ConID.id * IDCalc.conInfo -> unit
   val conEnvFind : ConID.id -> IDCalc.conInfo
+*)
   datatype exnCon = EXN of IDCalc.exnInfo | EXEXN of IDCalc.exInfo
   val exnConAdd : exnCon -> unit
   val exnConList : unit -> exnCon list

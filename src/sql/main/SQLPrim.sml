@@ -24,9 +24,9 @@ struct
   exception InvalidCommand
 
   datatype backend = datatype Backend.backend
-  datatype 'a schema = SCHEMA of Backend.schema * 'a
+  datatype 'a schema = SCHEMA of SMLSharp_SQL_Backend.schema * (unit -> 'a)
   datatype 'a server = SERVER of backend * 'a schema
-  datatype 'a conn = CONN of Backend.conn_impl * 'a
+  datatype 'a conn = CONN of Backend.conn_impl * (unit -> 'a)
   datatype 'a db = DB of unit -> 'a
   datatype 'a rows =
       FETCHED of 'a * 'a rel
@@ -108,7 +108,7 @@ struct
 
   fun eval sqlFn (CONN (conn, toy)) =
       let
-        val QUERY (q, recv, _) = sqlFn (DB (fn () => toy))
+        val QUERY (q, recv, _) = sqlFn (DB toy)
         val query = SMLFormat.prettyPrint nil (format_query q)
         val r = #execQuery conn (unline query)
       in
@@ -117,7 +117,7 @@ struct
 
   fun exec sqlFn (CONN (conn, toy)) =
       let
-        val q = sqlFn (DB (fn () => toy))
+        val q = sqlFn (DB toy)
         val command = SMLFormat.prettyPrint nil (format_command q)
         val R r = #execQuery conn (unline command)
         val () = #closeRel r ()
@@ -144,7 +144,7 @@ struct
         in
           case ty of
             SMLSharp_SQL_BackendTy.INT => opt "int"
-          | SMLSharp_SQL_BackendTy.INTINF => opt "intinf"
+          | SMLSharp_SQL_BackendTy.INTINF => opt "intInf"
           | SMLSharp_SQL_BackendTy.WORD => opt "word"
           | SMLSharp_SQL_BackendTy.CHAR => opt "char"
           | SMLSharp_SQL_BackendTy.STRING => opt "string"
@@ -221,68 +221,68 @@ struct
     datatype ty = datatype SMLSharp_SQL_BackendTy.ty
   in
   fun columnInfo_int colname =
-      (0, {colname = colname, ty = INT, nullable = false})
-      : int * Backend.schema_column
+      (fn () => 0, {colname = colname, ty = INT, nullable = false})
+      : (unit -> int) * Backend.schema_column
   fun columnInfo_intInf colname =
-      (0, {colname = colname, ty = INTINF, nullable = false})
-      : IntInf.int * Backend.schema_column
+      (fn () => 0, {colname = colname, ty = INTINF, nullable = false})
+      : (unit -> intInf) * Backend.schema_column
   fun columnInfo_word colname =
-      (0w0, {colname = colname, ty = WORD, nullable = false})
-      : word * Backend.schema_column
+      (fn () => 0w0, {colname = colname, ty = WORD, nullable = false})
+      : (unit -> word) * Backend.schema_column
   fun columnInfo_char colname =
-      (#"\000", {colname = colname, ty = CHAR, nullable = false})
-      : char * Backend.schema_column
+      (fn () => #"\000", {colname = colname, ty = CHAR, nullable = false})
+      : (unit -> char) * Backend.schema_column
   fun columnInfo_string colname =
-      ("", {colname = colname, ty = STRING, nullable = false})
-      : string * Backend.schema_column
+      (fn () => "", {colname = colname, ty = STRING, nullable = false})
+      : (unit -> string) * Backend.schema_column
   fun columnInfo_real colname =
-      (0.0, {colname = colname, ty = REAL, nullable = false})
-      : real * Backend.schema_column
+      (fn () => 0.0, {colname = colname, ty = REAL, nullable = false})
+      : (unit -> real) * Backend.schema_column
   fun columnInfo_real32 colname =
-      (0.0, {colname = colname, ty = REAL32, nullable = false})
-      : Real32.real * Backend.schema_column
+      (fn () => 0.0, {colname = colname, ty = REAL32, nullable = false})
+      : (unit -> real32) * Backend.schema_column
   fun columnInfo_timestamp colname =
-      (TimeStamp.fromString "",
+      (fn () => TimeStamp.fromString "",
        {colname = colname, ty = TIMESTAMP, nullable = false})
-      : timestamp * Backend.schema_column
+      : (unit -> timestamp) * Backend.schema_column
   fun columnInfo_decimal colname =
-      (Decimal.fromString "",
+      (fn () => Decimal.fromString "",
        {colname = colname, ty = DECIMAL, nullable = false})
-      : decimal * Backend.schema_column
+      : (unit -> decimal) * Backend.schema_column
   fun columnInfo_float colname =
-      (Float.fromString "",
+      (fn () => Float.fromString "",
        {colname = colname, ty = FLOAT, nullable = false})
-      : float * Backend.schema_column
+      : (unit -> float) * Backend.schema_column
   fun columnInfo_int_option colname =
-      (NONE, {colname = colname, ty = INT, nullable = true})
-      : int option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = INT, nullable = true})
+      : (unit -> int option) * Backend.schema_column
   fun columnInfo_intInf_option colname =
-      (NONE, {colname = colname, ty = INTINF, nullable = true})
-      : IntInf.int option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = INTINF, nullable = true})
+      : (unit -> intInf option) * Backend.schema_column
   fun columnInfo_word_option colname =
-      (NONE, {colname = colname, ty = WORD, nullable = true})
-      : word option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = WORD, nullable = true})
+      : (unit -> word option) * Backend.schema_column
   fun columnInfo_char_option colname =
-      (NONE, {colname = colname, ty = CHAR, nullable = true})
-      : char option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = CHAR, nullable = true})
+      : (unit -> char option) * Backend.schema_column
   fun columnInfo_string_option colname =
-      (NONE, {colname = colname, ty = STRING, nullable = true})
-      : string option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = STRING, nullable = true})
+      : (unit -> string option) * Backend.schema_column
   fun columnInfo_real_option colname =
-      (NONE, {colname = colname, ty = REAL, nullable = true})
-      : real option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = REAL, nullable = true})
+      : (unit -> real option) * Backend.schema_column
   fun columnInfo_real32_option colname =
-      (NONE, {colname = colname, ty = REAL32, nullable = true})
-      : Real32.real option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = REAL32, nullable = true})
+      : (unit -> real32 option) * Backend.schema_column
   fun columnInfo_timestamp_option colname =
-      (NONE, {colname = colname, ty = TIMESTAMP, nullable = true})
-      : timestamp option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = TIMESTAMP, nullable = true})
+      : (unit -> timestamp option) * Backend.schema_column
   fun columnInfo_decimal_option colname =
-      (NONE, {colname = colname, ty = DECIMAL, nullable = true})
-      : decimal option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = DECIMAL, nullable = true})
+      : (unit -> decimal option) * Backend.schema_column
   fun columnInfo_float_option colname =
-      (NONE, {colname = colname, ty = FLOAT, nullable = true})
-      : float option * Backend.schema_column
+      (fn () => NONE, {colname = colname, ty = FLOAT, nullable = true})
+      : (unit -> float option) * Backend.schema_column
   end (* local *)
 
   fun unify (x:('a,'w)toy, y:('a,'w)toy) = x
@@ -338,6 +338,7 @@ struct
   fun toSQL_char x = VALUE (V (CHAR x, fn _ => x))
   fun toSQL_string x = VALUE (V (STRING x, fn _ => x))
   fun toSQL_real x = VALUE (V (REAL x, fn _ => x))
+  fun toSQL_real32 x = VALUE (V (REAL32 x, fn _ => x))
   fun toSQL_timestamp x = VALUE (V (TIMESTAMP x, fn _ => x))
   fun toSQL_decimal x = VALUE (V (DECIMAL x, fn _ => x))
   fun toSQL_float x = VALUE (V (FLOAT x, fn _ => x))
@@ -351,6 +352,7 @@ struct
   fun toSQL_charOption x = VALUE (V (option CHAR x, fn _ => x))
   fun toSQL_stringOption x = VALUE (V (option STRING x, fn _ => x))
   fun toSQL_realOption x = VALUE (V (option REAL x, fn _ => x))
+  fun toSQL_real32Option x = VALUE (V (option REAL32 x, fn _ => x))
   fun toSQL_timestampOption x = VALUE (V (option TIMESTAMP x, fn _ => x))
   fun toSQL_decimalOption x = VALUE (V (option DECIMAL x, fn _ => x))
   fun toSQL_floatOption x = VALUE (V (option FLOAT x, fn _ => x))
@@ -359,10 +361,11 @@ struct
     | nonnull NONE = raise Format
 
   fun fromSQL_int (col, R r, _:(int,'w)toy) = nonnull (#getInt r col)
-  fun fromSQL_intInf (col, R r, _:(IntInf.int,'w)toy) = nonnull (#getIntInf r col)
+  fun fromSQL_intInf (col, R r, _:(intInf,'w)toy) = nonnull (#getIntInf r col)
   fun fromSQL_word (col, R r, _:(word,'w)toy) = nonnull (#getWord r col)
   fun fromSQL_char (col, R r, _:(char,'w)toy) = nonnull (#getChar r col)
   fun fromSQL_real (col, R r, _:(real,'w)toy) = nonnull (#getReal r col)
+  fun fromSQL_real32 (col, R r, _:(real32,'w)toy) = nonnull (#getReal32 r col)
   fun fromSQL_string (col, R r, _:(string,'w)toy) = nonnull (#getString r col)
   fun fromSQL_timestamp (col, R r, _:(TimeStamp.timestamp,'w)toy) =
       nonnull (#getTimestamp r col)
@@ -372,7 +375,7 @@ struct
       nonnull (#getFloat r col)
   fun fromSQL_intOption (col, R r, _:(int option,'w)toy) =
       #getInt r col
-  fun fromSQL_intInfOption (col, R r, _:(IntInf.int option,'w)toy) =
+  fun fromSQL_intInfOption (col, R r, _:(intInf option,'w)toy) =
       #getIntInf r col
   fun fromSQL_wordOption (col, R r, _:(word option,'w)toy) =
       #getWord r col
@@ -382,6 +385,8 @@ struct
       #getString r col
   fun fromSQL_realOption (col, R r, _:(real option,'w)toy) =
       #getReal r col
+  fun fromSQL_real32Option (col, R r, _:(real32 option,'w)toy) =
+      #getReal32 r col
   fun fromSQL_timestampOption (col, R r, _:(TimeStamp.timestamp option,'w)toy) =
       #getTimestamp r col
   fun fromSQL_decimalOption (col, R r, _:(decimal option,'w)toy) =

@@ -1,10 +1,7 @@
 _require "../../basis.smi"
 _require "../../smlformat-lib.smi"
 _require "../../compiler/absyn/main/Symbol.ppg.smi"
-_require "../../compiler/types/main/Types.ppg.smi"
 _require "../../compiler/types/main/IDCalc.ppg.smi"
-_require "../../compiler/types/main/EvalIty.smi"
-_require "../../compiler/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../compiler/control/main/Loc.ppg.smi"
 _require "../../compiler/control/main/Bug.ppg.smi"
 _require "../../compiler/name/main/LocalID.smi"
@@ -19,11 +16,13 @@ struct
   val jsonTyTfun : unit -> IDCalc.tfun
   val voidTfun : unit -> IDCalc.tfun
   val nullTfun : unit -> IDCalc.tfun
+  val optionTfun : unit -> IDCalc.tfun
 
   val RuntimeTypeErrorExp : unit -> IDCalc.icexp
 
   val DYNConInfo : unit -> IDCalc.conInfo
   val ARRAYtyConInfo : unit -> IDCalc.conInfo
+  val OPTIONtyConInfo : unit -> IDCalc.conInfo
   val BOOLtyConInfo : unit -> IDCalc.conInfo
   val INTtyConInfo : unit -> IDCalc.conInfo
   val NULLtyConInfo : unit -> IDCalc.conInfo
@@ -39,11 +38,14 @@ struct
   val OBJECTConInfo : unit -> IDCalc.conInfo
   val REALConInfo : unit -> IDCalc.conInfo
   val STRINGConInfo : unit -> IDCalc.conInfo
+(*
   val NULLConInfo : unit -> IDCalc.conInfo
   val VOIDConInfo : unit -> IDCalc.conInfo
+*)
 
   val DYN : unit -> IDCalc.icexp
   val ARRAYty : unit -> IDCalc.icexp
+  val OPTIONty : unit -> IDCalc.icexp
   val BOOLty : unit -> IDCalc.icexp
   val INTty : unit -> IDCalc.icexp
   val NULLty : unit -> IDCalc.icexp
@@ -59,8 +61,10 @@ struct
   val OBJECT : unit -> IDCalc.icexp
   val REAL : unit -> IDCalc.icexp
   val STRING : unit -> IDCalc.icexp
+(*
   val NULL : unit -> IDCalc.icexp
   val VOID : unit -> IDCalc.icexp
+*)
 
   val getJson : unit -> IDCalc.icexp
   val checkTy : unit -> IDCalc.icexp
@@ -74,6 +78,7 @@ struct
   val checkRecord : unit -> IDCalc.icexp
   val mapCoerce : unit -> IDCalc.icexp
   val makeCoerce : unit -> IDCalc.icexp
+  val optionCoerce : unit -> IDCalc.icexp
                              
   val init :  NameEvalEnv.topEnv -> unit
   val initExternalDecls : unit -> unit 

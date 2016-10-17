@@ -17,7 +17,7 @@ struct
   exception Link = SMLSharp_SQL_Errors.Link
 
   datatype backend = datatype SMLSharp_SQL_Backend.backend
-  datatype 'a schema = SCHEMA of SMLSharp_SQL_Backend.schema * 'a
+  datatype 'a schema = SCHEMA of SMLSharp_SQL_Backend.schema * (unit -> 'a)
   type 'a server (= boxed)
   type 'a conn (= boxed)
   type 'a db (= boxed)
@@ -65,67 +65,68 @@ struct
   val commandString : ('a db -> command) -> string
 
   val columnInfo_int
-      : string -> int * SMLSharp_SQL_Backend.schema_column 
+      : string -> (unit -> int) * SMLSharp_SQL_Backend.schema_column 
   val columnInfo_intInf
-      : string -> IntInf.int * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> intInf) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_word
-      : string -> word * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> word) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_char
-      : string -> char * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> char) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_string
-      : string -> string * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> string) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_real
-      : string -> real * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> real) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_real32
-      : string -> Real32.real * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> Real32.real) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_timestamp
-      : string -> timestamp * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> timestamp) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_decimal
-      : string -> decimal * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> decimal) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_float
-      : string -> float * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> float) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_int_option
-      : string -> int option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> int option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_intInf_option
-      : string -> IntInf.int option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> intInf option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_word_option
-      : string -> word option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> word option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_char_option
-      : string -> char option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> char option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_string_option
-      : string -> string option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> string option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_real_option
-      : string -> real option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> real option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_real32_option
-      : string -> Real32.real option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> Real32.real option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_timestamp_option
-      : string -> timestamp option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> timestamp option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_decimal_option
-      : string -> decimal option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> decimal option) * SMLSharp_SQL_Backend.schema_column
   val columnInfo_float_option
-      : string -> float option * SMLSharp_SQL_Backend.schema_column
+      : string -> (unit -> float option) * SMLSharp_SQL_Backend.schema_column
 
   val columnInfo =
-      case 'a in string -> 'a * SMLSharp_SQL_Backend.schema_column of
+      case 'a in string -> (unit -> 'a) * SMLSharp_SQL_Backend.schema_column of
         int => columnInfo_int
-      | IntInf.int => columnInfo_intInf
+      | intInf => columnInfo_intInf
       | word => columnInfo_word
       | char => columnInfo_char
       | string => columnInfo_string
       | real => columnInfo_real
-      | Real32.real => columnInfo_real32
+      | real32 => columnInfo_real32
       | timestamp => columnInfo_timestamp
       | decimal => columnInfo_decimal
       | float => columnInfo_float
       | 'b option =>
-        case 'b in string -> 'b option * SMLSharp_SQL_Backend.schema_column of
+        case 'b in string -> (unit -> 'b option)
+                             * SMLSharp_SQL_Backend.schema_column of
           int => columnInfo_int_option
-        | IntInf.int => columnInfo_intInf_option
+        | intInf => columnInfo_intInf_option
         | word => columnInfo_word_option
         | char => columnInfo_char_option
         | string => columnInfo_string_option
         | real => columnInfo_real_option
-        | Real32.real => columnInfo_real32_option
+        | real32 => columnInfo_real32_option
         | timestamp => columnInfo_timestamp_option
         | decimal => columnInfo_decimal_option
         | float => columnInfo_float_option
@@ -158,20 +159,22 @@ struct
   val exists : ('a db -> 'b query) -> ('a,'w) db' -> 'w bool_value
 
   val toSQL_int : int -> (int,'w) value
-  val toSQL_intInf : IntInf.int -> (IntInf.int,'w) value
+  val toSQL_intInf : intInf -> (intInf,'w) value
   val toSQL_word : word -> (word,'w) value
   val toSQL_char : char -> (char,'w) value
   val toSQL_string : string -> (string,'w) value
   val toSQL_real : real -> (real,'w) value
+  val toSQL_real32 : real32 -> (real32,'w) value
   val toSQL_timestamp : timestamp -> (timestamp,'w) value
   val toSQL_decimal : decimal -> (decimal,'w) value
   val toSQL_float : float -> (float,'w) value
   val toSQL_intOption : int option -> (int option, 'w) value
-  val toSQL_intInfOption : IntInf.int option -> (IntInf.int option,'w) value
+  val toSQL_intInfOption : intInf option -> (intInf option,'w) value
   val toSQL_wordOption : word option -> (word option,'w) value
   val toSQL_charOption : char option -> (char option,'w) value
   val toSQL_stringOption : string option -> (string option,'w) value
   val toSQL_realOption : real option -> (real option,'w) value
+  val toSQL_real32Option : real32 option -> (real32 option,'w) value
   val toSQL_timestampOption : timestamp option -> (timestamp option,'w) value
   val toSQL_decimalOption : decimal option -> (decimal option,'w) value
   val toSQL_floatOption : float option -> (float option,'w) value
@@ -179,7 +182,7 @@ struct
   val fromSQL_int
       : int * SMLSharp_SQL_Backend.res_impl * (int,'w) toy -> int
   val fromSQL_intInf
-      : int * SMLSharp_SQL_Backend.res_impl * (IntInf.int,'w) toy -> IntInf.int
+      : int * SMLSharp_SQL_Backend.res_impl * (intInf,'w) toy -> intInf
   val fromSQL_word
       : int * SMLSharp_SQL_Backend.res_impl * (word,'w) toy -> word
   val fromSQL_char
@@ -188,6 +191,8 @@ struct
       : int * SMLSharp_SQL_Backend.res_impl * (string,'w) toy -> string
   val fromSQL_real
       : int * SMLSharp_SQL_Backend.res_impl * (real,'w) toy -> real
+  val fromSQL_real32
+      : int * SMLSharp_SQL_Backend.res_impl * (real32,'w) toy -> real32
   val fromSQL_timestamp
       : int * SMLSharp_SQL_Backend.res_impl * (timestamp,'w) toy -> timestamp
   val fromSQL_decimal
@@ -197,8 +202,8 @@ struct
   val fromSQL_intOption
       : int * SMLSharp_SQL_Backend.res_impl * (int option,'w) toy -> int option
   val fromSQL_intInfOption
-      : int * SMLSharp_SQL_Backend.res_impl * (IntInf.int option,'w) toy
-        -> IntInf.int option
+      : int * SMLSharp_SQL_Backend.res_impl * (intInf option,'w) toy
+        -> intInf option
   val fromSQL_wordOption
       : int * SMLSharp_SQL_Backend.res_impl * (word option,'w) toy -> word option
   val fromSQL_charOption
@@ -208,6 +213,8 @@ struct
         -> string option
   val fromSQL_realOption
       : int * SMLSharp_SQL_Backend.res_impl * (real option,'w) toy -> real option
+  val fromSQL_real32Option
+      : int * SMLSharp_SQL_Backend.res_impl * (real32 option,'w) toy -> real32 option
   val fromSQL_timestampOption
       : int * SMLSharp_SQL_Backend.res_impl * (timestamp option,'w) toy
         -> timestamp option
@@ -220,22 +227,24 @@ struct
   val fromSQL =
       case 'a in int * res_impl * ('a,'w) toy -> 'a of
         int => fromSQL_int
-      | IntInf.int => fromSQL_intInf
+      | intInf => fromSQL_intInf
       | word => fromSQL_word
       | char => fromSQL_char
       | string => fromSQL_string
       | real => fromSQL_real
+      | real32 => fromSQL_real32
       | timestamp => fromSQL_timestamp
       | decimal => fromSQL_decimal
       | float => fromSQL_float
       | 'c option =>
         case 'c in int * res_impl * ('c option,'w) toy -> 'c option of
           int => fromSQL_intOption
-        | IntInf.int => fromSQL_intInfOption
+        | intInf => fromSQL_intInfOption
         | word => fromSQL_wordOption
         | char => fromSQL_charOption
         | string => fromSQL_stringOption
         | real => fromSQL_realOption
+        | real32 => fromSQL_real32Option
         | timestamp => fromSQL_timestampOption
         | decimal => fromSQL_decimalOption
         | float => fromSQL_floatOption

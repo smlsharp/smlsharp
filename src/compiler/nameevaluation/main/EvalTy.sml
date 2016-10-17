@@ -494,7 +494,9 @@ in
                                         )
                                       end
                                 val conInfo = {id=conId, longsymbol=longsymbol, ty=conTy}
+(*
                                 val _ = V.conEnvAdd (conId, conInfo)
+*)
                                 val idstatus = I.IDCON conInfo
                               in
                                 (SymbolEnv.insert(conVarE, symbol, idstatus),

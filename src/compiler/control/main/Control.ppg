@@ -74,6 +74,7 @@ struct
   val printRecordCompile = ref false
   val printDatatypeCompile = ref false
   val printStaticAnalysis = ref false
+  val printSystemDecls = ref false
   val printRecordUnboxing = ref false
   val printBitmapCompile = ref false
   val printBitmapANormal = ref false
@@ -229,6 +230,8 @@ struct
          BoolSwitch printDatatypeCompile),
         ("printStaticAnalysis", "print result of StaticAnalysis",
          BoolSwitch printStaticAnalysis),
+        ("printSystemDecls", "print system declarations ",
+         BoolSwitch printSystemDecls),
         ("printRecordUnboxing", "print result of RecordUnboxing",
          BoolSwitch printRecordUnboxing),
         ("printBitmapCompile", "print result of BitmapCompilation",

@@ -11,6 +11,7 @@ struct
       INT of int
     | WORD of word
     | REAL of real
+    | REAL32 of real32
     | STRING of string
     | CHAR of char
     | INTINF of IntInf.int

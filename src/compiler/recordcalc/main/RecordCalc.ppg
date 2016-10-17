@@ -1048,9 +1048,11 @@ struct
       RCEXPORTEXN of exnInfo
     | (*%
        * @format(var)
+          "extern" +d "val" +d var()(btvEnv)
        *)
       (*% @prefix formatWithoutType_
        * @format(var)
+          "extern" +d "val" +d var
        *)
       (* temporary disable EXTERN printing
           "extern" +d "val" +d var()(btvEnv)

@@ -25,7 +25,7 @@ struct
   val adjustDepthInTy : Types.lambdaDepth -> Types.ty -> unit
   val adjustDepthInTvarKind : Types.lambdaDepth -> Types.tvarKind -> unit
   val generalizer : Types.ty * Types.constraint list * Types.lambdaDepth
-                    -> {boundEnv: Types.btvEnv, removedTyIds: OTSet.set}
+                    -> {boundEnv: Types.btvEnv, removedTyIds: OTSet.set, boundConstraints : Types.constraint list}
   val performSubst : Types.ty * Types.ty -> unit
   val copyBoundEnv
       : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map * Types.btvEnv

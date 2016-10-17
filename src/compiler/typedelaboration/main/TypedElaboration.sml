@@ -60,6 +60,13 @@ struct
                                arg = PairPat (h, ListPat (t, loc), loc),
                                loc = loc}
 
+  fun App0 (exp, loc) =
+      I.ICAPPM (exp, [I.ICCONSTANT (Absyn.UNITCONST loc)], loc)
+
+  fun Fn0 (exp, loc) =
+      I.ICFNM ([{args = [I.ICPATCONSTANT (Absyn.UNITCONST loc)],
+                 body = exp}], loc)
+
   exception NotRecordTy
 
   fun recordTyFields ty =
@@ -78,9 +85,9 @@ struct
          *     {hoge: {fuga: int}}
          * to
          *     let
-         *       val ($1 : int, $2) = columnInfo "fuga"
+         *       val ($1, $2) = columnInfo "fuga"
          *     in
-         *       ([("hoge", [$2])], {hoge = {fuga = $1}})
+         *       ([("hoge", [$2])], fn x => {hoge = {fuga = $1 () : int}})
          *     end
          *)
         val tableTys =
@@ -115,7 +122,7 @@ struct
                      map
                        (fn (label, {toyVar, infoVar, ty}) =>
                            (PairPat
-                              (I.ICPATTYPED (I.ICPATVAR_TRANS toyVar, ty, loc),
+                              (I.ICPATVAR_TRANS toyVar,
                                I.ICPATVAR_TRANS infoVar,
                                loc),
                             I.ICAPPM (columnInfoFnExp,
@@ -127,7 +134,9 @@ struct
               (map (fn (label, fields) =>
                        (label,
                         I.ICRECORD
-                          (map (fn (l, {toyVar,...}) => (l, I.ICVAR toyVar))
+                          (map (fn (l, {toyVar, ty, ...}) =>
+                                   (l, I.ICTYPED (App0 (I.ICVAR toyVar, loc),
+                                                  ty, loc)))
                                fields,
                            loc)))
                    schema,
@@ -145,7 +154,7 @@ struct
                loc)
       in
         I.ICLET ([I.ICVAL (nil, binds, loc)],
-                 [Pair (infoExp, toyExp, loc)],
+                 [Pair (infoExp, Fn0 (toyExp, loc), loc)],
                  loc)
       end
 
@@ -206,6 +215,13 @@ struct
           in
             (App (J.mapCoerce(), [funExp, jsonListExp], loc),
              App (J.ARRAYty(), [tyToJsonTy loc argTy], loc))
+          end
+        else if eqTy (tfun, #tfun BuiltinTypes.optionTstrInfo) then 
+          let
+            val funExp = Fn (fn x => coerceJsonExp (I.ICVAR x, argTy, loc), loc)
+          in
+            (App (J.optionCoerce(), [funExp, jsonExp], loc),
+             App (J.OPTIONty(), [tyToJsonTy loc argTy], loc))
           end
         else if eqTy (tfun, J.dynTfun()) then
           case argTy of
