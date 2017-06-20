@@ -436,7 +436,7 @@ struct
   fun renameTopdec topdec =
       case topdec of
         M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, frameSlots,
-                      bodyExp, retTy, loc} =>
+                      bodyExp, retTy, gcCheck, loc} =>
         let
           val (argVarList, subst) = bindVarList emptySubst argVarList
           val (closureEnvVar, subst) = bindVarOption subst closureEnvVar
@@ -450,6 +450,7 @@ struct
              frameSlots = frameSlots,
              bodyExp = bodyExp,
              retTy = retTy,
+             gcCheck = gcCheck,
              loc = loc}
         end
       | M.MTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,

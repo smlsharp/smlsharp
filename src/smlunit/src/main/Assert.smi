@@ -193,7 +193,7 @@ struct
   end
   structure AssertList =
   struct
-    val assertEqualList : 'a assertEqual -> 'a List.list assertEqual
+    val assertEqualList : 'a assertEqual -> 'a list assertEqual
   end
   structure AssertWord8Array =
   struct

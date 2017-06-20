@@ -29,22 +29,21 @@ struct
 
   val emptyBtvEnv = BoundTypeVarID.Map.empty : T.btvEnv
 
-  fun runtimeTyTvarKind tvarKind =
+  fun runtimeTyKind (T.KIND {subkind, eqKind, dynKind, reifyKind, tvarKind}) =
       case tvarKind of
         T.UNIV => NONE
-      | T.JSON => NONE
       | T.BOXED => SOME R.BOXEDty
-      | T.UNBOXED => NONE
+      | T.REC _ => SOME R.BOXEDty
       | T.OPRIMkind _ => NONE
       | T.OCONSTkind _ => NONE
-      | T.REC _ => SOME R.BOXEDty
-
   fun runtimeTy btvEnv ty =
       case ty of
         T.SINGLETONty (T.INSTCODEty _) => SOME R.BOXEDty
       | T.SINGLETONty (T.INDEXty _) => SOME R.UINT32ty
       | T.SINGLETONty (T.TAGty _) => SOME R.UINT32ty
       | T.SINGLETONty (T.SIZEty _) => SOME R.UINT32ty
+      | T.SINGLETONty (T.TYPEty _) => SOME R.BOXEDty
+      | T.SINGLETONty (T.REIFYty _) => SOME R.BOXEDty
       | T.BACKENDty (T.RECORDSIZEty _) => SOME R.UINT32ty
       | T.BACKENDty (T.RECORDBITMAPINDEXty _) => SOME R.UINT32ty
       | T.BACKENDty (T.RECORDBITMAPty _) => SOME R.UINT32ty
@@ -74,9 +73,12 @@ struct
                  retTy = Option.map (runtimeArgTy tyvars) resultTy,
                  attributes = attributes})
       | T.ERRORty => NONE
-      | T.DUMMYty _ => SOME R.INT32ty
-      | T.DUMMY_RECORDty _ => SOME R.BOXEDty (* dummy record type is a record ty *)
-      | T.TYVARty (ref (T.TVAR {tvarKind,...})) => runtimeTyTvarKind tvarKind
+      | T.DUMMYty (_, kind) =>
+        (case runtimeTyKind kind of
+           SOME ty => SOME ty
+         | NONE => SOME R.INT32ty)
+      | T.TYVARty (ref (T.TVAR {kind, ...})) =>
+        runtimeTyKind kind
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => runtimeTy btvEnv ty
       | T.FUNMty _ => SOME R.BOXEDty  (* function closure *)
       | T.RECORDty _ => SOME R.BOXEDty
@@ -99,15 +101,15 @@ struct
         )
       | T.BOUNDVARty tid =>
         case BoundTypeVarID.Map.find (btvEnv, tid) of
-          SOME {tvarKind,...} => runtimeTyTvarKind tvarKind
+          SOME kind => runtimeTyKind kind
         | NONE => NONE
 
   and runtimeArgTy btvEnv ty =
       case TypesBasics.derefTy ty of
         T.BOUNDVARty tid =>
         (case BoundTypeVarID.Map.find (btvEnv, tid) of
-           SOME {tvarKind,...} =>
-           (case runtimeTyTvarKind tvarKind of
+           SOME kind =>
+           (case runtimeTyKind kind of
               SOME ty => ty
             | NONE => R.BOXEDty)
          | NONE => raise Bug.Bug "runtimeArgTy: BOUNDVARty")
@@ -119,9 +121,12 @@ struct
   fun tagOf ty =
       case ty of
         R.UNITty => R.TAG_UNBOXED
-      | R.UINT8ty => R.TAG_UNBOXED
+      | R.INT8ty => R.TAG_UNBOXED
+      | R.INT16ty => R.TAG_UNBOXED
       | R.INT32ty => R.TAG_UNBOXED
       | R.INT64ty => R.TAG_UNBOXED
+      | R.UINT8ty => R.TAG_UNBOXED
+      | R.UINT16ty => R.TAG_UNBOXED
       | R.UINT32ty => R.TAG_UNBOXED
       | R.UINT64ty => R.TAG_UNBOXED
       | R.DOUBLEty => R.TAG_UNBOXED
@@ -161,10 +166,13 @@ struct
 
   fun sizeOf ty =
       case ty of
-        R.UNITty => !pointerSize
-      | R.UINT8ty => 1
+        R.UNITty => 4  (* sizeof INT32ty *)
+      | R.INT8ty => 1
+      | R.INT16ty => 2
       | R.INT32ty => 4
       | R.INT64ty => 8
+      | R.UINT8ty => 1
+      | R.UINT16ty => 2
       | R.UINT32ty => 4
       | R.UINT64ty => 8
       | R.DOUBLEty => 8

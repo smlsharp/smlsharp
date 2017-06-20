@@ -156,8 +156,8 @@ struct
         val r = U.Fetch () res
       in
         if r = U.SQL_NO_DATA
-        then NONE
-        else (checkReturn "SQLFetch" (U.SQL_HANDLE_STMT, res) r; SOME res)
+        then false
+        else (checkReturn "SQLFetch" (U.SQL_HANDLE_STMT, res) r; true)
       end
 
   fun execQuery (conn, queryString) =
@@ -173,7 +173,7 @@ struct
       (SQLDisconnect conn;
        SQLFreeHandle (U.SQL_HANDLE_DBC, conn))
 
-  fun closeRel res =
+  fun closeRes res =
       SQLFreeHandle (U.SQL_HANDLE_STMT, res)
 
   fun translateType dbTypeName =
@@ -208,8 +208,8 @@ struct
 
   fun getColumnInfo res =
       case fetch res of
-        NONE => nil
-      | SOME res =>
+        false => nil
+      | true =>
         let
           val colname = case getData (res, U.COLUMN_NAME) of
                           SOME s => s
@@ -223,9 +223,7 @@ struct
                          | _ => raise Format
         in
           (* Fetchする順番に注意。行の順番が保存されるようにリストを作る。 *)
-          {colname = colname,
-           ty = ty,
-           nullable = nullable} :: getColumnInfo res
+          (colname, {ty = ty, nullable = nullable}) :: getColumnInfo res
         end
 
   fun escape s =
@@ -242,15 +240,15 @@ struct
         val tbl = escape table
         val _ = SQLColumns (!res, "", 0, "", 0, tbl, size tbl, "%", 1)
         val colInfo = getColumnInfo (!res)
-        val _ = closeRel (!res)
+        val _ = closeRes (!res)
       in
         (table, colInfo)
       end
 
   fun getTableName res =
       case fetch res of
-        NONE => nil
-      | SOME res =>
+        false => nil
+      | true =>
         (* Fetchする順番に注意。行の順番が保存されるようにリストを作る。 *)
         case getData (res, 0w3) of
           SOME s => s :: getTableName res
@@ -262,7 +260,7 @@ struct
         val _ = SQLAllocHandle (U.SQL_HANDLE_STMT, dbc, res)
         val _ = SQLTables (!res, "", 0, "", 0, "%", 1, "TABLE,VIEW", 10)
         val tables = getTableName (!res)
-        val _ = closeRel (!res)
+        val _ = closeRes (!res)
       in
         map (getTableInfo dbc) tables
       end

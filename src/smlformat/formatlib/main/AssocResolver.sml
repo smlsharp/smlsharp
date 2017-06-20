@@ -49,6 +49,17 @@ struct
               else false
 
         (**
+         * equivalence of two assocs
+         * @params (left, right)
+         * @param left a assoc to be compared.
+         * @param right another assoc to be compared.
+         * @return true if left = right regardless of cut.
+         *)
+        fun equal (left : FE.assoc, right : FE.assoc) =
+            #strength left = #strength right
+            andalso #direction left = #direction right
+
+        (**
          * enclose symbols in a pair of parentheses.
          * @params symbols
          * @param symbols a list of format expressions
@@ -159,7 +170,7 @@ struct
                 | SOME {cut = true, ...} => FE.Guard (NONE, newSymbols)
                 | SOME enclosedAssoc =>
                   if weakThan (enclosingAssoc, enclosedAssoc) orelse
-                     enclosingAssoc = enclosedAssoc
+                     equal (enclosingAssoc, enclosedAssoc)
                   then FE.Guard (NONE, newSymbols)
                   else FE.Guard (NONE, encloseSymbols newSymbols)
               ]

@@ -14,7 +14,7 @@ local
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
-  structure A = Absyn
+  structure A = AbsynTy
   structure L = SetLiftedTys
   structure PI = PatternCalcInterface
   fun bug s = Bug.Bug ("NameEval(EvalTy): " ^ s)
@@ -57,9 +57,11 @@ in
               (fn (ty, tvarSet) => EFTVty (ty, tvarSet))
               tvarSet
               fields
-            | I.JSON => tvarSet
+            | I.JSON _ => tvarSet
+            | I.REIFY => tvarSet
             | I.BOXED => tvarSet
             | I.UNBOXED => tvarSet
+
         and EFTVty (ty, tvarSet) =
             case ty of
               I.TYWILD => tvarSet
@@ -119,7 +121,6 @@ in
     case ty of
       A.TYWILD loc => I.TYWILD
     | A.TYID (tvar, loc) => I.TYVAR (evalTvar tvarEnv tvar)
-    | A.TYRECORD (nil, loc) => BT.unitITy
     | A.TYRECORD (tyFields, loc) =>
       (EU.checkRecordLabelDuplication
          #1 tyFields loc 
@@ -223,7 +224,9 @@ in
               tyFields
            )
         )
-      | A.KINDID ("json", _) => I.JSON
+      | A.KINDID ("json", _) => I.JSON {dynKind = false}
+      | A.KINDID ("dynamic", _) => I.JSON {dynKind = true}
+      | A.KINDID ("reify", _) => I.REIFY
       | A.KINDID ("boxed", _) => I.BOXED
       | A.KINDID ("unboxed", _) => I.UNBOXED
       | A.KINDID (name, loc) =>
@@ -319,19 +322,25 @@ in
       | P.FFICONTY (argTyList, longsymbol, loc) =>
         A.TYCONSTRUCT (map ffiTyToAbsynTy argTyList, longsymbol, loc)
 
-  fun tyToFfiTy subst (ty, loc) =
-      case ty of
-        I.TYWILD => I.FFIBASETY (ty, loc)
-      | I.TYERROR => I.FFIBASETY (ty, loc)
-      | I.TYCONSTRUCT _ => I.FFIBASETY (ty, loc)
-      | I.TYFUNM _ => I.FFIBASETY (ty, loc)
-      | I.TYPOLY _ => I.FFIBASETY (ty, loc)
-      | I.INFERREDTY _ => I.FFIBASETY (ty, loc) (* FIXME *)
-      | I.TYVAR tvar =>
+  fun tyToFfiTy tvarEnv env subst (ty, loc) =
+      let
+        fun toTy ty =
+            N.reduceTy
+              (TvarMap.map (evalTy tvarEnv env o ffiTyToAbsynTy) subst)
+              ty
+      in
+        case ty of
+          I.TYWILD => I.FFIBASETY (toTy ty, loc)
+        | I.TYERROR => I.FFIBASETY (toTy ty, loc)
+        | I.TYCONSTRUCT _ => I.FFIBASETY (toTy ty, loc)
+        | I.TYFUNM _ => I.FFIBASETY (toTy ty, loc)
+        | I.TYPOLY _ => I.FFIBASETY (toTy ty, loc)
+        | I.INFERREDTY _ => I.FFIBASETY (toTy ty, loc) (* FIXME *)
+        | I.TYVAR tvar =>
         (
           case TvarMap.find (subst, tvar) of
-            NONE => I.FFIBASETY (ty, loc)
-          | SOME ffity => ffity
+            NONE => I.FFIBASETY (toTy ty, loc)
+          | SOME ffity => evalFfity tvarEnv env ffity
         )
       | I.TYRECORD fields =>
         let
@@ -339,12 +348,14 @@ in
         in
           if RecordLabel.isOrderedList fields
           then I.FFIRECORDTY
-                 (map (fn (label, ty) => (label, tyToFfiTy subst (ty, loc)))
+                 (map (fn (label, ty) =>
+                          (label, tyToFfiTy tvarEnv env subst (ty, loc)))
                       fields, loc)
-          else I.FFIBASETY (ty, loc)
+          else I.FFIBASETY (toTy ty, loc)
         end
+      end
 
-  fun evalFfity (tvarEnv:tvarEnv) (env:V.env) ffiTy =
+  and evalFfity (tvarEnv:tvarEnv) (env:V.env) ffiTy =
       let
         val evalFfity = evalFfity tvarEnv env
       in
@@ -362,32 +373,33 @@ in
             (map (fn (l, ty) => (l, evalFfity ty)) stringFfityList,
              loc)
         | P.FFICONTY (argTyList, typath, loc) =>
-          (
-            case V.lookupTstr env typath handle e => raise e
-             of
-              V.TSTR (I.TFUN_DEF {longsymbol, iseq, formals, realizerTy}) =>
-              let
-                val argTyList = map evalFfity argTyList
-                val subst =
-                    List.foldl 
-                      (fn ((key, item), m) => TvarMap.insert (m, key, item)) TvarMap.empty 
-                      (ListPair.zipEq (formals, argTyList))
-(*
-                              raise bug "FIXME: tfun arity mismatch")
-*)
-              in
-                tyToFfiTy subst (realizerTy, loc)
-              end
+          let
+            val tfun =
+                case V.lookupTstr env typath of
+                  V.TSTR tfun => tfun
+                | V.TSTR_DTY {tfun, varE, formals, conSpec} => tfun
+          in
+            case I.pruneTfun tfun of
+               I.TFUN_DEF {longsymbol, iseq, formals, realizerTy} =>
+               let
+                 val subst =
+                     List.foldl
+                       (fn ((key, item), m) => TvarMap.insert (m, key, item))
+                       TvarMap.empty
+                       (ListPair.zipEq (formals, argTyList))
+               in
+                 tyToFfiTy tvarEnv env subst (realizerTy, loc)
+               end
             | _ => I.FFIBASETY (evalTy tvarEnv env (ffiTyToAbsynTy ffiTy), loc)
-          )
+          end
           handle V.LookupTstr =>
                  (EU.enqueueError
                     (loc, E.TypNotFound("Ty-100",{longsymbol = typath}));
                   I.FFIBASETY (I.TYERROR, loc))
                | UnqeualLengths =>
-                 (EU.enqueueError (loc, E.TypArity("Ty-110",{longsymbol = typath}));
+                 (EU.enqueueError
+                    (loc, E.TypArity("Ty-110",{longsymbol = typath}));
                   I.FFIBASETY (I.TYERROR, loc))
-
       end
 
   val emptyScopedTvars = nil : I.scopedTvars

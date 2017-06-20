@@ -1,3 +1,4 @@
+
 (**
  * user errors detected in Typed Elaboration
  * @copyright (c) 2016, Tohoku University.
@@ -21,14 +22,9 @@ struct
   and
     (*%
      * @format(name * ty)
-     * "record" +d "type" +d "is" +d "expected" +d "for" +d "SQL" +d "table"
-     * +d "`" name "'" +d "declaration:" +d ty
+     * "record" +d "list" +d "type" +d "is" +d "expected" +d "for" +d "SQL"
+     * +d "table" +d "`" name "'" +d "declaration:" +d ty
      *)
     InvalidSQLTableTy of RecordLabel.label * IDCalc.ty
-
-  and
-    (*%
-     *)
-    InvalidJSONty of IDCalc.ty
 
 end

@@ -7,7 +7,6 @@
  *)
 structure Types =
 struct
-  structure A = Absyn
   fun bug s = Bug.Bug ("Types: " ^ s)
 
   fun formatEnclosedTypIDMap args map =
@@ -85,19 +84,13 @@ struct
     TvarID.id
 
   (*%
-     @formatter(Absyn.eq) Absyn.format_eq
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
    *)
   (*% @prefix formatWithType_
-     @formatter(Absyn.eq) Absyn.format_eq
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
    *)
-  type eq =
-   (*%
-      @format(x) x
-    *)
-   (*% @prefix formatWithType_
-      @format(x) x
-    *)
-   Absyn.eq
+  datatype eq =
+   datatype AbsynTy.eq
 
   (*%
    *)
@@ -114,75 +107,99 @@ struct
        *)
      {symbol:symbol, id:tvarId, eq:eq, lifted:bool}
 
-    (*% @formatter(Absyn.eq) Absyn.format_eq *)
+  (*% @formatter(AbsynTy.eq) AbsynTy.format_eq *)
+  (*% @prefix formatWithType_
+      @formatter(AbsynTy.eq) AbsynTy.format_eq 
+   *)
+  type eqKind =
+    (*% @format(x) x *) 
     (*% @prefix formatWithType_
-        @formatter(Absyn.eq) Absyn.format_eq 
-     *)
-    type eqKind =
-      (*% @format(x) x *) 
-      (*% @prefix formatWithType_
-          @format(x) x
-        *) 
-      Absyn.eq
+        @format(x) x
+      *) 
+    AbsynTy.eq
 
 
-    (* utilities for pretty printer of types *)
+  (*% *)
+  (*% @prefix formatWithType_ *)
+  datatype subkind =
+      (*% @format "#unboxed" *)
+      (*% @prefix formatWithType_ @format "#unboxed" *)
+      UNBOXED
+    | (*% @format "#json" *)
+      (*% @prefix formatWithType_ @format "#json" *)
+      JSON
+    | (*% @format "#json" *)
+      (*% @prefix formatWithType_ @format "#json_atomic" *)
+      JSON_ATOMIC
+    | (*% @format *)
+      (*% @prefix formatWithType_ @format *)
+      ANY
 
-    datatype ('tvarKind, 'ty) btvOrdEnv =
-        ENV of
-        {btvEnv: {eqKind: eqKind, tvarKind: 'tvarKind} TermFormat.btvEnv,
-         btvOrder: {eqKind: eqKind, tvarKind: 'tvarKind} BoundTypeVarID.Map.map
-                   * 'ty -> BoundTypeVarID.id list}
+  (* utilities for pretty printer of types *)
+  datatype ('kind, 'ty) btvOrdEnv =
+    ENV of
+      {btvEnv : 'kind TermFormat.btvEnv,
+       btvOrder : 'kind BoundTypeVarID.Map.map * 'ty -> BoundTypeVarID.id list,
+       formatPrefix : 'kind -> TermFormat.format,
+       formatSuffix : ('kind, 'ty) btvOrdEnv list -> 'kind -> TermFormat.format}
 
-    fun unpackEnv [ENV x] = x
-      | unpackEnv nil =
-        {btvEnv = TermFormat.emptyBtvEnv,
-         btvOrder = fn _ => nil}
-      | unpackEnv _ = raise Bug.Bug "Types.unpackEnv"
+  fun unpackEnv [ENV x] = x
+    | unpackEnv nil =
+      {btvEnv = TermFormat.emptyBtvEnv,
+       btvOrder = fn _ => nil,
+       formatPrefix = fn _ => format_eqKind NONEQ,
+       formatSuffix = fn _ => fn _ => nil}
+    | unpackEnv _ = raise Bug.Bug "Types.unpackEnv"
 
-    fun packEnv x = [ENV x]
+  fun packEnv x = [ENV x]
 
-    fun format_boundTypeVarID env btvId =
-        let
-          val i = BoundTypeVarID.toInt btvId
-          val id = TermFormat.FormatComb.term ("(" ^ Int.toString i ^ ")")
-        in
-          TermFormat.formatBoundTyvar
-(* printing btvid
-            (fn tyvar => fn {eqKind, tvarKind} => format_eqKind eqKind @ tyvar  @ id )
-*)
-            (fn tyvar => fn {eqKind, tvarKind} => format_eqKind eqKind @ tyvar)
-            (#btvEnv (unpackEnv env))
-            btvId
-        end
+  fun format_tyvarWithEqKind btvOrdEnv tyvar kind =
+      let
+        val {formatPrefix, ...} = unpackEnv btvOrdEnv
+      in
+        formatPrefix kind @ tyvar
+      end
 
-    fun formatWithType_btvEnv_forPolyTy (formatRecordKind, env) boundtvars =
-        let
-          val {btvEnv, btvOrder} = unpackEnv env
-          fun formatTyvar tyvar (btvKind as {eqKind, tvarKind}) =
-              format_eqKind eqKind @ (tyvar @ formatRecordKind btvKind)
-        in
-          TermFormat.formatBtvEnvWithType formatTyvar btvEnv boundtvars
-        end
+  fun format_tyvarWithKind (btvOrdEnv, tyvar) kind =
+      let
+        val {formatPrefix, formatSuffix, ...} = unpackEnv btvOrdEnv
+      in
+        formatPrefix kind @ tyvar @ formatSuffix btvOrdEnv kind
+      end
 
-    fun format_btvEnv_forPolyTy (formatRecordKind, env) boundtvars =
-        let
-          val {btvEnv, btvOrder} = unpackEnv env
-          fun formatTyvar tyvar (btvKind as {eqKind, tvarKind}) =
-              format_eqKind eqKind @ (tyvar @ formatRecordKind btvKind)
-        in
-          TermFormat.formatBtvEnv formatTyvar btvEnv boundtvars
-        end
+  fun format_boundTyvar btvOrdEnv btvId =
+      TermFormat.formatBoundTyvar
+        (format_tyvarWithEqKind btvOrdEnv)
+        (#btvEnv (unpackEnv btvOrdEnv))
+        btvId
 
-    fun extendBtvEnv env {boundtvars, constraints, body} =
-        let
-          val {btvEnv, btvOrder} = unpackEnv env
-          val order = btvOrder (boundtvars, body)
-          val btvEnv = TermFormat.extendBtvEnvWithOrder
-                         btvEnv (boundtvars, order)
-        in
-          packEnv {btvEnv = btvEnv, btvOrder = btvOrder}
-        end
+  fun format_boundTypeVarID btvOrdEnv btvId =
+      format_boundTyvar btvOrdEnv btvId
+      @ TermFormat.FormatComb.term
+          ("(" ^ Int.toString (BoundTypeVarID.toInt btvId) ^ ")")
+
+  fun format_btvEnv_forPolyTy btvOrdEnv boundtvars =
+      TermFormat.formatBtvEnv
+        (fn tyvar => format_tyvarWithKind (btvOrdEnv, tyvar))
+        (#btvEnv (unpackEnv btvOrdEnv))
+        boundtvars
+
+  fun formatWithType_btvEnv_forPolyTy btvOrdEnv boundtvars =
+      TermFormat.formatBtvEnvWithType
+        (fn tyvar => format_tyvarWithKind (btvOrdEnv, tyvar))
+        (#btvEnv (unpackEnv btvOrdEnv))
+        boundtvars
+
+  fun extendBtvEnv btvOrdEnv {boundtvars, constraints, body} =
+      let
+        val {btvEnv, btvOrder, formatPrefix, formatSuffix} = unpackEnv btvOrdEnv
+        val order = btvOrder (boundtvars, body)
+        val btvEnv = TermFormat.extendBtvEnvWithOrder
+                       btvEnv (boundtvars, order)
+      in
+        packEnv {btvEnv = btvEnv, btvOrder = btvOrder,
+                 formatPrefix = formatPrefix, formatSuffix = formatSuffix}
+      end
 
   (*% *)
   (*% @prefix formatWithType_ *)
@@ -232,6 +249,7 @@ struct
 
   (*%
     @params(btvOrdEnv)
+    @formatter(formatUserLongSymbol) Symbol.formatUserLongSymbol
     @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
     @formatter(freeTypeVarID) format_freeTypeVarID
     @formatter(enclosedList) TermFormat.formatEnclosedList
@@ -246,13 +264,14 @@ struct
     @formatter(withDefault) SmlppgUtil.formatOptWithDefault
     @formatter(extendBtvEnv) extendBtvEnv
     @formatter(format_btvEnv_forPolyTy) format_btvEnv_forPolyTy
-    @formatter(BoundTypeVarID.id) format_boundTypeVarID
+    @formatter(BoundTypeVarID.id) format_boundTyvar
     @formatter(OPrimID.id) OPrimID.format_id
     @formatter(TypID.Map.map) formatEnclosedTypIDMap
     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
     @formatter(bool) SmlppgUtil.formatBinaryChoice
     @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
     @formatter(RecordLabel.label) RecordLabel.format_label
+    @formatter(tyvarWithKind) format_tyvarWithKind
    *)
   (*%
     @prefix formatWithType_
@@ -278,6 +297,7 @@ struct
     @formatter(bool) SmlppgUtil.formatBinaryChoice
     @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
     @formatter(RecordLabel.label) RecordLabel.format_label
+    @formatter(tyvarWithKind) format_tyvarWithKind
    *)
   datatype ty =
       (*% @format(t) t()(btvOrdEnv)  *)
@@ -295,19 +315,11 @@ struct
           @format "ERRORty"
        *)
       ERRORty
-    | (*% @format(id) id  *)
+    | (*% @format(id * kind) id *)
       (*% @prefix formatWithType_ 
-         @format(id) id 
+         @format(id * kind) id kind()(btvOrdEnv)
        *)
-      DUMMYty of dummyTyID
-    | (*% @format({id:id, fields:ty tys}) 
-          id "#" tys:dummyRecordTy(ty()(btvOrdEnv))
-       *)
-      (*% @prefix formatWithType_ 
-          @format({id:id, fields:ty tys}) 
-          id "#" tys:dummyRecordTy(ty()(btvOrdEnv))
-       *)
-      DUMMY_RECORDty of {id:dummyTyID, fields:ty RecordLabel.Map.map}
+      DUMMYty of dummyTyID * kind
     | (*% @format(tv tvRef) tvRef(tv()(btvOrdEnv)) *)
       (*% @prefix formatWithType_ 
           @format(tv tvRef) tvRef(tv()(btvOrdEnv))
@@ -373,15 +385,15 @@ struct
   and constraint =
       (* 2016-07-01 sasaki: 制約を示すデータ型を追加 *)
       (*%
-       * @format({res, args : (arg1 * arg2)})
+       * @format({res, args : (arg1 * arg2), loc})
        * res()(btvOrdEnv) +1 "=" + 2[arg1()(btvOrdEnv) +1 "join" +1 arg2()(btvOrdEnv)]
        *)
       (*%
        * @prefix formatWithType_
-       * @format({res, args : (arg1 * arg2)})
+       * @format({res, args : (arg1 * arg2), loc})
        * res()(btvOrdEnv) +1 "=" + 2[arg1()(btvOrdEnv) +1 "join" +1 arg2()(btvOrdEnv)]
        *)
-      JOIN of {res : ty, args : ty * ty}
+      JOIN of {res : ty, args : ty * ty, loc:Loc.loc}
 
   and tvarKind =
       (*%
@@ -417,21 +429,11 @@ struct
           @format 
        *)
       UNIV
-    | (*% @format "#json" *)
-      (*% @prefix formatWithType_ 
-          @format "#json"
-       *)
-      JSON
-    | (*% @format "#boxed" *)
+    | (*%  @format "#boxed" *)
       (*% @prefix formatWithType_ 
           @format "#boxed"
        *)
       BOXED
-    | (*% @format "#unboxed" *)
-      (*% @prefix formatWithType_ 
-          @format "#unboxed"
-       *)
-      UNBOXED
     | (*%
        * @format(ty tys)
        * "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
@@ -445,7 +447,7 @@ struct
   and dtyKind
     = (*% @format *)
       (*% @prefix formatWithType_ 
-          @format
+          @format "DTY"
        *)
       (* datatype including atomic types *)
       DTY
@@ -463,7 +465,7 @@ struct
           @format(builtin)
        *)
       (*% @prefix formatWithType_ 
-          @format(builtin)
+          @format(builtin)  "BUILTIN"
        *)
       (* builtin types *)
       BUILTIN of BuiltinTypeNames.bty
@@ -526,6 +528,20 @@ struct
        * @format(ty) "SIZE(" !N0{ ty()(btvOrdEnv) ")" }
        *)
       SIZEty of ty
+    | (*%
+       * @format(ty) "TYPE(" !N0{ ty()(btvOrdEnv) ")" }
+       *)
+      (*% @prefix formatWithType_ 
+       * @format(ty) "TYPE(" !N0{ ty()(btvOrdEnv) ")" }
+       *)
+      TYPEty of ty
+    | (*%
+       * @format(ty) "REIFYTy(" !N0{ ty()(btvOrdEnv) ")" }
+       *)
+      (*% @prefix formatWithType_ 
+       * @format(ty) "REIFYty(" !N0{ ty()(btvOrdEnv) ")" }
+       *)
+      REIFYty of ty
 
   and backendTy =
       (*% @format(ty) "RECORDSIZE(" !N0{ ty()(btvOrdEnv) } ")" *)
@@ -617,6 +633,28 @@ struct
        *)
       OVERLOAD_CASE of ty * overloadMatch TypID.Map.map
 
+  and kind = 
+      (*%
+       * @format({eqKind, dynKind, reifyKind, subkind, tvarKind})
+       * tvarKind()(btvOrdEnv)
+       * subkind
+       * dynKind()("#dynamic",)
+       * reifyKind()("#reify",)
+       *)
+      (*% @prefix formatWithType_
+       * @format({eqKind, dynKind, reifyKind, subkind, tvarKind})
+       * tvarKind()(btvOrdEnv)
+       * subkind
+       * dynKind()("#dynamic",)
+       * reifyKind()("#reify",)
+       *)
+      KIND of
+      {eqKind : eqKind,
+       dynKind : bool,
+       reifyKind : bool,
+       subkind : subkind,    (* kinds unrelated to type-directed compile *)
+       tvarKind : tvarKind}  (* kinds significant to type-directed compile *)
+
   withtype tvKind =
       (*
        Ohori: Dec 3, 2006.
@@ -635,35 +673,26 @@ struct
       (*%
          @format({lambdaDepth,
                   id,
-                  tvarKind,
-                  eqKind,
-                  occurresIn,
+                  kind,
                   utvarOpt: utvar utvarOpt})
-         eqKind id utvarOpt(utvar)("(",")")
-         tvarKind()(btvOrdEnv)
+         kind:tyvarWithKind()(btvOrdEnv, id utvarOpt(utvar)("(U","U)"))
        *)
       (*% @prefix formatWithType_ 
          @format({lambdaDepth,
                   id,
-                  tvarKind,
-                  eqKind,
-                  occurresIn,
+                  kind,
                   utvarOpt: utvar utvarOpt})
-          eqKind id utvarOpt(utvar)("(",")")
-          tvarKind()(btvOrdEnv)
+         kind:tyvarWithKind()(btvOrdEnv, id utvarOpt(utvar)("(U","U)"))
        *)
       {
        lambdaDepth: lambdaDepth,
        id: freeTypeVarID,
-       tvarKind: tvarKind,
-       eqKind: eqKind,
-       occurresIn: ty list,  (* this type variable occurres in this lists of 
-                                types as a join operand *)
+       kind: kind,
        utvarOpt: utvar option (* SOME: user-defined type variable *)
       }
 
   and tyCon
-    = (*% @format({id, longsymbol, iseq, runtimeTy, arity, conSet, conIDSet,
+    = (*% @format({id, longsymbol:longsymbol:formatUserLongSymbol, iseq, runtimeTy, arity, conSet, conIDSet,
                    extraArgs:ty tys,
                    dtyKind})
           longsymbol
@@ -721,59 +750,50 @@ struct
 
   and polyTy = (* for pretty printing *)
       (*%
-       * @format({boundtvars:btvKind imap, constraints: con cons, body})
+       * @format({boundtvars, constraints: con cons, body})
           "[" 
             !N0{
                2[
-                 {imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."}
+                 {boundtvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
                  cons:optionalList(con(btvOrdEnv))(+1"(",",",") =>")
                  +1
                  body()(btvOrdEnv) 
                 ]
             "]"
            }
-          @format:btvKind({eqKind, tvarKind})
-          tvarKind()(btvOrdEnv)
        *)
       (*% @prefix formatWithType_
-       * @format({boundtvars:btvKind imap, constraints: con cons, body})
-       * "[" !N0{ imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."
+       * @format({boundtvars, constraints: con cons, body})
+       * "[" !N0{ boundtvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."
        *          cons:optionalList(con(btvOrdEnv))(+1"(",",",") =>")
        *          +1 body()(btvOrdEnv) "]" }
-       * @format:btvKind({eqKind, tvarKind})
-       * tvarKind()(btvOrdEnv)
        *)
       (**
-       * boundtvars = {..., btvid -> btvKind as {tvarKind, eqKind}, ...}
+       * boundtvars = {..., btvid -> btvKind as {tvarKind, eqKind, boxedKind, dynKind, reifyKind}, ...}
        * btvid is the id of boundTvars used as i in BOUNDVARty(i)
        *)
       {
-        boundtvars : {eqKind: eqKind, tvarKind: tvarKind}
-                       BoundTypeVarID.Map.map,
+        boundtvars : kind BoundTypeVarID.Map.map,
         constraints : constraint list,
         body : ty
       }
 
   and codeEntryTy =
       (*%
-       * @format({tyvars: tvkind tvmap, haveClsEnv, argTyList: arg args,
+       * @format({tyvars, haveClsEnv, argTyList: arg args,
        *          retTy: ret rets})
        * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
        *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
-       * @format:tvkind({eqKind, tvarKind})
-       * tvarKind()(btvOrdEnv)
        *)
       (*% @prefix formatWithType_
-       * @format({tyvars: tvkind tvmap, haveClsEnv, argTyList: arg args,
+       * @format({tyvars, haveClsEnv, argTyList: arg args,
        *          retTy: ret rets})
        * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
        *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
-       * @format:tvkind({eqKind, tvarKind})
-       * tvarKind()(btvOrdEnv)
        *)
       (* argTyList and retTy must be closed by tyvars *)
       {
-        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
+        tyvars : kind BoundTypeVarID.Map.map,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty option
@@ -781,24 +801,20 @@ struct
 
   and callbackEntryTy =
       (*%
-       * @format({tyvars: tvkind tvmap, haveClsEnv, argTyList: arg args,
+       * @format({tyvars, haveClsEnv, argTyList: arg args,
        *          retTy: ret rets, attributes})
        * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
        *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
-       * @format:tvkind({eqKind, tvarKind})
-       * tvarKind()(btvOrdEnv)
        *)
       (*% @prefix formatWithType_
-       * @format({tyvars: tvkind tvmap, haveClsEnv, argTyList: arg args,
+       * @format({tyvars, haveClsEnv, argTyList: arg args,
        *          retTy: ret rets, attributes})
        * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
        *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
-       * @format:tvkind({eqKind, tvarKind})
-       * tvarKind()(btvOrdEnv)
        *)
       (* argTyList and retTy must be closed by tyvars *)
       {
-        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
+        tyvars : kind BoundTypeVarID.Map.map,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty option,
@@ -807,33 +823,31 @@ struct
 
   and foreignFunTy =
       (*%
-       * @format({tyvars: btvKind imap,
+       * @format({tyvars,
        *          argTyList: argTy argTys,
        *          varArgTyList: varTy varTys varOpt,
        *          resultTy: retTy retTyOpt, attributes})
        * L8{ 2[
-       *   {imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."}
+       *   {tyvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
        *   attributes +1
        *   R4{ argTys:appList(argTy()(btvOrdEnv))("(",",",")")
        *       varOpt(varTys:appList(varTy()(btvOrdEnv))("(",",",")"))("...",)
        *       +1 "->" +d retTyOpt:withDefault(retTy()(btvOrdEnv))("()") } ] }
-       * @format:btvKind({eqKind, tvarKind}) tvarKind()(btvOrdEnv)
        *)
       (*% @prefix formatWithType_
-       * @format({tyvars: btvKind imap,
+       * @format({tyvars,
        *          argTyList: argTy argTys,
        *          varArgTyList: varTy varTys varOpt,
        *          resultTy: retTy retTyOpt, attributes})
        * L8{ 2[
-       *   {imap:format_btvEnv_forPolyTy(btvKind)(btvOrdEnv) "."}
+       *   {tyvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
        *   attributes +1
        *   R4{ argTys:appList(argTy()(btvOrdEnv))("(",",",")")
        *       varOpt(varTys:appList(varTy()(btvOrdEnv))("(",",",")"))("...",)
        *       +1 "->" +d retTyOpt:withDefault(retTy()(btvOrdEnv))("()") } ] }
-       * @format:btvKind({eqKind, tvarKind}) tvarKind()(btvOrdEnv)
        *)
       {
-        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
+        tyvars : kind BoundTypeVarID.Map.map,
         argTyList : ty list,
         varArgTyList : ty list option,
         resultTy : ty option,
@@ -875,7 +889,6 @@ struct
       | BACKENDty bty => btvOrderBackendTy btv bty
       | ERRORty => nil
       | DUMMYty _ => nil
-      | DUMMY_RECORDty _ => nil
       | TYVARty (ref (TVAR _)) => nil
       | TYVARty (ref (SUBSTITUTED ty)) => btvOrderTy btv ty
       | BOUNDVARty id => if BoundTypeVarID.Set.member (btv, id)
@@ -899,6 +912,8 @@ struct
       | INDEXty (label, ty) => btvOrderTy btv ty
       | SIZEty ty => btvOrderTy btv ty
       | TAGty ty => btvOrderTy btv ty
+      | TYPEty ty => btvOrderTy btv ty
+      | REIFYty ty => btvOrderTy btv ty
   and btvOrderBackendTy btv bty =
       case bty of
         RECORDSIZEty ty => btvOrderTy btv ty
@@ -918,15 +933,13 @@ struct
                (argTyList
                 @ (case varArgTyList of NONE => nil | SOME l => l)
                 @ (case resultTy of NONE => nil | SOME x => [x])))
-  and btvOrderKind btv {eqKind, tvarKind} =
+  and btvOrderKind btv (KIND {eqKind, dynKind, reifyKind, subkind, tvarKind}) =
       case tvarKind of
         OCONSTkind tys => List.concat (map (btvOrderTy btv) tys)
       | OPRIMkind {instances,...} =>
         List.concat (map (btvOrderTy btv) instances)
       | UNIV => nil
-      | JSON => nil
       | BOXED => nil
-      | UNBOXED => nil
       | REC tys => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
   and btvOrder (boundtvars, body) =
       let
@@ -942,15 +955,27 @@ struct
               (btvOrderTy btv body)
       end
 
-  local
-    fun makeEnv btvEnv = packEnv {btvEnv=btvEnv, btvOrder=btvOrder}
-  in
+  fun format_kindPrefix (KIND {eqKind, ...}) =
+      format_eqKind eqKind
+
+  val format_kindSuffix = format_kind
+
+  fun makeEnv btvEnv =
+      packEnv {btvEnv = btvEnv,
+               btvOrder = btvOrder,
+               formatPrefix = format_kindPrefix,
+               formatSuffix = format_kindSuffix}
+
   val format_tvarKind =
       fn btvEnv => fn x => format_tvarKind (makeEnv btvEnv) x
   val format_tvState =
       fn btvEnv => fn x => format_tvState (makeEnv btvEnv) x
   val format_ty =
       fn btvEnv => fn x => format_ty (makeEnv btvEnv) x
+  val format_singletonTy =
+      fn btvEnv => fn x => format_singletonTy (makeEnv btvEnv) x
+  val formatWithType_singletonTy =
+      fn btvEnv => fn x => formatWithType_singletonTy (makeEnv btvEnv) x
   val formatWithType_ty =
       fn btvEnv => fn x => formatWithType_ty (makeEnv btvEnv) x
   val format_dtyKind =
@@ -965,47 +990,36 @@ struct
       fn x => format_callbackEntryTy (makeEnv nil) x
   val format_foreignFunTy =
       fn btvEnv => fn x => format_foreignFunTy (makeEnv btvEnv) x
-  end
-
-  (*%
-   * @params(btvEnv, tyvar)
-   *)
-  type btvKind =
-      (*%
-       * @format({eqKind, tvarKind})
-       * eqKind tyvar tvarKind()(btvEnv)
-       *)
-      {
-        tvarKind : tvarKind,
-        eqKind : eqKind
-      }
+  val format_kind =
+      fn (btvEnv, tyvar) => fn x =>
+         format_tyvarWithKind (makeEnv btvEnv, tyvar) x
 
   (*% *)
   type btvEnv =
        (*% @format(x xs) *)
-       btvKind BoundTypeVarID.Map.map
+       kind BoundTypeVarID.Map.map
 
   (* general formatter for btvEnv *)
   fun format_btvEnv btvEnv btvMap =
       let
         val btvEnv = TermFormat.extendBtvEnv btvEnv btvMap
-        fun formatTyvar tyvar kind = format_btvKind (btvEnv, tyvar) kind
       in
-        TermFormat.formatBtvEnv formatTyvar btvEnv btvMap
+        TermFormat.formatBtvEnv
+          (fn tyvar => format_kind (btvEnv, tyvar))
+          btvEnv
+          btvMap
       end
 
   (* general formatter for btvEnv *)
   fun format_btvEnvWithType btvEnv btvMap =
       let
         val btvEnv = TermFormat.extendBtvEnv btvEnv btvMap
-        fun formatTyvar tyvar kind = format_btvKind (btvEnv, tyvar) kind
       in
-        TermFormat.formatBtvEnvWithType formatTyvar btvEnv btvMap
+        TermFormat.formatBtvEnvWithType
+          (fn tyvar => format_kind (btvEnv, tyvar))
+          btvEnv
+          btvMap
       end
-
-  (* for pretty printing *)
-  type formatBtvEnv =
-      btvKind TermFormat.btvEnv
 
   (*%
    * @formatter(VarID.id)  VarID.format_id
@@ -1096,60 +1110,67 @@ struct
       (* ty is the type as a function *)
       {path: longsymbol, ty: ty}
 
-  val univKind = {tvarKind = UNIV, eqKind = A.NONEQ, utvarOpt = NONE: utvar option}
+  val univKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = false, subkind = ANY, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val jsonKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = false, subkind = JSON, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val joinKind  = {kind = KIND {tvarKind = UNIV, dynKind = true, reifyKind = false, subkind = JSON, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val jsonAtomicKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = false, subkind = JSON_ATOMIC, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val joinAtomicKind  = {kind = KIND {tvarKind = UNIV, dynKind = true, reifyKind = false, subkind = JSON_ATOMIC, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val emptyRecordKind = {kind = KIND {tvarKind = REC (RecordLabel.Map.empty), dynKind = false, reifyKind = false,
+                         subkind = ANY, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val dynamicKind = {kind = KIND {tvarKind = UNIV, dynKind = true, reifyKind = false, subkind = JSON, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val reifyKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = true, subkind = ANY, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
 
   val kindedTyvarList =
       ref nil : tvState ref list ref
 
-  fun newTvStateRef {lambdaDepth, tvarKind, occurresIn, eqKind, utvarOpt} =
+  fun newTvStateRef {lambdaDepth, kind, utvarOpt} =
       let
         val newTyvarID = FreeTypeVarID.generate ()
         val newTv =
             ref (TVAR {lambdaDepth = lambdaDepth,
                        id = newTyvarID,
-                       tvarKind = tvarKind,
-                       eqKind = eqKind,
-                       occurresIn = occurresIn,
+                       kind = kind,
                        utvarOpt = utvarOpt})
         val _ = kindedTyvarList := newTv::(!kindedTyvarList)
       in
         newTv
       end
 
-  fun newty {tvarKind, eqKind, utvarOpt} =
+  fun newty {kind, utvarOpt} =
       TYVARty (newTvStateRef {lambdaDepth = infiniteDepth,
-                              tvarKind = tvarKind,
-                              eqKind = eqKind,
-                              occurresIn = nil,
+                              kind = kind,
                               utvarOpt = utvarOpt})
 
   fun newUtvar (lambdaDepth, eqKind, utvar:utvar) =
       newTvStateRef {lambdaDepth = lambdaDepth,
-                     tvarKind = UNIV,
-                     eqKind = eqKind,
-                     occurresIn = nil,
+                     kind = KIND {tvarKind = UNIV,
+                                  eqKind = eqKind,
+                                  dynKind = false,
+                                  reifyKind = false,
+                                  subkind = ANY},
                      utvarOpt = SOME utvar}
 
-  fun newtyRaw {lambdaDepth, tvarKind, occurresIn, eqKind, utvarOpt} =
+  fun newtyRaw {lambdaDepth, kind, utvarOpt} =
       TYVARty(newTvStateRef {lambdaDepth = lambdaDepth,
-                             tvarKind = tvarKind,
-                             eqKind = eqKind,
-                             occurresIn = occurresIn,
+                             kind = kind,
                              utvarOpt = utvarOpt})
 
-  fun newtyWithLambdaDepth (lambdaDepth, {tvarKind, eqKind, utvarOpt}) =
+  fun newtyWithLambdaDepth (lambdaDepth, {kind, utvarOpt}) =
       TYVARty(newTvStateRef {lambdaDepth=lambdaDepth,
-                             tvarKind=tvarKind,
-                             eqKind=eqKind,
-                             occurresIn = nil,
+                             kind=kind,
                              utvarOpt=utvarOpt})
 
   fun printTy ty =
       let
         (* val print = fn s => if !Bug.debugPrint then print s else () *)
       in
-        print (Bug.prettyPrint (format_ty nil ty))
+        print (Bug.prettyPrint (formatWithType_ty nil ty))
       end
   fun tyToString ty = Bug.prettyPrint (format_ty nil ty)
+  fun singletonTyToString ty = Bug.prettyPrint (format_singletonTy nil ty)
+  fun singletonTyWithTypeToString ty = Bug.prettyPrint (formatWithType_singletonTy nil ty)
+  fun tyWithTypeToString ty = Bug.prettyPrint (formatWithType_ty nil ty)
+  fun btvEnvToString x = Bug.prettyPrint (format_btvEnv nil x)
+  fun btvEnvWithTypeToString x = Bug.prettyPrint (format_btvEnvWithType nil x)
 
 end

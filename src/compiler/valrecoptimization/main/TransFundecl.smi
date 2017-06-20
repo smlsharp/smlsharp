@@ -1,10 +1,11 @@
-_require "../../../basis.smi"
-_require "../../control/main/Bug.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+_require local "./TRANS_FUNDECL.sig"
+
 _require "../../types/main/IDCalc.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../name/main/LocalID.smi"
-_require "./TRANS_FUNDECL.sig"
 
 structure TransFundecl =
   struct

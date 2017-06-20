@@ -30,22 +30,26 @@
  *
  *    32bit                                      32bit           32bit
  *  +-------+----------------------------------+-------+- ... -+-------+
- *  |header |             payload              | bm[1] |       | bm[N] |
+ *  |header |             payload              | bm[0] |       |bm[N-1]|
  *  +-------+----------------------------------+-------+- ... -+-------+
  *          ^
  *          |
  *      object pointer
  *
  * The bitmap words exist only if the object is a record object.
- * The bitmap indicates the positions of pointers in the payload area.
+ * Each bitmap indicates whether or not its corresponding word is a pointer;
  * i-th bit (from LSB) of n-th word corresponds to (n*32+i)-th word of the
  * payload.  If a bit in the bitmap is set, its corresponding word is a
  * pointer to be traced.
- * The bitmap consists of the minimum number of words that covers the whole
- * of the payload area.
+ * The bitmap consists of the minimum number of bits for covering the entire
+ * payload area.
+ * A record representing a closure has one additional bit in the bitmap;
+ * the MSB bit of bm[0], which is not corresponding to any word in the
+ * payload of closure records, is a flag indicating whether or not its
+ * calling convention is rigid.
  *
  * An object header consists of a 28-bit integer SIZE, a 3-bit integer TYPE
- * and a 1-bit flag I as follows:
+ * and a 1-bit flag S as follows:
  *
  *  (MSB)  31 30  28                                   0  (LSB)
  *        +--+------+-----------------------------------+

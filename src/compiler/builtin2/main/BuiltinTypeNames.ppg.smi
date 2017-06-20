@@ -1,20 +1,25 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
+
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 
 structure BuiltinTypeNames =
 struct
 
   datatype bty 
-    = INTty
+    = INDEXty
+    | INT8ty
+    | INT16ty
+    | INT32ty
     | INT64ty
     | INTINFty
-    | WORDty
-    | WORD64ty
     | WORD8ty
+    | WORD16ty
+    | WORD32ty
+    | WORD64ty
     | CHARty
     | STRINGty
-    | REALty
+    | REAL64ty
     | REAL32ty
     | UNITty
     | PTRty

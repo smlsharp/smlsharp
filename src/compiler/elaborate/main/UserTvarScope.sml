@@ -194,19 +194,32 @@ struct
       | P.PLRECORD_SELECTOR _ => empty
       | P.PLSELECT (label, exp, loc) => tyvarsExp btvEnv exp
       | P.PLSEQ (exps, loc) => tyvarsList (tyvarsExp btvEnv) exps
+      | P.PLFOREACH {data, pred, iterator, loc} =>
+        union (tyvarsExp btvEnv data, 
+        union (tyvarsExp btvEnv iterator, 
+               tyvarsExp btvEnv pred))
+      | P.PLFOREACHDATA {data, whereParam, pred, iterator, loc} =>
+        union (tyvarsExp btvEnv data, 
+        union (tyvarsExp btvEnv whereParam, 
+        union (tyvarsExp btvEnv iterator, 
+               tyvarsExp btvEnv pred)))
       | P.PLFFIIMPORT (exp, ffiTy, loc) =>
         union (tyvarsFFIFun btvEnv exp, tyvarsFFIty btvEnv ffiTy)
       | P.PLFFIAPPLY (attr, exp, args, ffiTy, loc) =>
         union (union (tyvarsFFIFun btvEnv exp,
                       tyvarsList (tyvarsFFIArg btvEnv) args),
                tyvarsList (tyvarsFFIty btvEnv) ffiTy)
-      | P.PLSQLSCHEMA {columnInfoFnExp, ty, loc} =>
-        union (tyvarsExp btvEnv columnInfoFnExp,
+      | P.PLSQLSCHEMA {tyFnExp, ty, loc} =>
+        union (tyvarsExp btvEnv tyFnExp,
                tyvarsTy btvEnv ty)
       | P.PLJOIN (exp1, exp2, loc) =>
         union (tyvarsExp btvEnv exp1, tyvarsExp btvEnv exp2)
       | P.PLJSON (exp, ty, loc) =>
         union (tyvarsExp btvEnv exp, tyvarsTy btvEnv ty)
+      | P.PLTYPEOF (ty, loc) =>
+        tyvarsTy btvEnv ty
+      | P.PLREIFYTY (ty, loc) =>
+        tyvarsTy btvEnv ty
 
   and tyvarsFFIArg btvEnv ffiarg =
       case ffiarg of
@@ -324,19 +337,32 @@ struct
         P.PLSELECT (label, decideExp btvEnv exp, loc)
       | P.PLSEQ (exps, loc) =>
         P.PLSEQ (map (decideExp btvEnv) exps, loc)
+      | P.PLFOREACH {data, pred, iterator, loc} =>
+        P.PLFOREACH {data = decideExp btvEnv data, 
+                     pred = decideExp btvEnv pred, 
+                     iterator = decideExp btvEnv iterator, 
+                     loc = loc}
+      | P.PLFOREACHDATA {data, whereParam, pred, iterator, loc} =>
+        P.PLFOREACHDATA {data = decideExp btvEnv data, 
+                         whereParam = decideExp btvEnv whereParam, 
+                         pred = decideExp btvEnv pred, 
+                         iterator = decideExp btvEnv iterator, 
+                         loc = loc}
       | P.PLFFIIMPORT (exp, ffiTy, loc) =>
         P.PLFFIIMPORT (decideFFIFun btvEnv exp, ffiTy, loc)
       | P.PLFFIAPPLY (attr, exp, args, ffiTy, loc) =>
         P.PLFFIAPPLY (attr, decideFFIFun btvEnv exp,
                       map (decideFFIArg btvEnv) args,
                       ffiTy, loc)
-      | P.PLSQLSCHEMA {columnInfoFnExp, ty, loc} =>
-        P.PLSQLSCHEMA {columnInfoFnExp = decideExp btvEnv columnInfoFnExp,
+      | P.PLSQLSCHEMA {tyFnExp, ty, loc} =>
+        P.PLSQLSCHEMA {tyFnExp = decideExp btvEnv tyFnExp,
                        ty = ty,
                        loc = loc}
       | P.PLJOIN (exp1, exp2, loc) =>
         P.PLJOIN (decideExp btvEnv exp1, decideExp btvEnv exp2, loc)
       | P.PLJSON (exp, ty, loc) => P.PLJSON (decideExp btvEnv exp, ty, loc)
+      | P.PLTYPEOF (ty, loc) => P.PLTYPEOF (ty, loc)
+      | P.PLREIFYTY (ty, loc) => P.PLREIFYTY (ty, loc)
 
   and decideFFIArg btvEnv ffiarg =
       case ffiarg of

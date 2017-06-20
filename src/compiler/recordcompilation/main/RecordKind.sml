@@ -36,8 +36,8 @@ struct
   fun generateInstance (label, ty) loc =
       case TypesBasics.derefTy ty of
         ty as T.RECORDty _ => SOME (RC.RCINDEXOF (label, ty, loc))
- (* DUMMY_RECORDtyの追加にともない追加 *)
-      | T.DUMMY_RECORDty {id, fields} => SOME (RC.RCINDEXOF (label, T.RECORDty fields, loc))
+      | ty as T.DUMMYty (id, T.KIND {tvarKind = T.REC _, ...}) =>
+        SOME (RC.RCINDEXOF (label, ty, loc))
       | _ => NONE
 
 end

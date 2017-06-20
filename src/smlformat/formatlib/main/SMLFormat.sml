@@ -28,6 +28,8 @@ struct
 
   datatype parameter = datatype PrinterParameter.parameter
 
+  type format = FormatExpression.expression list
+
   (***************************************************************************)
 
   exception Fail of string
@@ -65,8 +67,6 @@ struct
                raise Fail ("indent underflow(" ^ Int.toString indent ^ ")")
 
   (***************************************************************************)
+  
 
 end
-
-type format = SMLFormat.FormatExpression.expression list
-fun prettyPrint exp = SMLFormat.prettyPrint nil exp

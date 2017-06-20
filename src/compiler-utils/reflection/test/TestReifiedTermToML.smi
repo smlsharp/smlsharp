@@ -1,0 +1,15 @@
+_require local "basis.smi"
+_require "smlunit-lib.smi"
+_require local "../main/ReifiedTerm.ppg.smi"
+_require local "../main/ReifiedTermToML.smi"
+_require local "../main/ReifyTerm.smi"
+
+_require local "../../env/main/SEnv.smi"
+_require local "../../symbols/main/Symbol.ppg.smi"
+_require local "../../ids/main/LocalID.smi"
+_require local "../main/ReifiedTy.ppg.smi"
+
+structure TestReifiedTermToML =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

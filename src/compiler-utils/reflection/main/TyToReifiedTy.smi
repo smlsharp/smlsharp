@@ -1,0 +1,26 @@
+_require local "../../../basis.smi"
+_require local "../../../json.smi"
+
+_require local "../../env/main/SEnv.smi"
+_require local "../../symbols/main/RecordLabel.smi"
+_require local "../../symbols/main/Symbol.ppg.smi"
+_require local "../../ids/main/LocalID.smi"
+_require local "../../debug/main/Bug.ppg.smi"
+
+_require local "../../../compiler/types/main/TypesBasics.smi"
+_require local "../../../compiler/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../compiler/runtimetypes/main/TypeLayout2.smi"
+_require local "../../../compiler/builtin2/main/BuiltinTypes.smi"
+_require local "../../../compiler/datatypecompilation/main/DatatypeLayout.smi"
+
+_require "../../../compiler/types/main/Types.ppg.smi"
+_require "./ReifiedTy.ppg.smi"
+
+structure TyToReifiedTy =
+struct
+  val toReifiedTy : Types.ty -> ReifiedTy.reifiedTy
+  val toTy : Types.ty -> ReifiedTy.tyRep
+(*
+  val getConSet : ReifiedTy.tyRep -> ReifiedTy.conSet
+*)
+end

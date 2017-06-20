@@ -1,7 +1,6 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-_require local "./Bug.ppg.smi"
-_require local "./Loc.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../../smlformat-lib.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
 
 structure Control =
 struct
@@ -16,13 +15,15 @@ struct
   val importAllExceptions : bool ref
   val generateExnMessage : bool ref
 
-  val prettyPrint : SMLFormat.FormatExpression.expression list -> string
   val interactiveMode : bool ref
   val doProfile : bool ref
   val printTimer : bool ref
   val printCommand : bool ref
   val traceFileLoad : bool ref
+
   val printWarning : bool ref
+  val printDiagnosis : bool ref
+
   val printParse : bool ref
   val printLoadFile : bool ref
   val printElab : bool ref
@@ -64,7 +65,6 @@ struct
   val printLLVMEmit : bool ref
   val printGenerateMain : bool ref
   val printWithType : bool ref
-  val printDiagnosis : bool ref
   val allow8bitId : bool ref
   val checkType : bool ref
   val doBitmapANormalReorder : bool ref
@@ -83,6 +83,7 @@ struct
   val enableUnboxedFloat : bool ref
   val insertCheckGC : bool ref
   val useMustTail : bool ref
+  val branchByCConvRigidity : bool ref
   val switchTable : switchTable
   val switchToString : switch -> string
   val interpretControlOption : string * switch * string ->  unit

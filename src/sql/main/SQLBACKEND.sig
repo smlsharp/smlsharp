@@ -14,13 +14,10 @@ sig
 
   val execQuery : conn * string -> res
   val closeConn : conn -> unit
-  val closeRel : res -> unit
-  val getDatabaseSchema : conn -> (string *
-                                   {colname: string,
-                                    ty: SMLSharp_SQL_BackendTy.ty,
-                                    nullable: bool} list) list
+  val closeRes : res -> unit
+  val getDatabaseSchema : conn -> SMLSharp_SQL_BackendTy.schema
   val connect : string -> conn
-  val fetch : res -> res option
+  val fetch : res -> bool  (* return false if it reaches the end *)
   val getValue : res * int -> value option
   val intValue : value -> int option
   val intInfValue : value -> intInf option

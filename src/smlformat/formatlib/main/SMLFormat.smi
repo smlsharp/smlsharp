@@ -18,9 +18,7 @@ struct
   structure BasicFormatters = BasicFormatters
   datatype parameter = datatype PrinterParameter.parameter
   exception Fail of string
+  type format = FormatExpression.expression list
   val traceLevel : int ref
-  val prettyPrint : parameter list 
-		    -> FormatExpression.expression list -> string
+  val prettyPrint : parameter list -> format -> string
 end
-type format = SMLFormat.FormatExpression.expression list
-val prettyPrint : format -> string

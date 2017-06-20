@@ -1,0 +1,10 @@
+_require local "../../../basis.smi"
+_require "./ReifiedTerm.ppg.smi"
+
+structure NaturalJoin =
+struct
+  exception NaturalJoin
+
+  val naturalJoin 
+    : ReifiedTerm.reifiedTerm * ReifiedTerm.reifiedTerm -> ReifiedTerm.reifiedTerm
+end

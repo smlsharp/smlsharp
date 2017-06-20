@@ -3,9 +3,9 @@ _require local "./SMLSharp_ScanChar.smi"
 
 structure Bool =
 struct
-  datatype bool = datatype bool
   val not : bool -> bool
   val toString : bool -> string
   val scan : (char, 'a) StringCvt.reader -> (bool, 'a) StringCvt.reader
   val fromString : string -> bool option
+  datatype bool = datatype bool
 end

@@ -139,6 +139,17 @@ in
       | ICSELECT (string, icexp, loc) =>
         ICSELECT (string, transExp icexp, loc)
       | ICSEQ (icexpList, loc) => ICSEQ (map transExp icexpList, loc)
+      | ICFOREACH {data, pred, iterator, loc} =>
+        ICFOREACH {data = transExp data,
+                   pred = transExp pred, 
+                   iterator = transExp iterator, 
+                   loc = loc}
+      | ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
+        ICFOREACHDATA {data = transExp data,
+                       whereParam = transExp whereParam,
+                       pred = transExp pred, 
+                       iterator = transExp iterator, 
+                       loc = loc}
       | ICFFIIMPORT (icexp, ty, loc) => ICFFIIMPORT (transFFIFun icexp, ty, loc)
       | ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
         ICFFIAPPLY (cconv, transFFIFun funExp,
@@ -150,12 +161,14 @@ in
                             ICFFIARGSIZEOF (ty, NONE, loc))
                         args,
                     retTy, loc)
-      | ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
-        ICSQLSCHEMA {columnInfoFnExp = transExp columnInfoFnExp,
+      | ICSQLSCHEMA {tyFnExp, ty, loc} =>
+        ICSQLSCHEMA {tyFnExp = transExp tyFnExp,
                      ty = ty,
                      loc = loc}
       | ICJOIN (icexp1, icexp2, loc) => ICJOIN (transExp icexp1, transExp icexp2, loc)
-      | ICJSON _ => raise Bug.Bug "ICJSON"
+      | ICJSON (icexp, ty, loc) => ICJSON (transExp icexp, ty, loc)
+      | ICTYPEOF (ty, loc) => icexp
+      | ICREIFYTY (ty, loc) => icexp
   and transFFIFun ffiFun =
       case ffiFun of
         ICFFIFUN exp => ICFFIFUN (transExp exp)

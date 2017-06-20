@@ -1,17 +1,19 @@
-_require "../../../basis.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../recordcalc/main/RecordCalc.ppg.smi"
+
 _require "../../../smlformat-lib.smi"
+_require "../../../basis.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
 _require "../../../compiler-utils/heapdump/main/HeapDump.smi"
 _require "../../util/main/TermFormat.smi"
-_require "../../name/main/LocalID.smi"
+_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../name/main/CodeLabel.smi"
 _require "../../name/main/ExternSymbol.smi"
-_require "../../recordcalc/main/RecordCalc.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
-_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
+
 
 structure RuntimeCalc =
 struct
@@ -26,14 +28,17 @@ struct
       }
   type varInfo = {id: VarID.id, ty: ty}
   datatype ncconst =
-      NVINT32 of Int32.int
+      NVINT8 of Int8.int
+    | NVINT16 of Int16.int
+    | NVINT32 of Int32.int
     | NVINT64 of Int64.int
+    | NVWORD8 of Word8.word
+    | NVWORD16 of Word16.word
     | NVWORD32 of Word32.word
     | NVWORD64 of Word64.word
     | NVCONTAG of Word32.word
-    | NVWORD8 of Word8.word
-    | NVREAL of string
-    | NVFLOAT of string
+    | NVREAL64 of string
+    | NVREAL32 of string
     | NVCHAR of Char.char
     | NVUNIT
     | NVNULLPOINTER
@@ -45,6 +50,7 @@ struct
         ty : ty
       }
     | NVFUNENTRY of FunEntryLabel.id
+    | NVEXFUNENTRY of ExternFunSymbol.id
     | NVCALLBACKENTRY of CallbackEntryLabel.id
     | NVTOPDATA of DataLabel.id
     | NVEXTRADATA of ExtraDataLabel.id
@@ -191,18 +197,18 @@ struct
 	resultTy : ty,
         loc : loc
       }
-    | NCLOCALCODE of
+    | NCCATCH of
       {
-        codeLabel : FunLocalLabel.id,
+        catchLabel : FunLocalLabel.id,
         argVarList : varInfo list,
-        codeBodyExp : ncexp,
-        mainExp : ncexp,
+        catchExp : ncexp,
+        tryExp : ncexp,
         resultTy : ty,
         loc : loc
       }
-    | NCGOTO of
+    | NCTHROW of
       {
-        destinationLabel : FunLocalLabel.id,
+        catchLabel : FunLocalLabel.id,
         argExpList : ncexp list,
         resultTy : ty,
         loc : loc
@@ -254,6 +260,20 @@ struct
         weak : bool,
         ty : ty,
         value : topconst option,
+        loc : loc
+      }
+    | NTEXTERNFUN of
+      {
+        id : ExternFunSymbol.id,
+        tyvars : Types.btvEnv,
+        argTyList : ty list,
+        retTy : ty,
+        loc : loc
+      }
+    | NTEXPORTFUN of
+      {
+        id : ExternFunSymbol.id,
+        funId : FunEntryLabel.id,
         loc : loc
       }
     | NTSTRING of
@@ -313,6 +333,7 @@ struct
         closureEnvVar : varInfo option,
         bodyExp : ncexp,
         retTy : ty,
+        gcCheck : bool,
         loc : loc
       }
     | NTCALLBACKFUNCTION of
@@ -336,21 +357,21 @@ struct
   val format_ty
       : ty -> SMLFormat.FormatExpression.expression list
   val formatWithType_ty
-      : Types.btvKind TermFormat.btvEnv
+      : Types.kind TermFormat.btvEnv
         -> ty -> SMLFormat.FormatExpression.expression list
   val format_primInfo
       : primInfo -> SMLFormat.FormatExpression.expression list
   val formatWithType_primInfo
-      : Types.btvKind TermFormat.btvEnv
+      : Types.kind TermFormat.btvEnv
         -> primInfo -> SMLFormat.FormatExpression.expression list
   val format_varInfo
       : varInfo -> SMLFormat.FormatExpression.expression list
   val formatWithType_varInfo
-      : Types.btvKind TermFormat.btvEnv
+      : Types.kind TermFormat.btvEnv
         -> varInfo -> SMLFormat.FormatExpression.expression list
   val format_ncconst : ncconst -> SMLFormat.FormatExpression.expression list
   val formatWithType_ncconst
-      : Types.btvKind TermFormat.btvEnv
+      : Types.kind TermFormat.btvEnv
         -> ncconst -> SMLFormat.FormatExpression.expression list
   val format_ncexp : ncexp -> SMLFormat.FormatExpression.expression list
   val format_address : address -> SMLFormat.FormatExpression.expression list

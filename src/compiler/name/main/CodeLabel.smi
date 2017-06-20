@@ -1,12 +1,13 @@
 _require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
 _require local "../../../smlnj-lib/Util/binary-map-fn.smi"
 _require local "../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "../../../smlformat-lib.smi"
 _require local "../../../smlnj-lib/Util/ord-key-sig.sml"
 _require local "../../../smlnj-lib/Util/ord-set-sig.sml"
 _require local "../../../smlnj-lib/Util/ord-map-sig.sml"
+
 _require local "./NameMangle.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
 
 structure FunEntryLabel =
 struct

@@ -1,8 +1,9 @@
-_require "../../../basis.smi"
-_require "../../../compiler-utils/env/main/IEnv.smi"
-_require "../../../compiler-utils/env/main/ISet.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "./GRAPH.sig"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/env/main/IEnv.smi"
+_require local "../../../compiler-utils/env/main/ISet.smi"
+
+_require local "./GRAPH.sig"
 
 structure Graph =
 struct

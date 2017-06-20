@@ -7,7 +7,6 @@ structure CheckEq =
 struct
 local
   structure T = Types
-  structure A = Absyn
   structure TU = TypesUtils
   structure BT = BuiltinTypes
 in
@@ -27,25 +26,26 @@ in
         T.SINGLETONty _ => raise Eqcheck
       | T.BACKENDty _ => raise Eqcheck
       | T.ERRORty  => raise Eqcheck
-      | T.DUMMYty _  => raise Eqcheck
-      | T.DUMMY_RECORDty _  => raise Eqcheck
+      | T.DUMMYty _ => raise Eqcheck
       | T.TYVARty
           (r
              as
-             ref(T.TVAR {lambdaDepth,id,tvarKind,eqKind,occurresIn, utvarOpt = NONE}))
+             ref(T.TVAR {lambdaDepth,id, kind = T.KIND {tvarKind, eqKind, dynKind, reifyKind, subkind}, utvarOpt = NONE}))
         => 
         (case eqKind  of
-           A.NONEQ =>
+           T.NONEQ =>
              r :=
              T.TVAR{
                   lambdaDepth = lambdaDepth, 
                   id = id, 
-                  tvarKind = tvarKind, 
-                  eqKind = A.EQ, 
-                  occurresIn = occurresIn,
+                  kind = T.KIND {tvarKind = tvarKind, 
+                                 eqKind = T.EQ, 
+                                 dynKind=dynKind,
+                                 reifyKind=reifyKind,
+                                 subkind = subkind},
                   utvarOpt = NONE
                   }
-           | A.EQ => ();
+           | T.EQ => ();
           case tvarKind of 
             T.OCONSTkind L =>
               let
@@ -58,9 +58,11 @@ in
                     T.TVAR{
                          lambdaDepth = lambdaDepth, 
                          id = id, 
-                         tvarKind = T.OCONSTkind newL,
-                         eqKind = A.EQ, 
-                         occurresIn = occurresIn,
+                         kind = T.KIND {tvarKind = T.OCONSTkind newL,
+                                        eqKind = T.EQ, 
+                                        dynKind = dynKind,
+                                        reifyKind = reifyKind,
+                                        subkind = subkind},
                          utvarOpt = NONE
                          }
               end
@@ -75,17 +77,21 @@ in
                     T.TVAR{
                          lambdaDepth = lambdaDepth, 
                          id = id, 
-                         tvarKind = T.OPRIMkind {instances = instances,
+                         kind = T.KIND
+                                  {tvarKind = T.OPRIMkind
+                                                {instances = instances,
                                                  operators = operators},
-                         occurresIn = occurresIn,
-                         eqKind = A.EQ, 
+                                   eqKind = T.EQ, 
+                                   dynKind = dynKind,
+                                   reifyKind = reifyKind,
+                                   subkind = subkind},
                          utvarOpt = NONE
                          }
               end
            | _ => ()
         )
-      | T.TYVARty (ref(T.TVAR {eqKind = A.EQ, utvarOpt = SOME _, ...})) => ()
-      | T.TYVARty (ref(T.TVAR {eqKind = A.NONEQ, utvarOpt = SOME _, ...})) =>
+      | T.TYVARty (ref(T.TVAR {kind = T.KIND {eqKind = T.EQ, ...}, utvarOpt = SOME _, ...})) => ()
+      | T.TYVARty (ref(T.TVAR {kind = T.KIND {eqKind = T.NONEQ, ...}, utvarOpt = SOME _, ...})) =>
         (*
           We cannot coerce user specified noneq type variable.
         *)
@@ -102,8 +108,8 @@ in
       | T.POLYty {boundtvars, constraints, body} =>
         (
           BoundTypeVarID.Map.app 
-              (fn {eqKind, ...} =>
-                  (case eqKind of A.NONEQ => raise Eqcheck | A.EQ => ()))
+              (fn T.KIND {eqKind, ...} =>
+                  (case eqKind of T.NONEQ => raise Eqcheck | T.EQ => ()))
               boundtvars;
           checkEq body
         )

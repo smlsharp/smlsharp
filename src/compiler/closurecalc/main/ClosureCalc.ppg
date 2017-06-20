@@ -58,8 +58,12 @@ struct
 
   (*%
    * @params(btvEnv)
+   * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
+   * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
    * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
+   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
+   * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
    * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
    * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
@@ -68,6 +72,7 @@ struct
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
+   * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
    * @formatter(Types.codeEntryTy) Types.format_codeEntryTy
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
@@ -75,16 +80,20 @@ struct
   (*%
    * @prefix formatWithType_
    * @params(btvEnv)
+   * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
+   * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
    * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
+   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
+   * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
    * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
-   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
    * @formatter(char) TermFormat.format_char_ML
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
+   * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
    * @formatter(Types.codeEntryTy) Types.format_codeEntryTy
    * @formatter(Types.callbackEntryTy) Types.format_callbackEntryTy
@@ -98,6 +107,20 @@ struct
       (*% @prefix formatWithType_
        * @format(x) x
        *)
+      CVINT8 of Int8.int
+    | (*%
+       * @format(x) x
+       *)
+      (*% @prefix formatWithType_
+       * @format(x) x
+       *)
+      CVINT16 of Int16.int
+    | (*%
+       * @format(x) x
+       *)
+      (*% @prefix formatWithType_
+       * @format(x) x
+       *)
       CVINT32 of Int32.int
     | (*%
        * @format(x) x
@@ -106,6 +129,20 @@ struct
        * @format(x) x
        *)
       CVINT64 of Int64.int
+    | (*%
+       * @format(x) x
+       *)
+      (*% @prefix formatWithType_
+       * @format(x) x
+       *)
+      CVWORD8 of Word8.word
+    | (*%
+       * @format(x) x
+       *)
+      (*% @prefix formatWithType_
+       * @format(x) x
+       *)
+      CVWORD16 of Word16.word
     | (*%
        * @format(x) x
        *)
@@ -128,26 +165,19 @@ struct
        *)
       CVCONTAG of Word32.word
     | (*%
-       * @format(x) x
-       *)
-      (*% @prefix formatWithType_
-       * @format(x) x
-       *)
-      CVWORD8 of Word8.word
-    | (*%
        * @format(x) x "f"
        *)
       (*% @prefix formatWithType_
        * @format(x) x "f"
        *)
-      CVREAL of string
+      CVREAL64 of string
     | (*%
        * @format(x) x "sf"
        *)
       (*% @prefix formatWithType_
        * @format(x) x "sf"
        *)
-      CVFLOAT of string
+      CVREAL32 of string
     | (*%
        * @format(x) x
        *)
@@ -214,6 +244,18 @@ struct
         codeEntryTy: Types.codeEntryTy
       }
     | (*%
+       * @format({id, codeEntryTy}) "@exfun:" id
+       *)
+      (*% @prefix formatWithType_
+       * @format({id, codeEntryTy}) 
+       * L2{ "@exfun:" id +1 "of" +d codeEntryTy }
+       *)
+      CVEXFUNENTRY of  (* FUNENTRYty *)
+      {
+        id: ExternFunSymbol.id,
+        codeEntryTy: Types.codeEntryTy
+      }
+    | (*%
        * @format({id, callbackEntryTy}) "@cbent:" id
        *)
       (*% @prefix formatWithType_
@@ -270,6 +312,13 @@ struct
        * @format(ty) "_cconvtag(" ty ")"
        *)
       CVCCONVTAG of Types.codeEntryTy   (* CCONVTAGty ty *)
+    | (*%
+       * @format(c1 * c2) "_orb(" c1()(btvEnv) "," c2()(btvEnv) ")"
+       *)
+      (*% @prefix formatWithType_
+       * @format(c1 * c2) "_orb(" c1()(btvEnv) "," c2()(btvEnv) ")"
+       *)
+      CVWORD32_ORB of ccconst * ccconst
 
   (*%
    * @params(btvEnv)
@@ -745,57 +794,56 @@ struct
         loc : loc
       }
     | (*%
-       * @format({codeLabel, argVarList: arg args, codeBodyExp, mainExp,
-       *          resultTy, loc})
-       * L2{ !N0{
-       *   "code" 2[ +1 codeLabel
-       *             +1 args:appList(arg)("{",",","}")
-       *             +d "=" ]
-       *   2[ +1 codeBodyExp()(btvEnv) ]
-       * } }
-       * +1 "in" 2[ +1 !N0{ mainExp()(btvEnv) } ]
-       * +1 "end"
+       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
+       *          loc})
+       * R0{ tryExp()(btvEnv)
+       *     +1 
+       *     !R0{ "_catch" +d
+       *          L8{ catchLabel
+       *              +1 1[ args:appList(arg)("{",",","}") ] }
+       *          +d "=>" 1[ +1 catchExp()(btvEnv) ] } }
        *)
-      (*% @prefix formatWithType_
-       * @format({codeLabel, argVarList: arg args, codeBodyExp, mainExp,
-       *          resultTy, loc})
-       * L2{ !N0{
-       *   "code" 2[ +1 codeLabel
-       *             +1 args:appList(arg()(btvEnv))("{",",","}")
-       *             +d "=" ]
-       *   2[ +1 codeBodyExp()(btvEnv) ]
-       * } }
-       * +1 "in" 2[ +1 !N0{ mainExp()(btvEnv) } ]
-       * +1 "end"
+      (*%
+       * @prefix formatWithType_
+       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
+       *          loc})
+       * L2{
+       *   R0{ tryExp()(btvEnv)
+       *     +1 
+       *     !R0{ "_catch" +d
+       *          L8{ catchLabel
+       *              +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] }
+       *          +d "=>" 1[ +1 catchExp()(btvEnv) ] } }
+       *   +1 ":" +d resultTy()(btvEnv) }
        *)
-      CCLOCALCODE of
+      (* lightweight exception that unwind call stack *)
+      CCCATCH of
       {
-        codeLabel : FunLocalLabel.id,
+        catchLabel : FunLocalLabel.id,
         argVarList : varInfo list,
-        codeBodyExp : ccexp,
-        mainExp : ccexp,
+        catchExp : ccexp,
+        tryExp : ccexp,
         resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({destinationLabel, argExpList: arg args, resultTy, loc})
-       * L8{ 2[
-       *   "goto"
-       *   +1 destinationLabel
-       *   +1 args:appList(arg()(btvEnv))("{",",","}")
-       * ] }
+       * @format({catchLabel, argExpList: arg args, resultTy, loc})
+       * R0{ "_throw"
+       *     1[ +1 L8{ catchLabel
+       *               +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] } ] }
        *)
       (*% @prefix formatWithType_
-       * @format({destinationLabel, argExpList: arg args, resultTy, loc})
-       * L8{ 2[
-       *   "goto"
-       *   +1 destinationLabel
-       *   +1 args:appList(arg()(btvEnv))("{",",","}")
-       * ] }
+       * @format({catchLabel, argExpList: arg args, resultTy, loc})
+       * L2{
+       *   R0{ "_throw"
+       *     1[ +1 L8{ catchLabel
+       *               +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] } ] }
+       *   +1 ":" +d resultTy()(btvEnv) }
        *)
-      CCGOTO of
+      (* lightweight exception that does not unwind call stack *)
+      CCTHROW of
       {
-        destinationLabel : FunLocalLabel.id,
+        catchLabel : FunLocalLabel.id,
         argExpList : ccexp list,
         resultTy : ty,
         loc : loc
@@ -854,12 +902,14 @@ struct
   (*%
    * @formatter(makeBtvEnv) TermFormat.makeBtvEnv
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
+   * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
    * @formatter(option) SmlppgUtil.formatOptWithDefault
    * @formatter(appList) TermFormat.formatAppList
    *)
   (*% @prefix formatWithType_
    * @formatter(makeBtvEnv) TermFormat.makeBtvEnv
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
+   * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
    * @formatter(option) SmlppgUtil.formatOptWithDefault
    * @formatter(appList) TermFormat.formatAppList
    *)
@@ -893,14 +943,24 @@ struct
         loc : loc
       }
     | (*%
-       * @format({id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
+       * @format({id, tyvarKindEnv, argVarList: arg args,
+       *          closureEnvVar: env envOpt, bodyExp,
        *          attributes, retTy, loc})
-       * "CTCALLBACKFUNCTION"
+       * "@cbent:" id
+       * + envOpt(env)("_")
+       * + args:appList(arg)("(",",",")")
+       * + "="
+       * 1[ +1 bodyExp()(tyvarKindEnv:makeBtvEnv) ]
        *)
       (*% @prefix formatWithType_
-       * @format({id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
+       * @format({id, tyvarKindEnv, argVarList: arg args,
+       *          closureEnvVar: env envOpt, bodyExp,
        *          attributes, retTy, loc})
-       * "CTCALLBACKFUNCTION"
+       * "@cbent:" id
+       * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
+       * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
+       * + "="
+       * 1[ +1 bodyExp()(tyvarKindEnv:makeBtvEnv) ]
        *)
       CTCALLBACKFUNCTION of
       {
@@ -921,6 +981,8 @@ struct
    * @formatter(appList) TermFormat.formatAppList
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
+   * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
+   * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(string) TermFormat.format_string_ML
    * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
@@ -931,9 +993,13 @@ struct
    * @formatter(appList) TermFormat.formatAppList
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
+   * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
+   * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(string) TermFormat.format_string_ML
    * @formatter(ty) format_ty
    * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(Types.btvEnv) Types.format_btvEnv
+   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    *)
   datatype topdata =
       (*%
@@ -968,6 +1034,45 @@ struct
         weak : bool,
         ty : ty,
         value : topconst option,
+        loc : loc
+      }
+    | (*%
+       * @format({id, tyvars, argTyList, retTy, loc})
+       * "@exfun:" id
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({id, tyvars, argTyList: argTy argTys, retTy, loc})
+       * L2{ "@exfun:" id 1[ +1 ":" +d
+       *   "[" !N0{ 2[
+       *     {tyvars()() "."}
+       *     +1
+       *     argTys:appList(argTy()(tyvars:extendBtvEnv()()))("{",",","}")
+       *     +1 "->" +d retTy()(tyvars:extendBtvEnv()())
+       *   ] "]" }
+       * ] }
+       *)
+      CTEXTERNFUN of
+      {
+        id : ExternFunSymbol.id,
+        tyvars : Types.btvEnv,
+        argTyList : ty list,
+        retTy : ty,
+        loc : loc
+      }
+    | (*%
+       * @format({id, funId, loc})
+       * "@exfun:" id + "=" +d funId
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({id, funId, loc})
+       * "@exfun:" id + "=" +d funId
+       *)
+      CTEXPORTFUN of
+      {
+        id : ExternFunSymbol.id,
+        funId : FunEntryLabel.id,
         loc : loc
       }
     | (*%

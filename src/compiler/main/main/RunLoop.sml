@@ -32,6 +32,8 @@ struct
   fun userErrorToString e =
       Bug.prettyPrint (UserError.format_errorInfo e)
 
+  val isatty = _import "isatty" : int -> int
+
   val sml_run = _import "sml_run" : () -> ()
 
   datatype result =
@@ -117,8 +119,11 @@ struct
       in
         (
           load options module handle OS.SysErr (m, _) => raise DLError m;
-          sml_run () handle e => raise UncaughtException e;
+          sml_run ()
+          handle e => raise UncaughtException e;
+(*
           PrintTopEnv.printTopEnv (#topEnv newContext);
+*)
           SUCCESS newContext
         )
         handle e =>
@@ -143,12 +148,15 @@ struct
   fun initInteractive () =
       let
         val lineCount = ref 1
+        val isTTY = isatty 0 <> 0
         val eof = ref false
         fun read (isFirst, _:int) =
             let
               val prompt = if isFirst then "# " else "> "
-              val _ = TextIO.output (TextIO.stdOut, prompt)
-              val _ = TextIO.flushOut TextIO.stdOut
+              val _ = if isTTY
+                      then (TextIO.output (TextIO.stdOut, prompt);
+                            TextIO.flushOut TextIO.stdOut)
+                      else ()
               val line = TextIO.inputLine TextIO.stdIn
               val _ = lineCount := !lineCount + 1
             in

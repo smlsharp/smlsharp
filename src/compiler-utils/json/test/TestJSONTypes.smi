@@ -1,0 +1,9 @@
+_require "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../../debug/main/Bug.ppg.smi"
+_require "../../../compiler/control/main/Control.ppg.smi"
+_require "../main/JSONTypes.ppg.smi"
+structure TestJSONTypes =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

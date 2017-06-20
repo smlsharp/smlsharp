@@ -8,7 +8,6 @@
 structure Option =
 struct
 
-  datatype option = datatype option
   exception Option
 
   fun getOpt (SOME value, _) = value
@@ -46,5 +45,7 @@ struct
          case g value of
            NONE => NONE
          | SOME value => f value
+
+  datatype option = datatype option
 
 end

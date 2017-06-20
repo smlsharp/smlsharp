@@ -1,10 +1,11 @@
-_require "../../../basis.smi"
+_require local "../../../basis.smi"
+_require local "../../util/main/TermFormat.smi"
+
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../util/main/TermFormat.smi"
 _require "../../toolchain/main/Filename.smi"
-_require "./Symbol.ppg.smi"
 _require "./Absyn.ppg.smi"
 _require "./InterfaceName.ppg.smi"
 

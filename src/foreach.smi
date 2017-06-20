@@ -1,0 +1,3 @@
+include "./compiler-utils/foreach/main/Foreach.smi"
+include "./compiler-utils/foreach/main/ForeachData.smi"
+include "./compiler-utils/foreach/main/ForeachArray.smi"

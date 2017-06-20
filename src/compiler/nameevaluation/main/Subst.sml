@@ -193,22 +193,23 @@ in
       = case tvarKind of
           I.UNIV => I.UNIV
         | I.REC fields => I.REC (RecordLabel.Map.map (substTy subst) fields)
-        | I.JSON => I.JSON
+        | I.JSON x => I.JSON x
+        | I.REIFY => I.REIFY
         | I.BOXED => I.BOXED
         | I.UNBOXED => I.UNBOXED
+
     fun substExnId (subst:subst)  id =
         case ExnID.Map.find(#exnIdS subst, id) of
           SOME newId => newId
         | NONE => id
-    fun substExInfo subst {longsymbol, ty, version} =
-        {longsymbol=longsymbol, ty=substTy subst ty, version=version}
+    fun substExInfo subst {used, longsymbol, ty, version} =
+        {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=version}
     fun substIdstatus subst idstatus = 
         case idstatus of
           I.IDVAR _ => idstatus
         | I.IDVAR_TYPED _ => idstatus
-        | I.IDEXVAR {exInfo, used, internalId} => 
-          I.IDEXVAR {exInfo=substExInfo subst exInfo, used = ref (!used), 
-                     internalId=internalId}
+        | I.IDEXVAR {exInfo, internalId} => 
+          I.IDEXVAR {exInfo=substExInfo subst exInfo, internalId=internalId}
         | I.IDEXVAR_TOBETYPED {longsymbol, id, version} => idstatus
         | I.IDBUILTINVAR {primitive, ty} =>
           I.IDBUILTINVAR {primitive=primitive, ty=substTy subst ty}
@@ -223,10 +224,10 @@ in
           end
         | I.IDEXNREP {id, longsymbol, ty} =>
           I.IDEXNREP {id=substExnId subst id, longsymbol=longsymbol,ty=substTy subst ty}
-        | I.IDEXEXN ({longsymbol, ty, version},used) => 
-          I.IDEXEXN ({longsymbol=longsymbol, ty=substTy subst ty, version=version}, ref (!used))
-        | I.IDEXEXNREP ({longsymbol, ty, version},used) => 
-          I.IDEXEXNREP ({longsymbol=longsymbol, ty=substTy subst ty, version=version}, ref (!used))
+        | I.IDEXEXN {used, longsymbol, ty, version} => 
+          I.IDEXEXN {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=version}
+        | I.IDEXEXNREP {used, longsymbol, ty, version} => 
+          I.IDEXEXNREP {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=version}
         | I.IDOPRIM {id, overloadDef, used, longsymbol} =>
           I.IDOPRIM {id=id, overloadDef=overloadDef, used = ref (!used),
                      longsymbol=longsymbol}
@@ -321,7 +322,8 @@ in
     = case tvarKind of
         I.UNIV => I.UNIV
       | I.REC fields => I.REC (RecordLabel.Map.map (substTfvTy tfvSubst) fields)
-      | I.JSON => I.JSON
+      | I.JSON x => I.JSON x
+      | I.REIFY => I.REIFY
       | I.BOXED => I.BOXED
       | I.UNBOXED => I.UNBOXED
 
@@ -330,19 +332,19 @@ in
         I.IDVAR varId => idstatus
       | I.IDVAR_TYPED {id, longsymbol, ty} => 
         I.IDVAR_TYPED {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
-      | I.IDEXVAR {exInfo={longsymbol, version, ty}, used, internalId} => 
-        I.IDEXVAR {exInfo = {longsymbol=longsymbol, version=version, ty = substTfvTy tfvSubst ty},
-                   used=used, internalId=internalId}
+      | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId} => 
+        I.IDEXVAR {exInfo = {used = used, longsymbol=longsymbol, version=version, ty = substTfvTy tfvSubst ty},
+                   internalId=internalId}
       | I.IDEXVAR_TOBETYPED _ => idstatus
       | I.IDBUILTINVAR {primitive, ty} =>
         I.IDBUILTINVAR {primitive=primitive, ty=substTfvTy tfvSubst ty}
       | I.IDCON {id, longsymbol, ty} => I.IDCON {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
       | I.IDEXN {id, longsymbol, ty} => I.IDEXN {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
       | I.IDEXNREP {id, longsymbol, ty} => I.IDEXNREP {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
-      | I.IDEXEXN ({longsymbol, ty, version}, used) => 
-        I.IDEXEXN ({longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, version=version}, used)
-      | I.IDEXEXNREP ({longsymbol, ty, version}, used) => 
-        I.IDEXEXNREP ({longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, version=version}, used)
+      | I.IDEXEXN {used, longsymbol, ty, version} => 
+        I.IDEXEXN {used = used, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, version=version}
+      | I.IDEXEXNREP {used, longsymbol, ty, version} => 
+        I.IDEXEXNREP {used = used, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, version=version}
       | I.IDOPRIM _ => idstatus
       | I.IDSPECVAR {ty, symbol} => I.IDSPECVAR {ty=substTfvTy tfvSubst ty, symbol=symbol}
       | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=substTfvTy tfvSubst ty, symbol=symbol}

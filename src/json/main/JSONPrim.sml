@@ -1,3 +1,0 @@
-structure JSONPrim =
-struct
-end

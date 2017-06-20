@@ -55,9 +55,9 @@ struct
 
   local
     fun userErrorToString e =
-        Control.prettyPrint (UserError.format_errorInfo e)
+        Bug.prettyPrint (UserError.format_errorInfo e)
     fun locToString loc =
-        Control.prettyPrint (Loc.format_loc loc)
+        Bug.prettyPrint (Loc.format_loc loc)
 (*
     fun printExnHistory e =
         case rev (SMLofNJ.exnHistory e) of

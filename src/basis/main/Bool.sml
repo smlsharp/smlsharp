@@ -8,8 +8,6 @@
 structure Bool =
 struct
 
-  datatype bool = datatype bool
-
   fun not true = false
     | not false = true
 
@@ -30,6 +28,7 @@ struct
               SOME (#"r", strm) => true2 strm
             | SOME (#"R", strm) => true2 strm
             | _ => NONE
+
         fun false4 strm =
             case getc strm of
               SOME (#"e", strm) => SOME (false, strm)
@@ -64,5 +63,7 @@ struct
 
   fun toString true = "true"
     | toString false = "false"
+
+  datatype bool = datatype bool
 
 end

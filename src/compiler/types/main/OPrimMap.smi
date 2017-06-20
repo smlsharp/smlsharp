@@ -1,8 +1,10 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
 _require local "./Types.ppg.smi"
+
+_require "../../../basis.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require "../../../smlnj-lib/Util/binary-map-fn.smi"
+
 
 structure OPrimOrd =
   struct

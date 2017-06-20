@@ -51,7 +51,7 @@ end =
 struct
 local
   structure C = Control
-  structure A = Absyn
+  structure A = AbsynConst
   structure T = Types
   structure PC = PatternCalc
   structure TC = TypedCalc
@@ -61,13 +61,27 @@ local
   structure UE = UserError
   structure BT = BuiltinTypes
   structure ME = MatchError
+  structure S = Symbol
   fun bug s = Bug.Bug ("MatchCompiler: " ^ s)
   type path = Symbol.longsymbol
-  type constant = Absyn.constant
+  type constant = A.constant
   type conInfo = T.conInfo
 
   val pos = Loc.makePos {fileName="MatchCompiler.sml", line=0, col=0}
   val loc = (pos,pos)
+
+  fun systemModeError (loc, ruleList) =
+      raise 
+        UserError.UserErrors
+        [(loc,
+          UserError.Error,
+          MatchError.MatchError
+            ("Fancy pattern not allowed in the operating system coding mode:", 
+             map (fn {args, body} => ((args, body), ref 1))
+                 ruleList
+            )
+         )
+        ]
 
   fun newLocalId () = VarID.generate ()
   fun newVarName s = Symbol.generateWithPrefix (s ^ "_T_")
@@ -122,6 +136,10 @@ local
             | TC.TPMODIFY {recordExp,elementExp,...} =>
               get(elementExp, get(recordExp, set))
             | TC.TPSEQ {expList, expTyList, loc} => foldl get set expList 
+            | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+              get (data, get (iterator, (get (pred, set))))
+            | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+              get (data, get (whereParam, get (iterator, (get (pred, set)))))
             | TC.TPMONOLET {binds, bodyExp, loc} =>
               get(bodyExp,foldl(fn ((var,exp),set) => get(exp,set)) set binds)
             | TC.TPLET {decls, body, tys, loc} =>
@@ -137,6 +155,11 @@ local
             | TC.TPFFIIMPORT {funExp=TC.TPFFIEXTERN _, ffiTy, stubTy, loc} => set
             | TC.TPCAST ((tpexp, expTy), ty, loc) => get(tpexp, set)
             | TC.TPSIZEOF (ty, loc) => set
+            | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+              get (arg1, get (arg2, set))
+            | TC.TPTYPEOF (ty, loc) => set
+            | TC.TPREIFYTY (ty, loc) => set
+            | TC.TPJSON {exp,ty,coerceTy,loc} => get (exp, set)
         and getDecl (decl, set) =
             case decl of
               TC.TPVAL (valIdTpexpList, loc) =>
@@ -283,6 +306,10 @@ in
             limitCheck (Exp tpexp1 :: Exp tpexp2 :: itemList) (n + 1)
         | TC.TPSEQ {expList, ...} =>
             limitCheck (map Exp expList @ itemList) (n + 1)
+        | TC.TPFOREACH {data, iterator, pred, ...} =>
+            limitCheck (Exp data :: Exp iterator :: Exp pred :: itemList) (n + 1)
+        | TC.TPFOREACHDATA {data, whereParam, iterator, pred, ...} =>
+            limitCheck (Exp data :: Exp whereParam :: Exp iterator :: Exp pred :: itemList) (n + 1)
         | TC.TPMONOLET {binds=(varIdInfo,tpexp1)::varIdInfotpexpList, 
                       bodyExp=tpexp2, 
                       loc} =>
@@ -325,9 +352,14 @@ in
         | TC.TPFFIIMPORT {funExp=TC.TPFFIEXTERN _, ...} =>
           limitCheck itemList (n + 1)
         | TC.TPSIZEOF _ => limitCheck itemList (n + 1)
+        | TC.TPTYPEOF _ => limitCheck itemList (n + 1)
+        | TC.TPREIFYTY _ => limitCheck itemList (n + 1)
         | TC.TPCAST ((tpexp, expTy), ty, loc) =>
           limitCheck (Exp tpexp :: itemList) (n + 1)
-
+        | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+          limitCheck (Exp arg1 :: Exp arg2 :: itemList) (n + 1)
+        | TC.TPJSON {exp,ty,coerceTy,loc} =>
+          limitCheck (Exp exp :: itemList) (n + 1)
 
       and limitCheckDecl tfpdecl itemList n = 
         case tfpdecl of
@@ -382,10 +414,10 @@ in
   fun getFieldsOfTy (btvEnv : T.btvEnv) ty =
       case TB.derefTy ty of
         T.RECORDty fields => fields
-      | T.TYVARty(ref(T.TVAR{tvarKind = T.REC fields, ...})) => fields
+      | T.TYVARty(ref(T.TVAR{kind = T.KIND {tvarKind = T.REC fields, ...}, ...})) => fields
       | T.BOUNDVARty index =>
         (case BoundTypeVarID.Map.find (btvEnv, index) of
-           SOME{tvarKind = T.REC fields, ...} => fields
+           SOME (T.KIND {tvarKind = T.REC fields, ...}) => fields
          | _ =>
            raise
              Bug.Bug
@@ -1253,6 +1285,13 @@ in
         RC.RCEXEXN_CONSTRUCTOR {exExnInfo=exExnInfo,loc=loc}
       | TC.TPCASEM {expList, expTyList, ruleList, ruleBodyTy, caseKind, loc} =>
 	 let
+(* 徳永君，systemModeError関数を，locとruleListを引数として呼び出すと，
+  (interactive):5.0-5.28 Error:
+    Fancy pattern not allowed in the operating system coding mode:
+        :: ((1, 2), nil ) => ...
+のようなエラーメッセージを出力してコンパイルが終了します．
+           val _ = systemModeError (loc, ruleList)
+*)
 	   val (topVarList, topBinds) = 
                foldr
                  (fn ((exp, ty1), (topVarList, topBinds))
@@ -1424,6 +1463,26 @@ in
             expTyList=expTyList, 
             loc=loc
            }
+       | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+         RC.RCFOREACH
+           {data = tpexpToRcexp varEnv btvEnv data,
+            dataTy = dataTy,
+            iterator = tpexpToRcexp varEnv btvEnv iterator,
+            iteratorTy = iteratorTy,
+            pred = tpexpToRcexp varEnv btvEnv pred,
+            predTy = predTy,
+            loc = loc}
+       | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+         RC.RCFOREACHDATA
+           {data = tpexpToRcexp varEnv btvEnv data,
+            dataTy = dataTy,
+            whereParam = tpexpToRcexp varEnv btvEnv whereParam,
+            whereParamTy = whereParamTy,
+            iterator = tpexpToRcexp varEnv btvEnv iterator,
+            iteratorTy = iteratorTy,
+            pred = tpexpToRcexp varEnv btvEnv pred,
+            predTy = predTy,
+            loc = loc}
       | TC.TPMONOLET {binds, bodyExp, loc} => 
 	RC.RCMONOLET
           {
@@ -1493,8 +1552,23 @@ in
           RC.RCFFI (RC.RCFFIIMPORT {funExp=funExp, ffiTy=ffiTy}, stubTy, loc)
         end
       | TC.TPSIZEOF (ty, loc) => RC.RCSIZEOF (ty, loc)
+      | TC.TPTYPEOF (ty, loc) => RC.RCTYPEOF (ty, loc)
+      | TC.TPREIFYTY (ty, loc) => RC.RCREIFYTY (ty, loc)
       | TC.TPCAST ((exp, expTy), ty, loc) =>
-         RC.RCCAST((tpexpToRcexp varEnv btvEnv exp, expTy), ty, loc)
+        RC.RCCAST((tpexpToRcexp varEnv btvEnv exp, expTy), ty, loc)
+      | TC.TPJOIN {ty, args = (arg1, arg2), argtys = (argty1, argty2), loc} =>
+        RC.RCJOIN 
+          {
+           ty=ty,
+           args=(tpexpToRcexp varEnv btvEnv arg1, tpexpToRcexp varEnv btvEnv arg2),
+           argTys=(argty1,argty2),
+           loc=loc
+          }
+      | TC.TPJSON {exp,ty,coerceTy,loc} =>
+        RC.RCJSON {exp=tpexpToRcexp varEnv btvEnv exp,
+                   ty=ty,
+                   coerceTy=coerceTy,
+                   loc=loc}
 
   and tpdecToRcdec varEnv btvEnv tpdec = 
       case tpdec of

@@ -1,6 +1,5 @@
 structure Option =
 struct
-  datatype option = datatype option
   exception Option
   val getOpt : 'a option * 'a -> 'a
   val isSome : 'a option -> bool
@@ -12,4 +11,5 @@ struct
   val mapPartial : ('a -> 'b option) -> 'a option -> 'b option
   val compose : ('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option
   val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
+  datatype option = datatype option
 end

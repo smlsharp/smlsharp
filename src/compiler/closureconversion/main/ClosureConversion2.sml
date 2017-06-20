@@ -49,8 +49,8 @@ struct
       | C.CCRAISE _ => false
       | C.CCHANDLE _ => false
       | C.CCSWITCH _ => false
-      | C.CCLOCALCODE _ => false
-      | C.CCGOTO _ => false
+      | C.CCCATCH _ => false
+      | C.CCTHROW _ => false
       | C.CCCAST {exp, expTy, targetTy, cast, loc} => isAtomic exp
       | C.CCEXPORTVAR _ => false
 
@@ -139,16 +139,15 @@ struct
                     unionSet (fv, fvExp bv branchExp))
                 (fvExpList bv [switchExp, defaultExp])
                 branches
-        | C.CCLOCALCODE {codeLabel, argVarList, codeBodyExp, mainExp,
-                         resultTy, loc} =>
+        | C.CCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
           let
             val bv2 = foldl (fn ({id,...},z) => VarID.Set.add (z,id))
                             bv
                             argVarList
           in
-            unionSet (fvExp bv2 codeBodyExp, fvExp bv mainExp)
+            unionSet (fvExp bv2 catchExp, fvExp bv tryExp)
           end
-        | C.CCGOTO {destinationLabel, argExpList, resultTy, loc} =>
+        | C.CCTHROW {catchLabel, argExpList, resultTy, loc} =>
           fvExpList bv argExpList
         | C.CCCAST {exp, expTy, targetTy, cast, loc} =>
           fvExp bv exp
@@ -298,22 +297,21 @@ struct
            defaultExp = substExp subst defaultExp,
            resultTy = resultTy,
            loc = loc}
-      | C.CCLOCALCODE {codeLabel, argVarList, codeBodyExp, mainExp,
-                       resultTy, loc} =>
+      | C.CCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         let
           val subst2 = foldl (fn (x,z) => remove (z, #id x)) subst argVarList
         in
-          C.CCLOCALCODE
-            {codeLabel = codeLabel,
+          C.CCCATCH
+            {catchLabel = catchLabel,
              argVarList = argVarList,
-             codeBodyExp = substExp subst2 codeBodyExp,
-             mainExp = substExp subst mainExp,
+             catchExp = substExp subst2 catchExp,
+             tryExp = substExp subst tryExp,
              resultTy = resultTy,
              loc = loc}
         end
-      | C.CCGOTO {destinationLabel, argExpList, resultTy, loc} =>
-        C.CCGOTO
-          {destinationLabel = destinationLabel,
+      | C.CCTHROW {catchLabel, argExpList, resultTy, loc} =>
+        C.CCTHROW
+          {catchLabel = catchLabel,
            argExpList = map (substExp subst) argExpList,
            resultTy = resultTy,
            loc = loc}
@@ -338,11 +336,13 @@ struct
         C.DYNAMICCALL {cconvTag = substExp subst cconvTag,
                        wrapper = substExp subst wrapper}
 
+  fun wordConst w loc =
+      C.CCCONST {const = C.CVWORD32 w, ty = BuiltinTypes.wordTy, loc = loc}
+
   fun toCcexp loc value =
       case value of
         SingletonTyEnv2.CONST n =>
-        (C.CCCONST {const = C.CVWORD32 n, ty = BuiltinTypes.wordTy, loc = loc},
-         BuiltinTypes.wordTy)
+        (wordConst n loc,  BuiltinTypes.wordTy)
       | SingletonTyEnv2.VAR v =>
         (C.CCVAR {varInfo = v, loc = loc}, #ty v)
       | SingletonTyEnv2.TAG (ty, n) =>
@@ -352,9 +352,7 @@ struct
          T.SINGLETONty (T.TAGty ty))
       | SingletonTyEnv2.SIZE (ty, n) =>
         (C.CCCAST
-           {exp = C.CCCONST {const = C.CVWORD32 (Word32.fromInt n),
-                             ty = BuiltinTypes.wordTy,
-                             loc = loc},
+           {exp = wordConst (Word32.fromInt n) loc,
             expTy = BuiltinTypes.wordTy,
             targetTy = T.SINGLETONty (T.SIZEty ty),
             cast = BuiltinPrimitive.TypeCast,
@@ -411,6 +409,31 @@ struct
         C.CCCONST {const = const, ty = ty, loc = loc}
       end
 
+  local
+    fun primapply prim (exp1ty, exp2ty) (exp1, exp2) loc =
+        C.CCPRIMAPPLY
+          {primInfo =
+             {primitive = P.R prim,
+              ty = {boundtvars = BoundTypeVarID.Map.empty,
+                    argTyList = [exp1ty, exp2ty],
+                    resultTy = BuiltinTypes.wordTy}},
+           argExpList = [exp1, exp2],
+           instTyList = nil,
+           instTagList = nil,
+           instSizeList = nil,
+           loc = loc}
+    fun primop2 prim exps loc =
+        primapply (P.M prim) (BuiltinTypes.wordTy, BuiltinTypes.wordTy) exps loc
+  in
+  fun word32_orb (exp1, exp2, loc) = primop2 P.Word32_orb (exp1, exp2) loc
+  fun word32_andb (exp1, exp2, loc) = primop2 P.Word32_andb (exp1, exp2) loc
+  fun word32_deref (exp1, exp2, loc) =
+      primapply P.Boxed_deref
+                (BuiltinTypes.boxedTy, BuiltinTypes.wordTy)
+                (exp1, exp2)
+                loc
+  end (* local *)
+
   datatype top =
       DEC of C.topdec
     | DATA of C.topdata
@@ -441,9 +464,12 @@ struct
         (P.R (P.M P.Word32_add), [], [e1, e2]) =>
         (C.CVWORD32 (Word32.+ (expToWord e1, expToWord e2)), resultTy)
       | (P.R (P.M P.Word32_andb), [], [e1, e2]) =>
-        (C.CVWORD32 (Word32.orb (expToWord e1, expToWord e2)), resultTy)
+        (C.CVWORD32 (Word32.andb (expToWord e1, expToWord e2)), resultTy)
       | (P.R (P.M P.Word32_orb), [], [e1, e2]) =>
-        (C.CVWORD32 (Word32.orb (expToWord e1, expToWord e2)), resultTy)
+        (C.CVWORD32 (Word32.orb (expToWord e1, expToWord e2))
+         handle ExpToConst =>
+                C.CVWORD32_ORB (#1 (expToConst e1), #1 (expToConst e2)),
+         resultTy)
       | (P.R (P.M P.Word32_xorb), [], [e1, e2]) =>
         (C.CVWORD32 (Word32.xorb (expToWord e1, expToWord e2)), resultTy)
       | (P.R (P.M P.Word32_sub), [], [e1, e2]) =>
@@ -640,6 +666,38 @@ struct
          bitmaps = bitmapList}
       end
 
+  fun addExtraBitmapBit (recordTy, bitmap0Exp, extraBitsExp, loc) =
+      C.CCCAST
+        {exp = word32_orb
+                 (C.CCCAST
+                    {exp = bitmap0Exp,
+                     expTy = T.BACKENDty (T.RECORDBITMAPty (0, recordTy)),
+                     targetTy = BuiltinTypes.wordTy,
+                     cast = BuiltinPrimitive.TypeCast,
+                     loc = loc},
+                  extraBitsExp,
+                  loc),
+         expTy = BuiltinTypes.wordTy,
+         targetTy = T.BACKENDty (T.RECORDBITMAPty (0, recordTy)),
+         cast = BuiltinPrimitive.TypeCast,
+         loc = loc}
+
+  fun readBitmap0 (recordTy, recordExp, bitmap0IndexExp, loc) =
+      word32_deref
+        (C.CCCAST
+           {exp = recordExp,
+            expTy = recordTy,
+            targetTy = BuiltinTypes.boxedTy,
+            cast = BuiltinPrimitive.TypeCast,
+            loc = loc},
+         C.CCCAST
+           {exp = bitmap0IndexExp,
+            expTy = T.BACKENDty (T.RECORDBITMAPINDEXty (0, recordTy)),
+            targetTy = BuiltinTypes.wordTy,
+            cast = BuiltinPrimitive.TypeCast,
+            loc = loc},
+         loc)
+
   fun makeTuple accum fields loc =
       let
         val {fieldList, recordTy, allocSizeExp, bitmaps} =
@@ -718,11 +776,13 @@ struct
   fun makeClosureEnvRecord accum styEnv (freeVars, loc) =
       let
         val fields = sortFields (envFields styEnv freeVars)
-        (* Allocate the maximum size to polymorphic fields in closure 
-         * environment records in order to eliminate the cost of dynamic
+        (* Allocate the maximum size to polymorphic fields in closure
+         * environment records in order to reduce the cost of dynamic
          * record layout computation.  Since closure environment records
-         * are never passed to C functions, the accurate field size is
-         * not needed. *)
+         * are never passed to C functions, its accurate layout is not
+         * needed.  In contrast to field sizes, the bitmap of closure
+         * environment records would be computed at runtime; therefore,
+         * we need to deal with RecordLayout2.computationAccum. *)
         val tupleFields =
             map (fn {var as {ty,...}, tag, usize, ...} =>
                     {exp = C.CCVAR {varInfo=var, loc=loc},
@@ -820,6 +880,16 @@ struct
        codeEntryTy = codeEntryTy # {haveClsEnv = isSome var}}
       : static_closure
 
+  fun decomposeExFunEntry (x as {id, codeEntryTy}) loc =
+      let
+        val ty = T.BACKENDty (T.FUNENTRYty codeEntryTy)
+        val const = C.CVEXFUNENTRY x
+      in
+        {codeExp = C.CCCONST {const = const, ty = ty, loc = loc},
+         closureEnvExp = nullClosureEnvExp loc,
+         cconv = C.STATICCALL codeEntryTy}
+      end
+
   fun decomposeStaticClosure ({id, closureEnvVar, codeEntryTy}:static_closure)
                              loc =
       {codeExp = funEntryExp (id, codeEntryTy, loc),
@@ -843,10 +913,10 @@ struct
                       targetTy = T.BACKENDty T.SOME_FUNENTRYty,
                       cast = BuiltinPrimitive.BitCast,
                       loc = loc}
-        val cconvExp =
+        val cconvWordExp =
             C.CCCAST {exp = cconvTagExp (codeEntryTy, loc),
                       expTy = T.BACKENDty (T.CCONVTAGty codeEntryTy),
-                      targetTy = T.BACKENDty T.SOME_CCONVTAGty,
+                      targetTy = BuiltinTypes.wordTy,
                       cast = BuiltinPrimitive.TypeCast,
                       loc = loc}
         val wrapperExp = funWrapperExp (id, codeEntryTy, loc)
@@ -857,12 +927,20 @@ struct
                      tag = SingletonTyEnv2.findTag styEnv ty,
                      size = SingletonTyEnv2.findSize styEnv ty})
                 [(closureEnvExp, T.BACKENDty T.SOME_CLOSUREENVty),
-                 (cconvExp, T.BACKENDty T.SOME_CCONVTAGty),
                  (entryExp, T.BACKENDty T.SOME_FUNENTRYty),
                  (wrapperExp, T.BACKENDty T.SOME_FUNWRAPPERty)]
         val accum = RecordLayout2.newComputationAccum ()
         val record = makeTuple accum fields loc
         val _ = checkNoExtraComputation accum
+        (* pack CCONVTAG into record bitmap *)
+        val bitmaps =
+            case #bitmaps record of
+              [{bitmapIndex, bitmapExp}] =>
+              [{bitmapIndex = bitmapIndex,
+                bitmapExp = addExtraBitmapBit (#recordTy record, bitmapExp,
+                                               cconvWordExp, loc)}]
+            | _ => raise Bug.Bug "makeClosureRecord"
+        val record = record # {bitmaps = bitmaps}
         val (top1, recordExp) = allocRecord (styEnv, path) record
       in
         (top1,
@@ -873,8 +951,9 @@ struct
                    loc = loc})
       end
 
-  fun decomposeClosureRecord styEnv (funExp, funTy) loc =
+  fun decomposeClosureRecord (funExp, funTy) loc =
       let
+        val styEnv = SingletonTyEnv2.emptyEnv
         val accum = RecordLayout2.newComputationAccum ()
         val {fieldList, recordTy, allocSizeExp, bitmaps} =
             computeTupleLayout
@@ -883,7 +962,6 @@ struct
                               size = SingletonTyEnv2.findSize styEnv ty,
                               ty = ty})
                    [T.BACKENDty T.SOME_CLOSUREENVty,
-                    T.BACKENDty T.SOME_CCONVTAGty,
                     T.BACKENDty T.SOME_FUNENTRYty,
                     T.BACKENDty T.SOME_FUNWRAPPERty])
               loc
@@ -904,18 +982,30 @@ struct
                                 resultTag = fieldTag,
                                 loc = loc})
                 fieldList
+        val (closureEnvExp, entryExp, wrapperExp, {bitmapIndex,...}) =
+            case (selectExps, bitmaps) of
+              ([a, b, c], [d]) => (a, b, c, d)
+            | _ => raise Bug.Bug "decomposeClosureRecord"
+        val cconvtagExp =
+            C.CCCAST
+              {exp = word32_andb
+                       (readBitmap0 (recordTy, recordExp, bitmapIndex, loc),
+                        wordConst 0wx80000000 loc,
+                        loc),
+               expTy = BuiltinTypes.wordTy,
+               targetTy = T.BACKENDty T.SOME_CCONVTAGty,
+               cast = BuiltinPrimitive.TypeCast,
+               loc = loc}
       in
-        case selectExps of
-          [closureEnvExp, cconvtagExp, entryExp, wrapperExp] =>
-          {codeExp = entryExp,
-           closureEnvExp = closureEnvExp,
-           cconv = C.DYNAMICCALL {cconvTag = cconvtagExp, wrapper = wrapperExp}}
-        | _ => raise Bug.Bug "decomposeClosureRecord"
+        {codeExp = entryExp,
+         closureEnvExp = closureEnvExp,
+         cconv = C.DYNAMICCALL {cconvTag = cconvtagExp, wrapper = wrapperExp}}
       end
 
   datatype staticEvalResult =
       CLOSURE of static_closure
     | RECCLOSURE of static_closure
+    | EXFUNENTRY of {id : ExternFunSymbol.id, codeEntryTy : T.codeEntryTy}
     | VALUE   (* any others *)
 
   type varEnv = (C.varInfo * C.ccconst option * staticEvalResult) VarID.Map.map
@@ -962,14 +1052,17 @@ struct
 
   fun compileConst (env:env) const loc =
       case const of
-        ConstantTerm.INT32 n => (nil, C.CVINT32 n)
+        ConstantTerm.INT8 n => (nil, C.CVINT8 n)
+      | ConstantTerm.INT16 n => (nil, C.CVINT16 n)
+      | ConstantTerm.INT32 n => (nil, C.CVINT32 n)
       | ConstantTerm.INT64 n => (nil, C.CVINT64 n)
+      | ConstantTerm.WORD8 n => (nil, C.CVWORD8 n)
+      | ConstantTerm.WORD16 n => (nil, C.CVWORD16 n)
       | ConstantTerm.WORD32 n => (nil, C.CVWORD32 n)
       | ConstantTerm.WORD64 n => (nil, C.CVWORD64 n)
       | ConstantTerm.CONTAG n => (nil, C.CVCONTAG n)
-      | ConstantTerm.WORD8 n => (nil, C.CVWORD8 n)
-      | ConstantTerm.REAL n => (nil, C.CVREAL n)
-      | ConstantTerm.FLOAT n => (nil, C.CVFLOAT n)
+      | ConstantTerm.REAL64 n => (nil, C.CVREAL64 n)
+      | ConstantTerm.REAL32 n => (nil, C.CVREAL32 n)
       | ConstantTerm.CHAR c => (nil, C.CVCHAR c)
       | ConstantTerm.UNIT => (nil, C.CVUNIT)
       | ConstantTerm.NULLPOINTER => (nil, C.CVNULLPOINTER)
@@ -987,6 +1080,94 @@ struct
         in
           ([DATA (C.CTSTRING {id = id, string = s, loc = loc})],
            C.CVTOPDATA {id = id, ty = BuiltinTypes.stringTy})
+        end
+
+  fun getFunTy ty =
+      case TypesBasics.derefTy ty of
+        T.FUNMty (argTys, retTy) =>
+        SOME {tyvars = BoundTypeVarID.Map.empty,
+              argTyList = argTys,
+              retTy = retTy}
+      | T.POLYty {boundtvars, constraints, body} =>
+        (case getFunTy body of
+           NONE => NONE
+         | SOME {tyvars, argTyList, retTy} =>
+           SOME {tyvars = BoundTypeVarID.Map.unionWith #2 (boundtvars, tyvars),
+                 argTyList =argTyList,
+                 retTy = retTy})
+      | _ => NONE
+
+  fun exFunCodeEntryTy styEnv {tyvars, argTyList, retTy} : T.codeEntryTy =
+      {tyvars = BoundTypeVarID.Map.unionWith
+                  #2 (SingletonTyEnv2.btvEnv styEnv, tyvars),
+       haveClsEnv = false,
+       argTyList = argTyList,
+       retTy = SOME retTy}
+
+  fun exportFunEntry (styEnv, path) (exvar as {ty, loc, ...}, value) =
+      case getFunTy ty of
+        NONE => nil
+      | SOME (fty as {argTyList, retTy, ...}) =>
+        let
+          val codeEntryTy = exFunCodeEntryTy styEnv fty
+          val funTy = T.FUNMty (argTyList, retTy)
+          val funExp = C.CCCAST {exp = C.CCEXVAR exvar,
+                                 expTy = ty,
+                                 targetTy = funTy,
+                                 cast = BuiltinPrimitive.TypeCast,
+                                 loc = loc}
+          val staticCls =
+              case value of
+                CLOSURE x => SOME x
+              | RECCLOSURE x => SOME x
+              | EXFUNENTRY _ => NONE
+              | VALUE => NONE
+          val (call, funId) =
+              case staticCls of
+                NONE =>
+                (SOME (decomposeClosureRecord (funExp, funTy) loc),
+                 FunEntryLabel.generate path)
+              | SOME {id, closureEnvVar = NONE, ...} => (NONE, id)
+              | SOME cls =>
+                let
+                  val {codeExp, cconv, ...} = decomposeStaticClosure cls loc
+                  val {closureEnvExp, ...} =
+                      decomposeClosureRecord (funExp, funTy) loc
+                in
+                  (SOME {codeExp=codeExp, cconv=cconv,
+                         closureEnvExp=closureEnvExp},
+                   FunEntryLabel.generate path)
+                end
+          val top =
+              DATA (C.CTEXPORTFUN {id = ExternFunSymbol.touch path,
+                                   funId = funId,
+                                   loc = loc})
+        in
+          case call of
+            NONE => [top]
+          | SOME {codeExp, cconv, closureEnvExp} =>
+            let
+              val argVarList = map newVar argTyList
+            in
+              [top,
+               DEC (C.CTFUNCTION
+                      {id = funId,
+                       tyvarKindEnv = #tyvars codeEntryTy,
+                       argVarList = argVarList,
+                       closureEnvVar = NONE,
+                       bodyExp =
+                         C.CCCALL
+                           {codeExp = codeExp,
+                            closureEnvExp = closureEnvExp,
+                            argExpList =
+                              map (fn v => C.CCVAR {varInfo=v, loc=loc})
+                                  argVarList,
+                            cconv = cconv,
+                            funTy = funTy,
+                            loc = loc},
+                       retTy = retTy,
+                       loc = loc})]
+            end
         end
 
   fun compileExp accum env bcexp =
@@ -1107,10 +1288,13 @@ struct
                                    ^ VarID.toString (#id varInfo))
         )
       | B.BCEXVAR {exVarInfo as {path,ty}, loc} =>
-        (nil, VALUE,
-         C.CCEXVAR {id = ExternSymbol.touch path,
-                    ty = ty,
-                    loc = loc})
+        (nil,
+         case getFunTy ty of
+           NONE => VALUE
+         | SOME x =>
+           EXFUNENTRY {id = ExternFunSymbol.touch path,
+                       codeEntryTy = exFunCodeEntryTy (#styEnv env) x},
+         C.CCEXVAR {id = ExternSymbol.touch path, ty = ty, loc = loc})
       | B.BCPRIMAPPLY {primInfo as {primitive,...}, argExpList, instTyList,
                        instTagList, instSizeList, loc} =>
         let
@@ -1125,7 +1309,7 @@ struct
                              instTagList = instTagList,
                              instSizeList = instSizeList,
                              loc = loc}
-          fun array_alloc (mutable, coalescable, ty, tag, size, args) =
+          fun array_alloc (mutable, coalescable, ty, tag, size, args, len) =
               let
                 val (top4, arrayExp) =
                     allocArray (#path env)
@@ -1134,7 +1318,9 @@ struct
                                 isCoalescable = coalescable,
                                 clearPad = false,
                                 initialElements = args,
-                                numElements = intExp (length args) loc,
+                                numElements = case len of
+                                                NONE => intExp (length args) loc
+                                              | SOME e => e,
                                 elemSizeExp = size,
                                 tagExp = tag,
                                 loc = loc}
@@ -1147,11 +1333,13 @@ struct
                 instTagList, instSizeList, argExpList) of
             (true, P.Array_alloc_init, [ty], [tag], [size], args) =>
             (* only toplevel arrays can be allocated statically *)
-            array_alloc (true, false, ty, tag, size, args)
+            array_alloc (true, false, ty, tag, size, args, NONE)
+          | (true, P.R P.Array_alloc_unsafe, [ty], [tag], [size], [lenExp]) =>
+            array_alloc (true, false, ty, tag, size, nil, SOME lenExp)
           | (true, P.Vector_alloc_init_fresh, [ty], [tag], [size], args) =>
-            array_alloc (false, false, ty, tag, size, args)
+            array_alloc (false, false, ty, tag, size, args, NONE)
           | (_, P.Vector_alloc_init, [ty], [tag], [size], args) =>
-            array_alloc (false, true, ty, tag, size, args)
+            array_alloc (false, true, ty, tag, size, args, NONE)
           | _ =>
             (top, VALUE, origResultExp)
         end
@@ -1163,12 +1351,12 @@ struct
               case c of
                 CLOSURE x => (fn x => x, decomposeStaticClosure x loc)
               | RECCLOSURE x => (fn x => x, decomposeStaticClosure x loc)
+              | EXFUNENTRY x => (fn x => x, decomposeExFunEntry x loc)
               | VALUE =>
                 let
                   val (letFn, funExp) = makeBind (funExp, funTy, loc)
                 in
-                  (letFn,
-                   decomposeClosureRecord (#styEnv env) (funExp, funTy) loc)
+                  (letFn, decomposeClosureRecord (funExp, funTy) loc)
                 end
         in
           (top1 @ top2,
@@ -1275,32 +1463,31 @@ struct
                        resultTy = resultTy,
                        loc = loc})
         end
-      | B.BCLOCALCODE {codeLabel, argVarList, codeBodyExp, mainExp, resultTy,
-                       loc} =>
+      | B.BCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         let
           val env2 = addBoundVars (env, argVarList)
-          val (top1, _, codeBodyExp) = compileExp accum env codeBodyExp
-          val (top2, _, mainExp) = compileExp accum env mainExp
+          val (top1, _, catchExp) = compileExp accum env catchExp
+          val (top2, _, tryExp) = compileExp accum env tryExp
         in
           (top1 @ top2,
            VALUE,
-           C.CCLOCALCODE {codeLabel = codeLabel,
-                          argVarList = argVarList,
-                          codeBodyExp = codeBodyExp,
-                          mainExp = mainExp,
-                          resultTy = resultTy,
-                          loc = loc})
+           C.CCCATCH {catchLabel = catchLabel,
+                      argVarList = argVarList,
+                      catchExp = catchExp,
+                      tryExp = tryExp,
+                      resultTy = resultTy,
+                      loc = loc})
         end
-      | B.BCGOTO {destinationLabel, argExpList, resultTy, loc} =>
+      | B.BCTHROW {catchLabel, argExpList, resultTy, loc} =>
         let
           val (top1, argExpList) = compileExpList accum env argExpList
         in
           (top1,
            VALUE,
-           C.CCGOTO {destinationLabel = destinationLabel,
-                     argExpList = argExpList,
-                     resultTy = resultTy,
-                     loc = loc})
+           C.CCTHROW {catchLabel = catchLabel,
+                      argExpList = argExpList,
+                      resultTy = resultTy,
+                      loc = loc})
         end
       | B.BCFNM {argVarList, bodyExp, retTy, loc} =>
         let
@@ -1496,29 +1683,41 @@ struct
   and compileDecl accum env bcdecl =
       case bcdecl of
         B.BCEXTERNVAR {exVarInfo as {path,ty}, loc} =>
-        ([DATA (C.CTEXTERNVAR {id=ExternSymbol.touch path, ty=ty, loc=loc})],
+        (DATA (C.CTEXTERNVAR {id = ExternSymbol.touch path, ty = ty, loc = loc})
+         :: (case getFunTy ty of
+               NONE => nil
+             | SOME {tyvars, argTyList, retTy} =>
+               [DATA (C.CTEXTERNFUN {id = ExternFunSymbol.touch path,
+                                     tyvars = tyvars,
+                                     argTyList = argTyList,
+                                     retTy = retTy,
+                                     loc = loc})]),
          emptyVarEnv,
          nil)
       | B.BCEXPORTVAR {weak, exVarInfo={path,ty}, exp, loc} =>
         let
           val env = setPath (env, path)
-          val (top1, _, exp) = compileExp accum env exp
+          val (top1, c, exp) = compileExp accum env exp
           val value = SOME (expToConst exp) handle ExpToConst => NONE
           val id = ExternSymbol.touch path
+          val binds =
+              case value of
+                SOME _ => nil
+              | NONE =>
+                [{boundVar = newVar BuiltinTypes.unitTy,
+                  boundExp = C.CCEXPORTVAR
+                               {id=id, ty=ty, valueExp=exp, loc=loc},
+                  loc = loc}]
+          val top2 =
+              if weak
+              then nil
+              else exportFunEntry (#styEnv env, path)
+                                  ({id=id, ty=ty, loc=loc}, c)
+          val top3 =
+              [DATA (C.CTEXPORTVAR {id=id, weak=weak, ty=ty, value=value,
+                                    loc=loc})]
         in
-          (top1 @ [DATA (C.CTEXPORTVAR {id=id, weak = weak,
-                                        ty=ty, value=value, loc=loc})],
-           emptyVarEnv,
-           case value of
-             SOME _ => nil
-           | NONE =>
-             [{boundVar = newVar BuiltinTypes.unitTy,
-               boundExp = C.CCEXPORTVAR
-                            {id = id,
-                             ty = ty,
-                             valueExp = exp,
-                             loc = loc},
-               loc = loc}])
+          (top1 @ top2 @ top3, emptyVarEnv, binds)
         end
       | B.BCVAL {boundVar, boundExp = B.BCFNM func, loc} =>
         compileFunc accum env (boundVar, func)

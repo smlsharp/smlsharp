@@ -4,7 +4,7 @@ struct
 local
   structure TC = TypedCalc
   structure T = Types
-  structure A = Absyn
+  structure A = AbsynConst
   fun bug s = Bug.Bug ("TypedCalcSize: " ^ s)
 
   exception Limit
@@ -141,12 +141,21 @@ local
         sizeExp (inc n) exp items
       | TC.TPSEQ {expList, expTyList, loc} =>
         size (inc n) (EXP expList :: items)
+      | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+        size (inc n) (EXP [data, iterator, pred] :: items)
+      | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+        size (inc n) (EXP [data, whereParam, iterator, pred] :: items)
       | TC.TPSIZEOF (ty, loc) => size (inc n) items
       | TC.TPTAPP {exp, expTy, instTyList, loc} =>
         sizeExp (inc n) exp items
       | TC.TPVAR varInfo => size (inc n) items
+      | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+        size (inc n) (EXP [arg1, arg2] :: items)
       (* the following should have been eliminate *)
       | TC.TPRECFUNVAR {arity, var} =>size (inc n) items
+      | TC.TPJSON {exp,ty,coerceTy,loc} => sizeExp (inc n) exp items
+      | TC.TPTYPEOF (ty, loc) => size (inc n) items
+      | TC.TPREIFYTY (ty, loc) => size (inc n) items
       )
   and sizePat n tppat items =
       (checkLimit n;

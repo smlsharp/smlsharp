@@ -1,13 +1,14 @@
-_require "../../../basis.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../name/main/LocalID.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+
+_require local "../../types/main/TypesBasics.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesBasics.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
 _require "./TypedCalc.ppg.smi"
 
 structure TypedCalcUtils =
@@ -20,19 +21,6 @@ structure TypedCalcUtils =
                     -> Types.ty * Types.constraint list * TypedCalc.tpexp
     val freshToplevelInst
         : Types.ty * TypedCalc.tpexp 
-          -> Types.ty * Types.constraint list * TypedCalc.tpexp
-    val freshToplevelGtoundInst
-        : Types.ty * TypedCalc.tpexp 
-          -> Types.ty * Types.constraint list * TypedCalc.tpexp
-    val groundInst
-        : Types.ty * TypedCalc.tpexp 
-          -> Types.ty * Types.constraint list * TypedCalc.tpexp
-    val groundInstTy
-        : Types.ty  -> Types.ty
-    val freshToplevelGtoundTy
-        : Types.ty -> Types.ty
-    val toplevelInstWithInstTy
-        : Types.ty * TypedCalc.tpexp * Types.ty 
           -> Types.ty * Types.constraint list * TypedCalc.tpexp
     val expansive : TypedCalc.tpexp  -> bool
     val isAtom : TypedCalc.tpexp  -> bool

@@ -15,4 +15,8 @@ struct
     | FLOAT
     | UNSUPPORTED of string
 
+  type schema_column = {ty: ty, nullable: bool}
+  type schema_table = string * (string * schema_column) list
+  type schema = schema_table list
+
 end

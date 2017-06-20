@@ -1,15 +1,15 @@
 _require local "../../../basis.smi"
 _require local "../../../smlformat-lib.smi"
-_require local "../../absyn/main/RecordLabel.smi"
-_require local "../../control/main/Bug.ppg.smi"
-_require local "../../control/main/Loc.ppg.smi"
-_require local "../../absyn/main/Absyn.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../types/main/IDCalc.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
 _require local "../../types/main/EvalIty.smi"
-_require "../../types/main/Types.ppg.smi"
 _require local "./BuiltinTypeNames.ppg.smi"
+
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
 
 structure BuiltinTypes =
 struct
@@ -24,6 +24,21 @@ struct
   val intTyCon : Types.tyCon
   val intITy : IDCalc.ty 
   val intTy : Types.ty
+
+  val indexTstrInfo : tstrInfo
+  val indexTyCon : Types.tyCon
+  val indexITy : IDCalc.ty 
+  val indexTy : Types.ty
+
+  val int8TstrInfo : tstrInfo
+  val int8TyCon : Types.tyCon
+  val int8ITy : IDCalc.ty 
+  val int8Ty : Types.ty
+
+  val int16TstrInfo : tstrInfo
+  val int16TyCon : Types.tyCon
+  val int16ITy : IDCalc.ty 
+  val int16Ty : Types.ty
 
   val int64TstrInfo : tstrInfo
   val int64TyCon : Types.tyCon
@@ -40,15 +55,20 @@ struct
   val wordITy : IDCalc.ty
   val wordTy : Types.ty
 
-  val word64TstrInfo : tstrInfo
-  val word64TyCon : Types.tyCon
-  val word64ITy : IDCalc.ty
-  val word64Ty : Types.ty
-       
   val word8TstrInfo : tstrInfo
   val word8TyCon : Types.tyCon
   val word8ITy : IDCalc.ty
   val word8Ty : Types.ty
+       
+  val word16TstrInfo : tstrInfo
+  val word16TyCon : Types.tyCon
+  val word16ITy : IDCalc.ty
+  val word16Ty : Types.ty
+       
+  val word64TstrInfo : tstrInfo
+  val word64TyCon : Types.tyCon
+  val word64ITy : IDCalc.ty
+  val word64Ty : Types.ty
        
   val charTstrInfo : tstrInfo
   val charTyCon : Types.tyCon
@@ -123,6 +143,7 @@ struct
 
   val listTstrInfo : tstrInfo
   val listTyCon : Types.tyCon
+  val listTy : Types.ty
   val consICConInfo : IDCalc.conInfo
   val consTPConInfo : Types.conInfo
   val nilICConInfo : IDCalc.conInfo

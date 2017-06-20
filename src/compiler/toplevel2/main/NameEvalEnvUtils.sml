@@ -28,15 +28,15 @@ struct
          NONE => raise bug "varId not found"
        | SOME (TypedCalc.VARID {ty,...})  => 
          I.IDEXVAR {exInfo={longsymbol=longsymbol,
+                            used = ref false,
                             version=version,
                             ty=I.INFERREDTY ty},
-                    used = ref false,
                     internalId= SOME id}
        | SOME (TypedCalc.RECFUNID ({ty,...},_))  => 
          I.IDEXVAR {exInfo={longsymbol=longsymbol, 
                             version=version,
+                            used = ref false, 
                             ty=I.INFERREDTY ty},
-                    used = ref false, 
                     internalId= SOME id}
       )
     | I.IDEXVAR _ => idstatus
@@ -73,14 +73,14 @@ struct
 
   fun setTyFunE tyVarE funE =
       SymbolEnv.map
-      (fn {id, version, used, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy,
+      (fn {id, version, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy,
                       polyArgTys, typidSet, exnIdSet, bodyEnv, bodyVarExp}
           =>
           let
             val bodyVarExp =
                 case bodyVarExp of
                   I.ICEXVAR_TOBETYPED {longsymbol=internalPath, id,
-                                       exInfo={version, longsymbol}} =>
+                                       exInfo={used, version, longsymbol}} =>
                   let
                     val ty =
                         case VarMap.find(tyVarE, {id=id, longsymbol=longsymbol}) of
@@ -91,13 +91,12 @@ struct
                   in
                     I.ICEXVAR 
                       {longsymbol=internalPath,
-                       exInfo={longsymbol=longsymbol, version=version, ty= ty}}
+                       exInfo={longsymbol=longsymbol, used = used,  version=version, ty= ty}}
                   end
                 | _ => bodyVarExp
           in
             {id=id,
              version = version,
-             used = used,
              argSigEnv = argSigEnv,
              argStrEntry = argStrEntry,
              argStrName = argStrName,
@@ -128,8 +127,8 @@ struct
 
   fun resetInternalIdIdstatus idstatus =
       case idstatus of
-      I.IDEXVAR {exInfo, used, internalId} =>
-      I.IDEXVAR {exInfo=exInfo, used=used, internalId=NONE}
+      I.IDEXVAR {exInfo, internalId} =>
+      I.IDEXVAR {exInfo=exInfo, internalId=NONE}
     | idstatus => idstatus
 
   fun resetInternalIdEnv (V.ENV{varE, strE, tyE}) =

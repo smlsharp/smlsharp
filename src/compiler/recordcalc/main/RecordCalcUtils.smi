@@ -1,15 +1,26 @@
-_require "../../../basis.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesBasics.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+
+_require local "../../types/main/TypesBasics.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+
 _require "./RecordCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+
 
 structure RecordCalcUtils =
 struct
+  exception ToplevelInstWithInstTyList
   val newRCVarInfo : Types.ty -> RecordCalc.varInfo
   val expansive : RecordCalc.rcexp -> bool
   val isAtom : RecordCalc.rcexp -> bool
+  val toplevelInstWithInstTy : {ty:Types.ty, exp:RecordCalc.rcexp, instTy:Types.ty}
+                                -> {ty : Types.ty, exp : RecordCalc.rcexp}
+  val toplevelInstWithInstTyList : {ty:Types.ty, exp:RecordCalc.rcexp, instTyList:Types.ty list}
+                                -> {ty : Types.ty, exp : RecordCalc.rcexp}
+  val groundInst : {ty : Types.ty, exp : RecordCalc.rcexp} 
+                   -> {ty : Types.ty, exp : RecordCalc.rcexp}
 end

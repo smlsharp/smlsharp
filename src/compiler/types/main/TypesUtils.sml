@@ -13,7 +13,6 @@ struct
 local 
   structure T = Types 
   structure TB = TypesBasics
-  structure A = Absyn 
   structure BT = BuiltinTypes
   type ty = T.ty
   type varInfo = T.varInfo
@@ -38,10 +37,9 @@ in
               T.SINGLETONty singletonTy => raise NonEQ
             | T.BACKENDty _ => raise NonEQ
             | T.ERRORty => raise NonEQ
-            | T.DUMMYty dummyTyID => ()
-            | T.DUMMY_RECORDty {id, fields} => RecordLabel.Map.app visit fields
-            | T.TYVARty (ref(T.TVAR {eqKind = A.NONEQ, ...})) => raise NonEQ
-            | T.TYVARty (ref(T.TVAR {eqKind = A.EQ, ...})) => ()
+            | T.DUMMYty (id, kind) => visitKind kind
+            | T.TYVARty (ref(T.TVAR {kind = T.KIND {eqKind = T.NONEQ, ...}, ...})) => raise NonEQ
+            | T.TYVARty (ref(T.TVAR {kind = T.KIND {eqKind = T.EQ, ...}, ...})) => ()
             | T.TYVARty (ref(T.SUBSTITUTED ty)) => visit ty
             | T.BOUNDVARty boundTypeVarID => ()
             | T.FUNMty _ => raise NonEQ 
@@ -53,15 +51,13 @@ in
               else raise NonEQ
             | T.POLYty {boundtvars, constraints, body} =>
               (BoundTypeVarID.Map.app 
-                 (fn {eqKind, tvarKind} => visitTvarKind tvarKind)
+                 visitKind
                  boundtvars;
                visit body)
-        and visitTvarKind tvarKind =
+        and visitKind (T.KIND {tvarKind, subkind, eqKind, reifyKind, dynKind}) =
             case tvarKind of
               T.UNIV => ()
-            | T.JSON => ()
             | T.BOXED => ()
-            | T.UNBOXED => ()
             | T.REC tySenvMap => RecordLabel.Map.app visit tySenvMap
             | T.OCONSTkind tyList => List.app visit tyList
             | T.OPRIMkind {instances, operators} => List.app visit instances
@@ -70,34 +66,25 @@ in
         handle NonEQ => false
       end
 
-  fun coerceTvarkindToEQ tvarKind = 
+  fun coerceTvarKindToEQ tvarKind = 
       let
         fun adjustEqKindInTy eqKind ty = 
             case eqKind of
-              A.NONEQ => ()
-            | A.EQ => 
+              T.NONEQ => ()
+            | T.EQ => 
               let
                 val (_,tyset,_) = TB.EFTV (ty, nil)
               in
                 OTSet.app
-                  (fn (tyvarRef as (ref (T.TVAR
-                                           {
-                                            lambdaDepth =lambdaDepth, 
-                                            id, 
-                                            tvarKind, 
-                                            eqKind,
-                                            occurresIn,
-                                            utvarOpt
-                                           }
+                  (fn (tyvarRef as 
+                       (ref (T.TVAR
+                               {lambdaDepth, id, kind = T.KIND kind, utvarOpt}
                       )))
                       =>
                       tyvarRef := T.TVAR
-                                    {
-                                     lambdaDepth = lambdaDepth, 
-                                     id = id, 
-                                     tvarKind = tvarKind, 
-                                     eqKind = A.EQ,
-                                     occurresIn = occurresIn,
+                                    {lambdaDepth = lambdaDepth, 
+                                     id = id,
+                                     kind = T.KIND (kind # {eqKind = T.EQ}),
                                      utvarOpt = utvarOpt
                                     }
                     | _ =>
@@ -111,9 +98,7 @@ in
         fun adjustEqKindInTvarKind eqKind kind = 
             case kind of
               T.UNIV => ()
-            | T.JSON => ()
             | T.BOXED => ()
-            | T.UNBOXED => ()
             | T.REC fields => 
               RecordLabel.Map.app (adjustEqKindInTy eqKind) fields
             | T.OCONSTkind tyList =>
@@ -121,12 +106,10 @@ in
             | T.OPRIMkind {instances = tyList,...} =>
               List.app (adjustEqKindInTy eqKind) tyList
       in
-        (adjustEqKindInTvarKind A.EQ tvarKind;
+        (adjustEqKindInTvarKind T.EQ tvarKind;
          case tvarKind of
            T.UNIV => T.UNIV
-         | T.JSON => T.JSON
          | T.BOXED => T.BOXED
-         | T.UNBOXED => T.UNBOXED
          | T.REC fields => T.REC fields
          | T.OCONSTkind L =>  
            let

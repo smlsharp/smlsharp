@@ -104,7 +104,7 @@ struct
         val formalTvars =
             map (fn tvarName =>
                     {symbol = mkSymbol tvarName,
-                     eq = Absyn.NONEQ,
+                     eq = T.NONEQ,
                      id = TvarID.generate (),
                      lifted = false})
                 formals
@@ -188,7 +188,28 @@ struct
         {printName = ["int"],
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.INTty}
+         dtyKind = BUILTIN B.INT32ty}
+
+  val (indexTstrInfo, indexTyCon, indexITy, indexTy, _) =
+      makeTfun
+        {printName = ["index"],
+         admitsEq = true,
+         formals = nil,
+         dtyKind = BUILTIN B.INT32ty}
+
+  val (int8TstrInfo, int8TyCon, int8ITy, int8Ty, _) =
+      makeTfun
+        {printName = ["int8"],
+         admitsEq = true,
+         formals = nil,
+         dtyKind = BUILTIN B.INT8ty}
+
+  val (int16TstrInfo, int16TyCon, int16ITy, int16Ty, _) =
+      makeTfun
+        {printName = ["int16"],
+         admitsEq = true,
+         formals = nil,
+         dtyKind = BUILTIN B.INT16ty}
 
   val (int64TstrInfo, int64TyCon, int64ITy, int64Ty, _) =
       makeTfun
@@ -209,14 +230,7 @@ struct
         {printName = ["word"],
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.WORDty}
-
-  val (word64TstrInfo, word64TyCon, word64ITy, word64Ty, _) =
-      makeTfun
-        {printName = ["word64"],
-         admitsEq = true,
-         formals = nil,
-         dtyKind = BUILTIN B.WORD64ty}
+         dtyKind = BUILTIN B.WORD32ty}
 
   val (word8TstrInfo, word8TyCon, word8ITy, word8Ty, _) =
       makeTfun
@@ -224,6 +238,20 @@ struct
          admitsEq = true,
          formals = nil,
          dtyKind = BUILTIN B.WORD8ty}
+
+  val (word16TstrInfo, word16TyCon, word16ITy, word16Ty, _) =
+      makeTfun
+        {printName = ["word16"],
+         admitsEq = true,
+         formals = nil,
+         dtyKind = BUILTIN B.WORD16ty}
+
+  val (word64TstrInfo, word64TyCon, word64ITy, word64Ty, _) =
+      makeTfun
+        {printName = ["word64"],
+         admitsEq = true,
+         formals = nil,
+         dtyKind = BUILTIN B.WORD64ty}
 
   val (charTstrInfo, charTyCon, charITy, charTy, _) =
       makeTfun
@@ -244,7 +272,7 @@ struct
         {printName = ["real"],
          admitsEq = false,
          formals = nil,
-         dtyKind = BUILTIN B.REALty}
+         dtyKind = BUILTIN B.REAL64ty}
 
   val (real32TstrInfo, real32TyCon, real32ITy, real32Ty, _) =
       makeTfun
@@ -341,7 +369,7 @@ struct
       case conList of [x,y] => (x,y) | _ => raise bug "conList bool"
 
   (* datatype 'a list = :: of 'a * 'a list | nil *)
-  val (listTstrInfo, listTyCon, _, _, conList) =
+  val (listTstrInfo, listTyCon, _, listTy, conList) =
       makeTfun
         {printName = ["list"],
          admitsEq = true,
@@ -387,12 +415,16 @@ struct
 
   fun findTstrInfo name =
       case name of
-        "int" => SOME intTstrInfo
+        "index" => SOME indexTstrInfo
+      | "int8" => SOME int8TstrInfo
+      | "int16" => SOME int16TstrInfo
+      | "int" => SOME intTstrInfo
       | "int64" => SOME int64TstrInfo
       | "intInf" => SOME intInfTstrInfo
+      | "word8" => SOME word8TstrInfo
+      | "word16" => SOME word16TstrInfo
       | "word" => SOME wordTstrInfo
       | "word64" => SOME word64TstrInfo
-      | "word8" => SOME word8TstrInfo
       | "char" => SOME charTstrInfo
       | "string" => SOME stringTstrInfo
       | "real" => SOME realTstrInfo

@@ -179,10 +179,8 @@ sml_obj_equal(void *obj1, void *obj2)
 void
 sml_obj_enum_ptr(void *obj, void (*trace)(void **, void *), void *data)
 {
-	unsigned int i, size;
+	unsigned int i;
 	unsigned int *bitmaps;
-
-	size = OBJ_SIZE(obj);
 
 	/*
 	DBG("%p: size=%lu, type=%08x",

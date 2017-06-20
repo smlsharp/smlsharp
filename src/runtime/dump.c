@@ -38,13 +38,13 @@ struct to_space {
 	size_t buf_filled;      /* in bytes */
 	size_t buf_size;        /* in bytes */
 	unsigned char *flags;   /* flags of the corresponding word in buf */
-	char *buf_old;		/* preserved previous buf */
+	char *keep;             /* save previous buf from realloc */
 };
 
 #define TO_SPACE_INIT \
 	((struct to_space) \
 	 {.buf = NULL, .buf_filled = 0, .buf_size = 0, \
-	  .flags = NULL, .buf_old = NULL})
+	  .flags = NULL, .keep = NULL})
 
 struct dump {
 	struct to_space immutables;
@@ -99,19 +99,8 @@ init()
 }
 
 static void
-finish_space(struct to_space *s)
-{
-	if (s->buf_old && s->buf_old != s->buf) {
-		free(s->buf_old);
-		s->buf_old = NULL;
-	}
-}
-
-static void
 destroy(struct dump *d)
 {
-	finish_space(&d->immutables);
-	finish_space(&d->mutables);
 	sml_tree_destroy(d->forward);
 }
 
@@ -126,13 +115,13 @@ allocate(struct to_space *s, size_t obj_total_size)
 
 	if (new_filled > s->buf_size) {
 		new_size = CEILING(new_filled, EXTEND_STEP);
-		if (s->buf_old) {
-			s->buf = xrealloc(s->buf, new_size);
+		if (s->keep && s->keep == s->buf) {
+			/* if s->buf is kept, allocate new buffer */
+			void *p = xmalloc(new_size);
+			memcpy(p, s->buf, s->buf_size);
+			s->buf = p;
 		} else {
-			/* preserve old pointer during sml_obj_enum_ptr */
-			s->buf_old = s->buf;
-			s->buf = xmalloc(new_size);
-			memcpy(s->buf, s->buf_old, s->buf_size);
+			s->buf = xrealloc(s->buf, new_size);
 		}
 		memset(s->buf + s->buf_size, 0, new_size - s->buf_size);
 		s->flags = xrealloc(s->flags, new_size / sizeof(void*));
@@ -166,18 +155,20 @@ copy(struct dump *d, void *obj)
 }
 
 struct trace_arg {
-	struct dump *d;
-	struct to_space *s;
+	struct dump *dump;
+	struct to_space *space;
+	void **obj_begin;
+	size_t obj_begin_index;
 };
 
 static void
 trace(void **slot, void *arg)
 {
 	struct trace_arg *t = arg;
-	struct dump *d = t->d;
-	struct to_space *s = t->s;
+	struct dump *d = t->dump;
+	struct to_space *s = t->space;
 	void *obj = *slot;
-	void **begin;
+	size_t slot_index;
 	const struct forward *fwd;
 
 	if (*slot == NULL)
@@ -187,27 +178,30 @@ trace(void **slot, void *arg)
 	if (!fwd)
 		fwd = copy(d, obj);
 
-	begin = (void**)(s->buf_old ? s->buf_old : s->buf);
-	s->flags[slot - begin] |= fwd->flags | IS_POINTER_FLAG;
-	*slot = (void*)fwd->copy_index;
+	slot_index = slot - t->obj_begin + t->obj_begin_index;
+	s->flags[slot_index] |= fwd->flags | IS_POINTER_FLAG;
+	((void**)s->buf)[slot_index] = (void*)fwd->copy_index;
 }
 
 static size_t
 forward_space(struct dump *d, struct to_space *s, size_t start)
 {
-	struct trace_arg arg = {d, s};
+	struct trace_arg arg = {.dump = d, .space = s};
 	size_t cur = start;
 	void *obj;
 
 	while (cur < s->buf_filled) {
 		obj = s->buf + cur;
-		s->flags[cur / sizeof(void*)] |= OBJECT_BEGIN_FLAG;
-		sml_obj_enum_ptr(obj, trace, &arg);
+		arg.obj_begin = obj;
+		arg.obj_begin_index = cur / sizeof(void*);
+		s->flags[arg.obj_begin_index] |= OBJECT_BEGIN_FLAG;
 		cur += CEILING(OBJ_TOTAL_SIZE(obj), MAXALIGN);
-		if (s->buf_old) {
-			free(s->buf_old);
-			s->buf_old = NULL;
-		}
+
+		s->keep = s->buf;
+		sml_obj_enum_ptr(obj, trace, &arg);
+		if (s->keep != s->buf)
+			free(s->keep);
+		s->keep = NULL;
 	}
 	return cur;
 }

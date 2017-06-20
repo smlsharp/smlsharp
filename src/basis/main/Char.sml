@@ -19,9 +19,6 @@ structure Word8 = SMLSharp_Builtin.Word8
 structure Char =
 struct
 
-  type char = char
-  type string = string
-
   (* 8-bit unsigned integer *)
   val minChar = #"\000"
   val maxChar = #"\255"
@@ -192,5 +189,8 @@ struct
       StringCvt.scanString SMLSharp_ScanChar.scanCChar string
 
   val op >= = Char.gteq
+
+  type char = char
+  type string = string
 
 end

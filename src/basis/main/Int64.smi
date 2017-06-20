@@ -13,7 +13,7 @@ struct
   val fromLarge : largeInt -> int
   val toInt = SMLSharp_Builtin.Int64.toInt32
   val fromInt = SMLSharp_Builtin.Int64.fromInt32
-  val precision : int option
+  val precision : int32 option
   val minInt : int option
   val maxInt : int option
   val + = SMLSharp_Builtin.Int64.add_unsafe

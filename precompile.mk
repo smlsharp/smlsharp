@@ -4,7 +4,7 @@
 include ./files.mk
 include ./src/config.mk
 
-SMLSHARP_ENV = SMLSHARP_HEAPSIZE=512M:2G
+SMLSHARP_ENV = SMLSHARP_HEAPSIZE=32M:2G
 
 MLYACC = src/ml-yacc/smlyacc
 MLLEX = src/ml-lex/smllex

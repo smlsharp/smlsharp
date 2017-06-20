@@ -112,7 +112,7 @@ alloc_top(struct toplevels **ta)
 	return (*ta)->ary + ((*ta)->fill++);
 }
 
-tlv_alloc(struct toplevels *, toplevels, free);
+user_tlv_alloc(struct toplevels *, toplevels, free);
 
 /*
  * A linked list of garbage collection information.
@@ -444,7 +444,10 @@ sml_register_top(const void *topfunc, const void *dependency,
 	struct toplevels *ta;
 	struct top *t;
 
-	ta = tlv_get_or_init(toplevels);
+	/* allocate current_mutator user_tlv as the first tls key. */
+	sml_control_init();
+
+	ta = user_tlv_get_or_init(toplevels);
 	if (!ta)
 		ta = alloc_toplevels();
 	t = alloc_top(&ta);
@@ -452,7 +455,7 @@ sml_register_top(const void *topfunc, const void *dependency,
 	t->dependency = dependency;
 	t->frametable = frametable;
 	t->root_offsets = root_offsets;
-	tlv_set(toplevels, ta);
+	user_tlv_set(toplevels, ta);
 }
 
 typedef void topfn(void);
@@ -465,8 +468,8 @@ sml_run()
 	struct gc_info *gi;
 	topfn **topfuncs, **p;
 
-	ta = tlv_get_or_init(toplevels);
-	tlv_set(toplevels, NULL);
+	ta = user_tlv_get_or_init(toplevels);
+	user_tlv_set(toplevels, NULL);
 
 	t = tsort_top(ta);
 	gi = load_gc_info(ta);
@@ -479,7 +482,8 @@ sml_run()
 	*p = NULL;
 	free(ta);
 
-	sml_run_toplevels(topfuncs);
+	for (p = topfuncs; *p; p++)
+		(*p)();
 
 	free(topfuncs);
 }

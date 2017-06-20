@@ -688,9 +688,9 @@ sig
   structure AssertList :
   sig
     (**
-     * Asserts that two List.list values are equal.
+     * Asserts that two list values are equal.
      *)
-    val assertEqualList : 'a assertEqual -> 'a List.list assertEqual
+    val assertEqualList : 'a assertEqual -> 'a list assertEqual
   end
 
   (**

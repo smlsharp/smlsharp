@@ -18,7 +18,7 @@ struct
       : (pthread_t ref, unit ptr, unit ptr -> unit ptr, unit ptr) -> int
   val pthread_join =
       _import "pthread_join"
-      : __attribute__((suspend)) (pthread_t, unit ptr ref) -> int
+      : (pthread_t, unit ptr ref) -> int
 
   type t = pthread_t * int ref
 
@@ -55,7 +55,7 @@ struct
       : (t, unit ptr) -> int
   val pthread_mutex_lock =
       _import "pthread_mutex_lock"
-      : __attribute__((suspend)) t -> int
+      : t -> int
   val pthread_mutex_unlock =
       _import "pthread_mutex_unlock"
       : t -> int

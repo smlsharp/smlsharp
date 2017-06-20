@@ -3,8 +3,6 @@ _require local "./List.smi"
 
 structure Array =
 struct
-  type 'a array = 'a array
-  type 'a vector = 'a vector
   val maxLen : int
   val array : int * 'a -> 'a array
   val fromList : 'a list -> 'a array
@@ -27,6 +25,9 @@ struct
   val find : ('a -> bool) -> 'a array -> 'a option
   val exists : ('a -> bool) -> 'a array -> bool
   val all : ('a -> bool) -> 'a array -> bool
+  val alli : (int * 'a -> bool) -> 'a array -> bool
   val collate : ('a * 'a -> General.order) -> 'a array * 'a array
                 -> General.order
+  type 'a array = 'a array
+  type 'a vector = 'a vector
 end

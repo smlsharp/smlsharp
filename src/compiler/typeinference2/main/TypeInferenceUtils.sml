@@ -20,13 +20,8 @@ local
 in
   
   val dummyTyId = ref 0
-  fun nextDummyTy () =
-      T.DUMMYty (!dummyTyId) before dummyTyId := !dummyTyId + 1
-
-  fun nextDummyRecordTy fields =
-      T.DUMMY_RECORDty {id = !dummyTyId, fields=fields} 
-      before dummyTyId := !dummyTyId + 1
-
+  fun nextDummyTy kind =
+      T.DUMMYty (!dummyTyId, kind) before dummyTyId := !dummyTyId + 1
 
   (*
    * make a fresh instance of ty by instantiating the top-level type
@@ -40,11 +35,11 @@ in
           val bty = TB.substBTvar subst body
           val constraints =
               List.map (fn c =>
-                           case c of T.JOIN {res, args = (arg1, arg2)} =>
+                           case c of T.JOIN {res, args = (arg1, arg2), loc} =>
                              T.JOIN
                                  {res = TB.substBTvar subst res,
                                   args = (TB.substBTvar subst arg1,
-                                          TB.substBTvar subst arg2)})
+                                          TB.substBTvar subst arg2), loc=loc})
                        constraints
         in  
           (bty, BoundTypeVarID.Map.listItems subst, constraints)
@@ -53,24 +48,16 @@ in
              
   fun instantiateTv tv =
       case tv of
-        ref(T.TVAR {tvarKind = T.OCONSTkind (h::_), ...}) =>
-        tv := T.SUBSTITUTED h
-      | ref(T.TVAR {tvarKind = T.OCONSTkind nil, ...}) =>
-        raise Bug.Bug "instantiateTv OCONSTkind"
-      | ref(T.TVAR {tvarKind = T.OPRIMkind {instances = (h::_),...}, ...}) =>
-        tv := T.SUBSTITUTED h
-      | ref(T.TVAR {tvarKind = T.OPRIMkind {instances = nil,...}, ...}) =>
-        raise Bug.Bug "instantiateTv OPRIMkind"
-      | ref(T.TVAR {tvarKind = T.REC tyFields, ...}) => 
-        tv := T.SUBSTITUTED (nextDummyRecordTy tyFields)
-      | ref(T.TVAR {tvarKind = T.UNIV, ...}) => 
-        tv := T.SUBSTITUTED (nextDummyTy())
-      | ref(T.TVAR {tvarKind = T.BOXED, ...}) =>
-        tv := T.SUBSTITUTED (nextDummyTy())
-      | ref(T.TVAR {tvarKind = T.UNBOXED, ...}) =>
-        tv := T.SUBSTITUTED (nextDummyTy())
-      | ref(T.TVAR {tvarKind = T.JSON, ...}) => 
-        tv := T.SUBSTITUTED (nextDummyTy())
+        ref (T.TVAR {kind as T.KIND {tvarKind, ...}, ...}) =>
+        (case tvarKind of
+           T.OCONSTkind (h::_) => tv := T.SUBSTITUTED h
+         | T.OCONSTkind nil => raise Bug.Bug "instantiateTv OCONSTkind"
+         | T.OPRIMkind {instances = (h::_),...} => tv := T.SUBSTITUTED h
+         | T.OPRIMkind {instances = nil,...} =>
+           raise Bug.Bug "instantiateTv OPRIMkind"
+         | T.REC tyFields => tv := T.SUBSTITUTED (nextDummyTy kind)
+         | T.BOXED => tv := T.SUBSTITUTED (nextDummyTy kind)
+         | T.UNIV => tv := T.SUBSTITUTED (nextDummyTy kind))
       | ref(T.SUBSTITUTED _) => ()
 
 (*
@@ -112,7 +99,7 @@ in
                 BoundTypeVarID.Map.foldl
                   (fn (ty, btvs) =>
                       case TB.derefTy ty of
-                        T.TYVARty (r as ref(T.TVAR (k as {id, ...}))) =>
+                        T.TYVARty (r as ref(T.TVAR {id, kind, ...})) =>
                         let 
                           val btvid = BoundTypeVarID.generate ()
                         in
@@ -123,10 +110,7 @@ in
                               (
                                btvs,
                                btvid,
-                               {
-                                tvarKind = (#tvarKind k),
-                                eqKind = (#eqKind k)
-                               }
+                               kind
                               )
                            )
                           )

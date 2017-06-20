@@ -993,7 +993,7 @@ struct
       (*%
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
-       *          retTy, loc})
+       *          retTy, gcCheck, loc})
        * "@fun:" id
        * + envOpt(env)("_")
        * + args:appList(arg)("(",",",")")
@@ -1006,7 +1006,7 @@ struct
       (*% @prefix formatWithType_
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
-       *          retTy, loc})
+       *          retTy, gcCheck, loc})
        * "@fun:" id
        * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
        * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
@@ -1025,6 +1025,7 @@ struct
         frameSlots : RuntimeTypes.ty SlotID.Map.map,
         bodyExp : mcexp,
         retTy : ty,
+        gcCheck : bool,
         loc : loc
       }
     | (*%

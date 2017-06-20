@@ -40,6 +40,8 @@ in
       | T.INDEXty (string, ty) => T.INDEXty (string, evalTy btvMap ty)
       | T.TAGty ty => T.TAGty (evalTy btvMap ty)
       | T.SIZEty ty => T.SIZEty (evalTy btvMap ty)
+      | T.TYPEty ty => T.TYPEty (evalTy btvMap ty)
+      | T.REIFYty ty => T.REIFYty (evalTy btvMap ty)
   and evalOverloadMatch (btvMap:btvMap) (overloadMatch:T.overloadMatch) 
       : T.overloadMatch =
       case overloadMatch  of
@@ -79,10 +81,8 @@ in
         raise Bug.Bug "evalTy: BACKENDty"
       | T.ERRORty => 
         ty
-      | T.DUMMYty dummyTyID => 
-        ty
-      | T.DUMMY_RECORDty {id, fields} => 
-        T.DUMMY_RECORDty {id=id, fields=RecordLabel.Map.map (evalTy btvMap) fields}
+      | T.DUMMYty (id, kind) =>
+        T.DUMMYty (id, evalKind btvMap kind)
       | T.TYVARty _ => raise bug "TYVARty in Optimize"
       | T.BOUNDVARty btv => 
         evalBtv btvMap btv
@@ -130,11 +130,11 @@ in
           val boundtvars = evalBtvEnv btvMap boundtvars
           val constraints = List.map
                                 (fn c =>
-                                    case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                    case c of T.JOIN {res, args = (arg1, arg2), loc} =>
                                       T.JOIN
                                           {res = evalTy btvMap res,
                                            args = (evalTy btvMap arg1,
-                                                   evalTy btvMap arg2)})
+                                                   evalTy btvMap arg2), loc=loc})
                                 constraints
         in
           T.POLYty
@@ -145,10 +145,13 @@ in
             }
         end
   and evalBtvEnv (btvMap:btvMap) (btvEnv:T.btvEnv) =
-      BoundTypeVarID.Map.map (evalBtvkind btvMap) btvEnv
-  and evalBtvkind (btvMap:btvMap) {tvarKind, eqKind} =
-      {tvarKind=evalTvarKind btvMap tvarKind,
-       eqKind=eqKind}
+      BoundTypeVarID.Map.map (evalKind btvMap) btvEnv
+  and evalKind (btvMap:btvMap) (T.KIND {tvarKind, eqKind, dynKind, reifyKind, subkind}) =
+      T.KIND {tvarKind=evalTvarKind btvMap tvarKind,
+              eqKind=eqKind,
+              subkind=subkind,
+              dynKind=dynKind,
+              reifyKind=reifyKind}
   and evalTvarKind btvMap tvarKind =
       case tvarKind of
         T.OCONSTkind tyList =>
@@ -178,9 +181,7 @@ in
              operators
           }
       | T.UNIV => T.UNIV
-      | T.JSON => T.JSON
       | T.BOXED => T.BOXED
-      | T.UNBOXED => T.UNBOXED
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map (evalTy btvMap) fields)
   and evalDtyKind btvMap dtyKind =

@@ -7,10 +7,9 @@ structure MatchError =
 struct
 local
   structure TC = TypedCalc
-  structure TCU = TypedCalcUtils
   structure RC = RecordCalc
   structure BF = SMLFormat.BasicFormatters
-  structure A = Absyn
+  structure A = AbsynConst
   structure MD = MatchData
   structure BT = BuiltinTypes
   structure T = Types

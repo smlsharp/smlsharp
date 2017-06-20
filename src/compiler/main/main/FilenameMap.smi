@@ -1,5 +1,6 @@
-_require "../../../basis.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/env/main/SEnv.smi"
+
 _require "../../toolchain/main/Filename.smi"
 
 structure FilenameMap =

@@ -1,10 +1,11 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../types/main/IDCalc.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../../smlformat-lib.smi"
+_require local "../../usererror/main/UserError.ppg.smi"
+
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
-_require "../../usererror/main/UserError.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
 
 structure NameEvalError =
   struct    
@@ -109,6 +110,7 @@ structure NameEvalError =
     exception ExnUndefined of code * {longsymbol: Symbol.longsymbol}
     exception DataTypeNameUndefined of code * {longsymbol: Symbol.longsymbol}
     exception StructureNameUndefined of code * {longsymbol : Symbol.longsymbol}
+    exception StructureRepOfFuncrorArgInInterface of code * {longsymbol : Symbol.longsymbol}
     exception FunctorNameUndefined of code * {symbol : Symbol.symbol}
     exception DuplicateDtyInSpec of code * Symbol.symbol
     exception DuplicateConInSpec of code * Symbol.symbol

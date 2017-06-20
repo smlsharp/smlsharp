@@ -1,0 +1,3 @@
+include "./thread/main/myth.smi"
+include "./thread/main/concurrent.smi"
+include "./thread/main/cml.smi"

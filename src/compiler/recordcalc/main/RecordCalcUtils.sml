@@ -4,6 +4,7 @@ local
   structure RC = RecordCalc
   structure BT = BuiltinTypes
   structure TB = TypesBasics
+  structure T = Types
   val tempVarNamePrefix = "R_"
 in
   fun newRCVarName () = Symbol.generateWithPrefix tempVarNamePrefix
@@ -28,6 +29,8 @@ in
       | RC.RCINDEXOF _ => false
       | RC.RCTAGOF _ => false
       | RC.RCSIZEOF _ => false
+      | RC.RCTYPEOF _ => false
+      | RC.RCREIFYTY _ => false
       | RC.RCDATACONSTRUCT {argExpOpt=NONE, argTyOpt, con, instTyList, loc} => false
       | RC.RCDATACONSTRUCT {con={path, id, ty}, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
         let
@@ -67,12 +70,17 @@ in
       | RC.RCPRIMAPPLY _ => true
       | RC.RCOPRIMAPPLY _ => true
       | RC.RCSEQ _ => true
+      | RC.RCFOREACH _ => true
+      | RC.RCFOREACHDATA _ => true
       | RC.RCRAISE _ => true
       | RC.RCHANDLE _ => true
       | RC.RCEXNCASE _ => true
       | RC.RCCALLBACKFN _ => true
       | RC.RCFOREIGNAPPLY _ => true
       | RC.RCSWITCH _ => true
+      | RC.RCJOIN {ty,args=(arg1,arg2),argTys,loc} => 
+        expansive arg1 orelse expansive arg2
+      | RC.RCJSON {exp,ty,coerceTy,loc} => expansive exp
 
   fun isAtom tpexp =
       case tpexp of
@@ -81,5 +89,315 @@ in
       | RC.RCVAR var => true
       | RC.RCEXVAR exVarInfo => true
       | _ => false
+
+ (* 2016-12-04 TypedCalcUtils から．constraintがあればエラー
+    FFICompilationで使用
+  *)
+  fun toplevelInstWithInstTy {ty, exp, instTy} =
+      if TB.monoTy ty then {ty=ty, exp=exp}
+      else
+        case ty of
+          T.POLYty{boundtvars,body,constraints = nil} =>
+          let 
+            val subst =
+                BoundTypeVarID.Map.map
+                  (fn x => instTy)
+                  boundtvars
+            val bty = TB.substBTvar subst body
+            val newExp = 
+                case exp of
+                  RC.RCDATACONSTRUCT {con,instTyList=nil,argTyOpt, argExpOpt=NONE,loc}
+                  => RC.RCDATACONSTRUCT
+                       {con=con,
+                        instTyList=map (fn x => instTy) (BoundTypeVarID.Map.listItems subst),
+                        argExpOpt=NONE, 
+                        argTyOpt = NONE,
+                        loc=loc}
+                | _ => RC.RCTAPP
+                         {exp=exp,
+                          expTy=ty,
+                          instTyList=map (fn x => instTy) (BoundTypeVarID.Map.listItems subst),
+                          loc=RC.getLocExp exp}
+          in  
+            {ty = bty, exp = newExp}
+          end
+        | T.POLYty{boundtvars,body,constraints = _::_} => 
+          raise Bug.Bug "RecodCalcUtils: toplevelInstWithInstTy with non-nil constraints"
+        | ty => {ty = ty, exp = exp}
+
+  exception ToplevelInstWithInstTyList
+ (* 2016-12-04 TypedCalcUtils から．constraintがあればエラー
+    FFICompilationで使用
+  *)
+  fun toplevelInstWithInstTyList {ty, exp, instTyList} =
+      if TB.monoTy ty then {ty=ty, exp=exp}
+      else
+        case ty of
+          T.POLYty{boundtvars,body,constraints = nil} =>
+          let 
+            val btvList = BoundTypeVarID.Map.listKeys boundtvars
+            val btvTyList = 
+                ListPair.zipEq (btvList, instTyList)
+                handle ListPair.UnequalLengths =>
+                       raise ToplevelInstWithInstTyList
+            val subst =
+                List.foldl
+                  (fn ((btv,ty), subst) =>
+                      BoundTypeVarID.Map.insert(subst, btv, ty))
+                BoundTypeVarID.Map.empty
+                btvTyList
+(*
+fun printTy ty = print (T.tyToString ty ^ "\n")
+val _ = print "ty\n"
+val _ = printTy ty
+val _ = print "instTyList\n"
+val _ = map printTy instTyList
+val _ = print "body\n"
+val _ = printTy body
+val _ = print "btvList\n"
+val _ = map printTy (map T.BOUNDVARty btvList)
+*)
+            val bty = TB.substBTvar subst body
+            val newExp = 
+                case exp of
+                  RC.RCDATACONSTRUCT {con,instTyList=nil,argTyOpt, argExpOpt=NONE,loc}
+                  => RC.RCDATACONSTRUCT
+                       {con = con,
+                        instTyList = instTyList,
+                        argExpOpt = NONE, 
+                        argTyOpt = NONE,
+                        loc = loc}
+                | _ => RC.RCTAPP
+                         {exp = exp,
+                          expTy = ty,
+                          instTyList = instTyList,
+                          loc = RC.getLocExp exp}
+          in  
+            {ty = bty, exp = newExp}
+          end
+        | T.POLYty{boundtvars,body,constraints = _::_} => 
+          raise Bug.Bug "RecodCalcUtils: toplevelInstWithInstTy with non-nil constraints"
+        | ty => {ty = ty, exp = exp}
+
+ (* 2017-1-03 TypedCalcUtils から ReifyTopEnvで使用 *)
+  fun newVarInfo loc (ty:T.ty) =
+      let
+        val newVarId = VarID.generate()
+        val IdString =  VarID.toString newVarId
+        val longsymbol = Symbol.mkLongsymbol ["_reify" ^ IdString] loc
+      in
+        {path=longsymbol, id=newVarId, ty = ty}
+      end
+
+  (**
+   * Make a kind consistent ground instance.
+   *)
+  fun instantiateTv ty =
+      case ty of
+        T.TYVARty (tv as ref (T.TVAR {kind = T.KIND {tvarKind, eqKind, subkind, reifyKind, dynKind}, ...})) =>
+        (case tvarKind of
+           T.OCONSTkind (h::_) => tv := T.SUBSTITUTED h
+         | T.OCONSTkind nil => raise Bug.Bug "instantiateTv: OCONSTkind"
+         | T.OPRIMkind {instances = (h::_), ...} => tv := T.SUBSTITUTED h
+         | T.OPRIMkind {instances = nil, ...} =>
+           raise Bug.Bug "instantiateTv: OPRIMkind"
+         | T.REC tyFields => tv := T.SUBSTITUTED (T.RECORDty tyFields)
+         | T.BOXED => tv := T.SUBSTITUTED (T.RECORDty RecordLabel.Map.empty)
+         | T.UNIV =>
+           case subkind of
+             T.JSON_ATOMIC => tv := T.SUBSTITUTED BuiltinTypes.intTy
+           | T.JSON => tv := T.SUBSTITUTED BuiltinTypes.intTy
+           | T.UNBOXED => tv := T.SUBSTITUTED BuiltinTypes.intTy
+           | T.ANY => tv := T.SUBSTITUTED BuiltinTypes.unitTy)
+      | _ => ()
+
+  fun groundInst {ty,exp} =
+      if TB.monoTy ty then {ty=ty,exp=exp}
+      else
+        let
+          val expLoc = RC.getLocExp exp
+        in
+          case ty of
+            T.POLYty{boundtvars,body,constraints} =>
+            let 
+              val subst = TB.freshSubst boundtvars
+              val _ = BoundTypeVarID.Map.app instantiateTv subst
+              val bty = TB.substBTvar subst body
+              val newExp = 
+                  case exp of
+                    RC.RCDATACONSTRUCT {con,instTyList=nil,argTyOpt, argExpOpt=NONE,loc}
+                    => RC.RCDATACONSTRUCT
+                         {con=con,
+                          instTyList=BoundTypeVarID.Map.listItems subst,
+                          argTyOpt =NONE,
+                          argExpOpt=NONE, 
+                          loc=loc}
+                  | _ => RC.RCTAPP
+                           {exp=exp,
+                            expTy=ty,
+                            instTyList=BoundTypeVarID.Map.listItems subst,
+                            loc=expLoc}
+            in 
+              groundInst {ty=bty,exp=newExp}
+            end
+          | T.FUNMty (tyList, bodyTy) =>
+              let
+                val newVar = newVarInfo expLoc bodyTy
+                val (exp, mkNewExp) = 
+                    (RC.RCVAR newVar,
+                     fn x => RC.RCMONOLET {binds = [(newVar, exp)],
+                                           bodyExp = x,
+                                           loc=expLoc}
+                    )
+                val argVarList = map (newVarInfo expLoc) tyList
+                val argExpList = map (fn x => RC.RCVAR x) argVarList
+                val {ty = instBodyTy, exp = instBody} = 
+                    groundInst
+                      {ty = bodyTy,
+                       exp = RC.RCAPPM{funExp=exp,
+                                       funTy=ty,
+                                       argExpList=argExpList,
+                                       loc=expLoc}
+                      }
+                val newExp = 
+                  RC.RCFNM
+                    {argVarList = argVarList,
+                     bodyTy = instBodyTy,
+                     bodyExp = instBody,
+                     loc = expLoc}
+              in 
+                {ty = T.FUNMty(tyList, instBodyTy), exp =  mkNewExp newExp}
+              end
+          | T.RECORDty tyFields => 
+            (case exp of
+               RC.RCRECORD {fields, recordTy=_, loc=loc} =>
+               let
+                 val (bindsRev, newTyFields, newFields) =
+                     RecordLabel.Map.foldli
+                       (fn (l, fieldTy, (bindsRev,newTyFields,newFields)) =>
+                           case RecordLabel.Map.find(fields,l) of
+                             SOME field =>
+                             let
+                               val {ty=ty', exp=exp'} = groundInst {ty=fieldTy, exp=field}
+                               val newTyFields = RecordLabel.Map.insert(newTyFields, l, ty')
+                               val (bindsRev, newFields) =
+                                   if isAtom exp' then 
+                                     (bindsRev, RecordLabel.Map.insert(newFields, l, exp'))
+                                   else
+                                     let
+                                       val fieldVar = newVarInfo loc ty'
+                                       val fieldExp = RC.RCVAR fieldVar
+                                       val newFields = RecordLabel.Map.insert(newFields, l, fieldExp)
+                                       val bindsRev = (fieldVar, exp') :: bindsRev
+                                     in
+                                       (bindsRev, newFields)
+                                     end
+                             in (bindsRev, newTyFields, newFields)
+                             end
+                           | _ => raise Bug.Bug "groundInst"
+                       )
+                       (nil, RecordLabel.Map.empty, RecordLabel.Map.empty)
+                       tyFields
+                 val binds = List.rev bindsRev
+                 val recordExp =
+                     RC.RCRECORD{fields=newFields,
+                                 recordTy=T.RECORDty newTyFields,
+                                 loc=loc}
+                 val returnExp =
+                     case binds of
+                       nil => recordExp
+                     | _ => 
+                       RC.RCMONOLET {binds = binds, bodyExp = recordExp, loc=loc}
+               in
+                 {ty=T.RECORDty newTyFields, exp=returnExp}
+               end
+             | _ =>
+               if isAtom exp then
+                 let 
+                   val (bindsRev, flty, flexp) =
+                       RecordLabel.Map.foldli 
+                         (fn (label, fieldTy, (bindsRev,flty,flexp)) =>
+                             let
+                               val {ty=fieldTy,exp=instExp} =
+                                   groundInst
+                                     {ty=fieldTy,
+                                      exp=RC.RCSELECT{label=label,
+                                                      exp=exp,
+                                                      expTy=ty,
+                                                      indexExp = RC.RCINDEXOF (label, ty, expLoc),
+                                                      resultTy=fieldTy,
+                                                      loc=expLoc}
+                                     }
+                               val fieldVar = newVarInfo expLoc fieldTy
+                               val fieldExp = RC.RCVAR fieldVar
+                             in
+                               ((fieldVar, instExp)::bindsRev,
+                                RecordLabel.Map.insert(flty,label,fieldTy),
+                                RecordLabel.Map.insert(flexp,label,fieldExp)
+                               )
+                             end)
+                         (nil,RecordLabel.Map.empty,RecordLabel.Map.empty)
+                         tyFields
+                   val binds = List.rev bindsRev
+                   val recordExp =
+                       RC.RCRECORD{fields=flexp,
+                                   recordTy=T.RECORDty flty,
+                                   loc=expLoc}
+                   val returnExp =
+                       case binds of
+                         nil => recordExp
+                       | _ => 
+                         RC.RCMONOLET
+                           {binds = binds,
+                            bodyExp = recordExp,
+                            loc=expLoc}
+                 in 
+                   {ty=T.RECORDty flty, exp=returnExp}
+                 end
+               else
+                 let 
+                   val var = newVarInfo expLoc ty
+                   val varExp = RC.RCVAR var
+                   val (bindsRev,flty,flexp) =
+                       RecordLabel.Map.foldli
+                         (fn (label,fieldTy,(bindsRev,flty,flexp)) =>
+                             let val {ty=fieldTy,exp=instExp} =
+                                     groundInst
+                                       {ty = fieldTy,
+                                        exp = RC.RCSELECT
+                                                {label=label,
+                                                 exp=varExp,
+                                                 indexExp = RC.RCINDEXOF (label, ty, expLoc),
+                                                 expTy=ty,
+                                                 resultTy=fieldTy,
+                                                 loc=expLoc}
+                                       }
+                                 val fieldVar = newVarInfo expLoc fieldTy
+                                 val fieldExp = RC.RCVAR fieldVar
+                             in
+                               ((fieldVar, instExp)::bindsRev,
+                                RecordLabel.Map.insert(flty,label,fieldTy),
+                                RecordLabel.Map.insert(flexp,label,fieldExp)
+                               )
+                             end
+                         )
+                         ([(var, exp)], RecordLabel.Map.empty,RecordLabel.Map.empty)
+                         tyFields
+                 in 
+                   {ty=T.RECORDty flty, 
+                    exp =RC.RCMONOLET
+                           {binds = List.rev bindsRev,
+                            bodyExp =
+                            RC.RCRECORD
+                              {fields=flexp,
+                               recordTy=T.RECORDty flty,
+                               loc=expLoc},
+                            loc = expLoc
+                           }
+                   }
+                 end
+            )
+          | ty => {ty=ty,exp=exp}
+        end
 end
 end

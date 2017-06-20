@@ -784,7 +784,7 @@ struct
   fun compileTopdec topdec =
       case topdec of
         M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
-                      frameSlots, bodyExp, retTy, loc} =>
+                      frameSlots, bodyExp, retTy, gcCheck, loc} =>
         let
           val params = optionToList closureEnvVar @ argVarList
           val (bodyExp, slots) = compileFunc (params, bodyExp, NONE)
@@ -796,6 +796,7 @@ struct
                         frameSlots = unionSlotMap (frameSlots, slots),
                         bodyExp = bodyExp,
                         retTy = retTy,
+                        gcCheck = gcCheck,
                         loc = loc}
         end
       | M.MTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,

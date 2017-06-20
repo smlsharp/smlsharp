@@ -1,25 +1,26 @@
-_require "../../../basis.smi"
+_require local "../../../basis.smi"
+_require local "../../util/main/TermFormat.smi"
+_require local "../../absyn/main/InterfaceName.ppg.smi"
+
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../util/main/TermFormat.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../absyn/main/AbsynInterface.ppg.smi"
-_require "../../absyn/main/InterfaceName.ppg.smi"
-_require "../../name/main/LocalID.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../absyn/main/AbsynTy.ppg.smi"
 _require "./PatternCalc.ppg.smi"
 
 structure PatternCalcInterface =
 struct
   type loc = Loc.loc
-  type ty = Absyn.ty
+  type ty = AbsynTy.ty
 
   type symbol = Symbol.symbol
 
   type longsymbol = Symbol.longsymbol
 
-  type tvar = Absyn.tvar
+  type tvar = AbsynTy.tvar
 
   type scopedTvars = PatternCalc.scopedTvars
 

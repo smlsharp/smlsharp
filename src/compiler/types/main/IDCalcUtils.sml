@@ -215,6 +215,17 @@ local
         | IC.ICRECORD_SELECTOR (string, loc) => exp
         | IC.ICSELECT (string, icexp, loc) =>
           IC.ICSELECT (string, copy icexp, loc)
+        | IC.ICFOREACH {data, pred, iterator, loc} =>
+          IC.ICFOREACH {data = copy data, 
+                        pred = copy pred, 
+                        iterator = copy iterator, 
+                        loc = loc}
+        | IC.ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
+          IC.ICFOREACHDATA {data = copy data, 
+                            pred = copy pred, 
+                            whereParam = copy whereParam,
+                            iterator = copy iterator, 
+                            loc = loc}
         | IC.ICSEQ (icexpList, loc) =>
           IC.ICSEQ (map copy icexpList, loc)
         | IC.ICFFIIMPORT (icexp, ffiTy, loc) =>
@@ -225,14 +236,16 @@ local
                          map (copyFfiArg varMap) ffiArgList,
                          ffiTy,
                          loc)
-        | IC.ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
-          IC.ICSQLSCHEMA {columnInfoFnExp = copyExp varMap columnInfoFnExp,
+        | IC.ICSQLSCHEMA {tyFnExp, ty, loc} =>
+          IC.ICSQLSCHEMA {tyFnExp = copyExp varMap tyFnExp,
                           ty = ty,
                           loc = loc}
         | IC.ICJOIN (icexp1, icexp2, loc) =>
           IC.ICJOIN (copy icexp1, copy icexp2, loc)
         | IC.ICJSON (icexp, ty, loc) =>
           IC.ICJSON (copy icexp, ty, loc)
+        | IC.ICTYPEOF (ty, loc) => exp
+        | IC.ICREIFYTY (ty, loc) => exp
       end
   and copyFfiArg varMap ffiArg =
       case ffiArg of

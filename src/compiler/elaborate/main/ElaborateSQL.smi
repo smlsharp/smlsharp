@@ -1,19 +1,23 @@
-_require "../../../basis.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+
+_require local "../../usererror/main/UserErrorUtils.smi"
+_require local "./ElaborateErrorSQL.ppg.smi"
+
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"
 _require "../../absyn/main/AbsynSQL.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
-_require "../../usererror/main/UserErrorUtils.smi"
-_require "./ElaborateErrorSQL.ppg.smi"
 
 structure ElaborateSQL =
   struct
+     type context (= boxed)
      val elaborateExp
-         : {elabExp:Absyn.exp -> PatternCalc.plexp,
-            elabPat:Absyn.pat -> PatternCalc.plpat}
-           -> (Absyn.exp,Absyn.pat,Absyn.ty) AbsynSQL.exp
+         : {elabExp : context option -> Absyn.exp -> PatternCalc.plexp,
+            elabPat : context option -> Absyn.pat -> PatternCalc.plpat}
+           -> context option
+           -> (Absyn.exp,Absyn.pat,Absyn.ty) AbsynSQL.sqlexp * Loc.loc
            -> PatternCalc.plexp
   end

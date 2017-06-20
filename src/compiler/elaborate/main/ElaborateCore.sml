@@ -251,6 +251,13 @@ struct
            {tyvars=tyvars, symbol = symbol, conbind = map expandInDataCon conbind}
       end
 
+  type env = {fixEnv : fixity SymbolEnv.map,
+              sqlEnv : ElaborateSQL.context option}
+
+  fun extendFixEnv (newFixEnv, {fixEnv, sqlEnv}:env) : env =
+      {fixEnv = SymbolEnv.unionWith #1 (newFixEnv, fixEnv),
+       sqlEnv = sqlEnv}
+
   (**************************************************************)
   (* utility functions for infix resolution. *)
   (* Here, we assume the left-right scan so that the first param is the 
@@ -263,10 +270,10 @@ struct
     | stronger (INFIXR n, INFIXR m) = n >= m  
     | stronger (NONFIX, _) = raise Bug.Bug "NONFIX in Elab.stronger"
     | stronger (_, NONFIX) = raise Bug.Bug "NONFIX in Elab.stronger"
-  fun findFixity (env : fixity SymbolEnv.map) longsymbol =
+  fun findFixity ({fixEnv, ...}:env) longsymbol =
       case longsymbol of
         [symbol] =>
-        (case SymbolEnv.find (env, symbol) of
+        (case SymbolEnv.find (fixEnv, symbol) of
            SOME v => v
          | _ => NONFIX)
       | _ => NONFIX
@@ -415,7 +422,7 @@ struct
           (fn (element, (elaborateds, env')) =>
            let
              val (elaborated, env'') =
-               elabolator (SymbolEnv.unionWith #1 (env', env)) element
+               elabolator (extendFixEnv (env', env)) element
            in
              (
               elaborated :: elaborateds,
@@ -961,9 +968,32 @@ struct
       | A.EXPLET (decs, elist, loc) => 
         let
           val (pdecs, env') = elabDecs env decs
-          val newEnv = SymbolEnv.unionWith #1 (env',env)
+          val newEnv = extendFixEnv (env',env)
         in
           PC.PLLET (pdecs, map (elabExp newEnv) elist, loc)
+        end
+      | A.EXPFOREACHARRAY {id, pat, data, iterate, pred, loc} =>
+        let
+          val pat = elabPat env pat
+          val idPat = PC.PLPATID [id]
+          val pat = PC.PLPATRECORD (false, RecordLabel.tupleList [idPat, pat], loc)
+          val iterator = PC.PLFNM ([([pat], elabExp env iterate)], loc)
+          val pred = PC.PLFNM ([([pat], elabExp env pred)], loc)
+          val data = elabExp env data
+        in
+          PC.PLFOREACH {data = data, iterator = iterator, pred = pred, loc = loc}
+        end
+      | A.EXPFOREACHDATA {id, pat, whereParam, data, iterate, pred, loc} =>
+        let
+          val pat = elabPat env pat
+          val idPat = PC.PLPATID [id]
+          val pat = PC.PLPATRECORD (false, RecordLabel.tupleList [idPat, pat], loc)
+          val iterator = PC.PLFNM ([([pat], elabExp env iterate)], loc)
+          val pred = PC.PLFNM ([([pat], elabExp env pred)], loc)
+          val data = elabExp env data
+          val whereParam = elabExp env whereParam
+        in
+          PC.PLFOREACHDATA {data = data, iterator = iterator, pred = pred, whereParam=whereParam, loc = loc}
         end
       | A.EXPFFIIMPORT (exp, ty, loc) =>
         (case ty of A.FFIFUNTY _ => ()
@@ -988,12 +1018,18 @@ struct
                        map elabFFITy retTy, loc)
       | A.EXPSQL (sqlexp, loc) =>
         ElaborateSQL.elaborateExp
-          {elabExp = elabExp env, elabPat = elabPat env}
-          sqlexp
+          {elabExp = fn c => elabExp (env # {sqlEnv = c}),
+           elabPat = fn c => elabPat (env # {sqlEnv = c})}
+          (#sqlEnv env)
+          (sqlexp, loc)
       | A.EXPJOIN (exp1, exp2, loc) =>
         PC.PLJOIN (elabExp env exp1, elabExp env exp2, loc)
       | A.EXPJSON (exp, ty, loc) =>
         PC.PLJSON (elabExp env exp, ty, loc)
+      | A.EXPTYPEOF (ty, loc) =>
+        PC.PLTYPEOF (ty, loc)
+      | A.EXPREIFYTY (ty, loc) =>
+        PC.PLREIFYTY (ty, loc)
       | A.EXPJSONCASE (exp, matches, loc) =>
         let
           (* FIXME : too crowded! *)
@@ -1420,7 +1456,7 @@ struct
         | A.DECLOCAL (dec1, dec2, loc) => 
           let
             val (pdecs1, env1) = elabDecs env dec1
-            val (pdecs2, env2) = elabDecs (SymbolEnv.unionWith #1 (env1, env)) dec2
+            val (pdecs2, env2) = elabDecs (extendFixEnv (env1, env)) dec2
           in
             ([PC.PDLOCALDEC(pdecs1, pdecs2, loc)], env2)
           end
@@ -1459,5 +1495,11 @@ struct
           )
 
     and elabDecs env decs = elabSequence elabDec env decs
+
+
+    fun elabDec' env dec =
+        elabDec {fixEnv = env, sqlEnv = NONE} dec
+
+    val elabDec = elabDec'
 
 end

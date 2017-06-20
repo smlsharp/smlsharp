@@ -29,10 +29,9 @@ struct
    *)
   (*%
    * @format(label)
-   *    "duplicate" +d "tuple" +d "in" +d "from" +d "and/or" +d "into"
-   *    +d "clause:" +d label
+   *    "duplicate" +d "tuple" +d "in" +d "from" +d "clause:" +d label
    *)
-  DuplicateSQLTuple of Symbol.symbol
+  DuplicateSQLFromLabel of RecordLabel.label
 
   and
   (*
@@ -94,9 +93,9 @@ struct
   and
   (*%
    * @format(name)
-   *    "only" +d "natural" +d "join" +d "can" +d "be" +d "named:" +d name
+   *    "cross" +d "join" +d "cannot" +d "be" +d "named:" +d name
    *)
-  OnlyNaturalJoinCanBeNamed of Symbol.symbol
+  CrossJoinName of RecordLabel.label
 
   and
   (*%

@@ -15,38 +15,8 @@ struct
   (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
   type longsymbol = Symbol.longsymbol
 
-  (*%
-      @formatter(loc) Loc.format_loc
-   *)
-  datatype constant 
-    = (*%
-         @format({radix, digits} * loc) digits
-       *)
-      INT of {radix: StringCvt.radix, digits: string} * loc
-    | (*%
-         @format({radix, digits} * loc) digits
-       *)
-      WORD of {radix: StringCvt.radix, digits: string} * loc
-    | (*%
-         @format(value * loc) "\"" value "\""
-       *)
-      STRING of string * loc
-    | (*%
-         @format(value * loc) value
-       *)
-      REAL of string * loc
-    | (*%
-         @format(value * loc) "#\"" value "\""
-       *)
-      CHAR of char * loc
-    | (*%
-         @format(loc) "()"
-       *)
-      UNITCONST of loc
-    | (*% 
-         @format(loc) "NULL"
-       *)
-      NULLCONST of loc
+  (*% @formatter(AbsynConst.constant) AbsynConst.format_constant *)
+  datatype constant = datatype AbsynConst.constant
 
   (*% *)
   type headerFormatComment =
@@ -65,147 +35,18 @@ struct
         localTags : FormatTemplate.formattag list
       }
 
-  (*%
-   *)
-   datatype eq = 
-      (*%
-       * @format "''"
-       *)
-      EQ
-    | (*%
-       * @format "'"
-       *)
-      NONEQ
-
-  (*%
-   * @formatter(listWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
-   * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
-   * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
-   * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
-   * @formatter(NameMap.namePath) NameMap.format_namePath
-   * @formatter(seqList) TermFormat.formatSeqList
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(RecordLabel.label) RecordLabel.format_label
-   *)
-  datatype ty
-    = (*%
-         @format(loc) "_"
-       *)
-       TYWILD of loc
-    | (*%
-         @format(tvar * loc) tvar
-       *)
-      TYID of tvar * loc
-    | (*%
-         @format(field fields * loc)
-           "{"
-             1
-              1[ fields(field)(","1) ]
-             1
-            "}"
-         @format:field(label * ty)
-           label ":" +d ty
-       *)
-      TYRECORD of (RecordLabel.label * ty) list * loc
-    | (*%
-         @format(arg args * longsymbol * loc)
-          args:seqList(arg)("(" d, "," d, d ")")
-          args:ifCons()(+)
-          longsymbol
-       *)
-      TYCONSTRUCT of ty list * longsymbol * loc
-    | (*%
-         @format(elem elems * loc) 
-           elems(elem)( + "*" +d )
-       *)
-      TYTUPLE of ty list * loc
-    | (*%
-       * @format(dom * result * loc) 
-          "("
-           1[
-              dom + "->" +d result 
-            ]
-           +1
-           ")"
-       *)
-      TYFUN of ty * ty * loc
-    | (*%
-       * @format(tvar tvars * ty * loc)
-        "[" 
-          +1
-          1[
-            tvars(tvar)(",") "." 
-            +1 ty
-           ]
-          +1
-         "]"
-       *)
-      TYPOLY of (kindedTvar) list * ty * loc
-
-  and tvarKind 
-    = (*%
-       * @format 
-       *)
-      UNIV 
-    | (*%
-         @format(field fields * loc) 
-           "#{" 
-               1[1 fields(field)(","+1)] 
-             1 
-            "}"
-         @format:field(label * ty) {label} +d ":" +d {ty}
-       *)
-      REC of (RecordLabel.label * ty) list * loc
-    | (*%
-        @format(id * loc) "#" id
-       *)
-      KINDID of string * loc
-
-  withtype tvar 
-    = (*%
-       * @format({symbol:symbol, eq:eq}) eq symbol
-       *)
-      {symbol:symbol, eq:eq}
-
-  and kindedTvar 
-    = (*%
-       * @format({symbol, eq} * tvarKind) eq symbol tvarKind
-       *)
-      {symbol:symbol, eq:eq} * tvarKind
-
-  (*%
-   * @formatter(seqList) TermFormat.formatSeqList
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(RecordLabel.label) RecordLabel.format_label
-   *)
-  datatype ffiTy 
-    = (*%
-       * @format(attr attrs * dom doms * var vars varsOpt * ret rets * loc)
-       *           R1{ "(" doms(dom)("," + ) ")" +d "->"
-       *               2[ +1 "(" rets(ret)("," + ) ")" ] }
-       *)
-      FFIFUNTY of string list * ffiTy list * ffiTy list option * ffiTy list * loc
-    | (*%
-       * @format(elem elems * loc) N1{ d elems(elem)( + "*" +d ) }
-       *)
-      FFITUPLETY of ffiTy list * loc
-    | (*%
-       * @format(tvar * loc) tvar
-       *)
-      FFITYVAR of tvar * loc
-    | (*%
-       * @format(field fields * loc)
-       *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
-       * @format:field(label * ty) {label} +d ":" +d {ty}
-       *)
-      FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
-    | (*%
-       * @format(arg args * longsymbol * loc)
-          args:seqList(arg)("(" d, "," d, d ")") 
-          args:ifCons()(+)
-          longsymbol
-       *)
-      FFICONTY of ffiTy list * longsymbol * loc
+  (*% @formatter(AbsynTy.eq) AbsynTy.format_eq *)
+  datatype eq = datatype AbsynTy.eq
+  (*% @formatter(AbsynTy.ty) AbsynTy.format_ty *)
+  datatype ty = datatype AbsynTy.ty
+  (*% @formatter(AbsynTy.tvarKind) AbsynTy.format_tvarKind *)
+  datatype tvarKind = datatype AbsynTy.tvarKind
+  (*% @formatter(AbsynTy.tvar) AbsynTy.format_tvar *)
+  datatype tvar = datatype AbsynTy.tvar
+  (*% @formatter(AbsynTy.kindedTvar) AbsynTy.format_kindedTvar *)
+  datatype kindedTvar = datatype AbsynTy.kindedTvar
+  (*% @formatter(AbsynTy.ffiTy) AbsynTy.format_ffiTy *)
+  datatype ffiTy = datatype AbsynTy.ffiTy
 
   (*%
    * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
@@ -394,7 +235,7 @@ struct
       }
 
   (*%
-   * @formatter(AbsynSQL.exp) AbsynSQL.format_exp
+   * @formatter(AbsynSQL.sqlexp) AbsynSQL.format_sqlexp
    * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
    * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
    * @formatter(seqList) TermFormat.formatSeqList
@@ -553,6 +394,25 @@ struct
        *)
       EXPLET of dec list * exp list * loc
     | (*%
+        @format({id, pat, data, iterate, pred, loc:loc})
+            "foreach" + id + "in" + data
+            +1 "with" + pat
+            +1 "while" + 2[pred]
+            +1 "do" + 2[iterate]
+            +1 "end"
+       *)
+      EXPFOREACHARRAY of {id:symbol, pat:pat, data:exp, iterate:exp, pred:exp, loc:loc}
+    | (*%
+        @format({id, whereParam, pat, data, iterate, pred, loc:loc})
+            "foreach" + id + "in" + data
+            +1 "where" + whereParam
+            +1 "with" + pat
+            +1 "while" + 2[pred]
+            +1 "do" + 2[iterate]
+            +1 "end"
+       *)
+      EXPFOREACHDATA of {id:symbol, whereParam:exp, pat:pat, data:exp, iterate:exp, pred:exp, loc:loc}
+    | (*%
          @format(exp * ty * loc)
             exp + ":" + "_import" 
             +1 ty 
@@ -567,15 +427,33 @@ struct
     | (*%
           @format((e,p,t) s * loc) s(e,p,t)
        *)
-      EXPSQL of (exp, pat, ty) AbsynSQL.exp * loc
+      EXPSQL of (exp, pat, ty) AbsynSQL.sqlexp * loc
     | (*%
           @format(e1 * e2 * loc) "JOIN(" e1 + "," + e2 ")"
        *)
       EXPJOIN of exp * exp * loc
-    | (*% *)
+    | (*% 
+          @format(e * ty * loc) "_json" + e + "as" + ty
+       *)
       EXPJSON of exp * ty * loc
-    | (*% *)
+    | (*% 
+         @format(exp * rule rules * loc)
+         1[
+           "_joincase" + 1[ exp ] + "of" 
+            +1
+            1[rules(rule)(~1[+1 "|"] +) ]
+          ]
+         @format:rule(pat * exp) {{pat} + "=>" +1 {exp}}
+       *)
       EXPJSONCASE of exp * (pat * exp) list * loc
+    | (*% 
+          @format(ty * loc) "_typeof(" +  ty + ")"
+       *)
+      EXPTYPEOF of ty * loc
+    | (*% 
+          @format(ty * loc) "_reifyTy(" +  ty + ")"
+       *)
+      EXPREIFYTY of ty * loc
 
   and ffiArg
     = (*%
@@ -1099,28 +977,10 @@ struct
        *)
       EOF
 
-  fun getLocConstant const : loc=
-      case const of
-      INT (_, loc) => loc
-    | WORD (_, loc) => loc
-    | STRING (_, loc) => loc
-    | REAL (_, loc) => loc
-    | CHAR (_, loc) => loc
-    | UNITCONST loc => loc
-    | NULLCONST loc => loc
-
-  fun getLeftLocConstant x = #1 (getLocConstant x)
-  fun getRightLocConstant x = #2 (getLocConstant x)
-
-  fun getLocTy ty =
-      case ty of
-        TYWILD loc => loc
-      | TYID(_, loc) => loc
-      | TYRECORD (_, loc) => loc
-      | TYCONSTRUCT (_, _, loc) => loc
-      | TYTUPLE(_, loc) => loc
-      | TYFUN (_, _, loc) => loc
-      | TYPOLY (_, _, loc) => loc
+  val getLocConstant = AbsynConst.getLocConstant
+  val getLeftLocConstant = AbsynConst.getLeftLocConstant
+  val getRightLocConstant = AbsynConst.getRightLocConstant
+  val getLocTy = AbsynTy.getLocTy
 
   fun getLocPat pat =
       case pat of 
@@ -1134,15 +994,7 @@ struct
       | PATTYPED (_, _, loc) => loc
       | PATLAYERED (_, _, loc) => loc
 
-  fun replaceLocConst (const, loc) =
-      case const of
-      INT (int, _) => INT (int, loc)
-    | WORD (word, _) => WORD (word, loc)
-    | STRING (string, loc) => STRING (string, loc)
-    | REAL (real, _) => REAL (real, loc)
-    | CHAR (char, _) => CHAR (char, loc)
-    | UNITCONST _ => UNITCONST loc
-    | NULLCONST _ => NULLCONST loc
+  val replaceLocConst = AbsynConst.replaceLocConst
 
   fun replaceLoc (exp,loc) =
     case exp of
@@ -1168,10 +1020,16 @@ struct
     | EXPLET (decList,expList,_) =>EXPLET (decList,expList,loc)
     | EXPFFIIMPORT (exp,ty,_) =>EXPFFIIMPORT (exp,ty,loc)
     | EXPFFIAPPLY (attrs,symbol,args,ty,_) => EXPFFIAPPLY (attrs,symbol,args,ty,loc)
+    | EXPFOREACHARRAY {id, pat, data, iterate, pred, loc = _} => 
+      EXPFOREACHARRAY {id=id, pat=pat, data=data, iterate=iterate, pred=pred, loc=loc}
+    | EXPFOREACHDATA {id, pat, data, whereParam, iterate, pred, loc = _} => 
+      EXPFOREACHDATA {id=id, pat=pat, data=data, whereParam = whereParam, iterate=iterate, pred=pred, loc=loc}
     | EXPSQL (sql,_) => EXPSQL (sql,loc)
     | EXPJOIN(e1,e2,_) => EXPJOIN(e1,e2, loc)
     | EXPJSON(e,t,_) => EXPJSON(e,t,loc)
     | EXPJSONCASE(e,r,_) => EXPJSONCASE (e, r, loc)
+    | EXPTYPEOF(ty,_) => EXPTYPEOF(ty, loc)
+    | EXPREIFYTY(ty,_) => EXPREIFYTY(ty, loc)
   (** used as the prefix of formatter name if no @prefix tag is declared. *)
   val DefaultFormatterPrefix = "format_"
 

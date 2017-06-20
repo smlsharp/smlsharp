@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 struct sml_livecheck;
-struct sml_livecheck *sml_livecheck(struct sml_control *);
+struct sml_livecheck *sml_livecheck(struct sml_mutator *);
 void sml_livecheck_destroy(struct sml_livecheck *);
 void *sml_livecheck_at(struct sml_livecheck *, void *);
 void *sml_livecheck_parent(struct sml_livecheck *, void *);
@@ -83,14 +83,14 @@ livecheck_mark(void **slot, void *data)
 static struct sml_livecheck_obj global_root;
 
 static void
-livecheck_trace(struct sml_control *control, struct sml_livecheck *s)
+livecheck_trace(struct sml_mutator *mutator, struct sml_livecheck *s)
 {
 	s->parent = &global_root;
 	sml_enum_global(livecheck_mark, s);
 	sml_callback_enum_ptr(livecheck_mark, s);
-	if (control) {
+	if (mutator) {
 		s->parent = NULL;
-		sml_stack_enum_ptr(control, livecheck_mark, s);
+		sml_stack_enum_ptr(mutator, livecheck_mark, s);
 	}
 	while (s->top) {
 		s->parent = s->top;
@@ -101,11 +101,11 @@ livecheck_trace(struct sml_control *control, struct sml_livecheck *s)
 }
 
 struct sml_livecheck *
-sml_livecheck(struct sml_control *control)
+sml_livecheck(struct sml_mutator *mutator)
 {
 	struct sml_livecheck *s;
 	s = livecheck_new();
-	livecheck_trace(control, s);
+	livecheck_trace(mutator, s);
 	return s;
 }
 

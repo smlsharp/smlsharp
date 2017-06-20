@@ -7,14 +7,9 @@
 structure SQLBackendTypes =
 struct
 
-  type schema_column =
-       {colname: string, ty: SMLSharp_SQL_BackendTy.ty, nullable: bool}
-  type schema_table = string * schema_column list
-  type schema = schema_table list
-
   datatype res_impl =
-       R of {closeRel : unit -> unit,
-             fetch : unit -> res_impl option,
+       R of {closeRes : unit -> unit,
+             fetch : unit -> bool,
              getInt : int -> int option,
              getIntInf : int -> IntInf.int option,
              getWord : int -> word option,
@@ -26,10 +21,10 @@ struct
              getTimestamp : int -> SMLSharp_SQL_TimeStamp.timestamp option,
              getDecimal : int -> SMLSharp_SQL_Decimal.decimal option,
              getFloat : int -> SMLSharp_SQL_Float.float option}
-         
+
   type conn_impl =
        {closeConn : unit -> unit,
-        getDatabaseSchema : unit -> schema,
+        getDatabaseSchema : unit -> SMLSharp_SQL_BackendTy.schema,
         execQuery : string -> res_impl}
 
   type server_impl =
@@ -53,8 +48,8 @@ struct
 
     fun resImpl res =
         SQLBackendTypes.R {
-          closeRel = fn () => B.closeRel res,
-          fetch = fn () => Option.map resImpl (B.fetch res),
+          closeRes = fn () => B.closeRes res,
+          fetch = fn () => B.fetch res,
           getInt = fn i => getValue B.intValue (res, i),
           getIntInf = fn i => getValue B.intInfValue (res, i),
           getWord = fn i => getValue B.wordValue (res, i),

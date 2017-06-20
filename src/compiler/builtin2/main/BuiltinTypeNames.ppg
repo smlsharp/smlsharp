@@ -3,24 +3,32 @@ struct
 
   (*% *)
   datatype bty 
-    = (*% @format "int" *)
-      INTty
+    = (*% @format "index" *)
+      INDEXty
+    | (*% @format "int8" *)
+      INT8ty
+    | (*% @format "int16" *)
+      INT16ty
+    | (*% @format "int32" *)
+      INT32ty
     | (*% @format "int64" *)
       INT64ty
     | (*% @format "intInf" *)
       INTINFty
-    | (*% @format "word" *)
-      WORDty
-    | (*% @format "word64" *)
-      WORD64ty
     | (*% @format "word8" *)
       WORD8ty
+    | (*% @format "word16" *)
+      WORD16ty
+    | (*% @format "word32" *)
+      WORD32ty
+    | (*% @format "word64" *)
+      WORD64ty
     | (*% @format "char" *)
       CHARty
     | (*% @format "string" *)
       STRINGty
-    | (*% @format "real" *)
-      REALty
+    | (*% @format "real64" *)
+      REAL64ty
     | (*% @format "real32" *)
       REAL32ty
     | (*% @format "unit" *)
@@ -46,15 +54,21 @@ struct
 
   fun findType name =
       case name of
-        "int" => SOME INTty
+        "index" => SOME INDEXty
+      | "int" => SOME INT32ty
+      | "int8" => SOME INT8ty
+      | "int16" => SOME INT16ty
+      | "int32" => SOME INT32ty
       | "int64" => SOME INT64ty
       | "intInf" => SOME INTINFty
-      | "word" => SOME WORDty
-      | "word64" => SOME WORD64ty
+      | "word" => SOME WORD32ty
       | "word8" => SOME WORD8ty
+      | "word16" => SOME WORD16ty
+      | "word32" => SOME WORD32ty
+      | "word64" => SOME WORD64ty
       | "char" => SOME CHARty
       | "string" => SOME STRINGty
-      | "real" => SOME REALty
+      | "real" => SOME REAL64ty
       | "real32" => SOME REAL32ty
       | "unit" => SOME UNITty
       | "ptr" => SOME PTRty
@@ -70,15 +84,19 @@ struct
 
   fun runtimeTy ty =
       case ty of
-        INTty => RuntimeTypes.INT32ty
+        INDEXty => RuntimeTypes.INT32ty
+      | INT8ty => RuntimeTypes.INT8ty
+      | INT16ty => RuntimeTypes.INT16ty
+      | INT32ty => RuntimeTypes.INT32ty
       | INT64ty => RuntimeTypes.INT64ty
       | INTINFty => RuntimeTypes.BOXEDty
-      | WORDty => RuntimeTypes.UINT32ty
-      | WORD64ty => RuntimeTypes.UINT64ty
       | WORD8ty => RuntimeTypes.UINT8ty
+      | WORD16ty => RuntimeTypes.UINT16ty
+      | WORD32ty => RuntimeTypes.UINT32ty
+      | WORD64ty => RuntimeTypes.UINT64ty
       | CHARty => RuntimeTypes.UINT8ty
       | STRINGty => RuntimeTypes.BOXEDty
-      | REALty => RuntimeTypes.DOUBLEty
+      | REAL64ty => RuntimeTypes.DOUBLEty
       | REAL32ty => RuntimeTypes.FLOATty
       | UNITty => RuntimeTypes.UNITty
       | PTRty => RuntimeTypes.POINTERty

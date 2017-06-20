@@ -1,0 +1,10 @@
+_require local "basis.smi"
+_require "../../../smlunit-lib.smi"
+_require local "../main/JSON.smi"
+_require local "../main/JSONImpl.smi"
+_require local "../main/JSONTypes.ppg.smi"
+structure TestJSONImpl =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end
+

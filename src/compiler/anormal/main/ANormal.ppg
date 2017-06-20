@@ -977,7 +977,7 @@ struct
   datatype topdec =
       (*%
        * @format({id, tyvarKindEnv, argVarList: arg args,
-       *          closureEnvVar: env envOpt, bodyExp, retTy, loc})
+       *          closureEnvVar: env envOpt, bodyExp, retTy, gcCheck, loc})
        * "@fun:" id
        * + envOpt(env)("_")
        * + args:appList(arg)("(",",",")")
@@ -986,7 +986,7 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({id, tyvarKindEnv, argVarList: arg args,
-       *          closureEnvVar: env envOpt, bodyExp, retTy, loc})
+       *          closureEnvVar: env envOpt, bodyExp, retTy, gcCheck, loc})
        * "@fun:" id
        * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
        * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
@@ -1001,6 +1001,7 @@ struct
         closureEnvVar : varInfo option,
         bodyExp : anexp,
         retTy : ty,
+        gcCheck : bool,
         loc : loc
       }
     | (*%

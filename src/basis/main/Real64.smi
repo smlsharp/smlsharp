@@ -8,7 +8,6 @@ _require "./IEEEReal.smi"
 
 structure Real64 =
 struct
-  type real = real
   structure Math =
   struct
     type real = real
@@ -82,7 +81,7 @@ struct
   val round : real -> int
   val toInt : IEEEReal.rounding_mode -> real -> int
   val toLargeInt : IEEEReal.rounding_mode -> real -> largeInt
-  val fromInt = SMLSharp_Builtin.Int32.toReal
+  val fromInt = SMLSharp_Builtin.Int32.toReal64
   val fromLargeInt : largeInt -> real
   val toLarge : real -> real
   val fromLarge : IEEEReal.rounding_mode -> real -> real
@@ -92,6 +91,7 @@ struct
   val fromString : string -> real option
   val toDecimal : real -> IEEEReal.decimal_approx
   val fromDecimal : IEEEReal.decimal_approx -> real option
+  type real = real
 end
 
 structure LargeReal = Real64

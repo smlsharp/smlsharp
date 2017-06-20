@@ -21,8 +21,7 @@ local
 
   type path = RC.path
   type longsymbol = Symbol.longsymbol
-  type btvKind = {tvarKind : T.tvarKind, eqKind : T.eqKind}
-  type btvEnv = btvKind BoundTypeVarID.Map.map
+  type btvEnv = T.kind BoundTypeVarID.Map.map
   type rcexp = RC.rcexp
 
   type btvMap = BoundTypeVarID.id BoundTypeVarID.Map.map
@@ -373,9 +372,33 @@ local
              expTyList = map copyT expTyList,
              loc = loc
             }
+        | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+          RC.RCFOREACH 
+            {data = copy data, 
+             dataTy = copyT dataTy,
+             iterator = copy iterator, 
+             iteratorTy = copyT iteratorTy, 
+             pred = copy pred, 
+             predTy = copyT predTy, 
+             loc = loc}
+        | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+          RC.RCFOREACHDATA
+            {data = copy data, 
+             dataTy = copyT dataTy,
+             whereParam = copy whereParam, 
+             whereParamTy = copyT whereParamTy, 
+             iterator = copy iterator, 
+             iteratorTy = copyT iteratorTy, 
+             pred = copy pred, 
+             predTy = copyT predTy, 
+             loc = loc}
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (copyT ty, loc)
-        | RC.RCSWITCH {branches:(Absyn.constant * rcexp) list, defaultExp:rcexp,
+        | RC.RCTYPEOF (ty, loc) =>
+          RC.RCTYPEOF (copyT ty, loc)
+        | RC.RCREIFYTY (ty, loc) =>
+          RC.RCREIFYTY (copyT ty, loc)
+        | RC.RCSWITCH {branches:(RC.constant * rcexp) list, defaultExp:rcexp,
                        expTy:Types.ty, loc:Loc.loc, switchExp:rcexp,
                        resultTy} =>
           RC.RCSWITCH
@@ -395,6 +418,16 @@ local
                     }
         | RC.RCVAR varInfo =>
           RC.RCVAR (evalVar context varInfo)
+        | RC.RCJOIN {ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
+          RC.RCJOIN {ty=copyT ty,
+                     args=(copy arg1,copy arg2),
+                     argTys=(copyT argTy1,copyT argTy2),
+                     loc=loc}
+        | RC.RCJSON {exp,ty,coerceTy,loc} =>
+          RC.RCJSON {exp=copy exp,
+                     ty=copyT ty,
+                     coerceTy=copyT coerceTy,
+                     loc=loc}
         )
           handle DuplicateBtv =>
                  raise bug "DuplicateBtv in copyExp copyExp"

@@ -29,13 +29,6 @@ struct
   val importAllExceptions = ref true
   val generateExnMessage = ref false
 
-  fun prettyPrint expressions =
-      let
-        val ppgenParameter = [SMLFormat.Columns (!printWidth)]
-      in
-        SMLFormat.prettyPrint ppgenParameter expressions
-      end
-
   (****************************************)
   (* internal compiler mode (user cannot specify them by -x option) *)
 
@@ -43,11 +36,6 @@ struct
 
   (****************************************)
   (* switches to control informations reported to user *)
-
-  (** true if every warning should be printed. *)
-  val printWarning = ref true
-
-  (* switches for developers *)
 
   (* print what compiler does *)
   val doProfile = ref false
@@ -101,7 +89,7 @@ struct
   (** true if detailed type information should be printed. *)
   val printWithType = ref false
 
-  (** true if every diagnosis should be printed. *)
+  val printWarning = ref true
   val printDiagnosis = ref true
 
   (* control toplevel *)
@@ -112,7 +100,7 @@ struct
   val doTCOptimization = ref true
   val doRCOptimization = ref false
   (** true if no formatter is generated and no binding information is printed *)
-  val skipPrinter = ref true
+  val skipPrinter = ref false
 
   (* switches for parser *)
   val allow8bitId = ref false
@@ -138,6 +126,7 @@ struct
   val enableUnboxedFloat = ref true
   val insertCheckGC = ref true
   val useMustTail = ref false
+  val branchByCConvRigidity = ref false
 
   (****************************************)
   (* switch table for -x options *)
@@ -293,7 +282,9 @@ struct
         ("traceFileLoad", "print filenames loaded by compiler",
          BoolSwitch traceFileLoad),
         ("useMustTail", "use musttail instead of tail as much as possible",
-         BoolSwitch useMustTail)
+         BoolSwitch useMustTail),
+        ("branchByCConvRigidity", "insert branch code for calling convention rigidity",
+         BoolSwitch branchByCConvRigidity)
       ]
 
   fun switchToString (IntSwitch intRef) = Int.toString (!intRef)

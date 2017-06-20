@@ -1,8 +1,8 @@
 _require "../../basis.smi"
-_require "../../smlformat-lib.smi"
-_require "./SQLErrors.smi"
-_require local "./SQLBackendTy.smi"
+_require "./SQLBackendTy.smi"
 _require "./Backend.smi"
+_require local "../../smlformat-lib.smi"
+_require local "./SQLErrors.smi"
 _require "./builtintypes/timestamp/TimeStamp.smi"
 _require "./builtintypes/decimal/Decimal.smi"
 _require "./builtintypes/float/Float.smi"
@@ -11,237 +11,108 @@ _require "./SQLQuery.ppg.smi"
 structure SMLSharp_SQL_Prim =
 struct
 
-  exception Format = SMLSharp_SQL_Errors.Format
-  exception Exec = SMLSharp_SQL_Errors.Exec
-  exception Connect = SMLSharp_SQL_Errors.Connect
-  exception Link = SMLSharp_SQL_Errors.Link
+  structure Ty = SMLSharp_SQL_BackendTy
+  structure Ast = SMLSharp_SQL_Query
+  structure List = List
+  structure Option = Option
+  structure Bool = Bool
 
-  datatype backend = datatype SMLSharp_SQL_Backend.backend
-  datatype 'a schema = SCHEMA of SMLSharp_SQL_Backend.schema * (unit -> 'a)
-  type 'a server (= boxed)
-  type 'a conn (= boxed)
-  type 'a db (= boxed)
-  type 'a rel (= boxed)
-  datatype res_impl = datatype SMLSharp_SQL_Backend.res_impl
   type timestamp = SMLSharp_SQL_TimeStamp.timestamp
   type decimal = SMLSharp_SQL_Decimal.decimal
   type float = SMLSharp_SQL_Float.float
 
-  datatype qconst =
-      CONST_INT of int
-    | CONST_WORD of word
-    | CONST_REAL of real
-    | CONST_STRING of string
-    | CONST_CHAR of char
+  type backend = SMLSharp_SQL_Backend.backend
+  type 'a server (= boxed)
+  type 'a conn (= boxed)
+  type 'a cursor (= boxed)
+  type res (= boxed)
+  exception Toy
 
-  type 'w dbi (= contag)
-  type ('a,'w) db' (= boxed)
-  type ('a,'w) table (= boxed)
-  type ('a,'w) row (= boxed)
-  type qexp (= boxed)
-  type ('a,'w) toy = 'w dbi -> 'a
-  type ('a,'b) selector = ('a -> 'b) * string
-  type ('a,'w) raw_row = (string * qexp) list * ('a,'w) toy
-  type ('a,'w) value' (= boxed)
-  datatype ('a,'w) value = VALUE of ('a,'w) value' | CONST of qconst * 'a
-  type 'w bool_value = (bool option, 'w) value
-  type 'a query (= boxed)
-  type command (= boxed)
+  datatype ('toy, 'w) exp =
+      EXPty of 'w Ast.exp_ast * 'toy
+  datatype ('toy, 'w) whr =
+      WHRty of 'w Ast.whr_ast * 'toy
+  datatype ('toy, 'w) from =
+      FROMty of 'w Ast.from_ast * (unit -> 'toy)
+  datatype ('toy, 'w) orderby =
+      ORDERBYty of 'w Ast.orderby_ast * 'toy
+  datatype ('toy, 'w) offset =
+      OFFSETty of 'w Ast.offset_ast * 'toy
+  datatype ('toy, 'w) limit =
+      LIMITty of 'w Ast.limit_ast * 'toy
+  datatype ('src, 'toy, 'w) select =
+      SELECTty of 'w Ast.select_ast * ('src -> 'toy) * (res -> 'toy)
+  datatype ('toy, 'w) query =
+      QUERYty of 'w Ast.query_ast * (unit -> 'toy) * (res -> 'toy)
+  datatype ('toy, 'ret, 'w) command =
+      COMMANDty of 'w Ast.command_ast * (unit -> 'toy) * (res -> 'ret)
+  datatype ('toy, 'w) db =
+      DBty of 'w Ast.db * (unit -> 'toy)
 
-  val sqlserver_string : string * 'a schema -> 'a server
-  val sqlserver_backend : backend * 'a schema -> 'a server
+  val closeRes : res -> unit
+
+  val queryCommand : ('a,'w) query -> ('a,'a cursor,'w) command
+
+  val sqlserver_string : string * (Ty.schema * (unit -> 'a)) -> 'a server
+  val sqlserver_backend : backend * (Ty.schema * (unit -> 'a)) -> 'a server
   val sqlserver =
-      case 'a in 'a * 'b schema -> 'b server of
+      case 'a in 'a * (Ty.schema * (unit -> 'b)) -> 'b server of
         string => sqlserver_string
       | backend => sqlserver_backend
 
+  val sqleval : (('a,'w) db -> ('b,'c,'w) command) -> 'a conn -> 'c
+
   val connect : 'a server -> 'a conn
-  val eval : ('a db -> 'b query) -> 'a conn -> 'b rel
-  val exec : ('a db -> command) -> 'a conn -> unit
-  val fetch : 'a rel -> ('a * 'a rel) option
   val closeConn : 'a conn -> unit
-  val closeRel : 'a rel -> unit
-  val queryString : ('a db -> 'b query) -> string
-  val commandString : ('a db -> command) -> string
+  val closeCursor : 'a cursor -> unit
+  val fetch : 'a list cursor -> 'a option
+  val fetchAll : 'a list cursor -> 'a list
 
-  val columnInfo_int
-      : string -> (unit -> int) * SMLSharp_SQL_Backend.schema_column 
-  val columnInfo_intInf
-      : string -> (unit -> intInf) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_word
-      : string -> (unit -> word) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_char
-      : string -> (unit -> char) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_string
-      : string -> (unit -> string) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_real
-      : string -> (unit -> real) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_real32
-      : string -> (unit -> Real32.real) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_timestamp
-      : string -> (unit -> timestamp) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_decimal
-      : string -> (unit -> decimal) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_float
-      : string -> (unit -> float) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_int_option
-      : string -> (unit -> int option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_intInf_option
-      : string -> (unit -> intInf option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_word_option
-      : string -> (unit -> word option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_char_option
-      : string -> (unit -> char option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_string_option
-      : string -> (unit -> string option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_real_option
-      : string -> (unit -> real option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_real32_option
-      : string -> (unit -> Real32.real option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_timestamp_option
-      : string -> (unit -> timestamp option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_decimal_option
-      : string -> (unit -> decimal option) * SMLSharp_SQL_Backend.schema_column
-  val columnInfo_float_option
-      : string -> (unit -> float option) * SMLSharp_SQL_Backend.schema_column
+  val toy : (('a,'w) db -> ('b,'w) query) -> 'a -> 'b
+  val commandToString : (('a,'w) db -> ('b,'c,'w) command) -> string
 
-  val columnInfo =
-      case 'a in string -> (unit -> 'a) * SMLSharp_SQL_Backend.schema_column of
-        int => columnInfo_int
-      | intInf => columnInfo_intInf
-      | word => columnInfo_word
-      | char => columnInfo_char
-      | string => columnInfo_string
-      | real => columnInfo_real
-      | real32 => columnInfo_real32
-      | timestamp => columnInfo_timestamp
-      | decimal => columnInfo_decimal
-      | float => columnInfo_float
-      | 'b option =>
-        case 'b in string -> (unit -> 'b option)
-                             * SMLSharp_SQL_Backend.schema_column of
-          int => columnInfo_int_option
-        | intInf => columnInfo_intInf_option
-        | word => columnInfo_word_option
-        | char => columnInfo_char_option
-        | string => columnInfo_string_option
-        | real => columnInfo_real_option
-        | real32 => columnInfo_real32_option
-        | timestamp => columnInfo_timestamp_option
-        | decimal => columnInfo_decimal_option
-        | float => columnInfo_float_option
-
-  val Some : ('a,'w) value -> ('a option,'w) value
-  val Null : ('a option,'w) value
-
-  val add : ('a,'w) value * ('a,'w) value -> ('a,'w) value
-  val sub : ('a,'w) value * ('a,'w) value -> ('a,'w) value
-  val mul : ('a,'w) value * ('a,'w) value -> ('a,'w) value
-  val div : ('a,'w) value * ('a,'w) value -> ('a,'w) value
-  val mod : ('a,'w) value * ('a,'w) value -> ('a,'w) value
-  val neg : ('a,'w) value -> ('a,'w) value
-  val abs : ('a,'w) value -> ('a,'w) value
-  val lt : ('a,'w) value * ('a,'w) value -> 'w bool_value
-  val le : ('a,'w) value * ('a,'w) value -> 'w bool_value
-  val gt : ('a,'w) value * ('a,'w) value -> 'w bool_value
-  val ge : ('a,'w) value * ('a,'w) value -> 'w bool_value
-  val eq : ('a,'w) value * ('a,'w) value -> 'w bool_value
-  val neq : ('a,'w) value * ('a,'w) value -> 'w bool_value
-  val strcat : (string, 'w) value * (string, 'w) value -> (string, 'w) value
-  val andAlso : 'w bool_value * 'w bool_value -> 'w bool_value
-  val orElse : 'w bool_value * 'w bool_value -> 'w bool_value
-  val not : 'w bool_value -> 'w bool_value
-  val isNull : ('a,'w) value -> 'w bool_value
-  val isNotNull : ('a,'w) value -> 'w bool_value
-  val like_string : (string,'w) value * (string,'w) value -> 'w bool_value
-  val like_stringOption
-      : (string option,'w) value * (string option,'w) value -> 'w bool_value
-  val exists : ('a db -> 'b query) -> ('a,'w) db' -> 'w bool_value
-
-  val toSQL_int : int -> (int,'w) value
-  val toSQL_intInf : intInf -> (intInf,'w) value
-  val toSQL_word : word -> (word,'w) value
-  val toSQL_char : char -> (char,'w) value
-  val toSQL_string : string -> (string,'w) value
-  val toSQL_real : real -> (real,'w) value
-  val toSQL_real32 : real32 -> (real32,'w) value
-  val toSQL_timestamp : timestamp -> (timestamp,'w) value
-  val toSQL_decimal : decimal -> (decimal,'w) value
-  val toSQL_float : float -> (float,'w) value
-  val toSQL_intOption : int option -> (int option, 'w) value
-  val toSQL_intInfOption : intInf option -> (intInf option,'w) value
-  val toSQL_wordOption : word option -> (word option,'w) value
-  val toSQL_charOption : char option -> (char option,'w) value
-  val toSQL_stringOption : string option -> (string option,'w) value
-  val toSQL_realOption : real option -> (real option,'w) value
-  val toSQL_real32Option : real32 option -> (real32 option,'w) value
-  val toSQL_timestampOption : timestamp option -> (timestamp option,'w) value
-  val toSQL_decimalOption : decimal option -> (decimal option,'w) value
-  val toSQL_floatOption : float option -> (float option,'w) value
-
-  val fromSQL_int
-      : int * SMLSharp_SQL_Backend.res_impl * (int,'w) toy -> int
-  val fromSQL_intInf
-      : int * SMLSharp_SQL_Backend.res_impl * (intInf,'w) toy -> intInf
-  val fromSQL_word
-      : int * SMLSharp_SQL_Backend.res_impl * (word,'w) toy -> word
-  val fromSQL_char
-      : int * SMLSharp_SQL_Backend.res_impl * (char,'w) toy -> char
-  val fromSQL_string
-      : int * SMLSharp_SQL_Backend.res_impl * (string,'w) toy -> string
-  val fromSQL_real
-      : int * SMLSharp_SQL_Backend.res_impl * (real,'w) toy -> real
-  val fromSQL_real32
-      : int * SMLSharp_SQL_Backend.res_impl * (real32,'w) toy -> real32
-  val fromSQL_timestamp
-      : int * SMLSharp_SQL_Backend.res_impl * (timestamp,'w) toy -> timestamp
-  val fromSQL_decimal
-      : int * SMLSharp_SQL_Backend.res_impl * (decimal,'w) toy -> decimal
-  val fromSQL_float
-      : int * SMLSharp_SQL_Backend.res_impl * (float,'w) toy -> float
-  val fromSQL_intOption
-      : int * SMLSharp_SQL_Backend.res_impl * (int option,'w) toy -> int option
-  val fromSQL_intInfOption
-      : int * SMLSharp_SQL_Backend.res_impl * (intInf option,'w) toy
-        -> intInf option
-  val fromSQL_wordOption
-      : int * SMLSharp_SQL_Backend.res_impl * (word option,'w) toy -> word option
-  val fromSQL_charOption
-      : int * SMLSharp_SQL_Backend.res_impl * (char option,'w) toy -> char option
-  val fromSQL_stringOption
-      : int * SMLSharp_SQL_Backend.res_impl * (string option,'w) toy
-        -> string option
-  val fromSQL_realOption
-      : int * SMLSharp_SQL_Backend.res_impl * (real option,'w) toy -> real option
-  val fromSQL_real32Option
-      : int * SMLSharp_SQL_Backend.res_impl * (real32 option,'w) toy -> real32 option
-  val fromSQL_timestampOption
-      : int * SMLSharp_SQL_Backend.res_impl * (timestamp option,'w) toy
-        -> timestamp option
-  val fromSQL_decimalOption
-      : int * SMLSharp_SQL_Backend.res_impl * (decimal option,'w) toy
-        -> decimal option
-  val fromSQL_floatOption
-      : int * SMLSharp_SQL_Backend.res_impl * (float option,'w) toy -> float option
-
+  val fromSQL_int : res * int -> int
+  val fromSQL_intInf : res * int -> intInf
+  val fromSQL_word : res * int -> word
+  val fromSQL_char : res * int -> char
+  val fromSQL_bool : res * int -> bool
+  val fromSQL_string : res * int -> string
+  val fromSQL_real : res * int -> real
+  val fromSQL_real32 : res * int -> real32
+  val fromSQL_timestamp : res * int -> timestamp
+  val fromSQL_decimal : res * int -> decimal
+  val fromSQL_float : res * int -> float
+  val fromSQL_intOption : res * int -> int option
+  val fromSQL_intInfOption : res * int -> intInf option
+  val fromSQL_wordOption : res * int -> word option
+  val fromSQL_charOption : res * int -> char option
+  val fromSQL_boolOption : res * int -> bool option
+  val fromSQL_stringOption : res * int -> string option
+  val fromSQL_realOption : res * int -> real option
+  val fromSQL_real32Option : res * int -> real32 option
+  val fromSQL_timestampOption : res * int -> timestamp option
+  val fromSQL_decimalOption : res * int -> decimal option
+  val fromSQL_floatOption : res * int -> float option
   val fromSQL =
-      case 'a in int * res_impl * ('a,'w) toy -> 'a of
+      case 'a in res * int -> 'a of
         int => fromSQL_int
       | intInf => fromSQL_intInf
       | word => fromSQL_word
       | char => fromSQL_char
+      | bool => fromSQL_bool
       | string => fromSQL_string
       | real => fromSQL_real
       | real32 => fromSQL_real32
       | timestamp => fromSQL_timestamp
       | decimal => fromSQL_decimal
       | float => fromSQL_float
-      | 'c option =>
-        case 'c in int * res_impl * ('c option,'w) toy -> 'c option of
+      | 'b option =>
+        case 'b in res * int -> 'b option of
           int => fromSQL_intOption
         | intInf => fromSQL_intInfOption
         | word => fromSQL_wordOption
         | char => fromSQL_charOption
+        | bool => fromSQL_boolOption
         | string => fromSQL_stringOption
         | real => fromSQL_realOption
         | real32 => fromSQL_real32Option
@@ -249,57 +120,793 @@ struct
         | decimal => fromSQL_decimalOption
         | float => fromSQL_floatOption
 
-  exception InvalidCommand
+  val toyServer : unit -> 'a
 
-  type ('row,'view,'w) table1 (= boxed)
-  type ('row,'view,'w) table2 (= boxed)
-  type ('row,'view,'w) table3 (= boxed)
-  type ('row,'view,'w) table4 (= boxed)
-  type ('row,'w) table5 (= boxed)
+  val ty_int : (unit -> int) -> Ty.schema_column
+  val ty_intInf : (unit -> intInf) -> Ty.schema_column
+  val ty_word : (unit -> word) -> Ty.schema_column
+  val ty_char : (unit -> char) -> Ty.schema_column
+  val ty_bool : (unit -> bool) -> Ty.schema_column
+  val ty_string : (unit -> string) -> Ty.schema_column
+  val ty_real : (unit -> real) -> Ty.schema_column
+  val ty_real32 : (unit -> real32) -> Ty.schema_column
+  val ty_timestamp : (unit -> timestamp) -> Ty.schema_column
+  val ty_decimal : (unit -> decimal) -> Ty.schema_column
+  val ty_float : (unit -> float) -> Ty.schema_column
+  val ty_intOption : (unit -> int option) -> Ty.schema_column
+  val ty_intInfOption : (unit -> intInf option) -> Ty.schema_column
+  val ty_wordOption : (unit -> word option) -> Ty.schema_column
+  val ty_charOption : (unit -> char option) -> Ty.schema_column
+  val ty_boolOption : (unit -> bool option) -> Ty.schema_column
+  val ty_stringOption : (unit -> string option) -> Ty.schema_column
+  val ty_realOption : (unit -> real option) -> Ty.schema_column
+  val ty_real32Option : (unit -> real32 option) -> Ty.schema_column
+  val ty_timestampOption : (unit -> timestamp option) -> Ty.schema_column
+  val ty_decimalOption : (unit -> decimal option) -> Ty.schema_column
+  val ty_floatOption : (unit -> float option) -> Ty.schema_column
 
-  val openDB : ('w -> unit) * 'a db -> ('a,'w) db'
-  val getValue : ('a,'w) row * ('a,'b) selector -> ('b,'w) value
-  val readValue : ('a,'w) value -> qexp * ('a,'w) toy
-  val getTable : ('a,'w) db' * ('a,'b) selector -> ('b,'w) table
-  val getDefault : ('a,'w) table * ('a,'b) selector -> ('b,'w) value
-  val useTable : ('a,'w) table -> ('a, ('a,'w) row, 'w) table1
-  val aliasTable : ('a,'b,'w) table1 * string -> ('a,('a,'w) row,'w) table1
-  val crossJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1
-                  -> ('a * 'c, 'b * 'd, 'w) table1
-  val innerJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 * 
-                  ('b * 'd -> 'w bool_value)
-                    -> ('a * 'c, 'b * 'd, 'w) table1
-  val naturalJoin : ('a,'b,'w) table1 * ('c,'d,'w) table1 * ('a * 'c -> 'e)
-                    -> ('e, 'b * 'd, 'w) table1
-  val dummyJoin : ('a,'b,'w) table1 -> ('a * unit, 'b, 'w) table1
-  val subquery : ('a db -> 'b query) * ('a,'w) db' * string
-                 -> ('b,('b,'w) row,'w) table1
-  val sourceTable : ('a,'b,'w) table1 -> ('a,'b,'w) table2
-  val useDual : unit -> (unit, unit, 'a) table2
-  val chooseRows : ('a,'b,'w) table2 * ('b -> 'w bool_value)
-                   -> ('a,'b,'w) table3
-  val chooseAll : ('a,'b,'w) table2 -> ('a,'b,'w) table3
-  val mapTable : ('a,'b,'w) table3 * ('b -> ('c,'w) raw_row)
-                 -> ('a * 'c, 'b * ('c,'w) row, 'w) table4
-  val sortTableAsc : ('a,'b,'w) table4 * ('b -> ('c,'w) value)
-                     -> ('a,'b,'w) table4
-  val sortTableDesc : ('a,'b,'w) table4 * ('b -> ('c,'w) value)
-                      -> ('a,'b,'w) table4
-  val selectDistinct : ('a * 'b, 'c, 'w) table4 -> ('b,'w) table5
-  val selectAll : ('a * 'b, 'c, 'w) table4 -> ('b,'w) table5
-  val selectDefault : ('a * 'b, 'c, 'w) table4 -> ('b,'w) table5
-  val readRow : ('a,'w) table5 -> ('a,'w) toy
-  val makeQuery : ('a,'w) table5 * (SMLSharp_SQL_Backend.res_impl -> 'a)
-                  -> ('d,'w) db' -> 'a query
-  val deleteRows : ('a,'b,'w) table3
-                   -> ('d,'w) db' -> command
-  val updateRows : ('a * 'b, 'c, 'w) table3
-                   * ('c * ('a,'w) toy -> ('a,'w) raw_row)
-                   -> ('d,'w) db' -> command
-  val insertRows : ('a,'w) table * ('a,'w) raw_row list
-                   -> ('d,'w) db' -> command
-  val beginTransaction : ('d,'w) db' -> command
-  val commitTransaction : ('d,'w) db' -> command
-  val rollbackTransaction : ('d,'w) db' -> command
+  val ty =
+      case 'a in (unit -> 'a) -> Ty.schema_column of
+        int => ty_int
+      | intInf => ty_intInf
+      | word => ty_word
+      | char => ty_char
+      | bool => ty_bool
+      | string => ty_string
+      | real => ty_real
+      | real32 => ty_real32
+      | timestamp => ty_timestamp
+      | decimal => ty_decimal
+      | float => ty_float
+      | 'b option =>
+        case 'b in (unit -> 'b option) -> Ty.schema_column of
+          int => ty_intOption
+        | intInf => ty_intInfOption
+        | word => ty_wordOption
+        | char => ty_charOption
+        | bool => ty_boolOption
+        | string => ty_stringOption
+        | real => ty_realOption
+        | real32 => ty_real32Option
+        | timestamp => ty_timestampOption
+        | decimal => ty_decimalOption
+        | float => ty_floatOption
+
+  val compare_int = Int.compare
+  val compare_intInf = IntInf.compare
+  val compare_word = Word.compare
+  val compare_char = Char.compare
+  val compare_bool : bool * bool -> order
+  val compare_string = String.compare
+  val compare_real = Real.compare
+  val compare_real32 = Real32.compare
+  val compare_timestamp = SMLSharp_SQL_TimeStamp.compare
+  val compare_decimal = SMLSharp_SQL_Decimal.compare
+  val compare_float = SMLSharp_SQL_Float.compare
+  val compare_intOption : int option * int option -> order
+  val compare_intInfOption : intInf option * intInf option -> order
+  val compare_wordOption : word option * word option -> order
+  val compare_charOption : char option * char option -> order
+  val compare_boolOption : bool option * bool option -> order
+  val compare_stringOption : string option * string option -> order
+  val compare_realOption : real option * real option -> order
+  val compare_real32Option : real32 option * real32 option -> order
+  val compare_timestampOption : timestamp option * timestamp option -> order
+  val compare_decimalOption : decimal option * decimal option -> order
+  val compare_floatOption : float option * float option -> order
+
+  val compare =
+      case 'a in 'a * 'a -> order of
+        int => compare_int
+      | intInf => compare_intInf
+      | word => compare_word
+      | char => compare_char
+      | bool => compare_bool
+      | string => compare_string
+      | real => compare_real
+      | real32 => compare_real32
+      | timestamp => compare_timestamp
+      | decimal => compare_decimal
+      | float => compare_float
+      | 'b option =>
+        case 'b in 'b option * 'b option -> order of
+          int => compare_intOption
+        | intInf => compare_intInfOption
+        | word => compare_wordOption
+        | char => compare_charOption
+        | bool => compare_boolOption
+        | string => compare_stringOption
+        | real => compare_realOption
+        | Real32.real => compare_real32Option
+        | timestamp => compare_timestampOption
+        | decimal => compare_decimalOption
+        | float => compare_floatOption
+
+  structure General2 =
+  struct
+    val reverseOrder : order -> order
+    val comparePair : ('a * 'a -> order) * ('b * 'b -> order)
+                      -> ('a * 'b) * ('a * 'b) -> order
+  end
+
+  structure Bool3 =
+  struct
+    type bool3 = bool option
+    val toBool3_bool : bool -> bool3
+    val toBool3_bool3 : bool3 -> bool3
+    val toBool3 =
+        case 'a in 'a -> bool3 of
+          bool => toBool3_bool
+        | bool3 => toBool3_bool3
+    val and3 : bool3 * bool3 -> bool3
+    val or3 : bool3 * bool3 -> bool3
+    val not3 : bool3 -> bool3
+    val isTrue : bool3 -> bool
+    val isFalse : bool3 -> bool
+    val isUnknown : bool3 -> bool
+  end
+
+  structure List2 =
+  struct
+    val onlyOne : {1:'a} list -> 'a
+    val isNotEmpty : 'a list -> bool
+    val prod : ('a * 'b) list * ('c * 'd) list
+               -> ((('a * 'b) * ('c * 'd)) * ('b * 'd)) list
+    val join : ('b * 'd -> 'e)
+               -> ('a * 'b) list * ('c * 'd) list
+               -> ((('a * 'b) * ('c * 'd)) * 'e) list
+    val nub : ('a * 'a -> order) -> 'a list -> 'a list
+    val sortBy : ('a -> 'b) -> ('b * 'b -> order) -> 'a list -> 'a list
+    val groupBy : ('a -> 'b) -> ('b * 'b -> order) -> 'a list -> 'a list list
+  end
+
+  val wrap_int : int -> Ast.const
+  val wrap_intInf : intInf -> Ast.const
+  val wrap_word : word -> Ast.const
+  val wrap_char : char -> Ast.const
+  val wrap_string : string -> Ast.const
+  val wrap_real : real -> Ast.const
+  val wrap_real32 : real32 -> Ast.const
+  val unwrap_int : Ast.const -> int
+  val unwrap_intInf : Ast.const -> intInf
+  val unwrap_word : Ast.const -> word
+  val unwrap_char : Ast.const -> char
+  val unwrap_string : Ast.const -> string
+  val unwrap_real : Ast.const -> real
+  val unwrap_real32 : Ast.const -> real32
+  val unwrap_intOption : Ast.const -> int option
+  val unwrap_intInfOption : Ast.const -> intInf option
+  val unwrap_wordOption : Ast.const -> word option
+  val unwrap_charOption : Ast.const -> char option
+  val unwrap_stringOption : Ast.const -> string option
+  val unwrap_realOption : Ast.const -> real option
+  val unwrap_real32Option : Ast.const -> real32 option
+  val wrap =
+      case 'a in 'a -> Ast.const of
+        int => wrap_int
+      | intInf => wrap_intInf
+      | word => wrap_word
+      | char => wrap_char
+      | string => wrap_string
+      | real => wrap_real
+      | real32 => wrap_real32
+  val unwrapInt =
+      case 'a in Ast.const -> 'a of
+        int => unwrap_int
+      | intInf => unwrap_intInf
+      | 'b option =>
+        case 'b in Ast.const -> 'b option of
+          int => unwrap_intOption
+        | intInf => unwrap_intInfOption
+  val unwrapWord =
+      case 'a in Ast.const -> 'a of
+        word => unwrap_word
+      | word option => unwrap_wordOption
+  val unwrapReal =
+      case 'a in Ast.const -> 'a of
+        real => unwrap_real
+      | real32 => unwrap_real32
+      | 'b option =>
+        case 'b in Ast.const -> 'b option of
+          real => unwrap_realOption
+        | real32 => unwrap_real32Option
+  val unwrapString =
+      case 'a in Ast.const -> 'a of
+        string => unwrap_string
+      | string option => unwrap_stringOption
+  val unwrapChar =
+      case 'a in Ast.const -> 'a of
+        char => unwrap_char
+      | char option => unwrap_charOption
+
+  val toSQL_int : int -> ('a -> int, 'w) exp
+  val toSQL_intInf : intInf -> ('a -> intInf, 'w) exp
+  val toSQL_word : word -> ('a -> word, 'w) exp
+  val toSQL_char : char -> ('a -> char, 'w) exp
+  val toSQL_bool : bool -> ('a -> bool, 'w) exp
+  val toSQL_string : string -> ('a -> string, 'w) exp
+  val toSQL_real : real -> ('a -> real, 'w) exp
+  val toSQL_real32 : real32 -> ('a -> real32, 'w) exp
+  val toSQL_timestamp : timestamp -> ('a -> timestamp, 'w) exp
+  val toSQL_decimal : decimal -> ('a -> decimal, 'w) exp
+  val toSQL_float : float -> ('a -> float, 'w) exp
+  val toSQL_intOption : int option -> ('a -> int option, 'w) exp
+  val toSQL_intInfOption : IntInf.int option -> ('a -> intInf option, 'w) exp
+  val toSQL_wordOption : word option -> ('a -> word option, 'w) exp
+  val toSQL_charOption : char option -> ('a -> char option, 'w) exp
+  val toSQL_boolOption : bool option -> ('a -> bool option, 'w) exp
+  val toSQL_stringOption : string option -> ('a -> string option, 'w) exp
+  val toSQL_realOption : real option -> ('a -> real option, 'w) exp
+  val toSQL_real32Option : real32 option -> ('a -> real32 option, 'w) exp
+  val toSQL_timestampOption
+      : timestamp option -> ('a -> timestamp option, 'w) exp
+  val toSQL_decimalOption : decimal option -> ('a -> decimal option, 'w) exp
+  val toSQL_floatOption : float option -> ('a -> float option, 'w) exp
+
+  type ('a,'w) op1 = ('a,'w) exp -> ('a,'w) exp
+  type ('a,'w) op2 = ('a,'w) exp * ('a,'w) exp -> ('a,'w) exp
+  type ('a,'b,'w) cmpop =
+       ('a -> 'b, 'w) exp * ('a -> 'b, 'w) exp -> ('a -> Bool3.bool3, 'w) exp
+
+  val add_int : ('a -> int, 'w) op2
+  val add_intInf : ('a -> intInf, 'w) op2
+  val add_word : ('a -> word, 'w) op2
+  val add_real : ('a -> real, 'w) op2
+  val add_real32 : ('a -> real32, 'w) op2
+  val add_intOption : ('a -> int option, 'w) op2
+  val add_intInfOption : ('a -> intInf option, 'w) op2
+  val add_wordOption : ('a -> word option, 'w) op2
+  val add_realOption : ('a -> real option, 'w) op2
+  val add_real32Option : ('a -> real32 option, 'w) op2
+
+  val sub_int : ('a -> int, 'w) op2
+  val sub_intInf : ('a -> intInf, 'w) op2
+  val sub_word : ('a -> word, 'w) op2
+  val sub_real : ('a -> real, 'w) op2
+  val sub_real32 : ('a -> real32, 'w) op2
+  val sub_intOption : ('a -> int option, 'w) op2
+  val sub_intInfOption : ('a -> intInf option, 'w) op2
+  val sub_wordOption : ('a -> word option, 'w) op2
+  val sub_realOption : ('a -> real option, 'w) op2
+  val sub_real32Option : ('a -> real32 option, 'w) op2
+
+  val mul_int : ('a -> int, 'w) op2
+  val mul_intInf : ('a -> intInf, 'w) op2
+  val mul_word : ('a -> word, 'w) op2
+  val mul_real : ('a -> real, 'w) op2
+  val mul_real32 : ('a -> real32, 'w) op2
+  val mul_intOption : ('a -> int option, 'w) op2
+  val mul_intInfOption : ('a -> intInf option, 'w) op2
+  val mul_wordOption : ('a -> word option, 'w) op2
+  val mul_realOption : ('a -> real option, 'w) op2
+  val mul_real32Option : ('a -> real32 option, 'w) op2
+
+  val div_int : ('a -> int, 'w) op2
+  val div_intInf : ('a -> intInf, 'w) op2
+  val div_word : ('a -> word, 'w) op2
+  val div_real : ('a -> real, 'w) op2
+  val div_real32 : ('a -> real32, 'w) op2
+  val div_intOption : ('a -> int option, 'w) op2
+  val div_intInfOption : ('a -> intInf option, 'w) op2
+  val div_wordOption : ('a -> word option, 'w) op2
+  val div_realOption : ('a -> real option, 'w) op2
+  val div_real32Option : ('a -> real32 option, 'w) op2
+
+  val mod_int : ('a -> int, 'w) op2
+  val mod_intInf : ('a -> intInf, 'w) op2
+  val mod_word : ('a -> word, 'w) op2
+  val mod_real : ('a -> real, 'w) op2
+  val mod_real32 : ('a -> real32, 'w) op2
+  val mod_intOption : ('a -> int option, 'w) op2
+  val mod_intInfOption : ('a -> intInf option, 'w) op2
+  val mod_wordOption : ('a -> word option, 'w) op2
+  val mod_realOption : ('a -> real option, 'w) op2
+  val mod_real32Option : ('a -> real32 option, 'w) op2
+
+  val neg_int : ('a -> int, 'w) op1
+  val neg_intInf : ('a -> intInf, 'w) op1
+  val neg_word : ('a -> word, 'w) op1
+  val neg_real : ('a -> real, 'w) op1
+  val neg_real32 : ('a -> real32, 'w) op1
+  val neg_intOption : ('a -> int option, 'w) op1
+  val neg_intInfOption : ('a -> intInf option, 'w) op1
+  val neg_wordOption : ('a -> word option, 'w) op1
+  val neg_realOption : ('a -> real option, 'w) op1
+  val neg_real32Option : ('a -> real32 option, 'w) op1
+
+  val abs_int : ('a -> int, 'w) op1
+  val abs_intInf : ('a -> intInf, 'w) op1
+  val abs_word : ('a -> word, 'w) op1
+  val abs_real : ('a -> real, 'w) op1
+  val abs_real32 : ('a -> real32, 'w) op1
+  val abs_intOption : ('a -> int option, 'w) op1
+  val abs_intInfOption : ('a -> intInf option, 'w) op1
+  val abs_wordOption : ('a -> word option, 'w) op1
+  val abs_realOption : ('a -> real option, 'w) op1
+  val abs_real32Option : ('a -> real32 option, 'w) op1
+
+  val lt_int : ('a, int, 'w) cmpop
+  val lt_intInf : ('a, intInf, 'w) cmpop
+  val lt_word : ('a, word, 'w) cmpop
+  val lt_char : ('a, char, 'w) cmpop
+  val lt_bool : ('a, bool, 'w) cmpop
+  val lt_string : ('a, string, 'w) cmpop
+  val lt_real : ('a, real, 'w) cmpop
+  val lt_real32 : ('a, real32, 'w) cmpop
+  val lt_timestamp : ('a, timestamp, 'w) cmpop
+  val lt_decimal : ('a, decimal, 'w) cmpop
+  val lt_float : ('a, float, 'w) cmpop
+  val lt_intOption : ('a, int option, 'w) cmpop
+  val lt_intInfOption : ('a, intInf option, 'w) cmpop
+  val lt_wordOption : ('a, word option, 'w) cmpop
+  val lt_charOption : ('a, char option, 'w) cmpop
+  val lt_boolOption : ('a, bool option, 'w) cmpop
+  val lt_stringOption : ('a, string option, 'w) cmpop
+  val lt_realOption : ('a, real option, 'w) cmpop
+  val lt_real32Option : ('a, real32 option, 'w) cmpop
+  val lt_timestampOption : ('a, timestamp option, 'w) cmpop
+  val lt_decimalOption : ('a, decimal option, 'w) cmpop
+  val lt_floatOption : ('a, float option, 'w) cmpop
+
+  val gt_int : ('a, int, 'w) cmpop
+  val gt_intInf : ('a, intInf, 'w) cmpop
+  val gt_word : ('a, word, 'w) cmpop
+  val gt_char : ('a, char, 'w) cmpop
+  val gt_bool : ('a, bool, 'w) cmpop
+  val gt_string : ('a, string, 'w) cmpop
+  val gt_real : ('a, real, 'w) cmpop
+  val gt_real32 : ('a, real32, 'w) cmpop
+  val gt_timestamp : ('a, timestamp, 'w) cmpop
+  val gt_decimal : ('a, decimal, 'w) cmpop
+  val gt_float : ('a, float, 'w) cmpop
+  val gt_intOption : ('a, int option, 'w) cmpop
+  val gt_intInfOption : ('a, intInf option, 'w) cmpop
+  val gt_wordOption : ('a, word option, 'w) cmpop
+  val gt_charOption : ('a, char option, 'w) cmpop
+  val gt_boolOption : ('a, bool option, 'w) cmpop
+  val gt_stringOption : ('a, string option, 'w) cmpop
+  val gt_realOption : ('a, real option, 'w) cmpop
+  val gt_real32Option : ('a, real32 option, 'w) cmpop
+  val gt_timestampOption : ('a, timestamp option, 'w) cmpop
+  val gt_decimalOption : ('a, decimal option, 'w) cmpop
+  val gt_floatOption : ('a, float option, 'w) cmpop
+
+  val le_int : ('a, int, 'w) cmpop
+  val le_intInf : ('a, intInf, 'w) cmpop
+  val le_word : ('a, word, 'w) cmpop
+  val le_char : ('a, char, 'w) cmpop
+  val le_bool : ('a, bool, 'w) cmpop
+  val le_string : ('a, string, 'w) cmpop
+  val le_real : ('a, real, 'w) cmpop
+  val le_real32 : ('a, real32, 'w) cmpop
+  val le_timestamp : ('a, timestamp, 'w) cmpop
+  val le_decimal : ('a, decimal, 'w) cmpop
+  val le_float : ('a, float, 'w) cmpop
+  val le_intOption : ('a, int option, 'w) cmpop
+  val le_intInfOption : ('a, intInf option, 'w) cmpop
+  val le_wordOption : ('a, word option, 'w) cmpop
+  val le_charOption : ('a, char option, 'w) cmpop
+  val le_boolOption : ('a, bool option, 'w) cmpop
+  val le_stringOption : ('a, string option, 'w) cmpop
+  val le_realOption : ('a, real option, 'w) cmpop
+  val le_real32Option : ('a, real32 option, 'w) cmpop
+  val le_timestampOption : ('a, timestamp option, 'w) cmpop
+  val le_decimalOption : ('a, decimal option, 'w) cmpop
+  val le_floatOption : ('a, float option, 'w) cmpop
+
+  val ge_int : ('a, int, 'w) cmpop
+  val ge_intInf : ('a, intInf, 'w) cmpop
+  val ge_word : ('a, word, 'w) cmpop
+  val ge_char : ('a, char, 'w) cmpop
+  val ge_bool : ('a, bool, 'w) cmpop
+  val ge_string : ('a, string, 'w) cmpop
+  val ge_real : ('a, real, 'w) cmpop
+  val ge_real32 : ('a, real32, 'w) cmpop
+  val ge_timestamp : ('a, timestamp, 'w) cmpop
+  val ge_decimal : ('a, decimal, 'w) cmpop
+  val ge_float : ('a, float, 'w) cmpop
+  val ge_intOption : ('a, int option, 'w) cmpop
+  val ge_intInfOption : ('a, intInf option, 'w) cmpop
+  val ge_wordOption : ('a, word option, 'w) cmpop
+  val ge_charOption : ('a, char option, 'w) cmpop
+  val ge_boolOption : ('a, bool option, 'w) cmpop
+  val ge_stringOption : ('a, string option, 'w) cmpop
+  val ge_realOption : ('a, real option, 'w) cmpop
+  val ge_real32Option : ('a, real32 option, 'w) cmpop
+  val ge_timestampOption : ('a, timestamp option, 'w) cmpop
+  val ge_decimalOption : ('a, decimal option, 'w) cmpop
+  val ge_floatOption : ('a, float option, 'w) cmpop
+
+  val eq_int : ('a, int, 'w) cmpop
+  val eq_intInf : ('a, intInf, 'w) cmpop
+  val eq_word : ('a, word, 'w) cmpop
+  val eq_char : ('a, char, 'w) cmpop
+  val eq_bool : ('a, bool, 'w) cmpop
+  val eq_string : ('a, string, 'w) cmpop
+  val eq_real : ('a, real, 'w) cmpop
+  val eq_real32 : ('a, real32, 'w) cmpop
+  val eq_timestamp : ('a, timestamp, 'w) cmpop
+  val eq_decimal : ('a, decimal, 'w) cmpop
+  val eq_float : ('a, float, 'w) cmpop
+  val eq_intOption : ('a, int option, 'w) cmpop
+  val eq_intInfOption : ('a, intInf option, 'w) cmpop
+  val eq_wordOption : ('a, word option, 'w) cmpop
+  val eq_charOption : ('a, char option, 'w) cmpop
+  val eq_boolOption : ('a, bool option, 'w) cmpop
+  val eq_stringOption : ('a, string option, 'w) cmpop
+  val eq_realOption : ('a, real option, 'w) cmpop
+  val eq_real32Option : ('a, real32 option, 'w) cmpop
+  val eq_timestampOption : ('a, timestamp option, 'w) cmpop
+  val eq_decimalOption : ('a, decimal option, 'w) cmpop
+  val eq_floatOption : ('a, float option, 'w) cmpop
+
+  val neq_int : ('a, int, 'w) cmpop
+  val neq_intInf : ('a, intInf, 'w) cmpop
+  val neq_word : ('a, word, 'w) cmpop
+  val neq_char : ('a, char, 'w) cmpop
+  val neq_bool : ('a, bool, 'w) cmpop
+  val neq_string : ('a, string, 'w) cmpop
+  val neq_real : ('a, real, 'w) cmpop
+  val neq_real32 : ('a, real32, 'w) cmpop
+  val neq_timestamp : ('a, timestamp, 'w) cmpop
+  val neq_decimal : ('a, decimal, 'w) cmpop
+  val neq_float : ('a, float, 'w) cmpop
+  val neq_intOption : ('a, int option, 'w) cmpop
+  val neq_intInfOption : ('a, intInf option, 'w) cmpop
+  val neq_wordOption : ('a, word option, 'w) cmpop
+  val neq_charOption : ('a, char option, 'w) cmpop
+  val neq_boolOption : ('a, bool option, 'w) cmpop
+  val neq_stringOption : ('a, string option, 'w) cmpop
+  val neq_realOption : ('a, real option, 'w) cmpop
+  val neq_real32Option : ('a, real32 option, 'w) cmpop
+  val neq_timestampOption : ('a, timestamp option, 'w) cmpop
+  val neq_decimalOption : ('a, decimal option, 'w) cmpop
+  val neq_floatOption : ('a, float option, 'w) cmpop
+
+  val concat_string : ('a -> string, 'w) op2
+  val concat_stringOption : ('a -> string option, 'w) op2
+
+  val like_string : ('a, string, 'w) cmpop
+  val like_stringOption : ('a, string option, 'w) cmpop
+
+  type ('a,'b,'w) avgop = ('a -> 'b list, 'w) exp -> ('a -> real option, 'w) exp
+
+  val avg_int : ('a, int, 'w) avgop
+  val avg_intInf : ('a, intInf, 'w) avgop
+  val avg_word : ('a, word, 'w) avgop
+  val avg_real : ('a, real, 'w) avgop
+  val avg_real32 : ('a, real32, 'w) avgop
+  val avg_intOption : ('a, int option, 'w) avgop
+  val avg_intInfOption : ('a, intInf option, 'w) avgop
+  val avg_wordOption : ('a, word option, 'w) avgop
+  val avg_realOption : ('a, real option, 'w) avgop
+  val avg_real32Option : ('a, real32 option, 'w) avgop
+
+  structure Op =
+  struct
+
+    val toSQL =
+        case 'a in 'a -> ('c -> 'a, 'w) exp of
+          int => toSQL_int
+        | intInf => toSQL_intInf
+        | word => toSQL_word
+        | char => toSQL_char
+        | bool => toSQL_bool
+        | string => toSQL_string
+        | real => toSQL_real
+        | real32 => toSQL_real32
+        | timestamp => toSQL_timestamp
+        | decimal => toSQL_decimal
+        | float => toSQL_float
+        | 'b option =>
+          case 'b in 'b option -> ('c -> 'b option, 'w) exp of
+            int => toSQL_intOption
+          | intInf => toSQL_intInfOption
+          | word => toSQL_wordOption
+          | char => toSQL_charOption
+          | bool => toSQL_boolOption
+          | string => toSQL_stringOption
+          | real => toSQL_realOption
+          | real32 => toSQL_real32Option
+          | timestamp => toSQL_timestampOption
+          | decimal => toSQL_decimalOption
+          | float => toSQL_floatOption
+
+    val + =
+        case 'b in ('a -> 'b, 'w) op2 of
+          int => add_int
+        | intInf => add_intInf
+        | word => add_word
+        | real => add_real
+        | real32 => add_real32
+        | 'c option =>
+          case 'c in ('a -> 'c option, 'w) op2 of
+            int => add_intOption
+          | intInf => add_intInfOption
+          | word => add_wordOption
+          | real => add_realOption
+          | real32 => add_real32Option
+
+    val - =
+        case 'b in ('a -> 'b, 'w) op2 of
+          int => sub_int
+        | intInf => sub_intInf
+        | word => sub_word
+        | real => sub_real
+        | real32 => sub_real32
+        | 'c option =>
+          case 'c in ('a -> 'c option, 'w) op2 of
+            int => sub_intOption
+          | intInf => sub_intInfOption
+          | word => sub_wordOption
+          | real => sub_realOption
+          | real32 => sub_real32Option
+
+    val * =
+        case 'b in ('a -> 'b, 'w) op2 of
+          int => mul_int
+        | intInf => mul_intInf
+        | word => mul_word
+        | real => mul_real
+        | real32 => mul_real32
+        | 'c option =>
+          case 'c in ('a -> 'c option, 'w) op2 of
+            int => mul_intOption
+          | intInf => mul_intInfOption
+          | word => mul_wordOption
+          | real => mul_realOption
+          | real32 => mul_real32Option
+
+    val / =
+        case 'b in ('a -> 'b, 'w) op2 of
+          int => div_int
+        | intInf => div_intInf
+        | word => div_word
+        | real => div_real
+        | real32 => div_real32
+        | 'c option =>
+          case 'c in ('a -> 'c option, 'w) op2 of
+            int => div_intOption
+          | intInf => div_intInfOption
+          | word => div_wordOption
+          | real => div_realOption
+          | real32 => div_real32Option
+
+    val mod =
+        case 'b in ('a -> 'b, 'w) op2 of
+          int => mod_int
+        | intInf => mod_intInf
+        | word => mod_word
+        | real => mod_real
+        | real32 => mod_real32
+        | 'c option =>
+          case 'c in ('a -> 'c option, 'w) op2 of
+            int => mod_intOption
+          | intInf => mod_intInfOption
+          | word => mod_wordOption
+          | real => mod_realOption
+          | real32 => mod_real32Option
+
+    val ~ =
+        case 'b in ('a -> 'b, 'w) op1 of
+          int => neg_int
+        | intInf => neg_intInf
+        | word => neg_word
+        | real => neg_real
+        | real32 => neg_real32
+        | 'c option =>
+          case 'c in ('a -> 'c option, 'w) op1 of
+            int => neg_intOption
+          | intInf => neg_intInfOption
+          | word => neg_wordOption
+          | real => neg_realOption
+          | real32 => neg_real32Option
+
+    val abs =
+        case 'b in ('a -> 'b, 'w) op1 of
+          int => abs_int
+        | intInf => abs_intInf
+        | word => abs_word
+        | real => abs_real
+        | real32 => abs_real32
+        | 'c option =>
+          case 'c in ('a -> 'c option, 'w) op1 of
+            int => abs_intOption
+          | intInf => abs_intInfOption
+          | word => abs_wordOption
+          | real => abs_realOption
+          | real32 => abs_real32Option
+
+    val < =
+        case 'b in ('a, 'b, 'w) cmpop of
+          int => lt_int
+        | intInf => lt_intInf
+        | word => lt_word
+        | char => lt_char
+        | bool => lt_bool
+        | real => lt_real
+        | real32 => lt_real32
+        | string => lt_string
+        | timestamp => lt_timestamp
+        | decimal => lt_decimal
+        | float => lt_float
+        | 'c option =>
+          case 'c in ('a, 'c option, 'w) cmpop of
+            int => lt_intOption
+          | intInf => lt_intInfOption
+          | word => lt_wordOption
+          | char => lt_charOption
+          | bool => lt_boolOption
+          | real => lt_realOption
+          | real32 => lt_real32Option
+          | string => lt_stringOption
+          | timestamp => lt_timestampOption
+          | decimal => lt_decimalOption
+          | float => lt_floatOption
+
+    val > =
+        case 'b in ('a, 'b, 'w) cmpop of
+          int => gt_int
+        | intInf => gt_intInf
+        | word => gt_word
+        | char => gt_char
+        | bool => gt_bool
+        | real => gt_real
+        | real32 => gt_real32
+        | string => gt_string
+        | timestamp => gt_timestamp
+        | decimal => gt_decimal
+        | float => gt_float
+        | 'c option =>
+          case 'c in ('a, 'c option, 'w) cmpop of
+            int => gt_intOption
+          | intInf => gt_intInfOption
+          | word => gt_wordOption
+          | char => gt_charOption
+          | bool => gt_boolOption
+          | real => gt_realOption
+          | real32 => gt_real32Option
+          | string => gt_stringOption
+          | timestamp => gt_timestampOption
+          | decimal => gt_decimalOption
+          | float => gt_floatOption
+
+    val <= =
+        case 'b in ('a, 'b, 'w) cmpop of
+          int => le_int
+        | intInf => le_intInf
+        | word => le_word
+        | char => le_char
+        | bool => le_bool
+        | real => le_real
+        | real32 => le_real32
+        | string => le_string
+        | timestamp => le_timestamp
+        | decimal => le_decimal
+        | float => le_float
+        | 'c option =>
+          case 'c in ('a, 'c option, 'w) cmpop of
+            int => le_intOption
+          | intInf => le_intInfOption
+          | word => le_wordOption
+          | char => le_charOption
+          | bool => le_boolOption
+          | real => le_realOption
+          | real32 => le_real32Option
+          | string => le_stringOption
+          | timestamp => le_timestampOption
+          | decimal => le_decimalOption
+          | float => le_floatOption
+
+    val >= =
+        case 'b in ('a, 'b, 'w) cmpop of
+          int => ge_int
+        | intInf => ge_intInf
+        | word => ge_word
+        | char => ge_char
+        | bool => ge_bool
+        | real => ge_real
+        | real32 => ge_real32
+        | string => ge_string
+        | timestamp => ge_timestamp
+        | decimal => ge_decimal
+        | float => ge_float
+        | 'c option =>
+          case 'c in ('a, 'c option, 'w) cmpop of
+            int => ge_intOption
+          | intInf => ge_intInfOption
+          | word => ge_wordOption
+          | char => ge_charOption
+          | bool => ge_boolOption
+          | real => ge_realOption
+          | real32 => ge_real32Option
+          | string => ge_stringOption
+          | timestamp => ge_timestampOption
+          | decimal => ge_decimalOption
+          | float => ge_floatOption
+
+    val = =
+        case 'b in ('a, 'b, 'w) cmpop of
+          int => eq_int
+        | intInf => eq_intInf
+        | word => eq_word
+        | char => eq_char
+        | bool => eq_bool
+        | real => eq_real
+        | real32 => eq_real32
+        | string => eq_string
+        | timestamp => eq_timestamp
+        | decimal => eq_decimal
+        | float => eq_float
+        | 'c option =>
+          case 'c in ('a, 'c option, 'w) cmpop of
+            int => eq_intOption
+          | intInf => eq_intInfOption
+          | word => eq_wordOption
+          | char => eq_charOption
+          | bool => eq_boolOption
+          | real => eq_realOption
+          | real32 => eq_real32Option
+          | string => eq_stringOption
+          | timestamp => eq_timestampOption
+          | decimal => eq_decimalOption
+          | float => eq_floatOption
+
+    val <> =
+        case 'b in ('a, 'b, 'w) cmpop of
+          int => neq_int
+        | intInf => neq_intInf
+        | word => neq_word
+        | char => neq_char
+        | bool => neq_bool
+        | real => neq_real
+        | real32 => neq_real32
+        | string => neq_string
+        | timestamp => neq_timestamp
+        | decimal => neq_decimal
+        | float => neq_float
+        | 'c option =>
+          case 'c in ('a, 'c option, 'w) cmpop of
+            int => neq_intOption
+          | intInf => neq_intInfOption
+          | word => neq_wordOption
+          | char => neq_charOption
+          | bool => neq_boolOption
+          | real => neq_realOption
+          | real32 => neq_real32Option
+          | string => neq_stringOption
+          | timestamp => neq_timestampOption
+          | decimal => neq_decimalOption
+          | float => neq_floatOption
+
+    val || =
+        case 'b in ('a -> 'b, 'w) op2 of
+          string => concat_string
+        | string option => concat_stringOption
+
+    val like =
+        case 'b in ('a, 'b, 'w) cmpop of
+          string => like_string
+        | string option => like_stringOption
+
+    val Some : ('a -> 'b, 'w) exp -> ('a -> 'b option, 'w) exp
+    val isnull : ('a -> 'b option, 'w) exp * ('a -> 'b, 'w) exp -> ('a -> 'b, 'w) exp
+
+    val avg =
+        case 'b in ('a, 'b, 'w) avgop of
+          int => avg_int
+        | intInf => avg_intInf
+        | word => avg_word
+        | real => avg_real
+        | real32 => avg_real32
+        | 'c option =>
+          case 'c in ('a, 'c option, 'w) avgop of
+            int => avg_intOption
+          | intInf => avg_intInfOption
+          | word => avg_wordOption
+          | real => avg_realOption
+          | real32 => avg_real32Option
+
+  end
 
 end

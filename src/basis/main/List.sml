@@ -16,7 +16,6 @@ val op < = SMLSharp_Builtin.Int32.lt
 structure List =
 struct
 
-  datatype list = datatype list
   exception Empty
 
   fun null nil = true
@@ -179,5 +178,5 @@ struct
       in
         loop (l1, l2)
       end
-
+  type 'a list = 'a list
 end

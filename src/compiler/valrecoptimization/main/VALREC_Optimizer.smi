@@ -1,10 +1,12 @@
-_require "../../../basis.smi"
-_require "../../control/main/Bug.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+
+_require local "../../util/main/Graph.smi"
+_require local "./VALREC_OPTIMIZER.sig"
+_require local "./VALREC_Utils.smi"
+
 _require "../../types/main/IDCalc.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../util/main/Graph.smi"
-_require "./VALREC_OPTIMIZER.sig"
-_require "./VALREC_Utils.smi"
 
 structure VALREC_Optimizer =
   struct

@@ -4,16 +4,18 @@
  * @copyright (c) 2012, Tohoku University.
  * @author UENO Katsuhiro
  *)
-structure ExternSymbol :> sig
 
+signature EXTERN_SYMBOL =
+sig
   type id
   val touch : Symbol.longsymbol -> id
-  val toString : id -> string  
+  val toString : id -> string
   val format_id : id -> SMLFormat.FormatExpression.expression list
   structure Map : ORD_MAP where type Key.ord_key = id
   structure Set : ORD_SET where type item = id
+end
 
-end =
+structure ExternSymbol :> EXTERN_SYMBOL =
 struct
 
   type id = string
@@ -34,3 +36,5 @@ struct
   structure Set = SSet
 
 end
+
+structure ExternFunSymbol :> EXTERN_SYMBOL = ExternSymbol

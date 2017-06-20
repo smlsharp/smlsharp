@@ -440,8 +440,34 @@ local
              expTyList = map evalT expTyList,
              loc = loc
             }
+        | RC.RCFOREACH {data, dataTy, iterator, iteratorTy,  pred,  predTy, loc} =>
+          RC.RCFOREACH
+            {data = eval data,
+             dataTy = evalT dataTy,
+             iterator = eval iterator,
+             iteratorTy = evalT iteratorTy,
+             pred = eval pred,
+             predTy = evalT predTy,
+             loc = loc
+            }
+        | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy,  pred,  predTy, loc} =>
+          RC.RCFOREACHDATA
+            {data = eval data,
+             dataTy = evalT dataTy,
+             whereParam = eval whereParam,
+             whereParamTy = evalT whereParamTy,
+             iterator = eval iterator,
+             iteratorTy = evalT iteratorTy,
+             pred = eval pred,
+             predTy = evalT predTy,
+             loc = loc
+            }
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (evalT ty, loc)
+        | RC.RCTYPEOF (ty, loc) =>
+          RC.RCTYPEOF (evalT ty, loc)
+        | RC.RCREIFYTY (ty, loc) =>
+          RC.RCREIFYTY (evalT ty, loc)
         | RC.RCTAPP {exp, expTy, instTyList, loc} =>
           let
             val exp = eval exp
@@ -498,7 +524,7 @@ local
              loc = loc}
         | RC.RCINDEXOF (string, ty, loc) => 
           RC.RCINDEXOF (string, evalT ty, loc)
-        | RC.RCSWITCH {branches:(Absyn.constant * rcexp) list, defaultExp:rcexp,
+        | RC.RCSWITCH {branches:(RC.constant * rcexp) list, defaultExp:rcexp,
                        expTy:Types.ty, loc:Loc.loc, switchExp:rcexp,
                        resultTy} =>
           RC.RCSWITCH
@@ -515,6 +541,19 @@ local
             }
         | RC.RCTAGOF (ty, loc) =>
           RC.RCTAGOF (evalT ty, loc)
+        | RC.RCJOIN {ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
+          RC.RCJOIN
+            {
+             ty= evalT ty,
+             args = (eval arg1, eval arg2),
+             argTys = (evalT argTy1, evalT argTy2),
+             loc = loc
+            }
+        | RC.RCJSON {exp,ty,coerceTy,loc} =>
+          RC.RCJSON {exp=eval exp,
+                     ty=evalT ty,
+                     coerceTy=evalT coerceTy,
+                     loc=loc}
       end
   and applyTerms
         ({varMap, btvMap}:context)

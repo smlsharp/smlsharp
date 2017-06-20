@@ -123,7 +123,7 @@ struct
   val ?= = Real64.ueq
   val isNan = Real64.isNan
   val trunc = Real64.trunc
-  val fromInt = SMLSharp_Builtin.Int32.toReal
+  val fromInt = SMLSharp_Builtin.Int32.toReal64
 
   fun *+ (r1, r2, r3) = r1 * r2 + r3
   fun *- (r1, r2, r3) = r1 * r2 - r3

@@ -1,0 +1,23 @@
+_require local "../../../basis.smi"
+_require local "../../../ffi/main/Pointer.smi"
+_require local "../../../config/main/PointerSize.smi"
+
+_require local "../../../compiler/userlevelprimitive/main/UserLevelPrimitive.smi"
+
+_require local "../../debug/main/Bug.ppg.smi"
+_require local "../../env/main/SEnv.smi"
+_require local "../../ids/main/LocalID.smi"
+_require local "../../symbols/main/RecordLabel.smi"
+_require local "../../json/main/JSONTypes.ppg.smi"
+
+_require local "./ReifiedTyData.smi"
+
+_require "./ReifiedTy.ppg.smi"
+_require "./ReifiedTerm.ppg.smi"
+
+structure ReifyTerm =
+struct
+  val toReifiedTerm : ['a#reify.'a -> ReifiedTerm.reifiedTerm]
+  val sizeOf : ReifiedTy.reifiedTy -> word
+  val setCdr : ['a#reify. 'a list * 'a list -> unit]
+end

@@ -1,0 +1,46 @@
+_require "../../basis.smi"
+_require "./myth.smi"
+
+structure Concurrent =
+struct
+
+  structure Mvar =
+  struct
+    type 'a var (= boxed)
+    val create : unit -> 'a var
+    val put : 'a var * 'a -> unit
+    val take : 'a var -> 'a
+  end
+
+  structure Ivar =
+  struct
+    type 'a var (= boxed)
+    val create : unit -> 'a var
+    val set : 'a var * 'a -> bool
+    val get : 'a var -> 'a
+  end
+
+  structure Couple =
+  struct
+    type ('a,'b) couple (= boxed)
+    val create : unit -> ('a,'b) couple
+    val left : ('a,'b) couple * 'a -> ('a * 'b) Ivar.var
+    val right : ('a,'b) couple * 'b -> ('a * 'b) Ivar.var
+  end
+
+  structure Thread =
+  struct
+    val spawn : (unit -> unit) -> unit
+    val yield = Myth.Thread.yield
+  end
+
+  structure Future =
+  struct
+    type 'a future (= boxed)
+    val spawn : (unit -> 'a) -> 'a future
+    val wrap : 'a future * ('a -> 'b) -> 'b future
+    val wrapHandle : 'a future * (exn -> 'a) -> 'a future
+    val sync : 'a future -> 'a
+  end
+
+end

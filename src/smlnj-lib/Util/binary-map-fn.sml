@@ -611,4 +611,30 @@ in
 	    foldli g empty m
 	  end
 
+(* 2016-12-05 ohori: the following is added *)
+    fun 'a difference (elemEq: 'a * 'a -> bool) (a:'a map,b:'a map) : ('a option * 'a option) map = 
+        mergeWith 
+           (fn (SOME a, SOME b) => if elemEq (a, b) then NONE else SOME (SOME a,SOME b)
+             | (SOME a, NONE) => SOME (SOME a, NONE)
+             | (NONE, SOME b) => SOME (NONE, SOME b)
+             | (NONE, NONE) => NONE
+           )
+          (a,b)
+
+    fun 'a subtractByKeyEquiv (elemEq: 'a * 'a -> bool) (a:'a map,b:'a map) = 
+        mapPartial 
+          (fn (SOME a, _) => SOME a
+            | (NOEN, _) => NONE)
+        (difference elemEq (a,b))
+
+    fun 'a subtractByKeyElemEquiv (elemEq: 'a * 'a -> bool) (a,b) = 
+        mapPartial 
+          (fn (SOME a, NONE) => SOME a
+            | (SOME a, SOME b) => NONE
+            | (NOEN, _) => NONE)
+        (difference elemEq (a,b))
+
+    fun 'a eq (elemEq: 'a * 'a -> bool) (a,b) = 
+        isEmpty (difference elemEq (a,b))
+
   end (* functor BinaryMapFn *)

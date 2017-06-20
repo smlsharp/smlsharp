@@ -1,8 +1,9 @@
-_require "../../../basis.smi"
-_require "../../util/main/ListSorter.smi"
-_require "../../toolchain/main/Filename.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/list-utils/main/ListSorter.smi"
+_require local "../../toolchain/main/Filename.smi"
+
 _require "../../absyn/main/AbsynInterface.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../absyn/main/InterfaceName.ppg.smi"
 
 structure InterfaceHash =

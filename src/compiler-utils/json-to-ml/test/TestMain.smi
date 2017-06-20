@@ -1,0 +1,8 @@
+_require local "basis.smi"
+_require local "smlunit-lib.smi"
+_require local "./JSONToML001.smi"
+
+structure TestMain =
+struct
+  val test : unit -> unit
+end

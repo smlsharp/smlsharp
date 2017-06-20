@@ -1,0 +1,38 @@
+_require "../../../basis.smi"
+_require local "../../../smlformat-lib.smi"
+_require local "../../debug/main/Bug.ppg.smi"
+_require local "../../reflection/main/ReifiedTerm.ppg.smi"
+_require "../../type-directed-dynamic/main/PolyDynamic.smi"
+_require "./JSONParser.smi"
+_require "./JSONTypes.ppg.smi"
+
+structure JSON =
+struct
+  exception AttemptToReturnVOIDValue
+  exception RuntimeTypeError
+  exception TypeIsNotJsonKind
+  exception AttemptToViewNull
+
+  exception NaturalJoin
+
+  datatype null = datatype JSONTypes.null
+  datatype void = datatype JSONTypes.void
+  datatype jsonTy = datatype JSONTypes.jsonTy
+  datatype json = datatype JSONTypes.json
+  datatype dyn = datatype JSONTypes.dyn
+
+  val view : 'a dyn -> 'a
+  val import : string -> void dyn
+  val importJson :JSONParser.utJson -> void dyn
+  val typeOf : json -> jsonTy
+  val printJsonTy : jsonTy -> unit
+  val jsonToJsonDyn : json -> void dyn
+  val jsonToString : json -> string
+  val jsonDynToString : 'a dyn -> string
+  val jsonDynToJson : 'a dyn -> json
+
+  val toJson : ['a#dynamic.'a -> json]
+  val dynamicToJson : PolyDynamic.dynamic -> json
+  val toJsonDyn : ['a#dynamic.'a -> void dyn]
+
+end

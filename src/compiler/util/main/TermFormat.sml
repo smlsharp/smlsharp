@@ -128,9 +128,12 @@ structure TermFormat :> sig
   val format_IntInf_dec_ML : IntInf.int -> format
   val format_Int64_dec_ML : Int64.int -> format
   val format_Int32_dec_ML : Int32.int -> format
+  val format_Int16_dec_ML : Int16.int -> format
+  val format_Int8_dec_ML : Int8.int -> format
   val format_int_dec_ML : int -> format
   val format_Word64_hex_ML : Word64.word -> format
   val format_Word32_hex_ML : Word32.word -> format
+  val format_Word16_hex_ML : Word16.word -> format
   val format_Word8_hex_ML : Word8.word -> format
   val format_word_hex_ML : word -> format
   val format_string_ML : string -> format
@@ -138,9 +141,12 @@ structure TermFormat :> sig
 
   val format_Int64_dec_C : Int64.int -> format
   val format_Int32_dec_C : Int32.int -> format
+  val format_Int16_dec_C : Int16.int -> format
+  val format_Int8_dec_C : Int8.int -> format
   val format_int_dec_C : int -> format
   val format_Word64_hex_C : Word64.word -> format
   val format_Word32_hex_C : Word32.word -> format
+  val format_Word16_hex_C : Word16.word -> format
   val format_Word8_hex_C : Word8.word -> format
   val format_word_hex_C : word -> format
   val format_string_C : string -> format
@@ -645,16 +651,22 @@ struct
   fun format_IntInf_dec_ML x = format_dec_MLi IntInf.fmt x
   fun format_Int64_dec_ML x = format_dec_MLi Int64.fmt x
   fun format_Int32_dec_ML x = format_dec_MLi Int32.fmt x
+  fun format_Int16_dec_ML x = format_dec_MLi Int16.fmt x
+  fun format_Int8_dec_ML x = format_dec_MLi Int8.fmt x
   fun format_int_dec_ML x = format_dec_MLi Int.fmt x
   fun format_Word64_hex_ML x = format_hex_MLw Word64.fmt x
   fun format_Word32_hex_ML x = format_hex_MLw Word32.fmt x
+  fun format_Word16_hex_ML x = format_hex_MLw Word16.fmt x
   fun format_Word8_hex_ML x = format_hex_MLw Word8.fmt x
   fun format_word_hex_ML x = format_hex_MLw Word.fmt x
   fun format_Int64_dec_C x = format_dec_C Int64.fmt x
   fun format_Int32_dec_C x = format_dec_C Int32.fmt x
+  fun format_Int16_dec_C x = format_dec_C Int16.fmt x
+  fun format_Int8_dec_C x = format_dec_C Int8.fmt x
   fun format_int_dec_C x = format_dec_C Int.fmt x
   fun format_Word64_hex_C x = format_hex_C Word64.fmt x
   fun format_Word32_hex_C x = format_hex_C Word32.fmt x
+  fun format_Word16_hex_C x = format_hex_C Word16.fmt x
   fun format_Word8_hex_C x = format_hex_C Word8.fmt x
   fun format_word_hex_C x = format_hex_C Word.fmt x
 

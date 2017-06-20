@@ -1,11 +1,13 @@
-_require "../../../basis.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../types/main/Types.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+
+_require local "../../absyn/main/AbsynConst.ppg.smi"
+_require local "../../types/main/Types.ppg.smi"
+_require local "../../typedcalc/main/TypedCalc.ppg.smi"
+
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
 
 structure RCSize =

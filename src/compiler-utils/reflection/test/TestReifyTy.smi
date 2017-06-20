@@ -1,0 +1,23 @@
+_require "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../../compiler/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../compiler/userlevelprimitive/main/UserLevelPrimitive.smi"
+
+_require "../../env/main/SEnv.smi"
+_require "../../symbols/main/Symbol.ppg.smi"
+_require "../../symbols/main/RecordLabel.smi"
+_require "../../symbols/main/Loc.ppg.smi"
+_require "../../format-utils/main/SmlppgUtil.ppg.smi"
+_require "../../debug/main/Bug.ppg.smi"
+_require "../../ids/main/LocalID.smi"
+_require "../../list-utils/main/utils.smi"
+
+_require "../main/ReifyTy.smi"
+_require "../main/ReifiedTy.ppg.smi"
+
+structure TestReifyTy =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

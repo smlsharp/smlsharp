@@ -31,40 +31,57 @@ struct
   fun formatDecimal x = term (SMLSharp_SQL_Decimal.toString x)
   fun formatFloat x = term (SMLSharp_SQL_Float.toString x)
 
-  fun ifnone (_,x,y) NONE = x
-    | ifnone (_,x,y) (SOME _) = y
+  fun ifnone (x,y) NONE = x
+    | ifnone (x,y) (SOME _) = y
 
-  fun default (f,x) NONE = x
-    | default (f,_) (SOME x) = f x
+  (*% @formatter(string) formatSQLID *)
+  type id =
+      (*% @format(x) x *)
+      string
 
-  fun iftrue (x,y) true = x
-    | iftrue (x,y) false = y
+  (*% *)
+  type oper =
+      (*% @format(x) x *)
+      string
 
-  fun ifsingle (_,x,y) [_] = x
-    | ifsingle (_,x,y) _ = y
+  (*% *)
+  datatype 'w ascdesc_ast =
+      (*% @format "ASC" *)
+      ASC
+    | (*% @format "DESC" *)
+      DESC
 
-  fun ifempty (_,x,y) nil = x
-    | ifempty (_,x,y) _ = y
+  (*% *)
+  datatype 'w distinct_ast =
+      (*% @format "ALL" *)
+      ALL
+    | (*% @format "DISTINCT" *)
+      DISTINCT
 
-  (*% @prefix ifInt_ @params(f) *)
-  (*% @prefix format_
-   * @formatter(sqlid) formatSQLID
+  datatype 'w db =
+      DB
+
+  (*% *)
+  datatype 'w table_id =
+      (*% @format(db * id) id *)
+      TABLEID of 'w db * id
+
+  (*%
    * @formatter(int) formatSQLInt
    * @formatter(intInf) formatSQLIntInf
    * @formatter(word) formatSQLWord
    * @formatter(real) formatSQLReal
    * @formatter(real32) formatSQLReal32
-   * @formatter(sqlstring) formatSQLString
+   * @formatter(string) formatSQLString
    * @formatter(char) formatSQLChar
    * @formatter(SMLSharp_SQL_TimeStamp.timestamp) formatTimestamp
    * @formatter(SMLSharp_SQL_Decimal.decimal) formatDecimal
    * @formatter(SMLSharp_SQL_Float.float) formatFloat
-   * @formatter(ifnone) ifnone
-   * @formatter(iftrue) iftrue
-   * @formatter(ifempty) ifempty
-   * @formatter(ifInt) ifInt_qexp
    *)
-  datatype qexp =
+  (*% @prefix ifInt_
+   * @params(f)
+   *)
+  datatype const =
       (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format f *)
       INT of int
@@ -77,14 +94,17 @@ struct
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
       REAL32 of real32
-    | (*% @prefix format_ @format(x) x:sqlstring *)
+    | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
       STRING of string
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
       CHAR of char
     | (*% @prefix format_ @format(x) x *)
-      (*% @prefix ifInt_ @format(x) "" *)
+      (*% @prefix ifInt_ @format *)
+      BOOL of bool
+    | (*% @prefix format_ @format(x) x *)
+      (*% @prefix ifInt_ @format f *)
       INTINF of intInf
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
@@ -95,238 +115,297 @@ struct
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
       FLOAT of SMLSharp_SQL_Float.float
-    | (*% @prefix format_ @format "NULL" *)
-      (*% @prefix ifInt_ @format *)
-      NULL
-    | (*% @prefix format_ @format "DEFAULT" *)
-      (*% @prefix ifInt_ @format *)
-      DEFAULT
-    | (*% @prefix format_
-       * @format(id opt * col)
-       * opt(id:sqlid) opt:ifnone(id)(,".") col:sqlid
-       *)
-      (*% @prefix ifInt_ @format *)
-      COLUMN of string option * string
-    | (*% @prefix format_
-       * @format(e1 * e2)
-       * L1{ e1 2[ +1 "OR" +d e2 ] }
-       *)
-      (*% @prefix ifInt_ @format *)
-      OR of qexp * qexp
-    | (*% @prefix format_
-       * @format(e1 * e2)
-       * L2{ e1 2[ +1 "AND" +d e2 ] }
-       *)
-      (*% @prefix ifInt_ @format *)
-      AND of qexp * qexp
-    | (*% @prefix format_
-       * @format(e1)
-       * N3{ "NOT" +d e1 }
-       *)
-      (*% @prefix ifInt_ @format *)
-      NOT of qexp
-    | (*% @prefix format_
-       * @format(e1 * oper * e2)
-       * N4{ e1 1[ +1 oper +d e2 ] }
-       *)
-      (*% @prefix ifInt_ @format *)
-      CMPOP of qexp * string * qexp
-    | (*% @prefix format_
-       * @format(e1 * oper * e2)
-       * N5{ e1 1[ +1 oper +d e2 ] }
-       *)
-      (*% @prefix ifInt_ @format *)
-      ADDOP of qexp * string * qexp
-    | (*% @prefix format_
-       * @format(e1 * oper * e2)
-       * N6{ e1 1[ +1 oper +d e2 ] }
-       *)
-      (*% @prefix ifInt_ @format *)
-      MULOP of qexp * string * qexp
-    | (*% @prefix format_
-       * @format(oper * e1)
-       * N7{ oper e1 }
-       *)
-      (*% @prefix ifInt_ @format *)
-      UNARYOP of string * qexp
-    | (*% @prefix format_
-       * @format(e1)
-       * N4{ e1 +d "IS" +d "NULL" }
-       *)
-      (*% @prefix ifInt_ @format *)
-      ISNULL of qexp
-    | (*% @prefix format_
-       * @format(e1)
-       * N4{ e1 +d "IS" +d +d "NOT" +d "NULL" }
-       *)
-      (*% @prefix ifInt_ @format *)
-      ISNOTNULL of qexp
-    | (*% @prefix format_
-       * @format(q1)
-       * N4{ "EXISTS(" !N0{ q1 ")" } }
-       *)
-      (*% @prefix ifInt_ @format *)
-      EXISTS of qtable5
 
-  and qtable1 =
-      (*% @prefix format_ 
-       * @format(id) id:sqlid
+  (*% @prefix ifInt_
+   * @params(f)
+   *)
+  (*% @prefix format_
+   * @formatter(ifnone) ifnone
+   * @formatter(ifInt) ifInt_exp_ast
+   *)
+  datatype 'w exp_ast =
+      (*% @prefix format_ @format(x) x *)
+      (*% @prefix ifInt_ @format(c) c(f) *)
+      CONST of const
+    | (*% @prefix format_ @format(x) x *)
+      (*% @prefix ifInt_ @format *)
+      LITERAL of oper
+    | (*% @prefix format_ @format(x) x *)
+      (*% @prefix ifInt_ @format *)
+      COLUMN1 of id
+    | (*% @prefix format_ @format(x * y) x "." y *)
+      (*% @prefix ifInt_ @format *)
+      COLUMN2 of id * id
+    | (*% @prefix format_
+       * @format(oper * w arg args)
+       * oper "(" !N0{ args(arg(w))("," +1) ")" }
        *)
       (*% @prefix ifInt_ @format *)
-      ID of string
-    | (*% @prefix format_ 
-       * @format(q * id)
-       * N2{ q +1 "AS" +d id:sqlid }
+      FUNCALL of oper * 'w exp_ast list
+    | (*% @prefix format_
+       * @format(w1 e1 * w2 e2)
+       * L1{ e1(w1) 2[ +1 "OR" +d e2(w2) ] }
        *)
       (*% @prefix ifInt_ @format *)
-      AS of qtable1 * string
-    | (*% @prefix format_ 
-       * @format(q * id)
-       * N2{ "(" !N0{ q ")" } +1 "AS" +d id:sqlid }
+      OR of 'w exp_ast * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 e1 * w2 e2)
+       * L2{ e1(w1) 2[ +1 "AND" +d e2(w2) ] }
        *)
       (*% @prefix ifInt_ @format *)
-      SUBQUERY of qtable5 * string
-    | (*% @prefix format_ 
-       * @format(q1 * q2)
-       * L1{ q1 +1 "CROSS" +d "JOIN" +2 q2 }
+      AND of 'w exp_ast * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 e1)
+       * N3{ "NOT" +d e1(w1) }
        *)
       (*% @prefix ifInt_ @format *)
-      CROSSJOIN of qtable1 * qtable1
-    | (*% @prefix format_ 
-       * @format(q1 * q2 * e)
-       * L1{ q1 +1 "INNER" +d "JOIN" +2 q2 +1 "ON" +d e }
+      NOT of 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 e1 * oper * w2 e2)
+       * N4{ e1(w1) 1[ +1 oper +d e2(w2) ] }
        *)
       (*% @prefix ifInt_ @format *)
-      INNERJOIN of qtable1 * qtable1 * qexp
-    | (*% @prefix format_ 
-       * @format(q1 * q2)
-       * L1{ q1 +1 "NATURAL" +d "JOIN" +2 q2 }
+      CMPOP of 'w exp_ast * oper * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 e1 * oper * w2 e2)
+       * N5{ e1(w1) 1[ +1 oper +d e2(w2) ] }
        *)
       (*% @prefix ifInt_ @format *)
-      NATURALJOIN of qtable1 * qtable1
+      ADDOP of 'w exp_ast * oper * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 e1 * oper * w2 e2)
+       * N6{ e1(w1) 1[ +1 oper +d e2(w2) ] }
+       *)
+      (*% @prefix ifInt_ @format *)
+      MULOP of 'w exp_ast * oper * 'w exp_ast
+    | (*% @prefix format_
+       * @format(oper * w1 e1)
+       * N7{ oper e1(w1) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      UNARYOP of oper * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 e1 * oper)
+       * N4{ e1(w1) +d "IS" +d oper }
+       *)
+      (*% @prefix ifInt_ @format *)
+      IS of 'w exp_ast * oper
+    | (*% @prefix format_
+       * @format(w1 e1 * oper)
+       * N4{ e1(w1) +d "IS" +d +d "NOT" +d oper }
+       *)
+      (*% @prefix ifInt_ @format *)
+      IS_NOT of 'w exp_ast * oper
+    | (*% @prefix format_
+       * @format(w1 q1)
+       * N4{ "(" !N0{ q1(w1) ")" } }
+       *)
+      (*% @prefix ifInt_ @format *)
+      EXP_SUBQUERY of 'w query_ast
+    | (*% @prefix format_
+       * @format(w1 q1)
+       * N4{ "EXISTS(" !N0{ q1(w1) ")" } }
+       *)
+      (*% @prefix ifInt_ @format *)
+      EXISTS of 'w query_ast
 
-  and qtable2 =
-      (*% @prefix format_ 
-       * @format(q)
-       * +1 !N0{ "FROM" 2[ +1 q ] }
+  and 'w table_ast =
+      (*% @prefix format_ @format(w t) t(w) *)
+      (*% @prefix ifInt_ @format *)
+      TABLE of 'w table_id
+    | (*% @prefix format_
+       * @format(w t * id)
+       * N2{ t(w) +1 "AS" +d id }
        *)
       (*% @prefix ifInt_ @format *)
-      FROM of qtable1
-    | (*% @prefix format_ 
-       * @format
+      TABLE_AS of 'w table_ast * id
+    | (*% @prefix format_
+       * @format(w q)
+       * "(" !N0{ q(w) ")" }
        *)
       (*% @prefix ifInt_ @format *)
-      FROM_DUAL
+      TABLE_SUBQUERY of 'w query_ast
+    | (*% @prefix format_
+       * @format(w1 q1 * w2 q2 * w3 q3)
+       * L1{ q1(w1) +1 "JOIN" +d q2(w2) +2 "ON" +d q3(w3) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      JOIN of 'w table_ast * 'w table_ast * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 q1 * w2 q2 * w3 q3)
+       * L1{ q1(w1) +1 "INNER" +d "JOIN" +d q2(w2) +2 "ON" +d q3(w3) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      INNERJOIN of 'w table_ast * 'w table_ast * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 q1 * w2 q2)
+       * L1{ q1(w1) +1 "CROSS" +d "JOIN" +2 q2(w2) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      CROSSJOIN of 'w table_ast * 'w table_ast
+    | (*% @prefix format_
+       * @format(w1 q1 * w2 q2)
+       * L1{ q1(w1) +1 "NATURAL" +d "JOIN" +2 q2(w2) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      NATURALJOIN of 'w table_ast * 'w table_ast
 
-  and qtable3 =
-      (*% @prefix format_ 
-       * @format(q * e opt)
-       * q opt:ifnone(e)(,+1 !N0{ "WHERE" 2[ +1 opt(e) ] })
+  and 'w select_ast =
+      (*% @prefix format_
+       * @format(w1 distinct opt1 * field fields)
+       * !N0{ "SELECT" opt1:ifnone()(,+d opt1(distinct(w1)))
+       *      2[ +1 fields(field)("," +1) ] }
+       * @format:field(id * w q)
+       * !N0{ q(w) 2[ +1 "AS" +d id ] }
        *)
       (*% @prefix ifInt_ @format *)
-      WHERE of qtable2 * qexp option
+      SELECT of 'w distinct_ast option * (id * 'w exp_ast) list
 
-  and qtable4 =
-      (*% @prefix format_ 
-       * @format({select: select selects, from: from, orderBy})
-       * !N0{ 2[ +1 selects(select)("," +1) ] } from orderBy
-       * @format:select(label * e)
-       * !N0{ e 2[ +1 "AS" +d label:sqlid ] }
-       * @format:orderBy(ord ords)
-       * ords:ifempty(ord)(,+1 "ORDER" +d "BY" !N0{ 2[ +1 ords(ord)("," +1) ] })
-       * @format:ord({key: key, asc})
-       * { key:ifInt()("0+") key +d asc:iftrue()("ASC","DESC") }
+  and 'w from_ast =
+      (*% @prefix format_
+       * @format(w t l)
+       * !N0{ "FROM" 2[ +1 l(t(w))("," +1) ] }
        *)
       (*% @prefix ifInt_ @format *)
-      SELECT of {select : (string * qexp) list,
-                 from : qtable3,
-                 orderBy : {key : qexp, asc : bool} list}
+      FROM of 'w table_ast list
 
-  and qtable5 =
-      (*% @prefix format_ 
-       * @format(q)
-       * !N0{ "SELECT" +d "DISTINCT" q }
+  and 'w whr_ast =
+      (*% @prefix format_
+       * @format(w q)
+       * !N0{ "WHERE" 2[ +1 q(w) ] }
        *)
       (*% @prefix ifInt_ @format *)
-      SELECT_DISTINCT of qtable4
-    | (*% @prefix format_ 
-       * @format(q)
-       * !N0{ "SELECT" +d "ALL" q }
+      WHERE of 'w exp_ast
+
+  and 'w groupby_ast =
+      (*% @prefix format_
+       * @format(w key keys * w having opt)
+       * !N0{ "GROUP" +d "BY" 2[ +1 keys(key(w))("," +1) ] }
+       * opt:ifnone()(, +1 opt(having(w)))
        *)
       (*% @prefix ifInt_ @format *)
-      SELECT_ALL of qtable4
-    | (*% @prefix format_ 
-       * @format(q)
-       * !N0{ "SELECT" q }
+      GROUPBY of 'w exp_ast list * 'w having_ast option
+
+  and 'w having_ast =
+      (*% @prefix format_
+       * @format(w exp)
+       * !N0{ "HAVING" 2[ +1 exp(w) ] }
        *)
       (*% @prefix ifInt_ @format *)
-      SELECT_DEFAULT of qtable4
+      HAVING of 'w exp_ast
+
+  and 'w orderby_ast =
+      (*% @prefix format_
+       * @format(key keys)
+       * !N0{ "ORDER" +d "BY" +1 2[ +1 keys(key)("," +1) ] }
+       * @format:key(w q * w2 asc opt)
+       * !N0{ q:ifInt(w)("0+") q(w) opt:ifnone()(,2[ +1 opt(asc(w2)) ]) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      ORDERBY of ('w exp_ast * 'w ascdesc_ast option) list
+
+  and 'w offset_ast =
+      (*% @prefix format_
+       * @format({count : w exp, rows : row rowopt})
+       * !N0{ "OFFSET" +d exp(w) rowopt:ifnone()(, +d rowopt(row)) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      OFFSET of {count : 'w exp_ast, rows : string option}
+
+  and 'w limit_ast =
+      (*% @prefix format_
+       * @format(w exp expopt)
+       * !N0{ "LIMIT" +d expopt:ifnone()("ALL", expopt(exp(w))) }
+       *)
+      (*% @prefix ifInt_ @format *)
+      LIMIT of 'w exp_ast option
+    | (*% @prefix format_
+       * @format({first, count: w exp expopt, rows})
+       * !N0{ "FETCH" +d first +d expopt(exp(w)) +d rows +d "ONLY" }
+       *)
+      (*% @prefix ifInt_ @format *)
+      FETCH of {first : string, count : 'w exp_ast option, rows : string}
+
+  and 'w query_ast =
+      (*% @prefix format_
+       * @format(w1 select
+       *         * w2 from
+       *         * w3 whr opt3
+       *         * w4 groupby opt4
+       *         * w5 orderby opt5
+       *         * w6 offset opt6
+       *         * w7 limit opt7)
+       * !N0{ select(w1)
+       *      +1 from(w2)
+       *      opt3:ifnone()(,+1 opt3(whr(w3)))
+       *      opt4:ifnone()(,+1 opt4(groupby(w4)))
+       *      opt5:ifnone()(,+1 opt5(orderby(w5)))
+       *      opt6:ifnone()(,+1 opt6(offset(w6)))
+       *      opt7:ifnone()(,+1 opt7(limit(w7)))
+       * }
+       *)
+      (*% @prefix ifInt_ @format *)
+      QUERY of 'w select_ast
+               * 'w from_ast
+               * 'w whr_ast option
+               * 'w groupby_ast option
+               * 'w orderby_ast option
+               * 'w offset_ast option
+               * 'w limit_ast option
 
   (*% *)
-  type query =
-      (*% @format(x) x *)
-      qtable5
+  datatype 'w insert_value_ast =
+      (*% @format(w q) q(w) *)
+      VALUE of 'w exp_ast
+    | (*% @format "DEFAULT" *)
+      DEFAULT
+
+  (*% *)
+  datatype 'w insert_values_ast =
+      (*%
+       * @format(row rows) !N0{ "VALUES" 2[ +1 rows(row)("," +1) ] }
+       * @format:row(w v l) "(" !N0{ l(v(w))("," +1) ")" }
+       *)
+      INSERT_VALUES of 'w insert_value_ast list list
+    | (*% @format(w q) q(w) *)
+      INSERT_SELECT of 'w query_ast
 
   (*%
    * @formatter(sqlid) formatSQLID
-   * @formatter(ifsingle) ifsingle
    * @formatter(ifnone) ifnone
    *)
-  datatype command =
-      (*%
-       * @format(q)
-       * !N0{ "DELETE" q }
-       *)
-      DELETE of qtable3
+  datatype 'w command_ast =
+      (*% @format(w q) q(w) *)
+      QUERY_COMMAND of 'w query_ast
     | (*%
-       * @format({table: table, labels, values,
-       *          from: f fopt, whereCond: wh whopt})
-       * !N0{
-       *    "UPDATE" +d table
-       *    +1 { "SET" 2[ +1 { labels +1 "=" +d values } ] }
-       *    fopt:ifnone(f)(,+1 { "FROM" 2[ +1 fopt(f) ] })
-       *    whopt:ifnone(wh)(,+1 { "WHERE" 2[ +1 whopt(wh) ] })
-       * }
-       * @format:labels(l:sqlid ls)
-       * ls:ifsingle(l)(,"(") !N0{ ls(l)("," +1) ls:ifsingle(l)(,")") }
-       * @format:values(v vs)
-       * vs:ifsingle(v)(,"(") !N0{ vs(v)("," +1) vs:ifsingle(v)(,")") }
+       * @format(w1 table * label labels opt * w values)
+       * !N0{ "INSERT" +d "INTO" +d table(w1)
+       *      2[ opt:ifnone()(,+1 "(" !N0{ opt(labels(label)("," +1)) ")" }) ] }
+       * +1 values(w)
        *)
-      UPDATE of {table : qtable1,
-                 labels : string list,
-                 values: qexp list,
-                 from : qtable1 option,
-                 whereCond : qexp option}
+      INSERT of 'w table_id * id list option * 'w insert_values_ast
     | (*%
-       * @format({into, labels, values})
-       * !N0{
-       *    { "INSERT" +d "INTO" +d into:sqlid 2[ +1 labels ] }
-       *    +1 { "VALUES" 2[ +2 values ] }
-       * }
-       * @format:labels(l:sqlid ls)
-       * ls:ifsingle(l)(,"(") !N0{ ls(l)("," +1) ls:ifsingle(l)(,")") }
-       * @format:values(r rs)
-       * { rs(r)("," +1) }
-       * @format:r(v vs)
-       * vs:ifsingle(v)(,"(") !N0{ vs(v)("," +1) vs:ifsingle(v)(,")") }
+       * @format(w1 table * set sets * w2 whr opt)
+       * !N0{ "UPDATE" +d table(w1) }
+       * +1 !N0{ "SET" +d sets(set)("," +1) }
+       * opt:ifnone()(, +1 opt(whr(w2)))
+       * @format:set(id * w q)
+       * !N0{ id +d "=" 2[ +1 q(w) ] }
        *)
-      INSERT of {into : string,
-                 labels : string list,
-                 values : qexp list list}
+      UPDATE of 'w table_id * (id * 'w exp_ast) list * 'w whr_ast option
     | (*%
-       * @format
-       * "BEGIN"
+       * @format(w1 table * w2 whr opt)
+       * !N0{ "DELETE" +d "FROM" +d table(w1) }
+       * opt:ifnone()(, +1 opt(whr(w2)))
        *)
+      DELETE of 'w table_id * 'w whr_ast option
+    | (*% @format "BEGIN" *)
       BEGIN
-    | (*%
-       * @format
-       * "COMMIT"
-       *)
+    | (*% @format "COMMIT" *)
       COMMIT
-    | (*%
-       * @format
-       * "ROLLBACK"
-       *)
+    | (*% @format "ROLLBACK" *)
       ROLLBACK
+
+  val format_command_ast = format_command_ast (fn _ => nil)
 
 end

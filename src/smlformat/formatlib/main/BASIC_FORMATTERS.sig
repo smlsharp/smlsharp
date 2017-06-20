@@ -15,65 +15,65 @@ sig
 
   (***************************************************************************)
 
-  (** format expression *)
-  type expression
+  (** format *)
+  type format
 
   (**
    *  formatter for a type T receives a value of the type T and returns
-   * a list of format expressions of the string representation of the value.
+   *  a format of the value.
    *)
-  type 'a formatter = 'a -> expression list
+  type 'a formatter = 'a -> format
 
   (***************************************************************************)
 
   (** the formatter for unit type. *)
-  val format_unit : General.unit formatter
+  val format_unit : unit -> format
 
   (** the formatter for int type. *)
-  val format_int : Int.int formatter
+  val format_int : int -> format
 
   (** the formatter for word type. *)
-  val format_word : Word.word formatter
+  val format_word : word -> format
 
   (** the formatter for real type. *)
-  val format_real : Real.real formatter
+  val format_real : real -> format
 
   (** the formatter for char type. *)
-  val format_char : Char.char formatter
+  val format_char : char -> format
 
   (** the formatter for string type. *)
-  val format_string : String.string formatter
+  val format_string : string -> format
 
   (** the formatter for substring type. *)
-  val format_substring : Substring.substring formatter
+  val format_substring : substring -> format
 
   (** the formatter for exn type. *)
-  val format_exn : General.exn formatter
+  val format_exn : exn -> format
 
-  val format_exn_Ref : General.exn formatter ref
+  val format_exn_Ref : (exn -> format) ref
 
   (** the formatter for array type. *)
   val format_array :
-      ('a formatter * expression list) -> 'a Array.array formatter
+      ('a formatter * format) -> 'a array -> format
 
   (** the formatter for vector type. *)
   val format_vector :
-      ('a formatter * expression list) -> 'a Vector.vector formatter
+      ('a formatter * format) -> 'a vector -> format
 
   (** the formatter for ref type. *)
-  val format_ref : 'a formatter -> 'a ref formatter
+  val format_ref : 'a formatter -> 'a ref -> format
 
   (** the formatter for bool type. *)
-  val format_bool : bool formatter
+  val format_bool : bool -> format
 
   (** the formatter for option type. *)
-  val format_option : 'a formatter -> 'a Option.option formatter
+  val format_option : 'a formatter -> 'a option -> format
 
   (** the formatter for order type. *)
-  val format_order : General.order formatter
+  val format_order : order -> format
 
   (** the formatter for list type. *)
-  val format_list : ('a formatter * expression list) -> 'a list formatter
+  val format_list : ('a formatter * format) -> 'a list -> format
 
   (***************************************************************************)
 

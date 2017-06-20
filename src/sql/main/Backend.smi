@@ -11,14 +11,10 @@ _require local "./SQLBACKEND.sig"
 
 structure SMLSharp_SQL_Backend =
 struct
-  type schema_column =
-       {colname: string, ty: SMLSharp_SQL_BackendTy.ty, nullable: bool}
-  type schema_table = string * schema_column list
-  type schema = schema_table list
 
   datatype res_impl =
-       R of {closeRel : unit -> unit,
-             fetch : unit -> res_impl option,
+       R of {closeRes : unit -> unit,
+             fetch : unit -> bool,
              getInt : int -> int option,
              getIntInf : int -> IntInf.int option,
              getWord : int -> word option,
@@ -33,7 +29,7 @@ struct
           
   type conn_impl =
        {closeConn : unit -> unit,
-        getDatabaseSchema : unit -> schema,
+        getDatabaseSchema : unit -> SMLSharp_SQL_BackendTy.schema,
         execQuery : string -> res_impl}
 
   type server_impl =

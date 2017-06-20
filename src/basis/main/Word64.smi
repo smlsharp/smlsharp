@@ -3,7 +3,6 @@ _require "./StringCvt.smi"
 _require local "./SMLSharp_ScanChar.smi"
 _require "./IntInf.smi"
 _require local "./String.smi"
-_require local "./Int64.smi"
 
 structure Word64 =
 struct

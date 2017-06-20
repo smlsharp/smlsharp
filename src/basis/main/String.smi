@@ -7,8 +7,6 @@ _require local "./Substring.smi"
 
 structure String =
 struct
-  type string = string
-  type char = char
   val maxSize : int
   val size = SMLSharp_Builtin.String.size
   val explode : string -> char list
@@ -40,4 +38,6 @@ struct
   val fromString : string -> string option
   val toCString : string -> string
   val fromCString : string -> string option
+  type string = string
+  type char = char
 end

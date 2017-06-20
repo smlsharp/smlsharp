@@ -11,7 +11,7 @@ struct
   structure PGSQL = SMLSharp_SQL_PGSQL
 
   type conn = PGSQL.conn
-  type res = {result: PGSQL.result, rowIndex: int, numRows: int}
+  type res = {result: PGSQL.result, rowIndex: int ref, numRows: int}
   type sqltype = string
   type value = string
 
@@ -31,17 +31,17 @@ struct
         else raise Exec (if r = _NULL then "NULL"
                          else (PGSQL.PQclear () r;
                                PGSQL.getErrorMessage conn));
-        {result = r, rowIndex = ~1, numRows = PGSQL.PQntuples () r}
+        {result = r, rowIndex = ref ~1, numRows = PGSQL.PQntuples () r}
       end
 
   fun fetch (r as {result, rowIndex, numRows}:res) =
-      if rowIndex + 1 < numRows
-      then SOME (r # {rowIndex = rowIndex + 1})
-      else NONE
+      if !rowIndex + 1 < numRows
+      then (rowIndex := !rowIndex + 1; true)
+      else false
 
   fun closeConn conn = (PGSQL.PQfinish () conn; ())
 
-  fun closeRel ({result,...}:res) = (PGSQL.PQclear () result; ())
+  fun closeRes ({result,...}:res) = (PGSQL.PQclear () result; ())
 
   fun connect connInfo =
       let
@@ -53,7 +53,7 @@ struct
         else conn
       end
 
-  fun getValue ({result, rowIndex, ...}:res, colIndex:int) =
+  fun getValue ({result, rowIndex = ref rowIndex, ...}:res, colIndex:int) =
       if PGSQL.PQgetisnull () (result, rowIndex, colIndex)
       then NONE
       else
@@ -108,12 +108,11 @@ struct
     fun evalQuery (query, fetchFn, conn) =
         let
           val r = execQuery (conn, query)
-          val tuples =
-              List.tabulate (#numRows r, fn i => fetchFn (r # {rowIndex=i}))
-              handle e => (closeRel r; raise e)
+          fun loop l r = if fetch r then loop (fetchFn r :: l) r else l
+          val tuples = loop nil r handle e => (closeRes r; raise e)
         in
-            closeRel r;
-            tuples
+          closeRes r;
+          rev tuples
         end
 
     fun getTableSchema conn {relname, oid} =
@@ -127,9 +126,9 @@ struct
                       \AND pg_attribute.atttypid = pg_type.oid \
                       \ORDER BY pg_attribute.attname"
           fun fetchFn res =
-              {colname = getString (res, 0),
-               nullable = not (getBool (res, 1)),
-               ty = translateType (getString (res, 2))}
+              (getString (res, 0),
+               {nullable = not (getBool (res, 1)),
+                ty = translateType (getString (res, 2))})
         in
           (relname, evalQuery (query, fetchFn, conn))
         end
