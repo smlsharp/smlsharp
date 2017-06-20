@@ -97,7 +97,8 @@ struct
       let
         val fields =
             case TypesBasics.derefTy recordTy of
-              T.RECORDty fieldTypes => RecordLabel.Map.listItemsi fieldTypes
+              T.RECORDty fieldTypes => fieldTypes
+            | T.DUMMYty (_, T.KIND {tvarKind = T.REC fields, ...}) => fields
             | _ => raise Bug.Bug "recordFieldTys"
       in
         map (fn (label, ty) =>
@@ -105,7 +106,7 @@ struct
                  ty = ty,
                  size = findSize (env, ty),
                  tag = findTag (env, ty)})
-            fields
+            (RecordLabel.Map.listItemsi fields)
       end
 
   fun compileExp env comp tlexp =
@@ -357,28 +358,27 @@ struct
                    bodyExp = Let (map (toBcdecl loc) decls, bodyExp, loc),
                    loc = loc}
         end
-      | L.TLLOCALCODE {codeLabel, argVarList, codeBodyExp, mainExp, resultTy,
-                       loc} =>
+      | L.TLCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         let
           val env2 = SingletonTyEnv2.bindVars (env, argVarList)
-          val codeBodyExp = compileExp env2 comp codeBodyExp
-          val mainExp = compileExp env comp mainExp
+          val catchExp = compileExp env2 comp catchExp
+          val tryExp = compileExp env comp tryExp
         in
-          B.BCLOCALCODE {codeLabel = codeLabel,
-                         argVarList = argVarList,
-                         codeBodyExp = codeBodyExp,
-                         mainExp = mainExp,
-                         resultTy = resultTy,
-                         loc = loc}
+          B.BCCATCH {catchLabel = catchLabel,
+                     argVarList = argVarList,
+                     catchExp = catchExp,
+                     tryExp = tryExp,
+                     resultTy = resultTy,
+                     loc = loc}
         end
-      | L.TLGOTO {destinationLabel, argExpList, resultTy, loc} =>
+      | L.TLTHROW {catchLabel, argExpList, resultTy, loc} =>
         let
           val argExpList = map (compileExp env comp) argExpList
         in
-          B.BCGOTO {destinationLabel = destinationLabel,
-                    argExpList = argExpList,
-                    resultTy = resultTy,
-                    loc = loc}
+          B.BCTHROW {catchLabel = catchLabel,
+                     argExpList = argExpList,
+                     resultTy = resultTy,
+                     loc = loc}
         end
 
   and compileDecl env comp tldecl =

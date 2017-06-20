@@ -98,7 +98,7 @@ struct
   fun Match (exp, pat, idx, matchedExp, defaultExp) =
       if size pat = idx
       then matchedExp
-      else E.Switch (E.String_sub_unsafe (exp, E.Int idx),
+      else E.Switch (E.String_sub_unsafe (exp, E.Int32 idx),
                      [(C.CHAR (String.sub (pat, idx)),
                        Match (exp, pat, idx + 1, matchedExp, defaultExp))],
                      defaultExp)
@@ -141,7 +141,7 @@ struct
     | emitTree (BRANCH (pat, next), idx, keyExp, defaultExp) =
       Match (keyExp, pat, idx,
              E.Switch
-               (E.String_sub_unsafe (keyExp, E.Int (size pat)),
+               (E.String_sub_unsafe (keyExp, E.Int32 (size pat)),
                 map (fn (c, t) =>
                         (C.CHAR (chr c),
                          emitTree (t, size pat + 1, keyExp, defaultExp)))
@@ -154,10 +154,10 @@ struct
       let
         val vid = EmitTypedLambda.newId ()
         val defaultLabel = FunLocalLabel.generate nil
-        val jumpExp = E.Exp (L.TLGOTO {destinationLabel = defaultLabel,
-                                       argExpList = nil,
-                                       resultTy = resultTy,
-                                       loc = loc},
+        val jumpExp = E.Exp (L.TLTHROW {catchLabel = defaultLabel,
+                                        argExpList = nil,
+                                        resultTy = resultTy,
+                                        loc = loc},
                              resultTy)
         val exp =
             E.Let ([(vid, E.Exp (keyExp, keyTy))],
@@ -168,11 +168,11 @@ struct
                                  (IEnv.listItemsi trees),
                              jumpExp))
       in
-        L.TLLOCALCODE
-          {codeLabel = defaultLabel,
+        L.TLCATCH
+          {catchLabel = defaultLabel,
            argVarList = nil,
-           codeBodyExp = defaultExp,
-           mainExp = EmitTypedLambda.emit loc exp,
+           catchExp = defaultExp,
+           tryExp = EmitTypedLambda.emit loc exp,
            resultTy = resultTy,
            loc = loc}
       end

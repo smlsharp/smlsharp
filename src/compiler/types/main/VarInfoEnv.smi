@@ -2,9 +2,10 @@ _require "../../../basis.smi"
 _require local "../../../smlnj-lib/Util/ord-key-sig.sml"
 _require "../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require local "../../control/main/Bug.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+
 _require "./Types.ppg.smi"
 
 structure TvOrd =

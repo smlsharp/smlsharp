@@ -5,7 +5,7 @@
 structure NameEvalUtils =
 struct
 local
-  structure A = Absyn
+  structure A = AbsynTy
   structure I = IDCalc
   structure BT = BuiltinTypeNames
   structure PI = PatternCalcInterface

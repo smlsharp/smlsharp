@@ -44,13 +44,13 @@ struct
 local
 
   (*%
-     @formatter(Absyn.eq) Absyn.format_eq
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
    *)
   (*% @prefix formatWithType_
-     @formatter(Absyn.eq) Absyn.format_eq
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
    *)
   (*% @prefix print_
-     @formatter(Absyn.eq) Absyn.format_eq
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
    *)
   type eq =
    (*%
@@ -62,7 +62,7 @@ local
    (*% @prefix print_
       @format(x) x
     *)
-   Absyn.eq
+   AbsynTy.eq
   fun bug s = Bug.Bug ("IDCalc: " ^ s)
   val tempVarNamePrefix = "T_"
 in
@@ -402,13 +402,13 @@ in
       {longsymbol: longsymbol, id: oprimId}
 
   (*% 
-     @formatter(Absyn.constant) Absyn.format_constant
+     @formatter(AbsynConst.constant) AbsynConst.format_constant
    *)
   (*% @prefix formatWithType_ 
-     @formatter(Absyn.constant) Absyn.format_constant
+     @formatter(AbsynConst.constant) AbsynConst.format_constant
    *)
   (*% @prefix print_
-     @formatter(Absyn.constant) Absyn.format_constant
+     @formatter(AbsynConst.constant) AbsynConst.format_constant
    *)
   type constant 
     = (*%
@@ -420,7 +420,7 @@ in
       (*% @prefix print_
          @format(x) x
        *)
-    Absyn.constant
+    AbsynConst.constant
 
   (*%
      @formatter(tyformat) Types.format_ty
@@ -461,6 +461,7 @@ in
        LIFTEDty of tvar
 
    (*%
+     @formatter(formatUserLongSymbol) Symbol.formatUserLongSymbol
      @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
      @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
      @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
@@ -659,10 +660,14 @@ in
           "#" tys:recordTy(ty()(,))
        *)
       REC of ty RecordLabel.Map.map
-    | (*% @format "#json" *)
-      (*% @prefix formatWithType_ @format "#json" *)
-      (*% @prefix print_ @format "#json" *)
-      JSON
+    | (*% @format({dynKind}) "#json" *)
+      (*% @prefix formatWithType_ @format({dynKind}) "#json" *)
+      (*% @prefix print_ @format({dynKind}) "#json" *)
+      JSON of {dynKind:bool}
+    | (*% @format({dynKind}) "#reify" *)
+      (*% @prefix formatWithType_ @format({dynKind}) "#reify" *)
+      (*% @prefix print_ @format({dynKind}) "#reify" *)
+      REIFY
     | (*% @format "#boxed" *)
       (*% @prefix formatWithType_ @format "#boxed" *)
       (*% @prefix print_ @format "#boxed" *)
@@ -714,7 +719,7 @@ in
   (* actual structures of a type function *)
   and tfunkind
     = (*%
-         @format({id, iseq, formals, longsymbol, conSpec, conIDSet, liftedTys, runtimeTy, dtyKind})
+         @format({id, iseq, formals, longsymbol:longsymbol:formatUserLongSymbol, conSpec, conIDSet, liftedTys, runtimeTy, dtyKind})
            longsymbol
        *)
       (*% @prefix formatWithType_
@@ -746,7 +751,7 @@ in
                    dtyKind:dtyKind
                   }
     | (*%
-         @format({longsymbol, id, iseq, formals}) 
+         @format({longsymbol:longsymbol:formatUserLongSymbol, id, iseq, formals}) 
            longsymbol
        *)
       (*% @prefix formatWithType_
@@ -764,7 +769,7 @@ in
       (* type constructore name in spec *)
       TFV_SPEC of {longsymbol:longsymbol, id:typId, iseq:bool, formals:formals}
     | (*%
-         @format({longsymbol, id, iseq, formals, conSpec, liftedTys})
+         @format({longsymbol:longsymbol:formatUserLongSymbol, id, iseq, formals, conSpec, liftedTys})
            longsymbol
        *)
       (*% @prefix formatWithType_
@@ -823,7 +828,7 @@ in
        *)
       INSTANTIATED of {tfunkind:tfunkind, tfun:tfun}
     | (*%
-         @format({longsymbol, tfun, varE, formals, conSpec, liftedTys})
+         @format({longsymbol:longsymbol:formatUserLongSymbol, tfun, varE, formals, conSpec, liftedTys})
            longsymbol
        *)
       (*% @prefix formatWithType_
@@ -929,15 +934,15 @@ in
        *)
       IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol}
     | (*%
-         @format({exInfo, used, internalId})
+         @format({exInfo, internalId})
             "external var" + exInfo
        *)
       (*% @prefix formatWithType_
-         @format({exInfo, used, internalId})  
+         @format({exInfo, internalId})  
             "external var" + exInfo
        *)
       (*% @prefix print_
-         @format({exInfo, used, internalId})
+         @format({exInfo, internalId})
            "val" + exInfo()(,)
        *)
       (* 2012-1-30 used flag indicate that it is referenced and 
@@ -949,7 +954,7 @@ in
          This id is only set by genExtern in NameEval.
        *)
       (* external variable name *)
-      IDEXVAR of {exInfo:exInfo, used:bool ref, internalId:varId option}
+      IDEXVAR of {exInfo:exInfo, internalId:varId option}
     | (*%
          @format({longsymbol, id, version})  "external var to be typed" + longsymbol 
        *)
@@ -1020,41 +1025,41 @@ in
      (* exception name *)
       IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol}
     | (*%
-         @format({longsymbol, ty:ty, version} * used)
+         @format({used, longsymbol, ty:ty, version})
           1["external exn" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({longsymbol, ty:ty, version} * used)
+         @format({used, longsymbol, ty:ty, version})
           1["external exn" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({longsymbol, ty:ty, version} * used)
+         @format({used, longsymbol, ty:ty, version})
             "exception" + name + ":" + ty()(,)
        *)
       (* external exception name *)
-      IDEXEXN of {longsymbol:longsymbol, version:version, ty:ty} * bool ref
+      IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty}
     | (*%
-         @format({longsymbol, ty:ty, version} * unsed)
+         @format({used, longsymbol, ty:ty, version})
           1["external exn rep" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({longsymbol, ty:ty, version} * used)
+         @format({used, longsymbol, ty:ty, version})
           1["external exn rep" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({longsymbol, ty:ty, version} * used)
+         @format({used, longsymbol, ty:ty, version})
             "exception" + name + "=" + longsymbol
        *)
       (* external exception name *)
-      IDEXEXNREP of {ty:ty, version:version, longsymbol:longsymbol} * bool ref
+      IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol}
     | (*%
-         @format({id,overloadDef, used, longsymbol})  "oprim" "(" id ")"
+         @format({id, overloadDef, used, longsymbol})  "oprim" "(" id ")"
        *)
       (*% @prefix formatWithType_
-         @format({id,overloadDef, used, longsymbol})  "oprim" "(" id ")"
+         @format({id, overloadDef, used, longsymbol})  "oprim" "(" id ")"
        *)
       (*% @prefix print_
-         @format({id,overloadDef, used, longsymbol})
+         @format({id, overloadDef, used, longsymbol})
        *)
       (* overloaded primitive name *)
       IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol}
@@ -1140,19 +1145,19 @@ in
       ICEXVAR of {longsymbol:longsymbol, exInfo:exInfo}
     | (*%
          @format({longsymbol, id:varId, exInfo:exInfo}) exInfo
-         @format:exInfo({longsymbol:longsymbol, version:version}) 
+         @format:exInfo({used, longsymbol:longsymbol, version:version}) 
              longsymbol + "(to be typed)"
        *)
       (*% @prefix formatWithType_
          @format({longsymbol, id:varId, exInfo:exInfo}) exInfo
-         @format:exInfo({longsymbol:longsymbol, version:version}) 
+         @format:exInfo({used, longsymbol:longsymbol, version:version}) 
                 longsymbol + "(to be typed)"
        *)
       (*% @prefix print_
          @format({longsymbol, id:varId, exInfo:exInfo})
        *)
       (* extnernal variable imported through _require *)
-      ICEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId, exInfo:{longsymbol:longsymbol, version:version}}
+      ICEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId, exInfo:{used:bool ref, longsymbol:longsymbol, version:version}}
     | (*%
          @format({primitive,ty,loc})  primitive
        *)
@@ -1543,6 +1548,40 @@ in
        *)
       ICSEQ of icexp list * loc
     | (*%
+        @format({data, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix formatWithType_
+        @format({data, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix print_
+        @format({data, iterator, pred, loc:loc})
+       *)
+      ICFOREACH of {data:icexp, iterator:icexp, pred:icexp, loc:loc}
+    | (*%
+        @format({data, whereParam, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "where" + whereParam
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix formatWithType_
+        @format({data, whereParam, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "where" + whereParam
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix print_
+        @format({data, whereParam, iterator, pred, loc:loc})
+       *)
+      ICFOREACHDATA of {data:icexp, whereParam:icexp, iterator:icexp, pred:icexp, loc:loc}
+    | (*%
        * @format(exp * ty * loc)
          1[
            exp 
@@ -1574,19 +1613,19 @@ in
       ICFFIAPPLY of FFIAttributes.attributes option
                     * ffiFun * ffiArg list * ffiTy list * loc
     | (*%
-         @format({columnInfoFnExp, ty, loc})
+         @format({tyFnExp, ty, loc})
            N0{ "_sqlschema" + ":" + ty }
        *)
       (*% @prefix formatWithType_
-         @format({columnInfoFnExp, ty, loc})
+         @format({tyFnExp, ty, loc})
            N0{ "_sqlschema" + ":" + ty }
        *)
       (*% @prefix print_
-         @format({columnInfoFnExp, ty, loc})
+         @format({tyFnExp, ty, loc})
        *)
       ICSQLSCHEMA of
       {
-        columnInfoFnExp : icexp,
+        tyFnExp : icexp,
         ty : ty,
         loc : loc
       }
@@ -1606,6 +1645,14 @@ in
       (*% @prefix formatWithType_ @format *)
       (*% @prefix print_ @format *)
       ICJSON of icexp * ty * loc
+    | (*% *)
+      (*% @prefix formatWithType_ @format *)
+      (*% @prefix print_ @format *)
+      ICTYPEOF of ty * loc
+    | (*% *)
+      (*% @prefix formatWithType_ @format *)
+      (*% @prefix print_ @format *)
+      ICREIFYTY of ty * loc
 
   and ffiArg
     = (*%
@@ -2110,15 +2157,15 @@ in
      *)
       INST_OVERLOAD of overloadCase
     | (*% 
-         @format({exInfo, used, loc}) exInfo
+         @format({exInfo, loc}) exInfo
        *)
       (*% @prefix formatWithType_ 
-         @format({exInfo, used, loc}) exInfo
+         @format({exInfo, loc}) exInfo
        *)
       (*% @prefix print_
-         @format({exInfo, used, loc}) exInfo()(,)
+         @format({exInfo, loc}) exInfo()(,)
        *)
-      INST_EXVAR of {exInfo:exInfo, used:bool ref, loc:loc}
+      INST_EXVAR of {exInfo:exInfo, loc:loc}
     | (*% 
          @format({primitive, ty} * loc) primitive
        *)
@@ -2188,18 +2235,18 @@ in
 
   and exInfo
     = (*% 
-         @format({longsymbol, version, ty})  
+         @format({used, longsymbol, version, ty})  
            longsymbol version 
        *)
       (*% @prefix formatWithType_
-         @format({longsymbol, version, ty})  
+         @format({used, longsymbol, version, ty})  
            longsymbol version + ":" + ty
        *)
       (*% @prefix print_
-         @format({longsymbol, version, ty}) 
+         @format({used, longsymbol, version, ty}) 
        *)
       (* ty is the type as a function *)
-      {longsymbol: longsymbol, version:version, ty:ty}
+      {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
 
   and conInfo
     = (*% 
@@ -2335,7 +2382,9 @@ in
      a proper error message *)
 
   type topdecl = icdecl list
-  type exexnInfo = {longsymbol:longsymbol, ty:ty, version:version}
+(*
+  type exexnInfo = {used:bool ref, longsymbol:longsymbol, ty:ty, version:version}
+*)
 
   fun mkTfv (tfvkind:tfunkind) = ref tfvkind
 
@@ -2394,8 +2443,8 @@ in
 
   fun tvarIseq ({symbol, id, eq, lifted}:tvar) =
       case eq of
-        Absyn.EQ => true
-      | Absyn.NONEQ => false
+        AbsynTy.EQ => true
+      | AbsynTy.NONEQ => false
 
   fun tfunIseq tfun =
       case tfun of
@@ -2465,7 +2514,7 @@ in
   fun getLocExp icexp =
       case icexp of
       ICERROR => Loc.noloc
-    | ICCONSTANT constant => Absyn.getLocConstant constant
+    | ICCONSTANT constant => AbsynConst.getLocConstant constant
     | ICVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
     | ICEXVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
     | ICEXVAR_TOBETYPED  {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
@@ -2493,11 +2542,15 @@ in
     | ICRECORD_SELECTOR (string, loc) => loc
     | ICSELECT (string, icexp, loc) => loc
     | ICSEQ (icexpList, loc) => loc
+    | ICFOREACH {loc,...} => loc
+    | ICFOREACHDATA {loc,...} => loc
     | ICFFIIMPORT (icexp, ffiTy, loc) => loc
     | ICFFIAPPLY (ffiAttributesOption, icexp, ffiArgList, ffiTy, loc) => loc
     | ICSQLSCHEMA {loc,...} => loc
     | ICJOIN (icexp1, icexp2, loc) => loc
     | ICJSON (icexp, ty, loc) => loc
+    | ICTYPEOF (ty, loc) => loc
+    | ICREIFYTY (ty, loc) => loc
     
   fun getLeftLocExp icexp = #1 (getLocExp icexp)
   fun getRightLocExp icexp = #2 (getLocExp icexp)
@@ -2511,7 +2564,7 @@ in
       | ICPATCON {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
       | ICPATEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
       | ICPATEXEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
-      | ICPATCONSTANT constant => Absyn.getLocConstant constant
+      | ICPATCONSTANT constant => AbsynConst.getLocConstant constant
       | ICPATCONSTRUCT {con, arg, loc} => loc
       | ICPATRECORD {flex, fields, loc} => loc
       | ICPATLAYERED {patVar, tyOpt, pat, loc} => loc

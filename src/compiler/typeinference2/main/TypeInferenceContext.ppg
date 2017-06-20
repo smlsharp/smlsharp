@@ -115,7 +115,7 @@ struct
                (var:IDCalc.varInfo),
                idstatus:idstatus) =
     (
-     TU.adjustDepthInTy lambdaDepth (case idstatus of
+     TU.adjustDepthInTy (ref false) lambdaDepth (case idstatus of
                                        TC.VARID {ty,...} => ty
                                      | TC.RECFUNID ({ty,...}, arity) => ty
                                     );
@@ -196,7 +196,7 @@ struct
                 (newTvarEnv, addedUtvars)
                ) =>
                let 
-                 val newTvStateRef = T.newUtvar (lambdaDepth, eq, utvar)
+                 val newTvStateRef = T.newUtvar (lambdaDepth, eq,  utvar)
                in 
                  (TvarMap.insert(newTvarEnv, utvar, T.TYVARty newTvStateRef),
                   TvarMap.insert(addedUtvars, utvar, (newTvStateRef, tvarKind))

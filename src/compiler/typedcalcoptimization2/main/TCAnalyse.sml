@@ -122,6 +122,10 @@ local
         visitExp exp
       | TC.TPSEQ {expList, expTyList, loc} =>
         visitExpList expList
+      | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred,  predTy, loc} =>
+        (visitExp data; visitExp iterator; visitExp pred)
+      | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred,  predTy, loc} =>
+        (visitExp data; visitExp whereParam; visitExp iterator; visitExp pred)
       | TC.TPSIZEOF (ty, loc) => ()
       | TC.TPTAPP {exp, expTy, instTyList, loc} =>
         visitExp exp
@@ -130,6 +134,12 @@ local
       (* the following should have been eliminate *)
       | TC.TPRECFUNVAR {arity, var} =>
         inc (#id var)
+      | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+        (visitExp arg1; visitExp arg2)
+      | TC.TPJSON {exp,ty,coerceTy,loc} =>
+        visitExp exp
+      | TC.TPTYPEOF (ty,loc) => ()
+      | TC.TPREIFYTY (ty,loc) => ()
   and visitRecordField exp =
       case exp of
         TC.TPVAR var => incInf (#id var)

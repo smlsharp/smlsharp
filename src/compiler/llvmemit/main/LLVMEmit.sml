@@ -449,6 +449,7 @@ struct
               | L.FPEXT => LLVM.LLVMBuildFPExt
               | L.ZEXT => LLVM.LLVMBuildZExt
               | L.SEXT => LLVM.LLVMBuildSExt
+              | L.INTTOPTR => LLVM.LLVMBuildIntToPtr
               | L.PTRTOINT => LLVM.LLVMBuildPtrToInt
           val operand = emitOperand env3 operand
           val ty = emitTy context ty

@@ -1,6 +1,5 @@
 signature BOOL =
 sig
-  (* datatype bool = false | true *)
   type bool = bool
   val not : bool -> bool
   val toString : bool -> string

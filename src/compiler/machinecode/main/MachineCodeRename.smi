@@ -1,7 +1,8 @@
-_require "../../../basis.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../name/main/CodeLabel.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+_require local "../../name/main/CodeLabel.smi"
+
 _require "./MachineCode.ppg.smi"
 
 structure MachineCodeRename =

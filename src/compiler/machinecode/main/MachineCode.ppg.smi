@@ -1,18 +1,19 @@
-_require "../../../basis.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../util/main/TermFormat.smi"
+
+_require "../../absyn/main/InterfaceName.ppg.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
-_require "../../util/main/TermFormat.smi"
-_require "../../name/main/CodeLabel.smi"
-_require "../../name/main/ExternSymbol.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../types/main/Types.ppg.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
 _require "../../runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../runtimecalc/main/RuntimeCalc.ppg.smi"
+_require "../../name/main/ExternSymbol.smi"
+_require "../../name/main/CodeLabel.smi"
 _require "../../anormal/main/ANormal.ppg.smi"
-_require "../../absyn/main/InterfaceName.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
 
 structure MachineCode =
 struct
@@ -265,6 +266,7 @@ struct
         frameSlots : RuntimeTypes.ty SlotID.Map.map,
         bodyExp : mcexp,
         retTy : ty,
+        gcCheck : bool,
         loc : loc
       }
     | MTCALLBACKFUNCTION of

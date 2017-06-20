@@ -1,2 +1,4 @@
 include "./smlnj-lib/Util/parser-comb-sig.sml"
 include "./smlnj-lib/Util/parser-comb.smi"
+include "./smlnj-lib/Util/array-qsort.smi"
+include "./smlnj-lib/Util/list-mergesort.smi"

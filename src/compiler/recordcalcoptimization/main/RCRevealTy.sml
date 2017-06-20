@@ -191,8 +191,32 @@ local
              expTyList = map revealTy expTyList,
              loc = loc
             }
+        | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+          RC.RCFOREACH 
+            {data = evalExp data, 
+             dataTy = revealTy dataTy,
+             iterator = evalExp iterator, 
+             iteratorTy = revealTy iteratorTy, 
+             pred = evalExp pred, 
+             predTy = revealTy predTy, 
+             loc = loc}
+        | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+          RC.RCFOREACHDATA
+            {data = evalExp data, 
+             dataTy = revealTy dataTy,
+             whereParam = evalExp whereParam, 
+             whereParamTy = revealTy whereParamTy, 
+             iterator = evalExp iterator, 
+             iteratorTy = revealTy iteratorTy, 
+             pred = evalExp pred, 
+             predTy = revealTy predTy, 
+             loc = loc}
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (revealTy ty, loc)
+        | RC.RCTYPEOF (ty, loc) =>
+          RC.RCTYPEOF (revealTy ty, loc)
+        | RC.RCREIFYTY (ty, loc) =>
+          RC.RCREIFYTY (revealTy ty, loc)
         | RC.RCTAPP {exp, expTy, instTyList, loc} =>
           RC.RCTAPP {exp = evalExp exp,
                      expTy = revealTy expTy,
@@ -227,7 +251,7 @@ local
                     loc)
         | RC.RCINDEXOF (string, ty, loc) =>
           RC.RCINDEXOF (string, revealTy ty, loc)
-        | RC.RCSWITCH {branches:(Absyn.constant * rcexp) list, defaultExp:rcexp,
+        | RC.RCSWITCH {branches:(RC.constant * rcexp) list, defaultExp:rcexp,
                        expTy:Types.ty, loc:Loc.loc, switchExp:rcexp,
                        resultTy} =>
           RC.RCSWITCH 
@@ -241,6 +265,18 @@ local
             }
         | RC.RCTAGOF (ty, loc) =>
           RC.RCTAGOF (revealTy ty, loc)
+        | RC.RCJOIN {ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
+          RC.RCJOIN
+            {ty=revealTy ty,
+             args=(evalExp arg1, evalExp arg2),
+             argTys=(revealTy argTy1, revealTy argTy2),
+             loc=loc
+            }
+        | RC.RCJSON {exp,ty,coerceTy,loc} =>
+          RC.RCJSON {exp=evalExp exp,
+                     ty=revealTy ty,
+                     coerceTy=revealTy coerceTy,
+                     loc=loc}
 
   and evalDecl (rcdecl:RC.rcdecl) =
       case rcdecl of

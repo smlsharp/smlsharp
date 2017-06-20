@@ -1,16 +1,18 @@
 _require "../../../basis.smi"
+_require local "../../debug/main/Bug.ppg.smi"
+_require "../../symbols/main/RecordLabel.smi"
+_require "../../symbols/main/Symbol.ppg.smi"
+_require local "../../ids/main/LocalID.smi"
+_require local "../../env/main/IEnv.smi"
+
 _require "../../../compiler/types/main/Types.ppg.smi"
 _require local "../../../compiler/types/main/TypesBasics.smi"
 _require local "../../../compiler/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../compiler/runtimetypes/main/TypeLayout2.smi"
 _require local "../../../compiler/builtin2/main/BuiltinTypeNames.ppg.smi"
 _require local "../../../compiler/builtin2/main/BuiltinTypes.smi"
 _require local "../../../compiler/bitmapcompilation2/main/SingletonTyEnv.smi"
 _require local "../../../compiler/bitmapcompilation2/main/RecordLayout.smi"
-_require local "../../../compiler/control/main/Bug.ppg.smi"
-_require "../../../compiler/absyn/main/RecordLabel.smi"
-_require "../../../compiler/absyn/main/Symbol.ppg.smi"
-_require local "../../env/main/IEnv.smi"
-_require local "../../../compiler/name/main/LocalID.smi"
 _require local "../../../compiler/datatypecompilation/main/DatatypeLayout.smi"
 
 structure Dynamic =
@@ -23,13 +25,17 @@ struct
   val load : unit ptr * Types.ty -> dynamic
 
   datatype value =
-      WORD8 of Word8.word
-    | CHAR of char
+      CHAR of char
+    | INT8 of Int8.int
+    | INT16 of Int16.int
     | INT32 of Int32.int
+    | INDEX of index
     | INT64 of Int64.int
+    | WORD8 of Word8.word
+    | WORD16 of Word16.word
     | WORD32 of Word32.word
     | WORD64 of Word64.word
-    | REAL of real
+    | REAL64 of real
     | REAL32 of Real32.real
     | PTR of unit ptr
     | RECORD of (RecordLabel.label * dynamic) list
@@ -43,6 +49,9 @@ struct
     | EXN of exn
     | FUN
     | UNIT
+    | OPTION_NONE
+    | OPTION_SOME of value
+    | BOOL of bool
     | OPAQUE of value
     | OTHER
   and dynamic_list =
@@ -54,5 +63,8 @@ struct
   val read : dynamic -> value
   val readList : dynamic_list -> dynamic list
   val readArray : dynamic_array -> dynamic vector
+
+  val makeRecord : dynamic RecordLabel.Map.map -> dynamic
+  val makeTuple : dynamic list -> dynamic
 
 end

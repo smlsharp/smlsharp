@@ -2,8 +2,6 @@ _require "./General.smi"
 
 structure Substring =
 struct
-  type char = char
-  type string = string
   type substring (= boxed)
   val sub : substring * int -> char
   val size : substring -> int
@@ -42,4 +40,6 @@ struct
   val app : (char -> unit) -> substring -> unit
   val foldl : (char * 'a -> 'a) -> 'a -> substring -> 'a
   val foldr : (char * 'a -> 'a) -> 'a -> substring -> 'a
+  type char = char
+  type string = string
 end

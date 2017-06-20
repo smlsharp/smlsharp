@@ -8,4 +8,5 @@ struct
   val fromString : string -> float
   val toReal : float -> real
   val toDecimal : float -> IEEEReal.decimal_approx
+  val compare : float * float -> order
 end

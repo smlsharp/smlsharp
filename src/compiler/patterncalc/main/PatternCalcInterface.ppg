@@ -13,8 +13,8 @@ struct
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
-  (*% @formatter(Absyn.ty) Absyn.format_ty *)
-  type ty = Absyn.ty
+  (*% @formatter(AbsynTy.ty) AbsynTy.format_ty *)
+  type ty = AbsynTy.ty
 
   (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
   type symbol = Symbol.symbol
@@ -22,8 +22,8 @@ struct
   (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
   type longsymbol = Symbol.longsymbol
 
-  (*% @formatter(Absyn.tvar) Absyn.format_tvar *)
-  type tvar = Absyn.tvar
+  (*% @formatter(AbsynTy.tvar) AbsynTy.format_tvar *)
+  type tvar = AbsynTy.tvar
 
   (*% @formatter(PatternCalc.scopedTvars) PatternCalc.format_scopedTvars *)
   type scopedTvars = PatternCalc.scopedTvars

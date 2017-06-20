@@ -1,27 +1,29 @@
+_require local "../../../smlformat-lib.smi"
+_require local "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+_require local "../../../compiler-utils/env/main/SEnv.smi"
+
+_require local "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require local "../../util/main/TermFormat.smi"
+_require local "../../types/main/IDCalc.ppg.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+_require local "../../typedcalc/main/TypedCalc.ppg.smi"
+
 _require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
 _require "../../../smlnj-lib/Util/ord-key-sig.sml"
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../util/main/TermFormat.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../types/main/IDCalc.ppg.smi"
-_require "../../types/main/Types.ppg.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
 _require "../../types/main/VarInfoEnv.smi"
-_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../absyn/main/AbsynConst.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
 
 structure MatchData = 
 struct
   datatype kind = Bind | Match | Handle of RecordCalc.varInfo
     
-  type const = Absyn.constant
+  type const = AbsynConst.constant
   type conInfo = RecordCalc.conInfo
   type exnCon = RecordCalc.exnCon
 

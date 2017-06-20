@@ -291,9 +291,31 @@ local
              expTyList = expTyList,
              loc = loc
             }
+        | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+          TC.TPFOREACH 
+            {data = eval data, 
+             dataTy = dataTy,
+             iterator = eval iterator, 
+             iteratorTy = iteratorTy, 
+             pred = eval pred, 
+             predTy = predTy, 
+             loc = loc}
+      | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred,  predTy, loc} =>
+          TC.TPFOREACHDATA 
+            {data = eval data, 
+             dataTy = dataTy,
+             whereParam = eval whereParam,
+             whereParamTy = whereParamTy,
+             iterator = eval iterator, 
+             iteratorTy = iteratorTy, 
+             pred = eval pred, 
+             predTy = predTy, 
+             loc = loc}
         | TC.TPSIZEOF (ty, loc) => TC.TPSIZEOF (ty, loc)
+        | TC.TPTYPEOF (ty, loc) => TC.TPTYPEOF (ty, loc)
+        | TC.TPREIFYTY (ty, loc) => TC.TPREIFYTY (ty, loc)
         | TC.TPTAPP {exp, expTy, instTyList, loc} =>
-          (case exp of
+          (case eval exp of
              TC.TPPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
              let
                val btvMap = applyTys (btvEnv, instTyList)
@@ -315,8 +337,8 @@ local
                   bodyTy=bodyTy, 
                   loc=loc}
              end
-           | _ => 
-             TC.TPTAPP {exp=eval exp,
+           | exp =>
+             TC.TPTAPP {exp=exp,
                         expTy = expTy,
                         instTyList= instTyList,
                         loc = loc
@@ -324,9 +346,19 @@ local
           )
         | TC.TPVAR varInfo =>
           evalVar varMap varInfo
+        | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+          TC.TPJOIN {ty = ty,
+                     args = (eval arg1, eval arg2),
+                     argtys = argtys,
+                     loc = loc}
         (* the following should have been eliminate *)
         | TC.TPRECFUNVAR {arity, var} =>
           raise bug "TPRECFUNVAR in eval"
+        | TC.TPJSON {exp,ty,coerceTy,loc} =>
+          TC.TPJSON {exp=eval exp,
+                     ty=ty,
+                     coerceTy=coerceTy,
+                     loc = loc}
       end
   and applyTerms
         (varMap:varMap)

@@ -4,8 +4,6 @@ _require "./SMLSharp_ScanChar.smi"
 
 structure Char =
 struct
-  type char = char
-  type string = string
   val minChar : char
   val maxChar : char
   val maxOrd : int
@@ -40,4 +38,6 @@ struct
   val fromString : string -> char option
   val toCString : char -> string
   val fromCString : string -> char option
+  type char = char
+  type string = string
 end

@@ -7,13 +7,17 @@
 structure Unify =
 struct
 local
-  structure A = Absyn
   structure T = Types
   structure TB = TypesBasics
   structure TU = TypesUtils
+  structure U = UserLevelPrimitive
 in
   exception Unify
   exception EqRawTy
+
+  fun raiseUnify id =
+      (Bug.printError ("UnifyFail: " ^ Int.toString id ^ "\n");
+       raise Unify)
 
   fun bug s = Bug.Bug ("Unify:" ^ s)
 
@@ -44,85 +48,86 @@ in
         T.CONSTRUCTty {tyCon = {id, ...}, args} => id
       | _ => raise TyConId
 
-  fun coerceKind 
-        (
-         kind1 as
-         {
-          utvarOpt = utvarOpt1,
-          eqKind = eqKind1,
-          lambdaDepth = lambdaDepth1,
-          tvarKind = tvarKind1,
-          occurresIn = occurresIn1,
-          id = id1
-         } : T.tvKind,
-         kind2 as
-         {
-          utvarOpt = utvarOpt2,
-          eqKind = eqKind2,
-          lambdaDepth = lambdaDepth2,
-          tvarKind = tvarKind2,
-          occurresIn = occurresIn2,
-          id = id2
-         } : T.tvKind
-        ) : T.tvKind * (T.ty * T.ty) list =
-    let
-      val utvarOpt = utvarOpt2
-      val eqKind = 
-          case (eqKind1, eqKind2) of
-            (A.EQ, A.NONEQ) => raise Unify
-          | _ => eqKind2
-      val lambdaDepth = 
-          case Int.compare (lambdaDepth1, lambdaDepth2) of
-            LESS => 
-            (
-             TB.adjustDepthInTvarKind lambdaDepth1 tvarKind2;
-             lambdaDepth1
-            )
-          | GREATER =>
-            (
-             TB.adjustDepthInTvarKind lambdaDepth2 tvarKind1;
-             lambdaDepth2
-            )
-          | EQUAL => lambdaDepth1
-      val (tvarKind, newTyEquations) =
-          case (tvarKind1, tvarKind2) of
-            (T.REC fl1, T.REC fl2) =>
-            let 
-              val newTyEquations = 
-                  RecordLabel.Map.foldli
-                    (fn (label, ty, newTyEquations) =>
-                        case RecordLabel.Map.find(fl2, label) of
-                          NONE => raise Unify
-                        | SOME ty' => (ty, ty')::newTyEquations)
-                    nil
-                    fl1
-            in (T.REC fl2, newTyEquations)
-            end
-          | (T.UNIV, _) => (tvarKind2, nil)
-          | (T.JSON, T.JSON) => (tvarKind2, nil)
-          | _ => raise Unify
-    in
-      (
-       {
-        utvarOpt = utvarOpt,
-        eqKind = eqKind,
-        lambdaDepth = lambdaDepth,
-        tvarKind = tvarKind,
-        occurresIn = occurresIn1 @ occurresIn2,
-        id = id2
-       },
-       newTyEquations)
-    end
+  fun newtySubkind subkind =
+      T.newty {utvarOpt = NONE,
+               kind = T.KIND {tvarKind = T.UNIV,
+                              dynKind = false,
+                              reifyKind = false,
+                              subkind = subkind,
+                              eqKind = T.NONEQ}}
+
+  fun checkSubkind ty subkind =
+      case subkind of
+        T.ANY => nil
+      | T.UNBOXED => if isBoxedTy ty then raiseUnify 2 else nil
+      | T.JSON_ATOMIC =>
+        (case TB.derefTy ty of
+           T.CONSTRUCTty {tyCon = {id, ...}, args=[]} =>
+           if id = #id BuiltinTypes.intTyCon
+              orelse id = #id BuiltinTypes.realTyCon
+              orelse id = #id BuiltinTypes.stringTyCon
+              orelse id = #id BuiltinTypes.boolTyCon
+           then nil
+           else raiseUnify 12
+         | T.TYVARty _ =>
+           [(ty, newtySubkind subkind)]
+         | _ => raiseUnify 12
+        )
+      | T.JSON =>
+        (case TB.derefTy ty of
+           T.CONSTRUCTty {tyCon = {id, ...}, args=[]} =>
+           if id = #id BuiltinTypes.intTyCon
+              orelse id = #id BuiltinTypes.realTyCon
+              orelse id = #id BuiltinTypes.stringTyCon
+              orelse id = #id BuiltinTypes.boolTyCon
+              orelse id = #id (U.JSON_void_tyCon ())
+           then nil
+           else raiseUnify 14
+         | T.CONSTRUCTty {tyCon = {id, ...}, args=[argTy]} =>
+           if id = #id BuiltinTypes.listTyCon
+           then [(argTy, newtySubkind subkind)]
+           else if id = #id BuiltinTypes.optionTyCon
+           then [(argTy, newtySubkind subkind)]
+           else if id = #id (U.JSON_dyn_tyCon ())
+           then [(argTy, newtySubkind subkind)]
+(*
+                   case TB.derefTy argTy of
+                     T.RECORDty fields =>
+                     [(argTy, T.newtyRaw {utvarOpt = utvarOpt,
+                                          lambdaDepth = lambdaDepth,
+                                          tvarKind = tvarKind,
+                                          dynKind = dynKind,
+                                          reifyKind = reifyKind,
+                                          boxedKind = boxedKind,
+                                          eqKind = eqKind})]
+                   | T.CONSTRUCTty {tyCon = {dtyKind, id, ...}, args} =>
+                     if id = #id BuiltinTypes.intTyCon
+                        orelse id = #id BuiltinTypes.realTyCon
+                        orelse id = #id BuiltinTypes.stringTyCon
+                        orelse id = #id BuiltinTypes.boolTyCon
+                        orelse id = #id BuiltinTypes.unitTyCon
+                        orelse id = #id (U.JSON_void_tyCon ()) then nil
+                     else raiseUnify 15
+                   | _ => raiseUnify 16
+*)
+           else raiseUnify 17
+         | T.RECORDty fields =>
+           RecordLabel.Map.foldr
+             (fn (x,z) => (x, newtySubkind subkind) :: z)
+             nil
+             fields
+         | T.TYVARty _ =>
+           [(ty, newtySubkind subkind)]
+         | _ => raiseUnify 18)
+
   fun checkKind 
-        ty 
-        ({utvarOpt,eqKind,lambdaDepth,occurresIn, tvarKind,id}: T.tvKind) =
+        ty
+        ({utvarOpt,kind as T.KIND {eqKind,dynKind,reifyKind,subkind,tvarKind},lambdaDepth,id}: T.tvKind) =
       let
-        val _ = 
-            case utvarOpt of NONE => () | SOME _ => raise Unify
-        val _ =
-            (case eqKind of A.EQ => CheckEq.checkEq ty | _ => ())
-            handle CheckEq.Eqcheck => raise Unify
-        val _ = TB.adjustDepthInTy lambdaDepth ty
+        val _ = case utvarOpt of NONE => () | SOME _ => raiseUnify 3
+        val _ = (case eqKind of T.EQ => CheckEq.checkEq ty | _ => ())
+                 handle CheckEq.Eqcheck => raiseUnify 4
+        val _ = TB.adjustDepthInTy (ref false) lambdaDepth ty
         val newTyEquations = 
             case tvarKind of
               T.REC kindFields =>
@@ -134,108 +139,151 @@ in
                         ty, 
                         case RecordLabel.Map.find(tyFields, l) of
                           SOME ty' => ty'
-                        | NONE => raise Unify
+                        | NONE => raiseUnify 6
                        ) :: tyEquations)
                    nil
                    kindFields
                | T.TYVARty _ => raise bug "checkKind"
-               | _ => raise Unify)
+               | _ => raiseUnify 7)
             | T.OCONSTkind L =>
               (case List.filter
                       (fn x => TypID.eq(tyConId x, tyConId ty)
-                               handle TyConId => raise Unify
-                      )
-                      L of
-                 [ty1] => [(ty,ty1)]
-               | _ => raise Unify)
+                               handle TyConId => raiseUnify 8)
+                      L 
+                of [ty1] => [(ty,ty1)]
+                 | _ => raiseUnify 9)
             | T.OPRIMkind {instances, operators} => 
               (case List.filter
                       (fn x => TypID.eq(tyConId x, tyConId ty)
-                               handle TyConId => raise Unify
-                      )
+                               handle TyConId => raiseUnify 10)
                       instances
-                of
-                 [ty1] => [(ty,ty1)]
-               | _ => raise Unify)
+                of [ty1] => [(ty,ty1)]
+                 | _ => raiseUnify 11)
+            | T.BOXED => if isBoxedTy ty then nil else raiseUnify 1
             | T.UNIV => nil
-            | T.JSON =>
-              (case TB.derefTy ty of
-                 T.CONSTRUCTty {tyCon = {id, ...}, args=[]} =>
-                 if id = #id BuiltinTypes.intTyCon
-                    orelse id = #id BuiltinTypes.realTyCon
-                    orelse id = #id BuiltinTypes.stringTyCon
-                    orelse id = #id BuiltinTypes.boolTyCon
-                    orelse id = #id BuiltinTypes.unitTyCon
-                 then nil
-                 else raise Unify
-               | T.CONSTRUCTty {tyCon = {id, ...}, args=[argTy]} =>
-                 if id = #id BuiltinTypes.listTyCon
-                 then
-                   [(argTy, T.newtyRaw {utvarOpt = utvarOpt,
-                                        lambdaDepth = lambdaDepth,
-                                        tvarKind = tvarKind,
-                                        occurresIn = occurresIn,
-                                        eqKind = eqKind})]
-                 else if id = #id BuiltinTypes.optionTyCon
-                 then
-                   [(argTy, T.newtyRaw {utvarOpt = utvarOpt,
-                                        lambdaDepth = lambdaDepth,
-                                        tvarKind = tvarKind,
-                                        occurresIn = occurresIn,
-                                        eqKind = eqKind})]
-
-                 else raise Unify
-               | T.RECORDty fields =>
-                 RecordLabel.Map.foldr
-                   (fn (x,z) =>
-                     (x, T.newtyRaw {utvarOpt = utvarOpt,
-                                     lambdaDepth = lambdaDepth,
-                                     tvarKind = tvarKind,
-                                     occurresIn = occurresIn,
-                                     eqKind = eqKind})
-                     :: z)
-                   nil
-                   fields
-               | T.TYVARty _ =>
-                 [(ty, T.newtyRaw {utvarOpt = utvarOpt,
-                                   lambdaDepth = lambdaDepth,
-                                   tvarKind = tvarKind,
-                                   occurresIn = occurresIn,
-                                   eqKind = eqKind})]
-               | _ => raise Unify)
-            | T.BOXED => if isBoxedTy ty then nil else raise Unify
-            | T.UNBOXED => if isBoxedTy ty then raise Unify else nil
       in
-        newTyEquations
+        newTyEquations @ checkSubkind ty subkind
       end
+      handle U.IDNotFound name =>
+             raise bug ("userlevel primitive error handling (checkKind):" ^ name)
         
+  fun coerceKind 
+     {from = {utvarOpt = utvarOpt1,
+              kind = T.KIND {eqKind = eqKind1,
+                             dynKind = dynKind1,
+                             reifyKind = reifyKind1,
+                             subkind = subkind1,
+                             tvarKind = tvarKind1},
+              lambdaDepth = lambdaDepth1, 
+              id = id1} : T.tvKind,
+      to = {utvarOpt = utvarOpt2,
+            kind = T.KIND {eqKind = eqKind2,
+                           dynKind = dynKind2,
+                           reifyKind = reifyKind2,
+                           subkind = subkind2,
+                           tvarKind = tvarKind2},
+            lambdaDepth = lambdaDepth2,
+            id = id2} : T.tvKind
+     } : T.tvKind * (T.ty * T.ty) list =
+    let
+      val reifyKind = 
+          case (reifyKind1, reifyKind2) of
+            (true, false) => raiseUnify 181
+          | _ => reifyKind2
+      val dynKind = 
+          case (dynKind1, dynKind2) of
+            (true, false) => raiseUnify 182
+          | _ => dynKind2
+      val subkind =
+          case (subkind1, subkind2) of
+            (T.ANY, _) => subkind2
+          | (_, T.ANY) => raiseUnify 190
+          | (T.JSON, T.JSON) => subkind2
+          | (T.JSON, T.JSON_ATOMIC) => subkind2
+          | (T.JSON, T.UNBOXED) => raiseUnify 191
+          | (T.JSON_ATOMIC, T.JSON) => raiseUnify 192
+          | (T.JSON_ATOMIC, T.JSON_ATOMIC) => subkind2
+          | (T.JSON_ATOMIC, T.UNBOXED) => raiseUnify 193
+          | (T.UNBOXED, T.JSON) => raiseUnify 194
+          | (T.UNBOXED, T.JSON_ATOMIC) => subkind2
+          | (T.UNBOXED, T.UNBOXED) => subkind2
+      val utvarOpt = utvarOpt2
+      val eqKind = 
+          case (eqKind1, eqKind2) of
+            (T.EQ, T.NONEQ) => raiseUnify 20
+          | _ => eqKind2
+      val lambdaDepth = 
+          case Int.compare (lambdaDepth1, lambdaDepth2) of
+            LESS => 
+            (
+             TB.adjustDepthInTvarKind (ref false) lambdaDepth1 tvarKind2;
+             lambdaDepth1
+            )
+          | GREATER =>
+            (
+             TB.adjustDepthInTvarKind (ref false) lambdaDepth2 tvarKind1;
+             lambdaDepth2
+            )
+          | EQUAL => lambdaDepth1
+      val (tvarKind, newTyEquations) =
+          case (tvarKind1, tvarKind2) of
+            (T.REC fl1, T.REC fl2) =>
+            let 
+              val newTyEquations = 
+                  RecordLabel.Map.foldli
+                    (fn (label, ty, newTyEquations) =>
+                        case RecordLabel.Map.find(fl2, label) of
+                          NONE => raiseUnify 21
+                        | SOME ty' => (ty, ty')::newTyEquations)
+                    nil
+                    fl1
+            in (T.REC fl2, newTyEquations)
+            end
+          | (T.UNIV, _) => (tvarKind2, nil)
+          | (T.BOXED, T.BOXED) => (tvarKind2, nil)
+          | _ => raiseUnify 22
+    in
+      (
+       {
+        utvarOpt = utvarOpt,
+        kind = T.KIND {eqKind = eqKind,
+                       dynKind = dynKind,
+                       reifyKind = reifyKind,
+                       subkind = subkind,
+                       tvarKind = tvarKind},
+        lambdaDepth = lambdaDepth,
+        id = id2
+       },
+       newTyEquations)
+    end
+
   and lubKind 
-        (
-         kind1 as
-         {
-          utvarOpt = utvarOpt1,
-          eqKind = eqKind1,
+        (kind1 as
+         {utvarOpt = utvarOpt1,
+          kind = T.KIND {eqKind = eqKind1,
+                         dynKind = dynKind1,
+                         reifyKind = reifyKind1,
+                         subkind = subkind1,
+                         tvarKind = tvarKind1},
           lambdaDepth = lambdaDepth1,
-          tvarKind = tvarKind1,
-          occurresIn = occurresIn1,
-          id = id1
-         } : T.tvKind,
+          id = id1} : T.tvKind,
          kind2 as
-         {
-          utvarOpt = utvarOpt2,
-          eqKind = eqKind2,
+         {utvarOpt = utvarOpt2,
+          kind = T.KIND {eqKind = eqKind2,
+                         dynKind = dynKind2,
+                         reifyKind = reifyKind2,
+                         subkind = subkind2,
+                         tvarKind = tvarKind2},
           lambdaDepth = lambdaDepth2,
-          occurresIn = occurresIn2,
-          tvarKind = tvarKind2,
-          id = id2
-         } : T.tvKind
+          id = id2} : T.tvKind
         ) : T.tvKind * (T.ty * T.ty) list =
       case (utvarOpt1, utvarOpt2) of
-        (SOME _, NONE) => coerceKind (kind2, kind1)
-      | (NONE, SOME _) => coerceKind (kind1, kind2)
-      | (SOME _, SOME _) => raise Unify
+        (SOME _, NONE) => coerceKind {from = kind2, to = kind1}
+      | (NONE, SOME _) => coerceKind {from = kind1, to = kind2}
+      | (SOME _, SOME _) => raiseUnify 23
       | _ =>
       let 
+        val utvarOpt = NONE
         fun lubTyList(tyList1, tyList2) = 
             let
               fun find ty nil = NONE
@@ -255,33 +303,45 @@ in
                   (nil,nil)
                   tyList1
             in
-              case tyList of nil => raise Unify
+              case tyList of nil => raiseUnify 24
                            | _ => (tyList, newEqs)
             end
-        val utvarOpt = NONE
         val (eqKind, tvarKind1, tvarKind2) =
             (case (eqKind1, eqKind2) of
-               (A.NONEQ, A.NONEQ) => (A.NONEQ, tvarKind1, tvarKind2)
-             | (A.EQ, A.EQ) => (A.EQ, tvarKind1, tvarKind2)
-             | (A.NONEQ, A.EQ) =>
-               (A.EQ, TU.coerceTvarkindToEQ tvarKind1, tvarKind2)
-             | (A.EQ, A.NONEQ) =>
-               (A.EQ, tvarKind1, TU.coerceTvarkindToEQ tvarKind2)
+               (T.NONEQ, T.NONEQ) => (T.NONEQ, tvarKind1, tvarKind2)
+             | (T.EQ, T.EQ) => (T.EQ, tvarKind1, tvarKind2)
+             | (T.NONEQ, T.EQ) =>
+               (T.EQ, TU.coerceTvarKindToEQ tvarKind1, tvarKind2)
+             | (T.EQ, T.NONEQ) =>
+               (T.EQ, tvarKind1, TU.coerceTvarKindToEQ tvarKind2)
             )
-            handle TU.CoerceTvarKindToEQ => raise Unify
+            handle TU.CoerceTvarKindToEQ => raiseUnify 25
         val lambdaDepth = 
             case Int.compare (lambdaDepth1, lambdaDepth2) of
                 LESS => 
                 (
-                 TB.adjustDepthInTvarKind lambdaDepth1 tvarKind2;
+                 TB.adjustDepthInTvarKind (ref false) lambdaDepth1 tvarKind2;
                  lambdaDepth1
                 )
               | GREATER =>
                 (
-                 TB.adjustDepthInTvarKind lambdaDepth2 tvarKind1;
+                 TB.adjustDepthInTvarKind (ref false) lambdaDepth2 tvarKind1;
                  lambdaDepth2
                 )
               | EQUAL => lambdaDepth1
+        val subkind =
+            case (subkind1, subkind2) of
+              (T.ANY, _) => subkind2
+            | (_, T.ANY) => subkind1
+            | (T.JSON, T.JSON) => subkind2
+            | (T.JSON, T.JSON_ATOMIC) => subkind2
+            | (T.JSON, T.UNBOXED) => T.JSON_ATOMIC
+            | (T.JSON_ATOMIC, T.JSON) => subkind1
+            | (T.JSON_ATOMIC, T.JSON_ATOMIC) => subkind2
+            | (T.JSON_ATOMIC, T.UNBOXED) => subkind1
+            | (T.UNBOXED, T.JSON) => T.JSON_ATOMIC
+            | (T.UNBOXED, T.JSON_ATOMIC) => subkind2
+            | (T.UNBOXED, T.UNBOXED) => subkind2
         val (newTvarKind, newTyEquations) =
             case (tvarKind1, tvarKind2) of
               (T.REC fl1, T.REC fl2) =>
@@ -341,7 +401,7 @@ in
                 val (I,newEqs) = lubTyList(I1,I2)
               in
                 case I of 
-                  nil => raise Unify
+                  nil => raiseUnify 27
                 | _ => 
                   (T.OPRIMkind
                      {
@@ -350,95 +410,75 @@ in
                      },
                    newEqs)
               end
-            | (T.JSON, T.OCONSTkind tys) =>
-              (case List.mapPartial
-                      (fn ty => SOME (ty, checkKind ty kind1)
-                                handle Unify => NONE)
-                      tys of
-                 nil => raise Unify
-               | l => (T.OCONSTkind (map #1 l), List.concat (map #2 l)))
-            | (T.JSON, T.OPRIMkind {instances, operators}) =>
-              (case List.mapPartial
-                      (fn ty => SOME (ty, checkKind ty kind1)
-                                handle Unify => NONE)
-                      instances of
-                 nil => raise Unify
-               | l => (T.OPRIMkind {instances = map #1 l,
-                                    operators = operators},
-                       List.concat (map #2 l)))
-            | (T.JSON, T.JSON) => (T.JSON, nil)
-            | (T.JSON, T.REC fields) =>
-              (case List.concat
-                      (map (fn ty => checkKind ty kind1 handle Unify => nil)
-                           (RecordLabel.Map.listItems fields)) of
-                 nil => raise Unify
-               | l => (T.REC fields, l))
-            | (T.OCONSTkind tys, T.JSON) =>
-              (case List.mapPartial
-                      (fn ty => SOME (ty, checkKind ty kind2)
-                                handle Unify => NONE)
-                      tys of
-                 nil => raise Unify
-               | l => (T.OCONSTkind (map #1 l), List.concat (map #2 l)))
-            | (T.OPRIMkind {instances, operators}, T.JSON) =>
-              (case List.mapPartial
-                      (fn ty => SOME (ty, checkKind ty kind2)
-                                handle Unify => NONE)
-                      instances of
-                 nil => raise Unify
-               | l => (T.OPRIMkind {instances = map #1 l,
-                                    operators = operators},
-                       List.concat (map #2 l)))
-            | (T.REC fields, T.JSON) =>
-              (case List.concat
-                      (map (fn ty => checkKind ty kind2 handle Unify => nil)
-                           (RecordLabel.Map.listItems fields)) of
-                 nil => raise Unify
-               | l => (T.REC fields, l))
+            | (T.BOXED, T.BOXED) => (T.BOXED, nil)
             | (T.BOXED, T.OCONSTkind tys) =>
               (T.OCONSTkind (List.filter isBoxedTy tys), nil)
             | (T.BOXED, T.OPRIMkind {instances, operators}) =>
               (T.OPRIMkind {instances = List.filter isBoxedTy instances,
                             operators = operators},
                nil)
-            | (T.BOXED, T.BOXED) => (T.BOXED, nil)
-            | (T.BOXED, T.REC x) => (T.REC x, nil)
+            | (T.BOXED, T.REC _) => (tvarKind2, nil)
             | (T.OCONSTkind tys, T.BOXED) =>
               (T.OCONSTkind (List.filter isBoxedTy tys), nil)
             | (T.OPRIMkind {instances, operators}, T.BOXED) =>
               (T.OPRIMkind {instances = List.filter isBoxedTy instances,
                             operators = operators},
                nil)
-            | (T.REC x, T.BOXED) => (T.REC x, nil)
+            | (T.REC _, T.BOXED) => (tvarKind2, nil)
+            | (T.UNIV, x) => (x,nil)
+            | (x, T.UNIV) => (x,nil)
+            | _ => raiseUnify 36
+        val (newTvarKind, newTyEquations2) =
+            case (subkind, newTvarKind) of
+              (T.ANY, _) => (newTvarKind, nil)
             | (T.UNBOXED, T.OCONSTkind tys) =>
               (T.OCONSTkind (List.filter (not o isBoxedTy) tys), nil)
             | (T.UNBOXED, T.OPRIMkind {instances, operators}) =>
               (T.OPRIMkind {instances = List.filter (not o isBoxedTy) instances,
                             operators = operators},
                nil)
-            | (T.UNBOXED, T.UNBOXED) => (T.UNBOXED, nil)
-            | (T.UNBOXED, T.REC x) => raise Unify
-            | (T.OCONSTkind tys, T.UNBOXED) =>
-              (T.OCONSTkind (List.filter (not o isBoxedTy) tys), nil)
-            | (T.OPRIMkind {instances, operators}, T.UNBOXED) =>
-              (T.OPRIMkind {instances = List.filter (not o isBoxedTy) instances,
-                            operators = operators},
-               nil)
-            | (T.REC x, T.UNBOXED) => raise Unify
-            | (T.UNIV, x) => (x,nil)
-            | (x, T.UNIV) => (x,nil)
-            | _ => raise Unify
+            | (T.UNBOXED, T.REC _) => raiseUnify 381
+            | (T.UNBOXED, T.BOXED) => raiseUnify 382
+            | (T.UNBOXED, T.UNIV) => (T.UNIV, nil)
+            | (_, T.OCONSTkind tys) =>
+              (case ListPair.unzip
+                      (List.mapPartial
+                         (fn ty => SOME (ty, checkSubkind ty subkind)
+                                   handle Unify => NONE)
+                         tys) of
+                 (nil, nil) => raiseUnify 383
+               | (tys, eqs) => (T.OCONSTkind tys, List.concat eqs))
+            | (_, T.OPRIMkind {instances, operators}) =>
+              (case ListPair.unzip
+                      (List.mapPartial
+                         (fn ty => SOME (ty, checkSubkind ty subkind)
+                                   handle Unify => NONE)
+                         instances) of
+                 (nil, nil) => raiseUnify 384
+               | (tys, eqs) => (T.OPRIMkind {instances = tys,
+                                             operators = operators},
+                                List.concat eqs))
+            | (_, T.REC fields) =>
+              (T.REC fields,
+               List.concat (map (fn ty => checkSubkind ty subkind)
+                                (RecordLabel.Map.listItems fields)))
+            | (T.JSON, T.BOXED) => (T.BOXED, nil)
+            | (T.JSON, T.UNIV) => (T.UNIV, nil)
+            | (T.JSON_ATOMIC, T.BOXED) => raiseUnify 387
+            | (T.JSON_ATOMIC, T.UNIV) => (T.UNIV, nil)
       in 
         (
          {
           lambdaDepth = lambdaDepth,
-          tvarKind = newTvarKind, 
-          eqKind = eqKind, 
+          kind = T.KIND {tvarKind = newTvarKind, 
+                         eqKind = eqKind, 
+                         dynKind = dynKind1 orelse dynKind2,
+                         reifyKind = reifyKind1 orelse reifyKind2,
+                         subkind = subkind},
           utvarOpt = utvarOpt,
-          occurresIn = occurresIn1 @ occurresIn2,
           id = id1
          },
-         newTyEquations
+         newTyEquations @ newTyEquations2
         )
       end
 
@@ -460,16 +500,16 @@ in
               => unifyTy ((ty1, derefTy2) :: tail)
             | (T.ERRORty, _) => unifyTy tail
             | (_, T.ERRORty) => unifyTy tail
-            | (T.DUMMYty n2, T.DUMMYty n1) =>
-              if n1 = n2 then unifyTy tail else raise Unify
             | (T.DUMMYty _,
                T.TYVARty (ref(T.TVAR
                                 {
                                  lambdaDepth,
                                  id,
-                                 tvarKind = T.UNIV,
-                                 eqKind=A.NONEQ,
-                                 occurresIn,
+                                 kind = T.KIND {tvarKind = T.UNIV,
+                                                eqKind=T.NONEQ,
+                                                dynKind,
+                                                reifyKind,
+                                                subkind = T.ANY},
                                  utvarOpt = NONE
                                 }
                               ))
@@ -482,9 +522,11 @@ in
                                 {
                                  lambdaDepth,
                                  id,
-                                 tvarKind = T.UNIV,
-                                 eqKind=Absyn.NONEQ,
-                                 occurresIn,
+                                 kind = T.KIND {tvarKind = T.UNIV,
+                                                eqKind=T.NONEQ,
+                                                dynKind = dynKind,
+                                                reifyKind = reifyKind,
+                                                subkind = T.ANY},
                                  utvarOpt = NONE
                                 }
                               )),
@@ -494,8 +536,8 @@ in
                TB.performSubst(ty1, ty2); 
                unifyTy tail
               )
-            | (T.DUMMYty _, _) => raise Unify
-            | (_, T.DUMMYty _) => raise Unify
+            | (T.DUMMYty _, _) => raiseUnify 40
+            | (_, T.DUMMYty _) => raiseUnify 41
 
            (* type variables *)
 (*
@@ -514,13 +556,13 @@ in
               let
                 val _ =
                     case (eqkind1, eqkind2) of
-                      (A.NONEQ, A.EQ) => raise Unify
+                      (A.NONEQ, T.EQ) => raiseUnify 42
                     | _ => ()
 (*
                 val _ = 
                     if T.strictlyYoungerDepth
                          {tyvarDepth=depth1, contextDepth=depth2}
-                    then () else raise Unify
+                    then () else raiseUnify 43
 *)
               in
                 (
@@ -544,13 +586,13 @@ in
               let
                 val _ =
                     case (eqkind1, eqkind2) of
-                      (A.EQ, A.NONEQ) => raise Unify
+                      (T.EQ, A.NONEQ) => raiseUnify 44
                     | _ => ()
 (*
                 val _ = 
                     if T.strictlyYoungerDepth {tyvarDepth=depth2,
                                                contextDepth=depth1}
-                    then () else raise Unify
+                    then () else raiseUnify 45
 *)
               in
                 (
@@ -566,15 +608,13 @@ in
               ) => 
               if FreeTypeVarID.eq(#id tvKind1, #id tvKind2) then unifyTy tail
               else if occurres tvState1 ty2 orelse occurres tvState2 ty1 
-              then raise Unify
+              then raiseUnify 46
               else 
                 let 
                   val (newKind, newTyEquations) = lubKind (tvKind1, tvKind2)
                   val newTy = T.newtyRaw {utvarOpt = #utvarOpt newKind,
                                           lambdaDepth = #lambdaDepth newKind,
-                                          tvarKind = #tvarKind newKind,
-                                          occurresIn = #occurresIn newKind,
-                                          eqKind = #eqKind newKind}
+                                          kind = #kind newKind}
                 in
                   unifyTy newTyEquations;
                   TB.performSubst(ty1, newTy);
@@ -586,7 +626,7 @@ in
                _
               ) =>
               if occurres tvState1 ty2 
-              then raise Unify
+              then raiseUnify 47
               else
                 let
                   val newTyEquations = checkKind ty2 tvKind1
@@ -603,7 +643,7 @@ in
                T.TYVARty (tvState2 as ref(T.TVAR tvKind2))
               ) =>
               if occurres tvState2 ty1
-              then raise Unify
+              then raiseUnify 48
               else
                 let
                   val newTyEquations = checkKind ty1 tvKind2
@@ -623,7 +663,7 @@ in
               if length domainTyList1 = length domainTyList2 then
                 unifyTy (ListPair.zip (domainTyList1, domainTyList2)
                          @ ((rangeTy1, rangeTy2) :: tail))
-              else raise Unify
+              else raiseUnify 49
             | (
                T.CONSTRUCTty {tyCon = {id = id1,...}, args = tyList1},
                T.CONSTRUCTty {tyCon = {id = id2,...}, args = tyList2}
@@ -633,7 +673,7 @@ in
               in
                 if omit andalso length tyList1 = length tyList2
                 then unifyTy  (ListPair.zip (tyList1, tyList2) @ tail)
-                else raise Unify
+                else raiseUnify 50
               end
             | (T.RECORDty tyFields1, T.RECORDty tyFields2) =>
               let
@@ -642,13 +682,13 @@ in
                       (fn (label, ty1, (newTyEquations, rest)) =>
                           let val (rest, ty2) = RecordLabel.Map.remove(rest, label)
                           in ((ty1, ty2) :: newTyEquations, rest) end
-                          handle LibBase.NotFound => raise Unify)
+                          handle LibBase.NotFound => raiseUnify 51)
                       (nil, tyFields2)
                       tyFields1
               in
                 if RecordLabel.Map.isEmpty rest 
                 then unifyTy (newTyEquations@tail)
-                else raise Unify
+                else raiseUnify 52
               end
             | (T.SINGLETONty _, T.SINGLETONty _) =>
               raise bug "unifyTy: SINGLETONty occurs"
@@ -657,8 +697,8 @@ in
                standard monotype unify *)
             | (T.BOUNDVARty id1,T.BOUNDVARty id2) =>
               if BoundTypeVarID.eq(id1, id2) then unifyTy tail
-              else raise Unify
-            | (ty1, ty2) => raise Unify
+              else raiseUnify 53
+            | (ty1, ty2) => raiseUnify 54
       in
         unifyTy L
       end
@@ -671,6 +711,52 @@ in
    * @return nil 
    *)
   fun unify typeEqs = unifyTypeEquations false typeEqs
+
+(*
+  (**
+   * type equality 
+   *)
+  fun tyEq (ty1, ty2) = 
+      case (ty1, ty2) of
+        (T.TYVARty (ref(T.SUBSTITUTED derefTy1)), _) => tyEq (derefTy1, ty2)
+      | (_, T.TYVARty (ref(T.SUBSTITUTED derefTy2))) => tyEq (ty1, derefTy2)
+      | (T.DUMMYty n2, T.DUMMYty n1) => n1 = n2
+      | (T.TYVARty (ref(T.TVAR tvKind1)), T.TYVARty (ref(T.TVAR tvKind2)))
+        => FreeTypeVarID.eq(#id tvKind1, #id tvKind2)
+      | (T.FUNMty(domainTyList1, rangeTy1),T.FUNMty(domainTyList2, rangeTy2))
+        =>
+        length domainTyList1 = length domainTyList2 
+        andalso
+        List.all 
+          tyEq 
+          ((rangeTy1, rangeTy2) :: ListPair.zip (domainTyList1, domainTyList2))
+      | (
+         T.CONSTRUCTty {tyCon = {id = id1,...}, args = tyList1},
+         T.CONSTRUCTty {tyCon = {id = id2,...}, args = tyList2}
+        ) =>
+        TypID.eq(id1, id2) andalso
+        length tyList1 = length tyList2 andalso
+        List.all 
+          tyEq 
+          (ListPair.zip (tyList1, tyList2))
+      | (T.RECORDty tyFields1, T.RECORDty tyFields2) =>
+        let
+          val (newTyEquations, rest) = 
+              RecordLabel.Map.foldri 
+                (fn (label, ty1, (newTyEquations, rest)) =>
+                    let val (rest, ty2) = RecordLabel.Map.remove(rest, label)
+                    in ((ty1, ty2) :: newTyEquations, rest) end
+                    handle LibBase.NotFound => raiseUnify 51)
+                (nil, tyFields2)
+                tyFields1
+        in
+          RecordLabel.Map.isEmpty rest  andalso
+          List.all tyEq newTyEquations
+        end
+      | (T.BOUNDVARty id1,T.BOUNDVARty id2) =>
+         BoundTypeVarID.eq(id1, id2)
+      | _ => false
+*)
 
   (* Note: only used in type instantiation for signature match.
    * Since signature match guaranttes the type is correct
@@ -749,6 +835,7 @@ in
           eqTyList btvEquiv (args1, args2)
         | (T.ERRORty, _) => true
         | (_, T.ERRORty) => true
+        | (T.DUMMYty (id1, _), T.DUMMYty (id2, _)) => id1 = id2
         | (T.DUMMYty _, _) => (unify [(ty1, ty2)]; true)
         | (_, T.DUMMYty _) => (unify [(ty1, ty2)]; true)
         | (T.TYVARty tv1, _) => (unify [(ty1, ty2)]; true)
@@ -812,12 +899,18 @@ in
          true)
         handle NONEQ => false
       end
-  and eqKind btvEquiv ({eqKind=eqK1, tvarKind=tvK1},
-                       {eqKind=eqK2, tvarKind=tvK2}) =
+  and eqKind btvEquiv (T.KIND {eqKind=eqK1, dynKind=dynKind1, reifyKind=reifyKind1, subkind=subkind1, tvarKind=tvK1},
+                       T.KIND {eqKind=eqK2, dynKind=dynKind2, reifyKind=reifyKind2, subkind=subkind2, tvarKind=tvK2}) =
       (case (eqK1, eqK2) of
-         (Absyn.EQ, Absyn.EQ) => true
-       | (Absyn.NONEQ, Absyn.NONEQ) => true
+         (T.EQ, T.EQ) => true
+       | (T.NONEQ, T.NONEQ) => true
        | _ => false) andalso
+      (dynKind1 = dynKind2)
+      andalso
+      (reifyKind1 = reifyKind2)
+      andalso
+      (subkind1 = subkind2)
+      andalso
       eqTvarKind btvEquiv (tvK1, tvK2)
   and eqTvarKind btvEquiv (tvK1, tvK2) =
       case (tvK1, tvK2) of
@@ -828,9 +921,7 @@ in
        eqTyList btvEquiv (tyL1, tyL2) andalso
        eqOprimSelectorList btvEquiv (opL1, opL2)
     | (T.UNIV, T.UNIV) => true
-    | (T.JSON, T.JSON) => true
     | (T.BOXED, T.BOXED) => true
-    | (T.UNBOXED, T.UNBOXED) => true
     | (T.REC smap1, T.REC smap2) => eqSMap btvEquiv (smap1, smap2)
     | _ => false
 

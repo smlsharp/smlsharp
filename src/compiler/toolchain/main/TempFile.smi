@@ -1,6 +1,7 @@
 _require local "../../../basis.smi"
-_require "./Filename.smi"
 _require local "./CoreUtils.smi"
+
+_require "./Filename.smi"
 
 structure TempFile =
 struct

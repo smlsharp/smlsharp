@@ -437,66 +437,45 @@ prim_IntInf_toString(sml_intinf_t *n)
 	return ret;
 }
 
-int
-prim_IntInf_toInt(sml_intinf_t *obj)
-{
-	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
-	return sml_intinf_get_si(obj);
-}
-
 unsigned int
 prim_IntInf_toWord(sml_intinf_t *obj)
 {
-	unsigned long n;
-
 	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
 
-	/* mpz_get_ui(op) returns least significant bits of absolute value
-	 * of "op" but this primitive requires to return least significant
-	 * bits of 2's complement form of "op". So we take 2's complement
-	 * of the return value of mpz_get_ui if "op" is negative.
-	 */
-	n = sml_intinf_get_ui(obj);
-	if (sml_intinf_sign(obj) < 0)
-		n = ~n + 1;
-
-	return n;
+	if (sizeof(long int) > sizeof(int)) {
+		/* if long int is larger than int, the low-order bits of
+		 * mpz_get_si is the answer. */
+		return (int)(unsigned int)(unsigned long int)
+			(sml_intinf_get_si(obj));
+	} else {
+		/* otherwise, compute 2's complement of the absolute of
+		 * the given value (mpz_get_ui) */
+		unsigned long int n = sml_intinf_get_ui(obj);
+		if (sml_intinf_sign(obj) < 0) n = -n;
+		return n;
+	}
 }
 
-long long
-prim_IntInf_toInt64(sml_intinf_t *obj)
-{
-        long long n;
-        unsigned long long tmp = 0;
-        size_t countp = sizeof(tmp);
-
-	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
-
-	/* mpz_export exports absolute value. So we take 2's complement
-	 * of the return value of n if "obj" is negative.
-	 */
-        sml_intinf_export (&tmp, &countp, -1, sizeof(tmp), 0, 0, obj);
-	if (sml_intinf_sign(obj) < 0)
-		tmp = ~tmp + 1;
-        memcpy(&n, &tmp, sizeof(n));
-	return n;
-}
-
-unsigned long long
+uint64_t
 prim_IntInf_toWord64(sml_intinf_t *obj)
 {
-	unsigned long long n = 0;
-        size_t countp = sizeof(n);
-
 	assert(OBJ_TYPE(obj) == OBJTYPE_INTINF);
 
-	/* mpz_export exports absolute value. So we take 2's complement
-	 * of the return value of n if "obj" is negative.
-	 */
-        sml_intinf_export (&n, &countp, -1, sizeof(n), 0, 0, obj);
-	if (sml_intinf_sign(obj) < 0)
-		n = ~n + 1;
-	return n;
+	if (sizeof(long int) > sizeof(uint64_t)) {
+		return (uint64_t)(unsigned long int)(sml_intinf_get_si(obj));
+	} else if (sizeof(long int) == sizeof(uint64_t)) {
+		unsigned long int n = (signed long int)sml_intinf_get_ui(obj);
+		if (sml_intinf_sign(obj) < 0) n = -n;
+		return n;
+	} else {
+		uint64_t *p, n;
+		p = mpz_export(NULL, NULL, -1, sizeof(n), 0, 0, obj->value);
+		if (p == NULL) return 0;
+		n = *p;
+		free(p);
+		if (sml_intinf_sign(obj) < 0) n = -n;
+		return n;
+	}
 }
 
 double
@@ -510,7 +489,7 @@ sml_intinf_t *
 prim_IntInf_fromInt(int x)
 {
 	sml_intinf_t *n = sml_intinf_new();
-	sml_intinf_set_si(n, x);
+	sml_intinf_set_si(n, (long int)(unsigned long int)x);
 	return n;
 }
 
@@ -523,29 +502,30 @@ prim_IntInf_fromWord(unsigned int x)
 }
 
 sml_intinf_t *
-prim_IntInf_fromInt64(long long x)
+prim_IntInf_fromInt64(int64_t x)
 {
 	sml_intinf_t *n = sml_intinf_new();
 
-	/* mpz_import imports absolute value. So we take 2's complement
-	 * of the value of x if "x" is negative.
-	 */
-        if (x < 0) {
-                x = ~x + 1;
-                sml_intinf_import(n, 1, -1, sizeof(x), 0, 0, &x);
-                sml_intinf_neg(n, n);
-        } else {
-                sml_intinf_import(n, 1, -1, sizeof(x), 0, 0, &x);
-        }
+	if (sizeof(long int) >= sizeof(int64_t)) {
+		sml_intinf_set_si(n, (long int)(uint64_t)x);
+	} else {
+		uint64_t u = x;
+		if (x < 0) u = -u;
+		mpz_import(n->value, 1, -1, sizeof(u), 0, 0, &u);
+		if (x < 0) sml_intinf_neg(n, n);
+	}
 	return n;
 }
 
 sml_intinf_t *
-prim_IntInf_fromWord64(unsigned long long x)
+prim_IntInf_fromWord64(uint64_t x)
 {
 	sml_intinf_t *n = sml_intinf_new();
 
-        sml_intinf_import(n, 1, -1, sizeof(x), 0, 0, &x);
+	if (sizeof(long int) >= sizeof(int64_t))
+		sml_intinf_set_ui(n, (long int)(uint64_t)x);
+	else
+		mpz_import(n->value, 1, -1, sizeof(x), 0, 0, &x);
 	return n;
 }
 

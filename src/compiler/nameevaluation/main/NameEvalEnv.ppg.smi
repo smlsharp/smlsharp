@@ -1,42 +1,48 @@
-_require "../../../basis.smi"
+_require local "../../../basis.smi"
+_require local "../../../smlnj-lib/Util/binary-set-fn.smi"
+_require local "../../../compiler-utils/env/main/SEnv.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
+
+_require local "../../usererror/main/UserErrorUtils.smi"
+_require local "./NameEvalError.ppg.smi"
+_require local "./NameEvalEnv.sig"
+
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
 _require "../../util/main/TermFormat.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
-_require "../../name/main/LocalID.smi"
 _require "../../types/main/IDCalc.ppg.smi"
-_require "../../usererror/main/UserErrorUtils.smi"
-(*
-_require "../../builtin2/main/BuiltinTypes.smi"
-*)
-_require "./NameEvalError.ppg.smi"
-_require "./NameEvalEnv.sig"
 
 structure NameEvalEnv =
 struct
+  type varE = IDCalc.varE
   datatype tstr
     =  TSTR of IDCalc.tfun
     |  TSTR_DTY of {tfun:IDCalc.tfun,
-                    varE:IDCalc.varE,
+                    varE:varE,
                     formals:IDCalc.formals, conSpec:IDCalc.conSpec}
   type tyE = tstr SymbolEnv.map
   datatype strKind =
       SIGENV 
     | STRENV of StructureID.id
     | FUNAPP of {id:StructureID.id, funId:FunctorID.id, argId:StructureID.id}
+(* 2016-11-06 ohori: interfaceでのfunctor argumentをfunctor replicationに
+  使用禁止するための暫定措置
+  参照：bug 331_functorSmi-a
+  FUNARGはSTRENVと同等の振る舞い．
+  ただし，interfaceの中でのstructure replicationを禁止．
+ *)
+    | FUNARG of StructureID.id
   datatype strE
     = STR of {env:env, strKind:strKind} SymbolEnv.map
   and env
-    = ENV of {varE: IDCalc.varE, tyE: tyE, strE: strE}
+    = ENV of {varE: varE, tyE: tyE, strE: strE}
   type strEntry = {env:env, strKind:strKind}
   type funEEntry = 
        {id: FunctorID.id,
         version:int option,
-        used: bool ref,
         argSigEnv: env,
         argStrEntry: strEntry,
         argStrName: Symbol.symbol,
@@ -110,15 +116,15 @@ struct
   val reinsertStr : env * Symbol.symbol * strEntry -> env
   val singletonStr : Symbol.symbol * strEntry -> env
 
-  val varEWithVarE : IDCalc.varE * IDCalc.varE -> IDCalc.varE
-  val bindVarEWithVarE : IDCalc.varE * IDCalc.varE -> IDCalc.varE
+  val varEWithVarE : varE * varE -> varE
+  val bindVarEWithVarE : varE * varE -> varE
   val tyEWithTyE : tyE * tyE -> tyE
   val bindTyEWithTyE : tyE * tyE -> tyE
   val strEWithStrE : strE * strE -> strE
   val bindStrEWithStrE : strE * strE -> strE
 
-  val envWithVarE : env * IDCalc.varE -> env
-  val bindEnvWithVarE : env * IDCalc.varE -> env
+  val envWithVarE : env * varE -> env
+  val bindEnvWithVarE : env * varE -> env
   val envWithEnv : env * env -> env
   val bindEnvWithEnv : env * env -> env
 
@@ -148,7 +154,7 @@ struct
   val topEnvWithTopEnv : topEnv * topEnv -> topEnv
   val bindTopEnvWithTopEnv : topEnv * topEnv -> topEnv
 
-  val unionVarE : string -> IDCalc.varE * IDCalc.varE -> IDCalc.varE
+  val unionVarE : string -> varE * varE -> varE
   val unionTyE : string -> tyE * tyE -> tyE
   val unionStrE : string -> strE * strE -> strE
   val unionEnv : string -> env * env -> env
@@ -157,7 +163,7 @@ struct
   val unionTopEnv : string -> topEnv * topEnv -> topEnv
 
   val replaceLocTyE : Loc.loc -> tyE -> tyE
-  val replaceLocVarE : Loc.loc -> IDCalc.varE -> IDCalc.varE
+  val replaceLocVarE : Loc.loc -> varE -> varE
   val replaceLocStrEntry : Loc.loc -> strEntry -> strEntry
   val replaceLocStrE : Loc.loc -> strE -> strE
   val replaceLocEnv : Loc.loc -> env -> env

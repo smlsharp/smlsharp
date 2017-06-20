@@ -45,9 +45,9 @@ struct
   val cmp =
       _import "prim_IntInf_cmp"
       : __attribute__((pure,fast)) (int, int) -> int32
-  val toInt_unsafe =
-      _import "prim_IntInf_toInt"
-      : __attribute__((pure,fast)) int -> int32
+  val toWord =
+      _import "prim_IntInf_toWord"
+      : __attribute__((pure,fast)) int -> word32
   val fromInt =
       _import "prim_IntInf_fromInt"
       : __attribute__((unsafe,pure,fast,gc)) int32 -> int
@@ -88,6 +88,9 @@ struct
 
   fun toLarge n = n : int
   fun fromLarge n = n : int
+
+  fun toInt_unsafe x =
+      Word32.toInt32X (toWord x)
 
   fun toInt int =
       if int < fromInt minInt32 orelse fromInt maxInt32 < int

@@ -425,57 +425,56 @@ struct
         loc : loc
       }
     | (*%
-       * @format({codeLabel, argVarList: arg args, codeBodyExp, mainExp,
-       *          resultTy, loc})
-       * L2{ !N0{
-       *   "code" 2[ +1 codeLabel
-       *             +1 args:appList(arg)("{",",","}")
-       *             +d "=" ]
-       *   2[ +1 codeBodyExp()(btvEnv) ]
-       * } }
-       * +1 "in" 2[ +1 !N0{ mainExp()(btvEnv) } ]
-       * +1 "end"
+       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
+       *          loc})
+       * R0{ tryExp()(btvEnv)
+       *     +1 
+       *     !R0{ "_catch" +d
+       *          L8{ catchLabel
+       *              +1 1[ args:appList(arg)("{",",","}") ] }
+       *          +d "=>" 1[ +1 catchExp()(btvEnv) ] } }
        *)
-      (*% @prefix formatWithType_
-       * @format({codeLabel, argVarList: arg args, codeBodyExp, mainExp,
-       *          resultTy, loc})
-       * L2{ !N0{
-       *   "code" 2[ +1 codeLabel
-       *             +1 args:appList(arg()(btvEnv))("{",",","}")
-       *             +d "=" ]
-       *   2[ +1 codeBodyExp()(btvEnv) ]
-       * } }
-       * +1 "in" 2[ +1 !N0{ mainExp()(btvEnv) } ]
-       * +1 "end"
+      (*%
+       * @prefix formatWithType_
+       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
+       *          loc})
+       * L2{
+       *   R0{ tryExp()(btvEnv)
+       *     +1 
+       *     !R0{ "_catch" +d
+       *          L8{ catchLabel
+       *              +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] }
+       *          +d "=>" 1[ +1 catchExp()(btvEnv) ] } }
+       *   +1 ":" +d resultTy()(btvEnv) }
        *)
-      BCLOCALCODE of
+      (* lightweight exception that unwind call stack *)
+      BCCATCH of
       {
-        codeLabel : FunLocalLabel.id,
+        catchLabel : FunLocalLabel.id,
         argVarList : varInfo list,
-        codeBodyExp : bcexp,
-        mainExp : bcexp,
+        catchExp : bcexp,
+        tryExp : bcexp,
         resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({destinationLabel, argExpList: arg args, resultTy, loc})
-       * L8{ 2[
-       *   "goto"
-       *   +1 destinationLabel
-       *   +1 args:appList(arg()(btvEnv))("{",",","}")
-       * ] }
+       * @format({catchLabel, argExpList: arg args, resultTy, loc})
+       * R0{ "_throw"
+       *     1[ +1 L8{ catchLabel
+       *               +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] } ] }
        *)
       (*% @prefix formatWithType_
-       * @format({destinationLabel, argExpList: arg args, resultTy, loc})
-       * L8{ 2[
-       *   "goto"
-       *   +1 destinationLabel
-       *   +1 args:appList(arg()(btvEnv))("{",",","}")
-       * ] }
+       * @format({catchLabel, argExpList: arg args, resultTy, loc})
+       * L2{
+       *   R0{ "_throw"
+       *     1[ +1 L8{ catchLabel
+       *               +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] } ] }
+       *   +1 ":" +d resultTy()(btvEnv) }
        *)
-      BCGOTO of
+      (* lightweight exception that does not unwind call stack *)
+      BCTHROW of
       {
-        destinationLabel : FunLocalLabel.id,
+        catchLabel : FunLocalLabel.id,
         argExpList : bcexp list,
         resultTy : ty,
         loc : loc

@@ -7,6 +7,25 @@
 #ifndef SMLSHARP__SMLSHARP_H__
 #define SMLSHARP__SMLSHARP_H__
 
+/*
+ * One of the following macros may be defined by the command line:
+ * - WITHOUT_MULTITHREAD: Remove multithread support at all.
+ * - WITHOUT_CONCURRENCY: pthread support + stop-the-world collector.
+ * - WITHOUT_MASSIVETHREADS: turn off massivethreads support.
+ * The default setting is pthread support + concurrent gc + massivethreads
+ */
+#ifdef WITHOUT_MULTITHREAD
+#undef  WITHOUT_CONCURRENCY
+#define WITHOUT_CONCURRENCY
+#undef  WITHOUT_MASSIVETHREADS
+#define WITHOUT_MASSIVETHREADS
+#endif /* WITHOUT_MULTITHREAD */
+
+#ifdef WITHOUT_CONCURRENCY
+#undef  WITHOUT_MASSIVETHREADS
+#define WITHOUT_MASSIVETHREADS
+#endif /* WITHOUT_CONCURRENCY */
+
 #if !defined __STDC_VERSION__ || __STDC_VERSION__ < 199901L
 # error C99 is required
 #endif
@@ -22,10 +41,15 @@
 #include <inttypes.h>
 #ifndef WITHOUT_MULTITHREAD
 #include <pthread.h>
+#include <sched.h>
 #endif /* !WITHOUT_MULTITHREAD */
 #ifdef HAVE_STDATOMIC_H
 # include <stdatomic.h>
 #endif
+
+#ifndef WITHOUT_MASSIVETHREADS
+#include <myth/myth.h>
+#endif /* !WITHOUT_MASSIVETHREADS */
 
 #ifndef HAVE_STDATOMIC_H
 # ifdef HAVE_GCC_ATOMIC
@@ -131,60 +155,137 @@
 #define cond_signal(c) ((void)0)
 #endif /* !WITHOUT_MULTITHREAD */
 
-/*
- * support for thread local variable (tlv)
- */
-#ifndef WITHOUT_MULTITHREAD
-#define tlv_alloc__(ty, k, destructor)	       \
-	static pthread_key_t tlv_key__##k##__; \
-	static pthread_once_t tlv_key__##k##__once__ = PTHREAD_ONCE_INIT; \
-	static void tlv_destruct__##k##__(void *p__) { destructor(p__); } \
-	static void tlv_init__##k##__() { \
-		pthread_key_create(&tlv_key__##k##__, tlv_destruct__##k##__); \
+/* spin lock */
+typedef struct { _Atomic(int) lock; } sml_spinlock_t;
+#define SPIN_LOCK_INIT {ATOMIC_VAR_INIT(0)}
+static inline void spin_lock(sml_spinlock_t *l) {
+	int old, i = 8192;
+	for (;;) {
+		old = 0;
+		if (cmpswap_weak_acquire(&l->lock, &old, 1)) break;
+		if (--i == 0) { sched_yield(); i = 8192; }
 	}
-#define tlv_init__(k) \
-	pthread_once(&tlv_key__##k##__once__, tlv_init__##k##__)
-#define tlv_set__(k,v) \
-	(tlv_init__(k), pthread_setspecific(tlv_key__##k##__, v))
-#ifdef HAVE_TLS
+}
+static inline void spin_unlock(sml_spinlock_t *l) {
+	store_release(&l->lock, 0);
+}
+
+/*
+ * support for thread local variables (tlv)
+ */
+#define single_tlv_alloc(ty, k, destructor)  static ty single_tlv__##k##__
+#define single_tlv_init(k)  ((void)0)
+#define single_tlv_get(k)  (single_tlv__##k##__)
+#define single_tlv_set(k,v)  ((void)(single_tlv__##k##__ = (v)))
+
+#define pth_tlv_alloc__(ty, k, destructor) \
+	static pthread_key_t pth_tlv_key__##k##__; \
+	static pthread_once_t pth_tlv_key__##k##__once__ = PTHREAD_ONCE_INIT; \
+	static void pth_tlv_destruct__##k##__(void *p__) { destructor(p__); } \
+	static void pth_tlv_init__##k##__once__() { \
+		pthread_key_create(&pth_tlv_key__##k##__, \
+				   pth_tlv_destruct__##k##__); \
+	} \
+	static inline void pth_tlv_init__##k##__() { \
+		pthread_once(&pth_tlv_key__##k##__once__, \
+			     pth_tlv_init__##k##__once__); \
+	} \
+	static inline void pth_tlv_set__##k##__(ty const arg__) { \
+		pth_tlv_init__##k##__(); \
+		pthread_setspecific(pth_tlv_key__##k##__, arg__); \
+	}
+#define pth_tlv_alloc(ty, k, destructor) \
+	pth_tlv_alloc__(ty, k, destructor) \
+	static inline ty pth_tlv_get__##k##__() { \
+		return pthread_getspecific(pth_tlv_key__##k##__); \
+	}
+#define pth_tlv_init(k) (pth_tlv_init__##k##__())
+#define pth_tlv_get(k) (pth_tlv_get__##k##__())
+#define pth_tlv_set(k,v) (pth_tlv_set__##k##__(v))
+
 /* Even if operating system provides thread local storage (TLS), we use
  * pthread_key in order to ensure that thread local variables are correctly
  * destructed even if the thread terminates abnormally.  To ensure this,
  * tlv_set operation updates both TLS and pthread_key.  This makes tlv_set
  * slower.  This overhead should be negligible since tlv_set is typically
- * used only at thread initialization.  In contrast, tlv_get only reads TLS
- * so it is pretty fast.  In Linux, tlv_get is often compiled to just one
- * CPU instruction.
- */
-#define tlv_alloc(ty, k, destructor) \
-	tlv_alloc__(ty, k, destructor) \
-	static _Thread_local ty tlv__##k##__; \
-	static inline void tlv_set__##k##__(ty const arg__) { \
-		tlv_set__(k, arg__); \
-		tlv__##k##__ = arg__; \
+ * used only at thread initialization.  In contrast, tlv_get only reads TLS;
+ * so, it is pretty fast.  In Linux, tlv_get is often compiled to just one
+ * CPU instruction. */
+#define tls_tlv_alloc(ty, k, destructor) \
+	pth_tlv_alloc__(ty, k, destructor) \
+	static _Thread_local ty tls_tlv__##k##__; \
+	static inline void tls_tlv_set__##k##__(ty const arg__) { \
+		pth_tlv_set__##k##__(arg__); \
+		tls_tlv__##k##__ = arg__; \
 	}
-#define tlv_get(k) (tlv__##k##__)
-#else /* HAVE_TLS */
-#define tlv_alloc(ty, k, destructor) \
-	tlv_alloc__(ty, k, destructor) \
-	static inline void tlv_set__##k##__(ty const arg__) { \
-		tlv_set__(k, arg__); \
+#define tls_tlv_init(k) (pth_tlv_init__##k##__())
+#define tls_tlv_get(k) (tls_tlv__##k##__)
+#define tls_tlv_set(k,v) (tls_tlv_set__##k##__(v))
+
+/* thread local variables for massivethreads.
+ * The massivethreads library uses pthread for worker threads.
+ * Therefore, we can use pthread_key_t for worker-local variables.
+ * In addition, since user threads are non-preemptive, pthread
+ * synchronization primitives may work safely (but less efficient) even in
+ * a user thread. */
+#define mth_tlv_alloc(ty, k, destructor) \
+	static myth_key_t mth_tlv_key__##k##__; \
+	static myth_once_t mth_tlv_key__##k##__once__; \
+	static void mth_tlv_destruct__##k##__(void *p__) { destructor(p__); } \
+	static void mth_tlv_init__##k##__once__() { \
+		myth_key_create(&mth_tlv_key__##k##__, \
+				mth_tlv_destruct__##k##__); \
 	} \
-	static inline ty tlv_get__##k##__() { \
-		return pthread_getspecific(tlv_key__##k##__); \
+	static inline void mth_tlv_init__##k##__() { \
+		myth_once(&mth_tlv_key__##k##__once__, \
+			  mth_tlv_init__##k##__once__); \
+	} \
+	static inline void mth_tlv_set__##k##__(ty const arg__) { \
+		mth_tlv_init__##k##__(); \
+		myth_setspecific(mth_tlv_key__##k##__, arg__); \
+	} \
+	static inline ty mth_tlv_get__##k##__() { \
+		return myth_getspecific(mth_tlv_key__##k##__); \
 	}
-#define tlv_get(k) (tlv_get__##k##__())
-#endif /* HAVE_TLS */
-#define tlv_get_or_init(k) (tlv_init__(k), tlv_get(k))
-#define tlv_set(k,v) (tlv_set__##k##__(v))
-#else /* !WITHOUT_MULTITHREAD */
-#define tlv_alloc(ty, k, destructor)  static ty tlv__##k##__
-#define tlv_get_or_init(k)  (tlv__##k##__)
-#define tlv_get(k)  (tlv__##k##__)
-#define tlv_set(k,v)  ((void)(tlv__##k##__ = (v)))
-#endif /* !WITHOUT_MULTITHREAD */
+#define mth_tlv_init(k) (mth_tlv_init__##k##__())
+#define mth_tlv_get(k) mth_tlv_get__##k##__()
+#define mth_tlv_set(k,v) (mth_tlv_set__##k##__(v))
+
+#if defined WITHOUT_MULTITHREAD
+#define worker_tlv_alloc single_tlv_alloc
+#define worker_tlv_init single_tlv_init
+#define worker_tlv_get single_tlv_get
+#define worker_tlv_set single_tlv_set
+#elif defined HAVE_TLS
+#define worker_tlv_alloc tls_tlv_alloc
+#define worker_tlv_init tls_tlv_init
+#define worker_tlv_get tls_tlv_get
+#define worker_tlv_set tls_tlv_set
+#else /* !WITHOUT_MULTITHREAD && !HAVE_TLS */
+#define worker_tlv_alloc pth_tlv_alloc
+#define worker_tlv_init pth_tlv_init
+#define worker_tlv_get pth_tlv_get
+#define worker_tlv_set pth_tlv_set
+#endif /* !WITHOUT_MULTITHREAD && !HAVE_TLS */
+
+#ifndef WITHOUT_MASSIVETHREADS
+#define user_tlv_alloc mth_tlv_alloc
+#define user_tlv_init mth_tlv_init
+#define user_tlv_get mth_tlv_get
+#define user_tlv_set mth_tlv_set
+#else /* WITHOUT_MASSIVETHREADS */
+#define user_tlv_alloc worker_tlv_alloc
+#define user_tlv_init worker_tlv_init
+#define user_tlv_get worker_tlv_get
+#define user_tlv_set worker_tlv_set
+#endif /* WITHOUT_MASSIVETHREADS */
+
+#define worker_tlv_get_or_init(k) (worker_tlv_init(k), worker_tlv_get(k))
+#define user_tlv_get_or_init(k) (user_tlv_init(k), user_tlv_get(k))
+
 
 /* helpful attributes */
+
 #ifdef __GNUC__
 # define NOINLINE __attribute__((noinline))
 # define ATTR_MALLOC __attribute__((malloc))
@@ -310,13 +411,14 @@ void sml_run(void);
 /* enumerate pointers in mutable top-level objects */
 void sml_enum_global(void (*trace)(void **, void *), void *);
 
-/* run SML# top-level codes.
- * topfuncs points to an array of function pointers terminated by NULL. */
-void sml_run_toplevels(void (**topfuncs)(void));
+/* remove all thread-local data for SML# */
+void sml_deatch(void);
 
 /*
  * thread management
  */
+void sml_control_init(void);
+
 /* create an SML# execution context for current thread.
  * This is called when program or a callback starts.
  * Its argument is 3-pointer-size work area for SML# runtime. */
@@ -348,8 +450,8 @@ _Atomic(unsigned int) sml_check_flag;
 /* the main routine of garbage collection */
 void sml_gc(void);
 
-struct sml_control;
-void sml_stack_enum_ptr(struct sml_control *, void (*)(void **, void *),
+struct sml_mutator;
+void sml_stack_enum_ptr(struct sml_mutator *, void (*)(void **, void *),
 			void *);
 
 enum sml_sync_phase {
@@ -362,6 +464,11 @@ enum sml_sync_phase {
 	SYNC2 = 5,
 	MARK = 7
 };
+
+#if !defined WITHOUT_MULTITHREAD && defined WITHOUT_CONCURRENCY
+int sml_stop_the_world(void);
+void sml_run_the_world(void);
+#endif /* !defined WITHOUT_MULTITHREAD && defined WITHOUT_CONCURRENCY */
 
 void *sml_leave_internal(void *frame_pointer);
 void sml_enter_internal(void *old_top);

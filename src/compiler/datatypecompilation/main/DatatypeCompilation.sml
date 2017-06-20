@@ -141,48 +141,11 @@ struct
       in
         case argExpOpt of
           NONE => E.Cast (E.Tuple [tagExp], retTy)
-        | SOME argExp =>
-          let
-            val (binds, exps) =
-                case TypesBasics.derefTy (dataconArgTy conInfo) of
-                  T.RECORDty _ => explodeRecordExp argExp
-                | _ => (nil, [argExp])
-          in
-            E.Let (binds, E.Cast (E.Tuple (tagExp :: exps), retTy))
-          end
+        | SOME argExp => E.Cast (E.Tuple [tagExp, argExp], retTy)
       end
 
   fun extractTaggedConArg (conInfo:RecordCalc.conInfo, dataExp) argTy =
-      let
-        val (labels, fieldTys) =
-            case TypesBasics.derefTy (dataconArgTy conInfo) of
-              T.RECORDty _ => explodeRecordTy argTy
-            | _ => (nil, [argTy])
-        val dataExp = E.Cast (dataExp, E.tupleTy (BT.contagTy :: fieldTys))
-        val (binds, exps) = explodeRecordExp dataExp
-      in
-        case (labels, exps) of
-          (nil, [_, exp]) => E.Let (binds, exp)
-        | (nil, _) => raise Bug.Bug "extractTaggedConArg"
-        | (_::_, _::t) => E.Let (binds, E.Record (labels, t))
-        | (_::_, nil) => raise Bug.Bug "extractTaggedConArg"
-      end
-
-  fun composeArgOnlyCon (conInfo, argExp, retTy) =
-      if DatatypeLayout.needPack (dataconArgTy conInfo)
-      then E.Cast (E.Tuple [argExp], retTy)
-      else E.Cast (argExp, retTy)
-
-  fun extractArgOnlyConArg (conInfo, dataExp) argTy =
-      if DatatypeLayout.needPack (dataconArgTy conInfo)
-      then E.SelectN (1, E.Cast (dataExp, E.tupleTy [argTy]))
-      else E.Cast (dataExp, argTy)
-
-  fun composeArgOrNullCon (conInfo, argExp, retTy) =
-      E.Cast (E.Tuple [argExp], retTy)
-
-  fun extractArgOrNullConArg (conInfo, dataExp) argTy =
-      E.SelectN (1, E.Cast (dataExp, E.tupleTy [argTy]))
+      E.SelectN (2, E.Cast (dataExp, E.tupleTy [BT.contagTy, argTy]))
 
   fun composeCon (conInfo:RC.conInfo, instTyList, argExpOpt) =
       let
@@ -211,33 +174,39 @@ struct
               NONE => E.Cast (E.Null, retTy)
             | SOME _ => composeTaggedCon (layout, conInfo, argExpOpt, retTy)
           )
-        | LAYOUT_BOOL {falseName} =>
+        | LAYOUT_CHOICE {falseName} =>
           (
             case argExpOpt of
-              SOME _ => raise Bug.Bug "composeCon: LAYOUT_BOOL"
+              SOME _ => raise Bug.Bug "composeCon: LAYOUT_CHOICE"
             | NONE =>
               E.Cast (if Symbol.eqSymbol (Symbol.lastSymbol (#path conInfo),
                                           falseName)
                       then E.ConTag 0 else E.ConTag 1,
                       retTy)
           )
-        | LAYOUT_UNIT =>
+        | LAYOUT_SINGLE =>
           (
             case argExpOpt of
-              SOME _ => raise Bug.Bug "composeCon: LAYOUT_UNIT"
+              SOME _ => raise Bug.Bug "composeCon: LAYOUT_SINGLE"
             | NONE => E.Cast (E.ConTag 0, retTy)
           )
-        | LAYOUT_ARGONLY =>
+        | LAYOUT_SINGLE_ARG {wrap} =>
           (
             case argExpOpt of
-              SOME exp => composeArgOnlyCon (conInfo, exp, retTy)
-            | _ => raise Bug.Bug "composeCon: LAYOUT_ARGONLY"
+              NONE => raise Bug.Bug "composeCon: LAYOUT_SINGLE_ARG"
+            | SOME exp =>
+              if wrap
+              then E.Cast (E.Tuple [exp], retTy)
+              else E.Cast (exp, retTy)
           )
-        | LAYOUT_ARG_OR_NULL =>
+        | LAYOUT_ARG_OR_NULL {wrap} =>
           (
             case argExpOpt of
               NONE => E.Cast (E.Null, retTy)
-            | SOME exp => composeArgOrNullCon (conInfo, exp, retTy)
+            | SOME exp =>
+              if wrap
+              then E.Cast (E.Tuple [exp], retTy)
+              else E.Cast (exp, retTy)
           )
         | LAYOUT_REF =>
           (
@@ -257,6 +226,7 @@ struct
       let
         val tyCon = extractTyCon dataTy
         val layout = DatatypeLayout.datatypeLayout tyCon
+        val dataExp = E.Exp (dataExp, dataTy)
       in
         case layout of
           LAYOUT_TAGGED layout =>
@@ -264,7 +234,7 @@ struct
             val dataVid = EmitTypedLambda.newId ()
             val dataVarExp = E.Var dataVid
           in
-            E.Let ([(dataVid, E.Exp (dataExp, dataTy))],
+            E.Let ([(dataVid, dataExp)],
                    E.Switch
                      (extractConTag (layout, dataVarExp),
                       map
@@ -276,7 +246,7 @@ struct
                         ruleList,
                       E.Exp (defaultExp, resultTy)))
           end
-        | LAYOUT_BOOL {falseName} =>
+        | LAYOUT_CHOICE {falseName} =>
           let
             val (conInfo, ifTrueExp, ifFalseExp) =
                 case ruleList of
@@ -288,28 +258,31 @@ struct
                   if Symbol.eqSymbol (Symbol.lastSymbol (#path con1), falseName)
                   then (con1, defaultExp, exp1)
                   else (con1, exp1, defaultExp)
-                | _ => raise Bug.Bug "switchCon: LAYOUT_BOOL"
+                | _ => raise Bug.Bug "switchCon: LAYOUT_CHOICE"
           in
-            E.If (E.Exp (dataExp, dataTy),
+            E.If (dataExp,
                   E.Exp (ifTrueExp, resultTy),
                   E.Exp (ifFalseExp, resultTy))
           end
-        | LAYOUT_UNIT =>
+        | LAYOUT_SINGLE =>
           (
             case ruleList of
               [(_, _, branchExp)] => E.Exp (branchExp, resultTy)
-            | _ => raise Bug.Bug "compileExp: RCCASE: LAYOUT_UNIT"
+            | _ => raise Bug.Bug "switchCon: LAYOUT_SINGLE"
           )
-        | LAYOUT_ARGONLY =>
+        | LAYOUT_SINGLE_ARG {wrap} =>
           (
             case ruleList of
-              [(conInfo, argVar as SOME _, branchExp)] =>
+              [(_, argVar as SOME _, branchExp)] =>
               makeBranch
-                (extractArgOnlyConArg (conInfo, E.Exp (dataExp, dataTy)))
+                (fn argTy =>
+                    if wrap 
+                    then E.SelectN (1, E.Cast (dataExp, E.tupleTy [argTy]))
+                    else E.Cast (dataExp, argTy))
                 (argVar, branchExp, resultTy)
-            | _ => raise Bug.Bug "compileExp: RCCASE: LAYOUT_ARGONLY"
+            | _ => raise Bug.Bug "switchCon: LAYOUT_SINGLE_ARG"
           )
-        | LAYOUT_ARG_OR_NULL =>
+        | LAYOUT_ARG_OR_NULL {wrap} =>
           let
             val (conInfo, argVar, ifDataExp, ifNullExp) =
                 case ruleList of
@@ -324,12 +297,17 @@ struct
                 | _ => raise Bug.Bug "switchArgOrNull"
             val dataVid = EmitTypedLambda.newId ()
           in
-            E.Let ([(dataVid, E.Exp (dataExp, dataTy))],
-                   E.If (E.IsNull (E.Cast (E.Var dataVid, BT.boxedTy)),
-                         E.Exp (ifNullExp, resultTy),
-                         makeBranch
-                           (extractArgOrNullConArg (conInfo, E.Var dataVid))
-                           (argVar, ifDataExp, resultTy)))
+            E.Let
+              ([(dataVid, dataExp)],
+               E.If
+                 (E.IsNull (E.Cast (E.Var dataVid, BT.boxedTy)),
+                  E.Exp (ifNullExp, resultTy),
+                  makeBranch
+                    (fn argTy =>
+                        if wrap
+                        then E.SelectN (1, E.Cast (dataExp, E.tupleTy [argTy]))
+                        else E.Cast (dataExp, argTy))
+                    (argVar, ifDataExp, resultTy)))
           end
         | LAYOUT_REF =>
           (
@@ -337,7 +315,7 @@ struct
               [(_, SOME argVar, branchExp)] =>
               E.TLLet
                 ([E.Bind (argVar,
-                          E.Ref_deref (#ty argVar, E.Exp (dataExp, dataTy)))],
+                          E.Ref_deref (#ty argVar, dataExp))],
                  E.Exp (branchExp, resultTy))
             | _ => raise Bug.Bug "compileExp: RCCASE: LAYOUT_ARGONLY"
           )
@@ -443,14 +421,21 @@ struct
                         TL.TLCONSTANT {const = c,
                                        ty = ConstantTerm.typeOf c,
                                        loc = loc},
-         recordTerm = fn (fields, recordTy) =>
-                         TL.TLRECORD {isMutable = false,
-                                      fields = fields,
-                                      recordTy = recordTy,
-                                      loc = loc},
+         tupleTerm =
+           fn fields =>
+              TL.TLRECORD
+                {isMutable = false,
+                 fields = RecordLabel.tupleMap (map #1 fields),
+                 recordTy = T.RECORDty (RecordLabel.tupleMap (map #2 fields)),
+                 loc = loc},
          conTerm =
            fn {con, instTyList, arg} =>
-              EmitTypedLambda.emit loc (composeCon (con, instTyList, arg))}
+              EmitTypedLambda.emit loc (composeCon (con, instTyList, arg)),
+         fnTerm =
+           fn (ty1,(exp,ty2)) => TL.TLFNM {argVarList = [newVar ty1],
+                                           bodyTy = ty2,
+                                           bodyExp = exp,
+                                           loc = loc}}
         (const, ty)
       handle e as ConstantTerm.TooLargeConstant =>
              (UserError.enqueueError errors (loc, e);
@@ -474,6 +459,8 @@ struct
            loc = loc}
       | RC.RCSIZEOF (ty, loc) =>
         TL.TLSIZEOF {ty=ty, loc=loc}
+      | RC.RCTYPEOF (ty, loc) => raise Bug.Bug "RCTYPEOF in DatatypeCompilation"
+      | RC.RCREIFYTY (ty, loc) => raise Bug.Bug "RCREIFYTY in DatatypeCompilation"
       | RC.RCTAGOF (ty, loc) =>
         TL.TLTAGOF {ty=ty, loc=loc}
       | RC.RCINDEXOF (label, recordTy, loc) =>
@@ -729,6 +716,14 @@ struct
         raise Bug.Bug "compileExp: RCOPRIMAPPLY"
       | RC.RCFFI exp =>
         raise Bug.Bug "RCFFI"
+      | RC.RCJOIN _ =>
+        raise Bug.Bug "compileExp: RCJOIN"
+      | RC.RCJSON _ =>
+        raise Bug.Bug "compileExp: RCJSON"
+      | RC.RCFOREACH _ =>
+        raise Bug.Bug "compileExp: RCFOREACH"
+      | RC.RCFOREACHDATA _ =>
+        raise Bug.Bug "compileExp: RCFOREACH"
 
   and compileDecl env rcdecl =
       case rcdecl of
@@ -815,7 +810,7 @@ struct
           (env,
            [TL.TLEXPORTVAR
               {weak = true,
-               exVarInfo = exExnInfo,
+               exVarInfo = {path = path, ty = BT.exntagTy},
                exp = EmitTypedLambda.emit Loc.noloc tagExp,
                loc = Loc.noloc}])
         end

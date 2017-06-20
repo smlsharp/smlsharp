@@ -15,10 +15,9 @@ struct
   (***************************************************************************)
 
   structure FE = FormatExpression
-
   type expression = FE.expression
-
-  type 'a formatter = 'a -> expression list
+  type format = expression list
+  type 'a formatter = 'a -> format
 
   (***************************************************************************)
 
@@ -29,7 +28,7 @@ struct
       in [FE.Term (size text, text)] end
 
   fun format_word word =
-      let val text = "0x" ^ Word.toString word
+      let val text = "0wx" ^ Word.toString word
       in [FE.Term (size text, text)] end
 
   fun format_real real =

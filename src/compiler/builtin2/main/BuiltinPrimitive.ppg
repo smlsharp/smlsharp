@@ -38,145 +38,211 @@ struct
   (*
    * Note on conversion between integers and floats.
    *
-   * The following family of conversion primitives directly corresponds to
-   * machine instructions:
-   *   - Word8_toWord32X      : word8 -> word32    (sign-extend)
-   *   - Word8_toWord32       : word8 -> word32    (zero-extend)
-   *   - Word32_toWord8       : word32 -> word8    (truncate)
-   *   - Int32_toReal         : int32 -> real64
-   *   - Word32_toReal        : word32 -> real64
-   *   - Real_toInt32_unsafe  : real64 -> int32    (round towards zero)
-   *   - Real_toWord32_unsafe : real64 -> word32   (round towards zero)
-   * The result of Real_toInt32_unsafe and Real_toWord32_unsafe is undefined
-   * if the given value does not fit in the target type.
-   * Conversion between "int" and "word" of same size (such as Word.toIntX and
-   * Word.fromInt) can be carried out just by type cast.
-   * The source type of primitives for conversion between integers must be
-   * "word" type; conversion from "int" type are realized as a composition
-   * of type cast and conversion from "word".
+   * Each primitive of the following families corresponds to an LLVM
+   * instruction:
+   *   - Word<M>_toWord<N>X       : word<M> -> word<N>  (M < N; sign-extend)
+   *   - Word<M>_toWord<N>        : word<M> -> word<N>  (M < N; zero-extend)
+   *   - Word<M>_toWord<N>        : word<M> -> word<N>  (M > N; truncate)
+   *   - Int<M>_toReal<N>         : int<M> -> real<N>   (round against zero)
+   *   - Word<M>_toReal<N>        : word<M> -> real<N>  (round towards +Inf)
+   *   - Real<M>_toInt<N>_unsafe  : real<M> -> int<N>   (round towards zero)
+   *   - Real<M>_toWord<N>_unsafe : real<M> -> word<N>  (round towards zero)
    *
-   * According to the Basis Library specification, Word.toInt may fail
-   * and raise Overflow exception if the given value is larger than the
-   * maximum (positive) value of "int" type.  To follow this requirement
-   * effectively, we provide Word32_toInt primitive that is inline-expanded
-   * to codes that casts the given value to "int" value only if the given
-   * value is in the range.
+   * A *_unsafe primitive may fail (returns an undef in LLVM) if the given
+   * value does not fit in the value range of the target type.
+   * For example, Real64_toWord32_unsafe x may fail if x >= 2^32, x < 0, or
+   * x is NaN.
    *
-   * In contrast to conversion between integers, SML# compiler does not
-   * provide any primitive with range check for conversion of floating-point
-   * numbers.  If the range check is needed, it must be carried out in the
-   * implementation of the Basis Library.
+   * We do not provide word-to-int or int-to-word conversion primitives
+   * for same size since they are same as type cast between int and word.
    *
-   * Note that conversion from "int" to "real32" may fail since real32 has
-   * only 23-bit mantissa, whereas that from "int" to "real64" never fail.
-   * The name of "Int32_toFloat_unsafe" indicates this fact in its "_unsafe"
-   * suffix.
+   * We neither provide size conversion primitives for int types since
+   * each of them is equivalent to a composition of type casts and the above
+   * primitives.
+   *
+   * For efficiency, we provide
+   * - Word<N>_toInt32X (N <> 32), which is inline-expanded to a composition
+   *   of type cast and size conversion, and
+   * - {Word|Int}<N>_toInt32 and {Word|Int}<N>_fromInt32, each of which is
+   *   inline-expanded to code that checks whether or not the given value
+   *   fits in int32 before size conversion.
+   *
+   * We do not provide conversion primitives with range check for floating-
+   * point numbers.  Range check must be in the Basis Library implementation.
    *)
 
   (*
    * Note on shift operators
    *
-   * While the type of shift count is "word" in the Basis Library regardless
-   * of operand word size (for example, the type of Word8.<< is
-   * word8 * word -> word8), in machine instruction, both operands of shift
-   * operation are usually same.  In addition, if a shift count larger than
-   * the number of bits is given, the result of the shift operation is
-   * usually undefined.
-   *
-   * Therefore, the type of Word8_lshift_unsafe is word8 * word8 -> word8,
-   * not word8 * word -> word8.  Word8_lshift is the safe version of shift
-   * operation, which is inline-expanded to Word8_lshift_unsafe with range
-   * check of shift count.
+   * The semantics of LLVM shift instruction is different from the Basis
+   * Library manual in the following sence:
+   * 1. Both operands of a shift instruction must be same (ex. shl takes
+   *    two i8 value) whereas the type of shift count is always "word" in
+   *    the Basis Library regardless of word size (ex. Word8.<< : word8 *
+   *    word -> word8).
+   * 2. If a shift count is larger than the number of word bits, the result
+   *    of a shift instruction is undefined.
+   * Therefore,
+   * 1. Word<N>_<shift>_unsafe, which corresponds to a LLVM instruction, has
+   *    type word<N> * word<N> -> word<N>, not word<N> * word -> word<N>.
+   * 2. Word<N>_<shift> is provided for efficient implementation of Basis
+   *    Library functions.  It is inline-expanded to Word<N>_<shift>_unsafe
+   *    with range check of shift count.
    *)
 
   (* primitives compiled at code generation *)
   (*% *)
   datatype primitiveMachineCode =
       Array_turnIntoVector  (* 'a array -> 'a vector *)
-    | Float_abs             (* Real32.real -> Real32.real *)
-    | Float_add             (* Real32.real * Real32.real -> Real32.real *)
-    | Float_div             (* Real32.real * Real32.real -> Real32.real *)
-    | Float_equal           (* Real32.real * Real32.real -> bool *)
-    | Float_unorderedOrEqual(* Real32.real * Real32.real -> bool *)
-    | Float_gt              (* Real32.real * Real32.real -> bool *)
-    | Float_gteq            (* Real32.real * Real32.real -> bool *)
-    | Float_isNan           (* Real32.real -> bool *)
-    | Float_lt              (* Real32.real * Real32.real -> bool *)
-    | Float_lteq            (* Real32.real * Real32.real -> bool *)
-    | Float_mul             (* Real32.real * Real32.real -> Real32.real *)
-    | Float_rem             (* Real32.real * Real32.real -> Real32.real *)
-    | Float_sub             (* Real32.real * Real32.real -> Real32.real *)
-    | Float_toInt32_unsafe  (* Real32.real -> int *)
-    | Float_toInt64_unsafe  (* Real32.real -> Int64.int *)
-    | Float_toWord32_unsafe (* Real32.real -> word *)
-    | Float_toWord64_unsafe (* Real32.real -> Word64.word *)
-    | Float_toReal          (* Real32.real -> real *)
     | (* true if two arguements (of any types) are identical *)
       IdentityEqual         (* overloaded; X * X -> bool for any X *)
+    | Int8_add_overflowCheck(* int8 * int8 -> bool *)
+    | Int8_add_unsafe       (* int8 * int8 -> int8 ; poison if overflow *)
+    | Int8_gt               (* int8 * int8 -> bool *)
+    | Int8_gteq             (* int8 * int8 -> bool *)
+    | Int8_lt               (* int8 * int8 -> bool *)
+    | Int8_lteq             (* int8 * int8 -> bool *)
+    | Int8_mul_overflowCheck(* int8 * int8 -> bool *)
+    | Int8_mul_unsafe       (* int8 * int8 -> int8 ; poison if overflow *)
+    | Int8_quot_unsafe      (* int8 * int8 -> int8 *)
+    | Int8_rem_unsafe       (* int8 * int8 -> int8 *)
+    | Int8_sub_overflowCheck(* int8 * int8 -> bool *)
+    | Int8_sub_unsafe       (* int8 * int8 -> int8 ; poison if overflow *)
+    | Int8_toReal32         (* int8 -> real32 *)
+    | Int8_toReal64         (* int8 -> real *)
+    | Int16_add_overflowCheck(* int16 * int16 -> bool *)
+    | Int16_add_unsafe      (* int16 * int16 -> int16 ; poison if overflow *)
+    | Int16_gt              (* int16 * int16 -> bool *)
+    | Int16_gteq            (* int16 * int16 -> bool *)
+    | Int16_lt              (* int16 * int16 -> bool *)
+    | Int16_lteq            (* int16 * int16 -> bool *)
+    | Int16_mul_overflowCheck(* int16 * int16 -> bool *)
+    | Int16_mul_unsafe      (* int16 * int16 -> int16 ; poison if overflow *)
+    | Int16_quot_unsafe     (* int16 * int16 -> int16 *)
+    | Int16_rem_unsafe      (* int16 * int16 -> int16 *)
+    | Int16_sub_overflowCheck(* int16 * int16 -> int16 ; poison if overflow *)
+    | Int16_sub_unsafe      (* int16 * int16 -> int16 ; poison if overflow *)
+    | Int16_toReal32        (* int16 -> real32 *)
+    | Int16_toReal64        (* int16 -> real *)
+    | Int32_add_overflowCheck(* int * int -> bool *)
     | Int32_add_unsafe      (* int * int -> int ; poison if overflow *)
     | Int32_gt              (* int * int -> bool *)
     | Int32_gteq            (* int * int -> bool *)
     | Int32_lt              (* int * int -> bool *)
     | Int32_lteq            (* int * int -> bool *)
+    | Int32_mul_overflowCheck(* int * int -> bool *)
     | Int32_mul_unsafe      (* int * int -> int ; poison if overflow *)
     | Int32_quot_unsafe     (* int * int -> int *)
     | Int32_rem_unsafe      (* int * int -> int *)
+    | Int32_sub_overflowCheck(* int * int -> bool *)
     | Int32_sub_unsafe      (* int * int -> int ; poison if overflow *)
-    | Int32_toReal          (* int -> real *)
-    | Int32_toFloat_unsafe  (* int -> Real32.real *)
+    | Int32_toReal32        (* int -> real32 *)
+    | Int32_toReal64        (* int -> real *)
+    | Int64_add_overflowCheck(* int64 * int64 -> bool *)
     | Int64_add_unsafe      (* int64 * int64 -> int64 ; poison if overflow *)
     | Int64_gt              (* int64 * int64 -> bool *)
     | Int64_gteq            (* int64 * int64 -> bool *)
     | Int64_lt              (* int64 * int64 -> bool *)
     | Int64_lteq            (* int64 * int64 -> bool *)
+    | Int64_mul_overflowCheck(* int64 * int64 -> bool *)
     | Int64_mul_unsafe      (* int64 * int64 -> int64 ; poison if overflow *)
     | Int64_quot_unsafe     (* int64 * int64 -> int64 *)
     | Int64_rem_unsafe      (* int64 * int64 -> int64 *)
+    | Int64_sub_overflowCheck(* int64 * int64 -> bool *)
     | Int64_sub_unsafe      (* int64 * int64 -> int64 ; poison if overflow *)
-    | Int64_toReal_unsafe   (* int64 -> real *)
-    | Int64_toFloat_unsafe  (* int64 -> Real32.real *)
+    | Int64_toReal32        (* int64 -> real32 *)
+    | Int64_toReal64        (* int64 -> real *)
     | ObjectSize            (* overloaded; X -> word (X is a boxed type) *)
     | Ptr_advance           (* 'a ptr * int -> 'a ptr *)
+    | Ptr_fromWord64        (* word64 -> 'a ptr *)
     | Ptr_toWord64          (* 'a ptr -> word64 *)
-    | Real_abs              (* real-> real *)
-    | Real_add              (* real * real -> real *)
-    | Real_div              (* real * real -> real *)
-    | Real_equal            (* real * real -> bool *)  (* Real.== *)
-    | Real_unorderedOrEqual (* real * real -> bool *)  (* Real.?= *)
-    | Real_gt               (* real * real -> bool *)
-    | Real_gteq             (* real * real -> bool *)
-    | Real_isNan            (* Real32.real -> bool *)
-    | Real_lt               (* real * real -> bool *)
-    | Real_lteq             (* real * real -> bool *)
-    | Real_mul              (* real * real -> real *)
-    | Real_rem              (* real * real -> real *)
-    | Real_sub              (* real * real -> real *)
-    | Real_toInt32_unsafe   (* real -> int *)
-    | Real_toInt64_unsafe   (* real -> int64 *)
-    | Real_toWord32_unsafe  (* real -> word *)
-    | Real_toWord64_unsafe  (* real -> word64 *)
-    | Real_toFloat_unsafe   (* real -> Real32.real *)
+    | Real32_abs            (* real32 -> real32 *)
+    | Real32_add            (* real32 * real32 -> real32 *)
+    | Real32_div            (* real32 * real32 -> real32 *)
+    | Real32_equal          (* real32 * real32 -> bool *)
+    | Real32_unorderedOrEqual(* real32 * real32 -> bool *)
+    | Real32_gt             (* real32 * real32 -> bool *)
+    | Real32_gteq           (* real32 * real32 -> bool *)
+    | Real32_isNan          (* real32 -> bool *)
+    | Real32_lt             (* real32 * real32 -> bool *)
+    | Real32_lteq           (* real32 * real32 -> bool *)
+    | Real32_mul            (* real32 * real32 -> real32 *)
+    | Real32_rem            (* real32 * real32 -> real32 *)
+    | Real32_sub            (* real32 * real32 -> real32 *)
+    | Real32_toInt8_unsafe  (* real32 -> int8 *)
+    | Real32_toInt16_unsafe (* real32 -> int16 *)
+    | Real32_toInt32_unsafe (* real32 -> int *)
+    | Real32_toInt64_unsafe (* real32 -> int64 *)
+    | Real32_toWord8_unsafe (* real32 -> word8 *)
+    | Real32_toWord16_unsafe(* real32 -> word *)
+    | Real32_toWord32_unsafe(* real32 -> word32 *)
+    | Real32_toWord64_unsafe(* real32 -> word64 *)
+    | Real32_toReal64       (* real32 -> real *)
+    | Real64_abs            (* real -> real *)
+    | Real64_add            (* real * real -> real *)
+    | Real64_div            (* real * real -> real *)
+    | Real64_equal          (* real * real -> bool *)  (* Real.== *)
+    | Real64_unorderedOrEqual(* real * real -> bool *)  (* Real.?= *)
+    | Real64_gt             (* real * real -> bool *)
+    | Real64_gteq           (* real * real -> bool *)
+    | Real64_isNan          (* real -> bool *)
+    | Real64_lt             (* real * real -> bool *)
+    | Real64_lteq           (* real * real -> bool *)
+    | Real64_mul            (* real * real -> real *)
+    | Real64_rem            (* real * real -> real *)
+    | Real64_sub            (* real * real -> real *)
+    | Real64_toInt8_unsafe  (* real -> int8 *)
+    | Real64_toInt16_unsafe (* real -> int16 *)
+    | Real64_toInt32_unsafe (* real -> int *)
+    | Real64_toInt64_unsafe (* real -> int64 *)
+    | Real64_toWord8_unsafe (* real -> word8 *)
+    | Real64_toWord16_unsafe(* real -> word16 *)
+    | Real64_toWord32_unsafe(* real -> word *)
+    | Real64_toWord64_unsafe(* real -> word64 *)
+    | Real64_toReal32_unsafe(* real -> real32 *)
     | (* recursive memory comparison on heap data structures *)
       RuntimePolyEqual      (* 'a * 'a -> bool *)
-    | Word8_add             (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_andb            (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_arshift_unsafe  (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_div_unsafe      (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_gt              (* Word8.word * Word8.word -> bool *)
-    | Word8_gteq            (* Word8.word * Word8.word -> bool *)
-    | Word8_lshift_unsafe   (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_lt              (* Word8.word * Word8.word -> bool *)
-    | Word8_lteq            (* Word8.word * Word8.word -> bool *)
-    | Word8_mod_unsafe      (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_mul             (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_orb             (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_rshift_unsafe   (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_sub             (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_toWord32        (* Word8.word -> word *)
-    | Word8_toWord32X       (* Word8.word -> word *)
-    | Word8_toWord64        (* Word8.word -> word64 *)
-    | Word8_toWord64X       (* Word8.word -> word64 *)
-    | Word8_xorb            (* Word8.word * Word8.word -> Word8.word *)
+    | Word8_add             (* word8 * word8 -> word8 *)
+    | Word8_andb            (* word8 * word8 -> word8 *)
+    | Word8_arshift_unsafe  (* word8 * word8 -> word8 *)
+    | Word8_div_unsafe      (* word8 * word8 -> word8 *)
+    | Word8_gt              (* word8 * word8 -> bool *)
+    | Word8_gteq            (* word8 * word8 -> bool *)
+    | Word8_lshift_unsafe   (* word8 * word8 -> word8 *)
+    | Word8_lt              (* word8 * word8 -> bool *)
+    | Word8_lteq            (* word8 * word8 -> bool *)
+    | Word8_mod_unsafe      (* word8 * word8 -> word8 *)
+    | Word8_mul             (* word8 * word8 -> word8 *)
+    | Word8_orb             (* word8 * word8 -> word8 *)
+    | Word8_rshift_unsafe   (* word8 * word8 -> word8 *)
+    | Word8_sub             (* word8 * word8 -> word8 *)
+    | Word8_toWord16        (* word8 -> word16 *)
+    | Word8_toWord16X       (* word8 -> word16 *)
+    | Word8_toWord32        (* word8 -> word *)
+    | Word8_toWord32X       (* word8 -> word *)
+    | Word8_toWord64        (* word8 -> word64 *)
+    | Word8_toWord64X       (* word8 -> word64 *)
+    | Word8_xorb            (* word8 * word8 -> word8 *)
+    | Word16_add            (* word16 * word16 -> word16 *)
+    | Word16_andb           (* word16 * word16 -> word16 *)
+    | Word16_arshift_unsafe (* word16 * word16 -> word16 *)
+    | Word16_div_unsafe     (* word16 * word16 -> word16 *)
+    | Word16_gt             (* word16 * word16 -> bool *)
+    | Word16_gteq           (* word16 * word16 -> bool *)
+    | Word16_lshift_unsafe  (* word16 * word16 -> word16 *)
+    | Word16_lt             (* word16 * word16 -> bool *)
+    | Word16_lteq           (* word16 * word16 -> bool *)
+    | Word16_mod_unsafe     (* word16 * word16 -> word16 *)
+    | Word16_mul            (* word16 * word16 -> word16 *)
+    | Word16_orb            (* word16 * word16 -> word16 *)
+    | Word16_rshift_unsafe  (* word16 * word16 -> word16 *)
+    | Word16_sub            (* word16 * word16 -> word16 *)
+    | Word16_toWord8        (* word16 -> word8 *)
+    | Word16_toWord32       (* word16 -> word *)
+    | Word16_toWord32X      (* word16 -> word *)
+    | Word16_toWord64       (* word16 -> word64 *)
+    | Word16_toWord64X      (* word16 -> word64 *)
+    | Word16_xorb           (* word16 * word16 -> word16 *)
     | Word32_add            (* word * word -> word *)
     | Word32_andb           (* word * word -> word *)
     | Word32_arshift_unsafe (* word * word -> word *)
@@ -191,7 +257,8 @@ struct
     | Word32_orb            (* word * word -> word *)
     | Word32_rshift_unsafe  (* word * word -> word *)
     | Word32_sub            (* word * word -> word *)
-    | Word32_toWord8        (* word -> Word8.word *)
+    | Word32_toWord8        (* word -> word8 *)
+    | Word32_toWord16       (* word -> word16 *)
     | Word32_toWord64       (* word -> word64 *)
     | Word32_toWord64X      (* word -> int64 *)
     | Word32_xorb           (* word * word -> word *)
@@ -209,7 +276,8 @@ struct
     | Word64_orb            (* word64 * word64 -> word64 *)
     | Word64_rshift_unsafe  (* word64 * word64 -> word64 *)
     | Word64_sub            (* word64 * word64 -> word64 *)
-    | Word64_toWord8        (* Word8.word -> word64 *)
+    | Word64_toWord8        (* word64 -> word8 *)
+    | Word64_toWord16       (* word64 -> word16 *)
     | Word64_toWord32       (* word64 -> word *)
     | Word64_xorb           (* word64 * word64 -> word64 *)
 
@@ -218,8 +286,11 @@ struct
   datatype primitiveRuntimeCalc =
       Array_alloc_unsafe    (* int -> 'a array *)
     | Array_copy_unsafe     (* 'a array * int * 'a array * int * int -> unit *)
+    | Boxed_copy            (* boxed * word * boxed * word * word -> unit or
+                             * boxed * word * unit ptr * word * word -> unit *)
     | Boxed_deref           (* overloaded; boxed * word -> X *)
-    | Ptr_dup               (* 'a ptr -> boxed *)
+    | Boxed_store           (* overloaded; boxed * word * X -> unit *)
+    | Record_alloc_unsafe   (* word * word -> boxed *)
     | Vector_alloc_unsafe   (* int -> 'a array *)
     | (*% @format(x) x *)
       M of primitiveMachineCode
@@ -267,10 +338,29 @@ struct
     | NotEqual              (* [''a.''a * ''a -> bool] *)
     | Exn_Name              (* exn -> string *)
     | Exn_Message           (* exn -> string * word * boxed *)
-    | Float_neg             (* Real32.real -> Real32.real *)
-    | Float_notEqual        (* Real32.real * Real32.real -> bool *)
-    | Float_trunc           (* Real32.real -> int *)
     | Ignore                (* 'a -> unit *)
+    | Int8_abs              (* int8 -> int8 *)
+    | Int8_add              (* int8 * int8 -> int8 *)
+    | Int8_div              (* int8 * int8 -> int8 *)
+    | Int8_fromInt32        (* int -> int8 *)
+    | Int8_mod              (* int8 * int8 -> int8 *)
+    | Int8_mul              (* int8 * int8 -> int8 *)
+    | Int8_neg              (* int8 -> int8 *)
+    | Int8_quot             (* int8 * int8 -> int8 *)
+    | Int8_rem              (* int8 * int8 -> int8 *)
+    | Int8_sub              (* int8 * int8 -> int8 *)
+    | Int8_toInt32          (* int8 -> int *)
+    | Int16_abs             (* int16 -> int16 *)
+    | Int16_add             (* int16 * int16 -> int16 *)
+    | Int16_div             (* int16 * int16 -> int16 *)
+    | Int16_fromInt32       (* int -> int16 *)
+    | Int16_mod             (* int16 * int16 -> int16 *)
+    | Int16_mul             (* int16 * int16 -> int16 *)
+    | Int16_neg             (* int16 -> int16 *)
+    | Int16_quot            (* int16 * int16 -> int16 *)
+    | Int16_rem             (* int16 * int16 -> int16 *)
+    | Int16_sub             (* int16 * int16 -> int16 *)
+    | Int16_toInt32         (* int8 -> int *)
     | Int32_abs             (* int -> int *)
     | Int32_add             (* int * int -> int *)
     | Int32_div             (* int * int -> int *)
@@ -291,9 +381,12 @@ struct
     | Int64_rem             (* int64 * int64 -> int64 *)
     | Int64_sub             (* int64 * int64 -> int64 *)
     | Int64_toInt32         (* int64 -> int *)
-    | Real_neg              (* real -> real *)
-    | Real_notEqual         (* real * real -> bool *)  (* Real.!= *)
-    | Real_trunc            (* real -> int *)
+    | Real32_neg            (* real32 -> real32 *)
+    | Real32_notEqual       (* real32 * real32 -> bool *)
+    | Real32_trunc          (* real32 -> int *)
+    | Real64_neg            (* real -> real *)
+    | Real64_notEqual       (* real * real -> bool *)  (* Real.!= *)
+    | Real64_trunc          (* real -> int *)
     | Ref_assign            (* 'a ref * 'a -> unit *)
     | Ref_deref             (* 'a ref -> 'a *)
     | String_alloc          (* int -> string *)
@@ -301,16 +394,26 @@ struct
     | String_sub            (* string * int -> char *)
     | Vector_length         (* 'a vector -> int *)
     | Vector_sub            (* 'a vector * int -> 'a *)
-    | Word8_arshift         (* Word8.word * word -> Word8.word *)
-    | Word8_div             (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_fromInt32       (* int -> Word8.word *)
-    | Word8_lshift          (* Word8.word * word -> Word8.word *)
-    | Word8_mod             (* Word8.word * Word8.word -> Word8.word *)
-    | Word8_neg             (* Word8.word -> Word8.word *)
+    | Word8_arshift         (* word8 * word -> word8 *)
+    | Word8_div             (* word8 * word8 -> word8 *)
+    | Word8_fromInt32       (* int -> word8 *)
+    | Word8_lshift          (* word8 * word -> word8 *)
+    | Word8_mod             (* word8 * word8 -> word8 *)
+    | Word8_neg             (* word8 -> word8 *)
     | Word8_notb            (* word -> word *)
-    | Word8_rshift          (* Word8.word * word -> Word8.word *)
-    | Word8_toInt32         (* Word8.word -> int *)
-    | Word8_toInt32X        (* Word8.word -> int *)
+    | Word8_rshift          (* word8 * word -> word8 *)
+    | Word8_toInt32         (* word8 -> int *)
+    | Word8_toInt32X        (* word8 -> int *)
+    | Word16_arshift        (* word16 * word -> word16 *)
+    | Word16_div            (* word16 * word16 -> word16 *)
+    | Word16_fromInt32      (* int -> word16 *)
+    | Word16_lshift         (* word16 * word -> word16 *)
+    | Word16_mod            (* word16 * word16 -> word16 *)
+    | Word16_neg            (* word16 -> word16 *)
+    | Word16_notb           (* word -> word *)
+    | Word16_rshift         (* word16 * word -> word16 *)
+    | Word16_toInt32        (* word16 -> int *)
+    | Word16_toInt32X       (* word16 -> int *)
     | Word32_arshift        (* word * word -> word *)
     | Word32_div            (* word * word -> word *)
     | Word32_lshift         (* word * word -> word *)
@@ -368,68 +471,111 @@ struct
   fun haveSideEffect prim =
       case prim of
         L (R (M Array_turnIntoVector)) => update_or_read
-      | L (R (M Float_abs)) => none
-      | L (R (M Float_add)) => none
-      | L (R (M Float_div)) => none
-      | L (R (M Float_equal)) => none
-      | L (R (M Float_unorderedOrEqual)) => none
-      | L (R (M Float_gt)) => none
-      | L (R (M Float_gteq)) => none
-      | L (R (M Float_isNan)) => none
-      | L (R (M Float_lt)) => none
-      | L (R (M Float_lteq)) => none
-      | L (R (M Float_mul)) => none
-      | L (R (M Float_rem)) => none
-      | L (R (M Float_sub)) => none
-      | L (R (M Float_toInt32_unsafe)) => none (* not raise Domain,Overflow*)
-      | L (R (M Float_toInt64_unsafe)) => none  (* ditto *)
-      | L (R (M Float_toWord32_unsafe)) => none   (* ditto *)
-      | L (R (M Float_toWord64_unsafe)) => none (* ditto *)
-      | L (R (M Float_toReal)) => none
       | L (R (M IdentityEqual)) => none
+      | L (R (M Int8_add_overflowCheck)) => none
+      | L (R (M Int8_add_unsafe)) => none (* does not raise Overflow *)
+      | L (R (M Int8_gt)) => none
+      | L (R (M Int8_gteq)) => none
+      | L (R (M Int8_lt)) => none
+      | L (R (M Int8_lteq)) => none
+      | L (R (M Int8_mul_overflowCheck)) => none
+      | L (R (M Int8_mul_unsafe)) => none (* does not raise Overflow *)
+      | L (R (M Int8_quot_unsafe)) => none (* does not raise Div, Overflow *)
+      | L (R (M Int8_rem_unsafe)) => none (* does not raise Div, Overflow *)
+      | L (R (M Int8_sub_overflowCheck)) => none
+      | L (R (M Int8_sub_unsafe)) => none (* does not raise Overflow *)
+      | L (R (M Int8_toReal64)) => none
+      | L (R (M Int8_toReal32)) => none
+      | L (R (M Int16_add_overflowCheck)) => none
+      | L (R (M Int16_add_unsafe)) => none (* does not raise Overflow *)
+      | L (R (M Int16_gt)) => none
+      | L (R (M Int16_gteq)) => none
+      | L (R (M Int16_lt)) => none
+      | L (R (M Int16_lteq)) => none
+      | L (R (M Int16_mul_overflowCheck)) => none
+      | L (R (M Int16_mul_unsafe)) => none (* does not raise Overflow *)
+      | L (R (M Int16_quot_unsafe)) => none (* does not raise Div, Overflow *)
+      | L (R (M Int16_rem_unsafe)) => none (* does not raise Div, Overflow *)
+      | L (R (M Int16_sub_overflowCheck)) => none
+      | L (R (M Int16_sub_unsafe)) => none (* does not raise Overflow *)
+      | L (R (M Int16_toReal64)) => none
+      | L (R (M Int16_toReal32)) => none
+      | L (R (M Int32_add_overflowCheck)) => none
       | L (R (M Int32_add_unsafe)) => none (* does not raise Overflow *)
       | L (R (M Int32_gt)) => none
       | L (R (M Int32_gteq)) => none
       | L (R (M Int32_lt)) => none
       | L (R (M Int32_lteq)) => none
+      | L (R (M Int32_mul_overflowCheck)) => none
       | L (R (M Int32_mul_unsafe)) => none (* does not raise Overflow *)
       | L (R (M Int32_quot_unsafe)) => none (* does not raise Div, Overflow *)
       | L (R (M Int32_rem_unsafe)) => none (* does not raise Div, Overflow *)
+      | L (R (M Int32_sub_overflowCheck)) => none
       | L (R (M Int32_sub_unsafe)) => none (* does not raise Overflow *)
-      | L (R (M Int32_toReal)) => none
-      | L (R (M Int32_toFloat_unsafe)) => none
+      | L (R (M Int32_toReal64)) => none
+      | L (R (M Int32_toReal32)) => none
+      | L (R (M Int64_add_overflowCheck)) => none
       | L (R (M Int64_add_unsafe)) => none (* does not raise Overflow *)
       | L (R (M Int64_gt)) => none
       | L (R (M Int64_gteq)) => none
       | L (R (M Int64_lt)) => none
       | L (R (M Int64_lteq)) => none
+      | L (R (M Int64_mul_overflowCheck)) => none
       | L (R (M Int64_mul_unsafe)) => none (* does not raise Overflow *)
       | L (R (M Int64_quot_unsafe)) => none (* does not raise Div, Overflow *)
       | L (R (M Int64_rem_unsafe)) => none (* does not raise Div, Overflow *)
+      | L (R (M Int64_sub_overflowCheck)) => none
       | L (R (M Int64_sub_unsafe)) => none (* does not raise Overflow *)
-      | L (R (M Int64_toReal_unsafe)) => none
-      | L (R (M Int64_toFloat_unsafe)) => none
+      | L (R (M Int64_toReal64)) => none
+      | L (R (M Int64_toReal32)) => none
       | L (R (M ObjectSize)) => none
       | L (R (M Ptr_advance)) => none
+      | L (R (M Ptr_fromWord64)) => none
       | L (R (M Ptr_toWord64)) => none
-      | L (R (M Real_abs)) => none
-      | L (R (M Real_add)) => none
-      | L (R (M Real_div)) => none
-      | L (R (M Real_equal)) => none
-      | L (R (M Real_unorderedOrEqual)) => none
-      | L (R (M Real_gt)) => none
-      | L (R (M Real_gteq)) => none
-      | L (R (M Real_isNan)) => none
-      | L (R (M Real_lt)) => none
-      | L (R (M Real_lteq)) => none
-      | L (R (M Real_mul)) => none
-      | L (R (M Real_rem)) => none
-      | L (R (M Real_sub)) => none
-      | L (R (M Real_toInt32_unsafe)) => none (* does not raise Domain,Overflow*)
-      | L (R (M Real_toInt64_unsafe)) => none  (* ditto *)
-      | L (R (M Real_toWord32_unsafe)) => none   (* ditto *)
-      | L (R (M Real_toWord64_unsafe)) => none (* ditto *)
-      | L (R (M Real_toFloat_unsafe)) => none
+      | L (R (M Real32_abs)) => none
+      | L (R (M Real32_add)) => none
+      | L (R (M Real32_div)) => none
+      | L (R (M Real32_equal)) => none
+      | L (R (M Real32_unorderedOrEqual)) => none
+      | L (R (M Real32_gt)) => none
+      | L (R (M Real32_gteq)) => none
+      | L (R (M Real32_isNan)) => none
+      | L (R (M Real32_lt)) => none
+      | L (R (M Real32_lteq)) => none
+      | L (R (M Real32_mul)) => none
+      | L (R (M Real32_rem)) => none
+      | L (R (M Real32_sub)) => none
+      | L (R (M Real32_toInt8_unsafe)) => none   (* not raise Domain,Overflow*)
+      | L (R (M Real32_toInt16_unsafe)) => none  (* ditto *)
+      | L (R (M Real32_toInt32_unsafe)) => none  (* not raise Domain,Overflow*)
+      | L (R (M Real32_toInt64_unsafe)) => none  (* ditto *)
+      | L (R (M Real32_toWord8_unsafe)) => none  (* ditto *)
+      | L (R (M Real32_toWord16_unsafe)) => none (* ditto *)
+      | L (R (M Real32_toWord32_unsafe)) => none (* ditto *)
+      | L (R (M Real32_toWord64_unsafe)) => none (* ditto *)
+      | L (R (M Real32_toReal64)) => none
+      | L (R (M Real64_abs)) => none
+      | L (R (M Real64_add)) => none
+      | L (R (M Real64_div)) => none
+      | L (R (M Real64_equal)) => none
+      | L (R (M Real64_unorderedOrEqual)) => none
+      | L (R (M Real64_gt)) => none
+      | L (R (M Real64_gteq)) => none
+      | L (R (M Real64_isNan)) => none
+      | L (R (M Real64_lt)) => none
+      | L (R (M Real64_lteq)) => none
+      | L (R (M Real64_mul)) => none
+      | L (R (M Real64_rem)) => none
+      | L (R (M Real64_sub)) => none
+      | L (R (M Real64_toInt8_unsafe)) => none   (* no raise Domain,Overflow*)
+      | L (R (M Real64_toInt16_unsafe)) => none  (* ditto *)
+      | L (R (M Real64_toInt32_unsafe)) => none  (* ditto *)
+      | L (R (M Real64_toInt64_unsafe)) => none  (* ditto *)
+      | L (R (M Real64_toWord8_unsafe)) => none  (* ditto *)
+      | L (R (M Real64_toWord16_unsafe)) => none (* ditto *)
+      | L (R (M Real64_toWord32_unsafe)) => none (* ditto *)
+      | L (R (M Real64_toWord64_unsafe)) => none (* ditto *)
+      | L (R (M Real64_toReal32_unsafe)) => none
       | L (R (M RuntimePolyEqual)) => none
       | L (R (M Word8_add)) => none
       | L (R (M Word8_andb)) => none
@@ -446,10 +592,32 @@ struct
       | L (R (M Word8_rshift_unsafe)) => none
       | L (R (M Word8_sub)) => none
       | L (R (M Word8_xorb)) => none
+      | L (R (M Word8_toWord16)) => none
+      | L (R (M Word8_toWord16X)) => none
       | L (R (M Word8_toWord32)) => none
       | L (R (M Word8_toWord32X)) => none
       | L (R (M Word8_toWord64)) => none
       | L (R (M Word8_toWord64X)) => none
+      | L (R (M Word16_add)) => none
+      | L (R (M Word16_andb)) => none
+      | L (R (M Word16_arshift_unsafe)) => none
+      | L (R (M Word16_div_unsafe)) => none
+      | L (R (M Word16_gt)) => none
+      | L (R (M Word16_gteq)) => none
+      | L (R (M Word16_lshift_unsafe)) => none
+      | L (R (M Word16_lt)) => none
+      | L (R (M Word16_lteq)) => none
+      | L (R (M Word16_mod_unsafe)) => none
+      | L (R (M Word16_mul)) => none
+      | L (R (M Word16_orb)) => none
+      | L (R (M Word16_rshift_unsafe)) => none
+      | L (R (M Word16_sub)) => none
+      | L (R (M Word16_xorb)) => none
+      | L (R (M Word16_toWord8)) => none
+      | L (R (M Word16_toWord32)) => none
+      | L (R (M Word16_toWord32X)) => none
+      | L (R (M Word16_toWord64)) => none
+      | L (R (M Word16_toWord64X)) => none
       | L (R (M Word32_add)) => none
       | L (R (M Word32_andb)) => none
       | L (R (M Word32_arshift_unsafe)) => none
@@ -466,6 +634,7 @@ struct
       | L (R (M Word32_sub)) => none
       | L (R (M Word32_xorb)) => none
       | L (R (M Word32_toWord8)) => none
+      | L (R (M Word32_toWord16)) => none
       | L (R (M Word32_toWord64)) => none
       | L (R (M Word32_toWord64X)) => none
       | L (R (M Word64_add)) => none
@@ -483,12 +652,15 @@ struct
       | L (R (M Word64_rshift_unsafe)) => none
       | L (R (M Word64_sub)) => none
       | L (R (M Word64_toWord8)) => none
+      | L (R (M Word64_toWord16)) => none
       | L (R (M Word64_toWord32)) => none
       | L (R (M Word64_xorb)) => none
       | L (R Array_alloc_unsafe) => memory (* does not raise Size *)
       | L (R Array_copy_unsafe) => update_or_read (* does not raise Subscript *)
+      | L (R Boxed_copy) => memory
       | L (R Boxed_deref) => read
-      | L (R Ptr_dup) => memory
+      | L (R Boxed_store) => update
+      | L (R Record_alloc_unsafe) => memory (* does not raise Size *)
       | L (R Vector_alloc_unsafe) => memory (* does not raise Size *)
       | L Array_alloc_init => memory (* does not raise Size *)
       | L Array_sub_unsafe => read (* does not raise Subscript *)
@@ -518,10 +690,29 @@ struct
       | NotEqual => none
       | Exn_Name => none
       | Exn_Message => none
-      | Float_neg => none
-      | Float_notEqual => none
-      | Float_trunc => throw (* Domain, Overflow *)
       | Ignore => none
+      | Int8_abs => throw (* Overflow *)
+      | Int8_add => throw (* Overflow *)
+      | Int8_div => throw (* Div, Overflow *)
+      | Int8_fromInt32 => throw (* Overflow *)
+      | Int8_mod => throw (* Div, Overflow *)
+      | Int8_mul => throw (* Overflow *)
+      | Int8_neg => throw (* Overflow *)
+      | Int8_quot => throw (* Overflow *)
+      | Int8_rem => throw (* Overflow *)
+      | Int8_sub => throw (* Overflow *)
+      | Int8_toInt32 => throw (* Overflow *)
+      | Int16_abs => throw (* Overflow *)
+      | Int16_add => throw (* Overflow *)
+      | Int16_div => throw (* Div, Overflow *)
+      | Int16_fromInt32 => throw (* Overflow *)
+      | Int16_mod => throw (* Div, Overflow *)
+      | Int16_mul => throw (* Overflow *)
+      | Int16_neg => throw (* Overflow *)
+      | Int16_quot => throw (* Overflow *)
+      | Int16_rem => throw (* Overflow *)
+      | Int16_sub => throw (* Overflow *)
+      | Int16_toInt32 => throw (* Overflow *)
       | Int32_abs => throw (* Overflow *)
       | Int32_add => throw (* Overflow *)
       | Int32_div => throw (* Div, Overflow *)
@@ -542,9 +733,12 @@ struct
       | Int64_rem => throw (* Overflow *)
       | Int64_sub => throw (* Overflow *)
       | Int64_toInt32 => throw (* Overflow *)
-      | Real_neg => none
-      | Real_notEqual => none
-      | Real_trunc => throw (* Domain, Overflow *)
+      | Real32_neg => none
+      | Real32_notEqual => none
+      | Real32_trunc => throw (* Domain, Overflow *)
+      | Real64_neg => none
+      | Real64_notEqual => none
+      | Real64_trunc => throw (* Domain, Overflow *)
       | Ref_assign => update
       | Ref_deref => read
       | String_alloc => throw_or_memory (* Size *)
@@ -562,6 +756,16 @@ struct
       | Word8_rshift => none
       | Word8_toInt32 => none (* never Overflow *)
       | Word8_toInt32X => none (* never Overflow *)
+      | Word16_arshift => none
+      | Word16_div => throw (* Div *)
+      | Word16_fromInt32 => none
+      | Word16_lshift => none
+      | Word16_mod => throw (* Div *)
+      | Word16_neg => none
+      | Word16_notb => none
+      | Word16_rshift => none
+      | Word16_toInt32 => none (* never Overflow *)
+      | Word16_toInt32X => none (* never Overflow *)
       | Word32_arshift => none
       | Word32_div => throw (* Div *)
       | Word32_lshift => none
@@ -585,68 +789,111 @@ struct
   fun findPrimitive name =
       case name of
         "Array_turnIntoVector" => SOME (L (R (M Array_turnIntoVector)))
-      | "Float_abs" => SOME (L (R (M Float_abs)))
-      | "Float_add" => SOME (L (R (M Float_add)))
-      | "Float_div" => SOME (L (R (M Float_div)))
-      | "Float_equal" => SOME (L (R (M Float_equal)))
-      | "Float_unorderedOrEqual" => SOME (L (R (M Float_unorderedOrEqual)))
-      | "Float_gt" => SOME (L (R (M Float_gt)))
-      | "Float_gteq" => SOME (L (R (M Float_gteq)))
-      | "Float_isNan" => SOME (L (R (M Float_isNan)))
-      | "Float_lt" => SOME (L (R (M Float_lt)))
-      | "Float_lteq" => SOME (L (R (M Float_lteq)))
-      | "Float_mul" => SOME (L (R (M Float_mul)))
-      | "Float_rem" => SOME (L (R (M Float_rem)))
-      | "Float_sub" => SOME (L (R (M Float_sub)))
-      | "Float_toInt32_unsafe" => SOME (L (R (M Float_toInt32_unsafe)))
-      | "Float_toInt64_unsafe" => SOME (L (R (M Float_toInt64_unsafe)))
-      | "Float_toWord32_unsafe" => SOME (L (R (M Float_toWord32_unsafe)))
-      | "Float_toWord64_unsafe" => SOME (L (R (M Float_toWord64_unsafe)))
-      | "Float_toReal" => SOME (L (R (M Float_toReal)))
       | "IdentityEqual" => SOME (L (R (M IdentityEqual)))
+      | "Int8_add_overflowCheck" => SOME (L (R (M Int8_add_overflowCheck)))
+      | "Int8_add_unsafe" => SOME (L (R (M Int8_add_unsafe)))
+      | "Int8_gt" => SOME (L (R (M Int8_gt)))
+      | "Int8_gteq" => SOME (L (R (M Int8_gteq)))
+      | "Int8_lt" => SOME (L (R (M Int8_lt)))
+      | "Int8_lteq" => SOME (L (R (M Int8_lteq)))
+      | "Int8_mul_overflowCheck" => SOME (L (R (M Int8_mul_overflowCheck)))
+      | "Int8_mul_unsafe" => SOME (L (R (M Int8_mul_unsafe)))
+      | "Int8_quot_unsafe" => SOME (L (R (M Int8_quot_unsafe)))
+      | "Int8_rem_unsafe" => SOME (L (R (M Int8_rem_unsafe)))
+      | "Int8_sub_overflowCheck" => SOME (L (R (M Int8_sub_overflowCheck)))
+      | "Int8_sub_unsafe" => SOME (L (R (M Int8_sub_unsafe)))
+      | "Int8_toReal64" => SOME (L (R (M Int8_toReal64)))
+      | "Int8_toReal32" => SOME (L (R (M Int8_toReal32)))
+      | "Int16_add_overflowCheck" => SOME (L (R (M Int16_add_overflowCheck)))
+      | "Int16_add_unsafe" => SOME (L (R (M Int16_add_unsafe)))
+      | "Int16_gt" => SOME (L (R (M Int16_gt)))
+      | "Int16_gteq" => SOME (L (R (M Int16_gteq)))
+      | "Int16_lt" => SOME (L (R (M Int16_lt)))
+      | "Int16_lteq" => SOME (L (R (M Int16_lteq)))
+      | "Int16_mul_overflowCheck" => SOME (L (R (M Int16_mul_overflowCheck)))
+      | "Int16_mul_unsafe" => SOME (L (R (M Int16_mul_unsafe)))
+      | "Int16_quot_unsafe" => SOME (L (R (M Int16_quot_unsafe)))
+      | "Int16_rem_unsafe" => SOME (L (R (M Int16_rem_unsafe)))
+      | "Int16_sub_overflowCheck" => SOME (L (R (M Int16_sub_overflowCheck)))
+      | "Int16_sub_unsafe" => SOME (L (R (M Int16_sub_unsafe)))
+      | "Int16_toReal64" => SOME (L (R (M Int16_toReal64)))
+      | "Int16_toReal32" => SOME (L (R (M Int16_toReal32)))
+      | "Int32_add_overflowCheck" => SOME (L (R (M Int32_add_overflowCheck)))
       | "Int32_add_unsafe" => SOME (L (R (M Int32_add_unsafe)))
       | "Int32_gt" => SOME (L (R (M Int32_gt)))
       | "Int32_gteq" => SOME (L (R (M Int32_gteq)))
       | "Int32_lt" => SOME (L (R (M Int32_lt)))
       | "Int32_lteq" => SOME (L (R (M Int32_lteq)))
+      | "Int32_mul_overflowCheck" => SOME (L (R (M Int32_mul_overflowCheck)))
       | "Int32_mul_unsafe" => SOME (L (R (M Int32_mul_unsafe)))
       | "Int32_quot_unsafe" => SOME (L (R (M Int32_quot_unsafe)))
       | "Int32_rem_unsafe" => SOME (L (R (M Int32_rem_unsafe)))
+      | "Int32_sub_overflowCheck" => SOME (L (R (M Int32_sub_overflowCheck)))
       | "Int32_sub_unsafe" => SOME (L (R (M Int32_sub_unsafe)))
-      | "Int32_toReal" => SOME (L (R (M Int32_toReal)))
-      | "Int32_toFloat_unsafe" => SOME (L (R (M Int32_toFloat_unsafe)))
+      | "Int32_toReal64" => SOME (L (R (M Int32_toReal64)))
+      | "Int32_toReal32" => SOME (L (R (M Int32_toReal32)))
+      | "Int64_add_overflowCheck" => SOME (L (R (M Int64_add_overflowCheck)))
       | "Int64_add_unsafe" => SOME (L (R (M Int64_add_unsafe)))
       | "Int64_gt" => SOME (L (R (M Int64_gt)))
       | "Int64_gteq" => SOME (L (R (M Int64_gteq)))
       | "Int64_lt" => SOME (L (R (M Int64_lt)))
       | "Int64_lteq" => SOME (L (R (M Int64_lteq)))
+      | "Int64_mul_overflowCheck" => SOME (L (R (M Int64_mul_overflowCheck)))
       | "Int64_mul_unsafe" => SOME (L (R (M Int64_mul_unsafe)))
       | "Int64_quot_unsafe" => SOME (L (R (M Int64_quot_unsafe)))
       | "Int64_rem_unsafe" => SOME (L (R (M Int64_rem_unsafe)))
+      | "Int64_sub_overflowCheck" => SOME (L (R (M Int64_sub_overflowCheck)))
       | "Int64_sub_unsafe" => SOME (L (R (M Int64_sub_unsafe)))
-      | "Int64_toReal_unsafe" => SOME (L (R (M Int64_toReal_unsafe)))
-      | "Int64_toFloat_unsafe" => SOME (L (R (M Int64_toFloat_unsafe)))
+      | "Int64_toReal64" => SOME (L (R (M Int64_toReal64)))
+      | "Int64_toReal32" => SOME (L (R (M Int64_toReal32)))
       | "ObjectSize" => SOME (L (R (M ObjectSize)))
       | "Ptr_advance" => SOME (L (R (M Ptr_advance)))
+      | "Ptr_fromWord64" => SOME (L (R (M Ptr_fromWord64)))
       | "Ptr_toWord64" => SOME (L (R (M Ptr_toWord64)))
-      | "Real_abs" => SOME (L (R (M Real_abs)))
-      | "Real_add" => SOME (L (R (M Real_add)))
-      | "Real_div" => SOME (L (R (M Real_div)))
-      | "Real_equal" => SOME (L (R (M Real_equal)))
-      | "Real_unorderedOrEqual" => SOME (L (R (M Real_unorderedOrEqual)))
-      | "Real_gt" => SOME (L (R (M Real_gt)))
-      | "Real_gteq" => SOME (L (R (M Real_gteq)))
-      | "Real_isNan" => SOME (L (R (M Real_isNan)))
-      | "Real_lt" => SOME (L (R (M Real_lt)))
-      | "Real_lteq" => SOME (L (R (M Real_lteq)))
-      | "Real_mul" => SOME (L (R (M Real_mul)))
-      | "Real_rem" => SOME (L (R (M Real_rem)))
-      | "Real_sub" => SOME (L (R (M Real_sub)))
-      | "Real_toInt32_unsafe" => SOME (L (R (M Real_toInt32_unsafe)))
-      | "Real_toInt64_unsafe" => SOME (L (R (M Real_toInt64_unsafe)))
-      | "Real_toWord32_unsafe" => SOME (L (R (M Real_toWord32_unsafe)))
-      | "Real_toWord64_unsafe" => SOME (L (R (M Real_toWord64_unsafe)))
-      | "Real_toFloat_unsafe" => SOME (L (R (M Real_toFloat_unsafe)))
+      | "Real32_abs" => SOME (L (R (M Real32_abs)))
+      | "Real32_add" => SOME (L (R (M Real32_add)))
+      | "Real32_div" => SOME (L (R (M Real32_div)))
+      | "Real32_equal" => SOME (L (R (M Real32_equal)))
+      | "Real32_unorderedOrEqual" => SOME (L (R (M Real32_unorderedOrEqual)))
+      | "Real32_gt" => SOME (L (R (M Real32_gt)))
+      | "Real32_gteq" => SOME (L (R (M Real32_gteq)))
+      | "Real32_isNan" => SOME (L (R (M Real32_isNan)))
+      | "Real32_lt" => SOME (L (R (M Real32_lt)))
+      | "Real32_lteq" => SOME (L (R (M Real32_lteq)))
+      | "Real32_mul" => SOME (L (R (M Real32_mul)))
+      | "Real32_rem" => SOME (L (R (M Real32_rem)))
+      | "Real32_sub" => SOME (L (R (M Real32_sub)))
+      | "Real32_toInt8_unsafe" => SOME (L (R (M Real32_toInt8_unsafe)))
+      | "Real32_toInt16_unsafe" => SOME (L (R (M Real32_toInt16_unsafe)))
+      | "Real32_toInt32_unsafe" => SOME (L (R (M Real32_toInt32_unsafe)))
+      | "Real32_toInt64_unsafe" => SOME (L (R (M Real32_toInt64_unsafe)))
+      | "Real32_toWord8_unsafe" => SOME (L (R (M Real32_toWord8_unsafe)))
+      | "Real32_toWord16_unsafe" => SOME (L (R (M Real32_toWord16_unsafe)))
+      | "Real32_toWord32_unsafe" => SOME (L (R (M Real32_toWord32_unsafe)))
+      | "Real32_toWord64_unsafe" => SOME (L (R (M Real32_toWord64_unsafe)))
+      | "Real32_toReal64" => SOME (L (R (M Real32_toReal64)))
+      | "Real64_abs" => SOME (L (R (M Real64_abs)))
+      | "Real64_add" => SOME (L (R (M Real64_add)))
+      | "Real64_div" => SOME (L (R (M Real64_div)))
+      | "Real64_equal" => SOME (L (R (M Real64_equal)))
+      | "Real64_unorderedOrEqual" => SOME (L (R (M Real64_unorderedOrEqual)))
+      | "Real64_gt" => SOME (L (R (M Real64_gt)))
+      | "Real64_gteq" => SOME (L (R (M Real64_gteq)))
+      | "Real64_isNan" => SOME (L (R (M Real64_isNan)))
+      | "Real64_lt" => SOME (L (R (M Real64_lt)))
+      | "Real64_lteq" => SOME (L (R (M Real64_lteq)))
+      | "Real64_mul" => SOME (L (R (M Real64_mul)))
+      | "Real64_rem" => SOME (L (R (M Real64_rem)))
+      | "Real64_sub" => SOME (L (R (M Real64_sub)))
+      | "Real64_toInt8_unsafe" => SOME (L (R (M Real64_toInt8_unsafe)))
+      | "Real64_toInt16_unsafe" => SOME (L (R (M Real64_toInt16_unsafe)))
+      | "Real64_toInt32_unsafe" => SOME (L (R (M Real64_toInt32_unsafe)))
+      | "Real64_toInt64_unsafe" => SOME (L (R (M Real64_toInt64_unsafe)))
+      | "Real64_toWord8_unsafe" => SOME (L (R (M Real64_toWord8_unsafe)))
+      | "Real64_toWord16_unsafe" => SOME (L (R (M Real64_toWord16_unsafe)))
+      | "Real64_toWord32_unsafe" => SOME (L (R (M Real64_toWord32_unsafe)))
+      | "Real64_toWord64_unsafe" => SOME (L (R (M Real64_toWord64_unsafe)))
+      | "Real64_toReal32_unsafe" => SOME (L (R (M Real64_toReal32_unsafe)))
       | "RuntimePolyEqual" => SOME (L (R (M RuntimePolyEqual)))
       | "Word8_add" => SOME (L (R (M Word8_add)))
       | "Word8_andb" => SOME (L (R (M Word8_andb)))
@@ -662,11 +909,33 @@ struct
       | "Word8_orb" => SOME (L (R (M Word8_orb)))
       | "Word8_rshift_unsafe" => SOME (L (R (M Word8_rshift_unsafe)))
       | "Word8_sub" => SOME (L (R (M Word8_sub)))
+      | "Word8_toWord16" => SOME (L (R (M Word8_toWord16)))
+      | "Word8_toWord16X" => SOME (L (R (M Word8_toWord16X)))
       | "Word8_toWord32" => SOME (L (R (M Word8_toWord32)))
       | "Word8_toWord32X" => SOME (L (R (M Word8_toWord32X)))
       | "Word8_toWord64" => SOME (L (R (M Word8_toWord64)))
       | "Word8_toWord64X" => SOME (L (R (M Word8_toWord64X)))
       | "Word8_xorb" => SOME (L (R (M Word8_xorb)))
+      | "Word16_add" => SOME (L (R (M Word16_add)))
+      | "Word16_andb" => SOME (L (R (M Word16_andb)))
+      | "Word16_arshift_unsafe" => SOME (L (R (M Word16_arshift_unsafe)))
+      | "Word16_div_unsafe" => SOME (L (R (M Word16_div_unsafe)))
+      | "Word16_gt" => SOME (L (R (M Word16_gt)))
+      | "Word16_gteq" => SOME (L (R (M Word16_gteq)))
+      | "Word16_lshift_unsafe" => SOME (L (R (M Word16_lshift_unsafe)))
+      | "Word16_lt" => SOME (L (R (M Word16_lt)))
+      | "Word16_lteq" => SOME (L (R (M Word16_lteq)))
+      | "Word16_mod_unsafe" => SOME (L (R (M Word16_mod_unsafe)))
+      | "Word16_mul" => SOME (L (R (M Word16_mul)))
+      | "Word16_orb" => SOME (L (R (M Word16_orb)))
+      | "Word16_rshift_unsafe" => SOME (L (R (M Word16_rshift_unsafe)))
+      | "Word16_sub" => SOME (L (R (M Word16_sub)))
+      | "Word16_toWord8" => SOME (L (R (M Word16_toWord8)))
+      | "Word16_toWord32" => SOME (L (R (M Word16_toWord32)))
+      | "Word16_toWord32X" => SOME (L (R (M Word16_toWord32X)))
+      | "Word16_toWord64" => SOME (L (R (M Word16_toWord64)))
+      | "Word16_toWord64X" => SOME (L (R (M Word16_toWord64X)))
+      | "Word16_xorb" => SOME (L (R (M Word16_xorb)))
       | "Word32_add" => SOME (L (R (M Word32_add)))
       | "Word32_andb" => SOME (L (R (M Word32_andb)))
       | "Word32_arshift_unsafe" => SOME (L (R (M Word32_arshift_unsafe)))
@@ -682,6 +951,7 @@ struct
       | "Word32_rshift_unsafe" => SOME (L (R (M Word32_rshift_unsafe)))
       | "Word32_sub" => SOME (L (R (M Word32_sub)))
       | "Word32_toWord8" => SOME (L (R (M Word32_toWord8)))
+      | "Word32_toWord16" => SOME (L (R (M Word32_toWord16)))
       | "Word32_toWord64" => SOME (L (R (M Word32_toWord64)))
       | "Word32_toWord64X" => SOME (L (R (M Word32_toWord64X)))
       | "Word32_xorb" => SOME (L (R (M Word32_xorb)))
@@ -700,12 +970,15 @@ struct
       | "Word64_rshift_unsafe" => SOME (L (R (M Word64_rshift_unsafe)))
       | "Word64_sub" => SOME (L (R (M Word64_sub)))
       | "Word64_toWord8" => SOME (L (R (M Word64_toWord8)))
+      | "Word64_toWord16" => SOME (L (R (M Word64_toWord16)))
       | "Word64_toWord32" => SOME (L (R (M Word64_toWord32)))
       | "Word64_xorb" => SOME (L (R (M Word64_xorb)))
       | "Array_alloc_unsafe" => SOME (L (R Array_alloc_unsafe))
       | "Array_copy_unsafe" => SOME (L (R Array_copy_unsafe))
+      | "Boxed_copy" => SOME (L (R Boxed_copy))
       | "Boxed_deref" => SOME (L (R Boxed_deref))
-      | "Ptr_dup" => SOME (L (R Ptr_dup))
+      | "Boxed_store" => SOME (L (R Boxed_store))
+      | "Record_alloc_unsafe" => SOME (L (R Record_alloc_unsafe))
       | "Ptr_deref" => SOME (L Ptr_deref)
       | "Ptr_store" => SOME (L Ptr_store)
       | "Array_sub_unsafe" => SOME (L Array_sub_unsafe)
@@ -731,10 +1004,29 @@ struct
       | "NotEqual" => SOME NotEqual
       | "Exn_Name" => SOME Exn_Name
       | "Exn_Message" => SOME Exn_Message
-      | "Float_neg" => SOME Float_neg
-      | "Float_notEqual" => SOME Float_notEqual
-      | "Float_trunc" => SOME Float_trunc
       | "Ignore" => SOME Ignore
+      | "Int8_abs" => SOME Int8_abs
+      | "Int8_add" => SOME Int8_add
+      | "Int8_div" => SOME Int8_div
+      | "Int8_fromInt32" => SOME Int8_fromInt32
+      | "Int8_mod" => SOME Int8_mod
+      | "Int8_mul" => SOME Int8_mul
+      | "Int8_neg" => SOME Int8_neg
+      | "Int8_quot" => SOME Int8_quot
+      | "Int8_rem" => SOME Int8_rem
+      | "Int8_sub" => SOME Int8_sub
+      | "Int8_toInt32" => SOME Int8_toInt32
+      | "Int16_abs" => SOME Int16_abs
+      | "Int16_add" => SOME Int16_add
+      | "Int16_div" => SOME Int16_div
+      | "Int16_fromInt32" => SOME Int16_fromInt32
+      | "Int16_mod" => SOME Int16_mod
+      | "Int16_mul" => SOME Int16_mul
+      | "Int16_neg" => SOME Int16_neg
+      | "Int16_quot" => SOME Int16_quot
+      | "Int16_rem" => SOME Int16_rem
+      | "Int16_sub" => SOME Int16_sub
+      | "Int16_toInt32" => SOME Int16_toInt32
       | "Int32_abs" => SOME Int32_abs
       | "Int32_add" => SOME Int32_add
       | "Int32_div" => SOME Int32_div
@@ -755,9 +1047,12 @@ struct
       | "Int64_rem" => SOME Int64_rem
       | "Int64_sub" => SOME Int64_sub
       | "Int64_toInt32" => SOME Int64_toInt32
-      | "Real_neg" => SOME Real_neg
-      | "Real_notEqual" => SOME Real_notEqual
-      | "Real_trunc" => SOME Real_trunc
+      | "Real32_neg" => SOME Real32_neg
+      | "Real32_notEqual" => SOME Real32_notEqual
+      | "Real32_trunc" => SOME Real32_trunc
+      | "Real64_neg" => SOME Real64_neg
+      | "Real64_notEqual" => SOME Real64_notEqual
+      | "Real64_trunc" => SOME Real64_trunc
       | "Ref_assign" => SOME Ref_assign
       | "Ref_deref" => SOME Ref_deref
       | "String_alloc" => SOME String_alloc
@@ -775,6 +1070,16 @@ struct
       | "Word8_rshift" => SOME Word8_rshift
       | "Word8_toInt32" => SOME Word8_toInt32
       | "Word8_toInt32X" => SOME Word8_toInt32X
+      | "Word16_arshift" => SOME Word16_arshift
+      | "Word16_div" => SOME Word16_div
+      | "Word16_fromInt32" => SOME Word16_fromInt32
+      | "Word16_lshift" => SOME Word16_lshift
+      | "Word16_mod" => SOME Word16_mod
+      | "Word16_neg" => SOME Word16_neg
+      | "Word16_notb" => SOME Word16_notb
+      | "Word16_rshift" => SOME Word16_rshift
+      | "Word16_toInt32" => SOME Word16_toInt32
+      | "Word16_toInt32X" => SOME Word16_toInt32X
       | "Word32_arshift" => SOME Word32_arshift
       | "Word32_div" => SOME Word32_div
       | "Word32_lshift" => SOME Word32_lshift

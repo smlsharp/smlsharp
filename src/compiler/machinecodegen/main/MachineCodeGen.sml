@@ -47,20 +47,6 @@ struct
         M.ANCONST {const = M.NVTAG {tag = tag, ty = ty}, ty = tagTy ty}
       end
 
-  fun wordToTag (tagExp, valueTy) =
-      case tagExp of
-        M.ANCONST {const = M.NVWORD32 0w0, ...} =>
-        M.ANCONST {const = M.NVTAG {tag=R.TAG_UNBOXED, ty=valueTy},
-                   ty = tagTy valueTy}
-      | M.ANCONST {const = M.NVWORD32 _, ...} =>
-        M.ANCONST {const = M.NVTAG {tag=R.TAG_BOXED, ty=valueTy},
-                   ty = tagTy valueTy}
-      | _ =>
-        M.ANCAST {exp = tagExp,
-                  expTy = wordTy,
-                  targetTy = tagTy valueTy,
-                  runtimeTyCast = true}
-
   fun Int32_mul_unsafe (resultVar, op1, op2, loc) =
       mid (M.MCPRIMAPPLY
              {resultVar = resultVar,
@@ -87,27 +73,27 @@ struct
       o initExp
       o mid M.MCALLOC_COMPLETED
 
-  fun switchByTag {tagExp, tagOfTy, ifBoxed, ifUnboxed, loc} =
+  fun If {condExp, condTy, const, thenExp, elseExp, loc} =
       let
         val nextLabel = FunLocalLabel.generate nil
-        val ifBoxedLabel = FunLocalLabel.generate nil
-        val ifUnboxedLabel = FunLocalLabel.generate nil
+        val thenLabel = FunLocalLabel.generate nil
+        val elseLabel = FunLocalLabel.generate nil
         val goto : M.mcexp =
             (nil, M.MCGOTO {id = nextLabel, argList = nil, loc = loc})
-        val ifBoxedBlock =
+        val thenBlock =
             fn K => (nil, M.MCLOCALCODE
-                            {id = ifBoxedLabel,
+                            {id = thenLabel,
                              recursive = false,
                              argVarList = nil,
-                             bodyExp = ifBoxed goto,
+                             bodyExp = thenExp goto,
                              nextExp = K,
                              loc = loc}) : M.mcexp
-        val ifUnboxedBlock =
+        val elseBlock =
             fn K => (nil, M.MCLOCALCODE
-                            {id = ifUnboxedLabel,
+                            {id = elseLabel,
                              recursive = false,
                              argVarList = nil,
-                             bodyExp = ifUnboxed goto,
+                             bodyExp = elseExp goto,
                              nextExp = K,
                              loc = loc}) : M.mcexp
       in
@@ -120,17 +106,23 @@ struct
                bodyExp = K,
                loc = loc,
                nextExp =
-                 (ifBoxedBlock o ifUnboxedBlock)
+                 (thenBlock o elseBlock)
                    (nil,
                     M.MCSWITCH
-                      {switchExp = tagExp,
-                       expTy = tagTy tagOfTy,
-                       branches =
-                         [(M.NVTAG {tag = R.TAG_UNBOXED, ty = tagOfTy},
-                           ifUnboxedLabel)],
-                       default = ifBoxedLabel,
+                      {switchExp = condExp,
+                       expTy = condTy,
+                       branches = [(const, thenLabel)],
+                       default = elseLabel,
                        loc = loc})})
       end
+
+  fun switchByTag {tagExp, tagOfTy, ifBoxed, ifUnboxed, loc} =
+      If {condExp = tagExp,
+          condTy = tagTy tagOfTy,
+          const = M.NVTAG {tag = R.TAG_UNBOXED, ty = tagOfTy},
+          thenExp = ifUnboxed,
+          elseExp = ifBoxed,
+          loc = loc}
 
   fun arrayBytes (numElems, elemSize, elemTy:M.ty, loc) =
       let
@@ -284,8 +276,7 @@ struct
         (allocArray
            {resultVar = resultVar,
             resultTy = resultTy,
-            (* FIXME: the type of tag *)
-            objType = M.OBJTYPE_VECTOR (wordToTag (tag, #1 boxedTy)),
+            objType = M.OBJTYPE_VECTOR tag,
             elemTy = ty,
             elemTag = tag,
             elemSize = size,
@@ -294,6 +285,20 @@ struct
          mask (subst, [resultVar]))
       | (P.Vector_alloc_unsafe, _, _, _, _) =>
         raise Bug.Bug "compileExp: Vector_alloc_unsafe"
+
+      | (P.Record_alloc_unsafe, [], [], [], [payloadSize, allocSize]) =>
+        (Alloc
+           {resultVar = resultVar,
+            objType = M.OBJTYPE_RECORD,
+            payloadSize = payloadSize,
+            allocSize = allocSize,
+            initExp = mid (M.MCBZERO {recordExp = M.ANVAR resultVar,
+                                      recordSize = allocSize,
+                                      loc = loc}),
+            loc = loc},
+         mask (subst, [resultVar]))
+      | (P.Record_alloc_unsafe, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Record_alloc_unsafe"
 
       | (P.Array_copy_unsafe, [ty], [tag], [size],
          [src, si, dst, di, len]) =>
@@ -335,25 +340,48 @@ struct
       | (P.Boxed_deref, _, _, _, _) =>
         raise Bug.Bug "compilePrim: Boxed_deref"
 
-      | (P.Ptr_dup, [], [], [], [ptr, tag, size]) =>
-        (Alloc
-           {resultVar = resultVar,
-            objType = M.OBJTYPE_VECTOR tag, (* FIXME: the type of tag *)
-            payloadSize = size,
-            allocSize = size,
-            initExp =
-              mid (M.MCMEMCPY_FIELD
-                     {dstAddr = M.MAARRAYELEM
-                                  {arrayExp = M.ANVAR resultVar,
-                                   elemSize = size,
-                                   elemIndex = intConst 0},
-                      srcAddr = M.MAPTR ptr,
-                      copySize = size,
-                      loc = loc}),
-            loc = loc},
-         mask (subst, [resultVar]))
-      | (P.Ptr_dup, _, _, _, _) =>
-        raise Bug.Bug "compilePrim: Ptr_dup"
+      | (P.Boxed_store, [], [], [], [ptr, index, value]) =>
+        (case argTyList of
+           [_, _, srcTy] =>
+           (mid (M.MCSTORE
+                   {dstAddr = M.MAOFFSET {base = ptr, offset = index},
+                    srcExp = value,
+                    srcTy = srcTy,
+                    barrier = case srcTy of (_, R.BOXEDty) => true | _ => false,
+                    loc = loc}),
+            VarID.Map.insert (subst, #id resultVar, unitConst))
+         | _ => raise Bug.Bug "compilePrim: Boxed_store")
+      | (P.Boxed_store, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Boxed_store"
+
+      | (P.Boxed_copy, [], [], [], [dst, dstIndex, src, srcIndex, tag, size]) =>
+        let
+          val tmpVar = {id = VarID.generate (), ty = boxedTy}
+          val dstAddr = M.MAOFFSET {base = dst, offset = dstIndex}
+          val srcAddr = M.MAOFFSET {base = src, offset = srcIndex}
+        in
+          (If {condExp = tag,
+               condTy = wordTy,
+               const = M.NVWORD32 (Word.fromInt
+                                     (TypeLayout2.tagValue R.TAG_UNBOXED)),
+               thenExp = mid (M.MCMEMCPY_FIELD {dstAddr = dstAddr,
+                                                srcAddr = srcAddr,
+                                                copySize = size,
+                                                loc = loc}),
+               elseExp =
+                 mid (M.MCLOAD {resultVar = tmpVar,
+                                srcAddr = srcAddr,
+                                loc = loc})
+                 o mid (M.MCSTORE {dstAddr = dstAddr,
+                                   srcExp = M.ANVAR tmpVar,
+                                   srcTy = boxedTy,
+                                   barrier = true,
+                                   loc = loc}),
+               loc = loc},
+           VarID.Map.insert (subst, #id resultVar, unitConst))
+        end
+      | (P.Boxed_copy, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: Boxed_copy"
 
       | (P.M prim, _, _, _, _) =>
         (mid (M.MCPRIMAPPLY {resultVar = resultVar,
@@ -645,7 +673,7 @@ struct
   fun compileTopdec topdec =
       case topdec of
         A.ATFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, loc} =>
+                      retTy, gcCheck, loc} =>
         M.MTFUNCTION
           {id = id,
            tyvarKindEnv = tyvarKindEnv,
@@ -654,6 +682,7 @@ struct
            frameSlots = SlotID.Map.empty,
            bodyExp = compileExp VarID.Map.empty bodyExp,
            retTy = retTy,
+           gcCheck = gcCheck,
            loc = loc}
       | A.ATCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
                               bodyExp, attributes, retTy, cleanupHandler,

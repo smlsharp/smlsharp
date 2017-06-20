@@ -64,7 +64,7 @@ struct
        flushError ())
 
   fun userErrorToString x =
-      Control.prettyPrint (UserError.format_errorInfo x)
+      Bug.prettyPrint (UserError.format_errorInfo x)
 
   fun printWarnings warnings =
       if !Control.printWarning
@@ -85,91 +85,91 @@ struct
       else ()
 
   fun printParseResult flag title code =
-      printCode [flag] (Control.prettyPrint o Absyn.format_unitparseresult)
+      printCode [flag] (Bug.prettyPrint o Absyn.format_unitparseresult)
                 title [code]
 
   fun printAbsyn flag title code =
-      printCode [flag] (Control.prettyPrint o AbsynInterface.format_compileUnit)
+      printCode [flag] (Bug.prettyPrint o AbsynInterface.format_compileUnit)
                 title [code]
 
   fun printPatternCalc flag title code =
       printCode [flag]
-                (Control.prettyPrint o PatternCalcInterface.format_compileUnit)
+                (Bug.prettyPrint o PatternCalcInterface.format_compileUnit)
                 title [code]
 
   fun printPatternCalcInteractive flagList title code =
       printCode flagList
-                (Control.prettyPrint o PatternCalcInterface.format_interactiveUnit)
+                (Bug.prettyPrint o PatternCalcInterface.format_interactiveUnit)
                 title [code]
 
   fun printIDCalc flagList title code =
       printCode
         flagList
         (if !Control.printWithType
-         then (Control.prettyPrint o IDCalc.formatWithType_icdecl)
-         else (Control.prettyPrint o IDCalc.format_icdecl))
+         then (Bug.prettyPrint o IDCalc.formatWithType_icdecl)
+         else (Bug.prettyPrint o IDCalc.format_icdecl))
         title code
 
   fun printTypedCalc flagList title code =
       printCode
         flagList
         (if !Control.printWithType
-         then Control.prettyPrint o (TypedCalc.formatWithType_tpdecl nil)
-         else Control.prettyPrint o (TypedCalc.format_tpdecl nil))
+         then Bug.prettyPrint o (TypedCalc.formatWithType_tpdecl nil)
+         else Bug.prettyPrint o (TypedCalc.format_tpdecl nil))
         title code
 
   fun printRecordCalc flagList title code =
       printCode
         flagList
         (if !Control.printWithType
-         then Control.prettyPrint o (RecordCalc.format_rcdecl nil)
-         else Control.prettyPrint o (RecordCalc.formatWithoutType_rcdecl nil))
+         then Bug.prettyPrint o (RecordCalc.format_rcdecl nil)
+         else Bug.prettyPrint o (RecordCalc.formatWithoutType_rcdecl nil))
         title code
 
   fun printTypedLambda flagList title code =
       printCode
         flagList
         (if !Control.printWithType
-         then Control.prettyPrint o (TypedLambda.formatWithType_tldecl nil)
-         else Control.prettyPrint o (TypedLambda.format_tldecl nil))
+         then Bug.prettyPrint o (TypedLambda.formatWithType_tldecl nil)
+         else Bug.prettyPrint o (TypedLambda.format_tldecl nil))
         title code
 
   fun printBitmapCalc2 flag title code =
       printCode [flag]
                 (if !Control.printWithType
-                 then Control.prettyPrint o BitmapCalc2.formatWithType_bcdecl
-                 else Control.prettyPrint o BitmapCalc2.format_bcdecl)
+                 then Bug.prettyPrint o BitmapCalc2.formatWithType_bcdecl
+                 else Bug.prettyPrint o BitmapCalc2.format_bcdecl)
                 title code
 
   fun printClosureCalc flagList title code =
       printCode flagList
                 (if !Control.printWithType
-                 then Control.prettyPrint o ClosureCalc.formatWithType_program
-                 else Control.prettyPrint o ClosureCalc.format_program)
+                 then Bug.prettyPrint o ClosureCalc.formatWithType_program
+                 else Bug.prettyPrint o ClosureCalc.format_program)
                 title [code]
 
   fun printRuntimeCalc flag title code =
       printCode [flag]
                 (if !Control.printWithType
-                 then Control.prettyPrint o RuntimeCalc.formatWithType_program
-                 else Control.prettyPrint o RuntimeCalc.format_program)
+                 then Bug.prettyPrint o RuntimeCalc.formatWithType_program
+                 else Bug.prettyPrint o RuntimeCalc.format_program)
                 title [code]
 
   fun printANormal flag title code =
       printCode [flag]
                 (if !Control.printWithType
-                 then Control.prettyPrint o ANormal.formatWithType_program
-                 else Control.prettyPrint o ANormal.format_program)
+                 then Bug.prettyPrint o ANormal.formatWithType_program
+                 else Bug.prettyPrint o ANormal.format_program)
                 title [code]
 
   fun printMachineCode flag title code =
       printCode [flag]
-                (Control.prettyPrint o MachineCode.format_program)
+                (Bug.prettyPrint o MachineCode.format_program)
                 title [code]
 
   fun printLLVMIR flag title code =
       printCode [flag]
-                (Control.prettyPrint o LLVMIR.format_program)
+                (Bug.prettyPrint o LLVMIR.format_program)
                 title [code]
 
   fun printLLVMModule flag title module =
@@ -268,32 +268,6 @@ struct
         (typeinfVarE, tpdecs)
       end
 
-(*
-  fun doPrinterGeneration exnConList topEnv tpdecs =
-      let
-        val _ = #start Counter.printerGenerationTimeCounter()
-        val (topEnv, externDecls, printDecls) =
-            PrinterGeneration.generate exnConList topEnv
-        val tpdecs = externDecls @ tpdecs @ printDecls
-        val _ =  #stop Counter.printerGenerationTimeCounter()
-        val _ = printTypedCalc Control.printPrinterGen
-                               "Printer Generated" tpdecs
-      in
-        tpdecs
-      end
-*)
-
-  fun doInstantiate topEnv tpdecs =
-      let
-        val _ = #start Counter.printerGenerationTimeCounter()
-        val newDecls =  Reify.instantiateTopEnv topEnv
-        val tpdecs = tpdecs @ newDecls
-        val _ =  #stop Counter.printerGenerationTimeCounter()
-        val _ = printTypedCalc [Control.printPrinterGen] "Printer Generated" tpdecs
-      in
-        tpdecs
-      end
-
   fun doUncurryOptimization tpdecs =
       let
         val _ = #start Counter.UncurryOptimizationTimeCounter()
@@ -370,17 +344,17 @@ struct
         icdecls
       end
 
-  fun doFFICompilation rcdecs =
+  fun doFFICompilation nameevalTopEnv rcdecs =
       let
         val _ = #start Counter.ffiCompilationTimeCounter()
-        val rcdecs = FFICompilation.compile rcdecs
+        val rcdecs = FFICompilation.compile nameevalTopEnv rcdecs
         val _ =  #stop Counter.ffiCompilationTimeCounter()
         val _ = printRecordCalc [Control.printFFICompile] "FFI Compiled" rcdecs
       in
         rcdecs
       end
 
-  fun doRecordCompilation rcdecs =
+  fun doRecordCompilation nameevalTopEnv rcdecs =
       let
        val _ = #start Counter.recordCompilationTimeCounter()
         val rcdecs = RecordCompilation.compile rcdecs
@@ -564,8 +538,8 @@ struct
 
         val (requireTopEnv, nameevalTopEnv, icdecls) =
             doNameEvaluation context plunit
-        val _ = JSONData.init requireTopEnv
-        val _ = ConstantTerm.init requireTopEnv
+        val externDecls = UserLevelPrimitive.init requireTopEnv
+        val icdecls = icdecls @ externDecls
         val icdecls = doTypedElaboration icdecls
         val icdecls = doVALRECOptimization icdecls
 
@@ -580,17 +554,6 @@ struct
             if !Control.interactiveMode
             then NameEvalEnvUtils.mergeTypeEnv (nameevalTopEnv, typeinfVarEnv)
             else nameevalTopEnv
-
-(*
-        val tpcalc =
-            if !Control.interactiveMode andalso not (!Control.skipPrinter)
-            then doPrinterGeneration exnConList nameevalTopEnv tpcalc
-            else tpcalc
-*)
-        val tpdecs =
-            if !Control.interactiveMode 
-            then doInstantiate nameevalTopEnv tpdecs
-            else tpdecs
 
         val nameevalTopEnv = NameEvalEnvUtils.resetInternalId nameevalTopEnv
 
@@ -611,8 +574,13 @@ struct
                 then raise Return (dependency, STOPPED)
                 else ()
 
-        val rcdecs = doFFICompilation rcdecs
-        val rcdecs = doRecordCompilation rcdecs
+        val rcdecs =
+            if !Control.interactiveMode andalso not (!Control.skipPrinter)
+            then rcdecs @ (ReifyTopEnv.reifyTopEnv nameevalTopEnv)
+            else rcdecs
+
+        val rcdecs = doFFICompilation nameevalTopEnv rcdecs
+        val rcdecs = doRecordCompilation nameevalTopEnv rcdecs
 
         val rcdecs = if !Control.doRCOptimization
                      then doRecordCalcOptimization rcdecs
@@ -705,7 +673,7 @@ struct
               filename
         val _ = #stop Counter.loadFileTimeCounter ()
         val _ = printCode [Control.printLoadFile]
-                          (Control.prettyPrint
+                          (Bug.prettyPrint
                            o AbsynInterface.format_interface_unit)
                           "File Loaded" [abunit]
 
@@ -715,7 +683,7 @@ struct
         val _ =  #stop Counter.elaborationTimeCounter()
         val _ = printWarnings warnings
         val _ = printCode [Control.printElab, Control.printSystemDecls]
-                          (Control.prettyPrint
+                          (Bug.prettyPrint
                            o PatternCalcInterface.format_interface_unit)
                           "Elaborated" [plunit]
       in

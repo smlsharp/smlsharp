@@ -1,30 +1,32 @@
 _require local "../../../basis.smi"
-_require local "../../control/main/Bug.ppg.smi"
-_require local "../../control/main/Loc.ppg.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+
 _require local "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require local "../../builtin2/main/BuiltinTypes.smi"
-_require local "../../name/main/LocalID.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
 _require local "../../runtimetypes/main/RuntimeTypes.ppg.smi"
-_require "../../types/main/Types.ppg.smi"
+_require local "../../runtimetypes/main/TypeLayout2.smi"
 _require local "../../types/main/TypesBasics.smi"
+
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
 
 structure DatatypeLayout =
 struct
+
   datatype taggedLayout =
       TAGGED_RECORD of {tagMap: int SymbolEnv.map}
-    | TAGGED_TAGONLY of {tagMap: int SymbolEnv.map}
     | TAGGED_OR_NULL of {tagMap: int SymbolEnv.map, nullName: Symbol.symbol}
+    | TAGGED_TAGONLY of {tagMap: int SymbolEnv.map}
 
   datatype layout =
       LAYOUT_TAGGED of taggedLayout
-    | LAYOUT_BOOL of {falseName: Symbol.symbol}
-    | LAYOUT_UNIT
-    | LAYOUT_ARGONLY
-    | LAYOUT_ARG_OR_NULL
+    | LAYOUT_ARG_OR_NULL of {wrap: bool}
+    | LAYOUT_SINGLE_ARG of {wrap: bool}
+    | LAYOUT_CHOICE of {falseName: Symbol.symbol}
+    | LAYOUT_SINGLE
     | LAYOUT_REF
 
   val datatypeLayout : Types.tyCon -> layout
-  val needPack : Types.ty -> bool
 
 end

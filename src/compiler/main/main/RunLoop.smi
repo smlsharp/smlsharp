@@ -1,11 +1,12 @@
 _require "../../../basis.smi"
 _require local "../../../config/main/Config.smi"
+_require local "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
 _require local "../../../llvm/main/LLVM.smi"
 _require local "../../../ffi/main/DynamicLink.smi"
 _require local "../../../sql/main/SQLErrors.smi"
-_require local "../../control/main/Loc.ppg.smi"
+
 _require local "../../control/main/Control.ppg.smi"
-_require local "../../control/main/Bug.ppg.smi"
 _require local "../../util/main/Counter.smi"
 _require local "../../usererror/main/UserError.ppg.smi"
 _require "../../toolchain/main/Filename.smi"
@@ -16,7 +17,9 @@ _require "../../toolchain/main/LLVMUtils.smi"
 _require local "../../parser2/main/Parser.smi"
 _require "../../toplevel2/main/Top.smi"
 _require local "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+(*
 _require local "../../interactivePrinter/main/PrintTopEnv.smi"
+*)
 
 structure RunLoop =
 struct

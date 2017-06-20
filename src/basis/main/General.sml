@@ -13,8 +13,6 @@ structure String = SMLSharp_Builtin.String
 
 structure General =
 struct
-  type unit = unit
-  type exn = exn
   datatype order = EQUAL | GREATER | LESS
   exception Bind = Bind
   exception Chr = Chr
@@ -77,4 +75,6 @@ struct
         buf
       end
 
+  type unit = unit
+  type exn = exn
 end

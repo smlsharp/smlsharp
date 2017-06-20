@@ -105,6 +105,10 @@ in
       | ICRECORD_SELECTOR _ => VarID.Set.empty
       | ICSELECT (label,exp, loc) => getFreeIdsInExp exp
       | ICSEQ (expList,loc) => getFreeIdsInExpList expList
+      | ICFOREACH {data, pred, iterator, loc} =>
+        getFreeIdsInExpList [data, pred, iterator]
+      | ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
+        getFreeIdsInExpList [data, whereParam, pred, iterator]
       | ICFFIIMPORT (exp,ty,loc) => getFreeIdsInFFIFun exp
       | ICFFIAPPLY (cconv,funExp,args,retTy,loc) =>
         foldl (fn (ICFFIARG (exp, ty, loc), z) =>
@@ -114,11 +118,13 @@ in
                 | (ICFFIARGSIZEOF (ty, NONE, loc), z) => z)
               (getFreeIdsInFFIFun funExp)
               args
-      | ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
-        getFreeIdsInExp columnInfoFnExp
+      | ICSQLSCHEMA {tyFnExp, ty, loc} =>
+        getFreeIdsInExp tyFnExp
       | ICJOIN (exp1, exp2, loc) =>
         VarID.Set.union(getFreeIdsInExp exp1, getFreeIdsInExp exp2)
-      | ICJSON _ => raise Bug.Bug "ICJSON"
+      | ICJSON (exp, ty, loc) => getFreeIdsInExp exp
+      | ICTYPEOF (ty, loc) => VarID.Set.empty
+      | ICREIFYTY (ty, loc) => VarID.Set.empty
 
   and getFreeIdsInFFIFun ffiFun =
       case ffiFun of

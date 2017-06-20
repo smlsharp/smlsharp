@@ -11,8 +11,7 @@ local
 
   type ty = T.ty
   type longsymbol = Symbol.longsymbol
-  type btvKind = {tvarKind : T.tvarKind, eqKind : T.eqKind}
-  type btvEnv = btvKind BoundTypeVarID.Map.map
+  type btvEnv = T.kind BoundTypeVarID.Map.map
   type varInfo = T.varInfo
 
   type btvMap = BoundTypeVarID.id BoundTypeVarID.Map.map
@@ -425,6 +424,28 @@ local
              expTyList = map copyT expTyList,
              loc = loc
             }
+        | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc}  =>
+          TC.TPFOREACH
+            {data = copy data, 
+             dataTy = copyT dataTy, 
+             iterator = copy iterator,
+             iteratorTy = copyT iteratorTy, 
+             pred = copy pred, 
+             predTy = copyT predTy, 
+             loc=loc
+            }
+        | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc}  =>
+          TC.TPFOREACHDATA
+            {data = copy data, 
+             dataTy = copyT dataTy, 
+             whereParam = copy whereParam,
+             whereParamTy = copyT whereParamTy, 
+             iterator = copy iterator,
+             iteratorTy = copyT iteratorTy, 
+             pred = copy pred, 
+             predTy = copyT predTy, 
+             loc=loc
+            }
         | TC.TPSIZEOF (ty, loc) =>
           TC.TPSIZEOF (copyT ty, loc)
         | TC.TPTAPP {exp, expTy, instTyList, loc} =>
@@ -438,6 +459,21 @@ local
         (* the following should have been eliminate *)
         | TC.TPRECFUNVAR {arity, var} =>
           raise bug "TPRECFUNVAR in copy"
+        | TC.TPJOIN {ty, args = (arg1, arg2), argtys = (argty1, argty2), loc} =>
+          TC.TPJOIN
+            {ty = copyT ty,
+             args = (copy arg1, copy arg2),
+             argtys = (copyT argty1, copyT argty2),
+             loc = loc}
+        | TC.TPJSON {exp,ty,coerceTy,loc} =>
+          TC.TPJSON {exp=copy exp,
+                     ty=copyT ty,
+                     coerceTy=copyT coerceTy,
+                     loc=loc}
+        | TC.TPTYPEOF (ty,loc) =>
+          TC.TPTYPEOF (copyT ty,loc)
+        | TC.TPREIFYTY (ty,loc) =>
+          TC.TPREIFYTY (copyT ty,loc)
         )
           handle DuplicateBtv =>
                  (P.print "DuplicateBtv in copyExp\n";

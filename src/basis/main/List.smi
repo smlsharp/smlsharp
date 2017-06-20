@@ -2,7 +2,6 @@ _require "./General.smi"
 
 structure List =
 struct
-  datatype list = datatype list
   exception Empty
   val null : 'a list -> bool
   val length : 'a list -> int
@@ -30,4 +29,5 @@ struct
   val tabulate : int * (int -> 'a) -> 'a list
   val collate : ('a * 'a -> General.order) -> 'a list * 'a list
                 -> General.order
+  datatype list = datatype list
 end

@@ -109,8 +109,6 @@ local
        spine
 in
 
-  val dummyTy = TIU.nextDummyTy ()
-
   fun matchToFnCaseTerm  loc {ruleList = nil,...} =
       raise
         Bug.Bug
@@ -395,6 +393,43 @@ in
                   spine,
                   loc)
       end
+    | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+      let
+        val newData = uncurryExp  nil data
+        val newIterator = uncurryExp  nil iterator
+        val newPred = uncurryExp  nil pred
+      in
+        makeApply (TC.TPFOREACH 
+                     {data = newData, 
+                      dataTy = dataTy,
+                      iterator = newIterator, 
+                      iteratorTy = iteratorTy,
+                      pred = newPred, 
+                      predTy = predTy,
+                      loc = loc},
+                   spine,
+                   loc)
+      end
+    | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+      let
+        val newData = uncurryExp  nil data
+        val newWhereParam = uncurryExp  nil whereParam
+        val newIterator = uncurryExp  nil iterator
+        val newPred = uncurryExp  nil pred
+      in
+        makeApply (TC.TPFOREACHDATA
+                     {data = newData, 
+                      dataTy = dataTy,
+                      whereParam = newWhereParam, 
+                      whereParamTy = whereParamTy,
+                      iterator = newIterator, 
+                      iteratorTy = iteratorTy,
+                      pred = newPred, 
+                      predTy = predTy,
+                      loc = loc},
+                   spine,
+                   loc)
+      end
     | TC.TPMONOLET {binds, bodyExp, loc} =>
       let
         val newBinds = map (fn (v,exp) => (v, uncurryExp  nil exp))binds
@@ -522,6 +557,22 @@ in
                 loc)
       
     | TC.TPSIZEOF (_,loc) => makeApply (tpexp, spine, loc)
+    | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+      makeApply (TC.TPJOIN {ty = ty,
+                            args = (uncurryExp nil arg1, uncurryExp nil arg2),
+                            argtys = argtys,
+                            loc = loc},
+                 spine,
+                 loc)
+    | TC.TPTYPEOF (_,loc) => makeApply (tpexp, spine, loc)
+    | TC.TPREIFYTY (_,loc) => makeApply (tpexp, spine, loc)
+    | TC.TPJSON {exp,ty,coerceTy,loc} =>
+      makeApply(TC.TPJSON {exp=uncurryExp nil exp,
+                           ty=ty,
+                           coerceTy=coerceTy,
+                           loc=loc},
+                spine,
+                loc)
 
   and uncurryDecl tpdecl = 
       case tpdecl of

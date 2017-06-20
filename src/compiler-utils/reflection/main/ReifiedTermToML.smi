@@ -1,0 +1,20 @@
+_require local "../../../basis.smi"
+_require local "../../../config/main/PointerSize.smi"
+_require local "../../../ffi/main/Pointer.smi"
+_require local "../../../compiler/bitmapcompilation2/main/RecordLayout.smi"
+_require local "../../../compiler/bitmapcompilation2/main/SingletonTyEnv.smi"
+_require local "../../../compiler/runtimetypes/main/TypeLayout2.smi"
+_require local "../../symbols/main/RecordLabel.smi"
+_require local "../../symbols/main/Loc.ppg.smi"
+_require local "../../debug/main/Bug.ppg.smi"
+_require local "./ReifiedTy.ppg.smi"
+
+_require local "../../env/main/SEnv.smi"
+_require local "../../ids/main/LocalID.smi"
+
+_require "./ReifiedTerm.ppg.smi"
+
+structure ReifiedTermToML =
+struct
+  val reifiedTermToML : ['a#reify. ReifiedTerm.reifiedTerm -> 'a]
+end

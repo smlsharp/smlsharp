@@ -37,8 +37,13 @@ struct
       case TypesBasics.derefTy ty of
         ty as T.BOUNDVARty tid =>
         (case BoundTypeVarID.Map.find (btvEnv, tid) of
-           SOME {tvarKind=T.REC _, ...} =>
-           SOME (RC.RCTAGOF (ty, loc))
+           SOME (T.KIND {tvarKind, ...}) =>
+           (case tvarKind of
+              T.UNIV => NONE
+            | T.REC _ => SOME (RC.RCTAGOF (ty, loc))
+            | T.BOXED => SOME (RC.RCTAGOF (ty, loc))
+            | T.OPRIMkind _ => NONE
+            | T.OCONSTkind _ => NONE)
          | _ => NONE)
       | _ => SOME (RC.RCTAGOF (ty, loc))
 
@@ -46,8 +51,13 @@ struct
       case TypesBasics.derefTy ty of
         ty as T.BOUNDVARty tid =>
         (case BoundTypeVarID.Map.find (btvEnv, tid) of
-           SOME {tvarKind=T.REC _, ...} =>
-           SOME (RC.RCSIZEOF (ty, loc))
+           SOME (T.KIND {tvarKind, ...}) =>
+           (case tvarKind of
+              T.UNIV => NONE
+            | T.REC _ => SOME (RC.RCSIZEOF (ty, loc))
+            | T.BOXED => SOME (RC.RCSIZEOF (ty, loc))
+            | T.OPRIMkind _ => NONE
+            | T.OCONSTkind _ => NONE)
          | _ => NONE)
       | _ => SOME (RC.RCSIZEOF (ty, loc))
 

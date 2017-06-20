@@ -1,6 +1,7 @@
 _require local "../../../basis.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
+
 _require "../../../smlformat-lib.smi"
-_require local "../../util/main/SmlppgUtil.ppg.smi"
 
 structure FFIAttributes =
 struct

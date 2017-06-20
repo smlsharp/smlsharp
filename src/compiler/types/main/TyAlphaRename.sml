@@ -11,8 +11,7 @@ local
 
   type ty = T.ty
   type longsymbol = Symbol.longsymbol
-  type btvKind = {tvarKind : T.tvarKind, eqKind : T.eqKind}
-  type btvEnv = btvKind BoundTypeVarID.Map.map
+  type btvEnv = T.kind BoundTypeVarID.Map.map
 
   type btvMap = BoundTypeVarID.id BoundTypeVarID.Map.map
   val emptyBtvMap = BoundTypeVarID.Map.empty
@@ -67,7 +66,7 @@ local
             )
             (btvMap, BoundTypeVarID.Map.empty)
             btvEnv
-        val btvEnv = BoundTypeVarID.Map.map (copyBtvkind btvMap) btvEnv
+        val btvEnv = BoundTypeVarID.Map.map (copyKind btvMap) btvEnv
       in
         (btvMap, btvEnv)
       end
@@ -92,6 +91,8 @@ local
       | T.INDEXty (string, ty) => T.INDEXty (string, copyTy btvMap ty)
       | T.TAGty ty => T.TAGty (copyTy btvMap ty)
       | T.SIZEty ty => T.SIZEty (copyTy btvMap ty)
+      | T.TYPEty ty => T.TYPEty (copyTy btvMap ty)
+      | T.REIFYty ty => T.TYPEty (copyTy btvMap ty)
   and copyOverloadMatch (btvMap:btvMap) overloadMatch =
       case overloadMatch  of
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
@@ -126,10 +127,8 @@ local
         raise Bug.Bug "copyTy: BACKENDty"
       | T.ERRORty => 
          ty
-      | T.DUMMYty dummyTyID => 
-        ty
-      | T.DUMMY_RECORDty {id, fields} =>
-        T.DUMMY_RECORDty {id=id, fields=RecordLabel.Map.map (copyTy btvMap) fields}
+      | T.DUMMYty (dummyTyID, kind) => 
+        T.DUMMYty (dummyTyID, copyKind btvMap kind)
       | T.TYVARty _ => raise bug "TYVARty in AlphaRename"
       | T.BOUNDVARty btv => 
         T.BOUNDVARty (evalBtv btvMap btv)
@@ -178,11 +177,11 @@ local
           val (btvMap, boundtvars) = newBtvEnv btvMap boundtvars
           val constraints = List.map
                                 (fn c =>
-                                    case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                    case c of T.JOIN {res, args = (arg1, arg2), loc} =>
                                       T.JOIN
                                           {res = copyTy btvMap res,
                                            args = (copyTy btvMap arg1,
-                                                   copyTy btvMap arg2)})
+                                                   copyTy btvMap arg2), loc=loc})
                                 constraints
           val _ = P.print "newBtvEnv\n"
         in
@@ -194,11 +193,11 @@ local
             }
         end
       end
-  and copyBtvkind btvMap {tvarKind, eqKind} =
+  and copyKind btvMap (T.KIND {tvarKind, eqKind, dynKind, reifyKind, subkind}) =
       let
         val tvarKind = copyTvarKind btvMap tvarKind
       in
-        {tvarKind=tvarKind, eqKind=eqKind}
+        T.KIND {tvarKind=tvarKind, eqKind=eqKind, subkind=subkind, dynKind=dynKind, reifyKind=reifyKind}
       end
   and copyTvarKind btvMap tvarKind =
       case tvarKind of
@@ -229,9 +228,7 @@ local
              operators
           }
       | T.UNIV => T.UNIV
-      | T.JSON => T.JSON
       | T.BOXED => T.BOXED
-      | T.UNBOXED => T.UNBOXED
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map (copyTy btvMap) fields)
   and copyDtyKind btvMap dtyKind =

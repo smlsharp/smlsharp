@@ -1,15 +1,16 @@
-_require "../../../basis.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+
+_require local "../../absyn/main/AbsynConst.ppg.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+
 _require "../../../smlformat-lib.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../recordcalc/main/RecordCalc.ppg.smi"
-_require "../../typedcalc/main/TypedCalc.ppg.smi"
-_require "../../typedcalc/main/TypedCalcUtils.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
-_require "../../types/main/Types.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
 _require "../../usererror/main/UserError.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
 _require "./MatchData.smi"
 
 structure MatchError = 

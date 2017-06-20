@@ -1,0 +1,56 @@
+_require local "../../../basis.smi"
+_require local "../../../compiler/userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../env/main/SEnv.smi"
+
+_require local "./ReifyUtils.smi"
+
+_require "../../symbols/main/Loc.ppg.smi"
+_require "../../ids/main/LocalID.smi"
+_require "../../symbols/main/Symbol.ppg.smi"
+_require "../../../compiler/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../compiler/types/main/Types.ppg.smi"
+_require "../../symbols/main/RecordLabel.smi"
+
+structure ReifiedTyData =
+struct
+  type loc = Loc.loc
+  type ty = Types.ty
+  type btvId = BoundTypeVarID.id
+  type typId = TypID.id
+  type varInfo = RecordCalc.varInfo
+  type exVarInfo = RecordCalc.exVarInfo
+  type conInfo = RecordCalc.conInfo
+  type exnCon = RecordCalc.exnCon
+  type exp = RecordCalc.rcexp
+  type label = RecordLabel.label
+  type expTy = {exp:exp, ty:ty}
+
+  val BtvIdTy : unit -> ty
+  val TypIdTy : unit -> ty
+  val LongsymbolTy : unit -> ty
+  val PosTy : unit -> ty
+  val ConSetTy : unit -> ty
+  val ConSetEnvTy : unit -> ty
+  val TyRepTy : unit -> ty
+  val LabelTy : unit -> ty
+  val ReifiedTyLabelMapTy : unit -> ty
+  val ReifiedTyTy : unit -> ty
+  val IdstatusTy : unit -> ty
+  val EnvTy : unit -> ty
+
+  val SEnvMapTy : ty -> ty
+  val TypIDMapMapTy : ty -> ty
+  val BounTypeVarIDMapMapTy : ty -> ty
+  val RecordLabelMapMapTy : ty -> ty
+
+
+  val LabelAsString : loc -> RecordLabel.label -> expTy
+  val SymbolAsString : loc -> Symbol.symbol -> expTy
+
+  val Loc : loc -> expTy
+  val BtvId : loc -> btvId -> expTy
+  val TypId : loc -> typId -> expTy
+  val Longsymbol : loc -> Symbol.longsymbol -> expTy
+  val RecordLabelFromString : loc -> string -> expTy
+
+end

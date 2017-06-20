@@ -129,7 +129,13 @@ local
         (visitExp exp; visitExp indexExp)
       | RC.RCSEQ {expList, expTyList, loc} =>
         visitExpList expList
+      | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+        visitExpList [data, iterator, pred]
+      | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+        visitExpList [data, whereParam, iterator, pred]
       | RC.RCSIZEOF (ty, loc) => ()
+      | RC.RCTYPEOF (ty, loc) => ()
+      | RC.RCREIFYTY (ty, loc) => ()
       | RC.RCTAPP {exp, expTy, instTyList, loc} =>
         visitExp exp
       | RC.RCVAR varInfo =>
@@ -143,12 +149,17 @@ local
         (visitExpList argExpList;
          visitExp funExp)
       | RC.RCINDEXOF (string, ty, loc) => ()
-      | RC.RCSWITCH {branches:(Absyn.constant * rcexp) list, defaultExp:rcexp,
+      | RC.RCSWITCH {branches:(RC.constant * rcexp) list, defaultExp:rcexp,
                      expTy:Types.ty, loc:Loc.loc, switchExp:rcexp, resultTy} =>
         (visitExpList (map #2 branches);
          visitExp defaultExp;
          visitExp switchExp)
       | RC.RCTAGOF (ty, loc) => ()
+      | RC.RCJOIN {ty,args=(arg1,arg2),argTys,loc} =>
+        (visitExp arg1;
+         visitExp arg2)
+      | RC.RCJSON {exp,ty,coerceTy,loc} =>
+        visitExp exp
   and visitRecordField exp =
       case exp of
         RC.RCCONSTANT {const, loc, ty} => ()

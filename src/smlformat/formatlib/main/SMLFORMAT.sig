@@ -15,7 +15,7 @@ sig
 
   structure BasicFormatters : BASIC_FORMATTERS
 
-  sharing type FormatExpression.expression = BasicFormatters.expression
+  type format = FormatExpression.expression list
 
   (***************************************************************************)
 

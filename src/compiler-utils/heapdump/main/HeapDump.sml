@@ -27,6 +27,7 @@ struct
          word ref,
          word ref,
          Word8.word ref) -> ()
+val sml_dump_heap = fn _ => raise Fail "FIXME"
 
   val free =
       _import "free"

@@ -1,35 +1,31 @@
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+_require local "../../util/main/TermFormat.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+_require local "../../types/main/TypesBasics.smi"
+_require local "../../types/main/IDCalc.ppg.smi"
+
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require local "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require local "../../control/main/Bug.ppg.smi"
-_require local "../../name/main/LocalID.smi"
-_require local "../../util/main/TermFormat.smi"
-_require local "../../usererror/main/UserError.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require local "../../builtin2/main/BuiltinTypes.smi"
+_require "../../absyn/main/AbsynConst.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
-_require local "../../types/main/TypesBasics.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
-
-_require local "../../control/main/Loc.ppg.smi"
-_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
-_require local "../../types/main/IDCalc.ppg.smi"
-_require local "../../types/main/EvalIty.smi"
 
 structure ConstantTerm =
 struct
   datatype constant =
-      INT32 of Int32.int
+      INT8 of Int8.int
+    | INT16 of Int16.int
+    | INT32 of Int32.int
     | INT64 of Int64.int
     | INTINF of IntInf.int
+    | WORD8 of Word8.word
+    | WORD16 of Word16.word
     | WORD32 of Word32.word
     | WORD64 of Word64.word
-    | WORD8 of Word8.word
     | STRING of string
-    | REAL of string
-    | FLOAT of string
+    | REAL64 of string
+    | REAL32 of string
     | CHAR of char
     | UNIT 
     | NULLPOINTER
@@ -39,15 +35,15 @@ struct
       : constant -> SMLFormat.FormatExpression.expression list
   exception TooLargeConstant
   val compare : constant * constant -> order
-  val constTy : Absyn.constant -> Types.ty
+  val constTy : AbsynConst.constant -> Types.ty
   val typeOf : constant -> Types.ty
   val fixConst
       : {constTerm : constant -> 'a,
-         recordTerm : 'a RecordLabel.Map.map * Types.ty -> 'a,
+         tupleTerm : ('a * Types.ty) list -> 'a,
          conTerm : {con: RecordCalc.conInfo, instTyList: Types.ty list,
-                    arg: 'a option} -> 'a}
-        -> Absyn.constant * Types.ty
+                    arg: 'a option} -> 'a,
+	 fnTerm : Types.ty * ('a * Types.ty) -> 'a}
+        -> AbsynConst.constant * Types.ty
         -> 'a
 
-  val init : NameEvalEnv.topEnv -> unit
 end

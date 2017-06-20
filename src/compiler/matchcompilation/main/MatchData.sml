@@ -6,7 +6,7 @@
 structure MatchData = 
 struct
 local
-  structure A = Absyn
+  structure A = AbsynConst
   structure T = Types
   structure TC = TypedCalc
   structure RC = RecordCalc
@@ -14,7 +14,7 @@ local
 in
   datatype kind = Bind | Match | Handle of RC.varInfo
     
-  type const = Absyn.constant
+  type const = A.constant
   type conInfo = RC.conInfo
   type exnCon = RC.exnCon
 

@@ -14,4 +14,6 @@ struct
       case IEEEReal.fromString x of
         SOME x => x
       | NONE => raise SMLSharp_SQL_Errors.Format
+
+  val compare = String.compare
 end

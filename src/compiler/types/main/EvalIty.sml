@@ -123,7 +123,7 @@ in
         )
   and evalIty context ity =
        case ity of
-         I.TYWILD => T.newty {tvarKind=T.UNIV, eqKind=Absyn.NONEQ, utvarOpt=NONE}
+         I.TYWILD => T.newty T.univKind
        | I.TYERROR => T.ERRORty
        | I.TYVAR tvar =>
          (case TvarMap.find(#tvarEnv context, tvar) of
@@ -135,22 +135,28 @@ in
             )
          )
        | I.TYRECORD tyMap => T.RECORDty (RecordLabel.Map.map (evalIty context) tyMap)
-       | I.TYCONSTRUCT {tfun, args} =>
+       | I.TYCONSTRUCT {tfun, args} => 
+(*
+  2016-11-02 JSON.null 大堀：に関する以下のad hocな対応は必要ないと思われる．
+*)
          (* JSON.nullを'a#json optionに変換; circulr referenceのためbuiltintypesが使えないことに
             ともない，ad-hocな対応;
           *)
          let
-           fun isJsonNullTfun tfun = 
+           fun isJsonNullTfun tfun = false
+           (* 2016-10-24 sasaki: UserLevelPrimitiveとの循環参照を避けるための一時的な変更
                (case tfun of
                   I.TFUN_VAR (ref (I.TFUN_DTY {longsymbol, ...})) =>
                   if map Symbol.symbolToString longsymbol = ["JSON", "null"] andalso
-                     TypID.eq(I.tfunId tfun, I.tfunId (JSONData.nullTfun())) then
+                     TypID.eq(I.tfunId tfun, I.tfunId (UserLevelPrimitive.JSON_null_tfun())) then
                     true 
                   else false
                 | _ => false
                )
                handle Bug.Bug _ => false
+            *)
          in
+(* 2016-10-24 sasaki: isJsonNullTfunは常にfalseを返すようにしたため変更
            if isJsonNullTfun tfun then
              let
 (* 
@@ -163,7 +169,7 @@ in
                             (BoundTypeVarID.Map.empty,
                              btvid,
                              {tvarKind = T.JSON,
-                              eqKind = Absyn.NONEQ}
+                              eqKind = T.NONEQ}
                             )
                    handle e => raise e
                val polybody = T.CONSTRUCTty{tyCon = tyCon, args = [T.BOUNDVARty btvid]}
@@ -172,14 +178,15 @@ in
                val arg = T.newtyRaw
                            {lambdaDepth = T.infiniteDepth,
                             tvarKind = T.JSON,
-                            eqKind = Absyn.NONEQ,
+                            eqKind = T.NONEQ,
                             occurresIn = nil,
                             utvarOpt = NONE}
-               val tyCon = evalTfun context (JSONData.optionTfun())
+               val tyCon = evalTfun context (UserLevelPrimitive.JSON_option_tfun())
              in
                T.CONSTRUCTty{tyCon = tyCon, args = [arg]}
              end
            else
+*)
              let
                val args = map (evalIty context) args
                val tyCon = evalTfun context tfun
@@ -235,7 +242,7 @@ in
                  freeTvs
            val btvs =
                IEnv.foldl
-                 (fn (r as ref(T.TVAR (k as {id, ...})), btvs) =>
+                 (fn (r as ref(T.TVAR (k as {id, kind, ...})), btvs) =>
                      let 
                        val btvid = BoundTypeVarID.generate ()
                      in
@@ -246,10 +253,7 @@ in
                            (
                             btvs,
                             btvid,
-                            {
-                             tvarKind = (#tvarKind k),
-                             eqKind = (#eqKind k)
-                            }
+                            kind
                            )
                         )
                        )
@@ -263,7 +267,7 @@ in
        | I.INFERREDTY ty => ty
   and evalKindedTvarList (context as {tvarEnv, varEnv, oprimEnv}) kindedTvarList =
       let
-        fun genBtv ((tvar as {eq,...}, kind), (btvKindList, tvarEnv)) = 
+        fun genBtv ((tvar as {eq, ...}, kind), (btvKindList, tvarEnv)) = 
             let
               val btvId = BoundTypeVarID.generate()
               val btvTy = T.BOUNDVARty btvId
@@ -274,20 +278,28 @@ in
             btvId must be generated in the order of kindedTvarList *)
         val (btvKindListRev, tvarEnv) = foldl genBtv (nil, tvarEnv) kindedTvarList
         val newContext = {tvarEnv = tvarEnv, varEnv=varEnv, oprimEnv=oprimEnv}
-        fun evalTvarKind context kind : T.tvarKind  =
+        fun evalKind context kind : {tvarKind:T.tvarKind, dynKind: bool, reifyKind:bool, subkind:T.subkind}  =
             case kind of
-              I.UNIV => T.UNIV
-            | I.REC tyFields => T.REC (RecordLabel.Map.map (evalIty newContext) tyFields)
-            | I.JSON => T.JSON
-            | I.BOXED => T.BOXED
-            | I.UNBOXED => T.UNBOXED
+              I.UNIV => {tvarKind = T.UNIV, dynKind = false, reifyKind=false, subkind = T.ANY}
+            | I.REC tyFields => 
+              {tvarKind = T.REC (RecordLabel.Map.map (evalIty newContext) tyFields), 
+               dynKind = false,
+               reifyKind = false,
+               subkind = T.ANY}
+            | I.JSON {dynKind} => {tvarKind = T.UNIV, dynKind = dynKind, reifyKind=false, subkind = T.JSON}
+            | I.REIFY => {tvarKind = T.UNIV, dynKind = false, reifyKind=true, subkind = T.ANY}
+            | I.BOXED => {tvarKind = T.BOXED, dynKind = false, reifyKind=false, subkind = T.ANY}
+            | I.UNBOXED => {tvarKind = T.UNIV, dynKind = false, reifyKind=false, subkind = T.UNBOXED}
         val btvEnv =
             foldl
             (fn ((btvId, eq, kind), btvEnv) =>
                 let
-                  val kind = evalTvarKind newContext kind
+                  val {tvarKind, dynKind, reifyKind, subkind} = evalKind newContext kind
                 in
-                  BoundTypeVarID.Map.insert (btvEnv,btvId,{eqKind=eq,tvarKind=kind})
+                  BoundTypeVarID.Map.insert
+                    (btvEnv,
+                     btvId,
+                     T.KIND {eqKind=eq, dynKind=dynKind, reifyKind=reifyKind, subkind = subkind, tvarKind=tvarKind})
                 end
             )
             BoundTypeVarID.Map.empty

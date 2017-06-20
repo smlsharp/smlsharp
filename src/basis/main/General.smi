@@ -1,7 +1,5 @@
 structure General =
 struct
-  type unit = unit
-  type exn = exn
   exception Bind = Bind
   exception Match = Match
   exception Chr = Chr
@@ -20,4 +18,6 @@ struct
   val o = o
   val before = before
   val ignore = ignore
+  type unit = unit
+  type exn = exn
 end

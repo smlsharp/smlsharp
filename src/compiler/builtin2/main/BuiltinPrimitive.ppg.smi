@@ -5,68 +5,111 @@ structure BuiltinPrimitive =
 struct
   datatype primitiveMachineCode =
       Array_turnIntoVector
-    | Float_abs
-    | Float_add
-    | Float_div
-    | Float_equal
-    | Float_unorderedOrEqual
-    | Float_gt
-    | Float_gteq
-    | Float_isNan
-    | Float_lt
-    | Float_lteq
-    | Float_mul
-    | Float_rem
-    | Float_sub
-    | Float_toInt32_unsafe
-    | Float_toInt64_unsafe
-    | Float_toWord32_unsafe
-    | Float_toWord64_unsafe
-    | Float_toReal
     | IdentityEqual
+    | Int8_add_unsafe
+    | Int8_add_overflowCheck
+    | Int8_gt
+    | Int8_gteq
+    | Int8_lt
+    | Int8_lteq
+    | Int8_mul_unsafe
+    | Int8_mul_overflowCheck
+    | Int8_quot_unsafe
+    | Int8_rem_unsafe
+    | Int8_sub_unsafe
+    | Int8_sub_overflowCheck
+    | Int8_toReal64
+    | Int8_toReal32
+    | Int16_add_unsafe
+    | Int16_add_overflowCheck
+    | Int16_gt
+    | Int16_gteq
+    | Int16_lt
+    | Int16_lteq
+    | Int16_mul_unsafe
+    | Int16_mul_overflowCheck
+    | Int16_quot_unsafe
+    | Int16_rem_unsafe
+    | Int16_sub_unsafe
+    | Int16_sub_overflowCheck
+    | Int16_toReal64
+    | Int16_toReal32
     | Int32_add_unsafe
+    | Int32_add_overflowCheck
     | Int32_gt
     | Int32_gteq
     | Int32_lt
     | Int32_lteq
     | Int32_mul_unsafe
+    | Int32_mul_overflowCheck
     | Int32_quot_unsafe
     | Int32_rem_unsafe
     | Int32_sub_unsafe
-    | Int32_toReal
-    | Int32_toFloat_unsafe
+    | Int32_sub_overflowCheck
+    | Int32_toReal64
+    | Int32_toReal32
     | Int64_add_unsafe
+    | Int64_add_overflowCheck
     | Int64_gt
     | Int64_gteq
     | Int64_lt
     | Int64_lteq
     | Int64_mul_unsafe
+    | Int64_mul_overflowCheck
     | Int64_quot_unsafe
     | Int64_rem_unsafe
     | Int64_sub_unsafe
-    | Int64_toReal_unsafe
-    | Int64_toFloat_unsafe
+    | Int64_sub_overflowCheck
+    | Int64_toReal64
+    | Int64_toReal32
     | ObjectSize
     | Ptr_advance
+    | Ptr_fromWord64
     | Ptr_toWord64
-    | Real_abs
-    | Real_add
-    | Real_div
-    | Real_equal
-    | Real_unorderedOrEqual
-    | Real_gt
-    | Real_gteq
-    | Real_isNan
-    | Real_lt
-    | Real_lteq
-    | Real_mul
-    | Real_rem
-    | Real_sub
-    | Real_toInt32_unsafe
-    | Real_toInt64_unsafe
-    | Real_toWord32_unsafe
-    | Real_toWord64_unsafe
-    | Real_toFloat_unsafe
+    | Real32_abs
+    | Real32_add
+    | Real32_div
+    | Real32_equal
+    | Real32_unorderedOrEqual
+    | Real32_gt
+    | Real32_gteq
+    | Real32_isNan
+    | Real32_lt
+    | Real32_lteq
+    | Real32_mul
+    | Real32_rem
+    | Real32_sub
+    | Real32_toInt8_unsafe
+    | Real32_toInt16_unsafe
+    | Real32_toInt32_unsafe
+    | Real32_toInt64_unsafe
+    | Real32_toWord8_unsafe
+    | Real32_toWord16_unsafe
+    | Real32_toWord32_unsafe
+    | Real32_toWord64_unsafe
+    | Real32_toReal64
+    | Real64_abs
+    | Real64_add
+    | Real64_div
+    | Real64_equal
+    | Real64_unorderedOrEqual
+    | Real64_gt
+    | Real64_gteq
+    | Real64_isNan
+    | Real64_lt
+    | Real64_lteq
+    | Real64_mul
+    | Real64_rem
+    | Real64_sub
+    | Real64_toInt8_unsafe
+    | Real64_toInt16_unsafe
+    | Real64_toInt32_unsafe
+    | Real64_toInt64_unsafe
+    | Real64_toWord8_unsafe
+    | Real64_toWord16_unsafe
+    | Real64_toWord32_unsafe
+    | Real64_toWord64_unsafe
+    | Real64_toReal32_unsafe
     | RuntimePolyEqual
     | Word8_add
     | Word8_andb
@@ -82,11 +125,33 @@ struct
     | Word8_orb
     | Word8_rshift_unsafe
     | Word8_sub
+    | Word8_toWord16
+    | Word8_toWord16X
     | Word8_toWord32
     | Word8_toWord32X
     | Word8_toWord64
     | Word8_toWord64X
     | Word8_xorb
+    | Word16_add
+    | Word16_andb
+    | Word16_arshift_unsafe
+    | Word16_div_unsafe
+    | Word16_gt
+    | Word16_gteq
+    | Word16_lshift_unsafe
+    | Word16_lt
+    | Word16_lteq
+    | Word16_mod_unsafe
+    | Word16_mul
+    | Word16_orb
+    | Word16_rshift_unsafe
+    | Word16_sub
+    | Word16_toWord8
+    | Word16_toWord32
+    | Word16_toWord32X
+    | Word16_toWord64
+    | Word16_toWord64X
+    | Word16_xorb
     | Word32_add
     | Word32_andb
     | Word32_arshift_unsafe
@@ -102,6 +167,7 @@ struct
     | Word32_rshift_unsafe
     | Word32_sub
     | Word32_toWord8
+    | Word32_toWord16
     | Word32_toWord64
     | Word32_toWord64X
     | Word32_xorb
@@ -120,13 +186,16 @@ struct
     | Word64_rshift_unsafe
     | Word64_sub
     | Word64_toWord8
+    | Word64_toWord16
     | Word64_toWord32
     | Word64_xorb
   datatype primitiveRuntimeCalc =
       Array_alloc_unsafe
     | Array_copy_unsafe
+    | Boxed_copy
     | Boxed_deref
-    | Ptr_dup
+    | Boxed_store
+    | Record_alloc_unsafe
     | Vector_alloc_unsafe
     | M of primitiveMachineCode
   datatype primitiveTypedLambda =
@@ -162,10 +231,29 @@ struct
     | NotEqual
     | Exn_Name
     | Exn_Message
-    | Float_neg
-    | Float_notEqual
-    | Float_trunc
     | Ignore
+    | Int8_abs
+    | Int8_add
+    | Int8_div
+    | Int8_fromInt32
+    | Int8_mod
+    | Int8_mul
+    | Int8_neg
+    | Int8_quot
+    | Int8_rem
+    | Int8_sub
+    | Int8_toInt32
+    | Int16_abs
+    | Int16_add
+    | Int16_div
+    | Int16_fromInt32
+    | Int16_mod
+    | Int16_mul
+    | Int16_neg
+    | Int16_quot
+    | Int16_rem
+    | Int16_sub
+    | Int16_toInt32
     | Int32_abs
     | Int32_add
     | Int32_div
@@ -186,9 +274,12 @@ struct
     | Int64_rem
     | Int64_sub
     | Int64_toInt32
-    | Real_neg
-    | Real_notEqual
-    | Real_trunc
+    | Real32_neg
+    | Real32_notEqual
+    | Real32_trunc
+    | Real64_neg
+    | Real64_notEqual
+    | Real64_trunc
     | Ref_assign
     | Ref_deref
     | String_alloc
@@ -206,6 +297,16 @@ struct
     | Word8_rshift
     | Word8_toInt32
     | Word8_toInt32X
+    | Word16_arshift
+    | Word16_div
+    | Word16_fromInt32
+    | Word16_lshift
+    | Word16_mod
+    | Word16_neg
+    | Word16_notb
+    | Word16_rshift
+    | Word16_toInt32
+    | Word16_toInt32X
     | Word32_arshift
     | Word32_div
     | Word32_lshift

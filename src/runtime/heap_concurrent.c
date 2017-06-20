@@ -792,17 +792,6 @@ struct subheap {
 
 static struct subheap global_subheaps[BLOCKSIZE_MAX_LOG2 + 1];
 
-#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
-static void
-collect_subheaps_sync1(struct segment **segarray)
-{
-	unsigned int i;
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++)
-		segarray[i] = stack_top(&global_subheaps[i].filled);
-}
-
-#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
-
 #if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
 static void
 collect_subheap(struct subheap *subheap, struct segment **seg_p)
@@ -820,25 +809,7 @@ collect_subheap(struct subheap *subheap, struct segment **seg_p)
 static void
 collect_subheap(struct subheap *subheap, struct segment **seg_p)
 {
-	struct segment *seg;
-	struct segment *sync1 = *seg_p;
-	struct list collect, filled;
-
-	list_init(&collect);
-	list_init(&filled);
-	seg = stack_flush(&subheap->filled);
-
-	while (seg != sync1) {
-		assert(seg);
-		if (seg->snapshot_free < BLOCK_LIMIT(seg))
-			list_append(&filled, &seg->as_list);
-		else
-			list_append(&collect, &seg->as_list);
-		seg = (struct segment *)seg->as_list.next;
-	}
-
-	stack_push_list(&subheap->filled, &filled);
-	*seg_p = list_finish(&collect, &seg->as_list);
+	*seg_p = stack_flush(&subheap->filled);
 }
 
 #endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
@@ -983,15 +954,6 @@ destroy_malloc_segment(struct malloc_segment *mseg)
 	free(mseg);
 }
 
-#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
-static void
-collect_malloc_segments_sync1(struct malloc_segment **collect_msegs)
-{
-	*collect_msegs = stack_top(&malloc_segments);
-}
-
-#endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
-
 #if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
 static void
 collect_malloc_segments(struct malloc_segment **collect_msegs)
@@ -1003,25 +965,7 @@ collect_malloc_segments(struct malloc_segment **collect_msegs)
 static void
 collect_malloc_segments(struct malloc_segment **collect_msegs)
 {
-	struct malloc_segment *mseg;
-	struct malloc_segment *sync1 = *collect_msegs;
-	struct list collect, filled;
-
-	list_init(&collect);
-	list_init(&filled);
-	mseg = stack_flush(&malloc_segments);
-
-	while (mseg != sync1) {
-		assert(mseg);
-		if (!mseg->markbit)
-			list_append(&collect, &mseg->as_list);
-		else
-			list_append(&filled, &mseg->as_list);
-		mseg = (struct malloc_segment *)mseg->as_list.next;
-	}
-
-	stack_push_list(&malloc_segments, &filled);
-	*collect_msegs = list_finish(&collect, &mseg->as_list);
+	*collect_msegs = stack_flush(&malloc_segments);
 }
 
 #endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
@@ -1202,12 +1146,12 @@ enum_obj_to_list(void **slot, void *data)
 #if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
 struct object_stack {
  	void *top;
- 	pthread_mutex_t lock;
+	sml_spinlock_t lock;
 };
 #endif /* !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
 
 #define EMPTY_OBJECT_STACK \
-	{.top = ATOMIC_VAR_INIT(NIL), .lock = PTHREAD_MUTEX_INITIALIZER}
+	{.top = ATOMIC_VAR_INIT(NIL), .lock = SPIN_LOCK_INIT}
 
 
 #if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
@@ -1222,14 +1166,14 @@ push_object(struct object_stack *stack, void *obj)
 
  	/* ensure that the collector receives all objects whose stack_slot
  	 * were occupied by mutators. */
- 	mutex_lock(&stack->lock);
+ 	spin_lock(&stack->lock);
 
 	/* this may fail if obj already belongs to another list or stack */
 	if (load_relaxed(&slot->next) == old
  	    && cmpswap_relaxed(&slot->next, &old, stack->top))
  		stack->top = obj;
  
- 	mutex_unlock(&stack->lock);
+ 	spin_unlock(&stack->lock);
 }
 
 #endif /* !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
@@ -1243,10 +1187,10 @@ push_objects(struct object_stack *stack, struct object_list *l)
 	if (begin == NIL)
 		return;
 
-	mutex_lock(&stack->lock);
+	spin_lock(&stack->lock);
 	store_relaxed(&l->last->next, stack->top);
 	stack->top = begin;
-	mutex_unlock(&stack->lock);
+	spin_unlock(&stack->lock);
 }
 
 #endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
@@ -1257,10 +1201,10 @@ flush_object_stack(struct object_stack *stack)
 {
 	void *top;
 
-	mutex_lock(&stack->lock);
+	spin_lock(&stack->lock);
 	top = stack->top;
 	stack->top = NIL;
-	mutex_unlock(&stack->lock);
+	spin_unlock(&stack->lock);
 	return top;
 }
 
@@ -1275,7 +1219,7 @@ struct alloc_ptr {
 	unsigned int blocksize_bytes;
 };
 
-union alloc_ptr_set {
+union sml_alloc {
 	struct alloc_ptr ptr[BLOCKSIZE_MAX_LOG2 + 1]; /* ptr[0] is not used. */
 	struct list_item as_list;
 };
@@ -1286,7 +1230,7 @@ union alloc_ptr_set {
 
 /* no need to set a destructor specific to alloc_ptr_set since it is
  * deallocated correctly when the current control is deallocated. */
-tlv_alloc(union alloc_ptr_set *, alloc_ptr_set, (void));
+worker_tlv_alloc(union sml_alloc *, alloc_ptr_set, (void));
 
 static const unsigned int dummy_bitmap = ~0U;
 static const sml_bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
@@ -1299,11 +1243,11 @@ struct {
 static void
 destroy_alloc_ptr_set_pool()
 {
-	union alloc_ptr_set *p, *next;
+	union sml_alloc *p, *next;
 
 	p = stack_flush(&alloc_ptr_set_pool.freelist);
 	while (p) {
-		next = (union alloc_ptr_set *)p->as_list.next;
+		next = (union sml_alloc *)p->as_list.next;
 		free(p);
 		p = next;
 	}
@@ -1383,7 +1327,7 @@ save_alloc_ptr(struct alloc_ptr *ptr)
 
 #if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
 static void
-save_alloc_ptr_set_sync2(union alloc_ptr_set *ptr_set)
+save_alloc_ptr_set_sync2(union sml_alloc *ptr_set)
 {
 	struct alloc_ptr *ptr;
 	unsigned int i;
@@ -1397,16 +1341,16 @@ save_alloc_ptr_set_sync2(union alloc_ptr_set *ptr_set)
 
 #endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 
-static union alloc_ptr_set *
+static union sml_alloc *
 new_alloc_ptr_set()
 {
-	union alloc_ptr_set *p;
+	union sml_alloc *p;
 	unsigned int i;
 
 	p = stack_pop(&alloc_ptr_set_pool.freelist);
 
 	if (!p) {
-		p = xmalloc(sizeof(union alloc_ptr_set));
+		p = xmalloc(sizeof(union sml_alloc));
 		for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
 			p->ptr[i].blocksize_bytes = 1U << i;
 			clear_alloc_ptr(&p->ptr[i]);
@@ -1414,23 +1358,6 @@ new_alloc_ptr_set()
 	}
 
 	return p;
-}
-
-static void
-release_alloc_ptr_set(union alloc_ptr_set *ptr_set)
-{
-	unsigned int i;
-	struct alloc_ptr *ptr;
-
-	/* save allocation pointers to segments as if each segment is
-	 * moved to the filled list */
-	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
-		ptr = &ptr_set->ptr[i];
-		if (ptr->free)
-			save_alloc_ptr(ptr);
-	}
-
-	stack_push(&alloc_ptr_set_pool.freelist, &ptr_set->as_list);
 }
 
 static void
@@ -1444,7 +1371,7 @@ move_to_filled(struct alloc_ptr *ptr, struct subheap *subheap)
 }
 
 static void
-move_all_to_filled(union alloc_ptr_set *ptr_set)
+move_all_to_filled(union sml_alloc *ptr_set)
 {
 	unsigned int i;
 	struct alloc_ptr *ptr;
@@ -1459,7 +1386,7 @@ move_all_to_filled(union alloc_ptr_set *ptr_set)
 }
 
 static void
-collect_alloc_ptr_set(union alloc_ptr_set *p, struct segment **segarray)
+collect_alloc_ptr_set(union sml_alloc *p, struct segment **segarray)
 {
 	unsigned int i;
 	struct segment *seg;
@@ -1477,12 +1404,12 @@ collect_alloc_ptr_set(union alloc_ptr_set *p, struct segment **segarray)
 static void
 collect_alloc_ptr_set_pool(struct segment **segarray)
 {
-	union alloc_ptr_set *p, *next;
+	union sml_alloc *p, *next;
 
 	p = stack_flush(&alloc_ptr_set_pool.freelist);
 	while (p) {
 		collect_alloc_ptr_set(p, segarray);
-		next = (union alloc_ptr_set *)p->as_list.next;
+		next = (union sml_alloc *)p->as_list.next;
 		free(p);
 		p = next;
 	}
@@ -1494,16 +1421,6 @@ union collect_set {
 	struct segment *segments[BLOCKSIZE_MAX_LOG2 + 1];
 	struct malloc_segment *malloc_segments;
 };
-
-#if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
-static void
-collect_segments_sync1(union collect_set *c)
-{
-	collect_subheaps_sync1(c->segments);
-	collect_malloc_segments_sync1(&c->malloc_segments);
-}
-
-#endif /* !WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
 
 static void
 collect_segments(union collect_set *c)
@@ -1903,7 +1820,6 @@ pop(void **top)
 static void
 visit_all(void *obj)
 {
-	void *next;
 	struct stack_slot *slot;
 
 	while (obj != NIL) {
@@ -1948,7 +1864,7 @@ trace_all()
 void
 sml_heap_collector_sync1()
 {
-	collect_segments_sync1(&collector.collect_set);
+	collect_segments(&collector.collect_set);
 }
 
 #endif /* !WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
@@ -1968,6 +1884,11 @@ sml_heap_collector_sync2()
 void
 sml_heap_collector_sync2()
 {
+	struct object_list objs;
+	object_list_init(&objs);
+	sml_enum_global(enum_obj_to_list, &objs);
+	sml_callback_enum_ptr(enum_obj_to_list, &objs);
+	push_objects(&collector.objects_from_mutators, &objs);
 }
 
 #endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
@@ -1984,15 +1905,10 @@ void
 sml_heap_collector_mark()
 {
 	unsigned int n;
-	collect_segments(&collector.collect_set);
 	/* ToDo: replace clear bitmap with copy from collector bitmap */
 	n = clear_collect_set(&collector.collect_set);
 	fetch_sub(relaxed, &collector.num_filled_total, n);
 	clear_collect_bitmaps(&segment_pool.heap);
-
-	assert(collector.root_objects == NIL);
-	sml_enum_global(push, &collector.root_objects);
-	sml_callback_enum_ptr(push, &collector.root_objects);
 	trace_all();
 }
 
@@ -2096,6 +2012,7 @@ collector_main(void *arg ATTR_UNUSED)
 		cond_signal(&collector_control.cond_collector);
 	}
 	mutex_unlock(&collector_control.lock);
+	return NULL;
 }
 
 #else /* !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY */
@@ -2265,11 +2182,11 @@ collector_main(void *arg ATTR_UNUSED)
 
 /********** mutators **********/
 
-void *
-sml_heap_mutator_init()
+union sml_alloc *
+sml_heap_worker_init()
 {
-	union alloc_ptr_set *p = new_alloc_ptr_set();
-	tlv_set(alloc_ptr_set, p);
+	union sml_alloc *p = new_alloc_ptr_set();
+	worker_tlv_set(alloc_ptr_set, p);
 
 #if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
 	mutex_lock(&collector_control.lock);
@@ -2281,12 +2198,12 @@ sml_heap_mutator_init()
 }
 
 void
-sml_heap_mutator_destroy(void *info)
+sml_heap_worker_destroy(union sml_alloc *ptr_set)
 {
-	union alloc_ptr_set *ptr_set = info;
-	assert(ptr_set == tlv_get(alloc_ptr_set));
-	tlv_set(alloc_ptr_set, NULL);
-	release_alloc_ptr_set(ptr_set);
+	/* This function is called only in ASYNC phase, therefore we do
+	 * not need to take a snapshot of allocation pointers.
+	 * Just put alloc_ptr in free list. */
+	stack_push(&alloc_ptr_set_pool.freelist, &ptr_set->as_list);
 
 #if !defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
 	mutex_lock(&collector_control.lock);
@@ -2298,34 +2215,36 @@ sml_heap_mutator_destroy(void *info)
 
 #if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
 void
-sml_heap_mutator_sync2(const struct sml_control *control ATTR_UNUSED,
-		       void *info)
-{
-	union alloc_ptr_set *ptr_set = info;
-	move_all_to_filled(ptr_set);
-}
-
-void
-sml_heap_mutator_sync2_enum(struct sml_control *control)
+sml_heap_mutator_sync2(struct sml_control *control ATTR_UNUSED)
 {
 	sml_stack_enum_ptr(control, push, &collector.root_objects);
 }
 
+void
+sml_heap_worker_sync2(union sml_alloc *ptr_set)
+{
+	move_all_to_filled(ptr_set);
+}
+
 #else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 void
-sml_heap_mutator_sync2(struct sml_control *control, void *info)
+sml_heap_mutator_sync2(struct sml_mutator *mutator)
 {
-	/* Do not use tlv_get(alloc_ptr_set) in this function and use
-	 * "info" instead.  This function may be called with "info" of
-	 * another thread, which differs from tlv_get(alloc_ptr_set).
-	 */
-	union alloc_ptr_set *ptr_set = info;
 	struct object_list objs;
 
 	/* enumerate pointers in the stack and send them to the collector */
 	object_list_init(&objs);
-	sml_stack_enum_ptr(control, enum_obj_to_list, &objs);
+	sml_stack_enum_ptr(mutator, enum_obj_to_list, &objs);
 	push_objects(&collector.objects_from_mutators, &objs);
+}
+
+void
+sml_heap_worker_sync2(union sml_alloc *ptr_set)
+{
+	/* Do not use worker_tlv_get(alloc_ptr_set) in this function and use
+	 * "ptr_set" instead.  This function may be called with "ptr_set" of
+	 * another thread, which differs from worker_tlv_get(alloc_ptr_set).
+	 */
 
 	/* save current allocation pointers to segments in ptr_set. */
 	save_alloc_ptr_set_sync2(ptr_set);
@@ -2350,8 +2269,8 @@ sml_write(void *obj ATTR_UNUSED, void **writeaddr, void *new_value)
 }
 
 #else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
-SML_PRIMITIVE void
-sml_write(void *obj ATTR_UNUSED, void **writeaddr, void *new_value)
+static void
+barrier(void **old_value, void *new_value)
 {
 	enum sml_sync_phase phase = sml_current_phase();
 
@@ -2372,12 +2291,42 @@ sml_write(void *obj ATTR_UNUSED, void **writeaddr, void *new_value)
 		/* The current phase is expected to be either SYNC1, PRESYNC2,
 		 * SYNC2, or MARK, but may be artbitrary.  This means that
 		 * write barrier may be performed even in ASYNC and PRESYNC1.
-		 * This should hardly happend but even this is safe. */
+		 * This should hardly happen but even this is safe. */
+#ifdef WITHOUT_MASSIVETHREADS
+		/* In either SYNC1, PRESYNC2, or SYNC2 phase, snooping
+		 * write barrier is required. */
 		if (phase <= SYNC2)
 			remember(new_value);  /* snooping barrier */
-		remember(*writeaddr);  /* snapshot barrier */
+#else /* !WITHOUT_MASSIVETHREADS */
+		/* Snooping barrier is needed in SYNC1 and PRESYNC2 phase.
+		 * In contrast to non-massivethread version, it is not
+		 * needed in SYNC2 since it is ensured that root set
+		 * enumeration is completed before SYNC2. */
+		if (phase <= PRESYNC2)
+			remember(new_value);
+#endif /* !WITHOUT_MASSIVETHREADS */
+		remember(old_value);  /* snapshot barrier */
 	}
+}
+
+SML_PRIMITIVE void
+sml_write(void *obj ATTR_UNUSED, void **writeaddr, void *new_value)
+{
+	barrier(*writeaddr, new_value);
 	*writeaddr = new_value;
+}
+
+int
+sml_cmpswap(void *obj, void *old_value, void *new_value)
+{
+	_Atomic(void *) *ref = (_Atomic(void *)*)obj;
+
+	if (cmpswap_acq_rel(ref, &old_value, new_value)) {
+		barrier(old_value, new_value);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 #endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
@@ -2582,7 +2531,7 @@ request_segment(struct subheap *subheap, struct alloc_ptr *ptr,
 			break;
 		}
 		/* release all segments owned by this thread for full GC */
-		move_all_to_filled(tlv_get(alloc_ptr_set));
+		move_all_to_filled(worker_tlv_get(alloc_ptr_set));
 		gc_count = vote_abort(gc_count);
 	}
 	sml_enter_internal(old_top);
@@ -2609,7 +2558,7 @@ find_segment(struct alloc_ptr *ptr, void *frame_pointer)
 	 * argument.  This is an optimization to minimize the number of
 	 * instructions on the most frequently executed path in sml_alloc.
 	 */
-	blocksize_log2 = ptr - &tlv_get(alloc_ptr_set)->ptr[0];
+	blocksize_log2 = ptr - &worker_tlv_get(alloc_ptr_set)->ptr[0];
 	assert(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
 	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 	subheap = &global_subheaps[blocksize_log2];
@@ -2672,7 +2621,7 @@ sml_alloc(unsigned int objsize)
 	blocksize_log2 = CEIL_LOG2(alloc_size);
 	assert(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
 	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
-	ptr = &(tlv_get(alloc_ptr_set)->ptr[blocksize_log2]);
+	ptr = &(worker_tlv_get(alloc_ptr_set)->ptr[blocksize_log2]);
 
 	if (!BITPTR_TEST(ptr->freebit)) {
 		BITPTR_INC(ptr->freebit);

@@ -150,6 +150,17 @@ struct
         loop 0
       end
 
+  fun alli predicate (ary : 'a array) =
+      let
+        val len = Array.length ary
+        fun loop i =
+            if i >= len then true
+            else predicate (i, Array.sub_unsafe (ary, i))
+                 andalso loop (i + 1)
+      in
+        loop 0
+      end
+
   fun collate cmpFn (ary1 : 'a array, ary2 : 'a array) =
       let
         val len1 = Array.length ary1

@@ -380,10 +380,56 @@ AS_HELP_STRING([--with-rt],[try to use clock_gettime for benchmark]),
   fi
 ])
 
-AC_CHECK_LIB(pthread, pthread_create)
-if test "x$ac_cv_lib_pthread_pthread_create" = "xno"; then
+AC_ARG_WITH(pthread,
+AS_HELP_STRING([--without-pthread],[disable pthread support (experimental)]),
+[],
+[ with_pthread=yes ])
+
+if test "x$with_pthread" = "xyes"; then
+  AC_CHECK_LIB(pthread, pthread_create)
+  if test "x$ac_cv_lib_pthread_pthread_create" = "xno"; then
     AC_MSG_ERROR([pthread library is not found.])
+  fi
+else
+  RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_MULTITHREAD"
 fi
+
+AC_ARG_WITH(massivethreads,
+AS_HELP_STRING([--without-massivethreads],[use pthread instead of massivethreads]),
+[
+  case "x$withval" in
+    xno) ;;
+    xyes) ;;
+    *) CPPFLAGS="$CPPFLAGS -I$withval/include"
+       LDFLAGS="$LDFLAGS -L$withval/lib"
+       with_massivethreads=yes
+       ;;
+  esac
+],
+[ with_massivethreads=yes ])
+
+if test "x$with_massivethreads" = "xyes"; then
+  if test "x$with_pthread" != "xyes"; then
+    AC_MSG_ERROR([massivethreads requires pthread.])
+  fi
+  AC_CHECK_LIB(myth, myth_create)
+  if test "x$ac_cv_lib_myth_myth_create" = "xno"; then
+    AC_MSG_ERROR([massivethreads library is not found.])
+  fi
+else
+  RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_MASSIVETHREADS"
+fi
+
+AC_ARG_ENABLE(concurrentgc,
+AS_HELP_STRING([--disable-concurrentgc],[disable concurrent GC (experimental)]),
+[
+  if test "x$enableval" = "xno"; then
+    if "x$with_massivethreads" = "xyes"; then
+      AC_MSG_ERROR([massivethreads support requires concurrent GC.])
+    fi
+    RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_CONCURRENCY"
+  fi
+])
 
 AC_CHECK_HEADERS(stdatomic.h, [], [
   AC_MSG_CHECKING([for GCC __atomic builtins])

@@ -1,19 +1,22 @@
-_require "../../../basis.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../util/main/TermFormat.smi"
+
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../util/main/SmlppgUtil.ppg.smi"
-_require "../../util/main/TermFormat.smi"
+_require "../../absyn/main/AbsynConst.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/AbsynTy.ppg.smi"
+
 
 structure PatternCalc =
 struct
   type loc = Loc.loc
-  type ty =  Absyn.ty
-  type tvar = Absyn.tvar
-  type kindedTvar = Absyn.kindedTvar
+  type ty =  AbsynTy.ty
+  type tvar = AbsynTy.tvar
+  type kindedTvar = AbsynTy.kindedTvar
   type symbol = Symbol.symbol
   type longsymbol = Symbol.longsymbol
 
@@ -28,7 +31,7 @@ struct
 
   datatype ffiTy 
     = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
-    | FFITYVAR of Absyn.tvar * loc
+    | FFITYVAR of AbsynTy.tvar * loc
     | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
     | FFICONTY of ffiTy list * longsymbol * loc
 
@@ -36,7 +39,7 @@ struct
     = kindedTvar list
 
   datatype plexp
-    = PLCONSTANT of Absyn.constant
+    = PLCONSTANT of AbsynConst.constant
     | PLVAR of longsymbol
     | PLTYPED of plexp *  ty * loc
     | PLAPPM of plexp * plexp list * loc
@@ -50,11 +53,15 @@ struct
     | PLRECORD_SELECTOR of RecordLabel.label * loc 
     | PLSELECT of RecordLabel.label * plexp * loc  (* this must be kept as a primitive *)
     | PLSEQ of plexp list * loc
+    | PLFOREACH of {data:plexp, iterator:plexp, pred:plexp, loc:loc}
+    | PLFOREACHDATA of {data:plexp, whereParam:plexp, iterator:plexp, pred:plexp, loc:loc}
     | PLFFIIMPORT of ffiFun * ffiTy * loc
     | PLFFIAPPLY of FFIAttributes.attributes option * ffiFun * ffiArg list * ffiTy list * loc
-    | PLSQLSCHEMA of {columnInfoFnExp : plexp, ty : ty, loc : loc}
+    | PLSQLSCHEMA of {tyFnExp : plexp, ty : ty, loc : loc}
     | PLJOIN of plexp * plexp * loc
     | PLJSON of plexp * ty * loc
+    | PLTYPEOF of ty * loc
+    | PLREIFYTY of ty * loc
 
   and ffiArg 
     = PLFFIARG of plexp * ffiTy * loc
@@ -87,7 +94,7 @@ struct
   and plpat 
     = PLPATWILD of loc
     | PLPATID of longsymbol
-    | PLPATCONSTANT of Absyn.constant
+    | PLPATCONSTANT of AbsynConst.constant
     | PLPATCONSTRUCT of plpat * plpat * loc
     | PLPATRECORD of bool * (RecordLabel.label * plpat) list * loc
     | PLPATLAYERED of symbol * ty option * plpat * loc
@@ -116,7 +123,8 @@ struct
     | PLSPECTYPE of {tydecls:(tvar list * symbol) list, iseq:bool, loc:loc}
     | PLSPECTYPEEQUATION of (tvar list * symbol * ty) * loc
     | PLSPECDATATYPE of
-      (tvar list * symbol * (symbol * ty option) list ) list * loc
+      {tyvars: tvar list, symbol: symbol,
+       conbind: {symbol: symbol, ty: ty option} list} list * loc
     | PLSPECREPLIC of symbol * longsymbol * loc (* replication *)
     | PLSPECEXCEPTION of (symbol * ty option) list * loc (* exception *)
     | PLSPECSTRUCT of (symbol * plsigexp) list * loc (* structure *)
@@ -133,35 +141,36 @@ struct
       {name:symbol, argStrName:symbol, argSig:plsigexp, body:plstrexp, loc:loc}
         list * loc 
 
-  type conbind  = {symbol: symbol, ty: ty option}
+  type conbind
+    = {symbol: symbol, ty: ty option}
   type datbind 
     = {tyvars: tvar list, symbol: symbol,
        conbind: {symbol: symbol, ty: ty option} list}
 
   val format_caseKind
-      : caseKind -> SMLFormat.FormatExpression.expression list
+      : caseKind -> SMLFormat.format
   val format_scopedTvars
-      : scopedTvars -> SMLFormat.FormatExpression.expression list
+      : scopedTvars -> SMLFormat.format
   val format_plexp
-      : plexp -> SMLFormat.FormatExpression.expression list
+      : plexp -> SMLFormat.format
   val format_ffiArg
-      : ffiArg -> SMLFormat.BasicFormatters.expression list
+      : ffiArg -> SMLFormat.format
   val format_ffiTy
-      : ffiTy -> SMLFormat.BasicFormatters.expression list
+      : ffiTy -> SMLFormat.format
   val format_pdecl
-      : pdecl -> SMLFormat.BasicFormatters.expression list
+      : pdecl -> SMLFormat.format
   val format_plpat
-      : plpat -> SMLFormat.FormatExpression.expression list
+      : plpat -> SMLFormat.format
   val format_plstrdec
-      : plstrdec -> SMLFormat.BasicFormatters.expression list
+      : plstrdec -> SMLFormat.format
   val format_plstrexp
-      : plstrexp -> SMLFormat.FormatExpression.expression list
+      : plstrexp -> SMLFormat.format
   val format_plsigexp
-      : plsigexp -> SMLFormat.FormatExpression.expression list
+      : plsigexp -> SMLFormat.format
   val format_plspec
-      : plspec -> SMLFormat.FormatExpression.expression list
+      : plspec -> SMLFormat.format
   val format_pltopdec
-      : pltopdec -> SMLFormat.BasicFormatters.expression list
+      : pltopdec -> SMLFormat.format
 
   val getLeftPosExp : plexp -> Loc.pos
   val getRightPosExp : plexp -> Loc.pos

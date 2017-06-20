@@ -53,7 +53,7 @@ local
       | I.IDCON _ => (exnSet, icdecls)
       | I.IDEXN {id, ty,...} => 
         let
-          val exInfo = {longsymbol=exLongsymbol, version=NONE, ty=ty}
+          val exInfo = {used = ref false, longsymbol=exLongsymbol, version=NONE, ty=ty}
         in
           if not (ExnID.Set.member(exnSet, id)) then
             (ExnID.Set.add(exnSet, id), 
@@ -65,7 +65,7 @@ local
         end
       | I.IDEXNREP {id, ty,...} => 
         let
-          val exInfo = {longsymbol=exLongsymbol, version=NONE, ty=ty}
+          val exInfo = {used = ref false, longsymbol=exLongsymbol, version=NONE, ty=ty}
         in
           if not (ExnID.Set.member(exnSet, id)) then
             (ExnID.Set.add(exnSet, id), 
@@ -303,7 +303,7 @@ local
                  V.reinsertId(V.emptyEnv,name,idstatus),
                  {exportDecls=
                   [I.ICEXPORTVAR 
-                     {exInfo={longsymbol=externLongsymbol, ty=ty, version=NONE},
+                     {exInfo={used = ref false, longsymbol=externLongsymbol, ty=ty, version=NONE},
                       id=varid}],
                    bindDecls = nil
                  }
@@ -324,7 +324,7 @@ local
                      (Symbol.symbolToLoc name, 
                       E.ProvideIDType("CP-120", {longsymbol = internalLongsymbol}));
                    raise Fail)
-              | SOME (idstatus as I.IDEXVAR {exInfo, used, internalId}) =>
+              | SOME (idstatus as I.IDEXVAR {exInfo, internalId}) =>
                 (* bug 069_open *)
                 (* bug 124_open *)
                 let
@@ -337,12 +337,12 @@ local
                            (Symbol.symbolToLoc name,
                             E.ProvideIDType ("CP-131", {longsymbol = internalLongsymbol})))
 *)
-                  val _ = used := true
+                  val _ = #used exInfo  := true
                   val icexp  =I.ICEXVAR {exInfo=exInfo, longsymbol=internalLongsymbol}
                   val newId = VarID.generate()
                   val icpat = I.ICPATVAR_TRANS {longsymbol=internalLongsymbol,id=newId}
                   val bindDecls = [I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)]
-                  val exInfo = {longsymbol=externLongsymbol,ty = ty, version=NONE}
+                  val exInfo = {used = ref false, longsymbol=externLongsymbol,ty = ty, version=NONE}
                   val exportDecls = [I.ICEXPORTVAR {exInfo=exInfo, id=newId}]
                   val idstatus = I.IDVAR_TYPED{id=newId, longsymbol=internalLongsymbol, ty = ty}
                 in
@@ -371,7 +371,7 @@ local
                   val exportDecls = 
                       [I.ICEXPORTVAR 
                          {id=newId,
-                          exInfo={longsymbol=externLongsymbol,ty=ty, version=NONE}}
+                          exInfo={used = ref false, longsymbol=externLongsymbol,ty=ty, version=NONE}}
                       ]
                   val idstatus = I.IDVAR_TYPED{id=newId, ty = ty, longsymbol=internalLongsymbol}
                 in
@@ -400,6 +400,7 @@ local
                       [I.ICEXPORTVAR
                          {id=newId,
                           exInfo={longsymbol=externLongsymbol,
+                                  used =ref false,
                                   version=NONE,
                                   ty=ty}}]
                   val idstatus = I.IDVAR_TYPED{id=newId, ty = ty, longsymbol=internalLongsymbol}
@@ -446,7 +447,7 @@ local
                   val newId = VarID.generate()
                   val icpat = I.ICPATVAR_TRANS {longsymbol=internalLongsymbol,id=newId}
                   val bindDecls = [I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)]
-                  val exInfo = {longsymbol=externLongsymbol, ty=ty, version=NONE}
+                  val exInfo = {used = ref false, longsymbol=externLongsymbol, ty=ty, version=NONE}
                   val exportDecls = [I.ICEXPORTVAR {id=newId, exInfo=exInfo}]
                   val idstatus = I.IDVAR_TYPED{id=newId, ty = ty, longsymbol=internalLongsymbol}
                 in
@@ -474,9 +475,9 @@ local
                   (Symbol.symbolToLoc name,
                    E.ProvideUndefinedID("CP-130", {longsymbol = path@[name]}));
                 raise Fail)
-             | SOME (idstatus as I.IDEXVAR {exInfo={longsymbol=refSym, ty, version}, used=used1, internalId}) =>
+             | SOME (idstatus as I.IDEXVAR {exInfo={used=used1, longsymbol=refSym, ty, version},  internalId}) =>
                (case V.checkId(evalEnv, aliasPath) of
-                  SOME (idstatus as I.IDEXVAR {exInfo={longsymbol=defSym, ty, version},used=used2, internalId}) =>
+                  SOME (idstatus as I.IDEXVAR {exInfo={used=used2, longsymbol=defSym, ty, version},internalId}) =>
                   if Symbol.eqLongsymbol(refSym, defSym) then
                     (used1 := true; used2:=true;
                      (exnSet, 
@@ -828,7 +829,7 @@ local
               (ExnID.Set.add(exnSet, id),
                V.reinsertId(V.emptyEnv, name, idstatus),
                {exportDecls=
-                [I.ICEXPORTEXN {id=id,exInfo={ty=ty,longsymbol=longsymbol, version=NONE}}],
+                [I.ICEXPORTEXN {id=id,exInfo={used = ref false, ty=ty,longsymbol=longsymbol, version=NONE}}],
                 bindDecls=nil
                }
               )
@@ -848,7 +849,7 @@ local
                  V.reinsertId(V.emptyEnv, name, I.IDEXNREP {id=id, longsymbol=longsymbol, ty=ty}),
                  {exportDecls =
                   [I.ICEXPORTEXN
-                     {id=id,exInfo={ty=ty,longsymbol=longsymbol, version=NONE}}],
+                     {id=id,exInfo={used = ref false, ty=ty,longsymbol=longsymbol, version=NONE}}],
                   bindDecls=nil
                  }
                 )
@@ -944,9 +945,9 @@ local
                   (loc, E.ProvideExceptionRepID("CP-520", {longsymbol = path@[name]}));
                 raise Fail)
             )
-          | I.IDEXEXN ({longsymbol=longsymbol1, ...},_) =>
+          | I.IDEXEXN {longsymbol=longsymbol1, ...} =>
             (case refIdstatus of
-               I.IDEXEXN ({longsymbol=longsymbol2,...},_) =>
+               I.IDEXEXN {longsymbol=longsymbol2,...} =>
                if Symbol.eqLongsymbol (longsymbol1, longsymbol2) then 
                  (exnSet, 
                   V.reinsertId(V.emptyEnv, name, defIdstatus), 
@@ -961,9 +962,9 @@ local
                   (loc, E.ProvideExceptionRepID("CP-540", {longsymbol = path@[name]}));
                 raise Fail)
             )
-          | I.IDEXEXNREP ({longsymbol=longsymbol1, ...},_) =>
+          | I.IDEXEXNREP {longsymbol=longsymbol1, ...} =>
             (case refIdstatus of
-               I.IDEXEXNREP ({longsymbol=longsymbol2,...},_) =>
+               I.IDEXEXNREP {longsymbol=longsymbol2,...} =>
                if Symbol.eqLongsymbol(longsymbol1, longsymbol2) then 
                  (exnSet, 
                   V.reinsertId(V.emptyEnv, name, defIdstatus),
@@ -985,7 +986,7 @@ local
      exception Bar = BAR
   In this case, Foo = IDEXEXNREP and FOO = IDEXEXN
 *)
-             | I.IDEXEXN ({longsymbol=longsymbol2,...},_) =>
+             | I.IDEXEXN {longsymbol=longsymbol2,...} =>
                if Symbol.eqLongsymbol(longsymbol1, longsymbol2) then 
                  (exnSet, 
                   V.reinsertId(V.emptyEnv, name, defIdstatus),
@@ -1200,7 +1201,7 @@ local
         =>
         let
           val funEEntry
-                as {id, version, used, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy, polyArgTys, 
+                as {id, version, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy, polyArgTys, 
                     typidSet, exnIdSet, bodyEnv, bodyVarExp}
             =
             (* case SymbolEnv.find(FunE, functorSymbol) of *)
@@ -1312,7 +1313,7 @@ local
               case bodyVarExp of 
                 I.ICVAR {longsymbol, id} => 
                 [I.ICEXPORTFUNCTOR 
-                   {exInfo={longsymbol=longsymbol, ty=functorTy, version=NONE}, 
+                   {exInfo={used = ref false, longsymbol=longsymbol, ty=functorTy, version=NONE}, 
                     id=id}
                 ]
               | I.ICEXVAR _ => nil
@@ -1320,7 +1321,6 @@ local
           val funEEntry =
               {id=id, 
                version = NONE,
-               used = ref false,
                argSigEnv=argSigEnv, 
                argStrEntry=argStrEntry, 
                argStrName=argStrName, 

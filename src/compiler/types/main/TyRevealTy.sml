@@ -30,6 +30,8 @@ in
       | T.INDEXty (string, ty) => T.INDEXty (string, revealTy ty)
       | T.TAGty ty => T.TAGty (revealTy ty)
       | T.SIZEty ty => T.SIZEty (revealTy ty)
+      | T.TYPEty ty => T.TYPEty (revealTy ty)
+      | T.REIFYty ty => T.REIFYty (revealTy ty)
   and revealOverloadMatch (overloadMatch:T.overloadMatch) : T.overloadMatch =
       case overloadMatch  of
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
@@ -100,8 +102,7 @@ in
       | T.BACKENDty backendTy =>
         raise Bug.Bug "revealTy: BACKENDty"
       | T.ERRORty => ty
-      | T.DUMMYty dummyTyID => ty
-      | T.DUMMY_RECORDty _ => ty
+      | T.DUMMYty (id, kind) => T.DUMMYty (id, revealKind kind)
       | T.TYVARty _ => raise bug "TYVARty in Optimize"
       | T.BOUNDVARty btv => ty
       | T.FUNMty (tyList, ty) =>
@@ -138,17 +139,17 @@ in
       | T.POLYty {boundtvars : T.btvEnv, constraints : T.constraint list, body : ty } =>
         T.POLYty {boundtvars = revealBtvEnv boundtvars, 
                   constraints = List.map (fn c =>
-                                             case c of T.JOIN {res, args = (arg1, arg2)} =>
+                                             case c of T.JOIN {res, args = (arg1, arg2), loc} =>
                                                T.JOIN
                                                    {res = revealTy res,
                                                     args = (revealTy arg1,
-                                                            revealTy arg2)})
+                                                            revealTy arg2), loc=loc})
                                          constraints,
                   body =  revealTy body}
   and revealBtvEnv (btvEnv:T.btvEnv) =
-      BoundTypeVarID.Map.map revealBtvkind btvEnv
-  and revealBtvkind {tvarKind, eqKind} =
-      {tvarKind=revealTvarKind tvarKind, eqKind=eqKind}
+      BoundTypeVarID.Map.map revealKind btvEnv
+  and revealKind (T.KIND {tvarKind, dynKind, reifyKind, subkind, eqKind}) =
+      T.KIND {tvarKind=revealTvarKind tvarKind, dynKind = dynKind, reifyKind = reifyKind, subkind = subkind, eqKind=eqKind}
   and revealTvarKind tvarKind =
       case tvarKind of
         T.OCONSTkind tyList =>
@@ -178,9 +179,7 @@ in
              operators
           }
       | T.UNIV => T.UNIV
-      | T.JSON => T.JSON
       | T.BOXED => T.BOXED
-      | T.UNBOXED => T.UNBOXED
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map revealTy fields)
   fun revealVar ({id, ty, path, opaque}:varInfo) =

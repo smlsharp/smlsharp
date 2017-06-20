@@ -1,0 +1,3 @@
+_require "basis.smi"
+_require "thread.smi"
+_require "compiler-utils/foreach/main/ForeachData.smi"

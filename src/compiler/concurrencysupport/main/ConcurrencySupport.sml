@@ -54,15 +54,17 @@ struct
   fun compileTopdec topdec =
       case topdec of
         M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
-                      frameSlots, bodyExp, retTy, loc} =>
-        M.MTFUNCTION {id = id,
-                      tyvarKindEnv = tyvarKindEnv,
-                      argVarList = argVarList,
-                      closureEnvVar = closureEnvVar,
-                      frameSlots = frameSlots,
-                      bodyExp = compileBody bodyExp,
-                      retTy = retTy,
-                      loc = loc}
+                      frameSlots, bodyExp, retTy, gcCheck, loc} =>
+        M.MTFUNCTION
+          {id = id,
+           tyvarKindEnv = tyvarKindEnv,
+           argVarList = argVarList,
+           closureEnvVar = closureEnvVar,
+           frameSlots = frameSlots,
+           bodyExp = if gcCheck then compileBody bodyExp else bodyExp,
+           retTy = retTy,
+           gcCheck = false,
+           loc = loc}
       | M.MTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
                               frameSlots, bodyExp, attributes, retTy,
                               cleanupHandler, loc} =>

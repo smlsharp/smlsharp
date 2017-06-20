@@ -74,18 +74,8 @@ struct
       case tfun of
         I.TFUN_VAR 
         (ref (I.TFUN_DTY 
-                {id=newId,
-                 iseq,
-                 longsymbol,
-                 formals,
-                 conSpec,
-                 conIDSet,
-		 runtimeTy,
-                 liftedTys,
-                 dtyKind
-                }
-             )
-        ) =>
+                {id=newId, iseq, longsymbol, formals, conSpec,
+                 conIDSet, runtimeTy, liftedTys, dtyKind})) =>
         let
           val newTfunkind = 
               ref (I.TFUN_DTY 
@@ -260,11 +250,11 @@ struct
       case idstatus of
         I.IDVAR  {id, longsymbol} => idstatus
       | I.IDVAR_TYPED {id, ty, longsymbol} => idstatus
-      | I.IDEXVAR {exInfo={longsymbol, version, ty}, used, internalId} => 
+      | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId} => 
         I.IDEXVAR {exInfo={longsymbol=longsymbol, 
+                           used = used,
                            version=version, 
                            ty=renameLongsymbolTy renameEnv ty}, 
-                   used=used, 
                    internalId=internalId}
       | I.IDEXVAR_TOBETYPED {longsymbol, id,  version} => idstatus
       | I.IDBUILTINVAR {primitive, ty} => 
@@ -275,8 +265,8 @@ struct
         I.IDEXN {id=id, ty=renameLongsymbolTy renameEnv ty, longsymbol=longsymbol}
       | I.IDEXNREP {id, ty, longsymbol} =>
         I.IDEXNREP {id=id, ty=renameLongsymbolTy renameEnv ty, longsymbol=longsymbol}
-      | I.IDEXEXN ({longsymbol, version, ty}, boolRef)  => idstatus
-      | I.IDEXEXNREP ({ty, version, longsymbol}, boolRef)  => idstatus
+      | I.IDEXEXN {used, longsymbol, version, ty}  => idstatus
+      | I.IDEXEXNREP {used, ty, version, longsymbol} => idstatus
       | I.IDOPRIM {id, overloadDef, used, longsymbol} => idstatus
       | I.IDSPECVAR {ty, symbol} => idstatus
       | I.IDSPECEXN {ty, symbol} => idstatus

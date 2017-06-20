@@ -26,9 +26,6 @@ val memcmp = _import "sml_memcmp"
 structure String =
 struct
 
-  type string = string
-  type char = char
-
   (* object size occupies 26 bits of 32-bit object header. In addition,
    * "string" have sentinel zero character at the end of the char sequence *)
   val maxSize = 0x03fffffe
@@ -270,5 +267,8 @@ struct
       in
         StringCvt.scanString scan s
       end
+
+  type string = string
+  type char = char
 
 end

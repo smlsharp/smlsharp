@@ -19,16 +19,41 @@ struct
    *)
   datatype ty =
       (*% @format "unit" *)
-      (* The empty record type.
-       * The unique value of this type is null pointer, which can be regarded
-       * as a record value. *)
+      (* The empty tuple type.
+       *
+       * Unlike Standard ML, SML# distinguishes unit type from empty record
+       * type.  The former is one of builtin atomic type, but the latter is
+       * a record type with record kind.  In low-level representation, a
+       * unit value is an integer 0, but an empty record is either a null
+       * pointer or heap-allocated object with 0-byte payload.
+       *
+       * Even in backend phases, we distinguish UNITty from other types
+       * in order to compile unit values to "no value" as much as possible.
+       * In ML, unit is usually used as a placeholder denoting no argument
+       * or no return value.  Low level code relevant to such functions
+       * does not need to actually create and pass unit values.  In this
+       * sense, UNITty has different low-level representation from other
+       * types.
+       * 
+       * SML# compiler backend does not generate code that stores a unit
+       * value in any register except for the following two cases that
+       * needs a unit as a first-class value: storing a unit value to
+       * memory, and passing unit values between a call instruction in
+       * "generic" calling convention.
+       *)
       UNITty
-    | (*% @format "uint8" *)
-      UINT8ty
+    | (*% @format "int8" *)
+      INT8ty
+    | (*% @format "int16" *)
+      INT16ty
     | (*% @format "int32" *)
       INT32ty
     | (*% @format "int64" *)
       INT64ty
+    | (*% @format "uint8" *)
+      UINT8ty
+    | (*% @format "uint16" *)
+      UINT16ty
     | (*% @format "uint32" *)
       UINT32ty
     | (*% @format "uint64" *)

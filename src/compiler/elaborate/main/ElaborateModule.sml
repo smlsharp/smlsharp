@@ -152,7 +152,13 @@ struct
                 )
             val _ = map check dataDescs
           in
-            PC.PLSPECDATATYPE(dataDescs, loc)
+            PC.PLSPECDATATYPE
+              (map (fn (tyvars, symbol, con) =>
+                       {tyvars = tyvars,
+                        symbol = symbol,
+                        conbind = map (fn (id,ty) => {symbol=id, ty=ty}) con})
+                   dataDescs,
+               loc)
           end
       | A.SPECREPLIC(tyCon, longTyCon, loc) =>
           PC.PLSPECREPLIC(tyCon, longTyCon, loc)

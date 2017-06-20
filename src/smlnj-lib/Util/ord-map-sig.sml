@@ -169,4 +169,9 @@ signature ORD_MAP =
 	 * map order.
 	 *)
 
+  val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
+  val subtractByKeyEquiv : ('a * 'a -> bool) -> ('a map * 'a map) -> 'a map
+  val subtractByKeyElemEquiv : ('a * 'a -> bool) -> ('a map * 'a map) -> 'a map
+  val eq : ('a * 'a -> bool) -> ('a map * 'a map) -> bool
+
   end (* ORD_MAP *)

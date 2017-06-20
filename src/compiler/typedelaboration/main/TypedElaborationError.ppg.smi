@@ -1,6 +1,7 @@
-_require "../../../basis.smi"
-_require "../../../smlformat-lib.smi"
-_require "../../absyn/main/RecordLabel.smi"
+_require local "../../../basis.smi"
+_require local "../../../smlformat-lib.smi"
+
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 
 structure TypedElaborationError =
@@ -8,6 +9,5 @@ struct
 
   exception InvalidSQLSchemaTy of IDCalc.ty
   and InvalidSQLTableTy of RecordLabel.label * IDCalc.ty
-  and InvalidJSONty of IDCalc.ty
 
 end

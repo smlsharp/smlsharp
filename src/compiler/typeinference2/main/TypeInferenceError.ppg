@@ -12,7 +12,7 @@ struct
     structure UE = UserError
     fun format_ty ty = (Types.format_ty []) ty
     fun format_ffiTy ty = TypedCalc.format_ffiTy nil ty
-    val format_AbsynTy = Absyn.format_ty 
+    val format_AbsynTy = AbsynTy.format_ty 
     val errorQueue = UE.createQueue ()
   in
 
@@ -24,12 +24,12 @@ struct
   (*%
    * @formatter(Types.ty) format_ty
    * @formatter(I.ffiTy) I.format_ffiTy
-   * @formatter(Absyn.ty) format_AbsynTy
+   * @formatter(AbsynTy.ty) format_AbsynTy
    * @formatter(path) Path.format_pathWithoutDotend
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    * @formatter(I.icpat) I.format_icpat
    * @formatter(RecordLabel.label) RecordLabel.format_label
-   * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(AbsynTy.tvar) AbsynTy.format_tvar
    *)
   exception
   (**
@@ -64,7 +64,7 @@ struct
    * @format(code * tvar) "(type inference" +d code ")" +d    
    * "type" + "variable" + tvar + "has" + "a" + "cyclic" + "record" + "kind"
    *)
-  CyclicTvarkindSpec of string * Absyn.tvar
+  CyclicTvarkindSpec of string * AbsynTy.tvar
 
   and
   (**
@@ -936,7 +936,7 @@ struct
    * "User" +d  "type" +d "variable" +d "cannot" +d "be" +d
    * "generalized:" + tvar
    *)
-  UserTvarNotGeneralized of string * Absyn.tvar
+  UserTvarNotGeneralized of string * AbsynTy.tvar
 
   and
   (**
@@ -1004,9 +1004,21 @@ struct
    *)
   (*%
    * @format(code * ty1 * ty2) "(type inference" +d code ")" +d
-   * "record" +d "type" +d "expected" + "ty1:" ty1 +d "ty2:" ty2
+   * "record" +d "type" +d "expected:" +1
+     "ty1:" + ty1 
+     +1 
+     "ty2:" + ty2
    *)
   JoinNonRecord of string * Types.ty * Types.ty
+
+  and
+
+  (*%
+   * @format(code * ty1 * ty2 * ty3) "(type inference" +d code ")" +d
+   * "argiment" +d "to" +d "join" +d "must" +d "have" +d "a" +d "ground" +d "type:"
+      +1 ty1 + "=" + ty2 + "join" +  ty3
+   *)
+  JoinWithDummy of string * Types.ty * Types.ty * Types.ty
 
   and
   (*%
@@ -1016,6 +1028,14 @@ struct
        +1 " operand two:" + ty2
    *)
   JoinInconsistent of string * {label:RecordLabel.label, ty1:Types.ty, ty2:Types.ty}
+
+  and
+  (*%
+   * @format(code * {res, ty1, ty2}) "(type inference" + code ")" +d
+   * "inconsistent" +d "natural" +d "join:"
+       +1 res + "=" +1 ty1  + "join" +  ty2
+   *)
+  JoinFailed of string * {res:Types.ty, ty1:Types.ty, ty2:Types.ty}
 
   and
   (*%
@@ -1033,6 +1053,49 @@ struct
    *)
   JoinResultNotAgree of string * Types.ty * Types.ty
 
+  and
+  (*%
+   * @format(code * ty1 * ty2) "(type inference" +d code ")" +d
+   * "natural" +d "join" +d "args" +d "don't" +d "agree" 
+   *   +1 "ty1:" ty1
+   *   +d "ty2:" ty2
+   *)
+  JoinArgsNotAgree of string * Types.ty * Types.ty
+
+  and
+  (*%
+   * @format(code * ty) "(type inference" +d code ")" +d
+   * "type" + "of" + "json" +d "kind" +d "expected" +d "for" +d "_typeof:" 
+   *  +1 ty
+   *)
+  JoinTypeExpected of string * Types.ty
+
+  and 
+  (*%
+     @format(name)
+     "(type inference)" +d
+      "JSON" + "primitive" + "not" + "loaded:" +d name
+      +1 "JSON" + "functions" + "require" + "json.smi"
+   *)
+  UserLevelPrimForJsonNotFound of string
+
+  and 
+  (*%
+     @format(name)
+     "(type inference)" +d
+      "JOIN" + "primitive" + "not" + "loaded:" +d name
+      +1 "JOIN" + "functions" + "require" + "json.smi"
+   *)
+  UserLevelPrimForJoinNotFound of string
+
+  and 
+  (*%
+    @format(code)
+     "(type inference" + code ")" +d
+     "type" + "error" + "found in" + "foreach" + "construct"
+   *)
+  ForEachTypeError of string
+    
   val isAnyError = ref false
 
   fun initializeTypeinfError () = 

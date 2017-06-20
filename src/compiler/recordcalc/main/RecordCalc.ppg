@@ -244,8 +244,8 @@ struct
       (*% @format(btv) btv()(btvEnv) *)
       Types.btvEnv
 
-  (*% @formatter(Absyn.constant) Absyn.format_constant *)
-  type constant = Absyn.constant
+  (*% @formatter(AbsynConst.constant) AbsynConst.format_constant *)
+  type constant = AbsynConst.constant
 
   (*%
    * @params(btvEnv)
@@ -286,7 +286,7 @@ struct
        *          argExpList: argExp argExps,
        *          attributes, resultTy,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   "_ffiapply"
        *   +1 funExp()(btvEnv)
        *   +1 argExps:appList(argExp()(btvEnv))("(",",",")") ] }
@@ -296,7 +296,7 @@ struct
        *          argExpList: argExp argExps,
        *          attributes, resultTy,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   "_ffiapply"
        *   +1 funExp()(btvEnv)
        *   +1 argExps:appList(argExp()(btvEnv))("(",",",")") ] }
@@ -311,20 +311,20 @@ struct
       }
     | (*%
        * @format({attributes, resultTy, argVarList: arg args, bodyExp, loc})
-       * L8{ 2[
+       * L8{ 1[
        *   "_callback"
        *   +1
-       *    R1{ 2[
+       *    R1{ 1[
        *     "fn" +d args:enclosedList(arg()(btvEnv))("{",",","}")
        *          +d "=>" +1 bodyExp()(btvEnv) ] }
        * ] }
        *)
       (*% @prefix formatWithoutType_
        * @format({attributes, resultTy, argVarList: arg args, bodyExp, loc})
-       * L8{ 2[
+       * L8{ 1[
        *   "_callback"
        *   +1 
-       *    R1{ 2[
+       *    R1{ 1[
        *     "fn" +d args:enclosedList(arg)
        *                              ("{",",","}")
        *          +d "=>" +1 bodyExp()(btvEnv) ] }
@@ -347,6 +347,24 @@ struct
           "_size"
        *)
       RCSIZEOF of ty * loc
+    | (*%
+       * @format(ty * loc)
+       * "_typeof(" !N0{ ty()(btvEnv) ")" }
+       *)
+      (*% @prefix formatWithoutType_
+       * @format(ty * loc)
+          "_typeof"
+       *)
+      RCTYPEOF of ty * loc
+    | (*%
+       * @format(ty * loc)
+       * "_reifyty(" !N0{ ty()(btvEnv) ")" }
+       *)
+      (*% @prefix formatWithoutType_
+       * @format(ty * loc)
+          "_reifyty"
+       *)
+      RCREIFYTY of ty * loc
     | (*%
        * @format(ty * loc)
        * "_tagof(" !N0{ ty()(btvEnv) ")" }
@@ -400,7 +418,7 @@ struct
        *          instTyList: instTy instTys,
        *          argExp,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   "_prim(" !N0{ primOp()(btvEnv) ")" }
        *   instTys:optionalList(instTy()(btvEnv))(+1 "{",",","}")
        *   +1 argExp()(btvEnv) ] }
@@ -410,7 +428,7 @@ struct
        *          instTyList: instTy instTys,
        *          argExp,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   "_prim(" !N0{ primOp ")" }
        *   instTys:optionalList(instTy()(btvEnv))(+1 "{",",","}")
        *   +1 argExp()(btvEnv) ] }
@@ -458,7 +476,7 @@ struct
                   argTyOpt,
        *          loc})
         L8{
-           2[
+           1[
              con()(btvEnv)
              instTys:optionalList(instTy()(btvEnv))(+1 "{",",","}")
              argOpt(arg()(btvEnv))(+1,)
@@ -471,7 +489,7 @@ struct
        *          argExpOpt: arg argOpt,
                   argTyOpt,
        *          loc})
-        L8{ 2[
+        L8{ 1[
           con
           argOpt(arg()(btvEnv))(+1,) ]
          }
@@ -489,7 +507,7 @@ struct
        *          instTyList: instTy instTys,
        *          argExpOpt: arg argOpt,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   exn
        *   instTys:optionalList(instTy()(btvEnv))(+1 "{",",","}")
        *   argOpt(arg()(btvEnv))(+1,) ] }
@@ -499,7 +517,7 @@ struct
        *          instTyList: instTy instTys,
        *          argExpOpt: arg argOpt,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   exn
        *   argOpt(arg()(btvEnv))(+1,) ] }
        *)
@@ -540,13 +558,13 @@ struct
       }
     | (*%
        * @format({funExp, funTy, argExpList: argExp argExps, loc})
-       * L8{ 2[
+       * L8{ 1[
        *   L2{ funExp()(btvEnv) +1 ":" +d funTy()(btvEnv) }
        *   +1 argExps:appList(argExp()(btvEnv))("{",",","}") ] }
        *)
       (*% @prefix formatWithoutType_
        * @format({funExp, funTy, argExpList: argExp argExps, loc})
-       * L8{ 2[
+       * L8{ 1[
        *   funExp()(btvEnv)
        *   +1 argExps:appList(argExp()(btvEnv))("{",",","}") ] }
        *)
@@ -560,23 +578,23 @@ struct
     | (*%
        * @format({binds: bind binds, bodyExp, loc})
        * R1{
-       *   "let" 2[ +1 binds(bind)(+1) ]
-       *   +1 "in" 2[ +1 bodyExp()(btvEnv) ]
+       *   "let" 1[ +1 binds(bind)(+1) ]
+       *   +1 "in" 1[ +1 bodyExp()(btvEnv) ]
        *   +1 "end"
        * }
        * @format:bind(var * exp)
-       * !R1{ 2[ "bind" +d var()(btvEnv) +d "="
+       * !R1{ 1[ "bind" +d var()(btvEnv) +d "="
        *         +1 exp()(btvEnv) ] }
        *)
       (*% @prefix formatWithoutType_
        * @format({binds: bind binds, bodyExp, loc})
        * R1{
-       *   "let" 2[ +1 binds(bind)(+1) ]
-       *   +1 "in" 2[ +1 bodyExp()(btvEnv) ]
+       *   "let" 1[ +1 binds(bind)(+1) ]
+       *   +1 "in" 1[ +1 bodyExp()(btvEnv) ]
        *   +1 "end"
        * }
        * @format:bind(var * exp)
-       * !R1{ 2[ "bind" +d var +d "="
+       * !R1{ 1[ "bind" +d var +d "="
        *         +1 exp()(btvEnv) ] }
        *)
     RCMONOLET of
@@ -588,16 +606,16 @@ struct
     | (*%
        * @format({decls:dec decs, body:exp exps, tys:ty tys, loc:Loc})
        * R1{
-       *   "let" 2[ decs:declList(dec()(btvEnv))(+1,+1) ]
-       *   +1 "in" 2[ +1 exps(exp()(btvEnv))(";" +1) ]
+       *   "let" 1[ decs:declList(dec()(btvEnv))(+1,+1) ]
+       *   +1 "in" 1[ +1 exps(exp()(btvEnv))(";" +1) ]
        *   +1 "end"
        * }
        *)
       (*% @prefix formatWithoutType_
        * @format({decls:dec decs, body:exp exps, tys:ty tys, loc:Loc})
        * R1{
-       *   "let" 2[ decs:declList(dec()(btvEnv))(+1,+1) ]
-       *   +1 "in" 2[ +1 exps(exp()(btvEnv))(";" +1) ]
+       *   "let" 1[ decs:declList(dec()(btvEnv))(+1,+1) ]
+       *   +1 "in" 1[ +1 exps(exp()(btvEnv))(";" +1) ]
        *   +1 "end"
        * }
        *)
@@ -619,14 +637,14 @@ struct
       }
     | (*%
        * @format({indexExp, label, exp, expTy, resultTy, loc})
-       * L2{ L8{ 2[
+       * L2{ L8{ 1[
        *   "#" "[" !N0{ indexExp()(btvEnv) "]" }
        *   +1 L2{ exp()(btvEnv) +1 ":" +d expTy()(btvEnv) }
        * ] } +1 ":" +d resultTy()(btvEnv) }
        *)
       (*% @prefix formatWithoutType_
        * @format({indexExp, label, exp, expTy, resultTy, loc})
-       * L8{ 2[
+       * L8{ 1[
        *   "#" indexExp()(btvEnv)
        *   +1 exp()(btvEnv) 
        * ] }
@@ -643,20 +661,20 @@ struct
     | (*%
        * @format({indexExp, label, recordExp, recordTy, elementExp, elementTy,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   L2{ recordExp()(btvEnv) +1 ":" +d recordTy()(btvEnv) }
        *   +1 "#" +d "{"
-       *   !N0{ "[" !N0{ indexExp()(btvEnv) "]"} +d "=" 2[ +1
+       *   !N0{ "[" !N0{ indexExp()(btvEnv) "]"} +d "=" 1[ +1
        *     L2{ elementExp()(btvEnv) +1 ":" +d elementTy()(btvEnv) } ] "}" }
        * ] }
        *)
       (*% @prefix formatWithoutType_
        * @format({indexExp, label, recordExp, recordTy, elementExp, elementTy,
        *          loc})
-       * L8{ 2[
+       * L8{ 1[
        *   recordExp()(btvEnv)
        *   +1 "#" +d "{"
-       *   !N0{ indexExp()(btvEnv) +d "=" 2[ +1
+       *   !N0{ indexExp()(btvEnv) +d "=" 1[ +1
        *     elementExp()(btvEnv) ] "}" }
        * ] }
        *)
@@ -672,25 +690,25 @@ struct
       }
     | (*%
        * @format({exp, ty, loc})
-       * L2{ R1{ 2[ "raise" +1 exp()(btvEnv) ] } +1 ":" +d ty()(btvEnv) }
+       * L2{ R1{ 1[ "raise" +1 exp()(btvEnv) ] } +1 ":" +d ty()(btvEnv) }
        *)
       (*% @prefix formatWithoutType_
        * @format({exp, ty, loc})
-       * R1{ 2[ "raise" +1 exp()(btvEnv) ] }
+       * R1{ 1[ "raise" +1 exp()(btvEnv) ] }
        *)
       RCRAISE of {exp:rcexp, ty:ty, loc:loc}
     | (*%
        * @format({exp, exnVar, handler, resultTy, loc})
        * R1{
        *   exp()(btvEnv)
-       *   +1 2[ "handle" +d exnVar()(btvEnv) +d "=>" +1 handler()(btvEnv) ]
+       *   +1 1[ "handle" +d exnVar()(btvEnv) +d "=>" +1 handler()(btvEnv) ]
        * }
        *)
       (*% @prefix formatWithoutType_
        * @format({exp, exnVar, handler, resultTy, loc})
        * R1{
        *   exp()(btvEnv)
-       *   +1 2[ "handle" +d exnVar +d "=>" +1 handler()(btvEnv) ]
+       *   +1 1[ "handle" +d exnVar +d "=>" +1 handler()(btvEnv) ]
        * }
        *)
       (* handle (exp1, x, exp2)
@@ -709,22 +727,22 @@ struct
     | (*%
        * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
        * R1{
-       *   2[ { "case" +1 exp()(btvEnv) +1 "of" } ]
-       *   2[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 2[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
+       *   1[ { "case" +1 exp()(btvEnv) +1 "of" } ]
+       *   1[ +1 ] rules(rule)( +1 "|" +d)
+       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
        * }
        * @format:rule(con * var varOpt * exp)
-       * 2[ con()(btvEnv) varOpt(var()(btvEnv))(+d,) +d "=>" +1 exp()(btvEnv) ]
+       * 1[ con()(btvEnv) varOpt(var()(btvEnv))(+d,) +d "=>" +1 exp()(btvEnv) ]
        *)
       (*% @prefix formatWithoutType_
        * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
        * R1{
-       *   2[ { "case" +1 exp()(btvEnv) +1 "of" } ]
-       *   2[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 2[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
+       *   1[ { "case" +1 exp()(btvEnv) +1 "of" } ]
+       *   1[ +1 ] rules(rule)( +1 "|" +d)
+       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
        * }
        * @format:rule(con * var varOpt * exp)
-       * 2[ con varOpt(var)(+d,) +d "=>" +1 exp()(btvEnv) ]
+       * 1[ con varOpt(var)(+d,) +d "=>" +1 exp()(btvEnv) ]
        *)
       RCCASE of
       {
@@ -738,22 +756,22 @@ struct
     | (*%
        * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
        * R1{
-       *   2[ { "caseExn" +1 exp()(btvEnv) +1 "of" } ]
-       *   2[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 2[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
+       *   1[ { "caseExn" +1 exp()(btvEnv) +1 "of" } ]
+       *   1[ +1 ] rules(rule)( +1 "|" +d)
+       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
        * }
        * @format:rule(exn * var varOpt * exp)
-       * 2[ exn varOpt(var()(btvEnv))(+d,) +d "=>" +1 exp()(btvEnv) ]
+       * 1[ exn varOpt(var()(btvEnv))(+d,) +d "=>" +1 exp()(btvEnv) ]
        *)
       (*% @prefix formatWithoutType_
        * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
        * R1{
-       *   2[ { "caseExn" +1 exp()(btvEnv) +1 "of" } ]
-       *   2[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 2[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
+       *   1[ { "caseExn" +1 exp()(btvEnv) +1 "of" } ]
+       *   1[ +1 ] rules(rule)( +1 "|" +d)
+       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
        * }
        * @format:rule(exn * var varOpt * exp)
-       * 2[ exn varOpt(var)(+d,) +d "=>" +1 exp()(btvEnv) ]
+       * 1[ exn varOpt(var)(+d,) +d "=>" +1 exp()(btvEnv) ]
        *)
       RCEXNCASE of
       {
@@ -772,15 +790,15 @@ struct
        *          resultTy,
        *          loc})
        * R1{
-       *   2[ { "switch"
+       *   1[ { "switch"
        *        +1 L2{ switchExp()(btvEnv) +1 ":" +d expTy()(btvEnv) }
        *        +1 "of" } ]
-       *   2[ +1 ] branches(branch)( +1 "|" +d)
+       *   1[ +1 ] branches(branch)( +1 "|" +d)
        *   branches:ifCons()(+1 "|" +d)
-       *   2[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
+       *   1[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
        * }
        * @format:branch(const * exp)
-       * 2[ const +d "=>" +1 exp()(btvEnv) ]
+       * 1[ const +d "=>" +1 exp()(btvEnv) ]
        *)
       (*% @prefix formatWithoutType_
        * @format({switchExp,
@@ -790,15 +808,15 @@ struct
        *          resultTy,
        *          loc})
        * R1{
-       *   2[ { "switch"
+       *   1[ { "switch"
        *        +1 switchExp()(btvEnv)
        *        +1 "of" } ]
-       *   2[ +1 ] branches(branch)( +1 "|" +d)
+       *   1[ +1 ] branches(branch)( +1 "|" +d)
        *   branches:ifCons()(+1 "|" +d)
-       *   2[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
+       *   1[ "_" +d "=>" +1 defaultExp()(btvEnv) ]
        * }
        * @format:branch(const * exp)
-       * 2[ const +d "=>" +1 exp()(btvEnv) ]
+       * 1[ const +d "=>" +1 exp()(btvEnv) ]
        *)
       (* switch e of ... | c => e ... | _ => e *)
       RCSWITCH of
@@ -812,7 +830,7 @@ struct
       }
     | (*%
        * @format({argVarList: arg args, bodyTy, bodyExp, loc})
-       * R1{ 2[
+       * R1{ 1[
        *   "fn"
        *   +d args:enclosedList(arg()(btvEnv))("{",",","}")
        *   1[ +1 ":" +d bodyTy()(btvEnv) ] +d "=>"
@@ -820,7 +838,7 @@ struct
        *)
       (*% @prefix formatWithoutType_
        * @format({argVarList: arg args, bodyTy, bodyExp, loc})
-       * R1{ 2[
+       * R1{ 1[
        *   "fn"
        *   +d args:enclosedList(arg)("{",",","}")
        *   +d "=>"
@@ -838,7 +856,7 @@ struct
        * @format({btvEnv: btv, argVarList: arg args, bodyTy, bodyExp, loc})
        * !R1{ "[" 1[
        * btv()(btvEnv) "." +1
-       * 2[
+       * 1[
        *   "fn"
        *   +d args:enclosedList(arg()(btv:extendBtvEnv()(btvEnv)))("{",",","}")
        *   1[ +1 ":" +d bodyTy()(btv:extendBtvEnv()(btvEnv)) ] +d "=>"
@@ -849,7 +867,7 @@ struct
        * @format({btvEnv: btv, argVarList: arg args, bodyTy, bodyExp, loc})
        * !R1{ "[" 1[
        * btv()(btvEnv) "." +1
-       * 2[
+       * 1[
        *   "fn"
        *   +d args:enclosedList(arg)("{",",","}")
        *   +d "=>"
@@ -894,7 +912,7 @@ struct
       }
     | (*%
        * @format({exp, expTy, instTyList: instTy instTys, loc})
-       * L8{ 2[
+       * L8{ 1[
        *   L2{ exp()(btvEnv) +1 ":" +d expTy()(btvEnv) }
        *   instTys:optionalList(instTy()(btvEnv))(+1 "{",",","}") ] }
        *)
@@ -924,6 +942,48 @@ struct
         loc : loc
       }
     | (*%
+        @format({data, dataTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      (*% @prefix formatWithoutType_
+        @format({data, dataTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      RCFOREACH of {data:rcexp, 
+                    dataTy:ty, 
+                    iterator:rcexp, 
+                    iteratorTy:ty, 
+                    pred:rcexp, 
+                    predTy:ty, 
+                    loc:loc}
+    | (*%
+        @format({data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "where" + 2[{whereParam()(btvEnv)}]
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      (*% @prefix formatWithoutType_
+        @format({data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "where" + 2[{whereParam()(btvEnv)}]
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      RCFOREACHDATA of {data:rcexp, 
+                        dataTy:ty, 
+                        whereParam:rcexp, 
+                        whereParamTy:ty, 
+                        iterator:rcexp, 
+                        iteratorTy:ty, 
+                        pred:rcexp, 
+                        predTy:ty, 
+                        loc:loc}
+    | (*%
        * @format((exp * ty1) * ty * loc)
        * L2{ "_cast(" !N0{ exp()(btvEnv) ")" } +1 ":" +d ty()(btvEnv) }
        *)
@@ -944,6 +1004,24 @@ struct
        * exp()(btvEnv)
        *)
       RCFFI of rcffiexp * ty * loc
+    | (*% 
+       * @format({ty, args:(arg1 * arg2),argTys:(argTy1 * argTy2),loc})
+       * "_join(" arg1()(btvEnv) ":"  argTy1()(btvEnv) "," arg2()(btvEnv) ":" argTy2()(btvEnv) ") :" ty()(btvEnv)
+       *)
+      (*% @prefix formatWithoutType_
+       * @format({ty, args:(arg1 * arg2),argTys,loc})
+       * "_join(" arg1()(btvEnv) "," arg2()(btvEnv)")"
+       *)
+      RCJOIN of {ty : ty, args : rcexp * rcexp, argTys : ty * ty, loc : loc}
+    | (*%
+       * @format({exp,ty,coerceTy,loc})
+       * "_json " exp()(btvEnv) ":" ty()(btvEnv) " as " coerceTy()(btvEnv)
+       *)
+      (*% @prefix formatWithoutType_
+       * @format({exp,ty,coerceTy,loc})
+       * "_json " exp()(btvEnv) " as " coerceTy()(btvEnv)
+       *)
+      RCJSON of {exp:rcexp, ty:ty, coerceTy:ty, loc:loc}
 
   and rcffiexp =
       (*%
@@ -1078,6 +1156,51 @@ struct
        * "builtin" +d "exception" +d exn
        *)
       RCBUILTINEXN of exExnInfo
+
+  fun rcexpToString rcexp =
+      SMLFormat.prettyPrint nil (format_rcexp nil rcexp)
+
+  fun getLocExp rcexp =
+      case rcexp of
+        RCFOREIGNAPPLY {loc,...} => loc
+      | RCCALLBACKFN {loc,...} => loc
+      | RCTAGOF (_,loc) => loc
+      | RCSIZEOF (_,loc) => loc
+      | RCTYPEOF (_,loc) => loc
+      | RCREIFYTY (_,loc) => loc
+      | RCINDEXOF (_,_,loc) => loc
+      | RCCONSTANT {loc,...} => loc
+      | RCFOREIGNSYMBOL {loc,...} => loc
+      | RCVAR _ => Loc.noloc
+      | RCEXVAR _ => Loc.noloc
+      | RCPRIMAPPLY {loc,...} => loc
+      | RCOPRIMAPPLY {loc,...} => loc
+      | RCDATACONSTRUCT {loc,...} => loc
+      | RCEXNCONSTRUCT {loc,...} => loc
+      | RCEXN_CONSTRUCTOR {loc,...} => loc
+      | RCEXEXN_CONSTRUCTOR {loc,...} => loc
+      | RCAPPM {loc,...} => loc
+      | RCMONOLET {loc,...} => loc
+      | RCLET {loc,...} => loc
+      | RCRECORD {loc,...} => loc
+      | RCSELECT {loc,...} => loc
+      | RCMODIFY {loc,...} => loc
+      | RCRAISE {loc,...} => loc
+      | RCHANDLE {loc,...} => loc
+      | RCCASE {loc,...} => loc
+      | RCEXNCASE {loc,...} => loc
+      | RCSWITCH {loc,...} => loc
+      | RCFNM {loc,...} => loc
+      | RCPOLYFNM {loc,...} => loc
+      | RCPOLY {loc,...} => loc
+      | RCTAPP {loc,...} => loc
+      | RCSEQ {loc,...} => loc
+      | RCFOREACH {loc,...} => loc
+      | RCFOREACHDATA {loc,...} => loc
+      | RCCAST (_,_,loc) => loc
+      | RCFFI (_,_,loc) => loc
+      | RCJOIN {loc,...} => loc
+      | RCJSON {loc,...} => loc
 
   val format_rcdecl' = format_rcdecl nil
   val formatWithoutType_rcdecl' = formatWithoutType_rcdecl nil

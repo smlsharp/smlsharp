@@ -1,17 +1,18 @@
 _require local "../../../basis.smi"
 _require local "../../../smlformat-lib.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
+
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../name/main/LocalID.smi"
-_require local "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
 _require "../../util/main/TermFormat.smi"
-_require local "../../util/main/SmlppgUtil.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/AbsynTy.ppg.smi"
 _require "./OPrimInstMap.smi"
 
 structure Types =
@@ -19,18 +20,20 @@ struct
   type typId = TypID.id
   type revealKey = RevealID.id
   type tvarId = TvarID.id
-  type eq = Absyn.eq
+  datatype eq = datatype AbsynTy.eq
   type utvar = {symbol:Symbol.symbol, id:tvarId, eq:eq, lifted:bool}
-  type eqKind = Absyn.eq
+  type eqKind = AbsynTy.eq
   type dummyTyID = int
   type freeTypeVarID = FreeTypeVarID.id
   type lambdaDepth = int
+   
+  datatype subkind = UNBOXED | JSON | JSON_ATOMIC | ANY
+
   datatype ty
     = SINGLETONty of singletonTy
     | BACKENDty of backendTy
     | ERRORty
-    | DUMMYty of dummyTyID
-    | DUMMY_RECORDty of {id:dummyTyID, fields:ty RecordLabel.Map.map}
+    | DUMMYty of dummyTyID * kind
     | TYVARty of tvState ref
     | BOUNDVARty of BoundTypeVarID.id
     | FUNMty of ty list * ty
@@ -52,16 +55,25 @@ struct
       }
     | POLYty of 
       {
-       boundtvars : {eqKind: eqKind, tvarKind: tvarKind}
-                      BoundTypeVarID.Map.map,
+       boundtvars : kind BoundTypeVarID.Map.map,
        constraints : constraint list,
        body : ty
       }
 
-  and constraint
-    = JOIN of {res : ty, args : ty * ty}
+  and kind =
+      KIND of
+      {
+        tvarKind : tvarKind,
+        eqKind : eqKind,
+        dynKind: bool,
+        reifyKind: bool,
+        subkind : subkind
+      }
 
-  and tvarKind 
+  and constraint
+    = JOIN of {res : ty, args : ty * ty, loc:Loc.loc}
+
+  and tvarKind
     = OCONSTkind of ty list
     | OPRIMkind of 
       {instances : ty list, 
@@ -75,9 +87,7 @@ struct
        } list
       }
     | UNIV
-    | JSON
     | BOXED
-    | UNBOXED
     | REC of ty RecordLabel.Map.map
 
   and dtyKind
@@ -104,9 +114,7 @@ struct
       {
        lambdaDepth: lambdaDepth,
        id: freeTypeVarID,
-       tvarKind: tvarKind,
-       eqKind: eqKind,
-       occurresIn: ty list,
+       kind: kind,
        utvarOpt: utvar option (* SOME: user-defined type variable *)
       }
     | SUBSTITUTED of ty
@@ -123,6 +131,8 @@ struct
     | INDEXty of RecordLabel.label * ty
     | TAGty of ty
     | SIZEty of ty
+    | TYPEty of ty
+    | REIFYty of ty
 
   and backendTy =
       RECORDSIZEty of ty
@@ -130,21 +140,21 @@ struct
     | RECORDBITMAPINDEXty of int * ty
     | CCONVTAGty of 
       {
-        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
+        tyvars : kind BoundTypeVarID.Map.map,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty option
       }
     | FUNENTRYty of
       {
-        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
+        tyvars : kind BoundTypeVarID.Map.map,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty option
       }
     | CALLBACKENTRYty of
       {
-        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
+        tyvars : kind BoundTypeVarID.Map.map,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty option,
@@ -156,7 +166,7 @@ struct
     | SOME_CCONVTAGty
     | FOREIGNFUNPTRty of
       {
-        tyvars : {eqKind: eqKind, tvarKind: tvarKind} BoundTypeVarID.Map.map,
+        tyvars : kind BoundTypeVarID.Map.map,
         argTyList : ty list,
         varArgTyList : ty list option,
         resultTy : ty option,
@@ -180,9 +190,7 @@ struct
    = {
        lambdaDepth: lambdaDepth,
        id: freeTypeVarID,
-       tvarKind: tvarKind,
-       eqKind: eqKind,
-       occurresIn: ty list,
+       kind: kind,
        utvarOpt: utvar option (* SOME: user-defined type variable *)
       }
 
@@ -206,12 +214,7 @@ struct
         match : overloadMatch,
         instMap : overloadMatch OPrimInstMap.map
       }
-  type btvKind 
-    = {
-        tvarKind : tvarKind,
-        eqKind : eqKind
-      }
-  type btvEnv = btvKind BoundTypeVarID.Map.map
+  type btvEnv = kind BoundTypeVarID.Map.map
   type varInfo = {path:Symbol.longsymbol, id:VarID.id, ty:ty, opaque:bool}
   type exVarInfo = {path:Symbol.longsymbol, ty:ty}
   type primInfo = {primitive : BuiltinPrimitive.primitive, ty : ty}
@@ -252,61 +255,53 @@ struct
   val strictlyYoungerDepth
       : {contextDepth: lambdaDepth, tyvarDepth: lambdaDepth} -> bool
 
-  val univKind
-      : {tvarKind: tvarKind,
-         eqKind: Absyn.eq,
-         utvarOpt: utvar option}
+  val univKind : {kind : kind, utvarOpt: utvar option}
+  val jsonKind : {kind : kind, utvarOpt: utvar option}
+  val joinKind : {kind : kind, utvarOpt: utvar option}
+  val jsonAtomicKind : {kind : kind, utvarOpt: utvar option}
+  val joinAtomicKind : {kind : kind, utvarOpt: utvar option}
+  val emptyRecordKind : {kind : kind, utvarOpt: utvar option}
+  val dynamicKind : {kind : kind, utvarOpt: utvar option}
+  val reifyKind : {kind : kind, utvarOpt: utvar option}
   val kindedTyvarList : tvState ref list ref
   val newTvStateRef
       : {lambdaDepth: lambdaDepth,
-         tvarKind: tvarKind,
-         eqKind: Absyn.eq,
-         occurresIn: ty list,
+         kind : kind,
          utvarOpt: utvar option}
         -> tvState ref
   val newty
-      : {tvarKind: tvarKind,
-         eqKind: Absyn.eq,
+      : {kind : kind,
          utvarOpt: utvar option}
         -> ty
-  val newUtvar : lambdaDepth * Absyn.eq * utvar -> tvState ref
+  val newUtvar : lambdaDepth * eq * utvar -> tvState ref
   val newtyRaw
       : {lambdaDepth: lambdaDepth,
-         tvarKind: tvarKind,
-         eqKind: Absyn.eq,
-         occurresIn: ty list,
+         kind : kind,
          utvarOpt: utvar option}
         -> ty
   val newtyWithLambdaDepth
-      : (lambdaDepth * {tvarKind: tvarKind,
-                        eqKind: Absyn.eq,
-                        utvarOpt: utvar option})
+      : (lambdaDepth * {kind : kind, utvarOpt: utvar option})
         -> ty
-  val printTy : ty -> unit
-  val tyToString : ty -> string
 
 (*****************)
   val format_tvarKind
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-         -> tvarKind -> TermFormat.format
+      : kind TermFormat.btvEnv -> tvarKind -> TermFormat.format
   val format_tvState
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-         -> tvState -> TermFormat.format
+      : kind TermFormat.btvEnv -> tvState -> TermFormat.format
   val format_ty
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> ty -> TermFormat.format
+      : kind TermFormat.btvEnv -> ty -> TermFormat.format
+  val format_singletonTy
+      : kind TermFormat.btvEnv -> singletonTy -> TermFormat.format
   val formatWithType_ty
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> ty -> TermFormat.format
+      : kind TermFormat.btvEnv -> ty -> TermFormat.format
+  val formatWithType_singletonTy
+      : kind TermFormat.btvEnv -> singletonTy -> TermFormat.format
   val format_tvKind
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> tvKind -> TermFormat.format
+      : kind TermFormat.btvEnv -> tvKind -> TermFormat.format
   val format_dtyKind
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> dtyKind -> TermFormat.format
+      : kind TermFormat.btvEnv -> dtyKind -> TermFormat.format
   val format_oprimSelector
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> oprimSelector -> TermFormat.format
+      : kind TermFormat.btvEnv -> oprimSelector -> TermFormat.format
   val format_dummyTyID : dummyTyID -> TermFormat.format
 (*****************)
 
@@ -320,11 +315,9 @@ struct
   val format_oprimInfo
       : oprimInfo -> TermFormat.format
   val format_conInfo
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> conInfo -> TermFormat.format
+      : kind TermFormat.btvEnv -> conInfo -> TermFormat.format
   val format_foreignFunTy
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> foreignFunTy -> TermFormat.format
+      : kind TermFormat.btvEnv -> foreignFunTy -> TermFormat.format
   val format_codeEntryTy
       : codeEntryTy -> TermFormat.format
   val format_callbackEntryTy
@@ -335,24 +328,24 @@ struct
       : exExnInfo -> TermFormat.format
 
   val formatWithType_varInfo
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> varInfo -> TermFormat.format
+      : kind TermFormat.btvEnv -> varInfo -> TermFormat.format
   val formatWithType_exVarInfo
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> exVarInfo -> TermFormat.format
+      : kind TermFormat.btvEnv -> exVarInfo -> TermFormat.format
   val formatWithType_primInfo
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> primInfo -> TermFormat.format
-  val format_btvKind
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        * TermFormat.format -> btvKind -> TermFormat.format
+      : kind TermFormat.btvEnv -> primInfo -> TermFormat.format
+  val format_kind
+      : kind TermFormat.btvEnv * TermFormat.format -> kind -> TermFormat.format
   val format_btvEnv
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> btvEnv
-        -> TermFormat.format
+      : kind TermFormat.btvEnv -> btvEnv -> TermFormat.format
   val format_btvEnvWithType
-      : {eqKind: Absyn.eq, tvarKind: tvarKind} TermFormat.btvEnv
-        -> btvEnv
-        -> TermFormat.format
+      : kind TermFormat.btvEnv -> btvEnv -> TermFormat.format
+
+  val printTy : ty -> unit
+  val tyToString : ty -> string
+  val singletonTyToString : singletonTy -> string
+  val singletonTyWithTypeToString : singletonTy -> string
+  val tyWithTypeToString : ty -> string
+  val btvEnvToString : btvEnv -> string
+  val btvEnvWithTypeToString : btvEnv -> string
 
 end

@@ -1,12 +1,14 @@
+_require local "../../../ml-yacc-lib.smi"
+_require local "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+
+_require local "../../toolchain/main/Filename.smi"
+_require local "../../absyn/main/Absyn.ppg.smi"
+
 _require "../../../basis.smi"
-_require "../../../ml-yacc-lib.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../toolchain/main/Filename.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
 _require "../../absyn/main/FormatTemplate.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
 
 structure InterfaceLrVals =
 struct

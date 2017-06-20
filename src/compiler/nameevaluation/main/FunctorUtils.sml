@@ -9,7 +9,7 @@ local
   structure V = NameEvalEnv
   structure U = NameEvalUtils
   structure TF = TfunVars
-  structure A = Absyn
+  structure A = AbsynTy
   structure I = IDCalc
   structure L = SetLiftedTys
   structure N = NormalizeTy
@@ -212,7 +212,11 @@ in
               val {varPats=pats2, exnPats=exnPats2, env=env, exnTagDecls=exnTagDecls2} = 
                   genArgVarE path varE env
               val env = genArgTyE path tyE env
+(* 2016-11-06 ohori: bug 331_functorSmi:
+   Functor argumentを仮に実体化したstrkindは，FUNARGとする．
               val strKind = V.STRENV (StructureID.generate())
+*)
+              val strKind = V.FUNARG (StructureID.generate())
             in
               {varPats=pats1@pats2,
                exnPats=exnPats@exnPats2, 
@@ -432,7 +436,7 @@ val _ = U.print "\n"
                   I.ICVAR {id=id, longsymbol=path@[name]} :: vars
                 | (name, I.IDVAR_TYPED {id, longsymbol, ty}, vars) => 
                   I.ICVAR {id=id, longsymbol= path@[name]} :: vars
-                | (name, I.IDEXVAR {exInfo, used, internalId}, vars) =>
+                | (name, I.IDEXVAR {exInfo, internalId}, vars) =>
                   I.ICEXVAR {exInfo=exInfo, longsymbol=path@[name]} :: vars
 (*
                 | (name, I.IDEXVAR {longsymbol, ty, used, version, internalId}, vars) =>
@@ -502,7 +506,7 @@ val _ = U.print "\n"
                     I.ICEXN_CONSTRUCTOR({id=id,ty=ty,
                                          longsymbol = path}) 
                     ::exnCons
-                  | SOME (I.IDEXEXN (exExnInfo, used)) =>
+                  | SOME (I.IDEXEXN exExnInfo) =>
                     I.ICEXEXN_CONSTRUCTOR {longsymbol=path, exInfo=exExnInfo} ::exnCons
 (*
                   | SOME (I.IDEXEXN {exExnInfo, used}) => 
@@ -520,7 +524,7 @@ val _ = U.print "\n"
                       I.ICEXEXN_CONSTRUCTOR({ty=ty,longsymbol=longsymbol},loc) ::exnCons
                     end
 *)
-                  | SOME (I.IDEXEXNREP (exExnInfo, used)) => 
+                  | SOME (I.IDEXEXNREP exExnInfo) => 
                     I.ICEXEXN_CONSTRUCTOR 
                       {exInfo=exExnInfo, longsymbol=path}
                     :: exnCons
@@ -557,9 +561,9 @@ val _ = U.print "\n"
             | (name, I.IDVAR_TYPED {id, longsymbol, ty}, (vars, set)) => 
               ((path@[name], I.ICVAR {id=id, longsymbol=longsymbol}) :: vars, 
                set)
-            | (name, I.IDEXVAR {exInfo, used, internalId},  (vars, set)) =>
+            | (name, I.IDEXVAR {exInfo, internalId},  (vars, set)) =>
               (* 2013-7-26 ohori. 061_functor but *)
-              (used := true;
+              (#used exInfo := true;
                ((path@[name], I.ICEXVAR {longsymbol=path@[name], exInfo=exInfo}) :: vars, set)
               )
 (*
@@ -592,8 +596,8 @@ val _ = U.print "\n"
 (*
             I.ICEXN ({id=id, ty=ty, path=path@[name]}, loc) :: vars
 *)
-            | (name, I.IDEXEXN (exExnInfo, used), (vars, set)) => (vars,set)
-            | (name, I.IDEXEXNREP (exExnInfo, used), (vars, set)) => (vars,set)
+            | (name, I.IDEXEXN exExnInfo, (vars, set)) => (vars,set)
+            | (name, I.IDEXEXNREP exExnInfo, (vars, set)) => (vars,set)
 (*
             I.ICEXEXN({path=path, ty=ty}, loc) :: vars
 *)
@@ -918,13 +922,13 @@ val _ = U.print "\n"
     | (I.IDEXNREP {ty=ty1,...}, I.IDEXNREP {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
       else raise Fail
-    | (I.IDEXEXN ({ty=ty1,...},_), I.IDEXN {ty=ty2,...}) =>
+    | (I.IDEXEXN {ty=ty1,...}, I.IDEXN {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
       else raise Fail
-    | (I.IDEXEXN ({ty=ty1,...},_), I.IDEXEXN ({ty=ty2,...},_)) =>
+    | (I.IDEXEXN {ty=ty1,...}, I.IDEXEXN {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
       else raise Fail
-    | (I.IDEXEXNREP ({ty=ty1,...},_), I.IDEXEXNREP ({ty=ty2,...},_)) =>
+    | (I.IDEXEXNREP {ty=ty1,...}, I.IDEXEXNREP {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
       else raise Fail
     | (I.IDEXVAR _, I.IDVAR _) => ()

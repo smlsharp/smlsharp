@@ -1,3 +1,4 @@
+
 _require "../../basis.smi"
 _require local "../../basis/main/SMLSharp_Runtime.smi"
 _require local "./SQLErrors.smi"
@@ -17,13 +18,10 @@ struct
 
   val execQuery : conn * string -> res
   val closeConn : conn -> unit
-  val closeRel : res -> unit
-  val getDatabaseSchema : conn -> (string *
-                                   {colname: string,
-                                    ty: SMLSharp_SQL_BackendTy.ty,
-                                    nullable: bool} list) list
+  val closeRes : res -> unit
+  val getDatabaseSchema : conn -> SMLSharp_SQL_BackendTy.schema
   val connect : string -> conn
-  val fetch : res -> res option
+  val fetch : res -> bool
   val getValue : res * int -> value option
   val intValue : value -> int option
   val intInfValue : value -> intInf option

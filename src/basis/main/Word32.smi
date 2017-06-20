@@ -6,7 +6,6 @@ _require local "./String.smi"
 
 structure Word32 =
 struct
-  type word = word
   val wordSize : int
   val toLarge = SMLSharp_Builtin.Word32.toWord64
   val toLargeX = SMLSharp_Builtin.Word32.toWord64X
@@ -46,6 +45,7 @@ struct
              -> (char, 'a) StringCvt.reader
              -> (word, 'a) StringCvt.reader
   val fromString : string -> word option
+  type word = word
 end
 
 structure Word = Word32

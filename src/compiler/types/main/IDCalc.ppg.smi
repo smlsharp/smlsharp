@@ -1,18 +1,19 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
 _require local "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/RecordLabel.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
+
 _require "../../util/main/TermFormat.smi"
-_require local "../../util/main/SmlppgUtil.ppg.smi"
-_require local "../../control/main/Bug.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/RecordLabel.smi"
 _require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/AbsynTy.ppg.smi"
+_require "../../absyn/main/AbsynConst.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "./TvarMap.smi"
 _require "./Types.ppg.smi"
@@ -30,12 +31,12 @@ struct
   type oprimId = OPrimID.id
   type tvarId = TvarID.id
   type revealKey = RevealID.id
-  type tvar = {symbol:symbol, id:tvarId, eq:Absyn.eq, lifted:bool}
+  type tvar = {symbol:symbol, id:tvarId, eq:AbsynTy.eq, lifted:bool}
   type liftedTys = TvarSet.set
   type formals = tvar list
   type varInfo = {longsymbol: longsymbol, id: varId}
   type oprimInfo = {longsymbol: longsymbol, id: oprimId}
-  type constant = Absyn.constant
+  type constant = AbsynConst.constant
   type typesTy = Types.ty
 
   datatype runtimeTy
@@ -55,7 +56,8 @@ struct
   and tvarKind
     = UNIV
     | REC of ty RecordLabel.Map.map
-    | JSON
+    | JSON of {dynKind:bool}
+    | REIFY
     | BOXED
     | UNBOXED
 
@@ -100,16 +102,15 @@ struct
    and idstatus
     = IDVAR of {id:varId, longsymbol:longsymbol}
     | IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol}
-    | IDEXVAR of {exInfo:{longsymbol: longsymbol, version:version, ty:ty}, 
-                  used:bool ref, 
+    | IDEXVAR of {exInfo:{longsymbol: longsymbol, version:version, used:bool ref, ty:ty}, 
                   internalId:varId option}
     | IDEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId,  version:version}
     | IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty}
     | IDCON of {id:conId, ty:ty, longsymbol:longsymbol}
     | IDEXN of {id:exnId, ty:ty, longsymbol:longsymbol}
     | IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol}
-    | IDEXEXN of {longsymbol:longsymbol, version:version, ty:ty} * bool ref
-    | IDEXEXNREP of {ty:ty, version:version, longsymbol:longsymbol} * bool ref
+    | IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty}
+    | IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol}
     | IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol}
     | IDSPECVAR of {ty:ty, symbol:symbol}
     | IDSPECEXN of {ty:ty, symbol:symbol}
@@ -119,14 +120,14 @@ struct
     = ICERROR
     | ICCONSTANT of constant
     | ICVAR of varInfo
-    | ICEXVAR of {longsymbol: longsymbol, exInfo:{longsymbol:longsymbol, version:version, ty:ty}}
-    | ICEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId, exInfo:{longsymbol:longsymbol, version:version}}
+    | ICEXVAR of {longsymbol: longsymbol, exInfo:{used:bool ref, longsymbol:longsymbol, version:version, ty:ty}}
+    | ICEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId, exInfo:{used:bool ref, longsymbol:longsymbol, version:version}}
     | ICBUILTINVAR of {primitive:BuiltinPrimitive.primitive, ty:ty, loc:loc}
     | ICCON of {longsymbol: longsymbol, ty:ty, id: conId}
     | ICEXN of {longsymbol: longsymbol, id: exnId, ty:ty}
-    | ICEXEXN of {longsymbol: longsymbol, exInfo:{longsymbol: longsymbol, version:version, ty:ty}}
+    | ICEXEXN of {longsymbol: longsymbol, exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}}
     | ICEXN_CONSTRUCTOR of {longsymbol: longsymbol, id: exnId, ty:ty}
-    | ICEXEXN_CONSTRUCTOR of {longsymbol: longsymbol, exInfo:{longsymbol: longsymbol, version:version, ty:ty}}
+    | ICEXEXN_CONSTRUCTOR of {longsymbol: longsymbol, exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}}
     | ICOPRIM of oprimInfo
     | ICTYPED of icexp * ty * loc
     | ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
@@ -148,12 +149,16 @@ struct
     | ICRECORD_SELECTOR of RecordLabel.label * loc 
     | ICSELECT of RecordLabel.label * icexp * loc
     | ICSEQ of icexp list * loc
+    | ICFOREACH of {data:icexp, iterator:icexp, pred:icexp, loc:loc}
+    | ICFOREACHDATA of {data:icexp, whereParam:icexp, iterator:icexp, pred:icexp, loc:loc}
     | ICFFIIMPORT of ffiFun * ffiTy * loc
     | ICFFIAPPLY of FFIAttributes.attributes option
                     * ffiFun * ffiArg list * ffiTy list * loc
-    | ICSQLSCHEMA of {columnInfoFnExp : icexp, ty : ty, loc : loc}
+    | ICSQLSCHEMA of {tyFnExp : icexp, ty : ty, loc : loc}
     | ICJOIN of icexp * icexp * loc
     | ICJSON of icexp * ty * loc
+    | ICTYPEOF of ty * loc
+    | ICREIFYTY of ty * loc
     
   and ffiArg
     = ICFFIARG of icexp * ffiTy * loc
@@ -170,7 +175,7 @@ struct
     | ICPATVAR_OPAQUE of varInfo
     | ICPATCON of {longsymbol: longsymbol, ty:ty, id: conId}
     | ICPATEXN of {longsymbol: longsymbol, id: exnId, ty:ty}
-    | ICPATEXEXN of {longsymbol:longsymbol, exInfo:{longsymbol: longsymbol, version:version, ty:ty}}
+    | ICPATEXEXN of {longsymbol:longsymbol, exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}}
     | ICPATCONSTANT of constant
     | ICPATCONSTRUCT of {con: icpat, arg: icpat, loc:loc}
     | ICPATRECORD of {flex: bool, fields: (RecordLabel.label * icpat) list, loc: loc}
@@ -207,14 +212,14 @@ struct
     | ICEXND of {exnInfo: {longsymbol: longsymbol, id: exnId, ty:ty}, loc: loc} list * loc
     | ICEXNTAGD of {exnInfo: {longsymbol: longsymbol, id: exnId, ty:ty}, varInfo:varInfo} * loc
     | ICEXPORTVAR of 
-      {exInfo:{longsymbol: longsymbol, version:version, ty:ty}, id:varId}
+      {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}, id:varId}
     | ICEXPORTTYPECHECKEDVAR of {longsymbol:longsymbol, version:version, id:varId}
     | ICEXPORTFUNCTOR of
-      {exInfo:{longsymbol: longsymbol, version:version, ty:ty}, id:varId}
+      {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}, id:varId}
     | ICEXPORTEXN of
-      {exInfo:{longsymbol: longsymbol, version:version, ty:ty}, id:exnId}
-    | ICEXTERNVAR of {longsymbol: longsymbol, version:version, ty:ty}
-    | ICEXTERNEXN of {longsymbol: longsymbol, version:version, ty:ty}
+      {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}, id:exnId}
+    | ICEXTERNVAR of {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
+    | ICEXTERNEXN of {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
     | ICBUILTINEXN of {longsymbol: longsymbol, ty:ty}
     | ICOVERLOADDEF of {boundtvars: (tvar * tvarKind) list,
                         id:oprimId,
@@ -231,8 +236,8 @@ struct
                         expTy: ty,
                         matches: {instTy: ty, instance: overloadInstance} list,
                         loc: loc}
-    | INST_EXVAR of {exInfo:{longsymbol: longsymbol, version:version, ty:ty},
-                     used:bool ref, loc:loc}
+    | INST_EXVAR of {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty},
+                     loc:loc}
     | INST_PRIM of {primitive: BuiltinPrimitive.primitive, ty: ty} * loc
 
   and ffiTy 
@@ -252,9 +257,11 @@ struct
         expTy: ty,
         matches: {instTy: ty, instance: overloadInstance} list,
         loc: Loc.loc}
-  type exInfo = {longsymbol: longsymbol, version:version, ty:ty}
+  type exInfo = {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
   type topdecl = icdecl list
-  type exexnInfo = {longsymbol:longsymbol, ty:ty, version:version}
+(*
+  type exexnInfo = {used:bool ref, longsymbol:longsymbol, ty:ty, version:version}
+*)
 
   val derefTfun : tfun -> tfun
   val emptyLiftedTys : liftedTys

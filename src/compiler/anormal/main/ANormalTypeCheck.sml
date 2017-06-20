@@ -49,6 +49,7 @@ struct
         dataEnv : A.ty DataLabel.Map.map,
         extraDataEnv : unit ExtraDataLabel.Map.map,
         externEnv : (A.ty * extern) ExternSymbol.Map.map,
+        externFunEnv : A.ty option ExternFunSymbol.Map.map,
         localCodeEnv : A.ty list FunLocalLabel.Map.map,
         handlerEnv : HandlerLabel.Set.set,
         returnTy : A.ty
@@ -63,6 +64,7 @@ struct
         dataEnv = DataLabel.Map.empty,
         extraDataEnv = ExtraDataLabel.Map.empty,
         externEnv = ExternSymbol.Map.empty,
+        externFunEnv = ExternFunSymbol.Map.empty,
         localCodeEnv = FunLocalLabel.Map.empty,
         handlerEnv = HandlerLabel.Set.empty,
         returnTy = retTy
@@ -105,6 +107,12 @@ struct
   fun printExternNotFound msg id =
       printErr (msg ^ ": extern not found "
                 ^ ExternSymbol.toString id ^ "\n")
+  fun printExternFunNotFound msg id =
+      printErr (msg ^ ": extern function not found "
+                ^ ExternFunSymbol.toString id ^ "\n")
+  fun printExportFunFound msg id =
+      printErr (msg ^ ": exported function referred "
+                ^ ExternFunSymbol.toString id ^ "\n")
   fun printLocalCodeNotFound msg id =
       printErr (msg ^ ": local code not found "
                 ^ FunLocalLabel.toString id ^ "\n")
@@ -132,6 +140,9 @@ struct
   fun printDoubledExtern msg id =
       printErr (msg ^ ": doubled extern "
                 ^ ExternSymbol.toString id ^ "\n")
+  fun printDoubledExternFun msg id =
+      printErr (msg ^ ": doubled extern function"
+                ^ ExternFunSymbol.toString id ^ "\n")
   fun printDoubledLocalCode msg id =
       printErr (msg ^ ": doubled local code "
                 ^ FunLocalLabel.toString id ^ "\n")
@@ -211,10 +222,9 @@ struct
         unifyBackendTy inst (bty1, bty2)
       | (T.BACKENDty _, _) => raise Unify
       | (T.ERRORty, _) => raise Unify  (* never appear *)
-      | (T.DUMMYty t1, T.DUMMYty t2) => if t1 = t2 then () else raise Unify
+      | (T.DUMMYty (id1, kind1), T.DUMMYty (id2, kind2)) =>
+        if id1 = id2 then unifyKind inst (kind1, kind1) else raise Unify
       | (T.DUMMYty _, _) => raise Unify
-      | (T.DUMMY_RECORDty t1, T.DUMMY_RECORDty t2) => if #id t1 = #id t2 then () else raise Unify
-      | (T.DUMMY_RECORDty _, _) => raise Unify
       | (T.BOUNDVARty t1, T.BOUNDVARty t2) =>
         (case (BoundTypeVarID.Map.find (#1 inst, t1),
                BoundTypeVarID.Map.find (#2 inst, t2)) of
@@ -267,7 +277,7 @@ struct
                   inst
                   btvEq
       in
-        app (fn ((_,k1),(_,k2)) => unifyBtvKind inst (k1, k2)) btvEq;
+        app (fn ((_,k1),(_,k2)) => unifyKind inst (k1, k2)) btvEq;
         inst
       end
 
@@ -283,6 +293,10 @@ struct
       | (T.TAGty _, _) => raise Unify
       | (T.SIZEty ty1, T.SIZEty ty2) => unifyTy inst (ty1, ty2)
       | (T.SIZEty _, _) => raise Unify
+      | (T.TYPEty ty1, T.TYPEty ty2) => unifyTy inst (ty1, ty2)
+      | (T.TYPEty _, _) => raise Unify
+      | (T.REIFYty ty1, T.REIFYty ty2) => unifyTy inst (ty1, ty2)
+      | (T.REIFYty _, _) => raise Unify
 
   and unifyBackendTy inst (bty1, bty2) =
       case (bty1, bty2) of
@@ -366,20 +380,22 @@ struct
         unifyTyOption inst (retTy1, retTy2)
       end
 
-  and unifyBtvKind inst ({eqKind=eq1, tvarKind=k1}, {eqKind=eq2, tvarKind=k2}) =
-      if eq1 <> eq2 then raise Unify else
+  and unifyKind inst (T.KIND {eqKind=eq1, dynKind=dynKind1, reifyKind=reifyKind1, subkind=subkind1, tvarKind=k1}, 
+                      T.KIND {eqKind=eq2, dynKind=dynKind2, reifyKind=reifyKind2, subkind=subkind2, tvarKind=k2}) =
+      if eq1 <> eq2
+         orelse dynKind1 <> dynKind2
+         orelse reifyKind1 <> reifyKind2
+         orelse subkind1 <> subkind2
+      then raise Unify
+      else
       case (k1, k2) of
         (T.OCONSTkind _, _) => raise Unify  (* never appear *)
       | (T.OPRIMkind i1, T.OPRIMkind i2) => ()  (* ignore overload instances *)
       | (T.OPRIMkind _, _) => raise Unify
       | (T.UNIV, T.UNIV) => ()
       | (T.UNIV, _) => raise Unify
-      | (T.JSON, T.JSON) => ()
-      | (T.JSON, _) => raise Unify
       | (T.BOXED, T.BOXED) => ()
       | (T.BOXED, _) => raise Unify
-      | (T.UNBOXED, T.UNBOXED) => ()
-      | (T.UNBOXED, _) => raise Unify
       | (T.REC tys1, T.REC tys2) =>
         app (unifyTy inst) (recordFieldTyEq (tys1, tys2))
       | (T.REC _, _) => raise Unify
@@ -459,14 +475,17 @@ struct
 
   fun checkConst (env:env) const =
       case const of
-        A.NVINT32 _ => tyOf B.intTy
+        A.NVINT8 _ => tyOf B.int8Ty
+      | A.NVINT16 _ => tyOf B.int16Ty
+      | A.NVINT32 _ => tyOf B.intTy
       | A.NVINT64 _ => tyOf B.int64Ty
+      | A.NVWORD8 _ => tyOf B.word8Ty
+      | A.NVWORD16 _ => tyOf B.word16Ty
       | A.NVWORD32 _ => tyOf B.wordTy
       | A.NVWORD64 _ => tyOf B.word64Ty
       | A.NVCONTAG _ => tyOf B.contagTy
-      | A.NVWORD8 _ => tyOf B.word8Ty
-      | A.NVREAL _ => tyOf B.realTy
-      | A.NVFLOAT _ => tyOf B.real32Ty
+      | A.NVREAL64 _ => tyOf B.realTy
+      | A.NVREAL32 _ => tyOf B.real32Ty
       | A.NVCHAR _ => tyOf B.charTy
       | A.NVUNIT => tyOf B.unitTy
       | A.NVNULLPOINTER => tyOf unitptrTy
@@ -477,6 +496,11 @@ struct
         (case FunEntryLabel.Map.find (#funEntryEnv env, id) of
            NONE => (printFunEntryNotFound "NVFUNENTRY" id; errorTy)
          | SOME ty => ty)
+      | A.NVEXFUNENTRY id =>
+        (case ExternFunSymbol.Map.find (#externFunEnv env, id) of
+           NONE => (printExternFunNotFound "NVEXFUNENTRY" id; errorTy)
+         | SOME NONE => (printExportFunFound "NVEXFUNENTRY" id; errorTy)
+         | SOME (SOME ty) => ty)
       | A.NVCALLBACKENTRY id =>
         (case CallbackEntryLabel.Map.find (#callbackEntryEnv env, id) of
            NONE => (printCallbackEntryNotFound "NVCALLBACKENTRY" id; errorTy)
@@ -541,7 +565,8 @@ struct
         T.RECORDty fieldTys => fieldTys
       | T.BOUNDVARty btv =>
         (case BoundTypeVarID.Map.find (#btvEnv env, btv) of
-           SOME {tvarKind = T.REC fieldTys, ...} => fieldTys
+           SOME (T.KIND {tvarKind = T.REC fieldTys, ...}) =>
+           fieldTys
          | _ => (printErr "record kind expected\n"; RecordLabel.Map.empty))
       | _ => (printErr "record type expected\n"; RecordLabel.Map.empty)
 
@@ -999,6 +1024,28 @@ struct
         else env
                # {externEnv =
                     ExternSymbol.Map.insert (#externEnv env, id, (ty, EXPORT))}
+      | A.NTEXTERNFUN {id, tyvars, argTyList, retTy, loc} =>
+        if ExternFunSymbol.Map.inDomain (#externFunEnv env, id)
+        then (printDoubledExternFun "NTEXTERNFUN" id; env)
+        else let
+          val ty =
+              (T.BACKENDty (T.FUNENTRYty {tyvars = tyvars,
+                                          haveClsEnv = false,
+                                          argTyList = map #1 argTyList,
+                                          retTy = SOME (#1 retTy)}),
+               R.MLCODEPTRty {haveClsEnv = false,
+                              argTys = map #2 argTyList,
+                              retTy = SOME (#2 retTy)})
+        in
+          env # {externFunEnv =
+                   ExternFunSymbol.Map.insert (#externFunEnv env, id, SOME ty)}
+        end
+      | A.NTEXPORTFUN {id, funId, loc} =>
+        if ExternFunSymbol.Map.inDomain (#externFunEnv env, id)
+        then (printDoubledExternFun "NTEXPORTFUN" id; env)
+        else env
+               # {externFunEnv =
+                    ExternFunSymbol.Map.insert (#externFunEnv env, id, NONE)}
       | A.NTSTRING {id, string, loc} =>
         if DataLabel.Map.inDomain (#dataEnv env, id)
         then (printDoubledData "NTSTRING" id; env)
@@ -1037,6 +1084,11 @@ struct
       case topdata of
         A.NTEXTERNVAR {id, ty, loc} => ()
       | A.NTEXPORTVAR {id, weak, ty, value, loc} => ()
+      | A.NTEXTERNFUN {id, tyvars, argTyList, retTy, loc} => ()
+      | A.NTEXPORTFUN {id, funId, loc} =>
+        if FunEntryLabel.Map.inDomain (#funEntryEnv env, funId)
+        then ()
+        else printFunEntryNotFound "NVEXPORTFUN" funId
       | A.NTSTRING {id, string, loc} => ()
       | A.NTINTINF {id, value, loc} => ()
       | A.NTRECORD {id, tyvarKindEnv=_, fieldList, recordTy,
@@ -1108,7 +1160,7 @@ struct
   fun makeTopdecEnv (topdec, env:env) =
       case topdec of
         A.ATFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, loc} =>
+                      retTy, gcCheck, loc} =>
         let
           val ty =
               (T.BACKENDty (T.FUNENTRYty {tyvars = tyvarKindEnv,
@@ -1161,7 +1213,7 @@ struct
   fun checkTopdec env topdec =
       case topdec of
         A.ATFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, loc} =>
+                      retTy, gcCheck, loc} =>
         checkFunctionBody
           "ATFUNCTION"
           env

@@ -34,7 +34,8 @@ struct
   fun assertType loc (x, y:L.ty) =
       if x = y
       then ()
-      else raise Bug.Bug
+      else (*raise Bug.Bug*)
+print
                  ("assertType: failed at " ^ loc ^ "\n\
                   \actual: " ^ Bug.prettyPrint (L.format_ty x) ^ "\n\
                   \expect: " ^ Bug.prettyPrint (L.format_ty y))
@@ -113,10 +114,13 @@ struct
 
   fun compileRuntimeTy rty =
       case rty of
-        T.UNITty => L.PTR L.I8
-      | T.UINT8ty => L.I8
+        T.UNITty => L.I32
+      | T.INT8ty => L.I8
+      | T.INT16ty => L.I16
       | T.INT32ty => L.I32
       | T.INT64ty => L.I64
+      | T.UINT8ty => L.I8
+      | T.UINT16ty => L.I16
       | T.UINT32ty => L.I32
       | T.UINT64ty => L.I64
       | T.BOXEDty => L.PTR L.I8
@@ -267,6 +271,114 @@ struct
          argAttrs = [nil],
          varArg = false,
          retTy = L.DOUBLE,
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_sadd_with_overflow_i8 =
+      R {name = "llvm.sadd.with.overflow.i8",
+         tail = NONE,
+         argTys = [L.I8, L.I8],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I8, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_sadd_with_overflow_i16 =
+      R {name = "llvm.sadd.with.overflow.i16",
+         tail = NONE,
+         argTys = [L.I16, L.I16],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I16, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_sadd_with_overflow_i32 =
+      R {name = "llvm.sadd.with.overflow.i32",
+         tail = NONE,
+         argTys = [L.I32, L.I32],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I32, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_sadd_with_overflow_i64 =
+      R {name = "llvm.sadd.with.overflow.i64",
+         tail = NONE,
+         argTys = [L.I64, L.I64],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I64, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_ssub_with_overflow_i8 =
+      R {name = "llvm.ssub.with.overflow.i8",
+         tail = NONE,
+         argTys = [L.I8, L.I8],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I8, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_ssub_with_overflow_i16 =
+      R {name = "llvm.ssub.with.overflow.i16",
+         tail = NONE,
+         argTys = [L.I16, L.I16],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I16, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_ssub_with_overflow_i32 =
+      R {name = "llvm.ssub.with.overflow.i32",
+         tail = NONE,
+         argTys = [L.I32, L.I32],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I32, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_ssub_with_overflow_i64 =
+      R {name = "llvm.ssub.with.overflow.i64",
+         tail = NONE,
+         argTys = [L.I64, L.I64],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I64, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_smul_with_overflow_i8 =
+      R {name = "llvm.smul.with.overflow.i8",
+         tail = NONE,
+         argTys = [L.I8, L.I8],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I8, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_smul_with_overflow_i16 =
+      R {name = "llvm.smul.with.overflow.i16",
+         tail = NONE,
+         argTys = [L.I16, L.I16],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I16, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_smul_with_overflow_i32 =
+      R {name = "llvm.smul.with.overflow.i32",
+         tail = NONE,
+         argTys = [L.I32, L.I32],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I32, L.I1], {packed=false}),
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val llvm_smul_with_overflow_i64 =
+      R {name = "llvm.smul.with.overflow.i64",
+         tail = NONE,
+         argTys = [L.I64, L.I64],
+         argAttrs = [nil, nil],
+         varArg = false,
+         retTy = L.STRUCT ([L.I64, L.I1], {packed=false}),
          retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val llvm_init_trampoline =
@@ -554,7 +666,7 @@ struct
       | SOME x => x
 
   fun funEntryLabelToSymbol id =
-      "_SMLF" ^ FunEntryLabel.toString id
+      "_SMLL" ^ FunEntryLabel.toString id
   fun callbackEntryLabelToSymbol id =
       "_SMLB" ^ CallbackEntryLabel.toString id
   fun dataLabelToSymbol id =
@@ -563,6 +675,8 @@ struct
       "_SMLM" ^ DataLabel.toString id
   fun extraDataLabelToSymbol id =
       "_SMLE" ^ ExtraDataLabel.toString id
+  fun externFunSymbolToSymbol id =
+      "_SMLF" ^ ExternFunSymbol.toString id
   fun externSymbolToSymbol id =
       "_SMLZ" ^ ExternSymbol.toString id
 
@@ -571,19 +685,28 @@ struct
 
   type alias_map =
       {dataMap : L.const DataLabel.Map.map,
-       extraDataMap : L.const ExtraDataLabel.Map.map}
+       extraDataMap : L.const ExtraDataLabel.Map.map,
+       exFunEntryMap : ExternFunSymbol.id list FunEntryLabel.Map.map}
 
   val emptyAliasMap =
       {dataMap = DataLabel.Map.empty,
-       extraDataMap = ExtraDataLabel.Map.empty} : alias_map
+       extraDataMap = ExtraDataLabel.Map.empty,
+       exFunEntryMap = FunEntryLabel.Map.empty} : alias_map
 
   fun singletonAlias (id, const) : alias_map =
       {dataMap = DataLabel.Map.singleton (id, const),
-       extraDataMap = ExtraDataLabel.Map.empty}
+       extraDataMap = ExtraDataLabel.Map.empty,
+       exFunEntryMap = FunEntryLabel.Map.empty}
 
   fun singletonAliasExtra (id, const) : alias_map =
       {dataMap = DataLabel.Map.empty,
-       extraDataMap = ExtraDataLabel.Map.singleton (id, const)}
+       extraDataMap = ExtraDataLabel.Map.singleton (id, const),
+       exFunEntryMap = FunEntryLabel.Map.empty}
+
+  fun singletonAliasFunEntry (id, id2) : alias_map =
+      {dataMap = DataLabel.Map.empty,
+       extraDataMap = ExtraDataLabel.Map.empty,
+       exFunEntryMap = FunEntryLabel.Map.singleton (id, [id2])}
 
   fun unionAliasMap (a1:alias_map, a2:alias_map) : alias_map =
       {dataMap =
@@ -593,20 +716,27 @@ struct
        extraDataMap =
          ExtraDataLabel.Map.unionWith
            (fn _ => raise Bug.Bug "extendAliasMap extraDataMap")
-           (#extraDataMap a1, #extraDataMap a2)}
+           (#extraDataMap a1, #extraDataMap a2),
+       exFunEntryMap =
+         FunEntryLabel.Map.unionWith
+           (op @)
+           (#exFunEntryMap a1, #exFunEntryMap a2)}
 
-  fun compileConst (aliasMap as {dataMap, extraDataMap}:alias_map) const =
+  fun compileConst (aliasMap:alias_map) const =
       case const of
-        M.NVINT32 x => L.INTCONST (Word64.fromInt x)
-      | M.NVWORD32 x => L.INTCONST (Word32.toLarge x)
+        M.NVINT8 x => L.INTCONST (Word64.fromInt (Int8.toInt x))
+      | M.NVINT16 x => L.INTCONST (Word64.fromInt (Int16.toInt x))
+      | M.NVINT32 x => L.INTCONST (Word64.fromInt x)
       | M.NVINT64 x => L.INTCONST (Word64.fromLargeInt (Int64.toLarge x))
+      | M.NVWORD8 x => L.INTCONST (Word8.toLarge x)
+      | M.NVWORD16 x => L.INTCONST (Word16.toLarge x)
+      | M.NVWORD32 x => L.INTCONST (Word32.toLarge x)
       | M.NVWORD64 x => L.INTCONST x
       | M.NVCONTAG x => L.INTCONST (Word32.toLarge x)
-      | M.NVWORD8 x => L.INTCONST (Word8.toLarge x)
-      | M.NVREAL x => L.FLOATCONST (readReal x)
-      | M.NVFLOAT x => L.FLOATCONST (readReal x)
+      | M.NVREAL64 x => L.FLOATCONST (readReal x)
+      | M.NVREAL32 x => L.FLOATCONST (readReal x)
       | M.NVCHAR x => L.INTCONST (Word64.fromInt (ord x))
-      | M.NVUNIT => L.NULL
+      | M.NVUNIT => L.INTCONST 0w0
       | M.NVNULLPOINTER => L.NULL
       | M.NVNULLBOXED => L.NULL
       | M.NVTAG {tag, ty} =>
@@ -621,10 +751,14 @@ struct
         in
           #2 (registerForeignEntry name (compileTy ty) cconv)
         end
-      | M.NVFUNENTRY id => L.SYMBOL (funEntryLabelToSymbol id)
+      | M.NVFUNENTRY id =>
+        (case FunEntryLabel.Map.find (#exFunEntryMap aliasMap, id) of
+           SOME (h::_) => L.SYMBOL (externFunSymbolToSymbol h)
+         | _ => L.SYMBOL (funEntryLabelToSymbol id))
+      | M.NVEXFUNENTRY id => L.SYMBOL (externFunSymbolToSymbol id)
       | M.NVCALLBACKENTRY id => L.SYMBOL (callbackEntryLabelToSymbol id)
       | M.NVEXTRADATA id =>
-        (case ExtraDataLabel.Map.find (extraDataMap, id) of
+        (case ExtraDataLabel.Map.find (#extraDataMap aliasMap, id) of
            SOME x => x
          | NONE => L.SYMBOL (extraDataLabelToSymbol id))
       | M.NVCAST {value, valueTy, targetTy, cast=P.BitCast} =>
@@ -632,7 +766,7 @@ struct
                          compileTy targetTy)
       | M.NVCAST {value, valueTy, targetTy, cast} => compileConst aliasMap value
       | M.NVTOPDATA id =>
-        (case DataLabel.Map.find (dataMap, id) of
+        (case DataLabel.Map.find (#dataMap aliasMap, id) of
            SOME x => x
          | NONE => L.SYMBOL (dataLabelToSymbol id))
 
@@ -1012,6 +1146,15 @@ struct
           insns [con (v, cmp, x, y),
                  L.CONV (var, L.ZEXT, (L.I1, L.VAR v), varTy)]
         end
+    fun overflowOp (var, varTy, intrinsic, x : L.operand, y : L.operand) =
+        let
+          val v1 = VarID.generate ()
+          val v2 = VarID.generate ()
+        in
+          callIntrinsic (SOME v1) intrinsic [x, y]
+          o insns [L.EXTRACTVALUE (v2, (L.I1, L.VAR v1), 1),
+                   L.CONV (var, L.ZEXT, (L.I1, L.VAR v2), varTy)]
+        end
   in
 
   fun compilePrim env {prim, retTy, argTys, resultTy, result, sizes, args} =
@@ -1035,96 +1178,6 @@ struct
       | (P.Array_turnIntoVector, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_turnIntoVector"
 
-      | (P.Float_abs, T.FLOATty, [T.FLOATty], [x]) =>
-        callIntrinsic (SOME result) llvm_fabs_f32 [x]
-      | (P.Float_abs, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_abs"
-
-      | (P.Float_add, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FADD, x, y))
-      | (P.Float_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_add"
-
-      | (P.Float_div, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FDIV, x, y))
-      | (P.Float_div, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_div"
-
-      | (P.Float_equal, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OEQ, x, y)
-      | (P.Float_equal, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_equal"
-
-      | (P.Float_unorderedOrEqual, T.UINT32ty, [T.FLOATty, T.FLOATty], [x,y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_UEQ, x, y)
-      | (P.Float_unorderedOrEqual, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_unorderedOrEqual"
-
-      | (P.Float_gt, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OGT, x, y)
-      | (P.Float_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_gt"
-
-      | (P.Float_gteq, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OGE, x, y)
-      | (P.Float_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_gteq"
-
-      | (P.Float_isNan, T.UINT32ty, [T.FLOATty], [x]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_UNO, x, x)
-      | (P.Float_isNan, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_isNan"
-
-      | (P.Float_lt, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OLT, x, y)
-      | (P.Float_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_lt"
-
-      | (P.Float_lteq, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OLE, x, y)
-      | (P.Float_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_lteq"
-
-      | (P.Float_mul, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FMUL, x, y))
-      | (P.Float_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_mul"
-
-      | (P.Float_rem, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FREM, x, y))
-      | (P.Float_rem, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_rem"
-
-      | (P.Float_sub, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FSUB, x, y))
-      | (P.Float_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_sub"
-
-      | (P.Float_toInt32_unsafe, T.INT32ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Float_toInt32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_toInt32_unsafe"
-
-      | (P.Float_toInt64_unsafe, T.INT64ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Float_toInt64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_toInt64_unsafe"
-
-      | (P.Float_toWord32_unsafe, T.UINT32ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Float_toWord32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_toWord32_unsafe"
-
-      | (P.Float_toWord64_unsafe, T.UINT64ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Float_toWord64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_toWord64_unsafe"
-
-      | (P.Float_toReal, T.DOUBLEty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPEXT, x, resultTy))
-      | (P.Float_toReal, _, _, _) =>
-        raise Bug.Bug "compilePrim: Float_toReal"
-
       | (P.IdentityEqual, T.UINT32ty, [ty1, ty2], [x, y]) =>
         (
           if ty1 = ty2 andalso #1 x = #1 y andalso isIntTy (#1 x)
@@ -1133,6 +1186,158 @@ struct
         )
       | (P.IdentityEqual, _, _, _) =>
         raise Bug.Bug "compilePrim: IdentityEqual"
+
+      | (P.Int8_add_overflowCheck,
+         T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_sadd_with_overflow_i8, x, y)
+      | (P.Int8_add_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_add_overflowCheck"
+
+      | (P.Int8_add_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
+      | (P.Int8_add_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_add_unsafe"
+
+      | (P.Int8_gt, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SGT, x, y)
+      | (P.Int8_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_gt"
+
+      | (P.Int8_gteq, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SGE, x, y)
+      | (P.Int8_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_gteq"
+
+      | (P.Int8_lt, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SLT, x, y)
+      | (P.Int8_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_lt"
+
+      | (P.Int8_lteq, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SLE, x, y)
+      | (P.Int8_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_lteq"
+
+      | (P.Int8_mul_overflowCheck,
+         T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_smul_with_overflow_i8, x, y)
+      | (P.Int8_mul_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_mul_overflowCheck"
+
+      | (P.Int8_mul_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
+      | (P.Int8_mul_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_mul_unsafe"
+
+      | (P.Int8_quot_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SDIV, x, y))
+      | (P.Int8_quot_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_quot_unsafe"
+
+      | (P.Int8_rem_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SREM, x, y))
+      | (P.Int8_rem_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_rem_unsafe"
+
+      | (P.Int8_sub_overflowCheck,
+         T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_ssub_with_overflow_i8, x, y)
+      | (P.Int8_sub_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_sub_overflowCheck"
+
+      | (P.Int8_sub_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
+      | (P.Int8_sub_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_sub_unsafe"
+
+      | (P.Int8_toReal32, T.FLOATty, [T.INT8ty], [x]) =>
+        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
+      | (P.Int8_toReal32, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_toReal32"
+
+      | (P.Int8_toReal64, T.DOUBLEty, [T.INT8ty], [x]) =>
+        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
+      | (P.Int8_toReal64, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int8_toReal64"
+
+      | (P.Int16_add_overflowCheck,
+         T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_sadd_with_overflow_i16, x, y)
+      | (P.Int16_add_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_add_overflowCheck"
+
+      | (P.Int16_add_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
+      | (P.Int16_add_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_add_unsafe"
+
+      | (P.Int16_gt, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SGT, x, y)
+      | (P.Int16_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_gt"
+
+      | (P.Int16_gteq, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SGE, x, y)
+      | (P.Int16_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_gteq"
+
+      | (P.Int16_lt, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SLT, x, y)
+      | (P.Int16_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_lt"
+
+      | (P.Int16_lteq, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.SLE, x, y)
+      | (P.Int16_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_lteq"
+
+      | (P.Int16_mul_overflowCheck,
+         T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_smul_with_overflow_i16, x, y)
+      | (P.Int16_mul_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_mul_overflowCheck"
+
+      | (P.Int16_mul_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
+      | (P.Int16_mul_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_mul_unsafe"
+
+      | (P.Int16_quot_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SDIV, x, y))
+      | (P.Int16_quot_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_quot_unsafe"
+
+      | (P.Int16_rem_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SREM, x, y))
+      | (P.Int16_rem_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_rem_unsafe"
+
+      | (P.Int16_sub_overflowCheck,
+         T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_ssub_with_overflow_i16, x, y)
+      | (P.Int16_sub_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_sub_overflowCheck"
+
+      | (P.Int16_sub_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
+      | (P.Int16_sub_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_sub_unsafe"
+
+      | (P.Int16_toReal32, T.FLOATty, [T.INT16ty], [x]) =>
+        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
+      | (P.Int16_toReal32, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_toReal32"
+
+      | (P.Int16_toReal64, T.DOUBLEty, [T.INT16ty], [x]) =>
+        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
+      | (P.Int16_toReal64, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int16_toReal64"
+
+      | (P.Int32_add_overflowCheck,
+         T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_sadd_with_overflow_i32, x, y)
+      | (P.Int32_add_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int32_add_overflowCheck"
 
       | (P.Int32_add_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
         insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
@@ -1159,6 +1364,12 @@ struct
       | (P.Int32_lteq, _, _, _) =>
         raise Bug.Bug "compilePrim: Int32_lteq"
 
+      | (P.Int32_mul_overflowCheck,
+         T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_smul_with_overflow_i32, x, y)
+      | (P.Int32_mul_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int32_mul_overflowCheck"
+
       | (P.Int32_mul_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
         insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
       | (P.Int32_mul_unsafe, _, _, _) =>
@@ -1174,20 +1385,32 @@ struct
       | (P.Int32_rem_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Int32_rem_unsafe"
 
+      | (P.Int32_sub_overflowCheck,
+         T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_ssub_with_overflow_i32, x, y)
+      | (P.Int32_sub_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int32_sub_overflowCheck"
+
       | (P.Int32_sub_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
         insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
       | (P.Int32_sub_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Int32_sub_unsafe"
 
-      | (P.Int32_toReal, T.DOUBLEty, [T.INT32ty], [x]) =>
+      | (P.Int32_toReal32, T.FLOATty, [T.INT32ty], [x]) =>
         insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int32_toReal, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_toReal"
+      | (P.Int32_toReal32, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int32_toReal32"
 
-      | (P.Int32_toFloat_unsafe, T.FLOATty, [T.INT32ty], [x]) =>
+      | (P.Int32_toReal64, T.DOUBLEty, [T.INT32ty], [x]) =>
         insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int32_toFloat_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_toFloat_unsafe"
+      | (P.Int32_toReal64, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int32_toReal64"
+
+      | (P.Int64_add_overflowCheck,
+         T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_sadd_with_overflow_i64, x, y)
+      | (P.Int64_add_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int64_add_overflowCheck"
 
       | (P.Int64_add_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
         insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
@@ -1214,6 +1437,12 @@ struct
       | (P.Int64_lteq, _, _, _) =>
         raise Bug.Bug "compilePrim: Int64_lteq"
 
+      | (P.Int64_mul_overflowCheck,
+         T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_smul_with_overflow_i64, x, y)
+      | (P.Int64_mul_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int64_mul_overflowCheck"
+
       | (P.Int64_mul_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
         insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
       | (P.Int64_mul_unsafe, _, _, _) =>
@@ -1229,20 +1458,26 @@ struct
       | (P.Int64_rem_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Int64_rem_unsafe"
 
+      | (P.Int64_sub_overflowCheck,
+         T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
+        overflowOp (result, resultTy, llvm_ssub_with_overflow_i64, x, y)
+      | (P.Int64_sub_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int64_sub_overflowCheck"
+
       | (P.Int64_sub_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
         insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
       | (P.Int64_sub_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Int64_sub_unsafe"
 
-      | (P.Int64_toReal_unsafe, T.DOUBLEty, [T.INT64ty], [x]) =>
+      | (P.Int64_toReal64, T.DOUBLEty, [T.INT64ty], [x]) =>
         insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int64_toReal_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_toReal"
+      | (P.Int64_toReal64, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int64_toReal64"
 
-      | (P.Int64_toFloat_unsafe, T.FLOATty, [T.INT64ty], [x]) =>
+      | (P.Int64_toReal32, T.FLOATty, [T.INT64ty], [x]) =>
         insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int64_toFloat_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_toFloat_unsafe"
+      | (P.Int64_toReal32, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int64_toReal32"
 
       | (P.ObjectSize, T.UINT32ty, [T.BOXEDty], [x]) =>
         let
@@ -1271,101 +1506,237 @@ struct
       | (P.Ptr_advance, _, _, _) =>
         raise Bug.Bug "compilePrim: Ptr_advance"
 
+      | (P.Ptr_fromWord64, T.POINTERty, [T.UINT64ty], [x]) =>
+        insn1 (L.CONV (result, L.INTTOPTR, x, resultTy))
+      | (P.Ptr_fromWord64, _, _, _) =>
+        raise Bug.Bug "compilePrim: Ptr_toWord64"
+
       | (P.Ptr_toWord64, T.UINT64ty, [T.POINTERty], [x]) =>
         insn1 (L.CONV (result, L.PTRTOINT, x, resultTy))
       | (P.Ptr_toWord64, _, _, _) =>
         raise Bug.Bug "compilePrim: Ptr_toWord64"
 
-      | (P.Real_abs, T.DOUBLEty, [T.DOUBLEty], [x]) =>
-        callIntrinsic (SOME result) llvm_fabs_f64 [x]
-      | (P.Real_abs, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_abs"
+      | (P.Real32_abs, T.FLOATty, [T.FLOATty], [x]) =>
+        callIntrinsic (SOME result) llvm_fabs_f32 [x]
+      | (P.Real32_abs, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_abs"
 
-      | (P.Real_add, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real32_add, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
         insn1 (L.OP2 (result, L.FADD, x, y))
-      | (P.Real_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_add"
+      | (P.Real32_add, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_add"
 
-      | (P.Real_div, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real32_div, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
         insn1 (L.OP2 (result, L.FDIV, x, y))
-      | (P.Real_div, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_div"
+      | (P.Real32_div, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_div"
 
-      | (P.Real_equal, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real32_equal, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OEQ, x, y)
-      | (P.Real_equal, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_equal"
+      | (P.Real32_equal, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_equal"
 
-      | (P.Real_unorderedOrEqual, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty],
+      | (P.Real32_unorderedOrEqual,
+         T.UINT32ty, [T.FLOATty, T.FLOATty], [x,y]) =>
+        cmpOp (result, resultTy, L.FCMP, L.F_UEQ, x, y)
+      | (P.Real32_unorderedOrEqual, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_unorderedOrEqual"
+
+      | (P.Real32_gt, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+        cmpOp (result, resultTy, L.FCMP, L.F_OGT, x, y)
+      | (P.Real32_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_gt"
+
+      | (P.Real32_gteq, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+        cmpOp (result, resultTy, L.FCMP, L.F_OGE, x, y)
+      | (P.Real32_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_gteq"
+
+      | (P.Real32_isNan, T.UINT32ty, [T.FLOATty], [x]) =>
+        cmpOp (result, resultTy, L.FCMP, L.F_UNO, x, x)
+      | (P.Real32_isNan, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_isNan"
+
+      | (P.Real32_lt, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+        cmpOp (result, resultTy, L.FCMP, L.F_OLT, x, y)
+      | (P.Real32_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_lt"
+
+      | (P.Real32_lteq, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+        cmpOp (result, resultTy, L.FCMP, L.F_OLE, x, y)
+      | (P.Real32_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_lteq"
+
+      | (P.Real32_mul, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+        insn1 (L.OP2 (result, L.FMUL, x, y))
+      | (P.Real32_mul, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_mul"
+
+      | (P.Real32_rem, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+        insn1 (L.OP2 (result, L.FREM, x, y))
+      | (P.Real32_rem, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_rem"
+
+      | (P.Real32_sub, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+        insn1 (L.OP2 (result, L.FSUB, x, y))
+      | (P.Real32_sub, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_sub"
+
+      | (P.Real32_toInt8_unsafe, T.INT8ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
+      | (P.Real32_toInt8_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toInt8_unsafe"
+
+      | (P.Real32_toInt16_unsafe, T.INT16ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
+      | (P.Real32_toInt16_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toInt16_unsafe"
+
+      | (P.Real32_toInt32_unsafe, T.INT32ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
+      | (P.Real32_toInt32_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toInt32_unsafe"
+
+      | (P.Real32_toInt64_unsafe, T.INT64ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
+      | (P.Real32_toInt64_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toInt64_unsafe"
+
+      | (P.Real32_toWord8_unsafe, T.UINT8ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
+      | (P.Real32_toWord8_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toWord8_unsafe"
+
+      | (P.Real32_toWord16_unsafe, T.UINT16ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
+      | (P.Real32_toWord16_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toWord16_unsafe"
+
+      | (P.Real32_toWord32_unsafe, T.UINT32ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
+      | (P.Real32_toWord32_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toWord32_unsafe"
+
+      | (P.Real32_toWord64_unsafe, T.UINT64ty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
+      | (P.Real32_toWord64_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toWord64_unsafe"
+
+      | (P.Real32_toReal64, T.DOUBLEty, [T.FLOATty], [x]) =>
+        insn1 (L.CONV (result, L.FPEXT, x, resultTy))
+      | (P.Real32_toReal64, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real32_toReal64"
+
+      | (P.Real64_abs, T.DOUBLEty, [T.DOUBLEty], [x]) =>
+        callIntrinsic (SOME result) llvm_fabs_f64 [x]
+      | (P.Real64_abs, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_abs"
+
+      | (P.Real64_add, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+        insn1 (L.OP2 (result, L.FADD, x, y))
+      | (P.Real64_add, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_add"
+
+      | (P.Real64_div, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+        insn1 (L.OP2 (result, L.FDIV, x, y))
+      | (P.Real64_div, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_div"
+
+      | (P.Real64_equal, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+        cmpOp (result, resultTy, L.FCMP, L.F_OEQ, x, y)
+      | (P.Real64_equal, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_equal"
+
+      | (P.Real64_unorderedOrEqual, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty],
          [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_UEQ, x, y)
-      | (P.Real_unorderedOrEqual, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_unorderedOrEqual"
+      | (P.Real64_unorderedOrEqual, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_unorderedOrEqual"
 
-      | (P.Real_gt, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real64_gt, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OGT, x, y)
-      | (P.Real_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_gt"
+      | (P.Real64_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_gt"
 
-      | (P.Real_gteq, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real64_gteq, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OGE, x, y)
-      | (P.Real_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_gteq"
+      | (P.Real64_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_gteq"
 
-      | (P.Real_isNan, T.UINT32ty, [T.DOUBLEty], [x]) =>
+      | (P.Real64_isNan, T.UINT32ty, [T.DOUBLEty], [x]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_UNO, x, x)
-      | (P.Real_isNan, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_isNan"
+      | (P.Real64_isNan, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_isNan"
 
-      | (P.Real_lt, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real64_lt, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OLT, x, y)
-      | (P.Real_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_lt"
+      | (P.Real64_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_lt"
 
-      | (P.Real_lteq, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real64_lteq, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OLE, x, y)
-      | (P.Real_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_lteq"
+      | (P.Real64_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_lteq"
 
-      | (P.Real_mul, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real64_mul, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
         insn1 (L.OP2 (result, L.FMUL, x, y))
-      | (P.Real_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_mul"
+      | (P.Real64_mul, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_mul"
 
-      | (P.Real_rem, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real64_rem, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
         insn1 (L.OP2 (result, L.FREM, x, y))
-      | (P.Real_rem, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_rem"
+      | (P.Real64_rem, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_rem"
 
-      | (P.Real_sub, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
+      | (P.Real64_sub, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
         insn1 (L.OP2 (result, L.FSUB, x, y))
-      | (P.Real_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_sub"
+      | (P.Real64_sub, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_sub"
 
-      | (P.Real_toInt32_unsafe, T.INT32ty, [T.DOUBLEty], [x]) =>
+      | (P.Real64_toInt8_unsafe, T.INT8ty, [T.DOUBLEty], [x]) =>
         insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real_toInt32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_toInt32_unsafe"
+      | (P.Real64_toInt8_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toInt8_unsafe"
 
-      | (P.Real_toInt64_unsafe, T.INT64ty, [T.DOUBLEty], [x]) =>
+      | (P.Real64_toInt16_unsafe, T.INT16ty, [T.DOUBLEty], [x]) =>
         insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real_toInt64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_toInt64_unsafe"
+      | (P.Real64_toInt16_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toInt16_unsafe"
 
-      | (P.Real_toWord32_unsafe, T.UINT32ty, [T.DOUBLEty], [x]) =>
+      | (P.Real64_toInt32_unsafe, T.INT32ty, [T.DOUBLEty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
+      | (P.Real64_toInt32_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toInt32_unsafe"
+
+      | (P.Real64_toInt64_unsafe, T.INT64ty, [T.DOUBLEty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
+      | (P.Real64_toInt64_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toInt64_unsafe"
+
+      | (P.Real64_toWord8_unsafe, T.UINT8ty, [T.DOUBLEty], [x]) =>
         insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real_toWord32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_toWord32_unsafe"
+      | (P.Real64_toWord8_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toWord8_unsafe"
 
-      | (P.Real_toWord64_unsafe, T.UINT64ty, [T.DOUBLEty], [x]) =>
+      | (P.Real64_toWord16_unsafe, T.UINT16ty, [T.DOUBLEty], [x]) =>
         insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real_toWord64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_toWord32_unsafe"
+      | (P.Real64_toWord16_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toWord16_unsafe"
 
-      | (P.Real_toFloat_unsafe, T.FLOATty, [T.DOUBLEty], [x]) =>
+      | (P.Real64_toWord32_unsafe, T.UINT32ty, [T.DOUBLEty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
+      | (P.Real64_toWord32_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toWord32_unsafe"
+
+      | (P.Real64_toWord64_unsafe, T.UINT64ty, [T.DOUBLEty], [x]) =>
+        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
+      | (P.Real64_toWord64_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toWord32_unsafe"
+
+      | (P.Real64_toReal32_unsafe, T.FLOATty, [T.DOUBLEty], [x]) =>
         insn1 (L.CONV (result, L.FPTRUNC, x, resultTy))
-      | (P.Real_toFloat_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real_toFloat_unsafe"
+      | (P.Real64_toReal32_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real64_toReal32_unsafe"
 
       (* ToDo: RuntimePolyEqual is to be deprecated by equality function
        * compilation *)
@@ -1451,6 +1822,16 @@ struct
       | (P.Word8_sub, _, _, _) =>
         raise Bug.Bug "compilePrim: Word8_sub"
 
+      | (P.Word8_toWord16, T.UINT16ty, [T.UINT8ty], [x]) =>
+        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
+      | (P.Word8_toWord16, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word8_toWord16"
+
+      | (P.Word8_toWord16X, T.UINT16ty, [T.UINT8ty], [x]) =>
+        insn1 (L.CONV (result, L.SEXT, x, resultTy))
+      | (P.Word8_toWord16X, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word8_toWord16X"
+
       | (P.Word8_toWord32, T.UINT32ty, [T.UINT8ty], [x]) =>
         insn1 (L.CONV (result, L.ZEXT, x, resultTy))
       | (P.Word8_toWord32, _, _, _) =>
@@ -1475,6 +1856,109 @@ struct
         insn1 (L.OP2 (result, L.XOR, x, y))
       | (P.Word8_xorb, _, _, _) =>
         raise Bug.Bug "compilePrim: Word8_xorb"
+
+      | (P.Word16_add, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.ADD L.WRAP, x, y))
+      | (P.Word16_add, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_add"
+
+      | (P.Word16_andb, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.AND, x, y))
+      | (P.Word16_andb, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_andb"
+
+      | (P.Word16_arshift_unsafe,
+         T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.ASHR, x, y))
+      | (P.Word16_arshift_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_arshift_unsafe"
+
+      | (P.Word16_div_unsafe, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.UDIV, x, y))
+      | (P.Word16_div_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_div"
+
+      | (P.Word16_gt, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.UGT, x, y)
+      | (P.Word16_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_gt"
+
+      | (P.Word16_gteq, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.UGE, x, y)
+      | (P.Word16_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_gteq"
+
+      | (P.Word16_lshift_unsafe,
+         T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SHL, x, y))
+      | (P.Word16_lshift_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_lshift_unsafe"
+
+      | (P.Word16_lt, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.ULT, x, y)
+      | (P.Word16_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_lt"
+
+      | (P.Word16_lteq, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        cmpOp (result, resultTy, L.ICMP, L.ULE, x, y)
+      | (P.Word16_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_lteq"
+
+      | (P.Word16_mod_unsafe, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.UREM, x, y))
+      | (P.Word16_mod_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_mod"
+
+      | (P.Word16_mul, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.MUL L.WRAP, x, y))
+      | (P.Word16_mul, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_mul"
+
+      | (P.Word16_orb, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.OR, x, y))
+      | (P.Word16_orb, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_orb"
+
+      | (P.Word16_rshift_unsafe,
+         T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.LSHR, x, y))
+      | (P.Word16_rshift_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_rshift_unsafe"
+
+      | (P.Word16_sub, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.SUB L.WRAP, x, y))
+      | (P.Word16_sub, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_sub"
+
+      | (P.Word16_toWord8, T.UINT8ty, [T.UINT16ty], [x]) =>
+        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
+      | (P.Word16_toWord8, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_toWord8"
+
+      | (P.Word16_toWord32, T.UINT32ty, [T.UINT16ty], [x]) =>
+        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
+      | (P.Word16_toWord32, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_toWord32"
+
+      | (P.Word16_toWord32X, T.UINT32ty, [T.UINT16ty], [x]) =>
+        insn1 (L.CONV (result, L.SEXT, x, resultTy))
+      | (P.Word16_toWord32X, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_toWord32X"
+
+      | (P.Word16_toWord64, T.UINT64ty, [T.UINT16ty], [x]) =>
+        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
+      | (P.Word16_toWord64, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_toWord64"
+
+      | (P.Word16_toWord64X, T.UINT64ty, [T.UINT16ty], [x]) =>
+        insn1 (L.CONV (result, L.SEXT, x, resultTy))
+      | (P.Word16_toWord64X, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_toWord64X"
+
+      | (P.Word16_xorb, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
+        insn1 (L.OP2 (result, L.XOR, x, y))
+      | (P.Word16_xorb, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word16_xorb"
 
       | (P.Word32_add, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
         insn1 (L.OP2 (result, L.ADD L.WRAP, x, y))
@@ -1552,6 +2036,11 @@ struct
       | (P.Word32_toWord8, _, _, _) =>
         raise Bug.Bug "compilePrim: Word32_toWord8"
 
+      | (P.Word32_toWord16, T.UINT16ty, [T.UINT32ty], [x]) =>
+        insn1 (L.CONV (result, L.TRUNC, x, resultTy))
+      | (P.Word32_toWord16, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word32_toWord16"
+
       | (P.Word32_toWord64, T.UINT64ty, [T.UINT32ty], [x]) =>
         insn1 (L.CONV (result, L.ZEXT, x, resultTy))
       | (P.Word32_toWord64, _, _, _) =>
@@ -1577,13 +2066,14 @@ struct
       | (P.Word64_andb, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_andb"
 
-      | (P.Word64_arshift_unsafe, T.UINT64ty, [T.UINT64ty, T.UINT64ty],
-         [x, y]) =>
+      | (P.Word64_arshift_unsafe,
+         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
         insn1 (L.OP2 (result, L.ASHR, x, y))
       | (P.Word64_arshift_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_arshift"
 
-      | (P.Word64_div_unsafe, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
+      | (P.Word64_div_unsafe,
+         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
         insn1 (L.OP2 (result, L.UDIV, x, y))
       | (P.Word64_div_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_div"
@@ -1598,7 +2088,8 @@ struct
       | (P.Word64_gteq, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_gteq"
 
-      | (P.Word64_lshift_unsafe, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x,y]) =>
+      | (P.Word64_lshift_unsafe,
+         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
         insn1 (L.OP2 (result, L.SHL, x, y))
       | (P.Word64_lshift_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_lshift_unsafe"
@@ -1628,7 +2119,8 @@ struct
       | (P.Word64_orb, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_orb"
 
-      | (P.Word64_rshift_unsafe, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x,y]) =>
+      | (P.Word64_rshift_unsafe,
+         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
         insn1 (L.OP2 (result, L.LSHR, x, y))
       | (P.Word64_rshift_unsafe, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_rshift_unsafe"
@@ -1642,6 +2134,11 @@ struct
         insn1 (L.CONV (result, L.TRUNC, x, resultTy))
       | (P.Word64_toWord8, _, _, _) =>
         raise Bug.Bug "compilePrim: Word64_toWord8"
+
+      | (P.Word64_toWord16, T.UINT16ty, [T.UINT64ty], [x]) =>
+        insn1 (L.CONV (result, L.TRUNC, x, resultTy))
+      | (P.Word64_toWord16, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word64_toWord16"
 
       | (P.Word64_toWord32, T.UINT32ty, [T.UINT64ty], [x]) =>
         insn1 (L.CONV (result, L.TRUNC, x, resultTy))
@@ -2211,7 +2708,7 @@ struct
   fun compileTopdec env topdec =
       case topdec of
         M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, frameSlots,
-                      bodyExp, retTy, loc} =>
+                      bodyExp, retTy, gcCheck, loc} =>
         let
           val closureEnvArg =
               case closureEnvVar of
@@ -2239,18 +2736,32 @@ struct
           val body =
               insns1
               o compileExp env bodyExp
+          val (name, linkage, aliases) =
+              case FunEntryLabel.Map.find
+                     (#exFunEntryMap (#aliasMap env), id) of
+                SOME (h::t) => (externFunSymbolToSymbol h, SOME L.EXTERNAL, t)
+              | _ => (funEntryLabelToSymbol id, SOME L.INTERNAL, nil)
         in
-          [L.DEFINE
-             {linkage = SOME L.INTERNAL,
-              cconv = SOME L.FASTCC,
-              retAttrs = nil,
-              retTy = retTy,
-              name = funEntryLabelToSymbol id,
-              parameters = params,
-              fnAttrs = [L.UWTABLE],
-              personality = !personality,
-              gcname = gcname,
-              body = body ()}]
+          L.DEFINE
+            {linkage = linkage,
+             cconv = SOME L.FASTCC,
+             retAttrs = nil,
+             retTy = retTy,
+             name = name,
+             parameters = params,
+             fnAttrs = [L.UWTABLE],
+             personality = !personality,
+             gcname = gcname,
+             body = body ()}
+          :: map
+               (fn id =>
+                   L.ALIAS
+                     {name = externFunSymbolToSymbol id,
+                      linkage = linkage,
+                      unnamed_addr = false,
+                      aliasee = (L.FPTR (retTy, map #1 params, false),
+                                 L.SYMBOL name)})
+               aliases
         end
       | M.MTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
                               frameSlots, bodyExp, attributes, retTy,
@@ -2573,8 +3084,25 @@ struct
                      SOME v => L.INIT_CONST (#2 (compileTopConst aliasMap v))
                    | NONE => L.ZEROINITIALIZER,
                  align = NONE}],
-        emptyAliasMap,
-        nil)
+         emptyAliasMap,
+         nil)
+      | M.NTEXTERNFUN {id, tyvars, argTyList, retTy, loc} =>
+        ([L.DECLARE
+            {linkage = NONE,
+             cconv = NONE,
+             retAttrs = nil,
+             retTy = case retTy of
+                       (_, T.UNITty) => L.VOID
+                     | _ => compileTy retTy,
+             name = externFunSymbolToSymbol id,
+             arguments = map (fn ty => (compileTy ty, [L.INREG])) argTyList,
+             varArg = false,
+             fnAttrs =  [L.UWTABLE],
+             gcname = gcname}],
+         emptyAliasMap,
+         nil)
+      | M.NTEXPORTFUN {id, funId, loc} =>
+        (nil, singletonAliasFunEntry (funId, id), nil)
       | M.NTSTRING {id, string, loc} =>
         let
           val len = Word32.fromInt (size string + 1)

@@ -1,6 +1,6 @@
 signature ARRAY =
 sig
-  type 'a array = 'a Array.array
+  type 'a array = 'a array
   type 'a vector = 'a Vector.vector
   val maxLen : int
   val array : int * 'a -> 'a array

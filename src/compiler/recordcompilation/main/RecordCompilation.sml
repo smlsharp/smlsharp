@@ -1,25 +1,24 @@
 (**
- * Platform indepedent type-directed compilation.
+ * Platform indepedent type-directed compilation for:
+ *  record polymorphism, 
+ *  natural data representation, and
+ *  type-reification/dynamic typing.
  *
- * @copyright (c) 2011, Tohoku University.
+ * @copyright (c) 2011-2016, Tohoku University.
  * @author UENO Katsuhiro
  * @author Atsushi Ohori
  *
  * This module relys on the type structure of rank-1 polymorphism.
  *)
-structure RecordCompilation : sig
-
-  val compile : RecordCalc.rcdecl list -> RecordCalc.rcdecl list
-
-end =
+structure RecordCompilation =
 struct
   val pos = Loc.makePos {fileName="RecordCompilation.sml", line=0, col=0}
   val loc = (pos,pos)
   fun mkLongsymbol path = Symbol.mkLongsymbol path loc
 
   structure RC = RecordCalc
-  structure TC = TypedCalc
   structure T = Types
+  structure TB = TypesBasics
 
   fun newVar ty =
       {path = [Symbol.generate ()],
@@ -61,12 +60,14 @@ struct
 
   fun RECORD fields =
       let
-        val recordTy = T.RECORDty (RecordLabel.Map.map (fn (exp, expTy) => expTy) fields)
+        val recordTy =
+            T.RECORDty (RecordLabel.Map.map (fn (exp, expTy) => expTy) fields)
       in
-        (fn loc => RC.RCRECORD
-                     {fields = RecordLabel.Map.map (fn (exp, expTy) => exp loc) fields,
-                      recordTy = recordTy,
-                      loc = loc},
+        (fn loc =>
+            RC.RCRECORD
+              {fields = RecordLabel.Map.map (fn (exp, expTy) => exp loc) fields,
+               recordTy = recordTy,
+               loc = loc},
          recordTy)
       end
 
@@ -75,7 +76,7 @@ struct
                             funTy = expTy,
                             argExpList = map (fn (exp,ty) => exp loc) args,
                             loc = loc},
-       case TypesBasics.derefTy expTy of
+       case TB.derefTy expTy of
          T.FUNMty (argTys, retTy) => retTy
        | _ => raise Bug.Bug "APPM")
 
@@ -85,14 +86,16 @@ struct
                                bodyTy = bodyTy,
                                bodyExp = bodyExp loc,
                                loc = loc},
-       T.POLYty {boundtvars = btvEnv, constraints = nil, body = T.FUNMty (map #ty args, bodyTy)})
+       T.POLYty {boundtvars = btvEnv,
+                 constraints = nil,
+                 body = T.FUNMty (map #ty args, bodyTy)})
 
   fun TAPP ((exp, expTy), instTyList) =
       (fn loc => RC.RCTAPP {exp = exp loc,
                             expTy = expTy,
                             instTyList = instTyList,
                             loc = loc},
-       TypesBasics.tpappTy (expTy, instTyList))
+       TB.tpappTy (expTy, instTyList))
       handle e => raise e
 
   fun LET (dec, (exp, expTy)) =
@@ -117,13 +120,13 @@ struct
          We alpha-rename boundtvars. *)
       case TyAlphaRename.copyTy
              TyAlphaRename.emptyBtvMap
-             (TypesBasics.derefTy (#ty conInfo)) of
+             (TB.derefTy (#ty conInfo)) of
         T.POLYty {boundtvars, constraints, body} =>
         let
           val instTyList =
               map T.BOUNDVARty (BoundTypeVarID.Map.listKeys boundtvars)
         in
-          case TypesBasics.derefTy body of
+          case TB.derefTy body of
             T.FUNMty ([argTy], ranTy) =>
             let
               val newVar = newVar argTy
@@ -169,6 +172,8 @@ struct
         | T.SIZEty _ => 1
         | T.INDEXty _ => 2
         | T.INSTCODEty _ => 3
+        | T.TYPEty _ => 4
+        | T.REIFYty _ => 5
 
     fun compare (sty1, sty2) =
         case (sty1, sty2) of
@@ -178,36 +183,43 @@ struct
           RecordKind.compareIndex (i1, i2)
         | (T.SIZEty ty1, T.SIZEty ty2) =>
           UnivKind.compareTagTy (ty1, ty2)
+        | (T.TYPEty ty1, T.TYPEty ty2) =>
+          TypeKind.compareTypeTy (ty1, ty2)
+        | (T.REIFYty ty1, T.REIFYty ty2) =>
+          ReifyKind.compareTypeTy (ty1, ty2)
         | (T.TAGty ty1, T.TAGty ty2) =>
           UnivKind.compareSizeTy (ty1, ty2)
         | (T.INSTCODEty _, _) => Int.compare (order sty1, order sty2)
         | (T.INDEXty _, _) => Int.compare (order sty1, order sty2)
         | (T.SIZEty _, _) => Int.compare (order sty1, order sty2)
         | (T.TAGty _, _) => Int.compare (order sty1, order sty2)
+        | (T.TYPEty _, _) => Int.compare (order sty1, order sty2)
+        | (T.REIFYty _, _) => Int.compare (order sty1, order sty2)
 
   end
 
   structure SingletonTyMap = BinaryMapFn(SingletonTyOrd)
   structure SingletonTySet = BinarySetFn(SingletonTyOrd)
 
-  fun generateExtraArgsOfKind btvEnv (btv, recordKind) =
-      case recordKind of
-        T.UNIV => UnivKind.generateSingletonTy btv
-      | T.JSON => UnivKind.generateSingletonTy btv
-      | T.BOXED => nil
-      | T.UNBOXED => UnivKind.generateSingletonTy btv
-      | T.OCONSTkind tys => nil
-      | T.OPRIMkind k =>
-        UnivKind.generateSingletonTy btv
-        @ OverloadKind.generateSingletonTy btvEnv k
-      | T.REC r => RecordKind.generateSingletonTy (btv, r)
+  fun generateExtraArgsOfKind btvEnv (btv, T.KIND {eqKind, dynKind, reifyKind,
+                                                   subkind, tvarKind}) =
+      (case tvarKind of
+         T.UNIV => UnivKind.generateSingletonTy btv
+       | T.BOXED => nil
+       | T.OCONSTkind tys => UnivKind.generateSingletonTy btv
+       | T.OPRIMkind k => OverloadKind.generateSingletonTy btvEnv k
+                          @ UnivKind.generateSingletonTy btv
+       | T.REC r => RecordKind.generateSingletonTy (btv, r))
+      @ (if dynKind then TypeKind.generateSingletonTy btv else nil)
+      @ (if reifyKind then ReifyKind.generateSingletonTy btv else nil)
+
   fun generateExtraArgs btvEnv =
       let
         val args =
-            map (fn (tid, {eqKind, tvarKind}) =>
+            map (fn (tid, kind) =>
                     foldl (fn (x,z) => SingletonTySet.add (z,x))
                           SingletonTySet.empty
-                          (generateExtraArgsOfKind btvEnv (tid, tvarKind)))
+                          (generateExtraArgsOfKind btvEnv (tid, kind)))
                 (BoundTypeVarID.Map.listItemsi btvEnv)
         fun unique (occurred, nil) = nil
           | unique (occurred, h::t) =
@@ -245,13 +257,17 @@ struct
         btvEnv = btvEnv
       } : context
 
+  datatype instance =
+      INST_APP of {appExp: RC.rcexp -> RC.rcexp, argTy: T.ty, bodyTy: T.ty,
+                   singletonTy: T.singletonTy, loc: Loc.loc}
+    | INST_EXP of RC.rcexp
+
   fun compileTy ty =
       case ty of
         T.SINGLETONty _ => ty
       | T.BACKENDty _ => ty
       | T.ERRORty => ty
-      | T.DUMMYty id => ty
-      | T.DUMMY_RECORDty id => ty
+      | T.DUMMYty _ => ty
       | T.TYVARty tv => ty  (* what used to be tyvar contains no POLYty. *)
       | T.BOUNDVARty tid => ty
       | T.FUNMty (argTys, retTy) =>
@@ -264,7 +280,9 @@ struct
       | T.POLYty {boundtvars, constraints, body} =>
         case generateExtraArgs boundtvars of
           nil =>
-          T.POLYty {boundtvars = boundtvars, constraints = constraints, body = compileTy body}
+          T.POLYty {boundtvars = boundtvars,
+                    constraints = constraints,
+                    body = compileTy body}
         | extraTys =>
           T.POLYty {boundtvars = boundtvars,
                     constraints = constraints, 
@@ -276,11 +294,6 @@ struct
   fun compileExVarInfo ({path, ty} : RC.exVarInfo) =
       {path = path, ty = compileTy ty} : RC.exVarInfo
 
-
-  datatype instance =
-      INST_APP of {appExp: RC.rcexp -> RC.rcexp, argTy: T.ty, bodyTy: T.ty,
-                   singletonTy: T.singletonTy, loc: Loc.loc}
-    | INST_EXP of RC.rcexp
 
   fun toExp instance =
       case instance of
@@ -298,7 +311,8 @@ struct
                      loc)
         end
 
-  fun generateConcreteInstance (context as {btvEnv,...}:context) sty loc =
+  fun generateConcreteInstance (context as {btvEnv, instanceEnv}:context)
+                               sty loc =
       case sty of
         T.INDEXty index =>
         Option.map INST_EXP (RecordKind.generateInstance index loc)
@@ -306,13 +320,23 @@ struct
         Option.map INST_EXP (UnivKind.generateTagInstance btvEnv ty loc)
       | T.SIZEty ty =>
         Option.map INST_EXP (UnivKind.generateSizeInstance btvEnv ty loc)
+      | T.TYPEty ty =>
+        SOME
+          (INST_EXP
+             (ReifyKind.generateTypeInstance
+                {btvEnv = btvEnv, 
+                 lookup = fn sty => SingletonTyMap.find (instanceEnv, sty)}
+                ty
+                loc))
+      | T.REIFYty ty =>
+        Option.map INST_EXP (ReifyKind.generateReifyInstance btvEnv ty loc)
       | T.INSTCODEty operator =>
-        case OverloadKind.generateInstance operator loc of
-          NONE => NONE
-        | SOME (OverloadKind.APP app) => SOME (INST_APP app)
-        | SOME (OverloadKind.EXP exp) =>
-          (* may contain RCTAPP. need more type-directed compilation *)
-          SOME (INST_EXP (compileExp context exp))
+        (case OverloadKind.generateInstance operator loc of
+           NONE => NONE
+         | SOME (OverloadKind.APP app) => SOME (INST_APP app)
+         | SOME (OverloadKind.EXP exp) =>
+           (* may contain RCTAPP. need more type-directed compilation *)
+           SOME (INST_EXP (compileExp context exp)))
 
   and generateInstance (context as {instanceEnv,...}) sty loc =
       case generateConcreteInstance context sty loc of
@@ -320,9 +344,7 @@ struct
       | NONE =>
         case SingletonTyMap.find (instanceEnv, sty) of
           SOME var => INST_EXP (RC.RCVAR var)
-        | NONE => (print (Bug.prettyPrint
-                            (T.format_ty nil (T.SINGLETONty sty)) ^ "\n");
-                   raise Bug.Bug "generateInstance")
+        | NONE => raise Bug.Bug "generateInstance (SingletonTyMap.find NONE)"
 
   and generateInstances context tys loc =
       map (fn ty as T.SINGLETONty sty => generateInstance context sty loc
@@ -351,6 +373,10 @@ struct
       | RC.RCSIZEOF (ty, loc) =>
         (* contains no POLYty *)
         toExp (generateInstance context (T.SIZEty ty) loc)
+      | RC.RCTYPEOF (ty, loc) => 
+        toExp (generateInstance context (T.TYPEty ty) loc)
+      | RC.RCREIFYTY (ty, loc) => 
+        toExp (generateInstance context (T.REIFYty ty) loc)
       | RC.RCINDEXOF (label, recordTy, loc) =>
         (* recordTy may contain POLYty due to rank-1 poly *)
         let
@@ -550,7 +576,7 @@ struct
         let
           val argExp = compileExp context argExp
           val primTy = compileTy ty
-          val primTy = TypesBasics.tpappTy (primTy, instTyList)
+          val primTy = TB.tpappTy (primTy, instTyList)
                        handle e => raise e
           val extraArgTys =
               case primTy of T.FUNMty (argTys, retTy) => argTys | _ => nil
@@ -567,7 +593,7 @@ struct
             INST_APP {appExp, ...} => appExp argExp
           | INST_EXP exp =>
             let
-              val funTy = TypesBasics.tpappTy (ty, instTyList)
+              val funTy = TB.tpappTy (ty, instTyList)
                           handle e => raise e
             in
               RC.RCAPPM {funExp = RC.RCCAST ((exp, T.SINGLETONty singletonTy),
@@ -582,7 +608,7 @@ struct
           val newExp = compileExp context exp
           val newExpTy = compileTy expTy
           val newInstTyList = instTyList (* contains no POLYty *)
-          val funTy = TypesBasics.tpappTy (newExpTy, newInstTyList)
+          val funTy = TB.tpappTy (newExpTy, newInstTyList)
                       handle e => raise e
           val extraArgs =
               case funTy of
@@ -607,6 +633,10 @@ struct
                        argExpList = extraArgs,
                        loc = loc}
         end
+      | RC.RCFOREACH _ =>
+         raise Bug.Bug "RCFOREACH in RecordCompile"
+      | RC.RCFOREACHDATA _ =>
+         raise Bug.Bug "RCFOREACH in RecordCompile"
       | RC.RCSEQ {expList, expTyList, loc} =>
         RC.RCSEQ
           {expList = map (compileExp context) expList,
@@ -616,7 +646,12 @@ struct
         RC.RCCAST ((compileExp context rcexp, compileTy expTy),
                    compileTy ty, loc)
       | RC.RCFFI exp =>
-        raise Bug.Bug "RCFFI"
+        raise Bug.Bug "RCFFI in RecordCompile"
+      | RC.RCJOIN _ =>
+        raise Bug.Bug "RCJOIN in RecordCompile"
+      | RC.RCJSON _ =>
+        raise Bug.Bug "RCJSON in RecordCompile"
+
 
   and compileDecl context rcdecl =
       case rcdecl of
@@ -777,8 +812,9 @@ struct
       let
         val context = {instanceEnv = SingletonTyMap.empty,
                        btvEnv = BoundTypeVarID.Map.empty} : context
+        val rcdeclList = List.concat (map (compileDecl context) topBlockList)
       in
-        List.concat (map (compileDecl context) topBlockList)
+        rcdeclList
       end
 
 end

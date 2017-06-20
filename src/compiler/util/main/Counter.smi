@@ -1,10 +1,10 @@
-_require "../../../basis.smi"
-_require "../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "../../../compiler-utils/env/main/IEnv.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../control/main/Control.ppg.smi"
+_require local "../../../smlnj-lib/Util/binary-set-fn.smi"
+_require local "../../../compiler-utils/env/main/IEnv.smi"
+_require local "../../../compiler-utils/env/main/SEnv.smi"
+_require local "../../control/main/Control.ppg.smi"
+_require local "COUNTER.sig"
 
-_require "COUNTER.sig"
+_require "../../../basis.smi"
 
 structure Counter =
 struct

@@ -7,73 +7,115 @@ _require "./builtintypes/float/Float.smi"
 structure SMLSharp_SQL_Query =
 struct
 
-  datatype qexp =
+  type id = string
+  type oper = string
+
+  datatype 'w ascdesc_ast =
+      ASC
+    | DESC
+
+  datatype 'w distinct_ast =
+      ALL
+    | DISTINCT
+
+  datatype 'w db =
+      DB
+
+  datatype 'w table_id =
+      TABLEID of 'w db * id
+
+  datatype const =
       INT of int
     | WORD of word
     | REAL of real
     | REAL32 of real32
     | STRING of string
     | CHAR of char
-    | INTINF of IntInf.int
+    | BOOL of bool
+    | INTINF of intInf
     | TIMESTAMP of SMLSharp_SQL_TimeStamp.timestamp
     | DECIMAL of SMLSharp_SQL_Decimal.decimal
     | FLOAT of SMLSharp_SQL_Float.float
-    | NULL
+
+  datatype 'w exp_ast =
+      CONST of const
+    | LITERAL of oper
+    | COLUMN1 of id
+    | COLUMN2 of id * id
+    | FUNCALL of id * 'w exp_ast list
+    | OR of 'w exp_ast * 'w exp_ast
+    | AND of 'w exp_ast * 'w exp_ast
+    | NOT of 'w exp_ast
+    | CMPOP of 'w exp_ast * oper * 'w exp_ast
+    | ADDOP of 'w exp_ast * oper * 'w exp_ast
+    | MULOP of 'w exp_ast * oper * 'w exp_ast
+    | UNARYOP of oper * 'w exp_ast
+    | IS of 'w exp_ast * oper
+    | IS_NOT of 'w exp_ast * oper
+    | EXP_SUBQUERY of 'w query_ast
+    | EXISTS of 'w query_ast
+
+  and 'w table_ast =
+      TABLE of 'w table_id
+    | TABLE_AS of 'w table_ast * id
+    | TABLE_SUBQUERY of 'w query_ast
+    | JOIN of 'w table_ast * 'w table_ast * 'w exp_ast
+    | INNERJOIN of 'w table_ast * 'w table_ast * 'w exp_ast
+    | CROSSJOIN of 'w table_ast * 'w table_ast
+    | NATURALJOIN of 'w table_ast * 'w table_ast
+
+  and 'w select_ast =
+      SELECT of 'w distinct_ast option * (id * 'w exp_ast) list
+
+  and 'w from_ast =
+      FROM of 'w table_ast list
+
+  and 'w whr_ast =
+      WHERE of 'w exp_ast
+
+  and 'w orderby_ast =
+      ORDERBY of ('w exp_ast * 'w ascdesc_ast option) list
+
+  and 'w offset_ast =
+      OFFSET of {count : 'w exp_ast, rows : string option}
+
+  and 'w limit_ast =
+      LIMIT of 'w exp_ast option
+    | FETCH of {first:string, count:'w exp_ast option, rows:string}
+
+  and 'w groupby_ast =
+      GROUPBY of 'w exp_ast list * 'w having_ast option
+
+  and 'w having_ast =
+      HAVING of 'w exp_ast
+
+  and 'w query_ast =
+      QUERY of 'w select_ast
+               * 'w from_ast
+               * 'w whr_ast option
+               * 'w groupby_ast option
+               * 'w orderby_ast option
+               * 'w offset_ast option
+               * 'w limit_ast option
+
+  datatype 'w insert_value_ast =
+      VALUE of 'w exp_ast
     | DEFAULT
-    | COLUMN of string option * string
-    | OR of qexp * qexp
-    | AND of qexp * qexp
-    | NOT of qexp
-    | CMPOP of qexp * string * qexp
-    | ADDOP of qexp * string * qexp
-    | MULOP of qexp * string * qexp
-    | UNARYOP of string * qexp
-    | ISNULL of qexp
-    | ISNOTNULL of qexp
-    | EXISTS of qtable5
 
-  and qtable1 =
-      ID of string
-    | AS of qtable1 * string
-    | SUBQUERY of qtable5 * string
-    | CROSSJOIN of qtable1 * qtable1
-    | INNERJOIN of qtable1 * qtable1 * qexp
-    | NATURALJOIN of qtable1 * qtable1
+  datatype 'w insert_values_ast =
+      INSERT_VALUES of 'w insert_value_ast list list
+    | INSERT_SELECT of 'w query_ast
 
-  and qtable2 =
-      FROM of qtable1
-    | FROM_DUAL
-
-  and qtable3 =
-      WHERE of qtable2 * qexp option
-
-  and qtable4 =
-      SELECT of {select : (string * qexp) list,
-                 from : qtable3,
-                 orderBy : {key : qexp, asc : bool} list}
-
-  and qtable5 =
-      SELECT_DISTINCT of qtable4
-    | SELECT_ALL of qtable4
-    | SELECT_DEFAULT of qtable4
-
-  type query = qtable5
-
-  datatype command =
-      DELETE of qtable3
-    | UPDATE of {table : qtable1,
-                 labels : string list,
-                 values: qexp list,
-                 from : qtable1 option,
-                 whereCond : qexp option}
-    | INSERT of {into : string,
-                 labels : string list,
-                 values : qexp list list}
+  datatype 'w command_ast =
+      QUERY_COMMAND of 'w query_ast
+    | INSERT of 'w table_id * id list option * 'w insert_values_ast
+    | UPDATE of 'w table_id * (id * 'w exp_ast) list * 'w whr_ast option
+    | DELETE of 'w table_id * 'w whr_ast option
     | BEGIN
     | COMMIT
     | ROLLBACK
 
-  val format_command : command -> SMLFormat.FormatExpression.expression list
-  val format_query : query -> SMLFormat.FormatExpression.expression list
+  val format_command_ast
+      : 'w command_ast -> SMLFormat.FormatExpression.expression list
 
 end

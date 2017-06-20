@@ -29,8 +29,6 @@ val memcmp = _import "sml_memcmp"
 structure Substring =
 struct
 
-  type char = char
-  type string = string
   type substring = string * int * int (* string * start * length *)
 
   (* object size occupies 26 bits of 32-bit object header. In addition,
@@ -462,4 +460,6 @@ struct
   fun app appFn slice =
       foldli (fn (i,x,()) => appFn x) () slice
 
+  type char = char
+  type string = string
 end

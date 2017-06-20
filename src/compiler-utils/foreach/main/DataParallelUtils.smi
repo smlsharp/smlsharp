@@ -1,0 +1,44 @@
+_require "../../../basis.smi"
+_require "../../../thread/main/myth.smi"
+
+structure DataParallelUtils =
+struct
+  type stage (= int)
+  val initialStage : stage
+  val next         : stage -> stage
+  val createStage  : unit -> stage ref
+  val setNextStage : stage ref -> unit
+  val isNewStage   : stage * stage -> bool
+
+  structure DPBool =
+  struct
+    val orTrue   : (stage ref * stage ref) -> unit
+    val andFalse : (stage ref * stage ref) -> unit
+    val isTrue   : (stage ref * stage ref) -> bool
+  end
+
+  structure NextValueLock =
+  struct
+    type id = int
+    type nextLock = {mutex: Myth.mutex, cond: Myth.cond}
+    type 'a context = {getNextLock : id -> nextLock,
+                       getStage : id -> stage,
+                       setStage : (id * stage) -> unit,
+                       setValue : id *'a -> unit,
+                       getValue : id -> 'a}
+    val createNextLock  : id ->  nextLock
+    val destroyNextLocl : nextLock -> unit 
+    val getMutex : 'a context -> id -> Myth.mutex
+    val getCond  : 'a context -> id -> Myth.cond
+    val getStage : 'a context -> id -> stage
+    val getValue : 'a context -> id -> 'a
+    val lock     : 'a context -> id -> unit
+    val unlock   : 'a context -> id -> unit
+    val signal   : 'a context -> id -> unit 
+    val wait     : 'a context -> id -> unit
+    val isReady  : 'a context -> stage ref * id -> bool 
+    val putValue : 'a context -> stage ref * id * 'a -> unit
+    val put      : 'a context -> stage ref * id * 'a -> unit
+    val get      : 'a context -> stage ref * id -> 'a
+  end
+end

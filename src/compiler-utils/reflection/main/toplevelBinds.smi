@@ -1,0 +1,11 @@
+_require local "../../../basis.smi"
+_require local "../../env/main/SEnv.smi"
+_require local "../../ids/main/LocalID.smi"
+
+_require local "./ReifiedTerm.ppg.smi"
+_require local "./ReifyTerm.smi"
+
+_require "./ReifiedTy.ppg.smi"
+
+val pp : ['a#reify. 'a -> unit]
+val typeOf : ['a#reify. 'a -> ReifiedTy.tyRep]

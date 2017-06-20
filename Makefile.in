@@ -48,7 +48,8 @@ LLVM_PLUGIN_OBJECTS = \
     $(LLVM_PLUGIN_SOURCES:.cpp=.$(OBJEXT))
 ALL_GEN_SOURCES = \
     $(GEN_SOURCES) \
-    src/config/main/Version.sml
+    src/config/main/Version.sml \
+    src/config/main/PointerSize.sml
 ALL_GEN_FILES = \
     $(ALL_GEN_SOURCES) \
     filemap \
@@ -229,9 +230,9 @@ precompiled/$(PRECOMPILED_ARCH).$(OBJEXT): $(LLVM_PLUGIN) \
 # -------- source code generation --------
 
 @SNAPDATE_RULE_@RELEASE_DATE: $(srcdir)/../.hg/dirstate
-@SNAPDATE_RULE_@	r=`HGPLAIN=1 hg summary | sed -n '/^parent:/!d;s/^.*[0-9]://;s/ .*$$//;1p'`; \
-@SNAPDATE_RULE_@	d=`HGPLAIN=1 hg log -r"$${r:-tip}" --template '{date|isodatesec}' | sed s/+0900/JST/`; \
-@SNAPDATE_RULE_@	echo "$$d $$r" > $@
+@SNAPDATE_RULE_@	set -e; \
+@SNAPDATE_RULE_@	r=`HGPLAIN=1 hg log -r. --template '{date|isodatesec} {node|short}'`; \
+@SNAPDATE_RULE_@	echo "$$r" | sed s/+0900/JST/ > $@
 
 src/config.sed: config.mk src/config.mk Makefile VERSION RELEASE_DATE
 	{ echo 'VERSION = '`cat VERSION`; \
@@ -302,7 +303,8 @@ depend_ml.mk files_ml.mk: PHONY
 	  SMLFORMAT      src/smlformat/generator/main/call-main.smi \
 	  MINISMLSHARP   src/compiler/minismlsharp.smi \
 	  COMPILER_LIB   src/compiler/smlsharp.smi \
-	  PRELUDE_LIB    src/prelude.smi
+	  PRELUDE_LIB    src/prelude.smi \
+	  THREAD_LIB     src/thread.smi
 
 depend_c.mk: PHONY
 	-rm -f depend_c.mk

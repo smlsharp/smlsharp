@@ -1,20 +1,26 @@
-_require "../../../basis.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../control/main/Loc.ppg.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../name/main/LocalID.smi"
+_require local "../../../basis.smi"
+
+_require local "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/ids/main/LocalID.smi"
+_require local "../../../compiler-utils/list-utils/main/utils.smi"
+_require local "../../../compiler-utils/reflection/main/ReifyUtils.smi"
+
+_require local "../../absyn/main/AbsynConst.ppg.smi"
+_require local "../../typedcalc/main/TypedCalc.ppg.smi"
+_require local "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require local "../../builtin2/main/BuiltinTypes.smi"
+_require local "../../types/main/Types.ppg.smi"
+_require local "../../runtimetypes/main/FFIAttributes.ppg.smi"
+_require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../types/main/TypesBasics.smi"
+_require local "../../usererror/main/UserError.ppg.smi"
+_require local "./FFICompilationError.ppg.smi"
+
+_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
 _require "../../recordcalc/main/RecordCalc.ppg.smi"
-_require "../../typedcalc/main/TypedCalc.ppg.smi"
-_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
-_require "../../builtin2/main/BuiltinTypes.smi"
-_require "../../types/main/Types.ppg.smi"
-_require "../../types/main/TypesBasics.smi"
-_require "../../runtimetypes/main/FFIAttributes.ppg.smi"
 
 structure FFICompilation =
 struct
-  val compile : RecordCalc.rcdecl list -> RecordCalc.rcdecl list
+  val compile : NameEvalEnv.topEnv -> RecordCalc.rcdecl list -> RecordCalc.rcdecl list
 end

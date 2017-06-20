@@ -1,20 +1,23 @@
-_require "../../../basis.smi"
-_require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../../compiler-utils/env/main/SSet.smi"
-_require "../../control/main/Bug.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../absyn/main/Fixity.smi"
-_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../basis.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/env/main/SEnv.smi"
+_require local "../../../compiler-utils/env/main/SSet.smi"
+
+_require local "../../absyn/main/Fixity.smi"
+_require local "../../types/main/Types.ppg.smi"
+
+_require "./TfunVars.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
 _require "../../builtin2/main/BuiltinTypeNames.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require "../../types/main/Types.ppg.smi"
-_require "../../types/main/IDCalc.ppg.smi"
-_require "../../types/main/TvarMap.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 _require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../absyn/main/AbsynTy.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../builtin2/main/BuiltinPrimitive.ppg.smi"
+_require "../../types/main/TvarMap.smi"
 _require "./NameEvalEnv.ppg.smi"
-_require "./TfunVars.smi"
+
 
 structure NameEvalUtils =
   struct
@@ -23,7 +26,7 @@ structure NameEvalUtils =
     val printLongsymbol : Symbol.longsymbol -> unit
     val printPath : string list -> unit
     val printTvar
-        : {eq:Absyn.eq, id:TvarID.id, lifted:bool, symbol:Symbol.symbol}
+        : {eq:AbsynTy.eq, id:TvarID.id, lifted:bool, symbol:Symbol.symbol}
           -> unit
     val printTvarId : TvarID.id -> unit
     val printVarId : VarID.id -> unit
@@ -31,7 +34,7 @@ structure NameEvalUtils =
     val printInterfaceId : InterfaceID.id -> unit
     val printBuiltinTy : BuiltinTypeNames.bty -> unit
     val printTy : IDCalc.ty -> unit
-    val printPITy : Absyn.ty -> unit
+    val printPITy : AbsynTy.ty -> unit
     val printTstr : NameEvalEnv.tstr -> unit
     val printTyE : NameEvalEnv.tstr SymbolEnv.map -> unit
     val printConSpec : IDCalc.ty option SymbolEnv.map -> unit

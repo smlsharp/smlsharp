@@ -16,7 +16,6 @@ local
   structure EU = UserErrorUtils
   structure E = NameEvalError
   structure AI = AbsynInterface
-  structure A = Absyn
   structure N = NormalizeTy
   structure Ty = EvalTy
   structure ITy = EvalIty
@@ -40,10 +39,10 @@ local
   (* FIXME factor out this def into some unique plcae *)
   val FUNCORPREFIX = "_"
 
-  fun addExSet (externSet:LongsymbolSet.set, {longsymbol, ty, version}:I.exInfo) =
+  fun addExSet (externSet:LongsymbolSet.set, {used, longsymbol, ty, version}:I.exInfo) =
       LongsymbolSet.add(externSet, longsymbol)
 
-  fun exSetMember (externSet:LongsymbolSet.set, {longsymbol, ty, version}:I.exInfo) =
+  fun exSetMember (externSet:LongsymbolSet.set, {used, longsymbol, ty, version}:I.exInfo) =
       LongsymbolSet.member(externSet, longsymbol)
 
   val emptyExSet = LongsymbolSet.empty
@@ -61,7 +60,7 @@ in
       (fn (I.IDEXN info) => I.IDEXNREP info
         (* 2012-9-25 ohori added to fix 241_functorExn bug *)
         | (I.IDEXEXN info) => I.IDEXEXNREP info
-        | (idstatus as I.IDEXVAR {used, ...}) =>
+        | (idstatus as I.IDEXVAR {exInfo={used, ...},...}) =>
           (used := true; idstatus)
         | idstatus => idstatus)
       varE
@@ -86,13 +85,13 @@ in
           let
             val longsymbol = Symbol.prefixPath(path,name)
           in
-            I.IDEXEXN ({longsymbol=longsymbol, ty=ty, version=NONE}, ref false)
+            I.IDEXEXN {longsymbol=longsymbol, ty=ty, version=NONE, used = ref false}
           end
         | (name, I.IDEXNREP {id, longsymbol, ty}) => 
           let
             val longsymbol = Symbol.prefixPath(path,name)
           in
-            I.IDEXEXNREP ({longsymbol=longsymbol, ty=ty, version=NONE}, ref false)
+            I.IDEXEXNREP {longsymbol=longsymbol, ty=ty, version=NONE, used = ref false}
           end
         | (name, idstatus) => idstatus)
       varE
@@ -146,7 +145,7 @@ in
       case idstatus of
         I.IDVAR _  => (externSet,  icdecls)
       | I.IDVAR_TYPED _ => (externSet, icdecls)
-      | I.IDEXVAR {exInfo, used, internalId} =>
+      | I.IDEXVAR {exInfo, internalId} =>
         if exSetMember(externSet, exInfo) 
         then (externSet, icdecls)
         else
@@ -157,7 +156,7 @@ in
       | I.IDCON _ => (externSet, icdecls)
       | I.IDEXN _ => (externSet, icdecls)
       | I.IDEXNREP _ => (externSet, icdecls)
-      | I.IDEXEXN (exInfo,used) => 
+      | I.IDEXEXN exInfo => 
         if exSetMember(externSet, exInfo) 
         then (externSet, icdecls)
         else
@@ -243,12 +242,12 @@ in
                   fun error e =
                       (EU.enqueueError (loc, e);
                        I.INST_EXVAR
-                         ({exInfo={longsymbol=longsymbol, version=NONE, ty=I.TYERROR}, 
-                           used=ref false, loc=Loc.noloc}))
+                         ({exInfo={used = ref false, longsymbol=longsymbol, version=NONE, ty=I.TYERROR}, 
+                           loc=Loc.noloc}))
                 in
                   (case V.lookupId env longsymbol of
-                     I.IDEXVAR {exInfo, internalId, used} =>
-                     I.INST_EXVAR {exInfo=exInfo, used = used, loc=loc}
+                     I.IDEXVAR {exInfo, internalId} =>
+                     I.INST_EXVAR {exInfo=exInfo, loc=loc}
                    | I.IDEXVAR_TOBETYPED _ => raise bug "IDEXVAR_TOBETYPED"
                    | I.IDBUILTINVAR {primitive, ty} =>
                      I.INST_PRIM ({primitive=primitive, ty=ty}, loc)
@@ -286,9 +285,9 @@ in
                   | _ => I.TYPOLY(kindedTvars,ty)
               val exInfo = {longsymbol=longsymbol, 
                             ty=ty,
+                            used = ref false,
                             version=NONE}
               val idstatus = I.IDEXVAR {exInfo=exInfo,
-                                        used=ref false, 
                                         internalId=NONE
                                        }
               val icdecl = I.ICEXTERNVAR exInfo
@@ -301,7 +300,7 @@ in
               val loc = longsymbolToLoc longsymbol
             in
               (case V.findId(env, longsymbol) of
-                 SOME (idstatus as I.IDEXVAR {exInfo, used, internalId}) => 
+                 SOME (idstatus as I.IDEXVAR {exInfo, internalId}) => 
                  if exSetMember(externSet, exInfo) then
                    (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, idstatus), nil)
                  else 
@@ -513,7 +512,13 @@ in
                  case tstr of 
                    V.TSTR_DTY {tfun, varE, formals, conSpec} => 
                    let
-                     val (tunf, renameEnv) = RL.replacePathTfun renameEnv path tfun
+                     val (tfun, renameEnv) = 
+(*
+                         RL.replaceLongsymbolTfun renameEnv (Symbol.prefixPath (path, symbol)) tfun
+                         RL.replacePathTfun renameEnv path tfun
+*)
+                         RL.replaceLongsymbolTfun emptyRenameEnv (Symbol.prefixPath (path, tycon)) tfun
+                     val varE = RL.renameLongsymbolVarE renameEnv varE
                    in
                      (V.TSTR_DTY {tfun= tfun,
                                   varE= varE,
@@ -544,8 +549,8 @@ in
               | SOME ty => 
                 I.TYFUNM([Ty.evalTy Ty.emptyTvarEnv env ty],
                           BT.exnITy)
-          val exInfo = {longsymbol=longsymbol, ty=ty, version=NONE}
-          val idstatus = I.IDEXEXN (exInfo, ref false)
+          val exInfo = {longsymbol=longsymbol, ty=ty, used = ref false,version=NONE}
+          val idstatus = I.IDEXEXN exInfo
           val icdecl = I.ICEXTERNEXN exInfo
           val externSet = addExSet(externSet, exInfo)
         in
@@ -564,25 +569,25 @@ in
            (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXNREP exnInfo), nil)
          | SOME (idstatus as I.IDEXNREP exnInfo) =>
            (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXNREP exnInfo), nil)
-         | SOME (idstatus as I.IDEXEXN (exInfo,used)) => 
+         | SOME (idstatus as I.IDEXEXN exInfo) => 
            if exSetMember(externSet, exInfo) then
-             (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP (exInfo, used)), nil)
+             (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP exInfo), nil)
            else 
              let
                val icdecl = I.ICEXTERNEXN exInfo
                val externSet = addExSet(externSet, exInfo)
              in
-               (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP (exInfo,used)), [icdecl])
+               (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP exInfo), [icdecl])
              end
-         | SOME (idstatus as I.IDEXEXNREP (exInfo, used)) => 
+         | SOME (idstatus as I.IDEXEXNREP exInfo) => 
            if exSetMember(externSet, exInfo) then
-             (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP (exInfo, used)), nil)
+             (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP exInfo), nil)
            else 
              let
                val icdecl = I.ICEXTERNEXN exInfo
                val externSet = addExSet(externSet, exInfo)
              in
-               (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP (exInfo, used)), [icdecl])
+               (renameEnv, externSet, V.rebindId  (V.emptyEnv, symbol, I.IDEXEXNREP exInfo), [icdecl])
              end
          | _ => 
            (EU.enqueueError
@@ -627,7 +632,16 @@ in
             NONE => 
             (
              EU.enqueueError
-               (loc, E.ExceptionNameUndefined("EI-140", {longsymbol = path}));
+               (loc, E.StructureNameUndefined("EI-140", {longsymbol = path}));
+             (renameEnv, 
+              externSet, 
+              {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())},
+              nil)
+            )
+          | SOME {env, strKind=V.FUNARG _} => 
+            (
+             EU.enqueueError
+               (loc, E.StructureRepOfFuncrorArgInInterface("EI-141", {longsymbol = path}));
              (renameEnv, 
               externSet, 
               {env=V.emptyEnv, strKind=V.STRENV(StructureID.generate())},
@@ -662,7 +676,7 @@ in
               nil))
           | (SOME funEEntry, SOME {env=argStrEnv, strKind}) =>
             let
-              val {id=funId,version, used,argSigEnv,argStrName,argStrEntry,dummyIdfunArgTy,polyArgTys,
+              val {id=funId,version, argSigEnv,argStrName,argStrEntry,dummyIdfunArgTy,polyArgTys,
                    typidSet,exnIdSet,bodyEnv,bodyVarExp}
                   = funEEntry
               val argId = case strKind of
@@ -795,12 +809,12 @@ in
                   case idstatus of
                     I.IDVAR varId => idstatus
                   | I.IDVAR_TYPED _ => idstatus
-                  | I.IDEXVAR {exInfo={longsymbol, version, ty},used,internalId} =>
+                  | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId} =>
                     I.IDEXVAR
                       {exInfo={longsymbol= Symbol.concatPath(copyPath , longsymbol),
                                ty=ty,
+                               used = used, 
                                version=version},
-                       used=used,
                        internalId=internalId}
                   | I.IDEXVAR_TOBETYPED {longsymbol, id, version} =>
                     I.IDEXVAR_TOBETYPED
@@ -809,12 +823,12 @@ in
                   | I.IDCON _ => idstatus
                   | I.IDEXN _ => idstatus
                   | I.IDEXNREP _ => idstatus
-                  | I.IDEXEXN  ({longsymbol, ty, version}, used) =>
+                  | I.IDEXEXN  {used, longsymbol, ty, version} =>
                     I.IDEXEXN  
-                      ({longsymbol= Symbol.concatPath(copyPath,longsymbol), ty=ty, version=version}, used)
-                  | I.IDEXEXNREP ({longsymbol, ty, version}, used) =>
+                      {used = used, longsymbol= Symbol.concatPath(copyPath,longsymbol), ty=ty, version=version}
+                  | I.IDEXEXNREP {used, longsymbol, ty, version} =>
                     I.IDEXEXNREP
-                      ({longsymbol = Symbol.concatPath(copyPath,longsymbol), ty=ty, version=version}, used)
+                      {used = used, longsymbol = Symbol.concatPath(copyPath,longsymbol), ty=ty, version=version}
                   | I.IDOPRIM _ => idstatus
                   | I.IDSPECVAR _ => idstatus
                   | I.IDSPECEXN _ => idstatus
@@ -957,7 +971,7 @@ in
 
   fun internalizeIdstatus (pathSet,idstatus) =
       case idstatus of
-        I.IDEXEXN (exInfo as {longsymbol, ty, version}, used) =>
+        I.IDEXEXN (exInfo as {used, longsymbol, ty, version}) =>
         if exSetMember(pathSet, exInfo) then (pathSet, idstatus)
           else
             let
@@ -1059,6 +1073,11 @@ in
               I.ICEXVAR {exInfo={ty,...},...} => ty
             | I.ICEXN {ty,...} => ty
             | I.ICEXN_CONSTRUCTOR _ => BT.exntagITy
+(* 2016-11-06 ohori: structure replicationの対象がfunctor argumentの場合，ICVAR等があり得る
+            | I.ICVAR {exInfo={ty,...},...} => ty
+            | I.ICEXN {ty,...} => ty
+            | I.ICEXN_CONSTRUCTOR _ => BT.exntagITy
+*)
             | _ => 
               (
                raise bug "*** VARTOTY ***"
@@ -1089,7 +1108,7 @@ in
             | I.TYFUNM _ => functorTy2
             | _ => I.TYFUNM([BT.unitITy], functorTy2)
         val longsymbol = [mkSymbol FUNCORPREFIX loc, functorSymbol]
-        val exInfo = {longsymbol=longsymbol, ty=functorTy, version=NONE}
+        val exInfo = {used = ref false, longsymbol=longsymbol, ty=functorTy, version=NONE}
         val decl = I.ICEXTERNVAR exInfo
         val functorExp = I.ICEXVAR {longsymbol=longsymbol,
                                     exInfo=exInfo}
@@ -1097,7 +1116,6 @@ in
         val funEEntry:V.funEEntry =
             {id = FunctorID.generate(),
              version = NONE,
-             used = ref false,
              argSigEnv = argSigEnv,
              argStrName = strSymbol,
              argStrEntry = argStrEntry,

@@ -6,6 +6,8 @@
 #ifndef SMLSHARP__HEAP_H__
 #define SMLSHARP__HEAP_H__
 
+union sml_alloc;
+
 /*
  * Initialize the SML# heap.
  * min_size : hint of minimum and initial heap size in bytes.
@@ -26,25 +28,30 @@ void sml_heap_stop(void);
 void sml_heap_destroy(void);
 
 /*
- * Initalize thread-local heap of the current thread.
- * It returns mutator-specific information of the current thread.
+ * Initalize thread-local heap of the current worker thread.
+ * It returns worker-specific information of the current worker thread.
  */
-void *sml_heap_mutator_init(void);
+union sml_alloc *sml_heap_worker_init(void);
 
 /*
- * Finalize thread-local heap of current thread.
- * info : mutator-specific information of the current thread
+ * Finalize thread-local heap of current worker thread.
+ * info : worker-specific information of the current worker thread
  */
-void sml_heap_mutator_destroy(void *info);
+void sml_heap_worker_destroy(union sml_alloc *info);
 
 /*
  * Called when a mutator switches to SYNC2.
  * control : control block of the mutator thread
- * info : mutator-specific information of the thread
- * Note that control and info may be different from those of the current
- * thread.
+ * Note that control may be different from those of the current thread.
  */
-void sml_heap_mutator_sync2(struct sml_control *control, void *info);
+void sml_heap_mutator_sync2(struct sml_mutator *mutator);
+
+/*
+ * Called when a worker switches to SYNC2.
+ * info : worker-specific information of the thread
+ * Note that info may be the one of other threads.
+ */
+void sml_heap_worker_sync2(union sml_alloc *info);
 
 /*
  * Called when all mutators has switched to SYNC1.

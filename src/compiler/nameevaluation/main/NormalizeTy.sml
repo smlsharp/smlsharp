@@ -12,7 +12,7 @@ local
   structure U = NameEvalUtils
   structure E = NameEvalError
   structure EU = UserErrorUtils
-  structure A = Absyn
+  structure A = AbsynTy
   exception Rigid
   fun bug s = Bug.Bug ("NormalizeTy: " ^ s)
 in
@@ -243,9 +243,8 @@ in
           I.IDVAR _ => idstatus
         | I.IDVAR_TYPED {id, longsymbol, ty} => 
           I.IDVAR_TYPED {id=id, longsymbol=longsymbol, ty= redTy TvarMap.empty ty}
-        | I.IDEXVAR {exInfo={longsymbol, version, ty}, used, internalId} =>
-          I.IDEXVAR {exInfo={longsymbol=longsymbol, version=version, ty=redTy TvarMap.empty ty},
-                     used=used, 
+        | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId} =>
+          I.IDEXVAR {exInfo={used=used, longsymbol=longsymbol, version=version, ty=redTy TvarMap.empty ty},
                      internalId = internalId
                     }
         | I.IDEXVAR_TOBETYPED {longsymbol, id, version} => idstatus
@@ -257,10 +256,10 @@ in
           I.IDEXN {id=id, longsymbol=longsymbol,ty=redTy TvarMap.empty ty}
         | I.IDEXNREP {id, longsymbol, ty} =>
           I.IDEXNREP {id=id, longsymbol=longsymbol, ty=redTy TvarMap.empty ty}
-        | I.IDEXEXN ({longsymbol, ty, version}, used) =>
-          I.IDEXEXN ({longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}, used)
-        | I.IDEXEXNREP ({longsymbol, ty, version}, used) =>
-          I.IDEXEXNREP ({longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}, used)
+        | I.IDEXEXN {used, longsymbol, ty, version} =>
+          I.IDEXEXN {used = used, longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}
+        | I.IDEXEXNREP {used, longsymbol, ty, version} =>
+          I.IDEXEXNREP {used = used, longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}
         | I.IDOPRIM _ => idstatus
         | I.IDSPECVAR {ty, symbol} => I.IDSPECVAR {ty=redTy TvarMap.empty ty, symbol=symbol}
         | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=redTy TvarMap.empty ty, symbol=symbol}
@@ -409,7 +408,7 @@ in
         val set = TvarSet.fromList tvarList
         fun eqtvar (tvar as {symbol, eq, id, lifted}) =
             TvarSet.member(set, tvar) orelse
-            case eq of Absyn.EQ => true | Absyn.NONEQ => false
+            case eq of A.EQ => true | A.NONEQ => false
         fun eqTfun (tfun, args) =
             let
               fun tfunId tfun =

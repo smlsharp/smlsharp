@@ -217,6 +217,26 @@ in
                  loc=loc,
                  resultTy=evalT resultTy
                 }
+            | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred,  predTy, loc} =>
+              TC.TPFOREACH 
+                {data = eval data, 
+                 dataTy = evalT dataTy, 
+                 iterator = eval iterator, 
+                 iteratorTy = evalT iteratorTy, 
+                 pred = eval pred,  
+                 predTy = evalT predTy, 
+                 loc = loc} 
+            | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred,  predTy, loc} =>
+              TC.TPFOREACHDATA
+                {data = eval data, 
+                 dataTy = evalT dataTy, 
+                 iterator = eval iterator, 
+                 iteratorTy = evalT iteratorTy, 
+                 whereParam = eval whereParam, 
+                 whereParamTy = evalT whereParamTy, 
+                 pred = eval pred,  
+                 predTy = evalT predTy, 
+                 loc = loc} 
             | TC.TPSEQ {expList, expTyList, loc} =>
               TC.TPSEQ
                 {expList = map eval expList,
@@ -233,9 +253,23 @@ in
                         }
             | TC.TPVAR varInfo =>
               TC.TPVAR (evalTyVar btvMap varInfo)
+            | TC.TPJOIN {ty, args = (arg1, arg2), argtys = (argty1, argty2), loc} =>
+              TC.TPJOIN {ty = evalT ty,
+                         args = (eval arg1, eval arg2),
+                         argtys = (evalT argty1, evalT argty2),
+                         loc = loc}
             (* the following should have been eliminate *)
             | TC.TPRECFUNVAR {arity, var} =>
               raise bug "TPRECFUNVAR in eval"
+            | TC.TPJSON {exp,ty,coerceTy,loc} =>
+              TC.TPJSON {exp=eval exp,
+                         ty=evalT ty,
+                         coerceTy=evalT coerceTy,
+                         loc=loc}
+            | TC.TPTYPEOF (ty, loc) =>
+              TC.TPTYPEOF (evalT ty, loc)
+            | TC.TPREIFYTY (ty, loc) =>
+              TC.TPREIFYTY (evalT ty, loc)
         and evalRule {args, body} =
             {args=map evalPat args, body=eval body}
         and evalDecl tpdecl =

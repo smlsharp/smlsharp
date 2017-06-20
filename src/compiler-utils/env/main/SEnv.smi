@@ -1,4 +1,8 @@
 _require "../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../symbols/main/RecordLabel.smi"
+_require "../../format-utils/main/SmlppgUtil.ppg.smi"
 _require "./SOrd.smi"
 
 structure SEnv = BinaryMapFn(SOrd)

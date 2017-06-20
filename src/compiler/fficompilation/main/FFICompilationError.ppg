@@ -1,0 +1,36 @@
+(**
+ * User errors detected in FFICompilation phase.
+ * @copyright (c) 2016-, Tohoku University.
+ * @author Tomohiro Sasaki
+  
+  2016 ohori 以下は，暫定版．他のフェーズに合わせて
+  書きなおす必要がある．
+
+ *)
+structure FFICompilationError =
+struct
+  local
+    fun format_ty ty = (Types.format_ty []) ty
+  in
+  (*%
+   * @formatter(Types.ty) format_ty
+   *)
+
+  exception
+  (*%
+   * @format(ty)
+   * "(FFIComilation) Invalid JSON Type : " ty
+   *)
+  InvalidJSONTy of Types.ty
+
+  and 
+  (*%
+     @format(name)
+     "(FFICompilation)" +d
+      "JSON" + "primitive" + "not" + "loaded:" +d name
+      +1 "JSON" + "functions" + "require" + "json.smi"
+   *)
+  UserLevelPrimForJsonNotFound of string
+
+  end
+end

@@ -60,6 +60,7 @@ struct
 
   type cconv =
        {tyvars : T.btvEnv,
+        haveClsEnv : bool,
         argTyList : N.ty list,
         retTy : N.ty,
         (* returns true if any type instantiation does not affect calling
@@ -82,6 +83,7 @@ struct
                     | SOME ty => compileTy tyvars ty
       in
         {tyvars = tyvars,
+         haveClsEnv = haveClsEnv,
          argTyList = argTyList,
          retTy = retTy,
          isRigid = isRigid} : cconv
@@ -96,18 +98,21 @@ struct
                            retTy = SOME retTy}
       | _ => raise Bug.Bug "funTyToConvention"
 
-  fun isWrapperConvention ({argTyList, retTy, ...}:cconv) =
+  fun isWrapperConvention ({argTyList, retTy, haveClsEnv, ...}:cconv) =
+      haveClsEnv andalso
       List.all (fn (_, R.BOXEDty) => true | (_, _) => false)
                (retTy :: argTyList)
 
-  fun toWrapperConvention ({tyvars, argTyList, retTy, isRigid}:cconv) =
+  fun toWrapperConvention ({tyvars, argTyList, retTy, haveClsEnv,
+                            isRigid}:cconv) =
       {tyvars = tyvars,
+       haveClsEnv = true,
        argTyList = map (fn (ty, _) => (ty, R.BOXEDty)) argTyList,
        retTy = (#1 retTy, R.BOXEDty),
        isRigid = true}
       : cconv
 
-  fun funEntryTy ({tyvars, argTyList, retTy, ...}:cconv, haveClsEnv) =
+  fun funEntryTy ({tyvars, argTyList, retTy, haveClsEnv, ...}:cconv) =
       (T.BACKENDty (T.FUNENTRYty {tyvars = tyvars,
                                   haveClsEnv = haveClsEnv,
                                   argTyList = map #1 argTyList,
@@ -229,13 +234,13 @@ struct
          resultTy = resultTy,
          loc = loc}
 
-  fun funEntryExp (id, cconv, haveClsEnv, loc) =
+  fun funEntryExp (id, cconv, loc) =
       N.NCCONST {const = N.NVFUNENTRY id,
-                 ty = funEntryTy (cconv, haveClsEnv),
+                 ty = funEntryTy cconv,
                  loc = loc}
 
   fun cconvTagConstWord ({isRigid, ...}:cconv) =
-      N.NVWORD32 (if isRigid then 0w1 else 0w0)
+      N.NVWORD32 (if isRigid then 0wx80000000 else 0w0)
 
   fun IfRigidCconvTag {cconvTagExp, ifRigid, ifNotRigid, resultTy, loc} =
       N.NCSWITCH
@@ -271,6 +276,10 @@ struct
                            (ListPair.zipEq (#argTyList callerConv,
                                             #argTyList calleeConv),
                             argExpList)
+        val closureEnvExp =
+            if #haveClsEnv calleeConv
+            then SOME closureEnvExp
+            else NONE
         val callExp =
             N.NCCALL {codeExp = codeExp,
                       closureEnvExp = closureEnvExp,
@@ -285,56 +294,47 @@ struct
                    argExpList, callerConv, loc} =
       let
         val (letFn1, codeExp) = makeBind (codeExp, someFunEntryTy, loc)
-        val (letFn2, wrapper) = makeBind (wrapper, someFunWrapperTy, loc)
+        val (letFn2, wrapperExp) = makeBind (wrapper, someFunWrapperTy, loc)
         val (letFn3, closureEnvExp) =
             makeBind (closureEnvExp, someClosureEnvTy, loc)
         val (letFn4, argExpList) =
             makeBindList (argExpList, #argTyList callerConv, loc)
-        fun call (calleeConv, codeExp, codeExpTy) =
+        val funEntry = (codeExp, someFunEntryTy)
+        val wrapper = (wrapperExp,someFunWrapperTy)
+        fun call (calleeConv, (codeExp, codeExpTy)) =
+            staticCall
+              {calleeConv = calleeConv,
+               callerConv = callerConv,
+               codeExp = N.NCCAST
+                           {exp = codeExp,
+                            expTy = codeExpTy,
+                            targetTy = funEntryTy calleeConv,
+                            cast = BuiltinPrimitive.BitCast,
+                            loc = loc},
+               closureEnvExp = closureEnvExp,
+               argExpList = argExpList,
+               loc = loc}
+        fun callBranch (calleeConv, codeEntry) =
             IfNull
               {exp = closureEnvExp,
                expTy = someClosureEnvTy,
-               thenExp = staticCall
-                           {calleeConv = calleeConv,
-                            callerConv = callerConv,
-                            codeExp =
-                              N.NCCAST
-                                {exp = codeExp,
-                                 expTy = codeExpTy,
-                                 targetTy = funEntryTy (calleeConv, false),
-                                 cast = BuiltinPrimitive.BitCast,
-                                 loc = loc},
-                            closureEnvExp = NONE,
-                            argExpList = argExpList,
-                            loc = loc},
-               elseExp = staticCall
-                           {calleeConv = calleeConv,
-                            callerConv = callerConv,
-                            codeExp =
-                              N.NCCAST
-                                {exp = codeExp,
-                                 expTy = codeExpTy,
-                                 targetTy = funEntryTy (calleeConv, true),
-                                 cast = BuiltinPrimitive.BitCast,
-                                 loc = loc},
-                            closureEnvExp = SOME closureEnvExp,
-                            argExpList = argExpList,
-                            loc = loc},
+               thenExp = call (calleeConv # {haveClsEnv = false}, codeEntry),
+               elseExp = call (calleeConv # {haveClsEnv = true}, codeEntry),
                resultTy = #retTy callerConv,
                loc = loc}
         val callExp =
             if isWrapperConvention callerConv
-            then call (callerConv, wrapper, someFunWrapperTy)
+            then call (callerConv, wrapper)
             else if not (#isRigid callerConv)
-            then call (toWrapperConvention callerConv, wrapper,
-                       someFunWrapperTy)
-            else IfRigidCconvTag
+            then call (toWrapperConvention callerConv, wrapper)
+            else if !Control.branchByCConvRigidity
+            then IfRigidCconvTag
                    {cconvTagExp = cconvTag,
-                    ifRigid = call (callerConv, codeExp, someFunEntryTy),
-                    ifNotRigid = call (toWrapperConvention callerConv, wrapper,
-                                       someFunWrapperTy),
+                    ifRigid = callBranch (callerConv, funEntry),
+                    ifNotRigid = call (toWrapperConvention callerConv, wrapper),
                     resultTy = #retTy callerConv,
                     loc = loc}
+            else call (toWrapperConvention callerConv, wrapper)
       in
         (letFn1 o letFn2 o letFn3 o letFn4) callExp
       end
@@ -344,15 +344,18 @@ struct
 
   fun compileConst (env as {btvEnv, wrapperMap}:env) ccvalue =
       case ccvalue of
-        C.CVINT32 x => N.NVINT32 x
+        C.CVINT8 x => N.NVINT8 x
+      | C.CVINT16 x => N.NVINT16 x
+      | C.CVINT32 x => N.NVINT32 x
       | C.CVINT64 x => N.NVINT64 x
       | C.CVEXTRADATA x => N.NVEXTRADATA x
+      | C.CVWORD8 x => N.NVWORD8 x
+      | C.CVWORD16 x => N.NVWORD16 x
       | C.CVWORD32 x => N.NVWORD32 x
       | C.CVWORD64 x => N.NVWORD64 x
       | C.CVCONTAG x => N.NVCONTAG x
-      | C.CVWORD8 x => N.NVWORD8 x
-      | C.CVREAL x => N.NVREAL x
-      | C.CVFLOAT x => N.NVFLOAT x
+      | C.CVREAL64 x => N.NVREAL64 x
+      | C.CVREAL32 x => N.NVREAL32 x
       | C.CVCHAR x => N.NVCHAR x
       | C.CVUNIT => N.NVUNIT
       | C.CVNULLPOINTER => N.NVNULLPOINTER
@@ -365,7 +368,7 @@ struct
       | C.CVFUNWRAPPER {id, codeEntryTy} =>
         let
           val cconv = toWrapperConvention (compileConvention codeEntryTy)
-          val ty = funEntryTy (cconv, #haveClsEnv codeEntryTy)
+          val ty = funEntryTy cconv
         in
           case FunEntryLabel.Map.find (wrapperMap, id) of
             SOME id =>
@@ -377,6 +380,8 @@ struct
         end
       | C.CVCALLBACKENTRY {id, callbackEntryTy} =>
         N.NVCALLBACKENTRY id
+      | C.CVEXFUNENTRY {id, codeEntryTy} =>
+        N.NVEXFUNENTRY id
       | C.CVTOPDATA {id, ty} =>
         N.NVTOPDATA id
       | C.CVCAST {value, valueTy, targetTy, cast} =>
@@ -390,6 +395,13 @@ struct
            valueTy = wordTy,
            targetTy = cconvtagTy ty,
            cast = BuiltinPrimitive.TypeCast}
+      | C.CVWORD32_ORB (c1, c2) =>
+        N.NVWORD32 (Word32.orb (constToWord (compileConst env c1),
+                                constToWord (compileConst env c2)))
+
+  and constToWord (N.NVWORD32 w) = w
+    | constToWord (N.NVCAST {value, ...}) = constToWord value
+    | constToWord _ = raise Bug.Bug "constToWord"
 
   fun compileTopConst env (const, ty) =
       (compileConst env const, compileTy (#btvEnv env) ty)
@@ -438,8 +450,7 @@ struct
       let
         val t = BoundTypeVarID.generate ()
         val btvTy = T.BOUNDVARty t
-        val univKind = {eqKind = #eqKind T.univKind,
-                        tvarKind = #tvarKind T.univKind}
+        val univKind = #kind T.univKind
       in
         {primitive = prim,
          ty = {boundtvars = BoundTypeVarID.Map.singleton (t, univKind),
@@ -673,8 +684,7 @@ struct
           staticCall {calleeConv = calleeConv,
                       callerConv = callerConv,
                       codeExp = codeExp,
-                      closureEnvExp = if #haveClsEnv cconv
-                                      then SOME closureEnvExp else NONE,
+                      closureEnvExp = closureEnvExp,
                       argExpList = argExpList,
                       loc = loc}
         end
@@ -805,19 +815,18 @@ struct
                     defaultExp = compileExp env defaultExp,
                     resultTy = compileTy btvEnv resultTy,
                     loc = loc}
-      | C.CCLOCALCODE {codeLabel, argVarList, codeBodyExp, mainExp, resultTy,
-                       loc} =>
-        N.NCLOCALCODE {codeLabel = codeLabel,
-                       argVarList = map (compileVarInfo btvEnv) argVarList,
-                       codeBodyExp = compileExp env codeBodyExp,
-                       mainExp = compileExp env mainExp,
-                       resultTy = compileTy btvEnv resultTy,
-                       loc = loc}
-      | C.CCGOTO {destinationLabel, argExpList, resultTy, loc} =>
-        N.NCGOTO {destinationLabel = destinationLabel,
-                  argExpList = map (compileExp env) argExpList,
-                  resultTy = compileTy btvEnv resultTy,
-                  loc = loc}
+      | C.CCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+        N.NCCATCH {catchLabel = catchLabel,
+                   argVarList = map (compileVarInfo btvEnv) argVarList,
+                   catchExp = compileExp env catchExp,
+                   tryExp = compileExp env tryExp,
+                   resultTy = compileTy btvEnv resultTy,
+                   loc = loc}
+      | C.CCTHROW {catchLabel, argExpList, resultTy, loc} =>
+        N.NCTHROW {catchLabel = catchLabel,
+                   argExpList = map (compileExp env) argExpList,
+                   resultTy = compileTy btvEnv resultTy,
+                   loc = loc}
       | C.CCCAST {exp, expTy, targetTy, cast, loc} =>
         let
           val expTy as (_, expRty) = compileTy btvEnv expTy
@@ -900,18 +909,17 @@ struct
               val wrapperId = FunEntryLabel.derive id
               val wrapperCconv = toWrapperConvention cconv
               val argVars = map newVar (#argTyList wrapperCconv)
-              val closureEnvVar =
-                  Option.map (compileVarInfo tyvarKindEnv) closureEnvVar
+              val wrapperClsEnvVar =
+                  case closureEnvVar of
+                    SOME v => compileVarInfo tyvarKindEnv v
+                  | NONE => newVar (ptrTy (#1 unitTy))
               val bodyExp =
                   staticCall
                     {calleeConv = cconv,
                      callerConv = wrapperCconv,
-                     codeExp = funEntryExp (id, cconv, isSome closureEnvVar,
-                                            loc),
+                     codeExp = funEntryExp (id, cconv, loc),
                      closureEnvExp =
-                       case closureEnvVar of
-                         SOME v => SOME (N.NCVAR {varInfo=v, loc=loc})
-                       | NONE => NONE,
+                       N.NCVAR {varInfo=wrapperClsEnvVar, loc=loc},
                      argExpList =
                        map (fn v => N.NCVAR {varInfo=v, loc=loc}) argVars,
                      loc = loc}
@@ -919,9 +927,10 @@ struct
               ([N.NTFUNCTION {id = wrapperId,
                               tyvarKindEnv = tyvarKindEnv,
                               argVarList = argVars,
-                              closureEnvVar = closureEnvVar,
+                              closureEnvVar = SOME wrapperClsEnvVar,
                               bodyExp = bodyExp,
                               retTy = #retTy wrapperCconv,
+                              gcCheck = false,
                               loc = loc}],
                FunEntryLabel.Map.singleton (id, wrapperId))
             end
@@ -954,6 +963,7 @@ struct
                Option.map (compileVarInfo tyvarKindEnv) closureEnvVar,
              bodyExp = compileExp env bodyExp,
              retTy = compileTy tyvarKindEnv retTy,
+             gcCheck = true,
              loc = loc}
         end
       | C.CTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
@@ -986,6 +996,15 @@ struct
                          value = Option.map (compileTopConst env) value,
                          loc = loc}
         end
+      | C.CTEXTERNFUN {id, tyvars, argTyList, retTy, loc} =>
+        N.NTEXTERNFUN
+          {id = id,
+           tyvars = tyvars,
+           argTyList = map (compileTy tyvars) argTyList,
+           retTy = compileTy tyvars retTy,
+           loc = loc}
+      | C.CTEXPORTFUN {id, funId, loc} =>
+        N.NTEXPORTFUN {id = id, funId = funId, loc = loc}
       | C.CTSTRING {id, string, loc} =>
         N.NTSTRING {id = id, string = string, loc = loc}
       | C.CTINTINF {id, value, loc} =>

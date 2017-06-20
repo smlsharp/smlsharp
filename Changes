@@ -1,4 +1,91 @@
 -----------------------------------------------------------------------------
+SML# version 3.3.0 (released on 2017-06-20)
+
+* The new feature of this version is massive parallelism for
+multicore processors, powered by MassiveThreads --- an efficient
+light-weight thread library for multicore CPUs.  By the combination
+of MassiveThreads and our fully concurrent GC, SML# is now capable
+of running millions of threads on multicore processors, as seen in
+thefollowing simple example:
+
+  val cutOff = 10
+  fun fib 0 = 0
+    | fib 1 = 1
+    | fib n =
+      if n < cutOff
+      then fib (n - 1) + fib (n - 2)
+      else let val t = Myth.Thread.create (fn _ => fib (n - 2))
+           in fib (n - 1) + Myth.Thread.join t
+           end
+
+The Myth structure is the binding library of MassiveThreads; it
+provides primitives for thread creation and synchronization.
+
+To enable the full functionality of MassiveThreads, set the
+MYTH_NUM_WORKERS environment variable to 0 when you start an SML#
+interactive session or run a SML# program.
+
+* The SQL integration has been significantly improved.
+Firstly, SQL query syntax becomes more direct and closer to the
+SQL commands.  One can write
+
+  val q = _sql db => select #t.name from #db.people as t
+                     where (#t.age = 25 and #t.salary > 300)
+
+instead of the old notation:
+
+      val q = _sql db => select #t.name from #db.people as t
+                         where SQL.andAlso (SQL.== (#t.age, 25),
+                                            SQL.> (#t.salary, 300)).
+
+Moreover, queries can be programmed by composing higher-order
+functions for component clauses.  The above q is also coded as:
+
+    val sel = _sql select #t.name
+    val frm = fn db => _sql from #db.people as t
+    val whr = fn () => _sql where (#t.age = 25 and #t.salary > 300)
+    val q = _sql db => select...(sel) from...(frm db) where...(whr ())
+
+Note that new SQL-related constructs are not compatible with old
+one in the following points:
+
+(1) SQL query syntax is changed as described above.
+
+(2) SQL tables are now associated with ML lists and therefore you
+    need to write "list" for each table type in _sqlserver
+    declaration.  For example, write
+      val s = _sqlserver : {people : {name:string, age:int, salary:int} list}
+    instead of
+      val s = _sqlserver : {people : {name:string, age:int, salary:int}}.
+
+(3) The _sqleval and _sqlexec construct are no longer needed and
+    avaiable.  The new _sql expression is a function that executes
+    a query through the given database connection.  For example, to
+    execute the above query, one can just call it with a connection
+    as follows:
+      val c = SQL.connect s
+      val result = q c
+
+* Another relatively minor new feature is type reification mechanism.
+Using this, for example, SML# define a polymorphic print function "pp"
+at the top-level.  One can do as follows:
+ # pp;
+ val it = fn : ['a#reify. 'a -> unit]
+ # pp 1;
+ 1
+ val it = () : unit
+ # pp [1,2,3];
+ [1, 2, 3]
+ val it = () : unit
+ # pp 3.14;
+ 3.14
+Note that pp is not a macro but an ordinary polymorphic function.
+Document on this is not yet ready, but the interested programmer may
+look at some modules in src/compiler/compiler-utils/reflection/main.
+
+* In addition to the above improvements, a lot of bugs has been fixed.
+
+-----------------------------------------------------------------------------
 SML# version 3.2.0 (released on 2016-09-16)
 
 This version contains the type system for natural join operations.

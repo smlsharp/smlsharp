@@ -17,7 +17,6 @@ local
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
-  structure A = Absyn
   structure N = NormalizeTy
   structure Sig = EvalSig
   structure FU = FunctorUtils
@@ -424,8 +423,8 @@ in
                             makeTypdecl (I.ICVAR {longsymbol=longsymbol,id=id}, 
                                          SOME (ty, idstatus))
                           end
-                        | SOME (idstatus as I.IDEXVAR {exInfo, used, internalId}) => 
-                          (used := true;
+                        | SOME (idstatus as I.IDEXVAR {exInfo, internalId}) => 
+                          (#used exInfo := true;
                            makeTypdecl (I.ICEXVAR {longsymbol=path@[name],exInfo=exInfo}, SOME (#ty exInfo, idstatus))
                           )
                         | SOME (I.IDEXVAR_TOBETYPED _) =>  raise bug "IDEXVAR_TOBETYPED"
@@ -454,14 +453,14 @@ in
                             makeTypdecl
                               (I.ICEXN {longsymbol=longsymbol,ty=ty, id=id}, NONE)
                           end
-                        | SOME (I.IDEXEXN (exExnInfo, used)) => 
-                          (used := true;
+                        | SOME (I.IDEXEXN exExnInfo) => 
+                          (#used exExnInfo := true;
                            makeTypdecl (I.ICEXEXN {exInfo=exExnInfo,
                                                    longsymbol=path@[name]},
                                                    NONE)
                           )
-                        | SOME (I.IDEXEXNREP (exExnInfo, used)) => 
-                          (used := true;
+                        | SOME (I.IDEXEXNREP exExnInfo) => 
+                          (#used exExnInfo := true;
                            makeTypdecl (I.ICEXEXN {longsymbol=path@[name],exInfo=exExnInfo}, NONE)
                           )
                         | SOME (I.IDOPRIM {id, overloadDef, used, longsymbol}) => 
@@ -517,7 +516,7 @@ in
                               (varE, icdeclList)
                              )
                          end
-                       | SOME (idstatus as I.IDEXEXN ({longsymbol, ty=ty2, version}, used)) => 
+                       | SOME (idstatus as I.IDEXEXN {used, longsymbol, ty=ty2, version}) => 
                          let
                            val _ = used := true
                            val ty1 = N.reduceTy TvarMap.empty ty1
@@ -532,7 +531,7 @@ in
                               (varE, icdeclList)
                              )
                          end
-                       | SOME (idstatus as I.IDEXEXNREP ({ty=ty2,...}, used)) => 
+                       | SOME (idstatus as I.IDEXEXNREP {used, ty=ty2,...}) => 
                          let
                            val _ = used := true
                            val ty1 = N.reduceTy TvarMap.empty ty1

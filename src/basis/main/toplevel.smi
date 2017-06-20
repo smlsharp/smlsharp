@@ -76,9 +76,12 @@ val + =
     case 'a in 'a * 'a -> 'a of
       int => SMLSharp_Builtin.Int32.add_unsafe  (*FIXME*)
     | word => SMLSharp_Builtin.Word32.add
+    | int8 => SMLSharp_Builtin.Int8.add_unsafe  (*FIXME*)
+    | word8 => SMLSharp_Builtin.Word8.add
+    | int16 => SMLSharp_Builtin.Int16.add_unsafe  (*FIXME*)
+    | word16 => SMLSharp_Builtin.Word16.add
     | int64 => SMLSharp_Builtin.Int64.add_unsafe  (*FIXME*)
     | word64 => SMLSharp_Builtin.Word64.add
-    | word8 => SMLSharp_Builtin.Word8.add
     | intInf => IntInf.+
     | real => SMLSharp_Builtin.Real64.add
     | real32 => SMLSharp_Builtin.Real32.add
@@ -87,9 +90,12 @@ val - =
     case 'a in 'a * 'a -> 'a of
       int => SMLSharp_Builtin.Int32.sub_unsafe  (*FIXME*)
     | word => SMLSharp_Builtin.Word32.sub
+    | int8 => SMLSharp_Builtin.Int8.sub_unsafe  (*FIXME*)
+    | word8 => SMLSharp_Builtin.Word8.sub
+    | int16 => SMLSharp_Builtin.Int16.sub_unsafe  (*FIXME*)
+    | word16 => SMLSharp_Builtin.Word16.sub
     | int64 => SMLSharp_Builtin.Int64.sub_unsafe  (*FIXME*)
     | word64 => SMLSharp_Builtin.Word64.sub
-    | word8 => SMLSharp_Builtin.Word8.sub
     | intInf => IntInf.-
     | real => SMLSharp_Builtin.Real64.sub
     | real32 => SMLSharp_Builtin.Real32.sub
@@ -98,9 +104,12 @@ val * =
     case 'a in 'a * 'a -> 'a of
       int => SMLSharp_Builtin.Int32.mul_unsafe  (*FIXME*)
     | word => SMLSharp_Builtin.Word32.mul
+    | int8 => SMLSharp_Builtin.Int8.mul_unsafe  (*FIXME*)
+    | word8 => SMLSharp_Builtin.Word8.mul
+    | int16 => SMLSharp_Builtin.Int16.mul_unsafe  (*FIXME*)
+    | word16 => SMLSharp_Builtin.Word16.mul
     | int64 => SMLSharp_Builtin.Int64.mul_unsafe  (*FIXME*)
     | word64 => SMLSharp_Builtin.Word64.mul
-    | word8 => SMLSharp_Builtin.Word8.mul
     | intInf => IntInf.*
     | real => SMLSharp_Builtin.Real64.mul
     | real32 => SMLSharp_Builtin.Real32.mul
@@ -109,18 +118,24 @@ val div =
     case 'a in 'a * 'a -> 'a of
       int => SMLSharp_Builtin.Int32.div
     | word => SMLSharp_Builtin.Word32.div
+    | int8 => SMLSharp_Builtin.Int8.div
+    | word8 => SMLSharp_Builtin.Word8.div
+    | int16 => SMLSharp_Builtin.Int16.div
+    | word16 => SMLSharp_Builtin.Word16.div
     | int64 => SMLSharp_Builtin.Int64.div
     | word64 => SMLSharp_Builtin.Word64.div
-    | word8 => SMLSharp_Builtin.Word8.div
     | intInf => IntInf.div
 
 val mod =
     case 'a in 'a * 'a -> 'a of
       int => SMLSharp_Builtin.Int32.mod
     | word => SMLSharp_Builtin.Word32.mod
+    | int8 => SMLSharp_Builtin.Int8.mod
+    | word8 => SMLSharp_Builtin.Word8.mod
+    | int16 => SMLSharp_Builtin.Int16.mod
+    | word16 => SMLSharp_Builtin.Word16.mod
     | int64 => SMLSharp_Builtin.Int64.mod
     | word64 => SMLSharp_Builtin.Word64.mod
-    | word8 => SMLSharp_Builtin.Word8.mod
     | intInf => IntInf.mod
 
 val / =
@@ -132,9 +147,12 @@ val ~ =
     case 'a in 'a -> 'a of
       int => SMLSharp_Builtin.Int32.neg
     | word => SMLSharp_Builtin.Word32.neg
+    | int8 => SMLSharp_Builtin.Int8.neg
+    | word8 => SMLSharp_Builtin.Word8.neg
+    | int16 => SMLSharp_Builtin.Int16.neg
+    | word16 => SMLSharp_Builtin.Word16.neg
     | int64 => SMLSharp_Builtin.Int64.neg
     | word64 => SMLSharp_Builtin.Word64.neg
-    | word8 => SMLSharp_Builtin.Word8.neg
     | intInf => IntInf.~
     | real => SMLSharp_Builtin.Real64.neg
     | real32 => SMLSharp_Builtin.Real32.neg
@@ -142,6 +160,8 @@ val ~ =
 val abs =
     case 'a in 'a -> 'a of
       int => SMLSharp_Builtin.Int32.abs
+    | int8 => SMLSharp_Builtin.Int8.abs
+    | int16 => SMLSharp_Builtin.Int16.abs
     | int64 => SMLSharp_Builtin.Int64.abs
     | real => SMLSharp_Builtin.Real64.abs
     | real32 => SMLSharp_Builtin.Real32.abs
@@ -151,9 +171,12 @@ val < =
     case 'a in 'a * 'a -> bool of
       int => SMLSharp_Builtin.Int32.lt
     | word => SMLSharp_Builtin.Word32.lt
+    | int8 => SMLSharp_Builtin.Int8.lt
+    | word8 => SMLSharp_Builtin.Word8.lt
+    | int16 => SMLSharp_Builtin.Int16.lt
+    | word16 => SMLSharp_Builtin.Word16.lt
     | int64 => SMLSharp_Builtin.Int64.lt
     | word64 => SMLSharp_Builtin.Word64.lt
-    | word8 => SMLSharp_Builtin.Word8.lt
     | intInf => IntInf.<
     | real => SMLSharp_Builtin.Real64.lt
     | real32 => SMLSharp_Builtin.Real32.lt
@@ -164,9 +187,12 @@ val > =
     case 'a in 'a * 'a -> bool of
       int => SMLSharp_Builtin.Int32.gt
     | word => SMLSharp_Builtin.Word32.gt
+    | int8 => SMLSharp_Builtin.Int8.gt
+    | word8 => SMLSharp_Builtin.Word8.gt
+    | int16 => SMLSharp_Builtin.Int16.gt
+    | word16 => SMLSharp_Builtin.Word16.gt
     | int64 => SMLSharp_Builtin.Int64.gt
     | word64 => SMLSharp_Builtin.Word64.gt
-    | word8 => SMLSharp_Builtin.Word8.gt
     | intInf => IntInf.>
     | real => SMLSharp_Builtin.Real64.gt
     | real32 => SMLSharp_Builtin.Real32.gt
@@ -177,9 +203,12 @@ val <= =
     case 'a in 'a * 'a -> bool of
       int => SMLSharp_Builtin.Int32.lteq
     | word => SMLSharp_Builtin.Word32.lteq
+    | int8 => SMLSharp_Builtin.Int8.lteq
+    | word8 => SMLSharp_Builtin.Word8.lteq
+    | int16 => SMLSharp_Builtin.Int16.lteq
+    | word16 => SMLSharp_Builtin.Word16.lteq
     | int64 => SMLSharp_Builtin.Int64.lteq
     | word64 => SMLSharp_Builtin.Word64.lteq
-    | word8 => SMLSharp_Builtin.Word8.lteq
     | intInf => IntInf.<=
     | real => SMLSharp_Builtin.Real64.lteq
     | real32 => SMLSharp_Builtin.Real32.lteq
@@ -190,9 +219,12 @@ val >= =
     case 'a in 'a * 'a -> bool of
       int => SMLSharp_Builtin.Int32.gteq
     | word => SMLSharp_Builtin.Word32.gteq
+    | int8 => SMLSharp_Builtin.Int8.gteq
+    | word8 => SMLSharp_Builtin.Word8.gteq
+    | int16 => SMLSharp_Builtin.Int16.gteq
+    | word16 => SMLSharp_Builtin.Word16.gteq
     | int64 => SMLSharp_Builtin.Int64.gteq
     | word64 => SMLSharp_Builtin.Word64.gteq
-    | word8 => SMLSharp_Builtin.Word8.gteq
     | intInf => IntInf.>=
     | real => SMLSharp_Builtin.Real64.gteq
     | real32 => SMLSharp_Builtin.Real32.gteq

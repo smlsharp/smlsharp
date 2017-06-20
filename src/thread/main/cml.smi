@@ -1,0 +1,55 @@
+_require "../../basis.smi"
+_require local "./myth.smi"
+_require local "./concurrent.smi"
+
+structure CML =
+struct
+  type thread_id (= boxed)
+  type 'a chan (= boxed)
+  type 'a event (= boxed)
+
+  (*
+    val version : {system : string, version_id : int list, date : string}
+    val banner  : string
+  *)
+  val spawnc : ('a -> unit) -> 'a -> thread_id
+  val spawn  : (unit -> unit) -> thread_id
+  val yield : unit -> unit
+  (*
+  val exit : unit -> 'a
+  val getTid : unit -> thread_id
+  val sameTid : thread_id * thread_id -> bool
+  val compareTid : thread_id * thread_id -> order
+  val hashTid : thread_id -> word
+  val tidToString : thread_id -> string
+  *)
+  val joinEvt : thread_id -> unit event
+  val channel : unit -> 'a chan
+  (*
+  val sameChannel : 'a chan * 'a chan -> bool
+  *)
+  val send : 'a chan * 'a -> unit
+  val recv : 'a chan -> 'a
+  val sendEvt : 'a chan * 'a -> unit event
+  val recvEvt : 'a chan -> 'a event
+  (*
+  val sendPoll : 'a chan * 'a -> bool
+  val recvPoll : 'a chan -> 'a option
+  *)
+  val wrap : 'a event * ('a -> 'b) -> 'b event
+  (*
+  val wrapHandler : 'a event * (exn -> 'a event) -> 'a event
+  *)
+  val guard : (unit -> 'a event) -> 'a event
+  val withNack : (unit event -> 'a event) -> 'a event
+  val choose : 'a event list -> 'a event
+  val sync : 'a event -> 'a
+  val select : 'a event list -> 'a
+  val never : 'a event
+  val alwaysEvt : 'a -> 'a event
+  (*
+  val timeOutEvt : Time.time -> unit event
+  val atTimeEvt : Time.time -> unit event
+  *)
+
+end

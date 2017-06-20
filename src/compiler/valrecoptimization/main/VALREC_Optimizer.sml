@@ -108,6 +108,17 @@ in
         ICSELECT (label, optimizeExp icexp, loc)
       | ICSEQ (icexpList, loc) =>
         ICSEQ (map optimizeExp icexpList, loc)
+      | ICFOREACH {data, pred, iterator, loc} =>
+        ICFOREACH {data = optimizeExp data, 
+                   pred = optimizeExp pred,  
+                   iterator  = optimizeExp iterator,
+                   loc = loc}
+      | ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
+        ICFOREACHDATA {data = optimizeExp data, 
+                       whereParam = optimizeExp whereParam,
+                       pred = optimizeExp pred,  
+                       iterator  = optimizeExp iterator,
+                       loc = loc}
       | ICFFIIMPORT (icexp,ty,loc) =>
         ICFFIIMPORT (optimizeFFIFun icexp, ty, loc)
       | ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
@@ -123,13 +134,16 @@ in
                      ICFFIARGSIZEOF (ty, NONE, loc))
 		 args,
              retTy, loc)
-      | ICSQLSCHEMA {columnInfoFnExp, ty, loc} =>
-        ICSQLSCHEMA {columnInfoFnExp = optimizeExp columnInfoFnExp,
+      | ICSQLSCHEMA {tyFnExp, ty, loc} =>
+        ICSQLSCHEMA {tyFnExp = optimizeExp tyFnExp,
                      ty = ty,
                      loc = loc}
       | ICJOIN (icexp1, icexp2, loc) =>
         ICJOIN (optimizeExp icexp1, optimizeExp icexp2, loc)
-      | ICJSON _ => raise Bug.Bug "ICJSON"
+      | ICJSON (icexp, ty, loc) => 
+        ICJSON (optimizeExp icexp, ty, loc)
+      | ICTYPEOF (ty, loc) => icexp
+      | ICREIFYTY (ty, loc) => icexp
 
   and optimizeFFIFun ffiFun =
       case ffiFun of

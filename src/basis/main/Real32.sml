@@ -115,9 +115,9 @@ struct
   val ?= = Real32.ueq
   val isNan = Real32.isNan
   val trunc = Real32.trunc
-  val fromInt = SMLSharp_Builtin.Int32.toFloat_unsafe  (* FIXME *)
-  val toLarge = Real32.toReal
-  val fromReal_unsafe = SMLSharp_Builtin.Real64.toFloat_unsafe
+  val fromInt = SMLSharp_Builtin.Int32.toReal32
+  val toLarge = SMLSharp_Builtin.Real32.toReal64
+  val fromReal_unsafe = SMLSharp_Builtin.Real64.toReal32_unsafe  (* FIXME *)
 
   fun *+ (r1, r2, r3) = r1 * r2 + r3
   fun *- (r1, r2, r3) = r1 * r2 - r3
@@ -250,7 +250,7 @@ struct
       | IEEEReal.TO_NEAREST => round x
 
   fun toLargeInt mode x =
-      Real64.toLargeInt mode (Real32.toReal x)
+      Real64.toLargeInt mode (toLarge x)
 
   fun fromLargeInt x =
       fromReal_unsafe (Real64.fromLargeInt x)  (* FIXME *)
@@ -259,10 +259,10 @@ struct
       raise SMLSharp_Runtime.Bug "FIXME: Real32.fromLarge: not implemented yet"
 
   fun fmt format x =
-      Real64.fmt format (Real32.toReal x)
+      Real64.fmt format (toLarge x)
 
   fun toString x =
-      Real64.toString (Real32.toReal x)
+      Real64.toString (toLarge x)
 
   fun scan getc strm =
       case Real64.scan getc strm of
@@ -273,7 +273,7 @@ struct
       StringCvt.scanString scan s
 
   fun toDecimal x =
-      Real64.toDecimal (Real32.toReal x)
+      Real64.toDecimal (toLarge x)
 
   fun fromDecimal x =
       case Real64.fromDecimal x of

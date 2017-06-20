@@ -1,3 +1,4 @@
+
 (* -*- sml -*- *)
 (** * constant terms.
  * @copyright (c) 2006, Tohoku University.
@@ -15,67 +16,35 @@ struct
   structure T = Types
   structure RC = RecordCalc
   structure TU = TypesBasics
-  structure UE = UserError
-  structure A = Absyn
+  structure A = AbsynConst
 
  (* for debugging *)
   fun printType ty =
       print (Bug.prettyPrint (Types.format_ty nil ty) ^ "\n")
 
-  local
-    fun findCon ({Env,...}:NameEvalEnv.topEnv) longid =
-        case NameEvalEnv.findId (Env, Symbol.mkLongsymbol longid Loc.noloc) of
-          NONE => NONE
-        | SOME (IDCalc.IDCON {id, longsymbol, ty}) =>
-          SOME {id = id, path = longsymbol,
-                ty = EvalIty.evalIty EvalIty.emptyContext ty}
-        | SOME _ => NONE
-
-    fun findTfun ({Env,...}:NameEvalEnv.topEnv) longid =
-        case NameEvalEnv.findTstr (Env, Symbol.mkLongsymbol longid Loc.noloc) of
-          NONE => NONE
-        | SOME (NameEvalEnv.TSTR tfun) => SOME tfun
-        | SOME (NameEvalEnv.TSTR_DTY {tfun, ...}) => SOME tfun
-
-    fun findTy topEnv longid =
-        case findTfun topEnv longid of
-          NONE => NONE
-        | SOME tfun => SOME (EvalIty.evalTfun EvalIty.emptyContext tfun)
-
-    fun sqlname x = ["SMLSharp_SQL_Prim", x]
-  in
-
-  val CONST_INT = ref NONE
-  val CONST_WORD = ref NONE
-  val CONST_REAL = ref NONE
-  val CONST_STRING = ref NONE
-  val CONST_CHAR = ref NONE
-  val SQL_CONST = ref NONE
-  val SQL_valueTy = ref NONE
-
-  fun init env =
-      (CONST_INT := findCon env (sqlname "CONST_INT");
-       CONST_WORD := findCon env (sqlname "CONST_WORD");
-       CONST_REAL := findCon env (sqlname "CONST_REAL");
-       CONST_STRING := findCon env (sqlname "CONST_STRING");
-       CONST_CHAR := findCon env (sqlname "CONST_CHAR");
-       SQL_CONST := findCon env (sqlname "CONST");
-       SQL_valueTy := findTy env (sqlname "value"))
-
-  end (* local *)
-
   (*%
+   * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
+   * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
    * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
+   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
+   * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
    * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
-   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
    * @formatter(IntInf.int) TermFormat.format_IntInf_dec_ML
    * @formatter(stringLiteral) TermFormat.format_string_ML
    * @formatter(charLiteral) TermFormat.format_char_ML
    *)
   datatype constant
     = (*%
+       * @format(value) value
+       *)
+      INT8 of Int8.int
+    | (*%
+       * @format(value) value
+       *)
+      INT16 of Int16.int
+    | (*%
        * @format(value) value
        *)
       INT32 of Int32.int
@@ -90,15 +59,19 @@ struct
     | (*%
        * @format(value) value
        *)
+      WORD8 of Word8.word
+    | (*%
+       * @format(value) value
+       *)
+      WORD16 of Word16.word
+    | (*%
+       * @format(value) value
+       *)
       WORD32 of Word32.word
     | (*%
        * @format(value) value
        *)
       WORD64 of Word64.word
-    | (*%
-       * @format(value) value
-       *)
-      WORD8 of Word8.word
     | (*%
        * @format(value) value:stringLiteral
        *)
@@ -106,11 +79,11 @@ struct
     | (*%
        * @format(value) value
        *)
-      REAL of string
+      REAL64 of string
     | (*%
        * @format(value) value "f"
        *)
-      FLOAT of string
+      REAL32 of string
     | (*%
        * @format(value) value:charLiteral
        *)
@@ -143,40 +116,49 @@ struct
       let
         fun order const =
             case const of
-              INT32 _ => 0
-            | INT64 _ => 1
-            | INTINF _ => 2
-            | WORD32 _ => 3
-            | WORD64 _ => 4
+              INT8 _ => 0
+            | INT16 _ => 1
+            | INT32 _ => 2
+            | INT64 _ => 3
+            | INTINF _ => 4
             | WORD8 _ => 5
-            | STRING _ => 6
-            | REAL _ => 7
-            | FLOAT _ => 8
-            | CHAR _ => 9
-            | UNIT => 10
-            | NULLPOINTER => 11
-            | NULLBOXED => 12
-            | CONTAG _ => 13
+            | WORD16 _ => 6
+            | WORD32 _ => 7
+            | WORD64 _ => 8
+            | STRING _ => 9
+            | REAL64 _ => 10
+            | REAL32 _ => 11
+            | CHAR _ => 12
+            | UNIT => 13
+            | NULLPOINTER => 14
+            | NULLBOXED => 15
+            | CONTAG _ => 16
       in
         case (x, y) of
-          (INT32 x, INT32 y) => Int32.compare (x, y)
+          (INT8 x, INT8 y) => Int8.compare (x, y)
+        | (INT8 _, _) => Int.compare (order x, order y)
+        | (INT16 x, INT16 y) => Int16.compare (x, y)
+        | (INT16 _, _) => Int.compare (order x, order y)
+        | (INT32 x, INT32 y) => Int32.compare (x, y)
         | (INT32 _, _) => Int.compare (order x, order y)
         | (INT64 x, INT64 y) => Int64.compare (x, y)
         | (INT64 _, _) => Int.compare (order x, order y)
         | (INTINF x, INTINF y) => IntInf.compare (x, y)
         | (INTINF _, _) => Int.compare (order x, order y)
+        | (WORD8 x, WORD8 y) => Word8.compare (x, y)
+        | (WORD8 _, _) => Int.compare (order x, order y)
+        | (WORD16 x, WORD16 y) => Word16.compare (x, y)
+        | (WORD16 _, _) => Int.compare (order x, order y)
         | (WORD32 x, WORD32 y) => Word32.compare (x, y)
         | (WORD32 _, _) => Int.compare (order x, order y)
         | (WORD64 x, WORD64 y) => Word64.compare (x, y)
         | (WORD64 _, _) => Int.compare (order x, order y)
-        | (WORD8 x, WORD8 y) => Word8.compare (x, y)
-        | (WORD8 _, _) => Int.compare (order x, order y)
         | (STRING x, STRING y) => String.compare (x, y)
         | (STRING _, _) => Int.compare (order x, order y)
-        | (REAL x, REAL y) => String.compare (x, y)
-        | (REAL _, _) => Int.compare (order x, order y)
-        | (FLOAT x, FLOAT y) => String.compare (x, y)
-        | (FLOAT _, _) => Int.compare (order x, order y)
+        | (REAL64 x, REAL64 y) => String.compare (x, y)
+        | (REAL64 _, _) => Int.compare (order x, order y)
+        | (REAL32 x, REAL32 y) => String.compare (x, y)
+        | (REAL32 _, _) => Int.compare (order x, order y)
         | (CHAR x, CHAR y) => Char.compare (x, y)
         | (CHAR _, _) => Int.compare (order x, order y)
         | (UNIT, UNIT) => EQUAL
@@ -211,29 +193,32 @@ struct
           | _ =>
             let
               val btv = BoundTypeVarID.generate ()
-              val btvKind = {tvarKind = T.OCONSTkind tys, eqKind = A.NONEQ}
+              val btvKind = T.KIND {tvarKind = T.OCONSTkind tys, eqKind = T.NONEQ, subkind = T.ANY, dynKind=false, reifyKind=false}
               val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv, btvKind)
             in
               T.POLYty {boundtvars = btvEnv, constraints = nil, body = T.BOUNDVARty btv}
             end
         end
 
-    fun sqlValueTy elemTy =
-        case !SQL_valueTy of
-          NONE => nil
-        | SOME valueTyCon =>
-          let
-            val (btvEnv, elemTy) = decomposePolyTy elemTy
-            val btv = BoundTypeVarID.generate ()
-            val btvKind = {tvarKind = T.UNIV, eqKind = A.NONEQ}
-            val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv, btvKind)
-          in
-            [T.POLYty
-               {boundtvars = btvEnv,
-                constraints = nil,
-                body = T.CONSTRUCTty {tyCon = valueTyCon,
-                                      args = [elemTy, T.BOUNDVARty btv]}}]
-          end
+(*
+    fun sqlExpTy elemTy =
+        let
+          val (btvEnv, elemTy) = decomposePolyTy elemTy
+          val btv1 = BoundTypeVarID.generate ()
+          val btv2 = BoundTypeVarID.generate ()
+          val btvKind = {tvarKind = T.UNIV, eqKind = T.NONEQ, boxedKind = T.ANY, dynKind=false, reifyKind=false}
+          val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv1, btvKind)
+          val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv2, btvKind)
+        in
+          [T.POLYty
+             {boundtvars = btvEnv,
+              constraints = nil,
+              body = T.CONSTRUCTty
+                       {tyCon = ULP.SQL_exp_tyCon (),
+                        args = [T.FUNMty ([T.BOUNDVARty btv1], elemTy),
+                                T.BOUNDVARty btv2]}}]
+          handle ULP.IDNotFound _ => []
+        end
 
     fun optionTy elemTy =
         let
@@ -243,10 +228,12 @@ struct
           polyTy (btvEnv, T.CONSTRUCTty {tyCon = tyCon, args = [elemTy]})
         end
 
+*)
+
     fun polyPtrTy () =
         let
           val btv = BoundTypeVarID.generate ()
-          val btvKind = {tvarKind = T.UNIV, eqKind = A.NONEQ}
+          val btvKind = #kind T.univKind
           val btvEnv = BoundTypeVarID.Map.singleton (btv, btvKind)
         in
           polyTy (btvEnv, T.CONSTRUCTty {tyCon = BT.ptrTyCon,
@@ -255,33 +242,29 @@ struct
 
     fun intType () =
         overloadTy
-          (BT.intTy
-           :: BT.int64Ty
-           :: BT.intInfTy
-           :: sqlValueTy (overloadTy [BT.intTy, optionTy BT.intTy]))
+          [BT.intTy,
+           BT.int8Ty,
+           BT.int16Ty,
+           BT.int64Ty,
+           BT.intInfTy]
 
     fun wordType () =
         overloadTy
-          (BT.wordTy
-           :: BT.word64Ty
-           :: BT.word8Ty
-           :: sqlValueTy (overloadTy [BT.wordTy, optionTy BT.wordTy]))
+          [BT.wordTy,
+           BT.word8Ty,
+           BT.word16Ty,
+           BT.word64Ty]
 
     fun stringType () =
-        overloadTy
-          (BT.stringTy
-           :: sqlValueTy (overloadTy [BT.stringTy, optionTy BT.stringTy]))
+        BT.stringTy
 
     fun realType () =
         overloadTy
-          (BT.realTy
-           :: BT.real32Ty
-           :: sqlValueTy (overloadTy [BT.realTy, optionTy BT.realTy]))
+          [BT.realTy,
+           BT.real32Ty]
 
     fun charType () =
-        overloadTy
-          (BT.charTy
-           :: sqlValueTy (overloadTy [BT.charTy, optionTy BT.charTy]))
+        BT.charTy
 
     fun unitType () =
         BT.unitTy
@@ -309,15 +292,18 @@ struct
 
   fun typeOf const =
       case const of
-        INT32 _ => BT.intTy
+        INT8 _ => BT.int8Ty
+      | INT16 _ => BT.int16Ty
+      | INT32 _ => BT.intTy
       | INT64 _ => BT.int64Ty
       | INTINF _ => BT.intInfTy
+      | WORD8 _ => BT.word8Ty
+      | WORD16 _ => BT.word16Ty
       | WORD32 _ => BT.wordTy
       | WORD64 _ => BT.word64Ty
-      | WORD8 _ => BT.word8Ty
       | STRING _ => BT.stringTy
-      | REAL _ => BT.realTy
-      | FLOAT _ => BT.real32Ty
+      | REAL64 _ => BT.realTy
+      | REAL32 _ => BT.real32Ty
       | CHAR _ => BT.charTy
       | UNIT => BT.unitTy
       | NULLPOINTER => T.CONSTRUCTty {tyCon = BT.ptrTyCon, args = []}
@@ -328,85 +314,46 @@ struct
    * fix the form of constant expression according to its type.
    *)
   fun fixConst {constTerm : constant -> 'exp,
-                recordTerm : 'exp RecordLabel.Map.map * Types.ty -> 'exp,
+                tupleTerm : ('exp * Types.ty) list -> 'exp,
                 conTerm : {con: RC.conInfo, instTyList: Types.ty list,
-                           arg: 'exp option} -> 'exp}
+                           arg: 'exp option} -> 'exp,
+                fnTerm : Types.ty * ('exp * Types.ty) -> 'exp}
                (const, ty) =
       let
         datatype constTy =
-                 INT32ty | INT64ty | WORD32ty | WORD64ty | CHARty | STRINGty
-               | REALty | FLOATty
-               | INTINFty | WORD8ty | UNITty | PTRty | BOXEDty
-               | OPTIONty of constTy | SQLVALUEty of constTy * T.ty
+                 INT8ty | INT16ty | INT32ty | INT64ty | INTINFty
+               | WORD8ty | WORD16ty | WORD32ty | WORD64ty
+               | REAL64ty | REAL32ty
+               | CHARty | STRINGty | UNITty | PTRty | BOXEDty
         fun constTy ty =
             case TU.derefTy ty of
               T.CONSTRUCTty {tyCon={id,...}, args=[]} =>
-              if TypID.eq (id, #id BT.intTyCon) then INT32ty
+              if TypID.eq (id, #id BT.int8TyCon) then INT8ty
+              else if TypID.eq (id, #id BT.int16TyCon) then INT16ty
+              else if TypID.eq (id, #id BT.intTyCon) then INT32ty
               else if TypID.eq (id, #id BT.int64TyCon) then INT64ty
+              else if TypID.eq (id, #id BT.word8TyCon) then WORD8ty
+              else if TypID.eq (id, #id BT.word16TyCon) then WORD16ty
               else if TypID.eq (id, #id BT.wordTyCon) then WORD32ty
               else if TypID.eq (id, #id BT.word64TyCon) then WORD64ty
               else if TypID.eq (id, #id BT.charTyCon) then CHARty
               else if TypID.eq (id, #id BT.stringTyCon) then STRINGty
-              else if TypID.eq (id, #id BT.realTyCon) then REALty
-              else if TypID.eq (id, #id BT.real32TyCon) then FLOATty
+              else if TypID.eq (id, #id BT.realTyCon) then REAL64ty
+              else if TypID.eq (id, #id BT.real32TyCon) then REAL32ty
               else if TypID.eq (id, #id BT.intInfTyCon) then INTINFty
-              else if TypID.eq (id, #id BT.word8TyCon) then WORD8ty
               else if TypID.eq (id, #id BT.unitTyCon) then UNITty
               else if TypID.eq (id, #id BT.boxedTyCon) then BOXEDty
               else
                 (printType ty;
-                 raise Bug.Bug "castConst"
+                 raise Bug.Bug "constTy"
                 )
             | T.CONSTRUCTty {tyCon={id,...}, args=[arg]} =>
               if TypID.eq (id, #id BT.ptrTyCon)
               then PTRty
-              else if TypID.eq (id,
-                                #id (BT.optionTyCon))
-              then OPTIONty (constTy arg)
-              else (printType ty; raise Bug.Bug "castConst")
-            | T.CONSTRUCTty {tyCon={id,...}, args=[arg1, arg2]} =>
-              (case !SQL_valueTy of
-                 NONE => raise Bug.Bug "castConst"
-               | SOME valueTyCon =>
-                 if TypID.eq (id, #id valueTyCon)
-                 then SQLVALUEty (constTy arg1, arg2)
-                 else (printType ty; raise Bug.Bug "castConst"))
+              else (printType ty; raise Bug.Bug "constTy")
             | _ =>
               (printType ty;
-               raise Bug.Bug "castConst")
-
-        fun pairTerm ((e1,t1), (e2,t2)) =
-            recordTerm (RecordLabel.tupleMap [e1, e2], ty)
-
-        fun optionTerm (exp, ty) =
-            (conTerm {con=BT.SOMETPConInfo, instTyList=[ty], arg=SOME exp},
-             T.CONSTRUCTty {tyCon = BT.optionTyCon, args = [ty]})
-
-        fun sqlConstTerm dbiTy (con, exp1) (exp2, ty2) =
-            let
-              val (CONSTconInfo, conInfo) =
-                  case (!SQL_CONST, !con) of
-                    (SOME x, SOME y) => (x, y)
-                  | _ => raise Bug.Bug "sqlValue:conInfo"
-              val qconstTy =
-                  case TU.derefTy (#ty conInfo) of
-                    T.FUNMty (_, ty) => ty
-                  | _ => raise Bug.Bug "sqlValue:qconstTy"
-              val con1 = conTerm {con=conInfo, instTyList=[], arg=SOME exp1}
-            in
-              conTerm {con = CONSTconInfo,
-(* 2013-08-31 ohori bug 266_SQLInsertOption.sml; SQL.Som 1 がbug例外を起こす．
-   このハンドコードは，脆弱．型変数の抽象の順序は，型に現れる順．
-*)
-                       instTyList = [ty, dbiTy],
-                       arg = SOME (pairTerm ((con1, qconstTy), (exp2, ty2)))}
-            end
-
-        fun sqlValue con dbiTy (exp, ty) =
-            sqlConstTerm dbiTy (con, exp) (exp, ty)
-
-        fun sqlOptionValue con dbiTy (exp, ty) =
-            sqlConstTerm dbiTy (con, exp) (optionTerm (exp, ty))
+               raise Bug.Bug "constTy")
 
         fun scanInt scanFn ({radix, digits}, loc) =
             let
@@ -421,51 +368,32 @@ struct
 
       in
         case (const, constTy ty) of
-          (A.INT x, INT32ty) =>
+          (A.INT x, INT8ty) =>
+          constTerm (INT8 (scanInt Int8.scan x))
+        | (A.INT x, INT16ty) =>
+          constTerm (INT16 (scanInt Int16.scan x))
+        | (A.INT x, INT32ty) =>
           constTerm (INT32 (scanInt Int32.scan x))
         | (A.INT x, INT64ty) =>
           constTerm (INT64 (scanInt Int64.scan x))
         | (A.INT x, INTINFty) =>
           constTerm (INTINF (scanInt IntInf.scan x))
-        | (A.INT x, SQLVALUEty (INT32ty, dbi)) =>
-          sqlValue CONST_INT dbi
-                   (constTerm (INT32 (scanInt Int32.scan x)), BT.intTy)
-        | (A.INT x, SQLVALUEty (OPTIONty INT32ty, dbi)) =>
-          sqlOptionValue CONST_INT dbi
-                         (constTerm (INT32 (scanInt Int32.scan x)), BT.intTy)
         | (A.INT _, _) => raise Bug.Bug "fixConst: INT"
+        | (A.WORD x, WORD8ty) =>
+          constTerm (WORD8 (scanInt Word8.scan x))
+        | (A.WORD x, WORD16ty) =>
+          constTerm (WORD16 (scanInt Word16.scan x))
         | (A.WORD x, WORD32ty) =>
           constTerm (WORD32 (scanInt Word32.scan x))
         | (A.WORD x, WORD64ty) =>
           constTerm (WORD64 (scanInt Word64.scan x))
-        | (A.WORD x, WORD8ty) =>
-          constTerm (WORD8 (scanInt Word8.scan x))
-        | (A.WORD x, SQLVALUEty (WORD32ty, dbi)) =>
-          sqlValue CONST_WORD dbi
-                   (constTerm (WORD32 (scanInt Word32.scan x)), BT.wordTy)
-        | (A.WORD x, SQLVALUEty (OPTIONty WORD32ty, dbi)) =>
-          sqlOptionValue CONST_WORD dbi
-                         (constTerm (WORD32 (scanInt Word32.scan x)), BT.wordTy)
         | (A.WORD _, _) => raise Bug.Bug "fixConst: WORD"
         | (A.STRING (x, loc), STRINGty) => constTerm (STRING x)
-        | (A.STRING (x, loc), SQLVALUEty (STRINGty, dbi)) =>
-          sqlValue CONST_STRING dbi (constTerm (STRING x), BT.stringTy)
-        | (A.STRING (x, loc), SQLVALUEty (OPTIONty STRINGty, dbi)) =>
-          sqlOptionValue CONST_STRING dbi
-                         (constTerm (STRING x), BT.stringTy)
         | (A.STRING _, _) => raise Bug.Bug "fixConst: STRING"
-        | (A.REAL (x, loc), REALty) => constTerm (REAL x)
-        | (A.REAL (x, loc), FLOATty) => constTerm (FLOAT x)
-        | (A.REAL (x, loc), SQLVALUEty (REALty, dbi)) =>
-          sqlValue CONST_REAL dbi (constTerm (REAL x), BT.realTy)
-        | (A.REAL (x, loc), SQLVALUEty (OPTIONty REALty, dbi)) =>
-          sqlOptionValue CONST_REAL dbi (constTerm (REAL x), BT.realTy)
+        | (A.REAL (x, loc), REAL64ty) => constTerm (REAL64 x)
+        | (A.REAL (x, loc), REAL32ty) => constTerm (REAL32 x)
         | (A.REAL _, _) => raise Bug.Bug "fixConst: REAL"
         | (A.CHAR (x, loc), CHARty) => constTerm (CHAR x)
-        | (A.CHAR (x, loc), SQLVALUEty (CHARty, dbi)) =>
-          sqlValue CONST_CHAR dbi (constTerm (CHAR x), BT.charTy)
-        | (A.CHAR (x, loc), SQLVALUEty (OPTIONty CHARty, dbi)) =>
-          sqlOptionValue CONST_CHAR dbi (constTerm (CHAR x), BT.charTy)
         | (A.CHAR _, _) => raise Bug.Bug "fixConst: CHAR"
         | (A.UNITCONST (_, loc), UNITty) => constTerm UNIT
         | (A.UNITCONST _, _) => raise Bug.Bug "fixConst: UNITCONST"

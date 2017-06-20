@@ -6,7 +6,6 @@
  * @version $Id: TypedCalc.ppg,v 1.36.6.7 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure TypedCalc = struct
-local
 
   structure T = Types
   structure I = IDCalc
@@ -175,10 +174,10 @@ local
       I.tvarId
 
   (*%
-     @formatter(Absyn.constant) Absyn.format_constant 
+     @formatter(AbsynConst.constant) AbsynConst.format_constant 
    *)
   (*% @prefix formatWithType_
-     @formatter(Absyn.constant) Absyn.format_constant 
+     @formatter(AbsynConst.constant) AbsynConst.format_constant 
    *)
   type constant 
     = (*%
@@ -187,7 +186,7 @@ local
       (*% @prefix formatWithType_
          @format(x) x
        *)
-      Absyn.constant
+      AbsynConst.constant
 
   (*%
      @formatter(I.tvar) I.format_tvar 
@@ -343,8 +342,6 @@ local
          @format(x) x 
       *)
       T.exExnInfo
-
-in
 
   (*%
      @formatter(T.varInfo) T.format_varInfo
@@ -864,6 +861,48 @@ in
      *)
       TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
     | (*%
+        @format({data, dataTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      (*% @prefix formatWithType_
+        @format({data, dataTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      TPFOREACH of {data:tpexp, 
+                    dataTy:ty, 
+                    iterator:tpexp, 
+                    iteratorTy:ty, 
+                    pred:tpexp, 
+                    predTy:ty, 
+                    loc:loc}
+    | (*%
+        @format({data, whereParam, whereParamTy, dataTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "where" + 2[whereParam()(btvEnv)]
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      (*% @prefix formatWithType_
+        @format({data, whereParam, whereParamTy, dataTy, iterator, iteratorTy, pred, predTy, loc})
+            "foreach" + {data()(btvEnv)}
+            +1 "where" + 2[whereParam()(btvEnv)]
+            +1 "do" + 2[{iterator()(btvEnv)}]
+            +1 "until" + 2[{pred()(btvEnv)}]
+       *)
+      TPFOREACHDATA of {data:tpexp, 
+                        dataTy:ty, 
+                        whereParam:tpexp,
+                        whereParamTy:ty,
+                        iterator:tpexp, 
+                        iteratorTy:ty, 
+                        pred:tpexp, 
+                        predTy:ty, 
+                        loc:loc}
+    | (*%
        * @format({binds:bind binds, bodyExp:exp, loc:loc})
             1[
                "bind" 2[ +1 binds(bind)( +1) ]  +1
@@ -1116,6 +1155,48 @@ in
         "_sizeof(" ty()(btvEnv) ")"
        *)
       TPSIZEOF of ty * loc
+   |  (*%
+        @format({ty,args:(arg1 * arg2),argtys,loc})
+        "_join(" arg1()(btvEnv) "," arg2()(btvEnv) ")"
+       *)
+      (*% @prefix formatWithType_
+        @format({ty,args:(arg1 * arg2),argtys:(argty1 * argty2),loc})
+        "_join(" arg1()(btvEnv) ":"  argty1()(btvEnv) "," arg2()(btvEnv) ":" argty2()(btvEnv) ") :" ty()(btvEnv)
+       *)
+      TPJOIN of
+        {
+          ty : ty,
+          args : tpexp * tpexp,
+          argtys: ty * ty,
+          loc : loc
+        }
+    | (*%
+        @format({exp,ty,coerceTy,loc})
+        "_json " exp()(btvEnv) ":" ty()(btvEnv) " as " coerceTy()(btvEnv)
+       *)
+      (*% @prefix formatWithType_
+        @format({exp,ty,coerceTy,loc})
+        "_json " exp()(btvEnv) " as " coerceTy()(btvEnv)
+       *)
+      TPJSON of {exp:tpexp, ty:ty, coerceTy:ty, loc:loc}
+    | (*%
+        @format(ty * loc)
+        "_typeof(" ty()(btvEnv) ")"
+       *)
+      (*% @prefix formatWithType_
+        @format(ty * loc)
+        "_typeof(" ty()(btvEnv) ")"
+       *)
+      TPTYPEOF of ty * loc
+    | (*%
+        @format(ty * loc)
+        "_reifyty(" ty()(btvEnv) ")"
+       *)
+      (*% @prefix formatWithType_
+        @format(ty * loc)
+        "_reifyty(" ty()(btvEnv) ")"
+       *)
+      TPREIFYTY of ty * loc
 
  and tpffifun
    = (*% @format(x) x()(btvEnv) *)
@@ -1525,6 +1606,4 @@ in
       *)
      tppat RecordLabel.Map.map
 
-
-end
 end

@@ -217,6 +217,7 @@ local
       | (NONE, NONE) => raise bug "none in unionWith3"
 
 in
+  type varE = varE
   (*%
      @formatter(bool) SmlppgUtil.formatBinaryChoice
    *)
@@ -317,6 +318,14 @@ in
         @format({id,funId,argId}) "structure(" id "=" funId "(" argId")" ")" 
        *)
       FUNAPP of {id:structureId, funId:functorId, argId:structureId}
+    | 
+      (*%
+        @format(id) "structureInFunarg(" id ")" 
+       *)
+      (*% @prefix printTy_
+        @format(id) "structureInFunarg(" id ")" 
+       *)
+      FUNARG of structureId
 
   (*%
      @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
@@ -399,7 +408,6 @@ in
       (*%
         @format({id,
                  version,
-                 used,
                  argSigEnv,
                  argStrEntry,
                  argStrName,
@@ -434,7 +442,6 @@ in
       (*% @prefix printTy_
         @format({id,
                  version,
-                 used,
                  argSigEnv,
                  argStrEntry,
                  argStrName,
@@ -454,7 +461,6 @@ in
          *)
        {id: functorId,
         version: int option,
-        used : bool ref,
         argSigEnv: env,
         argStrEntry: strEntry,
         argStrName: Symbol.symbol,
@@ -772,14 +778,14 @@ in
             (SOME (I.IDCON _)) => idstatus
           | (SOME (I.IDEXN _)) => idstatus
           | (SOME (I.IDEXNREP _)) => idstatus
-          | (SOME (I.IDEXEXN (_, used))) => idstatus
-          | (SOME (I.IDEXEXNREP (_, used))) => idstatus
+          | (SOME (I.IDEXEXN _)) => idstatus
+          | (SOME (I.IDEXEXNREP _)) => idstatus
           | NONE => NONE
           | (SOME (I.IDVAR _)) => NONE
           | (SOME (I.IDVAR_TYPED _)) => NONE
-          | (SOME (I.IDEXVAR {used,...})) => NONE
+          | (SOME (I.IDEXVAR _)) => NONE
           | (SOME (I.IDBUILTINVAR _)) => NONE
-          | (SOME (I.IDOPRIM {used,...})) => NONE
+          | (SOME (I.IDOPRIM _)) => NONE
           | (SOME (I.IDEXVAR_TOBETYPED _)) => raise bug "IDEXVAR_TOBETYPED to findCon"
           | (SOME (I.IDSPECVAR _)) => raise bug "IDSPECVAR to findCon"
           | (SOME (I.IDSPECEXN _)) => raise bug "IDSPECEXN to findCon"
@@ -814,14 +820,14 @@ in
             NONE => true
           | (SOME (I.IDVAR _)) => true
           | (SOME (I.IDVAR_TYPED _)) => true
-          | (SOME (I.IDEXVAR {used,...})) => true
+          | (SOME (I.IDEXVAR _)) => true
           | (SOME (I.IDBUILTINVAR _)) => true
           | (SOME (I.IDCON _)) => false
           | (SOME (I.IDEXN _)) => false
           | (SOME (I.IDEXNREP _)) => false
-          | (SOME (I.IDEXEXN (_, used))) => false
-          | (SOME (I.IDEXEXNREP (_, used))) => false
-          | (SOME (I.IDOPRIM {used,...})) => false
+          | (SOME (I.IDEXEXN _)) => false
+          | (SOME (I.IDEXEXNREP _)) => false
+          | (SOME (I.IDOPRIM _)) => false
           | (SOME (I.IDEXVAR_TOBETYPED _)) => raise bug "IDEXVAR_TOBETYPED to findCon"
           | (SOME (I.IDSPECVAR _)) => raise bug "IDSPECVAR to findCon"
           | (SOME (I.IDSPECEXN _)) => raise bug "IDSPECEXN to findCon"

@@ -11,7 +11,7 @@ struct
   structure KeyValuePair = SMLSharp_SQL_KeyValuePair
 
   type conn = MySQL.MYSQL
-  type res = {result: MySQL.MYSQL_RES, rowIndex: int, numRows: int}
+  type res = {result: MySQL.MYSQL_RES, rowIndex: int ref, numRows: int}
   type value = string
 
   exception Exec = SMLSharp_SQL_Errors.Exec
@@ -30,22 +30,22 @@ struct
         val result = MySQL.mysql_store_result () mysql
       in
         {result = result,
-         rowIndex = ~1,
+         rowIndex = ref ~1,
          numRows = MySQL.mysql_num_rows () result}
       end
 
   fun fetch (r as {result, rowIndex, numRows}:res) =
-      if rowIndex + 1 < numRows
-      then SOME (r # {rowIndex = rowIndex + 1})
-      else NONE
+      if !rowIndex + 1 < numRows
+      then (rowIndex := !rowIndex + 1; true)
+      else false
 
   fun closeConn conn = (MySQL.mysql_close () conn; ())
 
-  fun closeRel ({result,...}:res) = (MySQL.mysql_free_result () result; ())
+  fun closeRes ({result,...}:res) = (MySQL.mysql_free_result () result; ())
 
-  fun getValue ({result, rowIndex, ...}:res, colIndex:int) =
+  fun getValue ({result, rowIndex = ref rowIndex, ...}:res, colIndex:int) =
       let
-        val _ = MySQL.mysql_data_seek () (result,rowIndex)
+        val _ = MySQL.mysql_data_seek () (result, rowIndex)
         val row = MySQL.mysql_fetch_row () result
         val value = SMLSharp_Builtin.Pointer.deref
                       (SMLSharp_Builtin.Pointer.advance (row, colIndex))
@@ -117,11 +117,11 @@ struct
     fun evalQuery (query, fetchFn, conn) =
         let
           val r = execQuery (conn, query)
-          val tuples =
-              List.tabulate (#numRows r, fn i => fetchFn (r # {rowIndex=i}))
-              handle e => (closeRel r; raise e)
+          fun loop l r = if fetch r then loop (fetchFn r :: l) r else l
+          val tuples = loop nil r handle e => (closeRes r; raise e)
         in
-          closeRel r; tuples
+          closeRes r;
+          rev tuples
         end
 
     fun getTableSchema conn {tabname, dbname} =
@@ -133,9 +133,9 @@ struct
                       \AND schemata.schema_name = '" ^ dbname ^ "' \
                       \ORDER BY columns.column_name"
           fun fetchFn res =
-              {colname = getString (res, 0),
-               nullable = getBool (res, 1),
-               ty = translateType (getString (res, 2))}
+              (getString (res, 0),
+               {nullable = getBool (res, 1),
+                ty = translateType (getString (res, 2))})
         in
           (tabname, evalQuery (query, fetchFn, conn))
         end

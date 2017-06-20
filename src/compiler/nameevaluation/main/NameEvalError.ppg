@@ -403,6 +403,15 @@ in
 
   and
   (*%
+     @format((code * {longsymbol}))
+     "(name evaluation" +d code ")" +d
+     "replicating" +d "structure" +d "in" +d "functor" +d "argument" +d "not" +d "allowed" +d "in" +d "intercace:" 
+     +d longsymbol
+   *)
+    StructureRepOfFuncrorArgInInterface of (code * {longsymbol : longsymbol})
+
+  and
+  (*%
      @format((code * {symbol}))
      "(name evaluation" +d code ")" +d
      "functor" +d "name" +d "undefined:" +d symbol

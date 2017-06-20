@@ -1,0 +1,6 @@
+structure Foreach =
+struct
+  val intToIndex : int -> index
+  val indexToInt : index -> int
+  val rootIndex : index
+end

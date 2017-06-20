@@ -601,8 +601,7 @@ struct
                 (proc1 o proc2, ret)
               end
         end
-      | N.NCLOCALCODE {codeLabel, argVarList, codeBodyExp, mainExp, resultTy,
-                       loc} =>
+      | N.NCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         let
           val mergeVar =
               case context of
@@ -610,10 +609,10 @@ struct
               | NONTAIL => SOME (newVar resultTy)
               | BIND var => SOME (refreshVar var)
           val mergeLabel = FunLocalLabel.generate nil
-          val codeBodyExp = compileBranchExp env context mergeLabel codeBodyExp
-          val mainExp = compileBranchExp env context mergeLabel mainExp
+          val codeBodyExp = compileBranchExp env context mergeLabel catchExp
+          val mainExp = compileBranchExp env context mergeLabel tryExp
           val localCodeExp =
-              A.ANLOCALCODE {id = codeLabel,
+              A.ANLOCALCODE {id = catchLabel,
                              recursive = false,
                              argVarList = argVarList,
                              bodyExp = codeBodyExp,
@@ -639,11 +638,11 @@ struct
               (proc1 o proc2, ret)
             end
         end
-      | N.NCGOTO {destinationLabel, argExpList, resultTy, loc} =>
+      | N.NCTHROW {catchLabel, argExpList, resultTy, loc} =>
         let
           val (proc1, argExpList) = compileExpList env argExpList
           val (proc2, ret) =
-              last (A.ANGOTO {id=destinationLabel, argList=argExpList, loc=loc})
+              last (A.ANGOTO {id=catchLabel, argList=argExpList, loc=loc})
         in
           (proc1 o proc2, ret)
         end
@@ -772,7 +771,7 @@ struct
   fun compileTopdec topdec =
       case topdec of
         N.NTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, loc} =>
+                      retTy, gcCheck, loc} =>
         let
           val (closureEnvVar, argVarList, bodyExp) =
               compileFunBody (SOME id, closureEnvVar, argVarList, bodyExp,
@@ -785,6 +784,7 @@ struct
              closureEnvVar = closureEnvVar,
              bodyExp = bodyExp,
              retTy = retTy,
+             gcCheck = gcCheck,
              loc = loc}
         end
       | N.NTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,

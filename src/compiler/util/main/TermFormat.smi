@@ -1,12 +1,13 @@
 _require "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
+_require "../../../compiler-utils/ids/main/LocalID.smi"
 _require "../../../compiler-utils/env/main/SEnv.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
-_require local "../../control/main/Bug.ppg.smi"
+_require local "../../../compiler-utils/list-utils/main/ListSorter.smi"
+
 _require local "../../control/main/Control.ppg.smi"
-_require "../../name/main/LocalID.smi"
-_require local "./ListSorter.smi"
 
 structure TermFormat =
 struct
@@ -75,18 +76,24 @@ struct
   val format_IntInf_dec_ML : IntInf.int -> format
   val format_Int64_dec_ML : Int64.int -> format
   val format_Int32_dec_ML : Int32.int -> format
+  val format_Int16_dec_ML : Int16.int -> format
+  val format_Int8_dec_ML : Int8.int -> format
   val format_int_dec_ML : int -> format
   val format_Word64_hex_ML : Word64.word -> format
   val format_Word32_hex_ML : Word32.word -> format
+  val format_Word16_hex_ML : Word16.word -> format
   val format_Word8_hex_ML : Word8.word -> format
   val format_word_hex_ML : word -> format
   val format_string_ML : string -> format
   val format_char_ML : char -> format
   val format_Int64_dec_C : Int64.int -> format
   val format_Int32_dec_C : Int32.int -> format
+  val format_Int16_dec_C : Int16.int -> format
+  val format_Int8_dec_C : Int8.int -> format
   val format_int_dec_C : int -> format
   val format_Word64_hex_C : Word64.word -> format
   val format_Word32_hex_C : Word32.word -> format
+  val format_Word16_hex_C : Word16.word -> format
   val format_Word8_hex_C : Word8.word -> format
   val format_word_hex_C : word -> format
   val format_string_C : string -> format

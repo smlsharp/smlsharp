@@ -23,7 +23,7 @@ local
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
-  structure A = Absyn
+  structure A = AbsynTy
   structure N = NormalizeTy
   exception Arity 
   exception Eq
@@ -702,20 +702,21 @@ local
       (* datatype 'a foo = A of ... *)
         let
           val _ = EU.checkSymbolDuplication
-                    (fn (tvarList, symbol, conbinds) => symbol)
+                    (fn {tyvars, symbol, conbind} => symbol)
                     datadeclList
                     (fn s => E.DuplicateTypInDty("Sig-180",s))
           val _ = EU.checkSymbolDuplication
-                    (fn (symbol, tyOption) => symbol)
+                    (fn {symbol, ty} => symbol)
                     (foldl
-                       (fn ((tvarList, string, conbinds), allCons) =>
-                           allCons@conbinds)
+                       (fn ({tyvars, symbol, conbind}, allCons) =>
+                           allCons@conbind)
                        nil
                        datadeclList)
                     (fn s => E.DuplicateConNameInDty("Sig-190",s))
           val (specEnv, datadeclListRev) =
               foldl
-                (fn ((tvarList,symbol,conbinds), (specEnv, datadeclListRev)) =>
+                (fn ({tyvars=tvarList,symbol,conbind=conbinds},
+                     (specEnv, datadeclListRev)) =>
                     let
                       val _ = EU.checkSymbolDuplication
                                 (fn {symbol, eq} => symbol)
@@ -763,7 +764,7 @@ local
                     let
                       val (conVarE, conSpec) =
                           foldl
-                            (fn ((symbol, tyOption), (conVarE, conSpec)) =>
+                            (fn ({symbol, ty=tyOption}, (conVarE, conSpec)) =>
                                 let
                                   val tyOption =
                                       case tyOption of

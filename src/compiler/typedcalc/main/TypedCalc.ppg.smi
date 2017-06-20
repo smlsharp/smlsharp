@@ -1,15 +1,16 @@
 _require local "../../../basis.smi"
 _require "../../../smlformat-lib.smi"
-_require "../../absyn/main/RecordLabel.smi"
-_require "../../control/main/Loc.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Loc.ppg.smi"
+_require "../../../compiler-utils/symbols/main/Symbol.ppg.smi"
+_require "../../../compiler-utils/symbols/main/RecordLabel.smi"
+
 _require local "../../builtin2/main/BuiltinPrimitive.ppg.smi"
-_require local "../../util/main/SmlppgUtil.ppg.smi"
+_require local "../../../compiler-utils/format-utils/main/SmlppgUtil.ppg.smi"
 _require "../../util/main/TermFormat.smi"
 _require "../../types/main/Types.ppg.smi"
 _require local "../../types/main/IDCalc.ppg.smi"
 _require "../../runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../absyn/main/Absyn.ppg.smi"
-_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/AbsynConst.ppg.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
 
 structure TypedCalc =
@@ -18,8 +19,7 @@ structure TypedCalc =
       = RECFUNID of Types.varInfo * int | VARID of Types.varInfo
     val format_idstatus
         : idstatus -> SMLFormat.FormatExpression.expression list
-    val formatWithType_idstatus : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
-                                    TermFormat.btvEnv' list
+    val formatWithType_idstatus : Types.kind TermFormat.btvEnv
                                   -> idstatus
                                      -> SMLFormat.FormatExpression.expression 
                                           list
@@ -33,11 +33,10 @@ structure TypedCalc =
                     Loc.loc
       | FFIRECORDTY of (RecordLabel.label * ffiTy) list * Loc.loc
     val format_ffiTy
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> ffiTy TermFormat.formatter
-    val formatWithType_ffiTy : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
-                                 TermFormat.btvEnv' list
-                               -> ffiTy TermFormat.formatter
+        : Types.kind TermFormat.btvEnv -> ffiTy TermFormat.formatter
+    val formatWithType_ffiTy
+        : Types.kind TermFormat.btvEnv -> ffiTy TermFormat.formatter
+    type constant = AbsynConst.constant
     datatype tpexp
       = TPAPPM of {argExpList:tpexp list, funExp:tpexp, funTy:Types.ty,
                    loc:Loc.loc}
@@ -45,7 +44,7 @@ structure TypedCalc =
                     expTyList:Types.ty list, loc:Loc.loc, ruleBodyTy:Types.ty,
                     ruleList:{args:tppat list, body:tpexp} list}
       | TPCAST of (tpexp * Types.ty) * Types.ty * Loc.loc
-      | TPCONSTANT of {const:Absyn.constant, loc:Loc.loc, ty:Types.ty}
+      | TPCONSTANT of {const:constant, loc:Loc.loc, ty:Types.ty}
       | TPDATACONSTRUCT of {argExpOpt:tpexp option, con:Types.conInfo,
                             argTyOpt:Types.ty option, 
                             instTyList:Types.ty list, loc:Loc.loc}
@@ -82,10 +81,31 @@ structure TypedCalc =
       | TPSELECT of {exp:tpexp, expTy:Types.ty, label:RecordLabel.label, loc:Loc.loc,
                      resultTy:Types.ty}
       | TPSEQ of {expList:tpexp list, expTyList:Types.ty list, loc:Loc.loc}
+      | TPFOREACH of {data:tpexp, 
+                      dataTy:Types.ty, 
+                      iterator:tpexp, 
+                      iteratorTy:Types.ty, 
+                      pred:tpexp, 
+                      predTy:Types.ty, 
+                      loc:Loc.loc}
+      | TPFOREACHDATA of {data:tpexp, 
+                          dataTy:Types.ty, 
+                          whereParam:tpexp,
+                          whereParamTy:Types.ty,
+                          iterator:tpexp, 
+                          iteratorTy:Types.ty, 
+                          pred:tpexp, 
+                          predTy:Types.ty, 
+                          loc:Loc.loc}
       | TPSIZEOF of Types.ty * Loc.loc
       | TPTAPP of {exp:tpexp, expTy:Types.ty, instTyList:Types.ty list,
                    loc:Loc.loc}
       | TPVAR of Types.varInfo
+      | TPJOIN of {ty : Types.ty, args : tpexp * tpexp, argtys : Types.ty * Types.ty, 
+                   loc:Loc.loc}
+      | TPJSON of {exp:tpexp, ty:Types.ty, coerceTy:Types.ty, loc:Loc.loc}
+      | TPTYPEOF of Types.ty * Loc.loc
+      | TPREIFYTY of Types.ty * Loc.loc
     and tpffifun
       = TPFFIFUN of tpexp
       | TPFFIEXTERN of string
@@ -114,7 +134,7 @@ structure TypedCalc =
       | TPVALREC of {exp:tpexp, expTy:Types.ty, var:Types.varInfo} list * 
                     Loc.loc
     and tppat
-      = TPPATCONSTANT of Absyn.constant * Types.ty * Loc.loc
+      = TPPATCONSTANT of constant * Types.ty * Loc.loc
       | TPPATDATACONSTRUCT of {argPatOpt:tppat option, conPat:Types.conInfo,
                                instTyList:Types.ty list, loc:Loc.loc,
                                patTy:Types.ty}
@@ -127,35 +147,43 @@ structure TypedCalc =
       | TPPATVAR of Types.varInfo
       | TPPATWILD of Types.ty * Loc.loc 
     val format_tpexp
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> tpexp -> SMLFormat.FormatExpression.expression list
+        : Types.kind TermFormat.btvEnv
+          -> tpexp
+          -> SMLFormat.FormatExpression.expression list
     val format_tpdecl
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> tpdecl SMLFormat.BasicFormatters.formatter
+        : Types.kind TermFormat.btvEnv
+          -> tpdecl
+          -> SMLFormat.FormatExpression.expression list
     val format_tppat
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> tppat -> SMLFormat.FormatExpression.expression list
+        : Types.kind TermFormat.btvEnv
+          -> tppat
+          -> SMLFormat.FormatExpression.expression list
     val format_fields
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> tpexp RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
+        : Types.kind TermFormat.btvEnv
+          -> tpexp RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
     val format_patfields
-        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
-          -> tppat RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
-    val formatWithType_tpexp : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
-                                 TermFormat.btvEnv' list
-                               -> tpexp
-                                  -> SMLFormat.FormatExpression.expression list
-    val formatWithType_tpdecl : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
-                                  TermFormat.btvEnv' list
-                                -> tpdecl SMLFormat.BasicFormatters.formatter
-    val formatWithType_tppat : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
-                                 TermFormat.btvEnv' list
-                               -> tppat
-                                  -> SMLFormat.FormatExpression.expression list
-    val formatWithType_fields : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
-                                  TermFormat.btvEnv' list
-                                -> tpexp RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
-    val formatWithType_patfields : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
-                                     TermFormat.btvEnv' list
-                                   -> tppat RecordLabel.Map.map -> SMLFormat.FormatExpression.expression list
+        : Types.kind TermFormat.btvEnv
+          -> tppat RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tpexp
+        : Types.kind TermFormat.btvEnv
+          -> tpexp
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tpdecl
+        : Types.kind TermFormat.btvEnv
+          -> tpdecl
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tppat
+        : Types.kind TermFormat.btvEnv
+          -> tppat
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_fields
+        : Types.kind TermFormat.btvEnv
+          -> tpexp RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_patfields
+        : Types.kind TermFormat.btvEnv
+          -> tppat RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
   end

@@ -5,7 +5,7 @@ local
   structure RC = RecordCalc
   structure TC = TypedCalc
   structure T = Types
-  structure A = Absyn
+  structure A = AbsynConst
   fun bug s = Bug.Bug ("RecordCalcSize: " ^ s)
   type ty = T.ty
   type rcexp = RC.rcexp
@@ -129,7 +129,13 @@ local
         size (inc n) (EXP [exp, indexExp]::items)
       | RC.RCSEQ {expList, expTyList, loc} =>
         size (inc n) (EXP expList :: items)
+      | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
+        size (inc n) (EXP [data, iterator, pred] :: items)
+      | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
+        size (inc n) (EXP [data, whereParam, iterator, pred] :: items)
       | RC.RCSIZEOF (ty, loc) => size (inc n) items
+      | RC.RCTYPEOF (ty, loc) => size (inc n) items
+      | RC.RCREIFYTY (ty, loc) => size (inc n) items
       | RC.RCTAPP {exp, expTy, instTyList, loc} =>
         sizeExp (inc n) exp items
       | RC.RCVAR varInfo => size (inc n) items
@@ -145,11 +151,15 @@ local
       | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIEXTERN _}, ty, loc) =>
         size (inc n) items
       | RC.RCINDEXOF (string, ty, loc) => size (inc n) items
-      | RC.RCSWITCH {branches:(Absyn.constant * rcexp) list, defaultExp:rcexp,
+      | RC.RCSWITCH {branches:(RC.constant * rcexp) list, defaultExp:rcexp,
                      expTy:Types.ty, loc:Loc.loc, switchExp:rcexp, resultTy} =>
         size (inc n) (EXP (defaultExp :: switchExp :: (map #2 branches)) :: items)
       | RC.RCTAGOF (ty, loc) =>
         size (inc n) items
+      | RC.RCJOIN {ty,args=(arg1,arg2),argTys,loc} =>
+        size (inc n) (EXP [arg1, arg2] :: items)
+      | RC.RCJSON {exp,ty,coerceTy,loc} =>
+        size (inc n) (EXP [exp] :: items)
       )
   and sizeDecl n tpdecl items =
       (checkLimit n;

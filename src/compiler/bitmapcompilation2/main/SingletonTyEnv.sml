@@ -19,7 +19,7 @@ structure SingletonTyEnv2 :> sig
   val format_value : value TermFormat.formatter
 
   val emptyEnv : env
-  val bindTyvar : env * BoundTypeVarID.id * Types.btvKind -> env
+  val bindTyvar : env * BoundTypeVarID.id * Types.kind -> env
   val bindTyvars : env * Types.btvEnv -> env
   val bindVar : env * RecordCalc.varInfo -> env
   val bindVars : env * RecordCalc.varInfo list -> env
