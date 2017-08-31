@@ -1,0 +1,49 @@
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure ConstantTerm =
+struct
+  datatype constant =
+      INT8 of Int8.int
+    | INT16 of Int16.int
+    | INT32 of Int32.int
+    | INT64 of Int64.int
+    | INTINF of IntInf.int
+    | WORD8 of Word8.word
+    | WORD16 of Word16.word
+    | WORD32 of Word32.word
+    | WORD64 of Word64.word
+    | STRING of string
+    | REAL64 of string
+    | REAL32 of string
+    | CHAR of char
+    | UNIT 
+    | NULLPOINTER
+    | NULLBOXED
+    | CONTAG of Word32.word
+  val format_constant
+      : constant -> SMLFormat.FormatExpression.expression list
+  exception TooLargeConstant
+  val compare : constant * constant -> order
+  val constTy : AbsynConst.constant -> Types.ty
+  val typeOf : constant -> Types.ty
+  val fixConst
+      : {constTerm : constant -> 'a,
+         tupleTerm : ('a * Types.ty) list -> 'a,
+         conTerm : {con: RecordCalc.conInfo, instTyList: Types.ty list,
+                    arg: 'a option} -> 'a,
+	 fnTerm : Types.ty * ('a * Types.ty) -> 'a}
+        -> AbsynConst.constant * Types.ty
+        -> 'a
+
+end

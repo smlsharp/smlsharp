@@ -1,0 +1,19 @@
+_require "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../../libs/env/main/SEnv.smi"
+_require "../../extensions/json/main/JSONTypes.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
+_require "../../libs/util/main/TermFormat.smi"
+_require "../../format-utils/main/SmlppgUtil.ppg.smi"
+_require "../../data/control/main/Bug.ppg.smi"
+_require "../../data/control/main/Loc.ppg.smi"
+_require "../../data/control/main/Control.ppg.smi"
+_require "../../data/name/main/LocalID.smi"
+_require "../../absyn/main/Symbol.ppg.smi"
+_require "../../absyn/main/RecordLabel.smi"
+_require "../main/PolyDynamic.smi"
+
+structure TestPolyDynamic =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

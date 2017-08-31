@@ -1,0 +1,11 @@
+val f : unit ->
+        int * int * int * int * int * int * int * int * int * int *
+        int * int * int * int * int * int * int * int * int * int * 
+        int * int * int * int * int * int * int * int * int * int *
+        int * int * int * int * int * int * int * int * int * int * 
+        int * int * int * int * int * int * int * int * int * int *
+        int * int * int * int * int * int * int * int * int * int * 
+        int * int * int * int * int * int * int * int * int * int *
+        int * int * int * int * int * int * int * int * int * int * 
+        int * int * int * int * int * int * int * int * int * int * 
+        int * int * int * int * int * int * int * int * int * int

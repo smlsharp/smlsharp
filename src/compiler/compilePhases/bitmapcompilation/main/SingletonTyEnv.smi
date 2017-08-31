@@ -1,0 +1,38 @@
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+
+_require "../../../../basis.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../../libs/util/main/TermFormat.smi"
+
+structure SingletonTyEnv2 =
+struct
+
+  type env (=boxed)
+
+  datatype value =
+      VAR of RecordCalc.varInfo
+    | TAG of Types.ty * RuntimeTypes.tag
+    | SIZE of Types.ty * int
+    | CONST of Word32.word
+    | CAST of value * Types.ty
+  val format_value : value TermFormat.formatter
+
+  val emptyEnv : env
+  val bindTyvar : env * BoundTypeVarID.id * Types.kind -> env
+  val bindTyvars : env * Types.btvEnv -> env
+  val bindVar : env * RecordCalc.varInfo -> env
+  val bindVars : env * RecordCalc.varInfo list -> env
+
+  val btvEnv : env -> Types.btvEnv
+  val constTag : env -> Types.ty -> RuntimeTypes.tag option
+  val constSize : env -> Types.ty -> int option
+  val unalignedSize : env -> Types.ty -> int
+  val findTag : env -> Types.ty -> value
+  val findSize : env -> Types.ty -> value
+
+end

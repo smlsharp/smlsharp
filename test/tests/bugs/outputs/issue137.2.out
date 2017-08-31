@@ -1,3 +1,0 @@
-abstype t
-val x = - : t
-datatype s = datatype t

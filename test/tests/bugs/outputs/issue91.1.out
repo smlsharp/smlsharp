@@ -1,2 +1,0 @@
-datatype t2 = datatype t2
-val v2 = C2 2 : t2

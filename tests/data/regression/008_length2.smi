@@ -1,0 +1,3 @@
+val + : int * int -> int
+infixr 5 ::
+infix 6 +

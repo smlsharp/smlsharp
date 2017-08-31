@@ -1,0 +1,17 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "./NameEvalEnv.ppg.smi"
+
+structure RenameLongsymbol =
+struct
+  val replacePathTfun : IDCalc.tfun TypID.Map.map ->  Symbol.longsymbol -> IDCalc.tfun  -> IDCalc.tfun * IDCalc.tfun TypID.Map.map
+  val replaceLongsymbolTfun : IDCalc.tfun TypID.Map.map ->  Symbol.longsymbol -> IDCalc.tfun  -> IDCalc.tfun * IDCalc.tfun TypID.Map.map
+  val replacePathEnv : IDCalc.tfun TypID.Map.map ->  Symbol.longsymbol -> NameEvalEnv.env  -> NameEvalEnv.env * IDCalc.tfun TypID.Map.map
+  val renameLongsymbolIdstatus : IDCalc.tfun TypID.Map.map -> IDCalc.idstatus  -> IDCalc.idstatus
+  val renameLongsymbolVarE : IDCalc.tfun TypID.Map.map -> IDCalc.varE  -> IDCalc.varE
+  val renameLomgsymbolTopEnv : IDCalc.tfun TypID.Map.map -> NameEvalEnv.topEnv -> NameEvalEnv.topEnv
+end

@@ -1,0 +1,4 @@
+functor F (X : sig end) =
+struct
+  val toIntX : word -> int
+end

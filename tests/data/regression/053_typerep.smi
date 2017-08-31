@@ -1,0 +1,5 @@
+structure S =
+struct
+  datatype t = FOO
+end
+datatype t = datatype S.t

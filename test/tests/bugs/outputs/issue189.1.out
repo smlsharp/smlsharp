@@ -1,2 +1,0 @@
-val slice = fn : ['a,'b.'b list * 'a -> unit]
-val subslice = fn : ['a .'a list -> unit]

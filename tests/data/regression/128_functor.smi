@@ -1,0 +1,5 @@
+_require "128_functor2.smi"
+structure S =
+struct
+  exception E
+end

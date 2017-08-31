@@ -1,4 +1,3 @@
 (* provided the users for interactive mode *)
 _require "../prelude.smi"
-
-_require "./main/main/SimpleMain.smi"
+_require "./compilePhases/main/main/Main.smi"

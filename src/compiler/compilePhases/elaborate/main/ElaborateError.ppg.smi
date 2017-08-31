@@ -1,0 +1,57 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.ppg.smi"
+
+structure ElaborateError =
+  struct
+    exception RuntimeTyNotFound of string
+    exception InvalidOpAssociativity of Symbol.longsymbol
+    exception AbstypeNotSupported
+    exception SigIDFoundInInterface of Symbol.symbol
+    exception DerivedFormFunArg
+    exception MultipleInfixInInterface of Symbol.symbol * Loc.loc
+    exception InvalidFixityPrecedence
+    exception MultipleProvide of string
+    exception LoadInterfaceFailed of {filename:string, msg:string}
+    exception UserTvarScopedAtOuterDecl of {tvar:Absyn.tvar}
+    exception DuplicateUserTvar of {tvar:Absyn.tvar}
+    exception DifferentEqkindOfSameTvar of {tvar:Absyn.tvar}
+    exception UndefinedFFIAttribute of {attr:string}
+    exception NotForeignFunctionType of {ty:Absyn.ffiTy}
+    exception RealConstantInPattern
+    exception NotFnBoundInValRec
+    exception NotBoundTyvar of {tyvar:Symbol.symbol}
+    exception NotAllHaveSameNumberPatterns
+    exception NotAllHaveFunctionName
+    exception NonVariablePatternInValRec
+    exception NonfixExpected of string
+    exception LeftOfASMustBeVariable
+    exception InfixRequired
+    exception InfixUsedWithoutOP of Symbol.longsymbol
+    exception IllegalFunctionSymbol
+    exception FunctionParameterNotFound
+    exception ArgWithInfixID of Symbol.longsymbol
+    exception EndWithInfixID of Symbol.longsymbol
+    exception DuplicateVarNameInValRec of Symbol.symbol
+    exception DuplicateValDesc of Symbol.symbol
+    exception DuplicateTypeNameInDatatype of Symbol.symbol
+    exception DuplicateTypeNameInType of Symbol.symbol
+    exception DuplicateRecordLabelInRawType of RecordLabel.label
+    exception DuplicateRecordLabelInPat of RecordLabel.label
+    exception DuplicateRecordLabel of RecordLabel.label
+    exception DuplicateFunctorDesc of string
+    exception DuplicateStrDesc of Symbol.symbol
+    exception DuplicateTypParam of Symbol.symbol
+    exception DuplicateTypDesc of Symbol.symbol
+    exception DuplicateConstructorNameInException of Symbol.symbol
+    exception DuplicateConstructorNameInDatatype of Symbol.symbol
+    exception BindReservedName of Symbol.symbol
+    exception BeginWithInfixID of Symbol.longsymbol
+    exception ArityMismatchInTypeDeclaration of {given:int, tyCon:Symbol.symbol,
+                                                 wants:int}
+    exception InvalidPatternForJsonCase
+  end

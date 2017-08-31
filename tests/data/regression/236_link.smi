@@ -1,0 +1,2 @@
+_require "236_link2.smi"
+val y : (int * int) * (int * int)

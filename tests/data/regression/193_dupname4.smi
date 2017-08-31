@@ -1,0 +1,4 @@
+structure Duplicated_Structure =
+struct
+  val duplicated_variable : int
+end

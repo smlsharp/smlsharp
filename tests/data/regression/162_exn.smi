@@ -1,0 +1,8 @@
+structure S1 =
+struct
+  exception E
+end
+structure S2 =
+struct
+  exception E = S1.E
+end

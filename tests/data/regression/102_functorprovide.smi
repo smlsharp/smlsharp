@@ -1,0 +1,4 @@
+functor F(A:sig end) =
+struct
+  val x : int
+end

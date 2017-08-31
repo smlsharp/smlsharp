@@ -1,0 +1,30 @@
+_require "../../../../basis.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../extensions/debug/main/Bug.ppg.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../data/types/main/TypesBasics.smi"
+_require "../../../libs/heapdump/main/HeapDump.smi"
+_require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../../data/builtin/main/BuiltinTypes.smi"
+_require "../../../data/constantterm/main/ConstantTerm.ppg.smi"
+_require "./EmitTypedLambda.smi"
+
+structure PrimitiveTypedLambda =
+struct
+
+  val toPrimTy : Types.ty -> TypedLambda.primTy
+
+  val compile
+      : {primitive : BuiltinPrimitive.primitive,
+         primTy : TypedLambda.primTy,
+         instTyList : Types.ty list,
+         argExpList : EmitTypedLambda.exp list,
+         resultTy : Types.ty,
+         loc : TypedLambda.loc}
+        -> EmitTypedLambda.exp
+
+end

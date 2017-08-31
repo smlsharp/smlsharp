@@ -1,0 +1,31 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require "../../../data/types/main/TvarMap.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "./NameEvalEnv.ppg.smi"
+_require "./TfunVars.smi"
+
+structure Subst =
+struct
+  type tvarSubst = IDCalc.ty TvarMap.map
+  type tfvSubst = IDCalc.tfunkind ref TfvMap.map
+  type conIdSubst = IDCalc.idstatus ConID.Map.map
+  type exnIdSubst = ExnID.id ExnID.Map.map
+  type subst =
+      {conIdS:conIdSubst, exnIdS:exnIdSubst, tvarS:tvarSubst}
+  val emptyConIdSubst : conIdSubst
+  val emptyExnIdSubst : exnIdSubst
+  val emptySubst : subst
+  val emptyTvarSubst : tvarSubst
+  val emptyTfvSubst : tfvSubst
+  val substEnv : subst -> NameEvalEnv.env -> NameEvalEnv.env
+  val substTy : subst -> IDCalc.ty -> IDCalc.ty
+  val substTfvTy : tfvSubst -> IDCalc.ty -> IDCalc.ty
+  val substTfvTfun : tfvSubst -> IDCalc.tfun -> IDCalc.tfun
+  val substTfvEnv : tfvSubst -> NameEvalEnv.env -> NameEvalEnv.env
+end

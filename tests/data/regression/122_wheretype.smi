@@ -1,0 +1,8 @@
+structure T =
+struct
+  structure S =
+  struct
+    type t (= int)
+    type t2 = t
+  end
+end

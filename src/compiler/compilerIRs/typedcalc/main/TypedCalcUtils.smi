@@ -1,0 +1,27 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "./TypedCalc.ppg.smi"
+
+structure TypedCalcUtils =
+  struct
+    val newTCVarName : unit -> Symbol.symbol
+    val newTCVarInfo : Loc.loc -> Types.ty -> Types.varInfo
+    val newTCVarInfoWithLongsymbol : Symbol.longsymbol * Types.ty -> Types.varInfo
+    val getLocOfExp : TypedCalc.tpexp -> Loc.loc
+    val freshInst : Types.ty * TypedCalc.tpexp 
+                    -> Types.ty * Types.constraint list * TypedCalc.tpexp
+    val freshToplevelInst
+        : Types.ty * TypedCalc.tpexp 
+          -> Types.ty * Types.constraint list * TypedCalc.tpexp
+    val expansive : TypedCalc.tpexp  -> bool
+    val isAtom : TypedCalc.tpexp  -> bool
+  end

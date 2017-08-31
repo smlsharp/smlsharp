@@ -1,0 +1,4 @@
+structure S =
+struct
+  eqtype t (= contag)
+end

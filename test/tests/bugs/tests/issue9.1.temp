@@ -1,2 +1,0 @@
-(fn x => x) (fn (x,y) => (x,y));
-(fn x => x) (fn (x,y) => (x,y));

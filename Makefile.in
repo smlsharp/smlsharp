@@ -86,6 +86,7 @@ clean: PHONY
 	-rm -f $(COMPILER_SUPPORT_OBJECTS) $(LLVM_PLUGIN_OBJECTS)
 	-rm -f $(ALL_OBJECTS) $(ALL_GEN_SOURGES) $(CLEAN_FILES)
 	-rm -f $(ALL_GEN_FILES)
+	-rm -f tests/driver/process.$(OBJEXT)
 @SNAPDATE_RULE_@	-rm -f RELEASE_DATE
 
 distclean: clean
@@ -106,8 +107,6 @@ install: $(ALL_TARGETS)
 	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
 	$(INSTALL_PROGRAM) -m 644 $(srcdir)/src/builtin.smi \
 	  '$(DESTDIR)$(libdir_smlsharp)/builtin.smi'
-	$(INSTALL_PROGRAM) -m 644 $(srcdir)/src/interactive.smi \
-	  '$(DESTDIR)$(libdir_smlsharp)/interactive.smi'
 	if test -f src/compiler/smlsharp.lib; then \
 	  $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/compiler'; \
 	  $(INSTALL_PROGRAM) -m 644 src/compiler/smlsharp.lib \
@@ -136,6 +135,9 @@ install: $(ALL_TARGETS)
 	$(INSTALL_PROGRAM) -m 755 $(MLYACC) '$(DESTDIR)$(bindir)'
 	$(INSTALL_PROGRAM) -m 755 $(SMLFORMAT) '$(DESTDIR)$(bindir)'
 	$(INSTALL_PROGRAM) -m 755 $(SMLSHARP_STAGE2) '$(DESTDIR)$(bindir)'
+
+test: tests/driver/dotest PHONY
+	$(SMLSHARP_ENV) tests/driver/dotest
 
 # -------- implicit rules --------
 
@@ -178,6 +180,9 @@ src/llvm/main/smlsharp_gc.$(OBJEXT): src/llvm/main/smlsharp_gc.cpp
 src/llvm/smlsharp_gc.$(DLLEXT): src/llvm/main/smlsharp_gc.$(OBJEXT)
 	$(CXX) $(RUNLOOP_DLDFLAGS) -o $@ src/llvm/main/smlsharp_gc.$(OBJEXT)
 
+tests/driver/process.$(OBJEXT): tests/driver/process.c
+	$(CC) $(CFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $(srcdir)/tests/driver/process.c
+
 # -------- link file map --------
 
 filemap: files.mk
@@ -186,28 +191,32 @@ filemap: files.mk
 # -------- executables --------
 
 src/ml-lex/smllex: $(LINK_DEP) $(MLLEX_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath -filemap=filemap \
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+	-filemap=filemap \
 	$(srcdir)/src/ml-lex/ml-lex.smi -o $@
 
 src/ml-yacc/smlyacc: $(LINK_DEP) $(MLYACC_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath -filemap=filemap \
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+	-filemap=filemap \
 	$(srcdir)/src/ml-yacc/src/ml-yacc.smi -o $@
 
 src/smlformat/smlformat: $(LINK_DEP) $(SMLFORMAT_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath -filemap=filemap \
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+	-filemap=filemap \
 	$(srcdir)/src/smlformat/generator/main/call-main.smi -o $@
 
 src/compiler/smlsharp: $(LINK_DEP) $(COMPILER_SUPPORT_OBJECTS) \
                        $(COMPILER_LIB_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath -filemap=filemap \
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+	-filemap=filemap \
 	$(RDYNAMIC_LDFLAGS) $(LLVM_SMLSHARP_LDFLAGS) --link-all \
 	$(srcdir)/src/compiler/smlsharp.smi \
 	$(COMPILER_SUPPORT_OBJECTS) $(LLVM_LIBS) $(LLVM_SYSLIBS) -o $@
 
 src/compiler/minismlsharp: $(LINK_DEP) $(COMPILER_SUPPORT_OBJECTS) \
                            $(MINISMLSHARP_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath -filemap=filemap \
-	$(LLVM_SMLSHARP_LDFLAGS) \
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+	-filemap=filemap $(LLVM_SMLSHARP_LDFLAGS) \
 	$(srcdir)/src/compiler/minismlsharp.smi \
 	$(COMPILER_SUPPORT_OBJECTS) $(LLVM_LIBS) $(LLVM_SYSLIBS) -o $@
 
@@ -226,6 +235,14 @@ precompiled/$(PRECOMPILED_ARCH).$(OBJEXT): $(LLVM_PLUGIN) \
 	precompiled/$(PRECOMPILED_ARCH).$(OBJEXT) \
 	$(COMPILER_SUPPORT_OBJECTS) $(RUNTIME_TARGETS) \
 	$(LLVM_LIBS) $(LLVM_SYSLIBS) $(LIBS) -o $@
+
+tests/driver/dotest: $(LINK_DEP) $(TEST_OBJECTS) tests/driver/process.$(OBJEXT)
+	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFILE) \
+	-filemap=filemap \
+	$(RDYNAMIC_LDFLAGS) $(LLVM_SMLSHARP_LDFLAGS) --link-all \
+	$(srcdir)/tests/driver/dotest.smi \
+	tests/driver/process.$(OBJEXT) \
+	$(COMPILER_SUPPORT_OBJECTS) $(LLVM_LIBS) $(LLVM_SYSLIBS) -o $@
 
 # -------- source code generation --------
 
@@ -283,7 +300,7 @@ config.h: stamp-h
 
 # -------- dependencies --------
 
-depend: files_ml.mk depend_ml.mk depend_c.mk
+depend: depend_ml.mk depend_c.mk
 	rm -f $(srcdir)/files.mk
 	cp files_ml.mk $(srcdir)/files.mk
 	rm -f $(srcdir)/depend.mk
@@ -293,7 +310,7 @@ depend: files_ml.mk depend_ml.mk depend_c.mk
 depend_ml.mk files_ml.mk: PHONY
 	-rm -f depend_ml.mk files_ml.mk
 	@$(SMLSHARP_ENV) SMLSHARP='$(SMLSHARP_STAGE1)' OBJEXT='$(OBJEXT)' \
-	files_mk=files_ml.mk depend_mk=depend_ml.mk \
+	files_mk=files_ml.mk depend_mk=depend_ml.mk SMLFLAGS='$(SMLFLAGS)' \
 	$(SHELL) mkdepend \
 	  MLLEX          src/ml-lex/ml-lex.smi \
 	  MLYACC_LIB     src/ml-yacc-lib.smi \
@@ -304,18 +321,19 @@ depend_ml.mk files_ml.mk: PHONY
 	  MINISMLSHARP   src/compiler/minismlsharp.smi \
 	  COMPILER_LIB   src/compiler/smlsharp.smi \
 	  PRELUDE_LIB    src/prelude.smi \
-	  THREAD_LIB     src/thread.smi
+	  THREAD_LIB     src/thread.smi \
+	  TEST           tests/driver/dotest.smi
 
 depend_c.mk: PHONY
 	-rm -f depend_c.mk
 	@for i in $(RUNTIME_SOURCES) src/runtime/main.c; do \
 	  case "$$i" in *.cpp) cc='$(CXX)';; *) cc='$(CC)';; esac; \
-	  echo $$cc -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i 1>&2; \
+	  echo $$cc -E -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i 1>&2; \
 	  $$cc -E -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i \
 	  | perl -0npe 's,\A.*?\.(.*?:(?:\s|\\)*)(.*?)\.c,\2.\1\2.c,; \
 	                s,\s/.*?\.h(?=\s),,g; \
-	                s,^\s*\\\s*$$,,mg; \
-	                s,(?:\s*|\\$$)*\z,\n,m' \
+	                s,(?:\s*\\\s+)+, \\\n ,g; \
+	                s,(?:\s*\\\s*)+\z,\n,g' \
 	    >> depend_c.mk; \
 	done
 

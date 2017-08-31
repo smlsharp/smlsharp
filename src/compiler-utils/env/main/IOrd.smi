@@ -1,7 +1,0 @@
-_require "../../../basis.smi"
-
-structure IOrd =
-struct
-  type ord_key = int
-  val compare = Int.compare
-end

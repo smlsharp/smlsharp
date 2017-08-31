@@ -1,0 +1,5 @@
+structure A =
+struct
+  exception E
+end
+exception E = A.E

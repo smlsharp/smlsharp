@@ -1,0 +1,6 @@
+_require "239_functorExn2.smi"
+functor F(A:sig end) =
+struct
+  exception Foo = FOO
+  exception Bar = BAR
+end

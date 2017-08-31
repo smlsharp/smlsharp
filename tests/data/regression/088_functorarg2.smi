@@ -1,0 +1,4 @@
+structure S =
+struct
+  type 'a must_be_hidden (= boxed)
+end

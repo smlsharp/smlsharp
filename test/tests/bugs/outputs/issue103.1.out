@@ -1,6 +1,0 @@
-signature S = sig datatype dt = D of int | E of string end
-../tests/bugs/tests/issue103.1.sml:2.11-3.59 Error:
-  Signature mismatch :Constructors F  only occur in structure
-
-
-

@@ -1,0 +1,13 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+
+structure TypedElaborationError =
+struct
+
+  exception InvalidSQLSchemaTy of IDCalc.ty
+  and InvalidSQLTableTy of RecordLabel.label * IDCalc.ty
+
+end

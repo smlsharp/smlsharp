@@ -1,0 +1,17 @@
+_require local "../../../../basis.smi"
+_require "../../compilerPhases/nameevaluation/main/NameEvalEnv.ppg.smi"
+_require "./ReifiedTerm.ppg.smi"
+_require "./ReifyTopEnv.smi"
+_require "./TopEnvToReifiedTopEnv.smi"
+
+structure InteractiveEnv =
+struct
+  type staticEnv = ReifiedTerm.topEnv
+  exception CurrentEnvironmentNotAvailable
+  val setCurrentEnv : NameEvalEnv.topEnv -> unit
+(*
+  val getCurrentEnv : unit -> staticEnv
+*)
+  val printStaticEnv : staticEnv -> unit
+  val printStructures : staticEnv -> unit
+end

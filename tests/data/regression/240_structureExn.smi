@@ -1,0 +1,7 @@
+_require "240_structureExn2.smi"
+structure F =
+struct
+  exception Foo = FOO
+  exception Bar = BAR
+  exception Hoge
+end

@@ -1,0 +1,5 @@
+structure G =
+struct
+  datatype t = T
+end
+type t = G.t

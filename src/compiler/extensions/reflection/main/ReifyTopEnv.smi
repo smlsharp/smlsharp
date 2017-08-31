@@ -1,0 +1,47 @@
+_require local "../../../../basis.smi"
+_require local "../../../../ffi/main/Pointer.smi"
+_require local "../../../../smlformat-lib.smi"
+_require local "../../../../config/main/PointerSize.smi"
+
+_require local "../../../libs/list-utils/main/ListSorter.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require local "../../../compilePhases/nameevaluation/main/NormalizeTy.smi"
+_require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi"
+_require local "../../../compilerIRs/recordcalc/main/RecordCalcUtils.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
+
+_require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../debug/main/Bug.ppg.smi"
+_require local "../../format-utils/main/SmlppgUtil.ppg.smi"
+
+_require local "./ReifiedTy.ppg.smi"
+_require "./ReifiedTerm.ppg.smi"
+_require local "./ReifiedTyData.smi"
+_require local "./ReifyUtils.smi"
+(* 
+_require local "./TopEnvToReifiedTopEnv.smi"
+*)
+
+_require "../../../../compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
+_require "../../../../compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure ReifyTopEnv =
+struct
+  val topEnvBind 
+      : {sessionTopEnv:NameEvalEnv.topEnv,
+         requireTopEnv:NameEvalEnv.topEnv}
+         -> int option -> {env:NameEvalEnv.topEnv, decls:RecordCalc.rcdecl list}
+(*
+  val topEnvToReifiedTopEnv
+      : NameEvalEnv.topEnv -> ReifiedTerm.topEnv
+*)
+
+end

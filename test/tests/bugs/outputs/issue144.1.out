@@ -1,5 +1,0 @@
-signature SIG = sig type t val x : t end
-structure STR : sig type t = string val x : string end
-structure SS : SIG
-structure SSTrans : SIG
-val x = "a" : SSTrans.t

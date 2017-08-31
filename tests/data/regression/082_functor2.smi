@@ -1,0 +1,4 @@
+structure S =
+struct
+  type t (= int)
+end

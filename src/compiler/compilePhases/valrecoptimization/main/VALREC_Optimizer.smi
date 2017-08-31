@@ -1,0 +1,14 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../libs/util/main/Graph.smi"
+_require local "./VALREC_OPTIMIZER.sig"
+_require local "./VALREC_Utils.smi"
+
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+
+structure VALREC_Optimizer =
+  struct
+    val optimize : IDCalc.topdecl -> IDCalc.topdecl
+  end

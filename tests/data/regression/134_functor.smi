@@ -1,0 +1,5 @@
+_require "134_functor2.smi"
+structure S =
+struct
+  val f : unit -> int * real
+end

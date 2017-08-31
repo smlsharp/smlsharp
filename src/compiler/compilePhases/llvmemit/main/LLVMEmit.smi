@@ -1,0 +1,13 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require "../../../../llvm/main/LLVM.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
+_require "../../../compilerIRs/llvmir/main/LLVMIR.ppg.smi"
+
+structure LLVMEmit =
+struct
+  val emit : LLVMIR.program -> LLVM.LLVMModuleRef
+end

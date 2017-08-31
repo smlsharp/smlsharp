@@ -1,0 +1,9 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+
+structure FFICompilationError =
+  struct
+    exception InvalidJSONTy of Types.ty
+    exception UserLevelPrimForJsonNotFound of string
+  end

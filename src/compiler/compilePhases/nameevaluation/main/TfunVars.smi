@@ -1,0 +1,79 @@
+_require local "../../../../smlnj-lib/Util/lib-base.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require "../../../../basis.smi"
+_require "../../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "../../../../smlnj-lib/Util/binary-set-fn.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "./NameEvalEnv.ppg.smi"
+
+structure TfvKey = 
+  struct
+    type ord_key = IDCalc.tfunkind ref
+    val compare : ord_key * ord_key -> order
+   end
+structure TfvMap = BinaryMapFn(TfvKey)
+structure TfvSet = BinarySetFn(TfvKey)
+
+structure TfunVars =
+  struct
+    val tfvsTfun : (IDCalc.tfunkind ref -> bool)
+                   -> Symbol.longsymbol
+                   -> Symbol.symbol * IDCalc.tfun * Symbol.longsymbol TfvMap.map
+                   -> Symbol.longsymbol TfvMap.map
+    val tfvsTstr : (IDCalc.tfunkind ref -> bool)
+                   -> Symbol.longsymbol
+                   -> Symbol.symbol * NameEvalEnv.tstr * Symbol.longsymbol TfvMap.map
+                   -> Symbol.longsymbol TfvMap.map
+    val tfvsTyE : (IDCalc.tfunkind ref -> bool)
+                  -> Symbol.longsymbol
+                  -> NameEvalEnv.tstr SymbolEnv.map * Symbol.longsymbol TfvMap.map
+                  -> Symbol.longsymbol TfvMap.map
+    val tfvsStrE : (IDCalc.tfunkind ref -> bool)
+                   -> Symbol.longsymbol
+                   -> NameEvalEnv.strE * Symbol.longsymbol TfvMap.map
+                   -> Symbol.longsymbol TfvMap.map
+    val tfvsEnv : (IDCalc.tfunkind ref -> bool)
+                  -> Symbol.longsymbol
+                  -> NameEvalEnv.env * Symbol.longsymbol TfvMap.map
+                  -> Symbol.longsymbol TfvMap.map
+    val allTfvKind : IDCalc.tfunkind ref -> bool
+    val sigTfvKind : IDCalc.tfunkind ref -> bool
+    val specKind : IDCalc.tfunkind ref -> bool
+    val dtyKind : IDCalc.tfunkind ref -> bool
+    val sigDtyKind : IDCalc.tfunkind ref -> bool
+    val strDtyKind : IDCalc.tfunkind ref -> bool
+    val instantiatedKind : IDCalc.tfunkind ref -> bool
+  end
+
+structure TfunVarsRefresh =
+  struct
+    val tfvsTfun : (IDCalc.tfunkind ref -> bool)
+                   -> Symbol.longsymbol
+                   -> Symbol.symbol * IDCalc.tfun * Symbol.longsymbol TfvMap.map
+                   -> Symbol.longsymbol TfvMap.map
+    val tfvsTstr : (IDCalc.tfunkind ref -> bool)
+                   -> Symbol.longsymbol
+                   -> Symbol.symbol * NameEvalEnv.tstr * Symbol.longsymbol TfvMap.map
+                   -> Symbol.longsymbol TfvMap.map
+    val tfvsTyE : (IDCalc.tfunkind ref -> bool)
+                  -> Symbol.longsymbol
+                  -> NameEvalEnv.tstr SymbolEnv.map * Symbol.longsymbol TfvMap.map
+                  -> Symbol.longsymbol TfvMap.map
+    val tfvsStrE : (IDCalc.tfunkind ref -> bool)
+                   -> Symbol.longsymbol
+                   -> NameEvalEnv.strE * Symbol.longsymbol TfvMap.map
+                   -> Symbol.longsymbol TfvMap.map
+    val tfvsEnv : (IDCalc.tfunkind ref -> bool)
+                  -> Symbol.longsymbol
+                  -> NameEvalEnv.env * Symbol.longsymbol TfvMap.map
+                  -> Symbol.longsymbol TfvMap.map
+    val allTfvKind : IDCalc.tfunkind ref -> bool
+    val sigTfvKind : IDCalc.tfunkind ref -> bool
+    val specKind : IDCalc.tfunkind ref -> bool
+    val dtyKind : IDCalc.tfunkind ref -> bool
+    val sigDtyKind : IDCalc.tfunkind ref -> bool
+    val strDtyKind : IDCalc.tfunkind ref -> bool
+  end

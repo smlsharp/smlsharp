@@ -1,0 +1,24 @@
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../../basis.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+
+structure RecordKind =
+struct
+
+  val compareIndex
+      : (RecordLabel.label * Types.ty) * (RecordLabel.label * Types.ty) -> order
+
+  val generateSingletonTy : BoundTypeVarID.id * Types.ty RecordLabel.Map.map
+                            -> Types.singletonTy list
+
+  val generateInstance : (RecordLabel.label * Types.ty)
+                         -> Loc.loc
+                         -> RecordCalc.rcexp option
+
+end

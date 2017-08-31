@@ -1,0 +1,9 @@
+functor F (
+ A : sig
+   type t
+ end
+) =
+struct
+  datatype s = X of A.t
+  val f : s -> A.t
+end

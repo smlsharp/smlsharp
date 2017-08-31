@@ -1,1 +1,0 @@
-val minChar = #"\000";

@@ -1,0 +1,8 @@
+structure S =
+struct
+  type t = int
+end
+structure T =
+struct
+  val f : int -> S.t
+end

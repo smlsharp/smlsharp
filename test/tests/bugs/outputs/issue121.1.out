@@ -1,3 +1,0 @@
-signature S = sig datatype dt = E end
-structure S1 : S
-val it = E : S1.dt

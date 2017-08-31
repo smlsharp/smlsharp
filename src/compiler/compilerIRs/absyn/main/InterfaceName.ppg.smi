@@ -1,0 +1,63 @@
+_require local "../../../libs/digest/main/SHA3.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require "../../../../smlformat-lib.smi"
+_require "../../../../basis.smi"
+_require "../../../libs/toolchain/main/Filename.smi"
+
+structure InterfaceName =
+struct
+
+  type hash (= boxed)
+
+  val hash : string -> hash
+  val hashToString : hash -> string
+  val hashToWord64 : hash -> Word64.word
+
+  datatype file_place =
+      STDPATH
+    | LOCALPATH
+
+  type source =
+      file_place * Filename.filename
+
+  type interface_name =
+      {
+        hash: hash,
+        source: source
+      }
+
+  datatype file_type =
+      SML
+    | INCLUDES
+    | INTERFACE of interface_name
+  datatype file_dependency =
+      DEPEND of source * file_type * file_dependency list
+    | LOCAL of source * file_type * file_dependency list
+  type file_dependency_node = source * file_type * file_dependency list
+
+  type dependency =
+      {
+        (* name of this interface *)
+        interfaceNameOpt : interface_name option,
+        (* file dependency graph *)
+        depends : file_dependency list
+      }
+
+  val listFileDependencyNodes
+      : bool -> file_dependency list -> file_dependency_node list
+
+  val format_hash
+      : hash -> SMLFormat.FormatExpression.expression list
+  val format_file_place
+      : file_place -> SMLFormat.FormatExpression.expression list
+  val format_source
+      : source -> SMLFormat.FormatExpression.expression list
+  val format_interface_name
+      : interface_name -> SMLFormat.FormatExpression.expression list
+  val formatSimple_interface_name
+      : interface_name -> SMLFormat.FormatExpression.expression list
+  val format_dependency
+      : dependency -> SMLFormat.FormatExpression.expression list
+
+end

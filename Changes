@@ -1,4 +1,28 @@
 -----------------------------------------------------------------------------
+SML# version 3.4.0 (released on 2017-08-31)
+
+New features:
+* Automatic Makefile generation.  The smlsharp command with new "-Mm"
+  command line option computes file dependency of the given programs
+  and outputs a complete Makefile.
+
+* Loading an additional library for the interactive mode.  New "-r"
+  command line option let the compiler load a separately-compiled
+  library into the initial interactive environment.
+
+  By combining these two, you can use your own library in the
+  interactive mode simply by the following three steps:
+    $ smlsharp -Mm mylib.smi -o Makefile
+    $ make mylib
+    $ smlsharp -r mylib.smi
+
+Improvements:
+* The value and type printer of the interactive session is improved.
+
+Other changes:
+* The source tree has been reorganized.
+
+-----------------------------------------------------------------------------
 SML# version 3.3.0 (released on 2017-06-20)
 
 * The new feature of this version is massive parallelism for

@@ -1,0 +1,2 @@
+_require "188_exn3.smi"
+exception E2 = E3

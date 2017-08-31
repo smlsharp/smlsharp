@@ -1,0 +1,141 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "./AbsynConst.ppg.smi"
+
+structure AbsynSQL =
+struct
+
+  type symbol = Symbol.symbol
+  type label = RecordLabel.label
+  type loc = Loc.loc
+
+  datatype ('exp,'a) clause =
+      EMBED of 'exp * loc
+    | CLAUSE of 'a
+
+  type table_selector =
+      {db : symbol, label : label, loc : loc}
+
+  datatype asc_desc =
+      ASC
+    | DESC
+
+  datatype distinct =
+      DISTINCT
+    | ALL
+
+  datatype op1 =
+      IS_NULL
+    | IS_NOT_NULL
+    | IS_TRUE
+    | IS_NOT_TRUE
+    | IS_FALSE
+    | IS_NOT_FALSE
+    | IS_UNKNOWN
+    | IS_NOT_UNKNOWN
+    | NOT
+
+  datatype op2 =
+      AND
+    | OR
+
+  datatype 'exp exp =
+      EXP of 'exp * loc
+    | CONST of AbsynConst.constant
+    | NULL of loc
+    | TRUE of loc
+    | FALSE of loc
+    | UNKNOWN of loc
+    | COLUMN1 of label * loc
+    | COLUMN2 of (label * label) * loc
+    | EXISTS of 'exp query * loc
+    | OP1 of op1 * 'exp exp * loc
+    | OP2 of op2 * 'exp exp * 'exp exp * loc
+
+  and 'exp join =
+      INNER_JOIN of {inner : bool} * 'exp exp
+    | CROSS_JOIN
+    | NATURAL_JOIN
+
+  and 'exp table =
+      TABLE of table_selector
+    | TABLE_AS of 'exp table * label * loc
+    | TABLE_JOIN of 'exp table * 'exp join * 'exp table * loc
+    | TABLE_SUBQUERY of 'exp query * loc
+
+  and 'exp from =
+      FROM of 'exp table list * loc
+
+  and 'exp whr =
+      WHERE of 'exp exp * loc
+
+  and 'exp groupby =
+      GROUP_BY of ('exp exp list * loc) * 'exp having option
+
+  and 'exp having =
+      HAVING of 'exp exp * loc
+
+  and 'exp orderby =
+      ORDER_BY of ('exp exp * asc_desc option) list * loc
+
+  and 'exp offset =
+      OFFSET of 'exp exp * {rows:string} option * loc
+
+  and 'exp limit =
+      LIMIT of 'exp exp option * {first:string, rows:string} option * loc
+
+  and 'exp select =
+      SELECT of distinct option * ((label option * 'exp exp) list * loc) * loc
+
+  and 'exp query =
+      QUERY of ('exp, 'exp select) clause
+                * ('exp, 'exp from) clause
+                * ('exp, 'exp whr) clause option
+		* 'exp groupby option
+                * ('exp, 'exp orderby) clause option
+                * ('exp, 'exp offset) clause option
+                * ('exp, 'exp limit) clause option
+                * loc
+    | QUERY_EMBED of 'exp * loc
+
+  datatype 'exp insert_values =
+      INSERT_VALUES of (('exp exp option * loc) list * loc) list
+    | INSERT_SELECT of 'exp query
+
+  datatype 'exp sql =
+      E of 'exp exp
+    | QRY of 'exp query
+    | SEL of 'exp select
+    | FRM of 'exp from
+    | WHR of 'exp whr
+    | ORD of 'exp orderby
+    | OFF of 'exp offset
+    | LMT of 'exp limit
+    | INSERT_LABELED of table_selector * (label list * loc) * 'exp insert_values
+    | INSERT_NOLABEL of table_selector * 'exp query
+    | UPDATE of table_selector * ((label * 'exp exp) list * loc)
+                * ('exp, 'exp whr) clause option
+    | DELETE of table_selector * ('exp, 'exp whr) clause option
+    | BEGIN
+    | COMMIT
+    | ROLLBACK
+
+  datatype ('exp, 'pat, 'ty) sqlexp =
+      SQLSERVER of 'exp option * 'ty
+    | SQL of 'exp sql
+    | SQLFN of 'pat * 'exp sql
+    | SQLFNEXP of 'pat * 'exp
+
+  val format_sqlexp
+      : ('a -> SMLFormat.FormatExpression.expression list)
+        * ('b -> SMLFormat.FormatExpression.expression list)
+        * ('c -> SMLFormat.FormatExpression.expression list)
+        -> ('a, 'b, 'c) sqlexp -> SMLFormat.FormatExpression.expression list
+
+end

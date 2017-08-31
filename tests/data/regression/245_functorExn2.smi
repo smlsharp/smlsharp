@@ -1,0 +1,4 @@
+_require "245_functorExn3.smi"
+exception Bar
+structure B = struct end
+structure A = F(B)

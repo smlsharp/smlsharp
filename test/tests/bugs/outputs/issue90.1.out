@@ -1,2 +1,0 @@
-structure Sval1 : sig val x : int * int end
-structure Sval2 : sig val x : int * int val y : int * int end

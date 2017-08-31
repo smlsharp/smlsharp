@@ -1,0 +1,51 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/env/main/IEnv.smi"
+_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/VarInfoEnv.smi"
+
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/types/main/TvarMap.smi"
+_require "../../../data/types/main/VarMap.smi"
+_require "../../../data/types/main/OPrimMap.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+
+_require "./IDCalc.ppg.smi"
+
+structure EvalIty =
+struct
+  exception EVALTFUN of {iseq: bool,
+                         formals: IDCalc.formals,
+                         longsymbol:Symbol.longsymbol,
+                         realizerTy: IDCalc.ty}
+  type ityContext = {oprimEnv:IDCalc.ty OPrimMap.map,
+                     tvarEnv:Types.ty TvarMap.map,
+                     varEnv:IDCalc.ty VarMap.map}
+  val emptyContext : ityContext
+(*
+  val evalKindedTvar
+      : IDCalc.kindedTvar
+        * ({oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+           * Types.btvEnv)
+        -> ({oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+            * Types.btvEnv)
+*)
+  val evalKindedTvarList
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.kindedTvar list
+        -> {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+           * Types.btvEnv
+  val evalDtyKind
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.dtyKind -> Types.dtyKind
+  val evalTfun
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.tfun -> Types.tyCon
+  val evalIty
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.ty -> Types.ty
+end

@@ -1,0 +1,18 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../compilePhases/typeinference/main/Printers.smi"
+_require local "../../../data/types/main/TyAlphaRename.smi"
+
+_require "../../../libs/ids/main/LocalID.smi"
+_require "./TypedCalc.ppg.smi"
+
+structure TCAlphaRename =
+struct
+  val copyExp : TypedCalc.tpexp -> VarID.id VarID.Map.map * TypedCalc.tpexp
+end

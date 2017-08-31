@@ -1,0 +1,9 @@
+_require local "../../../src/basis.smi"
+_require "../../../src/smlunit-lib.smi"
+_require local "../../driver/Compiler.smi"
+_require local "../../../src/compiler/data/types/main/DummyTyID.smi"
+
+structure TestInteractivePrinter =
+struct
+  val tests : SMLUnit.Test.test
+end

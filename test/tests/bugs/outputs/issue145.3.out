@@ -1,3 +1,0 @@
-val f = fn : int -> int
-functor F (S : sig end) : sig val g : int -> int end
-structure S : sig val g : int -> int end

@@ -1,0 +1,7 @@
+_require "184_exn3.smi"
+
+structure S =
+struct
+  exception E  (* export name of this should be "S.E" *)
+  val x : int
+end

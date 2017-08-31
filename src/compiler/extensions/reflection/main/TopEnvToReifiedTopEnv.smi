@@ -1,0 +1,19 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require local "../../../compilerPhases/nameevaluation/main/NormalizeTy.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
+_require "../../../compilerPhases/nameevaluation/main/NameEvalEnv.ppg.smi"
+
+_require local "../../format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../debug/main/Bug.ppg.smi"
+_require "./ReifiedTerm.ppg.smi"
+
+structure TopEnvToReifiedTopEnv =
+struct
+  val topEnvToReifiedTopEnv : NameEvalEnv.topEnv -> ReifiedTerm.topEnv
+end

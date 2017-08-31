@@ -1,0 +1,5 @@
+structure S =
+struct
+  val x : int
+  val y : int
+end

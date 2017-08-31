@@ -1,0 +1,3 @@
+_require "243_functorAppInterface3.smi"
+structure A = struct type elem = int end
+structure FF = F(A)

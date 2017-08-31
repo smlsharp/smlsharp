@@ -1,7 +1,7 @@
 _require local "../../../../basis.smi"
-_require local "../../../../compiler-utils/debug/main/Bug.ppg.smi"
-
+_require local "../../../../compiler/extensions/debug/main/Bug.ppg.smi"
 _require "../../../../basis/main/General.smi"
+
 structure SMLSharp_SQL_TimeStamp =
 struct
   type timestamp (= boxed)

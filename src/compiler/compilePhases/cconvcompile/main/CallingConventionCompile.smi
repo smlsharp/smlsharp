@@ -1,0 +1,20 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+
+_require local "../../../data/control/main/Control.ppg.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
+_require local "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../../compilerIRs/closurecalc/main/ClosureCalc.ppg.smi"
+_require "../../../compilerIRs/runtimecalc/main/RuntimeCalc.ppg.smi"
+
+structure CallingConventionCompile =
+struct
+  val compile : ClosureCalc.program -> RuntimeCalc.program
+end

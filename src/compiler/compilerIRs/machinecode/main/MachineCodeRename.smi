@@ -1,0 +1,12 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
+
+_require "./MachineCode.ppg.smi"
+
+structure MachineCodeRename =
+struct
+  val rename : MachineCode.topdec list * MachineCode.toplevel
+               -> MachineCode.topdec list * MachineCode.toplevel
+end

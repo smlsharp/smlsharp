@@ -1,6 +1,6 @@
 _require local "../../basis.smi"
-_require local "../../compiler-utils/env/main/SEnv.smi"
-_require "../../compiler/toolchain/main/Filename.smi"
+_require local "../../compiler/libs/env/main/SEnv.smi"
+_require "../../compiler/libs/toolchain/main/Filename.smi"
 _require "./Version.smi"
 
 structure SMLSharp_Config =

@@ -1,0 +1,15 @@
+_require "basis.smi"
+_require "sql.smi"
+
+type testDB = {
+  評価用 : {
+    可変長 : string,
+    可変長２ : string,
+    費用 : real,
+    実数 : Real32.real,
+    実数2 : SQL.decimal,
+    実数3 : SQL.decimal
+  }
+}
+
+val c : testDB SMLSharp_SQL_Prim.conn

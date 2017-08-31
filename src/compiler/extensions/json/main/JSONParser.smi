@@ -1,0 +1,17 @@
+_require "../../../../basis.smi"
+_require local "../../../../ffi.smi"
+_require local "./YAJL.smi"
+
+structure JSONParser =
+struct
+  exception ParseError of string
+  datatype utJson =
+      BOOL of bool
+    | INT of int
+    | REAL of real
+    | STRING of string
+    | NULL
+    | ARRAY of utJson list
+    | OBJECT of (string * utJson) list
+  val parse : string -> utJson
+end

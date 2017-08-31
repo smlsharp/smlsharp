@@ -10,6 +10,6 @@ int
 main(int argc, char **argv)
 {
 	sml_init(argc, argv);
-	sml_run();
+	sml_run(0);
 	sml_exit(0);
 }

@@ -1,0 +1,8 @@
+functor F (A : sig end) =
+struct
+  structure S =
+  struct
+    type t = int
+    val f : t -> t
+  end
+end

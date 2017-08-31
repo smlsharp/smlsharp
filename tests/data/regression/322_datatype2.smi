@@ -1,0 +1,4 @@
+type a (= boxed)
+datatype t = A of a | B of word
+val f : int -> t
+val g : a -> int

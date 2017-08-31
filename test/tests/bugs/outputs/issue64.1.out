@@ -1,3 +1,0 @@
-val ## = fn : int * int -> int
-val v1 = 5 : int
-

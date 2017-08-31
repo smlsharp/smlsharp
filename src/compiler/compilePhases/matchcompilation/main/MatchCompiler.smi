@@ -1,0 +1,29 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/IEnv.smi"
+
+_require local "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require local "../../../data/control/main/Control.ppg.smi"
+_require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/VarInfoEnv.smi"
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "./MatchData.smi"
+_require local "./MatchError.ppg.smi"
+
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require "../../../extensions/usererror/main/UserError.ppg.smi"
+
+structure MatchCompiler =
+struct
+  val compile : TypedCalc.tpdecl list
+                -> RecordCalc.rcdecl list * UserError.errorInfo list
+end

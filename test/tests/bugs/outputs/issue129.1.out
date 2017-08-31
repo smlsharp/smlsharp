@@ -1,5 +1,0 @@
-signature S = sig val f : 'a -> 'a -> 'a end
-structure S : sig val f : ['a .'a -> ['b .'b -> 'b]] end
-val x = 2 : int
-structure S1 : S
-val y = 2 : int

@@ -1,0 +1,6 @@
+_require "../src/smlunit-lib.smi"
+_require "../src/compiler/extensions/reflection/test/TestNaturalJoin.smi"
+_require "./suite/regression/RegressionTests.smi"
+_require "./suite/compiler/TestInteractivePrinter.smi"
+
+val tests : SMLUnit.Test.test

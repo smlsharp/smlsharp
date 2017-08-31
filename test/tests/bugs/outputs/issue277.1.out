@@ -1,6 +1,0 @@
-val f = fn : exn -> int
-exception E : exn
-Match
-uncaught exception
-stdIn:11.9-11.11
-RuntimeError:ExecutionException

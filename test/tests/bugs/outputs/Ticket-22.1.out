@@ -1,2 +1,0 @@
-open Int
-val n = 1 : int

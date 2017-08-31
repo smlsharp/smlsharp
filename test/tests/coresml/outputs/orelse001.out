@@ -1,4 +1,0 @@
-exception E : exn
-val v1 = true : bool
-val v2 = true : bool
-

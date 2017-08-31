@@ -1,0 +1,9 @@
+_require "185_exnrep2.smi"
+structure T =
+struct
+  structure S =
+  struct
+    exception E = S.E
+  end
+  exception E = S.E
+end

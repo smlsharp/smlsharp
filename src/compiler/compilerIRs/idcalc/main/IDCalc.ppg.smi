@@ -1,0 +1,412 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+
+_require "../../../libs/util/main/TermFormat.smi"
+_require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../data/types/main/TvarMap.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+
+structure IDCalc =
+struct
+  type loc = Loc.loc
+  type version = int option
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
+  type typId = TypID.id
+  type conId = ConID.id
+  type varId = VarID.id
+  type exnId = ExnID.id
+  type oprimId = OPrimID.id
+  type tvarId = TvarID.id
+  type revealKey = RevealID.id
+  type tvar = {symbol:symbol, id:tvarId, eq:AbsynTy.eq, lifted:bool}
+  type liftedTys = TvarSet.set
+  type formals = tvar list
+  type varInfo = {longsymbol: longsymbol, id: varId}
+  type oprimInfo = {longsymbol: longsymbol, id: oprimId}
+  type constant = AbsynConst.constant
+  type typesTy = Types.ty
+
+  datatype runtimeTy
+    = BUILTINty of BuiltinTypeNames.bty
+    | LIFTEDty of tvar
+
+  datatype ty
+    = TYWILD
+    | TYERROR
+    | TYVAR of tvar
+    | TYRECORD of ty RecordLabel.Map.map
+    | TYCONSTRUCT of {tfun:tfun, args:ty list}
+    | TYFUNM of ty list * ty
+    | TYPOLY of (tvar * tvarKind) list * ty
+    | INFERREDTY of typesTy
+
+  and tvarKind
+    = UNIV
+    | REC of ty RecordLabel.Map.map
+    | JSON of {dynKind:bool}
+    | REIFY
+    | BOXED
+    | UNBOXED
+
+  and tfun
+    = TFUN_DEF of {iseq:bool, formals:formals, realizerTy:ty, longsymbol:longsymbol}
+    | TFUN_VAR of tfunkind ref
+
+  and tfunkind
+    = TFUN_DTY of {id:typId,
+                   iseq:bool,
+                   longsymbol:longsymbol,
+                   formals:formals,
+                   conSpec:(ty option) SymbolEnv.map,
+                   conIDSet : ConID.Set.set,
+		   runtimeTy:runtimeTy,
+                   liftedTys:liftedTys,
+                   dtyKind:dtyKind
+                  }
+    | TFV_SPEC of {longsymbol:longsymbol, id:typId, iseq:bool, formals:formals}
+    | TFV_DTY of {id:typId,
+                  longsymbol:longsymbol, 
+                  iseq:bool,
+                  formals:formals,
+                  conSpec:(ty option) SymbolEnv.map,
+                  liftedTys:liftedTys}
+    | REALIZED of {id:typId, tfun:tfun}
+    | INSTANTIATED of {tfunkind:tfunkind, tfun:tfun}
+    | FUN_DTY of {tfun:tfun,
+                  longsymbol:longsymbol, 
+                  varE:idstatus SymbolEnv.map,
+                  formals:formals,
+                  conSpec:(ty option) SymbolEnv.map,
+                  liftedTys:liftedTys}
+
+  and dtyKind
+    = FUNPARAM
+    | DTY
+    | DTY_INTERFACE
+    | OPAQUE of {tfun:tfun, revealKey:revealKey}
+    | BUILTIN of BuiltinTypeNames.bty
+
+   and idstatus
+    = IDVAR of {id:varId, longsymbol:longsymbol}
+    | IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol}
+    | IDEXVAR of {exInfo:{longsymbol: longsymbol, version:version, used:bool ref, ty:ty}, 
+                  internalId:varId option}
+    | IDEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId,  version:version}
+    | IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty}
+    | IDCON of {id:conId, ty:ty, longsymbol:longsymbol}
+    | IDEXN of {id:exnId, ty:ty, longsymbol:longsymbol}
+    | IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol}
+    | IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty}
+    | IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol}
+    | IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol}
+    | IDSPECVAR of {ty:ty, symbol:symbol}
+    | IDSPECEXN of {ty:ty, symbol:symbol}
+    | IDSPECCON of {symbol:symbol}
+
+   and icexp 
+    = ICERROR
+    | ICCONSTANT of constant
+    | ICVAR of varInfo
+    | ICEXVAR of {longsymbol: longsymbol, exInfo:{used:bool ref, longsymbol:longsymbol, version:version, ty:ty}}
+    | ICEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId, exInfo:{used:bool ref, longsymbol:longsymbol, version:version}}
+    | ICBUILTINVAR of {primitive:BuiltinPrimitive.primitive, ty:ty, loc:loc}
+    | ICCON of {longsymbol: longsymbol, ty:ty, id: conId}
+    | ICEXN of {longsymbol: longsymbol, id: exnId, ty:ty}
+    | ICEXEXN of {longsymbol: longsymbol, exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}}
+    | ICEXN_CONSTRUCTOR of {longsymbol: longsymbol, id: exnId, ty:ty}
+    | ICEXEXN_CONSTRUCTOR of {longsymbol: longsymbol, exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}}
+    | ICOPRIM of oprimInfo
+    | ICTYPED of icexp * ty * loc
+    | ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
+    | ICAPPM of icexp * icexp list * loc
+    | ICAPPM_NOUNIFY of icexp * icexp list * loc
+    | ICLET of icdecl list * icexp list * loc
+    | ICTYCAST of {from:tfun, to:tfun} list * icexp * loc
+    | ICRECORD of (RecordLabel.label * icexp) list * loc
+    | ICRAISE of icexp * loc
+    | ICHANDLE of icexp * (icpat * icexp) list * loc
+    | ICFNM of {args:icpat list, body:icexp} list * loc 
+    | ICFNM1 of (varInfo * ty list) list * icexp * loc 
+    | ICFNM1_POLY of (varInfo * ty) list * icexp * loc
+    | ICCASEM of icexp list 
+               * {args:icpat list, body:icexp} list 
+               * PatternCalc.caseKind 
+               * loc  (* primitive; caseKind added *)
+    | ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
+    | ICRECORD_SELECTOR of RecordLabel.label * loc 
+    | ICSELECT of RecordLabel.label * icexp * loc
+    | ICSEQ of icexp list * loc
+    | ICFOREACH of {data:icexp, iterator:icexp, pred:icexp, loc:loc}
+    | ICFOREACHDATA of {data:icexp, whereParam:icexp, iterator:icexp, pred:icexp, loc:loc}
+    | ICFFIIMPORT of ffiFun * ffiTy * loc
+    | ICFFIAPPLY of FFIAttributes.attributes option
+                    * ffiFun * ffiArg list * ffiTy list * loc
+    | ICSQLSCHEMA of {tyFnExp : icexp, ty : ty, loc : loc}
+    | ICJOIN of icexp * icexp * loc
+    | ICJSON of icexp * ty * loc
+    | ICTYPEOF of ty * loc
+    | ICREIFYTY of ty * loc
+    
+  and ffiArg
+    = ICFFIARG of icexp * ffiTy * loc
+    | ICFFIARGSIZEOF of ty * icexp option * loc
+
+  and ffiFun
+    = ICFFIFUN of icexp
+    | ICFFIEXTERN of string
+
+  and icpat 
+    = ICPATERROR
+    | ICPATWILD of loc
+    | ICPATVAR_TRANS of varInfo
+    | ICPATVAR_OPAQUE of varInfo
+    | ICPATCON of {longsymbol: longsymbol, ty:ty, id: conId}
+    | ICPATEXN of {longsymbol: longsymbol, id: exnId, ty:ty}
+    | ICPATEXEXN of {longsymbol:longsymbol, exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}}
+    | ICPATCONSTANT of constant
+    | ICPATCONSTRUCT of {con: icpat, arg: icpat, loc:loc}
+    | ICPATRECORD of {flex: bool, fields: (RecordLabel.label * icpat) list, loc: loc}
+    | ICPATLAYERED of {patVar : varInfo, tyOpt: ty option, pat: icpat, loc:loc}
+    | ICPATTYPED of icpat * ty * loc
+  
+  and icdecl
+    = ICVAL of (tvar * tvarKind) list * (icpat * icexp) list * loc
+    | ICDECFUN of
+         {
+          guard: (tvar * tvarKind) list,
+          funbinds:
+            {
+             funVarInfo: varInfo,
+             tyList: ty list,
+             rules: {args: icpat list, body: icexp} list
+            } list,
+          loc: loc
+         }
+    | ICNONRECFUN of
+         {
+          guard: (tvar * tvarKind) list,
+          funVarInfo: varInfo,
+          tyList: ty list,
+          rules: {args: icpat list, body: icexp} list,
+          loc: loc
+         }
+    | ICVALREC of {guard: (tvar * tvarKind) list,
+                   recbinds: {varInfo: varInfo,
+                              tyList:ty list,
+                              body: icexp} list,
+                   loc: loc}
+    | ICVALPOLYREC of ({varInfo: varInfo, ty:ty, body: icexp} list * loc)
+    | ICEXND of {exnInfo: {longsymbol: longsymbol, id: exnId, ty:ty}, loc: loc} list * loc
+    | ICEXNTAGD of {exnInfo: {longsymbol: longsymbol, id: exnId, ty:ty}, varInfo:varInfo} * loc
+    | ICEXPORTVAR of 
+      {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}, id:varId}
+    | ICEXPORTTYPECHECKEDVAR of {longsymbol:longsymbol, version:version, id:varId}
+    | ICEXPORTFUNCTOR of
+      {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}, id:varId}
+    | ICEXPORTEXN of
+      {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}, id:exnId}
+    | ICEXTERNVAR of {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
+    | ICEXTERNEXN of {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
+    | ICBUILTINEXN of {longsymbol: longsymbol, ty:ty}
+    | ICOVERLOADDEF of {boundtvars: (tvar * tvarKind) list,
+                        id:oprimId,
+                        longsymbol:longsymbol,
+                        overloadCase: {tvar: tvar,
+                                       expTy: ty,
+                                       matches: {instTy: ty, instance: overloadInstance} list,
+                                       loc: loc},
+                        loc:loc}
+    | ICTYCASTDECL of {from:tfun, to:tfun} list * icdecl list * loc
+
+  and overloadInstance 
+    = INST_OVERLOAD of {tvar: tvar,
+                        expTy: ty,
+                        matches: {instTy: ty, instance: overloadInstance} list,
+                        loc: loc}
+    | INST_EXVAR of {exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty},
+                     loc:loc}
+    | INST_PRIM of {primitive: BuiltinPrimitive.primitive, ty: ty} * loc
+
+  and ffiTy 
+    = FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
+    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
+    | FFIBASETY of ty * loc
+
+  type kindedTvar = tvar * tvarKind
+  type conInfo = {longsymbol: longsymbol, ty:ty, id: conId}
+  type exnInfo = {longsymbol: longsymbol, id: exnId, ty:ty}
+  type conSpec = (ty option) SymbolEnv.map
+  type varE = idstatus SymbolEnv.map
+  type tycast = {from:tfun, to:tfun}
+  type scopedTvars = kindedTvar list
+  type overloadCase 
+    =  {tvar: tvar,
+        expTy: ty,
+        matches: {instTy: ty, instance: overloadInstance} list,
+        loc: Loc.loc}
+  type exInfo = {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
+  type topdecl = icdecl list
+(*
+  type exexnInfo = {used:bool ref, longsymbol:longsymbol, ty:ty, version:version}
+*)
+
+  val derefTfun : tfun -> tfun
+  val emptyLiftedTys : liftedTys
+  val formatEnclosedTvarMap
+    : ('a -> TermFormat.format) 
+      * TermFormat.format 
+      * TermFormat.format
+      * TermFormat.format
+      * TermFormat.format
+      -> 'a TvarMap.map -> TermFormat.format
+  val formatEnclosedTvarSet
+    : TermFormat.format * TermFormat.format * TermFormat.format
+      -> TvarSet.set -> TermFormat.format
+  val formatWithType_conId : conId -> TermFormat.format
+  val formatWithType_conInfo : conInfo -> TermFormat.format
+  val formatWithType_conSpec : conSpec -> TermFormat.format
+  val formatWithType_constant : constant -> TermFormat.format
+  val formatWithType_dtyKind : dtyKind -> TermFormat.format
+  val formatWithType_exnId : exnId -> TermFormat.format
+  val formatWithType_exnInfo : exnInfo -> TermFormat.format
+  val formatWithType_ffiArg : ffiArg -> TermFormat.format
+  val formatWithType_ffiTy : ffiTy -> TermFormat.format
+  val formatWithType_formals : formals -> TermFormat.format
+  val formatWithType_icdecl : icdecl -> TermFormat.format
+  val formatWithType_icexp : icexp -> TermFormat.format
+  val formatWithType_icpat : icpat -> TermFormat.format
+  val formatWithType_idstatus : idstatus -> TermFormat.format
+  val formatWithType_kindedTvar : kindedTvar -> TermFormat.format
+  val formatWithType_liftedTys : liftedTys -> TermFormat.format
+  val formatWithType_oprimId : oprimId -> TermFormat.format
+  val formatWithType_oprimInfo : oprimInfo -> TermFormat.format
+  val formatWithType_overloadCase : overloadCase -> TermFormat.format
+  val formatWithType_overloadInstance : overloadInstance -> TermFormat.format
+  val formatWithType_longsymbol : longsymbol -> TermFormat.format
+  val formatWithType_revealKey : revealKey -> TermFormat.format
+  val formatWithType_scopedTvars : scopedTvars -> TermFormat.format
+  val formatWithType_tfun : tfun -> TermFormat.format
+  val formatWithType_tfunkind : tfunkind -> TermFormat.format
+  val formatWithType_tvar : tvar -> TermFormat.format
+  val formatWithType_tvarId : tvarId -> TermFormat.format
+  val formatWithType_tvarKind : tvarKind -> TermFormat.format
+  val formatWithType_ty : ty -> TermFormat.format
+  val formatWithType_tycast : tycast -> TermFormat.format
+  val formatWithType_typId : typId -> TermFormat.format
+  val formatWithType_varE : varE -> TermFormat.format
+  val formatWithType_varId : varId -> TermFormat.format
+  val formatWithType_varInfo : varInfo -> TermFormat.format
+  val formatWithType_exInfo : exInfo -> TermFormat.format
+  val format_conId : conId -> TermFormat.format
+  val format_conInfo : conInfo -> TermFormat.format
+  val format_conSpec : conSpec -> TermFormat.format
+  val format_constant : constant -> TermFormat.format
+  val format_dtyKind : dtyKind -> TermFormat.format
+  val format_exnId : exnId -> TermFormat.format
+  val format_exnInfo : exnInfo -> TermFormat.format
+  val format_ffiArg : ffiArg -> TermFormat.format
+  val format_ffiTy : ffiTy -> TermFormat.format
+  val format_formals : formals -> TermFormat.format
+  val format_icdecl : icdecl -> TermFormat.format
+  val format_icexp : icexp -> TermFormat.format
+  val format_icpat : icpat -> TermFormat.format
+  val format_idstatus : idstatus -> TermFormat.format
+  val format_kindedTvar : kindedTvar -> TermFormat.format
+  val format_liftedTys : liftedTys -> TermFormat.format
+  val format_oprimId : oprimId -> TermFormat.format
+  val format_oprimInfo : oprimInfo -> TermFormat.format
+  val format_overloadCase : overloadCase -> TermFormat.format
+  val format_overloadInstance : overloadInstance -> TermFormat.format
+  val format_longsymbol : longsymbol -> TermFormat.format
+  val format_revealKey : revealKey -> TermFormat.format
+  val format_scopedTvars : scopedTvars -> TermFormat.format
+  val format_tfun : tfun -> TermFormat.format
+  val format_tfunkind : tfunkind -> TermFormat.format
+  val format_tvar : tvar -> TermFormat.format
+  val format_tvarId : tvarId -> TermFormat.format
+  val format_tvarKind : tvarKind -> TermFormat.format
+  val format_ty : ty -> TermFormat.format
+  val format_tycast : tycast -> TermFormat.format
+  val format_typId : typId -> TermFormat.format
+  val format_varE : varE -> TermFormat.format
+  val format_varId : varId -> TermFormat.format
+  val format_varInfo : varInfo -> TermFormat.format
+  val format_exInfo : exInfo -> TermFormat.format
+  val getLeftLocExp : icexp -> Loc.pos
+  val getLeftLocPat : icpat -> Loc.pos
+  val getLocDec : icdecl -> Loc.loc
+  val getLocExp : icexp -> Loc.loc
+  val getLocPat : icpat -> Loc.loc
+  val getRightLocExp :icexp -> Loc.pos
+  val getRightLocPat : icpat -> Loc.pos
+  val getRuleLocM : {args:icpat list, body:icexp} list -> Loc.loc
+  val liftedTysSingleton : TvarSet.item -> liftedTys
+  val liftedTysToTy : liftedTys -> ty list
+  val liftedTysToTyvars : liftedTys -> TvarSet.item list
+  val liftedTysUnion : liftedTys * liftedTys -> TvarSet.set
+  val mkTfv : tfunkind -> tfunkind ref
+  val newICVar : unit -> varInfo
+
+  val print_conId : conId -> TermFormat.format
+  val print_exnId : exnId -> TermFormat.format
+  val print_oprimId : oprimId -> TermFormat.format
+  val print_constant : constant -> TermFormat.format
+  val print_formals : formals -> TermFormat.format
+  val print_liftedTys : liftedTys -> TermFormat.format
+  val print_longsymbol : longsymbol -> TermFormat.format
+  val print_oprimInfo : oprimInfo -> TermFormat.format
+  val print_revealKey : revealKey -> TermFormat.format
+  val print_tvar : tvar -> TermFormat.format
+  val print_tvarId : tvarId -> TermFormat.format
+  val print_varId : varId -> TermFormat.format
+  val print_typId : typId -> TermFormat.format
+  val print_varInfo : varInfo -> TermFormat.format
+
+  val print_conInfo : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> conInfo -> TermFormat.format
+  val print_conSpec : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> conSpec -> TermFormat.format
+  val print_dtyKind : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> dtyKind -> TermFormat.format
+  val print_exnInfo : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> exnInfo -> TermFormat.format
+  val print_ffiArg : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> ffiArg -> TermFormat.format
+  val print_ffiTy : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> ffiTy -> TermFormat.format
+  val print_icdecl : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> icdecl -> TermFormat.format
+  val print_icexp : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> icexp -> TermFormat.format
+  val print_icpat : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> icpat -> TermFormat.format
+  val print_idstatus : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> idstatus -> TermFormat.format
+  val print_kindedTvar : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> kindedTvar -> TermFormat.format
+  val print_overloadCase : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> overloadCase -> TermFormat.format
+  val print_overloadInstance : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> overloadInstance -> TermFormat.format
+  val print_scopedTvars : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> scopedTvars -> TermFormat.format
+  val print_tfun : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> tfun -> TermFormat.format
+  val print_tfunkind : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> tfunkind -> TermFormat.format
+  val print_tvarKind : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> tvarKind -> TermFormat.format
+  val print_ty : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> ty -> TermFormat.format
+  val print_tycast : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> tycast -> TermFormat.format
+  val print_varE : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> varE -> TermFormat.format
+  val print_exInfo : 'a * ('a * tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> exInfo -> TermFormat.format
+
+  val pruneTfun : tfun -> tfun
+  val tfunArity : tfun -> int
+  val tfunFormals : tfun -> formals
+  val tfunLongsymbol : tfun -> Symbol.longsymbol
+  val tfunId : tfun -> typId
+  val tfunIseq : tfun -> bool
+  val tfunLiftedTys : tfun -> liftedTys
+  val runtimeTyOfIty : ty ->  runtimeTy option
+  val tfunRuntimeTy : tfun -> runtimeTy option
+  val tfunkindId : tfunkind -> typId
+  val tfvId : tfunkind ref -> typId
+  val tvarIseq : tvar -> bool
+end

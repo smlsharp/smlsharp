@@ -1,0 +1,42 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlnj-lib/Util/binary-map-fn.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "./SingletonTyEnv.smi"
+
+structure RecordLayout2 =
+struct
+
+  datatype decl =
+      PRIMAPPLY of {boundVar: RecordCalc.varInfo,
+                    primInfo: TypedLambda.primInfo,
+                    argList: SingletonTyEnv2.value list}
+
+  type computationAccum (= boxed)
+  val newComputationAccum : unit -> computationAccum
+  val extractDecls : computationAccum -> decl list
+
+  val computeIndex
+      : computationAccum
+        -> {size: SingletonTyEnv2.value} list * {size: SingletonTyEnv2.value}
+        -> SingletonTyEnv2.value
+  val computeRecord
+      : computationAccum
+        -> {tag: SingletonTyEnv2.value, size: SingletonTyEnv2.value} list
+        -> {allocSize: SingletonTyEnv2.value,
+            fieldIndexes: SingletonTyEnv2.value list,
+            bitmaps: {index: SingletonTyEnv2.value,
+                      bitmap: SingletonTyEnv2.value} list,
+            padding: bool}
+
+end 

@@ -1,0 +1,11 @@
+_require "181_functor2.smi"
+
+functor F (
+  A : sig
+    type t
+  end
+) = 
+struct
+  type s (= boxed)
+  val f : ('a -> A.t) -> s
+end

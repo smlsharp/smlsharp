@@ -1,0 +1,13 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "./TRANS_FUNDECL.sig"
+
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+
+structure TransFundecl =
+  struct
+    val transIcdeclList : IDCalc.topdecl -> IDCalc.topdecl
+  end

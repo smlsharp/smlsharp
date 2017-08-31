@@ -1,0 +1,96 @@
+_require local "../../../../basis.smi"
+
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../compilerIRs/recordcalc/main/RecordCalcUtils.smi"
+_require local "../../../compilerIRs/absyn/main/Absyn.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/Unify.smi"
+
+_require  "../../../data/symbols/main/Symbol.ppg.smi"
+_require  "../../../data/symbols/main/RecordLabel.smi"
+_require  "../../../data/symbols/main/Loc.ppg.smi"
+_require  "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require  "../../../data/types/main/Types.ppg.smi"
+
+_require local "../../debug/main/Bug.ppg.smi"
+
+structure ReifyUtils =
+struct
+  type loc = Loc.loc
+  type ty = Types.ty
+  type varInfo = RecordCalc.varInfo
+  type exVarInfo = RecordCalc.exVarInfo
+  type conInfo = RecordCalc.conInfo
+  type exnCon = RecordCalc.exnCon
+  type exExnInfo = RecordCalc.exExnInfo
+  type exp = RecordCalc.rcexp
+  type decl = RecordCalc.rcdecl
+  type label = RecordLabel.label
+
+  val IntTy : ty
+  val Int64Ty : ty
+  val IntInfTy : ty
+  val WordTy : ty
+  val Word64Ty : ty
+  val Word8Ty : ty
+  val CharTy : ty
+  val StringTy : ty
+  val RealTy : ty
+  val Real32Ty : ty
+  val UnitTy : ty
+  val PtrTy : ty
+  val CodeptrTy : ty
+  val ExnTy : ty
+  val BoolTy : ty
+  val BoxedTy : ty
+  val RefTy : ty -> ty
+  val ListTy : ty -> ty
+  val ArrayTy : ty -> ty
+  val isArrayTy : ty -> bool
+  val isListTy : ty -> bool
+  val ArrayElemTy : ty -> ty
+  val ListElemTy : ty -> ty
+  val RecordTyFields : ty -> (string * ty) list
+  val FunArgBodyTy : ty -> {argTy:ty, bodyTy:ty}
+  val VectorTy : ty -> ty
+  val OptionTy : ty -> ty
+  val RecordTy : (string * ty) list -> ty
+  val TupleTy :  ty list -> ty
+
+  val newVar : ty -> varInfo
+  val newVarWithString : loc -> string -> ty -> varInfo
+  val newVarWithSymbol : Symbol.symbol -> ty -> varInfo
+
+  val Int : loc -> int  -> {exp:exp, ty:ty}
+  val Word : loc -> word -> {exp:exp, ty:ty}
+  val String : loc -> string -> {exp:exp, ty:ty}
+  val Real : loc -> real  -> {exp:exp, ty:ty}
+  val Bool : loc -> bool  -> {exp:exp, ty:ty}
+  val Exn : loc -> exExnInfo -> {exp:exp, ty:ty}
+ 
+  val Option : loc -> ty -> {exp:exp, ty:ty} option -> {exp:exp, ty:ty}
+
+  val Var : varInfo -> {ty:ty, exp:exp}
+  val MonoVar : exVarInfo -> {ty:ty, exp:exp}
+  val InstVar : {exVarInfo:exVarInfo, instTy:ty} -> {ty:ty, exp:exp}
+  val InstListVar : {exVarInfo:exVarInfo, instTyList:ty list} -> {ty:ty, exp:exp}
+  val Pair : loc -> {exp:exp,ty:ty} -> {exp:exp, ty:ty} -> {exp:exp, ty:ty}
+  val Seq : loc -> {exp:exp,ty:ty} list -> {exp:exp, ty:ty}
+  val Fn : loc -> {expFn : varInfo -> exp, argTy:ty, bodyTy:ty} -> {exp:exp, ty:ty}
+  val FunExp : loc -> ({exp:exp,ty:ty} -> {exp:exp, ty:ty}) -> ty -> {exp:exp, ty:ty}
+  val Apply : loc -> {exp:exp,ty:ty} -> {exp:exp, ty:ty} -> {exp:exp, ty:ty}
+  val ApplyList : loc -> {exp:exp,ty:ty} -> {exp:exp, ty:ty} list -> {exp:exp, ty:ty}
+  
+  val Con : loc -> conInfo -> {exp:exp, ty:ty} option -> {exp:exp, ty:ty}
+
+  val Cons : loc -> {hd : {exp:exp, ty:ty}, tl : {exp:exp, ty:ty}} -> {exp:exp, ty:ty}
+  val Nil : loc -> ty -> {exp:exp, ty:ty}
+  val List : loc -> ty -> {exp:exp,ty:ty} list -> {exp:exp, ty:ty}
+  val TypeCast : loc -> {ty:ty, exp:exp} -> ty -> {exp:exp, ty:ty}
+  val HandleAndReRaise : loc -> exExnInfo -> {exp:exp, ty:ty} -> exp
+  val Val : loc -> varInfo -> {ty:ty, exp:exp} -> decl
+  val --> : ty * ty -> ty
+  val ** : ty * ty -> ty
+end

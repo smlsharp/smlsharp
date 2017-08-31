@@ -1,0 +1,306 @@
+(**
+ * @copyright (c) 2012- Tohoku University.
+ * @author Atsushi Ohori
+ *)
+structure TermPrintUtils =
+struct
+local
+  structure FE = SMLFormat.FormatExpression
+  val ellipsis = [FE.Term (3, "...")]
+  val spaceIndicator = FE.Indicator{space = true, newline = NONE}
+  fun makeToken s = [FE.Term (String.size s, s)]
+in
+
+  type format = SMLFormat.FormatExpression.expression list
+
+  fun format_lazy elementFormatter elementFn =
+      elementFormatter(elementFn ())
+
+  fun makeLines s =
+      let
+        val fields = String.fields (fn x => x = #"\n") s
+        val termList =
+            foldr
+            (fn (s, nil) =>
+                FE.Term(String.size s, s)::nil
+              | (s,termList) => 
+                FE.Term(String.size s, s) ::
+                FE.Newline ::
+                termList
+            )
+            nil
+            fields
+      in
+        termList
+      end
+
+  fun format_int int =
+      let 
+        val text = Int.toString int
+      in
+        makeToken text 
+      end
+
+  (* ?? *)
+  fun format_real real =
+      let
+        val text = Real.fmt (StringCvt.GEN NONE) real
+      in 
+        makeToken text 
+      end
+
+  fun format_int_json int =
+      let 
+        val text = String.translate (fn #"~" => "-" | x => str x)
+                                    (Int.toString int)
+      in
+        makeToken text 
+      end
+
+  (* ?? *)
+  fun format_real_json real =
+      let
+        val text = String.translate (fn #"~" => "-" | x => str x)
+                                    (Real.fmt (StringCvt.GEN NONE) real)
+      in 
+        makeToken text 
+      end
+
+  fun format_string string =
+      let
+        val text = "\"" ^ (String.toRawString string) ^ "\""
+      in 
+        makeToken text 
+      end
+
+  fun format_label string =
+      makeToken string 
+
+  (* ?? *)
+  fun format_char char =
+      let
+        val text = "#" ^ "\"" ^ Char.toString char ^ "\""
+      in 
+        makeToken text 
+      end
+
+  fun format_int8 int =
+      let
+        val text = Int8.toString int
+      in
+        makeToken text 
+      end
+
+  fun format_int16 int =
+      let
+        val text = Int16.toString int
+      in
+        makeToken text 
+      end
+
+  fun format_int32 int =
+      let
+        val text = Int32.toString int
+      in
+        makeToken text 
+      end
+
+  fun format_int32_c int =
+      let
+        val text = Int32.toString int
+      in
+        makeToken text 
+      end
+
+  fun format_int64 int =
+      let
+        val text = Int64.toString int
+      in
+        makeToken text 
+      end
+
+  (* ?? *)
+  fun format_real32 int =
+      let
+        val text = Real32.toString int
+      in
+        makeToken text 
+      end
+
+  (* ?? *)
+  fun format_word16 word =
+      let 
+        val text = CharVector.map Char.toLower (Word16.toString word)
+      in 
+        makeToken ("0wx" ^ text)
+      end
+
+  (* ?? *)
+  fun format_word32 word =
+      let 
+        val text = CharVector.map Char.toLower (Word32.toString word)
+      in 
+        makeToken ("0wx" ^ text)
+      end
+
+  (* ?? *)
+  fun format_word64 word =
+      let 
+        val text = CharVector.map Char.toLower (Word64.toString word)
+      in 
+        makeToken ("0wx" ^ text)
+      end
+
+  (* ?? *)
+  fun format_word8 word =
+      let 
+        val text = CharVector.map Char.toLower (Word8.toString word)
+      in
+        makeToken ("0wx" ^ text)
+      end
+
+  (* ?? *)
+  fun format_IntInf int =
+      let
+        val text = IntInf.toString int
+      in
+        makeToken text 
+      end
+
+  (* from smlformat/lib/BasicFormatter.ppg *)
+  fun format_listWithDeffered (elementFormatter, separator, separaterDeffered) [] = []
+    | format_listWithDeffered (elementFormatter, separator, separaterDeffered) values =
+      let
+        fun format [] = []
+          | format [value] = elementFormatter value
+          | format (head::tail) =
+            let
+              val elementFormatExp = elementFormatter head
+            in
+              case elementFormatExp of
+                [] => elementFormatExp @ separaterDeffered @ (format tail)
+              | [SMLFormat.FormatExpression.Term _] => elementFormatExp @ separaterDeffered @ (format tail)
+              | _ => elementFormatExp @ separator @ (format tail)
+            end
+      in
+        format values
+      end
+
+
+  (* list format with bound and ellipsis *)
+  fun formatElements (elementFormatter, separator, separatorDeffered) list =
+    let
+      val count = List.length list
+      val (contents, hasEllipsis) =
+(*
+          if count > (!C.printMaxDepth)
+          then (List.take(list, !C.printMaxDepth), true)
+          else 
+*)
+            (list, false)
+    in
+      if hasEllipsis then 
+        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) 
+        @ separator @
+        ellipsis
+      else
+        format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
+    end
+
+
+  fun format_lazyArray (elementFormatter, separator, separatorDeffered) lazyFn =
+      let
+(*
+        val {contents, hasEllipsis} = lazyFn (SOME (!C.printMaxDepth))
+*)
+        val {contents, hasEllipsis} = lazyFn NONE
+      in
+      if hasEllipsis then 
+        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) 
+        @ separator @
+        ellipsis
+      else
+        format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
+      end            
+
+
+  fun formatOptCase (formatter, ifnone, ifsome) =
+      fn NONE => ifnone
+       | SOME _ => ifsome
+
+  fun formatPrependedOpt (formatter, prefixIfSome) =
+      fn NONE => [FE.Term (0, "")]
+       | SOME value => prefixIfSome @ (formatter value)
+
+  fun formatOption (formatter, prefixIfSome, suffixIfSome) =
+      fn NONE => [FE.Term (4, "NONE")]
+       | SOME value => [FE.Term (4, "SOME")] @ prefixIfSome @ (formatter value) @ suffixIfSome
+
+  (* this is a copy for TermFormat 
+    ToDo: we should put all the generic formatter function in
+    the lib2. The current TermFormat contain compiler specific
+    formatters for boundTypeVars.
+   *)
+  fun formatIfCons exp nil = nil
+    | formatIfCons exp _ = exp
+
+  fun formatNonEmptyTypIDMap exp map =
+      if TypID.Map.isEmpty map then nil
+      else exp
+
+
+ (*%
+  * @params(labelsep)
+  * @formatter(list)  SMLFormat.BasicFormatters.format_list
+  * @formatter(RecordLabel.label)  RecordLabel.format_label
+  *)
+ type 'a fieldList =
+     (*%
+        @format(field fields)
+          fields(field)(","+1) 
+
+        @format:field(label * elem) 
+          { 2[label labelsep elem] }
+      *)
+     (RecordLabel.label * 'a) list
+
+  fun formatRecordLabelMap (formatter, labelsep) env =
+      format_fieldList(formatter,labelsep) (RecordLabel.Map.listItemsi env)
+
+ (*%
+  * @params(labelsep)
+  * @formatter(list)  SMLFormat.BasicFormatters.format_list
+  *)
+ type 'a fieldList =
+     (*%
+        @format(field fields)
+          fields(field)(","+1) 
+
+        @format:field(label * elem) 
+          { 2[label labelsep elem] }
+      *)
+     (string * 'a) list
+
+  fun formatSEnvMap (formatter, labelsep) env =
+      format_fieldList(formatter,labelsep) (SEnv.listItemsi env)
+
+ (*%
+  * @params(labelsep)
+  * @formatter(list)  SMLFormat.BasicFormatters.format_list
+  * @formatter(TypID.id)  TypID.format_id
+  *)
+ type 'a typIdMap =
+     (*%
+        @format(field fields)
+          fields(field)(","+1) 
+
+        @format:field(id * elem) 
+          { 2[id + labelsep + elem] }
+      *)
+     (TypID.id * 'a) list
+
+  fun formatTypIDMap (formatter, labelsep) env =
+      format_typIdMap(formatter,labelsep) (TypID.Map.listItemsi env)
+
+end
+end

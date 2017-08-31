@@ -1,0 +1,11 @@
+structure T =
+struct
+  structure S1 =
+  struct
+    type 'a t (= boxed)
+  end
+  structure S2 =
+  struct
+    type 'a t (= boxed)
+  end
+end

@@ -1,0 +1,25 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "./UserError.ppg.smi"
+
+structure UserErrorUtils =
+struct
+  val initializeErrorQueue : unit -> unit
+  val getErrorsAndWarnings : unit -> UserError.errorInfo list
+  val getErrors : unit -> UserError.errorInfo list
+  val isAnyError : unit -> bool
+  val getWarnings : unit -> UserError.errorInfo list
+  val enqueueError : Loc.loc * exn -> unit
+  val enqueueWarning : Loc.loc * exn -> unit
+  val checkSymbolDuplication' : ('a -> Symbol.symbol option)
+                             -> 'a list -> (Symbol.symbol -> exn) -> unit
+  val checkSymbolDuplication : ('a -> Symbol.symbol)
+                             -> 'a list -> (Symbol.symbol -> exn) -> unit
+  val checkRecordLabelDuplication
+      : ('a -> RecordLabel.label)
+        -> 'a list -> Loc.loc -> (RecordLabel.label -> exn) -> unit
+end

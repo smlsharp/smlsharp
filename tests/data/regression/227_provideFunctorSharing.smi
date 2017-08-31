@@ -1,0 +1,6 @@
+functor F(
+P:sig
+   structure A : sig type foo end
+   structure B : sig type bar end
+ end
+) = struct end

@@ -1,0 +1,16 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+
+structure DummyTyID =
+struct
+  eqtype id (= int)
+  eqtype snap (= int)
+  val generate : unit -> id
+  val peek : unit -> snap
+  val succ : snap -> snap
+  val isNewerThan : id * snap -> bool
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val format_snap : snap -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val snapToString : snap -> string
+end

@@ -1,0 +1,23 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
+_require local "../../../compilerIRs/typedcalc/main/TCAlphaRename.smi"
+_require local "../../../data/types/main/TyAlphaRename.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "./TypeInferenceUtils.smi"
+_require local "./UNCURRYFUNDECL.sig"
+
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+
+structure UncurryFundecl =
+  struct
+    val optimize : TypedCalc.tpdecl list -> TypedCalc.tpdecl list
+  end
