@@ -1,0 +1,6 @@
+_require "108_functordty2.smi"
+structure S =
+struct
+  datatype t = T of s
+  and s = S of t | U
+end

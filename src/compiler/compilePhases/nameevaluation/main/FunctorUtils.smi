@@ -1,0 +1,43 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+
+_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
+_require local "../../../extensions/usererror/main/UserErrorUtils.smi"
+_require local "../../../data/types/main/TvarMap.smi"
+_require local "./EvalSig.smi"
+_require local "./EvalTy.smi"
+_require local "./NameEvalUtils.smi"
+_require local "./NormalizeTy.smi"
+_require local "./SetLiftedTys.smi"
+_require local "./TfunVars.smi"
+
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require  "./NameEvalEnv.ppg.smi"
+
+structure FunctorUtils =
+struct
+  val evalFunArg : NameEvalEnv.topEnv * PatternCalc.plsigexp * Loc.loc
+                   -> {argStrEntry : NameEvalEnv.strEntry,
+                       argSigEnv : NameEvalEnv.env,
+                       dummyIdfunArgTy : IDCalc.ty option,
+                       exnTagDecls : IDCalc.icdecl list,
+                       extraTvars : IDCalc.tvar list,
+                       firstArgPat : (IDCalc.varInfo * IDCalc.ty list) option,
+                       polyArgPats : (IDCalc.varInfo * IDCalc.ty) list, 
+                       tfvDecls : IDCalc.icdecl list}
+  val varsInEnv : NameEvalEnv.env * Loc.loc
+                  -> (Symbol.longsymbol * IDCalc.icexp) list * ExnID.Set.set
+  val typidSet : NameEvalEnv.env -> TypID.Set.set
+  val eqEnv : {specEnv:NameEvalEnv.env, implEnv:NameEvalEnv.env} -> bool
+  val eqSize : NameEvalEnv.env * NameEvalEnv.env -> bool
+  val eqShape : NameEvalEnv.env * NameEvalEnv.env -> bool
+  val makeFunctorArgs : Loc.loc -> Symbol.longsymbol list -> NameEvalEnv.env -> IDCalc.icexp list
+end

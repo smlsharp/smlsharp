@@ -1,3 +1,0 @@
-val f = fn : ['a .'a -> ['b .'b -> 'a * 'b]]
-val g = fn : ['a .'a -> ['b .'b -> 'a * 'b]]
-

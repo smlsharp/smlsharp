@@ -1,0 +1,23 @@
+_require "../../../../basis.smi"
+
+structure HeapDump =
+struct
+
+  type dump (= boxed)
+
+  val dump : ['a#boxed . 'a -> dump option]
+
+  datatype pointer =
+      IMMUTABLE of Word64.word
+    | MUTABLE of Word64.word
+
+  datatype image =
+      VALUE of Word64.word
+    | POINTER of pointer
+
+  val image : dump -> {immutables : image vector,
+                       mutables : image vector,
+                       first : pointer,
+                       mutableObjects : pointer list}
+
+end

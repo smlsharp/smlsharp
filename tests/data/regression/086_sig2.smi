@@ -1,0 +1,4 @@
+structure T =
+struct
+  type must_be_datatype = int
+end

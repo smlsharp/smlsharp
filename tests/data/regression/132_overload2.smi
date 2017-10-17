@@ -1,0 +1,5 @@
+infix <
+val < =
+    case 'a in 'a * 'a -> bool of
+      int => SMLSharp_Builtin.Int32.lt
+    | real => SMLSharp_Builtin.Real64.lt

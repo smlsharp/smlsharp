@@ -1,4 +1,5 @@
 _require "./General.smi"
+_use local "./VectorSlice_common.sml"
 
 structure VectorSlice =
 struct

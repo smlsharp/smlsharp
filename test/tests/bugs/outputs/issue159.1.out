@@ -1,2 +1,0 @@
-exception e72 : exn
-structure S72 : sig exception e : exn end

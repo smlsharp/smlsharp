@@ -1,0 +1,6 @@
+structure ST = 
+struct
+  exception HOGE
+end
+exception FOO
+exception BAR = FOO

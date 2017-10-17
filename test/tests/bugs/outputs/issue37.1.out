@@ -1,3 +1,0 @@
-val y = 10 : int
-val z = 20 : int
-val x = (10, 20) : int * int

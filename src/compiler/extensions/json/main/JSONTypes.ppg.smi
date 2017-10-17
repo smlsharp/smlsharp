@@ -1,0 +1,46 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require local "../../format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../format-utils/main/TermPrintUtils.ppg.smi"
+
+structure JSONTypes =
+struct
+  datatype null = NULL
+  datatype void = VOID
+
+  datatype jsonTy 
+    = DYNty
+    | NULLty
+    | BOOLty
+    | INTty
+    | REALty
+    | STRINGty
+    | ARRAYty of jsonTy
+    | RECORDty of (string * jsonTy) list
+    | PARTIALRECORDty of (string * jsonTy) list
+    | PARTIALINTty
+    | PARTIALBOOLty
+    | PARTIALSTRINGty
+    | PARTIALREALty
+    | OPTIONty of jsonTy
+
+  datatype json 
+    = ARRAY of json list * jsonTy
+    | BOOL of bool
+    | INT of int
+    | NULLObject
+    | OBJECT of (string * json) list
+    | REAL of real
+    | STRING of string
+
+  val eqJson : json * json -> bool
+  datatype 'a dyn 
+    = DYN of (json -> 'a) * json
+
+  type format = SMLFormat.FormatExpression.expression list
+  val format_jsonTy : jsonTy -> format
+  val format_json : json -> format
+  val jsonToString : json -> string
+  val jsonTyToString : jsonTy -> string
+
+end

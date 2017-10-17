@@ -1,0 +1,5 @@
+structure S =
+struct
+  type 'a t (= boxed)
+  val x : 'a t
+end

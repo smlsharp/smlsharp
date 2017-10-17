@@ -1,0 +1,56 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlnj-lib/Util/lib-base.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "./CheckEq.smi"
+_require local "./TypesBasics.smi"
+_require local "./TypesUtils.smi"
+
+_require "../../../libs/ids/main/LocalID.smi"
+_require "./Types.ppg.smi"
+_require "./VarInfoEnv.smi"
+
+structure Unify =
+  struct
+    exception Unify
+    exception EqRawTy
+    val bug : string -> exn
+    val occurres : OTSet.item -> Types.ty -> bool
+    val occurresTyList : OTSet.item -> Types.ty list -> bool
+    val occurresTyEqList : OTSet.item -> (Types.ty * Types.ty) list -> bool
+    exception TyConId
+    val tyConId : Types.ty -> TypID.id
+    val checkKind
+        : Types.ty
+          -> {id:Types.freeTypeVarID,
+              lambdaDepth:int,
+              kind:Types.kind,
+              utvarOpt:Types.utvar option}
+          -> (Types.ty * Types.ty) list
+    val lubKind
+        : Types.tvKind * Types.tvKind
+          -> {id:Types.freeTypeVarID,
+              lambdaDepth:Types.lambdaDepth,
+              kind:Types.kind,
+              utvarOpt:Types.utvar option}
+             * (Types.ty * Types.ty) list
+    val unifyTypeEquations : bool -> (Types.ty * Types.ty) list -> unit
+    val unify : (Types.ty * Types.ty) list -> unit
+    val patternUnify : (Types.ty * Types.ty) list -> unit
+
+    exception NONEQ
+    val eqTy : BoundTypeVarID.id BoundTypeVarID.Map.map
+               -> Types.ty * Types.ty -> bool
+    val eqTyList : BoundTypeVarID.id BoundTypeVarID.Map.map
+                   -> Types.ty list * Types.ty list -> bool
+
+    val instOfPolyTy : Types.ty * Types.ty list -> Types.ty
+    
+  end

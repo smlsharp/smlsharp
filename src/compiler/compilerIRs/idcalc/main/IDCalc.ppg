@@ -1,0 +1,2639 @@
+(**
+ * @copyright (c) 2012- Tohoku University.
+ * @author Atsushi Ohori
+ *)
+(*
+  2012-2 ohori
+  IDTypes are merged to IDCalc due to the following:
+    In order to generate a minimul set of interface declarations from a 
+    topEnv, it is necessary to keep overloaded decls in IDOPRIM.
+    IDOPRIM is an idstatus, which appears in varE, which in tern
+    appers in tfun.
+
+ 2012-2-3 ohori
+ IDCalc is moved to types/main/ due to the following:
+ In order to support interactive mode, it is necessary to generate 
+ an interface "val x: ity" for "val x = exp", where ity is ty in IDCalc.
+ "ity" is generated from ty (in Types) obtained by type inference.
+ One strategy is to revert ty to ity. But this require to extend ity so 
+ that it can represent ty. This should be possible but it require 
+ a certain amount of work. Especially, ity must be able to represent
+ overloaded kind containing instance selector.
+
+ The current solution is to add the following constructor in ity
+  INFERREDTY of Types.ty
+ which remembers the inferred type.
+ This require IDCalc and Types to sit in the same dir.  
+
+2012-10-16 ohori
+id(string) and longid(string list) are changed to Symbol.symbol
+and Symbol.longsymbol under the following policy:
+ * loc in symbol is the location where this symbol is defined
+ * symbol in idstatus is the one where it is defined. The location 
+   of an orrurence of a symbol is kept in the term. So in
+   ICVAR {varInfo,  loc}, varInfo contain the symbol where it is defined
+   and loc is the location where it occurres.
+
+2012-11-18 ohori
+path is changed to longsymbol, and external path is changed to
+the pair of a longsymbol and a version.
+*)
+
+structure IDCalc =
+struct
+local
+
+  (*%
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
+   *)
+  (*% @prefix formatWithType_
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
+   *)
+  (*% @prefix print_
+     @formatter(AbsynTy.eq) AbsynTy.format_eq
+   *)
+  type eq =
+   (*%
+      @format(x) x
+    *)
+   (*% @prefix formatWithType_
+      @format(x) x
+    *)
+   (*% @prefix print_
+      @format(x) x
+    *)
+   AbsynTy.eq
+  fun bug s = Bug.Bug ("IDCalc: " ^ s)
+  val tempVarNamePrefix = "T_"
+in
+  type loc = Loc.loc
+
+  (*%
+    @formatter(option) TermFormat.formatOptionalOption
+   *)
+  (*% @prefix formatWithType_
+    @formatter(option) TermFormat.formatOptionalOption
+   *)
+  (*% @prefix print_
+    @formatter(option) TermFormat.formatOptionalOption
+   *)
+  type version =
+    (*%
+       @format(int opt)  "(" opt(int)(,) ")"
+     *)
+    (*% @prefix formatWithType_
+       @format(int opt)  "(" opt(int)(,) ")"
+     *)
+    (*% @prefix print_
+       @format(int opt)  "(" opt(int)(,) ")"
+     *)
+    int option
+
+  (*%
+     @formatter(Symbol.symbol) Symbol.format_symbol
+   *)
+  (*% @prefix formatWithType_
+     @formatter(Symbol.symbol) Symbol.format_symbol
+   *)
+  (*% @prefix print_
+     @formatter(Symbol.symbol) Symbol.format_symbol
+   *)
+  type symbol = Symbol.symbol
+
+  (*% 
+      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   *)
+  (*% @prefix formatWithType_
+      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   *)
+  (*% @prefix print_
+      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   *)
+  type longsymbol = Symbol.longsymbol
+
+  (* the ids (names) used in and after IDCalc *)
+  (* type name *)
+  (*%
+      @formatter(TypID.id) TypID.format_id
+   *)
+  (*% @prefix formatWithType_
+      @formatter(TypID.id) TypID.format_id
+   *)
+  (*% @prefix print_
+      @formatter(TypID.id) TypID.format_id
+   *)
+  type typId =
+    (*%
+       @format(id) "t" id
+     *)
+    (*% @prefix formatWithType_
+       @format(id) "t" id
+      *)
+    (*% @prefix print_
+       @format(id) "t" id
+      *)
+    TypID.id
+
+  (* constructor name *)
+  (*%
+     @formatter(ConID.id) ConID.format_id
+   *)
+  (*% @prefix formatWithType_
+     @formatter(ConID.id) ConID.format_id
+   *)
+  (*% @prefix print_
+     @formatter(ConID.id) ConID.format_id
+   *)
+  type conId =
+    (*%
+        @format(id) "c" id
+     *)
+    (*% @prefix formatWithType_
+        @format(id) "c" id
+     *)
+    (*% @prefix print_
+        @format(id)
+     *)
+    ConID.id
+
+  (* local variable name *)
+  (*%
+      @formatter(VarID.id) VarID.format_id
+   *)
+  (*% @prefix formatWithType_
+      @formatter(VarID.id) VarID.format_id
+   *)
+  (*% @prefix print_
+      @formatter(VarID.id) VarID.format_id
+   *)
+  type varId =
+    (*%
+        @format(id) "v" id
+     *)
+    (*% @prefix formatWithType_
+        @format(id) "v" id
+     *)
+    (*% @prefix print_
+        @format(id)
+     *)
+    VarID.id
+
+  (* exception name *)
+  (*%
+     @formatter(ExnID.id) ExnID.format_id
+   *)
+  (*% @prefix formatWithType_
+     @formatter(ExnID.id) ExnID.format_id
+   *)
+  (*% @prefix print_
+     @formatter(ExnID.id) ExnID.format_id
+   *)
+  type exnId =
+    (*%
+       @format(id) "e" id
+     *)
+    (*% @prefix formatWithType_
+       @format(id) "e" id
+     *)
+    (*% @prefix print_
+       @format(id)
+     *)
+    ExnID.id
+
+  (* overloaded primitve id *)
+  (*%
+     @formatter(OPrimID.id) OPrimID.format_id
+   *)
+  (*% @prefix formatWithType_
+     @formatter(OPrimID.id) OPrimID.format_id
+   *)
+  (*% @prefix print_
+     @formatter(OPrimID.id) OPrimID.format_id
+   *)
+  type oprimId =
+    (*%
+       @format(id) "o" id
+      *)
+    (*% @prefix formatWithType_
+       @format(id) "o" id
+      *)
+    (*% @prefix print_
+       @format(id)
+      *)
+    OPrimID.id
+
+  (* type variable name *)
+  (*%
+     @formatter(TvarID.id) TvarID.format_id
+   *)
+  (*% @prefix formatWithType_
+     @formatter(TvarID.id) TvarID.format_id
+   *)
+  (*% @prefix print_
+     @formatter(TvarID.id) TvarID.format_id
+   *)
+  type tvarId =
+    (*%
+       @format(id) "tv" id
+     *)
+    (*% @prefix formatWithType_
+       @format(id) "tv" id
+     *)
+    (*% @prefix print_
+       @format(id)
+     *)
+    TvarID.id
+
+  (*%
+     @formatter(RevealID.id) RevealID.format_id
+   *)
+  (*% @prefix formatWithType_
+     @formatter(RevealID.id) RevealID.format_id
+   *)
+  (*% @prefix print_
+     @formatter(RevealID.id) RevealID.format_id
+   *)
+  type revealKey =
+    (*%
+       @format(id) "rv" id
+     *)
+    (*% @prefix formatWithType_
+       @format(id) "rv" id
+     *)
+    (*% @prefix print_
+       @format(id)
+     *)
+    RevealID.id
+
+  (* type variable; if lifted=ture then this type variable is originally
+     a type constructore in a functor argument.
+   *)
+  (*%
+   *)
+  (*% @prefix formatWithType_
+   *)
+  (*% @prefix print_
+   *)
+  type tvar =
+     (*%
+        @format({symbol, id, eq, lifted})
+          eq symbol
+       *)
+     (*% @prefix formatWithType_
+        @format({symbol, id, eq, lifted})
+          eq symbol "(" id ")"
+       *)
+     (*% @prefix print_
+        @format({symbol, id, eq, lifted})
+          eq symbol
+       *)
+     {symbol:symbol, id:tvarId, eq:eq, lifted:bool}
+
+  fun formatEnclosedTvarSet (lparen, comma, rparen) map =
+      TermFormat.formatOptionalList
+        (format_tvar, lparen, comma, rparen)
+        (TvarSet.listItems map)
+
+  fun formatEnclosedTvarMap (formatter, lparen, mapsto, comma, rparen)  map =
+      TermFormat.formatOptionalList
+        (fn (tvar, item) => (format_tvar tvar) @ mapsto @ (formatter item),
+         lparen,
+         comma,
+         rparen
+        )
+        (TvarMap.listItemsi map)
+
+  (* the set of tycons in a functor argument that are lifted to
+     type variables *)
+  (*%
+     @formatter(TvarSet.set) formatEnclosedTvarSet
+   *)
+  (*% @prefix formatWithType_
+     @formatter(TvarSet.set) formatEnclosedTvarSet
+   *)
+  (*% @prefix print_
+     @formatter(TvarSet.set) formatEnclosedTvarSet
+   *)
+  type liftedTys =
+    (*%
+       @format(tvset)  tvset()("<",",","> ")
+     *)
+    (*% @prefix formatWithType_
+       @format(tvset)  tvset()("<",",","> ")
+     *)
+    (*% @prefix print_
+       @format(tvset)
+     *)
+    TvarSet.set
+
+  val emptyLiftedTys = TvarSet.empty : liftedTys
+
+  (*%
+     @formatter(list) TermFormat.formatSeqList
+     @formatter(ifCons) TermFormat.formatIfCons
+   *)
+  (*% @prefix formatWithType_
+     @formatter(list) TermFormat.formatSeqList
+     @formatter(ifCons) TermFormat.formatIfCons
+   *)
+  (*% @prefix print_
+     @formatter(list) TermFormat.formatSeqList
+     @formatter(ifCons) TermFormat.formatIfCons
+   *)
+  type formals
+   = (*%
+        @format(formal formals) 
+          formals(formal)("(",",",")")
+          formals:ifCons()(+)
+     *)
+     (*% @prefix formatWithType_
+        @format(formal formals) 
+          formals(formal)("(",",",")")
+          formals:ifCons()(+)
+     *)
+     (*% @prefix print_
+        @format(formal formals) 
+          {formals(formal)("(",",",")")}
+     *)
+     tvar list
+
+  (*%
+    @formatter(option) TermFormat.formatOptionalOption
+   *)
+  (*% @prefix formatWithType_
+    @formatter(option) TermFormat.formatOptionalOption
+   *)
+  (*% @prefix print_
+    @formatter(option) TermFormat.formatOptionalOption
+   *)
+  (* variable *)
+  type varInfo
+    = (*%
+         @format({longsymbol, id})
+            longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, id})
+            longsymbol "(" id ")"
+       *)
+      (*% @prefix print_
+         @format({longsymbol, id})
+            longsymbol
+       *)
+      {longsymbol: longsymbol, id: varId}
+
+  (*%
+   *)
+  (*% @prefix formatWithType_
+   *)
+  (*% @prefix print_
+   *)
+  (* overloaded primitive name *)
+  type oprimInfo
+    = (*% 
+         @format({longsymbol, id})  longsymbol
+       *)
+      (*% @prefix formatWithType_ 
+         @format({longsymbol, id})  longsymbol "(" id ")"
+       *)
+      (*% @prefix print_
+         @format({longsymbol, id})  longsymbol
+       *)
+      {longsymbol: longsymbol, id: oprimId}
+
+  (*% 
+     @formatter(AbsynConst.constant) AbsynConst.format_constant
+   *)
+  (*% @prefix formatWithType_ 
+     @formatter(AbsynConst.constant) AbsynConst.format_constant
+   *)
+  (*% @prefix print_
+     @formatter(AbsynConst.constant) AbsynConst.format_constant
+   *)
+  type constant 
+    = (*%
+         @format(x) x
+       *)
+      (*% @prefix formatWithType_ 
+         @format(x) x
+       *)
+      (*% @prefix print_
+         @format(x) x
+       *)
+    AbsynConst.constant
+
+  (*%
+     @formatter(tyformat) Types.format_ty
+   *)
+  (*% @prefix formatWithType_
+     @formatter(tyformat) Types.format_ty
+   *)
+  (*% @prefix print_
+     @params(ordmaplist,envList,tyconName)
+     @formatter(tyformat) Types.print_ty
+   *)
+  type typesTy 
+    = (*%  
+         @format(ty:tyformat) ty()() 
+       *)
+      (*% @prefix formatWithType_
+         @format(ty:tyformat) ty()() 
+       *)
+      (*% @prefix print_
+         @format(ty:tyformat) ty()(,envList,tyconName)
+       *)
+      Types.ty
+
+   fun ifOpaque(opaque, opaqueExp, normalExp) _ =
+       if null(opaque) then normalExp else opaqueExp
+
+   (*% 
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
+     @formatter(tvar) format_tvar
+    *)
+   datatype runtimeTy
+     = (*% 
+          @format(bty) bty
+        *)
+       BUILTINty of BuiltinTypeNames.bty
+     | (*%
+          @format(tvar) tvar
+       *)
+       LIFTEDty of tvar
+
+   fun staticTfunName (env, sname) tfun =
+       SmlppgUtil.makeToken (sname (env, tfun))
+
+   (*%
+     @formatter(formatUserLongSymbol) Symbol.formatUserLongSymbol
+     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
+     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+     @formatter(TypID.Map.map) formatEnclosedTypEnv
+     @formatter(bool) SmlppgUtil.formatBinaryChoice
+     @formatter(appList) TermFormat.formatAppList
+     @formatter(declList) TermFormat.formatDeclList
+     @formatter(ifCons) TermFormat.formatIfCons
+     @formatter(optionalList) TermFormat.formatOptionalList
+     @formatter(option) TermFormat.formatOptionalOption
+     @formatter(recordTy) TermFormat.formatRecordTy
+     @formatter(seqList) TermFormat.formatSeqList
+     @formatter(enclosedList) TermFormat.formatEnclosedList
+     @formatter(optionalList) TermFormat.formatOptionalList
+     @formatter(RecordLabel.label) RecordLabel.format_label
+    *)
+   (*% @prefix formatWithType_
+     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
+     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+     @formatter(TypID.Map.map) formatEnclosedTypEnv
+     @formatter(bool) SmlppgUtil.formatBinaryChoice
+     @formatter(appList) TermFormat.formatAppList
+     @formatter(declList) TermFormat.formatDeclList
+     @formatter(enclosedList) TermFormat.formatEnclosedList
+     @formatter(ifCons) TermFormat.formatIfCons
+     @formatter(option) TermFormat.formatOptionalOption
+     @formatter(optionalList) TermFormat.formatOptionalList
+     @formatter(recordTy) TermFormat.formatRecordTy
+     @formatter(seqList) TermFormat.formatSeqList
+     @formatter(RecordLabel.label) RecordLabel.format_label
+   *)
+   (*% @prefix print_
+     @params(env,tfunName,tyConName,mode,name)
+     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+     @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+     @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
+     @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
+     @formatter(formatSymbolMap) SmlppgUtil.formatSymbolMap
+     @formatter(TypID.Map.map) formatEnclosedTypEnv
+     @formatter(bool) SmlppgUtil.formatBinaryChoice
+     @formatter(appList) TermFormat.formatAppList
+     @formatter(declList) TermFormat.formatDeclList
+     @formatter(enclosedList) TermFormat.formatEnclosedList
+     @formatter(ifCons) TermFormat.formatIfCons
+     @formatter(ifNonEmpty) TermFormat.formatIfNonEmptySymbolMap
+     @formatter(ifEmpty) TermFormat.formatIfEmptySymbolMap
+     @formatter(ifEmptyFormat) TermFormat.formatIfEmptyFormat
+     @formatter(option) TermFormat.formatOptionalOption
+     @formatter(optionalList) TermFormat.formatOptionalList
+     @formatter(recordTy) TermFormat.formatRecordTy
+     @formatter(seqList) TermFormat.formatSeqList
+     @formatter(formatGenericSymbolMap) SmlppgUtil.formatGenericSymbolMap
+     @formatter(ifOpaque) ifOpaque
+     @formatter(tfunOriginalPath) format_tfun
+     @formatter(staticTfunName) staticTfunName
+     @formatter(RecordLabel.label) RecordLabel.format_label
+   *)
+  datatype ty
+    = (*%
+         @format "_"
+       *)
+      (*% @prefix formatWithType_
+         @format "_"
+       *)
+      (*% @prefix print_
+         @format "_"
+       *)
+      TYWILD
+    | (*%
+          @format "?"
+       *)
+      (*% @prefix formatWithType_
+          @format "?"
+       *)
+      (*% @prefix print_
+          @format "?"
+       *)
+      TYERROR
+    | (*%
+         @format(tvar) tvar
+       *)
+      (*% @prefix formatWithType_
+         @format(tvar) tvar
+       *)
+      (*% @prefix print_
+         @format(tvar) tvar
+       *)
+      TYVAR of tvar
+    | (*%
+         @format(ty tys) tys:recordTy(ty)
+       *)
+      (*% @prefix formatWithType_
+         @format(ty tys) tys:recordTy(ty)
+       *)
+      (*% @prefix print_
+          @format(ty tys) tys:recordTy(ty()(env,tfunName,tyConName,,))
+       *)
+      TYRECORD of ty RecordLabel.Map.map
+    | (*%
+         @format({tfun, args: argTy argTys})
+           1[ argTys:seqList(argTy)("(",",",")")
+              argTys:ifCons()(+1) tfun ]
+       *)
+      (*% @prefix formatWithType_
+         @format({tfun, args: argTy argTys})
+           1[ argTys:seqList(argTy)("(",",",")")
+              argTys:ifCons()(+1) tfun ]
+       *)
+      (*% @prefix print_
+         @format({tfun:tfun:staticTfunName, args: argTy argTys})
+          L8{
+           2[ 
+             argTys:seqList(argTy()(env,tfunName,tyConName,,))("(",",",")")
+             argTys:ifCons()(+) 
+             tfun()(env,tfunName)
+            ]
+          }
+       *)
+      TYCONSTRUCT of {tfun:tfun, args:ty list}
+    | (*%
+         @format(ty1 tys * ty2)
+           1["{" tys(ty1)(",") "}" +1 "->" +d ty2]
+       *)
+      (*% @prefix formatWithType_
+         @format(ty1 tys * ty2)
+           1["{" tys(ty1)(",") "}" +1 "->" +d ty2]
+       *)
+      (*% @prefix print_
+         @format(ty1 tys * ty2)
+          R4{
+           2[
+             tys:seqList(ty1()(env,tfunName,tyConName,,))("(",",",")")
+             +1 
+             "->"
+             +d
+             ty2()(env,tfunName,tyConName,,)
+           ]
+          }
+       *)
+      TYFUNM of ty list * ty
+    | (*%
+         @format(kindedTvar list * ty)
+           "[" 1[list(kindedTvar)(",") "." +1 ty] "]"
+       *)
+      (*% @prefix formatWithType_
+         @format(kindedTvar list * ty)
+           "[" 1[list(kindedTvar)(",") "." +1 ty] "]"
+       *)
+      (*% @prefix print_
+         @format(kindedTvar list * ty)
+          !N0{
+           "["
+              2[
+                list(kindedTvar()(env,tfunName,tyConName,,))(",") 
+                "." 
+                +1 
+                ty()(env,tfunName,tyConName,,)
+               ]
+            "]"
+          }
+       *)
+      TYPOLY of kindedTvar list * ty
+    | (*%
+         @format(ty) "inferred" + ty
+       *)
+      (*% @prefix formatWithType_
+         @format(ty) "inferred" + ty
+       *)
+      (*% @prefix print_
+         @format(ty) ty()(,env,tyConName)
+       *)
+      INFERREDTY of typesTy
+
+  and tvarKind
+    = (*%
+          @format
+       *)
+      (*% @prefix formatWithType_
+          @format
+       *)
+      (*% @prefix print_
+          @format
+       *)
+      UNIV
+    | (*%
+         @format(ty tys)
+          "#" tys:recordTy(ty)
+       *)
+      (*% @prefix formatWithType_
+         @format(ty tys)
+          "#" tys:recordTy(ty)
+       *)
+      (*% @prefix print_
+         @format(ty tys)
+          "#" tys:recordTy(ty()(env,tfunName,tyConName,,))
+       *)
+      REC of ty RecordLabel.Map.map
+    | (*% @format({dynKind}) "#json" *)
+      (*% @prefix formatWithType_ @format({dynKind}) "#json" *)
+      (*% @prefix print_ @format({dynKind}) "#json" *)
+      JSON of {dynKind:bool}
+    | (*% @format({dynKind}) "#reify" *)
+      (*% @prefix formatWithType_ @format({dynKind}) "#reify" *)
+      (*% @prefix print_ @format({dynKind}) "#reify" *)
+      REIFY
+    | (*% @format "#boxed" *)
+      (*% @prefix formatWithType_ @format "#boxed" *)
+      (*% @prefix print_ @format "#boxed" *)
+      BOXED
+    | (*% @format "#unboxed" *)
+      (*% @prefix formatWithType_ @format "#unboxed" *)
+      (*% @prefix print_ @format "#unboxed" *)
+      UNBOXED
+
+  (* type function; there are two varieties.
+     TFUN_DEF for a type-level lambda term \'a.ty
+     TFUN_VAR for a type name
+   *)
+  and tfun
+    = (*%
+         @format({iseq, formals, realizerTy, longsymbol})
+           1["\\" formals "." +1 realizerTy]
+       *)
+      (*% @prefix formatWithType_
+         @format({iseq, formals, realizerTy, longsymbol})
+           1["\\" formals "." +1 realizerTy]
+       *)
+      (*% @prefix print_
+         @format({iseq, formals, realizerTy, longsymbol})
+           2[
+             "type"
+             + formals
+             formals:ifCons()(+)
+             name + "=" +
+             realizerTy()(env,tfunName,tyConName,,)
+           ]
+       *)
+      (* "type foo = ty"; after name evaluation this will not apper. *)
+      TFUN_DEF of {iseq:bool, formals:formals, realizerTy:ty, longsymbol:longsymbol}
+    | (*%
+         @format(tfunkind tfunref)
+           tfunref(tfunkind)
+       *)
+      (*% @prefix formatWithType_
+         @format(tfunkind tfunref)
+           tfunref(tfunkind)
+       *)
+      (*% @prefix print_
+         @format(tfunkind tfunref)
+           tfunref(tfunkind()(env,tfunName,tyConName,mode,name))
+       *)
+      TFUN_VAR of tfunkind ref
+
+  (* actual structures of a type function *)
+  and tfunkind
+    = (*%
+         @format({id, iseq, formals, longsymbol:longsymbol:formatUserLongSymbol, conSpec, conIDSet, liftedTys, runtimeTy, dtyKind})
+           longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({id, iseq, formals, longsymbol, conSpec, conIDSet, liftedTys, runtimeTy, dtyKind})
+           liftedTys "d" "(" formals ")" longsymbol "("id")"+ "(" iseq()("EQ","NONEQ") ")" dtyKind
+       *)
+      (*% @prefix print_
+         @format({id, iseq, formals, longsymbol, conSpec, conIDSet, liftedTys, runtimeTy, dtyKind})
+          4[
+             mode:ifEmptyFormat()("type"+, "datatype"+)
+             formals formals:ifCons()(+)
+             name +
+             mode:ifEmptyFormat()(dtyKind:ifOpaque()(dtyKind()(env,tfunName,tyConName,,), + "<hidden>", 
+                                       "=" + formals formals:ifCons()(+) longsymbol),
+                                  "=" +1 
+                                  dtyKind:ifOpaque()(dtyKind()(env,tfunName,tyConName,,),"<hidden>", conSpec()(env,tfunName,tyConName,,))
+                                 )
+           ]
+       *)
+      (* datatype name; after name evaluation this is the only entry *)
+      TFUN_DTY of {id:typId,
+                   iseq:bool,
+                   longsymbol:longsymbol,
+                   formals:formals,
+                   conSpec:conSpec,
+                   conIDSet : ConID.Set.set,
+		   runtimeTy:runtimeTy,
+                   liftedTys:liftedTys,
+                   dtyKind:dtyKind
+                  }
+    | (*%
+         @format({longsymbol:longsymbol:formatUserLongSymbol, id, iseq, formals}) 
+           longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, id, iseq, formals})
+           "s" + longsymbol + "(" formals ")" id
+       *)
+      (*% @prefix print_
+         @format({longsymbol, id, iseq, formals})
+          iseq()("eqtype","type")
+           +
+           formals
+           formals:ifCons()(+)
+           name
+       *)
+      (* type constructore name in spec *)
+      TFV_SPEC of {longsymbol:longsymbol, id:typId, iseq:bool, formals:formals}
+    | (*%
+         @format({longsymbol:longsymbol:formatUserLongSymbol, id, iseq, formals, conSpec, liftedTys})
+           longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, id, iseq, formals, conSpec, liftedTys})
+           liftedTys "v" "(" formals ")" id
+       *)
+      (*% @prefix print_
+         @format({longsymbol, id, iseq, formals, conSpec, liftedTys})
+          2[
+              mode:ifEmptyFormat()("type"+, "datatype"+)
+              formals
+              formals:ifCons()(+)
+              name + "="
+              +1
+              mode:ifEmptyFormat()(longsymbol, conSpec()(env,tfunName,tyConName,,))
+           ]
+       *)
+      (* datatype name in spec *)
+      TFV_DTY of {id:typId,
+                  longsymbol:longsymbol, 
+                  iseq:bool,
+                  formals:formals,
+                  conSpec:conSpec,
+                  liftedTys:liftedTys}
+    | (*%
+         @format({id, tfun}) tfun
+       *)
+      (*% @prefix formatWithType_
+         @format({id, tfun}) "*r" + tfun
+       *)
+      (*% @prefix print_
+         @format({id, tfun}) 
+           "realized" +
+           tfun()(env,tfunName,tyConName,mode,name)
+       *)
+      (* a type name that has been substituted for a type realizer.
+         This will only appear in spec.
+       *)
+      REALIZED of {id:typId, tfun:tfun}
+    | (*%
+         @format({tfunkind, tfun})
+           1[tfun +1 "(i*" tfunkind ")"]
+       *)
+      (*% @prefix formatWithType_
+         @format({tfunkind, tfun})
+           1[tfun +1 "(i*" tfunkind ")"]
+       *)
+      (*% @prefix print_
+         @format({tfunkind, tfun})
+          "instantiated" +
+           tfun()(env,tfunName,tyConName,mode,name) 
+       *)
+      (* a type name that has been instantiated by an actual type function
+         This is generated by signature check.
+       *)
+      INSTANTIATED of {tfunkind:tfunkind, tfun:tfun}
+    | (*%
+         @format({longsymbol:longsymbol:formatUserLongSymbol, tfun, varE, formals, conSpec, liftedTys})
+           longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, tfun, varE, formals, conSpec, liftedTys})
+           "*d" "(" formals ")" tfun
+       *)
+      (*% @prefix print_
+         @format({longsymbol, tfun, varE, formals, conSpec, liftedTys})
+           "fun_dty" +
+           tfun()(env,tfunName,tyConName,mode,name)
+       *)
+      (* a datatype in a functor argument that has been materialized to
+         an actual datatype. varE contains generated conId for datatype
+         spec.
+       *)
+      FUN_DTY of {tfun:tfun,
+                  longsymbol:longsymbol, 
+                  varE:varE,
+                  formals:formals,
+                  conSpec:conSpec,
+                  liftedTys:liftedTys}
+
+  and dtyKind
+    = (*%
+         @format "[FP]"
+       *)
+      (*% @prefix formatWithType_
+         @format "[FP]"
+       *)
+      (*% @prefix print_
+         @format
+       *)
+      FUNPARAM
+    | (*%
+         @format "[DTY]"
+       *)
+      (*% @prefix formatWithType_
+         @format "[DTY]"
+       *)
+      (*% @prefix print_
+         @format
+       *)
+      (* datatypes *)
+      DTY
+    | (*%
+         @format "[DTY_INTERFACE]"
+       *)
+      (*% @prefix formatWithType_
+         @format "[DTY_INTERFACE]"
+       *)
+      (*% @prefix print_
+         @format "opaque"
+       *)
+     (* opaque dty interface *)
+      DTY_INTERFACE
+    | (*%
+         @format({tfun, revealKey})
+           "[opaque("revealKey "," tfun ")" "]"
+       *)
+      (*% @prefix formatWithType_
+         @format({tfun, revealKey})
+           "[opaque("revealKey "," tfun ")" "]"
+       *)
+      (*% @prefix print_
+         @format({tfun, revealKey})
+           "opaque"
+       *)
+      (* opaque types of builtin types; opqaue types of datatypes are DTYs *)
+      OPAQUE of {tfun:tfun, revealKey:revealKey}
+    | (*%
+         @format(builtin)
+       *)
+      (*% @prefix formatWithType_
+         @format(builtin)
+       *)
+      (*% @prefix print_
+         @format(builtin)
+       *)
+      (* builtin types *)
+      BUILTIN of BuiltinTypeNames.bty
+
+   and idstatus
+    = (*%
+         @format({id, longsymbol})  "var" + id
+       *)
+      (*% @prefix formatWithType_
+         @format({id, longsymbol})  "var" + id
+       *)
+      (*% @prefix print_
+         @format({id, longsymbol})
+           "val" + name
+       *)
+      IDVAR of {id:varId, longsymbol:longsymbol}
+    | (*%
+         @format({id, ty, longsymbol})  "typed var" + id + ":" + ty
+       *)
+      (*% @prefix formatWithType_
+         @format({id, ty, longsymbol})  "typed var" + id + ":" + ty
+       *)
+      (*% @prefix print_
+         @format({id, ty, longsymbol}) 
+            "val" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+      IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol}
+    | (*%
+         @format({exInfo, internalId})
+            "external var" + exInfo
+       *)
+      (*% @prefix formatWithType_
+         @format({exInfo, internalId})  
+            "external var" + exInfo
+       *)
+      (*% @prefix print_
+         @format({exInfo, internalId})
+           "val" + exInfo()(env,tfunName,tyConName,,)
+       *)
+      (* 2012-1-30 used flag indicate that it is referenced and 
+         therefore extern declaration needs to be generated.
+       *)
+      (* 2012-1-30 internalId is added for generating print term;
+         a print term is generated for each IDEXVAR entry in topEnv.
+         for this purpose varId is needed.
+         This id is only set by genExtern in NameEval.
+       *)
+      (* external variable name *)
+      IDEXVAR of {exInfo:exInfo, internalId:varId option}
+    | (*%
+         @format({longsymbol, id, version})  "external var to be typed" + longsymbol 
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, id, version})  "external var to be typed" + longsymbol 
+       *)
+      (*% @prefix print_
+         @format({longsymbol, id, version})
+          "val" + name
+       *)
+      (* 2012-1-30 used flag indicate that it is referenced and 
+         therefore extern declaration needs to be generated.
+       *)
+      (* external variable name *)
+      IDEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId,  version:version}
+    | (*%
+         @format({primitive, ty})  "primitive" + primitive
+       *)
+      (*% @prefix formatWithType_
+         @format({primitive, ty})  "primitive" + primitive
+       *)
+      (*% @prefix print_
+         @format({primitive, ty})
+           "val" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+      (* external variable name *)
+      IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty}
+    | (*%
+         @format({id, ty, longsymbol})
+           1["con" + id +1 ":" + ty]
+       *)
+      (*% @prefix formatWithType_
+         @format({id, ty, longsymbol})
+           1["con" + id +1 ":" + ty]
+       *)
+      (*% @prefix print_
+         @format({id, ty, longsymbol})
+           "val" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+     (* constructor name *)
+      IDCON of {id:conId, ty:ty, longsymbol:longsymbol}
+    | (*%
+         @format({id, ty:ty, longsymbol})
+           1[ "exn" + id +1 ":" + ty]
+       *)
+      (*% @prefix formatWithType_
+         @format({id, ty:ty, longsymbol})
+           1[ "exn" + id +1 ":" + ty]
+       *)
+      (*% @prefix print_
+         @format({id, ty:ty, longsymbol})
+            "exception" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+     (* exception name *)
+      IDEXN of {id:exnId, ty:ty, longsymbol:longsymbol}
+    | (*%
+         @format({id, ty:ty, longsymbol})
+           1["exn rep" + id +1 ":" + ty]
+       *)
+      (*% @prefix formatWithType_
+         @format({id, ty:ty, longsymbol})
+           1["exn rep" + id +1 ":" + ty]
+       *)
+      (*% @prefix print_
+         @format({id, ty:ty, longsymbol})
+            "exception" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+     (* exception name *)
+      IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol}
+    | (*%
+         @format({used, longsymbol, ty:ty, version})
+          1["external exn" + longsymbol +1 ":" + ty]
+       *)
+      (*% @prefix formatWithType_
+         @format({used, longsymbol, ty:ty, version})
+          1["external exn" + longsymbol +1 ":" + ty]
+       *)
+      (*% @prefix print_
+         @format({used, longsymbol, ty:ty, version})
+            "exception" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+      (* external exception name *)
+      IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty}
+    | (*%
+         @format({used, longsymbol, ty:ty, version})
+          1["external exn rep" + longsymbol +1 ":" + ty]
+       *)
+      (*% @prefix formatWithType_
+         @format({used, longsymbol, ty:ty, version})
+          1["external exn rep" + longsymbol +1 ":" + ty]
+       *)
+      (*% @prefix print_
+         @format({used, longsymbol, ty:ty, version})
+            "exception" + name + "=" + longsymbol
+       *)
+      (* external exception name *)
+      IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol}
+    | (*%
+         @format({id, overloadDef, used, longsymbol})  "oprim" "(" id ")"
+       *)
+      (*% @prefix formatWithType_
+         @format({id, overloadDef, used, longsymbol})  "oprim" "(" id ")"
+       *)
+      (*% @prefix print_
+         @format({id, overloadDef, used, longsymbol})
+       *)
+      (* overloaded primitive name *)
+      IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol}
+    | (*%
+         @format({ty, symbol}) 1["SPECVAR" +1 ":" + ty]
+       *)
+      (*% @prefix formatWithType_
+         @format({ty, symbol}) 1["SPECVAR" +1 ":" + ty]
+       *)
+      (*% @prefix print_
+         @format({ty, symbol})
+            "val" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+      (* variable name in spec *)
+      IDSPECVAR of {ty:ty, symbol:symbol}
+    | (*%
+         @format({ty, symbol}) "SPECEXN" + ty
+       *)
+      (*% @prefix formatWithType_
+         @format({ty, symbol}) "SPECEXN" + ty
+       *)
+      (*% @prefix print_
+         @format({ty, symbol})
+            "exception" + name + ":" + ty()(env,tfunName,tyConName,,)
+       *)
+      (* TODO: exception name of ty *)
+      (* exception name in a functor argument *)
+      IDSPECEXN of {ty:ty, symbol:symbol}
+    | (*%
+         @format({symbol}) "SPECCON"
+       *)
+      (*% @prefix formatWithType_
+         @format({symbol}) "SPECCON"
+       *)
+      (*% @prefix print_
+         @format({symbol})
+       *)
+      (* constructor name in a functor argument *)
+      IDSPECCON of {symbol:symbol}
+
+   and icexp 
+    = (*%  
+         @format  "_"
+       *)
+      (*% @prefix formatWithType_  
+         @format  "_"
+       *)
+      (*% @prefix print_
+         @format  "_"
+       *)
+      ICERROR
+    | (*%
+         @format(const)  const
+       *)
+      (*% @prefix formatWithType_
+         @format(const)  const
+       *)
+      (*% @prefix print_
+         @format(const) 
+       *)
+      ICCONSTANT of constant
+    | (*%
+         @format(var)  var
+       *)
+      (*% @prefix formatWithType_
+         @format(var)  var
+       *)
+      (*% @prefix print_
+         @format(var)
+       *)
+      (* local variable *)
+      ICVAR of varInfo
+    | (*%
+         @format({longsymbol, exInfo})  exInfo
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, exInfo})  exInfo
+       *)
+      (*% @prefix print_
+         @format({longsymbol, exInfo})
+       *)
+      (* extnernal variable imported through _require *)
+      ICEXVAR of {longsymbol:longsymbol, exInfo:exInfo}
+    | (*%
+         @format({longsymbol, id:varId, exInfo:exInfo}) exInfo
+         @format:exInfo({used, longsymbol:longsymbol, version:version}) 
+             longsymbol + "(to be typed)"
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, id:varId, exInfo:exInfo}) exInfo
+         @format:exInfo({used, longsymbol:longsymbol, version:version}) 
+                longsymbol + "(to be typed)"
+       *)
+      (*% @prefix print_
+         @format({longsymbol, id:varId, exInfo:exInfo})
+       *)
+      (* extnernal variable imported through _require *)
+      ICEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId, exInfo:{used:bool ref, longsymbol:longsymbol, version:version}}
+    | (*%
+         @format({primitive,ty,loc})  primitive
+       *)
+      (*% @prefix formatWithType_
+         @format({primitive,ty,loc})  primitive
+       *)
+      (*% @prefix print_
+         @format({primitive,ty,loc})
+       *)
+      (* builtin names imported through _require *)
+      ICBUILTINVAR of {primitive:BuiltinPrimitive.primitive, ty:ty, loc:loc}
+    | (*%
+         @format(con)  con
+       *)
+      (*% @prefix formatWithType_
+         @format(con)  con
+       *)
+      (*% @prefix print_
+         @format(con)
+       *)
+      (* constructor *)
+      ICCON of conInfo
+    | (*%
+         @format(exn)  exn 
+       *)
+      (*% @prefix formatWithType_
+         @format(exn)  exn 
+       *)
+      (*% @prefix print_
+         @format(exn)
+       *)
+      (* exception constructor *)
+      ICEXN of exnInfo
+    | (*%
+         @format({longsymbol, exInfo})  exInfo
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, exInfo})  exInfo
+       *)
+      (*% @prefix print_
+         @format({longsymbol, exInfo})
+       *)
+      (* extnernal exception constructor *)
+      ICEXEXN of {longsymbol:longsymbol, exInfo:exInfo}
+    | (*%
+         @format(exn)  "EXNCONSTRUCTOR" +d "(" exn ")"
+       *)
+      (*% @prefix formatWithType_
+         @format(exn)  "EXNCONSTRUCTOR" +d "(" exn ")"
+       *)
+      (*% @prefix print_
+         @format(exn)
+       *)
+      (* exception constructor *)
+      ICEXN_CONSTRUCTOR of exnInfo
+    | (*%
+         @format({longsymbol, exInfo})  
+           "External EXNCONSTRUCTOR" +d "(" exInfo ")"
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, exInfo})  
+           "External EXNCONSTRUCTOR" +d "(" exInfo ")"
+       *)
+      (*% @prefix print_
+         @format({longsymbol, exInfo})  
+       *)
+      (* exception constructor *)
+      ICEXEXN_CONSTRUCTOR of {longsymbol:longsymbol, exInfo:exInfo}
+    | (*% 
+         @format(var) var
+       *)
+      (*% @prefix formatWithType_ 
+         @format(var) var
+       *)
+      (*% @prefix print_
+         @format(var)
+       *)
+      (* overloaded primitives *)
+      ICOPRIM of oprimInfo
+    | (*%
+         @format(exp * ty * loc)
+           exp
+       *)
+      (*% @prefix formatWithType_
+         @format(exp * ty * loc)
+           1[exp +1 ":" ty] 
+       *)
+      (*% @prefix print_
+         @format(exp * ty * loc)
+       *)
+      ICTYPED of icexp * ty * loc
+    | (*%
+         @format({icexp, ty, loc,revealKey:key opt})
+          1[icexp +1 ":>" ty "("opt(key)(,)")" ]
+       *)
+      (*% @prefix formatWithType_
+         @format({icexp, ty, loc,revealKey:key opt})
+          1[icexp +1 ":>" ty "("opt(key)(,)")" ]
+       *)
+      (*% @prefix print_
+         @format({icexp, ty, loc,revealKey:key opt})
+       *)
+      ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
+    | (*%
+         @format(funExp * argExp list * loc)
+           1[
+             "(" funExp
+                 +d
+                 list:seqList(argExp)("{", ",", "}")
+             ")"
+           ]
+       *)
+      (*% @prefix formatWithType_
+         @format(funExp * argExp list * loc)
+           1[
+             funExp
+            +1
+            "{" list(argExp)(",") "}"
+            ]
+       *)
+      (*% @prefix print_
+         @format(funExp * argExp list * loc)
+       *)
+      ICAPPM of icexp * icexp list * loc
+    | (*%
+         @format(funExp * argExp list * loc)
+           1[ funExp
+              +1
+              "{" list(argExp)(",") "}"
+           ]
+       *)
+      (*% @prefix formatWithType_
+         @format(funExp * argExp list * loc)
+           1[ funExp
+              +1
+              "{" list(argExp)(",") "}"
+           ]
+       *)
+      (*% @prefix print_
+         @format(funExp * argExp list * loc)
+       *)
+      ICAPPM_NOUNIFY of icexp * icexp list * loc
+    | (*%
+         @format(dec decs * exp exps * Loc)
+            "let" 
+               1[ decs:declList(dec)(+1,+1) ]
+         +1 "in" 1[ +1 exps(exp)(";" +1) ]
+         +1 "end"
+       *)
+      (*% @prefix formatWithType_
+         @format(dec decs * exp exps * Loc)
+            "let" 
+               1[ decs:declList(dec)(+1,+1) ]
+         +1 "in" 1[ +1 exps(exp)(";" +1) ]
+         +1 "end"
+       *)
+      (*% @prefix print_
+         @format(dec decs * exp exps * Loc)
+       *)
+      ICLET of icdecl list * icexp list * loc
+    | (*%
+         @format(cast casts * exp * Loc)
+           "cast"
+              1[ casts:declList(cast)(+1,+1) ]
+           +1 "in"
+              1[ +1 exp ]
+           +1 "end"
+       *)
+      (*% @prefix formatWithType_
+         @format(cast casts * exp * Loc)
+           "cast"
+              1[ casts:declList(cast)(+1,+1) ]
+           +1 "in"
+              1[ +1 exp ]
+           +1 "end"
+       *)
+      (*% @prefix print_
+         @format(cast casts * exp * Loc)
+       *)
+      ICTYCAST of tycast list * icexp * loc
+    | (*%
+         @format(field fields * loc)
+           { fields:optionalList(field)("{",",","}") }
+         @format:field(label*exp)
+           label "=" exp
+       *)
+      (*% @prefix formatWithType_
+         @format(field fields * loc)
+           fields:optionalList(field)("{",",","}")
+         @format:field(label*exp)
+           label "=" exp
+       *)
+      (*% @prefix print_
+         @format(field fields * loc)
+       *)
+      ICRECORD of (RecordLabel.label * icexp) list * loc
+    | (*%
+         @format(exp * loc)
+         1[ "raise" +1 exp ]
+       *)
+      (*% @prefix formatWithType_
+         @format(exp * loc)
+         1[ "raise" +1 exp ]
+       *)
+      (*% @prefix print_
+         @format(exp * loc)
+       *)
+      ICRAISE of icexp * loc
+    | (*%
+         @format(exp * rule rules * loc)
+         1[
+            exp
+           +1 "handle"
+             1[ +1 ] rules(rule)( +1 "|" +d)
+          ]
+         @format:rule(pat * exp)
+            1[ pat +d "=>" +1 exp ]
+       *)
+      (*% @prefix formatWithType_
+         @format(exp * rule rules * loc)
+         1[
+            exp
+           +1 "handle"
+             1[ +1 ] rules(rule)( +1 "|" +d)
+          ]
+         @format:rule(pat * exp)
+            1[ pat +d "=>" +1 exp ]
+       *)
+      (*% @prefix print_
+         @format(exp * rule rules * loc)
+       *)
+      ICHANDLE of icexp * (icpat * icexp) list * loc
+    | (*%
+         @format(rule rules * loc)
+          "fn" +d rules(rule)(+1 " |"+d)
+         @format:rule({args:arg args,body:exp})
+          1[
+           args:seqList(arg)("{",",","}")
+           +d "=>"
+           +1 exp
+          ]
+       *)
+      (*% @prefix formatWithType_
+         @format(rule rules * loc)
+          "fn" +d rules(rule)(+1 " |"+d)
+         @format:rule({args:arg args,body:exp})
+          1[
+           args:seqList(arg)("{",",","}")
+           +d "=>"
+           +1 exp
+          ]
+       *)
+      (*% @prefix print_
+         @format(rule rules * loc)
+       *)
+      ICFNM of {args:icpat list, body:icexp} list * loc 
+    | (*%
+         @format(arg args * exp * loc)
+          "fn" +d 
+          1[
+             "{" args(arg)(",") "}"
+           +d "=>"
+           +1 exp
+          ]
+         @format:arg(var * ty tys) var
+       *)
+      (*% @prefix formatWithType_
+         @format(arg args * exp * loc)
+          "fn" +d 
+          1[
+             "{" args(arg)(",") "}"
+           +d "=>"
+           +1 exp
+          ]
+         @format:arg(var * ty tys) var
+       *)
+      (*% @prefix print_
+         @format(arg args * exp * loc)
+       *)
+      ICFNM1 of (varInfo * ty list) list * icexp * loc 
+    | (*%
+         @format(arg args * exp * loc)
+          "fn poly" +d 
+          1[
+             "{" args(arg)(",") "}"
+           +d "=>"
+           +1 exp
+          ]
+         @format:arg(var * ty) var
+       *)
+      (*% @prefix formatWithType_
+         @format(arg args * exp * loc)
+          "fn poly" +d 
+          1[
+             "{" args(arg)(",") "}"
+           +d "=>"
+           +1 exp
+          ]
+         @format:arg(var * ty) var
+       *)
+      (*% @prefix print_
+         @format(arg args * exp * loc)
+       *)
+      ICFNM1_POLY of (varInfo * ty) list * icexp * loc
+    | (*%
+         @format(exp exps * rule rules * caseKind *loc)
+         "case"
+            1[+1 exps:seqList(exp)("(",",",")")]
+          +1 "of" +
+          rules(rule)(+1 " |" +)
+        @format:rule({args:pat pats, body:exp})
+           1[pats:seqList(pat)("(",",",")") +d "=>" +1 exp]
+       *)
+      (*% @prefix formatWithType_
+         @format(exp exps * rule rules * caseKind *loc)
+         "case"
+            1[+1 exps:seqList(exp)("(",",",")")]
+          +1 "of" +
+          rules(rule)(+1 " |" +)
+        @format:rule({args:pat pats, body:exp})
+           1[pats:seqList(pat)("(",",",")") +d "=>" +1 exp]
+       *)
+      (*% @prefix print_
+         @format(exp exps * rule rules * caseKind *loc)
+       *)
+      ICCASEM of icexp list 
+               * {args:icpat list, body:icexp} list 
+               * PatternCalc.caseKind 
+               * loc  (* primitive; caseKind added *)
+    | (*%
+         @format(exp * field fields * loc)
+          1[ 
+             "modify" 
+          +1 exp 
+          +1 1["#" fields:seqList(field)("{",",","}")]
+          ]
+         @format:field(label * exp)
+          label "=" exp
+       *)
+      (*% @prefix formatWithType_
+         @format(exp * field fields * loc)
+          1[ 
+             "modify" 
+          +1 exp 
+          +1 1["#" fields:seqList(field)("{",",","}")]
+          ]
+         @format:field(label * exp)
+          label "=" exp
+       *)
+      (*% @prefix print_
+         @format(exp * field fields * loc)
+       *)
+      ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
+    | (*%
+         @format(label * loc) "#" label
+       *)
+      (*% @prefix formatWithType_
+         @format(label * loc) "#" label
+       *)
+      (*% @prefix print_
+         @format(label * loc)
+       *)
+      ICRECORD_SELECTOR of RecordLabel.label * loc 
+    | (*%
+         @format(label * exp * loc) 
+         "#" label  +1 exp
+       *)
+      (*% @prefix formatWithType_
+         @format(label * exp * loc) 
+         "#" label  +1 exp
+       *)
+      (*% @prefix print_
+         @format(label * exp * loc) 
+       *)
+      ICSELECT of RecordLabel.label * icexp * loc
+    | (*%
+         @format(exp list * loc)
+         1[
+            list:seqList(exp)("("+1, +1";", +1")")
+          ]
+       *)
+      (*% @prefix formatWithType_
+         @format(exp list * loc)
+         list:seqList(exp)("(",";",")")
+       *)
+      (*% @prefix print_
+         @format(exp list * loc)
+       *)
+      ICSEQ of icexp list * loc
+    | (*%
+        @format({data, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix formatWithType_
+        @format({data, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix print_
+        @format({data, iterator, pred, loc:loc})
+       *)
+      ICFOREACH of {data:icexp, iterator:icexp, pred:icexp, loc:loc}
+    | (*%
+        @format({data, whereParam, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "where" + whereParam
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix formatWithType_
+        @format({data, whereParam, iterator, pred, loc:loc})
+            "foreach" + data
+            +1 "where" + whereParam
+            +1 "do" + iterator
+            +1 "until" + pred
+       *)
+      (*% @prefix print_
+        @format({data, whereParam, iterator, pred, loc:loc})
+       *)
+      ICFOREACHDATA of {data:icexp, whereParam:icexp, iterator:icexp, pred:icexp, loc:loc}
+    | (*%
+       * @format(exp * ty * loc)
+         1[
+           exp 
+           +1 1["_import" +2 ":" + ty]
+         ]
+       *)
+      (*% @prefix formatWithType_
+       * @format(exp * ty * loc)
+         1[
+           exp 
+           +1 1["_import" +2 ":" + ty]
+         ]
+       *)
+      (*% @prefix print_
+       * @format(exp * ty * loc)
+       *)
+      ICFFIIMPORT of ffiFun * ffiTy * loc
+    | (*%
+         @format(ffiatrb * exp * arg list * ret rets * loc)
+         1[ "_ffiappy(" exp "," +1 list:seqList(arg)("",",","") ")" ]
+       *)
+      (*% @prefix formatWithType_
+         @format(ffiatrb * exp * arg list * ret rets * loc)
+         1[ "_ffiappy(" exp "," +1 list:seqList(arg)("",",","") ")" ]
+       *)
+      (*% @prefix print_
+         @format(ffiatrb * exp * arg list * ret rets * loc)
+       *)
+      ICFFIAPPLY of FFIAttributes.attributes option
+                    * ffiFun * ffiArg list * ffiTy list * loc
+    | (*%
+         @format({tyFnExp, ty, loc})
+           N0{ "_sqlschema" + ":" + ty }
+       *)
+      (*% @prefix formatWithType_
+         @format({tyFnExp, ty, loc})
+           N0{ "_sqlschema" + ":" + ty }
+       *)
+      (*% @prefix print_
+         @format({tyFnExp, ty, loc})
+       *)
+      ICSQLSCHEMA of
+      {
+        tyFnExp : icexp,
+        ty : ty,
+        loc : loc
+      }
+    | (*%
+         @format(exp1 * exp2 * loc)
+         "join(" + exp1 + "," + exp2 ")"
+       *)
+      (*% @prefix formatWithType_
+         @format(exp1 * exp2 * loc)
+         "join(" + exp1 + "," + exp2 ")"
+       *)
+      (*% @prefix print_
+         @format(exp1 * exp2 * loc)
+       *)
+      ICJOIN of icexp * icexp * loc
+    | (*% *)
+      (*% @prefix formatWithType_ @format *)
+      (*% @prefix print_ @format *)
+      ICJSON of icexp * ty * loc
+    | (*% *)
+      (*% @prefix formatWithType_ @format *)
+      (*% @prefix print_ @format *)
+      ICTYPEOF of ty * loc
+    | (*% *)
+      (*% @prefix formatWithType_ @format *)
+      (*% @prefix print_ @format *)
+      ICREIFYTY of ty * loc
+
+  and ffiArg
+    = (*%
+         @format(exp * ffiTy * loc) exp
+       *)
+      (*% @prefix formatWithType_
+         @format(exp * ffiTy * loc) exp
+       *)
+      (*% @prefix print_
+         @format(exp * ffiTy * loc)
+       *)
+      ICFFIARG of icexp * ffiTy * loc
+    | (*%
+         @format(ty * exp opt * loc)
+         "_sizeof(" !N0{ ty ")" }
+       *)
+      (*% @prefix formatWithType_
+         @format(ty * exp opt * loc)
+         "_sizeof(" !N0{ ty ")" }
+       *)
+      (*% @prefix print_
+         @format(ty * exp opt * loc)
+       *)
+      ICFFIARGSIZEOF of ty * icexp option * loc
+
+  and ffiFun
+    = (*% @format(x) x *)
+      (*% @prefix formatWithType_ @format(x) x *)
+      (*% @prefix print_ @format(x) *)
+      ICFFIFUN of icexp
+    | (*% @format(x) x *)
+      (*% @prefix formatWithType_ @format(x) x *)
+      (*% @prefix print_ @format(x) *)
+      ICFFIEXTERN of string
+
+  and icpat 
+    = (*%
+         @format "?"
+       *)
+      (*% @prefix formatWithType_
+         @format "?"
+       *)
+      (*% @prefix print_
+         @format "?"
+       *)
+      ICPATERROR
+    | (*%
+         @format(loc) "_"
+       *)
+      (*% @prefix formatWithType_
+         @format(loc) "_"
+       *)
+      (*% @prefix print_
+         @format(loc) "_"
+       *)
+      ICPATWILD of loc
+    | 
+      (* ordinary variable pat *)
+      (*%
+         @format(var) var
+       *)
+      (*% @prefix formatWithType_
+         @format(var) var
+       *)
+      (*% @prefix print_
+         @format(var)
+       *)
+      ICPATVAR_TRANS of varInfo
+    | 
+      (* 
+         opeque variable pat that are bound to a term of different type
+         this is introduce for TCOptimize to not inline abstracted term
+       *)
+      (*%
+         @format(var) var
+       *)
+      (*% @prefix formatWithType_
+         @format(var) var + "(opaque)"
+       *)
+      (*% @prefix print_
+         @format(var)
+       *)
+      ICPATVAR_OPAQUE of varInfo
+    | (*%
+         @format(con) con
+       *)
+      (*% @prefix formatWithType_
+         @format(con) con
+       *)
+      (*% @prefix print_
+         @format(con)
+       *)
+      (* datatype constructor *)
+      ICPATCON of conInfo
+    | (*%
+         @format(exn) exn
+       *)
+      (*% @prefix formatWithType_
+         @format(exn) exn
+       *)
+      (*% @prefix print_
+         @format(exn)
+       *)
+      (* exception constructor *)
+      ICPATEXN of exnInfo
+    | (*% 
+         @format({longsymbol, exInfo}) exInfo
+       *)
+      (*% @prefix formatWithType_ 
+         @format({longsymbol, exInfo}) exInfo
+       *)
+      (*% @prefix print_
+         @format({longsymbol, exInfo})
+       *)
+      ICPATEXEXN of {longsymbol:longsymbol, exInfo:exInfo}
+    | (*%
+         @format(const) const
+       *)
+      (*% @prefix formatWithType_
+         @format(const) const
+       *)
+      (*% @prefix print_
+         @format(const)
+       *)
+      (* constants *)
+      ICPATCONSTANT of constant
+    | (*%
+         @format({con, arg, loc})
+          1[con +1 arg]
+       *)
+      (*% @prefix formatWithType_
+         @format({con, arg, loc})
+          1[con +1 arg]
+       *)
+      (*% @prefix print_
+         @format({con, arg, loc})
+       *)
+      ICPATCONSTRUCT of {con: icpat, arg: icpat, loc:loc}
+    | (*%
+         @format({flex, fields: field fields, loc})
+           fields:enclosedList(field)("{",",","}")
+         @format:field(label*exp)
+           1[label  "=" +1  exp]
+       *)
+      (*% @prefix formatWithType_
+         @format({flex, fields: field fields, loc})
+           fields:enclosedList(field)("{",",","}")
+         @format:field(label*exp)
+           1[label  "=" +1  exp]
+       *)
+      (*% @prefix print_
+         @format({flex, fields: field fields, loc})
+       *)
+      ICPATRECORD of {flex: bool, fields: (RecordLabel.label * icpat) list, loc: loc}
+    | (*%
+         @format({patVar, tyOpt:ty opt, pat, loc})
+          1[ patVar +1 "as" +1 pat]
+       *)
+      (*% @prefix formatWithType_
+         @format({patVar, tyOpt:ty opt, pat, loc})
+          1[ patVar +1 "as" +1 pat]
+       *)
+      (*% @prefix print_
+         @format({patVar, tyOpt:ty opt, pat, loc})
+       *)
+      ICPATLAYERED of {patVar : varInfo, tyOpt: ty option, pat: icpat, loc:loc}
+    | (*%
+         @format(pat * ty * loc)
+         1[ pat +1 ":" + ty ]
+       *)
+      (*% @prefix formatWithType_
+         @format(pat * ty * loc)
+         1[ pat +1 ":" + ty ]
+       *)
+      (*% @prefix print_
+         @format(pat * ty * loc)
+       *)
+      ICPATTYPED of icpat * ty * loc
+  
+  and icdecl
+    = 
+      (*%
+         @format(scope * valbind valbinds * loc)
+           1[
+             "val"
+             scope 
+             +
+             valbinds(valbind)(+1 "and" +d)
+            ]
+         @format:valbind(pat * exp)
+            pat + "=" +d exp
+       *)
+      (*% @prefix formatWithType_
+         @format(scope * valbind valbinds * loc)
+           1[
+             "val"
+             scope 
+             +
+             valbinds(valbind)(+1 "and" +d)
+            ]
+         @format:valbind(pat * exp)
+            pat + "=" +1 exp
+       *)
+      (*% @prefix print_
+         @format(scope * valbind valbinds * loc)
+       *)
+      ICVAL of scopedTvars * (icpat * icexp) list * loc
+    | (*%
+         @format({guard:scope, funbinds:fundecl fundecls, loc})
+           1[
+             "fun"
+              scope + 
+              fundecls(fundecl)(+1 "and" +d)
+            ]
+         @format:fundecl({funVarInfo, tyList, rules:rule rules})
+            funVarInfo
+              +d
+              rules(rule)(~1[+1"|" + funVarInfo + ])
+         @format:rule({args:exp exps, body})
+           1[exps(exp)(+d) +d "=" +1 body ]
+       *)
+      (*% @prefix formatWithType_
+         @format({guard:scope, funbinds:fundecl fundecls, loc})
+           4[
+             "fun"
+              scope + 
+              fundecls(fundecl)(+1 "and" +d)
+            ]
+         @format:fundecl({funVarInfo, tyList, rules:rule rules})
+            funVarInfo
+              +d
+              rules(rule)(~2[+1"|" + funVarInfo + ])
+           
+         @format:rule({args:exp exps, body})
+           1[exps(exp)(+2) +1 "=" +d body ]
+       *)
+      (*% @prefix print_
+         @format({guard:scope, funbinds:fundecl fundecls, loc})
+       *)
+      ICDECFUN of
+         {
+          guard: scopedTvars,
+          funbinds:
+            {
+             funVarInfo: varInfo,
+             tyList: ty list,
+             rules: {args: icpat list, body: icexp} list
+            } list,
+          loc: loc
+         }
+    | (*%
+         @format({guard:scope, funVarInfo, tyList, rules: rule rules, loc})
+           4[
+            "fun"
+             scope + 
+             funVarInfo
+               +d
+               rules(rule)(~2[+1"|" + funVarInfo + ])
+            ]
+         @format:rule({args:exp exps, body})
+           1[exps(exp)(+2) +1 "=" +d body ]
+       *)
+      (*% @prefix formatWithType_
+         @format({guard:scope, funVarInfo, tyList, rules: rule rules, loc})
+           4[
+            "fun"
+             scope + 
+             funVarInfo
+               +d
+               rules(rule)(~2[+1"|" + funVarInfo + ])
+            ]
+         @format:rule({args:exp exps, body})
+           1[exps(exp)(+2) +1 "=" +d body ]
+       *)
+      (*% @prefix print_
+         @format({guard:scope, funVarInfo, tyList, rules: rule rules, loc})
+       *)
+      ICNONRECFUN of
+         {
+          guard: scopedTvars,
+          funVarInfo: varInfo,
+          tyList: ty list,
+          rules: {args: icpat list, body: icexp} list,
+          loc: loc
+         }
+    | (*%
+         @format({guard, recbinds:bind binds, loc})
+          "val rec" + guard +d binds(bind)(+1)
+         @format:bind({varInfo, tyList, body})
+           varInfo +d "=" +2 body
+       *)
+      (*% @prefix formatWithType_
+         @format({guard, recbinds:bind binds, loc})
+          "val rec" + guard +d binds(bind)(+1)
+         @format:bind({varInfo, tyList, body})
+           varInfo +d "=" +2 body
+       *)
+      (*% @prefix print_
+         @format({guard, recbinds:bind binds, loc})
+       *)
+      ICVALREC of {guard: scopedTvars,
+                   recbinds: {varInfo: varInfo,
+                              tyList:ty list,
+                              body: icexp} list,
+                   loc: loc}
+    | (*%
+         @format(bind binds * loc)
+          "val rec" +d binds(bind)(+1)
+         @format:bind({varInfo, ty, body})
+           varInfo + ":" + ty +d "=" +2 body
+       *)
+      (*% @prefix formatWithType_
+         @format(bind binds * loc)
+          "val rec" +d binds(bind)(+1)
+         @format:bind({varInfo, ty, body})
+           varInfo + ":" + ty +d "=" +2 body
+       *)
+      (*% @prefix print_
+         @format(bind binds * loc)
+       *)
+      ICVALPOLYREC of ({varInfo: varInfo, ty:ty, body: icexp} list * loc)
+    | (*%
+         @format(bind binds * loc)
+          binds:optionalList(bind)("exception" +d, +1 "and",)
+         @format:bind({exnInfo, loc}) exnInfo
+       *)
+      (*% @prefix formatWithType_
+         @format(bind binds * loc)
+          binds:optionalList(bind)("exception" +d, +1 "and",)
+         @format:bind({exnInfo, loc}) exnInfo
+       *)
+      (*% @prefix print_
+         @format(bind binds * loc)
+       *)
+      ICEXND of {exnInfo: exnInfo, loc: loc} list * loc
+    | (*%
+         @format({exnInfo, varInfo}* loc)
+         1["exception tag" +d exnInfo +d "=" +d varInfo]
+       *)
+      (*% @prefix formatWithType_
+         @format({exnInfo, varInfo}* loc)
+         1["exception tag" +d exnInfo +d "=" +d varInfo]
+       *)
+      (*% @prefix print_
+         @format({exnInfo, varInfo}* loc)
+       *)
+      ICEXNTAGD of {exnInfo: exnInfo, varInfo: varInfo} * loc
+    | (*%
+         @format({exInfo, id}) 
+          1["export" +d "variable" + exInfo]
+       *)
+      (*% @prefix formatWithType_
+         @format({exInfo, id}) 
+          1["export" +d "variable" + exInfo]
+       *)
+      (*% @prefix print_
+         @format({exInfo, id}) 
+       *)
+     (* export variable declaration specified in  _interface *)
+      ICEXPORTVAR of {exInfo:exInfo, id:varId}
+    | (*%
+         @format({longsymbol, version, id}) 
+          1["export" +d "(typed)" +d "variable" + longsymbol version]
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, version, id}) 
+          1["export" +d "(typed)" +d "variable" + longsymbol version]
+       *)
+      (*% @prefix print_
+         @format({longsymbol, version, id}) 
+       *)
+     (* export variable declaration specified in  _interface *)
+      ICEXPORTTYPECHECKEDVAR of {longsymbol:longsymbol, version:version, id:varId}
+    | (*%
+         @format({exInfo, id}) 
+          1["export" +d "variable" + exInfo]
+       *)
+      (*% @prefix formatWithType_
+         @format({exInfo, id}) 
+          1["export" +d "variable" + exInfo]
+       *)
+      (*% @prefix print_
+         @format({exInfo, id})
+       *)
+     (* export variable declaration specified in  _interface *)
+      ICEXPORTFUNCTOR of {exInfo:exInfo, id:varId}
+    | (*%
+         @format({exInfo, id})
+         "export" +d "exception" + exInfo
+       *)
+      (*% @prefix formatWithType_
+         @format({exInfo, id})
+         "export" +d "exception" + exInfo
+       *)
+      (*% @prefix print_
+         @format({exInfo, id})
+       *)
+     (* export exception declaration specified in  _interface *)
+      ICEXPORTEXN of {exInfo:exInfo, id:exnId}
+    | (*%
+        @format(exVar)
+         "extern" + "var" + exVar
+       *)
+      (*% @prefix formatWithType_
+        @format(exVar)
+         "extern" + "var" + exVar
+       *)
+      (*% @prefix print_
+        @format(exVar)
+         "extern" + "var" + exVar()(env,tfunName,tyConName,,)
+       *)
+      (* temporary disable extern printing:
+         "extern" + "var" + exVar
+        formatWithType_
+           "extern" + "var" + exVar
+        print_
+         "extern" + "var" + exVar()(env,tfunName,tyConName,,)
+       *)
+      (* import variable declaration specified in  _interface *)
+      ICEXTERNVAR of exInfo
+    | (*%
+        @format(exExn) 
+         "extern" + "exn" + exExn
+       *)
+      (*% @prefix formatWithType_
+        @format(exExn)
+         "extern" + "exn" + exExn
+       *)
+      (*% @prefix print_
+        @format(exExn)
+       *)
+      (* temporary disable extern printing:
+         1["extern" + "exception" + exExn]
+        formatWithType_
+         1["extern" + "exception" + exExn]
+        print_
+         "extern" + "var" + exVar()(env,tfunName,tyConName,,)
+       *)
+      (* import exception declaration specified in  _interface *)
+      ICEXTERNEXN of exInfo
+    | (*%
+         @format({longsymbol, ty})
+          "builtin exception" +d longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, ty})
+          "builtin exception" +d longsymbol + ty
+       *)
+      (*% @prefix print_
+         @format(e)
+       *)
+      ICBUILTINEXN of {longsymbol: longsymbol, ty:ty}
+    | (*%
+        @format({boundtvars, id, longsymbol, overloadCase, loc})
+         1["overloaded" + "var" + longsymbol + "(" id ")" +d "=" +d
+           overloadCase]
+       *)
+      (*% @prefix formatWithType_
+        @format({boundtvars, id, longsymbol, overloadCase, loc})
+         1["overloaded" + "var" + longsymbol + "(" id ")" +d "=" +d
+           overloadCase]
+       *)
+      (*% @prefix print_
+        @format({boundtvars, id, longsymbol, overloadCase, loc})
+       *)
+      (* overloaded name declaration specified in  _interface *)
+      ICOVERLOADDEF of {boundtvars:kindedTvar list,
+                        id:oprimId,
+                        longsymbol:longsymbol,
+                        overloadCase:overloadCase, 
+                        loc:loc}
+    | (*%
+         @format(cast casts * decl decls * Loc)
+           "cast"
+              1[ casts:declList(cast)(+1,+1) ]
+           +1 "in"
+              1[ +1 decls(decl)(+1) ]
+           +1 "end"
+       *)
+      (*% @prefix formatWithType_
+         @format(cast casts * decl decls * Loc)
+           "cast"
+              1[ casts:declList(cast)(+1,+1) ]
+           +1 "in"
+              1[ +1 decls(decl)(+1) ]
+           +1 "end"
+       *)
+      (*% @prefix print_
+         @format(cast casts * decl decls * Loc)
+       *)
+      ICTYCASTDECL of tycast list * icdecl list * loc
+
+  and overloadInstance =
+    (*% 
+       @format(exp) exp
+     *)
+    (*% @prefix formatWithType_ 
+       @format(exp) exp
+     *)
+    (*% @prefix print_
+       @format(exp)
+     *)
+      INST_OVERLOAD of overloadCase
+    | (*% 
+         @format({exInfo, loc}) exInfo
+       *)
+      (*% @prefix formatWithType_ 
+         @format({exInfo, loc}) exInfo
+       *)
+      (*% @prefix print_
+         @format({exInfo, loc}) exInfo()(env,tfunName,tyConName,,)
+       *)
+      INST_EXVAR of {exInfo:exInfo, loc:loc}
+    | (*% 
+         @format({primitive, ty} * loc) primitive
+       *)
+      (*% @prefix formatWithType_ 
+         @format({primitive, ty} * loc) primitive
+       *)
+      (*% @prefix print_
+         @format({primitive, ty} * loc)
+       *)
+      INST_PRIM of {primitive: BuiltinPrimitive.primitive, ty: ty} * loc
+
+  and ffiTy =
+      (*%
+       * @format(attr * dom doms * var vars varsOpt * ret rets * loc)
+       * doms:appList(dom)("(",",",")")
+       * varsOpt(vars:appList(var)("(",",",")"))("...",)
+       * +d "->"
+       * 1[ +1 rets:appList(ret)("(",",",")") ]
+       *)
+      (*% @prefix formatWithType_
+       * @format(attr * dom doms * var vars varsOpt * ret rets * loc)
+       * doms:appList(dom)("(",",",")")
+       * varsOpt(vars:appList(var)("(",",",")"))("...",)
+       * +d "->"
+       * 1[ +1 rets:appList(ret)("(",",",")") ]
+       *)
+      (*% @prefix print_
+         @format(attr * dom doms * var vars varsOpt * ret rets * loc)
+       *)
+      FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list * loc
+    | (*%
+         @format(field fields * loc)
+           "{" 2[ 1 fields(field)("," +1) ] 1 "}"
+         @format:field(label * ty) {label} +d ":" +d {ty}
+       *)
+      (*% @prefix formatWithType_
+         @format(field fields * loc)
+           "{" 2[ 1 fields(field)("," +1) ] 1 "}"
+         @format:field(label * ty) {label} +d ":" +d {ty}
+       *)
+      (*% @prefix print_
+         @format(field fields * loc)
+       *)
+      FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
+    | (*%
+         @format(ty * loc) ty
+       *)
+      (*% @prefix formatWithType_
+         @format(ty * loc) ty
+       *)
+      (*% @prefix print_
+         @format(ty * loc) 
+       *)
+      FFIBASETY of ty * loc
+
+  withtype kindedTvar
+    = (*% 
+         @format(tvar * tvarKind) tvar tvarKind
+       *)
+      (*% @prefix formatWithType_
+         @format(tvar * tvarKind) tvar tvarKind
+       *)
+      (*% @prefix print_
+         @format(tvar * tvarKind) tvar tvarKind()(env,tfunName,tyConName,,)
+       *)
+      tvar * tvarKind
+
+  and exInfo
+    = (*% 
+         @format({used, longsymbol, version, ty})  
+           longsymbol version 
+       *)
+      (*% @prefix formatWithType_
+         @format({used, longsymbol, version, ty})  
+           longsymbol version + ":" + ty
+       *)
+      (*% @prefix print_
+         @format({used, longsymbol, version, ty}) 
+       *)
+      (* ty is the type as a function *)
+      {used:bool ref, longsymbol: longsymbol, version:version, ty:ty}
+
+  and conInfo
+    = (*% 
+         @format({longsymbol, ty, id})
+            longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, ty, id})
+           1[ longsymbol "(" id ")" +1 ":" + ty]
+       *)
+      (*% @prefix print_
+         @format({longsymbol, ty, id})
+       *)
+      (* ty is the type as a function *)
+      {longsymbol: longsymbol, ty:ty, id: conId}
+
+  and exnInfo
+    = (*% 
+         @format({longsymbol, ty, id})  longsymbol
+       *)
+      (*% @prefix formatWithType_
+         @format({longsymbol, ty, id})  longsymbol "(" id ")"
+       *)
+      (*% @prefix print_
+         @format({longsymbol, ty, id}) 
+       *)
+      (* ty is the type as a function *)
+      {longsymbol: longsymbol, id: exnId, ty:ty}
+
+  and conSpec
+    = (*% 
+         @format(conEntry senv) senv(conEntry)(+1"|"+, )
+         @format:conEntry(ty opt) opt(ty)(+d "of" +d,)
+       *)
+      (*% @prefix formatWithType_
+         @format(conEntry senv) senv(conEntry)(+1"|"+, )
+         @format:conEntry(ty opt) opt(ty)(+d "of" +d,)
+       *)
+      (*% @prefix print_
+          @format(conEntry senv) 
+             senv:formatSymbolMap(conEntry)(,,~2[+1"|"+],)
+          @format:conEntry(ty opt) 
+            opt(ty()(env,tfunName,tyConName,,))(+1 "of" +,)
+       *)
+       (ty option) SymbolEnv.map
+
+  and varE
+    = (*%
+         @format(idstatus senv)
+           "{"
+            1[
+              senv(idstatus)(1, ":"+)
+             ]
+            1
+           "}"
+       *)
+      (*% @prefix formatWithType_
+         @format(idstatus senv)
+           "{"
+            1[
+              senv(idstatus)(1, ":"+)
+             ]
+            1
+           "}"
+       *)
+      (*% @prefix print_
+         @format(idstatus senv)
+            senv:formatGenericSymbolMap(idstatus,env,tfunName,tyConName)(\n,+1,)
+       *)
+      idstatus SymbolEnv.map
+
+  and overloadCase =
+    (*%
+       @format({tvar, expTy, matches: m ms, loc})
+         1[+1
+           "case" +d tvar +1 "in" +d expTy +1 "of" 1[+1 ms(m)(~1[+1 "|" +d])]
+         ]
+       @format:m({instTy, instance})
+         instTy +d "=>" +d instance
+     *)
+    (*% @prefix formatWithType_
+       @format({tvar, expTy, matches: m ms, loc})
+         1[+1
+           "case" +d tvar +1 "in" +d expTy +1 "of" 1[+1 ms(m)(~1[+1 "|" +d])]
+         ]
+       @format:m({instTy, instance})
+         instTy +d "=>" +d instance
+     *)
+    (*% @prefix print_
+       @format({tvar, expTy, matches: m ms, loc})
+     *)
+    {tvar: tvar,
+     expTy: ty,
+     matches: {instTy: ty, instance: overloadInstance} list,
+     loc: loc}
+
+  and tycast =
+    (*%
+       @format({from, to})
+        1[
+          from +d "to" +d to
+         ]
+    *)
+    (*% @prefix formatWithType_
+       @format({from, to})
+        1[
+          from +d "to" +d to
+         ]
+    *)
+    (*% @prefix print_
+       @format({from, to})
+    *)
+    {from:tfun, to:tfun}
+
+  and scopedTvars =
+    (*%
+      @format(ev evs:enclosedList)
+         {evs(ev)("(", ",", ")")}
+      @format:ev(tvar * tvarKind) tvar tvarKind
+     *)
+    (*% @prefix formatWithType_
+      @format(ev evs:enclosedList)
+        {evs(ev)("(", ",", ")")}
+      @format:ev(tvar * tvarKind) tvar tvarKind
+     *)
+    (*% @prefix print_
+       @format(ev evs:enclosedList)
+     *)
+      (tvar * tvarKind) list
+
+  (* add the following to keep the location of the icdecl list without
+     the extern decls and export decls. This is needed to print
+     a proper error message *)
+
+  type topdecl = icdecl list
+(*
+  type exexnInfo = {used:bool ref, longsymbol:longsymbol, ty:ty, version:version}
+*)
+
+  fun mkTfv (tfvkind:tfunkind) = ref tfvkind
+
+  fun tfunFormals tfun =
+      case tfun of
+        TFUN_DEF {formals,...} => formals
+      | TFUN_VAR (ref tfv) =>
+        (case tfv of
+           TFV_SPEC {formals,...} => formals
+         | TFV_DTY {formals,...} => formals
+         | TFUN_DTY {formals,...} => formals
+         | REALIZED {tfun,...} => tfunFormals tfun
+         | INSTANTIATED {tfun,...} => tfunFormals tfun
+         | FUN_DTY {tfun,...} => tfunFormals tfun
+       )
+
+  fun tfunLongsymbol tfun =
+      case tfun of
+        TFUN_DEF {longsymbol,...} => longsymbol
+      | TFUN_VAR (ref tfv) =>
+        (case tfv of
+           TFV_SPEC {longsymbol,...} => longsymbol
+         | TFV_DTY {longsymbol,...} => longsymbol
+         | TFUN_DTY {longsymbol,...} => longsymbol
+         | REALIZED {tfun,...} => tfunLongsymbol tfun
+         | INSTANTIATED {tfun,...} => tfunLongsymbol tfun
+         | FUN_DTY {tfun,...} => tfunLongsymbol tfun
+       )
+
+  fun tfunLiftedTys tfun =
+      case tfun of
+        TFUN_DEF {realizerTy=TYVAR (tvar as {lifted=true,...}),...} => TvarSet.singleton tvar
+      | TFUN_DEF _ => emptyLiftedTys
+      | TFUN_VAR (ref tfv) =>
+        (case tfv of
+           TFV_SPEC _ => emptyLiftedTys
+         | TFV_DTY {liftedTys,...} => liftedTys
+         | TFUN_DTY {liftedTys,...} => liftedTys
+         | REALIZED {tfun,...} => tfunLiftedTys tfun
+         | INSTANTIATED {tfun,...} => tfunLiftedTys tfun
+         | FUN_DTY {tfun,...} => tfunLiftedTys tfun
+        )
+
+  fun runtimeTyOfIty ity =
+      case ity of
+        TYWILD => NONE
+      | TYERROR => NONE
+      | TYVAR (tvar as {lifted,...}) => 
+        if lifted then SOME (LIFTEDty tvar)
+        else NONE
+      | TYRECORD _ => SOME (BUILTINty BuiltinTypeNames.BOXEDty)
+      | TYCONSTRUCT {tfun, args} => tfunRuntimeTy tfun
+      | TYFUNM _ => SOME (BUILTINty BuiltinTypeNames.BOXEDty)
+      | TYPOLY _ => NONE
+      | INFERREDTY _ => NONE
+
+  and tfunRuntimeTy tfun =
+      case tfun of
+        TFUN_DEF {realizerTy,...} => runtimeTyOfIty realizerTy
+      | TFUN_VAR (ref tfv) =>
+        (case tfv of
+           TFV_SPEC _ => NONE
+         | TFV_DTY _ => NONE
+         | TFUN_DTY {runtimeTy,...} => SOME runtimeTy
+         | REALIZED {tfun,...} => tfunRuntimeTy tfun
+         | INSTANTIATED {tfun,...} => tfunRuntimeTy tfun
+         | FUN_DTY {tfun,...} => NONE
+       )
+
+  fun tvarIseq ({symbol, id, eq, lifted}:tvar) =
+      case eq of
+        AbsynTy.EQ => true
+      | AbsynTy.NONEQ => false
+
+  fun tfunIseq tfun =
+      case tfun of
+        TFUN_DEF {iseq,...} => iseq
+      | TFUN_VAR (ref tfv) =>
+        (case tfv of
+           TFV_SPEC {iseq,...} => iseq
+         | TFUN_DTY {iseq,...} => iseq
+         | TFV_DTY {iseq,...} => iseq
+         | REALIZED {tfun,...} => tfunIseq tfun
+         | INSTANTIATED {tfun, ...} => tfunIseq tfun
+         | FUN_DTY {tfun,...} => tfunIseq tfun
+        )
+
+  fun tfunkindId tfunkind =
+      (case tfunkind of
+        TFV_SPEC {id,...} => id
+      | TFV_DTY {id,...} => id
+      | TFUN_DTY {id,...} => id
+      | REALIZED {id,...}  => id
+      | INSTANTIATED {tfunkind,...} => tfunkindId tfunkind
+      | FUN_DTY {tfun,...} => tfunId tfun
+      )
+      handle exn => raise  exn
+
+  and tfvId tfv =
+      case !tfv of
+        TFV_SPEC {id,...} => id
+      | TFV_DTY {id,...} => id
+      | TFUN_DTY {id,...} => id
+      | REALIZED {tfun,...} => raise bug "tfvid: ReALIZED"
+      | INSTANTIATED {tfun,...} => tfunId tfun
+      | FUN_DTY {tfun,...} => raise bug "FUN_DTY"
+
+  and tfunId tfun =
+      case tfun of
+        TFUN_DEF _ => raise bug "TFUN_DEF to TFUNID"
+      | TFUN_VAR tfv => (tfvId tfv handle exn => raise exn)
+
+  fun tfunArity tfun = List.length (tfunFormals tfun)
+
+  fun pruneTfun tfun =
+      case tfun of
+        TFUN_DEF _ => tfun
+      | TFUN_VAR (ref tfunkind) =>
+        (case tfunkind of
+           REALIZED {tfun,...} => pruneTfun tfun
+         | INSTANTIATED {tfun,...} => pruneTfun tfun
+         | _ => tfun
+        )
+
+  fun derefTfun tfun =
+      case tfun of
+        TFUN_DEF _ => tfun
+      | TFUN_VAR (ref tfunkind) =>
+        (case tfunkind of
+           REALIZED {tfun,...} => derefTfun tfun
+         | _ => tfun
+        )
+  fun liftedTysUnion (map1:liftedTys, map2:liftedTys) =
+      TvarSet.union (map1, map2)
+  fun liftedTysSingleton tvar = TvarSet.singleton tvar : liftedTys
+  fun liftedTysToTyvars (liftedTys:liftedTys) = TvarSet.listItems liftedTys
+  fun liftedTysToTy (liftedTys:liftedTys) =
+      map (fn tv => TYVAR(tv)) (liftedTysToTyvars liftedTys)
+
+  fun getLocExp icexp =
+      case icexp of
+      ICERROR => Loc.noloc
+    | ICCONSTANT constant => AbsynConst.getLocConstant constant
+    | ICVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICEXVAR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICEXVAR_TOBETYPED  {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICBUILTINVAR  {primitive, ty, loc} => loc
+    | ICCON {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICEXN_CONSTRUCTOR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICEXEXN_CONSTRUCTOR {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICEXEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICOPRIM {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+    | ICTYPED (icexp, ty, loc) => loc
+    | ICSIGTYPED {icexp, ty, loc, revealKey} => loc
+    | ICAPPM (icexp, icexpList, loc) => loc
+    | ICAPPM_NOUNIFY (icexp, icexpList, loc) => loc
+    | ICLET (icdeclList, icexpList, loc) => loc
+    | ICTYCAST (tycastList, icexpList, loc) => loc
+    | ICRECORD (fields, loc) => loc
+    | ICRAISE (icexp, loc) => loc
+    | ICHANDLE (icexp, rules, loc) => loc
+    | ICFNM (rules, loc) => loc
+    | ICFNM1 (args, exp, loc) => loc
+    | ICFNM1_POLY (args, exp, loc) => loc
+    | ICCASEM (icexpList, rules, kind, loc) => loc
+    | ICRECORD_UPDATE (icexp, fieds, loc) => loc
+    | ICRECORD_SELECTOR (string, loc) => loc
+    | ICSELECT (string, icexp, loc) => loc
+    | ICSEQ (icexpList, loc) => loc
+    | ICFOREACH {loc,...} => loc
+    | ICFOREACHDATA {loc,...} => loc
+    | ICFFIIMPORT (icexp, ffiTy, loc) => loc
+    | ICFFIAPPLY (ffiAttributesOption, icexp, ffiArgList, ffiTy, loc) => loc
+    | ICSQLSCHEMA {loc,...} => loc
+    | ICJOIN (icexp1, icexp2, loc) => loc
+    | ICJSON (icexp, ty, loc) => loc
+    | ICTYPEOF (ty, loc) => loc
+    | ICREIFYTY (ty, loc) => loc
+    
+  fun getLeftLocExp icexp = #1 (getLocExp icexp)
+  fun getRightLocExp icexp = #2 (getLocExp icexp)
+
+  fun getLocPat pat = 
+      case pat of
+        ICPATERROR => Loc.noloc
+      | ICPATWILD loc => loc
+      | ICPATVAR_TRANS {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | ICPATVAR_OPAQUE {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | ICPATCON {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | ICPATEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | ICPATEXEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
+      | ICPATCONSTANT constant => AbsynConst.getLocConstant constant
+      | ICPATCONSTRUCT {con, arg, loc} => loc
+      | ICPATRECORD {flex, fields, loc} => loc
+      | ICPATLAYERED {patVar, tyOpt, pat, loc} => loc
+      | ICPATTYPED (icpat, ty, loc) => loc
+
+  fun getRuleLocM nil = raise bug "empty rule in getRuleLocM"
+    | getRuleLocM [{args=pat::_,body=exp}] =
+        Loc.mergeLocs (getLocPat pat, getLocExp exp)
+    | getRuleLocM rules =
+        let
+          val pat1 = 
+            case rules of
+              {args=pat1::_, body}:: _ => pat1
+            | _ =>
+                raise
+                  bug
+                  "empty pattern in rules\
+                  \ (typeinference/main/TypeInferCore.sml)"
+          val {args, body=exp2} = List.last rules
+        in
+          Loc.mergeLocs (getLocPat pat1, getLocExp exp2)
+        end
+
+  fun getLeftLocPat pat = #1 (getLocPat pat)
+  fun getRightLocPat pat = #2 (getLocPat pat)
+        
+  fun getLocDec dec =
+      case dec of
+        ICVAL (scopedTvars, icpatIcexpList, loc) => loc
+      | ICDECFUN {guard,funbinds,loc} => loc
+      | ICNONRECFUN {loc,...} => loc
+      | ICVALREC {guard, recbinds,loc} => loc
+      | ICVALPOLYREC (_,loc) => loc
+      | ICEXND (exdecls, loc) => loc
+      | ICEXNTAGD (extagdecls, loc) => loc
+      | ICEXPORTVAR {exInfo, id} => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXPORTTYPECHECKEDVAR {longsymbol, version, id} => Loc.noloc
+      | ICEXPORTFUNCTOR {exInfo, id} => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXPORTEXN {exInfo, id} => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXTERNVAR exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICEXTERNEXN exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICBUILTINEXN exInfo => Symbol.longsymbolToLoc (#longsymbol exInfo)
+      | ICTYCASTDECL (tycastList, icdeclList, loc) => loc
+      | ICOVERLOADDEF {boundtvars, id, longsymbol, overloadCase, loc} => loc
+
+  fun newICVar() =
+      let
+        val longsymbol = [Symbol.generateWithPrefix tempVarNamePrefix]
+        val newVarId = VarID.generate()
+      in
+        {longsymbol=longsymbol, id=newVarId}
+      end
+
+end
+end

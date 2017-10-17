@@ -1,0 +1,318 @@
+
+_require local "../../../../basis.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+
+_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../../compilerIRs/runtimecalc/main/RuntimeCalc.ppg.smi"
+_require "../../../data/name/main/ExternSymbol.smi"
+_require "../../../data/name/main/CodeLabel.smi"
+_require "../../../compilerIRs/anormal/main/ANormal.ppg.smi"
+_require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+
+structure MachineCode =
+struct
+
+  type loc = Loc.loc
+  type ty = ANormal.ty
+  type varInfo = ANormal.varInfo
+
+  type primInfo =
+      {
+        primitive : BuiltinPrimitive.primitiveMachineCode,
+        ty : {boundtvars : Types.btvEnv,
+              argTyList : Types.ty list,
+              resultTy : Types.ty}
+      }
+
+  datatype mcconst = datatype ANormal.anconst
+  datatype mcvalue = datatype ANormal.anvalue
+
+  datatype address =
+      MAPTR of mcvalue
+    | MAPACKED of mcvalue
+    | MAOFFSET of {base: mcvalue, offset: mcvalue}
+    | MARECORDFIELD of
+      {
+        recordExp : mcvalue,
+        fieldIndex : mcvalue
+      }
+    | MAARRAYELEM of
+      {
+        arrayExp : mcvalue,
+        elemSize : mcvalue,
+        elemIndex : mcvalue
+      }
+
+  datatype objtype =
+      OBJTYPE_VECTOR of mcvalue
+    | OBJTYPE_ARRAY of mcvalue
+    | OBJTYPE_UNBOXED_VECTOR
+    | OBJTYPE_RECORD
+    | OBJTYPE_INTINF
+
+  datatype mcexp_mid =
+      MCINTINF of
+      {
+        resultVar : varInfo,
+        dataLabel : ExtraDataLabel.id,
+        loc : loc
+      }
+    | MCFOREIGNAPPLY of
+      {
+        resultVar : varInfo option,
+        funExp : mcvalue,
+        attributes : FFIAttributes.attributes,
+        argExpList : mcvalue list,
+        handler : HandlerLabel.id option,
+        loc : loc
+      }
+    | MCEXPORTCALLBACK of
+      {
+        resultVar : varInfo,
+        codeExp : mcvalue,
+        closureEnvExp : mcvalue,
+        instTyvars : Types.btvEnv,
+        loc : loc
+      }
+    | MCEXVAR of
+      {
+        resultVar : varInfo,
+        id : ExternSymbol.id,
+        loc : loc
+      }
+    | MCMEMCPY_FIELD of
+      {
+        dstAddr : address,
+        srcAddr : address,
+        copySize : mcvalue,
+        loc : loc
+      }
+    | MCMEMMOVE_UNBOXED_ARRAY of
+      {
+        dstAddr : address,
+        srcAddr : address,
+        numElems : mcvalue,
+        elemSize : mcvalue,
+        loc : loc
+      }
+    | MCMEMMOVE_BOXED_ARRAY of
+      {
+        srcArray : mcvalue,
+        dstArray : mcvalue,
+        srcIndex : mcvalue,
+        dstIndex : mcvalue,
+        numElems : mcvalue,
+        loc : loc
+      }
+    | MCALLOC of
+      {
+        resultVar : varInfo,
+        objType : objtype,
+        payloadSize : mcvalue,
+        allocSize : mcvalue,
+        loc : loc
+      }
+    | MCALLOC_COMPLETED
+    | MCCHECK
+    | MCRECORDDUP_ALLOC of
+      {
+        resultVar : varInfo,
+        copySizeVar : varInfo,
+        recordExp : mcvalue, 
+        loc : loc
+      } 
+    | MCRECORDDUP_COPY of
+      {
+        dstRecord : mcvalue,
+        srcRecord : mcvalue,
+        copySize : mcvalue,
+        loc : loc
+      }
+    | MCBZERO of
+      {
+        recordExp : mcvalue,
+        recordSize : mcvalue,
+        loc : loc
+      }
+    | MCSAVESLOT of
+      {
+        slotId : SlotID.id,
+        value : mcvalue,
+        loc : loc
+      }
+    | MCLOADSLOT of
+      {
+        resultVar : varInfo,
+        slotId : SlotID.id,
+        loc : loc
+      }
+    | MCLOAD of
+      {
+        resultVar : varInfo,
+        srcAddr : address,
+        loc : loc
+      }
+    | MCPRIMAPPLY of
+      {
+        resultVar : varInfo,
+        primInfo : primInfo,
+        argExpList : mcvalue list,
+        argTyList : ty list,
+        resultTy : ty,
+        instTyList : ty list,
+        instTagList : mcvalue list,
+        instSizeList : mcvalue list,
+        loc : loc
+      }
+    | MCBITCAST of
+      {
+        resultVar : varInfo,
+        exp : mcvalue,
+        expTy : ty,
+        targetTy : ty,
+        loc : loc
+      }
+    | MCCALL of
+      {
+        resultVar : varInfo option,
+        resultTy : ty,
+        codeExp : mcvalue,
+        closureEnvExp : mcvalue option,
+        argExpList : mcvalue list,
+        tail : bool,
+        handler : HandlerLabel.id option,
+        loc : loc
+      }
+    | MCSTORE of
+      {
+        srcExp : mcvalue,
+        srcTy : ty,
+        dstAddr : address,
+        barrier : bool,
+        loc : loc
+      }
+    | MCEXPORTVAR of
+      {
+        id : ExternSymbol.id,
+        ty : ty,
+        valueExp : mcvalue,
+        loc : loc
+      }
+
+  datatype mcexp_last =
+      MCRETURN of
+      {
+        value : mcvalue,
+        loc : loc
+      }
+    | MCRAISE of
+      {
+        argExp : mcvalue,
+        cleanup : HandlerLabel.id option,
+        loc : loc
+      }
+    | MCHANDLER of
+      {
+        nextExp : mcexp_mid list * mcexp_last,
+        id : HandlerLabel.id,
+        exnVar : varInfo,
+        handlerExp : mcexp_mid list * mcexp_last,
+        cleanup : HandlerLabel.id option,
+        loc : loc
+      }
+    | MCSWITCH of
+      {
+        switchExp : mcvalue,
+        expTy : ty,
+        branches : (mcconst * FunLocalLabel.id) list,
+        default : FunLocalLabel.id,
+        loc : loc
+      }
+    | MCLOCALCODE of
+      {
+        id : FunLocalLabel.id,
+        recursive : bool,
+        argVarList : varInfo list,
+        bodyExp : mcexp_mid list * mcexp_last,
+        nextExp : mcexp_mid list * mcexp_last,
+        loc : loc
+      }
+    | MCGOTO of
+      {
+        id : FunLocalLabel.id,
+        argList : mcvalue list,
+        loc : loc
+      }
+    | MCUNREACHABLE
+
+  type mcexp =
+      mcexp_mid list * mcexp_last
+
+  datatype topdata = datatype RuntimeCalc.topdata
+
+  datatype topdec =
+      MTFUNCTION of
+      {
+        id : FunEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        frameSlots : RuntimeTypes.ty SlotID.Map.map,
+        bodyExp : mcexp,
+        retTy : ty,
+        gcCheck : bool,
+        loc : loc
+      }
+    | MTCALLBACKFUNCTION of
+      {
+        id : CallbackEntryLabel.id,
+        tyvarKindEnv : Types.btvEnv,
+        argVarList : varInfo list,
+        closureEnvVar : varInfo option,
+        frameSlots : RuntimeTypes.ty SlotID.Map.map,
+        bodyExp : mcexp,
+        attributes : FFIAttributes.attributes,
+        retTy : ty option,
+        cleanupHandler : HandlerLabel.id option,
+        loc : loc
+      }
+
+  type toplevel =
+      {
+        dependency : InterfaceName.dependency,
+        frameSlots : RuntimeTypes.ty SlotID.Map.map,
+        bodyExp : mcexp,
+        cleanupHandler : HandlerLabel.id option
+      } 
+
+  type program =
+      {
+        topdata : topdata list,
+        topdecs : topdec list,
+        toplevel : toplevel
+      }
+
+  val format_ty : ty -> SMLFormat.FormatExpression.expression list
+  val format_varInfo : varInfo -> SMLFormat.FormatExpression.expression list
+  val format_primInfo : primInfo -> SMLFormat.FormatExpression.expression list
+  val format_mcconst : mcconst -> SMLFormat.FormatExpression.expression list
+  val format_mcvalue : mcvalue -> SMLFormat.FormatExpression.expression list
+  val format_address : address -> SMLFormat.FormatExpression.expression list
+  val format_objtype : objtype -> SMLFormat.FormatExpression.expression list
+  val format_mcexp_mid : mcexp_mid -> SMLFormat.FormatExpression.expression list
+  val format_mcexp_last : mcexp_last -> SMLFormat.FormatExpression.expression list
+  val format_mcexp : mcexp -> SMLFormat.FormatExpression.expression list
+  val format_topdata : topdata -> SMLFormat.FormatExpression.expression list
+  val format_topdec : topdec -> SMLFormat.FormatExpression.expression list
+  val format_program : program -> SMLFormat.FormatExpression.expression list
+  val formatWithType_program
+      : program -> SMLFormat.FormatExpression.expression list
+
+end

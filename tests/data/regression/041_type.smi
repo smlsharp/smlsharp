@@ -1,0 +1,5 @@
+_require "basis.smi"
+structure G =
+struct
+  type 'a t (= boxed)
+end

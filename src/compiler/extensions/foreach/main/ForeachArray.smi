@@ -1,0 +1,11 @@
+_require "../../../../basis.smi"
+_require "./ForeachCommon.smi"
+
+structure ForeachArray =
+struct
+  val ForeachArray
+      : 'a array 
+        -> 'a ForeachCommon.iterator
+        -> 'a ForeachCommon.pred
+        -> 'a array
+end

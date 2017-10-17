@@ -1,0 +1,9 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlunit-lib.smi"
+_require local "../main/ReifiedTerm.ppg.smi"
+_require local "../main/NaturalJoin.smi"
+
+structure TestNaturalJoin =
+struct
+  val tests : SMLUnit.Test.test
+end

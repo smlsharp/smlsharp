@@ -1,0 +1,2 @@
+val GenericOS_poll
+    : (int * word) array * (int * int) option -> (int * word) array

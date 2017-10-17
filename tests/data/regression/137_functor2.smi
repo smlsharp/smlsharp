@@ -1,0 +1,5 @@
+_require "137_functor3.smi"
+structure S =
+struct
+  val x : int
+end

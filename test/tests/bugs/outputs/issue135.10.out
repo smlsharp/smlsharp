@@ -1,5 +1,0 @@
-structure S : sig type t end
-../tests/bugs/tests/issue135.10.sml:2.9-2.15 Error:
-  type and type annotation don't agree
-  inferred type: 'A#{int, largeInt}
-                                                    type annotation: S.t

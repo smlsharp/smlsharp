@@ -1,0 +1,14 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+
+structure Bug =
+struct
+  exception Bug of string
+  exception BugWithLoc of string * Loc.loc
+  val debugPrint : bool ref
+  val printInfo : bool ref
+  val prettyPrint : SMLFormat.format -> string
+  val printError : string -> unit
+  val printMessage : string -> unit
+end

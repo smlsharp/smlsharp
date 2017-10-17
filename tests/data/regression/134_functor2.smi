@@ -1,0 +1,11 @@
+functor F (
+  A : sig
+    type t1
+    type t2
+    val x1 : t1
+    val x2 : t2
+  end
+) =
+struct
+  val f : unit -> A.t1 * A.t2
+end

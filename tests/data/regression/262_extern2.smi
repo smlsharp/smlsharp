@@ -1,0 +1,5 @@
+structure S1 =
+struct
+  val x : int
+end
+structure S2 = S1

@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.69)
 AC_INIT(smlsharp)
-AC_CONFIG_SRCDIR([src/compiler/toplevel2/main/Top.sml])
+AC_CONFIG_SRCDIR([src/compiler/compilePhases/toplevel/main/Top.sml])
 AC_CONFIG_HEADER([config.h])
 
 AC_CANONICAL_TARGET

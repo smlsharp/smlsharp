@@ -1,0 +1,5 @@
+_require local "../../src/basis.smi"
+_require local "../../src/smlunit-lib.smi"
+_require local "../../src/compiler/libs/toolchain/main/TempFile.smi"
+_require local "./Compiler.smi"
+_require local "../tests.smi"

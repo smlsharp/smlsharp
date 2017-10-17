@@ -1,4 +1,0 @@
-val f = fn : ['a,'b.'b * 'a  -> {a:'b , b:'a}]
-val g = fn : ['a#{a: 'b},'b.'a -> 'b]
-val cons = fn : ['a .'a * 'a list  -> 'a list]
-val x = [1] : int list

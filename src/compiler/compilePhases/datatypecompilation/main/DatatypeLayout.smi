@@ -1,0 +1,32 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+
+structure DatatypeLayout =
+struct
+
+  datatype taggedLayout =
+      TAGGED_RECORD of {tagMap: int SymbolEnv.map}
+    | TAGGED_OR_NULL of {tagMap: int SymbolEnv.map, nullName: Symbol.symbol}
+    | TAGGED_TAGONLY of {tagMap: int SymbolEnv.map}
+
+  datatype layout =
+      LAYOUT_TAGGED of taggedLayout
+    | LAYOUT_ARG_OR_NULL of {wrap: bool}
+    | LAYOUT_SINGLE_ARG of {wrap: bool}
+    | LAYOUT_CHOICE of {falseName: Symbol.symbol}
+    | LAYOUT_SINGLE
+    | LAYOUT_REF
+
+  val datatypeLayout : Types.tyCon -> layout
+
+end

@@ -1,0 +1,7 @@
+_require "basis.smi"
+functor Simple(
+  A : sig
+  end) =
+struct
+  val for : int -> (int -> 'a) -> unit
+end

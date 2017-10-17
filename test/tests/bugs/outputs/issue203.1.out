@@ -1,4 +1,0 @@
-signature SIG = sig type t datatype dt = D of t end
-structure STR1 : SIG
-structure STR2 : SIG
-

@@ -1,0 +1,8 @@
+functor F (
+  A : sig
+    type t
+  end
+) =
+struct
+  val f : 'a -> 'a
+end

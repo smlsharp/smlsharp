@@ -1,0 +1,64 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/env/main/SSet.smi"
+_require local "../../../extensions/reflection/main/ReifyUtils.smi"
+_require local "../../../extensions/reflection/main/ReifiedTy.ppg.smi"
+_require local "../../../extensions/reflection/main/ReifiedTyData.smi"
+_require local "../../../extensions/reflection/main/ReifyUtils.smi"
+(*
+_require local "../../../extensions/reflection/main/ReifyTy.smi"
+*)
+
+_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/constantterm/main/ConstantTerm.ppg.smi"
+_require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi"
+_require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalcUtils.smi"
+_require local "../../../data/types/main/TvarMap.smi"
+_require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
+_require local "../../../data/types/main/DummyTyID.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/OPrimInstMap.smi"
+_require local "../../../data/types/main/OPrimMap.smi"
+_require local "../../../data/types/main/VarInfoEnv.smi"
+_require local "../../../data/types/main/VarMap.smi"
+_require local "../../../data/types/main/Unify.smi"
+_require local "../../../data/types/main/TyAlphaRename.smi"
+_require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../../extensions/usererror/main/UserError.ppg.smi"
+_require "./TypeInferenceContext.ppg.smi"
+_require local "./TypeInferenceError.ppg.smi"
+_require local "./TypeInferenceUtils.smi"
+_require local "./Printers.smi"
+
+structure InferTypes =
+struct
+  val typeinfDecls : TypeInferenceContext.context * IDCalc.topdecl
+                           -> TypeInferenceContext.context
+                              * TypedCalc.tpdecl list
+                              * UserError.errorInfo list
+  val typeinf : NameEvalEnv.topEnv
+                -> IDCalc.topdecl
+                -> TypeInferenceContext.varEnv
+                   * TypedCalc.tpdecl list
+                   * UserError.errorInfo list
+
+  val typeinfBody : TypeInferenceContext.context * IDCalc.topdecl
+                    -> TypeInferenceContext.varEnv
+                       * TypedCalc.tpdecl list
+                       * UserError.errorInfo list
+end

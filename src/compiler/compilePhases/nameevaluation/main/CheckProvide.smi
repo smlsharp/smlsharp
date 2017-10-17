@@ -1,0 +1,42 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../../smlnj-lib/Util/lib-base.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require local "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../extensions/usererror/main/UserErrorUtils.smi"
+_require local "./EvalSig.smi"
+_require local "./EvalTy.smi"
+_require local "./FunctorUtils.smi"
+_require local "./NameEvalError.ppg.smi"
+_require local "./NameEvalInterface.smi"
+_require local "./NameEvalUtils.smi"
+_require local "./NormalizeTy.smi"
+
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "./NameEvalEnv.ppg.smi"
+structure CheckProvide =
+struct
+  val checkProvideFunctorBody :
+      {topEnv:NameEvalEnv.topEnv, 
+       evalEnv:NameEvalEnv.topEnv, 
+       argSigEnv:NameEvalEnv.env, 
+       specArgSig:PatternCalc.plsigexp, 
+       functorSymbol:Symbol.symbol, 
+       returnEnv:NameEvalEnv.env, 
+       specBodyStr:PatternCalcInterface.pistrexp, 
+       defLoc:Loc.loc,
+       specLoc:Loc.loc}
+      -> IDCalc.icdecl list * NameEvalEnv.env
+  val checkPitopdecList :
+      NameEvalEnv.topEnv
+      -> (NameEvalEnv.topEnv * PatternCalcInterface.pitopdec list)
+      -> {exportDecls:IDCalc.icdecl list, bindDecls:IDCalc.icdecl list}
+end

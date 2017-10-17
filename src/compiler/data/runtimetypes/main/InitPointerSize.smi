@@ -1,0 +1,9 @@
+_require local "../../../../basis.smi"
+_require local "../../../../llvm/main/LLVM.smi"
+_require local "../../../../config/main/PointerSize.smi"
+_require "../../../libs/toolchain/main/LLVMUtils.smi"
+
+structure InitPointerSize =
+struct
+  val init : LLVMUtils.compile_options -> unit
+end

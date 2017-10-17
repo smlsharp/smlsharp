@@ -1,0 +1,4 @@
+structure T2 =
+struct
+  exception E
+end

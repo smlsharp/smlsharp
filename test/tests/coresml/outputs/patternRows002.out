@@ -1,9 +1,0 @@
-val f1 = fn : ['a#{n1: int, n2: 'b, n3: 'b, n4: 'c}, 'b, 'c. 'a -> 'b]
-val v11 = 2 : int
-val v12 = 3 : int
-val f2 = fn : ['a#{n1: int, n2: 'b, n3: 'c}, 'b, 'c. 'a -> 'b]
-val v21 = 2 : int
-val v22 = 3 : int
-val f3 = fn : ['a#{n1: int, n2: 'b, n3: 'b}, 'b. 'a -> 'b]
-val v31 = 2 : int
-val v32 = 3 : int

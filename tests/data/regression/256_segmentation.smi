@@ -1,0 +1,3 @@
+_require "basis.smi"
+_require "compiler/libs/env/main/SEnv.smi"
+_require "256_segmentation2.smi"

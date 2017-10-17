@@ -1,6 +1,0 @@
-signature S =
-sig
-   type s
-   structure T : sig type t end
-   sharing type s = T.t
-end;

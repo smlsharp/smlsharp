@@ -1,0 +1,5 @@
+_require "101_functorapp2.smi"
+structure S =
+struct
+  val f : unit -> unit
+end

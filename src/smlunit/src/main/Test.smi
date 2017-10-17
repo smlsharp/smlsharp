@@ -6,6 +6,7 @@ struct
   type testFunction = unit -> unit
   datatype test =
       TestCase of testFunction
+    | Test of string * testFunction
     | TestLabel of (string * test)
     | TestList of test list
   val labelTests : (string * testFunction) list -> test

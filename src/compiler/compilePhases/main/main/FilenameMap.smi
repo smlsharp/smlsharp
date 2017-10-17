@@ -1,0 +1,13 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require "../../../libs/toolchain/main/Filename.smi"
+
+structure FilenameMap =
+struct
+  exception Load of string
+  type map (= boxed)
+  val load : Filename.filename -> map
+  val fromList : (Filename.filename * Filename.filename) list -> map
+  val find : map * Filename.filename -> Filename.filename option
+end

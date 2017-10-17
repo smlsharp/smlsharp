@@ -1,0 +1,9 @@
+(*
+functor F(A: sig type t end) =
+struct
+  structure K =
+  struct
+    type t = A.t
+  end
+end
+*)

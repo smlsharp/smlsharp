@@ -13,6 +13,7 @@ struct
 
   datatype test =
            TestCase of (unit -> unit)
+         | Test of string * (unit -> unit)
          | TestLabel of (string * test)
          | TestList of test list
 

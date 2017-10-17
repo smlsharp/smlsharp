@@ -1,2 +1,0 @@
-val x = fn : ['a,'b.'a * 'b -> ('a * 'b) ref]
-

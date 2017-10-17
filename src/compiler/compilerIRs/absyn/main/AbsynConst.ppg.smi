@@ -1,0 +1,27 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+
+structure AbsynConst =
+struct
+
+  type loc = Loc.loc
+
+  datatype constant
+    = INT of {radix: StringCvt.radix, digits: string} * loc
+    | WORD of {radix: StringCvt.radix, digits: string} * loc
+    | STRING of string * loc
+    | REAL of string * loc
+    | CHAR of char * loc
+    | UNITCONST of loc
+    | NULLCONST of loc
+
+  val format_constant : constant -> SMLFormat.FormatExpression.expression list
+
+  val getLeftLocConstant : constant -> Loc.pos
+  val getRightLocConstant : constant -> Loc.pos
+  val getLocConstant : constant -> loc
+
+  val replaceLocConst : constant * loc -> constant
+
+end

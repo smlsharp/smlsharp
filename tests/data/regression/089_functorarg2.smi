@@ -1,0 +1,8 @@
+structure S =
+struct
+  eqtype t (= boxed)
+end
+structure SomethingWrong =
+struct
+  type t = S.t
+end

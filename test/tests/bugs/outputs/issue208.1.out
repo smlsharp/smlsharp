@@ -1,3 +1,0 @@
-datatype ('a, 'b) t
-con A : ['a,'b.'b -> ('b, 'a) t]
-val x = A 1 : ['a .(int, 'a) t]

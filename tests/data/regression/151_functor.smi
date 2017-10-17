@@ -1,0 +1,4 @@
+functor F(A : sig end) =
+struct
+  type set (= boxed)
+end

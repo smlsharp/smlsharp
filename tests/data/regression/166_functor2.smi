@@ -1,0 +1,13 @@
+structure S =
+struct
+  exception E
+end
+
+functor F(
+  A : sig
+    exception E
+  end
+) =
+struct
+  exception E = A.E
+end

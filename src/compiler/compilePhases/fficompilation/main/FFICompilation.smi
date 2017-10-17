@@ -1,0 +1,26 @@
+_require local "../../../../basis.smi"
+
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/list-utils/main/utils.smi"
+
+_require local "../../../extensions/reflection/main/ReifyUtils.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require local "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../extensions/usererror/main/UserError.ppg.smi"
+_require local "./FFICompilationError.ppg.smi"
+
+_require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure FFICompilation =
+struct
+  val compile : NameEvalEnv.topEnv -> RecordCalc.rcdecl list -> RecordCalc.rcdecl list
+end

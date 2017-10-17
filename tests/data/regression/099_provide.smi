@@ -1,0 +1,5 @@
+structure S =
+struct
+  eqtype t (= unit)
+  val f : 'a -> 'a -> t
+end

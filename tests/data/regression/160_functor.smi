@@ -1,0 +1,9 @@
+functor F(A : sig
+  exception E
+end) =
+struct
+  structure B =
+  struct
+    exception E  (* This should be a replication of A.E *)
+  end
+end

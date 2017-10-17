@@ -1,0 +1,1 @@
+ val for : unit -> ['a. ('a -> int) -> 'a -> int]

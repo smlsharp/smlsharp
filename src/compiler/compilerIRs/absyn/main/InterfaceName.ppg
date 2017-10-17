@@ -1,0 +1,122 @@
+(* -*- sml -*- *)
+(**
+ * interface name
+ * @copyright (c) 2011, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+structure InterfaceName =
+struct
+
+  type hash = SHA3.digest
+
+  fun sub64 a i = Word64.fromInt (Word8.toInt (Vector.sub (a, i)))
+  fun read64 a i 0 x = x
+    | read64 a i j x =
+      read64 a (i+1) (j-1) (Word64.orb (sub64 a i, Word64.<< (x, 0w8)))
+
+  fun hash s = SHA3.shake128 (Byte.stringToBytes s, 8)
+  fun hashToString h = SHA3.hex h
+  fun hashToWord64 h = read64 h 0 8 0w0
+
+  fun format_hash x =
+      let
+        val s = hashToString x
+      in
+        [SMLFormat.FormatExpression.Term (size s, s)]
+      end
+
+  (*% *)
+  datatype file_place =
+      (*% *)
+      STDPATH
+    | (*% *)
+      LOCALPATH
+
+  (*% @formatter(Filename.filename) Filename.format_filename *)
+  (*% @prefix formatSimple_
+   *  @formatter(Filename.filename) Filename.format_filename *)
+  type source =
+      (*% @format(place * name) place +d name *)
+      (*% @prefix formatSimple_ @format(place * name) name *)
+      file_place * Filename.filename
+
+  (*% @formatter(hash) format_hash *)
+  (*% @prefix formatSimple_ @formatter(hash) format_hash *)
+  type interface_name =
+      (*%
+       * @format({hash, source})
+       * source +d "(" hash ")"
+       *)
+      (*%
+       * @prefix formatSimple_
+       * @format({hash, source})
+       * source +d "(" hash ")"
+       *)
+      {
+        hash: hash,
+        source: source
+      }
+
+  (*% *)
+  datatype file_type =
+      SML
+    | INCLUDES
+    | INTERFACE of interface_name
+
+  (*% *)
+  datatype file_dependency =
+      (*% @format(x) x *)
+      DEPEND of file_dependency_node
+    | (*% @format(x) "local" +1 x *)
+      LOCAL of file_dependency_node
+  withtype file_dependency_node =
+      (*% @format(s * ft * dep deps)
+       * !N0{ ft +d s +d "{" 2[ +1 deps(dep)("," +1) ] +1 "}" } *)
+      source * file_type * file_dependency list
+
+  (*% *)
+  type dependency =
+      {
+        (* name of this interface *)
+        interfaceNameOpt : interface_name option,
+        (* file dependency *)
+        depends : file_dependency list
+      }
+
+  structure Assoc :> sig
+    type 'a assoc
+    type key = Filename.filename
+    val empty : 'a assoc
+    val inDomain : 'a assoc * key -> bool
+    val append : 'a assoc * key * 'a -> 'a assoc
+    val listItems : 'a assoc -> 'a list
+  end =
+  struct
+    type 'a assoc = 'a SEnv.map * 'a list
+    type key = Filename.filename
+    val empty = (SEnv.empty, nil) : 'a assoc
+    fun inDomain ((map, _):'a assoc, x) =
+        SEnv.inDomain (map, Filename.toString x)
+    fun append (assoc as (map, items), k, v) =
+        if inDomain (assoc, k)
+        then assoc
+        else (SEnv.insert (map, Filename.toString k, v), v :: items)
+    fun listItems ((map, items):'a assoc) = rev items
+  end
+
+  fun listFileDependencyNodes allowLocal deps =
+      let
+        fun traverse limit visited (LOCAL x) =
+            if limit then traverse limit visited (DEPEND x) else visited
+          | traverse limit visited (DEPEND (node as ((_, file), _, deps))) =
+            if Assoc.inDomain (visited, file)
+            then visited
+            else Assoc.append (traverseList limit visited deps, file, node)
+        and traverseList limit visited deps =
+            foldl (fn (x, z) => traverse limit z x) visited deps
+      in
+        Assoc.listItems (traverseList allowLocal Assoc.empty deps)
+      end
+
+end

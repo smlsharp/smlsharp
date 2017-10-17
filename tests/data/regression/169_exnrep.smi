@@ -1,0 +1,9 @@
+functor F(
+  A : sig
+    exception E
+  end
+) =
+struct
+  exception E1 = A.E
+  exception E2 = E1
+end

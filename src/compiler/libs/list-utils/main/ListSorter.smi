@@ -1,0 +1,6 @@
+_require "../../../../basis.smi"
+
+structure ListSorter =
+struct
+  val sort : ('a * 'a -> order) -> 'a list -> 'a list
+end

@@ -1,4 +1,0 @@
-type t = int
-datatype dt
-con D : t -> dt
-

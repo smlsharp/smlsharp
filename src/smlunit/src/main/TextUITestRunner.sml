@@ -32,7 +32,8 @@ struct
   (***************************************************************************)
 
   fun printTo (parameter : parameter) string =
-      TextIO.output(#output parameter, string)
+      (TextIO.output(#output parameter, string);
+       TextIO.flushOut(#output parameter))
 
   fun doTest parameter path test =
       let
@@ -61,6 +62,8 @@ struct
                     print "E";
                     {testCount = 1, failures = [], errors = [(path, error)]}
                   ))
+        | (Test.Test (label, f)) =>
+          doTest parameter path (Test.TestLabel (label, Test.TestCase f))
         | (Test.TestLabel (label, test)) =>
           doTest parameter (path ^ separator ^ label) test
         | (Test.TestList tests) =>
@@ -108,7 +111,8 @@ struct
         app
         (fn (path, exn) =>
             (print
-             (path ^ ": " ^ (exnName exn) ^ ": " ^ (exnMessage exn) ^ "\n")))
+             (path ^ ": uncaught exception " ^ exnName exn ^ "\n <<< "
+              ^ exnMessage exn ^ " >>>\n")))
         errors
       end
 

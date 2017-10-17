@@ -1,5 +1,0 @@
-datatype 'a foo
-con Foo : ['a. 'a -> 'a foo]
-datatype 'a bar
-con Bar : ['a. 'a foo -> 'a bar]
-val v1 = Bar ... : int bar

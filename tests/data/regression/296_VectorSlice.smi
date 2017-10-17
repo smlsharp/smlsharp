@@ -1,0 +1,2 @@
+_require "basis/main/Vector.smi"
+_require "basis/main/VectorSlice.smi"

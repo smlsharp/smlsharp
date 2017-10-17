@@ -3,6 +3,7 @@ _require "./StringCvt.smi"
 _require local "./SMLSharp_ScanChar.smi"
 _require "./IntInf.smi"
 _require local "./String.smi"
+_use local "Word_common.sml"
 
 structure Word32 =
 struct

@@ -25,6 +25,13 @@ sig
             *)
            TestCase of testFunction
            (**
+            * a test case with label
+            * @params (label, test)
+            * @param label the name of the test
+            * @param test the function which performs the test
+            *)
+         | Test of string * testFunction
+           (**
             *  a test with name
             * @params (label, test)
             * @param label the name of the test

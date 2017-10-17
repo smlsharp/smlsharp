@@ -1,4 +1,0 @@
-datatype t
-con D : t
-type s = t
-val f = fn : t -> s

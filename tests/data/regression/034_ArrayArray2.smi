@@ -1,0 +1,2 @@
+val array = _builtin val Array_array : int * 'a -> 'a array
+val length = _builtin val Array_length : 'a array -> int

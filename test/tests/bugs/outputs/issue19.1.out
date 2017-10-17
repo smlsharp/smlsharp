@@ -1,1 +1,0 @@
-val escape = fn : char -> string

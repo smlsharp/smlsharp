@@ -1,4 +1,5 @@
 _require "./General.smi"
+_use local "./Vector_common.sml"
 
 structure Vector =
 struct

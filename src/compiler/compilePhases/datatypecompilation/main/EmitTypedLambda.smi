@@ -1,0 +1,236 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../data/constantterm/main/ConstantTerm.ppg.smi"
+
+structure EmitTypedLambda =
+struct
+
+  type vid (= VarID.id)
+  val newId : unit -> vid
+
+  datatype exp =
+      Exp of TypedLambda.tlexp * Types.ty
+    | Int8 of int
+    | Int16 of int
+    | Int32 of int
+    | Int64 of int
+    | Word8 of int
+    | Word16 of int
+    | Word32 of int
+    | Word64 of int
+    | Char of int
+    | ConTag of int
+    | Real64 of int
+    | Real32 of int
+    | String of string
+    | Unit
+    | Null
+    | True
+    | False
+    | SizeOf of Types.ty
+    | IndexOf of Types.ty * RecordLabel.label
+    | ExVar of RecordCalc.exVarInfo
+    | Cast of exp * Types.ty
+    | RuntimeTyCast of exp * Types.ty
+    | BitCast of exp * Types.ty
+    | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
+    | If of exp * exp * exp
+    | Andalso of exp list
+    | Switch of exp * (ConstantTerm.constant * exp) list * exp
+    | Raise of RecordCalc.exExnInfo * Types.ty
+    | Fn of vid * Types.ty * exp
+    | App of exp * exp
+    | Let of (vid * exp) list * exp
+    | Var of vid
+    | TLLet of decl list * exp
+    | TLVar of TypedLambda.varInfo
+    | Record of RecordLabel.label list * exp list
+    | Select of RecordLabel.label * exp
+  and decl =
+      Decl of TypedLambda.tldecl * TypedLambda.loc
+    | Bind of TypedLambda.varInfo * exp
+
+  val tupleTy : Types.ty list -> Types.ty
+  val arrayTy : Types.ty -> Types.ty
+
+  val Tuple : exp list -> exp
+  val SelectN : int * exp -> exp
+  val Ref_alloc : Types.ty * exp -> exp
+  val Ref_deref : Types.ty * exp -> exp
+  val Ref_assign : Types.ty * exp * exp -> exp
+  val Array_length : Types.ty * exp -> exp
+  val Array_sub_unsafe : Types.ty * exp * exp -> exp
+  val Array_turnIntoVector : Types.ty * exp -> exp
+  val Array_alloc_unsafe : Types.ty * exp -> exp
+  val Array_alloc_init : Types.ty * exp list -> exp
+  val Array_update_unsafe : Types.ty * exp * exp * exp -> exp
+  val Array_copy_unsafe : Types.ty * exp * exp * exp * exp * exp -> exp
+  val String_alloc_unsafe : exp -> exp
+  val String_size : exp -> exp
+  val String_sub_unsafe : exp * exp -> exp
+  val String_update_unsafe : exp * exp * exp -> exp
+  val String_copy_unsafe : exp * exp * exp * exp * exp -> exp
+  val IdentityEqual : Types.ty * exp * exp -> exp
+  val IsNull : exp -> exp
+  val Int8_eq : exp * exp -> exp
+  val Int8_gt : exp * exp -> exp
+  val Int8_gteq : exp * exp -> exp
+  val Int8_lt : exp * exp -> exp
+  val Int8_lteq : exp * exp -> exp
+  val Int8_quot_unsafe : exp * exp -> exp
+  val Int8_rem_unsafe : exp * exp -> exp
+  val Int8_sub_unsafe : exp * exp -> exp
+  val Int8_add_unsafe : exp * exp -> exp
+  val Int8_mul_unsafe : exp * exp -> exp
+  val Int8_sub_overflowCheck : exp * exp -> exp
+  val Int8_add_overflowCheck : exp * exp -> exp
+  val Int8_mul_overflowCheck : exp * exp -> exp
+  val Int16_eq : exp * exp -> exp
+  val Int16_gt : exp * exp -> exp
+  val Int16_gteq : exp * exp -> exp
+  val Int16_lt : exp * exp -> exp
+  val Int16_lteq : exp * exp -> exp
+  val Int16_quot_unsafe : exp * exp -> exp
+  val Int16_rem_unsafe : exp * exp -> exp
+  val Int16_sub_unsafe : exp * exp -> exp
+  val Int16_add_unsafe : exp * exp -> exp
+  val Int16_mul_unsafe : exp * exp -> exp
+  val Int16_sub_overflowCheck : exp * exp -> exp
+  val Int16_add_overflowCheck : exp * exp -> exp
+  val Int16_mul_overflowCheck : exp * exp -> exp
+  val Int32_eq : exp * exp -> exp
+  val Int32_gt : exp * exp -> exp
+  val Int32_gteq : exp * exp -> exp
+  val Int32_lt : exp * exp -> exp
+  val Int32_lteq : exp * exp -> exp
+  val Int32_quot_unsafe : exp * exp -> exp
+  val Int32_rem_unsafe : exp * exp -> exp
+  val Int32_sub_unsafe : exp * exp -> exp
+  val Int32_add_unsafe : exp * exp -> exp
+  val Int32_mul_unsafe : exp * exp -> exp
+  val Int32_sub_overflowCheck : exp * exp -> exp
+  val Int32_add_overflowCheck : exp * exp -> exp
+  val Int32_mul_overflowCheck : exp * exp -> exp
+  val Int64_eq : exp * exp -> exp
+  val Int64_gt : exp * exp -> exp
+  val Int64_gteq : exp * exp -> exp
+  val Int64_lt : exp * exp -> exp
+  val Int64_lteq : exp * exp -> exp
+  val Int64_quot_unsafe : exp * exp -> exp
+  val Int64_rem_unsafe : exp * exp -> exp
+  val Int64_sub_unsafe : exp * exp -> exp
+  val Int64_add_unsafe : exp * exp -> exp
+  val Int64_mul_unsafe : exp * exp -> exp
+  val Int64_sub_overflowCheck : exp * exp -> exp
+  val Int64_add_overflowCheck : exp * exp -> exp
+  val Int64_mul_overflowCheck : exp * exp -> exp
+  val Word8_gt : exp * exp -> exp
+  val Word8_gteq : exp * exp -> exp
+  val Word8_lt : exp * exp -> exp
+  val Word8_lteq : exp * exp -> exp
+  val Word8_div_unsafe : exp * exp -> exp
+  val Word8_mod_unsafe : exp * exp -> exp
+  val Word8_sub : exp * exp -> exp
+  val Word8_add : exp * exp -> exp
+  val Word8_orb : exp * exp -> exp
+  val Word8_xorb : exp * exp -> exp
+  val Word8_andb : exp * exp -> exp
+  val Word8_arshift_unsafe : exp * exp -> exp
+  val Word8_rshift_unsafe : exp * exp -> exp
+  val Word8_lshift_unsafe : exp * exp -> exp
+  val Word16_gt : exp * exp -> exp
+  val Word16_gteq : exp * exp -> exp
+  val Word16_lt : exp * exp -> exp
+  val Word16_lteq : exp * exp -> exp
+  val Word16_div_unsafe : exp * exp -> exp
+  val Word16_mod_unsafe : exp * exp -> exp
+  val Word16_sub : exp * exp -> exp
+  val Word16_add : exp * exp -> exp
+  val Word16_orb : exp * exp -> exp
+  val Word16_xorb : exp * exp -> exp
+  val Word16_andb : exp * exp -> exp
+  val Word16_arshift_unsafe : exp * exp -> exp
+  val Word16_rshift_unsafe : exp * exp -> exp
+  val Word16_lshift_unsafe : exp * exp -> exp
+  val Word32_gt : exp * exp -> exp
+  val Word32_gteq : exp * exp -> exp
+  val Word32_lt : exp * exp -> exp
+  val Word32_lteq : exp * exp -> exp
+  val Word32_div_unsafe : exp * exp -> exp
+  val Word32_mod_unsafe : exp * exp -> exp
+  val Word32_sub : exp * exp -> exp
+  val Word32_add : exp * exp -> exp
+  val Word32_orb : exp * exp -> exp
+  val Word32_xorb : exp * exp -> exp
+  val Word32_andb : exp * exp -> exp
+  val Word32_arshift_unsafe : exp * exp -> exp
+  val Word32_rshift_unsafe : exp * exp -> exp
+  val Word32_lshift_unsafe : exp * exp -> exp
+  val Word64_gt : exp * exp -> exp
+  val Word64_gteq : exp * exp -> exp
+  val Word64_lt : exp * exp -> exp
+  val Word64_lteq : exp * exp -> exp
+  val Word64_div_unsafe : exp * exp -> exp
+  val Word64_mod_unsafe : exp * exp -> exp
+  val Word64_sub : exp * exp -> exp
+  val Word64_add : exp * exp -> exp
+  val Word64_orb : exp * exp -> exp
+  val Word64_xorb : exp * exp -> exp
+  val Word64_andb : exp * exp -> exp
+  val Word64_arshift_unsafe : exp * exp -> exp
+  val Word64_rshift_unsafe : exp * exp -> exp
+  val Word64_lshift_unsafe : exp * exp -> exp
+  val Word8_toWord16 : exp -> exp
+  val Word8_toWord16X : exp -> exp
+  val Word8_toWord32 : exp -> exp
+  val Word8_toWord32X : exp -> exp
+  val Word8_toWord64 : exp -> exp
+  val Word8_toWord64X : exp -> exp
+  val Word16_toWord8 : exp -> exp
+  val Word16_toWord32 : exp -> exp
+  val Word16_toWord32X : exp -> exp
+  val Word16_toWord64 : exp -> exp
+  val Word16_toWord64X : exp -> exp
+  val Word32_toWord8 : exp -> exp
+  val Word32_toWord16 : exp -> exp
+  val Word32_toWord64 : exp -> exp
+  val Word32_toWord64X : exp -> exp
+  val Word64_toWord8 : exp -> exp
+  val Word64_toWord16 : exp -> exp
+  val Word64_toWord32 : exp -> exp
+  val Word32_fromInt32 : exp -> exp
+  val Word32_toInt32X : exp -> exp
+  val Real32_isNan : exp -> exp
+  val Real32_equal : exp * exp -> exp
+  val Real32_gteq : exp * exp -> exp
+  val Real32_lteq : exp * exp -> exp
+  val Real32_sub : exp * exp -> exp
+  val Real32_toInt32_unsafe : exp -> exp
+  val Real64_isNan : exp -> exp
+  val Real64_equal : exp * exp -> exp
+  val Real64_gteq : exp * exp -> exp
+  val Real64_lteq : exp * exp -> exp
+  val Real64_sub : exp * exp -> exp
+  val Real64_toInt32_unsafe : exp -> exp
+  val allocExnTag : {builtin:bool, path:RecordCalc.path, ty:Types.ty} -> exp
+  val extractExnTagName : exp -> exp
+  val extractExnTag : exp -> exp
+  val extractExnLoc : exp -> exp
+  val extractExnArg : exp * Types.ty -> exp
+  val Exn_Message : exp -> exp
+  val composeExn : exp * Loc.loc * exp option -> exp
+  val emit : TypedLambda.loc -> exp -> TypedLambda.tlexp
+
+end

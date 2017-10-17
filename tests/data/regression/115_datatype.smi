@@ -1,0 +1,5 @@
+structure S =
+struct
+  type t (= contag)
+  val f : t -> t
+end

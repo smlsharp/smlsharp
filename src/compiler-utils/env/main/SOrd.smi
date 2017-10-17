@@ -1,7 +1,0 @@
-_require "../../../basis.smi"
-
-structure SOrd =
-struct 
-  type ord_key = string
-  val compare : ord_key * ord_key -> order
-end

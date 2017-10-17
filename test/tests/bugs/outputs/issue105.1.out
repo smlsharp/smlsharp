@@ -1,5 +1,0 @@
-datatype dt
-con D : dt
-signature S1 = sig datatype dt = datatype dt end
-../tests/bugs/tests/issue105.1.sml:3.11-3.51 Error:
-  Signature mismatch (tycon): dt

@@ -1,0 +1,2 @@
+_require "104_functorlink3.smi"
+val F : unit

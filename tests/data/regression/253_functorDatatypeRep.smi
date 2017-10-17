@@ -1,0 +1,7 @@
+functor F(A:sig datatype foo = A end) =
+struct
+  structure B = 
+  struct
+    datatype foo = datatype A.foo
+  end
+end

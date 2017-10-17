@@ -1,0 +1,8 @@
+_require "../../../../basis.smi"
+
+structure ListUtils =
+struct
+  val split : 'a list -> int -> 'a list * 'a list option
+  val prefixList : 'a list -> 'a list list
+  val listEq : ('a * 'a -> bool) -> 'a list * 'a list -> bool
+end

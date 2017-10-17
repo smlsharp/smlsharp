@@ -1,0 +1,7 @@
+(*
+structure S =
+struct
+  type t (= int)
+  exception E of t
+end
+*)

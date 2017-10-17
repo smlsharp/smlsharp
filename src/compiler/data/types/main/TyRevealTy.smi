@@ -1,0 +1,26 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlnj-lib/Util/lib-base.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+
+_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require local "./OPrimInstMap.smi"
+_require local "./TypesBasics.smi"
+_require local "./Unify.smi"
+
+_require "./Types.ppg.smi"
+
+structure TyRevealTy =
+struct
+  val revealTy : Types.ty -> Types.ty
+  val revealVar : Types.varInfo -> Types.varInfo
+  val revealConInfo : Types.conInfo -> Types.conInfo
+  val revealExnInfo : Types.exnInfo -> Types.exnInfo
+  val revealExExnInfo : Types.exExnInfo -> Types.exExnInfo
+  val revealOprimInfo : Types.oprimInfo -> Types.oprimInfo
+  val revealPrimInfo : Types.primInfo -> Types.primInfo
+  val revealBtvEnv : Types.btvEnv -> Types.btvEnv
+end

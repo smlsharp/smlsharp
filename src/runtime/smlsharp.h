@@ -407,7 +407,7 @@ const struct sml_frame_layout *sml_lookup_frametable(void *);
 /* register a top-level.  This is called before entering main. */
 void sml_register_top(const void *, const void *, const void *, const void *);
 /* run the registered top-levels. */
-void sml_run(void);
+void sml_run(int allow_multiple_toplevel);
 /* enumerate pointers in mutable top-level objects */
 void sml_enum_global(void (*trace)(void **, void *), void *);
 

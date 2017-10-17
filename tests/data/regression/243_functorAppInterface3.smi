@@ -1,0 +1,4 @@
+functor F(A: sig type elem end) =
+struct
+  datatype 'a hoge = Empty | Node of A.elem * 'a * 'a hoge
+end

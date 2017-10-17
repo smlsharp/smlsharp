@@ -1,0 +1,20 @@
+_require local "../../../../basis.smi"
+_require local "../../../../config/main/Config.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "./CoreUtils.smi"
+_require local "./TempFile.smi"
+
+_require "./Filename.smi"
+
+structure BinUtils =
+struct
+  val assemble : {source: Filename.filename, flags: string list,
+                  object: Filename.filename} -> unit
+  val link : {flags: string list, objects: Filename.filename list,
+              libs: string list, dst: Filename.filename,
+              useCXX: bool, quiet: bool} -> unit
+  val partialLink : {objects: Filename.filename list, dst: Filename.filename}
+                    -> unit
+  val archive : {objects: Filename.filename list, archive: Filename.filename}
+                -> unit
+end

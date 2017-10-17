@@ -1,0 +1,266 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../libs/toolchain/main/Filename.smi"
+_require "./FormatTemplate.ppg.smi"
+_require "./AbsynTy.ppg.smi"
+_require "./AbsynConst.ppg.smi"
+_require "./AbsynSQL.ppg.smi"
+
+structure Absyn =
+struct
+  type loc = Loc.loc
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
+
+  datatype constant = datatype AbsynConst.constant
+
+  type headerFormatComment = 
+      {
+        formatters : (longsymbol * longsymbol) list,
+        params : symbol list
+      }
+
+  type definingFormatComment = 
+      {
+        primaryTag : FormatTemplate.formattag,
+        localTags : FormatTemplate.formattag list
+      }
+
+  datatype eq = datatype AbsynTy.eq
+  datatype ty = datatype AbsynTy.ty
+  datatype tvarKind = datatype AbsynTy.tvarKind
+  type tvar = AbsynTy.tvar
+  type kindedTvar = AbsynTy.kindedTvar
+  datatype ffiTy = datatype AbsynTy.ffiTy
+
+  datatype pat
+    = PATWILD of loc
+    | PATCONSTANT of constant
+    | PATID of {opPrefix:bool, longsymbol:longsymbol, loc:loc}
+    | PATRECORD of {ifFlex:bool, fields:patrow list, loc:loc}
+    | PATTUPLE of pat list * loc
+    | PATLIST of pat list * loc
+    | PATAPPLY of pat list * loc
+    | PATTYPED of pat * ty * loc
+    | PATLAYERED of pat * pat * loc
+  and patrow 
+    = PATROWPAT of RecordLabel.label * pat * loc
+    | PATROWVAR of symbol * (ty option) * (pat option) * loc
+
+  datatype exbind 
+    = EXBINDDEF of {opFlag:bool, 
+                     conSymbol:symbol, 
+                     tyOpt:ty option,
+                     loc:loc,
+                     formatComments:definingFormatComment list}
+     | EXBINDREP of {opFlag1:bool,
+                     conSymbol:symbol, 
+                     refLongsymbol:longsymbol,
+                     opFlag2:bool,
+                     loc:loc,
+                     formatComments:definingFormatComment list}
+  type typbind 
+    = {
+        tyvars : tvar list,
+        tyConSymbol : symbol,
+        ty : ty,
+        formatComments : definingFormatComment list
+      }
+
+  type datbind 
+    = {
+       tyvars : tvar list, 
+       tyConSymbol:symbol, 
+       rhs : {opFlag:bool, 
+              conSymbol:symbol, 
+              tyOpt:ty option, 
+              formatComments:definingFormatComment list} 
+               list
+      }
+
+  datatype exp
+    = EXPCONSTANT of constant
+    | EXPID of  longsymbol
+    | EXPOPID of longsymbol * loc
+    | EXPRECORD of (RecordLabel.label * exp) list * loc
+    | EXPRECORD_UPDATE of exp * (RecordLabel.label * exp) list * loc
+    | EXPRECORD_SELECTOR of RecordLabel.label * loc
+    | EXPTUPLE of exp list * loc
+    | EXPLIST of exp list * loc
+    | EXPSEQ of exp list * loc
+    | EXPAPP of exp list * loc
+    | EXPTYPED of exp * ty * loc
+    | EXPCONJUNCTION of exp * exp * loc
+    | EXPDISJUNCTION of exp * exp * loc
+    | EXPHANDLE of exp * (pat * exp) list * loc
+    | EXPRAISE of exp * loc
+    | EXPIF of exp * exp * exp * loc
+    | EXPWHILE of exp * exp * loc
+    | EXPCASE of exp * (pat * exp) list * loc
+    | EXPFN of (pat * exp) list * loc
+    | EXPLET of dec list * exp list * loc
+    | EXPFFIIMPORT of ffiFun * ffiTy * loc
+    | EXPFFIAPPLY of string list * ffiFun * ffiArg list * ffiTy list * loc
+    | EXPFOREACHARRAY of {id:symbol, pat:pat, data:exp, iterate:exp, pred:exp, loc:loc}
+    | EXPFOREACHDATA of {id:symbol, pat:pat, whereParam:exp, data:exp, iterate:exp, pred:exp, loc:loc}
+    | EXPSQL of (exp, pat, ty) AbsynSQL.sqlexp * loc
+    | EXPJOIN of exp * exp * loc
+    | EXPJSON of exp * ty * loc
+    | EXPJSONCASE of exp * (pat * exp) list * loc
+    | EXPTYPEOF of ty * loc
+    | EXPREIFYTY of ty * loc
+
+  and ffiArg 
+    = FFIARG of exp * ffiTy * loc
+    | FFIARGSIZEOF of ty * exp option * loc
+  and ffiFun
+    = FFIFUN of exp
+    | FFIEXTERN of string
+  and dec 
+    = DECVAL of kindedTvar list * (pat * exp) list * loc
+    | DECREC of kindedTvar list * (pat * exp) list * loc
+    | DECPOLYREC of (symbol * ty * exp) list * loc
+    | DECFUN of kindedTvar list * {fdecl:(pat list * ty option * exp) list, loc:loc} list * loc 
+    | DECTYPE of {formatComments : headerFormatComment list, tbs : typbind list, loc:loc}
+    | DECDATATYPE of {formatComments: headerFormatComment list,
+                      datatys: datbind list,
+                      withtys: typbind list,
+                      loc:loc}
+    | DECABSTYPE of 
+            {
+             formatComments : headerFormatComment list,
+             abstys: datbind list,
+             withtys: typbind list,
+             body: dec list,
+             loc:loc
+            }
+    | DECOPEN of longsymbol list * loc
+    | DECREPLICATEDAT of {formatComments: headerFormatComment list,
+                          defSymbol: symbol,
+                          refLongsymbol: longsymbol,
+                          loc:loc}
+    | DECEXN of {formatComments:headerFormatComment list,
+                 exbinds:exbind list,
+                 loc:loc}
+    | DECLOCAL of dec list * dec list * loc
+    | DECINFIX of string * symbol list * loc
+    | DECINFIXR of string * symbol list * loc
+    | DECNONFIX of symbol list * loc
+  and strdec 
+    = COREDEC of dec * loc
+    | STRUCTBIND of strbind list * loc
+    | STRUCTLOCAL of strdec  list * strdec list  * loc
+  and strexp 
+    = STREXPBASIC of strdec list * loc
+    | STRID of longsymbol * loc
+    | STRTRANCONSTRAINT of strexp * sigexp * loc
+    | STROPAQCONSTRAINT of strexp * sigexp * loc
+    | FUNCTORAPP of symbol * strexp * loc
+    | STRUCTLET  of strdec list * strexp * loc
+  and strbind 
+    = STRBINDTRAN of symbol * sigexp  * strexp * loc 
+    | STRBINDOPAQUE of symbol * sigexp  * strexp * loc
+    | STRBINDNONOBSERV of symbol * strexp * loc
+  and sigexp 
+    = SIGEXPBASIC of spec * loc
+    | SIGID of symbol * loc
+    | SIGWHERE of sigexp * (tvar list * longsymbol * ty) * loc
+  and spec
+    = SPECVAL of (symbol * ty) list * loc
+    | SPECTYPE of (tvar list * symbol) list * loc
+    | SPECDERIVEDTYPE of (tvar list * symbol * ty) list  * loc
+    | SPECEQTYPE of (tvar list * symbol) list * loc
+    | SPECDATATYPE of (tvar list * symbol * (symbol * ty option) list ) list * loc
+    | SPECREPLIC of symbol * longsymbol * loc
+    | SPECEXCEPTION of (symbol * ty option) list * loc
+    | SPECSTRUCT of (symbol * sigexp) list * loc
+    | SPECINCLUDE of sigexp * loc
+    | SPECDERIVEDINCLUDE of symbol list * loc
+    | SPECSEQ of spec * spec * loc 
+    | SPECSHARE of spec * longsymbol list * loc 
+    | SPECSHARESTR of spec * longsymbol list * loc 
+    | SPECEMPTY 
+  and funbind 
+    = FUNBINDTRAN of symbol * symbol * sigexp  * sigexp * strexp * loc 
+    | FUNBINDOPAQUE of symbol * symbol * sigexp  * sigexp * strexp * loc 
+    | FUNBINDNONOBSERV of symbol * symbol * sigexp  * strexp * loc 
+    | FUNBINDSPECTRAN of symbol * spec * sigexp  * strexp * loc 
+    | FUNBINDSPECOPAQUE of symbol * spec * sigexp  * strexp * loc 
+    | FUNBINDSPECNONOBSERV of symbol * spec * strexp * loc 
+  and topdec 
+    = TOPDECSTR of strdec * loc
+    | TOPDECSIG of ( symbol * sigexp ) list * loc 
+    | TOPDECFUN of funbind list * loc
+
+  datatype top 
+    = TOPDEC of topdec list
+    | USE of Filename.filename * loc
+
+  datatype interface 
+    = INTERFACE of Filename.filename * loc
+    | NOINTERFACE
+
+  type unit = 
+    {
+     interface : interface,
+     tops : top list,
+     loc : loc
+    }
+
+  datatype unitparseresult
+    = UNIT of unit
+    | EOF
+
+  val getLeftLocConstant = AbsynConst.getLeftLocConstant
+  val getRightLocConstant = AbsynConst.getRightLocConstant
+  val getLocConstant = AbsynConst.getLocConstant
+
+  val getLocTy = AbsynTy.getLocTy
+  val getLocPat : pat -> Loc.loc
+  val replaceLoc : exp * Loc.loc -> exp
+
+  val format_constant
+      : constant -> SMLFormat.FormatExpression.expression list
+  val format_eq
+      : eq -> SMLFormat.FormatExpression.expression list
+  val format_ty
+      : ty -> SMLFormat.FormatExpression.expression list
+  val format_tvarKind
+      : tvarKind -> SMLFormat.FormatExpression.expression list
+  val format_tvar
+      : tvar -> SMLFormat.FormatExpression.expression list
+  val format_kindedTvar
+      : kindedTvar -> SMLFormat.FormatExpression.expression list
+  val format_ffiTy
+      : ffiTy -> SMLFormat.FormatExpression.expression list
+  val format_pat
+      : pat -> SMLFormat.FormatExpression.expression list
+  val format_patrow
+      : patrow -> SMLFormat.FormatExpression.expression list
+  val format_typbind
+      : typbind -> SMLFormat.FormatExpression.expression list
+  val format_exp
+      : exp -> SMLFormat.FormatExpression.expression list
+  val format_dec
+      : dec -> SMLFormat.FormatExpression.expression list
+  val format_sigexp
+      : sigexp -> SMLFormat.FormatExpression.expression list
+  val format_spec
+      : spec -> SMLFormat.FormatExpression.expression list
+  val format_topdec
+      : topdec -> SMLFormat.FormatExpression.expression list
+  val format_unit
+      : unit -> SMLFormat.FormatExpression.expression list
+  val format_unitparseresult
+      : unitparseresult -> SMLFormat.FormatExpression.expression list
+
+  val DefaultFormatterPrefix : string
+end

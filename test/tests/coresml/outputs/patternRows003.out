@@ -1,8 +1,0 @@
-val f11 = fn : ['a. {a: 'a} -> 'a]
-val v11 = 11 : int
-val f12 = fn : ['a, 'b. {a: 'a * 'b} -> ('a * 'b) * 'a * 'b]
-val v12 = ((1, 2), 1, 2) : (int * int) * int * int
-val f21 = fn : {a: int} -> int
-val v21 = 21 : int
-val f22 = fn : {a: int * int} -> (int * int) * int * int
-val v22 = ((2, 2), 2, 2) : (int * int) * int * int

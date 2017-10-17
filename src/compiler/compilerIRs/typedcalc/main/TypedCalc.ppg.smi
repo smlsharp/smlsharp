@@ -1,0 +1,189 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+_require "../../../libs/util/main/TermFormat.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+
+structure TypedCalc =
+  struct
+    datatype idstatus
+      = RECFUNID of Types.varInfo * int | VARID of Types.varInfo
+    val format_idstatus
+        : idstatus -> SMLFormat.FormatExpression.expression list
+    val formatWithType_idstatus : Types.kind TermFormat.btvEnv
+                                  -> idstatus
+                                     -> SMLFormat.FormatExpression.expression 
+                                          list
+    datatype exnCon = EXEXN of Types.exExnInfo | EXN of Types.exnInfo
+    val format_exnCon
+        : exnCon -> SMLFormat.FormatExpression.expression list
+    val formatWithType_exnCon : exnCon -> SMLFormat.FormatExpression.expression list
+    datatype ffiTy
+      = FFIBASETY of Types.ty * Loc.loc
+      | FFIFUNTY of FFIAttributes.attributes option * ffiTy list * ffiTy list option * ffiTy list *
+                    Loc.loc
+      | FFIRECORDTY of (RecordLabel.label * ffiTy) list * Loc.loc
+    val format_ffiTy
+        : Types.kind TermFormat.btvEnv -> ffiTy TermFormat.formatter
+    val formatWithType_ffiTy
+        : Types.kind TermFormat.btvEnv -> ffiTy TermFormat.formatter
+    type constant = AbsynConst.constant
+    datatype tpexp
+      = TPAPPM of {argExpList:tpexp list, funExp:tpexp, funTy:Types.ty,
+                   loc:Loc.loc}
+      | TPCASEM of {caseKind:PatternCalc.caseKind, expList:tpexp list,
+                    expTyList:Types.ty list, loc:Loc.loc, ruleBodyTy:Types.ty,
+                    ruleList:{args:tppat list, body:tpexp} list}
+      | TPCAST of (tpexp * Types.ty) * Types.ty * Loc.loc
+      | TPCONSTANT of {const:constant, loc:Loc.loc, ty:Types.ty}
+      | TPDATACONSTRUCT of {argExpOpt:tpexp option, con:Types.conInfo,
+                            argTyOpt:Types.ty option, 
+                            instTyList:Types.ty list, loc:Loc.loc}
+      | TPERROR
+      | TPEXNCONSTRUCT of {argExpOpt:tpexp option, exn:exnCon,
+                           argTyOpt:Types.ty option, 
+                           instTyList:Types.ty list, loc:Loc.loc}
+      | TPEXN_CONSTRUCTOR of {exnInfo:Types.exnInfo, loc:Loc.loc}
+      | TPEXEXN_CONSTRUCTOR of {exExnInfo:Types.exExnInfo, loc:Loc.loc}
+      | TPEXVAR of Types.exVarInfo
+      | TPFFIIMPORT of {ffiTy:ffiTy, loc:Loc.loc, funExp:tpffifun,
+                        stubTy:Types.ty}
+      | TPFNM of {argVarList:Types.varInfo list, bodyExp:tpexp,
+                  bodyTy:Types.ty, loc:Loc.loc}
+      | TPHANDLE of {exnVar:Types.varInfo, exp:tpexp, handler:tpexp,
+                     resultTy:Types.ty, loc:Loc.loc}
+      | TPLET of {body:tpexp list, decls:tpdecl list, loc:Loc.loc,
+                  tys:Types.ty list}
+      | TPMODIFY of {elementExp:tpexp, elementTy:Types.ty, label:RecordLabel.label,
+                     loc:Loc.loc, recordExp:tpexp, recordTy:Types.ty}
+      | TPMONOLET of {binds:(Types.varInfo * tpexp) list, bodyExp:tpexp,
+                      loc:Loc.loc}
+      | TPOPRIMAPPLY of {argExp:tpexp, instTyList:Types.ty list, loc:Loc.loc,
+                         argTy:Types.ty, oprimOp:Types.oprimInfo}
+      | TPPOLY of {btvEnv:Types.btvEnv, exp:tpexp, expTyWithoutTAbs:Types.ty,
+                   loc:Loc.loc}
+      | TPPOLYFNM of {argVarList:Types.varInfo list, bodyExp:tpexp,
+                      bodyTy:Types.ty, btvEnv:Types.btvEnv, loc:Loc.loc}
+      | TPPRIMAPPLY of {argExp:tpexp, instTyList:Types.ty list, loc:Loc.loc,
+                        argTy:Types.ty, primOp:Types.primInfo}
+      | TPRAISE of {exp:tpexp, loc:Loc.loc, ty:Types.ty}
+      | TPRECFUNVAR of {arity:int, var:Types.varInfo}
+      | TPRECORD of {fields:tpexp RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty}
+      | TPSELECT of {exp:tpexp, expTy:Types.ty, label:RecordLabel.label, loc:Loc.loc,
+                     resultTy:Types.ty}
+      | TPSEQ of {expList:tpexp list, expTyList:Types.ty list, loc:Loc.loc}
+      | TPFOREACH of {data:tpexp, 
+                      dataTy:Types.ty, 
+                      iterator:tpexp, 
+                      iteratorTy:Types.ty, 
+                      pred:tpexp, 
+                      predTy:Types.ty, 
+                      loc:Loc.loc}
+      | TPFOREACHDATA of {data:tpexp, 
+                          dataTy:Types.ty, 
+                          whereParam:tpexp,
+                          whereParamTy:Types.ty,
+                          iterator:tpexp, 
+                          iteratorTy:Types.ty, 
+                          pred:tpexp, 
+                          predTy:Types.ty, 
+                          loc:Loc.loc}
+      | TPSIZEOF of Types.ty * Loc.loc
+      | TPTAPP of {exp:tpexp, expTy:Types.ty, instTyList:Types.ty list,
+                   loc:Loc.loc}
+      | TPVAR of Types.varInfo
+      | TPJOIN of {ty : Types.ty, args : tpexp * tpexp, argtys : Types.ty * Types.ty, 
+                   loc:Loc.loc}
+      | TPJSON of {exp:tpexp, ty:Types.ty, coerceTy:Types.ty, loc:Loc.loc}
+      | TPTYPEOF of Types.ty * Loc.loc
+      | TPREIFYTY of Types.ty * Loc.loc
+    and tpffifun
+      = TPFFIFUN of tpexp
+      | TPFFIEXTERN of string
+    and tpdecl
+      = TPEXD of {exnInfo:Types.exnInfo, loc:Loc.loc} list * Loc.loc
+      | TPEXNTAGD of {exnInfo:Types.exnInfo, varInfo:Types.varInfo} * Loc.loc
+      | TPEXPORTEXN of Types.exnInfo
+      | TPEXPORTRECFUNVAR of {var:Types.varInfo, arity:int}
+      | TPEXPORTVAR of Types.varInfo
+      | TPEXTERNEXN of {path:Symbol.longsymbol, ty:Types.ty}
+      | TPBUILTINEXN of {path:Symbol.longsymbol, ty:Types.ty}
+      | TPEXTERNVAR of {path:Symbol.longsymbol, ty:Types.ty}
+      | TPFUNDECL of {argTyList:Types.ty list, bodyTy:Types.ty,
+                      funVarInfo:Types.varInfo,
+                      ruleList:{args:tppat list, body:tpexp} list} list * 
+                     Loc.loc
+      | TPPOLYFUNDECL of Types.btvEnv * 
+                         {argTyList:Types.ty list, bodyTy:Types.ty,
+                          funVarInfo:Types.varInfo,
+                          ruleList:{args:tppat list, body:tpexp} list} list * 
+                         Loc.loc
+      | TPVAL of (Types.varInfo * tpexp) list * Loc.loc
+      | TPVALPOLYREC of Types.btvEnv * 
+                        {exp:tpexp, expTy:Types.ty, var:Types.varInfo} list * 
+                        Loc.loc
+      | TPVALREC of {exp:tpexp, expTy:Types.ty, var:Types.varInfo} list * 
+                    Loc.loc
+    and tppat
+      = TPPATCONSTANT of constant * Types.ty * Loc.loc
+      | TPPATDATACONSTRUCT of {argPatOpt:tppat option, conPat:Types.conInfo,
+                               instTyList:Types.ty list, loc:Loc.loc,
+                               patTy:Types.ty}
+      | TPPATERROR of Types.ty * Loc.loc
+      | TPPATEXNCONSTRUCT of {argPatOpt:tppat option, exnPat:exnCon,
+                              instTyList:Types.ty list, loc:Loc.loc,
+                              patTy:Types.ty}
+      | TPPATLAYERED of {asPat:tppat, loc:Loc.loc, varPat:tppat}
+      | TPPATRECORD of {fields:tppat RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty}
+      | TPPATVAR of Types.varInfo
+      | TPPATWILD of Types.ty * Loc.loc 
+    val format_tpexp
+        : Types.kind TermFormat.btvEnv
+          -> tpexp
+          -> SMLFormat.FormatExpression.expression list
+    val format_tpdecl
+        : Types.kind TermFormat.btvEnv
+          -> tpdecl
+          -> SMLFormat.FormatExpression.expression list
+    val format_tppat
+        : Types.kind TermFormat.btvEnv
+          -> tppat
+          -> SMLFormat.FormatExpression.expression list
+    val format_fields
+        : Types.kind TermFormat.btvEnv
+          -> tpexp RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
+    val format_patfields
+        : Types.kind TermFormat.btvEnv
+          -> tppat RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tpexp
+        : Types.kind TermFormat.btvEnv
+          -> tpexp
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tpdecl
+        : Types.kind TermFormat.btvEnv
+          -> tpdecl
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tppat
+        : Types.kind TermFormat.btvEnv
+          -> tppat
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_fields
+        : Types.kind TermFormat.btvEnv
+          -> tpexp RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithType_patfields
+        : Types.kind TermFormat.btvEnv
+          -> tppat RecordLabel.Map.map
+          -> SMLFormat.FormatExpression.expression list
+  end

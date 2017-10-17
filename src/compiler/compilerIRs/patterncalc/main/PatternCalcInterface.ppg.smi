@@ -1,0 +1,155 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
+_require "./PatternCalc.ppg.smi"
+
+structure PatternCalcInterface =
+struct
+  type loc = Loc.loc
+  type ty = AbsynTy.ty
+
+  type symbol = Symbol.symbol
+
+  type longsymbol = Symbol.longsymbol
+
+  type tvar = AbsynTy.tvar
+
+  type scopedTvars = PatternCalc.scopedTvars
+
+  type overloadCase = AbsynInterface.overloadCase
+
+  datatype overloadInstance = datatype AbsynInterface.overloadInstance
+
+  datatype valbindBody = datatype AbsynInterface.valbindBody
+
+  type datbind = AbsynInterface.datbind
+
+  datatype runtimeTy 
+   = BUILTINty of BuiltinTypeNames.bty
+   | LIFTEDty of longsymbol
+
+  datatype pidec 
+    = PIVAL of
+      {
+        scopedTvars: scopedTvars,
+        symbol: symbol,
+        body: valbindBody,
+        loc: loc
+      }
+    | PITYPE of
+      {
+        tyvars: tvar list,
+        symbol: symbol,
+        ty: ty,
+        loc: loc
+      }
+    | PIOPAQUE_TYPE of
+      {
+        tyvars: tvar list,
+        symbol: symbol,
+	runtimeTy: runtimeTy,
+        loc: loc
+      }
+    | PIOPAQUE_EQTYPE of
+      {
+        tyvars: tvar list,
+        symbol: symbol,
+	runtimeTy: runtimeTy,
+        loc: loc
+      }
+    | PITYPEBUILTIN of
+      {
+        symbol: symbol,
+        builtinSymbol: symbol,
+        loc: loc
+      }
+    | PIDATATYPE of {datbind: datbind list, loc: loc}
+    | PITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
+    | PIEXCEPTION of {symbol: symbol, 
+                      ty: ty option, 
+                      loc: loc}
+    | PIEXCEPTIONREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
+    | PISTRUCTURE of {symbol: symbol, strexp: pistrexp, loc: loc}
+
+  and pistrexp 
+    = PISTRUCT of {decs: pidec list, loc: loc}
+    | PISTRUCTREP of {longsymbol:longsymbol, loc: loc}
+    | PIFUNCTORAPP of {functorSymbol:symbol, argument:longsymbol, loc:loc}
+
+  type funbind 
+    = {functorSymbol: symbol,
+       param: {strSymbol: symbol, sigexp: PatternCalc.plsigexp},
+       strexp: pistrexp,
+       loc:loc}
+
+  datatype pitopdec 
+    =  PIDEC of pidec
+    | PIFUNDEC of funbind
+
+  type interfaceId = InterfaceID.id
+
+  type interfaceDec =
+      {
+        interfaceId: interfaceId,
+        requiredIds: {id: interfaceId, loc: loc} list,
+        provideTopdecs: pitopdec list
+      }
+
+  type interface =
+      {
+        interfaceDecs : interfaceDec list,
+        requiredIds : {id: interfaceId, loc: loc} list,
+        locallyRequiredIds : {id: interfaceId, loc: loc} list,
+        provideTopdecs : pitopdec list
+      } 
+
+  type compile_unit =
+      {
+        interface : interface option,
+        topdecsInclude : PatternCalc.pltopdec list,
+        topdecsSource : PatternCalc.pltopdec list
+      }
+
+  type interface_unit =
+      {
+        interfaceDecs : interfaceDec list,
+        requiredIds : {id: interfaceId, loc: loc} list,
+        topdecsInclude : PatternCalc.pltopdec list
+      } 
+
+  datatype topdec
+    = TOPDECSTR of PatternCalc.plstrdec * loc
+    | TOPDECSIG of (symbol * PatternCalc.plsigexp ) list * loc 
+    | TOPDECFUN of
+      {pltopdec: {name:symbol, argStrName:symbol, argSig:PatternCalc.plsigexp, body:PatternCalc.plstrexp, loc:loc},
+       pitopdec: funbind option}
+        list * loc 
+
+  type compile_unit_spliced =
+      {
+        interface : interface option,
+        topdecsInclude : topdec list,
+        topdecsSource : topdec list
+      }
+
+  val format_pidec : pidec -> SMLFormat.FormatExpression.expression list
+  val format_pitopdec : pitopdec -> SMLFormat.FormatExpression.expression list
+
+  val format_interfaceDec
+      : interfaceDec -> SMLFormat.FormatExpression.expression list
+  val format_compile_unit
+      : compile_unit -> SMLFormat.FormatExpression.expression list
+  val format_interface_unit
+      : interface_unit -> SMLFormat.FormatExpression.expression list
+  val pitopdecLoc : pitopdec -> loc
+  val pidecLoc : pidec -> loc
+
+end

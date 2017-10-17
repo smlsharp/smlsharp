@@ -1,5 +1,6 @@
 _require "./General.smi"
 _require "./CharVectorSlice.smi"
+_use local "ArraySlice_common.sml"
 
 structure CharArraySlice =
 struct

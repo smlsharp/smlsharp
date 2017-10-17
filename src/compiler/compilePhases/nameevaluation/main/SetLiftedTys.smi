@@ -1,0 +1,24 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../data/types/main/TvarMap.smi"
+_require local "../../../libs/util/main/SCCFun.smi"
+_require local "./NameEvalUtils.smi"
+_require local "./TfunVars.smi"
+
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "./NameEvalEnv.ppg.smi"
+
+
+structure SetLiftedTys =
+struct
+  val getId : IDCalc.tfunkind ref -> IDCalc.typId
+  val setLiftedTysEnv : NameEvalEnv.env
+                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
+  val setLiftedTysSpecEnv : NameEvalEnv.env
+                        -> (Symbol.symbol list * IDCalc.tfunkind ref) list list
+end

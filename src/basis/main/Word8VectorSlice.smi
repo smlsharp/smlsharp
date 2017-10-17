@@ -1,5 +1,6 @@
 _require "./General.smi"
 _require local "./Word8Vector.smi"
+_use local "./VectorSlice_common.sml"
 
 structure Word8VectorSlice =
 struct

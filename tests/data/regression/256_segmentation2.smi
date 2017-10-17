@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "compiler/libs/env/main/SEnv.smi"
+structure KVS =
+struct
+  type kvs (= boxed)
+  val init : unit -> unit
+  val get : string -> string option
+  val put : string * string -> unit
+end

@@ -1,0 +1,5 @@
+structure Char =
+struct
+  type char = char
+  type string = string
+end

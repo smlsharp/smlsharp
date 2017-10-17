@@ -1,4 +1,0 @@
-_require "../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "./SOrd.smi"
-
-structure SSet = BinarySetFn(SOrd)

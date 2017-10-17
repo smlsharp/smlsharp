@@ -1,0 +1,15 @@
+structure S =
+struct
+  type t = unit
+  exception E
+end
+
+functor F(
+  A : sig
+    type t
+    exception E
+  end
+) =
+struct
+  exception E = A.E
+end

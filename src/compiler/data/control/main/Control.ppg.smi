@@ -1,0 +1,90 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+
+structure Control =
+struct
+  type switch (= boxed)
+  type switchTable = (string * string * switch) list
+  val profileMaxPhases : int ref
+  val printWidth : int ref
+  val printMaxDepth : int ref
+  val printMaxOverloadInstances : int ref
+  val printMaxNestLevel : int ref
+  val printMaxExnNestLevel : int ref
+  val importAllExceptions : bool ref
+  val generateExnMessage : bool ref
+
+  val interactiveMode : bool ref
+  val doProfile : bool ref
+  val printTimer : bool ref
+  val printCommand : bool ref
+  val traceFileLoad : bool ref
+
+  val printWarning : bool ref
+  val printDiagnosis : bool ref
+
+  val printParse : bool ref
+  val printLoadFile : bool ref
+  val printElab : bool ref
+  val printNameEval : bool ref
+  val printTypeInf : bool ref
+  val printPrinterGen : bool ref
+  val printUncurryOpt : bool ref
+  val printTCOpt : bool ref
+  val printRCOpt : bool ref
+  val printVALRECOpt : bool ref
+  val printFundeclElab : bool ref
+  val printMatchCompile : bool ref
+  val printTypedElaboration : bool ref
+  val printFFICompile : bool ref
+  val printRecordCompile : bool ref
+  val printDatatypeCompile : bool ref
+  val printStaticAnalysis : bool ref
+  val printSystemDecls : bool ref
+  val printRecordUnboxing : bool ref
+  val printBitmapCompile : bool ref
+  val printBitmapANormal : bool ref
+  val printBitmapANormalReorder : bool ref
+  val printClosureConversion : bool ref
+  val printCConvCompile : bool ref
+  val printANormal : bool ref
+  val printANormalOpt : bool ref
+  val printStaticAlloc : bool ref
+  val printAIGeneration : bool ref
+  val printRTLSelect : bool ref
+  val printRTLStabilize : bool ref
+  val printRTLRename : bool ref
+  val printRTLColoring : bool ref
+  val printRTLFrame : bool ref
+  val printRTLEmit : bool ref
+  val printMachineCodeGen : bool ref
+  val printInsertCheckGC : bool ref
+  val printStackAllocation : bool ref
+  val printLLVMGen : bool ref
+  val printLLVMEmit : bool ref
+  val printGenerateMain : bool ref
+  val printWithType : bool ref
+  val allow8bitId : bool ref
+  val checkType : bool ref
+  val doBitmapANormalReorder : bool ref
+  val doRecordUnboxing : bool ref
+  val doUncurryOptimization : bool ref
+  val doTCOptimization : bool ref
+  val doRCOptimization : bool ref
+  val skipPrinter : bool ref
+  val doListExpressionOptimization : bool ref
+  val doUncurryingOptimizeInMatchCompile : bool ref
+  val doInlineCaseBranch : bool ref
+  val limitOfInlineCaseBranch : int ref
+  val debugCodeGen : bool ref
+  val doFrameCompaction : bool ref
+  val doRegisterCoalescing : bool ref
+  val enableUnboxedFloat : bool ref
+  val insertCheckGC : bool ref
+  val useMustTail : bool ref
+  val branchByCConvRigidity : bool ref
+  val switchTable : switchTable
+  val switchToString : switch -> string
+  val interpretControlOption : string * switch * string ->  unit
+end

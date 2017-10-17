@@ -1,0 +1,4 @@
+structure S =
+struct
+  datatype t = X of t | Y
+end

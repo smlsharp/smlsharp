@@ -1,0 +1,5 @@
+structure S =
+struct
+  eqtype t (= int)
+  val x : t
+end

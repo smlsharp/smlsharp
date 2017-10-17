@@ -1,0 +1,2 @@
+type t (= word)
+val f : int -> t

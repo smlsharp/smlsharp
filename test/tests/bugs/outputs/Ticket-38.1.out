@@ -1,3 +1,0 @@
-signature SIG = sig structure S : sig type t val x : t end end
-structure STR : SIG
-structure T : sig type t val x : t end

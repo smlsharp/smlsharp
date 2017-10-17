@@ -1,2 +1,0 @@
-functor F (P : sig end) : sig structure S : sig datatype dt con D : dt end end
-structure Q : sig structure S : sig datatype dt con D : dt end end

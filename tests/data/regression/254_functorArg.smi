@@ -1,0 +1,35 @@
+functor mkCore(
+  A : 
+sig
+  structure IntGrammar : 
+   sig
+    structure Grammar : 
+      sig
+       datatype symbol = TERM of int | NONTERM of int
+      end
+      structure SymbolAssoc : 
+       sig
+        type key
+       end
+    sharing type SymbolAssoc.key = Grammar.symbol
+   end
+end
+) 
+=
+struct
+  structure Grammar =
+  struct
+    datatype symbol = datatype A.IntGrammar.Grammar.symbol
+  end
+  structure IntGrammar =
+  struct
+    structure Grammar =
+    struct
+      datatype symbol = datatype A.IntGrammar.Grammar.symbol
+    end
+    structure SymbolAssoc =
+    struct
+      type key = A.IntGrammar.SymbolAssoc.key
+    end
+   end
+end

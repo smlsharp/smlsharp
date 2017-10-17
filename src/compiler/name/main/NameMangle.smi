@@ -1,7 +1,0 @@
-_require local "../../../basis.smi"
-_require local "../../../compiler-utils/debug/main/Bug.ppg.smi"
-
-structure NameMangle =
-struct
-  val mangle : string list -> string
-end

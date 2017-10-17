@@ -1,0 +1,7 @@
+functor F(
+  A : sig
+    structure mismatched_name : sig end
+  end
+) =
+struct
+end

@@ -32,7 +32,6 @@ infix 4 = <> > >= < <=
 
 structure Int_common =
 struct
-
   type int = Int.int
   val precision = SOME Int.precision
   val minInt = SOME Int.minInt

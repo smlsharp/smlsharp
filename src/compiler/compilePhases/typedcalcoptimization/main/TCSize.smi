@@ -1,0 +1,22 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+
+structure TCSize =
+struct
+  val sizeExp : TypedCalc.tpexp -> int
+  val sizePat : TypedCalc.tppat -> int
+  val sizeDecl : TypedCalc.tpdecl -> int
+  val sizeDeclList : TypedCalc.tpdecl list -> int
+  val isSmallerExp : TypedCalc.tpexp * int -> bool
+  val isSmallerPat : TypedCalc.tppat * int -> bool
+  val isSmallerDecl : TypedCalc.tpdecl * int -> bool
+  val isSmallerDeclList : TypedCalc.tpdecl list * int -> bool
+end

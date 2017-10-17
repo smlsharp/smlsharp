@@ -1,7 +1,0 @@
-val v1 = fn : int -> int
-val w1 = 1 : int
-val v2 = fn : int -> int
-val w2 = 2 : int
-../tests/coresml/tests/valueBindingsRec001.sml:22.1-22.21 Error:
-  only variable or typed variable pattern is allowed in val rec
-

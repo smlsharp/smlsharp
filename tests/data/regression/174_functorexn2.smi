@@ -1,0 +1,18 @@
+functor F(
+  A : sig
+    exception E 
+  end
+) =
+struct
+  exception E = A.E
+  exception E2 = A.E
+end
+
+functor G(
+  A : sig
+    exception E
+    exception E2
+  end
+) =
+struct
+end

@@ -5,6 +5,7 @@ _require local "./List.smi"
 _require local "./String.smi"
 _require "./IntInf.smi"
 _require local "./Option.smi"
+_use local "./Int_common.sml"
 
 structure Int64 =
 struct

@@ -1,6 +1,0 @@
-val f = fn : int -> int
-
-uncaught exception F
-  raised at: stdIn:6.18-6.21
-             stdIn:7.39
-

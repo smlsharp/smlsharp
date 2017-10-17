@@ -1,0 +1,30 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/constantterm/main/ConstantTerm.ppg.smi"
+_require local "../../../data/control/main/Control.ppg.smi"
+_require local "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../extensions/usererror/main/UserError.ppg.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "./EmitTypedLambda.smi"
+_require local "./SwitchCompile.smi"
+_require local "./PrimitiveTypedLambda.smi"
+_require local "./DatatypeLayout.smi"
+
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+
+structure DatatypeCompilation =
+struct
+  val compile : RecordCalc.rcdecl list -> TypedLambda.tldecl list
+end

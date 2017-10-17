@@ -1,0 +1,42 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../libs/list-utils/main/ListSorter.smi"
+
+structure SmlppgUtil =
+struct
+  type format = SMLFormat.FormatExpression.expression list
+  val makeToken : string -> format
+  val format_int32 : Int32.int -> format
+  val format_word32 : Word32.word -> format
+  val format_IntInf : IntInf.int -> format
+  val formatTyConArgumentTypes
+    : ('a -> format) * format * format * format -> 'a list -> format
+  val formatListWithEnclosureOne 
+    : ('a -> format) * format * format * format -> 'a list -> format
+  val formatListWithEnclosure
+    : ('a -> format) * format * format * format -> 'a list -> format
+  val formatListWithEnclosureIfMoreThanOne
+    : ('a -> format) * format * format * format
+      -> 'a list -> format
+  val formatSymbolMap 
+    : ('a -> format) * format * format * format * format
+      -> 'a SymbolEnv.map -> format
+  val formatGenericSymbolMap 
+    : ('a * 'b * 'c * format * format -> 'd -> format) * 'a * 'b * 'c * format * format * format
+      -> 'd SymbolEnv.map -> format
+  val formatSymbolMapWithEnclosure 
+    : ('a -> format) * format * format * format * format
+      -> 'a SymbolEnv.map -> format
+  val formatPrependedOpt 
+    : ('a -> format) * format -> 'a option -> format
+  val formatEnclosedOpt 
+    : ('a -> format) * format * format -> 'a option -> format
+  val formatOptWithDefault 
+      : ('a -> 'b) * 'b -> 'a option -> 'b
+  val formatBinaryChoice 
+      : 'a * 'a -> bool -> 'a
+  val format_map 
+     : ('key -> format) * ('element -> format) * format * format * format * format
+       -> ('key * 'element) list -> format
+end

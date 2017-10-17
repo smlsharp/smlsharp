@@ -1,0 +1,28 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/list-utils/main/ListSorter.smi"
+_require local "../../../libs/heapdump/main/HeapDump.smi"
+
+_require "../../../compilerIRs/machinecode/main/MachineCode.ppg.smi"
+_require "../../../compilerIRs/llvmir/main/LLVMIR.ppg.smi"
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
+_require local "../../../data/name/main/ExternSymbol.smi"
+_require local "../../../libs/toolchain/main/Filename.smi"
+_require local "../../../data/control/main/Control.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../compilerIRs/machinecode/main/MachineCodeRename.smi"
+_require local "../../../compilePhases/loadfile/main/InterfaceHash.smi"
+_require local "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+
+structure LLVMGen =
+struct
+  val compile : {targetTriple : string} -> MachineCode.program -> LLVMIR.program
+end

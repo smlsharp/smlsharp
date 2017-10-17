@@ -1,0 +1,94 @@
+_require "../../../../basis.smi"
+_require local "../../format-utils/main/TermPrintUtils.ppg.smi"
+_require "../../../../smlformat-lib.smi"
+_require "./ReifiedTy.ppg.smi"
+
+structure ReifiedTerm =
+struct
+  type path = string list
+  datatype reifiedTerm
+    = ARRAY of {dummyPrinter:reifiedTerm, contentsFn: int option -> {contents:reifiedTerm list,hasEllipsis:bool}}
+    | ARRAY2 of reifiedTerm array
+    | BOOL of bool
+    | BOUNDVAR
+    | CHAR of char
+    | CODEPTR of word64
+    | DATATYPE of string * reifiedTerm option
+    | EXNTAG
+    | EXN of {exnName : string, hasArg : bool}
+    | INT of int
+    | INT8 of int8
+    | INT16 of int16
+    | INT64 of int64
+    | INTERNAL 
+    | INTINF of IntInf.int
+    | LIST of reifiedTerm list
+    | OPAQUE 
+    | OPTION of reifiedTerm option
+    | OPTIONNONE
+    | OPTIONSOME of reifiedTerm
+    | POLY of reifiedTerm
+    | PTR of word64
+    | REAL32 of real32
+    | REAL of real
+    | RECORD of (string * reifiedTerm) list
+    | REF of reifiedTerm
+    | STRING of string
+    | TUPLE of reifiedTerm list
+    | UNIT
+    | VECTOR of {dummyPrinter:reifiedTerm, contentsFn: int option -> {contents:reifiedTerm list,hasEllipsis:bool}}
+    | VECTOR2 of reifiedTerm vector
+    | WORD of word
+    | WORD8 of word8
+    | WORD16 of word16
+    | WORD64 of word64
+    | BUILTIN
+    | ELIPSIS
+    | FUN of {closure:boxed, ty:ReifiedTy.reifiedTy}
+    | UNPRINTABLE
+  datatype idstatus
+    = EXEXN of {name:string, ty:string option}
+    | EXEXNREP of {name:string, path:string}
+    | EXVARTY of {name:string, ty:string}
+    | EXVAR of {name:string, term:reifiedTerm, ty:string}
+  val mkEXEXNIdstatus : string -> string option -> idstatus
+  val mkEXEXNREPIdstatus : string -> string -> idstatus
+  val mkEXVarIdstatus : string -> reifiedTerm -> string -> idstatus
+  type tstr = string * string
+  type varE = idstatus list
+  type tyE = tstr list
+  datatype env
+    = ENV of {strE:(string * env) list, tyE:tyE, varE:varE}
+  type strentry = string * env
+  type strE = strentry list
+  val mkENVenv : varE -> tyE -> strE -> env
+  type funE = string list
+  type sigE = string
+  type topEnv = {Env:env, FunE:funE, SigE:sigE}
+
+  val mkTopEnv : env ->  funE -> sigE -> topEnv
+
+  val format_path : string list -> SMLFormat.FormatExpression.expression list
+  val format_reifiedTerm : reifiedTerm -> SMLFormat.FormatExpression.expression list
+  val toJSON_reifiedTerm : reifiedTerm -> SMLFormat.FormatExpression.expression list
+  val reifiedTermToString : reifiedTerm -> string
+  val reifiedTermToJSON : reifiedTerm -> string
+  val format_tstr : string * string -> SMLFormat.FormatExpression.expression list
+  val format_idstatus 
+    : idstatus -> SMLFormat.FormatExpression.expression list
+  val format_varE 
+    : idstatus list -> SMLFormat.FormatExpression.expression list
+  val format_tyE : (string * string) list -> SMLFormat.FormatExpression.expression list
+  val format_env : env -> SMLFormat.FormatExpression.expression list
+  val format_strentry : strentry -> SMLFormat.FormatExpression.expression list
+  val format_topEnv 
+    : topEnv -> SMLFormat.FormatExpression.expression list
+  val structure_topEnv 
+    : topEnv -> SMLFormat.FormatExpression.expression list
+  val format_funE : string list -> SMLFormat.FormatExpression.expression list
+
+  val printStructureTopEnv : topEnv -> unit
+  val printTopEnvOutput : (string -> unit) ref
+  val printTopEnv : topEnv -> unit
+
+end

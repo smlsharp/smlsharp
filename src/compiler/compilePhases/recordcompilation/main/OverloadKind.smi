@@ -1,0 +1,30 @@
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+
+_require "../../../../basis.smi"
+_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+
+structure OverloadKind =
+struct
+
+  val compareSelector : Types.oprimSelector * Types.oprimSelector -> order
+
+  val generateSingletonTy : Types.btvEnv
+                            -> {instances: Types.ty list,
+                                operators: Types.oprimSelector list}
+                            -> Types.singletonTy list
+
+  datatype instance =
+      APP of {appExp: RecordCalc.rcexp -> RecordCalc.rcexp,
+              argTy: Types.ty, bodyTy: Types.ty,
+              singletonTy: Types.singletonTy, loc: Loc.loc}
+    | EXP of RecordCalc.rcexp
+
+  val generateInstance : Types.oprimSelector
+                         -> Loc.loc
+                         -> instance option
+end

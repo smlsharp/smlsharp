@@ -1,0 +1,23 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols//main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+
+_require local "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TyReduce.smi"
+_require local "../../../compilePhases/typeinference/main/Printers.smi"
+_require local "../../../compilerIRs/recordcalc/main/RecordCalcUtils.smi"
+_require local "../../../compilerIRs/recordcalc/main/RCAlphaRename.smi"
+_require local "./RCAnalyse.smi"
+_require local "./RCSize.smi"
+_require local "./RCRevealTy.smi"
+
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure RCOptimize =
+struct
+  val optimize : RecordCalc.rcdecl list -> RecordCalc.rcdecl list
+end

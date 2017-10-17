@@ -1,7 +1,0 @@
-val a1 = {a = 1} : {a:int}
-val a2 = {a = {b = 2}} : {a:{b:int}}
-val it = 1 : int
-val it = {b = 2} : {b:int}
-val f = fn : ['a#{a: 'b},'b.'a -> 'b]
-val it = 1 : int
-val it = {b = 2} : {b:int}

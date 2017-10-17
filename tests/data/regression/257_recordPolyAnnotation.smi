@@ -1,0 +1,7 @@
+structure A =
+struct
+  val pairMeta
+      : ['a#{A: 'b}, 'b, 'c#{B:int}.
+         'a * 'c -> unit
+        ]
+end

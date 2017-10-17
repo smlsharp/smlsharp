@@ -1,0 +1,7 @@
+_require local "../../../../basis.smi"
+
+structure Fixity =
+struct
+  datatype fixity = INFIX of int | INFIXR of int | NONFIX
+  val fixityToString : fixity -> string
+end
