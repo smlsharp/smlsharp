@@ -11,6 +11,7 @@ structure ClosureConversion2 : sig
 end =
 struct
 
+  structure L = TypedLambda
   structure B = BitmapCalc2
   structure C = ClosureCalc
   structure T = Types
@@ -337,28 +338,25 @@ struct
                        wrapper = substExp subst wrapper}
 
   fun wordConst w loc =
-      C.CCCONST {const = C.CVWORD32 w, ty = BuiltinTypes.wordTy, loc = loc}
+      C.CCCONST {const = C.CVWORD32 w, ty = BuiltinTypes.word32Ty, loc = loc}
 
   fun toCcexp loc value =
       case value of
-        SingletonTyEnv2.CONST n =>
-        (wordConst n loc,  BuiltinTypes.wordTy)
-      | SingletonTyEnv2.VAR v =>
+        RecordLayoutCalc.CONST n =>
+        (wordConst n loc,  BuiltinTypes.word32Ty)
+      | RecordLayoutCalc.VAR v =>
         (C.CCVAR {varInfo = v, loc = loc}, #ty v)
-      | SingletonTyEnv2.TAG (ty, n) =>
+      | RecordLayoutCalc.TAG (ty, n) =>
         (C.CCCONST {const = C.CVTAG {tag = n, ty = ty},
                     ty = T.SINGLETONty (T.TAGty ty),
                     loc = loc},
          T.SINGLETONty (T.TAGty ty))
-      | SingletonTyEnv2.SIZE (ty, n) =>
-        (C.CCCAST
-           {exp = wordConst (Word32.fromInt n) loc,
-            expTy = BuiltinTypes.wordTy,
-            targetTy = T.SINGLETONty (T.SIZEty ty),
-            cast = BuiltinPrimitive.TypeCast,
-            loc = loc},
-         T.SINGLETONty (T.SIZEty ty))
-      | SingletonTyEnv2.CAST (v, ty2) =>
+      | RecordLayoutCalc.SIZE (ty, n) =>
+        (C.CCCONST {const = C.CVSIZE {size = n, ty = ty},
+                    ty = T.SINGLETONty (T.SIZEty ty),
+                    loc = loc},
+         T.SINGLETONty (T.TAGty ty))
+      | RecordLayoutCalc.CAST (v, ty2) =>
         let
           val (exp, ty) = toCcexp loc v
         in
@@ -380,7 +378,7 @@ struct
                 loc = loc}
 
   fun intExp n loc =
-      C.CCCONST {const = C.CVINT32 n, ty = BuiltinTypes.intTy, loc = loc}
+      C.CCCONST {const = C.CVINT32 n, ty = BuiltinTypes.int32Ty, loc = loc}
 
   fun varExp varInfo loc =
       (C.CCVAR {varInfo = varInfo, loc = loc}, #ty varInfo)
@@ -416,20 +414,23 @@ struct
              {primitive = P.R prim,
               ty = {boundtvars = BoundTypeVarID.Map.empty,
                     argTyList = [exp1ty, exp2ty],
-                    resultTy = BuiltinTypes.wordTy}},
+                    resultTy = BuiltinTypes.word32Ty}},
            argExpList = [exp1, exp2],
            instTyList = nil,
            instTagList = nil,
            instSizeList = nil,
            loc = loc}
     fun primop2 prim exps loc =
-        primapply (P.M prim) (BuiltinTypes.wordTy, BuiltinTypes.wordTy) exps loc
+        primapply (P.M prim)
+                  (BuiltinTypes.word32Ty, BuiltinTypes.word32Ty)
+                  exps
+                  loc
   in
-  fun word32_orb (exp1, exp2, loc) = primop2 P.Word32_orb (exp1, exp2) loc
-  fun word32_andb (exp1, exp2, loc) = primop2 P.Word32_andb (exp1, exp2) loc
+  fun word32_orb (exp1, exp2, loc) = primop2 P.Word_orb (exp1, exp2) loc
+  fun word32_andb (exp1, exp2, loc) = primop2 P.Word_andb (exp1, exp2) loc
   fun word32_deref (exp1, exp2, loc) =
       primapply P.Boxed_deref
-                (BuiltinTypes.boxedTy, BuiltinTypes.wordTy)
+                (BuiltinTypes.boxedTy, BuiltinTypes.word32Ty)
                 (exp1, exp2)
                 loc
   end (* local *)
@@ -461,18 +462,18 @@ struct
   and primToConst {primInfo={primitive, ty={resultTy,...}},
                    argExpList, instTyList, instTagList, instSizeList, loc} =
       case (primitive, instTyList, argExpList) of
-        (P.R (P.M P.Word32_add), [], [e1, e2]) =>
+        (P.R (P.M P.Word_add), [], [e1, e2]) =>
         (C.CVWORD32 (Word32.+ (expToWord e1, expToWord e2)), resultTy)
-      | (P.R (P.M P.Word32_andb), [], [e1, e2]) =>
+      | (P.R (P.M P.Word_andb), [], [e1, e2]) =>
         (C.CVWORD32 (Word32.andb (expToWord e1, expToWord e2)), resultTy)
-      | (P.R (P.M P.Word32_orb), [], [e1, e2]) =>
+      | (P.R (P.M P.Word_orb), [], [e1, e2]) =>
         (C.CVWORD32 (Word32.orb (expToWord e1, expToWord e2))
          handle ExpToConst =>
                 C.CVWORD32_ORB (#1 (expToConst e1), #1 (expToConst e2)),
          resultTy)
-      | (P.R (P.M P.Word32_xorb), [], [e1, e2]) =>
+      | (P.R (P.M P.Word_xorb), [], [e1, e2]) =>
         (C.CVWORD32 (Word32.xorb (expToWord e1, expToWord e2)), resultTy)
-      | (P.R (P.M P.Word32_sub), [], [e1, e2]) =>
+      | (P.R (P.M P.Word_sub), [], [e1, e2]) =>
         (C.CVWORD32 (Word32.- (expToWord e1, expToWord e2)), resultTy)
       | _ =>
         (* FIXME : evaluate other primitives *)
@@ -562,19 +563,37 @@ struct
         mainExp
         binds
 
+  fun primInfo op2 =
+      {primitive =
+         case op2 of
+           RecordLayoutCalc.ADD => P.R (P.M P.Word_add)
+         | RecordLayoutCalc.SUB => P.R (P.M P.Word_sub)
+         | RecordLayoutCalc.DIV => P.R (P.M P.Word_div_unsafe)
+         | RecordLayoutCalc.AND => P.R (P.M P.Word_andb)
+         | RecordLayoutCalc.OR => P.R (P.M P.Word_orb)
+         | RecordLayoutCalc.LSHIFT => P.R (P.M P.Word_lshift_unsafe)
+         | RecordLayoutCalc.RSHIFT => P.R (P.M P.Word_rshift_unsafe),
+       ty = {boundtvars = BoundTypeVarID.Map.empty,
+             argTyList = [BuiltinTypes.word32Ty, BuiltinTypes.word32Ty],
+             resultTy = BuiltinTypes.word32Ty}}
+
   fun declToCcexp (decls, mainExp, loc) =
       foldr
-        (fn (RecordLayout2.PRIMAPPLY {boundVar, primInfo, argList}, z) =>
+        (fn (RecordLayoutCalc.VAL (boundVar, exp), z) =>
             C.CCLET
               {boundVar = boundVar,
                boundExp =
-                 C.CCPRIMAPPLY
-                   {primInfo = primInfo,
-                    argExpList = map (fn x => #1 (toCcexp loc x)) argList,
-                    instTyList = nil,
-                    instTagList = nil,
-                    instSizeList = nil,
-                    loc = loc},
+                 case exp of
+                   RecordLayoutCalc.VALUE value =>
+                   #1 (toCcexp loc value)
+                 | RecordLayoutCalc.OP (op2, (v1, v2)) =>
+                   C.CCPRIMAPPLY
+                     {primInfo = primInfo op2,
+                      argExpList = [#1 (toCcexp loc v1), #1 (toCcexp loc v2)],
+                      instTyList = nil,
+                      instTagList = nil,
+                      instSizeList = nil,
+                      loc = loc},
                mainExp = z,
                loc = loc})
         mainExp
@@ -672,12 +691,12 @@ struct
                  (C.CCCAST
                     {exp = bitmap0Exp,
                      expTy = T.BACKENDty (T.RECORDBITMAPty (0, recordTy)),
-                     targetTy = BuiltinTypes.wordTy,
+                     targetTy = BuiltinTypes.word32Ty,
                      cast = BuiltinPrimitive.TypeCast,
                      loc = loc},
                   extraBitsExp,
                   loc),
-         expTy = BuiltinTypes.wordTy,
+         expTy = BuiltinTypes.word32Ty,
          targetTy = T.BACKENDty (T.RECORDBITMAPty (0, recordTy)),
          cast = BuiltinPrimitive.TypeCast,
          loc = loc}
@@ -693,7 +712,7 @@ struct
          C.CCCAST
            {exp = bitmap0IndexExp,
             expTy = T.BACKENDty (T.RECORDBITMAPINDEXty (0, recordTy)),
-            targetTy = BuiltinTypes.wordTy,
+            targetTy = BuiltinTypes.word32Ty,
             cast = BuiltinPrimitive.TypeCast,
             loc = loc},
          loc)
@@ -725,17 +744,17 @@ struct
 
   local
     type field = {var: C.varInfo,
-                  tag: SingletonTyEnv2.value,
-                  size: SingletonTyEnv2.value,
+                  tag: RecordLayoutCalc.value,
+                  size: RecordLayoutCalc.value,
                   usize: int}
 
     fun fvValue value =
         case value of
-          SingletonTyEnv2.CONST _ => emptySet
-        | SingletonTyEnv2.VAR var => singletonSet var
-        | SingletonTyEnv2.SIZE _ => emptySet
-        | SingletonTyEnv2.TAG _ => emptySet
-        | SingletonTyEnv2.CAST (v, _) => fvValue v
+          RecordLayoutCalc.CONST _ => emptySet
+        | RecordLayoutCalc.VAR var => singletonSet var
+        | RecordLayoutCalc.SIZE _ => emptySet
+        | RecordLayoutCalc.TAG _ => emptySet
+        | RecordLayoutCalc.CAST (v, _) => fvValue v
 
     fun tagSizeVars fields =
         VarID.Map.foldl
@@ -752,7 +771,8 @@ struct
                   {var = var,
                    tag = SingletonTyEnv2.findTag styEnv ty,
                    size = SingletonTyEnv2.findSize styEnv ty,
-                   usize = SingletonTyEnv2.unalignedSize styEnv ty})
+                   usize = RuntimeTypes.getSize
+                             (SingletonTyEnv2.unalignedSize styEnv ty)})
               vars
         (* tag and size is needed to read a value from closure environment. *)
         val set = minusSet (tagSizeVars fields, vars)
@@ -788,7 +808,7 @@ struct
                     {exp = C.CCVAR {varInfo=var, loc=loc},
                      ty = ty,
                      tag = tag,
-                     size = SingletonTyEnv2.CONST (Word32.fromInt usize)})
+                     size = RecordLayoutCalc.CONST (Word32.fromInt usize)})
                 fields
         val record as {fieldList,recordTy,...} =
             makeTuple accum tupleFields loc
@@ -916,7 +936,7 @@ struct
         val cconvWordExp =
             C.CCCAST {exp = cconvTagExp (codeEntryTy, loc),
                       expTy = T.BACKENDty (T.CCONVTAGty codeEntryTy),
-                      targetTy = BuiltinTypes.wordTy,
+                      targetTy = BuiltinTypes.word32Ty,
                       cast = BuiltinPrimitive.TypeCast,
                       loc = loc}
         val wrapperExp = funWrapperExp (id, codeEntryTy, loc)
@@ -992,7 +1012,7 @@ struct
                        (readBitmap0 (recordTy, recordExp, bitmapIndex, loc),
                         wordConst 0wx80000000 loc,
                         loc),
-               expTy = BuiltinTypes.wordTy,
+               expTy = BuiltinTypes.word32Ty,
                targetTy = T.BACKENDty T.SOME_CCONVTAGty,
                cast = BuiltinPrimitive.TypeCast,
                loc = loc}
@@ -1050,37 +1070,26 @@ struct
   fun enterFunction ({varEnv, styEnv, path, toplevel}:env) : env =
       {varEnv = varEnv, styEnv = styEnv, path = path, toplevel = false}
 
-  fun compileConst (env:env) const loc =
+  fun compileConst const =
       case const of
-        ConstantTerm.INT8 n => (nil, C.CVINT8 n)
-      | ConstantTerm.INT16 n => (nil, C.CVINT16 n)
-      | ConstantTerm.INT32 n => (nil, C.CVINT32 n)
-      | ConstantTerm.INT64 n => (nil, C.CVINT64 n)
-      | ConstantTerm.WORD8 n => (nil, C.CVWORD8 n)
-      | ConstantTerm.WORD16 n => (nil, C.CVWORD16 n)
-      | ConstantTerm.WORD32 n => (nil, C.CVWORD32 n)
-      | ConstantTerm.WORD64 n => (nil, C.CVWORD64 n)
-      | ConstantTerm.CONTAG n => (nil, C.CVCONTAG n)
-      | ConstantTerm.REAL64 n => (nil, C.CVREAL64 n)
-      | ConstantTerm.REAL32 n => (nil, C.CVREAL32 n)
-      | ConstantTerm.CHAR c => (nil, C.CVCHAR c)
-      | ConstantTerm.UNIT => (nil, C.CVUNIT)
-      | ConstantTerm.NULLPOINTER => (nil, C.CVNULLPOINTER)
-      | ConstantTerm.NULLBOXED => (nil, C.CVNULLBOXED)
-      | ConstantTerm.INTINF n => (* for case branches *)
-        let
-          val id = ExtraDataLabel.generate (#path env)
-        in
-          ([DATA (C.CTINTINF {id = id, value = n, loc = loc})],
-           C.CVEXTRADATA id)
-        end
-      | ConstantTerm.STRING s =>
-        let
-          val id = DataLabel.generate (#path env)
-        in
-          ([DATA (C.CTSTRING {id = id, string = s, loc = loc})],
-           C.CVTOPDATA {id = id, ty = BuiltinTypes.stringTy})
-        end
+        L.INT8 n => C.CVINT8 n
+      | L.INT16 n => C.CVINT16 n
+      | L.INT32 n => C.CVINT32 n
+      | L.INT64 n => C.CVINT64 n
+      | L.WORD8 n => C.CVWORD8 n
+      | L.WORD16 n => C.CVWORD16 n
+      | L.WORD32 n => C.CVWORD32 n
+      | L.WORD64 n => C.CVWORD64 n
+      | L.CONTAG n => C.CVCONTAG n
+      | L.REAL64 n => C.CVREAL64 n
+      | L.REAL32 n => C.CVREAL32 n
+      | L.CHAR c => C.CVCHAR c
+      | L.UNIT => C.CVUNIT
+      | L.NULLPOINTER => C.CVNULLPOINTER
+      | L.NULLBOXED => C.CVNULLBOXED
+      | L.TAG (n, ty) => C.CVTAG {tag = n, ty = ty}
+      | L.SIZE (n, ty) => C.CVSIZE {size = n, ty = ty}
+      | L.INDEX (n, l, ty) => C.CVINDEX {index = n, label = l, ty = ty}
 
   fun getFunTy ty =
       case TypesBasics.derefTy ty of
@@ -1102,7 +1111,7 @@ struct
                   #2 (SingletonTyEnv2.btvEnv styEnv, tyvars),
        haveClsEnv = false,
        argTyList = argTyList,
-       retTy = SOME retTy}
+       retTy = retTy}
 
   fun exportFunEntry (styEnv, path) (exvar as {ty, loc, ...}, value) =
       case getFunTy ty of
@@ -1237,7 +1246,17 @@ struct
                                  resultTy = funPtrTy,
                                  loc = loc})
         end
-      | B.BCCONSTANT {const = ConstantTerm.INTINF n, ty, loc} =>
+      | B.BCCONSTANT {const = L.S (L.STRING s), ty, loc} =>
+        let
+          val id = DataLabel.generate (#path env)
+        in
+          ([DATA (C.CTSTRING {id = id, string = s, loc = loc})],
+           VALUE,
+           C.CCCONST {const = C.CVTOPDATA {id = id, ty = BuiltinTypes.stringTy},
+                      ty = BuiltinTypes.stringTy,
+                      loc = loc})
+        end
+      | B.BCCONSTANT {const = L.S (L.INTINF n), ty, loc} =>
         let
           val id = ExtraDataLabel.generate (#path env)
         in
@@ -1245,26 +1264,12 @@ struct
            VALUE,
            C.CCINTINF {srcLabel = id, loc = loc})
         end
-      | B.BCCONSTANT {const, ty, loc} =>
+      | B.BCCONSTANT {const = L.C const, ty, loc} =>
         let
-          val (top, const) = compileConst env const loc
+          val const = compileConst const
         in
-          (top, VALUE, C.CCCONST {const = const, ty = ty, loc = loc})
+          (nil, VALUE, C.CCCONST {const = const, ty = ty, loc = loc})
         end
-      | B.BCDUMP {dump, ty, loc} =>
-        let
-          val id = DataLabel.generate (#path env)
-          val const = C.CVTOPDATA {id = id, ty = ty}
-        in
-          ([DATA (C.CTDUMP {id = id, dump = dump, ty = ty, loc = loc})],
-           VALUE,
-           C.CCCONST {const = const, ty = ty, loc = loc})
-        end
-      | B.BCTAG {tag, ty, loc} =>
-        (nil, VALUE,
-         C.CCCONST {const = C.CVTAG {tag = tag, ty = ty},
-                    ty = T.SINGLETONty (T.TAGty ty),
-                    loc = loc})
       | B.BCFOREIGNSYMBOL {name, ty, loc} =>
         (nil, VALUE,
          C.CCCONST {const = C.CVFOREIGNSYMBOL {name=name, ty=ty},
@@ -1466,7 +1471,7 @@ struct
       | B.BCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         let
           val env2 = addBoundVars (env, argVarList)
-          val (top1, _, catchExp) = compileExp accum env catchExp
+          val (top1, _, catchExp) = compileExp accum env2 catchExp
           val (top2, _, tryExp) = compileExp accum env tryExp
         in
           (top1 @ top2,
@@ -1567,11 +1572,11 @@ struct
   and compileBranches accum env nil loc = (nil, nil)
     | compileBranches accum env ({constant,branchExp}::branches) loc =
       let
-        val (top1, const) = compileConst env constant loc
-        val (top2, _, branchExp) = compileExp accum env branchExp
-        val (top3, branches) = compileBranches accum env branches loc
+        val const = compileConst constant
+        val (top1, _, branchExp) = compileExp accum env branchExp
+        val (top2, branches) = compileBranches accum env branches loc
       in
-        (top1 @ top2 @ top3,
+        (top1 @ top2,
          {constant = const, branchExp = branchExp} :: branches)
       end
 
@@ -1643,7 +1648,7 @@ struct
              codeEntryTy = {tyvars = tyvarKindEnv,
                             haveClsEnv = isSome closureEnvVar,
                             argTyList = map #ty argVarList,
-                            retTy = SOME retTy}}
+                            retTy = retTy}}
         val (top3, recordExp) =
             makeClosureRecord (#styEnv env, #path env)
                               (closure, #ty boundVar)
@@ -1682,8 +1687,12 @@ struct
 
   and compileDecl accum env bcdecl =
       case bcdecl of
-        B.BCEXTERNVAR {exVarInfo as {path,ty}, loc} =>
-        (DATA (C.CTEXTERNVAR {id = ExternSymbol.touch path, ty = ty, loc = loc})
+        B.BCEXTERNVAR {exVarInfo as {path,ty}, provider, loc} =>
+        (DATA (C.CTEXTERNVAR
+                 {id = ExternSymbol.touch path,
+                  ty = ty,
+                  provider = provider,
+                  loc = loc})
          :: (case getFunTy ty of
                NONE => nil
              | SOME {tyvars, argTyList, retTy} =>
@@ -1691,6 +1700,7 @@ struct
                                      tyvars = tyvars,
                                      argTyList = argTyList,
                                      retTy = retTy,
+                                     provider = provider,
                                      loc = loc})]),
          emptyVarEnv,
          nil)
@@ -1752,7 +1762,7 @@ struct
                                       #2 (tyvarKindEnv, boundtvars),
                            haveClsEnv = true,
                            argTyList = map #ty argVarList,
-                           retTy = SOME retTy}
+                           retTy = retTy}
                     in
                       {boundVar = boundVar,
                        boundtvars = boundtvars,

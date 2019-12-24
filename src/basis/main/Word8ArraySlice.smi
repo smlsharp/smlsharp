@@ -1,12 +1,12 @@
 _require "./General.smi"
 _require "./Word8VectorSlice.smi"
-_use local "./ArraySlice_common.sml"
+_use local "./Slice_common.sml"
 
 structure Word8ArraySlice =
 struct
   type elem = word8
   type array = elem array
-  type slice (= boxed)
+  type slice (= *)
   type vector = elem vector
   type vector_slice = Word8VectorSlice.slice
   val length : slice -> int

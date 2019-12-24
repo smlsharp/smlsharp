@@ -1,0 +1,3 @@
+val n = 10 : int
+
+val Sn = 385 : int

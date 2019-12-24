@@ -1,0 +1,14 @@
+_require "../../../../basis.smi"
+
+structure AbsynConst =
+struct
+
+  datatype constant
+    = INT of IntInf.int
+    | WORD of IntInf.int
+    | STRING of string
+    | REAL of string
+    | CHAR of char
+    | UNITCONST
+
+end

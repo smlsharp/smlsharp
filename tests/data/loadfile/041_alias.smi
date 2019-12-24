@@ -1,0 +1,4 @@
+_require "041_alias/../041_alias/041_alias2.smi"
+_require "041_alias/../041_alias/../041_alias/041_alias2.smi"
+_require "041_alias/041_alias2.smi"
+val x : int

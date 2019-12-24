@@ -8,7 +8,7 @@ struct
 local
   structure TC = TypedCalc
   structure RC = RecordCalc
-  structure BF = SMLFormat.BasicFormatters
+  (* structure BF = SMLFormat.BasicFormatters *)
   structure A = AbsynConst
   structure MD = MatchData
   structure BT = BuiltinTypes
@@ -28,7 +28,7 @@ in
   type rule
   = (*%
      * @format((pat pats* exp) * flag)
-     *          flag:flag 4[{pats(pat()())(","+1)} + "=>" + "..."]
+     *          flag:flag 4[{pats(pat)(","+1)} + "=>" + "..."]
      *)
     (TC.tppat list * TC.tpexp) * int ref
 
@@ -91,7 +91,7 @@ in
                     T.FUNMty ([BT.unitTy], BT.unitTy),
                     loc),
                funTy = T.FUNMty ([BT.unitTy], BT.unitTy),
-               argExpList = [RC.RCCONSTANT {const = A.UNITCONST loc,
+               argExpList = [RC.RCCONSTANT {const = RC.CONST A.UNITCONST,
                                             ty = BT.unitTy,
                                             loc = loc}],
                loc = loc},

@@ -7,17 +7,18 @@ structure FunctorUtils =
 struct
 local
   structure V = NameEvalEnv
+  structure VP = NameEvalEnvPrims
   structure U = NameEvalUtils
   structure TF = TfunVars
-  structure A = AbsynTy
+  (* structure A = AbsynTy *)
   structure I = IDCalc
   structure L = SetLiftedTys
   structure N = NormalizeTy
   structure BT = BuiltinTypes
   structure Sig = EvalSig
   structure Ty = EvalTy
-  structure P = PatternCalc
-  structure EU = UserErrorUtils
+  (* structure P = PatternCalc *)
+  (* structure EU = UserErrorUtils *)
   fun bug s = Bug.Bug ("NameEval (FunctorUtils): " ^ s)
   val DUMMYIDFUN = "id"
 in
@@ -30,7 +31,7 @@ in
               (case I.derefTfun tfun of
                  tfun as (I.TFUN_VAR (tfv as ref tfunkind)) =>
                  (case tfunkind of
-                    I.TFV_SPEC {longsymbol, id, iseq, formals} =>
+                    I.TFV_SPEC {longsymbol, id, admitsEq, formals} =>
                     (case formals of 
                        nil => 
                        (U.print "spec tfv\n";
@@ -48,20 +49,23 @@ in
                      | _ =>
                        let
                          val longsymbol = path@[name]
+                         val funparamProp =
+                             case I.propertyOfIty BT.boxedITy of
+                               SOME (I.PROP p) => p
+                             | _ => raise Bug.Bug "funparam prop"
                          (* 2012-8-6 ohori bug 062_functorPoly.sml; Bug : nil path
                             originalPath=path *)
                          val _ =
                              tfv :=
                              I.TFUN_DTY
                                {id=id,
-                                iseq=iseq,
-				runtimeTy = I.BUILTINty BuiltinTypeNames.BOXEDty,
+                                admitsEq=admitsEq,
                                 formals=formals,
                                 conSpec=SymbolEnv.empty,
                                 conIDSet = ConID.Set.empty,
                                 longsymbol= longsymbol,
                                 liftedTys=I.emptyLiftedTys,
-                                dtyKind=I.FUNPARAM
+                                dtyKind=I.FUNPARAM funparamProp
                                }
                        in
                          icdecls
@@ -101,16 +105,16 @@ in
             case tstr of
               V.TSTR tfun =>
               (case I.derefTfun tfun of
-                 I.TFUN_DEF _ => V.reinsertTstr(env, name, tstr)
+                 I.TFUN_DEF _ => VP.reinsertTstr(env, name, tstr)
                | I.TFUN_VAR (ref tfunkind) =>
                  (case tfunkind of
                     I.TFV_SPEC _ => raise bug "unmaterialized (1)"
                   | I.TFV_DTY _ =>  raise bug "unmaterialized (2)"
-                  | I.TFUN_DTY _ => V.reinsertTstr(env, name, tstr)
+                  | I.TFUN_DTY _ => VP.reinsertTstr(env, name, tstr)
                   | I.REALIZED _ => raise bug "REALIZED"
                   | I.INSTANTIATED {tfunkind, tfun} => raise bug "INSTANTIATED"
                   | I.FUN_DTY _ =>
-                    V.reinsertTstr(env, name, V.TSTR tfun)
+                    VP.reinsertTstr(env, name, V.TSTR tfun)
                  )
               )
             | V.TSTR_DTY {tfun, varE=_, formals=_, conSpec=_} =>
@@ -126,7 +130,7 @@ in
                      U.printTstr tstr;
                      raise bug "unmaterialized (4)"
                     )
-                  | I.TFUN_DTY _ => V.reinsertTstr(env, name, tstr)
+                  | I.TFUN_DTY _ => VP.reinsertTstr(env, name, tstr)
                   | I.REALIZED _ => raise bug "REALIZED"
                   | I.INSTANTIATED _ => raise bug "INSTANTIATED"
                   | I.FUN_DTY {longsymbol, tfun,varE,formals,liftedTys,conSpec} =>
@@ -136,7 +140,7 @@ in
                                                 formals=formals,
                                                 conSpec=conSpec}
                     in
-                      V.envWithVarE(V.reinsertTstr(env, name, envTstr), varE)
+                      VP.envWithVarE(VP.reinsertTstr(env, name, envTstr), varE)
                     end
                  )
               )
@@ -156,7 +160,7 @@ in
                   in
                     {varPats=pat::varPats,
                      exnPats=exnPats,
-                     env=V.reinsertId(env, name, idstatus),
+                     env=VP.reinsertId(env, name, idstatus),
                      exnTagDecls=exnTagDecls
                     }
                   end
@@ -175,14 +179,14 @@ in
                   in
                     {varPats=varPats,
                      exnPats=pat::exnPats,
-                     env=V.reinsertId(env, name, idstatus),
+                     env=VP.reinsertId(env, name, idstatus),
                      exnTagDecls=exnTagDecl::exnTagDecls
                     }
                   end
                 | I.IDSPECCON {symbol} => 
                   {varPats=varPats, exnPats=exnPats, env=env, exnTagDecls=exnTagDecls}
                 | idstatus => {varPats=varPats, exnPats=exnPats, 
-                               env=V.reinsertId(env, name, idstatus), exnTagDecls=exnTagDecls}
+                               env=VP.reinsertId(env, name, idstatus), exnTagDecls=exnTagDecls}
             )
             {varPats=nil, exnPats=nil, env=env, exnTagDecls=nil}
             varE
@@ -195,7 +199,7 @@ in
                   in
                     {varPats=newPats@varPats,
                      exnPats=newExnPats@exnPats,
-                     env=V.reinsertStr(env, name, newStrEntry),
+                     env=VP.reinsertStr(env, name, newStrEntry),
                      exnTagDecls=newExnTagDecls @ exnTagDecls
                     }
                   end
@@ -232,7 +236,7 @@ in
             handle exn => raise exn
         val extraTvarsMap =
             foldr
-              (fn ((tfv as ref (tfunkind as I.TFV_SPEC {iseq, id, formals, ...}),
+              (fn ((tfv as ref (tfunkind as I.TFV_SPEC {admitsEq, id, formals, ...}),
                     path),
                    extraTvarsMap)
                   =>
@@ -243,9 +247,9 @@ in
                        val tvar = {symbol=tvarName,
                                    lifted=true,
                                    id = TvarID.generate(),
-                                   eq = if iseq then A.EQ else A.NONEQ}
+                                   isEq = admitsEq}
                        val tfun = I.TFUN_DEF {longsymbol=path,
-                                              iseq=iseq, 
+                                              admitsEq=admitsEq,
                                               formals=nil, 
                                               realizerTy= I.TYVAR tvar}
                      in
@@ -280,7 +284,7 @@ val _ = U.print "\n"
             in
               case !tfv of
                  I.TFV_SPEC _ => raise bug "non dty tfv (4)"
-               | I.TFV_DTY {longsymbol, id, iseq, formals, conSpec, liftedTys} =>
+               | I.TFV_DTY {longsymbol, id, admitsEq, formals, conSpec, liftedTys} =>
                  let
                    val loc = Symbol.longsymbolToLoc longsymbol
                    val returnTy =
@@ -308,7 +312,7 @@ val _ = U.print "\n"
                                      I.TYPOLY
                                        (
                                         map
-                                          (fn tv =>(tv,I.UNIV))
+                                          (fn tv =>(tv,I.UNIV I.emptyProperties))
                                           formals,
                                         conTy
                                        )
@@ -328,14 +332,13 @@ val _ = U.print "\n"
                          (SymbolEnv.empty, nil, ConID.Set.empty)
                          conSpec
                          (* is it safe to create a new var here? *)
-		   val runtimeTy = BuiltinTypes.runtimeTyOfConspec conSpec
+		   val property = DatatypeLayout.datatypeLayout conSpec
                    val envTfun =
                        I.TFUN_VAR
                          (ref
                             (I.TFUN_DTY{id=id,
-                                        iseq=iseq,
+                                        admitsEq=admitsEq,
                                         formals=formals,
-					runtimeTy=runtimeTy,
                                         conSpec=conSpec,
                                         conIDSet=conIDSet,
                                         longsymbol=longsymbol,
@@ -343,7 +346,7 @@ val _ = U.print "\n"
                                         longsymbol=Symbol.mkLongsymbol (path@[name]) loc,
 *)
                                         liftedTys=liftedTys,
-                                        dtyKind=I.DTY
+                                        dtyKind=I.DTY property
 				       }
                             )
                          )
@@ -381,9 +384,11 @@ val _ = U.print "\n"
               SOME
                 (
                  I.TYRECORD
-                   (RecordLabel.tupleMap
+                   {ifFlex=false,
+                    fields = 
+                    RecordLabel.tupleMap
                       (map (fn tvar => I.TYVAR tvar) extraTvars)
-                   )
+                    }
                 )
         val dummyIdfunTy =
             case dummyIdfunArgTy of
@@ -497,7 +502,10 @@ val _ = U.print "\n"
         fun genActualTag (pathList, env) = 
             foldr
               (fn (path, exnCons) => 
+(*
                   case V.checkId(env, path) of
+*)
+                  case VP.findId(env, path) of
                     SOME (I.IDEXN {id, longsymbol, ty}) => 
                     I.ICEXN_CONSTRUCTOR
                       {id=id, ty=ty, longsymbol = path}
@@ -641,6 +649,8 @@ val _ = U.print "\n"
                 (* 2012-7-31 ohori: bug 228_abstypeInFunctor.sml; dtyKind must be processed  *)
                 I.TFUN_VAR(ref (I.TFUN_DTY{id, dtyKind = I.OPAQUE{tfun, ...},...})) =>
                 TypID.Set.add(typidSetTfun (tfun,typidSet), id)
+              | I.TFUN_VAR(ref (I.TFUN_DTY{id, dtyKind = I.INTERFACE tfun,...})) =>
+                TypID.Set.add(typidSetTfun (tfun,typidSet), id)
               | I.TFUN_VAR(ref (I.TFUN_DTY{id,...})) =>
                 TypID.Set.add(typidSet, id)
               | _ => typidSet
@@ -665,26 +675,25 @@ val _ = U.print "\n"
   fun visitTfun {specTfun=tfun1, implTfun=tfun2} =
       case (I.derefTfun tfun1, I.derefTfun tfun2) of
         (I.TFUN_VAR
-           (tfv as (ref(I.TFV_DTY{id=id1,iseq,formals, conSpec, liftedTys,...}))),
+           (tfv as (ref(I.TFV_DTY{id=id1,admitsEq,formals, conSpec, liftedTys,...}))),
          I.TFUN_VAR (ref((I.TFV_DTY{longsymbol,id=id2,...})))) =>
         tfv := I.TFV_DTY{id=id2,
-                         iseq=iseq,
+                         admitsEq=admitsEq,
                          longsymbol=longsymbol,
                          formals=formals,
                          conSpec=conSpec,
                          liftedTys=liftedTys}
       | (I.TFUN_VAR
-           (tfv as (ref(I.TFV_SPEC{id=id1,iseq,formals,...}))),
+           (tfv as (ref(I.TFV_SPEC{id=id1,admitsEq,formals,...}))),
          I.TFUN_VAR (ref((I.TFV_SPEC{longsymbol, id=id2,...})))) =>
         tfv := I.TFV_SPEC{id=id2,
                           longsymbol=longsymbol,
-                          iseq=iseq,
+                          admitsEq=admitsEq,
                           formals=formals}
       | (I.TFUN_VAR
            (tfv as (ref(I.TFUN_DTY{id=id1,
-                                   iseq,
+                                   admitsEq,
                                    formals,
-				   runtimeTy,
                                    conSpec,
                                    conIDSet=conIDSet1,
                                    longsymbol,
@@ -692,9 +701,8 @@ val _ = U.print "\n"
                                    liftedTys}))),
          I.TFUN_VAR (ref((I.TFUN_DTY{id=id2,conIDSet=conIDSet2,...})))) =>
         tfv := I.TFUN_DTY{id=id2,
-                          iseq=iseq,
+                          admitsEq=admitsEq,
                           formals=formals,
-			  runtimeTy=runtimeTy,
                           conSpec=conSpec,
                           conIDSet=conIDSet2,
                           longsymbol=longsymbol,
@@ -795,16 +803,16 @@ val _ = U.print "\n"
                    
   and eqTfun {specTfun=tfun1, implTfun=tfun2} =
       case (I.derefTfun tfun1, I.derefTfun tfun2) of
-      (I.TFUN_DEF {iseq=iseq1, formals=formals1, realizerTy=ty1,...},
-       I.TFUN_DEF {iseq=iseq2, formals=formals2, realizerTy=ty2,...}) =>
+      (I.TFUN_DEF {admitsEq=admitsEq1, formals=formals1, realizerTy=ty1,...},
+       I.TFUN_DEF {admitsEq=admitsEq2, formals=formals2, realizerTy=ty2,...}) =>
       let
-        val _ = if iseq1 = iseq2 then () else raise Fail
+        val _ = if admitsEq1 = admitsEq2 then () else raise Fail
         val tvarPairs = if length formals1 = length formals2 then 
                           ListPair.zip (formals1, formals2)
                         else raise Fail
         val eqEnv = foldl
-                      (fn (({id=tv1,symbol=_,eq=_,lifted=_},
-                            {id=tv2,symbol=_,eq=_,lifted=_}),
+                      (fn (({id=tv1,symbol=_,isEq=_,lifted=_},
+                            {id=tv2,symbol=_,isEq=_,lifted=_}),
                            eqEnv) =>
                           TvarID.Map.insert(eqEnv, tv1, tv2)
                       )
@@ -815,26 +823,26 @@ val _ = U.print "\n"
         else raise Fail
       end
     (* 167_functor.sml: without the following check, ChackProvide may loop *)
-    | (I.TFUN_VAR(tfv as ref(I.TFUN_DTY{id=id1,iseq=eq1,formals=formals1,runtimeTy=ty1,
-                                          dtyKind=I.DTY_INTERFACE,...})),
-       I.TFUN_VAR(ref(I.TFUN_DTY{id=id2,iseq=eq2,formals=formals2,runtimeTy=ty2,
-                                 dtyKind=I.DTY_INTERFACE,...}))) =>
+    | (I.TFUN_VAR(tfv as ref(I.TFUN_DTY{id=id1,admitsEq=eq1,formals=formals1,
+                                          dtyKind=I.DTY_INTERFACE ty1,...})),
+       I.TFUN_VAR(ref(I.TFUN_DTY{id=id2,admitsEq=eq2,formals=formals2,
+                                 dtyKind=I.DTY_INTERFACE ty2,...}))) =>
       if TypID.eq(id1,id2) then ()
-      else 
-        if Ty.compatRuntimeTy {absTy=ty1, implTy=ty2}
+      else
+        if Ty.compatProperty {abs=I.PROP ty1, impl=I.PROP ty2}
            andalso List.length formals1 = List.length formals2
            andalso (not eq1 orelse eq2)
         then tfv := I.REALIZED {id=id1, tfun=tfun2}
         else raise Fail
-    | (I.TFUN_VAR(tfv as ref(I.TFUN_DTY{id,iseq,formals,runtimeTy,dtyKind=I.DTY_INTERFACE,...})),
+    | (I.TFUN_VAR(tfv as ref(I.TFUN_DTY{id,admitsEq,formals,dtyKind=I.DTY_INTERFACE property,...})),
        _) =>
       let
-        val implRuntimeTy = case I.tfunRuntimeTy tfun2 of 
-                              SOME ty => ty | NONE => raise Fail
-        val implIseq = I.tfunIseq tfun2
-        val _ = if Ty.compatRuntimeTy {absTy=runtimeTy, implTy=implRuntimeTy}
+        val implProperty = case I.tfunProperty tfun2 of 
+                             SOME ty => ty | NONE => raise Fail
+        val implAdmitsEq = I.tfunAdmitsEq tfun2
+        val _ = if Ty.compatProperty {abs=I.PROP property, impl=implProperty}
                    andalso List.length formals = I.tfunArity tfun2
-                   andalso (not iseq orelse implIseq)
+                   andalso (not admitsEq orelse implAdmitsEq)
                 then () 
                 else raise Fail
       in

@@ -44,6 +44,8 @@ struct
          | SOME{priority} => priorityToString priority)
     | toString (StartOfIndent indent) =  Int.toString indent ^ "["
     | toString EndOfIndent = "]"
+    | toString (Sequence expressions) =
+      concat (map (fn exp => (toString exp) ^ " ") expressions)
 
   local
     structure PC = ParserComb

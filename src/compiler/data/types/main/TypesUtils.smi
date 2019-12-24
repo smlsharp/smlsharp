@@ -1,12 +1,14 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
+(* _require local "../../../data/symbols/main/Loc.smi" *)
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+(* _require local "../../../data/symbols/main/Symbol.smi" *)
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 
+(*
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
-_require local "./OPrimInstMap.smi"
+*)
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require local "./VarInfoEnv.smi"
 _require local "./TypesBasics.smi"
 
@@ -14,7 +16,9 @@ _require "./Types.ppg.smi"
 
 structure TypesUtils =
 struct
-  exception CoerceTvarKindToEQ 
+  exception CoerceTvarKindToProp
   val admitEqTy : Types.ty -> bool
-  val coerceTvarKindToEQ : Types.tvarKind -> Types.tvarKind
+  val isBoxedTy : Types.ty -> bool
+  val isCoercibleTyToProp : Types.kindProperty -> Types.ty -> bool
+  val coerceTvarKindToProp : Types.kindProperty -> Types.tvarKind -> Types.tvarKind
 end

@@ -63,7 +63,7 @@ val lib =
                  (case OS.Process.getEnv "SMLSHARP_LIBODBC" of
                     SOME x => x
                   | NONE =>
-                    case SMLSharp_Config.DLLEXT () of
+                    case !SMLSharp_SQL_Config.DLLEXT of
                       "so" => "libodbc.so.2"
                     | dll => "libodbc.2." ^ dll))
 

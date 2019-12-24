@@ -1,11 +1,11 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
 
-_require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi"
+(* _require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi" *)
 _require local "../../../data/types/main/VarMap.smi"
-_require local "../../../data/types/main/TypesBasics.smi"
+(* _require local "../../../data/types/main/TypesBasics.smi" *)
 _require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require local "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 

@@ -11,7 +11,6 @@ struct
   structure T = Types
   structure P = BuiltinPrimitive
   structure B = BuiltinTypes
-  structure C = ConstantTerm
 
   type vid = VarID.id
 
@@ -19,6 +18,7 @@ struct
 
   datatype exp =
       Exp of TypedLambda.tlexp * Types.ty
+    | Const of TypedLambda.tlconst * Types.ty
     | Int8 of int
     | Int16 of int
     | Int32 of int
@@ -29,8 +29,8 @@ struct
     | Word64 of int
     | Char of int
     | ConTag of int
-    | Real64 of int
-    | Real32 of int
+    | Real64 of real64
+    | Real32 of real32
     | String of string
     | Unit
     | Null
@@ -40,12 +40,11 @@ struct
     | IndexOf of Types.ty * RecordLabel.label
     | ExVar of RecordCalc.exVarInfo
     | Cast of exp * Types.ty
-    | RuntimeTyCast of exp * Types.ty
     | BitCast of exp * Types.ty
     | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
     | If of exp * exp * exp
     | Andalso of exp list
-    | Switch of exp * (ConstantTerm.constant * exp) list * exp
+    | Switch of exp * (TypedLambda.tlconst * exp) list * exp
     | Raise of RecordCalc.exExnInfo * Types.ty
     | Fn of vid * Types.ty * exp
     | App of exp * exp
@@ -85,7 +84,6 @@ struct
       | L.TLPOLY _ => false
       | L.TLTAPP _ => false
       | L.TLCAST {exp, expTy, targetTy, cast, loc} => isAtomic exp
-      | L.TLDUMP _ => false
 
   fun Tuple exps =
       Record (ListPair.unzip (RecordLabel.tupleList exps))
@@ -154,300 +152,64 @@ struct
   fun IsNull exp1 =
       IdentityEqual (B.boxedTy, exp1, Null)
 
-  fun op2 prim intTy (exp1, exp2) =
-      monoPrimApp (P.R (P.M prim), [intTy, intTy], intTy, [exp1, exp2])
-  fun cmp prim intTy (exp1, exp2) =
-      monoPrimApp (P.R (P.M prim), [intTy, intTy], B.boolTy, [exp1, exp2])
+  fun op1 prim ty exp =
+      monoPrimApp (P.R (P.M prim), [ty], ty, [exp])
+  fun op2 prim ty (exp1, exp2) =
+      monoPrimApp (P.R (P.M prim), [ty, ty], ty, [exp1, exp2])
+  fun cmp1 prim ty exp =
+      monoPrimApp (P.R (P.M prim), [ty], B.boolTy, [exp])
+  fun cmp2 prim ty (exp1, exp2) =
+      monoPrimApp (P.R (P.M prim), [ty, ty], B.boolTy, [exp1, exp2])
+  fun conv prim (fromTy, toTy) exp1 =
+      monoPrimApp (P.R (P.M prim), [fromTy], toTy, [exp1])
 
-  fun Int8_eq (exp1, exp2) = IdentityEqual (B.int8Ty, exp1, exp2)
-  fun Int8_gt x = cmp P.Int8_gt B.int8Ty x
-  fun Int8_lt x = cmp P.Int8_lt B.int8Ty x
-  fun Int8_gteq x = cmp P.Int8_gteq B.int8Ty x
-  fun Int8_lteq x = cmp P.Int8_lteq B.int8Ty x
-  fun Int8_quot_unsafe x = op2 P.Int8_quot_unsafe B.int8Ty x
-  fun Int8_rem_unsafe x = op2 P.Int8_rem_unsafe B.int8Ty x
-  fun Int8_sub_unsafe x = op2 P.Int8_sub_unsafe B.int8Ty x
-  fun Int8_add_unsafe x = op2 P.Int8_add_unsafe B.int8Ty x
-  fun Int8_mul_unsafe x = op2 P.Int8_mul_unsafe B.int8Ty x
-  fun Int8_sub_overflowCheck x = cmp P.Int8_sub_overflowCheck B.int8Ty x
-  fun Int8_add_overflowCheck x = cmp P.Int8_add_overflowCheck B.int8Ty x
-  fun Int8_mul_overflowCheck x = cmp P.Int8_mul_overflowCheck B.int8Ty x
+  fun Int_eq intTy (x, y) = IdentityEqual (intTy, x, y)
+  fun Int_lt intTy x = cmp2 P.Int_lt intTy x
+  fun Int_gteq intTy x = cmp2 P.Int_gteq intTy x
+  fun Int_lteq intTy x = cmp2 P.Int_lteq intTy x
+  fun Int_quot_unsafe intTy x = op2 P.Int_quot_unsafe intTy x
+  fun Int_rem_unsafe intTy x = op2 P.Int_rem_unsafe intTy x
+  fun Int_add_unsafe intTy x = op2 P.Int_add_unsafe intTy x
+  fun Int_mul_unsafe intTy x = op2 P.Int_mul_unsafe intTy x
+  fun Int_sub_unsafe intTy x = op2 P.Int_sub_unsafe intTy x
+  fun Int_add_overflowCheck intTy x = cmp2 P.Int_add_overflowCheck intTy x
+  fun Int_mul_overflowCheck intTy x = cmp2 P.Int_mul_overflowCheck intTy x
+  fun Int_sub_overflowCheck intTy x = cmp2 P.Int_sub_overflowCheck intTy x
+  fun Int_toInt_unsafe x y = conv P.Word_sext_trunc x y
 
-  fun Int16_eq (exp1, exp2) = IdentityEqual (B.int16Ty, exp1, exp2)
-  fun Int16_gt x = cmp P.Int16_gt B.int16Ty x
-  fun Int16_lt x = cmp P.Int16_lt B.int16Ty x
-  fun Int16_gteq x = cmp P.Int16_gteq B.int16Ty x
-  fun Int16_lteq x = cmp P.Int16_lteq B.int16Ty x
-  fun Int16_quot_unsafe x = op2 P.Int16_quot_unsafe B.int16Ty x
-  fun Int16_rem_unsafe x = op2 P.Int16_rem_unsafe B.int16Ty x
-  fun Int16_sub_unsafe x = op2 P.Int16_sub_unsafe B.int16Ty x
-  fun Int16_add_unsafe x = op2 P.Int16_add_unsafe B.int16Ty x
-  fun Int16_mul_unsafe x = op2 P.Int16_mul_unsafe B.int16Ty x
-  fun Int16_sub_overflowCheck x = cmp P.Int16_sub_overflowCheck B.int16Ty x
-  fun Int16_add_overflowCheck x = cmp P.Int16_add_overflowCheck B.int16Ty x
-  fun Int16_mul_overflowCheck x = cmp P.Int16_mul_overflowCheck B.int16Ty x
+  fun Word_lt wordTy x = cmp2 P.Word_lt wordTy x
+  fun Word_gt wordTy x = cmp2 P.Word_gt wordTy x
+  fun Word_lteq wordTy x = cmp2 P.Word_lteq wordTy x
+  fun Word_gteq wordTy x = cmp2 P.Word_gteq wordTy x
+  fun Word_arshift_unsafe wordTy x = op2 P.Word_arshift_unsafe wordTy x
+  fun Word_rshift_unsafe wordTy x = op2 P.Word_rshift_unsafe wordTy x
+  fun Word_lshift_unsafe wordTy x = op2 P.Word_lshift_unsafe wordTy x
+  fun Word_div_unsafe wordTy x = op2 P.Word_div_unsafe wordTy x
+  fun Word_mod_unsafe wordTy x = op2 P.Word_mod_unsafe wordTy x
+  fun Word_add wordTy x = op2 P.Word_add wordTy x
+  fun Word_sub wordTy x = op2 P.Word_sub wordTy x
+  fun Word_andb wordTy x = op2 P.Word_andb wordTy x
+  fun Word_orb wordTy x = op2 P.Word_orb wordTy x
+  fun Word_xorb wordTy x = op2 P.Word_xorb wordTy x
+  fun Word_fromInt x y = conv P.Word_sext_trunc x y
+  fun Word_toInt x y = conv P.Word_zext_trunc x y
+  fun Word_toIntX_unsafe x y = conv P.Word_sext_trunc x y
+  fun Word_toWord x y = conv P.Word_zext_trunc x y
 
-  fun Int32_eq (exp1, exp2) = IdentityEqual (B.intTy, exp1, exp2)
-  fun Int32_gt x = cmp P.Int32_gt B.intTy x
-  fun Int32_lt x = cmp P.Int32_lt B.intTy x
-  fun Int32_gteq x = cmp P.Int32_gteq B.intTy x
-  fun Int32_lteq x = cmp P.Int32_lteq B.intTy x
-  fun Int32_quot_unsafe x = op2 P.Int32_quot_unsafe B.intTy x
-  fun Int32_rem_unsafe x = op2 P.Int32_rem_unsafe B.intTy x
-  fun Int32_sub_unsafe x = op2 P.Int32_sub_unsafe B.intTy x
-  fun Int32_add_unsafe x = op2 P.Int32_add_unsafe B.intTy x
-  fun Int32_mul_unsafe x = op2 P.Int32_mul_unsafe B.intTy x
-  fun Int32_sub_overflowCheck x = cmp P.Int32_sub_overflowCheck B.intTy x
-  fun Int32_add_overflowCheck x = cmp P.Int32_add_overflowCheck B.intTy x
-  fun Int32_mul_overflowCheck x = cmp P.Int32_mul_overflowCheck B.intTy x
-
-  fun Int64_eq (exp1, exp2) = IdentityEqual (B.int64Ty, exp1, exp2)
-  fun Int64_gt x = cmp P.Int64_gt B.int64Ty x
-  fun Int64_lt x = cmp P.Int64_lt B.int64Ty x
-  fun Int64_gteq x = cmp P.Int64_gteq B.int64Ty x
-  fun Int64_lteq x = cmp P.Int64_lteq B.int64Ty x
-  fun Int64_quot_unsafe x = op2 P.Int64_quot_unsafe B.int64Ty x
-  fun Int64_rem_unsafe x = op2 P.Int64_rem_unsafe B.int64Ty x
-  fun Int64_sub_unsafe x = op2 P.Int64_sub_unsafe B.int64Ty x
-  fun Int64_add_unsafe x = op2 P.Int64_add_unsafe B.int64Ty x
-  fun Int64_mul_unsafe x = op2 P.Int64_mul_unsafe B.int64Ty x
-  fun Int64_sub_overflowCheck x = cmp P.Int64_sub_overflowCheck B.int64Ty x
-  fun Int64_add_overflowCheck x = cmp P.Int64_add_overflowCheck B.int64Ty x
-  fun Int64_mul_overflowCheck x = cmp P.Int64_mul_overflowCheck B.int64Ty x
-
-  fun Word8_gt x = cmp P.Word8_gt B.word8Ty x
-  fun Word8_lt x = cmp P.Word8_lt B.word8Ty x
-  fun Word8_gteq x = cmp P.Word8_gteq B.word8Ty x
-  fun Word8_lteq x = cmp P.Word8_lteq B.word8Ty x
-  fun Word8_div_unsafe x = op2 P.Word8_div_unsafe B.word8Ty x
-  fun Word8_mod_unsafe x = op2 P.Word8_mod_unsafe B.word8Ty x
-  fun Word8_sub x = op2 P.Word8_sub B.word8Ty x
-  fun Word8_add x = op2 P.Word8_add B.word8Ty x
-  fun Word8_orb x = op2 P.Word8_orb B.word8Ty x
-  fun Word8_xorb x = op2 P.Word8_xorb B.word8Ty x
-  fun Word8_andb x = op2 P.Word8_andb B.word8Ty x
-  fun Word8_arshift_unsafe x = op2 P.Word8_arshift_unsafe B.word8Ty x
-  fun Word8_rshift_unsafe x = op2 P.Word8_rshift_unsafe B.word8Ty x
-  fun Word8_lshift_unsafe x = op2 P.Word8_lshift_unsafe B.word8Ty x
-
-  fun Word16_gt x = cmp P.Word16_gt B.word16Ty x
-  fun Word16_lt x = cmp P.Word16_lt B.word16Ty x
-  fun Word16_gteq x = cmp P.Word16_gteq B.word16Ty x
-  fun Word16_lteq x = cmp P.Word16_lteq B.word16Ty x
-  fun Word16_div_unsafe x = op2 P.Word16_div_unsafe B.word16Ty x
-  fun Word16_mod_unsafe x = op2 P.Word16_mod_unsafe B.word16Ty x
-  fun Word16_sub x = op2 P.Word16_sub B.word16Ty x
-  fun Word16_add x = op2 P.Word16_add B.word16Ty x
-  fun Word16_orb x = op2 P.Word16_orb B.word16Ty x
-  fun Word16_xorb x = op2 P.Word16_xorb B.word16Ty x
-  fun Word16_andb x = op2 P.Word16_andb B.word16Ty x
-  fun Word16_arshift_unsafe x = op2 P.Word16_arshift_unsafe B.word16Ty x
-  fun Word16_rshift_unsafe x = op2 P.Word16_rshift_unsafe B.word16Ty x
-  fun Word16_lshift_unsafe x = op2 P.Word16_lshift_unsafe B.word16Ty x
-
-  fun Word32_gt x = cmp P.Word32_gt B.wordTy x
-  fun Word32_lt x = cmp P.Word32_lt B.wordTy x
-  fun Word32_gteq x = cmp P.Word32_gteq B.wordTy x
-  fun Word32_lteq x = cmp P.Word32_lteq B.wordTy x
-  fun Word32_div_unsafe x = op2 P.Word32_div_unsafe B.wordTy x
-  fun Word32_mod_unsafe x = op2 P.Word32_mod_unsafe B.wordTy x
-  fun Word32_sub x = op2 P.Word32_sub B.wordTy x
-  fun Word32_add x = op2 P.Word32_add B.wordTy x
-  fun Word32_orb x = op2 P.Word32_orb B.wordTy x
-  fun Word32_xorb x = op2 P.Word32_xorb B.wordTy x
-  fun Word32_andb x = op2 P.Word32_andb B.wordTy x
-  fun Word32_arshift_unsafe x = op2 P.Word32_arshift_unsafe B.wordTy x
-  fun Word32_rshift_unsafe x = op2 P.Word32_rshift_unsafe B.wordTy x
-  fun Word32_lshift_unsafe x = op2 P.Word32_lshift_unsafe B.wordTy x
-
-  fun Word64_gt x = cmp P.Word64_gt B.word64Ty x
-  fun Word64_lt x = cmp P.Word64_lt B.word64Ty x
-  fun Word64_gteq x = cmp P.Word64_gteq B.word64Ty x
-  fun Word64_lteq x = cmp P.Word64_lteq B.word64Ty x
-  fun Word64_div_unsafe x = op2 P.Word64_div_unsafe B.word64Ty x
-  fun Word64_mod_unsafe x = op2 P.Word64_mod_unsafe B.word64Ty x
-  fun Word64_sub x = op2 P.Word64_sub B.word64Ty x
-  fun Word64_add x = op2 P.Word64_add B.word64Ty x
-  fun Word64_orb x = op2 P.Word64_orb B.word64Ty x
-  fun Word64_xorb x = op2 P.Word64_xorb B.word64Ty x
-  fun Word64_andb x = op2 P.Word64_andb B.word64Ty x
-  fun Word64_arshift_unsafe x = op2 P.Word64_arshift_unsafe B.word64Ty x
-  fun Word64_rshift_unsafe x = op2 P.Word64_rshift_unsafe B.word64Ty x
-  fun Word64_lshift_unsafe x = op2 P.Word64_lshift_unsafe B.word64Ty x
-
-  fun Word8_toWord16 exp1 =
-      monoPrimApp (P.R (P.M P.Word8_toWord16),
-                   [B.word8Ty], B.word16Ty,
-                   [exp1])
-
-  fun Word8_toWord16X exp1 =
-      monoPrimApp (P.R (P.M P.Word8_toWord16X),
-                   [B.word8Ty], B.word16Ty,
-                   [exp1])
-
-  fun Word8_toWord32 exp1 =
-      monoPrimApp (P.R (P.M P.Word8_toWord32),
-                   [B.word8Ty], B.wordTy,
-                   [exp1])
-
-  fun Word8_toWord32X exp1 =
-      monoPrimApp (P.R (P.M P.Word8_toWord32X),
-                   [B.word8Ty], B.wordTy,
-                   [exp1])
-
-  fun Word8_toWord64 exp1 =
-      monoPrimApp (P.R (P.M P.Word8_toWord64),
-                   [B.word8Ty], B.word64Ty,
-                   [exp1])
-
-  fun Word8_toWord64X exp1 =
-      monoPrimApp (P.R (P.M P.Word8_toWord64X),
-                   [B.word8Ty], B.word64Ty,
-                   [exp1])
-
-  fun Word16_toWord8 exp1 =
-      monoPrimApp (P.R (P.M P.Word16_toWord8),
-                   [B.word16Ty], B.word8Ty,
-                   [exp1])
-
-  fun Word16_toWord32 exp1 =
-      monoPrimApp (P.R (P.M P.Word16_toWord32),
-                   [B.word16Ty], B.wordTy,
-                   [exp1])
-
-  fun Word16_toWord32X exp1 =
-      monoPrimApp (P.R (P.M P.Word16_toWord32X),
-                   [B.word16Ty], B.wordTy,
-                   [exp1])
-
-  fun Word16_toWord64 exp1 =
-      monoPrimApp (P.R (P.M P.Word16_toWord64),
-                   [B.word16Ty], B.word64Ty,
-                   [exp1])
-
-  fun Word16_toWord64X exp1 =
-      monoPrimApp (P.R (P.M P.Word16_toWord64X),
-                   [B.word16Ty], B.word64Ty,
-                   [exp1])
-
-  fun Word32_toWord8 exp1 =
-      monoPrimApp (P.R (P.M P.Word32_toWord8),
-                   [B.wordTy], B.word8Ty,
-                   [exp1])
-
-  fun Word32_toWord16 exp1 =
-      monoPrimApp (P.R (P.M P.Word32_toWord16),
-                   [B.wordTy], B.word16Ty,
-                   [exp1])
-
-  fun Word32_toWord64 exp =
-      monoPrimApp (P.R (P.M P.Word32_toWord64),
-                   [B.wordTy], B.word64Ty,
-                   [exp])
-
-  fun Word32_toWord64X exp =
-      monoPrimApp (P.R (P.M P.Word32_toWord64X),
-                   [B.wordTy], B.word64Ty,
-                   [exp])
-
-  fun Word64_toWord8 exp1 =
-      monoPrimApp (P.R (P.M P.Word64_toWord8),
-                   [B.word64Ty], B.word8Ty,
-                   [exp1])
-
-  fun Word64_toWord16 exp1 =
-      monoPrimApp (P.R (P.M P.Word64_toWord16),
-                   [B.word64Ty], B.word16Ty,
-                   [exp1])
-
-  fun Word64_toWord32 exp =
-      monoPrimApp (P.R (P.M P.Word64_toWord32),
-                   [B.word64Ty], B.wordTy,
-                   [exp])
-
-  fun Word32_fromInt32 exp =
-      RuntimeTyCast (exp, B.wordTy)
-
-  fun Word32_toInt32X exp =
-      RuntimeTyCast (exp, B.intTy)
-
-  fun Real32_isNan exp1 =
-      monoPrimApp (P.R (P.M P.Real32_isNan),
-                   [B.real32Ty], B.boolTy,
-                   [exp1])
-
-  fun Real32_equal (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real32_equal),
-(* bug 303_Real32NotEqual
-                   [B.realTy, B.realTy], B.boolTy,*)
-                   [B.real32Ty, B.real32Ty], B.boolTy,
-                   [exp1, exp2])
-
-  fun Real32_gteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real32_gteq),
-                   [B.real32Ty, B.real32Ty], B.boolTy,
-                   [exp1, exp2])
-
-  fun Real32_lteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real32_lteq),
-                   [B.real32Ty, B.real32Ty], B.boolTy,
-                   [exp1, exp2])
-
-  fun Real32_sub (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real32_sub),
-                   [B.real32Ty, B.real32Ty], B.real32Ty,
-                   [exp1, exp2])
-
-  fun Real32_toInt32_unsafe exp =
-      monoPrimApp (P.R (P.M P.Real32_toInt32_unsafe),
-                   [B.real32Ty], B.intTy,
-                   [exp])
-
-  fun Real64_isNan exp1 =
-      monoPrimApp (P.R (P.M P.Real64_isNan),
-                   [B.realTy], B.boolTy,
-                   [exp1])
-
-  fun Real64_equal (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real64_equal),
-                   [B.realTy, B.realTy], B.boolTy,
-                   [exp1, exp2])
-
-  fun Real64_gteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real64_gteq),
-                   [B.realTy, B.realTy], B.boolTy,
-                   [exp1, exp2])
-
-  fun Real64_lteq (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real64_lteq),
-                   [B.realTy, B.realTy], B.boolTy,
-                   [exp1, exp2])
-
-  fun Real64_sub (exp1, exp2) =
-      monoPrimApp (P.R (P.M P.Real64_sub),
-                   [B.realTy, B.realTy], B.realTy,
-                   [exp1, exp2])
-
-  fun Real64_toInt32_unsafe exp =
-      monoPrimApp (P.R (P.M P.Real64_toInt32_unsafe),
-                   [B.realTy], B.intTy,
-                   [exp])
+  fun Real_isNan realTy x = cmp1 P.Real_isNan realTy x
+  fun Real_equal realTy x = cmp2 P.Real_equal realTy x
+  fun Real_gteq realTy x = cmp2 P.Real_gteq realTy x
+  fun Real_lteq realTy x = cmp2 P.Real_lteq realTy x
+  fun Real_sub realTy x = op2 P.Real_sub realTy x
 
   fun ObjectSize (ty, exp) =
       monoPrimApp (P.R (P.M P.ObjectSize),
-                   [ty], B.wordTy,
+                   [ty], B.word32Ty,
                    [exp])
-
-  fun Array_turnIntoVector (elemTy, aryExp) =
-      polyPrimApp (P.R (P.M P.Array_turnIntoVector),
-                   fn t => [arrayTy t],
-                   fn t => vectorTy t,
-                   elemTy,
-                   [aryExp])
 
   fun Array_alloc_unsafe (elemTy, lenExp) =
       polyPrimApp (P.R P.Array_alloc_unsafe,
-                   fn t => [B.intTy], fn t => arrayTy t,
+                   fn t => [B.int32Ty], fn t => arrayTy t,
                    elemTy,
                    [lenExp])
 
@@ -473,29 +235,39 @@ struct
                    elems)
 
   fun Array_length (elemTy, exp1) =
-      Word32_toInt32X (Word32_div_unsafe (ObjectSize (arrayTy elemTy, exp1),
-                                          Cast (SizeOf elemTy, B.wordTy)))
+      Cast (Word_div_unsafe B.word32Ty (ObjectSize (arrayTy elemTy, exp1),
+                                        Cast (SizeOf elemTy, B.word32Ty)),
+            B.int32Ty)
 
   fun Array_sub_unsafe (elemTy, arrayExp, indexExp) =
-      polyPrimApp (P.Array_sub_unsafe,
-                   fn t => [arrayTy t, B.intTy],
-                   fn t => t,
-                   elemTy,
-                   [arrayExp, indexExp])
+      polyPrimApp
+        (P.Array_sub_unsafe,
+         fn t => [arrayTy t, B.int32Ty],
+         fn t => t,
+         elemTy,
+         [arrayExp, indexExp])
 
   fun Array_update_unsafe (elemTy, arrayExp, indexExp, argExp) =
-      polyPrimApp (P.Array_update_unsafe,
-                   fn t => [arrayTy t, B.intTy, t],
-                   fn t => B.unitTy,
-                   elemTy,
-                   [arrayExp, indexExp, argExp])
+      polyPrimApp
+        (P.Array_update_unsafe,
+         fn t => [arrayTy t, B.int32Ty, t],
+         fn t => B.unitTy,
+         elemTy,
+         [arrayExp, indexExp, argExp])
 
   fun Array_copy_unsafe (elemTy, src, si, dst, di, len) =
-      polyPrimApp (P.R P.Array_copy_unsafe,
-                   fn t => [arrayTy t, B.intTy, arrayTy t, B.intTy, B.intTy],
-                   fn t => B.unitTy,
+      polyPrimApp
+        (P.R P.Array_copy_unsafe,
+         fn t => [arrayTy t, B.int32Ty, arrayTy t, B.int32Ty, B.int32Ty],
+         fn t => B.unitTy,
+         elemTy,
+         [src, si, dst, di, len])
+
+  fun Vector_alloc_unsafe (elemTy, lenExp) =
+      polyPrimApp (P.R P.Vector_alloc_unsafe,
+                   fn t => [B.int32Ty], fn t => arrayTy t,
                    elemTy,
-                   [src, si, dst, di, len])
+                   [lenExp])
 
   (*
    * "'a ref" is "'a array" of just one element.
@@ -524,16 +296,18 @@ struct
         val vid3 = newId ()
       in
         Let ([(vid1, lenExp),
-              (vid2, Array_alloc_unsafe
-                       (B.charTy, Int32_add_unsafe (Var vid1, Int32 1))),
+              (vid2, Vector_alloc_unsafe
+                       (B.charTy,
+                        Int_add_unsafe B.int32Ty (Var vid1, Int32 1))),
               (vid3, Array_update_unsafe
-                       (B.charTy, Var vid2, Var vid1, Char 0))],
-             Cast (Array_turnIntoVector (B.charTy, Var vid2), B.stringTy))
+                       (B.charTy, Cast (Var vid2, arrayTy B.charTy),
+                        Var vid1, Char 0))],
+             Cast (Var vid2, B.stringTy))
       end
 
   fun String_size exp1 =
-      Int32_sub_unsafe (Array_length (B.charTy, Cast (exp1, arrayTy B.charTy)),
-                        Int32 1)
+      Cast (Word_sub B.word32Ty (ObjectSize (B.stringTy, exp1), Word32 1),
+            B.int32Ty)
 
   fun String_sub_unsafe (strExp, indexExp) =
       Cast (Array_sub_unsafe (B.charTy, Cast (strExp, arrayTy B.charTy),
@@ -554,7 +328,7 @@ struct
       | _ => false
 
   fun locToString ((pos1, pos2):Loc.loc) =
-      Loc.fileNameOfPos pos1 ^ ":" ^ Int.toString (Loc.lineOfPos pos1)
+      Loc.posToString pos1
 
   (*
    * An exception objet is implemented as either
@@ -594,19 +368,20 @@ struct
            T.RECORDty tys =>
            (case List.find (isStringTy o #2) (RecordLabel.Map.listItemsi tys) of
               SOME (label, _) =>
-              Word32_orb (Cast (IndexOf (argTy, label), B.wordTy), Word32 1)
+              Word_orb B.word32Ty
+                       (Cast (IndexOf (argTy, label), B.word32Ty), Word32 1)
             | NONE => Word32 0)
          | ty =>
            if isStringTy ty
            then Cast
                   (IndexOf (tupleTy [B.exntagTy, B.stringTy, B.stringTy],
                             RecordLabel.fromInt 3),
-                   B.wordTy)
+                   B.word32Ty)
            else Word32 0)
       | _ => Word32 0
 
   val exnTagImplTy =
-      tupleTy [B.stringTy, B.wordTy]
+      tupleTy [B.stringTy, B.word32Ty]
 
   fun allocExnTag {builtin, path, ty} =
       Cast ((if builtin then Vector_alloc_init else Vector_alloc_init_fresh)
@@ -630,13 +405,13 @@ struct
             (vid2, extractExnMsgIndex (extractExnTag (Var vid1)))],
            Tuple
              [extractExnLoc (Var vid1),
-              Word32_andb (Var vid2, Word32 ~2),
+              Word_andb B.word32Ty (Var vid2, Word32 ~2),
               Switch
                 (Var vid2,
-                 [(C.WORD32 0w0, Null)],
+                 [(L.WORD32 0w0, Null)],
                  Switch
-                   (Word32_andb (Var vid2, Word32 1),
-                    [(C.WORD32 0w0, Cast (Var vid1, B.boxedTy))],
+                   (Word_andb B.word32Ty (Var vid2, Word32 1),
+                    [(L.WORD32 0w0, Cast (Var vid1, B.boxedTy))],
                     extractExnArg (Var vid1, B.boxedTy)))])
       end
 
@@ -648,72 +423,82 @@ struct
   fun emitExp loc env exp =
       case exp of
         Exp x => x
+      | Const (const, ty) =>
+        (L.TLCONSTANT {const = L.C const, ty = ty, loc = loc}, ty)
       | Int8 n =>
-        (L.TLCONSTANT {const = C.INT8 (Int8.fromInt n),
+        (L.TLCONSTANT {const = L.C (L.INT8 (Int8.fromInt n)),
                        ty = B.int8Ty,
                        loc = loc},
-         B.intTy)
+         B.int8Ty)
       | Int16 n =>
-        (L.TLCONSTANT {const = C.INT16 (Int16.fromInt n),
+        (L.TLCONSTANT {const = L.C (L.INT16 (Int16.fromInt n)),
                        ty = B.int16Ty,
                        loc = loc},
-         B.intTy)
+         B.int16Ty)
       | Int32 n =>
-        (L.TLCONSTANT {const = C.INT32 (Int32.fromInt n),
-                       ty = B.intTy,
+        (L.TLCONSTANT {const = L.C (L.INT32 (Int32.fromInt n)),
+                       ty = B.int32Ty,
                        loc = loc},
-         B.intTy)
+         B.int32Ty)
       | Int64 n =>
-        (L.TLCONSTANT {const = C.INT64 (Int64.fromInt n),
+        (L.TLCONSTANT {const = L.C (L.INT64 (Int64.fromInt n)),
                        ty = B.int64Ty,
                        loc = loc},
          B.int64Ty)
       | Word8 n =>
-        (L.TLCONSTANT {const = C.WORD8 (Word8.fromInt n),
+        (L.TLCONSTANT {const = L.C (L.WORD8 (Word8.fromInt n)),
                        ty = B.word8Ty,
                        loc = loc},
-         B.wordTy)
+         B.word32Ty)
       | Word16 n =>
-        (L.TLCONSTANT {const = C.WORD16 (Word16.fromInt n),
+        (L.TLCONSTANT {const = L.C (L.WORD16 (Word16.fromInt n)),
                        ty = B.word16Ty,
                        loc = loc},
-         B.wordTy)
+         B.word32Ty)
       | Word32 n =>
-        (L.TLCONSTANT {const = C.WORD32 (Word32.fromInt n),
-                       ty = B.wordTy,
+        (L.TLCONSTANT {const = L.C (L.WORD32 (Word32.fromInt n)),
+                       ty = B.word32Ty,
                        loc = loc},
-         B.wordTy)
+         B.word32Ty)
       | Word64 n =>
-        (L.TLCONSTANT {const = C.WORD64 (Word64.fromInt n),
+        (L.TLCONSTANT {const = L.C (L.WORD64 (Word64.fromInt n)),
                        ty = B.word64Ty,
                        loc = loc},
          B.word64Ty)
       | Char n =>
-        (L.TLCONSTANT {const = C.CHAR (chr n), ty = B.charTy, loc = loc},
+        (L.TLCONSTANT {const = L.C (L.CHAR (chr n)),
+                       ty = B.charTy,
+                       loc = loc},
          B.charTy)
       | ConTag n =>
-        (L.TLCONSTANT {const = C.CONTAG (Word32.fromInt n),
+        (L.TLCONSTANT {const = L.C (L.CONTAG (Word32.fromInt n)),
                        ty = B.contagTy,
                        loc = loc},
          B.contagTy)
       | Real64 n =>
-        (L.TLCONSTANT {const = C.REAL64 (Int32.toString n),
-                       ty = B.realTy,
+        (L.TLCONSTANT {const = L.C (L.REAL64 n),
+                       ty = B.real64Ty,
                        loc = loc},
-         B.realTy)
+         B.real64Ty)
       | Real32 n =>
-        (L.TLCONSTANT {const = C.REAL32 (Int32.toString n),
+        (L.TLCONSTANT {const = L.C (L.REAL32 n),
                        ty = B.real32Ty,
                        loc = loc},
          B.real32Ty)
       | String x =>
-        (L.TLCONSTANT {const = C.STRING x, ty = B.stringTy, loc = loc},
+        (L.TLCONSTANT {const = L.S (L.STRING x),
+                       ty = B.stringTy,
+                       loc = loc},
          B.stringTy)
       | Unit =>
-        (L.TLCONSTANT {const = C.UNIT, ty = B.unitTy, loc = loc},
+        (L.TLCONSTANT {const = L.C L.UNIT,
+                       ty = B.unitTy,
+                       loc = loc},
          B.unitTy)
       | Null =>
-        (L.TLCONSTANT {const = C.NULLBOXED, ty = B.boxedTy, loc = loc},
+        (L.TLCONSTANT {const = L.C L.NULLBOXED,
+                       ty = B.boxedTy,
+                       loc = loc},
          B.boxedTy)
       | False => emitExp loc env (Cast (ConTag 0, B.boolTy))
       | True => emitExp loc env (Cast (ConTag 1, B.boolTy))
@@ -731,14 +516,6 @@ struct
         in
           (L.TLCAST {exp = exp, expTy = expTy, targetTy = ty,
                      cast = P.TypeCast, loc = loc},
-           ty)
-        end
-      | RuntimeTyCast (exp, ty) =>
-        let
-          val (exp, expTy) = emitExp loc env exp
-        in
-          (L.TLCAST {exp = exp, expTy = expTy, targetTy = ty,
-                     cast = P.RuntimeTyCast, loc = loc},
            ty)
         end
       | BitCast (exp, ty) =>
@@ -772,7 +549,7 @@ struct
                                     cast = P.TypeCast,
                                     loc = loc},
               expTy = B.contagTy,
-              branches = [{constant = C.CONTAG 0w0, exp = exp3}],
+              branches = [{constant = L.CONTAG 0w0, exp = exp3}],
               defaultExp = exp2,
               resultTy = ty2,
               loc = loc},
@@ -780,6 +557,7 @@ struct
         end
       | Andalso nil => emitExp loc env True
       | Andalso [x] => emitExp loc env x
+      | Andalso (True::t) => emitExp loc env (Andalso t)
       | Andalso (h::t) => emitExp loc env (If (h, Andalso t, False))
       | Switch (switchExp, branches, defaultExp) =>
         let

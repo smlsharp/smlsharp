@@ -111,14 +111,14 @@ val tests = TestList [
     ("027_raise",
      fn () =>
         let
-          val {errors, objfiles} = compile' ["regression/027_raise.sml"]
+          val {errors, objfiles, ...} = compile' ["regression/027_raise.sml"]
         in
           case errors of
             [(_,_,T.ValueRestriction _)] => ()
           | errors => raiseCompileError errors;
           (execute (link "" objfiles);
            fail "must be aborted")
-          handle Signaled 6 => ()
+          handle Signaled (6, _) => ()
         end),
   Test
     ("028_utvar",
@@ -130,7 +130,7 @@ val tests = TestList [
     ("030_uncaught",
      fn () => (execute (link "" (compile ["regression/030_uncaught.sml"]));
                fail "must be aborted")
-              handle Signaled 6 => ()),
+              handle Signaled (6, _) => ()),
   Test
     ("032_sig",
      fn () => ignore (compile ["regression/032_sig.sml"])),
@@ -746,9 +746,8 @@ val tests = TestList [
     ("187_segv",
      fn () =>
         case compile' ["regression/187_segv.sml"] of
-          {errors =
-             [(_,_,M.MatchError ("match nonexhaustive",_))],
-           objfiles} =>
+          {errors = [(_,_,M.MatchError ("match nonexhaustive",_))],
+           objfiles, ...} =>
           execute (link "" objfiles)
         | {errors, ...} => raiseCompileError errors),
   Test
@@ -813,8 +812,7 @@ val tests = TestList [
         assertEqualStringList
           ["exception R3 of string\n\
            \exception E31 of int\n\
-           \exception E32 = E31\n",
-           ""]
+           \exception E32 = E31\n"]
           (#prints (interactiveFile "regression/199_exn.sml"))),
   Test
     ("200_record",
@@ -902,8 +900,7 @@ val tests = TestList [
            \      struct\n\
            \        datatype dt = <hidden>\n\
            \      end\n\
-           \  end\n",
-          ""]
+           \  end\n"]
           (#prints
              (interactiveFile "regression/213_printSDatatypeOpaque.sml"))),
   Test
@@ -1041,8 +1038,7 @@ val tests = TestList [
            \  end\n\
            \signature S2 =\n\
            \  sig\n\
-           \  end\n",
-           ""]
+           \  end\n"]
           (#prints (interactiveFile "regression/218_printer.sml"))),
   Test
     ("219_structure",
@@ -1087,8 +1083,7 @@ val tests = TestList [
            \  struct\n\
            \    datatype hoge = B of P.foo\n\
            \  end\n",
-           "val it = fn : P.foo -> A.hoge\n",
-           ""]
+           "val it = fn : P.foo -> A.hoge\n"]
           (#prints
              (interactiveFile "regression/222_functorArgumentTyconName.sml"))),
   Test
@@ -1136,15 +1131,14 @@ val tests = TestList [
            \    type foo\n\
            \  end) :\n\
            \    sig\n\
-           \      type bar = 'foo\n\
-           \      val f : 'foo -> 'foo\n\
+           \      type bar = foo\n\
+           \      val f : foo -> foo\n\
            \    end\n",
            "structure A =\n\
            \  struct\n\
            \    type 'a foo = int\n\
            \    val f = fn : int -> int\n\
-           \  end\n",
-           ""]
+           \  end\n"]
           (#prints (interactiveFile "regression/229_functorPrinter.sml"))),
   Test
     ("230_signaturePrint",
@@ -1203,8 +1197,7 @@ val tests = TestList [
            \  sig\n\
            \    datatype foo = A | B\n\
            \    datatype ZZZ = C\n\
-           \  end\n",
-           ""]
+           \  end\n"]
           (#prints (interactiveFile "regression/233_functorSigNewLine.sml"))),
   Test
     ("234_recordPat",
@@ -1352,15 +1345,17 @@ val tests = TestList [
      fn () => (compile ["regression/260_provide.sml"];
                fail "must cause a compile error")
               handle CompileError
-                       (_, [(_,_,T.TypeAnnotationNotAgree _)])
+                       (_, [(_,_,T.SignatureMismatch _)])
                      => ()),
+(*
   Test
     ("260_turnIntoVector",
      fn () =>
         case compile' ["regression/260_turnIntoVector.sml"] of
-          {errors = [(_,_,T.ValueRestriction _)], objfiles} =>
+          {errors = [(_,_,T.ValueRestriction _)], objfiles, ...} =>
           execute (link "" objfiles)
         | {errors, ...} => raiseCompileError errors),
+*)
   Test
     ("261_typeinf",
      fn () =>
@@ -1474,14 +1469,14 @@ val tests = TestList [
           val m = compile ["regression/285_realPath.sml"]
           val e = link "regression/285_realPath.smi" m
           val f = TempFile.create "README"
-          val dir = Filename.toString (Filename.dirname f)
-          val oldpwd = OS.FileSys.getDir ()
-          val _ = OS.FileSys.chDir dir
-          val _ = OS.Process.system "ln -s README testlink"
-                  handle e => (OS.FileSys.chDir oldpwd; raise e)
+          val testlink = Filename.concatPath
+                           (Filename.dirname f, Filename.fromString "testlink")
         in
-          execute e handle e => (OS.FileSys.chDir oldpwd; raise e);
-          OS.FileSys.chDir oldpwd;
+          CoreUtils.chdir
+            (Filename.dirname f)
+            (fn _ => (OS.Process.system "ln -s README testlink"; execute e))
+          handle e => (CoreUtils.rm_f testlink; raise e);
+          CoreUtils.rm_f testlink;
           ()
         end),
   Test
@@ -1491,12 +1486,12 @@ val tests = TestList [
           val m = compile ["regression/287_remove.sml"]
           val e = link "regression/287_remove.smi" m
           val f = TempFile.create "temp"
-          val dir = Filename.toString (Filename.dirname f)
-          val oldpwd = OS.FileSys.getDir ()
-          val _ = OS.FileSys.chDir dir
+          val testdir = Filename.concatPath
+                          (Filename.dirname f, Filename.fromString "testdir")
         in
-          execute e handle e => (OS.FileSys.chDir oldpwd; raise e);
-          OS.FileSys.chDir oldpwd;
+          CoreUtils.chdir (Filename.dirname f) (fn _ => execute e)
+          handle e => (CoreUtils.rmdir_f testdir; raise e);
+          CoreUtils.rmdir_f testdir;
           ()
         end),
   Test
@@ -1563,9 +1558,11 @@ val tests = TestList [
   Test
     ("311_DateFmt",
      fn () => evalFile "regression/311_DateFmt.sml"),
+(* Date.fromStringは、仕様の問題
   Test
     ("312_DateFromString",
      fn () => evalFile "regression/312_DateFromString.sml"),
+*)
   Test
     ("313_DateFromString",
      fn () => evalFile "regression/313_DateFromString.sml"),
@@ -1575,9 +1572,11 @@ val tests = TestList [
   Test
     ("315_IntInfPatternMatch",
      fn () => evalFile "regression/315_IntInfPatternMatch.sml"),
+(* Date.fromStringは、仕様の問題
   Test
     ("316_DateFromString",
      fn () => evalFile "regression/316_DateFromString.sml"),
+*)
   Test
     ("317_functor",
      fn () => ignore (interactiveFile "regression/317_functor.sml")),
@@ -1607,9 +1606,12 @@ val tests = TestList [
               handle CompileError
                        (_, [(_,_,P.ParseError _)])
                      => ()),
+(*
+  (* this is a test for old JSON functions and therefore do not work *)
   Test
     ("326_jsonCase",
      fn () => evalFile "regression/326_jsonCase.sml"),
+*)
   Test
     ("327_searchLpadBug",
      fn () => evalFile "regression/327_searchLpadBug.sml"
@@ -1629,6 +1631,8 @@ val tests = TestList [
         in
           repeat (fn () => execute e) 10
         end),
+(*
+  (* these are tests for old JSON functions and therefore do not work *)
   Test
     ("333_jsonAs",
      fn () => ignore (interactiveFile "regression/333_jsonAs.sml")),
@@ -1638,7 +1642,6 @@ val tests = TestList [
         execute
           (link "regression/333_jsonAs.sml"
                 (compile ["regression/333_jsonAs.sml"]))),
-
   Test
     ("334_JSONView",
      fn () => evalFile "regression/334_JSONView.sml"),
@@ -1652,6 +1655,7 @@ val tests = TestList [
     ("335_dynamic",
      (* ToDo: this uses old JSON functions and so does not work *)
      fn () => ignore (interactiveFile' "regression/335_dynamic.sml")),
+*)
 
   TestList nil
 ]

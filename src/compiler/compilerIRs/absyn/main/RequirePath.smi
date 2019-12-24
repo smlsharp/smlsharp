@@ -1,0 +1,22 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../libs/toolchain/main/Filename.smi"
+
+structure RequirePath =
+struct
+  type path (= list)
+  val fromString : string -> path
+  val toString : path -> string
+  val format_path : path -> SMLFormat.FormatExpression.expression list
+  val beginsWithDot : path -> bool
+  val prependDot : path -> path
+
+  datatype reason =
+      EmptyPath
+    | AbsolutePath
+    | DirectoryPath
+  exception Path of reason
+
+  val toFilename : path -> Filename.filename
+
+end

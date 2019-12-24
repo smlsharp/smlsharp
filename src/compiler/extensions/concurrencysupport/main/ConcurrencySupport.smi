@@ -1,4 +1,6 @@
 _require local "../../../../basis.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../compilerIRs/machinecode/main/MachineCode.ppg.smi"
 
 structure ConcurrencySupport =

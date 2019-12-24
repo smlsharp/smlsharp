@@ -1,0 +1,5 @@
+NODE {tests/data/loadfile/080_sig2.sig INCLUDES}
+NODE {tests/data/loadfile/080_sig.smi INTERFACE}
+ROOT {ROOT_SML USERPATH tests/data/loadfile/080_sig.sml COMPILE
+ PROVIDE {USERPATH tests/data/loadfile/080_sig.smi INTERFACE 30238d43aeba4499
+  REQUIRE {USERPATH tests/data/loadfile/080_sig2.sig INCLUDES}}}

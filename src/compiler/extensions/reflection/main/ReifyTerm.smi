@@ -1,23 +1,26 @@
 _require local "../../../../basis.smi"
 _require local "../../../../ffi/main/Pointer.smi"
-_require local "../../../../config/main/PointerSize.smi"
 
 _require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/env/main/IEnv.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
+(* _require local "../../../data/control/main/Control.smi" *)
 
-_require local "../../json/main/JSONTypes.ppg.smi"
 _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"
-_require local "../../debug/main/Bug.ppg.smi"
+_require local "../../debug/main/Bug.smi"
 
-_require local "./ReifiedTyData.smi"
-
+(* _require local "./ReifiedTyData.smi" *)
+(* _require local "./ReifyUtils.smi" *)
 _require "./ReifiedTy.ppg.smi"
 _require "./ReifiedTerm.ppg.smi"
+_require local "./ReifiedTermToML.smi"
 
 structure ReifyTerm =
 struct
   val toReifiedTerm : ['a#reify.'a -> ReifiedTerm.reifiedTerm]
-  val sizeOf : ReifiedTy.reifiedTy -> word
+  val toReifiedTermPrint : ['a#reify.'a -> ReifiedTerm.reifiedTerm]
   val setCdr : ['a#reify. 'a list * 'a list -> unit]
+  val pp : ['a#reify. 'a -> unit]
+  val typeOf : ['a#reify. 'a -> ReifiedTy.tyRep]
 end

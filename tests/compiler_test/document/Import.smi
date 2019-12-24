@@ -1,0 +1,10 @@
+_require local "basis.smi"
+_require "smlunit-lib.smi"
+_require local "ffi.smi"
+_require local "reify.smi"
+
+structure Import =
+struct
+  val tests : SMLUnit.Test.test
+end
+

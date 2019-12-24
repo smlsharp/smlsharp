@@ -1,7 +1,7 @@
 exception SysErr of string
 infix 4 =
 fun cstrToString (x:char ptr) : string =
-    if (SMLSharp_Builtin.Pointer.toUnitPtr x) = _NULL
+    if x = SMLSharp_Builtin.Pointer.null ()
     then raise SysErr "null pointer exception"
     else (* str_new x *) raise Fail "fail"
 

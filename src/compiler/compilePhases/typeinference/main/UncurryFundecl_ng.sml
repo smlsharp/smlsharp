@@ -7,7 +7,7 @@ local
 
   structure T = Types
   structure TB = TypesBasics
-  structure TIU = TypeInferenceUtils
+  (* structure TIU = TypeInferenceUtils *)
   structure TC = TypedCalc
   structure TCU = TypedCalcUtils
 
@@ -22,7 +22,7 @@ local
                  grab (n - 1) ranty (tyList@[domty])
               | _ => 
                  (
-                  T.printTy ty;
+                  print (Bug.prettyPrint (T.format_ty ty));
                   raise Bug.Bug "grabTy"
                   )
              )
@@ -194,22 +194,25 @@ in
                 TB.copyBoundEnv boundtvars
             val body = TB.substBTvar subst body
             val (argTyList, newBodyTy) = grabTy (body, arity)
-(* 2013-07-30 ohori bug 263_uncurry
-            val newPoyTyBody = T.FUNMty(argTyList, newBodyTy)
-*)
-            val newPolyTyBody = 
-                foldr
-                  (fn (ty, newPolyTyBody) => T.FUNMty([ty], newPolyTyBody))
-                newBodyTy
-                argTyList
-            val newPolyTy =
-                T.POLYty{boundtvars = boundtvars, constraints = constraints, body = newPolyTyBody}
-            val newPolyTy = TyAlphaRename.copyTy TyAlphaRename.emptyBtvMap newPolyTy
+            val uncurriedTy =
+                TyAlphaRename.copyTy
+                  TyAlphaRename.emptyBtvMap
+                  (T.POLYty {boundtvars = boundtvars,
+                             constraints = constraints,
+                             body = T.FUNMty (argTyList, newBodyTy)})
+            val curriedTyBody =
+                foldr (fn (ty, bodyTy) => T.FUNMty ([ty], bodyTy))
+                      newBodyTy
+                      argTyList
+            val curriedTy =
+                T.POLYty {boundtvars = boundtvars,
+                          constraints = constraints,
+                          body = curriedTyBody}
             val newPolyTtermBody =
                 grabAndApply 
                   (TC.TPTAPP
-                     {exp = TC.TPVAR {path=path, id=id, ty=newPolyTy, opaque=false},
-                      expTy = newPolyTy,
+                     {exp = TC.TPVAR {path=path, id=id, ty=uncurriedTy, opaque=false},
+                      expTy = uncurriedTy,
                       instTyList =
                       map
                         T.BOUNDVARty
@@ -220,8 +223,9 @@ in
                    spine, 
                    loc)
           in
-            TC.TPPOLY{btvEnv =boundtvars,
-                      expTyWithoutTAbs = newPolyTyBody,
+            TC.TPPOLY{btvEnv = boundtvars,
+                      constraints = constraints,
+                      expTyWithoutTAbs = curriedTyBody,
                       exp = newPolyTtermBody,
                       loc = loc
                      }
@@ -393,43 +397,6 @@ in
                   spine,
                   loc)
       end
-    | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
-      let
-        val newData = uncurryExp  nil data
-        val newIterator = uncurryExp  nil iterator
-        val newPred = uncurryExp  nil pred
-      in
-        makeApply (TC.TPFOREACH 
-                     {data = newData, 
-                      dataTy = dataTy,
-                      iterator = newIterator, 
-                      iteratorTy = iteratorTy,
-                      pred = newPred, 
-                      predTy = predTy,
-                      loc = loc},
-                   spine,
-                   loc)
-      end
-    | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
-      let
-        val newData = uncurryExp  nil data
-        val newWhereParam = uncurryExp  nil whereParam
-        val newIterator = uncurryExp  nil iterator
-        val newPred = uncurryExp  nil pred
-      in
-        makeApply (TC.TPFOREACHDATA
-                     {data = newData, 
-                      dataTy = dataTy,
-                      whereParam = newWhereParam, 
-                      whereParamTy = whereParamTy,
-                      iterator = newIterator, 
-                      iteratorTy = iteratorTy,
-                      pred = newPred, 
-                      predTy = predTy,
-                      loc = loc},
-                   spine,
-                   loc)
-      end
     | TC.TPMONOLET {binds, bodyExp, loc} =>
       let
         val newBinds = map (fn (v,exp) => (v, uncurryExp  nil exp))binds
@@ -468,6 +435,7 @@ in
     | TC.TPPOLYFNM
         {
          btvEnv,
+         constraints,
          argVarList,
          bodyTy,
          bodyExp,
@@ -480,6 +448,7 @@ in
         makeApply(TC.TPPOLYFNM
                     {
                      btvEnv = btvEnv,
+                     constraints = constraints,
                      argVarList = argVarList,
                      bodyTy = bodyTy,
                      bodyExp = newBodyExp,
@@ -488,11 +457,12 @@ in
                   spine,
                   loc)
         end
-    | TC.TPPOLY {btvEnv, expTyWithoutTAbs, exp, loc} =>
+    | TC.TPPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
       let
         val newExp = uncurryExp  nil exp
       in
         makeApply(TC.TPPOLY {btvEnv=btvEnv, 
+                             constraints=constraints,
                              expTyWithoutTAbs = expTyWithoutTAbs, 
                              exp = newExp, 
                              loc = loc},
@@ -545,7 +515,7 @@ in
         (TC.TPFFIIMPORT
            {funExp =
               case funExp of
-                TC.TPFFIFUN ptrExp => TC.TPFFIFUN (uncurryExp nil ptrExp)
+                TC.TPFFIFUN (ptrExp, ty) => TC.TPFFIFUN (uncurryExp nil ptrExp, ty)
               | TC.TPFFIEXTERN _ => funExp,
             ffiTy = ffiTy,
             stubTy = stubTy,
@@ -557,22 +527,54 @@ in
                 loc)
       
     | TC.TPSIZEOF (_,loc) => makeApply (tpexp, spine, loc)
-    | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+    | TC.TPJOIN {isJoin, ty, args = (arg1, arg2), argtys, loc} =>
       makeApply (TC.TPJOIN {ty = ty,
                             args = (uncurryExp nil arg1, uncurryExp nil arg2),
                             argtys = argtys,
+                            isJoin = isJoin,
                             loc = loc},
                  spine,
                  loc)
-    | TC.TPTYPEOF (_,loc) => makeApply (tpexp, spine, loc)
     | TC.TPREIFYTY (_,loc) => makeApply (tpexp, spine, loc)
-    | TC.TPJSON {exp,ty,coerceTy,loc} =>
-      makeApply(TC.TPJSON {exp=uncurryExp nil exp,
-                           ty=ty,
-                           coerceTy=coerceTy,
-                           loc=loc},
+    | TC.TPDYNAMIC {exp,ty,elemTy, coerceTy,loc} =>
+      makeApply(TC.TPDYNAMIC {exp=uncurryExp nil exp,
+                              ty=ty,
+                              elemTy = elemTy,
+                              coerceTy=coerceTy,
+                              loc=loc},
                 spine,
                 loc)
+    | TC.TPDYNAMICIS {exp,ty,elemTy, coerceTy,loc} =>
+      makeApply(TC.TPDYNAMICIS {exp=uncurryExp nil exp,
+                                ty=ty,
+                                elemTy = elemTy,
+                                coerceTy=coerceTy,
+                                loc=loc},
+                spine,
+                loc)
+    | TC.TPDYNAMICNULL {ty, coerceTy,loc} => makeApply(tpexp, spine, loc)
+    | TC.TPDYNAMICTOP {ty, coerceTy,loc} => makeApply(tpexp, spine, loc)
+    | TC.TPDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} =>
+      makeApply(TC.TPDYNAMICVIEW {exp=uncurryExp nil exp,
+                                  ty=ty,
+                                  elemTy = elemTy,
+                                  coerceTy=coerceTy,
+                                  loc=loc},
+                spine,
+                loc)
+    | TC.TPDYNAMICCASE 
+        {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} =>
+      makeApply(TC.TPDYNAMICCASE
+                  {
+                   groupListTerm = uncurryExp nil groupListTerm,
+                   groupListTy = groupListTy,
+                   dynamicTerm = uncurryExp nil dynamicTerm,
+                   dynamicTy = dynamicTy,
+                   elemTy = elemTy,
+                   ruleBodyTy = ruleBodyTy,
+                   loc = loc},
+                  spine,
+                  loc)
 
   and uncurryDecl tpdecl = 
       case tpdecl of
@@ -585,27 +587,31 @@ in
            (map (fn (var, ty, exp) => {var=var,exp=exp, expTy = ty}) 
                 (map (matchToFnCaseTerm  loc) fundecls),
             loc)]
-      | TC.TPPOLYFUNDECL (btvEnv, fundecls, loc) =>
+      | TC.TPPOLYFUNDECL {btvEnv, constraints, recbinds=fundecls, loc} =>
         [TC.TPVALPOLYREC
-           (btvEnv, 
+           {btvEnv=btvEnv, 
+            constraints=constraints,
+            recbinds=
             map (fn (v,ty,exp) => {var =v, exp = exp, expTy = ty})
                 (map (matchToFnCaseTerm  loc) fundecls),
-            loc)]
+            loc=loc}]
       | TC.TPVALREC (bindList, loc) =>
         [TC.TPVALREC
            (map (fn {var, expTy, exp} =>
                     {var=var, expTy=expTy, exp=uncurryExp  nil exp})
                 bindList, loc)
         ]
-      | TC.TPVALPOLYREC (btvEnv, recBinds, loc) =>
+      | TC.TPVALPOLYREC {btvEnv, constraints, recbinds=recBinds, loc} =>
         [
          TC.TPVALPOLYREC
-           (btvEnv, 
+           {btvEnv=btvEnv, 
+            constraints=constraints,
+            recbinds=
             map
               (fn {var, expTy, exp}
                   => {var=var, expTy = expTy, exp = uncurryExp  nil exp})
               recBinds, 
-            loc) 
+            loc=loc}
         ]
       | TC.TPEXD _ => [tpdecl]
       | TC.TPEXNTAGD _ => [tpdecl]

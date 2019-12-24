@@ -1,0 +1,24 @@
+_require "basis.smi"
+
+structure Str1 = struct
+  val v1 : int
+  val f1 : int -> int
+  type t1 = int
+  type d1 (= contag)
+  type d2 (= boxed)
+  val v2 : d1
+  val f2 : int -> d2
+  exception Exn1
+  structure Str11 = struct
+    type t11 = t1
+    exception Exn11 = Exn1
+  end
+  structure Str12 = Str11
+end
+
+exception Exn1
+exception Exn2 of int
+
+val v1 : int
+val f1 : 'a -> 'a
+

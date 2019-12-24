@@ -17,14 +17,118 @@ struct
 
   structure EU = UserErrorUtils
   structure E = ElaborateError
-
   structure I = AbsynInterface
+  structure T = AbsynTy
   structure P = PatternCalcInterface
   structure PC = PatternCalc
   val symbolToLoc = Symbol.symbolToLoc
   val mkSymbol = Symbol.mkSymbol
 
   type fixEnv = Fixity.fixity SymbolEnv.map
+  val emptyFixEnv = SymbolEnv.empty : fixEnv
+
+  fun unionFixEnv (env1, env2) =
+      SymbolEnv.mergeWithi
+        (fn (k, x, NONE) => x
+          | (k, NONE, x) => x
+          | (k, x as (SOME _), y as (SOME _)) =>
+            (EU.enqueueError
+               (Symbol.symbolToLoc k, E.MultipleInfixInInterface k);
+             y))
+        (env1, env2)
+
+  (* ToDo: integrate expandWithTypesInDataBind in ElaborateCore.sml *)
+  type subst =
+      {
+        tyvar : T.ty SymbolEnv.map,
+        tycon : I.typbind_trans SymbolEnv.map
+      }
+
+  fun maskTyvar ({tyvar, tycon}:subst) (tvars : T.tvar list) : subst =
+      {tycon = tycon,
+       tyvar = foldl (fn ({symbol, isEq}, z) =>
+                         if SymbolEnv.inDomain (z, symbol)
+                         then #1 (SymbolEnv.remove (z, symbol))
+                         else z)
+                     tyvar
+                     tvars}
+
+  fun tyconSubst typbinds : subst =
+      {tyvar = SymbolEnv.empty,
+       tycon = foldl (fn (x, z) => SymbolEnv.insert (z, #symbol x, x))
+                     SymbolEnv.empty
+                     typbinds}
+
+  fun tyvarSubst pairs : subst =
+      {tycon = SymbolEnv.empty,
+       tyvar = foldl (fn ((x, ty), z) => SymbolEnv.insert (z, #symbol x, ty))
+                     SymbolEnv.empty
+                     pairs}
+
+  fun substTy subst ty =
+      case ty of
+        T.TYWILD _ => ty
+      | T.TYID (tvar as {symbol, isEq}, loc) =>
+        (case SymbolEnv.find (#tyvar subst, symbol) of
+           NONE => T.TYID (tvar, loc)
+         | SOME ty => ty)
+      | T.FREE_TYID _ => raise Bug.Bug "FREE_TYID to substTy in ElaborateInterface"
+      | T.TYRECORD {ifFlex, fields, loc} =>
+        T.TYRECORD {ifFlex = ifFlex, fields = substRecordTy subst fields, loc=loc}
+      | T.TYCONSTRUCT (tyList, tyCon as [symbol], loc) =>
+        (case SymbolEnv.find (#tycon subst, symbol) of
+           NONE =>
+           T.TYCONSTRUCT (map (substTy subst) tyList, tyCon, loc)
+         | SOME {tyvars, symbol, ty, loc} =>
+           substTy 
+             (tyvarSubst
+                (ListPair.zipEq (tyvars, tyList)
+                 handle ListPair.UnequalLengths =>
+                        (EU.enqueueError
+                           (loc, E.ArityMismatchInTypeDeclaration
+                                   {tyCon = symbol,
+                                    wants = length tyvars,
+                                    given = length tyList});
+                         nil)))
+             ty)
+      | T.TYCONSTRUCT (tyList, tyCon, loc) =>
+        T.TYCONSTRUCT (map (substTy subst) tyList, tyCon, loc)
+      | T.TYTUPLE (tys, loc) =>
+        T.TYTUPLE (map (substTy subst) tys, loc)
+      | T.TYFUN (ty1, ty2, loc) =>
+        T.TYFUN (substTy subst ty1, substTy subst ty2, loc)
+      | T.TYPOLY (tvars, ty, loc) =>
+        let
+          val subst = maskTyvar subst (map #1 tvars)
+        in
+          T.TYPOLY (map (substTvar subst) tvars,
+                    substTy subst ty,
+                    loc)
+        end
+
+  and substRecordTy subst fields =
+      map (fn (l, ty) => (l, substTy subst ty)) fields
+
+  and substTvar subst ((tvar, kind) : T.kindedTvar) =
+      (tvar, substTvarKind subst kind)
+
+  and substTvarKind subst tvarKind =
+      case tvarKind of
+        T.UNIV _ => tvarKind
+      | T.REC ({properties, recordKind}, loc) =>
+        T.REC ({properties = properties,
+                recordKind = substRecordTy subst recordKind},
+               loc)
+
+  fun substConbind subst (conbind as {symbol, ty}:I.conbind) =
+      case ty of
+        NONE => conbind
+      | SOME ty => {symbol = symbol, ty = SOME (substTy subst ty)}
+
+  fun substDatbind subst ({tyvars, symbol, conbind}:I.datbind) =
+      {tyvars = tyvars,
+       symbol = symbol,
+       conbind = map (substConbind subst) conbind}
 
   fun checkSigexp sigexp =
       case sigexp of
@@ -140,49 +244,29 @@ struct
       case typbind of 
       I.TRANSPARENT {tyvars, symbol, ty, loc} => 
       P.PITYPE {tyvars=tyvars, symbol = symbol, ty=ty, loc=loc}
-    | I.OPAQUE_NONEQ {tyvars, symbol, runtimeTy, loc} =>
-      let
-        val runtimeTy = 
-            case runtimeTy of 
-              [name] =>
-              (case BuiltinTypeNames.findType (Symbol.symbolToString name) of
-                 SOME ty => P.BUILTINty ty
-               | NONE => P.LIFTEDty runtimeTy
-              )
-            | _ => P.LIFTEDty runtimeTy
-      in
-        P.PIOPAQUE_TYPE 
-          {tyvars=tyvars, symbol= symbol, runtimeTy=runtimeTy, loc=loc}
-      end
-    | I.OPAQUE_EQ {tyvars, symbol, runtimeTy, loc} =>
-      let
-        val runtimeTy = 
-            case runtimeTy of 
-              [name] => 
-              (case BuiltinTypeNames.findType (Symbol.symbolToString name) of
-                 SOME ty => P.BUILTINty ty
-               | NONE => P.LIFTEDty runtimeTy)
-            | _ => P.LIFTEDty runtimeTy
-      in
-        P.PIOPAQUE_EQTYPE 
-          {tyvars=tyvars, symbol= symbol, runtimeTy=runtimeTy, loc=loc}
-      end
+    | I.OPAQUE {eq, tyvars, symbol, runtimeTy, loc} =>
+      P.PIOPAQUE_TYPE
+        {eq=eq, tyvars=tyvars, symbol= symbol, runtimeTy=runtimeTy, loc=loc}
 
   fun elabDec dec =
       case dec of
         I.IVAL valbind => [elabValbind valbind]
       | I.ITYPE typbindList => map elabTypbind typbindList
-      | I.IDATATYPE {datbind, loc} =>
-        (app (fn {tyvars, symbol, conbind} =>
-                 (EU.checkSymbolDuplication
-                    (fn {symbol, ty} => symbol)
-                    conbind
-                    E.DuplicateConstructorNameInDatatype;
-                  app (fn {symbol, ty} =>
-                          ElaborateCore.checkReservedNameForValBind symbol)
-                      conbind))
-             datbind;
-         [P.PIDATATYPE {datbind=datbind, loc=loc}])
+      | I.IDATATYPE {datbind, withType, loc} =>
+        (EU.checkSymbolDuplication
+           (fn x => x)
+           (map #symbol datbind @ map #symbol withType)
+           E.DuplicateTypeNameInDatatype;
+         EU.checkSymbolDuplication
+           (fn x => x)
+           (List.concat (map (map #symbol o #conbind) datbind))           
+           E.DuplicateConstructorNameInDatatype;
+         app ElaborateCore.checkReservedNameForValBind
+             (List.concat (map (map #symbol o #conbind) datbind));
+         P.PIDATATYPE
+           {datbind = map (substDatbind (tyconSubst withType)) datbind,
+            loc = loc}
+         :: map P.PITYPE withType)
       | I.ITYPEREP {loc, longsymbol, symbol} => 
         [P.PITYPEREP {loc=loc, longsymbol = longsymbol, symbol= symbol}]
       | I.ITYPEBUILTIN {builtinSymbol, loc, symbol} => 
@@ -226,9 +310,7 @@ struct
                     loc = loc}
       end
 
-  fun mustBeDisjoint _ = raise Bug.Bug "must be disjoint"
-
-  fun elabTopdec fixEnv itopdec =
+  fun elabTopdec itopdec =
       case itopdec of
       I.IDEC dec =>
       (SymbolEnv.empty, map P.PIDEC (elabDec dec))
@@ -245,100 +327,83 @@ struct
             | I.INFIXR (SOME n) =>
               Fixity.INFIXR (ElaborateCore.elabInfixPrec (n, loc))
             | I.NONFIX => Fixity.NONFIX
-
-        (* check duplicate declarations *)
-        val _ =
-            app (fn symbol =>
-                    case SymbolEnv.find (fixEnv, symbol) of
-                      SOME (fixity1, loc1) =>
-                      if fixity = fixity1 then ()
-                      else EU.enqueueError
-                             (loc, E.MultipleInfixInInterface (symbol, loc))
-                    | NONE => ())
-                symbols
-
-        val fixEnv =
-            foldl (fn (symbol,z) =>
-                      SymbolEnv.insert (z, symbol, (fixity, loc)))
-                  SymbolEnv.empty
-                  symbols
+        val fixEnvs = map (fn k => SymbolEnv.singleton (k, fixity)) symbols
+        val fixEnv = foldl unionFixEnv emptyFixEnv fixEnvs
       in
         (fixEnv, nil)
       end
 
-  and elabTopdecList fixEnv nil = (SymbolEnv.empty, nil)
-    | elabTopdecList fixEnv (dec::decs) =
+  and elabTopdecList fixEnv nil = (emptyFixEnv, nil)
+    | elabTopdecList fixEnv (dec :: decs) =
       let
-        val (newFixEnv1, dec) = elabTopdec fixEnv dec
-        val fixEnv = SymbolEnv.unionWith mustBeDisjoint (fixEnv, newFixEnv1)
-        val (newFixEnv2, decs) = elabTopdecList fixEnv decs
+        val (fixEnv1, decs1) = elabTopdec dec
+        val fixEnv = unionFixEnv (fixEnv, fixEnv1)
+        val (fixEnv2, decs2) = elabTopdecList fixEnv decs
       in
-        (SymbolEnv.unionWith mustBeDisjoint (newFixEnv1, newFixEnv2), dec @ decs)
-      end
-
-  fun elabInterfaceDec fixEnv ({interfaceId, interfaceName, requiredIds, provideTopdecs}
-                               :I.interfaceDec) =
-      let
-        val (newFixEnv, provideTopdecs) = elabTopdecList fixEnv provideTopdecs
-      in
-        (newFixEnv,
-         {interfaceId = interfaceId,
-          requiredIds = requiredIds,
-          provideTopdecs = provideTopdecs} : P.interfaceDec)
-      end
-
-  fun elabInterfaceDecs fixEnv nil = (InterfaceID.Map.empty, nil)
-    | elabInterfaceDecs fixEnv (dec::decs) =
-      let
-        val (newFixEnv, dec) = elabInterfaceDec fixEnv dec
-        val fixEnvMap1 = InterfaceID.Map.singleton (#interfaceId dec, newFixEnv)
-        val fixEnv = SymbolEnv.unionWith #2 (fixEnv, newFixEnv)
-        val (fixEnvMap2, decs) = elabInterfaceDecs fixEnv decs
-        val fixEnvMap = InterfaceID.Map.unionWith #2 (fixEnvMap1, fixEnvMap2)
-      in
-        (fixEnvMap, dec::decs)
-      end
-
-  fun toFixEnv env =
-      SymbolEnv.map (fn (x, _:I.loc) => x) env : fixEnv
-
-  fun elaborate ({interfaceDecs, provideInterfaceNameOpt, requiredIds,
-                  locallyRequiredIds, provideTopdecs}:I.interface) =
-      let
-        val (fixEnvMap, newDecls) =
-            elabInterfaceDecs SymbolEnv.empty interfaceDecs
-        val allFixEnv =
-            InterfaceID.Map.foldl
-              (SymbolEnv.unionWith mustBeDisjoint)
-              SymbolEnv.empty
-              fixEnvMap
-        val (provideFixEnv, provideTopdecs) =
-            elabTopdecList allFixEnv provideTopdecs
-        val interface =
-            {
-              interfaceDecs = newDecls,
-              requiredIds = requiredIds,
-              locallyRequiredIds = locallyRequiredIds,
-              provideTopdecs = provideTopdecs
-            }
-            : P.interface
-
-        val requireFixEnv =
-            foldl (fn ({id, loc}, z) =>
-                      case InterfaceID.Map.find (fixEnvMap, id) of
-                        SOME env => SymbolEnv.unionWith mustBeDisjoint (z, env)
-                      | NONE => raise Bug.Bug "elaborate: interface not found")
-                  SymbolEnv.empty
-                  (requiredIds @ locallyRequiredIds)
-      in
-        (toFixEnv requireFixEnv, interface)
+        (SymbolEnv.unionWith #2 (fixEnv1, fixEnv2), decs1 @ decs2)
       end
 
   fun elaborateTopdecList decs =
+      elabTopdecList emptyFixEnv decs
+
+  fun elabInterfaceDec ({interfaceId, interfaceName, requiredIds,
+                         provideTopdecs} : I.interface_dec) =
       let
-        val (fixEnv, decs) = elabTopdecList SymbolEnv.empty decs
+        val (fixEnv, provideTopdecs) = elaborateTopdecList provideTopdecs
+        val dec : P.interfaceDec =
+            {interfaceId = interfaceId,
+             interfaceName = interfaceName,
+             requiredIds = requiredIds,
+             provideTopdecs = provideTopdecs}
       in
-        (toFixEnv fixEnv, decs)
+        (InterfaceID.Map.singleton (interfaceId, fixEnv), dec)
+      end
+
+  fun elabInterfaceDecList nil = (InterfaceID.Map.empty, nil)
+    | elabInterfaceDecList (dec :: decs) =
+      let
+        val (env1, pdec) = elabInterfaceDec dec
+        val (env2, pdecs) = elabInterfaceDecList decs
+      in
+        (InterfaceID.Map.unionWith
+           (fn _ => raise Bug.Bug "duplicate interface id")
+           (env1, env2),
+         pdec :: pdecs)
+      end
+
+  fun elaborate ({interfaceDecs, provide}:I.interface) =
+      let
+        val {requiredIds, locallyRequiredIds, provideTopdecs, topdecsInclude} =
+            provide
+        val (interfaceEnv, pinterfaceDecs) =
+            elabInterfaceDecList interfaceDecs
+        val (provideFixEnv, provideTopdecs) =
+            elaborateTopdecList provideTopdecs
+
+        (* check duplicate infix among interfaces *)
+        val _ = InterfaceID.Map.foldl
+                  (fn (fixEnv, z) => unionFixEnv (z, fixEnv))
+                  provideFixEnv
+                  interfaceEnv
+
+        val interface : P.interface =
+            {interfaceDecs = pinterfaceDecs,
+             requiredIds = requiredIds,
+             locallyRequiredIds = locallyRequiredIds,
+             provideTopdecs = provideTopdecs}
+        val requireFixEnv =
+            foldl
+              (fn ({id, ...}, z) =>
+                  case InterfaceID.Map.find (interfaceEnv, id) of
+                    NONE => raise Bug.Bug "elaborate: id not found"
+                  | SOME fixEnv => SymbolEnv.unionWith #2 (z, fixEnv))
+              emptyFixEnv
+              (requiredIds @ locallyRequiredIds)
+      in
+        {interface = interface,
+         provideFixEnv = provideFixEnv,
+         requireFixEnv = requireFixEnv,
+         topdecsInclude = topdecsInclude}
       end
 
 end

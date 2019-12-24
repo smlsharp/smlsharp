@@ -1,0 +1,17 @@
+_require "../../../basis.smi"
+_require "./FormatComment.grm.smi"
+_require local "./FormatTemplate.smi"
+
+structure FormatCommentLex
+ =
+struct
+  structure UserDeclarations =
+  struct
+    type token = FormatCommentLrVals.Tokens.token
+    type pos = FormatCommentLrVals.Tokens.pos
+    type arg (= {})
+    val initArg : {error : string * pos * pos -> unit, offset : int} -> arg
+  end
+  val makeLexer
+      : (int -> string) -> UserDeclarations.arg -> unit -> UserDeclarations.token
+end

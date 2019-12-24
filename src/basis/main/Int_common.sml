@@ -17,8 +17,6 @@ struct
   val precision = 64
   val minInt = ~0x8000000000000000 : int
   val maxInt = 0x7fffffffffffffff : int
-  val Word32_toWordN = SMLSharp_Builtin.Word32.toWord64
-  val WordN_toIntNX = SMLSharp_Builtin.Word64.toInt64X
   val toLarge = ...
   val fromLarge = ...
 end
@@ -41,9 +39,9 @@ struct
   val toLarge = Int.toLarge
   val fromLarge = Int.fromLarge
 
-  val op + = Int.add_unsafe
-  val op - = Int.sub_unsafe
-  val op * = Int.mul_unsafe
+  val op + = Int.add_unsafe (* FIXME *)
+  val op - = Int.sub_unsafe (* FIXME *)
+  val op * = Int.mul_unsafe (* FIXME *)
   val op div = Int.div
   val op mod = Int.mod
   val quot = Int.quot
@@ -62,15 +60,11 @@ struct
   fun min (left, right) = if left < right then left else right
   fun max (left, right) = if left > right then left else right
   fun sign num = if num < 0 then ~1 else if num = 0 then 0 else 1
-  fun sameSign (left, right) = (sign left) = (sign right)
-
-  fun fromInt32_fast x =
-      Int.WordN_toIntNX
-        (Int.Word32_toWordN (SMLSharp_Builtin.Word32.fromInt32 x))
+  fun sameSign (left, right) = sign left = sign right
 
   fun fmt radix n =
       let
-        val r = fromInt32_fast (SMLSharp_ScanChar.radixToInt radix)
+        val r = Int.fromInt32 (SMLSharp_ScanChar.radixToInt radix)
         (* use nagative to avoid Overflow *)
         fun loop (n, z) =
             if n >= 0 then z
@@ -92,11 +86,11 @@ struct
           val op + = Int.add
           val op - = Int.sub
           val op * = Int.mul
-          val r = fromInt32_fast r
+          val r = Int.fromInt32 r
           fun posloop z nil = SOME (z, strm)
-            | posloop z (h::t) = posloop (z * r + fromInt32_fast h) t
+            | posloop z (h::t) = posloop (z * r + Int.fromInt32 h) t
           fun negloop z nil = SOME (z, strm)
-            | negloop z (h::t) = negloop (z * r - fromInt32_fast h) t
+            | negloop z (h::t) = negloop (z * r - Int.fromInt32 h) t
         in
           if neg then negloop 0 digits else posloop 0 digits
         end

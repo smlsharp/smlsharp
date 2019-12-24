@@ -1,0 +1,66 @@
+val it = fn : ['a#{X: 'b}, 'b. 'a ref -> 'b -> unit]
+
+val pointClass =
+  {getColor = fn, getX = fn, getY = fn, setColor = fn, setX = fn, setY = fn}
+  : {getColor: ['a#{Color: 'b}, 'b. 'a ref -> 'b],
+     getX: ['a#{X: 'b}, 'b. 'a ref -> 'b],
+     getY: ['a#{Y: 'b}, 'b. 'a ref -> 'b],
+     setColor: ['a#{Color: 'b}, 'b. 'a ref -> 'b -> unit],
+     setX: ['a#{X: 'b}, 'b. 'a ref -> 'b -> unit],
+     setY: ['a#{Y: 'b}, 'b. 'a ref -> 'b -> unit]}
+
+val myPoint =
+  fn
+  : ['a#{Color: 'b},
+     'b,
+     'c#{X: 'd},
+     'd,
+     'e#{Y: 'f},
+     'f,
+     'g#{Color: 'h},
+     'h,
+     'i#{X: 'j},
+     'j,
+     'k#{Y: 'l},
+     'l,
+     'm.
+     ({getColor: 'a ref -> 'b,
+       getX: 'c ref -> 'd,
+       getY: 'e ref -> 'f,
+       setColor: 'g ref -> 'h -> unit,
+       setX: 'i ref -> 'j -> unit,
+       setY: 'k ref -> 'l -> unit}
+      -> {X: real, Y: real} ref -> 'm)
+     -> 'm]
+
+val myColorPoint =
+  fn
+  : ['a#{Color: 'b},
+     'b,
+     'c#{X: 'd},
+     'd,
+     'e#{Y: 'f},
+     'f,
+     'g#{Color: 'h},
+     'h,
+     'i#{X: 'j},
+     'j,
+     'k#{Y: 'l},
+     'l,
+     'm.
+     ({getColor: 'a ref -> 'b,
+       getX: 'c ref -> 'd,
+       getY: 'e ref -> 'f,
+       setColor: 'g ref -> 'h -> unit,
+       setX: 'i ref -> 'j -> unit,
+       setY: 'k ref -> 'l -> unit}
+      -> {Color: string, X: real, Y: real} ref -> 'm)
+     -> 'm]
+
+val it = () : unit
+
+val it = 1.0 : real
+
+val it = 0.0 : real
+
+val it = "Red" : string

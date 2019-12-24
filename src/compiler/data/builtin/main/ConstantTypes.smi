@@ -1,0 +1,19 @@
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+(* _require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi" *)
+_require local "./ConstantError.ppg.smi"
+
+_require local "../../../../basis.smi"
+_require "../../../compilerIRs/absyn/main/AbsynConst.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
+
+structure ConstantTypes =
+struct
+  val constTy : AbsynConst.constant -> Types.ty
+  val fixConst : AbsynConst.constant * Types.ty * Loc.loc
+                 -> TypedLambda.tlexp
+end

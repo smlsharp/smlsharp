@@ -15,41 +15,42 @@ struct
   val eqSymbol = Symbol.eqSymbol
 
   type tvset = (A.tvar * Loc.loc) list
-  type btvEnv = (A.eq * A.tvarKind) SymbolEnv.map
+  type btvEnv = {isEq:bool, kind:A.tvarKind} SymbolEnv.map
 
+  val noloc = Loc.noloc
   val empty = nil : tvset
   val emptyEnv = SymbolEnv.empty : btvEnv
 
-  fun member (set:tvset, {symbol=s1, eq}:A.tvar) =
-      List.exists (fn ({symbol=s2, eq},_) => eqSymbol(s1,s2)) set
+  fun member (set:tvset, {symbol=s1, isEq}:A.tvar) =
+      List.exists (fn ({symbol=s2, isEq},_) => eqSymbol(s1,s2)) set
 
   fun singleton (tvar:A.tvar, loc) =
       [(tvar, loc)] : tvset
 
-  fun checkEqkind (tvar as {symbol, eq}:A.tvar, eq2, loc) =
-      if eq = eq2 then ()
+  fun checkEq (tvar as {symbol, isEq}:A.tvar, isEq2, loc) =
+      if isEq = isEq2 then ()
       else EU.enqueueError
-             (loc, E.DifferentEqkindOfSameTvar {tvar = tvar})
+             (loc, E.DifferentEqOfSameTvar {tvar = tvar})
 
   fun union (tvs1:tvset, tvs2:tvset) =
       foldr
         (fn (elem as (tv, loc), tvs:tvset) =>
             case List.find (fn ({symbol=s1,...},_) => eqSymbol(s1,#symbol tv)) tvs1 of
               NONE => elem::tvs
-            | SOME ({eq,...}, _) => (checkEqkind (tv, eq, loc); tvs))
+            | SOME ({isEq,...}, _) => (checkEq (tv, isEq, loc); tvs))
         tvs1
         tvs2
 
   fun toTvarList (tvset:tvset) =
-      map (fn (tv, _) => (tv, A.UNIV)) (rev tvset)
+      map (fn (tv, _) => (tv, A.UNIV (nil,noloc))) (rev tvset)
 
   fun toBtvEnv (kindedTvars:A.kindedTvar list, loc) =
-      foldl (fn ((tvar as {symbol, eq}, kind), btvEnv) =>
+      foldl (fn ((tvar as {symbol, isEq}, kind), btvEnv) =>
                 (if SymbolEnv.inDomain (btvEnv, symbol)
                  then EU.enqueueError
                         (loc, E.DuplicateUserTvar {tvar = tvar})
                  else ();
-                 SymbolEnv.insert (btvEnv, symbol, (eq, kind))))
+                 SymbolEnv.insert (btvEnv, symbol, {isEq=isEq, kind=kind})))
             SymbolEnv.empty
             kindedTvars
             : btvEnv
@@ -58,11 +59,11 @@ struct
       SymbolEnv.unionWith #2 (btvEnv, toBtvEnv (kindedTvars, loc))
 
   fun bindTvars btvEnv loc tvars =
-      bindKindedTvars btvEnv loc (map (fn tv => (tv, A.UNIV)) tvars)
+      bindKindedTvars btvEnv loc (map (fn tv => (tv, A.UNIV (nil,noloc))) tvars)
 
   fun extend (btvEnv:btvEnv, tvset:tvset) =
-      foldl (fn (({symbol, eq}, _), btvEnv) =>
-                SymbolEnv.insert (btvEnv, symbol, (eq, A.UNIV)))
+      foldl (fn (({symbol, isEq}, _), btvEnv) =>
+                SymbolEnv.insert (btvEnv, symbol, {isEq=isEq, kind=A.UNIV(nil,noloc)}))
             btvEnv
             tvset
 
@@ -78,13 +79,14 @@ struct
   fun tyvarsTvar btvEnv (tv as {symbol,...}, loc) =
       case SymbolEnv.find (btvEnv, symbol) of
         NONE => singleton (tv, loc)
-      | SOME (eq, kind) => (checkEqkind (tv, eq, loc); empty)
+      | SOME {isEq, kind} => (checkEq (tv, isEq, loc); empty)
 
   fun tyvarsTy btvEnv ty =
       case ty of
         A.TYWILD _ => empty
       | A.TYID tv => tyvarsTvar btvEnv tv
-      | A.TYRECORD (rows, loc) =>
+      | A.FREE_TYID tv => empty
+      | A.TYRECORD {ifFlex, fields = rows, loc} =>
         (* sort rows in order to make the "occurrence order" unique *)
         tyvarsList (fn (k,t) => tyvarsTy btvEnv t) (sortTyrows rows)
       | A.TYCONSTRUCT (tys, tycon, loc) =>
@@ -106,11 +108,10 @@ struct
 
   and tyvarsTvarKind btvEnv kind =
       case kind of
-        A.UNIV => empty
-      | A.REC (rows, loc) =>
+        A.UNIV _ => empty
+      | A.REC ({properties,recordKind}, loc) =>
         (* sort rows in order to make the "occurrence order" unique *)
-        tyvarsList (fn (k,t) => tyvarsTy btvEnv t) (sortTyrows rows)
-      | A.KINDID _ => empty
+        tyvarsList (fn (k,t) => tyvarsTy btvEnv t) (sortTyrows recordKind)
 
   and tyvarsFFIty btvEnv ty =
       case ty of
@@ -157,6 +158,9 @@ struct
   fun tyvarsMatch btvEnv (pats, exp) =
       union (tyvarsList (tyvarsPat btvEnv) pats, tyvarsExp btvEnv exp)
 
+  and tyvarsMatch1 btvEnv (pat, exp) =
+      union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
+
   and tyvarsBind btvEnv (pat, exp) =
       union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
 
@@ -166,6 +170,7 @@ struct
   and tyvarsExp btvEnv exp =
       case exp of
         P.PLCONSTANT _ => empty
+      | P.PLSIZEOF (ty, loc) => tyvarsTy btvEnv ty
       | P.PLVAR _ => empty
       | P.PLTYPED (exp, ty, loc) =>
         union (tyvarsExp btvEnv exp, tyvarsTy btvEnv ty)
@@ -194,39 +199,26 @@ struct
       | P.PLRECORD_SELECTOR _ => empty
       | P.PLSELECT (label, exp, loc) => tyvarsExp btvEnv exp
       | P.PLSEQ (exps, loc) => tyvarsList (tyvarsExp btvEnv) exps
-      | P.PLFOREACH {data, pred, iterator, loc} =>
-        union (tyvarsExp btvEnv data, 
-        union (tyvarsExp btvEnv iterator, 
-               tyvarsExp btvEnv pred))
-      | P.PLFOREACHDATA {data, whereParam, pred, iterator, loc} =>
-        union (tyvarsExp btvEnv data, 
-        union (tyvarsExp btvEnv whereParam, 
-        union (tyvarsExp btvEnv iterator, 
-               tyvarsExp btvEnv pred)))
       | P.PLFFIIMPORT (exp, ffiTy, loc) =>
         union (tyvarsFFIFun btvEnv exp, tyvarsFFIty btvEnv ffiTy)
-      | P.PLFFIAPPLY (attr, exp, args, ffiTy, loc) =>
-        union (union (tyvarsFFIFun btvEnv exp,
-                      tyvarsList (tyvarsFFIArg btvEnv) args),
-               tyvarsList (tyvarsFFIty btvEnv) ffiTy)
       | P.PLSQLSCHEMA {tyFnExp, ty, loc} =>
         union (tyvarsExp btvEnv tyFnExp,
                tyvarsTy btvEnv ty)
-      | P.PLJOIN (exp1, exp2, loc) =>
+      | P.PLJOIN (bool, exp1, exp2, loc) =>
         union (tyvarsExp btvEnv exp1, tyvarsExp btvEnv exp2)
-      | P.PLJSON (exp, ty, loc) =>
+      | P.PLDYNAMIC (exp, ty, loc) =>
         union (tyvarsExp btvEnv exp, tyvarsTy btvEnv ty)
-      | P.PLTYPEOF (ty, loc) =>
-        tyvarsTy btvEnv ty
+      | P.PLDYNAMICIS (exp, ty, loc) =>
+        union (tyvarsExp btvEnv exp, tyvarsTy btvEnv ty)
+      | P.PLDYNAMICVIEW (exp, ty, loc) =>
+        union (tyvarsExp btvEnv exp, tyvarsTy btvEnv ty)
+      | P.PLDYNAMICNULL (ty, loc) => tyvarsTy btvEnv ty
+      | P.PLDYNAMICTOP (ty, loc) => tyvarsTy btvEnv ty
+      | P.PLDYNAMICCASE (exp, rules, loc) =>
+        union (tyvarsExp btvEnv exp,
+               tyvarsList (tyvarsMatch1 btvEnv) rules)
       | P.PLREIFYTY (ty, loc) =>
         tyvarsTy btvEnv ty
-
-  and tyvarsFFIArg btvEnv ffiarg =
-      case ffiarg of
-        P.PLFFIARG (exp, ffiTy, loc) =>
-        union (tyvarsExp btvEnv exp, tyvarsFFIty btvEnv ffiTy)
-      | P.PLFFIARGSIZEOF (ty, exp, loc) =>
-        union (tyvarsTy btvEnv ty, tyvarsOpt (tyvarsExp btvEnv) exp)
 
   and tyvarsFFIFun btvEnv ffiFun =
       case ffiFun of
@@ -302,9 +294,13 @@ struct
   and decideMatch btvEnv (pat:P.plpat list, exp) =
       (pat, decideExp btvEnv exp)
 
+  and decideMatch1 btvEnv (pat:P.plpat, exp) =
+      (pat, decideExp btvEnv exp)
+
   and decideExp btvEnv exp =
       case exp of
         P.PLCONSTANT _ => exp
+      | P.PLSIZEOF _ => exp
       | P.PLVAR _ => exp
       | P.PLTYPED (exp, ty, loc) =>
         P.PLTYPED (decideExp btvEnv exp, ty, loc)
@@ -332,44 +328,29 @@ struct
         P.PLCASEM (map (decideExp btvEnv) exps,
                    map (decideMatch btvEnv) matches,
                    caseKind, loc)
+      | P.PLDYNAMIC (exp, ty, loc) => P.PLDYNAMIC (decideExp btvEnv exp, ty, loc)
+      | P.PLDYNAMICIS (exp, ty, loc) => P.PLDYNAMICIS (decideExp btvEnv exp, ty, loc)
+      | P.PLDYNAMICNULL (ty, loc) => exp
+      | P.PLDYNAMICTOP (ty, loc) => exp
+      | P.PLDYNAMICVIEW (exp, ty, loc) => P.PLDYNAMICVIEW (decideExp btvEnv exp, ty, loc)
+      | P.PLDYNAMICCASE (exp, matches, loc) =>
+        P.PLDYNAMICCASE (decideExp btvEnv exp,
+                          map (decideMatch1 btvEnv) matches,
+                          loc)
       | P.PLRECORD_SELECTOR _ => exp
       | P.PLSELECT (label, exp, loc) =>
         P.PLSELECT (label, decideExp btvEnv exp, loc)
       | P.PLSEQ (exps, loc) =>
         P.PLSEQ (map (decideExp btvEnv) exps, loc)
-      | P.PLFOREACH {data, pred, iterator, loc} =>
-        P.PLFOREACH {data = decideExp btvEnv data, 
-                     pred = decideExp btvEnv pred, 
-                     iterator = decideExp btvEnv iterator, 
-                     loc = loc}
-      | P.PLFOREACHDATA {data, whereParam, pred, iterator, loc} =>
-        P.PLFOREACHDATA {data = decideExp btvEnv data, 
-                         whereParam = decideExp btvEnv whereParam, 
-                         pred = decideExp btvEnv pred, 
-                         iterator = decideExp btvEnv iterator, 
-                         loc = loc}
       | P.PLFFIIMPORT (exp, ffiTy, loc) =>
         P.PLFFIIMPORT (decideFFIFun btvEnv exp, ffiTy, loc)
-      | P.PLFFIAPPLY (attr, exp, args, ffiTy, loc) =>
-        P.PLFFIAPPLY (attr, decideFFIFun btvEnv exp,
-                      map (decideFFIArg btvEnv) args,
-                      ffiTy, loc)
       | P.PLSQLSCHEMA {tyFnExp, ty, loc} =>
         P.PLSQLSCHEMA {tyFnExp = decideExp btvEnv tyFnExp,
                        ty = ty,
                        loc = loc}
-      | P.PLJOIN (exp1, exp2, loc) =>
-        P.PLJOIN (decideExp btvEnv exp1, decideExp btvEnv exp2, loc)
-      | P.PLJSON (exp, ty, loc) => P.PLJSON (decideExp btvEnv exp, ty, loc)
-      | P.PLTYPEOF (ty, loc) => P.PLTYPEOF (ty, loc)
+      | P.PLJOIN (bool, exp1, exp2, loc) =>
+        P.PLJOIN (bool, decideExp btvEnv exp1, decideExp btvEnv exp2, loc)
       | P.PLREIFYTY (ty, loc) => P.PLREIFYTY (ty, loc)
-
-  and decideFFIArg btvEnv ffiarg =
-      case ffiarg of
-        P.PLFFIARG (exp, ffiTy, loc) =>
-        P.PLFFIARG (decideExp btvEnv exp, ffiTy, loc)
-      | P.PLFFIARGSIZEOF (ty, exp, loc) =>
-        P.PLFFIARGSIZEOF (ty, Option.map (decideExp btvEnv) exp, loc)
 
   and decideFFIFun btvEnv ffiFun =
       case ffiFun of
@@ -568,8 +549,7 @@ struct
           PI.PIVAL {scopedTvars = scopedTvars, symbol = symbol, body=body, loc=loc}
         end
     | PI.PITYPE {tyvars, symbol, ty, loc} => pidec
-    | PI.PIOPAQUE_TYPE {tyvars, symbol, runtimeTy, loc} => pidec
-    | PI.PIOPAQUE_EQTYPE {tyvars, symbol,runtimeTy,loc} => pidec
+    | PI.PIOPAQUE_TYPE {eq, tyvars, symbol, runtimeTy, loc} => pidec
     | PI.PITYPEBUILTIN {symbol, builtinSymbol, loc} => pidec
     | PI.PIDATATYPE {datbind, loc} => pidec
     | PI.PITYPEREP {symbol, longsymbol, loc} => pidec
@@ -599,9 +579,11 @@ struct
   fun decidePitopdecs provideTopdecs = 
       map decidePitopdec provideTopdecs
 
-  fun decideInterfaceDec {interfaceId, requiredIds, provideTopdecs} =
+  fun decideInterfaceDec {interfaceId, interfaceName, requiredIds,
+                          provideTopdecs} =
       {
        interfaceId = interfaceId,
+       interfaceName = interfaceName,
        requiredIds = requiredIds,
        provideTopdecs = decidePitopdecs provideTopdecs
       }

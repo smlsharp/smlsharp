@@ -16,8 +16,8 @@ local
   type varInfo = T.varInfo
 
   fun bug s = Bug.Bug ("TypesUtils: " ^ s)
-  fun printType ty = print (Bug.prettyPrint (T.format_ty nil ty))
-  fun printKind kind = print (Bug.prettyPrint (T.format_tvarKind nil kind))
+  fun printType ty = print (Bug.prettyPrint (T.format_ty ty))
+  fun printKind kind = print (Bug.prettyPrint (T.format_tvarKind kind))
   fun printSubst subst =
       BoundTypeVarID.Map.mapi 
         (fn (i,ty) => (print (BoundTypeVarID.toString i);
@@ -106,38 +106,35 @@ local
         end
   and substBTvarSingletonTy tyidEnv subst singletonTy =
       case singletonTy of
-        T.INSTCODEty {oprimId, longsymbol, keyTyList, match, instMap} => 
+        T.INSTCODEty {oprimId, longsymbol, match} =>
         T.INSTCODEty {oprimId = oprimId,
                       longsymbol = longsymbol,
-                      keyTyList = map (substBTvar tyidEnv subst) keyTyList,
-                      match = substBTvarOverloadMatch tyidEnv subst match,
-                      instMap = instMap}
+                      match = substBTvarOverloadMatch tyidEnv subst match}
       | T.INDEXty (label, ty) =>
         T.INDEXty (label, substBTvar tyidEnv subst ty)
       | T.TAGty ty =>
         T.TAGty (substBTvar tyidEnv subst ty)
       | T.SIZEty ty =>
         T.SIZEty (substBTvar tyidEnv subst ty)
-      | T.TYPEty ty =>
-        T.TYPEty (substBTvar tyidEnv subst ty)
       | T.REIFYty ty =>
         T.REIFYty (substBTvar tyidEnv subst ty)
-  and substBTvarTyCon tyidEnv subst ({id, longsymbol,iseq,arity,runtimeTy,conSet, conIDSet, extraArgs,dtyKind}) = 
-      {id=id, longsymbol=longsymbol, iseq=iseq, arity=arity, runtimeTy=runtimeTy, conSet=conSet,
+  and substBTvarTyCon tyidEnv subst ({id, longsymbol,admitsEq,arity,conSet, conIDSet, extraArgs,dtyKind}) =
+      {id=id, longsymbol=longsymbol, admitsEq=admitsEq, arity=arity, conSet=conSet,
        conIDSet=conIDSet,
        extraArgs = map (substBTvar tyidEnv subst) extraArgs,
        dtyKind=(substBTvarDtyKind tyidEnv subst dtyKind)} 
   and substBTvarDtyKind tyidEnv subst dtyKind =
       case dtyKind of
-        T.DTY => T.DTY
+        T.DTY _ => dtyKind
       | T.OPAQUE {opaqueRep, revealKey} =>
         T.OPAQUE {opaqueRep = substBTvarOpaqueRep tyidEnv subst opaqueRep, revealKey=revealKey}
-      | T.BUILTIN _ => dtyKind
+      | T.INTERFACE opaqueRep =>
+        T.INTERFACE (substBTvarOpaqueRep tyidEnv subst opaqueRep)
   and substBTvarOpaqueRep tyidEnv subst opaqueRep =
       case opaqueRep of
         T.TYCON tyCon  => T.TYCON (substBTvarTyCon tyidEnv subst tyCon)
-      | T.TFUNDEF {iseq, arity, polyTy} => 
-        T.TFUNDEF {iseq=iseq, arity=arity, polyTy=substBTvar tyidEnv subst polyTy}
+      | T.TFUNDEF {admitsEq, arity, polyTy} =>
+        T.TFUNDEF {admitsEq=admitsEq, arity=arity, polyTy=substBTvar tyidEnv subst polyTy}
 
 (* This is wrong; we should not update the original ref.
   and substBTvarTvstate subst tvstate =
@@ -149,30 +146,25 @@ local
    Updating type variables for TVAR seem to be OK. 
    Updating T.SUBSTITUTED causes probem. I do not know why.
 *)      
-  and substBTvarKind tyidEnv subst (T.KIND (kind as {tvarKind, eqKind, dynKind, reifyKind, subkind})) =
+  and substBTvarKind tyidEnv subst (T.KIND (kind as {tvarKind, properties, dynamicKind})) =
       T.KIND {tvarKind = substBTvarTvarKind tyidEnv subst tvarKind,
-              eqKind = eqKind,
-              dynKind = dynKind,
-              reifyKind = reifyKind,
-              subkind = subkind}
+              properties = properties,
+              dynamicKind = dynamicKind}
 
   and substBTvarTvarKind tyidEnv subst tvarKind =
       case tvarKind of
         T.REC fields => T.REC (RecordLabel.Map.map (substBTvar tyidEnv subst) fields)
       | T.UNIV => T.UNIV
-      | T.BOXED => T.BOXED
       | T.OCONSTkind l => 
         T.OCONSTkind (map (substBTvar tyidEnv subst) l)
       | T.OPRIMkind {instances, operators} =>
         T.OPRIMkind 
           {instances = map (substBTvar tyidEnv subst) instances,
            operators =
-           map (fn {oprimId, longsymbol, keyTyList, match, instMap} =>
+           map (fn {oprimId, longsymbol, match} =>
                    {oprimId = oprimId,
                     longsymbol = longsymbol,
-                    keyTyList = map (substBTvar tyidEnv subst) keyTyList,
-                    match = substBTvarOverloadMatch tyidEnv subst match,
-                    instMap = instMap})
+                    match = substBTvarOverloadMatch tyidEnv subst match})
                operators
           }
 
@@ -219,7 +211,7 @@ end
       let
         val subst =
             BoundTypeVarID.Map.map
-              (fn x => 
+              (fn k => 
                   let
                     val newTy = 
                         T.newty {
@@ -234,13 +226,13 @@ end
             BoundTypeVarID.Map.mapi
               (fn (i, ty) => 
                   (case BoundTypeVarID.Map.find(boundEnv, i) of
-                     SOME (kind as T.KIND {eqKind, ...}) =>
+                     SOME (kind as T.KIND {properties, ...}) =>
                      let
                        val uvtarOpt =
                            case utvarOpt of
                              NONE => NONE
                            | SOME{symbol, id,...} => 
-                             SOME{symbol=symbol,id=id,eq=eqKind}
+                             SOME{symbol=symbol,id=id,eq=T.isProperties T.EQ properties}
                      in
                        (ty, utvarOpt, substBTvarKind subst kind)
                      end
@@ -269,7 +261,7 @@ end
       let
         val id = TvarID.generate()
         val symbol = Symbol.mkSymbol "RIGID" Loc.noloc
-        val tvar = {symbol=symbol, eq=T.NONEQ,id=id,lifted=false}
+        val tvar = {symbol=symbol, isEq=false, id=id, lifted=false}
         val utvarOpt = SOME tvar
       in
         makeFreshSubst utvarOpt boundEnv
@@ -283,8 +275,8 @@ end
         exception PolyTy
         fun visit ty =
             case ty of
-              T.SINGLETONty singletonTy => raise PolyTy
-            | T.BACKENDty backendTy => raise PolyTy
+              T.SINGLETONty _ => raise Bug.Bug "monoTy: SINGLETONty"
+            | T.BACKENDty backendTy => raise Bug.Bug "monoTy: BACKENDty"
             | T.ERRORty => ()
             | T.DUMMYty _ => ()
             | T.TYVARty _ => ()
@@ -360,7 +352,7 @@ end
      EFTV should not traverse operators in OPRIMkind.
    *)
  local
-   fun traverseTy (ty, env as (i, set, indexMap)) =
+   fun traverseTy (ty, env as (tvset as (i, set, indexMap), btvset)) =
        case ty of
          T.SINGLETONty sty => raise Bug.Bug "SINGLETONty to EFTV"
        | T.BACKENDty bty => raise Bug.Bug "BACKENDty to EFTV"
@@ -373,30 +365,38 @@ end
          else 
             traverseTvKind
               (tvKind,
-               (i+1,
-                OTSet.add(set, tyvarRef),
-                IEnv.insert(indexMap, i, tyvarRef))
+               ((i+1,
+                 OTSet.add(set, tyvarRef),
+                 IEnv.insert(indexMap, i, tyvarRef)),
+                btvset)
               )
-       | T.BOUNDVARty int => env
+       | T.BOUNDVARty int =>
+         (tvset, BoundTypeVarID.Set.add (btvset, int))
        | T.FUNMty (tyList, ty) =>
          traverseTy (ty, foldl traverseTy env tyList)
        | T.RECORDty tyLabelEnvMap => 
          RecordLabel.Map.foldl traverseTy env tyLabelEnvMap
        | T.CONSTRUCTty {tyCon, args = tyList} => foldl traverseTy env tyList
        | T.POLYty {boundtvars, constraints=conPoly, body=ty} =>
-         traverseTy
-           (ty,
-            BoundTypeVarID.Map.foldl
-              traverseKind
-              env
-              boundtvars
-           )
+         let
+           val (tvset, btvset) =
+               traverseTy
+                 (ty,
+                  BoundTypeVarID.Map.foldl
+                    traverseKind
+                    env
+                    boundtvars)
+         in
+           (tvset,
+            BoundTypeVarID.Set.filter
+              (fn x => not (BoundTypeVarID.Map.inDomain (boundtvars, x)))
+              btvset)
+         end
    and traverseTvKind ({lambdaDepth, id, kind, utvarOpt}, env) = 
        traverseKind (kind, env) 
-   and traverseKind (T.KIND {tvarKind, subkind, reifyKind, dynKind, eqKind}, env) =
+   and traverseKind (T.KIND {tvarKind, properties, dynamicKind}, env) =
        case tvarKind of
          T.UNIV=> env
-       | T.BOXED => env
        | T.REC fields => 
          RecordLabel.Map.foldl traverseTy env fields
        | T.OCONSTkind _ =>
@@ -407,9 +407,9 @@ end
                 foldl traverseOprimSelector
                 (foldl traverseTy env instances)
                 operators
-   and traverseOprimSelector ({oprimId, path, keyTyList, match, instMap}
+   and traverseOprimSelector ({oprimId, path, match}
                               : T.oprimSelector, env) =
-       traverseOverloadMatch (match, foldl traverseTy env keyTyList)
+       traverseOverloadMatch (match, env)
    and traverseOverloadMatch (match, env) =
        case match of
          T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
@@ -422,18 +422,20 @@ end
    (* traverseはstableになるまで実行する必要がある．*)
      fun traverseConstraints (env as (_, tyset, _)) constraints = 
          let
+           fun traverseTy' (ty, env) =
+               #1 (traverseTy (ty, (env, BoundTypeVarID.Set.empty)))
            fun traverse env nil  = env
              | traverse (env as (_, tyset, _)) (T.JOIN {res, args = (arg1, arg2), loc} :: tail) = 
                let
-                 val (_, newTyset1, _) = traverseTy (arg1, (0, OTSet.empty, IEnv.empty))
-                 val (_, newTyset2, _) = traverseTy (arg2, (0, OTSet.empty, IEnv.empty))
-                 val (_, newTyset3, _) = traverseTy (res, (0, OTSet.empty, IEnv.empty))
+                 val (_, newTyset1, _) = traverseTy' (arg1, (0, OTSet.empty, IEnv.empty))
+                 val (_, newTyset2, _) = traverseTy' (arg2, (0, OTSet.empty, IEnv.empty))
+                 val (_, newTyset3, _) = traverseTy' (res, (0, OTSet.empty, IEnv.empty))
                  val env = 
                      if not (OTSet.isEmpty (OTSet.intersection (tyset, newTyset1)))
                         orelse  not (OTSet.isEmpty (OTSet.intersection (tyset, newTyset2)))
                         orelse  not (OTSet.isEmpty (OTSet.intersection (tyset, newTyset3)))
                      then 
-                        traverseTy(arg1, traverseTy(arg2, traverseTy(res, env)))
+                        traverseTy' (arg1, traverseTy' (arg2, traverseTy' (res, env)))
                      else env
                in
                  traverse env tail
@@ -443,12 +445,12 @@ end
            if OTSet.isEmpty (OTSet.difference(newTyset, tyset)) then env
            else traverseConstraints env constraints
          end
+     val empty = ((0, OTSet.empty, IEnv.empty), BoundTypeVarID.Set.empty)
  in
    fun EFTV (ty, constraints) =
-       traverseConstraints
-         (traverseTy (ty, (0, OTSet.empty, IEnv.empty))) 
-         constraints
-   fun EFTVTy ty = traverseTy (ty, (0, OTSet.empty, IEnv.empty))
+       traverseConstraints (#1 (traverseTy (ty, empty))) constraints
+   fun EFTVTy ty = #1 (traverseTy (ty, empty))
+   fun EFBTV ty = #2 (traverseTy (ty, empty))
  end      
 
   fun adjustDepthInTy changed contextDepth ty = 
@@ -473,7 +475,6 @@ end
   fun adjustDepthInTvarKind changed contextDepth tvarKind = 
     case tvarKind of
       T.UNIV => ()
-    | T.BOXED => ()
     | T.REC fields => 
         RecordLabel.Map.app (adjustDepthInTy changed contextDepth) fields
     | T.OCONSTkind tyList => 
@@ -600,35 +601,20 @@ end
                 (ref (T.TVAR {lambdaDepth,
                               id,
                               kind = T.KIND {tvarKind = T.UNIV,
-                                             eqKind,
-                                             dynKind,
-                                             reifyKind,
-                                             subkind},
+                                             properties,
+                                             dynamicKind},
                               utvarOpt = NONE})) => 
           let 
             (* 2012-7-27 ohori. eqKind must be NONEQ *)
-            val _ = case eqKind of T.EQ => raise CoerceFun | _ => ()
-            val _ = case subkind of T.ANY => () | _ => raise CoerceFun
-(* 2012-7-27 ohori. The following does not make sense:
-            val tyList = 
-                map (fn x => 
-                        let
-                          val newTy = 
-                              T.newty {tvarKind = T.UNIV,
-                                       eqKind=eqKind,
-                                       utvarOpt = NONE}
-                          in 
-                              newTy
-                          end)
-                      tyList
-*)
-              val tyList = map (fn x => T.newty T.univKind) tyList
-              val ty2 = T.newty T.univKind
-              val resTy = T.FUNMty(tyList, ty2)
-              val _ = adjustDepthInTy (ref false) lambdaDepth resTy
-              val _ = performSubst (oldTy, resTy)
+            val _ = if T.isProperties T.EQ properties then raise CoerceFun else ()
+            val _ = if T.isProperties T.UNBOXED properties then raise CoerceFun else ()
+            val tyList = map (fn x => T.newty T.univKind) tyList
+            val ty2 = T.newty T.univKind
+            val resTy = T.FUNMty(tyList, ty2)
+            val _ = adjustDepthInTy (ref false) lambdaDepth resTy
+            val _ = performSubst (oldTy, resTy)
           in
-              (tyList, ty2, nil, nil)
+            (tyList, ty2, nil, nil)
           end
         | T.TYVARty (ref (T.TVAR {utvarOpt = SOME _,...})) => 
            raise CoerceFun
@@ -717,27 +703,29 @@ end
          resultTy = substBTvar subst resultTy}
       end
 
-  fun tpappTy (ty, nil) = ty
-    | tpappTy (T.TYVARty (ref (T.SUBSTITUTED ty)), tyl) =
+  fun tpappTy (T.TYVARty (ref (T.SUBSTITUTED ty)), tyl) =
       tpappTy (ty, tyl)
     | tpappTy (T.POLYty{boundtvars, body, ...}, tyl) = 
       let
         val subst = 
-            ListPair.foldr
+            ListPair.foldrEq
                 (fn ((i, _), ty, S) => BoundTypeVarID.Map.insert(S, i, ty))
                 BoundTypeVarID.Map.empty
                 (BoundTypeVarID.Map.listItemsi boundtvars, tyl)
+            handle ListPair.UnequalLengths =>
+                   raise Bug.Bug "tpappTy: arity mismatch"
       in 
         substBTvar subst body
       end
+    | tpappTy (ty, nil) = ty
     | tpappTy (ty1, tyl) =
       raise
         Bug.Bug
             ("tpappTy:"
-             ^ Bug.prettyPrint (Types.format_ty nil ty1)
+             ^ Bug.prettyPrint (Types.format_ty ty1)
              ^ ", "
              ^ "{" ^
-             concat(map (fn x => Bug.prettyPrint (Types.format_ty nil x))
+             concat(map (fn x => Bug.prettyPrint (Types.format_ty x))
                         tyl)
              ^ "}")
 
@@ -766,5 +754,6 @@ end
 
   fun tupleTy tys =
       T.RECORDty (RecordLabel.tupleMap tys)
+
 end
 end

@@ -1,20 +1,19 @@
-
-_require "../../basis.smi"
+_require local "../../basis.smi"
 _require local "../../basis/main/SMLSharp_Runtime.smi"
 _require local "./SQLErrors.smi"
 _require "./SQLBackendTy.smi"
 _require local "./MySQL.smi"
 _require local "./KeyValuePair.smi"
 _require local "./SQLBACKEND.sig"
+_require "./Numeric.smi"
 _require "./builtintypes/timestamp/TimeStamp.smi"
-_require "./builtintypes/decimal/Decimal.smi"
-_require "./builtintypes/float/Float.smi"
 
 structure SMLSharp_SQL_MySQLBackend =
 struct
   type conn (= ptr)
-  type res (= boxed)
-  type value (= boxed)
+  type res (= {})
+  type value (= string)
+  type server_desc = string
 
   val execQuery : conn * string -> res
   val closeConn : conn -> unit
@@ -32,6 +31,5 @@ struct
   val charValue : value -> char option
   val boolValue : value -> bool option
   val timestampValue : value -> SMLSharp_SQL_TimeStamp.timestamp option
-  val decimalValue : value -> SMLSharp_SQL_Decimal.decimal option
-  val floatValue : value -> SMLSharp_SQL_Float.float option
+  val numericValue : value -> SMLSharp_SQL_Numeric.num option
 end

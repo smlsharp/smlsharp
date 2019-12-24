@@ -530,8 +530,8 @@ val tests = TestList [
     ("option some p",
      fn () =>
         testPrinter
-          "SOME (123,456)"
-          ["val it = SOME (123,456) : (int * int) option\n"]),
+          "SOME (123, 456)"
+          ["val it = SOME (123, 456) : (int * int) option\n"]),
   Test
     ("option some none",
      fn () =>
@@ -555,7 +555,7 @@ val tests = TestList [
      fn () =>
         testPrinter
           "SOME (SOME (123, 456))"
-          ["val it = SOME (SOME (123,456)) : (int * int) option option\n"]),
+          ["val it = SOME (SOME (123, 456)) : (int * int) option option\n"]),
   Test
     ("list nil",
      fn () =>
@@ -766,55 +766,55 @@ val tests = TestList [
      fn () =>
         testPrinter
           "(1, 2, 3)"
-          ["val it = (1,2,3) : int * int * int\n"]),
+          ["val it = (1, 2, 3) : int * int * int\n"]),
   Test
     ("tuple 484",
      fn () =>
         testPrinter
           "(1, 2.3, 4)"
-          ["val it = (1,2.3,4) : int * real * int\n"]),
+          ["val it = (1, 2.3, 4) : int * real * int\n"]),
   Test
     ("tuple 448",
      fn () =>
         testPrinter
           "(1, 2, 3.4)"
-          ["val it = (1,2,3.4) : int * int * real\n"]),
+          ["val it = (1, 2, 3.4) : int * int * real\n"]),
   Test
     ("tuple 4p4",
      fn () =>
         testPrinter
           "(1, (2, 3), 4)"
-          ["val it = (1,(2,3),4) : int * (int * int) * int\n"]),
+          ["val it = (1, (2, 3), 4) : int * (int * int) * int\n"]),
   Test
     ("tuple (44)4p",
      fn () =>
         testPrinter
           "((1, 2), 3, \"4\")"
-          ["val it = ((1,2),3,\"4\") : (int * int) * int * string\n"]),
+          ["val it = ((1, 2), 3, \"4\") : (int * int) * int * string\n"]),
   Test
     ("tuple 144",
      fn () =>
         testPrinter
           "(#\"1\", 2, 3)"
-          ["val it = (#\"1\",2,3) : char * int * int\n"]),
+          ["val it = (#\"1\", 2, 3) : char * int * int\n"]),
   Test
     ("tuple 414",
      fn () =>
         testPrinter
           "(1, #\"2\", 3)"
-          ["val it = (1,#\"2\",3) : int * char * int\n"]),
+          ["val it = (1, #\"2\", 3) : int * char * int\n"]),
   Test
     ("tuple 211(44)",
      fn () =>
         testPrinter
           "(1 : Int16.int, #\"2\", #\"3\", (4, 5))"
-          ["val it = (1,#\"2\",#\"3\",(4,5)) : int16 * char * char * (int * int)\n"]),
+          ["val it = (1, #\"2\", #\"3\", (4, 5)) : int16 * char * char * (int * int)\n"]),
   Test
     ("record tuple",
      fn () =>
         testPrinter
           "{1 = 123, 2 = 456}"
-          ["val it = (123,456) : int * int\n"]),
+          ["val it = (123, 456) : int * int\n"]),
   Test
     ("record 444",
      fn () =>
@@ -846,8 +846,8 @@ val tests = TestList [
         testPrinter
           "{A = 1, B = {a = 1, b = 2}, C = 3, D = \"4\"}"
           ["val it =\n\
-           \  {A = 1, B = {a = 1, b = 2}, C = 3, D = \"4\"}\
-           \ : {A: int, B: {a: int, b: int}, C: int, D: string}\n"]),
+           \  {A = 1, B = {a = 1, b = 2}, C = 3, D = \"4\"}\n\
+           \  : {A: int, B: {a: int, b: int}, C: int, D: string}\n"]),
   Test
     ("record 144",
      fn () =>
@@ -866,16 +866,16 @@ val tests = TestList [
         testPrinter
           "{A = 1 : Int16.int, B = #\"2\", C = #\"3\", D = (4, 5)}"
           ["val it =\n\
-           \  {A = 1, B = #\"2\", C = #\"3\", D = (4,5)}\
-           \ : {A: int16, B: char, C: char, D: int * int}\n"]),
+           \  {A = 1, B = #\"2\", C = #\"3\", D = (4, 5)}\n\
+           \  : {A: int16, B: char, C: char, D: int * int}\n"]),
   Test
     ("record stringLabel",
      fn () =>
         testPrinter
           "{\"ABC\" = 1, \"foo bar\" = 2, \"hoge:fuga,piyo\" = 3}"
           ["val it =\n\
-           \  {ABC = 1, \"foo bar\" = 2, \"hoge:fuga,piyo\" = 3}\
-           \ : {ABC: int, \"foo bar\": int, \"hoge:fuga,piyo\": int}\n"]),
+           \  {ABC = 1, \"foo bar\" = 2, \"hoge:fuga,piyo\" = 3}\n\
+           \  : {ABC: int, \"foo bar\": int, \"hoge:fuga,piyo\": int}\n"]),
   Test
     ("record stringLabel escape",
      fn () =>
@@ -888,8 +888,8 @@ val tests = TestList [
         testPrinter
           "{あいうえお = \"かきくけこ\", さしすせそ = \"たちつてと\"}"
           ["val it =\n\
-           \  {あいうえお = \"かきくけこ\", さしすせそ = \"たちつてと\"}\
-           \ : {あいうえお: string, さしすせそ: string}\n"]),
+           \  {あいうえお = \"かきくけこ\", さしすせそ = \"たちつてと\"}\n\
+           \  : {あいうえお: string, さしすせそ: string}\n"]),
   Test
     ("record nested",
      fn () =>
@@ -897,14 +897,16 @@ val tests = TestList [
           "let fun f x = {A = x, B = x} in f (f (f (f 1))) end"
           ["val it =\n\
            \  {\n\
-           \    A = {\n\
-           \          A = {A = {A = 1, B = 1}, B = {A = 1, B = 1}},\n\
-           \          B = {A = {A = 1, B = 1}, B = {A = 1, B = 1}}\n\
-           \        },\n\
-           \    B = {\n\
-           \          A = {A = {A = 1, B = 1}, B = {A = 1, B = 1}},\n\
-           \          B = {A = {A = 1, B = 1}, B = {A = 1, B = 1}}\n\
-           \        }\n\
+           \    A =\n\
+           \      {\n\
+           \        A = {A = {A = 1, B = 1}, B = {A = 1, B = 1}},\n\
+           \        B = {A = {A = 1, B = 1}, B = {A = 1, B = 1}}\n\
+           \      },\n\
+           \    B =\n\
+           \      {\n\
+           \        A = {A = {A = 1, B = 1}, B = {A = 1, B = 1}},\n\
+           \        B = {A = {A = 1, B = 1}, B = {A = 1, B = 1}}\n\
+           \      }\n\
            \  }\n\
            \  : {A:\n\
            \       {A: {A: {A: int, B: int}, B: {A: int, B: int}},\n\
@@ -919,7 +921,7 @@ val tests = TestList [
           "datatype 'a t1 = F of int * int | B of int t1 | Z of 'a | H | T;\n\
           \F (1, 2)"
          ["datatype 'a t1 = F of int * int | B of int t1 | Z of 'a | H | T\n",
-           "val it = F (1,2) : ['a. 'a t1]\n"]),
+           "val it = F (1, 2) : ['a. 'a t1]\n"]),
   Test
     ("datatype tagged_record bh",
      fn () =>
@@ -999,7 +1001,7 @@ val tests = TestList [
           "datatype 'a t2 = F of int * int | B of int t2 | Z of 'a | H;\n\
           \F (1, 2)"
           ["datatype 'a t2 = F of int * int | B of int t2 | Z of 'a | H\n",
-           "val it = F (1,2) : ['a. 'a t2]\n"]),
+           "val it = F (1, 2) : ['a. 'a t2]\n"]),
   Test
     ("datatype tagged_or_null bh",
      fn () =>
@@ -1079,7 +1081,7 @@ val tests = TestList [
           "datatype t3 = F of int * t3 | B;\n\
           \F (1, B)"
           ["datatype t3 = F of int * t3 | B\n",
-           "val it = F (1,B) : t3\n"]),
+           "val it = F (1, B) : t3\n"]),
   Test
     ("datatype arg_or_null(nowrap) nested",
      fn () =>
@@ -1087,7 +1089,7 @@ val tests = TestList [
           "datatype t3 = F of int * t3 | B;\n\
           \F (1, F (2, B))"
           ["datatype t3 = F of int * t3 | B\n",
-           "val it = F (1,F (2,B)) : t3\n"]),
+           "val it = F (1, F (2, B)) : t3\n"]),
   Test
     ("datatype arg_or_null(wrap) n",
      fn () =>
@@ -1271,7 +1273,7 @@ val tests = TestList [
           "datatype tA = F of int * int;\n\
           \F (123, 456)"
           ["datatype tA = F of int * int\n",
-           "val it = F (123,456) : tA\n"]),
+           "val it = F (123, 456) : tA\n"]),
   Test
     ("datatype single_arg(nowrap) nested",
      fn () =>
@@ -1281,7 +1283,7 @@ val tests = TestList [
           \G (F (123, 456))"
           ["datatype tA = F of int * int\n\
            \datatype tB = G of tA\n",
-           "val it = G (F (123,456)) : tB\n"]),
+           "val it = G (F (123, 456)) : tB\n"]),
   Test
     ("datatype single_arg(nowrap) rec",
      fn () =>
@@ -1379,7 +1381,7 @@ val tests = TestList [
           \P (1, #\"2\")"
           ["datatype ('a, 'b) t = F of ('a, 'b) s | R of ('b, 'a) s\n\
            \datatype ('a, 'b) s = W of ('a, 'b) t | P of 'a * 'b\n",
-           "val it = P (1,#\"2\") : (int, char) s\n"]),
+           "val it = P (1, #\"2\") : (int, char) s\n"]),
   Test
     ("datatype polyrecmutual wfp",
      fn () =>
@@ -1389,7 +1391,7 @@ val tests = TestList [
           \W (F (P (1, #\"2\")))"
           ["datatype ('a, 'b) t = F of ('a, 'b) s | R of ('b, 'a) s\n\
            \datatype ('a, 'b) s = W of ('a, 'b) t | P of 'a * 'b\n",
-           "val it = W (F (P (1,#\"2\"))) : (int, char) s\n"]),
+           "val it = W (F (P (1, #\"2\"))) : (int, char) s\n"]),
   Test
     ("datatype polyrecmutual wrp",
      fn () =>
@@ -1399,7 +1401,7 @@ val tests = TestList [
           \W (R (P (#\"2\", 1)))"
           ["datatype ('a, 'b) t = F of ('a, 'b) s | R of ('b, 'a) s\n\
            \datatype ('a, 'b) s = W of ('a, 'b) t | P of 'a * 'b\n",
-           "val it = W (R (P (#\"2\",1))) : (int, char) s\n"]),
+           "val it = W (R (P (#\"2\", 1))) : (int, char) s\n"]),
   Test
     ("datatype polyrecmutual wfwrwfp",
      fn () =>
@@ -1409,7 +1411,7 @@ val tests = TestList [
           \W (F (W (R (W (F (P (1, #\"2\")))))))"
           ["datatype ('a, 'b) t = F of ('a, 'b) s | R of ('b, 'a) s\n\
            \datatype ('a, 'b) s = W of ('a, 'b) t | P of 'a * 'b\n",
-           "val it = W (F (W (R (W (F (P (1,#\"2\"))))))) : (char, int) s\n"]),
+           "val it = W (F (W (R (W (F (P (1, #\"2\"))))))) : (char, int) s\n"]),
   Test
     ("ptr null",
      fn () =>
@@ -1438,7 +1440,7 @@ val tests = TestList [
     ("boxed",
      fn () =>
         testPrinter
-          "SMLSharp_Builtin.Pointer.toBoxed \"a\""
+          "SMLSharp_Builtin.Pointer.castToBoxed \"a\""
           ["val it = _ : boxed\n"]),
   Test
     ("structure transparent",
@@ -1480,7 +1482,7 @@ val tests = TestList [
     ("dummytype opaque",
      fn () =>
         let
-          val d = DummyTyID.snapToString (DummyTyID.peek ())
+          val d = DummyTyID.snapToString (DummyTyID.succ (DummyTyID.peek ()))
         in
           testPrinter
             "structure T3 :> sig type 'a t val x : 'a t end = struct datatype 'a t = x end;\n\
@@ -1598,7 +1600,7 @@ val tests = TestList [
           val d = DummyTyID.snapToString (DummyTyID.peek ())
         in
           testPrinter
-            "(fn x => x) SMLSharp_Builtin.Pointer.toBoxed"
+            "(fn x => x) SMLSharp_Builtin.Pointer.castToBoxed"
             ["val it = fn : ?X"^d^" -> boxed\n"]
         end),
   Test
@@ -1609,8 +1611,10 @@ val tests = TestList [
         in
           testPrinter
             "(fn x => x) ReifyTerm.toReifiedTerm"
-            ["val it = fn : ?X"^d^" -> ReifiedTerm.reifiedTerm\n"]
+            ["val it = fn : ?X"^d^" -> Dynamic.term\n"]
         end),
+(*
+  (* json kind has been removed *)
   Test
     ("dummytype jsonkind",
      fn () =>
@@ -1620,6 +1624,17 @@ val tests = TestList [
           testPrinter
             "(fn x => x) JSON.toJson"
             ["val it = fn : ?X"^d^" -> JSON.json\n"]
+        end),
+*)
+  Test
+    ("dummytype unboxed kind",
+     fn () =>
+        let
+          val d = DummyTyID.snapToString (DummyTyID.peek ())
+        in
+          testPrinter
+            "(fn x => x) (let fun 'a#unboxed f x = x :'a in f end)"
+            ["val it = fn : ?X"^d^" -> ?X"^d^"\n"]
         end),
 
   TestList nil

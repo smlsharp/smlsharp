@@ -9,28 +9,4 @@
  *)
 structure FFICompilationError =
 struct
-  local
-    fun format_ty ty = (Types.format_ty []) ty
-  in
-  (*%
-   * @formatter(Types.ty) format_ty
-   *)
-
-  exception
-  (*%
-   * @format(ty)
-   * "(FFIComilation) Invalid JSON Type : " ty
-   *)
-  InvalidJSONTy of Types.ty
-
-  and 
-  (*%
-     @format(name)
-     "(FFICompilation)" +d
-      "JSON" + "primitive" + "not" + "loaded:" +d name
-      +1 "JSON" + "functions" + "require" + "json.smi"
-   *)
-  UserLevelPrimForJsonNotFound of string
-
-  end
 end

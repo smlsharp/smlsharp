@@ -11,8 +11,7 @@ struct
     | REAL32
     | BOOL
     | TIMESTAMP
-    | DECIMAL
-    | FLOAT
+    | NUMERIC
     | UNSUPPORTED of string
 
   type schema_column = {ty: ty, nullable: bool}

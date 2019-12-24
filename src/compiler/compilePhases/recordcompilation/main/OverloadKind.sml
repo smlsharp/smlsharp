@@ -3,35 +3,19 @@
  * @author UENO Katsuhiro
  * @author Atsushi Ohori
  *)
-structure OverloadKind : sig
+structure OverloadKind : KIND_INSTANCE =
+struct
+  structure RC = RecordCalc
+  structure T = Types
 
-  val compareSelector : Types.oprimSelector * Types.oprimSelector -> order
-
-  val generateSingletonTy : Types.btvEnv
-                            -> {instances: Types.ty list,
-                                operators: Types.oprimSelector list}
-                            -> Types.singletonTy list
+  type singleton_ty_body = Types.oprimSelector
+  type kind = {instances : Types.ty list, operators : Types.oprimSelector list}
+  val singletonTy = T.INSTCODEty
 
   datatype instance =
       APP of {appExp: RecordCalc.rcexp -> RecordCalc.rcexp,
               argTy: Types.ty, bodyTy: Types.ty,
-              singletonTy: Types.singletonTy, loc: Loc.loc}
-    (* instance may contain RCTAPP. need more type-directed compilation *)
-    | EXP of RecordCalc.rcexp
-
-  val generateInstance : Types.oprimSelector
-                         -> Loc.loc
-                         -> instance option
-
-end =
-struct
-
-  structure RC = RecordCalc
-  structure T = Types
-
-  datatype instance =
-      APP of {appExp: RC.rcexp -> RC.rcexp, argTy: T.ty, bodyTy: T.ty,
-              singletonTy: T.singletonTy, loc: Loc.loc}
+              singletonTy: Types.singletonTy, loc: RecordCalc.loc}
     | EXP of RecordCalc.rcexp
 
   fun matchToKeyList match =
@@ -58,10 +42,10 @@ struct
         EQUAL => compareKeyTyList (tys1, tys2)
       | x => x
 
-  fun compareSelector
-        ({oprimId=id1, longsymbol=_, keyTyList=_, match=match1, instMap=_}
+  fun compare
+        ({oprimId=id1, longsymbol=_, match=match1}
          :T.oprimSelector,
-         {oprimId=id2, longsymbol=_, keyTyList=_, match=match2, instMap=_}
+         {oprimId=id2, longsymbol=_, match=match2}
          :T.oprimSelector) =
       case OPrimID.compare (id1, id2) of
         EQUAL => compareKeyTyList (matchToKeyList match1, matchToKeyList match2)
@@ -106,18 +90,19 @@ struct
            | NONE => NONE)
         | _ => NONE
 
-  fun generateInstance (selector as {oprimId, match, ...}:T.oprimSelector) loc =
+  fun generateInstance {btvEnv, lookup} (selector as {oprimId, match, ...})
+                       loc =
       evalMatch (match, T.INSTCODEty selector, loc)
 
-  fun generateSingletonTy (btvEnv:Types.btvEnv) {instances:T.ty list, operators} =
-      map (fn operator as {keyTyList, match, ...} =>
+  fun generateArgs (btvEnv:Types.btvEnv) (btv, {instances, operators}) =
+      map (fn operator as {match, ...} =>
               (app (fn ty => case TypesBasics.derefTy ty of
                                T.BOUNDVARty t =>
                                if BoundTypeVarID.Map.inDomain (btvEnv, t)
                                then ()
                                else raise Bug.Bug "generateSingletonTy"
                              | _ => ())
-                   (keyTyList @ matchToKeyList match);
+                   (matchToKeyList match);
                T.INSTCODEty operator))
           operators
 

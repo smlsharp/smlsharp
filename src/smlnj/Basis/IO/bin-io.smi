@@ -44,8 +44,8 @@ struct
   end
   type vector = StreamIO.vector
   type elem = StreamIO.elem
-  type instream (= boxed)
-  type outstream (= boxed)
+  type instream (= ref)
+  type outstream (= ref)
   val input : instream -> vector
   val input1 : instream -> elem option
   val inputN : instream * int -> vector

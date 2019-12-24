@@ -1,9 +1,9 @@
 _require "../../../../basis.smi"
-_require "../../../../smlnj-lib/Util/ord-key-sig.sml"
-_require "../../../../smlnj-lib/Util/ord-map-sig.sml"
-_require "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../../smlnj-lib/Util/ord-key-sig.sml"
+_require local "../../../../smlnj-lib/Util/ord-map-sig.sml"
+_require local "../../../extensions/debug/main/Bug.smi"
 
-_require "./Graph.smi"
+_require local "./Graph.smi"
 
 functor SCCFun(IMap :
   sig
@@ -72,7 +72,7 @@ functor SCCFun(IMap :
  =
 struct
   type elem = IMap.Key.ord_key
-  type graph (= boxed)
+  type graph (= *)
   val empty : graph
   val addNode : graph * elem -> graph
   val addEdge : graph * elem * elem -> graph

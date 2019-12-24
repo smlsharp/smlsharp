@@ -1,175 +1,132 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
 _require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
 
-_require local "../../debug/main/Bug.ppg.smi"
+_require local "../../debug/main/Bug.smi"
 
 structure UserLevelPrimitive =
 struct
 
   exception IDNotFound of string
 
-  val SQL_toyServer_icexp : unit -> IDCalc.icexp
-  val SQL_exp_tyCon : unit -> Types.tyCon
-  val SQL_whr_tyCon : unit -> Types.tyCon
-  val SQL_from_tyCon : unit -> Types.tyCon
-  val SQL_orderby_tyCon : unit -> Types.tyCon
-  val SQL_offset_tyCon : unit -> Types.tyCon
-  val SQL_limit_tyCon : unit -> Types.tyCon
-  val SQL_select_tyCon : unit -> Types.tyCon
-  val SQL_query_tyCon : unit -> Types.tyCon
-  val SQL_command_tyCon : unit -> Types.tyCon
-  val SQL_db_tyCon : unit -> Types.tyCon
+  val SQL_icexp_toyServer : unit -> IDCalc.icexp
+  val SQL_tyCon_exp : unit -> Types.tyCon
+  val SQL_tyCon_whr : unit -> Types.tyCon
+  val SQL_tyCon_from : unit -> Types.tyCon
+  val SQL_tyCon_orderby : unit -> Types.tyCon
+  val SQL_tyCon_offset : unit -> Types.tyCon
+  val SQL_tyCon_limit : unit -> Types.tyCon
+  val SQL_tyCon_select : unit -> Types.tyCon
+  val SQL_tyCon_query : unit -> Types.tyCon
+  val SQL_tyCon_command : unit -> Types.tyCon
+  val SQL_tyCon_db : unit -> Types.tyCon
 
-  val FOREACH_ForeachArray_exInfo : unit -> Types.exVarInfo
-  val FOREACH_ForeachData_exInfo : unit -> Types.exVarInfo
-  val FOREACH_index_tyCon : unit -> Types.tyCon
+  val REIFY_tyCon_BoundTypeVarIDMapMap : unit -> Types.tyCon
+  val REIFY_tyCon_RecordLabelMapMap : unit -> Types.tyCon
+  val REIFY_tyCon_RECORDLABELty : unit -> Types.tyCon
+  val REIFY_tyCon_SENVMAPty : unit -> Types.tyCon
+  val REIFY_tyCon_IENVMAPty : unit -> Types.tyCon
+  val REIFY_tyCon_TypIDMapMap : unit -> Types.tyCon
+  val REIFY_tyCon_void : unit -> Types.tyCon
+  val REIFY_tyCon_btvId : unit -> Types.tyCon
+  val REIFY_tyCon_dyn : unit -> Types.tyCon
+  val REIFY_tyCon_env : unit -> Types.tyCon
+  val REIFY_tyCon_idstatus : unit -> Types.tyCon
+  val REIFY_tyCon_label : unit -> Types.tyCon
+  val REIFY_tyCon_reifiedTerm : unit -> Types.tyCon
+  val REIFY_tyCon_reifiedTy : unit -> Types.tyCon
+  val REIFY_tyCon_typId : unit -> Types.tyCon
 
-  val REIFY_reifiedTy_tyCon : unit -> Types.tyCon
-  val REIFY_btvId_tyCon : unit -> Types.tyCon
-  val REIFY_typId_tyCon : unit -> Types.tyCon
-  val REIFY_env_tyCon : unit -> Types.tyCon
-  val REIFY_idstatus_tyCon : unit -> Types.tyCon
-  val REIFY_reifiedTerm_tyCon : unit -> Types.tyCon
-  val REIFY_label_tyCon : unit -> Types.tyCon
-  val REIFY_symbol_tyCon : unit -> Types.tyCon
-  val REIFY_pos_tyCon : unit -> Types.tyCon
-  val REIFY_SEnvMap_tyCon : unit -> Types.tyCon
-  val REIFY_RecordLabelMapMap_tyCon : unit -> Types.tyCon
-  val REIFY_BoundTypeVarIDMapMap_tyCon : unit -> Types.tyCon
-  val REIFY_TypIDMapMap_tyCon : unit -> Types.tyCon
+  val REIFY_conInfo_ARRAYty : unit -> Types.conInfo
+  val REIFY_conInfo_BOOLty : unit -> Types.conInfo
+  val REIFY_conInfo_BOTTOMty : unit -> Types.conInfo
+  val REIFY_conInfo_BOXEDty : unit -> Types.conInfo
+  val REIFY_conInfo_BOUNDVARty : unit -> Types.conInfo
+  val REIFY_conInfo_BUILTIN : unit -> Types.conInfo
+  val REIFY_conInfo_CHARty : unit -> Types.conInfo
+  val REIFY_conInfo_CODEPTRty : unit -> Types.conInfo
+  val REIFY_conInfo_DYNAMICty : unit -> Types.conInfo
+  val REIFY_conInfo_ERRORty : unit -> Types.conInfo
+  val REIFY_conInfo_EXNTAGty : unit -> Types.conInfo
+  val REIFY_conInfo_EXNty : unit -> Types.conInfo
+  val REIFY_conInfo_IENVMAPty : unit -> Types.conInfo
+  val REIFY_conInfo_INT16ty : unit -> Types.conInfo
+  val REIFY_conInfo_INT64ty : unit -> Types.conInfo
+  val REIFY_conInfo_INT8ty : unit -> Types.conInfo
+  val REIFY_conInfo_INTERNALty : unit -> Types.conInfo
+  val REIFY_conInfo_INTINFty : unit -> Types.conInfo
+  val REIFY_conInfo_INT32ty : unit -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_ARG_OR_NULL : unit -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_CHOICE : unit -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_SINGLE : unit -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_SINGLE_ARG : unit -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_TAGGED : unit -> Types.conInfo
+  val REIFY_conInfo_LISTty : unit -> Types.conInfo
+  val REIFY_conInfo_OPTIONty : unit -> Types.conInfo
+  val REIFY_conInfo_PTRty : unit -> Types.conInfo
+  val REIFY_conInfo_RECORDLABELty : unit -> Types.conInfo
+  val REIFY_conInfo_RECORDLABELMAPty : unit -> Types.conInfo
+  val REIFY_conInfo_REAL32ty : unit -> Types.conInfo
+  val REIFY_conInfo_REAL64ty : unit -> Types.conInfo
+  val REIFY_conInfo_REFty : unit -> Types.conInfo
+  val REIFY_conInfo_SENVMAPty : unit -> Types.conInfo
+  val REIFY_conInfo_STRINGty : unit -> Types.conInfo
+  val REIFY_conInfo_TAGGED_OR_NULL : unit -> Types.conInfo
+  val REIFY_conInfo_TAGGED_RECORD : unit -> Types.conInfo
+  val REIFY_conInfo_TAGGED_TAGONLY : unit -> Types.conInfo
+  val REIFY_conInfo_VOIDty : unit -> Types.conInfo
+  val REIFY_conInfo_TYVARty : unit -> Types.conInfo
+  val REIFY_conInfo_UNITty : unit -> Types.conInfo
+  val REIFY_conInfo_VECTORty : unit -> Types.conInfo
+  val REIFY_conInfo_WORD16ty : unit -> Types.conInfo
+  val REIFY_conInfo_WORD64ty : unit -> Types.conInfo
+  val REIFY_conInfo_WORD8ty : unit -> Types.conInfo
+  val REIFY_conInfo_WORD32ty : unit -> Types.conInfo
 
-  val REIFY_TAGGED_RECORD_conInfo : unit -> Types.conInfo
-  val REIFY_TAGGED_OR_NULL_conInfo : unit -> Types.conInfo
-  val REIFY_TAGGED_TAGONLY_conInfo : unit -> Types.conInfo
-  val REIFY_LAYOUT_TAGGED_conInfo : unit -> Types.conInfo
-  val REIFY_LAYOUT_ARG_OR_NULL_conInfo : unit -> Types.conInfo
-  val REIFY_LAYOUT_SINGLE_ARG_conInfo : unit -> Types.conInfo
-  val REIFY_LAYOUT_CHOICE_conInfo : unit -> Types.conInfo
-  val REIFY_LAYOUT_SINGLE_conInfo : unit -> Types.conInfo
-  val REIFY_INTERNALty_conInfo : unit -> Types.conInfo
-  val REIFY_BOUNDVARty_conInfo : unit -> Types.conInfo
-  val REIFY_OPAQUEty_conInfo : unit -> Types.conInfo
-  val REIFY_CODEPTRty_conInfo : unit -> Types.conInfo
-  val REIFY_EXNTAGty_conInfo : unit -> Types.conInfo
-  val REIFY_INTty_conInfo : unit -> Types.conInfo
-  val REIFY_INT8ty_conInfo : unit -> Types.conInfo
-  val REIFY_INT16ty_conInfo : unit -> Types.conInfo
-  val REIFY_INT64ty_conInfo : unit -> Types.conInfo
-  val REIFY_INTINFty_conInfo : unit -> Types.conInfo
-  val REIFY_BOOLty_conInfo : unit -> Types.conInfo
-  val REIFY_WORDty_conInfo : unit -> Types.conInfo
-  val REIFY_WORD8ty_conInfo : unit -> Types.conInfo
-  val REIFY_WORD16ty_conInfo : unit -> Types.conInfo
-  val REIFY_WORD64ty_conInfo : unit -> Types.conInfo
-  val REIFY_CHARty_conInfo : unit -> Types.conInfo
-  val REIFY_STRINGty_conInfo : unit -> Types.conInfo
-  val REIFY_REALty_conInfo : unit -> Types.conInfo
-  val REIFY_REAL32ty_conInfo : unit -> Types.conInfo
-  val REIFY_UNITty_conInfo : unit -> Types.conInfo
-  val REIFY_EXNty_conInfo : unit -> Types.conInfo
-  val REIFY_PTRty_conInfo : unit -> Types.conInfo
-  val REIFY_BUILTIN_conInfo : unit -> Types.conInfo
-  val REIFY_UNPRINTABLE_conInfo : unit -> Types.conInfo
+  val REIFY_exExnInfo_NaturalJoin : unit -> Types.exExnInfo
+  val REIFY_exExnInfo_RuntimeTypeError : unit -> Types.exExnInfo
 
-  val REIFY_ERRORty_conInfo : unit -> Types.conInfo
-
-  val REIFY_FUNMty_conInfo : unit -> Types.conInfo
-  val REIFY_TYVARty_conInfo : unit -> Types.conInfo
-  val REIFY_LISTty_conInfo : unit -> Types.conInfo
-  val REIFY_ARRAYty_conInfo : unit -> Types.conInfo
-  val REIFY_VECTORty_conInfo : unit -> Types.conInfo
-  val REIFY_OPTIONty_conInfo : unit -> Types.conInfo
-  val REIFY_REFty_conInfo : unit -> Types.conInfo
-
-  val REIFY_RecordLabelFromString_exInfo : unit -> Types.exVarInfo
-  val REIFY_SymbolMkLongSymbol_exInfo : unit -> Types.exVarInfo
-  val REIFY_stringReifiedTyListToRecordTy_exInfo : unit -> Types.exVarInfo
-  val REIFY_stringReifiedTyOptionListToConSet_exInfo : unit -> Types.exVarInfo
-  val REIFY_typIdConSetListToConSetEnv_exInfo : unit -> Types.exVarInfo
-  val REIFY_btvIdBtvIdListToBoundenv_exInfo : unit -> Types.exVarInfo
-  val REIFY_boundenvReifiedTyToPolyTy_exInfo : unit -> Types.exVarInfo
-  val REIFY_makeDummyTy_exInfo : unit -> Types.exVarInfo
-  val REIFY_makeFUNMty_exInfo : unit -> Types.exVarInfo
-  val REIFY_boolToWrapRecord_exInfo : unit -> Types.exVarInfo
-  val REIFY_stringToFalseNameRecord_exInfo : unit -> Types.exVarInfo
-  val REIFY_stringIntListToTagMap_exInfo : unit -> Types.exVarInfo
-  val REIFY_tagMapStringToTagMapNullNameRecord_exInfo : unit -> Types.exVarInfo
-  val REIFY_tagMapToTagMapRecord_exInfo : unit -> Types.exVarInfo
-  val REIFY_longsymbolIdArgsLayoutListToDatatypeTy_exInfo : unit -> Types.exVarInfo
-  val REIFY_longsymbolIdArgsToOpaqueTy_exInfo : unit -> Types.exVarInfo
-  val REIFY_makePos_exInfo : unit -> Types.exVarInfo
-  val REIFY_TyRep_exInfo : unit -> Types.exVarInfo
-
-  val REIFY_toReifiedTerm_exInfo : unit -> Types.exVarInfo
-
-  val REIFY_mkEXEXNIdstatus_exInfo : unit -> Types.exVarInfo
-  val REIFY_mkEXEXNREPIdstatus_exInfo : unit -> Types.exVarInfo
-  val REIFY_mkEXVarIdstatus_exInfo : unit -> Types.exVarInfo
-  val REIFY_mkENVenv_exInfo : unit -> Types.exVarInfo
-  val REIFY_mkTopEnv_exInfo : unit -> Types.exVarInfo
-  val REIFY_printTopEnv_exInfo : unit -> Types.exVarInfo
-
-  val REIFY_reifiedTermToML_exInfo : unit -> Types.exVarInfo
-
-  val REIFY_naturalJoin_exInfo : unit -> Types.exVarInfo
-
-  val REIFY_NaturalJoin_exExnInfo : unit -> Types.exExnInfo
-
-  val JSON_dyn_tyCon : unit -> Types.tyCon
-  val JSON_json_tyCon : unit -> Types.tyCon
-  val JSON_jsonTy_tyCon : unit -> Types.tyCon
-  val JSON_void_tyCon : unit -> Types.tyCon
-  val JSON_null_tyCon : unit -> Types.tyCon
-
-  val JSON_RuntimeTypeError_exExnInfo : unit -> Types.exExnInfo
-  val JSON_NaturalJoin_exExnInfo : unit -> Types.exExnInfo
-
-  val JSON_getJson_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkTy_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkInt_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkReal_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkBool_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkString_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkArray_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkNull_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkDyn_exVarInfo : unit -> Types.exVarInfo
-  val JSON_checkRecord_exVarInfo : unit -> Types.exVarInfo
-  val JSON_mapCoerce_exVarInfo : unit -> Types.exVarInfo
-  val JSON_makeCoerce_exVarInfo : unit -> Types.exVarInfo
-  val JSON_coerceJson_exVarInfo : unit -> Types.exVarInfo
-  val JSON_optionCoerce_exVarInfo : unit -> Types.exVarInfo
-  val JSON_naturalJoin_exVarInfo : unit -> Types.exVarInfo
-  val JSON_toJson_exVarInfo : unit -> Types.exVarInfo
-
-  val JSON_DYN_conInfo : unit -> Types.conInfo
-  val JSON_ARRAYty_conInfo : unit -> Types.conInfo
-  val JSON_OPTIONty_conInfo : unit -> Types.conInfo
-  val JSON_BOOLty_conInfo : unit -> Types.conInfo
-  val JSON_PARTIALBOOLty_conInfo : unit -> Types.conInfo
-  val JSON_INTty_conInfo : unit -> Types.conInfo
-  val JSON_PARTIALINTty_conInfo : unit -> Types.conInfo
-  val JSON_NULLty_conInfo : unit -> Types.conInfo
-  val JSON_DYNty_conInfo : unit -> Types.conInfo
-  val JSON_RECORDty_conInfo : unit -> Types.conInfo
-  val JSON_PARTIALRECORDty_conInfo : unit -> Types.conInfo
-  val JSON_REALty_conInfo : unit -> Types.conInfo
-  val JSON_PARTIALREALty_conInfo : unit -> Types.conInfo
-  val JSON_STRINGty_conInfo : unit -> Types.conInfo
-  val JSON_PARTIALSTRINGty_conInfo : unit -> Types.conInfo
-  val JSON_ARRAY_conInfo : unit -> Types.conInfo
-  val JSON_BOOL_conInfo : unit -> Types.conInfo
-  val JSON_INT_conInfo : unit -> Types.conInfo
-  val JSON_NULLObject_conInfo : unit -> Types.conInfo
-  val JSON_OBJECT_conInfo : unit -> Types.conInfo
-  val JSON_REAL_conInfo : unit -> Types.conInfo
-  val JSON_STRING_conInfo : unit -> Types.conInfo
-
-  val DYNAMIC_dynamic_tyCon : unit -> Types.tyCon
+  val REIFY_exInfo_RecordLabelFromString : unit -> Types.exVarInfo
+  val REIFY_exInfo_SymbolMkLongSymbol : unit -> Types.exVarInfo
+  val REIFY_exInfo_TyRep : unit -> Types.exVarInfo
+  val REIFY_exInfo_TyRepToReifiedTy : unit -> Types.exVarInfo
+  val REIFY_exInfo_MergeConSetEnvWithTyRepList : unit -> Types.exVarInfo
+  val REIFY_exInfo_boolToWrapRecord : unit -> Types.exVarInfo
+  val REIFY_exInfo_boundenvReifiedTyToPolyTy : unit -> Types.exVarInfo
+  val REIFY_exInfo_btvIdBtvIdListToBoundenv : unit -> Types.exVarInfo
+  val REIFY_exInfo_coerceTermGeneric : unit -> Types.exVarInfo
+  val REIFY_exInfo_checkTermGeneric : unit -> Types.exVarInfo
+  val REIFY_exInfo_viewTermGeneric : unit -> Types.exVarInfo
+  val REIFY_exInfo_null : unit -> Types.exVarInfo
+  val REIFY_exInfo_void : unit -> Types.exVarInfo
+  val REIFY_exInfo_dynamicTypeCase : unit -> Types.exVarInfo
+  val REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy : unit -> Types.exVarInfo
+  val REIFY_exInfo_longsymbolIdArgsToOpaqueTy : unit -> Types.exVarInfo
+  val REIFY_exInfo_makeDummyTy : unit -> Types.exVarInfo
+  val REIFY_exInfo_makeFUNMty : unit -> Types.exVarInfo
+  val REIFY_exInfo_makePos : unit -> Types.exVarInfo
+  val REIFY_exInfo_mkENVenv : unit -> Types.exVarInfo
+  val REIFY_exInfo_mkEXEXNIdstatus : unit -> Types.exVarInfo
+  val REIFY_exInfo_mkEXEXNREPIdstatus : unit -> Types.exVarInfo
+  val REIFY_exInfo_mkEXVarIdstatus : unit -> Types.exVarInfo
+  val REIFY_exInfo_mkTopEnv : unit -> Types.exVarInfo
+  val REIFY_exInfo_naturalJoin : unit -> Types.exVarInfo
+  val REIFY_exInfo_extend : unit -> Types.exVarInfo
+  val REIFY_exInfo_printTopEnv : unit -> Types.exVarInfo
+  val REIFY_exInfo_reifiedTermToML : unit -> Types.exVarInfo
+  val REIFY_exInfo_stringIntListToTagMap : unit -> Types.exVarInfo
+  val REIFY_exInfo_stringReifiedTyListToRecordTy : unit -> Types.exVarInfo
+  val REIFY_exInfo_stringReifiedTyOptionListToConSet : unit -> Types.exVarInfo
+  val REIFY_exInfo_stringToFalseNameRecord : unit -> Types.exVarInfo
+  val REIFY_exInfo_tagMapStringToTagMapNullNameRecord : unit -> Types.exVarInfo
+  val REIFY_exInfo_tagMapToTagMapRecord : unit -> Types.exVarInfo
+  val REIFY_exInfo_toReifiedTerm : unit -> Types.exVarInfo
+  val REIFY_exInfo_toReifiedTermPrint : unit -> Types.exVarInfo
+  val REIFY_exInfo_typIdConSetListToConSetEnv : unit -> Types.exVarInfo
 
   val init : NameEvalEnv.topEnv -> IDCalc.icdecl list
   val initExternalDecls : unit -> unit 

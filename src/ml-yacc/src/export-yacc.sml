@@ -37,13 +37,32 @@ end = struct
 
     val exit = OS.Process.exit
 
-    (* 2012 ohori: type annotation added *)
-    fun parseGen (_:string, argv:string list) : OS.Process.status = let
+(* 2019-07-06: Ueno: add -s and -p prefix command line options
+    fun parseGen (_, argv) = let
 	fun parse_gen () =
 	    case argv of
 		[file] => (ParseGen.parseGen file; exit OS.Process.success)
 	      | _ => (err("Usage: ml-yacc filename\n");
 		      exit OS.Process.failure)
+*)
+    fun parseGen (name, argv) = let
+        fun die msg = (err (concat msg); OS.Process.exit OS.Process.failure)
+        fun die' msg = die (name :: ": " :: msg)
+        fun getopt r nil nil = (r, nil)
+          | getopt r nil ("--"::t) = (r, t)
+          | getopt r nil (h::t) =
+            if String.isPrefix "-" h andalso size h > 1
+            then getopt r (tl (String.explode h)) t else (r, h :: t)
+          | getopt r (#"p"::nil) nil = die' ["-p requires an argument\n"]
+          | getopt r (#"p"::nil) (h::t) = getopt (SOME h, #2 r) nil t
+          | getopt r (#"p"::t) l = getopt (SOME (String.implode t), #2 r) nil l
+          | getopt r (#"s"::t) l = getopt (#1 r, true) t l
+          | getopt r (c::t) _ = die' ["invalid option -" ^ str c]
+        fun parse_gen () =
+            case getopt (NONE, false) nil argv of
+              ((p, s), [file]) =>
+              (ParseGen.parseGen file {p=p, s=s}; exit OS.Process.success)
+            | _ => die ["usage: ", name, " [-s] [-p output_prefix] input\n"]
     in
 	(handleInterrupt parse_gen; OS.Process.success)
 	handle Interrupt => OS.Process.failure

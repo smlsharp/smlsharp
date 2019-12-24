@@ -1,70 +1,62 @@
-_require "../../../../basis.smi"
-_require local "../../debug/main/Bug.ppg.smi"
-_require "../../../libs/symbols/main/RecordLabel.smi"
-_require "../../../libs/symbols/main/Symbol.ppg.smi"
+_require local "../../../../basis.smi"
+_require local "../../../libs/env/main/SEnv.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
-_require local "../../../libs/env/main/IEnv.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+(* _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi" *)
+_require local "./ReifyTerm.smi"
+_require local "../../json/main/JSON.smi"
+_require "./ReifiedTy.ppg.smi"
+_require "./ReifiedTerm.ppg.smi"
+_require "./PartialDynamic.smi"
+_require local "./NaturalJoin.smi"
+_require local "./ReifiedTermToML.smi"
 
-_require "../../../data/types/main/Types.ppg.smi"
-_require local "../../../data/types/main/TypesBasics.smi"
-_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
-_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
-_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
-_require local "../../../data/builtin/main/BuiltinTypes.smi"
-_require local "../../../compilerPhases/bitmapcompilation/main/SingletonTyEnv.smi"
-_require local "../../../compilerPhases/bitmapcompilation/main/RecordLayout.smi"
-_require local "../../../compilerPhases/datatypecompilation/main/DatatypeLayout.smi"
-
-structure Dynamic =
+structure Dynamic = 
 struct
+  exception RuntimeTypeError = PartialDynamic.RuntimeTypeError
+  type 'a dyn = 'a ReifiedTerm.dyn
+  type void = ReifiedTy.void
+  type dynamic = void dyn
+  datatype term = datatype ReifiedTerm.reifiedTerm
+  datatype ty = datatype ReifiedTy.reifiedTy
 
-  type dynamic (= boxed)
+  val dynamicToString : dynamic -> string
+  val dynamicToTerm : dynamic -> term
+  val dynamicToTy : dynamic -> ty
+  val dynamicToTyString : dynamic -> string
+  val termToDynamic : term -> dynamic
+  val termToString : term -> string
+  val termToTy : term -> ty
+  val tyToString : ty -> string
 
-  val dynamic = _builtin val Dynamic : 'a -> dynamic
+  val null : dynamic
+  val void : dynamic
+  val nullWithTy : ty -> dynamic
+  val voidWithTy : ty -> dynamic
+  val Record : (string * term) list -> term
+  val RecordTermToKeyListValueList : term -> (string list * string list)
+  val RecordTy : (string * ty) list -> ty
+  val dynamic : ['a#reify.'a -> dynamic]
+  val view : ['a#reify.'a dyn -> 'a]
 
-  val load : unit ptr * Types.ty -> dynamic
+  val fromJson : string -> dynamic
+  val fromJsonFile : string -> dynamic
+  val toJson : 'a dyn -> string
 
-  datatype value =
-      CHAR of char
-    | INT8 of Int8.int
-    | INT16 of Int16.int
-    | INT32 of Int32.int
-    | INDEX of index
-    | INT64 of Int64.int
-    | WORD8 of Word8.word
-    | WORD16 of Word16.word
-    | WORD32 of Word32.word
-    | WORD64 of Word64.word
-    | REAL64 of real
-    | REAL32 of Real32.real
-    | PTR of unit ptr
-    | RECORD of (RecordLabel.label * dynamic) list
-    | VARIANT of Types.typId * Symbol.symbol * value option
-    | LIST of dynamic_list
-    | ARRAY of {length : int, sub : int -> dynamic}
-    | VECTOR of {length : int, sub : int -> dynamic}
-    | REF of value
-    | INTINF of IntInf.int
-    | STRING of string
-    | EXN of exn
-    | FUN
-    | UNIT
-    | OPTION_NONE
-    | OPTION_SOME of value
-    | BOOL of bool
-    | OPAQUE of value
-    | OTHER
-  and dynamic_list =
-      NIL
-    | CONS of dynamic * dynamic
-  type dynamic_array =
-      {length : int, sub : int -> dynamic}
+  val valueToJson : ['a#reify. 'a -> string]
 
-  val read : dynamic -> value
-  val readList : dynamic_list -> dynamic list
-  val readArray : dynamic_array -> dynamic vector
-
-  val makeRecord : dynamic RecordLabel.Map.map -> dynamic
-  val makeTuple : dynamic list -> dynamic
+  val pp : ['a#reify. 'a -> unit]
+  val format : ['a#reify. 'a -> string]
+  val greaterEq : 'a dyn * 'b dyn -> bool
+  val ## : string -> 'a dyn -> dynamic
+  val ### : ['a#reify#{}, 'b#reify. string -> 'a -> 'b]
+  val Hd : 'a dyn -> dynamic
+  val Tl : 'a dyn -> dynamic
+  val Nil : dynamic
+  val Cons : 'a dyn * 'b dyn  -> dynamic
+  val join : dynamic * dynamic -> dynamic
+  val extend : dynamic * dynamic -> dynamic
+  val override : dynamic * dynamic -> dynamic
 
 end
+

@@ -1,0 +1,18 @@
+_require local "../../basis.smi"
+_require local "../../ffi.smi"
+_require local "../../reify.smi"
+_require local "./PGSQL.smi"
+
+structure PGSQLDynamic =
+struct
+  type 'a server (= boxed)
+  type 'a con (= ptr)
+  exception DynamicTypeMismatch
+  exception Runtime
+
+  val makeServer : ['a#{}. string -> 'a server]
+  val connect : ['a#reify, 'b#reify. 'a server -> 'a con] 
+  val insert : ['a#reify, 'b#reify. 'a con * 'b -> unit]
+  val finish : ['a. 'a con -> unit]
+
+end

@@ -127,6 +127,7 @@ local
         case exp of
           IC.ICERROR => exp
         | IC.ICCONSTANT _ => exp
+        | IC.ICSIZEOF _ => exp
         | IC.ICVAR var => IC.ICVAR (evalVar varMap var)
         | IC.ICEXVAR _ => exp
         | IC.ICEXVAR_TOBETYPED {longsymbol, id, exInfo} =>
@@ -152,6 +153,10 @@ local
                          ty=ty,
                          loc=loc,
                          revealKey=revealKey}
+        | IC.ICINTERFACETYPED {icexp,ty,loc} =>
+          IC.ICINTERFACETYPED {icexp=copy icexp,
+                               ty=ty,
+                               loc=loc}
         | IC.ICAPPM (icexp, icexpList, loc) =>
           IC.ICAPPM (copy icexp, map copy icexpList, loc)
         | IC.ICAPPM_NOUNIFY (icexp, icexpList,loc) =>
@@ -208,6 +213,10 @@ local
                       map (copyRule varMap) rules,
                       caseKind,
                       loc)
+        | IC.ICDYNAMICCASE (icexp, rules, loc) =>
+          IC.ICDYNAMICCASE (copy icexp,
+                      map (copyRule1 varMap) rules,
+                      loc)
         | IC.ICRECORD_UPDATE (icexp, stringIcexpList, loc) =>
           IC.ICRECORD_UPDATE (copy icexp,
                               map (fn (l,e) => (l, copy e)) stringIcexpList,
@@ -215,44 +224,26 @@ local
         | IC.ICRECORD_SELECTOR (string, loc) => exp
         | IC.ICSELECT (string, icexp, loc) =>
           IC.ICSELECT (string, copy icexp, loc)
-        | IC.ICFOREACH {data, pred, iterator, loc} =>
-          IC.ICFOREACH {data = copy data, 
-                        pred = copy pred, 
-                        iterator = copy iterator, 
-                        loc = loc}
-        | IC.ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
-          IC.ICFOREACHDATA {data = copy data, 
-                            pred = copy pred, 
-                            whereParam = copy whereParam,
-                            iterator = copy iterator, 
-                            loc = loc}
         | IC.ICSEQ (icexpList, loc) =>
           IC.ICSEQ (map copy icexpList, loc)
         | IC.ICFFIIMPORT (icexp, ffiTy, loc) =>
           IC.ICFFIIMPORT (copyFfiFun varMap icexp, ffiTy, loc)
-        | IC.ICFFIAPPLY (ffiAttributesOption, icexp, ffiArgList, ffiTy, loc) =>
-          IC.ICFFIAPPLY (ffiAttributesOption,
-                         copyFfiFun varMap icexp,
-                         map (copyFfiArg varMap) ffiArgList,
-                         ffiTy,
-                         loc)
         | IC.ICSQLSCHEMA {tyFnExp, ty, loc} =>
           IC.ICSQLSCHEMA {tyFnExp = copyExp varMap tyFnExp,
                           ty = ty,
                           loc = loc}
-        | IC.ICJOIN (icexp1, icexp2, loc) =>
-          IC.ICJOIN (copy icexp1, copy icexp2, loc)
-        | IC.ICJSON (icexp, ty, loc) =>
-          IC.ICJSON (copy icexp, ty, loc)
-        | IC.ICTYPEOF (ty, loc) => exp
+        | IC.ICJOIN (bool, icexp1, icexp2, loc) =>
+          IC.ICJOIN (bool, copy icexp1, copy icexp2, loc)
+        | IC.ICDYNAMIC (icexp, ty, loc) =>
+          IC.ICDYNAMIC (copy icexp, ty, loc)
+        | IC.ICDYNAMICIS (icexp, ty, loc) =>
+          IC.ICDYNAMICIS (copy icexp, ty, loc)
+        | IC.ICDYNAMICNULL (ty, loc) => exp
+        | IC.ICDYNAMICTOP (ty, loc) => exp
+        | IC.ICDYNAMICVIEW (icexp, ty, loc) =>
+          IC.ICDYNAMICVIEW (copy icexp, ty, loc)
         | IC.ICREIFYTY (ty, loc) => exp
       end
-  and copyFfiArg varMap ffiArg =
-      case ffiArg of
-        IC.ICFFIARG  (icexp, ffiTy, loc) =>
-        IC.ICFFIARG  (copyExp varMap icexp, ffiTy, loc)
-      | IC.ICFFIARGSIZEOF (ty, icexpOption, loc) =>
-        IC.ICFFIARGSIZEOF (ty, Option.map (copyExp varMap) icexpOption, loc)
   and copyFfiFun varMap ffiFun =
       case ffiFun of
         IC.ICFFIFUN exp => IC.ICFFIFUN (copyExp varMap exp)
@@ -263,6 +254,13 @@ local
         val body = copyExp varMap body
       in
         {args=args, body=body}
+      end
+  and copyRule1 varMap {arg, body} =
+      let
+        val (varMap, arg) = copyPat varMap arg
+        val body = copyExp varMap body
+      in
+        {arg=arg, body=body}
       end
   and copyBind (newVarMap, varMap) (pat, exp) = 
       let
@@ -431,5 +429,6 @@ in
   val copyDecl = fn decl => #2 (copyDecl VarID.Map.empty decl)
   val copyDeclList = fn declList => #2 (copyDeclList VarID.Map.empty declList)
   val copyPat = fn pat => #2 (copyPat VarID.Map.empty pat)
+  fun equalPropList (x, y) = Types.equalProperties x y
 end
 end

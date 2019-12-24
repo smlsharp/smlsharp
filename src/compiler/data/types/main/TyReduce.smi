@@ -1,15 +1,14 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
+(* _require local "../../../data/symbols/main/Loc.smi" *)
+_require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
 
-_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+(* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
 _require local "./TyAlphaRename.smi"
 _require local "./TypesBasics.smi"
-_require local "./OPrimInstMap.smi"
-_require local "./TyPrinters.smi"
+(* _require local "./TyPrinters.smi" *)
 
 _require "../../../libs/ids/main/LocalID.smi"
 _require "./Types.ppg.smi"
@@ -25,6 +24,7 @@ struct
   val evalExnInfo   : btvMap -> Types.exnInfo -> Types.exnInfo 
   val evalOprimInfo : btvMap -> Types.oprimInfo -> Types.oprimInfo 
   val evalPrimInfo  : btvMap -> Types.primInfo -> Types.primInfo 
+  val evalConstraint: btvMap -> Types.constraint -> Types.constraint
   val evalTy        : btvMap -> Types.ty -> Types.ty 
   val evalTyVar     : btvMap -> Types.varInfo -> Types.varInfo 
 end

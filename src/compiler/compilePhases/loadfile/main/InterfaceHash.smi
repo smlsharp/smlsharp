@@ -1,15 +1,16 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../libs/list-utils/main/ListSorter.smi"
-_require local "../../../libs/toolchain/main/Filename.smi"
+_require "../../../libs/toolchain/main/Filename.smi"
 
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 
 structure InterfaceHash =
 struct
+
   val generate
-      : {source : InterfaceName.source,
+      : {filename : Filename.filename,
          requires : InterfaceName.interface_name list,
          topdecs : AbsynInterface.itopdec list}
         -> InterfaceName.hash

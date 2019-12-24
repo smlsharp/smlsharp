@@ -1,0 +1,11 @@
+(**
+ * default configuration for SQL
+ *
+ * @copyright (c) 2019, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+structure SMLSharp_SQL_Config =
+struct
+  val DLLEXT = ref "%DLLEXT%"
+end

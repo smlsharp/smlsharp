@@ -1,0 +1,4 @@
+NODE {tests/data/loadfile/040_alias2.smi INTERFACE}
+ROOT {ROOT_SML USERPATH tests/data/loadfile/040_alias2.sml COMPILE
+ PROVIDE {USERPATH tests/data/loadfile/040_alias2.smi INTERFACE 92f70b74f6b189fc
+ }}

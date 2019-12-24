@@ -24,9 +24,9 @@ structure Lalr : LALR_GRAPH =
 	infix 9 sub
 	open IntGrammar.Grammar IntGrammar Core Graph Look
 	structure Graph = Graph
-	structure Core = Core
-	structure Grammar = IntGrammar.Grammar
-	structure IntGrammar = IntGrammar
+	(* structure Core = Core *)
+	(* structure Grammar = IntGrammar.Grammar *)
+	(* structure IntGrammar = IntGrammar *)
 
 	datatype tmpcore = TMPCORE of (item * term list ref) list * int
 	datatype lcore = LCORE of (item * term list) list * int

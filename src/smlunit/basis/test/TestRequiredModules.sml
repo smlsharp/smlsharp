@@ -14,7 +14,6 @@ struct
       let
         val tests =
                 [
-(*
                    TestLabel ("Array001", Array001.suite ())
                   ,TestLabel ("Array101", Array101.suite ())
                   ,TestLabel ("ArraySlice001", ArraySlice001.suite ())
@@ -41,9 +40,7 @@ struct
                   ,TestLabel ("Math001", Math001.suite ())
                   ,TestLabel ("Option001", Option001.suite ())
                   ,TestLabel ("Position001", Position001.suite ())
-*)
-                   TestLabel ("Real001", Real001.suite ())
-(*
+                  ,TestLabel ("Real001", Real001.suite ())
                   ,TestLabel ("String001", String001.suite ())
                   ,TestLabel ("StringCvt001", StringCvt001.suite ())
                   ,TestLabel ("Substring001", Substring001.suite ())
@@ -62,7 +59,6 @@ struct
                   ,TestLabel ("Word8Vector101", Word8Vector101.suite ())
                   ,TestLabel ("Word8VectorSlice101", Word8VectorSlice101.suite ())
                   ,TestLabel ("Word8VectorSlice001", Word8VectorSlice001.suite ())
-*)
                 ]
       in
         tests

@@ -15,9 +15,9 @@ struct
   val store = SMLSharp_Builtin.Pointer.store
 
   fun isNull (ptr : 'a ptr) =
-      SMLSharp_Builtin.Pointer.toUnitPtr ptr = _NULL
+      SMLSharp_Builtin.Pointer.toUnitPtr ptr = SMLSharp_Builtin.Pointer.null ()
 
-  fun NULL () = SMLSharp_Builtin.Pointer.fromUnitPtr _NULL
+  val NULL = SMLSharp_Builtin.Pointer.null
 
   val prim_import =
       _import "prim_UnmanagedMemory_import"
@@ -32,5 +32,14 @@ struct
       _import "sml_str_new"
       : __attribute__((unsafe,fast,gc))
         char ptr -> string
+
+  val str_new2 =
+      _import "sml_str_new2"
+      : __attribute__((unsafe,fast,gc))
+        (char ptr, word) -> string
+
+  fun importString' (ptr, len) =
+      if len < 0 then raise Size
+      else str_new2 (ptr, SMLSharp_Builtin.Word32.fromInt32 len)
 
 end

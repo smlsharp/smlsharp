@@ -18,6 +18,7 @@ struct
   structure BP = BuiltinPrimitive
   structure U = UserLevelPrimitive
   structure RyU = ReifyUtils
+  structure RyD = ReifiedTyData
 
   fun isSimpleExp rcexp =
       case rcexp of
@@ -25,7 +26,6 @@ struct
       | R.RCCALLBACKFN _ => false
       | R.RCTAGOF _ => true
       | R.RCSIZEOF _ => true
-      | R.RCTYPEOF _ => true
       | R.RCREIFYTY _ => true
       | R.RCINDEXOF _ => true
       | R.RCCONSTANT _ => true
@@ -49,17 +49,22 @@ struct
       | R.RCCASE _ => false
       | R.RCEXNCASE _ => false
       | R.RCSWITCH _ => false
+      | R.RCCATCH _ => false
+      | R.RCTHROW _ => false
       | R.RCFNM _=> false
       | R.RCPOLYFNM _ => false
       | R.RCPOLY _ => false
       | R.RCTAPP _ => false
       | R.RCSEQ _ => false
-      | R.RCFOREACH _ => false
-      | R.RCFOREACHDATA _ => false
       | R.RCCAST ((exp,_),_,_) => isSimpleExp exp
       | R.RCFFI _ => false
       | R.RCJOIN _ => false
-      | R.RCJSON _ => false
+      | R.RCDYNAMIC _ => false
+      | R.RCDYNAMICIS _ => false
+      | R.RCDYNAMICNULL _ => false
+      | R.RCDYNAMICTOP _ => false
+      | R.RCDYNAMICVIEW _ => false
+      | R.RCDYNAMICCASE _ => false
 
   val emptyEnv = BoundTypeVarID.Map.empty : T.btvEnv
 
@@ -116,9 +121,12 @@ struct
          exp = R.RCRECORD {fields = exps, recordTy = ty, loc = loc}}
       end
 
-  fun composeArg loc nil =
+  fun unitExp loc = 
       {ty = BT.unitTy,
-       exp = R.RCCONSTANT {const=A.UNITCONST loc, ty=BT.unitTy, loc=loc}}
+       exp = R.RCCONSTANT {const = R.CONST A.UNITCONST,
+                           ty = BT.unitTy, loc = loc}}
+
+  fun composeArg loc nil = unitExp loc
     | composeArg loc [exp] = exp
     | composeArg loc exps = implodeRecord loc (RecordLabel.tupleList exps)
 
@@ -307,21 +315,6 @@ struct
            loc = loc}
       end
 
-  (* datatype json  *)
-  fun JsonTy () = T.CONSTRUCTty {tyCon = U.JSON_json_tyCon (), args = []}
-
-  (* datatype jsonTy  *)
-  fun JsonTyTy () = T.CONSTRUCTty {tyCon = U.JSON_jsonTy_tyCon (), args = []}
-
-  fun TypeOf loc ty = 
-      {exp = R.RCTYPEOF (ty, loc),
-       ty = JsonTyTy()}
-
-  fun JsonToML loc Exp argTy =
-      RyU.Apply
-        loc
-        (RyU.InstVar {exVarInfo = U.JSON_coerceJson_exVarInfo (), instTy = argTy})
-        (RyU.Pair loc Exp (TypeOf loc argTy))
 
   fun infectPoly (ty, exp) =
       case TB.derefTy ty of
@@ -344,9 +337,9 @@ struct
 
   fun compileFFIexp multiArg loc env (rcffiexp, resultTy) =
       case rcffiexp of
-        R.RCFFIIMPORT {funExp = R.RCFFIFUN ptrExp, ffiTy} =>
+        R.RCFFIIMPORT {funExp = R.RCFFIFUN (ptrExp, ptrTy), ffiTy} =>
         let
-          val ptrExp = {ty = BT.codeptrTy, exp = compileExp env ptrExp}
+          val ptrExp = {ty = ptrTy, exp = compileExp env ptrExp}
           val (letFn, ptrExp) = toSimpleExp loc ptrExp
           val (funptrTy, importExpFn) = stubImport multiArg env ffiTy
           val ptrExp = BitCast loc (ptrExp, funptrTy)
@@ -363,62 +356,7 @@ struct
           infectPoly (resultTy, #exp (importExpFn symbolExp))
         end
 
-  (* _json rcexp as coerceTy *)
-  and compileJson loc env (Exp, coerceTy) =
-      let
-        val instTy = case TB.derefTy (#ty Exp) of 
-                       T.CONSTRUCTty {tyCon = {dtyKind = T.DTY, id, ...}, args=[argTy]} =>
-                       if id = #id (U.JSON_dyn_tyCon ()) then argTy
-                       else raise Bug.Bug "FFICompilation : compileJson"
-                     | _ => raise Bug.Bug "FFICompilation : compileJson"
-        val JsonExp = 
-            RyU.Apply 
-              loc
-              (RyU.InstVar {exVarInfo = U.JSON_getJson_exVarInfo (), instTy = instTy})
-              Exp
-       val CheckExp = 
-            RyU.ApplyList
-              loc
-              (RyU.MonoVar (U.JSON_checkTy_exVarInfo ()))
-              [JsonExp, TypeOf loc coerceTy]
-      in
-        case TB.derefTy coerceTy of
-          T.CONSTRUCTty {tyCon = {dtyKind = T.DTY, id, ...}, args} =>
-          if id = #id (U.JSON_dyn_tyCon ()) then
-            let 
-              val argTy = case args of [argTy] => argTy 
-                                     | _ => raise Bug.Bug "FFICompilation : compileJson"
-              val ViewExp = RyU.FunExp loc (fn Exp => JsonToML loc Exp argTy) (JsonTy())
-              val MakeCoerceExp = RyU.InstVar {exVarInfo = U.JSON_makeCoerce_exVarInfo (),
-                                               instTy = argTy}
-            in
-              RyU.Seq 
-                loc
-                [CheckExp,       
-                 RyU.ApplyList
-                   loc
-                   MakeCoerceExp
-                   [JsonExp, TypeOf loc argTy, ViewExp]
-                ]
-            end
-          else RyU.Seq loc [CheckExp, JsonToML loc JsonExp coerceTy]
-        | _ => RyU.Seq loc [CheckExp, JsonToML loc JsonExp coerceTy]
-      end
-      handle U.IDNotFound name =>
-             raise UserError.UserErrors 
-                     [(loc,
-                       UserError.Error,
-                       FFICompilationError.UserLevelPrimForJsonNotFound name)]
-(*
-           | JsonTy => 
-             raise UserError.UserErrors 
-                     [(loc, 
-                       UserError.Error, 
-                       FFICompilationError.InvalidJSONTy coerceTy)]
-
-*)
-
-  and compileJoinExp loc env {resultTy, args = (arg1, arg2), argTys = (argTy1, argTy2)} =
+  and compileJoinExp isJoin loc env {resultTy, args = (arg1, arg2), argTys = (argTy1, argTy2)} =
       (* 2016-10-27 sasaki : JOINの試験実装 *)
       (* _join(arg1:argTy1,arg2:argTy2):resultTy
        * =>
@@ -429,9 +367,11 @@ struct
        * : resultTy
        *)
       let
-        val NaturalJoin = RyU.MonoVar (U.REIFY_naturalJoin_exInfo ())
+        val NaturalJoin = 
+            if isJoin then RyU.MonoVar (U.REIFY_exInfo_naturalJoin ())
+            else RyU.MonoVar (U.REIFY_exInfo_extend ())
         fun ToReifiedTerm instTy = 
-            RyU.InstVar {exVarInfo = U.REIFY_toReifiedTerm_exInfo (),
+            RyU.InstVar {exVarInfo = U.REIFY_exInfo_toReifiedTerm (),
                          instTy = instTy}
         val Arg1 = {exp = compileExp env arg1, ty= argTy1}
         val Arg2 = {exp = compileExp env arg2, ty= argTy2}
@@ -439,48 +379,10 @@ struct
         val Term2 = RyU.Apply loc (ToReifiedTerm argTy2) Arg2
         val JoinedTerm = RyU.Apply loc NaturalJoin (RyU.Pair loc Term1 Term2)
         val ReifiedTermToML = 
-            RyU.InstVar {exVarInfo = U.REIFY_reifiedTermToML_exInfo (), 
+            RyU.InstVar {exVarInfo = U.REIFY_exInfo_reifiedTermToML (), 
                          instTy = resultTy}
       in
         #exp (RyU.Apply loc ReifiedTermToML JoinedTerm)
-      end
-
-  and compileForeach loc env {Data = Data as {ty,...}, Pred, Iterator} =
-    let
-      val ForeachArray = 
-          RyU.InstVar {exVarInfo = U.FOREACH_ForeachArray_exInfo (),
-                       instTy = RyU.ArrayElemTy ty}
-      in
-        #exp (RyU.ApplyList loc ForeachArray [Data, Iterator, Pred])
-      end
-
-  and compileForeachData 
-        loc env
-        {Data = Data as {ty=DataTy,...}, 
-         WhereParam = WhereParam as {ty=WhereParamTy, ...},
-         Pred, Iterator} =
-    let
-      val paramFields = RyU.RecordTyFields WhereParamTy
-(*
-      val paraTy = 
-          case List.find (fn (s,ty) => s = "default") paramFields of
-            SOME (l,ty) => ty
-          | NONE => raise Bug.Bug "compileForeachData: default field not found"
-      val sizeTy =
-          case List.find (fn (s,ty) => s = "size") paramFields of
-            SOME (s, ty) => ty
-          | NONE => raise Bug.Bug "compileForeachData: default field not found"
-      val {argTy = seqTy, bodyTy=_} = RyU.FunArgBodyTy sizeTy
-*)
-      val {argTy=seqTy, bodyTy=paraTy} =
-          case List.find (fn (s,ty) => s = "initialize") paramFields of
-            SOME (s, ty) => RyU.FunArgBodyTy (#bodyTy (RyU.FunArgBodyTy ty))
-          | NONE => raise Bug.Bug "compileForeachData: initialize field not found"
-      val ForeachData = 
-          RyU.InstListVar {exVarInfo = U.FOREACH_ForeachData_exInfo (),
-                           instTyList = [seqTy, paraTy]}
-      in
-        #exp (RyU.ApplyList loc ForeachData [WhereParam, Data, Iterator, Pred])
       end
 
   and compileExp env rcexp =
@@ -503,8 +405,6 @@ struct
         R.RCTAGOF (ty, loc)
       | R.RCSIZEOF (ty, loc) =>
         R.RCSIZEOF (ty, loc)
-      | R.RCTYPEOF (ty, loc) =>
-        R.RCTYPEOF (ty, loc)
       | R.RCREIFYTY (ty, loc) =>
         R.RCREIFYTY (ty, loc)
       | R.RCINDEXOF (label, recordTy, loc) =>
@@ -552,7 +452,8 @@ struct
           exception Fallback
           fun monolet {binds=nil, bodyExp, loc} = bodyExp
             | monolet x = R.RCMONOLET x
-          fun explodeTuple (R.RCCONSTANT {const=A.UNITCONST _,...}) = []
+          fun explodeTuple (R.RCCONSTANT {const=R.CONST A.UNITCONST,...}) =
+              []
             | explodeTuple (x as R.RCRECORD {fields, ...}) =
               if RecordLabel.isTupleMap fields
               then RecordLabel.Map.listItems fields
@@ -652,6 +553,20 @@ struct
            defaultExp = compileExp env defaultExp,
            resultTy = resultTy,
            loc = loc}
+      | R.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+        R.RCCATCH
+          {catchLabel = catchLabel,
+           argVarList = argVarList,
+           catchExp = compileExp env catchExp,
+           tryExp = compileExp env tryExp,
+           resultTy = resultTy,
+           loc = loc}
+      | R.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+        R.RCTHROW
+          {catchLabel = catchLabel,
+           argExpList = map (compileExp env) argExpList,
+           resultTy = resultTy,
+           loc = loc}
       | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
         R.RCFNM
           {argVarList = argVarList,
@@ -682,39 +597,108 @@ struct
           {expList = map (compileExp env) expList,
            expTyList = expTyList,
            loc = loc}
-      | R.RCFOREACH {data, dataTy, pred, predTy, iterator, iteratorTy, loc} =>
-        compileForeach 
-          loc env 
-          {Data = {exp = compileExp env data, ty= dataTy},
-           Iterator = {exp = compileExp env iterator, ty=iteratorTy},
-           Pred = {exp = compileExp env pred, ty=predTy}}
-      | R.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, pred, predTy, iterator, iteratorTy, loc} =>
-        compileForeachData
-          loc env 
-          {Data = {exp = compileExp env data, ty= dataTy},
-           WhereParam = {exp = compileExp env whereParam, ty = whereParamTy},
-           Iterator = {exp = compileExp env iterator, ty=iteratorTy},
-           Pred = {exp = compileExp env pred, ty=predTy}}
       | R.RCCAST ((rcexp, expTy), ty, loc) =>
         R.RCCAST ((compileExp env rcexp, expTy), ty, loc)
       | R.RCFFI (exp, ty, loc) =>
         compileFFIexp false loc env (exp, ty)
-      | R.RCJOIN {ty, args, argTys, loc} =>
+      | R.RCJOIN {isJoin, ty, args, argTys, loc} =>
+        if isJoin then
+          let
+            val Body = {exp = compileJoinExp isJoin
+                                loc env
+                                {resultTy=ty, args=args, argTys=argTys}, 
+                        ty = ty}
+            val exnCon = TC.EXEXN (U.REIFY_exExnInfo_NaturalJoin ())
+          in
+            HandleAndReRaise loc exnCon Body
+          end
+        else
+          compileJoinExp isJoin
+                         loc env
+                         {resultTy=ty, args=args, argTys=argTys}
+      | R.RCDYNAMIC {exp,ty,elemTy, coerceTy,loc} =>
         let
-          val Body = {exp = compileJoinExp 
-                              loc env
-                              {resultTy=ty, args=args, argTys=argTys}, 
-                      ty = ty}
-          val exnCon = TC.EXEXN (U.REIFY_NaturalJoin_exExnInfo ())
+          fun TypeOf loc ty = {exp = R.RCREIFYTY (ty, loc), 
+                               ty = RyD.TyRepTy()}
+          val exnCon = TC.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError ())
+          val Body =
+              RyU.Apply
+                loc
+                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_coerceTermGeneric (), 
+                                  instTyList = [elemTy, coerceTy]})
+                (RyU.Pair loc {exp=exp,ty=ty} (TypeOf loc coerceTy))
         in
           HandleAndReRaise loc exnCon Body
         end
-      | R.RCJSON {exp,ty,coerceTy,loc} =>
+      | R.RCDYNAMICIS {exp,ty,elemTy, coerceTy,loc} =>
         let
-          val Body = compileJson loc env ({exp = exp, ty=ty}, coerceTy)
-          val exnCon = TC.EXEXN (U.JSON_RuntimeTypeError_exExnInfo ())
+          fun TypeOf loc ty = {exp = R.RCREIFYTY (ty, loc), 
+                               ty = RyD.TyRepTy()}
+          val exnCon = TC.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError ())
+          val Body =
+              RyU.Apply
+                loc
+                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_checkTermGeneric (), 
+                                  instTyList = [elemTy]})
+                (RyU.Pair loc {exp=exp,ty=ty} (TypeOf loc coerceTy))
         in
           HandleAndReRaise loc exnCon Body
+        end
+      | R.RCDYNAMICVIEW {exp, ty, elemTy, coerceTy,loc} =>
+        let
+          fun TypeOf loc ty = {exp = R.RCREIFYTY (ty, loc), 
+                               ty = RyD.TyRepTy()}
+          val exnCon = TC.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError ())
+          val Body =
+              RyU.Apply
+                loc
+                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_viewTermGeneric (), 
+                                  instTyList = [elemTy, coerceTy]})
+                (RyU.Pair loc {exp=exp,ty=ty} (TypeOf loc coerceTy))
+        in
+          HandleAndReRaise loc exnCon Body
+        end
+      | R.RCDYNAMICNULL {ty, coerceTy, loc} =>
+        let
+          fun TypeOf loc ty = {exp = R.RCREIFYTY (ty, loc), 
+                               ty = RyD.TyRepTy()}
+          val {exp,...} =
+              RyU.Apply
+                loc
+                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_null (), 
+                                  instTyList = [ty]})
+                (TypeOf loc ty)
+        in
+          exp
+        end
+      | R.RCDYNAMICTOP {ty, coerceTy, loc} =>
+        let
+          fun TypeOf loc ty = {exp = R.RCREIFYTY (ty, loc), 
+                               ty = RyD.TyRepTy()}
+          val {exp,...} =
+              RyU.Apply
+                loc
+                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_void (), 
+                                  instTyList = [ty]})
+                (TypeOf loc ty)
+        in
+          exp
+        end
+      | R.RCDYNAMICCASE
+          {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} => 
+        let
+          val groupListTerm = compileExp env groupListTerm
+          val dynamicTerm = compileExp env dynamicTerm
+        in
+          #exp
+            (RyU.ApplyList
+               loc
+               (RyU.InstListVar 
+                  {exVarInfo = U.REIFY_exInfo_dynamicTypeCase (),
+                   instTyList = [elemTy, ruleBodyTy]})
+               [{exp=dynamicTerm, ty = dynamicTy}, {exp=groupListTerm, ty=groupListTy}]
+             handle exn => raise exn
+            )
         end
 
   and compileDecl rcdecl =
@@ -749,7 +733,7 @@ struct
       | R.RCBUILTINEXN exExnInfo =>
         R.RCBUILTINEXN exExnInfo
 
-  fun compile  topEnv decls =
+  fun compile decls =
       map compileDecl decls
 
 end

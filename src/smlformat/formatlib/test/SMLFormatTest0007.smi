@@ -1,0 +1,9 @@
+_require local "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
+_require local "../main/SMLFormat.smi"
+_require local "./SMLFormatTestUtil.smi"
+
+structure SMLFormatTest0007 =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

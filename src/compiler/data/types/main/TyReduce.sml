@@ -3,7 +3,7 @@ struct
 local
   structure T = Types
   structure TU = TypesBasics
-  structure P = TyPrinters
+  (* structure P = TyPrinters *)
   type ty = T.ty
   type varInfo = T.varInfo
   type longsymbol = Symbol.longsymbol
@@ -25,22 +25,17 @@ in
           {
            oprimId,
            longsymbol,
-           keyTyList : ty list,
-           match : T.overloadMatch,
-           instMap : T.overloadMatch OPrimInstMap.map
+           match : T.overloadMatch
           } =>
         T.INSTCODEty
           {
            oprimId=oprimId,
            longsymbol=longsymbol,
-           keyTyList = map (evalTy btvMap) keyTyList,
-           match = evalOverloadMatch btvMap match,
-           instMap = OPrimInstMap.map (evalOverloadMatch btvMap) instMap
+           match = evalOverloadMatch btvMap match
           }
       | T.INDEXty (string, ty) => T.INDEXty (string, evalTy btvMap ty)
       | T.TAGty ty => T.TAGty (evalTy btvMap ty)
       | T.SIZEty ty => T.SIZEty (evalTy btvMap ty)
-      | T.TYPEty ty => T.TYPEty (evalTy btvMap ty)
       | T.REIFYty ty => T.REIFYty (evalTy btvMap ty)
   and evalOverloadMatch (btvMap:btvMap) (overloadMatch:T.overloadMatch) 
       : T.overloadMatch =
@@ -93,11 +88,10 @@ in
       | T.CONSTRUCTty
           {
            tyCon =
-           {id : T.typId,
+           {id,
             longsymbol : longsymbol,
-            iseq : bool,
+            admitsEq : bool,
             arity : int,
-            runtimeTy : BuiltinTypeNames.bty,
             conSet,
             conIDSet,
             extraArgs : ty list,
@@ -110,9 +104,8 @@ in
            tyCon =
            {id = id,
             longsymbol = longsymbol,
-            iseq = iseq,
+            admitsEq = admitsEq,
             arity = arity,
-            runtimeTy = runtimeTy,
             conSet = conSet,
             conIDSet = conIDSet,
             extraArgs = map (evalTy btvMap) extraArgs,
@@ -128,14 +121,7 @@ in
           } =>
         let
           val boundtvars = evalBtvEnv btvMap boundtvars
-          val constraints = List.map
-                                (fn c =>
-                                    case c of T.JOIN {res, args = (arg1, arg2), loc} =>
-                                      T.JOIN
-                                          {res = evalTy btvMap res,
-                                           args = (evalTy btvMap arg1,
-                                                   evalTy btvMap arg2), loc=loc})
-                                constraints
+          val constraints = List.map (evalConstraint btvMap) constraints
         in
           T.POLYty
             {
@@ -144,14 +130,17 @@ in
              body =  evalTy btvMap body
             }
         end
+  and evalConstraint btvMap (T.JOIN {res, args = (arg1, arg2), loc}) =
+      T.JOIN {res = evalTy btvMap res,
+              args = (evalTy btvMap arg1, evalTy btvMap arg2),
+              loc=loc}
   and evalBtvEnv (btvMap:btvMap) (btvEnv:T.btvEnv) =
       BoundTypeVarID.Map.map (evalKind btvMap) btvEnv
-  and evalKind (btvMap:btvMap) (T.KIND {tvarKind, eqKind, dynKind, reifyKind, subkind}) =
+  and evalKind (btvMap:btvMap) (T.KIND {tvarKind, properties, dynamicKind}) =
       T.KIND {tvarKind=evalTvarKind btvMap tvarKind,
-              eqKind=eqKind,
-              subkind=subkind,
-              dynKind=dynKind,
-              reifyKind=reifyKind}
+              properties = properties,
+              dynamicKind = dynamicKind
+             }
   and evalTvarKind btvMap tvarKind =
       case tvarKind of
         T.OCONSTkind tyList =>
@@ -162,43 +151,38 @@ in
            {
             oprimId : OPrimID.id,
             longsymbol : longsymbol,
-            keyTyList : ty list,
-            match : T.overloadMatch,
-            instMap : T.overloadMatch OPrimInstMap.map
+            match : T.overloadMatch
            } list
           } =>
         T.OPRIMkind
           {instances = map (evalTy btvMap) instances,
            operators =
            map
-             (fn {oprimId, longsymbol, keyTyList, match, instMap} =>
+             (fn {oprimId, longsymbol, match} =>
                  {oprimId=oprimId,
                   longsymbol=longsymbol,
-                  keyTyList = map (evalTy btvMap) keyTyList,
-                  match = evalOverloadMatch btvMap match,
-                  instMap = OPrimInstMap.map (evalOverloadMatch btvMap) instMap}
+                  match = evalOverloadMatch btvMap match}
              )
              operators
           }
       | T.UNIV => T.UNIV
-      | T.BOXED => T.BOXED
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map (evalTy btvMap) fields)
   and evalDtyKind btvMap dtyKind =
       case dtyKind of
-        T.DTY => dtyKind
-      | T.OPAQUE {opaqueRep:T.opaqueRep, revealKey:T.revealKey} =>
+        T.DTY _ => dtyKind
+      | T.OPAQUE {opaqueRep:T.opaqueRep, revealKey} =>
         T.OPAQUE {opaqueRep = evalOpaqueRep btvMap opaqueRep,
                   revealKey=revealKey}
-      | T.BUILTIN bty => dtyKind
+      | T.INTERFACE opaqueRep =>
+        T.INTERFACE (evalOpaqueRep btvMap opaqueRep)
   and evalOpaqueRep btvMap opaueRep =
       case opaueRep of
         T.TYCON
-          {id : T.typId,
+          {id,
            longsymbol : longsymbol,
-           iseq : bool,
+           admitsEq : bool,
            arity : int,
-           runtimeTy : BuiltinTypeNames.bty,
            conSet,
            conIDSet,
            extraArgs : ty list,
@@ -207,16 +191,15 @@ in
         T.TYCON
           {id = id,
            longsymbol = longsymbol,
-           iseq = iseq,
+           admitsEq = admitsEq,
            arity = arity,
-           runtimeTy = runtimeTy,
            conSet = conSet,
            conIDSet = conIDSet,
            extraArgs = map (evalTy btvMap) extraArgs,
            dtyKind = evalDtyKind btvMap dtyKind
           }
-      | T.TFUNDEF {iseq, arity, polyTy} =>
-        T.TFUNDEF {iseq=iseq,
+      | T.TFUNDEF {admitsEq, arity, polyTy} =>
+        T.TFUNDEF {admitsEq=admitsEq,
                    arity=arity,
                    polyTy = evalTy btvMap polyTy}
 

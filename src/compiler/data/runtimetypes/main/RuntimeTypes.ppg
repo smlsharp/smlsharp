@@ -7,101 +7,314 @@
 structure RuntimeTypes =
 struct
 
+  fun iftrue (x, y) true = x
+    | iftrue (x, y) false = y
+  fun ifsome (x, y) (SOME _) = x
+    | ifsome (x, y) NONE = y
+  fun ifcons (x, y) (_::_) = x
+    | ifcons (x, y) nil = y
+
+  (*% *)
+  datatype tagged_layout =
+      (*% @format({tagMap:int map}) "RECORD(" { map(int)(","d) ")" } *)
+      TAGGED_RECORD of {tagMap: string list}
+    | (*% @format({tagMap:int map, nullName})
+       *  "OR_NULL(" { "null:" nullName "," d map(int)(","d) ")" } *)
+      TAGGED_OR_NULL of {tagMap: string list, nullName: string}
+    | (*% @format({tagMap:int map}) "TAGONLY(" { map(int)(","d) ")" } *)
+      TAGGED_TAGONLY of {tagMap: string list}
+
+  (*% *)
+  datatype layout =
+      (*% @format(x) "TAGGED_" x *)
+      LAYOUT_TAGGED of tagged_layout
+    | (*% @format({wrap}) "ARG_OR_NULL(wrap=" wrap ")" *)
+      LAYOUT_ARG_OR_NULL of {wrap: bool}
+    | (*% @format({wrap}) "SINGLE_ARG(wrap=" wrap ")" *)
+      LAYOUT_SINGLE_ARG of {wrap: bool}
+    | (*% @format({falseName}) "CHOICE(false=" falseName ")" *)
+      LAYOUT_CHOICE of {falseName: string}
+    | (*% @format "SINGLE" *)
+      LAYOUT_SINGLE
+    | (*% @format "REF" *)
+      LAYOUT_REF
+
   (*% *)
   datatype tag =
-      TAG_BOXED
-    | TAG_UNBOXED
+      (*% @format "B" *)
+      BOXED
+    | (*% @format "U" *)
+      UNBOXED
+
+  (*% *)
+  datatype tag_prop =
+      (*% @format(x) x *)
+      TAG of tag
+    | (*% @format "*" *)
+      ANYTAG
+
+  (*% *)
+  type size = int ref
+  (* pointerSize is a ref and updated at the beginning of the compiler
+   * toplevel.  To give sizes a uniform type, we choose "int ref" for
+   * the implementation of the size type. *)
+
+  val size1 = ref 1
+  val size2 = ref 2
+  val size4 = ref 4
+  val size8 = ref 8
+  val pointerSize = ref ~1 (* available only during compilation *)
+  val maxSize = ref 8
+
+  fun getSize (ref n) =
+      if n >= 0 then n
+      else raise Bug.Bug "pointer size of target machine is not initialized. \
+                         \It is available only during compilation, and perhaps \
+                         \it is not what you really want.  To obtain the \
+                         \pointer size of the current code, use _sizeof(boxed) \
+                         \expression."
+
+  fun init {pointerSize = n} =
+      pointerSize := n
+
+  fun uninit () =
+      pointerSize := ~1
+
+  (*% *)
+  datatype size_prop =
+      (*% @format(x) x *)
+      SIZE of size
+    | (*% @format "*" *)
+      ANYSIZE
+
+  (*% *)
+  datatype signed =
+      (*% @format "i" *)
+      SIGNED
+    | (*% @format "w" *)
+      UNSIGNED
 
   (*%
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(option) SmlppgUtil.formatOptWithDefault
-   * @formatter(optional) TermFormat.formatOptionalOption
+   * @formatter(iftrue) iftrue
+   * @formatter(ifsome) ifsome
+   * @formatter(ifcons) ifcons
    *)
-  datatype ty =
-      (*% @format "unit" *)
-      (* The empty tuple type.
-       *
-       * Unlike Standard ML, SML# distinguishes unit type from empty record
-       * type.  The former is one of builtin atomic type, but the latter is
-       * a record type with record kind.  In low-level representation, a
-       * unit value is an integer 0, but an empty record is either a null
-       * pointer or heap-allocated object with 0-byte payload.
-       *
-       * Even in backend phases, we distinguish UNITty from other types
-       * in order to compile unit values to "no value" as much as possible.
-       * In ML, unit is usually used as a placeholder denoting no argument
-       * or no return value.  Low level code relevant to such functions
-       * does not need to actually create and pass unit values.  In this
-       * sense, UNITty has different low-level representation from other
-       * types.
-       * 
-       * SML# compiler backend does not generate code that stores a unit
-       * value in any register except for the following two cases that
-       * needs a unit as a first-class value: storing a unit value to
-       * memory, and passing unit values between a call instruction in
-       * "generic" calling convention.
-       *)
-      UNITty
-    | (*% @format "int8" *)
-      INT8ty
-    | (*% @format "int16" *)
-      INT16ty
-    | (*% @format "int32" *)
-      INT32ty
-    | (*% @format "int64" *)
-      INT64ty
-    | (*% @format "uint8" *)
-      UINT8ty
-    | (*% @format "uint16" *)
-      UINT16ty
-    | (*% @format "uint32" *)
-      UINT32ty
-    | (*% @format "uint64" *)
-      UINT64ty
-    | (*% @format "double" *)
-      DOUBLEty      (* 64-bit double precision floating-point *)
-    | (*% @format "float" *)
-      FLOATty       (* 32-bit single precision floating-point *)
-    | (*% @format "boxed" *)
-      BOXEDty       (* heap object pointer *)
-    | (*% @format "ptr" *)
-      POINTERty     (* void * *)
-    | (*% @format "codeptr" *)
-      SOME_CODEPTRty  (* pointers to some code *)
-    | (*% @format({haveClsEnv, argTys: argTy argTys, retTy: retTy retTyOpt})
-       * retTyOpt(retTy)("void")
-       * "(" haveClsEnv()("@,",) argTys(argTy)(",") ")*" *)
-      (* pointers to function entries generated by SML# compiler *)
-      MLCODEPTRty of
-      {
-        haveClsEnv: bool,
-        argTys: ty list,
-        retTy: ty option
-      }
-    | (*% @format({argTys: argTy argTys, varArgTys: varTy varTys varOpt,
+  datatype rep =
+      (*% @format(x) x *)
+      INT of signed   (* integer *)
+    | (*% @format "f" *)
+      FLOAT           (* floating-point number *)
+    | (*% @format "p" *)
+      PTR             (* non-null pointer to an ML object *)
+    | (*% @format "q" *)
+      CPTR            (* C pointer *)
+    | (*% @format(x) x *)
+      CODEPTR of code (* pointer to code *)
+    | (*% @format(x) !N0{ "d[" x "]" } *)
+      DATA of layout  (* datatype *)
+    | (*% @format "*" *)
+      BINARY          (* top: arbitrary pointer (BOXED) or binary (UNBOXED) *)
+
+  and code =
+      (*% @format "c" *)
+      SOMECODE   (* pointer to some code *)
+    | (*%
+       * @format({argTys: argTy argTys, varArgTys: varTy varTys varOpt,
        *           retTy: retTy retTyOpt, attributes})
-       * retTyOpt(retTy)("void")
-       * "(" argTys(argTy)(",")
-       *     varOpt:optional(varTys(varTy)(","))(",...(",")") ")"
+       * !N0{ "f["
+       *   retTyOpt:ifsome()(retTyOpt(retTy), "v")
+       *   "("
+       *   argTys(argTy)(",")
+       *   varOpt:ifsome()("...(" varOpt(varTys(varTy)(",")) ")",)
+       *   ")"
+       * "]" }
        *)
-      FOREIGNCODEPTRty of
+      FOREIGN of (* pointers to C functions *)
       {
         argTys: ty list,
         varArgTys: ty list option,
         retTy: ty option,
         attributes: FFIAttributes.attributes
       }
-    | (*% @format({haveClsEnv, argTys: argTy argTys,
-       *           retTy: retTy retTyOpt, attributes})
-       * retTyOpt(retTy)("void")
-       * "(" haveClsEnv()("@,",) argTys(argTy)(",") ")"
+    | (*%
+       * @format({haveClsEnv, argTys: argTy argTys, retTy})
+       * !N0{ "m["
+       *   retTy
+       *   "("
+       *   haveClsEnv:iftrue()("@" argTys:ifcons()(",",),)
+       *   argTys(argTy)(",")
+       *   ")"
+       * "]" }
        *)
-      CALLBACKCODEPTRty of
+      FN of (* pointers to ML function entries *)
       {
-        haveClsEnv: bool, 
+        haveClsEnv: bool,
+        argTys: ty list,
+        retTy: ty
+      }
+    | (*%
+       * @format({haveClsEnv, argTys: argTy argTys,
+       *           retTy: retTy retTyOpt, attributes})
+       * !N0{ "b["
+       *   retTyOpt:ifsome()(retTyOpt(retTy), "v")
+       *   "("
+       *   haveClsEnv:iftrue()("@" argTys:ifcons()(",",),)
+       *   argTys(argTy)(",")
+       *   ")"
+       * "]" }
+       *)
+      CALLBACK of (* pointers to ML callback function entries *)
+      {
+        haveClsEnv: bool,
         argTys: ty list,
         retTy: ty option,
         attributes: FFIAttributes.attributes
       }
+
+  withtype ty =
+      (*% @format({tag, size, rep}) tag size rep *)
+      {tag : tag, size : size, rep : rep}
+
+  (*% *)
+  type property =
+      (*% @format({tag, size, rep}) tag size rep *)
+      {tag : tag_prop, size : size_prop, rep : rep}
+
+  val SINT = INT SIGNED
+  val UINT = INT UNSIGNED
+
+  val recordTy =
+      {tag = BOXED, size = pointerSize, rep = PTR}
+  val boxedTy =
+      {tag = BOXED, size = pointerSize, rep = BINARY}
+  val ptrTy =
+      {tag = UNBOXED, size = pointerSize, rep = CPTR}
+  val contagTy =
+      {tag = UNBOXED, size = size4, rep = BINARY}
+  val int8Ty =
+      {tag = UNBOXED, size = size1, rep = SINT}
+  val int16Ty =
+      {tag = UNBOXED, size = size2, rep = SINT}
+  val int32Ty =
+      {tag = UNBOXED, size = size4, rep = SINT}
+  val int64Ty =
+      {tag = UNBOXED, size = size8, rep = SINT}
+  val word8Ty =
+      {tag = UNBOXED, size = size1, rep = UINT}
+  val word16Ty =
+      {tag = UNBOXED, size = size2, rep = UINT}
+  val word32Ty =
+      {tag = UNBOXED, size = size4, rep = UINT}
+  val word64Ty =
+      {tag = UNBOXED, size = size8, rep = UINT}
+  val uintptrTy =
+      {tag = UNBOXED, size = pointerSize, rep = UINT}
+  val real32Ty =
+      {tag = UNBOXED, size = size4, rep = FLOAT}
+  val real64Ty =
+      {tag = UNBOXED, size = size8, rep = FLOAT}
+  val codeptrTy =
+      {tag = UNBOXED, size = pointerSize, rep = CODEPTR SOMECODE}
+  val unitTy =
+      {tag = UNBOXED, size = size4, rep = DATA LAYOUT_SINGLE}
+  val anyProp =
+      {tag = ANYTAG, size = ANYSIZE, rep = BINARY}
+
+  fun tyToProp {tag, size, rep} =
+      {tag = TAG tag, size = SIZE size, rep = rep}
+
+  val recordProp = tyToProp recordTy
+  val boxedProp = tyToProp boxedTy
+  val ptrProp = tyToProp ptrTy
+  val contagProp = tyToProp contagTy
+  val int8Prop = tyToProp int8Ty
+  val int16Prop = tyToProp int16Ty
+  val int32Prop = tyToProp int32Ty
+  val int64Prop = tyToProp int64Ty
+  val word8Prop = tyToProp word8Ty
+  val word16Prop = tyToProp word16Ty
+  val word32Prop = tyToProp word32Ty
+  val word64Prop = tyToProp word64Ty
+  val uintptrProp = tyToProp uintptrTy
+  val real32Prop = tyToProp real32Ty
+  val real64Prop = tyToProp real64Ty
+  val codeptrProp = tyToProp codeptrTy
+  val unitProp = tyToProp unitTy
+
+  fun lubTag (ANYTAG, x) = ANYTAG
+    | lubTag (x, ANYTAG) = ANYTAG
+    | lubTag (x as TAG _, y as TAG _) = if x = y then x else ANYTAG
+  fun lubSize (ANYSIZE, x) = ANYSIZE
+    | lubSize (x, ANYSIZE) = ANYSIZE
+    | lubSize (x as SIZE s1, y as SIZE s2) = if x = y then x else ANYSIZE
+  fun lubRep (BINARY, x) = BINARY
+    | lubRep (x, BINARY) = BINARY
+    | lubRep (x, y) = if x = y then x else BINARY
+  fun lub ({tag=t1, size=s1, rep=r1}, {tag=t2, size=s2, rep=r2}) =
+      {tag = lubTag (t1, t2), size = lubSize (s1, s2), rep = lubRep (r1, r2)}
+
+  (*
+   * For safety, nul pointers must be strictly distinguished.
+   * Subsuming non-null pointers as nullable pointers may cause a subtle
+   * problem.  For example, Consider the following:
+   *
+   * A.sml:
+   *   type t = int * int         (* t is never null *)
+   *   datatype s = X of t | Y    (* Y is null safely without wrapping t *)
+   *   val x = X (0, 0)
+   *   fun f (x, y) = x + y
+   *
+   * A.smi:
+   *   type t (= boxed)           (* t may be null *)
+   *   datatype s = X of t | Y    (* Y is null and hence X wraps t *)
+   *   val x : s
+   *   val f : t -> int
+   *
+   * B.sml:
+   *   case x of X y => f y | Y => 0
+   *
+   * B.smi:
+   *   _require "A.smi"
+   *
+   * In A.sml, since the compiler knows that t's value is never null,
+   * the layout of datatype s is determined as LAYOUT_ARG_OR_NULL {wrap=false}.
+   * Therefore, x is a pointer to (0, 0).
+   *
+   * From the outside of A.sml, since A.smi claims that type t may be null.
+   * Hence, in B.sml, the layout of type s is LAYOUT_ARG_OR_NULL {wrap=true}.
+   * Namely, x is a pointer to a pointer to t.
+   * The pattern match "X y" is eventually compiled to two sequential
+   * pointer dereferences.
+   *
+   * At runtime, A.sml sets a pointer to (0, 0) to x and then B.sml attempts
+   * to dereference x twice.  Consequently, the second pointer dereference
+   * causes segmentation fault since it attempts to access the address 0.
+   *)
+  fun canBeRegardedAs ({tag=t1, size=s1, rep=r1}:property,
+                       {tag=t2, size=s2, rep=r2}:property) =
+      t1 = t2 andalso s1 = s2 andalso
+      case (t1, r1, r2) of
+      (*
+       * For convenience, all DATAs except for LAYOUT_REF are considered
+       * nullable pointers so that the user can declare opaque datatypes
+       * without specific knowledge about compiler implementation.
+       * Hence, DATAs are regarded as nullable regardless of actual
+       * nullability.  For example, LAYOUT_TAGGED is never null but
+       * considered nullable.
+       *
+       * To avoid the issue mentioned above, we distinguish non-null pointers
+       * from nullable pointers.
+       * Thus, we do not have the rule (BOXED, PTR, BINARY) => true.
+       *)
+        (TAG BOXED, DATA LAYOUT_REF, PTR) => true
+      | (TAG BOXED, DATA _, BINARY) => true
+      (*
+       * For unboxed data, BINARY subsumes other representations.
+       *)
+      | (TAG UNBOXED, _, BINARY) => true
+      (*
+       * Otherwise, two representations must be equal.
+       *)
+      | (_, r1, r2) => r1 = r2
 
 end

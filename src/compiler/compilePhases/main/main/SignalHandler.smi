@@ -1,0 +1,15 @@
+_require local "../../../../basis.smi"
+_require local "../../../../basis/main/SMLSharp_Runtime.smi"
+
+structure SignalHandler =
+struct
+  datatype signal =
+      SIGINT
+    | SIGHUP
+    | SIGPIPE
+    | SIGALRM
+    | SIGTERM
+  exception Signal of signal list
+  val init : unit -> unit
+  val stop : unit -> unit
+end

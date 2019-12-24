@@ -10,7 +10,7 @@ local
 
   val print = fn s => if !Bug.printInfo then print s else ()
   fun printRcexp rcexp = 
-      print (Bug.prettyPrint (RC.format_rcexp nil rcexp))
+      print (Bug.prettyPrint (RC.format_rcexp rcexp))
 
   exception DuplicateVar
   exception DuplicateBtv
@@ -28,8 +28,11 @@ local
   val emptyBtvMap = BoundTypeVarID.Map.empty
   type varMap = VarID.id VarID.Map.map
   val emptyVarMap = VarID.Map.empty
-  type context = {varMap:varMap, btvMap:btvMap}
-  val emptyContext = {varMap=emptyVarMap, btvMap=emptyBtvMap}
+  type catchMap = FunLocalLabel.id FunLocalLabel.Map.map
+  val emptyCatchMap = FunLocalLabel.Map.empty
+  type context = {varMap:varMap, btvMap:btvMap, catchMap:catchMap}
+  val emptyContext = {varMap=emptyVarMap, btvMap=emptyBtvMap,
+                      catchMap=emptyCatchMap}
 
   fun copyTy (context:context) (ty:ty) = 
       TyAlphaRename.copyTy (#btvMap context) ty
@@ -39,12 +42,12 @@ local
               P.print "\n";
               raise exn
              )
-  fun newBtvEnv ({varMap, btvMap}:context) (btvEnv:btvEnv) =
+  fun newBtvEnv ({varMap, btvMap, catchMap}:context) (btvEnv:btvEnv) =
       let
         val (btvMap, btvEnv) = 
             TyAlphaRename.newBtvEnv btvMap btvEnv
       in
-        ({btvMap=btvMap, varMap=varMap}, btvEnv)
+        ({btvMap=btvMap, varMap=varMap, catchMap=catchMap}, btvEnv)
       end
   fun copyExVarInfo context {path:path, ty:ty} =
       {path=path, ty=copyTy context ty}
@@ -85,7 +88,7 @@ local
 
   type varInfo = {path:path, id:VarID.id, ty:ty}
   (* alpha-rename terms *)
-  fun newId ({varMap, btvMap}:context) id =
+  fun newId ({varMap, btvMap, catchMap}:context) id =
       let
         val newId = VarID.generate()
         val _ = addSubst (id, newId)
@@ -94,7 +97,7 @@ local
               (fn _ => raise DuplicateVar)
               (varMap, id, newId)
       in
-        ({varMap=varMap, btvMap=btvMap}, newId)
+        ({varMap=varMap, btvMap=btvMap, catchMap=catchMap}, newId)
       end
   fun newVar (context:context) ({path, id, ty}:varInfo) =
       let
@@ -125,8 +128,15 @@ local
       in
         (context, List.rev varsRev)
       end
+  fun newCatch ({varMap, btvMap, catchMap}:context) label =
+      let
+        val newId = FunLocalLabel.derive label
+        val catchMap = FunLocalLabel.Map.insert (catchMap, label, newId)
+      in
+        ({varMap=varMap, btvMap=btvMap, catchMap=catchMap}, newId)
+      end
 
-  fun evalVar (context as {varMap, btvMap}:context) ({path, id, ty}:varInfo) =
+  fun evalVar (context as {varMap, ...}:context) ({path, id, ty}:varInfo) =
       let
         val ty = copyTy context ty
         val id =
@@ -277,6 +287,29 @@ local
                resultTy= copyT resultTy,
                loc=loc}
           end
+        | RC.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy,
+                      loc} =>
+          let
+            val (context, argVarList) = newVars context argVarList
+            val (context2, catchLabel) = newCatch context catchLabel
+          in
+            RC.RCCATCH
+              {catchLabel = catchLabel,
+               argVarList = argVarList,
+               catchExp = copyExp context catchExp,
+               tryExp = copyExp context2 tryExp,
+               resultTy = copyT resultTy,
+               loc = loc}
+          end
+        | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+          RC.RCTHROW
+            {catchLabel =
+               case FunLocalLabel.Map.find (#catchMap context, catchLabel) of
+                 SOME label => label
+               | NONE => catchLabel,
+             argExpList = map (copyExp context) argExpList,
+             resultTy = copyT resultTy,
+             loc = loc}
         | RC.RCINDEXOF (string, ty, loc) =>
           RC.RCINDEXOF (string, copyT ty, loc)
         | RC.RCLET {body:rcexp list, decls, loc, tys} =>
@@ -372,30 +405,8 @@ local
              expTyList = map copyT expTyList,
              loc = loc
             }
-        | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
-          RC.RCFOREACH 
-            {data = copy data, 
-             dataTy = copyT dataTy,
-             iterator = copy iterator, 
-             iteratorTy = copyT iteratorTy, 
-             pred = copy pred, 
-             predTy = copyT predTy, 
-             loc = loc}
-        | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
-          RC.RCFOREACHDATA
-            {data = copy data, 
-             dataTy = copyT dataTy,
-             whereParam = copy whereParam, 
-             whereParamTy = copyT whereParamTy, 
-             iterator = copy iterator, 
-             iteratorTy = copyT iteratorTy, 
-             pred = copy pred, 
-             predTy = copyT predTy, 
-             loc = loc}
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (copyT ty, loc)
-        | RC.RCTYPEOF (ty, loc) =>
-          RC.RCTYPEOF (copyT ty, loc)
         | RC.RCREIFYTY (ty, loc) =>
           RC.RCREIFYTY (copyT ty, loc)
         | RC.RCSWITCH {branches:(RC.constant * rcexp) list, defaultExp:rcexp,
@@ -418,16 +429,57 @@ local
                     }
         | RC.RCVAR varInfo =>
           RC.RCVAR (evalVar context varInfo)
-        | RC.RCJOIN {ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
+        | RC.RCJOIN {isJoin, ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
           RC.RCJOIN {ty=copyT ty,
                      args=(copy arg1,copy arg2),
                      argTys=(copyT argTy1,copyT argTy2),
+                     isJoin = isJoin,
                      loc=loc}
-        | RC.RCJSON {exp,ty,coerceTy,loc} =>
-          RC.RCJSON {exp=copy exp,
-                     ty=copyT ty,
-                     coerceTy=copyT coerceTy,
-                     loc=loc}
+        | RC.RCDYNAMIC {exp,ty,elemTy, coerceTy,loc} =>
+          RC.RCDYNAMIC {exp=copy exp,
+                        ty=copyT ty,
+                        elemTy = copyT elemTy,
+                        coerceTy=copyT coerceTy,
+                        loc=loc}
+        | RC.RCDYNAMICIS {exp,ty,elemTy, coerceTy,loc} =>
+          RC.RCDYNAMICIS {exp=copy exp,
+                          ty=copyT ty,
+                          elemTy = copyT elemTy,
+                          coerceTy=copyT coerceTy,
+                          loc=loc}
+        | RC.RCDYNAMICNULL {ty, coerceTy,loc} =>
+          RC.RCDYNAMICNULL {ty=copyT ty,
+                            coerceTy=copyT coerceTy,
+                            loc=loc}
+        | RC.RCDYNAMICTOP {ty, coerceTy,loc} =>
+          RC.RCDYNAMICTOP {ty=copyT ty,
+                            coerceTy=copyT coerceTy,
+                            loc=loc}
+        | RC.RCDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} =>
+          RC.RCDYNAMICVIEW {exp=copy exp,
+                            ty=copyT ty,
+                            elemTy = copyT elemTy,
+                            coerceTy=copyT coerceTy,
+                            loc=loc}
+        | RC.RCDYNAMICCASE
+         {
+          groupListTerm, 
+          groupListTy, 
+          dynamicTerm, 
+          dynamicTy, 
+          elemTy, 
+          ruleBodyTy, 
+          loc} =>
+          RC.RCDYNAMICCASE
+            {
+             groupListTerm  = copy groupListTerm, 
+             groupListTy = copyT groupListTy,
+             dynamicTerm = copy dynamicTerm,
+             dynamicTy = copyT dynamicTy,
+             elemTy = copyT elemTy, 
+             ruleBodyTy = copyT ruleBodyTy, 
+             loc=loc
+            }
         )
           handle DuplicateBtv =>
                  raise bug "DuplicateBtv in copyExp copyExp"
@@ -439,7 +491,7 @@ local
       RC.RCFFIIMPORT
         {ffiTy = copyFfiTy context ffiTy,
          funExp= case funExp of
-                   RC.RCFFIFUN exp => RC.RCFFIFUN (copyExp context exp)
+                   RC.RCFFIFUN (exp, ty) => RC.RCFFIFUN (copyExp context exp, copyTy context ty)
                  | RC.RCFFIEXTERN _ => funExp}
   and copyDecl context tpdecl =
       case tpdecl of
@@ -465,17 +517,17 @@ local
         (context,
          RC.RCEXPORTVAR (evalVar context varInfo)
         )
-      | RC.RCEXTERNEXN {path, ty} =>
+      | RC.RCEXTERNEXN ({path, ty}, provider) =>
         (context,
-         RC.RCEXTERNEXN {path=path, ty=copyTy context ty}
+         RC.RCEXTERNEXN ({path=path, ty=copyTy context ty}, provider)
         )
       | RC.RCBUILTINEXN {path, ty} =>
         (context,
          RC.RCBUILTINEXN {path=path, ty=copyTy context ty}
         )
-      | RC.RCEXTERNVAR {path, ty} =>
+      | RC.RCEXTERNVAR ({path, ty}, provider) =>
         (context,
-         RC.RCEXTERNVAR {path=path, ty=copyTy context ty}
+         RC.RCEXTERNVAR ({path=path, ty=copyTy context ty}, provider)
         )
       | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>
         let
@@ -489,9 +541,9 @@ local
            loc) =>
         (
         let
-          val (newContext as {varMap, btvMap}, btvEnv) = newBtvEnv context btvEnv
+          val (newContext, btvEnv) = newBtvEnv context btvEnv
           val vars = map #var recbinds
-          val (newContext as {varMap, btvMap}, vars) = newVars newContext vars
+          val (newContext as {varMap, ...}, vars) = newVars newContext vars
           val varRecbindList = ListPair.zip (vars, recbinds)
           val recbinds =
               map
@@ -502,7 +554,7 @@ local
                 )
                 varRecbindList
         in
-          ({varMap=varMap, btvMap = #btvMap context},
+          ({varMap=varMap, btvMap = #btvMap context, catchMap = #catchMap context},
            RC.RCVALPOLYREC (btvEnv, recbinds, loc))
         end
           handle DuplicateBtv =>

@@ -1,0 +1,10 @@
+NODE {tests/data/loadfile/011_require2.smi INTERFACE}
+NODE {tests/data/loadfile/011_require3.smi INTERFACE}
+NODE {tests/data/loadfile/011_require.smi INTERFACE}
+ROOT {ROOT_SML USERPATH tests/data/loadfile/011_require.sml COMPILE
+ PROVIDE {USERPATH tests/data/loadfile/011_require.smi INTERFACE
+  70683002d2a87b9f
+  REQUIRE {USERPATH tests/data/loadfile/011_require2.smi INTERFACE
+   dbf9b64b92bbedc8}
+  REQUIRE {USERPATH tests/data/loadfile/011_require3.smi INTERFACE
+   b8b217009943e7b6}}}

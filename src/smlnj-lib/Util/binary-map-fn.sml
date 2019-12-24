@@ -623,14 +623,14 @@ in
 
     fun 'a subtractByKeyEquiv (elemEq: 'a * 'a -> bool) (a:'a map,b:'a map) = 
         mapPartial 
-          (fn (SOME a, _) => SOME a
+          (fn (SOME a, NONE) => SOME a
+            | (SOME a, SOME b) => NONE
             | (NOEN, _) => NONE)
         (difference elemEq (a,b))
 
     fun 'a subtractByKeyElemEquiv (elemEq: 'a * 'a -> bool) (a,b) = 
         mapPartial 
-          (fn (SOME a, NONE) => SOME a
-            | (SOME a, SOME b) => NONE
+          (fn (SOME a, _) => SOME a
             | (NOEN, _) => NONE)
         (difference elemEq (a,b))
 

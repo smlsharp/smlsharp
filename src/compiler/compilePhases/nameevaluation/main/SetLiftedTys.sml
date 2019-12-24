@@ -18,7 +18,7 @@ local
   structure I = IDCalc
   structure IV = NameEvalEnv
   structure TF = TfunVars
-  structure U = NameEvalUtils
+  (* structure U = NameEvalUtils *)
   structure SCC = SCCFun(TfvMap)
   fun dtysTy tfvKind (ty,set) =
       let
@@ -27,7 +27,8 @@ local
         case ty of
           I.TYWILD => set
         | I.TYVAR _ => set
-        | I.TYRECORD fields =>
+        | I.TYFREE_TYVAR _ => set
+        | I.TYRECORD {ifFlex, fields=fields} =>
           RecordLabel.Map.foldl
             (fn (ty, set) => dtys (ty, set))
             set
@@ -130,9 +131,9 @@ local
 
   fun liftedTysTfun (tfun, liftedTys) =
       case I.derefTfun tfun of
-        I.TFUN_DEF {longsymbol, iseq, formals=nil, realizerTy=I.TYVAR tvar} =>
+        I.TFUN_DEF {longsymbol, admitsEq, formals=nil, realizerTy=I.TYVAR tvar} =>
         TvarSet.add(liftedTys, tvar)
-      | I.TFUN_DEF {longsymbol, iseq, formals, realizerTy} => liftedTys
+      | I.TFUN_DEF {longsymbol, admitsEq, formals, realizerTy} => liftedTys
       | I.TFUN_VAR (ref tfunkind) => liftedTysTfunkind (tfunkind, liftedTys)
   and liftedTysTfunkind (tfunkind, liftedTys) =
       case tfunkind of
@@ -148,10 +149,11 @@ local
   and liftedTysTy (ty, liftedTys) =
       case ty of
         I.TYWILD => liftedTys
+      | I.TYFREE_TYVAR freeTvar =>liftedTys
       | I.TYVAR (tvar as {lifted,...}) =>
         if lifted then TvarSet.add(liftedTys, tvar)
         else liftedTys
-      | I.TYRECORD fields => 
+      | I.TYRECORD {ifFlex, fields=fields} => 
         RecordLabel.Map.foldl
           (fn (ty, liftedTys) => liftedTysTy (ty, liftedTys))
           liftedTys
@@ -189,18 +191,16 @@ local
         val liftedTys = foldr liftedTysConSpec I.emptyLiftedTys conSpecList
       in
         app
-          (fn (tfv as (ref (I.TFV_DTY{longsymbol, id, iseq, formals, conSpec,...}))) =>
-              tfv := I.TFV_DTY{longsymbol=longsymbol,id=id, iseq=iseq, formals=formals,
+          (fn (tfv as (ref (I.TFV_DTY{longsymbol, id, admitsEq, formals, conSpec,...}))) =>
+              tfv := I.TFV_DTY{longsymbol=longsymbol,id=id, admitsEq=admitsEq, formals=formals,
                                conSpec=conSpec, liftedTys=liftedTys}
-            |  (tfv as (ref (I.TFUN_DTY{id,iseq,formals,
+            |  (tfv as (ref (I.TFUN_DTY{id,admitsEq,formals,
                                         dtyKind,
-					runtimeTy,
                                         longsymbol,
                                         conIDSet,
                                         conSpec,...}))) =>
                tfv := I.TFUN_DTY{id=id,
-                                 iseq=iseq,
-				 runtimeTy=runtimeTy,
+                                 admitsEq=admitsEq,
                                  formals=formals,
                                  longsymbol=longsymbol,
                                  conSpec=conSpec,
@@ -219,24 +219,23 @@ local
         val freeTfvs = TF.tfvsEnv tfvKind nil (env, TfvMap.empty)
         val _ = 
             TfvMap.appi
-              (fn (tfv as (ref (I.TFV_DTY{longsymbol, id,iseq,formals,conSpec,...})),
+              (fn (tfv as (ref (I.TFV_DTY{longsymbol, id,admitsEq,formals,conSpec,...})),
                    path) =>
                    tfv := I.TFV_DTY{id=id,
                                     longsymbol=longsymbol,
-                                    iseq=iseq,
+                                    admitsEq=admitsEq,
                                     formals=formals,
                                     conSpec=conSpec,
                                     liftedTys=I.emptyLiftedTys}
-                |  (tfv as (ref (I.TFUN_DTY{id,iseq,runtimeTy, formals,
+                |  (tfv as (ref (I.TFUN_DTY{id,admitsEq,formals,
                                             dtyKind,longsymbol,conIDSet,
                                             conSpec,...})),path) =>
                    tfv := I.TFUN_DTY{id=id,
-                                     iseq=iseq,
+                                     admitsEq=admitsEq,
                                      formals=formals,
                                      conSpec=conSpec,
                                      conIDSet = conIDSet,
                                      longsymbol=longsymbol,
-				     runtimeTy=runtimeTy,
                                      dtyKind=dtyKind,
                                      liftedTys=I.emptyLiftedTys
                                     }

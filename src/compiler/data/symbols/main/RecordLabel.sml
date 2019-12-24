@@ -42,6 +42,13 @@ struct
         [SMLFormat.FormatExpression.Term (size s, s)]
       end
 
+  fun format_jsonLabel s =
+      let
+        val s = "\"" ^ s ^ "\""
+      in
+        [SMLFormat.FormatExpression.Term (size s, s)]
+      end
+
   (* match with ^[1-9][0-9]*($|_) *)
   fun numericPrefix s =
       let

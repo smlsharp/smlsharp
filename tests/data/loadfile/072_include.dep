@@ -1,0 +1,17 @@
+NODE {tests/data/loadfile/072_include5.smi INTERFACE}
+NODE {tests/data/loadfile/072_include6.smi INTERFACE}
+NODE {tests/data/loadfile/072_include3.smi INCLUDES}
+NODE {tests/data/loadfile/072_include4.smi INTERFACE}
+NODE {tests/data/loadfile/072_include2.smi INCLUDES}
+NODE {tests/data/loadfile/072_include.smi INTERFACE}
+ROOT {ROOT_SML USERPATH tests/data/loadfile/072_include.sml COMPILE
+ PROVIDE {USERPATH tests/data/loadfile/072_include.smi INTERFACE
+  003a14a1cd8340ec
+  REQUIRE {USERPATH tests/data/loadfile/072_include2.smi INCLUDES
+   INCLUDE {USERPATH tests/data/loadfile/072_include3.smi INCLUDES
+    INCLUDE {USERPATH tests/data/loadfile/072_include5.smi INTERFACE
+     59399d4206d2a063}
+    INCLUDE {USERPATH tests/data/loadfile/072_include6.smi INTERFACE
+     ac6859c386e27a43}}
+   INCLUDE {USERPATH tests/data/loadfile/072_include4.smi INTERFACE
+    e2e5a29e92c66bb1}}}}

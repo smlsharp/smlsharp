@@ -18,7 +18,8 @@ end =
 struct
   val mktempRetryCount = 5
   val tmpDir = ref NONE : Filename.filename option ref
-  val tmpFiles = ref nil : (Filename.filename * Filename.filename) list ref
+  datatype tmp_item = FILE | DIR 
+  val tmpFiles = ref nil : (tmp_item * Filename.filename) list ref
   val tmpFileCount = ref 0
 
   fun mktemp_d retry =
@@ -27,9 +28,10 @@ struct
       else
         let
           (*
-           * Basis Library specification says that OS.FileSys.tmpName creates
-           * a new file. tmpName of SML/NJ for UNIX doesn't create a file
-           * because it is implemented by tmpnam(3).
+           * Basis Library specification says that OS.FileSys.tmpName
+           * creates a new file.  However, on combination of UNIX and SML/NJ,
+           * OS.FileSys.tmpName does not create a file because it is
+           * implemented by tmpnam(3).
            *)
           val tmpname = OS.FileSys.tmpName ()
           val tmpname = Filename.fromString tmpname
@@ -37,7 +39,10 @@ struct
           (CoreUtils.rm_f tmpname;
            CoreUtils.mkdir tmpname;
            tmpname)
-          handle OS.SysErr _ => mktemp_d (retry - 1)
+          handle e as OS.SysErr (_, SOME n) =>
+                 if OS.errorName n = "exist"
+                 then mktemp_d (retry - 1)
+                 else raise e
         end
 
   fun tmpDirName () =
@@ -51,66 +56,50 @@ struct
           dirname
         end
 
-  fun split template =
+  fun freshName () =
       let
-        val ss = Substring.full template
-        val (base, suffix) = Substring.splitr (fn c => c <> #".") ss
-        val base = Substring.dropr (fn c => c = #".") base
-      in
-        (Substring.string base, Substring.string suffix)
-      end
-
-  fun makeFilename (dir, base, suffix, seqno) =
-      let
-        val num = StringCvt.padLeft #"0" 3 (Int.fmt StringCvt.DEC seqno)
-        val base = if base = "" then num else base ^ "-" ^ num
-        val filename = Filename.fromString base
-        val absname = Filename.concatPath (dir, filename)
-      in
-        if suffix = "" then absname else Filename.addSuffix (absname, suffix)
-      end
-
-  fun freshName template =
-      let
-        val dir = tmpDirName ()
-        val (base, suffix) = split template
-        fun loop () =
-            let
-              val filename = makeFilename (dir, base, suffix, !tmpFileCount)
-            in
-              if CoreUtils.testExist filename
-              then (tmpFileCount := !tmpFileCount + 1; loop ())
-              else filename
-            end
-      in
-        loop ()
+        val count = !tmpFileCount
+        val _ = tmpFileCount := !tmpFileCount + 1;
+        val s = Int.fmt StringCvt.DEC count
+      in 
+        if size s < 6
+        then StringCvt.padLeft #"0" 6 s
+        else s
       end
 
   fun create name =
       let
-        val d = StringCvt.padLeft #"0" 3 (Int.fmt StringCvt.DEC (!tmpFileCount))
-        val _ = tmpFileCount := !tmpFileCount + 1
-        val name = if name = "" orelse String.isPrefix "." name
-                   then "tmp_" ^ d ^ name
-                   else name
         val tmpDir = tmpDirName ()
-        val dir = Filename.concatPath (tmpDir, Filename.fromString d)
-        val _ = CoreUtils.mkdir dir
-        val tmpfile = Filename.concatPath (dir, Filename.fromString name)
-        val _ = tmpFiles := (dir, tmpfile) :: !tmpFiles
+        val tmpName = freshName ()
+        val filename =
+            if name = "" orelse String.isPrefix "." name then
+              Filename.concatPath (tmpDir, Filename.fromString (tmpName ^ name))
+            else
+              let
+                val tmpName = Filename.fromString tmpName
+                val tmpDir = Filename.concatPath (tmpDir, tmpName)
+              in
+                CoreUtils.mkdir tmpDir;
+                tmpFiles := (DIR, tmpDir) :: !tmpFiles;
+                Filename.concatPath (tmpDir, Filename.fromString name)
+              end
       in
-        CoreUtils.newFile tmpfile;
-        tmpfile
+        CoreUtils.newFile filename;
+        tmpFiles := (FILE, filename) :: !tmpFiles;
+        filename
       end
 
   fun cleanup () =
-      (
-        app (fn (dir, file) => (CoreUtils.rm_f file; CoreUtils.rmdir_f dir))
-            (rev (!tmpFiles));
+      let
+        fun loop nil = ()
+          | loop ((FILE, file) :: t) = (CoreUtils.rm_f file; loop t)
+          | loop ((DIR, dir) :: t) = (CoreUtils.rmdir_f dir; loop t)
+      in
+        loop (!tmpFiles);
         Option.map CoreUtils.rmdir_f (!tmpDir);
         tmpDir := NONE;
         tmpFiles := nil;
         tmpFileCount := 0
-      )
+      end
 
 end

@@ -1,0 +1,2 @@
+_require "basis.smi"
+(* val i8 : int8 *)  (* これを書くとtoo large constantエラーが出る *)

@@ -1,2 +1,2 @@
-_require "../../../basis.smi"
-_require "./Main.smi"
+_require local "../../../basis.smi"
+_require local "./Main.smi"

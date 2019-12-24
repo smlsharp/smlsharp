@@ -1,10 +1,10 @@
 _require "./General.smi"
 _require "./VectorSlice.smi"
-_use local "./ArraySlice_common.sml"
+_use local "./Slice_common.sml"
 
 structure ArraySlice =
 struct
-  type 'a slice (= boxed)
+  type 'a slice (= *)
   val length : 'a slice -> int
   val sub : 'a slice * int -> 'a
   val update : 'a slice * int * 'a -> unit

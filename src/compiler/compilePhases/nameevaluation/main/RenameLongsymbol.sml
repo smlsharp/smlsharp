@@ -8,18 +8,17 @@ struct
       case tfun of
         I.TFUN_VAR 
         (ref (I.TFUN_DTY 
-                {id=newId, iseq, longsymbol, formals, conSpec,
-                 conIDSet, runtimeTy, liftedTys, dtyKind })) =>
+                {id=newId, admitsEq, longsymbol, formals, conSpec,
+                 conIDSet, liftedTys, dtyKind })) =>
         let
           val newTfunkind = 
               ref (I.TFUN_DTY 
                      {id=newId,
-                      iseq=iseq,
+                      admitsEq=admitsEq,
                       longsymbol=newLongsymbol,
                       formals=formals,
                       conSpec=conSpec,
                       conIDSet=conIDSet,
-		      runtimeTy=runtimeTy,
                       liftedTys=liftedTys,
                       dtyKind=dtyKind
                      })
@@ -31,8 +30,11 @@ struct
                     I.TYWILD => ty
                   | I.TYERROR => ty
                   | I.TYVAR tvar => ty
-                  | I.TYRECORD tyLabelenvMap =>
-                    I.TYRECORD (RecordLabel.Map.map replaceTfunTy tyLabelenvMap)
+                  | I.TYFREE_TYVAR tvar => ty
+                  | I.TYRECORD {ifFlex, fields=tyLabelenvMap} =>
+                    I.TYRECORD 
+                      {ifFlex=ifFlex, 
+                       fields=RecordLabel.Map.map replaceTfunTy tyLabelenvMap}
                   | I.TYCONSTRUCT {tfun, args} =>
                     I.TYCONSTRUCT 
                       {tfun = if isSelf tfun then newTfun else tfun,
@@ -48,12 +50,11 @@ struct
               val _ = newTfunkind := 
                       I.TFUN_DTY 
                         {id=newId,
-                         iseq=iseq,
+                         admitsEq=admitsEq,
                          longsymbol=newLongsymbol,
                          formals=formals,
                          conSpec=newConSpec,
                          conIDSet=conIDSet,
-		         runtimeTy=runtimeTy,
                          liftedTys=liftedTys,
                          dtyKind=dtyKind
                         }
@@ -74,18 +75,17 @@ struct
       case tfun of
         I.TFUN_VAR 
         (ref (I.TFUN_DTY 
-                {id=newId, iseq, longsymbol, formals, conSpec,
-                 conIDSet, runtimeTy, liftedTys, dtyKind})) =>
+                {id=newId, admitsEq, longsymbol, formals, conSpec,
+                 conIDSet, liftedTys, dtyKind})) =>
         let
           val newTfunkind = 
               ref (I.TFUN_DTY 
                      {id=newId,
-                      iseq=iseq,
+                      admitsEq=admitsEq,
                       longsymbol=replacePathLongsymbol (longsymbol, path),
                       formals=formals,
                       conSpec=conSpec,
                       conIDSet=conIDSet,
-		      runtimeTy=runtimeTy,
                       liftedTys=liftedTys,
                       dtyKind=dtyKind
                      })
@@ -97,8 +97,11 @@ struct
                     I.TYWILD => ty
                   | I.TYERROR => ty
                   | I.TYVAR tvar => ty
-                  | I.TYRECORD tyLabelenvMap =>
-                    I.TYRECORD (RecordLabel.Map.map replaceTfunTy tyLabelenvMap)
+                  | I.TYFREE_TYVAR tvar => ty
+                  | I.TYRECORD {ifFlex, fields=tyLabelenvMap} =>
+                    I.TYRECORD 
+                      {ifFlex=ifFlex, 
+                       fields=RecordLabel.Map.map replaceTfunTy tyLabelenvMap}
                   | I.TYCONSTRUCT {tfun, args} =>
                     I.TYCONSTRUCT 
                       {tfun = if isSelf tfun then newTfun else tfun,
@@ -114,12 +117,11 @@ struct
               val _ = newTfunkind := 
                       I.TFUN_DTY 
                         {id=newId,
-                         iseq=iseq,
+                         admitsEq=admitsEq,
                          longsymbol=replacePathLongsymbol (longsymbol, path),
                          formals=formals,
                          conSpec=newConSpec,
                          conIDSet=conIDSet,
-		         runtimeTy=runtimeTy,
                          liftedTys=liftedTys,
                          dtyKind=dtyKind
                         }
@@ -185,12 +187,11 @@ struct
            SOME (newTfun as I.TFUN_VAR 
                   (tfunkind as 
                      ref (I.TFUN_DTY {id,
-                                      iseq,
+                                      admitsEq,
                                       longsymbol,
                                       formals,
                                       conSpec,
                                       conIDSet,
-		                      runtimeTy,
                                       liftedTys,
                                       dtyKind
                                      }
@@ -202,12 +203,11 @@ struct
              val _ = tfunkind := 
                      I.TFUN_DTY 
                        {id=id,
-                        iseq=iseq,
+                        admitsEq=admitsEq,
                         longsymbol=longsymbol,
                         formals=formals,
                         conSpec=newConSpec,
                         conIDSet=conIDSet,
-		        runtimeTy=runtimeTy,
                         liftedTys=liftedTys,
                         dtyKind=dtyKind
                        }
@@ -223,8 +223,11 @@ struct
         I.TYWILD => ty
       | I.TYERROR => ty
       | I.TYVAR tvar => ty
-      | I.TYRECORD tyLabelenvMap =>
-        I.TYRECORD (RecordLabel.Map.map (renameLongsymbolTy renameEnv) tyLabelenvMap)
+      | I.TYFREE_TYVAR freeTvar => ty
+      | I.TYRECORD {ifFlex, fields=tyLabelenvMap} =>
+        I.TYRECORD
+          {ifFlex=ifFlex, 
+           fields=RecordLabel.Map.map (renameLongsymbolTy renameEnv) tyLabelenvMap}
       | I.TYCONSTRUCT {tfun, args} =>
         I.TYCONSTRUCT 
           {tfun = renameLongsymbolTfun renameEnv tfun, 

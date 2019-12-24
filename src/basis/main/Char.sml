@@ -86,7 +86,7 @@ struct
 
     fun escapeChar radix ch =
         let
-          val buf = String.alloc 4
+          val buf = String.alloc_unsafe 4
           val _ = Array.update_unsafe (String.castToArray buf, 0, #"\\")
           fun loop (0, n) = ()
             | loop (i, n) =
@@ -122,7 +122,7 @@ struct
 
     fun str c =
         let
-          val buf = String.alloc 1
+          val buf = String.alloc_unsafe 1
         in
           Array.update_unsafe (String.castToArray buf, 0, c);
           buf

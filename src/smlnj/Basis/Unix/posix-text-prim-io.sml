@@ -3,10 +3,13 @@ infix 6 + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
 infix 3 := o
-val op + = SMLSharp_Builtin.Int32.add_unsafe
-val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op + = SMLSharp_Builtin.Int32.add
+val op - = SMLSharp_Builtin.Int32.sub
 val op > = Position.>
 val op < = Position.<
+val op o = SMLSharp_Builtin.General.o
+val op := = SMLSharp_Builtin.General.:=
+val ! = SMLSharp_Builtin.General.!
 structure StringImp = String
 structure IntImp = Int32
 structure PositionImp = Position
@@ -27,9 +30,9 @@ end
  *)
 
 local
-    structure String = StringImp
-    structure Int = IntImp
-    structure Position = PositionImp
+    (* structure String = StringImp *)
+    (* structure Int = IntImp *)
+    (* structure Position = PositionImp *)
 in
 (*
 structure PosixTextPrimIO : sig
@@ -48,7 +51,7 @@ structure SMLSharp_SMLNJ_PosixTextPrimIO (*: sig
 
     structure PF = Posix.FileSys
     structure PIO = Posix.IO
-    structure BinPrimIO = PosixBinPrimIO
+    (* structure BinPrimIO = PosixBinPrimIO *)
     structure PrimIO = TextPrimIO
 
     type file_desc = PF.file_desc

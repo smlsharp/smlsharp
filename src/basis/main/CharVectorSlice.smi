@@ -1,10 +1,11 @@
 _require "./General.smi"
+_use local "./Slice_common.sml"
 
 structure CharVectorSlice =
 struct
   type elem = char
   type vector = string
-  type slice (= boxed)
+  type slice (= *)
   val length : slice -> int
   val sub : slice * int -> elem
   val full : vector -> slice

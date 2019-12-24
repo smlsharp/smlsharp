@@ -11,6 +11,7 @@ struct
          | MaxDepthOfGuards of int option
          | MaxWidthOfGuards of int option
          | CutOverTail of bool
+         | OutputFunction of string -> unit
   val defaultNewline : string
   val defaultSpace : string
   val defaultColumns : int
@@ -19,6 +20,7 @@ struct
   val defaultMaxDepthOfGuards : 'a option
   val defaultMaxWidthOfGuards : 'a option
   val defaultCutOverTail : bool
+  val defaultOutputFunction : (string -> unit) option
   type parameterRecord =
        {
          newlineString : string,
@@ -28,7 +30,8 @@ struct
          guardRight : string,
          maxDepthOfGuards : int option,
          maxWidthOfGuards : int option,
-         cutOverTail : bool
+         cutOverTail : bool,
+         outputFunction : (string -> unit) option
        }
   val convert : parameter list ->
         {	
@@ -39,7 +42,8 @@ struct
           guardRight : string,
           maxDepthOfGuards : int option,
           maxWidthOfGuards : int option,
-          cutOverTail : bool
+          cutOverTail : bool,
+	  outputFunction : (string -> unit) option
         }
 
 end

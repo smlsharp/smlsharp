@@ -17,7 +17,7 @@ struct
   val sleep : Time.time -> unit
 
   (* utilities for other structures in Basis Library *)
-  type atexit_tag (= boxed)
+  type atexit_tag (= ref)
   val atExit' : (unit -> unit) -> atexit_tag
   val cancelAtExit : atexit_tag -> unit
   val rebindAtExit : atexit_tag * (unit -> unit) -> unit

@@ -13,7 +13,7 @@ struct
 
   structure N = RuntimeCalc
   structure A = ANormal
-  structure T = Types
+  (* structure T = Types *)
   structure R = RuntimeTypes
 
   (* reuse var ids as many as possible *)
@@ -37,23 +37,23 @@ struct
 
   datatype context = TAIL | NONTAIL | BIND of A.varInfo
 
-  val unitTy = (BuiltinTypes.unitTy, R.UNITty)
+  val unitTy = (BuiltinTypes.unitTy, RuntimeTypes.unitTy)
   val unitValue =
       A.ANCONST {const = A.NVUNIT, ty = unitTy}
+
+  val intInfTy = (BuiltinTypes.intInfTy, RuntimeTypes.recordTy)
 
   fun toConst (A.ANCONST x) = SOME x
     | toConst (A.ANVAR _) = NONE
     | toConst A.ANBOTTOM = NONE
-    | toConst (A.ANCAST {exp, expTy, targetTy, runtimeTyCast}) =
+    | toConst (A.ANCAST {exp, expTy, targetTy}) =
       case toConst exp of
         NONE => NONE
       | SOME {const, ty} =>
         SOME {const = A.NVCAST {value = const,
                                 valueTy = ty,
                                 targetTy = targetTy,
-                                cast = if runtimeTyCast
-                                       then BuiltinPrimitive.RuntimeTyCast
-                                       else BuiltinPrimitive.TypeCast},
+                                cast = BuiltinPrimitive.TypeCast},
               ty = targetTy}
 
   datatype handler =
@@ -225,7 +225,7 @@ struct
                                      dataLabel = srcLabel,
                                      nextExp = K,
                                      loc = loc},
-                      (BuiltinTypes.intInfTy, R.BOXEDty), loc)
+                      intInfTy, loc)
       | N.NCVAR {varInfo, loc} =>
         let
           val (value, ty) = compileVarInfo env varInfo
@@ -250,7 +250,7 @@ struct
                                  expTy = expTy,
                                  nextExp = K,
                                  loc = loc},
-                    (#1 expTy, R.BOXEDty), loc)
+                    (#1 expTy, R.recordTy), loc)
         in
           (proc1 o proc2, ret)
         end
@@ -460,17 +460,15 @@ struct
         end
       | N.NCCAST {exp, expTy, targetTy, cast, loc} =>
         let
-          val runtimeTyCast =
+          val _ =
               case cast of
-                BuiltinPrimitive.TypeCast => false
-              | BuiltinPrimitive.RuntimeTyCast => true
+                BuiltinPrimitive.TypeCast => ()
               | BuiltinPrimitive.BitCast => raise Bug.Bug "compileExp: NCCAST"
           val (proc1, exp) = compileExp env NONTAIL exp
           val (proc2, ret) =
               return context (A.ANCAST {exp = exp,
                                         expTy = expTy,
-                                        targetTy = targetTy,
-                                        runtimeTyCast = runtimeTyCast},
+                                        targetTy = targetTy},
                               targetTy, loc)
         in
           (proc1 o proc2, ret)
@@ -609,7 +607,8 @@ struct
               | NONTAIL => SOME (newVar resultTy)
               | BIND var => SOME (refreshVar var)
           val mergeLabel = FunLocalLabel.generate nil
-          val codeBodyExp = compileBranchExp env context mergeLabel catchExp
+          val (env2, argVarList) = addBoundVars (env, argVarList)
+          val codeBodyExp = compileBranchExp env2 context mergeLabel catchExp
           val mainExp = compileBranchExp env context mergeLabel tryExp
           val localCodeExp =
               A.ANLOCALCODE {id = catchLabel,
@@ -696,7 +695,9 @@ struct
 
   and compileInitField env initField =
       case initField of
-        N.INIT_VALUE var =>
+        N.INIT_CONST (const, ty) =>
+        A.INIT_VALUE (A.ANCONST {const = const, ty = ty})
+      | N.INIT_VALUE var =>
         A.INIT_VALUE (#1 (compileVarInfo env var))
       | N.INIT_COPY {srcExp, fieldSize} =>
         A.INIT_COPY {srcExp = #1 (compileVarInfo env srcExp),

@@ -7,14 +7,12 @@
 #include "smlsharp.h"
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #ifdef HAVE_CONFIG_H
-# ifdef HAVE_SYS_MMAN_H
-#  include <unistd.h>
-#  include <sys/mman.h>
-# endif /* HAVE_SYS_MMAN_H */
-# ifdef MINGW32
-#  include <windows.h>
-# endif /* MINGW32 */
+#ifdef MINGW32
+# include <windows.h>
+#endif /* MINGW32 */
 #endif /* HAVE_CONFIG_H */
 #include "object.h"
 #include "heap.h"
@@ -316,7 +314,7 @@ static struct segment_layout segment_layout[BLOCKSIZE_MAX_LOG2 + 1];
 
 /* assume that segment address is a multiple of SEGMENT_SIZE */
 static inline struct segment *
-segment_addr(void *p)
+segment_addr(const void *p)
 {
 	return (void*)((uintptr_t)p & ~((uintptr_t)(SEGMENT_SIZE - 1)));
 }
@@ -557,19 +555,19 @@ clear_bitmap(struct segment *seg)
 }
 
 static void
-mark_bits(struct segment *seg, unsigned int index, sml_bitptr_t b)
+mark_bits(struct segment *seg, unsigned int index, sml_bitptrw_t b)
 {
 	unsigned int i;
 
-	assert(BITPTR_EQUAL(b, BITPTR(BITMAP0_BASE(seg), index)));
+	assert(BITPTRW_EQUAL(b, BITPTRW(BITMAP0_BASE(seg), index)));
 	assert(index < seg->layout->num_blocks);
 
-	BITPTR_SET(b);
-	for (i = 1; ~BITPTR_WORD(b) == 0U && i < SEG_RANK; i++) {
+	BITPTRW_SET(b);
+	for (i = 1; ~BITPTRW_WORD(b) == 0U && i < SEG_RANK; i++) {
 		index /= BITPTR_WORDBITS;
-		b = BITPTR(BITMAP_BASE(seg, i), index);
-		assert(b.ptr < BITMAP_LIMIT(seg, i));
-		BITPTR_SET(b);
+		b = BITPTRW(BITMAP_BASE(seg, i), index);
+		assert(b.wptr < BITMAP_LIMIT(seg, i));
+		BITPTRW_SET(b);
 	}
 }
 
@@ -651,7 +649,7 @@ init_heap_space(struct heap_space *heap, size_t min_size, size_t max_size)
 	 * and end of the space.
 	 */
 	p = ReservePage(NULL, max_size + SEGMENT_SIZE);
-	if (p == ReservePageError)
+	if (p == AllocPageError)
 		sml_fatal(0, "failed to alloc virtual memory.");
 	freesize_post = (uintptr_t)p & (SEGMENT_SIZE - 1);
 	if (freesize_post == 0) {
@@ -1706,7 +1704,7 @@ visit(void *obj)
 	struct malloc_segment *mseg;
 	struct segment *seg;
 	unsigned int index;
-	sml_bitptr_t b;
+	sml_bitptrw_t b;
 
 	if (obj == NULL || (OBJ_HEADER(obj) & OBJ_FLAG_SKIP))
 		return NULL;
@@ -1719,8 +1717,8 @@ visit(void *obj)
 	} else {
 		seg = segment_addr(obj);
 		index = object_index(seg, obj);
-		b = BITPTR(BITMAP0_BASE(seg), index);
-		if (BITPTR_TEST(b))
+		b = BITPTRW(BITMAP0_BASE(seg), index);
+		if (BITPTRW_TEST(b))
 			return NULL;
 		mark_bits(seg, index, b);
 		seg->free_count++;
@@ -1737,7 +1735,7 @@ visit(void *obj)
 	struct malloc_segment *mseg;
 	struct segment *seg;
 	unsigned int index;
-	sml_bitptr_t b;
+	sml_bitptrw_t b;
 
 	if (obj == NULL || (OBJ_HEADER(obj) & OBJ_FLAG_SKIP))
 		return NULL;
@@ -1750,15 +1748,15 @@ visit(void *obj)
 	} else {
 		seg = segment_addr(obj);
 		index = object_index(seg, obj);
-		b = BITPTR(COLLECT_BITMAP_BASE(seg), index);
-		if (BITPTR_TEST(b))
+		b = BITPTRW(COLLECT_BITMAP_BASE(seg), index);
+		if (BITPTRW_TEST(b))
 			return NULL;
-		BITPTR_SET(b);
-		b = BITPTR(BITMAP0_BASE(seg), index);
-		if ((char*)obj >= seg->snapshot_free && !BITPTR_TEST(b))
+		BITPTRW_SET(b);
+		b = BITPTRW(BITMAP0_BASE(seg), index);
+		if ((char*)obj >= seg->snapshot_free && !BITPTRW_TEST(b))
 			return NULL;
 		if (seg->free_count < 0) {
-			assert(!BITPTR_TEST(b));
+			assert(!BITPTRW_TEST(b));
 			mark_bits(seg, index, b);
 			seg->free_count++;
 		}
@@ -1876,7 +1874,7 @@ sml_heap_collector_sync2()
 	collect_segments(&collector.collect_set);
 	clear_collect_set(&collector.collect_set);
 	assert(collector.root_objects == NIL);
-	sml_enum_global(push, &collector.root_objects);
+	sml_global_enum_ptr(push, &collector.root_objects);
 	sml_callback_enum_ptr(push, &collector.root_objects);
 }
 
@@ -1886,7 +1884,7 @@ sml_heap_collector_sync2()
 {
 	struct object_list objs;
 	object_list_init(&objs);
-	sml_enum_global(enum_obj_to_list, &objs);
+	sml_global_enum_ptr(enum_obj_to_list, &objs);
 	sml_callback_enum_ptr(enum_obj_to_list, &objs);
 	push_objects(&collector.objects_from_mutators, &objs);
 }
@@ -2215,9 +2213,9 @@ sml_heap_worker_destroy(union sml_alloc *ptr_set)
 
 #if defined WITHOUT_MULTITHREAD || defined WITHOUT_CONCURRENCY
 void
-sml_heap_mutator_sync2(struct sml_control *control ATTR_UNUSED)
+sml_heap_user_sync2(struct sml_user *user)
 {
-	sml_stack_enum_ptr(control, push, &collector.root_objects);
+	sml_stack_enum_ptr(user, push, &collector.root_objects);
 }
 
 void
@@ -2228,13 +2226,13 @@ sml_heap_worker_sync2(union sml_alloc *ptr_set)
 
 #else /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 void
-sml_heap_mutator_sync2(struct sml_mutator *mutator)
+sml_heap_user_sync2(struct sml_user *user)
 {
 	struct object_list objs;
 
 	/* enumerate pointers in the stack and send them to the collector */
 	object_list_init(&objs);
-	sml_stack_enum_ptr(mutator, enum_obj_to_list, &objs);
+	sml_stack_enum_ptr(user, enum_obj_to_list, &objs);
 	push_objects(&collector.objects_from_mutators, &objs);
 }
 
@@ -2332,12 +2330,12 @@ sml_cmpswap(void *obj, void *old_value, void *new_value)
 #endif /* !WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 
 static sml_bitptr_t
-bitptr_linear_search(unsigned int *start, const unsigned int *limit)
+bitptr_linear_search(const unsigned int *start, const unsigned int *limit)
 {
 	sml_bitptr_t b = {start, 0};
 	while (b.ptr < limit) {
 		b.mask = 0;
-		BITPTR_NEXT(b);
+		BITPTR_NEXT0(b);
 		if (!BITPTR_NEXT_FAILED(b)) break;
 		b.ptr++;
 	}
@@ -2347,7 +2345,8 @@ bitptr_linear_search(unsigned int *start, const unsigned int *limit)
 static NOINLINE void *
 find_bitmap(struct alloc_ptr *ptr)
 {
-	unsigned int i, index, *base, *limit, *p;
+	unsigned int i, index, *base, *limit;
+	const unsigned int *p;
 	struct segment *seg;
 	sml_bitptr_t b = ptr->freebit;
 	void *obj;
@@ -2358,13 +2357,13 @@ find_bitmap(struct alloc_ptr *ptr)
 	seg = ALLOC_PTR_TO_SEGMENT(ptr);
 	base = BITMAP0_BASE(seg);
 
-	BITPTR_NEXT(b);
+	BITPTR_NEXT0(b);
 	if (BITPTR_NEXT_FAILED(b)) {
 		for (i = 1;; i++) {
 			index = BITPTR_WORDINDEX(b, base) + 1;
 			base = BITMAP_BASE(seg, i);
 			b = BITPTR(base, index);
-			BITPTR_NEXT(b);
+			BITPTR_NEXT0(b);
 			if (!BITPTR_NEXT_FAILED(b))
 				break;
 			if (i >= SEG_RANK - 1) {
@@ -2380,7 +2379,7 @@ find_bitmap(struct alloc_ptr *ptr)
 			index = BITPTR_INDEX(b, base);
 			base = BITMAP_BASE(seg, i - 1);
 			b = BITPTR(base + index, 0);
-			BITPTR_NEXT(b);
+			BITPTR_NEXT0(b);
 			assert(!BITPTR_NEXT_FAILED(b));
 		}
 	}

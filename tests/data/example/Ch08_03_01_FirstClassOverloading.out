@@ -1,0 +1,7 @@
+val it = 2 : int
+
+val it = 2.0 : real
+
+val it = 0wx2 : word
+
+val plus = fn : ['a::{int, word, int8, word8, ...}. 'a -> 'a]

@@ -4,12 +4,15 @@ infixr 5 :: @
 infix 4 = <> > >= < <=
 infix 3 := o
 infix 0 before
-val op * = SMLSharp_Builtin.Int32.mul_unsafe
-val op + = SMLSharp_Builtin.Int32.add_unsafe
-val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op * = SMLSharp_Builtin.Int32.mul
+val op + = SMLSharp_Builtin.Int32.add
+val op - = SMLSharp_Builtin.Int32.sub
 val op >= = SMLSharp_Builtin.Int32.gteq
 val op < = SMLSharp_Builtin.Int32.lt
-fun op before (x, y:unit) = x
+val op o = SMLSharp_Builtin.General.o
+val op := = SMLSharp_Builtin.General.:=
+val ! = SMLSharp_Builtin.General.!
+val op before = SMLSharp_Builtin.General.before
 structure Int =
 struct
   val quot = SMLSharp_Builtin.Int32.quot_unsafe

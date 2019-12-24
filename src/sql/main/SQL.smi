@@ -2,19 +2,16 @@ _require "./SQLPrim.smi"
 _require "./SQLErrors.smi"
 _require "./Backend.smi"
 _require "./builtintypes/timestamp/TimeStamp.smi"
-_require "./builtintypes/decimal/Decimal.smi"
-_require "./builtintypes/float/Float.smi"
 
 structure SQL =
 struct
 
   structure TimeStamp = SMLSharp_SQL_TimeStamp
-  structure Decimal = SMLSharp_SQL_Decimal
-  structure Float = SMLSharp_SQL_Float
 
+  type bool3 = SMLSharp_SQL_Prim.bool3
   type timestamp = SMLSharp_SQL_Prim.timestamp
-  type decimal = SMLSharp_SQL_Prim.decimal
-  type float = SMLSharp_SQL_Prim.float
+  type numeric = SMLSharp_SQL_Prim.numeric
+  type decimal = numeric
   type backend = SMLSharp_SQL_Prim.backend
   type 'a server = 'a SMLSharp_SQL_Prim.server
   type 'a conn = 'a SMLSharp_SQL_Prim.conn
@@ -25,7 +22,7 @@ struct
   type ('toy,'w) orderby = ('toy,'w) SMLSharp_SQL_Prim.orderby
   type ('src,'toy,'w) select = ('src,'toy,'w) SMLSharp_SQL_Prim.select
   type ('toy,'w) query = ('toy,'w) SMLSharp_SQL_Prim.query
-  type ('toy,'ret,'w) command = ('toy,'ret,'w) SMLSharp_SQL_Prim.command
+  type ('toy,'w) command = ('toy,'w) SMLSharp_SQL_Prim.command
   type ('toy,'w) db = ('toy,'w) SMLSharp_SQL_Prim.db
   exception Format = SMLSharp_SQL_Errors.Format
   exception Exec = SMLSharp_SQL_Errors.Exec
@@ -35,6 +32,9 @@ struct
   val postgresql = SMLSharp_SQL_Backend.postgresql
   val mysql = SMLSharp_SQL_Backend.mysql
   val odbc = SMLSharp_SQL_Backend.odbc
+  val sqlite3 = SMLSharp_SQL_Backend.sqlite3
+  val sqlite3' = SMLSharp_SQL_Backend.sqlite3'
+  structure SQLite3 = SMLSharp_SQL_Backend.SQLite3
 
   val queryCommand = SMLSharp_SQL_Prim.queryCommand
   val connect = SMLSharp_SQL_Prim.connect
@@ -45,7 +45,11 @@ struct
 
   val toy = SMLSharp_SQL_Prim.toy
   val commandToString = SMLSharp_SQL_Prim.commandToString
+  val queryToString = SMLSharp_SQL_Prim.queryToString
+  val expToString = SMLSharp_SQL_Prim.expToString
 
+  structure Numeric = SMLSharp_SQL_Prim.Numeric
+  structure Decimal = Numeric
   structure Op = SMLSharp_SQL_Prim.Op
 
 end

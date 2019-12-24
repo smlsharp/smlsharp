@@ -1,0 +1,3 @@
+_require "./040_alias2.smi"
+_require "./040_alias3.smi"
+val x : int

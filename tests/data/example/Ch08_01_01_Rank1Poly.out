@@ -1,0 +1,5 @@
+val f = fn : ['a. 'a -> ['b. 'b -> 'a * 'b]]
+
+val it = fn : ['a. 'a -> int * 'a]
+
+val it = (1, "ML") : int * string

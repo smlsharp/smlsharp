@@ -234,10 +234,10 @@ sml_obj_alloc(unsigned int objtype, size_t payload_size)
 }
 
 char *
-sml_str_new2(const char *str, size_t len)
+sml_str_new2(const char *str, unsigned int len)
 {
 	char *obj;
-	obj = sml_obj_alloc(OBJTYPE_UNBOXED_VECTOR, len + 1);
+	obj = sml_obj_alloc(OBJTYPE_UNBOXED_VECTOR, (size_t)len + 1);
 	memcpy(obj, str, len);
 	obj[len] = '\0';
 	return obj;

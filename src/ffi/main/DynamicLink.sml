@@ -10,9 +10,13 @@ infix 4 < =
 infix 3 :=
 val op + = SMLSharp_Builtin.Int32.add_unsafe
 val op < = SMLSharp_Builtin.Int32.lt
+val op := = SMLSharp_Builtin.General.:=
+val ! = SMLSharp_Builtin.General.!
 
 structure DynamicLink =
 struct
+
+  exception Error of string
 
   type lib = unit ptr
   datatype scope = LOCAL | GLOBAL
@@ -38,8 +42,8 @@ struct
     val RTLD_NOW = ref 0
     val RTLD_LOCAL = ref 0
     val RTLD_GLOBAL = ref 0
-    val RTLD_DEFAULT = ref _NULL
-    val RTLD_NEXT = ref _NULL
+    val RTLD_DEFAULT = ref (SMLSharp_Builtin.Pointer.null ())
+    val RTLD_NEXT = ref (SMLSharp_Builtin.Pointer.null ())
 
     val const_RTLD_LAZY =
         _import "prim_const_RTLD_LAZY"
@@ -90,8 +94,8 @@ struct
       let
         val lib = c_dlopen (libname, dlopenMode (scope, mode))
       in
-        if lib = _NULL
-        then raise SMLSharp_Runtime.SysErr (dlerror (), NONE)
+        if lib = SMLSharp_Builtin.Pointer.null ()
+        then raise Error (dlerror ())
         else lib
       end
 
@@ -100,15 +104,22 @@ struct
 
   fun dlclose lib =
       if c_dlclose lib < 0
-      then raise SMLSharp_Runtime.SysErr (dlerror (), NONE)
+      then raise Error (dlerror ())
       else ()
 
   fun dlsym' (lib, symbol) =
       let
+        val _ = c_dlerror ()  (* clear the last error *)
         val ptr = c_dlsym (lib, symbol)
       in
-        if ptr = _NULL
-        then raise SMLSharp_Runtime.SysErr (dlerror (), NONE)
+        if ptr = SMLSharp_Builtin.Pointer.null ()
+        then let
+               val err = c_dlerror ()
+             in
+               if err = SMLSharp_Builtin.Pointer.null ()
+               then ptr
+               else raise Error (SMLSharp_Runtime.str_new err)
+             end
         else ptr
       end
 

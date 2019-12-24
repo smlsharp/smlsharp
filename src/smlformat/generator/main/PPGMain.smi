@@ -1,11 +1,11 @@
 _require "../../../basis.smi"
-_require "./Utility.smi"
-_require "./ErrorQueue.smi"
-_require "./Ast.smi"
-_require "./Constants_MLton.smi"
-_require "./MLParser.smi"
-_require "./FormatterGenerator.smi"
-_require "./BasicFormattersEnv.smi"
+_require local "./Utility.smi"
+_require local "./ErrorQueue.smi"
+_require local "./Ast.smi"
+_require local "./Constants_MLton.smi"
+_require local "./MLParser.smi"
+_require local "./FormatterGenerator.smi"
+_require local "./BasicFormattersEnv.smi"
 
 structure PPGMain =
 struct
@@ -15,6 +15,7 @@ struct
         sourceFileName : string,
         sourceStream : TextIO.instream,
         destinationStream : TextIO.outstream,
-        withLineDirective : bool
+        withLineDirective : bool,
+        separationMode : string option
       } -> unit
 end

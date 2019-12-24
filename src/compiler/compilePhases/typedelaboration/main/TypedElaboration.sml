@@ -13,10 +13,10 @@ struct
   fun Exp e (_:I.loc) = e : I.icexp
 
   fun Unit loc =
-      I.ICCONSTANT (AbsynConst.UNITCONST loc)
+      I.ICCONSTANT (AbsynConst.UNITCONST, loc)
 
   fun String s loc =
-      I.ICCONSTANT (AbsynConst.STRING (s, loc))
+      I.ICCONSTANT (AbsynConst.STRING s, loc)
 
   fun LabelString l =
       String (RecordLabel.toString l)
@@ -43,7 +43,7 @@ struct
 
   fun Fun_toy ty =
       Typed 
-        (Exp (UserLevelPrimitive.SQL_toyServer_icexp ()),
+        (Exp (UserLevelPrimitive.SQL_icexp_toyServer ()),
          I.TYFUNM ([BuiltinTypes.unitITy], ty))
 
   fun eqTy (ty1, ty2) =
@@ -64,7 +64,7 @@ struct
 
   fun recordTy ty =
       case ty of
-        I.TYRECORD fields => fields
+        I.TYRECORD {ifFlex,fields} => fields
       | _ => raise Unexpected
 
   fun compileSchema {tyFnExp, ty, loc} =
@@ -103,6 +103,7 @@ struct
       case icexp of
         I.ICERROR  => icexp
       | I.ICCONSTANT _ => icexp
+      | I.ICSIZEOF _ => icexp
       | I.ICVAR _ => icexp
       | I.ICEXVAR _ => icexp
       | I.ICEXVAR_TOBETYPED _ => icexp
@@ -120,6 +121,10 @@ struct
                       ty = ty,
                       revealKey = revealKey,
                       loc = loc}
+      | I.ICINTERFACETYPED {icexp, ty, loc} =>
+        I.ICINTERFACETYPED {icexp = compileExp icexp,
+                            ty = ty,
+                            loc = loc}
       | I.ICAPPM (icexp, icexplist, loc) =>
         I.ICAPPM (compileExp icexp, map compileExp icexplist, loc)
       | I.ICAPPM_NOUNIFY (icexp, icexplist, loc) =>
@@ -147,6 +152,10 @@ struct
                    map compileRule rules,
                    caseKind,
                    loc)
+      | I.ICDYNAMICCASE (icexp, rules, loc) =>
+        I.ICDYNAMICCASE (compileExp icexp,
+                         map compileRule1 rules,
+                         loc)
       | I.ICRECORD_UPDATE (icexp, fields, loc) =>
         I.ICRECORD_UPDATE (compileExp icexp,
                            map (fn (l, exp) => (l, compileExp exp)) fields,
@@ -156,42 +165,21 @@ struct
         I.ICSELECT (label, compileExp icexp, loc)
       | I.ICSEQ (icexpList, loc) =>
         I.ICSEQ (map compileExp icexpList, loc)
-      | I.ICFOREACH {data, iterator, pred, loc} =>
-        I.ICFOREACH {data = compileExp data, 
-                     iterator = compileExp iterator, 
-                     pred = compileExp pred, 
-                     loc = loc}
-      | I.ICFOREACHDATA {data, whereParam, iterator, pred, loc} =>
-        I.ICFOREACHDATA {data = compileExp data, 
-                         whereParam = compileExp whereParam,
-                         iterator = compileExp iterator, 
-                         pred = compileExp pred, 
-                         loc = loc}
       | I.ICFFIIMPORT (icexp, ty, loc) =>
         I.ICFFIIMPORT (compileFFIFun icexp, ty, loc)
-      | I.ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
-        I.ICFFIAPPLY (cconv,
-                      compileFFIFun funExp,
-                      map compileFFIArg args,
-                      retTy,
-                      loc)
       | I.ICSQLSCHEMA arg =>
         compileSchema arg
-      | I.ICJOIN (icexp1, icexp2, loc) =>
-        I.ICJOIN (compileExp icexp1, compileExp icexp2, loc)
-      | I.ICJSON (icexp, ty, loc) =>
-        I.ICJSON (compileExp icexp, ty, loc)
-      | I.ICTYPEOF (ty, loc) => icexp
+      | I.ICJOIN (bool, icexp1, icexp2, loc) =>
+        I.ICJOIN (bool, compileExp icexp1, compileExp icexp2, loc)
+      | I.ICDYNAMIC (icexp, ty, loc) =>
+        I.ICDYNAMIC (compileExp icexp, ty, loc)
+      | I.ICDYNAMICIS (icexp, ty, loc) =>
+        I.ICDYNAMICIS (compileExp icexp, ty, loc)
+      | I.ICDYNAMICNULL (ty, loc) => icexp
+      | I.ICDYNAMICTOP (ty, loc) => icexp
+      | I.ICDYNAMICVIEW (icexp, ty, loc) =>
+        I.ICDYNAMICVIEW (compileExp icexp, ty, loc)
       | I.ICREIFYTY (ty, loc) => icexp
-
-  and compileFFIArg ffiArg =
-      case ffiArg of
-        I.ICFFIARG (exp, ty, loc) =>
-        I.ICFFIARG (compileExp exp, ty, loc)
-      | I.ICFFIARGSIZEOF (ty, SOME exp, loc) =>
-        I.ICFFIARGSIZEOF (ty, SOME (compileExp exp), loc)
-      | I.ICFFIARGSIZEOF (ty, NONE, loc) =>
-        I.ICFFIARGSIZEOF (ty, NONE, loc)
 
   and compileFFIFun ffiFun =
       case ffiFun of
@@ -200,6 +188,9 @@ struct
 
   and compileRule {args: I.icpat list, body} =
       {args = args, body = compileExp body}
+
+  and compileRule1 {arg: I.icpat, body} =
+      {arg = arg, body = compileExp body}
 
   and compileDecl icdecl =
       case icdecl of

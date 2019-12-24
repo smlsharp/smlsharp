@@ -97,7 +97,7 @@ struct
    * format tag
    *)
   type formattag =
-       {id : id option, typepat : typepat, templates : template list}
+       {id : (id * id list) option, typepat : typepat, templates : template list}
 
   (***************************************************************************)
 

@@ -33,9 +33,9 @@ structure MakeTable =
 				structure Graph = Graph
 				structure Look = Look)
 *)
-	structure LrTable = LrTable
-	structure IntGrammar = IntGrammar
-	structure Grammar = IntGrammar.Grammar
+	(* structure LrTable = LrTable *)
+	(* structure IntGrammar = IntGrammar *)
+	(* structure Grammar = IntGrammar.Grammar *)
 	structure GotoList = ListOrdSet
 		(struct
 		   type elem = Grammar.nonterm * LrTable.state

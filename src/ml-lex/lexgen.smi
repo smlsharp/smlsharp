@@ -1,5 +1,5 @@
-_require "../basis.smi"
+_require local "../basis.smi"
 structure LexGen =
 struct
-  val lexGen : string -> unit
+  val lexGen : string option -> string -> unit
 end

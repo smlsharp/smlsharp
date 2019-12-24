@@ -1,16 +1,15 @@
 _require "../../../../basis.smi"
-_require "../../../libs/env/main/IEnv.smi"
-_require "../../../extensions/debug/main/Bug.ppg.smi"
-_require "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/env/main/IEnv.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
 
 _require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
-_require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
-_require "../../../data/builtin/main/BuiltinTypes.smi"
-_require "../../../data/constantterm/main/ConstantTerm.ppg.smi"
-_require "../../../data/name/main/CodeLabel.smi"
+(* _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi" *)
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
 _require "../../../data/types/main/Types.ppg.smi"
-_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
-_require "./EmitTypedLambda.smi"
+(* _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi" *)
+_require local "./EmitTypedLambda.smi"
 
 structure SwitchCompile =
 struct
@@ -19,7 +18,7 @@ struct
       : {switchExp : TypedLambda.tlexp,
          expTy : Types.ty,
          branches :
-           {constant : ConstantTerm.constant, exp : TypedLambda.tlexp} list,
+           {constant : string, exp : TypedLambda.tlexp} list,
          defaultExp : TypedLambda.tlexp,
          resultTy : Types.ty,
          loc : TypedLambda.loc}
@@ -29,7 +28,7 @@ struct
       : {switchExp : TypedLambda.tlexp,
          expTy : Types.ty,
          branches :
-           {constant : ConstantTerm.constant, exp : TypedLambda.tlexp} list,
+           {constant : IntInf.int, exp : TypedLambda.tlexp} list,
          defaultExp : TypedLambda.tlexp,
          resultTy : Types.ty,
          loc : TypedLambda.loc}

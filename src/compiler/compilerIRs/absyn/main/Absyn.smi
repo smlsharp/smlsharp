@@ -1,0 +1,203 @@
+(* _require local "../../../../basis.smi" *)
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "./RequirePath.smi"
+_require "./AbsynTy.smi"
+_require "./AbsynConst.smi"
+_require "./AbsynSQL.smi"
+
+structure Absyn =
+struct
+  type loc = Loc.loc
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
+
+  datatype constant = datatype AbsynConst.constant
+
+  datatype ty = datatype AbsynTy.ty
+  datatype tvarKind = datatype AbsynTy.tvarKind
+  type tvar = AbsynTy.tvar
+  type kindedTvar = AbsynTy.kindedTvar
+  datatype ffiTy = datatype AbsynTy.ffiTy
+
+  datatype pat
+    = PATWILD of loc
+    | PATCONSTANT of constant * loc
+    | PATID of {opPrefix:bool, longsymbol:longsymbol, loc:loc}
+    | PATRECORD of {ifFlex:bool, fields:patrow list, loc:loc}
+    | PATTUPLE of pat list * loc
+    | PATLIST of pat list * loc
+    | PATAPPLY of pat list * loc
+    | PATTYPED of pat * ty * loc
+    | PATLAYERED of pat * pat * loc
+  and patrow 
+    = PATROWPAT of RecordLabel.label * pat * loc
+    | PATROWVAR of symbol * (ty option) * (pat option) * loc
+
+  datatype exbind 
+    = EXBINDDEF of {opFlag:bool, 
+                     conSymbol:symbol, 
+                     tyOpt:ty option,
+                     loc:loc}
+     | EXBINDREP of {opFlag1:bool,
+                     conSymbol:symbol, 
+                     refLongsymbol:longsymbol,
+                     opFlag2:bool,
+                     loc:loc}
+  type typbind 
+    = {
+        tyvars : tvar list,
+        tyConSymbol : symbol,
+        ty : ty * loc,
+        loc : loc
+      }
+
+  type datbind 
+    = {
+       tyvars : tvar list, 
+       tyConSymbol:symbol, 
+       rhs : {opFlag:bool, 
+              conSymbol:symbol, 
+              tyOpt:ty option,
+              loc:loc}
+               list,
+       loc : loc
+      }
+
+  datatype exp
+    = EXPCONSTANT of constant * loc
+    | EXPSIZEOF of ty * loc
+    | EXPID of  longsymbol
+    | EXPOPID of longsymbol * loc
+    | EXPRECORD of (RecordLabel.label * exp) list * loc
+    | EXPRECORD_UPDATE of exp * (RecordLabel.label * exp) list * loc
+    | EXPRECORD_SELECTOR of RecordLabel.label * loc
+    | EXPTUPLE of exp list * loc
+    | EXPLIST of exp list * loc
+    | EXPSEQ of exp list * loc
+    | EXPAPP of exp list * loc
+    | EXPTYPED of exp * ty * loc
+    | EXPCONJUNCTION of exp * exp * loc
+    | EXPDISJUNCTION of exp * exp * loc
+    | EXPHANDLE of exp * (pat * exp) list * loc
+    | EXPRAISE of exp * loc
+    | EXPIF of exp * exp * exp * loc
+    | EXPWHILE of exp * exp * loc
+    | EXPCASE of exp * (pat * exp) list * loc
+    | EXPFN of (pat * exp) list * loc
+    | EXPLET of dec list * exp list * loc
+    | EXPFFIIMPORT of ffiFun * ffiTy * loc
+    | EXPSQL of (exp, pat, ty) AbsynSQL.sqlexp * loc
+    | EXPFOREACH of exp_foreach * loc
+    | EXPJOIN of bool * exp * exp * loc
+    | EXPDYNAMIC of exp * ty * loc
+    | EXPDYNAMICIS of exp * ty * loc
+    | EXPDYNAMICNULL of ty * loc
+    | EXPDYNAMICTOP of ty * loc
+    | EXPDYNAMICVIEW of exp * ty * loc
+    | EXPDYNAMICCASE of exp * (pat * exp) list * loc
+    | EXPREIFYTY of ty * loc
+
+  and ffiFun
+    = FFIFUN of exp
+    | FFIEXTERN of string
+
+  and exp_foreach
+    = FOREACHARRAY of {id:symbol, pat:pat, data:exp, iterate:exp, pred:exp}
+    | FOREACHDATA of {id:symbol, pat:pat, whereParam:exp, data:exp, iterate:exp, pred:exp}
+
+  and dec 
+    = DECVAL of kindedTvar list * (pat * exp) list * loc
+    | DECREC of kindedTvar list * (pat * exp) list * loc
+    | DECPOLYREC of (symbol * ty * exp) list * loc
+    | DECFUN of kindedTvar list * {fdecl:(pat list * ty option * exp) list, loc:loc} list * loc 
+    | DECTYPE of {tbs : typbind list, loc:loc}
+    | DECDATATYPE of {datatys: datbind list,
+                      withtys: typbind list,
+                      loc:loc}
+    | DECABSTYPE of 
+            {
+             abstys: datbind list,
+             withtys: typbind list,
+             body: dec list * loc,
+             loc:loc
+            }
+    | DECOPEN of longsymbol list * loc
+    | DECREPLICATEDAT of {defSymbol: symbol,
+                          refLongsymbol: longsymbol,
+                          loc:loc}
+    | DECEXN of {exbinds:exbind list,
+                 loc:loc}
+    | DECLOCAL of dec list * dec list * loc
+    | DECINFIX of string * symbol list * loc
+    | DECINFIXR of string * symbol list * loc
+    | DECNONFIX of symbol list * loc
+  and strdec 
+    = COREDEC of dec * loc
+    | STRUCTBIND of strbind list * loc
+    | STRUCTLOCAL of strdec  list * strdec list  * loc
+  and strexp 
+    = STREXPBASIC of strdec list * loc
+    | STRID of longsymbol * loc
+    | STRTRANCONSTRAINT of strexp * sigexp * loc
+    | STROPAQCONSTRAINT of strexp * sigexp * loc
+    | FUNCTORAPP of symbol * strexp * loc
+    | STRUCTLET  of strdec list * strexp * loc
+  and strbind 
+    = STRBINDTRAN of symbol * sigexp  * strexp * loc 
+    | STRBINDOPAQUE of symbol * sigexp  * strexp * loc
+    | STRBINDNONOBSERV of symbol * strexp * loc
+  and sigexp 
+    = SIGEXPBASIC of spec * loc
+    | SIGID of symbol * loc
+    | SIGWHERE of sigexp * (tvar list * longsymbol * ty) * loc
+  and spec
+    = SPECVAL of (symbol * ty) list * loc
+    | SPECTYPE of (tvar list * symbol) list * loc
+    | SPECDERIVEDTYPE of (tvar list * symbol * ty) list  * loc
+    | SPECEQTYPE of (tvar list * symbol) list * loc
+    | SPECDATATYPE of (tvar list * symbol * (symbol * ty option) list ) list * loc
+    | SPECREPLIC of symbol * longsymbol * loc
+    | SPECEXCEPTION of (symbol * ty option) list * loc
+    | SPECSTRUCT of (symbol * sigexp) list * loc
+    | SPECINCLUDE of sigexp * loc
+    | SPECDERIVEDINCLUDE of symbol list * loc
+    | SPECSEQ of spec * spec * loc 
+    | SPECSHARE of spec * longsymbol list * loc 
+    | SPECSHARESTR of spec * longsymbol list * loc 
+    | SPECEMPTY 
+  and funbind 
+    = FUNBINDTRAN of symbol * symbol * sigexp  * sigexp * strexp * loc 
+    | FUNBINDOPAQUE of symbol * symbol * sigexp  * sigexp * strexp * loc 
+    | FUNBINDNONOBSERV of symbol * symbol * sigexp  * strexp * loc 
+    | FUNBINDSPECTRAN of symbol * spec * sigexp  * strexp * loc 
+    | FUNBINDSPECOPAQUE of symbol * spec * sigexp  * strexp * loc 
+    | FUNBINDSPECNONOBSERV of symbol * spec * strexp * loc 
+  and topdec 
+    = TOPDECSTR of strdec * loc
+    | TOPDECSIG of ( symbol * sigexp ) list * loc 
+    | TOPDECFUN of funbind list * loc
+
+  datatype top 
+    = TOPDEC of topdec list
+    | USE of RequirePath.path * loc
+
+  datatype interface 
+    = INTERFACE of RequirePath.path * loc
+    | NOINTERFACE
+
+  type unit = 
+    {
+     interface : interface,
+     tops : top list,
+     loc : loc
+    }
+
+  datatype unitparseresult
+    = UNIT of unit
+    | EOF
+
+  val getLocPat : pat -> Loc.loc
+
+end

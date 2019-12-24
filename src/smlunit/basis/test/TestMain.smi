@@ -1,5 +1,5 @@
-_require "smlunit-lib.smi"
-_require "basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../../../basis.smi"
 _require "TestRequiredModules.smi"
 _require "TestOptionalModules_SMLSharp.smi"
 

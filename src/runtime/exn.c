@@ -18,17 +18,20 @@
 #define EXNCLASS_SMLSHARP (VENDOR_SMLSHARP | LANG_SMLSHARP)
 
 #define DW_EH_PE_omit     0xff
+#define DW_EH_PE_uleb128  0x01
 #define DW_EH_PE_udata4   0x03
 
 /*
  * low-level exception object handled by Itanium C++ ABI.
  */
 struct exception {
-	struct _Unwind_Exception header;
 	void *exn_obj;           /* ML's exn object */
 	void *handler_addr;      /* handler address found in SEARCH phase */
+	struct _Unwind_Exception header;
 	unsigned int num_cleanup;
 };
+#define UE_TO_EXCEPTION(ue) \
+	((struct exception *)((char*)(ue) - offsetof(struct exception, header)))
 
 /*
  * The internal structure of SML# exception objects.
@@ -85,8 +88,8 @@ cleanup(_Unwind_Reason_Code reason ATTR_UNUSED,
 	free(exc);
 }
 
-static void
-backtrace()
+void
+sml_backtrace()
 {
 #ifdef HAVE_UNW_GETCONTEXT
 	unw_context_t c;
@@ -115,10 +118,13 @@ backtrace()
 }
 
 SML_PRIMITIVE void
-sml_raise(void *exn)
+sml_raise(void *arg)
 {
-	struct exception *e;
+	struct exception *e = arg;
 	_Unwind_Reason_Code ret;
+
+	assert(OBJ_SIZE(arg) >= sizeof(struct exception));
+	assert(e->exn_obj != NULL);
 
 	/* The exn object must be kept alive until control reaches an SML#
 	 * exception handler, but must not be in a stack frame.  To protect
@@ -126,19 +132,23 @@ sml_raise(void *exn)
 	 * context.  Before switching to C stack frames, the exn object must
 	 * be saved by sml_save_exn.
 	 */
-	e = xmalloc(sizeof(struct exception));
 	e->header.exception_class = EXNCLASS_SMLSHARP;
 	e->header.exception_cleanup = cleanup;
-	e->exn_obj = exn;
 	e->handler_addr = NULL;
 	e->num_cleanup = 0;
 
+	/* Note: During stack unwinding, user C code may execute because
+	 * of user cleanup handler such as C++ destructor.
+	 * Note: We do not allow the garbage collector to move "e" object
+	 * during stack unwinding.  C code possesses "e" until the control
+	 * reaches SML#'s landingpad.
+	 */
 	ret = _Unwind_RaiseException(&e->header);
 
 	/* control reaches here if unwinding failed */
 	if (ret == _URC_END_OF_STACK) {
-		backtrace();
-		uncaught_exception(exn);
+		sml_backtrace();
+		uncaught_exception(e->exn_obj);
 	}
 
 	sml_fatal(0, "unwinding failed");
@@ -184,24 +194,43 @@ search_lpad(struct _Unwind_Context *context)
 {
 	const unsigned char *src, *actiontab;
 	uintptr_t lpstart, tablen, ip, start, lpad, len;
-	unsigned char action;
+	unsigned char encoding, action;
 	struct landing_pad ret;
 
 	/* The language-specific data is organized by LLVM in the following
-	 * structure, which is compatible with GCC's except_tab:
+	 * structure, which is compatible with GCC's except_tab
+	 * (see EHStreamer::emitExceptionTable):
 	 * struct packed {
 	 *   uint8_t   lpstart_enc;  // always DW_EH_PE_omit (0xff)
-	 *   uint8_t   ttype_enc;    // we ignore it
-	 *   uleb128   ttype_off;    // we ignore it
-	 *   uint8_t   callsite_enc; // always DW_EH_PE_udata4 (0x03)
+	 * # uint8_t   ttype_enc;    // we ignore it
+	 * # uleb128   ttype_off;    // we ignore it
+	 * ! uint8_t   callsite_enc; // always DW_EH_PE_udata4 (0x03)
 	 *   uleb128   callsite_len; // length of CallSiteTable in bytes
 	 *   struct {
-	 *     udata4  cs_start;     // start address (relative to RegionStart)
-	 *     udata4  cs_len;       // code range length
-	 *     udata4  cs_lpad;      // landing pad address (ditto)
-	 *     uleb128 action;       // ([index of action] - 1) or 0
+	 * !   udata4  cs_start;     // start address (relative to RegionStart)
+	 * !   udata4  cs_len;       // code range length
+	 * !   udata4  cs_lpad;      // landing pad address (ditto)
+	 *     uleb128 action;       // ([index of action] + 1) or 0
 	 *   } CallSiteTable[];
+	 *   struct {
+	 *     sleb128 type;         // 0 = cleanup, + = catch, - = filter
+	 *     sleb128 next;         // next action (0 = end of actions)
+	 }   } ActionTable[];
 	 * };
+	 *
+	 * Note on ! lines:
+	 * Up to LLVM 6, callsite table is encoded in udata4.
+	 * From LLVM 7, LLVM uses uleb128 instead of udata4 for callsite table.
+	 *
+	 * Note on # lines:
+	 * From LLVM 3.9, LLVM may set DW_EH_PE_omit to "ttype_enc" and
+	 * therefore "ttype_off" may be omitted.
+	 *
+	 * For actions:  SML# uses three-kinds of actions: cleanup, catch-all,
+	 * or both.  If "action" of CallSiteTable is 0, it is a cleanup handler.
+	 * Otherwise, it is at least a catch-all handler.
+	 * If there are more than one actions, namely "next" of ActionTable is
+	 * non-zero, it is also a cleanup handler.
 	 */
 	src = (const unsigned char *)_Unwind_GetLanguageSpecificData(context);
 
@@ -216,12 +245,14 @@ search_lpad(struct _Unwind_Context *context)
 	lpstart = _Unwind_GetRegionStart(context);
 
 	/* ignore @TType */
-	src++;
-	read_uleb128(&src);
+	if (*(src++) != DW_EH_PE_omit)
+		read_uleb128(&src);
 
 	/* LLVM seems to use only udata4 to generate call-site table */
-	if (*(src++) != DW_EH_PE_udata4)
-		sml_fatal(0, "call-site table encoding must be udata4");
+	encoding = *(src++);
+	if (encoding != DW_EH_PE_udata4 && encoding != DW_EH_PE_uleb128)
+		sml_fatal(0, "call-site table encoding must be either "
+			  "udata4 or uleb128");
 	tablen = read_uleb128(&src);
 	actiontab = src + tablen;
 
@@ -261,10 +292,17 @@ search_lpad(struct _Unwind_Context *context)
 	ip--;
 
 	while (src < actiontab) {
-		start = read_udata4(&src) + lpstart;
-		len = read_udata4(&src);
-		lpad = read_udata4(&src);
+		if (encoding == DW_EH_PE_uleb128) {
+			start = read_uleb128(&src);
+			len = read_uleb128(&src);
+			lpad = read_uleb128(&src);
+		} else {
+			start = read_udata4(&src);
+			len = read_udata4(&src);
+			lpad = read_udata4(&src);
+		}
 		action = *(src++);
+		start += lpstart;
 
 		if (action >= 0x80)
 			sml_fatal(0, "action too large");
@@ -301,13 +339,12 @@ search_lpad(struct _Unwind_Context *context)
 static void ATTR_NORETURN
 terminate(struct _Unwind_Context *context, void *exnobj)
 {
-	uintptr_t ip = _Unwind_GetIP(context);
-	uintptr_t start = _Unwind_GetRegionStart(context);
-	uintptr_t lsda = _Unwind_GetLanguageSpecificData(context);
+	char *ip = (void*)_Unwind_GetIP(context);
+	char *start = (void*)_Unwind_GetRegionStart(context);
+	char *lsda = (void*)_Unwind_GetLanguageSpecificData(context);
 	sml_error(0, "*** ip %p (%p+%lu) is not found in exception table at %p",
-		  (void*)ip, (void*)start, (unsigned long)(ip - start),
-		  (void*)lsda);
-	backtrace();
+		  ip, start, ip - start, lsda);
+	sml_backtrace();
 	if (exnobj)
 		uncaught_exception(exnobj);
 	else
@@ -318,7 +355,6 @@ _Unwind_Reason_Code
 sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 		struct _Unwind_Exception *ue, struct _Unwind_Context *context)
 {
-	struct exception *e = (struct exception *)ue;
 	struct landing_pad lpad;
 	void *ret1, *ret2;
 
@@ -329,11 +365,11 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 		lpad = search_lpad(context);
 		if (lpad.type & CATCH) {
 			if (exnclass == EXNCLASS_SMLSHARP)
-				e->handler_addr = lpad.addr;
+				UE_TO_EXCEPTION(ue)->handler_addr = lpad.addr;
 			return _URC_HANDLER_FOUND;
 		}
 		if ((lpad.type & CLEANUP) && exnclass == EXNCLASS_SMLSHARP)
-			e->num_cleanup++;
+			UE_TO_EXCEPTION(ue)->num_cleanup++;
 		return _URC_CONTINUE_UNWIND;
 	}
 
@@ -343,10 +379,9 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 	if (actions & _UA_HANDLER_FRAME) {
 		/* Unwinding is completed. */
 		if (exnclass == EXNCLASS_SMLSHARP) {
-			lpad.addr = e->handler_addr;
+			lpad.addr = UE_TO_EXCEPTION(ue)->handler_addr;
 			ret1 = NULL;
-			ret2 = e->exn_obj;
-			free(e);
+			ret2 = UE_TO_EXCEPTION(ue);
 		} else {
 			lpad = search_lpad(context);
 			ret1 = NULL;
@@ -356,7 +391,8 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 	} else {
 		/* If no cleanup is found during SEARCH phase, no need to
 		 * search for a cleanup landing pad. */
-		if (exnclass == EXNCLASS_SMLSHARP && e->num_cleanup == 0)
+		if (exnclass == EXNCLASS_SMLSHARP
+		    && UE_TO_EXCEPTION(ue)->num_cleanup == 0)
 			return _URC_CONTINUE_UNWIND;
 
 		lpad = search_lpad(context);
@@ -366,9 +402,9 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 		}
 
 		if (exnclass == EXNCLASS_SMLSHARP) {
-			e->num_cleanup--;
+			UE_TO_EXCEPTION(ue)->num_cleanup--;
 			ret1 = ue;
-			ret2 = e->exn_obj;
+			ret2 = UE_TO_EXCEPTION(ue);
 		} else {
 			ret1 = ue;
 			ret2 = NULL;
@@ -376,15 +412,14 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 	}
 
 	/* We are going back to SML# code through a landing pad.
-	 * There are two pointers passed to SML# code: "ret1" for a pointer
-	 * to _Unwind_Exception and "ret2" for an SML# exception object.
-	 * "ret1" is NULL when unwinding is finished.  "ret2" may be NULL
-	 * if the exception is a foreign exception, i.e., not an SML#
-	 * exception.  Note that "ret1" is allocated in SML# heap but its
-	 * liveness is not ensured by the runtime; liveness management of
-	 * ret1 and ret2 is the responsibility of the user code.
-	 * To keep _Unwind_Exception alive during unwinding of C frames,
-	 * the runtime provides sml_save_exn feature.
+	 * Two pointers are passed to SML# code:
+	 * "ret1" for a pointer to struct _Unwind_Exception and
+	 * "ret2" for a pointer to struct exception.
+	 * "ret1" is NULL when unwinding is finished.
+	 * "ret2" is NULL if the exception is a foreign exception.
+	 * Note that "ret2" is allocated in SML# heap; the user code
+	 * must save it from garbage collection.
+	 * Use sml_save_exn to keep "ret1" alive during cleanup.
 	 */
 
 	if (!lpad.addr)
@@ -396,26 +431,4 @@ sml_personality(int version, _Unwind_Action actions, uint64_t exnclass,
 	_Unwind_SetGR(context, __builtin_eh_return_data_regno(1),
 		      __builtin_extend_pointer(ret2));
 	return _URC_INSTALL_CONTEXT;
-}
-
-SML_PRIMITIVE void
-sml_save_exn(void *arg)
-{
-	struct _Unwind_Exception *ue = arg;
-	if (ue && ue->exception_class == EXNCLASS_SMLSHARP)
-		sml_save_exn_internal(((struct exception *)ue)->exn_obj);
-}
-
-SML_PRIMITIVE void *
-sml_unsave_exn(void *arg)
-{
-	struct _Unwind_Exception *ue = arg;
-	void *obj = NULL;
-
-	if (!ue || ue->exception_class == EXNCLASS_SMLSHARP) {
-		obj = sml_save_exn_internal(NULL);
-		if (ue)
-			((struct exception *)ue)->exn_obj = obj;
-	}
-	return obj;
 }

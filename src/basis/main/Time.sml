@@ -8,13 +8,14 @@
 infix 7 * / quot
 infix 6 + - ^
 infixr 5 ::
-infix 4 = < >=
+infix 4 = < >= <=
 val op quot = IntInf.quot
 val op * = IntInf.*
 val op + = IntInf.+
 val op / = Real64./
 val op < = SMLSharp_Builtin.Int32.lt
-val op >= = SMLSharp_Builtin.Int32.gteq
+val op <= = SMLSharp_Builtin.Int32.lteq
+val op >= = IntInf.>=
 val op - = SMLSharp_Builtin.Int32.sub_unsafe
 val op ^ = String.^
 structure Word32 = SMLSharp_Builtin.Word32
@@ -25,13 +26,11 @@ struct
   type time = IntInf.int
   exception Time
 
-  val op + = IntInf.+
-
   val zeroTime = 0 : IntInf.int
 
   fun fromReal rsec =
       IntInf.fromLarge
-        (Real64.toLargeInt IEEEReal.TO_ZERO (Real64.* (rsec, 1E9)))
+        (Real64.toLargeInt IEEEReal.TO_NEAREST (Real64.* (rsec, 1E9)))
   fun toReal nsec =
       Real64.fromLargeInt (IntInf.toLarge nsec) / 1E9
 
@@ -68,19 +67,22 @@ struct
         val whole = IntInf.toString whole
         val frac = IntInf.toString frac
       in
-        sign ^ whole ^ "." ^ StringCvt.padRight #"0" prec frac
+        if prec = 0 then 
+          sign ^ whole 
+        else
+          sign ^ whole ^ "." ^ StringCvt.padRight #"0" prec frac
       end
 
   fun fmt prec nsec =
       if prec < 0 then raise Size
-      else if prec >= 9 then toStringWithDot (nsec, 9, prec)
+      else if 9 <= prec then toStringWithDot (nsec, 9, prec)
       else
         let
           val p = IntInf.pow (10, 9 - prec)
           val (d, r) = IntInf.quotRem (nsec, p)
           (* round to nearest or even *)
-          val d = if IntInf.abs r = IntInf.div (p, 2)
-                  then d + IntInf.rem (d, 2) else d
+          val d = if IntInf.abs r >= IntInf.div (p, 2)
+                  then d + (if d >= 0 then 1 else ~1) else d
         in
           toStringWithDot (d, prec, prec)
         end
@@ -119,6 +121,7 @@ struct
   fun fromString s =
       StringCvt.scanString scan s
 
+  val op + = IntInf.+
   val op - = IntInf.-
   val compare = IntInf.compare
   val op < = IntInf.<

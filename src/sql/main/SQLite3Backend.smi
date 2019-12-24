@@ -1,0 +1,34 @@
+_require "../../basis.smi"
+_require local "../../ffi/main/Pointer.smi"
+_require local "./SQLErrors.smi"
+_require "./SQLBackendTy.smi"
+_require "./SQLite3.smi"
+_require local "./SQLBACKEND.sig"
+_require "./Numeric.smi"
+_require "./builtintypes/timestamp/TimeStamp.smi"
+
+structure SMLSharp_SQL_SQLite3Backend =
+struct
+  type conn (= ptr)
+  type res (= ptr)
+  type value (= *)
+  type server_desc = SMLSharp_SQL_SQLite3.flags * string
+
+  val execQuery : conn * string -> res
+  val closeConn : conn -> unit
+  val closeRes : res -> unit
+  val getDatabaseSchema : conn -> SMLSharp_SQL_BackendTy.schema
+  val connect : server_desc -> conn
+  val fetch : res -> bool
+  val getValue : res * int -> value option
+  val intValue : value -> int option
+  val intInfValue : value -> IntInf.int option
+  val wordValue : value -> word option
+  val realValue : value -> real option
+  val real32Value : value -> real32 option
+  val stringValue : value -> string option
+  val charValue : value -> char option
+  val boolValue : value -> bool option
+  val timestampValue : value -> SMLSharp_SQL_TimeStamp.timestamp option
+  val numericValue : value -> SMLSharp_SQL_Numeric.num option
+end

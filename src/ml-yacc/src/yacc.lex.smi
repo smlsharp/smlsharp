@@ -1,9 +1,9 @@
-_require "../../basis.smi"
-_require "../../ml-yacc/lib/base.sig"
-_require "../../ml-yacc/lib/lrtable.smi"
-_require "../../ml-yacc/lib/parser2.smi"
-_require "./utils.sig"
-_require "./sigs.sml"
+_require local "../../basis.smi"
+_require local "../../ml-yacc/lib/base.sig"
+(* _require "../../ml-yacc/lib/lrtable.smi" *)
+(* _require "../../ml-yacc/lib/parser2.smi" *)
+_require local "./utils.sig"
+(* _require "./sigs.sml" *)
 _require "./hdr.smi"
 _require "./yacc.grm.smi"
 

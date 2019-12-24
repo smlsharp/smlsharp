@@ -46,37 +46,35 @@ struct
         fun swap (i, j) =
             let val tmp = sub i in update (i, sub j); update (j, tmp) end
         fun quickSort (left, right) =
-	    if left < right
-            then
-              let
-	        val center = (left + right) div 2
-	        val pivotValue = sub center
-
-	        val _ = update (center, sub left)
+          if left < right
+          then
+            let
+	      val center = (left + right) div 2
+	      val pivotValue = sub center
+	      val _ = update (center, sub left)
                 (* ensure that values left to pivot are less than pivotValue,
                  * and value to rigth to pivot are greater than or equal to
                  * pivotValue. *)
-                fun scan (cursor, pivot) =
-                    if cursor <= right
-                    then
-                      if LESS = compare(sub cursor, pivotValue)
-                      then
-                        (
-                          swap (pivot + 1, cursor);
-                          scan (cursor + 1, pivot + 1)
-                        )
-                      else scan (cursor + 1, pivot)
-                    else pivot
-                val pivot = scan (left + 1, left)
-              in
-                update (left, sub pivot);
-                update (pivot, pivotValue);
-                (* now, array is partitioned at pivot. *)
-
-	        quickSort(left, pivot - 1);
-	        quickSort(pivot + 1, right)
-              end
-            else ()
+              fun scan (cursor, pivot) =
+                if cursor <= right
+                then
+                  if LESS = compare(sub cursor, pivotValue)
+                  then
+                    (
+                     swap (pivot + 1, cursor);
+                     scan (cursor + 1, pivot + 1)
+                    )
+                  else scan (cursor + 1, pivot)
+                else pivot
+              val pivot = scan (left + 1, left)
+            in
+              update (left, sub pivot);
+              update (pivot, pivotValue);
+              (* now, array is partitioned at pivot. *)
+	      quickSort(left, pivot - 1);
+	      quickSort(pivot + 1, right)
+            end
+          else ()
       in
         quickSort (0, Array.length array - 1);
         Array.foldr (fn (value, list) => value :: list) [] array

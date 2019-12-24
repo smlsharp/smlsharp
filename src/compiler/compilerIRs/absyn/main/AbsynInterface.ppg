@@ -17,7 +17,7 @@ struct
     | (*% @format ":>" *)
       SIG_OPAQUE
 
-  (*% @formatter(Absyn.ty) Absyn.format_ty *)
+  (*% @formatter(Absyn.ty) AbsynFormatter.format_ty *)
   type ty = Absyn.ty
 
   (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
@@ -30,7 +30,7 @@ struct
   type loc = Loc.loc
 
   (*%
-   * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(Absyn.tvar) AbsynFormatter.format_tvar
    *)
   datatype overloadInstance 
     = (*% @format(exp) exp *)
@@ -83,28 +83,34 @@ struct
 
   (*%
    * @formatter(list) TermFormat.formatSeqList
-   * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(Absyn.tvar) AbsynFormatter.format_tvar
    *)
-  datatype typbind 
+  type typbind_trans
     = (*%
        * @format({tyvars: tv tvs, symbol, ty, loc})
        * tvs(tv)("(","," 1,")" +d) symbol +d "="
        * 2[ +1 ty]
        *)
-      TRANSPARENT of {tyvars: Absyn.tvar list, symbol: symbol, ty: ty, loc: loc}
-    | (*%
-       * @format({tyvars: tv tvs, symbol, runtimeTy, loc})
-       * tvs(tv)("(","," 1,")" +d) symbol +d "="
-       * 2[ +1 runtimeTy +1 "as" +d "opaqueNoneq" ]
-       *)
-      OPAQUE_NONEQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
-    | (*%
-       * @format({tyvars: tv tvs, symbol, runtimeTy, loc})
-       * tvs(tv)("(","," 1,")" +d) symbol +d "="
-       * 2[ +1 runtimeTy +1 "as" +d "opaqueEq" ]
-       *)
-      OPAQUE_EQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
+      {tyvars: Absyn.tvar list, symbol: symbol, ty: ty, loc: loc}
 
+  (*% @formatter(AbsynTy.opaque_impl) AbsynTyFormatter.format_opaque_impl *)
+  datatype opaque_impl = datatype AbsynTy.opaque_impl
+
+  (*%
+   * @formatter(list) TermFormat.formatSeqList
+   * @formatter(Absyn.tvar) AbsynFormatter.format_tvar
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  datatype typbind 
+    = (*% @format(t) t *)
+      TRANSPARENT of typbind_trans
+    | (*%
+       * @format({eq, tyvars: tv tvs, symbol, runtimeTy, loc})
+       * tvs(tv)("(","," 1,")" +d) symbol +d "="
+       * 2[ +1 runtimeTy +1 "as" +d eq()("opaqueEq","opaqueNoneq") ]
+       *)
+      OPAQUE of {eq: bool, tyvars: Absyn.tvar list, symbol: symbol,
+                 runtimeTy: opaque_impl, loc: loc}
 
   (*%
    * @formatter(option) TermFormat.formatOptionalOption
@@ -119,7 +125,7 @@ struct
   (*%
    * @formatter(seq) TermFormat.formatSeqList
    * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(Absyn.tvar) AbsynFormatter.format_tvar
    *)
   type datbind 
     = (*%
@@ -151,7 +157,7 @@ struct
 
   (*%
    * @formatter(declist) TermFormat.formatDeclList
-   * @formatter(Absyn.sigexp) Absyn.format_sigexp
+   * @formatter(Absyn.sigexp) AbsynFormatter.format_sigexp
    *)
   datatype idec 
     = (*%
@@ -165,12 +171,14 @@ struct
        *)
       ITYPE of typbind list
     | (*%
-         @format({datbind: bind binds, loc})
+         @format({datbind: bind binds, withType: typ typs, loc})
          1[
            "datatype" +d binds(bind)(~1[1 "and"] +d)
+           "withtype" +d typs(typ)(~1[1 "and"] +d)
           ]
        *)
-      IDATATYPE of {datbind: datbind list, loc: loc}
+      IDATATYPE of {datbind: datbind list, withType: typbind_trans list,
+                    loc: loc}
     | (*%
        * @format({symbol, longsymbol,  loc})
        * "datatype" +d symbol +d "="
@@ -227,7 +235,7 @@ struct
       }
 
   (*%
-   * @formatter(Absyn.sigexp) Absyn.format_sigexp
+   * @formatter(Absyn.sigexp) AbsynFormatter.format_sigexp
    *)
   type sigbind 
     = (*%
@@ -237,8 +245,8 @@ struct
       {symbol: symbol, sigexp: Absyn.sigexp, loc: loc}
 
   (*%
-   * @formatter(Absyn.sigexp) Absyn.format_sigexp
-   * @formatter(Absyn.spec) Absyn.format_spec
+   * @formatter(Absyn.sigexp) AbsynFormatter.format_sigexp
+   * @formatter(Absyn.spec) AbsynFormatter.format_spec
    *)
   datatype funParam 
     = (*%
@@ -254,7 +262,7 @@ struct
       FUNPARAM_SPEC of Absyn.spec
 
   (*%
-   * @formatter(Absyn.sigexp) Absyn.format_sigexp
+   * @formatter(Absyn.sigexp) AbsynFormatter.format_sigexp
    *)
   type funbind 
     = (*%
@@ -300,20 +308,27 @@ struct
       IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
   (*%
-   * @formatter(Filename.filename) Filename.format_filename
+   * @formatter(RequirePath.path) RequirePath.format_path
+   * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   datatype irequire =
-      (*% @format(s * l) "_require" +d s *)
-      REQUIRE of Filename.filename * loc
-    | (*% @format(s * l) "local" +d "_require" +d s *)
-      LOCAL_REQUIRE of Filename.filename * loc
+      (*%
+       * @format(s * opt opts * l) "_require" +d s opts(opt)()
+       * @format:opt(opt) +d opt
+       *)
+      REQUIRE of RequirePath.path * Symbol.symbol list * loc
+    | (*%
+       * @format(s * opt opts * l) "local" +d "_require" +d s opts(opt)()
+       * @format:opt(opt) +d opt
+       *)
+      LOCAL_REQUIRE of RequirePath.path * Symbol.symbol list * loc
     | (*% @format(s * l) "local" +d "_use" +d s *)
-      LOCAL_USE of Filename.filename * loc
+      LOCAL_USE of RequirePath.path * loc
 
   (*%
-   * @formatter(Absyn.topdec) Absyn.format_topdec
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    * @formatter(dec) TermFormat.formatDeclList
-   * @formatter(Filename.filename) Filename.format_filename
+   * @formatter(RequirePath.path) RequirePath.format_path
    *)
   datatype itop 
     = (*%
@@ -333,26 +348,27 @@ struct
        *)
       INCLUDES of
       {
-        includes: (Filename.filename * loc) list,
+        includes: (RequirePath.path * loc) list,
         topdecs: Absyn.topdec list
       }
 
   (*%
-   * @formatter(decList) TermFormat.formatDeclList
    * @formatter(InterfaceID.id) InterfaceID.format_id
    * @formatter(InterfaceName.interface_name)
    *    InterfaceName.format_interface_name
    *)
-  type interfaceDec =
+  type interface_dec =
       (*%
        * @format({interfaceId, interfaceName, requiredIds: req reqs,
        *          provideTopdecs: dec decs})
-       * "interface" +d interfaceId +d "=" +d "iface"
-       * 2[ reqs:decList(req)(+1, +1) ]
-       * 2[ +1 "provide" +d "<" { interfaceName ">" } ]
-       * 2[ decs:decList(dec)(+1, +1) ]
+       * "interface" +d interfaceId 2[
+       * reqs(req)()
+       * +1 "provide" +d interfaceName
+       * decs(dec)()
        * +1 "end"
-       * @format:req({id, loc}) "require" +d id
+       * ]
+       * @format:req({id, loc}) +1 "require" +d id
+       * @format:dec(dec) +1 dec
        *)
       {
         interfaceId: InterfaceID.id,
@@ -363,63 +379,56 @@ struct
 
   (*%
    * @formatter(InterfaceID.id) InterfaceID.format_id
-   * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(option) TermFormat.formatOptionalOption
-   * @formatter(InterfaceName.interface_name)
-   *    InterfaceName.format_interface_name
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    *)
   type interface =
       (*%
-       * @format({interfaceDecs: bind binds,
-       *          provideInterfaceNameOpt: name nameOpt,
-       *          requiredIds: req reqs,
-       *          locallyRequiredIds: lreq lreqs,
-       *          provideTopdecs: pdec pdecs})
-       * "interfaces"
-       * 2[ binds:decList(bind)(+1, +1) ]
-       * +1 "requires"
-       * 2[ reqs:decList(req)(+1, +1) ]
-       * 2[ lreqs:decList(lreq)(+1, +1) ]
-       * +1 "provide" nameOpt(name)("<",">")
-       * 2[ pdecs:decList(pdec)(+1, +1) ]
-       * +1 "end"
-       * @format:req({id, loc}) "require" +d id
-       * @format:lreq({id, loc}) "local require" +d id
+       * @format({interfaceDecs: bind binds, provide})
+       * binds(bind)()
+       * "provide" +d "interface" 2[ +1 provide ] "end"
+       * @format:bind(bind) bind +1
+       * @format:provide({requiredIds: req reqs, locallyRequiredIds: lreq lreqs,
+       *                  provideTopdecs: dec decs, topdecsInclude: inc incs})
+       * reqs(req)()
+       * lreqs(lreq)()
+       * decs(dec)()
+       * incs(inc)()
+       * @format:req({id, loc}) +1 "require" +d id
+       * @format:lreq({id, loc}) +1 "local" +d "require" +d id
+       * @format:dec(dec) +1 dec
+       * @format:inc(inc) +1 "include" +d inc
        *)
       {
-        interfaceDecs : interfaceDec list,
-        provideInterfaceNameOpt : InterfaceName.interface_name option,
-        requiredIds : {id: InterfaceID.id, loc: loc} list,
-        locallyRequiredIds : {id: InterfaceID.id, loc: loc} list,
-        provideTopdecs : itopdec list
+        interfaceDecs : interface_dec list,
+        provide :
+          {requiredIds : {id : InterfaceID.id, loc : loc} list,
+           locallyRequiredIds : {id : InterfaceID.id, loc : loc} list,
+           provideTopdecs : itopdec list,
+           topdecsInclude: Absyn.topdec list}
       }
 
   (*%
    * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(Absyn.topdec) Absyn.format_topdec
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    *)
   type compile_unit =
       (*%
-       * @format({interface:interface interfaceOpt, topdecsSource: dec decs,
-       *          topdecsInclude:inc incs})
+       * @format({interface:interface interfaceOpt, topdecsSource: dec decs})
        * "interface"
        * 2[ +1 interfaceOpt(interface) ]
-       * +1 "topdecsInclude"
-       * 2[ incs:decList(inc)(+1, +1) ]
        * +1 "topdecsSource"
        * 2[ decs:decList(dec)(+1, +1) ]
        * +1 "end"
        *)
       {
         interface : interface option,
-        topdecsInclude : Absyn.topdec list,
         topdecsSource : Absyn.topdec list
       }
 
   (* an interface loaded as if it is "_require"-ed *)
   (*%
    * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(Absyn.topdec) Absyn.format_topdec
+   * @formatter(Absyn.topdec) AbsynFormatter.format_topdec
    * @formatter(InterfaceID.id) InterfaceID.format_id
    *)
   type interface_unit =
@@ -437,7 +446,7 @@ struct
        * @format:req({id, loc}) "require" +d id
        *)
       {
-        interfaceDecs : interfaceDec list,
+        interfaceDecs : interface_dec list,
         requiredIds : {id: InterfaceID.id, loc: loc} list,
         topdecsInclude : Absyn.topdec list
       }

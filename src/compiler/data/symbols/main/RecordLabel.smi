@@ -2,12 +2,12 @@ _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "./Symbol.ppg.smi"
+_require "./Symbol.smi"
 
 structure RecordLabel =
 struct
 
-  eqtype label (= boxed)
+  eqtype label (= string)
 
   val fromSymbol : Symbol.symbol -> label
   val fromLongsymbol : Symbol.longsymbol -> label
@@ -17,6 +17,7 @@ struct
   val escapeString : label -> string
   val compare : label * label -> order
   val format_label : label -> SMLFormat.FormatExpression.expression list
+  val format_jsonLabel : label -> SMLFormat.FormatExpression.expression list
 
   structure Ord =
   struct

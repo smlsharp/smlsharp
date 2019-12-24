@@ -1,11 +1,8 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
-
 _require "../../../data/name/main/CodeLabel.smi"
-_require local "../../../libs/util/main/TermFormat.smi"
 
 structure LLVMIR =
 struct
@@ -79,7 +76,7 @@ struct
     | FLOAT
     | DOUBLE
     | VOID
-    | FPTR of ty * ty list * bool
+    | FN of ty * ty list * bool
     | ARRAY of Word32.word * ty
     | STRUCT of ty list * {packed: bool}
 
@@ -96,6 +93,7 @@ struct
     | CONST_GETELEMENTPTR of
       {
         inbounds : bool,
+        ty : ty,
         ptr : ty * const,
         indices : (ty * const) list
       }
@@ -178,12 +176,12 @@ struct
     | SEQ_CST
 
   datatype insn =
-      LOAD of var * operand
-    | LOAD_ATOMIC of var * operand * {order: atomic_ordering, align: word}
+      LOAD of var * ty * operand
+    | LOAD_ATOMIC of var * ty * operand * {order: atomic_ordering, align: word}
     | STORE of {value: operand, dst: operand}
     | STORE_ATOMIC of {value: operand, dst: operand, order: atomic_ordering,
                        align: word}
-    | ALLOCA of var * ty
+    | ALLOCA of var * ty * {align: word} option
     | CALL of
       {
         result: var option,
@@ -197,6 +195,7 @@ struct
     | GETELEMENTPTR of
       {
         result: var,
+        ty: ty,
         inbounds: bool,
         ptr: operand,
         indices: operand list
@@ -212,8 +211,14 @@ struct
   type destination =
       label * operand list
 
+  datatype phi_label =
+      BLOCKLABEL of label
+    | LPADLABEL of landingPadLabel
+    | BEGINFUNC
+
   datatype phi =
       PHI of ty * var
+    | PHI_COMPLETE of var * ty * (value * phi_label) list
 
   datatype last =
       BLOCK of
@@ -238,6 +243,7 @@ struct
     | BR_C of operand * destination * destination
     | INVOKE of 
       {
+        result: var option,
         cconv: calling_convention option,
         retAttrs: parameter_attribute list,
         fnPtr: operand,
@@ -302,6 +308,7 @@ struct
     | ALIAS of
       {
         name : symbol,
+        ty : ty,
         linkage : linkage option,
         unnamed_addr : bool,
         aliasee : ty * const

@@ -1,0 +1,2 @@
+_require local "./021_local3.smi"
+val y : int

@@ -8,31 +8,6 @@
 
 structure SMLSharp_Version =
 struct
-  val Version = "%VERSION%"
-  val ReleaseDate = "%RELEASE_DATE%"
+  val Release = "%RELEASE%"
   val DefaultSystemBaseDir = "%LIBDIR_SMLSHARP%"
-  datatype host_os = Mingw | Cygwin | Unix
-  structure DefaultConfig =
-  struct
-    val CC = "%CC%"
-    val CXX = "%CXX%"
-    val LD = "%LD%"
-    val AR = "%AR%"
-    val RANLIB = "%RANLIB%"
-    val LLC = "%LLC%"
-    val OPT = "%OPT%"
-    val LLVM_DIS = "%LLVM_DIS%"
-    val LDFLAGS = "%LDFLAGS%"
-    val LIBS = "%LIBS%"
-    val DLLEXT = "%DLLEXT%"
-    val LIBEXT = "%LIBEXT%"
-    val ASMEXT = "%ASMEXT%"
-    val OBJEXT = "%OBJEXT%"
-    val A_OUT = "%A_OUT%"
-    val HOST_OS_TYPE = %HOST_OS_TYPE%
-    val TARGET_TRIPLE = "%TARGET_TRIPLE%"
-    val CMDLINE_MAXLEN = %CMDLINE_MAXLEN%
-    val PIC_DEFAULT = %PIC_DEFAULT%
-    val RUNLOOP_DLDFLAGS = "%RUNLOOP_DLDFLAGS%"
-  end
 end

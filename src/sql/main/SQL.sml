@@ -11,8 +11,8 @@ struct
   open SMLSharp_SQL_Prim
   open SMLSharp_SQL_Errors
   open SMLSharp_SQL_Backend
+  structure Numeric = SMLSharp_SQL_Prim.Numeric
+  structure Decimal = Numeric
   structure TimeStamp = SMLSharp_SQL_TimeStamp
-  structure Decimal = SMLSharp_SQL_Decimal
-  structure Float = SMLSharp_SQL_Float
 
 end

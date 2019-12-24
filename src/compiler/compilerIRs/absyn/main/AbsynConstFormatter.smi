@@ -1,0 +1,12 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require "./AbsynConst.smi"
+
+structure AbsynConstFormatter =
+struct
+
+  val format_constant
+      : AbsynConst.constant -> SMLFormat.FormatExpression.expression list
+
+end

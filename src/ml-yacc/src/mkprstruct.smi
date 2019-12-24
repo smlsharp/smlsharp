@@ -1,9 +1,9 @@
-_require "../../basis.smi"
-_require "../../ml-yacc/lib/base.sig"
+_require local "../../basis.smi"
+_require local "../../ml-yacc/lib/base.sig"
 _require "../../ml-yacc/lib/lrtable.smi"
-_require "./utils.sig"
-_require "./sigs.sml"
-_require "./mklrtable.smi"
+_require local "./utils.sig"
+_require local "./sigs.sml"
+(* _require "./mklrtable.smi" *)
 _require "./shrink.smi"
 
 structure PrintStruct =

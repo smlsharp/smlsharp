@@ -34,6 +34,7 @@ struct
            }
          | StartOfIndent of int
          | EndOfIndent
+         | Sequence of expression list
   val isHigherThan : priority * priority -> bool
   val assocToString : assoc -> string
   val priorityToString : priority -> string

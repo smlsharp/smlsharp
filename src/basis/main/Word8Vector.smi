@@ -1,5 +1,5 @@
 _require "./General.smi"
-_use local "./Vector_common.sml"
+_use local "./Array_common.sml"
 
 structure Word8Vector =
 struct

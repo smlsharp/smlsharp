@@ -1,4 +1,4 @@
-_require "../../../basis.smi"
+_require local "../../../basis.smi"
 _require "./Assert.smi"
 _require "./Test.smi"
 _require "./TextUITestRunner.smi"

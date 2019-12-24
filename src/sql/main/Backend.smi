@@ -1,12 +1,13 @@
 _require "../../basis.smi"
 _require "./builtintypes/timestamp/TimeStamp.smi"
-_require "./builtintypes/decimal/Decimal.smi"
-_require "./builtintypes/float/Float.smi"
 _require local "./SQLErrors.smi"
 _require "./SQLBackendTy.smi"
+_require "./Numeric.smi"
 _require local "./PGSQLBackend.smi"
 _require local "./MySQLBackend.smi"
 _require local "./ODBCBackend.smi"
+_require "./SQLite3.smi"
+_require local "./SQLite3Backend.smi"
 _require local "./SQLBACKEND.sig"
 
 structure SMLSharp_SQL_Backend =
@@ -24,9 +25,8 @@ struct
              getChar : int -> char option,
              getBool : int -> bool option,
              getTimestamp : int -> SMLSharp_SQL_TimeStamp.timestamp option,
-             getDecimal : int -> SMLSharp_SQL_Decimal.decimal option,
-             getFloat : int -> SMLSharp_SQL_Float.float option}
-          
+             getNumeric : int -> SMLSharp_SQL_Numeric.num option}
+
   type conn_impl =
        {closeConn : unit -> unit,
         getDatabaseSchema : unit -> SMLSharp_SQL_BackendTy.schema,
@@ -40,5 +40,26 @@ struct
   val postgresql : string -> backend
   val mysql : string -> backend
   val odbc : string -> backend
+  val sqlite3 : string -> backend
+  val sqlite3' : SMLSharp_SQL_SQLite3.flags * string -> backend
   val default : string -> backend
+
+  structure SQLite3 =
+  struct
+    val flags = SMLSharp_SQL_SQLite3.flags
+    type open_mode = SMLSharp_SQL_SQLite3.open_mode
+    val SQLITE_OPEN_READONLY = SMLSharp_SQL_SQLite3.SQLITE_OPEN_READONLY
+    val SQLITE_OPEN_READWRITE = SMLSharp_SQL_SQLite3.SQLITE_OPEN_READWRITE
+    val SQLITE_OPEN_READWRITE_CREATE =
+        SMLSharp_SQL_SQLite3.SQLITE_OPEN_READWRITE_CREATE
+    type threading_mode = SMLSharp_SQL_SQLite3.threading_mode
+    val SQLITE_OPEN_NOMUTEX = SMLSharp_SQL_SQLite3.SQLITE_OPEN_NOMUTEX
+    val SQLITE_OPEN_FULLMUTEX = SMLSharp_SQL_SQLite3.SQLITE_OPEN_FULLMUTEX
+    type cache_mode = SMLSharp_SQL_SQLite3.cache_mode
+    val SQLITE_OPEN_SHAREDCACHE = SMLSharp_SQL_SQLite3.SQLITE_OPEN_SHAREDCACHE
+    val SQLITE_OPEN_PRIVATECACHE = SMLSharp_SQL_SQLite3.SQLITE_OPEN_PRIVATECACHE
+    type uri_mode = SMLSharp_SQL_SQLite3.uri_mode
+    val SQLITE_OPEN_URI = SMLSharp_SQL_SQLite3.SQLITE_OPEN_URI
+  end
+
 end

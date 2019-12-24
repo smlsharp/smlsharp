@@ -1,0 +1,12 @@
+val myCPoint = fn : ['a#{CPoint: {x: real, y: real} -> 'b}, 'b. 'a -> 'b]
+
+val myPPoint = fn : ['a#{PPoint: {r: real, theta: real} -> 'b}, 'b. 'a -> 'b]
+
+val distance =
+  {CPoint = fn, PPoint = fn}
+  : {CPoint: ['a#{x: real, y: real}. 'a -> real],
+     PPoint: ['a#{r: 'b, theta: 'c}, 'b, 'c. 'a -> 'b]}
+
+val it = 1.41421356237 : real
+
+val it = 1.41421356237 : real

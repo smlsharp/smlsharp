@@ -1,5 +1,5 @@
 structure S =
 struct
-  type 'a t (= boxed)
+  type 'a t (= *)
   val x : 'a t
 end

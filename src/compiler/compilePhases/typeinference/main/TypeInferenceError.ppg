@@ -10,29 +10,24 @@ struct
   local
     structure I = IDCalc
     structure UE = UserError
-    val formatTyFun = ref (Types.format_ty [])
+    val formatTyFun = ref Types.format_ty
     fun format_ty ty = (!formatTyFun) ty
-    fun format_ffiTy ty = TypedCalc.format_ffiTy nil ty
-    val format_AbsynTy = AbsynTy.format_ty 
+    fun format_ffiTy ty = TypedCalc.format_ffiTy ty
     val errorQueue = UE.createQueue ()
   in
 
     fun setPrintTyFun {Env, FunE, SigE} = 
-        formatTyFun := Types.print_ty (nil, [Env], NameEvalUtils.staticTyConName)
-  (*%
-     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
-   *)
-  type longsymbol = Symbol.longsymbol
+        formatTyFun := Types.formatTyForUser {env = [Env], tyConName = NameEvalUtils.staticTyConName}
 
   (*%
    * @formatter(Types.ty) format_ty
    * @formatter(I.ffiTy) I.format_ffiTy
-   * @formatter(AbsynTy.ty) format_AbsynTy
    * @formatter(path) Path.format_pathWithoutDotend
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   * @formatter(Symbol.symbol) Symbol.format_symbol
    * @formatter(I.icpat) I.format_icpat
+   * @formatter(TypedCalc.tppat) TypedCalc.format_tppat
    * @formatter(RecordLabel.label) RecordLabel.format_label
-   * @formatter(AbsynTy.tvar) AbsynTy.format_tvar
    *)
   exception
   (**
@@ -57,7 +52,7 @@ struct
    * @format(code * longsymbol) "(type inference" +d code ")" +d  
    * "path" +d longsymbol +d "is" +d "not" +d "a" +d "constructor"
    *)
-  NonConstructorPathInPat of string * longsymbol
+  NonConstructorPathInPat of string * Symbol.longsymbol
 
   and
   (**
@@ -67,7 +62,7 @@ struct
    * @format(code * tvar) "(type inference" +d code ")" +d    
    * "type" + "variable" + tvar + "has" + "a" + "cyclic" + "record" + "kind"
    *)
-  CyclicTvarkindSpec of string * AbsynTy.tvar
+  CyclicTvarkindSpec of string * Symbol.symbol
 
   and
   (**
@@ -87,10 +82,10 @@ struct
     where A.c is not defined.
    *)
   (*%
-   * @format(code * longsymbol:longsymbol) "(type inference" +d code ")" +d    
+   * @format(code * longsymbol) "(type inference" +d code ")" +d    
    * "constructor" +d "path" +d longsymbol +d "undefined"
    *)
-  ConstructorPathNotFound of string * longsymbol
+  ConstructorPathNotFound of string * Symbol.longsymbol
 
   and
   (**
@@ -117,7 +112,7 @@ struct
      "data" +d "constructor" +d {longsymbol} +d "used" +d "without"
      +d "argument" +d "in" +d "pattern"
    *)
-  ConRequireArg of string * {longsymbol : longsymbol}
+  ConRequireArg of string * {longsymbol : Symbol.longsymbol}
 
   and
   (**
@@ -215,7 +210,7 @@ struct
    * "occurrence:" +d {occurrence}
    *)
   RecDefinitionAndOccurrenceNotAgree of string *
-  {longsymbol : longsymbol, definition : Types.ty, occurrence : Types.ty}
+  {longsymbol : Symbol.longsymbol, definition : Types.ty, occurrence : Types.ty}
 
   and
   (**
@@ -227,7 +222,7 @@ struct
    * @format(code * {longsymbol}) "(type inference" +d code ")" +d  
    *   "duplicate" +d "variables" +d "in" +d "pattern(s):" +d longsymbol
    *)
-  DuplicatePatternVar of string * {longsymbol : longsymbol}
+  DuplicatePatternVar of string * {longsymbol : Symbol.longsymbol}
 
   and
   (**
@@ -369,6 +364,22 @@ struct
    *        +1  "other rules:" + {otherRules}
    *)
   RuleTypeMismatch of string * {thisRule: Types.ty, otherRules:Types.ty}
+
+  and
+  (**
+   * <pre>
+   *    1 => 1
+   *  | "1" => "1"
+   * </pre>
+   *)
+  (*%
+   * @format(code * {thisRule, otherRules}) "(type inference" +d code ")" +d   
+   * "type" +d "of" +d "the" +d "rule" +d "body" +d "does" +d "not" +d "agree" +d
+   * "with" +d "other" +d "rules"
+   *        +1  "  this rule:" + {thisRule}
+   *        +1  "other rules:" + {otherRules}
+   *)
+  RuleBodyTypeMismatch of string * {thisRule: Types.ty, otherRules:Types.ty}
 
   and
   (**
@@ -939,7 +950,7 @@ struct
    * "User" +d  "type" +d "variable" +d "cannot" +d "be" +d
    * "generalized:" + tvar
    *)
-  UserTvarNotGeneralized of string * AbsynTy.tvar
+  UserTvarNotGeneralized of string * Symbol.symbol
 
   and
   (**
@@ -1073,14 +1084,28 @@ struct
    *)
   JoinTypeExpected of string * Types.ty
 
-  and 
+  and
   (*%
-     @format(name)
-     "(type inference)" +d
-      "JSON" + "primitive" + "not" + "loaded:" +d name
-      +1 "JSON" + "functions" + "require" + "json.smi"
+   * @format(code * ty) "(type inference" +d code ")" +d
+   * "dynamic"+ "type" +d "expected" +d "for" +d "_dynamic:" 
+   *  +1 ty
    *)
-  UserLevelPrimForJsonNotFound of string
+  DynamicTypeExpected of string * Types.ty
+
+  and
+  (*%
+   * @format(code * ty) "(type inference" +d code ")" +d
+   * "reify"+ "kind" +d "expected" +d "for" +d "the type:" +d ty
+   *)
+  ReifyKindExpected of string * Types.ty
+
+  and
+  (*%
+   * @format(code * pat) "(type inference" +d code ")" +d
+   * "dynamic"+ "type" +d "case" +d "pattern" +d "must" +d "have" +d "a" +d "ground" +d "type" 
+   *  +1 pat
+   *)
+  DynamicCasePatsMustBeGround of string * TypedCalc.tppat
 
   and 
   (*%
@@ -1090,6 +1115,14 @@ struct
       +1 "JOIN" + "functions" + "require" + "json.smi"
    *)
   UserLevelPrimForJoinNotFound of string
+
+  and
+  (*%
+     @format(ty)
+     "(type inference)" +d
+     "inconsistent" +d "type" +d "kind:" +d ty
+   *)
+  InconsistentKind of Types.ty
 
   and 
   (*%

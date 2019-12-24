@@ -1,0 +1,3 @@
+_use local "./052_use2.use"
+_use local "./052_use3.use"
+val x : int * int

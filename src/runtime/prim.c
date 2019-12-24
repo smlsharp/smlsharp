@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fenv.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -28,21 +29,11 @@
 #include <float.h>
 #endif /* HAVE_DECL_ISINF */
 #endif /* HAVE_CONFIG_H */
-#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_TIMES_H)
 #include <sys/times.h>
-#endif /* HAVE_SYS_TIMES_H */
-#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_RESOURCE_H)
 #include <sys/resource.h>
-#endif /* HAVE_SYS_RESOURCE_H */
-#if defined(HAVE_CONFIG_H) && !defined(HAVE_UTIMES) && defined(HAVE_UTIME_H)
 #include <utime.h>
-#endif /* HAVE_UTIME_H */
-#if !defined(HAVE_CONFIG_H) || defined(HAVE_POLL_H)
 #include <poll.h>
-#endif /* HAVE_POLL_H */
-#if !defined(HAVE_CONFIG_H) || defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
-#endif /* HAVE_DLFCN_H */
 
 #ifdef MINGW32
 #include <windows.h>
@@ -1130,13 +1121,14 @@ prim_GenericOS_open(const char *filename, const char *fmode)
 		subflags |= O_BINARY;
 #endif
 
-	return open(filename, flags | subflags, 0777);
+	return open(filename, flags | subflags, 0666);
 }
 
 int
 prim_GenericOS_read(int fd, char *buf, unsigned int offset, unsigned int len)
 {
-	assert(OBJ_TYPE(buf) == OBJTYPE_UNBOXED_ARRAY);
+	assert(OBJ_TYPE(buf) == OBJTYPE_UNBOXED_ARRAY
+	       || OBJ_TYPE(buf) == OBJTYPE_UNBOXED_VECTOR);
 	assert(offset + len <= OBJ_SIZE(buf));
 
 #ifdef HAVE_INTERACTIVE_MODE

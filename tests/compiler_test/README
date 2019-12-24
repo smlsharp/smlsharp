@@ -1,0 +1,14 @@
+(1)
+tests/compiler_test/*/hoge.sm[il]を作ってユニットテストケースを書く．
+strucuture HogeTests =
+struct
+  val tests : SMLUnit.Test.test
+end
+ 
+(2)
+hoge.smiとHogeTests.testsをそれぞれ
+tests/compiler_test/tests.sm[il]に加える・
+
+(3)
+tests/suite/compiler_test/CompilerTest.smlのsmlfilesに
+../compiler_test/hoge.smlを加える．

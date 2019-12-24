@@ -1,18 +1,22 @@
-_require "../../src/basis.smi"
+(* init for interactive mode *)
+_require "../../src/basis.smi" init
+_require "../../src/compiler/extensions/reflection/main/ReifyTerm.smi" init
 _require "../../src/smlformat-lib.smi"
 _require local "../../src/basis/main/SMLSharp_Runtime.smi"
-_require local "../../src/config/main/Config.smi"
-_require "../../src/compiler/data/control/main/Control.ppg.smi"
+_require local "../../src/compiler/libs/config/main/Config.smi"
+_require local "../../src/compiler/data/symbols/main/Loc.smi"
+_require local "../../src/compiler/data/control/main/Control.smi"
 _require "../../src/compiler/extensions/usererror/main/UserError.ppg.smi"
 _require "../../src/compiler/libs/toolchain/main/Filename.smi"
+_require "../../src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require local "../../src/compiler/libs/toolchain/main/CoreUtils.smi"
 _require local "../../src/compiler/libs/toolchain/main/LLVMUtils.smi"
 _require local "../../src/compiler/libs/toolchain/main/TempFile.smi"
 _require local "../../src/compiler/compilePhases/parser/main/Parser.smi"
 _require local "../../src/compiler/compilePhases/toplevel/main/Top.smi"
 _require local "../../src/compiler/compilePhases/main/main/Main.smi"
-_require "../../src/compiler/compilePhases/main/main/Interactive.smi"
-_require "../../src/compiler/compilePhases/main/main/FilenameMap.smi"
+_require local "../../src/compiler/compilePhases/main/main/Interactive.smi"
+_require local "../../src/compiler/compilePhases/main/main/UserFileMap.smi"
 _require local "../../src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi"
 
 (* needed to make the prelude library available *)
@@ -29,21 +33,22 @@ struct
   exception CompileError of string * UserError.errorInfo list
 
   (* exceptions raised by "execute" when the program aborts *)
-  exception Failure of int
-  exception CoreDumped
-  exception Signaled of int
+  exception Failure of int * string
+  exception CoreDumped of string
+  exception Signaled of int * string
 
   (* found an uncaught exception during interactive execution
    * The first "string" is the formatted error message. *)
   exception UncaughtException of string * exn
 
   type srcfile = string
-  type objfiles (= boxed)
-  type exefile (= boxed)
+  type objfiles (= list)
+  type exefile (= string)
   type error = UserError.errorInfo
 
   val systemBaseDir : Filename.filename
   val dataDir : Filename.filename
+  val dataFile : string -> Filename.filename
 
   (* initialize this driver *)
   val init : unit -> unit
@@ -68,11 +73,20 @@ struct
 
   (* batch compilation *)
   val compile : string list -> objfiles
-  val compile' : string list -> {objfiles : objfiles, errors : error list}
+  val compile'
+      : string list
+        -> {objfiles : objfiles,
+            errors : error list,
+            dependency : InterfaceName.file_dependency option list}
   val link : string -> objfiles -> exefile
-  val link' : string -> objfiles -> {exefile : exefile, errors : error list}
+  val link' : string
+              -> objfiles
+              -> {exefile : exefile,
+                  errors : error list,
+                  dependency : InterfaceName.file_dependency option}
   val execute : exefile -> unit
 
   val raiseCompileError : error list -> 'a
+  val checkCompileError : ['a#{errors : error list}. 'a -> 'a]
 
 end

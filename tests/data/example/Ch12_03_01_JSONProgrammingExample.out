@@ -1,0 +1,15 @@
+val J =
+  "[{\"name\":\"Joe\", \"age\":21, \"grade\":1.1},{\"name\":\"Sue\", \"age\":31, \"grade\":2.0},{\"name\":\"Bob\", \"age\":41, \"grade\":3.9}]" : string
+
+val getNames = fn : ['a#{name: 'b}, 'b. 'a list -> 'b list]
+
+val j = _ : JSON.void JSON.dyn
+
+val vl =
+  [
+   {age = 21, grade = 1.1, name = "Joe"},
+   {age = 31, grade = 2.0, name = "Sue"},
+   {age = 41, grade = 3.9, name = "Bob"}
+  ] : {age: int, grade: real, name: string} list
+
+val nl = ["Joe", "Sue", "Bob"] : string list

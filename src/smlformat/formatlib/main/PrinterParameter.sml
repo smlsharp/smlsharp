@@ -18,15 +18,18 @@ struct
          | MaxDepthOfGuards of int option
          | MaxWidthOfGuards of int option
          | CutOverTail of bool
+         | OutputFunction of string -> unit
 
   val defaultNewline = "\n"
   val defaultSpace = " "
+
   val defaultColumns = 80
   val defaultGuardLeft = "("
   val defaultGuardRight = ")"
   val defaultMaxDepthOfGuards = NONE
   val defaultMaxWidthOfGuards = NONE
   val defaultCutOverTail = false
+  val defaultOutputFunction = NONE
 
   type parameterRecord =
        {
@@ -37,7 +40,8 @@ struct
          guardRight : string,
          maxDepthOfGuards : int option,
          maxWidthOfGuards : int option,
-         cutOverTail : bool
+         cutOverTail : bool,
+         outputFunction : (string -> unit) option
        }
 
   (***************************************************************************)
@@ -71,20 +75,23 @@ struct
                 )
                 parameterList
 
-        val (columns, spaceString, newlineString, cutOverTail) =
+        val (columns, spaceString, newlineString, cutOverTail, outputFunction) =
             List.foldl
-                (fn (param, (cols, space, newline, cuttail)) =>
+                (fn (param, (cols, space, newline, cuttail, outputFn)) =>
                     case param
-                     of Newline s => (cols, space, s, cuttail)
-                      | Space s => (cols, s, newline, cuttail)
-                      | Columns n => (n, space, newline, cuttail)
-                      | CutOverTail b => (cols, space, newline, b)
-                      | _ => (cols, space, newline, cuttail))
+                     of Newline s => (cols, space, s, cuttail, outputFn)
+                      | Space s => (cols, s, newline, cuttail, outputFn)
+                      | Columns n => (n, space, newline, cuttail, outputFn)
+                      | CutOverTail b => (cols, space, newline, b, outputFn)
+                      | OutputFunction f =>
+                        (cols, space, newline, cuttail, SOME f)
+                      | _ => (cols, space, newline, cuttail, outputFn))
                 (
                   defaultColumns,
                   defaultSpace,
                   defaultNewline,
-                  defaultCutOverTail
+                  defaultCutOverTail,
+                  defaultOutputFunction
                 )
                 parameterList
       in
@@ -96,7 +103,8 @@ struct
           guardRight = guardRight,
           maxDepthOfGuards = maxDepthOfGuards,
           maxWidthOfGuards = maxWidthOfGuards,
-          cutOverTail = cutOverTail
+          cutOverTail = cutOverTail,
+          outputFunction = outputFunction
         }
       end
 

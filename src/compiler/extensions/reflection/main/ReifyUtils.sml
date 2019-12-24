@@ -5,6 +5,7 @@ struct
   structure A = Absyn
   structure T = Types
   structure TB = TypesBasics
+  structure U = UserLevelPrimitive
 
   type loc = Loc.loc
   type ty = Types.ty
@@ -21,7 +22,7 @@ struct
   exception TypeMismatch
 
   fun eqTy arg = Unify.eqTy BoundTypeVarID.Map.empty arg
-  fun printTy ty = Bug.printError (T.tyToString ty ^ "\n")
+  fun printTy ty = Bug.printError (Bug.prettyPrint (T.format_ty ty))
   fun printRcexp rcexp = Bug.printError (RC.rcexpToString rcexp ^ "\n")
 
   fun --> (argTy, retTy) = T.FUNMty ([argTy], retTy)
@@ -29,15 +30,15 @@ struct
   infixr 4 -->
   infix 5 **
 
-  val IntTy = T.CONSTRUCTty {tyCon = BT.intTyCon, args = []}
+  val Int32Ty = T.CONSTRUCTty {tyCon = BT.int32TyCon, args = []}
   val Int64Ty = T.CONSTRUCTty {tyCon = BT.int64TyCon, args = []}
   val IntInfTy = T.CONSTRUCTty {tyCon = BT.intInfTyCon, args = []}
-  val WordTy = T.CONSTRUCTty {tyCon = BT.wordTyCon, args = []}
+  val Word32Ty = T.CONSTRUCTty {tyCon = BT.word32TyCon, args = []}
   val Word64Ty = T.CONSTRUCTty {tyCon = BT.word64TyCon, args = []}
   val Word8Ty = T.CONSTRUCTty {tyCon = BT.word8TyCon, args = []}
   val CharTy = T.CONSTRUCTty {tyCon = BT.charTyCon, args = []}
   val StringTy = T.CONSTRUCTty {tyCon = BT.stringTyCon, args = []}
-  val RealTy = T.CONSTRUCTty {tyCon = BT.realTyCon, args = []}
+  val Real64Ty = T.CONSTRUCTty {tyCon = BT.real64TyCon, args = []}
   val Real32Ty = T.CONSTRUCTty {tyCon = BT.real32TyCon, args = []}
   val UnitTy = T.CONSTRUCTty {tyCon = BT.unitTyCon, args = []}
   val PtrTy = T.CONSTRUCTty {tyCon = BT.ptrTyCon, args = []}
@@ -55,6 +56,22 @@ struct
   fun isListTy ty =
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args = [ty]} =>TypID.eq (#id tyCon, #id BT.listTyCon)
+      | _ => false
+  fun isPartialDynTy ty =
+      case TB.derefTy ty of
+        T.CONSTRUCTty {tyCon, args = [ty]} =>
+        TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn()))
+      | _ => false
+  fun partialDynElemTy ty =
+      case TB.derefTy ty of
+        T.CONSTRUCTty {tyCon, args = [ty]} =>
+        if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn())) then SOME ty 
+        else NONE
+      | _ => NONE
+  fun isBottomTy ty =
+      case TB.derefTy ty of
+        T.CONSTRUCTty {tyCon, args = [ty]} =>
+        TypID.eq (#id tyCon, #id (U.REIFY_tyCon_void()))
       | _ => false
   fun ArrayElemTy ty = 
       case TB.derefTy ty of 
@@ -94,11 +111,10 @@ struct
   fun RecordTy stringTyList =
       T.RECORDty
         (foldr 
-           (fn ((s,v),map) => 
-               RecordLabel.Map.insert(map, RecordLabel.fromString s,v))
-           RecordLabel.Map.empty
-           stringTyList
-        )
+          (fn ((s,v),map) => 
+              RecordLabel.Map.insert(map, RecordLabel.fromString s,v))
+          RecordLabel.Map.empty
+          stringTyList)
 
   fun newVar ty =
       {path = [Symbol.generate ()], ty = ty, id = VarID.generate ()} : RC.varInfo
@@ -111,27 +127,27 @@ struct
 
   fun Int loc int =
       {exp = RC.RCCONSTANT
-               {const = A.INT ({radix=StringCvt.DEC, digits=Int.toString int}, loc),
+               {const = RC.CONST (A.INT (Int.toLarge int)),
                 loc = loc,
-                ty = BT.intTy},
-       ty = IntTy}
+                ty = BT.int32Ty},
+       ty = Int32Ty}
   fun Word loc word =
       {exp = RC.RCCONSTANT
-               {const = A.WORD ({radix=StringCvt.DEC, digits=Word.toString word}, loc),
+               {const = RC.CONST (A.WORD (Word.toLargeInt word)),
                 loc = loc,
-                ty = BT.wordTy},
-       ty = WordTy}
+                ty = BT.word32Ty},
+       ty = Word32Ty}
   fun String loc str =
-      {exp = RC.RCCONSTANT {const = A.STRING (str, loc),
+      {exp = RC.RCCONSTANT {const = RC.CONST (A.STRING (str)),
                             loc = loc,
                             ty = BT.stringTy},
        ty = StringTy}
   fun Real loc real =
       {exp = RC.RCCONSTANT
-               {const = A.REAL (Real.toString real, loc),
+               {const = RC.CONST (A.REAL (Real.toString real)),
                 loc = loc,
-                ty = BT.realTy},
-       ty = RealTy}
+                ty = BT.real64Ty},
+       ty = Real64Ty}
   fun Bool loc bool =
       let
         val conInfo = if bool then BT.trueTPConInfo else BT.falseTPConInfo

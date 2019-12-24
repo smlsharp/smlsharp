@@ -15,6 +15,7 @@ local
   structure TF = TfunVars
   structure TFR = TfunVarsRefresh
   structure V = NameEvalEnv
+  structure VP = NameEvalEnvPrims
   structure BT = BuiltinTypes
   structure L = SetLiftedTys
   structure Ty = EvalTy
@@ -101,16 +102,16 @@ local
           handle exn => raise exn
       val tfvSubst = 
           TfvMap.foldri
-          (fn (tfv as ref (I.TFV_SPEC {longsymbol, iseq, formals,...}), _, tfvSubst) =>
+          (fn (tfv as ref (I.TFV_SPEC {longsymbol, admitsEq, formals,...}), _, tfvSubst) =>
               let
                 val longsymbol =  path @ longsymbol
                 val id = TypID.generate()
                 val newTfv =
-                    I.mkTfv (I.TFV_SPEC{longsymbol=longsymbol, id=id,iseq=iseq,formals=formals})
+                    I.mkTfv (I.TFV_SPEC{longsymbol=longsymbol, id=id,admitsEq=admitsEq,formals=formals})
               in 
                 TfvMap.insert(tfvSubst, tfv, newTfv)
               end
-            | (tfv as ref (I.TFV_DTY {longsymbol, iseq,formals,conSpec,liftedTys,...}), _,
+            | (tfv as ref (I.TFV_DTY {longsymbol, admitsEq,formals,conSpec,liftedTys,...}), _,
                tfvSubst) =>
               let
                 val longsymbol = path @ longsymbol
@@ -118,7 +119,7 @@ local
                 val newTfv =
                     I.mkTfv (I.TFV_DTY{id=id,
                                        longsymbol=longsymbol,
-                                       iseq=iseq,
+                                       admitsEq=admitsEq,
                                        conSpec=conSpec,
                                        liftedTys=liftedTys,
                                        formals=formals}
@@ -140,7 +141,7 @@ local
           handle exn => raise exn
       val _ =
           TfvMap.app
-          (fn (tfv as ref (I.TFV_DTY {longsymbol, iseq,formals,conSpec,liftedTys,id})) =>
+          (fn (tfv as ref (I.TFV_DTY {longsymbol, admitsEq,formals,conSpec,liftedTys,id})) =>
               let
                 val conSpec =
                     SymbolEnv.map
@@ -150,7 +151,7 @@ local
               in
                 tfv:=
                     I.TFV_DTY
-                      {iseq=iseq,
+                      {admitsEq=admitsEq,
                        longsymbol=longsymbol,
                        formals=formals,
                        conSpec=conSpec,
@@ -192,9 +193,9 @@ local
                   | _ => raise bug "non tfv (2)"
               fun checkEqtypeTfv tfv =
                   case !tfv of 
-                    I.TFV_SPEC {iseq,...} => iseq
+                    I.TFV_SPEC {admitsEq,...} => admitsEq
                   | I.TFV_DTY _ => false
-                  | I.REALIZED {id, tfun} => I.tfunIseq tfun (* bug 173_sharing.smk *)
+                  | I.REALIZED {id, tfun} => I.tfunAdmitsEq tfun (* bug 173_sharing.smk *)
                   | _ => raise bug "impossible"
               fun checkEqtypeTfvList nil = false
                 | checkEqtypeTfvList (h::t) = 
@@ -218,8 +219,8 @@ local
                   if isEqtype then
                     case pathTypIdDtyTfvList of
                       nil => ()
-                    | (_, _, ref (I.TFV_DTY{iseq, ...}))::_ => 
-                      if iseq then ()
+                    | (_, _, ref (I.TFV_DTY{admitsEq, ...}))::_ =>
+                      if admitsEq then ()
                       else
                         (EU.enqueueError
                            (loc, E.EqtypeInSigShare("Sig-040",
@@ -294,7 +295,7 @@ local
                | I.FUN_DTY _ => raise bug "FUN_DTY in spec"
               )
         fun getTfv longsymbol =
-            case V.findTstr (specEnv, longsymbol) of
+            case VP.findTstr (specEnv, longsymbol) of
               NONE => raise Undef
             | SOME tstr => 
               (case tstr of
@@ -344,7 +345,7 @@ local
       case plsigexp of
         P.PLSIGEXPBASIC (plspec, loc) => evalPlspec topEnv path plspec
       | P.PLSIGID symbol =>
-        (case V.findSigETopEnv(topEnv, symbol) of
+        (case VP.findSigETopEnv(topEnv, symbol) of
            NONE => (EU.enqueueError
                       (symbolToLoc symbol,
                        E.SigIdUndefined("Sig-060", {symbol = symbol}));
@@ -359,7 +360,7 @@ local
           fun setRealizer ((tyvarList, longsymbol, ty), returnEnv) =
               let
                 val _ = EU.checkSymbolDuplication
-                          (fn {symbol, eq} => symbol)
+                          (fn {symbol, isEq} => symbol)
                           tyvarList
                           (fn s => E.DuplicateTypParms("Sig-070",s))
                 val (tvarEnv, tvarList) =
@@ -388,14 +389,14 @@ local
                          | I.FUN_DTY _ => raise bug "FUN_DTY in sig"
                         )
                   val realizeeTstr = 
-                      case V.findTstr (specEnv, longsymbol) of
+                      case VP.findTstr (specEnv, longsymbol) of
                         SOME tstr => tstr
                       | NONE => raise Undef
                   val realizerTfun =
                       case N.tyForm tvarList ty of
                         N.TYNAME tfun => getTfunTfun tfun
                       | N.TYTERM ty =>
-                        I.TFUN_DEF {iseq=N.admitEq tvarList ty,
+                        I.TFUN_DEF {admitsEq=N.admitEq tvarList ty,
                                     longsymbol=longsymbol,
                                      (* eq attrib of extras is inherited
                                                             from its decl. *)
@@ -410,7 +411,7 @@ local
                            I.TFUN_VAR(ref (I.TFUN_DTY {conSpec,...})) =>
                            SymbolEnv.foldri
                              (fn (name, _, varE) =>
-                                 case V.findId((#Env topEnv),
+                                 case VP.findId((#Env topEnv),
                                                realizerPath@[name]) of
                                    SOME idstatus =>
                                    SymbolEnv.insert(varE, name,idstatus)
@@ -454,10 +455,10 @@ local
                           else raise Rigid
                   val _ =
                   case tfunkind of
-                    I.TFV_SPEC {iseq=eq1,...} =>
+                    I.TFV_SPEC {admitsEq=eq1,...} =>
                     (
                      case realizerTfun of
-                       I.TFUN_DEF {iseq=eq2,...} =>
+                       I.TFUN_DEF {admitsEq=eq2,...} =>
                        if eq1 andalso not eq2 then raise Eq
                        else tfv := 
                                  let
@@ -466,9 +467,9 @@ local
                                    I.REALIZED {id=id, tfun=realizerTfun}
                                  end
                      | I.TFUN_VAR
-                         (ref (I.TFV_SPEC {longsymbol,id=id2,iseq=eq2,formals})) =>
+                         (ref (I.TFV_SPEC {longsymbol,id=id2,admitsEq=eq2,formals})) =>
                        tfv := I.REALIZED {id=id2, tfun=realizerTfun}
-                     | I.TFUN_VAR (ref (I.TFV_DTY {iseq=eq2,...})) =>
+                     | I.TFUN_VAR (ref (I.TFV_DTY {admitsEq=eq2,...})) =>
                        if eq1 andalso not eq2 then raise Eq
                        else tfv :=
                                  let
@@ -476,7 +477,7 @@ local
                                  in
                                    I.REALIZED {id=id, tfun=realizerTfun}
                                  end
-                     | I.TFUN_VAR(ref (I.TFUN_DTY {iseq=eq2,...})) =>
+                     | I.TFUN_VAR(ref (I.TFUN_DTY {admitsEq=eq2,...})) =>
                        if eq1 andalso not eq2 then raise Eq
                        else tfv :=
                                  let
@@ -489,10 +490,10 @@ local
                        raise bug "INSTANTIATED"
                      | I.TFUN_VAR (ref (I.FUN_DTY _)) => raise bug "FUN_DTY"
                     )
-                  | I.TFV_DTY {id=id1, iseq=eq1, formals, conSpec,...} => 
+                  | I.TFV_DTY {id=id1, admitsEq=eq1, formals, conSpec,...} =>
                     (case realizerTfun of
                        I.TFUN_DEF _ => raise Type1
-                     | I.TFUN_VAR (tfv2 as ref(I.TFV_SPEC {iseq=eq2,...}))=>
+                     | I.TFUN_VAR (tfv2 as ref(I.TFV_SPEC {admitsEq=eq2,...}))=>
                        if eq2 andalso not eq1 then raise Eq
                        else tfv2 :=
                                  let
@@ -558,10 +559,10 @@ local
                       val returnEnv = 
                           SymbolEnv.foldri
                             (fn (name, _, returnEnv) =>
-                                case V.findId((#Env topEnv),
+                                case VP.findId((#Env topEnv),
                                               realizerPath@[name]) of
                                   SOME idstatus =>
-                                  V.rebindIdLongsymbol
+                                  VP.rebindIdLongsymbol
                                     (returnEnv, realizeePath@[name], idstatus)
                                 | _ =>
                                   (U.print "setRealizer\n";
@@ -577,7 +578,7 @@ local
                             returnEnv
                             varE
                     in
-                      V.rebindTstrLongsymbol(returnEnv,
+                      VP.rebindTstrLongsymbol(returnEnv,
                                              longsymbol,
                                              V.TSTR_DTY{tfun=tfun,
                                                         varE=realizerVarE,
@@ -641,12 +642,12 @@ local
               case kindedTyars of
                 nil => ty
               | _ => I.TYPOLY(kindedTyars,ty)
-          val specEnv = V.insertId (V.emptyEnv, symbol, I.IDSPECVAR {ty=ty, symbol=symbol})
+          val specEnv = VP.insertId (V.emptyEnv, symbol, I.IDSPECVAR {ty=ty, symbol=symbol})
         in
           specEnv
         end
 
-      | P.PLSPECTYPE {tydecls=tvarListStringList, iseq, loc} =>
+      | P.PLSPECTYPE {tydecls=tvarListStringList, eq, loc} =>
       (* type 'a foo and ...*)
         let
           val specEnv =
@@ -654,7 +655,7 @@ local
                 (fn ((tvarList, symbol), specEnv) =>
                     let
                       val _ = EU.checkSymbolDuplication
-                                (fn {symbol, eq} => symbol)
+                                (fn {symbol, isEq} => symbol)
                                 tvarList
                                 (fn s => E.DuplicateTypParms("Sig-160",s))
                       val (_, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
@@ -662,11 +663,11 @@ local
                       val longsymbol = path @ [symbol]
                       val tfunvar =
                           I.mkTfv (I.TFV_SPEC{longsymbol=longsymbol, 
-                                              id=id,iseq=iseq, 
+                                              id=id,admitsEq=eq,
                                               formals=tvarList})
                       val tfun = I.TFUN_VAR tfunvar
                       val specEnv =
-                          V.bindTstr (specEnv,symbol,V.TSTR tfun)
+                          VP.bindTstr (specEnv,symbol,V.TSTR tfun)
                     in
                       specEnv
                     end
@@ -682,20 +683,20 @@ local
         let
           val longsymbol = [symbol]
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, eq} => symbol)
+                    (fn {symbol, isEq} => symbol)
                     tvarList
                     (fn s => E.DuplicateTypParms("Sig-170",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
           val ty = Ty.evalTy tvarEnv env ty
-          val iseq = N.admitEq tvarList ty
+          val admitsEq = N.admitEq tvarList ty
           val formals = tvarList
           val tfun =
               case N.tyForm formals ty of
                 N.TYNAME tfun => tfun
               | N.TYTERM ty =>
-                I.TFUN_DEF {longsymbol=longsymbol,iseq=iseq,formals=formals,realizerTy=ty}
+                I.TFUN_DEF {longsymbol=longsymbol,admitsEq=admitsEq,formals=formals,realizerTy=ty}
         in
-          V.bindTstr (V.emptyEnv, symbol, V.TSTR tfun)
+          VP.bindTstr (V.emptyEnv, symbol, V.TSTR tfun)
         end
 
       | P.PLSPECDATATYPE (datadeclList, loc) =>
@@ -719,18 +720,18 @@ local
                      (specEnv, datadeclListRev)) =>
                     let
                       val _ = EU.checkSymbolDuplication
-                                (fn {symbol, eq} => symbol)
+                                (fn {symbol, isEq} => symbol)
                                 tvarList
                                 (fn s => E.DuplicateTypParms("Sig-200", s))
                       val (tvarEnv, tvarList)=
                           Ty.genTvarList Ty.emptyTvarEnv tvarList
                       val id = TypID.generate()
-                      val iseqRef = ref true
+                      val admitsEqRef = ref true
                       val longsymbol = Symbol.prefixPath(path , symbol)
                       val tfv =
                           I.mkTfv(I.TFV_DTY{id=id,
                                             longsymbol=longsymbol,
-                                            iseq=true,
+                                            admitsEq=true,
                                             formals=tvarList,
                                             conSpec=SymbolEnv.empty,
                                             liftedTys=I.emptyLiftedTys
@@ -738,14 +739,14 @@ local
                                )
                       val tfun = I.TFUN_VAR tfv
                       val specEnv =
-                          V.insertTstr (specEnv, symbol,V.TSTR tfun)
+                          VP.insertTstr (specEnv, symbol,V.TSTR tfun)
                       val datadeclListRev =
                           {name=symbol,
                            longsymbol=longsymbol,
                            id=id,
                            tfv=tfv,
                            tfun=tfun,
-                           iseqRef=iseqRef,
+                           admitsEqRef=admitsEqRef,
                            args=tvarList,
                            conbinds = conbinds,
                            tvarEnv=tvarEnv
@@ -756,10 +757,10 @@ local
                 )
                 (V.emptyEnv, nil)
                 datadeclList
-          val evalEnv = V.envWithEnv (env, specEnv)
+          val evalEnv = VP.envWithEnv (env, specEnv)
           val datadeclList =
               foldl
-                (fn ({name, longsymbol, id, tfv, tfun, iseqRef, args, tvarEnv, conbinds},
+                (fn ({name, longsymbol, id, tfv, tfun, admitsEqRef, args, tvarEnv, conbinds},
                      datadeclList) =>
                     let
                       val (conVarE, conSpec) =
@@ -790,7 +791,7 @@ local
                        tfv=tfv,
                        conVarE=conVarE,
                        conSpec=conSpec,
-                       iseqRef=iseqRef,
+                       admitsEqRef=admitsEqRef,
                        conbinds=conbinds,
                        args=args
                       } :: datadeclList
@@ -800,13 +801,13 @@ local
                 datadeclListRev
           val _ = N.setEq
                   (map 
-                     (fn {id, args, conSpec, iseqRef,...} =>
-                         {id=id, args=args, conSpec=conSpec, iseqRef=iseqRef})
+                     (fn {id, args, conSpec, admitsEqRef,...} =>
+                         {id=id, args=args, conSpec=conSpec, admitsEqRef=admitsEqRef})
                      datadeclList
                   )
           val (specEnv, nameListRev) =
               foldl
-                (fn ({name,longsymbol, id,tfv,conVarE,conSpec,iseqRef,args,conbinds},
+                (fn ({name,longsymbol, id,tfv,conVarE,conSpec,admitsEqRef,args,conbinds},
                      (specEnv, nameListRev)) =>
                     let
                       val _ =
@@ -814,14 +815,14 @@ local
                                I.TFV_DTY
                                  {id=id,
                                   longsymbol=longsymbol,
-                                  iseq = !iseqRef,
+                                  admitsEq = !admitsEqRef,
                                   conSpec=conSpec,
                                   formals=args,
                                   liftedTys=I.emptyLiftedTys
                                  }
                       val tfun = I.TFUN_VAR tfv
                       val specEnv =
-                          V.bindTstr
+                          VP.bindTstr
                             (specEnv,
                              name,
                              V.TSTR_DTY{tfun=tfun,
@@ -829,7 +830,7 @@ local
                                         formals=args,
                                         conSpec=conSpec}
                             )
-                      val specEnv = V.bindEnvWithVarE (specEnv, conVarE)
+                      val specEnv = VP.bindEnvWithVarE (specEnv, conVarE)
                     in
                       (specEnv, name::nameListRev)
                     end
@@ -842,7 +843,7 @@ local
 
       (* datatype foo = datatype bar *)
       | P.PLSPECREPLIC (symbol, longsymbol, loc) =>
-        (case V.findTstr (env, longsymbol) of
+        (case VP.findTstr (env, longsymbol) of
            NONE =>
            (EU.enqueueError(loc,E.DtyUndefinedInSpec
                                   ("Sig-210", {longsymbol = longsymbol}));
@@ -850,12 +851,12 @@ local
            )
          | SOME tstr =>
            (case tstr of
-              V.TSTR tfun => V.bindTstr (V.emptyEnv, symbol, tstr)
+              V.TSTR tfun => VP.bindTstr (V.emptyEnv, symbol, tstr)
             | V.TSTR_DTY {tfun, varE, formals, conSpec} =>
               let
-                val specEnv = V.bindTstr (V.emptyEnv, symbol, tstr)
+                val specEnv = VP.bindTstr (V.emptyEnv, symbol, tstr)
                 val varE = V.replaceLocVarE loc varE
-                val specEnv = V.bindEnvWithVarE(specEnv, varE)
+                val specEnv = VP.bindEnvWithVarE(specEnv, varE)
               in
                 specEnv
               end
@@ -876,7 +877,7 @@ local
                             I.TYFUNM([Ty.evalTy Ty.emptyTvarEnv env ty],
                                      BT.exnITy)
                     in
-                      V.bindId (specEnv, symbol, I.IDSPECEXN {ty=ty, symbol=symbol})
+                      VP.bindId (specEnv, symbol, I.IDSPECEXN {ty=ty, symbol=symbol})
                     end
                 )
                 V.emptyEnv
@@ -894,7 +895,7 @@ local
                     let
                       val strSpecEnv = evalSig topEnv (path@[symbol]) sigexp
                       val specEnv =
-                          V.bindStr (specEnv, symbol, {env=strSpecEnv, strKind=V.SIGENV})
+                          VP.bindStr (specEnv, symbol, {env=strSpecEnv, strKind=V.SIGENV})
                     in
                       specEnv
                     end
@@ -918,9 +919,9 @@ local
       | P.PLSPECSEQ (plspec1, plspec2, loc) =>
         let
           val specEnv1 = evalPlspec topEnv path plspec1
-          val evalEnv = V.topEnvWithEnv (topEnv,specEnv1)
+          val evalEnv = VP.topEnvWithEnv (topEnv,specEnv1)
           val specEnv2 = evalPlspec evalEnv path plspec2
-          val specEnv = V.unionEnv "220" (specEnv1,specEnv2)
+          val specEnv = VP.unionEnv "220" (specEnv1,specEnv2)
         in
           specEnv
         end
@@ -970,7 +971,7 @@ local
               foldl
                 (fn (longsymbol, pathEnv) =>
                     let
-                      val envEntry = V.findStr(specEnv, longsymbol)
+                      val envEntry = VP.findStr(specEnv, longsymbol)
                     in
                       case envEntry
                        of NONE =>

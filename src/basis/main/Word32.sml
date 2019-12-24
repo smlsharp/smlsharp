@@ -14,7 +14,6 @@ struct
   fun fromWord32X x = x : word
   fun toWord32 x = x : word
   val fromLarge = SMLSharp_Builtin.Word64.toWord32
-  val fromLarge = SMLSharp_Builtin.Word64.toWord32
   val toLargeInt =
       _import "prim_IntInf_fromWord"
       : __attribute__((unsafe,pure,fast,gc))

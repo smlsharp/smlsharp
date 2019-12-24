@@ -10,7 +10,7 @@ struct
   (***************************************************************************)
 
   local
-    structure FG = FormatterGenerator
+    (* structure FG = FormatterGenerator *)
   in
 
   fun main(programName:string, commandLineArgs:string list) =
@@ -29,6 +29,10 @@ struct
         val outputFilename =
             case List.find (String.isPrefix "--output=") options of
               SOME s => SOME (String.substring (s, 9, size s - 9))
+            | NONE => NONE
+        val separationMode =
+            case List.find (String.isPrefix "--separate=") options of
+              SOME s => SOME (String.substring (s, 11, size s - 11))
             | NONE => NONE
 
         val (openOut, closeOut, removeOut) =
@@ -64,7 +68,8 @@ struct
                   sourceFileName = sourceFileName,
                   sourceStream = sourceStream,
                   destinationStream = outputStream,
-                  withLineDirective = withLineDirective
+                  withLineDirective = withLineDirective,
+                  separationMode = separationMode
                 }
                 handle error => (closeOut outputStream;
                                  removeOut sourceFileName;

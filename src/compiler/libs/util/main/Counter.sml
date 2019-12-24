@@ -427,6 +427,8 @@ struct
       #addElapsedTime ElapsedCounterSet "printer generation"
   val UncurryOptimizationTimeCounter =
       #addElapsedTime ElapsedCounterSet "uncurry optimize"
+  val polyTyEliminationCounter =
+      #addElapsedTime ElapsedCounterSet "polyty elimination"
   val TypedCalcOptimizationTimeCounter =
       #addElapsedTime ElapsedCounterSet "typedcalc optimize"
   val matchCompilationTimeCounter =
@@ -435,6 +437,8 @@ struct
       #addElapsedTime ElapsedCounterSet "recordcalc optimize"
   val typedElaborationTimeCounter =
       #addElapsedTime ElapsedCounterSet "Typed Elaboration"
+  val reifyTopEnvTimeCounter =
+      #addElapsedTime ElapsedCounterSet "Reify TopEnv"
   val ffiCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "FFI compilation"
   val recordCompilationTimeCounter =

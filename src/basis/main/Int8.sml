@@ -11,17 +11,8 @@ struct
   val precision = 8
   val minInt = ~0x80 : int
   val maxInt = 0x7f : int
-  val Word32_toWordN = SMLSharp_Builtin.Word32.toWord8
-  val WordN_toIntNX = SMLSharp_Builtin.Word8.toInt8X
   fun toLarge x = IntInf.fromInt (toInt32 x)
-  fun fromLarge x =
-      let val x = IntInf.toInt x
-      in if SMLSharp_Builtin.Int32.lt (x, toInt32 minInt)
-            orelse SMLSharp_Builtin.Int32.lt (toInt32 maxInt, x)
-         then raise Overflow
-         else WordN_toIntNX
-                (Word32_toWordN (SMLSharp_Builtin.Word32.fromInt32 x))
-      end
+  fun fromLarge x = fromInt32 (IntInf.toInt x)
 end
 
 _use "Int_common.sml"

@@ -7,14 +7,13 @@ _use local "./Int_common.sml"
 
 structure Int32 =
 struct
-  type int = int32
   val toLarge = IntInf.fromInt
   val fromLarge = IntInf.toInt
-  val toInt : int -> int32
-  val fromInt : int32 -> int
-  val precision : int32 option
-  val minInt : int option
-  val maxInt : int option
+  val toInt : int32 -> int
+  val fromInt : int -> int32
+  val precision : int option
+  val minInt : int32 option
+  val maxInt : int32 option
   val + = SMLSharp_Builtin.Int32.add_unsafe
   val - = SMLSharp_Builtin.Int32.sub_unsafe
   val * = SMLSharp_Builtin.Int32.mul_unsafe
@@ -22,23 +21,24 @@ struct
   val mod = SMLSharp_Builtin.Int32.mod
   val quot = SMLSharp_Builtin.Int32.quot
   val rem = SMLSharp_Builtin.Int32.rem
-  val compare : int * int -> General.order
+  val compare : int32 * int32 -> General.order
   val < = SMLSharp_Builtin.Int32.lt
   val <= = SMLSharp_Builtin.Int32.lteq
   val > = SMLSharp_Builtin.Int32.gt
   val >= = SMLSharp_Builtin.Int32.gteq
   val ~ = SMLSharp_Builtin.Int32.neg
   val abs = SMLSharp_Builtin.Int32.abs
-  val min : int * int -> int
-  val max : int * int -> int
-  val sign : int -> int32
-  val sameSign : int * int -> bool
-  val fmt : StringCvt.radix -> int -> string
-  val toString : int -> string
+  val min : int32 * int32 -> int32
+  val max : int32 * int32 -> int32
+  val sign : int32 -> int32
+  val sameSign : int32 * int32 -> bool
+  val fmt : StringCvt.radix -> int32 -> string
+  val toString : int32 -> string
   val scan : StringCvt.radix
              -> (char, 'a) StringCvt.reader
-             -> (int, 'a) StringCvt.reader
-  val fromString : string -> int option
+             -> (int32, 'a) StringCvt.reader
+  val fromString : string -> int32 option
+  type int = int32
 end
 
 structure Position = Int32

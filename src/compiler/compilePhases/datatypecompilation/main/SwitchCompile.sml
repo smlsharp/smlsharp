@@ -10,7 +10,7 @@ structure SwitchCompile : sig
       : {switchExp : TypedLambda.tlexp,
          expTy : Types.ty,
          branches :
-           {constant : ConstantTerm.constant, exp : TypedLambda.tlexp} list,
+           {constant : string, exp : TypedLambda.tlexp} list,
          defaultExp : TypedLambda.tlexp,
          resultTy : Types.ty,
          loc : TypedLambda.loc}
@@ -20,7 +20,7 @@ structure SwitchCompile : sig
       : {switchExp : TypedLambda.tlexp,
          expTy : Types.ty,
          branches :
-           {constant : ConstantTerm.constant, exp : TypedLambda.tlexp} list,
+           {constant : IntInf.int, exp : TypedLambda.tlexp} list,
          defaultExp : TypedLambda.tlexp,
          resultTy : Types.ty,
          loc : TypedLambda.loc}
@@ -30,7 +30,6 @@ end =
 struct
 
   structure L = TypedLambda
-  structure C = ConstantTerm
   structure B = BuiltinTypes
   structure T = Types
   structure E = EmitTypedLambda
@@ -99,7 +98,7 @@ struct
       if size pat = idx
       then matchedExp
       else E.Switch (E.String_sub_unsafe (exp, E.Int32 idx),
-                     [(C.CHAR (String.sub (pat, idx)),
+                     [(L.CHAR (String.sub (pat, idx)),
                        Match (exp, pat, idx + 1, matchedExp, defaultExp))],
                      defaultExp)
 
@@ -109,8 +108,10 @@ struct
 
   fun IntInf_hex (exp, loc) =
       case exp of
-        L.TLCONSTANT {const = C.INTINF n, ty, loc} =>
-        L.TLCONSTANT {const = C.STRING (hex n), ty = B.stringTy, loc = loc}
+        L.TLCONSTANT {const = L.S (L.INTINF n), ty, loc} =>
+        L.TLCONSTANT {const = L.S (L.STRING (hex n)),
+                      ty = B.stringTy,
+                      loc = loc}
       | _ =>
         let
           val attributes =
@@ -143,7 +144,7 @@ struct
              E.Switch
                (E.String_sub_unsafe (keyExp, E.Int32 (size pat)),
                 map (fn (c, t) =>
-                        (C.CHAR (chr c),
+                        (L.CHAR (chr c),
                          emitTree (t, size pat + 1, keyExp, defaultExp)))
                     (IEnv.listItemsi next),
                 defaultExp),
@@ -163,7 +164,7 @@ struct
             E.Let ([(vid, E.Exp (keyExp, keyTy))],
                    E.Switch (E.String_size (E.Var vid),
                              map (fn (len, t) =>
-                                     (C.INT32 (Int32.fromInt len),
+                                     (L.INT32 len,
                                       emitTree (t, 0, E.Var vid, jumpExp)))
                                  (IEnv.listItemsi trees),
                              jumpExp))
@@ -182,9 +183,8 @@ struct
       let
         val trie =
             foldl
-              (fn ({constant = C.STRING s, exp}, trie) =>
-                  insert (trie, s, E.Exp (exp, resultTy))
-                | _ => raise Bug.Bug "compileStringSwitch")
+              (fn ({constant = s, exp}, trie) =>
+                  insert (trie, s, E.Exp (exp, resultTy)))
               EMPTY
               branches
       in
@@ -196,9 +196,8 @@ struct
       let
         val trie =
             foldl
-              (fn ({constant = C.INTINF n, exp}, trie) =>
-                  insert (trie, hex n, E.Exp (exp, resultTy))
-                | _ => raise Bug.Bug "compileIntInfSwitch")
+              (fn ({constant = n, exp}, trie) =>
+                  insert (trie, hex n, E.Exp (exp, resultTy)))
               EMPTY
               branches
         val switchExp = IntInf_hex (switchExp, loc)

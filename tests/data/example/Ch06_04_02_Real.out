@@ -1,0 +1,17 @@
+val it = 10.0 : real
+
+val it = 100.0 : real
+
+val it = 0.001 : real
+
+val it = ~0.01 : real
+
+val it = 10 : int
+
+val it = 20.0 : real
+
+val it = ~10.0 : real
+
+val it = 5.0 : real
+
+val it = 20.0 : real

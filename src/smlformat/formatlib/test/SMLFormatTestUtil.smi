@@ -1,0 +1,23 @@
+_require local "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../main/SMLFormat.smi"
+
+structure SMLFormatTestUtil =
+struct
+  val assertEqualAssoc
+      : SMLFormat.FormatExpression.assoc
+        -> SMLFormat.FormatExpression.assoc
+        -> unit
+  val assertEqualPriority
+      : SMLFormat.FormatExpression.priority
+          -> SMLFormat.FormatExpression.priority -> unit
+  val assertEqualFormatExpression
+      : SMLFormat.FormatExpression.expression
+          -> SMLFormat.FormatExpression.expression -> unit
+  val assertEqualFormatExpressionList
+      : SMLFormat.FormatExpression.expression list
+          -> SMLFormat.FormatExpression.expression list -> unit
+  val normalize
+      : SMLFormat.FormatExpression.expression list
+          -> SMLFormat.FormatExpression.expression list
+end

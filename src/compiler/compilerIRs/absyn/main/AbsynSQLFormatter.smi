@@ -1,0 +1,20 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require "./AbsynSQL.smi"
+
+structure AbsynSQLFormatter =
+struct
+
+  val format_sqlexp
+      : ('a -> SMLFormat.FormatExpression.expression list)
+        * ('b -> SMLFormat.FormatExpression.expression list)
+        * ('c -> SMLFormat.FormatExpression.expression list)
+        -> ('a, 'b, 'c) AbsynSQL.sqlexp
+        -> SMLFormat.FormatExpression.expression list
+
+end

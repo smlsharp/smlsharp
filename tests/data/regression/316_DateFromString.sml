@@ -7,4 +7,5 @@ val _ = case a of SOME _ => () | _ => raise Fail "Unexpected"
 
 This code raises Fail exception unexpectedly since the assertion fails.
 This caused by not ignoring possible initial whitespace.
+
 *)

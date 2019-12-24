@@ -22,8 +22,8 @@ struct
     val socket : iodesc_kind
     val device : iodesc_kind
   end
-  eqtype poll_desc (= boxed)
-  type poll_info (= boxed)
+  eqtype poll_desc (= *)
+  type poll_info (= poll_desc)
   val pollDesc : iodesc -> poll_desc option
   val pollToIODesc : poll_desc -> iodesc
   exception Poll

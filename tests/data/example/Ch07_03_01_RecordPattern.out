@@ -1,0 +1,7 @@
+val f = fn : ['a, 'b. {X: 'a, Y: 'b} -> 'a * 'b]
+
+val f = fn : ['a#{X: 'b, Y: 'c}, 'b, 'c. 'a -> 'b * 'c]
+
+val f = fn : ['a#{X: 'b, Y: 'c}, 'b, 'c. 'a -> 'b * 'c]
+
+val f = fn : ['a#{X: 'b}, 'b. 'a list -> 'b]

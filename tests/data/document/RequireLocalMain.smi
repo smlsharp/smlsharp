@@ -1,0 +1,2 @@
+_require local "./RequireLocal.smi"
+val v1a = v1

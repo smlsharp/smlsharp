@@ -1,0 +1,4 @@
+NODE {tests/data/loadfile/001_interface2.smi INTERFACE}
+ROOT {ROOT_INCLUDES LINK
+ INCLUDE {USERPATH tests/data/loadfile/001_interface2.smi INTERFACE
+  0bf2f5640e89f8c9}}

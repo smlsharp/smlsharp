@@ -47,24 +47,32 @@ struct
           before print ("[SMLFormat] end " ^ phase ^ "\n")
         )
 
+  fun prettyPrint1 parameter expressions =
+      (trace "pretty-print" (PrettyPrinter.format parameter)
+       o trace "preprocess" (PreProcessor.preProcess parameter)
+       o trace "assocResolve" (AssocResolver.resolve parameter)
+       o trace "truncate" (Truncator.truncate parameter))
+        (FormatExpression.Guard(NONE, expressions))
+      handle PreProcessor.Fail message =>
+             raise Fail ("in preprocess:" ^ message)
+           | PreProcessor.UnMatchEndOfIndent message =>
+             raise Fail message
+           | PrettyPrinter.UnMatchEndOfIndent =>
+             raise Fail "unmatched EndOfIndent"
+           | PrettyPrinter.IndentUnderFlow indent =>
+             raise Fail ("indent underflow(" ^ Int.toString indent ^ ")")
+
   fun prettyPrint parameters expressions =
-      let
-        val parameter = PrinterParameter.convert parameters
-      in
-        (trace "pretty-print" (PrettyPrinter.format parameter)
-         o trace "preprocess" (PreProcessor.preProcess parameter)
-         o trace "assocResolve" (AssocResolver.resolve parameter)
-         o trace "truncate" (Truncator.truncate parameter))
-            (FormatExpression.Guard(NONE, expressions))
-      end
-        handle PreProcessor.Fail message =>
-               raise Fail ("in preprocess:" ^ message)
-             | PreProcessor.UnMatchEndOfIndent message =>
-               raise Fail message
-             | PrettyPrinter.UnMatchEndOfIndent =>
-               raise Fail "unmatched EndOfIndent"
-             | PrettyPrinter.IndentUnderFlow indent =>
-               raise Fail ("indent underflow(" ^ Int.toString indent ^ ")")
+      case PrinterParameter.convert parameters of
+        {newlineString = "\n", spaceString = " ", columns,
+         guardLeft = "(", guardRight = ")",
+         maxDepthOfGuards = NONE, maxWidthOfGuards = NONE,
+         cutOverTail = false, outputFunction} =>
+        PrettyPrinter2.format
+          {outputFn = outputFunction, width = columns}
+          expressions
+      | parameters =>
+        prettyPrint1 parameters expressions
 
   (***************************************************************************)
   

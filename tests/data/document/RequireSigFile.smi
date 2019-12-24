@@ -1,0 +1,22 @@
+_require "./RequireSigFileSig.sml"
+
+structure Str1 = struct
+  val v1 : int
+  val f1 : int -> int
+  type t1 = int
+  type d1 (= contag)
+  type d2 (= boxed)
+  val v2 : d1
+  val f2 : int -> d2
+  exception Exn1
+  structure Str11 = struct
+    type t11 = t1
+    exception Exn11 = Exn1
+  end
+  structure Str12 = Str11
+end
+
+(*
+functor Fun1 (Str1 : Sig1) = struct
+end
+*)

@@ -7,7 +7,6 @@ _use local "./Word_common.sml"
 
 structure Word8 =
 struct
-  type word = word8
   val wordSize : int
   val toLarge = SMLSharp_Builtin.Word8.toWord64
   val toLargeX = SMLSharp_Builtin.Word8.toWord64X
@@ -15,9 +14,9 @@ struct
   val toLargeWordX = SMLSharp_Builtin.Word8.toWord64X
   val fromLarge = SMLSharp_Builtin.Word64.toWord8
   val fromLargeWord = SMLSharp_Builtin.Word64.toWord8
-  val toLargeInt : word -> LargeInt.int
-  val toLargeIntX : word -> LargeInt.int
-  val fromLargeInt : LargeInt.int -> word
+  val toLargeInt : word8 -> LargeInt.int
+  val toLargeIntX : word8 -> LargeInt.int
+  val fromLargeInt : LargeInt.int -> word8
   val toInt = SMLSharp_Builtin.Word8.toInt32
   val toIntX = SMLSharp_Builtin.Word8.toInt32X
   val fromInt = SMLSharp_Builtin.Word8.fromInt32
@@ -33,18 +32,19 @@ struct
   val * = SMLSharp_Builtin.Word8.mul
   val div = SMLSharp_Builtin.Word8.div
   val mod = SMLSharp_Builtin.Word8.mod
-  val compare : word * word -> General.order
+  val compare : word8 * word8 -> General.order
   val < = SMLSharp_Builtin.Word8.lt
   val <= = SMLSharp_Builtin.Word8.lteq
   val > = SMLSharp_Builtin.Word8.gt
   val >= = SMLSharp_Builtin.Word8.gteq
   val ~ = SMLSharp_Builtin.Word8.neg
-  val min : word * word -> word
-  val max : word * word -> word
-  val fmt : StringCvt.radix -> word -> string
-  val toString : word -> string
+  val min : word8 * word8 -> word8
+  val max : word8 * word8 -> word8
+  val fmt : StringCvt.radix -> word8 -> string
+  val toString : word8 -> string
   val scan : StringCvt.radix
              -> (char, 'a) StringCvt.reader
-             -> (word, 'a) StringCvt.reader
-  val fromString : string -> word option
+             -> (word8, 'a) StringCvt.reader
+  val fromString : string -> word8 option
+  type word = word8
 end

@@ -14,8 +14,6 @@ struct
   val precision = 64
   val minInt = ~0x8000000000000000 : int
   val maxInt = 0x7fffffffffffffff : int
-  val Word32_toWordN = SMLSharp_Builtin.Word32.toWord64
-  val WordN_toIntNX = SMLSharp_Builtin.Word64.toInt64X
   val toLarge =
       _import "prim_IntInf_fromInt64"
       : __attribute__((unsafe,pure,fast,gc)) int -> intInf
@@ -25,10 +23,9 @@ struct
   fun fromLarge x =
       if IntInf.< (x, toLarge minInt) orelse IntInf.< (toLarge maxInt, x)
       then raise Overflow
-      else WordN_toIntNX (Word64_fromLarge x)
+      else SMLSharp_Builtin.Word64.toInt64X (Word64_fromLarge x)
 end
 
 _use "Int_common.sml"
 
 structure Int64 = Int_common
-

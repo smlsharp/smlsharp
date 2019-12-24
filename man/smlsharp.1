@@ -1,0 +1,277 @@
+.TH SMLSHARP 1
+.SH NAME
+smlsharp
+\- the SML# compiler
+.SH SYNOPSIS
+.B smlsharp
+[\fIoptions\fP]
+.I filename ...
+.
+.SH DESCRIPTION
+The
+.B smlsharp
+command is a driver that encompasses
+the SML# compiler, linker, and other useful tools for software
+development in SML#.
+Depending on the options and filenames given in the command line argument,
+.B smlsharp
+changes its mode and acts differently.
+The following modes are provided:
+.TP
+.B Compiler
+This mode translates the given SML# program
+.RI ( .sml
+file)
+into LLVM IR and invokes the LLVM compiler to generate machine code.
+.TP
+.B Linker
+Given an SML# interface file
+.RI ( .smi
+file),
+this mode searches for target object files to be involved and
+link them together into an executable file by invoking the C/C++ compiler
+driver.
+.TP
+.B Makefile generator
+This mode analyzes given
+.I .sml
+and
+.I .smi
+files and generates a template of Makefiles that compiles and links the
+entire project.
+.TP
+.B Interactive mode
+This mode allows users to input and execute SML# expressions and
+declarations interactively.
+.
+.SH OPTIONS
+.SS Mode Switches
+.TP
+.B -fsyntax-only
+Run the compiler to check the syntax of the given files.
+No output file is created.
+.TP
+.B -ftypecheck-only
+Run the compiler to check the type consistency of the given files.
+No output file is created.
+.TP
+.B -S
+Run the compiler and produce an assembly file.
+.TP
+.B -c
+Run the compiler and produce an object file.
+.TP
+.BR -M ,\  -MM
+List files relevant to compile the given
+.I .sml
+file in Makefile rule format.
+.B -M
+enumerates all the files, but
+.B -MM
+excludes standard library files.
+.TP
+.BR -Ml ,\  -MMl
+List
+.I .smi
+and object files relevant to compile the given
+.I .smi
+file in Makefile rule format.
+.B -Ml
+enumerates all the files, but
+.B -MMl
+excludes standard library files.
+.TP
+.BR -Mm ,\  -MMm
+Generate a template of Makefile to build the entire project
+specified by the given
+.I .smi
+files.
+.B -Mm
+enumerates all the files, but
+.B -MMm
+excludes standard library files.
+.PP
+If none of the above options is specified,
+.B smlsharp
+turns into the following mode depending on the given files:
+.IP \(bu 4
+If no input file is given,
+it turns into the interactive mode.
+.IP \(bu 4
+If an
+.I .smi
+file and optional object files are given,
+it links all the relevant object files into an executable file.
+.IP \(bu 4
+If an
+.I .sml
+file is given, it compiles the given file and then links it into
+an executable file.
+.
+.SS Common Options
+.TP
+\fB-o\fP \fIfilename\fP
+Set the filename of the output file, which depends on the selected mode.
+The default output file name depends on the mode selected:
+.RS
+.IP \(bu 4
+In compiler mode, the default file name is obtained by replacing the
+path of the
+.I .smi
+file corresponding to the given
+.I .sml
+file with either
+.IR .o ,
+.IR .s ,
+.IR .ll ,
+or
+.IR .bc .
+.IP \(bu 4
+In linker mode, the default output is "a.out".
+.IP \(bu 4
+Otherwise, the output is written to the standard output.
+.RE
+.TP
+.B -v
+Be verbose and show commands that
+.B smlsharp
+runs.
+.
+.SS Interactive Mode Options
+.TP
+\fB-r\fP \fIsmifile\fP
+Load and link the library specified by the
+.I .smi
+file before the interactive session starts.
+.
+.SS Compiler Mode Options
+.TP
+.B -emit-llvm
+Generate LLVM files.
+When used with
+.B -S
+option, this produces LLVM IR file instead of an assembly file.
+Otherwise, this produces LLVM bitcode file instead of an object file.
+.TP
+.BR -fpic ,\  -fPIC ,\  -fno-pic ,\  -mdynamic-no-pic
+Set relocation model of the LLVM IR compiler (llc).
+If none of the above is specified, target default relocation model
+is selected.
+.BR -fpic and -fPIC
+selects fully relocatable position independent code.
+.B -mdynamic-no-pic
+selects relocatable external references.
+.TP
+\fB-I\fP \fIdirectory\fP
+Add the directory to the search path for _require.
+.TP
+\fB-march=\fP\fIarch\fP
+.TQ
+\fB-mattr=\fP\fIattributes\fP
+.TQ
+\fB-mcpu=\fP\fIcpu\fP
+Specify the target architecture, target attributes, and target
+processor family of the LLVM IR compiler (llc).
+.TP
+.B -nostdpath
+Do not search the standard system directories for _require.
+.TP
+.BR -O ,\  -O0 ,\  -O1 ,\  -O2 ,\  -O3 ,\  -Os ,\  -Oz
+Specify the optimization level.
+.B -O0
+means no optimization.
+.B -O3
+enables almost all the optimizations.
+.BR -O1 and -O2
+are somewhere between
+.BR -O0 and -O3 .
+.B -O
+is equivalent to
+.BR -O2 .
+.BR -Os and -Oz
+turns on optimizations for smaller code sizes.
+.TP
+\fB-target\fP \fItarget_triple\fP
+Specify the code generation target for cross-compile.
+.TP
+\fB-Xllc\fP \fIarg\fP
+Pass the additional argument to the LLVM IR compiler (llc).
+.TP
+\fB-Xopt\fP \fIoption\fP
+Pass the additional argument to the LLVM IR optimizer (opt).
+.
+.SS Linker Mode Options
+.TP
+.B -c++
+Use C++ compiler driver instead of C compiler driver.
+.TP
+\fB-l\fP\fIlibrary\fP
+Link the specified library with the SML# program.
+.TP
+\fB-L\fP \fIdirectory\fP
+Add the directory to the search path for libraries.
+.TP
+.B -nostdlib
+Do not link with the SML# runtime library.
+.TP
+\fB-Wl \fIargs\fP, \fB-Xlinker\fP \fIarg\fP
+Pass the additional arugument (comma-separated arguments in
+.IR args )
+to the C compiler driver.
+.
+.SS Miscellaneous Options
+.TP
+\fB-B\fP \fIdirectory\fP
+Set the compiler builtin directory.
+.TP
+\fB-BX\fP \fIdirectory\fP
+Set the directory of compiler helper commands and internal plugins.
+.TP
+\fB-d\fP [\fIname\fP\fB=\fP\fIvalue\fP]
+Set value to the specified compiler developers' option.
+When \fIname\fP\fB=\fP\fIvalue is not specified,
+verbose output for compiler developers is turned on.
+When
+.B -d
+is used with
+.BR --help ,
+the list of developers' option is printed.
+.TP
+\fB-filemap\fP \fIfilename\fP
+Specify the default file name mapping.
+Each line of the file is of the form
+"\f[CW]=/\fP\fIfilename1\fP\f[CW]/\fP\fIfilename2\fP\f[CW]/\fP", where
+.I filename1
+is the default filename that the compiler produces, and
+.I filename2
+is the replacement.
+.TP
+.B --help
+Print help message.
+.
+.SH ENVIRONMENT
+.TP
+.B SMLSHARP_HEAPSIZE
+Set the minimum and maximum size of SML# heap.
+The default is "32M:256M", which means at least 32MB and at most 256MB.
+.TP
+.B SMLSHARP_VERBOSE
+Set the verbosity level of the SML# runtime library.
+The default is 3.
+Bigger value makes the runtime more verbose.
+.TP
+.BR MYTH_NUM_WORKERS ,\  MTYH_BIND_WORKERS
+Parameters for the MassiveThreads library.
+If none of them is set,
+the default is the best one for single-threaded programs.
+.
+.SH SEE ALSO
+.IR cc (1), c++ (1), ld (1)
+.br
+.IR "SML# Document" ,
+available at
+https://www.pllab.riec.tohoku.ac.jp/smlsharp/docs/
+.br
+.IR "LLVM Documentation" ,
+available at
+https://llvm.org/docs/

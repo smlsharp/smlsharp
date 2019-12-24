@@ -24,26 +24,36 @@ struct
   infixr 4 -->
   infix 5 **
 
-  fun BtvIdTy () = T.CONSTRUCTty {tyCon = UP.REIFY_btvId_tyCon(), args = []}
-  fun TypIdTy () = T.CONSTRUCTty {tyCon = UP.REIFY_typId_tyCon(), args = []}
-  fun SymbolTy () = 
-      T.CONSTRUCTty {tyCon = UP.REIFY_symbol_tyCon(), args = []}
-  fun LongsymbolTy () = ListTy (SymbolTy())
-  fun PosTy () = T.CONSTRUCTty {tyCon = UP.REIFY_pos_tyCon(), args = []}
-  fun SEnvMapTy ty = T.CONSTRUCTty {tyCon = UP.REIFY_SEnvMap_tyCon(), args=[ty]}
-  fun TypIDMapMapTy ty = T.CONSTRUCTty {tyCon = UP.REIFY_TypIDMapMap_tyCon(), args = [ty]}
-  fun BounTypeVarIDMapMapTy ty =
-      T.CONSTRUCTty {tyCon = UP.REIFY_BoundTypeVarIDMapMap_tyCon(), args = [ty]}
-  fun RecordLabelMapMapTy ty = 
-      T.CONSTRUCTty {tyCon = UP.REIFY_RecordLabelMapMap_tyCon(), args = [ty]}
-  fun LabelTy () = T.CONSTRUCTty {tyCon = UP.REIFY_label_tyCon(), args = []}
-  fun IdstatusTy () = T.CONSTRUCTty {tyCon = UP.REIFY_idstatus_tyCon(), args = []}
-  fun EnvTy () = T.CONSTRUCTty {tyCon = UP.REIFY_env_tyCon(), args = []}
+  fun BtvIdTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_btvId(), args = []}
+  fun TypIdTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_typId(), args = []}
 
-  fun ReifiedTermTy () = T.CONSTRUCTty {tyCon = UP.REIFY_reifiedTerm_tyCon(), args = []}
-  fun ReifiedTyTy () = T.CONSTRUCTty {tyCon = UP.REIFY_reifiedTy_tyCon(), args = []}
+(*
+  fun PosTy () = 
+      RecordTy [("fileName", StringTy), ("line", IntTy), ("col", IntTy)]
+  fun LocTy () = 
+      RecordTy [("1", PosTy()), ("2", PosTy())]
+  fun SymbolTy () =
+      RecordTy [("string", StringTy), ("loc", LocTy())]
+  fun LongsymbolTy () = ListTy (SymbolTy())
+
+  fun SymbolTy () = 
+      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_symbol(), args = []}
+  fun PosTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_pos(), args = []}
+*)
+  fun SENVMAPTY ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_SENVMAPty(), args=[ty]}
+  fun TypIDMapMapTy ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_TypIDMapMap(), args = [ty]}
+  fun BounTypeVarIDMapMapTy ty =
+      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_BoundTypeVarIDMapMap(), args = [ty]}
+  fun RecordLabelMapMapTy ty = 
+      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_RecordLabelMapMap(), args = [ty]}
+  fun LabelTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_label(), args = []}
+  fun IdstatusTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_idstatus(), args = []}
+  fun EnvTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_env(), args = []}
+
+  fun ReifiedTermTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTerm(), args = []}
+  fun ReifiedTyTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTy(), args = []}
   fun ReifiedTyLabelMapTy () = RecordLabelMapMapTy (ReifiedTyTy())
-  fun ConSetTy () =  SEnvMapTy (OptionTy (ReifiedTyTy()))
+  fun ConSetTy () =  SENVMAPTY (OptionTy (ReifiedTyTy()))
   fun ConSetEnvTy () = TypIDMapMapTy (ConSetTy())
   fun TyRepTy () = RecordTy [("conSetEnv", ConSetEnvTy()), ("reifiedTy", ReifiedTyTy())]
 
@@ -53,20 +63,34 @@ struct
   fun SymbolAsString loc symbol =
       String loc (Symbol.symbolToString symbol)
 
-  fun Loc (loc as (pos1,pos2)) = 
+  fun Pos loc pos =
       let
-        val FileName1 = String loc (Loc.fileNameOfPos pos1)
-        val Line1 = Int loc (Loc.lineOfPos pos1)
-        val Col1 = Int loc (Loc.colOfPos pos1)
-        val FileName2 = String loc (Loc.fileNameOfPos pos2)
-        val Line2 = Int loc (Loc.lineOfPos pos2)
-        val Col2 = Int loc (Loc.colOfPos pos2)
-        val MakePos = MonoVar (UP.REIFY_makePos_exInfo())
-        val posExp1 = ApplyList loc MakePos [FileName1, Line1, Col1]
-        val posExp2 = ApplyList loc MakePos [FileName2, Line2, Col2]
+        val (isNoPos, isStdPath, name, line, col, pos, gap) =
+            case pos of
+              Loc.POS {source = Loc.FILE (Loc.STDPATH,name), line, col,
+                       pos, gap} =>
+              (false, true, SOME (Filename.toString name), line, col, pos, gap)
+            | Loc.POS {source = Loc.FILE (Loc.USERPATH,name), line, col,
+                       pos, gap} =>
+              (false, false, SOME (Filename.toString name), line, col, pos, gap)
+            | Loc.POS {source = Loc.INTERACTIVE, line, col, pos, gap} =>
+              (false, false, NONE, line, col, pos, gap)
+            | Loc.NOPOS =>
+              (true, false, NONE, 0, 0, 0, 0)
+        val IsNoPos = Bool loc isNoPos
+        val IsStdPath = Bool loc isStdPath
+        val Name = Option loc StringTy (Option.map (String loc) name)
+        val Line = Int loc line
+        val Col = Int loc col
+        val Pos = Int loc pos
+        val Gap = Int loc gap
+        val MakePos = MonoVar (UP.REIFY_exInfo_makePos ())
       in
-        Pair loc posExp1 posExp2
+        ApplyList loc MakePos [IsNoPos, IsStdPath, Name, Line, Col, Pos, Gap]
       end
+
+  fun Loc (loc as (pos1, pos2)) =
+      Pair loc (Pos loc pos1) (Pos loc pos2)
 
   fun BtvId loc btvid =
       TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy())
@@ -76,13 +100,13 @@ struct
       let
         val stringList = Symbol.longsymbolToLongid longsymbol
         val stringListExp = List loc StringTy (map (String loc) stringList)
-        val mkLongsymbolExp = MonoVar (UP.REIFY_SymbolMkLongSymbol_exInfo())
+        val mkLongsymbolExp = MonoVar (UP.REIFY_exInfo_SymbolMkLongSymbol())
       in
         ApplyList loc mkLongsymbolExp [stringListExp, Loc loc]
       end
   fun RecordLabelFromString loc string =
       Apply 
         loc
-        (MonoVar (UP.REIFY_RecordLabelFromString_exInfo()))
+        (MonoVar (UP.REIFY_exInfo_RecordLabelFromString()))
         (String loc string)
 end

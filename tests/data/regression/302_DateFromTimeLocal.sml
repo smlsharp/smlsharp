@@ -1,6 +1,8 @@
 val a = Date.toString (Date.fromTimeLocal Time.zeroTime)
-val _ = case a of "Thu Jan  1 09:00:00 1970" => ()
-               |  _ => raise Fail "Unexpected"
+
+val _ = case a of "Thu Jan 01 09:00:00 1970" => ()
+               |  "Thu Jan  1 09:00:00 1970" => ()
+               |  _ => raise Fail ("Unexpected: " ^ a)
 
 
 

@@ -13,7 +13,7 @@ struct
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
-  (*% @formatter(AbsynTy.ty) AbsynTy.format_ty *)
+  (*% @formatter(AbsynTy.ty) AbsynTyFormatter.format_ty *)
   type ty = AbsynTy.ty
 
   (*% @formatter(Symbol.symbol) Symbol.format_symbol*)
@@ -22,7 +22,7 @@ struct
   (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol*)
   type longsymbol = Symbol.longsymbol
 
-  (*% @formatter(AbsynTy.tvar) AbsynTy.format_tvar *)
+  (*% @formatter(AbsynTy.tvar) AbsynTyFormatter.format_tvar *)
   type tvar = AbsynTy.tvar
 
   (*% @formatter(PatternCalc.scopedTvars) PatternCalc.format_scopedTvars *)
@@ -58,25 +58,14 @@ struct
   type datbind = AbsynInterface.datbind
 
   (*%
-   * @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
-   *)
-  datatype runtimeTy 
-   = (*%
-       @format(ty) ty
-      *)
-     BUILTINty of BuiltinTypeNames.bty
-   |  (*%
-       @format(path) path
-      *)
-     LIFTEDty of longsymbol
-
-  (*%
    * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(declist) TermFormat.formatDeclList
    * @formatter(PatternCalc.plsigexp) PatternCalc.format_plsigexp
-   * @formatter(BuiltinTypeNames.bty) BuiltinTypeNames.format_bty
+   * @formatter(RuntimeTypes.bty) RuntimeTypes.format_bty
+   * @formatter(AbsynTy.opaque_impl) AbsynTyFormatter.format_opaque_impl
    * @formatter(seq) TermFormat.formatSeqList
    * @formatter(ifCons) TermFormat.formatIfCons
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
    *)
   datatype pidec =
       (*%
@@ -109,8 +98,8 @@ struct
         loc: loc
       }
     | (*%
-         @format({tyvars: tv tvs, symbol, runtimeTy, loc})
-          "type" +d 
+         @format({eq, tyvars: tv tvs, symbol, runtimeTy, loc})
+          eq()("eqtype","type") +d 
            tvs:seq(tv)("(",",",")") 
            tvs:ifCons()(+)
            symbol +d "(=" +d runtimeTy +d ")"
@@ -120,26 +109,10 @@ struct
        *)
       PIOPAQUE_TYPE of
       {
+        eq: bool,
         tyvars: tvar list,
         symbol: symbol,
-	runtimeTy: runtimeTy,
-        loc: loc
-      }
-    | (*%
-         @format({tyvars: tv tvs, symbol, runtimeTy, loc})
-         "eqtype" +d 
-          tvs:seq(tv)("(",",",")") 
-          tvs:ifCons()(+)
-          symbol +d "(=" +d runtimeTy +d ")"
-       *)
-      (*
-       * eqtype 'a foo ( = runtimeTy ) 
-       *)
-      PIOPAQUE_EQTYPE of
-      {
-        tyvars: tvar list,
-        symbol: symbol,
-	runtimeTy: runtimeTy,
+        runtimeTy: AbsynTy.opaque_impl,
         loc: loc
       }
     | (*%
@@ -245,7 +218,7 @@ struct
    *)
   type interfaceDec =
       (*%
-       * @format({interfaceId, requiredIds: req reqs, provideTopdecs: dec decs})
+       * @format({interfaceId, interfaceName, requiredIds: req reqs, provideTopdecs: dec decs})
        * "interface" +d interfaceId
        * 2[ reqs:decList(req)(+1, +1) ]
        * +1 "in"
@@ -256,6 +229,7 @@ struct
        *)
       {
         interfaceId: interfaceId,
+        interfaceName: InterfaceName.interface_name,
         requiredIds: {id: interfaceId, loc: loc} list,
         provideTopdecs: pitopdec list
       }
@@ -356,7 +330,6 @@ struct
         PIVAL {loc,...} => loc
       | PITYPE {loc,...} => loc
       | PIOPAQUE_TYPE {loc,...} => loc
-      | PIOPAQUE_EQTYPE {loc,...} => loc
       | PITYPEBUILTIN {loc,...} => loc
       | PIDATATYPE {loc,...} => loc
       | PITYPEREP {loc,...} => loc

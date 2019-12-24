@@ -2,19 +2,20 @@ _require local "../../../../basis.smi"
 
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../compilerIRs/recordcalc/main/RecordCalcUtils.smi"
-_require local "../../../compilerIRs/absyn/main/Absyn.ppg.smi"
+_require local "../../../compilerIRs/absyn/main/Absyn.smi"
+_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/types/main/Unify.smi"
 
-_require  "../../../data/symbols/main/Symbol.ppg.smi"
+_require  "../../../data/symbols/main/Symbol.smi"
 _require  "../../../data/symbols/main/RecordLabel.smi"
-_require  "../../../data/symbols/main/Loc.ppg.smi"
+_require  "../../../data/symbols/main/Loc.smi"
 _require  "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 _require  "../../../data/types/main/Types.ppg.smi"
 
-_require local "../../debug/main/Bug.ppg.smi"
+_require local "../../debug/main/Bug.smi"
 
 structure ReifyUtils =
 struct
@@ -29,15 +30,15 @@ struct
   type decl = RecordCalc.rcdecl
   type label = RecordLabel.label
 
-  val IntTy : ty
+  val Int32Ty : ty
   val Int64Ty : ty
   val IntInfTy : ty
-  val WordTy : ty
+  val Word32Ty : ty
   val Word64Ty : ty
   val Word8Ty : ty
   val CharTy : ty
   val StringTy : ty
-  val RealTy : ty
+  val Real64Ty : ty
   val Real32Ty : ty
   val UnitTy : ty
   val PtrTy : ty
@@ -50,6 +51,11 @@ struct
   val ArrayTy : ty -> ty
   val isArrayTy : ty -> bool
   val isListTy : ty -> bool
+  val isPartialDynTy : ty -> bool
+(*
+  val isBottomTy : ty -> bool
+*)
+  val partialDynElemTy : ty -> ty option
   val ArrayElemTy : ty -> ty
   val ListElemTy : ty -> ty
   val RecordTyFields : ty -> (string * ty) list

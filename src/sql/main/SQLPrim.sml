@@ -12,23 +12,23 @@ struct
   structure Backend = SMLSharp_SQL_Backend
   structure Errors = SMLSharp_SQL_Errors
   structure TimeStamp = SMLSharp_SQL_TimeStamp
-  structure Decimal = SMLSharp_SQL_Decimal
-  structure Float = SMLSharp_SQL_Float
+  structure Numeric = SMLSharp_SQL_Numeric
   structure Ty = SMLSharp_SQL_BackendTy
   structure Ast = SMLSharp_SQL_Query
   structure List = List
   structure Option = Option
   structure Bool = Bool
 
+  datatype bool3 = True | False | Unknown
+  type numeric = Numeric.num
+  type decimal = numeric
   type timestamp = TimeStamp.timestamp
-  type decimal = Decimal.decimal
-  type float = Float.float
 
   type backend = SMLSharp_SQL_Backend.backend
   datatype 'a server = SERVER of Ty.schema * (unit -> 'a) * Backend.backend
-  datatype 'a conn = CONN of Backend.conn_impl * (unit -> 'a)
+  datatype 'a conn = CONN of (Backend.conn_impl * (unit -> 'a)) option ref
   type res = Backend.res_impl
-  datatype 'a cursor = CURSOR of (res * (res -> 'a)) option ref
+  datatype 'a cursor = CURSOR of (res * (res -> 'a list) option) option ref
   exception Toy
 
   fun toyServer () = raise Toy
@@ -38,19 +38,19 @@ struct
   datatype ('toy, 'w) whr =
       WHRty of 'w Ast.whr_ast * 'toy
   datatype ('toy, 'w) from =
-      FROMty of 'w Ast.from_ast * (unit -> 'toy)
+      FROMty of 'w Ast.from_ast * ({} -> 'toy)
   datatype ('toy, 'w) orderby =
       ORDERBYty of 'w Ast.orderby_ast * 'toy
   datatype ('toy, 'w) offset =
-      OFFSETty of 'w Ast.offset_ast * 'toy
+      OFFSETty of 'w Ast.limit_ast * 'toy
   datatype ('toy, 'w) limit =
       LIMITty of 'w Ast.limit_ast * 'toy
   datatype ('src, 'toy, 'w) select =
       SELECTty of 'w Ast.select_ast * ('src -> 'toy) * (res -> 'toy)
   datatype ('toy, 'w) query =
-      QUERYty of 'w Ast.query_ast * (unit -> 'toy) * (res -> 'toy)
-  datatype ('toy, 'ret, 'w) command =
-      COMMANDty of 'w Ast.command_ast * (unit -> 'toy) * (res -> 'ret)
+      QUERYty of 'w Ast.query_ast * ({} -> 'toy) * (res -> 'toy)
+  datatype ('toy, 'w) command =
+      COMMANDty of 'w Ast.command_ast * ({} -> 'toy) * (res -> 'toy)
   datatype ('toy, 'w) db =
       DBty of 'w Ast.db * (unit -> 'toy)
 
@@ -58,8 +58,9 @@ struct
       #closeRes r ()
 
   fun queryCommand (QUERYty (ast, toy, readFn)) =
-      COMMANDty (Ast.QUERY_COMMAND ast, toy,
-                 fn res => CURSOR (ref (SOME (res, readFn))))
+      COMMANDty (Ast.QUERY_COMMAND ast,
+                 fn {} => CURSOR (ref NONE),
+                 fn res => CURSOR (ref (SOME (res, SOME readFn))))
 
   fun sqlserver_string (desc, (schema, toy)) =
       SERVER (schema, toy, Backend.default desc)
@@ -84,15 +85,17 @@ struct
           | Ty.REAL32 => opt "real32"
           | Ty.BOOL => opt "bool"
           | Ty.TIMESTAMP => opt "timestamp"
-          | Ty.DECIMAL => opt "decimal"
-          | Ty.FLOAT => opt "float"
+          | Ty.NUMERIC => opt "numeric"
           | Ty.UNSUPPORTED x => "unsupported (" ^ x ^ ")"
         end
+
+    fun equalName y (x, _) =
+        CharVector.map Char.toLower x = CharVector.map Char.toLower y
 
     fun unifyColumns (tableName, expectColumns, actualColumns) =
         (
           app (fn (expectName, expectTy) =>
-                  case List.find (fn (x,_) => x = expectName) actualColumns of
+                  case List.find (equalName expectName) actualColumns of
                     NONE => raise Link ("column `" ^ expectName
                                         ^ "' of table `" ^ tableName
                                         ^ "' is not found.")
@@ -106,7 +109,7 @@ struct
                                      ^ typename actualTy ^ "'"))
               expectColumns;
           app (fn (actualName, actualTy) =>
-                  case List.find (fn (x,_) => x = actualName) expectColumns of
+                  case List.find (equalName actualName) expectColumns of
                     NONE =>
                     raise Link ("table `" ^ tableName ^ "' has column `"
                                 ^ actualName ^ "' but not declared.")
@@ -116,7 +119,7 @@ struct
 
     fun unifySchema (expectSchema, actualSchema) =
         app (fn (tableName, expectColumns) =>
-                case List.find (fn (n,_) => n = tableName) actualSchema of
+                case List.find (equalName tableName) actualSchema of
                   SOME (_, actualColumns) =>
                   unifyColumns (tableName, expectColumns, actualColumns)
                 | NONE =>
@@ -135,15 +138,17 @@ struct
         val e = (link (conn, schema); NONE) handle e => SOME e
       in
         case e of
-          NONE => CONN (conn, toy)
+          NONE => CONN (ref (SOME (conn, toy)))
         | SOME e => (#closeConn conn (); raise e)
       end
 
-  fun 'w sqleval cmd (CONN (conn, toy)) =
+  fun 'w sqleval cmd (CONN (ref NONE)) =
+      raise Errors.Exec "closed connection"
+    | sqleval cmd (CONN (ref (SOME (conn, toy)))) =
         let
           val db = Ast.DB : 'w Ast.db
           val COMMANDty (ast, toy, retFn) = cmd (DBty (db, toy))
-          val s = SMLFormat.prettyPrint nil (Ast.format_command_ast ast)
+          val s = SMLFormat.prettyPrint nil (Ast.format_command_ast () ast)
           val r = #execQuery conn s
         in
           retFn r
@@ -154,7 +159,7 @@ struct
         val db = Ast.DB : 'w Ast.db
         val QUERYty (_, toyFn, _) = queryFn (DBty (db, fn () => arg))
       in
-        toyFn ()
+        toyFn {}
       end
 
   fun 'w commandToString commandFn =
@@ -162,11 +167,24 @@ struct
         val db = Ast.DB : 'w Ast.db
         val COMMANDty (ast, _, _) = commandFn (DBty (db, toyServer))
       in
-        SMLFormat.prettyPrint nil (Ast.format_command_ast ast)
+        SMLFormat.prettyPrint nil (Ast.format_command_ast () ast)
       end
 
-  fun closeConn (CONN (conn, _)) =
-      #closeConn conn ()
+  fun 'w queryToString queryFn =
+      let
+        val db = Ast.DB : 'w Ast.db
+        val QUERYty (ast, _, _) = queryFn (DBty (db, toyServer))
+      in
+        SMLFormat.prettyPrint nil (Ast.format_query_ast () ast)
+      end
+
+  fun expToString (EXPty (ast, _)) =
+      SMLFormat.prettyPrint nil (Ast.format_exp_ast () ast)
+
+  fun closeConn (CONN (ref NONE)) =
+      raise Errors.Connect "closed connection"
+    | closeConn (CONN (r as ref (SOME (conn, _)))) =
+      (r := NONE; #closeConn conn ())
 
   fun closeCursor (CURSOR (ref NONE)) =
       raise Errors.Exec "closed cursor"
@@ -175,10 +193,13 @@ struct
 
   fun fetch (CURSOR (ref NONE)) =
       raise Errors.Exec "closed cursor"
-    | fetch (CURSOR (r as ref (SOME (b as Backend.R res, readFn)))) =
-      if #fetch res () then SOME (hd (readFn b)) else NONE
+    | fetch (CURSOR (ref (SOME (b, NONE)))) = NONE
+    | fetch (CURSOR (r as ref (SOME (b as Backend.R res, SOME readFn)))) =
+      if #fetch res ()
+      then SOME (hd (readFn b))
+      else (r := SOME (b, NONE); NONE)
 
-  fun fetchAll c =      
+  fun fetchAll c =
       let
         fun loop l = case fetch c of NONE => l | SOME x => loop (x::l)
         val result = loop nil
@@ -199,8 +220,7 @@ struct
   fun fromSQL_real (Backend.R r, i) = nonnull (#getReal r i)
   fun fromSQL_real32 (Backend.R r, i) = nonnull (#getReal32 r i)
   fun fromSQL_timestamp (Backend.R r, i) = nonnull (#getTimestamp r i)
-  fun fromSQL_decimal (Backend.R r, i) = nonnull (#getDecimal r i)
-  fun fromSQL_float (Backend.R r, i) = nonnull (#getFloat r i)
+  fun fromSQL_numeric (Backend.R r, i) = nonnull (#getNumeric r i)
   fun fromSQL_intOption (Backend.R r, i) = #getInt r i
   fun fromSQL_intInfOption (Backend.R r, i) = #getIntInf r i
   fun fromSQL_wordOption (Backend.R r, i) = #getWord r i
@@ -210,8 +230,7 @@ struct
   fun fromSQL_realOption (Backend.R r, i) = #getReal r i
   fun fromSQL_real32Option (Backend.R r, i) = #getReal32 r i
   fun fromSQL_timestampOption (Backend.R r, i) = #getTimestamp r i
-  fun fromSQL_decimalOption (Backend.R r, i) = #getDecimal r i
-  fun fromSQL_floatOption (Backend.R r, i) = #getFloat r i
+  fun fromSQL_numericOption (Backend.R r, i) = #getNumeric r i
 
   fun ty_int _ = {ty = Ty.INT, nullable = false}
   fun ty_intInf _ = {ty = Ty.INTINF, nullable = false}
@@ -222,8 +241,7 @@ struct
   fun ty_real _ = {ty = Ty.REAL, nullable = false}
   fun ty_real32 _ = {ty = Ty.REAL32, nullable = false}
   fun ty_timestamp _ = {ty = Ty.TIMESTAMP, nullable = false}
-  fun ty_decimal _ = {ty = Ty.DECIMAL, nullable = false}
-  fun ty_float _ = {ty = Ty.FLOAT, nullable = false}
+  fun ty_numeric _ = {ty = Ty.NUMERIC, nullable = false}
   fun ty_intOption _ = {ty = Ty.INT, nullable = true}
   fun ty_intInfOption _ = {ty = Ty.INTINF, nullable = true}
   fun ty_wordOption _ = {ty = Ty.WORD, nullable = true}
@@ -233,8 +251,7 @@ struct
   fun ty_realOption _ = {ty = Ty.REAL, nullable = true}
   fun ty_real32Option _ = {ty = Ty.REAL32, nullable = true}
   fun ty_timestampOption _ = {ty = Ty.TIMESTAMP, nullable = true}
-  fun ty_decimalOption _ = {ty = Ty.DECIMAL, nullable = true}
-  fun ty_floatOption _ = {ty = Ty.FLOAT, nullable = true}
+  fun ty_numericOption _ = {ty = Ty.NUMERIC, nullable = true}
 
   fun cmpOpt f (NONE, NONE) = EQUAL
     | cmpOpt f (NONE, SOME _) = GREATER
@@ -253,8 +270,7 @@ struct
   val compare_real = Real.compare
   val compare_real32 = Real32.compare
   val compare_timestamp = TimeStamp.compare
-  val compare_decimal = Decimal.compare
-  val compare_float = Float.compare
+  val compare_numeric = Numeric.compare
   fun compare_intOption x = cmpOpt Int.compare x
   fun compare_intInfOption x = cmpOpt IntInf.compare x
   fun compare_wordOption x = cmpOpt Word.compare x
@@ -264,8 +280,7 @@ struct
   fun compare_realOption x = cmpOpt Real.compare x
   fun compare_real32Option x = cmpOpt Real32.compare x
   fun compare_timestampOption x = cmpOpt compare_timestamp x
-  fun compare_decimalOption x = cmpOpt compare_decimal x
-  fun compare_floatOption x = cmpOpt compare_float x
+  fun compare_numericOption x = cmpOpt compare_numeric x
 
   structure General2 =
   struct
@@ -282,35 +297,31 @@ struct
   structure Bool3 =
   struct
 
-    type bool3 = bool option
+    datatype bool3 = datatype bool3
 
-    fun toBool3_bool (x : bool) = SOME x
-    fun toBool3_bool3 (x : bool3) = x
+    fun fromBool true = True
+      | fromBool false = False
 
-    fun and3 (SOME false, _) = SOME false
-      | and3 (_, SOME false) = SOME false
-      | and3 (NONE, _) = NONE
-      | and3 (_, NONE) = NONE
-      | and3 (SOME true, SOME true) = SOME true
-
-    fun or3 (SOME true, _) = SOME true
-      | or3 (_, SOME true) = SOME true
-      | or3 (NONE, _) = NONE
-      | or3 (_, NONE) = NONE
-      | or3 (SOME false, SOME false) = SOME false
-
-    fun not3 (SOME true) = SOME false
-      | not3 (SOME false) = SOME true
-      | not3 NONE = NONE
-
-    fun isTrue (SOME true) = true
+    fun isTrue True = true
       | isTrue _ = false
 
-    fun isFalse (SOME false) = true
-      | isFalse _ = false
+    fun is (x:bool3) y = if x = y then True else False
 
-    fun isUnknown NONE = true
-      | isUnknown _ = false
+    fun and3 (False, _) = False
+      | and3 (_, False) = False
+      | and3 (Unknown, _) = Unknown
+      | and3 (_, Unknown) = Unknown
+      | and3 (True, True) = True
+
+    fun or3 (True, _) = True
+      | or3 (_, True) = True
+      | or3 (Unknown, _) = Unknown
+      | or3 (_, Unknown) = Unknown
+      | or3 (False, False) = False
+
+    fun not3 True = False
+      | not3 False = True
+      | not3 Unknown = Unknown
 
   end
 
@@ -382,6 +393,7 @@ struct
   fun wrap_string x = Ast.STRING x
   fun wrap_real x = Ast.REAL x
   fun wrap_real32 x = Ast.REAL32 x
+  fun wrap_numeric x = Ast.NUMERIC x
   fun unwrap_int x = case x of Ast.INT x => x | _ => raise Toy
   fun unwrap_intInf x = case x of Ast.INTINF x => x | _ => raise Toy
   fun unwrap_word x = case x of Ast.WORD x => x | _ => raise Toy
@@ -390,6 +402,7 @@ struct
   fun unwrap_string x = case x of Ast.STRING x => x | _ => raise Toy
   fun unwrap_real x = case x of Ast.REAL x => x | _ => raise Toy
   fun unwrap_real32 x = case x of Ast.REAL32 x => x | _ => raise Toy
+  fun unwrap_numeric x = case x of Ast.NUMERIC x => x | _ => raise Toy
   fun unwrap_intOption x = case x of Ast.INT x => SOME x | _ => raise Toy
   fun unwrap_intInfOption x = case x of Ast.INTINF x => SOME x | _ => raise Toy
   fun unwrap_wordOption x = case x of Ast.WORD x => SOME x | _ => raise Toy
@@ -398,6 +411,8 @@ struct
   fun unwrap_stringOption x = case x of Ast.STRING x => SOME x | _ => raise Toy
   fun unwrap_realOption x = case x of Ast.REAL x => SOME x | _ => raise Toy
   fun unwrap_real32Option x = case x of Ast.REAL32 x => SOME x | _ => raise Toy
+  fun unwrap_numericOption x =
+      case x of Ast.NUMERIC x => SOME x | _ => raise Toy
 
   fun toSQL_int x = EXPty (Ast.CONST (Ast.INT x), fn _ => x)
   fun toSQL_intInf x = EXPty (Ast.CONST (Ast.INTINF x), fn _ => x)
@@ -408,8 +423,7 @@ struct
   fun toSQL_real x = EXPty (Ast.CONST (Ast.REAL x), fn _ => x)
   fun toSQL_real32 x = EXPty (Ast.CONST (Ast.REAL32 x), fn _ => x)
   fun toSQL_timestamp x = EXPty (Ast.CONST (Ast.TIMESTAMP x), fn _ => x)
-  fun toSQL_decimal x = EXPty (Ast.CONST (Ast.DECIMAL x), fn _ => x)
-  fun toSQL_float x = EXPty (Ast.CONST (Ast.FLOAT x), fn _ => x)
+  fun toSQL_numeric x = EXPty (Ast.CONST (Ast.NUMERIC x), fn _ => x)
   fun toSQLopt ast (SOME x) = EXPty (Ast.CONST (ast x), fn _ => SOME x)
     | toSQLopt ast NONE = EXPty (Ast.LITERAL "NULL", fn _ => NONE)
   fun toSQL_intOption x = toSQLopt Ast.INT x
@@ -421,8 +435,7 @@ struct
   fun toSQL_realOption x = toSQLopt Ast.REAL x
   fun toSQL_real32Option x = toSQLopt Ast.REAL32 x
   fun toSQL_timestampOption x = toSQLopt Ast.TIMESTAMP x
-  fun toSQL_decimalOption x = toSQLopt Ast.DECIMAL x
-  fun toSQL_floatOption x = toSQLopt Ast.FLOAT x
+  fun toSQL_numericOption x = toSQLopt Ast.NUMERIC x
 
   fun op1 (ast, oper, f) (EXPty x) =
       EXPty (ast (oper, #1 x), fn c => f (#2 x c))
@@ -433,11 +446,15 @@ struct
       EXPty (ast (#1 x, oper, #1 y), fn c => f (#2 x c, #2 y c))
   fun op2opt (ast, oper, f) x =
       op2 (ast, oper, fn (SOME x, SOME y) => SOME (f (x, y)) | _ => NONE) x
+  fun opCmpOpt (ast, oper, f) x =
+      op2 (ast, oper, fn (SOME x, SOME y) => f (x, y) | _ => Bool3.Unknown) x
+
+  fun op2fun (x, f, y) = Ast.FUNCALL (f, [x, y])
 
   type ('a,'w) op1 = ('a,'w) exp -> ('a,'w) exp
   type ('a,'w) op2 = ('a,'w) exp * ('a,'w) exp -> ('a,'w) exp
   type ('a,'b,'w) cmpop =
-       ('a -> 'b, 'w) exp * ('a -> 'b, 'w) exp -> ('a -> bool option, 'w) exp
+       ('a -> 'b, 'w) exp * ('a -> 'b, 'w) exp -> ('a -> bool3, 'w) exp
 
   fun add x = op2 (Ast.ADDOP, "+", op +) x
   fun addOpt x = op2opt (Ast.ADDOP, "+", op +) x
@@ -446,11 +463,13 @@ struct
   val add_word = add
   val add_real = add
   val add_real32 = add
+  fun add_numeric x = op2 (Ast.ADDOP, "+", Numeric.+) x
   val add_intOption = addOpt
   val add_intInfOption = addOpt
   val add_wordOption = addOpt
   val add_realOption = addOpt
   val add_real32Option = addOpt
+  fun add_numericOption x = op2opt (Ast.ADDOP, "+", Numeric.+) x
 
   fun sub x = op2 (Ast.ADDOP, "-", op -) x
   fun subOpt x = op2opt (Ast.ADDOP, "-", op -) x
@@ -459,11 +478,13 @@ struct
   val sub_word = sub
   val sub_real = sub
   val sub_real32 = sub
+  fun sub_numeric x = op2 (Ast.ADDOP, "-", Numeric.-) x
   val sub_intOption = subOpt
   val sub_intInfOption = subOpt
   val sub_wordOption = subOpt
   val sub_realOption = subOpt
   val sub_real32Option = subOpt
+  fun sub_numericOption x = op2opt (Ast.ADDOP, "-", Numeric.-) x
 
   fun mul x = op2 (Ast.MULOP, "*", op *) x
   fun mulOpt x = op2opt (Ast.MULOP, "*", op *) x
@@ -472,11 +493,13 @@ struct
   val mul_word = mul
   val mul_real = mul
   val mul_real32 = mul
+  fun mul_numeric x = op2 (Ast.MULOP, "*", Numeric.*) x
   val mul_intOption = mulOpt
   val mul_intInfOption = mulOpt
   val mul_wordOption = mulOpt
   val mul_realOption = mulOpt
   val mul_real32Option = mulOpt
+  fun mul_numericOption x = op2opt (Ast.MULOP, "*", Numeric.*) x
 
   fun divide x = op2 (Ast.MULOP, "/", op div) x
   fun divideOpt x = op2opt (Ast.MULOP, "/", op div) x
@@ -487,27 +510,46 @@ struct
   val div_word = divide
   val div_real = divideR
   val div_real32 = divideR
+  fun div_numeric x = op2 (Ast.MULOP, "/", Numeric.quot) x
   val div_intOption = divideOpt
   val div_intInfOption = divideOpt
   val div_wordOption = divideOpt
   val div_realOption = divideROpt
   val div_real32Option = divideROpt
+  fun div_numericOption x = op2opt (Ast.MULOP, "/", Numeric.quot) x
 
   fun realMod (x, y) = Real.realMod (x / y) * y
   fun real32Mod (x, y) = Real32.realMod (x / y) * y
 
-  fun modulo x = op2 (Ast.MULOP, "%", op mod) x
-  fun moduloOpt x = op2opt (Ast.MULOP, "%", op mod) x
+  fun modulo x = op2 (op2fun, "MOD", op mod) x
+  fun moduloOpt x = op2opt (op2fun, "MOD", op mod) x
   val mod_int = modulo
   val mod_intInf = modulo
   val mod_word = modulo
-  fun mod_real x = op2 (Ast.MULOP, "%", realMod) x
-  fun mod_real32 x = op2 (Ast.MULOP, "%", real32Mod) x
+  fun mod_real x = op2 (op2fun, "MOD", realMod) x
+  fun mod_real32 x = op2 (op2fun, "MOD", real32Mod) x
+  fun mod_numeric x = op2 (op2fun, "MOD", Numeric.rem) x
   val mod_intOption = moduloOpt
   val mod_intInfOption = moduloOpt
   val mod_wordOption = moduloOpt
-  fun mod_realOption x = op2opt (Ast.MULOP, "%", realMod) x
-  fun mod_real32Option x = op2opt (Ast.MULOP, "%", real32Mod) x
+  fun mod_realOption x = op2opt (op2fun, "MOD", realMod) x
+  fun mod_real32Option x = op2opt (op2fun, "MOD", real32Mod) x
+  fun mod_numericOption x = op2opt (op2fun, "MOD", Numeric.rem) x
+
+  fun infix_modulo x = op2 (Ast.MULOP, "%", op mod) x
+  fun infix_moduloOpt x = op2opt (Ast.MULOP, "%", op mod) x
+  val infix_mod_int = infix_modulo
+  val infix_mod_intInf = infix_modulo
+  val infix_mod_word = infix_modulo
+  fun infix_mod_real x = op2 (Ast.MULOP, "%", realMod) x
+  fun infix_mod_real32 x = op2 (Ast.MULOP, "%", real32Mod) x
+  fun infix_mod_numeric x = op2 (Ast.MULOP, "%", Numeric.rem) x
+  val infix_mod_intOption = infix_moduloOpt
+  val infix_mod_intInfOption = infix_moduloOpt
+  val infix_mod_wordOption = infix_moduloOpt
+  fun infix_mod_realOption x = op2opt (Ast.MULOP, "%", realMod) x
+  fun infix_mod_real32Option x = op2opt (Ast.MULOP, "%", real32Mod) x
+  fun infix_mod_numericOption x = op2opt (Ast.MULOP, "%", Numeric.rem) x
 
   fun neg x = op1 (Ast.UNARYOP, "-", op ~) x
   fun negOpt x = op1opt (Ast.UNARYOP, "-", op ~) x
@@ -516,11 +558,13 @@ struct
   val neg_word = neg
   val neg_real = neg
   val neg_real32 = neg
+  fun neg_numeric x = op1 (Ast.UNARYOP, "-", Numeric.~) x
   val neg_intOption = negOpt
   val neg_intInfOption = negOpt
   val neg_wordOption = negOpt
   val neg_realOption = negOpt
   val neg_real32Option = negOpt
+  fun neg_numericOption x = op1opt (Ast.UNARYOP, "-", Numeric.~) x
 
   fun absolute (EXPty x) =
       EXPty (Ast.FUNCALL ("ABS", [#1 x]), fn c => abs (#2 x c))
@@ -531,15 +575,20 @@ struct
   fun abs_word (EXPty x) = EXPty (Ast.FUNCALL ("ABS", [#1 x]), #2 x)
   val abs_real = absolute
   val abs_real32 = absolute
+  fun abs_numeric (EXPty x) =
+      EXPty (Ast.FUNCALL ("ABS", [#1 x]), fn c => Numeric.abs (#2 x c))
   val abs_intOption = absoluteOpt
   val abs_intInfOption = absoluteOpt
   fun abs_wordOption (EXPty x) = EXPty (Ast.FUNCALL ("ABS", [#1 x]), #2 x)
   val abs_realOption = absoluteOpt
   val abs_real32Option = absoluteOpt
+  fun abs_numericOption (EXPty x) =
+      EXPty (Ast.FUNCALL ("ABS", [#1 x]),
+             fn c => Option.map Numeric.abs (#2 x c))
 
-  fun ltCmp cmp x = case cmp x of LESS => true | _ => false
-  fun lt cmp x = op2 (Ast.CMPOP, "<", SOME o ltCmp cmp) x
-  fun ltOpt cmp x = op2opt (Ast.CMPOP, "<", ltCmp cmp) x
+  fun ltCmp cmp x = case cmp x of LESS => Bool3.True | _ => Bool3.False
+  fun lt cmp x = op2 (Ast.CMPOP, "<", ltCmp cmp) x
+  fun ltOpt cmp x = opCmpOpt (Ast.CMPOP, "<", ltCmp cmp) x
   fun lt_int x = lt compare_int x
   fun lt_intInf x = lt compare_intInf x
   fun lt_word x = lt compare_word x
@@ -549,8 +598,7 @@ struct
   fun lt_real x = lt compare_real x
   fun lt_real32 x = lt compare_real32 x
   fun lt_timestamp x = lt compare_timestamp x
-  fun lt_decimal x = lt compare_decimal x
-  fun lt_float x = lt compare_float x
+  fun lt_numeric x = lt compare_numeric x
   fun lt_intOption x = ltOpt compare_int x
   fun lt_intInfOption x = ltOpt compare_intInf x
   fun lt_wordOption x = ltOpt compare_word x
@@ -560,12 +608,11 @@ struct
   fun lt_realOption x = ltOpt compare_real x
   fun lt_real32Option x = ltOpt compare_real32 x
   fun lt_timestampOption x = ltOpt compare_timestamp x
-  fun lt_decimalOption x = ltOpt compare_decimal x
-  fun lt_floatOption x = ltOpt compare_float x
+  fun lt_numericOption x = ltOpt compare_numeric x
 
-  fun gtCmp cmp x = case cmp x of GREATER => true | _ => false
-  fun gt cmp x = op2 (Ast.CMPOP, ">", SOME o gtCmp cmp) x
-  fun gtOpt cmp x = op2opt (Ast.CMPOP, ">", gtCmp cmp) x
+  fun gtCmp cmp x = case cmp x of GREATER => Bool3.True | _ => Bool3.False
+  fun gt cmp x = op2 (Ast.CMPOP, ">", gtCmp cmp) x
+  fun gtOpt cmp x = opCmpOpt (Ast.CMPOP, ">", gtCmp cmp) x
   fun gt_int x = gt compare_int x
   fun gt_intInf x = gt compare_intInf x
   fun gt_word x = gt compare_word x
@@ -575,8 +622,7 @@ struct
   fun gt_real x = gt compare_real x
   fun gt_real32 x = gt compare_real32 x
   fun gt_timestamp x = gt compare_timestamp x
-  fun gt_decimal x = gt compare_decimal x
-  fun gt_float x = gt compare_float x
+  fun gt_numeric x = gt compare_numeric x
   fun gt_intOption x = gtOpt compare_int x
   fun gt_intInfOption x = gtOpt compare_intInf x
   fun gt_wordOption x = gtOpt compare_word x
@@ -586,12 +632,11 @@ struct
   fun gt_realOption x = gtOpt compare_real x
   fun gt_real32Option x = gtOpt compare_real32 x
   fun gt_timestampOption x = gtOpt compare_timestamp x
-  fun gt_decimalOption x = gtOpt compare_decimal x
-  fun gt_floatOption x = gtOpt compare_float x
+  fun gt_numericOption x = gtOpt compare_numeric x
 
-  fun leCmp cmp x = case cmp x of GREATER => false | _ => true
-  fun le cmp x = op2 (Ast.CMPOP, "<=", SOME o leCmp cmp) x
-  fun leOpt cmp x = op2opt (Ast.CMPOP, "<=", leCmp cmp) x
+  fun leCmp cmp x = case cmp x of GREATER => Bool3.False | _ => Bool3.True
+  fun le cmp x = op2 (Ast.CMPOP, "<=", leCmp cmp) x
+  fun leOpt cmp x = opCmpOpt (Ast.CMPOP, "<=", leCmp cmp) x
   fun le_int x = le compare_int x
   fun le_intInf x = le compare_intInf x
   fun le_word x = le compare_word x
@@ -601,8 +646,7 @@ struct
   fun le_real x = le compare_real x
   fun le_real32 x = le compare_real32 x
   fun le_timestamp x = le compare_timestamp x
-  fun le_decimal x = le compare_decimal x
-  fun le_float x = le compare_float x
+  fun le_numeric x = le compare_numeric x
   fun le_intOption x = leOpt compare_int x
   fun le_intInfOption x = leOpt compare_intInf x
   fun le_wordOption x = leOpt compare_word x
@@ -612,12 +656,11 @@ struct
   fun le_realOption x = leOpt compare_real x
   fun le_real32Option x = leOpt compare_real32 x
   fun le_timestampOption x = leOpt compare_timestamp x
-  fun le_decimalOption x = leOpt compare_decimal x
-  fun le_floatOption x = leOpt compare_float x
+  fun le_numericOption x = leOpt compare_numeric x
 
-  fun geCmp cmp x = case cmp x of LESS => false | _ => true
-  fun ge cmp x = op2 (Ast.CMPOP, ">=", SOME o geCmp cmp) x
-  fun geOpt cmp x = op2opt (Ast.CMPOP, ">=", geCmp cmp) x
+  fun geCmp cmp x = case cmp x of LESS => Bool3.False | _ => Bool3.True
+  fun ge cmp x = op2 (Ast.CMPOP, ">=", geCmp cmp) x
+  fun geOpt cmp x = opCmpOpt (Ast.CMPOP, ">=", geCmp cmp) x
   fun ge_int x = ge compare_int x
   fun ge_intInf x = ge compare_intInf x
   fun ge_word x = ge compare_word x
@@ -627,8 +670,7 @@ struct
   fun ge_real x = ge compare_real x
   fun ge_real32 x = ge compare_real32 x
   fun ge_timestamp x = ge compare_timestamp x
-  fun ge_decimal x = ge compare_decimal x
-  fun ge_float x = ge compare_float x
+  fun ge_numeric x = ge compare_numeric x
   fun ge_intOption x = geOpt compare_int x
   fun ge_intInfOption x = geOpt compare_intInf x
   fun ge_wordOption x = geOpt compare_word x
@@ -638,12 +680,11 @@ struct
   fun ge_realOption x = geOpt compare_real x
   fun ge_real32Option x = geOpt compare_real32 x
   fun ge_timestampOption x = geOpt compare_timestamp x
-  fun ge_decimalOption x = geOpt compare_decimal x
-  fun ge_floatOption x = geOpt compare_float x
+  fun ge_numericOption x = geOpt compare_numeric x
 
-  fun eqCmp cmp x = case cmp x of EQUAL => true | _ => false
-  fun eq cmp x = op2 (Ast.CMPOP, "=", SOME o eqCmp cmp) x
-  fun eqOpt cmp x = op2opt (Ast.CMPOP, "=", eqCmp cmp) x
+  fun eqCmp cmp x = case cmp x of EQUAL => Bool3.True | _ => Bool3.False
+  fun eq cmp x = op2 (Ast.CMPOP, "=", eqCmp cmp) x
+  fun eqOpt cmp x = opCmpOpt (Ast.CMPOP, "=", eqCmp cmp) x
   fun eq_int x = eq compare_int x
   fun eq_intInf x = eq compare_intInf x
   fun eq_word x = eq compare_word x
@@ -653,8 +694,7 @@ struct
   fun eq_real x = eq compare_real x
   fun eq_real32 x = eq compare_real32 x
   fun eq_timestamp x = eq compare_timestamp x
-  fun eq_decimal x = eq compare_decimal x
-  fun eq_float x = eq compare_float x
+  fun eq_numeric x = eq compare_numeric x
   fun eq_intOption x = eqOpt compare_int x
   fun eq_intInfOption x = eqOpt compare_intInf x
   fun eq_wordOption x = eqOpt compare_word x
@@ -664,12 +704,11 @@ struct
   fun eq_realOption x = eqOpt compare_real x
   fun eq_real32Option x = eqOpt compare_real32 x
   fun eq_timestampOption x = eqOpt compare_timestamp x
-  fun eq_decimalOption x = eqOpt compare_decimal x
-  fun eq_floatOption x = eqOpt compare_float x
+  fun eq_numericOption x = eqOpt compare_numeric x
 
-  fun neqCmp cmp x = case cmp x of EQUAL => false | _ => true
-  fun neq cmp x = op2 (Ast.CMPOP, "<>", SOME o neqCmp cmp) x
-  fun neqOpt cmp x = op2opt (Ast.CMPOP, "<>", neqCmp cmp) x
+  fun neqCmp cmp x = case cmp x of EQUAL => Bool3.False | _ => Bool3.True
+  fun neq cmp x = op2 (Ast.CMPOP, "<>", neqCmp cmp) x
+  fun neqOpt cmp x = opCmpOpt (Ast.CMPOP, "<>", neqCmp cmp) x
   fun neq_int x = neq compare_int x
   fun neq_intInf x = neq compare_intInf x
   fun neq_word x = neq compare_word x
@@ -679,8 +718,7 @@ struct
   fun neq_real x = neq compare_real x
   fun neq_real32 x = neq compare_real32 x
   fun neq_timestamp x = neq compare_timestamp x
-  fun neq_decimal x = neq compare_decimal x
-  fun neq_float x = neq compare_float x
+  fun neq_numeric x = neq compare_numeric x
   fun neq_intOption x = neqOpt compare_int x
   fun neq_intInfOption x = neqOpt compare_intInf x
   fun neq_wordOption x = neqOpt compare_word x
@@ -690,8 +728,24 @@ struct
   fun neq_realOption x = neqOpt compare_real x
   fun neq_real32Option x = neqOpt compare_real32 x
   fun neq_timestampOption x = neqOpt compare_timestamp x
-  fun neq_decimalOption x = neqOpt compare_decimal x
-  fun neq_floatOption x = neqOpt compare_float x
+  fun neq_numericOption x = neqOpt compare_numeric x
+
+  fun nullif cmp (EXPty x, EXPty y) =
+      EXPty (Ast.FUNCALL ("NULLIF", [#1 x, #1 y]),
+             fn c => case (#2 x c, #2 y c) of
+                       (SOME x, SOME y) =>
+                       (case cmp (x, y) of EQUAL => NONE | _ => SOME x)
+                     | (x, _) => x)
+  fun nullif_intOption x = nullif compare_int x
+  fun nullif_intInfOption x = nullif compare_intInf x
+  fun nullif_wordOption x = nullif compare_word x
+  fun nullif_charOption x = nullif compare_char x
+  fun nullif_boolOption x = nullif compare_bool x
+  fun nullif_stringOption x = nullif compare_string x
+  fun nullif_realOption x = nullif compare_real x
+  fun nullif_real32Option x = nullif compare_real32 x
+  fun nullif_timestampOption x = nullif compare_timestamp x
+  fun nullif_numericOption x = nullif compare_numeric x
 
   fun concat_string (EXPty x, EXPty y) =
       EXPty (Ast.FUNCALL ("CONCAT", [#1 x, #1 y]), fn c => #2 x c ^ #2 y c)
@@ -709,48 +763,158 @@ struct
         | (SOME (#"_", p2), SOME (c, s2)) => match ((p2,s2)::t)
         | (SOME (#"_", _), NONE) => match t
         | (SOME (c, p2), SOME (c2, s2)) =>
-          match (if c = c2 then (p2,s2)::t else t) 
+          match (if c = c2 then (p2,s2)::t else t)
         | (SOME _, NONE) => match t
         | (NONE, SOME _) => match t
         | (NONE, NONE) => true
   in
   fun matchLike (x, y) = match [(Substring.full y, Substring.full x)]
+  fun matchLike3 x = Bool3.fromBool (matchLike x)
   end
 
-  fun like_string x = op2 (Ast.CMPOP, "LIKE", SOME o matchLike) x
-  fun like_stringOption x = op2opt (Ast.CMPOP, "LIKE", matchLike) x
+  fun like_string x = op2 (Ast.CMPOP, "LIKE", matchLike3) x
+  fun like_stringOption x = opCmpOpt (Ast.CMPOP, "LIKE", matchLike3) x
 
   fun isnull (EXPty x, EXPty y) =
       EXPty (Ast.FUNCALL ("ISNULL", [#1 x, #1 y]),
              fn c => getOpt (#2 x c, #2 y c))
 
-  type ('a,'b,'w) avgop = ('a -> 'b list, 'w) exp -> ('a -> real option, 'w) exp
+  type ('a,'b,'c,'w) aggop = ('a -> 'b list, 'w) exp -> ('a -> 'c, 'w) exp
 
-  fun avgReal f nil = NONE
-    | avgReal f l =
-      let val l' = List.mapPartial f l
-      in SOME (foldl (op +) 0.0 l' / real (length l'))
-      end
+  fun aggop (oper, aggFn) (EXPty x) =
+      EXPty (Ast.FUNCALL (oper, [#1 x]), fn c => aggFn (#2 x c))
+  fun aggOptOp (oper, aggFn) x =
+      aggop (oper, fn x => aggFn (List.mapPartial (fn x => x) x)) x
 
-  fun avg toReal (EXPty x) =
-      EXPty (Ast.FUNCALL ("AVG", [#1 x]), fn c => avgReal toReal (#2 x c))
-  fun avg_int x = avg (SOME o Real.fromInt) x
-  fun avg_intInf x = avg (SOME o Real.fromLargeInt) x
-  fun avg_word x = avg (SOME o Real.fromLargeInt o Word.toLargeInt) x
-  fun avg_real x = avg SOME x
-  fun avg_real32 x = avg (SOME o Real32.toLarge) x
-  fun avg_intOption x = avg (Option.map Real.fromInt) x
-  fun avg_intInfOption x = avg (Option.map Real.fromLargeInt) x
-  fun avg_wordOption x = avg (Option.map (Real.fromLargeInt o Word.toLargeInt)) x
-  fun avg_realOption x = avg (fn x => x) x
-  fun avg_real32Option x = avg (Option.map Real32.toLarge) x
+  fun avgValue toNum nil = NONE
+    | avgValue toNum l =
+      SOME
+        (Numeric.quot
+           (foldl (fn (x,z) => Numeric.+ (toNum x, z)) (Numeric.fromInt 0) l,
+            Numeric.fromInt (length l)))
+  fun avg f x = aggop ("AVG", avgValue f) x
+  fun avgOpt f x = aggOptOp ("AVG", avgValue f) x
+  fun avg_int x = avg Numeric.fromInt x
+  fun avg_intInf x = avg Numeric.fromLargeInt x
+  fun avg_word x = avg (Numeric.fromLargeInt o Word.toLargeInt) x
+  fun avg_real x = avg Numeric.fromLargeReal x
+  fun avg_real32 x = avg (Numeric.fromLargeReal o Real32.toLarge) x
+  fun avg_numeric x = avg (fn x => x) x
+  fun avg_intOption x = avgOpt Numeric.fromInt x
+  fun avg_intInfOption x = avgOpt Numeric.fromLargeInt x
+  fun avg_wordOption x = avgOpt (Numeric.fromLargeInt o Word.toLargeInt) x
+  fun avg_realOption x = avgOpt Numeric.fromLargeReal x
+  fun avg_real32Option x = avgOpt (Numeric.fromLargeReal o Real32.toLarge) x
+  fun avg_numericOption x = avgOpt (fn x => x) x
+
+  fun sumValue add zero nil = NONE
+    | sumValue add zero l = SOME (foldl add zero l)
+  fun sum f z x = aggop ("SUM", sumValue f z) x
+  fun sumOpt f z x = aggOptOp ("SUM", sumValue f z) x
+  fun sum_int x = sum (op +) 0 x
+  fun sum_intInf x = sum (op +) 0 x
+  fun sum_word x = sum (op +) 0w0 x
+  fun sum_real x = sum (op +) 0.0 x
+  fun sum_real32 x = sum (op +) 0.0 x
+  fun sum_numeric x = sum Numeric.+ (Numeric.fromInt 0) x
+  fun sum_intOption x = sumOpt (op +) 0 x
+  fun sum_intInfOption x = sumOpt (op +) 0 x
+  fun sum_wordOption x = sumOpt (op +) 0w0 x
+  fun sum_realOption x = sumOpt (op +) 0.0 x
+  fun sum_real32Option x = sumOpt (op +) 0.0 x
+  fun sum_numericOption x = sumOpt Numeric.+ (Numeric.fromInt 0) x
+
+  fun maxValue compare nil = NONE
+    | maxValue compare (h::t) =
+      SOME (foldl (fn (x, z) => case compare (x, z) of GREATER => x | _ => z)
+                  h t)
+  fun max f x = aggop ("MAX", maxValue f) x
+  fun maxOpt f x = aggOptOp ("MAX", maxValue f) x
+  fun max_int x = max compare_int x
+  fun max_intInf x = max compare_intInf x
+  fun max_word x = max compare_word x
+  fun max_char x = max compare_char x
+  fun max_bool x = max compare_bool x
+  fun max_string x = max compare_string x
+  fun max_real x = max compare_real x
+  fun max_real32 x = max compare_real32 x
+  fun max_timestamp x = max compare_timestamp x
+  fun max_numeric x = max compare_numeric x
+  fun max_intOption x = maxOpt compare_int x
+  fun max_intInfOption x = maxOpt compare_intInf x
+  fun max_wordOption x = maxOpt compare_word x
+  fun max_charOption x = maxOpt compare_char x
+  fun max_boolOption x = maxOpt compare_bool x
+  fun max_stringOption x = maxOpt compare_string x
+  fun max_realOption x = maxOpt compare_real x
+  fun max_real32Option x = maxOpt compare_real32 x
+  fun max_timestampOption x = maxOpt compare_timestamp x
+  fun max_numericOption x = maxOpt compare_numeric x
+
+  fun minValue compare nil = NONE
+    | minValue compare (h::t) =
+      SOME (foldl (fn (x, z) => case compare (x, z) of LESS => x | _ => z) h t)
+  fun min f x = aggop ("MIN", minValue f) x
+  fun minOpt f x = aggOptOp ("MIN", minValue f) x
+  fun min_int x = min compare_int x
+  fun min_intInf x = min compare_intInf x
+  fun min_word x = min compare_word x
+  fun min_char x = min compare_char x
+  fun min_bool x = min compare_bool x
+  fun min_string x = min compare_string x
+  fun min_real x = min compare_real x
+  fun min_real32 x = min compare_real32 x
+  fun min_timestamp x = min compare_timestamp x
+  fun min_numeric x = min compare_numeric x
+  fun min_intOption x = minOpt compare_int x
+  fun min_intInfOption x = minOpt compare_intInf x
+  fun min_wordOption x = minOpt compare_word x
+  fun min_charOption x = minOpt compare_char x
+  fun min_boolOption x = minOpt compare_bool x
+  fun min_stringOption x = minOpt compare_string x
+  fun min_realOption x = minOpt compare_real x
+  fun min_real32Option x = minOpt compare_real32 x
+  fun min_timestampOption x = minOpt compare_timestamp x
+  fun min_numericOption x = minOpt compare_numeric x
+
+  fun count x = aggop ("COUNT", length) x
+  fun count_option x = aggOptOp ("COUNT", length) x
+
+  fun Num f (EXPty x) =
+      EXPty (#1 x, fn c => SOME (f (#2 x c)) : numeric option)
+  fun NumOpt f (EXPty x) =
+      EXPty (#1 x, fn c => Option.map f (#2 x c) : numeric option)
+  fun Num_int x = Num Numeric.fromInt x
+  fun Num_intInf x = Num Numeric.fromLargeInt x
+  fun Num_word x = Num (Numeric.fromLargeInt o Word.toLargeInt) x
+  fun Num_real x = Num (Numeric.fromLargeReal) x
+  fun Num_real32 x = Num (Numeric.fromLargeReal o Real32.toLarge) x
+  fun Num_numeric x = Num (fn x => x) x
+  fun Num_intOption x = NumOpt Numeric.fromInt x
+  fun Num_intInfOption x = NumOpt Numeric.fromLargeInt x
+  fun Num_wordOption x = NumOpt (Numeric.fromLargeInt o Word.toLargeInt) x
+  fun Num_realOption x = NumOpt (Numeric.fromLargeReal) x
+  fun Num_real32Option x = NumOpt (Numeric.fromLargeReal o Real32.toLarge) x
+  fun Num_numericOption x = x
 
   structure Op =
   struct
     fun Some (EXPty (ast, toy)) = EXPty (ast, fn c => SOME (toy c))
-    fun isnull (EXPty x, EXPty y) =
-        EXPty (Ast.FUNCALL ("ISNULL", [#1 x, #1 y]),
-               fn c => getOpt (#2 x c, #2 y c))
+    fun Part (EXPty (ast, toy)) =
+        EXPty (ast, fn c => List.mapPartial (fn x => x) (toy c))
+
+    fun coalesce (EXPty x, EXPty y) =
+        EXPty (Ast.FUNCALL ("COALESCE", [#1 x, #1 y]),
+               fn c => case (#2 x c, #2 y c) of
+                         (SOME x, _) => x
+                       | (NONE, y) => y)
+
+    fun coalesce' (EXPty x, EXPty y) =
+        EXPty (Ast.FUNCALL ("COALESCE", [#1 x, #1 y]),
+               fn c => case (#2 x c, #2 y c) of
+                         (SOME x, _) => SOME x
+                       | (NONE, SOME y) => SOME y
+                       | (NONE, NONE) => NONE)
   end
 
 end

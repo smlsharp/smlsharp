@@ -1,6 +1,6 @@
 _require "../../basis.smi"
 _require local "../../basis/main/SMLSharp_Runtime.smi"
-_require local "../../config/main/Config.smi"
+_require local "../../config/main/SQLConfig.smi"
 _require local "../../ffi.smi"
 
 structure SMLSharp_SQL_PGSQL =
@@ -28,6 +28,8 @@ struct
   val PQgetisnull : unit -> (result * int * int) -> bool
   val PQntuples : unit -> result -> int
   val PQnfields : unit -> result -> int
+  val PQfname : unit -> result * int -> char ptr
+  val PQfnumber : unit -> result * string -> int
   val PQresultStatus : unit -> result -> resultStatus
   val PQerrorMessage : unit -> conn -> char ptr
   val PQresultErrorMessage : unit -> result -> char ptr

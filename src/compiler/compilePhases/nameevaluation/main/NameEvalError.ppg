@@ -9,7 +9,7 @@
 structure NameEvalError =
 struct
 local
-  structure UE = UserError
+  (* structure UE = UserError *)
 
   (*%
      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
@@ -29,6 +29,8 @@ in
      @formatter(PatternCalc.plpat) PatternCalc.format_plpat
      @formatter(PatternCalc.ffiTy) PatternCalc.format_ffiTy
      @formatter(RecordLabel.label) RecordLabel.format_label
+     @formatter(Absyn.ty) AbsynFormatter.format_ty
+     @formatter(Absyn.tvarKind) AbsynFormatter.format_tvarKind
    *)
   exception
   (*%
@@ -82,9 +84,9 @@ in
   (*%
      @format(code * {symbol})
      "(name evaluation" +d code ")" +d
-     "Illeagal" +d "runtime" + "type" +d "specification" +d "in" +d "type" +d "spec:" +d symbol
+     "Illegal" +d "runtime" + "type" +d "specification:" +d symbol
    *)
-  IlleagalBuiltinTy of (code * {symbol: symbol})
+  IllegalBuiltinTy of (code * {symbol: longsymbol})
 
   and
   (*%
@@ -1289,6 +1291,28 @@ in
      "invalid" +d "kind" +d "name:" +d s
    *)
   InvalidKindName of code * string
+
+  and
+  (**
+   *)
+  (*%
+     @format(code * s)
+     "(name evaluation" +d code ")" +d
+     "invalid" +d "kind:" +d s
+   *)
+  InvalidKind of code * Absyn.tvarKind
+
+  and
+  (**
+   *)
+  (*%
+     @format(code * ty)
+     "(name evaluation" +d code ")" +d
+     "partial" +d "record" +d "type" +d "not"
+     +d "allowed" +d "in" +d "type" +d "declaration:"
+     +d ty
+   *)
+  FlexRecordNotAllowed of code * Absyn.ty
 
 end
 end

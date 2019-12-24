@@ -237,6 +237,7 @@ struct
       (T.fmt ~1 T.zeroTime; fail "Size expected.")
       handle General.Size => ()
         
+(* round towar ZERO これは本当か？ *)
   fun toString0001 () =
       let
         val case_0 as () = assertEqualString "0.000" (T.toString T.zeroTime)

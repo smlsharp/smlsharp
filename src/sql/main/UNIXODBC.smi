@@ -1,7 +1,7 @@
 _require "../../basis.smi"
-_require local "../../config/main/Config.smi"
+_require local "../../config/main/SQLConfig.smi"
 _require local "../../ffi.smi"
-_require local "../../ffi/main/Pointer.smi"
+(* _require local "../../ffi/main/Pointer.smi" *)
 
 structure UNIXODBC = struct
 

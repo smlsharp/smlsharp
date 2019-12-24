@@ -23,16 +23,18 @@ struct
     val con_NONE = [SQLPrim, "Option", "NONE"]
     val con_true = [SQLPrim, "Bool", "true"]
     val con_false = [SQLPrim, "Bool", "false"]
+    val con_True = [SQLPrim, "Bool3", "True"]
+    val con_False = [SQLPrim, "Bool3", "False"]
+    val con_Unknown = [SQLPrim, "Bool3", "Unknown"]
     val ty_db = [SQLPrim, "db"]
     val ty_command = [SQLPrim, "command"]
     val fun_isSome = [SQLPrim, "Option", "isSome"]
     val fun_not3 = [SQLPrim, "Bool3", "not3"]
     val fun_and3 = [SQLPrim, "Bool3", "and3"]
     val fun_or3 = [SQLPrim, "Bool3", "or3"]
-    val fun_toBool3 = [SQLPrim, "Bool3", "toBool3"]
+    val fun_fromBool = [SQLPrim, "Bool3", "fromBool"]
     val fun_isTrue = [SQLPrim, "Bool3", "isTrue"]
-    val fun_isFalse = [SQLPrim, "Bool3", "isFalse"]
-    val fun_isUnknown = [SQLPrim, "Bool3", "isUnknown"]
+    val fun_is = [SQLPrim, "Bool3", "is"]
     val fun_map = [SQLPrim, "List", "map"]
     val fun_filter = [SQLPrim, "List", "filter"]
     val fun_append = [SQLPrim, "List", "@"]
@@ -56,6 +58,7 @@ struct
     val fun_unwrapWord = [SQLPrim, "unwrapWord"]
     val fun_unwrapString = [SQLPrim, "unwrapString"]
     val fun_unwrapChar = [SQLPrim, "unwrapChar"]
+    val fun_unwrapBool = [SQLPrim, "unwrapBool"]
     val fun_queryCommand = [SQLPrim, "queryCommand"]
     val fun_sqlserver = [SQLPrim, "sqlserver"]
     val fun_sqleval = [SQLPrim, "sqleval"]
@@ -67,6 +70,7 @@ struct
     val con_REAL = [SQLPrim, "Ast", "REAL"]
     val con_STRING = [SQLPrim, "Ast", "STRING"]
     val con_CHAR = [SQLPrim, "Ast", "CHAR"]
+    val con_BOOL = [SQLPrim, "Ast", "BOOL"]
     val con_LITERAL = [SQLPrim, "Ast", "LITERAL"]
     val con_COLUMN1 = [SQLPrim, "Ast", "COLUMN1"]
     val con_COLUMN2 = [SQLPrim, "Ast", "COLUMN2"]
@@ -92,7 +96,6 @@ struct
     val con_ORDERBY = [SQLPrim, "Ast", "ORDERBY"]
     val con_OFFSET = [SQLPrim, "Ast", "OFFSET"]
     val con_LIMIT = [SQLPrim, "Ast", "LIMIT"]
-    val con_FETCH = [SQLPrim, "Ast", "FETCH"]
     val con_GROUPBY = [SQLPrim, "Ast", "GROUPBY"]
     val con_HAVING = [SQLPrim, "Ast", "HAVING"]
     val con_ALL = [SQLPrim, "Ast", "ALL"]
@@ -133,7 +136,7 @@ struct
   fun Ty ty (_:S.loc) = ty : A.ty
 
   fun Tyvar x : A.tvar =
-      {symbol = x, eq = A.NONEQ}
+      {symbol = x, isEq = false}
 
   fun TyWild loc =
       A.TYWILD loc
@@ -154,7 +157,7 @@ struct
       P.PLPATWILD loc
 
   fun PatUnit loc =
-      P.PLPATCONSTANT (A.UNITCONST loc)
+      P.PLPATCONSTANT (A.UNITCONST, loc)
 
   fun PatVar symbol (_:P.loc) =
       P.PLPATID [symbol]
@@ -210,19 +213,19 @@ struct
       end
 
   fun Let tyvars (pat, exp) exp2 loc =
-      P.PLLET ([P.PDVAL (map (fn x => (x, A.UNIV)) tyvars,
+      P.PLLET ([P.PDVAL (map (fn x => (x, A.UNIV(nil,loc))) tyvars,
                          [(pat loc, exp loc)], loc)],
                [exp2 loc], loc)
 
   fun Unit loc =
-      P.PLCONSTANT (A.UNITCONST loc)
+      P.PLCONSTANT (A.UNITCONST, loc)
 
   fun Int n loc =
       P.PLCONSTANT
-        (A.INT ({radix = StringCvt.DEC, digits = Int.toString n}, loc))
+        (A.INT (Int.toLarge n), loc)
 
   fun String s loc =
-      P.PLCONSTANT (A.STRING (s, loc))
+      P.PLCONSTANT (A.STRING s, loc)
 
   fun LabelString label =
       String (RecordLabel.toString label)
@@ -234,6 +237,9 @@ struct
       fn loc => P.PLRECORD (map (fn (l, e) => (l, e loc)) fields, loc)
 
   fun Tuple exps = Record (RecordLabel.tupleList exps)
+
+  fun UnitTuple loc =
+      Tuple [] loc
 
   fun Pair (x, y) =
       Tuple [x, y]
@@ -257,7 +263,7 @@ struct
       P.PLSEQ ([exp loc, Unit loc], loc)
 
   fun Join (exp1, exp2) loc =
-      P.PLJOIN (exp1 loc, exp2 loc, loc)
+      P.PLJOIN (true, exp1 loc, exp2 loc, loc)
 
   fun Con name nil = ExVar name
     | Con name [arg] = App (ExVar name) arg
@@ -285,17 +291,23 @@ struct
   fun False loc =
       Con Name.con_false [] loc
 
+  fun True3 loc =
+      Con Name.con_True [] loc
+
+  fun False3 loc =
+      Con Name.con_False [] loc
+
+  fun Unknown3 loc =
+      Con Name.con_Unknown [] loc
+
   fun Option NONE = None
     | Option (SOME x) = Some x
 
   fun Ty_db (toyTy, connTy) =
       TyCon [toyTy, connTy] Name.ty_db
 
-  fun Ty_command (toyTy, retTy, connTy) =
-      TyCon [toyTy, retTy, connTy] Name.ty_command
-
-  fun Fun_isSome e =
-      App (ExVar Name.fun_isSome) e
+  fun Ty_command (toyTy, connTy) =
+      TyCon [toyTy, connTy] Name.ty_command
 
   fun Fun_not3 e =
       App (ExVar Name.fun_not3) e
@@ -306,25 +318,23 @@ struct
   fun Fun_or3 (e1, e2) =
       App (ExVar Name.fun_or3) (Tuple [e1, e2])
 
-  fun Fun_toBool3 e =
-      App (ExVar Name.fun_toBool3) e
+  fun Fun_fromBool e =
+      App (ExVar Name.fun_fromBool) e
 
   fun Fun_isTrue e =
       App (ExVar Name.fun_isTrue) e
 
-  fun Fun_isFalse e =
-      App (ExVar Name.fun_isFalse) e
+  fun Fun_is e1 e2 =
+      App (App (ExVar Name.fun_is) e1) e2
 
-  fun Fun_isUnknown e =
-      App (ExVar Name.fun_isUnknown) e
+  fun Fun_isSome e =
+      Fun_fromBool (App (ExVar Name.fun_isSome) e)
 
   fun Fun_map f l =
       App (App (ExVar Name.fun_map) (Fn1 f)) l
 
   fun Fun_filter f l =
-      App (App (ExVar Name.fun_filter)
-               (Fn1 (fn x => Fun_isTrue (Fun_toBool3 (f x)))))
-          l
+      App (App (ExVar Name.fun_filter) (Fn1 (fn x => Fun_isTrue (f x)))) l
 
   fun Fun_append (e1, e2) =
       App (ExVar Name.fun_append) (Tuple [e1, e2])
@@ -332,11 +342,11 @@ struct
   fun Fun_hd e =
       App (ExVar Name.fun_hd) e
 
-  fun Fun_take (n, e) =
-      App (ExVar Name.fun_take) (Pair (n, e))
+  fun Fun_take (e, n) =
+      App (ExVar Name.fun_take) (Pair (e, n))
 
-  fun Fun_drop (n, e) =
-      App (ExVar Name.fun_drop) (Pair (n, e))
+  fun Fun_drop (e, n) =
+      App (ExVar Name.fun_drop) (Pair (e, n))
 
   fun Fun_onlyOne e =
       App (ExVar Name.fun_onlyOne) e
@@ -374,8 +384,8 @@ struct
   fun Fun_fromSQL (h, i) =
       App (ExVar Name.fun_fromSQL) (Tuple [h, Int i])
 
-  fun Fun_wrap const =
-      App (ExVar Name.fun_wrap) (Exp (P.PLCONSTANT const))
+  fun Fun_wrap x =
+      App (ExVar Name.fun_wrap) x
 
   fun Fun_unwrapInt exp =
       App (ExVar Name.fun_unwrapInt) exp
@@ -391,6 +401,9 @@ struct
 
   fun Fun_unwrapChar exp =
       App (ExVar Name.fun_unwrapChar) exp
+
+  fun Fun_unwrapBool exp =
+      App (ExVar Name.fun_unwrapBool) exp
 
   fun Fun_queryCommand select =
       App (ExVar Name.fun_queryCommand) select
@@ -408,19 +421,22 @@ struct
       Con Name.con_CONST [x]
 
   fun Con_INT const =
-      Con Name.con_INT [Exp (P.PLCONSTANT const)]
+      Con Name.con_INT [fn loc => P.PLCONSTANT (const, loc)]
 
   fun Con_WORD const =
-      Con Name.con_WORD [Exp (P.PLCONSTANT const)]
+      Con Name.con_WORD [fn loc => P.PLCONSTANT (const, loc)]
 
   fun Con_REAL const =
-      Con Name.con_REAL [Exp (P.PLCONSTANT const)]
+      Con Name.con_REAL [fn loc => P.PLCONSTANT (const, loc)]
 
   fun Con_STRING const =
-      Con Name.con_STRING [Exp (P.PLCONSTANT const)]
+      Con Name.con_STRING [fn loc => P.PLCONSTANT (const, loc)]
 
   fun Con_CHAR const =
-      Con Name.con_CHAR [Exp (P.PLCONSTANT const)]
+      Con Name.con_CHAR [fn loc => P.PLCONSTANT (const, loc)]
+
+  fun Con_BOOL x =
+      Con Name.con_BOOL [x]
 
   fun Con_LITERAL x =
       Con Name.con_LITERAL [String x]
@@ -491,20 +507,21 @@ struct
   fun Con_ORDERBY keys =
       Con Name.con_ORDERBY [List (map Pair keys)]
 
-  fun Con_OFFSET {count, rows} =
+  fun Con_OFFSET {offset = (offset, rows), fetch} =
       Con Name.con_OFFSET
           [Record
-             [(RecordLabel.fromString "count", count),
-              (RecordLabel.fromString "rows", Option (Option.map String rows))]]
+             [(RecordLabel.fromString "offset", Pair (offset, String rows)),
+              (RecordLabel.fromString "fetch",
+               case fetch of
+                 NONE => None
+               | SOME (first, count, rows) =>
+                 Tuple [String first, Option count, String rows])]]
 
-  fun Con_LIMIT exp =
-      Con Name.con_LIMIT [Option exp]
-
-  fun Con_FETCH {first, count, rows} =
-      Con Name.con_FETCH
-          [Record [(RecordLabel.fromString "first", String first),
-                   (RecordLabel.fromString "count", Option count),
-                   (RecordLabel.fromString "rows", String rows)]]
+  fun Con_LIMIT {limit, offset} =
+      Con Name.con_LIMIT
+          [Record
+             [(RecordLabel.fromString "limit", Option limit),
+              (RecordLabel.fromString "offset", Option offset)]]
 
   fun Con_GROUPBY (keys, having) =
       Con Name.con_GROUPBY [List keys, having]
@@ -523,10 +540,10 @@ struct
           [distinct,
            List (map (fn (l, e) => Pair (LabelString l, e)) selectList)]
 
-  fun Con_QUERY (select, from, whr, groupby, orderby, offset, limit) =
+  fun Con_QUERY (select, from, whr, groupby, orderby, limit) =
       Con Name.con_QUERY [select, from,
                           Option whr, Option groupby,
-                          Option orderby, Option offset, Option limit]
+                          Option orderby, Option limit]
 
   fun Con_DEFAULT loc =
       Con Name.con_DEFAULT [] loc
@@ -665,8 +682,10 @@ struct
     | WHERE of query * S.loc
     | FROM of table list * S.loc
     | ORDERBY of (query * S.asc_desc option) list * S.loc
-    | OFFSET of query * {rows:string} option * S.loc
-    | LIMIT of query option * {first:string, rows:string} option * S.loc
+    | OFFSET of {offset : query * string * S.loc,
+                 fetch : (string * query option * string * S.loc) option}
+    | LIMIT of {limit : query option * S.loc,
+                offset : (query * S.loc) option}
     | SELECT of S.distinct option * ((S.label * query) list * S.loc) * S.loc
     | QUERY of {select : query,
                 from : query,
@@ -674,7 +693,6 @@ struct
                 whr : query option,
                 groupBy : groupBy option,
                 orderBy : query option,
-                offset : query option,
                 limit : query option,
                 loc : S.loc}
     | INSERT_VALUES of {table : table_selector,
@@ -802,7 +820,7 @@ struct
                   if member (representatives, (k, l))
                   then Select l (Select k (Fun_hd equiv))
                   else Fun_map (fn x => Select l (Select k x)) equiv)
-              columns)
+              (union (columns, representatives)))
 
   fun nestedPair nil = Int 0
     | nestedPair (h::t) = foldl (fn (x,z) => Pair (z,x)) h t
@@ -840,7 +858,7 @@ struct
       | TABLE (t as {loc,...}, _) =>
         Loc loc (Fun_map (fn x => Pair (x, x)) (tableIdToToy t))
       | TABLE_SUBQUERY (query, loc) =>
-        Loc loc (Fun_map (fn x => Pair (x, x)) (queryToToy query Unit))
+        Loc loc (Fun_map (fn x => Pair (x, x)) (queryToToy query UnitTuple))
       | TABLE_JOIN (tab1, INNER_JOIN (_, exp), tab2, loc) =>
         (Loc loc)
           (Fun_filter
@@ -868,7 +886,7 @@ struct
   and insertValueToToy default (l, (NONE, loc)) =
       (l, Loc loc (Select l default))
     | insertValueToToy default (l, (SOME e, loc)) =
-      (l, Loc loc (queryToToy e Unit))
+      (l, Loc loc (queryToToy e UnitTuple))
 
   and insertRowToToy default labels (row, loc) =
       Record (ListPair.map (insertValueToToy default) (labels, row))
@@ -894,7 +912,7 @@ struct
 
   (* The toy program of each query construct is made under some context
    * denoted by "fn c".  For uniformity, even if it does not depend on
-   * any context, it is with "fn c", where "c" is unit. *)
+   * any context, it is with "fn c", where "c" is {}. *)
   and queryToToy query =
       case query of
         EMBED (x, ty, loc) =>
@@ -906,33 +924,31 @@ struct
       | COLUMN2 ((label1, label2), loc) =>
         (fn c => Loc loc (Select label2 (Select label1 c)))
       | EXISTS (query, loc) =>
-        (fn c => Loc loc (Some (Fun_isNotEmpty (queryToToy query c))))
+        (fn c => Loc loc (Fun_fromBool (Fun_isNotEmpty (queryToToy query c))))
       | OP1 (S.IS_NULL, query, loc) =>
-        (fn c => Loc loc (Fun_not3 (Some (Fun_isSome (queryToToy query c)))))
+        (fn c => Loc loc (Fun_not3 (Fun_isSome (queryToToy query c))))
       | OP1 (S.IS_NOT_NULL, query, loc) =>
-        (fn c => Loc loc (Some (Fun_isSome (queryToToy query c))))
+        (fn c => Loc loc (Fun_isSome (queryToToy query c)))
       | OP1 (S.IS_TRUE, query, loc) =>
-        (fn c => Loc loc (Some (Fun_isTrue (queryToToy query c))))
+        (fn c => Loc loc (Fun_is True3 (queryToToy query c)))
       | OP1 (S.IS_NOT_TRUE, query, loc) =>
-        (fn c => Loc loc (Fun_not3 (Some (Fun_isTrue (queryToToy query c)))))
+        (fn c => Loc loc (Fun_not3 (Fun_is True3 (queryToToy query c))))
       | OP1 (S.IS_FALSE, query, loc) =>
-        (fn c => Loc loc (Some (Fun_isFalse (queryToToy query c))))
+        (fn c => Loc loc (Fun_is False3 (queryToToy query c)))
       | OP1 (S.IS_NOT_FALSE, query, loc) =>
-        (fn c => Loc loc (Fun_not3 (Some (Fun_isFalse (queryToToy query c)))))
+        (fn c => Loc loc (Fun_not3 (Fun_is False3 (queryToToy query c))))
       | OP1 (S.IS_UNKNOWN, query, loc) =>
-        (fn c => Loc loc (Some (Fun_isUnknown (queryToToy query c))))
+        (fn c => Loc loc (Some (Fun_is Unknown3 (queryToToy query c))))
       | OP1 (S.IS_NOT_UNKNOWN, query, loc) =>
-        (fn c => Loc loc (Fun_not3 (Some (Fun_isUnknown (queryToToy query c)))))
+        (fn c => Loc loc (Fun_not3 (Fun_is Unknown3 (queryToToy query c))))
       | OP1 (S.NOT, query, loc) =>
-        (fn c => Loc loc (Fun_not3 (Fun_toBool3 (queryToToy query c))))
+        (fn c => Loc loc (Fun_not3 (queryToToy query c)))
       | OP2 (S.AND, q1, q2, loc) =>
-        (fn c => Loc loc (Fun_and3 (Fun_toBool3 (queryToToy q1 c),
-                                    Fun_toBool3 (queryToToy q2 c))))
+        (fn c => Loc loc (Fun_and3 (queryToToy q1 c, queryToToy q2 c)))
       | OP2 (S.OR, q1, q2, loc) =>
-        (fn c => Loc loc (Fun_or3 (Fun_toBool3 (queryToToy q1 c),
-                                   Fun_toBool3 (queryToToy q2 c))))
+        (fn c => Loc loc (Fun_or3 (queryToToy q1 c, queryToToy q2 c)))
       | EXP_SUBQUERY (query as EMBED _, loc) =>
-        (fn c => Loc loc (Fun_onlyOne (queryToToy query Unit)))
+        (fn c => Loc loc (Fun_onlyOne (queryToToy query UnitTuple)))
       | EXP_SUBQUERY (query, loc) =>
         (fn c => Loc loc (Fun_onlyOne (queryToToy query c)))
       | WHERE (exp, loc) =>
@@ -948,14 +964,22 @@ struct
                  (fn x => nestedPair (map (fn (q,_) => queryToToy q x) keys))
                  (nestedCompare (map (ascdescToToy o #2) keys))
                  c))
-      | OFFSET (count, fmt, loc) =>
-        (fn c => (Loc loc) (Fun_drop (c, queryToToy count Unit)))
-      | LIMIT (NONE, NONE, loc) =>
-        (fn c => c)
-      | LIMIT (NONE, SOME _, loc) =>
-        (fn c => (Loc loc) (Fun_take (c, Int 1)))
-      | LIMIT (SOME count, fmt, loc) =>
-        (fn c => (Loc loc) (Fun_take (c, queryToToy count Unit)))
+      | LIMIT {limit=(limit,loc), offset} =>
+        (case limit of
+           NONE => (fn c => c)
+         | SOME count =>
+           (fn c => (Loc loc) (Fun_take (c, queryToToy count UnitTuple))))
+        o (case offset of
+             NONE => (fn c => c)
+           | SOME (count, loc) =>
+             (fn c => (Loc loc) (Fun_drop (c, queryToToy count UnitTuple))))
+      | OFFSET {offset=(offset, _, loc), fetch} =>
+        (case fetch of
+           NONE => (fn c => c)
+         | SOME (_, NONE, _, loc) => (fn c => (Loc loc) (Fun_take (c, Int 1)))
+         | SOME (_, SOME count, _, loc) =>
+           (fn c => (Loc loc) (Fun_take (c, queryToToy count UnitTuple))))
+        o (fn c => (Loc loc) (Fun_drop (c, queryToToy offset UnitTuple)))
       | SELECT (distinct, (selectList, loc1), loc2) =>
         (fn c =>
             (Loc loc2)
@@ -963,19 +987,17 @@ struct
                  (Fun_map
                     (fn x => Loc loc1 (Record (recordToToy selectList x)))
                     c)))
-      | QUERY {select, from, whr, correlate, groupBy, orderBy, offset, limit,
-               loc} =>
+      | QUERY {select, from, whr, correlate, groupBy, orderBy, limit, loc} =>
         (fn c =>
             (Loc loc
              o queryToToyOpt limit
-             o queryToToyOpt offset
              o queryToToyOpt orderBy
              o queryToToy select
              o groupByToToy groupBy
              o queryToToyOpt whr
              o correlateJoin correlate c
              o queryToToy from)
-              Unit)
+              UnitTuple)
       | INSERT_VALUES {table, labels, values, loc} =>
         let
           val table = tableIdToToy table
@@ -986,7 +1008,7 @@ struct
         end
       | INSERT_SELECT {table, labels = NONE, query, loc} =>
         (fn c => Ignore (Fun_append (tableIdToToy table,
-                                     queryToToy query Unit)))
+                                     queryToToy query UnitTuple)))
       | INSERT_SELECT {table, labels = SOME labs, query, loc} =>
         let
           val table = tableIdToToy table
@@ -998,7 +1020,7 @@ struct
              (Loc loc)
                (Ignore
                   ((Fun_map (fn x => Case1 x (pat, exp)))
-                     (queryToToy query Unit)))
+                     (queryToToy query UnitTuple)))
         end
       | UPDATE {table as {label, ...}, setList, whr, loc} =>
         (fn c =>
@@ -1117,18 +1139,26 @@ struct
              (map (fn (exp, ascdesc) =>
                       (queryToTerm exp, ascdescToTerm ascdesc))
                   keys))
-      | OFFSET (count, fmt, loc) =>
-        (Loc loc) (Con_OFFSET {count = queryToTerm count,
-                               rows = Option.map #rows fmt})
-      | LIMIT (count, NONE, loc) =>
-        (Loc loc) (Con_LIMIT (Option.map queryToTerm count))
-      | LIMIT (count, SOME {first, rows}, loc) =>
-        (Loc loc) (Con_FETCH {first = first, rows = rows,
-                              count = Option.map queryToTerm count})
+      | OFFSET {offset = (offset, rows, loc), fetch} =>
+        (Loc loc)
+          (Con_OFFSET
+             {offset = (Loc loc (queryToTerm offset), rows),
+              fetch =
+                case fetch of
+                  NONE => NONE
+                | SOME (first, count, rows, loc) =>
+                  SOME (first, Option.map (Loc loc o queryToTerm) count, rows)})
+      | LIMIT {limit = (limit, loc), offset} =>
+        (Loc loc)
+          (Con_LIMIT
+             {limit = Option.map (Loc loc o queryToTerm) limit,
+              offset =
+                case offset of
+                  NONE => NONE
+                | SOME (count, loc) => SOME (Loc loc (queryToTerm count))})
       | SELECT (distinct, (selectList, _), loc) =>
         Loc loc (Con_SELECT (distinctToTerm distinct, recordToTerm selectList))
-      | QUERY {select, from, whr, correlate, groupBy, orderBy, offset, limit,
-               loc} =>
+      | QUERY {select, from, whr, correlate, groupBy, orderBy, limit, loc} =>
         (Loc loc)
           (Con_QUERY
              (queryToTerm select,
@@ -1136,7 +1166,6 @@ struct
               Option.map queryToTerm whr,
               Option.map groupByToTerm groupBy,
               Option.map queryToTerm orderBy,
-              Option.map queryToTerm offset,
               Option.map queryToTerm limit))
       | INSERT_VALUES {table, labels, values, loc} =>
         (Loc loc)
@@ -1292,7 +1321,9 @@ struct
               A.EXPLET
                 ([A.DECOPEN ([Symbol.mkLongsymbol Name.structure_Op loc], loc),
                   A.DECINFIX ("5", [Symbol.mkSymbol "like" loc,
-                                    Symbol.mkSymbol "||" loc], loc)],
+                                    Symbol.mkSymbol "||" loc], loc), 
+                  A.DECINFIX ("7", [Symbol.mkSymbol "%" loc], loc),
+                  A.DECNONFIX ([Symbol.mkSymbol "mod" loc], loc)],
                  [A.EXPAPP ([exp], loc)],
                  loc)
           val plexp = elabAbsynExp (SOME c) abexp
@@ -1328,39 +1359,37 @@ struct
         in
           (ret, EXISTS (q, loc))
         end
-      | S.CONST c =>
+      | S.CONST (c, loc) =>
         let
           fun const (con, unwrap, loc) =
               CONST {ast = Con_CONST (con c),
-                     toy = unwrap (Fun_wrap c),
+                     toy = unwrap (Fun_wrap (Exp (P.PLCONSTANT (c, loc)))),
                      loc = loc}
         in
           case c of
-            A.INT (_, loc) => 
+            A.INT _ =>
             (emptyRet, const (Con_INT, Fun_unwrapInt, loc))
-          | A.WORD (_, loc) =>
+          | A.WORD _ =>
             (emptyRet, const (Con_WORD, Fun_unwrapWord, loc))
-          | A.STRING (_, loc) =>
+          | A.STRING _ =>
             (emptyRet, const (Con_STRING, Fun_unwrapString, loc))
-          | A.REAL (_, loc) =>
+          | A.REAL _ =>
             (emptyRet, const (Con_REAL, Fun_unwrapReal, loc))
-          | A.CHAR (_, loc) =>
+          | A.CHAR _ =>
             (emptyRet, const (Con_CHAR, Fun_unwrapChar, loc))
-          | A.UNITCONST loc =>
-            elabEmbed env EXPty (A.EXPCONSTANT c, loc)
-          | A.NULLCONST loc =>
-            elabEmbed env EXPty (A.EXPCONSTANT c, loc)
+          | A.UNITCONST =>
+            elabEmbed env EXPty (A.EXPCONSTANT (c, loc), loc)
         end
       | S.NULL loc =>
         (emptyRet, CONST {ast = Con_LITERAL "NULL", toy = None, loc = loc})
       | S.TRUE loc =>
-        (emptyRet, CONST {ast = Con_LITERAL "TRUE", toy = Some True, loc = loc})
+        (emptyRet, CONST {ast = Con_CONST (Con_BOOL True),
+                          toy = Fun_unwrapBool (Fun_wrap True),
+                          loc = loc})
       | S.FALSE loc =>
-        (emptyRet,
-         CONST {ast = Con_LITERAL "FALSE", toy = Some False, loc = loc})
-      | S.UNKNOWN loc =>
-        (emptyRet,
-         CONST {ast = Con_LITERAL "UNKNOWN", toy = Fun_toBool3 None, loc = loc})
+        (emptyRet, CONST {ast = Con_CONST (Con_BOOL False),
+                          toy = Fun_unwrapBool (Fun_wrap False),
+                          loc = loc})
 
   and elabWhere env (S.WHERE (exp, loc)) =
       let
@@ -1467,25 +1496,48 @@ struct
   and elabOrderByClause env (S.EMBED exploc) = elabEmbed env ORDERBYty exploc
     | elabOrderByClause env (S.CLAUSE clause) = elabOrderBy env clause
 
-  and elabOffset env (S.OFFSET (exp, fmt, loc)) =
+  and elabOffset env (S.OFFSET {offset = (offset, rows, loc), fetch}) =
       let
-        val (ret, q) = elabExp env exp
+        val (ret1, offset) = elabExp env offset
+        val (ret2, fetch) =
+            elabOpt
+              (fn (first, count, rows, loc) =>
+                  let
+                    val (ret, count) = elabOpt (elabExp env) count
+                  in
+                    (ret, (first, count, rows, loc))
+                  end)
+              fetch
       in
-        (ret, OFFSET (q, fmt, loc))
+        (merge [ret1, ret2],
+         OFFSET {offset = (offset, rows, loc), fetch = fetch})
       end
 
-  and elabOffsetClause env (S.EMBED exploc) = elabEmbed env OFFSETty exploc
-    | elabOffsetClause env (S.CLAUSE clause) = elabOffset env clause
-
-  and elabLimit env (S.LIMIT (exp, fmt, loc)) =
+  and elabLimit env (S.LIMIT {limit = (limit, loc), offset}) =
       let
-        val (ret, q) = elabOpt (elabExp env) exp
+        val (ret1, limit) = elabOpt (elabExp env) limit
+        val (ret2, offset) =
+            elabOpt
+              (fn (offset, loc) =>
+                  let
+                    val (ret, offset) = elabExp env offset
+                  in
+                    (ret, (offset, loc))
+                  end)
+              offset
       in
-        (ret, LIMIT (q, fmt, loc))
+        (merge [ret1, ret2],
+         LIMIT {limit = (limit, loc), offset = offset})
       end
 
-  and elabLimitClause env (S.EMBED exploc) = elabEmbed env LIMITty exploc
-    | elabLimitClause env (S.CLAUSE clause) = elabLimit env clause
+  and elabLimitOrOffsetClause env (S.LIMIT_CLAUSE (S.EMBED exploc)) =
+      elabEmbed env LIMITty exploc
+    | elabLimitOrOffsetClause env (S.OFFSET_CLAUSE (S.EMBED exploc)) =
+      elabEmbed env OFFSETty exploc
+    | elabLimitOrOffsetClause env (S.LIMIT_CLAUSE (S.CLAUSE limit)) =
+      elabLimit env limit
+    | elabLimitOrOffsetClause env (S.OFFSET_CLAUSE (S.CLAUSE offset)) =
+      elabOffset env offset
 
   and elabSelect env (S.SELECT (distinct, (selectList, loc1), loc2)) =
       let
@@ -1508,7 +1560,10 @@ struct
 
   and elabGroupByClause env (S.GROUP_BY ((groupBy, loc), having)) =
       let
-        val (ret1, keys) = elabList (elabExp env) groupBy
+        val (ret1, keys) =
+            case groupBy of
+              [S.CONST (A.UNITCONST, _)] => (emptyRet, nil)
+            | _ => elabList (elabExp env) groupBy
         val (ret2, having) = elabOpt (elabHavingClause env) having
       in
         (merge [ret1, ret2], {groupBy = (keys, loc), having = having})
@@ -1537,8 +1592,8 @@ struct
          having = having} : groupBy
       end
 
-  and elabQuery env (S.QUERY (select, from, whr, groupBy, orderBy, offset,
-                              limit, loc)) =
+  and elabQuery env (S.QUERY (select, from, whr, groupBy, orderBy, limit,
+                              loc)) =
       let
         val (fromLabels, (ret2, from)) = elabFromClause env from
         val (innerLabels, outerLabels) =
@@ -1559,8 +1614,7 @@ struct
         val (ret3, whr) = elabOpt (elabWhereClause env) whr
         val (ret4, groupBy) = elabOpt (elabGroupByClause env) groupBy
         val (ret5, orderBy) = elabOpt (elabOrderByClause env) orderBy
-        val (ret6, offset) = elabOpt (elabOffsetClause env) offset
-        val (ret7, limit) = elabOpt (elabLimitClause env) limit
+        val (ret6, limit) = elabOpt (elabLimitOrOffsetClause env) limit
 
         val groupBy =
             Option.map
@@ -1569,7 +1623,7 @@ struct
                   outerLabels = outerLabels})
               groupBy
       in
-        (removeLabels (merge [ret1, ret2, ret3, ret4, ret5, ret6, ret7],
+        (removeLabels (merge [ret1, ret2, ret3, ret4, ret5, ret6],
                        fromLabels),
          QUERY {select = select,
                 from = from,
@@ -1577,7 +1631,6 @@ struct
                 whr = whr,
                 groupBy = groupBy,
                 orderBy = orderBy,
-                offset = offset,
                 limit = limit,
                 loc = loc})
       end
@@ -1693,7 +1746,7 @@ struct
         val t = Tyvar (Symbol.generate ())
         val x = Symbol.generate ()
         val patTy = Ty_db (TyWild, TyID t)
-        val expTy = Ty_command (TyWild, TyWild, TyID t)
+        val expTy = Ty_command (TyWild, TyID t)
       in
         Fn1 (fn y =>
                 Let [t]
@@ -1723,8 +1776,16 @@ struct
           (#column2set ret, sqlFn (pat, makeBind ret bodyExp) loc)
         end
       | S.SQLFNEXP (pat, exp) =>
-        (emptySet,
-         sqlFn (elabPat NONE pat, Exp (#elabAbsynExp env NONE exp)) loc)
+        let
+          val pat = elabPat NONE pat
+          val (ret, query) =
+              case exp of
+                S.EXP (exp, loc) => elabEmbed env COMMANDty (exp, loc)
+              | _ => elabExp env exp
+          val bodyExp = queryToExp query
+        in
+          (#column2set ret, sqlFn (pat, makeBind ret bodyExp) loc)
+        end
       | S.SQLSERVER (exp, schema) =>
         (emptySet,
          Fun_sqlserver

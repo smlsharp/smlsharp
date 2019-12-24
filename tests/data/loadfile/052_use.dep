@@ -1,0 +1,9 @@
+NODE {tests/data/loadfile/052_use2.use SML}
+NODE {tests/data/loadfile/052_use3.use SML}
+NODE {tests/data/loadfile/052_use.smi INTERFACE}
+ROOT {ROOT_SML USERPATH tests/data/loadfile/052_use.sml COMPILE
+ PROVIDE {USERPATH tests/data/loadfile/052_use.smi INTERFACE ed65f1d9b41d861c
+  LOCAL_USE {USERPATH tests/data/loadfile/052_use2.use SML}
+  LOCAL_USE {USERPATH tests/data/loadfile/052_use3.use SML}}
+ USE {USERPATH tests/data/loadfile/052_use2.use SML}
+ USE {USERPATH tests/data/loadfile/052_use3.use SML}}

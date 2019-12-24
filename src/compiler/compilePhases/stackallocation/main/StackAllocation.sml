@@ -23,7 +23,9 @@ struct
     val generate : int -> set
     val fromList : SlotID.id list -> set
     val setMinus : set * set -> set
+    val union : set * set -> set
     val choose : set -> SlotID.id
+    val member : set * SlotID.id -> bool
   end =
   struct
     type set = SlotID.id list
@@ -61,6 +63,9 @@ struct
 
     fun choose nil = raise Bug.Bug "SlotSet.choose"
       | choose (h::_) = h : SlotID.id
+
+    fun member (nil, _) = false
+      | member (h::t, id:SlotID.id) = h = id orelse member (t, id)
   end
 
   structure Set :> sig
@@ -85,8 +90,8 @@ struct
 
     fun listItems (l:set) = l
 
-    fun singleton (v as {id, ty=(_, R.BOXEDty)} : M.varInfo) = [v]
-      | singleton _ = empty
+    fun singleton (v as {id, ty=(_, {tag = R.BOXED, ...})}) = [v]
+      | singleton (_:M.varInfo) = empty
 
     fun union (nil, set) = set
       | union (set, nil) = set
@@ -105,7 +110,8 @@ struct
       | merge l = merge (mergeStep nil l)
 
     fun fromList' z nil = merge z
-      | fromList' z ((v as {id, ty=(_,R.BOXEDty)})::t) = fromList' ([v]::z) t
+      | fromList' z ((v as {id, ty=(_,{tag=R.BOXED, ...})})::t) =
+        fromList' ([v]::z) t
       | fromList' z (_::t) = fromList' z t
 
     fun fromList l = fromList' nil l
@@ -135,10 +141,13 @@ struct
         | LESS => false
   end
 
+  fun nullValue ty =
+      M.ANCONST {const = M.NVNULLPOINTER, ty = ty}
+
   fun useValue value =
       case value of
         M.ANCONST _ => Set.empty
-      | M.ANCAST {exp, expTy, targetTy, runtimeTyCast} => useValue exp
+      | M.ANCAST {exp, expTy, targetTy} => useValue exp
       | M.ANBOTTOM => Set.empty
       | M.ANVAR v => Set.singleton v
 
@@ -167,6 +176,42 @@ struct
 
   fun useAddrs l =
       foldl (fn (x,z) => Set.union (useAddr x, z)) Set.empty l
+
+  fun varsToSlots alloc vars =
+      SlotSet.fromList
+        (List.mapPartial
+           (fn var => VarID.Map.find (alloc, #id var))
+           (Set.listItems vars))
+
+  datatype gc =
+      NOGC
+    | CAUSEGC of {defsBeforeGC : Set.set}
+
+  datatype gc_slot =
+      NOGC_SLOT
+    | CAUSEGC_SLOT of {saveBeforeGC : SlotSet.set}
+
+  fun updateGC (true, _) _ = CAUSEGC {defsBeforeGC = Set.empty}
+    | updateGC (false, _) NOGC = NOGC
+    | updateGC (false, defs) (CAUSEGC {defsBeforeGC}) =
+      CAUSEGC {defsBeforeGC = Set.union (defsBeforeGC, defs)}
+
+  fun updateGC_slot _ (true, _) _ = CAUSEGC_SLOT {saveBeforeGC = SlotSet.empty}
+    | updateGC_slot _ (false, _) NOGC_SLOT = NOGC_SLOT
+    | updateGC_slot alloc (false, defs) (CAUSEGC_SLOT {saveBeforeGC}) =
+      CAUSEGC_SLOT
+        {saveBeforeGC = SlotSet.union (saveBeforeGC, varsToSlots alloc defs)}
+
+  fun isSmallerThanOrEqualToGC (NOGC, NOGC) = true
+    | isSmallerThanOrEqualToGC (NOGC, CAUSEGC _) = true
+    | isSmallerThanOrEqualToGC (CAUSEGC _, NOGC) = false
+    | isSmallerThanOrEqualToGC (CAUSEGC {defsBeforeGC=s1},
+                              CAUSEGC {defsBeforeGC=s2}) =
+      Set.isSubsetOf (s1, s2)
+
+  fun toGC_slot alloc NOGC = NOGC_SLOT
+    | toGC_slot alloc (CAUSEGC {defsBeforeGC}) =
+      CAUSEGC_SLOT {saveBeforeGC = varsToSlots alloc defsBeforeGC}
 
   datatype exp =
       DEF of
@@ -224,9 +269,11 @@ struct
         predecessors : block list,
         argVarList : M.varInfo list,
         bodyExp : exp,
-        defuse : {defs : Set.set, uses : Set.set},
+        defuse : {defs : Set.set, uses : Set.set, gc : gc},
         liveIn : Set.set,
-        liveOut : Set.set
+        liveOut : Set.set,
+        gcIn : gc,
+        gcOut : gc
       } ref
 
   val dummyExp =
@@ -241,9 +288,11 @@ struct
                   predecessors = nil,
                   argVarList = argVarList,
                   bodyExp = dummyExp,
-                  defuse = {defs = Set.empty, uses = Set.empty},
+                  defuse = {defs = Set.empty, uses = Set.empty, gc = NOGC},
                   liveIn = Set.empty,
-                  liveOut = Set.empty})
+                  liveOut = Set.empty,
+                  gcIn = NOGC,
+                  gcOut = NOGC})
 
   fun addEdge (fromBlock as BLOCK r1,
                toBlock as BLOCK (r2 as ref {argVarList, ...})) =
@@ -255,22 +304,26 @@ struct
       case exp of
         DEF {def, causeGC, next} =>
         let
-          val {defs, uses} = defuseExp next
+          val {defs, uses, gc} = defuseExp next
         in
           {defs = Set.union (defs, def),
-           uses = Set.setMinus (uses, def)}
+           uses = Set.setMinus (uses, def),
+           gc = updateGC (causeGC, def) gc}
         end
       | MID {def, use, orig, causeGC, next} =>
         let
-          val {defs, uses} = defuseExp next
+          val {defs, uses, gc} = defuseExp next
         in
           {defs = Set.union (defs, def),
-           uses = Set.union (Set.setMinus (uses, def), use)}
+           uses = Set.union (Set.setMinus (uses, def), use),
+           gc = updateGC (causeGC, def) gc}
         end
       | CALL {def, use, returnTo, causeGC, orig} =>
-        {defs = def, uses = use}
+        {defs = def,
+         uses = use,
+         gc = updateGC (causeGC, def) NOGC}
       | LAST {def, use, args, orig} =>
-        {defs = def, uses = use}
+        {defs = def, uses = use, gc = NOGC}
       | LOCALCODE {id, recursive, body, next, loc} => defuseExp next
       | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         defuseExp nextExp
@@ -399,7 +452,7 @@ struct
                 use = useValues (codeExp :: optionToList closureEnvExp
                                  @ argExpList),
                 returnTo = returnTo,
-                causeGC = true,
+                causeGC = not tail,
                 orig = mid}
         end
       | M.MCINTINF {resultVar, dataLabel, loc} =>
@@ -469,12 +522,17 @@ struct
              orig = mid,
              causeGC = false,
              next = prepareExp env (mids, last)}
-      | M.MCCHECK =>
-        MID {def = Set.empty,
-             use = Set.empty,
-             orig = mid,
-             causeGC = true,
-             next = prepareExp env (mids, last)}
+      | M.MCCHECK {handler} =>
+        let
+          val returnTo = prepareCont env (nil, (mids, last))
+        in
+          addHandlerEdge env handler;
+          CALL {def = Set.empty,
+                use = Set.empty,
+                returnTo = returnTo,
+                causeGC = true,
+                orig = mid}
+        end
       | M.MCRECORDDUP_ALLOC {resultVar, copySizeVar, recordExp, loc} =>
         MID {def = Set.fromList [resultVar, copySizeVar],
              use = useValue recordExp,
@@ -536,6 +594,12 @@ struct
              orig = mid,
              causeGC = false,
              next = prepareExp env (mids, last)}
+      | M.MCKEEPALIVE {value, loc} =>
+        MID {def = Set.empty,
+             use = useValue value,
+             orig = mid,
+             causeGC = false,
+             next = prepareExp env (mids, last)}
 
   fun prepare (argVarList, mcexp, cleanupHandler) =
       let
@@ -557,89 +621,156 @@ struct
         (startBlock, exitBlock)
       end
 
+  val empty = fn x : M.mcexp => x
+  fun mid insn = fn (mids, last) : M.mcexp => (insn::mids, last) : M.mcexp
+  fun last insn = fn () => (nil, insn) : M.mcexp
+
   local
-    fun insert f alloc nil next = next
-      | insert f alloc (var::vars) next =
+    fun insert f alloc nil = empty
+      | insert f alloc (var::vars) =
         case VarID.Map.find (alloc, #id var) of
-          NONE => insert f alloc vars next
-        | SOME slot => f (var, slot) :: insert f alloc vars next
+          NONE => insert f alloc vars
+        | SOME slot => f (var, slot) o insert f alloc vars
+
+    fun insertWithValue f alloc nil = empty
+      | insertWithValue f alloc ((var, value)::args) =
+        case VarID.Map.find (alloc, #id var) of
+          NONE => insertWithValue f alloc args
+        | SOME slot => f (value, slot) o insertWithValue f alloc args
   in
 
-  fun save alloc vars next =
+  fun save alloc vars =
       insert
         (fn (var, slot) =>
-            M.MCSAVESLOT {slotId = slot, value = M.ANVAR var, loc = Loc.noloc})
+            mid (M.MCSAVESLOT
+                   {slotId = slot, value = M.ANVAR var, loc = Loc.noloc}))
         alloc
         (Set.listItems vars)
-        next
 
-  fun load alloc vars next =
+  fun saveArgs alloc args =
+      insertWithValue
+        (fn (value, slot) =>
+            mid (M.MCSAVESLOT
+                   {slotId = slot, value = value, loc = Loc.noloc}))
+        alloc
+        args
+
+  fun load alloc vars =
       insert
         (fn (var, slot) =>
-            M.MCLOADSLOT {resultVar = var, slotId = slot, loc = Loc.noloc})
+            mid (M.MCLOADSLOT
+                   {resultVar = var, slotId = slot, loc = Loc.noloc}))
         alloc
         (Set.listItems vars)
-        next
 
+  fun kill alloc NOGC_SLOT vars = empty
+    | kill alloc (CAUSEGC_SLOT {saveBeforeGC}) vars =
+      insert
+        (fn (var, slot) =>
+            if SlotSet.member (saveBeforeGC, slot)
+            then empty
+            else mid (M.MCSAVESLOT
+                        {slotId = slot,
+                         value = nullValue (#ty var),
+                         loc = Loc.noloc}))
+        alloc
+        (Set.listItems vars)
+          
   end (* local *)
 
-  fun reconstructExp alloc exp =
+  fun reconstructExp alloc (exp, out as {liveOut, gcOut}) =
       case exp of
         DEF {def, causeGC, next} =>
         let
-          val (mids, last) = reconstructExp alloc next
+          val ({liveIn=liveOut, gcIn=gcOut}, exp) =
+              reconstructExp alloc (next, out)
+          val liveIn = Set.setMinus (liveOut, def)
+          val gcIn = updateGC_slot alloc (causeGC, def) gcOut
         in
-          (save alloc def mids, last)
+          ({liveIn = liveIn, gcIn = gcIn},
+           save alloc def
+           o exp)
         end
       | MID {def, use, orig, causeGC, next} =>
         let
-          val (mids, last) = reconstructExp alloc next
+          val ({liveIn=liveOut, gcIn=gcOut}, exp) =
+              reconstructExp alloc (next, out)
+          val liveIn = Set.union (Set.setMinus (liveOut, def), use)
+          val gcIn = updateGC_slot alloc (causeGC, def) gcOut
+          val dead = Set.setMinus (use, liveOut)
         in
-          (load alloc use (orig :: save alloc def mids), last)
+          ({liveIn = liveIn, gcIn = gcIn},
+           load alloc use
+           o kill alloc gcIn dead
+           o mid orig
+           o save alloc def
+           o exp)
         end
       | CALL {def, use, returnTo, causeGC, orig} =>
         let
-          val (_, (mids, last)) = reconstructBlock alloc returnTo
+          val (_, exp) = reconstructBlock alloc returnTo
+          val liveIn = Set.union (Set.setMinus (liveOut, def), use)
+          val gcIn = updateGC_slot alloc (causeGC, def) gcOut
+          val dead = Set.setMinus (use, liveOut)
         in
-          (load alloc use (orig :: save alloc def mids), last)
+          ({liveIn = liveIn, gcIn = gcIn},
+           load alloc use
+           o kill alloc gcIn dead
+           o mid orig
+           o save alloc def
+           o exp)
         end
       | LAST {def, use, args, orig} =>
-        ((load alloc use)
-           (List.mapPartial
-              (fn (var, value) =>
-                  case VarID.Map.find (alloc, #id var) of
-                    NONE => NONE
-                  | SOME slot =>
-                    SOME (M.MCSAVESLOT
-                            {slotId = slot, value = value, loc = Loc.noloc}))
-              args),
-         orig)
+        let
+          val liveIn = Set.union (Set.setMinus (liveOut, def), use)
+          val gcIn = gcOut
+          val dead = Set.setMinus (use, liveOut)
+        in
+          ({liveIn = liveIn, gcIn = gcIn},
+           load alloc use
+           o kill alloc gcOut dead
+           o saveArgs alloc args
+           o last orig)
+        end
       | LOCALCODE {id, recursive, body, next, loc} =>
         let
-          val (argVarList, (mids, last)) = reconstructBlock alloc body
+          val (input, nextExp) = reconstructExp alloc (next, out)
+          val (argVarList, bodyExp) = reconstructBlock alloc body
         in
-          (nil, M.MCLOCALCODE {id = id,
-                               recursive = recursive,
-                               argVarList = argVarList,
-                               bodyExp = (mids, last),
-                               nextExp = reconstructExp alloc next,
-                               loc = loc})
+          (input,
+           last (M.MCLOCALCODE {nextExp = nextExp (),
+                                id = id,
+                                recursive = recursive,
+                                argVarList = argVarList,
+                                bodyExp = bodyExp (),
+                                loc = loc}))
         end
       | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         let
-          val nextExp = reconstructExp alloc nextExp
+          val (input, nextExp) = reconstructExp alloc (nextExp, out)
           val (_, handlerExp) = reconstructBlock alloc handler
         in
-          (nil, M.MCHANDLER {nextExp = nextExp,
-                             id = id,
-                             exnVar = exnVar,
-                             handlerExp = handlerExp,
-                             cleanup = cleanup,
-                             loc = loc})
+          (input,
+           last (M.MCHANDLER {nextExp = nextExp (),
+                              id = id,
+                              exnVar = exnVar,
+                              handlerExp = handlerExp (),
+                              cleanup = cleanup,
+                              loc = loc}))
         end
 
-  and reconstructBlock alloc (BLOCK (ref {argVarList, bodyExp, ...})) =
-      (argVarList, reconstructExp alloc bodyExp)
+  and reconstructBlock alloc (BLOCK (ref {argVarList, bodyExp, predecessors,
+                                          liveOut, gcOut, ...})) =
+      let
+        val output = {liveOut = liveOut, gcOut = toGC_slot alloc gcOut}
+        val ({liveIn, gcIn}, body) = reconstructExp alloc (bodyExp, output)
+        val actualLiveIn =
+            Set.merge
+              (map (fn BLOCK (ref {liveOut, ...}) => liveOut) predecessors)
+        val dead = Set.setMinus (actualLiveIn, liveIn)
+      in
+        (argVarList, kill alloc gcIn dead o body)
+      end
 
   fun blocks (b as (BLOCK (ref {bodyExp, ...}))) =
       b :: blocksInExp bodyExp
@@ -648,7 +779,8 @@ struct
       case exp of
         DEF {def, causeGC, next} => blocksInExp next
       | MID {def, use, orig, causeGC, next} => blocksInExp next
-      | CALL {def, use, returnTo, causeGC, orig} => blocks returnTo
+      | CALL {def, use, returnTo, causeGC, orig} =>
+        blocks returnTo
       | LAST {def, use, args, orig} => nil
       | LOCALCODE {id, recursive, body, next, loc} =>
         blocksInExp next @ blocks body
@@ -656,15 +788,33 @@ struct
         blocksInExp nextExp @ blocks handler
 
   fun liveness nil = ()
-    | liveness (BLOCK (r as ref {successors, predecessors, liveIn,
-                                 defuse = {defs, uses}, ...}) :: blocks) =
+    | liveness (BLOCK (r as ref {successors, predecessors, liveIn, gcIn,
+                                 defuse = {defs, uses, gc}, ...})
+                :: blocks) =
       let
         val liveOut =
             Set.merge (map (fn BLOCK (ref {liveIn,...}) => liveIn) successors)
         val newLiveIn = Set.union (Set.setMinus (liveOut, defs), uses)
-        val _ = r := (!r # {liveOut = liveOut, liveIn = newLiveIn})
+        val gcOut =
+            case (List.mapPartial
+                    (fn BLOCK (ref {gcIn, ...}) =>
+                        case gcIn of
+                          NOGC => NONE
+                        | CAUSEGC {defsBeforeGC} => SOME defsBeforeGC)
+                    successors) of
+              nil => NOGC
+            | defsBeforeGCs => CAUSEGC {defsBeforeGC = Set.merge defsBeforeGCs}
+        val newGcIn =
+            case (gc, gcOut) of
+              (CAUSEGC _, _) => gc
+            | (NOGC, NOGC) => NOGC
+            | (NOGC, CAUSEGC {defsBeforeGC}) =>
+              CAUSEGC {defsBeforeGC = Set.union (defs, defsBeforeGC)}
+        val _ = r := (!r # {liveOut = liveOut, liveIn = newLiveIn,
+                            gcOut = gcOut, gcIn = newGcIn})
         val blocks =
             if Set.isSubsetOf (newLiveIn, liveIn)
+               andalso isSmallerThanOrEqualToGC (newGcIn, gcIn)
             then blocks
             else predecessors @ blocks
       in
@@ -765,15 +915,51 @@ struct
             prepare (argVarList, mcexp, cleanupHandler)
         val blocks = rev (blocks startBlock)
         val () = liveness (exitBlock :: blocks)
-        val alloc = allocSlot (interference blocks)
-        val (_, bodyExp) = reconstructBlock alloc startBlock
-        val frameSlots =
-            VarID.Map.foldli
-              (fn (_,id,z) => SlotID.Map.insert (z, id, R.BOXEDty))
-              SlotID.Map.empty
-              alloc
       in
-        (bodyExp, frameSlots)
+        case startBlock of
+          BLOCK (ref {gcIn = NOGC, ...}) => (mcexp, SlotID.Map.empty)
+        | BLOCK (ref {gcIn = CAUSEGC _, ...}) =>
+          let
+            val alloc = allocSlot (interference blocks)
+(*
+val _ =
+(case startBlock of
+   BLOCK (ref {id, ...}) => print ("start " ^ FunLocalLabel.toString id ^ "\n");
+ case exitBlock of
+   BLOCK (ref {id, ...}) => print ("exit " ^ FunLocalLabel.toString id ^ "\n");
+ app (fn BLOCK (ref {id, gcIn, gcOut, ...}) =>
+         (print (FunLocalLabel.toString id ^ " = ");
+          case gcIn of
+            NOGC => print "in:NOGC"
+          | CAUSEGC {defsBeforeGC} =>
+            (print "in:CAUSEGC ";
+             app (fn id => print (SlotID.toString id ^ ","))
+                 (List.mapPartial
+                    (fn var => VarID.Map.find (alloc, #id var))
+                    (Set.listItems defsBeforeGC)));
+          print " ";
+          case gcOut of
+            NOGC => print "out:NOGC"
+          | CAUSEGC {defsBeforeGC} =>
+            (print "out:CAUSEGC ";
+             app (fn id => print (SlotID.toString id ^ ","))
+                 (List.mapPartial
+                    (fn var => VarID.Map.find (alloc, #id var))
+                    (Set.listItems defsBeforeGC)));
+          print "\n"))
+     blocks)
+*)
+            val (_, bodyExp) = reconstructBlock alloc startBlock
+            val bodyExp = bodyExp ()
+
+            val frameSlots =
+                VarID.Map.foldli
+                  (fn (_,id,z) => SlotID.Map.insert (z, id, R.boxedTy))
+                  SlotID.Map.empty
+                  alloc
+          in
+            (bodyExp, frameSlots)
+          end
       end
 
   fun unionSlotMap (slots1, slots2) : R.ty SlotID.Map.map =
@@ -787,6 +973,9 @@ struct
                       frameSlots, bodyExp, retTy, gcCheck, loc} =>
         let
           val params = optionToList closureEnvVar @ argVarList
+(*
+val _ = print (FunEntryLabel.toString id ^ ":\n")
+*)
           val (bodyExp, slots) = compileFunc (params, bodyExp, NONE)
         in
           M.MTFUNCTION {id = id,
@@ -818,12 +1007,11 @@ struct
                                 loc = loc}
         end
 
-  fun compileToplevel {dependency, frameSlots, bodyExp, cleanupHandler} =
+  fun compileToplevel {frameSlots, bodyExp, cleanupHandler} =
       let
         val (bodyExp, slots) = compileFunc (nil, bodyExp, cleanupHandler)
       in
-        {dependency = dependency,
-         frameSlots = unionSlotMap (frameSlots, slots),
+        {frameSlots = unionSlotMap (frameSlots, slots),
          bodyExp = bodyExp,
          cleanupHandler = cleanupHandler} : M.toplevel
       end

@@ -1,5 +1,0 @@
-_require "basis.smi"
-_require "thread.smi"
-_require "./mvar.smi"
-_require "./Foreach.smi"
-_require "./ForeachData.smi"

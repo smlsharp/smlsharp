@@ -1,7 +1,7 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
-_require "../../../libs/list-utils/main/ListSorter.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require local "../../../libs/list-utils/main/ListSorter.smi"
 
 structure SmlppgUtil =
 struct
@@ -23,8 +23,8 @@ struct
     : ('a -> format) * format * format * format * format
       -> 'a SymbolEnv.map -> format
   val formatGenericSymbolMap 
-    : ('a * 'b * 'c * format * format -> 'd -> format) * 'a * 'b * 'c * format * format * format
-      -> 'd SymbolEnv.map -> format
+    : ('a * format * format -> 'b -> format) * 'a * format * format * format
+      -> 'b SymbolEnv.map -> format
   val formatSymbolMapWithEnclosure 
     : ('a -> format) * format * format * format * format
       -> 'a SymbolEnv.map -> format

@@ -1,12 +1,16 @@
 _require local "../../../../basis.smi"
 _require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 
-_require "../../../data/symbols/main/Symbol.ppg.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../libs/toolchain/main/Filename.smi"
-_require "./Absyn.ppg.smi"
+_require "./RequirePath.smi"
+_require "./Absyn.smi"
+_require local "./AbsynFormatter.smi"
+_require "./AbsynTy.smi"
+_require local "./AbsynTyFormatter.smi"
 _require "./InterfaceName.ppg.smi"
 
 structure AbsynInterface =
@@ -41,10 +45,15 @@ struct
   type valbind =
       {symbol: symbol, body: valbindBody, loc: loc}
 
+  type typbind_trans
+    = {tyvars: Absyn.tvar list, symbol: symbol, ty: ty, loc: loc}
+
+  datatype opaque_impl = datatype AbsynTy.opaque_impl
+
   datatype typbind =
-      TRANSPARENT of {tyvars: Absyn.tvar list, symbol: symbol, ty: ty, loc: loc}
-    | OPAQUE_NONEQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
-    | OPAQUE_EQ of {tyvars: Absyn.tvar list, symbol: symbol, runtimeTy: longsymbol, loc: loc}
+      TRANSPARENT of typbind_trans
+    | OPAQUE of {eq: bool, tyvars: Absyn.tvar list, symbol: symbol,
+                 runtimeTy: opaque_impl, loc: loc}
 
   type conbind =
       {symbol: symbol, ty: ty option}
@@ -59,7 +68,8 @@ struct
   datatype idec =
       IVAL of valbind
     | ITYPE of typbind list
-    | IDATATYPE of {datbind: datbind list, loc: loc}
+    | IDATATYPE of {datbind: datbind list, withType: typbind_trans list,
+                    loc: loc}
     | ITYPEREP of {symbol: symbol, longsymbol: longsymbol, loc: loc}
     | ITYPEBUILTIN of {symbol: symbol, builtinSymbol: symbol,loc: loc}
     | IEXCEPTION of exbind list
@@ -104,9 +114,9 @@ struct
     | IINFIX of {fixity: fixity, symbols: symbol list, loc: loc}
 
   datatype irequire =
-      REQUIRE of Filename.filename * loc
-    | LOCAL_REQUIRE of Filename.filename * loc
-    | LOCAL_USE of Filename.filename * loc
+      REQUIRE of RequirePath.path * Symbol.symbol list * loc
+    | LOCAL_REQUIRE of RequirePath.path * Symbol.symbol list * loc
+    | LOCAL_USE of RequirePath.path * loc
 
   datatype itop =
       INTERFACE of
@@ -116,37 +126,37 @@ struct
       }
     | INCLUDES of
       {
-        includes: (Filename.filename * loc) list,
+        includes: (RequirePath.path * loc) list,
         topdecs: Absyn.topdec list
       }
 
-  type interfaceDec =
+  type interface_dec =
       {
-        interfaceId: InterfaceID.id,
+        interfaceId : InterfaceID.id,
         interfaceName : InterfaceName.interface_name,
-        requiredIds: {id: InterfaceID.id, loc: loc} list,
-        provideTopdecs: itopdec list
+        requiredIds : {id : InterfaceID.id, loc : loc} list,
+        provideTopdecs : itopdec list
       }
 
   type interface =
       {
-        interfaceDecs : interfaceDec list,
-        provideInterfaceNameOpt : InterfaceName.interface_name option,
-        requiredIds : {id: InterfaceID.id, loc: loc} list,
-        locallyRequiredIds : {id: InterfaceID.id, loc: loc} list,
-        provideTopdecs : itopdec list
-      } 
+        interfaceDecs : interface_dec list,
+        provide :
+          {requiredIds : {id : InterfaceID.id, loc : loc} list,
+           locallyRequiredIds : {id : InterfaceID.id, loc : loc} list,
+           provideTopdecs : itopdec list,
+           topdecsInclude: Absyn.topdec list}
+      }
 
   type compile_unit =
       {
         interface : interface option,
-        topdecsInclude : Absyn.topdec list,
         topdecsSource : Absyn.topdec list
       }
 
   type interface_unit =
       {
-        interfaceDecs : interfaceDec list,
+        interfaceDecs : interface_dec list,
         requiredIds : {id: InterfaceID.id, loc: loc} list,
         topdecsInclude : Absyn.topdec list
       }
@@ -194,8 +204,8 @@ struct
       : itopdec -> SMLFormat.FormatExpression.expression list
   val format_itop
       : itop -> SMLFormat.FormatExpression.expression list
-  val format_interfaceDec
-      : interfaceDec -> SMLFormat.FormatExpression.expression list
+  val format_interface_dec
+      : interface_dec -> SMLFormat.FormatExpression.expression list
   val format_interface
       : interface -> SMLFormat.FormatExpression.expression list
   val format_compile_unit

@@ -4,51 +4,43 @@
  *)
 structure RecordLayout2 :> sig
 
-  datatype decl =
-      PRIMAPPLY of {boundVar: RecordCalc.varInfo,
-                    primInfo: TypedLambda.primInfo,
-                    argList: SingletonTyEnv2.value list}
-
   type computationAccum
   val newComputationAccum : unit -> computationAccum
-  val extractDecls : computationAccum -> decl list
+  val extractDecls : computationAccum -> RecordLayoutCalc.dec list
 
   val computeIndex
       : computationAccum
-        -> {size: SingletonTyEnv2.value} list * {size: SingletonTyEnv2.value}
-        -> SingletonTyEnv2.value
+        -> {size: RecordLayoutCalc.value} list * {size: RecordLayoutCalc.value}
+        -> RecordLayoutCalc.value
   val computeRecord
       : computationAccum
-        -> {tag: SingletonTyEnv2.value, size: SingletonTyEnv2.value} list
-        -> {allocSize: SingletonTyEnv2.value,
-            fieldIndexes: SingletonTyEnv2.value list,
-            bitmaps: {index: SingletonTyEnv2.value,
-                      bitmap: SingletonTyEnv2.value} list,
+        -> {tag: RecordLayoutCalc.value, size: RecordLayoutCalc.value} list
+        -> {allocSize: RecordLayoutCalc.value,
+            fieldIndexes: RecordLayoutCalc.value list,
+            bitmaps: {index: RecordLayoutCalc.value,
+                      bitmap: RecordLayoutCalc.value} list,
             padding: bool}
 
 end =
 struct
 
   structure T = Types
-  structure P = BuiltinPrimitive
-  type varInfo = RecordCalc.varInfo
+  type varInfo = RecordLayoutCalc.varInfo
 
-  fun sizeOf ty =
-      TypeLayout2.sizeOf
-        (valOf (TypeLayout2.runtimeTy BoundTypeVarID.Map.empty ty))
+  val getSize = RuntimeTypes.getSize
 
-  fun wordSize () =
-      sizeOf BuiltinTypes.wordTy
+  fun bitmapWordSize () =
+      getSize (#size RuntimeTypes.word32Ty)
 
   fun bitmapWordBits () =
-      wordSize () * TypeLayout2.charBits
+      bitmapWordSize () * TypeLayout2.charBits
 
   fun pointerSize () =
-      sizeOf BuiltinTypes.boxedTy
+      getSize (#size RuntimeTypes.recordTy)
 
   fun maxShift () =
       let
-        val maxSize = TypeLayout2.maxSize
+        val maxSize = RuntimeTypes.getSize TypeLayout2.maxSize
         val pointerSize = pointerSize ()
         val maxShift = maxSize div pointerSize
       in
@@ -63,11 +55,11 @@ struct
       let
         val id = VarID.generate ()
       in
-        {id = id, path = [Symbol.generate ()], ty = BuiltinTypes.wordTy}
+        {id = id, path = [Symbol.generate ()], ty = BuiltinTypes.word32Ty}
         : varInfo
       end
 
-  datatype value = datatype SingletonTyEnv2.value
+  datatype value = datatype RecordLayoutCalc.value
 
   local
     fun order (VAR _) = 0
@@ -84,7 +76,7 @@ struct
       | (TAG (_, n1), TAG (_, n2)) =>
         Int.compare (TypeLayout2.tagValue n1, TypeLayout2.tagValue n2)
       | (TAG _, _) => compareByOrder (v1, v2)
-      | (SIZE (_, n1), SIZE (_, n2)) => Int.compare (n1, n2)
+      | (SIZE (_, n1), SIZE (_, n2)) => Int.compare (getSize n1, getSize n2)
       | (SIZE _, _) => compareByOrder (v1, v2)
       | (CONST n1, CONST n2) => Word32.compare (n1, n2)
       | (CONST _, _) => compareByOrder (v1, v2)
@@ -98,7 +90,7 @@ struct
   fun isWordTy ty =
       case TypesBasics.derefTy ty of
         T.CONSTRUCTty {tyCon, ...} =>
-        TypID.eq (#id tyCon, #id BuiltinTypes.wordTyCon)
+        TypID.eq (#id tyCon, #id BuiltinTypes.word32TyCon)
       | _ => false
 
   fun coerceToWord value =
@@ -107,20 +99,13 @@ struct
       | VAR (var as {ty,...}) =>
         if isWordTy ty
         then VAR var
-        else CAST (VAR var, BuiltinTypes.wordTy)
-      | SIZE (_, n) => const n
+        else CAST (VAR var, BuiltinTypes.word32Ty)
+      | SIZE (_, n) => const (getSize n)
       | TAG (_, n) => const (TypeLayout2.tagValue n)
       | CAST (v, _) => coerceToWord v
 
-  datatype exp =
-      ADD of value * value
-    | SUB of value * value
-    | DIV of value * value
-    | AND of value * value
-    | OR of value * value
-    | LSHIFT of value * value
-    | RSHIFT of value * value
-    | VALUE of value
+  datatype exp = datatype RecordLayoutCalc.exp
+  datatype op2 = datatype RecordLayoutCalc.op2
 
   local
     fun commute (v1, v2) =
@@ -131,91 +116,79 @@ struct
   in
   fun normalizeExp exp =
       case exp of
-        ADD (CONST n1, CONST n2) => VALUE (CONST (Word32.+ (n1, n2)))
-      | ADD (x, CONST 0w0) => VALUE x
-      | ADD (CONST 0w0, x) => VALUE x
-      | ADD x => ADD (commute x)
-      | SUB (CONST n1, CONST n2) => VALUE (CONST (Word32.- (n1, n2)))
-      | SUB (x, CONST 0w0) => VALUE x
-      | SUB x => exp
-      | DIV (CONST n1, CONST n2) => VALUE (CONST (Word32.div (n1, n2)))
-      | DIV (x, CONST 0w1) => VALUE x
-      | DIV (x, CONST 0w2) => normalizeExp (RSHIFT (x, CONST 0w1))
-      | DIV (x, CONST 0w4) => normalizeExp (RSHIFT (x, CONST 0w2))
-      | DIV (x, CONST 0w8) => normalizeExp (RSHIFT (x, CONST 0w3))
-      | DIV (x, CONST 0w16) => normalizeExp (RSHIFT (x, CONST 0w4))
-      | DIV x => exp
-      | AND (CONST n1, CONST n2) => VALUE (CONST (Word32.andb (n1, n2)))
-      | AND (x as (v, CONST m)) =>
-        if m = Word32.fromInt ~1 then VALUE v else AND (commute x)
-      | AND x => AND (commute x)
-      | OR (CONST n1, CONST n2) => VALUE (CONST (Word32.orb (n1, n2)))
-      | OR (x, CONST 0w0) => VALUE x
-      | OR x => OR (commute x)
-      | LSHIFT (CONST n1, CONST n2) =>
+        OP (ADD, (CONST n1, CONST n2)) => VALUE (CONST (Word32.+ (n1, n2)))
+      | OP (ADD, (x, CONST 0w0)) => VALUE x
+      | OP (ADD, (CONST 0w0, x)) => VALUE x
+      | OP (ADD, x) => OP (ADD, commute x)
+      | OP (SUB, (CONST n1, CONST n2)) => VALUE (CONST (Word32.- (n1, n2)))
+      | OP (SUB, (x, CONST 0w0)) => VALUE x
+      | OP (SUB, x) => exp
+      | OP (DIV, (CONST n1, CONST n2)) => VALUE (CONST (Word32.div (n1, n2)))
+      | OP (DIV, (x, CONST 0w1)) => VALUE x
+      | OP (DIV, (x, CONST 0w2)) => normalizeExp (OP (RSHIFT, (x, CONST 0w1)))
+      | OP (DIV, (x, CONST 0w4)) => normalizeExp (OP (RSHIFT, (x, CONST 0w2)))
+      | OP (DIV, (x, CONST 0w8)) => normalizeExp (OP (RSHIFT, (x, CONST 0w3)))
+      | OP (DIV, (x, CONST 0w16)) => normalizeExp (OP (RSHIFT, (x, CONST 0w4)))
+      | OP (DIV, x) => exp
+      | OP (AND, (CONST n1, CONST n2)) => VALUE (CONST (Word32.andb (n1, n2)))
+      | OP (AND, (x as (v, CONST m))) =>
+        if m = Word32.fromInt ~1 then VALUE v else OP (AND, commute x)
+      | OP (AND, x) => OP (AND, commute x)
+      | OP (OR, (CONST n1, CONST n2)) => VALUE (CONST (Word32.orb (n1, n2)))
+      | OP (OR, (x, CONST 0w0)) => VALUE x
+      | OP (OR, x) => OP (OR, commute x)
+      | OP (LSHIFT, (CONST 0w0, _)) => VALUE (CONST 0w0)
+      | OP (LSHIFT, (CONST n1, CONST n2)) =>
         VALUE (CONST (Word32.<< (n1, Word.fromInt (Word32.toIntX n2))))
-      | LSHIFT (x, CONST 0w0) => VALUE x
-      | LSHIFT (x, CONST 0w1) => normalizeExp (ADD (x, x))
-      | LSHIFT (x, CONST n) =>
+      | OP (LSHIFT, (x, CONST 0w0)) => VALUE x
+      | OP (LSHIFT, (x, CONST 0w1)) => normalizeExp (OP (ADD, (x, x)))
+      | OP (LSHIFT, (x, CONST n)) =>
         if n >= Word32.fromInt (bitmapWordBits ())
         then VALUE (CONST 0w0)
         else exp
-      | LSHIFT x => exp
-      | RSHIFT (CONST n1, CONST n2) =>
+      | OP (LSHIFT, x) => exp
+      | OP (RSHIFT, (CONST 0w0, _)) => VALUE (CONST 0w0)
+      | OP (RSHIFT, (CONST n1, CONST n2)) =>
         VALUE (CONST (Word32.>> (n1, Word.fromInt (Word32.toIntX n2))))
-      | RSHIFT (x, CONST 0w0) => VALUE x
-      | RSHIFT (x, CONST n) =>
+      | OP (RSHIFT, (x, CONST 0w0)) => VALUE x
+      | OP (RSHIFT, (x, CONST n)) =>
         if n >= Word32.fromInt (bitmapWordBits ())
         then VALUE (CONST 0w0)
         else exp
-      | RSHIFT x => exp
+      | OP (RSHIFT, x) => exp
       | VALUE x => exp
   end (* local *)
 
   local
-    fun order (ADD _) = 0
-      | order (SUB _) = 1
-      | order (DIV _) = 2
-      | order (AND _) = 3
-      | order (OR _) = 4
-      | order (LSHIFT _) = 5
-      | order (RSHIFT _) = 6
-      | order (VALUE _) = 7
+    fun order ADD = 0
+      | order SUB = 1
+      | order DIV = 2
+      | order AND = 3
+      | order OR = 4
+      | order LSHIFT = 5
+      | order RSHIFT = 6
     fun compareByOrder (e1, e2) = Int.compare (order e1, order e2)
-    fun comparePair (v1, v2) (v3, v4) =
-        case compareValue (v1, v3) of
-          EQUAL => compareValue (v2, v4)
+    fun compareOp2 ((op1, (v11, v12)), (op2, (v21, v22))) =
+        case Int.compare (order op1, order op2) of
+          EQUAL => (case compareValue (v11, v21) of
+                      EQUAL => compareValue (v21, v22)
+                    | x => x)
         | x => x
   in
   fun compareExp (e1, e2) =
       case (e1, e2) of
-        (ADD x, ADD y) => comparePair x y
-      | (ADD _, _) => compareByOrder (e1, e2)
-      | (SUB x, SUB y) => comparePair x y
-      | (SUB _, _) => compareByOrder (e1, e2)
-      | (DIV x, DIV y) => comparePair x y
-      | (DIV _, _) => compareByOrder (e1, e2)
-      | (AND x, AND y) => comparePair x y
-      | (AND _, _) => compareByOrder (e1, e2)
-      | (OR x, OR y) => comparePair x y
-      | (OR _, _) => compareByOrder (e1, e2)
-      | (LSHIFT x, LSHIFT y) => comparePair x y
-      | (LSHIFT _, _) => compareByOrder (e1, e2)
-      | (RSHIFT x, RSHIFT y) => comparePair x y
-      | (RSHIFT _, _) => compareByOrder (e1, e2)
+        (OP x, OP y) => compareOp2 (x, y)
+      | (OP x, VALUE y) => GREATER
+      | (VALUE x, OP y) => LESS
       | (VALUE x, VALUE y) => compareValue (x, y)
-      | (VALUE _, _) => compareByOrder (e1, e2)
   end (* local *)
 
   structure ExpMap = BinaryMapFn(type ord_key = exp val compare = compareExp)
 
-  datatype decl =
-      PRIMAPPLY of {boundVar: varInfo,
-                    primInfo: TypedLambda.primInfo,
-                    argList: SingletonTyEnv2.value list}
+  datatype dec = datatype RecordLayoutCalc.dec
 
   type computationAccum =
-       (varInfo ExpMap.map * decl list) ref
+       (varInfo ExpMap.map * dec list) ref
 
   fun newComputationAccum () =
       ref (ExpMap.empty, nil) : computationAccum
@@ -223,53 +196,19 @@ struct
   fun extractDecls (comp as ref (_, decls) : computationAccum) =
       (comp := (ExpMap.empty, nil); rev decls)
 
-  local
-    fun prim1 prim arg var =
-        PRIMAPPLY
-          {boundVar = var,
-           primInfo = {primitive = prim,
-                       ty = {boundtvars = BoundTypeVarID.Map.empty,
-                             argTyList = [BuiltinTypes.wordTy],
-                             resultTy = BuiltinTypes.wordTy}},
-           argList = [arg]}
-
-    fun prim2 prim (arg1, arg2) var =
-        PRIMAPPLY
-          {boundVar = var,
-           primInfo = {primitive = prim,
-                       ty = {boundtvars = BoundTypeVarID.Map.empty,
-                             argTyList = [BuiltinTypes.wordTy,
-                                          BuiltinTypes.wordTy],
-                             resultTy = BuiltinTypes.wordTy}},
-           argList = [arg1, arg2]}
-  in
-
-  fun compute (comp as ref (map, decls)) exp =
-      let
-        val exp = normalizeExp exp
-        fun search decl =
-            case ExpMap.find (map, exp) of
-              SOME var => VAR var
-            | NONE =>
-              let
-                val var = newVar ()
-              in
-                comp := (ExpMap.insert (map, exp, var), decl var :: decls);
-                VAR var
-              end
-      in
-        case exp of
-          VALUE v => v
-        | ADD x => search (prim2 (P.R (P.M P.Word32_add)) x)
-        | SUB x => search (prim2 (P.R (P.M P.Word32_sub)) x)
-        | DIV x => search (prim2 (P.R (P.M P.Word32_div_unsafe)) x)
-        | AND x => search (prim2 (P.R (P.M P.Word32_andb)) x)
-        | OR x => search (prim2 (P.R (P.M P.Word32_orb)) x)
-        | LSHIFT x => search (prim2 (P.R (P.M P.Word32_lshift_unsafe)) x)
-        | RSHIFT x => search (prim2 (P.R (P.M P.Word32_rshift_unsafe)) x)
-      end
-
-  end (* local *)
+  fun compute (comp as ref (map, decs)) exp =
+      case normalizeExp exp of
+        VALUE v => v
+      | OP _ =>
+        case ExpMap.find (map, exp) of
+          SOME var => VAR var
+        | NONE =>
+          let
+            val var = newVar ()
+          in
+            comp := (ExpMap.insert (map, exp, var), VAL (var, exp) :: decs);
+            VAR var
+          end
 
   fun alignSize comp (accumSize, nextFieldSize) =
       case (TypeLayout2.sizeAssumption, TypeLayout2.alignComputation) of
@@ -279,10 +218,10 @@ struct
          *              = (accumSize + fieldSize - 1) & (-fieldSize)
          *)
         let
-          val tmp1 = compute comp (ADD (accumSize, nextFieldSize))
-          val tmp2 = compute comp (SUB (tmp1, CONST 0w1))
-          val tmp3 = compute comp (SUB (CONST 0w0, nextFieldSize))
-          val tmp4 = compute comp (AND (tmp2, tmp3))
+          val tmp1 = compute comp (OP (ADD, (accumSize, nextFieldSize)))
+          val tmp2 = compute comp (OP (SUB, (tmp1, CONST 0w1)))
+          val tmp3 = compute comp (OP (SUB, (CONST 0w0, nextFieldSize)))
+          val tmp4 = compute comp (OP (AND, (tmp2, tmp3)))
         in
           tmp4
         end
@@ -312,7 +251,7 @@ struct
       let
         val (padded, fieldIndex, layoutRev) =
             computeIndexRev comp (lastField, fieldsRev)
-        val accumSize = compute comp (ADD (fieldIndex, size))
+        val accumSize = compute comp (OP (ADD, (fieldIndex, size)))
       in
         (padded, {fieldIndex = fieldIndex, accumSize = accumSize} :: layoutRev)
       end
@@ -322,10 +261,10 @@ struct
       let
         (* align accumSize to word boundary *)
         val accumSize' = alignSize comp (accumSize, const (pointerSize ()))
-	val padded =
-	    case (accumSize, accumSize') of
-		(CONST accumSize, CONST accumSize') => accumSize <> accumSize'
-	      | _ => true
+        val padded =
+            case (accumSize, accumSize') of
+              (CONST accumSize, CONST accumSize') => accumSize <> accumSize'
+            | _ => true
       in
           (padded, {fieldIndex = fieldIndex, accumSize = accumSize'}::fieldsRev)
       end
@@ -342,10 +281,10 @@ struct
     | computeBitIndex comp [{tag, index, accumSize}] =
       let
         val pointerSize = const (pointerSize ())
-        val bitIndex = compute comp (DIV (index, pointerSize))
+        val bitIndex = compute comp (OP (DIV, (index, pointerSize)))
         val prevComp = !comp
-        val totalBits = compute comp (DIV (accumSize, pointerSize))
-        val tmpBitWidth = compute comp (SUB (totalBits, bitIndex))
+        val totalBits = compute comp (OP (DIV, (accumSize, pointerSize)))
+        val tmpBitWidth = compute comp (OP (SUB, (totalBits, bitIndex)))
         val bitWidth = const (estimateMaxShift tmpBitWidth)
         val _ = comp := prevComp
       in
@@ -355,8 +294,8 @@ struct
       let
         val (nextIndex, bits) = computeBitIndex comp bits
         val pointerSize = const (pointerSize ())
-        val bitIndex = compute comp (DIV (index, pointerSize))
-        val bitWidth = compute comp (SUB (nextIndex, bitIndex))
+        val bitIndex = compute comp (OP (DIV, (index, pointerSize)))
+        val bitWidth = compute comp (OP (SUB, (nextIndex, bitIndex)))
       in
         (bitIndex, {tag = tag, bitWidth = bitWidth} :: bits)
       end
@@ -371,7 +310,7 @@ struct
       {maxNumBits = 1, words = [bit]} : bitmap
     | setBitmapBit comp ({maxNumBits, words=word::words}, bit) =
       {maxNumBits = maxNumBits,
-       words = compute comp (OR (word, bit)) :: words}
+       words = compute comp (OP (OR, (word, bit))) :: words}
 
   (* lshift must be less than bitmapWordBits *)
   fun shiftBitmap comp (bitmap, CONST 0w0) = bitmap
@@ -381,19 +320,19 @@ struct
       let
         val maxShift = estimateMaxShift lshift
         val bitmapWordBits = bitmapWordBits ()
-        val rshift = compute comp (SUB (const bitmapWordBits, lshift))
+        val rshift = compute comp (OP (SUB, (const bitmapWordBits, lshift)))
         fun shiftLoop (word, nil, numBits) =
             if numBits + maxShift <= bitmapWordBits
-            then (compute comp (LSHIFT (word, lshift)), nil)
-            else (compute comp (LSHIFT (word, lshift)),
-                  [compute comp (RSHIFT (word, rshift))])
+            then (compute comp (OP (LSHIFT, (word, lshift))), nil)
+            else (compute comp (OP (LSHIFT, (word, lshift))),
+                  [compute comp (OP (RSHIFT, (word, rshift)))])
           | shiftLoop (word1, word2::words, numBits) =
             let
               val (word2, words) =
                   shiftLoop (word2, words, numBits - bitmapWordBits)
-              val word1 = compute comp (LSHIFT (word, lshift))
-              val carry = compute comp (RSHIFT (word, rshift))
-              val word2 = compute comp (OR (word2, carry))
+              val word1 = compute comp (OP (LSHIFT, (word, lshift)))
+              val carry = compute comp (OP (RSHIFT, (word, rshift)))
+              val word2 = compute comp (OP (OR, (word2, carry)))
             in
               (word1, word2::words)
             end
@@ -417,7 +356,8 @@ struct
   fun computeBitmapIndexes comp index nil = (index, nil)
     | computeBitmapIndexes comp index (bitmap::bitmaps) =
       let
-        val nextIndex = compute comp (ADD (index, const (wordSize ())))
+        val nextIndex =
+            compute comp (OP (ADD, (index, const (bitmapWordSize ()))))
         val (total, bitmaps) = computeBitmapIndexes comp nextIndex bitmaps
       in
         (total, {index = index, bitmap = bitmap : value} :: bitmaps)
@@ -431,7 +371,7 @@ struct
                 fields
         val sizesRev = rev (map (fn {tag,size} => {size=size}) fields)
         val (padded, layoutRev) = computeLayoutRev comp sizesRev
-	val (padded2, layoutRev) = alignAccumSizeRev comp layoutRev
+        val (padded2, layoutRev) = alignAccumSizeRev comp layoutRev
         val bitmapIndex = getAccumSizeRev layoutRev
         val layout = rev layoutRev
         val bits =

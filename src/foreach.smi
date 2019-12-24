@@ -1,3 +1,3 @@
-include "./compiler/extensions/foreach/main/Foreach.smi"
-include "./compiler/extensions/foreach/main/ForeachData.smi"
-include "./compiler/extensions/foreach/main/ForeachArray.smi"
+include "./foreach/main/Foreach.smi"
+include "./foreach/main/ForeachData.smi"
+include "./foreach/main/ForeachArray.smi"

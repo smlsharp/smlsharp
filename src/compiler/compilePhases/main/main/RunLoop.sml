@@ -36,29 +36,42 @@ struct
       end
 
   fun interactiveInput {lineCount, read} =
-      Parser.setup {sourceName = "(interactive)",
-                    read = read,
-                    mode = Parser.Interactive,
+      Parser.setup {read = read,
+                    source = Loc.INTERACTIVE,
                     initialLineno = !lineCount}
 
   fun handleError ({errorOutput, ...}:options) e =
       let
         fun puts s = TextIO.output (errorOutput, s ^ "\n")
+        fun isSIGINT e =
+            case e of
+              IO.Io {cause, ...} => isSIGINT cause
+            | SignalHandler.Signal [SignalHandler.SIGINT] => true
+            | _ => false
+        fun isIntr e =
+            case e of
+              OS.SysErr (_, SOME s) => OS.errorName s = "intr"
+            | IO.Io {cause, ...} => isIntr cause
+            | SignalHandler.Signal [SignalHandler.SIGINT] => true
+            | Interactive.LinkError e => isIntr e
+            | Interactive.UncaughtException e => isSIGINT e
+            | _ => false
       in
+        if isIntr e then puts "Interrupt" else
         case e of
           UserError.UserErrors nil =>
           puts "[BUG] empty UserErrors"
         | UserError.UserErrors errs =>
           app (fn e => puts (userErrorToString e)) errs
-        | Bug.Bug _ =>
+        | Bug.Bug _ => 
           puts (exnMessage e)
-        | Interactive.LinkError (e as OS.SysErr (msg, _)) =>
-          (puts ("Link error : " ^ exnMessage e);
-           puts "Perhaps incorrect name in _import declaration.")
         | Interactive.UncaughtException e =>
           puts ("uncaught exception " ^ exnMessage e)
-        | CoreUtils.Failed {command, message} =>
-          (puts ("command failed: " ^ command); puts message)
+        | Interactive.LinkError (ShellUtils.Fail {command, status, output}) =>
+          (puts "link failed:";
+           CoreUtils.cat [#stderr output] errorOutput)
+        | Interactive.LinkError (DynamicLink.Error msg) =>
+          puts ("dynamic link failed: " ^ msg)
         | _ => raise e
       end
 

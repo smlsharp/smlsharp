@@ -13,68 +13,68 @@ infix 4 = <> > >= < <=
 structure Int32 = SMLSharp_Builtin.Int32
 structure Word32 = SMLSharp_Builtin.Word32
 
+(*
 val minInt32 = ~0x80000000   (* 32 bit *)
 val maxInt32 = 0x7fffffff    (* 32 bit *)
+*)
 
 structure IntInf =
 struct
 
-  type int = intInf
-
   val abs =
       _import "prim_IntInf_abs"
-      : __attribute__((unsafe,pure,fast,gc)) int -> int
+      : __attribute__((unsafe,pure,fast,gc)) intInf -> intInf
   val ~ =
       _import "prim_IntInf_neg"
-      : __attribute__((unsafe,pure,fast,gc)) int -> int
+      : __attribute__((unsafe,pure,fast,gc)) intInf -> intInf
   val op - =
       _import "prim_IntInf_sub"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val op + =
       _import "prim_IntInf_add"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val op * =
       _import "prim_IntInf_mul"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val div_unsafe =
       _import "prim_IntInf_div"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val mod_unsafe =
       _import "prim_IntInf_mod"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val cmp =
       _import "prim_IntInf_cmp"
-      : __attribute__((pure,fast)) (int, int) -> int32
+      : __attribute__((pure,fast)) (intInf, intInf) -> int
   val toWord =
       _import "prim_IntInf_toWord"
-      : __attribute__((pure,fast)) int -> word32
+      : __attribute__((pure,fast)) intInf -> word
   val fromInt =
       _import "prim_IntInf_fromInt"
-      : __attribute__((unsafe,pure,fast,gc)) int32 -> int
+      : __attribute__((unsafe,pure,fast,gc)) int -> intInf
   val quot_unsafe =
       _import "prim_IntInf_quot"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val rem_unsafe =
       _import "prim_IntInf_rem"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val pow_unsafe =
       _import "prim_IntInf_pow"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int32) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, int) -> intInf
   val log2_unsafe =
       _import "prim_IntInf_log2"
-      : __attribute__((pure,fast)) int -> int32
+      : __attribute__((pure,fast)) intInf -> int
   val orb =
       _import "prim_IntInf_orb"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val xorb =
       _import "prim_IntInf_xorb"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val andb =
       _import "prim_IntInf_andb"
-      : __attribute__((unsafe,pure,fast,gc)) (int, int) -> int
+      : __attribute__((unsafe,pure,fast,gc)) (intInf, intInf) -> intInf
   val notb =
       _import "prim_IntInf_notb"
-      : __attribute__((unsafe,pure,fast,gc)) int -> int
+      : __attribute__((unsafe,pure,fast,gc)) intInf -> intInf
 
   fun compare (x, y) =
       case cmp (x, y) of
@@ -86,20 +86,19 @@ struct
   fun op >= (x, y) = Int32.gteq (cmp (x, y), 0)
   fun op > (x, y) = Int32.gt (cmp (x, y), 0)
 
-  fun toLarge n = n : int
-  fun fromLarge n = n : int
+  fun toLarge n = n : intInf
+  fun fromLarge n = n : intInf
 
-  fun toInt_unsafe x =
-      Word32.toInt32X (toWord x)
+  fun toInt x =
+      let
+        val y = Word32.toInt32X (toWord x)
+      in
+        if fromInt y = x then y else raise Overflow
+      end
 
-  fun toInt int =
-      if int < fromInt minInt32 orelse fromInt maxInt32 < int
-      then raise Overflow
-      else toInt_unsafe int
-
-  val precision : int32 option = NONE
-  val minInt : int option = NONE
-  val maxInt : int option = NONE
+  val precision : int option = NONE
+  val minInt : intInf option = NONE
+  val maxInt : intInf option = NONE
 
   fun op div (x, y) =
       if y = 0 then raise Div else div_unsafe (x, y)
@@ -138,7 +137,7 @@ struct
   fun << (x, 0w0) = x
     | << (x, width) = << (x + x, Word32.sub (width, 0w1))
   fun ~>> (x, 0w0) = x
-    | ~>> (x, width) = ~>> (quot_unsafe (x, 2), Word32.sub (width, 0w1))
+    | ~>> (x, width) = ~>> (div_unsafe (x, 2), Word32.sub (width, 0w1))
 
   fun min (x, y) = if x < y then x else y
   fun max (x, y) = if x < y then y else x
@@ -150,8 +149,8 @@ struct
         val r = fromInt (SMLSharp_ScanChar.radixToInt radix)
         fun loop (n, z) =
             if n <= 0 then z
-            else let val m = toInt_unsafe (mod_unsafe (n, r))
-                     val n = div_unsafe (n, r)
+            else let val (n, m) = divMod (n, r)
+                     val m = Word32.toInt32X (toWord m)
                  in loop (n, SMLSharp_ScanChar.intToDigit m :: z)
                  end
       in
@@ -178,6 +177,8 @@ struct
 
   fun fromString string =
       StringCvt.scanString (scan StringCvt.DEC) string
+
+  type int = intInf
 
 end
 

@@ -13,16 +13,15 @@ struct
    * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(Types.ty) Types.format_ty
    * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
    *)
   type ty =
       (*%
-       * @format(ty * rty) rty
+       * @format(ty * prop) prop
        *)
       (*% @prefix formatWithType_
-       * @format(ty * rty) "(" !N0{ ty()(btvEnv) "," +1 rty ")" }
+       * @format(ty * prop) "(" !N0{ ty "," +1 prop ")" }
        *)
       Types.ty * RuntimeTypes.ty
 
@@ -39,11 +38,9 @@ struct
    *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(BuiltinPrimitive.primitiveRuntimeCalc)
    * BuiltinPrimitive.format_primitiveRuntimeCalc
    * @formatter(Types.btvEnv) Types.format_btvEnv
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(appList) TermFormat.formatAppList
    * @formatter(Types.ty) Types.format_ty
    *)
@@ -58,11 +55,11 @@ struct
        * L2{ primitive +1 ":" +d ty }
        * @format:ty({boundtvars, argTyList: argTy argTys, resultTy})
        * "[" !N0{ 2[
-       *   {boundtvars()(boundtvars:extendBtvEnv()(btvEnv)) "."}
+       *   {boundtvars "."}
        *   +1
        *   argTys:appList
-       *     (argTy()(boundtvars:extendBtvEnv()(btvEnv)))("{",",","}")
-       *   +1 "->" +d resultTy()(boundtvars:extendBtvEnv()(btvEnv))
+       *     (argTy)("{",",","}")
+       *   +1 "->" +d resultTy
        * ] "]" }
        *)
       {
@@ -77,7 +74,6 @@ struct
    *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(VarID.id) VarID.format_id
    *)
   type varInfo =
@@ -85,7 +81,7 @@ struct
        * @format({id,ty}) "$" id
        *)
       (*% @prefix formatWithType_
-       * @format({id,ty}) L2{ "$" id +1 ":" +d ty()(btvEnv) }
+       * @format({id,ty}) L2{ "$" id +1 ":" +d ty }
        *)
       {id: VarID.id, ty: ty}
 
@@ -98,6 +94,8 @@ struct
    * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
    * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
+   * @formatter(Real64.real) TermFormat.format_Real64_ML
+   * @formatter(Real32.real) TermFormat.format_Real32_ML
    * @formatter(char) TermFormat.format_char_ML
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
@@ -106,11 +104,11 @@ struct
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
+   * @formatter(RuntimeTypes.size) RuntimeTypes.format_size
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
    * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
@@ -119,6 +117,8 @@ struct
    * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
    * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
    * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
+   * @formatter(Real64.real) TermFormat.format_Real64_ML
+   * @formatter(Real32.real) TermFormat.format_Real32_ML
    * @formatter(char) TermFormat.format_char_ML
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
@@ -128,6 +128,7 @@ struct
    * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
    * @formatter(Types.ty) Types.format_ty
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
+   * @formatter(RuntimeTypes.size) RuntimeTypes.format_size
    * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   datatype ncconst =
@@ -200,14 +201,14 @@ struct
       (*% @prefix formatWithType_
        * @format(x) x "f"
        *)
-      NVREAL64 of string
+      NVREAL64 of Real64.real
     | (*%
        * @format(x) x "sf"
        *)
       (*% @prefix formatWithType_
        * @format(x) x "sf"
        *)
-      NVREAL32 of string
+      NVREAL32 of Real32.real
     | (*%
        * @format(x) x
        *)
@@ -244,11 +245,25 @@ struct
        *)
       NVTAG of {tag : RuntimeTypes.tag, ty : Types.ty}
     | (*%
+       * @format({size, ty}) size
+       *)
+      (*% @prefix formatWithType_
+       * @format({size, ty}) size
+       *)
+      NVSIZE of {size : RuntimeTypes.size, ty : Types.ty}
+    | (*%
+       * @format({index, ty, label}) index
+       *)
+      (*% @prefix formatWithType_
+       * @format({index, ty, label}) index
+       *)
+      NVINDEX of {index : word, ty : Types.ty, label : RecordLabel.label}
+    | (*%
        * @format({name, ty}) "@globl:" name
        *)
       (*% @prefix formatWithType_
        * @format({name, ty})
-       * L2{ "@globl:" name +1 ":" +d ty()(btvEnv) }
+       * L2{ "@globl:" name +1 ":" +d ty }
        *)
       NVFOREIGNSYMBOL of
       {
@@ -296,8 +311,8 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({value, valueTy, targetTy, cast})
-       * L2{ cast "(" !L2{ value()(btvEnv) +1 ":" +d valueTy()(btvEnv) ")" }
-       *     +1 ":" +d targetTy()(btvEnv) }
+       * L2{ cast "(" !L2{ value +1 ":" +d valueTy ")" }
+       *     +1 ":" +d targetTy }
        *)
       NVCAST of
       {
@@ -315,7 +330,6 @@ struct
    * @formatter(caseList) TermFormat.formatCaseList
    * @formatter(decList) TermFormat.formatDeclList
    * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(withType) formatWithType_varInfo
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
@@ -324,7 +338,6 @@ struct
    *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(btvEnv) format_btvEnv
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
@@ -333,7 +346,6 @@ struct
    * @formatter(caseList) TermFormat.formatCaseList
    * @formatter(decList) TermFormat.formatDeclList
    * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
@@ -353,8 +365,8 @@ struct
        * @format({funExp, attributes, argExpList: arg args, resultTy, loc})
        * L8{ 1[
        *   "_ffiapply"
-       *   +1 funExp()(btvEnv)
-       *   +1 args:appList(arg()(btvEnv))("(",",",")")
+       *   +1 funExp
+       *   +1 args:appList(arg)("(",",",")")
        * ] }
        *)
       NCFOREIGNAPPLY of
@@ -377,8 +389,8 @@ struct
        * @format({codeExp, closureEnvExp, instTyvars, resultTy, loc})
        * L8{ 1[
        *   "_exportcallback"
-       *   +1 codeExp()(btvEnv)
-       *   +1 closureEnvExp()(btvEnv)
+       *   +1 codeExp
+       *   +1 closureEnvExp
        * ] }
        *)
       NCEXPORTCALLBACK of
@@ -394,7 +406,7 @@ struct
        *)
       (*%
        * @prefix formatWithType_
-       * @format({const, ty, loc}) L2{ const()(btvEnv) +1 ":" +d ty()(btvEnv) }
+       * @format({const, ty, loc}) L2{ const +1 ":" +d ty }
        *)
       NCCONST of {const: ncconst, ty: ty, loc: loc}
     | (*%
@@ -410,7 +422,7 @@ struct
        *)
       (*%
        * @prefix formatWithType_
-       * @format({varInfo, loc}) varInfo()(btvEnv)
+       * @format({varInfo, loc}) varInfo
        *)
       NCVAR of {varInfo : varInfo, loc : loc}
     | (*%
@@ -440,7 +452,7 @@ struct
        * @format({exp, expTy, loc})
        * L8{ 1[
        *   "_pack"
-       *   +1 exp()(btvEnv)
+       *   +1 exp
        * ] }
        *)
       (* make a packed value of type ('a,p) from a value of type ('a,b) *)
@@ -462,7 +474,7 @@ struct
        * @format({exp, resultTy, loc})
        * L8{ 1[
        *   "_unpack"
-       *   +1 exp()(btvEnv)
+       *   +1 exp
        * ] }
        *)
       (* extract a value of type ('a,b) from a packed value of type ('a,p) *)
@@ -485,8 +497,8 @@ struct
        * @format({srcAddr, resultTy, valueSize, loc})
        * L8{ 1[
        *   "_dup"
-       *   +1 srcAddr()(btvEnv)
-       *   +1 valueSize()(btvEnv)
+       *   +1 srcAddr
+       *   +1 valueSize
        * ] }
        *)
       (* copy a field of type ('a,b) to a fresh packed value of type ('a,p) *)
@@ -509,7 +521,7 @@ struct
        * @format({srcAddr, resultTy, loc})
        * L8{ 1[
        *   "_load"
-       *   +1 srcAddr()(btvEnv)
+       *   +1 srcAddr
        * ] }
        *)
       (* load a field of type ('a,b/p) as a value of type ('a,b/p) *)
@@ -534,9 +546,9 @@ struct
        * @format({srcExp, dstAddr, valueSize, loc})
        * L8{ 1[
        *   "_copy"
-       *   +1 srcExp()(btvEnv)
-       *   +1 dstAddr()(btvEnv)
-       *   +1 valueSize()(btvEnv)
+       *   +1 srcExp
+       *   +1 dstAddr
+       *   +1 valueSize
        * ] }
        *)
       (* copy a packed value of type ('a,p) to a field of type ('a,b) *)
@@ -560,8 +572,8 @@ struct
        * @format({srcExp, srcTy, dstAddr, loc})
        * L8{ 1[
        *   "_store"
-       *   +1 srcExp()(btvEnv)
-       *   +1 dstAddr()(btvEnv)
+       *   +1 srcExp
+       *   +1 dstAddr
        * ] }
        *)
       NCSTORE of
@@ -590,10 +602,10 @@ struct
        *          instTagList: tag tags, instSizeList: size sizes, loc})
        * L8{ 1[
        *   "_prim"
-       *   +1 L2{ primInfo()(btvEnv)
-       *          +1 "/t" +d tags:appList(tag()(btvEnv))("(",",",")")
-       *          +1 "/s" +d sizes:appList(size()(btvEnv))("(",",",")") }
-       *   +1 args:appList(arg()(btvEnv))("(",",",")")
+       *   +1 L2{ primInfo
+       *          +1 "/t" +d tags:appList(tag)("(",",",")")
+       *          +1 "/s" +d sizes:appList(size)("(",",",")") }
+       *   +1 args:appList(arg)("(",",",")")
        * ] }
        *)
       NCPRIMAPPLY of
@@ -623,9 +635,9 @@ struct
        *          resultTy, loc})
        * L8{ 1[
        *   "_call"
-       *   +1 codeExp()(btvEnv)
-       *   +1 clsOpt(cls()(btvEnv))
-       *   +1 args:appList(arg()(btvEnv))("(",",",")")
+       *   +1 codeExp
+       *   +1 clsOpt(cls)
+       *   +1 args:appList(arg)("(",",",")")
        * ] }
        *)
       NCCALL of
@@ -647,8 +659,8 @@ struct
        * @prefix formatWithType_
        * @format({boundVar, boundExp, mainExp, loc})
        * R1{
-       *   "let" +d boundVar()(btvEnv) +d "=" 1[ +1 boundExp()(btvEnv) ]
-       *   +1 "in" +1 mainExp()(btvEnv)
+       *   "let" +d boundVar +d "=" 1[ +1 boundExp ]
+       *   +1 "in" +1 mainExp
        * }
        *)
       NCLET of
@@ -681,17 +693,17 @@ struct
        *          bitmaps: bm bms, loc})
        * L2{
        * L2{ fields:enclosedList(field)("{",",","}")
-       *     +1 "/t" +d allocSizeExp()(btvEnv)
+       *     +1 "/t" +d allocSizeExp
        *     +1 "/b" +d bms:appList(bm)("(",",",")") }
-       * +1 ":" +d recordTy()(btvEnv) }
+       * +1 ":" +d recordTy }
        * @format:field({fieldExp, fieldTy, fieldIndex})
        * !R1{
-       *   L2{ "#" +d fieldIndex()(btvEnv) }
-       *   +d "=" +1 L2{ fieldExp()(btvEnv) +1 ":" +d fieldTy()(btvEnv) }
+       *   L2{ "#" +d fieldIndex }
+       *   +d "=" +1 L2{ fieldExp +1 ":" +d fieldTy }
        * }
        * @format:bm({bitmapIndex, bitmapExp})
-       * L8{ "[" !N0{ bitmapIndex()(btvEnv) "]" }
-       *     +1 bitmapExp()(btvEnv) }
+       * L8{ "[" !N0{ bitmapIndex "]" }
+       *     +1 bitmapExp }
        *)
       NCRECORD of
       {
@@ -722,13 +734,13 @@ struct
        * @prefix formatWithType_
        * @format({recordExp, recordTy, indexExp, valueExp, valueTy, loc})
        * L8{ 1[
-       *   L2{ recordExp()(btvEnv) +1 ":" +d recordTy()(btvEnv) }
+       *   L2{ recordExp +1 ":" +d recordTy }
        *   +1 "#"
        *   +d "{"
-       *     !N0{ L2{ "#" +d indexExp()(btvEnv) }
+       *     !N0{ L2{ "#" +d indexExp }
        *          +d "="
-       *          1[ +1 L2{ valueExp()(btvEnv)
-       *                    +1 ":" +d valueTy()(btvEnv) } ] }
+       *          1[ +1 L2{ valueExp
+       *                    +1 ":" +d valueTy } ] }
        *      "}"
        * ] }
        *)
@@ -754,9 +766,9 @@ struct
        * L2{
        * R1{ 1[
        *   "raise"
-       *   +1 argExp()(btvEnv)
+       *   +1 argExp
        * ] }
-       * +1 ":" +d resultTy()(btvEnv) }
+       * +1 ":" +d resultTy }
        *)
       NCRAISE of
       {
@@ -780,12 +792,12 @@ struct
        * L2{
        * R1{
        *   "try"
-       *   1[ +1 tryExp()(btvEnv) ]
-       *   +1 "handle" +d { exnVar()(btvEnv) +1 "=>" }
-       *   1[ +1 handlerExp()(btvEnv) ]
+       *   1[ +1 tryExp ]
+       *   +1 "handle" +d { exnVar +1 "=>" }
+       *   1[ +1 handlerExp ]
        *   +1 "end"
        * }
-       * +1 ":" +d resultTy()(btvEnv) }
+       * +1 ":" +d resultTy }
        *)
       NCHANDLE of
       {
@@ -818,15 +830,15 @@ struct
        * R1{
        *   { 1[
        *     "case"
-       *     +1 switchExp()(btvEnv)
+       *     +1 switchExp
        *     +1 "of"
        *   ] }
        *   branches:caseList(branch)
        *     (2[+1], +1 "|" +d,
-       *      !N0{ R1{ "_" +d "=>" +1 defaultExp()(btvEnv) } })
+       *      !N0{ R1{ "_" +d "=>" +1 defaultExp } })
        * }
        * @format:branch({constant, branchExp})
-       * !N0{ R1{ constant()(btvEnv) +d "=>" +1 branchExp()(btvEnv) } }
+       * !N0{ R1{ constant +d "=>" +1 branchExp } }
        *)
       NCSWITCH of
       {
@@ -852,13 +864,13 @@ struct
        * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
        *          loc})
        * L2{
-       *   R0{ tryExp()(btvEnv)
+       *   R0{ tryExp
        *     +1 
        *     !R0{ "_catch" +d
        *          L8{ catchLabel
-       *              +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] }
-       *          +d "=>" 1[ +1 catchExp()(btvEnv) ] } }
-       *   +1 ":" +d resultTy()(btvEnv) }
+       *              +1 1[ args:appList(arg)("{",",","}") ] }
+       *          +d "=>" 1[ +1 catchExp ] } }
+       *   +1 ":" +d resultTy }
        *)
       (* lightweight exception that unwind call stack *)
       NCCATCH of
@@ -881,8 +893,8 @@ struct
        * L2{
        *   R0{ "_throw"
        *     1[ +1 L8{ catchLabel
-       *               +1 1[ args:appList(arg()(btvEnv))("{",",","}") ] } ] }
-       *   +1 ":" +d resultTy()(btvEnv) }
+       *               +1 1[ args:appList(arg)("{",",","}") ] } ] }
+       *   +1 ":" +d resultTy }
        *)
       (* lightweight exception that does not unwind call stack *)
       NCTHROW of
@@ -899,7 +911,7 @@ struct
       (*%
        * @prefix formatWithType_
        * @format({exp, expTy, targetTy, cast, loc})
-       * cast "(" !L2{ exp()(btvEnv) +1 ":" +d targetTy()(btvEnv)} ")"
+       * cast "(" !L2{ exp +1 ":" +d targetTy} ")"
        *)
       NCCAST of
       {
@@ -923,7 +935,7 @@ struct
        * L8{ 1[
        *   "_export"
        *   +1 "@ext:" id
-       *   +1 valueExp()(btvEnv)
+       *   +1 valueExp
        * ] }
        *)
       NCEXPORTVAR of
@@ -944,7 +956,7 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format(ptrExp)
-       * "[" +d "ptr" +d ptrExp()(btvEnv) "]"
+       * "[" +d "ptr" +d ptrExp "]"
        *)
       NAPTR of ncexp
     | (*%
@@ -959,9 +971,9 @@ struct
        * @prefix formatWithType_
        * @format({recordExp, fieldIndex})
        * "[" !N0{
-       *   L2{ "#" +d fieldIndex()(btvEnv) }
+       *   L2{ "#" +d fieldIndex }
        *   +1 "of"
-       *   +1 recordExp()(btvEnv)
+       *   +1 recordExp
        * } "]"
        *)
       (* pointer to a field of a record *)
@@ -983,10 +995,10 @@ struct
        * @prefix formatWithType_
        * @format({arrayExp, elemSize, elemIndex})
        * "[" !N0{
-       *   elemIndex()(btvEnv)
-       *   +1 "*s" +d elemSize()(btvEnv)
+       *   elemIndex
+       *   +1 "*s" +d elemSize
        *   +1 "of"
-       *   +1 arrayExp()(btvEnv)
+       *   +1 arrayExp
        * } "]"
        *)
       (* pointer to an element of an array *)
@@ -1001,11 +1013,20 @@ struct
    * when the record or array is being created. *)
   and initField =
       (*%
+       * @format(const * ty) const
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format(const * ty) const
+       *)
+      (* set the result value of an expression *)
+      INIT_CONST of ncconst * ty
+    | (*%
        * @format(exp) exp
        *)
       (*%
        * @prefix formatWithType_
-       * @format(exp) exp()(btvEnv)
+       * @format(exp) exp
        *)
       (* set the result value of an expression *)
       INIT_VALUE of varInfo
@@ -1022,8 +1043,8 @@ struct
        * @format({srcExp, fieldSize})
        * L8{ 1[
        *  "_init_copy"
-       *  +1 srcExp()(btvEnv)
-       *  +1 fieldSize()(btvEnv)
+       *  +1 srcExp
+       *  +1 fieldSize
        * ] }
        *)
       (* copy the content of a packed value *)
@@ -1040,9 +1061,9 @@ struct
        * @prefix formatWithType_
        * @format({tagExp, tagOfTy, ifBoxed, ifUnboxed})
        * !R1{
-       *   { "_init_if" 1[ +1 tagExp()(btvEnv) ] }
-       *   +1 { "_when_boxed" 1[ +1 ifBoxed()(btvEnv) ] }
-       *   +1 { "_when_unboxed" 1[ +1 ifUnboxed()(btvEnv) ] }
+       *   { "_init_if" 1[ +1 tagExp ] }
+       *   +1 { "_when_boxed" 1[ +1 ifBoxed ] }
+       *   +1 { "_when_unboxed" 1[ +1 ifUnboxed ] }
        * }
        *)
       (* how to initialize the field depends on dynamic type information *)
@@ -1050,10 +1071,11 @@ struct
                   ifBoxed: initField, ifUnboxed: initField}
 
   (*% *)
-  (*% @prefix formatWithType_ *)
+  (*% @prefix formatWithType_
+   *)
   type topconst =
       (*% @format(const * ty) const *)
-      (*% @prefix formatWithType_ @format(const * ty) const()() *)
+      (*% @prefix formatWithType_ @format(const * ty) const *)
       ncconst * ty
 
   (*%
@@ -1079,22 +1101,22 @@ struct
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
    * @formatter(Types.btvEnv) Types.format_btvEnv
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    *)
   datatype topdata =
       (*%
-       * @format({id, ty, loc})
+       * @format({id, ty, provider, loc})
        * L2{ "@ext:" id 1[ +1 ":" +d ty ] }
        *)
       (*%
        * @prefix formatWithType_
-       * @format({id, ty, loc})
-       * L2{ "@ext:" id 1[ +1 ":" +d ty()() ] }
+       * @format({id, ty, provider, loc})
+       * L2{ "@ext:" id 1[ +1 ":" +d ty ] }
        *)
       NTEXTERNVAR of
       {
         id : ExternSymbol.id,
         ty : ty,
+        provider : Types.provider,
         loc : loc
       }
     | (*%
@@ -1117,18 +1139,18 @@ struct
         loc : loc
       }
     | (*%
-       * @format({id, tyvars, argTyList, retTy, loc})
+       * @format({id, tyvars, argTyList, retTy, provider, loc})
        * "@exfun:" id
        *)
       (*%
        * @prefix formatWithType_
-       * @format({id, tyvars, argTyList: argTy argTys, retTy, loc})
+       * @format({id, tyvars, argTyList: argTy argTys, retTy, provider, loc})
        * L2{ "@exfun:" id 1[ +1 ":" +d
        *   "[" !N0{ 2[
-       *     {tyvars()() "."}
+       *     {tyvars "."}
        *     +1
-       *     argTys:appList(argTy()(tyvars:extendBtvEnv()()))("{",",","}")
-       *     +1 "->" +d retTy()(tyvars:extendBtvEnv()())
+       *     argTys:appList(argTy)("{",",","}")
+       *     +1 "->" +d retTy
        *   ] "]" }
        * ] }
        *)
@@ -1138,6 +1160,7 @@ struct
         tyvars : Types.btvEnv,
         argTyList : ty list,
         retTy : ty,
+        provider : Types.provider,
         loc : loc
       }
     | (*%
@@ -1211,7 +1234,7 @@ struct
        * L2{
        * L2{ fields:enclosedList(field)("{",",","}")
        *     +1 "/b" +d bms:appList(bm)("(",",",")") }
-       * +1 ":" +d recordTy()() }
+       * +1 ":" +d recordTy }
        * ]
        * @format:field({fieldExp, fieldSize, fieldIndex})
        * !R1{
@@ -1256,7 +1279,7 @@ struct
        * L2{
        * L2{ elems:enclosedList(elem)("[",",","]")
        *     +1 "/b" +d tagExp }
-       * +1 ":" +d elemTy()() + "array" }
+       * +1 ":" +d elemTy + "array" }
        * ]
        *)
       NTARRAY of
@@ -1272,22 +1295,6 @@ struct
         tagExp : topconst,
         loc : loc
       }
-    | (*%
-       * @format({id, dump, ty, loc})
-       * "@data:" id +d "=" 1[ +1 "<DUMP>" ]
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({id, dump, ty, loc})
-       * "@data:" id +d "=" 1[ +1 "<" !N0{ "DUMP:" ty()() } ">" ]
-       *)
-      NTDUMP of
-      {
-        id : DataLabel.id,
-        dump : HeapDump.dump,
-        ty : Types.ty,
-        loc : loc
-      }
 
   (*%
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
@@ -1295,7 +1302,6 @@ struct
    * @formatter(appList) TermFormat.formatAppList
    *)
   (*% @prefix formatWithType_
-   * @formatter(makeBtvEnv) TermFormat.makeBtvEnv
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(option) SmlppgUtil.formatOptWithDefault
    * @formatter(appList) TermFormat.formatAppList
@@ -1314,10 +1320,10 @@ struct
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, bodyExp, retTy, gcCheck, loc})
        * "@fun:" id
-       * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
-       * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
+       * + envOpt(env)("_")
+       * + args:appList(arg)("(",",",")")
        * + "="
-       * 1[ +1 bodyExp()(tyvarKindEnv:makeBtvEnv) ]
+       * 1[ +1 bodyExp ]
        *)
       NTFUNCTION of
       {
@@ -1372,7 +1378,7 @@ struct
        * "_decl"
        * 1[ data:decList(datum)(+1,+1) ]
        * 1[ decs:decList(dec)(+1,+1) ]
-       * +1 "in" 1[ +1 !N0{ topExp()() } ]
+       * +1 "in" 1[ +1 !N0{ topExp } ]
        * +1 "end"
        *)
       {

@@ -1,0 +1,12 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+
+structure Bug =
+struct
+  exception Bug of string
+  val debugPrint : bool ref
+  val printInfo : bool ref
+  val prettyPrint : SMLFormat.format -> string
+  val printError : string -> unit
+  val printMessage : string -> unit
+end

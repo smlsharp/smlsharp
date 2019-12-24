@@ -4,7 +4,7 @@ structure RCAnalyse =
 struct
   datatype count = INF | FIN of int
 local
-  structure TC = TypedCalc
+  (* structure TC = TypedCalc *)
   structure RC = RecordCalc
   structure T = Types
   type rcexp = RC.rcexp
@@ -93,7 +93,7 @@ local
       | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
         ()
       | RC.RCEXVAR {path, ty} => ()
-      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIFUN ptrExp}, ty, loc) =>
+      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIFUN (ptrExp, _)}, ty, loc) =>
         visitExp ptrExp
       | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIEXTERN _}, ty, loc) =>
         ()
@@ -103,6 +103,10 @@ local
         ()
       | RC.RCHANDLE {exnVar, exp, handler, resultTy, loc} =>
         (visitExp exp; visitExp handler)
+      | RC.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+        (visitExp catchExp; visitExp tryExp)
+      | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+        visitExpList argExpList
       | RC.RCLET {body:rcexp list, decls, loc, tys} =>
         (visitExpList body;
          visitDeclList decls)
@@ -129,12 +133,7 @@ local
         (visitExp exp; visitExp indexExp)
       | RC.RCSEQ {expList, expTyList, loc} =>
         visitExpList expList
-      | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
-        visitExpList [data, iterator, pred]
-      | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
-        visitExpList [data, whereParam, iterator, pred]
       | RC.RCSIZEOF (ty, loc) => ()
-      | RC.RCTYPEOF (ty, loc) => ()
       | RC.RCREIFYTY (ty, loc) => ()
       | RC.RCTAPP {exp, expTy, instTyList, loc} =>
         visitExp exp
@@ -155,11 +154,16 @@ local
          visitExp defaultExp;
          visitExp switchExp)
       | RC.RCTAGOF (ty, loc) => ()
-      | RC.RCJOIN {ty,args=(arg1,arg2),argTys,loc} =>
+      | RC.RCJOIN {isJoin, ty,args=(arg1,arg2),argTys,loc} =>
         (visitExp arg1;
          visitExp arg2)
-      | RC.RCJSON {exp,ty,coerceTy,loc} =>
-        visitExp exp
+      | RC.RCDYNAMIC _ => raise bug "RCDYNAMIC to RCAnalye"
+      | RC.RCDYNAMICIS _ => raise bug "RCDYNAMICIS to RCAnalye"
+      | RC.RCDYNAMICNULL _ => raise bug "RCDYNAMICNULL to RCAnalye"
+      | RC.RCDYNAMICTOP _ => raise bug "RCDYNAMICTOP to RCAnalye"
+      | RC.RCDYNAMICVIEW _ => raise bug "RCDYNAMICVIEW to RCAnalye"
+      | RC.RCDYNAMICCASE _ => raise bug "RCDYNAMICCASE to RCAnalye"
+
   and visitRecordField exp =
       case exp of
         RC.RCCONSTANT {const, loc, ty} => ()
@@ -178,11 +182,11 @@ local
          ()
        | RC.RCEXPORTVAR varInfo =>
          incInf (#id varInfo)
-       | RC.RCEXTERNEXN {path, ty} =>
+       | RC.RCEXTERNEXN ({path, ty}, provider) =>
          ()
        | RC.RCBUILTINEXN {path, ty} =>
          ()
-       | RC.RCEXTERNVAR {path, ty} =>
+       | RC.RCEXTERNVAR ({path, ty}, provider) =>
          ()
        | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>
          visitExpList (map #2 binds)

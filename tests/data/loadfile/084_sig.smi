@@ -1,0 +1,3 @@
+_require "./084_sig2.sig"
+_require "./084_sig3.smi"
+structure S = struct val x : int end

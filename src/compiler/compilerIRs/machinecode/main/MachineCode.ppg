@@ -6,30 +6,37 @@
 structure MachineCode =
 struct
 
+  fun ifcons (x, y) (_::_) = x
+    | ifcons (x, y) nil = y
+  fun ifsingle (x, y) [_] = x
+    | ifsingle (x, y) _ = y
+  fun iftrue (x, y) true = x
+    | iftrue (x, y) false = y
+  fun ifsome (x, y) (SOME _) = x
+    | ifsome (x, y) NONE = y
+
   type loc = Loc.loc
 
   (*%
    * @formatter(RuntimeCalc.ty) RuntimeCalc.format_ty
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(RuntimeCalc.ty) RuntimeCalc.formatWithType_ty
    *)
   type ty =
       (*% @format(ty) ty *)
-      (*% @prefix formatWithType_ @format(ty) ty()(btvEnv) *)
+      (*% @prefix formatWithType_ @format(ty) ty *)
       RuntimeCalc.ty
 
   (*%
    * @formatter(RuntimeCalc.varInfo) RuntimeCalc.format_varInfo
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(RuntimeCalc.varInfo) RuntimeCalc.formatWithType_varInfo
    *)
   type varInfo =
       (*% @format(x) x *)
-      (*% @prefix formatWithType_ @format(x) x()(btvEnv) *)
+      (*% @prefix formatWithType_ @format(x) x *)
       RuntimeCalc.varInfo
 
   (*%
@@ -38,13 +45,11 @@ struct
    *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(BuiltinPrimitive.primitiveMachineCode)
    * BuiltinPrimitive.format_primitiveMachineCode
    * @formatter(Types.btvEnv) Types.format_btvEnv
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
-   * @formatter(appList) TermFormat.formatAppList
    * @formatter(Types.ty) Types.format_ty
+   * @formatter(ifsingle) ifsingle
    *)
   type primInfo =
       (*%
@@ -57,11 +62,13 @@ struct
        * L2{ primitive +1 ":" +d ty }
        * @format:ty({boundtvars, argTyList: argTy argTys, resultTy})
        * "[" !N0{ 2[
-       *   {boundtvars()(boundtvars:extendBtvEnv()(btvEnv)) "."}
+       *   {boundtvars "."}
        *   +1
-       *   argTys:appList
-       *     (argTy()(boundtvars:extendBtvEnv()(btvEnv)))("{",",","}")
-       *   +1 "->" +d resultTy()(boundtvars:extendBtvEnv()(btvEnv))
+       *   argTys:ifsingle()(,"{")
+       *   !N0{ argTys(argTy)("," +1)
+       *        argTys:ifsingle()(,"}") }
+       *   +1 "->" +d
+       *   resultTy
        * ] "]" }
        *)
       {
@@ -75,7 +82,6 @@ struct
    * @formatter(RuntimeCalc.ncconst) RuntimeCalc.format_ncconst
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(RuntimeCalc.ncconst) RuntimeCalc.formatWithType_ncconst
    *)
   datatype mcconst = datatype RuntimeCalc.ncconst
@@ -84,7 +90,6 @@ struct
    * @formatter(ANormal.anvalue) ANormal.format_anvalue
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(ANormal.anvalue) ANormal.formatWithType_anvalue
    *)
   datatype mcvalue = datatype ANormal.anvalue
@@ -106,7 +111,6 @@ struct
    * @formatter(SlotID.id) SlotID.format_id
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(SlotID.id) SlotID.format_id
    *)
   datatype address =
@@ -116,7 +120,7 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format(ptrExp)
-       * "[" +d "ptr" +d ptrExp()(btvEnv) "]"
+       * "[" +d "ptr" +d ptrExp "]"
        *)
       MAPTR of mcvalue
     | (*%
@@ -125,7 +129,7 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format(base)
-       * "[" base()(btvEnv) "]"
+       * "[" base "]"
        *)
       MAPACKED of mcvalue
     | (*%
@@ -134,7 +138,7 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({base, offset})
-       * "[" !N0{ offset()(btvEnv) +1 "+" +d base()(btvEnv) "]" }
+       * "[" !N0{ offset +1 "+" +d base "]" }
        *)
       MAOFFSET of {base: mcvalue, offset: mcvalue}
     | (*%
@@ -148,9 +152,9 @@ struct
       (*% @prefix formatWithType_
        * @format({recordExp, fieldIndex})
        * "[" !N0{
-       *   L2{ "#" +d fieldIndex()(btvEnv) }
+       *   L2{ "#" +d fieldIndex }
        *   +1 "of"
-       *   +1 recordExp()(btvEnv)
+       *   +1 recordExp
        * } "]"
        *)
       MARECORDFIELD of
@@ -170,10 +174,10 @@ struct
       (*% @prefix formatWithType_
        * @format({arrayExp, elemSize, elemIndex})
        * "[" !N0{
-       *   elemIndex()(btvEnv)
-       *   +1 "*s" +d elemSize()(btvEnv)
+       *   elemIndex
+       *   +1 "*s" +d elemSize
        *   +1 "of"
-       *   +1 arrayExp()(btvEnv)
+       *   +1 arrayExp
        * } "]"
        *)
       MAARRAYELEM of
@@ -187,35 +191,35 @@ struct
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
-   * @formatter(appList) TermFormat.formatAppList
    * @formatter(SlotID.id) SlotID.format_id
-   * @formatter(option) TermFormat.formatOptionalOption
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(ifcons) ifcons
+   * @formatter(ifsome) ifsome
+   * @formatter(iftrue) iftrue
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
-   * @formatter(appList) TermFormat.formatAppList
    * @formatter(SlotID.id) SlotID.format_id
    * @formatter(objtype) format_objtype
-   * @formatter(option) TermFormat.formatOptionalOption
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(ifcons) ifcons
+   * @formatter(ifsome) ifsome
+   * @formatter(iftrue) iftrue
    *)
   datatype mcexp_mid =
       (*%
        * @format({resultVar, dataLabel, loc})
-       * L8{ resultVar +d "=" 1[
-       *   +1 "largeint"
+       * L8{ 1[
+       *   resultVar +d "="
+       *   +1 "intinf"
        *   +1 dataLabel
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, dataLabel, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
-       *   +1 "largeint"
+       * L8{ resultVar +d "=" 1[
+       *   +1 "intinf"
        *   +1 dataLabel
        *   ";"
        * ] }
@@ -228,23 +232,25 @@ struct
       }
     | (*%
        * @format({resultVar: var varOpt, funExp, attributes,
-       *          argExpList: arg args, handler: handle handleOpt, loc})
-       * L8{ varOpt(var)(, +d "=") 1[
-       *   +1 "ffiapply"
+       *          argExpList: arg args, handler: handler handlerOpt, loc})
+       * L8{ 1[
+       *   varOpt:ifsome()(varOpt(var) +d "=" +1,)
+       *   "foreignapply"
        *   +1 funExp
-       *   +1 args:appList(arg)("(",",",")")
-       *   handleOpt(handle)(+1 "handle" +d,)
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   handlerOpt:ifsome()(+1 "handle" +d handlerOpt(handler),)
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
        * @format({resultVar: var varOpt, funExp, attributes,
-       *          argExpList: arg args, handler: handle handleOpt, loc})
-       * L8{ varOpt(var()(btvEnv))(, +d "=") 1[
-       *   +1 "ffiapply"
-       *   +1 funExp()(btvEnv)
-       *   +1 args:appList(arg()(btvEnv))("(",",",")")
-       *   handleOpt(handle)(+1 "handle" +d,)
+       *          argExpList: arg args, handler: handler handlerOpt, loc})
+       * L8{ 1[
+       *   varOpt:ifsome()(varOpt(var) +d "=" +1,)
+       *   "foreignapply"
+       *   +1 funExp
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   handlerOpt:ifsome()(+1 "handle" +d handlerOpt(handler),)
        *   ";"
        * ] }
        *)
@@ -259,7 +265,8 @@ struct
       }
     | (*%
        * @format({resultVar, codeExp, closureEnvExp, instTyvars, loc})
-       * L8{ resultVar +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "exportcallback"
        *   +1 codeExp
        *   +1 closureEnvExp
@@ -268,10 +275,11 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, codeExp, closureEnvExp, instTyvars, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "exportcallback"
-       *   +1 codeExp()(btvEnv)
-       *   +1 closureEnvExp()(btvEnv)
+       *   +1 codeExp
+       *   +1 closureEnvExp
        *   ";"
        * ] }
        *)
@@ -285,7 +293,8 @@ struct
       }
     | (*%
        * @format({resultVar, id, loc})
-       * L8{ resultVar +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "exvar"
        *   +1 "@ext:" id
        *   ";"
@@ -293,7 +302,8 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, id, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "exvar"
        *   +1 "@ext:" id
        *   ";"
@@ -319,9 +329,9 @@ struct
        * @format({dstAddr, srcAddr, copySize, loc})
        * L8{ 1[
        *   "memcpy_field"
-       *   +1 dstAddr()(btvEnv)
-       *   +1 srcAddr()(btvEnv)
-       *   +1 copySize()(btvEnv)
+       *   +1 dstAddr
+       *   +1 srcAddr
+       *   +1 copySize
        *   ";"
        * ] }
        *)
@@ -347,10 +357,10 @@ struct
        * @format({dstAddr, srcAddr, numElems, elemSize, loc})
        * L8{ 1[
        *   "memmove_unboxed_array"
-       *   +1 dstAddr()(btvEnv)
-       *   +1 srcAddr()(btvEnv)
-       *   +1 numElems()(btvEnv)
-       *   +1 elemSize()(btvEnv)
+       *   +1 dstAddr
+       *   +1 srcAddr
+       *   +1 numElems
+       *   +1 elemSize
        *   ";"
        * ] }
        *)
@@ -378,11 +388,11 @@ struct
        * @format({dstArray, dstIndex, srcArray, srcIndex, numElems, loc})
        * L8{ 1[
        *   "memmove_boxed_array"
-       *   +1 dstArray()(btvEnv)
-       *   +1 dstIndex()(btvEnv)
-       *   +1 srcArray()(btvEnv)
-       *   +1 srcIndex()(btvEnv)
-       *   +1 numElems()(btvEnv)
+       *   +1 dstArray
+       *   +1 dstIndex
+       *   +1 srcArray
+       *   +1 srcIndex
+       *   +1 numElems
        *   ";"
        * ] }
        *)
@@ -397,19 +407,21 @@ struct
       }
     | (*%
        * @format({resultVar, objType, payloadSize, allocSize, loc})
-       * L8{ resultVar +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "alloc"
-       *   +1 !N0{ "(" objType "," +1 payloadSize ")" }
+       *   +1 "(" !N0{ objType "," +1 payloadSize ")" }
        *   +1 allocSize
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, objType, payloadSize, allocSize, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "alloc"
-       *   +1 !N0{ "(" objType "," +1 payloadSize()(btvEnv) ")" }
-       *   +1 allocSize()(btvEnv)
+       *   +1 "(" !N0{ objType "," +1 payloadSize ")" }
+       *   +1 allocSize
        *   ";"
        * ] }
        *)
@@ -432,17 +444,21 @@ struct
        *)
       MCALLOC_COMPLETED
     | (*%
-       * @format
-       * "check;"
+       * @format({handler: handler handlerOpt})
+       * "check" handlerOpt:ifsome()(+1 "handle" +d handlerOpt(handler),) ";"
        *)
       (*% @prefix formatWithType_
-       * @format
-       * "check;"
+       * @format({handler: handler handlerOpt})
+       * "check" handlerOpt:ifsome()(+1 "handle" +d handlerOpt(handler),) ";"
        *)
-      MCCHECK
+      MCCHECK of
+      {
+        handler : HandlerLabel.id option
+      }
     | (*%
        * @format({resultVar, copySizeVar, recordExp, loc})
-       * L8{ resultVar "," +d copySizeVar +d "=" 1[
+       * L8{ 1[
+       *   resultVar "," +d copySizeVar +d "="
        *   +1 "recorddup_alloc"
        *   +1 recordExp
        *   ";"
@@ -450,9 +466,10 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, copySizeVar, recordExp, loc})
-       * L8{ resultVar()(btvEnv) "," +d copySizeVar()(btvEnv) +d "=" 1[
+       * L8{ 1[
+       *   resultVar "," +d copySizeVar +d "="
        *   +1 "recorddup_alloc"
-       *   +1 recordExp()(btvEnv)
+       *   +1 recordExp
        *   ";"
        * ] }
        *)
@@ -478,9 +495,9 @@ struct
        * @format({dstRecord, srcRecord, copySize, loc})
        * L8{ 1[
        *   "recorddup_copy"
-       *   +1 dstRecord()(btvEnv)
-       *   +1 srcRecord()(btvEnv)
-       *   +1 copySize()(btvEnv)
+       *   +1 dstRecord
+       *   +1 srcRecord
+       *   +1 copySize
        *   ";"
        * ] }
        *)
@@ -504,8 +521,8 @@ struct
        * @format({recordExp, recordSize, loc})
        * L8{ 1[
        *   "bzero"
-       *   +1 recordExp()(btvEnv)
-       *   +1 recordSize()(btvEnv)
+       *   +1 recordExp
+       *   +1 recordSize
        *   ";"
        * ] }
        *)
@@ -518,7 +535,7 @@ struct
     | (*%
        * @format({slotId, value, loc})
        * L8{ 1[
-       *   "save" + "slot"
+       *   "saveslot"
        *   +1 slotId
        *   +1 value
        *   ";"
@@ -527,9 +544,9 @@ struct
       (*% @prefix formatWithType_
        * @format({slotId, value, loc})
        * L8{ 1[
-       *   "save" + "slot"
+       *   "saveslot"
        *   +1 slotId
-       *   +1 value()(btvEnv)
+       *   +1 value
        *   ";"
        * ] }
        *)
@@ -543,15 +560,16 @@ struct
        * @format({resultVar, slotId, loc})
        * L8{ 1[
        *   resultVar +d "="
-       *   +1 "load" + "slot"
+       *   +1 "loadslot"
        *   +1 slotId
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, slotId, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
-       *   +1 "load" + "slot"
+       * L8{ 1[
+       *   resultVar +d "="
+       *   +1 "loadslot"
        *   +1 slotId
        *   ";"
        * ] }
@@ -564,7 +582,8 @@ struct
       }
     | (*%
        * @format({resultVar, srcAddr, loc})
-       * L8{ resultVar +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "load"
        *   +1 srcAddr
        *   ";"
@@ -572,9 +591,10 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, srcAddr, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "load"
-       *   +1 srcAddr()(btvEnv)
+       *   +1 srcAddr
        *   ";"
        * ] }
        *)
@@ -589,11 +609,12 @@ struct
        *          resultTy,
        *          instTyList, instTagList: tag tags, instSizeList: size sizes,
        *          loc})
-       * L8{ resultVar +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "prim" +d primInfo
-       *   +1 "/t" +d tags:appList(tag)("(",",",")")
-       *   +1 "/s" +d sizes:appList(size)("(",",",")")
-       *   +1 args:appList(arg)("(",",",")")
+       *   +1 tags:ifcons()("tag=(" !N0{ tags(tag)("," +1) ")" },)
+       *   +1 tags:ifcons()("size=(" !N0{ sizes(size)("," +1) ")" },)
+       *   +1 "(" !N0{ args(arg)("," +d) ")" }
        *   ";"
        * ] }
        *)
@@ -602,11 +623,12 @@ struct
        *          resultTy,
        *          instTyList, instTagList: tag tags, instSizeList: size sizes,
        *          loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
-       *   +1 "prim" +d primInfo()(btvEnv)
-       *   +1 "/t" +d tags:appList(tag()(btvEnv))("(",",",")")
-       *   +1 "/s" +d sizes:appList(size()(btvEnv))("(",",",")")
-       *   +1 args:appList(arg()(btvEnv))("(",",",")")
+       * L8{ 1[
+       *   resultVar +d "="
+       *   +1 "prim" +d primInfo
+       *   +1 tags:ifcons()("tag=(" !N0{ tags(tag)("," +1) ")" },)
+       *   +1 tags:ifcons()("size=(" !N0{ sizes(size)("," +1) ")" },)
+       *   +1 "(" !N0{ args(arg)("," +d) ")" }
        *   ";"
        * ] }
        *)
@@ -624,7 +646,8 @@ struct
       }
     | (*%
        * @format({resultVar, exp, expTy, targetTy, loc})
-       * L8{ resultVar +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "bitcast"
        *   +1 exp
        *   ";"
@@ -632,9 +655,10 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({resultVar, exp, expTy, targetTy, loc})
-       * L8{ resultVar()(btvEnv) +d "=" 1[
+       * L8{ 1[
+       *   resultVar +d "="
        *   +1 "bitcast"
-       *   +1 exp()(btvEnv)
+       *   +1 L2{ exp +1 ":" +d expTy }
        *   ";"
        * ] }
        *)
@@ -649,28 +673,30 @@ struct
     | (*%
        * @format({resultVar: resultVar resultVarOpt, resultTy, codeExp,
        *          closureEnvExp: clsEnv clsEnvOpt,
-       *          argExpList: arg args, tail, handler: handle handleOpt, loc})
-       * L8{ resultVarOpt(resultVar)(, +d "=") 1[
-       *   tail()(+1 "tail",)
-       *   +1 "call"
+       *          argExpList: arg args, tail, handler: handler handlerOpt, loc})
+       * L8{ 1[
+       *   resultVarOpt:ifsome()(resultVarOpt(resultVar) +d "=" +1,)
+       *   tail:iftrue()("tail" +1,)
+       *   "call"
        *   +1 codeExp
-       *   +1 clsEnvOpt(clsEnv)(,)
-       *   +1 args:appList(arg)("(",",",")")
-       *   handleOpt(handle)(+1 "handle" +d,)
+       *   +1 clsEnvOpt:ifsome()(clsEnvOpt(clsEnv), "_")
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   handlerOpt:ifsome()(+1 "handle" +d handlerOpt(handler),)
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
        * @format({resultVar: resultVar resultVarOpt, resultTy, codeExp,
        *          closureEnvExp: clsEnv clsEnvOpt,
-       *          argExpList: arg args, tail, handler: handle handleOpt, loc})
-       * L8{ resultVarOpt(resultVar()(btvEnv))(, +d "=") 1[
-       *   tail()(+1 "tail",)
-       *   +1 "call"
-       *   +1 codeExp()(btvEnv)
-       *   +1 clsEnvOpt(clsEnv()(btvEnv))(,)
-       *   +1 args:appList(arg()(btvEnv))("(",",",")")
-       *   handleOpt(handle)(+1 "handle" +d,)
+       *          argExpList: arg args, tail, handler: handler handlerOpt, loc})
+       * L8{ 1[
+       *   resultVarOpt:ifsome()(resultVarOpt(resultVar) +d "=" +1,)
+       *   tail:iftrue()("tail" +1,)
+       *   "call"
+       *   +1 codeExp
+       *   +1 clsEnvOpt:ifsome()(clsEnvOpt(clsEnv), "_")
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   handlerOpt:ifsome()(+1 "handle" +d handlerOpt(handler),)
        *   ";"
        * ] }
        *)
@@ -689,7 +715,7 @@ struct
        * @format({srcExp, srcTy, dstAddr, barrier, loc})
        * L8{ 1[
        *   "store"
-       *   +1 barrier()("barrier",)
+       *   barrier:iftrue()(+1 "barrier",)
        *   +1 dstAddr
        *   +1 srcExp
        *   ";"
@@ -699,9 +725,9 @@ struct
        * @format({srcExp, srcTy, dstAddr, barrier, loc})
        * L8{ 1[
        *   "store"
-       *   +1 barrier()("barrier",)
-       *   +1 dstAddr()(btvEnv)
-       *   +1 srcExp()(btvEnv)
+       *   barrier:iftrue()(+1 "barrier",)
+       *   +1 dstAddr
+       *   +1 srcExp
        *   ";"
        * ] }
        *)
@@ -716,7 +742,7 @@ struct
     | (*%
        * @format({id, ty, valueExp, loc})
        * L8{ 1[
-       *   "export"
+       *   "exportvar"
        *   +1 "@ext:" id
        *   +1 valueExp
        *   ";"
@@ -725,9 +751,9 @@ struct
       (*% @prefix formatWithType_
        * @format({id, ty, valueExp, loc})
        * L8{ 1[
-       *   "export"
+       *   "exportvar"
        *   +1 "@ext:" id
-       *   +1 valueExp()(btvEnv)
+       *   +1 valueExp
        *   ";"
        * ] }
        *)
@@ -738,29 +764,47 @@ struct
         valueExp : mcvalue,
         loc : loc
       }
+    | (*%
+       * @format({value, loc})
+       * L8{ 1[
+       *  "keepalive"
+       *  +1 value
+       *  ";"
+       * ] }
+       *)
+      (*% @prefix formatWithType_
+       * @format({value, loc})
+       * L8{ 1[
+       *  "keepalive"
+       *  +1 value
+       *  ";"
+       * ] }
+       *)
+      MCKEEPALIVE of
+      {
+        value : mcvalue,
+        loc : loc
+      }
 
   (*%
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
-   * @formatter(caseList) TermFormat.formatCaseList
-   * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(ifcons) ifcons
+   * @formatter(iftrue) iftrue
+   * @formatter(ifsome) ifsome
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
-   * @formatter(caseList) TermFormat.formatCaseList
-   * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(ifcons) ifcons
+   * @formatter(iftrue) iftrue
+   * @formatter(ifsome) ifsome
    *)
   datatype mcexp_last =
       (*%
        * @format({value, loc})
        * L8{ 1[
-       *   "ret"
+       *   "return"
        *   +1 value
        *   ";"
        * ] }
@@ -768,8 +812,8 @@ struct
       (*% @prefix formatWithType_
        * @format({value, loc})
        * L8{ 1[
-       *   "ret"
-       *   +1 value()(btvEnv)
+       *   "return"
+       *   +1 value
        *   ";"
        * ] }
        *)
@@ -781,18 +825,18 @@ struct
     | (*%
        * @format({argExp, cleanup: cleanup cleanupOpt, loc})
        * L8{ 1[
-       *   "raise_throw"
+       *   "raise"
        *   +1 argExp
-       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
+       *   cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
        *   ";"
        * ] }
        *)
       (*% @prefix formatWithType_
        * @format({argExp, cleanup: cleanup cleanupOpt, loc})
        * L8{ 1[
-       *   "raise_throw"
-       *   +1 argExp()(btvEnv)
-       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
+       *   "raise"
+       *   +1 argExp
+       *   cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
        *   ";"
        * ] }
        *)
@@ -805,20 +849,26 @@ struct
     | (*%
        * @format({nextExp, exnVar, id, handlerExp, cleanup: cleanup cleanupOpt,
        *          loc})
-       * L8{ 1[ "try" +1 id ] }
-       * +1 nextExp
-       * +1 L8{ 1[ "handle" +1 id d +1 exnVar +d "=" ] }
-       * +1 handlerExp 
-       * cleanupOpt(cleanup)(+1 "cleanup" +d,)
+       * L8{ 1[ "available" +1 id ";" ] }
+       * \n nextExp
+       * L8{ 1[
+       *   "handler" +1 id +1 "(" !N0{ exnVar ")" }
+       *   cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
+       *   ":"
+       * ] } \n
+       * 1[ \n handlerExp ]
        *)
       (*% @prefix formatWithType_
        * @format({nextExp, exnVar, id, handlerExp, cleanup: cleanup cleanupOpt,
        *          loc})
-       * L8{ 1[ "try" +1 id ] }
-       * +1 nextExp()(btvEnv)
-       * +1 L8{ 1[ "handle" +1 id d +1 exnVar()(btvEnv) +d "=" ] }
-       * +1 handlerExp()(btvEnv)
-       * cleanupOpt(cleanup)(+1 "cleanup" +d,)
+       * L8{ 1[ "available" +1 id ";" ] }
+       * \n nextExp
+       * L8{ 1[
+       *   "handler" +1 id +1 "(" !N0{ exnVar ")" }
+       *   cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
+       *   ":"
+       * ] }
+       * 1[ \n handlerExp ]
        *)
       MCHANDLER of
       {
@@ -832,27 +882,30 @@ struct
     | (*%
        * @format({switchExp, expTy, branches: branch branches, default, loc})
        * L8{ 1[
-       *   "case"
+       *   "switch"
        *   +1 switchExp
-       *   +1 "of"
+       *   +1 "[" !N0{ 1[
+       *     1 branches(branch)("," +1)
+       *     branches:ifcons()("," +1,) !N0{ "_" +d "=>" 1[ +1 default ] }
+       *   ] 1 "]" }
+       *   ";"
        * ] }
-       * branches:caseList(branch)
-       *   (2[+1], +1 "|" +d, !N0{ "_" +d "=>" +1 "@L:" default })
-       * @format:branch(constant * branch)
-       * !N0{ constant +d "=>" +1 "@L:" branch }
+       * @format:branch(const * label)
+       * !N0{ const +d "=>" 1[ +1 label ] }
        *)
       (*% @prefix formatWithType_
        * @format({switchExp, expTy, branches: branch branches, default, loc})
        * L8{ 1[
-       *   "case"
-       *   +1 switchExp()(btvEnv)
-       *   +1 "of"
+       *   "switch"
+       *   +1 switchExp
+       *   +1 "[" !N0{ 1[
+       *     1 branches(branch)("," +1)
+       *     branches:ifcons()("," +1,) !N0{ "_" +d "=>" 1[ +1 default ] }
+       *   ] 1 "]" }
+       *   ";"
        * ] }
-       * branches:caseList(branch)
-       *   (2[+1], +1 "|" +d, !N0{ "_" +d "=>" +1 "@L:" default })
-       * +1 "end;"
-       * @format:branch(constant * branch)
-       * !N0{ constant()(btvEnv) +d "=>" +1 "@L:" branch }
+       * @format:branch(const * label)
+       * !N0{ const +d "=>" 1[ +1 label ] }
        *)
       MCSWITCH of
       {
@@ -864,37 +917,29 @@ struct
       }
     | (*%
        * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
+       * L8{ 1[ "available" +1 id ";" ] }
+       * \n nextExp
        * L8{ 1[
-       *   "available"
-       *   +1 "@L:" id
-       *   ";"
+       *   "localcode"
+       *   recursive:iftrue()(+1 "rec",)
+       *   +1 id
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   ":"
        * ] }
-       * +1 nextExp
-       * +1
-       * L8{ 1[
-       *   recursive()("rec" +d,)
-       *   "@L:" id
-       *   +1 "(" { args(arg)(+1) ")" }
-       *   +d "="
-       * ] }
-       * +1 bodyExp
+       * 1[ \n bodyExp ]
        *)
       (*% @prefix formatWithType_
        * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
+       * L8{ 1[ "available" +1 id ";" ] }
+       * \n nextExp
        * L8{ 1[
-       *   "available"
-       *   +1 "@L:" id
-       *   ";"
+       *   "localcode"
+       *   recursive:iftrue()(+1 "rec",)
+       *   +1 id
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   ":"
        * ] }
-       * +1 nextExp()(btvEnv)
-       * +1
-       * L8{ 1[
-       *   recursive()("rec" +d,)
-       *   "@L:" id
-       *   +1 "(" { args(arg()(btvEnv))(+1) ")" }
-       *   +d "="
-       * ] }
-       * +1 bodyExp()(btvEnv)
+       * 1[ \n bodyExp ]
        *)
       MCLOCALCODE of
       {
@@ -909,7 +954,7 @@ struct
        * @format({id, argList: arg args, loc})
        * L8{ 1[
        *   "goto"
-       *   +1 "@L:" id
+       *   +1 id
        *   +1 "(" !N0{ args(arg)("," +1) ")" }
        *   ";"
        * ] }
@@ -918,8 +963,8 @@ struct
        * @format({id, argList: arg args, loc})
        * L8{ 1[
        *   "goto"
-       *   +1 "@L:" id
-       *   +1 "(" !N0{ args(arg()(btvEnv))("," +1) ")" }
+       *   +1 id
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
        *   ";"
        * ] }
        *)
@@ -942,13 +987,15 @@ struct
   withtype mcexp =
       (*%
        * @format(mid mids * last)
-       * mids:decList(mid)(+1,+1)
-       * +1 last
+       * mids(mid)(\n)
+       * mids:ifcons()(\n,)
+       * last
        *)
       (*% @prefix formatWithType_
        * @format(mid mids * last)
-       * mids:decList(mid()(btvEnv))(+1,+1)
-       * +1 last()(btvEnv)
+       * mids(mid)(\n)
+       * mids:ifcons()(\n,)
+       * last
        *)
       mcexp_mid list * mcexp_last
 
@@ -956,15 +1003,32 @@ struct
    * @formatter(RuntimeCalc.topdata) RuntimeCalc.format_topdata
    *)
   (*% @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(RuntimeCalc.topdata) RuntimeCalc.formatWithType_topdata
    *)
   datatype topdata = datatype RuntimeCalc.topdata
 
-  val formatSlotMap =
-      TermFormat.formatEnclosedMap
-        SlotID.format_id
-        SlotID.Map.listItemsi
+  fun formatSlotMap args smap =
+      SMLFormat.BasicFormatters.format_list args (SlotID.Map.listItemsi smap)
+  fun ifempty (x, y) smap =
+      if SlotID.Map.isEmpty smap then x else y
+
+  (* for pretty printing *)
+  (*%
+   * @formatter(SlotID.id) SlotID.format_id
+   *)
+  (*% @prefix formatWithType_
+   * @formatter(SlotID.id) SlotID.format_id
+   *)
+  type 'a slotmap_field =
+      (*%
+       * @format(k * v)
+       * k
+       *)
+      (*% @prefix formatWithType_
+       * @format(k * v)
+       * L2{ 1[ k +d  ":" +1 v ] }
+       *)
+      SlotID.id * 'a
 
   (*%
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
@@ -972,48 +1036,65 @@ struct
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
    * @formatter(SlotID.Map.map) formatSlotMap
    * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
-   * @formatter(option) SmlppgUtil.formatOptWithDefault
-   * @formatter(optional) TermFormat.formatOptionalOption
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(appList) TermFormat.formatAppList
+   * @formatter(ifempty) ifempty
+   * @formatter(ifsome) ifsome
+   * @formatter(iftrue) iftrue
    *)
   (*% @prefix formatWithType_
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
    * @formatter(CallbackEntryLabel.id) CallbackEntryLabel.format_id
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
-   * @formatter(makeBtvEnv) TermFormat.makeBtvEnv
    * @formatter(SlotID.Map.map) formatSlotMap
    * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
-   * @formatter(option) SmlppgUtil.formatOptWithDefault
-   * @formatter(optional) TermFormat.formatOptionalOption
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(appList) TermFormat.formatAppList
+   * @formatter(ifempty) ifempty
+   * @formatter(ifsome) ifsome
+   * @formatter(iftrue) iftrue
    *)
   datatype topdec =
       (*%
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
        *          retTy, gcCheck, loc})
-       * "@fun:" id
-       * + envOpt(env)("_")
-       * + args:appList(arg)("(",",",")")
-       * + "="
-       * 1[
-       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
-       *   +1 bodyExp
+       * L8{ 2[
+       *   "fun"
+       *   +1 id
+       *   +1 envOpt:ifsome()(envOpt(env),"_")
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   gcCheck:iftrue()(+1 "gc",)
+       *   +d "="
+       * ] }
+       * 1[ \n
+       *   slots:ifempty()(,
+       *     L8{ 1[
+       *       "frameslots"
+       *       +1 slots(slot:slotmap_field(slot))("," +1)
+       *       ";"
+       *     ] } \n
+       *   )
+       *   bodyExp
        * ]
        *)
       (*% @prefix formatWithType_
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
        *          retTy, gcCheck, loc})
-       * "@fun:" id
-       * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
-       * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
-       * + "="
-       * 1[
-       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
-       *   +1 bodyExp()(tyvarKindEnv:makeBtvEnv)
+       * L8{ 2[
+       *   "fun"
+       *   +1 id
+       *   +1 envOpt:ifsome()(envOpt(env),"_")
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   gcCheck:iftrue()(+1 "gc",)
+       *   +d "="
+       * ] }
+       * 1[ \n
+       *   slots:ifempty()(,
+       *     L8{ 1[
+       *       "frameslots"
+       *       +1 slots(slot:slotmap_field(slot))("," +1)
+       *       ";"
+       *     ] } \n
+       *   )
+       *   bodyExp
        * ]
        *)
       MTFUNCTION of
@@ -1032,28 +1113,46 @@ struct
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
        *          attributes, retTy, cleanupHandler: cleanup cleanupOpt, loc})
-       * "@callback:" id
-       * + envOpt(env)("_")
-       * + args:appList(arg)("(",",",")")
-       * + "="
-       * 1[
-       *   cleanupOpt:optional(cleanup)(+1 "cleanup" +d,)
-       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
-       *   +1 bodyExp
+       * L8{ 2[
+       *   "callback"
+       *   +1 id
+       *   +1 envOpt:ifsome()(envOpt(env),"_")
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   +1 cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
+       *   +d "="
+       * ] }
+       * 1[ \n
+       *   slots:ifempty()(,
+       *     L8{ 1[
+       *       "frameslots"
+       *       +1 slots(slot:slotmap_field(slot))("," +1)
+       *       ";"
+       *     ] } \n
+       *   )
+       *   bodyExp
        * ]
        *)
       (*% @prefix formatWithType_
        * @format({id, tyvarKindEnv, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
        *          attributes, retTy, cleanupHandler: cleanup cleanupOpt, loc})
-       * "@callback:" id
-       * + envOpt(env()(tyvarKindEnv:makeBtvEnv))("_")
-       * + args:appList(arg()(tyvarKindEnv:makeBtvEnv))("(",",",")")
-       * + "="
-       * 1[
-       *   cleanupOpt:optional(cleanup)(+1 "cleanup" +d,)
-       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
-       *   +1 bodyExp()(tyvarKindEnv:makeBtvEnv)
+       * L8{ 2[
+       *   "callback"
+       *   +1 id
+       *   +1 envOpt:ifsome()(envOpt(env),"_")
+       *   +1 "(" !N0{ args(arg)("," +1) ")" }
+       *   +1 cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
+       *   +d "="
+       * ] }
+       * 1[ \n
+       *   slots:ifempty()(,
+       *     L8{ 1[
+       *       "frameslots"
+       *       +1 slots(slot:slotmap_field(slot))("," +1)
+       *       ";"
+       *     ] } \n
+       *   )
+       *   bodyExp
        * ]
        *)
       MTCALLBACKFUNCTION of
@@ -1072,64 +1171,82 @@ struct
 
   (*%
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
+   * @formatter(SlotID.id) SlotID.format_id
    * @formatter(SlotID.Map.map) formatSlotMap
    * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
-   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(ifempty) ifempty
+   * @formatter(ifsome) ifsome
    *)
   (*% @prefix formatWithType_
    * @formatter(HandlerLabel.id) HandlerLabel.format_id
    * @formatter(SlotID.Map.map) formatSlotMap
    * @formatter(RuntimeTypes.ty) RuntimeTypes.format_ty
-   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(ifempty) ifempty
+   * @formatter(ifsome) ifsome
    *)
   type toplevel =
       (*%
-       * @format({dependency, frameSlots: slot slots, bodyExp,
+       * @format({frameSlots: slot slots, bodyExp,
        *          cleanupHandler: cleanup cleanupOpt})
-       * "@top:"
-       * + "="
-       * 1[
-       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
-       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
-       *   +1 bodyExp
+       * L8{ 2[
+       *   "toplevel"
+       *   cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
+       *   +d "="
+       * ] }
+       * 1[ \n
+       *   slots:ifempty()(,
+       *     L8{ 1[
+       *       "frameslots"
+       *       +1 slots(slot:slotmap_field(slot))("," +1)
+       *       ";"
+       *     ] } \n
+       *   )
+       *   bodyExp
        * ]
        *)
       (*% @prefix formatWithType_
-       * @format({dependency, frameSlots: slot slots, bodyExp,
+       * @format({frameSlots: slot slots, bodyExp,
        *          cleanupHandler: cleanup cleanupOpt})
-       * "@top:"
-       * + "="
-       * 1[
-       *   cleanupOpt(cleanup)(+1 "cleanup" +d,)
-       *   +1 slots(slot)("slots" +d "{", ",", ":", "}")
-       *   +1 bodyExp()()
+       * L8{ 2[
+       *   "toplevel"
+       *   cleanupOpt:ifsome()(+1 "cleanup" +d cleanupOpt(cleanup),)
+       *   +d "="
+       * ] }
+       * 1[ \n
+       *   slots:ifempty()(,
+       *     L8{ 1[
+       *       "frameslots"
+       *       +1 slots(slot:slotmap_field(slot))("," +1)
+       *       ";"
+       *     ] } \n
+       *   )
+       *   bodyExp
        * ]
        *)
       {
-        dependency : InterfaceName.dependency,
         frameSlots : RuntimeTypes.ty SlotID.Map.map,
         bodyExp : mcexp,
         cleanupHandler : HandlerLabel.id option
       }
 
   (*%
-   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(ifcons) ifcons
    *)
   (*% @prefix formatWithType_
-   * @formatter(decList) TermFormat.formatDeclList
+   * @formatter(ifcons) ifcons
    *)
   type program =
       (*%
        * @format({topdata: datum data, topdecs: dec decs, toplevel})
-       * data:decList(datum)(+1,+1)
-       * decs:decList(dec)(+1,+1)
-       * +1 toplevel
+       * data(datum)(\n) data:ifcons()("\n",)
+       * decs(dec)(\n) decs:ifcons()("\n",)
+       * toplevel
        *)
       (*% @prefix formatWithType_
        * @format({topdata: datum data, topdecs: dec decs, toplevel})
-       * data:decList(datum)(+1,+1)
-       * decs:decList(dec)(+1,+1)
-       * +1 toplevel
+       * data(datum)(\n) data:ifcons()("\n",)
+       * decs(dec)(\n) decs:ifcons()("\n",)
+       * toplevel
        *)
       {
         topdata : topdata list,

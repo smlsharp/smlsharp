@@ -1,0 +1,3 @@
+_require "./ReplicationDatatypeDecl2.smi"
+
+datatype d1a = datatype d1

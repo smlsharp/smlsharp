@@ -12,6 +12,8 @@ infix 3 := o
 val op - = SMLSharp_Builtin.Int32.sub_unsafe
 val op < = SMLSharp_Builtin.Int32.lt
 val op @ = List.@
+val op := = SMLSharp_Builtin.General.:=
+val ! = SMLSharp_Builtin.General.!
 structure Word32 = SMLSharp_Builtin.Word32
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
@@ -38,7 +40,7 @@ struct
 
   fun openDir dirname =
       let val dirHandle = prim_opendir dirname
-      in if dirHandle = _NULL then raise SMLSharp_Runtime.OS_SysErr ()
+      in if dirHandle = Pointer.null () then raise SMLSharp_Runtime.OS_SysErr ()
          else {dirHandle = dirHandle, isOpen = ref true}
       end
 
@@ -117,7 +119,7 @@ struct
       let
         val ret = prim_readlink filename
       in
-        if Pointer.identityEqual (String.castToBoxed ret, _NULL)
+        if Pointer.identityEqual (String.castToBoxed ret, Pointer.nullBoxed ())
         then raise SMLSharp_Runtime.OS_SysErr () else ret
       end
 

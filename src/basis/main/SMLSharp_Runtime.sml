@@ -51,7 +51,7 @@ struct
       str_new (strerror err)
 
   fun str_new_option ptr =
-      if SMLSharp_Builtin.Pointer.toUnitPtr ptr = _NULL
+      if ptr = SMLSharp_Builtin.Pointer.null ()
       then NONE else SOME (str_new ptr)
 
   fun OS_SysErr () =

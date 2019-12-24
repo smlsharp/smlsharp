@@ -6,23 +6,20 @@
  * @version $Id: qsort.sml,v 1.9 2007/09/20 09:02:53 matsu Exp $
  *)
 
-fun 'a#unboxed qsort (a, f) =
-    _ffiapply _import "qsort"
-      (a : 'a array,
-       Array.length a : int,
-       _sizeof('a),
-       f : ('a ptr, 'a ptr) -> int) : ()
+fun 'a#unboxed qsort (array, compare) =
+    let
+      val qsort_c =
+          _import "qsort"
+          : ('a array, int, 'a size, ('a ptr, 'a ptr) -> int) -> ()
+    in
+      qsort_c (array, Array.length array, _sizeof('a), compare)
+    end
 
-fun printIntAry x = (Array.app (fn x => print (" " ^ Int.toString x)) x;
-                     print "\n")
-fun printRealAry x = (Array.app (fn x => print (" " ^ Real.toString x)) x;
-                      print "\n")
+val a = Array.fromList [4, 75, 14, 2147483647, 3, 6, 423, 42, ~2147483648, 8, 2]
+val b = Array.fromList [2.3, 1.1, 0.2, 10.5, ~12.0]
 
-val a = Array.fromList [4,75,14,2147483647,3,6,423,42,~2147483648,8,2]
-val b = Array.fromList [2.3, 1.1, 0.2,10.5,~12.0]
-
-val _ = printIntAry a
-val _ = printRealAry b
+val _ = Dynamic.pp a
+val _ = Dynamic.pp b
 
 fun compare (p1, p2) =
     let
@@ -35,5 +32,5 @@ fun compare (p1, p2) =
 val _ = qsort (a, compare)
 val _ = qsort (b, compare)
 
-val _ = printIntAry a
-val _ = printRealAry b
+val _ = Dynamic.pp a
+val _ = Dynamic.pp b

@@ -1,11 +1,11 @@
-_require local "../../../../smlnj-lib/Util/lib-base.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+(* _require local "../../../../smlnj-lib/Util/lib-base.smi" *)
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 
 _require "../../../../basis.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "./NameEvalEnv.ppg.smi"
 
@@ -14,8 +14,13 @@ structure TfvKey =
     type ord_key = IDCalc.tfunkind ref
     val compare : ord_key * ord_key -> order
    end
+structure TfvKey2 =
+  struct
+    type ord_key = IDCalc.tfunkind ref
+    val compare : ord_key * ord_key -> order
+  end
 structure TfvMap = BinaryMapFn(TfvKey)
-structure TfvSet = BinarySetFn(TfvKey)
+structure TfvSet = BinarySetFn(TfvKey2)
 
 structure TfunVars =
   struct

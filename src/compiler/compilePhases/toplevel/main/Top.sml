@@ -18,7 +18,7 @@ struct
   fun extendContext ({topEnv, fixEnv, version, builtinDecls} : toplevelContext,
                      {topEnv=newTopEnv, fixEnv=newFixEnv} : newContext) =
       let
-        val topEnv = NameEvalEnv.topEnvWithTopEnv (topEnv, newTopEnv)
+        val topEnv = NameEvalEnvPrims.topEnvWithTopEnv (topEnv, newTopEnv)
       in
         {topEnv = topEnv,
          version = version,
@@ -69,16 +69,29 @@ struct
       else ()
 
   fun printParseResult flag title code =
-      printCode [flag] (Bug.prettyPrint o Absyn.format_unitparseresult)
+      printCode [flag] (Bug.prettyPrint o AbsynFormatter.format_unitparseresult)
                 title [code]
 
   fun printAbsyn flag title code =
       printCode [flag] (Bug.prettyPrint o AbsynInterface.format_compile_unit)
                 title [code]
 
+  fun printAbsynInterface flags title code =
+      printCode flags (Bug.prettyPrint o AbsynInterface.format_interface_unit)
+                title [code]
+
+  fun printFileDependency flags title code =
+      printCode flags (Bug.prettyPrint o InterfaceName.format_file_dependency)
+                title [code]
+
   fun printPatternCalc flag title code =
       printCode [flag]
                 (Bug.prettyPrint o PatternCalcInterface.format_compile_unit)
+                title [code]
+
+  fun printPatternCalcInterface flags title code =
+      printCode flags
+                (Bug.prettyPrint o PatternCalcInterface.format_interface_unit)
                 title [code]
 
   fun printIDCalc flagList title code =
@@ -93,24 +106,24 @@ struct
       printCode
         flagList
         (if !Control.printWithType
-         then Bug.prettyPrint o (TypedCalc.formatWithType_tpdecl nil)
-         else Bug.prettyPrint o (TypedCalc.format_tpdecl nil))
+         then Bug.prettyPrint o TypedCalc.formatWithType_tpdecl
+         else Bug.prettyPrint o TypedCalc.format_tpdecl)
         title code
 
   fun printRecordCalc flagList title code =
       printCode
         flagList
         (if !Control.printWithType
-         then Bug.prettyPrint o (RecordCalc.format_rcdecl nil)
-         else Bug.prettyPrint o (RecordCalc.formatWithoutType_rcdecl nil))
+         then Bug.prettyPrint o RecordCalc.format_rcdecl
+         else Bug.prettyPrint o RecordCalc.formatWithoutType_rcdecl)
         title code
 
   fun printTypedLambda flagList title code =
       printCode
         flagList
         (if !Control.printWithType
-         then Bug.prettyPrint o (TypedLambda.formatWithType_tldecl nil)
-         else Bug.prettyPrint o (TypedLambda.format_tldecl nil))
+         then Bug.prettyPrint o TypedLambda.formatWithType_tldecl
+         else Bug.prettyPrint o TypedLambda.format_tldecl)
         title code
 
   fun printBitmapCalc2 flag title code =
@@ -151,11 +164,26 @@ struct
                 (Bug.prettyPrint o LLVMIR.format_program)
                 title [code]
 
-  fun printLLVMModule flag title module =
+  fun printFile flag title file =
       if !flag
       then (printError title; printError ":\n"; flushError ();
-            LLVM.LLVMDumpModule module)
+            printError (CoreUtils.readTextFile file))
       else ()
+
+  fun initPointerSize llvmOptions =
+      let
+        val {alignment, ...} = LLVMUtils.getDataLayout llvmOptions
+        val ptrsize =
+            case List.find (fn {ty, ...} => ty = LLVMUtils.Pointer 0) alignment
+            of NONE => raise Bug.Bug "initPointerSize"
+             | SOME {size, ...} => size
+      in
+        if ptrsize = 32 orelse ptrsize = 64
+        then RuntimeTypes.init {pointerSize = ptrsize div 8}
+        else raise UserError.UserErrors
+                   [(Loc.noloc, UserError.Error,
+                     UnsupportedPointerSize ptrsize)]
+      end
 
   fun doParse input =
       let
@@ -170,18 +198,43 @@ struct
           {interface = Absyn.NOINTERFACE, tops = nil, loc = Loc.noloc}
       end
 
-  fun doLoadFile ({baseFilename, stdPath, loadPath, loadMode, ...}:options)
+  fun doLoadFile ({baseFilename, loadPath, loadMode, defaultInterface,
+                   ...}:options)
                  ({version, ...}: toplevelContext)
                  absyn =
       let
         val _ = #start Counter.loadFileTimeCounter()
-        val (dependency, abunit) =
+        val (dependency, prelude, abunit) =
             LoadFile.load
-              {baseFilename=baseFilename, stdPath=stdPath, loadPath=loadPath,
-               loadMode=loadMode}
+              {baseFilename = baseFilename,
+               loadPath = loadPath,
+               loadMode = loadMode,
+               defaultInterface = defaultInterface}
               absyn
         val _ = #stop Counter.loadFileTimeCounter()
         val _ = printAbsyn Control.printLoadFile "File Loaded" abunit
+        val _ = printFileDependency [Control.printDependency] "File dependency"
+                                    dependency
+      in
+        (dependency, prelude, abunit)
+      end
+
+  fun doLoadInterface {loadPath, loadMode, ...} sources =
+      let
+        val _ = #start Counter.loadFileTimeCounter ()
+        val (dependency, abunit) =
+            LoadFile.loadInterfaceFiles
+              {loadPath=loadPath, loadMode=loadMode}
+              sources
+        val _ = #stop Counter.loadFileTimeCounter ()
+        val _ = printAbsynInterface
+                  [Control.printLoadFile, Control.printSystemDecls]
+                  "File Loaded"
+                  abunit
+        val _ = printFileDependency
+                  [Control.printDependency, Control.printSystemDecls]
+                  "File dependency"
+                  dependency
       in
         (dependency, abunit)
       end
@@ -193,6 +246,21 @@ struct
         val _ =  #stop Counter.elaborationTimeCounter()
         val _ = outputWarnings warnings
         val _ = printPatternCalc Control.printElab "Elaborated" plunit
+      in
+        (newFixEnv, plunit)
+      end
+
+  fun doElabInterface {outputWarnings, ...} {fixEnv, ...} abunit =
+      let
+        val _ = #start Counter.elaborationTimeCounter ()
+        val (newFixEnv, plunit, warnings) =
+            Elaborator.elaborateInterface fixEnv abunit
+        val _ =  #stop Counter.elaborationTimeCounter()
+        val _ = case warnings of nil => () | l => outputWarnings l
+        val _ = printPatternCalcInterface
+                  [Control.printElab, Control.printSystemDecls]
+                  "Elaborate"
+                  plunit
       in
         (newFixEnv, plunit)
       end
@@ -210,6 +278,16 @@ struct
         val _ = printIDCalc [Control.printNameEval] "Name Evaluation" icdecls
       in
         (requireTopEnv, returnTopEnv, icdecls)
+      end
+
+  fun doNameEvalInterface {outputWarnings, ...} {topEnv, ...} plunit =
+      let
+        val _ = #start Counter.nameEvaluationTimeCounter()
+        val (newTopEnv, warnings) = NameEval.nameEvalInterface topEnv plunit
+        val _ =  #stop Counter.nameEvaluationTimeCounter()
+        val _ = case warnings of nil => () | l => outputWarnings l
+      in
+        newTopEnv
       end
 
   fun doTypeInference env outputWarnings icdecls =
@@ -230,6 +308,17 @@ struct
         val _ =  #stop Counter.UncurryOptimizationTimeCounter()
         val _ = printTypedCalc [Control.printUncurryOpt]
                                "Uncurrying Optimized" tpdecs
+      in
+       tpdecs
+      end
+
+  fun doPolyTyElimination tpdecs =
+      let
+        val _ = #start Counter.polyTyEliminationCounter()
+        val tpdecs = PolyTyElimination.compile tpdecs
+        val _ =  #stop Counter.polyTyEliminationCounter()
+        val _ = printTypedCalc [Control.printPolyTyElim]
+                               "PolyTy Eliminated" tpdecs
       in
        tpdecs
       end
@@ -299,17 +388,28 @@ struct
         icdecls
       end
 
-  fun doFFICompilation nameevalTopEnv rcdecs =
+  fun doReifyTopEnv env version rcdecls =
+      let
+        val _ = #start Counter.reifyTopEnvTimeCounter()
+        val {env, decls} = ReifyTopEnv.topEnvBind env version
+        val _ =  #stop Counter.reifyTopEnvTimeCounter()
+        val rcdecls = rcdecls @ decls
+        val _ = printRecordCalc [Control.printReifyTopEnv] "ReifyTopEnv" rcdecls
+      in
+        (env, rcdecls)
+      end
+
+  fun doFFICompilation rcdecs =
       let
         val _ = #start Counter.ffiCompilationTimeCounter()
-        val rcdecs = FFICompilation.compile nameevalTopEnv rcdecs
+        val rcdecs = FFICompilation.compile rcdecs
         val _ =  #stop Counter.ffiCompilationTimeCounter()
         val _ = printRecordCalc [Control.printFFICompile] "FFI Compiled" rcdecs
       in
         rcdecs
       end
 
-  fun doRecordCompilation nameevalTopEnv rcdecs =
+  fun doRecordCompilation rcdecs =
       let
        val _ = #start Counter.recordCompilationTimeCounter()
         val rcdecs = RecordCompilation.compile rcdecs
@@ -375,10 +475,10 @@ struct
         anprog
       end
 
-  fun doMachineCodeGen dependency anprog =
+  fun doMachineCodeGen anprog =
       let
         val _ = #start Counter.machineCodeGenTimeCounter()
-        val mcprog = MachineCodeGen.compile dependency anprog
+        val mcprog = MachineCodeGen.compile anprog
         val _ = #stop Counter.machineCodeGenTimeCounter()
         val _ = printMachineCode Control.printMachineCodeGen
                                  "MachineCodeGen" mcprog
@@ -408,10 +508,13 @@ struct
         mcprog
       end
 
-  fun doLLVMGen ({triple,...}:LLVMUtils.compile_options) mcprog =
+  fun doLLVMGen ({triple,...}:LLVMUtils.compile_options)
+                (prelude, mcprog) =
       let
         val _ = #start Counter.llvmGenTimeCounter()
-        val llvmprog = LLVMGen.compile {targetTriple = triple} mcprog
+        val llvmprog = LLVMGen.compile
+                         {targetTriple = triple}
+                         (prelude, mcprog)
         val _ = #stop Counter.llvmGenTimeCounter()
         val _ = printLLVMIR Control.printLLVMGen "LLVM generated" llvmprog
       in
@@ -421,11 +524,20 @@ struct
   fun doLLVMEmit llvmir =
       let
         val _ = #start Counter.llvmEmitTimeCounter()
-        val module = LLVMEmit.emit llvmir
+        val llfile = LLVMEmit.emit llvmir
         val _ = #stop Counter.llvmEmitTimeCounter()
-        val _ = printLLVMModule Control.printLLVMEmit "LLVM Emit" module
+        val _ = printFile Control.printLLVMEmit "LLVM emit" llfile
       in
-        module
+        llfile
+      end
+
+  fun doAssemble llfile =
+      let
+        val _ = #start Counter.assembleTimeCounter()
+        val bcfile = LLVMUtils.assemble llfile
+        val _ = #stop Counter.assembleTimeCounter()
+      in
+        bcfile
       end
 
 (*
@@ -472,7 +584,7 @@ struct
   end (* local *)
 *)
 
-  exception Return of InterfaceName.dependency * result
+  exception Return of InterfaceName.file_dependency * result
 
   fun compile llvmOptions
               (options as {stopAt, outputWarnings, ...}:TopData.options)
@@ -483,10 +595,10 @@ struct
 
         val _ = #start Counter.compilationTimeCounter()
 
-        val _ = InitPointerSize.init llvmOptions
+        val _ = initPointerSize llvmOptions
 
         val parsed = doParse input
-        val (dependency, abunit) = doLoadFile options context parsed
+        val (dependency, prelude, abunit) = doLoadFile options context parsed
 
         val (newFixEnv, plunit) = doElaboration outputWarnings fixEnv abunit
 
@@ -497,7 +609,7 @@ struct
         val (requireTopEnv, nameevalTopEnv, icdecls) =
             doNameEvaluation outputWarnings context plunit
         val externDecls = UserLevelPrimitive.init requireTopEnv
-        val icdecls = icdecls @ externDecls
+        val icdecls = externDecls @ icdecls 
         val icdecls = doTypedElaboration icdecls
         val icdecls = doVALRECOptimization icdecls
 
@@ -505,9 +617,12 @@ struct
                      then icdecls
                      else doFundeclElaboration icdecls
 
+        val _ = TopEnvUtils.setCurrentEnv 
+                  (NameEvalEnvPrims.topEnvWithTopEnv (requireTopEnv,nameevalTopEnv))
+
         val (typeinfVarEnv, tpdecs) = 
             doTypeInference 
-              (NameEvalEnv.topEnvWithTopEnv (requireTopEnv,nameevalTopEnv))
+              (NameEvalEnvPrims.topEnvWithTopEnv (requireTopEnv,nameevalTopEnv))
               outputWarnings icdecls
             handle exn => raise exn
 
@@ -524,6 +639,11 @@ struct
                      else tpdecs
 
         val tpdecs =
+            if stopAt <> ErrorCheck andalso !Control.doPolyTyElimination
+            then doPolyTyElimination tpdecs
+            else tpdecs
+
+        val tpdecs =
             if stopAt <> ErrorCheck andalso !Control.doTCOptimization
             then doTypedCalcOptimization tpdecs
             else tpdecs
@@ -534,17 +654,17 @@ struct
                 then raise Return (dependency, STOPPED)
                 else ()
 
-        val {env = nameevalTopEnv, decls} = 
-            ReifyTopEnv.topEnvBind {sessionTopEnv=nameevalTopEnv, requireTopEnv=topEnv} version
+        val (nameevalTopEnv, rcdecs) =
+            if !Control.interactiveMode andalso not (!Control.skipPrinter)
+            then doReifyTopEnv {sessionTopEnv=nameevalTopEnv,
+                                requireTopEnv=topEnv}
+                               version
+                               rcdecs
+            else (nameevalTopEnv, rcdecs)
         val newContext = {topEnv=nameevalTopEnv, fixEnv=newFixEnv}
 
-        val rcdecs =
-            if !Control.interactiveMode andalso not (!Control.skipPrinter)
-            then rcdecs @ decls
-            else rcdecs
-
-        val rcdecs = doFFICompilation nameevalTopEnv rcdecs
-        val rcdecs = doRecordCompilation nameevalTopEnv rcdecs
+        val rcdecs = doFFICompilation rcdecs
+        val rcdecs = doRecordCompilation rcdecs
 
         val rcdecs = if !Control.doRCOptimization
                      then doRecordCalcOptimization rcdecs
@@ -555,79 +675,63 @@ struct
         val cccalc = doClosureConversion2 bcdecs
         val nccalc = doCallingConventionCompile cccalc
         val ancalc = doANormalize nccalc
-        val mccalc = doMachineCodeGen dependency ancalc
+        val mccalc = doMachineCodeGen ancalc
         val mccalc = if !Control.insertCheckGC
                      then doInsertCheckGC mccalc
                      else mccalc
         val mccalc = doStackAllocation mccalc
-        val llvmir = doLLVMGen llvmOptions mccalc
-        val module = doLLVMEmit llvmir
-
+        val llvmir = doLLVMGen llvmOptions (prelude, mccalc)
+        val llfile = doLLVMEmit llvmir
+        val bcfile = doAssemble llfile
         val _ =  #stop Counter.compilationTimeCounter()
+        val _ = RuntimeTypes.uninit ()
       in
-        (dependency, RETURN (newContext, module))
+        (dependency, RETURN (newContext, bcfile))
       end
       handle Return return =>
-             (#stop Counter.compilationTimeCounter(); return)
+             (#stop Counter.compilationTimeCounter();
+              RuntimeTypes.uninit ();
+              return)
+           | e => (RuntimeTypes.uninit (); raise e)
 
-  fun loadBuiltin filename =
+  exception Return of InterfaceName.file_dependency
+
+  fun loadInterfaces (options as {stopAt, ...}) context sources =
       let
-        val file = Filename.TextIO.openIn filename
-        val input = InterfaceParser.setup
-                      {read = fn n => TextIO.inputN (file, n),
-                       sourceName = Filename.toString filename}
-        val itop = InterfaceParser.parse input
-                   handle e => (TextIO.closeIn file; raise e)
-        val _ = TextIO.closeIn file
-        val abdecs =
-            case itop of
-              AbsynInterface.INTERFACE {requires=nil, provide} => provide
-            | _ => raise Bug.Bug "illeagal builtin file"
-        val (fixEnv, pldecs) = Elaborator.elaborateBuiltin abdecs
-        val (topEnv, idcalc) = NameEval.evalBuiltin pldecs
-      in
-        {topEnv=topEnv, version=NONE, fixEnv=fixEnv, builtinDecls=idcalc}
-        : toplevelContext
-      end
-
-  exception Return of InterfaceName.dependency
-
-  fun loadInterfaces {stopAt, stdPath, loadPath, loadMode, outputWarnings, ...}
-                     ({topEnv, fixEnv, ...}:toplevelContext)
-                     sources =
-      let
-        val outputWarnings = fn nil => () | l => outputWarnings l
-
-        val _ = #start Counter.loadFileTimeCounter ()
-        val (dependency, abunit) =
-            LoadFile.loadInterfaceFiles
-              {stdPath=stdPath, loadPath=loadPath, loadMode=loadMode}
-              sources
-        val _ = #stop Counter.loadFileTimeCounter ()
-        val _ = printCode [Control.printLoadFile]
-                          (Bug.prettyPrint
-                           o AbsynInterface.format_interface_unit)
-                          "File Loaded" [abunit]
-
-        val _ = #start Counter.elaborationTimeCounter ()
-        val (newFixEnv, plunit, warnings) =
-            Elaborator.elaborateInterface fixEnv abunit
-        val _ =  #stop Counter.elaborationTimeCounter()
-        val _ = outputWarnings warnings
-        val _ = printCode [Control.printElab, Control.printSystemDecls]
-                          (Bug.prettyPrint
-                           o PatternCalcInterface.format_interface_unit)
-                          "Elaborated" [plunit]
-
+        val (dependency, abunit) = doLoadInterface options sources
+        val (newFixEnv, plunit) = doElabInterface options context abunit
         val _ = if stopAt = SyntaxCheck then raise Return dependency else ()
-
-        val _ = #start Counter.nameEvaluationTimeCounter()
-        val (newTopEnv, warnings) = NameEval.nameEvalInterface topEnv plunit
-        val _ =  #stop Counter.nameEvaluationTimeCounter()
-        val _ = outputWarnings warnings
+        val newTopEnv = doNameEvalInterface options context plunit
       in
         (dependency, {topEnv=newTopEnv, fixEnv=newFixEnv})
       end
       handle Return x => (x, emptyNewContext)
+
+  fun loadBuiltin source =
+      let 
+        val options =
+            {loadPath = nil,
+             loadMode = InterfaceName.ALL,
+             outputWarnings = fn l => raise UserError.UserErrors l}
+        val context =
+            {fixEnv = SymbolEnv.empty,
+             topEnv = NameEvalEnv.emptyTopEnv}
+        val (dependency, abunit) = doLoadInterface options [source]
+        val (newFixEnv, plunit) = doElabInterface options context abunit
+        val topdecs =
+            case plunit of
+              {interfaceDecs = [{requiredIds = nil, provideTopdecs, ...}],
+               requiredIds = [_], topdecsInclude = nil} => provideTopdecs
+            | _ =>
+              raise UserError.UserErrors
+                      [(Loc.noloc, UserError.Error, IllegalBuiltin (#2 source))]
+        val (newTopEnv, idcalc) = NameEval.evalBuiltin topdecs
+      in
+        {topEnv=newTopEnv,
+         version=InterfaceName.SELF,
+         fixEnv=newFixEnv,
+         builtinDecls=idcalc}
+        : toplevelContext
+      end
 
 end

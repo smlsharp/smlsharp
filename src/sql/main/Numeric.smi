@@ -1,0 +1,28 @@
+_require "../../basis.smi"
+
+structure SMLSharp_SQL_Numeric =
+struct
+  type num (= boxed)
+  val toLargeInt : num -> LargeInt.int
+  val fromLargeInt : LargeInt.int -> num
+  val toLargeReal : num -> LargeReal.real
+  val fromLargeReal : LargeReal.real -> num
+  val toInt : num -> Int.int
+  val fromInt : Int.int -> num
+  val toDecimal : num -> IEEEReal.decimal_approx
+  val fromDecimal : IEEEReal.decimal_approx -> num
+  val + : num * num -> num
+  val - : num * num -> num
+  val * : num * num -> num
+  val quot : num * num -> num
+  val rem : num * num -> num
+  val compare : num * num -> order
+  val < : num * num -> bool
+  val <= : num * num -> bool
+  val > : num * num -> bool
+  val >= : num * num -> bool
+  val ~ : num -> num
+  val abs : num -> num
+  val toString : num -> string
+  val fromString : string -> num option
+end

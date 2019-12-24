@@ -1,21 +1,25 @@
 _require local "../../../../basis.smi"
 
-_require local "../../debug/main/Bug.ppg.smi"
+_require local "../../debug/main/Bug.smi"
 _require local "../../format-utils/main/TermPrintUtils.ppg.smi"
 
 _require "../../../../smlformat-lib.smi"
 
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../libs/toolchain/main/Filename.smi"
 
 structure ReifiedTy =
 struct
   type btvId = BoundTypeVarID.id
   type typId = TypID.id
   exception ConSetNotFound
+
+  val ptrSize : word
 
   datatype taggedLayout 
     = TAGGED_RECORD of {tagMap: int SEnv.map}
@@ -36,44 +40,58 @@ struct
   datatype reifiedTy
     = ARRAYty of reifiedTy
     | BOOLty
+    | BOTTOMty
+    | BOXEDty
     | BOUNDVARty of BoundTypeVarID.id
     | CHARty
     | CODEPTRty
-    | CONSTRUCTty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, conSet:reifiedTy option SEnv.map, layout:layout, size:int}
-    | DATATYPEty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, layout:layout, size:int}
+    | CONSTRUCTty of
+      {longsymbol: Symbol.longsymbol, 
+       id:TypID.id, 
+       args:reifiedTy list,
+       conSet:reifiedTy option SEnv.map, layout:layout, size:int}
+    | DATATYPEty of
+      {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, layout:layout, size:int}
     | DUMMYty of {boxed : bool, size : word}
+    | DYNAMICty of reifiedTy
     | ERRORty
     | EXNTAGty
     | EXNty
     | FUNMty of reifiedTy list * reifiedTy
-    | INTty
-    | INT8ty
+    | IENVMAPty of reifiedTy
     | INT16ty
     | INT64ty
-    | INTERNALty of int
+    | INT8ty
+    | INTERNALty
     | INTINFty
+    | INT32ty
     | LISTty of reifiedTy
     | OPAQUEty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, size:int}
     | OPTIONty of reifiedTy
     | POLYty of {boundenv: btvId BoundTypeVarID.Map.map, body:reifiedTy}
     | PTRty of reifiedTy
     | REAL32ty
-    | REALty
+    | REAL64ty
+    | RECORDLABELty 
+    | RECORDLABELMAPty of reifiedTy
     | RECORDty of reifiedTy RecordLabel.Map.map
     | REFty of reifiedTy
+    | SENVMAPty of reifiedTy
     | STRINGty
     | TYVARty
     | UNITty 
     | VECTORty of reifiedTy
-    | WORDty
-    | WORD8ty
+    | VOIDty
     | WORD16ty
     | WORD64ty
+    | WORD8ty
+    | WORD32ty
 
- type conSet = reifiedTy option SEnv.map
-
+  type conSet = reifiedTy option SEnv.map
+  datatype void = void
   val format_reifiedTy : reifiedTy -> SMLFormat.format
   val reifiedTyToString : reifiedTy -> string
+  val printTy : reifiedTy -> unit
   val reifiedTyEq : reifiedTy * reifiedTy -> bool
 
   val emptyConSet : conSet
@@ -106,11 +124,13 @@ struct
   val getConSet : tyRep -> conSet
   val instantiate : reifiedTy * reifiedTy list -> reifiedTy
 
-  val stringReifiedTyListToRecordTy :  (string * reifiedTy) list -> reifiedTy
+  val stringReifiedTyListToRecordTy : (string * reifiedTy) list -> reifiedTy
   val stringReifiedTyOptionListToConSet : (string * reifiedTy option) list -> conSet
-  val makePos : string -> int -> int -> Loc.pos
+  val makePos : bool -> bool -> string option -> int -> int -> int -> int ->  Loc.pos
   val typIdConSetListToConSetEnv : (TypID.id * conSet) list -> conSetEnv
   val TyRep : conSetEnv -> reifiedTy -> tyRep
+  val TyRepToReifiedTy : tyRep -> reifiedTy 
+  val MergeConSetEnvWithTyRepList : conSetEnv -> tyRep list -> conSetEnv
   val btvIdBtvIdListToBoundenv : (btvId * btvId) list -> btvId BoundTypeVarID.Map.map
   val boundenvReifiedTyToPolyTy : btvId BoundTypeVarID.Map.map -> reifiedTy -> reifiedTy
   val makeDummyTy : bool -> word -> reifiedTy
@@ -122,5 +142,8 @@ struct
   val tagMapToTagMapRecord : (int SEnv.map) -> {tagMap:int SEnv.map}
   val longsymbolIdArgsLayoutListToDatatypeTy : Symbol.longsymbol -> TypID.id -> reifiedTy list -> layout -> int -> reifiedTy
   val longsymbolIdArgsToOpaqueTy : Symbol.longsymbol -> TypID.id -> reifiedTy list -> int -> reifiedTy
+
+  val sizeOf : reifiedTy -> word
+  val isGroundTy : reifiedTy -> bool
 
 end

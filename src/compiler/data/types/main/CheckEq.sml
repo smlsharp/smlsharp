@@ -8,7 +8,9 @@ struct
 local
   structure T = Types
   structure TU = TypesUtils
+(*
   structure BT = BuiltinTypes
+*)
 in
 
   (** raised when checkEq fails *)
@@ -22,96 +24,88 @@ in
    * @return nil
    *)
   fun checkEq ty =
-      case ty of
-        T.SINGLETONty _ => raise Eqcheck
-      | T.BACKENDty _ => raise Eqcheck
-      | T.ERRORty  => raise Eqcheck
-      | T.DUMMYty _ => raise Eqcheck
-      | T.TYVARty
-          (r
-             as
-             ref(T.TVAR {lambdaDepth,id, kind = T.KIND {tvarKind, eqKind, dynKind, reifyKind, subkind}, utvarOpt = NONE}))
-        => 
-        (case eqKind  of
-           T.NONEQ =>
-             r :=
-             T.TVAR{
+      if TU.admitEqTy ty then ()
+      else
+        case ty of
+          T.TYVARty
+            (r
+               as
+               ref(T.TVAR {lambdaDepth,
+                           id, 
+                           kind = T.KIND {tvarKind, properties, dynamicKind}, 
+                           utvarOpt = NONE}))
+          => 
+          (case tvarKind of 
+             T.UNIV =>
+               r :=
+               T.TVAR
+                 {
                   lambdaDepth = lambdaDepth, 
                   id = id, 
-                  kind = T.KIND {tvarKind = tvarKind, 
-                                 eqKind = T.EQ, 
-                                 dynKind=dynKind,
-                                 reifyKind=reifyKind,
-                                 subkind = subkind},
+                  kind = T.KIND {tvarKind = tvarKind,
+                                 properties = T.addProperties T.EQ properties,
+                                 dynamicKind = dynamicKind},
                   utvarOpt = NONE
-                  }
-           | T.EQ => ();
-          case tvarKind of 
-            T.OCONSTkind L =>
-              let
-                val newL = List.filter TU.admitEqTy L 
-              in
-                case newL of
-                  nil => raise Eqcheck
-                | _ =>
-                    r :=
-                    T.TVAR{
-                         lambdaDepth = lambdaDepth, 
-                         id = id, 
-                         kind = T.KIND {tvarKind = T.OCONSTkind newL,
-                                        eqKind = T.EQ, 
-                                        dynKind = dynKind,
-                                        reifyKind = reifyKind,
-                                        subkind = subkind},
-                         utvarOpt = NONE
-                         }
-              end
-          | T.OPRIMkind {instances, operators} =>
-              let
-                val instances = List.filter TU.admitEqTy instances
-              in
-                case instances of
-                  nil => raise Eqcheck
-                | _ =>
-                    r :=
-                    T.TVAR{
-                         lambdaDepth = lambdaDepth, 
-                         id = id, 
-                         kind = T.KIND
-                                  {tvarKind = T.OPRIMkind
-                                                {instances = instances,
-                                                 operators = operators},
-                                   eqKind = T.EQ, 
-                                   dynKind = dynKind,
-                                   reifyKind = reifyKind,
-                                   subkind = subkind},
-                         utvarOpt = NONE
-                         }
-              end
-           | _ => ()
-        )
-      | T.TYVARty (ref(T.TVAR {kind = T.KIND {eqKind = T.EQ, ...}, utvarOpt = SOME _, ...})) => ()
-      | T.TYVARty (ref(T.TVAR {kind = T.KIND {eqKind = T.NONEQ, ...}, utvarOpt = SOME _, ...})) =>
-        (*
-          We cannot coerce user specified noneq type variable.
-        *)
-           raise Eqcheck
+                 }
+           | T.REC tyRecordLabelMap  => 
+             (checkEq (T.RECORDty tyRecordLabelMap);
+              r :=
+              T.TVAR
+                {
+                 lambdaDepth = lambdaDepth, 
+                 id = id, 
+                 kind = T.KIND {tvarKind = tvarKind,
+                                properties = T.addProperties T.EQ properties,
+                                dynamicKind = dynamicKind
+                               },
+                 utvarOpt = NONE
+                }
+             )
+           | T.OCONSTkind L =>
+             let
+               val newL = List.filter TU.admitEqTy L 
+             in
+               case newL of
+                 nil => raise Eqcheck
+               | _ =>
+                 r :=
+                 T.TVAR
+                   {
+                    lambdaDepth = lambdaDepth, 
+                    id = id, 
+                    kind = T.KIND {tvarKind = T.OCONSTkind newL,
+                                   properties = T.addProperties T.EQ properties,
+                                   dynamicKind = dynamicKind
+                                  },
+                    utvarOpt = NONE
+                   }
+             end
+           | _ => raise Eqcheck
+          )
       | T.TYVARty (ref(T.SUBSTITUTED ty)) => checkEq ty
       | T.BOUNDVARty tid => ()
-      | T.FUNMty _ => raise Eqcheck
       | T.RECORDty fl => RecordLabel.Map.foldr (fn (ty,()) => checkEq ty) () fl
-      | T.CONSTRUCTty {tyCon={id,iseq,...},args} =>
+      | T.CONSTRUCTty {tyCon={id,admitsEq,...},args} =>
+        if TypID.eq(id, T.arrayTypId) then ()
+        else if TypID.eq(id, T.refTypId) then ()
+        else if admitsEq then List.app checkEq args
+        else raise Eqcheck
+(*
         if TypID.eq(id, #id BT.arrayTyCon) then ()
         else if TypID.eq(id, #id BT.refTyCon) then ()
-        else if iseq then List.app checkEq args
+        else if admitsEq then List.app checkEq args
         else raise Eqcheck
+*)
       | T.POLYty {boundtvars, constraints, body} =>
         (
           BoundTypeVarID.Map.app 
-              (fn T.KIND {eqKind, ...} =>
-                  (case eqKind of T.NONEQ => raise Eqcheck | T.EQ => ()))
-              boundtvars;
+            (fn T.KIND {properties, ...} =>
+                if T.isProperties T.EQ properties then () else raise Eqcheck)
+            boundtvars;
           checkEq body
         )
+      | T.DUMMYty (dummyTyID, T.KIND {tvarKind, properties, dynamicKind}) =>
+        if T.isProperties T.EQ properties then () else raise Eqcheck
+      | _ => raise Eqcheck
   end
 end

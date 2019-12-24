@@ -7,6 +7,9 @@ struct
 local
   structure I = IDCalc
   structure T = Types
+  structure U = Unify
+  (* structure DK = DynamicKind *)
+
   structure TB = TypesBasics
   fun bug s = Bug.Bug ("EvalITy: " ^ s)
   val debugPrint = fn s => if !Bug.debugPrint then print s else ()
@@ -16,7 +19,20 @@ local
   fun printPath path =
       debugPrint (String.concatWith "." path)
 
+  type freeTvarEnv = T.ty TvarID.Map.map ref
+  val freeTvarEnv = ref TvarID.Map.empty : freeTvarEnv
 in
+  fun resetFreeTvarEnv () = freeTvarEnv := TvarID.Map.empty
+  fun setFreeTvarEnv (id, ty1) = 
+      let
+        val _ = 
+            case TvarID.Map.find(!freeTvarEnv, id) of
+              SOME ty2  => U.unify [(ty1, ty2)]
+            | NONE => ()
+      in
+        freeTvarEnv := TvarID.Map.insert(!freeTvarEnv, id, ty1)
+      end
+      
   type ityContext = {oprimEnv:I.ty OPrimMap.map,
                      tvarEnv:Types.ty TvarMap.map, 
                      varEnv:I.ty VarMap.map}
@@ -26,27 +42,27 @@ in
        tvarEnv=TvarMap.empty,
        varEnv=VarMap.empty
       }
-  exception EVALTFUN of {iseq:bool, formals:I.formals, realizerTy:I.ty, longsymbol:Symbol.longsymbol}
+  exception EVALTFUN of {admitsEq:bool, formals:I.formals, realizerTy:I.ty, longsymbol:Symbol.longsymbol}
 
   fun evalDtyKind context dtyKind = 
       case dtyKind of
-        I.DTY => T.DTY
-      | I.DTY_INTERFACE => T.DTY
-      | I.FUNPARAM => T.DTY
+        I.DTY ty => T.DTY ty
+      | I.DTY_INTERFACE ty => T.DTY ty
+      | I.FUNPARAM ty => T.DTY ty
       | I.OPAQUE {tfun, revealKey} =>
         let
           val opaqueRep = 
               T.TYCON (evalTfun context tfun)
               handle
-              EVALTFUN{iseq, formals, realizerTy, longsymbol} =>
+              EVALTFUN{admitsEq, formals, realizerTy, longsymbol} =>
               let
                 val (context, btvEnv) =
                     evalKindedTvarList
                       context 
-                      (map (fn tv => (tv, I.UNIV)) formals)
+                      (map (fn tv => (tv, I.UNIV I.emptyProperties)) formals)
                 val rty = evalIty context realizerTy
               in
-                T.TFUNDEF {iseq=iseq,
+                T.TFUNDEF {admitsEq=admitsEq,
                            arity=length formals,
                            polyTy=T.POLYty{boundtvars=btvEnv,constraints = nil, body=rty}
                            }
@@ -54,33 +70,43 @@ in
         in
           T.OPAQUE {opaqueRep=opaqueRep, revealKey=revealKey}
         end
-      | I.BUILTIN builtinTy => T.BUILTIN builtinTy
+      | I.INTERFACE tfun =>
+        let
+          val interfaceRep = 
+              T.TYCON (evalTfun context tfun)
+              handle
+              EVALTFUN{admitsEq, formals, realizerTy, longsymbol} =>
+              let
+                val (context, btvEnv) =
+                    evalKindedTvarList
+                      context 
+                      (map (fn tv => (tv, I.UNIV I.emptyProperties)) formals)
+                val rty = evalIty context realizerTy
+              in
+                T.TFUNDEF {admitsEq=admitsEq,
+                           arity=length formals,
+                           polyTy=T.POLYty{boundtvars=btvEnv,constraints = nil, body=rty}
+                           }
+              end
+        in
+          T.INTERFACE interfaceRep
+        end
 (*
   and evalTfun context path tfun = 
 *)
   and evalTfun context tfun = 
       case tfun of
-        I.TFUN_DEF {iseq, formals, realizerTy, longsymbol} =>
-        raise EVALTFUN {iseq=iseq, formals=formals, realizerTy=realizerTy, longsymbol=longsymbol}
+        I.TFUN_DEF {admitsEq, formals, realizerTy, longsymbol} =>
+        raise EVALTFUN {admitsEq=admitsEq, formals=formals, realizerTy=realizerTy, longsymbol=longsymbol}
       | I.TFUN_VAR tfunKindRef =>
         (case tfunKindRef of
-           ref(I.TFUN_DTY{id,iseq,formals,runtimeTy, longsymbol, conIDSet,
+           ref(I.TFUN_DTY{id,admitsEq,formals, longsymbol, conIDSet,
                            conSpec,liftedTys,dtyKind}) =>
            let
-             (* Here we changed LIFTEDty to BOXED.
-               I think this is OK since this type only occurrs in the functor body
-               and we changes all of them.
-               The other possibility is to introduce (LIFTEDty builtinTy) in
-               tyCon. 
-               *)
-             val runtimeTy = 
-                 case runtimeTy of
-                   I.BUILTINty ty => ty
-                 | I.LIFTEDty _ => BuiltinTypeNames.BOXEDty
              val (argTyContext, btvEnv) =
                  evalKindedTvarList
                    context
-                   (map (fn ty => (ty, I.UNIV)) formals)
+                   (map (fn ty => (ty, I.UNIV I.emptyProperties)) formals)
              val argTyFn =
                  if BoundTypeVarID.Map.isEmpty btvEnv
                  then fn ity => fn () => evalIty argTyContext ity
@@ -94,8 +120,7 @@ in
                path = path,
               *)
                longsymbol = longsymbol,
-               iseq = iseq,
-	       runtimeTy = runtimeTy,
+               admitsEq = admitsEq,
                arity = List.length formals,
                conIDSet = conIDSet,
                conSet = SymbolEnv.map (Option.map argTyFn) conSpec,
@@ -103,14 +128,14 @@ in
                dtyKind = evalDtyKind context dtyKind
               }
            end
-         | ref(I.TFV_SPEC {longsymbol, id, iseq, formals}) =>
+         | ref(I.TFV_SPEC {longsymbol, id, admitsEq, formals}) =>
            (debugPrint "****** evalTfun ******\n";
             debugPrint "tfun\n";
             printTfun tfun;
             debugPrint "\n";
             raise bug "TFV_SPEC in evalTfun"
            )
-         | ref(I.TFV_DTY {longsymbol, id,iseq,formals,conSpec,liftedTys}) =>
+         | ref(I.TFV_DTY {longsymbol, id,admitsEq,formals,conSpec,liftedTys}) =>
            (debugPrint "****** evalTfun ******\n";
             debugPrint "tfun\n";
             printTfun tfun;
@@ -121,6 +146,29 @@ in
          | ref(I.INSTANTIATED{tfun,...}) => evalTfun context tfun
          | ref(I.FUN_DTY{tfun,...}) => evalTfun context tfun
         )
+
+  and evalFreeTvar context {symbol, id, isEq, tvarKind} =
+      let
+        val {tvarKind, properties} =
+            case tvarKind of
+              I.UNIV props => {tvarKind = T.UNIV, properties = props}
+            | I.REC {recordKind=tyFields, properties} => 
+              {tvarKind = T.REC (RecordLabel.Map.map (evalIty context) tyFields), 
+               properties = properties}
+        val properties = 
+            if isEq
+            then T.addProperties I.EQ properties
+            else properties
+        val kind = {kind = T.KIND {tvarKind = tvarKind, 
+                                   properties = properties, 
+                                   dynamicKind = NONE},
+                    utvarOpt = NONE : T.utvar option}
+        val newTy = T.newty kind
+        val _ = setFreeTvarEnv (id, newTy)
+      in
+        newTy
+      end
+
   and evalIty context ity =
        case ity of
          I.TYWILD => T.newty T.univKind
@@ -131,91 +179,47 @@ in
           | NONE => 
             (debugPrint "evalIty tvar not found\n";
              printTy ity;
-             raise bug ("free tvar:" ^(Bug.prettyPrint(I.format_ty ity)))
+             debugPrint "\n";
+             raise bug ("free tvar:" ^ (Bug.prettyPrint(I.format_ty ity)))
             )
          )
-       | I.TYRECORD tyMap => T.RECORDty (RecordLabel.Map.map (evalIty context) tyMap)
-       | I.TYCONSTRUCT {tfun, args} => 
-(*
-  2016-11-02 JSON.null 大堀：に関する以下のad hocな対応は必要ないと思われる．
-*)
-         (* JSON.nullを'a#json optionに変換; circulr referenceのためbuiltintypesが使えないことに
-            ともない，ad-hocな対応;
-          *)
+       | I.TYFREE_TYVAR freeTvar => evalFreeTvar context freeTvar
+       | I.TYRECORD {ifFlex, fields=tyMap} => 
          let
-           fun isJsonNullTfun tfun = false
-           (* 2016-10-24 sasaki: UserLevelPrimitiveとの循環参照を避けるための一時的な変更
-               (case tfun of
-                  I.TFUN_VAR (ref (I.TFUN_DTY {longsymbol, ...})) =>
-                  if map Symbol.symbolToString longsymbol = ["JSON", "null"] andalso
-                     TypID.eq(I.tfunId tfun, I.tfunId (UserLevelPrimitive.JSON_null_tfun())) then
-                    true 
-                  else false
-                | _ => false
-               )
-               handle Bug.Bug _ => false
-            *)
+           val fields = RecordLabel.Map.map (evalIty context) tyMap
          in
-(* 2016-10-24 sasaki: isJsonNullTfunは常にfalseを返すようにしたため変更
-           if isJsonNullTfun tfun then
-             let
-(* 
- (*
-  NILと同様の扱いで，POLYtyを与える必要があが，ユーザライブラリのapply termであるため
-  このad hocな解決は困難
- *)
-               val btvid = BoundTypeVarID.generate ()
-               val btvEnv = BoundTypeVarID.Map.insert
-                            (BoundTypeVarID.Map.empty,
-                             btvid,
-                             {tvarKind = T.JSON,
-                              eqKind = T.NONEQ}
-                            )
-                   handle e => raise e
-               val polybody = T.CONSTRUCTty{tyCon = tyCon, args = [T.BOUNDVARty btvid]}
-               val polyty = T.POLYty {boundtvars = btvEnv, constraints = nil, body = polybody}
-*)
-               val arg = T.newtyRaw
-                           {lambdaDepth = T.infiniteDepth,
-                            tvarKind = T.JSON,
-                            eqKind = T.NONEQ,
-                            occurresIn = nil,
-                            utvarOpt = NONE}
-               val tyCon = evalTfun context (UserLevelPrimitive.JSON_option_tfun())
-             in
-               T.CONSTRUCTty{tyCon = tyCon, args = [arg]}
-             end
-           else
-*)
-             let
-               val args = map (evalIty context) args
-               val tyCon = evalTfun context tfun
-                   handle e => raise e
-             in
-               T.CONSTRUCTty{tyCon=tyCon, args=args}
-             end
-             handle 
-             EVALTFUN {iseq, formals, realizerTy, longsymbol} =>
-             if length formals = length args then
-               let
-                 val args = map (evalIty context) args
-                 val tvarTyPairs = ListPair.zip (formals, args)
-                 val tvarEnv = #tvarEnv context
-                 val tvarEnv = 
-                     foldr
-                       (fn ((tvar, ty), tvarEnv) =>
-                           TvarMap.insert(tvarEnv, tvar, ty))
-                       tvarEnv
-                       tvarTyPairs
-                 val context = {tvarEnv = tvarEnv,
-                                varEnv = #varEnv context,
-                                oprimEnv = #oprimEnv context}
-               in
-                 evalIty context realizerTy
-               end
-             else
-               raise bug "TYCONSTRUCT ARITY"
+           if ifFlex then T.newtyWithRecordKind fields
+           else T.RECORDty fields
          end
+       | I.TYCONSTRUCT {tfun, args} => 
+         (let
+            val args = map (evalIty context) args
+            val tyCon = evalTfun context tfun
+                handle e => raise e
+          in
+            T.CONSTRUCTty{tyCon=tyCon, args=args}
+          end
+          handle 
+          EVALTFUN {admitsEq, formals, realizerTy, longsymbol} =>
+          if length formals = length args then
+            let
+              val args = map (evalIty context) args
+              val tvarTyPairs = ListPair.zip (formals, args)
+              val tvarEnv = #tvarEnv context
+              val tvarEnv = 
+                  foldr
+                    (fn ((tvar, ty), tvarEnv) =>
+                        TvarMap.insert(tvarEnv, tvar, ty))
+                    tvarEnv
+                    tvarTyPairs
+              val context = {tvarEnv = tvarEnv,
+                             varEnv = #varEnv context,
+                             oprimEnv = #oprimEnv context}
+            in
+              evalIty context realizerTy
+            end
+          else raise bug "TYCONSTRUCT ARITY"
+         )
        | I.TYFUNM (tyList,ty2) =>
          T.FUNMty (map (evalIty context) tyList, evalIty context ty2)
        | I.TYPOLY (kindedTvarList, ty) =>
@@ -262,44 +266,46 @@ in
                  BoundTypeVarID.Map.empty
                  tids
          in
-           T.POLYty {boundtvars = btvs, constraints = nil, body = ty}
+           if BoundTypeVarID.Map.isEmpty btvs
+           then ty
+           else T.POLYty {boundtvars = btvs, constraints = nil, body = ty}
          end
        | I.INFERREDTY ty => ty
   and evalKindedTvarList (context as {tvarEnv, varEnv, oprimEnv}) kindedTvarList =
       let
-        fun genBtv ((tvar as {eq, ...}, kind), (btvKindList, tvarEnv)) = 
+        fun genBtv ((tvar as {isEq, ...}, kind), (btvKindList, tvarEnv)) =
             let
               val btvId = BoundTypeVarID.generate()
               val btvTy = T.BOUNDVARty btvId
             in
-              ((btvId, eq, kind) :: btvKindList, TvarMap.insert(tvarEnv, tvar, btvTy))
+              ((btvId, isEq, kind) :: btvKindList, TvarMap.insert(tvarEnv, tvar, btvTy))
             end
         (* Below, the use of foldl is essential.
             btvId must be generated in the order of kindedTvarList *)
         val (btvKindListRev, tvarEnv) = foldl genBtv (nil, tvarEnv) kindedTvarList
         val newContext = {tvarEnv = tvarEnv, varEnv=varEnv, oprimEnv=oprimEnv}
-        fun evalKind context kind : {tvarKind:T.tvarKind, dynKind: bool, reifyKind:bool, subkind:T.subkind}  =
+        fun evalKind context kind : {tvarKind:T.tvarKind, properties:T.kindPropertyList}  =
             case kind of
-              I.UNIV => {tvarKind = T.UNIV, dynKind = false, reifyKind=false, subkind = T.ANY}
-            | I.REC tyFields => 
+              I.UNIV props => {tvarKind = T.UNIV, properties = props}
+            | I.REC {recordKind=tyFields, properties} => 
               {tvarKind = T.REC (RecordLabel.Map.map (evalIty newContext) tyFields), 
-               dynKind = false,
-               reifyKind = false,
-               subkind = T.ANY}
-            | I.JSON {dynKind} => {tvarKind = T.UNIV, dynKind = dynKind, reifyKind=false, subkind = T.JSON}
-            | I.REIFY => {tvarKind = T.UNIV, dynKind = false, reifyKind=true, subkind = T.ANY}
-            | I.BOXED => {tvarKind = T.BOXED, dynKind = false, reifyKind=false, subkind = T.ANY}
-            | I.UNBOXED => {tvarKind = T.UNIV, dynKind = false, reifyKind=false, subkind = T.UNBOXED}
+               properties = properties}
         val btvEnv =
             foldl
-            (fn ((btvId, eq, kind), btvEnv) =>
+            (fn ((btvId, isEq, kind), btvEnv) =>
                 let
-                  val {tvarKind, dynKind, reifyKind, subkind} = evalKind newContext kind
+                  val {tvarKind, properties} = evalKind newContext kind
+                  val properties = 
+                      if isEq
+                      then T.addProperties I.EQ properties
+                      else properties
                 in
                   BoundTypeVarID.Map.insert
                     (btvEnv,
                      btvId,
-                     T.KIND {eqKind=eq, dynKind=dynKind, reifyKind=reifyKind, subkind = subkind, tvarKind=tvarKind})
+                     T.KIND {properties = properties,
+                             tvarKind = tvarKind,
+                             dynamicKind = NONE})
                 end
             )
             BoundTypeVarID.Map.empty

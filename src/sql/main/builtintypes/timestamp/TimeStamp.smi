@@ -1,10 +1,10 @@
-_require local "../../../../basis.smi"
-_require local "../../../../compiler/extensions/debug/main/Bug.ppg.smi"
-_require "../../../../basis/main/General.smi"
+_require "../../../../basis.smi"
+(* _require local "../../../../compiler/extensions/debug/main/Bug.ppg.smi" *)
+(* _require "../../../../basis/main/General.smi" *)
 
 structure SMLSharp_SQL_TimeStamp =
 struct
-  type timestamp (= boxed)
+  type timestamp (= Time.time)
   val now : unit -> timestamp
   val toString : timestamp -> string
   val fromString : string -> timestamp

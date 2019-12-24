@@ -1,0 +1,12 @@
+NODE {tests/data/loadfile/022_local4.smi INTERFACE}
+NODE {tests/data/loadfile/022_local2.smi INTERFACE}
+NODE {tests/data/loadfile/022_local3.smi INTERFACE}
+NODE {tests/data/loadfile/022_local.smi INTERFACE}
+ROOT {ROOT_INCLUDES LINK
+ INCLUDE {USERPATH tests/data/loadfile/022_local.smi INTERFACE d1bf986fd9386fac
+  LOCAL_REQUIRE {USERPATH tests/data/loadfile/022_local2.smi INTERFACE
+   b3b09ffa2a62de6f
+   LOCAL_REQUIRE {USERPATH tests/data/loadfile/022_local4.smi INTERFACE
+    20b649fe6ad59ea8}}
+  REQUIRE {USERPATH tests/data/loadfile/022_local3.smi INTERFACE
+   d0f827cddfebc210}}}

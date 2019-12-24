@@ -1,0 +1,3 @@
+val f = fn : ['a#{X: 'b}, 'b. 'a -> 'b -> 'a]
+
+val reStructure = fn : ['a#{Salary: real}. 'a -> 'a]

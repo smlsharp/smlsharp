@@ -1,24 +1,26 @@
 _require local "../../../../basis.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
 _require local "../../../libs/env/main/IEnv.smi"
-_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+(* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
 _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/types/main/VarInfoEnv.smi"
+_require local "../../../data/types/main/Unify.smi"
 
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/types/main/TvarMap.smi"
 _require "../../../data/types/main/VarMap.smi"
 _require "../../../data/types/main/OPrimMap.smi"
 _require "../../../data/types/main/Types.ppg.smi"
+(* _require "../../../data/types/main/DynamicKind.ppg.smi" *)
 
 _require "./IDCalc.ppg.smi"
 
 structure EvalIty =
 struct
-  exception EVALTFUN of {iseq: bool,
+  exception EVALTFUN of {admitsEq: bool,
                          formals: IDCalc.formals,
                          longsymbol:Symbol.longsymbol,
                          realizerTy: IDCalc.ty}

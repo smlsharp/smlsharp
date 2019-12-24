@@ -1,7 +1,7 @@
-_require local "../../../basis/main/General.smi"
+(* _require local "../../../basis/main/General.smi" *)
 _require local "../../../basis/main/IO.smi"
 _require local "../../../basis/main/Int32.smi"
-_require local "../../../basis/main/CharVector.smi"
+(* _require local "../../../basis/main/CharVector.smi" *)
 _require local "../../../basis/main/CharVectorSlice.smi"
 _require local "../../../basis/main/CharArray.smi"
 _require local "../../../basis/main/CharArraySlice.smi"

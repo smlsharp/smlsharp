@@ -1,6 +1,8 @@
 
 infix - :=
 val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op := = SMLSharp_Builtin.General.:=
+val ! = SMLSharp_Builtin.General.!
 
 val r = ref {a=((1,2),(3,4)), b=((5,6),(7,8)), c=((9,1),(2,3)), d=((4,5),(6,7))}
 fun f g = r := g (!r)

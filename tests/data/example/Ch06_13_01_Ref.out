@@ -1,0 +1,7 @@
+val x = ref 1 : int ref
+
+val it = 1 : int
+
+val it = () : unit
+
+val it = 2 : int

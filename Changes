@@ -1,4 +1,59 @@
 -----------------------------------------------------------------------------
+SML# version 3.5.0 (released on 2019-12-24)
+
+New features:
+* Dynamic typing support.  You can make any statically-typed value to
+  dynamically-typed value by Dynamic.dynamic primitive and perform
+  dynamic type cast to get back the statically-typed value by _dynamic
+  expression. For example:
+
+    # val x = Dynamic.dynamic {a = 1, b = "c"};
+    val x = _ : Dynamic.void Dynamic.dyn
+    # val y = _dynamic x as {a:int, b:string};
+    val y = {a = 1, b = "c"} : {a : int, b : string}
+
+  JSON support is reorganized on top of the dynamic typing mechanism.
+  The _json expression is integrated into the _dynamic expression.
+  The following example shows the new notation of dealing with JSON data:
+  
+    # val x = Dynamic.fromJson "{\"a\":1, \"b\":\"c\"}";
+    val x = _ : Dynamic.void Dynamic.dyn
+    # val y = _dynamic x as {a:int} Dynamic.dyn
+    val y = _ : {a : int} Dynamic.dyn
+    # val z = Dynamic.view y;
+    val z = {a = 1} : {a : int}
+    # Dynamic.valueToJson z;
+    val it = "{\"a\" : 1}" : string
+
+* Polymorphic Type Elimination.  A new optimization phase named as
+  PolyTyElimination is added.  This phase computes the set of possible
+  type instances for each type abstraction and minimizes the insertion
+  of extra lambda abstractions by the type-directed compilation.
+  According to our evaluation using micro benchmarks, this achieves 10%
+  speed-up and 12% code size reduction on average.
+
+Improvements:
+* The SML# compiler now uses LLVM 3.9.1 or later.  The latest one,
+  LLVM 9.0.0, is preferable.
+
+* Pthread support is turned on by default.  MassiveThreads and Pthread
+  can be mixed in the same program.  --without-massivethreads is no
+  longer needed to enable Pthread support.
+
+* SIGINT is now handled in the interactive session.  By pressing Ctrl-C,
+  you can abort the current execution and go back to the prompt.
+
+* SQLite3 support is added.
+
+* In addition to the above improvements, a lot of bugs has been fixed.
+
+Other changes:
+* SMLFormat now uses the same parser as the SML# compiler.
+
+* Manpages of the smlsharp, smlformat, smllex, and smlyacc commands
+  are provided.
+
+-----------------------------------------------------------------------------
 SML# version 3.4.0 (released on 2017-08-31)
 
 New features:

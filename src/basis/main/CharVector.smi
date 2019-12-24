@@ -1,4 +1,5 @@
 _require "./General.smi"
+_use local "./Array_common.sml"
 
 structure CharVector =
 struct

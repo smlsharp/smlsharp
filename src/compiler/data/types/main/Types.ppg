@@ -7,277 +7,214 @@
  *)
 structure Types =
 struct
-  fun bug s = Bug.Bug ("Types: " ^ s)
+  structure FE = SMLFormat.FormatExpression
 
-  fun formatEnclosedTypIDMap args map =
-      TermFormat.formatEnclosedMap
-        TypID.format_id
-        TypID.Map.listItemsi
-        args
-        map
+  local
+    open SMLFormat.FormatExpression
+  in
+  fun iftrue (x, y) true = x
+    | iftrue (x, y) false = y
+  fun ifsome (x, y) (SOME _) = x
+    | ifsome (x, y) NONE = y
+  fun ifsingle (x, y) [_] = x
+    | ifsingle (x, y) _ = y
+  fun ifcons (x, y) (_::_) = x
+    | ifcons (x, y) nil = y
+  fun ifcons2 (x, y) (_::_::_) = x
+    | ifcons2 (x, y) _ = y
+  fun N0ifcons2 x (_::_::_) =
+      [Guard (SOME {cut = true, strength = 0, direction = Neutral}, x)]
+    | N0ifcons2 x _ = x
+  fun sep (Sequence nil :: l, s, r) () = sep (l, s, r) ()
+    | sep (l, s, Sequence nil :: r) () = sep (l, s, r) ()
+    | sep (l as _::_, s, r as _::_) () = Sequence l :: Sequence s :: r
+    | sep (l, s, r) () = Sequence l :: r
+  val dummy = ()
+  end
+
+  fun helper_listWithBound (formatter, comma, ellipsis) list =
+      if length list > !Control.printMaxOverloadInstances
+      then SMLFormat.FormatExpression.Sequence
+             (SMLFormat.BasicFormatters.format_list
+                (formatter, comma)
+                (List.take (list, !Control.printMaxOverloadInstances)))
+           :: SMLFormat.FormatExpression.Sequence comma
+           :: ellipsis
+      else SMLFormat.BasicFormatters.format_list (formatter, comma) list
 
   (*%
-     @formatter(Symbol.symbol) Symbol.format_symbol
+   * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
-  (*% @prefix print_
-     @formatter(Symbol.symbol) Symbol.format_symbol
-   *)
-  (*% @prefix formatWithType_
-     @formatter(Symbol.symbol) Symbol.format_symbol
+  (*%
+   * @prefix print_
+   * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   type symbol = Symbol.symbol
 
-  (*% 
-      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+  (*%
+   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
-  (*% @prefix print_
-      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
-   *)
-  (*% @prefix formatWithType_
-      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+  (*%
+   * @prefix print_
+   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
   type longsymbol = Symbol.longsymbol
 
   (*%
-      @formatter(TypID.id) TypID.format_id
+   * @formatter(TypID.id) TypID.format_id
    *)
-  (*% @prefix print_
-      @formatter(TypID.id) TypID.format_id
-   *)
-  (*% @prefix formatWithType_
-      @formatter(TypID.id) TypID.format_id
+  (*%
+   * @prefix print_
+   * @formatter(TypID.id) TypID.format_id
    *)
   type typId =
-    (*%
-       @format(id) "t" id
-     *)
-    (*% @prefix print_
-       @format(id) "t" id
-     *)
-    (*% @prefix formatWithType_
-       @format(id) "t" id
-     *)
-    TypID.id
+      (*%
+       * @format(id) "t" id
+       *)
+      (*% @prefix print_ @ditto *)
+      TypID.id
+
+  val arrayTypId = TypID.generate()
+  val refTypId = TypID.generate()
 
   (*%
-     @formatter(RevealID.id) RevealID.format_id
+   * @formatter(RevealID.id) RevealID.format_id
    *)
-  (*% @prefix print_
-     @formatter(RevealID.id) RevealID.format_id
-   *)
-  (*% @prefix formatWithType_
-     @formatter(RevealID.id) RevealID.format_id
+  (*%
+   * @prefix print_
+   * @formatter(RevealID.id) RevealID.format_id
    *)
   type revealKey =
-    (*%
-       @format(id) "rv" id
-     *)
-    (*% @prefix print_
-       @format(id) "rv" id
-     *)
-    (*% @prefix formatWithType_
-       @format(id) "rv" id
-     *)
-    RevealID.id
+      (*%
+       * @format(id) "rv" id
+       *)
+      (*% @prefix print_ @ditto *)
+      RevealID.id
 
   (*%
-     @formatter(TvarID.id) TvarID.format_id
+   * @formatter(TvarID.id) TvarID.format_id
    *)
-  (*% @prefix print_
-     @formatter(TvarID.id) TvarID.format_id
-   *)
-  (*% @prefix formatWithType_
-     @formatter(TvarID.id) TvarID.format_id
+  (*%
+   * @prefix print_
+   * @formatter(TvarID.id) TvarID.format_id
    *)
   type tvarId =
-    (*%
-       @format(id) "tv" id
-     *)
-    (*% @prefix print_
-       @format(id) "tv" id
-     *)
-    (*% @prefix formatWithType_
-       @format(id) "tv" id
-     *)
-    TvarID.id
+      (*%
+       * @format(id) "tv" id
+       *)
+      (*% @prefix print_ @ditto *)
+      TvarID.id
 
   (*%
-     @formatter(AbsynTy.eq) AbsynTy.format_eq
+   * @formatter(InterfaceName.provider) InterfaceName.format_provider
    *)
-  (*% @prefix print_
-     @formatter(AbsynTy.eq) AbsynTy.format_eq
+  (*%
+   * @prefix print_
+   * @formatter(InterfaceName.provider) InterfaceName.format_provider
    *)
-  (*% @prefix formatWithType_
-     @formatter(AbsynTy.eq) AbsynTy.format_eq
-   *)
-  datatype eq =
-   datatype AbsynTy.eq
+  datatype provider = datatype InterfaceName.provider
 
   (*%
+   * @formatter(iftrue) iftrue
    *)
-  (*%  @prefix print_
-   *)
-  (*% @prefix formatWithType_
+  (*%
+   * @prefix print_
+   * @formatter(iftrue) iftrue
    *)
   type utvar =
-     (*%
-        @format({symbol, id, eq, lifted})
-          eq symbol
+      (*%
+       * @format({symbol, id, isEq, lifted})
+       * symbol "(" id lifted:iftrue()(",lifted",) ")"
        *)
-     (*% @prefix print_
-        @format({symbol, id, eq, lifted})
-          eq symbol
+      (*%
+       * @prefix print_
+       * @format({symbol, id, isEq, lifted})
+       * symbol
        *)
-     (*% @prefix formatWithType_
-        @format({symbol, id, eq, lifted})
-          eq symbol
-       *)
-     {symbol:symbol, id:tvarId, eq:eq, lifted:bool}
+      {symbol:symbol, id:tvarId, isEq:bool, lifted:bool}
 
-  (*% @formatter(AbsynTy.eq) AbsynTy.format_eq *)
-  (*% @prefix print_ @formatter(AbsynTy.eq) AbsynTy.format_eq *)
-  (*% @prefix formatWithType_
-      @formatter(AbsynTy.eq) AbsynTy.format_eq 
+  (*%
+   * @formatter(DummyTyID.id) DummyTyID.format_id
    *)
-  type eqKind =
-    (*% @format(x) x *) 
-    (*%  @prefix print_ @format(x) x *) 
-    (*% @prefix formatWithType_
-        @format(x) x
-      *) 
-    AbsynTy.eq
-
-
-  (*% *)
-  (*% @prefix print_ *)
-  (*% @prefix formatWithType_ *)
-  datatype subkind =
-      (*% @format "#unboxed" *)
-      (*% @prefix print_ @format "#unboxed" *)
-      (*% @prefix formatWithType_ @format "#unboxed" *)
-      UNBOXED
-    | (*% @format "#json" *)
-      (*% @prefix print_ @format "#json" *)
-      (*% @prefix formatWithType_ @format "#json" *)
-      JSON
-    | (*% @format "#json" *)
-      (*% @prefix print_ @format "#json" *)
-      (*% @prefix formatWithType_ @format "#json_atomic" *)
-      JSON_ATOMIC
-    | (*% @format *)
-      (*% @prefix print_ @format *)
-      (*% @prefix formatWithType_ @format *)
-      ANY
-
-  (* utilities for pretty printer of types *)
-  datatype ('kind, 'ty) btvOrdEnv =
-    ENV of
-      {btvEnv : 'kind TermFormat.btvEnv,
-       btvOrder : 'kind BoundTypeVarID.Map.map * 'ty -> BoundTypeVarID.id list,
-       formatPrefix : 'kind -> TermFormat.format,
-       formatSuffix : ('kind, 'ty) btvOrdEnv list -> 'kind -> TermFormat.format}
-
-  fun unpackEnv [ENV x] = x
-    | unpackEnv nil =
-      {btvEnv = TermFormat.emptyBtvEnv,
-       btvOrder = fn _ => nil,
-       formatPrefix = fn _ => format_eqKind NONEQ,
-       formatSuffix = fn _ => fn _ => nil}
-    | unpackEnv _ = raise Bug.Bug "Types.unpackEnv"
-
-  fun packEnv x = [ENV x]
-
-  fun format_tyvarWithEqKind btvOrdEnv tyvar kind =
-      let
-        val {formatPrefix, ...} = unpackEnv btvOrdEnv
-      in
-        formatPrefix kind @ tyvar
-      end
-
-  fun format_tyvarWithKind (btvOrdEnv, tyvar) kind =
-      let
-        val {formatPrefix, formatSuffix, ...} = unpackEnv btvOrdEnv
-      in
-        formatPrefix kind @ tyvar @ formatSuffix btvOrdEnv kind
-      end
-
-  fun print_tyvarWithKind (btvOrdEnv, envList, sname, tyvar) kind =
-      let
-        val {formatPrefix, formatSuffix, ...} = unpackEnv btvOrdEnv
-      in
-        formatPrefix kind @ tyvar @ formatSuffix btvOrdEnv kind
-      end
-
-  fun format_boundTyvar btvOrdEnv btvId =
-      TermFormat.formatBoundTyvar
-        (format_tyvarWithEqKind btvOrdEnv)
-        (#btvEnv (unpackEnv btvOrdEnv))
-        btvId
-
-  fun format_boundTypeVarID btvOrdEnv btvId =
-      format_boundTyvar btvOrdEnv btvId
-      @ TermFormat.FormatComb.term
-          ("(" ^ Int.toString (BoundTypeVarID.toInt btvId) ^ ")")
-
-  fun format_btvEnv_forPolyTy btvOrdEnv boundtvars =
-      TermFormat.formatBtvEnv
-        (fn tyvar => format_tyvarWithKind (btvOrdEnv, tyvar))
-        (#btvEnv (unpackEnv btvOrdEnv))
-        boundtvars
-
-  fun print_btvEnv_forPolyTy (btvOrdEnv,envList,sname) boundtvars =
-      TermFormat.formatBtvEnv
-        (fn tyvar => format_tyvarWithKind (btvOrdEnv, tyvar))
-        (#btvEnv (unpackEnv btvOrdEnv))
-        boundtvars
-
-  fun formatWithType_btvEnv_forPolyTy btvOrdEnv boundtvars =
-      TermFormat.formatBtvEnvWithType
-        (fn tyvar => format_tyvarWithKind (btvOrdEnv, tyvar))
-        (#btvEnv (unpackEnv btvOrdEnv))
-        boundtvars
-
-  fun extendBtvEnv btvOrdEnv {boundtvars, constraints, body} =
-      let
-        val {btvEnv, btvOrder, formatPrefix, formatSuffix} = unpackEnv btvOrdEnv
-        val order = btvOrder (boundtvars, body)
-        val btvEnv = TermFormat.extendBtvEnvWithOrder
-                       btvEnv (boundtvars, order)
-      in
-        packEnv {btvEnv = btvEnv, btvOrder = btvOrder,
-                 formatPrefix = formatPrefix, formatSuffix = formatSuffix}
-      end
-
-  (*% @formatter(DummyTyID.id) DummyTyID.format_id *)
-  (*%   @prefix print_  @formatter(DummyTyID.id) DummyTyID.format_id *)
-  (*% @prefix formatWithType_
-   * @formatter(DummyTyID.id) DummyTyID.format_id *)
+  (*%
+   * @prefix print_
+   * @formatter(DummyTyID.id) DummyTyID.format_id
+   *)
   type dummyTyID = 
-    (*% @format(id) "?X" id *) 
-    (*%  @prefix print_ @format(id) "?X" id *) 
-    (*% @prefix formatWithType_ 
-        @format(id) "?X" id
-      *) 
-    DummyTyID.id
+      (*%
+       * @format(id) "?X" id
+       *)
+      (*% @prefix print_ @ditto *)
+      DummyTyID.id
 
-  (*% 
-      @formatter(FreeTypeVarID.id) TermFormat.formatFreeTyvar
-   *)
-  (*% @prefix print_ 
-      @formatter(FreeTypeVarID.id) TermFormat.formatFreeTyvar
-   *)
-  (*% @prefix formatWithType_
-      @formatter(FreeTypeVarID.id) TermFormat.formatFreeTyvar
-   *)
-  type freeTypeVarID = FreeTypeVarID.id
+  fun tvName base index =
+      if index < 26 then str (chr (ord base + index))
+      else tvName base (index div 26) ^ str (chr (ord base + index mod 26))
+  fun btvName index = "'" ^ tvName #"a" index
+  fun ftvName index = "'" ^ tvName #"A" index
+  fun helper_ftvName id =
+      SMLFormat.BasicFormatters.format_string (ftvName (FreeTypeVarID.toInt id))
+  fun helper_btvName {btvOrder, ...} tid =
+      SMLFormat.BasicFormatters.format_string
+        (case BoundTypeVarID.Map.find (btvOrder, tid) of
+           SOME i =>  btvName i
+         | NONE => "'BT" ^ BoundTypeVarID.toString tid)
 
-  (* this is a temporal definition *)
-  (*% *)
+  (*%
+   * @formatter(FreeTypeVarID.id) FreeTypeVarID.format_id
+   *)
+  (*%
+   * @prefix print_
+   * @formatter(helper_ftvName) helper_ftvName
+   *)
+  type freeTypeVarID =
+      (*%
+       * @format(id) "'FT" id
+       *)
+      (*%
+       * @prefix print_
+       * @format(id) id:helper_ftvName
+       *)
+      FreeTypeVarID.id
+
+  (*%
+   * @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id
+   *)
+  (*%
+   * @prefix print_
+   * @params(env)
+   * @formatter(helper_btvName) helper_btvName
+   *)
+  type boundTypeVarID =
+      (*%
+       * @format(id) "'bt" id
+       *)
+      (*%
+       * @prefix print_
+       * @format(id) id:helper_btvName()(env)
+       *)
+      BoundTypeVarID.id
+
+  (*
+       Ohori: Dec 3, 2006.
+       lambdaDepth is introduce to speed up type generalization.
+       Initially, it is equal to the length of \Gamma at which a type
+       variable is introduced. The top level is therefore 0.
+       We then maintain the invariant:
+         lambdaDepth(t) is the minimal |\Gamma|  such that
+              \Gamma{x:\tau(t)}
+       A type variable is created with lambdaDepth = INFINITE.
+       When a type is entered in \Gamma{x:\tau}, the lambdaDepth of
+       each type variable t' in tau is set to |\Gamma|
+       Whenever (t,tau) is unified, the lambdaDepth of each type variable t'
+       in tau must be set to min(lambdaDepth(t), lambdaDepth(t')).
+  *)
   type lambdaDepth = int
   val infiniteDepth = valOf Int.maxInt (* the largest word in SML/NJ *)
   val toplevelDepth = 0
-  fun youngerDepth {contextDepth:int, tyvarDepth:int} = contextDepth <= tyvarDepth
-  fun strictlyYoungerDepth {tyvarDepth=tyvarDepth:int,contextDepth=contextDepth:int} =
+  fun youngerDepth {contextDepth:lambdaDepth, tyvarDepth:lambdaDepth} =
+      contextDepth <= tyvarDepth
+  fun strictlyYoungerDepth {contextDepth:lambdaDepth, tyvarDepth:lambdaDepth} =
       contextDepth < tyvarDepth
 
   (*
@@ -301,183 +238,313 @@ struct
      | decDepth (FIN n) = (FIN (n - 1))
   *)
 
-   fun staticTyConName (env, sname) tyCon =
-       SmlppgUtil.makeToken (sname (env, tyCon))
-
-
   (*%
-    @params(btvOrdEnv)
-    @formatter(formatUserLongSymbol) Symbol.formatUserLongSymbol
-    @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
-    @formatter(freeTypeVarID) format_freeTypeVarID
-    @formatter(enclosedList) TermFormat.formatEnclosedList
-    @formatter(enclosedListWithBound) TermFormat.formatEnclosedListWithBound
-    @formatter(seqList) TermFormat.formatSeqList
-    @formatter(appList) TermFormat.formatAppList
-    @formatter(optionalList) TermFormat.formatOptionalList
-    @formatter(ifCons) TermFormat.formatIfCons
-    @formatter(recordTy) TermFormat.formatRecordTy
-    @formatter(dummyRecordTy) TermFormat.formatDummyRecordTy
-    @formatter(option) TermFormat.formatOptionalOption
-    @formatter(withDefault) SmlppgUtil.formatOptWithDefault
-    @formatter(extendBtvEnv) extendBtvEnv
-    @formatter(format_btvEnv_forPolyTy) format_btvEnv_forPolyTy
-    @formatter(BoundTypeVarID.id) format_boundTyvar
-    @formatter(OPrimID.id) OPrimID.format_id
-    @formatter(TypID.Map.map) formatEnclosedTypIDMap
-    @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
-    @formatter(bool) SmlppgUtil.formatBinaryChoice
-    @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
-    @formatter(RecordLabel.label) RecordLabel.format_label
-    @formatter(tyvarWithKind) format_tyvarWithKind
+   * @extern(dummy) dummy
+   * @formatter(sep) sep
+   * @formatter(iftrue) iftrue
    *)
   (*%
-    @prefix print_
-    @params(btvOrdEnv,envList,sname)
-    @formatter(formatUserLongSymbol) Symbol.formatUserLongSymbol
-    @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
-    @formatter(freeTypeVarID) format_freeTypeVarID
-    @formatter(enclosedList) TermFormat.formatEnclosedList
-    @formatter(enclosedListWithBound) TermFormat.formatEnclosedListWithBound
-    @formatter(seqList) TermFormat.formatSeqList
-    @formatter(appList) TermFormat.formatAppList
-    @formatter(optionalList) TermFormat.formatOptionalList
-    @formatter(ifCons) TermFormat.formatIfCons
-    @formatter(recordTy) TermFormat.formatRecordTy
-    @formatter(dummyRecordTy) TermFormat.formatDummyRecordTy
-    @formatter(option) TermFormat.formatOptionalOption
-    @formatter(withDefault) SmlppgUtil.formatOptWithDefault
-    @formatter(extendBtvEnv) extendBtvEnv
-    @formatter(format_btvEnv_forPolyTy) format_btvEnv_forPolyTy
-    @formatter(BoundTypeVarID.id) format_boundTyvar
-    @formatter(OPrimID.id) OPrimID.format_id
-    @formatter(TypID.Map.map) formatEnclosedTypIDMap
-    @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
-    @formatter(bool) SmlppgUtil.formatBinaryChoice
-    @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
-    @formatter(RecordLabel.label) RecordLabel.format_label
-    @formatter(tyvarWithKind) print_tyvarWithKind
-    @formatter(staticTyConName) staticTyConName
+   * @prefix print_
+   * @extern(dummy) dummy
+   * @formatter(sep) sep
+   * @formatter(iftrue) iftrue
+   *)
+  type kindPropertyList =
+      (*%
+       * @format({reify, boxed, unboxed, eq})
+       * dummy:sep()(dummy:sep()(dummy:sep()(
+       *   reify:iftrue()("#reify",), d,
+       *   boxed:iftrue()("#boxed",)), d,
+       *   unboxed:iftrue()("#unboxed",)), d,
+       *   eq:iftrue()("#eq",))
+       *)
+      (*% @prefix print_ @ditto *)
+      {
+        reify : bool,
+        boxed : bool,
+        unboxed : bool,
+        eq : bool
+      }
+
+  datatype kindProperty = REIFY | BOXED | UNBOXED | EQ
+  fun propertiesOf x = x
+  val emptyProperties =
+      {reify = false, boxed = false, unboxed = false, eq = false}
+  val eqProperties =
+      {reify = false, boxed = false, unboxed = false, eq = true}
+  val reifyProperties =
+      {reify = true, boxed = false, unboxed = false, eq = false}
+  fun isProperties BOXED {boxed, ...} = boxed
+    | isProperties UNBOXED {unboxed, ...} = unboxed
+    | isProperties REIFY {reify, ...} = reify
+    | isProperties EQ {eq, ...} = eq
+  fun isSubProperties {reify=r1, boxed=b1, unboxed=u1, eq=e1}
+                      {reify=r2, boxed=b2, unboxed=u2, eq=e2} =
+      let
+        fun implies (a,b) = not a orelse b
+      in
+        implies (r1, r2)
+        andalso implies (b1, b2)
+        andalso implies (u1, u2)
+        andalso implies (e1, e2)
+      end
+  fun unionProperties {reify=r1, boxed=b1, unboxed=u1, eq=e1}
+                      {reify=r2, boxed=b2, unboxed=u2, eq=e2} =
+      {reify = r1 orelse r2,
+       boxed = b1 orelse b2,
+       unboxed = u1 orelse u2,
+       eq = e1 orelse e2}
+  fun addProperties prop {reify=r, boxed=b, unboxed=u, eq=e} =
+      case prop of
+        REIFY => {reify=true, boxed=b, unboxed=u, eq=e}
+      | BOXED => {reify=r, boxed=true, unboxed=u, eq=e}
+      | UNBOXED => {reify=r, boxed=b, unboxed=true, eq=e}
+      | EQ    => {reify=r, boxed=b, unboxed=u, eq=true}
+  fun equalProperties (prop1:kindPropertyList) prop2 = prop1 = prop2
+
+  (*%
+   * @prefix helper_
+   *)
+  type 'ty tupleTy =
+      (*%
+       * @prefix helper_
+       * @format(ty tys)
+       * N5{ !N6{ tys(ty)(+1 "*" +d) } }
+       *)
+      'ty list
+
+  val helper_tupleTy =
+      fn formatter => fn map =>
+         helper_tupleTy formatter (RecordLabel.Map.listItems map)
+
+  (*%
+   * @prefix helper_
+   * @formatter(RecordLabel.label) RecordLabel.format_label
+   *)
+  type 'ty recordTy =
+      (*%
+       * @prefix helper_
+       * @format(field fields)
+       * "{" !N0{ fields(field)("," +1) } "}"
+       * @format:field(label * ty)
+       * { label ":" 2[ +1 ty ] }
+       *)
+      (RecordLabel.label * 'ty) list
+
+  val helper_recordTy =
+      fn formatter => fn map =>
+         helper_recordTy formatter (RecordLabel.Map.listItemsi map)
+
+  fun helper_record formatter map =
+      if RecordLabel.isTupleMap map
+      then helper_tupleTy formatter map
+      else helper_recordTy formatter map
+
+  (*%
+   * @prefix helper_format_
+   * @formatter(boundTypeVarID) format_boundTypeVarID
    *)
   (*%
-    @prefix formatWithType_
-    @params(btvOrdEnv)
-    @formatter(enclosedLabelMap) TermFormat.formatEnclosedLabelMap
-    @formatter(freeTypeVarID) format_freeTypeVarID
-    @formatter(enclosedList) TermFormat.formatEnclosedList
-    @formatter(enclosedListWithBound) TermFormat.formatEnclosedListWithBound
-    @formatter(seqList) TermFormat.formatSeqList
-    @formatter(appList) TermFormat.formatAppList
-    @formatter(optionalList) TermFormat.formatOptionalList
-    @formatter(ifCons) TermFormat.formatIfCons
-    @formatter(recordTy) TermFormat.formatRecordTy
-    @formatter(dummyRecordTy) TermFormat.formatDummyRecordTy
-    @formatter(option) TermFormat.formatOptionalOption
-    @formatter(withDefault) SmlppgUtil.formatOptWithDefault
-    @formatter(extendBtvEnv) extendBtvEnv
-    @formatter(format_btvEnv_forPolyTy) format_btvEnv_forPolyTy
-    @formatter(BoundTypeVarID.id) format_boundTypeVarID
-    @formatter(OPrimID.id) OPrimID.format_id
-    @formatter(TypID.Map.map) formatEnclosedTypIDMap
-    @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
-    @formatter(bool) SmlppgUtil.formatBinaryChoice
-    @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
-    @formatter(RecordLabel.label) RecordLabel.format_label
-    @formatter(tyvarWithKind) format_tyvarWithKind
+   * @prefix helper_print_
+   * @params(env)
+   * @formatter(boundTypeVarID) print_boundTypeVarID
+   *)
+  type 'kind boundTvars =
+      (*%
+       * @prefix helper_format_
+       * @format(field fields)
+       * fields(field)("," +1)
+       * @format:field(btv * kind)
+       * btv kind
+       *)
+      (*%
+       * @prefix helper_print_
+       * @format(field fields)
+       * fields(field)("," +1)
+       * @format:field(btv * kind)
+       * btv()(env) kind
+       *)
+      (boundTypeVarID * 'kind) list
+
+  val helper_format_boundTvars =
+      fn formatter => fn map =>
+         helper_format_boundTvars formatter (BoundTypeVarID.Map.listItemsi map)
+  val helper_print_boundTvars =
+      fn (formatter, env as {btvOrder, ...}) => fn map =>
+         helper_print_boundTvars
+           (formatter, env)
+           (ListSorter.sort
+              (fn ((x, _), (y, _)) =>
+                  Int.compare
+                    (case BoundTypeVarID.Map.find (btvOrder, x) of
+                       SOME x => x | NONE => BoundTypeVarID.toInt x,
+                     case BoundTypeVarID.Map.find (btvOrder, y) of
+                       SOME y => y | NONE => BoundTypeVarID.toInt y))
+              (BoundTypeVarID.Map.listItemsi map))
+
+  (*%
+   * @prefix helper_
+   * @formatter(typId) format_typId
+   *)
+  type 'overloadMatch overloadRules =
+      (*%
+       * @prefix helper_
+       * @format(field fields)
+       * fields(field)("," +1)
+       * @format:field(id * match)
+       * L9{ id +d "=>" +1 match }
+       *)
+      (typId * 'overloadMatch) list
+
+  val helper_overloadRules =
+      fn formatter => fn map =>
+         helper_overloadRules formatter (TypID.Map.listItemsi map)
+
+  fun helper_tyCon {tyConNameEnv, tyConName, ...} tyCon =
+      SMLFormat.BasicFormatters.format_string (tyConName (tyConNameEnv, tyCon))
+
+  fun helper_extendEnv (env as {btvOrder, extendBtvOrder, ...}) x =
+      env # {btvOrder = extendBtvOrder btvOrder x}
+
+  (*%
+   * @extern(dummy) dummy
+   * @formatter(iftrue) iftrue
+   * @formatter(ifsome) ifsome
+   * @formatter(ifsingle) ifsingle
+   * @formatter(ifcons) ifcons
+   * @formatter(ifcons2) ifcons2
+   * @formatter(N0ifcons2) N0ifcons2
+   * @formatter(sep) sep
+   * @formatter(helper_recordTy) helper_recordTy
+   * @formatter(helper_record) helper_record
+   * @formatter(helper_format_boundTvars) helper_format_boundTvars
+   * @formatter(helper_overloadRules) helper_overloadRules
+   * @formatter(DynamicKind.dynamicKind) DynamicKind.format_dynamicKind
+   * @formatter(RuntimeTypes.property) RuntimeTypes.format_property
+   * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
+   * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+   * @formatter(OPrimID.id) OPrimID.format_id
+   *)
+  (*%
+   * @prefix print_
+   * @params(env)
+   * @extern(dummy) dummy
+   * @formatter(ifsome) ifsome
+   * @formatter(ifsingle) ifsingle
+   * @formatter(ifcons) ifcons
+   * @formatter(ifcons2) ifcons2
+   * @formatter(sep) sep
+   * @formatter(N0ifcons2) N0ifcons2
+   * @formatter(helper_listWithBound) helper_listWithBound
+   * @formatter(helper_recordTy) helper_recordTy
+   * @formatter(helper_record) helper_record
+   * @formatter(helper_print_boundTvars) helper_print_boundTvars
+   * @formatter(helper_tyCon) helper_tyCon
+   * @formatter(helper_extendEnv) helper_extendEnv
    *)
   datatype ty =
-      (*% @format(t) t()(btvOrdEnv)  *)
-      (*% @prefix print_ @format(t) t()(btvOrdEnv,envList,sname)  *)
-      (*% @prefix formatWithType_
-         @format(t) t()(btvOrdEnv) 
+      (*%
+       * @format(sty) sty
+       *)
+      (*%
+       * @prefix print_
+       * @format(sty) sty()(env)
        *)
       (* a singleton type for type-directed compilation *)
       SINGLETONty of singletonTy
-    | (*% @format(t) t()(btvOrdEnv) *)
-      (*% @prefix print_ @format(t) t()(btvOrdEnv,envList,sname) *)
-      (*% @prefix formatWithType_ @format(t) t()(btvOrdEnv) *)
+    | (*%
+       * @format(bty) bty
+       *)
+      (*%
+       * @prefix print_
+       * @format(bty) bty()(env)
+       *)
       (* singleton types introduced by compiler backend *)
       BACKENDty of backendTy
-    | (*% @format "ERRORty" *)
-      (*% @prefix print_ @format "ERRORty" *)
-      (*% @prefix formatWithType_
-          @format "ERRORty"
+    | (*%
+       * @format "ERRORty"
+       *)
+      (*%
+       * @prefix print_
+       * @format "_"
        *)
       ERRORty
-    | (*% @format(id * kind) id *)
-      (*% @prefix print_ @format(id * kind) id *)
-      (*% @prefix formatWithType_ 
-         @format(id * kind) id kind()(btvOrdEnv)
+    | (*%
+       * @format(id * kind) id kind
+       *)
+      (*%
+       * @prefix print_
+       * @format(id * kind) id
        *)
       DUMMYty of dummyTyID * kind
-    | (*% @format(tv tvRef) tvRef(tv()(btvOrdEnv)) *)
-      (*% @prefix print_ @format(tv tvRef) tvRef(tv()(btvOrdEnv,envList,sname)) *)
-      (*% @prefix formatWithType_ 
-          @format(tv tvRef) tvRef(tv()(btvOrdEnv))
+    | (*%
+       * @format(tv tvRef) tvRef(tv)
+       *)
+      (*%
+       * @prefix print_
+       * @format(tv tvRef) tvRef(tv()(env))
        *)
       TYVARty of tvState ref
-    | (*% @format(id) id()(btvOrdEnv) *)
-      (*% @prefix print_ @format(id) id()(btvOrdEnv) *)
-      (*% @prefix formatWithType_ 
-          @format(id) id()(btvOrdEnv)
+    | (*%
+       * @format(bid) bid
        *)
-      BOUNDVARty of BoundTypeVarID.id
+      (*%
+       * @prefix print_
+       * @format(bid) bid()(env)
+       *)
+      BOUNDVARty of boundTypeVarID
     | (*%
        * @format(argTy argTys * retTy)
-        R4{
-          2[ 
-            argTys:appList(argTy()(btvOrdEnv))("{",",","}")
-            +1 
-            "->" 
-            + retTy()(btvOrdEnv)
-           ]
-          }
+       * R4{
+       *   argTys:ifsingle()(
+       *     argTys(argTy)(),
+       *     "{" !N0{ argTys(argTy)("," +1) } "}"
+       *   )
+       *   +1 "->" +d retTy
+       * }
        *)
-      (*% @prefix print_
+      (*%
+       * @prefix print_
        * @format(argTy argTys * retTy)
-        R4{
-          2[ 
-            argTys:appList(argTy()(btvOrdEnv,envList,sname))("{",",","}")
-            +1 
-            "->" 
-            + retTy()(btvOrdEnv,envList,sname)
-           ]
-          }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(argTy argTys * retTy)
-       * R4{ argTys:appList(argTy()(btvOrdEnv))("{",",","}")
-       *     +1 "->" +d retTy()(btvOrdEnv) }
+       * R4{
+       *   argTys:ifsingle()(
+       *     argTys(argTy()(env))(),
+       *     "{" !N0{ argTys(argTy()(env))("," +1) } "}"
+       *   )
+       *   +1 "->" +d retTy()(env)
+       * }
        *)
       FUNMty of ty list * ty
-    | (*% @format(ty tys) 
-          tys:recordTy(ty()(btvOrdEnv))
+    | (*%
+       * @format(ty tys)
+       * tys:helper_record(ty)
        *)
-      (*% @prefix print_ 
-          @format(ty tys) 
-          tys:recordTy(ty()(btvOrdEnv,envList,sname))
-       *)
-      (*% @prefix formatWithType_ 
-          @format(ty tys) tys:recordTy(ty()(btvOrdEnv))
+      (*%
+       * @prefix print_
+       * @format(ty tys)
+       * tys:helper_record(ty()(env))
        *)
       RECORDty of ty RecordLabel.Map.map
     | (*%
        * @format({tyCon, args: argTy argTys})
-       * L8{ 2[ argTys:seqList(argTy()(btvOrdEnv))("(",",",")")
-       *        argTys:ifCons()(+1) tyCon()(btvOrdEnv) ] }
+       * L8{
+       *   argTys:ifcons2()("(",)
+       *   argTys:N0ifcons2()(argTys(argTy)("," +1))
+       *   argTys:ifcons2()(")",)
+       *   argTys:ifcons()(+1,)
+       *   tyCon
+       * }
        *)
-      (*% @prefix print_
-       * @format({tyCon:tyCon:staticTyConName, args: argTy argTys})
-       * L8{ 2[ argTys:seqList(argTy()(btvOrdEnv,envList,sname))("(",",",")")
-       *        argTys:ifCons()(+1) tyCon()(envList,sname) ] }
-       *)
-      (*%  @prefix formatWithType_ 
+      (*%
+       * @prefix print_
        * @format({tyCon, args: argTy argTys})
-         L8{ 2[ argTys:seqList(argTy()(btvOrdEnv))("(",",",")")
-                argTys:ifCons()(+1) 
-                tyCon()(btvOrdEnv) 
-              ] 
-           }
+       * L8{
+       *   argTys:ifcons2()("(",)
+       *   argTys:N0ifcons2()(argTys(argTy()(env))("," +1))
+       *   argTys:ifcons2()(")",)
+       *   2[ argTys:ifcons()(+1,) tyCon()(env) ]
+       * }
        *)
       CONSTRUCTty of
       {
@@ -485,304 +552,371 @@ struct
         args : ty list
       }
     | (*%
-         @format(polyTy)
-           polyTy()(polyTy:extendBtvEnv()(btvOrdEnv))
+       * @format({boundtvars: kind kinds, constraints:con cons, body})
+       * "[" !N0{
+       *   { kinds:helper_format_boundTvars(kind) } "." +1
+       *   cons:ifcons()("(" !N0{ cons(con)("," +1) } ")" +d "=>" +1,)
+       *   body
+       * } "]"
        *)
-      (*% @prefix print_
-         @format(polyTy)
-           polyTy()(polyTy:extendBtvEnv()(btvOrdEnv),envList,sname)
+      (*%
+       * @prefix print_
+       * @format(x)
+       * x()(x:helper_extendEnv(env))
+       * @format:x({boundtvars: kind kinds, constraints:con cons, body})
+       * @params(newenv)
+       * "[" !N0{
+       *   { kinds:helper_print_boundTvars(kind()(newenv))(newenv) } "." +1
+       *   cons:ifcons()("(" !N0{ cons(con()(newenv))("," +1) } ")" +d "=>" +1,)
+       *   body()(newenv)
+       * } "]"
        *)
-      (*% @prefix formatWithType_ 
-       * @format(polyTy)
-       * polyTy()(polyTy:extendBtvEnv()(btvOrdEnv))
-       *)
-      POLYty of polyTy
+      POLYty of
+      {
+        boundtvars : kind BoundTypeVarID.Map.map,
+        constraints : constraint list,
+        body : ty
+      }
 
-  and constraint =
-      (* 2016-07-01 sasaki: 制約を示すデータ型を追加 *)
+  and tvState =
       (*%
-       * @format({res, args : (arg1 * arg2), loc})
-       * res()(btvOrdEnv) +1 "=" + 2[arg1()(btvOrdEnv) +1 "join" +1 arg2()(btvOrdEnv)]
-       *)
-      (*% @prefix print_
-       * @format({res, args : (arg1 * arg2), loc})
-       * res()(btvOrdEnv,envList,sname) +1 "=" + 2[arg1()(btvOrdEnv,envList,sname) +1 "join" +1 arg2()(btvOrdEnv,envList,sname)]
+       * @format(tvKind) tvKind
        *)
       (*%
-       * @prefix formatWithType_
-       * @format({res, args : (arg1 * arg2), loc})
-       * res()(btvOrdEnv) +1 "=" + 2[arg1()(btvOrdEnv) +1 "join" +1 arg2()(btvOrdEnv)]
+       * @prefix print_
+       * @format(tvKind) tvKind()(env)
        *)
-      JOIN of {res : ty, args : ty * ty, loc:Loc.loc}
+      TVAR of tvKind
+    | (*%
+       * @format(ty) ty
+       *)
+      (*%
+       * @prefix print_
+       * @format(ty) ty()(env)
+       *)
+      SUBSTITUTED of ty
+
+  and kind =
+      (*%
+       * @format({properties, tvarKind, dynamicKind: dk dkopt})
+       * { dummy:sep()(dummy:sep()(properties, d, tvarKind), 1,
+       *   dkopt:ifsome()("%" dkopt(dk),)) }
+       *)
+      (*%
+       * @prefix print_
+       * @format({properties, tvarKind, dynamicKind})
+       * { dummy:sep()(properties, d, tvarKind()(env)) }
+       *)
+      KIND of
+      {
+        properties : kindPropertyList,
+        tvarKind : tvarKind,
+        dynamicKind : DynamicKind.dynamicKind option
+      }
+      (* NOTE: During typechecking, we don't deal with consistency between
+       * each of properties and tvarKind.  When discharing type variables
+       * for type generalization, the consistency between properties is
+       * checked.  If they are inconsistent, the compiler reports a type
+       * error.
+       *
+       * If dynamicKind is NONE, the dynamicKind is the most specific one
+       * that respects to properties and tvarKind, and is computed on demand
+       * at PolyTyElimination and RecordCompilation.
+       * PolyTyElimination sets dynamicKind to SOME.
+       *
+       * To keep it simple, we do not compute dynamicKind during InferTypes.
+       * Set NONE to dynamicKind if you don't have a specific idea.
+       *)
 
   and tvarKind =
       (*%
        * @format(ty tys)
-       * "::" tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
-       *)
-      (*% @prefix print_
-       * @format(ty tys)
-       * "::" tys:enclosedListWithBound(ty()(btvOrdEnv,envList,sname))("{",",","}")
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(ty tys)
-       * "::" tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
-       *)
-      (* for overloaded constants *)
-      OCONSTkind of ty list
-    | (*
-       * @format({instances: ty tys,
-       *          operators: oper opers})
-       * "::" opers:enclosedListWithBound(oper()(btvOrdEnv))("{",",","}")
-       *      tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
+       * "::{" !N0{ tys(ty)("," +d) } "}"
        *)
       (*%
-         @format({instances: ty tys,
-                  operators: oper opers})
-         "::" tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
+       * @prefix print_
+       * @format(ty tys)
+       * "::{" !N0{ tys:helper_listWithBound(ty()(env))("," +d, "...") } "}"
        *)
-      (*%  @prefix print_
-         @format({instances: ty tys,
-                  operators: oper opers})
-         "::" tys:enclosedListWithBound(ty()(btvOrdEnv,envList,sname))("{",",","}")
+      OCONSTkind of ty list
+    | (*%
+       * @format({instances: ty tys, operators: oper opers})
+       * "::" { "{" !N0{ opers(oper)("," +d) } "}" 1
+       *        "{" !N0{ tys(ty)("," +d) } "}" }
        *)
-      (*% @prefix formatWithType_ 
-       * @format({instances: ty tys,
-       *          operators: oper opers})
-       * "::" opers:enclosedListWithBound(oper()(btvOrdEnv))("{",",","}")
-       *      tys:enclosedListWithBound(ty()(btvOrdEnv))("{",",","}")
+      (*%
+       * @prefix print_
+       * @format({instances: ty tys, operators})
+       * "::{" !N0{ tys:helper_listWithBound(ty()(env))("," +d, "...") } "}"
        *)
       OPRIMkind of {instances : ty list, operators : oprimSelector list}
-    | (*%  @format  *)
-      (*% @prefix print_  @format  *)
-      (*% @prefix formatWithType_ 
-          @format 
+    | (*%
+       * @format "#UNIV"
+       *)
+      (*%
+       * @prefix print_
+       * @format
        *)
       UNIV
-    | (*%  @format "#boxed" *)
-      (*% @prefix print_  @format "#boxed" *)
-      (*% @prefix formatWithType_ 
-          @format "#boxed"
-       *)
-      BOXED
     | (*%
        * @format(ty tys)
-       * "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
+       * "#" tys:helper_recordTy(ty)
        *)
-      (*% @prefix print_
+      (*%
+       * @prefix print_
        * @format(ty tys)
-       * "#" tys:enclosedLabelMap(ty()(btvOrdEnv,envList,sname))("{",",",":","}")
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(ty tys)
-       * "#" tys:enclosedLabelMap(ty()(btvOrdEnv))("{",",",":","}")
+       * "#" tys:helper_recordTy(ty()(env))
        *)
       REC of ty RecordLabel.Map.map
 
   and dtyKind
-    = (*% @format *)
-      (*% @prefix print_ @format *)
-      (*% @prefix formatWithType_ 
-          @format "DTY"
+    = (*%
+       * @format(p)
+       * L2{ "DTY" +1 "(" !N0{ p } ")" }
        *)
-      (* datatype including atomic types *)
-      DTY
+      (*%
+       * @prefix print_
+       * @format "DTY"
+       *)
+      DTY of RuntimeTypes.property
     | (*%
-          @format({opaqueRep, revealKey})
-                 "[opaque("revealKey "," opaqueRep()(btvOrdEnv) ")" "]"
+       * @format({opaqueRep, revealKey})
+       * L2{ "OPAQUE" +1 "(" !N0{ revealKey "," +1 opaqueRep } ")" }
        *)
-      (*% @prefix print_
-          @format({opaqueRep, revealKey})
-                 "[opaque("revealKey "," opaqueRep()(btvOrdEnv,envList,sname) ")" "]"
-       *)
-      (*% @prefix formatWithType_ 
-          @format({opaqueRep, revealKey})
-                 "[opaque("revealKey "," opaqueRep()(btvOrdEnv) ")" "]"
+      (*%
+       * @prefix print_
+       * @format "OPAQUE"
        *)
       (* opaque types of builtin types; opqaue types of datatypes are DTYs *)
       OPAQUE of {opaqueRep:opaqueRep, revealKey:revealKey}
     | (*%
-          @format(builtin)
+       * @format(opaqueRep)
+       * L2{ "INTERFACE" +1 "(" !N0{ opaqueRep } ")" }
        *)
-      (*% @prefix print_
-          @format(builtin)
+      (*%
+       * @prefix print_
+       * @format "INTERFACE"
        *)
-      (*% @prefix formatWithType_ 
-          @format(builtin)  "BUILTIN"
-       *)
-      (* builtin types *)
-      BUILTIN of BuiltinTypeNames.bty
+      (* opaque types of builtin types; opqaue types of datatypes are DTYs *)
+      INTERFACE of opaqueRep
 
   and opaqueRep 
-    = (*% 
-         @format(tyCon) tyCon()(btvOrdEnv)
+    = (*%
+       * @format(tyCon) tyCon
        *)
-      (*% @prefix print_
-         @format(tyCon) tyCon()(btvOrdEnv,envList,sname)
-       *)
-      (*% @prefix formatWithType_ 
-          @format(tyCon) tyCon()(btvOrdEnv)
+      (*%
+       * @prefix print_
+       * @format "TYCON"
        *)
       TYCON of tyCon 
     | (*%
-         @format({iseq, arity, polyTy}) polyTy()(btvOrdEnv)
+       * @format({admitsEq, arity, polyTy})
+       * L2{ "TFUNDEF" +1 "(" !N0{ admitsEq "," +1 arity "," +1 polyTy } ")" }
        *)
-      (*% @prefix print_
-         @format({iseq, arity, polyTy}) polyTy()(btvOrdEnv,envList,sname)
+      (*%
+       * @prefix print_
+       * @format "TFUNDEF"
        *)
-      (*% @prefix formatWithType_ 
-         @format({iseq, arity, polyTy}) polyTy()(btvOrdEnv)
-       *)
-      TFUNDEF of {iseq:bool, arity:int, polyTy:ty}
+      TFUNDEF of {admitsEq:bool, arity:int, polyTy:ty}
 
-  and tvState =
-      (*%  @format(tvKind) tvKind()(btvOrdEnv)  *) 
-      (*% @prefix print_ @format(tvKind) tvKind()(btvOrdEnv,envList,sname)  *) 
-      (*% @prefix formatWithType_ 
-          @format(tvKind) tvKind()(btvOrdEnv) 
+  and constraint =
+      (* 2016-07-01 sasaki: 制約を示すデータ型を追加 *)
+      (*%
+       * @format({args:arg1 * arg2, res, loc})
+       * res +d "=" +d arg1 +d "join" +d arg2
        *)
-      TVAR of tvKind
-    | (*% @format(ty) ty()(btvOrdEnv) *)
-      (*% @prefix print_  @format(ty) ty()(btvOrdEnv,envList,sname) *)
-      (*% @prefix formatWithType_ 
-           @format(ty) ty()(btvOrdEnv)
+      (*%
+       * @prefix print_
+       * @format({args:arg1 * arg2, res, loc})
+       * res()(env) +d "=" +d arg1()(env) +d "join" +d arg2()(env)
        *)
-      SUBSTITUTED of ty
+      JOIN of {res : ty, args : ty * ty, loc:Loc.loc}
 
   and singletonTy =
       (*%
-       * @format(operator) "INSTCODE(" !N0{ operator()(btvOrdEnv) ")" }
+       * @format(oprimSelector)
+       * L2{ "INSTCODEty" +1 "(" !N0{ oprimSelector } ")" }
        *)
-      (*% @prefix print_
-       * @format(operator) "INSTCODE(" !N0{ operator()(btvOrdEnv,envList,sname) ")" }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(operator) "INSTCODE(" !N0{ operator()(btvOrdEnv) ")" }
+      (*%
+       * @prefix print_
+       * @format "INSTCODEty"
        *)
       (* a singletonset denoting the instance function for a type 'a *)
       INSTCODEty of oprimSelector
     | (*%
-       * @format(label * ty) "INDEX(" !N0{ label "," +1 ty()(btvOrdEnv) ")" }
+       * @format(label * ty)
+       * L2{ "INDEXty" +1 "(" !N0{ label "," +1 ty } ")" }
        *)
-      (*% @prefix print_
-       * @format(label * ty) "INDEX(" !N0{ label "," +1 ty()(btvOrdEnv,envList,sname) ")" }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(label * ty) "INDEX(" !N0{ label "," +1 ty()(btvOrdEnv) ")" }
+      (*%
+       * @prefix print_
+       * @format "INDEXty"
        *)
       INDEXty of RecordLabel.label * ty
     | (*%
-       * @format(ty) "TAG(" !N0{ ty()(btvOrdEnv) ")" }
+       * @format(ty)
+       * L2{ "TAGty" +1 "(" !N0{ ty } ")" }
        *)
-      (*% @prefix print_
-       * @format(ty) "TAG(" !N0{ ty()(btvOrdEnv,envList,sname) ")" }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(ty) "TAG(" !N0{ ty()(btvOrdEnv) ")" }
+      (*%
+       * @prefix print_
+       * @format "TAGty"
        *)
       TAGty of ty
     | (*%
-       * @format(ty) "SIZE(" !N0{ ty()(btvOrdEnv) ")" }
+       * @format(ty)
+       * L2{ "SIZEty" +1 "(" !N0{ ty } ")" }
        *)
-      (*% @prefix print_
-       * @format(ty) "SIZE(" !N0{ ty()(btvOrdEnv,envList,sname) ")" }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(ty) "SIZE(" !N0{ ty()(btvOrdEnv) ")" }
+      (*%
+       * @prefix print_
+       * @format "SIZEty"
        *)
       SIZEty of ty
     | (*%
-       * @format(ty) "TYPE(" !N0{ ty()(btvOrdEnv) ")" }
+       * @format(ty)
+       * L2{ "REIFYty" +1 "(" !N0{ ty } ")" }
        *)
-      (*% @prefix print_
-       * @format(ty) "TYPE(" !N0{ ty()(btvOrdEnv,envList,sname) ")" }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(ty) "TYPE(" !N0{ ty()(btvOrdEnv) ")" }
-       *)
-      TYPEty of ty
-    | (*%
-       * @format(ty) "REIFYTy(" !N0{ ty()(btvOrdEnv) ")" }
-       *)
-      (*% @prefix print_
-       * @format(ty) "REIFYTy(" !N0{ ty()(btvOrdEnv,envList,sname) ")" }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(ty) "REIFYty(" !N0{ ty()(btvOrdEnv) ")" }
+      (*%
+       * @prefix print_
+       * @format "REIFYty"
        *)
       REIFYty of ty
 
   and backendTy =
-      (*% @format(ty) "RECORDSIZE(" !N0{ ty()(btvOrdEnv) } ")" *)
-      (*% @prefix print_ 
-          @format(ty) "RECORDSIZE(" !N0{ ty()(btvOrdEnv,envList,sname) } ")" *)
-      (*% @prefix formatWithType_
-       * @format(ty) "RECORDSIZE(" !N0{ ty()(btvOrdEnv) } ")" *)
+      (*%
+       * @format(ty)
+       * L2{ "RECORDSIZEty" +1 "(" !N0{ ty } ")" }
+       *)
+      (*%
+       * @prefix print_
+       * @format "RECORDSIZEty"
+       *)
       (* type of the number of bytes of records of type ty *)
       RECORDSIZEty of ty
-    | (*% @format(i * ty) "RECORDBITMAPINDEX(" !N0{ i "," ty()(btvOrdEnv) } ")"
+    | (*%
+       * @format(i * ty)
+       * L2 { "RECORDBITMAPINDEXty" +1 "(" !N0{ i "," +1 ty } ")" }
        *)
-      (*% @prefix print_ @format(i * ty) "RECORDBITMAPINDEX(" !N0{ i "," ty()(btvOrdEnv,envList,sname) } ")"
-       *)
-      (*% @prefix formatWithType_
-       * @format(i * ty) "RECORDBITMAPINDEX(" !N0{ i "," ty()(btvOrdEnv) } ")"
+      (*%
+       * @prefix print_
+       * @format "RECORDBITMAPINDEXty"
        *)
       (* type of the index of i-th word of the bitmap of records of type ty *)
       RECORDBITMAPINDEXty of int * ty
-    | (*% @format(i * ty) "RECORDBITMAP(" !N0{ i "," ty()(btvOrdEnv) } ")" *)
-      (*% @prefix print_ @format(i * ty) "RECORDBITMAP(" !N0{ i "," ty()(btvOrdEnv,envList,sname) } ")" *)
-      (*% @prefix formatWithType_
-       * @format(i * ty) "RECORDBITMAP(" !N0{ i "," ty()(btvOrdEnv) } ")" *)
+    | (*%
+       * @format(i * ty)
+       * L2 { "RECORDBITMAPty" +1 "(" !N0{ i "," +1 ty } ")" }
+       *)
+      (*%
+       * @prefix print_
+       * @format "RECORDBITMAPty"
+       *)
       (* type of the i-th word of the bitmap of records of type ty *)
       RECORDBITMAPty of int * ty
-    | (*% @format(ty) "CCONVTAG(" !N0{ ty()(btvOrdEnv) } ")" *)
-      (*% @prefix print_ @format(ty) "CCONVTAG(" !N0{ ty()(btvOrdEnv,envList,sname) } ")" *)
-      (*% @prefix formatWithType_
-       * @format(ty) "CCONVTAG(" !N0{ ty()(btvOrdEnv) } ")" *)
+    | (*%
+       * @format(ty)
+       * L2 { "CCONVTAGty" +1 "(" !N0{ ty } ")" }
+       *)
+      (*%
+       * @prefix print_
+       * @format "CCONVTAGty"
+       *)
       (* type of calling convention tag of function of type ty *)
       CCONVTAGty of codeEntryTy
-    | (* type of pointer to the entry of an ML function *)
-      (*% @format(ty) "FUNENTRY(" ty()(btvOrdEnv) ")" *)
-      (*%  @prefix print_ @format(ty) "FUNENTRY(" ty()(btvOrdEnv,envList,sname) ")" *)
-      (*% @prefix formatWithType_
-       * @format(ty) "FUNENTRY(" ty()(btvOrdEnv) ")" *)
+    | (*%
+       * @format(ty)
+       * L2 { "FUNENTRYty" +1 "(" !N0{ ty } ")" }
+       *)
+      (*%
+       * @prefix print_
+       * @format "FUNENTRYty"
+       *)
+      (* type of pointer to the entry of an ML function *)
       FUNENTRYty of codeEntryTy
-    | (* type of pointer to the entry of a callback function code *)
-      (*% @format(ty) "CALLBACKENTRY(" ty()(btvOrdEnv) ")" *)
-      (*%  @prefix print_ @format(ty) "CALLBACKENTRY(" ty()(btvOrdEnv,envList,sname) ")" *)
-      (*% @prefix formatWithType_
-       * @format(ty) "CALLBACKENTRY(" ty()(btvOrdEnv) ")" *)
+    | (*%
+       * @format(ty)
+       * L2 { "CALLBAKCENTRYty" +1 "(" !N0{ ty } ")" }
+       *)
+      (*%
+       * @prefix print_
+       * @format "CALLBACKENTRYty"
+       *)
+      (* type of pointer to the entry of a callback function code *)
       CALLBACKENTRYty of callbackEntryTy
-    | (* type of some function code *)
+    | (*%
+       * @format "SOME_FUNENTRYty"
+       *)
+      (*%
+       * @prefix print_
+       * @format "SOME_FUNENTRYty"
+       *)
+      (* type of some function code *)
       SOME_FUNENTRYty
-    | (* type of some function code *)
+    | (*%
+       * @format "SOME_FUNWRAPPERty"
+       *)
+      (*%
+       * @prefix print_
+       * @format "SOME_FUNWRAPPERty"
+       *)
+      (* type of some function code *)
       SOME_FUNWRAPPERty
-    | (* type of some closure environment *)
+    | (*%
+       * @format "SOME_CLOSUREENVty"
+       *)
+      (*%
+       * @prefix print_
+       * @format "SOME_CLOSUREENVty"
+       *)
+      (* type of some closure environment *)
       SOME_CLOSUREENVty
-    | (* type of some calling convention tag *)
+    | (*%
+       * @format "SOME_CCONVTAGty"
+       *)
+      (*%
+       * @prefix print_
+       * @format "SOME_CCONVTAGty"
+       *)
+      (* type of some calling convention tag *)
       SOME_CCONVTAGty
-    | (* type of foreign function pointer *)
-      (*% @format(ty) "FOREIGNFUNTY(" ty()(btvOrdEnv) ")" *)
-      (*%  @prefix print_ @format(ty) "FOREIGNFUNTY(" ty()(btvOrdEnv,envList,sname) ")" *)
-      (*% @prefix formatWithType_
-       * @format(ty) "FOREIGNFUNTY(" ty()(btvOrdEnv) ")" *)
-      FOREIGNFUNPTRty of foreignFunTy
+    | (*%
+       * @format({tyvars: kind kinds, argTyList: arg args,
+       *          varArgTyList: varg vargs vargopt, resultTy : ret retopt,
+       *          attributes})
+       * L2{
+       *   "FOREIGNFUNPTRty" +1
+       *   "(" !N0{
+       *     kinds:helper_format_boundTvars(kind) "." +1
+       *     attributes +1
+       *     "{" !N0{ args(arg)("," +1) } "}"
+       *     vargopt:ifsome()(1 "{" !N0{ vargopt(vargs(varg)("," +1)) } "}",)
+       *     +1 "->" +d
+       *     retopt:ifsome()(retopt(ret), "{}")
+       *   } ")"
+       * }
+       *)
+      (*%
+       * @prefix print_
+       * @format "FOREIGNFUNPTRty"
+       *)
+      (* type of foreign function pointer *)
+      FOREIGNFUNPTRty of
+      {
+        tyvars : kind BoundTypeVarID.Map.map,
+        argTyList : ty list,
+        varArgTyList : ty list option,
+        resultTy : ty option,
+        attributes : FFIAttributes.attributes
+      }
 
   and overloadMatch =
       (*%
-       * @format({exVarInfo, instTyList: ty tys})
-       * L8{ exVarInfo +1 tys:appList(ty()(btvOrdEnv))(+1 "{",",","}") }
+       * @format({exVarInfo, instTyList:ty tys})
+       * L2{ "OVERLOAD_EXVAR" +1
+       *     "(" !N0{ exVarInfo "," +1 tys(ty)("," +1) } ")" }
        * @format:exVarInfo({path, ty}) path
        *)
-      (*%  @prefix print_
-       * @format({exVarInfo, instTyList: ty tys})
-       * L8{ exVarInfo +1 tys:appList(ty()(btvOrdEnv,envList,sname))(+1 "{",",","}") }
-       * @format:exVarInfo({path, ty}) path
-       *)
-      (*% @prefix formatWithType_ 
-       * @format({exVarInfo, instTyList: ty tys})
-       * L8{ exVarInfo +1 tys:appList(ty()(btvOrdEnv))(+1 "{",",","}") }
-       * @format:exVarInfo({path, ty}) path
+      (*%
+       * @prefix print_
+       * @format "OVERLOAD_EXVAR"
        *)
       OVERLOAD_EXVAR of
       {
@@ -790,19 +924,14 @@ struct
         instTyList: ty list
       }
     | (*%
-       * @format({primInfo, instTyList: ty tys})
-       * L8{ primInfo +1 tys:appList(ty()(btvOrdEnv))(+1 "{",",","}") }
+       * @format({primInfo, instTyList:ty tys})
+       * L2{ "OVERLOAD_PRIM" +1
+       *     "(" !N0{ primInfo "," +1 tys(ty)("," +1) } ")" }
        * @format:primInfo({primitive, ty}) primitive
        *)
-      (*% @prefix print_
-       * @format({primInfo, instTyList: ty tys})
-       * L8{ primInfo +1 tys:appList(ty()(btvOrdEnv,envList,sname))(+1 "{",",","}") }
-       * @format:primInfo({primitive, ty}) primitive
-       *)
-      (*% @prefix formatWithType_ 
-       * @format({primInfo, instTyList: ty tys})
-       * L8{ primInfo +1 tys:appList(ty()(btvOrdEnv))(+1 "{",",","}") }
-       * @format:primInfo({primitive, ty}) primitive
+      (*%
+       * @prefix print_
+       * @format "OVERLOAD_PRIM"
        *)
       OVERLOAD_PRIM of
       {
@@ -811,86 +940,27 @@ struct
       }
     | (*%
        * @format(ty * match matches)
-       * !N0{ "match" +d ty()(btvOrdEnv)
-       *      matches(match()(btvOrdEnv))(+1 "of" +d, +1, +d "=>",) }
+       * L2{ "OVERLOAD_CASE" +1
+       *     "(" !N0{ ty "," +1 matches:helper_overloadRules(match) } }
        *)
-      (*% @prefix print_
-       * @format(ty * match matches)
-       * !N0{ "match" +d ty()(btvOrdEnv,envList,sname)
-       *      matches(match()(btvOrdEnv,envList,sname))(+1 "of" +d, +1, +d "=>",) }
-       *)
-      (*% @prefix formatWithType_ 
-       * @format(ty * match matches)
-       * !N0{ "match" +d ty()(btvOrdEnv)
-       *      matches(match()(btvOrdEnv))(+1 "of" +d, +1, +d "=>",) }
+      (*%
+       * @prefix print_
+       * @format "OVERLOAD_CASE"
        *)
       OVERLOAD_CASE of ty * overloadMatch TypID.Map.map
 
-  and kind = 
-      (*%
-       * @format({eqKind, dynKind, reifyKind, subkind, tvarKind})
-       * tvarKind()(btvOrdEnv)
-       * subkind
-       * dynKind()("#dynamic",)
-       * reifyKind()("#reify",)
-       *)
-      (*%  @prefix print_
-       * @format({eqKind, dynKind, reifyKind, subkind, tvarKind})
-       * tvarKind()(btvOrdEnv,envList,sname)
-       * subkind
-       * dynKind()("#dynamic",)
-       * reifyKind()("#reify",)
-       *)
-      (*% @prefix formatWithType_
-       * @format({eqKind, dynKind, reifyKind, subkind, tvarKind})
-       * tvarKind()(btvOrdEnv)
-       * subkind
-       * dynKind()("#dynamic",)
-       * reifyKind()("#reify",)
-       *)
-      KIND of
-      {eqKind : eqKind,
-       dynKind : bool,
-       reifyKind : bool,
-       subkind : subkind,    (* kinds unrelated to type-directed compile *)
-       tvarKind : tvarKind}  (* kinds significant to type-directed compile *)
-
   withtype tvKind =
-      (*
-       Ohori: Dec 3, 2006.
-       lambdaDepth is introduce to speed up type generalization.
-       Initially, it is equal to the length of \Gamma at which a type
-       variable is introduced. The top level is therefore 0.
-       We then maintain the invariant:
-         lambdaDepth(t) is the minimal |\Gamma|  such that
-              \Gamma{x:\tau(t)}
-       A type variable is created with lambdaDepth = INFINITE.
-       When a type is entered in \Gamma{x:\tau}, the lambdaDepth of
-       each type variable t' in tau is set to |\Gamma|
-       Whenever (t,tau) is unified, the lambdaDepth of each type variable t'
-       in tau must be set to min(lambdaDepth(t), lambdaDepth(t')).
-      *)
       (*%
-         @format({lambdaDepth,
-                  id,
-                  kind,
-                  utvarOpt: utvar utvarOpt})
-         kind:tyvarWithKind()(btvOrdEnv, id utvarOpt(utvar)("(U","U)"))
-         + "(lambdaDepth:" + lambdaDepth + ")"
+       * @format({lambdaDepth, id, kind, utvarOpt: utvar utvarOpt})
+       * id
+       * utvarOpt:ifsome()("(" utvarOpt(utvar) ")",)
+       * kind
        *)
-      (*%  @prefix print_
-         @format({lambdaDepth,
-                  id,
-                  kind,
-                  utvarOpt: utvar utvarOpt})
-         kind:tyvarWithKind()(btvOrdEnv,envList,sname, id utvarOpt(utvar)("(U","U)"))
-       *)
-      (*% @prefix formatWithType_ 
-         @format({lambdaDepth,
-                  id,
-                  kind,
-                  utvarOpt: utvar utvarOpt})
-         kind:tyvarWithKind()(btvOrdEnv, id utvarOpt(utvar)("(U","U)"))
+      (*%
+       * @prefix print_
+       * @format({lambdaDepth, id, kind, utvarOpt: utvar utvarOpt})
+       * utvarOpt:ifsome()(utvarOpt(utvar), id)
+       * kind()(env)
        *)
       {
        lambdaDepth: lambdaDepth,
@@ -899,157 +969,68 @@ struct
        utvarOpt: utvar option (* SOME: user-defined type variable *)
       }
 
-  and tyCon
-    = (*% @format({id, longsymbol:longsymbol:formatUserLongSymbol, iseq, runtimeTy, arity, conSet, conIDSet,
-                   extraArgs:ty tys,
-                   dtyKind})
-          longsymbol
-       *)
-      (*%  @prefix print_
-         @format({id, longsymbol:longsymbol:formatUserLongSymbol, iseq, runtimeTy, arity, conSet, conIDSet,
-                   extraArgs:ty tys,
-                   dtyKind})
-          longsymbol
-       *)
-      (*% @prefix formatWithType_ 
-          @format({id, longsymbol, iseq, runtimeTy, arity, conSet, conIDSet,
-                   extraArgs:ty tys,
-                   dtyKind})
-          tys:ifCons()(tys:enclosedList(ty()(btvOrdEnv))("{",",","}"))
-          longsymbol 
-          "(" id "[" dtyKind()(btvOrdEnv) "]" ")"
-       *)
-      {id : typId,
-       longsymbol : longsymbol,
-       iseq : bool,
-       arity : int,
-       runtimeTy : BuiltinTypeNames.bty,
-       conSet : (unit -> ty) option SymbolEnv.map,
-       conIDSet : ConID.Set.set,
-       extraArgs : ty list,
-       dtyKind : dtyKind
-      }
-
-(* old llvm
-    = (*%
-          @format({id, path, iseq, runtimeTy, arity, conSet,
-                   extraArgs:ty tys,
-                   dtyKind})
-          tys:ifCons()(tys:enclosedList(ty()(btvOrdEnv))("{",",","}"))
-          path 
-          "(" id "[" dtyKind()(btvOrdEnv) "]" ")"
-     (* @format({id, path, iseq, runtimeTy, arity, conSet,
-                   extraArgs:ty tys,
-                   dtyKind})
-          path*)
-       *)
-      (*% @prefix formatWithType_ 
-          @format({id, longsymbol, iseq, runtimeTy, arity, conSet,
-                   extraArgs:ty tys,
-                   dtyKind})
-          tys:ifCons()(tys:enclosedList(ty()(btvOrdEnv))("{",",","}"))
-          longsymbol 
-          "(" id "[" dtyKind()(btvOrdEnv) "]" ")"
-       *)
-      {id : typId,
-       longsymbol : longsymbol,
-       iseq : bool,
-       arity : int,
-       runtimeTy : BuiltinTypeNames.bty,
-       conSet : {hasArg:bool} SEnv.map,
-       extraArgs : ty list,
-       dtyKind : dtyKind
-      }
-*)
-
-  and polyTy = (* for pretty printing *)
+  and tyCon =
       (*%
-       * @format({boundtvars, constraints: con cons, body})
-          "[" 
-            !N0{
-               2[
-                 {boundtvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
-                 cons:optionalList(con(btvOrdEnv))(+1"(",",",") =>")
-                 +1
-                 body()(btvOrdEnv) 
-                ]
-            "]"
-           }
+       * @format({id, longsymbol, admitsEq, arity, conSet, conIDSet,
+       *          extraArgs, dtyKind})
+       * longsymbol "(" id ")"
        *)
-      (*%  @prefix print_
-       * @format({boundtvars, constraints: con cons, body})
-          "[" 
-            !N0{
-               2[
-                 {boundtvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
-                 cons:optionalList(con(btvOrdEnv,envList,sname))(+1"(",",",") =>")
-                 +1
-                 body()(btvOrdEnv,envList,sname) 
-                ]
-            "]"
-           }
-       *)
-      (*% @prefix formatWithType_
-       * @format({boundtvars, constraints: con cons, body})
-       * "[" !N0{ boundtvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."
-       *          cons:optionalList(con(btvOrdEnv))(+1"(",",",") =>")
-       *          +1 body()(btvOrdEnv) "]" }
-       *)
-      (**
-       * boundtvars = {..., btvid -> btvKind as {tvarKind, eqKind, boxedKind, dynKind, reifyKind}, ...}
-       * btvid is the id of boundTvars used as i in BOUNDVARty(i)
+      (*%
+       * @prefix print_
+       * @format(x)
+       * x:helper_tyCon()(env)
        *)
       {
-        boundtvars : kind BoundTypeVarID.Map.map,
-        constraints : constraint list,
-        body : ty
+        id : typId,
+        longsymbol : longsymbol,
+        admitsEq : bool,
+        arity : int,
+        conSet : (unit -> ty) option SymbolEnv.map,
+        conIDSet : ConID.Set.set,
+        extraArgs : ty list,
+        dtyKind : dtyKind
       }
 
   and codeEntryTy =
       (*%
-       * @format({tyvars, haveClsEnv, argTyList: arg args,
-       *          retTy: ret rets})
-       * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
-       *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
+       * @format({tyvars: kind kinds, haveClsEnv,
+       *          argTyList: arg args, retTy})
+       * "[" !N0{
+       *   kinds:helper_format_boundTvars(kind) "." +1
+       *   "{" !N0{
+       *     dummy:sep()(haveClsEnv:iftrue()("*",), ",", args(arg)("," +1))
+       *   } "}"
+       *   +1 "->" +d retTy
+       * } "]"
        *)
-      (*%   @prefix print_
-       * @format({tyvars, haveClsEnv, argTyList: arg args,
-       *          retTy: ret rets})
-       * R4{ args:appList(arg()(btvOrdEnv,envList,sname))("{",",","}")
-       *     +1 "->" +d rets(ret()(btvOrdEnv,envList,sname))("{","}") }
-       *)
-      (*% @prefix formatWithType_
-       * @format({tyvars, haveClsEnv, argTyList: arg args,
-       *          retTy: ret rets})
-       * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
-       *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
+      (*%
+       * @prefix print_
+       * @format "codeEntryTy"
        *)
       (* argTyList and retTy must be closed by tyvars *)
       {
         tyvars : kind BoundTypeVarID.Map.map,
         haveClsEnv : bool,
         argTyList : ty list,
-        retTy : ty option
+        retTy : ty
       }
 
   and callbackEntryTy =
       (*%
-       * @format({tyvars, haveClsEnv, argTyList: arg args,
-       *          retTy: ret rets, attributes})
-       * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
-       *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
+       * @format({tyvars: kind kinds, attributes, haveClsEnv,
+       *          argTyList: arg args, retTy: ret retopt})
+       * "[" !N0{
+       *   kinds:helper_format_boundTvars(kind) "." +1
+       *   attributes +1
+       *   "{" !N0{
+       *     dummy:sep()(haveClsEnv:iftrue()("*",), ",", args(arg)("," +1))
+       *   } "}"
+       *   +1 "->" +d retopt:ifsome()(retopt(ret), "{}")
+       * } "]"
        *)
-      (*%   @prefix print_
-       * @format({tyvars, haveClsEnv, argTyList: arg args,
-       *          retTy: ret rets, attributes})
-       * R4{ args:appList(arg()(btvOrdEnv,envList,sname))("{",",","}")
-       *     +1 "->" +d rets(ret()(btvOrdEnv,envList,sname))("{","}") }
-       *)
-      (*% @prefix formatWithType_
-       * @format({tyvars, haveClsEnv, argTyList: arg args,
-       *          retTy: ret rets, attributes})
-       * R4{ args:appList(arg()(btvOrdEnv))("{",",","}")
-       *     +1 "->" +d rets(ret()(btvOrdEnv))("{","}") }
+      (*%
+       * @prefix print_
+       * @format "callbackEntryTy"
        *)
       (* argTyList and retTy must be closed by tyvars *)
       {
@@ -1060,263 +1041,134 @@ struct
         attributes : FFIAttributes.attributes
       }
 
-  and foreignFunTy =
-      (*%
-       * @format({tyvars,
-       *          argTyList: argTy argTys,
-       *          varArgTyList: varTy varTys varOpt,
-       *          resultTy: retTy retTyOpt, attributes})
-       * L8{ 2[
-       *   {tyvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
-       *   attributes +1
-       *   R4{ argTys:appList(argTy()(btvOrdEnv))("(",",",")")
-       *       varOpt(varTys:appList(varTy()(btvOrdEnv))("(",",",")"))("...",)
-       *       +1 "->" +d retTyOpt:withDefault(retTy()(btvOrdEnv))("()") } ] }
-       *)
-      (*%   @prefix print_
-       * @format({tyvars,
-       *          argTyList: argTy argTys,
-       *          varArgTyList: varTy varTys varOpt,
-       *          resultTy: retTy retTyOpt, attributes})
-       * L8{ 2[
-       *   {tyvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
-       *   attributes +1
-       *   R4{ argTys:appList(argTy()(btvOrdEnv,envList,sname))("(",",",")")
-       *       varOpt(varTys:appList(varTy()(btvOrdEnv,envList,sname))("(",",",")"))("...",)
-       *       +1 "->" +d retTyOpt:withDefault(retTy()(btvOrdEnv,envList,sname))("()") } ] }
-       *)
-      (*% @prefix formatWithType_
-       * @format({tyvars,
-       *          argTyList: argTy argTys,
-       *          varArgTyList: varTy varTys varOpt,
-       *          resultTy: retTy retTyOpt, attributes})
-       * L8{ 2[
-       *   {tyvars:format_btvEnv_forPolyTy()(btvOrdEnv) "."}
-       *   attributes +1
-       *   R4{ argTys:appList(argTy()(btvOrdEnv))("(",",",")")
-       *       varOpt(varTys:appList(varTy()(btvOrdEnv))("(",",",")"))("...",)
-       *       +1 "->" +d retTyOpt:withDefault(retTy()(btvOrdEnv))("()") } ] }
-       *)
-      {
-        tyvars : kind BoundTypeVarID.Map.map,
-        argTyList : ty list,
-        varArgTyList : ty list option,
-        resultTy : ty option,
-        attributes : FFIAttributes.attributes
-      }
-
   and oprimSelector =
-      (*
-       * @format({oprimId, longsymbol, keyTyList: keyTy keyTys, match, instMap})
-       * longsymbol "#" oprimId
-       * (* instTys:optionalList(instTy()(btvOrdEnv))(+1 "{",",","}") *)
-       * (* keyTys:enclosedList(keyTy()(btvOrdEnv))("[",",","]") *)
-       * "(" {match()(btvOrdEnv)} ")"
+      (*%
+       * @format({oprimId, longsymbol, match})
+       * oprimId "(" longsymbol ")"
        *)
       (*%
-       * @format({oprimId, longsymbol, keyTyList: keyTy keyTys, match, instMap})
-       * longsymbol "#" oprimId
-       * (* instTys:optionalList(instTy()(btvOrdEnv))(+1 "{",",","}") *)
-       * (* keyTys:enclosedList(keyTy()(btvOrdEnv))("[",",","]") *)
-       *)
-      (*%   @prefix print_
-       * @format({oprimId, longsymbol, keyTyList: keyTy keyTys, match, instMap})
-       * longsymbol "#" oprimId
-       * (* instTys:optionalList(instTy()(btvOrdEnv,envList,sname))(+1 "{",",","}") *)
-       * (* keyTys:enclosedList(keyTy()(btvOrdEnv,envList,sname))("[",",","]") *)
-       *)
-      (*% @prefix formatWithType_
-       * @format({oprimId, longsymbol, keyTyList: keyTy keyTys, match, instMap})
-         longsymbol "#" oprimId 
-         (* +1 keyTys:enclosedList(keyTy()(btvOrdEnv))("[",",","]") *)
-         (* +1 match()(btvOrdEnv) *)
+       * @prefix print_
+       * @format "oprimSelector"
        *)
       {
         oprimId : OPrimID.id,
         longsymbol : longsymbol,
-        keyTyList : ty list,
-        match : overloadMatch,
-        instMap : overloadMatch OPrimInstMap.map
+        match : overloadMatch
       }
 
-  (* printing order of bound type variables. *)
-  fun btvOrderTy btv ty =
+  datatype btv_order =
+      UNDECIDED of kind
+    | DECIDED of int
+
+  fun btvOrderTy count btv ty =
       case ty of
-        SINGLETONty sty => btvOrderSingletonTy btv sty
-      | BACKENDty bty => btvOrderBackendTy btv bty
-      | ERRORty => nil
-      | DUMMYty _ => nil
-      | TYVARty (ref (TVAR _)) => nil
-      | TYVARty (ref (SUBSTITUTED ty)) => btvOrderTy btv ty
-      | BOUNDVARty id => if BoundTypeVarID.Set.member (btv, id)
-                         then [id] else nil
-      | FUNMty (tys, ty) => List.concat (map (btvOrderTy btv) (tys @ [ty]))
-      | RECORDty tys => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
-      | CONSTRUCTty {tyCon, args} => List.concat (map (btvOrderTy btv) args)
+        SINGLETONty _ => btv (* ignored *)
+      | BACKENDty _ => btv (* ignored *)
+      | ERRORty => btv
+      | DUMMYty _ => btv
+      | TYVARty (ref (TVAR _)) => btv
+      | TYVARty (ref (SUBSTITUTED ty)) => btvOrderTy count btv ty
+      | FUNMty (tys, ty) => btvOrderTy count (btvOrderTyList count btv tys) ty
+      | RECORDty tys => btvOrderTyList count btv (RecordLabel.Map.listItems tys)
+      | CONSTRUCTty {tyCon, args} => btvOrderTyList count btv args
       | POLYty {boundtvars, constraints, body} =>
         let
           val btv =
-              BoundTypeVarID.Set.filter
-                (fn id => not (BoundTypeVarID.Map.inDomain (boundtvars, id)))
+              BoundTypeVarID.Map.filteri
+                (fn (i, _) => not (BoundTypeVarID.Map.inDomain (boundtvars, i)))
                 btv
         in
-          btvOrderTy btv body
+          btvOrderTy count btv body
         end
-  and btvOrderSingletonTy btv sty =
-      case sty of
-        INSTCODEty {oprimId, longsymbol, keyTyList, match, instMap} =>
-        List.concat (map (btvOrderTy btv) keyTyList)
-      | INDEXty (label, ty) => btvOrderTy btv ty
-      | SIZEty ty => btvOrderTy btv ty
-      | TAGty ty => btvOrderTy btv ty
-      | TYPEty ty => btvOrderTy btv ty
-      | REIFYty ty => btvOrderTy btv ty
-  and btvOrderBackendTy btv bty =
-      case bty of
-        RECORDSIZEty ty => btvOrderTy btv ty
-      | RECORDBITMAPINDEXty (i,ty) => btvOrderTy btv ty
-      | RECORDBITMAPty (i,ty) => btvOrderTy btv ty
-      | CCONVTAGty _ => nil  (* contains no free type variables *)
-      | FUNENTRYty _ => nil  (* contains no free type variables *)
-      | CALLBACKENTRYty _ => nil  (* contains no free type variables *)
-      | SOME_FUNENTRYty => nil
-      | SOME_FUNWRAPPERty => nil
-      | SOME_CLOSUREENVty => nil
-      | SOME_CCONVTAGty => nil
-      | FOREIGNFUNPTRty {tyvars, argTyList, varArgTyList, resultTy,
-                         attributes} =>
-        List.concat
-          (map (btvOrderTy btv)
-               (argTyList
-                @ (case varArgTyList of NONE => nil | SOME l => l)
-                @ (case resultTy of NONE => nil | SOME x => [x])))
-  and btvOrderKind btv (KIND {eqKind, dynKind, reifyKind, subkind, tvarKind}) =
+      | BOUNDVARty id =>
+        case BoundTypeVarID.Map.find (btv, id) of
+          NONE => btv
+        | SOME (DECIDED n) => btv
+        | SOME (UNDECIDED k) =>
+          let
+            val btv = BoundTypeVarID.Map.insert (btv, id, DECIDED (!count))
+            val _ = count := !count + 1
+          in
+            btvOrderKind count btv k
+          end
+  and btvOrderTyList count btv tys =
+      foldl (fn (ty, btv) => btvOrderTy count btv ty) btv tys
+  and btvOrderKind count btv (KIND {properties, tvarKind, dynamicKind}) =
       case tvarKind of
-        OCONSTkind tys => List.concat (map (btvOrderTy btv) tys)
-      | OPRIMkind {instances,...} =>
-        List.concat (map (btvOrderTy btv) instances)
-      | UNIV => nil
-      | BOXED => nil
-      | REC tys => List.concat (map (btvOrderTy btv) (RecordLabel.Map.listItems tys))
-  and btvOrder (boundtvars, body) =
+        OCONSTkind tys => btvOrderTyList count btv tys
+      | OPRIMkind {instances, ...} => btvOrderTyList count btv instances
+      | UNIV => btv
+      | REC tys => btvOrderTyList count btv (RecordLabel.Map.listItems tys)
+
+  fun extendBtvOrder btvOrder {boundtvars, constraints, body} =
       let
-        val btv = BoundTypeVarID.Map.foldli
-                    (fn (id,_,z) => BoundTypeVarID.Set.add (z, id))
-                    BoundTypeVarID.Set.empty
-                    boundtvars
+        val btv =
+            BoundTypeVarID.Map.mergeWith
+              (fn (_, SOME k) => SOME (UNDECIDED k)
+                | (SOME x, _) => SOME (DECIDED x)
+                | (NONE, NONE) => NONE)
+              (btvOrder, boundtvars)
+        val count = BoundTypeVarID.Map.numItems btvOrder
+        val btv = btvOrderTy (ref count) btv body
       in
-        foldr (fn (x,z) => case BoundTypeVarID.Map.find (boundtvars, x) of
-                             NONE => x :: z
-                           | SOME k => x :: btvOrderKind btv k @ z)
-              nil
-              (btvOrderTy btv body)
+        BoundTypeVarID.Map.mapPartial
+          (fn DECIDED n => SOME n | UNDECIDED _ => NONE)
+          btv
       end
 
-  fun format_kindPrefix (KIND {eqKind, ...}) =
-      format_eqKind eqKind
-
-  val format_kindSuffix = format_kind
-
-  fun makeEnv btvEnv =
-      packEnv {btvEnv = btvEnv,
-               btvOrder = btvOrder,
-               formatPrefix = format_kindPrefix,
-               formatSuffix = format_kindSuffix}
-
-  val format_tvarKind =
-      fn btvEnv => fn x => format_tvarKind (makeEnv btvEnv) x
-  val format_tvState =
-      fn btvEnv => fn x => format_tvState (makeEnv btvEnv) x
-  val format_ty =
-      fn btvEnv => fn x => format_ty (makeEnv btvEnv) x
-  val print_ty =
-      fn (btvEnv, envList, sname) => fn x => print_ty (makeEnv btvEnv, envList, sname) x
-  val format_singletonTy =
-      fn btvEnv => fn x => format_singletonTy (makeEnv btvEnv) x
-  val formatWithType_singletonTy =
-      fn btvEnv => fn x => formatWithType_singletonTy (makeEnv btvEnv) x
-  val formatWithType_ty =
-      fn btvEnv => fn x => formatWithType_ty (makeEnv btvEnv) x
-  val format_dtyKind =
-      fn btvEnv => fn x => format_dtyKind (makeEnv btvEnv) x
-  val format_tvKind =
-      fn btvEnv => fn x => format_tvKind (makeEnv btvEnv) x
-  val format_oprimSelector =
-      fn btvEnv => fn x => format_oprimSelector (makeEnv btvEnv) x
-  val format_codeEntryTy =
-      fn x => format_codeEntryTy (makeEnv nil) x
-  val format_callbackEntryTy =
-      fn x => format_callbackEntryTy (makeEnv nil) x
-  val format_foreignFunTy =
-      fn btvEnv => fn x => format_foreignFunTy (makeEnv btvEnv) x
-  val format_kind =
-      fn (btvEnv, tyvar) => fn x =>
-         format_tyvarWithKind (makeEnv btvEnv, tyvar) x
-
-  (*% *)
-  type btvEnv =
-       (*% @format(x xs) *)
-       kind BoundTypeVarID.Map.map
-
-  (* general formatter for btvEnv *)
-  fun format_btvEnv btvEnv btvMap =
-      let
-        val btvEnv = TermFormat.extendBtvEnv btvEnv btvMap
-      in
-        TermFormat.formatBtvEnv
-          (fn tyvar => format_kind (btvEnv, tyvar))
-          btvEnv
-          btvMap
-      end
-
-  (* general formatter for btvEnv *)
-  fun format_btvEnvWithType btvEnv btvMap =
-      let
-        val btvEnv = TermFormat.extendBtvEnv btvEnv btvMap
-      in
-        TermFormat.formatBtvEnvWithType
-          (fn tyvar => format_kind (btvEnv, tyvar))
-          btvEnv
-          btvMap
-      end
+  fun formatTyForUser sname ty =
+      print_ty
+        {btvOrder = BoundTypeVarID.Map.empty,
+         extendBtvOrder = extendBtvOrder,
+         tyConNameEnv = #env sname,
+         tyConName = #tyConName sname}
+        ty
 
   (*%
-   * @formatter(VarID.id)  VarID.format_id
+   * @formatter(helper_format_boundTvars) helper_format_boundTvars
+   *)
+  type btvEnv =
+      (*%
+       * @format(kind kinds)
+       * kinds:helper_format_boundTvars(kind)
+       *)
+      kind BoundTypeVarID.Map.map
+
+  (*%
+   * @formatter(VarID.id) VarID.format_id
    *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
-   * @formatter(VarID.id)  VarID.format_id
+   * @formatter(iftrue) iftrue
    * @formatter(longsymbol) format_longsymbol
-   * @formatter(ty) formatWithType_ty
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(ty) format_ty
+   * @formatter(VarID.id) VarID.format_id
    *)
-  type varInfo
-    = (*%
-       * @format({path, id, ty, opaque})  path
+  type varInfo =
+      (*%
+       * @format({path, id, ty, opaque}) path
        *)
       (*%
        * @prefix formatWithType_
        * @format({path, id, ty, opaque})
-       * L2{ path "(" id ")" +1 ":" +d ty()(btvEnv) opaque()("(opaque)",)}
+       * L2{ path "(" id opaque:iftrue()(",opaque",) ")" +1 ":" +d ty }
        *)
       {path:longsymbol, id:VarID.id, ty:ty, opaque:bool}
 
-  (*% *)
+  (*%
+   *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(longsymbol) format_longsymbol
    * @formatter(ty) format_ty
    *)
-  type exVarInfo
-    = (*%
+  type exVarInfo =
+      (*%
        * @format({path, ty}) path
        *)
       (*%
        * @prefix formatWithType_
-       * @format({path, ty})
-       * L2{ path +1 ":" +d ty()(btvEnv) }
+       * @format({path, ty}) L2{ path +1 ":" +d ty }
        *)
       {path:longsymbol, ty:ty}
 
@@ -1325,59 +1177,70 @@ struct
    *)
   (*%
    * @prefix formatWithType_
-   * @params(btvEnv)
    * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
    * @formatter(ty) format_ty
    *)
-  type primInfo
-    = (*% @format({primitive, ty}) primitive *)
+  type primInfo =
+      (*%
+       * @format({primitive, ty}) primitive
+       *)
       (*%
        * @prefix formatWithType_
-       * @format({primitive, ty})
-       * L2{ primitive +1 ":" +d ty()(btvEnv) }
+       * @format({primitive, ty}) L2{ primitive +1 ":" +d ty }
        *)
       {primitive : BuiltinPrimitive.primitive, ty : ty}
 
-  (*% @formatter(OPrimID.id)  OPrimID.format_id  *)
+  (*%
+   * @formatter(OPrimID.id) OPrimID.format_id
+   *)
   type oprimInfo
-    = (*% @format({path, id, ty}) path *)
+    = (*%
+       * @format({path, id, ty}) path "(" id ")"
+       *)
       (* ty is the polytype as a function *)
       {ty : ty, path: longsymbol, id : OPrimID.id}
 
   (*%
-     @params(btvEnv)
-     @formatter(ConID.id)  ConID.format_id
+   * @formatter(ConID.id) ConID.format_id
    *)
   type conInfo
-    = (*% @format({path, ty, id}) path *)
-      (* @format({path, ty, id}) path "(" id ")" + ":" + ty()(btvEnv) *)
+    = (*%
+       * @format({path, ty, id}) path
+       *)
       (* ty is the type as a function *)
       {path: longsymbol, ty: ty, id: ConID.id}
 
-  (*% 
-      @formatter(ExnID.id)  ExnID.format_id
+  (*%
+   * @formatter(ExnID.id) ExnID.format_id
    *)
   type exnInfo
-    = (*% @format({path, ty, id})  path "(" id ")" *)
+    = (*%
+       * @format({path, ty, id}) path "(" id ")"
+       *)
       (* ty is the type as a function *)
       {path: longsymbol, ty: ty, id: ExnID.id}
 
-  (*% 
+  (*%
    *)
   type exExnInfo
-    = (*% @format({path, ty})  path  *)
+    = (*%
+       * @format({path, ty}) path
+       *)
       (* ty is the type as a function *)
       {path: longsymbol, ty: ty}
 
-  val univKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = false, subkind = ANY, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
-  val jsonKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = false, subkind = JSON, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
-  val joinKind  = {kind = KIND {tvarKind = UNIV, dynKind = true, reifyKind = false, subkind = JSON, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
-  val jsonAtomicKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = false, subkind = JSON_ATOMIC, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
-  val joinAtomicKind  = {kind = KIND {tvarKind = UNIV, dynKind = true, reifyKind = false, subkind = JSON_ATOMIC, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
-  val emptyRecordKind = {kind = KIND {tvarKind = REC (RecordLabel.Map.empty), dynKind = false, reifyKind = false,
-                         subkind = ANY, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
-  val dynamicKind = {kind = KIND {tvarKind = UNIV, dynKind = true, reifyKind = false, subkind = JSON, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
-  val reifyKind = {kind = KIND {tvarKind = UNIV, dynKind = false, reifyKind = true, subkind = ANY, eqKind = NONEQ}, utvarOpt = NONE: utvar option}
+  val univKind = {kind = KIND {tvarKind = UNIV,
+                               properties=emptyProperties,
+                               dynamicKind=NONE},
+                  utvarOpt = NONE: utvar option}
+  val reifyKind = {kind = KIND {tvarKind = UNIV,
+                                properties=reifyProperties,
+                                dynamicKind=NONE},
+                   utvarOpt = NONE: utvar option}
+  val emptyRecordKind = {kind = KIND {tvarKind = REC (RecordLabel.Map.empty), 
+                                      properties = emptyProperties,
+                                      dynamicKind=NONE},
+                         utvarOpt = NONE: utvar option}
 
   val kindedTyvarList =
       ref nil : tvState ref list ref
@@ -1400,13 +1263,22 @@ struct
                               kind = kind,
                               utvarOpt = utvarOpt})
 
-  fun newUtvar (lambdaDepth, eqKind, utvar:utvar) =
+  fun newtyWithRecordKind fields =
+      TYVARty (newTvStateRef {lambdaDepth = infiniteDepth,
+                              kind = KIND 
+                                       {tvarKind = REC fields,
+                                        properties = emptyProperties,
+                                        dynamicKind=NONE},
+                              utvarOpt = NONE})
+
+  fun newUtvar (lambdaDepth, utvar:utvar) =
       newTvStateRef {lambdaDepth = lambdaDepth,
                      kind = KIND {tvarKind = UNIV,
-                                  eqKind = eqKind,
-                                  dynKind = false,
-                                  reifyKind = false,
-                                  subkind = ANY},
+                                  properties = if #isEq utvar
+                                               then eqProperties
+                                               else emptyProperties,
+                                  dynamicKind=NONE
+                                 },
                      utvarOpt = SOME utvar}
 
   fun newtyRaw {lambdaDepth, kind, utvarOpt} =
@@ -1418,18 +1290,5 @@ struct
       TYVARty(newTvStateRef {lambdaDepth=lambdaDepth,
                              kind=kind,
                              utvarOpt=utvarOpt})
-
-  fun printTy ty =
-      let
-        (* val print = fn s => if !Bug.debugPrint then print s else () *)
-      in
-        print (Bug.prettyPrint (formatWithType_ty nil ty))
-      end
-  fun tyToString ty = Bug.prettyPrint (format_ty nil ty)
-  fun singletonTyToString ty = Bug.prettyPrint (format_singletonTy nil ty)
-  fun singletonTyWithTypeToString ty = Bug.prettyPrint (formatWithType_singletonTy nil ty)
-  fun tyWithTypeToString ty = Bug.prettyPrint (formatWithType_ty nil ty)
-  fun btvEnvToString x = Bug.prettyPrint (format_btvEnv nil x)
-  fun btvEnvWithTypeToString x = Bug.prettyPrint (format_btvEnvWithType nil x)
 
 end

@@ -1,0 +1,20 @@
+_require "basis.smi"
+
+type d1 (= contag)
+type d2 (= contag)
+type 'a d3 (= contag)
+eqtype d4 (= contag)
+
+type d5 (= contag)
+eqtype d6 (= contag)
+
+val dv1 : d1
+val dv21 : d2
+val dv22 : d2
+val dv31 : int d3
+val dv32 : int d3
+val dv411 : d4
+val dv412 : d4
+val dv42 : d4
+val dv61 : d6
+val dv62 : d6

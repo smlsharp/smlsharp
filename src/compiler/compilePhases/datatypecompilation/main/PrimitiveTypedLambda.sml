@@ -5,492 +5,53 @@
  * @author UENO Katsuhiro
  *)
 
-structure L = TypedLambda
-structure T = Types
-structure P = BuiltinPrimitive
-structure B = BuiltinTypes
-structure C = ConstantTerm
-structure E = EmitTypedLambda
-
-functor IntPrim(
-  val intTy : T.ty
-  val wordTy : T.ty
-  val numBits_log2 : int
-  val INT : int -> C.constant
-  val WORD : int -> C.constant
-  val Int : int -> E.exp
-  val Word : int -> E.exp
-  val Int_lt : E.exp * E.exp -> E.exp
-  val Int_eq : E.exp * E.exp -> E.exp
-  val Int_add_unsafe : E.exp * E.exp -> E.exp
-  val Int_sub_unsafe : E.exp * E.exp -> E.exp
-  val Int_mul_unsafe : E.exp * E.exp -> E.exp
-  val Int_add_overflowCheck : E.exp * E.exp -> E.exp
-  val Int_sub_overflowCheck : E.exp * E.exp -> E.exp
-  val Int_mul_overflowCheck : E.exp * E.exp -> E.exp
-  val Int_quot_unsafe : E.exp * E.exp -> E.exp
-  val Int_rem_unsafe : E.exp * E.exp -> E.exp
-  val Word_fromWord32 : E.exp -> E.exp
-  val Word_fromWord32X : E.exp -> E.exp
-  val Word_toWord32 : E.exp -> E.exp
-  val Word_toWord32X : E.exp -> E.exp
-  val Word_sub : E.exp * E.exp -> E.exp
-  val Word_add : E.exp * E.exp -> E.exp
-  val Word_xorb : E.exp * E.exp -> E.exp
-  val Word_andb : E.exp * E.exp -> E.exp
-  val Word_orb : E.exp * E.exp -> E.exp
-  val Word_rshift_unsafe : E.exp * E.exp -> E.exp
-  val Word_lshift_unsafe : E.exp * E.exp -> E.exp
-  val Word_arshift_unsafe : E.exp * E.exp -> E.exp
-  val Word_div_unsafe : E.exp * E.exp -> E.exp
-  val Word_mod_unsafe : E.exp * E.exp -> E.exp
-) =
+structure PrimitiveTypedLambda =
 struct
 
-  val numBits = Word.toIntX (Word.<< (0w1, Word.fromInt numBits_log2))
-  val minInt = Word_lshift_unsafe (Word 1, Word (numBits - 1))
-  fun toWord exp = E.RuntimeTyCast (exp, wordTy)
-  fun toInt exp = E.RuntimeTyCast (exp, intTy)
-  fun boolToWord32 exp = E.RuntimeTyCast (exp, B.wordTy)
-  fun boolToWord exp = Word_fromWord32 (boolToWord32 exp)
+  structure L = TypedLambda
+  structure T = Types
+  structure P = BuiltinPrimitive
+  structure B = BuiltinTypes
+  structure E = EmitTypedLambda
 
-  fun Int_add retTy (arg1, arg2) =
-      E.Switch
-        (Int_add_overflowCheck (arg1, arg2),
-         [(C.INT32 0, Int_add_unsafe (arg1, arg2))],
-         E.Raise (B.OverflowExExn, retTy))
+  val int8min = ~128 : int8
+  val int16min = ~32768 : int16
+  val int32min = ~2147483648 : int32
+  val int64min = ~9223372036854775808 : int64
 
-  fun Int_sub retTy (arg1, arg2) =
-      E.Switch
-        (Int_sub_overflowCheck (arg1, arg2),
-         [(C.INT32 0, Int_sub_unsafe (arg1, arg2))],
-         E.Raise (B.OverflowExExn, retTy))
+  val int8min_r64 = ~128.0 : real64
+  val int8max_r64 =  127.0 : real64
+  val int16min_r64 = ~32768.0 : real64
+  val int16max_r64 =  32767.0 : real64
+  val int32min_r64 = ~2147483648.0 : real64
+  val int32max_r64 =  2147483647.0 : real64
+  val int64min_r64 = ~9223372036854775808.0 : real64 (* c3e0000000000000 *)
+  val int64max_r64 =  9223372036854774784.0 : real64 (* 43dfffffffffffff *)
 
-  fun Int_mul retTy (arg1, arg2) =
-      E.Switch
-        (Int_mul_overflowCheck (arg1, arg2),
-         [(C.INT32 0, Int_mul_unsafe (arg1, arg2))],
-         E.Raise (B.OverflowExExn, retTy))
+  val int8min_r32 = ~128.0 : real32
+  val int8max_r32 =  127.0 : real32
+  val int16min_r32 = ~32768.0 : real32
+  val int16max_r32 =  32767.0 : real32
+  val int32min_r32 = ~2147483648.0 : real32 (* cf000000 *)
+  val int32max_r32 =  2147483520.0 : real32  (* 4effffff *)
+  val int64min_r32 = ~9223372036854775808.0 : real32 (* df000000 *)
+  val int64max_r32 =  9223371487098961920.0 : real32 (* 5effffff *)
 
-  fun Int_quot retTy (arg1, arg2) =
-      (*
-       * Overflow check
-       *   (x == minInt) && (y == -1)
-       * = ((x ^ minInt) | (y + 1)) == 0
-       * ( = (y != 0) && (let (c,r) = add(x,x) in (r | adc(y,0,c)) == 0) )
-       *)
-      E.Switch
-        (arg2,
-         [(INT 0, E.Raise (B.DivExExn, retTy))],
-         E.Switch
-           (Word_orb (Word_xorb (toWord arg1, minInt),
-                      Word_add (toWord arg2, Word 1)),
-            [(WORD 0, E.Raise (B.OverflowExExn, retTy))],
-            Int_quot_unsafe (arg1, arg2)))
+  val numBits_int8 = 8
+  val numBits_int16 = 16
+  val numBits_int32 = 32
+  val numBits_int64 = 64
 
-  fun Int_rem retTy (arg1, arg2) =
-      E.Switch
-        (arg2,
-         [(INT 0, E.Raise (B.DivExExn, retTy))],
-         E.Switch
-           (Word_add (toWord arg2, Word 1),
-            [(WORD 0, Int 0)],
-            Int_rem_unsafe (arg1, arg2)))
-
-  fun Int_div retTy (arg1, arg2) =
-      (*
-       * Overflow check
-       *   (x == minInt) && (y == -1)
-       * = ((x ^ minInt) | (y + 1)) == 0
-       *)
-      E.Switch
-        (arg2,
-         [(INT 0, E.Raise (B.DivExExn, retTy))],
-         E.Switch
-           (Word_orb (Word_xorb (toWord arg1, minInt),
-                      Word_add (toWord arg2, Word 1)),
-            [(WORD 0, E.Raise (B.OverflowExExn, retTy))],
-            (*
-             * div rounds the quotient towards negative infinity.
-             *    7 div  3 =  2     7 quot  3 =  2
-             *    7 div ~3 = ~3     7 quot ~3 = ~2
-             *   ~7 div  3 = ~3    ~7 quot  3 = ~2
-             *   ~7 div ~3 =  2    ~7 quot ~3 =  2
-             * q = x quot y
-             * r = x rem y
-             * s = x xor y
-             * x div y = q - ((s < 0) && (r != 0))
-             *         = q - ((s < 0) & ((r == 0) ^ 1))
-             *)
-            let
-              val q = EmitTypedLambda.newId ()
-              val r = EmitTypedLambda.newId ()
-              val s = EmitTypedLambda.newId ()
-            in
-              E.Let
-                ([(q, Int_quot_unsafe (arg1, arg2)),
-                  (r, Int_rem_unsafe (arg1, arg2)),
-                  (s, toInt (Word_xorb (toWord arg1, toWord arg2)))],
-                 let
-                   val f1 = boolToWord (Int_lt (E.Var s, Int 0))
-                   val f2 = boolToWord (Int_eq (E.Var r, Int 0))
-                   val m = Word_andb (f1, Word_xorb (f2, Word 1))
-                 in
-                   Int_sub_unsafe (E.Var q, toInt m)
-                 end)
-            end))
-
-  fun Int_mod retTy (arg1, arg2) =
-      E.Switch
-        (arg2,
-         [(INT 0, E.Raise (B.DivExExn, retTy))],
-         E.Switch
-           (Word_add (toWord arg2, Word 1),
-            [(WORD 0, Int 0)],
-            (*
-             * mod rounds the quotient towards negative infinity.
-             *    7 mod  3 =  1     7 rem  3 =  1
-             *    7 mod ~3 = ~2     7 rem ~3 =  1
-             *   ~7 mod  3 =  2    ~7 rem  3 = ~1
-             *   ~7 mod ~3 = ~1    ~7 rem ~3 = ~1
-             * r = x rem y
-             * s = x xor y
-             * x mod y = r + (((s < 0) && (r != 0)) ? y : 0)
-             *         = r + ((-((s < 0) & ((r == 0) ^ 1))) & y)
-             *)
-            let
-              val r = EmitTypedLambda.newId ()
-              val s = EmitTypedLambda.newId ()
-            in
-              E.Let
-                ([(r, Int_rem_unsafe (arg1, arg2)),
-                  (s, toInt (Word_xorb (toWord arg1, toWord arg2)))],
-                 let
-                   val f1 = boolToWord (Int_lt (E.Var s, Int 0))
-                   val f2 = boolToWord (Int_eq (E.Var r, Int 0))
-                   val m = Word_andb (f1, Word_xorb (f2, Word 1))
-                   val a = Word_andb (Word_sub (Word 0, m), toWord arg2)
-                 in
-                   Int_add_unsafe (E.Var r, a)
-                 end)
-            end))
-
-  fun Int_abs retTy arg =
-      (*
-       * Overflow check  (x == minInt) = ((x ^ minInt) == 0)
-       * abs(x) = (x + (-(x < 0))) ^ (-(x < 0))
-       *)
-      E.Switch
-        (Word_xorb (toWord arg, minInt),
-         [(WORD 0, E.Raise (B.OverflowExExn, retTy))],
-         let
-           val y = EmitTypedLambda.newId ()
-         in
-           E.Let
-             ([(y, Word_sub (Word 0, boolToWord (Int_lt (arg, Int 0))))],
-              Word_xorb (Word_add (toWord arg, E.Var y), E.Var y))
-         end)
-           
-  fun Int_neg retTy arg =
-      (*
-       * Overflow check  (x == minInt) = ((x ^ minInt) == 0)
-       *)
-      E.Switch
-        (Word_xorb (toWord arg, minInt),
-         [(WORD 0, E.Raise (B.OverflowExExn, retTy))],
-         Int_sub_unsafe (Int 0, arg))
-
-  fun Word_div retTy (arg1, arg2) =
-      E.Switch
-        (arg2,
-         [(WORD 0, E.Raise (B.DivExExn, retTy))],
-         Word_div_unsafe (arg1, arg2))
-
-  fun Word_mod retTy (arg1, arg2) =
-      E.Switch
-        (arg2,
-         [(WORD 0, E.Raise (B.DivExExn, retTy))],
-         Word_mod_unsafe (arg1, arg2))
-
-  fun Word_lshift retTy (arg1, arg2) =
-      E.Switch
-        (E.Word32_rshift_unsafe (arg2, E.Word32 numBits_log2),
-         [(WORD 0, Word_lshift_unsafe (arg1, Word_fromWord32 arg2))],
-         Word 0)
-
-  fun Word_rshift retTy (arg1, arg2) =
-      E.Switch
-        (E.Word32_rshift_unsafe (arg2, E.Word32 numBits_log2),
-         [(WORD 0, Word_rshift_unsafe (arg1, Word_fromWord32 arg2))],
-         Word 0)
-
-  fun Word_arshift retTy (arg1, arg2) =
-      E.Switch
-        (E.Word32_rshift_unsafe (arg2, E.Word32 numBits_log2),
-         [(WORD 0, Word_arshift_unsafe (arg1, Word_fromWord32 arg2))],
-         Word_arshift_unsafe (arg1, Word (numBits - 1)))
-
-  fun Word_neg retTy arg =
-      Word_sub (Word 0, arg)
-
-  fun Word_notb retTy arg =
-      Word_xorb (Word ~1, arg)
-
-  fun Word_fromInt32_extend retTy arg =
-      Word_fromWord32X (E.Word32_fromInt32 arg)
-
-  fun Word_fromInt32_trunc retTy arg =
-      Word_fromWord32X (E.Word32_fromInt32 arg)
-
-  fun Word_toInt32_extend retTy arg =
-      E.Word32_toInt32X (Word_toWord32 arg)
-
-  fun Word_toInt32_trunc retTy arg =
-      (*
-       * Check whether or not the value fits in int32.
-       *   x < (1 << 31)
-       * = (x >> 31) == 0
-       *)
-      E.Switch
-        (Word_rshift_unsafe (toWord arg, Word 31),
-         [(WORD 0, E.Word32_toInt32X (Word_toWord32 arg))],
-         E.Raise (B.OverflowExExn, retTy))
-
-  fun Word_toInt32X_extend retTy arg =
-      E.Word32_toInt32X (Word_toWord32X arg)
-
-  fun Word_toInt32X_trunc retTy arg =
-      (*
-       * Check whether or not the value fits in int32.
-       *   (minInt <= x) && (x <= maxInt)
-       * = (~(x | maxInt) == 0) || ((x & minInt) == 0)
-       * = ((~x & minInt) == 0) || ((x & minInt) == 0)
-       * = (((-(x < 0)) ^ x) & minInt) == 0
-       * = ((-(x < 0)) ^ x) >> 31 == 0
-       *)
-      let
-        val m = Word_sub (Word 0, boolToWord (Int_lt (toInt arg, Int 0)))
-      in
-        E.Switch
-          (Word_rshift_unsafe (Word_xorb (m, arg), Word 31),
-           [(WORD 0, Word_toWord32 arg)],
-           E.Raise (B.OverflowExExn, retTy))
-      end
-
-  fun Int_toInt32_extend retTy arg =
-      E.Word32_toInt32X (Word_toWord32X (toWord arg))
-
-  fun Int_toInt32_trunc retTy arg =
-      (*
-       * Check whether or not the value fits in int32.
-       *   (minInt <= x) && (x <= maxInt)
-       * = (~(x | maxInt) == 0) || ((x & minInt) == 0)
-       * = ((~x & minInt) == 0) || ((x & minInt) == 0)
-       * = (((-(x < 0)) ^ x) & minInt) == 0
-       * = ((-(x < 0)) ^ x) >> 31 == 0
-       *)
-      let
-        val m = Word_sub (Word 0, boolToWord (Int_lt (arg, Int 0)))
-      in
-        E.Switch
-          (Word_rshift_unsafe (Word_xorb (m, toWord arg), Word 31),
-           [(WORD 0, E.Word32_toInt32X (Word_toWord32 (toWord arg)))],
-           E.Raise (B.OverflowExExn, retTy))
-      end
-
-  fun Int_fromInt32_extend retTy arg =
-      toInt (Word_fromWord32X (E.Word32_fromInt32 arg))
-
-  fun Int_fromInt32_trunc retTy arg =
-      (*
-       * Check whether or not the value fits in int.
-       *   (minInt <= x) && (x <= maxInt)
-       * = (~(x | maxInt) == 0) || ((x & minInt) == 0)
-       * = ((~x & minInt) == 0) || ((x & minInt) == 0)
-       * = (((-(x < 0)) ^ x) & minInt) == 0
-       * = ((-(x < 0)) ^ x) >> (numBits - 1) == 0
-       *)
-      let
-        val f1 = boolToWord32 (E.Int32_lt (arg, E.Int32 0))
-        val f2 = E.Word32_sub (E.Word32 0, f1)
-        val f3 = E.Word32_xorb (f2, E.Word32_fromInt32 arg)
-      in
-        E.Switch
-          (E.Word32_rshift_unsafe (f3, E.Word32 (numBits - 1)),
-           [(C.WORD32 0w0, toInt (Word_fromWord32X (E.Word32_fromInt32 arg)))],
-           E.Raise (B.OverflowExExn, retTy))
-      end
-
-end
-
-structure Int8Prim =
-  IntPrim(
-    val intTy = B.int8Ty
-    val wordTy = B.word8Ty
-    val numBits_log2 = 3
-    val INT = C.INT8 o Int8.fromInt
-    val WORD = C.WORD8 o Word8.fromInt
-    val Int = E.Int8
-    val Word = E.Word8
-    val Int_lt = E.Int8_lt
-    val Int_eq = E.Int8_eq
-    val Int_add_unsafe = E.Int8_add_unsafe
-    val Int_sub_unsafe = E.Int8_sub_unsafe
-    val Int_mul_unsafe = E.Int8_mul_unsafe
-    val Int_add_overflowCheck = E.Int8_add_overflowCheck
-    val Int_sub_overflowCheck = E.Int8_sub_overflowCheck
-    val Int_mul_overflowCheck = E.Int8_mul_overflowCheck
-    val Int_quot_unsafe = E.Int8_quot_unsafe
-    val Int_rem_unsafe = E.Int8_rem_unsafe
-    val Word_fromWord32 = E.Word32_toWord8
-    val Word_toWord32 = E.Word8_toWord32
-    val Word_fromWord32X = E.Word32_toWord8
-    val Word_toWord32X = E.Word8_toWord32X
-    val Word_sub = E.Word8_sub
-    val Word_add = E.Word8_add
-    val Word_xorb = E.Word8_xorb
-    val Word_andb = E.Word8_andb
-    val Word_orb = E.Word8_orb
-    val Word_lshift_unsafe = E.Word8_lshift_unsafe
-    val Word_rshift_unsafe = E.Word8_rshift_unsafe
-    val Word_arshift_unsafe = E.Word8_arshift_unsafe
-    val Word_div_unsafe = E.Word8_div_unsafe
-    val Word_mod_unsafe = E.Word8_mod_unsafe
-  )
-
-structure Int16Prim =
-  IntPrim(
-    val intTy = B.int16Ty
-    val wordTy = B.word16Ty
-    val numBits_log2 = 4
-    val INT = C.INT16 o Int16.fromInt
-    val WORD = C.WORD16 o Word16.fromInt
-    val Int = E.Int16
-    val Word = E.Word16
-    val Int_lt = E.Int16_lt
-    val Int_eq = E.Int16_eq
-    val Int_add_unsafe = E.Int16_add_unsafe
-    val Int_sub_unsafe = E.Int16_sub_unsafe
-    val Int_mul_unsafe = E.Int16_mul_unsafe
-    val Int_add_overflowCheck = E.Int16_add_overflowCheck
-    val Int_sub_overflowCheck = E.Int16_sub_overflowCheck
-    val Int_mul_overflowCheck = E.Int16_mul_overflowCheck
-    val Int_quot_unsafe = E.Int16_quot_unsafe
-    val Int_rem_unsafe = E.Int16_rem_unsafe
-    val Word_fromWord32 = E.Word32_toWord16
-    val Word_toWord32 = E.Word16_toWord32
-    val Word_fromWord32X = E.Word32_toWord16
-    val Word_toWord32X = E.Word16_toWord32X
-    val Word_sub = E.Word16_sub
-    val Word_add = E.Word16_add
-    val Word_xorb = E.Word16_xorb
-    val Word_andb = E.Word16_andb
-    val Word_orb = E.Word16_orb
-    val Word_lshift_unsafe = E.Word16_lshift_unsafe
-    val Word_rshift_unsafe = E.Word16_rshift_unsafe
-    val Word_arshift_unsafe = E.Word16_arshift_unsafe
-    val Word_div_unsafe = E.Word16_div_unsafe
-    val Word_mod_unsafe = E.Word16_mod_unsafe
-  )
-
-structure Int32Prim =
-  IntPrim(
-    val intTy = B.intTy
-    val wordTy = B.wordTy
-    val numBits_log2 = 5
-    val INT = C.INT32
-    val WORD = C.WORD32 o Word32.fromInt
-    val Int = E.Int32
-    val Word = E.Word32
-    val Int_lt = E.Int32_lt
-    val Int_eq = E.Int32_eq
-    val Int_add_unsafe = E.Int32_add_unsafe
-    val Int_sub_unsafe = E.Int32_sub_unsafe
-    val Int_mul_unsafe = E.Int32_mul_unsafe
-    val Int_add_overflowCheck = E.Int32_add_overflowCheck
-    val Int_sub_overflowCheck = E.Int32_sub_overflowCheck
-    val Int_mul_overflowCheck = E.Int32_mul_overflowCheck
-    val Int_quot_unsafe = E.Int32_quot_unsafe
-    val Int_rem_unsafe = E.Int32_rem_unsafe
-    val Word_fromWord32 = fn x => x
-    val Word_toWord32 = fn x => x
-    val Word_fromWord32X = fn x => x
-    val Word_toWord32X = fn x => x
-    val Word_sub = E.Word32_sub
-    val Word_add = E.Word32_add
-    val Word_xorb = E.Word32_xorb
-    val Word_andb = E.Word32_andb
-    val Word_orb = E.Word32_orb
-    val Word_lshift_unsafe = E.Word32_lshift_unsafe
-    val Word_rshift_unsafe = E.Word32_rshift_unsafe
-    val Word_arshift_unsafe = E.Word32_arshift_unsafe
-    val Word_div_unsafe = E.Word32_div_unsafe
-    val Word_mod_unsafe = E.Word32_mod_unsafe
-  )
-
-structure Int64Prim =
-  IntPrim(
-    type i = Int64.int
-    val intTy = B.int64Ty
-    val wordTy = B.word64Ty
-    val numBits_log2 = 6
-    val INT = C.INT64 o Int64.fromInt
-    val WORD = C.WORD64 o Word64.fromInt
-    val Int = E.Int64
-    val Word = E.Word64
-    val Int_lt = E.Int64_lt
-    val Int_eq = E.Int64_eq
-    val Int_add_unsafe = E.Int64_add_unsafe
-    val Int_sub_unsafe = E.Int64_sub_unsafe
-    val Int_mul_unsafe = E.Int64_mul_unsafe
-    val Int_add_overflowCheck = E.Int64_add_overflowCheck
-    val Int_sub_overflowCheck = E.Int64_sub_overflowCheck
-    val Int_mul_overflowCheck = E.Int64_mul_overflowCheck
-    val Int_quot_unsafe = E.Int64_quot_unsafe
-    val Int_rem_unsafe = E.Int64_rem_unsafe
-    val Word_fromWord32 = E.Word32_toWord64
-    val Word_toWord32 = E.Word64_toWord32
-    val Word_fromWord32X = E.Word32_toWord64X
-    val Word_toWord32X = E.Word64_toWord32
-    val Word_sub = E.Word64_sub
-    val Word_add = E.Word64_add
-    val Word_xorb = E.Word64_xorb
-    val Word_andb = E.Word64_andb
-    val Word_orb = E.Word64_orb
-    val Word_lshift_unsafe = E.Word64_lshift_unsafe
-    val Word_rshift_unsafe = E.Word64_rshift_unsafe
-    val Word_arshift_unsafe = E.Word64_arshift_unsafe
-    val Word_div_unsafe = E.Word64_div_unsafe
-    val Word_mod_unsafe = E.Word64_mod_unsafe
-  )
-
-structure PrimitiveTypedLambda : sig
-
-  val toPrimTy : Types.ty -> TypedLambda.primTy
-
-  val compile
-      : {primitive : BuiltinPrimitive.primitive,
-         primTy : TypedLambda.primTy,
-         instTyList : Types.ty list,
-         argExpList : EmitTypedLambda.exp list,
-         resultTy : Types.ty,
-         loc : TypedLambda.loc}
-        -> EmitTypedLambda.exp
-
-end =
-struct
-
-  (* FIXME : we assume 32 bit machine *)
-  val maxSize = 0x03ffffff
-  val maxArraySize = (maxSize + 1) div 8 - 1
-  val minInt = ~0x80000000
-  val maxInt = 0x7fffffff
-  val minInt64 = ~0x8000000000000000 : Int64.int
-  val maxInt64 = 0x7fffffffffffffff : Int64.int
+  (* char is 8-bit *)
   val maxChar = 255
-  val wordBits = 32
-  val word64Bits = 64
-  val byteBits = 8
+  (* the maximum size that can be stored in the object header *)
+  val maxObjectSize = 0x0fffffff
+  val maxStringSize = maxObjectSize - 1
+
+  fun maxArraySize elemTy =
+      E.Word_div_unsafe
+        B.word32Ty
+        (E.Word32 maxObjectSize, E.Cast (E.SizeOf elemTy, B.word32Ty))
 
   fun primFunTy boundtvars ty =
       case TypesBasics.derefTy ty of
@@ -511,89 +72,227 @@ struct
         T.POLYty {boundtvars, constraints, body} => primFunTy boundtvars body
       | ty => primFunTy BoundTypeVarID.Map.empty ty
 
+  datatype int_ty =
+      INT8ty
+    | INT16ty
+    | INT32ty
+    | INT64ty
 
+  datatype word_ty =
+      WORD8ty
+    | WORD16ty
+    | WORD32ty
+    | WORD64ty
+
+  datatype real_ty =
+      REAL32ty
+    | REAL64ty
+
+  fun intTy ty =
+      case TypesBasics.derefTy ty of
+        T.CONSTRUCTty {tyCon, args=[]} =>
+        if TypID.eq (#id tyCon, #id B.int8TyCon) then INT8ty
+        else if TypID.eq (#id tyCon, #id B.int16TyCon) then INT16ty
+        else if TypID.eq (#id tyCon, #id B.int32TyCon) then INT32ty
+        else if TypID.eq (#id tyCon, #id B.int64TyCon) then INT64ty
+        else raise Bug.Bug "intTy expected"
+      | _ => raise Bug.Bug "intTy expected"
+
+  fun wordTy ty =
+      case TypesBasics.derefTy ty of
+        T.CONSTRUCTty {tyCon, args=[]} =>
+        if TypID.eq (#id tyCon, #id B.word8TyCon) then WORD8ty
+        else if TypID.eq (#id tyCon, #id B.word16TyCon) then WORD16ty
+        else if TypID.eq (#id tyCon, #id B.word32TyCon) then WORD32ty
+        else if TypID.eq (#id tyCon, #id B.word64TyCon) then WORD64ty
+        else raise Bug.Bug "wordTy expected"
+      | _ => raise Bug.Bug "wordTy expected"
+
+  fun realTy ty =
+      case TypesBasics.derefTy ty of
+        T.CONSTRUCTty {tyCon, args=[]} =>
+        if TypID.eq (#id tyCon, #id B.real32TyCon) then REAL32ty
+        else if TypID.eq (#id tyCon, #id B.real64TyCon) then REAL64ty
+        else raise Bug.Bug "realTy expected"
+      | _ => raise Bug.Bug "realTy expected"
+
+  fun int_wordTy ty =
+      case intTy ty of
+        INT8ty => B.word8Ty
+      | INT16ty => B.word16Ty
+      | INT32ty => B.word32Ty
+      | INT64ty => B.word64Ty
+
+  fun int_range_real rty ity =
+      case (realTy rty, intTy ity) of
+        (REAL32ty, INT8ty) => (E.Real32 int8min_r32, E.Real32 int8max_r32)
+      | (REAL32ty, INT16ty) => (E.Real32 int16min_r32, E.Real32 int16max_r32)
+      | (REAL32ty, INT32ty) => (E.Real32 int32min_r32, E.Real32 int32max_r32)
+      | (REAL32ty, INT64ty) => (E.Real32 int64min_r32, E.Real32 int64max_r32)
+      | (REAL64ty, INT8ty) => (E.Real64 int8min_r64, E.Real64 int8max_r64)
+      | (REAL64ty, INT16ty) => (E.Real64 int16min_r64, E.Real64 int16max_r64)
+      | (REAL64ty, INT32ty) => (E.Real64 int32min_r64, E.Real64 int32max_r64)
+      | (REAL64ty, INT64ty) => (E.Real64 int64min_r64, E.Real64 int64max_r64)
+
+  fun word_const ty n =
+      case wordTy ty of
+        WORD8ty => L.WORD8 (Word8.fromInt n)
+      | WORD16ty => L.WORD16 (Word16.fromInt n)
+      | WORD32ty => L.WORD32 (Word32.fromInt n)
+      | WORD64ty => L.WORD64 (Word64.fromInt n)
+
+  fun word_constExp ty =
+      case wordTy ty of
+        WORD8ty => E.Word8
+      | WORD16ty => E.Word16
+      | WORD32ty => E.Word32
+      | WORD64ty => E.Word64
+
+  fun int_const ty n =
+      case intTy ty of
+        INT8ty => L.INT8 (Int8.fromInt n)
+      | INT16ty => L.INT16 (Int16.fromInt n)
+      | INT32ty => L.INT32 (Int32.fromInt n)
+      | INT64ty => L.INT64 (Int64.fromInt n)
+
+  fun int_constExp ty n =
+      E.Const (int_const ty n, ty)
+
+  fun int_min ty =
+      case intTy ty of
+        INT8ty => L.INT8 int8min
+      | INT16ty => L.INT16 int16min
+      | INT32ty => L.INT32 int32min
+      | INT64ty => L.INT64 int64min
+
+  fun int_minExp ty =
+      E.Const (int_min ty, ty)
+
+  fun int_numBits ty =
+      case intTy ty of
+        INT8ty => numBits_int8 - 1
+      | INT16ty => numBits_int16 - 1
+      | INT32ty => numBits_int32 - 1
+      | INT64ty => numBits_int64 - 1
+
+  fun word_numBits ty =
+      case wordTy ty of
+        WORD8ty => numBits_int8
+      | WORD16ty => numBits_int16
+      | WORD32ty => numBits_int32
+      | WORD64ty => numBits_int64
+
+  fun real_zero ty =
+      case realTy ty of
+        REAL32ty => E.Real32 0.0
+      | REAL64ty => E.Real64 0.0
+
+  fun word_canTrunc ty truncBits exp =
+      (* check whether exp is of the form
+       * 1111...1111xxxxx.....xxxxx      0000...0000xxxxx.....xxxxx
+       *            <- truncBits ->  or             <- truncBits ->
+       * <------- wordBits ------->      <------- wordBits ------->
+       *)
+      E.Word_lteq
+        ty
+        (E.Word_add
+           ty
+           (E.Word_arshift_unsafe ty (exp, word_constExp ty truncBits),
+            word_constExp ty 1),
+         word_constExp ty 1)
+
+  fun bool_toWord32 exp =
+      E.Cast (exp, B.word32Ty)
+
+  fun Array_sub (elemTy, ary, index) =
+      E.If (E.Andalso
+              [E.Int_gteq B.int32Ty (index, E.Int32 0),
+               E.Int_lt B.int32Ty (index, E.Array_length (elemTy, ary))],
+            E.Array_sub_unsafe (elemTy, ary, index),
+            E.Raise (B.SubscriptExExn, elemTy))
 
   fun elabPrim (primitive, primTy, instTyList, retTy, argExpList, loc) =
-      case (primitive, argExpList, instTyList) of
-        (P.Cast P.TypeCast, [arg], _) =>
+      case (primitive, argExpList, #argTyList primTy, instTyList) of
+        (P.Cast P.TypeCast, [arg], _, _) =>
         E.Cast (arg, retTy)
-      | (P.Cast P.TypeCast, _, _) =>
+      | (P.Cast P.TypeCast, _, _, _) =>
         raise Bug.Bug "compilePrim: Cast"
 
-      | (P.Cast P.RuntimeTyCast, [arg], _) =>
-        E.RuntimeTyCast (arg, retTy)
-      | (P.Cast P.RuntimeTyCast, _, _) =>
-        raise Bug.Bug "compilePrim: RuntimeTyCast"
-
-      | (P.Cast P.BitCast, [arg], _) =>
+      | (P.Cast P.BitCast, [arg], _, _) =>
         E.BitCast (arg, retTy)
-      | (P.Cast P.BitCast, _, _) =>
+      | (P.Cast P.BitCast, _, _, _) =>
         raise Bug.Bug "compilePrim: BitCast"
 
-      | (P.Exn_Name, [arg], []) =>
+      | (P.Exn_name, [arg], _, []) =>
         E.extractExnTagName (E.extractExnTag arg)
-      | (P.Exn_Name, _, _) =>
+      | (P.Exn_name, _, _, _) =>
         raise Bug.Bug "compilePrim: Exn_Name"
 
-      | (P.Exn_Message, [arg], []) =>
+      | (P.Exn_message, [arg], _, []) =>
         E.Exn_Message arg
-      | (P.Exn_Message, _, _) =>
+      | (P.Exn_message, _, _, _) =>
         raise Bug.Bug "compilePrim: Exn_Message"
 
-      | (P.Equal, [arg1, arg2], [_]) =>
+      | (P.Equal, [arg1, arg2], _, [_]) =>
         E.PrimApply ({primitive = P.R (P.M P.RuntimePolyEqual),
                       ty = primTy},
                      instTyList, retTy, [arg1, arg2])
-      | (P.Equal, _, _) =>
+      | (P.Equal, _, _, _) =>
         raise Bug.Bug "compilePrim: Equal"
 
-      | (P.NotEqual, [arg1, arg2], [_]) =>
+      | (P.NotEqual, [arg1, arg2], _, [_]) =>
         E.If (E.PrimApply ({primitive = P.R (P.M P.RuntimePolyEqual),
                             ty = primTy},
                            instTyList, retTy, [arg1, arg2]),
               E.False, E.True)
-      | (P.NotEqual, _, _) =>
+      | (P.NotEqual, _, _, _) =>
         raise Bug.Bug "compilePrim: NotEqual"
 
-      | (P.Real64_notEqual, [arg1, arg2], []) =>
-        E.If (E.Real64_equal (arg1, arg2), E.False, E.True)
-      | (P.Real64_notEqual, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_notEqual"
-
-      | (P.Real32_notEqual, [arg1, arg2], []) =>
-        E.If (E.Real32_equal (arg1, arg2), E.False, E.True)
-      | (P.Real32_notEqual, _, _) =>
+      | (P.Real_notEqual, [arg1, arg2], [ty, _], []) =>
+        E.If (E.Real_equal ty (arg1, arg2), E.False, E.True)
+      | (P.Real_notEqual, _, _, _) =>
         raise Bug.Bug "compilePrim: Real32_notEqual"
 
-      | (P.Array_alloc, [size], [_]) =>
-        E.If (E.Andalso [E.Int32_gteq (size, E.Int32 0),
-                         E.Int32_lteq (size, E.Int32 maxArraySize)],
-              E.PrimApply ({primitive = P.R P.Array_alloc_unsafe,
-                            ty = primTy},
-                           instTyList, retTy, [size]),
+      | (P.Array_alloc, [size], _, [elemTy]) =>
+        E.If (E.Andalso [E.Int_gteq B.int32Ty (size, E.Int32 0),
+                         E.Int_lteq B.int32Ty (size, maxArraySize elemTy)],
+              E.Array_alloc_unsafe (elemTy, size),
               E.Raise (B.SizeExExn, retTy))
-      | (P.Array_alloc, _, _) =>
+      | (P.Array_alloc, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_alloc"
 
-      | (P.String_alloc, [size], []) =>
-        E.If (E.Andalso [E.Int32_gteq (size, E.Int32 0),
-                         E.Int32_lteq (size, E.Int32 (maxSize - 1))],
+      | (P.Vector_alloc, [size], _, [elemTy]) =>
+        E.If (E.Andalso [E.Int_gteq B.int32Ty (size, E.Int32 0),
+                         E.Int_lteq B.int32Ty (size, maxArraySize elemTy)],
+              E.Vector_alloc_unsafe (elemTy, size),
+              E.Raise (B.SizeExExn, retTy))
+      | (P.Vector_alloc, _, _, _) =>
+        raise Bug.Bug "compilePrim: Vector_alloc"
+
+      | (P.String_alloc_unsafe, [size], _, []) =>
+        E.String_alloc_unsafe size
+      | (P.String_alloc_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: String_alloc_unsafe"
+
+      | (P.String_alloc, [size], [ty], []) =>
+        E.If (E.Andalso [E.Int_gteq B.int32Ty (size, E.Int32 0),
+                         E.Int_lteq B.int32Ty (size, E.Int32 maxStringSize)],
               E.String_alloc_unsafe size,
               E.Raise (B.SizeExExn, retTy))
-      | (P.String_alloc, _, _) =>
+      | (P.String_alloc, _, _, _) =>
         raise Bug.Bug "compilePrim: String_alloc"
 
-      | (P.Array_length, [ary], [ty]) =>
-        E.Array_length (ty, ary)
-      | (P.Array_length, _, _) =>
+      | (P.Array_length, [ary], _, [elemTy]) =>
+        E.Array_length (elemTy, ary)
+      | (P.Array_length, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_length"
 
-      | (P.String_size, [ary], []) =>
-        E.String_size ary
-      | (P.String_size, _, _) =>
+      | (P.String_size, [arg], _, []) =>
+        E.String_size arg
+      | (P.String_size, _, _, _) =>
         raise Bug.Bug "compilePrim: String_size"
 
-      | (P.Array_copy, [di, dst, src], [ty]) =>
+      | (P.Array_copy, [di, dst, src], _, [elemTy]) =>
         let
           val slen = EmitTypedLambda.newId ()
           val dlen = EmitTypedLambda.newId ()
@@ -607,577 +306,458 @@ struct
            * (See 292_arrayCopy).
            * To prevent this, we rewrite the above condition to the following
            * overflow-conscious form:
-           *   di >= 0 and dlen >= di and dlen - di >= slen
+           *   di >= 0 and di <= dlen and dlen - di >= slen
            *)
-          E.Let ([(slen, E.Array_length (ty, src)),
-                  (dlen, E.Array_length (ty, dst))],
-                 E.If (E.Andalso
-                         [E.Int32_gteq (di, E.Int32 0),
-                          E.Int32_gteq (E.Var dlen, di),
-                          E.Int32_gteq (E.Int32_sub_unsafe (E.Var dlen, di),
-                                        E.Var slen)],
-                       E.Array_copy_unsafe
-                         (ty, src, E.Int32 0, dst, di, E.Var slen),
-                       E.Raise (B.SubscriptExExn, retTy)))
+          E.Let
+            ([(slen, E.Array_length (elemTy, src)),
+              (dlen, E.Array_length (elemTy, dst))],
+             E.If
+               (E.Andalso
+                  [E.Int_gteq B.int32Ty (di, E.Int32 0),
+                   E.Int_lteq B.int32Ty (di, E.Var dlen),
+                   E.Int_gteq
+                     B.int32Ty
+                     (E.Int_sub_unsafe B.int32Ty (E.Var dlen, di), E.Var slen)],
+                E.Array_copy_unsafe
+                  (elemTy, src, E.Int32 0, dst, di, E.Var slen),
+                E.Raise (B.SubscriptExExn, retTy)))
         end
-      | (P.Array_copy, _, _) =>
+      | (P.Array_copy, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_copy"
 
-      | (P.Array_sub, [ary, index], [ty]) =>
-        E.If (E.Andalso [E.Int32_gteq (index, E.Int32 0),
-                         E.Int32_lt (index, E.Array_length (ty, ary))],
-              E.PrimApply ({primitive = P.Array_sub_unsafe,
-                            ty = primTy},
-                           instTyList, retTy, [ary, index]),
-              E.Raise (B.SubscriptExExn, retTy))
-      | (P.Array_sub, _, _) =>
+      | (P.Array_sub, [ary, index], _, [elemTy]) =>
+        Array_sub (elemTy, ary, index)
+      | (P.Array_sub, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_sub"
 
-      | (P.Array_update, [ary, index, elem], [ty]) =>
-        E.If (E.Andalso [E.Int32_gteq (index, E.Int32 0),
-                         E.Int32_lt (index, E.Array_length (ty, ary))],
-              E.PrimApply ({primitive = P.Array_update_unsafe,
-                            ty = primTy},
-                           instTyList, retTy, [ary, index, elem]),
+      | (P.Array_update, [ary, index, elem], _, [elemTy]) =>
+        E.If (E.Andalso
+                [E.Int_gteq B.int32Ty (index, E.Int32 0),
+                 E.Int_lt B.int32Ty (index, E.Array_length (elemTy, ary))],
+              E.Array_update_unsafe (elemTy, ary, index, elem),
               E.Raise (B.SubscriptExExn, retTy))
-      | (P.Array_update, _, _) =>
+      | (P.Array_update, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_update"
 
-      | (P.String_sub, [ary, index], []) =>
-        E.If (E.Andalso [E.Int32_gteq (index, E.Int32 0),
-                         E.Int32_lt (index, E.String_size ary)],
+      | (P.String_sub, [ary, index], [_, ty], []) =>
+        E.If (E.Andalso
+                [E.Int_gteq B.int32Ty (index, E.Int32 0),
+                 E.Int_lt B.int32Ty (index, E.String_size ary)],
               E.String_sub_unsafe (ary, index),
               E.Raise (B.SubscriptExExn, retTy))
-      | (P.String_sub, _, _) =>
+      | (P.String_sub, _, _, _) =>
         raise Bug.Bug "compilePrim: String_sub"
 
-      | (P.Vector_length, [vec], [ty]) =>
-        elabPrim (P.Array_length, primTy, instTyList, retTy,
-                  [E.Cast (vec, E.arrayTy ty)], loc)
-      | (P.Vector_length, _, _) =>
+      | (P.Vector_length, [vec], _, [elemTy]) =>
+        E.Array_length (elemTy, E.Cast (vec, E.arrayTy elemTy))
+      | (P.Vector_length, _, _, _) =>
         raise Bug.Bug "compilePrim: Vector_length"
 
-      | (P.Vector_sub, [vec, index], [ty]) =>
-        elabPrim (P.Array_sub, primTy, instTyList, retTy,
-                  [E.Cast (vec, E.arrayTy ty), index], loc)
-      | (P.Vector_sub, _, _) =>
+      | (P.Vector_sub, [vec, index], _, [elemTy]) =>
+        Array_sub (elemTy, E.Cast (vec, E.arrayTy elemTy), index)
+      | (P.Vector_sub, _, _, _) =>
         raise Bug.Bug "compilePrim: Vector_sub"
 
-      | (P.Ref_deref, [refExp], [elemTy]) =>
+      | (P.Ref_deref, [refExp], _, [elemTy]) =>
         E.Ref_deref (elemTy, refExp)
-      | (P.Ref_deref, _, _) =>
+      | (P.Ref_deref, _, _, _) =>
         raise Bug.Bug "compilePrim: Ref_deref"
 
-      | (P.Ref_assign, [refExp, argExp], [elemTy]) =>
+      | (P.Ref_assign, [refExp, argExp], _, [elemTy]) =>
         E.Ref_assign (elemTy, refExp, argExp)
-      | (P.Ref_assign, _, _) =>
+      | (P.Ref_assign, _, _, _) =>
         raise Bug.Bug "compilePrim: Ref_assign"
 
-      | (P.Word8_arshift, [arg1, arg2], []) =>
-        Int8Prim.Word_arshift retTy (arg1, arg2)
-      | (P.Word8_arshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_arshift"
+      | (P.Word_arshift, [arg1, arg2], [ty1, ty2], []) =>
+        E.If (E.Word_lt ty2 (arg2, word_constExp ty2 (word_numBits ty1)),
+              E.Word_arshift_unsafe ty1 (arg1, E.Word_toWord (ty2, ty1) arg2),
+              E.Word_arshift_unsafe
+                ty1 (arg1, word_constExp ty1 (word_numBits ty1 - 1)))
+      | (P.Word_arshift, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_arshift"
 
-      | (P.Word8_div, [arg1, arg2], []) =>
-        Int8Prim.Word_div retTy (arg1, arg2)
-      | (P.Word8_div, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_div"
+      | (P.Word_lshift, [arg1, arg2], [ty1, ty2], []) =>
+        E.If (E.Word_lt ty2 (arg2, word_constExp ty2 (word_numBits ty1)),
+              E.Word_lshift_unsafe ty1 (arg1, E.Word_toWord (ty2, ty1) arg2),
+              word_constExp ty1 0)
+      | (P.Word_lshift, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_lshift"
 
-      | (P.Word8_fromInt32, [arg], []) =>
-        Int8Prim.Word_fromInt32_trunc retTy arg
-      | (P.Word8_fromInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_fromInt32"
+      | (P.Word_rshift, [arg1, arg2], [ty1, ty2], []) =>
+        E.If (E.Word_lt ty2 (arg2, word_constExp ty2 (word_numBits ty1)),
+              E.Word_rshift_unsafe ty1 (arg1, E.Word_toWord (ty2, ty1) arg2),
+              word_constExp ty1 0)
+      | (P.Word_rshift, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_rshift"
 
-      | (P.Word8_lshift, [arg1, arg2], []) =>
-        Int8Prim.Word_lshift retTy (arg1, arg2)
-      | (P.Word8_lshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_lshift"
+      | (P.Word_div, [arg1, arg2], [_, ty], []) =>
+        E.Switch (arg2,
+                  [(word_const ty 0, E.Raise (B.DivExExn, retTy))],
+                  E.Word_div_unsafe ty (arg1, arg2))
+      | (P.Word_div, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_div"
 
-      | (P.Word8_mod, [arg1, arg2], []) =>
-        Int8Prim.Word_mod retTy (arg1, arg2)
-      | (P.Word8_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_mod"
+      | (P.Word_mod, [arg1, arg2], [_, ty], []) =>
+        E.Switch (arg2,
+                  [(word_const ty 0, E.Raise (B.DivExExn, retTy))],
+                  E.Word_mod_unsafe ty (arg1, arg2))
+      | (P.Word_mod, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_mod"
 
-      | (P.Word8_neg, [arg], []) =>
-        Int8Prim.Word_neg retTy arg
-      | (P.Word8_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_neg"
+      | (P.Word_neg, [arg], [ty], []) =>
+        E.Word_sub ty (word_constExp ty 0, arg)
+      | (P.Word_neg, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_neg"
 
-      | (P.Word8_notb, [arg], []) =>
-        Int8Prim.Word_notb retTy arg
-      | (P.Word8_notb, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_notb"
+      | (P.Word_notb, [arg], [ty], []) =>
+        E.Word_xorb ty (word_constExp ty ~1, arg)
+      | (P.Word_notb, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_notb"
 
-      | (P.Word8_rshift, [arg1, arg2], []) =>
-        Int8Prim.Word_rshift retTy (arg1, arg2)
-      | (P.Word8_rshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_rshift"
+      | (P.Word_fromInt, [arg], [ty], []) =>
+        if word_numBits retTy = int_numBits ty + 1
+        then E.Cast (arg, retTy)
+        else E.Word_fromInt (ty, retTy) arg
+      | (P.Word_fromInt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_fromInt"
 
-      | (P.Word8_toInt32, [arg], []) =>
-        Int8Prim.Word_toInt32_extend retTy arg
-      | (P.Word8_toInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toInt32"
+      | (P.Word_toIntX, [arg], [ty], []) =>
+        let
+          val wordBits = word_numBits ty
+          val intBits = int_numBits retTy
+        in
+          if wordBits = intBits + 1
+          then E.Cast (arg, retTy)
+          else if wordBits < intBits + 1
+          then E.Word_toIntX_unsafe (ty, retTy) arg
+          else E.If (word_canTrunc ty intBits arg,
+                     E.Word_toIntX_unsafe (ty, retTy) arg,
+                     E.Raise (B.OverflowExExn, retTy))
+        end
+      | (P.Word_toIntX, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_toIntX"
 
-      | (P.Word8_toInt32X, [arg], []) =>
-        Int8Prim.Word_toInt32X_extend retTy arg
-      | (P.Word8_toInt32X, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toInt32X"
+      | (P.Word_toInt, [arg], [ty], []) =>
+        let
+          val wordBits = word_numBits ty
+          val intBits = int_numBits retTy
+        in
+          if wordBits < intBits
+          then E.Word_toInt (ty, retTy) arg
+          else E.Switch
+                 (E.Word_rshift_unsafe ty (arg, word_constExp ty intBits),
+                  [(word_const ty 0, E.Word_toInt (ty, retTy) arg)],
+                  E.Raise (B.OverflowExExn, retTy))
+        end
+      | (P.Word_toInt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_toInt"
 
-      | (P.Word16_arshift, [arg1, arg2], []) =>
-        Int16Prim.Word_arshift retTy (arg1, arg2)
-      | (P.Word16_arshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_arshift"
-
-      | (P.Word16_div, [arg1, arg2], []) =>
-        Int16Prim.Word_div retTy (arg1, arg2)
-      | (P.Word16_div, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_div"
-
-      | (P.Word16_fromInt32, [arg], []) =>
-        Int16Prim.Word_fromInt32_trunc retTy arg
-      | (P.Word16_fromInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_fromInt32"
-
-      | (P.Word16_lshift, [arg1, arg2], []) =>
-        Int16Prim.Word_lshift retTy (arg1, arg2)
-      | (P.Word16_lshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_lshift"
-
-      | (P.Word16_mod, [arg1, arg2], []) =>
-        Int16Prim.Word_mod retTy (arg1, arg2)
-      | (P.Word16_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_mod"
-
-      | (P.Word16_neg, [arg], []) =>
-        Int16Prim.Word_neg retTy arg
-      | (P.Word16_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_neg"
-
-      | (P.Word16_notb, [arg], []) =>
-        Int16Prim.Word_notb retTy arg
-      | (P.Word16_notb, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_notb"
-
-      | (P.Word16_rshift, [arg1, arg2], []) =>
-        Int16Prim.Word_rshift retTy (arg1, arg2)
-      | (P.Word16_rshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_rshift"
-
-      | (P.Word16_toInt32, [arg], []) =>
-        Int16Prim.Word_toInt32_extend retTy arg
-      | (P.Word16_toInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_toInt32"
-
-      | (P.Word16_toInt32X, [arg], []) =>
-        Int16Prim.Word_toInt32X_extend retTy arg
-      | (P.Word16_toInt32X, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_toInt32X"
-
-      | (P.Word32_arshift, [arg1, arg2], []) =>
-        Int32Prim.Word_arshift retTy (arg1, arg2)
-      | (P.Word32_arshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_arshift"
-
-      | (P.Word32_div, [arg1, arg2], []) =>
-        Int32Prim.Word_div retTy (arg1, arg2)
-      | (P.Word32_div, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_div"
-
-      | (P.Word32_lshift, [arg1, arg2], []) =>
-        Int32Prim.Word_lshift retTy (arg1, arg2)
-      | (P.Word32_lshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_lshift"
-
-      | (P.Word32_mod, [arg1, arg2], []) =>
-        Int32Prim.Word_mod retTy (arg1, arg2)
-      | (P.Word32_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_mod"
-
-      | (P.Word32_neg, [arg], []) =>
-        Int32Prim.Word_neg retTy arg
-      | (P.Word32_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_neg"
-
-      | (P.Word32_notb, [arg], []) =>
-        Int32Prim.Word_notb retTy arg
-      | (P.Word32_notb, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_notb"
-
-      | (P.Word32_rshift, [arg1, arg2], []) =>
-        Int32Prim.Word_rshift retTy (arg1, arg2)
-      | (P.Word32_rshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_rshift"
-
-      | (P.Word32_toInt32, [arg], []) =>
-        Int32Prim.Word_toInt32_trunc retTy arg
-      | (P.Word32_toInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_toInt32"
-
-      | (P.Word64_arshift, [arg1, arg2], []) =>
-        Int64Prim.Word_arshift retTy (arg1, arg2)
-      | (P.Word64_arshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_arshift"
-
-      | (P.Word64_div, [arg1, arg2], []) =>
-        Int64Prim.Word_div retTy (arg1, arg2)
-      | (P.Word64_div, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_div"
-
-      | (P.Word64_fromInt32, [arg], []) =>
-        Int64Prim.Word_fromInt32_trunc retTy arg
-      | (P.Word64_fromInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_fromInt32"
-
-      | (P.Word64_lshift, [arg1, arg2], []) =>
-        Int64Prim.Word_lshift retTy (arg1, arg2)
-      | (P.Word64_lshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_lshift"
-
-      | (P.Word64_mod, [arg1, arg2], []) =>
-        Int64Prim.Word_mod retTy (arg1, arg2)
-      | (P.Word64_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_mod"
-
-      | (P.Word64_neg, [arg], []) =>
-        Int64Prim.Word_neg retTy arg
-      | (P.Word64_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_neg"
-
-      | (P.Word64_notb, [arg], []) =>
-        Int64Prim.Word_notb retTy arg
-      | (P.Word64_notb, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_notb"
-
-      | (P.Word64_rshift, [arg1, arg2], []) =>
-        Int64Prim.Word_rshift retTy (arg1, arg2)
-      | (P.Word64_rshift, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_rshift"
-
-      | (P.Word64_toInt32, [arg], []) =>
-        Int64Prim.Word_toInt32_trunc retTy arg
-      | (P.Word64_toInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_toInt32"
-
-      | (P.Word64_toInt32X, [arg], []) =>
-        Int64Prim.Word_toInt32X_trunc retTy arg
-      | (P.Word64_toInt32X, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_toInt32X"
-
-      | (P.Int8_abs, [arg], []) =>
-        Int8Prim.Int_abs retTy arg
-      | (P.Int8_abs, _, _) =>
+      | (P.Int_abs, [arg], _, []) =>
+        E.Switch
+          (arg,
+           [(int_min retTy, E.Raise (B.OverflowExExn, retTy))],
+           E.If (E.Int_lt retTy (arg, int_constExp retTy 0),
+                 E.Int_sub_unsafe retTy (int_constExp retTy 0, arg),
+                 arg))
+      | (P.Int_abs, _, _, _) =>
         raise Bug.Bug "compilePrim: Int8_abs"
 
-      | (P.Int8_add, [arg1, arg2], []) =>
-        Int8Prim.Int_add retTy (arg1, arg2)
-      | (P.Int8_add, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_add"
+      | (P.Int_neg, [arg], _, []) =>
+        E.Switch
+          (arg,
+           [(int_min retTy, E.Raise (B.OverflowExExn, retTy))],
+           E.Int_sub_unsafe retTy (int_constExp retTy 0, arg))
+      | (P.Int_neg, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_neg"
 
-      | (P.Int8_div, [arg1, arg2], []) =>
-        Int8Prim.Int_div retTy (arg1, arg2)
-      | (P.Int8_div, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_div"
+      | (P.Int_add, [arg1, arg2], _, []) =>
+        E.Switch
+          (E.Int_add_overflowCheck retTy (arg1, arg2),
+           [(int_const retTy 0, E.Int_add_unsafe retTy (arg1, arg2))],
+           E.Raise (B.OverflowExExn, retTy))
+      | (P.Int_add, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_add"
 
-      | (P.Int8_fromInt32, [arg], []) =>
-        Int8Prim.Int_fromInt32_trunc retTy arg
-      | (P.Int8_fromInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_fromInt32"
+      | (P.Int_mul, [arg1, arg2], _, []) =>
+        E.Switch
+          (E.Int_mul_overflowCheck retTy (arg1, arg2),
+           [(int_const retTy 0, E.Int_mul_unsafe retTy (arg1, arg2))],
+           E.Raise (B.OverflowExExn, retTy))
+      | (P.Int_mul, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_mul"
 
-      | (P.Int8_mod, [arg1, arg2], []) =>
-        Int8Prim.Int_mod retTy (arg1, arg2)
-      | (P.Int8_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_mod"
+      | (P.Int_sub, [arg1, arg2], _, []) =>
+        E.Switch
+          (E.Int_sub_overflowCheck retTy (arg1, arg2),
+           [(int_const retTy 0, E.Int_sub_unsafe retTy (arg1, arg2))],
+           E.Raise (B.OverflowExExn, retTy))
+      | (P.Int_sub, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_sub"
 
-      | (P.Int8_mul, [arg1, arg2], []) =>
-        Int8Prim.Int_mul retTy (arg1, arg2)
-      | (P.Int8_mul, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_mul"
+      | (P.Int_div, [arg1, arg2], _, []) =>
+        let
+          val wordTy = int_wordTy retTy
+          val Word_add = E.Word_add wordTy
+          val Word_andb = E.Word_andb wordTy
+          val Word_orb = E.Word_orb wordTy
+          val Word_xorb = E.Word_xorb wordTy
+          fun Word_fromInt x = E.Cast (x, wordTy)
+          fun Word_toInt x = E.Cast (x, retTy)
+          val bool_toWord = E.Word_toWord (B.word32Ty, wordTy) o bool_toWord32
+          val q = EmitTypedLambda.newId ()
+          val r = EmitTypedLambda.newId ()
+          val s = EmitTypedLambda.newId ()
+        in
+          E.Switch
+            (arg2,
+             [(int_const retTy 0, E.Raise (B.DivExExn, retTy))],
+             (*
+              * Overflow check
+              *   (x == minInt) && (y == -1)
+              * = ((x ^ minInt) | (y + 1)) == 0
+              *)
+             E.Switch
+               (Word_orb (Word_xorb (Word_fromInt arg1, int_minExp retTy),
+                          Word_add (Word_fromInt arg2, int_constExp retTy 1)),
+                [(word_const wordTy 0, E.Raise (B.OverflowExExn, retTy))],
+                (*
+                 * div rounds the quotient towards negative infinity.
+                 *    7 div  3 =  2     7 quot  3 =  2
+                 *    7 div ~3 = ~3     7 quot ~3 = ~2
+                 *   ~7 div  3 = ~3    ~7 quot  3 = ~2
+                 *   ~7 div ~3 =  2    ~7 quot ~3 =  2
+                 * q = x quot y
+                 * r = x rem y
+                 * s = x xor y
+                 * x div y = q - ((s < 0) && (r != 0))
+                 *         = q - ((s < 0) & ((r == 0) ^ 1))
+                 *)
+                E.Let
+                  ([(q, E.Int_quot_unsafe retTy (arg1, arg2)),
+                    (r, E.Int_rem_unsafe retTy (arg1, arg2)),
+                    (s, Word_toInt (Word_xorb (Word_fromInt arg1,
+                                               Word_fromInt arg2)))],
+                   let
+                     val f1 = bool_toWord
+                                (E.Int_lt retTy (E.Var s, int_constExp retTy 0))
+                     val f2 = bool_toWord
+                                (E.Int_eq retTy (E.Var r, int_constExp retTy 0))
+                     val m = Word_andb
+                               (f1, Word_xorb (f2, word_constExp wordTy 1))
+                   in
+                     E.Int_sub_unsafe retTy (E.Var q, Word_toInt m)
+                   end)))
+        end
+      | (P.Int_div, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_div"
 
-      | (P.Int8_neg, [arg], []) =>
-        Int8Prim.Int_neg retTy arg
-      | (P.Int8_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_neg"
+      | (P.Int_mod, [arg1, arg2], _, []) =>
+        let
+          val wordTy = int_wordTy retTy
+          val Word_sub = E.Word_sub wordTy
+          val Word_andb = E.Word_andb wordTy
+          val Word_orb = E.Word_orb wordTy
+          val Word_xorb = E.Word_xorb wordTy
+          fun Word_fromInt x = E.Cast (x, wordTy)
+          fun Word_toInt x = E.Cast (x, retTy)
+          val bool_toWord = E.Word_toWord (B.word32Ty, wordTy) o bool_toWord32
+          val r = EmitTypedLambda.newId ()
+          val s = EmitTypedLambda.newId ()
+        in
+          E.Switch
+            (arg2,
+             [(int_const retTy 0, E.Raise (B.DivExExn, retTy)),
+              (int_const retTy ~1, int_constExp retTy 0)],
+             (*
+              * mod rounds the quotient towards negative infinity.
+              *    7 mod  3 =  1     7 rem  3 =  1
+              *    7 mod ~3 = ~2     7 rem ~3 =  1
+              *   ~7 mod  3 =  2    ~7 rem  3 = ~1
+              *   ~7 mod ~3 = ~1    ~7 rem ~3 = ~1
+              * r = x rem y
+              * s = x xor y
+              * x mod y = r + (((s < 0) && (r != 0)) ? y : 0)
+              *         = r + ((-((s < 0) & ((r == 0) ^ 1))) & y)
+              *)
+             E.Let
+               ([(r, E.Int_rem_unsafe retTy (arg1, arg2)),
+                 (s, Word_toInt (Word_xorb (Word_fromInt arg1,
+                                            Word_fromInt arg2)))],
+                let
+                  val f1 = bool_toWord
+                             (E.Int_lt retTy (E.Var s, int_constExp retTy 0))
+                  val f2 = bool_toWord
+                             (E.Int_eq retTy (E.Var r, int_constExp retTy 0))
+                  val m = Word_andb (f1, Word_xorb (f2, word_constExp wordTy 1))
+                  val n = Word_sub (word_constExp wordTy 0, m)
+                  val a = Word_andb (n, Word_fromInt arg2)
+                in
+                  E.Int_add_unsafe retTy (E.Var r, Word_toInt a)
+                end))
+        end
+      | (P.Int_mod, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_mod"
 
-      | (P.Int8_quot, [arg1, arg2], []) =>
-        Int8Prim.Int_quot retTy (arg1, arg2)
-      | (P.Int8_quot, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_quot"
+      | (P.Int_quot, [arg1, arg2], _, []) =>
+        let
+          val wordTy = int_wordTy retTy
+          val Word_add = E.Word_add wordTy
+          val Word_orb = E.Word_orb wordTy
+          val Word_xorb = E.Word_xorb wordTy
+          fun Word_fromInt x = E.Cast (x, wordTy)
+        in
+          E.Switch
+            (arg2,
+             [(int_const retTy 0, E.Raise (B.DivExExn, retTy))],
+             (*
+              * Overflow check
+              *   (x == minInt) && (y == -1)
+              * = ((x ^ minInt) | (y + 1)) == 0
+              *)
+             E.Switch
+               (Word_orb (Word_xorb (Word_fromInt arg1, int_minExp retTy),
+                          Word_add (Word_fromInt arg2, int_constExp retTy 1)),
+                [(word_const wordTy 0, E.Raise (B.OverflowExExn, retTy))],
+                E.Int_quot_unsafe retTy (arg1, arg2)))
+        end
+      | (P.Int_quot, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_quot"
 
-      | (P.Int8_rem, [arg1, arg2], []) =>
-        Int8Prim.Int_rem retTy (arg1, arg2)
-      | (P.Int8_rem, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_rem"
+      | (P.Int_rem, [arg1, arg2], _, []) =>
+        let
+          val wordTy = int_wordTy retTy
+          val Word_orb = E.Word_orb wordTy
+          val Word_xorb = E.Word_xorb wordTy
+          fun Word_fromInt x = E.Cast (x, wordTy)
+        in
+          E.Switch
+            (arg2,
+             [(int_const retTy 0, E.Raise (B.DivExExn, retTy)),
+              (int_const retTy ~1, int_constExp retTy 0)],
+             E.Int_rem_unsafe retTy (arg1, arg2))
+        end
+      | (P.Int_rem, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_rem"
 
-      | (P.Int8_sub, [arg1, arg2], []) =>
-        Int8Prim.Int_sub retTy (arg1, arg2)
-      | (P.Int8_sub, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_sub"
+      | (P.Int_toInt, [arg], [ty], []) =>
+        let
+          val fromBits = int_numBits ty
+          val toBits = int_numBits retTy
+          val wordTy = int_wordTy ty
+          fun Word_fromInt x = E.Cast (x, wordTy)
+        in
+          if fromBits = toBits
+          then arg
+          else if fromBits < toBits
+          then E.Int_toInt_unsafe (ty, retTy) arg
+          else E.If (word_canTrunc wordTy toBits (Word_fromInt arg),
+                     E.Int_toInt_unsafe (ty, retTy) arg,
+                     E.Raise (B.OverflowExExn, retTy))
+        end
+      | (P.Int_toInt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_toInt"
 
-      | (P.Int8_toInt32, [arg], []) =>
-        Int8Prim.Int_toInt32_extend retTy arg
-      | (P.Int8_toInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_toInt32"
-
-      | (P.Int16_abs, [arg], []) =>
-        Int16Prim.Int_abs retTy arg
-      | (P.Int16_abs, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_abs"
-
-      | (P.Int16_add, [arg1, arg2], []) =>
-        Int16Prim.Int_add retTy (arg1, arg2)
-      | (P.Int16_add, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_add"
-
-      | (P.Int16_div, [arg1, arg2], []) =>
-        Int16Prim.Int_div retTy (arg1, arg2)
-      | (P.Int16_div, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_div"
-
-      | (P.Int16_fromInt32, [arg], []) =>
-        Int16Prim.Int_fromInt32_trunc retTy arg
-      | (P.Int16_fromInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_fromInt32"
-
-      | (P.Int16_mod, [arg1, arg2], []) =>
-        Int16Prim.Int_mod retTy (arg1, arg2)
-      | (P.Int16_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_mod"
-
-      | (P.Int16_mul, [arg1, arg2], []) =>
-        Int16Prim.Int_mul retTy (arg1, arg2)
-      | (P.Int16_mul, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_mul"
-
-      | (P.Int16_neg, [arg], []) =>
-        Int16Prim.Int_neg retTy arg
-      | (P.Int16_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_neg"
-
-      | (P.Int16_quot, [arg1, arg2], []) =>
-        Int16Prim.Int_quot retTy (arg1, arg2)
-      | (P.Int16_quot, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_quot"
-
-      | (P.Int16_rem, [arg1, arg2], []) =>
-        Int16Prim.Int_rem retTy (arg1, arg2)
-      | (P.Int16_rem, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_rem"
-
-      | (P.Int16_sub, [arg1, arg2], []) =>
-        Int16Prim.Int_sub retTy (arg1, arg2)
-      | (P.Int16_sub, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_sub"
-
-      | (P.Int16_toInt32, [arg], []) =>
-        Int16Prim.Int_toInt32_extend retTy arg
-      | (P.Int16_toInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_toInt32"
-
-      | (P.Int32_abs, [arg], []) =>
-        Int32Prim.Int_abs retTy arg
-      | (P.Int32_abs, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_abs"
-
-      | (P.Int32_add, [arg1, arg2], []) =>
-        Int32Prim.Int_add retTy (arg1, arg2)
-      | (P.Int32_add, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_add"
-
-      | (P.Int32_div, [arg1, arg2], []) =>
-        Int32Prim.Int_div retTy (arg1, arg2)
-      | (P.Int32_div, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_div"
-
-      | (P.Int32_mod, [arg1, arg2], []) =>
-        Int32Prim.Int_mod retTy (arg1, arg2)
-      | (P.Int32_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_mod"
-
-      | (P.Int32_mul, [arg1, arg2], []) =>
-        Int32Prim.Int_mul retTy (arg1, arg2)
-      | (P.Int32_mul, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_mul"
-
-      | (P.Int32_neg, [arg], []) =>
-        Int32Prim.Int_neg retTy arg
-      | (P.Int32_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_neg"
-
-      | (P.Int32_quot, [arg1, arg2], []) =>
-        Int32Prim.Int_quot retTy (arg1, arg2)
-      | (P.Int32_quot, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_quot"
-
-      | (P.Int32_rem, [arg1, arg2], []) =>
-        Int32Prim.Int_rem retTy (arg1, arg2)
-      | (P.Int32_rem, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_rem"
-
-      | (P.Int32_sub, [arg1, arg2], []) =>
-        Int32Prim.Int_sub retTy (arg1, arg2)
-      | (P.Int32_sub, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_sub"
-
-      | (P.Int64_abs, [arg], []) =>
-        Int64Prim.Int_abs retTy arg
-      | (P.Int64_abs, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_abs"
-
-      | (P.Int64_add, [arg1, arg2], []) =>
-        Int64Prim.Int_add retTy (arg1, arg2)
-      | (P.Int64_add, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_add"
-
-      | (P.Int64_div, [arg1, arg2], []) =>
-        Int64Prim.Int_div retTy (arg1, arg2)
-      | (P.Int64_div, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_div"
-
-      | (P.Int64_fromInt32, [arg], []) =>
-        Int64Prim.Int_fromInt32_extend retTy arg
-      | (P.Int64_fromInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_fromInt32"
-
-      | (P.Int64_mod, [arg1, arg2], []) =>
-        Int64Prim.Int_mod retTy (arg1, arg2)
-      | (P.Int64_mod, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_mod"
-
-      | (P.Int64_mul, [arg1, arg2], []) =>
-        Int64Prim.Int_mul retTy (arg1, arg2)
-      | (P.Int64_mul, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_mul"
-
-      | (P.Int64_neg, [arg], []) =>
-        Int64Prim.Int_neg retTy arg
-      | (P.Int64_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_neg"
-
-      | (P.Int64_quot, [arg1, arg2], []) =>
-        Int64Prim.Int_quot retTy (arg1, arg2)
-      | (P.Int64_quot, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_quot"
-
-      | (P.Int64_rem, [arg1, arg2], []) =>
-        Int64Prim.Int_rem retTy (arg1, arg2)
-      | (P.Int64_rem, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_rem"
-
-      | (P.Int64_sub, [arg1, arg2], []) =>
-        Int64Prim.Int_sub retTy (arg1, arg2)
-      | (P.Int64_sub, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_sub"
-
-      | (P.Int64_toInt32, [arg], []) =>
-        Int64Prim.Int_toInt32_trunc retTy arg
-      | (P.Int64_toInt32, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_toInt32"
-
-      | (P.Char_chr, [arg], []) =>
-        E.If (E.Andalso [E.Int32_gteq (arg, E.Int32 0),
-                         E.Int32_lteq (arg, E.Int32 maxChar)],
-              E.Cast (E.Word32_toWord8 (E.Word32_fromInt32 arg), B.charTy),
-              E.Raise (B.ChrExExn, retTy))
-      | (P.Char_chr, _, _) =>
+      | (P.Char_chr, [arg], [ty], []) =>
+        E.If (E.Andalso [E.Int_gteq ty (arg, int_constExp ty 0),
+                         case intTy ty of
+                           INT8ty => E.True
+                         | _ => E.Int_lteq ty (arg, int_constExp ty maxChar)],
+              E.Cast (E.Word_fromInt (ty, B.word8Ty) arg, B.charTy),
+              E.Raise (B.ChrExExn, B.charTy))
+      | (P.Char_chr, _, _, _) =>
         raise Bug.Bug "compilePrim: Char_chr"
 
-      | (P.Char_gt, [arg1, arg2], []) =>
-        E.Word8_gt (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
-      | (P.Char_gt, _, _) =>
+      | (P.Char_gt, [arg1, arg2], _, []) =>
+        E.Word_gt
+          B.word8Ty (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
+      | (P.Char_gt, _, _, _) =>
         raise Bug.Bug "compilePrim: Char_gt"
 
-      | (P.Char_gteq, [arg1, arg2], []) =>
-        E.Word8_gteq (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
-      | (P.Char_gteq, _, _) =>
+      | (P.Char_gteq, [arg1, arg2], _, []) =>
+        E.Word_gteq
+          B.word8Ty (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
+      | (P.Char_gteq, _, _, _) =>
         raise Bug.Bug "compilePrim: Char_gteq"
 
-      | (P.Char_lt, [arg1, arg2], []) =>
-        E.Word8_lt (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
-      | (P.Char_lt, _, _) =>
+      | (P.Char_lt, [arg1, arg2], _, []) =>
+        E.Word_lt
+          B.word8Ty (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
+      | (P.Char_lt, _, _, _) =>
         raise Bug.Bug "compilePrim: Char_lt"
 
-      | (P.Char_lteq, [arg1, arg2], []) =>
-        E.Word8_lteq (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
-      | (P.Char_lteq, _, _) =>
+      | (P.Char_lteq, [arg1, arg2], _, []) =>
+        E.Word_lteq
+          B.word8Ty (E.Cast (arg1, B.word8Ty), E.Cast (arg2, B.word8Ty))
+      | (P.Char_lteq, _, _, _) =>
         raise Bug.Bug "compilePrim: Char_lteq"
 
-      | (P.Char_ord, [arg], []) =>
-        E.Word32_toInt32X (E.Word8_toWord32 (E.Cast (arg, B.word8Ty)))
-      | (P.Char_ord, _, _) =>
+      | (P.Char_ord, [arg], [ty], []) =>
+        (case intTy retTy of
+           INT8ty =>
+           E.If (E.Int_gteq B.int8Ty (E.Cast (arg, B.int8Ty), E.Int8 0),
+                 E.Cast (arg, B.int8Ty),
+                 E.Raise (B.OverflowExExn, retTy))
+         | _ =>
+           E.Word_toInt (B.word8Ty, retTy) (E.Cast (arg, B.word8Ty)))
+      | (P.Char_ord, _, _, _) =>
         raise Bug.Bug "compilePrim: Char_ord"
 
-      | (P.Real64_neg, [arg], []) =>
-        E.Real64_sub (E.Real64 0, arg)
-      | (P.Real64_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_neg"
+      | (P.Real_neg, [arg], [ty], []) =>
+        E.Real_sub ty (real_zero ty, arg)
+      | (P.Real_neg, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_neg"
 
-      | (P.Real32_neg, [arg], []) =>
-        E.Real32_sub (E.Real32 0, arg)
-      | (P.Real32_neg, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_neg"
-
-      | (P.Real32_trunc, [arg], []) =>
-        E.If (E.Real32_isNan arg,
+      | (P.Real_trunc, [arg], [ty], []) =>
+        E.If (E.Real_isNan ty arg,
               E.Raise (B.DomainExExn, retTy),
-              E.If (E.Andalso [E.Real32_gteq (arg, E.Real32 minInt),
-                               E.Real32_lteq (arg, E.Real32 maxInt)],
-                    E.PrimApply ({primitive = P.R (P.M P.Real32_toInt32_unsafe),
+              E.If (E.Andalso
+                      [E.Real_gteq ty (arg, #1 (int_range_real ty retTy)),
+                       E.Real_lteq ty (arg, #2 (int_range_real ty retTy))],
+                    E.PrimApply ({primitive = P.R (P.M P.Real_trunc_unsafe),
                                   ty = primTy},
                                  instTyList, retTy, [arg]),
                     E.Raise (B.OverflowExExn, retTy)))
-      | (P.Real32_trunc, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_trunc"
+      | (P.Real_trunc, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_trunc"
 
-      | (P.Real64_trunc, [arg], []) =>
-        E.If (E.Real64_isNan arg,
-              E.Raise (B.DomainExExn, retTy),
-              E.If (E.Andalso [E.Real64_gteq (arg, E.Real64 minInt),
-                               E.Real64_lteq (arg, E.Real64 maxInt)],
-                    E.PrimApply ({primitive = P.R (P.M P.Real64_toInt32_unsafe),
-                                  ty = primTy},
-                                 instTyList, retTy, [arg]),
-                    E.Raise (B.OverflowExExn, retTy)))
-      | (P.Real64_trunc, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_trunc"
-
-      | (P.Compose, [arg1, arg2], [ty1, ty2, ty3]) =>
+      | (P.Compose, [arg1, arg2], _, [ty1, ty2, ty3]) =>
         let
           val v = EmitTypedLambda.newId ()
         in
           E.Fn (v, ty3, E.App (arg1, (E.App (arg2, E.Var v))))
         end
-      | (P.Compose, _, _) =>
+      | (P.Compose, _, _, _) =>
         raise Bug.Bug "compilePrim: Compose"
 
-      | (P.Ignore, [arg], [ty]) =>
+      | (P.Ignore, [arg], _, [ty]) =>
         E.Let ([(EmitTypedLambda.newId (), arg)], E.Unit)
-      | (P.Ignore, _, _) =>
+      | (P.Ignore, _, _, _) =>
         raise Bug.Bug "compilePrim: Ignore"
 
-      | (P.Before, [arg1, arg2], [ty]) =>
+      | (P.Before, [arg1, arg2], _, [ty]) =>
         let
           val ret = EmitTypedLambda.newId ()
         in
           E.Let ([(ret, arg1), (EmitTypedLambda.newId (), arg2)], E.Var ret)
         end
-      | (P.Before, _, _) =>
+      | (P.Before, _, _, _) =>
         raise Bug.Bug "compilePrim: Before"
 
-      | (P.Dynamic, [arg], [ty]) =>
-        E.Cast
-          (E.Tuple
-             [E.Cast (E.Ref_alloc (ty, arg), B.boxedTy),
-              E.Word32 0,
-              case HeapDump.dump ty of
-                NONE => E.Null
-              | SOME dump =>
-                E.Exp (L.TLDUMP {dump = dump, ty = B.boxedTy, loc = loc},
-                       B.boxedTy)],
-           retTy)
-      | (P.Dynamic, _, _) =>
-        raise Bug.Bug "compilePrim: Dynamic"
+      | (P.Ptr_null, [_], _, [ty]) =>
+        let
+          fun ptrTy ty = T.CONSTRUCTty {tyCon = B.ptrTyCon, args= [ty]}
+        in
+          E.Cast (E.Const (L.NULLPOINTER, ptrTy B.unitTy), ptrTy ty)
+        end
+      | (P.Ptr_null, _, _, _) =>
+        raise Bug.Bug "compilePrim: Ptr_null"
 
-      | (P.L prim, args, instTyList) =>
+      | (P.Boxed_null, [_], _, _) =>
+        E.Null
+      | (P.Boxed_null, _, _, _) =>
+        raise Bug.Bug "compilePrim: Boxed_null"
+
+      | (P.L prim, args, _, instTyList) =>
         E.PrimApply ({primitive = prim, ty = primTy},
                      instTyList, retTy, args)
 

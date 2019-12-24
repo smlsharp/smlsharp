@@ -1,8 +1,0 @@
-_require "basis.smi"
-_require "thread/main/myth.smi"
-
-structure Main =
-struct
-  val doit : unit -> unit
-  val testit : TextIO.outstream -> unit
-end

@@ -12,15 +12,17 @@ struct
   local
     open SMLFormat.FormatExpression
     infixr @
-    fun insert l (Guard (assoc,r) :: t) = Guard (assoc, l @ r) :: t
-      | insert l x = l @ x
+    fun insert l (Guard (assoc,r) :: t) = Guard (assoc, Sequence l :: r) :: t
+      | insert l x = [Sequence l, Sequence x]
     fun insert2 (ins1, ins2) nil = [ins1]
       | insert2 (ins1, ins2) (h::t) = insert ins1 h :: map (insert ins2) t
   in
   fun format_prepend (format, sep1, ins1, sep2, ins2) l =
       case insert2 (ins1, ins2) (map format l) of
         nil => nil
-      | h::t => sep1 @ h @ foldr (fn (x,z) => sep2 @ x @ z) nil t
+      | h::t => Sequence sep1
+                :: Sequence h
+                :: foldr (fn (x,z) => Sequence sep2 :: Sequence x :: z) nil t
   end
   (*
    * format_prepend inserts "first" or "next" to the first guard of the
@@ -50,21 +52,22 @@ struct
   fun format_ifnil (x,y) nil = x
     | format_ifnil (x,y) _ = y
 
+  (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
-  (*% @formatter(AbsynConst.constant) AbsynConst.format_constant *)
+  (*% @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant *)
   type constant = AbsynConst.constant
 
   (*% @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes *)
   type ffiAttributes = FFIAttributes.attributes
 
-  (*% @formatter(AbsynTy.kindedTvar) AbsynTy.format_kindedTvar *)
+  (*% @formatter(AbsynTy.kindedTvar) AbsynTyFormatter.format_kindedTvar *)
   type kindedTvar = AbsynTy.kindedTvar
 
-  (*% @formatter(AbsynTy.tvar) AbsynTy.format_tvar *)
+  (*% @formatter(AbsynTy.tvar) AbsynTyFormatter.format_tvar *)
   type tvar = AbsynTy.tvar
 
-  (*% @formatter(AbsynTy.ty) AbsynTy.format_ty *)
+  (*% @formatter(AbsynTy.ty) AbsynTyFormatter.format_ty *)
   type ty = AbsynTy.ty
 
   (*% @formatter(Symbol.symbol) Symbol.format_symbol *)
@@ -154,9 +157,9 @@ struct
        *)
       PLPATID of longsymbol
     | (*%
-       * @format(const) const
+       * @format(const * loc) const
        *)
-      PLPATCONSTANT of constant
+      PLPATCONSTANT of constant * loc
     | (*%
        * @format(pat1 * pat2 * loc)
        * L8{ pat1 1[ +1 pat2 ] }
@@ -253,9 +256,13 @@ struct
    *)
   datatype plexp =
       (*%
-       * @format(const) const
+       * @format(const * loc) const
        *)
-      PLCONSTANT of constant
+      PLCONSTANT of constant * loc
+    | (*%
+       * @format(ty * loc) "sizeof(" !N0{ ty ")" }
+       *)
+      PLSIZEOF of ty * loc
     | (*%
        * @format(longsymbol) longsymbol
        *)
@@ -327,37 +334,10 @@ struct
        *)
       PLSEQ of plexp list * loc
     | (*%
-        @format({data, iterator, pred, loc:loc})
-            "foreach" + data
-            +1 "do" + iterator
-            +1 "until" + pred
-       *)
-      PLFOREACH of {data:plexp, iterator:plexp, pred:plexp, loc:loc}
-    | (*%
-        @format({data, whereParam, iterator, pred, loc:loc})
-            "foreach" + data
-            +1 "where" + whereParam
-            +1 "do" + iterator
-            +1 "until" + pred
-       *)
-      PLFOREACHDATA of {data:plexp, whereParam:plexp, iterator:plexp, pred:plexp, loc:loc}
-    | (*%
        * @format(exp * ty * loc)
        * L4{ exp +1 { ":" +d "_import" 2[ +1 ty ] } }
        *)
       PLFFIIMPORT of ffiFun * ffiTy * loc
-    | (*%
-       * @format(cconv cconvopt * exp * arg args * ret rets * loc)
-       * L4{
-       *   L8{ "_ffiapply"
-       *       1[ cconvopt:ifnone()(, +1 cconvopt(cconv)) ]
-       *       1[ +1 exp
-       *          +1 args:enclosed(arg)("(", ",", ")") ] }
-       *   +1 ":" +d rets:enclosed(ret)("(", ",", ")")
-       * }
-       *)
-      PLFFIAPPLY of ffiAttributes option * ffiFun * ffiArg list
-                    * ffiTy list * loc
     | (*%
        * @format({tyFnExp, ty, loc})
        * L4{ L8{ "_sqlschema" +1 tyFnExp } +1 ":" +d ty }
@@ -369,38 +349,47 @@ struct
         loc : loc
       }
     | (*%
-       * @format(exp1 * exp2 * loc)
-       * R0{ "_join" 1[ 1 "(" !N0{ exp1 "," +1 exp2 ")" } ] }
+       * @format(isJoin * exp1 * exp2 * loc)
+       * R0{ isJoin()("_join","_extend") 1[ 1 "(" !N0{ exp1 "," +1 exp2 ")" } ] }
        *)
-      PLJOIN of plexp * plexp * loc
+      PLJOIN of bool * plexp * plexp * loc
     | (*%
        * @format(exp * ty * loc)
-       * R0{ { "_json" 1[ +1 exp ] } +1 "as" +d ty }
+       * R0{ { "_dynamic" 1[ +1 exp ] } +1 "as" +d ty }
        *)
-      PLJSON of plexp * ty * loc
+      PLDYNAMIC of plexp * ty * loc
+    | (*%
+       * @format(exp * ty * loc)
+       * R0{ { "_dynamic" 1[ +1 exp ] } +1 "is" +d ty }
+       *)
+      PLDYNAMICIS of plexp * ty * loc
     | (*%
        * @format(ty * loc)
-       * R0{ "_typeof" 1 "(" !N0{ ty ")" } }
+       * R0{ "_dynamicnull" +1 "as" +d ty }
        *)
-      PLTYPEOF of ty * loc
+      PLDYNAMICNULL of ty * loc
+    | (*%
+       * @format(ty * loc)
+       * R0{ "_dynamictop" +1 "as" +d ty }
+       *)
+      PLDYNAMICTOP of ty * loc
+    | (*%
+       * @format(exp * ty * loc)
+       * R0{ { "_dynamicview" 1[ +1 exp ] } +1 "as" +d ty }
+       *)
+
+      PLDYNAMICVIEW of plexp * ty * loc
+    | (*%
+       * @format(exp * rule rules * loc)
+       * R0{ !R0{ "dynamiccase" 1[ +1 exp ] }
+       *     +1 rules:prepend(rule)(, "of" +d, +1, "|" +d) }
+       *)
+      PLDYNAMICCASE of plexp * rule1 list * loc
     | (*%
        * @format(ty * loc)
        * R0{ "_reifyTy" 1 "(" !N0{ ty ")" } }
        *)
     PLREIFYTY of ty * loc
-
-  and ffiArg =
-      (*%
-       * @format(exp * ty * loc)
-       * L4{ exp +1 ":" +d ty }
-       *)
-      PLFFIARG of plexp * ffiTy * loc
-    | (*%
-       * @format(ty * exp expopt * loc)
-       * R0{ "_sizeof" 1 "(" !N0{ ty ")" }
-       *     expopt:ifnone()(, +1 "*" +d expopt(exp)) }
-       *)
-      PLFFIARGSIZEOF of ty * plexp option * loc
 
   and ffiFun =
       (*% @format(x) x *)
@@ -578,12 +567,12 @@ struct
        *)
       PLSPECVAL of scopedTvars * symbol * ty * loc
     | (*%
-       * @format({tydecls: bind binds, iseq, loc})
-       * !R0{ binds:prepend(bind)(, iseq()("eqtype","type") +d, +1, "and" +d) }
+       * @format({tydecls: bind binds, eq, loc})
+       * !R0{ binds:prepend(bind)(, eq()("eqtype","type") +d, +1, "and" +d) }
        * @format:bind(tvars * id)
        * !R0{ tvars id }
        *)
-      PLSPECTYPE of {tydecls:(tvars * symbol) list, iseq:bool, loc:loc}
+      PLSPECTYPE of {tydecls:(tvars * symbol) list, eq:bool, loc:loc}
     | (*%
        * @format(bind * loc)
        * !R0{ "type" +d bind }    (* FIXME *)
@@ -687,9 +676,17 @@ struct
        *)
       plpatm * plexp
 
+  and rule1 =
+      (*%
+       * @format(pat * exp)
+       * !R0{ pat +d "=>" 1[ +1 !R0{ exp } ] }
+       *)
+      plpat * plexp
+
   fun getLocExp plexp =
       case plexp of
-        PLCONSTANT x => AbsynConst.getLocConstant x
+        PLCONSTANT x => #2 x
+      | PLSIZEOF x => #2 x
       | PLVAR x => Symbol.longsymbolToLoc x
       | PLTYPED x => #3 x
       | PLAPPM x => #3 x
@@ -703,14 +700,15 @@ struct
       | PLRECORD_SELECTOR x => #2 x
       | PLSELECT x => #3 x
       | PLSEQ x => #2 x
-      | PLFOREACH {loc,...} => loc
-      | PLFOREACHDATA {loc,...} => loc
       | PLFFIIMPORT x => #3 x
-      | PLFFIAPPLY x => #5 x
       | PLSQLSCHEMA {loc,...} => loc
-      | PLJOIN (_,_,loc) => loc
-      | PLJSON (_,_,loc) => loc
-      | PLTYPEOF (_,loc) => loc
+      | PLJOIN (_, _,_,loc) => loc
+      | PLDYNAMIC (_,_,loc) => loc
+      | PLDYNAMICIS (_,_,loc) => loc
+      | PLDYNAMICNULL (_,loc) => loc
+      | PLDYNAMICTOP (_,loc) => loc
+      | PLDYNAMICVIEW (_,_,loc) => loc
+      | PLDYNAMICCASE (_,_,loc) => loc
       | PLREIFYTY (_,loc) => loc
   fun getLeftPosExp plexp = #1 (getLocExp plexp)
   fun getRightPosExp plexp = #2 (getLocExp plexp)
@@ -719,7 +717,7 @@ struct
       case pat of
         PLPATWILD x => x
       | PLPATID x => Symbol.longsymbolToLoc x
-      | PLPATCONSTANT x => AbsynConst.getLocConstant x
+      | PLPATCONSTANT x => #2 x
       | PLPATCONSTRUCT x => #3 x
       | PLPATRECORD x => #3 x
       | PLPATLAYERED x => #4 x

@@ -1,5 +1,5 @@
-_require "../../basis.smi"
-_require "./utils.sig"
+_require local "../../basis.smi"
+_require local "./utils.sig"
 
 functor ListOrdSet(
   B : sig
@@ -97,7 +97,7 @@ functor Hash(
   end
 ) =
 struct
-  type table (= boxed)
+  type table (= {})
   type elem = B.elem
   val size : table -> int
   val add : elem * table -> table

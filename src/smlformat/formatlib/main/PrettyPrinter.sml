@@ -10,7 +10,7 @@ struct
 
   (***************************************************************************)
 
-  structure FE = FormatExpression
+  (* structure FE = FormatExpression *)
   structure PE = PreProcessedExpression
   structure PP = PrinterParameter
 
@@ -30,6 +30,9 @@ struct
   exception IndentUnderFlow of int
 
   (***************************************************************************)
+
+  fun foldl f z nil = z
+    | foldl f z (h :: t) = foldl f (f (h, z)) t 
 
   (**
    * sorts a list
@@ -72,10 +75,28 @@ struct
       val newlineString = #newlineString parameters
       val cutOverTail = #cutOverTail parameters
 
+      type buffer = int * string list (* in reverse order *)
+
+      val empty = (0, nil) : buffer
+
+      fun single s = (size s, [s]) : buffer
+
+      fun append (len, strings) s =
+          (len + size s, s :: strings) : buffer
+
+      fun truncate newLen (buf as (len, nil)) = buf
+        | truncate newLen (buf as (len, h :: t)) =
+          if newLen >= len then buf
+          else if newLen <= 0 then (0, nil)
+          else if len - size h >= newLen then truncate newLen (len - size h, t)
+          else (newLen, substring (h, 0, size h - (len - newLen)) :: t)
+
+      fun size ((len, _) : buffer) = len
+
       datatype line =
-               Unclosed of string
-             | Closed of string
-             | Truncated of string
+               Unclosed of buffer
+             | Closed of buffer
+             | Truncated of buffer
 
       type context =
            {
@@ -129,31 +150,34 @@ struct
             then
               Truncated
                   (if initialCols < 2 orelse sizeOfString < 2
-                   then ".."
-                   else String.substring (string, 0, initialCols - 2) ^ "..")
+                   then single ".."
+                   else append (truncate (initialCols - 2) string) "..")
             else ifNotOver string
           end
       fun appendToLine text (Unclosed line :: lines') =
-          let val str = line ^ text
+          let val str = append line text
           in (checkOverTail Unclosed str) :: lines'
           end
         | appendToLine text (lines as (Truncated _ :: _)) = lines
-        | appendToLine text lines = (Unclosed text) :: lines
+        | appendToLine text lines = (Unclosed (single text)) :: lines
       fun closeLine (Unclosed line :: lines) =
           (checkOverTail Closed line) :: lines
         | closeLine (Truncated line :: lines) = (Closed line) :: lines
-        | closeLine lines = (Closed "") :: lines
+        | closeLine lines = (Closed empty) :: lines
+      fun revAppend nil r = r
+        | revAppend (h :: t) r = revAppend t (h :: r)
+      fun concatLines nil r = r
+        | concatLines (Closed (_, s) :: t) r =
+          concatLines t (revAppend (newlineString :: s) r)
+        | concatLines (Truncated (_, s) :: t) r =
+          concatLines t (revAppend (newlineString :: s) r)
+        | concatLines (Unclosed (_, s) :: t) r =
+          concatLines t (revAppend s r)
       fun linesToString ({lines, ...} : context) =
-          let
-            val strings =
-                map
-                    (fn (Closed s) => s ^ newlineString
-                      | (Truncated s) => s ^ newlineString
-                      | (Unclosed s) => s)
-                    (List.rev lines) (* lines are in reversed order. *)
-          in
-            String.concat strings
-          end
+          (* lines are in reversed order. *)
+          case #outputFunction parameters of
+            NONE => String.concat (concatLines lines nil)
+          | SOME f => (f (String.concat (concatLines lines nil)); "")
 
       fun visit canMultiline (context : context) (PE.Term (columns, text)) =
           {

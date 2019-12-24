@@ -14,7 +14,7 @@ structure Look : LOOK =
     struct
 	open Array List
 	infix 9 sub
-	structure Grammar = IntGrammar.Grammar
+	(* structure Grammar = IntGrammar.Grammar *)
 	structure IntGrammar = IntGrammar
 	open Grammar IntGrammar
 

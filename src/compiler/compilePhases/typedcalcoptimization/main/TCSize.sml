@@ -20,11 +20,10 @@ local
       case const of
         A.INT _ => 1
       | A.WORD _ => 1
-      | A.STRING (string, loc) => 1 + String.size string  div 4
+      | A.STRING string => 1 + String.size string  div 4
       | A.REAL _ => 2
       | A.CHAR _ => 1
-      | A.UNITCONST _ => 1
-      | A.NULLCONST _ => 1
+      | A.UNITCONST => 1
 
   fun inc n = n + 1
   fun incN (n,N) = n + N
@@ -83,6 +82,8 @@ local
             loc
            } =>
          sizeExp (inc n) exp items
+      | TC.TPDYNAMICCASE {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} =>
+        size (inc n) (EXP [dynamicTerm, groupListTerm] :: items)
       | TC.TPERROR => size (inc n) items
       | TC.TPEXNCONSTRUCT
           {argExpOpt = NONE,
@@ -105,7 +106,7 @@ local
       | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} => 
         size (inc n) items
       | TC.TPEXVAR exVarInfo => size (inc n) items
-      | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} => 
+      | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, _), stubTy} => 
         sizeExp (inc n) ptrExp items
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIEXTERN _, stubTy} => 
         size (inc n) items
@@ -128,9 +129,9 @@ local
         size (inc n) (BIND binds :: EXP [bodyExp] :: items)
       | TC.TPOPRIMAPPLY {argExp, argTy, instTyList, loc, oprimOp} =>
         sizeExp (inc n) argExp items
-      | TC.TPPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
+      | TC.TPPOLY {btvEnv, constraints, exp, expTyWithoutTAbs, loc} =>
         sizeExp (incBtvEnv (inc n, btvEnv)) exp items
-      | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
+      | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, constraints, loc} =>
         sizeExp (incBtvEnv(incVar(inc n,argVarList),btvEnv)) bodyExp items
       | TC.TPPRIMAPPLY {argExp, argTy, instTyList, loc, primOp} =>
         sizeExp (inc n) argExp items
@@ -141,20 +142,19 @@ local
         sizeExp (inc n) exp items
       | TC.TPSEQ {expList, expTyList, loc} =>
         size (inc n) (EXP expList :: items)
-      | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
-        size (inc n) (EXP [data, iterator, pred] :: items)
-      | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
-        size (inc n) (EXP [data, whereParam, iterator, pred] :: items)
       | TC.TPSIZEOF (ty, loc) => size (inc n) items
       | TC.TPTAPP {exp, expTy, instTyList, loc} =>
         sizeExp (inc n) exp items
       | TC.TPVAR varInfo => size (inc n) items
-      | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+      | TC.TPJOIN {isJoin, ty, args = (arg1, arg2), argtys, loc} =>
         size (inc n) (EXP [arg1, arg2] :: items)
       (* the following should have been eliminate *)
       | TC.TPRECFUNVAR {arity, var} =>size (inc n) items
-      | TC.TPJSON {exp,ty,coerceTy,loc} => sizeExp (inc n) exp items
-      | TC.TPTYPEOF (ty, loc) => size (inc n) items
+      | TC.TPDYNAMIC {exp,ty,elemTy, coerceTy,loc} => sizeExp (inc n) exp items
+      | TC.TPDYNAMICIS {exp,ty,elemTy, coerceTy,loc} => sizeExp (inc n) exp items
+      | TC.TPDYNAMICNULL {ty, coerceTy,loc} => size (inc n) items
+      | TC.TPDYNAMICTOP {ty, coerceTy,loc} => size (inc n) items
+      | TC.TPDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} => sizeExp (inc n) exp items
       | TC.TPREIFYTY (ty, loc) => size (inc n) items
       )
   and sizePat n tppat items =
@@ -215,17 +215,18 @@ local
          size (inc n) items 
        | TC.TPEXPORTRECFUNVAR {var, arity} =>
          size (inc n) items 
-       | TC.TPEXTERNEXN {path, ty} =>
+       | TC.TPEXTERNEXN ({path, ty}, provider) =>
          size (inc n) items 
        | TC.TPBUILTINEXN {path, ty} =>
          size (inc n) items 
-       | TC.TPEXTERNVAR {path, ty} =>
+       | TC.TPEXTERNVAR ({path, ty}, provider) =>
          size (inc n) items 
        | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
          size (inc n) (BIND binds :: items)
-       | TC.TPVALPOLYREC (btvEnv,
+       | TC.TPVALPOLYREC {btvEnv,
+                          constraints,
                           recbinds:{exp:TC.tpexp, expTy:T.ty, var:T.varInfo} list,
-                          loc) =>
+                          loc} =>
          size
            (incBtvEnv (inc n, btvEnv))
            (BIND (map (fn {exp,expTy,var} => (var, exp)) recbinds) :: items)

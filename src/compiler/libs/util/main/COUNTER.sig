@@ -51,11 +51,13 @@ sig
   val fundeclElaborationTimeCounter : elapsedTimeCounter
   val typeInferenceTimeCounter : elapsedTimeCounter
   val printerGenerationTimeCounter : elapsedTimeCounter
+  val polyTyEliminationCounter : elapsedTimeCounter
   val UncurryOptimizationTimeCounter : elapsedTimeCounter
   val TypedCalcOptimizationTimeCounter : elapsedTimeCounter
   val RecordCalcOptimizationTimeCounter : elapsedTimeCounter
   val matchCompilationTimeCounter : elapsedTimeCounter
   val typedElaborationTimeCounter : elapsedTimeCounter
+  val reifyTopEnvTimeCounter : elapsedTimeCounter
   val ffiCompilationTimeCounter : elapsedTimeCounter
   val recordCompilationTimeCounter : elapsedTimeCounter
   val datatypeCompilationTimeCounter : elapsedTimeCounter

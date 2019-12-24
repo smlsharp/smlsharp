@@ -6,8 +6,7 @@
  *)
 structure MachineCodeGen : sig
 
-  val compile : InterfaceName.dependency
-                -> ANormal.program
+  val compile : ANormal.program
                 -> MachineCode.program
 
 end =
@@ -23,41 +22,48 @@ struct
   fun optionToList NONE = nil
     | optionToList (SOME x) = [x]
 
-  val intTy = (B.intTy, R.INT32ty)
+  fun natural ty =
+      case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
+        SOME {tag = R.TAG t, size = R.SIZE s, rep = r} =>
+        (ty, {tag = t, size = s, rep = r})
+      | _ => raise Bug.Bug "natural"
+
+  fun int32Ty () = natural BuiltinTypes.int32Ty
+  fun word32Ty () = natural BuiltinTypes.word32Ty
   fun intConst n =
-      M.ANCONST {const = M.NVINT32 n, ty = intTy}
+      M.ANCONST {const = M.NVINT32 n, ty = int32Ty ()}
+  fun wordConst n =
+      M.ANCONST {const = M.NVWORD32 n, ty = word32Ty ()}
 
-  val unitTy = (BuiltinTypes.unitTy, R.UNITty)
-  val unitConst =
-      M.ANCONST {const = M.NVUNIT, ty = unitTy}
+  fun unitTy () = natural BuiltinTypes.unitTy
+  fun unitConst () =
+      M.ANCONST {const = M.NVUNIT, ty = unitTy ()}
+  fun singleConst ty =
+      M.ANCONST {const = M.NVUNIT, ty = ty}
 
-  fun sizeTy ty = (T.SINGLETONty (T.SIZEty ty), R.UINT32ty)
-  fun tagTy ty = (T.SINGLETONty (T.TAGty ty), R.UINT32ty)
-  val wordTy = (BuiltinTypes.wordTy, R.UINT32ty)
-  val boxedTy = (BuiltinTypes.boxedTy, R.BOXEDty)
+  fun sizeTy ty = natural (T.SINGLETONty (T.SIZEty ty))
+  fun tagTy ty = natural (T.SINGLETONty (T.TAGty ty))
+  fun boxedTy () = natural BuiltinTypes.boxedTy
+  fun exnTy () = natural BuiltinTypes.exnTy
 
   val empty = fn x:M.mcexp => x
   fun mid m = fn (mids, last):M.mcexp => (m::mids, last):M.mcexp
-  fun last l = (nil, l):M.mcexp
+  fun last l = fn () => (nil, l):M.mcexp
 
-  fun tagExp ((ty, rty):M.ty) =
-      let
-        val tag = TypeLayout2.tagOf rty
-      in
-        M.ANCONST {const = M.NVTAG {tag = tag, ty = ty}, ty = tagTy ty}
-      end
+  fun tagExp ((ty, {tag, ...}):M.ty) =
+      M.ANCONST {const = M.NVTAG {tag = tag, ty = ty}, ty = tagTy ty}
 
   fun Int32_mul_unsafe (resultVar, op1, op2, loc) =
       mid (M.MCPRIMAPPLY
              {resultVar = resultVar,
               primInfo =
-                {primitive = P.Int32_mul_unsafe,
+                {primitive = P.Int_mul_unsafe,
                  ty = {boundtvars = BoundTypeVarID.Map.empty,
-                       argTyList = [B.intTy, B.intTy],
-                       resultTy = B.intTy}},
+                       argTyList = [B.int32Ty, B.int32Ty],
+                       resultTy = B.int32Ty}},
               argExpList = [op1, op2],
-              argTyList = [intTy, intTy],
-              resultTy = intTy,
+              argTyList = [int32Ty (), int32Ty ()],
+              resultTy = int32Ty (),
               instTyList = [],
               instTagList = [],
               instSizeList = [],
@@ -119,21 +125,20 @@ struct
   fun switchByTag {tagExp, tagOfTy, ifBoxed, ifUnboxed, loc} =
       If {condExp = tagExp,
           condTy = tagTy tagOfTy,
-          const = M.NVTAG {tag = R.TAG_UNBOXED, ty = tagOfTy},
+          const = M.NVTAG {tag = RuntimeTypes.UNBOXED, ty = tagOfTy},
           thenExp = ifUnboxed,
           elseExp = ifBoxed,
           loc = loc}
 
   fun arrayBytes (numElems, elemSize, elemTy:M.ty, loc) =
       let
-        val sizeVar = {id = VarID.generate (), ty = intTy}
+        val sizeVar = {id = VarID.generate (), ty = int32Ty ()}
       in
         (Int32_mul_unsafe
            (sizeVar,
             M.ANCAST {exp = elemSize,
                       expTy = sizeTy (#1 elemTy),
-                      targetTy = intTy,
-                      runtimeTyCast = true},
+                      targetTy = int32Ty ()},
             numElems,
             loc),
          M.ANVAR sizeVar)
@@ -178,9 +183,9 @@ struct
       case value of
         A.ANCONST _ => value
       | A.ANBOTTOM => value
-      | A.ANCAST {exp, expTy, targetTy, runtimeTyCast} =>
+      | A.ANCAST {exp, expTy, targetTy} =>
         A.ANCAST {exp = compileValue subst exp, expTy = expTy,
-                  targetTy = targetTy, runtimeTyCast = runtimeTyCast}
+                  targetTy = targetTy}
       | A.ANVAR {id, ty} =>
         case VarID.Map.find (subst, id) of
           NONE => value
@@ -244,7 +249,7 @@ struct
       in
         mid (M.MCSTORE {dstAddr = dstAddr,
                         srcExp = compileValue subst bitmapExp,
-                        srcTy = wordTy,
+                        srcTy = word32Ty (),
                         barrier = false,
                         loc = loc})
       end
@@ -327,7 +332,7 @@ struct
                       elemSize = size,
                       loc = loc}),
             loc = loc},
-         VarID.Map.insert (subst, #id resultVar, unitConst))
+         VarID.Map.insert (subst, #id resultVar, unitConst ()))
       | (P.Array_copy_unsafe, _, _, _, _) =>
         raise Bug.Bug "compilePrim: Array_copy_unsafe"
 
@@ -347,23 +352,25 @@ struct
                    {dstAddr = M.MAOFFSET {base = ptr, offset = index},
                     srcExp = value,
                     srcTy = srcTy,
-                    barrier = case srcTy of (_, R.BOXEDty) => true | _ => false,
+                    barrier = case srcTy of (_, {tag=R.BOXED,...}) => true
+                                          | _ => false,
                     loc = loc}),
-            VarID.Map.insert (subst, #id resultVar, unitConst))
+            VarID.Map.insert (subst, #id resultVar, unitConst ()))
          | _ => raise Bug.Bug "compilePrim: Boxed_store")
       | (P.Boxed_store, _, _, _, _) =>
         raise Bug.Bug "compilePrim: Boxed_store"
 
       | (P.Boxed_copy, [], [], [], [dst, dstIndex, src, srcIndex, tag, size]) =>
         let
-          val tmpVar = {id = VarID.generate (), ty = boxedTy}
+          val tmpVar = {id = VarID.generate (), ty = boxedTy ()}
           val dstAddr = M.MAOFFSET {base = dst, offset = dstIndex}
           val srcAddr = M.MAOFFSET {base = src, offset = srcIndex}
         in
           (If {condExp = tag,
-               condTy = wordTy,
+               condTy = word32Ty (),
                const = M.NVWORD32 (Word.fromInt
-                                     (TypeLayout2.tagValue R.TAG_UNBOXED)),
+                                     (TypeLayout2.tagValue
+                                        RuntimeTypes.UNBOXED)),
                thenExp = mid (M.MCMEMCPY_FIELD {dstAddr = dstAddr,
                                                 srcAddr = srcAddr,
                                                 copySize = size,
@@ -374,14 +381,20 @@ struct
                                 loc = loc})
                  o mid (M.MCSTORE {dstAddr = dstAddr,
                                    srcExp = M.ANVAR tmpVar,
-                                   srcTy = boxedTy,
+                                   srcTy = boxedTy (),
                                    barrier = true,
                                    loc = loc}),
                loc = loc},
-           VarID.Map.insert (subst, #id resultVar, unitConst))
+           VarID.Map.insert (subst, #id resultVar, unitConst ()))
         end
       | (P.Boxed_copy, _, _, _, _) =>
         raise Bug.Bug "compilePrim: Boxed_copy"
+
+      | (P.KeepAlive, [ty], [tag], [size], [value]) =>
+        (mid (M.MCKEEPALIVE {value = value, loc = loc}),
+         VarID.Map.insert (subst, #id resultVar, unitConst ()))
+      | (P.KeepAlive, _, _, _, _) =>
+        raise Bug.Bug "compilePrim: KeepAlive"
 
       | (P.M prim, _, _, _, _) =>
         (mid (M.MCPRIMAPPLY {resultVar = resultVar,
@@ -402,17 +415,33 @@ struct
                {resultVar = resultVar,
                 dataLabel = dataLabel,
                 loc = loc})
-            (compileExp (mask (subst, [resultVar])) nextExp)
+        o compileExp (mask (subst, [resultVar])) nextExp
       | A.ANFOREIGNAPPLY {resultVar, funExp, attributes, argExpList,
                           handler, nextExp, loc} =>
-        mid (M.MCFOREIGNAPPLY
-               {resultVar = resultVar,
-                funExp = compileValue subst funExp,
-                attributes = attributes,
-                argExpList = map (compileValue subst) argExpList,
-                handler = handler,
-                loc = loc})
-            (compileExp (mask (subst, optionToList resultVar)) nextExp)
+        let
+          val {causeGC, fast, ...} = attributes
+          val argExpList = map (compileValue subst) argExpList
+          val keepInsns =
+              if causeGC orelse not fast
+              then
+                foldl
+                  (fn (v as M.ANVAR {ty = (_, {tag = R.BOXED, ...}), ...}, z) =>
+                      z o mid (M.MCKEEPALIVE {value = v, loc = loc})
+                    | (_, z) => z)
+                  empty
+                  argExpList
+              else empty
+        in
+          mid (M.MCFOREIGNAPPLY
+                 {resultVar = resultVar,
+                  funExp = compileValue subst funExp,
+                  attributes = attributes,
+                  argExpList = argExpList,
+                  handler = handler,
+                  loc = loc})
+          o keepInsns
+          o compileExp (mask (subst, optionToList resultVar)) nextExp
+        end
       | A.ANEXPORTCALLBACK {resultVar, codeExp, closureEnvExp, instTyvars,
                             nextExp, loc} =>
         mid (M.MCEXPORTCALLBACK
@@ -421,17 +450,17 @@ struct
                 closureEnvExp = compileValue subst closureEnvExp,
                 instTyvars = instTyvars,
                 loc = loc})
-            (compileExp (mask (subst, [resultVar])) nextExp)
+        o compileExp (mask (subst, [resultVar])) nextExp
       | A.ANEXVAR {resultVar, id, nextExp, loc} =>
         mid (M.MCEXVAR
                {resultVar = resultVar,
                 id = id,
                 loc = loc})
-            (compileExp (mask (subst, [resultVar])) nextExp)
+        o compileExp (mask (subst, [resultVar])) nextExp
       | A.ANPACK {resultVar, exp, expTy, nextExp, loc} =>
         let
-          val size = intConst (TypeLayout2.sizeOf (#2 expTy))
-          val resultTy = (#1 expTy, R.BOXEDty)
+          val size = intConst (RuntimeTypes.getSize (#size (#2 expTy)))
+          val resultTy = (#1 expTy, boxedTy ())
         in
           Alloc
             {resultVar = resultVar,
@@ -446,14 +475,14 @@ struct
                        barrier = false,
                        loc = loc}),
              loc = loc}
-            (compileExp (mask (subst, [resultVar])) nextExp)
+          o compileExp (mask (subst, [resultVar])) nextExp
         end
       | A.ANUNPACK {resultVar, exp, nextExp, loc} =>
         mid (M.MCLOAD
                {resultVar = resultVar,
                 srcAddr = M.MAPACKED (compileValue subst exp),
                 loc = loc})
-            (compileExp (mask (subst, [resultVar])) nextExp)
+        o compileExp (mask (subst, [resultVar])) nextExp
       | A.ANDUP {resultVar, srcAddr, valueSize, nextExp, loc} =>
         let
           val valueSize = compileValue subst valueSize
@@ -470,14 +499,14 @@ struct
                        copySize = valueSize,
                        loc = loc}),
              loc = loc}
-            (compileExp (mask (subst, [resultVar])) nextExp)
+          o compileExp (mask (subst, [resultVar])) nextExp
         end
       | A.ANLOAD {resultVar, srcAddr, nextExp, loc} =>
         mid (M.MCLOAD
                {resultVar = resultVar,
                 srcAddr = compileAddress subst loc srcAddr,
                 loc = loc})
-            (compileExp (mask (subst, [resultVar])) nextExp)
+        o compileExp (mask (subst, [resultVar])) nextExp
       | A.ANPRIMAPPLY {resultVar, primInfo, argExpList,
                        instTyList, instTagList,
                        argTyList, resultTy, instSizeList, nextExp, loc} =>
@@ -496,7 +525,7 @@ struct
                  loc = loc}
         in
           proc1
-            (compileExp subst nextExp)
+          o compileExp subst nextExp
         end
       | A.ANBITCAST {resultVar, exp, expTy, targetTy, nextExp, loc} =>
         mid (M.MCBITCAST
@@ -505,15 +534,18 @@ struct
                 expTy = expTy,
                 targetTy = targetTy,
                 loc = loc})
-            (compileExp (mask (subst, [resultVar])) nextExp)
+        o compileExp (mask (subst, [resultVar])) nextExp
       | A.ANCALL {resultVar, codeExp, closureEnvExp, argExpList, nextExp,
                   handler, loc} =>
         let
           val resultTy = #ty resultVar
           val (resultVar, subst) =
-              if #2 resultTy = R.UNITty
-              then (NONE, VarID.Map.insert (subst, #id resultVar, unitConst))
-              else (SOME resultVar, mask (subst, [resultVar]))
+              case #rep (#2 resultTy) of
+                R.DATA R.LAYOUT_SINGLE =>
+                (NONE,
+                 VarID.Map.insert (subst, #id resultVar, unitConst ()))
+              | _ =>
+                (SOME resultVar, mask (subst, [resultVar]))
         in
           mid (M.MCCALL
                  {resultVar = resultVar,
@@ -524,14 +556,15 @@ struct
                   tail = false,
                   handler = handler,
                   loc = loc})
-              (compileExp subst nextExp)
+          o compileExp subst nextExp
         end
       | A.ANTAILCALL {resultTy, codeExp, closureEnvExp, argExpList, loc} =>
         let
           val (resultVar, retValue) =
-              if #2 resultTy = R.UNITty
-              then (NONE, unitConst)
-              else
+              case #rep (#2 resultTy) of
+                R.DATA R.LAYOUT_SINGLE =>
+                (NONE, singleConst resultTy)
+              | _ =>
                 let
                   val resultVar = {id = VarID.generate (), ty = resultTy}
                 in
@@ -547,7 +580,7 @@ struct
                   tail = true,
                   handler = NONE,
                   loc = loc})
-            (last (M.MCRETURN {value = retValue, loc = loc}))
+          o last (M.MCRETURN {value = retValue, loc = loc})
         end
       | A.ANRECORD {resultVar, fieldList, isMutable, clearPad,
                     allocSizeExp, bitmaps, nextExp, loc} =>
@@ -576,7 +609,7 @@ struct
              allocSize = allocSizeExp,
              initExp = proc1 o proc2 o proc3,
              loc = loc}
-            (compileExp (mask (subst, [resultVar])) nextExp)
+          o compileExp (mask (subst, [resultVar])) nextExp
         end
       | A.ANMODIFY {resultVar, recordExp, indexExp, valueExp, valueTy,
                     nextExp, loc} =>
@@ -585,28 +618,28 @@ struct
               M.MARECORDFIELD
                 {recordExp = M.ANVAR resultVar,
                  fieldIndex = compileValue subst indexExp}
-          val copySizeVar = {id = VarID.generate (), ty = wordTy}
+          val copySizeVar = {id = VarID.generate (), ty = word32Ty ()}
           val srcRecord = compileValue subst recordExp
         in
-          (mid (M.MCRECORDDUP_ALLOC
-                  {resultVar = resultVar,
-                   copySizeVar = copySizeVar,
-                   recordExp = srcRecord,
-                   loc = loc})
-           o mid (M.MCRECORDDUP_COPY
-                    {dstRecord = M.ANVAR resultVar,
-                     srcRecord = srcRecord,
-                     copySize = M.ANVAR copySizeVar,
-                     loc = loc})
-           o compileRecordField
-               subst
-               resultVar
-               loc
-               {fieldExp = valueExp,
-                fieldTy = valueTy,
-                fieldIndex = indexExp}
-           o mid M.MCALLOC_COMPLETED)
-            (compileExp (mask (subst, [resultVar])) nextExp)
+          mid (M.MCRECORDDUP_ALLOC
+                 {resultVar = resultVar,
+                  copySizeVar = copySizeVar,
+                  recordExp = srcRecord,
+                  loc = loc})
+          o mid (M.MCRECORDDUP_COPY
+                   {dstRecord = M.ANVAR resultVar,
+                    srcRecord = srcRecord,
+                    copySize = M.ANVAR copySizeVar,
+                    loc = loc})
+          o compileRecordField
+              subst
+              resultVar
+              loc
+              {fieldExp = valueExp,
+               fieldTy = valueTy,
+               fieldIndex = indexExp}
+          o mid M.MCALLOC_COMPLETED
+          o compileExp (mask (subst, [resultVar])) nextExp
         end
       | A.ANRETURN {value, ty, loc} =>
         last (M.MCRETURN
@@ -618,33 +651,59 @@ struct
                 srcAddr = M.MAPACKED (compileValue subst srcExp),
                 copySize = compileValue subst valueSize,
                 loc = loc})
-            (compileExp subst nextExp)
+        o compileExp subst nextExp
       | A.ANSTORE {srcExp, srcTy, dstAddr, nextExp, loc} =>
         mid (M.MCSTORE
                {srcExp = compileValue subst srcExp,
                 srcTy = srcTy,
                 dstAddr = compileAddress subst loc dstAddr,
-                barrier = case srcTy of (_, R.BOXEDty) => true | _ => false,
+                barrier = case srcTy of (_, {tag=R.BOXED,...}) => true
+                                      | _ => false,
                 loc = loc})
-            (compileExp subst nextExp)
+        o compileExp subst nextExp
       | A.ANEXPORTVAR {id, ty, valueExp, nextExp, loc} =>
         mid (M.MCEXPORTVAR
                {id = id,
                 ty = ty,
                 valueExp = compileValue subst valueExp,
                 loc = loc})
-            (compileExp subst nextExp)
+        o compileExp subst nextExp
       | A.ANRAISE {argExp, cleanup, loc} =>
-        last (M.MCRAISE
-               {argExp = compileValue subst argExp,
-                cleanup = cleanup,
-                loc = loc})
+        let
+          val argExp = compileValue subst argExp
+          val bufVar = {id = VarID.generate (), ty = boxedTy ()}
+        in
+          Alloc
+            {resultVar = bufVar,
+             objType = M.OBJTYPE_RECORD,
+             payloadSize = wordConst 0w56,
+             allocSize = wordConst 0w60,
+             initExp =
+               mid (M.MCSTORE
+                      {dstAddr = M.MAOFFSET {base = M.ANVAR bufVar,
+                                             offset = intConst 56},
+                       srcExp = wordConst 0w1,
+                       srcTy = word32Ty (),
+                       barrier = false,
+                       loc = loc})
+               o mid (M.MCSTORE
+                        {dstAddr = M.MAPTR (M.ANVAR bufVar),
+                         srcExp = argExp,
+                         srcTy = exnTy (),
+                         barrier = false,
+                         loc = loc}),
+             loc = loc}
+          o last (M.MCRAISE
+                    {argExp = M.ANVAR bufVar,
+                     cleanup = cleanup,
+                     loc = loc})
+        end
       | A.ANHANDLER {nextExp, exnVar, id, handlerExp, cleanup, loc} =>
         last (M.MCHANDLER
-                {nextExp = compileExp subst nextExp,
+                {nextExp = compileExp subst nextExp (),
                  id = id,
                  exnVar = exnVar,
-                 handlerExp = compileExp (mask (subst, [exnVar])) handlerExp,
+                 handlerExp = compileExp (mask (subst, [exnVar])) handlerExp (),
                  cleanup = cleanup,
                  loc = loc})
       | A.ANSWITCH {switchExp, expTy, branches, default, loc} =>
@@ -664,8 +723,8 @@ struct
                 {id = id,
                  recursive = recursive,
                  argVarList = argVarList,
-                 bodyExp = compileExp (mask (subst, argVarList)) bodyExp,
-                 nextExp = compileExp subst nextExp,
+                 bodyExp = compileExp (mask (subst, argVarList)) bodyExp (),
+                 nextExp = compileExp subst nextExp (),
                  loc = loc})
       | A.ANUNREACHABLE =>
         last M.MCUNREACHABLE
@@ -680,7 +739,7 @@ struct
            argVarList = argVarList,
            closureEnvVar = closureEnvVar,
            frameSlots = SlotID.Map.empty,
-           bodyExp = compileExp VarID.Map.empty bodyExp,
+           bodyExp = compileExp VarID.Map.empty bodyExp (),
            retTy = retTy,
            gcCheck = gcCheck,
            loc = loc}
@@ -692,20 +751,18 @@ struct
            tyvarKindEnv = tyvarKindEnv,
            argVarList = argVarList,
            closureEnvVar = closureEnvVar,
-           bodyExp = compileExp VarID.Map.empty bodyExp,
+           bodyExp = compileExp VarID.Map.empty bodyExp (),
            frameSlots = SlotID.Map.empty,
            attributes = attributes,
            retTy = retTy,
            cleanupHandler = cleanupHandler,
            loc = loc}
 
-  fun compile dependency
-              ({topdata, topdecs, topExp, topCleanupHandler}:A.program) =
+  fun compile ({topdata, topdecs, topExp, topCleanupHandler}:A.program) =
       let
         val topdecs = map compileTopdec topdecs
-        val topExp = compileExp VarID.Map.empty topExp
-        val toplevel = {dependency = dependency,
-                        frameSlots = SlotID.Map.empty,
+        val topExp = compileExp VarID.Map.empty topExp ()
+        val toplevel = {frameSlots = SlotID.Map.empty,
                         bodyExp = topExp,
                         cleanupHandler = topCleanupHandler}
       in

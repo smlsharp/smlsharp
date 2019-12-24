@@ -3,56 +3,46 @@
  * @copyright (c) 2010, Tohoku University.
  * @author UENO Katsuhiro
  *)
-structure Filename :> sig
-
-  eqtype filename
-
-  (* "/" is used as directory separator on any platform. *)
-  val toString : filename -> string
-  val fromString : string -> filename
-  val format_filename : filename -> SMLFormat.FormatExpression.expression list
-
-  val basename : filename -> filename
-  val dirname : filename -> filename
-  val suffix : filename -> string option
-  val addSuffix : filename * string -> filename
-  val removeSuffix : filename -> filename
-  val replaceSuffix : string -> filename -> filename
-  val pwd : unit -> filename
-  val concatPath : filename * filename -> filename
-  val isAbsolute : filename -> bool
-  val realPath : filename -> filename
-
-  structure TextIO : sig
-    val openIn : filename -> TextIO.instream
-    val openOut : filename -> TextIO.outstream
-  end
-  structure BinIO : sig
-    val openIn : filename -> BinIO.instream
-    val openOut : filename -> BinIO.outstream
-  end
-
-end =
+structure Filename =
 struct
   type filename = string
 
-  fun toString x = x : string
+  (* empty is the identity element of concatPath *)
+  val empty = ""
+
+  val dot = OS.Path.currentArc
+  val dotdot = OS.Path.parentArc
+
   fun fromString x = x : filename
+  fun toString x = x : string
+  fun format_filename x = SMLFormat.BasicFormatters.format_string x
 
-  val format_filename = SMLFormat.BasicFormatters.format_string
+  fun isEmpty "" = true
+    | isEmpty _ = false
 
+  (* same as POSIX basename(1) *)
   fun basename filename =
-      #file (OS.Path.splitDirFile filename)
+      case OS.Path.splitDirFile filename of
+        {dir, file = ""} => if dir = filename then dir else basename dir
+      | {dir, file} => file
 
+  fun removeTrailing filename =
+      case OS.Path.splitDirFile filename of
+        {dir, file = ""} => if dir = filename then dir else removeTrailing dir
+      | _ => filename
+
+  (* same as POSIX dirname(1) *)
   fun dirname filename =
-      case #dir (OS.Path.splitDirFile filename) of
-        "" => "."
-      | x => x
+      case OS.Path.splitDirFile filename of
+        {dir = "", file} => dot
+      | {dir, file = ""} => if dir = filename then dir else dirname dir
+      | {dir, file} => removeTrailing dir
 
   fun suffix filename =
       #ext (OS.Path.splitBaseExt filename)
 
-  fun addSuffix (filename, suffix) =
+  fun addSuffix ("", suffix) = ""
+    | addSuffix (filename, suffix) =
       OS.Path.joinBaseExt {base = filename, ext = SOME suffix}
 
   fun removeSuffix filename =
@@ -64,17 +54,34 @@ struct
   fun pwd () =
       OS.FileSys.getDir ()
 
-  fun concatPath ("", filename) = filename
+  fun concatPath ("", x) = x
+    | concatPath (x, "") = x
     | concatPath (filename1, filename2) =
-      if filename1 = OS.Path.currentArc
-      then filename2
-      else OS.Path.concat (filename1, filename2)
+      OS.Path.concat (filename1, filename2)
+
+  fun concatPaths nil = ""
+    | concatPaths ("" :: t) = concatPaths t
+    | concatPaths (filename :: nil) = filename
+    | concatPaths (filename1 :: filename2 :: t) =
+      concatPaths (concatPath (filename1, filename2) :: t)
+
+  (* concatPaths o components is an identical function except that
+   * unneeded shashes are removed *)
+  fun components filename =
+      case OS.Path.splitDirFile filename of
+        {dir = "", file = ""} => []
+      | {dir = "", file} => [file]
+      | {dir, file = ""} => if dir = filename then [dir] else components dir
+      | {dir, file} => components dir @ [file]
 
   fun isAbsolute filename =
       OS.Path.isAbsolute filename
 
-  fun realPath filename =
+  fun realPath "" = "."
+    | realPath filename =
       OS.FileSys.realPath filename
+
+  val compare = String.compare
 
   structure TextIO =
   struct
@@ -86,5 +93,8 @@ struct
     fun openIn filename = BinIO.openIn filename
     fun openOut filename = BinIO.openOut filename
   end
+
+  structure Map = SEnv
+  structure Set = SSet
 
 end

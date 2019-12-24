@@ -2,144 +2,177 @@
  * @copyright (c) 2011, Tohoku University.
  * @author UENO Katsuhiro
  *)
-structure TypeLayout2 : sig
-
-  val runtimeTy : Types.btvEnv
-                  -> Types.ty
-                  -> RuntimeTypes.ty option
-  val tagOf : RuntimeTypes.ty -> RuntimeTypes.tag
-  val tagValue : RuntimeTypes.tag -> int
-
-  datatype size_assumption =
-      ALL_SIZES_ARE_POWER_OF_2
-  datatype align_computation =
-      ALIGN_EQUAL_SIZE
-
-  val sizeOf : RuntimeTypes.ty -> int
-  val maxSize : int
-  val sizeAssumption : size_assumption
-  val alignComputation : align_computation
-  val charBits : int
-
-end =
+structure TypeLayout2 =
 struct
 
   structure T = Types
   structure R = RuntimeTypes
+  (* structure D = DynamicKind *)
 
   val emptyBtvEnv = BoundTypeVarID.Map.empty : T.btvEnv
 
-  fun runtimeTyKind (T.KIND {subkind, eqKind, dynKind, reifyKind, tvarKind}) =
+  exception PropOf
+
+  fun dummyTy {tag, size, rep} =
+      {tag = case tag of R.ANYTAG => R.TAG R.UNBOXED | R.TAG _ => tag,
+       size = case size of R.ANYSIZE => #size R.int32Prop | R.SIZE _ => size,
+       rep = rep}
+
+  fun toGeneric ({tag, size, rep}:R.ty) =
+      {tag = tag, size = size, rep = R.BINARY}
+
+  fun coerceToBoxed ({tag, size, rep}:R.property) =
+      if (tag = R.ANYTAG orelse tag = #tag R.boxedProp)
+         andalso (size = R.ANYSIZE orelse size = #size R.boxedProp)
+      then SOME (R.boxedProp # {rep = rep})
+      else NONE
+
+  fun coerceToUnboxed ({tag, size, rep}:R.property) =
+      if tag = R.ANYTAG orelse tag = R.TAG R.UNBOXED
+      then SOME {tag = R.TAG R.UNBOXED, size = size, rep = rep}
+      else NONE
+
+  fun coerceToProperties properties prop =
+      case Types.propertiesOf properties of
+        {reify, boxed, unboxed, eq} =>
+        if boxed andalso unboxed then NONE
+        else if boxed then coerceToBoxed prop
+        else if unboxed then coerceToUnboxed prop
+        else SOME prop
+
+  fun propertyOfTvarKind btvEnv tvarKind =
       case tvarKind of
-        T.UNIV => NONE
-      | T.BOXED => SOME R.BOXEDty
-      | T.REC _ => SOME R.BOXEDty
-      | T.OPRIMkind _ => NONE
-      | T.OCONSTkind _ => NONE
-  fun runtimeTy btvEnv ty =
+        T.UNIV => SOME R.anyProp
+      | T.REC _ => SOME R.recordProp
+      | T.OCONSTkind tys => propertyOfTyList btvEnv tys
+      | T.OPRIMkind {instances, operators} => propertyOfTyList btvEnv instances
+
+  and propertyOfKind btvEnv (T.KIND {dynamicKind, properties, tvarKind}) =
+      case propertyOfTvarKind btvEnv tvarKind of
+        NONE => NONE
+      | SOME prop1 =>
+        case coerceToProperties properties prop1 of
+          NONE => NONE
+        | SOME static =>
+          case dynamicKind of
+            NONE => SOME static
+          | SOME {tag, size, record} =>
+            let
+              val dynamic = {tag = tag, size = size, rep = #rep static}
+            in
+              (* dynamicKind must be more specific than property of tvarKind *)
+              if R.lub (static, dynamic) = static
+              then ()
+              else raise Bug.Bug ("propertyOfKind: dynamicKind mismatch. "
+                                  ^ "dynamicKind="
+                                  ^ Bug.prettyPrint (R.format_property dynamic)
+                                  ^ " must be more specific than staticKind="
+                                  ^ Bug.prettyPrint (R.format_property static));
+              SOME dynamic
+            end
+
+  and propertyOfTyList btvEnv nil = NONE
+    | propertyOfTyList btvEnv [ty] = propertyOf btvEnv ty
+    | propertyOfTyList btvEnv (ty :: tys) =
+      case propertyOf btvEnv ty of
+        NONE => NONE
+      | SOME prop1 =>
+        case propertyOfTyList btvEnv tys of
+          NONE => NONE
+        | SOME prop2 => SOME (R.lub (prop1, prop2))
+
+  and propertyOf btvEnv ty =
       case ty of
-        T.SINGLETONty (T.INSTCODEty _) => SOME R.BOXEDty
-      | T.SINGLETONty (T.INDEXty _) => SOME R.UINT32ty
-      | T.SINGLETONty (T.TAGty _) => SOME R.UINT32ty
-      | T.SINGLETONty (T.SIZEty _) => SOME R.UINT32ty
-      | T.SINGLETONty (T.TYPEty _) => SOME R.BOXEDty
-      | T.SINGLETONty (T.REIFYty _) => SOME R.BOXEDty
-      | T.BACKENDty (T.RECORDSIZEty _) => SOME R.UINT32ty
-      | T.BACKENDty (T.RECORDBITMAPINDEXty _) => SOME R.UINT32ty
-      | T.BACKENDty (T.RECORDBITMAPty _) => SOME R.UINT32ty
-      | T.BACKENDty (T.CCONVTAGty _) => SOME R.UINT32ty
-      | T.BACKENDty T.SOME_CLOSUREENVty => SOME R.BOXEDty
-      | T.BACKENDty T.SOME_CCONVTAGty => SOME R.UINT32ty
-      | T.BACKENDty T.SOME_FUNENTRYty => SOME R.SOME_CODEPTRty
-      | T.BACKENDty T.SOME_FUNWRAPPERty => SOME R.SOME_CODEPTRty
+        T.SINGLETONty (T.INSTCODEty _) => SOME R.recordProp
+      | T.SINGLETONty (T.INDEXty _) => SOME R.word32Prop
+      | T.SINGLETONty (T.TAGty _) => SOME R.word32Prop
+      | T.SINGLETONty (T.SIZEty _) => SOME R.word32Prop
+      | T.SINGLETONty (T.REIFYty _) => SOME R.recordProp
+      | T.BACKENDty (T.RECORDSIZEty _) => SOME R.word32Prop
+      | T.BACKENDty (T.RECORDBITMAPINDEXty _) => SOME R.word32Prop
+      | T.BACKENDty (T.RECORDBITMAPty _) => SOME R.word32Prop
+      | T.BACKENDty (T.CCONVTAGty _) => SOME R.word32Prop
+      | T.BACKENDty T.SOME_CLOSUREENVty => SOME R.recordProp
+      | T.BACKENDty T.SOME_CCONVTAGty => SOME R.word32Prop
+      | T.BACKENDty T.SOME_FUNENTRYty => SOME R.codeptrProp
+      | T.BACKENDty T.SOME_FUNWRAPPERty => SOME R.codeptrProp
       | T.BACKENDty (T.FUNENTRYty {tyvars, haveClsEnv, argTyList, retTy}) =>
-        SOME (R.MLCODEPTRty
-                {haveClsEnv = haveClsEnv,
-                 argTys = map (runtimeArgTy tyvars) argTyList,
-                 retTy = Option.map (runtimeArgTy tyvars) retTy})
+        (SOME
+           (R.codeptrProp
+            # {rep =
+                 R.CODEPTR
+                   (R.FN
+                      {haveClsEnv = haveClsEnv,
+                       argTys = map (toGeneric o runtimeArgTy tyvars) argTyList,
+                       retTy = runtimeArgTy tyvars retTy})})
+         handle PropOf => NONE)
       | T.BACKENDty (T.CALLBACKENTRYty ({tyvars, haveClsEnv, argTyList, retTy,
                                          attributes})) =>
-        SOME (R.CALLBACKCODEPTRty
-                {haveClsEnv = haveClsEnv,
-                 argTys = map (runtimeArgTy tyvars) argTyList,
-                 retTy = Option.map (runtimeArgTy tyvars) retTy,
-                 attributes = attributes})
+        (SOME
+           (R.codeptrProp
+            # {rep =
+                 R.CODEPTR
+                   (R.CALLBACK
+                      {haveClsEnv = haveClsEnv,
+                       argTys = map (runtimeArgTy tyvars) argTyList,
+                       retTy = Option.map (runtimeArgTy tyvars) retTy,
+                       attributes = attributes})})
+         handle PropOf => NONE)
       | T.BACKENDty (T.FOREIGNFUNPTRty {tyvars, argTyList, varArgTyList,
                                         resultTy, attributes}) =>
-        SOME (R.FOREIGNCODEPTRty
-                {argTys = map (runtimeArgTy tyvars) argTyList,
-                 varArgTys =
-                   Option.map (map (runtimeArgTy tyvars)) varArgTyList,
-                 retTy = Option.map (runtimeArgTy tyvars) resultTy,
-                 attributes = attributes})
+        (SOME
+           (R.codeptrProp
+            # {rep =
+                 R.CODEPTR
+                   (R.FOREIGN
+                      {argTys = map (runtimeArgTy tyvars) argTyList,
+                       varArgTys = Option.map (map (runtimeArgTy tyvars))
+                                              varArgTyList,
+                       retTy = Option.map (runtimeArgTy tyvars) resultTy,
+                       attributes = attributes})})
+         handle PropOf => NONE)
       | T.ERRORty => NONE
       | T.DUMMYty (_, kind) =>
-        (case runtimeTyKind kind of
-           SOME ty => SOME ty
-         | NONE => SOME R.INT32ty)
+        Option.map dummyTy (propertyOfKind btvEnv kind)
       | T.TYVARty (ref (T.TVAR {kind, ...})) =>
-        runtimeTyKind kind
-      | T.TYVARty (ref (T.SUBSTITUTED ty)) => runtimeTy btvEnv ty
-      | T.FUNMty _ => SOME R.BOXEDty  (* function closure *)
-      | T.RECORDty _ => SOME R.BOXEDty
+        propertyOfKind btvEnv kind
+      | T.TYVARty (ref (T.SUBSTITUTED ty)) => propertyOf btvEnv ty
+      | T.FUNMty _ => SOME R.recordProp  (* function closure *)
+      | T.RECORDty _ => SOME R.recordProp
       | T.POLYty {boundtvars, constraints, body} =>
-        runtimeTy (BoundTypeVarID.Map.unionWith #2 (btvEnv, boundtvars)) body
+        propertyOf (BoundTypeVarID.Map.unionWith #2 (btvEnv, boundtvars)) body
       | T.CONSTRUCTty {tyCon, args} =>
         (
           case #dtyKind tyCon of
-            T.BUILTIN ty => SOME (BuiltinTypeNames.runtimeTy ty)
+            T.DTY p => SOME p
           | T.OPAQUE {opaqueRep, revealKey} =>
-            (
-              case opaqueRep of
-                T.TYCON tyCon =>
-                runtimeTy btvEnv (T.CONSTRUCTty {tyCon=tyCon, args=args})
-              | T.TFUNDEF {iseq, arity, polyTy} =>
-                runtimeTy btvEnv (TypesBasics.tpappTy (polyTy, args))
-            )
-          | T.DTY =>
-            SOME (BuiltinTypeNames.runtimeTy (#runtimeTy tyCon))
+            propertyOfOpaqueRep btvEnv (opaqueRep, args)
+          | T.INTERFACE opaqueRep =>
+            propertyOfOpaqueRep btvEnv (opaqueRep, args)
         )
       | T.BOUNDVARty tid =>
         case BoundTypeVarID.Map.find (btvEnv, tid) of
-          SOME kind => runtimeTyKind kind
+          SOME kind => propertyOfKind btvEnv kind
         | NONE => NONE
 
+  and propertyOfOpaqueRep btvEnv (opaqueRep, args) =
+      case opaqueRep of
+        T.TYCON tyCon =>
+        propertyOf btvEnv (T.CONSTRUCTty {tyCon = tyCon, args = args})
+      | T.TFUNDEF {admitsEq, arity, polyTy} =>
+        propertyOf btvEnv (TypesBasics.tpappTy (polyTy, args))
+
   and runtimeArgTy btvEnv ty =
-      case TypesBasics.derefTy ty of
-        T.BOUNDVARty tid =>
-        (case BoundTypeVarID.Map.find (btvEnv, tid) of
-           SOME kind =>
-           (case runtimeTyKind kind of
-              SOME ty => ty
-            | NONE => R.BOXEDty)
-         | NONE => raise Bug.Bug "runtimeArgTy: BOUNDVARty")
-      | _ =>
-        case runtimeTy btvEnv ty of
-          SOME ty => ty
-        | NONE => raise Bug.Bug "runtimeArgTy"
+      case propertyOf btvEnv ty of
+        SOME {tag = R.TAG t, size = R.SIZE s, rep = r} =>
+        {tag = t, size = s, rep = r}
+      | SOME _ => R.boxedTy (* packed *)
+      | NONE => raise PropOf
 
-  fun tagOf ty =
-      case ty of
-        R.UNITty => R.TAG_UNBOXED
-      | R.INT8ty => R.TAG_UNBOXED
-      | R.INT16ty => R.TAG_UNBOXED
-      | R.INT32ty => R.TAG_UNBOXED
-      | R.INT64ty => R.TAG_UNBOXED
-      | R.UINT8ty => R.TAG_UNBOXED
-      | R.UINT16ty => R.TAG_UNBOXED
-      | R.UINT32ty => R.TAG_UNBOXED
-      | R.UINT64ty => R.TAG_UNBOXED
-      | R.DOUBLEty => R.TAG_UNBOXED
-      | R.FLOATty => R.TAG_UNBOXED
-      | R.BOXEDty => R.TAG_BOXED
-      | R.POINTERty => R.TAG_UNBOXED
-      | R.SOME_CODEPTRty => R.TAG_UNBOXED
-      | R.MLCODEPTRty _ => R.TAG_UNBOXED
-      | R.FOREIGNCODEPTRty _ => R.TAG_UNBOXED
-      | R.CALLBACKCODEPTRty _ => R.TAG_UNBOXED
+  fun tagValue R.UNBOXED = 0
+    | tagValue R.BOXED = 1
 
-  fun tagValue R.TAG_UNBOXED = 0
-    | tagValue R.TAG_BOXED = 1
+  val sizeValue = RuntimeTypes.getSize
 
   datatype size_assumption =
       (* every type has power-of-2 size *)
@@ -160,35 +193,11 @@ struct
       ALIGN_UPTO_4
 *)
 
-  val pointerSize = SMLSharp_PointerSize.pointerSize
-
-  (* FIXME: ILP32 layout is hard-coded. *)
-
-  fun sizeOf ty =
-      case ty of
-        R.UNITty => 4  (* sizeof INT32ty *)
-      | R.INT8ty => 1
-      | R.INT16ty => 2
-      | R.INT32ty => 4
-      | R.INT64ty => 8
-      | R.UINT8ty => 1
-      | R.UINT16ty => 2
-      | R.UINT32ty => 4
-      | R.UINT64ty => 8
-      | R.DOUBLEty => 8
-      | R.FLOATty => 4
-      | R.BOXEDty => !pointerSize
-      | R.POINTERty => !pointerSize
-      | R.MLCODEPTRty _ => !pointerSize
-      | R.SOME_CODEPTRty => !pointerSize
-      | R.FOREIGNCODEPTRty _ => !pointerSize
-      | R.CALLBACKCODEPTRty _ => !pointerSize
-
   val charBits = 8
 
   (* maximum size that sizeOf returns.
    * It is also the maximum alignment constraint *)
-  val maxSize = 8
+  val maxSize = #size RuntimeTypes.word64Ty
 
   (* NOTE: On x86 Linux (and any other long-lived operating systems on x86),
    * sizeof(long double) is 12. So ALL_SIZES_ARE_POWER_OF_2_EXCEPT_LONG_DOUBLE

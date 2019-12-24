@@ -1,0 +1,3 @@
+_require "./071_include2.smi"
+_require "./071_include3.smi"
+val x : int * int * int

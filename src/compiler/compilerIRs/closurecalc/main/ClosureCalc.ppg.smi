@@ -1,16 +1,15 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../libs/env/main/SEnv.smi"
-_require "../../../libs/heapdump/main/HeapDump.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
+(* _require "../../../libs/env/main/SEnv.smi" *)
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../libs/ids/main/LocalID.smi"
+(* _require "../../../libs/ids/main/LocalID.smi" *)
 
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
-_require "../../../libs/util/main/TermFormat.smi"
-_require "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 _require "../../../data/name/main/CodeLabel.smi"
 _require "../../../data/name/main/ExternSymbol.smi"
 _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
@@ -35,8 +34,8 @@ struct
     | CVWORD32 of Word32.word
     | CVWORD64 of Word64.word
     | CVCONTAG of Word32.word
-    | CVREAL64 of string
-    | CVREAL32 of string
+    | CVREAL64 of Real64.real
+    | CVREAL32 of Real32.real
     | CVCHAR of Char.char
     | CVUNIT
     | CVNULLPOINTER
@@ -64,6 +63,8 @@ struct
         cast : BuiltinPrimitive.cast
       }
     | CVTAG of {tag : RuntimeTypes.tag, ty : ty}
+    | CVSIZE of {size : RuntimeTypes.size, ty : ty}
+    | CVINDEX of {index : word, ty : ty, label : RecordLabel.label}
     | CVCCONVTAG of Types.codeEntryTy
     | CVWORD32_ORB of ccconst * ccconst
 
@@ -250,6 +251,7 @@ struct
       {
         id : ExternSymbol.id,
         ty : ty,
+        provider : Types.provider,
         loc : loc
       } 
     | CTEXPORTVAR of
@@ -266,6 +268,7 @@ struct
         tyvars : Types.btvEnv,
         argTyList : ty list,
         retTy : ty,
+        provider : Types.provider,
         loc : loc
       }
     | CTEXPORTFUN of
@@ -316,13 +319,6 @@ struct
         tagExp : topconst,
         loc : loc
       }
-    | CTDUMP of
-      {
-        id : DataLabel.id,
-        dump : HeapDump.dump,
-        ty : ty,
-        loc : loc
-      }
 
   type program =
       {
@@ -338,14 +334,11 @@ struct
   val format_primInfo
       : primInfo -> SMLFormat.FormatExpression.expression list
   val format_ccconst
-      : Types.kind TermFormat.btvEnv
-        -> ccconst -> SMLFormat.FormatExpression.expression list
+      : ccconst -> SMLFormat.FormatExpression.expression list
   val format_cconv
-      : Types.kind TermFormat.btvEnv
-        -> cconv -> SMLFormat.FormatExpression.expression list
+      : cconv -> SMLFormat.FormatExpression.expression list
   val format_ccexp
-      : Types.kind TermFormat.btvEnv
-        -> ccexp -> SMLFormat.FormatExpression.expression list
+      : ccexp -> SMLFormat.FormatExpression.expression list
   val format_topdec
       : topdec -> SMLFormat.FormatExpression.expression list
   val format_topdata

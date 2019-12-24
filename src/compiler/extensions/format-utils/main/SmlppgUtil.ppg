@@ -61,16 +61,14 @@ struct
              ]
            else (elementFormatter e) (*@ [s_d_Indicator]*)
          | list =>
-           prefixIfNotNull
-           @ [
-               FE.Guard 
-                   (
-                     SOME{cut = true, strength = 0, direction = FE.Neutral},
-                     (SMLFormat.BasicFormatters.format_list
-                          (elementFormatter, separator) list)
-                   )
-             ]
-           @ suffixIfNotNull
+           FE.Sequence prefixIfNotNull
+           :: FE.Guard 
+                (
+                  SOME{cut = true, strength = 0, direction = FE.Neutral},
+                  (SMLFormat.BasicFormatters.format_list
+                     (elementFormatter, separator) list)
+                )
+           :: suffixIfNotNull
   in
   fun formatTyConArgumentTypes arguments = formatElements true arguments
   fun formatListWithEnclosureOne arguments = formatElements false arguments
@@ -85,9 +83,9 @@ struct
       (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
       fn [] => nil
        | list =>
-         prefixIfNotNull @
-         (SMLFormat.BasicFormatters.format_list
-              (elementFormatter, separator) list) @
+         FE.Sequence prefixIfNotNull ::
+         FE.Sequence (SMLFormat.BasicFormatters.format_list
+                         (elementFormatter, separator) list) ::
          suffixIfNotNull
 
   (*
@@ -101,9 +99,9 @@ struct
       fn [] => [FE.Term (0, "")]
        | [value] => elementFormatter value
        | list =>
-         prefixIfNotNull @
-         (SMLFormat.BasicFormatters.format_list
-              (elementFormatter, separator) list) @
+         FE.Sequence prefixIfNotNull ::
+         FE.Sequence (SMLFormat.BasicFormatters.format_list
+                        (elementFormatter, separator) list) ::
          suffixIfNotNull
 
  (*%
@@ -153,7 +151,7 @@ struct
            (SymbolEnv.listItemsi smap))
 
  (*%
-  * @params(env,tfunName,tyConName,lparen, itemsep, rparen)
+  * @params(sname, lparen, itemsep, rparen)
   * @formatter(formatListWithEnclosure)  formatListWithEnclosure
   * @formatter(Symbol.symbol)  Symbol.format_symbol
   *)
@@ -162,14 +160,14 @@ struct
         @format(field fields)
           fields:formatListWithEnclosure(field)(itemsep, lparen, rparen) 
         @format:field(symbol * ty) 
-          ty()(env,tfunName,tyConName,,symbol)
+          ty()(sname,,symbol)
       *)
      (Symbol.symbol * 'a) list
 
   fun formatGenericSymbolMap
-        (elementFormatter,env,tfunName,tyConName,lparen, itemsep, rparen) smap =
+        (elementFormatter, sname, lparen, itemsep, rparen) smap =
       format_genericSymbolVarenv
-        (elementFormatter,env,tfunName,tyConName,lparen, itemsep, rparen)
+        (elementFormatter, sname, lparen, itemsep, rparen)
         (ListSorter.sort 
            (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
            (SymbolEnv.listItemsi smap))
@@ -192,11 +190,13 @@ struct
 
   fun formatPrependedOpt (formatter, prefixIfSome) =
       fn NONE => [FE.Term (0, "")]
-       | SOME value => prefixIfSome @ (formatter value)
+       | SOME value => FE.Sequence prefixIfSome :: formatter value
 
   fun formatEnclosedOpt (formatter, prefixIfSome, suffixIfSome) =
       fn NONE => [FE.Term (0, "")]
-       | SOME value => prefixIfSome @ (formatter value) @ suffixIfSome
+       | SOME value => FE.Sequence prefixIfSome ::
+                       FE.Sequence (formatter value) ::
+                       suffixIfSome
 
   fun formatOptWithDefault (formatter, default) =
       fn NONE => default

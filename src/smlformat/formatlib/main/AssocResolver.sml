@@ -68,7 +68,7 @@ struct
         fun encloseSymbols symbols =
             [
               FE.Term (1, #guardLeft parameter),
-              FE.StartOfIndent 1
+              FE.StartOfIndent 1,
 (*
               FE.Indicator
               {
@@ -77,9 +77,7 @@ struct
                 SOME {priority = FE.Preferred 1}
               }
 *)
-            ] @
-            symbols @
-            [
+              FE.Sequence symbols,
 (*
               FE.EndOfIndent,
               FE.Indicator
@@ -115,6 +113,18 @@ struct
               val inheritToOtherAssoc = 
                   {cut = cut, strength = strength, direction = FE.Neutral}
 
+              fun revFE nil nil r = r
+                | revFE nil (h :: t) r = revFE h t r
+                | revFE (FE.Sequence x :: t) k r = revFE x (t :: k) r
+                | revFE (h :: t) k r = revFE t k (h :: r)
+              val revFE = fn l => revFE l nil nil
+
+              fun mapRevFE f nil nil r = r
+                | mapRevFE f nil (h :: t) r = mapRevFE f h t r
+                | mapRevFE f (FE.Sequence x :: t) k r = mapRevFE f x (t :: k) r
+                | mapRevFE f (h :: t) k r = mapRevFE f t k (f h :: r)
+              val mapRevFE = fn f => fn l => mapRevFE f l nil nil
+
               (**
                *  Visit the children with specified assoc to inherit.
                *
@@ -129,19 +139,23 @@ struct
                *)
               fun visitList (toFirstChild, toOther) children =
                   let
-                    fun scan _ [] visited = List.rev visited
-                      | scan toInherit (head::others) visited =
+                    fun scan _ nil nil visited = visited
+                      | scan i nil (h :: t) visited =
+                        scan i h t visited
+                      | scan i (FE.Sequence x :: t) k visited =
+                        scan i x (t :: k) visited
+                      | scan toInherit (head :: others) k visited =
                         let
                           val visited' = (visit toInherit head) :: visited
                         in
                           case head of
                             (* switch the assoc to pass to children. *)
-                            FE.Guard _ => scan toOther others visited'
-                          | FE.Term _ => scan toOther others visited'
-                          | _ => scan toInherit others visited'
+                            FE.Guard _ => scan toOther others k visited'
+                          | FE.Term _ => scan toOther others k visited'
+                          | _ => scan toInherit others k visited'
                         end
                   in
-                    scan toFirstChild children []
+                    scan toFirstChild children nil []
                   end
 
               val newSymbols =
@@ -149,40 +163,34 @@ struct
                     FE.Left =>
                     (* pass Ln to the left-most child Term/Guard,
                      * Nn to the other following it. *)
-                    visitList
-                    (inheritToFirstAssoc, inheritToOtherAssoc)
-                    symbols
+                    revFE
+                      (visitList
+                         (inheritToFirstAssoc, inheritToOtherAssoc)
+                         symbols)
 
                   | FE.Right =>
                     (* pass Rn to the right-most child Term/Guard,
                      * Nn to the other following it. *)
-                    List.rev
-                    (visitList
-                     (inheritToFirstAssoc, inheritToOtherAssoc)
-                     (List.rev symbols))
+                    visitList
+                      (inheritToFirstAssoc, inheritToOtherAssoc)
+                      (revFE symbols)
 
-                  | _ => List.map (visit inheritToFirstAssoc) symbols
-              val newSymbols = List.concat newSymbols
+                  | _ =>
+                    revFE (mapRevFE (visit inheritToFirstAssoc) symbols)
             in
-              [
-                case enclosedAssocOpt of
-                  NONE => FE.Guard (NONE, newSymbols)
-                | SOME {cut = true, ...} => FE.Guard (NONE, newSymbols)
-                | SOME enclosedAssoc =>
-                  if weakThan (enclosingAssoc, enclosedAssoc) orelse
-                     equal (enclosingAssoc, enclosedAssoc)
-                  then FE.Guard (NONE, newSymbols)
-                  else FE.Guard (NONE, encloseSymbols newSymbols)
-              ]
+              case enclosedAssocOpt of
+                NONE => FE.Guard (NONE, newSymbols)
+              | SOME {cut = true, ...} => FE.Guard (NONE, newSymbols)
+              | SOME enclosedAssoc =>
+                if weakThan (enclosingAssoc, enclosedAssoc) orelse
+                   equal (enclosingAssoc, enclosedAssoc)
+                then FE.Guard (NONE, newSymbols)
+                else FE.Guard (NONE, encloseSymbols newSymbols)
             end
 
-          | visit enclosing symbol = [symbol]
+          | visit enclosing symbol = symbol
       in
-        case
-          visit {cut = true, strength = ~1, direction = FE.Neutral} symbol
-         of
-          [symbol] => symbol
-        | symbols => FE.Guard(NONE, symbols)
+        visit {cut = true, strength = ~1, direction = FE.Neutral} symbol
       end
                  
   (***************************************************************************)

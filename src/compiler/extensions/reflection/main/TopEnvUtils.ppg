@@ -1,0 +1,91 @@
+structure TopEnvUtils =
+struct
+local
+  val currentEnv = ref NONE : NameEvalEnv.topEnv option ref
+in
+
+  structure V = NameEvalEnv
+
+  (*%
+    @formatter(Symbol.symbol) Symbol.formatWithLoc_symbol
+   *)
+  datatype SstrE
+    = (*% 
+       @format(entry list)
+         list(entry)()
+       @format:entry(symbol * Senv)
+        1 "structure" + symbol
+          2[Senv]
+      *)
+      SSTR of (Symbol.symbol * Senv) list
+  and Senv 
+   = (*%
+       @format(sstre) sstre
+      *)
+     SENV of SstrE
+
+  (*%
+    @formatter(Symbol.symbol) Symbol.formatWithLoc_symbol
+   *)
+  type SfunE
+    = (*% 
+        @format(entry list)
+          list(entry)()
+        @format:entry(symbol)
+         1 "functor" + symbol
+      *)
+      Symbol.symbol list
+
+  (*%
+    @formatter(Symbol.symbol) Symbol.formatWithLoc_symbol
+   *)
+  type SsigE 
+    = (*% 
+        @format(entry list)
+          list(entry)()
+        @format:entry(symbol)
+         1 "signature" + symbol
+      *)
+      Symbol.symbol list
+
+  (*% *)
+  type StopEnv 
+    = (*%
+        @format({Env, FunE, SigE})
+          SigE 
+        1 FunE 
+        1 Env
+       *)
+      {Env:Senv, FunE:SfunE, SigE: SsigE}
+
+  fun StopEnvtoString env =
+      SMLFormat.prettyPrint nil (format_StopEnv env)
+
+  fun printTopEnv env =
+      (print (StopEnvtoString env);
+       print "\n"
+      )
+
+  fun strEToSkelton (V.STR strEntrySymbolenvMap) =
+      SSTR (map (fn (s, {env,...}) => (s, envToSkelton env))
+                (SymbolEnv.listItemsi strEntrySymbolenvMap)
+           )
+  and envToSkelton (V.ENV {varE, tyE, strE}) = SENV (strEToSkelton strE)
+
+  fun funEToSkelton funEEntrySymbolMap =
+      SymbolEnv.listKeys funEEntrySymbolMap
+
+  fun sigEToSkelton envSymbolMap = SymbolEnv.listKeys envSymbolMap
+
+  fun topEnvToSkelton {Env, FunE, SigE} =
+      {Env = envToSkelton Env,
+       FunE = funEToSkelton FunE,
+       SigE = sigEToSkelton SigE}
+
+  fun setCurrentEnv env = currentEnv:= SOME env
+
+  fun printTopEnvSummary () =  printTopEnv (topEnvToSkelton (valOf (!currentEnv)))
+
+
+end
+end

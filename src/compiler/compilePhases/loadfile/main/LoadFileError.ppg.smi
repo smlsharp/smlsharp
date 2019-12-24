@@ -1,17 +1,23 @@
 _require local "../../../../basis.smi"
 _require local "../../../../smlformat-lib.smi"
 
-_require "../../../data/symbols/main/Loc.ppg.smi"
+(* _require "../../../data/symbols/main/Loc.smi" *)
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require "../../../compilerIRs/absyn/main/RequirePath.smi"
 _require "../../../libs/toolchain/main/Filename.smi"
 
 structure LoadFileError =
 struct
   exception NotAnInterface of Filename.filename
-  exception FileNotFound of Filename.filename
+  exception FileNotFoundOnPath of RequirePath.path
   exception CircularLoad of Filename.filename
-  exception UnexpectedInterfaceDecl of Filename.filename
+  exception UnexpectedInterfaceDecl of RequirePath.path
   exception DuplicateHash of InterfaceName.interface_name
-                             * (InterfaceName.interface_name * Loc.loc)
-  exception UseNotAllowed of Filename.filename
+                             * InterfaceName.interface_name
+  exception UseNotAllowed of RequirePath.path
+  exception PathMustNotBeEmpty
+  exception AbsolutePathNotAllowed of RequirePath.path
+  exception DirectoryPathNotAllowed of RequirePath.path
+  exception UseRequireConflict of Filename.filename
+  exception UnknownRequireOption of string
 end

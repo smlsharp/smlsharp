@@ -1,19 +1,19 @@
-_require "../../../../basis.smi"
-_require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 
 _require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi"
 _require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
 
 
-_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+(* _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi" *)
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
 
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 
 structure TypeInferenceError =
   struct
@@ -23,7 +23,7 @@ structure TypeInferenceError =
     exception FFIStubMismatch of string * Types.ty * Types.ty
     exception NonInteroperableType of string * IDCalc.ffiTy
     exception EmptyExportInterface of string * {fileName:string}
-    exception UserTvarNotGeneralized of string * AbsynTy.tvar
+    exception UserTvarNotGeneralized of string * Symbol.symbol
     exception ExnConRequiredInSigMatch of string * {tyConName:string}
     exception DataConRequiredInSigMatch of string * {tyConName:string}
     exception DuplicateTypeNameInDatatypes of string * {tyConName:string}
@@ -81,6 +81,8 @@ structure TypeInferenceError =
     exception HandlerTy of string * {expTy:Types.ty, handlerTy:Types.ty}
     exception RuleTypeMismatch
               of string * {otherRules:Types.ty, thisRule:Types.ty}
+    exception RuleBodyTypeMismatch
+              of string * {otherRules:Types.ty, thisRule:Types.ty}
     exception PatternExpMismatch of string * {expTy:Types.ty, patTy:Types.ty}
     exception FunTyConMismatch of string * {argTy:Types.ty, funTy:Types.ty}
     exception TyConListMismatch
@@ -111,7 +113,7 @@ structure TypeInferenceError =
     exception ConstructorPathNotFound of string * Symbol.longsymbol
     exception InconsistentListElementType
               of string * {nextTy:Types.ty, prevTy:Types.ty}
-    exception CyclicTvarkindSpec of string * AbsynTy.tvar
+    exception CyclicTvarkindSpec of string * Symbol.symbol
     exception NonConstructorPathInPat of string * Symbol.longsymbol
     exception ArityMismatchInTypeDeclaration
               of string * {given:int, tyCon:string, wants:int}
@@ -123,8 +125,11 @@ structure TypeInferenceError =
     exception JoinResultNotAgree of string * Types.ty * Types.ty
     exception JoinArgsNotAgree of string * Types.ty * Types.ty
     exception JoinTypeExpected of string * Types.ty
+    exception DynamicTypeExpected of string * Types.ty
+    exception ReifyKindExpected of string * Types.ty
+    exception DynamicCasePatsMustBeGround of string * TypedCalc.tppat
     exception JoinWithDummy of string * Types.ty * Types.ty * Types.ty
-    exception UserLevelPrimForJsonNotFound of string
+    exception InconsistentKind of Types.ty
     exception ForEachTypeError of string
 
     val setPrintTyFun : NameEvalEnv.topEnv -> unit

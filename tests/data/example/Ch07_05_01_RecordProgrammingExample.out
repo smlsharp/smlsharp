@@ -1,0 +1,11 @@
+val moveX = fn : ['a#{Vx: real, X: real}. 'a * real -> 'a]
+
+val moveY = fn : ['a#{Vy: real, Y: real}. 'a * real -> 'a]
+
+val accelerateX = fn : ['a#{Vx: real}. 'a * real -> 'a]
+
+val accelerateY = fn : ['a#{Vy: real}. 'a * real -> 'a]
+
+val tic = fn : ['a#{Vx: real, Vy: real, X: real, Y: real}. 'a * real -> 'a]
+
+val accelerateX = fn : ['a#{Vx: real}. 'a * real -> 'a]

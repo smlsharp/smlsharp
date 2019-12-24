@@ -1,0 +1,5 @@
+val it = fn : ['a#{X: 'b}, 'b. 'a -> 'b]
+
+val it = 1.1 : real
+
+val f = fn : ['a#{X: 'b, Y: 'c}, 'b, 'c. 'a -> 'b * 'c]

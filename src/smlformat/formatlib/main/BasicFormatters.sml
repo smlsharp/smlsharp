@@ -65,8 +65,9 @@ struct
             let val expression = elementFormatter (Array.sub (array, index))
             in
               if 0 = index
-              then expression @ expressions
-              else scan (index - 1) (separator @ expression @ expressions)
+              then FE.Sequence expression :: expressions
+              else scan (index - 1) (FE.Sequence separator
+                                     :: FE.Sequence expression :: expressions)
             end
       in
         case Array.length array of
@@ -92,8 +93,9 @@ struct
             let val expression = elementFormatter (Vector.sub (vector, index))
             in
               if 0 = index
-              then expression @ expressions
-              else scan (index - 1) (separator @ expression @ expressions)
+              then FE.Sequence expression :: expressions
+              else scan (index - 1) (FE.Sequence separator
+                                     :: FE.Sequence expression :: expressions)
             end
       in
         case Vector.length vector of
@@ -137,7 +139,8 @@ struct
         fun format [] = []
           | format [value] = elementFormatter value
           | format (head::tail) =
-            (elementFormatter head) @ separator @ (format tail)
+            FE.Sequence (elementFormatter head)
+            :: FE.Sequence separator :: (format tail)
       in
         format values
       end

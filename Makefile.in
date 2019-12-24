@@ -5,265 +5,305 @@ include config.mk
 include src/config.mk
 include @srcdir@/files.mk
 
-MLYACC = src/ml-yacc/smlyacc
-MLLEX = src/ml-lex/smllex
+SMLLEX = src/ml-lex/smllex
+SMLYACC = src/ml-yacc/smlyacc
 SMLFORMAT = src/smlformat/smlformat
-SMLSHARP_STAGE2 = src/compiler/smlsharp
-LLVM_PLUGIN = src/llvm/smlsharp_gc.$(DLLEXT)
-
+SMLSHARP = src/compiler/smlsharp
+LLVM_PLUGIN = src/llvm/smlsharp_gc-$(LLVM_VERSION).$(DLLEXT)
 SMLSHARP_ENV = SMLSHARP_HEAPSIZE=32M:2G
-
 NETLIB_CFLAGS = $(CFLAGS) -DIEEE_8087 -DMALLOC=sml_xmalloc -DLong=int
-NETLIB_SOURCES = src/runtime/netlib/dtoa.c
-RUNTIME_SOURCES = \
-    src/runtime/callback.c \
-    src/runtime/control.c \
-    src/runtime/error.c \
-    src/runtime/exn.c \
-    src/runtime/finalize.c \
-    src/runtime/init.c \
-    src/runtime/object.c \
-    src/runtime/xmalloc.c \
-    src/runtime/prim.c \
-    src/runtime/splay.c \
-    src/runtime/top.c \
-    src/runtime/dump.c \
-    src/runtime/livecheck.c \
-    $(NETLIB_SOURCES) \
-    src/runtime/heap_concurrent.c \
-    src/sql/main/builtintypes/timestamp/string_to_time_t.c \
-    src/sql/main/builtintypes/timestamp/timeval_to_string.c
+
 RUNTIME_OBJECTS = \
-    $(RUNTIME_SOURCES:.c=.$(OBJEXT))
-RUNTIME_TARGETS = \
-    src/runtime/main.$(OBJEXT) \
-    src/runtime/libsmlsharp.$(LIBEXT)
-COMPILER_SUPPORT_SOURCES = \
-    src/llvm/main/llvm_support.cpp
+  src/runtime/callback.$(OBJEXT) \
+  src/runtime/control.$(OBJEXT) \
+  src/runtime/error.$(OBJEXT) \
+  src/runtime/exn.$(OBJEXT) \
+  src/runtime/finalize.$(OBJEXT) \
+  src/runtime/init.$(OBJEXT) \
+  src/runtime/object.$(OBJEXT) \
+  src/runtime/xmalloc.$(OBJEXT) \
+  src/runtime/prim.$(OBJEXT) \
+  src/runtime/splay.$(OBJEXT) \
+  src/runtime/top.$(OBJEXT) \
+  src/runtime/livecheck.$(OBJEXT) \
+  src/runtime/heap_concurrent.$(OBJEXT) \
+  src/sql/main/builtintypes/timestamp/string_to_time_t.$(OBJEXT) \
+  src/sql/main/builtintypes/timestamp/timeval_to_string.$(OBJEXT)
+LIBSMLSHARP_OBJECTS = \
+  $(RUNTIME_OBJECTS) \
+  src/runtime/call_with_cleanup.$(OBJEXT) \
+  src/runtime/netlib/dtoa.$(OBJEXT)
+LIBSMLSHARP_TARGETS = \
+  src/runtime/main.$(OBJEXT) \
+  src/runtime/libsmlsharp.$(LIBEXT)
 COMPILER_SUPPORT_OBJECTS = \
-    $(COMPILER_SUPPORT_SOURCES:.cpp=.$(OBJEXT))
-LLVM_PLUGIN_SOURCES = \
-    src/llvm/main/smlsharp_gc.cpp
+  src/runtime/signal.$(OBJEXT)
+TEST_SUPPORT_OBJECTS = \
+  tests/driver/process.$(OBJEXT)
 LLVM_PLUGIN_OBJECTS = \
-    $(LLVM_PLUGIN_SOURCES:.cpp=.$(OBJEXT))
-ALL_GEN_SOURCES = \
-    $(GEN_SOURCES) \
-    src/config/main/Version.sml \
-    src/config/main/PointerSize.sml
+  src/llvm/main/smlsharp_gc-$(LLVM_VERSION).$(OBJEXT)
 ALL_GEN_FILES = \
-    $(ALL_GEN_SOURCES) \
-    filemap \
-    precompiled/$(PRECOMPILED_ARCH).bc \
-    precompiled/$(PRECOMPILED_ARCH).$(OBJEXT) \
-    minismlsharp \
-    src/config.sed
-SML_TARGETS = \
-    $(RUNTIME_TARGETS) \
-    $(LLVM_PLUGIN) \
-    $(MLLEX) \
-    $(MLYACC) \
-    $(SMLFORMAT) \
-    $(SMLSHARP_STAGE2)
+  $(GEN_SOURCES) \
+  $(GEN_MISC_FILES) \
+  filemap \
+  precompiled/$(PRECOMPILED_ARCH).bc \
+  precompiled/$(PRECOMPILED_ARCH).$(OBJEXT) \
+  minismlsharp
 ALL_TARGETS = \
-    Makefile \
-    config.mk \
-    src/config.mk \
-    $(SML_TARGETS) \
-    $(INSTALL_FILES_SRC) \
-    $(INSTALL_FILES_OBJ)
+  $(LIBSMLSHARP_TARGETS) \
+  $(LLVM_PLUGIN) \
+  $(SMLLEX) \
+  $(SMLYACC) \
+  $(SMLFORMAT) \
+  $(SMLSHARP) \
+  $(INSTALL_FILES)
 LINK_DEP = \
-    filemap \
-    src/config.mk \
-    $(RUNTIME_TARGETS) \
-    $(LLVM_PLUGIN) \
-    $(SMLSHARP_DEP)
+  filemap \
+  $(LIBSMLSHARP_TARGETS) \
+  $(LLVM_PLUGIN) \
+  $(SMLSHARP_DEP)
 
 all: $(ALL_TARGETS)
 
 clean: PHONY
-	-rm -f $(SML_TARGETS)
-	-rm -f $(RUNTIME_OBJECTS)
-	-rm -f $(COMPILER_SUPPORT_OBJECTS) $(LLVM_PLUGIN_OBJECTS)
-	-rm -f $(ALL_OBJECTS) $(ALL_GEN_SOURGES) $(CLEAN_FILES)
-	-rm -f $(ALL_GEN_FILES)
-	-rm -f tests/driver/process.$(OBJEXT)
-@SNAPDATE_RULE_@	-rm -f RELEASE_DATE
+	-rm -f $(ALL_TARGETS)
+	-rm -f $(LIBSMLSHARP_OBJECTS) $(LLVM_PLUGIN_OBJECTS)
+	-rm -f $(COMPILER_SUPPORT_OBJECTS) $(TEST_SUPPORT_OBJECTS)
+	-rm -f $(ALL_OBJECTS) $(ALL_GEN_FILES)
+@IFDEV@	-rm -f RELEASE
 
-distclean: clean
+distclean: PHONY clean
 	-rm -rf autom4te.cache config.h config.log config.status
 	-rm -f Makefile config.mk src/config.mk stamp-h
 
-sources: PHONY $(ALL_GEN_SOURCES)
-runtime: PHONY $(RUNTIME_TARGETS)
+sources: PHONY $(GEN_SOURCES)
+runtime: PHONY $(LIBSMLSHARP_TARGETS)
 
-install: $(ALL_TARGETS)
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
-	$(INSTALL_PROGRAM) -m 644 src/config.mk \
-	  '$(DESTDIR)$(libdir_smlsharp)/config.mk'
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/runtime'
-	$(INSTALL_PROGRAM) -m 644 src/runtime/libsmlsharp.$(LIBEXT) \
-	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
-	$(INSTALL_PROGRAM) -m 644 src/runtime/main.$(OBJEXT) \
-	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
-	$(INSTALL_PROGRAM) -m 644 $(srcdir)/src/builtin.smi \
-	  '$(DESTDIR)$(libdir_smlsharp)/builtin.smi'
-	if test -f src/compiler/smlsharp.lib; then \
-	  $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/compiler'; \
-	  $(INSTALL_PROGRAM) -m 644 src/compiler/smlsharp.lib \
-	    '$(DESTDIR)$(libdir_smlsharp)/compiler'; else :; fi
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/llvm'
-	$(INSTALL_PROGRAM) -m 755 src/llvm/smlsharp_gc.$(DLLEXT) \
-	  '$(DESTDIR)$(libdir_smlsharp)/llvm/smlsharp_gc.$(DLLEXT)'
+install: PHONY $(ALL_TARGETS)
 	@copy () { \
-	  if test ! -d "$$2"; then \
-	    echo $(INSTALL) -m 755 -d "$$2"; \
-	    $(INSTALL) -m 755 -d "$$2" || exit $?; \
-	  fi; \
-	  echo $(INSTALL_DATA) "$$1" "$$2"; \
-	  $(INSTALL_DATA) "$$1" "$$2" || exit $?; \
+	   dir=$${2%/*}; \
+	   dir=$${dir#src}; \
+	   dir='$(DESTDIR)$(libdir_smlsharp)'"$$dir"; \
+	   test -d "$$dir" || $(INSTALL) -d "$$dir" || exit; \
+	   echo $(INSTALL_DATA) "$$1" "$$dir"; \
+	   $(INSTALL_DATA) "$$1" "$$dir" || exit; \
 	}; \
-	for i in $(INSTALL_FILES_SRC); do \
-	  d=`dirname "$$i" | sed 's,^src/*,,'`; \
-	  copy '$(srcdir)/'"$$i" '$(DESTDIR)$(libdir_smlsharp)/'"$$d"; \
-	done; \
-	for i in $(INSTALL_FILES_OBJ); do \
-	  d=`dirname "$$i" | sed 's,^src/*,,'`; \
-	  copy "$$i" '$(DESTDIR)$(libdir_smlsharp)/'"$$d"; \
-	done
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) -m 755 $(MLLEX) '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) -m 755 $(MLYACC) '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) -m 755 $(SMLFORMAT) '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) -m 755 $(SMLSHARP_STAGE2) '$(DESTDIR)$(bindir)'
+	for i in $(INSTALL_FILES_SRC); do copy '$(srcdir)/'"$$i" "$$i"; done; \
+	for i in $(INSTALL_FILES_OBJ); do copy "$$i" "$$i"; done
+	test ! -f src/compiler/smlsharp.lib \
+	|| { $(INSTALL) -d '$(DESTDIR)$(libdir_smlsharp)/src/compiler'; \
+	     $(INSTALL_DATA) src/compiler/smlsharp.lib \
+	       '$(DESTDIR)/$(libdir_smsharp)/compiler'; }
+	$(INSTALL) -d '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) src/config.mk \
+	  '$(DESTDIR)$(libdir_smlsharp)/config.mk'
+	$(INSTALL_DATA) $(srcdir)/src/builtin.smi \
+	  '$(DESTDIR)$(libdir_smlsharp)/builtin.smi'
+	$(INSTALL) -d '$(DESTDIR)$(libdir_smlsharp)/runtime'
+	$(INSTALL_DATA) src/runtime/libsmlsharp.$(LIBEXT) \
+	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
+	$(INSTALL_DATA) src/runtime/main.$(OBJEXT) \
+	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
+	$(INSTALL_DATA) $(COMPILER_SUPPORT_OBJECTS) \
+	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
+	$(INSTALL) -d '$(DESTDIR)$(libdir_smlsharp)/llvm'
+	$(INSTALL_PROGRAM) $(LLVM_PLUGIN) '$(DESTDIR)$(libdir_smlsharp)/llvm'
+	$(INSTALL) -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(SMLLEX) '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(SMLYACC) '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(SMLFORMAT) '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(SMLSHARP) '$(DESTDIR)$(bindir)'
+	$(INSTALL) -d '$(DESTDIR)/$(mandir)/man1'
+	$(INSTALL_DATA) man/smllex.1 '$(DESTDIR)/$(mandir)/man1'
+	$(INSTALL_DATA) man/smlyacc.1 '$(DESTDIR)/$(mandir)/man1'
+	$(INSTALL_DATA) man/smlformat.1 '$(DESTDIR)/$(mandir)/man1'
+	$(INSTALL_DATA) man/smlsharp.1 '$(DESTDIR)/$(mandir)/man1'
 
-test: tests/driver/dotest PHONY
+test: PHONY tests/driver/dotest
 	$(SMLSHARP_ENV) tests/driver/dotest
+
+stage: PHONY src/compiler/minismlsharp
+	@n=`ls minismlsharp* | sed 's/minismlsharp//' | sort -n | tail -n1` \
+	&& n=$$(($${n:--1}+1)) \
+	&& mv -f -v minismlsharp "minismlsharp$$n" \
+	&& mv -f -v src/compiler/minismlsharp minismlsharp \
+	&& echo "** Stage $$(($$n+1)) build completed.  Rerun 'make stage' for further stages, or run 'make all' for stage $$(($$n+2)) full build."
 
 # -------- implicit rules --------
 
 PHONY: # force to rebuild
 
-.SUFFIXES: .c .h .o .a .sml .ppg .ppg.sml .lex .grm .lex.sml .grm.sml
+.POSIX:
+.SUFFIXES: .c .@OBJEXT@ .sml .smi .sig .ppg .lex .grm
 
-.sml.o:
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) -c -o $@ $<
-.ppg.ppg.sml:
-	$(SMLSHARP_ENV) $(SMLFORMAT) --output=$@ $<
-.lex.lex.sml:
-	$(SMLSHARP_ENV) SMLLEX_OUTPUT=$@ $(MLLEX) $<
-.grm.grm.sml:
-	$(SMLSHARP_ENV) SMLYACC_OUTPUT=$@ $(MLYACC) $<
-.c.o:
+.sml.@OBJEXT@:
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath -filemap=filemap $(SMLFLAGS) -c -o $@ $<
+.c.@OBJEXT@:
 	$(CC) $(CFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $<
 
 # -------- runtime --------
 
-src/runtime/libsmlsharp.$(LIBEXT): $(RUNTIME_OBJECTS)
+src/runtime/libsmlsharp.$(LIBEXT): $(LIBSMLSHARP_OBJECTS)
 	-rm -f $@
-	$(AR) qc $@ $(RUNTIME_OBJECTS)
+	$(AR) qc $@ $(LIBSMLSHARP_OBJECTS)
 	-$(RANLIB) $@
 
-src/runtime/netlib/dtoa.o: src/runtime/netlib/dtoa.c
+src/runtime/netlib/dtoa.$(OBJEXT): $(srcdir)/src/runtime/netlib/dtoa.c
 	$(CC) $(NETLIB_CFLAGS) -c -o $@ $(srcdir)/src/runtime/netlib/dtoa.c
 
-src/runtime/exn.o: src/runtime/exn.c
+src/runtime/exn.$(OBJEXT): $(srcdir)/src/runtime/exn.c
 	$(CC) $(CFLAGS) -fexceptions $(DEFS) $(CPPFLAGS) -c -o $@ $(srcdir)/src/runtime/exn.c
+
+src/runtime/control.$(OBJEXT): $(srcdir)/src/runtime/control.c
+	$(CC) $(CFLAGS) -fexceptions $(DEFS) $(CPPFLAGS) -c -o $@ $(srcdir)/src/runtime/control.c
+
+src/runtime/call_with_cleanup.o: $(srcdir)/src/runtime/call_with_cleanup.ll
+	$(LLC) -mtriple=$(target) -O2 $(LLCFLAGS) -filetype=obj -o $@ $(srcdir)/src/runtime/call_with_cleanup.ll
 
 # -------- compiler support --------
 
-src/llvm/main/llvm_support.$(OBJEXT): src/llvm/main/llvm_support.cpp
-	$(CXX) $(LLVM_CXXFLAGS) -c -o $@ $(srcdir)/src/llvm/main/llvm_support.cpp
+src/llvm/main/smlsharp_gc-$(LLVM_VERSION).$(OBJEXT): \
+  $(srcdir)/src/llvm/main/smlsharp_gc.cpp
+	$(CXX) $(LLVM_CXXFLAGS) -fPIC -c -o $@ $(srcdir)/src/llvm/main/smlsharp_gc.cpp
 
-src/llvm/main/smlsharp_gc.$(OBJEXT): src/llvm/main/smlsharp_gc.cpp
-	$(CXX) $(LLVM_CXXFLAGS) -c -o $@ $(srcdir)/src/llvm/main/smlsharp_gc.cpp
+$(LLVM_PLUGIN): \
+  src/llvm/main/smlsharp_gc-$(LLVM_VERSION).$(OBJEXT)
+	$(CXX) $(RUNLOOP_DLDFLAGS) -o $@ src/llvm/main/smlsharp_gc-$(LLVM_VERSION).$(OBJEXT)
 
-src/llvm/smlsharp_gc.$(DLLEXT): src/llvm/main/smlsharp_gc.$(OBJEXT)
-	$(CXX) $(RUNLOOP_DLDFLAGS) -o $@ src/llvm/main/smlsharp_gc.$(OBJEXT)
-
-tests/driver/process.$(OBJEXT): tests/driver/process.c
+tests/driver/process.$(OBJEXT): $(srcdir)/tests/driver/process.c
 	$(CC) $(CFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $(srcdir)/tests/driver/process.c
 
 # -------- link file map --------
 
-filemap: files.mk
-	sed '1,/^ALL_OBJECTS =/d;/ =/,$$d;s, *\\*$$,,;s,\(.*\)\.[a-z]*$$,$(srcdir)/\1.smi &,' files.mk > $@
+filemap: Makefile $(srcdir)/files.mk
+	set -ex; \
+	srcdir='$(srcdir)/'; \
+	srcdir=$${srcdir#./}; \
+	src='$(srcdir)/files.mk'; \
+	all=`mktemp`; \
+	gen=`mktemp`; \
+	obj=`mktemp`; \
+	trap 'rm -f "$$all" "$$gen" "$$obj"' EXIT; \
+	trap 'exit 127' INT QUIT STOP; \
+	sed -e '1,/^ALL_OBJECTS =/d;/ =/,$$d;s/[ \\]//g' \
+	    "$$src" > "$$all"; \
+	sed -e '1,/^GEN_SOURCES =/d;/ =/,$$d;s/[ \\]//g;s/sml$$/$(OBJEXT)/' \
+	    "$$src" > "$$gen"; \
+	cat "$$all" "$$gen" | sort | uniq -u > "$$obj"; \
+	sed -e "s'.*'= $${srcdir}& &'" \
+	    "$$obj" > $@; \
+	sed -e "s'.*'= $${srcdir}& &'" \
+	    "$$gen" >> $@; \
+	sed -e "s/$(OBJEXT)\$$/smi/;s'.*'= $${srcdir}& $${srcdir}&'" \
+	    "$$obj" >> $@; \
+	sed -e "s/$(OBJEXT)\$$/smi/;s'.*'= & $${srcdir}&'" \
+	    "$$gen" >> $@
 
 # -------- executables --------
 
-src/ml-lex/smllex: $(LINK_DEP) $(MLLEX_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+$(SMLLEX): $(LINK_DEP) $(SMLLEX_OBJECTS)
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFLAGS) \
 	-filemap=filemap \
 	$(srcdir)/src/ml-lex/ml-lex.smi -o $@
 
-src/ml-yacc/smlyacc: $(LINK_DEP) $(MLYACC_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+$(SMLYACC): $(LINK_DEP) $(SMLYACC_OBJECTS)
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFLAGS) \
 	-filemap=filemap \
 	$(srcdir)/src/ml-yacc/src/ml-yacc.smi -o $@
 
-src/smlformat/smlformat: $(LINK_DEP) $(SMLFORMAT_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
+$(SMLFORMAT): $(LINK_DEP) $(SMLFORMAT_OBJECTS)
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFLAGS) \
 	-filemap=filemap \
 	$(srcdir)/src/smlformat/generator/main/call-main.smi -o $@
 
-src/compiler/smlsharp: $(LINK_DEP) $(COMPILER_SUPPORT_OBJECTS) \
-                       $(COMPILER_LIB_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
-	-filemap=filemap \
-	$(RDYNAMIC_LDFLAGS) $(LLVM_SMLSHARP_LDFLAGS) --link-all \
-	$(srcdir)/src/compiler/smlsharp.smi \
-	$(COMPILER_SUPPORT_OBJECTS) $(LLVM_LIBS) $(LLVM_SYSLIBS) -o $@
+$(SMLSHARP): $(LINK_DEP) $(COMPILER_SUPPORT_OBJECTS) $(COMPILER_LIB_OBJECTS)
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFLAGS) \
+	$(RDYNAMIC_SMLFLAGS) -filemap=filemap \
+	$(srcdir)/src/compiler/smlsharp.smi $(COMPILER_SUPPORT_OBJECTS) -o $@
 
-src/compiler/minismlsharp: $(LINK_DEP) $(COMPILER_SUPPORT_OBJECTS) \
-                           $(MINISMLSHARP_OBJECTS)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFLAGS) \
-	-filemap=filemap $(LLVM_SMLSHARP_LDFLAGS) \
-	$(srcdir)/src/compiler/minismlsharp.smi \
-	$(COMPILER_SUPPORT_OBJECTS) $(LLVM_LIBS) $(LLVM_SYSLIBS) -o $@
+src/compiler/minismlsharp: \
+  $(LINK_DEP) $(COMPILER_SUPPORT_OBJECTS) $(MINISMLSHARP_OBJECTS)
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFLAGS) \
+	-filemap=filemap $(srcdir)/src/compiler/minismlsharp.smi \
+	$(COMPILER_SUPPORT_OBJECTS) -o $@
 
-precompiled/$(PRECOMPILED_ARCH).bc: precompiled/$(PRECOMPILED_ARCH).ll.xz
+precompiled/$(PRECOMPILED_ARCH).bc: \
+  $(srcdir)/precompiled/$(PRECOMPILED_ARCH).ll.xz
 	$(XZ) -c -d $(srcdir)/precompiled/$(PRECOMPILED_ARCH).ll.xz \
 	| $(LLVM_AS) -o $@
 
-precompiled/$(PRECOMPILED_ARCH).$(OBJEXT): $(LLVM_PLUGIN) \
-                                           precompiled/$(PRECOMPILED_ARCH).bc
-	$(LLC) -load=$(LLVM_PLUGIN) -mtriple=$(TARGET_TRIPLE) -O2 \
+precompiled/$(PRECOMPILED_ARCH).$(OBJEXT): \
+  $(LLVM_PLUGIN) precompiled/$(PRECOMPILED_ARCH).bc
+	$(LLC) -load=$(LLVM_PLUGIN) -mtriple=$(target) -O2 $(LLCFLAGS) \
 	-tailcallopt -filetype=obj -o $@ precompiled/$(PRECOMPILED_ARCH).bc
 
-./minismlsharp: $(RUNTIME_TARGETS) $(COMPILER_SUPPORT_OBJECTS) \
+./minismlsharp: $(LIBSMLSHARP_TARGETS) $(COMPILER_SUPPORT_OBJECTS) \
                 precompiled/$(PRECOMPILED_ARCH).$(OBJEXT)
-	$(CXX) $(LDFLAGS) $(LLVM_LDFLAGS) \
-	precompiled/$(PRECOMPILED_ARCH).$(OBJEXT) \
-	$(COMPILER_SUPPORT_OBJECTS) $(RUNTIME_TARGETS) \
-	$(LLVM_LIBS) $(LLVM_SYSLIBS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) src/runtime/main.$(OBJEXT) \
+	precompiled/$(PRECOMPILED_ARCH).$(OBJEXT) $(COMPILER_SUPPORT_OBJECTS) \
+	src/runtime/libsmlsharp.$(LIBEXT) $(LIBS) -o $@
 
 tests/driver/dotest: $(LINK_DEP) $(TEST_OBJECTS) tests/driver/process.$(OBJEXT)
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE1) -Bsrc -nostdpath $(SMLFILE) \
-	-filemap=filemap \
-	$(RDYNAMIC_LDFLAGS) $(LLVM_SMLSHARP_LDFLAGS) --link-all \
-	$(srcdir)/tests/driver/dotest.smi \
-	tests/driver/process.$(OBJEXT) \
-	$(COMPILER_SUPPORT_OBJECTS) $(LLVM_LIBS) $(LLVM_SYSLIBS) -o $@
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFILE) \
+	$(RDYNAMIC_SMLFLAGS) -filemap=filemap \
+	$(srcdir)/tests/driver/dotest.smi tests/driver/process.$(OBJEXT) \
+	$(COMPILER_SUPPORT_OBJECTS) -o $@
 
 # -------- source code generation --------
 
-@SNAPDATE_RULE_@RELEASE_DATE: $(srcdir)/../.hg/dirstate
-@SNAPDATE_RULE_@	set -e; \
-@SNAPDATE_RULE_@	r=`HGPLAIN=1 hg log -r. --template '{date|isodatesec} {node|short}'`; \
-@SNAPDATE_RULE_@	echo "$$r" | sed s/+0900/JST/ > $@
+@IFDEV@$(srcdir)/RELEASE: \
+@IFDEV@  $(srcdir)/../.hg/store/00changelog.i $(srcdir)/../.hg/dirstate
+@IFDEV@	set -e; \
+@IFDEV@	export HGPLAIN=1 LC_ALL=C; \
+@IFDEV@	n=`printf '\\\n'`; \
+@IFDEV@	tags=`hg log -r 0::. --template '. {tags}\n'`; \
+@IFDEV@	ver=`echo "$$tags" | sed '$$!d;y/ /'"$$n/" | sed '/^smlsharp[-_]/!d'`; \
+@IFDEV@	ver=`echo "$$ver" | sed 's/^[^-_]*[-_]//;s/~/-/g'`; \
+@IFDEV@	count=`echo "$$tags" | awk '{x++}END{print x}'`; \
+@IFDEV@	versions=`echo "$$tags" | sed "y/ /$$n/" | sed '/^smlsharp[-_]/!d'`; \
+@IFDEV@	last=`echo "$$versions" | sed '$$!d;s/^[^-_]*[-_]//;s/~/-/g'`; \
+@IFDEV@	next=`echo "$$last" | awk -v FS=. -v OFS=. '{$$3+=1;print}'`; \
+@IFDEV@	dn=`hg log -r. --template '{date|isodatesec} {node}'`; \
+@IFDEV@	date=`echo "$$dn" | cut -d\  -f-2`; \
+@IFDEV@	tz=`echo "$$dn" | cut -d\  -f3 | sed 's/+0900/JST/'`; \
+@IFDEV@	node=`echo "$$dn" | cut -d\  -f4`; \
+@IFDEV@	shortnode=`echo "$$node" | sed 's/^\(............\).*$$/ \1/'`; \
+@IFDEV@	mininode=`echo "$$node" | sed 's/^\(....\).*$$/\1/'`; \
+@IFDEV@	[ -n "$$ver" ] && shortnode=; \
+@IFDEV@	[ -n "$$ver" ] || ver="$$next-$$count.hg$$mininode"; \
+@IFDEV@	release="$$ver ($$date $$tz$$shortnode)"; \
+@IFDEV@	echo "$$release" > $@
 
-src/config.sed: config.mk src/config.mk Makefile VERSION RELEASE_DATE
-	{ echo 'VERSION = '`cat VERSION`; \
-	  echo 'RELEASE_DATE = '`cat RELEASE_DATE`; \
-	  echo 'LIBDIR_SMLSHARP = $(libdir_smlsharp)'; \
-	  cat src/config.mk; \
-	  sed -n '/^SIZEOF_VOID_P/p' config.mk; } \
-	| sed 's/["\\]/\\\\\\&/g;s/^/s"%/;s/ = /%"/;s/$$/";/' > $@
+src/config/main/Version.sml: \
+  $(srcdir)/src/config/main/Version.sml.in $(srcdir)/RELEASE
+	sed -e 's"%RELEASE%"'"`cat $(srcdir)/RELEASE`"'"' \
+	    -e 's"%LIBDIR_SMLSHARP%"$(libdir_smlsharp)"' \
+	$(srcdir)/src/config/main/Version.sml.in > $@
 
-src/config/main/Version.sml : src/config.sed src/config/main/Version.sml.in
-	sed -f src/config.sed $(srcdir)/src/config/main/Version.sml.in > $@
-src/config/main/PointerSize.sml : src/config.sed \
-                                  src/config/main/PointerSize.sml.in
-	sed -f src/config.sed $(srcdir)/src/config/main/PointerSize.sml.in > $@
+src/config/main/SQLConfig.sml: \
+  $(srcdir)/src/config/main/SQLConfig.sml.in src/config.mk
+	sed -e 's"%DLLEXT%"$(DLLEXT)"' \
+	$(srcdir)/src/config/main/SQLConfig.sml.in > $@
+
+src/compiler/compilerIRs/absyn/main/AbsynFormatter.sml: \
+  src/compiler/compilerIRs/absyn/main/Absyn.sml \
+  $(SMLFORMAT_DEP)
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynFormatter src/compiler/compilerIRs/absyn/main/Absyn.sml
+
+src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.sml: \
+  src/compiler/compilerIRs/absyn/main/AbsynTy.sml \
+  $(SMLFORMAT_DEP)
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynTyFormatter src/compiler/compilerIRs/absyn/main/AbsynTy.sml
+
+src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.sml: \
+  src/compiler/compilerIRs/absyn/main/AbsynConst.sml \
+  $(SMLFORMAT_DEP)
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynConstFormatter src/compiler/compilerIRs/absyn/main/AbsynConst.sml
+
+src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.sml: \
+  src/compiler/compilerIRs/absyn/main/AbsynSQL.sml \
+  $(SMLFORMAT_DEP)
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynSQLFormatter src/compiler/compilerIRs/absyn/main/AbsynSQL.sml
 
 # ---- autoconf ----
 
@@ -298,23 +338,55 @@ stamp-h: config.h.in config.status
 	./config.status config.h stamp-h
 config.h: stamp-h
 
+src/config/main/C_dlfcn.sml: \
+  $(srcdir)/src/config/main/C_dlfcn.sml.in config.status
+	./config.status $@
+src/config/main/C_errno.sml.sml: \
+  $(srcdir)/src/config/main/C_errno.sml.in config.status
+	./config.status $@
+src/config/main/C_gmp.sml: \
+  $(srcdir)/src/config/main/C_gmp.sml.sml.in config.status
+	./config.status $@
+src/config/main/C_myth.smi.sml: \
+  $(srcdir)/src/config/main/C_myth.smi.sml.in config.status
+	./config.status $@
+src/config/main/C_myth.sml.sml: \
+  $(srcdir)/src/config/main/C_myth.sml.sml.in config.status
+	./config.status $@
+src/config/main/C_pthread.smi: \
+  $(srcdir)/src/config/main/C_pthread.smi.in config.status
+	./config.status $@
+src/config/main/C_pthread.sml: \
+  $(srcdir)/src/config/main/C_pthread.sml.in config.status
+	./config.status $@
+src/config/main/C_signal.sml: \
+  $(srcdir)/src/config/main/C_signal.sml.in config.status
+	./config.status $@
+src/config/main/C_stddef.smi: \
+  $(srcdir)/src/config/main/C_stddef.smi.in config.status
+	./config.status $@
+src/config/main/C_stddef.sml.sml: \
+  $(srcdir)/src/config/main/C_stddef.sml.in config.status
+	./config.status $@
+src/config/main/C_type.smi: \
+  $(srcdir)/src/config/main/C_type.smi.in config.status
+	./config.status $@
+src/config/main/C_type.sml: \
+  $(srcdir)/src/config/main/C_type.sml.in config.status
+	./config.status $@
+
 # -------- dependencies --------
 
-depend: depend_ml.mk depend_c.mk
-	rm -f $(srcdir)/files.mk
-	cp files_ml.mk $(srcdir)/files.mk
-	rm -f $(srcdir)/depend.mk
-	cat depend_ml.mk depend_c.mk > $(srcdir)/depend.mk
-	rm -f files_ml.mk depend_ml.mk depend_c.mk
-
-depend_ml.mk files_ml.mk: PHONY
-	-rm -f depend_ml.mk files_ml.mk
-	@$(SMLSHARP_ENV) SMLSHARP='$(SMLSHARP_STAGE1)' OBJEXT='$(OBJEXT)' \
-	files_mk=files_ml.mk depend_mk=depend_ml.mk SMLFLAGS='$(SMLFLAGS)' \
+depend: PHONY minismlsharp
+	test '.' = '$(srcdir)'
+	rm -f depend_ml.mk files_ml.mk depend_c.mk
+	@$(SMLSHARP_ENV) SMLSHARP='$(MINISMLSHARP)' OBJEXT='$(OBJEXT)' \
+	SMLFLAGS='$(SMLFLAGS)' \
+	files_mk=files_ml.mk depend_mk=depend_ml.mk \
 	$(SHELL) mkdepend \
-	  MLLEX          src/ml-lex/ml-lex.smi \
-	  MLYACC_LIB     src/ml-yacc-lib.smi \
-	  MLYACC         src/ml-yacc/src/ml-yacc.smi \
+	  SMLLEX         src/ml-lex/ml-lex.smi \
+	  SMLYACC_LIB    src/ml-yacc-lib.smi \
+	  SMLYACC        src/ml-yacc/src/ml-yacc.smi \
 	  SMLFORMAT_LIB  src/smlformat-lib.smi \
 	  SMLUNIT_LIB    src/smlunit-lib.smi \
 	  SMLFORMAT      src/smlformat/generator/main/call-main.smi \
@@ -323,19 +395,23 @@ depend_ml.mk files_ml.mk: PHONY
 	  PRELUDE_LIB    src/prelude.smi \
 	  THREAD_LIB     src/thread.smi \
 	  TEST           tests/driver/dotest.smi
-
-depend_c.mk: PHONY
-	-rm -f depend_c.mk
-	@for i in $(RUNTIME_SOURCES) src/runtime/main.c; do \
-	  case "$$i" in *.cpp) cc='$(CXX)';; *) cc='$(CC)';; esac; \
-	  echo $$cc -E -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i 1>&2; \
-	  $$cc -E -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i \
-	  | perl -0npe 's,\A.*?\.(.*?:(?:\s|\\)*)(.*?)\.c,\2.\1\2.c,; \
-	                s,\s/.*?\.h(?=\s),,g; \
-	                s,(?:\s*\\\s+)+, \\\n ,g; \
-	                s,(?:\s*\\\s*)+\z,\n,g' \
+	@set -e; \
+	for i in $(RUNTIME_OBJECTS:.$(OBJEXT)=.c) \
+	         $(COMPILER_SUPPORT_OBJECTS:.$(OBJEXT)=.c) \
+	         $(TEST_SUPPORT_OBJECTS:.$(OBJEXT)=.c) \
+	         src/runtime/main.c; do \
+	  echo $(CC) -E -MM $(DEFS) $(CPPFLAGS) $$i 1>&2; \
+	  tmp=`$(CC) -E -MM $(DEFS) $(CPPFLAGS) $$i`; \
+	  echo "$$tmp" \
+	  | perl -0npe 's/[\s\\]+/ /g; s/\s*\z/ /;' \
+	            -e 's/\A(.+?).o: (.+?)\1.c/\2\1.o: \2\1.c/;' \
+	            -e 's/ \/[^ ]*(?= )//g;' \
+	            -e 's/ +/ \\\n /g; s/[\s\\]+\z/\n/;' \
+	            -e 's/^ (?!config.h)/ \$$(srcdir)\//mg' \
 	    >> depend_c.mk; \
 	done
+	cat files_ml.mk > files.mk
+	cat depend_ml.mk depend_c.mk > depend.mk
+	rm -f files_ml.mk depend_ml.mk depend_c.mk
 
 include @srcdir@/depend.mk
-@INCLUDE_STAGE1@include @srcdir@/stage1.mk

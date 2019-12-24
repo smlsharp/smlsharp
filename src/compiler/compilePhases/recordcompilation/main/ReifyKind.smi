@@ -1,31 +1,28 @@
 _require "../../../../basis.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../libs/ids/main/LocalID.smi"
-_require local "../../../extensions/reflection/main/ReifyTy.smi"
-_require local "../../../extensions/reflection/main/TyToReifiedTy.smi"
-_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
-_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
-_require local "../../../data/builtin/main/BuiltinTypes.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
-_require "../../../data/types/main/Types.ppg.smi"
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require local "../../../extensions/reflection/main/TyToReifiedTy.smi"
+_require local "../../../extensions/reflection/main/ReifyTy.smi"
+(* _require "../../../extensions/reflection/main/ReifiedTy.ppg.smi" *)
+_require "./KIND_INSTANCE.sig"
 
 structure ReifyKind =
 struct
-
-  val compareTypeTy : Types.ty * Types.ty -> order
-
-  val generateSingletonTy : BoundTypeVarID.id -> Types.singletonTy list
-
-  val generateTypeInstance
-      : {btvEnv : Types.btvEnv,
-         lookup : Types.singletonTy -> RecordCalc.varInfo option}
-        -> Types.ty -> Loc.loc -> RecordCalc.rcexp
-
-  val generateReifyInstance
-      : Types.btvEnv -> Types.ty -> Loc.loc -> RecordCalc.rcexp option
-
+  type singleton_ty_body = Types.ty
+  type kind = bool
+  type instance = RecordCalc.rcexp
+  val singletonTy
+      : singleton_ty_body -> Types.singletonTy
+  val generateArgs
+      : Types.btvEnv
+        -> BoundTypeVarID.id * kind
+        -> Types.singletonTy list
+  val compare
+      : singleton_ty_body * singleton_ty_body -> order
+  val generateInstance
+      : {lookup : Types.singletonTy -> RecordCalc.varInfo option,
+         btvEnv : Types.btvEnv}
+        -> singleton_ty_body
+        -> RecordCalc.loc
+        -> instance option
 end

@@ -1,0 +1,20 @@
+_require local "../../../../basis.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+(* _require local "../../../libs/toolchain/main/Filename.smi" *)
+_require local "../../../data/control/main/Control.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require local "./iml.grm.smi"
+_require local "./iml.lex.smi"
+
+structure SMLSharpParser =
+struct
+  type source = {source : Loc.source,
+                 read : bool * int -> string,
+                 initialLineno : int}
+  type input (= {})
+  exception Error of (Loc.loc * string) list
+  val setup : source -> input
+  val parse : input -> Absyn.unitparseresult
+  val isEOF : input -> bool
+end

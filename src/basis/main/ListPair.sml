@@ -14,7 +14,7 @@ struct
 
   fun zip (l1, l2) =
       let
-        fun loop (h1::t1, h2::t2, z) = loop (t1, t2, (h1,h2)::z)
+        fun loop (h1::t1, h2::t2, z) = loop (t1, t2, (h1, h2) :: z)
           | loop (_, _, z) = List.rev z
       in
         loop (l1, l2, nil)
@@ -22,7 +22,7 @@ struct
 
   fun zipEq (l1, l2) =
       let
-        fun loop (h1::t1, h2::t2, z) = loop (t1, t2, (h1,h2)::z)
+        fun loop (h1::t1, h2::t2, z) = loop (t1, t2, (h1, h2) :: z)
           | loop (nil, nil, z) = List.rev z
           | loop _ = raise UnequalLengths
       in
@@ -32,7 +32,7 @@ struct
   fun unzip pairs =
       let
         fun loop (nil, l, r) = (List.rev l, List.rev r)
-          | loop ((h1, h2)::t, l, r) = loop (t, h1::l, h2::r)
+          | loop ((h1, h2)::t, l, r) = loop (t, h1 :: l, h2 :: r)
       in
         loop (pairs, nil, nil)
       end

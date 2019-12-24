@@ -3,7 +3,7 @@ structure RCSize =
 struct
 local
   structure RC = RecordCalc
-  structure TC = TypedCalc
+  (* structure TC = TypedCalc *)
   structure T = Types
   structure A = AbsynConst
   fun bug s = Bug.Bug ("RecordCalcSize: " ^ s)
@@ -21,13 +21,15 @@ local
 
   fun constSize const =
       case const of
-        A.INT _ => 1
-      | A.WORD _ => 1
-      | A.STRING (string, loc) => 1 + String.size string  div 4
-      | A.REAL _ => 2
-      | A.CHAR _ => 1
-      | A.UNITCONST _ => 1
-      | A.NULLCONST _ => 1
+        RC.CONST (A.INT _) => 1
+      | RC.CONST (A.WORD _) => 1
+      | RC.CONST (A.STRING string) => 1 + String.size string  div 4
+      | RC.CONST (A.REAL _) => 2
+      | RC.CONST (A.CHAR _) => 1
+      | RC.CONST A.UNITCONST => 1
+      | RC.SIZE _ => 1
+      | RC.TAG _ => 1
+      | RC.INDEX _ => 1
 
   fun inc n = n + 1
   fun incN (n,N) = n + N
@@ -108,6 +110,10 @@ local
         size (inc n) items
       | RC.RCHANDLE {exnVar, exp, handler, resultTy, loc} =>
         size (incVar (inc n, [exnVar])) (EXP [exp, handler]:: items)
+      | RC.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+        size (incVar (inc n, argVarList)) (EXP [catchExp, tryExp] :: items)
+      | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+        size (inc n) (EXP argExpList :: items)
       | RC.RCLET {body:rcexp list, decls, loc, tys} =>
         size (inc n) (EXP body :: DECL decls :: items)
       | RC.RCMODIFY {elementExp, elementTy, indexExp, label, loc, recordExp, recordTy} =>
@@ -129,12 +135,7 @@ local
         size (inc n) (EXP [exp, indexExp]::items)
       | RC.RCSEQ {expList, expTyList, loc} =>
         size (inc n) (EXP expList :: items)
-      | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
-        size (inc n) (EXP [data, iterator, pred] :: items)
-      | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
-        size (inc n) (EXP [data, whereParam, iterator, pred] :: items)
       | RC.RCSIZEOF (ty, loc) => size (inc n) items
-      | RC.RCTYPEOF (ty, loc) => size (inc n) items
       | RC.RCREIFYTY (ty, loc) => size (inc n) items
       | RC.RCTAPP {exp, expTy, instTyList, loc} =>
         sizeExp (inc n) exp items
@@ -146,7 +147,7 @@ local
                            attributes, resultTy, funExp:rcexp,
                            loc:Loc.loc} =>
         size (inc n) (EXP argExpList :: items)
-      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIFUN ptrExp}, ty, loc) =>
+      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIFUN (ptrExp, _)}, ty, loc) =>
         sizeExp (inc n) ptrExp items
       | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIEXTERN _}, ty, loc) =>
         size (inc n) items
@@ -156,10 +157,14 @@ local
         size (inc n) (EXP (defaultExp :: switchExp :: (map #2 branches)) :: items)
       | RC.RCTAGOF (ty, loc) =>
         size (inc n) items
-      | RC.RCJOIN {ty,args=(arg1,arg2),argTys,loc} =>
+      | RC.RCJOIN {isJoin, ty,args=(arg1,arg2),argTys,loc} =>
         size (inc n) (EXP [arg1, arg2] :: items)
-      | RC.RCJSON {exp,ty,coerceTy,loc} =>
-        size (inc n) (EXP [exp] :: items)
+      | RC.RCDYNAMIC _ => raise bug "RCDYNAMIC to RCSize"
+      | RC.RCDYNAMICIS _ => raise bug "RCDYNAMICIS to RCSize"
+      | RC.RCDYNAMICNULL _ => raise bug "RCDYNAMICNULL to RCSize"
+      | RC.RCDYNAMICTOP _ => raise bug "RCDYNAMICNULL to RCSize"
+      | RC.RCDYNAMICVIEW _ => raise bug "RCDYNAMICVIEW to RCSize"
+      | RC.RCDYNAMICCASE _ => raise bug "RCDYNAMICCASE to RCSize"
       )
   and sizeDecl n tpdecl items =
       (checkLimit n;
@@ -172,11 +177,11 @@ local
          size (inc n) items 
        | RC.RCEXPORTVAR varInfo =>
          size (inc n) items 
-       | RC.RCEXTERNEXN {path, ty} =>
+       | RC.RCEXTERNEXN ({path, ty}, provider) =>
          size (inc n) items 
        | RC.RCBUILTINEXN {path, ty} =>
          size (inc n) items 
-       | RC.RCEXTERNVAR {path, ty} =>
+       | RC.RCEXTERNVAR ({path, ty}, provider) =>
          size (inc n) items 
        | RC.RCVAL (binds:(RC.varInfo * rcexp) list, loc) =>
          size (inc n) (BIND binds :: items)

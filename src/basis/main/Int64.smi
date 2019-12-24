@@ -1,22 +1,21 @@
 _require "./General.smi"
 _require "./StringCvt.smi"
 _require local "./SMLSharp_ScanChar.smi"
-_require local "./List.smi"
+(* _require local "./List.smi" *)
 _require local "./String.smi"
-_require "./IntInf.smi"
-_require local "./Option.smi"
+_require local "./IntInf.smi"
+(* _require local "./Option.smi" *)
 _use local "./Int_common.sml"
 
 structure Int64 =
 struct
-  type int = int64
-  val toLarge : int -> largeInt
-  val fromLarge : largeInt -> int
+  val toLarge : int64 -> largeInt
+  val fromLarge : largeInt -> int64
   val toInt = SMLSharp_Builtin.Int64.toInt32
   val fromInt = SMLSharp_Builtin.Int64.fromInt32
-  val precision : int32 option
-  val minInt : int option
-  val maxInt : int option
+  val precision : int option
+  val minInt : int64 option
+  val maxInt : int64 option
   val + = SMLSharp_Builtin.Int64.add_unsafe
   val - = SMLSharp_Builtin.Int64.sub_unsafe
   val * = SMLSharp_Builtin.Int64.mul_unsafe
@@ -24,21 +23,22 @@ struct
   val mod = SMLSharp_Builtin.Int64.mod
   val quot = SMLSharp_Builtin.Int64.quot
   val rem = SMLSharp_Builtin.Int64.rem
-  val compare : int * int -> General.order
+  val compare : int64 * int64 -> General.order
   val < = SMLSharp_Builtin.Int64.lt
   val <= = SMLSharp_Builtin.Int64.lteq
   val > = SMLSharp_Builtin.Int64.gt
   val >= = SMLSharp_Builtin.Int64.gteq
   val ~ = SMLSharp_Builtin.Int64.neg
   val abs = SMLSharp_Builtin.Int64.abs
-  val min : int * int -> int
-  val max : int * int -> int
-  val sign : int -> int32
-  val sameSign : int * int -> bool
-  val fmt : StringCvt.radix -> int -> string
-  val toString : int -> string
+  val min : int64 * int64 -> int64
+  val max : int64 * int64 -> int64
+  val sign : int64 -> int
+  val sameSign : int64 * int64 -> bool
+  val fmt : StringCvt.radix -> int64 -> string
+  val toString : int64 -> string
   val scan : StringCvt.radix
              -> (char, 'a) StringCvt.reader
-             -> (int, 'a) StringCvt.reader
-  val fromString : string -> int option
+             -> (int64, 'a) StringCvt.reader
+  val fromString : string -> int64 option
+  type int = int64
 end

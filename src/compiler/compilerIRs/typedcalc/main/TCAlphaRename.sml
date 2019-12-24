@@ -22,6 +22,8 @@ local
   val emptyContext = {varMap=emptyVarMap, btvMap=emptyBtvMap}
 
   fun copyTy (context:context) (ty:ty) = TyAlphaRename.copyTy (#btvMap context) ty
+  fun copyConstraintList (context:context) constraints =
+      map (TyAlphaRename.copyConstraint (#btvMap context)) constraints
   fun newBtvEnv ({varMap, btvMap}:context) (btvEnv:btvEnv) = 
       let
         val (btvMap, btvEnv) = 
@@ -263,6 +265,16 @@ local
              instTyList = map copyT instTyList,
              loc = loc
             }
+        | TC.TPDYNAMICCASE {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} =>
+          TC.TPDYNAMICCASE 
+            {groupListTerm = copy groupListTerm,
+             groupListTy = copyT groupListTy,
+             dynamicTerm = copy dynamicTerm,
+             dynamicTy = copyT dynamicTy,
+             elemTy = copyT elemTy,
+             ruleBodyTy = copyT ruleBodyTy,
+             loc = loc
+            }
         | TC.TPERROR => exp
         | TC.TPEXNCONSTRUCT {argExpOpt, argTyOpt, exn:TC.exnCon, instTyList, loc} =>
           TC.TPEXNCONSTRUCT
@@ -280,11 +292,11 @@ local
              loc= loc}
         | TC.TPEXVAR {path, ty} =>
           TC.TPEXVAR {path=path, ty=copyT ty}
-        | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} =>
+        | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, ty), stubTy} =>
           TC.TPFFIIMPORT
             {ffiTy = copyFfiTy context ffiTy,
              loc = loc,
-             funExp = TC.TPFFIFUN (copy ptrExp),
+             funExp = TC.TPFFIFUN (copy ptrExp, copyT ty),
              stubTy = copyT stubTy
             }
         | TC.TPFFIIMPORT {ffiTy, loc, funExp as TC.TPFFIEXTERN _, stubTy} =>
@@ -356,13 +368,14 @@ local
              loc = loc,
              oprimOp = copyOprimInfo context oprimOp
             }
-        | TC.TPPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
+        | TC.TPPOLY {btvEnv, constraints, exp, expTyWithoutTAbs, loc} =>
           (
           let
             val (context, btvEnv) = newBtvEnv context btvEnv
           in
             TC.TPPOLY
               {btvEnv=btvEnv,
+               constraints = copyConstraintList context constraints,
                exp = copyExp context exp,
                expTyWithoutTAbs = copyTy context expTyWithoutTAbs,
                loc = loc
@@ -375,7 +388,7 @@ local
                 raise DuplicateBtv)
           )
 
-        | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
+        | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, constraints, loc} =>
           (
           let
             val (context, btvEnv) = newBtvEnv context btvEnv
@@ -386,6 +399,7 @@ local
                bodyExp=copyExp context bodyExp,
                bodyTy=copyTy context bodyTy,
                btvEnv=btvEnv,
+               constraints=copyConstraintList context constraints,
                loc=loc
               }
           end
@@ -424,28 +438,6 @@ local
              expTyList = map copyT expTyList,
              loc = loc
             }
-        | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc}  =>
-          TC.TPFOREACH
-            {data = copy data, 
-             dataTy = copyT dataTy, 
-             iterator = copy iterator,
-             iteratorTy = copyT iteratorTy, 
-             pred = copy pred, 
-             predTy = copyT predTy, 
-             loc=loc
-            }
-        | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc}  =>
-          TC.TPFOREACHDATA
-            {data = copy data, 
-             dataTy = copyT dataTy, 
-             whereParam = copy whereParam,
-             whereParamTy = copyT whereParamTy, 
-             iterator = copy iterator,
-             iteratorTy = copyT iteratorTy, 
-             pred = copy pred, 
-             predTy = copyT predTy, 
-             loc=loc
-            }
         | TC.TPSIZEOF (ty, loc) =>
           TC.TPSIZEOF (copyT ty, loc)
         | TC.TPTAPP {exp, expTy, instTyList, loc} =>
@@ -459,19 +451,39 @@ local
         (* the following should have been eliminate *)
         | TC.TPRECFUNVAR {arity, var} =>
           raise bug "TPRECFUNVAR in copy"
-        | TC.TPJOIN {ty, args = (arg1, arg2), argtys = (argty1, argty2), loc} =>
+        | TC.TPJOIN {isJoin, ty, args = (arg1, arg2), argtys = (argty1, argty2), loc} =>
           TC.TPJOIN
             {ty = copyT ty,
              args = (copy arg1, copy arg2),
              argtys = (copyT argty1, copyT argty2),
+             isJoin = isJoin,
              loc = loc}
-        | TC.TPJSON {exp,ty,coerceTy,loc} =>
-          TC.TPJSON {exp=copy exp,
-                     ty=copyT ty,
-                     coerceTy=copyT coerceTy,
-                     loc=loc}
-        | TC.TPTYPEOF (ty,loc) =>
-          TC.TPTYPEOF (copyT ty,loc)
+        | TC.TPDYNAMIC {exp,ty,elemTy, coerceTy,loc} =>
+          TC.TPDYNAMIC {exp=copy exp,
+                        ty=copyT ty,
+                        elemTy = copyT elemTy,
+                        coerceTy=copyT coerceTy,
+                        loc=loc}
+        | TC.TPDYNAMICIS {exp,ty,elemTy, coerceTy,loc} =>
+          TC.TPDYNAMICIS {exp=copy exp,
+                          ty=copyT ty,
+                          elemTy = copyT elemTy,
+                          coerceTy=copyT coerceTy,
+                          loc=loc}
+        | TC.TPDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} =>
+          TC.TPDYNAMICVIEW {exp=copy exp,
+                            ty=copyT ty,
+                            elemTy = copyT elemTy,
+                            coerceTy=copyT coerceTy,
+                            loc=loc}
+        | TC.TPDYNAMICNULL {ty, coerceTy, loc} =>
+          TC.TPDYNAMICNULL {ty = copyT ty,
+                            coerceTy=copyT coerceTy,
+                            loc=loc}
+        | TC.TPDYNAMICTOP {ty, coerceTy, loc} =>
+          TC.TPDYNAMICTOP {ty = copyT ty,
+                           coerceTy=copyT coerceTy,
+                           loc=loc}
         | TC.TPREIFYTY (ty,loc) =>
           TC.TPREIFYTY (copyT ty,loc)
         )
@@ -514,17 +526,17 @@ local
         )
       | TC.TPEXPORTRECFUNVAR _ =>
         raise bug "TPEXPORTRECFUNVAR to AlphaRename"
-      | TC.TPEXTERNEXN {path, ty} =>
+      | TC.TPEXTERNEXN ({path, ty}, provider) =>
         (context,
-         TC.TPEXTERNEXN {path=path, ty=copyTy context ty}
+         TC.TPEXTERNEXN ({path=path, ty=copyTy context ty}, provider)
         )
       | TC.TPBUILTINEXN {path, ty} =>
         (context,
          TC.TPBUILTINEXN {path=path, ty=copyTy context ty}
         )
-      | TC.TPEXTERNVAR {path, ty} =>
+      | TC.TPEXTERNVAR ({path, ty}, provider) =>
         (context,
-         TC.TPEXTERNVAR {path=path, ty=copyTy context ty}
+         TC.TPEXTERNVAR ({path=path, ty=copyTy context ty}, provider)
         )
       | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
         let
@@ -533,9 +545,10 @@ local
           (context, TC.TPVAL (binds, loc))
         end
       | TC.TPVALPOLYREC
-          (btvEnv,
+          {btvEnv,
+           constraints,
            recbinds:{exp:TC.tpexp, expTy:ty, var:T.varInfo} list,
-           loc) =>
+           loc} =>
         (
         let
           val (newContext as {varMap, btvMap}, btvEnv) = newBtvEnv context btvEnv
@@ -552,7 +565,11 @@ local
                 varRecbindList
         in
           ({varMap=varMap, btvMap = #btvMap context},
-           TC.TPVALPOLYREC (btvEnv, recbinds, loc))
+           TC.TPVALPOLYREC
+             {btvEnv = btvEnv,
+              constraints = copyConstraintList context constraints,
+              recbinds = recbinds,
+              loc = loc})
         end
           handle DuplicateBtv =>
                  (P.print "DuplicateBtv in TPVALPOLYREC\n";

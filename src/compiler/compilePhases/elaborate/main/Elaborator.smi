@@ -1,11 +1,12 @@
 _require local "../../../../basis.smi"
 
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
+_require local "./ElaborateError.ppg.smi"
 _require local "./ElaborateInterface.smi"
 _require local "./ElaborateModule.smi"
 _require local "./UserTvarScope.smi"
 
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
@@ -27,7 +28,4 @@ struct
          * PatternCalcInterface.interface_unit
          * UserError.errorInfo list
 
-  val elaborateBuiltin :
-      AbsynInterface.itopdec list
-      -> fixEnv * PatternCalcInterface.pitopdec list
 end

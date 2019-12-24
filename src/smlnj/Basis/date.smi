@@ -1,6 +1,7 @@
 _require local "../../basis/main/Int32.smi"
 _require local "../../basis/main/String.smi"
 _require local "../../basis/main/Array.smi"
+_require local "../../basis/main/Vector.smi"
 _require local "../../basis/main/Char.smi"
 _require local "../../basis/main/List.smi"
 _require "../../basis/main/StringCvt.smi"
@@ -9,11 +10,11 @@ _require "../../basis/main/Time.smi"
 _require local "../../basis/main/SMLSharp_Runtime.smi"
 _require local "../../basis/main/CharArraySlice.smi"
 _require local "../../basis/main/Word32.smi"
-_require local "../../basis/main/Bool.smi"
+(* _require local "../../basis/main/Bool.smi" *)
 _require local "../../basis/main/CharArray.smi"
 _require local "../../basis/main/IntInf.smi"
 _require "../../basis/main/General.smi"
-_require local "../../basis/main/SMLSharp_ScanChar.smi"
+(* _require local "../../basis/main/SMLSharp_ScanChar.smi" *)
 
 structure Date =
 struct

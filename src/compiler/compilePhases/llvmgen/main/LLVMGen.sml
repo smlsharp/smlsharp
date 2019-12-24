@@ -4,13 +4,7 @@
  * @copyright (c) 2013, Tohoku University.
  * @author UENO Katsuhiro
  *)
-structure LLVMGen : sig
-
-  val compile : {targetTriple : string}
-                -> MachineCode.program
-                -> LLVMIR.program
-
-end =
+structure LLVMGen =
 struct
 
   (* NOTE:
@@ -85,26 +79,52 @@ print
           (insn1 (L.CONV (var, L.BITCAST, operand, ty)), (ty, L.VAR var))
         end
 
+  val maxSize =
+      RuntimeTypes.getSize TypeLayout2.maxSize
+
+  fun pointerSize () =
+      RuntimeTypes.getSize (#size RuntimeTypes.recordTy)
+
   fun intptrTy () =
-      case TypeLayout2.sizeOf T.BOXEDty of
-        4 => L.I32
+      case pointerSize () of
+        1 => L.I8
+      | 2 => L.I16
+      | 4 => L.I32
       | 8 => L.I64
       | _ => raise Bug.Bug "FIXME: intptrTy"
 
-  fun isIntTy ty =
+  fun intSize ty =
       case ty of
-        L.I1 => true
-      | L.I8 => true
-      | L.I16 => true
-      | L.I32 => true
-      | L.I64 => true
-      | L.PTR _ => true
-      | L.FLOAT => false
-      | L.DOUBLE => false
-      | L.VOID => false
-      | L.FPTR _ => true
-      | L.ARRAY _ => false
-      | L.STRUCT _ => false
+        L.I1 => SOME 1
+      | L.I8 => SOME 8
+      | L.I16 => SOME 16
+      | L.I32 => SOME 32
+      | L.I64 => SOME 64
+      | L.PTR _ => NONE
+      | L.FLOAT => NONE
+      | L.DOUBLE => NONE
+      | L.VOID => NONE
+      | L.FN _ => NONE
+      | L.ARRAY _ => NONE
+      | L.STRUCT _ => NONE
+
+  fun isIntTy (L.PTR _) = true
+    | isIntTy ty = isSome (intSize ty)
+
+  fun realSize ty =
+      case ty of
+        L.I1 => NONE
+      | L.I8 => NONE
+      | L.I16 => NONE
+      | L.I32 => NONE
+      | L.I64 => NONE
+      | L.PTR _ => NONE
+      | L.FLOAT => SOME 32
+      | L.DOUBLE => SOME 64
+      | L.VOID => NONE
+      | L.FN _ => NONE
+      | L.ARRAY _ => NONE
+      | L.STRUCT _ => NONE
 
   fun compileCallConv cconv =
       case cconv of
@@ -113,38 +133,56 @@ print
       | SOME FFIAttributes.FFI_STDCALL => SOME L.X86STDCALLCC
       | SOME FFIAttributes.FFI_FASTCC => SOME L.FASTCC
 
-  fun compileRuntimeTy rty =
-      case rty of
-        T.UNITty => L.I32
-      | T.INT8ty => L.I8
-      | T.INT16ty => L.I16
-      | T.INT32ty => L.I32
-      | T.INT64ty => L.I64
-      | T.UINT8ty => L.I8
-      | T.UINT16ty => L.I16
-      | T.UINT32ty => L.I32
-      | T.UINT64ty => L.I64
-      | T.BOXEDty => L.PTR L.I8
-      | T.POINTERty => L.PTR L.I8
-      | T.MLCODEPTRty {haveClsEnv, argTys, retTy} =>
-        L.FPTR (case retTy of
-                  SOME T.UNITty => L.VOID
-                | _ => compileRuntimeTyOpt retTy,
-                (if haveClsEnv then [L.PTR L.I8] else nil)
-                @ map compileRuntimeTy argTys,
-                false)
-      | T.SOME_CODEPTRty => L.FPTR (L.VOID, nil, true)
-      | T.FOREIGNCODEPTRty {argTys, varArgTys, retTy, attributes} =>
-        L.FPTR (compileRuntimeTyOpt retTy,
-                map compileRuntimeTy argTys,
-                isSome varArgTys)
-      | T.CALLBACKCODEPTRty {haveClsEnv, argTys, retTy, attributes} =>
-        L.FPTR (compileRuntimeTyOpt retTy,
-                (if haveClsEnv then [L.PTR L.I8] else nil)
-                @ map compileRuntimeTy argTys,
-                false)
-      | T.DOUBLEty => L.DOUBLE
-      | T.FLOATty => L.FLOAT
+  fun compileRuntimeTy (rty as {tag, size, rep}) =
+      case (tag, T.getSize size, rep) of
+        (T.UNBOXED, 1, T.INT _) => L.I8
+      | (T.UNBOXED, 2, T.INT _) => L.I16
+      | (T.UNBOXED, 4, T.INT _) => L.I32
+      | (T.UNBOXED, 8, T.INT _) => L.I64
+      | (_, _, T.INT _) => raise Bug.Bug "compileRuntimeTy: INT"
+      | (T.UNBOXED, 4, T.FLOAT) => L.FLOAT
+      | (T.UNBOXED, 8, T.FLOAT) => L.DOUBLE
+      | (_, _, T.FLOAT) => raise Bug.Bug "compileRuntimeTy: FLOAT"
+      | (_, size, T.PTR) =>
+        if size = pointerSize () then L.PTR L.I8
+        else raise Bug.Bug "compileRUntimeTy: PTR"
+      | (_, size, T.CPTR) =>
+        if size = pointerSize () then L.PTR L.I8
+        else raise Bug.Bug "compileRuntimeTy: PTR_NULLABLE"
+      | (_, size, T.CODEPTR code) =>
+        if tag <> T.UNBOXED orelse size <> pointerSize ()
+        then raise Bug.Bug "compileRuntimeTy: T.CODEPTR"
+        else
+          (
+            case code of
+              T.SOMECODE => L.PTR (L.FN (L.VOID, nil, true))
+            | T.FOREIGN {argTys, varArgTys, retTy, attributes} =>
+              L.PTR (L.FN (compileRuntimeTyOpt retTy,
+                           map compileRuntimeTy argTys,
+                           isSome varArgTys))
+            | T.FN {haveClsEnv, argTys, retTy} =>
+              L.PTR (L.FN (case retTy of
+                             {rep = T.DATA T.LAYOUT_SINGLE, ...} => L.VOID
+                           | _ => compileRuntimeTy retTy,
+                           (if haveClsEnv then [L.PTR L.I8] else nil)
+                           @ map compileRuntimeTy argTys,
+                           false))
+            | T.CALLBACK {haveClsEnv, argTys, retTy, attributes} =>
+              L.PTR (L.FN (compileRuntimeTyOpt retTy,
+                           (if haveClsEnv then [L.PTR (L.PTR L.I8)] else nil)
+                           @ map compileRuntimeTy argTys,
+                           false))
+          )
+      | (T.BOXED, size, T.BINARY) =>
+        if size = pointerSize () then L.PTR L.I8
+        else raise Bug.Bug "compileRUntimeTy: BINARY"
+      | (T.UNBOXED, 1, T.BINARY) => L.I8
+      | (T.UNBOXED, 2, T.BINARY) => L.I16
+      | (T.UNBOXED, 4, T.BINARY) => L.I32
+      | (T.UNBOXED, 8, T.BINARY) => L.I64
+      | (_, _, T.BINARY) => raise Bug.Bug "compileRuntimeTy: BINARY"
+      | (_, _, T.DATA _) => compileRuntimeTy (rty # {rep = T.BINARY})
+
   and compileRuntimeTyOpt NONE = L.VOID
     | compileRuntimeTyOpt (SOME ty) = compileRuntimeTy ty
 
@@ -409,19 +447,40 @@ print
          retTy = L.PTR L.I8,
          retAttrs = [L.NOALIAS],
          fnAttrs = [L.NOUNWIND]}
-  val sml_register_top =
-      R {name = "sml_register_top",
+  val sml_gcroot =
+      R {name = "sml_gcroot",
          tail = SOME L.TAIL,
-         argTys = [L.PTR L.I8, L.PTR L.I8, L.PTR L.I8, L.PTR L.I8],
+         argTys = [L.PTR L.I8, L.PTR (L.FN (L.VOID, nil, false)),
+                   L.PTR L.I8, L.PTR L.I8],
          argAttrs = [nil, nil, nil, nil],
          varArg = false,
          retTy = L.VOID,
          retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
+(*
+  val sml_gcroot_load =
+      R {name = "sml_gcroot_load",
+         tail = NONE,
+         argTys = [L.PTR L.I8, L.PTR L.I8, L.PTR L.I8],
+         argAttrs = [[L.INREG], [L.INREG], [L.INREG]],
+         varArg = false,
+         retTy = L.VOID,
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+  val sml_gcroot_unload =
+      R {name = "sml_gcroot_unload",
+         tail = NONE,
+         argTys = [L.PTR L.I8, L.PTR L.I8, L.PTR L.I8],
+         argAttrs = [[L.INREG], [L.INREG], [L.INREG]],
+         varArg = false,
+         retTy = L.VOID,
+         retAttrs = [],
+         fnAttrs = [L.NOUNWIND]}
+*)
   val sml_start =
       R {name = "sml_start",
          tail = NONE,
-         argTys = [L.PTR (L.PTR L.I8)],
+         argTys = [L.PTR L.I8],
          argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.VOID,
@@ -460,7 +519,7 @@ print
          argTys = [],
          argAttrs = [],
          varArg = false,
-         retTy = L.VOID,
+         retTy = L.PTR L.I8,
          retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
   val sml_unsave =
@@ -475,12 +534,12 @@ print
   val sml_check =
       R {name = "sml_check",
          tail = NONE,
-         argTys = [],
-         argAttrs = [],
+         argTys = [L.I32],
+         argAttrs = [[L.INREG]],
          varArg = false,
          retTy = L.VOID,
          retAttrs = [],
-         fnAttrs = [L.NOUNWIND]}
+         fnAttrs = []}
   val sml_check_flag =
       V {name = "sml_check_flag",
          ty = L.I32}
@@ -572,9 +631,11 @@ print
          argTys = [],
          argAttrs = [],
          varArg = true,
-         retTy = compileRuntimeTy T.INT32ty,
+         retTy = L.I32,
          retAttrs = [],
          fnAttrs = [L.NOUNWIND]}
+
+  fun intrinsicTy (R {retTy, ...}) = retTy
 
   local
     val foreignEntries = ref SEnv.empty
@@ -600,7 +661,7 @@ print
         let
           val dec =
               case ty of
-                L.FPTR (retTy, argTys, varArg) =>
+                L.PTR (L.FN (retTy, argTys, varArg)) =>
                 L.DECLARE {linkage = NONE,
                            cconv = cconv,
                            retAttrs = nil,
@@ -621,7 +682,7 @@ print
   fun registerIntrinsic (R {name, argTys, argAttrs, retTy, retAttrs, varArg,
                             fnAttrs, ...}) =
       let
-        val ty = L.FPTR (retTy, argTys, varArg)
+        val ty = L.PTR (L.FN (retTy, argTys, varArg))
       in
         case SEnv.find (!foreignEntries, name) of
           SOME (oldTy, _) => foreignSymbol ((ty, name), oldTy)
@@ -661,11 +722,6 @@ print
 
   end (* local *)
 
-  fun readReal s =
-      case Real.fromString s of
-        NONE => raise Bug.Bug "realReal"
-      | SOME x => x
-
   fun funEntryLabelToSymbol id =
       "_SMLL" ^ FunEntryLabel.toString id
   fun callbackEntryLabelToSymbol id =
@@ -681,8 +737,57 @@ print
   fun externSymbolToSymbol id =
       "_SMLZ" ^ ExternSymbol.toString id
 
-  val dataLabelOffset =
-      Word32.fromInt TypeLayout2.maxSize
+  val dataLabelOffset = Word.fromInt maxSize
+
+  type extern_decls =
+      {extern:
+         {used : bool ref,
+          provider : InterfaceName.provider,
+          dec : L.topdec option}
+           ExternSymbol.Map.map,
+       externFun:
+         {used : bool ref,
+          provider : InterfaceName.provider,
+          dec : L.topdec}
+           ExternFunSymbol.Map.map}
+
+  val emptyExternDecls : extern_decls =
+      {extern = ExternSymbol.Map.empty,
+       externFun = ExternFunSymbol.Map.empty}
+
+  fun singletonExtern (id, provider, dec) : extern_decls =
+      {extern = ExternSymbol.Map.singleton
+                  (id, {used = ref false, provider = provider, dec = dec}),
+       externFun = ExternFunSymbol.Map.empty}
+
+  fun singletonExternFun (id, provider, dec) : extern_decls =
+      {extern = ExternSymbol.Map.empty,
+       externFun =
+         ExternFunSymbol.Map.singleton
+           (id, {used = ref false, provider = provider, dec = dec})}
+
+  fun unionExternDecls (e1:extern_decls, e2:extern_decls) : extern_decls =
+      {extern =
+         ExternSymbol.Map.unionWith
+           (fn _ => raise Bug.Bug "unionExternDecls extern")
+           (#extern e1, #extern e2),
+       externFun =
+         ExternFunSymbol.Map.unionWith
+           (fn _ => raise Bug.Bug "unionExternDecls externFun")
+           (#externFun e1, #externFun e2)}
+
+  fun listUsedExternDecls ({extern, externFun}:extern_decls) =
+      ExternSymbol.Map.listItems
+        (ExternSymbol.Map.mapPartial
+           (fn {used = ref false, ...} => NONE
+             | {used, provider, dec = NONE} => NONE
+             | {used, provider, dec = SOME dec} => SOME (provider, dec))
+           extern)
+      @ ExternFunSymbol.Map.listItems
+          (ExternFunSymbol.Map.mapPartial
+             (fn {used = ref false, ...} => NONE
+               | {used, provider, dec} => SOME (provider, dec))
+             externFun)
 
   type alias_map =
       {dataMap : L.const DataLabel.Map.map,
@@ -723,7 +828,8 @@ print
            (op @)
            (#exFunEntryMap a1, #exFunEntryMap a2)}
 
-  fun compileConst (aliasMap:alias_map) const =
+  fun compileConst (env as {aliasMap:alias_map, externDecls:extern_decls})
+                   const =
       case const of
         M.NVINT8 x => L.INTCONST (Word64.fromInt (Int8.toInt x))
       | M.NVINT16 x => L.INTCONST (Word64.fromInt (Int16.toInt x))
@@ -734,19 +840,23 @@ print
       | M.NVWORD32 x => L.INTCONST (Word32.toLarge x)
       | M.NVWORD64 x => L.INTCONST x
       | M.NVCONTAG x => L.INTCONST (Word32.toLarge x)
-      | M.NVREAL64 x => L.FLOATCONST (readReal x)
-      | M.NVREAL32 x => L.FLOATCONST (readReal x)
+      | M.NVREAL64 x => L.FLOATCONST x
+      | M.NVREAL32 x => L.FLOATCONST (SMLSharp_Builtin.Real32.toReal64 x)
       | M.NVCHAR x => L.INTCONST (Word64.fromInt (ord x))
       | M.NVUNIT => L.INTCONST 0w0
       | M.NVNULLPOINTER => L.NULL
       | M.NVNULLBOXED => L.NULL
       | M.NVTAG {tag, ty} =>
         L.INTCONST (Word64.fromInt (TypeLayout2.tagValue tag))
+      | M.NVSIZE {size, ty} =>
+        L.INTCONST (Word64.fromInt (TypeLayout2.sizeValue size))
+      | M.NVINDEX {index, label, ty} =>
+        L.INTCONST (Word64.fromInt (Word.toInt index))
       | M.NVFOREIGNSYMBOL {name, ty} =>
         let
           val cconv =
               case ty of
-                (_, T.FOREIGNCODEPTRty {attributes,...}) =>
+                (_, {rep = T.CODEPTR (T.FOREIGN {attributes,...}), ...}) =>
                 compileCallConv (#callingConvention attributes)
               | _ => NONE
         in
@@ -756,26 +866,44 @@ print
         (case FunEntryLabel.Map.find (#exFunEntryMap aliasMap, id) of
            SOME (h::_) => L.SYMBOL (externFunSymbolToSymbol h)
          | _ => L.SYMBOL (funEntryLabelToSymbol id))
-      | M.NVEXFUNENTRY id => L.SYMBOL (externFunSymbolToSymbol id)
+      | M.NVEXFUNENTRY id =>
+        (case ExternFunSymbol.Map.find (#externFun externDecls, id) of
+           SOME {used, ...} => used := true
+         | _ => ();
+         L.SYMBOL (externFunSymbolToSymbol id))
       | M.NVCALLBACKENTRY id => L.SYMBOL (callbackEntryLabelToSymbol id)
       | M.NVEXTRADATA id =>
         (case ExtraDataLabel.Map.find (#extraDataMap aliasMap, id) of
            SOME x => x
          | NONE => L.SYMBOL (extraDataLabelToSymbol id))
       | M.NVCAST {value, valueTy, targetTy, cast=P.BitCast} =>
-        L.CONST_BITCAST ((compileTy valueTy, compileConst aliasMap value),
-                         compileTy targetTy)
-      | M.NVCAST {value, valueTy, targetTy, cast} => compileConst aliasMap value
+        (
+          case (compileTy valueTy, compileTy targetTy) of
+            (ty1 as L.PTR _, ty2 as L.PTR _) =>
+            L.CONST_BITCAST ((ty1, compileConst env value), ty2)
+          | (ty1 as L.PTR _, ty2 as L.I32) =>
+            L.CONST_PTRTOINT ((ty1, compileConst env value), ty2)
+          | (ty1 as L.PTR _, ty2 as L.I64) =>
+            L.CONST_PTRTOINT ((ty1, compileConst env value), ty2)
+          | (ty1 as L.I32, ty2 as L.PTR _) =>
+            L.CONST_INTTOPTR ((ty1, compileConst env value), ty2)
+          | (ty1 as L.I64, ty2 as L.PTR _) =>
+            L.CONST_INTTOPTR ((ty1, compileConst env value), ty2)
+          | (ty1, ty2) =>
+            L.CONST_BITCAST ((ty1, compileConst env value), ty2)
+        )
+      | M.NVCAST {value, valueTy, targetTy, cast} => compileConst env value
       | M.NVTOPDATA id =>
         (case DataLabel.Map.find (#dataMap aliasMap, id) of
            SOME x => x
          | NONE => L.SYMBOL (dataLabelToSymbol id))
 
-  fun compileTopConst aliasMap (const, ty) =
-      (compileTy ty, compileConst aliasMap const)
+  fun compileTopConst env (const, ty) =
+      (compileTy ty, compileConst env const)
 
   fun compileTopConstWord32 (const, ty:M.ty) =
-      case compileConst emptyAliasMap const of
+      case compileConst {aliasMap=emptyAliasMap, externDecls=emptyExternDecls}
+                        const of
         L.INTCONST w => Word32.fromLarge w
       | _ => raise Bug.Bug "compileTopConstWord32"
 
@@ -792,9 +920,6 @@ print
 
   local
     fun congruentTy (L.PTR _, L.PTR _) = true
-      | congruentTy (L.FPTR _, L.PTR _) = true
-      | congruentTy (L.PTR _, L.FPTR _) = true
-      | congruentTy (L.FPTR _, L.FPTR _) = true
       | congruentTy (ty1, ty2) = ty1 = ty2
   in
   fun isMustTailAllowed (funTy1:funTy, funTy2:funTy) =
@@ -813,8 +938,10 @@ print
   type env =
       {
         slotAddrMap: L.operand SlotID.Map.map,
-        aliasMap : alias_map,
-        exportMap : ((L.ty * L.const) * {gvr : L.ty * L.value})
+        constEnv : {aliasMap : alias_map, externDecls : extern_decls},
+        exportMap : {aliaseeTy : L.ty,
+                     gvarAddr : L.ty * L.const,
+                     gvarArray : L.operand}
                       ExternSymbol.Map.map,
         handlerMap : handler_kind HandlerLabel.Map.map,
         funTy : funTy,
@@ -825,7 +952,7 @@ print
   val emptyEnv =
       {
         slotAddrMap = SlotID.Map.empty,
-        aliasMap = emptyAliasMap,
+        constEnv = {aliasMap = emptyAliasMap, externDecls = emptyExternDecls},
         exportMap = ExternSymbol.Map.empty,
         handlerMap = HandlerLabel.Map.empty,
         funTy = dummyFunTy,
@@ -843,13 +970,21 @@ print
         SOME x => x
       | NONE => raise Bug.Bug "getHandlerKind"
 
-  fun compileValue (env as {aliasMap, ...}:env) value =
+  fun compileValue (env as {constEnv, ...}:env) value =
       case value of
       M.ANCONST {const, ty} =>
-      (compileTy ty, L.CONST (compileConst aliasMap const))
+      (compileTy ty,
+       L.CONST (compileConst constEnv const))
     | M.ANVAR {id,ty} =>
       (compileTy ty, L.VAR id)
-    | M.ANCAST {exp, expTy, targetTy, runtimeTyCast} => compileValue env exp
+    | M.ANCAST {exp, expTy, targetTy} =>
+      if compileTy expTy = compileTy targetTy
+         andalso #tag (#2 expTy) = #tag (#2 targetTy)
+      then compileValue env exp
+      else raise Bug.Bug ("compileValue: ANCAST: "
+                          ^ Bug.prettyPrint (M.format_ty expTy)
+                          ^ " -> "
+                          ^ Bug.prettyPrint (M.format_ty targetTy))
     | M.ANBOTTOM => raise Bug.Bug "compileValue: ANBOTTOM"
 
   fun compileAddress (env:env) addr =
@@ -875,6 +1010,7 @@ print
         in
           (insn1 (L.GETELEMENTPTR {result = var,
                                    inbounds = true,
+                                   ty = L.I8,
                                    ptr = ptr,
                                    indices = [offset]}),
            ptr,
@@ -898,6 +1034,7 @@ print
           (insns [L.OP2 (var1, L.MUL L.WRAP, size, index),
                   L.GETELEMENTPTR {result = var2,
                                    inbounds = true,
+                                   ty = L.I8,
                                    ptr = ptr,
                                    indices = [(#1 size, L.VAR var1)]}],
            ptr,
@@ -957,6 +1094,17 @@ print
                 (_, (ty, L.CONST (L.INTCONST w))) =>
                 (ty, L.INIT_CONST (L.INTCONST (Word64.orb (w, FLAG_SKIP))))
               | _ => raise Bug.Bug "makeHeaderWordStatic"
+
+  fun jumpIfZero value (thenLabel, args) =
+      let
+        val elseLabel = FunLocalLabel.generate nil
+      in
+        scope (last (L.SWITCH {value = value,
+                               default = (elseLabel, []),
+                               branches = [((#1 value, L.INTCONST 0w0),
+                                            (thenLabel, args))]}))
+        o label (elseLabel, [])
+      end
 
   fun jumpIfNull value (thenLabel, args) =
       let
@@ -1043,8 +1191,10 @@ print
       | SOME handlerLabel =>
         let
           val toLabel = FunLocalLabel.generate nil
+          val tmp = Option.map (fn _ => VarID.generate ()) result
         in
-          scope (last (L.INVOKE {cconv = cconv,
+          scope (last (L.INVOKE {result = tmp,
+                                 cconv = cconv,
                                  retAttrs = retAttrs,
                                  fnPtr = fnPtr,
                                  args = args,
@@ -1069,6 +1219,7 @@ print
            L.GETELEMENTPTR
              {result = result,
               inbounds = true,
+              ty = objHeaderTy,
               ptr = (L.PTR objHeaderTy, L.VAR objAddr),
               indices = [(L.I64, L.CONST (L.INTCONST (Word64.~ 0w1)))]}]
       end
@@ -1078,7 +1229,8 @@ print
         val headerAddr = VarID.generate ()
       in
         objectHeaderAddress (headerAddr, obj)
-        o insn1 (L.LOAD (result, (L.PTR objHeaderTy, L.VAR headerAddr)))
+        o insn1 (L.LOAD (result, objHeaderTy,
+                         (L.PTR objHeaderTy, L.VAR headerAddr)))
       end
 
   fun objectPayloadSize (result, header) =
@@ -1090,7 +1242,7 @@ print
       let
         val ty = objHeaderTy
         val wordBitMask = recordBitmapWordBits - 0w1
-        val pointerSize = Word64.fromInt (TypeLayout2.sizeOf T.BOXEDty)
+        val pointerSize = Word64.fromInt (pointerSize ())
         val numPointers = VarID.generate ()
         val numBitmapBits' = VarID.generate ()
         val numBitmapBits = VarID.generate ()
@@ -1153,334 +1305,115 @@ print
           val v2 = VarID.generate ()
         in
           callIntrinsic (SOME v1) intrinsic [x, y]
-          o insns [L.EXTRACTVALUE (v2, (L.I1, L.VAR v1), 1),
+          o insns [L.EXTRACTVALUE (v2, (intrinsicTy intrinsic, L.VAR v1), 1),
                    L.CONV (var, L.ZEXT, (L.I1, L.VAR v2), varTy)]
         end
+    fun compareIntTy (ty1, ty2) =
+        case (intSize ty1, intSize ty2) of
+          (SOME x, SOME y) => SOME (Int.compare (x, y))
+        | _ => NONE
+    fun compareRealTy (ty1, ty2) =
+        case (realSize ty1, realSize ty2) of
+          (SOME x, SOME y) => SOME (Int.compare (x, y))
+        | _ => NONE
   in
 
   fun compilePrim env {prim, retTy, argTys, resultTy, result, sizes, args} =
       case (prim, retTy, argTys, args) of
-        (P.Array_turnIntoVector, T.BOXEDty, [T.BOXEDty], [x]) =>
-        let
-          val var1 = VarID.generate ()
-          val var2 = VarID.generate ()
-          val var3 = VarID.generate ()
-        in
-          objectHeaderAddress (var1, x)
-          o insns [L.LOAD (var2, (L.PTR objHeaderTy, L.VAR var1)),
-                   L.OP2 (var3, L.AND, (objHeaderTy, L.VAR var2),
-                          (objHeaderTy,
-                           L.CONST (L.INTCONST
-                                      (Word64.notb FLAG_OBJTYPE_ARRAY)))),
-                   L.STORE {dst = (L.PTR objHeaderTy, L.VAR var1),
-                            value = (objHeaderTy, L.VAR var3)},
-                   L.CONV (result, L.BITCAST, x, resultTy)]
-        end
-      | (P.Array_turnIntoVector, _, _, _) =>
-        raise Bug.Bug "compilePrim: Array_turnIntoVector"
-
-      | (P.IdentityEqual, T.UINT32ty, [ty1, ty2], [x, y]) =>
+        (P.IdentityEqual, _, _, [x, y]) =>
         (
-          if ty1 = ty2 andalso #1 x = #1 y andalso isIntTy (#1 x)
+          if #1 x = #1 y andalso isIntTy (#1 x)
           then () else raise Bug.Bug "compilePrim: IdentityEqual";
           cmpOp (result, resultTy, L.ICMP, L.EQ, x, y)
         )
       | (P.IdentityEqual, _, _, _) =>
         raise Bug.Bug "compilePrim: IdentityEqual"
 
-      | (P.Int8_add_overflowCheck,
-         T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_sadd_with_overflow_i8, x, y)
-      | (P.Int8_add_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_add_overflowCheck"
-
-      | (P.Int8_add_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_add_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
-      | (P.Int8_add_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_add_unsafe"
+      | (P.Int_add_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_add_unsafe"
 
-      | (P.Int8_gt, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_gt, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.SGT, x, y)
-      | (P.Int8_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_gt"
+      | (P.Int_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_gt"
 
-      | (P.Int8_gteq, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_gteq, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.SGE, x, y)
-      | (P.Int8_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_gteq"
+      | (P.Int_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_gteq"
 
-      | (P.Int8_lt, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_lt, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.SLT, x, y)
-      | (P.Int8_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_lt"
+      | (P.Int_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_lt"
 
-      | (P.Int8_lteq, T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_lteq, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.SLE, x, y)
-      | (P.Int8_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_lteq"
+      | (P.Int_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_lteq"
 
-      | (P.Int8_mul_overflowCheck,
-         T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_smul_with_overflow_i8, x, y)
-      | (P.Int8_mul_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_mul_overflowCheck"
-
-      | (P.Int8_mul_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_mul_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
-      | (P.Int8_mul_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_mul_unsafe"
+      | (P.Int_mul_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_mul_unsafe"
 
-      | (P.Int8_quot_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_quot_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.SDIV, x, y))
-      | (P.Int8_quot_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_quot_unsafe"
+      | (P.Int_quot_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_quot_unsafe"
 
-      | (P.Int8_rem_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_rem_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.SREM, x, y))
-      | (P.Int8_rem_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_rem_unsafe"
+      | (P.Int_rem_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_rem_unsafe"
 
-      | (P.Int8_sub_overflowCheck,
-         T.UINT32ty, [T.INT8ty, T.INT8ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_ssub_with_overflow_i8, x, y)
-      | (P.Int8_sub_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_sub_overflowCheck"
-
-      | (P.Int8_sub_unsafe, T.INT8ty, [T.INT8ty, T.INT8ty], [x, y]) =>
+      | (P.Int_sub_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
-      | (P.Int8_sub_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_sub_unsafe"
+      | (P.Int_sub_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_sub_unsafe"
 
-      | (P.Int8_toReal32, T.FLOATty, [T.INT8ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int8_toReal32, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_toReal32"
+      | (P.Int_add_overflowCheck, _, _, [x, y]) =>
+        overflowOp
+          (result, resultTy,
+           case #1 x of
+             L.I8 => llvm_sadd_with_overflow_i8
+           | L.I16 => llvm_sadd_with_overflow_i16
+           | L.I32 => llvm_sadd_with_overflow_i32
+           | L.I64 => llvm_sadd_with_overflow_i64
+           |  _ => raise Bug.Bug "compilePrim: Int_add_overflowCheck",
+           x, y)
+      | (P.Int_add_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_add_overflowCheck"
 
-      | (P.Int8_toReal64, T.DOUBLEty, [T.INT8ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int8_toReal64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int8_toReal64"
+      | (P.Int_mul_overflowCheck, _, _, [x, y]) =>
+        overflowOp
+          (result, resultTy,
+           case #1 x of
+             L.I8 => llvm_smul_with_overflow_i8
+           | L.I16 => llvm_smul_with_overflow_i16
+           | L.I32 => llvm_smul_with_overflow_i32
+           | L.I64 => llvm_smul_with_overflow_i64
+           |  _ => raise Bug.Bug "compilePrim: Int_mul_overflowCheck",
+           x, y)
+      | (P.Int_mul_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_mul_overflowCheck"
 
-      | (P.Int16_add_overflowCheck,
-         T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_sadd_with_overflow_i16, x, y)
-      | (P.Int16_add_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_add_overflowCheck"
+      | (P.Int_sub_overflowCheck, _, _, [x, y]) =>
+        overflowOp
+          (result, resultTy,
+           case #1 x of
+             L.I8 => llvm_ssub_with_overflow_i8
+           | L.I16 => llvm_ssub_with_overflow_i16
+           | L.I32 => llvm_ssub_with_overflow_i32
+           | L.I64 => llvm_ssub_with_overflow_i64
+           |  _ => raise Bug.Bug "compilePrim: Int_sub_overflowCheck",
+           x, y)
+      | (P.Int_sub_overflowCheck, _, _, _) =>
+        raise Bug.Bug "compilePrim: Int_sub_overflowCheck"
 
-      | (P.Int16_add_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
-      | (P.Int16_add_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_add_unsafe"
-
-      | (P.Int16_gt, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SGT, x, y)
-      | (P.Int16_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_gt"
-
-      | (P.Int16_gteq, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SGE, x, y)
-      | (P.Int16_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_gteq"
-
-      | (P.Int16_lt, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SLT, x, y)
-      | (P.Int16_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_lt"
-
-      | (P.Int16_lteq, T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SLE, x, y)
-      | (P.Int16_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_lteq"
-
-      | (P.Int16_mul_overflowCheck,
-         T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_smul_with_overflow_i16, x, y)
-      | (P.Int16_mul_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_mul_overflowCheck"
-
-      | (P.Int16_mul_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
-      | (P.Int16_mul_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_mul_unsafe"
-
-      | (P.Int16_quot_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SDIV, x, y))
-      | (P.Int16_quot_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_quot_unsafe"
-
-      | (P.Int16_rem_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SREM, x, y))
-      | (P.Int16_rem_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_rem_unsafe"
-
-      | (P.Int16_sub_overflowCheck,
-         T.UINT32ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_ssub_with_overflow_i16, x, y)
-      | (P.Int16_sub_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_sub_overflowCheck"
-
-      | (P.Int16_sub_unsafe, T.INT16ty, [T.INT16ty, T.INT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
-      | (P.Int16_sub_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_sub_unsafe"
-
-      | (P.Int16_toReal32, T.FLOATty, [T.INT16ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int16_toReal32, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_toReal32"
-
-      | (P.Int16_toReal64, T.DOUBLEty, [T.INT16ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int16_toReal64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int16_toReal64"
-
-      | (P.Int32_add_overflowCheck,
-         T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_sadd_with_overflow_i32, x, y)
-      | (P.Int32_add_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_add_overflowCheck"
-
-      | (P.Int32_add_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
-      | (P.Int32_add_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_add_unsafe"
-
-      | (P.Int32_gt, T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SGT, x, y)
-      | (P.Int32_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_gt"
-
-      | (P.Int32_gteq, T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SGE, x, y)
-      | (P.Int32_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_gteq"
-
-      | (P.Int32_lt, T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SLT, x, y)
-      | (P.Int32_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_lt"
-
-      | (P.Int32_lteq, T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SLE, x, y)
-      | (P.Int32_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_lteq"
-
-      | (P.Int32_mul_overflowCheck,
-         T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_smul_with_overflow_i32, x, y)
-      | (P.Int32_mul_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_mul_overflowCheck"
-
-      | (P.Int32_mul_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
-      | (P.Int32_mul_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_mul_unsafe"
-
-      | (P.Int32_quot_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SDIV, x, y))
-      | (P.Int32_quot_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_quot_unsafe"
-
-      | (P.Int32_rem_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SREM, x, y))
-      | (P.Int32_rem_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_rem_unsafe"
-
-      | (P.Int32_sub_overflowCheck,
-         T.UINT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_ssub_with_overflow_i32, x, y)
-      | (P.Int32_sub_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_sub_overflowCheck"
-
-      | (P.Int32_sub_unsafe, T.INT32ty, [T.INT32ty, T.INT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
-      | (P.Int32_sub_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_sub_unsafe"
-
-      | (P.Int32_toReal32, T.FLOATty, [T.INT32ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int32_toReal32, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_toReal32"
-
-      | (P.Int32_toReal64, T.DOUBLEty, [T.INT32ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int32_toReal64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int32_toReal64"
-
-      | (P.Int64_add_overflowCheck,
-         T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_sadd_with_overflow_i64, x, y)
-      | (P.Int64_add_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_add_overflowCheck"
-
-      | (P.Int64_add_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ADD L.NSW, x, y))
-      | (P.Int64_add_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_add_unsafe"
-
-      | (P.Int64_gt, T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SGT, x, y)
-      | (P.Int64_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_gt"
-
-      | (P.Int64_gteq, T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SGE, x, y)
-      | (P.Int64_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_gteq"
-
-      | (P.Int64_lt, T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SLT, x, y)
-      | (P.Int64_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_lt"
-
-      | (P.Int64_lteq, T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.SLE, x, y)
-      | (P.Int64_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_lteq"
-
-      | (P.Int64_mul_overflowCheck,
-         T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_smul_with_overflow_i64, x, y)
-      | (P.Int64_mul_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_mul_overflowCheck"
-
-      | (P.Int64_mul_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.MUL L.NSW, x, y))
-      | (P.Int64_mul_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_mul_unsafe"
-
-      | (P.Int64_quot_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SDIV, x, y))
-      | (P.Int64_quot_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_quot_unsafe"
-
-      | (P.Int64_rem_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SREM, x, y))
-      | (P.Int64_rem_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_rem_unsafe"
-
-      | (P.Int64_sub_overflowCheck,
-         T.UINT32ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        overflowOp (result, resultTy, llvm_ssub_with_overflow_i64, x, y)
-      | (P.Int64_sub_overflowCheck, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_sub_overflowCheck"
-
-      | (P.Int64_sub_unsafe, T.INT64ty, [T.INT64ty, T.INT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SUB L.NSW, x, y))
-      | (P.Int64_sub_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_sub_unsafe"
-
-      | (P.Int64_toReal64, T.DOUBLEty, [T.INT64ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int64_toReal64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_toReal64"
-
-      | (P.Int64_toReal32, T.FLOATty, [T.INT64ty], [x]) =>
-        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
-      | (P.Int64_toReal32, _, _, _) =>
-        raise Bug.Bug "compilePrim: Int64_toReal32"
-
-      | (P.ObjectSize, T.UINT32ty, [T.BOXEDty], [x]) =>
+      | (P.ObjectSize, _, _, [x]) =>
         let
           val header = VarID.generate ()
         in
@@ -1490,8 +1423,7 @@ print
       | (P.ObjectSize, _, _, _) =>
         raise Bug.Bug "compilePrim: ObjectSize"
 
-      | (P.Ptr_advance, T.POINTERty, [T.POINTERty, T.INT32ty],
-         [ptr as (L.PTR L.I8, _), i]) =>
+      | (P.Ptr_advance, _, _, [ptr as (L.PTR L.I8, _), i]) =>
         let
           val var1 = VarID.generate ()
           val size = case sizes of
@@ -1501,655 +1433,224 @@ print
           insns [L.OP2 (var1, L.MUL L.WRAP, size, i),
                  L.GETELEMENTPTR {result = result,
                                   inbounds = false,
+                                  ty = L.I8,
                                   ptr = ptr,
                                   indices = [(#1 i, L.VAR var1)]}]
         end
       | (P.Ptr_advance, _, _, _) =>
         raise Bug.Bug "compilePrim: Ptr_advance"
 
-      | (P.Ptr_fromWord64, T.POINTERty, [T.UINT64ty], [x]) =>
+      | (P.Ptr_fromWord, _, _, [x]) =>
         insn1 (L.CONV (result, L.INTTOPTR, x, resultTy))
-      | (P.Ptr_fromWord64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Ptr_toWord64"
+      | (P.Ptr_fromWord, _, _, _) =>
+        raise Bug.Bug "compilePrim: Ptr_fromWord"
 
-      | (P.Ptr_toWord64, T.UINT64ty, [T.POINTERty], [x]) =>
+      | (P.Ptr_toWord, _, _, [x]) =>
         insn1 (L.CONV (result, L.PTRTOINT, x, resultTy))
-      | (P.Ptr_toWord64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Ptr_toWord64"
+      | (P.Ptr_toWord, _, _, _) =>
+        raise Bug.Bug "compilePrim: Ptr_toWord"
 
-      | (P.Real32_abs, T.FLOATty, [T.FLOATty], [x]) =>
-        callIntrinsic (SOME result) llvm_fabs_f32 [x]
-      | (P.Real32_abs, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_abs"
+      | (P.Real_abs, _, _, [x]) =>
+        callIntrinsic
+          (SOME result)
+          (case #1 x of
+             L.FLOAT => llvm_fabs_f32
+           | L.DOUBLE => llvm_fabs_f64
+           | _ => raise Bug.Bug "compilePrim: Real_abs")
+          [x]
+      | (P.Real_abs, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_abs"
 
-      | (P.Real32_add, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_add, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.FADD, x, y))
-      | (P.Real32_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_add"
+      | (P.Real_add, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_add"
 
-      | (P.Real32_div, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_div, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.FDIV, x, y))
-      | (P.Real32_div, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_div"
+      | (P.Real_div, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_div"
 
-      | (P.Real32_equal, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_equal, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OEQ, x, y)
-      | (P.Real32_equal, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_equal"
+      | (P.Real_equal, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_equal"
 
-      | (P.Real32_unorderedOrEqual,
-         T.UINT32ty, [T.FLOATty, T.FLOATty], [x,y]) =>
+      | (P.Real_unorderedOrEqual, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_UEQ, x, y)
-      | (P.Real32_unorderedOrEqual, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_unorderedOrEqual"
+      | (P.Real_unorderedOrEqual, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_unorderedOrEqual"
 
-      | (P.Real32_gt, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_gt, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OGT, x, y)
-      | (P.Real32_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_gt"
+      | (P.Real_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_gt"
 
-      | (P.Real32_gteq, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_gteq, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OGE, x, y)
-      | (P.Real32_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_gteq"
+      | (P.Real_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_gteq"
 
-      | (P.Real32_isNan, T.UINT32ty, [T.FLOATty], [x]) =>
+      | (P.Real_isNan, _, _, [x]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_UNO, x, x)
-      | (P.Real32_isNan, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_isNan"
+      | (P.Real_isNan, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_isNan"
 
-      | (P.Real32_lt, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_lt, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OLT, x, y)
-      | (P.Real32_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_lt"
+      | (P.Real_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_lt"
 
-      | (P.Real32_lteq, T.UINT32ty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_lteq, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.FCMP, L.F_OLE, x, y)
-      | (P.Real32_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_lteq"
+      | (P.Real_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_lteq"
 
-      | (P.Real32_mul, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_mul, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.FMUL, x, y))
-      | (P.Real32_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_mul"
+      | (P.Real_mul, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_mul"
 
-      | (P.Real32_rem, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_rem, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.FREM, x, y))
-      | (P.Real32_rem, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_rem"
+      | (P.Real_rem, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_rem"
 
-      | (P.Real32_sub, T.FLOATty, [T.FLOATty, T.FLOATty], [x, y]) =>
+      | (P.Real_sub, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.FSUB, x, y))
-      | (P.Real32_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_sub"
+      | (P.Real_sub, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_sub"
 
-      | (P.Real32_toInt8_unsafe, T.INT8ty, [T.FLOATty], [x]) =>
+      | (P.Real_trunc_unsafe, _, _, [x]) =>
         insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real32_toInt8_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toInt8_unsafe"
+      | (P.Real_trunc_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_toInt_unsafe"
 
-      | (P.Real32_toInt16_unsafe, T.INT16ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real32_toInt16_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toInt16_unsafe"
-
-      | (P.Real32_toInt32_unsafe, T.INT32ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real32_toInt32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toInt32_unsafe"
-
-      | (P.Real32_toInt64_unsafe, T.INT64ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real32_toInt64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toInt64_unsafe"
-
-      | (P.Real32_toWord8_unsafe, T.UINT8ty, [T.FLOATty], [x]) =>
+      | (P.Real_fptoui, _, _, [x]) =>
         insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real32_toWord8_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toWord8_unsafe"
+      | (P.Real_fptoui, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_toWord_unsafe"
 
-      | (P.Real32_toWord16_unsafe, T.UINT16ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real32_toWord16_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toWord16_unsafe"
+      | (P.Real_fpext_fptrunc, _, _, [x]) =>
+        (case compareRealTy (resultTy, #1 x) of
+           SOME GREATER => insn1 (L.CONV (result, L.FPEXT, x, resultTy))
+         | SOME EQUAL => insn1 (L.CONV (result, L.BITCAST, x, resultTy))
+         | SOME LESS => insn1 (L.CONV (result, L.FPTRUNC, x, resultTy))
+         | NONE => raise Bug.Bug "compilePrim: Word_zext_trunc")
+      | (P.Real_fpext_fptrunc, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_fpext_fptrunc"
 
-      | (P.Real32_toWord32_unsafe, T.UINT32ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real32_toWord32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toWord32_unsafe"
-
-      | (P.Real32_toWord64_unsafe, T.UINT64ty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real32_toWord64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toWord64_unsafe"
-
-      | (P.Real32_toReal64, T.DOUBLEty, [T.FLOATty], [x]) =>
-        insn1 (L.CONV (result, L.FPEXT, x, resultTy))
-      | (P.Real32_toReal64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real32_toReal64"
-
-      | (P.Real64_abs, T.DOUBLEty, [T.DOUBLEty], [x]) =>
-        callIntrinsic (SOME result) llvm_fabs_f64 [x]
-      | (P.Real64_abs, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_abs"
-
-      | (P.Real64_add, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FADD, x, y))
-      | (P.Real64_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_add"
-
-      | (P.Real64_div, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FDIV, x, y))
-      | (P.Real64_div, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_div"
-
-      | (P.Real64_equal, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OEQ, x, y)
-      | (P.Real64_equal, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_equal"
-
-      | (P.Real64_unorderedOrEqual, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty],
-         [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_UEQ, x, y)
-      | (P.Real64_unorderedOrEqual, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_unorderedOrEqual"
-
-      | (P.Real64_gt, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OGT, x, y)
-      | (P.Real64_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_gt"
-
-      | (P.Real64_gteq, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OGE, x, y)
-      | (P.Real64_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_gteq"
-
-      | (P.Real64_isNan, T.UINT32ty, [T.DOUBLEty], [x]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_UNO, x, x)
-      | (P.Real64_isNan, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_isNan"
-
-      | (P.Real64_lt, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OLT, x, y)
-      | (P.Real64_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_lt"
-
-      | (P.Real64_lteq, T.UINT32ty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        cmpOp (result, resultTy, L.FCMP, L.F_OLE, x, y)
-      | (P.Real64_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_lteq"
-
-      | (P.Real64_mul, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FMUL, x, y))
-      | (P.Real64_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_mul"
-
-      | (P.Real64_rem, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FREM, x, y))
-      | (P.Real64_rem, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_rem"
-
-      | (P.Real64_sub, T.DOUBLEty, [T.DOUBLEty, T.DOUBLEty], [x, y]) =>
-        insn1 (L.OP2 (result, L.FSUB, x, y))
-      | (P.Real64_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_sub"
-
-      | (P.Real64_toInt8_unsafe, T.INT8ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real64_toInt8_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toInt8_unsafe"
-
-      | (P.Real64_toInt16_unsafe, T.INT16ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real64_toInt16_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toInt16_unsafe"
-
-      | (P.Real64_toInt32_unsafe, T.INT32ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real64_toInt32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toInt32_unsafe"
-
-      | (P.Real64_toInt64_unsafe, T.INT64ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOSI, x, resultTy))
-      | (P.Real64_toInt64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toInt64_unsafe"
-
-      | (P.Real64_toWord8_unsafe, T.UINT8ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real64_toWord8_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toWord8_unsafe"
-
-      | (P.Real64_toWord16_unsafe, T.UINT16ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real64_toWord16_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toWord16_unsafe"
-
-      | (P.Real64_toWord32_unsafe, T.UINT32ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real64_toWord32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toWord32_unsafe"
-
-      | (P.Real64_toWord64_unsafe, T.UINT64ty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTOUI, x, resultTy))
-      | (P.Real64_toWord64_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toWord32_unsafe"
-
-      | (P.Real64_toReal32_unsafe, T.FLOATty, [T.DOUBLEty], [x]) =>
-        insn1 (L.CONV (result, L.FPTRUNC, x, resultTy))
-      | (P.Real64_toReal32_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Real64_toReal32_unsafe"
+      | (P.Real_fromInt, _, _, [x]) =>
+        insn1 (L.CONV (result, L.SITOFP, x, resultTy))
+      | (P.Real_fromInt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Real_fromInt"
 
       (* ToDo: RuntimePolyEqual is to be deprecated by equality function
        * compilation *)
-      | (P.RuntimePolyEqual, T.UINT32ty, [T.BOXEDty, T.BOXEDty],
+      | (P.RuntimePolyEqual, _, [{tag=T.BOXED,...}, {tag=T.BOXED,...}],
          [x as (L.PTR L.I8, _), y as (L.PTR L.I8, _)]) =>
         callIntrinsic (SOME result) sml_obj_equal [x, y]
-      | (P.RuntimePolyEqual, T.UINT32ty, [ty1, ty2], [x, y]) =>
+      | (P.RuntimePolyEqual, _, _, [x, y]) =>
         (
-          if ty1 = ty2 andalso #1 x = #1 y andalso isIntTy (#1 x)
+          if #1 x = #1 y andalso isIntTy (#1 x)
           then () else raise Bug.Bug "compilePrim: RuntimePolyEqual";
           cmpOp (result, resultTy, L.ICMP, L.EQ, x, y)
         )
       | (P.RuntimePolyEqual, _, _, _) =>
         raise Bug.Bug "compilePrim: RuntimePolyEqual"
 
-      | (P.Word8_add, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_add, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.ADD L.WRAP, x, y))
-      | (P.Word8_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_add"
+      | (P.Word_add, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_add"
 
-      | (P.Word8_andb, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_andb, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.AND, x, y))
-      | (P.Word8_andb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_andb"
+      | (P.Word_andb, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_andb"
 
-      | (P.Word8_arshift_unsafe, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_arshift_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.ASHR, x, y))
-      | (P.Word8_arshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_arshift_unsafe"
+      | (P.Word_arshift_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_arshift_unsafe"
 
-      | (P.Word8_div_unsafe, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_div_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.UDIV, x, y))
-      | (P.Word8_div_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_div"
+      | (P.Word_div_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_div"
 
-      | (P.Word8_gt, T.UINT32ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_gt, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.UGT, x, y)
-      | (P.Word8_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_gt"
+      | (P.Word_gt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_gt"
 
-      | (P.Word8_gteq, T.UINT32ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_gteq, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.UGE, x, y)
-      | (P.Word8_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_gteq"
+      | (P.Word_gteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_gteq"
 
-      | (P.Word8_lshift_unsafe, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_lshift_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.SHL, x, y))
-      | (P.Word8_lshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_lshift_unsafe"
+      | (P.Word_lshift_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_lshift_unsafe"
 
-      | (P.Word8_lt, T.UINT32ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_lt, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.ULT, x, y)
-      | (P.Word8_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_lt"
+      | (P.Word_lt, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_lt"
 
-      | (P.Word8_lteq, T.UINT32ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_lteq, _, _, [x, y]) =>
         cmpOp (result, resultTy, L.ICMP, L.ULE, x, y)
-      | (P.Word8_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_lteq"
+      | (P.Word_lteq, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_lteq"
 
-      | (P.Word8_mod_unsafe, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_mod_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.UREM, x, y))
-      | (P.Word8_mod_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_mod"
+      | (P.Word_mod_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_mod"
 
-      | (P.Word8_mul, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_mul, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.MUL L.WRAP, x, y))
-      | (P.Word8_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_mul"
+      | (P.Word_mul, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_mul"
 
-      | (P.Word8_orb, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_orb, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.OR, x, y))
-      | (P.Word8_orb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_orb"
+      | (P.Word_orb, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_orb"
 
-      | (P.Word8_rshift_unsafe, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_rshift_unsafe, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.LSHR, x, y))
-      | (P.Word8_rshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_rshift_unsafe"
+      | (P.Word_rshift_unsafe, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_rshift_unsafe"
 
-      | (P.Word8_sub, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_sub, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.SUB L.WRAP, x, y))
-      | (P.Word8_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_sub"
+      | (P.Word_sub, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_sub"
 
-      | (P.Word8_toWord16, T.UINT16ty, [T.UINT8ty], [x]) =>
-        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
-      | (P.Word8_toWord16, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toWord16"
-
-      | (P.Word8_toWord16X, T.UINT16ty, [T.UINT8ty], [x]) =>
-        insn1 (L.CONV (result, L.SEXT, x, resultTy))
-      | (P.Word8_toWord16X, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toWord16X"
-
-      | (P.Word8_toWord32, T.UINT32ty, [T.UINT8ty], [x]) =>
-        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
-      | (P.Word8_toWord32, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toWord32"
-
-      | (P.Word8_toWord32X, T.UINT32ty, [T.UINT8ty], [x]) =>
-        insn1 (L.CONV (result, L.SEXT, x, resultTy))
-      | (P.Word8_toWord32X, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toWord32X"
-
-      | (P.Word8_toWord64, T.UINT64ty, [T.UINT8ty], [x]) =>
-        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
-      | (P.Word8_toWord64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toWord64"
-
-      | (P.Word8_toWord64X, T.UINT64ty, [T.UINT8ty], [x]) =>
-        insn1 (L.CONV (result, L.SEXT, x, resultTy))
-      | (P.Word8_toWord64X, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_toWord64X"
-
-      | (P.Word8_xorb, T.UINT8ty, [T.UINT8ty, T.UINT8ty], [x, y]) =>
+      | (P.Word_xorb, _, _, [x, y]) =>
         insn1 (L.OP2 (result, L.XOR, x, y))
-      | (P.Word8_xorb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word8_xorb"
+      | (P.Word_xorb, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_xorb"
 
-      | (P.Word16_add, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ADD L.WRAP, x, y))
-      | (P.Word16_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_add"
+      | (P.Word_zext_trunc, _, _, [x]) =>
+        (case compareIntTy (resultTy, #1 x) of
+           SOME GREATER => insn1 (L.CONV (result, L.ZEXT, x, resultTy))
+         | SOME EQUAL => insn1 (L.CONV (result, L.BITCAST, x, resultTy))
+         | SOME LESS => insn1 (L.CONV (result, L.TRUNC, x, resultTy))
+         | NONE => raise Bug.Bug "compilePrim: Word_zext_trunc")
+      | (P.Word_zext_trunc, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_zext_trunc"
 
-      | (P.Word16_andb, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.AND, x, y))
-      | (P.Word16_andb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_andb"
-
-      | (P.Word16_arshift_unsafe,
-         T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ASHR, x, y))
-      | (P.Word16_arshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_arshift_unsafe"
-
-      | (P.Word16_div_unsafe, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.UDIV, x, y))
-      | (P.Word16_div_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_div"
-
-      | (P.Word16_gt, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.UGT, x, y)
-      | (P.Word16_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_gt"
-
-      | (P.Word16_gteq, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.UGE, x, y)
-      | (P.Word16_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_gteq"
-
-      | (P.Word16_lshift_unsafe,
-         T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SHL, x, y))
-      | (P.Word16_lshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_lshift_unsafe"
-
-      | (P.Word16_lt, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.ULT, x, y)
-      | (P.Word16_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_lt"
-
-      | (P.Word16_lteq, T.UINT32ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.ULE, x, y)
-      | (P.Word16_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_lteq"
-
-      | (P.Word16_mod_unsafe, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.UREM, x, y))
-      | (P.Word16_mod_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_mod"
-
-      | (P.Word16_mul, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.MUL L.WRAP, x, y))
-      | (P.Word16_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_mul"
-
-      | (P.Word16_orb, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.OR, x, y))
-      | (P.Word16_orb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_orb"
-
-      | (P.Word16_rshift_unsafe,
-         T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.LSHR, x, y))
-      | (P.Word16_rshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_rshift_unsafe"
-
-      | (P.Word16_sub, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SUB L.WRAP, x, y))
-      | (P.Word16_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_sub"
-
-      | (P.Word16_toWord8, T.UINT8ty, [T.UINT16ty], [x]) =>
-        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
-      | (P.Word16_toWord8, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_toWord8"
-
-      | (P.Word16_toWord32, T.UINT32ty, [T.UINT16ty], [x]) =>
-        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
-      | (P.Word16_toWord32, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_toWord32"
-
-      | (P.Word16_toWord32X, T.UINT32ty, [T.UINT16ty], [x]) =>
-        insn1 (L.CONV (result, L.SEXT, x, resultTy))
-      | (P.Word16_toWord32X, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_toWord32X"
-
-      | (P.Word16_toWord64, T.UINT64ty, [T.UINT16ty], [x]) =>
-        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
-      | (P.Word16_toWord64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_toWord64"
-
-      | (P.Word16_toWord64X, T.UINT64ty, [T.UINT16ty], [x]) =>
-        insn1 (L.CONV (result, L.SEXT, x, resultTy))
-      | (P.Word16_toWord64X, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_toWord64X"
-
-      | (P.Word16_xorb, T.UINT16ty, [T.UINT16ty, T.UINT16ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.XOR, x, y))
-      | (P.Word16_xorb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word16_xorb"
-
-      | (P.Word32_add, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ADD L.WRAP, x, y))
-      | (P.Word32_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_add"
-
-      | (P.Word32_andb, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.AND, x, y))
-      | (P.Word32_andb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_andb"
-
-      | (P.Word32_arshift_unsafe, T.UINT32ty, [T.UINT32ty, T.UINT32ty],
-         [x, y]) =>
-        insn1 (L.OP2 (result, L.ASHR, x, y))
-      | (P.Word32_arshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_arshift"
-
-      | (P.Word32_div_unsafe, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.UDIV, x, y))
-      | (P.Word32_div_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_div"
-
-      | (P.Word32_gt, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.UGT, x, y)
-      | (P.Word32_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_gt"
-
-      | (P.Word32_gteq, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.UGE, x, y)
-      | (P.Word32_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_gteq"
-
-      | (P.Word32_lshift_unsafe, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x,y]) =>
-        insn1 (L.OP2 (result, L.SHL, x, y))
-      | (P.Word32_lshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_lshift_unsafe"
-
-      | (P.Word32_lt, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.ULT, x, y)
-      | (P.Word32_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_lt"
-
-      | (P.Word32_lteq, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.ULE, x, y)
-      | (P.Word32_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_lteq"
-
-      | (P.Word32_mod_unsafe, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.UREM, x, y))
-      | (P.Word32_mod_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_mod"
-
-      | (P.Word32_mul, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.MUL L.WRAP, x, y))
-      | (P.Word32_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_mul"
-
-      | (P.Word32_orb, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.OR, x, y))
-      | (P.Word32_orb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_orb"
-
-      | (P.Word32_rshift_unsafe, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x,y]) =>
-        insn1 (L.OP2 (result, L.LSHR, x, y))
-      | (P.Word32_rshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_rshift_unsafe"
-
-      | (P.Word32_sub, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SUB L.WRAP, x, y))
-      | (P.Word32_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_sub"
-
-      | (P.Word32_toWord8, T.UINT8ty, [T.UINT32ty], [x]) =>
-        insn1 (L.CONV (result, L.TRUNC, x, resultTy))
-      | (P.Word32_toWord8, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_toWord8"
-
-      | (P.Word32_toWord16, T.UINT16ty, [T.UINT32ty], [x]) =>
-        insn1 (L.CONV (result, L.TRUNC, x, resultTy))
-      | (P.Word32_toWord16, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_toWord16"
-
-      | (P.Word32_toWord64, T.UINT64ty, [T.UINT32ty], [x]) =>
-        insn1 (L.CONV (result, L.ZEXT, x, resultTy))
-      | (P.Word32_toWord64, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_toWord64"
-
-      | (P.Word32_toWord64X, T.UINT64ty, [T.UINT32ty], [x]) =>
-        insn1 (L.CONV (result, L.SEXT, x, resultTy))
-      | (P.Word32_toWord64X, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_toWord64X"
-
-      | (P.Word32_xorb, T.UINT32ty, [T.UINT32ty, T.UINT32ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.XOR, x, y))
-      | (P.Word32_xorb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word32_xorb"
-
-      | (P.Word64_add, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ADD L.WRAP, x, y))
-      | (P.Word64_add, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_add"
-
-      | (P.Word64_andb, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.AND, x, y))
-      | (P.Word64_andb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_andb"
-
-      | (P.Word64_arshift_unsafe,
-         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.ASHR, x, y))
-      | (P.Word64_arshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_arshift"
-
-      | (P.Word64_div_unsafe,
-         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.UDIV, x, y))
-      | (P.Word64_div_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_div"
-
-      | (P.Word64_gt, T.UINT32ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.UGT, x, y)
-      | (P.Word64_gt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_gt"
-
-      | (P.Word64_gteq, T.UINT32ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.UGE, x, y)
-      | (P.Word64_gteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_gteq"
-
-      | (P.Word64_lshift_unsafe,
-         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SHL, x, y))
-      | (P.Word64_lshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_lshift_unsafe"
-
-      | (P.Word64_lt, T.UINT32ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.ULT, x, y)
-      | (P.Word64_lt, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_lt"
-
-      | (P.Word64_lteq, T.UINT32ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        cmpOp (result, resultTy, L.ICMP, L.ULE, x, y)
-      | (P.Word64_lteq, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_lteq"
-
-      | (P.Word64_mod_unsafe, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.UREM, x, y))
-      | (P.Word64_mod_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_mod"
-
-      | (P.Word64_mul, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.MUL L.WRAP, x, y))
-      | (P.Word64_mul, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_mul"
-
-      | (P.Word64_orb, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.OR, x, y))
-      | (P.Word64_orb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_orb"
-
-      | (P.Word64_rshift_unsafe,
-         T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.LSHR, x, y))
-      | (P.Word64_rshift_unsafe, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_rshift_unsafe"
-
-      | (P.Word64_sub, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.SUB L.WRAP, x, y))
-      | (P.Word64_sub, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_sub"
-
-      | (P.Word64_toWord8, T.UINT8ty, [T.UINT64ty], [x]) =>
-        insn1 (L.CONV (result, L.TRUNC, x, resultTy))
-      | (P.Word64_toWord8, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_toWord8"
-
-      | (P.Word64_toWord16, T.UINT16ty, [T.UINT64ty], [x]) =>
-        insn1 (L.CONV (result, L.TRUNC, x, resultTy))
-      | (P.Word64_toWord16, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_toWord16"
-
-      | (P.Word64_toWord32, T.UINT32ty, [T.UINT64ty], [x]) =>
-        insn1 (L.CONV (result, L.TRUNC, x, resultTy))
-      | (P.Word64_toWord32, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_toWord32"
-
-      | (P.Word64_xorb, T.UINT64ty, [T.UINT64ty, T.UINT64ty], [x, y]) =>
-        insn1 (L.OP2 (result, L.XOR, x, y))
-      | (P.Word64_xorb, _, _, _) =>
-        raise Bug.Bug "compilePrim: Word64_xorb"
+      | (P.Word_sext_trunc, _, _, [x]) =>
+        (case compareIntTy (resultTy, #1 x) of
+           SOME GREATER => insn1 (L.CONV (result, L.SEXT, x, resultTy))
+         | SOME EQUAL => insn1 (L.CONV (result, L.BITCAST, x, resultTy))
+         | SOME LESS => insn1 (L.CONV (result, L.TRUNC, x, resultTy))
+         | NONE => raise Bug.Bug "compilePrim: Word_zext_trunc")
+      | (P.Word_sext_trunc, _, _, _) =>
+        raise Bug.Bug "compilePrim: Word_sext_trunc"
 
   end (* local *)
 
@@ -2157,7 +1658,7 @@ print
       case mid of
         M.MCINTINF {resultVar, dataLabel, loc} =>
         let
-          val dataPtr = compileConst (#aliasMap env) (M.NVEXTRADATA dataLabel)
+          val dataPtr = compileConst (#constEnv env) (M.NVEXTRADATA dataLabel)
         in
           callIntrinsic NONE sml_save nil
           o callIntrinsic (SOME (#id resultVar))
@@ -2188,25 +1689,25 @@ print
                 let
                   val lpadLabel = HandlerLabel.generate nil
                   val ueVar = VarID.generate ()
-                  val exnVar = VarID.generate ()
-                  val exn2Var = VarID.generate ()
+                  val argVar = VarID.generate ()
+                  val arg2Var = VarID.generate ()
                   val unsaveInsn =
-                      callIntrinsic (SOME exn2Var) sml_unsave_exn
-                                    [(L.PTR L.I8, L.VAR ueVar)]
+                      callIntrinsic (SOME arg2Var) sml_unsave_exn
+                                    [(L.PTR L.I8, L.VAR argVar)]
                   val kind =
                       case handler of
                         NONE => {catch=false, cleanup=true}
                       | SOME id => getHandlerKind env id # {cleanup=true}
                   val jumpInsn =
                       case handler of
-                        NONE => resumeInsn (ueVar, exn2Var)
+                        NONE => resumeInsn (ueVar, argVar)
                       | SOME id =>
-                        last (L.BR (jumpToLandingPad (id, ueVar, exn2Var)))
+                        last (L.BR (jumpToLandingPad (id, ueVar, arg2Var)))
                 in
                   (SOME lpadLabel,
                    landingPad
                      env
-                     (lpadLabel, kind, ueVar, exnVar,
+                     (lpadLabel, kind, ueVar, argVar,
                       enterInsn
                       o unsaveInsn
                       o jumpInsn
@@ -2247,6 +1748,7 @@ print
              o callIntrinsic (SOME entryPtr) sml_find_callback
                              [(L.PTR L.I8, L.VAR funPtr), closureEnv]
              o insns [L.LOAD (trampPtr1,
+                              L.PTR L.I8,
                               (L.PTR (L.PTR L.I8), L.VAR entryPtr)),
                       L.ICMP (cmpResult, L.EQ,
                               (L.PTR L.I8, L.VAR trampPtr1),
@@ -2262,6 +1764,7 @@ print
                       L.GETELEMENTPTR
                         {result = nestArg1,
                          inbounds = true,
+                         ty = L.PTR L.I8,
                          ptr = (L.PTR (L.PTR L.I8), L.VAR entryPtr),
                          indices = [(L.I32, L.CONST (L.INTCONST 0w1))]},
                       L.CONV (nestArg2, L.BITCAST,
@@ -2285,11 +1788,16 @@ print
         in
           case ExternSymbol.Map.find (#exportMap env, id) of
             NONE =>
-            insn1 (L.LOAD (#id resultVar,
-                           (L.PTR ty,
-                            L.CONST (L.SYMBOL (externSymbolToSymbol id)))))
-          | SOME ((_, const), _) =>
-            insn1 (L.LOAD (#id resultVar, (L.PTR ty, L.CONST const)))
+            (case ExternSymbol.Map.find
+                    (#extern (#externDecls (#constEnv env)), id) of
+               NONE => raise Bug.Bug "compileMid: MCEXVAR"
+             | SOME {used, ...} => used := true;
+             insn1 (L.LOAD (#id resultVar,
+                            ty,
+                            (L.PTR ty,
+                             L.CONST (L.SYMBOL (externSymbolToSymbol id))))))
+          | SOME {gvarAddr = (_, const), ...} =>
+            insn1 (L.LOAD (#id resultVar, ty, (L.PTR ty, L.CONST const)))
         end
       | M.MCMEMCPY_FIELD {dstAddr, srcAddr, copySize, loc} =>
         let
@@ -2356,25 +1864,26 @@ print
         end
       | M.MCALLOC_COMPLETED =>
         empty
-      | M.MCCHECK =>
+      | M.MCCHECK {handler} =>
         let
           val check_flag = referIntrinsicVar sml_check_flag
           val onLabel = FunLocalLabel.generate nil
           val offLabel = FunLocalLabel.generate nil
           val flag = VarID.generate ()
           val cmpResult = VarID.generate ()
+          val flagValue = (L.I32, L.VAR flag)
         in
           scope
-            (insns [L.LOAD_ATOMIC (flag, check_flag, {order = L.UNORDERED,
-                                                      align = 0w4}),
-                    L.ICMP (cmpResult, L.EQ, (L.I32, L.VAR flag),
+            (insns [L.LOAD_ATOMIC (flag, L.I32, check_flag,
+                                   {order = L.UNORDERED, align = 0w4}),
+                    L.ICMP (cmpResult, L.EQ, flagValue,
                             (L.I32, L.CONST (L.INTCONST 0w0)))]
              o scope
                  (last (L.BR_C ((L.I1, L.VAR cmpResult),
                                 (offLabel, nil),
                                 (onLabel, nil))))
              o label (onLabel, nil)
-             o callIntrinsic NONE sml_check nil
+             o invokeIntrinsic NONE sml_check handler [flagValue]
              o last (L.BR (offLabel, nil)))
           o label (offLabel, nil)
         end
@@ -2402,7 +1911,7 @@ print
                           (objHeaderTy,
                            L.CONST (L.INTCONST (Word64.notb FLAG_SKIP)))))
           o objectHeaderAddress (dstHeaderAddr, dstRecord)
-          o insn1 (L.STORE {dst = (objHeaderTy, L.VAR dstHeaderAddr),
+          o insn1 (L.STORE {dst = (L.PTR objHeaderTy, L.VAR dstHeaderAddr),
                             value = (objHeaderTy, L.VAR dstHeader)})
           o callIntrinsic NONE llvm_memcpy
                           [dstRecord,
@@ -2440,7 +1949,7 @@ print
                 NONE => raise Bug.Bug "compileExp: MCLOADSLOT"
               | SOME addr => addr
         in
-          insn1 (L.LOAD (#id resultVar, srcAddr))
+          insn1 (L.LOAD (#id resultVar, compileTy (#ty resultVar), srcAddr))
         end
       | M.MCLOAD {resultVar, srcAddr, loc} =>
         let
@@ -2450,7 +1959,7 @@ print
         in
           insns1
           o insns2
-          o insn1 (L.LOAD (#id resultVar, srcAddr))
+          o insn1 (L.LOAD (#id resultVar, compileTy (#ty resultVar), srcAddr))
         end
       | M.MCPRIMAPPLY {resultVar, primInfo={primitive,...}, argExpList,
                        argTyList, resultTy, instTyList, instTagList,
@@ -2474,7 +1983,19 @@ print
           val exp = compileValue env exp
           val targetTy = compileTy targetTy
         in
-          insn1 (L.CONV (#id resultVar, L.BITCAST, exp, targetTy))
+          case (#1 exp, targetTy) of
+            (L.PTR _, L.PTR _) =>
+            insn1 (L.CONV (#id resultVar, L.BITCAST, exp, targetTy))
+          | (L.PTR _, L.I32) =>
+            insn1 (L.CONV (#id resultVar, L.PTRTOINT, exp, targetTy))
+          | (L.PTR _, L.I64) =>
+            insn1 (L.CONV (#id resultVar, L.PTRTOINT, exp, targetTy))
+          | (L.I32, L.PTR _) =>
+            insn1 (L.CONV (#id resultVar, L.INTTOPTR, exp, targetTy))
+          | (L.I64, L.PTR _) =>
+            insn1 (L.CONV (#id resultVar, L.INTTOPTR, exp, targetTy))
+          | _ =>
+            insn1 (L.CONV (#id resultVar, L.BITCAST, exp, targetTy))
         end
       | M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, argExpList, tail,
                   handler, loc} =>
@@ -2491,25 +2012,60 @@ print
               {argTys = map (fn (x,(y,z)) => (y,x)) args,
                varArg = false,
                retTy = case resultTy of
-                         (_, T.UNITty) => L.VOID
+                         (_, {rep = T.DATA T.LAYOUT_SINGLE, ...}) => L.VOID
                        | _ => compileTy resultTy,
                cconv = SOME L.FASTCC}
           (*
-           * LLVM's tail call optimization changes the size of stack frames
-           * due to calling convention requiring that some arguments must
-           * be in stack; therefore, it is not always compatible with LLVM's
-           * GC support.  To avoid this incompatibility, we turn on the tail
-           * call optimization only if both callee and caller does not have
-           * any stack arguments.
-           *)
+
+*)
           val tail =
               if not tail
+              (*
+               * It is not a good idea to add "tail" annotation to calls
+               * not in a tail position because an unnecessary "tail" would
+               * yield incorrect code.  The following is an example that
+               * causes the incorrectness:
+               *
+               *  declare void @llvm.gcroot(i8**, i8* )
+               *  declare i32 @join(i8* ) gc "smlsharp"
+               *  declare i8* @create() gc "smlsharp"
+               *  define fastcc i32 @start(i32 %arg) gc "smlsharp" {
+               *    %v1 = alloca i8*
+               *    call void @llvm.gcroot(i8** %v1, i8* null)
+               *    %v3 = icmp slt i32 %arg, 2
+               *    br i1 %v3, label %L55, label %L54
+               *  L55:
+               *    ret i32 0
+               *  L54:
+               *    %v8 = sub nsw i32 %arg, 1
+               *    %v9 = call fastcc i8* @create()
+               *    store i8* %v9, i8** %v1      ;;; MANDATORY
+               *    %v11 = tail call fastcc i32 @start(i32 %v8)  ;; [*1]
+               *    %v12 = load i8*, i8** %v1    ;;; MANDATORY
+               *    %v13 = tail call fastcc i32 @join(i8* %v12)
+               *    ret i32 %v13
+               *  }
+               *
+               * The "store" and "load" marked MANDATORY are required to
+               * maintain the root set for GC.  However, "opt -O1" command
+               * eliminates these two operations.  By removing "tail"
+               * annotation from [*1] avoids this unexpected elimination.
+               *)
               then NONE
               else if !Control.useMustTail
                       andalso isMustTailAllowed (#funTy env, funTy)
               then SOME L.MUSTTAIL
-              (* FIXME: We assume that first three arguments are passed
-               * in registers. *)
+              (*
+               * LLVM's tail call optimization changes the size of stack frames
+               * due to calling convention requiring that some arguments must
+               * be in stack; therefore, it is not always compatible with LLVM's
+               * GC support.  To avoid this incompatibility, we turn on the tail
+               * call optimization only if both callee and caller does not have
+               * any stack arguments.
+               *
+               * FIXME: We assume that first three arguments are passed
+               * in registers.
+               *)
               else if length (#argTys funTy) <= 3
                       andalso length (#argTys (#funTy env)) <= 3
               then SOME L.TAIL
@@ -2549,13 +2105,16 @@ print
                      {dst = (L.PTR (compileTy ty),
                              L.CONST (L.SYMBOL (externSymbolToSymbol id))),
                       value = value})
-          | SOME ((dstTy, dst), {gvr}) =>
+          | SOME {gvarAddr = (dstTy, dst), gvarArray, ...} =>
             case ty of
-              (_, T.BOXEDty) =>
-              callIntrinsic NONE sml_write [gvr, (dstTy, L.CONST dst), value]
+              (_, {tag = T.BOXED, ...}) =>
+              callIntrinsic NONE sml_write
+                            [gvarArray, (dstTy, L.CONST dst), value]
             | _ =>
               insn1 (L.STORE {dst = (dstTy, L.CONST dst), value = value})
         end
+      | M.MCKEEPALIVE {value, loc} =>
+        empty
 
   fun compileLast (env:env) mcexp_last =
       case mcexp_last of
@@ -2573,17 +2132,25 @@ print
           val kind = {catch = true, cleanup = isSome cleanup}
           val nextEnv = bindHandlerLabel env (id, kind)
           val ueVar = VarID.generate ()
+          val argVar = VarID.generate ()
+          val arg2Var = VarID.generate ()
           val jumpInsn =
               case cleanup of
                 NONE => empty
               | SOME cleanupLabel =>
-                jumpIfNull (compileValue env (M.ANVAR exnVar))
-                           (jumpToLandingPad (cleanupLabel, ueVar, #id exnVar))
+                jumpIfNull (L.PTR L.I8, L.VAR argVar)
+                           (jumpToLandingPad (cleanupLabel, ueVar, argVar))
         in
-          landingPad env (id, kind, ueVar, #id exnVar,
-                          jumpInsn
-                          o compileExp env handlerExp
-                          o ignore)
+          landingPad
+            env
+            (id, kind, ueVar, argVar,
+             jumpInsn
+             o insns [L.CONV (arg2Var, L.BITCAST, (L.PTR L.I8, L.VAR argVar),
+                              L.PTR (L.PTR L.I8)),
+                      L.LOAD (#id exnVar, L.PTR L.I8,
+                              (L.PTR (L.PTR L.I8), L.VAR arg2Var))]
+             o compileExp env handlerExp
+             o ignore)
           o compileExp nextEnv nextExp
         end
       | M.MCSWITCH {switchExp, expTy, branches, default, loc} =>
@@ -2594,7 +2161,7 @@ print
           val constTy = compileTy expTy
           val branches =
               map (fn (const, label) =>
-                      ((constTy, compileConst (#aliasMap env) const),
+                      ((constTy, compileConst (#constEnv env) const),
                        (label, nil)))
                   branches
         in
@@ -2622,23 +2189,26 @@ print
 
   fun allocSlots slotMap =
       SlotID.Map.foldli
-        (fn (slotId, T.BOXEDty, z as (insns1, slotMap)) =>
+        (fn (slotId, rty, (allocInsns, gcrootInsns, slotMap)) =>
             let
+              val ty = compileRuntimeTy rty
               val varId = VarID.generate ()
             in
-              (insns1
-               o insn1 (L.ALLOCA (varId, L.PTR L.I8))
-               o callIntrinsic NONE llvm_gcroot
-                               [(L.PTR (L.PTR L.I8), L.VAR varId),
-                                nullOperand],
-               SlotID.Map.insert (slotMap, slotId,
-                                  (L.PTR (L.PTR L.I8), L.VAR varId)))
-            end
-          | _ => raise Bug.Bug "allocSlots: FIXME: not implemented")
-        (empty, SlotID.Map.empty)
+              (allocInsns o insn1 (L.ALLOCA (varId, ty, NONE)),
+               case rty of
+                 {tag = T.BOXED, ...} =>
+                 gcrootInsns
+                 o callIntrinsic NONE llvm_gcroot
+                                 [(L.PTR ty, L.VAR varId),
+                                  nullOperand]
+               | {tag = T.UNBOXED, ...} =>
+                 gcrootInsns,
+               SlotID.Map.insert (slotMap, slotId, (L.PTR ty, L.VAR varId)))
+            end)
+        (empty, empty, SlotID.Map.empty)
         slotMap
 
-  fun compileTop {aliasMap, exportMap}
+  fun compileTop {constEnv, exportMap}
                  {frameSlots, bodyExp, cleanupHandler,
                   argTys, varArg, cconv, retTy} =
       let
@@ -2647,7 +2217,7 @@ print
             case retTy of
               NONE =>
               (L.VOID, fn _ => last (L.BR (retLabel, [])), [], L.RET_VOID)
-            | SOME (_, T.UNITty) =>
+            | SOME (_, {rep = T.DATA T.LAYOUT_SINGLE, ...}) =>
               (L.VOID, fn x => last (L.BR (retLabel, [])), [], L.RET_VOID)
             | SOME ty =>
               let
@@ -2659,10 +2229,10 @@ print
                  [(retTy, arg)],
                  L.RET (retTy, L.VAR arg))
               end
-        val (allocInsns, slotMap) = allocSlots frameSlots
+        val (allocInsns1, gcrootInsns, slotMap) = allocSlots frameSlots
         val personality = ref NONE
         val env = {slotAddrMap = slotMap,
-                   aliasMap = aliasMap,
+                   constEnv = constEnv,
                    exportMap = exportMap,
                    handlerMap = HandlerLabel.Map.empty,
                    funTy = {argTys = argTys,
@@ -2677,33 +2247,42 @@ print
             | SOME id =>
               let
                 val ueVar = VarID.generate ()
-                val exnVar = VarID.generate ()
+                val argVar = VarID.generate ()
               in
                 (bindHandlerLabel env (id, {catch=false, cleanup=true}),
                  landingPad
                    env
                    (id, {catch=false, cleanup=true},
-                    ueVar, exnVar,
-                    callIntrinsic NONE sml_save_exn [(L.PTR L.I8, L.VAR ueVar)]
+                    ueVar, argVar,
+                    callIntrinsic NONE sml_save_exn [(L.PTR L.I8, L.VAR argVar)]
                     o callIntrinsic NONE sml_end []))
               end
         val buf1 = VarID.generate ()
         val buf2 = VarID.generate ()
+        val (allocInsns2, prologue, epilogue) =
+            case bodyExp of
+              (nil, M.MCRETURN _) => (empty, empty, empty)
+            | _ =>
+              (insn1 (L.ALLOCA (buf1, L.ARRAY (0w3, L.PTR L.I8), NONE)),
+               insn1 (L.CONV (buf2, L.BITCAST,
+                              (L.PTR (L.ARRAY (0w3, L.PTR L.I8)), L.VAR buf1),
+                              L.PTR L.I8))
+               o callIntrinsic NONE sml_start
+                               [(L.PTR L.I8, L.VAR buf2)]
+               o cleanupInsn,
+               callIntrinsic NONE sml_end nil)
+        val allocInsns =
+            allocInsns2
+            o allocInsns1
         val body =
-            allocInsns
-            o insn1 (L.ALLOCA (buf1, L.ARRAY (0w3, L.PTR L.I8)))
-            o insn1 (L.CONV (buf2, L.BITCAST,
-                             (L.ARRAY (0w3, L.PTR L.I8), L.VAR buf1),
-                             L.PTR (L.PTR L.I8)))
-            o callIntrinsic NONE sml_start
-                            [(L.PTR (L.PTR L.I8), L.VAR buf2)]
-            o cleanupInsn
+            gcrootInsns
+            o prologue
             o scope (compileExp bodyEnv bodyExp)
             o label (retLabel, retArgs)
-            o callIntrinsic NONE sml_end nil
+            o epilogue
             o last return
       in
-        (body, retTy, !personality)
+        (allocInsns, body, retTy, !personality)
       end
 
   fun compileTopdec env topdec =
@@ -2717,15 +2296,16 @@ print
               | SOME {id, ty} => [(compileTy ty, [L.INREG], id)]
           val (retTy, returnInsns) =
               case retTy of
-                (_, T.UNITty) => (L.VOID, fn v => last L.RET_VOID)
+                (_, {rep = T.DATA T.LAYOUT_SINGLE, ...}) =>
+                (L.VOID, fn v => last L.RET_VOID)
               | _ => (compileTy retTy, fn v => last (L.RET v))
           val args = map (fn {id, ty} => (compileTy ty, [L.INREG], id))
                          argVarList
           val params = closureEnvArg @ args
-          val (insns1, slotMap) = allocSlots frameSlots
+          val (allocInsns, gcrootInsns, slotMap) = allocSlots frameSlots
           val personality = ref NONE
           val env = {slotAddrMap = slotMap,
-                     aliasMap = #aliasMap env,
+                     constEnv = #constEnv env,
                      exportMap = #exportMap env,
                      funTy = {argTys = map (fn (x,y,z) => (x,y)) params,
                               varArg = false,
@@ -2735,11 +2315,12 @@ print
                      personality = SOME personality,
                      returnInsns = returnInsns}
           val body =
-              insns1
+              allocInsns
+              o gcrootInsns
               o compileExp env bodyExp
           val (name, linkage, aliases) =
               case FunEntryLabel.Map.find
-                     (#exFunEntryMap (#aliasMap env), id) of
+                     (#exFunEntryMap (#aliasMap (#constEnv env)), id) of
                 SOME (h::t) => (externFunSymbolToSymbol h, SOME L.EXTERNAL, t)
               | _ => (funEntryLabelToSymbol id, SOME L.INTERNAL, nil)
         in
@@ -2758,9 +2339,10 @@ print
                (fn id =>
                    L.ALIAS
                      {name = externFunSymbolToSymbol id,
+                      ty = L.FN (retTy, map #1 params, false),
                       linkage = linkage,
                       unnamed_addr = false,
-                      aliasee = (L.FPTR (retTy, map #1 params, false),
+                      aliasee = (L.PTR (L.FN (retTy, map #1 params, false)),
                                  L.SYMBOL name)})
                aliases
         end
@@ -2777,11 +2359,11 @@ print
                   val ty = compileTy ty
                   val arg = VarID.generate ()
                 in
-                  (insn1 (L.LOAD (id, (L.PTR ty, L.VAR arg))),
+                  (insn1 (L.LOAD (id, ty, (L.PTR ty, L.VAR arg))),
                    (L.PTR ty, [L.NEST], arg) :: args)
                 end
           val cconv = compileCallConv (#callingConvention attributes)
-          val (body, retTy, personality) =
+          val (allocInsns, bodyInsns, retTy, personality) =
               compileTop env {frameSlots = frameSlots,
                               bodyExp = bodyExp,
                               cleanupHandler = cleanupHandler,
@@ -2789,9 +2371,6 @@ print
                               argTys = map (fn (x,y,z) => (x,y)) args,
                               varArg = false,
                               cconv = cconv}
-          val body =
-              insns1
-              o body
         in
           [L.DEFINE
              {linkage = SOME L.INTERNAL,
@@ -2803,135 +2382,219 @@ print
               fnAttrs = [L.UWTABLE],
               personality = personality,
               gcname = gcname,
-              body = body ()}]
+              body = (allocInsns o insns1 o bodyInsns) ()}]
         end
 
-  fun ptrDiff intptrTy p1 p2 =
-      L.CONST_SUB (L.WRAP, (intptrTy, L.CONST_PTRTOINT (p1, intptrTy)),
-                           (intptrTy, L.CONST_PTRTOINT (p2, intptrTy)))
-
-  fun makeRootsetArray roots =
-      case roots of
-        nil => (nil, (L.PTR L.I8, L.CONST L.NULL))
-      | _::_ =>
-        let
-          val intptrTy = intptrTy ()
-          val numRoots = length roots
-          val arrayTy = L.ARRAY (Word.fromInt (1 + numRoots), intptrTy)
-          val baseAddr = (L.PTR arrayTy, L.SYMBOL "_SML_rts")
-        in
-          ([L.GLOBALVAR
-              {name = "_SML_rts",
-               linkage = SOME L.PRIVATE,
-               constant = true,
-               unnamed_addr = true,
-               ty = arrayTy,
-               align = NONE,
-               initializer =
-                 L.INIT_ARRAY
-                   ((intptrTy,
-                     L.INIT_CONST (L.INTCONST (Word64.fromInt numRoots)))
-                    :: map (fn x => (intptrTy,
-                                     L.INIT_CONST (ptrDiff intptrTy
-                                                           (L.PTR L.I8, x)
-                                                           baseAddr)))
-                           roots)}],
-           (L.PTR L.I8, L.CONST (L.CONST_BITCAST (baseAddr, L.PTR L.I8))))
-        end
-
-  fun makeDepArray dependency =
+  fun makeRootArray toplevelName nil = (nil, (L.PTR L.I8, L.NULL))
+    | makeRootArray toplevelName roots =
       let
-        val (hash, name) =
-            case #interfaceNameOpt dependency of
-              NONE => (InterfaceHash.emptyHash (), "")
-            | SOME {hash, source=(_,name)} =>
-              (hash, Filename.toString (Filename.basename name))
-        val link =
-            List.mapPartial
-              (fn (_, I.INTERFACE {hash, ...}, _) => SOME hash | _ => NONE)
-              (InterfaceName.listFileDependencyNodes true (#depends dependency))
-        val depends =
-            InterfaceName.hashToWord64 hash
-            :: Word64.fromInt (length link)
-            :: map InterfaceName.hashToWord64 link
-        val depArrayTy = L.ARRAY (Word.fromInt (length depends), L.I64)
-        val nameArrayTy = L.ARRAY (Word.fromInt (size name + 1), L.I8)
+        val intptrTy = intptrTy ()
+        val numRoots = length roots
+        val gcrootTy = L.ARRAY (Word.fromInt (1 + numRoots), intptrTy)
+        val smlrootName = ToplevelSymbol.rootName toplevelName
+        val baseAddr = (L.PTR gcrootTy, L.SYMBOL smlrootName)
+        val numRoots = Word64.fromInt numRoots
+        fun ptrDiff p1 p2 =
+            L.CONST_SUB (L.WRAP,
+                         (intptrTy, L.CONST_PTRTOINT (p1, intptrTy)),
+                         (intptrTy, L.CONST_PTRTOINT (p2, intptrTy)))
+        fun offsetOf x =
+            (intptrTy, L.INIT_CONST (ptrDiff (L.PTR L.I8, x) baseAddr))
       in
+        (* this object is intended to be immutable, but we place it in
+         * the same section as mutable objects so that the offset of the
+         * mutables can be computed at compile time. *)
         ([L.GLOBALVAR
-            {name = "_SML_dep",
+            {name = smlrootName,
              linkage = SOME L.PRIVATE,
-             constant = true,
+             constant = false, (* must be false to avoid relocation *)
              unnamed_addr = true,
-             ty = L.STRUCT ([depArrayTy, nameArrayTy], {packed=true}),
+             ty = gcrootTy,
              align = NONE,
              initializer =
-               L.INIT_STRUCT
-                 ([(depArrayTy,
-                    L.INIT_ARRAY
-                      (map (fn x => (L.I64, L.INIT_CONST (L.INTCONST x)))
-                           depends)),
-                   (nameArrayTy, L.INIT_STRING (name ^ "\000"))],
-                  {packed=true})}],
-         (L.PTR L.I8,
-          L.CONST
-            (L.CONST_BITCAST
-               ((L.PTR L.I64,
-                 L.CONST_GETELEMENTPTR
-                   {inbounds = true,
-                    ptr = (L.PTR depArrayTy, L.SYMBOL "_SML_dep"),
-                    indices = [(L.I32, L.INTCONST 0w0),
-                               (L.I32, L.INTCONST 0w0),
-                               (L.I32, L.INTCONST 0w0)]}),
-                L.PTR L.I8))))
+               L.INIT_ARRAY
+                 ((intptrTy, L.INIT_CONST (L.INTCONST numRoots))
+                  :: map offsetOf roots)}],
+         baseAddr)
       end
 
-  fun makeCtors {top, dep, mut} =
+  fun initializeModule isEmptyBody toplevelName depends sml_root =
       let
-        val ctorFunTy = L.FPTR (L.VOID, [], false)
-        val ctorsElemTy = L.STRUCT ([L.I32, ctorFunTy], {packed=false})
+        val smlmainDepends = map (ToplevelSymbol.mainName o SOME) depends
+        val smlloadDepends = map (ToplevelSymbol.loadName o SOME) depends
+        val decs1 =
+            map (fn name =>
+                    L.DECLARE {linkage = NONE,
+                               cconv = NONE,
+                               retAttrs = nil,
+                               retTy = L.VOID,
+                               name = name,
+                               arguments = nil,
+                               varArg = false,
+                               fnAttrs = [L.UWTABLE],
+                               gcname = gcname})
+                smlmainDepends
+        val decs2 =
+            map (fn name =>
+                    L.DECLARE {linkage = NONE,
+                               cconv = NONE,
+                               retAttrs = nil,
+                               retTy = L.VOID,
+                               name = name,
+                               arguments = [(L.PTR L.I8, nil)],
+                               varArg = false,
+                               fnAttrs = [],
+                               gcname = NONE})
+                smlloadDepends
+        val smlmainCalls =
+            map (fn name =>
+                    L.CALL {result = NONE,
+                            tail = SOME L.TAIL,
+                            cconv = NONE,
+                            retAttrs = nil,
+                            fnPtr = (L.PTR (L.FN (L.VOID, [], false)),
+                                     L.CONST (L.SYMBOL name)),
+                            args = nil,
+                            fnAttrs = [L.UWTABLE]})
+                smlmainDepends
+        val initArg = VarID.generate ()
+        val smlloadCalls =
+            map (fn name =>
+                    L.CALL {result = NONE,
+                            tail = SOME L.TAIL,
+                            cconv = NONE,
+                            retAttrs = nil,
+                            fnPtr = (L.PTR (L.FN (L.VOID, [L.PTR L.I8], false)),
+                                     L.CONST (L.SYMBOL name)),
+                            args = [(nil, (L.PTR L.I8, L.VAR initArg))],
+                            fnAttrs = []})
+                smlloadDepends
+        val smlmainName = ToplevelSymbol.mainName toplevelName
+        val smlftabName = ToplevelSymbol.ftabName toplevelName
+        val smltabbName = ToplevelSymbol.tabbName toplevelName
+        val smlloadName = ToplevelSymbol.loadName toplevelName
+        val smldoneName = ToplevelSymbol.doneName toplevelName
+        val sml_main = (L.PTR (L.FN (L.VOID, [], false)), L.SYMBOL smlmainName)
+        val sml_ftab = (L.PTR L.I8, L.SYMBOL smlftabName)
+        val sml_tabb = (L.PTR (L.FN (L.VOID, [], false)), L.SYMBOL smltabbName)
+        val sml_load = (L.PTR (L.FN (L.VOID, [L.PTR L.I8], false)),
+                        L.SYMBOL smlloadName)
+        val sml_done = (L.PTR L.I8, L.CONST (L.SYMBOL smldoneName))
+        fun toPtr (const as (L.PTR L.I8, _)) = const
+          | toPtr const = (L.PTR L.I8, L.CONST_BITCAST (const, L.PTR L.I8))
+        fun intConst n = (L.I8, L.CONST (L.INTCONST n))
       in
-        [L.EXTERN {name = "_SML_ftab", ty = L.I8},
-         L.DEFINE
-           {linkage = SOME L.INTERNAL,
-            cconv = NONE,
-            retAttrs = nil,
-            retTy = L.VOID,
-            name = "_SML_ctor",
-            parameters = [],
-            fnAttrs = [L.NOUNWIND],
-            personality = NONE,
-            gcname = NONE,
-            body =
-              (callIntrinsic
-                 NONE
-                 sml_register_top
-                 [top,
-                  dep,
-                  (L.PTR L.I8, L.CONST (L.SYMBOL "_SML_ftab")),
-                  mut]
-               o last L.RET_VOID)
-                ()},
-         L.GLOBALVAR
-           {name = "llvm.global_ctors",
-            linkage = SOME L.APPENDING,
-            unnamed_addr = false,
-            constant = false,
-            ty = L.ARRAY (0w1, ctorsElemTy),
-            align = NONE,
-            initializer =
-              L.INIT_ARRAY
-                [(ctorsElemTy,
-                  L.INIT_STRUCT
-                    ([(L.I32, L.INIT_CONST (L.INTCONST 0w65535)),
-                      (ctorFunTy, L.INIT_CONST (L.SYMBOL "_SML_ctor"))],
-                     {packed=false}))]}]
+        (decs1 @ decs2 @
+         [L.EXTERN (* generated by smlsharp_gc plugin *)
+            {name = smlftabName,
+             ty = L.I8},
+          L.GLOBALVAR
+            {name = smldoneName,
+             linkage = SOME L.PRIVATE,
+             constant = false,
+             unnamed_addr = true,
+             ty = L.I8,
+             align = NONE,
+             initializer = L.ZEROINITIALIZER},
+          L.DEFINE
+            {linkage = SOME L.PRIVATE,
+             cconv = NONE,
+             retAttrs = nil,
+             retTy = L.VOID,
+             name = smltabbName,
+             parameters = [],
+             fnAttrs = [L.NAKED],
+             personality = NONE,
+             gcname = NONE,
+             body = (nil, L.UNREACHABLE)},
+          let
+            val v1 = VarID.generate ()
+            val thenLabel = FunLocalLabel.generate nil
+          in
+            L.DEFINE
+              {linkage = NONE,
+               cconv = NONE,
+               retAttrs = nil,
+               retTy = L.VOID,
+               name = smlloadName,
+               parameters = [(L.PTR L.I8, [], initArg)],
+               fnAttrs = [L.NOUNWIND],
+               personality = NONE,
+               gcname = NONE,
+               body =
+                 (scope
+                    (insn1 (L.LOAD (v1, L.I8, sml_done))
+                     o jumpIfZero (L.I8, L.VAR v1) (thenLabel, nil)
+                     o last L.RET_VOID)
+                  o label (thenLabel, [])
+                  o insn1 (L.STORE {value = (L.I8, L.CONST (L.INTCONST 0w1)),
+                                    dst = sml_done})
+                  o insns smlloadCalls
+                  o callIntrinsic NONE sml_gcroot
+                                  [(L.PTR L.I8, L.VAR initArg),
+                                   constToValue sml_tabb,
+                                   constToValue sml_ftab,
+                                   constToValue (toPtr sml_root)]
+                  o last L.RET_VOID)
+                   ()}
+          end],
+         [let
+            val v1 = VarID.generate ()
+          in
+            L.DEFINE
+              {linkage = SOME L.WEAK,
+               cconv = NONE,
+               retAttrs = nil,
+               retTy = L.VOID,
+               name = "sml_load",
+               parameters = [(L.PTR L.I8, [], v1)],
+               fnAttrs = nil,
+               personality = NONE,
+               gcname = NONE,
+               body = (insn1 (L.CALL {result = NONE,
+                                      tail = SOME L.TAIL,
+                                      cconv = NONE,
+                                      retAttrs = nil,
+                                      fnPtr = constToValue sml_load,
+                                      args = [(nil, (L.PTR L.I8, L.VAR v1))],
+                                      fnAttrs = [L.UWTABLE, L.NOINLINE]})
+                       o last L.RET_VOID)
+                        ()}
+          end],
+         smlmainName,
+         sml_main,
+         case (isEmptyBody, smlmainCalls) of
+           (_, nil) => empty
+         | (true, call::nil) => insn1 call
+         | _ =>
+           let
+             val v1 = VarID.generate ()
+             val v2 = VarID.generate ()
+             val thenLabel = FunLocalLabel.generate nil
+           in
+             scope
+               (insns [L.LOAD (v1, L.I8, sml_done),
+                       L.OP2 (v2, L.AND, (L.I8, L.VAR v1),
+                              (L.I8, L.CONST (L.INTCONST 0w2)))]
+                o jumpIfZero (L.I8, L.VAR v2) (thenLabel, nil)
+                o last L.RET_VOID)
+             o label (thenLabel, [])
+             o insn1 (L.STORE {value = (L.I8, L.CONST (L.INTCONST 0w3)),
+                               dst = sml_done})
+             o insns smlmainCalls
+           end)
       end
 
-  fun compileToplevel aliasMap roots
-                      {dependency, frameSlots, bodyExp, cleanupHandler} =
+  fun compileToplevel env roots {toplevelName, initRequisites}
+                      {frameSlots, bodyExp, cleanupHandler} =
       let
-        val (body, _, personality) =
-            compileTop aliasMap
+        val (rootArrayDecs, sml_root) = makeRootArray toplevelName roots
+        val emptyBody =
+            case bodyExp of
+              (nil, M.MCRETURN _) => true
+            | _ => false
+        val (allocInsns, bodyInsns, _, personality) =
+            compileTop env
                        {frameSlots = frameSlots,
                         bodyExp = bodyExp,
                         cleanupHandler = cleanupHandler,
@@ -2939,27 +2602,60 @@ print
                         argTys = nil,
                         varArg = false,
                         cconv = NONE}
-        val (decs1, sml_top) =
-            ([L.DEFINE
-                {linkage = SOME L.INTERNAL,
-                 cconv = NONE,
-                 retAttrs = nil,
-                 retTy = L.VOID,
-                 name = "_SML_top",
-                 parameters = [],
-                 fnAttrs = [L.UWTABLE],
-                 personality = personality,
-                 gcname = gcname,
-                 body = body ()}],
-             (L.PTR L.I8,
-              L.CONST (L.CONST_BITCAST ((L.FPTR (L.VOID, nil, false),
-                                         L.SYMBOL "_SML_top"),
-                                        L.PTR L.I8))))
-        val (decs2, sml_dep) = makeDepArray dependency
-        val (decs3, sml_mut) = makeRootsetArray roots
-        val decs4 = makeCtors {top = sml_top, dep = sml_dep, mut = sml_mut}
+        (* listUsedExternDecls must be performed after compileTop *)
+        val (providers, externDecls) =
+            ListPair.unzip (listUsedExternDecls (#externDecls (#constEnv env)))
+        val needInit =
+            foldl
+              (fn (I.OTHER {hash, ...}, z) =>
+                  SSet.add (z, InterfaceName.hashToString hash)
+               | (_, z) => z)
+              SSet.empty
+              providers
+        val depends =
+            List.mapPartial
+              (fn (I.INIT_ALWAYS, name) => SOME name
+                | (I.INIT_IFNEEDED, name as {hash, ...}) =>
+                  if SSet.member (needInit, InterfaceName.hashToString hash)
+                  then SOME name else NONE)
+              initRequisites
+        val (loadDecs, weakDecs1, smlmainName, sml_main, initInsns) =
+            initializeModule emptyBody toplevelName depends sml_root
+        val mainDecs =
+            [L.DEFINE
+               {linkage = NONE,
+                cconv = NONE,
+                retAttrs = nil,
+                retTy = L.VOID,
+                name = smlmainName,
+                parameters = [],
+                fnAttrs = [L.UWTABLE],
+                personality = personality,
+                gcname = gcname,
+                body = (allocInsns o initInsns o bodyInsns) ()}]
+        val weakDecs2 =
+            [L.DEFINE
+               {linkage = SOME L.WEAK,
+                cconv = NONE,
+                retAttrs = nil,
+                retTy = L.VOID,
+                name = "sml_main",
+                parameters = [],
+                fnAttrs = nil,
+                personality = NONE,
+                gcname = NONE,
+                body = (insn1 (L.CALL {result = NONE,
+                                       tail = SOME L.TAIL,
+                                       cconv = NONE,
+                                       retAttrs = nil,
+                                       fnPtr = constToValue sml_main,
+                                       args = nil,
+                                       fnAttrs = [L.UWTABLE, L.NOINLINE]})
+                        o last L.RET_VOID) ()}]
       in
-        decs1 @ decs2 @ decs3 @ decs4
+        (externDecls,
+         rootArrayDecs @ loadDecs @ mainDecs,
+         weakDecs1 @ weakDecs2)
       end
 
   fun pad (i, j) =
@@ -2967,15 +2663,15 @@ print
       else if i = j then nil
       else [(L.ARRAY (j - i, L.I8), L.ZEROINITIALIZER)]
 
-  fun compileInitConst aliasMap const =
-      case compileTopConst aliasMap const of
+  fun compileInitConst constEnv const =
+      case compileTopConst constEnv const of
         (ty, const) => (ty, L.INIT_CONST const)
 
-  fun allocTopArray topdataList =
+  fun allocTopArray toplevelName topdataList =
       let
         val exports =
             List.mapPartial
-              (fn M.NTEXPORTVAR {id, weak=false, ty=(_,T.BOXEDty),
+              (fn M.NTEXPORTVAR {id, weak=false, ty=(_,{tag=T.BOXED,...}),
                                  value=NONE, loc} => SOME id
                 | _ => NONE)
               topdataList
@@ -2984,48 +2680,51 @@ print
           nil => (nil, ExternSymbol.Map.empty, nil)
         | _::_ =>
           let
-            val pointerSize = TypeLayout2.sizeOf T.BOXEDty
             val numExports = length exports
             val header =
                 makeHeaderWordStatic
                   (M.OBJTYPE_ARRAY
                      (M.ANCONST
-                        {const = M.NVTAG {tag=T.TAG_BOXED, ty=Types.ERRORty},
-                         ty = (Types.ERRORty, T.INT32ty)}),
-                   Word64.fromInt (pointerSize * numExports))
+                        {const = M.NVTAG {tag=T.BOXED, ty=Types.ERRORty},
+                         ty = (Types.ERRORty, T.word32Ty)}),
+                   Word64.fromInt (pointerSize () * numExports))
             val exportArrayTy =
                 L.ARRAY (Word.fromInt (length exports), L.PTR L.I8)
             val data =
-                pad (objHeaderSize, Word.fromInt pointerSize)
+                pad (objHeaderSize, Word.fromInt (pointerSize ()))
                 @ [header, (exportArrayTy, L.ZEROINITIALIZER)]
             val dataTy = L.STRUCT (map #1 data, {packed=true})
             val arrayOffset =
                 Word64.fromInt (length data - 1)
-            fun gvrElem i =
+            val gvarName = ToplevelSymbol.gvarName toplevelName
+            fun gvarElem i =
                 (L.PTR (L.PTR L.I8),
                  L.CONST_GETELEMENTPTR
                    {inbounds = true,
-                    ptr = (L.PTR dataTy, L.SYMBOL "_SML_gvr"),
-                    indices = [(L.I64, L.INTCONST 0w0),
+                    ty = dataTy,
+                    ptr = (L.PTR dataTy, L.SYMBOL gvarName),
+                    indices = [(L.I32, L.INTCONST 0w0),
                                (L.I32, L.INTCONST arrayOffset),
-                               (L.I64, L.INTCONST (Word64.fromInt i))]})
-            val gvrObj = L.CONST_BITCAST (gvrElem 0, L.PTR L.I8)
-            val gvrObjValue = (L.PTR L.I8, L.CONST gvrObj)
+                               (L.I32, L.INTCONST (Word64.fromInt i))]})
+            val gvarObj = L.CONST_BITCAST (gvarElem 0, L.PTR L.I8)
+            val gvarObjValue = (L.PTR L.I8, L.CONST gvarObj)
           in
             ([L.GLOBALVAR
-                {name = "_SML_gvr",
+                {name = gvarName,
                  linkage = SOME L.PRIVATE,
                  unnamed_addr = false,
                  constant = false,
                  ty = dataTy,
                  initializer = L.INIT_STRUCT (data, {packed=true}),
-                 align = SOME pointerSize}],
+                 align = SOME (pointerSize ())}],
              foldli (fn (id,i,z) =>
                         ExternSymbol.Map.insert
-                          (z, id, (gvrElem i, {gvr = gvrObjValue})))
+                          (z, id, {aliaseeTy = L.PTR L.I8,
+                                   gvarAddr = gvarElem i,
+                                   gvarArray = gvarObjValue}))
                     ExternSymbol.Map.empty
                     exports,
-             [gvrObj])
+             [gvarObj])
           end
       end
 
@@ -3040,6 +2739,7 @@ print
         val objptr =
             L.CONST_GETELEMENTPTR
               {inbounds = true,
+               ty = L.I8,
                ptr = (L.PTR L.I8,
                       L.CONST_BITCAST ((L.PTR ty, L.SYMBOL label), L.PTR L.I8)),
                indices = [(L.I32, L.INTCONST (Word32.toLarge dataLabelOffset))]}
@@ -3050,30 +2750,38 @@ print
                        constant = not mutable,
                        ty = ty,
                        initializer = L.INIT_STRUCT (data, {packed=true}),
-                       align = SOME TypeLayout2.maxSize}],
+                       align = SOME maxSize}],
          singletonAlias (id, objptr),
+         emptyExternDecls,
          if mutable andalso includesBoxed then [objptr] else nil)
       end
 
-  fun compileTopdata {aliasMap, exportMap} topdata =
+  fun compileTopdata {constEnv, exportMap} topdata =
       case topdata of
-        M.NTEXTERNVAR {id, ty, loc} =>
-        ([L.EXTERN
-            {name = externSymbolToSymbol id,
-             ty = compileTy ty}],
-         emptyAliasMap,
-         nil)
+        M.NTEXTERNVAR {id, ty, provider, loc} =>
+        let
+          val dec =
+              L.EXTERN
+                {name = externSymbolToSymbol id,
+                 ty = compileTy ty}
+        in
+          (nil,
+           emptyAliasMap,
+           singletonExtern (id, provider, SOME dec),
+           nil)
+        end
       | M.NTEXPORTVAR {id, weak, ty, value, loc} =>
         (case ExternSymbol.Map.find (exportMap, id) of
-           SOME (const, _) =>
+           SOME {aliaseeTy, gvarAddr, ...} =>
            [L.ALIAS
               {name = externSymbolToSymbol id,
+               ty = aliaseeTy,
                linkage = NONE,
                unnamed_addr = false,
-               aliasee = const}]
+               aliasee = gvarAddr}]
          | NONE =>
            case (ty, value) of
-             ((_,T.BOXEDty), NONE) => raise Bug.Bug "NTEXPORTVAR"
+             ((_,{tag=T.BOXED,...}), NONE) => raise Bug.Bug "NTEXPORTVAR"
            | _ =>
              [L.GLOBALVAR
                 {name = externSymbolToSymbol id,
@@ -3083,28 +2791,38 @@ print
                  ty = compileTy ty,
                  initializer =
                    case value of
-                     SOME v => L.INIT_CONST (#2 (compileTopConst aliasMap v))
+                     SOME v => L.INIT_CONST (#2 (compileTopConst constEnv v))
                    | NONE => L.ZEROINITIALIZER,
                  align = NONE}],
          emptyAliasMap,
+         singletonExtern (id, I.SELF, NONE),
          nil)
-      | M.NTEXTERNFUN {id, tyvars, argTyList, retTy, loc} =>
-        ([L.DECLARE
-            {linkage = NONE,
-             cconv = NONE,
-             retAttrs = nil,
-             retTy = case retTy of
-                       (_, T.UNITty) => L.VOID
-                     | _ => compileTy retTy,
-             name = externFunSymbolToSymbol id,
-             arguments = map (fn ty => (compileTy ty, [L.INREG])) argTyList,
-             varArg = false,
-             fnAttrs =  [L.UWTABLE],
-             gcname = gcname}],
-         emptyAliasMap,
-         nil)
+      | M.NTEXTERNFUN {id, tyvars, argTyList, retTy, provider, loc} =>
+        let
+          val dec =
+              L.DECLARE
+                {linkage = NONE,
+                 cconv = NONE,
+                 retAttrs = nil,
+                 retTy = case retTy of
+                           (_, {rep = T.DATA T.LAYOUT_SINGLE, ...}) => L.VOID
+                         | _ => compileTy retTy,
+                 name = externFunSymbolToSymbol id,
+                 arguments = map (fn ty => (compileTy ty, [L.INREG])) argTyList,
+                 varArg = false,
+                 fnAttrs =  [L.UWTABLE],
+                 gcname = gcname}
+        in
+          (nil,
+           emptyAliasMap,
+           singletonExternFun (id, provider, dec),
+           nil)
+        end
       | M.NTEXPORTFUN {id, funId, loc} =>
-        (nil, singletonAliasFunEntry (funId, id), nil)
+        (nil,
+         singletonAliasFunEntry (funId, id),
+         emptyExternDecls,
+         nil)
       | M.NTSTRING {id, string, loc} =>
         let
           val len = Word32.fromInt (size string + 1)
@@ -3137,9 +2855,11 @@ print
            singletonAliasExtra
              (id, L.CONST_GETELEMENTPTR
                     {inbounds = true,
+                     ty = ty,
                      ptr = (L.PTR ty, L.SYMBOL label),
                      indices = [(L.I32, L.INTCONST 0w0),
                                 (L.I32, L.INTCONST 0w0)]}),
+           emptyExternDecls,
            nil)
         end
       | M.NTRECORD {id, tyvarKindEnv, recordTy=_, fieldList, isMutable,
@@ -3148,17 +2868,18 @@ print
           (* FIXME : optimize bitmap *)
           val includesBoxed =
               List.exists
-                (fn {fieldExp=(_,(_,T.BOXEDty)),...} => true | _ => false)
+                (fn {fieldExp=(_,(_,{tag=T.BOXED,...})),...} => true
+                  | _ => false)
                 fieldList
           val fields =
               map (fn {fieldExp, fieldSize, fieldIndex} =>
-                      (compileTopConst aliasMap fieldExp,
+                      (compileTopConst constEnv fieldExp,
                        compileTopConstWord32 fieldIndex,
                        compileTopConstWord32 fieldSize))
                   fieldList
           val bitmaps =
               map (fn {bitmapIndex, bitmapExp} =>
-                      (compileInitConst aliasMap bitmapExp,
+                      (compileInitConst constEnv bitmapExp,
                        compileTopConstWord32 bitmapIndex))
                   bitmaps
           val (bitmapIndex, bitmaps) =
@@ -3185,9 +2906,10 @@ print
       | M.NTARRAY {id, elemTy, isMutable, isCoalescable, clearPad, numElements,
                    initialElements, elemSizeExp, tagExp, loc} =>
         let
-          val includesBoxed = case elemTy of (_,T.BOXEDty) => true | _ => false
+          val includesBoxed =
+              case elemTy of (_,{tag=T.BOXED,...}) => true | _ => false
           val initialElements =
-              map (compileInitConst aliasMap) initialElements
+              map (compileInitConst constEnv) initialElements
           val numElements = compileTopConstWord32 numElements
           val elemTy = compileTy elemTy
           val elemSize = compileTopConstWord32 elemSizeExp
@@ -3214,99 +2936,46 @@ print
              includesBoxed = includesBoxed,
              data = initialElements @ filler}
         end
-      | M.NTDUMP {id, dump, ty=_, loc} =>
-        let
-          val {immutables, mutables, first, mutableObjects} =
-              HeapDump.image dump
-          val immutablesLabel = dataLabelToSymbol id
-          val immutablesArrayTy =
-              L.ARRAY (Word32.fromInt (Vector.length immutables), L.PTR L.I8)
-          val mutablesLabel = dataLabelToSymbolAlt id
-          val mutablesArrayTy =
-              L.ARRAY (Word32.fromInt (Vector.length mutables), L.PTR L.I8)
-          fun pointerConst' (HeapDump.MUTABLE p) =
-              L.CONST_GETELEMENTPTR
-                {inbounds = true,
-                 ptr = (L.PTR mutablesArrayTy, L.SYMBOL mutablesLabel),
-                 indices = [(L.I64, L.INTCONST 0w0),
-                            (L.I64, L.INTCONST p)]}
-            | pointerConst' (HeapDump.IMMUTABLE p) =
-              L.CONST_GETELEMENTPTR
-                {inbounds = true,
-                 ptr = (L.PTR immutablesArrayTy, L.SYMBOL immutablesLabel),
-                 indices = [(L.I64, L.INTCONST 0w0),
-                            (L.I64, L.INTCONST p)]}
-          fun pointerConst p =
-              L.CONST_BITCAST ((L.PTR (L.PTR L.I8), pointerConst' p),
-                               L.PTR L.I8)
-          fun elemsInit elems =
-              Vector.foldr
-                (fn (HeapDump.VALUE v, z) =>
-                    (L.PTR L.I8,
-                     L.INIT_CONST (L.CONST_INTTOPTR ((L.I64, L.INTCONST v),
-                                                     L.PTR L.I8)))
-                    :: z
-                  | (HeapDump.POINTER v, z) =>
-                    (L.PTR L.I8, L.INIT_CONST (pointerConst v))
-                    :: z)
-                nil
-                elems
-          val immutablesElems = elemsInit immutables
-          val mutablesElems = elemsInit mutables
-        in
-          ((case immutablesElems of
-              nil => nil
-            | _::_ => 
-              [L.GLOBALVAR
-                 {name = immutablesLabel,
-                  linkage = SOME L.PRIVATE,
-                  unnamed_addr = false,
-                  constant = true,
-                  ty = immutablesArrayTy,
-                  initializer = L.INIT_ARRAY immutablesElems,
-                  align = SOME TypeLayout2.maxSize}])
-           @ (case mutablesElems of
-                nil => nil
-              | _::_ =>
-                [L.GLOBALVAR
-                   {name = mutablesLabel,
-                    linkage = SOME L.PRIVATE,
-                    unnamed_addr = false,
-                    constant = false,
-                    ty = mutablesArrayTy,
-                    initializer = L.INIT_ARRAY mutablesElems,
-                    align = SOME TypeLayout2.maxSize}]),
-           singletonAlias (id, pointerConst first),
-           map pointerConst mutableObjects)
-        end
 
-  fun compileTopdataList env nil = (nil, emptyAliasMap, nil)
+  fun compileTopdataList env nil = (nil, emptyAliasMap, emptyExternDecls, nil)
     | compileTopdataList env (dec::decs) =
       let
-        val (decs1, aliasMap1, roots1) = compileTopdata env dec
-        val (decs2, aliasMap2, roots2) = compileTopdataList env decs
+        val (decs1, aliasMap1, externs1, roots1) = compileTopdata env dec
+        val (decs2, aliasMap2, externs2, roots2) = compileTopdataList env decs
       in
-        (decs1 @ decs2, unionAliasMap (aliasMap1, aliasMap2), roots1 @ roots2)
+        (decs1 @ decs2,
+         unionAliasMap (aliasMap1, aliasMap2),
+         unionExternDecls (externs1, externs2),
+         roots1 @ roots2)
       end
 
-  fun compile {targetTriple} ({topdata, topdecs, toplevel}:M.program) =
+  fun compile {targetTriple} (prelude, {topdata, topdecs, toplevel}:M.program) =
       let
         val (topdecs, toplevel) = MachineCodeRename.rename (topdecs, toplevel)
         val _ = initForeignEntries ()
-        val (decs2, exportMap, roots1) = allocTopArray topdata
-        val env = {aliasMap = emptyAliasMap, exportMap = exportMap}
-        val (_, aliasMap, _) = compileTopdataList env topdata
-        val env = {aliasMap = aliasMap, exportMap = exportMap}
-        val (decs3, _, roots2) = compileTopdataList env topdata
-        val decs4 = List.concat (map (compileTopdec env) topdecs)
-        val decs5 = compileToplevel env (roots1 @ roots2) toplevel
-        val decs1 = declareForeignEntries ()
+        val (topArrayDecs, exportMap, roots1) =
+            allocTopArray (#toplevelName prelude) topdata
+        val env = {constEnv = {aliasMap = emptyAliasMap,
+                               externDecls = emptyExternDecls},
+                   exportMap = exportMap}
+        val (_, aliasMap, externDecls, _) = compileTopdataList env topdata
+        val env = {constEnv = {aliasMap = aliasMap,
+                               externDecls = externDecls},
+                   exportMap = exportMap}
+        val (topDataDecs, _, _, roots2) = compileTopdataList env topdata
+        val topDecDecs = List.concat (map (compileTopdec env) topdecs)
+        val (externDecs2, toplevelDecs, weakDecs) =
+            compileToplevel env (roots1 @ roots2) prelude toplevel
+        val externDecs1 = declareForeignEntries ()
       in
         {
           moduleName = "",
           datalayout = NONE,  (* FIXME *)
           triple = SOME targetTriple,
-          topdecs = decs1 @ decs2 @ decs3 @ decs4 @ decs5
+          topdecs =
+            externDecs1 @ externDecs2
+            @ topDataDecs  @ topArrayDecs
+            @ weakDecs @ toplevelDecs @ topDecDecs
         } : L.program
       end
 

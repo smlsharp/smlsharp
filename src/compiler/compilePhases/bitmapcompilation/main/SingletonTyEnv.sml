@@ -10,56 +10,31 @@ structure SingletonTyEnv2 :> sig
 
   type env
 
-  datatype value =
-      VAR of RecordCalc.varInfo
-    | TAG of Types.ty * RuntimeTypes.tag
-    | SIZE of Types.ty * int
-    | CONST of Word32.word
-    | CAST of value * Types.ty
-  val format_value : value TermFormat.formatter
-
   val emptyEnv : env
   val bindTyvar : env * BoundTypeVarID.id * Types.kind -> env
   val bindTyvars : env * Types.btvEnv -> env
-  val bindVar : env * RecordCalc.varInfo -> env
-  val bindVars : env * RecordCalc.varInfo list -> env
+  val bindVar : env * RecordLayoutCalc.varInfo -> env
+  val bindVars : env * RecordLayoutCalc.varInfo list -> env
 
   val btvEnv : env -> Types.btvEnv
   val constTag : env -> Types.ty -> RuntimeTypes.tag option
-  val constSize : env -> Types.ty -> int option
-  val unalignedSize : env -> Types.ty -> int
-  val findTag : env -> Types.ty -> value
-  val findSize : env -> Types.ty -> value
+  val constSize : env -> Types.ty -> RuntimeTypes.size option
+  val unalignedSize : env -> Types.ty -> RuntimeTypes.size
+  val findTag : env -> Types.ty -> RecordLayoutCalc.value
+  val findSize : env -> Types.ty -> RecordLayoutCalc.value
 
 end =
 struct
 
   structure T = Types
-  type varInfo = RecordCalc.varInfo
+  structure R = RuntimeTypes
+  type varInfo = RecordLayoutCalc.varInfo
 
   datatype entry =
       SIZEty of BoundTypeVarID.id
     | TAGty of BoundTypeVarID.id
 
-  datatype value =
-      VAR of varInfo
-    | TAG of Types.ty * RuntimeTypes.tag
-    | SIZE of Types.ty * int
-    | CONST of Word32.word
-    | CAST of value * Types.ty
-
-  local
-    open TermFormat.FormatComb
-  in
-  fun format_value value =
-      case value of
-        VAR var => RecordCalc.format_varInfo var
-      | TAG (ty, n) => RuntimeTypes.format_tag n
-      | SIZE (ty, n) => begin_ text "size(" $(int n) text ")" end_
-      | CONST n => begin_ text "0wx" $(term (Word32.fmt StringCvt.HEX n)) end_
-      | CAST (value, ty) =>
-        begin_ text "cast(" $(format_value value) text ")" end_
-  end
+  datatype value = datatype RecordLayoutCalc.value
 
   type env =
       {
@@ -136,14 +111,16 @@ struct
         btvEnv
 
   fun constTag ({btvEnv,...}:env) ty =
-      case TypeLayout2.runtimeTy btvEnv ty of
-        NONE => NONE
-      | SOME ty => SOME (TypeLayout2.tagOf ty)
+      case TypeLayout2.propertyOf btvEnv ty of
+        SOME {tag = R.TAG tag, ...} => SOME tag
+      | SOME {tag = R.ANYTAG, ...} => NONE
+      | _ => raise Bug.Bug "constTag"
 
   fun constSize ({btvEnv,...}:env) ty =
-      case TypeLayout2.runtimeTy btvEnv ty of
-        NONE => NONE
-      | SOME ty => SOME (TypeLayout2.sizeOf ty)
+      case TypeLayout2.propertyOf btvEnv ty of
+        SOME {size = R.SIZE size, ...} => SOME size
+      | SOME {size = R.ANYSIZE, ...} => NONE
+      | NONE => raise Bug.Bug "constSize"
 
   fun unalignedSize env ty =
       case constSize env ty of
@@ -161,7 +138,7 @@ struct
               NONE => raise Bug.Bug ("findTag " ^ BoundTypeVarID.toString tid)
             | SOME var => VAR var
           )
-        | _ => raise Bug.Bug ("findTag " ^ Bug.prettyPrint (T.format_ty nil ty))
+        | _ => raise Bug.Bug ("findTag " ^ Bug.prettyPrint (T.format_ty ty))
 
   fun findSize (env as {sizeEnv,...}) ty =
       case constSize env ty of
@@ -171,8 +148,12 @@ struct
           T.BOUNDVARty tid =>
           (
             case BoundTypeVarID.Map.find (sizeEnv, tid) of
-              NONE => raise Bug.Bug
-                            ("findSize btvId:" ^ BoundTypeVarID.toString tid)
+              NONE => 
+              (print "findSize\n";
+               print (Bug.prettyPrint (Types.format_ty ty));
+               raise Bug.Bug
+                       ("findSize btvId:" ^ BoundTypeVarID.toString tid)
+              )
             | SOME var => VAR var
           )
         | _ => raise Bug.Bug "findSize"

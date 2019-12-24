@@ -1,0 +1,9 @@
+val powerCurry = fn : int -> int -> int
+
+val square = fn : int -> int
+
+val Sigma = fn : (int -> int) -> int -> int
+
+val it = 14 : int
+
+val it = 36 : int

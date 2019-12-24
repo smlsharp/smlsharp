@@ -1,0 +1,26 @@
+(* _require "../../../../basis.smi" *)
+(* _require local "../../../../config/main/Version.smi" *)
+_require local "../../../libs/toolchain/main/LLVMUtils.smi"
+_require local "../../../libs/config/main/Config.smi"
+_require local "./ExecutablePath.smi"
+_require "../../../libs/toolchain/main/Filename.smi"
+_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require "./FilenameMap.smi"
+
+structure MainUtils =
+struct
+  exception ObjFileNotFound of Filename.filename
+  exception SmlFileNotFound of Filename.filename
+  val toSmlFile : Filename.filename -> Filename.filename
+  val toAsmFile : Filename.filename -> Filename.filename
+  val toObjFile : Filename.filename -> Filename.filename
+  val toLLFile : Filename.filename -> Filename.filename
+  val toBCFile : Filename.filename -> Filename.filename
+  val toExeTarget : Filename.filename -> Filename.filename
+  val smiSourceToObjSource : 
+      ['a#{fileMap: (unit -> FilenameMap.map) option}.
+       'a -> InterfaceName.source -> InterfaceName.source]
+  val smiSourceToSmlSource : 
+      ['a#{fileMap: (unit -> FilenameMap.map) option}.
+       'a -> InterfaceName.source -> InterfaceName.source option]
+end

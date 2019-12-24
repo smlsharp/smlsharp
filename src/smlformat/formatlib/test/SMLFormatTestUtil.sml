@@ -53,11 +53,22 @@ struct
               failByNotEqual
                   ("StartOfIndent " ^ textLeft, "StartOfIndent " ^ textRight))
     | assertEqualFormatExpression FE.EndOfIndent FE.EndOfIndent = ()
+    | assertEqualFormatExpression (FE.Sequence argLeft) (FE.Sequence argRight) =
+      (assertEqualList assertEqualFormatExpression argLeft argRight
+       handle Fail(NotEqualFailure(textLeft, textRight)) =>
+              failByNotEqual("Sequence " ^ textLeft, "Sequence " ^ textRight))
     | assertEqualFormatExpression left right =
       failByNotEqual(FE.toString left, FE.toString right)
 
   val assertEqualFormatExpressionList =
       assertEqualList assertEqualFormatExpression
+
+  fun normalize nil = nil
+    | normalize (FE.Sequence nil :: t) = normalize t
+    | normalize (FE.Sequence (x :: y) :: t) =
+      x :: normalize (FE.Sequence y :: t)
+    | normalize (h :: t) = h :: normalize t
+
   end
 
 end

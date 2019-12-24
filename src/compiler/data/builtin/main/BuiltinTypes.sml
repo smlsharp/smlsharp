@@ -4,13 +4,11 @@ struct
   structure I = IDCalc
   structure T = Types
   structure Ity = EvalIty
-  structure B = BuiltinTypeNames
+  structure R = RuntimeTypes
   fun bug s = Bug.Bug ("BuiltinTypes: " ^ s)
 
-  val pos = Loc.makePos {fileName="BuiltinTypes.sml", line=0, col=0}
-  val loc = (pos,pos)
-  fun mkLongsymbol path = Symbol.mkLongsymbol path loc
-  fun mkSymbol name = Symbol.mkSymbol name loc
+  fun mkLongsymbol path = Symbol.mkLongsymbol path Loc.noloc
+  fun mkSymbol name = Symbol.mkSymbol name Loc.noloc
 
   type tstrInfo =
       {tfun : I.tfun,
@@ -27,30 +25,10 @@ struct
     | FUN of ty * ty
 
   datatype dtyKind =
-      BUILTIN of BuiltinTypeNames.bty
-    | REF of string * ty option
+      BUILTIN of RuntimeTypes.property
     | DTY of (string * ty option) list
-
-  fun makeConSpec stringTyOptionList =
-      foldr
-      (fn ((string, tyoption), conSpec) =>
-          SymbolEnv.insert(conSpec, mkSymbol string, tyoption)
-      )
-      SymbolEnv.empty
-      stringTyOptionList
-
-  type btyDef =
-      {printName : string list,
-       admitsEq : bool,
-       formals : string list,
-       dtyKind : dtyKind}
-
-  type btyInfo =
-       tstrInfo
-       * T.tyCon
-       * I.ty
-       * T.ty
-       * (I.conInfo * T.conInfo) list
+    | BOOL of string * string
+    | REF of string * ty option
 
   fun evalTy (env as (tvarMap, self)) ty =
       case ty of
@@ -62,11 +40,14 @@ struct
                   )
       | RECORD fields =>
         I.TYRECORD
-          (foldl
+          {ifFlex = false,
+           fields =
+           foldl
              (fn ((label, ty), fields) =>
                  RecordLabel.Map.insert(fields, label, evalTy env ty))
              RecordLabel.Map.empty
-             fields)
+             fields
+          }
       | TUPLE tys =>
         evalTy env (RECORD (RecordLabel.tupleList tys))
       | CON ({tfun,...}, args) =>
@@ -76,293 +57,300 @@ struct
       | FUN(bty1, bty2) =>
         I.TYFUNM([evalTy env bty1], evalTy env bty2)
 
-  fun runtimeTyOfConspec conSpec =
-      if SymbolEnv.isEmpty (SymbolEnv.filter isSome conSpec)
-      then I.BUILTINty B.CONTAGty
-      else I.BUILTINty B.BOXEDty
+  val tstrinfoMap = ref SymbolEnv.empty
 
-  local
-    val builtinConEnvRef = ref ConID.Map.empty : (I.conInfo ConID.Map.map) ref
-  in
-    fun builtinConEnvAdd (id, conInfo) = 
-        builtinConEnvRef := ConID.Map.insert(!builtinConEnvRef, id, conInfo)
-    fun builtinConEnv ()= !builtinConEnvRef
-  end
-  fun makeTfun ({printName, admitsEq, formals, dtyKind}:btyDef) : btyInfo =
+  fun makeTfun typIdOpt {printName, admitsEq, formals, dtyKind} =
       let
-        val longsymbol = mkLongsymbol printName
-        val (dtyKind, runtimeTy, conSpec) =
-            case dtyKind of
-              BUILTIN x => (I.BUILTIN x, I.BUILTINty x, nil)
-            | REF conSpec =>
-              (I.BUILTIN B.REFty, I.BUILTINty B.REFty, [conSpec])
-            | DTY conSpec =>
-              (I.DTY, 
-               runtimeTyOfConspec 
-                 (makeConSpec conSpec), 
-               conSpec)
+        val symbol = mkSymbol printName
         val formalTvars =
             map (fn tvarName =>
                     {symbol = mkSymbol tvarName,
-                     eq = T.NONEQ,
+                     isEq = false,
                      id = TvarID.generate (),
                      lifted = false})
                 formals
         val tvarEnv =
             ListPair.foldlEq
-              (fn (name, tvar, tvarEnv) => SymbolEnv.insert (tvarEnv, mkSymbol name, tvar))
+              (fn (name, tvar, tvarEnv) =>
+                  SymbolEnv.insert (tvarEnv, mkSymbol name, tvar))
               SymbolEnv.empty
               (formals, formalTvars)
-        val id = TypID.generate()
-        val dtySpec =
-            {id = id,
-             iseq = admitsEq,
-             formals = formalTvars,
-             runtimeTy = runtimeTy,
-             conSpec = SymbolEnv.empty,
-             conIDSet = ConID.Set.empty,
-             longsymbol = longsymbol,
-             liftedTys = I.emptyLiftedTys,
-             dtyKind = dtyKind}
-        val tfv = I.mkTfv (I.TFUN_DTY dtySpec)
+        val tfvSpec =
+            {longsymbol = [symbol],
+             id = case typIdOpt of NONE => TypID.generate () | SOME id => id,
+             admitsEq = admitsEq,
+             formals = formalTvars}
+        val tfv = I.mkTfv (I.TFV_SPEC tfvSpec)
         val tfun = I.TFUN_VAR tfv
+        val boundtvars = map (fn tv => (tv, I.UNIV T.emptyProperties)) formalTvars
+        val conList =
+            case dtyKind of
+              BUILTIN _ => nil
+            | DTY l => l
+            | BOOL (t, f) => [(t, NONE), (f, NONE)]
+            | REF x => [x]
+        val conList =
+            map (fn (name, tyOpt) =>
+                    {name = mkSymbol name,
+                     id = ConID.generate (),
+                     ty = Option.map (evalTy (tvarEnv, tfun)) tyOpt})
+                conList
         val conSpec =
-            map
-              (fn (name, NONE) => (name, NONE)
-                | (name, SOME ty) => (name, SOME (evalTy (tvarEnv, tfun) ty)))
-              conSpec
-        val conSpec =
-            foldl (fn ((k,v),z) => SymbolEnv.insert (z, mkSymbol k,v))
+            foldl (fn ({name, ty, ...}, z) => SymbolEnv.insert (z, name, ty))
                   SymbolEnv.empty
-                  conSpec
-        val boundtvars = map (fn tv => (tv, I.UNIV)) formalTvars
-        val returnTy =
-            I.TYCONSTRUCT {tfun=tfun, args = map I.TYVAR formalTvars}
-        val (varE, conIDSet) =
-            SymbolEnv.foldri
-              (fn (name, tyopt, (varE, conIDSet)) =>
+                  conList
+        val conIDSet =
+            foldl (fn ({id, ...}, z) => ConID.Set.add (z, id))
+                  ConID.Set.empty
+                  conList
+        val property =
+            case dtyKind of
+              BUILTIN prop => prop
+            | DTY _ => DatatypeLayout.datatypeLayout conSpec
+            | REF _ => R.recordProp # {rep = R.DATA R.LAYOUT_REF}
+            | BOOL (f, t) =>
+              RuntimeTypes.contagProp
+              # {rep = R.DATA (R.LAYOUT_CHOICE {falseName = f})}
+        val dty =
+            {id = #id tfvSpec,
+             admitsEq = #admitsEq tfvSpec,
+             longsymbol = #longsymbol tfvSpec,
+             formals = #formals tfvSpec,
+             conSpec = conSpec,
+             conIDSet = conIDSet,
+             liftedTys = I.emptyLiftedTys,
+             dtyKind = I.DTY property}
+        val _ = tfv := I.TFUN_DTY dty
+        val returnTy = I.TYCONSTRUCT {tfun=tfun, args = map I.TYVAR formalTvars}
+        val conInfoList =
+            map (fn {name, id, ty} =>
                   let
-                    val conId = ConID.generate()
-                    val conBodyTy =
-                        case tyopt of
+                    val conMonoTy =
+                        case ty of
                           NONE => returnTy
                         | SOME ty => I.TYFUNM ([ty], returnTy)
                     val conTy =
-                        case formalTvars of
-                          nil => conBodyTy
-                        | _ => I.TYPOLY (boundtvars, conBodyTy)
-                    val conInfo = {id=conId, ty=conTy, longsymbol=[name]}
-                    val _ = builtinConEnvAdd (conId, conInfo)
-                  in
-                    (SymbolEnv.insert(varE, name, I.IDCON conInfo),
-                     ConID.Set.add(conIDSet, conId))
-                  end)
-              (SymbolEnv.empty, ConID.Set.empty)
-              conSpec
-        val dtySpec = dtySpec # {conSpec = conSpec}
-        val dtySpec = dtySpec # {conIDSet = conIDSet}
-        val _ = tfv := I.TFUN_DTY dtySpec  
-        val tyCon = Ity.evalTfun Ity.emptyContext tfun
-                    handle e => (print "bug: evalTfun failed 2\n"; raise e)
+                          case boundtvars of
+                            nil => conMonoTy
+                          | _::_ => I.TYPOLY (boundtvars, conMonoTy)
+                    val conInfo : I.conInfo =
+                        {id = id, ty = conTy, longsymbol = [name]}
+                    in
+                      (name, conInfo)
+                    end)
+                conList
+        val varE =
+            foldl (fn ((k,v),z) => SymbolEnv.insert (z, k, I.IDCON v))
+                  SymbolEnv.empty
+                  conInfoList
+        val tyCon =
+            Ity.evalTfun Ity.emptyContext tfun
+            handle e => (print "bug: evalTfun failed 2\n"; raise e)
         val ity =
             case formalTvars of
               nil => I.TYCONSTRUCT {tfun=tfun, args=nil}
             | _::_ => I.TYERROR
         val ty = Ity.evalIty Ity.emptyContext ity
         val conList =
-            map (fn I.IDCON (conInfo as {id, ty, longsymbol}) =>
-                    (conInfo, {id=id, ty = Ity.evalIty Ity.emptyContext ty,
-                               path = longsymbol})
-                  | _ => raise bug "con not found")
-                (SymbolEnv.listItems varE)
+            map (fn (_, conInfo as {id, ty, longsymbol}) =>
+                    (conInfo, {id = id,
+                               ty = Ity.evalIty Ity.emptyContext ty,
+                               path = longsymbol}))
+                conInfoList
+        val tstrInfo =
+            {tfun=tfun, varE=varE, formals=formalTvars, conSpec=conSpec}
       in
-        ({tfun=tfun, varE=varE, formals=formalTvars, conSpec=conSpec},
-         tyCon,
-         ity,
-         ty,
-         conList)
+        tstrinfoMap := SymbolEnv.insert (!tstrinfoMap, symbol, tstrInfo);
+        (tstrInfo, tyCon, ity, ty, conList)
       end
 
-  val (intTstrInfo, intTyCon, intITy, intTy, _) =
-      makeTfun
-        {printName = ["int"],
+  val (int32TstrInfo, int32TyCon, int32ITy, int32Ty, _) =
+      makeTfun NONE
+        {printName = "int32",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.INT32ty}
-
-  val (indexTstrInfo, indexTyCon, indexITy, indexTy, _) =
-      makeTfun
-        {printName = ["index"],
-         admitsEq = true,
-         formals = nil,
-         dtyKind = BUILTIN B.INT32ty}
+         dtyKind = BUILTIN R.int32Prop}
 
   val (int8TstrInfo, int8TyCon, int8ITy, int8Ty, _) =
-      makeTfun
-        {printName = ["int8"],
+      makeTfun NONE
+        {printName = "int8",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.INT8ty}
+         dtyKind = BUILTIN R.int8Prop}
 
   val (int16TstrInfo, int16TyCon, int16ITy, int16Ty, _) =
-      makeTfun
-        {printName = ["int16"],
+      makeTfun NONE
+        {printName = "int16",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.INT16ty}
+         dtyKind = BUILTIN R.int16Prop}
 
   val (int64TstrInfo, int64TyCon, int64ITy, int64Ty, _) =
-      makeTfun
-        {printName = ["int64"],
+      makeTfun NONE
+        {printName = "int64",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.INT64ty}
+         dtyKind = BUILTIN R.int64Prop}
 
   val (intInfTstrInfo, intInfTyCon, intInfITy, intInfTy, _) =
-      makeTfun
-        {printName = ["intInf"],
+      makeTfun NONE
+        {printName = "intInf",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.INTINFty}
+         dtyKind = BUILTIN R.recordProp}
 
-  val (wordTstrInfo, wordTyCon, wordITy, wordTy, _) =
-      makeTfun
-        {printName = ["word"],
+  val (word32TstrInfo, word32TyCon, word32ITy, word32Ty, _) =
+      makeTfun NONE
+        {printName = "word32",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.WORD32ty}
+         dtyKind = BUILTIN R.word32Prop}
 
   val (word8TstrInfo, word8TyCon, word8ITy, word8Ty, _) =
-      makeTfun
-        {printName = ["word8"],
+      makeTfun NONE
+        {printName = "word8",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.WORD8ty}
+         dtyKind = BUILTIN R.word8Prop}
 
   val (word16TstrInfo, word16TyCon, word16ITy, word16Ty, _) =
-      makeTfun
-        {printName = ["word16"],
+      makeTfun NONE
+        {printName = "word16",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.WORD16ty}
+         dtyKind = BUILTIN R.word16Prop}
 
   val (word64TstrInfo, word64TyCon, word64ITy, word64Ty, _) =
-      makeTfun
-        {printName = ["word64"],
+      makeTfun NONE
+        {printName = "word64",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.WORD64ty}
+         dtyKind = BUILTIN R.word64Prop}
 
   val (charTstrInfo, charTyCon, charITy, charTy, _) =
-      makeTfun
-        {printName = ["char"],
+      makeTfun NONE
+        {printName = "char",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.CHARty}
+         dtyKind = BUILTIN R.word8Prop}
 
   val (stringTstrInfo, stringTyCon, stringITy, stringTy, _) =
-      makeTfun
-        {printName = ["string"],
+      makeTfun NONE
+        {printName = "string",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.STRINGty}
+         dtyKind = BUILTIN R.recordProp}
 
-  val (realTstrInfo, realTyCon, realITy, realTy, _) =
-      makeTfun
-        {printName = ["real"],
+  val (real64TstrInfo, real64TyCon, real64ITy, real64Ty, _) =
+      makeTfun NONE
+        {printName = "real64",
          admitsEq = false,
          formals = nil,
-         dtyKind = BUILTIN B.REAL64ty}
+         dtyKind = BUILTIN R.real64Prop}
 
   val (real32TstrInfo, real32TyCon, real32ITy, real32Ty, _) =
-      makeTfun
-        {printName = ["real32"],
+      makeTfun NONE
+        {printName = "real32",
          admitsEq = false,
          formals = nil,
-         dtyKind = BUILTIN B.REAL32ty}
+         dtyKind = BUILTIN R.real32Prop}
 
   val (unitTstrInfo, unitTyCon, unitITy, unitTy, _) =
-      makeTfun
-        {printName = ["unit"],
+      makeTfun NONE
+        {printName = "unit",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.UNITty}
+         dtyKind = BUILTIN R.unitProp}
 
   val (ptrTstrInfo, ptrTyCon, _, _, _) =
-      makeTfun
-        {printName = ["ptr"],
+      makeTfun NONE
+        {printName = "ptr",
          admitsEq = true,
          formals = ["a"],
-         dtyKind = BUILTIN B.PTRty}
+         dtyKind = BUILTIN R.ptrProp}
 
   val unitPtr = CON (ptrTstrInfo, [CON (unitTstrInfo, nil)])
 
   val (codeptrTstrInfo, codeptrTyCon, codeptrITy, codeptrTy, _) =
-      makeTfun
-        {printName = ["codeptr"],
+      makeTfun NONE
+        {printName = "codeptr",
          admitsEq = true,
          formals = nil,
-         dtyKind = BUILTIN B.CODEPTRty}
+         dtyKind = BUILTIN R.codeptrProp}
 
   val (arrayTstrInfo, arrayTyCon, _, _, _) =
-      makeTfun
-        {printName = ["array"],
+      makeTfun (SOME T.arrayTypId)
+        {printName = "array",
          admitsEq = true,
          formals = ["a"],
-         dtyKind = BUILTIN B.ARRAYty}
+         dtyKind = BUILTIN R.recordProp}
 
   val (vectorTstrInfo, vectorTyCon, _, _, _) =
-      makeTfun
-        {printName = ["vector"],
+      makeTfun NONE
+        {printName = "vector",
          admitsEq = true,
          formals = ["a"],
-         dtyKind = BUILTIN B.VECTORty}
+         dtyKind = BUILTIN R.recordProp}
 
   val (exnTstrInfo, exnTyCon, exnITy, exnTy, _) =
-      makeTfun
-        {printName = ["exn"],
+      makeTfun NONE
+        {printName = "exn",
          admitsEq = false,
          formals = nil,
-         dtyKind = BUILTIN B.EXNty}
+         dtyKind = BUILTIN R.recordProp}
 
   val (boxedTstrInfo, boxedTyCon, boxedITy, boxedTy, _) =
-      makeTfun
-        {printName = ["boxed"],
+      makeTfun NONE
+        {printName = "boxed",
          admitsEq = false,
          formals = nil,
-         dtyKind = BUILTIN B.BOXEDty}
+         dtyKind = BUILTIN R.boxedProp}
 
   val (exntagTstrInfo, exntagTyCon, exntagITy, exntagTy, _) =
-      makeTfun
-        {printName = ["exntag"],
+      makeTfun NONE
+        {printName = "exntag",
          admitsEq = false,
          formals = nil,
-         dtyKind = BUILTIN B.EXNTAGty}
+         dtyKind = BUILTIN R.recordProp}
 
   val (contagTstrInfo, contagTyCon, contagITy, contagTy, _) =
-      makeTfun
-        {printName = ["contag"],
+      makeTfun NONE
+        {printName = "contag",
          admitsEq = false,
          formals = nil,
-         dtyKind = BUILTIN B.CONTAGty}
+         dtyKind = BUILTIN RuntimeTypes.contagProp}
 
-  val (refTstrInfo, refTyCon, _, _, conList) =
-      makeTfun
-        {printName = ["ref"],
+  val _ = (* for opaque record/tuple types *)
+      makeTfun NONE
+        {printName = "record",
+         admitsEq = false,
+         formals = nil,
+         dtyKind = BUILTIN RuntimeTypes.recordProp}
+
+  val (sizeTstrInfo, sizeTyCon, sizeITy, sizeTy, _) =
+      makeTfun NONE
+        {printName = "size",
          admitsEq = true,
          formals = ["a"],
-         dtyKind = REF ("ref", SOME(TVAR "a"))}
+         dtyKind = BUILTIN R.uintptrProp}
+
+  val (refTstrInfo, refTyCon, _, _, conList) =
+      makeTfun (SOME T.refTypId)
+        {printName = "ref",
+         admitsEq = true,
+         formals = ["a"],
+         dtyKind = REF ("ref", SOME (TVAR "a"))}
 
   val (refICConInfo, refTPConInfo) =
       case conList of [x] => x | _ => raise bug "conList ref"
 
   (* datatype bool = false | true *)
   val (boolTstrInfo, boolTyCon, boolITy, boolTy, conList) =
-      makeTfun
-        {printName = ["bool"],
+      makeTfun NONE
+        {printName = "bool",
          admitsEq = true,
          formals = nil,
-         dtyKind = DTY [("false", NONE), ("true", NONE)]}
+         dtyKind = BOOL ("false", "true")}
 
   val ((falseICConInfo, falseTPConInfo),
        (trueICConInfo, trueTPConInfo)) =
@@ -370,8 +358,8 @@ struct
 
   (* datatype 'a list = :: of 'a * 'a list | nil *)
   val (listTstrInfo, listTyCon, _, listTy, conList) =
-      makeTfun
-        {printName = ["list"],
+      makeTfun NONE
+        {printName = "list",
          admitsEq = true,
          formals = ["a"],
          dtyKind = DTY [("::", SOME(TUPLE [TVAR "a", SELF [TVAR "a"]])),
@@ -383,8 +371,8 @@ struct
 
   (* datatype 'a option = NONE | SOME of 'a *)
   val (optionTstrInfo, optionTyCon, _, _, conList) =
-      makeTfun
-        {printName = ["option"],
+      makeTfun NONE
+        {printName = "option",
          admitsEq = true,
          formals = ["a"],
          dtyKind = DTY [("NONE", NONE),
@@ -414,34 +402,7 @@ struct
   val ChrExExn = evalExn (["Chr"], NONE)
 
   fun findTstrInfo name =
-      case name of
-        "index" => SOME indexTstrInfo
-      | "int8" => SOME int8TstrInfo
-      | "int16" => SOME int16TstrInfo
-      | "int" => SOME intTstrInfo
-      | "int64" => SOME int64TstrInfo
-      | "intInf" => SOME intInfTstrInfo
-      | "word8" => SOME word8TstrInfo
-      | "word16" => SOME word16TstrInfo
-      | "word" => SOME wordTstrInfo
-      | "word64" => SOME word64TstrInfo
-      | "char" => SOME charTstrInfo
-      | "string" => SOME stringTstrInfo
-      | "real" => SOME realTstrInfo
-      | "real32" => SOME real32TstrInfo
-      | "unit" => SOME unitTstrInfo
-      | "ptr" => SOME ptrTstrInfo
-      | "codeptr" => SOME codeptrTstrInfo
-      | "array" => SOME arrayTstrInfo
-      | "vector" => SOME vectorTstrInfo
-      | "exn" => SOME exnTstrInfo
-      | "boxed" => SOME boxedTstrInfo
-      | "exntag" => SOME exntagTstrInfo
-      | "ref" => SOME refTstrInfo
-      | "bool" => SOME boolTstrInfo
-      | "list" => SOME listTstrInfo
-      | "option" => SOME optionTstrInfo
-      | _ => NONE
+      SymbolEnv.find (!tstrinfoMap, name)
 
   (* 以下は，builtin typesか否かの判定に使用 *)
   val _ = TypID.setReservedId ()

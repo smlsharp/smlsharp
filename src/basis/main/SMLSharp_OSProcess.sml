@@ -10,6 +10,8 @@ infix 6 + -
 infixr 5 ::
 infix 4 = <> > >= < <=
 infix 3 :=
+val ! = SMLSharp_Builtin.General.!
+val op := = SMLSharp_Builtin.General.:=
 
 structure SMLSharp_OSProcess =
 struct

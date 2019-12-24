@@ -1,0 +1,2 @@
+_require "./003_interface2.smi"
+val x : int

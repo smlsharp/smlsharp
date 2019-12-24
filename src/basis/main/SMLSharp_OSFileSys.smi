@@ -9,7 +9,7 @@ _require local "./List.smi"
 
 structure SMLSharp_OSFileSys =
 struct
-  type dirstream (= boxed)
+  type dirstream (= {})
   val openDir : string -> dirstream
   val readDir : dirstream -> string option
   val rewindDir : dirstream -> unit

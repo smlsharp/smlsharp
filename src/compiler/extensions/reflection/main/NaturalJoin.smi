@@ -1,10 +1,16 @@
 _require local "../../../../basis.smi"
+_require local "../../debug/main/Bug.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
 _require "./ReifiedTerm.ppg.smi"
+_require local "./ReifiedTy.ppg.smi"
+_require local "./PartialDynamic.smi"
 
 structure NaturalJoin =
 struct
   exception NaturalJoin
-
-  val naturalJoin 
-    : ReifiedTerm.reifiedTerm * ReifiedTerm.reifiedTerm -> ReifiedTerm.reifiedTerm
+  exception GreaterEq
+  val naturalJoin : ReifiedTerm.reifiedTerm * ReifiedTerm.reifiedTerm -> ReifiedTerm.reifiedTerm
+  val extend : ReifiedTerm.reifiedTerm * ReifiedTerm.reifiedTerm -> ReifiedTerm.reifiedTerm
+  val override : ReifiedTerm.reifiedTerm * ReifiedTerm.reifiedTerm -> ReifiedTerm.reifiedTerm
+  val greaterEq : ReifiedTerm.reifiedTerm * ReifiedTerm.reifiedTerm -> bool
 end

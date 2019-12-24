@@ -60,7 +60,10 @@ signature PARSE_GEN_PARSER =
 
 signature PARSE_GEN =
   sig
+(* 2019-07-06: Ueno: add -s and -p prefix command line options
     val parseGen : string -> unit
+*)
+    val parseGen : string -> {p:string option, s:bool} -> unit
   end;
 
 signature GRAMMAR =

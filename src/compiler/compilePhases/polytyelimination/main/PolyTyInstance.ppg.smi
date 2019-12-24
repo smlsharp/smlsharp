@@ -1,0 +1,31 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../data/types/main/DynamicKind.ppg.smi"
+
+structure PolyTyInstance =
+struct
+
+  datatype instance =
+      EXTERN of DynamicKind.dynamicKind
+    | INST of BoundTypeVarID.Set.set * Types.ty
+    | UNDEF
+
+  datatype inst =
+     MONO of Types.ty
+   | POLY of DynamicKind.dynamicKind
+   | EMPTY
+
+  val format_instance : instance -> SMLFormat.FormatExpression.expression list
+  val format_inst : inst -> SMLFormat.FormatExpression.expression list
+
+  val format_instancesMap
+      : instance list BoundTypeVarID.Map.map
+        -> SMLFormat.FormatExpression.expression list
+  val format_instMap
+      : inst BoundTypeVarID.Map.map
+        -> SMLFormat.FormatExpression.expression list
+
+end

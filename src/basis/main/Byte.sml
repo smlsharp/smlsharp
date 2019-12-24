@@ -29,7 +29,7 @@ struct
   fun bytesToString vec =
       let
         val len = Vector.length vec
-        val buf = String.alloc len   (* raise Size if len = 0x0fffffff *)
+        val buf = String.alloc len
       in
         Array.copy_unsafe (Vector.castToArray vec, 0,
                            String.castToWord8Array buf, 0, len);
@@ -39,16 +39,17 @@ struct
   fun stringToBytes vec =
       let
         val len = String.size vec
-        val buf = Array.alloc_unsafe len
+        val buf = Vector.alloc_unsafe len
       in
-        Array.copy_unsafe (String.castToWord8Array vec, 0, buf, 0, len);
-        Array.turnIntoVector buf
+        Array.copy_unsafe (String.castToWord8Array vec, 0,
+                           Vector.castToArray buf, 0, len);
+        buf
       end
 
   fun unpackStringVec slice =
       let
         val (vec, start, length) = Word8VectorSlice.base slice
-        val buf = String.alloc length  (* raise Size if len = 0x0fffffff *)
+        val buf = String.alloc length
       in
         Array.copy_unsafe (Vector.castToArray vec, start,
                            String.castToWord8Array buf, 0, length);
@@ -58,7 +59,7 @@ struct
   fun unpackString slice =
       let
         val (ary, start, length) = Word8ArraySlice.base slice
-        val buf = String.alloc length  (* raise Size if len = 0x0fffffff *)
+        val buf = String.alloc length
       in
         Array.copy_unsafe (ary, start, String.castToWord8Array buf, 0, length);
         buf

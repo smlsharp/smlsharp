@@ -4,6 +4,8 @@ infix 3 := o
 val op - = Position.-
 val op < = SMLSharp_Builtin.Int32.lt
 val op ^ = String.^
+val op := = SMLSharp_Builtin.General.:=
+val ! = SMLSharp_Builtin.General.!
 fun ignore x = ()
 structure SysWordImp = SMLSharp_Builtin.Word32
 structure SysInt = Int32
@@ -39,8 +41,8 @@ end
 
 local
     structure SysWord = SysWordImp
-    structure Int = IntImp
-    structure Position = PositionImp
+    (* structure Int = IntImp *)
+    (* structure Position = PositionImp *)
 in
 (*
 structure POSIX_IO =

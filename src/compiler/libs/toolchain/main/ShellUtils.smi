@@ -1,0 +1,21 @@
+_require local "../../../libs/config/main/Config.smi"
+(* _require local "../../../data/symbols/main/Loc.smi" *)
+_require local "../../../data/control/main/Control.smi"
+
+_require "../../../../basis.smi"
+_require "./Filename.smi"
+_require local "./TempFile.smi"
+_require local "./CoreUtils.smi"
+
+structure ShellUtils =
+struct
+  type output = {stdout : Filename.filename, stderr : Filename.filename}
+  exception Fail of {command : string,
+                     status : OS.Process.status,
+                     output : output}
+  datatype arg = ARG of string | EXPAND of string
+  val join : arg list -> string
+  val split : {pre : arg list, args : arg list, post : arg list}
+              -> arg list * arg list
+  val system : arg list -> output
+end

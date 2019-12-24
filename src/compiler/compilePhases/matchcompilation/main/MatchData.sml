@@ -8,7 +8,7 @@ struct
 local
   structure A = AbsynConst
   structure T = Types
-  structure TC = TypedCalc
+  (* structure TC = TypedCalc *)
   structure RC = RecordCalc
   structure BT = BuiltinTypes
 in
@@ -25,15 +25,11 @@ in
       | orderRadix StringCvt.OCT = 1
       | orderRadix StringCvt.DEC = 2
       | orderRadix StringCvt.HEX = 4
-    fun compareInt ({radix=r1, digits=d1}, {radix=r2, digits=d2}) =
-        case Int.compare (orderRadix r1, orderRadix r2) of
-          EQUAL => String.compare (d1, d2)
-        | order => order
-    fun compare (A.INT (x,_), A.INT (y,_)) = compareInt (x, y)
-      | compare (A.WORD (x,_), A.WORD (y,_)) = compareInt (x, y)
-      | compare (A.STRING (s1,_), A.STRING (s2,_)) = String.compare (s1, s2)
-      | compare (A.REAL (r1,_), A.REAL (r2,_)) = String.compare (r1, r2)
-      | compare (A.CHAR (c1,_), A.CHAR (c2,_)) = Char.compare (c1, c2)
+    fun compare (A.INT x, A.INT y) = IntInf.compare (x, y)
+      | compare (A.WORD x, A.WORD y) = IntInf.compare (x, y)
+      | compare (A.STRING s1, A.STRING s2) = String.compare (s1, s2)
+      | compare (A.REAL r1, A.REAL r2) = String.compare (r1, r2)
+      | compare (A.CHAR c1, A.CHAR c2) = Char.compare (c1, c2)
       | compare (A.INT _, _) = LESS
       | compare (A.STRING _, A.REAL _) = LESS
       | compare (_, _) = GREATER
@@ -143,7 +139,7 @@ in
   | UnivNode of RC.varInfo * tree
 
   val unitExp =
-      RC.RCCONSTANT {const=A.UNITCONST Loc.noloc, ty=BT.unitTy, loc=Loc.noloc}
+      RC.RCCONSTANT {const=RC.CONST A.UNITCONST, ty=BT.unitTy, loc=Loc.noloc}
 
   val expDummy = unitExp
 end

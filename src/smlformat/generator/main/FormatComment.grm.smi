@@ -1,0 +1,69 @@
+_require local "../../../basis.smi"
+_require local "../../../ml-yacc-lib.smi"
+_require "./Ast.smi"
+_require "./FormatTemplate.smi"
+
+structure FormatCommentLrVals =
+struct
+  structure Parser =
+  struct
+    type token (= boxed)
+    type stream (= ref)
+    type result = Ast.parse_result
+    type pos = int
+    type arg = unit
+    exception ParseError
+    val makeStream : {lexer:unit -> token} -> stream
+    val consStream : token * stream -> stream
+    val getStream : stream -> token * stream
+    val sameToken : token * token -> bool
+    val parse : {lookahead:int,
+                 stream:stream,
+                 error: (string * pos * pos -> unit),
+                 arg: arg}
+                -> result * stream
+  end
+  structure Tokens =
+  struct
+    type pos = Parser.pos
+    type token = Parser.token
+val ASSOCINDICATOR: ({ cut:bool,strength:int,direction:FormatTemplate.assocDirection } ) *  pos * pos -> token
+val FORMATINDICATOR: ({ space:bool,newline:{ priority:FormatTemplate.priority }  option } ) *  pos * pos -> token
+val STARTOFINDENT: (int) *  pos * pos -> token
+val NEWLINE:  pos * pos -> token
+val LOCALFORMATTAG: (string) *  pos * pos -> token
+val FORMATTAG:  pos * pos -> token
+val FORMATEXTERNTAG:  pos * pos -> token
+val HEADERTAG:  pos * pos -> token
+val DESTINATIONTAG:  pos * pos -> token
+val FORMATPARAMSTAG:  pos * pos -> token
+val FORMATTERTAG:  pos * pos -> token
+val PREFIXTAG:  pos * pos -> token
+val DITTOTAG:  pos * pos -> token
+val FORMATCOMMENTEND:  pos * pos -> token
+val FORMATCOMMENTSTART:  pos * pos -> token
+val EQUALOP:  pos * pos -> token
+val DOT:  pos * pos -> token
+val INT: (string) *  pos * pos -> token
+val ASTERISK:  pos * pos -> token
+val WILD:  pos * pos -> token
+val DOTDOTDOT:  pos * pos -> token
+val STRING: (string) *  pos * pos -> token
+val RBRACKET:  pos * pos -> token
+val LBRACKET:  pos * pos -> token
+val RBRACE:  pos * pos -> token
+val LBRACE:  pos * pos -> token
+val RPAREN:  pos * pos -> token
+val LPAREN:  pos * pos -> token
+val PREFIXEDLABEL: (string) *  pos * pos -> token
+val ID: (string) *  pos * pos -> token
+val COLON:  pos * pos -> token
+val COMMA:  pos * pos -> token
+val CONTEXT_DEFINING_WITH_INNER: (unit) *  pos * pos -> token
+val CONTEXT_DEFINING: (unit) *  pos * pos -> token
+val CONTEXT_INNER: (unit) *  pos * pos -> token
+val CONTEXT_HEADER: (unit) *  pos * pos -> token
+val SPECIAL: (char) *  pos * pos -> token
+val EOF:  pos * pos -> token
+  end
+end

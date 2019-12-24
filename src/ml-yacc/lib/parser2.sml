@@ -130,7 +130,7 @@ functor LrParserFun(type arg type pos type svalue)  =
       type arg = arg
       type pos = pos
       type svalue = svalue
-      structure LrTable = LrTable
+      (* structure LrTable = LrTable *)
       fun eqT (LrTable.T i, LrTable.T i') = i = i'
 
       structure Token : TOKEN =

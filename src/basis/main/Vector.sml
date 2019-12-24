@@ -6,17 +6,29 @@
  * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
 
-type 'a elem = 'a
+structure Seq =
+struct
+  type 'a seq = 'a vector
+  type 'a elem = 'a
+  val castToArray = SMLSharp_Builtin.Vector.castToArray
+  val length = SMLSharp_Builtin.Vector.length
+  val alloc = SMLSharp_Builtin.Vector.alloc
+  val alloc_unsafe = SMLSharp_Builtin.Vector.alloc_unsafe
+  fun empty () = alloc_unsafe 0
+  type 'a vector = 'a vector
+  val castVectorToArray = SMLSharp_Builtin.Vector.castToArray
+  val allocVector_unsafe = SMLSharp_Builtin.Vector.alloc_unsafe
+  val vectorLength = SMLSharp_Builtin.Vector.length
+end
 
-(* object size occupies 26 bits of 32-bit object header,
- * and the size of the maximum value is 8 bytes.
- * so we take 2^23 for maxLen. *)
-val maxLen = 0x007fffff
-
-_use "./Vector_common.sml"
+_use "./Array_common.sml"
 
 structure Vector =
 struct
-  open Vector_common
+  open Array_common
   type 'a vector = 'a vector
+  val sub = SMLSharp_Builtin.Vector.sub
+  (* object size occupies 28 bits of 32-bit object header.
+   * Actual maximum size depends on the element size. *)
+  val maxLen = 0x0fffffff
 end

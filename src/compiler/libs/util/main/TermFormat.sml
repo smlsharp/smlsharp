@@ -54,6 +54,8 @@ structure TermFormat :> sig
       : ('a formatter * format * format) -> 'a option formatter
   val formatOptionalOption
       : ('a formatter * format * format) -> 'a option formatter
+  val formatOption
+      : ('a formatter * format * format) -> 'a option formatter
 
   (*
    * formatting maps:
@@ -82,6 +84,7 @@ structure TermFormat :> sig
 
   (* formatting records and tuples *)
   val formatRecordExp : 'a formatter -> 'a RecordLabel.Map.map formatter
+  val formatRecordExpToJson : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
   val formatDummyRecordTy : 'a formatter -> 'a RecordLabel.Map.map formatter
 
@@ -106,8 +109,7 @@ structure TermFormat :> sig
   val formatIfEmptyFormat : (format * format) -> format -> format
 
   (* formatting bound type variables *)
-  type 'kind btvEnv'
-  type 'kind btvEnv = 'kind btvEnv' formatParam
+  type 'kind btvEnv
   val emptyBtvEnv : 'k btvEnv
   val makeBtvEnv : 'k BoundTypeVarID.Map.map -> 'k btvEnv
   val extendBtvEnv : 'k btvEnv -> 'k BoundTypeVarID.Map.map -> 'k btvEnv
@@ -138,6 +140,8 @@ structure TermFormat :> sig
   val format_word_hex_ML : word -> format
   val format_string_ML : string -> format
   val format_char_ML : char -> format
+  val format_Real64_ML : Real64.real -> format
+  val format_Real32_ML : Real32.real -> format
 
   val format_Int64_dec_C : Int64.int -> format
   val format_Int32_dec_C : Int32.int -> format
@@ -239,7 +243,7 @@ struct
   fun term s = Term (size s, s)
   val commaSpace = [term ",", sp]
   val comma = [term ","]
-  fun nest level l = StartOfIndent level :: l @ [EndOfIndent]
+  fun nest level l = StartOfIndent level :: Sequence l :: EndOfIndent :: nil
 
   (**** combinators for writing format expressions by hand ****)
 
@@ -253,13 +257,13 @@ struct
     fun space (A (fmt, last)) k = k (A (fn t => fmt (sp :: t), last))
     fun dspace (A (fmt, last)) k = k (A (fn t => fmt (dsp :: t), last))
     fun newline (A (fmt, last)) k = k (A (fn t => fmt (Newline :: t), last))
-    fun $ (A (fmt, last)) exp k = k (A (fn t => fmt (exp @ t), last))
+    fun $ (A (fmt, last)) exp k = k (A (fn t => fmt (Sequence exp :: t), last))
     fun guardEnd (A (fmt, last)) assoc result k =
         k (A (fn t => fmt (Guard (assoc, result) :: t), last))
     fun guard_ accum assoc k =
         k (A (fn t => t, guardEnd accum assoc))
     fun nestEnd (A (fmt, last)) level result k =
-        k (A (fn t => fmt (nest level result @ t), last))
+        k (A (fn t => fmt (Sequence (nest level result) :: t), last))
     fun nest_ accum level k =
         k (A (fn t => t, nestEnd accum level))
   end
@@ -267,14 +271,14 @@ struct
 
   fun intersperse sep nil = nil
     | intersperse sep [x] = x
-    | intersperse sep (h::t) = h @ sep @ intersperse sep t
+    | intersperse sep (h::t) = Sequence h :: Sequence sep :: intersperse sep t
 
   (**** formatters for basic types ****)
   fun formatEnclosedList (formatter, lparen, comma, rparen) elems =
       begin_
         $lparen
         guard_ cutAssoc
-          $(intersperse (comma @ [sp]) (map formatter elems))
+          $(intersperse [Sequence comma, sp] (map formatter elems))
           $rparen
         end_
       end_
@@ -301,7 +305,7 @@ struct
         begin_
           $lparen
           guard_ cutAssoc
-            $(intersperse (comma @ [sp]) (map formatter elems))
+            $(intersperse [Sequence comma, sp] (map formatter elems))
             $ellipsis
             $rparen
           end_
@@ -310,14 +314,15 @@ struct
         begin_
           $lparen
           guard_ cutAssoc
-            $(intersperse (comma @ [sp]) (map formatter elems))
+            $(intersperse [Sequence comma, sp] (map formatter elems))
             $rparen
           end_
         end_
     end
 
 
-  fun formatAppList (formatter, lparen, comma, rparen) nil = lparen @ rparen
+  fun formatAppList (formatter, lparen, comma, rparen) nil =
+      Sequence lparen :: rparen
     | formatAppList (formatter, lparen, comma, rparen) [x] = formatter x
     | formatAppList args elems = formatEnclosedList args elems
 
@@ -330,20 +335,28 @@ struct
 
   fun formatDeclList (formatter, head, sep) nil = nil
     | formatDeclList (formatter, head, sep) (elem::elems) =
-      head @ formatter elem
-      @ List.concat (map (fn x => sep @ formatter x) elems)
+      Sequence head :: Sequence (formatter elem)
+      :: map (fn x => Sequence (Sequence sep :: formatter x)) elems
 
-  fun formatCaseList (formatter, head, sep, last) nil = head @ last
+  fun formatCaseList (formatter, head, sep, last) nil = Sequence head :: last
     | formatCaseList (formatter, head, sep, last) elems =
-      head @ foldr (fn (x,z) => formatter x @ sep @ z) last elems
+      Sequence head
+      :: foldr (fn (x,z) => Sequence (formatter x) :: Sequence sep :: z)
+               last elems
 
-  fun formatEnclosedOption (formatter, lparen, rparen) NONE = lparen @ rparen
+  fun formatEnclosedOption (formatter, lparen, rparen) NONE =
+      Sequence lparen :: rparen
     | formatEnclosedOption (formatter, lparen, rparen) (SOME x) =
-      lparen @ formatter x @ rparen
+      Sequence lparen :: Sequence (formatter x) :: rparen
 
   fun formatOptionalOption (formatter, lparen, rparen) NONE = nil
     | formatOptionalOption (formatter, lparen, rparen) (SOME x) =
-      lparen @ formatter x @ rparen
+      Sequence lparen :: Sequence (formatter x) :: rparen
+
+  fun formatOption (formatter, lparen, rparen) NONE = [term "NONE"]
+    | formatOption (formatter, lparen, rparen) (SOME x) =
+      term "SOME(" :: Sequence lparen :: Sequence (formatter x)
+      :: Sequence rparen :: term ")" :: nil
 
   fun keyValuePair (key, mapsto, value) =
       begin_
@@ -369,11 +382,17 @@ struct
                         args
                         map
 
+  fun formatEnclosedLabelMapToJson args map =
+      formatEnclosedMap RecordLabel.format_jsonLabel
+                        RecordLabel.Map.listItemsi
+                        args
+                        map
+
   fun formatEnclosedList (formatter, lparen, comma, rparen) elems =
       begin_
         $lparen
         guard_ cutAssoc
-          $(intersperse (comma @ [sp]) (map formatter elems))
+          $(intersperse [Sequence comma, sp] (map formatter elems))
           $rparen
         end_
       end_
@@ -434,6 +453,11 @@ struct
              (formatter, [term "{"], [term ","], [dsp, term "="], [term "}"])
              smap
 
+  fun formatRecordExpToJson formatter smap =
+      formatEnclosedLabelMapToJson
+        (formatter, [term "{"], [term ","], [dsp, term ":"], [term "}"])
+        smap
+
   fun formatRecordTy formatter smap =
       if RecordLabel.isTupleMap smap
       then begin_ guard_ tupleAssoc guard_ tupleInnerAssoc
@@ -489,20 +513,13 @@ struct
 
   (**** formatting bound type variables ****)
 
-  type 'kind btvEnv' =
+  type 'kind btvEnv =
        {
          base : int,
          env : (int * 'kind) BoundTypeVarID.Map.map
        }
-  type 'kind btvEnv = 'kind btvEnv' formatParam
 
-  val emptyBtvEnv' = {base=0, env=BoundTypeVarID.Map.empty} : 'kind btvEnv'
-  val emptyBtvEnv = nil : 'kind btvEnv
-
-  fun getBtvEnv nil = emptyBtvEnv'
-    | getBtvEnv [btvEnv] = btvEnv
-    | getBtvEnv _ =
-      raise Bug.Bug "TermFormat.getBtvEnv: illgal btvEnv parameter"
+  val emptyBtvEnv = {base=0, env=BoundTypeVarID.Map.empty} : 'kind btvEnv
 
   fun listItemsiWithOrder (map, order) =
       let
@@ -516,19 +533,19 @@ struct
         loop (map, order)
       end
 
-  fun add ({base, env} : 'k btvEnv') (k, v) =
+  fun add ({base, env} : 'k btvEnv) (k, v) =
       {base = base + 1, env = BoundTypeVarID.Map.insert (env, k, (base, v))}
 
   fun extendBtvEnv env btvMap =
-      [BoundTypeVarID.Map.foldli (fn (k, v, env) => add env (k, v))
-                                 (getBtvEnv env) btvMap]
+      BoundTypeVarID.Map.foldli (fn (k, v, env) => add env (k, v))
+                                env btvMap
 
   fun makeBtvEnv btvMap = extendBtvEnv emptyBtvEnv btvMap
 
   fun extendBtvEnvWithOrder env pair =
-      [foldl (fn (x, env) => add env x)
-             (getBtvEnv env)
-             (listItemsiWithOrder pair)]
+      foldl (fn (x, env) => add env x)
+            env
+            (listItemsiWithOrder pair)
 
   fun tvName base index =
        if index < 26 then str (chr (ord base + index))
@@ -542,7 +559,7 @@ struct
   datatype btvName = BOUND of int | FREE of BoundTypeVarID.id
 
   fun lookup env btvId =
-      case BoundTypeVarID.Map.find (#env (getBtvEnv env), btvId) of
+      case BoundTypeVarID.Map.find (#env env, btvId) of
         SOME (nameIndex, kind) => (BOUND nameIndex, SOME kind)
       | NONE => (FREE btvId, NONE)
 
@@ -659,6 +676,8 @@ struct
   fun format_Word16_hex_ML x = format_hex_MLw Word16.fmt x
   fun format_Word8_hex_ML x = format_hex_MLw Word8.fmt x
   fun format_word_hex_ML x = format_hex_MLw Word.fmt x
+  fun format_Real64_ML x = [term (Real64.fmt StringCvt.EXACT x)]
+  fun format_Real32_ML x = [term (Real32.fmt StringCvt.EXACT x)]
   fun format_Int64_dec_C x = format_dec_C Int64.fmt x
   fun format_Int32_dec_C x = format_dec_C Int32.fmt x
   fun format_Int16_dec_C x = format_dec_C Int16.fmt x
@@ -736,8 +755,8 @@ struct
   fun formatFormatExp exp =
       case exp of
         Term (n, s) =>
-        dsp :: format_string_ML s
-        @ (if size s = n then nil else [term ("(" ^ Int.toString n ^ ")")])
+        dsp :: Sequence (format_string_ML s)
+        :: (if size s = n then nil else [term ("(" ^ Int.toString n ^ ")")])
       | Newline => [dsp, term "\\n"]
       | Guard (assoc, exps) =>
         begin_
@@ -763,6 +782,8 @@ struct
       | StartOfIndent n =>
         [dsp, term (Int.toString n ^ "[")]
       | EndOfIndent => [dsp, term "]"]
+      | Sequence exps =>
+        intersperse [sp] (map formatFormatExp exps)
 
   and formatFormat exps =
       case List.concat (map formatFormatExp exps) of
