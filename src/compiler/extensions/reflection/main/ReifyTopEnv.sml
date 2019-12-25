@@ -8,8 +8,9 @@ local
   fun bug s = Bug.Bug ("ReiyTopEnv:" ^ s)
   structure I = IDCalc
   structure T = Types
-  structure TB = TypesBasics
+  (* structure TB = TypesBasics *)
   structure V = NameEvalEnv
+  structure VP = NameEvalEnvPrims
   structure UP = UserLevelPrimitive
   structure RCU = RecordCalcUtils
   structure RC = RecordCalc
@@ -28,6 +29,10 @@ local
         SMLFormat.prettyPrint ppgenParameter expressions
       end
 
+  fun setVersion (sym, I.STEP n) = Symbol.setVersion (sym, n)
+    | setVersion (sym, I.OTHER _) = sym
+    | setVersion (sym, I.SELF) = sym
+
   fun --> (argTy, retTy) = T.FUNMty ([argTy], retTy)
   fun ** (ty1, ty2) = T.RECORDty (RecordLabel.tupleMap [ty1, ty2])
   infixr 4 -->
@@ -36,23 +41,26 @@ local
   open ReifiedTyData ReifyUtils 
 in
 
-  val staticTfunName = NameEvalUtils.staticTfunName
-  val staticTyConName = NameEvalUtils.staticTyConName
+  fun sname envList =
+      {env = envList,
+       tfunName = NameEvalUtils.staticTfunName,
+       tyConName = NameEvalUtils.staticTyConName}
+
   fun reifyIdstatus envList loc symbol idstatus =
       case idstatus of
       I.IDVAR id => NONE
     | I.IDVAR_TYPED _ => NONE
     | I.IDEXVAR {exInfo=exInfo as {used, longsymbol, ty, version}, internalId = SOME id} =>
       let
-        val TyTerm = String loc (prettyPrint idstatusWidth (I.print_ty (envList,staticTfunName,staticTyConName,nil,nil) ty))
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
+        val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val Name = String loc (Symbol.symbolToString symbol)
-        val VarExp = Var {path = Symbol.setVersion(longsymbol, version), ty = ty, id = id}
+        val VarExp = Var {path = setVersion(longsymbol, version), ty = ty, id = id}
         val InstVarExp = RCU.groundInst VarExp
-        val ReifyFun = InstVar {exVarInfo=UP.REIFY_toReifiedTerm_exInfo(), instTy = #ty InstVarExp}
+        val ReifyFun = InstVar {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint(), instTy = #ty InstVarExp}
         val ReifiedTerm = Apply loc ReifyFun InstVarExp
                           handle exn as TypeMismatch => raise exn
-        val IdstatusFun = MonoVar (UP.REIFY_mkEXVarIdstatus_exInfo()) 
+        val IdstatusFun = MonoVar (UP.REIFY_exInfo_mkEXVarIdstatus()) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, ReifiedTerm, TyTerm]
                           handle exn as TypeMismatch => raise exn
       in
@@ -60,16 +68,16 @@ in
       end
     | I.IDEXVAR {exInfo={used, longsymbol, ty, version}, internalId = NONE,...} =>
       let
-        val accessLongsymbol = Symbol.setVersion(longsymbol, version)
+        val accessLongsymbol = setVersion(longsymbol, version)
         val Name = String loc (Symbol.symbolToString symbol)
-        val TyTerm = String loc (prettyPrint idstatusWidth (I.print_ty (envList, staticTfunName, staticTyConName, nil,nil) ty))
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
+        val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val VarExp = MonoVar {path=accessLongsymbol, ty=ty}
         val InstVarExp = RCU.groundInst VarExp
-        val ReifyFun = InstVar {exVarInfo=UP.REIFY_toReifiedTerm_exInfo(), instTy = #ty InstVarExp}
+        val ReifyFun = InstVar {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint(), instTy = #ty InstVarExp}
         val Term = Apply loc ReifyFun InstVarExp
             handle exn as TypeMismatch => raise exn
-        val IdstatusFun = MonoVar (UP.REIFY_mkEXVarIdstatus_exInfo()) 
+        val IdstatusFun = MonoVar (UP.REIFY_exInfo_mkEXVarIdstatus()) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, Term, TyTerm]
             handle exn as TypeMismatch => raise exn
       in
@@ -78,10 +86,11 @@ in
     | I.IDEXVAR_TOBETYPED _ => NONE
     | I.IDBUILTINVAR {primitive, ty} => 
       let
-        val TyTerm = String loc (prettyPrint idstatusWidth (I.print_ty (envList, staticTfunName, staticTyConName, nil,nil) ty))
+        val ty = EvalIty.evalIty EvalIty.emptyContext ty
+        val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val Name = String loc (Symbol.symbolToString symbol)
-        val Term = Con loc (UP.REIFY_BUILTIN_conInfo()) NONE
-        val IdstatusFun = MonoVar (UP.REIFY_mkEXVarIdstatus_exInfo()) 
+        val Term = Con loc (UP.REIFY_conInfo_BUILTIN()) NONE
+        val IdstatusFun = MonoVar (UP.REIFY_exInfo_mkEXVarIdstatus()) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, Term, TyTerm]
             handle exn as TypeMismatch => raise exn
       in
@@ -92,18 +101,21 @@ in
     | I.IDEXNREP _ => NONE
     | I.IDEXEXN {used, longsymbol, ty, version} =>
       let
-        val ty = EvalIty.evalIty EvalIty.emptyContext ty
-        val exnArgTy = 
-            case ty of 
-              T.FUNMty([argTy], _) => SOME argTy
-            | _ => NONE 
-       val ArgTyTerm =
-            case exnArgTy of 
+        val exnArgTy =
+            case ty of
+              I.TYFUNM ([argTy], _) => SOME argTy
+            | _ => NONE
+        val ArgTyTerm =
+            case exnArgTy of
               NONE => Option loc StringTy NONE
-            | SOME argTy => 
-              Option loc StringTy (SOME (String loc (prettyPrint idstatusWidth (T.format_ty nil argTy))))
+            | SOME argTy =>
+              Option loc StringTy
+                (SOME (String loc (prettyPrint idstatusWidth
+                   (T.formatTyForUser
+                      (sname envList)
+                      (EvalIty.evalIty EvalIty.emptyContext argTy)))))
         val Name = String loc (Symbol.symbolToString symbol)
-        val IdstatusFun = MonoVar (UP.REIFY_mkEXEXNIdstatus_exInfo()) 
+        val IdstatusFun = MonoVar (UP.REIFY_exInfo_mkEXEXNIdstatus()) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, ArgTyTerm]
             handle exn as TypeMismatch => raise exn
       in
@@ -113,7 +125,7 @@ in
       let
         val Path = String loc (Symbol.longsymbolToString longsymbol)
         val Name = String loc (Symbol.symbolToString symbol)
-        val IdstatusFun = MonoVar (UP.REIFY_mkEXEXNREPIdstatus_exInfo()) 
+        val IdstatusFun = MonoVar (UP.REIFY_exInfo_mkEXEXNREPIdstatus()) 
         val ReifiedTerm = ApplyList loc IdstatusFun [Name, Path]
             handle exn as TypeMismatch => raise exn
       in
@@ -130,9 +142,9 @@ in
         val name = SmlppgUtil.makeToken name
         val tyVal = 
             case tstr of
-              V.TSTR tfun => prettyPrint tstrWidth (I.print_tfun (envList, staticTfunName, staticTyConName, nil, name) tfun)
+              V.TSTR tfun => prettyPrint tstrWidth (I.print_tfun (sname envList, nil, name) tfun)
             | V.TSTR_DTY {tfun, varE, formals, conSpec} => 
-              prettyPrint tstrWidth (I.print_tfun (envList, staticTfunName, staticTyConName, SmlppgUtil.makeToken "DTY",name) tfun)
+              prettyPrint tstrWidth (I.print_tfun (sname envList, SmlppgUtil.makeToken "DTY",name) tfun)
       in
         Pair loc (String loc "")  (String loc tyVal)
       end
@@ -225,7 +237,7 @@ in
       in
         ApplyList
           loc 
-          (MonoVar (UP.REIFY_mkENVenv_exInfo()))
+          (MonoVar (UP.REIFY_exInfo_mkENVenv()))
           [VarE, TyE, StrE]
         handle exn as TypeMismatch => raise exn
       end
@@ -271,7 +283,7 @@ in
         val sigE = (ListSorter.sort 
                       (fn ((s1, _), (s2, _)) => Symbol.compare(s1,s2))
                       (SymbolEnv.listItemsi sigE))
-        val sigE = prettyPrint sigWidth (V.printTy_sigEList (envList, staticTfunName, staticTyConName, nil,nil) sigE)
+        val sigE = prettyPrint sigWidth (V.printTy_sigEList (sname envList,nil,nil) sigE)
       in
         String loc sigE
       end
@@ -281,7 +293,7 @@ in
         (* 2012-8-7 ohori ad-hoc fix for bug 232_functorSigNewLines.sml *)
         val funEEntry = filterSpecCon funEEntry
         val name = "functor " ^ (Symbol.symbolToString symbol)
-        val funE = name ^ (prettyPrint tstrWidth (V.printTy_funEEntry (envList, staticTfunName, staticTyConName, nil,nil) funEEntry))
+        val funE = name ^ (prettyPrint tstrWidth (V.printTy_funEEntry (sname envList,nil,nil) funEEntry))
       in
         String loc funE
       end
@@ -307,13 +319,14 @@ in
   fun externalBind loc (string, Exp) Env version = 
       let
         val ty = #ty Exp
-        val longsymbol as [symbol] = [Symbol.mkSymbol string loc]
+        val symbol = Symbol.mkSymbol string loc
+        val longsymbol = [symbol]
         val varInfo as {id,...} = newVarWithSymbol symbol (#ty Exp)
-        val externalInfo = {id = id, path = Symbol.setVersion(longsymbol, version), ty = ty}
+        val externalInfo = {id = id, path = setVersion(longsymbol, version), ty = ty}
         val idstatus = 
-            I.IDEXVAR {exInfo = {used = ref false, longsymbol = longsymbol, ty = I.INFERREDTY ty, version = version}, 
+            I.IDEXVAR {exInfo = {used = ref false, longsymbol = longsymbol, ty = I.INFERREDTY ty, version = version},
                        internalId = NONE} 
-        val Env = NameEvalEnv.reinsertId (Env, symbol, idstatus)
+        val Env = VP.rebindId (Env, symbol, idstatus)
       in
         {env = Env,
          decls = [Val loc varInfo Exp, RC.RCEXPORTVAR externalInfo]
@@ -329,7 +342,7 @@ in
         val TopEnvExp = 
             ApplyList 
               Loc.noloc 
-              (MonoVar (UP.REIFY_mkTopEnv_exInfo()))
+              (MonoVar (UP.REIFY_exInfo_mkTopEnv()))
               [Env, FunE, SigE]
             handle exn as TypeMismatch => raise exn
       in
@@ -341,7 +354,7 @@ in
         val PrintExp =
             Apply
               Loc.noloc
-              (MonoVar (UP.REIFY_printTopEnv_exInfo()))
+              (MonoVar (UP.REIFY_exInfo_printTopEnv()))
               Exp
             handle exn as TypeMismatch => raise exn
         val (_, decls) = internalBind PrintExp
@@ -351,7 +364,7 @@ in
 
   fun topEnvBind {sessionTopEnv, requireTopEnv} version =
       let
-        val referenceEnv = NameEvalEnv.topEnvWithTopEnv (requireTopEnv, sessionTopEnv)
+        val referenceEnv = VP.topEnvWithTopEnv (requireTopEnv, sessionTopEnv)
         val sessionEnvName = "sessionEnv"
         val sessionEnvExp = reifyTopEnv referenceEnv sessionTopEnv version
         val (varSessionEnv, decls1) = internalBind sessionEnvExp
@@ -361,16 +374,18 @@ in
 (*
         val currentEnvName = "_currentEnv"
         val currentEnv = NameEvalEnv.topEnvWithTopEnv(requireTopEnv, sessionTopEnv)
-        val currentEnvExp = reifyTopEnv currentEnv version
-        val (varCurrentEnv, decls3) = internalBind currentEnvExp
-        val {env = _, decls = decls4} = 
+        val currentEnvExp = reifyTopEnv referenceEnv currentEnv version
+        val (varCurrentEnv, decls4) = internalBind currentEnvExp
+        val {env = _, decls = decls5} = 
             externalBind Loc.noloc (currentEnvName, varCurrentEnv) env version
 *)
-
         val topEnv = {SigE = #SigE sessionTopEnv, FunE = #FunE sessionTopEnv, Env = env}
       in
         {env = topEnv,
          decls = decls1 @ decls2 @ decls3 
+(*
+                 @ decls4 @ decls5
+*)
         }
       end
       handle UserLevelPrimitive.IDNotFound _ =>

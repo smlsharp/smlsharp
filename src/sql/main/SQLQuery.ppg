@@ -27,9 +27,9 @@ struct
   fun formatSQLReal x = term (fixSign (Real.fmt (StringCvt.FIX (SOME 10)) x))
   fun formatSQLReal32 x = term (fixSign (Real32.fmt (StringCvt.FIX (SOME 10)) x))
   fun formatSQLChar x = formatSQLString (str x)
+  fun formatSQLBool true = term "TRUE" | formatSQLBool false = term "FALSE"
   fun formatTimestamp x = term ("'" ^ (SMLSharp_SQL_TimeStamp.toString x) ^ "'")
-  fun formatDecimal x = term (SMLSharp_SQL_Decimal.toString x)
-  fun formatFloat x = term (SMLSharp_SQL_Float.toString x)
+  fun formatNumeric x = term (fixSign (SMLSharp_SQL_Numeric.toString x))
 
   fun ifnone (x,y) NONE = x
     | ifnone (x,y) (SOME _) = y
@@ -74,9 +74,9 @@ struct
    * @formatter(real32) formatSQLReal32
    * @formatter(string) formatSQLString
    * @formatter(char) formatSQLChar
+   * @formatter(bool) formatSQLBool
    * @formatter(SMLSharp_SQL_TimeStamp.timestamp) formatTimestamp
-   * @formatter(SMLSharp_SQL_Decimal.decimal) formatDecimal
-   * @formatter(SMLSharp_SQL_Float.float) formatFloat
+   * @formatter(SMLSharp_SQL_Numeric.num) formatNumeric
    *)
   (*% @prefix ifInt_
    * @params(f)
@@ -111,10 +111,7 @@ struct
       TIMESTAMP of SMLSharp_SQL_TimeStamp.timestamp
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
-      DECIMAL of SMLSharp_SQL_Decimal.decimal
-    | (*% @prefix format_ @format(x) x *)
-      (*% @prefix ifInt_ @format *)
-      FLOAT of SMLSharp_SQL_Float.float
+      NUMERIC of SMLSharp_SQL_Numeric.num
 
   (*% @prefix ifInt_
    * @params(f)
@@ -304,27 +301,29 @@ struct
       (*% @prefix ifInt_ @format *)
       ORDERBY of ('w exp_ast * 'w ascdesc_ast option) list
 
-  and 'w offset_ast =
-      (*% @prefix format_
-       * @format({count : w exp, rows : row rowopt})
-       * !N0{ "OFFSET" +d exp(w) rowopt:ifnone()(, +d rowopt(row)) }
-       *)
-      (*% @prefix ifInt_ @format *)
-      OFFSET of {count : 'w exp_ast, rows : string option}
-
   and 'w limit_ast =
       (*% @prefix format_
-       * @format(w exp expopt)
+       * @format({limit, offset: offset opt})
+       * limit opt:ifnone()(, +1 opt(offset))
+       * @format:limit(w exp expopt)
        * !N0{ "LIMIT" +d expopt:ifnone()("ALL", expopt(exp(w))) }
+       * @format:offset(w exp)
+       * !N0{ "OFFSET" +d exp(w) }
        *)
       (*% @prefix ifInt_ @format *)
-      LIMIT of 'w exp_ast option
+      LIMIT of {limit : 'w exp_ast option, offset : 'w exp_ast option}
     | (*% @prefix format_
-       * @format({first, count: w exp expopt, rows})
-       * !N0{ "FETCH" +d first +d expopt(exp(w)) +d rows +d "ONLY" }
+       * @format({offset, fetch: fetch opt})
+       * offset opt:ifnone()(, +1 opt(fetch))
+       * @format:offset(w exp * rows)
+       * !N0{ "OFFSET" +d N8{ exp(w) } +d rows}
+       * @format:fetch(first * w exp expopt * rows)
+       * !N0{ "FETCH" +d first expopt:ifnone()(, 2[ +1 N8{ expopt(exp(w)) } ])
+       *      +d rows +d "ONLY" }
        *)
       (*% @prefix ifInt_ @format *)
-      FETCH of {first : string, count : 'w exp_ast option, rows : string}
+      OFFSET of {offset : 'w exp_ast * string,
+                 fetch : (string * 'w exp_ast option * string) option}
 
   and 'w query_ast =
       (*% @prefix format_
@@ -333,15 +332,13 @@ struct
        *         * w3 whr opt3
        *         * w4 groupby opt4
        *         * w5 orderby opt5
-       *         * w6 offset opt6
-       *         * w7 limit opt7)
+       *         * w6 limit opt6)
        * !N0{ select(w1)
        *      +1 from(w2)
        *      opt3:ifnone()(,+1 opt3(whr(w3)))
        *      opt4:ifnone()(,+1 opt4(groupby(w4)))
        *      opt5:ifnone()(,+1 opt5(orderby(w5)))
-       *      opt6:ifnone()(,+1 opt6(offset(w6)))
-       *      opt7:ifnone()(,+1 opt7(limit(w7)))
+       *      opt6:ifnone()(,+1 opt6(limit(w6)))
        * }
        *)
       (*% @prefix ifInt_ @format *)
@@ -350,7 +347,6 @@ struct
                * 'w whr_ast option
                * 'w groupby_ast option
                * 'w orderby_ast option
-               * 'w offset_ast option
                * 'w limit_ast option
 
   (*% *)
@@ -406,6 +402,8 @@ struct
     | (*% @format "ROLLBACK" *)
       ROLLBACK
 
-  val format_command_ast = format_command_ast (fn _ => nil)
+  val format_command_ast = fn () => format_command_ast (fn _ => nil)
+  val format_query_ast = fn () => format_query_ast (fn _ => nil)
+  val format_exp_ast = fn () => format_exp_ast (fn _ => nil)
 
 end

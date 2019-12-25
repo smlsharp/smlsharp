@@ -12,42 +12,41 @@ struct
     structure IC = IDCalc
     structure TU = TypesBasics
     structure TC = TypedCalc
+    structure FE = SMLFormat.FormatExpression
 
     (*% 
-       @params(btvEnv)
        @formatter(TC.idstatus) TC.formatWithType_idstatus
      *)
     type idstatus 
      = (*%
-          @format(x) x()(btvEnv)
+          @format(x) x
         *)
        TC.idstatus
 
   in
 
   (*%
-   * @params(btvEnv)
    * @formatter(TvarMap.map) IDCalc.formatEnclosedTvarMap
    * @formatter(T.ty) T.format_ty
    *)
   type tvarEnv =
       (*%
          @format(ty map)
-         map(ty()(btvEnv))("{", ":", ",", "}")
+         map(ty)("{", ":", ",", "}")
        *)
       T.ty TvarMap.map
 
   fun formatList (formatter, sep) nil = nil
     | formatList (formatter, sep) (elem::elems) =
-      formatter elem
-      @ List.concat (map (fn x => sep @ formatter x) elems)
-
+      FE.Sequence (formatter elem)
+      :: map (fn x => FE.Sequence (FE.Sequence sep :: formatter x)) elems
 
   fun formatEnclosedVarMap (formatter, mapsto, comma) map =
       formatList
         (fn (var, item) =>
-            (IDCalc.format_varInfo var) @ mapsto
-            @ (formatter item),
+            FE.Sequence (IDCalc.format_varInfo var)
+            :: FE.Sequence mapsto
+            :: formatter item,
          comma
         )
         (VarMap.listItemsi map)
@@ -55,8 +54,9 @@ struct
   fun formatEnclosedOPrimMap (formatter, mapsto, comma) map =
       formatList
         (fn (oprimInfo, item) =>
-            (IDCalc.format_oprimInfo oprimInfo) @ mapsto
-            @ (formatter item),
+            FE.Sequence (IDCalc.format_oprimInfo oprimInfo)
+            :: FE.Sequence mapsto
+            :: formatter item,
          comma
         )
         (OPrimMap.listItemsi map)
@@ -66,7 +66,7 @@ struct
    *)
   type varEnv =
       (*%
-         @format(var map) map(var()())(":",+2)
+         @format(var map) map(var)(":",+2)
        *)
       idstatus VarMap.map
 
@@ -88,7 +88,7 @@ struct
           "{"
            1[
              +1
-              1["tvarEnv:"+1 tvarEnv()()]
+              1["tvarEnv:"+1 tvarEnv]
              +1
               1["varEnv:"+1 varEnv]
              +1
@@ -192,11 +192,11 @@ struct
             foldl
               (fn
                (
-                (utvar as {symbol, id, eq, lifted}, tvarKind),
+                (utvar as {symbol, id, isEq, lifted}, tvarKind),
                 (newTvarEnv, addedUtvars)
                ) =>
                let 
-                 val newTvStateRef = T.newUtvar (lambdaDepth, eq,  utvar)
+                 val newTvStateRef = T.newUtvar (lambdaDepth, utvar)
                in 
                  (TvarMap.insert(newTvarEnv, utvar, T.TYVARty newTvStateRef),
                   TvarMap.insert(addedUtvars, utvar, (newTvStateRef, tvarKind))

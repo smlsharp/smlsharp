@@ -10,6 +10,7 @@ infix 7 * / div mod
 infix 6 + -
 infixr 5 ::
 infix 4 = <> > >= < <=
+val ! = SMLSharp_Builtin.General.!
 structure Real32 = SMLSharp_Builtin.Real32
 
 structure Real32 =
@@ -52,11 +53,7 @@ struct
     val exp =
         _import "expf"
         : __attribute__((pure,fast)) real -> real
-(* 310_Real32MathPow
-    val pow =
-        _import "powf"
-        : __attribute__((pure,fast)) (real, real) -> real*)
-    val powf =
+    val pow' =
         _import "powf"
         : __attribute__((pure,fast)) (real, real) -> real
     val posInf = Real32.div (1.0, 0.0)
@@ -66,8 +63,8 @@ struct
         then 
           if Real32.equal (x, 1.0) orelse Real32.equal (x, ~1.0)
           then nan
-          else powf (x, y)
-        else powf (x, y)
+          else pow' (x, y)
+        else pow' (x, y)
     val ln =
         _import "logf"
         : __attribute__((pure,fast)) real -> real
@@ -115,21 +112,17 @@ struct
   val ?= = Real32.ueq
   val isNan = Real32.isNan
   val trunc = Real32.trunc
-  val fromInt = SMLSharp_Builtin.Int32.toReal32
+  val fromInt = SMLSharp_Builtin.Real32.fromInt32
   val toLarge = SMLSharp_Builtin.Real32.toReal64
-  val fromReal_unsafe = SMLSharp_Builtin.Real64.toReal32_unsafe  (* FIXME *)
+  val fromReal64 = SMLSharp_Builtin.Real32.fromReal64
 
   fun *+ (r1, r2, r3) = r1 * r2 + r3
   fun *- (r1, r2, r3) = r1 * r2 - r3
 
-(* bug 305_Real32Min
-  fun min (x, y) = if Real32.lteq (x, y) then x else if isNan x then y else x*)
   fun min (x, y) =
       if isNan x then y
       else if isNan y then x
       else if Real32.lteq (x, y) then x else y
-(* bug 306_Real32Max
-  fun max (x, y) = if Real32.gteq (x, y) then x else if isNan x then y else x*)
   fun max (x, y) =
       if isNan x then y
       else if isNan y then x
@@ -186,17 +179,13 @@ struct
 
   fun realMod x = #frac (split x)
 
-(* bug 307_Real32NextAfter
-  val nextAfter =
-      _import "nextafterf"
-      : __attribute__((pure,fast)) (real, real) -> real*)
   val nextafterf = 
       _import "nextafterf"
       : __attribute__((pure,fast)) (real, real) -> real
 
   fun nextAfter (r, t) =
       case (class r, class t) of
-	(IEEEReal.INF, IEEEReal.NAN) => nextafterf(r, t)
+	(IEEEReal.INF, IEEEReal.NAN) => nextafterf (r, t)
       | (IEEEReal.INF, _) => r
       | _ => nextafterf (r, t)
 
@@ -215,10 +204,6 @@ struct
   val realTrunc =
       _import "truncf"
       : __attribute__((pure,fast)) real -> real
-(* bug 308_Real32RealRound
-  val realRound =
-      _import "roundf"
-      : __attribute__((pure,fast)) real -> real*)
   fun floorOrCeil r =
       if signBit r then realFloor r else realCeil r
 
@@ -238,8 +223,6 @@ struct
 
   fun floor x = Real32.trunc (realFloor x)
   fun ceil x = Real32.trunc (realCeil x)
-(* bug 309_Real32Round
-  fun round x = Real32.trunc (realTrunc x)*)
   fun round x = Real32.trunc (realRound x)
 
   fun toInt mode x =
@@ -253,10 +236,13 @@ struct
       Real64.toLargeInt mode (toLarge x)
 
   fun fromLargeInt x =
-      fromReal_unsafe (Real64.fromLargeInt x)  (* FIXME *)
+      fromReal64 (Real64.fromLargeInt x)  (* FIXME *)
 
   fun fromLarge (mode:IEEEReal.rounding_mode) (x:LargeReal.real) : real =
-      raise SMLSharp_Runtime.Bug "FIXME: Real32.fromLarge: not implemented yet"
+      case mode of
+        IEEEReal.TO_NEAREST => fromReal64 x
+      | _ =>
+        raise SMLSharp_Runtime.Bug "FIXME: Real32.fromLarge: not implemented"
 
   fun fmt format x =
       Real64.fmt format (toLarge x)
@@ -267,7 +253,7 @@ struct
   fun scan getc strm =
       case Real64.scan getc strm of
         NONE => NONE
-      | SOME (x, strm) => SOME (fromReal_unsafe x, strm)  (* FIXME *)
+      | SOME (x, strm) => SOME (fromReal64 x, strm)  (* FIXME *)
 
   fun fromString s =
       StringCvt.scanString scan s
@@ -278,6 +264,6 @@ struct
   fun fromDecimal x =
       case Real64.fromDecimal x of
         NONE => NONE
-      | SOME x => SOME (fromReal_unsafe x)  (* FIXME *)
+      | SOME x => SOME (fromReal64 x)  (* FIXME *)
 
 end

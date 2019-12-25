@@ -1,0 +1,10 @@
+NODE {tests/data/loadfile/013_require/013_require3.smi INTERFACE}
+NODE {tests/data/loadfile/013_require/013_require2.smi INTERFACE}
+NODE {tests/data/loadfile/013_require.smi INTERFACE}
+ROOT {ROOT_INCLUDES LINK
+ INCLUDE {USERPATH tests/data/loadfile/013_require.smi INTERFACE
+  55d365f415dac8b2
+  REQUIRE {USERPATH tests/data/loadfile/013_require/013_require2.smi INTERFACE
+   9397bba76b32c63b
+   REQUIRE {USERPATH tests/data/loadfile/013_require/013_require3.smi INTERFACE
+    632922146942cb5a}}}}

@@ -9,6 +9,7 @@ structure Main =
 struct
 
   structure I = InterfaceName
+  structure S = ShellUtils
 
   exception Error of string list
 
@@ -22,35 +23,49 @@ struct
       end
   fun force f = f ()
 
+  fun consOpt (SOME x, y) = x :: y
+    | consOpt (NONE, y) = y
+
   fun defaultSystemBaseDir () =
       case ExecutablePath.getPath () of
         NONE => Filename.fromString SMLSharp_Version.DefaultSystemBaseDir
       | SOME path =>
-        Filename.concatPath
-          (Filename.dirname (Filename.fromString path),
-           Filename.fromString "../lib/smlsharp")
+        Filename.concatPaths
+          [Filename.dirname (Filename.fromString path),
+           Filename.dotdot,
+           Filename.fromString "lib",
+           Filename.fromString "smlsharp"]
 
-  fun toAsmFile filename =
-      Filename.replaceSuffix (SMLSharp_Config.ASMEXT ()) filename
-  fun toObjFile filename =
-      Filename.replaceSuffix (SMLSharp_Config.OBJEXT ()) filename
-  fun toLLFile filename =
-      Filename.replaceSuffix LLVM.ASMEXT filename
-  fun toBCFile filename =
-      Filename.replaceSuffix LLVM.OBJEXT filename
-  fun toExeTarget filename =
-      Filename.removeSuffix filename
+  fun suffixOf LLVMUtils.IRFile = LLVMUtils.ASMEXT
+    | suffixOf LLVMUtils.BitcodeFile = LLVMUtils.OBJEXT
+    | suffixOf LLVMUtils.AssemblyFile = Config.ASMEXT ()
+    | suffixOf LLVMUtils.ObjectFile = Config.OBJEXT ()
 
-  fun defaultExeTarget () =
-      case SMLSharp_Config.HOST_OS_TYPE () of
-        SMLSharp_Config.Mingw => Filename.fromString "a.exe"
-      | _ => Filename.fromString "a.out"
+  fun lookupFilename fileMap filename =
+      case fileMap of
+        NONE => filename
+      | SOME fileMap =>
+        case UserFileMap.find (force fileMap, filename) of
+          SOME filename => filename
+        | NONE => raise Error ["file not found in filemap: "
+                               ^ Filename.toString filename]
+
+  fun substituteSource {fileMap, ...} suffix ((place, filename):I.source) =
+      let
+        val defaultResult = Filename.replaceSuffix suffix filename
+      in
+        case place of
+          Loc.STDPATH => defaultResult
+        | Loc.USERPATH => lookupFilename fileMap defaultResult
+      end
+
+  fun sourceToObjFile options source =
+      substituteSource options (Config.OBJEXT ()) source
 
   fun printVersion {llvmOptions={triple, ...}, ...} =
-      print ("SML# " ^ SMLSharp_Version.Version
-             ^ " (" ^ SMLSharp_Version.ReleaseDate ^ ") for "
-             ^ triple
-             ^ " with LLVM " ^ LLVM.getVersion ()
+      print ("SML# " ^ SMLSharp_Version.Release
+             ^ " for " ^ triple
+             ^ " with LLVM " ^ LLVMUtils.getVersion ()
              ^ "\n")
 
   fun putsErr s =
@@ -73,8 +88,6 @@ struct
         putsErr "[BUG] empty UserErrors"
       | UserError.UserErrors errs =>
         app (fn e => putsErr (userErrorToString e)) errs
-      | LLVM.LLVMError msg =>
-        putsErr ("LLVM error: " ^ msg)
       | IO.Io {name, function, cause} =>
         putsErr ("IO: " ^ function ^ ": " ^ name ^ ": "
                  ^ (case cause of
@@ -82,6 +95,10 @@ struct
                     | e => exnName e))
       | OS.SysErr x =>
         putsErr ("SysErr: " ^ sysErrToString x ^ "\n")
+      | ShellUtils.Fail {command, status, output = {stderr, ...}} =>
+        (putsErr ("command failed at status " ^ Int.toString status
+                  ^ ": " ^ command);
+         CoreUtils.cat [stderr] TextIO.stdErr)
       | _ =>
         putsErr ("uncaught exception: " ^ exnMessage e)
 
@@ -89,6 +106,10 @@ struct
       if !Control.printWarning
       then app (fn e => putsErr (userErrorToString e)) errors
       else ()
+
+  datatype file_place_limit =
+      ALL_PLACE
+    | USERPATH_ONLY
 
   datatype compile_mode =
       CompileOnly
@@ -101,9 +122,10 @@ struct
   datatype compiler_mode =
       Compile of compile_mode
     | Check of check_mode
-    | MakeDependCompile of InterfaceName.file_place
-    | MakeDependLink of InterfaceName.file_place
-    | MakeMakefile
+    | MakeDependCompile of file_place_limit
+    | MakeDependLink of file_place_limit
+    | MakeMakefile of file_place_limit
+    | AnalyzeFiles
     | Help
 
   datatype command_line_args =
@@ -119,23 +141,23 @@ struct
     | TargetAttrs of string
     | Mode of compiler_mode
     | SourceFile of string
-    | SystemBaseDir of string
-    | LinkerFlags of string list
-    | LLCFlags of string list
-    | OPTFlags of string list
+    | SystemBaseDir of Filename.filename
+    | SystemBaseExecDir of Filename.filename
+    | LinkerFlags of ShellUtils.arg list
+    | LLCFlags of ShellUtils.arg list
+    | OPTFlags of ShellUtils.arg list
     | ControlSwitch of string option
     | NoStdPath
     | NoStdLib
     | Verbose
     | UseCXX
-    | LinkAll
     | EmitLLVM
     | FileMap of string
     | Require of string
 
   val optionDesc =
       let
-        fun splitComma s = String.fields (fn c => #"," = c) s
+        fun splitComma s = map S.ARG (String.fields (fn c => #"," = c) s)
         open GetOpt
       in
         [
@@ -146,8 +168,10 @@ struct
           SHORT (#"L", REQUIRED LibraryPath),
           SHORT (#"l", REQUIRED Library),
           SHORT (#"v", NOARG Verbose),
-          SHORT (#"B", REQUIRED SystemBaseDir),
-          SHORT (#"M", NOARG (Mode (MakeDependCompile I.STDPATH))),
+          SHORT (#"A", NOARG (Mode AnalyzeFiles)),
+          SHORT (#"B", REQUIRED (SystemBaseDir o Filename.fromString)),
+          SLONG ("BX", REQUIRED (SystemBaseExecDir o Filename.fromString)),
+          SHORT (#"M", NOARG (Mode (MakeDependCompile ALL_PLACE))),
           SHORT (#"r", REQUIRED Require),
           SLONG ("O0", NOARG (OptLevel LLVMUtils.O0)),
           SLONG ("O1", NOARG (OptLevel LLVMUtils.O1)),
@@ -156,7 +180,7 @@ struct
           SLONG ("O3", NOARG (OptLevel LLVMUtils.O3)),
           SLONG ("Os", NOARG (OptLevel LLVMUtils.Os)),
           SLONG ("Oz", NOARG (OptLevel LLVMUtils.Oz)),
-          DLONG ("target", REQUIRED TargetTriple),
+          SLONG ("target", REQUIRED TargetTriple),
           SLONG ("march", REQUIRED TargetArch),
           SLONG ("mcpu", REQUIRED TargetCPU),
           SLONG ("mattr", REQUIRED TargetAttrs),
@@ -165,19 +189,19 @@ struct
           SLONG ("fno-pic", NOARG (RelocModel LLVMUtils.RelocStatic)),
           SLONG ("mdynamic-no-pic",
                  NOARG (RelocModel LLVMUtils.RelocDynamicNoPIC)),
-          SLONG ("MM", NOARG (Mode (MakeDependCompile I.LOCALPATH))),
-          SLONG ("Ml", NOARG (Mode (MakeDependLink I.STDPATH))),
-          SLONG ("MMl", NOARG (Mode (MakeDependLink I.LOCALPATH))),
-          SLONG ("Mm", NOARG (Mode MakeMakefile)),
+          SLONG ("MM", NOARG (Mode (MakeDependCompile USERPATH_ONLY))),
+          SLONG ("Ml", NOARG (Mode (MakeDependLink ALL_PLACE))),
+          SLONG ("MMl", NOARG (Mode (MakeDependLink USERPATH_ONLY))),
+          SLONG ("Mm", NOARG (Mode (MakeMakefile ALL_PLACE))),
+          SLONG ("MMm", NOARG (Mode (MakeMakefile USERPATH_ONLY))),
           SLONG ("Wl", REQUIRED (fn x => LinkerFlags (splitComma x))),
-          SLONG ("Xlinker", REQUIRED (fn x => LinkerFlags [x])),
-          SLONG ("Xllc", REQUIRED (fn x => LLCFlags [x])),
-          SLONG ("Xopt", REQUIRED (fn x => OPTFlags [x])),
+          SLONG ("Xlinker", REQUIRED (fn x => LinkerFlags [S.ARG x])),
+          SLONG ("Xllc", REQUIRED (fn x => LLCFlags [S.ARG x])),
+          SLONG ("Xopt", REQUIRED (fn x => OPTFlags [S.ARG x])),
           SLONG ("fsyntax-only", NOARG (Mode (Check SyntaxOnly))),
           SLONG ("ftypecheck-only", NOARG (Mode (Check TypeCheckOnly))),
           SLONG ("emit-llvm", NOARG EmitLLVM),
           SLONG ("c++", NOARG UseCXX),
-          DLONG ("link-all", NOARG LinkAll),
           SLONG ("filemap", REQUIRED FileMap),
           SLONG ("nostdpath", NOARG NoStdPath),
           SLONG ("nostdlib", NOARG NoStdLib),
@@ -192,11 +216,13 @@ struct
       | Compile AssemblyOnly => "-S"
       | Check SyntaxOnly => "-fsyntax-only"
       | Check TypeCheckOnly => "-ftypecheck-only"
-      | MakeDependCompile I.STDPATH => "-M"
-      | MakeDependCompile I.LOCALPATH => "-MM"
-      | MakeDependLink I.STDPATH => "-Ml"
-      | MakeDependLink I.LOCALPATH => "-MMl"
-      | MakeMakefile => "-Mm"
+      | MakeDependCompile ALL_PLACE => "-M"
+      | MakeDependCompile USERPATH_ONLY => "-MM"
+      | MakeDependLink ALL_PLACE => "-Ml"
+      | MakeDependLink USERPATH_ONLY => "-MMl"
+      | MakeMakefile ALL_PLACE => "-Mm"
+      | MakeMakefile USERPATH_ONLY => "-MMm"
+      | AnalyzeFiles => "-A"
       | Help => "--help"
 
   fun usageMessage progname =
@@ -219,6 +245,7 @@ struct
       \  -fpic              generate position independent code if possible\n\
       \  -fno-pic           don't generate position independent code\n\
       \  -mdynamic-no-pic   generate absolute addressing code suitable for executables\n\
+      \  -A                 analyze a source file tree\n\
       \  -M                 make dependency for compile\n\
       \  -MM                make dependency for compile but ignore system files\n\
       \  -Ml                make dependency for link\n\
@@ -277,108 +304,56 @@ struct
 
   fun loadBuiltin {systemBaseDir, ...} =
       Top.loadBuiltin
-        (Filename.concatPath
+        (Loc.STDPATH,
+         Filename.concatPath
            (systemBaseDir, Filename.fromString "builtin.smi"))
 
-  fun loadPrelude {systemBaseDir,
+  fun loadPrelude {linkOptions = {systemBaseDir, ...},
                    topContext,
-                   topOptions = {stdPath, loadPath, ...},
+                   topOptions = {loadPath, ...},
                    require, ...} =
       let
         val context = force topContext
         val (dependency, newContext) =
             Top.loadInterfaces
               {stopAt = Top.NoStop,
-               stdPath = stdPath,
                loadPath = loadPath,
-               loadMode = Top.NOLOCAL,
+               loadMode = I.NOLOCAL,
                outputWarnings = fn e => raise UserError.UserErrors e}
               context
-              ((I.STDPATH,
+              ((Loc.STDPATH,
                 Filename.concatPath
                   (systemBaseDir, Filename.fromString "prelude.smi"))
-               :: map (fn x => (I.LOCALPATH, x)) require)
+               :: map (fn x => (Loc.USERPATH, x)) require)
       in
-        (#depends dependency, Top.extendContext (context, newContext))
+        (dependency, Top.extendContext (context, newContext))
       end
 
   fun loadFileMap filename =
-      FilenameMap.load filename
-      handle FilenameMap.Load msg =>
+      UserFileMap.load filename
+      handle UserFileMap.Load {msg, lineno} =>
              raise Error [Filename.toString filename
-                          ^ ": failed to read filemap: " ^ msg]
+                          ^ ":" ^ Int.toString lineno
+                          ^ ": " ^ msg]
 
-  fun smiSourceToObjSource {fileMap, ...} ((place, filename):I.source) =
-      case place of
-        I.STDPATH => (place, toObjFile filename)
-      | I.LOCALPATH =>
-        case fileMap of
-          NONE => (place, toObjFile filename)
-        | SOME fileMap =>
-          case FilenameMap.find (force fileMap, filename) of
-            SOME filename => (place, filename)
-          | NONE => raise Error ["object file is not found in filemap: "
-                                 ^ Filename.toString filename]
-
-  fun isBiggerPlace (I.STDPATH, I.LOCALPATH) = true
-    | isBiggerPlace _ = false
-
-  fun listDependsCompile limit deps =
-      let
-        val deps = map (fn I.LOCAL x => I.DEPEND x | x => x) deps
-        val nodes = InterfaceName.listFileDependencyNodes false deps
-      in
-        List.mapPartial
-          (fn ((p, file), _, _) =>
-              if isBiggerPlace (p, limit) then NONE else SOME file)
-          nodes
-      end
-
-  fun listDependsLink limit deps =
-      List.filter
-        (fn ((p, _), _, _) => not (isBiggerPlace (p, limit)))
-        (InterfaceName.listFileDependencyNodes true deps)
-
-  fun listLinkObjectFiles options limit deps =
-      List.mapPartial
-        (fn (source, I.INTERFACE iname, deps) =>
-            SOME (#2 (smiSourceToObjSource options source), iname, deps)
-          | _ => NONE)
-        (listDependsLink limit deps)
-
-  fun compileLLVMModule {llvmOptions, ...} (fileType, dstfile) module =
+  fun compileLLVMBitcode {llvmOptions, ...} (fileType, dstfile) bcfile =
       let
         val _ = #start Counter.llvmOutputTimeCounter ()
-        val r = RET (LLVMUtils.compile llvmOptions (module, fileType, dstfile))
+        val r = RET (LLVMUtils.compile llvmOptions
+                                       {srcfile = bcfile,
+                                        dstfile = (fileType, dstfile)})
                 handle e => ERR e
         val _ = #stop Counter.llvmOutputTimeCounter ()
-        val _ = LLVM.LLVMDisposeModule module
       in
         case r of RET () => () | ERR e => raise e
       end
 
-  fun compileLLVMModuleToObjectFile options module =
+  fun compileLLVMBitcodeToObjectFile options bcfile =
       let
-        val dstfile = TempFile.create ("." ^ SMLSharp_Config.OBJEXT ())
+        val dstfile = TempFile.create ("." ^ Config.OBJEXT ())
       in
-        compileLLVMModule options (LLVMUtils.ObjectFile, dstfile) module;
+        compileLLVMBitcode options (LLVMUtils.ObjectFile, dstfile) bcfile;
         dstfile
-      end
-
-  fun compileLLVMBitcode options filename =
-      let
-        val context = LLVM.LLVMGetGlobalContext ()
-        val filename = Filename.toString filename
-        val buf = LLVM.LLVMCreateMemoryBufferWithContentsOfFile filename
-        val module = RET (LLVM.LLVMParseBitcodeInContext (context, buf))
-                     handle e => ERR e
-      in
-        LLVM.LLVMDisposeMemoryBuffer buf;
-        case module of
-          RET m => compileLLVMModuleToObjectFile options m
-        | ERR (LLVM.LLVMError msg) =>
-          raise Error [filename ^ ": " ^ msg]
-        | ERR e => raise e
       end
 
   fun compileSML {llvmOptions, topOptions, topContext, ...} filename =
@@ -388,38 +363,57 @@ struct
         val topOptions = topOptions # {baseFilename = SOME filename}
         val input =
             Parser.setup
-              {mode = Parser.File,
+              {source = Loc.FILE (Loc.USERPATH, filename),
                read = fn (_, n) => TextIO.inputN (io, n),
-               sourceName = Filename.toString filename,
                initialLineno = 1}
         val r =
             RET (Top.compile llvmOptions topOptions context input)
             handle e => ERR e
         val _ = TextIO.closeIn io
-        val (dependency, module) =
+        val (dependency, bcfile) =
             case r of
               ERR e => raise e
-            | RET (dep, Top.RETURN (_, module)) => (dep, SOME module)
+            | RET (dep, Top.RETURN (_, bcfile)) => (dep, SOME bcfile)
             | RET (dep, Top.STOPPED) => (dep, NONE)
       in
-        {dependency = dependency, module = module}
+        {dependency = dependency, bcfile = bcfile}
       end
 
   fun compileSMLFile options {outputFileType, outputFilename} srcfile =
       case compileSML options srcfile of
-        {module = NONE, dependency, ...} => dependency
-      | {module = SOME module, dependency, ...} =>
-        (compileLLVMModule options (outputFileType, outputFilename) module;
-         dependency)
+        {bcfile = NONE, dependency, ...} => dependency
+      | {bcfile = SOME bcfile, dependency, ...} =>
+        let
+          val suffix = suffixOf outputFileType
+          val output =
+              case outputFilename of
+                SOME filename => filename
+              | NONE =>
+                case #edges (#root dependency) of
+                  (I.PROVIDE, I.FILE {source, ...}) :: _ =>
+                  Filename.replaceSuffix suffix (sourceToObjFile options source)
+                | _ => Filename.replaceSuffix suffix srcfile
+        in
+          compileLLVMBitcode options (outputFileType, output) bcfile;
+          dependency
+        end
 
   fun loadSMI {topOptions, topContext, ...} filename =
       let
+        val loadMode =
+            case #loadMode topOptions of
+              I.NOLOCAL => I.NOLOCAL
+            | I.COMPILE => I.NOLOCAL
+            | I.LINK => I.LINK
+            | I.COMPILE_AND_LINK => I.LINK
+            | I.ALL => I.ALL
+            | I.ALL_USERPATH => I.ALL_USERPATH
         val (dependency, _) =
-            Top.loadInterfaces topOptions
+            Top.loadInterfaces (topOptions # {loadMode = loadMode})
                                (force topContext)
-                               [(I.LOCALPATH, filename)]
+                               [(Loc.USERPATH, filename)]
       in
-        {dependency = dependency, module = NONE}
+        {dependency = dependency, bcfile = NONE}
       end
 
   fun loadSMLorSMI options filename =
@@ -432,233 +426,273 @@ struct
       then ()
       else raise Error ["file not found: " ^ Filename.toString filename]
 
-  fun archive filenames =
+  fun archive nil = nil
+    | archive filenames =
       let
-        val arfile = TempFile.create ("." ^ SMLSharp_Config.LIBEXT ())
+        val arfile = TempFile.create ("." ^ Config.LIBEXT ())
       in
         BinUtils.archive {objects = filenames, archive = arfile};
-        arfile
+        [arfile]
       end
 
-  fun toLinkableFiles (options as {linkOptions={linkAll, ...}, ...})
-                      compileResult =
+  fun subsumes (ALL_PLACE, _) = true
+    | subsumes (USERPATH_ONLY, Loc.USERPATH) = true
+    | subsumes (USERPATH_ONLY, Loc.STDPATH) = false
+
+  fun listCompileSources limit allNodes =
+      List.mapPartial
+        (fn I.FILE {source, ...} =>
+            if subsumes (limit, #1 source)
+            then SOME (#2 source)
+            else NONE)
+        allNodes
+
+  fun listLinkObjects options limit allNodes =
+      List.mapPartial
+        (fn I.FILE {source, fileType = I.INTERFACE hash, ...} =>
+            if subsumes (limit, #1 source)
+            then SOME {name = {hash = hash, source = source},
+                       objfile = sourceToObjFile options source}
+            else NONE
+          | _ => NONE)
+        allNodes
+
+  fun resultToLinkableFiles options compileResult =
       let
-        val (mainfile, depends) =
-            case compileResult of
-              {module = SOME module, dependency = {depends, ...}, ...} =>
-              (compileLLVMModuleToObjectFile options module, depends)
-            | {module = NONE,
-               dependency =
-                 {interfaceNameOpt = NONE,
-                  depends = [I.DEPEND (_, I.INTERFACE {source, ...}, deps)]},
-               ...} =>
-              (#2 (smiSourceToObjSource options source), deps)
-            | _ =>
-              raise Error ["invalid interface as program entry"]
-        val objfiles =
-            map #1 (rev (listLinkObjectFiles options I.STDPATH depends))
+        val {bcfile, dependency as {allNodes, root}, ...} = compileResult
+        val provides =
+            List.mapPartial
+              (fn (I.PROVIDE, I.FILE node) => SOME (#source node)
+                | (I.INCLUDE, I.FILE node) => SOME (#source node)
+                | _ => NONE)
+              (#edges root)
+        val mainObjectFiles =
+            case bcfile of
+              SOME bcfile => [compileLLVMBitcodeToObjectFile options bcfile]
+            | NONE => map (sourceToObjFile options) provides
+        val allNodes =
+            case provides of
+              nil => allNodes
+            | provides =>
+              List.filter
+                (fn I.FILE {source, ...} =>
+                    List.all (fn x => source <> x) provides)
+                allNodes
+        val objectFiles =
+            map #objfile (listLinkObjects options ALL_PLACE allNodes)
       in
-        app testFileExist (mainfile :: objfiles);
-        if linkAll
-        then mainfile :: objfiles
-        else case objfiles of
-               nil => [mainfile]
-             | _::_ => [mainfile, archive objfiles]
+        (SOME dependency, mainObjectFiles @ archive objectFiles)
       end
 
-  fun link (options as {llvmOptions = {systemBaseDir, ...},
-                        linkOptions = {noStdLib, useCXX, LDFLAGS, LIBS, ...},
-                        ...})
+  fun makeLinkableFiles options srcfile =
+      case Filename.suffix srcfile of
+        SOME "sml" => resultToLinkableFiles options (compileSML options srcfile)
+      | SOME "smi" => resultToLinkableFiles options (loadSMI options srcfile)
+      | SOME x =>
+        if x = LLVMUtils.OBJEXT
+        then (NONE, [compileLLVMBitcodeToObjectFile options srcfile])
+        else (NONE, [srcfile])
+      | NONE => (NONE, [srcfile])
+
+  fun link (options as {linkOptions = {systemBaseDir, noStdLib, useCXX, 
+                                       LDFLAGS, LIBS, ...}, ...})
            {sourceFiles, outputFile} =
       let
-        val objfiles =
-            List.concat
-              (map (fn srcfile =>
-                       case Filename.suffix srcfile of
-                         SOME "sml" =>
-                         toLinkableFiles options (compileSML options srcfile)
-                       | SOME "smi" =>
-                         toLinkableFiles options (loadSMI options srcfile)
-                       | SOME x =>
-                         if x = LLVM.OBJEXT
-                         then [compileLLVMBitcode options srcfile]
-                         else [srcfile]
-                       | NONE => [srcfile])
-                   sourceFiles)
+        val objects = map (makeLinkableFiles options) sourceFiles
+        val objfiles = List.concat (map #2 objects)
+        val dependency = List.mapPartial #1 objects
         val runtimeDir = Filename.fromString "runtime"
         val runtimeDir = Filename.concatPath (systemBaseDir, runtimeDir)
         val libsmlsharp = Filename.fromString "libsmlsharp.a"
         val libsmlsharp = Filename.concatPath (runtimeDir, libsmlsharp)
         val smlsharpEntry = Filename.fromString "main.o"
         val smlsharpEntry = Filename.concatPath (runtimeDir, smlsharpEntry)
-        val libs =
-            if noStdLib then LIBS else Filename.toString libsmlsharp :: LIBS
+        val libs = if noStdLib
+                   then LIBS
+                   else S.ARG (Filename.toString libsmlsharp) :: LIBS
         val objects =
-            if noStdLib then objfiles else objfiles @ [smlsharpEntry]
+            if noStdLib then objfiles else smlsharpEntry :: objfiles
       in
         BinUtils.link {flags = LDFLAGS,
                        libs = libs,
                        objects = objects,
                        dst = outputFile,
-                       useCXX = useCXX,
-                       quiet = false}
+                       useCXX = useCXX};
+        dependency
       end
 
   fun interactive (options
                      as {llvmOptions,
                          linkOptions={LDFLAGS, LIBS, ...},
-                         topOptions={stdPath, loadPath, outputWarnings, ...},
+                         topOptions={loadPath, outputWarnings, ...},
                          ...}) =
       let
-        val (depends, topContext) = loadPrelude options
+        val ({allNodes, ...}, topContext) = loadPrelude options
+        val objectFiles = listLinkObjects options ALL_PLACE allNodes
       in
         RunLoop.interactive
           {options = {llvmOptions = llvmOptions,
                       LDFLAGS = LDFLAGS,
                       LIBS = LIBS,
                       baseFilename = NONE,
-                      stdPath = stdPath,
                       loadPath = loadPath,
                       outputWarnings = outputWarnings},
            errorOutput = TextIO.stdErr}
           topContext
-          (map (fn (objfile, {hash, ...}, _) =>
-                   {objfile = objfile, hash = hash})
-               (listLinkObjectFiles options I.STDPATH depends))
+          objectFiles
       end
 
-  fun printTo (NONE, f) = f TextIO.stdOut
+  fun printTo (NONE, f) = f (fn s => TextIO.output (TextIO.stdOut, s))
     | printTo (SOME filename, f) =
       let
         val out = Filename.TextIO.openOut filename
-        val () = f out handle e => (TextIO.closeOut out; raise e)
+        val outFn = fn s => TextIO.output (out, s)
+        val () = f outFn handle e => (TextIO.closeOut out; raise e)
       in
         TextIO.closeOut out
       end
 
-  local
-    fun format w nil = nil
-      | format w (h::t) =
-        let
-          val n = size h
-        in
-          if w = 0 then h :: format n t
-          else if w + 1 + n <= 78 then " " :: h :: format (w + 1 + n) t
-          else " \\\n " :: h :: format (1 + n) t
-        end
-  in
+  fun printMakeLine out w nil = out "\n"
+    | printMakeLine out w (h :: t) =
+      let
+        val n = size h
+      in
+        if w + 1 + n > !Control.printWidth
+        then (out " \\\n "; out h; printMakeLine out (1 + n) t)
+        else if w + 1 + n + 2 <= !Control.printWidth
+        then (out " "; out h; printMakeLine out (w + 1 + n) t)
+        else case t of
+               nil => (out " "; out h; out "\n")
+             | _::_ => (out " \\\n "; out h; printMakeLine out (1 + n) t)
+      end
+
   fun printMakeRule out (target, sources) =
-      (app (fn s => TextIO.output (out, s))
-           (format 0 (target ^ ":" :: sources));
-       TextIO.output (out, "\n"))
-  end (* local *)
+      let
+        val target = Filename.toString target
+        val sources = map Filename.toString sources
+      in
+        out target;
+        out ":";
+        if !Control.printWidth <= 0
+        then (app (fn x => (out " "; out x)) sources; out "\n")
+        else printMakeLine out (size target + 1) sources
+      end
 
   fun printDependCompile options {limit, out} srcfile =
       let
-        val {dependency, ...} = loadSMLorSMI options srcfile
-        val depends =
-            case dependency of
-              {interfaceNameOpt = NONE, depends} => depends
-            | {interfaceNameOpt = SOME (iname as {source, ...}), depends} =>
-              depends @ [I.DEPEND (source, I.INTERFACE iname, nil)]
-        val depfiles = map Filename.toString (listDependsCompile limit depends)
-        val target = Filename.toString (toObjFile srcfile)
-        val source = Filename.toString srcfile
+        val {dependency = {allNodes, root = {fileType, edges, ...}}, ...} =
+            loadSMLorSMI options srcfile
+        val target = sourceToObjFile options (Loc.USERPATH, srcfile)
+        val rootfile =
+            case fileType of
+              I.ROOT_SML source => Option.map #2 source
+            | I.ROOT_INCLUDES => NONE
+        val depfiles = listCompileSources limit allNodes
       in
-        printMakeRule out (target, source :: depfiles)
+        printMakeRule out (target, consOpt (rootfile, depfiles))
       end
 
   fun printDependLink options {limit, out} srcfile =
       let
-        val {dependency, ...} = loadSMLorSMI options srcfile
-        val depends =
-            case dependency of
-              {interfaceNameOpt = NONE, depends} => depends
-            | {interfaceNameOpt = SOME (iname as {source, ...}), depends} =>
-              [I.DEPEND (source, I.INTERFACE iname, depends)]
-        val depfiles =
-            map (fn (s, _, _) => Filename.toString s)
-                (listLinkObjectFiles options limit depends)
-        val target = Filename.toString (toExeTarget srcfile)
+        val {dependency = {allNodes, root = {fileType, edges, ...}}, ...} =
+            loadSMLorSMI options srcfile
+        val target = Filename.removeSuffix srcfile
+        val rootfile =
+            case fileType of
+              I.ROOT_SML source => Option.map #2 source
+            | I.ROOT_INCLUDES => NONE
+        val depfiles = listCompileSources limit allNodes
+        val objfiles = map #objfile (listLinkObjects options limit allNodes)
       in
-        printMakeRule out (target, depfiles)
+        printMakeRule out (target, consOpt (rootfile, depfiles @ objfiles))
       end
 
-  fun listLinkDependFiles options deps =
+  fun generateMakefile (options as {generateMakefileOptions =
+                                      {programName,
+                                       systemBaseDir,
+                                       systemBaseDirSpecified,
+                                       systemBaseExecDir,
+                                       systemBaseExecDirSpecified, ...},
+                                    topOptions,
+                                    topContext, ...})
+                       {limit, out} smifiles =
       let
-        val objfiles =
-            List.mapPartial
-              (fn (s, I.INTERFACE _, _) => SOME (smiSourceToObjSource options s)
-                | _ => NONE)
-              deps
-        val smifiles =
-            List.mapPartial
-              (fn (s, I.SML, _) => NONE | (s, _, _) => SOME s)
-              deps
-      in
-        map (Filename.toString o #2) (objfiles @ smifiles)
-      end
-
-  fun generateMakefile (options as {topOptions, topContext, ...}) out srcfiles =
-      let
-        val ({depends, ...}, _) =
-            Top.loadInterfaces topOptions
-                               (force topContext)
-                               (map (fn x => (I.LOCALPATH, x)) srcfiles)
+        val command = [programName]
+        val command =
+            if systemBaseDirSpecified
+            then command @ ["-B", Filename.toString systemBaseDir]
+            else command
+        val command =
+            if systemBaseExecDirSpecified
+            then command @ ["-BX", Filename.toString systemBaseExecDir]
+            else command
+        val ({allNodes, root = {edges, ...}}, _) =
+            Top.loadInterfaces
+              (topOptions # {loadMode = I.ALL_USERPATH})
+              (force topContext)
+              (map (fn x => (Loc.USERPATH, x)) smifiles)
         val targets =
             List.mapPartial
-              (fn I.LOCAL _ => NONE
-                | I.DEPEND (node as (source, t, deps)) =>
-                  SOME (source, toExeTarget (#2 source), t, [I.DEPEND node]))
-              depends
+              (fn edge as (I.INCLUDE, I.FILE {source, ...}) =>
+                  SOME {target = Filename.removeSuffix (#2 source),
+                        smifile = #2 source,
+                        root = {fileType = I.ROOT_INCLUDES,
+                                mode = I.LINK,
+                                edges = [edge]}}
+                | _ => NONE)
+              edges
       in
-        TextIO.output (out, "SMLSHARP = smlsharp\n");
-        printMakeRule out ("all", map (Filename.toString o #2) targets);
+        out "SMLSHARP ="; printMakeLine out 10 command;
+        out "SMLFLAGS ="; printMakeLine out 10 ["-O2"];
+        out "LIBS =\n";
+        printMakeRule out (Filename.fromString "all", map #target targets);
+        (* print link rules *)
         app
-          (fn (source, target, ftype, deps) =>
-              (printMakeRule
-                 out
-                 (Filename.toString target,
-                  listLinkDependFiles
-                    options
-                    (listDependsLink I.LOCALPATH deps));
-               case ftype of
-                 I.INTERFACE _ =>
-                 TextIO.output
-                   (out, "\t$(SMLSHARP) $(LDFLAGS) -o $@ "
-                         ^ Filename.toString (#2 source)
-                         ^ " $(LIBS)\n")
-               | _ => ()))
-          targets;
-        app
-          (fn (objfile, iname, deps) =>
+          (fn {target, smifile, root} =>
               let
-                val dep = I.DEPEND (#source iname, I.INTERFACE iname, nil)
-                val depfiles = listDependsCompile I.LOCALPATH (deps @ [dep])
-                val smlfile = Filename.replaceSuffix "sml" objfile
+                val {allNodes, ...} = LoadFile.revisit root
+                val sources = listCompileSources limit allNodes
+                val objects =
+                    map #objfile (listLinkObjects options limit allNodes)
               in
-                printMakeRule
-                  out
-                  (Filename.toString objfile,
-                   map Filename.toString (smlfile :: depfiles));
-                TextIO.output
-                  (out, "\t$(SMLSHARP) $(SMLFLAGS) -o $@ -c "
-                        ^ Filename.toString smlfile
-                        ^ "\n")
+                printMakeRule out (target, sources @ objects);
+                out "\t$(SMLSHARP)";
+                printMakeLine out 19 ["$(LDFLAGS)",
+                                      "-o", Filename.toString target,
+                                      Filename.toString smifile, "$(LIBS)"]
               end)
-          (listLinkObjectFiles options I.LOCALPATH depends)
+          targets;
+        (* print compile rules *)
+        app
+          (fn node as I.FILE {source, fileType = I.INTERFACE _, ...} =>
+              if subsumes (USERPATH_ONLY, #1 source) then
+                let
+                  val root = {fileType = I.ROOT_SML NONE,
+                              mode = I.COMPILE,
+                              edges = [(I.PROVIDE, node)]}
+                  val {allNodes, ...} = LoadFile.revisit root
+                  val sources = listCompileSources limit allNodes
+                  val target = sourceToObjFile options source
+                  val smlfile = Filename.replaceSuffix "sml" target
+                in
+                  printMakeRule out (target, smlfile :: sources);
+                  out "\t$(SMLSHARP)";
+                  printMakeLine out 19 ["$(SMLFLAGS)",
+                                        "-o", Filename.toString target,
+                                        "-c", Filename.toString smlfile]
+                end
+              else ()
+            | _ => ())
+          allNodes
       end
 
-  fun makeLLVMOptions {systemBaseDir, triple, arch, cpu, features,
+  fun makeLLVMOptions {systemBaseExecDir, triple, arch, cpu, features,
                        optLevel, relocModel, LLCFLAGS, OPTFLAGS, ...} =
-      {systemBaseDir =
-         case systemBaseDir of
-           SOME x => x
-         | NONE => defaultSystemBaseDir (),
+      {systemBaseExecDir = systemBaseExecDir,
        triple =
          case triple of
            SOME x => x
-         | NONE => SMLSharp_Config.TARGET_TRIPLE (),
+         | NONE => LLVMUtils.getDefaultTarget (),
        arch = arch,
        cpu = cpu,
        features = features,
@@ -666,7 +700,7 @@ struct
        relocModel =
          case relocModel of
            SOME x => x
-         | NONE => if SMLSharp_Config.PIC_DEFAULT ()
+         | NONE => if Config.PIC_DEFAULT ()
                    then LLVMUtils.RelocPIC
                    else LLVMUtils.RelocDefault,
        LLCFLAGS = LLCFLAGS,
@@ -691,23 +725,27 @@ struct
       end
 
   fun loadConfig {systemBaseDir, ...} =
-      (case systemBaseDir of
-         NONE => ()
-       | SOME dir =>
-         SMLSharp_Config.loadConfig dir
-         handle SMLSharp_Config.Load =>
-                raise Error ["failed to read config.mk. Specify"
-                             ^ " correct path by -B option."];
-       app setExtraOption (SMLSharp_Config.EXTRA_OPTIONS ()))
+      let
+        val config_mk = Filename.fromString "config.mk"
+        val config_mk = Filename.concatPath (systemBaseDir, config_mk)
+      in
+        Config.loadConfig config_mk;
+        app setExtraOption (Config.EXTRA_OPTIONS ())
+      end
 
   fun command (progname, commandLineArgs) =
       let
+        val defaultSystemBaseDir = defaultSystemBaseDir ()
         val args =
             {
-              systemBaseDir = NONE,
+              programName = progname,
+              systemBaseDir = defaultSystemBaseDir,
+              systemBaseDirSpecified = false,
+              systemBaseExecDir = defaultSystemBaseDir,
+              systemBaseExecDirSpecified = false,
               noStdPath = false,
               noStdLib = false,
-              loadPath = nil,
+              localPath = nil,
               LDFLAGS = nil,
               LIBS = nil,
               optLevel = LLVMUtils.O0,
@@ -727,7 +765,6 @@ struct
               fileMap = NONE,
               require = nil,
               useCXX = false,
-              linkAll = false,
               emitLLVM = false
             }
         fun processArg (arg, args) =
@@ -735,11 +772,11 @@ struct
               OutputFile file =>
               args # {outputFilename = SOME (Filename.fromString file)}
             | IncludePath path =>
-              args # {loadPath = #loadPath args @ [Filename.fromString path]}
+              args # {localPath = #localPath args @ [Filename.fromString path]}
             | LibraryPath path =>
-              args # {LDFLAGS = #LDFLAGS args @ ["-L" ^ path]}
+              args # {LDFLAGS = #LDFLAGS args @ [S.ARG ("-L" ^ path)]}
             | Library lib =>
-              args # {LIBS = #LIBS args @ ["-l" ^ lib]}
+              args # {LIBS = #LIBS args @ [S.ARG ("-l" ^ lib)]}
             | OptLevel level =>
               args # {optLevel = level}
             | RelocModel mode =>
@@ -754,8 +791,6 @@ struct
               args # {features = attr}
             | UseCXX =>
               args # {useCXX = true}
-            | LinkAll =>
-              args # {linkAll = true}
             | EmitLLVM =>
               args # {emitLLVM = true}
             | NoStdPath =>
@@ -764,8 +799,15 @@ struct
               args # {noStdLib = true}
             | SourceFile file =>
               args # {srcfiles = #srcfiles args @ [Filename.fromString file]}
-            | SystemBaseDir file =>
-              args # {systemBaseDir = SOME (Filename.fromString file)}
+            | SystemBaseDir filename =>
+              args # {systemBaseDir = filename,
+                      systemBaseDirSpecified = true,
+                      systemBaseExecDir = if #systemBaseExecDirSpecified args
+                                          then #systemBaseExecDir args
+                                          else filename}
+            | SystemBaseExecDir filename =>
+              args # {systemBaseExecDir = filename,
+                      systemBaseExecDirSpecified = true}
             | LinkerFlags flags =>
               args # {LDFLAGS = #LDFLAGS args @ flags}
             | LLCFlags flags =>
@@ -794,11 +836,13 @@ struct
 
         val args = foldl processArg args (parseArgs commandLineArgs)
 
-        (* If -B option is specified, SML# compiler reads "config.mk" file
-         * in the given directory and configures the compiler itself
-         * according to the config.mk file.  Otherwise, SML# compiler
-         * uses built-in configurations. *)
+        (* read "config.mk" file in the system base directory and configure
+         * the compiler itself according to that file. *)
         val _ = loadConfig args
+                handle Config.Load err =>
+                       (printExn progname err;
+                        raise Error ["failed to read config.mk. Specify\
+                                     \ correct path by -B option."])
 
         (* Set global control options according to args.
          * The order of extra options is siginificant; if the same option
@@ -810,11 +854,11 @@ struct
         (* Now we have done the global configuration of the compiler.
          * Fill unspecified settings with default settings according to the
          * global configurations. *)
-        val llvmOptions = makeLLVMOptions args
-        val systemBaseDir =
-            #systemBaseDir llvmOptions
         val stdPath =
-            if #noStdPath args then nil else [systemBaseDir]
+            if #noStdPath args then nil
+            else [(Loc.STDPATH, #systemBaseDir args)]
+        val loadPath =
+            map (fn x => (Loc.USERPATH, x)) (#localPath args) @ stdPath
         val stopAt =
             case #mode args of
               SOME (Compile _) => Top.NoStop
@@ -822,41 +866,48 @@ struct
             | SOME (Check TypeCheckOnly) => Top.ErrorCheck
             | SOME (MakeDependCompile _) => Top.SyntaxCheck
             | SOME (MakeDependLink _) => Top.SyntaxCheck
-            | SOME MakeMakefile => Top.SyntaxCheck
+            | SOME (MakeMakefile _) => Top.SyntaxCheck
+            | SOME AnalyzeFiles => Top.ErrorCheck
             | SOME Help => Top.SyntaxCheck
             | NONE => Top.NoStop
         val loadMode =
             case #mode args of
-              SOME (Compile _) => Top.COMPILE
-            | SOME (Check _) => Top.COMPILE
-            | SOME (MakeDependCompile _) => Top.COMPILE
-            | SOME (MakeDependLink _) => Top.COMPILE_AND_LINK
-            | SOME MakeMakefile => Top.ALL
-            | SOME Help => Top.COMPILE
-            | NONE => Top.COMPILE_AND_LINK
+              SOME (Compile _) => I.COMPILE
+            | SOME (Check _) => I.COMPILE
+            | SOME (MakeDependCompile _) => I.COMPILE
+            | SOME (MakeDependLink _) => I.COMPILE_AND_LINK
+            | SOME (MakeMakefile _) => I.ALL
+            | SOME AnalyzeFiles => I.COMPILE_AND_LINK
+            | SOME Help => I.COMPILE
+            | NONE => I.COMPILE_AND_LINK
+        val fileMap =
+            Option.map (fn x => delay (fn () => loadFileMap x)) (#fileMap args)
 
         val options =
             {
-              systemBaseDir = systemBaseDir,
-              llvmOptions = llvmOptions,
+              generateMakefileOptions =
+                {programName = #programName args,
+                 systemBaseDir = #systemBaseDir args,
+                 systemBaseDirSpecified = #systemBaseDirSpecified args,
+                 systemBaseExecDir = #systemBaseExecDir args,
+                 systemBaseExecDirSpecified = #systemBaseExecDirSpecified args},
+              llvmOptions = makeLLVMOptions args,
               topOptions =
                 {stopAt = stopAt,
                  baseFilename = NONE,
-                 stdPath = stdPath,
-                 loadPath = #loadPath args,
+                 loadPath = loadPath,
                  loadMode = loadMode,
-                 outputWarnings = printWarnings} : Top.options,
+                 outputWarnings = printWarnings,
+                 defaultInterface = lookupFilename fileMap} : Top.options,
               linkOptions =
-                {LDFLAGS = #LDFLAGS args,
+                {systemBaseDir = #systemBaseDir args,
+                 LDFLAGS = #LDFLAGS args,
                  LIBS = #LIBS args,
                  noStdLib = #noStdLib args,
-                 useCXX = #useCXX args,
-                 linkAll = #linkAll args},
+                 useCXX = #useCXX args},
               topContext =
-                delay (fn () => loadBuiltin llvmOptions),
-              fileMap =
-                Option.map (fn x => delay (fn () => loadFileMap x))
-                           (#fileMap args),
+                delay (fn () => loadBuiltin args),
+              fileMap = fileMap,
               require = #require args
             }
 
@@ -864,10 +915,6 @@ struct
           | filetype (AssemblyOnly, false) = LLVMUtils.AssemblyFile
           | filetype (CompileOnly, true) = LLVMUtils.BitcodeFile
           | filetype (CompileOnly, false) = LLVMUtils.ObjectFile
-        fun defaultTarget (AssemblyOnly, true) = toLLFile
-          | defaultTarget (AssemblyOnly, false) = toAsmFile
-          | defaultTarget (CompileOnly, true) = toBCFile
-          | defaultTarget (CompileOnly, false) = toObjFile
       in
         case args of
           {mode = SOME Help, ...} =>
@@ -884,19 +931,41 @@ struct
         | {mode = SOME (MakeDependCompile limit), srcfiles, ...} =>
           printTo
             (#outputFilename args,
-             fn out =>
-                app (printDependCompile options {limit = limit, out = out})
-                    srcfiles)
+             fn out => app (printDependCompile
+                              options
+                              {limit = limit, out = out})
+                           srcfiles)
         | {mode = SOME (MakeDependLink limit), srcfiles, ...} =>
           printTo
             (#outputFilename args,
-             fn out =>
-                app (printDependLink options {limit = limit, out = out})
-                    srcfiles)
-        | {mode = SOME MakeMakefile, srcfiles, ...} =>
+             fn out => app (printDependLink
+                              options
+                              {limit = limit, out = out})
+                           srcfiles)
+        | {mode = SOME (MakeMakefile limit), srcfiles, ...} =>
           printTo
             (#outputFilename args,
-             fn out => generateMakefile options out srcfiles)
+             fn out => generateMakefile
+                         options
+                         {limit = limit, out = out}
+                         srcfiles)
+        | {mode = SOME AnalyzeFiles, srcfiles, ...} =>
+          raise Error ["analyze mode is currently disabled"]
+(*
+          let
+            val sourceFile =
+                case srcfiles
+                of nil => raise Error ["a root .smi file must be specified in analyze mode"]
+                 | [s] => s
+                 | _::_::_ => raise Error ["cannot specify multiple .smi \
+                                           \files in analyze mode"]
+            val _ = case Filename.suffix sourceFile of
+                             SOME "smi" => ()
+                           | _ => raise Error ["root .smi file must be specified in analyze mode"]
+          in
+            AnalyzeFiles.analyzeFiles options (I.USERPATH,sourceFile)
+          end
+*)
         | {mode = SOME (m as Check _), outputFilename = SOME _, ...} =>
           raise Error ["cannot specify -o with " ^ modeToOption m]
         | {mode = SOME (Check _), outputFilename = NONE, srcfiles, ...} =>
@@ -910,7 +979,7 @@ struct
           (compileSMLFile
              options
              {outputFileType = filetype (m, emitLLVM),
-              outputFilename = dstfile}
+              outputFilename = SOME dstfile}
              srcfile;
            ())
         | {mode = SOME (Compile m), outputFilename = NONE, srcfiles, emitLLVM,
@@ -919,7 +988,7 @@ struct
                   (compileSMLFile
                      options
                      {outputFileType = filetype (m, emitLLVM),
-                      outputFilename = defaultTarget (m, emitLLVM) srcfile}
+                      outputFilename = NONE}
                      srcfile;
                    ()))
               srcfiles
@@ -940,22 +1009,26 @@ struct
             val outputFile =
                 case outputFilename of
                   SOME filename => filename
-                | NONE => defaultExeTarget ()
+                | NONE => Filename.fromString (Config.A_OUT ())
           in
-            link options {sourceFiles = srcfiles, outputFile = outputFile}
+            link options {sourceFiles = srcfiles, outputFile = outputFile};
+            ()
           end
       end
 
   fun main (progname, args) =
       let
-        val r = RET (command (progname, args)) handle e => ERR e
+        val _ = SignalHandler.init ()
+        val r = RET (command (progname, args); SignalHandler.stop ())
+                handle e => (SignalHandler.stop (); printExn progname e; ERR e)
+        val _ = TempFile.cleanup ()
       in
-        if !Control.doProfile
-        then (print "Time Profile:\n"; print (Counter.dump ())) else ();
-        TempFile.cleanup ();
         case r of
-          RET () => OS.Process.success
-        | ERR e => (printExn progname e; OS.Process.failure)
+          ERR (SignalHandler.Signal _) => OS.Process.failure
+        | _ =>
+          (if !Control.doProfile
+           then (print "Time Profile:\n"; print (Counter.dump ())) else ();
+           case r of RET _ => OS.Process.success | ERR _ => OS.Process.failure)
       end
 
 end

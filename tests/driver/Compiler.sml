@@ -8,6 +8,8 @@
 structure Compiler =
 struct
 
+  structure I = InterfaceName
+
   exception Init of string
   exception CompileError of string * UserError.errorInfo list
   exception Failure of int
@@ -20,9 +22,14 @@ struct
                    objfile : Filename.filename} list
   type exefile = Filename.filename
   type error = UserError.errorInfo
+  type compile_result =
+      {objfiles : objfiles,
+       errors : error list,
+       dependency : InterfaceName.file_dependency option}
 
-  val systemBaseDir = Filename.fromString "./src"
-  val dataDir = Filename.fromString "./tests/data"
+  val systemBaseDir = Filename.fromString "src"
+  val dataDir = Filename.fromString "tests/data"
+  val loadPath = [(Loc.STDPATH, systemBaseDir)]
 
   fun dataFile name =
       Filename.concatPath (dataDir, Filename.fromString name)
@@ -32,11 +39,14 @@ struct
       then ()
       else raise Init (Filename.toString dir ^ " is not a directory.")
 
+  fun toObjFile filename =
+      Filename.replaceSuffix (Config.OBJEXT ()) filename
+
   fun init () =
       (
         checkDir systemBaseDir;
         checkDir dataDir;
-        Main.loadConfig {systemBaseDir = SOME systemBaseDir}
+        Main.loadConfig {systemBaseDir = systemBaseDir}
       )
 
   fun force (ref (SOME x), _) = x
@@ -49,16 +59,15 @@ struct
   val r = ref NONE
   fun preludeContext () =
       force (r, fn () => #2 (Main.loadPrelude
-                               {systemBaseDir = systemBaseDir,
+                               {linkOptions = {systemBaseDir = systemBaseDir},
                                 topContext = builtinContext,
                                 require = nil,
-                                topOptions = {loadPath = nil,
-                                              stdPath = [systemBaseDir]}}))
+                                topOptions = {loadPath = loadPath}}))
 
-  fun options (r : UserError.errorInfo list ref) =
+  fun options (loadMode, r : UserError.errorInfo list ref) =
       {llvmOptions =
          Main.makeLLVMOptions
-           {systemBaseDir = SOME systemBaseDir,
+           {systemBaseExecDir = systemBaseDir,
             triple = NONE,
             arch = "",
             cpu = "",
@@ -69,14 +78,15 @@ struct
             OPTFLAGS = nil} : LLVMUtils.compile_options,
        topOptions =
          {baseFilename = NONE,
-          stdPath = [systemBaseDir],
-          loadPath = nil,
+          loadPath = loadPath,
           stopAt = Top.NoStop,
-          loadMode = Top.COMPILE_AND_LINK,
-          outputWarnings = fn l => r := !r @ l} : Top.options,
+          loadMode = loadMode,
+          outputWarnings = fn l => r := !r @ l,
+          defaultInterface = fn x => x} : Top.options,
        linkOptions =
-         {LDFLAGS = nil : string list,
-          LIBS = nil : string list,
+         {systemBaseDir = systemBaseDir,
+          LDFLAGS = nil,
+          LIBS = nil,
           noStdLib = false,
           useCXX = false,
           linkAll = false},
@@ -85,12 +95,11 @@ struct
 
   fun interactiveOptions
         {llvmOptions,
-         topOptions = {stdPath, loadPath, baseFilename, outputWarnings, ...},
+         topOptions = {loadPath, baseFilename, outputWarnings, ...},
          linkOptions = {LDFLAGS, LIBS, ...},
          ...} =
       {llvmOptions = llvmOptions,
        baseFilename = baseFilename,
-       stdPath = stdPath,
        loadPath = loadPath,
        LDFLAGS = LDFLAGS,
        LIBS = LIBS,
@@ -110,7 +119,8 @@ struct
   fun evalInput input =
       let
         val errors = ref nil
-        val session = Interactive.start (interactiveOptions (options errors))
+        val topOptions = options (I.COMPILE_AND_LINK, errors)
+        val session = Interactive.start (interactiveOptions topOptions)
         datatype 'a try = R of 'a | E of exn
         fun loop context =
             if Parser.isEOF input then () else
@@ -128,39 +138,37 @@ struct
         {errors = !errors}
       end
 
-  fun stringInput mode src =
+  fun stringInput source src =
       let
         val buf = ref src
       in
         Parser.setup
-          {mode = mode,
+          {source = source,
            read = fn _ => !buf before buf := "",
-           sourceName = "(eval)",
            initialLineno = 1}
       end
 
-  fun fileInput mode srcfile =
+  fun fileInput source srcfile =
       let
-        val srcfile = dataFile srcfile
         val io = Filename.TextIO.openIn srcfile
         val input = Parser.setup
-                      {mode = mode,
+                      {source = source,
                        read = fn (_,n) => TextIO.inputN (io, n),
-                       sourceName = Filename.toString srcfile,
                        initialLineno = 1}
       in
         (io, input)
       end
 
   fun eval' src =
-      evalInput (stringInput Parser.File src)
+      evalInput (stringInput (Loc.FILE (Loc.USERPATH, Filename.empty)) src)
 
   fun eval src =
       ignore (checkCompileError (eval' src))
 
   fun evalFile' srcfile =
       let
-        val (io, input) = fileInput Parser.File srcfile
+        val srcfile = dataFile srcfile
+        val (io, input) = fileInput (Loc.FILE (Loc.USERPATH, srcfile)) srcfile
       in
         (evalInput input handle e => (TextIO.closeIn io; raise e))
         before TextIO.closeIn io
@@ -183,21 +191,22 @@ struct
       in
         Control.interactiveMode := true;
         Control.skipPrinter := false;
-        ReifiedTerm.printTopEnvOutput := printer;
+        ReifiedTerm.printTopEnvOutput := SOME printer;
         ({errors = #errors (evalInput input), prints = !buf}
          handle e => (reset (); raise e))
         before reset ()
       end
 
   fun interactive' src =
-      interactiveInput (stringInput Parser.Batch src)
+      interactiveInput (stringInput Loc.INTERACTIVE src)
 
   fun interactive src =
       {prints = #prints (checkCompileError (interactive' src))}
 
   fun interactiveFile' srcfile =
       let
-        val (io, input) = fileInput Parser.Batch srcfile
+        val srcfile = dataFile srcfile
+        val (io, input) = fileInput Loc.INTERACTIVE srcfile
       in
         (interactiveInput input handle e => (TextIO.closeIn io; raise e))
         before TextIO.closeIn io
@@ -209,22 +218,28 @@ struct
   fun compileFile srcfile =
       let
         val srcfile = dataFile srcfile
-        val objfile = TempFile.create ("." ^ SMLSharp_Config.OBJEXT ())
+        val objfile = TempFile.create ("." ^ Config.OBJEXT ())
         val errors = ref nil
-        val interfaceNameOpt =
-            #interfaceNameOpt
-              (Main.compileSMLFile
-                 (options errors)
-                 {outputFileType = LLVMUtils.ObjectFile,
-                  outputFilename = objfile}
-                 srcfile)
+        val dependency =
+            SOME (Main.compileSMLFile
+                    (options (InterfaceName.COMPILE, errors))
+                    {outputFileType = LLVMUtils.ObjectFile,
+                     outputFilename = SOME objfile}
+                    srcfile)
             handle UserError.UserErrors l => (errors := !errors @ l; NONE)
         val smifile =
-            case interfaceNameOpt of
-              SOME {source = (_, file), ...} => SOME file
-            | NONE => NONE
+            case dependency of
+              NONE => NONE
+            | SOME {root = {edges, ...}, ...} =>
+              case edges of
+                (I.PROVIDE, I.FILE {source = (_, file),
+                                    fileType = I.INTERFACE _, ...}) :: _ =>
+                SOME file
+              | _ => NONE
       in
-        {objfiles = [{smifile = smifile, objfile = objfile}], errors = !errors}
+        {objfiles = [{smifile = smifile, objfile = objfile}],
+         dependency = dependency,
+         errors = !errors} : compile_result
       end
 
   fun compile' srcfiles =
@@ -232,6 +247,7 @@ struct
         val results = map compileFile srcfiles
       in
         {objfiles = List.concat (map #objfiles results),
+         dependency = map #dependency results,
          errors = List.concat (map #errors results)}
       end
 
@@ -245,31 +261,37 @@ struct
         val errors = ref nil
       in
         Main.link
-          (options errors)
-          {sourceFiles = [objfile], outputFile = dstfile}
-        handle UserError.UserErrors l => errors := !errors @ l;
-        {exefile = dstfile, errors = !errors}
+          (options (I.LINK, errors))
+          {sourceFiles = [objfile], outputFile = dstfile};
+        {exefile = dstfile, errors = !errors, dependency = NONE}
+        handle UserError.UserErrors l =>
+               {exefile = dstfile, errors = !errors @ l, dependency = NONE}
       end
     | link' "" _ = raise Fail "link'"
     | link' srcfile objfiles =
       let
         val fileMap =
-            FilenameMap.fromList
+            UserFileMap.fromList
               (List.mapPartial
-                 (fn {smifile = SOME smi, objfile} => SOME (smi, objfile)
+                 (fn {smifile = SOME smi, objfile} =>
+                     SOME (toObjFile smi, objfile)
                    | {smifile = NONE, ...} => NONE)
                  objfiles)
         val srcfile = dataFile srcfile
         val fileMap = SOME (fn () => fileMap)
         val dstfile = TempFile.create ".exe"
         val errors = ref nil
+        val (errors2, dependency) =
+            (nil,
+             case Main.link
+                    (options (I.LINK, errors) # {fileMap = fileMap})
+                    {sourceFiles = [srcfile],
+                     outputFile = dstfile} of
+               [dep] => SOME dep
+             | _ => raise Fail "link: non-single dep for single smi file")
+            handle UserError.UserErrors l => (l, NONE)
       in
-        Main.link
-          (options errors # {fileMap = fileMap})
-          {sourceFiles = [srcfile],
-           outputFile = dstfile}
-        handle UserError.UserErrors l => errors := !errors @ l;
-        {exefile = dstfile, errors = !errors}
+        {exefile = dstfile, errors = !errors @ errors2, dependency = dependency}
       end
 
   fun link srcfile objfiles =
@@ -280,24 +302,31 @@ struct
       CoreUtils.system {quiet = true, command = Filename.toString exefile}
 *)
 
-  val sml_test_exec = _import "sml_test_exec" : (string, int array) -> int
+  val sml_test_exec =
+      _import "sml_test_exec"
+      : (string, string, int array) -> int
 
-  exception Failure of int
-  exception CoreDumped
-  exception Signaled of int
+  exception Failure of int * string
+  exception CoreDumped of string
+  exception Signaled of int * string
 
   fun execute exefile =
       let
+        val file = Filename.toString (TempFile.create ".out")
         val a = Array.array (2, 0)
-        val r = sml_test_exec (Filename.toString exefile, a)
+        val r = sml_test_exec (Filename.toString exefile, file, a)
+        val f = TextIO.openIn file
+        val out = TextIO.inputAll f
+        val _ = TextIO.closeIn f
         val m = Array.sub (a, 0)
         val n = Array.sub (a, 1)
       in
         if r < 0 then raise SMLSharp_Runtime.OS_SysErr () else
         case m of
-          0 => if n = 0 then () else raise Failure n
-        | 1 => raise Signaled n
-        | 2 => raise CoreDumped
+          0 => if n = 0 then ()
+               else raise Failure (n, "status=" ^ Int.toString n ^ "\n" ^ out)
+        | 1 => raise Signaled (n, "signal=" ^ Int.toString n ^ "\n" ^ out)
+        | 2 => raise CoreDumped out
         | _ => raise Fail ("unknown status : " ^ Int.fmt StringCvt.HEX n)
       end
 

@@ -1,13 +1,13 @@
-_require "../../basis.smi"
-_require "../../ml-yacc/lib/base.sig"
-_require "./utils.smi"
-_require "./utils.sig"
-_require "./sigs.sml"
+_require local "../../basis.smi"
+_require local "../../ml-yacc/lib/base.sig"
+_require local "./utils.smi"
+_require local "./utils.sig"
+_require local "./sigs.sml"
 _require "./grammar.smi"
 _require "./core.smi"
-_require "./coreutils.smi"
+(* _require "./coreutils.smi" *)
 _require "./graph.smi"
-_require "./look.smi"
+_require local "./look.smi"
 
 structure Lalr =
 struct

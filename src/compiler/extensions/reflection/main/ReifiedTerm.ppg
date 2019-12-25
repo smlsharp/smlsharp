@@ -4,380 +4,506 @@
  *)
 structure ReifiedTerm =
 struct
+  structure FE = SMLFormat.FormatExpression
 
   fun format_if (thenFmt, elseFmt) true = thenFmt
     | format_if (thenFmt, elseFmt) false = elseFmt
 
+  local
+    open SMLFormat.FormatExpression
+    open SMLFormat.BasicFormatters
+  in
+  fun iftrue (x, y) true = x
+    | iftrue (x, y) false = y
+  fun ifcons (x, y) (_::_) = x
+    | ifcons (x, y) nil = y
+  fun ifsome (x, y) (SOME _) = x
+    | ifsome (x, y) NONE = y
+  fun ifempty (x, y) "" = x
+    | ifempty (x, y) _ = y
+  fun join (nil, sep, y) () = y
+    | join (x, sep, nil) () = x
+    | join (x, sep, y) () = Sequence x :: Sequence sep :: Sequence y :: nil
+  fun split sep "" = nil
+    | split sep s =
+      foldr (fn (x,z) => Term (size x, x) :: ifcons (Sequence sep :: z, nil) z)
+            nil
+            (String.fields (fn x => x = #"\n") s)
+  val u = ()
+
+  fun isTuple (x, y) map = if RecordLabel.isTupleMap map then x else y
+
+  fun format_RecordLabelMap args map =
+      format_list args (RecordLabel.Map.listItemsi map)
+
+  fun format_RecordOrTuple (format_value, format_keyValue, sep) map =
+      if RecordLabel.isTupleMap map
+      then format_list (format_value, sep) (RecordLabel.Map.listItems map)
+      else format_list (format_keyValue, sep) (RecordLabel.Map.listItemsi map)
+
+  fun quotedLabel l =
+      TermPrintUtils.format_string (RecordLabel.toString l)
+  end
+
   (*%
-     @formatter(ReifiedTy.reifiedTy) ReifiedTy.format_reifiedTy
-     @formatter(option) TermPrintUtils.formatPrependedOpt
-     @formatter(optcase) TermPrintUtils.formatOptCase
-     @formatter(standardOption) TermPrintUtils.formatOption
-     @formatter(standardString) SMLFormat.BasicFormatters.format_string
-     @formatter(choice) format_if
-     @formatter(int) TermPrintUtils.format_int
-     @formatter(int8) TermPrintUtils.format_int8
-     @formatter(int16) TermPrintUtils.format_int16
-     @formatter(int64) TermPrintUtils.format_int64
-     @formatter(string) TermPrintUtils.format_string
-     @formatter(label) TermPrintUtils.format_label
-     @formatter(real) TermPrintUtils.format_real
-     @formatter(char) TermPrintUtils.format_char
-     @formatter(word) TermPrintUtils.format_word32
-     @formatter(word8) TermPrintUtils.format_word8
-     @formatter(word16) TermPrintUtils.format_word16
-     @formatter(word64) TermPrintUtils.format_word64
-     @formatter(real32) TermPrintUtils.format_real32
-     @formatter(list) TermPrintUtils.formatElements
-     @formatter(lazyArray) TermPrintUtils.format_lazyArray
-     @formatter(intInf) TermPrintUtils.format_IntInf
+   * @formatter(recordExp) format_RecordOrTuple
+   * @formatter(recordField) format_format_recordField
+   * @formatter(RecordLabel.Map.map) format_RecordLabelMap
+   * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(quotedLabel) quotedLabel
+   * @formatter(ReifiedTy.reifiedTy) ReifiedTy.format_reifiedTy
+   * @formatter(int) TermPrintUtils.format_int
+   * @formatter(int8) TermPrintUtils.format_int8
+   * @formatter(int16) TermPrintUtils.format_int16
+   * @formatter(int64) TermPrintUtils.format_int64
+   * @formatter(quote) TermPrintUtils.format_string
+   * @formatter(real) TermPrintUtils.format_real
+   * @formatter(char) TermPrintUtils.format_char
+   * @formatter(word) TermPrintUtils.format_word32
+   * @formatter(word8) TermPrintUtils.format_word8
+   * @formatter(word16) TermPrintUtils.format_word16
+   * @formatter(word64) TermPrintUtils.format_word64
+   * @formatter(real32) TermPrintUtils.format_real32
+   * @formatter(intInf) TermPrintUtils.format_IntInf
+   * @formatter(iftrue) iftrue
+   * @formatter(ifsome) ifsome
+   * @formatter(isTuple) isTuple
    *)
   (*%
-     @prefix toJSON_
-     @formatter(ReifiedTy.reifiedTy) ReifiedTy.format_reifiedTy
-     @formatter(standardOption) TermPrintUtils.formatOption
-     @formatter(standardString) SMLFormat.BasicFormatters.format_string
-     @formatter(choice) format_if
-     @formatter(option) TermPrintUtils.formatPrependedOpt
-     @formatter(int) TermPrintUtils.format_int_json
-     @formatter(int8) TermPrintUtils.format_int8
-     @formatter(int16) TermPrintUtils.format_int16
-     @formatter(int64) TermPrintUtils.format_int64
-     @formatter(string) TermPrintUtils.format_string
-     @formatter(label) TermPrintUtils.format_label
-     @formatter(real) TermPrintUtils.format_real_json
-     @formatter(char) TermPrintUtils.format_char
-     @formatter(word) TermPrintUtils.format_word32
-     @formatter(word8) TermPrintUtils.format_word8
-     @formatter(word16) TermPrintUtils.format_word16
-     @formatter(word64) TermPrintUtils.format_word64
-     @formatter(real32) TermPrintUtils.format_real32
-     @formatter(list) TermPrintUtils.formatElements
-     @formatter(lazyArray) TermPrintUtils.format_lazyArray
-     @formatter(intInf) TermPrintUtils.format_IntInf
+   * @prefix toJSON_
+   * @formatter(recordField) toJSON_format_recordField
+   * @formatter(RecordLabel.Map.map) format_RecordLabelMap
+   * @formatter(RecordLabel.label) RecordLabel.format_label
+   * @formatter(quotedLabel) quotedLabel
+   * @formatter(ReifiedTy.reifiedTy) ReifiedTy.format_reifiedTy
+   * @formatter(int) TermPrintUtils.format_int
+   * @formatter(int8) TermPrintUtils.format_int8
+   * @formatter(int16) TermPrintUtils.format_int16
+   * @formatter(int64) TermPrintUtils.format_int64
+   * @formatter(quote) TermPrintUtils.format_string
+   * @formatter(real) TermPrintUtils.format_real
+   * @formatter(char) TermPrintUtils.format_char
+   * @formatter(word) TermPrintUtils.format_word32
+   * @formatter(word8) TermPrintUtils.format_word8
+   * @formatter(word16) TermPrintUtils.format_word16
+   * @formatter(word64) TermPrintUtils.format_word64
+   * @formatter(real32) TermPrintUtils.format_real32
+   * @formatter(intInf) TermPrintUtils.format_IntInf
+   * @formatter(iftrue) iftrue
+   * @formatter(ifsome) ifsome
+   * @formatter(isTuple) isTuple
    *)
   datatype reifiedTerm
-    = (*% @format({dummyPrinter, contentsFn})
-          {"<" 2[1 contentsFn:lazyArray(dummyPrinter)(","+2, ","+d)] 1 ">"}
-       *)
-      (*%
-         @prefix toJSON_
-         @format({dummyPrinter, contentsFn})
-          { "[" 2[1 contentsFn:lazyArray(dummyPrinter)(","1,","1)] 1"]" }
-       *)
-      ARRAY of {dummyPrinter:reifiedTerm,
-                contentsFn:(int option -> {contents:reifiedTerm list, hasEllipsis:bool})
-               }
-    | (*%
-         @format(term terms)
-          { "<" 2[1 terms(term)(","+2)] 1 ">" }
-        *)              
-      (*%
-         @prefix toJSON_
-         @format(term terms)
-          { "[" 2[1 terms(term)(","+2)] 1 "]" }
-       *)
-      ARRAY2 of reifiedTerm array
-    | (*% @format(bool) bool
+    = (*%
+       * @format(term terms)
+       * !N0{ "<" 2[ 1 terms(term)("," +2) ] 1 ">" }
        *)
       (*% @prefix toJSON_
-          @format(bool) bool
+       * @format(term terms)
+       * !N0{ "[" 2[ 1 terms(term)("," +2) ] 1 "]" }
+       *)
+      ARRAY_PRINT of reifiedTerm array
+    | (*%
+       * @format(ty * boxed) "ARRAY"
+       *)
+      (*% @prefix toJSON_
+       * @format(ty * boxed) "ARRAY"
+       *)
+      ARRAY of ReifiedTy.reifiedTy * boxed
+    | (*%
+       * @format(bool) bool
+       *)
+      (*% @prefix toJSON_
+       * @format(bool) bool
        *)
       BOOL of bool
-    | (*% @format
+    | (*%
+       * @format(boxed) "_"
        *)
       (*% @prefix toJSON_
-          @format
+       * @format(boxed) "BOXED"
+       *)
+      BOXED of boxed
+    | (*%
+       * @format "null"
+       *)
+      (*% @prefix toJSON_
+       * @format "null"
+       *)
+      NULL
+    | (*%
+       * @format(ty) L8{ "null" +1 ":" +d ty }
+       *)
+      (*% @prefix toJSON_
+       * @format(ty) L8{ "null" +1 ":" +d ty }
+       *)
+      NULL_WITHTy of ReifiedTy.reifiedTy
+    | (*%
+       * @format "BOUNDVAR"
+       *)
+      (*%
+       * @prefix toJSON_
+       * @format "BOUNDVAR"
        *)
       BOUNDVAR
-    | (*% @format(char) char
+    | (*%
+       * @format(char) char
        *)
       (*% @prefix toJSON_
-          @format(char) char
+       * @format(char) char
        *)
       CHAR of char
-    | (*% @format(word) word
+    | (*%
+       * @format(word) word
        *)
       (*% @prefix toJSON_
-          @format(word) word
+       * @format(word) word
        *) 
       CODEPTR of word64
-    | (*% @format(con:label * term opt)
-          opt:optcase(term)(con:label, L8{ 1[con:label opt(term)(+1)] })
+    | (*%
+       * @format(con * term opt * ty)
+       * opt:ifsome()( L6{ con +1 2[ opt(term) ] }, con )
        *)
       (*% @prefix toJSON_
-          @format(con:label * term opt)
-          L8{ 2[con +1 opt(term)(+1)] }
+       * @format(con * term opt * ty)
+       * opt:ifsome()( L6{ con +1 2[ opt(term) ] }, con )
        *)
-      DATATYPE of string * reifiedTerm option
-    | (*% @format({exnName,hasArg})
-       * hasArg:choice()(
-       *   L8{ 2[ exnName:standardString +1 "..." ] },
-       *   exnName:standardString
-       * )
+      DATATYPE of string * reifiedTerm option * ReifiedTy.reifiedTy
+    | (*%
+       * @format(ty * term) "_"
        *)
       (*% @prefix toJSON_
-          @format({exnName,hasArg}) "exn"
+       * @format(ty * term) "DYNAMIC"
+       *)
+      DYNAMIC of ReifiedTy.reifiedTy * boxed 
+    | (*%
+       * @format({exnName, hasArg})
+       * hasArg:iftrue()( L6{ exnName 2[ +1 "..." ] }, exnName )
+       *)
+      (*% @prefix toJSON_
+       * @format({exnName,hasArg}) "EXN"
        *)
       EXN of {exnName : string, hasArg : bool}
-    | (*% @format "contag"
+    | (*%
+       * @format "EXNTAG"
        *)
       (*% @prefix toJSON_
-          @format "contag"
+       * @format "EXNTAG"
        *)
       EXNTAG
-    | (*% @format(int) int
+    | (*%
+       * @format(int) int
        *)
       (*% @prefix toJSON_
-          @format(int) int
+       * @format(int) int
        *)
-      INT of int
-    | (*% @format(int) int
+      INT32 of int
+    | (*%
+       * @format(int) int
        *)
       (*% @prefix toJSON_
-          @format(int) int
+       * @format(int) int
        *)
       INT8 of int8
-    | (*% @format(int) int
+    | (*%
+       * @format(int) int
        *)
       (*% @prefix toJSON_
-          @format(int) int
+       * @format(int) int
        *)
       INT16 of int16
-    | (*% @format(int64) int64
+    | (*%
+       * @format(int) int
        *)
       (*% @prefix toJSON_
-          @format(int64) int64
+       * @format(int) int
        *)
       INT64 of int64
-    | (*% @format "?"
+    | (*%
+       * @format "INTERNAL"
        *)
       (*% @prefix toJSON_
-          @format "?"
+       * @format "INTERNAL"
        *)
       INTERNAL 
-    | (*% @format(int) int
+    | (*%
+       * @format(int) int
        *)
       (*% @prefix toJSON_
-          @format(int) int
+       * @format(int) int
        *)
       INTINF of intInf
-    | (*% @format(term terms)
-          { "[" 1[1 terms(term)(","+2, ","+d)] 1 "]" }
+    | (*%
+       * @format(term terms)
+       * !N0{ "[" 2[ 1 terms(term)("," +2) ] 1 "]" }
        *)
-      (*%
-         @prefix toJSON_
-         @format(term terms)
-          { "[" 1[1 terms(term)(","1,","1)] 1 "]" }
+      (*% @prefix toJSON_
+       * @format(term terms)
+       * !N0{ "[" 2[ 1 terms(term)("," +2) ] 1 "]" }
        *)
       LIST of reifiedTerm list
-    | (*% @format "_"
+    | (*%
+       * @format "_"
        *)
       (*% @prefix toJSON_
-          @format "_"
+       * @format "OPAQUE"
        *)
       OPAQUE
-    | (*% @format(term opt) L8{ opt:standardOption(term)(+1,)}
+    | (*%
+       * @format(term opt * ty)
+       * opt:ifsome()( L6{ "SOME" 2[ +1 opt(term) ] }, "NONE" )
        *)
       (*% @prefix toJSON_
-          @format(term opt) opt:standardOption(term)(+1,)
+       * @format(term opt * ty)
+       * opt:ifsome()( L6{ "SOME" 2[ +1 opt(term) ] }, "NONE" )
        *)
-      OPTION of reifiedTerm option
-    | (*% @format "NONE"
-       *)
-      (*% @prefix toJSON_
-          @format "null"
-       *)
-      OPTIONNONE
-    | (*% @format(arg) 
-          L8{ 2["SOME" +1 arg] }
+      OPTION of reifiedTerm option * ReifiedTy.reifiedTy
+    | (*%
+       * @format(word) word
        *)
       (*% @prefix toJSON_
-          @format(arg) arg
-       *)
-      OPTIONSOME of reifiedTerm
-    | (*% @format(term) term
-       *)
-      (*% @prefix toJSON_
-          @format(term) term
-       *)
-      POLY of reifiedTerm
-    | (*% @format(word) word
-       *)
-      (*% @prefix toJSON_
-          @format(word) word
+       * @format(word) word
        *)
       PTR of word64
-    | (*% @format(real) real
+    | (*%
+       * @format(real) real
        *)
       (*% @prefix toJSON_
-          @format(real) real
+       * @format(real) real
        *)
       REAL32 of real32
-    | (*% @format(real) real
+    | (*%
+       * @format(real) real
        *)
       (*% @prefix toJSON_
-          @format(real) real
+       * @format(real) real
        *)
-      REAL of real
-    | (*% @format(field terms)
-          {"{" 2[1 terms(field)(","+2,","+2)] 1"}" }
-         @format:field(name:label * term) 
-           { name + "=" + term }
-       *)
-      (*%
-         @prefix toJSON_
-         @format(field terms)
-         !N0{"{"  2[1 terms(field)(","+1,","+1)] 1 "}" }
-         @format:field(name:label * term) 
-           { name  ":"  term }
-       *)
-      RECORD of (string * reifiedTerm) list
-    | (*% @format(term) 
-         L8{"ref" + term}
+      REAL64 of real
+    | (*% 
+       * @format(term terms)
+       * !N0{
+       *   terms:isTuple()("(", "{")
+       *   2[ 1 terms:recordExp(term,term:recordField(term))("," +2) ]
+       *   1 terms:isTuple()(")", "}")
+       * }
        *)
       (*% @prefix toJSON_
-          @format(term)
+       * @format(term terms)
+       * !N0{ "{" 2[ 1 terms(term:recordField(term))("," +1) ] 1 "}" }
        *)
-      REF of reifiedTerm
-    | (*% @format(string) string
+      RECORD of reifiedTerm RecordLabel.Map.map
+    | (*% 
+       * @format(label) "#" label
        *)
       (*% @prefix toJSON_
-          @format(string) string
+       * @format(label) "RECORDLABEL"
+       *)
+      RECORDLABEL of RecordLabel.label
+    | (*%
+       * @format(term) 
+       * L6{ "ref" 2[ +1 term ] }
+       *)
+      (*% @prefix toJSON_
+       * @format(term) "REF_PRINT"
+       *)
+      REF_PRINT of reifiedTerm
+    | (*%
+       * @format(ty * boxed) "REF"
+       *)
+      (*% @prefix toJSON_
+       * @format(ty * boxed) "REF"
+       *)
+      REF of ReifiedTy.reifiedTy * boxed
+    | (*%
+       * @format(keyValue terms)
+       * !N0{ "{" 2[ 1 terms(keyValue)("," +2) ] 1 "}" }
+       * @format:keyValue(key * value)
+       * { key:quote +1 "=>" +d value }
+       *)
+      (*% @prefix toJSON_
+       * @format(keyValue terms) "SENVMAP"
+       *)
+      SENVMAP of (string * reifiedTerm) list
+    | (*%
+       * @format(keyValue terms)
+       * !N0{ "{" 2[ 1 terms(keyValue)("," +2) ] 1 "}" }
+       * @format:keyValue(key * value)
+       * { "#" key +1 "=>" +d value }
+       *)
+      (*% @prefix toJSON_
+       * @format(term terms) "RECORDLABELMAP"
+       *)
+      RECORDLABELMAP of (RecordLabel.label * reifiedTerm) list
+    | (*%
+       * @format(keyValue terms)
+       * !N0{ "{" 2[ 1 terms(keyValue)("," +2) ] 1 "}" }
+       * @format:keyValue(key * value)
+       * { key +1 "=>" +d value }
+       *)
+      (*% @prefix toJSON_
+       * @format(term terms) "IENVMAP"
+       *)
+      IENVMAP of (int * reifiedTerm) list
+    | (*%
+       * @format(string) string:quote
+       *)
+      (*% @prefix toJSON_
+       * @format(string) string:quote
        *)
       STRING of string
     | (*%
-         @format(field terms)
-         !N0{"(" 1[1 terms(field)(","1, ","1)] 1 ")" }
-       *)
-      (*%
-         @prefix toJSON_
-         @format(field terms)
-         !N0{"(" 1[1 terms(field)(","1,","1)] 1 ")" }
-       *)
-      TUPLE of reifiedTerm list
-    | (*% @format "()"
+       * @format "void"
        *)
       (*% @prefix toJSON_
-          @format "{}"
+       * @format "VOID"
+       *)
+      VOID 
+    | (*%
+       * @format(ty)
+       * L8{ "void" +1 ":" +d ty }
+       *)
+      (*% @prefix toJSON_
+       * @format(ty)
+       * L8{ "void" +1 ":" +d ty }
+       *)
+      VOID_WITHTy of ReifiedTy.reifiedTy
+    | (*%
+       * @format "()"
+       *)
+      (*% @prefix toJSON_
+       * @format "{}"
        *)
       UNIT 
     | (*%
-         @format({dummyPrinter, contentsFn})
-          {"<|" 2[1 contentsFn:lazyArray(dummyPrinter)(","+2, ","+d)] 1 "|>"}
+       * @format(term terms)
+       * !N0{ "<|" 2[ 1 terms(term)("," +2) ] 1 "|>" }
        *)
-      (*%
-         @prefix toJSON_
-         @format({dummyPrinter, contentsFn})
-          {"<|" 2[1 contentsFn:lazyArray(dummyPrinter)(","+2, ","+d)] 1 "|>"}
-       *)
-      VECTOR of {dummyPrinter:reifiedTerm,
-                      contentsFn: (int option -> {contents:reifiedTerm list, hasEllipsis:bool})
-                     }
-    | (*% @format(term terms)
-          { "<|" 2[1 terms(term)(","+2)] 1 "|>" }
-        *)              
       (*% @prefix toJSON_ 
-          @format(term terms)
-          { "<|" 2[1 terms(term)(","+2)] 1 "|>" }
+       * @format(term terms)
+       * !N0{ "[" 2[ 1 terms(term)("," +2) ] 1 "]" }
        *)
-       VECTOR2 of reifiedTerm vector
-    | (*% @format(word) word
+      VECTOR_PRINT of reifiedTerm vector
+    | (*%
+       * @format(ty * boxed) "VECTOR"
+       *)              
+      (*% @prefix toJSON_ 
+       * @format(ty * boxed) "VECTOR"
+       *)
+      VECTOR of ReifiedTy.reifiedTy * boxed
+    | (*%
+       * @format(word) word
        *)
       (*% @prefix toJSON_
-          @format(word) word
+       * @format(word) word
        *)
-      WORD of word
-    | (*% @format(word) word
+      WORD32 of word
+    | (*%
+       * @format(word) word
        *)
       (*% @prefix toJSON_
-          @format(word) word
+       * @format(word) word
        *)
       WORD8 of word8
-    | (*% @format(word) word
+    | (*%
+       * @format(word) word
        *)
       (*% @prefix toJSON_
-          @format(word) word
+       * @format(word) word
        *)
       WORD16 of word16
-    | (*% @format(word64) word64
+    | (*%
+       * @format(word) word
        *)
       (*% @prefix toJSON_
-          @format(word64) word64
+       * @format(word) word
        *)
       WORD64 of word64
-    | (*% @format(ptr) "fn"
+    | (*%
+       * @format(ptr) "fn"
        *)
       (*% @prefix toJSON_
-          @format({closure:ptr, ty}) "fn"
+       * @format({closure:ptr, ty}) "FUN"
        *)
       FUN of {closure:boxed, ty:ReifiedTy.reifiedTy}
-    | (*% @format "_"
+    | (*%
+       * @format "_"
        *)
       (*% @prefix toJSON_
-          @format "_"
+       * @format "_"
        *)
       UNPRINTABLE 
-    | (*% @format "..."
+    | (*%
+       * @format "<builtin>"
        *)
       (*% @prefix toJSON_
-          @format "..."
-       *)
-      ELIPSIS 
-    | (*% @format "<builtin>"
-       *)
-      (*% @prefix toJSON_
-          @format "<builtin>"
+       * @format "<builtin>"
        *)
       BUILTIN
+
+  withtype 'a format_recordField
+    = (*%
+       * @format(label * value)
+       * { label +d "=" 2[ +1 value ] }
+       *)
+      (*% @prefix toJSON_
+       * @format(label * value)
+       * { label:quotedLabel +d ":" 2[ +1 value ] }
+       *)
+      RecordLabel.label * 'a
+
+  (*% *)
+  (*% @prefix toJSON_ *)
+  datatype 'a dyn
+    = (*%
+       * @format(term) "<dynamic>"
+       *)
+      (*%
+       * @prefix toJSON_ 
+       * @format(term) "<dynamic>"
+       *)
+      DYN of reifiedTerm
+
+  fun toDynamic term = DYN term
+  fun toReifiedTerm (DYN term) = term
 
   fun reifiedTermToString term =
       SMLFormat.prettyPrint nil (format_reifiedTerm term)
   fun reifiedTermToJSON term =
       SMLFormat.prettyPrint nil (toJSON_reifiedTerm term)
 
-  (*% *)
-  type path =
-    (*%
-       @format(name names)  names(name)(".")
-     *)
-    string list
-
-  fun ifMultilines (nl, sp) s =
-      if List.length (String.fields (fn x => x = #"\n") s) > 1 
-         orelse String.size s > 60
-      then nl
-      else sp
+  (*%
+   *)
+  type path
+    = (*%
+       * @format(name names)
+       * names(name)(".")
+       *)
+      string list
 
   (*%
-     @formatter(option) TermPrintUtils.formatPrependedOpt
-     @formatter(makeLines) TermPrintUtils.makeLines
-     @formatter(ifMultilines) ifMultilines
+   * @formatter(split) split
+   * @formatter(ifsome) ifsome
    *)
   datatype idstatus 
-    = (*
-         @format({name, term, ty})
-          {2[ "val" + name + "=" +1 term ty:ifMultilines()(\n,+) ":" + {ty:makeLines} ] }
-          {2[ "val" + name + "=" +1 term +1 ":" + ty:makeLines ] }
-       *)
-      (*%
-         @format({name, term, ty})
-          {2[ "val" + name + "=" +1 term ty:ifMultilines()(\n,+) ":" + {ty:makeLines}] }
+    = (*%
+       * @format({name, term, ty})
+       * { "val" +d name +d "=" 2[ +1 term +2 ":" +d { ty:split()(+1) } ] }
        *)
       EXVAR of {name:string, term:reifiedTerm, ty:string}
     | (*%
-         @format({name, ty})
-          {2[ "val" + name + ":" + {ty:makeLines}] }
+       * @format({name, ty})
+       * { "val" +d name 2[ +1 ":" +d { ty:split()(+1) } ] }
        *)
       EXVARTY of {name:string, ty:string}
     | (*%
-         @format({name, ty:ty opt})
-          {"exception" + name opt(ty:makeLines)(+"of"+)}
+       * @format({name, ty : ty tyOpt})
+       * { "exception" +d name
+       *   tyOpt:ifsome()( 2[ +1 "of" +d tyOpt(ty:split()(+1)) ], ) }
        *)
       EXEXN of {name:string, ty:string option}
     | (*%
-         @format({name, path})
-           {"exception" + name + "=" + path}
+       * @format({name, path})
+       * { "exception" +d name +d "=" +d path }
        *)
       EXEXNREP of {name:string, path:string}
 
@@ -390,113 +516,65 @@ struct
   fun mkEXVarIdstatus string reifiedTerm tyString =
       EXVAR {name = string, term = reifiedTerm, ty = tyString}
 
-  (*% 
-      @formatter(makeLines) TermPrintUtils.makeLines
+  (*%
+   * @formatter(split) split
    *)
-  (*% 
-      @prefix structure_
-      @formatter(makeLines) TermPrintUtils.makeLines
-   *)
-  type tstr 
+  type tstr
     = (*%
-         @format(name * def:makeLines) 
-          def
-       *)  
-      (*%
-         @prefix structure_
-         @format(name * def:makeLines) 
-          def
-       *)  
+       * @format(name * def)
+       * def:split()(\n)
+       *)
       string * string
 
   (*%
-     @formatter(ifCons) TermPrintUtils.formatIfCons
-  *)
+   *)
   type varE
     = (*%
-         @format(var vars) 
-           vars(var)(\n)
+       * @format(var vars)
+       * vars(var)(\n)
        *)
       idstatus list
 
   (*%
-  *)
-  (*%
-    @prefix structure_
-  *)
+   *)
   type tyE
     = (*%
-         @format(ty tys) 
-           tys(ty)(\n)
-       *)
-      (*%
-         @prefix structure_
-         @format(ty tys) 
-           tys(ty)(\n)
+       * @format(ty tys)
+       * tys(ty)(\n)
        *)
       tstr list
 
-  fun ifNonEmptyTyEVarE (varE,exp) tyE =
-      if null(tyE) orelse null(varE) then nil
-      else exp
-  fun ifNonEmptyTyEVarEStrE (varE,tyE,exp) strs =
-      if null(strs) orelse null(varE) andalso null(tyE) then nil
-      else exp
-  fun ifNonEmptyTyEStrE (tyE,exp) strs =
-      if null(strs) orelse null(tyE) then nil
-      else exp
-  fun ifNonEmptyEnv (env, exp) _ =
-      if null(env) then nil
-      else exp @ env
   (*%
-     @formatter(ifCons) TermPrintUtils.formatIfCons
-     @formatter(ifNonEmptyTyEVarE) ifNonEmptyTyEVarE
-     @formatter(ifNonEmptyTyEVarEStrE) ifNonEmptyTyEVarEStrE
-     @formatter(ifNonEmptyEnv) ifNonEmptyEnv
+   * @extern(u) u
+   * @formatter(join) join
    *)
   (*%
-     @prefix structure_
-     @formatter(ifCons) TermPrintUtils.formatIfCons
-     @formatter(ifNonEmptyTyEVarE) ifNonEmptyTyEVarE
-     @formatter(ifNonEmptyTyEStrE) ifNonEmptyTyEStrE
-     @formatter(ifNonEmptyEnv) ifNonEmptyEnv
+   * @prefix structure_
+   * @extern(u) u
+   * @formatter(join) join
    *)
-  datatype env 
+  datatype env
     = (*%
-         @format({varE, tyE, strE:str strs})
-          tyE
-          tyE:ifNonEmptyTyEVarE()(varE,\n)
-          varE
-          strs:ifNonEmptyTyEVarEStrE()(varE,tyE,\n)
-          strs(str)(\n)
+       * @format({varE, tyE, strE : str strs})
+       * u:join()( u:join()( tyE, \n, varE ), \n, strs(str)(\n) )
        *)
-     (*%
-         @prefix structure_
-         @format({varE, tyE, strE:str strs})
-          strs(str)(\n)
+      (*%
+       * @format({varE, tyE, strE : str strs})
+       * strs(str)(\n)
        *)
       ENV of {varE:varE, tyE:tyE, strE:strentry list}
+
   withtype strentry
-   = (*%
-         @format(name*env)
-           "structure" + name + "="
-          2[
-           \n
-           "struct"
-             2[
-               env:ifNonEmptyEnv()(env,\n)
-              ]
-           \n
-           "end"
-           ]
+    = (*%
+       * @format(name * env)
+       * "structure" +d name +d "=" 2[ \n
+       * "struct" 2[ u:join()("", \n, env) ] \n
+       * "end" ]
        *)
-     (*%
-         @prefix structure_
-         @format(name*env)
-          name
-          2[
-             env:ifNonEmptyEnv()(env,\n)
-           ]
+      (*%
+       * @prefix structure_
+       * @format(name * env)
+       * name 2[ u:join()("", \n, env) ]
        *)
      string * env
 
@@ -504,105 +582,66 @@ struct
   fun mkENVenv varE tyE strE =
       ENV {varE = varE, tyE = tyE, strE = strE}
 
-  (*% 
-     @formatter(ifCons) TermPrintUtils.formatIfCons
-   *)
-  (*% 
-     @prefix structure_
-     @formatter(ifCons) TermPrintUtils.formatIfCons
+  (*%
+   * @formatter(split) split
    *)
   type funE
     = (*%
-         @format(functor functors) 
-           functors(functor)(\n)
-       *)
-      (*%
-         @prefix structure_
-         @format(functor functors) 
-           functors(functor)(\n)
+       * @format(functor functors)
+       * functors(functor:split()(\n))(\n)
        *)
       string list
 
-  (*% *)
-  (*% 
-     @prefix structure_
-   *)
-  type sigentry 
-    = (*%
-         @format(name * sige) 
-         "signature" + name + "="
-           2[
-            \n
-            "sig"
-              2[sige]
-            \n
-            "end"
-           ]
-       *)
-     (*%
-         @prefix structure_
-         @format(name * sige)
-           "signature" + name
-       *)
-     string * string
-
-  (*% 
-   *)
-  (*% 
-     @prefix structure_
-   *)
-  type sigE = 
-  (*% 
-     @format(sigE) sigE
-   *)
-  (*% 
-     @prefix structure_
-     @format(sigE) sigE
-   *)
-     string
-
-  fun printEnv (env,nl) string =
-      if String.size string = 0 
-      then if null(env) then nil
-           else env @ nl
-      else if null(env) then nl
-      else nl @ env @ nl
   (*%
-     @formatter(printEnv) printEnv
-     @formatter(ifCons) TermPrintUtils.formatIfCons
+   * @formatter(split) split
+   *)
+  type sigE
+    = (*%
+       * @format(sigE)
+       * sigE:split()(\n)
+       *)
+      string
+
+  (*%
+   * @extern(u) u
+   * @formatter(join) join
    *)
   (*%
-     @prefix structure_
-     @formatter(printEnv) printEnv
-     @formatter(ifCons) TermPrintUtils.formatIfCons
+   * @prefix structure_
+   * @extern(u) u
+   * @formatter(join) join
    *)
-  type topEnv 
+  type topEnv
     = (*%
-         @format({Env, FunE, SigE}) 
-           FunE
-           FunE:ifCons()(\n)
-           SigE
-           SigE:printEnv()(Env,\n)
+       * @format({Env, FunE, SigE})
+       * u:join()( u:join()( u:join()( FunE, \n, SigE ), \n, Env ), \n, "" )
        *)
       (*%
-         @prefix structure_
-         @format({Env, FunE, SigE}) 
-            Env
+       * @prefix structure_
+       * @format({Env, FunE, SigE})
+       * Env \n
        *)
        {Env:env, FunE:funE, SigE:sigE}
 
   fun mkTopEnv env funE sigE =
        {Env = env, FunE = funE, SigE = sigE}
 
-  val printTopEnvOutput = ref print
+  val printTopEnvOutput = ref NONE
 
-  fun printTopEnv topEnv = 
-      !printTopEnvOutput
-        (SMLFormat.prettyPrint nil (format_topEnv topEnv))
+  fun printTopEnv topEnv =
+      (case !printTopEnvOutput of SOME f => f | NONE => fn _ => ())
+        (SMLFormat.prettyPrint
+           (case !printTopEnvOutput of
+              NONE => [SMLFormat.OutputFunction print]
+            | SOME _ => nil)
+           (format_topEnv topEnv))
 
-  fun printStructureTopEnv topEnv = 
-      !printTopEnvOutput
-        (SMLFormat.prettyPrint nil (structure_topEnv topEnv) ^ "\n")
-
+  fun printStructureTopEnv topEnv =
+      (case !printTopEnvOutput of SOME f => f | NONE => fn _ => ())
+        (SMLFormat.prettyPrint
+           (case !printTopEnvOutput of
+              NONE => [SMLFormat.OutputFunction print]
+            | SOME _ => nil)
+           (structure_topEnv topEnv))
 
 end

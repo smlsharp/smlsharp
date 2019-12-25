@@ -29,7 +29,6 @@ in
       | RC.RCINDEXOF _ => false
       | RC.RCTAGOF _ => false
       | RC.RCSIZEOF _ => false
-      | RC.RCTYPEOF _ => false
       | RC.RCREIFYTY _ => false
       | RC.RCDATACONSTRUCT {argExpOpt=NONE, argTyOpt, con, instTyList, loc} => false
       | RC.RCDATACONSTRUCT {con={path, id, ty}, instTyList, argTyOpt, argExpOpt= SOME tpexp, loc} =>
@@ -60,7 +59,7 @@ in
       | RC.RCLET {decls, body, tys,loc} => true
       | RC.RCPOLY {exp=tpexp,...} => expansive tpexp
       | RC.RCTAPP {exp, ...} => expansive exp
-      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy, funExp=RC.RCFFIFUN ptrExp}, ty, loc) =>
+      | RC.RCFFI (RC.RCFFIIMPORT {ffiTy, funExp=RC.RCFFIFUN (ptrExp, _)}, ty, loc) =>
         expansive ptrExp
       | RC.RCFFI (RC.RCFFIIMPORT {ffiTy, funExp=RC.RCFFIEXTERN _}, ty, loc) =>
         false
@@ -70,17 +69,22 @@ in
       | RC.RCPRIMAPPLY _ => true
       | RC.RCOPRIMAPPLY _ => true
       | RC.RCSEQ _ => true
-      | RC.RCFOREACH _ => true
-      | RC.RCFOREACHDATA _ => true
       | RC.RCRAISE _ => true
       | RC.RCHANDLE _ => true
       | RC.RCEXNCASE _ => true
       | RC.RCCALLBACKFN _ => true
       | RC.RCFOREIGNAPPLY _ => true
       | RC.RCSWITCH _ => true
-      | RC.RCJOIN {ty,args=(arg1,arg2),argTys,loc} => 
+      | RC.RCCATCH _ => true
+      | RC.RCTHROW _ => true
+      | RC.RCJOIN {isJoin, ty,args=(arg1,arg2),argTys,loc} => 
         expansive arg1 orelse expansive arg2
-      | RC.RCJSON {exp,ty,coerceTy,loc} => expansive exp
+      | RC.RCDYNAMIC {exp,ty,elemTy, coerceTy,loc} => expansive exp
+      | RC.RCDYNAMICIS {exp,ty,elemTy, coerceTy,loc} => expansive exp
+      | RC.RCDYNAMICNULL {ty, coerceTy,loc} => false
+      | RC.RCDYNAMICTOP {ty, coerceTy,loc} => false
+      | RC.RCDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} => expansive exp
+      | RC.RCDYNAMICCASE _ => true
 
   fun isAtom tpexp =
       case tpexp of
@@ -191,10 +195,37 @@ val _ = map printTy (map T.BOUNDVARty btvList)
 
   (**
    * Make a kind consistent ground instance.
+   *
+   * NOTE: If properties contradict with tvarKind, or if constraints are not
+   * satisfiable, there is no type-consistent ground instance.
+   * Examples include:
+   *
+   * # fun f x = #a _join({a=true},x) = 123;
+   * val f = fn : ['a#[reify]{}, 'b#[reify]{a: int}. ('b = {a: bool} join 'a) =>
+   *               'a -> bool]
+   * # fun f x = let fun 'a#unboxed g x = x : 'a in (g x, #a x) end;
+   * val f = fn : ['a#[unboxed]{a: 'b}, 'b. 'a -> 'a * 'b]
+   * # val 'a#[boxed,unboxed] l = nil : 'a list;
+   * val l = [] : ['a#[boxed,unboxed]. 'a list]
+   *
+   * This function generates an instance even for these polytypes.
+   * Actually, this function generates an instance for which the record
+   * compilation can choose a valid singleton type.
+   *
+   * This function is used only by ReifyTopEnv for printing polymorphic
+   * data (such as nil).  Even if a polytype does not have any type-consistent
+   * instance, the printer requires type instantiation in order to reveal the
+   * data structure.  The choice of a type instance is not a matter for this
+   * purpose because a data structure of a polymorphic type, say ['a. 'a t],
+   * does not include any value of type 'a.
+   *
+   * Therefore, this function does not concern type-consistency, but only
+   * concerns that the generated instance can pass subsequent compilation
+   * phases, namely record compilation.
    *)
   fun instantiateTv ty =
       case ty of
-        T.TYVARty (tv as ref (T.TVAR {kind = T.KIND {tvarKind, eqKind, subkind, reifyKind, dynKind}, ...})) =>
+        T.TYVARty (tv as ref (T.TVAR {kind = T.KIND {tvarKind, properties, dynamicKind}, ...})) =>
         (case tvarKind of
            T.OCONSTkind (h::_) => tv := T.SUBSTITUTED h
          | T.OCONSTkind nil => raise Bug.Bug "instantiateTv: OCONSTkind"
@@ -202,13 +233,11 @@ val _ = map printTy (map T.BOUNDVARty btvList)
          | T.OPRIMkind {instances = nil, ...} =>
            raise Bug.Bug "instantiateTv: OPRIMkind"
          | T.REC tyFields => tv := T.SUBSTITUTED (T.RECORDty tyFields)
-         | T.BOXED => tv := T.SUBSTITUTED (T.RECORDty RecordLabel.Map.empty)
-         | T.UNIV =>
-           case subkind of
-             T.JSON_ATOMIC => tv := T.SUBSTITUTED BuiltinTypes.intTy
-           | T.JSON => tv := T.SUBSTITUTED BuiltinTypes.intTy
-           | T.UNBOXED => tv := T.SUBSTITUTED BuiltinTypes.intTy
-           | T.ANY => tv := T.SUBSTITUTED BuiltinTypes.unitTy)
+         | T.UNIV => 
+           if T.isProperties T.BOXED properties
+           then tv := T.SUBSTITUTED (T.RECORDty RecordLabel.Map.empty)
+           else tv := T.SUBSTITUTED BuiltinTypes.unitTy
+	)
       | _ => ()
 
   fun groundInst {ty,exp} =

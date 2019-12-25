@@ -1,0 +1,37 @@
+_require local "../../../../basis.smi"
+(* _require "../../../../smlformat-lib.smi" *)
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+(* _require local "../../../data/symbols/main/Symbol.smi" *)
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../debug/main/Bug.smi"
+_require "./ReifiedTerm.ppg.smi"
+_require "./ReifiedTy.ppg.smi"
+_require local "./ReifiedTermToML.smi"
+(* _require "./ReifyUtils.smi" *)
+(* _require "./ReifiedUtils.smi" *)
+
+
+structure PartialDynamic =
+struct
+  exception RuntimeTypeError
+  val glbTy : ReifiedTy.reifiedTy * ReifiedTy.reifiedTy  -> ReifiedTy.reifiedTy
+  val lubTy : ReifiedTy.reifiedTy * ReifiedTy.reifiedTy  -> ReifiedTy.reifiedTy
+  val matchTy : ReifiedTy.reifiedTy * ReifiedTy.reifiedTy  -> bool
+  val inferTy : ReifiedTerm.reifiedTerm -> ReifiedTy.reifiedTy
+  val viewDynamic : ['a#reify. 'a ReifiedTerm.dyn -> 'a]
+
+  val coerceTermGeneric : ['a, 'b#reify. 'a ReifiedTerm.dyn * ReifiedTy.tyRep -> 'b]
+  val checkTermGeneric : ['a. 'a ReifiedTerm.dyn * ReifiedTy.tyRep -> bool]
+  val null : ['a#reify. ReifiedTy.tyRep -> 'a ReifiedTerm.dyn]
+  val void : ['a#reify. ReifiedTy.tyRep -> 'a ReifiedTerm.dyn]
+  val viewTermGeneric : ['a, 'b#reify. 'a ReifiedTerm.dyn * ReifiedTy.tyRep -> 'b]
+  val dynamicTypeCase : ['a,'b. 
+                              'a ReifiedTerm.dyn
+                            -> (ReifiedTy.tyRep * ('a ReifiedTerm.dyn -> 'b)) list
+                            -> 'b
+                        ]
+  val genNull : ReifiedTy.reifiedTy -> ReifiedTerm.reifiedTerm
+  val genVoid : ReifiedTy.reifiedTy -> ReifiedTerm.reifiedTerm
+end
+

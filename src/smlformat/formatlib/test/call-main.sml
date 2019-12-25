@@ -1,0 +1,1 @@
+val _ = TestMain.test ()

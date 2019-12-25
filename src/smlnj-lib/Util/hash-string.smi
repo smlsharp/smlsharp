@@ -1,0 +1,14 @@
+_require "../../basis.smi"
+
+structure Unsafe =
+  struct
+    structure CharVector =
+      struct
+        val sub : string * int -> char
+      end
+  end
+structure HashString =
+  struct
+    val hashString : string -> word
+    val hashSubstring : substring -> word
+  end

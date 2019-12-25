@@ -1,0 +1,40 @@
+_require "basis.smi"
+
+type r1 (= record)
+type ('a, 'b) r2 (= record)
+eqtype ('a, 'b) r3 (= record)
+
+type a1 (= array)
+type 'a a2 (= array)
+eqtype 'a a3 (= array)
+
+type f1 (= ->)
+type ('a, 'b) f2 (= ->)
+
+type d1 (= boxed)
+type ('a, 'b) d2 (= boxed)
+eqtype ('a, 'b) d3 (= boxed)
+
+val r1 : r1
+val r2 : (int, string) r2
+val r31 : (int, string) r3
+val r32 : (int, string) r3
+
+val a1 : a1
+val a2 : int a2
+val a31 : int a3
+val a32 : int a3
+
+val f1 : f1
+val f2 : ('a, 'b) f2
+val f3 : f1 -> int -> int
+
+val d11 : d1
+val d12 : d1
+
+val d21 : (int, 'b) d2
+val d22 : ('a, string) d2
+
+val d31 : (int, 'b) d3
+val d321 : ('a, string) d3
+val d322 : ('a, int) d3

@@ -1,0 +1,2 @@
+_use local "./050_use2.use"
+val x : int

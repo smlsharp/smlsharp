@@ -1,0 +1,2 @@
+_use local "./035_cycle.sml"
+val x : int

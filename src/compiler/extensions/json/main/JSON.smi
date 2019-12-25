@@ -1,40 +1,22 @@
-_require "../../../../basis.smi"
-_require local "../../../../smlformat-lib.smi"
-_require local "../../../extensions/reflection/main/ReifiedTerm.ppg.smi"
-_require "../../../extensions/reflection/main/PolyDynamic.smi"
-_require local "../../debug/main/Bug.ppg.smi"
-
-
-_require "./JSONParser.smi"
-_require "./JSONTypes.ppg.smi"
+_require local "../../../../basis.smi"
+_require local "../../../../ffi.smi"
+_require local "./YAJL.smi"
+_require "../../reflection/main/ReifiedTerm.ppg.smi"
+_require "../../reflection/main/ReifiedTy.ppg.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
 
 structure JSON =
 struct
-  exception AttemptToReturnVOIDValue
-  exception RuntimeTypeError
-  exception TypeIsNotJsonKind
-  exception AttemptToViewNull
-
-  exception NaturalJoin
-
-  datatype null = datatype JSONTypes.null
-  datatype void = datatype JSONTypes.void
-  datatype jsonTy = datatype JSONTypes.jsonTy
-  datatype json = datatype JSONTypes.json
-  datatype dyn = datatype JSONTypes.dyn
-
-  val view : 'a dyn -> 'a
-  val import : string -> void dyn
-  val importJson :JSONParser.utJson -> void dyn
-  val typeOf : json -> jsonTy
-  val printJsonTy : jsonTy -> unit
-  val jsonToJsonDyn : json -> void dyn
-  val jsonToString : json -> string
-  val jsonDynToString : 'a dyn -> string
-  val jsonDynToJson : 'a dyn -> json
-
-  val toJson : ['a#dynamic.'a -> json]
-  val dynamicToJson : PolyDynamic.dynamic -> json
-  val toJsonDyn : ['a#dynamic.'a -> void dyn]
-
+  exception ParseError of string
+  datatype json =
+      BOOL of bool
+    | INT of int
+    | REAL of real
+    | STRING of string
+    | NULL
+    | ARRAY of json list
+    | OBJECT of (string * json) list
+  val parse : string -> json
+  val jsonToReifiedTerm : json -> ReifiedTerm.reifiedTerm
+  val jsonToDynamic : json -> ReifiedTy.void ReifiedTerm.dyn
 end

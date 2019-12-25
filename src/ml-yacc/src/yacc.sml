@@ -9,8 +9,8 @@
   struct
     open Array List
     infix 9 sub
-    structure Grammar = MakeTable.Grammar
-    structure Header = ParseGenParser.Header
+    (* structure Grammar = MakeTable.Grammar *)
+    (* structure Header = ParseGenParser.Header *)
 
     open Header Grammar
 
@@ -282,7 +282,11 @@
 	       term, control,value} : declData,
 	       rules : rule list),spec,error : pos -> string -> unit,
 	       wasError : unit -> bool) =>
+(* 2019-07-06: Ueno: allow users to specify the prefix of output files.
      let
+*)
+     fn opts as {p,s} => let
+	val spec = getOpt (#p opts, spec)
 	val verbose = List.exists (fn VERBOSE=>true | _ => false) control
 	val defaultReductions = not (List.exists (fn NODEFAULT=>true | _ => false) control)
 	val pos_type =
@@ -852,7 +856,10 @@ precedences of the rule and the terminal are equal.
 	            of NONE => ""
 		     | SOME s => symbolName s
 
+(* 2019-07-06: By Ohori, smlyacc have avoided functor usage.
 	val names = NAMES {miscStruct=name' ^ "LrValsFun",
+*)
+	val names = NAMES {miscStruct=name' ^ "LrVals",
 			   valueStruct="MlyValue",
 			   tableStruct="LrTable",
 			   tokenStruct="Tokens",
@@ -869,25 +876,12 @@ precedences of the rule and the terminal are equal.
 
         val entries = ref 0 (* save number of action table entries here *)
 	
-(* Ueno (2013-05-29): specify output file by environment variable
     in  let val result = TextIO.openOut (spec ^ ".sml")
+(* 2019-07-06: Ueno: unify sig file to sml file
  	    val sigs = TextIO.openOut (spec ^ ".sig")
+*)
 	    val pos = ref 0
 	    val pr = fn s => TextIO.output(result,s)
-*)
-        val (spec, pr, sigs, closeResult) =
-            case OS.Process.getEnv "SMLYACC_OUTPUT" of
-              NONE => let val result = TextIO.openOut (spec ^ ".sml")
-                          val sigs = TextIO.openOut (spec ^ ".sig")
-                          val pr = fn s => TextIO.output (result, s)
-                      in (spec, pr, sigs, fn () => TextIO.closeOut result) end
-            | SOME spec =>
-              let val buf = ref nil
-                  val sigs = TextIO.openOut spec
-                  fun p s = TextIO.output (sigs, s)
-                  fun close () = (app p (rev (!buf)); TextIO.closeOut sigs)
-              in (spec, fn s => buf := s :: !buf, sigs, close) end
-    in  let val pos = ref 0
 	    val say = fn s => let val l = String.size s
 			           val newPos = (!pos) + l
 			      in if newPos > lineLength 
@@ -916,15 +910,26 @@ precedences of the rule and the terminal are equal.
 			       nonterm=nonterm,terms=terms,
 			       tokenInfo=token_sig_info_decl}
 
+(* 2019-07-06: Ueno: unify sig file to sml file *)
+	    val _ = if #s opts then printSigs(values,names,pr)
+                    else let val sigs = TextIO.openOut (spec ^ ".sig")
+                         in printSigs(values,names,fn s => TextIO.output(sigs,s));
+                            TextIO.closeOut sigs
+                         end
 	    val (NAMES {miscStruct,tableStruct,dataStruct,tokenSig,tokenStruct,dataSig,...}) = names
          in case header_decl
+(* 2019-07-06: By Ohori, smlyacc have avoided functor usage.
 	    of NONE => (say "functor "; say miscStruct; 
 			sayln "(structure Token : TOKEN)";
+*)
+            of NONE => (say "structure "; sayln miscStruct;
 			say " : sig structure ";
 			say dataStruct;
 			say " : "; sayln dataSig;
 			say "       structure ";
 			say tokenStruct; say " : "; sayln tokenSig;
+(* 2019-07-06: By Ohori, smlyacc have avoided functor usage. *)
+			sayln "       structure Parser : PARSER";
 			sayln "   end")
 	     | SOME s => say s;
 	    sayln " = ";
@@ -984,13 +989,11 @@ precedences of the rule and the terminal are equal.
 	    printTokenStruct(values,names);
 	    sayln "end";
             case footer_decl of SOME s => sayln s | NONE => ();
+(* 2019-07-06: Ueno: unify sig file to sml file
 	    printSigs(values,names,fn s => TextIO.output(sigs,s));    
-(* Ueno (2013-05-29): specify output file by environment variable
 	    TextIO.closeOut sigs;
-	    TextIO.closeOut result;
 *)
-	    closeResult ();
-	    TextIO.closeOut sigs;
+	    TextIO.closeOut result;
 	    MakeTable.Errs.printSummary (fn s => TextIO.output(TextIO.stdOut,s)) errs
 	end;
         if verbose then

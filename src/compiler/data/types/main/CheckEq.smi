@@ -1,9 +1,11 @@
 _require local "../../../../basis.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
 
+(*
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
+*)
 _require local "./TypesUtils.smi"
 
 _require "./Types.ppg.smi"

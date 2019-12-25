@@ -1,0 +1,62 @@
+_require local "../../basis.smi"
+_require local "../../basis/main/SMLSharp_Runtime.smi"
+_require local "../../ffi/main/DynamicLink.smi"
+_require local "../../config/main/SQLConfig.smi"
+
+structure SMLSharp_SQL_SQLite3 =
+struct
+
+  val SQLITE_OK : int
+  val SQLITE_ROW : int
+  val SQLITE_DONE : int
+
+  eqtype open_mode (= word)
+  val SQLITE_OPEN_READONLY : open_mode
+  val SQLITE_OPEN_READWRITE : open_mode
+  val SQLITE_OPEN_READWRITE_CREATE : open_mode
+
+  eqtype threading_mode (= word)
+  val SQLITE_OPEN_NOMUTEX : threading_mode
+  val SQLITE_OPEN_FULLMUTEX : threading_mode
+
+  eqtype cache_mode (= word)
+  val SQLITE_OPEN_SHAREDCACHE : cache_mode
+  val SQLITE_OPEN_PRIVATECACHE : cache_mode
+
+  eqtype uri_mode (= word)
+  val SQLITE_OPEN_URI : uri_mode
+
+  type flags = {mode : open_mode,
+                threading : threading_mode,
+                cache : cache_mode,
+                uri : uri_mode}
+  val flags : flags
+
+  eqtype column_type (= int)
+  val SQLITE_INTEGER : column_type
+  val SQLITE_FLOAT : column_type
+  val SQLITE3_TEXT : column_type
+  val SQLITE_BLOB : column_type
+  val SQLITE_NULL : column_type
+
+  type sqlite3 (= ptr)
+  type sqlite3_stmt (= ptr)
+
+  val new_sqlite3 : unit -> sqlite3 ref
+  val new_sqlite3_stmt : unit -> sqlite3_stmt ref
+
+  val sqlite3_errstr : int -> string
+  val sqlite3_open_v2 : string * sqlite3 ref * flags -> int
+  val sqlite3_close_v2 : sqlite3 -> int
+  val sqlite3_prepare_v2 : sqlite3 * string * sqlite3_stmt ref -> int
+  val sqlite3_step : sqlite3_stmt -> int
+  val sqlite3_column_type : sqlite3_stmt * int -> column_type
+  val sqlite3_column_bytes : sqlite3_stmt * int -> int
+  val sqlite3_column_blob : sqlite3_stmt * int -> word8 ptr
+  val sqlite3_column_double : sqlite3_stmt * int -> real
+  val sqlite3_column_int : sqlite3_stmt * int -> int
+  val sqlite3_column_int64 : sqlite3_stmt * int -> int64
+  val sqlite3_column_text : sqlite3_stmt * int -> char ptr
+  val sqlite3_finalize : sqlite3_stmt -> int
+
+end

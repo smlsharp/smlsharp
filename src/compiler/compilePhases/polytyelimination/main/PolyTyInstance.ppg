@@ -1,0 +1,75 @@
+(* -*- sml -*- *)
+(**
+ * Polytype instance
+ *
+ * @copyright (c) 2017, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+structure PolyTyInstance =
+struct
+
+  fun format_btvMap (l,c,e,r) btvset =
+      TermFormat.formatEnclosedMap
+        (fn x => Types.format_ty (Types.BOUNDVARty x))
+        (map (fn k => (k, k)) o BoundTypeVarID.Set.listItems)
+        (BoundTypeVarID.format_id, l, c, e, r)
+        btvset
+
+  (*%
+   * @formatter(Types.ty) Types.format_ty
+   * @formatter(BoundTypeVarID.Set.set) format_btvMap
+   * @formatter(DynamicKind.dynamicKind) DynamicKind.format_dynamicKind
+   *)
+  datatype instance =
+      (*% @format(k) "EXTERN(" k ")" *)
+      EXTERN of DynamicKind.dynamicKind
+    | (*% @format(set * ty)
+       * "[" !N0{ set()(,",",+d "::",) "." +1 ty } "]"
+       *)
+      INST of BoundTypeVarID.Set.set * Types.ty
+    | (*% @format "UNDEF" *)
+      UNDEF
+
+  (*%
+   * @formatter(Types.ty) Types.format_ty
+   * @formatter(DynamicKind.dynamicKind) DynamicKind.format_dynamicKind
+   *)
+  datatype inst =
+     (*% @format(ty) ty *)
+     MONO of Types.ty   (* ground instance *)
+   | (*% @format(k) k *)
+     POLY of DynamicKind.dynamicKind
+   | (*% @format "EMPTY" *)
+     EMPTY
+
+  (* for debug *)
+  fun format_instSetMap args btvmap =
+      TermFormat.formatEnclosedMap
+        BoundTypeVarID.format_id
+        BoundTypeVarID.Map.listItemsi
+        args
+        btvmap
+
+  (* for debug *)
+  (*%
+   * @formatter(list) TermFormat.formatEnclosedList
+   * @formatter(BoundTypeVarID.Map.map) format_instSetMap
+   *)
+  type instancesMap =
+      (*% @format(inst insts imap)
+       * imap(insts(inst)("[",",","]"))("{",",",+d "=>","}")
+       *)
+      instance list BoundTypeVarID.Map.map
+
+  (* for debug *)
+  (*%
+   * @formatter(BoundTypeVarID.Map.map) format_instSetMap
+   *)
+  type instMap =
+      (*% @format(inst abmap)
+       * abmap(inst)("{",",",+d "=","}")
+       *)
+      inst BoundTypeVarID.Map.map
+
+end

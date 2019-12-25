@@ -11,11 +11,10 @@ infixr 5 :: @
 infix 4 = <> > >= < <=
 val op + = SMLSharp_Builtin.Int32.add_unsafe
 val op - = SMLSharp_Builtin.Int32.sub_unsafe
-val op * = SMLSharp_Builtin.Int32.mul_unsafe
+val op > = SMLSharp_Builtin.Int32.gt
 val op ~ = SMLSharp_Builtin.Int32.neg
 val op ^ = String.^
 val op @ = List.@
-structure Word32 = SMLSharp_Builtin.Word32
 
 structure IEEEReal =
 struct
@@ -144,21 +143,15 @@ struct
 
   fun toInt (sign, digits) =
       let
-        (* FIXME : assume 32 bit *)
-        val op * = Word32.mul
-        val op + = Word32.add
-        val op - = Word32.sub
-        val op > = Word32.gt
-        fun loop (z, nil) = z
-          | loop (z, h::t) =
-            if z > 0wxccccccc orelse Word32.fromInt32 h > 0wx80000000 - z * 0w10
-            then raise Overflow
-            else loop (z * 0w10 + Word32.fromInt32 h, t)
-        val n = loop (0w0, digits)
+        val op + = SMLSharp_Builtin.Int32.add
+        val op - = SMLSharp_Builtin.Int32.sub
+        val op * = SMLSharp_Builtin.Int32.mul
+        fun posloop z nil = z
+          | posloop z (h::t) = posloop (z * 10 + h) t
+        fun negloop z nil = z
+          | negloop z (h::t) = negloop (z * 10 - h) t
       in
-        if sign then ~(Word32.toInt32X n)
-        else if n = 0wx80000000 then raise Overflow
-        else Word32.toInt32X n
+        if sign then negloop 0 digits else posloop 0 digits
       end
 
   (* ([0-9]+(\.[0-9]+)?|\.[0-9]+)([eE][+~-]?[0-9]* )? *)

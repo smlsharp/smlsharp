@@ -1,2 +1,2 @@
-_require "../basis.smi"
-_require "./compilePhases/main/main/MiniMain.smi"
+_require local "../basis.smi"
+_require local "./compilePhases/main/main/MiniMain.smi"

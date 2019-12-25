@@ -46,24 +46,9 @@
    don't. */
 #undef HAVE_DECL_ISNORMAL
 
-/* Define to 1 if you have the declaration of `LLVM_NATIVE_TARGET', and to 0
-   if you don't. */
-#undef HAVE_DECL_LLVM_NATIVE_TARGET
-
-/* Define to 1 if you have the declaration of `RTLD_DEFAULT', and to 0 if you
-   don't. */
-#undef HAVE_DECL_RTLD_DEFAULT
-
-/* Define to 1 if you have the declaration of `RTLD_NEXT', and to 0 if you
-   don't. */
-#undef HAVE_DECL_RTLD_NEXT
-
 /* Define to 1 if you have the declaration of `signbit', and to 0 if you
    don't. */
 #undef HAVE_DECL_SIGNBIT
-
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
 
 /* Define to 1 if you have the `dlopen' function. */
 #undef HAVE_DLOPEN
@@ -71,17 +56,11 @@
 /* Define to 1 if you have the `fegetround' function. */
 #undef HAVE_FEGETROUND
 
-/* Define to 1 if you have the <fenv.h> header file. */
-#undef HAVE_FENV_H
-
 /* Define to 1 if you have the `fesetround' function. */
 #undef HAVE_FESETROUND
 
 /* Define to 1 if you have the `finite' function. */
 #undef HAVE_FINITE
-
-/* Define to 1 if you have the <float.h> header file. */
-#undef HAVE_FLOAT_H
 
 /* Define to 1 if you have the `floorf' function. */
 #undef HAVE_FLOORF
@@ -100,9 +79,6 @@
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
-
-/* Define to 1 if you have the <ieeefp.h> header file. */
-#undef HAVE_IEEEFP_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -137,9 +113,6 @@
 /* Define to 1 if you have the `yajl' library (-lyajl). */
 #undef HAVE_LIBYAJL
 
-/* Define to 1 if you have the `yajl_s' library (-lyajl_s). */
-#undef HAVE_LIBYAJL_S
-
 /* Define to 1 if the system has the type `max_align_t'. */
 #undef HAVE_MAX_ALIGN_T
 
@@ -167,9 +140,6 @@
 /* Define to 1 if you have the `poll' function. */
 #undef HAVE_POLL
 
-/* Define to 1 if you have the <poll.h> header file. */
-#undef HAVE_POLL_H
-
 /* Define to 1 if you have the `readlink' function. */
 #undef HAVE_READLINK
 
@@ -178,12 +148,6 @@
 
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
-
-/* Define to 1 if you have the `sigaction' function. */
-#undef HAVE_SIGACTION
-
-/* Define to 1 if you have the `sigprocmask' function. */
-#undef HAVE_SIGPROCMASK
 
 /* Define to 1 if you have the `sleep' function. */
 #undef HAVE_SLEEP
@@ -209,20 +173,8 @@
 /* Define to 1 if you have the `strptime' function. */
 #undef HAVE_STRPTIME
 
-/* Define to 1 if you have the <sys/mman.h> header file. */
-#undef HAVE_SYS_MMAN_H
-
-/* Define to 1 if you have the <sys/resource.h> header file. */
-#undef HAVE_SYS_RESOURCE_H
-
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#undef HAVE_SYS_SOCKET_H
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
-
-/* Define to 1 if you have the <sys/times.h> header file. */
-#undef HAVE_SYS_TIMES_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
@@ -245,11 +197,8 @@
 /* Define to 1 if you have the `utimes' function. */
 #undef HAVE_UTIMES
 
-/* Define to 1 if you have the <utime.h> header file. */
-#undef HAVE_UTIME_H
-
 /* Define if your system is Windows */
-#undef MINGW32
+#undef MINGW
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -269,8 +218,23 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The size of `void *', as computed by sizeof. */
-#undef SIZEOF_VOID_P
+/* The size of `double', as computed by sizeof. */
+#undef SIZEOF_DOUBLE
+
+/* The size of `float', as computed by sizeof. */
+#undef SIZEOF_FLOAT
+
+/* The size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
@@ -283,6 +247,3 @@
 
 /* Alternative to alignof */
 #undef alignof
-
-/* Define to `unsigned int' if <sys/types.h> does not define. */
-#undef size_t

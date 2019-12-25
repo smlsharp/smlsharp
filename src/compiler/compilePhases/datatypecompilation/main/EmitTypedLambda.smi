@@ -1,18 +1,17 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 
 _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
-_require "../../../data/constantterm/main/ConstantTerm.ppg.smi"
 
 structure EmitTypedLambda =
 struct
@@ -22,6 +21,7 @@ struct
 
   datatype exp =
       Exp of TypedLambda.tlexp * Types.ty
+    | Const of TypedLambda.tlconst * Types.ty
     | Int8 of int
     | Int16 of int
     | Int32 of int
@@ -32,8 +32,8 @@ struct
     | Word64 of int
     | Char of int
     | ConTag of int
-    | Real64 of int
-    | Real32 of int
+    | Real64 of real64
+    | Real32 of real32
     | String of string
     | Unit
     | Null
@@ -43,12 +43,11 @@ struct
     | IndexOf of Types.ty * RecordLabel.label
     | ExVar of RecordCalc.exVarInfo
     | Cast of exp * Types.ty
-    | RuntimeTyCast of exp * Types.ty
     | BitCast of exp * Types.ty
     | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
     | If of exp * exp * exp
     | Andalso of exp list
-    | Switch of exp * (ConstantTerm.constant * exp) list * exp
+    | Switch of exp * (TypedLambda.tlconst * exp) list * exp
     | Raise of RecordCalc.exExnInfo * Types.ty
     | Fn of vid * Types.ty * exp
     | App of exp * exp
@@ -72,7 +71,6 @@ struct
   val Ref_assign : Types.ty * exp * exp -> exp
   val Array_length : Types.ty * exp -> exp
   val Array_sub_unsafe : Types.ty * exp * exp -> exp
-  val Array_turnIntoVector : Types.ty * exp -> exp
   val Array_alloc_unsafe : Types.ty * exp -> exp
   val Array_alloc_init : Types.ty * exp list -> exp
   val Array_update_unsafe : Types.ty * exp * exp * exp -> exp
@@ -82,148 +80,45 @@ struct
   val String_sub_unsafe : exp * exp -> exp
   val String_update_unsafe : exp * exp * exp -> exp
   val String_copy_unsafe : exp * exp * exp * exp * exp -> exp
+  val Vector_alloc_unsafe : Types.ty * exp -> exp
   val IdentityEqual : Types.ty * exp * exp -> exp
   val IsNull : exp -> exp
-  val Int8_eq : exp * exp -> exp
-  val Int8_gt : exp * exp -> exp
-  val Int8_gteq : exp * exp -> exp
-  val Int8_lt : exp * exp -> exp
-  val Int8_lteq : exp * exp -> exp
-  val Int8_quot_unsafe : exp * exp -> exp
-  val Int8_rem_unsafe : exp * exp -> exp
-  val Int8_sub_unsafe : exp * exp -> exp
-  val Int8_add_unsafe : exp * exp -> exp
-  val Int8_mul_unsafe : exp * exp -> exp
-  val Int8_sub_overflowCheck : exp * exp -> exp
-  val Int8_add_overflowCheck : exp * exp -> exp
-  val Int8_mul_overflowCheck : exp * exp -> exp
-  val Int16_eq : exp * exp -> exp
-  val Int16_gt : exp * exp -> exp
-  val Int16_gteq : exp * exp -> exp
-  val Int16_lt : exp * exp -> exp
-  val Int16_lteq : exp * exp -> exp
-  val Int16_quot_unsafe : exp * exp -> exp
-  val Int16_rem_unsafe : exp * exp -> exp
-  val Int16_sub_unsafe : exp * exp -> exp
-  val Int16_add_unsafe : exp * exp -> exp
-  val Int16_mul_unsafe : exp * exp -> exp
-  val Int16_sub_overflowCheck : exp * exp -> exp
-  val Int16_add_overflowCheck : exp * exp -> exp
-  val Int16_mul_overflowCheck : exp * exp -> exp
-  val Int32_eq : exp * exp -> exp
-  val Int32_gt : exp * exp -> exp
-  val Int32_gteq : exp * exp -> exp
-  val Int32_lt : exp * exp -> exp
-  val Int32_lteq : exp * exp -> exp
-  val Int32_quot_unsafe : exp * exp -> exp
-  val Int32_rem_unsafe : exp * exp -> exp
-  val Int32_sub_unsafe : exp * exp -> exp
-  val Int32_add_unsafe : exp * exp -> exp
-  val Int32_mul_unsafe : exp * exp -> exp
-  val Int32_sub_overflowCheck : exp * exp -> exp
-  val Int32_add_overflowCheck : exp * exp -> exp
-  val Int32_mul_overflowCheck : exp * exp -> exp
-  val Int64_eq : exp * exp -> exp
-  val Int64_gt : exp * exp -> exp
-  val Int64_gteq : exp * exp -> exp
-  val Int64_lt : exp * exp -> exp
-  val Int64_lteq : exp * exp -> exp
-  val Int64_quot_unsafe : exp * exp -> exp
-  val Int64_rem_unsafe : exp * exp -> exp
-  val Int64_sub_unsafe : exp * exp -> exp
-  val Int64_add_unsafe : exp * exp -> exp
-  val Int64_mul_unsafe : exp * exp -> exp
-  val Int64_sub_overflowCheck : exp * exp -> exp
-  val Int64_add_overflowCheck : exp * exp -> exp
-  val Int64_mul_overflowCheck : exp * exp -> exp
-  val Word8_gt : exp * exp -> exp
-  val Word8_gteq : exp * exp -> exp
-  val Word8_lt : exp * exp -> exp
-  val Word8_lteq : exp * exp -> exp
-  val Word8_div_unsafe : exp * exp -> exp
-  val Word8_mod_unsafe : exp * exp -> exp
-  val Word8_sub : exp * exp -> exp
-  val Word8_add : exp * exp -> exp
-  val Word8_orb : exp * exp -> exp
-  val Word8_xorb : exp * exp -> exp
-  val Word8_andb : exp * exp -> exp
-  val Word8_arshift_unsafe : exp * exp -> exp
-  val Word8_rshift_unsafe : exp * exp -> exp
-  val Word8_lshift_unsafe : exp * exp -> exp
-  val Word16_gt : exp * exp -> exp
-  val Word16_gteq : exp * exp -> exp
-  val Word16_lt : exp * exp -> exp
-  val Word16_lteq : exp * exp -> exp
-  val Word16_div_unsafe : exp * exp -> exp
-  val Word16_mod_unsafe : exp * exp -> exp
-  val Word16_sub : exp * exp -> exp
-  val Word16_add : exp * exp -> exp
-  val Word16_orb : exp * exp -> exp
-  val Word16_xorb : exp * exp -> exp
-  val Word16_andb : exp * exp -> exp
-  val Word16_arshift_unsafe : exp * exp -> exp
-  val Word16_rshift_unsafe : exp * exp -> exp
-  val Word16_lshift_unsafe : exp * exp -> exp
-  val Word32_gt : exp * exp -> exp
-  val Word32_gteq : exp * exp -> exp
-  val Word32_lt : exp * exp -> exp
-  val Word32_lteq : exp * exp -> exp
-  val Word32_div_unsafe : exp * exp -> exp
-  val Word32_mod_unsafe : exp * exp -> exp
-  val Word32_sub : exp * exp -> exp
-  val Word32_add : exp * exp -> exp
-  val Word32_orb : exp * exp -> exp
-  val Word32_xorb : exp * exp -> exp
-  val Word32_andb : exp * exp -> exp
-  val Word32_arshift_unsafe : exp * exp -> exp
-  val Word32_rshift_unsafe : exp * exp -> exp
-  val Word32_lshift_unsafe : exp * exp -> exp
-  val Word64_gt : exp * exp -> exp
-  val Word64_gteq : exp * exp -> exp
-  val Word64_lt : exp * exp -> exp
-  val Word64_lteq : exp * exp -> exp
-  val Word64_div_unsafe : exp * exp -> exp
-  val Word64_mod_unsafe : exp * exp -> exp
-  val Word64_sub : exp * exp -> exp
-  val Word64_add : exp * exp -> exp
-  val Word64_orb : exp * exp -> exp
-  val Word64_xorb : exp * exp -> exp
-  val Word64_andb : exp * exp -> exp
-  val Word64_arshift_unsafe : exp * exp -> exp
-  val Word64_rshift_unsafe : exp * exp -> exp
-  val Word64_lshift_unsafe : exp * exp -> exp
-  val Word8_toWord16 : exp -> exp
-  val Word8_toWord16X : exp -> exp
-  val Word8_toWord32 : exp -> exp
-  val Word8_toWord32X : exp -> exp
-  val Word8_toWord64 : exp -> exp
-  val Word8_toWord64X : exp -> exp
-  val Word16_toWord8 : exp -> exp
-  val Word16_toWord32 : exp -> exp
-  val Word16_toWord32X : exp -> exp
-  val Word16_toWord64 : exp -> exp
-  val Word16_toWord64X : exp -> exp
-  val Word32_toWord8 : exp -> exp
-  val Word32_toWord16 : exp -> exp
-  val Word32_toWord64 : exp -> exp
-  val Word32_toWord64X : exp -> exp
-  val Word64_toWord8 : exp -> exp
-  val Word64_toWord16 : exp -> exp
-  val Word64_toWord32 : exp -> exp
-  val Word32_fromInt32 : exp -> exp
-  val Word32_toInt32X : exp -> exp
-  val Real32_isNan : exp -> exp
-  val Real32_equal : exp * exp -> exp
-  val Real32_gteq : exp * exp -> exp
-  val Real32_lteq : exp * exp -> exp
-  val Real32_sub : exp * exp -> exp
-  val Real32_toInt32_unsafe : exp -> exp
-  val Real64_isNan : exp -> exp
-  val Real64_equal : exp * exp -> exp
-  val Real64_gteq : exp * exp -> exp
-  val Real64_lteq : exp * exp -> exp
-  val Real64_sub : exp * exp -> exp
-  val Real64_toInt32_unsafe : exp -> exp
+  val Int_eq : Types.ty -> exp * exp -> exp
+  val Int_lt : Types.ty -> exp * exp -> exp
+  val Int_lteq : Types.ty -> exp * exp -> exp
+  val Int_gteq : Types.ty -> exp * exp -> exp
+  val Int_quot_unsafe : Types.ty -> exp * exp -> exp
+  val Int_rem_unsafe : Types.ty -> exp * exp -> exp
+  val Int_add_unsafe : Types.ty -> exp * exp -> exp
+  val Int_mul_unsafe : Types.ty -> exp * exp -> exp
+  val Int_sub_unsafe : Types.ty -> exp * exp -> exp
+  val Int_add_overflowCheck : Types.ty -> exp * exp -> exp
+  val Int_mul_overflowCheck : Types.ty -> exp * exp -> exp
+  val Int_sub_overflowCheck : Types.ty -> exp * exp -> exp
+  val Int_toInt_unsafe : Types.ty * Types.ty -> exp -> exp
+  val Word_lt : Types.ty -> exp * exp -> exp
+  val Word_gt : Types.ty -> exp * exp -> exp
+  val Word_lteq : Types.ty -> exp * exp -> exp
+  val Word_gteq : Types.ty -> exp * exp -> exp
+  val Word_arshift_unsafe : Types.ty -> exp * exp -> exp
+  val Word_lshift_unsafe : Types.ty -> exp * exp -> exp
+  val Word_rshift_unsafe : Types.ty -> exp * exp -> exp
+  val Word_toWord : Types.ty * Types.ty -> exp -> exp
+  val Word_add : Types.ty -> exp * exp -> exp
+  val Word_sub : Types.ty -> exp * exp -> exp
+  val Word_andb : Types.ty -> exp * exp -> exp
+  val Word_orb : Types.ty -> exp * exp -> exp
+  val Word_xorb : Types.ty -> exp * exp -> exp
+  val Word_fromInt : Types.ty * Types.ty -> exp -> exp
+  val Word_toInt : Types.ty * Types.ty -> exp -> exp
+  val Word_toIntX_unsafe : Types.ty * Types.ty -> exp -> exp
+  val Word_div_unsafe : Types.ty -> exp * exp -> exp
+  val Word_mod_unsafe : Types.ty -> exp * exp -> exp
+  val Real_isNan : Types.ty -> exp -> exp
+  val Real_equal : Types.ty -> exp * exp -> exp
+  val Real_gteq : Types.ty -> exp * exp -> exp
+  val Real_lteq : Types.ty -> exp * exp -> exp
+  val Real_sub : Types.ty -> exp * exp -> exp
   val allocExnTag : {builtin:bool, path:RecordCalc.path, ty:Types.ty} -> exp
   val extractExnTagName : exp -> exp
   val extractExnTag : exp -> exp

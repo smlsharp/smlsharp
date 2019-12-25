@@ -1,12 +1,12 @@
 _require "./General.smi"
 _require "./CharVectorSlice.smi"
-_use local "ArraySlice_common.sml"
+_use local "./Slice_common.sml"
 
 structure CharArraySlice =
 struct
   type elem = char
   type array = char array
-  type slice (= boxed)
+  type slice (= *)
   type vector = string
   type vector_slice = CharVectorSlice.slice
   val length : slice -> int

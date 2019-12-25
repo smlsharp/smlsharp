@@ -42,14 +42,13 @@ in
       | TC.TPEXN_CONSTRUCTOR {loc,...} => loc
       | TC.TPEXEXN_CONSTRUCTOR {loc,...} => loc
       | TC.TPCASEM {loc,...} => loc
+      | TC.TPDYNAMICCASE {loc,...} => loc
       | TC.TPPRIMAPPLY {loc,...} => loc
       | TC.TPOPRIMAPPLY {loc,...} => loc
       | TC.TPRECORD {loc,...} => loc
       | TC.TPSELECT {loc,...} => loc
       | TC.TPMODIFY {loc,...} => loc
       | TC.TPSEQ {loc,...} => loc
-      | TC.TPFOREACH {loc,...} => loc
-      | TC.TPFOREACHDATA {loc,...} => loc
       | TC.TPMONOLET {loc,...} => loc
       | TC.TPLET {decls, body, tys, loc} => loc
       | TC.TPRAISE {exp, ty, loc} => loc
@@ -61,8 +60,11 @@ in
       | TC.TPFFIIMPORT {loc,...} => loc
       | TC.TPSIZEOF (_, loc) => loc
       | TC.TPJOIN {loc, ...} => loc
-      | TC.TPJSON {loc,...} => loc
-      | TC.TPTYPEOF (ty,loc) => loc
+      | TC.TPDYNAMIC {loc,...} => loc
+      | TC.TPDYNAMICIS {loc,...} => loc
+      | TC.TPDYNAMICNULL {loc,...} => loc
+      | TC.TPDYNAMICTOP {loc,...} => loc
+      | TC.TPDYNAMICVIEW {loc,...} => loc
       | TC.TPREIFYTY (ty,loc) => loc
 
   fun isAtom tpexp =
@@ -124,30 +126,32 @@ in
           varPathInfoTpexpList
       | TC.TPPOLY {exp=tpexp,...} => expansive tpexp
       | TC.TPTAPP {exp, ...} => expansive exp
-      | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} => expansive ptrExp
+      | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, _), stubTy} => expansive ptrExp
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIEXTERN _, stubTy} => false
       | TC.TPCAST ((tpexp, expTy), ty, loc) => expansive tpexp 
       | TC.TPCASEM _ => true
+      | TC.TPDYNAMICCASE _ => true
       | TC.TPPRIMAPPLY _ => true
       | TC.TPOPRIMAPPLY _ => true
       | TC.TPERROR => true
       | TC.TPAPPM _ => true
       | TC.TPMODIFY _ => true
       | TC.TPSEQ _ => true
-      | TC.TPFOREACH _ => true
-      | TC.TPFOREACHDATA _ => true
       | TC.TPLET {decls, body, tys,loc} => true
       | TC.TPRAISE _ => true
       | TC.TPHANDLE _ => true
       | TC.TPPOLYFNM _ => false
       | TC.TPSIZEOF _ => true
-      | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+      | TC.TPJOIN {isJoin, ty, args = (arg1, arg2), argtys, loc} =>
 (* 2016-12-02 多相型は実行文であるため JOIN を expansiveとする；
         expansive arg1 andalso expansive arg2
 *)
         true
-      | TC.TPJSON {exp,ty,coerceTy,loc} => expansive exp
-      | TC.TPTYPEOF _ => false
+      | TC.TPDYNAMIC {exp,ty,elemTy, coerceTy,loc} => expansive exp
+      | TC.TPDYNAMICIS {exp,ty,elemTy, coerceTy,loc} => expansive exp
+      | TC.TPDYNAMICNULL {ty, coerceTy,loc} => false
+      | TC.TPDYNAMICTOP {ty, coerceTy,loc} => false
+      | TC.TPDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} => expansive exp
       | TC.TPREIFYTY _ => false
 
   (**

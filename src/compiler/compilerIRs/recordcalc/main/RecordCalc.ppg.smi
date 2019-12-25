@@ -1,74 +1,69 @@
 _require local "../../../../basis.smi"
 
-_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+(* _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi" *)
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/name/main/CodeLabel.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynConst.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynConstFormatter.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../../libs/util/main/TermFormat.smi"
 _require "../../../data/types/main/Types.ppg.smi"
+_require "../../../data/types/main/DynamicKind.ppg.smi"
 
 structure RecordCalc =
   struct
+    type loc = Loc.loc
     type path = Symbol.longsymbol
     val format_path : path -> TermFormat.format
     type varInfo = {path:path, id:VarID.id, ty:Types.ty}
     val format_varInfo
         : varInfo -> SMLFormat.FormatExpression.expression list
     val formatWithType_varInfo
-        : Types.kind TermFormat.btvEnv
-          -> varInfo
+        : varInfo
           -> SMLFormat.FormatExpression.expression list
     type exVarInfo = {path:path, ty:Types.ty}
     val format_exVarInfo
         : exVarInfo
           -> SMLFormat.FormatExpression.expression list
     val formatWithType_exVarInfo
-        : Types.kind TermFormat.btvEnv
-          -> exVarInfo
+        : exVarInfo
           -> SMLFormat.FormatExpression.expression list
     type conInfo = {path: path, ty:Types.ty, id: ConID.id}
     val format_conInfo
-        : Types.kind TermFormat.btvEnv
-          -> conInfo
+        : conInfo
           -> SMLFormat.FormatExpression.expression list
     val formatWithType_conInfo
-        : Types.kind TermFormat.btvEnv
-          -> conInfo
+        : conInfo
           -> SMLFormat.FormatExpression.expression list
     type exnInfo = {path: path, ty:Types.ty, id: ExnID.id}
     val format_exnInfo
-        : Types.kind TermFormat.btvEnv
-          -> exnInfo
+        : exnInfo
           -> SMLFormat.FormatExpression.expression list
     val formatWithType_exnInfo
-        : Types.kind TermFormat.btvEnv
-          -> exnInfo
+        : exnInfo
           -> SMLFormat.FormatExpression.expression list
 
     type exExnInfo = {path: path, ty:Types.ty}
     val format_exExnInfo
-        : Types.kind TermFormat.btvEnv
-          -> exExnInfo
+        : exExnInfo
           -> SMLFormat.FormatExpression.expression list
     val formatWithType_exExnInfo
-        : Types.kind TermFormat.btvEnv
-          -> exExnInfo
+        : exExnInfo
           -> SMLFormat.FormatExpression.expression list
 
     type oprimInfo = {ty : Types.ty, path: path, id : OPrimID.id}
     val format_oprimInfo
-        : Types.kind TermFormat.btvEnv
-          -> oprimInfo
+        : oprimInfo
           -> SMLFormat.FormatExpression.expression list
     val formatWithType_oprimInfo
-        : Types.kind TermFormat.btvEnv
-          -> oprimInfo
+        : oprimInfo
           -> SMLFormat.FormatExpression.expression list
 
     datatype exnCon = datatype TypedCalc.exnCon
@@ -77,7 +72,11 @@ structure RecordCalc =
     val formatWithType_exnCon
         : exnCon -> SMLFormat.FormatExpression.expression list
 
-    type constant = AbsynConst.constant
+    datatype constant =
+        CONST of AbsynConst.constant
+      | SIZE of DynamicKind.size' * Types.ty
+      | TAG of DynamicKind.tag' * Types.ty
+      | INDEX of DynamicKind.index' * RecordLabel.label * Types.ty
 
     datatype rcexp
       = RCAPPM of {argExpList:rcexp list, funExp:rcexp, funTy:Types.ty, loc:Loc.loc}
@@ -126,12 +125,7 @@ structure RecordCalc =
       | RCSELECT of {exp:rcexp, expTy:Types.ty, indexExp:rcexp, label:RecordLabel.label,
                      loc:Loc.loc, resultTy:Types.ty}
       | RCSEQ of {expList:rcexp list, expTyList:Types.ty list, loc:Loc.loc}
-      | RCFOREACH of {data:rcexp, dataTy:Types.ty, iterator:rcexp, iteratorTy:Types.ty, 
-                      pred:rcexp, predTy:Types.ty, loc:Loc.loc}
-      | RCFOREACHDATA of {data:rcexp, dataTy:Types.ty, whereParam:rcexp, whereParamTy:Types.ty, iterator:rcexp, iteratorTy:Types.ty, 
-                          pred:rcexp, predTy:Types.ty, loc:Loc.loc}
       | RCSIZEOF of Types.ty * Loc.loc
-      | RCTYPEOF of Types.ty * Loc.loc
       | RCREIFYTY of Types.ty * Loc.loc
       | RCSWITCH of {branches:(constant * rcexp) list, defaultExp:rcexp,
                      expTy:Types.ty, loc:Loc.loc, switchExp:rcexp,
@@ -139,21 +133,50 @@ structure RecordCalc =
       | RCTAGOF of Types.ty * Loc.loc
       | RCTAPP of {exp:rcexp, expTy:Types.ty, instTyList:Types.ty list, loc:Loc.loc}
       | RCVAR of varInfo
-      | RCJOIN of {ty:Types.ty, args:rcexp*rcexp, argTys:Types.ty*Types.ty, loc:Loc.loc}
-      | RCJSON of {exp:rcexp, ty:Types.ty, coerceTy:Types.ty, loc:Loc.loc}
+      | RCCATCH of
+        {
+          catchLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          catchExp : rcexp,
+          tryExp : rcexp,
+          resultTy : Types.ty,
+          loc : loc
+        }
+      | RCTHROW of
+        {
+          catchLabel : FunLocalLabel.id,
+          argExpList : rcexp list,
+          resultTy : Types.ty,
+          loc : loc
+        }
+      | RCJOIN of {isJoin:bool, ty:Types.ty, args:rcexp*rcexp, argTys:Types.ty*Types.ty, loc:Loc.loc}
+      | RCDYNAMIC of {exp:rcexp, ty:Types.ty, elemTy: Types.ty, coerceTy:Types.ty, loc:loc}
+      | RCDYNAMICIS of {exp:rcexp, ty:Types.ty, elemTy: Types.ty, coerceTy:Types.ty, loc:loc}
+      | RCDYNAMICNULL of {ty:Types.ty, coerceTy:Types.ty, loc:loc}
+      | RCDYNAMICTOP of {ty:Types.ty, coerceTy:Types.ty, loc:loc}
+      | RCDYNAMICVIEW of {exp:rcexp, ty:Types.ty, elemTy: Types.ty, coerceTy:Types.ty, loc:loc}
+      | RCDYNAMICCASE of
+         {
+          groupListTerm:rcexp, 
+          groupListTy:Types.ty, 
+          dynamicTerm:rcexp, 
+          dynamicTy:Types.ty, 
+          elemTy:Types.ty, 
+          ruleBodyTy:Types.ty, 
+          loc:loc}
     and rcffiexp
       = RCFFIIMPORT of {ffiTy:TypedCalc.ffiTy, funExp:rcffifun}
     and rcffifun
-      = RCFFIFUN of rcexp
+      = RCFFIFUN of rcexp * Types.ty
       | RCFFIEXTERN of string
     and rcdecl
       = RCEXD of {exnInfo:exnInfo, loc:Loc.loc} list * Loc.loc
       | RCEXNTAGD of {exnInfo:exnInfo, varInfo:varInfo} * Loc.loc
       | RCEXPORTEXN of exnInfo
       | RCEXPORTVAR of varInfo
-      | RCEXTERNEXN of exExnInfo
+      | RCEXTERNEXN of exExnInfo * Types.provider
       | RCBUILTINEXN of exExnInfo
-      | RCEXTERNVAR of exVarInfo
+      | RCEXTERNVAR of exVarInfo * Types.provider
       | RCVAL of (varInfo * rcexp) list * Loc.loc
       | RCVALPOLYREC of Types.btvEnv * {exp:rcexp, expTy:Types.ty, var:varInfo} list * Loc.loc
       | RCVALREC of {exp:rcexp, expTy:Types.ty, var:varInfo} list * Loc.loc
@@ -161,27 +184,19 @@ structure RecordCalc =
    val getLocExp : rcexp -> Loc.loc
 
     val format_rcexp
-        : Types.kind TermFormat.btvEnv
-          -> rcexp
+        : rcexp
 	  -> SMLFormat.FormatExpression.expression list
     val rcexpToString : rcexp -> string
     val format_rcffiexp
-        : Types.kind TermFormat.btvEnv
-          -> rcffiexp
+        : rcffiexp
 	  -> SMLFormat.FormatExpression.expression list
     val format_rcdecl
-        : Types.kind TermFormat.btvEnv
-          -> rcdecl TermFormat.formatter
+        : rcdecl TermFormat.formatter
     val formatWithoutType_rcexp
-        : Types.kind TermFormat.btvEnv
-          -> rcexp TermFormat.formatter
+        : rcexp TermFormat.formatter
     val formatWithoutType_rcffiexp
-        : Types.kind TermFormat.btvEnv
-          -> rcffiexp	
+        : rcffiexp
 	  -> SMLFormat.FormatExpression.expression list
     val formatWithoutType_rcdecl
-        : Types.kind TermFormat.btvEnv
-	  -> rcdecl TermFormat.formatter
-    val format_rcdecl' : rcdecl TermFormat.formatter
-    val formatWithoutType_rcdecl' : rcdecl TermFormat.formatter
+        : rcdecl TermFormat.formatter
   end

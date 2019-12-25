@@ -12,7 +12,7 @@ structure Core  : CORE =
 		open IntGrammar
 		open  Grammar
 		structure IntGrammar = IntGrammar
-		structure Grammar = Grammar
+		(* structure Grammar = Grammar *)
 
 		datatype item = ITEM of
 				{ rule : rule,

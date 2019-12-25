@@ -1,8 +1,8 @@
-_require "../../basis.smi"
-_require "../../ml-yacc/lib/base.sig"
+_require local "../../basis.smi"
+_require local "../../ml-yacc/lib/base.sig"
 _require "./mklrtable.smi"
-_require "./utils.sig"
-_require "./sigs.sml"
+_require local "./utils.sig"
+_require local "./sigs.sml"
 
 structure Verbose =
 struct

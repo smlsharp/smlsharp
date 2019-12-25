@@ -1,0 +1,27 @@
+_require "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+_require "./KIND_INSTANCE.sig"
+
+structure SizeKind =
+struct
+  type singleton_ty_body = Types.ty
+  type kind = RuntimeTypes.size_prop
+  type instance = RecordCalc.rcexp
+  val singletonTy
+      : singleton_ty_body -> Types.singletonTy
+  val generateArgs
+      : Types.btvEnv
+        -> BoundTypeVarID.id * kind
+        -> Types.singletonTy list
+  val compare
+      : singleton_ty_body * singleton_ty_body -> order
+  val generateInstance
+      : {lookup : Types.singletonTy -> RecordCalc.varInfo option,
+         btvEnv : Types.btvEnv}
+        -> singleton_ty_body
+        -> RecordCalc.loc
+        -> instance option
+end

@@ -7,8 +7,8 @@ struct
 local
   structure A = AbsynTy
   structure I = IDCalc
-  structure BT = BuiltinTypeNames
-  structure PI = PatternCalcInterface
+  (* structure BT = RuntimeTypes *)
+  (* structure PI = PatternCalcInterface *)
   structure V = NameEvalEnv
 in  
   val print = fn s => if !Bug.debugPrint then print s else ()
@@ -45,7 +45,7 @@ in
       else ()
   fun printVarInfo var =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (I.format_varInfo var))
+        print (Bug.prettyPrint (I.formatWithType_varInfo var))
       else ()
   fun printInterfaceId id = 
       if !Bug.debugPrint then 
@@ -53,15 +53,11 @@ in
       else ()
   fun printTy ty =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (I.format_ty ty))
-      else ()
-  fun printBuiltinTy ty =
-      if !Bug.debugPrint then 
-        print (Bug.prettyPrint (BT.format_bty ty))
+        print (Bug.prettyPrint (I.formatWithType_ty ty))
       else ()
   fun printPITy ty =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (A.format_ty ty))
+        print (Bug.prettyPrint (AbsynTyFormatter.format_ty ty))
       else ()
   fun printTstr tstr =
       if !Bug.debugPrint then 
@@ -81,11 +77,11 @@ in
       else ()
   fun printTfunkind tfunkind =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (I.format_tfunkind tfunkind))
+        print (Bug.prettyPrint (I.formatWithType_tfunkind tfunkind))
       else ()
   fun printIdstatus idstatus =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (I.format_idstatus idstatus) ^ "\n")
+        print (Bug.prettyPrint (I.formatWithType_idstatus idstatus) ^ "\n")
       else ()
   fun printTypId typId =
       if !Bug.debugPrint then 
@@ -233,11 +229,11 @@ in
       else ()
   fun printVar var =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (IDCalc.format_varInfo var) ^ "\n")
+        print (Bug.prettyPrint (IDCalc.formatWithType_varInfo var) ^ "\n")
       else ()
   fun printExp exp =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (IDCalc.format_icexp exp) ^ "\n")
+        print (Bug.prettyPrint (IDCalc.formatWithType_icexp exp) ^ "\n")
       else ()
   fun printPat pat =
       if !Bug.debugPrint then 
@@ -511,6 +507,7 @@ in
         | NONE => "?." ^ Symbol.longsymbolToString longsymbol
           handle Bug.Bug _ => "?"
       end
+
 
 end
 end

@@ -1,20 +1,21 @@
 _require local "../../../../basis.smi"
 _require local "../../../../smlnj-lib/Util/lib-base.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
 
-_require local "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
+(* _require local "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi" *)
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
-_require local "../../../extensions/usererror/main/UserErrorUtils.smi"
-_require local "./NameEvalError.ppg.smi"
-_require local "./NameEvalUtils.smi"
+(* _require local "../../../extensions/usererror/main/UserErrorUtils.smi" *)
+(* _require local "./NameEvalError.ppg.smi" *)
+(* _require local "./NameEvalUtils.smi" *)
 _require local "./TfunVars.smi"
 
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/types/main/TvarMap.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require local "../../../compilerIRs/idcalc/main/IDCalcUtils.smi"
 _require "./NameEvalEnv.ppg.smi"
 
 structure NormalizeTy =
@@ -37,16 +38,31 @@ struct
                    * (IDCalc.formals * IDCalc.ty)
                 -> bool
   val equalTfun : ((TypID.id * TypID.id) -> bool) -> IDCalc.tfun * IDCalc.tfun -> bool
-  val reduceEnv : NameEvalEnv.env -> NameEvalEnv.env
-  val reduceTfun : IDCalc.tfun -> IDCalc.tfun
-  val reduceTy : IDCalc.ty TvarMap.map -> IDCalc.ty -> IDCalc.ty
-  val tyForm : IDCalc.tvar list -> IDCalc.ty -> normalForm
-  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SymbolEnv.map,
-               id:TypID.id, iseqRef:bool ref} list
-              -> unit
   val equalTy :
       ((TypID.id * TypID.id -> bool) * (IDCalc.tvarId TvarID.Map.map))
       -> IDCalc.ty * IDCalc.ty -> bool
+  val eqTydefWithInterface
+      : bool -> (TypID.id * TypID.id -> bool)
+        -> (IDCalc.formals * IDCalc.ty)
+           * (IDCalc.formals * IDCalc.ty)
+        -> bool
+  val equalTfunWithInterface 
+      : bool -> ((TypID.id * TypID.id) -> bool)
+        -> IDCalc.tfun * IDCalc.tfun -> bool
+  val equalTyWithInterface :
+      bool -> ((TypID.id * TypID.id -> bool) * (IDCalc.tvarId TvarID.Map.map))
+      -> IDCalc.ty * IDCalc.ty -> bool
+  val reduceEnv : NameEvalEnv.env -> NameEvalEnv.env
+  val reduceTfun : IDCalc.tfun -> IDCalc.tfun
+  val reduceTfunWithInterface 
+      : bool -> IDCalc.tfun -> IDCalc.tfun
+  val reduceTy : IDCalc.ty TvarMap.map -> IDCalc.ty -> IDCalc.ty
+  val reduceTyWithInterface 
+      : bool -> IDCalc.ty TvarMap.map -> IDCalc.ty -> IDCalc.ty
+  val tyForm : IDCalc.tvar list -> IDCalc.ty -> normalForm
+  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SymbolEnv.map,
+               id:TypID.id, admitsEqRef:bool ref} list
+              -> unit
   val makeTypIdEquiv : TypID.id list list -> (TypID.id * TypID.id) -> bool
   val emptyTypIdEquiv : (TypID.id * TypID.id) -> bool
 end

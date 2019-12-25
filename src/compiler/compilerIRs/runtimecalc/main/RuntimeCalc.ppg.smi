@@ -1,12 +1,12 @@
 _require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
-_require local "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+(* _require local "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi" *)
 
 _require "../../../../smlformat-lib.smi"
 _require "../../../../basis.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
-_require "../../../libs/heapdump/main/HeapDump.smi"
-_require "../../../libs/util/main/TermFormat.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../../data/name/main/CodeLabel.smi"
@@ -37,13 +37,15 @@ struct
     | NVWORD32 of Word32.word
     | NVWORD64 of Word64.word
     | NVCONTAG of Word32.word
-    | NVREAL64 of string
-    | NVREAL32 of string
+    | NVREAL64 of Real64.real
+    | NVREAL32 of Real32.real
     | NVCHAR of Char.char
     | NVUNIT
     | NVNULLPOINTER
     | NVNULLBOXED
     | NVTAG of {tag : RuntimeTypes.tag, ty : Types.ty}
+    | NVSIZE of {size : RuntimeTypes.size, ty : Types.ty}
+    | NVINDEX of {index : word, ty : Types.ty, label : RecordLabel.label}
     | NVFOREIGNSYMBOL of
       {
         name : string,
@@ -242,7 +244,8 @@ struct
         elemIndex : ncexp
       }
   and initField =
-      INIT_VALUE of varInfo
+      INIT_CONST of ncconst * ty
+    | INIT_VALUE of varInfo
     | INIT_COPY of {srcExp: varInfo, fieldSize: varInfo}
     | INIT_IF of {tagExp: varInfo, tagOfTy: Types.ty,
                   ifBoxed: initField, ifUnboxed: initField}
@@ -252,6 +255,7 @@ struct
       {
         id : ExternSymbol.id,
         ty : ty,
+        provider : Types.provider,
         loc : loc
       }
     | NTEXPORTVAR of
@@ -268,6 +272,7 @@ struct
         tyvars : Types.btvEnv,
         argTyList : ty list,
         retTy : ty,
+        provider : Types.provider,
         loc : loc
       }
     | NTEXPORTFUN of
@@ -316,13 +321,6 @@ struct
         tagExp : topconst,
         loc : loc
       }
-    | NTDUMP of
-      {
-        id : DataLabel.id,
-        dump : HeapDump.dump,
-        ty : Types.ty,
-        loc : loc
-      }
 
   datatype topdec =
       NTFUNCTION of
@@ -357,22 +355,18 @@ struct
   val format_ty
       : ty -> SMLFormat.FormatExpression.expression list
   val formatWithType_ty
-      : Types.kind TermFormat.btvEnv
-        -> ty -> SMLFormat.FormatExpression.expression list
+      : ty -> SMLFormat.FormatExpression.expression list
   val format_primInfo
       : primInfo -> SMLFormat.FormatExpression.expression list
   val formatWithType_primInfo
-      : Types.kind TermFormat.btvEnv
-        -> primInfo -> SMLFormat.FormatExpression.expression list
+      : primInfo -> SMLFormat.FormatExpression.expression list
   val format_varInfo
       : varInfo -> SMLFormat.FormatExpression.expression list
   val formatWithType_varInfo
-      : Types.kind TermFormat.btvEnv
-        -> varInfo -> SMLFormat.FormatExpression.expression list
+      : varInfo -> SMLFormat.FormatExpression.expression list
   val format_ncconst : ncconst -> SMLFormat.FormatExpression.expression list
   val formatWithType_ncconst
-      : Types.kind TermFormat.btvEnv
-        -> ncconst -> SMLFormat.FormatExpression.expression list
+      : ncconst -> SMLFormat.FormatExpression.expression list
   val format_ncexp : ncexp -> SMLFormat.FormatExpression.expression list
   val format_address : address -> SMLFormat.FormatExpression.expression list
   val format_initField : initField -> SMLFormat.FormatExpression.expression list

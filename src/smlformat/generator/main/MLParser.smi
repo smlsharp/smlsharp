@@ -1,14 +1,18 @@
 _require "../../../basis.smi"
-_require "../../../ml-yacc-lib.smi"
+_require local "../../../compiler/compilePhases/parser/main/SMLSharpParser.smi"
+_require local "../../../compiler/data/symbols/main/Loc.smi"
+_require local "../../../compiler/data/symbols/main/Symbol.smi"
+_require local "../../../compiler/data/symbols/main/RecordLabel.smi"
+_require local "../../../compiler/compilerIRs/absyn/main/Absyn.smi"
+_require local "../../../compiler/libs/toolchain/main/Filename.smi"
 _require "./Ast.smi"
-_require "./ml.grm.smi"
-_require "./ml.lex.smi"
-_require "./MLPARSER.sig"
+_require local "./FormatComment.grm.smi"
+_require local "./FormatComment.lex.smi"
 
 structure MLParser =
 struct
-  exception ParseError of string
-  val parse : string * TextIO.instream -> Ast.dec list * (int -> int * int)
+  exception ParseError of string list
+  val parse : string * string -> Ast.dec list * (int -> int * int)
   val getErrorMessage :
       string -> (int -> int * int) -> string * (int * int) -> string
 end

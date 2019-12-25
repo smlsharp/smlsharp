@@ -1,0 +1,7 @@
+_require local "basis.smi"
+_require "smlunit-lib.smi"
+
+structure LexicalItem =
+struct
+  val tests : SMLUnit.Test.test
+end

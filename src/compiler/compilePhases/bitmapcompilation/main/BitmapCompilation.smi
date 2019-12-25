@@ -1,8 +1,8 @@
 _require local "../../../../basis.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 
 _require local "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
@@ -10,9 +10,8 @@ _require local "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
-_require local "../../../data/constantterm/main/ConstantTerm.ppg.smi"
-_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
-_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
+(* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
+_require local "./RecordLayoutCalc.ppg.smi"
 _require local "./RecordLayout.smi"
 _require local "./SingletonTyEnv.smi"
 

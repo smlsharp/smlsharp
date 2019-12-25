@@ -91,7 +91,7 @@ struct
                 UserErrorUtils.checkSymbolDuplication
                   #2 tydescs E.DuplicateTypDesc
           in
-            PC.PLSPECTYPE {tydecls=tydescs, iseq=false, loc=loc}
+            PC.PLSPECTYPE {tydecls=tydescs, eq=false, loc=loc}
           end
 (*
       | A.SPECTYPE(tydescs, loc) => 
@@ -121,7 +121,7 @@ struct
                   #2
                   tydescs E.DuplicateTypDesc
           in
-            PC.PLSPECTYPE{tydecls=tydescs, iseq=true, loc=loc}
+            PC.PLSPECTYPE{tydecls=tydescs, eq=true, loc=loc}
           end
 (*
       | A.SPECEQTYPE(tydescs, loc) => 

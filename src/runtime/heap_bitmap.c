@@ -19,9 +19,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_MMAN_H)
 #include <sys/mman.h>
-#endif /* HAVE_SYS_MMAN_H */
 #ifdef MINGW32
 #include <windows.h>
 #undef OBJ_BITMAP

@@ -7,9 +7,9 @@ struct
 
   (*%
    * @formatter(Filename.filename) Filename.format_filename
-   * @formatter(Loc.loc) Loc.format_loc
+   * @formatter(RequirePath.path) RequirePath.format_path
    * @formatter(InterfaceName.interface_name)
-   *   InterfaceName.formatSimple_interface_name
+   *   InterfaceName.format_short_interface_name
    *)
   exception
 
@@ -24,12 +24,12 @@ struct
    * @format(string)
    * "file" +d "not" +d "found" +d "on" +d "load" +d "path:" +d string
    *)
-  FileNotFound of Filename.filename
+  FileNotFoundOnPath of RequirePath.path
 
   and
   (*%
    * @format(string)
-   * "detected" +d "circular" +d "file" +d "refrences:" +d string
+   * "detected" +d "circular" +d "file" +d "reference:" +d string
    *)
   CircularLoad of Filename.filename
 
@@ -38,24 +38,57 @@ struct
    * @format(symbol)
    * "unexpected" +d "_interface" +d "found:" +d symbol
    *)
-  UnexpectedInterfaceDecl of Filename.filename
+  UnexpectedInterfaceDecl of RequirePath.path
 
   and
   (*%
-   * @format(iname1 * il)
+   * @format(iname1 * iname2)
    * "duplicate" +d "interface" +d "found:" +d iname1
-   * +1 "conflict" +d "with" +d il
-   * @format:il(iname2 * loc)
-   * iname2 +d "loaded" +d "at" +d loc
+   * +d "conflict" +d "with" +d iname2
    *)
   DuplicateHash of InterfaceName.interface_name
-                   * (InterfaceName.interface_name * Loc.loc)
+                   * InterfaceName.interface_name
 
   and
   (*%
    * @format(string)
    * "use" +d "without" +d "declaration:" +d string
    *)
-  UseNotAllowed of Filename.filename
+  UseNotAllowed of RequirePath.path
+
+  and
+  (*%
+   * @format
+   * "empty" +d "path"
+   *)
+  PathMustNotBeEmpty
+
+  and
+  (*%
+   * @format(path)
+   * "absolute" +d "path" +d "is" +d "not" +d "allowed:" +d path
+   *)
+  AbsolutePathNotAllowed of RequirePath.path
+
+  and
+  (*%
+   * @format(path)
+   * "path" +d "indicating" +d "a" +d "direcoty:" +d path
+   *)
+  DirectoryPathNotAllowed of RequirePath.path
+
+  and
+  (*%
+   * @format(string)
+   * "_use" +d "and" +d "_require" +d "the" +d "same" +d "file:" +d string
+   *)
+  UseRequireConflict of Filename.filename
+
+  and
+  (*%
+   * @format(string)
+   * "unknown" +d "require" +d "option:" +d string
+   *)
+  UnknownRequireOption of string
 
 end

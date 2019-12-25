@@ -1,0 +1,45 @@
+(* _require local "../../../../basis.smi" *)
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+
+structure AbsynTy =
+struct
+
+  type loc = Loc.loc
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
+
+  datatype ty
+    = TYWILD of loc
+    | TYID of {symbol:symbol, isEq:bool} * loc
+    | FREE_TYID of {freeTvar:{symbol:symbol, isEq:bool}, tvarKind:tvarKind, loc:loc}
+    | TYRECORD of {ifFlex:bool, fields:(RecordLabel.label * ty) list, loc:loc}
+    | TYCONSTRUCT of ty list * longsymbol * loc
+    | TYTUPLE of ty list * loc
+    | TYFUN of ty * ty * loc
+    | TYPOLY of ({symbol:symbol, isEq:bool} * tvarKind) list * ty * loc
+
+  and tvarKind
+    = UNIV of string list * loc
+    | REC of {properties:string list,
+              recordKind:(RecordLabel.label * ty) list} * loc
+
+  type tvar = {symbol:symbol, isEq:bool}
+  type kindedTvar = {symbol:symbol, isEq:bool} * tvarKind
+
+  datatype ffiTy
+    = FFIFUNTY of string list * ffiTy list * ffiTy list option * ffiTy list
+                  * loc
+    | FFITUPLETY of ffiTy list * loc
+    | FFITYVAR of tvar * loc
+    | FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc
+    | FFICONTY of ffiTy list * longsymbol * loc
+
+  datatype opaque_impl
+    = IMPL_TY of longsymbol
+    | IMPL_TUPLE
+    | IMPL_RECORD
+    | IMPL_FUNC
+
+end

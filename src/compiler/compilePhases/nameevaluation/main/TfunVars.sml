@@ -5,7 +5,13 @@
 local
   fun bug s = Bug.Bug ("TfvKey: " ^ s)
   structure I = IDCalc
-  structure IV = NameEvalEnv
+  fun ('a#boxed) toWord64 (x:'a) =
+      let
+        val buf = ref x
+      in
+        SMLSharp_Builtin.Dynamic.readWord64
+          (SMLSharp_Builtin.Pointer.refToBoxed buf,0w0)
+      end
 in
   structure TfvKey =
     struct
@@ -49,35 +55,14 @@ in
           end
     end
   structure TfvMap = BinaryMapFn(TfvKey)
-  structure TfvSet = BinarySetFn(TfvKey)
-end
-
-(*
-local
-  structure I = IDCalc
-  fun bug s = Bug.Bug ("DtyKey: " ^ s)
-in
-  structure DtyKey = 
+  structure TfvKey2 =
     struct
-      type ord_key = I.tfunkind ref * string list
-      fun compare ((tfv1,_):ord_key, (tfv2,_):ord_key) = 
-          let
-            val id1 = case !tfv1 of
-                        I.TFV_DTY {id,...} => id
-                      | I.TFUN_DTY{id,...} => id
-                      | _ => raise bug "tfvkey"
-            val id2 = case !tfv2 of
-                        I.TFV_DTY {id,...} => id
-                      | I.TFUN_DTY{id,...} => id
-                      | _ => raise bug "tfvkey"
-          in
-            TypID.compare(id1, id2)
-          end
+      type ord_key = I.tfunkind ref
+      fun compare (tfv1:ord_key, tfv2:ord_key) = 
+          Word64.compare (toWord64 tfv1,toWord64 tfv2) 
     end
-  structure DtyPathMap = BinaryMapFn(DtyKey)
-  structure DtyPathSet = BinarySetFn(DtyKey)
+  structure TfvSet = BinarySetFn(TfvKey2)
 end
-*)
 
 structure TfunVars =
 struct
@@ -96,6 +81,8 @@ in
           val set =
               case !tfv of
                 I.TFUN_DTY{dtyKind = I.OPAQUE{tfun, ...},...} =>
+                tfvsTfun tfvKind path (name, tfun, set)
+              | I.TFUN_DTY{dtyKind = I.INTERFACE tfun,...} =>
                 tfvsTfun tfvKind path (name, tfun, set)
               | _ => set
         in

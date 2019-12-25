@@ -1,3 +1,4 @@
-include "./thread/main/myth.smi"
-include "./thread/main/concurrent.smi"
-include "./thread/main/cml.smi"
+include "./thread/main/Myth.smi"
+include "./thread/main/Concurrent.smi"
+include "./thread/main/CML.smi"
+include "./thread/main/Pthread.smi"

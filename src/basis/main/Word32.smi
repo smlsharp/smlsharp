@@ -14,9 +14,9 @@ struct
   val toLargeWordX = SMLSharp_Builtin.Word32.toWord64X
   val fromLarge = SMLSharp_Builtin.Word64.toWord32
   val fromLargeWord = SMLSharp_Builtin.Word64.toWord32
-  val toLargeInt : word -> largeInt
-  val toLargeIntX : word -> largeInt
-  val fromLargeInt : LargeInt.int -> word
+  val toLargeInt : word32 -> largeInt
+  val toLargeIntX : word32 -> largeInt
+  val fromLargeInt : LargeInt.int -> word32
   val toInt = SMLSharp_Builtin.Word32.toInt32
   val toIntX = SMLSharp_Builtin.Word32.toInt32X
   val fromInt = SMLSharp_Builtin.Word32.fromInt32
@@ -32,21 +32,21 @@ struct
   val * = SMLSharp_Builtin.Word32.mul
   val div = SMLSharp_Builtin.Word32.div
   val mod = SMLSharp_Builtin.Word32.mod
-  val compare : word * word -> General.order
+  val compare : word32 * word32 -> General.order
   val < = SMLSharp_Builtin.Word32.lt
   val <= = SMLSharp_Builtin.Word32.lteq
   val > = SMLSharp_Builtin.Word32.gt
   val >= = SMLSharp_Builtin.Word32.gteq
   val ~ = SMLSharp_Builtin.Word32.neg
-  val min : word * word -> word
-  val max : word * word -> word
-  val fmt : StringCvt.radix -> word -> string
-  val toString : word -> string
+  val min : word32 * word32 -> word32
+  val max : word32 * word32 -> word32
+  val fmt : StringCvt.radix -> word32 -> string
+  val toString : word32 -> string
   val scan : StringCvt.radix
              -> (char, 'a) StringCvt.reader
-             -> (word, 'a) StringCvt.reader
-  val fromString : string -> word option
-  type word = word
+             -> (word32, 'a) StringCvt.reader
+  val fromString : string -> word32 option
+  type word = word32
 end
 
 structure Word = Word32

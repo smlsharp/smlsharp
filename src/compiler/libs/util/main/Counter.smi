@@ -1,7 +1,7 @@
 _require local "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require local "../../../libs/env/main/IEnv.smi"
 _require local "../../../libs/env/main/SEnv.smi"
-_require local "../../../data/control/main/Control.ppg.smi"
+_require local "../../../data/control/main/Control.smi"
 _require local "COUNTER.sig"
 
 _require "../../../../basis.smi"
@@ -76,10 +76,12 @@ struct
   val typeInferenceTimeCounter : elapsedTimeCounter
   val printerGenerationTimeCounter : elapsedTimeCounter
   val UncurryOptimizationTimeCounter : elapsedTimeCounter
+  val polyTyEliminationCounter : elapsedTimeCounter
   val TypedCalcOptimizationTimeCounter : elapsedTimeCounter
   val RecordCalcOptimizationTimeCounter : elapsedTimeCounter
   val matchCompilationTimeCounter : elapsedTimeCounter
   val typedElaborationTimeCounter : elapsedTimeCounter
+  val reifyTopEnvTimeCounter : elapsedTimeCounter
   val ffiCompilationTimeCounter : elapsedTimeCounter
   val recordCompilationTimeCounter : elapsedTimeCounter
   val datatypeCompilationTimeCounter : elapsedTimeCounter

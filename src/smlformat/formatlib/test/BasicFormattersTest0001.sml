@@ -53,7 +53,6 @@ struct
   structure U = SMLFormatTestUtil
 
   structure FE = SMLFormat.FormatExpression
-  structure FE = SMLFormat.FormatExpression
   structure BF = SMLFormat.BasicFormatters
 
   (***************************************************************************)
@@ -116,7 +115,7 @@ struct
 
   local
     val TESTFORMATWORD0001_VALUE = 0w0
-    val TESTFORMATWORD0001_EXPECTED = [FE.Term(3, "0x0")]
+    val TESTFORMATWORD0001_EXPECTED = [FE.Term(4, "0wx0")]
   in
   fun testFormatWord0001 () =
       (
@@ -129,7 +128,7 @@ struct
 
   local
     val TESTFORMATWORD0002_VALUE = 0wx123456
-    val TESTFORMATWORD0002_EXPECTED = [FE.Term(8, "0x123456")]
+    val TESTFORMATWORD0002_EXPECTED = [FE.Term(9, "0wx123456")]
   in
   fun testFormatWord0002 () =
       (
@@ -295,9 +294,10 @@ struct
       (
         U.assertEqualFormatExpressionList
         TESTFORMATARRAY0001_EXPECTED
-        (BF.format_array
+        (U.normalize
+           (BF.format_array
              (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATARRAY0001_VALUE);
+             TESTFORMATARRAY0001_VALUE));
         ()
       )
   end
@@ -325,9 +325,10 @@ struct
       (
         U.assertEqualFormatExpressionList
         TESTFORMATARRAY0003_EXPECTED
-        (BF.format_array
+        (U.normalize
+           (BF.format_array
              (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATARRAY0003_VALUE);
+             TESTFORMATARRAY0003_VALUE));
         ()
       )
   end
@@ -349,9 +350,10 @@ struct
       (
         U.assertEqualFormatExpressionList
         TESTFORMATVECTOR0001_EXPECTED
-        (BF.format_vector
+        (U.normalize
+           (BF.format_vector
              (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATVECTOR0001_VALUE);
+             TESTFORMATVECTOR0001_VALUE));
         ()
       )
   end
@@ -379,9 +381,10 @@ struct
       (
         U.assertEqualFormatExpressionList
         TESTFORMATVECTOR0003_EXPECTED
-        (BF.format_vector
+        (U.normalize
+           (BF.format_vector
              (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATVECTOR0003_VALUE);
+             TESTFORMATVECTOR0003_VALUE));
         ()
       )
   end
@@ -515,9 +518,10 @@ struct
       (
         U.assertEqualFormatExpressionList
         TESTFORMATLIST0001_EXPECTED
-        (BF.format_list
+        (U.normalize
+           (BF.format_list
              (BF.format_string, [FE.Term(1, ":")])
-             TESTFORMATLIST0001_VALUE);
+             TESTFORMATLIST0001_VALUE));
         ()
       )
   end

@@ -1,0 +1,16 @@
+_require local "../../../../basis.smi"
+_require local "../../../libs/toolchain/main/Filename.smi"
+_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+
+structure ToplevelSymbol =
+struct
+
+  val mainName : InterfaceName.interface_name option -> string
+  val ftabName : InterfaceName.interface_name option -> string
+  val tabbName : InterfaceName.interface_name option -> string
+  val loadName : InterfaceName.interface_name option -> string
+  val doneName : InterfaceName.interface_name option -> string
+  val rootName : InterfaceName.interface_name option -> string
+  val gvarName : InterfaceName.interface_name option -> string
+
+end

@@ -1,0 +1,21 @@
+_require local "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
+_require local "./SMLFormatTest0001.smi"
+_require local "./SMLFormatTest0002.smi"
+_require local "./SMLFormatTest0003.smi"
+_require local "./SMLFormatTest0004.smi"
+_require local "./SMLFormatTest0005.smi"
+_require local "./SMLFormatTest0006.smi"
+_require local "./SMLFormatTest0007.smi"
+_require local "./SMLFormatTest0008.smi"
+_require local "./SMLFormatTest0009.smi"
+_require local "./SMLFormatTest0010.smi"
+_require local "./SMLFormatTest0011.smi"
+_require local "./PrinterParameterTest0001.smi"
+_require local "./PrinterParameterTest0002.smi"
+_require local "./BasicFormattersTest0001.smi"
+
+structure PPLibTest =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

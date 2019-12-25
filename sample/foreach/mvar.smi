@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "thread/main/myth.smi"
+
+structure MVar =
+struct
+  type 'a mvar (= {})
+  val new : unit -> 'a mvar
+  val put : 'a mvar * 'a -> unit
+  val take : 'a mvar -> 'a
+  val read : 'a mvar -> 'a
+  val isSome : 'a mvar -> bool
+end

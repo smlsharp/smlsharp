@@ -4,14 +4,15 @@
  * @copyright (c) 2013, Tohoku University.
  *)
 
-structure SMLSharp_SQL_ODBCBackend :> SMLSharp_SQL_SQLBACKEND =
+structure SMLSharp_SQL_ODBCBackend : SMLSharp_SQL_SQLBACKEND =
 struct
   structure U = UNIXODBC
-  structure P = Pointer
+  (* structure P = Pointer *)
 
   type conn = U.SQLHDBC
   type res = U.SQLHSTMT
   type value = string
+  type server_desc = string
 
   exception Exec = SMLSharp_SQL_Errors.Exec
   exception Connect = SMLSharp_SQL_Errors.Connect
@@ -180,11 +181,11 @@ struct
       case dbTypeName of
         "0" => SMLSharp_SQL_BackendTy.UNSUPPORTED "SQL_UNKNOWN_TYPE"
       | "1" => SMLSharp_SQL_BackendTy.STRING (* SQL_CHAR *)
-      | "2" => SMLSharp_SQL_BackendTy.DECIMAL (* SQL_NUMERIC *)
-      | "3" => SMLSharp_SQL_BackendTy.DECIMAL (* SQL_DECIMAL *)
+      | "2" => SMLSharp_SQL_BackendTy.NUMERIC (* SQL_NUMERIC *)
+      | "3" => SMLSharp_SQL_BackendTy.NUMERIC (* SQL_DECIMAL *)
       | "4" => SMLSharp_SQL_BackendTy.INT (* SQL_INTEGER *)
       | "5" => SMLSharp_SQL_BackendTy.INT (* SQL_SMALLINT; should be Int16 *)
-      | "6" => SMLSharp_SQL_BackendTy.FLOAT (* SQL_FLOAT *)
+      | "6" => SMLSharp_SQL_BackendTy.REAL (* SQL_FLOAT *)
       | "7" => SMLSharp_SQL_BackendTy.REAL32 (* SQL_REAL *)
       | "8" => SMLSharp_SQL_BackendTy.REAL (* SQL_DOUBLE *)
       | "9" => SMLSharp_SQL_BackendTy.UNSUPPORTED "SQL_DATE"
@@ -290,8 +291,7 @@ struct
   fun stringValue (x:string) = SOME x
   fun charValue x = SOME (String.sub (x, 0)) handle Subscript => NONE
   fun timestampValue x = SOME (SMLSharp_SQL_TimeStamp.fromString x)
-  fun decimalValue x = SOME (SMLSharp_SQL_Decimal.fromString x)
-  fun floatValue x = SOME (SMLSharp_SQL_Float.fromString x)
+  fun numericValue x = SMLSharp_SQL_Numeric.fromString x
   (* 1 = true, 0 = false *)
   fun boolValue x = case x of "1" => SOME true
                             | "0" => SOME false

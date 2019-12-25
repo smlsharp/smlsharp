@@ -1,4 +1,4 @@
-_require "../../../basis.smi"
+(* _require "../../../basis.smi" *)
 
 structure FormatTemplate =
 struct
@@ -30,5 +30,5 @@ struct
     | TypedVarTyPat of id * id
     | VarTyPat of id
     | WildTyPat
-  type formattag = {id:id option, templates:template list, typepat:typepat}
+  type formattag = {id:(id * id list) option, templates:template list, typepat:typepat}
 end

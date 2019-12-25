@@ -4,15 +4,16 @@
  * @copyright (c) 2010, Tohoku University.
  *)
 
-structure SMLSharp_SQL_MySQLBackend :> SMLSharp_SQL_SQLBACKEND =
+structure SMLSharp_SQL_MySQLBackend : SMLSharp_SQL_SQLBACKEND =
 struct
 
   structure MySQL = SMLSharp_SQL_MySQL
   structure KeyValuePair = SMLSharp_SQL_KeyValuePair
 
   type conn = MySQL.MYSQL
-  type res = {result: MySQL.MYSQL_RES, rowIndex: int ref, numRows: int}
+  type res = {result: MySQL.MYSQL_RES, rowIndex: word64 ref, numRows: word64}
   type value = string
+  type server_desc = string
 
   exception Exec = SMLSharp_SQL_Errors.Exec
   exception Connect = SMLSharp_SQL_Errors.Connect
@@ -30,13 +31,13 @@ struct
         val result = MySQL.mysql_store_result () mysql
       in
         {result = result,
-         rowIndex = ref ~1,
+         rowIndex = ref 0w0,
          numRows = MySQL.mysql_num_rows () result}
       end
 
   fun fetch (r as {result, rowIndex, numRows}:res) =
-      if !rowIndex + 1 < numRows
-      then (rowIndex := !rowIndex + 1; true)
+      if !rowIndex < numRows
+      then (rowIndex := !rowIndex + 0w1; true)
       else false
 
   fun closeConn conn = (MySQL.mysql_close () conn; ())
@@ -45,12 +46,12 @@ struct
 
   fun getValue ({result, rowIndex = ref rowIndex, ...}:res, colIndex:int) =
       let
-        val _ = MySQL.mysql_data_seek () (result, rowIndex)
+        val _ = MySQL.mysql_data_seek () (result, rowIndex - 0w1)
         val row = MySQL.mysql_fetch_row () result
         val value = SMLSharp_Builtin.Pointer.deref
                       (SMLSharp_Builtin.Pointer.advance (row, colIndex))
       in
-        if value = _NULL
+        if value = SMLSharp_Builtin.Pointer.null ()
         then NONE
         else SOME (SMLSharp_Runtime.str_new
                      (SMLSharp_Builtin.Pointer.fromUnitPtr value))
@@ -65,8 +66,7 @@ struct
   fun charValue x = SOME (String.sub (x, 0)) handle Subscript => NONE
   fun boolValue x = (print x; raise Fail "MySQL does'nt support boolean")
   fun timestampValue x = SOME (SMLSharp_SQL_TimeStamp.fromString x)
-  fun decimalValue x = SOME (SMLSharp_SQL_Decimal.fromString x)
-  fun floatValue x = SOME (SMLSharp_SQL_Float.fromString x)
+  fun numericValue x = SMLSharp_SQL_Numeric.fromString x
 
   local
 
@@ -206,7 +206,7 @@ struct
           val unix_socket =
               case KeyValuePair.find (pairs, "unix_socket") of
                 SOME x => raise Connect "unix_socket is not supported"
-              | NONE => _NULL
+              | NONE => SMLSharp_Builtin.Pointer.null ()
           val flags = findInt (pairs, "flags", 0)
         in
           MySQL.mysql_real_connect
@@ -217,14 +217,15 @@ struct
 
   fun connect connInfo =
       let
-        val mysql = MySQL.mysql_init () _NULL
+        val mysql = MySQL.mysql_init () (SMLSharp_Builtin.Pointer.null ())
       in
-        if mysql = _NULL then raise Connect "mysql_init failed"
+        if mysql = SMLSharp_Builtin.Pointer.null ()
+        then raise Connect "mysql_init failed"
         else
           let
             val conn = real_connect mysql connInfo
           in
-            if conn = _NULL
+            if conn = SMLSharp_Builtin.Pointer.null ()
             then raise Connect (SMLSharp_Runtime.str_new
                                   (MySQL.mysql_error () mysql)
                                   ^ " (errno:"

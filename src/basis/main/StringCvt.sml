@@ -10,7 +10,9 @@ infixr 5 ::
 infix 4 = <> > >= < <=
 val op - = SMLSharp_Builtin.Int32.sub_unsafe
 val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op <= = SMLSharp_Builtin.Int32.lteq
 val op >= = SMLSharp_Builtin.Int32.gteq
+structure Int32 = SMLSharp_Builtin.Int32
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 
@@ -19,9 +21,9 @@ struct
 
   datatype radix = BIN | OCT | DEC | HEX
   datatype realfmt =
-           SCI of int option
-         | FIX of int option
-         | GEN of int option
+           SCI of int32 option
+         | FIX of int32 option
+         | GEN of int32 option
          | EXACT
   type ('a, 'b) reader = 'b -> ('a * 'b) option
 
@@ -38,9 +40,9 @@ struct
       let
         val len = String.size string
       in
-        if len >= width then string else
+        if width <= len then string else
         let
-          val buf = String.alloc_unsafe width
+          val buf = String.alloc width
           val padlen = width - len
         in
           fill (String.castToArray buf, 0, padlen, padChar);
@@ -54,9 +56,9 @@ struct
       let
         val len = String.size string
       in
-        if len >= width then string else
+        if width <= len then string else
         let
-          val buf = String.alloc_unsafe width
+          val buf = String.alloc width
         in
           Array.copy_unsafe (String.castToArray string, 0,
                              String.castToArray buf, 0, len);
@@ -67,46 +69,50 @@ struct
 
   fun splitl predicate reader source =
       let
-        fun scan (source, n, prefix) =
+        fun scan (take, n, source) =
             case reader source of
-              NONE => (n, prefix, source)
+              NONE => (take, n, source)
             | SOME (char, source') =>
               if predicate char
-              then scan (source', n+1, char :: prefix)
-              else (n, prefix, source)
-        val (len, chars, source') = scan (source, 0, [])
-        val buf = String.alloc_unsafe len
+              then scan (char :: take, Int32.add (n, 1), source')
+              else (take, n, source)
+        val (chars, len, source') =
+            scan ([], 0, source) handle Overflow => raise Size
+        val buf = String.alloc len
         fun loop (i, nil) = ()
           | loop (i, h::t) =
             (Array.update_unsafe (String.castToArray buf, i, h);
              loop (i - 1, t))
-        val _ = loop (len - 1, chars)
       in
+        loop (len - 1, chars);
         (buf, source')
       end
 
-  fun takel predicate reader source = #1(splitl predicate reader source)
+  fun takel predicate reader source =
+      #1 (splitl predicate reader source)
 
-  fun dropl predicate reader source = #2(splitl predicate reader source)
+  fun dropl predicate reader source =
+      case reader source of
+        NONE => source
+      | SOME (char, source') =>
+        if predicate char then dropl predicate reader source' else source
 
-  local
-    (* ToDo : this isWS and Char.isSpace shoud be the same. *)
-    fun isWS #" " = true
-      | isWS #"\n" = true
-      | isWS #"\t" = true
-      | isWS #"\r" = true
-      | isWS #"\v" = true
-      | isWS #"\f" = true
-      | isWS _ = false
-  in
+  (* isWS must be the same as Char.isSpace. *)
+  fun isWS #" " = true
+    | isWS #"\n" = true
+    | isWS #"\t" = true
+    | isWS #"\r" = true
+    | isWS #"\v" = true
+    | isWS #"\f" = true
+    | isWS _ = false
+
   fun skipWS reader source =
       case reader source of
         NONE => source
       | SOME(char, source') =>
         if isWS char then skipWS reader source' else source
-  end
 
-  type cs = int
+  type cs = int32
 
   fun scanString readerConverter string =
       let

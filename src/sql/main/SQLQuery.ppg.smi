@@ -1,8 +1,7 @@
-_require "../../basis.smi"
+_require local "../../basis.smi"
 _require "../../smlformat-lib.smi"
+_require "./Numeric.smi"
 _require "./builtintypes/timestamp/TimeStamp.smi"
-_require "./builtintypes/decimal/Decimal.smi"
-_require "./builtintypes/float/Float.smi"
 
 structure SMLSharp_SQL_Query =
 struct
@@ -34,8 +33,7 @@ struct
     | BOOL of bool
     | INTINF of intInf
     | TIMESTAMP of SMLSharp_SQL_TimeStamp.timestamp
-    | DECIMAL of SMLSharp_SQL_Decimal.decimal
-    | FLOAT of SMLSharp_SQL_Float.float
+    | NUMERIC of SMLSharp_SQL_Numeric.num
 
   datatype 'w exp_ast =
       CONST of const
@@ -76,12 +74,10 @@ struct
   and 'w orderby_ast =
       ORDERBY of ('w exp_ast * 'w ascdesc_ast option) list
 
-  and 'w offset_ast =
-      OFFSET of {count : 'w exp_ast, rows : string option}
-
   and 'w limit_ast =
-      LIMIT of 'w exp_ast option
-    | FETCH of {first:string, count:'w exp_ast option, rows:string}
+      LIMIT of {limit : 'w exp_ast option, offset : 'w exp_ast option}
+    | OFFSET of {offset : 'w exp_ast * string,
+                 fetch : (string * 'w exp_ast option * string) option}
 
   and 'w groupby_ast =
       GROUPBY of 'w exp_ast list * 'w having_ast option
@@ -95,7 +91,6 @@ struct
                * 'w whr_ast option
                * 'w groupby_ast option
                * 'w orderby_ast option
-               * 'w offset_ast option
                * 'w limit_ast option
 
   datatype 'w insert_value_ast =
@@ -116,6 +111,10 @@ struct
     | ROLLBACK
 
   val format_command_ast
-      : 'w command_ast -> SMLFormat.FormatExpression.expression list
+      : unit -> 'w command_ast -> SMLFormat.FormatExpression.expression list
+  val format_query_ast
+      : unit -> 'w query_ast -> SMLFormat.FormatExpression.expression list
+  val format_exp_ast
+      : unit -> 'w exp_ast -> SMLFormat.FormatExpression.expression list
 
 end

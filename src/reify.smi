@@ -1,0 +1,17 @@
+include "./compiler/libs/ids/main/LocalID.smi"
+include "./compiler/data/symbols/main/Symbol.smi"
+include "./compiler/data/symbols/main/RecordLabel.smi"
+include "./compiler/libs/env/main/SEnv.smi"
+include "./compiler/libs/env/main/IEnv.smi"
+include "./compiler/extensions/reflection/main/NaturalJoin.smi"
+include "./compiler/extensions/reflection/main/ReifiedTy.ppg.smi"
+include "./compiler/extensions/reflection/main/ReifiedTerm.ppg.smi"
+include "./compiler/extensions/reflection/main/ReifyTerm.smi"
+include "./compiler/extensions/reflection/main/PartialDynamic.smi"
+include "./compiler/extensions/reflection/main/ReifiedTermToML.smi"
+(*
+include "./compiler/extensions/reflection/main/TyToReifiedTy.smi"
+include "./compiler/extensions/reflection/main/ReifyUtils.smi"
+include "./compiler/extensions/reflection/main/ReifyTy.smi"
+*)
+include "./compiler/extensions/reflection/main/Dynamic.smi"

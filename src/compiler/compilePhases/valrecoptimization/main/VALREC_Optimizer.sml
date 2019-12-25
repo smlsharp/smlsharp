@@ -26,6 +26,7 @@ in
       case icexp of
 	ICERROR => icexp
       | ICCONSTANT _ => icexp
+      | ICSIZEOF _ => icexp
       | ICVAR _ => icexp
       | ICEXVAR _ => icexp 
       | ICEXVAR_TOBETYPED _ => icexp 
@@ -43,6 +44,10 @@ in
                     ty=ty,
                     revealKey=revealKey,
                     loc=loc}
+      | ICINTERFACETYPED {icexp,ty,loc} =>
+        ICINTERFACETYPED {icexp=optimizeExp icexp,
+                          ty=ty,
+                          loc=loc}
       | ICAPPM (funExp, argExpList, loc) => 
 	ICAPPM (optimizeExp funExp,
 		map optimizeExp argExpList,
@@ -97,6 +102,14 @@ in
 		 matchList,
              kind,
              loc)
+      | ICDYNAMICCASE (selector, matchList, loc) =>
+        ICDYNAMICCASE
+            (optimizeExp selector,
+             map
+		 (fn ({arg:icpat, body:icexp}) =>
+                     {arg=arg, body=optimizeExp body})
+		 matchList,
+             loc)
       | ICRECORD_UPDATE (icexp, elementList, loc) =>
         ICRECORD_UPDATE
             (optimizeExp icexp,
@@ -108,41 +121,22 @@ in
         ICSELECT (label, optimizeExp icexp, loc)
       | ICSEQ (icexpList, loc) =>
         ICSEQ (map optimizeExp icexpList, loc)
-      | ICFOREACH {data, pred, iterator, loc} =>
-        ICFOREACH {data = optimizeExp data, 
-                   pred = optimizeExp pred,  
-                   iterator  = optimizeExp iterator,
-                   loc = loc}
-      | ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
-        ICFOREACHDATA {data = optimizeExp data, 
-                       whereParam = optimizeExp whereParam,
-                       pred = optimizeExp pred,  
-                       iterator  = optimizeExp iterator,
-                       loc = loc}
       | ICFFIIMPORT (icexp,ty,loc) =>
         ICFFIIMPORT (optimizeFFIFun icexp, ty, loc)
-      | ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
-        ICFFIAPPLY
-            (cconv,
-             optimizeFFIFun funExp,
-             map (fn ICFFIARG (icexp, ty, loc) =>
-                     ICFFIARG (optimizeExp icexp, ty, loc)
-                   | ICFFIARGSIZEOF (ty, SOME icexp, loc) =>
-                     ICFFIARGSIZEOF
-			 (ty, SOME (optimizeExp icexp), loc)
-                   | ICFFIARGSIZEOF (ty, NONE, loc) =>
-                     ICFFIARGSIZEOF (ty, NONE, loc))
-		 args,
-             retTy, loc)
       | ICSQLSCHEMA {tyFnExp, ty, loc} =>
         ICSQLSCHEMA {tyFnExp = optimizeExp tyFnExp,
                      ty = ty,
                      loc = loc}
-      | ICJOIN (icexp1, icexp2, loc) =>
-        ICJOIN (optimizeExp icexp1, optimizeExp icexp2, loc)
-      | ICJSON (icexp, ty, loc) => 
-        ICJSON (optimizeExp icexp, ty, loc)
-      | ICTYPEOF (ty, loc) => icexp
+      | ICJOIN (bool, icexp1, icexp2, loc) =>
+        ICJOIN (bool, optimizeExp icexp1, optimizeExp icexp2, loc)
+      | ICDYNAMIC (icexp, ty, loc) => 
+        ICDYNAMIC (optimizeExp icexp, ty, loc)
+      | ICDYNAMICIS (icexp, ty, loc) => 
+        ICDYNAMICIS (optimizeExp icexp, ty, loc)
+      | ICDYNAMICNULL (ty, loc) => icexp
+      | ICDYNAMICTOP (ty, loc) => icexp
+      | ICDYNAMICVIEW (icexp, ty, loc) => 
+        ICDYNAMICVIEW (optimizeExp icexp, ty, loc)
       | ICREIFYTY (ty, loc) => icexp
 
   and optimizeFFIFun ffiFun =

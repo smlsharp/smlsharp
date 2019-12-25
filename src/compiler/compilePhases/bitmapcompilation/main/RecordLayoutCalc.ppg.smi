@@ -1,0 +1,41 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+
+structure RecordLayoutCalc =
+struct
+
+  type varInfo
+    = {path : Symbol.longsymbol, id : VarID.id, ty : Types.ty}
+
+  datatype value =
+      VAR of varInfo
+    | TAG of Types.ty * RuntimeTypes.tag
+    | SIZE of Types.ty * RuntimeTypes.size
+    | CONST of Word32.word
+    | CAST of value * Types.ty
+
+  datatype op2 =
+      ADD
+    | SUB
+    | DIV
+    | AND
+    | OR
+    | LSHIFT
+    | RSHIFT
+
+  datatype exp =
+      VALUE of value
+    | OP of op2 * (value * value)
+
+  datatype dec =
+      VAL of varInfo * exp
+
+  val format_value : value -> SMLFormat.FormatExpression.expression list
+  val format_exp : exp -> SMLFormat.FormatExpression.expression list
+  val format_dec : dec -> SMLFormat.FormatExpression.expression list
+
+end

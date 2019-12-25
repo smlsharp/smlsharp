@@ -331,6 +331,12 @@ struct
   end
   structure E = Environment
 
+  fun foldlFE f z nil nil = z
+    | foldlFE f z nil (h :: t) = foldlFE f z h t
+    | foldlFE f z (FE.Sequence x :: t) k = foldlFE f z x (t :: k)
+    | foldlFE f z (h :: t) k = foldlFE f (f (h, z)) t k
+  val foldlFE = fn f => fn z => fn l => foldlFE f z l nil
+
   (***************************************************************************)
 
   (**
@@ -479,7 +485,7 @@ struct
               context = innerContext,
               result
             } =
-            foldl
+            foldlFE
             (fn (expression, {ENV, context, result}) =>
                 let
                   val (newENV, newContext, newExpression) =
@@ -502,7 +508,7 @@ struct
               },
               result = []
             }
-            (expressions @ [guard]) (* append guard *)
+            [FE.Sequence expressions, guard]  (* append guard *)
 
         (* separate the guard entry and the others *)
         val (guardEntry, innerENV) =
@@ -624,6 +630,9 @@ struct
       in
         (newENV, context, PE.Indicator {space = false, newline = ref true})
       end
+
+    | calculate parameter ENV context (FE.Sequence _) =
+      raise Fail "a bug: Sequence never occur here"
 
   (***************************************************************************)
 

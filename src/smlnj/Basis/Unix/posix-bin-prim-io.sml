@@ -18,8 +18,8 @@ structure Word8Vector = struct end
  *)
 
 local
-    structure Position = PositionImp
-    structure OS = OSImp
+    (* structure Position = PositionImp *)
+    (* structure OS = OSImp *)
 in	
 (*
 structure PosixBinPrimIO : OS_PRIM_IO = 
@@ -29,7 +29,7 @@ structure SMLSharp_SMLNJ_PosixBinPrimIO (*: OS_PRIM_IO*) =
 
     structure PrimIO = BinPrimIO
 
-    structure Vec = Word8Vector
+    (* structure Vec = Word8Vector *)
     structure PF = Posix.FileSys
     structure PIO = Posix.IO
 

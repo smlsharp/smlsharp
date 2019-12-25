@@ -1,0 +1,3 @@
+val it = "SML#\n" : string
+
+val it = () : unit

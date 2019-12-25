@@ -1,2 +1,2 @@
-_require "../../basis.smi"
-_require "./export-yacc.smi"
+_require local "../../basis.smi"
+_require local "./export-yacc.smi"

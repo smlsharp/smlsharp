@@ -318,7 +318,7 @@ local
           RC.RCFFI (RC.RCFFIIMPORT
                       {ffiTy = evalFfiTy context ffiTy,
                        funExp = case funExp of
-                                  RC.RCFFIFUN ptrExp => RC.RCFFIFUN (eval ptrExp)
+                                  RC.RCFFIFUN (ptrExp, ty) => RC.RCFFIFUN (eval ptrExp, evalT ty)
                                 | RC.RCFFIEXTERN _ => funExp},
                     evalT ty,
                     loc)
@@ -337,6 +337,19 @@ local
                        handler= eval handler,
                        resultTy = evalT resultTy,
                        loc=loc}
+        | RC.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy,
+                      loc} =>
+          RC.RCCATCH {catchLabel = catchLabel,
+                      argVarList = map (evalTyVar context) argVarList,
+                      catchExp = eval catchExp,
+                      tryExp = eval tryExp,
+                      resultTy = evalT resultTy,
+                      loc = loc}
+        | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+          RC.RCTHROW {catchLabel = catchLabel,
+                      argExpList = map (evalExp context) argExpList,
+                      resultTy = evalT resultTy,
+                      loc = loc}
         | RC.RCLET {body:rcexp list, decls, loc, tys} =>
           let
             val tys = map evalT tys
@@ -440,32 +453,8 @@ local
              expTyList = map evalT expTyList,
              loc = loc
             }
-        | RC.RCFOREACH {data, dataTy, iterator, iteratorTy,  pred,  predTy, loc} =>
-          RC.RCFOREACH
-            {data = eval data,
-             dataTy = evalT dataTy,
-             iterator = eval iterator,
-             iteratorTy = evalT iteratorTy,
-             pred = eval pred,
-             predTy = evalT predTy,
-             loc = loc
-            }
-        | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy,  pred,  predTy, loc} =>
-          RC.RCFOREACHDATA
-            {data = eval data,
-             dataTy = evalT dataTy,
-             whereParam = eval whereParam,
-             whereParamTy = evalT whereParamTy,
-             iterator = eval iterator,
-             iteratorTy = evalT iteratorTy,
-             pred = eval pred,
-             predTy = evalT predTy,
-             loc = loc
-            }
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (evalT ty, loc)
-        | RC.RCTYPEOF (ty, loc) =>
-          RC.RCTYPEOF (evalT ty, loc)
         | RC.RCREIFYTY (ty, loc) =>
           RC.RCREIFYTY (evalT ty, loc)
         | RC.RCTAPP {exp, expTy, instTyList, loc} =>
@@ -541,19 +530,22 @@ local
             }
         | RC.RCTAGOF (ty, loc) =>
           RC.RCTAGOF (evalT ty, loc)
-        | RC.RCJOIN {ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
+        | RC.RCJOIN {isJoin, ty,args=(arg1,arg2), argTys=(argTy1,argTy2),loc} =>
           RC.RCJOIN
             {
              ty= evalT ty,
              args = (eval arg1, eval arg2),
              argTys = (evalT argTy1, evalT argTy2),
+             isJoin = isJoin,
              loc = loc
             }
-        | RC.RCJSON {exp,ty,coerceTy,loc} =>
-          RC.RCJSON {exp=eval exp,
-                     ty=evalT ty,
-                     coerceTy=evalT coerceTy,
-                     loc=loc}
+        | RC.RCDYNAMIC _ => raise bug "RCDYNAMIC to RCOptimize"
+        | RC.RCDYNAMICIS _ => raise bug "RCDYNAMICIS to RCOptimize"
+        | RC.RCDYNAMICNULL _ => raise bug "RCDYNAMICNULL to RCOptimize"
+        | RC.RCDYNAMICTOP _ => raise bug "RCDYNAMICTOP to RCOptimize"
+        | RC.RCDYNAMICVIEW _ => raise bug "RCDYNAMICVIEW to RCOptimize"
+        | RC.RCDYNAMICCASE _ => raise bug "RCDYNAMICCASE to RCOptimize"
+
       end
   and applyTerms
         ({varMap, btvMap}:context)
@@ -641,9 +633,9 @@ local
            RC.RCEXPORTVAR varInfo :: declListRev
           )
         end
-      | RC.RCEXTERNEXN {path, ty} =>
+      | RC.RCEXTERNEXN ({path, ty}, provider) =>
         (context,
-         RC.RCEXTERNEXN {path=path, ty=evalTy context ty}
+         RC.RCEXTERNEXN ({path=path, ty=evalTy context ty}, provider)
          :: declListRev
         )
       | RC.RCBUILTINEXN {path, ty} =>
@@ -651,9 +643,9 @@ local
          RC.RCBUILTINEXN {path=path, ty=evalTy context ty}
          :: declListRev
         )
-      | RC.RCEXTERNVAR {path, ty} =>
+      | RC.RCEXTERNVAR ({path, ty}, provider) =>
         (context,
-         RC.RCEXTERNVAR {path=path, ty=evalTy context ty}
+         RC.RCEXTERNVAR ({path=path, ty=evalTy context ty}, provider)
          :: declListRev
         )
       | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>

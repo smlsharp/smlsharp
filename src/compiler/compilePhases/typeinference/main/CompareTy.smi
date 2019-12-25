@@ -1,0 +1,12 @@
+_require "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+(* _require local "../../../data/symbols/main/Loc.smi" *)
+(* _require local "../../../data/symbols/main/Symbol.smi" *)
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+(* _require "../../../extensions/usererror/main/UserError.ppg.smi" *)
+structure CompareTy =
+struct
+  val compareTy : Types.ty * Types.ty  -> order
+end

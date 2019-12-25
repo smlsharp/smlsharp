@@ -4,8 +4,8 @@ _require local "./SMLSharp_Runtime.smi"
 
 structure Timer =
 struct
-  type cpu_timer (= boxed)
-  type real_timer (= boxed)
+  type cpu_timer (= {})
+  type real_timer (= Time.time)
   val startCPUTimer : unit -> cpu_timer
   val checkCPUTimes : cpu_timer
                       -> {nongc : {usr : Time.time, sys : Time.time},

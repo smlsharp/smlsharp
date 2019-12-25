@@ -121,6 +121,19 @@ local
                        handler= evalExp handler,
                        resultTy=revealTy resultTy,
                        loc=loc}
+        | RC.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy,
+                      loc} =>
+          RC.RCCATCH {catchLabel = catchLabel,
+                      argVarList = map revealVar argVarList,
+                      catchExp = evalExp catchExp,
+                      tryExp = evalExp tryExp,
+                      resultTy = revealTy resultTy,
+                      loc = loc}
+        | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+          RC.RCTHROW {catchLabel = catchLabel,
+                      argExpList = map evalExp argExpList,
+                      resultTy = revealTy resultTy,
+                      loc = loc}
         | RC.RCLET {body:rcexp list, decls, loc, tys} =>
           RC.RCLET {body=map evalExp body,
                     decls=map evalDecl decls, 
@@ -191,30 +204,8 @@ local
              expTyList = map revealTy expTyList,
              loc = loc
             }
-        | RC.RCFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
-          RC.RCFOREACH 
-            {data = evalExp data, 
-             dataTy = revealTy dataTy,
-             iterator = evalExp iterator, 
-             iteratorTy = revealTy iteratorTy, 
-             pred = evalExp pred, 
-             predTy = revealTy predTy, 
-             loc = loc}
-        | RC.RCFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred, predTy, loc} =>
-          RC.RCFOREACHDATA
-            {data = evalExp data, 
-             dataTy = revealTy dataTy,
-             whereParam = evalExp whereParam, 
-             whereParamTy = revealTy whereParamTy, 
-             iterator = evalExp iterator, 
-             iteratorTy = revealTy iteratorTy, 
-             pred = evalExp pred, 
-             predTy = revealTy predTy, 
-             loc = loc}
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (revealTy ty, loc)
-        | RC.RCTYPEOF (ty, loc) =>
-          RC.RCTYPEOF (revealTy ty, loc)
         | RC.RCREIFYTY (ty, loc) =>
           RC.RCREIFYTY (revealTy ty, loc)
         | RC.RCTAPP {exp, expTy, instTyList, loc} =>
@@ -245,7 +236,7 @@ local
           RC.RCFFI (RC.RCFFIIMPORT 
                       {ffiTy=revealFfiTy ffiTy,
                        funExp= case funExp of
-                                 RC.RCFFIFUN ptrExp => RC.RCFFIFUN (evalExp ptrExp)
+                                 RC.RCFFIFUN (ptrExp, ty) => RC.RCFFIFUN (evalExp ptrExp, revealTy ty)
                                | RC.RCFFIEXTERN _ => funExp},
                     revealTy ty, 
                     loc)
@@ -265,18 +256,60 @@ local
             }
         | RC.RCTAGOF (ty, loc) =>
           RC.RCTAGOF (revealTy ty, loc)
-        | RC.RCJOIN {ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
+        | RC.RCJOIN {isJoin, ty,args=(arg1,arg2),argTys=(argTy1,argTy2),loc} =>
           RC.RCJOIN
             {ty=revealTy ty,
              args=(evalExp arg1, evalExp arg2),
              argTys=(revealTy argTy1, revealTy argTy2),
+             isJoin=isJoin,
              loc=loc
             }
-        | RC.RCJSON {exp,ty,coerceTy,loc} =>
-          RC.RCJSON {exp=evalExp exp,
-                     ty=revealTy ty,
-                     coerceTy=revealTy coerceTy,
-                     loc=loc}
+        | RC.RCDYNAMIC {exp,ty,elemTy, coerceTy,loc} =>
+          RC.RCDYNAMIC {exp=evalExp exp,
+                        ty=revealTy ty,
+                        elemTy = revealTy elemTy,
+                        coerceTy=revealTy coerceTy,
+                        loc=loc}
+        | RC.RCDYNAMICIS {exp,ty,elemTy, coerceTy,loc} =>
+          RC.RCDYNAMICIS {exp=evalExp exp,
+                          ty=revealTy ty,
+                          elemTy = revealTy elemTy,
+                          coerceTy=revealTy coerceTy,
+                          loc=loc}
+        | RC.RCDYNAMICNULL {ty, coerceTy,loc} =>
+          RC.RCDYNAMICNULL {ty=revealTy ty,
+                            coerceTy=revealTy coerceTy,
+                            loc=loc}
+        | RC.RCDYNAMICTOP {ty, coerceTy,loc} =>
+          RC.RCDYNAMICTOP {ty=revealTy ty,
+                           coerceTy=revealTy coerceTy,
+                           loc=loc}
+        | RC.RCDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} =>
+          RC.RCDYNAMICVIEW {exp=evalExp exp,
+                            ty=revealTy ty,
+                            elemTy = revealTy elemTy,
+                            coerceTy=revealTy coerceTy,
+                            loc=loc}
+        | RC.RCDYNAMICCASE
+            {
+             groupListTerm, 
+             groupListTy, 
+             dynamicTerm, 
+             dynamicTy, 
+             elemTy, 
+             ruleBodyTy, 
+             loc
+            } => 
+          RC.RCDYNAMICCASE
+            {
+             groupListTerm = evalExp groupListTerm, 
+             groupListTy = revealTy groupListTy, 
+             dynamicTerm = evalExp dynamicTerm, 
+             dynamicTy = revealTy dynamicTy, 
+             elemTy = revealTy elemTy, 
+             ruleBodyTy = revealTy ruleBodyTy, 
+             loc = loc
+            }
 
   and evalDecl (rcdecl:RC.rcdecl) =
       case rcdecl of
@@ -294,12 +327,12 @@ local
         RC.RCEXPORTEXN (revealExnInfo exnInfo)
       | RC.RCEXPORTVAR varInfo =>
         RC.RCEXPORTVAR varInfo
-      | RC.RCEXTERNEXN {path, ty} =>
-        RC.RCEXTERNEXN {path=path, ty=revealTy ty}
+      | RC.RCEXTERNEXN ({path, ty}, provider) =>
+        RC.RCEXTERNEXN ({path=path, ty=revealTy ty}, provider)
       | RC.RCBUILTINEXN {path, ty} =>
         RC.RCBUILTINEXN {path=path, ty=revealTy ty}
-      | RC.RCEXTERNVAR {path, ty} =>
-        RC.RCEXTERNVAR {path=path, ty=revealTy ty}
+      | RC.RCEXTERNVAR ({path, ty}, provider) =>
+        RC.RCEXTERNVAR ({path=path, ty=revealTy ty}, provider)
       | RC.RCVAL (binds:(RC.varInfo * rcexp) list, loc) =>
         RC.RCVAL (map evalBind binds, loc)
       | RC.RCVALPOLYREC

@@ -19,9 +19,9 @@ structure Graph : LRGRAPH =
 	struct
 	        open Array List
 		infix 9 sub
-		structure Core = Core
-		structure Grammar = IntGrammar.Grammar
-		structure IntGrammar = IntGrammar
+		(* structure Core = Core *)
+		(* structure Grammar = IntGrammar.Grammar *)
+		(* structure IntGrammar = IntGrammar *)
 		open Core Core.Grammar CoreUtils IntGrammar
 
 		structure NodeSet = RbOrdSet

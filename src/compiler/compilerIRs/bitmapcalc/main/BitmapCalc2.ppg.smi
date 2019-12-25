@@ -1,14 +1,12 @@
 _require local "../../../../basis.smi"
-_require local "../../../libs/ids/main/LocalID.smi"
+(* _require local "../../../libs/ids/main/LocalID.smi" *)
 _require local "../../../libs/util/main/TermFormat.smi"
 
 _require "../../../../smlformat-lib.smi"
-_require "../../../libs/heapdump/main/HeapDump.smi"
 _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
-_require "../../../data/constantterm/main/ConstantTerm.ppg.smi"
+(* _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 _require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
@@ -41,8 +39,7 @@ struct
         bodyExp : bcexp,
         loc: loc
       }
-    | BCCONSTANT of {const : ConstantTerm.constant, ty : ty, loc : loc}
-    | BCTAG of {tag : RuntimeTypes.tag, ty : ty, loc : loc}
+    | BCCONSTANT of {const : TypedLambda.constant, ty : ty, loc : loc}
     | BCFOREIGNSYMBOL of
       {
         name : string,
@@ -167,7 +164,7 @@ struct
       {
         switchExp : bcexp,
         expTy : ty,
-        branches : {constant : ConstantTerm.constant, branchExp : bcexp} list,
+        branches : {constant : TypedLambda.tlconst, branchExp : bcexp} list,
         defaultExp : bcexp,
         resultTy : ty,
         loc : loc
@@ -178,12 +175,6 @@ struct
         expTy : ty,
         targetTy : ty,
         cast : BuiltinPrimitive.cast,
-        loc : loc
-      }
-    | BCDUMP of
-      {
-        dump : HeapDump.dump,
-        ty : ty,
         loc : loc
       }
 
@@ -202,6 +193,7 @@ struct
     | BCEXTERNVAR of
       {
         exVarInfo: exVarInfo,
+        provider: Types.provider,
         loc: loc
       }
     | BCEXPORTVAR of

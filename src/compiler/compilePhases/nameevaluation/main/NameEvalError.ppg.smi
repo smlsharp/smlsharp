@@ -1,9 +1,11 @@
 _require local "../../../../basis.smi"
 _require local "../../../../smlformat-lib.smi"
-_require local "../../../extensions/usererror/main/UserError.ppg.smi"
+(* _require local "../../../extensions/usererror/main/UserError.ppg.smi" *)
 
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynFormatter.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 
@@ -11,7 +13,7 @@ structure NameEvalError =
   struct    
     type code = string
     exception CyclicKind of (code * {tvarList: IDCalc.tvar list})
-    exception IlleagalBuiltinTy of code * {symbol: Symbol.symbol}
+    exception IllegalBuiltinTy of code * {symbol: Symbol.longsymbol}
     exception InvalidOverloadInst of code * {longsymbol: Symbol.longsymbol}
     exception FFIFunTyIsNotAllowedHere of code * PatternCalc.ffiTy
     exception ProvideFunctorMismatch of code * {longsymbol: Symbol.longsymbol}
@@ -155,5 +157,7 @@ structure NameEvalError =
     exception StrNotFound of code * {longsymbol: Symbol.longsymbol}
     exception ProvideFunctorIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
     exception ProvideParamIdMismatchInFunapp of (code * {longsymbol: Symbol.longsymbol})
+    exception InvalidKind of code * Absyn.tvarKind
     exception InvalidKindName of code * string
+    exception FlexRecordNotAllowed of code * Absyn.ty
   end

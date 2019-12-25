@@ -1,0 +1,330 @@
+_require local "../../../../basis.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require local "../../../data/control/main/Control.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/Unify.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+(* _require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi" *)
+_require local "../../../extensions/reflection/main/ReifiedTyData.smi"
+
+structure TypedCalcCon =
+struct
+  type exp = TypedCalc.tpexp * Types.ty
+  type pat = TypedCalc.tppat * Types.ty * Types.varInfo VarID.Map.map
+
+  val TPERROR : exp
+  val TPCONSTANT
+      : {const:Absyn.constant,
+         ty:Types.ty,
+         loc:Loc.loc}
+        -> exp
+  val TPSIZEOF
+      : Types.ty
+        * Loc.loc
+        -> exp
+  val TPREIFYTY
+      : Types.ty
+        * Loc.loc
+        -> exp
+  val TPEXN_CONSTRUCTOR
+      : {exnInfo : Types.exnInfo, loc : Loc.loc}
+        -> exp
+  val TPEXEXN_CONSTRUCTOR
+      : {exExnInfo : Types.exExnInfo, loc : Loc.loc}
+        -> exp
+  val TPEXVAR
+      : Types.exVarInfo
+        -> exp
+  val TPVAR
+      : Types.varInfo
+        -> exp
+  val TPRECFUNVAR
+      : {var : Types.varInfo,
+         arity : int}
+        -> exp
+  val TPCAST
+      : (exp * Types.ty)
+        * Types.ty
+        * Loc.loc
+        -> exp
+  val TPDATACONSTRUCT
+      : {con : Types.conInfo,
+         instTyList : Types.ty list,
+         argExpOpt : exp option,
+         loc : Loc.loc}
+        -> exp
+  val TPEXNCONSTRUCT
+      : {exn : TypedCalc.exnCon,
+         instTyList : Types.ty list,
+         argExpOpt : exp option,
+         loc : Loc.loc}
+        -> exp
+  val TPFFIIMPORT_FUN
+      : {funExp : exp,
+         ffiTy : TypedCalc.ffiTy,
+         loc : Loc.loc}
+        -> exp
+  val TPFFIIMPORT_EXT
+      : {funExp : string,
+         ffiTy : TypedCalc.ffiTy,
+         loc : Loc.loc}
+        -> exp
+  val TPTAPP
+      : {exp : exp,
+         instTyList : Types.ty list,
+         loc : Loc.loc}
+        -> exp
+  val TPPOLY
+      : {btvEnv : Types.btvEnv,
+         constraints : Types.constraint list,
+         exp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPPOLYFNM
+      : {btvEnv : Types.btvEnv,
+         constraints : Types.constraint list,
+         argVarList : Types.varInfo list,
+         bodyExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPFNM
+      : {argVarList : Types.varInfo list,
+         bodyExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPAPPM
+      : {funExp : exp,
+         argExpList : exp list,
+         loc : Loc.loc}
+        -> exp
+  val TPCASEM
+      : {caseKind : PatternCalc.caseKind,
+         expList : exp list,
+         ruleList : {args : pat list, body : exp} list,
+         loc : Loc.loc}
+        -> exp
+  val TPLET
+      : {decls : TypedCalc.tpdecl list,
+         body : exp list,
+         loc : Loc.loc}
+        -> exp
+  val TPMONOLET
+      : {binds : (Types.varInfo * exp) list,
+         bodyExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPSEQ
+      : {expList : exp list,
+         loc: Loc.loc}
+        -> exp
+  val TPRAISE
+      : {exp : exp,
+         ty : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPHANDLE
+      : {exp : exp,
+         exnVar : Types.varInfo,
+         handler : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPRECORD
+      : {fields : exp RecordLabel.Map.map,
+         loc : Loc.loc}
+        -> exp
+  val TPSELECT
+      : Types.btvEnv option
+        -> {exp : exp,
+            label : RecordLabel.label,
+            loc : Loc.loc}
+        -> exp
+  val TPMODIFY
+      : Types.btvEnv option
+        -> {recordExp : exp,
+            label : RecordLabel.label,
+            elementExp : exp,
+            loc : Loc.loc}
+        -> exp
+  val TPPRIMAPPLY
+      : {primOp : Types.primInfo,
+         instTyList : Types.ty list,
+         argExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPOPRIMAPPLY
+      : {oprimOp : Types.oprimInfo,
+         instTyList : Types.ty list,
+         argExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPJOIN
+      : {args : exp * exp,
+         ty : Types.ty,
+         isJoin:bool,
+         loc : Loc.loc}
+        -> exp
+  val TPDYNAMIC
+      : {exp : exp,
+         coerceTy : Types.ty,
+         elemTy : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPDYNAMICIS
+      : {exp : exp,
+         coerceTy : Types.ty,
+         elemTy : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPDYNAMICVIEW
+      : {exp : exp,
+         coerceTy : Types.ty,
+         elemTy : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPDYNAMICNULL
+      : {ty : Types.ty,
+         coerceTy : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPDYNAMICTOP
+      : {ty : Types.ty,
+         coerceTy : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPDYNAMICCASE
+      : {groupListTerm : exp,
+         groupListTy : Types.ty,
+         dynamicTerm : exp,
+         dynamicTy : Types.ty,
+         elemTy : Types.ty,
+         ruleBodyTy : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPPATERROR : pat
+  val TPPATCONSTANT
+      : Absyn.constant
+        * Types.ty
+        * Loc.loc
+        -> pat
+  val TPPATVAR
+      : Types.varInfo
+        -> pat
+  val TPPATWILD
+      : Types.ty
+        * Loc.loc
+        -> pat
+  val TPPATDATACONSTRUCT
+      : {conPat : Types.conInfo,
+         instTyList : Types.ty list,
+         argPatOpt : pat option,
+         loc : Loc.loc}
+        -> pat
+  val TPPATEXNCONSTRUCT
+      : {exnPat : TypedCalc.exnCon,
+         instTyList : Types.ty list,
+         argPatOpt : pat option,
+         loc : Loc.loc}
+        -> pat
+  val TPPATLAYERED
+      : {varPat : pat,
+         asPat : pat,
+         loc : Loc.loc}
+        -> pat
+  val TPPATRECORD
+      : Types.btvEnv option
+        -> {fields : pat RecordLabel.Map.map,
+           recordTy : Types.ty option,
+           loc : Loc.loc}
+        -> pat
+
+  val patVars
+      : pat list -> Types.varInfo VarID.Map.map
+
+  type env =
+      {
+        exnEnv : Types.exnInfo ExnID.Map.map,
+        exExnEnv : Types.exExnInfo LongsymbolEnv.map,
+        varEnv : Types.varInfo VarID.Map.map,
+        exVarEnv : Types.exVarInfo LongsymbolEnv.map,
+        btvEnv : Types.kind BoundTypeVarID.Map.map
+      }
+
+  val emptyEnv : env
+  val extendEnv : env * env -> env
+  val exnEnv : Types.exnInfo ExnID.Map.map -> env
+  val exExnEnv : Types.exExnInfo LongsymbolEnv.map -> env
+  val varEnv : Types.varInfo VarID.Map.map -> env
+  val exVarEnv : Types.exVarInfo LongsymbolEnv.map -> env
+  val btvEnv : Types.kind BoundTypeVarID.Map.map -> env
+  val makeExnEnv : Types.exnInfo list -> env
+  val makeExExnEnv : Types.exExnInfo list -> env
+  val makeVarEnv : Types.varInfo list -> env
+  val makeExVarEnv : Types.exVarInfo list -> env
+  val clsVarEnv : Types.btvEnv * Types.constraint list
+                  -> Types.varInfo list
+                  -> env
+
+  val TPEXD
+      : {exnInfo : Types.exnInfo, loc : Loc.loc} list
+        * Loc.loc
+        -> TypedCalc.tpdecl * env
+  val TPEXNTAGD
+      : {exnInfo : Types.exnInfo,
+         varInfo : Types.varInfo}
+        * Loc.loc
+        -> TypedCalc.tpdecl * env
+  val TPEXPORTEXN
+      : Types.exnInfo
+        -> TypedCalc.tpdecl * env
+  val TPEXPORTRECFUNVAR
+      : {var : Types.varInfo,
+         arity : int}
+        -> TypedCalc.tpdecl * env
+  val TPEXPORTVAR
+      : Types.varInfo
+        -> TypedCalc.tpdecl * env
+  val TPEXTERNEXN
+      : Types.exExnInfo * Types.provider
+        -> TypedCalc.tpdecl * env
+  val TPBUILTINEXN
+      : Types.exExnInfo
+        -> TypedCalc.tpdecl * env
+  val TPEXTERNVAR
+      : Types.exVarInfo * Types.provider
+        -> TypedCalc.tpdecl * env
+  val TPFUNDECL
+      : {funVarInfo : Types.varInfo,
+         ruleList : {args : pat list, body : exp} list} list
+        * Loc.loc
+        -> TypedCalc.tpdecl * env
+  val TPPOLYFUNDECL
+      : {btvEnv : Types.btvEnv,
+         constraints : Types.constraint list,
+         recbinds : {funVarInfo : Types.varInfo,
+                     ruleList : {args : pat list, body : exp} list} list,
+         loc : Loc.loc}
+        -> TypedCalc.tpdecl * env
+  val TPVAL
+      : (Types.varInfo * exp) list
+        * Loc.loc
+        -> TypedCalc.tpdecl * env
+  val TPVALREC
+      : {var : Types.varInfo, exp : exp} list
+        * Loc.loc
+        -> TypedCalc.tpdecl * env
+  val TPVALPOLYREC
+      : {btvEnv : Types.btvEnv,
+         constraints : Types.constraint list,
+         recbinds : {var : Types.varInfo, exp : exp} list,
+         loc : Loc.loc}
+        -> TypedCalc.tpdecl * env
+
+end

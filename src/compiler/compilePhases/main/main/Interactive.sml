@@ -7,23 +7,26 @@
 structure Interactive =
 struct
 
-  val sml_run = _import "sml_run" : int -> ()
+  datatype arg = datatype ShellUtils.arg
+
+  val sml_gcroot_load =
+      _import "sml_gcroot_load"
+      : (codeptr vector, word) -> unit ptr
 
   exception UncaughtException of exn
   exception LinkError of exn
 
   fun isWindows () =
-      case SMLSharp_Config.HOST_OS_TYPE () of
-        SMLSharp_Config.Unix => false
-      | SMLSharp_Config.Cygwin => true
-      | SMLSharp_Config.Mingw => true
+      case Config.HOST_OS_TYPE () of
+        Config.Unix => false
+      | Config.Cygwin => true
+      | Config.Mingw => true
 
   type options =
       {baseFilename : Filename.filename option,
-       stdPath : Filename.filename list,
-       loadPath : Filename.filename list,
-       LDFLAGS : string list,
-       LIBS : string list,
+       loadPath : InterfaceName.source list,
+       LDFLAGS : ShellUtils.arg list,
+       LIBS : ShellUtils.arg list,
        llvmOptions : LLVMUtils.compile_options,
        outputWarnings : UserError.errorInfo list -> unit}
 
@@ -34,13 +37,14 @@ struct
    * global scope *)
   val version = ref 0
 
-  fun start (options as {llvmOptions={systemBaseDir, ...}, ...}:options) =
+  fun start (options as {llvmOptions={systemBaseExecDir, ...}, ...}:options) =
       let
         val libfiles =
             if isWindows ()
-            then [Filename.concatPath
-                    (systemBaseDir,
-                     Filename.fromString "compiler/smlsharp.lib")]
+            then [Filename.concatPaths
+                    [systemBaseExecDir,
+                     Filename.fromString "compiler",
+                     Filename.fromString "smlsharp.lib"]]
             else nil
       in
         {options = options, libfiles = ref libfiles} : session
@@ -48,61 +52,74 @@ struct
 
   fun loadObj ({options={LDFLAGS, LIBS, ...}, libfiles}:session) objfiles =
       let
-        val sofile = TempFile.create ("." ^ SMLSharp_Config.DLLEXT ())
+        val sofile = TempFile.create ("." ^ Config.DLLEXT ())
         val ldflags =
-            case SMLSharp_Config.HOST_OS_TYPE () of
-              SMLSharp_Config.Unix => nil
-            | SMLSharp_Config.Cygwin =>
-              ["-Wl,-out-implib,"
-               ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
-            | SMLSharp_Config.Mingw =>
-              ["-Wl,--out-implib="
-               ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
+            case Config.HOST_OS_TYPE () of
+              Config.Unix => nil
+            | Config.Cygwin =>
+              [ARG ("-Wl,-out-implib,"
+                    ^ Filename.toString (Filename.replaceSuffix "lib" sofile))]
+            | Config.Mingw =>
+              [ARG ("-Wl,--out-implib="
+                    ^ Filename.toString (Filename.replaceSuffix "lib" sofile))]
         val _ =
             BinUtils.link
-              {flags = SMLSharp_Config.RUNLOOP_DLDFLAGS () :: LDFLAGS @ ldflags,
-               libs = map Filename.toString (!libfiles) @ LIBS,
-               objects = objfiles,
+              {flags = EXPAND (Config.RUNLOOP_DLDFLAGS ())
+                       :: LDFLAGS @ ldflags,
+               libs = map (ARG o Filename.toString) (!libfiles) @ LIBS,
+               objects = map #objfile objfiles,
                dst = sofile,
-               useCXX = false,
-               quiet = not (!Control.printCommand)}
+               useCXX = false}
         val so =
             DynamicLink.dlopen' (Filename.toString sofile,
                                  DynamicLink.GLOBAL,
                                  DynamicLink.NOW)
+        val _ =
+            if isWindows ()
+            then libfiles := Filename.replaceSuffix "lib" sofile :: !libfiles
+            else ()
+        val smlloads =
+            map (fn {name, objfile} =>
+                    DynamicLink.dlsym (so, ToplevelSymbol.loadName name))
+                objfiles
+        val _ = sml_gcroot_load (Vector.fromList smlloads,
+                                 Word.fromInt (length smlloads))
+        val smlmains =
+            map (fn {name, objfile} =>
+                    DynamicLink.dlsym (so, ToplevelSymbol.mainName name))
+                objfiles
       in
-        if isWindows ()
-        then libfiles := Filename.replaceSuffix "lib" sofile :: !libfiles
-        else ();
-        so
+        case smlmains of
+          f::nil => f : _import () -> ()
+        | _ => fn () => app (fn f => (f : _import () -> ()) ()) smlmains
       end
 
-  fun load (session as {options={llvmOptions, ...}, ...}) module =
+  fun load (session as {options={llvmOptions, ...}, ...}) bcfile =
       let
-        val objfile = TempFile.create ("." ^ SMLSharp_Config.OBJEXT ())
+        val objfile = TempFile.create ("." ^ Config.OBJEXT ())
         val _ = #start Counter.llvmOutputTimeCounter()
         val _ = LLVMUtils.compile llvmOptions
-                                  (module, LLVMUtils.ObjectFile, objfile)
+                                  {srcfile = bcfile,
+                                   dstfile = (LLVMUtils.ObjectFile, objfile)}
         val _ = #stop Counter.llvmOutputTimeCounter()
-        val _ = LLVM.LLVMDisposeModule module
       in
-        loadObj session [objfile]
+        loadObj session [{objfile=objfile, name=NONE}]
       end
 
-  fun run (session as {options={stdPath, loadPath, llvmOptions, baseFilename,
+  fun run (session as {options={loadPath, llvmOptions, baseFilename,
                                 outputWarnings, ...}, ...})
           context input =
       let
-        val context = context # {version = SOME (!version)}
+        val context = context # {version = InterfaceName.STEP (!version)}
         val topOptions = {stopAt = Top.NoStop,
                           baseFilename = baseFilename,
-                          stdPath = stdPath,
                           loadPath = loadPath,
-                          loadMode = Top.COMPILE,
+                          loadMode = InterfaceName.COMPILE,
+                          defaultInterface = fn x => x,
                           outputWarnings = outputWarnings} : Top.options
         val _ = Counter.reset ()
         val (_, result) = Top.compile llvmOptions topOptions context input
-        val (newContext, module) =
+        val (newContext, bcfile) =
             case result of
               Top.RETURN x => x
             | Top.STOPPED => raise Bug.Bug "run"
@@ -113,60 +130,40 @@ struct
         val newContext =
             if !Control.interactiveMode
             then newContext else Top.emptyNewContext
+        val main = load session bcfile handle e => raise LinkError e
       in
-        load session module handle e => raise LinkError e;
         version := !version + 1;
-        sml_run 0 handle e => raise UncaughtException e;
+        main () handle e => raise UncaughtException e;
         newContext
       end
 
-  structure WSet =
-    BinarySetFn(type ord_key = Word64.word val compare = Word64.compare)
+  fun isLoaded name =
+      let
+        val mainName = ToplevelSymbol.mainName (SOME name)
+      in
+        (DynamicLink.dlsym' (DynamicLink.default (), mainName); true)
+        handle DynamicLink.Error _ => false
+      end
 
-  val toplevelIds = ref NONE
-
-  val sml_toplevel_ids = _import "sml_toplevel_ids" : Word64.word ptr ref -> int
-
-  fun getToplevelIds () =
-      case !toplevelIds of
-        SOME x => x
-      | NONE =>
-        let
-          val idsptr = ref (Pointer.NULL ())
-          val numIds = sml_toplevel_ids idsptr
-          fun read s p 0 = s
-            | read s p n =
-              read (WSet.add (s, Pointer.load p)) (Pointer.advance (p, 1)) (n-1)
-          val ids = read WSet.empty (!idsptr) numIds
-        in
-          toplevelIds := SOME ids;
-          ids
-        end
-
-  type objfile = {objfile : Filename.filename, hash : InterfaceName.hash}
+  type objfile =
+      {objfile : Filename.filename, name : InterfaceName.interface_name}
 
   fun loadObjectFiles session objfiles =
-      let
-        val (ids, objfilesRev) =
-            foldl
-              (fn ({objfile, hash}, z as (ids, objfilesRev)) =>
-                  let
-                    val hash = InterfaceName.hashToWord64 hash
-                  in
-                    if WSet.member (ids, hash)
-                    then z
-                    else (WSet.add (ids, hash), objfile :: objfilesRev)
-                  end)
-              (getToplevelIds (), nil)
-              objfiles
-      in
-        case objfilesRev of
-          nil => ()
-        | _::_ =>
-          (toplevelIds := SOME ids;
-           loadObj session (rev objfilesRev) handle e => raise LinkError e;
-           sml_run 1 handle e => raise UncaughtException e;
-           ())
-      end
+      case List.filter (not o isLoaded o #name) objfiles of
+        nil => ()
+      | objfiles as _::_ =>
+        let
+          val objfiles =
+              map (fn {name, objfile} => {name = SOME name, objfile = objfile})
+                  objfiles
+          val main = loadObj session objfiles handle e => raise LinkError e
+        in
+          main () handle e => raise UncaughtException e
+        end
+handle e as LinkError x =>
+(print "LinkError: ";
+ print (exnMessage x);
+ print "\n";
+ raise e)
 
 end

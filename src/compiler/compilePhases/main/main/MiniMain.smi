@@ -1,29 +1,32 @@
-_require local "../../../../config/main/Version.smi"
-_require local "../../../../config/main/Config.smi"
-_require local "../../../../llvm/main/LLVM.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+_require "../../../../basis.smi"
+_require local "../../../libs/config/main/Config.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
+(* _require local "../../../libs/env/main/SSet.smi" *)
 
-_require local "../../../data/control/main/Control.ppg.smi"
+_require local "../../../data/control/main/Control.smi"
 _require local "../../../libs/util/main/Counter.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"
 _require local "../../../libs/toolchain/main/Filename.smi"
 _require local "../../../libs/toolchain/main/CoreUtils.smi"
+_require local "../../../libs/toolchain/main/ShellUtils.smi"
 _require local "../../../libs/toolchain/main/TempFile.smi"
 _require local "../../../libs/toolchain/main/BinUtils.smi"
 _require local "../../../libs/toolchain/main/LLVMUtils.smi"
 _require local "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require local "../../../compilePhases/parser/main/Parser.smi"
 _require local "../../../compilePhases/toplevel/main/Top.smi"
-_require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+(* _require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi" *)
 _require local "../../../compilePhases/loadfile/main/LoadFile.smi"
+_require local "./SignalHandler.smi"
 _require local "./GetOpt.smi"
 _require local "./ExecutablePath.smi"
-_require local "./FilenameMap.smi"
-
-_require "../../../../basis.smi"
-
+_require local "./UserFileMap.smi"
+(* _require local "./MainUtils.smi" *)
+(*
+_require "../../../../json.smi"
+*)
 _use local "./Main.sml"
 
 structure Main =

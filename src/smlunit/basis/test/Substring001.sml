@@ -313,10 +313,10 @@ struct
       (* error case *)
       let
         val case_m1 as () =
-            (SOME(SS.triml ~1); fail "triml: expects Subscript")
+            (SOME(SS.triml ~1 (SS.full "")); fail "triml: expects Subscript")
             handle General.Subscript => ()
         val case_m1 as () =
-            (SOME(SS.trimr ~1); fail "trimr: expects Subscript")
+            (SOME(SS.trimr ~1 (SS.full "")); fail "trimr: expects Subscript")
             handle General.Subscript => ()
       in () end
 

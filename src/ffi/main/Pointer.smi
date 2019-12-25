@@ -5,8 +5,9 @@ struct
   val store = SMLSharp_Builtin.Pointer.store
 
   val isNull : 'a ptr -> bool
-  val NULL : unit -> 'a ptr
+  val NULL = SMLSharp_Builtin.Pointer.null
 
   val importBytes : word8 ptr * int -> word8 vector
   val importString : char ptr -> string
+  val importString' : char ptr * int -> string
 end

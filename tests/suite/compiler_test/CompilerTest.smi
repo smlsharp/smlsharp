@@ -1,0 +1,10 @@
+_require local "../../../src/basis.smi"
+_require "../../../src/smlunit-lib.smi"
+_require local "../../driver/Compiler.smi"
+_require local "../../driver/Compiler.smi"
+_require local "../../../src/compiler/compilePhases/main/main/Main.smi"
+
+structure CompilerTest =
+struct
+  val tests : SMLUnit.Test.test
+end

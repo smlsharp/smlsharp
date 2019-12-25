@@ -1,0 +1,2 @@
+_require "./013_require3.smi"
+val y : int

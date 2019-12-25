@@ -31,6 +31,7 @@ struct
            }
          | StartOfIndent of int
          | EndOfIndent
+         | Sequence of expression list
 
   (***************************************************************************)
 

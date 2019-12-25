@@ -16,6 +16,7 @@ struct
   structure L = TypedLambda
   structure B = BitmapCalc2
   structure T = Types
+  structure P = BuiltinPrimitive
   type varInfo = RecordCalc.varInfo
 
   fun newVar ty =
@@ -38,48 +39,61 @@ struct
 
   fun Cast ((exp, ty), targetTy, loc) =
       B.BCCAST {exp = exp, expTy = ty, targetTy = targetTy,
-                cast = BuiltinPrimitive.TypeCast, loc = loc}
+                cast = P.TypeCast, loc = loc}
 
   fun valueToBcexp (value, loc) =
       case value of
-        SingletonTyEnv2.CONST n =>
-        (B.BCCONSTANT {const = ConstantTerm.WORD32 n,
-                       ty = BuiltinTypes.wordTy,
+        RecordLayoutCalc.CONST n =>
+        (B.BCCONSTANT {const = L.C (L.WORD32 n),
+                       ty = BuiltinTypes.word32Ty,
                        loc = loc},
-         BuiltinTypes.wordTy)
-      | SingletonTyEnv2.VAR v =>
+         BuiltinTypes.word32Ty)
+      | RecordLayoutCalc.VAR v =>
         (B.BCVAR {varInfo = v, loc = loc}, #ty v)
-      | SingletonTyEnv2.TAG (ty, n) =>
-        (B.BCTAG {tag = n, ty = ty, loc = loc},
+      | RecordLayoutCalc.TAG (ty, n) =>
+        (B.BCCONSTANT {const = L.C (L.TAG (n, ty)),
+                       ty = T.SINGLETONty (T.TAGty ty),
+                       loc = loc},
          T.SINGLETONty (T.TAGty ty))
-      | SingletonTyEnv2.SIZE (ty, n) =>
-        (B.BCCAST
-           {exp = B.BCCONSTANT {const = ConstantTerm.WORD32 (Word32.fromInt n),
-                                ty = BuiltinTypes.wordTy,
-                                loc = loc},
-            expTy = BuiltinTypes.wordTy,
-            targetTy = T.SINGLETONty (T.SIZEty ty),
-            cast = BuiltinPrimitive.TypeCast,
-            loc = loc},
+      | RecordLayoutCalc.SIZE (ty, n) =>
+        (B.BCCONSTANT {const = L.C (L.SIZE (n, ty)),
+                       ty = T.SINGLETONty (T.SIZEty ty),
+                       loc = loc},
          T.SINGLETONty (T.SIZEty ty))
-      | SingletonTyEnv2.CAST (v, ty2) =>
+      | RecordLayoutCalc.CAST (v, ty2) =>
         (Cast (valueToBcexp (v, loc), ty2, loc), ty2)
+
+  fun primInfo op2 =
+      {primitive =
+         case op2 of
+           RecordLayoutCalc.ADD => P.R (P.M P.Word_add)
+         | RecordLayoutCalc.SUB => P.R (P.M P.Word_sub)
+         | RecordLayoutCalc.DIV => P.R (P.M P.Word_div_unsafe)
+         | RecordLayoutCalc.AND => P.R (P.M P.Word_andb)
+         | RecordLayoutCalc.OR => P.R (P.M P.Word_orb)
+         | RecordLayoutCalc.LSHIFT => P.R (P.M P.Word_lshift_unsafe)
+         | RecordLayoutCalc.RSHIFT => P.R (P.M P.Word_rshift_unsafe),
+       ty = {boundtvars = BoundTypeVarID.Map.empty,
+             argTyList = [BuiltinTypes.word32Ty, BuiltinTypes.word32Ty],
+             resultTy = BuiltinTypes.word32Ty}}
 
   fun toBcdecl loc decl =
       case decl of
-        RecordLayout2.PRIMAPPLY {boundVar, primInfo, argList} =>
-        let
-          val argExpList = map (fn v => #1 (valueToBcexp (v, loc))) argList
-        in
-          B.BCVAL {boundVar = boundVar,
-                   boundExp = B.BCPRIMAPPLY {primInfo = primInfo,
-                                             argExpList = argExpList,
-                                             instTyList = nil,
-                                             instTagList = nil,
-                                             instSizeList = nil,
-                                             loc = loc},
-                   loc = loc}
-        end
+        RecordLayoutCalc.VAL (boundVar, RecordLayoutCalc.VALUE value) =>
+        B.BCVAL {boundVar = boundVar,
+                 boundExp = #1 (valueToBcexp (value, loc)),
+                 loc = loc}
+      | RecordLayoutCalc.VAL (boundVar, RecordLayoutCalc.OP (op2, (v1, v2))) =>
+        B.BCVAL {boundVar = boundVar,
+                 boundExp = B.BCPRIMAPPLY
+                              {primInfo = primInfo op2,
+                               argExpList = [#1 (valueToBcexp (v1, loc)),
+                                             #1 (valueToBcexp (v2, loc))],
+                               instTyList = nil,
+                               instTagList = nil,
+                               instSizeList = nil,
+                               loc = loc},
+                 loc = loc}
 
   fun findTag (env, ty) =
       SingletonTyEnv2.findTag env ty
@@ -107,6 +121,10 @@ struct
                  size = findSize (env, ty),
                  tag = findTag (env, ty)})
             (RecordLabel.Map.listItemsi fields)
+        handle e as Bug.Bug _ => 
+               (print "findSize 1\n";
+                print (Bug.prettyPrint (Types.format_ty recordTy));
+                raise e)
       end
 
   fun compileExp env comp tlexp =
@@ -135,10 +153,16 @@ struct
       | L.TLTAGOF {ty, loc} =>
         findTagExp (env, ty, loc)
       | L.TLSIZEOF {ty, loc} =>
-        findSizeExp (env, ty, loc)
+        (findSizeExp (env, ty, loc)
+        handle e as Bug.Bug _ => (print "findSize 2\n";raise e))
       | L.TLINDEXOF {label, recordTy, loc} =>
         let
           val fields = recordFieldTys env recordTy
+              handle e as Bug.Bug _ => 
+                     (print "INDEXOF 1\n";
+                      print (Bug.prettyPrint (L.format_tlexp tlexp));
+                      raise e)
+
           fun find (fields, nil) = raise Bug.Bug "compileExp: MVINDEXOF"
             | find (fields, {label=l,size,tag,ty}::t) =
               if l = label then (rev fields, {size=size})
@@ -154,8 +178,6 @@ struct
         B.BCCONSTANT {const = const, ty = ty, loc = loc}
       | L.TLFOREIGNSYMBOL {name, ty, loc} =>
         B.BCFOREIGNSYMBOL {name = name, ty = ty, loc = loc}
-      | L.TLDUMP {dump, ty, loc} =>
-        B.BCDUMP {dump = dump, ty = ty, loc = loc}
       | L.TLVAR {varInfo, loc} =>
         B.BCVAR {varInfo = varInfo, loc = loc}
       | L.TLEXVAR {exVarInfo, loc} =>
@@ -167,6 +189,7 @@ struct
               map (fn ty => findTagExp (env, ty, loc)) instTyList
           val instSizeList =
               map (fn ty => findSizeExp (env, ty, loc)) instTyList
+              handle e as Bug.Bug _ => (print "findSize 3\n";raise e)
         in
           B.BCPRIMAPPLY {primInfo = primInfo,
                          argExpList = argExpList,
@@ -203,6 +226,11 @@ struct
                     else raise Bug.Bug "MVRECORD: label mismatch")
                 (recordFieldTys env recordTy,
                  RecordLabel.Map.listItemsi fields)
+              handle e as Bug.Bug _ => 
+                     (print "RECORD 1\n";
+                      print (Bug.prettyPrint (L.format_tlexp tlexp));
+                      raise e)
+
           val {allocSize, fieldIndexes, bitmaps, padding} =
               RecordLayout2.computeRecord
                 comp
@@ -251,6 +279,7 @@ struct
           val recordExp = compileExp env comp recordExp
           val indexExp = compileExp env comp indexExp
           val resultSize = findSizeExp (env, resultTy, loc)
+              handle e as Bug.Bug _ => (print "findSize 4\n";raise e)
           val resultTag = findTagExp (env, resultTy, loc)
         in
           B.BCSELECT {recordExp = recordExp,
@@ -270,6 +299,7 @@ struct
           val valueExp = compileExp env comp valueExp
           val valueTag = findTagExp (env, valueTy, loc)
           val valueSize = findSizeExp (env, valueTy, loc)
+              handle e as Bug.Bug _ => (print "findSize 5\n";raise e)
         in
           B.BCMODIFY {recordExp = recordExp,
                       recordTy = recordTy,
@@ -408,12 +438,19 @@ struct
                             exVarInfo = exVarInfo,
                             exp = compileExp env comp exp,
                             loc = loc}])
-    | L.TLEXTERNVAR (exVarInfo, loc) =>
-      (env, [B.BCEXTERNVAR {exVarInfo = exVarInfo, loc = loc}])
+    | L.TLEXTERNVAR (exVarInfo, provider, loc) =>
+      (env, [B.BCEXTERNVAR {exVarInfo = exVarInfo, provider = provider,
+                            loc = loc}])
 
   fun compileDeclList env comp (decl::decls) =
       let
         val (env, decls1) = compileDecl env comp decl
+            handle e as Bug.Bug _ => 
+                   (print "compileDecl\n";
+                    print (Bug.prettyPrint (L.format_tldecl decl));
+                    print "\n";
+                    raise e)
+                            
         val (env, decls2) = compileDeclList env comp decls
       in
         (env, decls1 @ decls2)

@@ -6,92 +6,62 @@
  * @copyright 2010, 2011, 2012, 2013, Tohoku University.
  *)
 
+structure Seq =
+struct
+  type 'a seq = string
+  type 'a elem = char
+  val castToArray = SMLSharp_Builtin.String.castToArray
+  val length = SMLSharp_Builtin.String.size
+  val alloc = SMLSharp_Builtin.String.alloc
+  val alloc_unsafe = SMLSharp_Builtin.String.alloc_unsafe
+  type 'a vector = string
+  val castVectorToArray = SMLSharp_Builtin.String.castToArray
+  val allocVector = SMLSharp_Builtin.String.alloc
+  val allocVector_unsafe = SMLSharp_Builtin.String.alloc_unsafe
+  fun emptyVector () = ""
+  structure VectorSlice = struct fun base x = x end
+end
+
+_use "./Slice_common.sml"
+
 infix 7 * / div mod
 infix 6 + - ^
 infixr 5 ::
 infix 4 = <> > >= < <=
 val op + = SMLSharp_Builtin.Int32.add_unsafe
 val op - = SMLSharp_Builtin.Int32.sub_unsafe
-val op > = SMLSharp_Builtin.Int32.gt
 val op < = SMLSharp_Builtin.Int32.lt
 val op <= = SMLSharp_Builtin.Int32.lteq
 val op >= = SMLSharp_Builtin.Int32.gteq
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
-structure Char = SMLSharp_Builtin.Char
 structure Word32 = SMLSharp_Builtin.Word32
 structure Word8 = SMLSharp_Builtin.Word8
-
-val memcmp = _import "sml_memcmp"
-             : __attribute__ ((pure,fast))
-               (string, int, string, int, int) -> int
+structure Char = SMLSharp_Builtin.Char
 
 structure Substring =
 struct
+  open Slice_common
+  type char = char
+  type string = string
+  type substring = unit slice
+  val size = length
+  val string = vector
+  val substring = subsequence
+  val extract = slice
+  val slice = subslice
+  val getc = getItem
 
-  type substring = string * int * int (* string * start * length *)
-
-  (* object size occupies 26 bits of 32-bit object header. In addition,
-   * "string" have sentinel zero character at the end of the char sequence *)
-  val maxSize = 0x03fffffe
-
-  fun substring_unsafe ((vec, start, length):substring) =
-      let
-        val buf = String.alloc_unsafe length
-      in
-        Array.copy_unsafe (String.castToArray vec, start,
-                           String.castToArray buf, 0, length);
-        buf
-      end
-
-  fun concatWith sep [] = ""
-    | concatWith sep [x] = substring_unsafe x
-    | concatWith sep slices =
-      let
-        val sepLen = String.size sep
-        fun totalLength (nil : substring list, z) = z
-          | totalLength ([(_,_,len)], z) =
-            let val z = z + len
-            in if z > maxSize then raise Size else z
-            end
-          | totalLength ((_,_,len)::t, z) =
-            let val z = z + sepLen + len
-            in if z > maxSize then raise Size else totalLength (t, z)
-            end
-        val len = totalLength (slices, 0)
-        val buf = String.alloc_unsafe len
-        fun loop (i, nil : substring list) = ()
-          | loop (i, (vec, beg, len)::t) =
-            (Array.copy_unsafe (String.castToArray vec, beg,
-                                String.castToArray buf, i, len);
-             case t of
-               nil => ()
-             | _::_ =>
-               let val i = i + len
-               in Array.copy_unsafe (String.castToArray sep, 0,
-                                     String.castToArray buf, i, sepLen);
-                  loop (i + sepLen, t)
-               end)
-      in
-        loop (0, slices);
-        buf
-      end
-
-  fun explode ((vec, start, length):substring) =
-      let
-        fun loop (i, z) =
-            if i >= start
-            then loop (i - 1, Array.sub_unsafe (String.castToArray vec, i) :: z)
-            else z
-      in
-        loop (start + length - 1, nil)
-      end
+  val memcmp = _import "sml_memcmp"
+               : __attribute__ ((pure,fast))
+                               (string, int, string, int, int) -> int
 
   fun isPrefix prefix ((vec, start, length):substring) =
       let
         val len = String.size prefix
       in
-        len <= length andalso memcmp (prefix, 0, vec, start, len) = 0
+        len <= length
+        andalso memcmp (prefix, 0, vec, start, len) = 0
       end
 
   fun isSuffix suffix ((vec, start, length):substring) =
@@ -106,44 +76,42 @@ struct
       let
         val len1 = String.size vec1
       in
-        if len1 > length then ~1
+        if length < len1 then ~1
         else if len1 = length
         then if memcmp (vec1, 0, vec2, start, length) = 0 then start else ~1
         else
           let
             (* Rabin-Karp algorithm *)
-            val limit = length - len1 + start
-            val base = 0w127
+            val prime = 0w127
+            fun ord c =
+                Word8.toWord32 (Char.castToWord8 c)
             fun sub (vec, i) =
-                Word8.toWord32
-                  (Char.castToWord8
-                     (Array.sub_unsafe (String.castToArray vec, i)))
+                ord (Array.sub_unsafe (String.castToArray vec, i))
             fun hash_add (hash, ch) =
-                Word32.add (Word32.mul (hash, base), ch)
-            fun hash1_init (i, hash) =
+                Word32.add (Word32.mul (hash, prime), ch)
+            fun hash1 (i, hash) =
                 if i < len1
-                then hash1_init (i+1, hash_add (hash, sub (vec1, i)))
+                then hash1 (i + 1, hash_add (hash, sub (vec1, i)))
                 else hash
-            fun hash2_init (i, hash) =
+            val hash1 = hash1 (0, 0w0)
+            fun hash2 (i, hash) =
                 if i < len1
-                then hash2_init (i+1, hash_add (hash, sub (vec2, start+i)))
+                then hash2 (i + 1, hash_add (hash, sub (vec2, start + i)))
                 else hash
-            fun baseDel_init (0, z) = z
-              | baseDel_init (n, z) = baseDel_init (n - 1, Word32.mul (z, base))
-            val hash1 = hash1_init (0, 0w0)
-            val hash2 = hash2_init (0, 0w0)
-            val baseDel = baseDel_init (len1, 0w1)
-            fun hash_rot (hash, del, add) =
-                Word32.sub (Word32.add (Word32.mul (hash, base), add),
-                            Word32.mul (del, baseDel))
+            val hash2 = hash2 (0, 0w0)
+            fun hashDel (0, z) = z
+              | hashDel (n, z) = hashDel (n - 1, Word32.mul (z, prime))
+            val hashDel = hashDel (len1, 0w1)
+            fun rotate {hash, del, add} =
+                Word32.sub (Word32.add (Word32.mul (hash, prime), add),
+                            Word32.mul (del, hashDel))
+            val limit = length - len1 + start
             fun search (i, hash2) =
                 if hash1 = hash2 andalso memcmp (vec1, 0, vec2, i, len1) = 0
                 then i
-                else if i >= limit then ~1
-                else let val del = sub (vec2, i)
-                         val add = sub (vec2, i + len1)
-                     in search (i + 1, hash_rot (hash2, del, add))
-                     end
+                else if limit <= i then ~1
+                else search (i + 1, rotate {hash = hash2, del = sub (vec2, i),
+                                            add = sub (vec2, i + len1)})
           in
             search (start, hash2)
           end
@@ -152,157 +120,24 @@ struct
   fun isSubstring vec1 slice =
       strstr vec1 slice >= 0
 
-  fun translate transFn ((vec, start, length):substring) =
-      let
-        fun init (i, totalSize, buf) =
-            if i < start + length then
-              let val c = Array.sub_unsafe (String.castToArray vec, i)
-                  val x = transFn c
-                  val n = String.size x
-              in if totalSize + n > maxSize then raise Size else ();
-                 init (i + 1, totalSize + n, x :: buf)
-              end
-            else (totalSize, buf)
-        val (totalSize, buf) = init (start, 0, nil)
-        val dst = String.alloc_unsafe totalSize
-        fun concat (i, nil) = dst
-          | concat (i, h::t) =
-            let val len = String.size h
-                val i = i - len
-            in Array.copy_unsafe (String.castToArray h, 0,
-                                  String.castToArray dst, i, len);
-               concat (i, t)
-            end
-      in
-        concat (totalSize, buf)
-      end
-
-  fun sub ((vec, start, length):substring, index) =
-      if index < 0 orelse length <= index then raise Subscript
-      else Array.sub_unsafe (String.castToArray vec, start + index)
-
-  fun base (x:substring) = x
-
-  fun full vec = (vec, 0, String.size vec) : substring
-
-  fun size ((vec, start, length):substring) = length
-
-  fun isEmpty ((vec, start, length):substring) = length = 0
-
-  fun concat nil = ""
-    | concat [x] = substring_unsafe x
-    | concat slices =
-      let
-        fun totalLength (nil : substring list, z) = z
-          | totalLength ((vec, start, length)::t, z) =
-            let val z = length + z
-            in if z > maxSize then raise Size else totalLength (t, z)
-            end
-        val len = totalLength (slices, 0)
-        val buf = String.alloc_unsafe len
-        fun loop (i, nil : substring list) = ()
-          | loop (i, (vec, start, length)::t) =
-            (Array.copy_unsafe (String.castToArray vec, start,
-                                String.castToArray buf, i, length);
-             loop (i + length, t))
-      in
-        loop (0, slices);
-        buf
-      end
-
-  fun substring (x as (vec, start, length)) =
-      let
-        val len = String.size vec
-      in
-        if start < 0 orelse len < start
-           orelse length < 0 orelse len - start < length
-        then raise Subscript
-        else x : substring
-      end
-
-  fun extract (vec, start, SOME length) = substring (vec, start, length)
-    | extract (vec, start, NONE) =
-      let
-        val len = String.size vec
-      in
-        if start < 0 orelse len < start then raise Subscript
-        else (vec, start, len - start)
-      end
-
-  fun string ((vec, start, length):substring) =
-      let
-        val buf = String.alloc_unsafe length
-      in
-        Array.copy_unsafe (String.castToArray vec, start,
-                           String.castToArray buf, 0, length);
-        buf
-      end
-
-  fun getc ((vec, start, length):substring) =
-      if length <= 0 then NONE
-      else SOME (Array.sub_unsafe (String.castToArray vec, start),
-                 (vec, start + 1, length - 1) : substring)
-
   fun first ((vec, start, length):substring) =
-      if length = 0 then NONE
+      if length <= 0 then NONE
       else SOME (Array.sub_unsafe (String.castToArray vec, start))
 
-  fun triml size =
+  fun triml size ((vec, start, length):substring) =
       if size < 0 then raise Subscript
-      else fn (vec, start, length):substring =>
-              if size < length
-              then (vec, start + size, length - size)
-              else (vec, start + length, 0)
+      else if size < length
+      then (vec, start + size, length - size)
+      else (vec, start + length, 0)
 
-  fun trimr size =
+  fun trimr size ((vec, start, length):substring) =
       if size < 0 then raise Subscript
-      else fn (vec, start, length):substring =>
-              (vec, start, if size < length then length - size else 0)
-
-  fun slice ((vec, start, length):substring, start2, lengthOpt) =
-      if start2 < 0 orelse length < start2 then raise Subscript
-      else case lengthOpt of
-             NONE => (vec, start + start2, length - start2)
-           | SOME len =>
-             if len < 0 orelse length - start2 < len then raise Subscript
-             else (vec, start + start2, len)
-
-  fun collate cmpFn ((vec1, start1, length1):substring,
-                     (vec2, start2, length2):substring) =
-      let
-        fun loop (i, 0, j, 0) = General.EQUAL
-          | loop (i, 0, j, _) = General.LESS
-          | loop (i, _, j, 0) = General.GREATER
-          | loop (i, rest1, j, rest2) =
-            let
-              val c1 = Array.sub_unsafe (String.castToArray vec1, i)
-              val c2 = Array.sub_unsafe (String.castToArray vec2, j)
-            in
-              case cmpFn (c1, c2) of
-                General.EQUAL => loop (i + 1, rest1 - 1, j + 1, rest2 - 1)
-              | order => order
-            end
-      in
-        loop (start1, length1, start2, length2)
-      end
-
-  fun compare ((vec1, start1, length1):substring,
-               (vec2, start2, length2):substring) =
-      let
-        val len = if length1 < length2 then length1 else length2
-      in
-        case memcmp (vec1, start1, vec2, start2, len) of
-          0 => if length1 = length2 then General.EQUAL
-               else if length1 < length2 then General.LESS
-               else General.GREATER
-        | n => if n < 0 then General.LESS else General.GREATER
-      end
+      else (vec, start, if size < length then length - size else 0)
 
   fun splitl whileFn ((vec, start, length):substring) =
       let
         fun loop i =
-            if i < length
-               andalso
+            if i < length andalso
                whileFn (Array.sub_unsafe (String.castToArray vec, start + i))
             then loop (i + 1)
             else ((vec, start, i), (vec, start + i, length - i))
@@ -310,17 +145,16 @@ struct
         loop 0
       end
 
-  fun splitr whileFn ((vec, start, len):substring) =
+  fun splitr whileFn ((vec, start, length):substring) =
       let
         fun loop i =
-            if i > 0
-               andalso
+            if 0 < i andalso
                whileFn (Array.sub_unsafe
                           (String.castToArray vec, start + i - 1))
             then loop (i - 1)
-            else ((vec, start, i), (vec, start + i, len - i))
+            else ((vec, start, i), (vec, start + i, length - i))
       in
-        loop len
+        loop length
       end
 
   fun splitAt ((vec, start, length):substring, index) =
@@ -330,8 +164,8 @@ struct
   fun dropl whileFn ((vec, start, length):substring) =
       let
         fun loop (i, length) =
-            if length > 0
-               andalso whileFn (Array.sub_unsafe (String.castToArray vec, i))
+            if 0 < length andalso
+               whileFn (Array.sub_unsafe (String.castToArray vec, i))
             then loop (i + 1, length - 1)
             else (vec, i, length)
       in
@@ -341,8 +175,7 @@ struct
   fun dropr whileFn ((vec, start, length):substring) =
       let
         fun loop length =
-            if length > 0
-               andalso
+            if 0 < length andalso
                whileFn (Array.sub_unsafe
                           (String.castToArray vec, start + length - 1))
             then loop (length - 1)
@@ -354,8 +187,7 @@ struct
   fun takel whileFn ((vec, start, length):substring) =
       let
         fun loop i =
-            if i < length
-               andalso
+            if i < length andalso
                whileFn (Array.sub_unsafe (String.castToArray vec, start + i))
             then loop (i + 1)
             else (vec, start, i)
@@ -366,8 +198,7 @@ struct
   fun taker whileFn ((vec, start, length):substring) =
       let
         fun loop len =
-            if len < length
-               andalso
+            if len < length andalso
                whileFn (Array.sub_unsafe
                           (String.castToArray vec, start + length - len - 1))
             then loop (len + 1)
@@ -389,14 +220,21 @@ struct
 
   fun span ((vec1, start1, length1):substring,
             (vec2, start2, length2):substring) =
-      if (String.identityEqual (vec1, vec2)
-          orelse (let val len1 = String.size vec1
-                      val len2 = String.size vec2
-                  in len1 = len2 andalso memcmp (vec1, 0, vec2, 0, len1) = 0
-                  end))
-         andalso start1 <= start2 + length2
+      if vec1 = vec2 andalso start1 <= start2 + length2
       then (vec1, start1, start2 + length2 - start1)
       else raise General.Span
+
+  fun compare ((vec1, start1, length1):substring,
+               (vec2, start2, length2):substring) =
+      let
+        val len = if length1 < length2 then length1 else length2
+      in
+        case memcmp (vec1, start1, vec2, start2, len) of
+          0 => if length1 = length2 then General.EQUAL
+               else if length1 < length2 then General.LESS
+               else General.GREATER
+        | n => if n < 0 then General.LESS else General.GREATER
+      end
 
   fun rev (nil, r) = r : substring list
     | rev (h::t, r) = rev (t, h::r)
@@ -406,7 +244,7 @@ struct
         fun add (b, e, z) =
             if b = e then z else (vec, b, e - b) :: z
         fun loop (beg, i, z) =
-            if i >= start + length then rev (add (beg, i, z), nil)
+            if start + length <= i then rev (add (beg, i, z), nil)
             else if isDelimiter (Array.sub_unsafe (String.castToArray vec, i))
             then loop (i + 1, i + 1, add (beg, i, z))
             else loop (beg, i + 1, z)
@@ -418,7 +256,7 @@ struct
       let
         fun add (b, e, z) = (vec, b, e - b) :: z
         fun loop (beg, i, z) =
-            if i >= start + length then rev (add (beg, i, z), nil)
+            if start + length <= i then rev (add (beg, i, z), nil)
             else if isDelimiter (Array.sub_unsafe (String.castToArray vec, i))
             then loop (i + 1, i + 1, add (beg, i, z))
             else loop (beg, i + 1, z)
@@ -426,40 +264,4 @@ struct
         loop (start, start, nil)
       end
 
-  fun foldli foldFn (z : 'b) ((vec, start, length):substring) =
-      let
-        fun loop (i, z : 'b) =
-            if i >= start + length then z
-            else let val x = Array.sub_unsafe (String.castToArray vec, i)
-                 in loop (i + 1, foldFn (i - start, x, z))
-                 end
-      in
-        loop (start, z)
-      end
-
-  fun foldl foldFn z slice =
-      foldli (fn (i,x,z) => foldFn (x,z)) z slice
-
-  fun foldri foldFn (z : 'b) ((vec, start, length):substring) =
-      let
-        fun loop (i, z : 'b) =
-            if i < start then z
-            else let val x = Array.sub_unsafe (String.castToArray vec, i)
-                 in loop (i - 1, foldFn (i - start, x, z))
-                 end
-      in
-        loop (start + length - 1, z)
-      end
-
-  fun foldr foldFn z slice =
-      foldri (fn (i,x,z) => foldFn (x,z)) z slice
-
-  fun appi appFn slice =
-      foldli (fn (i,x,()) => appFn (i,x)) () slice
-
-  fun app appFn slice =
-      foldli (fn (i,x,()) => appFn x) () slice
-
-  type char = char
-  type string = string
 end

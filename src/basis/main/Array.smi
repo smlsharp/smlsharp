@@ -1,5 +1,5 @@
 _require "./General.smi"
-_require local "./List.smi"
+(* _require local "./List.smi" *)
 _use local "./Array_common.sml"
 
 structure Array =

@@ -5,19 +5,12 @@
  *)
 structure CoreUtils : sig
 
-  exception Failed of {command: string, message: string}
-
-  val join : string list -> string
-  val quote : string -> string
-
   val newFile : Filename.filename -> unit
   val testExist : Filename.filename -> bool
   val testDir : Filename.filename -> bool
-  val rm : Filename.filename -> unit
   val rm_f : Filename.filename -> unit
   val mkdir : Filename.filename -> unit
   val rmdir_f : Filename.filename -> unit
-  val system : {command : string, quiet : bool} -> unit
   val chdir : Filename.filename -> (unit -> 'a) -> 'a
 
   val makeTextFile : Filename.filename * string -> unit
@@ -27,94 +20,73 @@ structure CoreUtils : sig
   val readBinFile : Filename.filename -> Word8Vector.vector
 
   val cp : Filename.filename -> Filename.filename -> unit
+  val cat : Filename.filename list -> TextIO.outstream -> unit
 
 end =
 struct
-
-  exception Failed of {command: string, message: string}
-
-  fun join args =
-      String.concatWith " " args
-
-  fun quote "" = "\"\""
-    | quote x = x (* FIXME *)
 
   fun log msg =
       if !Control.printCommand
       then TextIO.output (TextIO.stdErr, msg ^ "\n")
       else ()
 
-  fun handleSysErr (cmd, e) =
-      case e of
-        OS.SysErr (msg, _) =>
-        (log ("FAILED: " ^ msg); raise Failed {command=cmd, message=msg})
-      | _ => raise e
-
-  fun ignoreSysErr e =
-      case e of
-        OS.SysErr (msg, _) => ()
-      | _ => raise e
-
   fun newFile filename =
-      BinIO.closeOut (BinIO.openOut (Filename.toString filename))
+      BinIO.closeOut (BinIO.openAppend (Filename.toString filename))
 
   fun testExist filename =
       (OS.FileSys.fileSize (Filename.toString filename); true)
-      handle OS.SysErr _ => false
+      handle e as OS.SysErr (_, SOME n) =>
+             case OS.errorName n of
+               "noent" => false
+             | "efault" => false
+             | "acces" => true
+             | _ => raise e
 
   fun testDir filename =
       OS.FileSys.isDir (Filename.toString filename)
-
-  fun rm filename =
-      let
-        val filename = Filename.toString filename
-        val cmd = "rm " ^ filename
-      in
-        log cmd;
-        OS.FileSys.remove filename handle e => handleSysErr (cmd, e)
-      end
+      handle e as OS.SysErr (_, SOME n) =>
+             case OS.errorName n of
+               "noent" => false
+             | "efault" => false
+             | "acces" => true
+             | _ => raise e
 
   fun rm_f filename =
       let
         val filename = Filename.toString filename
-        val cmd = "rm -f " ^ filename
       in
-        log cmd;
-        OS.FileSys.remove filename handle e => ignoreSysErr e
+        log ("rm -f " ^ filename);
+        OS.FileSys.remove filename
+        handle e as OS.SysErr (_, SOME n) =>
+               case OS.errorName n of
+                 "noent" => ()
+               | "efault" => ()
+               | "acces" => ()
+               | "isdir" => ()
+               | _ => raise e
       end
 
   fun mkdir filename =
       let
         val filename = Filename.toString filename
-        val cmd = "mkdir " ^ filename
       in
-        log cmd;
-        OS.FileSys.mkDir filename handle e => handleSysErr (cmd, e)
+        log ("mkdir " ^ filename);
+        OS.FileSys.mkDir filename
       end
 
   fun rmdir_f filename =
       let
         val filename = Filename.toString filename
-        val cmd = "rmdir " ^ filename
       in
-        log cmd;
-        OS.FileSys.rmDir filename handle e => ignoreSysErr e
-      end
-
-  fun system {command, quiet} =
-      let
-        val command =
-            case (quiet, SMLSharp_Config.HOST_OS_TYPE ()) of
-              (true, SMLSharp_Config.Unix) => command ^ " > /dev/null 2>&1"
-            | (true, SMLSharp_Config.Cygwin) => command ^ " > /dev/null 2>&1"
-            | (true, SMLSharp_Config.Mingw) => command ^ " > nul 2>&1"
-            | (false, _) => command
-      in
-        log command;
-        if OS.Process.isSuccess (OS.Process.system command)
-        then ()
-        else (log ("FAILED: command: " ^ command);
-              raise Failed {command=command, message="command failed"})
+        log ("rmdir " ^ filename);
+        OS.FileSys.rmDir filename
+        handle e as OS.SysErr (_, SOME n) =>
+               case OS.errorName n of
+                 "noent" => ()
+               | "efault" => ()
+               | "acces" => ()
+               | "notdir" => ()
+               | _ => raise e
       end
 
   fun chdir filename f =
@@ -171,15 +143,24 @@ struct
         s
       end
 
-  fun copy s d =
+  fun copyBin s d =
       let
-        val buf = BinIO.inputN (s, 4094)
+        val buf = BinIO.inputN (s, 4092)
       in
         if Word8Vector.length buf = 0
         then ()
-        else (BinIO.output (d, buf); copy s d)
+        else (BinIO.output (d, buf); copyBin s d)
       end
-        
+
+  fun copyText s d =
+      let
+        val buf = TextIO.inputN (s, 4092)
+      in
+        if size buf = 0
+        then ()
+        else (TextIO.output (d, buf); copyText s d)
+      end
+
   fun cp src dst =
       let
         val cmd = "cp " ^ Filename.toString src ^ " " ^ Filename.toString dst
@@ -189,11 +170,21 @@ struct
         let
           val d = Filename.BinIO.openOut dst
         in
-          copy s d handle e => (BinIO.closeOut d; handleSysErr (cmd, e));
+          copyBin s d handle e => (BinIO.closeOut d; raise e);
           BinIO.closeOut d
         end
-        handle e => (BinIO.closeIn s; handleSysErr (cmd, e));
+        handle e => (BinIO.closeIn s; raise e);
         BinIO.closeIn s
+      end
+
+  fun cat nil dst = ()
+    | cat (file :: files) dst =
+      let
+        val s = Filename.TextIO.openIn file
+      in
+        copyText s dst handle e => (TextIO.closeIn s; raise e);
+        TextIO.closeIn s;
+        cat files dst
       end
 
 end

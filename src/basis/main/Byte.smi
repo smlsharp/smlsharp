@@ -10,6 +10,5 @@ struct
   val stringToBytes : string -> word8 vector
   val unpackStringVec : Word8VectorSlice.slice -> string
   val unpackString : Word8ArraySlice.slice -> string
-  val packString : word8 array * int * Substring.substring
-                   -> unit
+  val packString : word8 array * int * Substring.substring -> unit
 end

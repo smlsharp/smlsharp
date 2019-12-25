@@ -1,24 +1,32 @@
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../data/types/main/TypesBasics.smi"
-
-_require "../../../data/symbols/main/Loc.ppg.smi"
-_require "../../../libs/ids/main/LocalID.smi"
 _require "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require "../../../data/types/main/DynamicKind.ppg.smi"
+_require local "../../../data/types/main/DynamicKindUtils.smi"
+(* _require local "../../../data/symbols/main/Loc.smi" *)
+(* _require local "../../../data/builtin/main/BuiltinTypes.smi" *)
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
-_require "../../../data/types/main/Types.ppg.smi"
+(* _require local "../../../compilerIRs/absyn/main/AbsynConst.smi" *)
+_require "./KIND_INSTANCE.sig"
 
 structure RecordKind =
 struct
+  type singleton_ty_body = RecordLabel.label * Types.ty
+  type kind = DynamicKind.record * Types.ty RecordLabel.Map.map
+  type instance = RecordCalc.rcexp
+  val singletonTy
+      : singleton_ty_body -> Types.singletonTy
 
-  val compareIndex
-      : (RecordLabel.label * Types.ty) * (RecordLabel.label * Types.ty) -> order
-
-  val generateSingletonTy : BoundTypeVarID.id * Types.ty RecordLabel.Map.map
-                            -> Types.singletonTy list
-
-  val generateInstance : (RecordLabel.label * Types.ty)
-                         -> Loc.loc
-                         -> RecordCalc.rcexp option
-
+  val generateArgs
+      : Types.btvEnv
+        -> BoundTypeVarID.id * kind
+        -> Types.singletonTy list
+  val compare
+      : singleton_ty_body * singleton_ty_body -> order
+  val generateInstance
+      : {lookup : Types.singletonTy -> RecordCalc.varInfo option,
+         btvEnv : Types.btvEnv}
+        -> singleton_ty_body
+        -> RecordCalc.loc
+        -> instance option
 end

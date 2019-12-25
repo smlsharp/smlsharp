@@ -1,0 +1,11 @@
+val it = #"a" : char
+
+val it = #"\n" : char
+
+val it = 97 : int
+
+val it = #"h" : char
+
+val it = 32 : int
+
+val it = #"h" : char

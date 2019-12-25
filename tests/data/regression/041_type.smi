@@ -1,5 +1,5 @@
 _require "basis.smi"
 structure G =
 struct
-  type 'a t (= boxed)
+  type 'a t (= array)
 end

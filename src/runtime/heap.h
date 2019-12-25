@@ -44,7 +44,7 @@ void sml_heap_worker_destroy(union sml_alloc *info);
  * control : control block of the mutator thread
  * Note that control may be different from those of the current thread.
  */
-void sml_heap_mutator_sync2(struct sml_mutator *mutator);
+void sml_heap_user_sync2(struct sml_user *user);
 
 /*
  * Called when a worker switches to SYNC2.

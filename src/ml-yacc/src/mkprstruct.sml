@@ -11,13 +11,13 @@ yacc.sml is the only user as
 		      sharing LrTable = ShrinkLrTable.LrTable)
 *)
 local
-   structure LrTable = MakeTable.LrTable
+   (* structure LrTable = MakeTable.LrTable *)
 in
 structure PrintStruct : PRINT_STRUCT =
    struct
       open Array List
       infix 9 sub
-      structure LrTable = LrTable
+      (* structure LrTable = LrTable *)
       open ShrinkLrTable LrTable
       
      

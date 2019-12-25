@@ -11,6 +11,8 @@ infix 6 + - ^
 infixr 5 ::
 infix 4 = <> > >= < <=
 val op ^ = String.^
+val ! = SMLSharp_Builtin.General.!
+structure Int32 = SMLSharp_Builtin.Int32
 structure Real64 = SMLSharp_Builtin.Real64
 structure Pointer = SMLSharp_Builtin.Pointer
 structure Array = SMLSharp_Builtin.Array
@@ -73,10 +75,6 @@ struct
     val exp =
         _import "exp"
         : __attribute__((pure,fast)) real -> real
-(* 301 Mathpow 
-    val pow =
-        _import "pow"
-        : __attribute__((pure,fast)) (real, real) -> real*)
     val pow' =
         _import "pow"
         : __attribute__((pure,fast)) (real, real) -> real
@@ -123,7 +121,7 @@ struct
   val ?= = Real64.ueq
   val isNan = Real64.isNan
   val trunc = Real64.trunc
-  val fromInt = SMLSharp_Builtin.Int32.toReal64
+  val fromInt = Real64.fromInt32
 
   fun *+ (r1, r2, r3) = r1 * r2 + r3
   fun *- (r1, r2, r3) = r1 * r2 - r3
@@ -234,7 +232,7 @@ struct
         else if frac > 0.5
         then floorOrCeil r
         else if == (rem (whole, 2.0), 0.0)
-        then whole 
+        then whole
         else floorOrCeil r
       end
 
@@ -289,7 +287,7 @@ struct
           val decpt = ref 0
           val sign = ref 0
           val s = sml_dtoa (value, mode, ndigit, decpt, sign,
-                            Pointer.fromUnitPtr _NULL)
+                            Pointer.null ())
           val digits = str_new s
           val _ = sml_freedtoa s
         in
@@ -309,195 +307,240 @@ struct
         : __attribute__((pure,fast))
           (string, char ptr ptr) -> real
   in
-  fun strtod str = sml_strtod (str, Pointer.fromUnitPtr _NULL)
+  fun strtod str = sml_strtod (str, Pointer.null ())
   end (* local *)
 
   local
     val op + = SMLSharp_Builtin.Int32.add_unsafe
     val op - = SMLSharp_Builtin.Int32.sub_unsafe
-    val op < = SMLSharp_Builtin.Int32.lt
     val op > = SMLSharp_Builtin.Int32.gt
     val op >= = SMLSharp_Builtin.Int32.gteq
+    val op < = SMLSharp_Builtin.Int32.lt
     val op <= = SMLSharp_Builtin.Int32.lteq
-
-    fun storeSign (buf, sign) =
-        if sign
-        then Array.update_unsafe (buf, 0, #"~")
-        else ()
-
-    fun fillZero (buf, index, limit) =
-        let
-          fun loop i =
-              if i >= limit then ()
-              else (Array.update_unsafe (buf, i, #"0");
-                    loop (i+1))
-        in
-          loop index
-        end
-
-    fun insertSignAndDot (sign, decpt, digits, prec) =
-        let
-          val plen = if sign then 1 else 0
-          val slen = String.size digits
-        in
-          if decpt > 0 then
-            if decpt >= slen then
-              let
-                val zeroes = decpt - slen
-                val frac = if prec > 0 then prec + 1 else 0
-                val buflen = plen + slen + zeroes + frac
-                val buf = String.alloc buflen
-              in
-                storeSign (String.castToArray buf, sign);
-                Array.copy_unsafe (String.castToArray digits, 0,
-                                   String.castToArray buf, plen, slen);
-                fillZero (String.castToArray buf,
-                          plen + slen, plen + slen + zeroes);
-                if frac > 0
-                then let val i = plen + slen + zeroes
-                     in Array.update_unsafe (String.castToArray buf, i, #".");
-                        fillZero (String.castToArray buf, i + 1, buflen)
-                     end
-                else ();
-                buf
-              end
-            else
-              let
-                val frac = slen - decpt
-                val zeroes = if prec > frac then prec - frac else 0
-                val buflen = plen + slen + 1 + zeroes
-                val buf = String.alloc buflen
-              in
-                storeSign (String.castToArray buf, sign);
-                Array.copy_unsafe (String.castToArray digits, 0,
-                                   String.castToArray buf, plen, decpt);
-                Array.update_unsafe (String.castToArray buf,
-                                     plen + decpt, #".");
-                Array.copy_unsafe
-                  (String.castToArray digits, decpt,
-                   String.castToArray buf, plen + decpt + 1, slen - decpt);
-                if zeroes > 0
-                then fillZero (String.castToArray buf, plen + slen + 1, buflen)
-                else ();
-                buf
-              end
-          else
-            let
-              val pzeroes = 0 - decpt
-              val frac = pzeroes + slen
-              val tzeroes = if prec > frac then prec - frac else 0
-              val frac = frac + tzeroes
-              val frac = if frac > 0 then frac + 1 else 0
-              val buflen = plen + 1 + frac
-              val buf = String.alloc buflen
-            in
-              storeSign (String.castToArray buf, sign);
-              Array.update_unsafe (String.castToArray buf, plen, #"0");
-              if frac > 0
-              then (Array.update_unsafe (String.castToArray buf,
-                                         plen + 1, #".");
-                    fillZero (String.castToArray buf, plen + 2,
-                              plen + 2 + pzeroes);
-                    Array.copy_unsafe
-                      (String.castToArray digits, 0,
-                       String.castToArray buf, plen + 2 + pzeroes, slen);
-                    if tzeroes > 0
-                    then fillZero (String.castToArray buf,
-                                   plen + 2 + pzeroes + slen, buflen)
-                    else ())
-              else ();
-              buf
-            end
-        end
-
-    fun appendExponent (str, exp) =
-        let
-          val slen = String.size str
-          val elen = String.size exp
-          val buf = String.alloc (slen + 1 + elen)
-        in
-          Array.copy_unsafe (String.castToArray str, 0,
-                             String.castToArray buf, 0, slen);
-          Array.update_unsafe (String.castToArray buf, slen, #"E");
-          Array.copy_unsafe (String.castToArray exp, 0,
-                             String.castToArray buf, slen + 1, elen);
-          buf
-        end
-
-    fun fmtFIX prec value =
-        let
-          val {sign, decpt, digits} = fcvt (value, prec)
-        in
-          insertSignAndDot (sign, decpt, digits, prec)
-        end
-
-    fun fmtSCI' ({sign, decpt, digits}, prec) =
-        let
-          val exp = decpt - 1
-          val str = insertSignAndDot (sign, 1, digits, prec)
-        in
-          appendExponent (str, Int32.toString exp)
-        end
-
-    fun fmtSCI prec value =
-        fmtSCI' (ecvt (value, prec + 1), prec)
-
-    fun fmtGEN prec value =
-        let
-          val x as {sign, decpt, digits} = ecvt (value, prec)
-        in
-          if ~5 < decpt - 1 andalso decpt <= prec
-          then insertSignAndDot (sign, decpt, digits, 1)
-          else fmtSCI' (x, 0)
-        end
-
-    fun fmtEXACT value =
-        case exactCvt value of
-          {sign = true, decpt = 1, digits = "0"} => "~0.0"
-        | {sign = false, decpt = 1, digits = "0"} => "0.0"
-        | {sign, decpt, digits} =>
-          let
-            val str = insertSignAndDot (sign, 0, digits, 0)
-          in
-            if decpt = 0 then str else appendExponent (str, Int32.toString decpt)
-          end
-
-    fun stringToDigits str =
-        let
-          fun loop (i, z) =
-              if i < 0
-              then z
-              else let val c = Array.sub_unsafe (String.castToArray str, i)
-                       val n = Char.ord c - 0x30
-                   in loop (i - 1, n::z)
-                   end
-        in
-          loop (String.size str - 1, nil)
-        end
-
-    fun digitsToString (sign, digits) =
-        let
-          fun length (nil : int list, z) = z
-            | length (h::t, z) = length (t, z + 1)
-          val len = length (digits, 3)
-          val buf = String.alloc len
-          fun loop (nil : int list, i) = SOME buf
-            | loop (h::t, i) =
-              if h < 0 orelse 9 < h
-              then NONE
-              else (Array.update_unsafe
-                      (String.castToArray buf, i,
-                       Word8.castToChar (Word8.add (Word8.fromInt32 h, 0wx30)));
-                    loop (t, i + 1))
-        in
-          Array.update_unsafe
-            (String.castToArray buf, 0, if sign then #"-" else #"+");
-          Array.update_unsafe (String.castToArray buf, 1, #"0");
-          Array.update_unsafe (String.castToArray buf, 2, #".");
-          loop (digits, 3)
-        end
-
   in
+
+  fun storeSign (buf, sign) =
+      if sign
+      then Array.update_unsafe (buf, 0, #"~")
+      else ()
+
+  fun fillZero (buf, index, limit) =
+      let
+        fun loop i =
+            if i >= limit then ()
+            else (Array.update_unsafe (buf, i, #"0");
+                  loop (i+1))
+      in
+        loop index
+      end
+
+  (* prec is given from the users and therefore the string representation
+   * of a real may exceed the size limit of strings. *)
+  fun insertSignAndDot (sign, decpt, digits, prec) =
+      let
+        val plen = if sign then 1 else 0
+        val slen = String.size digits
+      in
+        if decpt <= 0 then
+          let
+            local
+              val op + = Int32.add
+              val op - = Int32.sub
+            in
+            val pzeroes = 0 - decpt handle Overflow => raise Size
+            val frac = pzeroes + slen handle Overflow => raise Size
+            val tzeroes =
+                (if frac < prec then prec - frac else 0)
+                handle Overflow => raise Size
+            val frac = frac + tzeroes handle Overflow => raise Size
+            val frac =
+                (if 0 < frac then frac + 1 else 0)
+                handle Overflow => raise Size
+            val buflen = plen + 1 + frac handle Overflow => raise Size
+            val buf = String.alloc buflen
+            end
+          in
+            storeSign (String.castToArray buf, sign);
+            Array.update_unsafe (String.castToArray buf, plen, #"0");
+            if frac > 0
+            then (Array.update_unsafe (String.castToArray buf,
+                                       plen + 1, #".");
+                  fillZero (String.castToArray buf, plen + 2,
+                            plen + 2 + pzeroes);
+                  Array.copy_unsafe
+                    (String.castToArray digits, 0,
+                     String.castToArray buf, plen + 2 + pzeroes, slen);
+                  if tzeroes > 0
+                  then fillZero (String.castToArray buf,
+                                 plen + 2 + pzeroes + slen, buflen)
+                  else ())
+            else ();
+            buf
+          end
+        else if slen <= decpt then
+          let
+            local
+              val op + = Int32.add
+              val op - = Int32.sub
+            in
+            val zeroes = decpt - slen handle Overflow => raise Size
+            val frac = (if 0 < prec then prec + 1 else 0)
+                       handle Overflow => raise Size
+            val buflen = plen + slen + zeroes + frac
+                         handle Overflow => raise Size
+            val buf = String.alloc buflen
+            end
+          in
+            storeSign (String.castToArray buf, sign);
+            Array.copy_unsafe (String.castToArray digits, 0,
+                               String.castToArray buf, plen, slen);
+            fillZero (String.castToArray buf,
+                      plen + slen, plen + slen + zeroes);
+            if frac > 0
+            then let val i = plen + slen + zeroes
+                 in Array.update_unsafe (String.castToArray buf, i, #".");
+                    fillZero (String.castToArray buf, i + 1, buflen)
+                 end
+            else ();
+            buf
+          end
+        else
+          let
+            local
+              val op + = Int32.add
+              val op - = Int32.sub
+            in
+            val frac = slen - decpt handle Overflow => raise Size
+            val zeroes = (if frac < prec then prec - frac else 0)
+                         handle Overflow => raise Size
+            val buflen = plen + slen + 1 + zeroes handle Overflow => raise Size
+            val buf = String.alloc buflen
+            end
+          in
+            storeSign (String.castToArray buf, sign);
+            Array.copy_unsafe (String.castToArray digits, 0,
+                               String.castToArray buf, plen, decpt);
+            Array.update_unsafe (String.castToArray buf,
+                                 plen + decpt, #".");
+            Array.copy_unsafe
+              (String.castToArray digits, decpt,
+               String.castToArray buf, plen + decpt + 1, slen - decpt);
+            if zeroes > 0
+            then fillZero (String.castToArray buf, plen + slen + 1, buflen)
+            else ();
+            buf
+          end
+      end
+
+  fun intToChars sign n pos =
+      let
+        val op - = Int32.sub_unsafe
+        fun loop (n, z, len) =
+            if n = 0 then (z, len)
+            else let val q = Int32.quot_unsafe (n, 10)
+                     val r = Int32.rem_unsafe (n, 10)
+                 in loop (q, Word8.castToChar
+                               (Word8.sub (0wx30, Word8.fromInt32 r)) :: z,
+                          Int32.add (len, 1))
+                 end
+      in
+        if n = 0 then ([#"0"], Int32.add (pos, 1))
+        else if 0 < n then loop (0 - n, nil, pos)
+        else case loop (n, nil, Int32.add (pos, 1)) of (l, n) => (sign::l, n)
+      end
+
+  fun copyChars (buf, i, nil) = ()
+    | copyChars (buf, i, h::t) =
+      (Array.update_unsafe (String.castToArray buf, i, h);
+       copyChars (buf, i + 1, t))
+
+  fun appendExponent (str, sign, exp) =
+      let
+        val slen = String.size str
+        val (exp, allocSize) =
+            intToChars sign exp (Int32.add (slen, 1))
+            handle Overflow => raise Size
+        val buf = String.alloc allocSize
+      in
+        Array.copy_unsafe (String.castToArray str, 0,
+                           String.castToArray buf, 0, slen);
+        Array.update_unsafe (String.castToArray buf, slen, #"E");
+        copyChars (buf, slen + 1, exp);
+        buf
+      end
+
+  fun fmtFIX prec value =
+      let
+        val {sign, decpt, digits} = fcvt (value, prec)
+      in
+        insertSignAndDot (sign, decpt, digits, prec)
+      end
+
+  fun fmtSCI' ({sign, decpt, digits}, prec) =
+      let
+        val exp = decpt - 1
+        val str = insertSignAndDot (sign, 1, digits, prec)
+      in
+        appendExponent (str, #"~", exp)
+      end
+
+  fun fmtSCI prec value =
+      fmtSCI' (ecvt (value, prec + 1), prec)
+
+  fun fmtGEN prec value =
+      let
+        val x as {sign, decpt, digits} = ecvt (value, prec)
+      in
+        if ~4 < decpt andalso decpt <= prec
+        then insertSignAndDot (sign, decpt, digits, 1)
+        else fmtSCI' (x, 0)
+      end
+
+  fun fmtEXACT value =
+      case exactCvt value of
+        {sign = true, decpt = 1, digits = "0"} => "~0.0"
+      | {sign = false, decpt = 1, digits = "0"} => "0.0"
+      | {sign, decpt, digits} =>
+        let
+          val str = insertSignAndDot (sign, 0, digits, 0)
+        in
+          if decpt = 0 then str else appendExponent (str, #"~", decpt)
+        end
+
+  fun stringToDigits str =
+      let
+        fun loop (i, z) =
+            if 0 > i
+            then z
+            else let val c = Array.sub_unsafe (String.castToArray str, i)
+                     val n = Char.ord c - 0x30
+                 in loop (i - 1, n::z)
+                 end
+      in
+        loop (String.size str - 1, nil)
+      end
+
+  fun digitsToString (sign, digits) =
+      let
+        fun length (nil : int list, z) = z
+          | length (h::t, z) = length (t, Int32.add (z, 1))
+        val len = length (digits, 3) handle Overflow => raise Size
+        val buf = String.alloc len
+        fun loop (nil : int list, i) = SOME buf
+          | loop (h::t, i) =
+            if h < 0 orelse 9 < h
+            then NONE
+            else (Array.update_unsafe
+                    (String.castToArray buf, i,
+                     Word8.castToChar (Word8.add (Word8.fromInt32 h, 0wx30)));
+                  loop (t, i + 1))
+      in
+        Array.update_unsafe
+          (String.castToArray buf, 0, if sign then #"-" else #"+");
+        Array.update_unsafe (String.castToArray buf, 1, #"0");
+        Array.update_unsafe (String.castToArray buf, 2, #".");
+        loop (digits, 3)
+      end
 
   fun fmt format =
       let
@@ -531,9 +574,9 @@ struct
         val clsid = SMLSharp_RealClass.classReal x
         val class = SMLSharp_RealClass.class clsid
         fun ret () =
-            {exp = 0, 
+            {exp = 0,
              digits = [],
-             sign = SMLSharp_RealClass.toInt clsid < 0,
+             sign = SMLSharp_RealClass.signBit clsid,
              class = class}
       in
         case class of
@@ -562,15 +605,7 @@ struct
       | _ =>
         case digitsToString (sign, digits) of
           NONE => NONE
-        | SOME s =>
-          let
-            val exp = Int32.toString exp
-          in
-            if Array.sub_unsafe (String.castToArray exp, 0) = #"~"
-            then Array.update_unsafe (String.castToArray exp, 0, #"-")
-            else ();
-            SOME (strtod (appendExponent (s, exp)))
-          end
+        | SOME s => SOME (strtod (appendExponent (s, #"-", exp)))
 
   end (* local *)
 

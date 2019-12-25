@@ -4,7 +4,7 @@ _require local "./base.sig"
 functor StreamFun(A: sig type tok end) =
 struct
   type tok = A.tok
-  type stream (= boxed)
+  type stream (= ref)
   val streamify : (unit -> tok) -> stream
   val cons : tok * stream -> stream
   val get : stream -> tok * stream

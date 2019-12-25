@@ -1,8 +1,8 @@
-_require local "./Types.ppg.smi"
+(* _require local "./Types.ppg.smi" *)
 
 _require "../../../../basis.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 
 

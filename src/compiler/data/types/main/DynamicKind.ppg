@@ -1,0 +1,51 @@
+(**
+ * @copyright (c) 2018 Tohoku University.
+ * @author Atsushi Ohori
+ *)
+
+structure DynamicKind =
+struct
+
+  datatype tag' = datatype RuntimeTypes.tag
+  type size' = RuntimeTypes.size
+  (*% @formatter(RuntimeTypes.tag_prop) RuntimeTypes.format_tag_prop *)
+  datatype tag = datatype RuntimeTypes.tag_prop
+  (*% @formatter(RuntimeTypes.size_prop) RuntimeTypes.format_size_prop *)
+  datatype size = datatype RuntimeTypes.size_prop
+  val getSize = RuntimeTypes.getSize
+
+  val format_size' = RuntimeTypes.format_size
+  val format_tag' = RuntimeTypes.format_tag
+
+  (*% *)
+  type index' = word
+
+  (*%
+     @formatter(recordTy) TermFormat.formatRecordTy
+   *)
+  type record
+    =  (*% @format(ind index) 
+          index:recordTy(ind)
+        *)
+    index' RecordLabel.Map.map
+
+  (*% *)
+  type dynamicKind 
+    = {
+       tag: tag,
+       size: size,
+       record: record
+      }
+
+  val recordUnknown = RecordLabel.Map.empty : record
+
+  val topKind =
+      {tag = ANYTAG,
+       size = ANYSIZE,
+       record = recordUnknown}
+  val pointerKind =
+      {tag = #tag RuntimeTypes.recordProp,
+       size = #size RuntimeTypes.recordProp,
+       record = recordUnknown}
+
+end

@@ -1,13 +1,16 @@
 _require local "../../../../basis.smi"
-_require local "../../../libs/ids/main/LocalID.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../libs/env/main/SEnv.smi"
-
-_require "../../../../llvm/main/LLVM.smi"
+_require local "../../../../ffi/main/Pointer.smi"
+_require local "../../../../basis/main/SMLSharp_Runtime.smi"
+_require local "../../../../smlformat-lib.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../data/name/main/CodeLabel.smi"
 _require "../../../compilerIRs/llvmir/main/LLVMIR.ppg.smi"
+_require "../../../libs/toolchain/main/Filename.smi"
+_require local "../../../libs/toolchain/main/TempFile.smi"
+(* _require local "../../../libs/toolchain/main/CoreUtils.smi" *)
+_require local "../../../libs/toolchain/main/LLVMUtils.smi"
 
 structure LLVMEmit =
 struct
-  val emit : LLVMIR.program -> LLVM.LLVMModuleRef
+  val emit : LLVMIR.program -> Filename.filename
 end

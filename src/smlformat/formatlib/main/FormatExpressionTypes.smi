@@ -12,4 +12,5 @@ struct
          | Indicator of {space : bool, newline : {priority : priority} option}
          | StartOfIndent of int
          | EndOfIndent
+         | Sequence of expression list
 end

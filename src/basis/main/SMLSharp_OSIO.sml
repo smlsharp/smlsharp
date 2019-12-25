@@ -13,6 +13,7 @@ val op - = SMLSharp_Builtin.Int32.sub_unsafe
 val op < = SMLSharp_Builtin.Int32.lt
 val op > = SMLSharp_Builtin.Int32.gt
 structure Word32 = SMLSharp_Builtin.Word32
+structure Vector = SMLSharp_Builtin.Vector
 structure Array = SMLSharp_Builtin.Array
 
 structure OS =
@@ -271,17 +272,19 @@ struct
   fun readVec (fd, len) =
       if len < 0 then raise Size else
       let
-        val buf = SMLSharp_Builtin.Array.alloc len
-        val n = prim_readAry (fd, buf, 0w0, Word32.fromInt32 len)
+        val buf = SMLSharp_Builtin.Vector.alloc len
+        val n = prim_readAry
+                  (fd, Vector.castToArray buf, 0w0, Word32.fromInt32 len)
       in
         if n < 0 then raise SMLSharp_Runtime.OS_SysErr ()
-        else if n = len then SMLSharp_Builtin.Array.turnIntoVector buf
+        else if n = len then buf
         else
           let
-            val ret = SMLSharp_Builtin.Array.alloc n
+            val ret = SMLSharp_Builtin.Vector.alloc n
           in
-            SMLSharp_Builtin.Array.copy_unsafe (buf, 0, ret, 0, n);
-            SMLSharp_Builtin.Array.turnIntoVector ret
+            SMLSharp_Builtin.Array.copy_unsafe
+              (Vector.castToArray buf, 0, Vector.castToArray ret, 0, n);
+            ret
           end
       end
 

@@ -1,0 +1,23 @@
+_require "basis.smi"
+
+exception Exn1
+
+exception Exn2 of int
+
+type t1 (= int)
+exception Exn3 of t1
+
+exception Exn41
+      and Exn42
+
+exception Exn5
+
+infix Exn6
+exception op Exn6 of int * int
+
+exception Exn7 of int -> int
+exception Exn8 of {A:int, B:string}
+exception Exn9 of int list
+
+val v2 : exn
+val v3 : exn

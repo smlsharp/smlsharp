@@ -83,6 +83,7 @@ in
       case icexp of
         ICERROR  => icexp
       | ICCONSTANT constant => icexp
+      | ICSIZEOF _ => icexp
       | ICVAR _ => icexp
       | ICEXVAR _ => icexp
       | ICEXVAR_TOBETYPED _ => icexp
@@ -99,6 +100,10 @@ in
                     ty=ty,
                     revealKey=revealKey,
                     loc=loc}
+      | ICINTERFACETYPED {icexp,ty,loc} =>
+        ICINTERFACETYPED {icexp=transExp icexp,
+                          ty=ty,
+                          loc=loc}
       | ICAPPM (icexp, icexplist, loc) =>
         ICAPPM (transExp icexp, map transExp icexplist, loc)
       | ICAPPM_NOUNIFY (icexp, icexplist, loc) =>
@@ -131,6 +136,11 @@ in
                      icpatListIcexpList,
                  caseKind,
                  loc)
+      | ICDYNAMICCASE (icexp, icpatIcexpList, loc) =>
+        ICDYNAMICCASE (transExp icexp,
+                       map (fn {arg, body} => {arg = arg, body = transExp body})
+                           icpatIcexpList,
+                       loc)
       | ICRECORD_UPDATE (icexp, stringIcexpList, loc) =>
         ICRECORD_UPDATE (transExp icexp,
                          map (fn (l, exp) => (l, transExp exp)) stringIcexpList,
@@ -139,35 +149,17 @@ in
       | ICSELECT (string, icexp, loc) =>
         ICSELECT (string, transExp icexp, loc)
       | ICSEQ (icexpList, loc) => ICSEQ (map transExp icexpList, loc)
-      | ICFOREACH {data, pred, iterator, loc} =>
-        ICFOREACH {data = transExp data,
-                   pred = transExp pred, 
-                   iterator = transExp iterator, 
-                   loc = loc}
-      | ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
-        ICFOREACHDATA {data = transExp data,
-                       whereParam = transExp whereParam,
-                       pred = transExp pred, 
-                       iterator = transExp iterator, 
-                       loc = loc}
       | ICFFIIMPORT (icexp, ty, loc) => ICFFIIMPORT (transFFIFun icexp, ty, loc)
-      | ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
-        ICFFIAPPLY (cconv, transFFIFun funExp,
-                    map (fn ICFFIARG (exp, ty, loc) =>
-                            ICFFIARG (transExp exp, ty, loc)
-                          | ICFFIARGSIZEOF (ty, SOME exp, loc) =>
-                            ICFFIARGSIZEOF (ty, SOME (transExp exp), loc)
-                          | ICFFIARGSIZEOF (ty, NONE, loc) =>
-                            ICFFIARGSIZEOF (ty, NONE, loc))
-                        args,
-                    retTy, loc)
       | ICSQLSCHEMA {tyFnExp, ty, loc} =>
         ICSQLSCHEMA {tyFnExp = transExp tyFnExp,
                      ty = ty,
                      loc = loc}
-      | ICJOIN (icexp1, icexp2, loc) => ICJOIN (transExp icexp1, transExp icexp2, loc)
-      | ICJSON (icexp, ty, loc) => ICJSON (transExp icexp, ty, loc)
-      | ICTYPEOF (ty, loc) => icexp
+      | ICJOIN (bool, icexp1, icexp2, loc) => ICJOIN (bool, transExp icexp1, transExp icexp2, loc)
+      | ICDYNAMIC (icexp, ty, loc) => ICDYNAMIC (transExp icexp, ty, loc)
+      | ICDYNAMICIS (icexp, ty, loc) => ICDYNAMICIS (transExp icexp, ty, loc)
+      | ICDYNAMICNULL (ty, loc) => icexp
+      | ICDYNAMICTOP (ty, loc) => icexp
+      | ICDYNAMICVIEW (icexp, ty, loc) => ICDYNAMICVIEW (transExp icexp, ty, loc)
       | ICREIFYTY (ty, loc) => icexp
   and transFFIFun ffiFun =
       case ffiFun of

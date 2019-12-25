@@ -2,7 +2,7 @@ _require local "../../../basis/main/CharArray.smi"
 _require local "../../../basis/main/CharVector.smi"
 _require local "../../../basis/main/CharArraySlice.smi"
 _require local "../../../basis/main/CharVectorSlice.smi"
-_require local "../../../basis/main/Substring.smi"
+(* _require local "../../../basis/main/Substring.smi" *)
 _require "../../../basis/main/IO.smi"
 _require local "../../../basis/main/OS.smi"
 _require local "../../../basis/main/Option.smi"
@@ -50,8 +50,8 @@ struct
   end
   type vector = StreamIO.vector
   type elem = StreamIO.elem
-  type instream (= boxed)
-  type outstream (= boxed)
+  type instream (= ref)
+  type outstream (= ref)
   val input : instream -> vector
   val input1 : instream -> elem option
   val inputN : instream * int -> vector

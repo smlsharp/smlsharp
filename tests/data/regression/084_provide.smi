@@ -1,4 +1,4 @@
 structure S =
 struct
-  eqtype t (= boxed)
+  eqtype t (= string)
 end

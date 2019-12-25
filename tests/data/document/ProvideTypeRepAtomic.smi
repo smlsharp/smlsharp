@@ -1,0 +1,42 @@
+_require "basis.smi"
+
+type i (= int)
+type i8 (= int8)
+type i16 (= int16)
+type i32 (= int32)
+type i64 (= int64)
+type iInf (= intInf)
+
+val i : i
+val i8 : i8
+val i16 : i16
+val i32 : i32
+val i64 : i64
+val iInf : iInf
+
+type w (= word)
+type w8 (= word8)
+type w16 (= word16)
+type w32 (= word32)
+type w64 (= word64)
+
+val w : w
+val w8 : w8
+val w16 : w16
+val w32 : w32
+val w64 :w64
+
+type r (= real)
+type r32 (= real32)
+type c (= char)
+type s (= string)
+type b (= bool)
+type u (= unit)
+
+val r : r
+val r32 : r32
+val c : c
+val s : s
+val b : b
+val u : u
+

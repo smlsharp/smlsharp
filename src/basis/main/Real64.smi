@@ -1,9 +1,9 @@
-_require local "./SMLSharp_Runtime.smi"
+(* _require local "./SMLSharp_Runtime.smi" *)
 _require local "./SMLSharp_RealClass.smi"
 _require "./General.smi"
 _require "./StringCvt.smi"
 _require local "./String.smi"
-_require local "./Int32.smi"
+(* _require local "./Int32.smi" *)
 _require "./IEEEReal.smi"
 
 structure Real64 =
@@ -81,7 +81,7 @@ struct
   val round : real -> int
   val toInt : IEEEReal.rounding_mode -> real -> int
   val toLargeInt : IEEEReal.rounding_mode -> real -> largeInt
-  val fromInt = SMLSharp_Builtin.Int32.toReal64
+  val fromInt = SMLSharp_Builtin.Real64.fromInt32
   val fromLargeInt : largeInt -> real
   val toLarge : real -> real
   val fromLarge : IEEEReal.rounding_mode -> real -> real

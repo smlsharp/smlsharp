@@ -6,21 +6,30 @@
  * @copyright 2010, 2011, 2012, 2013 Tohoku University.
  *)
 
-type 'a elem = word8
+structure Seq =
+struct
+  type 'a seq = word8 array
+  type 'a elem = word8
+  fun castToArray x = x
+  val length = SMLSharp_Builtin.Array.length
+  val alloc = SMLSharp_Builtin.Array.alloc
+  val alloc_unsafe = SMLSharp_Builtin.Array.alloc_unsafe
+  type 'a vector = word8 vector
+  val castVectorToArray = SMLSharp_Builtin.Vector.castToArray
+  val allocVector = SMLSharp_Builtin.Vector.alloc
+  val allocVector_unsafe = SMLSharp_Builtin.Vector.alloc_unsafe
+  fun emptyVector () = allocVector_unsafe 0
+  structure VectorSlice = Word8VectorSlice
+end
 
-(* object size occupies 26 bits of 32-bit object header. *)
-val maxLen = 0x03ffffff
-
-structure VectorSlice = Word8VectorSlice
-
-_use "./ArraySlice_common.sml"
+_use "./Slice_common.sml"
 
 structure Word8ArraySlice =
 struct
-  open ArraySlice_common
-  type elem = unit elem
-  type array = unit array
-  type vector = unit vector
+  open Slice_common
+  type elem = word8
+  type array = word8 array
+  type vector = word8 vector
   type slice = unit slice
-  type vector_slice = VectorSlice.slice
+  type vector_slice = Word8VectorSlice.slice
 end

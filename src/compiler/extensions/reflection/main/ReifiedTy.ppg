@@ -12,6 +12,8 @@ struct
   exception InstantiateFail
   exception GetConSetFail
 
+  fun Undetermined string = raise Bug.Bug (string ^ " size undetremnined")
+
   (*%
      @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id
    *)
@@ -142,102 +144,24 @@ struct
      @formatter(list) SMLFormat.BasicFormatters.format_list
      @formatter(option) TermPrintUtils.formatPrependedOpt
      @formatter(SEnv.map) TermPrintUtils.formatSEnvMap
-     @formatter(RecordLabel.Map.map) TermPrintUtils.formatRecordLabelMap
+     @formatter(recordTy) TermFormat.formatRecordTy
      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
   datatype reifiedTy
-    = (*%  @format(size) "internalTy"  *)
-      INTERNALty of int 
-    | (*%  @format(tid) tid *)
-      BOUNDVARty of btvId
-    | (*% @format "codeptr" *)
-      CODEPTRty
-    | (*% @format "exntag" *)
-      EXNTAGty
-    | (*% @format "int" *)
-      INTty
-    | (*% @format "int8" *)
-      INT8ty
-    | (*% @format "int16" *)
-      INT16ty
-    | (*% @format "int64" *)
-      INT64ty
-    | (*% @format "intInf" *)
-      INTINFty
+    = (*% @format(arg) arg + "array" *)
+      ARRAYty of reifiedTy
     | (*% @format "bool" *)
       BOOLty
-    | (*% @format "word" *)
-      WORDty
-    | (*% @format "word8" *)
-      WORD8ty
-    | (*% @format "word16" *)
-      WORD16ty
-    | (*% @format "word64" *)
-      WORD64ty
+    | (*% @format "bottom" *)
+      BOTTOMty
+    | (*% @format "boxed" *)
+      BOXEDty
+    | (*%  @format(tid) tid *)
+      BOUNDVARty of btvId
     | (*% @format "char" *)
       CHARty
-    | (*% @format "string" *)
-      STRINGty
-    | (*% @format "real" *)
-      REALty
-    | (*% @format "real32" *)
-      REAL32ty
-    | (*% @format "unit" *)
-      UNITty 
-    | (*% @format "exn" *)
-      EXNty
-    | (*% @format "?X" *)
-      TYVARty
-    | (*% @format "?DummyTy" *)
-      DUMMYty of {boxed : bool, size : word}
-    | (*% @format "?ERRORty" *)
-      ERRORty
-    | (*% @format(arg args * resultTy)
-            "{" args(arg)(",") + "}} -> " + resultTy
-      *)
-      FUNMty of reifiedTy list * reifiedTy
-    | (*% @format(arg) arg + "list" *)
-      LISTty of reifiedTy
-    | (*% @format(arg) arg + "array" *)
-      ARRAYty of reifiedTy
-    | (*% @format(arg) arg + "vector" *)
-      VECTORty of reifiedTy
-    | (*% @format(arg) arg + "option" *)
-      OPTIONty of reifiedTy
-    | (*% @format(arg) arg + "ref" *)
-      REFty of reifiedTy
-    | (*% @format(arg) arg + "ptr" *)
-      PTRty of reifiedTy
-    | (*% 
-        @format(ty tys) 
-         !N0{ "{" 2[1 tys(ty)(":") ] 1"}" }
-       *)
-      RECORDty of reifiedTy RecordLabel.Map.map
-    | (*% 
-         @format({longsymbol, id, args:ty tys, layout, size}) 
-           tys(ty)(",") + longsymbol "(" id ")" 
-           + 2[1 layout]
-       *)
-      DATATYPEty of {longsymbol: Symbol.longsymbol, 
-                     id:TypID.id, 
-                     args: reifiedTy list,
-                     layout: layout,
-                     size : int
-                    }
-    | (*% 
-         @format({longsymbol, id, args:ty tys, size}) 
-           tys(ty)(",") + longsymbol "(" id ")" 
-       *)
-      OPAQUEty of {longsymbol: Symbol.longsymbol, 
-                   id:TypID.id, 
-                   size : int,
-                   args: reifiedTy list
-                  }
-    | (*% 
-         @format({boundenv:btv env, body:ty}) 
-         "["env(btv)(",") "." + ty "]"
-       *)
-      POLYty of {boundenv: btvId BoundTypeVarID.Map.map, body: reifiedTy}
+    | (*% @format "codeptr" *)
+      CODEPTRty
     | (*% 
          @format({longsymbol, id, args:ty tys, conSet, layout, size}) 
            tys(ty)(",") + longsymbol "(" id ")" 
@@ -251,6 +175,100 @@ struct
                       layout: layout,
                       size : int
                      }
+    | (*% 
+         @format({longsymbol, id, args:ty tys, layout, size}) 
+           tys(ty)(",") + longsymbol "(" id ")" 
+           + 2[1 "datatype layout:" layout]
+       *)
+      DATATYPEty of {longsymbol: Symbol.longsymbol, 
+                     id:TypID.id, 
+                     args: reifiedTy list,
+                     layout: layout,
+                     size : int
+                    }
+    | (*% @format "?DummyTy" *)
+      DUMMYty of {boxed : bool, size : word}
+    | (*% @format(ty) ty + "dyn" *)
+      DYNAMICty of reifiedTy
+    | (*% @format "?ERRORty" *)
+      ERRORty
+    | (*% @format "exntag" *)
+      EXNTAGty
+    | (*% @format "exn" *)
+      EXNty
+    | (*% @format(arg args * resultTy)
+            "{" args(arg)(",") + "}} -> " + resultTy
+      *)
+      FUNMty of reifiedTy list * reifiedTy
+    | (*% @format(arg) arg + "IEnv.map" *)
+      IENVMAPty of reifiedTy
+    | (*% @format "int" *)
+      INT32ty
+    | (*% @format "int16" *)
+      INT16ty
+    | (*% @format "int64" *)
+      INT64ty
+    | (*% @format "int8" *)
+      INT8ty
+    | (*%  @format "internalTy"  *)
+      INTERNALty
+    | (*% @format "intInf" *)
+      INTINFty
+    | (*% @format(arg) arg + "list" *)
+      LISTty of reifiedTy
+    | (*% 
+         @format({longsymbol, id, args:ty tys, size}) 
+           tys(ty)(",") + longsymbol "(" id ")" 
+       *)
+      OPAQUEty of {longsymbol: Symbol.longsymbol, 
+                   id:TypID.id, 
+                   size : int,
+                   args: reifiedTy list
+                  }
+    | (*% @format(arg) arg + "option" *)
+      OPTIONty of reifiedTy
+    | (*% 
+         @format({boundenv:btv env, body:ty}) 
+         "["env(btv)(",") "." + ty "]"
+       *)
+      POLYty of {boundenv: btvId BoundTypeVarID.Map.map, body: reifiedTy}
+    | (*% @format(arg) arg + "ptr" *)
+      PTRty of reifiedTy
+    | (*% @format "real" *)
+      REAL64ty
+    | (*% @format "real32" *)
+      REAL32ty
+    | (*% @format "label" *)
+      RECORDLABELty 
+    | (*% @format(arg) arg + "RecordLabel.Map.map" *)
+      RECORDLABELMAPty of reifiedTy
+    | (*% 
+        @format(ty tys) 
+         !N0{ 2[1 tys:recordTy(ty) ] }
+       *)
+      RECORDty of reifiedTy RecordLabel.Map.map
+    | (*% @format(arg) arg + "ref" *)
+      REFty of reifiedTy
+    | (*% @format(arg) arg + "SEnv.map" *)
+      SENVMAPty of reifiedTy
+    | (*% @format "string" *)
+      STRINGty
+    | (*% @format "void" *)
+      VOIDty
+    | (*% @format "?X" *)
+      TYVARty
+    | (*% @format "unit" *)
+      UNITty 
+    | (*% @format(arg) arg + "vector" *)
+      VECTORty of reifiedTy
+    | (*% @format "word" *)
+      WORD32ty
+    | (*% @format "word8" *)
+      WORD8ty
+    | (*% @format "word16" *)
+      WORD16ty
+    | (*% @format "word64" *)
+      WORD64ty
 
   withtype conSet = 
       (*% 
@@ -261,16 +279,27 @@ struct
        *)
        (reifiedTy option) SEnv.map
 
+  (*%  *)
+  (*%  @prefix toJSON_ *)
+  datatype void
+    = (*%
+       * @format "void"
+       *)
+      (*%
+       * @prefix toJSON_ 
+       * @format "void"
+       *)
+      void
+
   fun reifiedTyToString reifiedTy =
       let
-        val _ = Bug.printError "ReifiedTy reifiedTyToString\n";
         val f = format_reifiedTy reifiedTy
-        val _ = Bug.printError "ReifiedTy after format\n";
         val s = SMLFormat.prettyPrint nil f
-        val _ = Bug.printError "ReifiedTy after reifiedTyToString\n";
       in
          s
       end
+
+  fun printTy ty = print (reifiedTyToString ty)
 
   fun reifiedTyEq (ty1, ty2) =
       let
@@ -300,6 +329,8 @@ struct
             case (ty1,ty2) of
               (ARRAYty ty1, ARRAYty ty2) => eq equivEnv (ty1, ty2)
             | (BOOLty, BOOLty) => true
+            | (BOTTOMty, BOTTOMty) => true
+            | (BOXEDty, BOXEDty) => true
             | (BOUNDVARty id1, BOUNDVARty id2) => btvIdEq equivEnv (id1, id2)
             | (CHARty, CHARty) => true
             | (CODEPTRty, CODEPTRty) => true
@@ -309,16 +340,18 @@ struct
               => TypID.eq (id1, id2) andalso eqList equivEnv (args1, args2)
             | (DUMMYty {boxed=b1, size=s1}, DUMMYty {boxed=b2, size=s2}) =>
               b1 = b2 andalso s1 = s2
+            | (DYNAMICty ty1, DYNAMICty ty2)  => eq equivEnv (ty1, ty2)
             | (ERRORty, ERRORty)  => true
             | (EXNTAGty, EXNTAGty) => true
             | (EXNty, EXNty) => true
             | (FUNMty ([arg1], ty1), FUNMty ([arg2], ty2)) => 
               eq equivEnv (arg1, arg2) andalso eq equivEnv (ty1, ty2)
-            | (INTty, INTty) => true
-            | (INT8ty, INT8ty) => true
+            | (IENVMAPty ty1, IENVMAPty ty2) => eq equivEnv (ty1, ty2)
+            | (INT32ty, INT32ty) => true
             | (INT16ty, INT16ty) => true
             | (INT64ty, INT64ty) => true
-            | (INTERNALty int1, INTERNALty int2) =>  int1 = int2
+            | (INT8ty, INT8ty) => true
+            | (INTERNALty, INTERNALty) => true
             | (INTINFty, INTINFty) => true
             | (LISTty  ty1, LISTty  ty2) => eq equivEnv (ty1, ty2)
             | (OPAQUEty {id=id1, args=args1,...}, OPAQUEty {id=id2, args=args2,...})
@@ -327,18 +360,21 @@ struct
             | (POLYty {boundenv=benv1, body=ty1}, POLYty {boundenv=benv2, body=ty2})
               => eq (extendEquivEnv (benv1, benv2) equivEnv) (ty1, ty2)
             | (PTRty ty1, PTRty ty2) => eq equivEnv (ty1, ty2)
+            | (REAL64ty, REAL64ty) => true
             | (REAL32ty, REAL32ty) => true
-            | (REALty, REALty) => true
-            | (RECORDty map1, RECORDty map2) => RecordLabel.Map.eq (eq equivEnv) (map1, map2)
+            | (RECORDty map1, RECORDty map2) => 
+              RecordLabel.Map.eq (eq equivEnv) (map1, map2)
             | (REFty ty1, REFty ty2)  => eq equivEnv (ty1, ty2)
+            | (SENVMAPty ty1, SENVMAPty ty2) => eq equivEnv (ty1, ty2)
             | (STRINGty, STRINGty) => true
-            | (TYVARty, TYVARty) => true
+            | (VOIDty, VOIDty) => true
+            | (TYVARty, TYVARty) => false
             | (UNITty , UNITty) => true
             | (VECTORty ty1, VECTORty ty2)  => eq equivEnv (ty1, ty2)
-            | (WORDty, WORDty) => true
-            | (WORD8ty, WORD8ty) => true
+            | (WORD32ty, WORD32ty) => true
             | (WORD16ty, WORD16ty) => true
             | (WORD64ty, WORD64ty) => true
+            | (WORD8ty, WORD8ty) => true
             | _ => false
       in
         eq emptyEquivEnv (ty1, ty2)
@@ -393,7 +429,12 @@ struct
       TypID.Map.eq conSetEq (conSetMap1, conSetMap2)
   fun lookUpConSet (conSetEnv, id) = 
       case TypID.Map.find(conSetEnv, id) of
-        NONE => raise ConSetNotFound
+        NONE => 
+        (
+         print "lookUpConSet\n";
+         print (conSetEnvToString  conSetEnv);
+         raise ConSetNotFound
+        )
       | SOME conSet => conSet
   fun insertConSet (conSetEnv, id, conSet) =
       TypID.Map.insert(conSetEnv, id, conSet)
@@ -436,6 +477,7 @@ struct
           BOUNDVARty id => 
           (case BoundTypeVarID.Map.find(subst, id) of
              NONE => ty | SOME newTy => newTy)
+        | IENVMAPty reifiedTy => IENVMAPty (apply reifiedTy)
         | LISTty reifiedTy => LISTty (apply reifiedTy)
         | ARRAYty reifiedTy => LISTty (apply reifiedTy)
         | VECTORty reifiedTy => LISTty (apply reifiedTy)
@@ -447,6 +489,7 @@ struct
           DATATYPEty {longsymbol=longsymbol, id=id, args=map apply args, layout=layout, size=size}
         | POLYty {boundenv, body} =>
           POLYty {boundenv=boundenv, body = apply body}
+        | SENVMAPty reifiedTy => SENVMAPty (apply reifiedTy)
         | _ => ty
       end
 
@@ -564,13 +607,143 @@ struct
   fun TyRep conSetEnv reifiedTy =
       {conSetEnv = conSetEnv, reifiedTy = reifiedTy}
 
+  fun MergeConSetEnvWithTyRepList conSetEnv tyRepList =
+      let
+        fun mergeConSet ({conSetEnv = conSet1, reifiedTy}, conSet2) =
+            TypID.Map.mergeWith 
+            (fn (x as SOME a, _) => x 
+              | (NONE, y) => y)
+            (conSet1, conSet2) 
+        val conSetEnv =foldl mergeConSet conSetEnv tyRepList
+      in
+        conSetEnv
+      end
+  fun TyRepToReifiedTy {conSetEnv, reifiedTy} = reifiedTy
+
   fun longsymbolIdArgsLayoutListToDatatypeTy longsymbol id args layout size =
       DATATYPEty {longsymbol=longsymbol, id = id, args = args, layout=layout, size = size}
 
   fun longsymbolIdArgsToOpaqueTy longsymbol id args size =
       OPAQUEty {longsymbol=longsymbol, id = id, args = args, size = size}
 
-  fun makePos filename line col = 
-      Loc.makePos {fileName=filename, line=line, col=col}
-end
+  fun makePos true _ _ _ _ _ _ = Loc.NOPOS
+    | makePos false isStdPath NONE line col pos gap =
+      Loc.POS {source = Loc.INTERACTIVE, line = line, col = col,
+               pos = pos, gap = gap}
+    | makePos false isStdPath (SOME name) line col pos gap =
+      Loc.POS
+        {source = Loc.FILE (if isStdPath then Loc.STDPATH else Loc.USERPATH,
+                            Filename.fromString name),
+         line = line,
+         col = col,
+         pos = pos,
+         gap = gap}
 
+  (* offsets *)
+  val charSize = 0w1
+  val int16Size = 0w2
+  val int64Size = 0w8
+  val int8Size = 0w1
+  val intSize = 0w4
+  val ptrSize = SMLSharp_Builtin.Dynamic.sizeToWord _sizeof(boxed)
+  val real32Size = 0w4
+  val realSize = 0w8
+  val tagSize = 0w4
+  val word16Size = 0w2
+  val word32Size = 0w4
+  val word64Size = 0w8
+  val word8Size = 0w1
+  val wordSize = 0w4
+  fun sizeOf reifiedTy = 
+      case reifiedTy of
+        ARRAYty reifiedTy => ptrSize
+      | BOOLty => intSize
+      | BOTTOMty => intSize
+      | BOXEDty => ptrSize
+      | BOUNDVARty BoundTypeVarIDid => Undetermined "BOUNDVARty"
+      | CHARty => charSize
+      | CODEPTRty => ptrSize
+      | CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => Word.fromInt size
+      | DATATYPEty {longsymbol, id, args, layout, size} => Word.fromInt size
+      | DUMMYty {boxed, size} => size
+      | DYNAMICty _ => ptrSize
+      | ERRORty =>  Undetermined "ERRORty"
+      | EXNTAGty => ptrSize
+      | EXNty  => ptrSize
+      | FUNMty _  => ptrSize
+      | IENVMAPty _ => ptrSize
+      | INT16ty => int16Size
+      | INT64ty => int64Size
+      | INT8ty => int8Size
+      | INTERNALty => Undetermined "INTERNALty"
+      | INTINFty => ptrSize
+      | INT32ty => intSize
+      | LISTty reifiedTy => ptrSize
+      | OPAQUEty {size,...} => Word.fromInt size
+      | OPTIONty reifiedTy => ptrSize
+      | POLYty {boundenv, body} => sizeOf body
+      | PTRty reifiedTy  => ptrSize
+      | REAL32ty  => real32Size
+      | REAL64ty => realSize
+      | RECORDLABELty => ptrSize
+      | RECORDLABELMAPty _ => ptrSize
+      | RECORDty reifiedTyLabelMap => ptrSize
+      | REFty reifiedTy => ptrSize
+      | SENVMAPty _ => ptrSize
+      | STRINGty => ptrSize
+      | VOIDty => intSize
+      | TYVARty => Undetermined "TYVARty"
+      | UNITty => intSize
+      | VECTORty reifiedTy => ptrSize
+      | WORD16ty => word16Size
+      | WORD64ty => word64Size
+      | WORD8ty => word8Size
+      | WORD32ty => word32Size
+
+  fun isGroundTy reifiedTy =
+      case reifiedTy of
+      ARRAYty reifiedTy => isGroundTy reifiedTy
+    | LISTty reifiedTy => isGroundTy reifiedTy
+    | OPTIONty reifiedTy => isGroundTy reifiedTy
+    | REFty reifiedTy => isGroundTy reifiedTy
+    | RECORDty reifiedTyRecordLabelMapmap => 
+      List.all isGroundTy (RecordLabel.Map.listItems reifiedTyRecordLabelMapmap)
+    | BOOLty => true
+    | CHARty => true
+    | INT16ty => true
+    | INT64ty => true
+    | INT8ty => true
+    | INTINFty => true
+    | INT32ty => true
+    | REAL32ty => true
+    | REAL64ty => true
+    | RECORDLABELty  => true
+    | STRINGty => true
+    | UNITty  => true
+    | WORD16ty => true
+    | WORD64ty => true
+    | WORD8ty => true
+    | WORD32ty => true
+    | BOTTOMty => false
+    | BOXEDty => false
+    | BOUNDVARty _  => false
+    | CODEPTRty => false
+    | CONSTRUCTty _ => false
+    | DATATYPEty _ => false
+    | DUMMYty _ => false
+    | DYNAMICty _ => false
+    | ERRORty => false
+    | EXNTAGty => false
+    | EXNty => false
+    | FUNMty _ => false
+    | IENVMAPty _ => false
+    | INTERNALty => false
+    | OPAQUEty _ => false
+    | POLYty _ => false
+    | PTRty _ => false
+    | RECORDLABELMAPty _ => false
+    | SENVMAPty _ => false
+    | TYVARty => false
+    | VECTORty _ => false
+    | VOIDty => false
+end

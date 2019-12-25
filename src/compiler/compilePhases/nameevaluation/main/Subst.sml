@@ -9,21 +9,26 @@ sig
   type tfvSubst
   type conIdSubst
   type exnIdSubst
+  type typIdSubst
   type subst
   val emptyConIdSubst : conIdSubst
   val emptyExnIdSubst : exnIdSubst
+  val emptyTypIdSubst : typIdSubst
   val emptySubst : subst
   val emptyTvarSubst : tvarSubst
   val emptyTfvSubst : tfvSubst
   val substEnv : subst -> NameEvalEnv.env -> NameEvalEnv.env
   val substTy : subst -> IDCalc.ty -> IDCalc.ty
+  val substTfunkind : subst -> IDCalc.tfunkind -> IDCalc.tfunkind
   val substTfvTy : tfvSubst -> IDCalc.ty -> IDCalc.ty
   val substTfvTfun : tfvSubst -> IDCalc.tfun -> IDCalc.tfun
+  val substTfvVarE : tfvSubst -> NameEvalEnv.varE -> NameEvalEnv.varE
   val substTfvEnv : tfvSubst -> NameEvalEnv.env -> NameEvalEnv.env
 end
 =
 struct
 local
+  structure U = NameEvalUtils
   structure I = IDCalc
   structure IV = NameEvalEnv
   fun bug s = Bug.Bug ("Subst: " ^ s)
@@ -32,16 +37,22 @@ in
   type tfvSubst = (I.tfunkind ref) TfvMap.map
   type conIdSubst = I.idstatus ConID.Map.map
   type exnIdSubst = ExnID.id ExnID.Map.map
+  type typIdSubst = TypID.id TypID.Map.map
   type subst = {tvarS:tvarSubst,
                 exnIdS:exnIdSubst,
-                conIdS:conIdSubst}
+                conIdS:conIdSubst,
+                typIdS:typIdSubst,
+                newProvider:I.version option}
   val emptyTvarSubst : tvarSubst = TvarMap.empty
   val emptyTfvSubst : tfvSubst = TfvMap.empty
   val emptyConIdSubst : conIdSubst = ConID.Map.empty
   val emptyExnIdSubst : exnIdSubst = ExnID.Map.empty
+  val emptyTypIdSubst : typIdSubst = TypID.Map.empty
   val emptySubst : subst = {tvarS=emptyTvarSubst,
-                    exnIdS=emptyExnIdSubst,
-                    conIdS=emptyConIdSubst}
+                            exnIdS=emptyExnIdSubst,
+                            conIdS=emptyConIdSubst,
+                            typIdS = emptyTypIdSubst,
+                            newProvider=NONE}
   local
     val visitedSet = ref (TfvSet.empty)
     fun resetSet () = visitedSet := TfvSet.empty
@@ -50,6 +61,10 @@ in
     (* here we only substitute conid; this is to refresh conid *)
     (* subst is also used for instantiation where we need to substitute
        conidstatus including ty *)
+    fun substTypId ({typIdS, ...}:subst) id = 
+        case TypID.Map.find(typIdS, id) of
+          SOME id => id
+        | NONE => id
     fun substConId (subst:subst) id =
         case ConID.Map.find(#conIdS subst, id) of
           SOME (I.IDCON {id,...}) => id
@@ -57,24 +72,29 @@ in
         | NONE => id
     fun substTfunkind subst tfunkind =
         case tfunkind of
-          I.TFV_SPEC {longsymbol, id, iseq, formals} => tfunkind
-        | I.TFV_DTY {longsymbol, id,iseq,formals,conSpec,liftedTys} =>
-          I.TFV_DTY {id=id,
+          I.TFV_SPEC {longsymbol, id, admitsEq, formals} => tfunkind
+        | I.TFV_DTY {longsymbol, id,admitsEq,formals,conSpec,liftedTys} =>
+          I.TFV_DTY {id= substTypId subst id,
                      longsymbol=longsymbol,
-                     iseq=iseq,
+                     admitsEq=admitsEq,
                      formals=formals,
                      conSpec=substConSpec subst conSpec,
                      liftedTys=liftedTys
                     }
-        | I.TFUN_DTY {id,iseq,formals,runtimeTy,longsymbol,
+        | I.FUN_DTY {tfun, longsymbol, varE,
+                     formals,
+                     conSpec,
+                     liftedTys} =>
+          I.FUN_DTY {tfun = substTfun subst tfun, 
+                     longsymbol = longsymbol, 
+                     varE = substVarE subst varE,
+                     formals = formals,
+                     conSpec = substConSpec subst conSpec,
+                     liftedTys = liftedTys}
+        | I.TFUN_DTY {id,admitsEq,formals,longsymbol,
                       conSpec,conIDSet, liftedTys,dtyKind} =>
-          I.TFUN_DTY {id=id,
-                      iseq=iseq,
-                      (* 
-		      runtimeTy=runtimeTy,
-                      2012-7-18 ohori: bug 210_functor.sml
-                       *)
-		      runtimeTy=substRuntimeTy subst runtimeTy,
+          I.TFUN_DTY {id= substTypId subst id,
+                      admitsEq=admitsEq,
                       formals=formals,
                       conSpec=substConSpec subst conSpec,
                       conIDSet = ConID.Set.map (substConId subst) conIDSet,
@@ -82,46 +102,33 @@ in
                       liftedTys=liftedTys,
                       dtyKind=
                       case dtyKind of
-                        I.DTY => dtyKind
-                      | I.DTY_INTERFACE => dtyKind
-                      | I.FUNPARAM => dtyKind
-                      | I.BUILTIN _ => dtyKind
+                        I.DTY _ => dtyKind
+                      | I.DTY_INTERFACE _ => dtyKind
+                      | I.FUNPARAM _ => dtyKind
                       | I.OPAQUE {tfun,revealKey} =>
                         I.OPAQUE {tfun=substTfun subst tfun,
                                   revealKey=revealKey}
+                      | I.INTERFACE tfun =>
+                        I.INTERFACE (substTfun subst tfun)
                      }
         | I.REALIZED {id, tfun} => raise bug "REALIZED"
         | I.INSTANTIATED {tfunkind, tfun} => raise bug "REALIZED"
-        | I.FUN_DTY _ => raise bug "FUN_DTY"
-
-    and substRuntimeTy (subst:subst as {tvarS,...}) runtimeTy =
-        case runtimeTy of
-          I.BUILTINty _ => runtimeTy
-        | I.LIFTEDty tvar => 
-          (case TvarMap.find(tvarS, tvar) of
-             SOME (I.TYVAR (tvar as {lifted,...})) => 
-             I.LIFTEDty tvar
-           | SOME ty =>
-             (case I.runtimeTyOfIty ty of
-                SOME runtimeTy => runtimeTy
-              | NONE => raise bug "runtimeTy not found in substRuntimeTy"
-             )
-           | NONE => runtimeTy
-          )
     and substConSpec subst conSpec =
         SymbolEnv.map
         (fn tyOpt => Option.map (substTy subst) tyOpt)
         conSpec
     and substTfun (subst:subst as {tvarS,...}) tfun = 
         case I.derefTfun tfun of
-        I.TFUN_DEF {longsymbol, iseq, formals=nil, realizerTy=I.TYVAR tvar} =>
+        I.TFUN_DEF {longsymbol, admitsEq, formals=nil, realizerTy=I.TYVAR tvar} =>
         (case TvarMap.find(tvarS, tvar) of
-           SOME ty => I.TFUN_DEF{longsymbol=longsymbol, iseq=iseq, formals=nil, realizerTy=ty}
-         | NONE => I.TFUN_DEF {longsymbol=longsymbol, iseq=iseq, formals=nil, realizerTy=I.TYVAR tvar}
+           SOME ty => I.TFUN_DEF{longsymbol=longsymbol, admitsEq=admitsEq, 
+                                 formals=nil, realizerTy=ty}
+         | NONE => I.TFUN_DEF {longsymbol=longsymbol, admitsEq=admitsEq, formals=nil, 
+                               realizerTy=I.TYVAR tvar}
         )
-      | I.TFUN_DEF {longsymbol, iseq, formals, realizerTy} =>
+      | I.TFUN_DEF {longsymbol, admitsEq, formals, realizerTy} =>
         I.TFUN_DEF {longsymbol=longsymbol,
-                    iseq=iseq,
+                    admitsEq=admitsEq,
                     formals=formals,
                     realizerTy=substTy subst realizerTy}
       | I.TFUN_VAR (tfv as ref (tfunkind as (I.TFV_SPEC _))) =>
@@ -154,6 +161,16 @@ in
           in
             I.TFUN_VAR tfv
           end
+      | I.TFUN_VAR (tfv as ref (tfunkind as (I.FUN_DTY _))) => 
+        if isVisited tfv then I.TFUN_VAR tfv
+        else
+          let
+            val _ = visit tfv;
+            val tfunkind = substTfunkind subst tfunkind
+            val _ = tfv := tfunkind
+          in
+            I.TFUN_VAR tfv
+          end
       | I.TFUN_VAR (tfv as ref (I.INSTANTIATED{tfunkind, tfun})) => 
         let
           val tfunkind = substTfunkind subst tfunkind
@@ -166,13 +183,15 @@ in
     and substTy (subst:subst as {tvarS,...}) (ty:I.ty) : I.ty =
         case ty of
           I.TYWILD => ty
+        | I.TYFREE_TYVAR freeTvar =>  ty
         | I.TYVAR (tvar) => 
           (case TvarMap.find(tvarS, tvar) of
              SOME ty => ty
            | NONE => ty
           )
-        | I.TYRECORD fields =>
-          I.TYRECORD (RecordLabel.Map.map (substTy subst) fields)
+        | I.TYRECORD {ifFlex, fields} =>
+          I.TYRECORD {ifFlex=ifFlex, 
+                      fields=RecordLabel.Map.map (substTy subst) fields}
         | I.TYCONSTRUCT {tfun, args} =>
           I.TYCONSTRUCT
             {tfun=substTfun subst tfun,
@@ -191,26 +210,38 @@ in
         (tvar, substKind subst tvarKind)
     and substKind subst tvarKind
       = case tvarKind of
-          I.UNIV => I.UNIV
-        | I.REC fields => I.REC (RecordLabel.Map.map (substTy subst) fields)
-        | I.JSON x => I.JSON x
+          I.UNIV props => I.UNIV props
+        | I.REC {properties, recordKind} => 
+          I.REC {properties=properties,
+                 recordKind = RecordLabel.Map.map (substTy subst) recordKind}
+(*
         | I.REIFY => I.REIFY
         | I.BOXED => I.BOXED
         | I.UNBOXED => I.UNBOXED
+*)
 
-    fun substExnId (subst:subst)  id =
+    and substExnId (subst:subst)  id =
         case ExnID.Map.find(#exnIdS subst, id) of
           SOME newId => newId
         | NONE => id
-    fun substExInfo subst {used, longsymbol, ty, version} =
-        {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=version}
-    fun substIdstatus subst idstatus = 
+    and substExInfo subst {used, longsymbol, ty, version} =
+        {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty,
+         version = substVersion subst version}
+    and substVersion ({newProvider, ...}:subst) version =
+        case newProvider of
+          NONE => version
+        | SOME x => x
+    and substIdstatus subst idstatus = 
         case idstatus of
           I.IDVAR _ => idstatus
         | I.IDVAR_TYPED _ => idstatus
         | I.IDEXVAR {exInfo, internalId} => 
           I.IDEXVAR {exInfo=substExInfo subst exInfo, internalId=internalId}
-        | I.IDEXVAR_TOBETYPED {longsymbol, id, version} => idstatus
+        | I.IDEXVAR_TOBETYPED {longsymbol, id, version} =>
+          I.IDEXVAR_TOBETYPED
+            {longsymbol = longsymbol,
+             id = id,
+             version = substVersion subst version}
         | I.IDBUILTINVAR {primitive, ty} =>
           I.IDBUILTINVAR {primitive=primitive, ty=substTy subst ty}
         | I.IDCON {id, longsymbol, ty} => 
@@ -227,16 +258,16 @@ in
         | I.IDEXNREP {id, longsymbol, ty} =>
           I.IDEXNREP {id=substExnId subst id, longsymbol=longsymbol,ty=substTy subst ty}
         | I.IDEXEXN {used, longsymbol, ty, version} => 
-          I.IDEXEXN {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=version}
+          I.IDEXEXN {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=substVersion subst version}
         | I.IDEXEXNREP {used, longsymbol, ty, version} => 
-          I.IDEXEXNREP {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=version}
+          I.IDEXEXNREP {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=substVersion subst version}
         | I.IDOPRIM {id, overloadDef, used, longsymbol} =>
           I.IDOPRIM {id=id, overloadDef=overloadDef, used = ref (!used),
                      longsymbol=longsymbol}
         | I.IDSPECVAR {ty, symbol} => I.IDSPECVAR {ty=substTy subst ty, symbol=symbol}
         | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=substTy subst ty, symbol=symbol}
         | I.IDSPECCON {symbol} => I.IDSPECCON {symbol=symbol} 
-    fun substVarE subst varE = SymbolEnv.map (substIdstatus subst) varE
+    and substVarE subst varE = SymbolEnv.map (substIdstatus subst) varE
     fun substTstr subst tstr =
         let
           val {tvarS,...} = subst
@@ -265,13 +296,14 @@ in
   in
     val substEnv = fn subst => fn env => (resetSet(); substEnv subst env)
     val substTy = fn subst => fn ty => (resetSet(); substTy subst ty)
+    val substTfunkind = fn subst => fn ty => (resetSet(); substTfunkind subst ty)
     val substVarE = fn subst => fn varE => (resetSet(); substVarE subst varE)
   end
 
   fun substTfvTfun tfvSubst tfun = 
       case I.derefTfun tfun of
-        I.TFUN_DEF {longsymbol, iseq, formals, realizerTy} =>
-        I.TFUN_DEF {iseq=iseq,
+        I.TFUN_DEF {longsymbol, admitsEq, formals, realizerTy} =>
+        I.TFUN_DEF {admitsEq=admitsEq,
                     longsymbol=longsymbol,
                     formals=formals,
                     realizerTy=substTfvTy tfvSubst realizerTy}
@@ -290,6 +322,20 @@ in
            NONE => tfun
          | SOME tfv => I.TFUN_VAR tfv
         )
+      | I.TFUN_VAR 
+          (tfv 
+             as
+             ref (I.FUN_DTY {tfun=interTfun, longsymbol, varE, formals,conSpec, liftedTys})) => 
+        (
+         tfv := 
+              I.FUN_DTY {tfun= substTfvTfun tfvSubst interTfun, 
+                         longsymbol = longsymbol, 
+                         varE = varE, 
+                         formals = formals,
+                         conSpec = conSpec, 
+                         liftedTys = liftedTys};
+         tfun
+        )
       | I.TFUN_VAR (tfv as ref (I.INSTANTIATED _)) => 
         (case TfvMap.find(tfvSubst, tfv) of
            NONE => tfun
@@ -301,8 +347,10 @@ in
       case ty of
         I.TYWILD => ty
       | I.TYVAR tvar => ty
-      | I.TYRECORD fields =>
-        I.TYRECORD (RecordLabel.Map.map (substTfvTy tfvSubst) fields)
+      | I.TYFREE_TYVAR freeTvar => ty
+      | I.TYRECORD {ifFlex, fields} =>
+        I.TYRECORD {ifFlex=ifFlex, 
+                    fields= RecordLabel.Map.map (substTfvTy tfvSubst) fields}
       | I.TYCONSTRUCT {tfun, args} =>
         I.TYCONSTRUCT
           {tfun=substTfvTfun tfvSubst tfun,
@@ -322,14 +370,18 @@ in
 
   and substTfvKind tfvSubst tvarKind
     = case tvarKind of
-        I.UNIV => I.UNIV
-      | I.REC fields => I.REC (RecordLabel.Map.map (substTfvTy tfvSubst) fields)
-      | I.JSON x => I.JSON x
+        I.UNIV props => I.UNIV props
+      | I.REC {properties, recordKind} => 
+        I.REC {properties=properties,
+               recordKind = RecordLabel.Map.map (substTfvTy tfvSubst) recordKind}
+
+(*
       | I.REIFY => I.REIFY
       | I.BOXED => I.BOXED
       | I.UNBOXED => I.UNBOXED
+*)
 
-  fun substTfvIdstatus tfvSubst idstatus = 
+  and substTfvIdstatus tfvSubst idstatus = 
       case idstatus of
         I.IDVAR varId => idstatus
       | I.IDVAR_TYPED {id, longsymbol, ty} => 
@@ -352,16 +404,17 @@ in
       | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=substTfvTy tfvSubst ty, symbol=symbol}
       | I.IDSPECCON {symbol} => I.IDSPECCON {symbol=symbol}
 
-  fun substTfvVarE tfvSubst varE = SymbolEnv.map (substTfvIdstatus tfvSubst) varE
+  and substTfvVarE tfvSubst varE = SymbolEnv.map (substTfvIdstatus tfvSubst) varE
 
   fun substTfvTstr tfvSubst tstr = 
       case tstr of 
-        IV.TSTR tfun => IV.TSTR (substTfvTfun tfvSubst tfun)
+        IV.TSTR tfun => 
+        IV.TSTR (substTfvTfun tfvSubst tfun)
       | IV.TSTR_DTY {tfun, varE, formals, conSpec} =>
         IV.TSTR_DTY {tfun=substTfvTfun tfvSubst tfun,
-                    varE=substTfvVarE tfvSubst varE,
-                    formals=formals,
-                    conSpec=SymbolEnv.map (Option.map (substTfvTy tfvSubst)) conSpec
+                     varE=substTfvVarE tfvSubst varE,
+                     formals=formals,
+                     conSpec=SymbolEnv.map (Option.map (substTfvTy tfvSubst)) conSpec
                    }
 
   fun substTfvTyE tfvSubst tyE = SymbolEnv.map (substTfvTstr tfvSubst) tyE

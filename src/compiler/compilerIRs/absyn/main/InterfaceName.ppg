@@ -8,7 +8,8 @@
 structure InterfaceName =
 struct
 
-  type hash = SHA3.digest
+  fun ifsome (x, y) (SOME _) = x
+    | ifsome (x, y) NONE = y
 
   fun sub64 a i = Word64.fromInt (Word8.toInt (Vector.sub (a, i)))
   fun read64 a i 0 x = x
@@ -18,40 +19,45 @@ struct
   fun hash s = SHA3.shake128 (Byte.stringToBytes s, 8)
   fun hashToString h = SHA3.hex h
   fun hashToWord64 h = read64 h 0 8 0w0
+  fun formatHash x = SMLFormat.BasicFormatters.format_string (hashToString x)
 
-  fun format_hash x =
-      let
-        val s = hashToString x
-      in
-        [SMLFormat.FormatExpression.Term (size s, s)]
-      end
+  (*% @formatter(SHA3.digest) formatHash *)
+  type hash = SHA3.digest
 
-  (*% *)
-  datatype file_place =
-      (*% *)
-      STDPATH
-    | (*% *)
-      LOCALPATH
+  (*% @formatter(Loc.file_place) Loc.format_file_place *)
+  datatype file_place = datatype Loc.file_place
 
   (*% @formatter(Filename.filename) Filename.format_filename *)
-  (*% @prefix formatSimple_
-   *  @formatter(Filename.filename) Filename.format_filename *)
+  (*%
+   * @prefix format_short_
+   * @formatter(Filename.filename) Filename.format_filename
+   *)
   type source =
-      (*% @format(place * name) place +d name *)
-      (*% @prefix formatSimple_ @format(place * name) name *)
+      (*%
+       * @format(place * name)
+       * place +d name
+       *)
+      (*%
+       * @prefix format_short_
+       * @format(place * name)
+       * name
+       *)
       file_place * Filename.filename
 
-  (*% @formatter(hash) format_hash *)
-  (*% @prefix formatSimple_ @formatter(hash) format_hash *)
+  (*% *)
+  (*%
+   * @prefix format_short_
+   * @formatter(hash) format_hash
+   *)
   type interface_name =
       (*%
        * @format({hash, source})
-       * source +d "(" hash ")"
+       * source "(" hash ")"
        *)
       (*%
        * @prefix formatSimple_
        * @format({hash, source})
-       * source +d "(" hash ")"
+       * source "(" hash ")"
        *)
       {
         hash: hash,
@@ -59,64 +65,212 @@ struct
       }
 
   (*% *)
+  datatype provider =
+      (*% @format(x) "(" x ")" *)
+      (* provided in a preceding step of interactive mode *)
+      STEP of int
+    | (*% @format(x) x *)
+      (* provided in a "_require"d file *)
+      OTHER of interface_name
+    | (*% @format "(system)" *)
+      (* self-provided, such as compiler builtins *)
+      SELF
+
+   (*
+    * USAGE OF "_use" IN BATCH COMPILE
+    *
+    * Even in batch compile mode, the "_use" directive may appear in .sml
+    * files if each "_use"d files are declared as "local _use" in its
+    * interface file.  Nested "_use" is allowed without declaration if the
+    * outermost "_use"d file is declared.  Note that the "_use" file path
+    * is relative to the interface file, not to the .sml file because
+    * the "_use" file is declared in the interface file.
+    *)
+
+   (*
+    * MEANING OF "local" OF "local _require" and "local _use"
+    *
+    * The "local _require" and "local _use" references in a .smi file
+    * are local in the sence that they are relevant only to the .sml
+    * counterpart of the .smi file.  They may be ignored when compiling
+    * other .sml files because they does not provide any information for
+    * current compilation unit.  The compilation process become faster by
+    * skipping loading useless files.  See FILE DEPENDENCY GRAPH AND FILE
+    * LOADING MECHANISM for how the SML# compiler deals with file references.
+    *)
+
+   (*
+    * FILE DEPENDENCY GRAPH AND FILE LOADING MECHANISM
+    *
+    * A software project involves a single DAG of file dependency, each node
+    * of which denotes a file, and each edge of which corresponds to a file
+    * reference such as _require and _use.  The file_dependency_root,
+    * file_depedency_edge, and file_dependency_node types constitutes the DAG.
+    * The file_type and file_dependency_edge_type types enumerate all the
+    * file kinds and file reference constructs that SML# deals with.
+    *
+    * Because of separate compliation, each SML# compiler invocation reads
+    * only the relevant part of the project DAG for the current compilation
+    * unit.  For example, in batch compile mode, the SML# compiler raeds an
+    * .sml file and its "_use"d .sml files to be compiled, its .smi
+    * counterpart, its requisites, and its all the non-local descendant
+    * requisites.  In link mode, the compiler traverses all "_require"s
+    * recursively regardless of their locality, but does not read "_use"d
+    * files at all.  Only the case that the entire DAG is read is the Makefile
+    * generation.
+    *
+    * There are six modes for file loading, as enumerated by the
+    * file_load_mode type:
+    *
+    * - ALL: all file references are read regardless of their kinds and
+    *   locality.
+    * - ALL_USERPATH: same as ALL except that local files are read only if
+    *   they are in USERPATH.
+    * - COMPILE: files releveant to the current compilation unit, which are
+    *   the files referenced immediately from the current compilation unit
+    *   and their non-local descendant requisites, are read.
+    * - LINK: files relevant to object files are read.  The compiler traverses
+    *   all the "_reqiure" and "local _require" references, but does not
+    *   refer any "_use" references.
+    * - COMPILE_AND_LINK: similar to a composition of COMPILE and LINK.
+    *   The compiler traverses all "_require"s and immediate "_use"s, but
+    *   ignores the "_use"s of descendants.
+    * - NOLOCAL: all non-local file references are read.
+    *
+    * The compiler traverses the DAG recursively with the current loading
+    * mode.  Every time the compiler reads a file, the mode is changed
+    * according to the edge type that the compiler traversed.
+    * The file_dependency_root, file_depedency_edge, and file_dependency_node
+    * types represents the traversing.  A file_dependency_node may have
+    * multiple edges to the same destination if a node is visited from the
+    * same node twice or more, which may occur when the user writes multiple
+    * "_requires"s in a .smi file.
+    *)
+
+  (*% *)
+  datatype file_load_mode =
+      NOLOCAL
+    | COMPILE
+    | LINK
+    | COMPILE_AND_LINK
+    | ALL_USERPATH
+    | ALL
+
+  (*% *)
+  (*% @prefix format_short_ *)
   datatype file_type =
       SML
     | INCLUDES
-    | INTERFACE of interface_name
+    | (*%
+       * @format(h)
+       * "INTERFACE" +d h
+       *)
+      (*%
+       * @prefix format_short_
+       * @format(h)
+       * "INTERFACE"
+       *)
+      INTERFACE of hash
 
   (*% *)
-  datatype file_dependency =
-      (*% @format(x) x *)
-      DEPEND of file_dependency_node
-    | (*% @format(x) "local" +1 x *)
-      LOCAL of file_dependency_node
-  withtype file_dependency_node =
-      (*% @format(s * ft * dep deps)
-       * !N0{ ft +d s +d "{" 2[ +1 deps(dep)("," +1) ] +1 "}" } *)
-      source * file_type * file_dependency list
+  datatype file_dependency_edge_type =
+      REQUIRE         (* _require "file" *)
+    | LOCAL_REQUIRE   (* local _require "file" *)
+    | LOCAL_USE       (* local _use "file" *)
+    | USE             (* _use "file" *)
+    | INCLUDE         (* include "file" *)
+    | PROVIDE         (* _interface "file" *)
 
   (*% *)
-  type dependency =
-      {
-        (* name of this interface *)
-        interfaceNameOpt : interface_name option,
-        (* file dependency *)
-        depends : file_dependency list
+  (*%
+   * @prefix format_short_
+   *)
+  datatype file_dependency_node =
+      (*%
+       * @format({source, fileType, edges:e es})
+       * "{" 1[ source +d fileType es(e)() ] d "}"
+       * @format:e(e)
+       * \n e
+       *)
+      (*% @prefix format_short_
+       * @format({source, fileType, edges:e es})
+       * "{" 1[ source +d fileType ] d "}"
+       *)
+      FILE of {
+        source : source,
+        fileType : file_type,
+        edges : file_dependency_edge list
       }
 
-  structure Assoc :> sig
-    type 'a assoc
-    type key = Filename.filename
-    val empty : 'a assoc
-    val inDomain : 'a assoc * key -> bool
-    val append : 'a assoc * key * 'a -> 'a assoc
-    val listItems : 'a assoc -> 'a list
-  end =
-  struct
-    type 'a assoc = 'a SEnv.map * 'a list
-    type key = Filename.filename
-    val empty = (SEnv.empty, nil) : 'a assoc
-    fun inDomain ((map, _):'a assoc, x) =
-        SEnv.inDomain (map, Filename.toString x)
-    fun append (assoc as (map, items), k, v) =
-        if inDomain (assoc, k)
-        then assoc
-        else (SEnv.insert (map, Filename.toString k, v), v :: items)
-    fun listItems ((map, items):'a assoc) = rev items
-  end
+  withtype file_dependency_edge =
+      (*% @format(t * n) t +d n *)
+      file_dependency_edge_type * file_dependency_node
 
-  fun listFileDependencyNodes allowLocal deps =
-      let
-        fun traverse limit visited (LOCAL x) =
-            if limit then traverse limit visited (DEPEND x) else visited
-          | traverse limit visited (DEPEND (node as ((_, file), _, deps))) =
-            if Assoc.inDomain (visited, file)
-            then visited
-            else Assoc.append (traverseList limit visited deps, file, node)
-        and traverseList limit visited deps =
-            foldl (fn (x, z) => traverse limit z x) visited deps
-      in
-        Assoc.listItems (traverseList allowLocal Assoc.empty deps)
-      end
+  (*%
+   * @formatter(ifsome) ifsome
+   *)
+  datatype file_dependency_root_file_type =
+      (*% @format(s so) "ROOT_SML" +d so:ifsome()(so(s),"(none)") *)
+      ROOT_SML of source option
+    | ROOT_INCLUDES
+
+  (*% *)
+  type file_dependency_root =
+      (*%
+       * @format({fileType, mode, edges:e es})
+       * "{" 1[ fileType +d mode es(e)() ] d "}"
+       * @format:e(e)
+       * \n e
+       *)
+      {fileType : file_dependency_root_file_type,
+       mode : file_load_mode, 
+       edges : file_dependency_edge list} 
+
+  (*%
+   * @formatter(short) format_short_file_dependency_node
+   *)
+  type file_dependency =
+      (*%
+       * @format({allNodes: n ns, root})
+       * ns(n)()
+       * "ROOT" +d root
+       * @format:n(n)
+       * 1[ "NODE" +d n:short ] \n
+       *)
+      {allNodes : file_dependency_node list,  (* except for root *)
+       root : file_dependency_root}
+
+  (*% *)
+  datatype init_requisite =
+      INIT_ALWAYS
+    | INIT_IFNEEDED
+
+  (*%
+   * @formatter(ifsome) ifsome
+   *)
+  type toplevel_prelude =
+      (*%
+       * @format({toplevelName: n no, initRequisites: r rs})
+       * "toplevel" +d no:ifsome()(no(n),"(noname)")
+       * rs(r)()
+       * @format:r(i * n)
+       * \n i +d n
+       *)
+      {
+        toplevelName : interface_name option,
+        initRequisites : (init_requisite * interface_name) list
+      }
+
+(*
+  (*% *)
+  type dependRel = 
+   (*% 
+      @format(dep deps)
+            deps(dep)("," \n) \n
+      @format:dep({sourceFile, sourceHash, dependType, dependFile})
+            sourceFile "(" sourceHash ")" + dependType + "->" + dependFile
+    *)       
+    {sourceFile : source, sourceHash : hash, dependType:string, dependFile : source} list
+*)
 
 end

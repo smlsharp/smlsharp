@@ -20,7 +20,8 @@ structure PPGMain :
           sourceFileName : string,
           sourceStream : TextIO.instream,
           destinationStream : TextIO.outstream,
-          withLineDirective : bool
+          withLineDirective : bool,
+          separationMode : string option
         } -> unit
   end =
 struct
@@ -44,8 +45,7 @@ struct
    * @return offset of the end of the region from the beginning of the source
    *         code
    *)
-  fun regionToEndPos (SOME((left, right) : Ast.region)) = SOME(right)
-    | regionToEndPos NONE = NONE
+  fun regionToEndPos ((left, right) : Ast.region) = right
 
   (**
    * adjust the position which ML-lex gives into the correct position 
@@ -55,6 +55,13 @@ struct
    * </p>
    *)
   fun adjustLexPos lexpos = lexpos - Constants.INITIAL_POS_OF_LEXER
+
+  datatype context =
+      STRUCTURE of context * string
+    | FUNCTOR of context * string
+    | ABSTYPE of context
+    | LOCAL of context
+    | TOPLEVEL
 
   (****************************************)
 
@@ -77,15 +84,15 @@ struct
    *       </li>
    *   </ul>
    *)
-  fun generateForDec F (regionOpt, dec) =
+  fun generateForDec F (context, dec) =
       (case dec of
-         Ast.DatatypeDec {formatComments = _::_, ...} =>
-         let val (codes, F') = FG.generateForDataTypeDec F (regionOpt, dec)
-         in (F', [(regionToEndPos regionOpt, codes)]) end
+         Ast.DatatypeDec {formatComments = _::_, region, ...} =>
+         let val (codes, F') = FG.generateForDataTypeDec F (region, dec)
+         in (F', [(context, regionToEndPos region, codes)]) end
 
-       | Ast.TypeDec {formatComments = _::_, ...} =>
-         let val (codes, F') = FG.generateForTypeDec F (regionOpt, dec)
-         in (F', [(regionToEndPos regionOpt, codes)]) end
+       | Ast.TypeDec {formatComments = _::_, region, ...} =>
+         let val (codes, F') = FG.generateForTypeDec F (region, dec)
+         in (F', [(context, regionToEndPos region, codes)]) end
 
        | Ast.AbstypeDec
          {
@@ -93,7 +100,8 @@ struct
            abstycs,
            withtycs,
            bodyBeginPos,
-           body
+           region,
+           ...
          } =>
          let
            val datatypeDec =
@@ -101,16 +109,17 @@ struct
                {
                  formatComments = formatComments,
                  datatycs = abstycs,
-                 withtycs = withtycs
+                 withtycs = withtycs,
+                 region = region
                }
            val (codes, F') =
-               FG.generateForDataTypeDec F (regionOpt, datatypeDec)
-         in (F', [(SOME bodyBeginPos, codes)]) end
+               FG.generateForDataTypeDec F (region, datatypeDec)
+         in (F', [(ABSTYPE context, bodyBeginPos, codes)]) end
 
        | Ast.LocalDec (localDec, globalDec) =>
          let
-           val (F', codesForLocalDec) = generateForDec F (NONE, localDec)
-           val (F'', codesForGlobalDec) =  generateForDec F' (NONE, globalDec)
+           val (F', codesForLocalDec) = generateForDec F (LOCAL context, localDec)
+           val (F'', codesForGlobalDec) =  generateForDec F' (context, globalDec)
            val F''' = F'' (* ToDo : F'' = F + globalDec *)
          in
            (F''', codesForLocalDec @ codesForGlobalDec)
@@ -119,7 +128,7 @@ struct
        | Ast.SeqDec decs =>
          foldl
              (fn (dec, (F, codes)) =>
-                 let val (F', codes') = generateForDec F (NONE, dec)
+                 let val (F', codes') = generateForDec F (context, dec)
                  in (F', codes @ codes')
                  end)
              (F, [])
@@ -127,16 +136,14 @@ struct
 
        | Ast.StrDec structureBinds =>
          let
-           fun getStructureBind (regionOpt, Ast.Strb bind) = (regionOpt, bind)
-             | getStructureBind (_, Ast.MarkStrb (bind, region)) =
-               getStructureBind (SOME region, bind)
+           fun getStructureBind (Ast.Strb bind) = bind
          in
            foldl
                (fn (bind, (F, codes)) =>
                    let
-                     val (regionOpt, {def, ...}) =
-                         getStructureBind (NONE, bind)
-                     val (F', codes') = generateForStructure F (regionOpt, def)
+                     val {name, def, ...} =
+                         getStructureBind bind
+                     val (F', codes') = generateForStructure F (STRUCTURE (context, name), def)
                    in (F', codes @ codes')
                    end)
                (F, [])
@@ -145,27 +152,23 @@ struct
 
        | Ast.FctDec functorBinds =>
          let
-           fun getFunctorBind (regionOpt, Ast.Fctb bind) = (regionOpt, bind)
-             | getFunctorBind (_, Ast.MarkFctb (bind, region)) =
-               getFunctorBind (SOME region, bind)
+           fun getFunctorBind (Ast.Fctb bind) = bind
          in
            foldl
                (fn (bind, (F, codes)) =>
                    let
-                     val (regionOpt, {def, ...}) =
-                         getFunctorBind (NONE, bind)
-                     val (F', codes') = generateForFunctor F (regionOpt, def)
+                     val {name, def, ...} =
+                         getFunctorBind bind
+                     val (F', codes') = generateForFunctor F (FUNCTOR (context, name), def)
                    in (F', codes @ codes')
                    end)
                (F, [])
                functorBinds
          end
 
-       | Ast.MarkDec (dec, region) => generateForDec F (SOME region, dec)
-
-       | Ast.ExceptionDec {formatComments = _::_, ...} =>
-         let val (codes, F') = FG.generateForExceptionDec F (regionOpt, dec)
-         in (F', [(regionToEndPos regionOpt, codes)]) end
+       | Ast.ExceptionDec {formatComments = _::_, region, ...} =>
+         let val (codes, F') = FG.generateForExceptionDec F (region, dec)
+         in (F', [(context, regionToEndPos region, codes)]) end
 
        | _ => (F, []))
       handle exn as FG.GenerationError _ => (EQ.add (EQ.Error exn); (F, []))
@@ -175,7 +178,6 @@ struct
    * @params formatterEnv (region, strexp)
    * @param formatterEnv the formatterEnv which contains previously defined
    *                 formatters.
-   * @param region the region of the structure expression in the source code.
    * @param strexp the structure expression
    * @return a pair of
    *   <ul>
@@ -189,31 +191,25 @@ struct
    *       </li>
    *   </ul>
    *)
-  and generateForStructure F (regionOpt, Ast.BaseStr dec) =
-      generateForDec F (regionOpt, dec)
+  and generateForStructure F (context, Ast.BaseStr dec) =
+      generateForDec F (context, dec)
 
-    | generateForStructure F (regionOpt, Ast.LetStr(dec, str)) =
+    | generateForStructure F (context, Ast.LetStr(dec, str)) =
       let
-        val (F', codesForDec) = generateForDec F (NONE, dec)
-        val (F'', codesForStr) = generateForStructure F' (NONE, str)
+        val (F', codesForDec) = generateForDec F (LOCAL context, dec)
+        val (F'', codesForStr) = generateForStructure F' (context, str)
       in (F'', codesForDec @ codesForStr) end
-
-    | generateForStructure F (_, Ast.MarkStr(strexp, region)) =
-      generateForStructure F (SOME region, strexp)
 
     | generateForStructure F _ = (F, [])
 
-  and generateForFunctor F (regionOpt, Ast.BaseFct {body,...}) =
-      generateForStructure F (regionOpt, body)
+  and generateForFunctor F (context, Ast.BaseFct {body,...}) =
+      generateForStructure F (context, body)
 
-    | generateForFunctor F (regionOpt, Ast.LetFct(dec, str)) =
+    | generateForFunctor F (context, Ast.LetFct(dec, str)) =
       let
-        val (F', codesForDec) = generateForDec F (NONE, dec)
-        val (F'', codesForFct) = generateForFunctor F' (NONE, str)
+        val (F', codesForDec) = generateForDec F (LOCAL context, dec)
+        val (F'', codesForFct) = generateForFunctor F' (context, str)
       in (F'', codesForDec @ codesForFct) end
-
-    | generateForFunctor F (_, Ast.MarkFct(fctexp, region)) =
-      generateForFunctor F (SOME region, fctexp)
 
     | generateForFunctor F _ = (F, [])
 
@@ -234,7 +230,8 @@ struct
    * @return unit
    *)
   fun main
-        {sourceFileName, sourceStream, destinationStream, withLineDirective} =
+        {sourceFileName, sourceStream, destinationStream, withLineDirective,
+         separationMode} =
       let
         (* the all contents of source stream is pulled out here,
          * because the source code is scanned twice in the following process.
@@ -243,9 +240,9 @@ struct
 
         (* parse *)
         val (decs, posToLocation) =
-            MLParser.parse (sourceFileName, TextIO.openString sourceCode)
-            handle MLParser.ParseError message =>
-                   raise Error [message]
+            MLParser.parse (sourceFileName, sourceCode)
+            handle MLParser.ParseError messages =>
+                   raise Error messages
 
         (* generates formatters *)
         val F = BasicFormattersEnv.basicFormattersEnv
@@ -253,7 +250,7 @@ struct
         val (F, codes) =
             (foldl
              (fn(dec, (F, codes)) =>
-                let val (F, codes') = generateForDec F (NONE, dec)
+                let val (F, codes') = generateForDec F (TOPLEVEL, dec)
                 in (F, codes @ codes') end)
              (F, [])
              decs)
@@ -277,7 +274,7 @@ struct
           (* collect formatters for which the destination tag is specified. *)
           val customPositionCodes =
               foldl
-              (fn ((_, codes), accum) =>
+              (fn ((_, _, codes), accum) =>
                   (List.filter (fn (SOME _, _) => true | _ => false) codes) @
                   accum)
               []
@@ -316,11 +313,9 @@ struct
          *)
         fun merge sourceStream readChars pos texts =
          fn [] => rev ((TextIO.inputAll sourceStream) :: texts)
-          | ((NONE, _) :: _) =>
-            raise Fail "BUG: cannot fix the location to insert a code."
-          | ((SOME insertPosition, codes)::tail) =>
+          | ((_, insertPosition, codes)::tail) =>
             let
-              val toCopy = (adjustLexPos insertPosition) - readChars
+              val toCopy = (adjustLexPos (insertPosition + 1)) - readChars
               val input = TextIO.inputN (sourceStream, toCopy)
               (* get pos at the end of input. *)
               val pos as (line, col) =
@@ -355,8 +350,48 @@ struct
               merge sourceStream (readChars + toCopy) pos newTexts tail
             end
 
-        val merged = merge (TextIO.openString sourceCode) 0 (1, 1) [] codes
-        val replaced = map replaceFormatters merged
+        fun localOpen pos context =
+            let
+              fun error msg =
+                  raise Error [MLParser.getErrorMessage
+                                 sourceFileName
+                                 posToLocation
+                                 (msg, (pos, pos))]
+            in
+              case context of
+                TOPLEVEL => nil
+              | STRUCTURE (c, id) => localOpen pos c @ [id]
+              | FUNCTOR _ =>
+                error "cannot generate formatters in functor in separation mode"
+              | ABSTYPE _ =>
+                error "cannot generate formatters in abstype in separation mode"
+              | LOCAL _ =>
+                error "cannot generate local formatters in separation mode"
+            end
+
+        fun serialize codes =
+            map (fn (context, pos, codes) =>
+                    let
+                      val code =
+                          String.concat (map (fn (_, code) => code) codes)
+                    in
+                      case localOpen pos context of
+                        nil => code
+                      | p => "local open " ^ String.concatWith "." p ^ " in\n"
+                             ^ code ^ " end\n"
+                    end)
+                codes
+
+        val replaced =
+            case separationMode of
+              NONE =>
+              map replaceFormatters
+                  (merge (TextIO.openString sourceCode) 0 (1, 1) [] codes)
+            | SOME "" =>
+              serialize codes
+            | SOME strid =>
+              ("structure " ^ strid ^ " = struct\n")
+              :: serialize codes @ [" end\n"]
       in
         app (fn text => TextIO.output (destinationStream, text)) replaced
       end

@@ -1,35 +1,35 @@
-_require "../../../../basis.smi"
-_require local "../../../../smlnj-lib/Util/binary-set-fn.smi"
-_require local "../../../../config/main/Config.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../../llvm/main/LLVM.smi"
+_require local "../../../../basis.smi"
+(* _require local "../../../../smlnj-lib/Util/binary-set-fn.smi" *)
+_require local "../../../libs/config/main/Config.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../../ffi/main/DynamicLink.smi"
-_require local "../../../../ffi/main/Pointer.smi"
-_require local "../../../data/control/main/Control.ppg.smi"
+(* _require local "../../../../ffi/main/Pointer.smi" *)
+_require local "../../../data/control/main/Control.smi"
 _require local "../../../libs/util/main/Counter.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
 _require "../../../libs/toolchain/main/Filename.smi"
 _require local "../../../libs/toolchain/main/TempFile.smi"
 _require local "../../../libs/toolchain/main/BinUtils.smi"
 _require "../../../libs/toolchain/main/LLVMUtils.smi"
+_require "../../../libs/toolchain/main/ShellUtils.smi"
 _require "../../../compilePhases/parser/main/Parser.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../compilePhases/toplevel/main/Top.smi"
-_require local "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
+(* _require local "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi" *)
+_require local "../../../compilePhases/llvmgen/main/ToplevelSymbol.smi"
 
 structure Interactive =
 struct
 
   type options =
       {baseFilename : Filename.filename option,
-       stdPath : Filename.filename list,
-       loadPath : Filename.filename list,
-       LDFLAGS : string list,
-       LIBS : string list,
+       loadPath : InterfaceName.source list,
+       LDFLAGS : ShellUtils.arg list,
+       LIBS : ShellUtils.arg list,
        llvmOptions : LLVMUtils.compile_options,
        outputWarnings : UserError.errorInfo list -> unit}
 
-  type session (= boxed)
+  type session (= {})
 
   exception LinkError of exn
   exception UncaughtException of exn
@@ -37,7 +37,8 @@ struct
   val start : options -> session
   val run : session -> Top.toplevelContext -> Parser.input -> Top.newContext
 
-  type objfile = {objfile : Filename.filename, hash : InterfaceName.hash}
+  type objfile =
+      {objfile : Filename.filename, name : InterfaceName.interface_name}
 
   val loadObjectFiles : session -> objfile list -> unit
 

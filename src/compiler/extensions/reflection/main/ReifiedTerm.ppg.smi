@@ -1,56 +1,69 @@
 _require "../../../../basis.smi"
 _require local "../../format-utils/main/TermPrintUtils.ppg.smi"
 _require "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
 _require "./ReifiedTy.ppg.smi"
 
 structure ReifiedTerm =
 struct
   type path = string list
   datatype reifiedTerm
-    = ARRAY of {dummyPrinter:reifiedTerm, contentsFn: int option -> {contents:reifiedTerm list,hasEllipsis:bool}}
-    | ARRAY2 of reifiedTerm array
+    = ARRAY of ReifiedTy.reifiedTy * boxed
+    | ARRAY_PRINT of reifiedTerm array
     | BOOL of bool
+    | BOXED of boxed
     | BOUNDVAR
+    | BUILTIN
     | CHAR of char
     | CODEPTR of word64
-    | DATATYPE of string * reifiedTerm option
-    | EXNTAG
+    | DATATYPE of string * reifiedTerm option * ReifiedTy.reifiedTy
+    | DYNAMIC of ReifiedTy.reifiedTy * boxed
     | EXN of {exnName : string, hasArg : bool}
-    | INT of int
-    | INT8 of int8
+    | EXNTAG
+    | FUN of {closure:boxed, ty:ReifiedTy.reifiedTy}
+    | IENVMAP of (int * reifiedTerm) list
+    | INT32 of int
     | INT16 of int16
     | INT64 of int64
+    | INT8 of int8
     | INTERNAL 
     | INTINF of IntInf.int
     | LIST of reifiedTerm list
+    | NULL
+    | NULL_WITHTy of ReifiedTy.reifiedTy
     | OPAQUE 
-    | OPTION of reifiedTerm option
-    | OPTIONNONE
-    | OPTIONSOME of reifiedTerm
-    | POLY of reifiedTerm
+    | OPTION of reifiedTerm option * ReifiedTy.reifiedTy
     | PTR of word64
+    | REAL64 of real
     | REAL32 of real32
-    | REAL of real
-    | RECORD of (string * reifiedTerm) list
-    | REF of reifiedTerm
+    | RECORDLABEL of RecordLabel.label
+    | RECORDLABELMAP of (RecordLabel.label * reifiedTerm) list
+    | RECORD of reifiedTerm RecordLabel.Map.map
+    | REF of ReifiedTy.reifiedTy * boxed
+    | REF_PRINT of reifiedTerm
+    | SENVMAP of (string * reifiedTerm) list
     | STRING of string
-    | TUPLE of reifiedTerm list
+    | VOID
+    | VOID_WITHTy of ReifiedTy.reifiedTy
     | UNIT
-    | VECTOR of {dummyPrinter:reifiedTerm, contentsFn: int option -> {contents:reifiedTerm list,hasEllipsis:bool}}
-    | VECTOR2 of reifiedTerm vector
-    | WORD of word
-    | WORD8 of word8
+    | UNPRINTABLE
+    | VECTOR of ReifiedTy.reifiedTy * boxed
+    | VECTOR_PRINT of reifiedTerm vector
+    | WORD32 of word
     | WORD16 of word16
     | WORD64 of word64
-    | BUILTIN
-    | ELIPSIS
-    | FUN of {closure:boxed, ty:ReifiedTy.reifiedTy}
-    | UNPRINTABLE
+    | WORD8 of word8
+
+  type 'a dyn (= boxed)
+  val toDynamic : ['a. reifiedTerm -> 'a dyn]
+  val toReifiedTerm : ['a. 'a dyn -> reifiedTerm]
+
   datatype idstatus
     = EXEXN of {name:string, ty:string option}
     | EXEXNREP of {name:string, path:string}
-    | EXVARTY of {name:string, ty:string}
     | EXVAR of {name:string, term:reifiedTerm, ty:string}
+    | EXVARTY of {name:string, ty:string}
+
   val mkEXEXNIdstatus : string -> string option -> idstatus
   val mkEXEXNREPIdstatus : string -> string -> idstatus
   val mkEXVarIdstatus : string -> reifiedTerm -> string -> idstatus
@@ -68,27 +81,26 @@ struct
 
   val mkTopEnv : env ->  funE -> sigE -> topEnv
 
-  val format_path : string list -> SMLFormat.FormatExpression.expression list
-  val format_reifiedTerm : reifiedTerm -> SMLFormat.FormatExpression.expression list
-  val toJSON_reifiedTerm : reifiedTerm -> SMLFormat.FormatExpression.expression list
+  val format_path : string list -> SMLFormat.format
+  val format_reifiedTerm : reifiedTerm -> SMLFormat.format
+  val format_dyn : ('a -> SMLFormat.format) -> 'a dyn -> SMLFormat.format
+
+  val toJSON_reifiedTerm : reifiedTerm -> SMLFormat.format
   val reifiedTermToString : reifiedTerm -> string
   val reifiedTermToJSON : reifiedTerm -> string
-  val format_tstr : string * string -> SMLFormat.FormatExpression.expression list
-  val format_idstatus 
-    : idstatus -> SMLFormat.FormatExpression.expression list
+  val format_tstr : string * string -> SMLFormat.format
+  val format_idstatus : idstatus -> SMLFormat.format
   val format_varE 
-    : idstatus list -> SMLFormat.FormatExpression.expression list
-  val format_tyE : (string * string) list -> SMLFormat.FormatExpression.expression list
-  val format_env : env -> SMLFormat.FormatExpression.expression list
-  val format_strentry : strentry -> SMLFormat.FormatExpression.expression list
-  val format_topEnv 
-    : topEnv -> SMLFormat.FormatExpression.expression list
-  val structure_topEnv 
-    : topEnv -> SMLFormat.FormatExpression.expression list
-  val format_funE : string list -> SMLFormat.FormatExpression.expression list
+    : idstatus list -> SMLFormat.format
+  val format_tyE : (string * string) list -> SMLFormat.format
+  val format_env : env -> SMLFormat.format
+  val format_strentry : strentry -> SMLFormat.format
+  val format_topEnv : topEnv -> SMLFormat.format
+  val structure_topEnv : topEnv -> SMLFormat.format
+  val format_funE : string list -> SMLFormat.format
 
   val printStructureTopEnv : topEnv -> unit
-  val printTopEnvOutput : (string -> unit) ref
+  val printTopEnvOutput : (string -> unit) option ref
   val printTopEnv : topEnv -> unit
 
 end

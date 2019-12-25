@@ -19,8 +19,7 @@ struct
              getChar : int -> char option,
              getBool : int -> bool option,
              getTimestamp : int -> SMLSharp_SQL_TimeStamp.timestamp option,
-             getDecimal : int -> SMLSharp_SQL_Decimal.decimal option,
-             getFloat : int -> SMLSharp_SQL_Float.float option}
+             getNumeric : int -> SMLSharp_SQL_Numeric.num option}
 
   type conn_impl =
        {closeConn : unit -> unit,
@@ -59,8 +58,7 @@ struct
           getChar = fn i => getValue B.charValue (res, i),
           getBool = fn i => getValue B.boolValue (res, i),
           getTimestamp = fn i => getValue B.timestampValue (res, i),
-          getDecimal = fn i => getValue B.decimalValue (res, i),
-          getFloat = fn i => getValue B.floatValue (res, i)
+          getNumeric = fn i => getValue B.numericValue (res, i)
         }
 
     fun execQuery conn query =
@@ -98,10 +96,14 @@ struct
   structure PGSQL = Backend(SMLSharp_SQL_PGSQLBackend)
   structure MySQL = Backend(SMLSharp_SQL_MySQLBackend)
   structure ODBC = Backend(SMLSharp_SQL_ODBCBackend)
+  structure SQLite = Backend(SMLSharp_SQL_SQLite3Backend)
+  structure SQLite3 = SMLSharp_SQL_SQLite3
 
   val postgresql = PGSQL.backend
   val mysql = MySQL.backend
   val odbc = ODBC.backend
+  val sqlite3 = fn x => SQLite.backend (SQLite3.flags, x)
+  val sqlite3' = SQLite.backend
   val default = postgresql
 
 end

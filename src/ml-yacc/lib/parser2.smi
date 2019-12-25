@@ -39,7 +39,7 @@ struct
   structure Stream = 
   struct
     type tok = Token.token
-    type stream (= boxed)
+    type stream (= ref)
     val streamify : (unit -> tok) -> stream
     val cons : tok * stream -> stream
     val get : stream -> tok * stream

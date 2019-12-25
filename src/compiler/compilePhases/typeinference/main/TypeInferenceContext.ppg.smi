@@ -1,11 +1,11 @@
 _require local "../../../../basis.smi"
-_require local "../../../libs/ids/main/LocalID.smi"
+(* _require local "../../../libs/ids/main/LocalID.smi" *)
 _require local "../../../data/types/main/TypesBasics.smi"
 
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/types/main/OPrimMap.smi"
-_require "../../../libs/util/main/TermFormat.smi"
+(* _require "../../../libs/util/main/TermFormat.smi" *)
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../data/types/main/VarMap.smi"
 _require "../../../data/types/main/Types.ppg.smi"
@@ -16,8 +16,7 @@ structure TypeInferenceContext =
   struct
     type tvarEnv = Types.ty TvarMap.map
     val format_tvarEnv
-        : Types.kind TermFormat.btvEnv
-          -> Types.ty TvarMap.map
+        : Types.ty TvarMap.map
           -> SMLFormat.format
     type varEnv = TypedCalc.idstatus VarMap.map
     val format_varEnv

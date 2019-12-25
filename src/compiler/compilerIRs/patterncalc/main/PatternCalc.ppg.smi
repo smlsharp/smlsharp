@@ -2,13 +2,15 @@ _require local "../../../../basis.smi"
 _require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 _require local "../../../libs/util/main/TermFormat.smi"
 
-_require "../../../data/symbols/main/Symbol.ppg.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynConst.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynConstFormatter.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 
 
 structure PatternCalc =
@@ -39,7 +41,8 @@ struct
     = kindedTvar list
 
   datatype plexp
-    = PLCONSTANT of AbsynConst.constant
+    = PLCONSTANT of AbsynConst.constant * loc
+    | PLSIZEOF of ty * loc
     | PLVAR of longsymbol
     | PLTYPED of plexp *  ty * loc
     | PLAPPM of plexp * plexp list * loc
@@ -53,19 +56,16 @@ struct
     | PLRECORD_SELECTOR of RecordLabel.label * loc 
     | PLSELECT of RecordLabel.label * plexp * loc  (* this must be kept as a primitive *)
     | PLSEQ of plexp list * loc
-    | PLFOREACH of {data:plexp, iterator:plexp, pred:plexp, loc:loc}
-    | PLFOREACHDATA of {data:plexp, whereParam:plexp, iterator:plexp, pred:plexp, loc:loc}
     | PLFFIIMPORT of ffiFun * ffiTy * loc
-    | PLFFIAPPLY of FFIAttributes.attributes option * ffiFun * ffiArg list * ffiTy list * loc
     | PLSQLSCHEMA of {tyFnExp : plexp, ty : ty, loc : loc}
-    | PLJOIN of plexp * plexp * loc
-    | PLJSON of plexp * ty * loc
-    | PLTYPEOF of ty * loc
+    | PLJOIN of bool * plexp * plexp * loc
+    | PLDYNAMIC of plexp * ty * loc
+    | PLDYNAMICIS of plexp * ty * loc
+    | PLDYNAMICNULL of ty * loc
+    | PLDYNAMICTOP of ty * loc
+    | PLDYNAMICVIEW of plexp * ty * loc
+    | PLDYNAMICCASE of plexp * (plpat * plexp) list * loc
     | PLREIFYTY of ty * loc
-
-  and ffiArg 
-    = PLFFIARG of plexp * ffiTy * loc
-    | PLFFIARGSIZEOF of ty * plexp option * loc
 
   and ffiFun
     = PLFFIFUN of plexp
@@ -94,7 +94,7 @@ struct
   and plpat 
     = PLPATWILD of loc
     | PLPATID of longsymbol
-    | PLPATCONSTANT of AbsynConst.constant
+    | PLPATCONSTANT of AbsynConst.constant * loc
     | PLPATCONSTRUCT of plpat * plpat * loc
     | PLPATRECORD of bool * (RecordLabel.label * plpat) list * loc
     | PLPATLAYERED of symbol * ty option * plpat * loc
@@ -120,7 +120,7 @@ struct
 
   and plspec 
     = PLSPECVAL of scopedTvars * symbol * ty * loc (* value *)
-    | PLSPECTYPE of {tydecls:(tvar list * symbol) list, iseq:bool, loc:loc}
+    | PLSPECTYPE of {tydecls:(tvar list * symbol) list, eq:bool, loc:loc}
     | PLSPECTYPEEQUATION of (tvar list * symbol * ty) * loc
     | PLSPECDATATYPE of
       {tyvars: tvar list, symbol: symbol,
@@ -153,8 +153,6 @@ struct
       : scopedTvars -> SMLFormat.format
   val format_plexp
       : plexp -> SMLFormat.format
-  val format_ffiArg
-      : ffiArg -> SMLFormat.format
   val format_ffiTy
       : ffiTy -> SMLFormat.format
   val format_pdecl

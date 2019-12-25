@@ -1,25 +1,14 @@
 _require local "../../../../basis.smi"
-_require local "../../../../ml-yacc-lib.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-
-_require local "../../../data/control/main/Control.ppg.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"
+(* _require "../../../data/symbols/main/Loc.smi" *)
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require local "./ParserError.ppg.smi"
-_require local "./iml.grm.smi"
-_require local "./iml.lex.smi"
-
-_require "../../../compilerIRs/absyn/main/Absyn.ppg.smi"
+_require "./SMLSharpParser.smi"
 
 structure Parser =
 struct
-  datatype mode = Interactive | Batch | File
-  type source = {mode : mode,
-                 read : bool * int -> string,
-                 sourceName : string,
-                 initialLineno : int}
-  type input (= boxed)
+  type source = SMLSharpParser.source
+  type input (= SMLSharpParser.input)
   val setup : source -> input
   val parse : input -> Absyn.unitparseresult
   val isEOF : input -> bool

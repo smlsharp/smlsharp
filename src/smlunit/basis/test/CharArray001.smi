@@ -1,5 +1,5 @@
-_require "smlunit-lib.smi"
-_require "basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../../../basis.smi"
 _require "MutableSequence001.smi"
 
 structure CharArray001 =

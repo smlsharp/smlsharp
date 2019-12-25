@@ -6,58 +6,35 @@
  * @copyright 2010, 2011, 2012, 2013 Tohoku University.
  *)
 
-type 'a elem = char
-
-(* object size occupies 26 bits of 32-bit object header. *)
-val maxLen = 0x03ffffff
-
-structure VectorSlice =
+structure Seq =
 struct
-  exception Dummy
-  fun base (x : CharVectorSlice.slice) =
-      ((raise Dummy) : char vector, 0, 0)  (* dummy *)
+  type 'a seq = char array
+  type 'a elem = char
+  fun castToArray x = x
+  val length = SMLSharp_Builtin.Array.length
+  val alloc = SMLSharp_Builtin.Array.alloc
+  val alloc_unsafe = SMLSharp_Builtin.Array.alloc_unsafe
+  type 'a vector = string
+  val castVectorToArray = SMLSharp_Builtin.String.castToArray
+  val allocVector = SMLSharp_Builtin.String.alloc
+  (*
+   * Because of the implicit sentinel character, the maximum length of
+   * "string" is 1-element shorter than "char array".  To check this
+   * difference, allocVector_unsafe must be String.alloc, not alloc_unsafe.
+   *)
+  val allocVector_unsafe = SMLSharp_Builtin.String.alloc
+  fun emptyVector () = ""
+  structure VectorSlice = CharVectorSlice
 end
 
-_use "./ArraySlice_common.sml"
-
-infix 6 + - ^
-infix 4 = <> > >= < <=
-val op - = SMLSharp_Builtin.Int32.sub_unsafe
-val op >= = SMLSharp_Builtin.Int32.gteq
-structure Array = SMLSharp_Builtin.Array
-structure String = SMLSharp_Builtin.String
+_use "./Slice_common.sml"
 
 structure CharArraySlice =
 struct
-  open ArraySlice_common
+  open Slice_common
   type elem = char
+  type array = char array
   type vector = string
-  type array = unit array
   type slice = unit slice
   type vector_slice = CharVectorSlice.slice
-
-  (* NOTE:
-   * CharVector.vector is not "char vector", but "string".
-   * We cannot use the common implementation of vector and copyVec for
-   * CharArray.
-   *)
-
-  fun vector ((ary, start, length) : slice) =
-      let
-        val buf = String.alloc length  (* raise Size if len = 0xffffffff *)
-      in
-        Array.copy_unsafe (ary, start, String.castToArray buf, 0, length);
-        buf
-      end
-
-  fun copyVec {src : vector_slice, dst : array, di} =
-      let
-        val (vec, start, length) = CharVectorSlice.base src
-        val dlen = Array.length dst
-      in
-        if di >= 0 andalso dlen >= di andalso dlen - di >= length
-        then Array.copy_unsafe (String.castToArray vec, start, dst, di, length)
-        else raise Subscript
-      end
-
 end

@@ -1,7 +1,6 @@
 structure TyRevealTy = 
 struct
 local
-  structure U = Unify
   structure T = Types
   structure TU = TypesBasics
   type ty = T.ty
@@ -15,22 +14,17 @@ in
           {
            oprimId,
            longsymbol,
-           keyTyList : ty list,
-           match : T.overloadMatch,
-           instMap : T.overloadMatch OPrimInstMap.map
+           match : T.overloadMatch
           } =>
         T.INSTCODEty
           {
            oprimId=oprimId,
            longsymbol=longsymbol,
-           keyTyList = map revealTy keyTyList,
-           match = revealOverloadMatch match,
-           instMap = OPrimInstMap.map revealOverloadMatch instMap
+           match = revealOverloadMatch match
           }
       | T.INDEXty (string, ty) => T.INDEXty (string, revealTy ty)
       | T.TAGty ty => T.TAGty (revealTy ty)
       | T.SIZEty ty => T.SIZEty (revealTy ty)
-      | T.TYPEty ty => T.TYPEty (revealTy ty)
       | T.REIFYty ty => T.REIFYty (revealTy ty)
   and revealOverloadMatch (overloadMatch:T.overloadMatch) : T.overloadMatch =
       case overloadMatch  of
@@ -61,11 +55,10 @@ in
   and revealExExnInfo ({path, ty}:T.exExnInfo) : T.exExnInfo =
       {path=path, ty=revealTy ty}
   and revealTyCon
-        {id : T.typId,
+        {id,
          longsymbol : longsymbol,
-         iseq : bool,
+         admitsEq : bool,
          arity : int,
-         runtimeTy : BuiltinTypeNames.bty,
          conSet,
          conIDSet,
          extraArgs : ty list,
@@ -73,9 +66,8 @@ in
         } =
         {id = id,
          longsymbol = longsymbol,
-         iseq = iseq,
+         admitsEq = admitsEq,
          arity = arity,
-         runtimeTy = runtimeTy,
          conSet = conSet,
          conIDSet = conIDSet,
          extraArgs = map revealTy extraArgs,
@@ -83,16 +75,17 @@ in
         }
   and revealDtyKind dtyKind =
       case dtyKind of
-        T.DTY => dtyKind
-      | T.OPAQUE {opaqueRep:T.opaqueRep, revealKey:T.revealKey} =>
+        T.DTY _ => dtyKind
+      | T.OPAQUE {opaqueRep:T.opaqueRep, revealKey} =>
         T.OPAQUE {opaqueRep = revealOpaqueRep opaqueRep,
                   revealKey=revealKey}
-      | T.BUILTIN bty => dtyKind
+      | T.INTERFACE opaqueRep =>
+        T.INTERFACE (revealOpaqueRep opaqueRep)
   and revealOpaqueRep opaueRep =
       case opaueRep of
         T.TYCON tyCon  =>T.TYCON (revealTyCon tyCon)
-      | T.TFUNDEF {iseq, arity, polyTy} =>
-        T.TFUNDEF {iseq=iseq,
+      | T.TFUNDEF {admitsEq, arity, polyTy} =>
+        T.TFUNDEF {admitsEq=admitsEq,
                    arity=arity,
                    polyTy = revealTy polyTy}
   and revealTy (ty:ty) : ty =
@@ -113,11 +106,10 @@ in
         let
           val tyCon
                 as 
-                {id : T.typId,
+                {id,
                  longsymbol : longsymbol,
-                 iseq : bool,
+                 admitsEq : bool,
                  arity : int,
-                 runtimeTy : BuiltinTypeNames.bty,
                  conSet,
                  conIDSet,
                  extraArgs : ty list,
@@ -130,26 +122,31 @@ in
             (case opaqueRep of
                T.TYCON tyCon =>
                T.CONSTRUCTty{tyCon=tyCon, args= args}
-             | T.TFUNDEF {iseq, arity, polyTy} =>
-               U.instOfPolyTy(polyTy, args)
+             | T.TFUNDEF {admitsEq, arity, polyTy} =>
+               TU.tpappTy (polyTy, args)
             )
-          | T.DTY => T.CONSTRUCTty{tyCon=tyCon, args= args}
-          | T.BUILTIN bty => T.CONSTRUCTty{tyCon=tyCon, args= args}
+          | T.INTERFACE opaqueRep =>
+            (case opaqueRep of
+               T.TYCON tyCon =>
+               T.CONSTRUCTty{tyCon=tyCon, args= args}
+             | T.TFUNDEF {admitsEq, arity, polyTy} =>
+               TU.tpappTy (polyTy, args)
+            )
+          | T.DTY _ => T.CONSTRUCTty{tyCon=tyCon, args= args}
         end
       | T.POLYty {boundtvars : T.btvEnv, constraints : T.constraint list, body : ty } =>
         T.POLYty {boundtvars = revealBtvEnv boundtvars, 
-                  constraints = List.map (fn c =>
-                                             case c of T.JOIN {res, args = (arg1, arg2), loc} =>
-                                               T.JOIN
-                                                   {res = revealTy res,
-                                                    args = (revealTy arg1,
-                                                            revealTy arg2), loc=loc})
-                                         constraints,
+                  constraints = List.map revealConstraint constraints,
                   body =  revealTy body}
+  and revealConstraint (T.JOIN {res, args = (arg1, arg2), loc}) =
+      T.JOIN
+        {res = revealTy res,
+         args = (revealTy arg1, revealTy arg2),
+         loc=loc}
   and revealBtvEnv (btvEnv:T.btvEnv) =
       BoundTypeVarID.Map.map revealKind btvEnv
-  and revealKind (T.KIND {tvarKind, dynKind, reifyKind, subkind, eqKind}) =
-      T.KIND {tvarKind=revealTvarKind tvarKind, dynKind = dynKind, reifyKind = reifyKind, subkind = subkind, eqKind=eqKind}
+  and revealKind (T.KIND {tvarKind, properties, dynamicKind}) =
+      T.KIND {tvarKind=revealTvarKind tvarKind, properties = properties, dynamicKind = dynamicKind}
   and revealTvarKind tvarKind =
       case tvarKind of
         T.OCONSTkind tyList =>
@@ -160,26 +157,29 @@ in
            {
             oprimId : OPrimID.id,
             longsymbol : longsymbol,
-            keyTyList : ty list,
-            match : T.overloadMatch,
-            instMap : T.overloadMatch OPrimInstMap.map
+            match : T.overloadMatch
            } list
           } =>
         T.OPRIMkind
           {instances = map revealTy instances,
-           operators =
+           operators = operators
+(* do not reveal operators.
+ * they use opaque tycon ids as a key of instance selector *)
+(*
            map
-             (fn {oprimId, longsymbol, keyTyList, match, instMap} =>
+             (fn {oprimId, longsymbol, match} =>
                  {oprimId=oprimId,
                   longsymbol=longsymbol,
-                  keyTyList = map revealTy keyTyList,
-                  match = revealOverloadMatch match,
-                  instMap = OPrimInstMap.map revealOverloadMatch instMap}
+                  match = revealOverloadMatch match}
              )
              operators
+*)
           }
       | T.UNIV => T.UNIV
+(*
       | T.BOXED => T.BOXED
+      | T.UNBOXED => T.UNBOXED
+*)
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map revealTy fields)
   fun revealVar ({id, ty, path, opaque}:varInfo) =

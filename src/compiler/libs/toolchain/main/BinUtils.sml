@@ -3,155 +3,90 @@
  * @copyright (c) 2010, Tohoku University.
  * @author UENO Katsuhiro
  *)
-structure BinUtils : sig
-
-  val assemble : {source: Filename.filename, flags: string list,
-                  object: Filename.filename} -> unit
-  val link : {flags: string list, objects: Filename.filename list,
-              libs: string list, dst: Filename.filename,
-              useCXX: bool, quiet: bool} -> unit
-  val partialLink : {objects: Filename.filename list, dst: Filename.filename}
-                    -> unit
-  val archive : {objects: Filename.filename list, archive: Filename.filename}
-                -> unit
-
-end =
+structure BinUtils =
 struct
 
-  val join = CoreUtils.join
-  val quote = CoreUtils.quote
+  datatype arg = datatype ShellUtils.arg
 
-  fun take maxSize strs =
-      let
-        fun prepend (x, (l1, l2)) = (x::l1, l2)
-        fun loop (nil, cols) = (nil, nil)
-          | loop (h::t, cols) =
-            let
-              val len = cols + 1 + size (quote h)
-            in
-              if len > maxSize then (nil, h::t) else prepend (h, loop (t, len))
-            end
-      in
-        loop (strs, 0)
-      end
+  fun nestLink pre linked nil post =
+      nestLink pre nil linked post
+    | nestLink pre linked files post =
+      case ShellUtils.split {pre = pre, args = linked @ files, post = post} of
+        (args, nil) => ShellUtils.system (pre @ args @ post)
+      | (nil, args as _::nil) => ShellUtils.system (pre @ args @ post)
+      | _ =>
+        let
+          val objfile = TempFile.create ("." ^ Config.OBJEXT ())
+          val objfile = Filename.toString objfile
+          val pre = [EXPAND (Config.LD ()), ARG "-r"]
+          val post = [ARG "-o", ARG objfile]
+          val (linkobjs, rest) =
+              case ShellUtils.split {pre = pre, args = files, post = post} of
+                (files as _::_::_, rest) => (files, rest)
+              | (file1::nil, file2::rest) => ([file1, file2], rest)
+              | (file1::nil, nil) => (nil, [file1])
+              | (nil, file1::file2::rest) => ([file1, file2], rest)
+              | (nil, file1::nil) => (nil, [file1])
+              | (nil, nil) => (nil, nil)
+        in
+          case linkobjs of
+            nil => nestLink pre linked rest post
+          | _::_ =>
+            (ShellUtils.system (pre @ linkobjs @ post);
+             nestLink pre (linked @ [ARG objfile]) rest post)
+        end
 
-  fun invokeLinker NONE {pre, objfiles, post, quiet} =
-      CoreUtils.system
-        {command = join ([pre]
-                         @ map (quote o Filename.toString) objfiles
-                         @ [post]),
-         quiet = quiet}
-    | invokeLinker (SOME maxCommandLineSize) {pre, objfiles, post, quiet} =
-      let
-        val maxSize = maxCommandLineSize - (size pre + size post + 2)
-        fun loop (nil, linked) = loop (linked, nil)
-          | loop (files, linked) =
-            case take maxSize (linked @ files) of
-              (args, nil) =>
-              CoreUtils.system
-                {command = join ([pre] @ map quote args @ [post]),
-                 quiet = quiet}
-            | (nil, args as [_]) =>
-              CoreUtils.system 
-                {command = join ([pre] @ map quote args @ [post]),
-                 quiet = quiet}
-            | _ =>
-              let
-                val objfile = TempFile.create ("."^SMLSharp_Config.OBJEXT())
-                val objfile = Filename.toString objfile
-                val pre = join [SMLSharp_Config.LD (), "-r"]
-                val post = join ["-o", quote objfile]
-                val maxSize = maxCommandLineSize - (size pre + size post + 2)
-                val (linkobjs, rest) =
-                    case take maxSize files of
-                      (files as _::_::_, rest) => (files, rest)
-                    | (file1::nil, file2::rest) => ([file1, file2], rest)
-                    | (file1::nil, nil) => (nil, [file1])
-                    | (nil, file1::file2::rest) => ([file1, file2], rest)
-                    | (nil, file1::nil) => (nil, [file1])
-                    | (nil, nil) => (nil, nil)
-              in
-                case linkobjs of
-                  nil => loop (rest, linked)
-                | _::_ =>
-                  (CoreUtils.system
-                     {command = join ([pre] @ linkobjs @ [post]),
-                      quiet = quiet};
-                   loop (rest, linked @ [objfile]))
-              end
-      in
-        loop (map Filename.toString objfiles, nil)
-      end
+  fun invokeLinker {pre, files, post} =
+      (nestLink pre nil files post; ())
 
-  fun link {flags, objects, libs, dst, useCXX, quiet} =
+  fun link {flags, objects, libs, dst, useCXX} =
       invokeLinker
-        (SMLSharp_Config.CMDLINE_MAXLEN ())
-        {pre = join ((if useCXX
-                      then SMLSharp_Config.CXX ()
-                      else SMLSharp_Config.CC ())
-                     :: SMLSharp_Config.LDFLAGS ()
-                     :: map quote flags),
-         objfiles = objects,
-         post = join (map quote libs
-                      @ [SMLSharp_Config.LIBS (),
-                         "-o", quote (Filename.toString dst)]),
-         quiet = quiet}
+        {pre = EXPAND (if useCXX
+                       then Config.CXX ()
+                       else Config.CC ())
+               :: EXPAND (Config.LDFLAGS ())
+               :: flags,
+         files = map (ARG o Filename.toString) objects,
+         post = libs
+                @ [EXPAND (Config.LIBS ()),
+                   ARG "-o", ARG (Filename.toString dst)]}
         
   fun partialLink {objects, dst} =
       invokeLinker
-        (SMLSharp_Config.CMDLINE_MAXLEN ())
-        {pre = join [SMLSharp_Config.LD (), "-r"],
-         objfiles = objects,
-         post = join ["-o", quote (Filename.toString dst)],
-         quiet = false}
+        {pre = [EXPAND (Config.LD ()), ARG "-r"],
+         files = map (ARG o Filename.toString) objects,
+         post = [ARG "-o", ARG (Filename.toString dst)]}
 
   fun assemble {source, flags, object} =
-      CoreUtils.system
-        {command = join (SMLSharp_Config.CC ()
-                         :: map quote flags
-                         @ ["-c", quote (Filename.toString source),
-                            "-o", quote (Filename.toString object)]),
-         quiet = false}
+      (ShellUtils.system
+         (EXPAND (Config.CC ())
+          :: flags
+          @ [ARG "-c", ARG (Filename.toString source),
+             ARG "-o", ARG (Filename.toString object)]);
+       ())
 
-  fun invokeAr NONE {objects, archive} =
-      (CoreUtils.system
-         {command = join (SMLSharp_Config.AR ()
-                          :: "qc"
-                          :: quote (Filename.toString archive)
-                          :: map (quote o Filename.toString) objects),
-          quiet = false};
-       CoreUtils.system
-         {command = join [SMLSharp_Config.RANLIB (),
-                          quote (Filename.toString archive)],
-          quiet = false})
-    | invokeAr (SOME maxCommandLineSize) {objects, archive} =
+  fun invokeAr {objects, archive} =
       let
-        val _ = CoreUtils.rm_f archive
-        val archive = Filename.toString archive
-        val objects = map Filename.toString objects
-        val pre = join [SMLSharp_Config.AR (), "qc", quote archive]
-        val maxSize = maxCommandLineSize - size pre
-        fun loop nil = ()
-          | loop args =
-            let
-              val (args, rest) =
-                  case take maxSize args of
-                    (args as _::_, rest) => (args, rest)
-                  | (nil, file::rest) => ([file], rest)
-                  | (nil, nil) => (nil, nil)
-            in
-              CoreUtils.system {command = join (pre :: args), quiet = false};
-              loop rest
-            end
+        val pre = [EXPAND (Config.AR ()),
+                   ARG "qc", ARG (Filename.toString archive)]
+        val (args, rest) =
+            case ShellUtils.split {pre = pre, args = objects, post = nil} of
+              (args as _::_, rest) => (args, rest)
+            | (nil, arg::rest) => ([arg], rest)
+            | (nil, nil) => (nil, nil)
       in
-        loop objects;
-        CoreUtils.system
-          {command = join [SMLSharp_Config.RANLIB (), quote archive],
-           quiet = false}
+        ShellUtils.system (pre @ args);
+        case rest of
+          _::_ => invokeAr {objects = rest, archive = archive}
+        | nil =>
+          (ShellUtils.system [EXPAND (Config.RANLIB ()),
+                              ARG (Filename.toString archive)];
+           ())
       end
 
-  fun archive (args as {archive, ...}) =
+  fun archive {objects, archive} =
       (CoreUtils.rm_f archive;
-       invokeAr (SMLSharp_Config.CMDLINE_MAXLEN ()) args)
+       invokeAr {objects = map (ARG o Filename.toString) objects,
+                 archive = archive})
 
 end

@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlunit-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
 _require "IntInf001.smi"
 _require "IntInf101.smi"
 (*

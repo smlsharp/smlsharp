@@ -1,0 +1,3 @@
+_require "./011_require2.smi"
+_require "./011_require3.smi"
+val x : int * int

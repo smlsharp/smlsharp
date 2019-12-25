@@ -1,14 +1,13 @@
 _require local "../../../../basis.smi"
-_require "../../../../smlformat-lib.smi"
-_require "../../../../llvm/main/LLVM.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-
+_require local "../../../../smlformat-lib.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
-_require "../../../compilePhases/loadfile/main/LoadFile.smi"
 _require "../../../libs/toolchain/main/Filename.smi"
 _require local "../../../libs/util/main/TermFormat.smi"
 _require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
+(* _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi" *)
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../compilePhases/elaborate/main/Elaborator.smi"
 
 structure TopData =
@@ -19,22 +18,20 @@ struct
     | ErrorCheck                    (* run until error check is completed. *)
     | NoStop
 
-  datatype load_mode = datatype LoadFile.mode
-
   type options =
       {
         stopAt: stopAt,                         (* compile will stop here. *)
         baseFilename: Filename.filename option, (* base name for file search *)
-        stdPath: Filename.filename list,        (* system path for file search *)
-        loadPath: Filename.filename list,       (* user path for file search *)
-        loadMode: load_mode,                    (* load mode *)
-        outputWarnings: UserError.errorInfo list -> unit
+        loadPath: InterfaceName.source list,    (* path for file search *)
+        loadMode: InterfaceName.file_load_mode, (* load mode *)
+        outputWarnings: UserError.errorInfo list -> unit,
+        defaultInterface: Filename.filename -> Filename.filename
       }
 
   type toplevelContext =
       {
         topEnv: NameEvalEnv.topEnv,
-        version: int option,
+        version: IDCalc.version,
         fixEnv: Elaborator.fixEnv,
         builtinDecls: IDCalc.icdecl list
       }
@@ -46,11 +43,14 @@ struct
 
   datatype result =
       STOPPED                                   (* aborted due to stopAt. *)
-    | RETURN of newContext * LLVM.LLVMModuleRef (* compile completed *)
+    | RETURN of newContext * Filename.filename  (* compile completed *)
 
   val debugPrint : string -> unit
   val printStopAt : stopAt -> unit
   val printFileName : Filename.filename -> unit
   val printResult : result -> unit
   val printOptions : options -> unit
+
+  exception UnsupportedPointerSize of int
+  exception IllegalBuiltin of Filename.filename
 end

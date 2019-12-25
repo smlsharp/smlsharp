@@ -1,4 +1,4 @@
 functor F (A : sig end) =
 struct
-  type t (= boxed)
+  type t (= *)
 end

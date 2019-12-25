@@ -1,14 +1,17 @@
 _require local "../../../../basis.smi"
 _require local "../../../libs/util/main/TermFormat.smi"
-_require local "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+(* _require local "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi" *)
 
-_require "../../../data/symbols/main/Loc.ppg.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+(* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
-_require "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
+_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "./PatternCalc.ppg.smi"
 
 structure PatternCalcInterface =
@@ -32,10 +35,6 @@ struct
 
   type datbind = AbsynInterface.datbind
 
-  datatype runtimeTy 
-   = BUILTINty of BuiltinTypeNames.bty
-   | LIFTEDty of longsymbol
-
   datatype pidec 
     = PIVAL of
       {
@@ -53,16 +52,10 @@ struct
       }
     | PIOPAQUE_TYPE of
       {
+        eq: bool,
         tyvars: tvar list,
         symbol: symbol,
-	runtimeTy: runtimeTy,
-        loc: loc
-      }
-    | PIOPAQUE_EQTYPE of
-      {
-        tyvars: tvar list,
-        symbol: symbol,
-	runtimeTy: runtimeTy,
+        runtimeTy: AbsynTy.opaque_impl,
         loc: loc
       }
     | PITYPEBUILTIN of
@@ -99,6 +92,7 @@ struct
   type interfaceDec =
       {
         interfaceId: interfaceId,
+        interfaceName: InterfaceName.interface_name,
         requiredIds: {id: interfaceId, loc: loc} list,
         provideTopdecs: pitopdec list
       }
@@ -129,7 +123,8 @@ struct
     = TOPDECSTR of PatternCalc.plstrdec * loc
     | TOPDECSIG of (symbol * PatternCalc.plsigexp ) list * loc 
     | TOPDECFUN of
-      {pltopdec: {name:symbol, argStrName:symbol, argSig:PatternCalc.plsigexp, body:PatternCalc.plstrexp, loc:loc},
+      {pltopdec: {name:symbol, argStrName:symbol, argSig:PatternCalc.plsigexp, 
+                  body:PatternCalc.plstrexp, loc:loc},
        pitopdec: funbind option}
         list * loc 
 

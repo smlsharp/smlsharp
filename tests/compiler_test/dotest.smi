@@ -1,0 +1,3 @@
+_require local "basis.smi"
+_require local "smlunit-lib.smi"
+_require local "./tests.smi"

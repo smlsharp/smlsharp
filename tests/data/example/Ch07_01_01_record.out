@@ -1,0 +1,9 @@
+val point = {X = 0.0, Y = 0.0} : {X: real, Y: real}
+
+val it = (1.1, fn, "SML#") : real * (int -> int) * string
+
+val it = (1, 2) : int * int
+
+val f = fn : ['a. 'a -> ['b. 'b -> {X: 'a, Y: 'b}]]
+
+val g = fn : ['a. 'a -> ['b. 'b -> 'a * 'b]]

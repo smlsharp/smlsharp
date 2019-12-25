@@ -1,0 +1,4 @@
+NODE {tests/data/loadfile/071_include5.smi INTERFACE}
+ROOT {ROOT_SML USERPATH tests/data/loadfile/071_include5.sml COMPILE
+ PROVIDE {USERPATH tests/data/loadfile/071_include5.smi INTERFACE
+  c08121f7c2c0f2b0}}

@@ -7,7 +7,7 @@
 structure InterfaceHash : sig
 
   val generate
-      : {source : InterfaceName.source,
+      : {filename : Filename.filename,
          requires : InterfaceName.interface_name list,
          topdecs : AbsynInterface.itopdec list}
         -> InterfaceName.hash
@@ -22,11 +22,13 @@ struct
   fun listNamesValbind prefix ({symbol, body, loc}:A.valbind) =
       [prefix ^ ".V" ^ symbolToString symbol]
 
+  fun listNamesTypbindTrans prefix {tyvars, symbol, ty, loc} =
+      [prefix ^ ".T" ^ symbolToString symbol]
+
   fun listNamesTypbind prefix typbind =
       case typbind of 
-	  A.TRANSPARENT {tyvars, symbol, ty,  loc} => [prefix ^ ".T" ^ symbolToString symbol]
-	| A.OPAQUE_NONEQ {tyvars, symbol, runtimeTy, loc} => [prefix ^ ".T" ^ symbolToString symbol]
-	| A.OPAQUE_EQ {tyvars, symbol, runtimeTy, loc} => [prefix ^ ".T" ^ symbolToString symbol] 
+	  A.TRANSPARENT t => listNamesTypbindTrans prefix t
+	| A.OPAQUE {eq, tyvars, symbol, runtimeTy, loc} => [prefix ^ ".T" ^ symbolToString symbol]
 
   fun listNamesDatbind prefix ({tyvars, symbol, conbind}:A.datbind) =
       prefix ^ ".T" ^ symbolToString symbol ::
@@ -43,8 +45,9 @@ struct
         listNamesValbind prefix valbind
       | A.ITYPE typbinds =>
         List.concat (map (listNamesTypbind prefix) typbinds)
-      | A.IDATATYPE {datbind, loc} =>
-        List.concat (map (listNamesDatbind prefix) datbind)
+      | A.IDATATYPE {datbind, withType, loc} =>
+        List.concat (map (listNamesDatbind prefix) datbind
+                     @ map (listNamesTypbindTrans prefix) withType)
       | A.ITYPEREP {symbol, longsymbol, loc} =>
         [prefix ^ ".T" ^ symbolToString symbol]
       | A.ITYPEBUILTIN {symbol, builtinSymbol, loc} =>
@@ -85,9 +88,9 @@ struct
           map (fn x => prefix ^ symbolToString x) symbols
         end
 
-  fun generate {source as (_, path), requires, topdecs} =
+  fun generate {filename, requires, topdecs} =
       let
-        val sourceName = Filename.toString (Filename.basename path)
+        val sourceName = Filename.toString (Filename.basename filename)
 (*
         val sourceName =
             case source of

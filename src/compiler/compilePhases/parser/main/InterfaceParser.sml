@@ -8,7 +8,7 @@ structure InterfaceParser =
 struct
   structure Parser = Interface.Parser
   type token = Parser.token
-  type source = {read : int -> string, sourceName : string}
+  type source = {read : int -> string, source : Loc.source}
   type input =
       {
         streamRef : Parser.stream ref,
@@ -19,13 +19,13 @@ struct
   fun parseError errors (msg, lpos, rpos) =
       UserError.enqueueError errors ((lpos, rpos), ParserError.ParseError msg)
 
-  fun setup ({read, sourceName}:source) =
+  fun setup ({read, source}:source) =
       let
         val errors = UserError.createQueue ()
         val errorFn = parseError errors
         val lexarg =
             InterfaceLex.UserDeclarations.initArg
-              {sourceName = sourceName,
+              {source = source,
                lexErrorFn = errorFn,
                initialLineno = 1,
                allow8bitId = !Control.allow8bitId}

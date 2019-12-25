@@ -1,0 +1,25 @@
+_require local "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
+_require local "../../../libs/util/main/TermFormat.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require "./AbsynTy.smi"
+
+structure AbsynTyFormatter =
+struct
+
+  val format_ty
+      : AbsynTy.ty -> SMLFormat.FormatExpression.expression list
+  val format_tvarKind
+      : AbsynTy.tvarKind -> SMLFormat.FormatExpression.expression list
+  val format_tvar
+      : AbsynTy.tvar -> SMLFormat.FormatExpression.expression list
+  val format_kindedTvar
+      : AbsynTy.kindedTvar -> SMLFormat.FormatExpression.expression list
+  val format_ffiTy
+      : AbsynTy.ffiTy -> SMLFormat.FormatExpression.expression list
+  val format_opaque_impl
+      : AbsynTy.opaque_impl -> SMLFormat.FormatExpression.expression list
+
+end

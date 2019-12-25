@@ -11,7 +11,7 @@
 #ifndef WITHOUT_MULTITHREAD
 struct control {
 	_Atomic(unsigned int) state;
-	_Atomic(unsigned int) canceled;
+	_Atomic(unsigned int) flags;
 	struct control *next;  /* double-linked list */
 };
 #endif /* !WITHOUT_MULTITHREAD */
@@ -23,12 +23,15 @@ struct control {
 #define INACTIVE(phase)  ((phase) | INACTIVE_FLAG)
 #define IS_ACTIVE(state) (!((state) & INACTIVE_FLAG))
 
+#define CANCELED_FLAG    0x01U
+#define PTHREAD_FLAG     0x02U
+
 #ifdef WITHOUT_MULTITHREAD
 #undef IS_ACTIVE
 #define IS_ACTIVE(x) 1
 #endif /* WITHOUT_MULTITHREAD */
 
-struct sml_mutator {
+struct sml_user {
 #ifndef WITHOUT_MASSIVETHREADS
 	struct control control;
 #endif /* !WITHOUT_MASSIVETHREADS */
@@ -44,12 +47,14 @@ struct sml_mutator {
 };
 
 struct sml_worker {
+#ifndef WITHOUT_MULTITHREAD
 	struct control control;
+#endif /* !WITHOUT_MULTITHRED */
 	union sml_alloc *thread_local_heap;
-	struct sml_mutator *mutator;
+	struct sml_user *user;
 #ifndef WITHOUT_MASSIVETHREADS
 	/* newly created mutators (but not yet in global mutators list) */
-	_Atomic(struct control *) new_mutators;
+	_Atomic(struct control *) new_users;
 #endif /* WITHOUT_MASSIVETHREADS */
 };
 
@@ -60,10 +65,13 @@ static sml_spinlock_t worker_creation_lock = SPIN_LOCK_INIT;
 #endif /* !WITHOUT_MULTITHREAD */
 
 #ifndef WITHOUT_MASSIVETHREADS
-static struct control *mutators; /* owned by collector only */
+static struct control *users; /* owned by collector only */
 #endif /* !WITHOUT_MASSIVETHREADS */
 
 _Atomic(unsigned int) sml_check_flag;
+
+#define FLAG_GC      1U
+#define FLAG_SIGNAL  (~(-1U >> 1))
 
 #ifndef WITHOUT_CONCURRENCY
 static pthread_mutex_t sync_wait_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -81,15 +89,37 @@ static void cancel(void *p)
 	 * cancellation, which would break mutator--collector handshaking,
 	 * but no clever programmer use it ;p).
 	 */
-	store_release(&((struct control *)p)->canceled, 1);
+	fetch_or(relaxed, &((struct control *)p)->flags, CANCELED_FLAG);
 }
 #endif /* WITHOUT_MULTITHREAD */
 
 worker_tlv_alloc(struct sml_worker *, current_worker, cancel);
 
 #ifndef WITHOUT_MASSIVETHREADS
-user_tlv_alloc(struct sml_mutator *, current_mutator, cancel);
+user_tlv_alloc(struct sml_user *, current_user, cancel);
 #endif /* !WITHOUT_MASSIVETHREADS */
+
+static _Atomic(struct sml_worker *) signal_receiver;
+static void (*signal_handler)(void);
+
+int
+sml_set_signal_handler(void (*handler)(void))
+{
+	struct sml_worker *worker = worker_tlv_get(current_worker), *old = NULL;
+	if (!cmpswap_relaxed(&signal_receiver, &old, worker) && old != worker)
+		return 1;
+	signal_handler = handler;
+	return 0;
+}
+
+int
+sml_send_signal()
+{
+	if (load_relaxed(&signal_receiver) == NULL)
+		return 1;
+	fetch_or(release, &sml_check_flag, FLAG_SIGNAL);
+	return 0;
+}
 
 #if !defined WITHOUT_MULTITHREAD && defined WITHOUT_CONCURRENCY
 static pthread_mutex_t stop_the_world_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -142,16 +172,9 @@ static void
 control_init(struct control *control, unsigned int state)
 {
 	atomic_init(&control->state, state);
-	atomic_init(&control->canceled, 0);
+	atomic_init(&control->flags, 0);
 }
 #endif /* !WITHOUT_MULTITHREAD */
-
-#ifdef WITHOUT_MULTITHREAD
-static void
-control_destroy(struct control *control ATTR_UNUSED)
-{
-}
-#endif /* WITHOUT_MULTITHREAD */
 
 #ifndef WITHOUT_MULTITHREAD
 static void
@@ -178,7 +201,8 @@ activate_myth(struct control *control)
 	/* all updates by other threads must happen before here */
 	old = fetch_and(acquire, &control->state, ~INACTIVE_FLAG);
 	while (IS_ACTIVE(old)) {
-		myth_yield();
+		if (!(load_relaxed(&control->flags) & PTHREAD_FLAG))
+			myth_yield();
 		old = fetch_and(acquire, &control->state, ~INACTIVE_FLAG);
 	}
 	assert(IS_ACTIVE(load_relaxed(&control->state)));
@@ -187,19 +211,36 @@ activate_myth(struct control *control)
 
 #ifndef WITHOUT_MASSIVETHREADS
 static void
-mutator_register(struct sml_mutator *mutator, struct sml_worker *worker)
+user_register(struct sml_user *user, struct sml_worker *worker)
 {
-	control_init(&mutator->control, ACTIVE(ASYNC));
-	control_insert(&worker->new_mutators, &mutator->control);
-	user_tlv_set(current_mutator, mutator);
+	control_init(&user->control, ACTIVE(ASYNC));
+	control_insert(&worker->new_users, &user->control);
+	if (load_relaxed(&worker->control.flags) & PTHREAD_FLAG) {
+		atomic_init(&user->control.flags, PTHREAD_FLAG);
+		worker->user = user;
+	} else {
+		user_tlv_set(current_user, user);
+	}
 }
 #endif /* WITHOUT_MASSIVETHREADS */
+
+#ifdef WITHOUT_MULTITHREAD
+static void
+worker_register(struct sml_worker *worker ATTR_UNUSED)
+{
+	worker_tlv_set(current_worker, worker);
+}
+#endif /* WITHOUT_MULTITHREAD */
 
 #ifndef WITHOUT_MULTITHREAD
 static void
 worker_register(struct sml_worker *worker)
 {
 	control_init(&worker->control, ACTIVE(ASYNC));
+#ifndef WITHOUT_MASSIVETHREADS
+	if (!myth_is_myth_worker())
+		atomic_init(&worker->control.flags, PTHREAD_FLAG);
+#endif /* !WITHOUT_MASSIVETHREADS */
 	spin_lock(&worker_creation_lock);
 	atomic_init(&worker->control.state, ACTIVE(new_worker_phase));
 	control_insert(&workers, &worker->control);
@@ -208,14 +249,14 @@ worker_register(struct sml_worker *worker)
 }
 #endif /* WITHOUT_MULTITHREAD */
 
-static struct sml_mutator *
-mutator_new()
+static struct sml_user *
+user_new()
 {
-	struct sml_mutator *mutator;
-	mutator = xmalloc(sizeof(struct sml_mutator));
-	mutator->frame_stack = NULL;
-	mutator->exn_object = NULL;
-	return mutator;
+	struct sml_user *user;
+	user = xmalloc(sizeof(struct sml_user));
+	user->frame_stack = NULL;
+	user->exn_object = NULL;
+	return user;
 }
 
 static struct sml_worker *
@@ -224,17 +265,17 @@ worker_new()
 	struct sml_worker *worker;
 	worker = xmalloc(sizeof(struct sml_worker));
 	worker->thread_local_heap = sml_heap_worker_init();
-	worker->mutator = NULL;
+	worker->user = NULL;
 #ifndef WITHOUT_MASSIVETHREADS
-	atomic_init(&worker->new_mutators, NULL);
+	atomic_init(&worker->new_users, NULL);
 #endif /* WITHOUT_MASSIVETHREADS */
 	return worker;
 }
 
 static void
-mutator_destroy(struct sml_mutator *mutator)
+user_destroy(struct sml_user *user)
 {
-	free(mutator);
+	free(user);
 }
 
 static void
@@ -242,7 +283,7 @@ worker_destroy(struct sml_worker *worker)
 {
 	sml_heap_worker_destroy(worker->thread_local_heap);
 #ifdef WITHOUT_MASSIVETHREADS
-	mutator_destroy(worker->mutator);
+	user_destroy(worker->user);
 #endif /* WITHOUT_MASSIVETHREADS */
 	free(worker);
 }
@@ -273,17 +314,17 @@ decr_sync_counter_release()
 
 #if !defined WITHOUT_CONCURRENCY && defined WITHOUT_MASSIVETHREADS
 static void
-mutator_sync2(struct sml_mutator *mutator)
+user_sync2(struct sml_user *user)
 {
-	sml_heap_mutator_sync2(mutator);
+	sml_heap_user_sync2(user);
 }
 #endif /* !defined WITHOUT_CONCURRENCY && defined WITHOUT_MASSIVETHREADS */
 
 #ifndef WITHOUT_MASSIVETHREADS
 static void
-mutator_sync2(struct sml_mutator *mutator)
+user_sync2(struct sml_user *user)
 {
-	sml_heap_mutator_sync2(mutator);
+	sml_heap_user_sync2(user);
 	/* all updates by this thread must happen before here */
 	decr_sync_counter_release();
 }
@@ -291,13 +332,13 @@ mutator_sync2(struct sml_mutator *mutator)
 
 #ifndef WITHOUT_CONCURRENCY
 static void
-mutator_sync2_with(struct sml_mutator *mutator, void *frame_pointer)
+user_sync2_with(struct sml_user *user, void *frame_pointer)
 {
-	void *old_frame_top = mutator->frame_stack->top;
+	void *old_frame_top = user->frame_stack->top;
 	if (!old_frame_top)
-		mutator->frame_stack->top = frame_pointer;
-	mutator_sync2(mutator);
-	mutator->frame_stack->top = old_frame_top;
+		user->frame_stack->top = frame_pointer;
+	user_sync2(user);
+	user->frame_stack->top = old_frame_top;
 }
 #endif /* WITHOUT_CONCURRENCY */
 
@@ -321,30 +362,30 @@ worker_sync2(struct sml_worker *worker)
 
 #ifdef WITHOUT_MASSIVETHREADS
 static void
-mutator_leave(struct sml_mutator *mutator ATTR_UNUSED)
+user_leave(struct sml_user *user ATTR_UNUSED)
 {
 }
 #endif /* WITHOUT_MASSIVETHREADS */
 
 #ifndef WITHOUT_MASSIVETHREADS
 static void
-mutator_leave(struct sml_mutator *mutator)
+user_leave(struct sml_user *user)
 {
 	unsigned int old;
-	assert(IS_ACTIVE(load_relaxed(&mutator->control.state)));
+	assert(IS_ACTIVE(load_relaxed(&user->control.state)));
 	/* SYNC2 -> ASYNC */
-	old = swap(release, &mutator->control.state, INACTIVE(ASYNC));
+	old = swap(release, &user->control.state, INACTIVE(ASYNC));
 	if (old == ACTIVE(PRESYNC2))
-		mutator_sync2(mutator);
+		user_sync2(user);
 }
 #endif /* WITHOUT_MASSIVETHREADS */
 
-#ifdef WITHOUT_MULTITHRED
+#ifdef WITHOUT_MULTITHREAD
 static void
 worker_leave(struct sml_worker *worker ATTR_UNUSED)
 {
 }
-#endif /* WITHOUT_MULTITHRED */
+#endif /* WITHOUT_MULTITHREAD */
 
 #if !defined WITHOUT_MULTITHREAD && defined WITHOUT_CONCURRENCY
 static void
@@ -374,12 +415,13 @@ worker_leave(struct sml_worker *worker)
 		worker_sync1(worker);
 	} else if (old == ACTIVE(PRESYNC2)) {
 #ifdef WITHOUT_MASSIVETHREADS
-		mutator_sync2(worker->mutator);
+		user_sync2(worker->user);
 #endif /* WITHOUT_MASSIVETHREADS */
 		worker_sync2(worker);
 	}
 #ifndef WITHOUT_MASSIVETHREADS
-	worker->mutator = NULL;
+	if (!(load_relaxed(&worker->control.flags) & PTHREAD_FLAG))
+		worker->user = NULL;
 #endif /* !WITHOUT_MASSIVETHREADS */
 }
 #endif /* WITHOUT_CONCURRENCY */
@@ -388,9 +430,9 @@ SML_PRIMITIVE void
 sml_leave()
 {
 	struct sml_worker *worker = worker_tlv_get(current_worker);
-	assert(worker->mutator->frame_stack->top == NULL);
-	worker->mutator->frame_stack->top = CALLER_FRAME_END_ADDRESS();
-	mutator_leave(worker->mutator);
+	assert(worker->user->frame_stack->top == NULL);
+	worker->user->frame_stack->top = CALLER_FRAME_END_ADDRESS();
+	user_leave(worker->user);
 	worker_leave(worker);
 }
 
@@ -398,37 +440,37 @@ void *
 sml_leave_internal(void *frame_pointer)
 {
 	struct sml_worker *worker = worker_tlv_get(current_worker);
-	void *old_frame_top = worker->mutator->frame_stack->top;
+	void *old_frame_top = worker->user->frame_stack->top;
 	if (!old_frame_top)
-		worker->mutator->frame_stack->top = frame_pointer;
-	mutator_leave(worker->mutator);
+		worker->user->frame_stack->top = frame_pointer;
+	user_leave(worker->user);
 	worker_leave(worker);
 	return old_frame_top;
 }
 
 #ifdef WITHOUT_MASSIVETHREADS
 static void
-mutator_enter(struct sml_mutator *mutator ATTR_UNUSED)
+user_enter(struct sml_user *user ATTR_UNUSED)
 {
 }
 #endif /* WITHOUT_MASSIVETHREADS */
 
 #ifndef WITHOUT_MASSIVETHREADS
 static void
-mutator_enter(struct sml_mutator *mutator)
+user_enter(struct sml_user *user)
 {
-	activate_myth(&mutator->control);
+	activate_myth(&user->control);
 
-	if (load_relaxed(&mutator->control.state) == ACTIVE(PRESYNC2)) {
-		store_relaxed(&mutator->control.state, ACTIVE(ASYNC));
-		mutator_sync2(mutator);
+	if (load_relaxed(&user->control.state) == ACTIVE(PRESYNC2)) {
+		store_relaxed(&user->control.state, ACTIVE(ASYNC));
+		user_sync2(user);
 	}
 }
 #endif /* !WITHOUT_MASSIVETHREADS */
 
 #ifdef WITHOUT_MULTITHREAD
 static struct sml_worker *
-worker_enter(struct sml_worker *worker, struct sml_mutator *mutator ATTR_UNUSED)
+worker_enter(struct sml_worker *worker, struct sml_user *user ATTR_UNUSED)
 {
 	return worker;
 }
@@ -436,7 +478,7 @@ worker_enter(struct sml_worker *worker, struct sml_mutator *mutator ATTR_UNUSED)
 
 #if !defined WITHOUT_MULTITHREAD && defined WITHOUT_CONCURRENCY
 static struct sml_worker *
-worker_enter(struct sml_worker *worker, struct sml_mutator *mutator ATTR_UNUSED)
+worker_enter(struct sml_worker *worker, struct sml_user *user ATTR_UNUSED)
 {
 	struct control *control = &worker->control;
 	unsigned int old;
@@ -463,7 +505,7 @@ worker_enter(struct sml_worker *worker, struct sml_mutator *mutator ATTR_UNUSED)
 
 #if !defined WITHOUT_CONCURRENCY && defined WITHOUT_MASSIVETHREADS
 static struct sml_worker *
-worker_enter(struct sml_worker *worker, struct sml_mutator *mutator ATTR_UNUSED)
+worker_enter(struct sml_worker *worker, struct sml_user *user ATTR_UNUSED)
 {
 	activate(&worker->control);
 	return worker;
@@ -472,7 +514,7 @@ worker_enter(struct sml_worker *worker, struct sml_mutator *mutator ATTR_UNUSED)
 
 #ifndef WITHOUT_MASSIVETHREADS
 static struct sml_worker *
-worker_enter(struct sml_worker *worker, struct sml_mutator *mutator)
+worker_enter(struct sml_worker *worker, struct sml_user *user)
 {
 	if (worker) {
 		activate(&worker->control);
@@ -480,7 +522,7 @@ worker_enter(struct sml_worker *worker, struct sml_mutator *mutator)
 		worker = worker_new();
 		worker_register(worker);
 	}
-	worker->mutator = mutator;
+	worker->user = user;
 	return worker;
 }
 #endif /* !WITHOUT_MASSIVETHREADS */
@@ -488,51 +530,66 @@ worker_enter(struct sml_worker *worker, struct sml_mutator *mutator)
 SML_PRIMITIVE void
 sml_enter()
 {
-	struct sml_mutator *mutator = NULL;
+	struct sml_user *user = NULL;
 	struct sml_worker *worker;
 #ifndef WITHOUT_MASSIVETHREADS
-	mutator = user_tlv_get(current_mutator);
+	if (myth_is_myth_worker()) {
+		user = user_tlv_get(current_user);
+	} else {
+		worker = worker_tlv_get(current_worker);
+		user = worker->user;
+	}
 #endif /* WITHOUT_MASSIVETHREADS */
-	mutator_enter(mutator);
+	user_enter(user);
 	worker = worker_tlv_get(current_worker);
-	worker = worker_enter(worker, mutator);
-	assert(worker->mutator->frame_stack->top == CALLER_FRAME_END_ADDRESS());
-	worker->mutator->frame_stack->top = NULL;
+	worker = worker_enter(worker, user);
+	assert(worker->user->frame_stack->top == CALLER_FRAME_END_ADDRESS());
+	worker->user->frame_stack->top = NULL;
 }
 
 void
 sml_enter_internal(void *old_frame_top)
 {
-	struct sml_mutator *mutator = NULL;
-	struct sml_worker *worker;
+	struct sml_user *user = NULL;
+	struct sml_worker *worker = worker_tlv_get(current_worker);
 #ifndef WITHOUT_MASSIVETHREADS
-	mutator = user_tlv_get(current_mutator);
+	if (load_relaxed(&worker->control.flags) & PTHREAD_FLAG)
+		user = worker->user;
+	else
+		user = user_tlv_get(current_user);
 #endif /* WITHOUT_MASSIVETHREADS */
-	mutator_enter(mutator);
+	user_enter(user);
 	worker = worker_tlv_get(current_worker);
-	worker = worker_enter(worker, mutator);
-	worker->mutator->frame_stack->top = old_frame_top;
+	worker = worker_enter(worker, user);
+	worker->user->frame_stack->top = old_frame_top;
 }
 
-#ifdef WITHOUT_MASSIVETHREADS
+#if defined WITHOUT_MASSIVETHREADS && !defined WITHOUT_CONCURRENCY
 static void
-mutator_sync2_check(struct sml_mutator *mutator, void *frame_pointer)
+user_sync2_check(struct sml_user *user, void *frame_pointer)
 {
-	mutator_sync2_with(mutator, frame_pointer);
+	user_sync2_with(user, frame_pointer);
 }
-#endif /* WITHOUT_MASSIVETHREADS */
+#endif /* WITHOUT_MASSIVETHREADS && !WITHOUT_CONCURRENCY */
 
 #ifndef WITHOUT_MASSIVETHREADS
 static void
-mutator_sync2_check(struct sml_mutator *mutator, void *frame_pointer)
+user_sync2_check(struct sml_user *user, void *frame_pointer)
 {
-	unsigned int state = load_relaxed(&mutator->control.state);
+	unsigned int state = load_relaxed(&user->control.state);
 	if (state == ACTIVE(PRESYNC2)) {
-		store_relaxed(&mutator->control.state, ACTIVE(ASYNC));
-		mutator_sync2_with(mutator, frame_pointer);
+		store_relaxed(&user->control.state, ACTIVE(ASYNC));
+		user_sync2_with(user, frame_pointer);
 	}
 }
 #endif /* WITHOUT_MASSIVETHREADS */
+
+#ifdef WITHOUT_MULTITHREAD
+void
+sml_check_internal(void *frame_pointer ATTR_UNUSED)
+{
+}
+#endif /* WITHOUT_MULTITHREAD */
 
 #ifndef WITHOUT_CONCURRENCY
 void
@@ -550,19 +607,47 @@ sml_check_internal(void *frame_pointer)
 		break;
 	case ACTIVE(PRESYNC2):
 		store_relaxed(&worker->control.state, ACTIVE(SYNC2));
-		mutator_sync2_check(worker->mutator, frame_pointer);
+		user_sync2_check(worker->user, frame_pointer);
 		worker_sync2(worker);
 		break;
 	}
 }
 #endif /* !WITHOUT_CONCURRENCY */
 
-SML_PRIMITIVE void
-sml_check()
+void sml_call_with_cleanup(void(*)(void), void(*)(void*,void*,void*), void*);
+struct signal_cleanup_arg {
+	void *frame_pointer;
+	void (*signal_handler)(void);
+};
+
+static void
+signal_cleanup(void *arg, void *u, void *e)
 {
-	assert(worker_tlv_get(current_worker)->mutator->frame_stack->top
+	struct signal_cleanup_arg *a = arg;
+	signal_handler = a->signal_handler;
+	sml_enter_internal(a->frame_pointer);
+	sml_unsave_exn(e);
+}
+
+SML_PRIMITIVE void
+sml_check(unsigned int flag)
+{
+	void *frame_pointer = CALLER_FRAME_END_ADDRESS();
+	assert(worker_tlv_get(current_worker)->user->frame_stack->top
 	       == NULL);
-	sml_check_internal(CALLER_FRAME_END_ADDRESS());
+
+	if ((flag & FLAG_SIGNAL)
+	    && load_relaxed(&signal_receiver) == worker_tlv_get(current_worker)
+	    && signal_handler != NULL) {
+		struct signal_cleanup_arg a;
+		fetch_and(acquire, &sml_check_flag, ~FLAG_SIGNAL);
+		a.frame_pointer = sml_leave_internal(frame_pointer);
+		a.signal_handler = signal_handler;
+		signal_handler = NULL;
+		sml_call_with_cleanup(a.signal_handler, signal_cleanup, &a);
+	}
+
+	sml_check_internal(frame_pointer);
 }
 
 #ifdef WITHOUT_MULTITHREAD
@@ -592,30 +677,46 @@ SML_PRIMITIVE void
 sml_save()
 {
 	struct sml_worker *worker = worker_tlv_get(current_worker);
-	struct sml_mutator *mutator = worker->mutator;
+	struct sml_user *user = worker->user;
 	assert(IS_ACTIVE(load_relaxed(&worker->control.state)));
-	assert(mutator->frame_stack->top == NULL);
-	mutator->frame_stack->top = CALLER_FRAME_END_ADDRESS();
+	assert(user->frame_stack->top == NULL);
+	user->frame_stack->top = CALLER_FRAME_END_ADDRESS();
 }
 
 SML_PRIMITIVE void
 sml_unsave()
 {
 	struct sml_worker *worker = worker_tlv_get(current_worker);
-	struct sml_mutator *mutator = worker->mutator;
+	struct sml_user *user = worker->user;
 	assert(IS_ACTIVE(load_relaxed(&worker->control.state)));
-	assert(mutator->frame_stack->top == CALLER_FRAME_END_ADDRESS());
-	mutator->frame_stack->top = NULL;
+	assert(user->frame_stack->top == CALLER_FRAME_END_ADDRESS());
+	user->frame_stack->top = NULL;
 }
 
-void *
-sml_save_exn_internal(void *obj)
+SML_PRIMITIVE void
+sml_save_exn(void *obj)
 {
 	struct sml_worker *worker = worker_tlv_get(current_worker);
-	struct sml_mutator *mutator = worker->mutator;
-	void *old = mutator->exn_object;
-	mutator->exn_object = obj;
-	return old;
+	struct sml_user *user = worker->user;
+	if (user->exn_object)
+		sml_fatal(0, "unhandled exception during exception handling");
+	user->exn_object = obj;
+}
+
+SML_PRIMITIVE void *
+sml_unsave_exn(void *p)
+{
+	struct sml_worker *worker;
+	struct sml_user *user;
+	void *ret;
+	if (!p)
+		return NULL;
+	worker = worker_tlv_get(current_worker);
+	user = worker->user;
+	ret = user->exn_object;
+	assert(ret != NULL);
+	user->exn_object = NULL;
+	return ret;
 }
 
 /* for debug */
@@ -624,11 +725,12 @@ int
 sml_saved()
 {
 	struct sml_worker *worker = worker_tlv_get(current_worker);
-	struct sml_mutator *mutator = worker->mutator;
+	struct sml_user *user = worker->user;
 #ifndef WITHOUT_MASSIVETHREADS
-	mutator = user_tlv_get(current_mutator);
+	if (!(load_relaxed(&worker->control.flags) & PTHREAD_FLAG))
+		user = user_tlv_get(current_user);
 #endif /* WITHOUT_MASSIVETHREADS */
-	return mutator->frame_stack->top != NULL;
+	return user->frame_stack->top != NULL;
 }
 #endif /* NDEBUG */
 
@@ -637,70 +739,77 @@ sml_control_init()
 {
 	worker_tlv_init(current_worker);
 #ifndef WITHOUT_MASSIVETHREADS
-	user_tlv_init(current_mutator);
+	user_tlv_init(current_user);
 #endif /* !WITHOUT_MASSIVETHREADS */
 }
 
 SML_PRIMITIVE void
-sml_start(void **arg)
+sml_start(void *arg)
 {
-	struct frame_stack_range *range = (void*)arg;
-	struct sml_mutator *mutator = NULL;
+	struct frame_stack_range *range = arg;
+	struct sml_user *user = NULL;
 	struct sml_worker *worker;
 	range->bottom = CALLER_FRAME_END_ADDRESS();
 	range->top = NULL;
 
 #ifndef WITHOUT_MASSIVETHREADS
-	mutator = user_tlv_get(current_mutator);
-	if (mutator) {
-		mutator_enter(mutator);
-		worker = worker_tlv_get(current_worker);
-		worker = worker_enter(worker, mutator);
+	worker = worker_tlv_get(current_worker);
+	if (worker) {
+		user = load_relaxed(&worker->control.flags) & PTHREAD_FLAG
+			? worker->user : user_tlv_get(current_user);
 	} else {
-		mutator = mutator_new();
+		user = myth_is_myth_worker()
+			? user_tlv_get(current_user) : NULL;
+	}
+	if (user) {
+		user_enter(user);
 		worker = worker_tlv_get(current_worker);
-		worker = worker_enter(worker, mutator);
-		mutator_register(mutator, worker);
+		worker = worker_enter(worker, user);
+	} else {
+		user = user_new();
+		worker = worker_tlv_get(current_worker);
+		worker = worker_enter(worker, user);
+		user_register(user, worker);
 	}
 #else /* !WITHOUT_MASSIVETHREADS */
 	worker = worker_tlv_get(current_worker);
 	if (worker) {
-		worker = worker_enter(worker, mutator);
+		worker = worker_enter(worker, user);
 	} else {
 		worker = worker_new();
-		worker->mutator = mutator_new();
+		worker->user = user_new();
 		worker_register(worker);
 	}
 #endif /* !WITHOUT_MASSIVETHREADS */
 
-	range->next = worker->mutator->frame_stack;
-	worker->mutator->frame_stack = range;
+	range->next = worker->user->frame_stack;
+	worker->user->frame_stack = range;
 }
 
 SML_PRIMITIVE void
 sml_end()
 {
 	struct sml_worker *worker = worker_tlv_get(current_worker);
-	struct sml_mutator *mutator = worker->mutator;
+	struct sml_user *user = worker->user;
 
 	assert(IS_ACTIVE(load_relaxed(&worker->control.state)));
-	assert(mutator->frame_stack->bottom == CALLER_FRAME_END_ADDRESS());
+	assert(user->frame_stack->bottom == CALLER_FRAME_END_ADDRESS());
 
-	mutator->frame_stack = mutator->frame_stack->next;
-	mutator_leave(worker->mutator);
+	user->frame_stack = user->frame_stack->next;
+	user_leave(worker->user);
 	worker_leave(worker);
 }
 
 #ifndef WITHOUT_MASSIVETHREADS
 static struct control **
-mutators_gc(struct control **p)
+users_gc(struct control **p)
 {
 	struct control *control;
 
 	while ((control = *p)) {
-		if (load_acquire(&control->canceled)) {
+		if (load_acquire(&control->flags) & CANCELED_FLAG) {
 			*p = control->next;
-			mutator_destroy((struct sml_mutator *)control);
+			user_destroy((struct sml_user *)control);
 		} else {
 			p = &control->next;
 		}
@@ -711,15 +820,15 @@ mutators_gc(struct control **p)
 
 #ifndef WITHOUT_MASSIVETHREADS
 static void
-gather_mutators(struct sml_worker *worker)
+gather_users(struct sml_worker *worker)
 {
-	struct control **new_mutators;
+	struct control **new_users;
 
-	new_mutators = mutators_gc(&mutators);
+	new_users = users_gc(&users);
 
 	for (; worker; worker = (struct sml_worker *)worker->control.next) {
-		*new_mutators = swap(acquire, &worker->new_mutators, NULL);
-		new_mutators = mutators_gc(new_mutators);
+		*new_users = swap(acquire, &worker->new_users, NULL);
+		new_users = users_gc(new_users);
 	}
 }
 #endif /* !WITHOUT_MASSIVETHREADS */
@@ -729,11 +838,11 @@ static void
 control_gc()
 {
 	struct control *first_worker, **p;
-	struct control **new_mutators;
+	struct control **new_users;
 	struct sml_worker *w;
 
 #ifndef WITHOUT_MASSIVETHREADS
-	new_mutators = mutators_gc(&mutators);
+	new_users = users_gc(&users);
 #endif /* !WITHOUT_MASSIVETHREADS */
 
 	first_worker = load_acquire(&workers);
@@ -743,65 +852,67 @@ control_gc()
 	/* destroy canceled workers except for the first one */
 	p = &first_worker->next;
 	while ((w = (struct sml_worker *)*p)) {
-		if (load_acquire(&w->control.canceled)) {
+		if (load_acquire(&w->control.flags) & CANCELED_FLAG) {
 #ifndef WITHOUT_MASSIVETHREADS
-			*new_mutators = load_acquire(&w->new_mutators);
-			new_mutators = mutators_gc(new_mutators);
+			*new_users = load_acquire(&w->new_users);
+			new_users = users_gc(new_users);
 #endif /* !WITHOUT_MASSIVETHREADS */
 			*p = w->control.next;
 			worker_destroy(w);
 		} else {
 #ifndef WITHOUT_MASSIVETHREADS
-			*new_mutators = swap(acquire, &w->new_mutators, NULL);
-			new_mutators = mutators_gc(new_mutators);
+			*new_users = swap(acquire, &w->new_users, NULL);
+			new_users = users_gc(new_users);
 #endif /* !WITHOUT_MASSIVETHREADS */
 			p = &w->control.next;
 		}
 	}
 
 	/* if the first one is canceled, destroy it if we can occupy it */
-	if (load_acquire(&first_worker->canceled)
+	if ((load_acquire(&first_worker->flags) & CANCELED_FLAG)
 	    && cmpswap_acquire(&workers, &first_worker, first_worker->next)) {
 		w = (struct sml_worker *)first_worker;
 #ifndef WITHOUT_MASSIVETHREADS
-		*new_mutators = load_acquire(&w->new_mutators);
-		new_mutators = mutators_gc(new_mutators);
+		*new_users = load_acquire(&w->new_users);
+		new_users = users_gc(new_users);
 #endif /* !WITHOUT_MASSIVETHREADS */
 		worker_destroy(w);
 	}
 }
 #endif /* !WITHOUT_MULTITHREAD */
 
-#ifdef WITHOUT_MULTITHREAD
+#if defined WITHOUT_MULTITHREAD && !defined WITHOUT_CONCURRENCY
 void
 sml_detach()
 {
 	struct sml_worker *worker = worker_tlv_get_or_init(current_worker);
 	if (worker) {
-		if (mutator->frame_stack != NULL)
+		if (user->frame_stack != NULL)
 			sml_fatal(0, "sml_detach: ML code is running");
-		mutator_destroy(worker->mutator);
+		user_destroy(worker->user);
 		worker_destroy(worker);
 	}
 	worker_tlv_set(current_worker, NULL);
 }
-#endif /* WITHOUT_MULTITHREAD */
+#endif /* WITHOUT_MULTITHREAD && !WITHOUT_CONCURRENCY */
 
 #ifndef WITHOUT_MULTITHREAD
 void
 sml_detach()
 {
 	struct sml_worker *worker = worker_tlv_get_or_init(current_worker);
-	struct sml_mutator *mutator = worker->mutator;
+	struct sml_user *user = worker ? worker->user : NULL;
 
 #ifndef WITHOUT_MASSIVETHREADS
-	mutator = user_tlv_get_or_init(current_mutator);
-	user_tlv_set(current_mutator, NULL);
-	if (mutator)
-		cancel(mutator);
+	if (myth_is_myth_worker()) {
+		user = user_tlv_get_or_init(current_user);
+		user_tlv_set(current_user, NULL);
+	}
+	if (user)
+		cancel(user);
 #endif /* WITHOUT_MASSIVETHREADS */
 
-	if (mutator && mutator->frame_stack != NULL)
+	if (user && user->frame_stack != NULL)
 		sml_fatal(0, "sml_detach: ML code is running");
 
 	cancel(worker);
@@ -831,7 +942,7 @@ sync1(struct control *workers)
 	struct control *control;
 	unsigned int old, new, count = 0;
 
-	store_relaxed(&sml_check_flag, 1);
+	fetch_or(relaxed, &sml_check_flag, FLAG_GC);
 
 	for (control = workers; control; control = control->next) {
 		old = INACTIVE(PRESYNC1);
@@ -848,13 +959,46 @@ sync1(struct control *workers)
 		mutex_unlock(&sync_wait_lock);
 	}
 
-	store_relaxed(&sml_check_flag, 0);
+	fetch_and(relaxed, &sml_check_flag, ~FLAG_GC);
 
 	sml_heap_collector_sync1();
 }
 #endif /* !WITHOUT_CONCURRENCY */
 
 #ifndef WITHOUT_CONCURRENCY
+#ifndef WITHOUT_MASSIVETHREADS
+static void
+sync2_1()
+{
+	struct control *control;
+	unsigned int old, new, count = 0;
+
+	fetch_or(relaxed, &sml_check_flag, FLAG_GC);
+
+	for (control = users; control; control = control->next) {
+		old = INACTIVE(PRESYNC2);
+		new = ACTIVE(ASYNC);
+		/* all updates so far must happen before here */
+		if (cmpswap_acquire(&control->state, &old, new)) {
+			user_sync2((struct sml_user *)control);
+			/* all updates by this thread must happen before here */
+			store_release(&control->state, INACTIVE(ASYNC));
+		}
+		count++;
+	}
+
+	/* all updates so far must happen before here */
+	if (fetch_add(acquire, &sync_counter, count) + count != 0) {
+		mutex_lock(&sync_wait_lock);
+		while (!(load_acquire(&sync_counter) == 0))
+			cond_wait(&sync_wait_cond, &sync_wait_lock);
+		mutex_unlock(&sync_wait_lock);
+	}
+
+	fetch_and(relaxed, &sml_check_flag, ~FLAG_GC);
+}
+#endif
+
 static void
 sync2(struct control *workers)
 {
@@ -863,21 +1007,7 @@ sync2(struct control *workers)
 
 	sml_heap_collector_sync2();
 
-	store_relaxed(&sml_check_flag, 1);
-
-#ifndef WITHOUT_MASSIVETHREADS
-	for (control = mutators; control; control = control->next) {
-		old = INACTIVE(PRESYNC2);
-		new = ACTIVE(ASYNC);
-		/* all updates so far must happen before here */
-		if (cmpswap_acquire(&control->state, &old, new)) {
-			mutator_sync2((struct sml_mutator *)control);
-			/* all updates by this thread must happen before here */
-			store_release(&control->state, INACTIVE(ASYNC));
-		}
-		count++;
-	}
-#endif /* !WITHOUT_MASSIVETHREADS */
+	fetch_or(relaxed, &sml_check_flag, FLAG_GC);
 
 	for (control = workers; control; control = control->next) {
 		old = INACTIVE(PRESYNC2);
@@ -886,7 +1016,7 @@ sync2(struct control *workers)
 		if (cmpswap_acquire(&control->state, &old, new)) {
 			struct sml_worker *w = (struct sml_worker *)control;
 #ifdef WITHOUT_MASSIVETHREADS
-			mutator_sync2(w->mutator);
+			user_sync2(w->user);
 #endif /* WITHOUT_MASSIVETHREADS */
 			worker_sync2(w);
 			/* all updates by this thread must happen before here */
@@ -903,7 +1033,7 @@ sync2(struct control *workers)
 		mutex_unlock(&sync_wait_lock);
 	}
 
-	store_relaxed(&sml_check_flag, 0);
+	fetch_and(relaxed, &sml_check_flag, ~FLAG_GC);
 }
 #endif /* WITHOUT_CONCURRENCY */
 
@@ -915,7 +1045,7 @@ sml_gc()
 
 	sml_heap_worker_sync2(worker->thread_local_heap);
 	sml_heap_collector_sync2();
-	sml_heap_mutator_sync2(worker->mutator);
+	sml_heap_user_sync2(worker->user);
 	sml_heap_collector_mark();
 	sml_run_finalizer();
 	sml_heap_collector_async();
@@ -932,12 +1062,12 @@ sml_gc()
 	mutex_lock(&thread_creation_lock);
 	ASSERT(load_relaxed(&stop_the_world_flag));
 
-	store_relaxed(&sml_check_flag, 1);
+	fetch_or(relaxed, &sml_check_flag, FLAG_GC);
 
 	for (control = workers; control; control = control->next)
 		activate(control);
 
-	store_relaxed(&sml_check_flag, 0);
+	fetch_and(relaxed, &sml_check_flag, ~FLAG_GC);
 
 	for (control = workers; control; control = control->next) {
 		struct sml_worker *worker = (struct sml_worker *)control;
@@ -946,7 +1076,7 @@ sml_gc()
 	sml_heap_collector_sync2();
 	for (control = workers; control; control = control->next) {
 		struct sml_worker *worker = (struct sml_worker *)control;
-		sml_heap_mutator_sync2(worker->mutator);
+		sml_heap_user_sync2(worker->user);
 	}
 	sml_heap_collector_mark();
 	sml_run_finalizer();
@@ -995,9 +1125,10 @@ sml_gc()
 	spin_unlock(&worker_creation_lock);
 
 #ifndef WITHOUT_MASSIVETHREADS
-	/* mutators must precede workers */
-	gather_mutators((struct sml_worker *)current_workers);
-	change_phase(mutators, ASYNC, PRESYNC2);
+	/* users must precede workers */
+	gather_users((struct sml_worker *)current_workers);
+	change_phase(users, ASYNC, PRESYNC2);
+	sync2_1();
 #endif /* !WITHOUT_MASSIVETHREADS */
 	change_phase(current_workers, SYNC1, PRESYNC2);
 
@@ -1051,16 +1182,16 @@ frame_enum_ptr(void *frame_end, void (*trace)(void **, void *), void *data)
 }
 
 void
-sml_stack_enum_ptr(struct sml_mutator *mutator,
+sml_stack_enum_ptr(struct sml_user *user,
 		   void (*trace)(void **, void *), void *data)
 {
 	const struct frame_stack_range *range;
 	void *fp, *next;
 
-	if (mutator->exn_object)
-		trace(&mutator->exn_object, data);
+	if (user->exn_object)
+		trace(&user->exn_object, data);
 
-	for (range = mutator->frame_stack; range; range = range->next) {
+	for (range = user->frame_stack; range; range = range->next) {
 		/* skip dummy ranges */
 		if (range->bottom == NULL)
 			continue;
@@ -1095,7 +1226,9 @@ sml_exit(int status)
 		cancel(control);
 
 #ifndef WITHOUT_MASSIVETHREADS
-	control = (struct control *)user_tlv_get_or_init(current_mutator);
+	control = myth_is_myth_worker()
+		? (struct control *)user_tlv_get_or_init(current_user)
+		: NULL;
 	if (control)
 		cancel(control);
 #endif /* WITHOUT_MASSIVETHREADS */
@@ -1107,7 +1240,7 @@ sml_exit(int status)
 
 	control = load_relaxed(&workers);
 #ifndef WITHOUT_MASSIVETHREADS
-	control = mutators;
+	control = users;
 #endif /* WITHOUT_MASSIVETHREADS */
 
 	/* If there is no thread other than this thread, release all

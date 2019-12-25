@@ -1,0 +1,4 @@
+structure SMLSharp_SQL_Config =
+struct
+  val DLLEXT : string ref
+end

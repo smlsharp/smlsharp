@@ -81,7 +81,7 @@ struct
   val round : real -> int
   val toInt : IEEEReal.rounding_mode -> real -> int
   val toLargeInt : IEEEReal.rounding_mode -> real -> largeInt
-  val fromInt = SMLSharp_Builtin.Int32.toReal32
+  val fromInt = SMLSharp_Builtin.Real32.fromInt32
   val fromLargeInt : largeInt -> real
   val toLarge = SMLSharp_Builtin.Real32.toReal64
   val fromLarge : IEEEReal.rounding_mode -> LargeReal.real -> real

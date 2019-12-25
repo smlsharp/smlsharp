@@ -9,8 +9,8 @@ struct
   (***************************************************************************)
   
   (*%
-   * @formatter(Absyn.ffiTy) Absyn.format_ffiTy
-   * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(Absyn.ffiTy) AbsynFormatter.format_ffiTy
+   * @formatter(Absyn.tvar) AbsynFormatter.format_tvar
    * @formatter(Loc.loc) Loc.format_loc
    * @formatter(Symbol.symbol) Symbol.format_symbol
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
@@ -309,15 +309,6 @@ struct
   (*
    *)
   (*%
-   * @format({ty})
-   * "not" +d "a" +d "foreign" +d "function" +d "type:" +d ty
-   *)
-  NotForeignFunctionType of {ty: Absyn.ffiTy}
-
-  and
-  (*
-   *)
-  (*%
    * @format({attr})
    * "undefined" +d "foreign" +d "attribute:" +d attr
    *)
@@ -327,9 +318,8 @@ struct
   (*%
    * @format({tvar})
    * "type" +d "variable" +d tvar +d "has" +d "inconsistent" +d "equality"
-   * +d "kind"
    *)
-  DifferentEqkindOfSameTvar of {tvar: Absyn.tvar}
+  DifferentEqOfSameTvar of {tvar: Absyn.tvar}
 
   and
   (*%
@@ -371,12 +361,10 @@ struct
 
   and
   (*%
-   * @format(vid * prevLoc)
-   * "found" +d "multiple" +d "infix" +d "declaration" +d "for" +d vid +d
-   * "with" +d "different" +d "fixity." +1 "Previous" +d "infix"
-   * +d "declaratation" +d "is" +d "at:" +d prevLoc
+   * @format(vid)
+   * "multiple" +d "infix" +d "declaration:" +d "in" +d "interface:" +d vid
    *)
-  MultipleInfixInInterface of Symbol.symbol * Loc.loc
+  MultipleInfixInInterface of Symbol.symbol
 
   and
   (*%
@@ -420,5 +408,12 @@ struct
    * @format "invalid" +d "pattern" +d "for" +d "_jsoncase"
    *)
   InvalidPatternForJsonCase
+
+  and
+  (*%
+   * @format(id)
+   * "provide" +d "check" +d "fails" +d "(missing infix):" +d id
+   *)
+  ProvideInfixNotDefined of Symbol.symbol
 
 end

@@ -269,7 +269,13 @@ struct
          )]
 
     val TESTGUARD0101_COLUMNS = 3
+(*
     val TESTGUARD0101_EXPECTED = "ab\ncdef"
+*)
+(* Ueno's comment: "cdef" does not fit in a line of width 3 and thus
+ * ind_1 between "cd" and "e" must be a linebreak.  Since the ind_1 has
+ * the lowest priority, any other ind_* must be a linebreak. *)
+    val TESTGUARD0101_EXPECTED = "a\nb\ncd\nef"
   in
   fun testGuard0101 () =
       (
@@ -393,7 +399,15 @@ struct
          )]
 
     val TESTGUARD0105_COLUMNS = 3
+(*
     val TESTGUARD0105_EXPECTED = "a\nb\ncde\nf"
+*)
+(* Ueno's comment: "cdef" does not fit in a line of width 3 and thus
+ * either ind_1 between "cd" and "e" or ind_d must be a linebreak.
+ * Since deferred indicator has the lowest priority regardless of the
+ * nest of guards, the ind_1 rather than ind_d becomes a linebreak.
+ *)
+    val TESTGUARD0105_EXPECTED = "a\nb\ncd\nef"
   in
   fun testGuard0105 () =
       (
@@ -402,6 +416,37 @@ struct
         (prettyPrint
              TESTGUARD0105_COLUMNS
              TESTGUARD0105_EXPRESSION);
+        ()
+      )
+  end
+
+  local
+    val TESTGUARD0106_EXPRESSION = 
+        [E.Guard
+         (
+           NONE,
+           [
+             E.Term(1, "a"),
+             ind_2,
+             E.Term(1, "b"),
+             ind_1,
+             E.Guard
+             (NONE, [E.Term(2, "cd"), ind_d, E.Term(1, "e")]),
+             ind_d,
+             E.Term(1, "f")
+           ]
+         )]
+
+    val TESTGUARD0106_COLUMNS = 3
+    val TESTGUARD0106_EXPECTED = "a\nb\ncde\nf"
+  in
+  fun testGuard0106 () =
+      (
+        Assert.assertEqualString
+        TESTGUARD0106_EXPECTED
+        (prettyPrint
+             TESTGUARD0106_COLUMNS
+             TESTGUARD0106_EXPRESSION);
         ()
       )
   end
@@ -419,7 +464,8 @@ struct
         ("testGuard0102", testGuard0102),
         ("testGuard0103", testGuard0103),
         ("testGuard0104", testGuard0104),
-        ("testGuard0105", testGuard0105)
+        ("testGuard0105", testGuard0105),
+        ("testGuard0106", testGuard0106)
       ]
 
   (***************************************************************************)

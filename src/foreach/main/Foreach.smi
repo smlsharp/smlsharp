@@ -1,0 +1,8 @@
+_require "./ForeachData.smi"
+
+structure Foreach =
+struct
+  type index = ForeachData.index
+  val rootIndex = ForeachData.rootIndex
+  structure Thread = ForeachData.Thread
+end

@@ -19,6 +19,7 @@ in
       case icexp of
 	ICERROR => VarID.Set.empty
       | ICCONSTANT const => VarID.Set.empty
+      | ICSIZEOF _ => VarID.Set.empty
       | ICVAR varInfo => VarID.Set.singleton(#id varInfo)
       | ICEXVAR _ => VarID.Set.empty
       | ICEXVAR_TOBETYPED _ => VarID.Set.empty
@@ -31,6 +32,7 @@ in
       | ICOPRIM _ => VarID.Set.empty
       | ICTYPED (exp,ty,loc) => getFreeIdsInExp exp
       | ICSIGTYPED {icexp,ty,loc, revealKey} => getFreeIdsInExp icexp
+      | ICINTERFACETYPED {icexp,ty,loc} => getFreeIdsInExp icexp
       | ICAPPM (funExp,argExpList,loc) =>
         VarID.Set.union(getFreeIdsInExp funExp, 
 			getFreeIdsInExpList argExpList)
@@ -96,6 +98,16 @@ in
                           getFreeIdsInPatList args)))
             (getFreeIdsInExpList selectorList)
             matchList
+      | ICDYNAMICCASE (selector, matchList, loc) =>
+        foldl 
+            (fn ({arg,body},S) =>
+                VarID.Set.union
+                    (S,
+                     VarID.Set.difference
+                         (getFreeIdsInExp body,
+                          getFreeIdsInPat arg)))
+            (getFreeIdsInExp selector)
+            matchList
       | ICRECORD_UPDATE (exp,elementList,loc) =>
         foldl 
             (fn ((label,exp),S) =>
@@ -105,25 +117,16 @@ in
       | ICRECORD_SELECTOR _ => VarID.Set.empty
       | ICSELECT (label,exp, loc) => getFreeIdsInExp exp
       | ICSEQ (expList,loc) => getFreeIdsInExpList expList
-      | ICFOREACH {data, pred, iterator, loc} =>
-        getFreeIdsInExpList [data, pred, iterator]
-      | ICFOREACHDATA {data, whereParam, pred, iterator, loc} =>
-        getFreeIdsInExpList [data, whereParam, pred, iterator]
       | ICFFIIMPORT (exp,ty,loc) => getFreeIdsInFFIFun exp
-      | ICFFIAPPLY (cconv,funExp,args,retTy,loc) =>
-        foldl (fn (ICFFIARG (exp, ty, loc), z) =>
-                  VarID.Set.union (z, getFreeIdsInExp exp)
-                | (ICFFIARGSIZEOF (ty, SOME exp, loc), z) =>
-                  VarID.Set.union (z, getFreeIdsInExp exp)
-                | (ICFFIARGSIZEOF (ty, NONE, loc), z) => z)
-              (getFreeIdsInFFIFun funExp)
-              args
       | ICSQLSCHEMA {tyFnExp, ty, loc} =>
         getFreeIdsInExp tyFnExp
-      | ICJOIN (exp1, exp2, loc) =>
+      | ICJOIN (bool, exp1, exp2, loc) =>
         VarID.Set.union(getFreeIdsInExp exp1, getFreeIdsInExp exp2)
-      | ICJSON (exp, ty, loc) => getFreeIdsInExp exp
-      | ICTYPEOF (ty, loc) => VarID.Set.empty
+      | ICDYNAMIC (exp, ty, loc) => getFreeIdsInExp exp
+      | ICDYNAMICIS (exp, ty, loc) => getFreeIdsInExp exp
+      | ICDYNAMICNULL (ty, loc) => VarID.Set.empty
+      | ICDYNAMICTOP (ty, loc) => VarID.Set.empty
+      | ICDYNAMICVIEW (exp, ty, loc) => getFreeIdsInExp exp
       | ICREIFYTY (ty, loc) => VarID.Set.empty
 
   and getFreeIdsInFFIFun ffiFun =

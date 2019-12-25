@@ -1,0 +1,16 @@
+_require "smlunit-lib.smi"
+_require local "./document/CaseOf.smi"
+_require local "./document/LexicalItem.smi"
+_require local "./document/Expression.smi"
+_require local "./document/ScopeRule.smi"
+_require local "./document/ValDecl.smi"
+_require local "./document/ValRecDecl.smi"
+_require local "./document/FunDecl.smi"
+_require local "./document/DatatypeDecl.smi"
+_require local "./document/TypeDecl.smi"
+_require local "./document/ExceptionDecl.smi"
+_require local "./document/StrDecl.smi"
+_require local "./document/SigDecl.smi"
+_require local "./document/Import.smi"
+
+val tests : SMLUnit.Test.test

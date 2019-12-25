@@ -1,17 +1,16 @@
 _require local "../../../../basis.smi"
-_require local "../../../../smlnj-lib/Util/binary-set-fn.smi"
-_require local "../../../libs/env/main/SEnv.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+(* _require local "../../../../smlnj-lib/Util/binary-set-fn.smi" *)
+(* _require local "../../../libs/env/main/SEnv.smi" *)
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
 _require local "./NameEvalError.ppg.smi"
-_require local "./NameEvalEnv.sig"
 
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../libs/util/main/TermFormat.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
@@ -43,7 +42,7 @@ struct
   type strEntry = {env:env, strKind:strKind}
   type funEEntry = 
        {id: FunctorID.id,
-        version:int option,
+        version:IDCalc.version,
         argSigEnv: env,
         argStrEntry: strEntry,
         argStrName: Symbol.symbol,
@@ -64,13 +63,10 @@ struct
   val format_env : env -> TermFormat.format
   val format_funEEntry : funEEntry -> SMLFormat.FormatExpression.expression list
 
-  val printTy_env : 'a * ('a * IDCalc.tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> env -> TermFormat.format
-  val printTy_sigE : 'a * ('a * IDCalc.tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> sigE -> TermFormat.format
-(*
-  val printTy_sigEList : 'a * ('a * IDCalc.tfun -> string) * ('a * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> sigEList -> TermFormat.format
-*)
-  val printTy_sigEList : env list * (env list * IDCalc.tfun -> string) * (env list * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> sigEList -> TermFormat.format
-  val printTy_funEEntry : env list * (env list * IDCalc.tfun -> string) * (env list * Types.tyCon -> string) * TermFormat.format * TermFormat.format -> funEEntry -> SMLFormat.FormatExpression.expression list
+  val printTy_env : {env: 'a, tfunName: 'a * IDCalc.tfun -> string, tyConName: 'a * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> env -> TermFormat.format
+  val printTy_sigE : {env: 'a, tfunName: 'a * IDCalc.tfun -> string, tyConName: 'a * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> sigE -> TermFormat.format
+  val printTy_sigEList : {env: env list, tfunName: env list * IDCalc.tfun -> string, tyConName: env list * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> sigEList -> TermFormat.format
+  val printTy_funEEntry : {env: env list, tfunName: env list * IDCalc.tfun -> string, tyConName: env list * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> funEEntry -> SMLFormat.FormatExpression.expression list
 
   val format_funE : funE -> SMLFormat.FormatExpression.expression list
   val format_sigE : sigE -> SMLFormat.FormatExpression.expression list
@@ -84,13 +80,14 @@ struct
   val topEnvToString : topEnv -> string
   val funEToString : funE -> string
 
-  exception LookupTstr
-  exception LookupId
-  exception LookupStr
-
   val emptyTyE : tyE
   val emptyEnv : env
   val emptyTopEnv : topEnv
+
+(*
+  exception LookupTstr
+  exception LookupId
+  exception LookupStr
 
   val findTstr : env * Symbol.longsymbol -> tstr option
   val lookupTstr : env -> Symbol.longsymbol -> tstr
@@ -105,7 +102,9 @@ struct
   val findId : env * Symbol.longsymbol -> IDCalc.idstatus option
   val findCon : env * Symbol.longsymbol -> IDCalc.idstatus option
   val lookupId : env -> Symbol.longsymbol -> IDCalc.idstatus
-  val checkId : env * Symbol.longsymbol -> IDCalc.idstatus option
+  val checkSigId : env * Symbol.longsymbol -> IDCalc.idstatus option
+  val checkProvideId : env * Symbol.symbol -> IDCalc.idstatus option
+  val checkProvideAlias : Symbol.symbol * env * Symbol.longsymbol -> IDCalc.idstatus option
   val rebindId : env * Symbol.symbol * IDCalc.idstatus -> env
   val bindId : env * Symbol.symbol * IDCalc.idstatus -> env
   val reinsertId : env * Symbol.symbol * IDCalc.idstatus -> env
@@ -167,6 +166,11 @@ struct
   val unionSigE : string -> sigE * sigE -> sigE
   val unionFunE : string -> funE * funE -> funE
   val unionTopEnv : string -> topEnv * topEnv -> topEnv
+*)
+
+  val findTstr : env * Symbol.longsymbol -> tstr option
+  val findId : env * Symbol.longsymbol -> IDCalc.idstatus option
+
 
   val replaceLocTyE : Loc.loc -> tyE -> tyE
   val replaceLocVarE : Loc.loc -> varE -> varE
@@ -174,14 +178,4 @@ struct
   val replaceLocStrE : Loc.loc -> strE -> strE
   val replaceLocEnv : Loc.loc -> env -> env
 
-(*
-  val conEnvAdd : ConID.id * IDCalc.conInfo -> unit
-  val conEnvFind : ConID.id -> IDCalc.conInfo
-*)
-(*
-  datatype exnCon = EXN of IDCalc.exnInfo | EXEXN of IDCalc.exInfo
-  val exnConAdd : exnCon -> unit
-  val exnConList : unit -> exnCon list
-  val intExnConList : unit -> unit
-*)
 end

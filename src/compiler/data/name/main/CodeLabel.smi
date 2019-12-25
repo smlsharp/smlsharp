@@ -1,6 +1,6 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require local "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require local "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require local "../../../../smlnj-lib/Util/ord-key-sig.sml"
@@ -11,7 +11,7 @@ _require local "./NameMangle.smi"
 
 structure FunEntryLabel =
 struct
-  type id (= boxed)
+  type id (= *)
   val generate : Symbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool
@@ -102,7 +102,7 @@ end
 
 structure CallbackEntryLabel =
 struct
-  type id (= boxed)
+  type id (= *)
   val generate : Symbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool
@@ -193,7 +193,7 @@ end
 
 structure FunLocalLabel =
 struct
-  type id (= boxed)
+  type id (= *)
   val generate : Symbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool
@@ -284,7 +284,7 @@ end
 
 structure HandlerLabel =
 struct
-  type id (= boxed)
+  type id (= *)
   val generate : Symbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool
@@ -377,7 +377,7 @@ end
 
 structure DataLabel =
 struct
-  type id (= boxed)
+  type id (= *)
   val generate : Symbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool
@@ -468,7 +468,7 @@ end
 
 structure ExtraDataLabel =
 struct
-  type id (= boxed)
+  type id (= *)
   val generate : Symbol.longsymbol -> id
   val derive : id -> id
   val eq : id * id -> bool

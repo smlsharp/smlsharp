@@ -1,0 +1,10 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+
+structure DatatypeLayout =
+struct
+  val datatypeLayout : IDCalc.conSpec -> RuntimeTypes.property
+end

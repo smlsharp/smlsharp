@@ -117,9 +117,9 @@ struct
       case value of
         M.ANCONST _ => value
       | M.ANBOTTOM => value
-      | M.ANCAST {exp, expTy, targetTy, runtimeTyCast} =>
+      | M.ANCAST {exp, expTy, targetTy} =>
         M.ANCAST {exp = renameValue subst exp, expTy = expTy,
-                  targetTy = targetTy, runtimeTyCast = runtimeTyCast}
+                  targetTy = targetTy}
       | M.ANVAR {id, ty} =>
         case VarID.Map.find (varSubst, id) of
           NONE => raise Bug.Bug ("renameValue " ^ VarID.toString id)
@@ -247,8 +247,9 @@ struct
         end
       | M.MCALLOC_COMPLETED =>
         (M.MCALLOC_COMPLETED, subst)
-      | M.MCCHECK =>
-        (M.MCCHECK, subst)
+      | M.MCCHECK {handler} =>
+        (M.MCCHECK {handler = renameHandler subst handler},
+         subst)
       | M.MCRECORDDUP_ALLOC {resultVar, copySizeVar, recordExp, loc} =>
         let
           val recordExp = renameValue subst recordExp
@@ -364,6 +365,10 @@ struct
                         valueExp = renameValue subst valueExp,
                         loc = loc},
          subst)
+      | M.MCKEEPALIVE {value, loc} =>
+        (M.MCKEEPALIVE {value = renameValue subst value,
+                        loc = loc},
+         subst)
 
   fun renameMidList subst nil = (nil, subst)
     | renameMidList subst (mid::mids) =
@@ -475,13 +480,12 @@ struct
              loc = loc}
         end
 
-  fun renameToplevel {dependency, frameSlots, bodyExp, cleanupHandler} =
+  fun renameToplevel {frameSlots, bodyExp, cleanupHandler} =
       let
         val (cleanupHandler, subst) =
             bindHandlerOption emptySubst cleanupHandler
       in
-        {dependency = dependency,
-         frameSlots = frameSlots,
+        {frameSlots = frameSlots,
          bodyExp = renameExp subst bodyExp,
          cleanupHandler = cleanupHandler} : M.toplevel
       end

@@ -28,6 +28,19 @@ struct
                 FE.Term (3, "...")
               ]
             )
+
+    fun snoc nil x = [x]
+      | snoc l x = [FE.Sequence l, x]
+
+    fun filterFE f nil nil r = r
+      | filterFE f nil (h :: t) r =
+        filterFE f h t r
+      | filterFE f (FE.Sequence x :: t) k r =
+        filterFE f x (t :: k) r
+      | filterFE f (h :: t) k r =
+        filterFE f t k (if f h then snoc r h else r)
+    val filterFE = fn f => fn l => fn k => filterFE f l k nil
+
   in
   (**
    * truncates symbols beyond the depth and width of Guards specified by
@@ -44,29 +57,29 @@ struct
         fun keepSymbol (FE.StartOfIndent _) = true
           | keepSymbol FE.EndOfIndent = true
           | keepSymbol _ = false
-        fun takeHead _ accum [] = List.rev accum
-          | takeHead 0 accum symbols =
-            (List.rev accum) @ elision :: (List.filter keepSymbol symbols)
-          | takeHead w accum ((symbol as FE.Term _) :: symbols) =
-            takeHead (w - 1) (symbol :: accum) symbols
-          | takeHead w accum ((symbol as FE.Guard _) :: symbols) =
-            takeHead (w - 1) (symbol :: accum) symbols
-          | takeHead w accum (symbol :: symbols) =
-            takeHead w (symbol :: accum) symbols
-        fun visit depth (FE.Guard (enclosedAssocOpt, symbols)) =
+        fun takeHead d _ accum nil nil = accum
+          | takeHead d 0 accum symbols k =
+            FE.Sequence accum
+            :: elision
+            :: filterFE keepSymbol symbols k
+          | takeHead d w accum nil (h :: t) =
+            takeHead d w accum h t
+          | takeHead d w accum (FE.Sequence x :: t) k =
+            takeHead d w accum x (t :: k)
+          | takeHead d w accum ((symbol as FE.Term _) :: symbols) k =
+            takeHead d (w - 1) (visit (d + 1) symbol :: accum) symbols k
+          | takeHead d w accum ((symbol as FE.Guard _) :: symbols) k =
+            takeHead d (w - 1) (visit (d + 1) symbol :: accum) symbols k
+          | takeHead d w accum (symbol :: symbols) k =
+            takeHead d w (visit (d + 1) symbol :: accum) symbols k
+        and visit depth (FE.Guard (enclosedAssocOpt, symbols)) =
             if isCutOffDepth depth
             then elision
-            else
-              let
-                val symbols' = 
-                    map
-                        (visit (depth + 1)) 
-                        (case #maxWidthOfGuards parameter of
-                           NONE => symbols
-                         | SOME width => takeHead width [] symbols)
-              in
-                FE.Guard (enclosedAssocOpt, symbols')
-              end
+            else FE.Guard
+                   (enclosedAssocOpt,
+                    case #maxWidthOfGuards parameter of
+                      NONE => symbols
+                    | SOME width => takeHead depth width nil symbols nil)
           | visit depth symbol = symbol
       in
         visit 0 symbol

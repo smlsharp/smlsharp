@@ -1,0 +1,6 @@
+NODE {tests/data/loadfile/021_local3.smi INTERFACE}
+NODE {tests/data/loadfile/021_local2.smi INTERFACE}
+ROOT {ROOT_SML USERPATH tests/data/loadfile/021_local2.sml COMPILE
+ PROVIDE {USERPATH tests/data/loadfile/021_local2.smi INTERFACE 35e4d4f695168455
+  LOCAL_REQUIRE {USERPATH tests/data/loadfile/021_local3.smi INTERFACE
+   5d93907e0360447d}}}

@@ -1,0 +1,3 @@
+NODE {tests/data/loadfile/052_use.smi INTERFACE}
+ROOT {ROOT_INCLUDES LINK
+ INCLUDE {USERPATH tests/data/loadfile/052_use.smi INTERFACE ed65f1d9b41d861c}}

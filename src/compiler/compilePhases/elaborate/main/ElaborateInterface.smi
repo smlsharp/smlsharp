@@ -1,16 +1,18 @@
 _require local "../../../../basis.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
-_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+(* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
 _require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require local "./ElaborateError.ppg.smi"
 _require local "./ElaborateCore.smi"
 _require local "./ElaborateModule.smi"
 
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 
@@ -19,8 +21,8 @@ structure ElaborateInterface =
     type fixEnv = Fixity.fixity SymbolEnv.map
     val elaborate
         : AbsynInterface.interface
-          -> fixEnv * PatternCalcInterface.interface
-    val elaborateTopdecList
-        : AbsynInterface.itopdec list
-          -> fixEnv * PatternCalcInterface.pitopdec list
+          -> {interface : PatternCalcInterface.interface,
+              requireFixEnv : fixEnv,
+              provideFixEnv : fixEnv,
+              topdecsInclude : Absyn.topdec list}
   end

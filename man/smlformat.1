@@ -1,0 +1,107 @@
+.de EX
+.nf
+.ft CW
+..
+.de EE
+.br
+.fi
+.ft
+..
+.TH SMLFORMAT 1
+.SH NAME
+smlformat
+\- the pretty printer generator for SML#
+.SH SYNOPSIS
+.B smlformat
+[\fB--stdout\fP|\fB--output=\fP\fIfile\fP]
+[\fB--with-line-directive\fP]
+.I filename ...
+.
+.SH DESCRIPTION
+.I SMLFormat
+generates pretty printing functions for ML types and datatypes.
+The input file is an SML# program, each type and datatype of which is
+annotated by formatting comments.
+The
+.B smlformat
+command interprets the definition of types and its formatting comments
+and inserts formatting functions into the input program.
+Generated programs can be compiled by the SML# compiler.
+.PP
+When multiple input files are given,
+each input file is separately read and yields a separate program.
+By default, the output file name is obtained by appending
+.I .sml
+suffix to the input file name.
+.PP
+.
+.SS OPTIONS
+.TP
+\fB--stdout\fP
+Output the result to the standard output.
+.TP
+\fB--output=\fP\fIfilename\fP
+Output the result to the specified file.
+.TP
+\fB--with-line-directive\fP
+Insert comments about the line number of the input file into the output.
+.TP
+\fB--separate=\fP\fIstructureName\fP
+Output formatters in a separate structure.
+.
+.SH EXAMPLES
+The following is a minimal example of an input file
+.IR ex.ppg :
+.PP
+.RS
+.EX
+(*% *)
+datatype intlist = NIL | CONS of int * intlist
+fun pretty_intlist x =
+    SMLFormat.prettyPrint nil (format_intlist x)
+.EE
+.RE
+.PP
+where \f[CW](*% *)\fP is the formatting comment of the \f[CW]intlist\fP type.
+By invoking
+.BR smlformat ,
+.PP
+.RS
+.EX
+smlformat ex.ppg
+.EE
+.RE
+.PP
+it interprets the formatting comment
+and generates \f[CW]format_intlist\fP function of type
+\f[CW]intlist -> SMLFormat.format\fP.
+In the output file
+.IR ex.ppg.sml ,
+the definition of \f[CW]format_intlist\fP is inserted just after
+the definition of the \f[CW]intlist\fP type.
+.PP
+To compile the generated program, you need to write an interface file
+.I ex.ppg.smi
+by yourself.
+In the interface file,
+the SMLFormat library
+.I smlformat-lib.smi
+must be required.
+The content of
+.I ex.ppg.smi
+must be as follows:
+.PP
+.RS
+.EX
+_require "basis.smi"
+_require "smlformat-lib.smi"
+datatype intlist = NIL | CONS of int * intlist
+val format_intlist : intlist -> SMLFormat.format
+val pretty_intlist : intlist -> string
+.EE
+.RE
+.
+.SH SEE ALSO
+.IR "SML# Document" ,
+available at
+https://www.pllab.riec.tohoku.ac.jp/smlsharp/docs/

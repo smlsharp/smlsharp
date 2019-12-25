@@ -7,7 +7,7 @@
 
 infix 6 + - ^
 infix 4 = <> > >= < <=
-val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op - = SMLSharp_Builtin.Int32.sub
 structure Array = SMLSharp_Builtin.Array
 
 structure Timer =

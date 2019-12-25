@@ -1,298 +1,201 @@
 (**
  * @copyright (c) 2016- Tohoku University.
  * @author Atsushi Ohori
+ * @author Daisuke Kikuchi
  *)
 structure JSON =
 struct
-  structure JP = JSONParser
+  exception ParseError of string
   structure R = ReifiedTerm
 
-  exception AttemptToReturnVOIDValue
-  exception RuntimeTypeError
-  exception TypeIsNotJsonKind
-  exception AttemptToViewNull
+  datatype json =
+      BOOL of bool
+    | INT of int
+    | REAL of real
+    | STRING of string
+    | NULL
+    | ARRAY of json list
+    | OBJECT of (string * json) list
 
-  exception NaturalJoin
-
-  datatype null = datatype JSONTypes.null
-  datatype void = datatype JSONTypes.void
-  datatype jsonTy = datatype JSONTypes.jsonTy
-  datatype json = datatype JSONTypes.json
-  datatype dyn = datatype JSONTypes.dyn
-
-  (* for debugging *)
-  fun printJsonTy jsonTy =
-      let
-        val print = Bug.printError
-      in
-        case jsonTy of
-          ARRAYty jsonTy =>
-          (print "ARRAYty(";
-           printJsonTy jsonTy;
-           print ")")
-        | BOOLty => print "BOOLty"
-        | INTty => print "INTty"
-        | REALty => print "REALty"
-        | STRINGty => print "STRINGty"
-        | PARTIALBOOLty => print "PARTIALBOOLty"
-        | PARTIALINTty => print "PARTIALINTty"
-        | PARTIALREALty => print "PARTIALREALty"
-        | PARTIALSTRINGty => print "PARTIALSTRINGty"
-        | DYNty => print "DYNty"
-        | NULLty => print "NULLty"
-        | RECORDty stringJsontyList =>
-          (print "RECORDty{";
-           map (fn (l,jsonTy) =>
-                   (print l;
-                    print ":";
-                    printJsonTy jsonTy;
-                    print ","
-                   )
-               )
-               stringJsontyList;
-           ();
-           print "}"
-          )
-        | PARTIALRECORDty stringJsontyList =>
-          (print "PARTIALRECORDty{";
-           map (fn (l,jsonTy) =>
-                   (print l;
-                    print ":";
-                    printJsonTy jsonTy;
-                    print ","
-                   )
-               )
-               stringJsontyList;
-           ();
-           print "}"
-          )
-        | OPTIONty jsonTy =>
-          (print "OPTIONty(";
-           printJsonTy jsonTy;
-           print ")")
-      end
-
-  fun glbJsonTy (ty1, ty2) = 
-      if ty1 = ty2 then ty1
-      else
-        case (ty1, ty2) of
-          (NULLty, OPTIONty _) => ty2
-        | (NULLty, _) => OPTIONty ty2
-        | (OPTIONty _, NULLty) => ty1
-        | (_, NULLty) => OPTIONty ty1
-        | (OPTIONty argTy1, OPTIONty argTy2) => 
-          OPTIONty (glbJsonTy (argTy1, argTy2))
-        | (OPTIONty elemTy1, _) =>
-          OPTIONty (glbJsonTy (elemTy1, ty2))
-        | (_, OPTIONty elemTy2) =>
-          OPTIONty (glbJsonTy (ty1, elemTy2)) 
-        | (ARRAYty elemTy1, ARRAYty elemTy2) => 
-          ARRAYty (glbJsonTy (elemTy1, elemTy2))
-        | (RECORDty fl1, RECORDty fl2) =>
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | (PARTIALRECORDty fl1, RECORDty fl2) => 
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | (RECORDty fl1, PARTIALRECORDty fl2) => 
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | (PARTIALRECORDty fl1, PARTIALRECORDty fl2) => 
-          PARTIALRECORDty (glbFieldTys (fl1, fl2))
-        | _ => DYNty
-
-  and glbFieldTys (fl1, fl2) =
-      List.foldr
-        (fn ((l, ty1), fl) => 
-            case List.find (fn (l',_) => l' = l) fl2 of
-              NONE => fl
-            | SOME (_, ty2) => (l, glbJsonTy (ty1, ty2)) :: fl
-         ) 
-      nil
-      fl1
-
-  fun infer v = 
-    case v of
-      JP.OBJECT fields => inferObject fields
-    | JP.ARRAY vl   => inferArray vl
-    | JP.STRING s   => (STRING s, STRINGty)
-    | JP.INT i      => (INT i, INTty)
-    | JP.REAL r     => (REAL r, REALty)
-    | JP.BOOL b     => (BOOL b, BOOLty)
-    | JP.NULL       => (NULLObject, NULLty)
-  and inferObject kvl =
-    let
-      fun inferObject_aux kvl (tjl, tyl) =
-        case kvl of
-          (k,v)::kvs => 
-            let
-              val (tj, ty) = infer v
-            in
-              inferObject_aux kvs ((k, tj)::tjl, (k, ty)::tyl)
-            end
-        | [] => (List.rev tjl, List.rev tyl)
-
-      val (tjl, tyl) = inferObject_aux kvl ([], [])
-    in
-      (OBJECT tjl, RECORDty tyl)
-    end
-  and inferArray nil = (ARRAY (nil, DYNty), ARRAYty DYNty)
-    | inferArray (v::vl) = 
-      let
-        val (tj, ty) = infer v
-        val (tjlRev, ty) = 
-            foldl
-              (fn (v, (tjlRev, ty)) => 
-                  let
-                    val (tj, ty') = infer v
-                  in
-                    (tj::tjlRev, glbJsonTy (ty, ty'))
-                  end
-              )
-              ([tj],ty)
-            vl
-      in
-        (ARRAY (List.rev tjlRev, ty), ARRAYty ty)
-      end
-
-  fun typeOf v = 
-      case v of
-        ARRAY (_,jsonTy) => ARRAYty jsonTy
-      | BOOL _ => BOOLty
-      | INT _ => INTty
-      | NULLObject => NULLty
-      | OBJECT fieldList => RECORDty (map (fn (l, json) => (l, typeOf json)) fieldList)
-      | REAL _ => REALty
-      | STRING  _ => STRINGty
-
-  fun view (DYN (viewFn, json)) = viewFn json
-
-  fun importJson uj =
-      let
-        val (tj, _) = infer uj
-      in
-        DYN (fn _ => raise AttemptToReturnVOIDValue, tj)
-      end
-
-  fun import src =
-      importJson (JSONParser.parse src)
-
-  fun importForm src =
-      DYN (fn _ => raise AttemptToReturnVOIDValue,
-           OBJECT (map (fn (k,v) => (k, STRING v)) src))
-
-  exception ReifiedtermToJson
-  fun reifiedtermToJson reifiedterm =
-      case reifiedterm of
-        R.INT int => INT int
-      | R.BOOL bool => BOOL bool
-      | R.REAL real => REAL real
-      | R.STRING string => STRING string
-      | R.RECORD stringReifiedTermList => 
-        OBJECT (map (fn (l, r) => (l,  reifiedtermToJson r)) stringReifiedTermList)
-      | R.LIST reifiedTermList => 
-        let
-          val jsonList = map reifiedtermToJson reifiedTermList
-          val jsonTyList = map typeOf jsonList
-          val jsonTy = 
-              case jsonTyList of
-                nil => ARRAYty DYNty
-              | h::tl => List.foldr glbJsonTy h tl
-        in
-          ARRAY (jsonList, jsonTy)
-        end
-      | R.OPTIONNONE => NULLObject
-      | R.OPTIONSOME term => reifiedtermToJson term
-      | _ => raise TypeIsNotJsonKind
-
-  fun jsonToReifiedterm json =
+  fun jsonToReifiedTerm json =
       case json of
-        INT int => R.INT int
-      | BOOL bool => R.BOOL bool
-      | REAL real => R.REAL real
-      | STRING string => R.STRING string
-      | OBJECT stringJsonList =>
-        R.RECORD (map (fn (l, j) => (l,  jsonToReifiedterm j)) stringJsonList)
-      | ARRAY (jsonList, jsonTy) =>
-        R.LIST (map jsonToReifiedterm jsonList)
-      | NULLObject => R.OPTIONNONE
+      BOOL bool => R.BOOL bool
+    | INT int => R.INT32 int
+    | REAL real => R.REAL64 real
+    | STRING string => R.STRING string
+    | NULL => R.NULL
+    | ARRAY jsonList => R.LIST (map jsonToReifiedTerm jsonList)
+    | OBJECT stringJsonList =>
+      R.RECORD
+      (foldl (fn ((l, json), map) => 
+                 RecordLabel.Map.insert(map, RecordLabel.fromString l, jsonToReifiedTerm json))
+             RecordLabel.Map.empty
+             stringJsonList)
+  fun jsonToDynamic json = 
+      ReifiedTerm.toDynamic  (jsonToReifiedTerm json)
 
-  fun jsonToString json = 
-      SMLFormat.prettyPrint 
-        [SMLFormat.Columns 80]
-        (ReifiedTerm.toJSON_reifiedTerm (jsonToReifiedterm json))
-  fun jsonDynToString (DYN (view, json)) = 
-      SMLFormat.prettyPrint 
-        [SMLFormat.Columns 80]
-        (ReifiedTerm.toJSON_reifiedTerm (jsonToReifiedterm json))
-  fun jsonToJsonDyn json = DYN (fn _ => raise AttemptToReturnVOIDValue,json)
-  fun jsonDynToJson (DYN (view, json)) = json
+  datatype stackItem =
+      JSON of json
+    | OBJ_KEY of string
+    | OBJ_BEGIN
+    | ARY_BEGIN
+  type size_t = YAJL.size_t
+  type ctx = stackItem list ref
 
+  fun push (stack, item) = stack := item :: !stack
 
-  local 
-    open PolyDynamic
-  in
-    fun toList (elementTy, listObj) =
+  fun (parseNull: ctx -> int) stack = (push (stack, JSON NULL); 1)
+
+  fun (parseBool:ctx * int -> int) (stack, i) = 
+    let
+      val item = JSON (BOOL (i <> 0))
+    in
+      (push (stack, item); 1)
+    end
+
+  fun (parseInt:ctx * int64 -> int) (stack, i) =
+      (push (stack, JSON (INT (Int64.toInt i))); 1)
+
+  fun (parseDouble:ctx * real -> int) (stack, r) =
+      (push (stack, JSON (REAL r)); 1)
+
+  fun (parseYajlString:ctx * char ptr * size_t -> int) (stack, cp, n) =
+    let
+      val s = Pointer.importString cp
+      val k = String.substring (s, 0, YAJL.size_tToInt n)
+    in
+      (push (stack, JSON (STRING k)); 1)
+    end
+
+  fun (parseObjectStart:ctx -> int) stack =
+      (push (stack, OBJ_BEGIN); 1)
+
+  fun (parseObjectKey:ctx * char ptr * size_t -> int) (stack, cp, n) =
+    let
+      val s = Pointer.importString cp
+      val k = String.substring (s, 0, YAJL.size_tToInt n)
+    in
+      (push (stack, OBJ_KEY k); 1)
+    end
+
+  fun insert y kvl =
+    case kvl of 
+      x::kvs =>
         let
-          fun getTail (obj, listRev) = 
-              if isNull obj then listRev
-              else 
-                let
-                  val obj = deref obj
-                  val firstJson = 
-                      dynamicToJson
-                        (mkDynamic {ty = elementTy, obj = car obj})
-                in
-                  getTail (cdr (elementTy, obj), firstJson::listRev)
-                end
-          in
-            List.rev (getTail (listObj, nil))
-          end
-
-    and toRecord (filedsTy, obj) = 
-        let
-          fun getFields (nil, obj, fieldsRev) = List.rev fieldsRev
-            | getFields ((l,ty)::rest, obj, fieldsRev) = 
-              let
-                val obj = align(obj, ty)
-                val json = dynamicToJson (mkDynamic {ty = ty, obj = obj})
-                val obj = offset(obj, sizeOf ty)
-              in
-                getFields (rest, obj, (l,json)::fieldsRev)
-              end
-          in
-            getFields (filedsTy, obj, nil)
-          end
-
-    and dynamicToJson dyn = 
-        let
-          val ty = typeOf dyn
-          val obj =objOf dyn
+          val kx = #1 x
+          val ky = #1 y
         in
-          case ty of 
-            INTty => INT (getInt obj)
-          | REALty => REAL (getReal obj)
-          | STRINGty => STRING (getString obj)
-          | BOOLty => BOOL (getBool obj)
-          | ARRAYty elementTy =>
-            let
-              val jsonList = toList (elementTy, obj)
-            in
-              ARRAY (jsonList, elementTy)
-            end
-          | RECORDty fieldTys =>
-            let
-              val jsonFields = toRecord(fieldTys, deref obj)
-            in
-              OBJECT jsonFields
-            end
-          | OPTIONty ty =>
-            if isNull obj then NULLObject
-            else dynamicToJson (mkDynamic {ty = ty, obj = deref obj})
-          | DYNty => NULLObject (* undefined *)
-          | _ => NULLObject (* undefined *)
+          if (ky < kx) then y::(x::kvs)
+          else x::(insert y kvs)
         end
+    | [] => y::[]
 
-    fun toJson a = dynamicToJson (dynamic a)
+  (* オブジェクトのフィールドをキーでソートする関数 *)
+  fun sort kvl =
+    case kvl of 
+      y::kvs => insert y (sort kvs)
+    | [] => []
 
-    fun toJsonDyn a = jsonToJsonDyn (toJson a)
-  end
+  fun popObject xl stack =
+    let
+      fun popObject_aux xl (kl, vl) =
+        case xl of
+          x::xs => (
+            case x of
+              JSON j    => popObject_aux xs (kl, (j::vl))
+            | OBJ_KEY s => popObject_aux xs ((s::kl), vl)
+            | OBJ_BEGIN => (stack := xs; OBJECT (ListPair.zip (kl, vl)))
+            | ARY_BEGIN => raise ParseError "ARY_BEGIN before OBJ_BEGIN"
+          )
+        | [] => raise ParseError "Empty Stack in Object Parsing"
+    in
+      popObject_aux xl ([], [])
+    end
+
+  fun (parseObjectEnd:ctx -> int) stack = 
+    let
+      (* stackItem の先頭から OBJ_BEGIN までをpop *)
+      val obj = popObject (!stack) stack
+    in
+      (* JSON (OBJECT ...) を push *)
+      (stack := (JSON obj)::(!stack); 1)
+    end
+
+  fun (parseArrayStart:ctx -> int) stack = 
+    (stack := ARY_BEGIN::(!stack); 1)
+
+  fun popArray xl stack =
+    let
+      fun popArray_aux xl vl =
+        case xl of
+          x::xs => (
+            case x of
+              JSON j    => popArray_aux xs (j::vl)
+            | OBJ_KEY _ => raise ParseError "OBJ_KEY before ARY_BEGIN"
+            | OBJ_BEGIN => raise ParseError "OBJ_BEGIN before ARY_BEGIN"
+            | ARY_BEGIN => (stack := xs; ARRAY vl)
+          )
+        | [] => raise ParseError "Empty Stack in Array Parsing"
+    in
+      popArray_aux xl []
+    end
+
+  fun (parseArrayEnd:ctx -> int) stack =
+    let
+      (* stackItem の先頭から ARY_BEGIN までをpop *)
+      val ary = popArray (!stack) stack
+    in
+      (* JSON (ARRAY ...) を push *)
+      (stack := (JSON ary)::(!stack); 1)
+    end
+
+  val yajlCallbacks = 
+      {
+       1_yajl_null = parseNull,
+       2_yajl_boolean = parseBool,
+       3_yajl_integer = parseInt,
+       4_yajl_double = parseDouble,
+       5_yajl_number = Pointer.NULL (),
+       6_yajl_string = parseYajlString,
+       7_yajl_start_map = parseObjectStart,
+       8_yajl_map_key = parseObjectKey,
+       9_yajl_end_map = parseObjectEnd,
+       10_yajl_start_array =parseArrayStart,
+       11_yajl_end_array = parseArrayEnd
+      }
+
+  fun printYajlError (hndl, src) =
+      let
+        val err = YAJL.yajl_get_error(hndl, 0, src, YAJL.intToSize_t (String.size src))
+        val errText = Pointer.importString err
+        val _ = YAJL.yajl_free_error(hndl, err)
+      in
+        errText
+      end
+
+  (* parse : string -> utJson *)
+  fun parse src =
+    let
+      val stack = ref nil
+      val hndl = YAJL.yajl_alloc (yajlCallbacks, Pointer.NULL (), stack)
+      val st = YAJL.yajl_parse (hndl, src, YAJL.intToSize_t (String.size src))
+      val _ = 
+        case st of
+          0 => YAJL.yajl_complete_parse hndl
+        | 1 => raise ParseError (printYajlError (hndl, src))
+        | 2 => raise ParseError (printYajlError (hndl, src))
+        | _ => raise ParseError (printYajlError (hndl, src))
+
+      val _ = YAJL.yajl_free hndl
+
+      val jv = List.hd (!stack)
+
+      val res =
+        case jv of
+          JSON v => v
+        | _ => raise ParseError "Final state is not single JSON"
+    in
+      res
+    end
 
 end

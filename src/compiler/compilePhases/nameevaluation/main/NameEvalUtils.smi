@@ -1,17 +1,19 @@
 _require local "../../../../basis.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
-_require local "../../../libs/env/main/SEnv.smi"
-_require local "../../../libs/env/main/SSet.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
+(* _require local "../../../libs/env/main/SSet.smi" *)
 
-_require local "../../../compilerIRs/absyn/main/Fixity.smi"
+(* _require local "../../../compilerIRs/absyn/main/Fixity.smi" *)
 
 _require "./TfunVars.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
-_require "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+(* _require "../../../data/symbols/main/RecordLabel.smi" *)
+(* _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
-_require "../../../compilerIRs/absyn/main/AbsynTy.ppg.smi"
+_require "../../../compilerIRs/absyn/main/AbsynTy.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynTyFormatter.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 _require "../../../data/types/main/TvarMap.smi"
@@ -26,14 +28,11 @@ structure NameEvalUtils =
     val printSymbol : Symbol.symbol -> unit
     val printLongsymbol : Symbol.longsymbol -> unit
     val printPath : string list -> unit
-    val printTvar
-        : {eq:AbsynTy.eq, id:TvarID.id, lifted:bool, symbol:Symbol.symbol}
-          -> unit
+    val printTvar : IDCalc.tvar -> unit
     val printTvarId : TvarID.id -> unit
     val printVarId : VarID.id -> unit
     val printVarInfo : IDCalc.varInfo -> unit
     val printInterfaceId : InterfaceID.id -> unit
-    val printBuiltinTy : BuiltinTypeNames.bty -> unit
     val printTy : IDCalc.ty -> unit
     val printPITy : AbsynTy.ty -> unit
     val printTstr : NameEvalEnv.tstr -> unit

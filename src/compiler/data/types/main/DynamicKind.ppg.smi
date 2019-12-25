@@ -1,0 +1,40 @@
+_require local "../../../../basis.smi"
+(* _require local "../../../../config/main/PointerSize.smi" *)
+(* _require local "../../../extensions/debug/main/Bug.smi" *)
+_require "../../../../smlformat-lib.smi"
+(* _require "../../../libs/util/main/TermFormat.smi" *)
+_require local "../../../libs/util/main/TermFormat.smi"
+_require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
+
+structure DynamicKind =
+struct
+
+  datatype tag' = datatype RuntimeTypes.tag
+  type size' = RuntimeTypes.size
+  datatype tag = datatype RuntimeTypes.tag_prop
+  datatype size = datatype RuntimeTypes.size_prop
+  val getSize = RuntimeTypes.getSize
+
+  type index' = word
+
+  type record = index' RecordLabel.Map.map
+
+  type dynamicKind 
+    = {
+       tag: tag,
+       size: size,
+       record: record
+      }
+
+  val format_size : size -> SMLFormat.FormatExpression.expression list
+  val format_tag : tag -> SMLFormat.FormatExpression.expression list
+  val format_size' = RuntimeTypes.format_size
+  val format_tag' = RuntimeTypes.format_tag
+  val format_index' : index' -> SMLFormat.FormatExpression.expression list
+  val format_record : record -> SMLFormat.FormatExpression.expression list
+  val format_dynamicKind : dynamicKind -> SMLFormat.FormatExpression.expression list
+  val topKind : dynamicKind
+  val pointerKind : dynamicKind
+
+end

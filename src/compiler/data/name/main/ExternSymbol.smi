@@ -1,19 +1,19 @@
 _require local "../../../libs/env/main/SEnv.smi"
 _require local "../../../libs/env/main/SSet.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+(* _require local "../../../extensions/debug/main/Bug.smi" *)
 
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../../smlnj-lib/Util/ord-key-sig.sml"
-_require "../../../../smlnj-lib/Util/ord-set-sig.sml"
-_require "../../../../smlnj-lib/Util/ord-map-sig.sml"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
-_require "./NameMangle.smi"
+_require local "../../../../smlnj-lib/Util/ord-key-sig.sml"
+_require local "../../../../smlnj-lib/Util/ord-set-sig.sml"
+_require local "../../../../smlnj-lib/Util/ord-map-sig.sml"
+_require "../../../data/symbols/main/Symbol.smi"
+_require local "./NameMangle.smi"
 
 structure ExternSymbol =
 struct
 
-  type id (= boxed)
+  type id (= string)
   val touch : Symbol.longsymbol -> id
   val toString : id -> string
   val format_id : id -> SMLFormat.FormatExpression.expression list
@@ -103,7 +103,7 @@ end
 structure ExternFunSymbol =
 struct
 
-  type id (= boxed)
+  type id (= string)
   val touch : Symbol.longsymbol -> id
   val toString : id -> string
   val format_id : id -> SMLFormat.FormatExpression.expression list

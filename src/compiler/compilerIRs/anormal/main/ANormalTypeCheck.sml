@@ -19,7 +19,7 @@ struct
       (TypesBasics.derefTy ty, rty) : A.ty
 
   val errorTy =
-      (T.ERRORty, R.UINT32ty) : A.ty
+      (T.ERRORty, R.word32Ty) : A.ty
 
   val unitptrTy =
       T.CONSTRUCTty {tyCon = B.ptrTyCon, args = [B.unitTy]}
@@ -74,7 +74,7 @@ struct
       TextIO.output (TextIO.stdErr, s)
 
   fun printFrontendTy ty =
-      printErr (Bug.prettyPrint (T.format_ty nil ty))
+      printErr (Bug.prettyPrint (T.format_ty ty))
 
   fun printBackendTy rty =
       printErr (Bug.prettyPrint (R.format_ty rty))
@@ -181,17 +181,20 @@ struct
 
   fun printCannotComputeRuntimeTy msg ty =
       (printErr (msg ^ ": cannot compute runtime type\n");
-       printErr (Bug.prettyPrint (T.format_ty nil ty));
+       printErr (Bug.prettyPrint (T.format_ty ty));
        printErr "\n")
 
   fun revealConTy {tyCon:T.tyCon, args} =
       case #dtyKind tyCon of
-        T.DTY => T.CONSTRUCTty {tyCon=tyCon, args=args}
-      | T.BUILTIN _ => T.CONSTRUCTty {tyCon=tyCon, args=args}
+        T.DTY _ => T.CONSTRUCTty {tyCon=tyCon, args=args}
       | T.OPAQUE {opaqueRep, revealKey} =>
-        case opaqueRep of
-          T.TYCON tyCon => revealConTy {tyCon=tyCon, args=args}
-        | T.TFUNDEF {iseq, arity, polyTy} => Unify.instOfPolyTy (polyTy, args)
+        (case opaqueRep of
+           T.TYCON tyCon => revealConTy {tyCon=tyCon, args=args}
+         | T.TFUNDEF {admitsEq, arity, polyTy} => TypesBasics.tpappTy (polyTy, args))
+      | T.INTERFACE opaqueRep =>
+        (case opaqueRep of
+           T.TYCON tyCon => revealConTy {tyCon=tyCon, args=args}
+         | T.TFUNDEF {admitsEq, arity, polyTy} => TypesBasics.tpappTy (polyTy, args))
 
   exception Unify
 
@@ -293,8 +296,6 @@ struct
       | (T.TAGty _, _) => raise Unify
       | (T.SIZEty ty1, T.SIZEty ty2) => unifyTy inst (ty1, ty2)
       | (T.SIZEty _, _) => raise Unify
-      | (T.TYPEty ty1, T.TYPEty ty2) => unifyTy inst (ty1, ty2)
-      | (T.TYPEty _, _) => raise Unify
       | (T.REIFYty ty1, T.REIFYty ty2) => unifyTy inst (ty1, ty2)
       | (T.REIFYty _, _) => raise Unify
 
@@ -362,7 +363,7 @@ struct
         val inst = unifyBtvEnv inst (tyvars1, tyvars2)
       in
         unifyTyList inst (argTyList1, argTyList2);
-        unifyTyOption inst (retTy1, retTy2)
+        unifyTy inst (retTy1, retTy2)
       end
 
   and unifyCallbackEntryTy inst ({tyvars=tyvars1, haveClsEnv=haveClsEnv1,
@@ -380,12 +381,9 @@ struct
         unifyTyOption inst (retTy1, retTy2)
       end
 
-  and unifyKind inst (T.KIND {eqKind=eq1, dynKind=dynKind1, reifyKind=reifyKind1, subkind=subkind1, tvarKind=k1}, 
-                      T.KIND {eqKind=eq2, dynKind=dynKind2, reifyKind=reifyKind2, subkind=subkind2, tvarKind=k2}) =
-      if eq1 <> eq2
-         orelse dynKind1 <> dynKind2
-         orelse reifyKind1 <> reifyKind2
-         orelse subkind1 <> subkind2
+  and unifyKind inst (T.KIND {properties = prop1, tvarKind=k1, dynamicKind=d1}, 
+                      T.KIND {properties = prop2, tvarKind=k2, dynamicKind=d2}) =
+      if not (T.equalProperties prop1 prop2) 
       then raise Unify
       else
       case (k1, k2) of
@@ -394,8 +392,6 @@ struct
       | (T.OPRIMkind _, _) => raise Unify
       | (T.UNIV, T.UNIV) => ()
       | (T.UNIV, _) => raise Unify
-      | (T.BOXED, T.BOXED) => ()
-      | (T.BOXED, _) => raise Unify
       | (T.REC tys1, T.REC tys2) =>
         app (unifyTy inst) (recordFieldTyEq (tys1, tys2))
       | (T.REC _, _) => raise Unify
@@ -458,14 +454,16 @@ struct
             vars
 
   fun tyOf ty =
-      case TypeLayout2.runtimeTy BoundTypeVarID.Map.empty ty of
-        SOME rty => (ty, rty) : A.ty
-      | NONE => raise Bug.Bug "tyOf"
+      case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
+        SOME {tag = R.TAG t, size = R.SIZE s, rep = r} =>
+        (ty, {tag = t, size = s, rep = r}) : A.ty
+      | _ => raise Bug.Bug "tyOf"
 
   fun tyOf' msg ({btvEnv,...}:env) ty =
-      case TypeLayout2.runtimeTy btvEnv ty of
-        SOME rty => (ty, rty) : A.ty
-      | NONE => (printCannotComputeRuntimeTy msg ty; errorTy)
+      case TypeLayout2.propertyOf btvEnv ty of
+        SOME {tag = R.TAG t, size = R.SIZE s, rep = r} =>
+        (ty, {tag = t, size = s, rep = r}) : A.ty
+      | _ => (printCannotComputeRuntimeTy msg ty; errorTy)
 
   fun checkHandler msg ({handlerEnv,...}:env) NONE = ()
     | checkHandler msg ({handlerEnv,...}:env) (SOME handlerId) =
@@ -477,20 +475,23 @@ struct
       case const of
         A.NVINT8 _ => tyOf B.int8Ty
       | A.NVINT16 _ => tyOf B.int16Ty
-      | A.NVINT32 _ => tyOf B.intTy
+      | A.NVINT32 _ => tyOf B.int32Ty
       | A.NVINT64 _ => tyOf B.int64Ty
       | A.NVWORD8 _ => tyOf B.word8Ty
       | A.NVWORD16 _ => tyOf B.word16Ty
-      | A.NVWORD32 _ => tyOf B.wordTy
+      | A.NVWORD32 _ => tyOf B.word32Ty
       | A.NVWORD64 _ => tyOf B.word64Ty
       | A.NVCONTAG _ => tyOf B.contagTy
-      | A.NVREAL64 _ => tyOf B.realTy
+      | A.NVREAL64 _ => tyOf B.real64Ty
       | A.NVREAL32 _ => tyOf B.real32Ty
       | A.NVCHAR _ => tyOf B.charTy
       | A.NVUNIT => tyOf B.unitTy
       | A.NVNULLPOINTER => tyOf unitptrTy
       | A.NVNULLBOXED => tyOf B.boxedTy
       | A.NVTAG {tag, ty} => tyOf (T.SINGLETONty (T.TAGty ty))
+      | A.NVSIZE {size, ty} => tyOf (T.SINGLETONty (T.SIZEty ty))
+      | A.NVINDEX {index, label, ty} =>
+        tyOf (T.SINGLETONty (T.INDEXty (label, ty)))
       | A.NVFOREIGNSYMBOL {name, ty} => ty
       | A.NVFUNENTRY id =>
         (case FunEntryLabel.Map.find (#funEntryEnv env, id) of
@@ -508,8 +509,8 @@ struct
       | A.NVTOPDATA id =>
         (case DataLabel.Map.find (#dataEnv env, id) of
            NONE => (printDataNotFound "NVTOPDATA" id; errorTy)
-         | SOME (ty as (_, R.BOXEDty)) => ty
-         | SOME ty => (printErr "NVTOPDATA: not BOXEDty\n"; ty))
+         | SOME (ty as (_, {tag=R.BOXED,...})) => ty
+         | SOME ty => (printErr "NVTOPDATA: not BOXED\n"; ty))
       | A.NVEXTRADATA id =>
         (case ExtraDataLabel.Map.find (#extraDataEnv env, id) of
            NONE => (printExtraDataNotFound "NVEXTRADATA" id; errorTy)
@@ -519,12 +520,13 @@ struct
           val ty = checkConst env value
         in
           unify "NVCAST" (ty, valueTy);
-          if (case cast of
-                BuiltinPrimitive.TypeCast => false
-              | BuiltinPrimitive.RuntimeTyCast => true
-              | BuiltinPrimitive.BitCast => true)
-          then ()
-          else unifyBackendTy "NVCAST" (#2 valueTy, #2 targetTy);
+          case cast of
+            BuiltinPrimitive.BitCast => ()
+          | BuiltinPrimitive.TypeCast =>
+            if #tag (#2 valueTy) = #tag (#2 targetTy)
+               andalso #size (#2 valueTy) = #size (#2 targetTy)
+            then ()
+            else printBackendTypeMismatch "NVCAST" (#2 valueTy, #2 targetTy);
           targetTy
         end
 
@@ -541,14 +543,11 @@ struct
         (case VarID.Map.find (#varEnv env, id) of
            NONE => (printVarNotFound "ANVAR" id; ty)
          | SOME ty2 => (unify "ANVAR" (ty, ty2); ty))
-      | A.ANCAST {exp, expTy, targetTy, runtimeTyCast} =>
+      | A.ANCAST {exp, expTy, targetTy} =>
         let
           val ty = checkValue env exp
           val _ = unify "ANCAST" (ty, expTy)
         in
-          if runtimeTyCast
-          then ()
-          else unifyBackendTy "ANCAST" (#2 expTy, #2 targetTy);
           targetTy
         end
       | A.ANBOTTOM =>
@@ -616,7 +615,7 @@ struct
           val indexTy = checkValue env elemIndex
         in
           unify "AAARRAYELEM1" (sizeTy, tyOf (T.SINGLETONty (T.SIZEty elemTy)));
-          unify "AAARRAYELEM2" (indexTy, tyOf B.intTy);
+          unify "AAARRAYELEM2" (indexTy, tyOf B.int32Ty);
           elemTy
         end
 
@@ -628,9 +627,9 @@ struct
           val ty = checkValue env srcExp
           val sizeTy = checkValue env fieldSize
         in
-          if #2 ty = R.BOXEDty
+          if #tag (#2 ty) = R.BOXED
           then ()
-          else printErr "INIT_COPY: not BOXEDty\n";
+          else printErr "INIT_COPY: not BOXED\n";
           unify "INIT_COPY" (sizeTy, tyOf (T.SINGLETONty (T.SIZEty (#1 ty))));
           ty
         end
@@ -669,7 +668,9 @@ struct
                 (T.BACKENDty
                    (T.FOREIGNFUNPTRty {tyvars, argTyList, varArgTyList,
                                        resultTy, attributes=a1}),
-                 R.FOREIGNCODEPTRty {argTys,varArgTys,retTy,attributes=a2}) =>
+                 {rep = R.CODEPTR
+                          (R.FOREIGN {argTys,varArgTys,retTy,attributes=a2}),
+                  ...}) =>
                 (ListPair.zipEq (argTyList, argTys),
                  case (varArgTyList, varArgTys) of
                    (NONE, NONE) => nil
@@ -702,8 +703,10 @@ struct
                    (T.FOREIGNFUNPTRty
                       {tyvars, argTyList, varArgTyList=NONE, resultTy,
                        attributes=a1}),
-                 R.FOREIGNCODEPTRty
-                   {argTys, varArgTys=NONE, retTy, attributes=a2}) =>
+                 {rep = R.CODEPTR
+                          (R.FOREIGN
+                            {argTys, varArgTys=NONE, retTy, attributes=a2}),
+                  ...}) =>
                 (T.BACKENDty
                    (T.CALLBACKENTRYty
                       {tyvars = instTyvars,
@@ -711,11 +714,13 @@ struct
                        argTyList = argTyList,
                        retTy = resultTy,
                        attributes = a1}),
-                 R.CALLBACKCODEPTRty
-                   {haveClsEnv = true,
-                    argTys = argTys,
-                    retTy = retTy,
-                    attributes = a2})
+                 R.codeptrTy
+                 # {rep = R.CODEPTR
+                            (R.CALLBACK
+                               {haveClsEnv = true,
+                                argTys = argTys,
+                                retTy = retTy,
+                                attributes = a2})})
               | _ => (printErr "ANEXPORTCALLBACK: not FOREIGNFUNPTRty\n";
                       errorTy)
         in
@@ -738,14 +743,14 @@ struct
           val ty = checkValue env exp
         in
           unify "ANPACK1" (ty, expTy);
-          unify "ANPACK2" (#ty resultVar, (#1 ty, R.BOXEDty));
+          unify "ANPACK2" (#ty resultVar, (#1 ty, R.recordTy));
           checkExp (bindVar (env, resultVar)) nextExp
         end
       | A.ANUNPACK {resultVar, exp, nextExp, loc} =>
         let
           val ty = checkValue env exp
         in
-          unify "ANUNPACK1" (ty, (#1 ty, R.BOXEDty));
+          unify "ANUNPACK1" (ty, (#1 ty, R.recordTy));
           unify "ANUNPACK2" (#ty resultVar, tyOf' "ANUNPACK" env (#1 ty));
           checkExp (bindVar (env, resultVar)) nextExp
         end
@@ -755,7 +760,7 @@ struct
           val sizeTy = checkValue env valueSize
         in
           unify "ANDUP1" (sizeTy, tyOf (T.SINGLETONty (T.SIZEty ty)));
-          unify "ANDUP2" (#ty resultVar, (ty, R.BOXEDty));
+          unify "ANDUP2" (#ty resultVar, (ty, R.recordTy));
           checkExp (bindVar (env, resultVar)) nextExp
         end
       | A.ANLOAD {resultVar, srcAddr, nextExp, loc} =>
@@ -810,10 +815,11 @@ struct
           val (haveClsEnv, argTyList, retTy) =
               case codeTy of
                 (T.BACKENDty (T.FUNENTRYty _),
-                 R.MLCODEPTRty {haveClsEnv, argTys, retTy=SOME retTy}) =>
+                 {rep = R.CODEPTR (R.FN {haveClsEnv, argTys, retTy=retTy}),
+                  ...}) =>
                 (haveClsEnv, argTys, retTy)
               | _ => (printErr "ANCALL: not FUNENTRYty\n";
-                      (true, nil, R.UINT32ty))
+                      (true, nil, R.word32Ty))
         in
           case (haveClsEnv, closureEnvTy) of
             (false, NONE) => ()
@@ -837,10 +843,11 @@ struct
           val (haveClsEnv, argTyList, retTy) =
               case codeTy of
                 (T.BACKENDty (T.FUNENTRYty _),
-                 R.MLCODEPTRty {haveClsEnv, argTys, retTy=SOME retTy}) =>
+                 {rep = R.CODEPTR (R.FN {haveClsEnv, argTys, retTy=retTy}),
+                  ...}) =>
                 (haveClsEnv, argTys, retTy)
               | _ => (printErr "ANTAILCALL: not FUNENTRYty\n";
-                      (true, nil, R.UINT32ty))
+                      (true, nil, R.word32Ty))
         in
           case (haveClsEnv, closureEnvTy) of
             (false, NONE) => ()
@@ -930,7 +937,7 @@ struct
           val dstTy = checkAddress env dstAddr
           val sizeTy = checkValue env valueSize
         in
-          unify "ANCOPY1" (srcTy, (dstTy, R.BOXEDty));
+          unify "ANCOPY1" (srcTy, (dstTy, R.recordTy));
           unify "ANCOPY2" (sizeTy, tyOf (T.SINGLETONty (T.SIZEty (#1 srcTy))));
           checkExp env nextExp
         end
@@ -1012,7 +1019,7 @@ struct
 
   fun makeTopdataEnv (topdata, env:env) =
       case topdata of
-        A.NTEXTERNVAR {id, ty, loc} =>
+        A.NTEXTERNVAR {id, ty, provider, loc} =>
         if ExternSymbol.Map.inDomain (#externEnv env, id)
         then (printDoubledExtern "NTEXTERNVAR" id; env)
         else env
@@ -1024,7 +1031,7 @@ struct
         else env
                # {externEnv =
                     ExternSymbol.Map.insert (#externEnv env, id, (ty, EXPORT))}
-      | A.NTEXTERNFUN {id, tyvars, argTyList, retTy, loc} =>
+      | A.NTEXTERNFUN {id, tyvars, argTyList, retTy, provider, loc} =>
         if ExternFunSymbol.Map.inDomain (#externFunEnv env, id)
         then (printDoubledExternFun "NTEXTERNFUN" id; env)
         else let
@@ -1032,10 +1039,12 @@ struct
               (T.BACKENDty (T.FUNENTRYty {tyvars = tyvars,
                                           haveClsEnv = false,
                                           argTyList = map #1 argTyList,
-                                          retTy = SOME (#1 retTy)}),
-               R.MLCODEPTRty {haveClsEnv = false,
-                              argTys = map #2 argTyList,
-                              retTy = SOME (#2 retTy)})
+                                          retTy = #1 retTy}),
+               R.codeptrTy
+               # {rep = R.CODEPTR
+                          (R.FN {haveClsEnv = false,
+                                 argTys = map #2 argTyList,
+                                 retTy = #2 retTy})})
         in
           env # {externFunEnv =
                    ExternFunSymbol.Map.insert (#externFunEnv env, id, SOME ty)}
@@ -1072,19 +1081,15 @@ struct
         else env
                # {dataEnv = DataLabel.Map.insert (#dataEnv env, id,
                                                   tyOf (arrayTy elemTy))}
-      | A.NTDUMP {id, dump, ty, loc} =>
-        if DataLabel.Map.inDomain (#dataEnv env, id)
-        then (printDoubledData "NTDUMP" id; env)
-        else env # {dataEnv = DataLabel.Map.insert (#dataEnv env, id, tyOf ty)}
 
   fun checkTopConst env (const, ty) =
       (unify "TopConst" (checkConst env const, ty); ty)
 
   fun checkTopdata env topdata =
       case topdata of
-        A.NTEXTERNVAR {id, ty, loc} => ()
+        A.NTEXTERNVAR {id, ty, provider, loc} => ()
       | A.NTEXPORTVAR {id, weak, ty, value, loc} => ()
-      | A.NTEXTERNFUN {id, tyvars, argTyList, retTy, loc} => ()
+      | A.NTEXTERNFUN {id, tyvars, argTyList, retTy, provider, loc} => ()
       | A.NTEXPORTFUN {id, funId, loc} =>
         if FunEntryLabel.Map.inDomain (#funEntryEnv env, funId)
         then ()
@@ -1150,12 +1155,10 @@ struct
         in
           unifyList "NTARRAY1" (map (checkTopConst env) initialElements,
                                 map (fn _ => tyOf elemTy) initialElements);
-          unify "NTARRAY2" (numTy, tyOf B.intTy);
+          unify "NTARRAY2" (numTy, tyOf B.int32Ty);
           unify "NTARRAY3" (sizeTy, tyOf (T.SINGLETONty (T.SIZEty elemTy)));
           unify "NTARRAY4" (tagTy, tyOf (T.SINGLETONty (T.TAGty elemTy)))
         end
-      | A.NTDUMP {id, dump, ty, loc} =>
-        unifyBackendTy "NTDUMP" (#2 (tyOf ty), R.BOXEDty)
 
   fun makeTopdecEnv (topdec, env:env) =
       case topdec of
@@ -1166,10 +1169,12 @@ struct
               (T.BACKENDty (T.FUNENTRYty {tyvars = tyvarKindEnv,
                                           argTyList = map (#1 o #ty) argVarList,
                                           haveClsEnv = isSome closureEnvVar,
-                                          retTy = SOME (#1 retTy)}),
-               R.MLCODEPTRty {haveClsEnv = isSome closureEnvVar,
-                              argTys = map (#2 o #ty) argVarList,
-                              retTy = SOME (#2 retTy)})
+                                          retTy = #1 retTy}),
+               R.codeptrTy
+               # {rep = R.CODEPTR
+                          (R.FN {haveClsEnv = isSome closureEnvVar,
+                                 argTys = map (#2 o #ty) argVarList,
+                                 retTy = #2 retTy})})
         in
           if FunEntryLabel.Map.inDomain (#funEntryEnv env, id)
           then (printDoubledFunEntry "ATFUNCTION" id; env)

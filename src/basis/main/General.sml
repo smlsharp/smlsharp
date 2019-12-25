@@ -8,6 +8,7 @@
 infix 6 + -
 infix 4 = <> > >= < <=
 val op + = SMLSharp_Builtin.Int32.add_unsafe
+structure Int32 = SMLSharp_Builtin.Int32
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 
@@ -24,26 +25,29 @@ struct
   exception Size = Size
   exception Span
   exception Subscript = Subscript
-  val exnName = exnName
-  val exnMessage = exnName
-  val ! = !
-  val op := = op :=
-  val op o = op o
-  val op before = op before
-  val ignore = ignore
+  val exnName = SMLSharp_Builtin.General.exnName
+  val ! = SMLSharp_Builtin.General.!
+  val op := = SMLSharp_Builtin.General.:=
+  val op o = SMLSharp_Builtin.General.o
+  val op before = SMLSharp_Builtin.General.before
+  val ignore = SMLSharp_Builtin.General.ignore
 
   fun exnMessage e =
       let
         val name = exnName e
-        val (loc, index, boxed) = SMLSharp_Builtin.Exn.exnMessage e
-        val msg = if SMLSharp_Builtin.Pointer.identityEqual (boxed, _NULL)
+        val (loc, index, boxed) = SMLSharp_Builtin.General.exnMessage e
+        val msg = if SMLSharp_Builtin.Pointer.identityEqual
+                       (boxed, SMLSharp_Builtin.Pointer.nullBoxed ())
                   then ""
                   else SMLSharp_Builtin.Dynamic.readString (boxed, index)
         val len1 = String.size name
         val len2 = String.size msg
         val len3 = String.size loc
         val extra = if len2 = 0 then 4 else 6
-        val buf = String.alloc (len1 + len2 + len3 + extra)
+        val allocSize =
+            Int32.add (Int32.add (Int32.add (len1, len2), len3), extra)
+            handle Overflow => raise Size
+        val buf = String.alloc allocSize
         (* name ^ ": " ^ msg ^ " at " ^ loc *)
         val i = 0
         val _ = Array.copy_unsafe (String.castToArray name, 0,

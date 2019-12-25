@@ -1,0 +1,13 @@
+_require local "../../../src/basis.smi"
+_require "../../../src/smlunit-lib.smi"
+_require local "../../../src/smlformat-lib.smi"
+_require local "../../driver/Compiler.smi"
+_require local "../../../src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require local "../../../src/compiler/libs/toolchain/main/Filename.smi"
+_require local "../../../src/compiler/libs/toolchain/main/CoreUtils.smi"
+_require local "../../../src/compiler/compilePhases/loadfile/main/LoadFileError.ppg.smi"
+
+structure LoadFileTests =
+struct
+  val tests : SMLUnit.Test.test
+end

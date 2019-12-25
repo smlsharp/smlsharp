@@ -13,6 +13,5 @@ struct
   val isNormal : class -> bool
   val sign : class -> int
   val signBit : class -> bool
-  val toInt : class -> int
   val isZero : class -> bool
 end

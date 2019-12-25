@@ -178,9 +178,16 @@ in
               val elementFormatExp = elementFormatter head
             in
               case elementFormatExp of
-                [] => elementFormatExp @ separaterDeffered @ (format tail)
-              | [SMLFormat.FormatExpression.Term _] => elementFormatExp @ separaterDeffered @ (format tail)
-              | _ => elementFormatExp @ separator @ (format tail)
+                [] => FE.Sequence elementFormatExp ::
+                      FE.Sequence separaterDeffered ::
+                      format tail
+              | [SMLFormat.FormatExpression.Term _] =>
+                FE.Sequence elementFormatExp ::
+                FE.Sequence separaterDeffered ::
+                format tail
+              | _ => FE.Sequence elementFormatExp ::
+                     FE.Sequence separator
+                     :: format tail
             end
       in
         format values
@@ -200,8 +207,8 @@ in
             (list, false)
     in
       if hasEllipsis then 
-        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) 
-        @ separator @
+        FE.Sequence (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) ::
+        FE.Sequence separator ::
         ellipsis
       else
         format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
@@ -216,8 +223,8 @@ in
         val {contents, hasEllipsis} = lazyFn NONE
       in
       if hasEllipsis then 
-        (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) 
-        @ separator @
+        FE.Sequence (format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents) ::
+        FE.Sequence separator ::
         ellipsis
       else
         format_listWithDeffered (elementFormatter, separator, separatorDeffered) contents
@@ -230,11 +237,14 @@ in
 
   fun formatPrependedOpt (formatter, prefixIfSome) =
       fn NONE => [FE.Term (0, "")]
-       | SOME value => prefixIfSome @ (formatter value)
+       | SOME value => FE.Sequence prefixIfSome :: formatter value
 
   fun formatOption (formatter, prefixIfSome, suffixIfSome) =
       fn NONE => [FE.Term (4, "NONE")]
-       | SOME value => [FE.Term (4, "SOME")] @ prefixIfSome @ (formatter value) @ suffixIfSome
+       | SOME value => FE.Term (4, "SOME") ::
+                       FE.Sequence prefixIfSome ::
+                       FE.Sequence (formatter value) ::
+                       suffixIfSome
 
   (* this is a copy for TermFormat 
     ToDo: we should put all the generic formatter function in
@@ -264,8 +274,26 @@ in
       *)
      (RecordLabel.label * 'a) list
 
+ (*%
+  * @params(labelsep)
+  * @formatter(list)  SMLFormat.BasicFormatters.format_list
+  * @formatter(RecordLabel.label)  RecordLabel.format_label
+  *)
+ type 'a fieldListForJson =
+     (*%
+        @format(field fields)
+          fields(field)(","+1) 
+
+        @format:field(label * elem) 
+          { 2["\"" label "\"" labelsep elem] }
+      *)
+     (RecordLabel.label * 'a) list
+
   fun formatRecordLabelMap (formatter, labelsep) env =
       format_fieldList(formatter,labelsep) (RecordLabel.Map.listItemsi env)
+
+  fun formatRecordLabelMapForJSON (formatter, labelsep) env =
+      format_fieldListForJson(formatter,labelsep) (RecordLabel.Map.listItemsi env)
 
  (*%
   * @params(labelsep)

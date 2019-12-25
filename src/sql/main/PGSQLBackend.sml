@@ -5,7 +5,7 @@
  * @copyright (c) 2010, Tohoku University.
  *)
 
-structure SMLSharp_SQL_PGSQLBackend :> SMLSharp_SQL_SQLBACKEND =
+structure SMLSharp_SQL_PGSQLBackend : SMLSharp_SQL_SQLBACKEND =
 struct
 
   structure PGSQL = SMLSharp_SQL_PGSQL
@@ -14,6 +14,7 @@ struct
   type res = {result: PGSQL.result, rowIndex: int ref, numRows: int}
   type sqltype = string
   type value = string
+  type server_desc = string
 
   exception Exec = SMLSharp_SQL_Errors.Exec
   exception Connect = SMLSharp_SQL_Errors.Connect
@@ -22,13 +23,13 @@ struct
   fun execQuery (conn, queryString) =
       let
         val r = PGSQL.PQexec () (conn, queryString)
-        val s = if r = _NULL
+        val s = if r = SMLSharp_Builtin.Pointer.null ()
                 then PGSQL.PGRES_FATAL_ERROR
                 else PGSQL.PQresultStatus () r
       in
         if s = PGSQL.PGRES_COMMAND_OK orelse s = PGSQL.PGRES_TUPLES_OK
         then ()
-        else raise Exec (if r = _NULL then "NULL"
+        else raise Exec (if r = SMLSharp_Builtin.Pointer.null () then "NULL"
                          else (PGSQL.PQclear () r;
                                PGSQL.getErrorMessage conn));
         {result = r, rowIndex = ref ~1, numRows = PGSQL.PQntuples () r}
@@ -47,8 +48,10 @@ struct
       let
         val conn = PGSQL.PQconnectdb () connInfo
       in
-        if conn = _NULL orelse PGSQL.PQstatus () conn <> PGSQL.CONNECTION_OK
-        then raise Connect (if conn = _NULL then "NULL"
+        if conn = SMLSharp_Builtin.Pointer.null ()
+           orelse PGSQL.PQstatus () conn <> PGSQL.CONNECTION_OK
+        then raise Connect (if conn = SMLSharp_Builtin.Pointer.null ()
+                            then "NULL"
                             else PGSQL.getErrorMessage conn)
         else conn
       end
@@ -72,8 +75,7 @@ struct
   fun stringValue (x:string) = SOME x
   fun charValue x = SOME (String.sub (x, 0)) handle Subscript => NONE
   fun timestampValue x = SOME (SMLSharp_SQL_TimeStamp.fromString x)
-  fun decimalValue x = SOME (SMLSharp_SQL_Decimal.fromString x)
-  fun floatValue x = SOME (SMLSharp_SQL_Float.fromString x)
+  fun numericValue x = SMLSharp_SQL_Numeric.fromString x
 
   (* The boolean output conversion function of PostgreSQL-9.0.3, boolout,
    * returns "t" or "f".

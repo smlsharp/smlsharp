@@ -4,7 +4,7 @@ local
   structure TC = TypedCalc
   structure TCU = TypedCalcUtils
   structure T = Types
-  structure TU = TypesBasics
+  (* structure TU = TypesBasics *)
   structure P = Printers
   fun bug s = Bug.Bug ("TPOptimize: " ^ s)
 
@@ -147,6 +147,14 @@ local
              instTyList =  instTyList,
              loc = loc
             }
+        | TC.TPDYNAMICCASE {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} => 
+          TC.TPDYNAMICCASE {groupListTerm = eval groupListTerm,
+                            groupListTy = groupListTy,
+                            dynamicTerm = eval dynamicTerm,
+                            dynamicTy = dynamicTy,
+                            elemTy = elemTy,
+                            ruleBodyTy = ruleBodyTy,
+                            loc = loc}
         | TC.TPERROR => exp
         | TC.TPEXNCONSTRUCT {argExpOpt, argTyOpt, exn:TC.exnCon, instTyList, loc} =>
           TC.TPEXNCONSTRUCT
@@ -162,11 +170,11 @@ local
           TC.TPEXEXN_CONSTRUCTOR
             {exExnInfo= exExnInfo, loc= loc}
         | TC.TPEXVAR {path, ty} => exp
-        | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN ptrExp, stubTy} =>
+        | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, ty), stubTy} =>
           TC.TPFFIIMPORT
             {ffiTy = ffiTy,
              loc = loc,
-             funExp = TC.TPFFIFUN (eval ptrExp),
+             funExp = TC.TPFFIFUN (eval ptrExp, ty),
              stubTy = stubTy
             }
         | TC.TPFFIIMPORT {ffiTy, loc, funExp as TC.TPFFIEXTERN _, stubTy} =>
@@ -234,19 +242,21 @@ local
              loc = loc,
              oprimOp = oprimOp
             }
-        | TC.TPPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
+        | TC.TPPOLY {btvEnv, constraints, exp, expTyWithoutTAbs, loc} =>
           TC.TPPOLY
             {btvEnv= btvEnv,
+             constraints = constraints,
              exp = eval exp,
              expTyWithoutTAbs = expTyWithoutTAbs,
              loc = loc
             }
-        | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
+        | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, constraints, loc} =>
           TC.TPPOLYFNM
             {argVarList= argVarList,
              bodyExp=eval bodyExp,
              bodyTy=bodyTy,
              btvEnv= btvEnv,
+             constraints = constraints,
              loc=loc
             }
         | TC.TPPRIMAPPLY {argExp, argTy, instTyList, loc, primOp:T.primInfo} =>
@@ -291,39 +301,18 @@ local
              expTyList = expTyList,
              loc = loc
             }
-        | TC.TPFOREACH {data, dataTy, iterator, iteratorTy, pred, predTy, loc} =>
-          TC.TPFOREACH 
-            {data = eval data, 
-             dataTy = dataTy,
-             iterator = eval iterator, 
-             iteratorTy = iteratorTy, 
-             pred = eval pred, 
-             predTy = predTy, 
-             loc = loc}
-      | TC.TPFOREACHDATA {data, dataTy, whereParam, whereParamTy, iterator, iteratorTy, pred,  predTy, loc} =>
-          TC.TPFOREACHDATA 
-            {data = eval data, 
-             dataTy = dataTy,
-             whereParam = eval whereParam,
-             whereParamTy = whereParamTy,
-             iterator = eval iterator, 
-             iteratorTy = iteratorTy, 
-             pred = eval pred, 
-             predTy = predTy, 
-             loc = loc}
         | TC.TPSIZEOF (ty, loc) => TC.TPSIZEOF (ty, loc)
-        | TC.TPTYPEOF (ty, loc) => TC.TPTYPEOF (ty, loc)
         | TC.TPREIFYTY (ty, loc) => TC.TPREIFYTY (ty, loc)
         | TC.TPTAPP {exp, expTy, instTyList, loc} =>
           (case eval exp of
-             TC.TPPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
+             TC.TPPOLY {btvEnv, constraints, exp, expTyWithoutTAbs, loc} =>
              let
                val btvMap = applyTys (btvEnv, instTyList)
                val exp = TCEvalTy.evalExp btvMap exp
              in
                eval exp
              end
-           | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
+           | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, constraints, loc} =>
              let
                val btvMap = applyTys (btvEnv, instTyList)
                val argVarList = map (TyReduce.evalTyVar btvMap) argVarList
@@ -346,19 +335,41 @@ local
           )
         | TC.TPVAR varInfo =>
           evalVar varMap varInfo
-        | TC.TPJOIN {ty, args = (arg1, arg2), argtys, loc} =>
+        | TC.TPJOIN {isJoin, ty, args = (arg1, arg2), argtys, loc} =>
           TC.TPJOIN {ty = ty,
                      args = (eval arg1, eval arg2),
                      argtys = argtys,
+                     isJoin = isJoin,
                      loc = loc}
         (* the following should have been eliminate *)
         | TC.TPRECFUNVAR {arity, var} =>
           raise bug "TPRECFUNVAR in eval"
-        | TC.TPJSON {exp,ty,coerceTy,loc} =>
-          TC.TPJSON {exp=eval exp,
-                     ty=ty,
-                     coerceTy=coerceTy,
-                     loc = loc}
+        | TC.TPDYNAMIC {exp,ty,elemTy, coerceTy,loc} =>
+          TC.TPDYNAMIC {exp=eval exp,
+                        ty=ty,
+                        elemTy = elemTy,
+                        coerceTy=coerceTy,
+                        loc = loc}
+        | TC.TPDYNAMICIS {exp,ty,elemTy, coerceTy,loc} =>
+          TC.TPDYNAMICIS {exp=eval exp,
+                          ty=ty,
+                          elemTy = elemTy,
+                          coerceTy=coerceTy,
+                          loc = loc}
+        | TC.TPDYNAMICVIEW {exp,ty,elemTy, coerceTy,loc} =>
+          TC.TPDYNAMICVIEW {exp=eval exp,
+                            ty=ty,
+                            elemTy = elemTy,
+                            coerceTy=coerceTy,
+                            loc = loc}
+        | TC.TPDYNAMICNULL {ty, coerceTy,loc} =>
+          TC.TPDYNAMICNULL {ty=ty,
+                            coerceTy=coerceTy,
+                            loc = loc}
+        | TC.TPDYNAMICTOP {ty, coerceTy,loc} =>
+          TC.TPDYNAMICTOP {ty=ty,
+                           coerceTy=coerceTy,
+                           loc = loc}
       end
   and applyTerms
         (varMap:varMap)
@@ -467,9 +478,9 @@ local
         end
       | TC.TPEXPORTRECFUNVAR _ =>
         raise bug "TPEXPORTRECFUNVAR to optimize"
-      | TC.TPEXTERNEXN {path, ty} => (varMap,  tpdecl :: declListRev)
+      | TC.TPEXTERNEXN ({path, ty}, provider) => (varMap,  tpdecl :: declListRev)
       | TC.TPBUILTINEXN {path, ty} => (varMap,  tpdecl :: declListRev)
-      | TC.TPEXTERNVAR {path, ty} => (varMap, tpdecl :: declListRev)
+      | TC.TPEXTERNVAR ({path, ty}, provider) => (varMap, tpdecl :: declListRev)
       | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
         let
           val (varMap, binds) = evalBindsSeq binds (varMap, nil)
@@ -481,9 +492,10 @@ local
           (varMap, declListRev)
         end
       | TC.TPVALPOLYREC
-          (btvEnv,
+          {btvEnv,
+           constraints,
            recbinds:{exp:TC.tpexp, expTy:ty, var:T.varInfo} list,
-           loc) =>
+           loc} =>
         let
           val recbinds =
               map
@@ -495,7 +507,7 @@ local
                 recbinds
         in
           (varMap,
-           TC.TPVALPOLYREC (btvEnv, recbinds, loc)
+           TC.TPVALPOLYREC {btvEnv=btvEnv, constraints=constraints, recbinds=recbinds, loc=loc}
            :: declListRev
           )
         end

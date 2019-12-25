@@ -8,7 +8,7 @@ struct
   datatype term = T of int
   datatype nonterm = NT of int
   datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
-  type table (= boxed)
+  type table (= {})
   val numStates : table -> int
   val numRules : table -> int
   val describeActions : table -> state -> (term, action) pairlist * action

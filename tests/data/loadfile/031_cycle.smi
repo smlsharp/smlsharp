@@ -1,0 +1,2 @@
+_require "./031_cycle2.smi"
+val x : int

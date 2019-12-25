@@ -1,24 +1,35 @@
 /**
- * SMLSharpGC.c
- * @copyright (c) 2015, Tohoku University.
+ * smlsharp_gc.cpp
+ * @copyright (c) 2019, Tohoku University.
  * @author UENO Katsuhiro
+ * for LLVM 3.9.1, 4.0.1, 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.0
  */
 
+#include <llvm/Config/llvm-config.h>
 #include <llvm/CodeGen/AsmPrinter.h>
 #include <llvm/CodeGen/GCStrategy.h>
+#include <llvm/CodeGen/GCMetadata.h>
 #include <llvm/CodeGen/GCMetadataPrinter.h>
-#include <llvm/IR/Mangler.h>
-#include <llvm/MC/MCContext.h>
 #include <llvm/MC/MCStreamer.h>
 #include <llvm/MC/MCSymbol.h>
+#if LLVM_VERSION_MAJOR == 6
+#include <llvm/CodeGen/TargetLoweringObjectFile.h>
+#else
 #include <llvm/Target/TargetLoweringObjectFile.h>
-#include <llvm/Target/TargetMachine.h>
+#endif
 using namespace llvm;
 
 namespace {
 class SMLSharpGC : public GCStrategy {
 public:
-	SMLSharpGC();
+	SMLSharpGC() {
+#if LLVM_VERSION_MAJOR <= 7
+		NeededSafePoints = 1 << GC::PostCall;
+#else
+		NeededSafePoints = true;
+#endif
+		UsesMetadata = 1;
+	}
 };
 class SMLSharpGCPrinter : public GCMetadataPrinter {
 public:
@@ -29,12 +40,6 @@ public:
 static GCRegistry::Add<SMLSharpGC> X("smlsharp", "SML#");
 static GCMetadataPrinterRegistry::Add<SMLSharpGCPrinter> Y("smlsharp", "SML#");
 
-SMLSharpGC::SMLSharpGC()
-{
-	NeededSafePoints = 1 << GC::PostCall;
-	UsesMetadata = true;
-}
-
 static void
 EmitUInt16(AsmPrinter &ap, uint64_t value, uint64_t unit = 1)
 {
@@ -43,12 +48,14 @@ EmitUInt16(AsmPrinter &ap, uint64_t value, uint64_t unit = 1)
 	ap.OutStreamer->EmitIntValue(value / unit, 2);
 }
 
-static MCSymbol *
-GetLabel(AsmPrinter &ap, const Module &m, const std::string &name)
+static const Function *
+FindFunction(const Module &m, StringRef prefix)
 {
-	SmallString<128> mname;
-	Mangler::getNameWithPrefix(mname, name, m.getDataLayout());
-	return ap.OutContext.getOrCreateSymbol(mname);
+	for (auto &f : m.getFunctionList()) {
+		if (!f.hasExternalLinkage() && f.getName().startswith(prefix))
+			return &f;
+	}
+	return nullptr;
 }
 
 /*
@@ -62,51 +69,49 @@ GetLabel(AsmPrinter &ap, const Module &m, const std::string &name)
  *   } Descriptors[]; // terminated with NumSafePoints == 0
  */
 static void
-EmitFunctionInfo(AsmPrinter &ap, GCFunctionInfo &fi, MCSymbol *base,
-		 unsigned int ptrsize)
+EmitFunctionInfo(AsmPrinter &ap, GCFunctionInfo &fi, MCSymbol *base)
 {
 	// skip functions that have no safe point.
 	if (fi.size() == 0) return;
 
+	unsigned ptrsize = ap.getPointerSize();
 	ap.OutStreamer->AddComment(fi.getFunction().getName());
 	EmitUInt16(ap, fi.size());
 	EmitUInt16(ap, fi.getFrameSize(), ptrsize);
 	EmitUInt16(ap, fi.roots_size());
 
-	// LLVM does not compute liveness of each gc root; therefore
-	// all safe points in a function have identical set of gc roots.
-	for (GCFunctionInfo::roots_iterator
-		     i = fi.roots_begin(), ie = fi.roots_end();
-	     i != ie; ++i)
+	// LLVM does not compute the live set of each safe point
+	// (live_begin is an alias of roots_begin).
+	// all safe points in a function have the same set of gc roots.
+	for (auto i = fi.roots_begin(), ie = fi.roots_end(); i != ie; ++i)
 		EmitUInt16(ap, i->StackOffset, ptrsize);
 
 	ap.OutStreamer->EmitValueToAlignment(ptrsize);
-	for (GCFunctionInfo::iterator j = fi.begin(), je = fi.end();
-	     j != je; ++j)
-		ap.OutStreamer->emitAbsoluteSymbolDiff(j->Label, base, ptrsize);
+	for (auto &p : fi)
+		ap.OutStreamer->emitAbsoluteSymbolDiff(p.Label, base, ptrsize);
 }
 
 void
 SMLSharpGCPrinter::finishAssembly(Module &m, GCModuleInfo &info, AsmPrinter &ap)
 {
-	unsigned int ptrsize = ap.TM.getDataLayout()->getPointerSize();
-	MCSymbol *top = GetLabel(ap, m, "_SML_top");
-	MCSymbol *ftab = GetLabel(ap, m, "_SML_ftab");
+	const auto *tabb = FindFunction(m, "_SML_tabb");
+	std::string id = tabb ? tabb->getName().substr(9) : "";
+	auto *sml_tabb = tabb ? ap.getSymbol(tabb)
+		: ap.GetExternalSymbolSymbol("_SML_tabb" + id);
+	auto *sml_ftab = ap.GetExternalSymbolSymbol("_SML_ftab" + id);
 
+	unsigned align = ap.getPointerSize();
 	ap.OutStreamer->SwitchSection
 		(ap.getObjFileLowering().getSectionForConstant
-		 (SectionKind::getReadOnly(), nullptr));
-	ap.OutStreamer->EmitValueToAlignment(ptrsize);
-	ap.OutStreamer->EmitLabel(ftab);
+		 (ap.getDataLayout(), SectionKind::getReadOnly(),
+		  nullptr, align));
+	ap.OutStreamer->EmitValueToAlignment(ap.getPointerSize());
+	ap.OutStreamer->EmitLabel(sml_ftab);
 
-	for (GCModuleInfo::FuncInfoVec::iterator
-		     i = info.funcinfo_begin(), ie = info.funcinfo_end();
-	     i != ie; ++i) {
-		if ((**i).getStrategy().getName() == getStrategy().getName())
-			EmitFunctionInfo(ap, **i, top, ptrsize);
-		ap.OutStreamer->EmitValueToAlignment(ptrsize);
+	for (auto i = info.funcinfo_begin(); i != info.funcinfo_end(); ++i) {
+		if ((*i)->getStrategy().getName() == getStrategy().getName())
+			EmitFunctionInfo(ap, **i, sml_tabb);
+		ap.OutStreamer->EmitValueToAlignment(ap.getPointerSize());
 	}
-
-	ap.OutStreamer->AddComment("end of frame table");
 	EmitUInt16(ap, 0);
 }

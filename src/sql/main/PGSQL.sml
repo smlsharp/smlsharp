@@ -32,6 +32,8 @@ structure SMLSharp_SQL_PGSQL :> sig
   val PQgetisnull : unit -> (result * int * int) -> bool
   val PQntuples : unit -> result -> int
   val PQnfields : unit -> result -> int
+  val PQfname : unit -> result * int -> char ptr
+  val PQfnumber : unit -> result * string -> int
   val PQresultStatus : unit -> result -> resultStatus
   val PQerrorMessage : unit -> conn -> char ptr
   val PQresultErrorMessage : unit -> result -> char ptr
@@ -67,7 +69,7 @@ struct
                  (case OS.Process.getEnv "SMLSHARP_LIBPQ" of
                     SOME x => x
                   | NONE =>
-                    case SMLSharp_Config.DLLEXT () of
+                    case !SMLSharp_SQL_Config.DLLEXT of
                       "so" => "libpq.so.5"
                     | dll => "libpq.5." ^ dll))
 
@@ -119,6 +121,12 @@ struct
   val PQnfields =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQnfields")
                     : _import result -> int)
+  val PQfname =
+      lazy (fn _ => DynamicLink.dlsym (lib (), "PQfname")
+                    : _import (result, int)  -> char ptr)
+  val PQfnumber =
+      lazy (fn _ => DynamicLink.dlsym (lib (), "PQfnumber")
+                    : _import (result, string)  -> int)
   val PQresultStatus =
       lazy (fn _ => DynamicLink.dlsym (lib (), "PQresultStatus")
                     : _import result -> int)

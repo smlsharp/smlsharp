@@ -1,0 +1,2 @@
+_use local "./061_useerror2.use"
+val x : int

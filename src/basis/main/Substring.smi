@@ -1,8 +1,9 @@
 _require "./General.smi"
+_use local "./Slice_common.sml"
 
 structure Substring =
 struct
-  type substring (= boxed)
+  type substring (= *)
   val sub : substring * int -> char
   val size : substring -> int
   val base : substring -> string * int * int

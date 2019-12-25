@@ -1,0 +1,142 @@
+.de EX
+.nf
+.ft CW
+..
+.de EE
+.br
+.fi
+.ft
+..
+.TH SMLLEX 1
+.SH NAME
+smllex
+\- the lexical analyzer generator for SML#
+.SH SYNOPSIS
+.B smllex
+[\fB-o\fP\ \fIfile\fP]
+.I filename ...
+.
+.SH DESCRIPTION
+.I SMLLex
+is a lexical analyzer generator in the style of ML-Lex.
+It accepts input files designed for ML-Lex.
+Generated programs can be compiled by the SML# compiler.
+They are compatible to those of ML-Lex with a few exceptions.
+.PP
+When multiple input files are given,
+each input file is separately read and yields a separate program.
+By default, the output file name is obtained by appending
+.I .sml
+suffix to the input file name.
+.PP
+To compile the generated program with SML#, an interface file
+(\fI.smi\fP file) is needed.
+See
+.B EXAMPLES
+for details.
+.
+.SS OPTIONS
+.TP
+\fB-o\fP\ \fIfilename\fP
+Set the output file name of the first input.
+.
+.SH EXAMPLES
+The following is a minimal example of an input file
+.IR ex.lex :
+.PP
+.RS
+.EX
+type lexresult = bool option
+fun eof () = NONE
+%%
+%structure ExampleLex
+%%
+"T" => (SOME true);
+"F" => (SOME false);
+.EE
+.RE
+.PP
+By applying this file to
+.BR smllex ,
+.PP
+.RS
+.EX
+smllex ex.lex
+.EE
+.RE
+.PP
+you obtains a program named
+.IR ex.lex.sml .
+To compile it, you need to create the following
+.I ex.lex.smi
+file by yourself:
+.PP
+.RS
+.EX
+_require "basis.smi"
+structure ExampleLex =
+struct
+  exception LexError
+  val makeLexer : (int -> string) -> unit -> bool option
+end
+.EE
+.RE
+.PP
+When your
+.I .lex
+file has an
+.BR %arg ,
+directive,
+for example,
+.PP
+.RS
+.EX
+type lexresult = bool option
+fun eof {inverse} = NONE
+%%
+%structure Example2Lex
+%arg ({inverse});
+%%
+"T" => (SOME (if inverse then false else true));
+"F" => (SOME (if inverse then true else false));
+.EE
+.RE
+.PP
+the generated \f[CW]makeLexer\fP function takes an additional argument:
+.PP
+.RS
+.EX
+_require "basis.smi"
+structure Example2Lex =
+struct
+  exception LexError
+  val makeLexer : (int -> string) -> {inverse : bool}
+                  -> unit -> bool option
+end
+.EE
+.RE
+.
+.SH HISTORY
+SMLLex is a derivative of ML-Lex, which is originally developed by
+Andrew W. Appel, James S. Mattson, and David R. Tarditi.
+.PP
+Major changes from the orginal ML-Lex includes the following:
+.IP \(bu 4
+The command line option \fB-o\fP is added.
+.IP \(bu 4
+The character position starts with 0, not 2.
+.IP \(bu 4
+The generated program does not use
+.I Unsafe
+features of SML/NJ.
+.
+.SH SEE ALSO
+.IR smlyacc (1)
+.br
+.IR "A lexical analyzer generator for Standard ML" ,
+available at
+https://www.smlnj.org/doc/ML-Lex/manual.html
+.br
+.IR "SML# Document" ,
+available at
+https://www.pllab.riec.tohoku.ac.jp/smlsharp/docs/

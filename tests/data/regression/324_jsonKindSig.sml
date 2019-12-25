@@ -1,10 +1,10 @@
 structure Template 
 :> sig
-    val g : ['a, 'b#json. ('a * 'b) * 'a -> int]
+    val g : ['a, 'b#reify. ('a * 'b) * 'a -> int]
   end
 =
 struct
-  fun ('a, 'b#json) g ((filler, value:'b),a)= 1:int
+  fun ('a, 'b#reify) g ((filler, value:'b),a)= 1:int
 end 
 
 

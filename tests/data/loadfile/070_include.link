@@ -1,0 +1,12 @@
+NODE {tests/data/loadfile/070_include3.smi INTERFACE}
+NODE {tests/data/loadfile/070_include4.smi INTERFACE}
+NODE {tests/data/loadfile/070_include2.smi INCLUDES}
+NODE {tests/data/loadfile/070_include.smi INTERFACE}
+ROOT {ROOT_INCLUDES LINK
+ INCLUDE {USERPATH tests/data/loadfile/070_include.smi INTERFACE
+  70bd69e9fc68e454
+  REQUIRE {USERPATH tests/data/loadfile/070_include2.smi INCLUDES
+   INCLUDE {USERPATH tests/data/loadfile/070_include3.smi INTERFACE
+    8234116ac8d4b6a9}
+   INCLUDE {USERPATH tests/data/loadfile/070_include4.smi INTERFACE
+    edfedfb3ff5b1fc2}}}}

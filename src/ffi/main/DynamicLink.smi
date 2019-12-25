@@ -2,6 +2,7 @@ _require local "../../basis/main/SMLSharp_Runtime.smi"
 
 structure DynamicLink =
 struct
+  exception Error of string
   type lib (= ptr)
   datatype scope = LOCAL | GLOBAL
   datatype mode = LAZY | NOW

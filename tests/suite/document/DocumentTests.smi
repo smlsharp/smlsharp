@@ -1,0 +1,12 @@
+_require local "../../../src/basis.smi"
+_require "../../../src/smlunit-lib.smi"
+_require local "../../driver/Compiler.smi"
+_require local "../../../src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.smi"
+_require local "../../../src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.smi"
+_require local "../../../src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.smi"
+_require local "../../../src/compiler/data/builtin/main/ConstantError.ppg.smi"
+
+structure DocumentTests =
+struct
+  val tests : SMLUnit.Test.test
+end

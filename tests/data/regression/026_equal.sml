@@ -1,5 +1,6 @@
 infix =
-val puts = _import "puts" : string -> int
+(*val puts = _import "puts" : string -> int*)
+val puts = SMLSharp_Builtin.General.ignore
 fun f x = (x,x)
 val t = (5,5)
 val _ = if f 5 = t then puts "true" else (puts "false"; raise Fail "ng")

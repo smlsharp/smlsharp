@@ -3,12 +3,15 @@ infix 6 + - ^
 infixr 5 :: @
 infix 4 = <> > >= < <=
 infix 3 := o
-val op * = SMLSharp_Builtin.Int32.mul_unsafe
-val op + = SMLSharp_Builtin.Int32.add_unsafe
-val op - = SMLSharp_Builtin.Int32.sub_unsafe
+val op * = SMLSharp_Builtin.Int32.mul
+val op + = SMLSharp_Builtin.Int32.add
+val op - = SMLSharp_Builtin.Int32.sub
 val op >= = SMLSharp_Builtin.Int32.gteq
 val op < = SMLSharp_Builtin.Int32.lt
-structure Int = Int32
+val op o = SMLSharp_Builtin.General.o
+val op := = SMLSharp_Builtin.General.:=
+val ! = SMLSharp_Builtin.General.!
+(* structure Int = Int32 *)
 structure Word8 = SMLSharp_Builtin.Word8
 structure CleanIO =
 struct
@@ -36,7 +39,7 @@ local
   structure AS = Word8ArraySlice
   structure V = Word8Vector
   structure VS = Word8VectorSlice
-  structure Pos = Position
+  (* structure Pos = Position *)
 
   (* an element for initializing buffers *)
     val someElem = (0w0 : word8)

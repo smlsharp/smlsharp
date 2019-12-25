@@ -1,17 +1,17 @@
-_require "../../basis.smi"
-_require "../../ml-yacc/lib/base.sig"
-_require "../../ml-yacc/lib/parser2.smi"
-_require "./utils.sig"
-_require "./sigs.sml"
+_require local "../../basis.smi"
+_require local "../../ml-yacc/lib/base.sig"
+_require local "../../ml-yacc/lib/parser2.smi"
+_require local "./utils.sig"
+(* _require "./sigs.sml" *)
 _require "./hdr.smi"
-_require "./yacc.grm.sig"
+(* _require "./yacc.grm.sig" *)
 
 structure LrVals =
 struct
   structure Parser =
   struct
     type token (= boxed)
-    type stream (= boxed)
+    type stream (= ref)
     type pos = int
     type arg = Header.inputSource
     type result = string * Header.declData * (Header.rule list)

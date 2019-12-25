@@ -156,6 +156,7 @@
 #endif /* !WITHOUT_MULTITHREAD */
 
 /* spin lock */
+#ifndef WITHOUT_MULTITHREAD
 typedef struct { _Atomic(int) lock; } sml_spinlock_t;
 #define SPIN_LOCK_INIT {ATOMIC_VAR_INIT(0)}
 static inline void spin_lock(sml_spinlock_t *l) {
@@ -169,6 +170,7 @@ static inline void spin_lock(sml_spinlock_t *l) {
 static inline void spin_unlock(sml_spinlock_t *l) {
 	store_release(&l->lock, 0);
 }
+#endif /* WITHOUT_MULTITHREAD */
 
 /*
  * support for thread local variables (tlv)
@@ -287,6 +289,7 @@ static inline void spin_unlock(sml_spinlock_t *l) {
 /* helpful attributes */
 
 #ifdef __GNUC__
+# define ALWAYS_INLINE __attribute__((always_inline))
 # define NOINLINE __attribute__((noinline))
 # define ATTR_MALLOC __attribute__((malloc))
 # define ATTR_PURE __attribute__((pure))
@@ -295,6 +298,7 @@ static inline void spin_unlock(sml_spinlock_t *l) {
 # define ATTR_NORETURN __attribute__((noreturn))
 # define ATTR_UNUSED __attribute__((unused))
 #else
+# define ALWAYS_INLINE inline
 # define NOINLINE
 # define ATTR_MALLOC
 # define ATTR_PURE
@@ -381,6 +385,13 @@ void sml_msg_init(void);
 #define DEBUG(e) do { } while (0)
 #endif
 
+/* for performance debug */
+#define asm_rdtsc() ({ \
+	uint32_t a__, d__; \
+	__asm__ volatile ("rdtsc" : "=a" (a__), "=d" (d__)); \
+	((uint64_t)d__ << 32) | a__; \
+})
+
 /*
  * malloc with error checking
  * If allocation failed, program exits immediately.
@@ -391,25 +402,20 @@ void *sml_xrealloc(void *p, size_t size) ATTR_MALLOC;
 #define xrealloc sml_xrealloc
 
 /*
- * stack frame layout information
+ * GC root set management including stack frame layouts
  */
 struct sml_frame_layout {
+	uint16_t num_safe_points;
 	uint16_t frame_size;      /* in words */
 	uint16_t num_roots;
 	uint16_t root_offsets[];  /* in words */
 };
-/* search for the frame layout at the given code address */
-const struct sml_frame_layout *sml_lookup_frametable(void *);
 
-/*
- * top-level management
- */
-/* register a top-level.  This is called before entering main. */
-void sml_register_top(const void *, const void *, const void *, const void *);
-/* run the registered top-levels. */
-void sml_run(int allow_multiple_toplevel);
-/* enumerate pointers in mutable top-level objects */
-void sml_enum_global(void (*trace)(void **, void *), void *);
+void sml_gcroot(void *, void (*)(void), void *, void *);
+struct sml_gcroot *sml_gcroot_load(void (* const *)(void *), unsigned int);
+void sml_gcroot_unload(struct sml_gcroot *);
+const struct sml_frame_layout *sml_lookup_frametable(void *retaddr);
+void sml_global_enum_ptr(void (*trace)(void **, void *), void *data);
 
 /* remove all thread-local data for SML# */
 void sml_deatch(void);
@@ -422,7 +428,7 @@ void sml_control_init(void);
 /* create an SML# execution context for current thread.
  * This is called when program or a callback starts.
  * Its argument is 3-pointer-size work area for SML# runtime. */
-SML_PRIMITIVE void sml_start(void *[3]);
+SML_PRIMITIVE void sml_start(void *);
 /* destroy current SML# execution context.
  * This is called when program or a callback exits. */
 SML_PRIMITIVE void sml_end(void);
@@ -442,17 +448,19 @@ SML_PRIMITIVE void sml_save(void);
  * function. */
 SML_PRIMITIVE void sml_unsave(void);
 /* check collector's state and perform synchronization if needed. */
-SML_PRIMITIVE void sml_check(void);
+SML_PRIMITIVE void sml_check(unsigned int);
 /* a flag indicating that mutators are requested to be synchronized.
  * If this is non-zero, mutators must call sml_check at their GC safe point
  * as soon as possible. */
-_Atomic(unsigned int) sml_check_flag;
+extern _Atomic(unsigned int) sml_check_flag;
 /* the main routine of garbage collection */
 void sml_gc(void);
 
-struct sml_mutator;
-void sml_stack_enum_ptr(struct sml_mutator *, void (*)(void **, void *),
-			void *);
+struct sml_user;
+void sml_stack_enum_ptr(struct sml_user *, void (*)(void **, void *), void *);
+
+int sml_set_signal_handler(void(*)(void));
+int sml_send_signal(void);
 
 enum sml_sync_phase {
 	/* An even-number phases is the pre-phase of its successor phase.
@@ -475,8 +483,6 @@ void sml_enter_internal(void *old_top);
 void sml_check_internal(void *frame_pointer);
 enum sml_sync_phase sml_current_phase(void);
 int sml_saved(void); /* for debug */
-
-void *sml_save_exn_internal(void *obj);
 
 SML_PRIMITIVE void sml_save_exn(void *);
 SML_PRIMITIVE void *sml_unsave_exn(void *);
@@ -511,7 +517,7 @@ typedef struct sml_intinf sml_intinf_t;
 void sml_obj_enum_ptr(void *obj, void (*callback)(void **, void *), void *);
 void *sml_obj_alloc(unsigned int objtype, size_t payload_size);
 NOINLINE char *sml_str_new(const char *str);
-char *sml_str_new2(const char *str, size_t len);
+char *sml_str_new2(const char *str, unsigned int len);
 sml_intinf_t *sml_intinf_new(void);
 void *sml_intinf_hex(void *obj);
 
@@ -556,29 +562,36 @@ ATTR_NORETURN void sml_exit(int status);
  * bit pointer
  */
 typedef uint32_t sml_bmword_t;
-struct sml_bitptr { sml_bmword_t *ptr, mask; };
+struct sml_bitptr { const sml_bmword_t *ptr; sml_bmword_t mask; };
+struct sml_bitptrw { sml_bmword_t *wptr; sml_bmword_t mask; };
 typedef struct sml_bitptr sml_bitptr_t;
+typedef struct sml_bitptrw sml_bitptrw_t;
 #define BITPTR_WORDBITS  32U
 #define BITPTR(p,n) \
-	((struct sml_bitptr){.ptr = (p) + (n) / 32U, .mask = 1 << ((n) % 32U)})
-#define BITPTR_TEST(b)   (*(b).ptr & (b).mask)
-#define BITPTR_SET(b)    (*(b).ptr |= (b).mask)
-#define BITPTR_UNSET(b)  (*(b).ptr &= ~(b).mask)
-#define BITPTR_WORD(b)   (*(b).ptr)
-#define BITPTR_WORDINDEX(b,begin) ((b).ptr - (begin))
-#define BITPTR_EQUAL(b1,b2) ((b1).ptr == (b2).ptr && (b1).mask == (b2).mask)
+	((sml_bitptr_t){.ptr = (p) + (n) / 32U, .mask = 1 << ((n) % 32U)})
+#define BITPTRW(p,n) \
+	((sml_bitptrw_t){.wptr = (p) + (n) / 32U, .mask = 1 << ((n) % 32U)})
 
-#define BITPTR_NEXTWORD(b) ((b).ptr++, (b).mask = 1U)
+#define BITPTRW_TEST(b)  (*(b).wptr & (b).mask)
+#define BITPTRW_SET(b)  (*(b).wptr |= (b).mask)
+#define BITPTRW_UNSET(b)  (*(b).wptr &= ~(b).mask)
+#define BITPTRW_WORD(b)  (*(b).wptr)
+#define BITPTRW_EQUAL(b1,b2)  ((b1).wptr == (b2).wptr && (b1).mask == (b2).mask)
+#define BITPTR_TEST(b)  (*(b).ptr & (b).mask)
+#define BITPTR_WORD(b)  (*(b).ptr)
+#define BITPTR_EQUAL(b1,b2)  ((b1).ptr == (b2).ptr && (b1).mask == (b2).mask)
+#define BITPTR_WORDINDEX(b,begin)  ((b).ptr - (begin))
+#define BITPTR_NEXTWORD(b)  ((b).ptr++, (b).mask = 1U)
 
-/* BITPTR_NEXT: move to next 0 bit in the current word.
+/* BITPTR_NEXT0: move to next 0 bit in the current word.
  * mask becomes zero if failed. */
-#define BITPTR_NEXT(b) do { \
+#define BITPTR_NEXT0(b) do { \
 	uint32_t tmp__ = *(b).ptr | ((b).mask - 1U); \
 	(b).mask = (tmp__ + 1U) & ~tmp__; \
 } while (0)
 #define BITPTR_NEXT_FAILED(b)  ((b).mask == 0)
 
-/* BITPTR_NEXT: move to next 1 bit in the current word.
+/* BITPTR_NEXT1: move to next 1 bit in the current word.
  * mask becomes zero if failed. */
 #define BITPTR_NEXT1(b) do { \
 	uint32_t tmp__ = *(b).ptr & -((b).mask << 1); \
@@ -608,7 +621,9 @@ typedef struct sml_bitptr sml_bitptr_t;
 #ifdef MINGW32
 /* include <windows.h> */
 #define GetPageSize() ({ SYSTEM_INFO si; GetSystemInfo(&si); si.dwPageSize; })
-#define ReservePageError NULL
+#define AllocPageError NULL
+#define AllocPage(addr, size) \
+	VirtualAlloc(addr, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE)
 #define ReservePage(addr, size)	\
 	VirtualAlloc(addr, size, MEM_RESERVE, PAGE_NOACCESS)
 #define ReleasePage(addr, size) \
@@ -619,8 +634,11 @@ typedef struct sml_bitptr sml_bitptr_t;
 	VirtualFree(addr, size, MEM_DECOMMIT)
 #else
 /* inclue <sys/mman.h> */
-#define GetPageSize() getpagesize()
-#define ReservePageError MAP_FAILED
+/* inclue <unistd.h> */
+#define GetPageSize() sysconf(_SC_PAGESIZE)
+#define AllocPageError MAP_FAILED
+#define AllocPage(addr, size) \
+	mmap(addr, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0)
 #define ReservePage(addr, size) \
 	mmap(addr, size, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0)
 #define ReleasePage(addr, size) \

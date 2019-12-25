@@ -1,5 +1,5 @@
 (**
- * @copyright (c) 2012- Tohoku University.
+ * @copyright (c) 2012 - 2018 Tohoku University.
  * @author Atsushi Ohori
  *)
 (* the initial error code of this file : CP-001 *)
@@ -8,6 +8,7 @@ struct
 local
   structure I = IDCalc
   structure V = NameEvalEnv
+  structure VP = NameEvalEnvPrims
   structure BT = BuiltinTypes
   structure PI = PatternCalcInterface
   structure PL = PatternCalc
@@ -28,6 +29,55 @@ local
 
   exception Fail
 
+  val equalTyInterface = fn x => N.equalTyWithInterface true x
+  val equalTy = fn x => N.equalTyWithInterface false x
+  val equalTfunInterface = fn x => N.equalTfunWithInterface true x
+  val equalTfun = fn x => N.equalTfunWithInterface false x
+
+  fun isOpaque ty =
+      let
+        exception OPAQUE
+        fun traverseTy ty =
+            case ty of
+              I.TYWILD => ()
+            | I.TYERROR => ()
+            | I.TYVAR _ => ()
+            | I.TYFREE_TYVAR _ => ()
+            | I.TYRECORD {ifFlex, fields} => RecordLabel.Map.app traverseTy fields
+            | I.TYCONSTRUCT {tfun, args} =>
+              (case tfun of
+                 I.TFUN_VAR (ref (I.TFUN_DTY {dtyKind = I.OPAQUE _,...})) => raise OPAQUE 
+               | _ => ();
+               app traverseTy args)
+            | I.TYFUNM (tyList, ty) => app traverseTy (ty::tyList)
+            | I.TYPOLY (tvarlist, ty) => traverseTy ty
+            | I.INFERREDTY typesTy => ()
+      in
+        (traverseTy ty; false) handle OPAQUE => true
+      end
+
+  fun isInterface ty =
+      let
+        exception OPAQUE
+        fun traverseTy ty =
+            case ty of
+              I.TYWILD => ()
+            | I.TYERROR => ()
+            | I.TYVAR _ => ()
+            | I.TYFREE_TYVAR _ => ()
+            | I.TYRECORD {ifFlex, fields} => RecordLabel.Map.app traverseTy fields
+            | I.TYCONSTRUCT {tfun, args} =>
+              (case tfun of
+                 I.TFUN_VAR (ref (I.TFUN_DTY {dtyKind = I.INTERFACE _,...})) => raise OPAQUE 
+               | _ => ();
+               app traverseTy args)
+            | I.TYFUNM (tyList, ty) => app traverseTy (ty::tyList)
+            | I.TYPOLY (tvarlist, ty) => traverseTy ty
+            | I.INFERREDTY typesTy => ()
+      in
+        (traverseTy ty; false) handle OPAQUE => true
+      end
+
   fun genTypedExportVarsIdstatus 
         exLongsymbol
         idstatus
@@ -37,14 +87,14 @@ local
         (exnSet,
          {exportDecls=exportDecls @ 
                       [I.ICEXPORTTYPECHECKEDVAR
-                         {longsymbol=exLongsymbol, version=NONE, id=varId}],
+                         {longsymbol=exLongsymbol, version=I.SELF, id=varId}],
           bindDecls=nil}
         )
       | I.IDVAR_TYPED {id=varId,ty,...} => 
         (exnSet, 
          {exportDecls=exportDecls @ 
                       [I.ICEXPORTTYPECHECKEDVAR
-                         {longsymbol=exLongsymbol, version=NONE, id=varId}],
+                         {longsymbol=exLongsymbol, version=I.SELF, id=varId}],
           bindDecls=nil}
         )
       | I.IDEXVAR _ => (exnSet, icdecls)
@@ -53,7 +103,7 @@ local
       | I.IDCON _ => (exnSet, icdecls)
       | I.IDEXN {id, ty,...} => 
         let
-          val exInfo = {used = ref false, longsymbol=exLongsymbol, version=NONE, ty=ty}
+          val exInfo = {used = ref false, longsymbol=exLongsymbol, version=I.SELF, ty=ty}
         in
           if not (ExnID.Set.member(exnSet, id)) then
             (ExnID.Set.add(exnSet, id), 
@@ -65,7 +115,7 @@ local
         end
       | I.IDEXNREP {id, ty,...} => 
         let
-          val exInfo = {used = ref false, longsymbol=exLongsymbol, version=NONE, ty=ty}
+          val exInfo = {used = ref false, longsymbol=exLongsymbol, version=I.SELF, ty=ty}
         in
           if not (ExnID.Set.member(exnSet, id)) then
             (ExnID.Set.add(exnSet, id), 
@@ -117,7 +167,7 @@ local
       val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
     in
       let
-        val {id, iseq, formals, conSpec, dtyKind,...} =
+        val {id, admitsEq, formals, conSpec, dtyKind,...} =
             case I.derefTfun defRealTfun of 
               I.TFUN_DEF _ =>
               (EU.enqueueError
@@ -192,7 +242,8 @@ local
                   case (tyOpt1, tyOpt2) of
                     (NONE, NONE) => ()
                   | (SOME ty1, SOME ty2) => 
-                    if N.equalTy (N.emptyTypIdEquiv, eqEnv) (ty1, ty2) then ()
+                    if equalTyInterface (N.emptyTypIdEquiv, eqEnv) (ty1, ty2) 
+                    then ()
                     else 
                       (EU.enqueueError
                          (Symbol.symbolToLoc name,
@@ -205,9 +256,9 @@ local
                      raise Fail)
               )
               nameTyPairList
-        val returnEnv = V.reinsertTstr (V.emptyEnv, tycon, defTstr)
+        val returnEnv = VP.rebindTstr (V.emptyEnv, tycon, defTstr)
       in
-        V.envWithVarE(returnEnv, varE)
+        VP.envWithVarE(returnEnv, varE)
       end
     end
       
@@ -219,7 +270,7 @@ local
                    nameTstrTfunDatbindList) =>
                   let
                     val defTstr = 
-                        case V.checkTstr(env, [tycon]) of
+                        case VP.checkProvideTstr(env, tycon) of
                           NONE => (EU.enqueueError
                                      (Symbol.symbolToLoc tycon,
                                       E.ProvideUndefinedTypeName
@@ -256,7 +307,7 @@ local
         val evalEnv =
             foldl
               (fn ((name, defTstr, defRealTstr, tfun, dtbind, varE), evalEnv) =>
-                  V.reinsertTstr(evalEnv, name, defRealTstr))
+                  VP.reinsertTstr(evalEnv, name, defRealTstr))
               evalEnv
               nameTstrTfunDatbindList
       in
@@ -266,7 +317,7 @@ local
                 val newEnv =
                     checkDatbind path evalEnv env nameTstrTfunBind
               in
-                V.unionEnv "CP-100" (returnEnv, newEnv)
+                VP.unionEnv "CP-100" (returnEnv, newEnv)
               end
           )
           V.emptyEnv
@@ -279,209 +330,226 @@ local
         (evalTopEnv as {Env=evalEnv,FunE, SigE}) 
         (env, pidec) =
       case pidec of
+        (* val name ... *)
         PI.PIVAL {scopedTvars, symbol=name, body, loc} =>
         let
           val internalLongsymbol = path @ [name]
           (* for declaration and error message *)
           val (tvarEnv, scopedTvars) =
               Ty.evalScopedTvars Ty.emptyTvarEnv evalEnv scopedTvars
-          fun processExternVal {externLongsymbol, ty} =
-            let
-              val ty = Ty.evalTy tvarEnv evalEnv ty handle e => raise e
-              val ty = case scopedTvars of
-                         nil => ty
-                       | _ => I.TYPOLY(scopedTvars, ty)
-            in
-              case V.checkId(env, [name]) of
-                NONE =>
-                (EU.enqueueError
-                   (Symbol.symbolToLoc name, 
-                    E.ProvideUndefinedID("CP-110", {longsymbol = internalLongsymbol}));
-                 raise Fail)
-              | SOME (idstatus as I.IDVAR {id=varid,...}) =>
-                (exnSet,
-                 V.reinsertId(V.emptyEnv,name,idstatus),
-                 {exportDecls=
-                  [I.ICEXPORTVAR 
-                     {exInfo={used = ref false, longsymbol=externLongsymbol, ty=ty, version=NONE},
-                      id=varid}],
-                   bindDecls = nil
-                 }
-                )
-              | SOME (idstatus as I.IDVAR_TYPED {id=varid, ty=varTy,...}) =>
-                if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, varTy) then
-                  (exnSet,
-                   V.reinsertId(V.emptyEnv,name,idstatus),
-                   {exportDecls = 
-                    [I.ICEXPORTTYPECHECKEDVAR
-                       {id=varid, longsymbol=externLongsymbol, version=NONE}
-                    ],
-                    bindDecls= nil
-                   }
-                  )
-                else
-                  (EU.enqueueError
-                     (Symbol.symbolToLoc name, 
-                      E.ProvideIDType("CP-120", {longsymbol = internalLongsymbol}));
-                   raise Fail)
-              | SOME (idstatus as I.IDEXVAR {exInfo, internalId}) =>
-                (* bug 069_open *)
-                (* bug 124_open *)
-                let
-(*
-                  val _ = 
-                      if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, #ty exInfo) then
-                        ()
-                      else
-                        (EU.enqueueError
-                           (Symbol.symbolToLoc name,
-                            E.ProvideIDType ("CP-131", {longsymbol = internalLongsymbol})))
-*)
-                  val _ = #used exInfo  := true
-                  val icexp  =I.ICEXVAR {exInfo=exInfo, longsymbol=internalLongsymbol}
-                  val newId = VarID.generate()
-                  val icpat = I.ICPATVAR_TRANS {longsymbol=internalLongsymbol,id=newId}
-                  val bindDecls = [I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)]
-                  val exInfo = {used = ref false, longsymbol=externLongsymbol,ty = ty, version=NONE}
-                  val exportDecls = [I.ICEXPORTVAR {exInfo=exInfo, id=newId}]
-                  val idstatus = I.IDVAR_TYPED{id=newId, longsymbol=internalLongsymbol, ty = ty}
-                in
-                  (exnSet,
-                   V.reinsertId(V.emptyEnv,name,idstatus),
-                   {exportDecls= exportDecls, bindDecls= bindDecls}
-                  )
-                end
-              | SOME (I.IDEXVAR_TOBETYPED _) => raise bug "IDEXVAR_TOBETYPED"
-              | SOME (idstatus as I.IDBUILTINVAR {primitive, ty=primTy}) =>
-                (* bug 075_builtin *)
-                let
-(*
-                  val _ = 
-                      if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, primTy) then
-                        ()
-                      else
-                        (EU.enqueueError
-                           (Symbol.symbolToLoc name,
-                            E.ProvideIDType ("CP-132", {longsymbol = internalLongsymbol})))
-*)
-                  val icexp = I.ICBUILTINVAR{primitive=primitive,ty=primTy,loc=loc}
-                  val newId = VarID.generate()
-                  val icpat = I.ICPATVAR_TRANS {longsymbol=internalLongsymbol,id=newId}
-                  val bindDecls = [I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)]
-                  val exportDecls = 
-                      [I.ICEXPORTVAR 
-                         {id=newId,
-                          exInfo={used = ref false, longsymbol=externLongsymbol,ty=ty, version=NONE}}
-                      ]
-                  val idstatus = I.IDVAR_TYPED{id=newId, ty = ty, longsymbol=internalLongsymbol}
-                in
-                  (exnSet,
-                   V.reinsertId(V.emptyEnv,name,idstatus),
-                   {exportDecls=exportDecls, bindDecls=bindDecls}
-                  )
-                end
-
-              | SOME (idstatus as I.IDCON {id=conId, ty=conTy,...}) =>
-                let
-(*
-                  val _ = 
-                      if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, conTy) then
-                        ()
-                      else
-                        (EU.enqueueError
-                           (Symbol.symbolToLoc name,
-                            E.ProvideIDType ("CP-131", {longsymbol = internalLongsymbol})))
-*)
-                  val icexp  =I.ICCON {longsymbol=internalLongsymbol,ty=conTy, id=conId}
-                  val newId = VarID.generate()
-                  val icpat = I.ICPATVAR_TRANS {longsymbol=internalLongsymbol,id=newId}
-                  val bindDecls = [I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)]
-                  val exportDecls = 
-                      [I.ICEXPORTVAR
-                         {id=newId,
-                          exInfo={longsymbol=externLongsymbol,
-                                  used =ref false,
-                                  version=NONE,
-                                  ty=ty}}]
-                  val idstatus = I.IDVAR_TYPED{id=newId, ty = ty, longsymbol=internalLongsymbol}
-                in
-                  (exnSet,
-                   V.reinsertId(V.emptyEnv,name,idstatus),
-                   {exportDecls=exportDecls, bindDecls=bindDecls}
-                  )
-                end
-              | SOME (idstatus as I.IDEXN {id, ty=exnTy,...}) =>
-                let
-(*
-                  val _ = 
-                      if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, exnTy) then
-                        (print "IDEXN ok\n")
-                      else
-                        (print "IDEXN ng\n";
-                         EU.enqueueError
-                           (Symbol.symbolToLoc name,
-                            E.ProvideIDType ("CP-131", {longsymbol = internalLongsymbol}))
-                        )
-*)
-                  val icexp  =I.ICEXN {longsymbol=internalLongsymbol,ty=exnTy,id=id}
-                  val newId = VarID.generate()
-                  val icpat = I.ICPATVAR_TRANS {longsymbol=internalLongsymbol,id=newId}
-                  val bindDecls = [I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)]
-                  val idstatus = I.IDVAR_TYPED{id=newId, ty = ty, longsymbol=internalLongsymbol}
-                in
-                  (exnSet,
-                   V.reinsertId(V.emptyEnv,name,idstatus),
-                  {exportDecls=nil, bindDecls=bindDecls}
-                  )
-                end
-              | SOME (idstatus as I.IDEXNREP {id, ty=exnTy,...}) =>
-                let
-                  val _ = 
-                      if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, exnTy) then
-                        ()
-                      else
-                        (EU.enqueueError
-                           (Symbol.symbolToLoc name,
-                            E.ProvideIDType ("CP-131", {longsymbol = internalLongsymbol})))
-                  val icexp  =I.ICEXN {longsymbol=internalLongsymbol,ty=exnTy,id=id}
-                  val newId = VarID.generate()
-                  val icpat = I.ICPATVAR_TRANS {longsymbol=internalLongsymbol,id=newId}
-                  val bindDecls = [I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)]
-                  val exInfo = {used = ref false, longsymbol=externLongsymbol, ty=ty, version=NONE}
-                  val exportDecls = [I.ICEXPORTVAR {id=newId, exInfo=exInfo}]
-                  val idstatus = I.IDVAR_TYPED{id=newId, ty = ty, longsymbol=internalLongsymbol}
-                in
-                  (exnSet, 
-                   V.reinsertId(V.emptyEnv,name,idstatus), 
-                   {exportDecls=nil, bindDecls=bindDecls}
-                  )
-                end
-              | SOME (I.IDEXEXN _) => raise bug "IDEXEXN in env"
-              | SOME (I.IDEXEXNREP _) => raise bug "IDEXEXN in env"
-              | SOME (I.IDOPRIM _) => raise bug "IDOPRIM in env"
-              | SOME (I.IDSPECVAR _) => raise bug "IDSPECVAR in provideEnv"
-              | SOME (I.IDSPECEXN _ ) => raise bug "IDSPECEXN in provideEnv"
-              | SOME (I.IDSPECCON _) => raise bug "IDSPECCON in provideEnv"
-            end
         in
           case body of
             (* val name : ty *)
-            A.VAL_EXTERN {ty} => processExternVal {externLongsymbol=internalLongsymbol, ty=ty}
+            A.VAL_EXTERN {ty} => 
+            let
+               val externLongsymbol = internalLongsymbol
+               val ty = Ty.evalTy tvarEnv evalEnv ty handle e => raise e
+               val ty = case scopedTvars of
+                          nil => ty
+                        | _ => I.TYPOLY(scopedTvars, ty)
+               fun makeDecl  icexp = 
+                   let
+                     val icexp =  I.ICINTERFACETYPED {icexp=icexp, ty=ty, loc=loc}
+                     val newId = VarID.generate()
+                     val icpat = 
+                         if isOpaque ty 
+                         then I.ICPATVAR_OPAQUE {longsymbol=externLongsymbol,id=newId}
+                         else I.ICPATVAR_TRANS {longsymbol=externLongsymbol,id=newId}
+                   in
+                     (newId,
+                      VP.reinsertId
+                        (V.emptyEnv,
+                         name,
+                         I.IDVAR_TYPED {id=newId, ty=ty, longsymbol=externLongsymbol}),
+                      [I.ICVAL(Ty.emptyScopedTvars, [(icpat, icexp)], loc)]
+                     )
+                   end
+             in
+               case VP.checkProvideId(env, name) of
+                 NONE =>
+                 (EU.enqueueError
+                    (Symbol.symbolToLoc name, 
+                     E.ProvideUndefinedID("CP-110", {longsymbol = internalLongsymbol}));
+                  raise Fail)
+               | SOME (idstatus as I.IDVAR {id, longsymbol}) =>
+                 if not (isInterface ty) 
+                 then 
+                   (exnSet,
+                    VP.reinsertId(V.emptyEnv, name, idstatus),
+                    {exportDecls=
+                     [I.ICEXPORTVAR 
+                        {exInfo={used = ref false, 
+                                 longsymbol=externLongsymbol, 
+                                 ty=ty, version=I.SELF},
+                         id=id}],
+                     bindDecls = nil
+                    }
+                   )
+                 else 
+                   let
+                     val (newId, env, bindDecls) = 
+                         makeDecl (I.ICVAR {longsymbol=longsymbol,id=id})
+                   in
+                     (exnSet,
+                      env,
+                      {bindDecls = bindDecls,
+                       exportDecls = 
+                       [I.ICEXPORTVAR 
+                          {exInfo={used = ref false, 
+                                   longsymbol=externLongsymbol, 
+                                   ty=ty, version=I.SELF},
+                           id=newId}]
+                      }
+                     )
+                   end
+               | SOME (idstatus as I.IDVAR_TYPED {id=varid, ty=varTy,longsymbol,...}) =>
+                 if equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, varTy) 
+                 then
+                   (exnSet,
+                    VP.reinsertId(V.emptyEnv,name,idstatus),
+                    {exportDecls = 
+                     [I.ICEXPORTTYPECHECKEDVAR
+                        {id=varid, longsymbol=externLongsymbol, version=I.SELF}
+                     ],
+                     bindDecls= nil
+                    }
+                   )
+                 else
+                   let
+                     val (newId, env, bindDecls) = 
+                         makeDecl (I.ICVAR {longsymbol=longsymbol,id=varid})
+                   in
+                     (exnSet,
+                      env,
+                      {bindDecls = bindDecls,
+                       exportDecls = 
+                       [I.ICEXPORTVAR
+                          {exInfo = {used = ref false, 
+                                     ty = ty, 
+                                     longsymbol=externLongsymbol, 
+                                     version=I.SELF},
+                           id = newId}
+                       ]
+                      }
+                     )
+                   end
+               | SOME (idstatus as I.IDEXVAR {exInfo as {ty = exInfoTy, ...}, 
+                                              internalId}) =>
+                 (* bug 069_open, bug 124_open *)
+                 let
+                   val _ = #used exInfo  := true
+                   val icexp  = I.ICEXVAR {exInfo=exInfo, longsymbol=internalLongsymbol}
+                   val (newId, env, bindDecls) = makeDecl icexp
+                   val exportDecls = 
+                       [I.ICEXPORTVAR 
+                          {id=newId,
+                           exInfo={used = ref false, longsymbol=externLongsymbol,
+                                   ty = ty, version=I.SELF}}
+                       ]
+                 in
+                   (exnSet,
+                    env,
+                    {bindDecls = bindDecls, exportDecls = exportDecls}
+                   )
+                 end
+               | SOME (I.IDEXVAR_TOBETYPED _) => raise bug "IDEXVAR_TOBETYPED"
+               | SOME (idstatus as I.IDBUILTINVAR {primitive, ty=primTy}) =>
+                 (* bug 075_builtin *)
+                 let
+                   val icexp = I.ICBUILTINVAR{primitive=primitive,ty=primTy,loc=loc}
+                   val (newId, env, bindDecls) = makeDecl icexp
+                   val exportDecls = 
+                       [I.ICEXPORTVAR 
+                          {id=newId,
+                           exInfo={used = ref false, longsymbol=externLongsymbol,
+                                   ty=ty, version=I.SELF}}
+                       ]
+                 in
+                   (exnSet,
+                    env,
+                    {bindDecls = bindDecls, exportDecls = exportDecls}
+                   )
+                 end
+               | SOME (idstatus as I.IDCON {id=conId, ty=conTy,...}) =>
+                 let
+                   val icexp  =I.ICCON {longsymbol=internalLongsymbol,ty=conTy, id=conId}
+                   val (newId, env, bindDecls) = makeDecl icexp
+                   val exportDecls = 
+                       [I.ICEXPORTVAR 
+                          {id=newId,
+                           exInfo={used = ref false, longsymbol=externLongsymbol,
+                                   ty=ty, version=I.SELF}}
+                       ]
+                 in
+                   (exnSet,
+                    env,
+                    {bindDecls = bindDecls, exportDecls = exportDecls}
+                   )
+                 end
+               | SOME (idstatus as I.IDEXN {id, ty=exnTy,...}) =>
+                 let
+                   val icexp  =I.ICEXN {longsymbol=internalLongsymbol,ty=exnTy,id=id}
+                   val (newId, env, bindDecls) = makeDecl icexp
+                   val exportDecls = 
+                       [I.ICEXPORTVAR 
+                          {id=newId,
+                           exInfo={used = ref false, longsymbol=externLongsymbol,
+                                   ty=ty, version=I.SELF}}
+                       ]
+                 in
+                   (exnSet,
+                    env,
+                    {bindDecls = bindDecls, exportDecls = exportDecls}
+                   )
+                 end
+               | SOME (idstatus as I.IDEXNREP {id, ty=exnTy,...}) =>
+                 let
+                   val _ = 
+                       if equalTyInterface (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, exnTy) then
+                         ()
+                       else
+                         (EU.enqueueError
+                            (Symbol.symbolToLoc name,
+                             E.ProvideIDType ("CP-131", {longsymbol = internalLongsymbol})))
+                   val icexp  =I.ICEXN {longsymbol=internalLongsymbol,ty=exnTy,id=id}
+                   val (newId, env, bindDecls) = makeDecl icexp
+                   val exportDecls = 
+                       [I.ICEXPORTVAR 
+                          {id=newId,
+                           exInfo={used = ref false, longsymbol=externLongsymbol,
+                                   ty=ty, version=I.SELF}}
+                       ]
+                 in
+                   (exnSet,
+                    env,
+                    {bindDecls = bindDecls, exportDecls = exportDecls}
+                   )
+                 end
+               | SOME (I.IDEXEXN _) => raise bug "IDEXEXN in env"
+               | SOME (I.IDEXEXNREP _) => raise bug "IDEXEXN in env"
+               | SOME (I.IDOPRIM _) => raise bug "IDOPRIM in env"
+               | SOME (I.IDSPECVAR _) => raise bug "IDSPECVAR in provideEnv"
+               | SOME (I.IDSPECEXN _ ) => raise bug "IDSPECEXN in provideEnv"
+               | SOME (I.IDSPECCON _) => raise bug "IDSPECCON in provideEnv"
+             end (* val name : ty *)
+
           | (* val name = aliasPath *)
             A.VALALIAS_EXTERN aliasPath =>
-            (case V.checkId(env, [name]) of
+            (case VP.checkProvideId(env, name) of
                NONE =>
                (EU.enqueueError
                   (Symbol.symbolToLoc name,
                    E.ProvideUndefinedID("CP-130", {longsymbol = path@[name]}));
                 raise Fail)
-             | SOME (idstatus as I.IDEXVAR {exInfo={used=used1, longsymbol=refSym, ty, version},  internalId}) =>
-               (case V.checkId(evalEnv, aliasPath) of
-                  SOME (idstatus as I.IDEXVAR {exInfo={used=used2, longsymbol=defSym, ty, version},internalId}) =>
+             | SOME (idstatus as I.IDEXVAR {exInfo={used=used1, longsymbol=refSym, ty, version},  
+                                            internalId}) =>
+               (case VP.checkProvideAlias(name, evalEnv, aliasPath) of
+                  SOME (idstatus as I.IDEXVAR {exInfo={used=used2, longsymbol=defSym, ty, version},
+                                               internalId}) =>
                   if Symbol.eqLongsymbol(refSym, defSym) then
                     (used1 := true; used2:=true;
                      (exnSet, 
-                      V.reinsertId(V.emptyEnv,name,idstatus), 
+                      VP.reinsertId(V.emptyEnv,name,idstatus), 
                       {exportDecls=nil, bindDecls=nil}
                      )
                     )
@@ -502,11 +570,11 @@ local
                    raise Fail)
                )
              | SOME (idstatus as I.IDBUILTINVAR {primitive=refPrim, ...}) =>
-               (case V.checkId(evalEnv, aliasPath) of
+               (case VP.checkProvideAlias(name, evalEnv, aliasPath) of
                   SOME (I.IDBUILTINVAR {primitive=defPrim, ...}) =>
                   if refPrim = defPrim then
                     (exnSet, 
-                     V.reinsertId(V.emptyEnv,name,idstatus), 
+                     VP.reinsertId(V.emptyEnv,name,idstatus), 
                      {exportDecls=nil, bindDecls=nil}
                     )
                   else
@@ -526,11 +594,11 @@ local
                    raise Fail)
                )
              | SOME (idstatus as (I.IDVAR {id=refId,...})) =>
-               (case V.checkId(evalEnv, aliasPath) of
+               (case VP.checkProvideAlias(name, evalEnv, aliasPath) of
                   SOME (idstatus as (I.IDVAR {id=defId,...})) =>
                   if VarID.eq(refId,defId) then
                     (exnSet, 
-                     V.reinsertId(V.emptyEnv,name,idstatus), 
+                     VP.reinsertId(V.emptyEnv,name,idstatus), 
                      {exportDecls=nil, bindDecls=nil}
                     )
                   else 
@@ -541,7 +609,7 @@ local
                 | SOME (idstatus as (I.IDVAR_TYPED {id=defId, ty,...})) =>
                   if VarID.eq(refId,defId) then
                     (exnSet, 
-                     V.reinsertId(V.emptyEnv,name,idstatus), 
+                     VP.reinsertId(V.emptyEnv,name,idstatus), 
                      {exportDecls=nil, bindDecls=nil}
                     )
                   else 
@@ -561,11 +629,11 @@ local
                    raise Fail)
                )
              | SOME (idstatus as (I.IDVAR_TYPED {id=refId, ty,...})) =>
-               (case V.checkId(evalEnv, aliasPath) of
+               (case VP.checkProvideAlias(name, evalEnv, aliasPath) of
                   SOME (idstatus as (I.IDVAR {id=defId,...})) =>
                   if VarID.eq(refId,defId) then
                     (exnSet, 
-                     V.reinsertId(V.emptyEnv,name,idstatus), 
+                     VP.reinsertId(V.emptyEnv,name,idstatus), 
                      {exportDecls=nil, bindDecls=nil}
                     )
                   else 
@@ -575,7 +643,7 @@ local
                 | SOME (idstatus as (I.IDVAR_TYPED {id=defId, ty,...})) =>
                   if VarID.eq(refId,defId) then
                     (exnSet, 
-                     V.reinsertId(V.emptyEnv,name,idstatus), 
+                     VP.reinsertId(V.emptyEnv,name,idstatus), 
                      {exportDecls=nil, bindDecls=nil}
                     )
                   else 
@@ -595,21 +663,82 @@ local
                (EU.enqueueError
                   (loc, E.ProvideVarIDExpected("CP-230", {longsymbol = internalLongsymbol}));
                 raise Fail)
-            )
-          | A.VAL_BUILTIN _ =>
-            (exnSet, V.emptyEnv, {exportDecls=nil, bindDecls=nil})
-          | A.VAL_OVERLOAD _ => (exnSet, 
-                                 V.emptyEnv, 
-                                 {exportDecls=nil, bindDecls=nil}
-                                )
-        end
+            ) (* val symbol = symbol *)
+          | (* val symbol = _builtin symbol : ty *)
+            A.VAL_BUILTIN {builtinSymbol, ty} =>
+            (case BuiltinPrimitive.findPrimitive
+                    (Symbol.symbolToString builtinSymbol) of
+               NONE =>
+               (EU.enqueueError
+                  (symbolToLoc builtinSymbol,
+                   E.PrimitiveNotFound ("EI-080", {symbol = builtinSymbol}));
+                raise Fail)
+             | SOME prim =>
+               (exnSet,
+                VP.reinsertId
+                  (V.emptyEnv, name,
+                   I.IDBUILTINVAR
+                     {primitive = prim,
+                      ty = Ty.evalTy tvarEnv evalEnv ty}),
+                {exportDecls=nil, bindDecls=nil}))
+          | (* val symbol = case tyvar of ... *)
+            A.VAL_OVERLOAD overloadCase =>
+            let
+              (* check only *)
+              fun checkOverloadInstance (A.INST_OVERLOAD overloadCase) =
+                  ignore (checkOverloadCase overloadCase)
+                | checkOverloadInstance (A.INST_LONGVID {longsymbol}) =
+                  case VP.checkProvideAlias(name, evalEnv, longsymbol) of
+                    SOME (I.IDEXVAR _) => ()
+                  | SOME (I.IDBUILTINVAR _) => ()
+                  | SOME (I.IDVAR _) => ()
+                  | SOME (I.IDVAR_TYPED _) => ()
+                  | SOME _ =>
+                    (EU.enqueueError
+                       (Symbol.symbolToLoc name,
+                        E.ProvideVarIDExpected
+                          ("CP-230", {longsymbol = longsymbol}));
+                     raise Fail)
+                  | NONE =>
+                    (EU.enqueueError
+                       (Symbol.symbolToLoc name,
+                        E.ProvideUndefinedID
+                          ("CP-130", {longsymbol = longsymbol}));
+                     raise Fail)
+              and checkOverloadMatch {instTy, instance} =
+                  {instTy = Ty.evalTy tvarEnv evalEnv instTy,
+                   instance = checkOverloadInstance instance}
+              and checkOverloadCase {tyvar, expTy, matches, loc} =
+                  {tvar = Ty.evalTvar tvarEnv tyvar,
+                   expTy = Ty.evalTy tvarEnv evalEnv expTy,
+                   matches = (map checkOverloadMatch matches; nil),
+                   loc = loc}
+              val id = OPrimID.generate ()
+            in
+              (exnSet,
+               VP.reinsertId
+                 (V.emptyEnv, name,
+                  I.IDOPRIM
+                    {id = id,
+                     overloadDef =
+                       I.ICOVERLOADDEF
+                         {boundtvars = scopedTvars,
+                          id = id,
+                          longsymbol = internalLongsymbol,
+                          overloadCase = checkOverloadCase overloadCase,
+                          loc = loc},
+                     used = ref false,
+                     longsymbol = internalLongsymbol}),
+               {exportDecls=nil, bindDecls=nil})
+            end
+        end (* val name ... *)
 
-      | PI.PITYPE {tyvars, symbol=name, ty, loc} =>
-        (* type 'a foo = ty  *)
+      | (* type 'a foo = ty  *)
+        PI.PITYPE {tyvars, symbol=name, ty, loc} =>
         let
           val internalLongsymbol = path @ [name]
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, eq} => symbol)
+                    (fn {symbol, isEq} => symbol)
                     tyvars
                     (fn s => E.DuplicateTypParms("CP-240",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
@@ -619,16 +748,16 @@ local
                 N.TYNAME tfun => tfun
               | N.TYTERM ty =>
                 let
-                  val iseq = N.admitEq tvarList ty
+                  val admitsEq = N.admitEq tvarList ty
                 in
-                  I.TFUN_DEF {iseq=iseq,
+                  I.TFUN_DEF {admitsEq=admitsEq,
                               longsymbol = internalLongsymbol,
                               formals=tvarList,
                               realizerTy=ty
                              }
                 end
           val tstrDef =
-              case V.checkTstr(env, [name]) of
+              case VP.checkProvideTstr(env, name) of
                 NONE =>
                 (EU.enqueueError
                    (loc,
@@ -640,29 +769,30 @@ local
                 V.TSTR tfun => I.derefTfun tfun
               | V.TSTR_DTY {tfun,...} => I.derefTfun tfun
           val _ =
-              if N.equalTfun N.emptyTypIdEquiv (tfunSpec, tfunDef) then  ()
+              if equalTfunInterface N.emptyTypIdEquiv (tfunSpec, tfunDef) then  ()
               else 
-                (EU.enqueueError
+                (
+                 EU.enqueueError
                    (loc, E.ProvideInequalTfun("CP-260",{longsymbol = internalLongsymbol}));
                  raise Fail)
         in
           (exnSet, 
-           V.reinsertTstr (V.emptyEnv, name, tstrDef), 
+           VP.reinsertTstr (V.emptyEnv, name, tstrDef), 
            {exportDecls=nil, bindDecls=nil}
           )
-        end
+        end (* type 'a foo = ty  *)
 
-      | PI.PIOPAQUE_TYPE {tyvars, symbol=name, runtimeTy, loc} =>
-       (* type 'a foo (= runtimeTy )  *)
+      | (* type 'a foo (= runtimeTy )  *)
+        PI.PIOPAQUE_TYPE {eq, tyvars, symbol=name, runtimeTy, loc} =>
         let
           val internalLongsymbol = path @ [name]
           val _ = EU.checkSymbolDuplication
-                    (fn {symbol, eq} => symbol)
+                    (fn {symbol, isEq} => symbol)
                     tyvars
                     (fn s => E.DuplicateTypParms("CP-270",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
           val tstrDef =
-              case V.checkTstr(env, [name]) of
+              case VP.checkProvideTstr(env, name) of
                 NONE =>
                 (EU.enqueueError
                    (loc,
@@ -673,12 +803,12 @@ local
               case tstrDef of
                 V.TSTR tfun => I.derefTfun tfun
               | V.TSTR_DTY {tfun,...} => I.derefTfun tfun
-          val defRuntimeTy = 
-              case I.tfunRuntimeTy tfunDef of
+          val defProp =
+              case I.tfunProperty tfunDef of
                 SOME ty => ty
-              | NONE => raise bug "tfunRuntimeTy"
+              | NONE => raise Fail (* may reach here if tfunDef is TYERROR *)
           val _ =
-              if Ty.compatRuntimeTy {absTy=Ty.evalRuntimeTy tvarEnv evalEnv runtimeTy, implTy=defRuntimeTy} 
+              if Ty.compatProperty {abs=Ty.getProperty tvarEnv evalEnv runtimeTy loc, impl=defProp}
               then  ()
               else 
                 (
@@ -692,75 +822,48 @@ local
                 (EU.enqueueError
                    (loc, E.ProvideArity("CP-300",{longsymbol = internalLongsymbol}));
                  raise Fail)
+          val _ =
+              if eq andalso not (I.tfunAdmitsEq tfunDef)
+              then (EU.enqueueError
+                      (loc, E.ProvideEquality("CP-350",{longsymbol = internalLongsymbol}));
+                    raise Fail)
+              else ()
+          val admitsEq = I.tfunAdmitsEq tfunDef
+          val longsymbol  = I.tfunLongsymbol tfunDef
+          val liftedTys = I.tfunLiftedTys tfunDef
+          val formals = I.tfunFormals tfunDef
+          val id = TypID.generate()
+          val newTfun =
+              I.TFUN_VAR
+              (ref
+                 (I.TFUN_DTY {id=id,
+                             admitsEq=admitsEq,
+                             formals=formals,
+                             conSpec=SymbolEnv.empty,
+                             conIDSet = ConID.Set.empty,
+                             longsymbol=longsymbol,
+                             liftedTys= liftedTys,
+                             dtyKind=I.INTERFACE tfunDef
+                            }
+                 )
+              )
         in
           (exnSet, 
-           V.reinsertTstr (V.emptyEnv, name, tstrDef), 
+           VP.reinsertTstr (V.emptyEnv, name, V.TSTR newTfun), 
            {exportDecls=nil, bindDecls=nil}
           )
-        end
+        end (* type 'a foo (= runtimeTy )  *)
 
-      | PI.PIOPAQUE_EQTYPE {tyvars, symbol=name, runtimeTy, loc} =>
-       (* eqtype 'a foo (= runtimeTy )  *)
-        let
-          val internalLongsymbol = path @ [name]
-          val _ = EU.checkSymbolDuplication
-                    (fn {symbol, eq} => symbol)
-                    tyvars
-                    (fn s => E.DuplicateTypParms("CP-310",s))
-          val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
-          val tstrDef =
-              case V.checkTstr(env, [name]) of
-                NONE =>
-                (EU.enqueueError
-                   (loc,
-                    E.ProvideUndefinedTypeName("CP-320",{longsymbol = internalLongsymbol}));
-                 raise Fail)
-              | SOME tstr => tstr
-          val tfunDef = 
-              case tstrDef of
-                V.TSTR tfun => I.derefTfun tfun
-              | V.TSTR_DTY {tfun,...} => I.derefTfun tfun
-          val defRuntimeTy = 
-              case I.tfunRuntimeTy tfunDef of
-                SOME ty => ty
-              | NONE => raise bug "tfunRuntimeTy"
-          val _ =
-              if Ty.compatRuntimeTy {absTy=Ty.evalRuntimeTy tvarEnv evalEnv runtimeTy, implTy=defRuntimeTy} 
-              then ()
-              else 
-                (
-                 EU.enqueueError
-                   (loc, E.ProvideRuntimeType("CP-330",{longsymbol = internalLongsymbol}));
-                 raise Fail)
-          val arity = I.tfunArity tfunDef
-          val _ =
-              if List.length tyvars = arity then  ()
-              else 
-                (EU.enqueueError
-                   (loc, E.ProvideArity("CP-340",{longsymbol = internalLongsymbol}));
-                 raise Fail)
-          val iseq = I.tfunIseq tfunDef
-          val _ = if iseq then ()
-                  else
-                (EU.enqueueError
-                   (loc, E.ProvideEquality("CP-350",{longsymbol = internalLongsymbol}));
-                 raise Fail)
-        in
-          (exnSet, 
-           V.reinsertTstr (V.emptyEnv, name, tstrDef), 
-           {exportDecls=nil, bindDecls=nil}
-          )
-        end
-
-      | PI.PITYPEBUILTIN {symbol, builtinSymbol, loc} =>
+      | (* datatype foo = _builtin foo *)
+        PI.PITYPEBUILTIN {symbol, builtinSymbol, loc} =>
         raise bug "PITYPEBUILTIN in provideSpec"
 
-      | PI.PITYPEREP {symbol=tycon, longsymbol=origTycon, loc} =>
-        (* datatype foo = datatype bar *)
+      | (* datatype foo = datatype bar *)
+        PI.PITYPEREP {symbol=tycon, longsymbol=origTycon, loc} =>
          let
            val internalPath = path @ [tycon]
            val specTstr =
-               case V.checkTstr(evalEnv, origTycon) of
+               case VP.checkTstr(evalEnv, origTycon) of
                  NONE => (EU.enqueueError
                             (loc,
                              E.ProvideUndefinedTypeName
@@ -772,7 +875,7 @@ local
                  V.TSTR tfun => I.derefTfun tfun
                | V.TSTR_DTY {tfun,...} => I.derefTfun tfun
            val defTstr = 
-               case V.checkTstr(env, [tycon]) of
+               case VP.checkProvideTstr(env, tycon) of
                  NONE => (EU.enqueueError
                             (loc,
                              E.ProvideUndefinedTypeName
@@ -790,12 +893,12 @@ local
                  V.TSTR tfun => (SymbolEnv.empty, I.derefTfun tfun)
                | V.TSTR_DTY {tfun,varE, ...} => (varE, I.derefTfun tfun)
          in
-           if N.equalTfun N.emptyTypIdEquiv (defTfun, specTfun) then 
+           if equalTfunInterface N.emptyTypIdEquiv (defTfun, specTfun) then 
              let
-               val returnEnv = V.reinsertTstr(V.emptyEnv,tycon, defTstr)
+               val returnEnv = VP.reinsertTstr(V.emptyEnv,tycon, defTstr)
              in
                (exnSet, 
-                V.envWithVarE(returnEnv, varE),
+                VP.envWithVarE(returnEnv, varE),
 (* 2013-3-21 ohori
                 returnEnv, 
 *)
@@ -807,9 +910,10 @@ local
                 (loc,
                  E.ProvideDtyExpected ("CP-380",{longsymbol = internalPath}));
               raise Fail)
-         end
+         end (* datatype foo = datatype bar *)
 
-      | PI.PIEXCEPTION {symbol=name, ty=tyOpt, loc} => 
+      | (* exception name [of ty] *)
+        PI.PIEXCEPTION {symbol=name, ty=tyOpt, loc} => 
         let
           val longsymbol = path @ [name]
           val tySpec =
@@ -819,44 +923,52 @@ local
                                     BT.exnITy)
                 handle e => raise e
         in
-          case V.checkId (env, [name]) of
+          case VP.checkProvideId (env, name) of
             NONE =>
             (EU.enqueueError
                (loc, E.ProvideUndefinedID("CP-390", {longsymbol = longsymbol}));
              raise Fail)
           | SOME (idstatus as I.IDEXN {id,longsymbol=_,ty}) => 
-            if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, tySpec) then
+            if equalTyInterface (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, tySpec) then
               (ExnID.Set.add(exnSet, id),
-               V.reinsertId(V.emptyEnv, name, idstatus),
+               VP.reinsertId(V.emptyEnv, name, idstatus),
                {exportDecls=
-                [I.ICEXPORTEXN {id=id,exInfo={used = ref false, ty=ty,longsymbol=longsymbol, version=NONE}}],
+                [I.ICEXPORTEXN {id=id,exInfo={used = ref false, ty=ty,
+                                              longsymbol=longsymbol, version=I.SELF}}],
                 bindDecls=nil
                }
               )
             else 
-              (EU.enqueueError
+              (
+               EU.enqueueError
                  (loc, E.ProvideExceptionType("CP-400", {longsymbol = longsymbol}));
                raise Fail)
           | SOME (I.IDEXNREP {id,longsymbol=_, ty}) =>
             (* BUG 128_functor.sml *)
-            if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, tySpec)
+            if equalTyInterface (N.emptyTypIdEquiv, TvarID.Map.empty) (ty, tySpec)
             then
               if not (ExnID.Set.member(exnSet, id)) then
                 (ExnID.Set.add(exnSet, id),
 (* 2012-12-23
-                 V.reinsertId(V.emptyEnv, name, I.IDEXN {id=id, longsymbol=longsymbol, ty=ty}),
+                 VP.reinsertId(V.emptyEnv, name, I.IDEXN {id=id, longsymbol=longsymbol, ty=ty}),
 *)
-                 V.reinsertId(V.emptyEnv, name, I.IDEXNREP {id=id, longsymbol=longsymbol, ty=ty}),
+                 VP.reinsertId(V.emptyEnv, name, I.IDEXNREP {id=id, longsymbol=longsymbol, ty=ty}),
                  {exportDecls =
                   [I.ICEXPORTEXN
-                     {id=id,exInfo={used = ref false, ty=ty,longsymbol=longsymbol, version=NONE}}],
+                     {id=id,exInfo={used = ref false, ty=ty,
+                                    longsymbol=longsymbol, version=I.SELF}}],
                   bindDecls=nil
                  }
                 )
               else 
                 (exnSet, 
                  V.emptyEnv, 
-                 {exportDecls=nil, bindDecls=nil}
+                 {exportDecls=
+                  [I.ICEXPORTEXN
+                     {id=id,exInfo={used = ref false, ty=ty,
+                                    longsymbol=longsymbol, version=I.SELF}}],
+                  bindDecls=nil
+                 }
                 )
             else 
               (EU.enqueueError
@@ -875,12 +987,14 @@ local
                (loc,
                 E.ProvideUndefinedException("CP-440", {longsymbol = longsymbol}));
              raise Fail)
-        end
-      | PI.PIEXCEPTIONREP {symbol=name, longsymbol=origPath, loc} =>
+        end (* exception name [of ty] *)
+
+      | (* exception foo = barPath *)
+        PI.PIEXCEPTIONREP {symbol=name, longsymbol=origPath, loc} =>
         (
         let
           val refIdstatus = 
-              case V.checkId (evalEnv, origPath) of
+              case VP.checkProvideAlias (name, evalEnv, origPath) of
                 NONE =>
                 (
                  EU.enqueueError
@@ -897,7 +1011,7 @@ local
                            ("CP-460",{longsymbol = origPath}));
                  raise Fail)
           val defIdstatus =
-              case V.checkId (env, [name]) of
+              case VP.checkProvideId (env, name) of
                 NONE =>
                 (EU.enqueueError
                    (loc, E.ProvideUndefinedID
@@ -923,7 +1037,7 @@ local
                I.IDEXN {id=id2,...} =>
                if ExnID.eq(id1, id2) then 
                  (exnSet,
-                  V.reinsertId(V.emptyEnv, name, defIdstatus),
+                  VP.reinsertId(V.emptyEnv, name, defIdstatus),
                   {exportDecls=nil, bindDecls=nil}
                  )
                else
@@ -933,7 +1047,7 @@ local
              | I.IDEXNREP {id=id2,...} => 
                if ExnID.eq(id1, id2) then 
                  (exnSet, 
-                  V.reinsertId(V.emptyEnv, name, defIdstatus),
+                  VP.reinsertId(V.emptyEnv, name, defIdstatus),
                   {exportDecls=nil, bindDecls=nil}
                  )
                else
@@ -950,7 +1064,7 @@ local
                I.IDEXEXN {longsymbol=longsymbol2,...} =>
                if Symbol.eqLongsymbol (longsymbol1, longsymbol2) then 
                  (exnSet, 
-                  V.reinsertId(V.emptyEnv, name, defIdstatus), 
+                  VP.reinsertId(V.emptyEnv, name, defIdstatus), 
                   {exportDecls=nil, bindDecls=nil}
                  )
                else
@@ -967,7 +1081,7 @@ local
                I.IDEXEXNREP {longsymbol=longsymbol2,...} =>
                if Symbol.eqLongsymbol(longsymbol1, longsymbol2) then 
                  (exnSet, 
-                  V.reinsertId(V.emptyEnv, name, defIdstatus),
+                  VP.reinsertId(V.emptyEnv, name, defIdstatus),
                   {exportDecls=nil, bindDecls=nil}
                  )
                else
@@ -989,7 +1103,7 @@ local
              | I.IDEXEXN {longsymbol=longsymbol2,...} =>
                if Symbol.eqLongsymbol(longsymbol1, longsymbol2) then 
                  (exnSet, 
-                  V.reinsertId(V.emptyEnv, name, defIdstatus),
+                  VP.reinsertId(V.emptyEnv, name, defIdstatus),
                   {exportDecls=nil, bindDecls=nil}
                  )
                else
@@ -1008,14 +1122,17 @@ local
                 V.emptyEnv, 
                 {exportDecls=nil, bindDecls=nil}
                )
-        )
-      | PI.PIDATATYPE {datbind, loc} =>
+        ) (* exception foo = barPath *)
+
+      | (* datatype foo = ... *)
+        PI.PIDATATYPE {datbind, loc} =>
         (exnSet,
          checkDatbindList path evalEnv env datbind,
          {exportDecls=nil, bindDecls=nil}
         )
-      | PI.PISTRUCTURE {symbol=strSymbol, strexp=PI.PISTRUCT {decs,loc=strLoc}, loc} =>
-        (case V.checkStr(env, [strSymbol]) of
+      | (* structure S = struct ... end *)
+        PI.PISTRUCTURE {symbol=strSymbol, strexp=PI.PISTRUCT {decs,loc=strLoc}, loc} =>
+        (case VP.checkProvideStr(env, strSymbol) of
            SOME {env, strKind} => 
            let
              val (exnSet, returnEnv, icdecls) =
@@ -1023,7 +1140,7 @@ local
                    exnSet strLoc (path@[strSymbol]) evalTopEnv (env, decs)
              val strEntry = {env=returnEnv, strKind=strKind}
            in
-             (exnSet, V.reinsertStr(V.emptyEnv, strSymbol, strEntry), icdecls)
+             (exnSet, VP.reinsertStr(V.emptyEnv, strSymbol, strEntry), icdecls)
            end
          | NONE =>
            (EU.enqueueError
@@ -1031,12 +1148,10 @@ local
             raise Fail)
         )
 
-      | PI.PISTRUCTURE {symbol=strSymbol, 
+      | (* structure S = Spath *)
+        PI.PISTRUCTURE {symbol=strSymbol, 
                         strexp=PI.PISTRUCTREP {longsymbol=strPath,loc=strLoc}, loc} =>
-        let
-          val defLongsymbol = [strSymbol]
-        in
-          (case V.checkStr(env, defLongsymbol) of
+        (case VP.checkProvideStr(env, strSymbol) of
              SOME (strEntry1 as {env = env1, strKind}) =>
              let
                val defId = case strKind of
@@ -1047,7 +1162,7 @@ local
                                 (loc, E.ProvideStrRep("CP-580", {longsymbol=path@[strSymbol]}));
                               raise Fail)
              in
-               (case V.checkStr(evalEnv, strPath) of
+               (case VP.checkStr(evalEnv, strPath) of
                   SOME (strEntry as {env=_, strKind}) =>
                   let
                     val refId =
@@ -1062,9 +1177,9 @@ local
                     if StructureID.eq(defId, refId) then 
                       (exnSet, 
 (* 2012-12-23 
-                       V.reinsertStr(V.emptyEnv, strSymbol, strEntry), 
+                       VP.reinsertStr(V.emptyEnv, strSymbol, strEntry), 
 *)
-                       V.reinsertStr(V.emptyEnv, strSymbol, {env=env1, strKind=strKind}), 
+                       VP.reinsertStr(V.emptyEnv, strSymbol, {env=env1, strKind=strKind}), 
                        {exportDecls=nil, bindDecls=nil}
                       )
                     else 
@@ -1083,78 +1198,76 @@ local
              (EU.enqueueError
                 (loc, E.ProvideUndefinedStr("CP-620", {longsymbol=path@[strSymbol]}));
               raise Fail)
-          )
-        end
-      | PI.PISTRUCTURE {symbol=strSymbol, 
+          )  (* structure S = Spath *)
+
+      | (* structure A = F(B) *)
+        PI.PISTRUCTURE {symbol=strSymbol, 
                         strexp=PI.PIFUNCTORAPP
                                  {functorSymbol,
                                   argument, 
                                   loc=argLoc}, 
                         loc} =>
-        let
-          val defLongsymbol = [strSymbol]
-        in
-          (case V.checkStr(env, defLongsymbol) of
-             SOME (strEntry as {env=strEnv, strKind}) => 
-             (case strKind of
-                V.FUNAPP {id, funId=funId1, argId=argId1} =>
-                let
-                  val {FunE, Env, ...} = evalTopEnv
-                  val ({id=funId2,...}:V.funEEntry) = 
-                      (* case SymbolEnv.find(FunE, functorSymbol) of *)
-                      case V.checkFunETopEnv(evalTopEnv, functorSymbol) of
-                        SOME entry => entry
-                      | NONE =>
-                        (EU.enqueueError
-                           (loc,E.ProvideUndefinedFunctorName ("CP-630",{longsymbol = [functorSymbol]}));
-                         raise Fail)
-                  val {strKind=argStrKind, env=_} = 
-                      case V.checkStr(Env, argument) of
-                        SOME entry => entry
-                      | NONE => 
-                        (EU.enqueueError
-                           (loc, E.StrNotFound ("CP-640",{longsymbol = argument}));
-                         raise Fail)
-                  val argId2 = 
-                      case argStrKind of
-                        V.STRENV id => id
-                      | V.FUNAPP {id,...} => id
-                      | _ => 
-                        (EU.enqueueError
-                           (loc, E.StrNotFound ("CP-650",{longsymbol = argument}));
-                         raise Fail)
-                  val _ = if FunctorID.eq(funId1, funId2) then ()
-                          else 
-                            (
-                             EU.enqueueError
-                               (loc,
-                                E.ProvideFunctorIdMismatchInFunapp ("CP-660",{longsymbol = [functorSymbol]}));
-                             raise Fail)
-                  val _ = if StructureID.eq(argId1, argId2) then ()
-                          else 
-                            (
-                             EU.enqueueError
-                               (loc,
-                                E.ProvideParamIdMismatchInFunapp ("CP-665",{longsymbol = argument}));
-                             raise Fail)
-                  val (exnSet, icdecls) = 
-                      genTypedExportVarsEnv (path@[strSymbol]) strEnv (exnSet,{exportDecls=nil, bindDecls=nil})
-                in
-                  (exnSet, 
-                   V.reinsertStr(V.emptyEnv, strSymbol, {strKind=strKind, env=strEnv}), 
-                   icdecls)
-                end
-              | _ => 
-                (EU.enqueueError
-                   (loc, E.ProvideUndefinedStr("CP-670", {longsymbol=path@[strSymbol]}));
-                 raise Fail)
-             )
-           | _ => 
-             (EU.enqueueError
-                (loc, E.ProvideUndefinedStr("CP-680", {longsymbol=path@[strSymbol]}));
-              raise Fail)
-          )
-        end
+        (case VP.checkProvideStr(env, strSymbol) of
+           SOME (strEntry as {env=strEnv, strKind}) => 
+           (case strKind of
+              V.FUNAPP {id, funId=funId1, argId=argId1} =>
+              let
+                val {FunE, Env, ...} = evalTopEnv
+                val ({id=funId2,...}:V.funEEntry) = 
+                    (* case SymbolEnv.find(FunE, functorSymbol) of *)
+                    case VP.checkFunETopEnv(evalTopEnv, functorSymbol) of
+                      SOME entry => entry
+                    | NONE =>
+                      (EU.enqueueError
+                         (loc,E.ProvideUndefinedFunctorName ("CP-630",{longsymbol = [functorSymbol]}));
+                       raise Fail)
+                val {strKind=argStrKind, env=_} = 
+                    case VP.checkStr(Env, argument) of
+                      SOME entry => entry
+                    | NONE => 
+                      (EU.enqueueError
+                         (loc, E.StrNotFound ("CP-640",{longsymbol = argument}));
+                       raise Fail)
+                val argId2 = 
+                    case argStrKind of
+                      V.STRENV id => id
+                    | V.FUNAPP {id,...} => id
+                    | _ => 
+                      (EU.enqueueError
+                         (loc, E.StrNotFound ("CP-650",{longsymbol = argument}));
+                       raise Fail)
+                val _ = if FunctorID.eq(funId1, funId2) then ()
+                        else 
+                          (
+                           EU.enqueueError
+                             (loc,
+                              E.ProvideFunctorIdMismatchInFunapp ("CP-660",{longsymbol = [functorSymbol]}));
+                           raise Fail)
+                val _ = if StructureID.eq(argId1, argId2) then ()
+                        else 
+                          (
+                           EU.enqueueError
+                             (loc,
+                              E.ProvideParamIdMismatchInFunapp ("CP-665",{longsymbol = argument}));
+                           raise Fail)
+                val (exnSet, icdecls) = 
+                    genTypedExportVarsEnv (path@[strSymbol]) strEnv (exnSet,{exportDecls=nil, bindDecls=nil})
+              in
+                (exnSet, 
+                 VP.reinsertStr(V.emptyEnv, strSymbol, {strKind=strKind, env=strEnv}), 
+                 icdecls)
+              end
+            | _ => 
+              (EU.enqueueError
+                 (loc, E.ProvideUndefinedStr("CP-670", {longsymbol=path@[strSymbol]}));
+               raise Fail)
+           )
+         | _ => 
+           (EU.enqueueError
+              (loc, E.ProvideUndefinedStr("CP-680", {longsymbol=path@[strSymbol]}));
+            raise Fail)
+        )
+
   and checkPidecList 
         exnSet
         loc
@@ -1164,11 +1277,11 @@ local
       foldl
         (fn (decl, (exnSet, returnEnv, {exportDecls, bindDecls})) =>
             let
-               val evalEnv = V.envWithEnv (evalEnv, returnEnv)
+               val evalEnv = VP.envWithEnv (evalEnv, returnEnv)
                val evalTopEnv = {Env=evalEnv, FunE=FunE, SigE=SigE}
                val (exnSet, newEnv, {exportDecls=newExportDecls, bindDecls=newBindDecls}) =
                    checkPidec exnSet path evalTopEnv (env, decl)
-               val returnEnv = V.unionEnv "CP-690" (returnEnv, newEnv)
+               val returnEnv = VP.unionEnv "CP-690" (returnEnv, newEnv)
             in
               (exnSet, returnEnv, {exportDecls=exportDecls@newExportDecls,
                                    bindDecls=bindDecls@newBindDecls})
@@ -1191,7 +1304,7 @@ local
           val (exnSet, env, decls) =
               checkPidec exnSet nilPath evalTopEnv (Env, pidec)
         in
-          (exnSet, V.topEnvWithEnv(V.emptyTopEnv, env), decls)
+          (exnSet, VP.topEnvWithEnv(V.emptyTopEnv, env), decls)
         end
       | PI.PIFUNDEC (piFunbind as
                     {functorSymbol,
@@ -1205,7 +1318,7 @@ local
                     typidSet, exnIdSet, bodyEnv, bodyVarExp}
             =
             (* case SymbolEnv.find(FunE, functorSymbol) of *)
-            case V.checkFunETopEnv(topEnv, functorSymbol) of
+            case VP.checkFunETopEnv(topEnv, functorSymbol) of
               NONE =>
               (EU.enqueueError
                  (symbolToLoc functorSymbol,
@@ -1231,7 +1344,7 @@ local
                      raise Fail
                     )
 
-          val argEnv = V.reinsertStr(V.emptyEnv, strSymbol, argStrEntry)
+          val argEnv = VP.reinsertStr(V.emptyEnv, strSymbol, argStrEntry)
 (*
           val argEnv =
               V.ENV {varE=SymbolEnv.empty,
@@ -1239,9 +1352,9 @@ local
                      strE=V.STR (SymbolEnv.singleton(symbolToString strSymbol, argStrEntry))
                     }
 *)
-          val evalEnv = V.topEnvWithEnv (evalTopEnv, argEnv)
+          val evalEnv = VP.topEnvWithEnv (evalTopEnv, argEnv)
           val (_, {env=specBodyInterfaceEnv, strKind}, _) =
-              EI.evalPistr [functorSymbol] evalEnv (LongsymbolSet.empty, specBodyStr)
+              EI.evalPistr I.SELF [functorSymbol] evalEnv (LongsymbolSet.empty, specBodyStr)
           val specBodyEnv = EI.internalizeEnv specBodyInterfaceEnv
           val _ = if EU.isAnyError () then raise Fail 
                   else if FU.eqEnv {specEnv=specBodyEnv, implEnv=bodyEnv} then 
@@ -1255,6 +1368,10 @@ local
           val typidSet = FU.typidSet specBodyEnv
           val (allVars,exnIdSet) = FU.varsInEnv (specBodyEnv, loc)
 
+val _ = U.print "checkPitopdec: allVars\n"
+val _ = app (fn (x,_) => (U.printLongsymbol x; U.print " \n")) allVars
+val _ = U.print "\n"
+
           fun varToTy (_, var) =
               case var of
                 I.ICEXVAR {exInfo={ty,...},...} => ty
@@ -1264,11 +1381,12 @@ local
           val bodyTy =
               case allVars of
                 nil => BT.unitITy
-              | _ => I.TYRECORD (RecordLabel.tupleMap (map varToTy allVars))
+              | _ => I.TYRECORD {ifFlex=false,
+                                 fields=RecordLabel.tupleMap (map varToTy allVars)}
           val (extraTvars, firstArgTy) = 
               case dummyIdfunArgTy of
                 NONE => (nil, NONE)
-              | SOME (ty as I.TYRECORD fields) => 
+              | SOME (ty as I.TYRECORD {ifFlex,fields}) => 
                 (map (fn (I.TYVAR tvar) => tvar
                        | _ => raise bug "non tvar in dummyIdfunArgTy")
                      (RecordLabel.Map.listItems fields),
@@ -1300,7 +1418,7 @@ local
                 NONE => functorTy1
               | SOME ty => 
                 I.TYPOLY
-                  (map (fn x => (x, I.UNIV)) extraTvars,
+                  (map (fn x => (x, I.UNIV I.emptyProperties)) extraTvars,
                    I.TYFUNM([ty], functorTy1))
 
           val functorTy =
@@ -1313,14 +1431,14 @@ local
               case bodyVarExp of 
                 I.ICVAR {longsymbol, id} => 
                 [I.ICEXPORTFUNCTOR 
-                   {exInfo={used = ref false, longsymbol=longsymbol, ty=functorTy, version=NONE}, 
+                   {exInfo={used = ref false, longsymbol=longsymbol, ty=functorTy, version=I.SELF}, 
                     id=id}
                 ]
               | I.ICEXVAR _ => nil
               | _ => raise bug "nonvar in bodyVarExp"
           val funEEntry =
               {id=id, 
-               version = NONE,
+               version = I.SELF,
                argSigEnv=argSigEnv, 
                argStrEntry=argStrEntry, 
                argStrName=argStrName, 
@@ -1334,11 +1452,12 @@ local
 
           (* val funE =  SymbolEnv.singleton(functorSymbol, funEEntry) *)
           val funE =  SymbolEnv.singleton(functorSymbol, funEEntry)
-          val returnTopEnv = V.topEnvWithFunE(V.emptyTopEnv, funE)
+          val returnTopEnv = VP.topEnvWithFunE(V.emptyTopEnv, funE)
         in
           (exnSet, 
            returnTopEnv, 
-           {exportDecls=exportDecls,bindDecls=nil}
+           {exportDecls=exportDecls,
+            bindDecls=nil}
            )
         end
 
@@ -1365,13 +1484,7 @@ in
         val pidec = PI.PISTRUCTURE {symbol=functorSymbol, strexp=specBodyStr, loc=specLoc}
         val strKind = V.STRENV (StructureID.generate())
         val strEntry = {env=returnEnv, strKind=strKind}
-        val bodyEnv = V.reinsertStr(V.emptyEnv, functorSymbol, strEntry)
-(*
-        val bodyEnv = V.ENV {varE=SymbolEnv.empty,
-                             tyE=SymbolEnv.empty,
-                             strE=V.STR (SymbolEnv.singleton(funid, strEntry))
-                            }
-*)
+        val bodyEnv = VP.reinsertStr(V.emptyEnv, functorSymbol, strEntry)
         val (exnSet, bodyEnv as V.ENV{strE=V.STR strMap,...}, {exportDecls, bindDecls}) =
             checkPidec ExnID.Set.empty nilPath evalEnv (bodyEnv, pidec)
         val newEnv = 
@@ -1397,12 +1510,12 @@ in
             foldl
               (fn (pitopdec, (exnSet, returnTopEnv, {exportDecls, bindDecls})) =>
                   let
-                    val evalTopEnv = V.topEnvWithTopEnv (evalTopEnv, returnTopEnv)
+                    val evalTopEnv = VP.topEnvWithTopEnv (evalTopEnv, returnTopEnv)
                     val (exnSet, newTopEnv, {exportDecls=newExportDecls, bindDecls=newBindDecls}) =
                         checkPitopdec exnSet evalTopEnv (topEnv,pitopdec)
                         handle e => raise e
                     val returnTopEnv =
-                        V.unionTopEnv "CP-730" (returnTopEnv, newTopEnv)
+                        VP.unionTopEnv "CP-730" (returnTopEnv, newTopEnv)
                   in
                     (exnSet, 
                      returnTopEnv, 

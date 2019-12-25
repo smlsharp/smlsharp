@@ -1,0 +1,5 @@
+val it = fn : ['a. 'a * 'a list -> 'a list]
+
+val cons = fn : ['a. 'a -> 'a list -> 'a list]
+
+val twice = fn : ['a. ('a -> 'a) -> 'a -> 'a]

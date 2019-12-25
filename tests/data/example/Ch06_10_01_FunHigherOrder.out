@@ -1,0 +1,9 @@
+val powerCurry = fn : int -> int -> int
+
+val square = fn : int -> int
+
+val it = 9 : int
+
+val apply = fn : ['a. (int -> 'a) -> 'a]
+
+val it = 9 : int

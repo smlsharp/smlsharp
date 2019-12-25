@@ -12,6 +12,7 @@ val op + = SMLSharp_Builtin.Int32.add_unsafe
 val op - = SMLSharp_Builtin.Int32.sub_unsafe
 val op >= = SMLSharp_Builtin.Int32.gteq
 val op < = SMLSharp_Builtin.Int32.lt
+structure Int32 = SMLSharp_Builtin.Int32
 
 structure List =
 struct
@@ -24,7 +25,7 @@ struct
   fun length (l:'a list) =
       let
         fun loop (nil:'a list, z) = z
-          | loop (_::t, z) = loop (t, z + 1)
+          | loop (_::t, z) = loop (t, Int32.add (z, 1))
       in
         loop (l, 0)
       end

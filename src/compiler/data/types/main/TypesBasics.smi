@@ -1,10 +1,9 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 
-_require local "./OPrimInstMap.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/IEnv.smi"
 _require "./Types.ppg.smi"
@@ -22,6 +21,7 @@ struct
   val freshRigidInstTy : Types.ty -> Types.ty * Types.constraint list
   val EFTV : Types.ty * Types.constraint list
              -> int * OTSet.set * (Types.tvState ref) IEnv.map
+  val EFBTV : Types.ty -> BoundTypeVarID.Set.set
   val adjustDepthInTy : bool ref -> Types.lambdaDepth -> Types.ty -> unit
   val adjustDepthInTvarKind : bool ref -> Types.lambdaDepth -> Types.tvarKind -> unit
   val generalizer : Types.ty * Types.constraint list * Types.lambdaDepth

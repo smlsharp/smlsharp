@@ -1,19 +1,18 @@
 # GNU make is required.
 # This file assumes that srcdir and builddir are same ".".
-
 include ./files.mk
 include ./src/config.mk
 
 SMLSHARP_ENV = SMLSHARP_HEAPSIZE=32M:2G
 
-MLYACC = src/ml-yacc/smlyacc
-MLLEX = src/ml-lex/smllex
-SMLFORMAT = src/smlformat/smlformat
-SMLSHARP_STAGE2 = src/compiler/smlsharp
-MLLEX_DEP = $(MLLEX)
-MLYACC_DEP = $(MLYACC)
-SMLFORMAT_DEP = $(SMLFORMAT)
-SMLSHARP_DEP = $(SMLSHARP_STAGE2)
+MINISMLLEX = echo '$(@F) is older than $(^F)' 1>&2; false
+MINISMLYACC = echo '$(@F) is older than $(^F)' 1>&2; false
+MINISMLFORMAT = echo '$(@F) is older than $(^F)' 1>&2; false
+MINISMLSHARP = src/compiler/smlsharp
+SMLLEX_DEP = src/ml-lex/smllex
+SMLYACC_DEP = src/ml-yacc/smlyacc
+SMLFORMAT_DEP = src/smlformat/smlformat
+SMLSHARP_DEP = $(MINISMLSHARP)
 
 LLVM_CONFIG = $(patsubst %/llvm-dis,%/llvm-config,$(LLVM_DIS))
 LLVM_LINK = $(patsubst %/llvm-dis,%/llvm-link,$(LLVM_DIS))
@@ -27,7 +26,12 @@ else ifdef ARCH
 $(error ARCH must be either x86 or x86_64)
 endif
 
-OBJECTS = $(MINISMLSHARP_OBJECTS:.o=.$(ARCH).bc)
+MINISOURCES = \
+ src/config/main/SQLConfig.sml
+OBJECTS = \
+ $(patsubst %.o,%.$(ARCH).bc,\
+   $(MINISOURCES:.sml=_mini.o) \
+   $(filter-out $(MINISOURCES:.sml=.o),$(MINISMLSHARP_OBJECTS)))
 
 top:
 	@echo 'type "make all" to build minismlsharp for all targets, or "make all ARCH=..." to build it for a specific target.'
@@ -36,7 +40,6 @@ top:
 ifndef ARCH
 
 all:
-	$(MAKE) -f precompile.mk all ARCH=x86
 	$(MAKE) -f precompile.mk all ARCH=x86_64
 
 else   # ifdef ARCH
@@ -48,40 +51,66 @@ clean:
 	-rm -f precompile.dep precompiled/$(ARCH)_orig.bc
 	-rm -f precompiled/$(ARCH)_opt.bc precompiled/$(ARCH).ll.xz
 
-.SUFFIXES: .sml .$(ARCH).bc .ppg .ppg.sml .lex .lex.sml .grm .grm.sml .grm.sig
+.SUFFIXES: .sml .smi .sig .bc .ppg .lex .grm
 
 %.$(ARCH).bc: %.sml
-	$(SMLSHARP_ENV) $(SMLSHARP_STAGE2) -Bsrc --target=$(TRIPLE) -emit-llvm -c -o $@ $<
-.ppg.ppg.sml:
-	$(SMLSHARP_ENV) $(SMLFORMAT) --output=$@ $<
-.lex.lex.sml:
-	$(SMLSHARP_ENV) SMLLEX_OUTPUT=$@ $(MLLEX) $<
-.grm.grm.sml:
-	$(SMLSHARP_ENV) SMLYACC_OUTPUT=$@ $(MLYACC) $<
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -Bsrc -target $(TRIPLE) -emit-llvm -c -o $@ $<
+
+$(MINISOURCES:.sml=_mini.sml): %_mini.sml: %.sml.in precompile.mk
+	sed '1s!^!_interface "./$(notdir $(<:.sml.in=.smi))" !;s!%[^%]*%!!g' \
+	$< > $@
 
 ./precompile.dep: depend.mk precompile.mk
-	sed 's/\.o:/.$$(ARCH).bc:/' depend.mk > $@
+	sed $(foreach i,$(MINISOURCES:.sml=),-e 's!$(i).sml!$(i)_mini.sml!') \
+	    $(foreach i,$(MINISOURCES:.sml=),-e 's!$(i).o!$(i)_mini.o!') \
+	    -e 's/\.o:/.$$(ARCH).bc:/' -e 's/^	/&@/' \
+	    depend.mk > $@
 
 src/llvm/main/anonymize: src/llvm/main/anonymize.cpp
-	$(CXX) -o $@ src/llvm/main/anonymize.cpp `$(LLVM_CONFIG) --cxxflags --ldflags --libs --system-libs`
+	$(CXX) -o $@ src/llvm/main/anonymize.cpp $(shell $(LLVM_CONFIG) --cxxflags --ldflags --libs --system-libs)
+
+rev = $(and $(1),$(call rev,$(wordlist 2,$(words $(1)),$(1))) $(word 1,$(1)))
 
 precompiled/$(ARCH)_orig.bc: $(OBJECTS)
-	$(LLVM_LINK) -o $@ $(OBJECTS)
+	$(LLVM_LINK) -o $@ $(call rev,$(OBJECTS))
+
+precompiled/$(ARCH)_opt.ll: precompiled/$(ARCH)_opt.bc
+	$(LLVM_DIS) $<
+
+precompiled/$(ARCH)_orig.ll: precompiled/$(ARCH)_orig.bc
+	$(LLVM_DIS) precompiled/$(ARCH)_orig.bc
 
 precompiled/$(ARCH)_opt.bc: precompiled/$(ARCH)_orig.bc
-	$(OPT) -std-link-opts -internalize -Oz -o $@ precompiled/$(ARCH)_orig.bc
+	$(LLVM_DIS) < precompiled/$(ARCH)_orig.bc \
+	| sed -e '/call void @sml_gcroot(/{;/_minismlsharp/!{;s/@_SML_[tf][^,]*/null/g;};}' \
+	      -e '/call void @sml_gcroot([^,]*,[^,]*, i8\* null, i8\* null)/d' \
+	      -e 's/^define weak/define/' \
+	| $(OPT) -std-link-opts -internalize -Oz \
+	         -internalize-public-api-list=sml_main,sml_load \
+	         -o $@
 
 precompiled/$(ARCH).ll.xz: src/llvm/main/anonymize precompiled/$(ARCH)_opt.bc
 	src/llvm/main/anonymize < precompiled/$(ARCH)_opt.bc \
-	| (echo "@_SML_ftab = external constant i8"; \
-	   sed \
-	   -e 's,^@_SML_ftab = .*,@_SML_xftab = internal constant i16 0,' \
-	   -e '1,/@_SML_ftab/!s,@_SML_ftab,bitcast (i16* @_SML_xftab to i8*),' \
-	   -e '/^target triple =/d') \
+	| sed -E \
+	  -e '/^target +triple *=/d' \
+	  -e '/^source_filename *=/d' \
+	  -e '/^ *(tail )?call void @llvm\.lifetime\.(start|end)/d' \
+	  -e '/^declare void @llvm\.lifetime\.(start|end)/d' \
+	  -e 's/(^ *(tail )?call void @llvm\.mem(set|cpy|move)[.pi0-9]*)\(([^,]+align ([0-9]+)[^,]*,[^,]+,[^,]+),([^,]+)\)/\1(\4,i32 \5,\6)/' \
+	  -e 's/(^ *(tail )?call void @llvm\.mem(set|cpy|move)[.pi0-9]*)\(([^,]+,[^,]+,[^,]+),([^,]+)\)/\1(\4,i32 1,\5)/' \
+	  -e 's/(^declare void @llvm\.mem(set|cpy|move)[.pi0-9]*)\(([^,]+,[^,]+,[^,]+),([^,]+)\)/\1(\3,i32,\4)/' \
+	  -e '/^[0-9]*:/d' \
 	| perl \
-	  -ne 's/;.*$$|(".*?")| *([*=,()<>{}\[\]@%]) *|(\d) +(?=x )/$$+/eg; \
+	  -ne 's/(".*?")|;.*$$| *([*=,()<>{}\[\]@%]) *|(\d) +(?=x )/$$+/eg; \
 	       s/^ +//;s/ +$$//;print if /\S/' \
 	| $(XZ) -c > $@
+# Workaround for LLVM 6 or prior: from LLVM 7, the signature of memset,
+# memcpy, and memmove intrinsics has been changed.  LLVM 7, 8, and 9 seems
+# to accept old signatures and convert it into new ones.  This sed script
+# reverts this conversion.
+# Workaround for LLVM 8 or prior: from LLVM 9, numeric basic block labels
+# are made explicit, but old LLVMs does not accept such explicit numeric
+# labels.  This sed script removes the numeric labels.
 
 include ./precompile.dep
 

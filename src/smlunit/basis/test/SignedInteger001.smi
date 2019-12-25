@@ -1,5 +1,5 @@
-_require "smlunit-lib.smi"
-_require "basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../../../basis.smi"
 
 functor SignedInteger001 (
   A : sig

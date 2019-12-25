@@ -1,5 +1,5 @@
-_require "basis.smi"
-_require "smlunit-lib.smi"
+_require "../../../basis.smi"
+_require "../../../smlunit-lib.smi"
 _require "Array001.smi"
 _require "Array101.smi"
 _require "ArraySlice001.smi"

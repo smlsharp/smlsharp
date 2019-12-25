@@ -6,21 +6,30 @@
  * @copyright 2010, 2011, 2012, 2013 Tohoku University.
  *)
 
-type 'a elem = word8
-
-(* object size occupies 26 bits of 32-bit object header. *)
-val maxLen = 0x03ffffff
+structure Seq =
+struct
+  type 'a seq = word8 array
+  type 'a elem = word8
+  fun castToArray x = x
+  val length = SMLSharp_Builtin.Array.length
+  val alloc = SMLSharp_Builtin.Array.alloc
+  val alloc_unsafe = SMLSharp_Builtin.Array.alloc_unsafe
+  fun empty () = alloc_unsafe 0
+  type 'a vector = word8 vector
+  val castVectorToArray = SMLSharp_Builtin.Vector.castToArray
+  val allocVector_unsafe = SMLSharp_Builtin.Vector.alloc_unsafe
+  val vectorLength = SMLSharp_Builtin.Vector.length
+end
 
 _use "./Array_common.sml"
 
 structure Word8Array =
 struct
   open Array_common
-  type elem = unit elem
-  type vector = unit vector
-  type array = unit array
-  val length = length : array -> int
-  val sub = sub : array * int -> elem
-  val update = update : array * int * elem -> unit
-  val copy = copy : {di:int, dst:array, src:array} -> unit
+  type elem = word8
+  type vector = word8 vector
+  type array = word8 array
+  val update = SMLSharp_Builtin.Array.update
+  (* object size occupies 28 bits of 32-bit object header. *)
+  val maxLen = 0x0fffffff
 end

@@ -1,0 +1,17 @@
+val it = 10 : int
+
+val it = 10 : int
+
+val it = ~255 : int
+
+val it = 20 : int
+
+val it = ~10 : int
+
+val it = 5 : int
+
+val it = 20 : int
+
+val it = 7 : int
+
+val it = ~1 : int

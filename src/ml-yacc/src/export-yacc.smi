@@ -1,5 +1,5 @@
 _require "../../basis.smi"
-_require "./yacc.smi"
+_require local "./yacc.smi"
 
 structure ExportParseGen =
 struct

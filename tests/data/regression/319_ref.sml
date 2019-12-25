@@ -1,3 +1,4 @@
+val ! = SMLSharp_Builtin.General.!
 fun f x = ref x
 val r = f 1234.5
 val _ = if SMLSharp_Builtin.Real64.equal (!r, 1234.5)

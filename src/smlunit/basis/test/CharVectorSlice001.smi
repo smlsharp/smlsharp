@@ -1,5 +1,5 @@
-_require "smlunit-lib.smi"
-_require "basis.smi"
+_require "../../../smlunit-lib.smi"
+_require "../../../basis.smi"
 _require "ImmutableSequenceSlice001.smi"
 
 structure CharVectorSlice001 =

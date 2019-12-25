@@ -1,0 +1,11 @@
+_require local "../../../../basis.smi"
+_require "../../../libs/toolchain/main/Filename.smi"
+
+structure UserFileMap =
+struct
+  exception Load of {msg : string, lineno : int}
+  type map (= boxed)
+  val load : Filename.filename -> map
+  val fromList : (Filename.filename * Filename.filename) list -> map
+  val find : map * Filename.filename -> Filename.filename option
+end

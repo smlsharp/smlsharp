@@ -1,6 +1,0 @@
-include "./compiler/extensions/json/main/JSONImpl.smi"
-include "./compiler/extensions/json/main/JSON.smi"
-include "./compiler/extensions/json/main/JSONTypes.ppg.smi"
-(*
-include "./compiler-utils/json/main/DynamicToJson.smi"
-*)

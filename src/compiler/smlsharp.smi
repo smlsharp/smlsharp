@@ -1,3 +1,2 @@
-(* provided the users for interactive mode *)
-_require "../prelude.smi"
-_require "./compilePhases/main/main/Main.smi"
+_require local "../prelude.smi" init (* for interactive mode *)
+_require local "./compilePhases/main/main/Main.smi"

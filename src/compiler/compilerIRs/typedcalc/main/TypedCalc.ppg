@@ -9,6 +9,8 @@ structure TypedCalc = struct
 
   structure T = Types
   structure I = IDCalc
+
+  (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
   (*% 
@@ -35,36 +37,32 @@ structure TypedCalc = struct
       FFIAttributes.attributes
         
   (*%
-     @params(btvEnv)
      @formatter(tyformat) T.format_ty
    *)
   (*% @prefix formatWithType_
-     @params(btvEnv)
      @formatter(tyformat) T.format_ty
    *)
   type ty 
     = (*%  
-         @format(ty:tyformat) ty()(btvEnv) 
+         @format(ty:tyformat) ty
        *)
       (*% @prefix formatWithType_
-         @format(ty:tyformat) ty()(btvEnv) 
+         @format(ty:tyformat) ty
        *) 
       T.ty
 
   (*%
-     @params(btvEnv)
      @formatter(T.btvEnv) T.format_btvEnv
    *)
   (*% @prefix formatWithType_
-     @params(btvEnv)
-     @formatter(T.btvEnv) T.format_btvEnvWithType
+     @formatter(T.btvEnv) T.format_btvEnv
    *)
   type btvEnv 
     = (*% 
          @format(btv) 
        *)
       (*% @prefix formatWithType_
-         @format(btv) btv()(btvEnv)
+         @format(btv) btv
        *) 
       T.btvEnv
 
@@ -174,10 +172,10 @@ structure TypedCalc = struct
       I.tvarId
 
   (*%
-     @formatter(AbsynConst.constant) AbsynConst.format_constant 
+     @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant 
    *)
   (*% @prefix formatWithType_
-     @formatter(AbsynConst.constant) AbsynConst.format_constant 
+     @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant 
    *)
   type constant 
     = (*%
@@ -237,7 +235,6 @@ structure TypedCalc = struct
      @formatter(T.varInfo) T.format_varInfo
    *)
   (*% @prefix formatWithType_
-     @params(btvEnv)
      @formatter(T.varInfo) T.formatWithType_varInfo
    *)
   type varInfo 
@@ -245,7 +242,7 @@ structure TypedCalc = struct
         @format(var) var
        *)
       (*% @prefix formatWithType_
-        @format(var) var()(btvEnv)
+        @format(var) var
        *)
       T.varInfo
 
@@ -253,7 +250,6 @@ structure TypedCalc = struct
      @formatter(T.exVarInfo) T.format_exVarInfo 
    *)
   (*% @prefix formatWithType_
-     @params(btvEnv)
      @formatter(T.exVarInfo) T.formatWithType_exVarInfo 
    *)
   type exVarInfo 
@@ -261,7 +257,7 @@ structure TypedCalc = struct
          @format(x) x
        *)
       (*% @prefix formatWithType_
-         @format(x) x()(btvEnv)
+         @format(x) x
        *)
       T.exVarInfo
 
@@ -269,7 +265,6 @@ structure TypedCalc = struct
      @formatter(T.primInfo) T.format_primInfo 
    *)
   (*% @prefix formatWithType_
-      @params(btvEnv)
      @formatter(T.primInfo) T.formatWithType_primInfo 
    *)
   type primInfo 
@@ -277,7 +272,7 @@ structure TypedCalc = struct
          @format(x) x
        *)
       (*% @prefix formatWithType_
-         @format(x) x()(btvEnv)
+         @format(x) x
        *)
       T.primInfo
 
@@ -297,19 +292,17 @@ structure TypedCalc = struct
       T.oprimInfo
 
   (*% 
-     @params(btvEnv)     
      @formatter(T.conInfo) T.format_conInfo
    *)
   (*% @prefix formatWithType_
-     @params(btvEnv)     
      @formatter(T.conInfo) T.format_conInfo
    *)
   type conInfo
     = (*%
-        @format(con) con()(btvEnv)
+        @format(con) con
        *)
       (*% @prefix formatWithType_
-        @format(con) con()(btvEnv)
+        @format(con) con
        *)
       T.conInfo
 
@@ -347,7 +340,6 @@ structure TypedCalc = struct
      @formatter(T.varInfo) T.format_varInfo
    *)
   (*% @prefix formatWithType_
-     @params(btvEnv)
      @formatter(T.varInfo) T.formatWithType_varInfo
    *)
   datatype idstatus 
@@ -355,14 +347,14 @@ structure TypedCalc = struct
          @format(var) var
        *)
       (*% @prefix formatWithType_
-         @format(var) var()(btvEnv)
+         @format(var) var
        *)
       VARID of T.varInfo
     | (*% 
          @format(var * int) var
        *)
       (*% @prefix formatWithType_
-         @format(var * int) "(rf" var()(btvEnv) ")"
+         @format(var * int) "(rf" var ")"
        *)
       RECFUNID of T.varInfo * int
 
@@ -387,13 +379,11 @@ structure TypedCalc = struct
       EXEXN of exExnInfo
 
  (*%
-  * @params(btvEnv)
   * @formatter(appList) TermFormat.formatAppList
   * @formatter(recordList) TermFormat.formatEnclosedList
   * @formatter(RecordLabel.label) RecordLabel.format_label
   *)
  (*% @prefix formatWithType_
-  * @params(btvEnv)
   * @formatter(appList) TermFormat.formatAppList
   * @formatter(recordList) TermFormat.formatEnclosedList
   * @formatter(RecordLabel.label) RecordLabel.format_label
@@ -401,38 +391,38 @@ structure TypedCalc = struct
  datatype ffiTy =
      (*%
         @format(attr * dom doms * var vars varsOpt * ran rans * loc)
-        R4{ doms:appList(dom()(btvEnv))("(",",",")")
-            varsOpt(vars:appList(var()(btvEnv))("(",",",")"))
-           +1 "->" +d rans:appList(ran()(btvEnv))("(",",",")") }
+        R4{ doms:appList(dom)("(",",",")")
+            varsOpt(vars:appList(var)("(",",",")"))
+           +1 "->" +d rans:appList(ran)("(",",",")") }
       *)
      (*% @prefix formatWithType_
         @format(attr * dom doms * var vars varsOpt * ran rans * loc)
-        R4{ doms:appList(dom()(btvEnv))("(",",",")")
-            varsOpt(vars:appList(var()(btvEnv))("(",",",")"))
-           +1 "->" +d rans:appList(ran()(btvEnv))("(",",",")") }
+        R4{ doms:appList(dom)("(",",",")")
+            varsOpt(vars:appList(var)("(",",",")"))
+           +1 "->" +d rans:appList(ran)("(",",",")") }
       *)
      FFIFUNTY of ffiAttributes option * ffiTy list * ffiTy list option * ffiTy list * loc
    | (*%
         @format(field fields * loc)
           fields:recordList(field)("{",",","}")
-        @format:field(k * ty) { k ":" 2[ +1 ty()(btvEnv) ] }
+        @format:field(k * ty) { k ":" 2[ +1 ty ] }
       *)
      (*% @prefix formatWithType_
         @format(field fields * loc)
           fields:recordList(field)("{",",","}")
-        @format:field(k * ty) { k ":" 2[ +1 ty()(btvEnv) ] }
+        @format:field(k * ty) { k ":" 2[ +1 ty ] }
       *)
      FFIRECORDTY of (RecordLabel.label * ffiTy) list * loc (* order has meaning *)
    | (*%
-        @format(ty * loc) ty()(btvEnv)
+        @format(ty * loc) ty
       *)
      (*% @prefix formatWithType_
-        @format(ty * loc) ty()(btvEnv)
+        @format(ty * loc) ty
       *)
      FFIBASETY of ty * loc
 
  (*%
-   @params(btvEnv)
+   @formatter(bool) SmlppgUtil.formatBinaryChoice
    @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
    @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
    @formatter(enclosedListIfMoreThanOne)
@@ -441,7 +431,6 @@ structure TypedCalc = struct
    @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
    @formatter(declList) TermFormat.formatDeclList
    @formatter(recordExp) TermFormat.formatRecordExp
-   @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    @formatter(tyBindInfo) T.format_tyBindInfo
    @formatter(format_pathdot) Path.format_pathWithDotend
    @formatter(funBindInfo) T.format_funBindInfo
@@ -449,9 +438,10 @@ structure TypedCalc = struct
    @formatter(format_bmap_int) T.format_bmap_int
    @formatter(optionalList) TermFormat.formatOptionalList
    @formatter(RecordLabel.label) RecordLabel.format_label
+   @formatter(Types.constraint) Types.format_constraint
   *)
  (*% @prefix formatWithType_
-   @params(btvEnv)
+   @formatter(bool) SmlppgUtil.formatBinaryChoice
    @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
    @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
    @formatter(enclosedListIfMoreThanOne)
@@ -460,7 +450,6 @@ structure TypedCalc = struct
    @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
    @formatter(declList) TermFormat.formatDeclList
    @formatter(recordExp) TermFormat.formatRecordExp
-   @formatter(extendBtvEnv) TermFormat.extendBtvEnv
    @formatter(tyBindInfo) T.format_tyBindInfo
    @formatter(format_pathdot) Path.format_pathWithDotend
    @formatter(funBindInfo) T.format_funBindInfo
@@ -468,6 +457,7 @@ structure TypedCalc = struct
    @formatter(format_bmap_int) T.format_bmap_int
    @formatter(optionalList) TermFormat.formatOptionalList
    @formatter(RecordLabel.label) RecordLabel.format_label
+   @formatter(Types.constraint) Types.format_constraint
   *)
   datatype tpexp 
     = (*%  
@@ -482,21 +472,21 @@ structure TypedCalc = struct
            const
        *)
       (*% @prefix formatWithType_
-         @format({const, ty, loc}) 1[const +1 ":" + ty()(btvEnv)]
+         @format({const, ty, loc}) 1[const +1 ":" + ty]
        *)
       TPCONSTANT of {const:constant, ty:ty, loc:loc}
     | (*% 
          @format(var)  var
        *)
       (*% @prefix formatWithType_
-         @format(var)  var()(btvEnv)
+         @format(var)  var
        *)
       TPVAR of varInfo
     | (*% 
          @format(var)  var
        *)
       (*% @prefix formatWithType_
-         @format(var)  var()(btvEnv)
+         @format(var)  var
        *)
       (* extnernal variable imported through _require *)
       TPEXVAR of exVarInfo
@@ -504,7 +494,7 @@ structure TypedCalc = struct
          @format({var, arity}) var
        *)
       (*% @prefix formatWithType_
-         @format({var, arity}) var()(btvEnv) + "reffunvar"
+         @format({var, arity}) var + "reffunvar"
        *)
       TPRECFUNVAR of {var:varInfo, arity:int}
     | (*%
@@ -514,7 +504,7 @@ structure TypedCalc = struct
              "fn" + {ids(id)(","+1,"{","}")} +d "=>"
              1[
                +1
-               exp()(btvEnv)
+               exp
               ]
           ")"
        *)
@@ -522,12 +512,12 @@ structure TypedCalc = struct
          @format({argVarList:id:varInfo ids:enclosedListIfMoreThanOne,
                  bodyTy:ty, bodyExp:exp, loc:loc}) 
           "("
-             "fn" + {ids(id()(btvEnv))(","+1,"{","}")} +d "=>"
+             "fn" + {ids(id)(","+1,"{","}")} +d "=>"
              1[
                +1
-               exp()(btvEnv)
+               exp
                +1
-               ":" ty()(btvEnv)
+               ":" ty
               ]
           ")"
        *)
@@ -542,10 +532,10 @@ structure TypedCalc = struct
         1[
           1
           1[
-            exp1()(btvEnv)
+            exp1
            ]
           +1
-          exps(exp2()(btvEnv))(",","{","}")
+          exps(exp2)(",","{","}")
          ]
         1        
         ")"
@@ -559,10 +549,10 @@ structure TypedCalc = struct
         1[
           1
           1[
-            exp1()(btvEnv)
+            exp1
            ]
           +1
-          exps(exp2()(btvEnv))(",","{","}")
+          exps(exp2)(",","{","}")
          ]
         1        
         ")"
@@ -574,35 +564,35 @@ structure TypedCalc = struct
                   instTyList:ty tys:formatListWithEnclosure,
                   argExpOpt:exp opt, argTyOpt, loc:loc}) 
         1[
-          con()(btvEnv)
+          con
           +d
           opt( exp )
           ]
-        @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+        @format:exp(exp) 2[ +1 exp ]
       *)
       (*% @prefix formatWithType_
          @format({con:con,
                   instTyList:ty tys:formatListWithEnclosure,
                   argExpOpt:exp opt, argTyOpt, loc:loc}) 
         1[
-          con()(btvEnv)
+          con
           +d
           opt( exp )
           ]
-        @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+        @format:exp(exp) 2[ +1 exp ]
       *)
      (*
          @format({con:con,
                   instTyList:ty tys:formatListWithEnclosure,
                   argExpOpt:exp opt, argTyOpt, loc:loc}) 
       1[
-        con()(btvEnv)
+        con
         +1
-        "{" tys(ty()(btvEnv))(",",,) "}"
+        "{" tys(ty)(",",,) "}"
         +d
         opt( exp )
         ]
-        @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+        @format:exp(exp) 2[ +1 exp ]
       *)
       TPDATACONSTRUCT of 
       {
@@ -617,20 +607,20 @@ structure TypedCalc = struct
                   instTyList:ty tys:formatListWithEnclosure,
                   argExpOpt:exp opt, argTyOpt, loc:loc}) 
           R1{
-              exn !N0{tys(ty()(btvEnv))(",","{","}")}
+              exn !N0{tys(ty)(",","{","}")}
                   opt( exp )
             }
-         @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+         @format:exp(exp) 2[ +1 exp ]
       *)
       (*% @prefix formatWithType_
          @format({exn:exn,
                   instTyList:ty tys:formatListWithEnclosure,
                   argExpOpt:exp opt, argTyOpt, loc:loc}) 
           R1{
-              exn !N0{tys(ty()(btvEnv))(",","{","}")}
+              exn !N0{tys(ty)(",","{","}")}
                   opt( exp )
             }
-         @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+         @format:exp(exp) 2[ +1 exp ]
       *)
       TPEXNCONSTRUCT of 
       {
@@ -675,7 +665,7 @@ structure TypedCalc = struct
                   loc:loc})
          caseKind
           1[
-             +1 exps(exp()(btvEnv))(",", "{","}")
+             +1 exps(exp)(",", "{","}")
            ]
           +1
           "of"
@@ -684,10 +674,10 @@ structure TypedCalc = struct
             rules(rule)(~1[ +1 "|"+ ])
            ]
        @format:rule({args:pat pats:enclosedListIfMoreThanOne, body:exp})
-         pats(pat()(btvEnv))(",","{","}")
+         pats(pat)(",","{","}")
          + "=>"
          +1
-         exp()(btvEnv)
+         exp
        *)
       (*% @prefix formatWithType_
          @format({expList:exp exps:enclosedListIfMoreThanOne, 
@@ -698,9 +688,9 @@ structure TypedCalc = struct
                   loc:loc})
          caseKind
           1[
-             +1 exps(exp()(btvEnv))(",", "{","}")
+             +1 exps(exp)(",", "{","}")
              +1 ":"
-             "{" ty1s(ty1()(btvEnv))(",") "}"
+             "{" ty1s(ty1)(",") "}"
            ]
           +1
           "of"
@@ -709,12 +699,12 @@ structure TypedCalc = struct
             rules(rule)(~1[ +1 "|"+ ])
            ]
           +1
-          ":" + ty2()(btvEnv)
+          ":" + ty2
        @format:rule({args:pat pats:enclosedListIfMoreThanOne, body:exp})
-         pats(pat()(btvEnv))(",","{","}")
+         pats(pat)(",","{","}")
          + "=>"
          +1
-         exp()(btvEnv)
+         exp
        *)
       TPCASEM of 
        {
@@ -726,12 +716,40 @@ structure TypedCalc = struct
         loc:loc
         }
     | (*%
+       * @format ({groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc})
+         "_dynamicCase" +  dynamicTerm + "of" 
+          1 "groupListTerm" + 2[ groupListTerm ] 
+          1 "groupListTy" + 2[ groupListTy ] 
+          1 "elemTy" + 2[ elemTy]
+          1 "ruleBodyTy" + 2[ ruleBodyTy]
+          1 "end" 
+       *)
+      (*% @prefix formatWithType_
+       * @format ({groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc})
+         "_dynamicCase" +  dynamicTerm + "of" 
+          1 "groupListTerm" + 2[ groupListTerm ] 
+          1 "groupListTy" + 2[ groupListTy ] 
+          1 "elemTy" + 2[ elemTy]
+          1 "ruleBodyTy" + 2[ ruleBodyTy]
+          1 "end" 
+       *)
+      TPDYNAMICCASE of 
+       {
+        groupListTerm : tpexp,
+        groupListTy : ty,
+        dynamicTerm :  tpexp,
+        dynamicTy :  ty,
+        elemTy : ty, 
+        ruleBodyTy : ty,
+        loc:loc
+        }
+    | (*%
        @format({primOp:prim,
                 instTyList:ty tys:formatListWithEnclosure,
                 argExp:exp,
                 argTy:ty,
                 loc:loc})
-          prim exp()(btvEnv)
+          prim exp
      *)
       (*% @prefix formatWithType_
        @format({primOp:prim,
@@ -740,13 +758,13 @@ structure TypedCalc = struct
                 argTy:ty,
                 loc:loc})
          1[
-           prim()(btvEnv)
+           prim
             +d
-           !N0{tys(ty()(btvEnv))(",","{","}")}
+           !N0{tys(ty)(",","{","}")}
             +d
            exp
           ]
-       @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+       @format:exp(exp) 2[ +1 exp ]
      *)
       TPPRIMAPPLY of 
       {
@@ -762,7 +780,7 @@ structure TypedCalc = struct
                 argExp:exp,
                 argTy:ty,
                 loc:loc})
-           oprim exp()(btvEnv)
+           oprim exp
        *)
       (*% @prefix formatWithType_
        @format({oprimOp:oprim,
@@ -771,10 +789,10 @@ structure TypedCalc = struct
                 argTy:ty,
                 loc:loc})
        R1{
-           oprim !N0{tys(ty()(btvEnv))(",","{","}")}
+           oprim !N0{tys(ty)(",","{","}")}
             exp
          }
-       @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+       @format:exp(exp) 2[ +1 exp ]
        *)
       TPOPRIMAPPLY of 
       {
@@ -787,28 +805,28 @@ structure TypedCalc = struct
     | (*%
        * @format({fields:records, recordTy:ty, loc:loc})
         1[
-           records()(btvEnv)
+           records
          ]
        *)
       (*% @prefix formatWithType_
        * @format({fields:records, recordTy:ty, loc:loc})
         1[
-           records()(btvEnv)
-           +1 ":" ty()(btvEnv) 
+           records
+           +1 ":" ty
          ]
        *)
       TPRECORD of {fields:fields, recordTy:ty, loc:loc}
     | (*%
        @format({label:selector, exp:exp, expTy:ty, resultTy, loc:loc})
         L10{ "(""#"{selector} 
-              + {exp()(btvEnv)}
+              + {exp}
               ")" 
            }
        *)
       (*% @prefix formatWithType_
        @format({label:selector, exp:exp, expTy:ty, resultTy, loc:loc})
-        L10{ "(""#"{selector} + "("{exp()(btvEnv)2[ +1 ":" ty()(btvEnv) ]}")"")" 
-              2[ +1 ":" resultTy()(btvEnv) ] }
+        L10{ "(""#"{selector} + "("{exp 2[ +1 ":" ty ]}")"")"
+              2[ +1 ":" resultTy ] }
        *)
       TPSELECT of {label:RecordLabel.label, exp:tpexp, expTy:ty, resultTy:ty, loc:loc}
     | (*%
@@ -819,7 +837,7 @@ structure TypedCalc = struct
                    elementTy:y2, 
                    loc:loc})
            N0{
-              "MODIFY(" exp1()(btvEnv) "," +1 label "," +1 exp2()(btvEnv) ")"
+              "MODIFY(" exp1 "," +1 label "," +1 exp2 ")"
              }
       *)
       (*% @prefix formatWithType_
@@ -830,8 +848,8 @@ structure TypedCalc = struct
                    elementTy:y2, 
                    loc:loc})
            N0{
-              "MODIFY(" exp1()(btvEnv) "," +1 label "," +1 exp2()(btvEnv) ")"
-               2[ +1 ":" ty1()(btvEnv)
+              "MODIFY(" exp1 "," +1 label "," +1 exp2 ")"
+               2[ +1 ":" ty1
                 ]
              }
       *)
@@ -847,79 +865,37 @@ structure TypedCalc = struct
     | (*%
          @format({expList:exp exps,
                   expTyList:ty tys:formatListWithEnclosure, loc:loc})
-         exps(exp()(btvEnv))(";" +1)
+         exps(exp)(";" +1)
      *)
       (*% @prefix formatWithType_
          @format({expList:exp exps,
                   expTyList:ty tys:formatListWithEnclosure, loc:loc})
           !N0{
               "("
-                2[ 1 exps(exp()(btvEnv))(";" +2) ] 1
+                2[ 1 exps(exp)(";" +2) ] 1
               ")" 
-              2[ +1 ":" tys(ty()(btvEnv))(",","(",")") ]
+              2[ +1 ":" tys(ty)(",","(",")") ]
              }
      *)
       TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
     | (*%
-        @format({data, dataTy, iterator, iteratorTy, pred, predTy, loc})
-            "foreach" + {data()(btvEnv)}
-            +1 "do" + 2[{iterator()(btvEnv)}]
-            +1 "until" + 2[{pred()(btvEnv)}]
-       *)
-      (*% @prefix formatWithType_
-        @format({data, dataTy, iterator, iteratorTy, pred, predTy, loc})
-            "foreach" + {data()(btvEnv)}
-            +1 "do" + 2[{iterator()(btvEnv)}]
-            +1 "until" + 2[{pred()(btvEnv)}]
-       *)
-      TPFOREACH of {data:tpexp, 
-                    dataTy:ty, 
-                    iterator:tpexp, 
-                    iteratorTy:ty, 
-                    pred:tpexp, 
-                    predTy:ty, 
-                    loc:loc}
-    | (*%
-        @format({data, whereParam, whereParamTy, dataTy, iterator, iteratorTy, pred, predTy, loc})
-            "foreach" + {data()(btvEnv)}
-            +1 "where" + 2[whereParam()(btvEnv)]
-            +1 "do" + 2[{iterator()(btvEnv)}]
-            +1 "until" + 2[{pred()(btvEnv)}]
-       *)
-      (*% @prefix formatWithType_
-        @format({data, whereParam, whereParamTy, dataTy, iterator, iteratorTy, pred, predTy, loc})
-            "foreach" + {data()(btvEnv)}
-            +1 "where" + 2[whereParam()(btvEnv)]
-            +1 "do" + 2[{iterator()(btvEnv)}]
-            +1 "until" + 2[{pred()(btvEnv)}]
-       *)
-      TPFOREACHDATA of {data:tpexp, 
-                        dataTy:ty, 
-                        whereParam:tpexp,
-                        whereParamTy:ty,
-                        iterator:tpexp, 
-                        iteratorTy:ty, 
-                        pred:tpexp, 
-                        predTy:ty, 
-                        loc:loc}
-    | (*%
        * @format({binds:bind binds, bodyExp:exp, loc:loc})
             1[
                "bind" 2[ +1 binds(bind)( +1) ]  +1
-               "in" 2[ +2 exp()(btvEnv) ] +1 
+               "in" 2[ +2 exp ] +1
                "end"
              ]
          @format:bind(id:varInfo * exp)
-            id +d "=" 2[ +2 {exp()(btvEnv)} ]
+            id +d "=" 2[ +2 {exp} ]
        *)
       (*% @prefix formatWithType_
        * @format({binds:bind binds, bodyExp:exp, loc:loc})
        * !N0{
        *      {"bind" 2[ +1 binds(bind)( +1) ]}  +1
-       *      {"in" 2[ +2 exp()(btvEnv) ] +2 "end"}
+       *      {"in" 2[ +2 exp ] +2 "end"}
        *    }
        * @format:bind(id:varInfo * exp)
-       * { id()(btvEnv) +d "=" 2[ +2 {exp()(btvEnv)} ] }
+       * { id +d "=" 2[ +2 {exp} ] }
        *)
       TPMONOLET of {binds:(varInfo * tpexp) list, bodyExp:tpexp, loc:loc}
     | (*%
@@ -929,12 +905,12 @@ structure TypedCalc = struct
                   loc:loc})
          "let"
            1[ 
-              +1 decs(dec()(btvEnv))( +1)
+              +1 decs(dec)( +1)
             ] 
          +1
          "in"
            1[
-             +1 exps(exp()(btvEnv))( +1 ) 
+             +1 exps(exp)( +1 )
             ]
          +1
          "end"
@@ -946,15 +922,15 @@ structure TypedCalc = struct
                   loc:loc})
          "let"
            1[ 
-              +1 decs(dec()(btvEnv))( +1)
+              +1 decs(dec)( +1)
             ] 
          +1
          "in"
            1[
-             +1 exps(exp()(btvEnv))( +3 ) 
+             +1 exps(exp)( +3 )
              +d
              ":"
-             + tys(ty()(btvEnv))(",","{","}")
+             + tys(ty)(",","{","}")
             ]
          +1
          "end"
@@ -962,11 +938,11 @@ structure TypedCalc = struct
       TPLET of {decls:tpdecl list, body:tpexp list, tys:ty list, loc:loc}
     | (*%
        * @format({exp, ty, loc})
-       * N0{ "raise" +d {exp()(btvEnv)}  }
+       * N0{ "raise" +d {exp}  }
        *)
       (*% @prefix formatWithType_
        * @format({exp, ty, loc})
-       * N0{ "raise" +d {exp()(btvEnv)} 2[ +1 ":" ty()(btvEnv) ] }
+       * N0{ "raise" +d {exp} 2[ +1 ":" ty ] }
        *)
       TPRAISE of {exp:tpexp, ty:ty, loc:loc}
     | (*%
@@ -974,7 +950,7 @@ structure TypedCalc = struct
         "handle"
          1[
           +1
-          exp1()(btvEnv)
+          exp1
          ]
         +1
         "with" 
@@ -983,7 +959,7 @@ structure TypedCalc = struct
            1[
              "fn" + id + "=>"
              +1
-             exp2()(btvEnv)
+             exp2
            ]
          ]
        *)
@@ -992,16 +968,16 @@ structure TypedCalc = struct
         "handle"
          1[
           +1
-          exp1()(btvEnv)
+          exp1
          ]
         +1
         "with" 
          1[
            +1
            1[
-             "fn" + id()(btvEnv) + "=>"
+             "fn" + id + "=>"
              +1
-             exp2()(btvEnv)
+             exp2
            ]
          ]
        *)
@@ -1015,6 +991,7 @@ structure TypedCalc = struct
                    loc:loc}
     | (*%
          @format({btvEnv:btv,
+                  constraints,
                   argVarList:var:varInfo vars, 
                   bodyTy:ty, 
                   bodyExp:exp, 
@@ -1022,13 +999,13 @@ structure TypedCalc = struct
         "["
           1[
             1
-            btv()(btvEnv) "."
+            btv "."
             1[
               +1
               "fn" + "{" {vars(var)(",")}
                       "}" +d "=>"
               1[ +1
-                 1[exp()(btv:extendBtvEnv()(btvEnv))
+                 1[exp
                   ]
                ]
              ]
@@ -1038,6 +1015,7 @@ structure TypedCalc = struct
       *)
       (*% @prefix formatWithType_
          @format({btvEnv:btv,
+                  constraints,
                   argVarList:var:varInfo vars, 
                   bodyTy:ty, 
                   bodyExp:exp, 
@@ -1045,14 +1023,14 @@ structure TypedCalc = struct
         "["
           1[
             1
-            btv()(btvEnv) "."
+            btv "."
             1[
               +1
-              "fn" + "{" {vars(var()(btv:extendBtvEnv()(btvEnv)))(",")}
+              "fn" + "{" {vars(var)(",")}
                       "}" +d "=>"
               1[ +1
-                 1[exp()(btv:extendBtvEnv()(btvEnv))
-                   +1 ":" ty()(btv:extendBtvEnv()(btvEnv))
+                 1[exp
+                   +1 ":" ty
                   ]
                ]
              ]
@@ -1067,54 +1045,62 @@ structure TypedCalc = struct
       TPPOLYFNM of 
        {
         btvEnv : btvEnv,
+        constraints : Types.constraint list,
         argVarList : varInfo list,
         bodyTy: ty,
         bodyExp : tpexp,
         loc : loc
         }
     | (*%
-       @format({btvEnv:btv, expTyWithoutTAbs:ty, exp:exp, loc:loc})
+       @format({btvEnv:btv, constraints, expTyWithoutTAbs:ty, exp:exp, loc:loc})
         "["
           1[
             1
-            btv()(btvEnv) "."
+            btv "."
             +2
-            1[ exp()(btv:extendBtvEnv()(btvEnv))
+            1[ exp
              ]
            ]
           1
          "]"
       *)
       (*% @prefix formatWithType_
-       @format({btvEnv:btv, expTyWithoutTAbs:ty, exp:exp, loc:loc})
+       @format({btvEnv:btv, constraints, expTyWithoutTAbs:ty, exp:exp, loc:loc})
         "["
           1[
             1
-            btv()(btvEnv) "."
+            btv "."
             +2
-            1[ exp()(btv:extendBtvEnv()(btvEnv))
-               +1 ":" ty()(btv:extendBtvEnv()(btvEnv)) 
+            1[ exp
+               +1 ":" ty
              ]
            ]
           1
          "]"
       *)
      (* \forall t.e;  ty is the type of tpexp without type abstraction *)
-      TPPOLY of {btvEnv: btvEnv, expTyWithoutTAbs: ty, exp : tpexp, loc : loc}
+      TPPOLY of
+      {
+        btvEnv: btvEnv,
+        constraints : Types.constraint list,
+        expTyWithoutTAbs: ty,
+        exp : tpexp,
+        loc : loc
+      }
     | (*%
        @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
-          exp()(btvEnv)
+          exp
       *)
       (*% @prefix formatWithType_
        @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
         1[
-          exp()(btvEnv)
+          exp
           1[
             +1 ":" 
-            ty1()(btvEnv) 
+            ty1
             +1
             "{"
-              1[tys(ty2()(btvEnv))("," +d)]
+              1[tys(ty2)("," +d)]
             "}"
            ]
          ]
@@ -1123,11 +1109,11 @@ structure TypedCalc = struct
       TPTAPP of {exp:tpexp, expTy:ty, instTyList:ty list, loc:loc}
     | (*%
          @format ({funExp, ffiTy, stubTy, loc})
-         L10{ "FFI(" funExp()(btvEnv) ")" }
+         L10{ "FFI(" funExp ")" }
       *)
       (*% @prefix formatWithType_
          @format ({funExp, ffiTy, stubTy, loc})
-         L10{ "FFI(" funExp()(btvEnv) +d ":" +1 ffiTy()(btvEnv) ")" }
+         L10{ "FFI(" funExp +d ":" +1 ffiTy ")" }
       *)
       TPFFIIMPORT of
         {
@@ -1138,70 +1124,98 @@ structure TypedCalc = struct
         }
     | (*%
          @format((exp * expTy) * ty * loc)
-          "cast(" exp()(btvEnv) ")"
+          "cast(" exp ")"
        *)
       (*% @prefix formatWithType_
          @format((exp * expTy) * ty * loc)
-          "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
+          "cast(" exp + "to" + ty ")"
        *)
       (* cast e to some type ty; used to coerce con type to a record type *)
       TPCAST of (tpexp * ty) * ty * loc
     | (*%
         @format(ty * loc)
-        "_sizeof(" ty()(btvEnv) ")"
+        "_sizeof(" ty ")"
        *)
       (*% @prefix formatWithType_
         @format(ty * loc)
-        "_sizeof(" ty()(btvEnv) ")"
+        "_sizeof(" ty ")"
        *)
       TPSIZEOF of ty * loc
    |  (*%
-        @format({ty,args:(arg1 * arg2),argtys,loc})
-        "_join(" arg1()(btvEnv) "," arg2()(btvEnv) ")"
+        @format({isJoin, ty,args:(arg1 * arg2),argtys,loc})
+        isJoin()("_join(","_extend(") arg1 "," arg2 ")"
        *)
       (*% @prefix formatWithType_
-        @format({ty,args:(arg1 * arg2),argtys:(argty1 * argty2),loc})
-        "_join(" arg1()(btvEnv) ":"  argty1()(btvEnv) "," arg2()(btvEnv) ":" argty2()(btvEnv) ") :" ty()(btvEnv)
+        @format({isJoin, ty,args:(arg1 * arg2),argtys:(argty1 * argty2),loc})
+        isJoin()("_join(","_extend(") arg1 ":"  argty1 "," arg2 ":" argty2 ") :" ty
        *)
       TPJOIN of
         {
           ty : ty,
           args : tpexp * tpexp,
           argtys: ty * ty,
+          isJoin:bool,
           loc : loc
         }
     | (*%
-        @format({exp,ty,coerceTy,loc})
-        "_json " exp()(btvEnv) ":" ty()(btvEnv) " as " coerceTy()(btvEnv)
+        @format({exp,ty,elemTy, coerceTy,loc})
+        "_dynamic " exp ":" ty " as " coerceTy
        *)
       (*% @prefix formatWithType_
-        @format({exp,ty,coerceTy,loc})
-        "_json " exp()(btvEnv) " as " coerceTy()(btvEnv)
+        @format({exp,ty,elemTy, coerceTy,loc})
+        "_dynamic " exp " as " coerceTy
        *)
-      TPJSON of {exp:tpexp, ty:ty, coerceTy:ty, loc:loc}
+      TPDYNAMIC of {exp:tpexp, ty:ty, elemTy:ty, coerceTy:ty, loc:loc}
+    | (*%
+        @format({exp,ty,elemTy, coerceTy,loc})
+        "_dynamic " exp ":" ty " is " coerceTy
+       *)
+      (*% @prefix formatWithType_
+        @format({exp,ty,elemTy, coerceTy,loc})
+        "_dynamic " exp " is " coerceTy
+       *)
+      TPDYNAMICIS of {exp:tpexp, ty:ty, elemTy:ty, coerceTy:ty, loc:loc}
+    | (*%
+        @format({exp,ty,elemTy, coerceTy,loc})
+        "_dynamicview " exp ":" ty " as " coerceTy
+       *)
+      (*% @prefix formatWithType_
+        @format({exp,ty,elemTy, coerceTy,loc})
+        "_dynamicview " exp " as " coerceTy
+       *)
+      TPDYNAMICVIEW of {exp:tpexp, ty:ty, elemTy:ty, coerceTy:ty, loc:loc}
+    | (*%
+        @format({ty, coerceTy,loc})
+        "_dynamicnull as " ty
+       *)
+      (*% @prefix formatWithType_
+        @format({ty,coerceTy,loc})
+        "_dynamicnull as " ty + ":" + coerceTy
+       *)
+      TPDYNAMICNULL of {ty:ty, coerceTy:ty, loc:loc}
+    | (*%
+        @format({ty, coerceTy,loc})
+        "_dynamictop as " ty
+       *)
+      (*% @prefix formatWithType_
+        @format({ty,coerceTy,loc})
+        "_dynamictop as " ty + ":" + coerceTy
+       *)
+      TPDYNAMICTOP of {ty:ty, coerceTy:ty, loc:loc}
     | (*%
         @format(ty * loc)
-        "_typeof(" ty()(btvEnv) ")"
+        "_reifyty(" ty ")"
        *)
       (*% @prefix formatWithType_
         @format(ty * loc)
-        "_typeof(" ty()(btvEnv) ")"
-       *)
-      TPTYPEOF of ty * loc
-    | (*%
-        @format(ty * loc)
-        "_reifyty(" ty()(btvEnv) ")"
-       *)
-      (*% @prefix formatWithType_
-        @format(ty * loc)
-        "_reifyty(" ty()(btvEnv) ")"
+        "_reifyty(" ty ")"
        *)
       TPREIFYTY of ty * loc
 
  and tpffifun
-   = (*% @format(x) x()(btvEnv) *)
-     (*% @prefix formatWithType_ @format(x) x()(btvEnv) *)
-     TPFFIFUN of tpexp
+   = (*% @format(x * ty) x *)
+     (*% @prefix formatWithType_ @format(x * ty) x *)
+     TPFFIFUN of tpexp * ty
    | (*% @format(x) x *)
      (*% @prefix formatWithType_ @format(x) x *)
      TPFFIEXTERN of string
@@ -1213,7 +1227,7 @@ structure TypedCalc = struct
             "val" + binds(bind)(~1[ +1 "and"] +)
          ]
        @format:bind(var * exp)
-         var +d "=" +1 exp()(btvEnv)
+         var +d "=" +1 exp
       *)
      (*% @prefix formatWithType_
        @format(bind binds * loc) 
@@ -1221,7 +1235,7 @@ structure TypedCalc = struct
             "val" + binds(bind)(~1[ +1 "and"] +)
          ]
        @format:bind(var * exp)
-        var()(btvEnv) +d "=" +1 exp()(btvEnv)
+        var +d "=" +1 exp
       *)
      TPVAL of (varInfo * tpexp) list * loc
    | (*%
@@ -1234,7 +1248,7 @@ structure TypedCalc = struct
         @format:rules(rule rules)
            rules(rule)(~1[ +1"|"] +)
         @format:rule({args:pat pats, body:exp})
-           pats(pat()(btvEnv))(+d) +d "=" +1 exp()(btvEnv)
+           pats(pat)(+d) +d "=" +1 exp
       *)
      (*% @prefix formatWithType_
        @format(dec binds * loc)
@@ -1242,11 +1256,11 @@ structure TypedCalc = struct
             "fun" + binds(dec)(~1[ +1 "and"] +)
           ]
         @format:dec({funVarInfo,argTyList:ty tys,bodyTy,ruleList:rules})
-           1[funVarInfo()(btvEnv) + rules]
+           1[funVarInfo + rules]
         @format:rules(rule rules)
            rules(rule)(~1[ +1"|"] +)
         @format:rule({args:pat pats, body:exp})
-           pats(pat()(btvEnv))(+d) +d "=" +1 exp()(btvEnv)
+           pats(pat)(+d) +d "=" +1 exp
       *)
      TPFUNDECL of {
                     funVarInfo: varInfo, 
@@ -1257,10 +1271,10 @@ structure TypedCalc = struct
                    *
                    loc
    | (*%
-       * @format(btv * dec binds * loc)
+       * @format({btvEnv:btv, constraints, recbinds: dec binds, loc})
        1[
           "fun"
-          + "(" btv()(btvEnv) ")"
+          + "(" btv ")"
           +d binds(dec)(~1[ +1 "and"] +)
         ]
         @format:dec({funVarInfo, argTyList, bodyTy, ruleList:rule rules})
@@ -1273,40 +1287,42 @@ structure TypedCalc = struct
           ]
         @format:rule({args:pat pats, body:exp})
          1[
-            pats(pat()(btv:extendBtvEnv()(btvEnv)))(+d)
-            + "=" +1 exp()(btv:extendBtvEnv()(btvEnv)) 
+            pats(pat)(+d)
+            + "=" +1 exp
           ]
        *)
      (*% @prefix formatWithType_
-       * @format(btv * dec binds * loc)
+       * @format({btvEnv:btv, constraints, recbinds: dec binds, loc})
        1[
           "fun"
-          + "(" btv()(btvEnv) ")"
+          + "(" btv ")"
           +d binds(dec)(~1[ +1 "and"] +)
         ]
         @format:dec({funVarInfo, argTyList, bodyTy, ruleList:rule rules})
          2[
            +1
-           funVarInfo()(btv:extendBtvEnv()(btvEnv))
+           funVarInfo
            +1
            rules(rule)(~2[+1"|"]
-                       + funVarInfo()(btv:extendBtvEnv()(btvEnv)) +1)
+                       + funVarInfo +1)
           ]
         @format:rule({args:pat pats, body:exp})
          1[
-            pats(pat()(btv:extendBtvEnv()(btvEnv)))(+d)
-            + "=" +1 exp()(btv:extendBtvEnv()(btvEnv)) 
+            pats(pat)(+d)
+            + "=" +1 exp
           ]
        *)
-     TPPOLYFUNDECL of btvEnv
-                       * 
-                      {funVarInfo: varInfo,
-                       argTyList: ty list,
-                       bodyTy: ty,
-                       ruleList : {args:tppat list, body:tpexp} list
-                       } list 
-                       * 
-                       loc 
+     TPPOLYFUNDECL of
+     {
+       btvEnv : btvEnv,
+       constraints : Types.constraint list,
+       recbinds : {funVarInfo: varInfo,
+                   argTyList: ty list,
+                   bodyTy: ty,
+                   ruleList : {args:tppat list, body:tpexp} list
+                  } list,
+       loc : loc
+     }
    | (*%
        @format(bind binds * loc)
        1[
@@ -1317,7 +1333,7 @@ structure TypedCalc = struct
        @format:bind({var, expTy:ty1, exp:exp}) 
         1[ 
            var +d "=" 
-           +1 exp()(btvEnv)
+           +1 exp
          ]
       *)
      (*% @prefix formatWithType_
@@ -1329,37 +1345,42 @@ structure TypedCalc = struct
         ]
        @format:bind({var, expTy:ty1, exp:exp}) 
         1[ 
-           var()(btvEnv) +d "=" 
-           +1 exp()(btvEnv)
+           var +d "="
+           +1 exp
          ]
       *)
      TPVALREC of {var:varInfo, expTy:ty, exp:tpexp } list * loc
    | (*%
-       @format(btv * bind binds * loc)
+       @format({btvEnv:btv, constraints, recbinds: bind binds, loc})
          "valpolyrec["
              2[ 1
-                 btv()(btvEnv) "." +2
+                 btv "." +2
                  "val rec" +d {binds(bind)(~4[ +1 "and"] +)}
               ] 1
          "]"
        @format:bind({var, expTy:ty1, exp:exp})
          var +d "=" +2
-         2[ exp()(btv:extendBtvEnv()(btvEnv)) ]
+         2[ exp ]
       *)
      (*% @prefix formatWithType_
-       @format(btv * bind binds * loc)
+       @format({btvEnv:btv, constraints, recbinds: bind binds, loc})
          "valpolyrec["
              2[ 1
-                 btv()(btvEnv) "." +2
+                 btv "." +2
                  "val rec" +d {binds(bind)(~4[ +1 "and"] +)}
               ] 1
          "]"
        @format:bind({var, expTy:ty1, exp:exp})
-         var()(btv:extendBtvEnv()(btvEnv)) +d "=" +2
-         2[ exp()(btv:extendBtvEnv()(btvEnv)) ]
+         var +d "=" +2
+         2[ exp ]
       *)
      TPVALPOLYREC of
-     btvEnv * {var:varInfo, expTy:ty, exp:tpexp} list * loc
+     {
+       btvEnv : btvEnv,
+       constraints : Types.constraint list,
+       recbinds : {var:varInfo, expTy:ty, exp:tpexp} list,
+       loc : loc
+     }
    | (*%
          @format(bind binds * loc)
           binds:optionalList(bind)("exception" +d, +1 "and",)
@@ -1377,7 +1398,7 @@ structure TypedCalc = struct
        *)
      (*% @prefix formatWithType_
          @format({exnInfo, varInfo} * loc)
-            "exception tag" +d exnInfo +d "=" +d varInfo()(btvEnv)
+            "exception tag" +d exnInfo +d "=" +d varInfo
        *)
       TPEXNTAGD of {exnInfo: exnInfo, varInfo:varInfo} * loc
     | (*%
@@ -1386,7 +1407,7 @@ structure TypedCalc = struct
        *)
       (*% @prefix formatWithType_
          @format({var, arity})
-         "export" +d "rec fun var" +  var()(btvEnv)
+         "export" +d "rec fun var" +  var
        *)
       (* This is changed to TPEXPORT in uncurry optimization *)
       TPEXPORTRECFUNVAR of {var:varInfo, arity:int}
@@ -1396,7 +1417,7 @@ structure TypedCalc = struct
        *)
       (*% @prefix formatWithType_
          @format(var)
-         "export" + var()(btvEnv)
+         "export" + var
        *)
       (* This is changed to TPEXPORT in uncurry optimization *)
       TPEXPORTVAR of varInfo
@@ -1411,32 +1432,34 @@ structure TypedCalc = struct
      (* export exception declaration specified in  _interface *)
       TPEXPORTEXN of exnInfo
     | (*%
-        @format({path, ty})
+        @format({path, ty} * provider)
+         "extern" + "var" + path
        *)
       (*% @prefix formatWithType_
-        @format({path, ty})
+        @format({path, ty} * provider)
+         2["extern" + "var" + path +1 ":" + ty]
        *)
      (* temporary disable extern printint
          "extern" + "var" + path
        formatWithType_
-         2["extern" + "var" + path +1 ":" + ty()(btvEnv)]
+         2["extern" + "var" + path +1 ":" + ty]
       *)
-      TPEXTERNVAR of {path:longsymbol, ty:ty}
+      TPEXTERNVAR of {path:longsymbol, ty:ty} * Types.provider
     | (*%
-        @format({path, ty:ty})
+        @format({path, ty:ty} * provider)
          "extern" + "exception" + path
        *)
       (*% @prefix formatWithType_
-        @format({path, ty:ty})
-         "extern" + "exception" + path + ":" + ty()(btvEnv)
+        @format({path, ty:ty} * provider)
+         "extern" + "exception" + path + ":" + ty
        *)
      (* temporary disable extern printint
          "extern" + "exception" + path
        formatWithType_
-         "extern" + "exception" + path + ":" + ty()(btvEnv)
+         "extern" + "exception" + path + ":" + ty
       *)
      (* import exception declaration specified in  _interface *)
-      TPEXTERNEXN of {path:longsymbol, ty:ty}
+      TPEXTERNEXN of {path:longsymbol, ty:ty} * Types.provider
     | (*%
         @format({path, ty})
          "builtin" + "exception" + path
@@ -1467,7 +1490,7 @@ structure TypedCalc = struct
         @format(var) var
       *)
      (*% @prefix formatWithType_
-        @format(var) var()(btvEnv) 
+        @format(var) var
       *)
      TPPATVAR of varInfo
    | (*%
@@ -1484,7 +1507,7 @@ structure TypedCalc = struct
                  patTy:ty2, 
                  loc:loc}) 
        1[
-         d con()(btvEnv) + opt(pat()(btvEnv))
+         d con + opt(pat)
         ]
       *)
      (*% @prefix formatWithType_
@@ -1494,7 +1517,7 @@ structure TypedCalc = struct
                  patTy:ty2, 
                  loc:loc}) 
        1[
-         d con()(btvEnv) + opt(pat()(btvEnv))
+         d con + opt(pat)
         ]
       *)
     (*
@@ -1504,9 +1527,9 @@ structure TypedCalc = struct
                  patTy:ty2, 
                  loc:loc}) 
        1[
-        d con()(btvEnv) tys(ty1()(btvEnv))(",","{","}") + opt(pat()(btvEnv))
+        d con tys(ty1)(",","{","}") + opt(pat)
         +1
-        ":" ty2()(btvEnv)
+        ":" ty2
         ]
       *)
      TPPATDATACONSTRUCT of 
@@ -1524,8 +1547,8 @@ structure TypedCalc = struct
                  patTy:ty2, 
                  loc:loc}) 
         1[
-          d con tys(ty1()(btvEnv))(",","{","}") +
-          opt(pat()(btvEnv))
+          d con tys(ty1)(",","{","}") +
+          opt(pat)
          ]
       *)
      (*% @prefix formatWithType_
@@ -1535,9 +1558,9 @@ structure TypedCalc = struct
                  patTy:ty2, 
                  loc:loc}) 
         1[
-          d con tys(ty1()(btvEnv))(",","{","}") +
-          opt(pat()(btvEnv)) +1
-          ":" ty2()(btvEnv)
+          d con tys(ty1)(",","{","}") +
+          opt(pat) +1
+          ":" ty2
          ]
       *)
      TPPATEXNCONSTRUCT of 
@@ -1551,43 +1574,43 @@ structure TypedCalc = struct
    | (*%
          @format({fields:record, recordTy:ty, loc:loc})
          1[
-            record()(btvEnv)
+            record
           ]
       *)
      (*% @prefix formatWithType_
          @format({fields:record, recordTy:ty, loc:loc})
          1[
-            record()(btvEnv)
+            record
           ]
       *)
      (*
          @format({fields:record, recordTy:ty, loc:loc})
          1[
-            record()(btvEnv)
+            record
             +1
             ":"
-            ty()(btvEnv)
+            ty
           ]
       *)
      TPPATRECORD of {fields:patfields, recordTy:ty, loc:loc}
    | (*%
          @format({varPat:pat1, asPat:pat2, loc:loc})
-         pat1()(btvEnv) + "as" + pat2()(btvEnv)
+         pat1 + "as" + pat2
       *)
      (*% @prefix formatWithType_
          @format({varPat:pat1, asPat:pat2, loc:loc})
-         pat1()(btvEnv) + "as" + pat2()(btvEnv)
+         pat1 + "as" + pat2
       *)
      TPPATLAYERED of {varPat:tppat, asPat:tppat, loc:loc}
 
  withtype fields = 
      (*%
       * @format(exp smap:recordExp)
-        smap(exp()(btvEnv))
+        smap(exp)
       *)
      (*% @prefix formatWithType_
       * @format(exp smap:recordExp)
-        smap(exp()(btvEnv))
+        smap(exp)
       *)
      tpexp RecordLabel.Map.map
 
@@ -1595,15 +1618,25 @@ structure TypedCalc = struct
      (*%
       * @format(pat smap:recordExp)
         1[
-           smap(pat()(btvEnv))
+           smap(pat)
          ]
       *)
      (*% @prefix formatWithType_
       * @format(pat smap:recordExp)
         1[
-           smap(pat()(btvEnv))
+           smap(pat)
          ]
       *)
      tppat RecordLabel.Map.map
 
+  fun tppatToLoc tppat =
+      case tppat of 
+        TPPATERROR (ty, loc) => loc
+      | TPPATWILD (ty, loc) => loc
+      | TPPATVAR varInfo => Symbol.longsymbolToLoc (#path varInfo)
+      | TPPATCONSTANT (constant, ty, loc) => loc
+      | TPPATDATACONSTRUCT {loc, ...} => loc
+      | TPPATEXNCONSTRUCT {loc, ...} => loc
+      | TPPATRECORD {loc, ...} => loc
+      | TPPATLAYERED {loc, ...} => loc
 end

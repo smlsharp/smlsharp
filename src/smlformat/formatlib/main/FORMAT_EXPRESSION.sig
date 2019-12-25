@@ -99,6 +99,8 @@ sig
            StartOfIndent of int
          | (** pop a indent out of the indent stack *)
            EndOfIndent
+         | (** subsequence *)
+           Sequence of expression list
 
   (***************************************************************************)
 

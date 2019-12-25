@@ -7,19 +7,14 @@ struct
 local
   structure I = IDCalc
   structure Ty = EvalTy
-  structure ITy = EvalIty
   structure V = NameEvalEnv
-  structure L = SetLiftedTys
+  structure VP = NameEvalEnvPrims
   structure S = Subst
   structure TF = TfunVars
-  structure P = PatternCalc
-  structure PI = PatternCalcInterface
   structure U = NameEvalUtils
   structure EU = UserErrorUtils
   structure E = NameEvalError
   structure N = NormalizeTy
-  structure Sig = EvalSig
-  structure FU = FunctorUtils
   fun bug s = Bug.Bug ("SigCheck: " ^ s)
 in
   exception SIGCHECK
@@ -28,6 +23,55 @@ in
        {mode:mode,loc:Loc.loc,strPath:Symbol.longsymbol,strEnv:V.env,specEnv:V.env}
   type sigCheckResult = V.env * I.icdecl list 
 
+  fun printConSpec string conSpec = 
+      (U.print ("conSpec " ^ string ^ "\n");
+       SymbolEnv.mapi
+         (fn (symbol, tyOpt) =>
+             (
+              U.print "symbol\n";
+              U.printSymbol symbol;
+              U.print "\n tyopt\n";
+              (case tyOpt of
+                 NONE => U.print "NONE\n"
+               | SOME ty => 
+                 (U.print "SOME(";
+                  U.printTy ty; 
+                  U.print ")\n")
+              )
+             )
+         )
+         conSpec
+      )
+
+  fun printVarE string conSpec = 
+      (U.print ("varE " ^ string ^ "\n");
+       SymbolEnv.mapi
+         (fn (symbol, idStatus) =>
+             (
+              U.print "symbol\n";
+              U.printSymbol symbol;
+              U.print "\n tyopt\n";
+              U.printIdstatus idStatus
+             )
+         )
+         conSpec
+      )
+
+  fun printTfvSubst string tfvSubst =
+      (U.print ("tfvMap " ^ string ^ "\n");
+       TfvMap.mapi 
+         (fn (ref x, ref y) => 
+             (
+              U.print "key:\n";
+              U.printTfunkind x;
+              U.print "\n";
+              U.print "value:\n";
+              U.printTfunkind y;
+              U.print "\n"
+             )
+         ) 
+        tfvSubst
+      )
    fun removeVarE (srcVarE, targetVarE) =
        SymbolEnv.foldli
        (fn (name, _, targetVarE) =>
@@ -105,7 +149,7 @@ in
                     val tstrTfun =  case strTstr of
                                       V.TSTR tfun => tfun
                                     | V.TSTR_DTY {tfun, ...} => tfun
-                    val _ = if I.tfunIseq tfun andalso not (I.tfunIseq tstrTfun) then
+                    val _ = if I.tfunAdmitsEq tfun andalso not (I.tfunAdmitsEq tstrTfun) then
                               EU.enqueueError
                                 (Symbol.symbolToLoc name,
                                  E.SIGEqtype("200",{longsymbol=path@[name]}))
@@ -113,7 +157,7 @@ in
                     val _ = if I.tfunArity tfun <> I.tfunArity tstrTfun then
                               EU.enqueueError
                                 (Symbol.symbolToLoc name,
-                                 E.SIGArity("200",{longsymbol=path@[name]}))
+                                 E.SIGArity("210",{longsymbol=path@[name]}))
                             else ()
                   in
                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tstrTfun}
@@ -124,15 +168,15 @@ in
                         case strTstr of
                           V.TSTR tfun => tfun
                         | V.TSTR_DTY {tfun, ...} => tfun
-                    val _ = if I.tfunIseq tfun andalso not (I.tfunIseq tstrTfun) then
+                    val _ = if I.tfunAdmitsEq tfun andalso not (I.tfunAdmitsEq tstrTfun) then
                               EU.enqueueError
                                 (Symbol.symbolToLoc name,
-                                 E.SIGEqtype("200",{longsymbol=path@[name]}))
+                                 E.SIGEqtype("220",{longsymbol=path@[name]}))
                             else ()
                     val _ = if I.tfunArity tfun <> I.tfunArity tstrTfun then
                               EU.enqueueError
                                 (Symbol.symbolToLoc name,
-                                 E.SIGArity("200",{longsymbol=path@[name]}))
+                                 E.SIGArity("230",{longsymbol=path@[name]}))
                             else ()
                   in
                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tstrTfun}
@@ -178,25 +222,25 @@ in
                   if List.length specFormals <> List.length strFormals then
                      EU.enqueueError 
                        (Symbol.symbolToLoc strSymbol,
-                        E.SIGArity("205",{longsymbol=path@[strSymbol]}))
+                        E.SIGArity("240",{longsymbol=path@[strSymbol]}))
                   else if N.eqTydef N.emptyTypIdEquiv ((specFormals,specTy),(strFormals,strTy))
                   then ()
                   else (EU.enqueueError 
                           (Symbol.symbolToLoc strSymbol,
-                           E.SIGDtyMismatch ("210",{longsymbol=path@[specSymbol]})))
+                           E.SIGDtyMismatch ("250",{longsymbol=path@[specSymbol]})))
                 | (I.TFUN_VAR (ref (I.TFUN_DTY {id=id1,...})), I.TFUN_VAR (ref (I.TFUN_DTY {id=id2,...}))) =>
                   if TypID.eq(id1,id2) then ()
                   else 
                     (EU.enqueueError 
                        (Symbol.symbolToLoc strSymbol,
-                        E.SIGDtyMismatch("220",{longsymbol=path@[specSymbol]})))
+                        E.SIGDtyMismatch("260",{longsymbol=path@[specSymbol]})))
                 | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=specTfun,...})), strTfun) =>
                   checkTfun (specSymbol, strSymbol) (specTfun, strTfun)
                 | (specTfun, I.TFUN_VAR (ref (I.FUN_DTY {tfun=strTfun,...}))) =>
                   checkTfun (specSymbol, strSymbol) (specTfun, strTfun)
                 | _ =>(EU.enqueueError
                          (Symbol.symbolToLoc strSymbol,
-                          E.SIGDtyMismatch("230",{longsymbol=path@[strSymbol]})))
+                          E.SIGDtyMismatch("270",{longsymbol=path@[strSymbol]})))
               end
 
           fun checkConSpec typIdEquiv ((formals1, conSpec1), (formals2, conSpec2)) =
@@ -219,12 +263,12 @@ in
                           | (SOME _, NONE) => 
                             (EU.enqueueError 
                                (Symbol.symbolToLoc strSymbol,
-                                E.SIGConType ("275",{longsymbol=path@[strSymbol]}));
+                                E.SIGConType ("280",{longsymbol=path@[strSymbol]}));
                              conSpec2)
                           | (NONE, SOME _) =>
                             (EU.enqueueError 
                                (Symbol.symbolToLoc strSymbol,
-                                E.SIGConType ("275",{longsymbol=path@[strSymbol]}));
+                                E.SIGConType ("290",{longsymbol=path@[strSymbol]}));
                              conSpec2)
                           | (SOME ty1, SOME ty2) => 
                             if N.equalTy (typIdEquiv, tvarIdEquiv) (ty1, ty2) then 
@@ -232,13 +276,13 @@ in
                             else 
                               (EU.enqueueError 
                                  (Symbol.symbolToLoc strSymbol,
-                                  E.SIGConType ("275",{longsymbol=path@[strSymbol]}));
+                                  E.SIGConType ("300",{longsymbol=path@[strSymbol]}));
                                conSpec2)
                         end
                         handle LibBase.NotFound => 
                             (EU.enqueueError 
                                (Symbol.symbolToLoc specSymbol,
-                                E.SIGConNotFoundInDty ("275",{longsymbol=path@[specSymbol]}));
+                                E.SIGConNotFoundInDty ("310",{longsymbol=path@[specSymbol]}));
                              conSpec2)
                     )
                     conSpec2
@@ -248,7 +292,7 @@ in
                       (fn (strSymbol,_) =>
                           EU.enqueueError 
                             (Symbol.symbolToLoc strSymbol,
-                             E.SIGConNotInSig ("275",{longsymbol=path@[strSymbol]})
+                             E.SIGConNotInSig ("320",{longsymbol=path@[strSymbol]})
                             )
                       )
                       conSpec2
@@ -268,7 +312,7 @@ in
                           NONE => 
                           EU.enqueueError 
                             (Symbol.symbolToLoc conSymbol, 
-                             E.SIGConNotFound ("240",{longsymbol=path@[conSymbol]}))
+                             E.SIGConNotFound ("330",{longsymbol=path@[conSymbol]}))
                         | SOME strIdstatus =>
                           (case (idstatus, strIdstatus) of
                              (I.IDCON {id=conid1, ty=ty1,...}, I.IDCON {id=conid2, ty=ty2,...}) =>
@@ -276,11 +320,11 @@ in
                              else
                                (EU.enqueueError 
                                   (Symbol.symbolToLoc conSymbol,
-                                   E.SIGConNotFound ("250",{longsymbol=path@[conSymbol]})))
+                                   E.SIGConNotFound ("340",{longsymbol=path@[conSymbol]})))
                            | (I.IDCON _, _) => 
                              EU.enqueueError 
                                (Symbol.symbolToLoc conSymbol,
-                                E.SIGConNotFound("260",{longsymbol=path@[conSymbol]}))
+                                E.SIGConNotFound("350",{longsymbol=path@[conSymbol]}))
                            | (I.IDSPECCON _, I.IDCON _) => ()
                            | _ => raise bug "non conid"
                           )
@@ -299,14 +343,14 @@ in
                    V.TSTR strTfun =>
                    (EU.enqueueError 
                       (Symbol.symbolToLoc strSymbol,
-                       E.SIGDtyRequired("270",{longsymbol=path@[strSymbol]}));
+                       E.SIGDtyRequired("360",{longsymbol=path@[strSymbol]}));
                     specTstr)
                  | V.TSTR_DTY {tfun=strTfun, varE=strVarE, formals=strFormals, conSpec=strConSpec,...} =>
                    (checkTfun (specSymbol, strSymbol) (specTfun, strTfun);
                     if List.length formals <> List.length strFormals then
                       EU.enqueueError 
                         (Symbol.symbolToLoc strSymbol,
-                         E.SIGArity ("275",{longsymbol=path@[specSymbol]}))
+                         E.SIGArity ("370",{longsymbol=path@[specSymbol]}))
                     else ();
                     checkConSpec 
                       N.emptyTypIdEquiv
@@ -324,7 +368,7 @@ in
                       NONE => 
                       (EU.enqueueError 
                          (Symbol.symbolToLoc specSymbol,
-                          E.SIGTypUndefined("290",{longsymbol=path@[specSymbol]}));
+                          E.SIGTypUndefined("380",{longsymbol=path@[specSymbol]}));
                        tyE)
                     | SOME (strSymbol, strTstr) => 
                       let
@@ -336,40 +380,42 @@ in
                 SymbolEnv.empty
                 specTyE
 
-          fun isTrans ty = 
-            let
-              exception OPAQUE 
-              fun trace ty =
-                  case ty of
-                    I.TYWILD => ()
-                  | I.TYERROR => ()
-                  | I.TYVAR _  => ()
-                  | I.TYRECORD tyLabelenvMap =>
-                    RecordLabel.Map.app trace tyLabelenvMap
-                  | I.TYCONSTRUCT {tfun, args} =>
-                    (traceTfun tfun; List.app trace args)
-                  | I.TYFUNM (tyList, ty) =>
-                    (List.app trace tyList; trace ty)
-                  | I.TYPOLY (kindedTvarList, ty) => trace ty
-                  | I.INFERREDTY ty => ()
-              and traceTfun tfun = 
-                  case tfun of
-                    I.TFUN_DEF {realizerTy,...} => trace realizerTy
-                  | I.TFUN_VAR (ref tfunkind) => traceTfunkind tfunkind
-              and traceTfunkind tfunkind =
-                  case tfunkind of
-                    I.TFUN_DTY _ => ()
-                  | I.TFV_SPEC _ => ()
-                  | I.TFV_DTY _ => ()
-                  | I.REALIZED {id, tfun} => traceTfun tfun
-                  | I.INSTANTIATED _ => raise OPAQUE
-                  | I.FUN_DTY _ => ()
-            in
-              case mode of 
-                Trans => true
-              | Opaque => ((trace ty; true) handle OPAQUE => false)
-            end
                 
+      fun isTrans ty = 
+          let
+            exception OPAQUE 
+            fun trace ty =
+                case ty of
+                  I.TYWILD => ()
+                | I.TYERROR => ()
+                | I.TYVAR _  => ()
+                | I.TYFREE_TYVAR _  => ()
+                | I.TYRECORD {ifFlex, fields=tyLabelenvMap} =>
+                  RecordLabel.Map.app trace tyLabelenvMap
+                | I.TYCONSTRUCT {tfun, args} =>
+                  (traceTfun tfun; List.app trace args)
+                | I.TYFUNM (tyList, ty) =>
+                  (List.app trace tyList; trace ty)
+                | I.TYPOLY (kindedTvarList, ty) => trace ty
+                | I.INFERREDTY ty => ()
+            and traceTfun tfun = 
+                case tfun of
+                  I.TFUN_DEF {realizerTy,...} => trace realizerTy
+                | I.TFUN_VAR (ref tfunkind) => traceTfunkind tfunkind
+            and traceTfunkind tfunkind =
+                case tfunkind of
+                  I.TFUN_DTY _ => ()
+                | I.TFV_SPEC _ => ()
+                | I.TFV_DTY _ => ()
+                | I.REALIZED {id, tfun} => traceTfun tfun
+                | I.INSTANTIATED _ => raise OPAQUE
+                | I.FUN_DTY _ => ()
+          in
+            case mode of 
+              Trans => true
+            | Opaque => ((trace ty; true) handle OPAQUE => false)
+          end
+
           fun checkVarE (specVarE, strVarE) =
               SymbolEnv.foldri
                 (fn (name, specIdStatus, (varE, icdeclList)) =>
@@ -407,7 +453,7 @@ in
                           NONE =>
                           (EU.enqueueError
                              (Symbol.symbolToLoc name, 
-                              E.SIGVarUndefined ("300",{longsymbol = path@[name]}));
+                              E.SIGVarUndefined ("390",{longsymbol = path@[name]}));
                            (varE, icdeclList)
                           )
                         | SOME (I.IDVAR {id,longsymbol}) => 
@@ -480,7 +526,7 @@ in
                          NONE =>
                          (EU.enqueueError
                             (Symbol.symbolToLoc name,
-                             E.SIGVarUndefined("310",{longsymbol = path@[name]}));
+                             E.SIGVarUndefined("400",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
                        | SOME (idstatus as I.IDEXN {id, ty=ty2, longsymbol}) =>
@@ -498,7 +544,7 @@ in
                            else 
                              (EU.enqueueError 
                                 (Symbol.symbolToLoc name, 
-                                 E.SIGExnType("320",{longsymbol = path@[name]}));
+                                 E.SIGExnType("410",{longsymbol = path@[name]}));
                               (varE, icdeclList)
                              )
                          end
@@ -512,7 +558,7 @@ in
                            else 
                              (EU.enqueueError
                                 (Symbol.symbolToLoc name,
-                                 E.SIGExnType("330",{longsymbol = path@[name]}));
+                                 E.SIGExnType("420",{longsymbol = path@[name]}));
                               (varE, icdeclList)
                              )
                          end
@@ -527,7 +573,7 @@ in
                            else 
                              (EU.enqueueError
                                 (Symbol.symbolToLoc name,
-                                 E.SIGExnType ("340",{longsymbol = path@[name]}));
+                                 E.SIGExnType ("430",{longsymbol = path@[name]}));
                               (varE, icdeclList)
                              )
                          end
@@ -542,14 +588,14 @@ in
                            else 
                              (EU.enqueueError 
                                 (Symbol.symbolToLoc name, 
-                                 E.SIGExnType ("340",{longsymbol = path@[name]}));
+                                 E.SIGExnType ("440",{longsymbol = path@[name]}));
                               (varE, icdeclList)
                              )
                          end
                        | _ =>
                          (EU.enqueueError
                             (Symbol.symbolToLoc name, 
-                             E.SIGExnExpected ("350",{longsymbol = path@[name]}));
+                             E.SIGExnExpected ("450",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
                       )
@@ -558,7 +604,7 @@ in
                          NONE =>
                          (EU.enqueueError
                             (Symbol.symbolToLoc name, 
-                             E.SIGVarUndefined("360",{longsymbol = path@[name]}));
+                             E.SIGVarUndefined("460",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
                        | SOME (idstatus as I.IDCON {id,ty,...}) => 
@@ -566,7 +612,7 @@ in
                        | SOME _ => 
                          (EU.enqueueError
                             (Symbol.symbolToLoc name,
-                             E.SIGConNotFound ("370",{longsymbol = path@[name]}));
+                             E.SIGConNotFound ("470",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
                       )
@@ -575,7 +621,7 @@ in
                          NONE =>
                          (EU.enqueueError
                             (Symbol.symbolToLoc name, 
-                             E.SIGVarUndefined ("380",{longsymbol = path@[name]}));
+                             E.SIGVarUndefined ("480",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
                        | SOME (idstatus as I.IDCON {id=id2, ty=ty2,...}) => 
@@ -584,13 +630,13 @@ in
                          else 
                            (EU.enqueueError
                               (Symbol.symbolToLoc name, 
-                               E.SIGConNotFound ("390",{longsymbol = path@[name]}));
+                               E.SIGConNotFound ("490",{longsymbol = path@[name]}));
                             (varE, icdeclList)
                            )
                        | SOME _ => 
                          (EU.enqueueError
                             (Symbol.symbolToLoc name, 
-                             E.SIGConNotFound ("400",{longsymbol = path@[name]}));
+                             E.SIGConNotFound ("500",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
                       )
@@ -611,7 +657,7 @@ in
                       NONE => 
                       (EU.enqueueError
                          (Symbol.symbolToLoc name,
-                          E.SIGStrUndefined("410",{longsymbol=path@[name]}));
+                          E.SIGStrUndefined("510",{longsymbol=path@[name]}));
                        (strE, icdeclList))
                     | SOME {env=strEnv, strKind=strStrKind} =>
                       let
@@ -640,21 +686,16 @@ in
                 (case I.derefTfun tfun of
                    I.TFUN_VAR(tfv as ref (I.INSTANTIATED {tfunkind,tfun})) =>
                    (case tfunkind of (* creating a return env *)
-                      I.TFV_SPEC {id, iseq, ...} => 
+                      I.TFV_SPEC {id, admitsEq, ...} =>
                       let
                         val formals = I.tfunFormals tfun
                         val liftedTys = I.tfunLiftedTys tfun
-                        val runtimeTy = 
-                            case I.tfunRuntimeTy tfun of
-                              SOME ty => ty
-                            | NONE => raise bug "runtimeTy"
                         (* 2012-7-14: ohori [name] is added. *)
                         val longsymbol = path@[name]
                         val newTfunkind =
                             I.TFUN_DTY {id=id,
-                                        iseq=iseq,
+                                        admitsEq=admitsEq,
                                         formals=formals,
-                                        runtimeTy=runtimeTy,
                                         conSpec=SymbolEnv.empty,
                                         conIDSet = ConID.Set.empty,
                                         longsymbol=longsymbol,
@@ -664,23 +705,18 @@ in
                                                    revealKey=revealKey}
                                        }
                         val _ = tfv := newTfunkind
-                        val env = V.reinsertTstr(env,name,V.TSTR (I.TFUN_VAR tfv))
+                        val env = VP.reinsertTstr(env,name,V.TSTR (I.TFUN_VAR tfv))
                       in
                         env
                       end
-                    | I.TFV_DTY {id, iseq, ...} => 
+                    | I.TFV_DTY {id, admitsEq, ...} =>
                       let
                         val formals = I.tfunFormals tfun
                         val liftedTys = I.tfunLiftedTys tfun
-                        val runtimeTy = 
-                            case I.tfunRuntimeTy tfun of
-                              SOME ty => ty
-                            | NONE => raise bug "runtimeTy"
                         val newTfunkind =
                             I.TFUN_DTY {id=id,
-                                        iseq=iseq,
+                                        admitsEq=admitsEq,
                                         formals=formals,
-                                        runtimeTy=runtimeTy,
                                         conSpec=SymbolEnv.empty,
                                         conIDSet=ConID.Set.empty,
                                         (* 2012-7-14: ohori [name] is added. *)
@@ -692,26 +728,22 @@ in
                                        }
                         val _ = tfv := newTfunkind
                         val newTfun = I.TFUN_VAR tfv
-                        val env = V.reinsertTstr(env, name,V.TSTR newTfun)
+                        val env = VP.reinsertTstr(env, name,V.TSTR newTfun)
                       in
                         env
                       end
                     | _ => raise bug "non tfv (5)"
                    )
-                 | I.TFUN_VAR _ => V.reinsertTstr(env, name, tstr)
-                 | I.TFUN_DEF _ => V.reinsertTstr(env, name, tstr)
+                 | I.TFUN_VAR _ => VP.reinsertTstr(env, name, tstr)
+                 | I.TFUN_DEF _ => VP.reinsertTstr(env, name, tstr)
                 )
               | V.TSTR_DTY {tfun, varE, ...} =>
                 (case I.derefTfun tfun of
                    I.TFUN_VAR
                      (tfv as ref (I.INSTANTIATED{tfunkind,tfun=strTfun})) =>
                       (case tfunkind of
-                         I.TFV_DTY {longsymbol=_, id, iseq, formals, conSpec, liftedTys} =>
+                         I.TFV_DTY {longsymbol=_, id, admitsEq, formals, conSpec, liftedTys} =>
                          let
-                           val runtimeTy = 
-                               case I.tfunRuntimeTy strTfun of
-                                 SOME ty => ty
-                               | NONE => raise bug "runtimeTy"
                            val (conspecConId, conIDSet) =
                                SymbolEnv.foldri
                               (fn (name, tyOpt, (conspecConId, conIDSet)) =>
@@ -726,9 +758,8 @@ in
                                conSpec
                            val newTfunkind =
                                I.TFUN_DTY {id=id,
-                                           iseq=iseq,
+                                           admitsEq=admitsEq,
                                            formals=formals,
-                                           runtimeTy=runtimeTy,
                                            conSpec=conSpec,
                                            conIDSet=conIDSet,
                                            (* 2012-7-14: ohori [name] is added. *)
@@ -756,7 +787,7 @@ in
                                                 I.TYPOLY
                                                   (
                                                    map 
-                                                     (fn tv=>(tv,I.UNIV))
+                                                     (fn tv=>(tv,I.UNIV I.emptyProperties))
                                                      formals,
                                                    returnTy
                                                   )
@@ -769,7 +800,7 @@ in
                                                I.TYPOLY
                                                  (
                                                   map
-                                                    (fn tv =>(tv,I.UNIV))
+                                                    (fn tv =>(tv,I.UNIV I.emptyProperties))
                                                     formals,
                                                   I.TYFUNM([ty], returnTy)
                                                  )
@@ -791,14 +822,14 @@ in
                                             varE=varE,
                                             formals=formals,
                                             conSpec=conSpec}
-                           val env = V.reinsertTstr(env, name, newTstr)
-                           val env = V.envWithVarE(env, varE)
+                           val env = VP.reinsertTstr(env, name, newTstr)
+                           val env = VP.envWithVarE(env, varE)
                          in
                            env
                          end
                        | _ => raise bug "non dty tfv (1)"
                       )
-                 | _ => V.reinsertTstr(env, name, tstr)
+                 | _ => VP.reinsertTstr(env, name, tstr)
                 )
 
           fun makeOpaqueInstanceTyE tyE env =
@@ -816,7 +847,7 @@ in
                             val strEnv = makeOpaqueInstanceEnv (path@[name]) strEnv
                             val strKind = V.STRENV (StructureID.generate())
                           in
-                            V.reinsertStr(env, name, {env=strEnv, strKind=strKind}) 
+                            VP.reinsertStr(env, name, {env=strEnv, strKind=strKind}) 
                           end
                       )
                       env
@@ -861,7 +892,7 @@ in
                       (tfv := I.REALIZED{tfun=tfun,id=I.tfunkindId tfunkind};
                        case I.derefTfun tfun of 
                         I.TFUN_VAR
-                          (ref (I.TFUN_DTY{id,iseq,formals,runtimeTy,conSpec,
+                          (ref (I.TFUN_DTY{id,admitsEq,formals,conSpec,
                                            conIDSet,
                                            longsymbol,liftedTys,dtyKind})) =>
                         let
@@ -946,46 +977,51 @@ in
       : (S.tfvSubst * S.conIdSubst) * V.env =
     let
       val tfvMap = TF.tfvsEnv TF.allTfvKind nil (specEnv, TfvMap.empty)
-      val (tfvSubst, conIdSubst) = 
+
+      val (typIdSubst, tfvSubst, conIdSubst) = 
           TfvMap.foldri
-          (fn (tfv as ref (I.TFV_SPEC {longsymbol, iseq, formals,...}),path,
-               (tfvSubst, conIdSubst)) =>
+          (fn (tfv as ref (I.TFV_SPEC {id=origId, longsymbol, admitsEq, formals,...}),path,
+               (typIdSubst, tfvSubst, conIdSubst)) =>
               let
                 val id = TypID.generate()
                 val newTfv =
-                    I.mkTfv (I.TFV_SPEC{longsymbol=longsymbol, id=id,iseq=iseq,formals=formals})
+                    I.mkTfv (I.TFV_SPEC{longsymbol=longsymbol, id=id,admitsEq=admitsEq,formals=formals})
               in 
-                (TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
+                (TypID.Map.insert(typIdSubst, origId, id), 
+                 TfvMap.insert(tfvSubst, tfv, newTfv), 
+                 conIdSubst)
               end
             | (tfv as ref (I.INSTANTIATED {tfunkind, tfun}),
-               path, (tfvSubst, conIdSubst)) =>
+               path, (typIdSubst, tfvSubst, conIdSubst)) =>
               let
                 val newTfv = I.mkTfv (I.INSTANTIATED {tfunkind=tfunkind, tfun=tfun})
               in 
-                (TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
+                (typIdSubst, TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
               end
-            | (tfv as ref (I.TFV_DTY {longsymbol, iseq,formals,conSpec,liftedTys,...}),
-               path, (tfvSubst, conIdSubst)) =>
+            | (tfv as ref (I.TFV_DTY {id=origId, longsymbol, admitsEq,formals,conSpec,liftedTys,...}),
+               path, (typIdSubst, tfvSubst, conIdSubst)) =>
               let
                 val id = TypID.generate()
                 val newTfv =
                     I.mkTfv (I.TFV_DTY{id=id,
                                        longsymbol=longsymbol,
-                                       iseq=iseq,
+                                       admitsEq=admitsEq,
                                        conSpec=conSpec,
                                        liftedTys=liftedTys,
                                        formals=formals}
                           )
+                val typIdSubst = TypID.Map.insert(typIdSubst, origId, id)
+                val tfvSubst = TfvMap.insert(tfvSubst, tfv, newTfv)
               in 
-                (TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
+                (typIdSubst, tfvSubst, conIdSubst)
               end
             | (tfv as
                    ref(I.TFUN_DTY
-                         {id,iseq,formals,runtimeTy,longsymbol = originalPath,
+                         {id=origId,admitsEq,formals,longsymbol = originalPath,
                           conIDSet,
                           conSpec,liftedTys,dtyKind}),
-               path, (tfvSubst, conIdSubst)) =>
-              if TypID.Set.member(typidSet, id) then
+               path, (typIdSubst, tfvSubst, conIdSubst)) =>
+              if TypID.Set.member(typidSet, origId) then
                 let
                   val (name, path) = case List.rev path of
                                        h::tl => (h, List.rev tl)
@@ -1003,7 +1039,7 @@ in
                   val (conIdSubst, conIDSet) =
                       SymbolEnv.foldri
                       (fn (name, _, (conIdSubst, conIDSet)) =>
-                          case V.checkId(specEnv, path@[name]) of
+                          case VP.checkSigId(specEnv, path@[name]) of
                             SOME (I.IDCON {id, longsymbol, ty}) =>
                             let
                               val newId = ConID.generate()
@@ -1023,9 +1059,8 @@ in
                       I.mkTfv 
                         (I.TFUN_DTY
                            {id=id,
-                            iseq=iseq,
+                            admitsEq=admitsEq,
                             formals=formals,
-                            runtimeTy=runtimeTy,
                             conSpec=conSpec,
                             conIDSet = conIDSet,
                             longsymbol = copyPath @ [name],
@@ -1039,19 +1074,40 @@ in
                             dtyKind=dtyKind
                            }
                         )
-                in 
-                  (TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
+                  val _ = 
+                      newTfv := 
+                      I.TFUN_DTY
+                        {id=id,
+                         admitsEq=admitsEq,
+                         formals=formals,
+                         conSpec=conSpec,
+                         conIDSet = conIDSet,
+                         longsymbol = copyPath @ [name],
+                            (*
+                             originalPath=originalPath,
+                             2012-7-22 ohori: bug 222_functorArgumentTyconName.sml
+                             This is the real tycon generated here. So we set
+                             its real name here.
+                             *)
+                         liftedTys=liftedTys,
+                         dtyKind=dtyKind
+                        } 
+                  val tfvSubst = TfvMap.insert(tfvSubst, tfv, newTfv)
+                  val typIdSubst = TypID.Map.insert(typIdSubst, origId, id)
+                in
+                  (typIdSubst, tfvSubst, conIdSubst)
                 end
-              else (tfvSubst, conIdSubst)
+              else (typIdSubst, tfvSubst, conIdSubst)
             | _ => raise bug "non tfv (11)"
           )
-          (TfvMap.empty, ConID.Map.empty)
+          (TypID.Map.empty, TfvMap.empty, ConID.Map.empty)
           tfvMap
           handle exn => raise exn
       val _ =
           TfvMap.app
-          (fn (tfv as 
-                   ref (I.TFV_DTY{longsymbol,iseq,formals,conSpec,liftedTys,id})) =>
+          (fn 
+              (tfv as 
+                   ref (I.TFV_DTY{longsymbol,admitsEq,formals,conSpec,liftedTys,id})) =>
               let
                 val conSpec =
                     SymbolEnv.map
@@ -1061,19 +1117,44 @@ in
               in
                 tfv:=
                     I.TFV_DTY
-                      {iseq=iseq,
+                      {admitsEq=admitsEq,
                        longsymbol=longsymbol,
                        formals=formals,
                        conSpec=conSpec,
                        liftedTys=liftedTys,
                        id=id}
               end
-            | (tfv as ref (I.TFUN_DTY {iseq,
+            | 
+              (tfv as ref (I.FUN_DTY {tfun,
+                                      longsymbol, 
+                                      varE,
+                                      formals,
+                                      conSpec,
+                                      liftedTys})) =>
+
+              let
+                val tfun = S.substTfvTfun tfvSubst tfun
+                val varE = S.substTfvVarE tfvSubst varE
+               val conSpec =
+                    SymbolEnv.map
+                    (fn tyOpt =>
+                        Option.map (S.substTfvTy tfvSubst) tyOpt)
+                    conSpec
+              in
+                tfv:=
+                I.FUN_DTY {tfun = tfun,
+                           longsymbol = longsymbol, 
+                           varE = varE,
+                           formals = formals,
+                           conSpec = conSpec,
+                           liftedTys = liftedTys}
+              end
+            |
+              (tfv as ref (I.TFUN_DTY {admitsEq,
                                        formals,
                                        conSpec,
                                        conIDSet,
                                        longsymbol,
-                                       runtimeTy,
                                        liftedTys,
                                        id,
                                        dtyKind
@@ -1083,7 +1164,9 @@ in
                     case dtyKind of
                       I.OPAQUE{tfun, revealKey} => 
                       I.OPAQUE{tfun=S.substTfvTfun tfvSubst tfun,
-                                revealKey=revealKey}
+                               revealKey=revealKey}
+                    | I.INTERFACE tfun => 
+                      I.INTERFACE (S.substTfvTfun tfvSubst tfun)
                     | _ => dtyKind
                 val conSpec =
                     SymbolEnv.map
@@ -1093,9 +1176,8 @@ in
               in
                 tfv:=
                     I.TFUN_DTY
-                      {iseq=iseq,
+                      {admitsEq=admitsEq,
                        formals=formals,
-                       runtimeTy=runtimeTy,
                        conSpec=conSpec,
                        conIDSet=conIDSet,
                        longsymbol=longsymbol,
@@ -1107,10 +1189,25 @@ in
           tfvSubst
           handle exn => raise exn
       val subst = {tvarS=S.emptyTvarSubst,
-                   exnIdS=exnIdSubst,
-                   conIdS=conIdSubst} 
+                   exnIdS=S.emptyExnIdSubst,
+                   conIdS=S.emptyConIdSubst,
+                   typIdS=typIdSubst,
+                   newProvider=NONE}
+      val _ = 
+          TfvMap.app
+          (fn (tfv as ref tfunkind) => 
+              tfv := S.substTfunkind subst tfunkind)
+          tfvSubst
+          handle exn => raise exn
       val env =S.substTfvEnv tfvSubst specEnv
+          handle exn => raise exn
+      val subst = {tvarS=S.emptyTvarSubst,
+                   exnIdS=exnIdSubst,
+                   conIdS=conIdSubst,
+                   typIdS=S.emptyTypIdSubst,
+                   newProvider=NONE}
       val env =S.substEnv subst env
+          handle exn => raise exn
     in
       ((tfvSubst, conIdSubst), env)
     end

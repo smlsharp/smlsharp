@@ -1,0 +1,58 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+_require "../../../../smlnj-lib/Util/binary-set-fn.smi"
+_require "../../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "./Loc.smi"
+
+structure Symbol =
+struct
+
+  type symbol =  {string:string, loc:Loc.loc}
+(*
+  type symbol (= boxed)
+*)
+  type longsymbol = symbol list
+  val compare : symbol * symbol -> order
+  val lastSymbol : longsymbol -> symbol
+  val symbolToString : symbol -> string
+  val symbolToLoc : symbol -> Loc.loc
+  val longsymbolToString : longsymbol -> string
+  val longsymbolToLoc : longsymbol -> Loc.loc
+  val longsymbolToLastLoc : longsymbol -> Loc.loc
+  val longsymbolToLongid : longsymbol -> string list
+  val mkSymbol : string ->  Loc.loc -> symbol
+  val mkLongsymbol : string list -> Loc.loc -> longsymbol
+  val coerceLongsymbolToSymbol : longsymbol -> symbol
+  val setVersion : longsymbol * int -> longsymbol
+  val symbolCompare : symbol * symbol -> order
+  val longsymbolCompare : longsymbol * longsymbol -> order
+  val eqSymbol : symbol * symbol -> bool
+  val eqLongsymbol : longsymbol * longsymbol -> bool
+  val format_symbol : symbol -> SMLFormat.FormatExpression.expression list
+  val formatWithLoc_symbol : symbol -> SMLFormat.FormatExpression.expression list
+  val format_longsymbol : longsymbol -> SMLFormat.FormatExpression.expression list
+  val formatWithLoc_longsymbol : longsymbol -> SMLFormat.FormatExpression.expression list
+  val formatUserLongSymbol : longsymbol -> SMLFormat.FormatExpression.expression list
+  val replaceLocSymbol : Loc.loc -> symbol -> symbol
+  val replaceLocLongsymbol : Loc.loc -> longsymbol -> longsymbol
+  val prefixPath : longsymbol * symbol -> longsymbol
+  val concatPath : longsymbol * longsymbol -> longsymbol
+  val generate : unit -> symbol
+  val generateWithPrefix : string -> symbol
+end
+
+structure SymbolOrd =
+struct
+  type ord_key = Symbol.symbol
+  val compare : Symbol.symbol * Symbol.symbol -> order
+end
+structure SymbolEnv = BinaryMapFn(SymbolOrd)
+structure SymbolSet = BinarySetFn(SymbolOrd)
+structure LongsymbolOrd = 
+struct
+  type ord_key = Symbol.symbol list
+  val compare : Symbol.longsymbol * Symbol.longsymbol -> order
+end
+
+structure LongsymbolEnv = BinaryMapFn(LongsymbolOrd)
+structure LongsymbolSet = BinarySetFn(LongsymbolOrd)

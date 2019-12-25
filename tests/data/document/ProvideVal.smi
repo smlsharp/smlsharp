@@ -1,0 +1,35 @@
+_require "basis.smi"
+
+val i : int
+val i8 : int8
+val i16 : int16
+val i32 : int32
+val i64 : int64
+val iInf : intInf
+
+val w : word
+val w8 : word8
+val w16 : word16
+val w32 : word32
+val w64 : word64
+
+val r : real
+val r32 : real32
+val c : char
+val s : string
+val b : bool
+
+val ref1 : int ref
+val tuple1 : int * string
+val tuple2 : {1:int, 2:string}
+val record1 : {A:int, B:string}
+val list1 : int list
+
+val f1 : 'a -> 'a
+val f2 : int -> int
+val f3 : word -> word
+val f4 : word -> word
+val f5 : int -> int
+val f6 : 'a -> 'b
+val f7 : 'a -> int
+val v1 : string

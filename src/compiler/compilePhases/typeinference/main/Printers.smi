@@ -1,12 +1,12 @@
 _require local "../../../../basis.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 
-_require local "../../../data/types/main/OPrimMap.smi"
-_require local "../../../data/types/main/VarMap.smi"
-_require local "../../../data/types/main/TvarMap.smi"
+(* _require local "../../../data/types/main/OPrimMap.smi" *)
+(* _require local "../../../data/types/main/VarMap.smi" *)
+(* _require local "../../../data/types/main/TvarMap.smi" *)
 
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.ppg.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
@@ -28,4 +28,5 @@ structure Printers =
     val printIcpat : IDCalc.icpat -> unit
     val printIcdecl : IDCalc.icdecl -> unit
     val printIcVarInfo : {id:VarID.id, longsymbol:Symbol.longsymbol} -> unit
+    val printTycast : IDCalc.tycast -> unit
   end

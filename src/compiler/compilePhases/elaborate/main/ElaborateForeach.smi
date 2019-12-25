@@ -1,0 +1,14 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
+
+structure ElaborateForeach =
+struct
+  val elaborateExp
+      : {elabExp : Absyn.exp -> PatternCalc.plexp,
+         elabPat : Absyn.pat -> PatternCalc.plpat}
+        -> Absyn.exp_foreach * Absyn.loc
+        -> PatternCalc.plexp
+end

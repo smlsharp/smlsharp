@@ -1,15 +1,13 @@
 _require local "../../../../basis.smi"
-_require local "../../../../smlnj-lib/Util/lib-base.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
+(* _require local "../../../../smlnj-lib/Util/lib-base.smi" *)
+_require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
-_require local "../../../libs/env/main/SEnv.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
 
-_require local "../../../data/builtin/main/BuiltinTypeNames.ppg.smi"
-_require local "./OPrimInstMap.smi"
+(* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
 _require local "./TypesBasics.smi"
-_require local "./Unify.smi"
 
 _require "./Types.ppg.smi"
 
@@ -23,4 +21,5 @@ struct
   val revealOprimInfo : Types.oprimInfo -> Types.oprimInfo
   val revealPrimInfo : Types.primInfo -> Types.primInfo
   val revealBtvEnv : Types.btvEnv -> Types.btvEnv
+  val revealConstraint : Types.constraint -> Types.constraint
 end

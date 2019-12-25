@@ -1,13 +1,14 @@
 _require local "../../../../basis.smi"
-_require local "../../../../smlformat-lib.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
+(* _require local "../../../../smlformat-lib.smi" *)
+_require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
-_require local "./BuiltinTypeNames.ppg.smi"
+_require local "../../../data/runtimetypes/main/DatatypeLayout.smi"
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 
-_require "../../../data/symbols/main/Symbol.ppg.smi"
-_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../types/main/Types.ppg.smi"
 
@@ -16,19 +17,12 @@ struct
 
   type tstrInfo =  {tfun:IDCalc.tfun, varE:IDCalc.varE, formals:IDCalc.formals, conSpec:IDCalc.conSpec}
 
-  val runtimeTyOfConspec : 'a option SymbolEnv.map -> IDCalc.runtimeTy
+  val findTstrInfo : Symbol.symbol -> tstrInfo option
 
-  val findTstrInfo : string -> tstrInfo option
-
-  val intTstrInfo : tstrInfo
-  val intTyCon : Types.tyCon
-  val intITy : IDCalc.ty 
-  val intTy : Types.ty
-
-  val indexTstrInfo : tstrInfo
-  val indexTyCon : Types.tyCon
-  val indexITy : IDCalc.ty 
-  val indexTy : Types.ty
+  val int32TstrInfo : tstrInfo
+  val int32TyCon : Types.tyCon
+  val int32ITy : IDCalc.ty 
+  val int32Ty : Types.ty
 
   val int8TstrInfo : tstrInfo
   val int8TyCon : Types.tyCon
@@ -50,10 +44,10 @@ struct
   val intInfITy : IDCalc.ty
   val intInfTy : Types.ty
        
-  val wordTstrInfo : tstrInfo
-  val wordTyCon : Types.tyCon
-  val wordITy : IDCalc.ty
-  val wordTy : Types.ty
+  val word32TstrInfo : tstrInfo
+  val word32TyCon : Types.tyCon
+  val word32ITy : IDCalc.ty
+  val word32Ty : Types.ty
 
   val word8TstrInfo : tstrInfo
   val word8TyCon : Types.tyCon
@@ -80,10 +74,10 @@ struct
   val stringITy : IDCalc.ty
   val stringTy : Types.ty
        
-  val realTstrInfo : tstrInfo
-  val realTyCon : Types.tyCon
-  val realITy : IDCalc.ty
-  val realTy : Types.ty
+  val real64TstrInfo : tstrInfo
+  val real64TyCon : Types.tyCon
+  val real64ITy : IDCalc.ty
+  val real64Ty : Types.ty
        
   val real32TstrInfo : tstrInfo
   val real32TyCon : Types.tyCon
@@ -128,6 +122,11 @@ struct
   val contagITy : IDCalc.ty
   val contagTy : Types.ty
 
+  val sizeTstrInfo : tstrInfo
+  val sizeTyCon : Types.tyCon
+  val sizeITy : IDCalc.ty
+  val sizeTy : Types.ty
+
   val refTstrInfo : tstrInfo
   val refTyCon : Types.tyCon
   val refICConInfo : IDCalc.conInfo
@@ -166,7 +165,4 @@ struct
   val FailExExn : Types.exExnInfo
   val ChrExExn : Types.exExnInfo
 
-(*
-  val builtinConEnv : unit -> IDCalc.conInfo ConID.Map.map
-*)
 end

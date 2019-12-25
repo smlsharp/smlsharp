@@ -1,50 +1,132 @@
 _require local "../../../../basis.smi"
-_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
-_require local "../../../libs/util/main/TermFormat.smi"
-
 _require "../../../../smlformat-lib.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require "./FFIAttributes.ppg.smi"
 
 structure RuntimeTypes =
 struct
-  datatype tag =
-      TAG_BOXED
-    | TAG_UNBOXED
-  datatype ty =
-      UNITty
-    | INT8ty
-    | INT16ty
-    | INT32ty
-    | INT64ty
-    | UINT8ty
-    | UINT16ty
-    | UINT32ty
-    | UINT64ty
-    | DOUBLEty
-    | FLOATty
-    | BOXEDty
-    | POINTERty
-    | SOME_CODEPTRty
-    | MLCODEPTRty of
-      {
-        haveClsEnv: bool,
-        argTys: ty list,
-        retTy: ty option
-      }
-    | CALLBACKCODEPTRty of
-      {
-        haveClsEnv: bool,
-        argTys: ty list,
-        retTy: ty option,
-        attributes: FFIAttributes.attributes
-      }
-    | FOREIGNCODEPTRty of
+
+  datatype tagged_layout =
+      TAGGED_RECORD of {tagMap: string list}
+    | TAGGED_OR_NULL of {tagMap: string list, nullName: string}
+    | TAGGED_TAGONLY of {tagMap: string list}
+  datatype layout =
+      LAYOUT_TAGGED of tagged_layout
+    | LAYOUT_ARG_OR_NULL of {wrap: bool}
+    | LAYOUT_SINGLE_ARG of {wrap: bool}
+    | LAYOUT_CHOICE of {falseName: string}
+    | LAYOUT_SINGLE
+    | LAYOUT_REF
+
+  datatype tag = BOXED | UNBOXED
+  eqtype size (= ref)
+  val getSize : size -> int
+  datatype tag_prop = TAG of tag | ANYTAG
+  datatype size_prop = SIZE of size | ANYSIZE
+
+  val maxSize : size
+  val init : {pointerSize : int} -> unit
+  val uninit : unit -> unit
+
+  datatype signed = UNSIGNED | SIGNED
+
+  datatype rep =
+      INT of signed
+    | FLOAT
+    | PTR
+    | CPTR
+    | CODEPTR of code
+    | DATA of layout
+    | BINARY
+
+  and code =
+      SOMECODE
+    | FOREIGN of
       {
         argTys: ty list,
         varArgTys: ty list option,
         retTy: ty option,
         attributes: FFIAttributes.attributes
       }
-  val format_tag : tag -> SMLFormat.FormatExpression.expression list
-  val format_ty : ty -> SMLFormat.FormatExpression.expression list
+    | FN of
+      {
+        haveClsEnv: bool,
+        argTys: ty list,
+        retTy: ty
+      }
+    | CALLBACK of
+      {
+        haveClsEnv: bool,
+        argTys: ty list,
+        retTy: ty option,
+        attributes: FFIAttributes.attributes
+      }
+
+  withtype ty =
+      {tag : tag, size : size, rep : rep}
+
+  type property =
+      {tag : tag_prop, size : size_prop, rep : rep}
+
+  val recordTy : ty
+  val boxedTy : ty
+  val ptrTy : ty
+  val contagTy : ty
+  val int8Ty : ty
+  val int16Ty : ty
+  val int32Ty : ty
+  val int64Ty : ty
+  val word8Ty : ty
+  val word16Ty : ty
+  val word32Ty : ty
+  val word64Ty : ty
+  val uintptrTy : ty
+  val real32Ty : ty
+  val real64Ty : ty
+  val codeptrTy : ty
+  val unitTy : ty
+
+  val recordProp : property
+  val boxedProp : property
+  val ptrProp : property
+  val contagProp : property
+  val int8Prop : property
+  val int16Prop : property
+  val int32Prop : property
+  val int64Prop : property
+  val word8Prop : property
+  val word16Prop : property
+  val word32Prop : property
+  val word64Prop : property
+  val uintptrProp : property
+  val real32Prop : property
+  val real64Prop : property
+  val codeptrProp : property
+  val unitProp : property
+  val anyProp : property
+
+  val lubTag : tag_prop * tag_prop -> tag_prop
+  val lubSize : size_prop * size_prop -> size_prop
+  val lubRep : rep * rep -> rep
+  val lub : property * property -> property
+
+  val canBeRegardedAs : property * property -> bool
+
+  val format_tag
+      : tag -> SMLFormat.FormatExpression.expression list
+  val format_size
+      : size -> SMLFormat.FormatExpression.expression list
+  val format_tag_prop
+      : tag_prop -> SMLFormat.FormatExpression.expression list
+  val format_size_prop
+      : size_prop -> SMLFormat.FormatExpression.expression list
+  val format_layout
+      : layout -> SMLFormat.FormatExpression.expression list
+  val format_rep
+      : rep -> SMLFormat.FormatExpression.expression list
+  val format_property
+      : property -> SMLFormat.FormatExpression.expression list
+  val format_ty
+      : ty -> SMLFormat.FormatExpression.expression list
+
 end

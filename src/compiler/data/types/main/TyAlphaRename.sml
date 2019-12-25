@@ -76,23 +76,18 @@ local
           {
            oprimId,
            longsymbol,
-           keyTyList : ty list,
-           match : T.overloadMatch,
-           instMap : T.overloadMatch OPrimInstMap.map
+           match : T.overloadMatch
           } =>
         T.INSTCODEty
           {
            oprimId=oprimId,
            longsymbol=longsymbol,
-           keyTyList = map (copyTy btvMap) keyTyList,
-           match = copyOverloadMatch btvMap match,
-           instMap = OPrimInstMap.map (copyOverloadMatch btvMap) instMap
+           match = copyOverloadMatch btvMap match
           }
       | T.INDEXty (string, ty) => T.INDEXty (string, copyTy btvMap ty)
       | T.TAGty ty => T.TAGty (copyTy btvMap ty)
       | T.SIZEty ty => T.SIZEty (copyTy btvMap ty)
-      | T.TYPEty ty => T.TYPEty (copyTy btvMap ty)
-      | T.REIFYty ty => T.TYPEty (copyTy btvMap ty)
+      | T.REIFYty ty => T.REIFYty (copyTy btvMap ty)
   and copyOverloadMatch (btvMap:btvMap) overloadMatch =
       case overloadMatch  of
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
@@ -115,6 +110,10 @@ local
       {path=path, ty=copyTy btvMap ty}
   and copyPrimInfo btvMap {primitive : BuiltinPrimitive.primitive, ty : ty} =
       {primitive=primitive, ty=copyTy btvMap ty}
+  and copyConstraint btvMap (T.JOIN {res, args=(ty1,ty2), loc}) =
+      T.JOIN {res = copyTy btvMap res,
+              args = (copyTy btvMap ty1, copyTy btvMap ty2),
+              loc = loc}
   and copyTy (btvMap:btvMap) ty =
       let
         val _ = P.print "*** copyTy ***"
@@ -139,11 +138,10 @@ local
       | T.CONSTRUCTty
           {
            tyCon =
-           {id : T.typId,
+           {id,
             longsymbol : longsymbol,
-            iseq : bool,
+            admitsEq : bool,
             arity : int,
-            runtimeTy : BuiltinTypeNames.bty,
             conSet,
             conIDSet,
             extraArgs : ty list,
@@ -156,9 +154,8 @@ local
            tyCon =
            {id = id,
             longsymbol = longsymbol,
-            iseq = iseq,
+            admitsEq = admitsEq,
             arity = arity,
-            runtimeTy = runtimeTy,
             conSet = conSet,
             conIDSet = conIDSet,
             extraArgs = map (copyTy btvMap) extraArgs,
@@ -175,14 +172,7 @@ local
         let
           val _ = P.print "polyTy\n"
           val (btvMap, boundtvars) = newBtvEnv btvMap boundtvars
-          val constraints = List.map
-                                (fn c =>
-                                    case c of T.JOIN {res, args = (arg1, arg2), loc} =>
-                                      T.JOIN
-                                          {res = copyTy btvMap res,
-                                           args = (copyTy btvMap arg1,
-                                                   copyTy btvMap arg2), loc=loc})
-                                constraints
+          val constraints = List.map (copyConstraint btvMap) constraints
           val _ = P.print "newBtvEnv\n"
         in
           T.POLYty
@@ -193,11 +183,11 @@ local
             }
         end
       end
-  and copyKind btvMap (T.KIND {tvarKind, eqKind, dynKind, reifyKind, subkind}) =
+  and copyKind btvMap (T.KIND {tvarKind, properties, dynamicKind}) =
       let
         val tvarKind = copyTvarKind btvMap tvarKind
       in
-        T.KIND {tvarKind=tvarKind, eqKind=eqKind, subkind=subkind, dynKind=dynKind, reifyKind=reifyKind}
+        T.KIND {tvarKind=tvarKind, properties = properties, dynamicKind = dynamicKind}
       end
   and copyTvarKind btvMap tvarKind =
       case tvarKind of
@@ -209,43 +199,42 @@ local
            {
             oprimId : OPrimID.id,
             longsymbol : longsymbol,
-            keyTyList : ty list,
-            match : T.overloadMatch,
-            instMap : T.overloadMatch OPrimInstMap.map
+            match : T.overloadMatch
            } list
           } =>
         T.OPRIMkind
           {instances = map (copyTy btvMap) instances,
            operators =
            map
-             (fn {oprimId, longsymbol, keyTyList, match, instMap} =>
+             (fn {oprimId, longsymbol, match} =>
                  {oprimId=oprimId,
                   longsymbol=longsymbol,
-                  keyTyList = map (copyTy btvMap) keyTyList,
-                  match = copyOverloadMatch btvMap match,
-                  instMap = OPrimInstMap.map (copyOverloadMatch btvMap) instMap}
+                  match = copyOverloadMatch btvMap match}
              )
              operators
           }
       | T.UNIV => T.UNIV
+(*
       | T.BOXED => T.BOXED
+      | T.UNBOXED => T.UNBOXED
+*)
       | T.REC (fields:ty RecordLabel.Map.map) =>
         T.REC (RecordLabel.Map.map (copyTy btvMap) fields)
   and copyDtyKind btvMap dtyKind =
       case dtyKind of
-        T.DTY => dtyKind
-      | T.OPAQUE {opaqueRep:T.opaqueRep, revealKey:T.revealKey} =>
+        T.DTY _ => dtyKind
+      | T.OPAQUE {opaqueRep:T.opaqueRep, revealKey} =>
         T.OPAQUE {opaqueRep = copyOpaqueRep btvMap opaqueRep,
                   revealKey=revealKey}
-      | T.BUILTIN bty => dtyKind
+      | T.INTERFACE opaqueRep =>
+        T.INTERFACE (copyOpaqueRep btvMap opaqueRep)
   and copyOpaqueRep btvMap opaueRep =
       case opaueRep of
         T.TYCON
-          {id : T.typId,
+          {id,
            longsymbol : longsymbol,
-           iseq : bool,
+           admitsEq : bool,
            arity : int,
-           runtimeTy : BuiltinTypeNames.bty,
            conSet,
            conIDSet,
            extraArgs : ty list,
@@ -254,22 +243,22 @@ local
         T.TYCON
           {id = id,
            longsymbol = longsymbol,
-           iseq = iseq,
+           admitsEq = admitsEq,
            arity = arity,
-           runtimeTy = runtimeTy,
            conSet = conSet,
            conIDSet = conIDSet,
            extraArgs = map (copyTy btvMap) extraArgs,
            dtyKind = copyDtyKind btvMap dtyKind
           }
-      | T.TFUNDEF {iseq, arity, polyTy} =>
-        T.TFUNDEF {iseq=iseq,
+      | T.TFUNDEF {admitsEq, arity, polyTy} =>
+        T.TFUNDEF {admitsEq=admitsEq,
                    arity=arity,
                    polyTy = copyTy btvMap polyTy}
 in
   type btvMap = btvMap
   val emptyBtvMap = emptyBtvMap
   val copyTy = copyTy
+  val copyConstraint = copyConstraint
   val newBtvEnv = newBtvEnv
 end
 end

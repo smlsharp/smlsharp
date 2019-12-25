@@ -9,18 +9,6 @@ in
     | (*% @format "ErrorCheck" *)  ErrorCheck
     | (*% @format "NoStop" *) NoStop
 
-  fun format_loadMode mode =
-      TermFormat.FormatComb.term
-        (case mode of
-           LoadFile.COMPILE => "COMPILE"
-         | LoadFile.NOLOCAL => "NOLOCAL"
-         | LoadFile.LINK => "LINK"
-         | LoadFile.COMPILE_AND_LINK => "COMPILE_AND_LINK"
-         | LoadFile.ALL => "ALL")
-
-  (*% @formatter(LoadFile.mode) format_loadMode *)
-  type load_mode = LoadFile.mode
-
   (*%  @formatter(Filename.filename) Filename.format_filename *)
   datatype code 
     = (*%  @format(filename) filename *)
@@ -28,23 +16,24 @@ in
 
   (*%
      @formatter(Filename.filename) Filename.format_filename 
+     @formatter(InterfaceName.source) InterfaceName.format_source
+     @formatter(InterfaceName.file_load_mode)
+       InterfaceName.format_file_load_mode
      @formatter(option) TermFormat.formatOptionalOption
   *)
   type options 
     = (*%
          @format({stopAt,
                   baseFilename: bas basopt, 
-                  stdPath: std stds, 
                   loadPath: load loads,
                   loadMode,
-                  outputWarnings})
+                  outputWarnings,
+                  defaultInterface})
           "{"
            1[
               1[  "stopAt:" +d stopAt ]
                +1
               1["baseFilename:" +d basopt(bas)("SOME","NONE") ]
-               +1
-              1[ "stdPath:" +d stds(std)(",") ]
                +1
               1["loadPath:" +d loads(load)(".")]
                +1
@@ -56,17 +45,17 @@ in
       {
         stopAt: stopAt,
         baseFilename: Filename.filename option,
-        stdPath: Filename.filename list,
-        loadPath: Filename.filename list,
-        loadMode: load_mode,
-        outputWarnings: UserError.errorInfo list -> unit
+        loadPath: InterfaceName.source list,
+        loadMode: InterfaceName.file_load_mode,
+        outputWarnings: UserError.errorInfo list -> unit,
+        defaultInterface: Filename.filename -> Filename.filename
       }
 
   type toplevelContext =
       {
         fixEnv: Elaborator.fixEnv,
         topEnv: NameEvalEnv.topEnv,
-        version: int option,
+        version: IDCalc.version,
         builtinDecls: IDCalc.icdecl list
       }
 
@@ -85,7 +74,7 @@ in
     | (*% 
          @format(env * code) "return"
        *)
-      RETURN of newContext * LLVM.LLVMModuleRef
+      RETURN of newContext * Filename.filename
 
 (*
 
@@ -134,4 +123,21 @@ in
       debugPrint (Bug.prettyPrint (AbsynInterface.format_compileUnit unit))
 *)
   end
+
+  (*%  @formatter(Filename.filename) Filename.format_filename *)
+  exception
+
+  (*%
+   * @format(n)
+   * "unsupported" +d "pointer" +d "size:" +d n
+   *)
+  UnsupportedPointerSize of int
+
+  and
+  (*%
+   * @format(file)
+   * "illegal" +d "builtin" +d "interface:" +d file
+   *)
+  IllegalBuiltin of Filename.filename
+
 end

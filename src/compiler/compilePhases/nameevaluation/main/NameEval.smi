@@ -1,19 +1,18 @@
 _require local "../../../../basis.smi"
-_require local "../../../libs/env/main/SEnv.smi"
-_require local "../../../data/symbols/main/Loc.ppg.smi"
-_require local "../../../data/symbols/main/Symbol.ppg.smi"
+(* _require local "../../../libs/env/main/SEnv.smi" *)
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../extensions/debug/main/Bug.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 
-_require local "../../../data/control/main/Control.ppg.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynConst.ppg.smi"
-_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/control/main/Control.smi"
+_require local "../../../compilerIRs/absyn/main/AbsynConst.smi"
+(* _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi" *)
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
-_require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
+(* _require local "../../../compilerIRs/idcalc/main/EvalIty.smi" *)
 _require local "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/TvarMap.smi"
-_require local "../../../data/types/main/OPrimInstMap.smi"
 _require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require local "./CheckProvide.smi"
 _require local "./EvalSig.smi"
@@ -31,15 +30,16 @@ _require local "./SpliceFunProvide.smi"
 _require local "./RenameLongsymbol.smi"
 
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
-_require "../../../extensions/usererror/main/UserErrorUtils.smi"
+_require local "../../../extensions/usererror/main/UserErrorUtils.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
 _require "./NameEvalEnv.ppg.smi"
+_require local "./NameEvalEnvPrims.smi"
 
 structure NameEval =
   struct
     val nameEval : {topEnv: NameEvalEnv.topEnv, 
-                    version: int option,
+                    version: IDCalc.version,
                     systemDecls: IDCalc.icdecl list}
                     -> PatternCalcInterface.compile_unit
                     -> {requireTopEnv : NameEvalEnv.topEnv,

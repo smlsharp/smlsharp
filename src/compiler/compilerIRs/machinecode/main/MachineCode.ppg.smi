@@ -1,12 +1,10 @@
-
 _require local "../../../../basis.smi"
-_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
-_require local "../../../libs/util/main/TermFormat.smi"
+(* _require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi" *)
+(* _require local "../../../libs/util/main/TermFormat.smi" *)
 
-_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Loc.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../compilerIRs/runtimecalc/main/RuntimeCalc.ppg.smi"
@@ -120,7 +118,10 @@ struct
         loc : loc
       }
     | MCALLOC_COMPLETED
-    | MCCHECK
+    | MCCHECK of
+      {
+        handler : HandlerLabel.id option
+      }
     | MCRECORDDUP_ALLOC of
       {
         resultVar : varInfo,
@@ -205,6 +206,11 @@ struct
         valueExp : mcvalue,
         loc : loc
       }
+    | MCKEEPALIVE of
+      {
+        value : mcvalue,
+        loc : loc
+      }
 
   datatype mcexp_last =
       MCRETURN of
@@ -286,7 +292,6 @@ struct
 
   type toplevel =
       {
-        dependency : InterfaceName.dependency,
         frameSlots : RuntimeTypes.ty SlotID.Map.map,
         bodyExp : mcexp,
         cleanupHandler : HandlerLabel.id option

@@ -1,0 +1,5 @@
+val S = fn : int -> int
+
+val it = 385 : int
+
+val it = 2870 : int

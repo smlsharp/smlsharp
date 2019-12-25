@@ -14,46 +14,52 @@ struct
   structure EU = UserErrorUtils
 
   structure A = AbsynInterface
-  structure P = PatternCalcInterface
+  structure E = ElaborateError
 
   type fixEnv = Fixity.fixity SymbolEnv.map
 
   fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
       SymbolEnv.unionWith #2 (env1, env2)
 
-  fun elaborate
-        fixEnv
-        ({interface, topdecsInclude, topdecsSource}:A.compile_unit) =
+  fun fixEnvToLocEnv (env:fixEnv) =
+      SymbolEnv.mapi (fn (k, _) => Symbol.symbolToLoc k) env
+
+  fun elaborate fixEnv ({interface, topdecsSource}:A.compile_unit) =
       let
         val _ = EU.initializeErrorQueue ()
-
-        val (fixEnv, interface) =
+        val (interface, requireFixEnv, provideFixEnv, topdecsInclude) =
             case interface of
-              NONE => (fixEnv, NONE)
-            | SOME interface => 
-              let
-                val (requireFixEnv, interface) =
-                    ElaborateInterface.elaborate interface
-                val interface = UserTvarScope.decideInterface interface
-              in
-                (extendFixEnv (fixEnv, requireFixEnv), SOME interface)
-              end
+              NONE => (NONE, SymbolEnv.empty, SymbolEnv.empty, nil)
+            | SOME interface =>
+              case ElaborateInterface.elaborate interface of
+                {interface, requireFixEnv, provideFixEnv, topdecsInclude} =>
+                (SOME interface, requireFixEnv, provideFixEnv, topdecsInclude)
 
-        val (ptopdeclsInclude, topdecFixEnvInclude) =
+        val interface = Option.map UserTvarScope.decideInterface interface
+        val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
+        val (ptopdecsInclude, topdecsIncludeFixEnv) =
             ElaborateModule.elabTopDecs fixEnv topdecsInclude
-        val ptopdeclsInclude = UserTvarScope.decide ptopdeclsInclude
-        val fixEnv = extendFixEnv (fixEnv, topdecFixEnvInclude)
-
-        val (ptopdeclsSource, topdecFixEnvSource) =
+        val ptopdecsInclude = UserTvarScope.decide ptopdecsInclude
+        val fixEnv = extendFixEnv (fixEnv, topdecsIncludeFixEnv)
+        val (ptopdecsSource, topdecsSourceFixEnv) =
             ElaborateModule.elabTopDecs fixEnv topdecsSource
-        val ptopdeclsSource = UserTvarScope.decide ptopdeclsSource
+        val ptopdecsSource = UserTvarScope.decide ptopdecsSource
 
-        val plunit = {interface = interface,
-                      topdecsInclude = ptopdeclsInclude,
-                      topdecsSource = ptopdeclsSource}
+        (* provide check *)
+        val _ =
+            SymbolEnv.mergeWithi
+              (fn (k, x as SOME loc, NONE) =>
+                  (EU.enqueueError (loc, E.ProvideInfixNotDefined k); x)
+                | (k, x, y) => x)
+              (fixEnvToLocEnv provideFixEnv, fixEnvToLocEnv topdecsSourceFixEnv)
+
+        val plunit : PatternCalcInterface.compile_unit =
+            {interface = interface,
+             topdecsInclude = ptopdecsInclude,
+             topdecsSource = ptopdecsSource}
       in
         case EU.getErrors () of
-          nil => (topdecFixEnvSource, plunit, EU.getWarnings ())
+          nil => (topdecsSourceFixEnv, plunit, EU.getWarnings ())
         | _::_ =>
           raise UE.UserErrors (EU.getErrorsAndWarnings ())
       end
@@ -63,37 +69,28 @@ struct
         ({interfaceDecs, requiredIds, topdecsInclude}:A.interface_unit) =
       let
         val _ = EU.initializeErrorQueue ()
-        val interface = {interfaceDecs = interfaceDecs,
-                         provideInterfaceNameOpt = NONE,
-                         requiredIds = requiredIds,
-                         locallyRequiredIds = nil,
-                         provideTopdecs = nil}
-        val (fixEnvRequire, interface) =
-            ElaborateInterface.elaborate interface
-        val {interfaceDecs, requiredIds, ...} =
-            UserTvarScope.decideInterface interface
-        val fixEnv = extendFixEnv (fixEnv, fixEnvRequire)
-        val (ptopdecsInclude, fixEnvInclude) =
+        val {interface, requireFixEnv, provideFixEnv, topdecsInclude} =
+            ElaborateInterface.elaborate
+              {interfaceDecs = interfaceDecs,
+               provide = {requiredIds = requiredIds,
+                          locallyRequiredIds = nil,
+                          provideTopdecs = nil,
+                          topdecsInclude = topdecsInclude}}
+        val interface = UserTvarScope.decideInterface interface
+        val fixEnv = extendFixEnv (fixEnv, requireFixEnv)
+        val (ptopdecsInclude, topdecsIncludeFixEnv) =
             ElaborateModule.elabTopDecs fixEnv topdecsInclude
         val ptopdecsInclude = UserTvarScope.decide ptopdecsInclude
-        val warnings =
-            case EU.getErrors () of
-              nil => EU.getWarnings ()
-            | _::_ => raise UE.UserErrors (EU.getErrorsAndWarnings ())
+        val resultFixEnv = extendFixEnv (requireFixEnv, topdecsIncludeFixEnv)
+        val plunit =
+            {interfaceDecs = #interfaceDecs interface,
+             requiredIds = #requiredIds interface,
+             topdecsInclude = ptopdecsInclude}
       in
-        (* return fixEnv for codes requiring this interface *)
-        (extendFixEnv (fixEnvRequire, fixEnvInclude),
-         {interfaceDecs = interfaceDecs,
-          requiredIds = requiredIds,
-          topdecsInclude = ptopdecsInclude},
-         warnings)
-      end
-
-  fun elaborateBuiltin topdecs =
-      let
-        val (fixEnv, decs) = ElaborateInterface.elaborateTopdecList topdecs
-      in
-        (fixEnv, UserTvarScope.decidePitopdecs decs)
+        case EU.getErrors () of
+          nil => (resultFixEnv, plunit, EU.getWarnings ())
+        | _::_ =>
+          raise UE.UserErrors (EU.getErrorsAndWarnings ())
       end
 
 end

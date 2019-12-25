@@ -1,9 +1,9 @@
 _require "./General.smi"
-_use local "./VectorSlice_common.sml"
+_use local "./Slice_common.sml"
 
 structure VectorSlice =
 struct
-  type 'a slice (= boxed)
+  type 'a slice (= *)
   val length : 'a slice -> int
   val sub : 'a slice * int -> 'a
   val full : 'a vector -> 'a slice

@@ -1,0 +1,2 @@
+_require "./013_require/013_require2.smi"
+val x : int

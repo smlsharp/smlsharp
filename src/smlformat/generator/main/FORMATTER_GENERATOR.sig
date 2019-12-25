@@ -52,9 +52,9 @@ sig
   (**
    * generates SML code of the formatter for a datatype declaration.
    *
-   * @params formatterEnv (regionOpt, dec)
+   * @params formatterEnv (region, dec)
    * @param formatterEnv the formatter environment
-   * @param regionOpt the region of the declaration
+   * @param region the region of the declaration
    * @param dec the datatype declaration
    * @return a pair of
    * <ul>
@@ -68,15 +68,15 @@ sig
    *)
   val generateForDataTypeDec :
       formatterEnv ->
-      (Ast.region option * Ast.dec) ->
+      (Ast.region * Ast.dec) ->
       ((string option * string) list * formatterEnv)
 
   (**
    * generates SML code of the formatter for a type declaration.
    *
-   * @params formatterEnv (regionOpt, dec)
+   * @params formatterEnv (region, dec)
    * @param formatterEnv the formatter environment
-   * @param regionOpt the region of the declaration
+   * @param region the region of the declaration
    * @param dec the type declaration
    * @return a pair of
    * <ul>
@@ -90,15 +90,15 @@ sig
    *)
   val generateForTypeDec :
       formatterEnv ->
-      (Ast.region option * Ast.dec) ->
+      (Ast.region * Ast.dec) ->
       ((string option * string) list * formatterEnv)
 
   (**
    * generates SML code of the formatter for a exception declaration.
    *
-   * @params formatterEnv (regionOpt, dec)
+   * @params formatterEnv (region, dec)
    * @param formatterEnv the formatter environment
-   * @param regionOpt the region of the declaration
+   * @param region the region of the declaration
    * @param dec the type declaration
    * @return a pair of
    * <ul>
@@ -112,7 +112,7 @@ sig
    *)
   val generateForExceptionDec :
       formatterEnv ->
-      (Ast.region option * Ast.dec) ->
+      (Ast.region * Ast.dec) ->
       ((string option * string) list * formatterEnv)
 
   (***************************************************************************)
