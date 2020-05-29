@@ -96,7 +96,7 @@ struct
     | EXPDYNAMICNULL of ty * loc
     | EXPDYNAMICTOP of ty * loc
     | EXPDYNAMICVIEW of exp * ty * loc
-    | EXPDYNAMICCASE of exp * (pat * exp) list * loc
+    | EXPDYNAMICCASE of exp * (kindedTvar list * pat * exp) list * loc
     | EXPREIFYTY of ty * loc
 
   and ffiFun
@@ -198,6 +198,7 @@ struct
     = UNIT of unit
     | EOF
 
+  val getLocExp : exp -> Loc.loc
   val getLocPat : pat -> Loc.loc
 
 end

@@ -56,7 +56,9 @@ struct
   val printPolyTyElim = ref false
   val verbosePolyTyElim = ref 0
   val printTCOpt = ref false
+(*
   val printRCOpt = ref false
+*)
   val printVALRECOpt = ref false
   val printFundeclElab = ref false
   val printMatchCompile = ref false
@@ -104,7 +106,9 @@ struct
   val doUncurryOptimization = ref true
   val doPolyTyElimination = ref true
   val doTCOptimization = ref true
+(*
   val doRCOptimization = ref false
+*)
   (** true if no formatter is generated and no binding information is printed *)
   val skipPrinter = ref false
 
@@ -182,8 +186,10 @@ struct
          BoolSwitch doPolyTyElimination),
         ("doProfile", "print profiling information at exit",
          BoolSwitch doProfile),
+(*
         ("doRCOptimization", "turn on RC optimization",
          BoolSwitch doRCOptimization),
+*)
         ("doRecordUnboxing", "turn on record unboxing",
          BoolSwitch doRecordUnboxing),
         ("doRegisterCoalescing", "turn on register coalescing",
@@ -222,8 +228,10 @@ struct
          BoolSwitch printUncurryOpt),
         ("printTCOpt", "print result of TCOptimization",
          BoolSwitch printTCOpt),
+(*
         ("printRCOpt", "print result of RCOptimization",
          BoolSwitch printRCOpt),
+*)
         ("printVALRECOpt", "print result of VALRECOptimization",
          BoolSwitch printVALRECOpt),
         ("printFundeclElab", "print result of FundeclElaboration",

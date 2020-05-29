@@ -27,9 +27,7 @@ enum sml_msg_level {
 
 static enum sml_msg_level verbose_level = DEFAULT_VERBOSE_LEVEL;
 static FILE *logfile;
-#ifndef WITHOUT_MULTITHREAD
 static pthread_mutex_t msg_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif /* !WITHOUT_MULTITHREAD */
 
 static FILE *
 output()

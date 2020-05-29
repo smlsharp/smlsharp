@@ -1,30 +1,10 @@
 /**
  * smlsharp.h - SML# runtime implemenatation
- * @copyright (c) 2007-2009, Tohoku University.
+ * @copyright (c) 2007-2019, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: $
  */
 #ifndef SMLSHARP__SMLSHARP_H__
 #define SMLSHARP__SMLSHARP_H__
-
-/*
- * One of the following macros may be defined by the command line:
- * - WITHOUT_MULTITHREAD: Remove multithread support at all.
- * - WITHOUT_CONCURRENCY: pthread support + stop-the-world collector.
- * - WITHOUT_MASSIVETHREADS: turn off massivethreads support.
- * The default setting is pthread support + concurrent gc + massivethreads
- */
-#ifdef WITHOUT_MULTITHREAD
-#undef  WITHOUT_CONCURRENCY
-#define WITHOUT_CONCURRENCY
-#undef  WITHOUT_MASSIVETHREADS
-#define WITHOUT_MASSIVETHREADS
-#endif /* WITHOUT_MULTITHREAD */
-
-#ifdef WITHOUT_CONCURRENCY
-#undef  WITHOUT_MASSIVETHREADS
-#define WITHOUT_MASSIVETHREADS
-#endif /* WITHOUT_CONCURRENCY */
 
 #if !defined __STDC_VERSION__ || __STDC_VERSION__ < 199901L
 # error C99 is required
@@ -39,17 +19,11 @@
 #include <stddef.h>
 #include <assert.h>
 #include <inttypes.h>
-#ifndef WITHOUT_MULTITHREAD
 #include <pthread.h>
 #include <sched.h>
-#endif /* !WITHOUT_MULTITHREAD */
 #ifdef HAVE_STDATOMIC_H
 # include <stdatomic.h>
 #endif
-
-#ifndef WITHOUT_MASSIVETHREADS
-#include <myth/myth.h>
-#endif /* !WITHOUT_MASSIVETHREADS */
 
 #ifndef HAVE_STDATOMIC_H
 # ifdef HAVE_GCC_ATOMIC
@@ -133,7 +107,6 @@
 	atomic_fetch_xor_explicit(p, v, memory_order_##order)
 #define ASSERT_ERROR_(e) \
 	do { int no_error ATTR_UNUSED = e; assert(no_error == 0); } while (0)
-#ifndef WITHOUT_MULTITHREAD
 #define mutex_init(m) ASSERT_ERROR_(pthread_mutex_init(m, NULL))
 #define mutex_destroy(m) ASSERT_ERROR_(pthread_mutex_destroy(m))
 #define mutex_lock(m) ASSERT_ERROR_(pthread_mutex_lock(m))
@@ -143,34 +116,6 @@
 #define cond_wait(c, m) ASSERT_ERROR_(pthread_cond_wait(c, m))
 #define cond_broadcast(c) ASSERT_ERROR_(pthread_cond_broadcast(c))
 #define cond_signal(c) ASSERT_ERROR_(pthread_cond_signal(c))
-#else /* !WITHOUT_MULTITHREAD */
-#define mutex_init(m) ((void)0)
-#define mutex_destroy(m) ((void)0)
-#define mutex_lock(m) ((void)0)
-#define mutex_unlock(m) ((void)0)
-#define cond_init(c) ((void)0)
-#define cond_destroy(c) ((void)0)
-#define cond_wait(c, m) ((void)0)
-#define cond_broadcast(c) ((void)0)
-#define cond_signal(c) ((void)0)
-#endif /* !WITHOUT_MULTITHREAD */
-
-/* spin lock */
-#ifndef WITHOUT_MULTITHREAD
-typedef struct { _Atomic(int) lock; } sml_spinlock_t;
-#define SPIN_LOCK_INIT {ATOMIC_VAR_INIT(0)}
-static inline void spin_lock(sml_spinlock_t *l) {
-	int old, i = 8192;
-	for (;;) {
-		old = 0;
-		if (cmpswap_weak_acquire(&l->lock, &old, 1)) break;
-		if (--i == 0) { sched_yield(); i = 8192; }
-	}
-}
-static inline void spin_unlock(sml_spinlock_t *l) {
-	store_release(&l->lock, 0);
-}
-#endif /* WITHOUT_MULTITHREAD */
 
 /*
  * support for thread local variables (tlv)
@@ -253,34 +198,22 @@ static inline void spin_unlock(sml_spinlock_t *l) {
 #define mth_tlv_get(k) mth_tlv_get__##k##__()
 #define mth_tlv_set(k,v) (mth_tlv_set__##k##__(v))
 
-#if defined WITHOUT_MULTITHREAD
-#define worker_tlv_alloc single_tlv_alloc
-#define worker_tlv_init single_tlv_init
-#define worker_tlv_get single_tlv_get
-#define worker_tlv_set single_tlv_set
-#elif defined HAVE_TLS
+#ifdef HAVE_TLS
 #define worker_tlv_alloc tls_tlv_alloc
 #define worker_tlv_init tls_tlv_init
 #define worker_tlv_get tls_tlv_get
 #define worker_tlv_set tls_tlv_set
-#else /* !WITHOUT_MULTITHREAD && !HAVE_TLS */
+#else /* HAVE_TLS */
 #define worker_tlv_alloc pth_tlv_alloc
 #define worker_tlv_init pth_tlv_init
 #define worker_tlv_get pth_tlv_get
 #define worker_tlv_set pth_tlv_set
-#endif /* !WITHOUT_MULTITHREAD && !HAVE_TLS */
+#endif /* HAVE_TLS */
 
-#ifndef WITHOUT_MASSIVETHREADS
 #define user_tlv_alloc mth_tlv_alloc
 #define user_tlv_init mth_tlv_init
 #define user_tlv_get mth_tlv_get
 #define user_tlv_set mth_tlv_set
-#else /* WITHOUT_MASSIVETHREADS */
-#define user_tlv_alloc worker_tlv_alloc
-#define user_tlv_init worker_tlv_init
-#define user_tlv_get worker_tlv_get
-#define user_tlv_set worker_tlv_set
-#endif /* WITHOUT_MASSIVETHREADS */
 
 #define worker_tlv_get_or_init(k) (worker_tlv_init(k), worker_tlv_get(k))
 #define user_tlv_get_or_init(k) (user_tlv_init(k), user_tlv_get(k))
@@ -369,15 +302,6 @@ void sml_debug(const char *format, ...) ATTR_PRINTF(1, 2);
 
 void sml_msg_init(void);
 
-/* macros for debug print */
-#ifndef NDEBUG
-#define DBGMSG_(fmt) "%s:%d: "fmt"%s\n", __FILE__, __LINE__
-#define DBG_(fmt, ...) sml_debug(DBGMSG_(fmt), __VA_ARGS__)
-#define DBG(...) DBG_(__VA_ARGS__, "")
-#else
-#define DBG(...) ((void)0)
-#endif
-
 /* pretty alternative to #ifndef NDEBUG ... #endif */
 #ifndef NDEBUG
 #define DEBUG(e) do { e; } while (0)
@@ -391,6 +315,8 @@ void sml_msg_init(void);
 	__asm__ volatile ("rdtsc" : "=a" (a__), "=d" (d__)); \
 	((uint64_t)d__ << 32) | a__; \
 })
+
+#define asm_pause() do { __asm__ volatile ("pause" ::: "memory"); } while(0)
 
 /*
  * malloc with error checking
@@ -454,32 +380,37 @@ SML_PRIMITIVE void sml_check(unsigned int);
  * as soon as possible. */
 extern _Atomic(unsigned int) sml_check_flag;
 /* the main routine of garbage collection */
-void sml_gc(void);
+unsigned long sml_gc(int);
+unsigned long sml_wait_gc(void *);
 
 struct sml_user;
+struct sml_worker;
+struct sml_alloc;
 void sml_stack_enum_ptr(struct sml_user *, void (*)(void **, void *), void *);
 
-int sml_set_signal_handler(void(*)(void));
-int sml_send_signal(void);
+struct sml_alloc_cons {
+	struct sml_alloc *alloc;
+	struct sml_worker *next;
+};
+struct sml_alloc_cons sml_get_allocators(void);
+struct sml_alloc_cons sml_next_allocator(struct sml_worker *);
+
+typedef void (*sml_check_hook_fn)(void);
+sml_check_hook_fn sml_set_check_hook(sml_check_hook_fn hook);
+void sml_call_with_cleanup(void(*)(void), void(*)(void*,void*,void*), void*);
 
 enum sml_sync_phase {
-	/* An even-number phases is the pre-phase of its successor phase.
-	 * See control_leave in control.c. */
-	ASYNC = 1,
-	PRESYNC1 = 2,
-	SYNC1 = 3,
-	PRESYNC2 = 4,
-	SYNC2 = 5,
-	MARK = 7
+	PREASYNC = 0,           /* 000 = MARK ^ (MARK ^ PREASYNC) */
+	ASYNC = 1,              /* 001 = PREASYNC | 001 */
+	PRESYNC1 = 2,           /* 010 = ASYNC ^ (ASYNC ^ PRESYNC1) */
+	SYNC1 = 3,              /* 011 = PRESYNC1 | 001 */
+	PRESYNC2 = 4,           /* 100 = SYNC1 ^ (SYNC1 ^ PRESYNC2) */
+	SYNC2 = 5,              /* 101 = PRESYNC2 | 001 */
+	PREMARK = 6,            /* 110 = SYNC2 ^ (SYNC2 ^ PREMARK) */
+	MARK = 7,               /* 111 = PREMARK | 001 */
+	DUMMY_PHASE = 16        /* used for worker initialization */
 };
 
-#if !defined WITHOUT_MULTITHREAD && defined WITHOUT_CONCURRENCY
-int sml_stop_the_world(void);
-void sml_run_the_world(void);
-#endif /* !defined WITHOUT_MULTITHREAD && defined WITHOUT_CONCURRENCY */
-
-void *sml_leave_internal(void *frame_pointer);
-void sml_enter_internal(void *old_top);
 void sml_check_internal(void *frame_pointer);
 enum sml_sync_phase sml_current_phase(void);
 int sml_saved(void); /* for debug */
@@ -501,6 +432,7 @@ SML_PRIMITIVE void *sml_unsave_exn(void *);
 /*
  * SML# heap object management
  */
+/*void *sml_try_alloc(unsigned int objsize);*/
 SML_PRIMITIVE void *sml_alloc(unsigned int objsize);
 SML_PRIMITIVE void *sml_load_intinf(const char *hexsrc);
 SML_PRIMITIVE void **sml_find_callback(void *codeaddr, void *env);
@@ -564,19 +496,32 @@ ATTR_NORETURN void sml_exit(int status);
 typedef uint32_t sml_bmword_t;
 struct sml_bitptr { const sml_bmword_t *ptr; sml_bmword_t mask; };
 struct sml_bitptrw { sml_bmword_t *wptr; sml_bmword_t mask; };
+struct sml_bitptra { _Atomic(sml_bmword_t) *wptr; sml_bmword_t mask; };
 typedef struct sml_bitptr sml_bitptr_t;
 typedef struct sml_bitptrw sml_bitptrw_t;
+typedef struct sml_bitptra sml_bitptra_t;
 #define BITPTR_WORDBITS  32U
 #define BITPTR(p,n) \
 	((sml_bitptr_t){.ptr = (p) + (n) / 32U, .mask = 1 << ((n) % 32U)})
 #define BITPTRW(p,n) \
 	((sml_bitptrw_t){.wptr = (p) + (n) / 32U, .mask = 1 << ((n) % 32U)})
+#define BITPTRA(p,n) \
+	((sml_bitptra_t){.wptr = (p) + (n) / 32U, .mask = 1 << ((n) % 32U)})
 
-#define BITPTRW_TEST(b)  (*(b).wptr & (b).mask)
-#define BITPTRW_SET(b)  (*(b).wptr |= (b).mask)
-#define BITPTRW_UNSET(b)  (*(b).wptr &= ~(b).mask)
-#define BITPTRW_WORD(b)  (*(b).wptr)
-#define BITPTRW_EQUAL(b1,b2)  ((b1).wptr == (b2).wptr && (b1).mask == (b2).mask)
+static inline int BITPTRA_TEST_AND_SET(sml_bitptra_t b)
+{
+	sml_bmword_t old = load_relaxed(b.wptr);
+	do {
+		if (old & b.mask)
+			return 1;
+	} while (!cmpswap_relaxed(b.wptr, &old, old | b.mask));
+	return 0;
+}
+
+#define BITPTRA_TEST(b)  (load_relaxed((b).wptr) & (b).mask)
+#define BITPTRW_TEST(b)  (*((b).wptr) & (b).mask)
+#define BITPTRW_SET(b)  (*((b).wptr) |= (b).mask)
+
 #define BITPTR_TEST(b)  (*(b).ptr & (b).mask)
 #define BITPTR_WORD(b)  (*(b).ptr)
 #define BITPTR_EQUAL(b1,b2)  ((b1).ptr == (b2).ptr && (b1).mask == (b2).mask)

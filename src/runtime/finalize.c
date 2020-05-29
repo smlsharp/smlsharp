@@ -18,9 +18,7 @@ struct finalizer {
 	void (*finalizer)(void *obj);	/* the finalizer function for obj */
 };
 
-#ifndef WITHOUT_MULTITHREAD
 static pthread_mutex_t finalizer_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif /* !WITHOUT_MULTITHREAD */
 static sml_tree_t *finalizer_set;
 
 static int

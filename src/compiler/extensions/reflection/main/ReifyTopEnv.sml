@@ -12,8 +12,8 @@ local
   structure V = NameEvalEnv
   structure VP = NameEvalEnvPrims
   structure UP = UserLevelPrimitive
-  structure RCU = RecordCalcUtils
-  structure RC = RecordCalc
+  structure TCU = TypedCalcUtils
+  structure TC = TypedCalc
 
   fun eqTyCon ({id=id1,...}:T.tyCon, {id=id2,...}:T.tyCon) =
       TypID.eq(id1,id2)
@@ -55,8 +55,8 @@ in
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val Name = String loc (Symbol.symbolToString symbol)
-        val VarExp = Var {path = setVersion(longsymbol, version), ty = ty, id = id}
-        val InstVarExp = RCU.groundInst VarExp
+        val VarExp = Var {path = setVersion(longsymbol, version), ty = ty, id = id, opaque = false}
+        val InstVarExp = TCU.groundInst VarExp
         val ReifyFun = InstVar {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint(), instTy = #ty InstVarExp}
         val ReifiedTerm = Apply loc ReifyFun InstVarExp
                           handle exn as TypeMismatch => raise exn
@@ -73,7 +73,7 @@ in
         val ty = EvalIty.evalIty EvalIty.emptyContext ty
         val TyTerm = String loc (prettyPrint idstatusWidth (T.formatTyForUser (sname envList) ty))
         val VarExp = MonoVar {path=accessLongsymbol, ty=ty}
-        val InstVarExp = RCU.groundInst VarExp
+        val InstVarExp = TCU.groundInst VarExp
         val ReifyFun = InstVar {exVarInfo=UP.REIFY_exInfo_toReifiedTermPrint(), instTy = #ty InstVarExp}
         val Term = Apply loc ReifyFun InstVarExp
             handle exn as TypeMismatch => raise exn
@@ -321,15 +321,14 @@ in
         val ty = #ty Exp
         val symbol = Symbol.mkSymbol string loc
         val longsymbol = [symbol]
-        val varInfo as {id,...} = newVarWithSymbol symbol (#ty Exp)
-        val externalInfo = {id = id, path = setVersion(longsymbol, version), ty = ty}
+        val externalInfo = {path = setVersion(longsymbol, version), ty = ty}
         val idstatus = 
             I.IDEXVAR {exInfo = {used = ref false, longsymbol = longsymbol, ty = I.INFERREDTY ty, version = version},
                        internalId = NONE} 
         val Env = VP.rebindId (Env, symbol, idstatus)
       in
         {env = Env,
-         decls = [Val loc varInfo Exp, RC.RCEXPORTVAR externalInfo]
+         decls = [TC.TPEXPORTVAR {var = externalInfo, exp = #exp Exp}]
         }
       end
 

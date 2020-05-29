@@ -86,6 +86,7 @@ struct
       | T.BACKENDty  _ => ()
       | T.ERRORty => ()
       | T.DUMMYty _ => ()
+      | T.EXISTty _ => ()
       | T.TYVARty _ => ()
       | T.BOUNDVARty _ => ()
       | T.FUNMty (tyList, ty) =>(map traverseTy tyList; traverseTy ty)
@@ -100,7 +101,7 @@ struct
 (*
       case TB.derefTy (Unify.forceRevealTy (TB.derefTy ty)) of
 *)
-      case TB.derefTy (TB.derefTy ty) of
+      case TB.derefTy ty of
         T.BOUNDVARty tid => R.BOUNDVARty tid
       | T.CONSTRUCTty {tyCon, args} => 
         if eqTyCon (tyCon, BT.boolTyCon) then R.BOOLty
@@ -151,7 +152,8 @@ struct
         else if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_void())) then R.VOIDty 
         else if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn())) then
           R.DYNAMICty (toReifiedTy (oneArg args))
-        else if not (SymbolEnv.isEmpty (#conSet tyCon)) then
+        else if not (isOpaqueTycon tyCon) andalso 
+                not (SymbolEnv.isEmpty (#conSet tyCon)) then
           R.DATATYPEty 
             {longsymbol = #longsymbol tyCon, 
              id = #id tyCon, 
@@ -185,6 +187,15 @@ struct
                                 RuntimeTypes.BOXED => true
                               | RuntimeTypes.UNBOXED => false}
          | _ => raise Bug.Bug "toReifiedTy: DUMMYty")
+      | T.EXISTty (id, kind) =>
+        (case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
+           SOME {size = BN.SIZE size, tag = BN.TAG tag, ...} =>
+           R.EXISTty {size = Word.fromInt (RuntimeTypes.getSize size),
+                      id = ExistTyID.toInt id,
+                      boxed = case tag of
+                                RuntimeTypes.BOXED => true
+                              | RuntimeTypes.UNBOXED => false}
+         | _ => raise Bug.Bug "toReifiedTy: EXISTty")
       | T.ERRORty => R.ERRORty
       | _ => R.INTERNALty
 

@@ -1,3 +1,4 @@
+
 /*
  * callback.c - callback closure support
  * @copyright (c) 2010-2015, Tohoku University.
@@ -9,9 +10,7 @@
 #include <sys/mman.h>
 #include "splay.h"
 
-#ifndef WITHOUT_MULTITHREAD
 static pthread_mutex_t callbacks_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif /* !WITHOUT_MULTITHREAD */
 
 /* A callback consists of an SML# code address, an closure environment
  * object, and a trampoline code.  Two callbacks are identical if they

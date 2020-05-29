@@ -22,9 +22,9 @@
             insert into #db.progress (code, input_date, progress, project_code)
             values (
                default,
-               toSQL(now),
-               toSQL(progress),
-               toSQL(projectCode)
+               now,
+               progress,
+               projectCode
             )
       in
         if progress = 0

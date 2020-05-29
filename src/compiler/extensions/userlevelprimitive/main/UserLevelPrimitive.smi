@@ -40,6 +40,7 @@ struct
   val REIFY_tyCon_reifiedTerm : unit -> Types.tyCon
   val REIFY_tyCon_reifiedTy : unit -> Types.tyCon
   val REIFY_tyCon_typId : unit -> Types.tyCon
+  val REIFY_tyCon_existInstMap : unit -> Types.tyCon
 
   val REIFY_conInfo_ARRAYty : unit -> Types.conInfo
   val REIFY_conInfo_BOOLty : unit -> Types.conInfo
@@ -104,9 +105,11 @@ struct
   val REIFY_exInfo_null : unit -> Types.exVarInfo
   val REIFY_exInfo_void : unit -> Types.exVarInfo
   val REIFY_exInfo_dynamicTypeCase : unit -> Types.exVarInfo
+  val REIFY_exInfo_dynamicExistInstance : unit -> Types.exVarInfo
   val REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy : unit -> Types.exVarInfo
   val REIFY_exInfo_longsymbolIdArgsToOpaqueTy : unit -> Types.exVarInfo
   val REIFY_exInfo_makeDummyTy : unit -> Types.exVarInfo
+  val REIFY_exInfo_makeExistTy : unit -> Types.exVarInfo
   val REIFY_exInfo_makeFUNMty : unit -> Types.exVarInfo
   val REIFY_exInfo_makePos : unit -> Types.exVarInfo
   val REIFY_exInfo_mkENVenv : unit -> Types.exVarInfo

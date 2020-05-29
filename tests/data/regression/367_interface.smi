@@ -1,0 +1,4 @@
+structure S =
+struct
+  val e : 'a list
+end

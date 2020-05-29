@@ -1,4 +1,4 @@
-_sql db => insert into #db.people (age) values (Some 1)
+_sql db => insert into #db.people (age) values (SOME 1)
 
 (*
 2013-8-26 hikaru saito

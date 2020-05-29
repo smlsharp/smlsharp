@@ -66,8 +66,8 @@ struct
       if RTy.reifiedTyEq (ty1,ty2) then ty1
       else
         case (ty1, ty2) of
-          (_, RTy.BOTTOMty) => ty1
-        | (RTy.BOTTOMty, _) => ty2
+          (_, RTy.BOTTOMty) => RTy.BOTTOMty
+        | (RTy.BOTTOMty, _) => RTy.BOTTOMty
         | (RTy.OPTIONty argTy1, RTy.OPTIONty argTy2) => RTy.OPTIONty (glbTy (argTy1, argTy2))
         | (RTy.RECORDty fl1, RTy.RECORDty fl2) => RTy.RECORDty (glbFieldTys (fl1, fl2))
         | (RTy.LISTty elemTy1, RTy.LISTty elemTy2) => RTy.LISTty (glbTy (elemTy1, elemTy2))
@@ -105,7 +105,9 @@ struct
   fun inferTy reifiedTerm =
     case reifiedTerm of
       RTm.ARRAY (elemTy, boxed) => RTy.ARRAYty elemTy
-    | RTm.ARRAY_PRINT _ => raise Bug.Bug "ARRAY_PRINT to inferTy"
+    | RTm.ARRAY_PRINT _ => 
+      (print  (RTm.reifiedTermToString reifiedTerm ^ "\n");
+      raise Bug.Bug "ARRAY_PRINT to inferTy")
     | RTm.BOOL bool => RTy.BOOLty
     | RTm.BOXED _ => RTy.BOXEDty
     | RTm.BOUNDVAR => RTy.VOIDty
@@ -180,6 +182,11 @@ struct
         RTML.reifiedTermToMLWithTy 
           reifiedTerm
           {conSetEnv = conSetEnv, reifiedTy = coerceTy}
+(*
+        RTML.reifiedTermToMLWithTy 
+          reifiedTerm
+          {conSetEnv = conSetEnv, reifiedTy = reifiedTy}
+*)
       end
 
   fun checkTermGeneric (dynamic, tyRep:ReifiedTy.tyRep) =
@@ -220,9 +227,18 @@ struct
           {conSetEnv = conSetEnv, reifiedTy = projectedTermTy}
       end
 
+  type existInstMap =
+      {conSetEnv : ReifiedTy.conSetEnv,
+       instances : ReifiedTy.reifiedTy IEnv.map}
+
+  fun dynamicExistInstance {conSetEnv, instances} id =
+      case IEnv.find (instances, id) of
+        NONE => raise Bug.Bug "dynamicExistInstance"
+      | SOME ty => {conSetEnv = conSetEnv, reifiedTy = ty}
+
   fun ('a, 'b) dynamicTypeCase
                (dynamic: 'a RTm.dyn) 
-               (groupListTerm : (ReifiedTy.tyRep * ('a RTm.dyn -> 'b)) list)
+               (groupListTerm : (ReifiedTy.tyRep * (existInstMap -> 'a RTm.dyn -> 'b)) list)
     =
       let
         val reifiedTerm = RTm.toReifiedTerm dynamic
@@ -230,10 +246,16 @@ struct
         fun selectCase nil = raise RuntimeTypeError
           | selectCase ((tyRep, caseFn)::rest) = 
             let
-              val {reifiedTy=coerceTy,...} = ReifiedTy.getConstructTy tyRep
+              val {reifiedTy=coerceTy, conSetEnv} = ReifiedTy.getConstructTy tyRep
             in
+(*
               if matchTy (reifiedTy, coerceTy) then caseFn
               else selectCase rest
+*)
+              case RTy.reifiedTyEq' (reifiedTy, coerceTy) of
+                NONE => selectCase rest
+              | SOME instances =>
+                caseFn {conSetEnv = conSetEnv, instances = instances}
             end
         val caseFn = selectCase groupListTerm
       in

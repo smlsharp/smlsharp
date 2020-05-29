@@ -9,14 +9,15 @@
 #include "smlsharp.h"
 #include "heap.h"
 #ifndef WITHOUT_MASSIVETHREADS
+#include <myth/myth.h>
 extern char **environ;
 #endif /* WITHOUT_MASSIVETHREADS */
 
 int sml_argc;
 char **sml_argv;
 
-#define DEFAULT_HEAPSIZE_MIN  (32 * 1024 * 1024)
-#define DEFAULT_HEAPSIZE_MAX  (256 * 1024 * 1024)
+#define DEFAULT_HEAPSIZE_MIN  (4 * 1024 * 1024UL)
+#define DEFAULT_HEAPSIZE_MAX  (2 * 1024 * 1024 * 1024UL)
 
 static size_t
 parse_size(const char *src, char **next)

@@ -424,21 +424,24 @@ in
                       let
                         fun makeDecl icexp =
                             let
-                              val revealKey = 
-                                  case mode of Trans => NONE | Opaque => SOME revealKey
-                              val icexp = 
-                                  I.ICSIGTYPED {icexp=icexp, revealKey=revealKey,
-                                                ty=specTy, loc=loc}
                               val newId = VarID.generate()
                               val longsymbol = path@[name]
-                              val icpat = 
-                                  case mode of
-                                    Trans => I.ICPATVAR_TRANS {longsymbol=longsymbol,id=newId}
-                                  | Opaue => I.ICPATVAR_OPAQUE {longsymbol=longsymbol,id=newId}
+                              val var = {longsymbol=longsymbol,id=newId}
+                              val icdecl = 
+                               case mode of 
+                                 Trans =>
+                                 I.ICVAL_TRANS_SIG {var = var, exp = icexp, ty = specTy, loc = loc}
+                               | Opaque => 
+                                 I.ICVAL_OPAQUE_SIG {var = var,
+                                                    revealKey = revealKey,
+                                                    exp = icexp,
+                                                    ty = specTy, 
+                                                    loc = loc}
                             in
-                              (SymbolEnv.insert(varE, name, I.IDVAR_TYPED {id=newId, ty=specTy, longsymbol=longsymbol}),
-                               I.ICVAL(Ty.emptyScopedTvars,[(icpat,icexp)],loc)
-                               :: icdeclList)
+                              (SymbolEnv.insert
+                                 (varE, name, 
+                                  I.IDVAR_TYPED {id=newId, ty=specTy, longsymbol=longsymbol}),
+                               icdecl :: icdeclList)
                             end
                         fun makeTypdecl (icexp, idstatusActualTyOpt) =
                             case idstatusActualTyOpt of

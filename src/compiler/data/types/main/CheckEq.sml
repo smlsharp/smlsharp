@@ -80,7 +80,25 @@ in
                     utvarOpt = NONE
                    }
              end
-           | _ => raise Eqcheck
+           | T.OPRIMkind {instances = L, operators} =>
+             let
+               val newL = List.filter TU.admitEqTy L
+             in
+               case newL of
+                 nil => raise Eqcheck
+               | _ =>
+                 r :=
+                 T.TVAR
+                   {
+                    lambdaDepth = lambdaDepth, 
+                    id = id, 
+                    kind = T.KIND {tvarKind = T.OPRIMkind {instances = newL, operators = operators},
+                                   properties = T.addProperties T.EQ properties,
+                                   dynamicKind = dynamicKind
+                                  },
+                    utvarOpt = NONE
+                   }
+             end
           )
       | T.TYVARty (ref(T.SUBSTITUTED ty)) => checkEq ty
       | T.BOUNDVARty tid => ()

@@ -205,11 +205,13 @@ struct
    *)
   EndWithInfixID of Symbol.longsymbol
 
+(*
   and
   (*%
    * @format(id) "non-fix" +d "identifier" +d "expected" +d ":" +d id
    *)
  ArgWithInfixID of Symbol.longsymbol
+*)
 
   and
   (*%

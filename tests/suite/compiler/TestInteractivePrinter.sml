@@ -1482,7 +1482,8 @@ val tests = TestList [
     ("dummytype opaque",
      fn () =>
         let
-          val d = DummyTyID.snapToString (DummyTyID.succ (DummyTyID.peek ()))
+          val d = DummyTyID.snapToString
+                    (DummyTyID.succ (DummyTyID.succ (DummyTyID.peek ())))
         in
           testPrinter
             "structure T3 :> sig type 'a t val x : 'a t end = struct datatype 'a t = x end;\n\

@@ -8,6 +8,7 @@ structure AbsynSQL =
 struct
 
   type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
   type label = RecordLabel.label
   type loc = Loc.loc
 
@@ -42,7 +43,7 @@ struct
     | OR
 
   datatype 'exp exp =
-      EXP of 'exp * loc
+      EXP_EMBED of 'exp * loc
     | CONST of AbsynConst.constant * loc
     | NULL of loc
     | TRUE of loc
@@ -50,8 +51,14 @@ struct
     | COLUMN1 of label * loc
     | COLUMN2 of (label * label) * loc
     | EXISTS of 'exp query * loc
+    | EXP_SUBQUERY of 'exp query * loc
     | OP1 of op1 * 'exp exp * loc
     | OP2 of op2 * 'exp exp * 'exp exp * loc
+    | ID of symbol
+    | OPID of longsymbol * loc
+    | PARENID of symbol
+    | APP of 'exp exp list * loc
+    | TUPLE of 'exp exp list * loc
 
   and 'exp join =
       INNER_JOIN of {inner : bool} * 'exp exp
@@ -80,11 +87,14 @@ struct
       ORDER_BY of ('exp exp * asc_desc option) list * loc
 
   and 'exp limit =
-      LIMIT of {limit : 'exp exp option * loc, offset :('exp exp * loc) option}
+      LIMIT of {limit : 'exp exp option * loc,
+                offset : ('exp exp * loc) option,
+                loc : loc}
 
   and 'exp offset =
       OFFSET of {offset : 'exp exp * string * loc,
-                 fetch : (string * 'exp exp option * string * loc) option}
+                 fetch : (string * 'exp exp option * string * loc) option,
+                 loc : loc}
 
   and 'exp limit_or_offset =
       LIMIT_CLAUSE of ('exp, 'exp limit) clause
@@ -105,10 +115,11 @@ struct
 
   datatype 'exp insert_values =
       INSERT_VALUES of (('exp exp option * loc) list * loc) list
+    | INSERT_VAR of longsymbol * loc
     | INSERT_SELECT of 'exp query
 
   datatype 'exp sql =
-      E of 'exp exp
+      EXP of 'exp exp
     | QRY of 'exp query
     | SEL of 'exp select
     | FRM of 'exp from
@@ -129,6 +140,6 @@ struct
       SQLSERVER of 'exp option * 'ty
     | SQL of 'exp sql
     | SQLFN of 'pat * 'exp sql
-    | SQLFNEXP of 'pat * 'exp exp
+    | SQLFN_EMBED of 'pat * 'exp
 
 end

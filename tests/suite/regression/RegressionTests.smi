@@ -1,4 +1,5 @@
 _require local "../../../src/basis.smi"
+_require local "../../../src/sql.smi"
 _require "../../../src/smlunit-lib.smi"
 _require local "../../driver/Compiler.smi"
 _require local "../../../src/compiler/data/control/main/Control.smi"
@@ -10,6 +11,7 @@ _require local "../../../src/compiler/compilePhases/elaborate/main/ElaborateErro
 _require local "../../../src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.smi"
 _require local "../../../src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.smi"
 _require local "../../../src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.smi"
+_require local "../../../src/compiler/extensions/reflection/main/PartialDynamic.smi"
 
 structure RegressionTests =
 struct

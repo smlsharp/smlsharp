@@ -9,20 +9,16 @@ _require "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
 _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
-_require "./EmitTypedLambda.smi"
+_require local "./EmitTypedLambda.smi"
 
 structure PrimitiveTypedLambda =
 struct
 
-  val toPrimTy : Types.ty -> TypedLambda.primTy
-
   val compile
-      : {primitive : BuiltinPrimitive.primitive,
-         primTy : TypedLambda.primTy,
-         instTyList : Types.ty list,
-         argExpList : EmitTypedLambda.exp list,
-         resultTy : Types.ty,
+      : {primOp : Types.primInfo,
+         instTyList : Types.ty list option,
+         argExp : TypedLambda.tlexp,
          loc : TypedLambda.loc}
-        -> EmitTypedLambda.exp
+        -> TypedLambda.tlexp
 
 end

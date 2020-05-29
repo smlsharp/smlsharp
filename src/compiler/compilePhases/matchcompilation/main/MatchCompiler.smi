@@ -19,12 +19,11 @@ _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require local "./MatchData.smi"
 _require local "./MatchError.ppg.smi"
 
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
 
 structure MatchCompiler =
 struct
   val compile : TypedCalc.tpdecl list
-                -> RecordCalc.rcdecl list * UserError.errorInfo list
+                -> TypedCalc.tpdecl list * UserError.errorInfo list
 end

@@ -278,12 +278,12 @@ struct
        *)
       PLAPPM of plexp * plexpm * loc
     | (*%
-       * @format(dec decs * exp exps * loc)
+       * @format(dec decs * exp * loc)
        * R0{ "let" 1[ decs:decl(dec)(+1,+1) ]
-       *     +1 "in" 1[ exps:decl(exp)(+1, ";" +1) ]
+       *     +1 "in" 1[ exp ]
        *     +1 "end" }
        *)
-      PLLET of pdecl list * plexp list * loc
+      PLLET of pdecl list * plexp * loc
     | (*%
        * @format(field fields * loc)
        * fields:enclosed(field)("{",",","}")
@@ -383,8 +383,10 @@ struct
        * @format(exp * rule rules * loc)
        * R0{ !R0{ "dynamiccase" 1[ +1 exp ] }
        *     +1 rules:prepend(rule)(, "of" +d, +1, "|" +d) }
+       * @format:rule(tyvars * pat * exp)
+       * !R0{ tyvars +d pat +d "=>" 1[ +1 !R0{ exp } ] }
        *)
-      PLDYNAMICCASE of plexp * rule1 list * loc
+      PLDYNAMICCASE of plexp * (scopedTvars * plpat * plexp) list * loc
     | (*%
        * @format(ty * loc)
        * R0{ "_reifyTy" 1 "(" !N0{ ty ")" } }
@@ -682,72 +684,5 @@ struct
        * !R0{ pat +d "=>" 1[ +1 !R0{ exp } ] }
        *)
       plpat * plexp
-
-  fun getLocExp plexp =
-      case plexp of
-        PLCONSTANT x => #2 x
-      | PLSIZEOF x => #2 x
-      | PLVAR x => Symbol.longsymbolToLoc x
-      | PLTYPED x => #3 x
-      | PLAPPM x => #3 x
-      | PLLET x => #3 x
-      | PLRECORD x => #2 x
-      | PLRECORD_UPDATE x => #3 x
-      | PLRAISE x => #2 x
-      | PLHANDLE x => #3 x
-      | PLFNM x => #2 x
-      | PLCASEM x => #4 x
-      | PLRECORD_SELECTOR x => #2 x
-      | PLSELECT x => #3 x
-      | PLSEQ x => #2 x
-      | PLFFIIMPORT x => #3 x
-      | PLSQLSCHEMA {loc,...} => loc
-      | PLJOIN (_, _,_,loc) => loc
-      | PLDYNAMIC (_,_,loc) => loc
-      | PLDYNAMICIS (_,_,loc) => loc
-      | PLDYNAMICNULL (_,loc) => loc
-      | PLDYNAMICTOP (_,loc) => loc
-      | PLDYNAMICVIEW (_,_,loc) => loc
-      | PLDYNAMICCASE (_,_,loc) => loc
-      | PLREIFYTY (_,loc) => loc
-  fun getLeftPosExp plexp = #1 (getLocExp plexp)
-  fun getRightPosExp plexp = #2 (getLocExp plexp)
-
-  fun getLocPat pat =
-      case pat of
-        PLPATWILD x => x
-      | PLPATID x => Symbol.longsymbolToLoc x
-      | PLPATCONSTANT x => #2 x
-      | PLPATCONSTRUCT x => #3 x
-      | PLPATRECORD x => #3 x
-      | PLPATLAYERED x => #4 x
-      | PLPATTYPED x => #3 x
-
-  fun getLeftPosPat pat = #1 (getLocPat pat)
-  fun getRightPosPat pat = #2 (getLocPat pat)
-
-  fun getLocDec dec =
-      case dec of
-        PDVAL (_, _, loc) => loc
-      | PDDECFUN (_, _, loc) => loc
-      | PDVALREC (_, _, loc) => loc
-      | PDVALPOLYREC ( _, loc) => loc
-      | PDTYPE (_, loc) => loc
-      | PDABSTYPE (_, _, loc) => loc
-      | PDDATATYPE (_, loc) => loc
-      | PDREPLICATEDAT (_, _, loc) => loc
-      | PDEXD (_, loc) => loc
-      | PDLOCALDEC (_, _, loc) => loc
-      | PDOPEN (_, loc) => loc
-      | PDINFIXDEC (_, _, loc) => loc
-      | PDINFIXRDEC (_, _, loc) => loc
-      | PDNONFIXDEC (_, loc) => loc
-      | PDEMPTY => Loc.noloc
-
-  fun getLocTopDec topdec =
-      case topdec of
-        PLTOPDECSTR (plstrdec, loc) => loc
-      | PLTOPDECSIG (sigdecList, loc) => loc
-      | PLTOPDECFUN (fundeclList, loc) => loc
 
 end

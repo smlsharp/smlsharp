@@ -87,7 +87,7 @@ struct
          LIST (h::t) => LIST t
        | _ => VOID)
 
-  fun dynamic x = ReifiedTerm.toDynamic (ReifyTerm.toReifiedTermPrint x)
+  fun dynamic x = ReifiedTerm.toDynamic (ReifyTerm.toReifiedTerm x)
   fun view x = PartialDynamic.viewDynamic x
 
   fun toJson dyn = ReifiedTerm.reifiedTermToJSON (ReifiedTerm.toReifiedTerm dyn)

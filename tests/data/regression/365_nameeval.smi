@@ -1,0 +1,6 @@
+_require "basis.smi"
+structure Word32 =
+struct
+  type t = Word32.word
+  val wordSize: int
+end

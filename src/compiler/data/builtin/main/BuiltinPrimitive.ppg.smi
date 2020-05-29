@@ -96,8 +96,6 @@ struct
     | Compose
     | Equal
     | NotEqual
-    | Exn_name
-    | Exn_message
     | Ignore
     | Int_abs
     | Int_add

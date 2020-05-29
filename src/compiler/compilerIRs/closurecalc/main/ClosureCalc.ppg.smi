@@ -6,6 +6,7 @@ _require "../../../data/symbols/main/RecordLabel.smi"
 (* _require "../../../libs/ids/main/LocalID.smi" *)
 
 _require "../../../data/types/main/Types.ppg.smi"
+_require "../../../compilerIRs/absyn/main/ConstFormat.smi"
 _require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 _require local "../../../libs/util/main/TermFormat.smi"
@@ -20,8 +21,8 @@ structure ClosureCalc =
 struct
   type loc = Loc.loc
   type ty = Types.ty
-  type varInfo = RecordCalc.varInfo
-  type exVarInfo = RecordCalc.exVarInfo
+  type varInfo = TypedLambda.varInfo
+  type exVarInfo = Types.exVarInfo
   type primInfo = TypedLambda.primInfo
 
   datatype ccconst =

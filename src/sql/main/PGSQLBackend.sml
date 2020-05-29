@@ -154,4 +154,18 @@ struct
 
   end (* local *)
 
+  fun columnTypeName ty =
+      case ty of
+        SMLSharp_SQL_BackendTy.INT => "INT"
+      | SMLSharp_SQL_BackendTy.INTINF => ""
+      | SMLSharp_SQL_BackendTy.WORD => ""
+      | SMLSharp_SQL_BackendTy.CHAR => ""
+      | SMLSharp_SQL_BackendTy.STRING => "TEXT"
+      | SMLSharp_SQL_BackendTy.REAL => "FLOAT4"
+      | SMLSharp_SQL_BackendTy.REAL32 => "FLOAT8"
+      | SMLSharp_SQL_BackendTy.BOOL => "BOOLEAN"
+      | SMLSharp_SQL_BackendTy.TIMESTAMP => "TIMESTAMP"
+      | SMLSharp_SQL_BackendTy.NUMERIC => "NUMERIC"
+      | SMLSharp_SQL_BackendTy.UNSUPPORTED s => s
+
 end

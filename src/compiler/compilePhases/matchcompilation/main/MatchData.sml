@@ -8,15 +8,14 @@ struct
 local
   structure A = AbsynConst
   structure T = Types
-  (* structure TC = TypedCalc *)
-  structure RC = RecordCalc
+  structure TC = TypedCalc
   structure BT = BuiltinTypes
 in
-  datatype kind = Bind | Match | Handle of RC.varInfo
+  datatype kind = Bind | Match | Handle of T.varInfo
     
   type const = A.constant
-  type conInfo = RC.conInfo
-  type exnCon = RC.exnCon
+  type conInfo = T.conInfo
+  type exnCon = TC.exnCon
 
   structure ConstOrd : ORD_KEY = 
   struct
@@ -46,8 +45,8 @@ in
      end
    *)
   struct
-    type ord_key = conInfo * bool
-    fun compare (({id=id1,...}, _) : ord_key, ({id=id2,...}, _) : ord_key) = 
+    type ord_key = conInfo * Types.ty list option * bool
+    fun compare (({id=id1,...}, _, _) : ord_key, ({id=id2,...}, _, _) : ord_key) =
         ConID.compare(id1,id2)
   end
 
@@ -84,14 +83,14 @@ in
    *)
   struct
     type ord_key = exnCon * bool
-    fun compare ((exnCon1, _) : ord_key, (exnCon2, _) : ord_key) = 
+    fun compare ((exnCon1, _) : ord_key, (exnCon2, _) : ord_key) =
         case (exnCon1, exnCon2) of
-          (RC.EXN {id=id1,...}, RC.EXN{id=id2,...}) =>
+          (TC.EXN {id=id1,...}, TC.EXN{id=id2,...}) =>
           ExnID.compare(id1, id2)
-        | (RC.EXEXN{path=path1,...},RC.EXEXN{path=path2,...}) => 
+        | (TC.EXEXN{path=path1,...},TC.EXEXN{path=path2,...}) =>
           Symbol.longsymbolCompare (path1,path2)
-        | (RC.EXEXN _, RC.EXN _) => LESS
-        | (RC.EXN _, RC.EXEXN _) => GREATER
+        | (TC.EXEXN _, TC.EXN _) => LESS
+        | (TC.EXN _, TC.EXEXN _) => GREATER
   end
 
   structure SSOrd : ORD_KEY = 
@@ -112,9 +111,9 @@ in
 
   datatype pat
   = WildPat of T.ty
-  | VarPat of RC.varInfo
+  | VarPat of T.varInfo
   | ConstPat of const * T.ty
-  | DataConPat of conInfo * bool * pat * T.ty
+  | DataConPat of conInfo * T.ty list option * bool * pat * T.ty
   | ExnConPat of exnCon * bool * pat * T.ty
   | RecPat of (RecordLabel.label * pat) list * T.ty
   | LayerPat of pat * pat
@@ -127,19 +126,19 @@ in
   | ++ of pat * rule
   infixr ++
 
-  type env = RC.varInfo VarInfoEnv.map
+  type env = T.varInfo VarInfoEnv.map
 
   datatype tree
   = EmptyNode
   | LeafNode of exp * env
-  | EqNode of RC.varInfo * tree ConstMap.map * tree
-  | DataConNode of RC.varInfo * tree DataConMap.map * tree
-  | ExnConNode of RC.varInfo * tree ExnConMap.map * tree
-  | RecNode of RC.varInfo * RecordLabel.label * tree
-  | UnivNode of RC.varInfo * tree
+  | EqNode of T.varInfo * tree ConstMap.map * tree
+  | DataConNode of T.varInfo * tree DataConMap.map * tree
+  | ExnConNode of T.varInfo * tree ExnConMap.map * tree
+  | RecNode of T.varInfo * RecordLabel.label * tree
+  | UnivNode of T.varInfo * tree
 
   val unitExp =
-      RC.RCCONSTANT {const=RC.CONST A.UNITCONST, ty=BT.unitTy, loc=Loc.noloc}
+      TC.TPCONSTANT {const=A.UNITCONST, ty=BT.unitTy, loc=Loc.noloc}
 
   val expDummy = unitExp
 end

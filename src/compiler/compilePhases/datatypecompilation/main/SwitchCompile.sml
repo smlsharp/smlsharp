@@ -108,10 +108,8 @@ struct
 
   fun IntInf_hex (exp, loc) =
       case exp of
-        L.TLCONSTANT {const = L.S (L.INTINF n), ty, loc} =>
-        L.TLCONSTANT {const = L.S (L.STRING (hex n)),
-                      ty = B.stringTy,
-                      loc = loc}
+        L.TLSTRING (L.INTINF n, loc) =>
+        L.TLSTRING (L.STRING (hex n),  loc)
       | _ =>
         let
           val attributes =
@@ -125,8 +123,7 @@ struct
             {funExp = L.TLFOREIGNSYMBOL
                         {name = "sml_intinf_hex",
                          ty = T.BACKENDty (T.FOREIGNFUNPTRty
-                                             {tyvars = BoundTypeVarID.Map.empty,
-                                              argTyList = [B.intInfTy],
+                                             {argTyList = [B.intInfTy],
                                               varArgTyList = NONE,
                                               resultTy = SOME B.stringTy,
                                               attributes = attributes}),

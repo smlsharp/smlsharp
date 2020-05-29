@@ -72,12 +72,11 @@ local
           RC.RCCAST ((evalExp rcexp, revealTy expTy), revealTy ty, loc)
         | RC.RCCONSTANT {const, loc, ty} =>
           RC.RCCONSTANT {const=const, loc = loc, ty=revealTy ty}
-        | RC.RCDATACONSTRUCT {argExpOpt, argTyOpt, con:RC.conInfo, instTyList, loc} =>
+        | RC.RCDATACONSTRUCT {argExpOpt, con:RC.conInfo, instTyList, loc} =>
           RC.RCDATACONSTRUCT
             {argExpOpt = Option.map evalExp argExpOpt,
-             argTyOpt = Option.map revealTy argTyOpt,
              con = revealConInfo con,
-             instTyList = map revealTy instTyList,
+             instTyList = Option.map (map revealTy) instTyList,
              loc = loc
             }
         | RC.RCEXNCASE {defaultExp:rcexp, exp:rcexp, expTy:ty, loc:Loc.loc,
@@ -93,17 +92,16 @@ local
                  ruleList,
              resultTy = revealTy resultTy
             }
-        | RC.RCEXNCONSTRUCT {argExpOpt, exn:RC.exnCon, instTyList, loc} =>
+        | RC.RCEXNCONSTRUCT {argExpOpt, exn:RC.exnCon, loc} =>
           RC.RCEXNCONSTRUCT
             {argExpOpt = Option.map evalExp argExpOpt,
              exn = revealExnCon exn,
-             instTyList = map revealTy instTyList,
              loc = loc
             }
-        | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} =>
-          RC.RCEXN_CONSTRUCTOR {exnInfo=revealExnInfo exnInfo, loc=loc}
-        | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
-          RC.RCEXEXN_CONSTRUCTOR {exExnInfo=revealExExnInfo exExnInfo, loc= loc}
+        | RC.RCEXNTAG {exnInfo, loc} =>
+          RC.RCEXNTAG {exnInfo=revealExnInfo exnInfo, loc=loc}
+        | RC.RCEXEXNTAG {exExnInfo, loc} =>
+          RC.RCEXEXNTAG {exExnInfo=revealExExnInfo exExnInfo, loc= loc}
         | RC.RCEXVAR {path, ty} =>
           RC.RCEXVAR {path=path, ty=revealTy ty}
         | RC.RCFNM {argVarList, bodyExp, bodyTy, loc} =>
@@ -134,11 +132,10 @@ local
                       argExpList = map evalExp argExpList,
                       resultTy = revealTy resultTy,
                       loc = loc}
-        | RC.RCLET {body:rcexp list, decls, loc, tys} =>
-          RC.RCLET {body=map evalExp body,
+        | RC.RCLET {body, decls, loc} =>
+          RC.RCLET {body=evalExp body,
                     decls=map evalDecl decls, 
-                    loc=loc, 
-                    tys=map revealTy tys}
+                    loc=loc}
         | RC.RCMODIFY {elementExp, elementTy, indexExp, label, loc, recordExp, recordTy} =>
           RC.RCMODIFY
             {elementExp = evalExp elementExp,
@@ -148,10 +145,6 @@ local
              loc = loc,
              recordExp = evalExp recordExp,
              recordTy = revealTy recordTy}
-        | RC.RCMONOLET {binds:(RC.varInfo * rcexp) list, bodyExp, loc} =>
-          RC.RCMONOLET {binds=map evalBind binds, 
-                        bodyExp=evalExp bodyExp, 
-                        loc=loc}
         | RC.RCOPRIMAPPLY {argExp, instTyList, loc, oprimOp:RC.oprimInfo} =>
           RC.RCOPRIMAPPLY
             {argExp = evalExp argExp,
@@ -166,18 +159,10 @@ local
              expTyWithoutTAbs = revealTy expTyWithoutTAbs,
              loc = loc
             }
-        | RC.RCPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
-          RC.RCPOLYFNM
-            {argVarList=map revealVar argVarList,
-             bodyExp=evalExp bodyExp,
-             bodyTy=revealTy bodyTy,
-             btvEnv=revealBtvEnv btvEnv,
-             loc=loc
-            }
         | RC.RCPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
           RC.RCPRIMAPPLY
             {argExp=evalExp argExp,
-             instTyList=map revealTy instTyList,
+             instTyList=Option.map (map revealTy) instTyList,
              loc=loc,
              primOp=revealPrimInfo primOp
             }
@@ -197,12 +182,6 @@ local
              label=label,
              loc=loc,
              resultTy=revealTy resultTy
-            }
-        | RC.RCSEQ {expList, expTyList, loc} =>
-          RC.RCSEQ
-            {expList = map evalExp expList,
-             expTyList = map revealTy expTyList,
-             loc = loc
             }
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (revealTy ty, loc)
@@ -310,14 +289,19 @@ local
              ruleBodyTy = revealTy ruleBodyTy, 
              loc = loc
             }
+        | RC.RCDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+          RC.RCDYNAMICEXISTTAPP
+            {existInstMap = evalExp existInstMap,
+             exp = evalExp exp,
+             expTy = revealTy expTy,
+             instTyList = map revealTy instTyList,
+             loc = loc}
 
   and evalDecl (rcdecl:RC.rcdecl) =
       case rcdecl of
-        RC.RCEXD (exbinds:{exnInfo:RC.exnInfo, loc:Loc.loc} list, loc) =>
+        RC.RCEXD (exnInfo, loc) =>
         RC.RCEXD
-          (map (fn {exnInfo, loc} =>
-                   {exnInfo=revealExnInfo exnInfo, loc=loc})
-               exbinds,
+          (revealExnInfo exnInfo,
            loc)
       | RC.RCEXNTAGD ({exnInfo, varInfo}, loc) =>
         RC.RCEXNTAGD ({exnInfo=revealExnInfo exnInfo,
@@ -325,37 +309,35 @@ local
                       loc)
       | RC.RCEXPORTEXN exnInfo =>
         RC.RCEXPORTEXN (revealExnInfo exnInfo)
-      | RC.RCEXPORTVAR varInfo =>
-        RC.RCEXPORTVAR varInfo
+      | RC.RCEXPORTVAR {var={path, ty}, exp} =>
+        RC.RCEXPORTVAR {var={path=path, ty=revealTy ty}, exp=evalExp exp}
       | RC.RCEXTERNEXN ({path, ty}, provider) =>
         RC.RCEXTERNEXN ({path=path, ty=revealTy ty}, provider)
       | RC.RCBUILTINEXN {path, ty} =>
         RC.RCBUILTINEXN {path=path, ty=revealTy ty}
       | RC.RCEXTERNVAR ({path, ty}, provider) =>
         RC.RCEXTERNVAR ({path=path, ty=revealTy ty}, provider)
-      | RC.RCVAL (binds:(RC.varInfo * rcexp) list, loc) =>
-        RC.RCVAL (map evalBind binds, loc)
+      | RC.RCVAL (bind:(RC.varInfo * rcexp), loc) =>
+        RC.RCVAL (evalBind bind, loc)
       | RC.RCVALPOLYREC
           (btvEnv,
-           recbinds:{exp:rcexp, expTy:ty, var:RC.varInfo} list,
+           recbinds:{exp:rcexp, var:RC.varInfo} list,
            loc) =>
         RC.RCVALPOLYREC 
           (revealBtvEnv btvEnv, 
            map
-             (fn {exp, expTy, var} =>
+             (fn {exp, var} =>
                  {var=revealVar var,
-                  expTy=revealTy expTy,
                   exp=evalExp exp}
              )
              recbinds,
            loc)
-      | RC.RCVALREC (recbinds:{exp:rcexp, expTy:ty, var:RC.varInfo} list,loc) =>
+      | RC.RCVALREC (recbinds:{exp:rcexp, var:RC.varInfo} list,loc) =>
         RC.RCVALREC 
           (
            map
-             (fn {exp, expTy, var} =>
+             (fn {exp, var} =>
                  {var=revealVar var,
-                  expTy=revealTy expTy,
                   exp=evalExp exp}
              )
              recbinds,

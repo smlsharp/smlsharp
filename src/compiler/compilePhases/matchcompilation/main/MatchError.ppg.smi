@@ -10,7 +10,7 @@ _require "../../../data/symbols/main/Loc.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
 _require "./MatchData.smi"
 
 structure MatchError = 
@@ -33,13 +33,13 @@ struct
   val matchBothMessage : string
 
   val raiseBindFailExp
-      : Types.ty -> Loc.loc -> RecordCalc.rcexp
+      : Types.ty -> Loc.loc -> TypedCalc.tpexp
   val raiseMatchFailExp
-      : Types.ty -> Loc.loc -> RecordCalc.rcexp
+      : Types.ty -> Loc.loc -> TypedCalc.tpexp
   val handleFail
-      : RecordCalc.varInfo -> Types.ty -> Loc.loc -> RecordCalc.rcexp
+      : Types.varInfo -> Types.ty -> Loc.loc -> TypedCalc.tpexp
   val raiseMatchCompBugExp
-      : Types.ty -> Loc.loc -> RecordCalc.rcexp
+      : Types.ty -> Loc.loc -> TypedCalc.tpexp
 
   datatype flagKind = Redundant | NotExhaustive
 

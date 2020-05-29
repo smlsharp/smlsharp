@@ -46,7 +46,7 @@ struct
     | PLVAR of longsymbol
     | PLTYPED of plexp *  ty * loc
     | PLAPPM of plexp * plexp list * loc
-    | PLLET of pdecl list * plexp list * loc
+    | PLLET of pdecl list * plexp * loc
     | PLRECORD of (RecordLabel.label * plexp) list * loc
     | PLRECORD_UPDATE of plexp * (RecordLabel.label * plexp) list * loc
     | PLRAISE of plexp * loc
@@ -64,7 +64,7 @@ struct
     | PLDYNAMICNULL of ty * loc
     | PLDYNAMICTOP of ty * loc
     | PLDYNAMICVIEW of plexp * ty * loc
-    | PLDYNAMICCASE of plexp * (plpat * plexp) list * loc
+    | PLDYNAMICCASE of plexp * (scopedTvars * plpat * plexp) list * loc
     | PLREIFYTY of ty * loc
 
   and ffiFun
@@ -170,12 +170,4 @@ struct
   val format_pltopdec
       : pltopdec -> SMLFormat.format
 
-  val getLeftPosExp : plexp -> Loc.pos
-  val getRightPosExp : plexp -> Loc.pos
-  val getLocExp : plexp -> Loc.pos * Loc.pos
-  val getLeftPosPat : plpat -> Loc.pos
-  val getRightPosPat : plpat -> Loc.pos
-  val getLocPat : plpat -> Loc.pos * Loc.pos
-  val getLocDec : pdecl -> Loc.loc
-  val getLocTopDec : pltopdec -> Loc.loc
 end

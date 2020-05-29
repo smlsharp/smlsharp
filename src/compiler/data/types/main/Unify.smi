@@ -14,6 +14,7 @@ _require local "./CheckEq.smi"
 (* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
 _require local "./TypesBasics.smi"
 _require local "./TypesUtils.smi"
+_require local "./TyPrinters.smi"
 
 _require "../../../libs/ids/main/LocalID.smi"
 _require "./Types.ppg.smi"

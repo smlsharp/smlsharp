@@ -78,8 +78,10 @@ struct
   type sqlite3 = unit ptr
   type sqlite3_stmt = unit ptr
 
-  val new_sqlite3 = fn () => ref (SMLSharp_Builtin.Pointer.null ())
-  val new_sqlite3_stmt = fn () => ref (SMLSharp_Builtin.Pointer.null ())
+  val new_sqlite3 =
+      fn () => ref (SMLSharp_Builtin.Pointer.null () : sqlite3)
+  val new_sqlite3_stmt =
+      fn () => ref (SMLSharp_Builtin.Pointer.null () : sqlite3_stmt)
 
   val sqlite3_errstr =
       lazy (fn _ => dlsym "sqlite3_errstr" : _import int -> char ptr)

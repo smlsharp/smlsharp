@@ -40,6 +40,7 @@ in
             | T.BACKENDty _ => raise NonBoxed
             | T.ERRORty => raise NonBoxed
             | T.DUMMYty (id, kind) => visitKind kind
+            | T.EXISTty (id, kind) => visitKind kind
             | T.TYVARty (ref(T.TVAR {kind,...})) => visitKind kind
             | T.TYVARty (ref(T.SUBSTITUTED ty)) => visit ty
             | T.BOUNDVARty boundTypeVarID => ()
@@ -74,6 +75,7 @@ in
             | T.BACKENDty _ => raise NonEQ
             | T.ERRORty => raise NonEQ
             | T.DUMMYty (id, kind) => visitKind kind
+            | T.EXISTty (id, kind) => visitKind kind
             | T.TYVARty (ref(T.TVAR {kind, ...})) => visitKind kind
             | T.TYVARty (ref(T.SUBSTITUTED ty)) => visit ty
             | T.BOUNDVARty boundTypeVarID => ()

@@ -3,7 +3,7 @@
  * @author Atsushi Ohori
  * @author UENO Katsuhiro
  *)
-structure ReifyKind =
+structure ReifyKind : KIND_INSTANCE =
 struct
 
   (* structure RC = RecordCalc *)
@@ -12,7 +12,7 @@ struct
 
   type singleton_ty_body = Types.ty
   type kind = bool
-  type instance = RecordCalc.rcexp
+  type instance = TypedLambda.tlexp
   val singletonTy = T.REIFYty
 
   fun compare (ty1, ty2) =
@@ -46,7 +46,10 @@ struct
         fun lookUp btv = lookup (T.REIFYty (T.BOUNDVARty btv))
         val tyRep = TyToReifiedTy.toTy ty
         val tyRepExp = ReifyTy.TyRepWithLookUp lookUp loc tyRep
+        val retExp = DatatypeCompilation.compileExp
+                       DatatypeCompilation.emptyEnv
+                       (#exp tyRepExp)
       in
-        SOME (#exp tyRepExp)
+        SOME retExp
       end
 end

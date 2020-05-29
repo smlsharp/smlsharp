@@ -38,6 +38,7 @@ struct
 
   val queryCommand = SMLSharp_SQL_Prim.queryCommand
   val connect = SMLSharp_SQL_Prim.connect
+  val connectAndCreate = SMLSharp_SQL_Prim.connectAndCreate
   val closeConn = SMLSharp_SQL_Prim.closeConn
   val closeCursor = SMLSharp_SQL_Prim.closeCursor
   val fetch = SMLSharp_SQL_Prim.fetch

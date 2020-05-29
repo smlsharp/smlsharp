@@ -24,7 +24,8 @@ struct
       TABLEID of 'w db * id
 
   datatype const =
-      INT of int
+      NULL
+    | INT of int
     | WORD of word
     | REAL of real
     | REAL32 of real32
@@ -37,7 +38,6 @@ struct
 
   datatype 'w exp_ast =
       CONST of const
-    | LITERAL of oper
     | COLUMN1 of id
     | COLUMN2 of id * id
     | FUNCALL of id * 'w exp_ast list
@@ -47,6 +47,7 @@ struct
     | CMPOP of 'w exp_ast * oper * 'w exp_ast
     | ADDOP of 'w exp_ast * oper * 'w exp_ast
     | MULOP of 'w exp_ast * oper * 'w exp_ast
+    | OP2 of 'w exp_ast * oper * 'w exp_ast
     | UNARYOP of oper * 'w exp_ast
     | IS of 'w exp_ast * oper
     | IS_NOT of 'w exp_ast * oper
@@ -109,6 +110,7 @@ struct
     | BEGIN
     | COMMIT
     | ROLLBACK
+    | CREATE_TABLE of id * (id * {ty : string, nullable : bool}) list
 
   val format_command_ast
       : unit -> 'w command_ast -> SMLFormat.FormatExpression.expression list

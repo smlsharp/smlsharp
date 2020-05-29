@@ -7,6 +7,7 @@ _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/ExistTyID.smi"
 (* _require local "../../../data/types/main/Unify.smi" *)
 _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require local "../../../data/runtimetypes/main/TypeLayout2.smi"

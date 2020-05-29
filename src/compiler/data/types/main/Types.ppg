@@ -425,6 +425,7 @@ struct
    * @formatter(FFIAttributes.attributes) FFIAttributes.format_attributes
    * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
    * @formatter(OPrimID.id) OPrimID.format_id
+   * @formatter(ExistTyID.id) ExistTyID.format_id
    *)
   (*%
    * @prefix print_
@@ -442,6 +443,7 @@ struct
    * @formatter(helper_print_boundTvars) helper_print_boundTvars
    * @formatter(helper_tyCon) helper_tyCon
    * @formatter(helper_extendEnv) helper_extendEnv
+   * @formatter(ExistTyID.id) ExistTyID.format_id
    *)
   datatype ty =
       (*%
@@ -478,6 +480,14 @@ struct
        * @format(id * kind) id
        *)
       DUMMYty of dummyTyID * kind
+    | (*%
+       * @format(id * kind) "?E" id kind
+       *)
+      (*%
+       * @prefix print_
+       * @format(id * kind) id
+       *)
+      EXISTty of ExistTyID.id * kind
     | (*%
        * @format(tv tvRef) tvRef(tv)
        *)
@@ -672,7 +682,7 @@ struct
   and dtyKind
     = (*%
        * @format(p)
-       * L2{ "DTY" +1 "(" !N0{ p } ")" }
+       * L8{ "DTY" +1 "(" !N0{ p } ")" }
        *)
       (*%
        * @prefix print_
@@ -681,7 +691,7 @@ struct
       DTY of RuntimeTypes.property
     | (*%
        * @format({opaqueRep, revealKey})
-       * L2{ "OPAQUE" +1 "(" !N0{ revealKey "," +1 opaqueRep } ")" }
+       * L8{ "OPAQUE" +1 "(" !N0{ revealKey "," +1 opaqueRep } ")" }
        *)
       (*%
        * @prefix print_
@@ -691,7 +701,7 @@ struct
       OPAQUE of {opaqueRep:opaqueRep, revealKey:revealKey}
     | (*%
        * @format(opaqueRep)
-       * L2{ "INTERFACE" +1 "(" !N0{ opaqueRep } ")" }
+       * L8{ "INTERFACE" +1 "(" !N0{ opaqueRep } ")" }
        *)
       (*%
        * @prefix print_
@@ -711,7 +721,7 @@ struct
       TYCON of tyCon 
     | (*%
        * @format({admitsEq, arity, polyTy})
-       * L2{ "TFUNDEF" +1 "(" !N0{ admitsEq "," +1 arity "," +1 polyTy } ")" }
+       * L8{ "TFUNDEF" +1 "(" !N0{ admitsEq "," +1 arity "," +1 polyTy } ")" }
        *)
       (*%
        * @prefix print_
@@ -735,7 +745,7 @@ struct
   and singletonTy =
       (*%
        * @format(oprimSelector)
-       * L2{ "INSTCODEty" +1 "(" !N0{ oprimSelector } ")" }
+       * L8{ "INSTCODEty" +1 "(" !N0{ oprimSelector } ")" }
        *)
       (*%
        * @prefix print_
@@ -745,7 +755,7 @@ struct
       INSTCODEty of oprimSelector
     | (*%
        * @format(label * ty)
-       * L2{ "INDEXty" +1 "(" !N0{ label "," +1 ty } ")" }
+       * L8{ "INDEXty" +1 "(" !N0{ label "," +1 ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -754,7 +764,7 @@ struct
       INDEXty of RecordLabel.label * ty
     | (*%
        * @format(ty)
-       * L2{ "TAGty" +1 "(" !N0{ ty } ")" }
+       * L8{ "TAGty" +1 "(" !N0{ ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -763,7 +773,7 @@ struct
       TAGty of ty
     | (*%
        * @format(ty)
-       * L2{ "SIZEty" +1 "(" !N0{ ty } ")" }
+       * L8{ "SIZEty" +1 "(" !N0{ ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -772,7 +782,7 @@ struct
       SIZEty of ty
     | (*%
        * @format(ty)
-       * L2{ "REIFYty" +1 "(" !N0{ ty } ")" }
+       * L8{ "REIFYty" +1 "(" !N0{ ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -783,7 +793,7 @@ struct
   and backendTy =
       (*%
        * @format(ty)
-       * L2{ "RECORDSIZEty" +1 "(" !N0{ ty } ")" }
+       * L8{ "RECORDSIZEty" +1 "(" !N0{ ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -793,7 +803,7 @@ struct
       RECORDSIZEty of ty
     | (*%
        * @format(i * ty)
-       * L2 { "RECORDBITMAPINDEXty" +1 "(" !N0{ i "," +1 ty } ")" }
+       * L8{ "RECORDBITMAPINDEXty" +1 "(" !N0{ i "," +1 ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -803,7 +813,7 @@ struct
       RECORDBITMAPINDEXty of int * ty
     | (*%
        * @format(i * ty)
-       * L2 { "RECORDBITMAPty" +1 "(" !N0{ i "," +1 ty } ")" }
+       * L8{ "RECORDBITMAPty" +1 "(" !N0{ i "," +1 ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -813,7 +823,7 @@ struct
       RECORDBITMAPty of int * ty
     | (*%
        * @format(ty)
-       * L2 { "CCONVTAGty" +1 "(" !N0{ ty } ")" }
+       * L8{ "CCONVTAGty" +1 "(" !N0{ ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -823,7 +833,7 @@ struct
       CCONVTAGty of codeEntryTy
     | (*%
        * @format(ty)
-       * L2 { "FUNENTRYty" +1 "(" !N0{ ty } ")" }
+       * L8{ "FUNENTRYty" +1 "(" !N0{ ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -833,7 +843,7 @@ struct
       FUNENTRYty of codeEntryTy
     | (*%
        * @format(ty)
-       * L2 { "CALLBAKCENTRYty" +1 "(" !N0{ ty } ")" }
+       * L8{ "CALLBAKCENTRYty" +1 "(" !N0{ ty } ")" }
        *)
       (*%
        * @prefix print_
@@ -878,13 +888,12 @@ struct
       (* type of some calling convention tag *)
       SOME_CCONVTAGty
     | (*%
-       * @format({tyvars: kind kinds, argTyList: arg args,
+       * @format({argTyList: arg args,
        *          varArgTyList: varg vargs vargopt, resultTy : ret retopt,
        *          attributes})
-       * L2{
+       * L8{
        *   "FOREIGNFUNPTRty" +1
        *   "(" !N0{
-       *     kinds:helper_format_boundTvars(kind) "." +1
        *     attributes +1
        *     "{" !N0{ args(arg)("," +1) } "}"
        *     vargopt:ifsome()(1 "{" !N0{ vargopt(vargs(varg)("," +1)) } "}",)
@@ -900,7 +909,6 @@ struct
       (* type of foreign function pointer *)
       FOREIGNFUNPTRty of
       {
-        tyvars : kind BoundTypeVarID.Map.map,
         argTyList : ty list,
         varArgTyList : ty list option,
         resultTy : ty option,
@@ -909,9 +917,9 @@ struct
 
   and overloadMatch =
       (*%
-       * @format({exVarInfo, instTyList:ty tys})
-       * L2{ "OVERLOAD_EXVAR" +1
-       *     "(" !N0{ exVarInfo "," +1 tys(ty)("," +1) } ")" }
+       * @format({exVarInfo, instTyList:ty tys tyo})
+       * L8{ "OVERLOAD_EXVAR" +1
+       *     "(" !N0{ exVarInfo "," +1 tyo(tys(ty)("," +1)) } ")" }
        * @format:exVarInfo({path, ty}) path
        *)
       (*%
@@ -921,12 +929,12 @@ struct
       OVERLOAD_EXVAR of
       {
         exVarInfo: {path: longsymbol, ty: ty},
-        instTyList: ty list
+        instTyList: ty list option
       }
     | (*%
-       * @format({primInfo, instTyList:ty tys})
-       * L2{ "OVERLOAD_PRIM" +1
-       *     "(" !N0{ primInfo "," +1 tys(ty)("," +1) } ")" }
+       * @format({primInfo, instTyList:ty tys tyo})
+       * L8{ "OVERLOAD_PRIM" +1
+       *     "(" !N0{ primInfo "," +1 tyo(tys(ty)("," +1)) } ")" }
        * @format:primInfo({primitive, ty}) primitive
        *)
       (*%
@@ -936,11 +944,11 @@ struct
       OVERLOAD_PRIM of
       {
         primInfo: {primitive: BuiltinPrimitive.primitive, ty: ty},
-        instTyList: ty list
+        instTyList: ty list option
       }
     | (*%
        * @format(ty * match matches)
-       * L2{ "OVERLOAD_CASE" +1
+       * L8{ "OVERLOAD_CASE" +1
        *     "(" !N0{ ty "," +1 matches:helper_overloadRules(match) } }
        *)
       (*%
@@ -1066,6 +1074,7 @@ struct
       | BACKENDty _ => btv (* ignored *)
       | ERRORty => btv
       | DUMMYty _ => btv
+      | EXISTty _ => btv
       | TYVARty (ref (TVAR _)) => btv
       | TYVARty (ref (SUBSTITUTED ty)) => btvOrderTy count btv ty
       | FUNMty (tys, ty) => btvOrderTy count (btvOrderTyList count btv tys) ty

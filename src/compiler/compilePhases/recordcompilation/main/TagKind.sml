@@ -30,8 +30,6 @@ struct
         NONE => raise Bug.Bug "TagKind.generateInstance"
       | SOME {tag = R.ANYTAG, ...} => NONE
       | SOME {tag = R.TAG t, ...} =>
-        SOME (RC.RCCONSTANT {const = RC.TAG (t, ty),
-                             ty = T.SINGLETONty (singletonTy ty),
-                             loc = loc})
+        SOME (RC.RCCONSTANT (RC.TAG (t, ty), loc))
 
 end

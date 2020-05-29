@@ -25,7 +25,7 @@ structure OTSet = BinarySetFn(TvOrd)
 
 structure varInfoOrd =
 struct
-  type ord_key = {path:Symbol.longsymbol, id:VarID.id, ty:Types.ty}
+  type ord_key = {path:Symbol.longsymbol, id:VarID.id, ty:Types.ty, opaque:bool}
   val compare : ord_key * ord_key -> order
 end
 

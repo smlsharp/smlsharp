@@ -31,6 +31,8 @@ struct
   fun formatTimestamp x = term ("'" ^ (SMLSharp_SQL_TimeStamp.toString x) ^ "'")
   fun formatNumeric x = term (fixSign (SMLSharp_SQL_Numeric.toString x))
 
+  fun iftrue (x,y) true = x
+    | iftrue (x,y) false = y
   fun ifnone (x,y) NONE = x
     | ifnone (x,y) (SOME _) = y
 
@@ -82,7 +84,10 @@ struct
    * @params(f)
    *)
   datatype const =
-      (*% @prefix format_ @format(x) x *)
+      (*% @prefix format_ @format "NULL" *)
+      (*% @prefix ifInt_ @format *)
+      NULL
+    | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format f *)
       INT of int
     | (*% @prefix format_ @format(x) x *)
@@ -124,9 +129,6 @@ struct
       (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format(c) c(f) *)
       CONST of const
-    | (*% @prefix format_ @format(x) x *)
-      (*% @prefix ifInt_ @format *)
-      LITERAL of oper
     | (*% @prefix format_ @format(x) x *)
       (*% @prefix ifInt_ @format *)
       COLUMN1 of id
@@ -175,6 +177,12 @@ struct
        *)
       (*% @prefix ifInt_ @format *)
       MULOP of 'w exp_ast * oper * 'w exp_ast
+    | (*% @prefix format_
+       * @format(w1 e1 * oper * w2 e2)
+       * "(" !N0{ e1(w1) 1[ +1 oper +d e2(w2) ] ")" }
+       *)
+      (*% @prefix ifInt_ @format *)
+      OP2 of 'w exp_ast * oper * 'w exp_ast
     | (*% @prefix format_
        * @format(oper * w1 e1)
        * N7{ oper e1(w1) }
@@ -367,8 +375,8 @@ struct
       INSERT_SELECT of 'w query_ast
 
   (*%
-   * @formatter(sqlid) formatSQLID
    * @formatter(ifnone) ifnone
+   * @formatter(iftrue) iftrue
    *)
   datatype 'w command_ast =
       (*% @format(w q) q(w) *)
@@ -401,6 +409,13 @@ struct
       COMMIT
     | (*% @format "ROLLBACK" *)
       ROLLBACK
+    | (*%
+       * @format(table * column columns)
+       * !N0{ "CREATE TABLE" +d table +d "(" columns(column)("," +d) ")" }
+       * @format:column(id * {ty, nullable})
+       * id +d ty nullable:iftrue()(, +d "NOT" +d "NULL")
+       *)
+      CREATE_TABLE of id * (id * {ty : string, nullable : bool}) list
 
   val format_command_ast = fn () => format_command_ast (fn _ => nil)
   val format_query_ast = fn () => format_query_ast (fn _ => nil)

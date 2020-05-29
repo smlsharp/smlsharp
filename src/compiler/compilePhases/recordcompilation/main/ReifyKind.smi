@@ -4,13 +4,15 @@ _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../extensions/reflection/main/TyToReifiedTy.smi"
 _require local "../../../extensions/reflection/main/ReifyTy.smi"
 (* _require "../../../extensions/reflection/main/ReifiedTy.ppg.smi" *)
+_require local "../../datatypecompilation/main/DatatypeCompilation.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "./KIND_INSTANCE.sig"
 
 structure ReifyKind =
 struct
   type singleton_ty_body = Types.ty
   type kind = bool
-  type instance = RecordCalc.rcexp
+  type instance = TypedLambda.tlexp
   val singletonTy
       : singleton_ty_body -> Types.singletonTy
   val generateArgs

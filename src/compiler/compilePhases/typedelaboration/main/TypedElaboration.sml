@@ -116,11 +116,6 @@ struct
       | I.ICOPRIM oprimInfo => icexp
       | I.ICTYPED (icexp, ty, loc) =>
         I.ICTYPED (compileExp icexp, ty, loc)
-      | I.ICSIGTYPED {icexp, ty, loc, revealKey} =>
-        I.ICSIGTYPED {icexp = compileExp icexp,
-                      ty = ty,
-                      revealKey = revealKey,
-                      loc = loc}
       | I.ICINTERFACETYPED {icexp, ty, loc} =>
         I.ICINTERFACETYPED {icexp = compileExp icexp,
                             ty = ty,
@@ -129,8 +124,8 @@ struct
         I.ICAPPM (compileExp icexp, map compileExp icexplist, loc)
       | I.ICAPPM_NOUNIFY (icexp, icexplist, loc) =>
         I.ICAPPM_NOUNIFY (compileExp icexp, map compileExp icexplist, loc)
-      | I.ICLET (icdecList, icexpList, loc) =>
-        I.ICLET (map compileDecl icdecList, map compileExp icexpList, loc)
+      | I.ICLET (icdecList, icexp, loc) =>
+        I.ICLET (map compileDecl icdecList, compileExp icexp, loc)
       | I.ICTYCAST (tycastList, icexp, loc) =>
         I.ICTYCAST (tycastList, compileExp icexp, loc)
       | I.ICRECORD (fields, loc) =>
@@ -154,7 +149,7 @@ struct
                    loc)
       | I.ICDYNAMICCASE (icexp, rules, loc) =>
         I.ICDYNAMICCASE (compileExp icexp,
-                         map compileRule1 rules,
+                         map compileDynRule rules,
                          loc)
       | I.ICRECORD_UPDATE (icexp, fields, loc) =>
         I.ICRECORD_UPDATE (compileExp icexp,
@@ -189,8 +184,8 @@ struct
   and compileRule {args: I.icpat list, body} =
       {args = args, body = compileExp body}
 
-  and compileRule1 {arg: I.icpat, body} =
-      {arg = arg, body = compileExp body}
+  and compileDynRule {tyvars, arg: I.icpat, body} =
+      {tyvars = tyvars, arg = arg, body = compileExp body}
 
   and compileDecl icdecl =
       case icdecl of
@@ -198,6 +193,11 @@ struct
         I.ICVAL (tvars,
                  map (fn (pat, exp) => (pat, compileExp exp)) binds,
                  loc)
+      | I.ICVAL_OPAQUE_SIG {var, exp, ty, revealKey,  loc} =>
+        I.ICVAL_OPAQUE_SIG 
+          {var = var, exp = compileExp exp, ty = ty, revealKey = revealKey,  loc = loc}
+      | I.ICVAL_TRANS_SIG {var, exp, ty, loc} =>
+        I.ICVAL_TRANS_SIG  {var = var, exp = compileExp exp, ty = ty, loc = loc}
       | I.ICDECFUN {guard, funbinds, loc} =>
         I.ICDECFUN {guard = guard,
                     funbinds = map (fn {funVarInfo, tyList, rules} =>

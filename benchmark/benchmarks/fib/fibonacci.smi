@@ -1,0 +1,4 @@
+_require "basis.smi"
+
+val doit : unit -> unit
+val testit : TextIO.outstream -> unit

@@ -218,7 +218,7 @@ local
             val exp = eval exp
           in
            case exp of
-             RC.RCDATACONSTRUCT {argExpOpt, argTyOpt, con:RC.conInfo, instTyList, loc} =>
+             RC.RCDATACONSTRUCT {argExpOpt, con:RC.conInfo, instTyList, loc} =>
              let
                val ruleOpt =
                    List.find 
@@ -229,9 +229,12 @@ local
                      (NONE, NONE) => (NONE, eval defaultExp)
                    | (NONE, SOME argExp) =>
                      let
-                       val argTy = case argTyOpt 
-                                    of SOME ty => evalT ty
-                                     | NONE => raise bug "none of argTyOpt"
+                       val argTy =
+                           case (case instTyList of
+                                   NONE => TypesBasics.derefTy (#ty con)
+                                 | SOME tys => TypesBasics.tpappTy (#ty con, tys)) of
+                             T.FUNMty ([argTy], _) => evalT argTy
+                           | _ => raise bug "none of argTyOpt"
                        val dummyVar = RCU.newRCVarInfo argTy
                        val argExp = eval argExp
                        val bodyExp = eval defaultExp
@@ -251,7 +254,9 @@ local
              in
                case bindOpt of
                  NONE => bodyExp
-               | SOME bind => RC.RCMONOLET {binds=[bind], bodyExp=bodyExp, loc=loc}
+               | SOME bind => RC.RCLET {decls=[RC.RCVAL(bind, loc)],
+                                        body=bodyExp,
+                                        loc=loc}
              end
            | exp => 
              RC.RCCASE 
@@ -274,12 +279,11 @@ local
           RC.RCCAST ((eval rcexp, evalT expTy), evalT ty, loc)
         | RC.RCCONSTANT {const, loc, ty} =>
           RC.RCCONSTANT {const=const, loc = loc, ty=evalT ty}
-        | RC.RCDATACONSTRUCT {argExpOpt, argTyOpt, con:RC.conInfo, instTyList, loc} => 
+        | RC.RCDATACONSTRUCT {argExpOpt, con:RC.conInfo, instTyList, loc} =>
           RC.RCDATACONSTRUCT
             {argExpOpt = Option.map eval argExpOpt,
              con = evalConInfo context con,
-             instTyList = map evalT instTyList,
-             argTyOpt = Option.map evalT argTyOpt,
+             instTyList = Option.map (map evalT) instTyList,
              loc = loc
             }
         | RC.RCEXNCASE {defaultExp:rcexp, exp:rcexp, expTy:ty, loc:Loc.loc,
@@ -300,17 +304,16 @@ local
                ruleList,
              resultTy = evalT resultTy
             }
-        | RC.RCEXNCONSTRUCT {argExpOpt, exn:RC.exnCon, instTyList, loc} =>
+        | RC.RCEXNCONSTRUCT {argExpOpt, exn:RC.exnCon, loc} =>
           RC.RCEXNCONSTRUCT
             {argExpOpt = Option.map eval argExpOpt,
              exn = evalExnCon context exn,
-             instTyList = map evalT instTyList,
              loc = loc
             }
-        | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} => 
-          RC.RCEXN_CONSTRUCTOR {exnInfo=evalExnInfo context exnInfo, loc=loc}
-        | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
-          RC.RCEXEXN_CONSTRUCTOR
+        | RC.RCEXNTAG {exnInfo, loc} => 
+          RC.RCEXNTAG {exnInfo=evalExnInfo context exnInfo, loc=loc}
+        | RC.RCEXEXNTAG {exExnInfo, loc} =>
+          RC.RCEXEXNTAG
             {exExnInfo=evalExExnInfo context exExnInfo, loc= loc}
         | RC.RCEXVAR {path, ty} =>
           RC.RCEXVAR {path=path, ty=evalT ty}
@@ -350,15 +353,14 @@ local
                       argExpList = map (evalExp context) argExpList,
                       resultTy = evalT resultTy,
                       loc = loc}
-        | RC.RCLET {body:rcexp list, decls, loc, tys} =>
+        | RC.RCLET {body, decls, loc} =>
           let
-            val tys = map evalT tys
             val (context, decls) = evalDeclList context decls
-            val body = map (evalExp context) body
+            val body = evalExp context body
           in
             case decls of
-              nil => RC.RCSEQ {expList=body, expTyList=tys, loc=loc}
-            | _ => RC.RCLET {body=body, decls=decls, loc=loc, tys=tys}
+              nil => body
+            | _ => RC.RCLET {body=body, decls=decls, loc=loc}
           end
         | RC.RCMODIFY {elementExp, elementTy, indexExp, label, loc, recordExp, recordTy} =>
           (case recordExp of
@@ -380,15 +382,6 @@ local
                 recordExp = eval recordExp,
                 recordTy = evalT recordTy}
           )
-        | RC.RCMONOLET {binds:(varInfo * rcexp) list, bodyExp, loc} =>
-          let
-            val (context, binds) = evalBindsSeq context binds
-            val bodyExp = evalExp context bodyExp
-          in
-            case binds of
-              nil => bodyExp
-            | _ => RC.RCMONOLET {binds=binds, bodyExp=bodyExp, loc=loc}
-          end
         | RC.RCOPRIMAPPLY {argExp, instTyList, loc, oprimOp:RC.oprimInfo} =>
           RC.RCOPRIMAPPLY
             {argExp = eval argExp,
@@ -403,18 +396,10 @@ local
              expTyWithoutTAbs = evalT expTyWithoutTAbs,
              loc = loc
             }
-        | RC.RCPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
-          RC.RCPOLYFNM
-            {argVarList=map (evalTyVar context) argVarList,
-             bodyExp=eval bodyExp,
-             bodyTy=evalT bodyTy,
-             btvEnv=evalBtvEnv context btvEnv,
-             loc=loc
-            }
         | RC.RCPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
           RC.RCPRIMAPPLY
             {argExp=eval argExp,
-             instTyList=map evalT instTyList,
+             instTyList=Option.map (map evalT) instTyList,
              loc=loc,
              primOp=evalPrimInfo context primOp
             }
@@ -447,12 +432,6 @@ local
                  resultTy=evalT resultTy
                 }
           end
-        | RC.RCSEQ {expList, expTyList, loc} =>
-          RC.RCSEQ
-            {expList = map eval expList,
-             expTyList = map evalT expTyList,
-             loc = loc
-            }
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (evalT ty, loc)
         | RC.RCREIFYTY (ty, loc) =>
@@ -469,19 +448,6 @@ local
                 val newContext = applyTys context (btvEnv, instTyList)
               in
                 evalExp newContext exp
-              end
-            | RC.RCPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
-              let
-                val newContext = applyTys context (btvEnv, instTyList)
-                val bodyExp = evalExp newContext bodyExp
-                val bodyTy = evalTy newContext bodyTy
-                val argVarList = map (evalTyVar newContext) argVarList
-              in
-                RC.RCFNM
-                  {argVarList=argVarList, 
-                   bodyExp=bodyExp, 
-                   bodyTy=bodyTy, 
-                   loc=loc}
               end
             | _ => 
               RC.RCTAPP {exp=exp,
@@ -545,6 +511,7 @@ local
         | RC.RCDYNAMICTOP _ => raise bug "RCDYNAMICTOP to RCOptimize"
         | RC.RCDYNAMICVIEW _ => raise bug "RCDYNAMICVIEW to RCOptimize"
         | RC.RCDYNAMICCASE _ => raise bug "RCDYNAMICCASE to RCOptimize"
+        | RC.RCDYNAMICEXISTTAPP _ => raise bug "RCDYNAMICEXISTTAPP to RCOptimize"
 
       end
   and applyTerms
@@ -568,18 +535,17 @@ local
       in
         case binds of
           nil => newBody
-        | _ => RC.RCMONOLET {binds=binds, bodyExp=newBody, loc=loc}
+        | _ => RC.RCLET {decls = map (fn x => RC.RCVAL(x, loc)) binds,
+                         body = newBody, loc = loc}
       end
   and evalDecl (tpdecl:RC.rcdecl, (context:context, declListRev:RC.rcdecl list)) =
       case tpdecl of
-        RC.RCEXD (exbinds:{exnInfo:RC.exnInfo, loc:Loc.loc} list, loc) =>
+        RC.RCEXD (exnInfo, loc) =>
         let 
         val res = 
         (context,
          RC.RCEXD
-           (map (fn {exnInfo, loc} =>
-                    {exnInfo=evalExnInfo context exnInfo, loc=loc})
-                exbinds,
+           (evalExnInfo context exnInfo,
             loc)
          ::declListRev
         )
@@ -598,7 +564,7 @@ local
               | newExp => 
                 let
                   val newVar = RCU.newRCVarInfo (#ty varInfo)
-                  val bindDecl = RC.RCVAL ([(newVar, newExp)], loc)
+                  val bindDecl = RC.RCVAL ((newVar, newExp), loc)
                   val newTpexntag =
                       RC.RCEXNTAGD ({exnInfo=evalExnInfo context exnInfo,
                                      varInfo=newVar},
@@ -615,24 +581,11 @@ local
          RC.RCEXPORTEXN (evalExnInfo context exnInfo)
          :: declListRev
         )
-      | RC.RCEXPORTVAR varInfo =>
-        let
-          val tpexp = evalVar context varInfo
-          val (internalVar, declListRev) = 
-              case tpexp of
-                RC.RCVAR var => (var, declListRev)
-              | _ => 
-                let
-                  val varInfo = evalTyVar context varInfo
-                in
-                  (varInfo,
-                   RC.RCVAL ([(varInfo, tpexp)], Loc.noloc) :: declListRev)
-                end
-        in
-          (context,
-           RC.RCEXPORTVAR varInfo :: declListRev
-          )
-        end
+      | RC.RCEXPORTVAR {var, exp} =>
+        (context,
+         RC.RCEXPORTVAR {var = var, exp = evalExp context exp}
+         :: declListRev
+        )
       | RC.RCEXTERNEXN ({path, ty}, provider) =>
         (context,
          RC.RCEXTERNEXN ({path=path, ty=evalTy context ty}, provider)
@@ -648,27 +601,24 @@ local
          RC.RCEXTERNVAR ({path=path, ty=evalTy context ty}, provider)
          :: declListRev
         )
-      | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>
+      | RC.RCVAL (bind:(varInfo * rcexp), loc) =>
         let
-          val (context, binds) = evalBindsSeq context binds
+          val (context, binds) = evalBindSeq (bind, (context, nil))
           val declListRev =
-              case binds of
-                nil => declListRev
-              | _ => RC.RCVAL (binds, loc) :: declListRev
+              map (fn x => RC.RCVAL (x, loc)) binds @ declListRev
         in
           (context, declListRev)
         end
       | RC.RCVALPOLYREC
           (btvEnv,
-           recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,
+           recbinds:{exp:rcexp, var:varInfo} list,
            loc) =>
         let
           val btvEnv = evalBtvEnv context btvEnv
           val recbinds =
               map
-                (fn {exp, expTy, var} =>
+                (fn {exp, var} =>
                     {var=evalTyVar context var,
-                     expTy=evalTy context expTy,
                      exp=evalExp context exp}
                 )
                 recbinds
@@ -678,13 +628,12 @@ local
            :: declListRev
           )
         end
-      | RC.RCVALREC (recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,loc) =>
+      | RC.RCVALREC (recbinds:{exp:rcexp, var:varInfo} list,loc) =>
         let
           val recbinds =
               map
-                (fn {exp, expTy, var} =>
+                (fn {exp, var} =>
                     {var=evalTyVar context var,
-                     expTy=evalTy context expTy,
                      exp=evalExp context exp}
                 )
                 recbinds

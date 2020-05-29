@@ -114,8 +114,8 @@ struct
       printCode
         flagList
         (if !Control.printWithType
-         then Bug.prettyPrint o RecordCalc.format_rcdecl
-         else Bug.prettyPrint o RecordCalc.formatWithoutType_rcdecl)
+         then Bug.prettyPrint o RecordCalc.formatWithType_rcdecl
+         else Bug.prettyPrint o RecordCalc.format_rcdecl)
         title code
 
   fun printTypedLambda flagList title code =
@@ -334,6 +334,7 @@ struct
         tpdecs
       end
 
+(*
   fun doRecordCalcOptimization rcdecs =
       let
         val _ = #start Counter.RecordCalcOptimizationTimeCounter()
@@ -344,6 +345,7 @@ struct
       in
         rcdecs
       end
+*)
 
   fun doVALRECOptimization icdecls =
       let
@@ -369,13 +371,13 @@ struct
   fun doMatchCompilation outputWarnings tpdecs =
       let
         val _ = #start Counter.matchCompilationTimeCounter()
-        val (rcdecs, warnings) = MatchCompiler.compile tpdecs
+        val (tpdecs, warnings) = MatchCompiler.compile tpdecs
         val _ =  #stop Counter.matchCompilationTimeCounter()
-        val _ = printRecordCalc [Control.printMatchCompile]
-                                "Match Compiled" rcdecs
+        val _ = printTypedCalc [Control.printMatchCompile]
+                               "Match Compiled" tpdecs
         val _ = outputWarnings warnings
       in
-        rcdecs
+        tpdecs
       end
 
   fun doTypedElaboration icdecls =
@@ -388,31 +390,31 @@ struct
         icdecls
       end
 
-  fun doReifyTopEnv env version rcdecls =
+  fun doReifyTopEnv env version tpdecls =
       let
         val _ = #start Counter.reifyTopEnvTimeCounter()
         val {env, decls} = ReifyTopEnv.topEnvBind env version
         val _ =  #stop Counter.reifyTopEnvTimeCounter()
-        val rcdecls = rcdecls @ decls
-        val _ = printRecordCalc [Control.printReifyTopEnv] "ReifyTopEnv" rcdecls
+        val tpdecls = tpdecls @ decls
+        val _ = printTypedCalc [Control.printReifyTopEnv] "ReifyTopEnv" tpdecls
       in
-        (env, rcdecls)
+        (env, tpdecls)
       end
 
-  fun doFFICompilation rcdecs =
+  fun doFFICompilation tpdecs =
       let
         val _ = #start Counter.ffiCompilationTimeCounter()
-        val rcdecs = FFICompilation.compile rcdecs
+        val tpdecs = FFICompilation.compile tpdecs
         val _ =  #stop Counter.ffiCompilationTimeCounter()
-        val _ = printRecordCalc [Control.printFFICompile] "FFI Compiled" rcdecs
+        val _ = printTypedCalc [Control.printFFICompile] "FFI Compiled" tpdecs
       in
-        rcdecs
+        tpdecs
       end
 
-  fun doRecordCompilation rcdecs =
+  fun doRecordCompilation tpdecs =
       let
        val _ = #start Counter.recordCompilationTimeCounter()
-        val rcdecs = RecordCompilation.compile rcdecs
+        val rcdecs = RecordCompilation.compile tpdecs
         val _ =  #stop Counter.recordCompilationTimeCounter()
         val _ = printRecordCalc [Control.printRecordCompile]
                                 "Record Compiled" rcdecs
@@ -420,10 +422,10 @@ struct
        rcdecs
       end
 
-  fun doDatatypeCompilation rcdecs =
+  fun doDatatypeCompilation tpdecs =
       let
         val _ = #start Counter.datatypeCompilationTimeCounter()
-        val tldecs = DatatypeCompilation.compile rcdecs
+        val tldecs = DatatypeCompilation.compile tpdecs
         val _ =  #stop Counter.datatypeCompilationTimeCounter()
         val _ = printTypedLambda [Control.printDatatypeCompile]
                                  "Datatype Compiled" tldecs
@@ -431,10 +433,10 @@ struct
         tldecs
       end
 
-  fun doBitmapCompilation2 tldecs =
+  fun doBitmapCompilation2 rcdecs =
       let
         val _ = #start Counter.bitmapCompilationTimeCounter()
-        val bcdecs = BitmapCompilation2.compile tldecs
+        val bcdecs = BitmapCompilation2.compile rcdecs
         val _ =  #stop Counter.bitmapCompilationTimeCounter()
         val _ = printBitmapCalc2 Control.printBitmapCompile
                                  "Bitmap Compiled" bcdecs
@@ -633,10 +635,21 @@ struct
 
         val nameevalTopEnv = NameEvalEnvUtils.resetInternalId nameevalTopEnv
 
-
         val tpdecs = if !Control.doUncurryOptimization
                      then doUncurryOptimization tpdecs
                      else tpdecs
+
+        val (nameevalTopEnv, tpdecs) =
+            if !Control.interactiveMode andalso not (!Control.skipPrinter)
+            then doReifyTopEnv {sessionTopEnv=nameevalTopEnv,
+                                requireTopEnv=topEnv}
+                               version
+                               tpdecs
+            else (nameevalTopEnv, tpdecs)
+        val newContext = {topEnv=nameevalTopEnv, fixEnv=newFixEnv}
+
+        val tpdecs = doFFICompilation tpdecs
+        val tpdecs = doMatchCompilation outputWarnings tpdecs
 
         val tpdecs =
             if stopAt <> ErrorCheck andalso !Control.doPolyTyElimination
@@ -648,30 +661,21 @@ struct
             then doTypedCalcOptimization tpdecs
             else tpdecs
 
-        val rcdecs = doMatchCompilation outputWarnings tpdecs
+        val tldecs = doDatatypeCompilation tpdecs
 
         val _ = if stopAt = ErrorCheck
                 then raise Return (dependency, STOPPED)
                 else ()
 
-        val (nameevalTopEnv, rcdecs) =
-            if !Control.interactiveMode andalso not (!Control.skipPrinter)
-            then doReifyTopEnv {sessionTopEnv=nameevalTopEnv,
-                                requireTopEnv=topEnv}
-                               version
-                               rcdecs
-            else (nameevalTopEnv, rcdecs)
-        val newContext = {topEnv=nameevalTopEnv, fixEnv=newFixEnv}
+        val rcdecs = doRecordCompilation tldecs
 
-        val rcdecs = doFFICompilation rcdecs
-        val rcdecs = doRecordCompilation rcdecs
-
+(*
         val rcdecs = if !Control.doRCOptimization
                      then doRecordCalcOptimization rcdecs
                      else rcdecs
+*)
 
-        val tldecs = doDatatypeCompilation rcdecs
-        val bcdecs = doBitmapCompilation2 tldecs
+        val bcdecs = doBitmapCompilation2 rcdecs
         val cccalc = doClosureConversion2 bcdecs
         val nccalc = doCallingConventionCompile cccalc
         val ancalc = doANormalize nccalc

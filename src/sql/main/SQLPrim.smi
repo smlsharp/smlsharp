@@ -51,6 +51,7 @@ struct
       DBty of 'w Ast.db * (unit -> 'toy)
 
   val closeRes : res -> unit
+  val closeCommand : res -> unit
 
   val queryCommand : ('a list,'w) query -> ('a cursor,'w) command
 
@@ -64,6 +65,7 @@ struct
   val sqleval : (('a,'w) db -> ('b,'w) command) -> 'a conn -> 'b
 
   val connect : 'a server -> 'a conn
+  val connectAndCreate : 'a server -> 'a conn
   val closeConn : 'a conn -> unit
   val closeCursor : 'a cursor -> unit
   val fetch : 'a cursor -> 'a option
@@ -119,6 +121,51 @@ struct
         | timestamp => fromSQL_timestampOption
         | numeric => fromSQL_numericOption
 
+  val toSQL_int : int -> Ast.const
+  val toSQL_intInf : intInf -> Ast.const
+  val toSQL_word : word -> Ast.const
+  val toSQL_char : char -> Ast.const
+  val toSQL_bool : bool -> Ast.const
+  val toSQL_string : string -> Ast.const
+  val toSQL_real : real -> Ast.const
+  val toSQL_real32 : real32 -> Ast.const
+  val toSQL_timestamp : timestamp -> Ast.const
+  val toSQL_numeric : numeric -> Ast.const
+  val toSQL_intOption : int option -> Ast.const
+  val toSQL_intInfOption : IntInf.int option -> Ast.const
+  val toSQL_wordOption : word option -> Ast.const
+  val toSQL_charOption : char option -> Ast.const
+  val toSQL_boolOption : bool option -> Ast.const
+  val toSQL_stringOption : string option -> Ast.const
+  val toSQL_realOption : real option -> Ast.const
+  val toSQL_real32Option : real32 option -> Ast.const
+  val toSQL_timestampOption : timestamp option -> Ast.const
+  val toSQL_numericOption : numeric option -> Ast.const
+  val toSQL =
+      case 'a in 'a -> Ast.const of
+        int => toSQL_int
+      | intInf => toSQL_intInf
+      | word => toSQL_word
+      | char => toSQL_char
+      | bool => toSQL_bool
+      | string => toSQL_string
+      | real => toSQL_real
+      | real32 => toSQL_real32
+      | timestamp => toSQL_timestamp
+      | numeric => toSQL_numeric
+      | 'b option =>
+        case 'b in 'b option -> Ast.const of
+          int => toSQL_intOption
+        | intInf => toSQL_intInfOption
+        | word => toSQL_wordOption
+        | char => toSQL_charOption
+        | bool => toSQL_boolOption
+        | string => toSQL_stringOption
+        | real => toSQL_realOption
+        | real32 => toSQL_real32Option
+        | timestamp => toSQL_timestampOption
+        | numeric => toSQL_numericOption
+
   val toyServer : unit -> 'a
 
   val ty_int : (unit -> int) -> Ty.schema_column
@@ -141,7 +188,6 @@ struct
   val ty_real32Option : (unit -> real32 option) -> Ty.schema_column
   val ty_timestampOption : (unit -> timestamp option) -> Ty.schema_column
   val ty_numericOption : (unit -> numeric option) -> Ty.schema_column
-
   val ty =
       case 'a in (unit -> 'a) -> Ty.schema_column of
         int => ty_int
@@ -187,7 +233,6 @@ struct
   val compare_real32Option : real32 option * real32 option -> order
   val compare_timestampOption : timestamp option * timestamp option -> order
   val compare_numericOption : numeric option * numeric option -> order
-
   val compare =
       case 'a in 'a * 'a -> order of
         int => compare_int
@@ -245,483 +290,298 @@ struct
     val groupBy : ('a -> 'b) -> ('b * 'b -> order) -> 'a list -> 'a list list
   end
 
-  val wrap_int : int -> Ast.const
-  val wrap_intInf : intInf -> Ast.const
-  val wrap_word : word -> Ast.const
-  val wrap_char : char -> Ast.const
-  val wrap_bool : bool -> Ast.const
-  val wrap_string : string -> Ast.const
-  val wrap_real : real -> Ast.const
-  val wrap_real32 : real32 -> Ast.const
-  val wrap_numeric : numeric -> Ast.const
-  val unwrap_int : Ast.const -> int
-  val unwrap_intInf : Ast.const -> intInf
-  val unwrap_word : Ast.const -> word
-  val unwrap_char : Ast.const -> char
-  val unwrap_bool : Ast.const -> bool
-  val unwrap_string : Ast.const -> string
-  val unwrap_real : Ast.const -> real
-  val unwrap_real32 : Ast.const -> real32
-  val unwrap_numeric : Ast.const -> numeric
-  val unwrap_intOption : Ast.const -> int option
-  val unwrap_intInfOption : Ast.const -> intInf option
-  val unwrap_wordOption : Ast.const -> word option
-  val unwrap_charOption : Ast.const -> char option
-  val unwrap_boolOption : Ast.const -> bool option
-  val unwrap_stringOption : Ast.const -> string option
-  val unwrap_realOption : Ast.const -> real option
-  val unwrap_real32Option : Ast.const -> real32 option
-  val unwrap_numericOption : Ast.const -> numeric option
-  val wrap =
-      case 'a in 'a -> Ast.const of
-        int => wrap_int
-      | intInf => wrap_intInf
-      | word => wrap_word
-      | char => wrap_char
-      | bool => wrap_bool
-      | string => wrap_string
-      | real => wrap_real
-      | real32 => wrap_real32
-      | numeric => wrap_numeric
-  val unwrapInt =
-      case 'a in Ast.const -> 'a of
-        int => unwrap_int
-      | intInf => unwrap_intInf
-      | numeric => unwrap_numeric
-      | 'b option =>
-        case 'b in Ast.const -> 'b option of
-          int => unwrap_intOption
-        | intInf => unwrap_intInfOption
-        | numeric => unwrap_numericOption
-  val unwrapWord =
-      case 'a in Ast.const -> 'a of
-        word => unwrap_word
-      | numeric => unwrap_numeric
-      | 'b option =>
-        case 'b in Ast.const -> 'b option of
-          word => unwrap_wordOption
-        | numeric => unwrap_numericOption
-  val unwrapReal =
-      case 'a in Ast.const -> 'a of
-        real => unwrap_real
-      | real32 => unwrap_real32
-      | numeric => unwrap_numeric
-      | 'b option =>
-        case 'b in Ast.const -> 'b option of
-          real => unwrap_realOption
-        | real32 => unwrap_real32Option
-        | numeric => unwrap_numericOption
-  val unwrapString =
-      case 'a in Ast.const -> 'a of
-        string => unwrap_string
-      | string option => unwrap_stringOption
-  val unwrapChar =
-      case 'a in Ast.const -> 'a of
-        char => unwrap_char
-      | char option => unwrap_charOption
-  val unwrapBool =
-      case 'a in Ast.const -> 'a of
-        bool => unwrap_bool
-      | bool option => unwrap_boolOption
+  val add_intOption : int option * int option -> int option
+  val add_intInfOption : intInf option * intInf option -> intInf option
+  val add_wordOption : word option * word option -> word option
+  val add_realOption : real option * real option -> real option
+  val add_real32Option : real32 option * real32 option -> real32 option
+  val add_numericOption : numeric option * numeric option -> numeric option
 
-  val toSQL_int : int -> ('a -> int, 'w) exp
-  val toSQL_intInf : intInf -> ('a -> intInf, 'w) exp
-  val toSQL_word : word -> ('a -> word, 'w) exp
-  val toSQL_char : char -> ('a -> char, 'w) exp
-  val toSQL_bool : bool -> ('a -> bool, 'w) exp
-  val toSQL_string : string -> ('a -> string, 'w) exp
-  val toSQL_real : real -> ('a -> real, 'w) exp
-  val toSQL_real32 : real32 -> ('a -> real32, 'w) exp
-  val toSQL_timestamp : timestamp -> ('a -> timestamp, 'w) exp
-  val toSQL_numeric : numeric -> ('a -> numeric, 'w) exp
-  val toSQL_intOption : int option -> ('a -> int option, 'w) exp
-  val toSQL_intInfOption : IntInf.int option -> ('a -> intInf option, 'w) exp
-  val toSQL_wordOption : word option -> ('a -> word option, 'w) exp
-  val toSQL_charOption : char option -> ('a -> char option, 'w) exp
-  val toSQL_boolOption : bool option -> ('a -> bool option, 'w) exp
-  val toSQL_stringOption : string option -> ('a -> string option, 'w) exp
-  val toSQL_realOption : real option -> ('a -> real option, 'w) exp
-  val toSQL_real32Option : real32 option -> ('a -> real32 option, 'w) exp
-  val toSQL_timestampOption
-      : timestamp option -> ('a -> timestamp option, 'w) exp
-  val toSQL_numericOption : numeric option -> ('a -> numeric option, 'w) exp
+  val sub_intOption : int option * int option -> int option
+  val sub_intInfOption : intInf option * intInf option -> intInf option
+  val sub_wordOption : word option * word option -> word option
+  val sub_realOption : real option * real option -> real option
+  val sub_real32Option : real32 option * real32 option -> real32 option
+  val sub_numericOption : numeric option * numeric option -> numeric option
 
-  type ('a,'w) op1 = ('a,'w) exp -> ('a,'w) exp
-  type ('a,'w) op2 = ('a,'w) exp * ('a,'w) exp -> ('a,'w) exp
-  type ('a,'b,'w) cmpop =
-       ('a -> 'b, 'w) exp * ('a -> 'b, 'w) exp -> ('a -> bool3, 'w) exp
+  val mul_intOption : int option * int option -> int option
+  val mul_intInfOption : intInf option * intInf option -> intInf option
+  val mul_wordOption : word option * word option -> word option
+  val mul_realOption : real option * real option -> real option
+  val mul_real32Option : real32 option * real32 option -> real32 option
+  val mul_numericOption : numeric option * numeric option -> numeric option
 
-  val add_int : ('a -> int, 'w) op2
-  val add_intInf : ('a -> intInf, 'w) op2
-  val add_word : ('a -> word, 'w) op2
-  val add_real : ('a -> real, 'w) op2
-  val add_real32 : ('a -> real32, 'w) op2
-  val add_numeric : ('a -> numeric, 'w) op2
-  val add_intOption : ('a -> int option, 'w) op2
-  val add_intInfOption : ('a -> intInf option, 'w) op2
-  val add_wordOption : ('a -> word option, 'w) op2
-  val add_realOption : ('a -> real option, 'w) op2
-  val add_real32Option : ('a -> real32 option, 'w) op2
-  val add_numericOption : ('a -> numeric option, 'w) op2
+  val div_intOption : int option * int option -> int option
+  val div_intInfOption : intInf option * intInf option -> intInf option
+  val div_wordOption : word option * word option -> word option
+  val div_realOption : real option * real option -> real option
+  val div_real32Option : real32 option * real32 option -> real32 option
+  val div_numericOption : numeric option * numeric option -> numeric option
 
-  val sub_int : ('a -> int, 'w) op2
-  val sub_intInf : ('a -> intInf, 'w) op2
-  val sub_word : ('a -> word, 'w) op2
-  val sub_real : ('a -> real, 'w) op2
-  val sub_real32 : ('a -> real32, 'w) op2
-  val sub_numeric : ('a -> numeric, 'w) op2
-  val sub_intOption : ('a -> int option, 'w) op2
-  val sub_intInfOption : ('a -> intInf option, 'w) op2
-  val sub_wordOption : ('a -> word option, 'w) op2
-  val sub_realOption : ('a -> real option, 'w) op2
-  val sub_real32Option : ('a -> real32 option, 'w) op2
-  val sub_numericOption : ('a -> numeric option, 'w) op2
+  val mod_real : real * real -> real
+  val mod_real32 : real32 * real32 -> real32
+  val mod_intOption : int option * int option -> int option
+  val mod_intInfOption : intInf option * intInf option -> intInf option
+  val mod_wordOption : word option * word option -> word option
+  val mod_realOption : real option * real option -> real option
+  val mod_real32Option : real32 option * real32 option -> real32 option
+  val mod_numericOption : numeric option * numeric option -> numeric option
 
-  val mul_int : ('a -> int, 'w) op2
-  val mul_intInf : ('a -> intInf, 'w) op2
-  val mul_word : ('a -> word, 'w) op2
-  val mul_real : ('a -> real, 'w) op2
-  val mul_real32 : ('a -> real32, 'w) op2
-  val mul_numeric : ('a -> numeric, 'w) op2
-  val mul_intOption : ('a -> int option, 'w) op2
-  val mul_intInfOption : ('a -> intInf option, 'w) op2
-  val mul_wordOption : ('a -> word option, 'w) op2
-  val mul_realOption : ('a -> real option, 'w) op2
-  val mul_real32Option : ('a -> real32 option, 'w) op2
-  val mul_numericOption : ('a -> numeric option, 'w) op2
+  val neg_intOption : int option -> int option
+  val neg_intInfOption : intInf option -> intInf option
+  val neg_wordOption : word option -> word option
+  val neg_realOption : real option -> real option
+  val neg_real32Option : real32 option -> real32 option
+  val neg_numericOption : numeric option -> numeric option
 
-  val div_int : ('a -> int, 'w) op2
-  val div_intInf : ('a -> intInf, 'w) op2
-  val div_word : ('a -> word, 'w) op2
-  val div_real : ('a -> real, 'w) op2
-  val div_real32 : ('a -> real32, 'w) op2
-  val div_numeric : ('a -> numeric, 'w) op2
-  val div_intOption : ('a -> int option, 'w) op2
-  val div_intInfOption : ('a -> intInf option, 'w) op2
-  val div_wordOption : ('a -> word option, 'w) op2
-  val div_realOption : ('a -> real option, 'w) op2
-  val div_real32Option : ('a -> real32 option, 'w) op2
-  val div_numericOption : ('a -> numeric option, 'w) op2
+  val abs_word : word -> word
+  val abs_intOption : int option -> int option
+  val abs_intInfOption : intInf option -> intInf option
+  val abs_wordOption : word option -> word option
+  val abs_realOption : real option -> real option
+  val abs_real32Option : real32 option -> real32 option
+  val abs_numericOption : numeric option -> numeric option
 
-  val mod_int : ('a -> int, 'w) op2
-  val mod_intInf : ('a -> intInf, 'w) op2
-  val mod_word : ('a -> word, 'w) op2
-  val mod_real : ('a -> real, 'w) op2
-  val mod_real32 : ('a -> real32, 'w) op2
-  val mod_numeric : ('a -> numeric, 'w) op2
-  val mod_intOption : ('a -> int option, 'w) op2
-  val mod_intInfOption : ('a -> intInf option, 'w) op2
-  val mod_wordOption : ('a -> word option, 'w) op2
-  val mod_realOption : ('a -> real option, 'w) op2
-  val mod_real32Option : ('a -> real32 option, 'w) op2
-  val mod_numericOption : ('a -> numeric option, 'w) op2
+  val lt_int : int * int -> bool3
+  val lt_intInf : intInf * intInf -> bool3
+  val lt_word : word * word -> bool3
+  val lt_char : char * char -> bool3
+  val lt_bool : bool * bool -> bool3
+  val lt_string : string * string -> bool3
+  val lt_real : real * real -> bool3
+  val lt_real32 : real32 * real32 -> bool3
+  val lt_timestamp : timestamp * timestamp -> bool3
+  val lt_numeric : numeric * numeric -> bool3
+  val lt_intOption : int option * int option -> bool3
+  val lt_intInfOption : intInf option * intInf option -> bool3
+  val lt_wordOption : word option * word option -> bool3
+  val lt_charOption : char option * char option -> bool3
+  val lt_boolOption : bool option * bool option -> bool3
+  val lt_stringOption : string option * string option -> bool3
+  val lt_realOption : real option * real option -> bool3
+  val lt_real32Option : real32 option * real32 option -> bool3
+  val lt_timestampOption : timestamp option * timestamp option -> bool3
+  val lt_numericOption : numeric option * numeric option -> bool3
 
-  val infix_mod_int : ('a -> int, 'w) op2
-  val infix_mod_intInf : ('a -> intInf, 'w) op2
-  val infix_mod_word : ('a -> word, 'w) op2
-  val infix_mod_real : ('a -> real, 'w) op2
-  val infix_mod_real32 : ('a -> real32, 'w) op2
-  val infix_mod_numeric : ('a -> numeric, 'w) op2
-  val infix_mod_intOption : ('a -> int option, 'w) op2
-  val infix_mod_intInfOption : ('a -> intInf option, 'w) op2
-  val infix_mod_wordOption : ('a -> word option, 'w) op2
-  val infix_mod_realOption : ('a -> real option, 'w) op2
-  val infix_mod_real32Option : ('a -> real32 option, 'w) op2
-  val infix_mod_numericOption : ('a -> numeric option, 'w) op2
+  val gt_int : int * int -> bool3
+  val gt_intInf : intInf * intInf -> bool3
+  val gt_word : word * word -> bool3
+  val gt_char : char * char -> bool3
+  val gt_bool : bool * bool -> bool3
+  val gt_string : string * string -> bool3
+  val gt_real : real * real -> bool3
+  val gt_real32 : real32 * real32 -> bool3
+  val gt_timestamp : timestamp * timestamp -> bool3
+  val gt_numeric : numeric * numeric -> bool3
+  val gt_intOption : int option * int option -> bool3
+  val gt_intInfOption : intInf option * intInf option -> bool3
+  val gt_wordOption : word option * word option -> bool3
+  val gt_charOption : char option * char option -> bool3
+  val gt_boolOption : bool option * bool option -> bool3
+  val gt_stringOption : string option * string option -> bool3
+  val gt_realOption : real option * real option -> bool3
+  val gt_real32Option : real32 option * real32 option -> bool3
+  val gt_timestampOption : timestamp option * timestamp option -> bool3
+  val gt_numericOption : numeric option * numeric option -> bool3
 
-  val neg_int : ('a -> int, 'w) op1
-  val neg_intInf : ('a -> intInf, 'w) op1
-  val neg_word : ('a -> word, 'w) op1
-  val neg_real : ('a -> real, 'w) op1
-  val neg_real32 : ('a -> real32, 'w) op1
-  val neg_numeric : ('a -> numeric, 'w) op1
-  val neg_intOption : ('a -> int option, 'w) op1
-  val neg_intInfOption : ('a -> intInf option, 'w) op1
-  val neg_wordOption : ('a -> word option, 'w) op1
-  val neg_realOption : ('a -> real option, 'w) op1
-  val neg_real32Option : ('a -> real32 option, 'w) op1
-  val neg_numericOption : ('a -> numeric option, 'w) op1
+  val le_int : int * int -> bool3
+  val le_intInf : intInf * intInf -> bool3
+  val le_word : word * word -> bool3
+  val le_char : char * char -> bool3
+  val le_bool : bool * bool -> bool3
+  val le_string : string * string -> bool3
+  val le_real : real * real -> bool3
+  val le_real32 : real32 * real32 -> bool3
+  val le_timestamp : timestamp * timestamp -> bool3
+  val le_numeric : numeric * numeric -> bool3
+  val le_intOption : int option * int option -> bool3
+  val le_intInfOption : intInf option * intInf option -> bool3
+  val le_wordOption : word option * word option -> bool3
+  val le_charOption : char option * char option -> bool3
+  val le_boolOption : bool option * bool option -> bool3
+  val le_stringOption : string option * string option -> bool3
+  val le_realOption : real option * real option -> bool3
+  val le_real32Option : real32 option * real32 option -> bool3
+  val le_timestampOption : timestamp option * timestamp option -> bool3
+  val le_numericOption : numeric option * numeric option -> bool3
 
-  val abs_int : ('a -> int, 'w) op1
-  val abs_intInf : ('a -> intInf, 'w) op1
-  val abs_word : ('a -> word, 'w) op1
-  val abs_real : ('a -> real, 'w) op1
-  val abs_real32 : ('a -> real32, 'w) op1
-  val abs_numeric : ('a -> numeric, 'w) op1
-  val abs_intOption : ('a -> int option, 'w) op1
-  val abs_intInfOption : ('a -> intInf option, 'w) op1
-  val abs_wordOption : ('a -> word option, 'w) op1
-  val abs_realOption : ('a -> real option, 'w) op1
-  val abs_real32Option : ('a -> real32 option, 'w) op1
-  val abs_numericOption : ('a -> numeric option, 'w) op1
+  val ge_int : int * int -> bool3
+  val ge_intInf : intInf * intInf -> bool3
+  val ge_word : word * word -> bool3
+  val ge_char : char * char -> bool3
+  val ge_bool : bool * bool -> bool3
+  val ge_string : string * string -> bool3
+  val ge_real : real * real -> bool3
+  val ge_real32 : real32 * real32 -> bool3
+  val ge_timestamp : timestamp * timestamp -> bool3
+  val ge_numeric : numeric * numeric -> bool3
+  val ge_intOption : int option * int option -> bool3
+  val ge_intInfOption : intInf option * intInf option -> bool3
+  val ge_wordOption : word option * word option -> bool3
+  val ge_charOption : char option * char option -> bool3
+  val ge_boolOption : bool option * bool option -> bool3
+  val ge_stringOption : string option * string option -> bool3
+  val ge_realOption : real option * real option -> bool3
+  val ge_real32Option : real32 option * real32 option -> bool3
+  val ge_timestampOption : timestamp option * timestamp option -> bool3
+  val ge_numericOption : numeric option * numeric option -> bool3
 
-  val lt_int : ('a, int, 'w) cmpop
-  val lt_intInf : ('a, intInf, 'w) cmpop
-  val lt_word : ('a, word, 'w) cmpop
-  val lt_char : ('a, char, 'w) cmpop
-  val lt_bool : ('a, bool, 'w) cmpop
-  val lt_string : ('a, string, 'w) cmpop
-  val lt_real : ('a, real, 'w) cmpop
-  val lt_real32 : ('a, real32, 'w) cmpop
-  val lt_timestamp : ('a, timestamp, 'w) cmpop
-  val lt_numeric : ('a, numeric, 'w) cmpop
-  val lt_intOption : ('a, int option, 'w) cmpop
-  val lt_intInfOption : ('a, intInf option, 'w) cmpop
-  val lt_wordOption : ('a, word option, 'w) cmpop
-  val lt_charOption : ('a, char option, 'w) cmpop
-  val lt_boolOption : ('a, bool option, 'w) cmpop
-  val lt_stringOption : ('a, string option, 'w) cmpop
-  val lt_realOption : ('a, real option, 'w) cmpop
-  val lt_real32Option : ('a, real32 option, 'w) cmpop
-  val lt_timestampOption : ('a, timestamp option, 'w) cmpop
-  val lt_numericOption : ('a, numeric option, 'w) cmpop
+  val eq_int : int * int -> bool3
+  val eq_intInf : intInf * intInf -> bool3
+  val eq_word : word * word -> bool3
+  val eq_char : char * char -> bool3
+  val eq_bool : bool * bool -> bool3
+  val eq_string : string * string -> bool3
+  val eq_real : real * real -> bool3
+  val eq_real32 : real32 * real32 -> bool3
+  val eq_timestamp : timestamp * timestamp -> bool3
+  val eq_numeric : numeric * numeric -> bool3
+  val eq_intOption : int option * int option -> bool3
+  val eq_intInfOption : intInf option * intInf option -> bool3
+  val eq_wordOption : word option * word option -> bool3
+  val eq_charOption : char option * char option -> bool3
+  val eq_boolOption : bool option * bool option -> bool3
+  val eq_stringOption : string option * string option -> bool3
+  val eq_realOption : real option * real option -> bool3
+  val eq_real32Option : real32 option * real32 option -> bool3
+  val eq_timestampOption : timestamp option * timestamp option -> bool3
+  val eq_numericOption : numeric option * numeric option -> bool3
 
-  val gt_int : ('a, int, 'w) cmpop
-  val gt_intInf : ('a, intInf, 'w) cmpop
-  val gt_word : ('a, word, 'w) cmpop
-  val gt_char : ('a, char, 'w) cmpop
-  val gt_bool : ('a, bool, 'w) cmpop
-  val gt_string : ('a, string, 'w) cmpop
-  val gt_real : ('a, real, 'w) cmpop
-  val gt_real32 : ('a, real32, 'w) cmpop
-  val gt_timestamp : ('a, timestamp, 'w) cmpop
-  val gt_numeric : ('a, numeric, 'w) cmpop
-  val gt_intOption : ('a, int option, 'w) cmpop
-  val gt_intInfOption : ('a, intInf option, 'w) cmpop
-  val gt_wordOption : ('a, word option, 'w) cmpop
-  val gt_charOption : ('a, char option, 'w) cmpop
-  val gt_boolOption : ('a, bool option, 'w) cmpop
-  val gt_stringOption : ('a, string option, 'w) cmpop
-  val gt_realOption : ('a, real option, 'w) cmpop
-  val gt_real32Option : ('a, real32 option, 'w) cmpop
-  val gt_timestampOption : ('a, timestamp option, 'w) cmpop
-  val gt_numericOption : ('a, numeric option, 'w) cmpop
+  val neq_int : int * int -> bool3
+  val neq_intInf : intInf * intInf -> bool3
+  val neq_word : word * word -> bool3
+  val neq_char : char * char -> bool3
+  val neq_bool : bool * bool -> bool3
+  val neq_string : string * string -> bool3
+  val neq_real : real * real -> bool3
+  val neq_real32 : real32 * real32 -> bool3
+  val neq_timestamp : timestamp * timestamp -> bool3
+  val neq_numeric : numeric * numeric -> bool3
+  val neq_intOption : int option * int option -> bool3
+  val neq_intInfOption : intInf option * intInf option -> bool3
+  val neq_wordOption : word option * word option -> bool3
+  val neq_charOption : char option * char option -> bool3
+  val neq_boolOption : bool option * bool option -> bool3
+  val neq_stringOption : string option * string option -> bool3
+  val neq_realOption : real option * real option -> bool3
+  val neq_real32Option : real32 option * real32 option -> bool3
+  val neq_timestampOption : timestamp option * timestamp option -> bool3
+  val neq_numericOption : numeric option * numeric option -> bool3
 
-  val le_int : ('a, int, 'w) cmpop
-  val le_intInf : ('a, intInf, 'w) cmpop
-  val le_word : ('a, word, 'w) cmpop
-  val le_char : ('a, char, 'w) cmpop
-  val le_bool : ('a, bool, 'w) cmpop
-  val le_string : ('a, string, 'w) cmpop
-  val le_real : ('a, real, 'w) cmpop
-  val le_real32 : ('a, real32, 'w) cmpop
-  val le_timestamp : ('a, timestamp, 'w) cmpop
-  val le_numeric : ('a, numeric, 'w) cmpop
-  val le_intOption : ('a, int option, 'w) cmpop
-  val le_intInfOption : ('a, intInf option, 'w) cmpop
-  val le_wordOption : ('a, word option, 'w) cmpop
-  val le_charOption : ('a, char option, 'w) cmpop
-  val le_boolOption : ('a, bool option, 'w) cmpop
-  val le_stringOption : ('a, string option, 'w) cmpop
-  val le_realOption : ('a, real option, 'w) cmpop
-  val le_real32Option : ('a, real32 option, 'w) cmpop
-  val le_timestampOption : ('a, timestamp option, 'w) cmpop
-  val le_numericOption : ('a, numeric option, 'w) cmpop
+  val concat_stringOption : string option * string option -> string option
 
-  val ge_int : ('a, int, 'w) cmpop
-  val ge_intInf : ('a, intInf, 'w) cmpop
-  val ge_word : ('a, word, 'w) cmpop
-  val ge_char : ('a, char, 'w) cmpop
-  val ge_bool : ('a, bool, 'w) cmpop
-  val ge_string : ('a, string, 'w) cmpop
-  val ge_real : ('a, real, 'w) cmpop
-  val ge_real32 : ('a, real32, 'w) cmpop
-  val ge_timestamp : ('a, timestamp, 'w) cmpop
-  val ge_numeric : ('a, numeric, 'w) cmpop
-  val ge_intOption : ('a, int option, 'w) cmpop
-  val ge_intInfOption : ('a, intInf option, 'w) cmpop
-  val ge_wordOption : ('a, word option, 'w) cmpop
-  val ge_charOption : ('a, char option, 'w) cmpop
-  val ge_boolOption : ('a, bool option, 'w) cmpop
-  val ge_stringOption : ('a, string option, 'w) cmpop
-  val ge_realOption : ('a, real option, 'w) cmpop
-  val ge_real32Option : ('a, real32 option, 'w) cmpop
-  val ge_timestampOption : ('a, timestamp option, 'w) cmpop
-  val ge_numericOption : ('a, numeric option, 'w) cmpop
+  val like_string : string * string -> bool3
+  val like_stringOption : string option * string option -> bool3
 
-  val eq_int : ('a, int, 'w) cmpop
-  val eq_intInf : ('a, intInf, 'w) cmpop
-  val eq_word : ('a, word, 'w) cmpop
-  val eq_char : ('a, char, 'w) cmpop
-  val eq_bool : ('a, bool, 'w) cmpop
-  val eq_string : ('a, string, 'w) cmpop
-  val eq_real : ('a, real, 'w) cmpop
-  val eq_real32 : ('a, real32, 'w) cmpop
-  val eq_timestamp : ('a, timestamp, 'w) cmpop
-  val eq_numeric : ('a, numeric, 'w) cmpop
-  val eq_intOption : ('a, int option, 'w) cmpop
-  val eq_intInfOption : ('a, intInf option, 'w) cmpop
-  val eq_wordOption : ('a, word option, 'w) cmpop
-  val eq_charOption : ('a, char option, 'w) cmpop
-  val eq_boolOption : ('a, bool option, 'w) cmpop
-  val eq_stringOption : ('a, string option, 'w) cmpop
-  val eq_realOption : ('a, real option, 'w) cmpop
-  val eq_real32Option : ('a, real32 option, 'w) cmpop
-  val eq_timestampOption : ('a, timestamp option, 'w) cmpop
-  val eq_numericOption : ('a, numeric option, 'w) cmpop
+  val nullif_intOption : int option * int option -> int option
+  val nullif_intInfOption : intInf option * intInf option -> intInf option
+  val nullif_wordOption : word option * word option -> word option
+  val nullif_charOption : char option * char option -> char option
+  val nullif_boolOption : bool option * bool option -> bool option
+  val nullif_stringOption : string option * string option -> string option
+  val nullif_realOption : real option * real option -> real option
+  val nullif_real32Option : real32 option * real32 option -> real32 option
+  val nullif_timestampOption
+      : timestamp option * timestamp option -> timestamp option
+  val nullif_numericOption : numeric option * numeric option -> numeric option
 
-  val neq_int : ('a, int, 'w) cmpop
-  val neq_intInf : ('a, intInf, 'w) cmpop
-  val neq_word : ('a, word, 'w) cmpop
-  val neq_char : ('a, char, 'w) cmpop
-  val neq_bool : ('a, bool, 'w) cmpop
-  val neq_string : ('a, string, 'w) cmpop
-  val neq_real : ('a, real, 'w) cmpop
-  val neq_real32 : ('a, real32, 'w) cmpop
-  val neq_timestamp : ('a, timestamp, 'w) cmpop
-  val neq_numeric : ('a, numeric, 'w) cmpop
-  val neq_intOption : ('a, int option, 'w) cmpop
-  val neq_intInfOption : ('a, intInf option, 'w) cmpop
-  val neq_wordOption : ('a, word option, 'w) cmpop
-  val neq_charOption : ('a, char option, 'w) cmpop
-  val neq_boolOption : ('a, bool option, 'w) cmpop
-  val neq_stringOption : ('a, string option, 'w) cmpop
-  val neq_realOption : ('a, real option, 'w) cmpop
-  val neq_real32Option : ('a, real32 option, 'w) cmpop
-  val neq_timestampOption : ('a, timestamp option, 'w) cmpop
-  val neq_numericOption : ('a, numeric option, 'w) cmpop
+  val avg_int : int list -> numeric option
+  val avg_intInf : intInf list -> numeric option
+  val avg_word : word list -> numeric option
+  val avg_real : real list -> numeric option
+  val avg_real32 : real32 list -> numeric option
+  val avg_numeric : numeric list -> numeric option
+  val avg_intOption : int option list -> numeric option
+  val avg_intInfOption : intInf option list -> numeric option
+  val avg_wordOption : word option list -> numeric option
+  val avg_realOption : real option list -> numeric option
+  val avg_real32Option : real32 option list -> numeric option
+  val avg_numericOption : numeric option list -> numeric option
 
-  val nullif_intOption : ('a -> int option, 'w) op2
-  val nullif_intInfOption : ('a -> intInf option, 'w) op2
-  val nullif_wordOption : ('a -> word option, 'w) op2
-  val nullif_charOption : ('a -> char option, 'w) op2
-  val nullif_boolOption : ('a -> bool option, 'w) op2
-  val nullif_stringOption : ('a -> string option, 'w) op2
-  val nullif_realOption : ('a -> real option, 'w) op2
-  val nullif_real32Option : ('a -> real32 option, 'w) op2
-  val nullif_timestampOption : ('a -> timestamp option, 'w) op2
-  val nullif_numericOption : ('a -> numeric option, 'w) op2
+  val sum_int : int list -> int option
+  val sum_intInf : intInf list -> intInf option
+  val sum_word : word list -> word option
+  val sum_real : real list -> real option
+  val sum_real32 : real32 list -> real32 option
+  val sum_numeric : numeric list -> numeric option
+  val sum_intOption : int option list -> int option
+  val sum_intInfOption : intInf option list -> intInf option
+  val sum_wordOption : word option list -> word option
+  val sum_realOption : real option list -> real option
+  val sum_real32Option : real32 option list -> real32 option
+  val sum_numericOption : numeric option list -> numeric option
 
-  val concat_string : ('a -> string, 'w) op2
-  val concat_stringOption : ('a -> string option, 'w) op2
+  val max_int : int list -> int option
+  val max_intInf : intInf list -> intInf option
+  val max_word : word list -> word option
+  val max_char : char list -> char option
+  val max_bool : bool list -> bool option
+  val max_string : string list -> string option
+  val max_real : real list -> real option
+  val max_real32 : real32 list -> real32 option
+  val max_timestamp : timestamp list -> timestamp option
+  val max_numeric : numeric list -> numeric option
+  val max_intOption : int option list -> int option
+  val max_intInfOption : intInf option list -> intInf option
+  val max_wordOption : word option list -> word option
+  val max_charOption : char option list -> char option
+  val max_boolOption : bool option list -> bool option
+  val max_stringOption : string option list -> string option
+  val max_realOption : real option list -> real option
+  val max_real32Option : real32 option list -> real32 option
+  val max_timestampOption : timestamp option list -> timestamp option
+  val max_numericOption : numeric option list -> numeric option
 
-  val like_string : ('a, string, 'w) cmpop
-  val like_stringOption : ('a, string option, 'w) cmpop
+  val min_int : int list -> int option
+  val min_intInf : intInf list -> intInf option
+  val min_word : word list -> word option
+  val min_char : char list -> char option
+  val min_bool : bool list -> bool option
+  val min_string : string list -> string option
+  val min_real : real list -> real option
+  val min_real32 : real32 list -> real32 option
+  val min_timestamp : timestamp list -> timestamp option
+  val min_numeric : numeric list -> numeric option
+  val min_intOption : int option list -> int option
+  val min_intInfOption : intInf option list -> intInf option
+  val min_wordOption : word option list -> word option
+  val min_charOption : char option list -> char option
+  val min_boolOption : bool option list -> bool option
+  val min_stringOption : string option list -> string option
+  val min_realOption : real option list -> real option
+  val min_real32Option : real32 option list -> real32 option
+  val min_timestampOption : timestamp option list -> timestamp option
+  val min_numericOption : numeric option list -> numeric option
 
-  type ('a,'b,'c,'w) aggop = ('a -> 'b list, 'w) exp -> ('a -> 'c, 'w) exp
+  val count : 'a list -> int
+  val count_option : 'a option list -> int
 
-  val avg_int : ('a, int, numeric option, 'w) aggop
-  val avg_intInf : ('a, intInf, numeric option, 'w) aggop
-  val avg_word : ('a, word, numeric option, 'w) aggop
-  val avg_real : ('a, real, numeric option, 'w) aggop
-  val avg_real32 : ('a, real32, numeric option, 'w) aggop
-  val avg_numeric : ('a, numeric, numeric option, 'w) aggop
-  val avg_intOption : ('a, int option, numeric option, 'w) aggop
-  val avg_intInfOption : ('a, intInf option, numeric option, 'w) aggop
-  val avg_wordOption : ('a, word option, numeric option, 'w) aggop
-  val avg_realOption : ('a, real option, numeric option, 'w) aggop
-  val avg_real32Option : ('a, real32 option, numeric option, 'w) aggop
-  val avg_numericOption : ('a, numeric option, numeric option, 'w) aggop
-
-  val sum_int : ('a, int, int option, 'w) aggop
-  val sum_intInf : ('a, intInf, intInf option, 'w) aggop
-  val sum_word : ('a, word, word option, 'w) aggop
-  val sum_real : ('a, real, real option, 'w) aggop
-  val sum_real32 : ('a, real32, real32 option, 'w) aggop
-  val sum_numeric : ('a, numeric, numeric option, 'w) aggop
-  val sum_intOption : ('a, int option, int option, 'w) aggop
-  val sum_intInfOption : ('a, intInf option, intInf option, 'w) aggop
-  val sum_wordOption : ('a, word option, word option, 'w) aggop
-  val sum_realOption : ('a, real option, real option, 'w) aggop
-  val sum_real32Option : ('a, real32 option, real32 option, 'w) aggop
-  val sum_numericOption : ('a, numeric option, numeric option, 'w) aggop
-
-  val max_int : ('a, int, int option, 'w) aggop
-  val max_intInf : ('a, intInf, intInf option, 'w) aggop
-  val max_word : ('a, word, word option, 'w) aggop
-  val max_char : ('a, char, char option, 'w) aggop
-  val max_bool : ('a, bool, bool option, 'w) aggop
-  val max_string : ('a, string, string option, 'w) aggop
-  val max_real : ('a, real, real option, 'w) aggop
-  val max_real32 : ('a, real32, real32 option, 'w) aggop
-  val max_timestamp : ('a, timestamp, timestamp option, 'w) aggop
-  val max_numeric : ('a, numeric, numeric option, 'w) aggop
-  val max_intOption : ('a, int option, int option, 'w) aggop
-  val max_intInfOption : ('a, intInf option, intInf option, 'w) aggop
-  val max_wordOption : ('a, word option, word option, 'w) aggop
-  val max_charOption : ('a, char option, char option, 'w) aggop
-  val max_boolOption : ('a, bool option, bool option, 'w) aggop
-  val max_stringOption : ('a, string option, string option, 'w) aggop
-  val max_realOption : ('a, real option, real option, 'w) aggop
-  val max_real32Option : ('a, real32 option, real32 option, 'w) aggop
-  val max_timestampOption : ('a, timestamp option, timestamp option, 'w) aggop
-  val max_numericOption : ('a, numeric option, numeric option, 'w) aggop
-
-  val min_int : ('a, int, int option, 'w) aggop
-  val min_intInf : ('a, intInf, intInf option, 'w) aggop
-  val min_word : ('a, word, word option, 'w) aggop
-  val min_char : ('a, char, char option, 'w) aggop
-  val min_bool : ('a, bool, bool option, 'w) aggop
-  val min_string : ('a, string, string option, 'w) aggop
-  val min_real : ('a, real, real option, 'w) aggop
-  val min_real32 : ('a, real32, real32 option, 'w) aggop
-  val min_timestamp : ('a, timestamp, timestamp option, 'w) aggop
-  val min_numeric : ('a, numeric, numeric option, 'w) aggop
-  val min_intOption : ('a, int option, int option, 'w) aggop
-  val min_intInfOption : ('a, intInf option, intInf option, 'w) aggop
-  val min_wordOption : ('a, word option, word option, 'w) aggop
-  val min_charOption : ('a, char option, char option, 'w) aggop
-  val min_boolOption : ('a, bool option, bool option, 'w) aggop
-  val min_stringOption : ('a, string option, string option, 'w) aggop
-  val min_realOption : ('a, real option, real option, 'w) aggop
-  val min_real32Option : ('a, real32 option, real32 option, 'w) aggop
-  val min_timestampOption : ('a, timestamp option, timestamp option, 'w) aggop
-  val min_numericOption : ('a, numeric option, numeric option, 'w) aggop
-
-  val count : ('a, 'b, int, 'w) aggop
-  val count_option : ('a, 'b option, int, 'w) aggop
-
-  val Num_int : ('a -> int, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_intInf : ('a -> intInf, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_word : ('a -> word, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_real : ('a -> real, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_real32 : ('a -> real32, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_numeric : ('a -> numeric, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_intOption : ('a -> int option, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_intInfOption : ('a -> intInf option, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_wordOption : ('a -> word option, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_realOption : ('a -> real option, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_real32Option : ('a -> real32 option, 'w) exp -> ('a -> numeric option, 'w) exp
-  val Num_numericOption : ('a -> numeric option, 'w) exp -> ('a -> numeric option, 'w) exp
+  val Num_int : int -> numeric option
+  val Num_intInf : intInf -> numeric option
+  val Num_word : word -> numeric option
+  val Num_real : real -> numeric option
+  val Num_real32 : real32 -> numeric option
+  val Num_numeric : numeric -> numeric option
+  val Num_intOption : int option -> numeric option
+  val Num_intInfOption : intInf option -> numeric option
+  val Num_wordOption : word option -> numeric option
+  val Num_realOption : real option -> numeric option
+  val Num_real32Option : real32 option -> numeric option
+  val Num_numericOption : numeric option -> numeric option
 
   structure Op =
   struct
 
-    val toSQL =
-        case 'a in 'a -> ('c -> 'a, 'w) exp of
-          int => toSQL_int
-        | intInf => toSQL_intInf
-        | word => toSQL_word
-        | char => toSQL_char
-        | bool => toSQL_bool
-        | string => toSQL_string
-        | real => toSQL_real
-        | real32 => toSQL_real32
-        | timestamp => toSQL_timestamp
-        | numeric => toSQL_numeric
-        | 'b option =>
-          case 'b in 'b option -> ('c -> 'b option, 'w) exp of
-            int => toSQL_intOption
-          | intInf => toSQL_intInfOption
-          | word => toSQL_wordOption
-          | char => toSQL_charOption
-          | bool => toSQL_boolOption
-          | string => toSQL_stringOption
-          | real => toSQL_realOption
-          | real32 => toSQL_real32Option
-          | timestamp => toSQL_timestampOption
-          | numeric => toSQL_numericOption
-
     val + =
-        case 'b in ('a -> 'b, 'w) op2 of
-          int => add_int
-        | intInf => add_intInf
-        | word => add_word
-        | real => add_real
-        | real32 => add_real32
-        | numeric => add_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op2 of
+        case 'a in 'a * 'a -> 'a of
+          int => Int.+
+        | intInf => IntInf.+
+        | word => Word.+
+        | real => Real.+
+        | real32 => Real32.+
+        | numeric => Numeric.+
+        | 'b option =>
+          case 'b in 'b option * 'b option -> 'b option of
             int => add_intOption
           | intInf => add_intInfOption
           | word => add_wordOption
@@ -730,126 +590,126 @@ struct
           | numeric => add_numericOption
 
     val - =
-        case 'b in ('a -> 'b, 'w) op2 of
-          int => sub_int
-        | intInf => sub_intInf
-        | word => sub_word
-        | real => sub_real
-        | real32 => sub_real32
-        | numeric => sub_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op2 of
+        case 'a in 'a * 'a -> 'a of
+          int => Int.-
+        | intInf => IntInf.-
+        | word => Word.-
+        | real => Real.-
+        | real32 => Real32.-
+        | numeric => Numeric.-
+        | 'b option =>
+          case 'b in 'b option * 'b option -> 'b option of
             int => sub_intOption
           | intInf => sub_intInfOption
           | word => sub_wordOption
           | real => sub_realOption
           | real32 => sub_real32Option
-	  | numeric => sub_numericOption
+          | numeric => sub_numericOption
 
     val * =
-        case 'b in ('a -> 'b, 'w) op2 of
-          int => mul_int
-        | intInf => mul_intInf
-        | word => mul_word
-        | real => mul_real
-        | real32 => mul_real32
-        | numeric => mul_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op2 of
+        case 'a in 'a * 'a -> 'a of
+          int => Int.*
+        | intInf => IntInf.*
+        | word => Word.*
+        | real => Real.*
+        | real32 => Real32.*
+        | numeric => Numeric.*
+        | 'b option =>
+          case 'b in 'b option * 'b option -> 'b option of
             int => mul_intOption
           | intInf => mul_intInfOption
           | word => mul_wordOption
           | real => mul_realOption
           | real32 => mul_real32Option
-	  | numeric => mul_numericOption
+          | numeric => mul_numericOption
 
     val / =
-        case 'b in ('a -> 'b, 'w) op2 of
-          int => div_int
-        | intInf => div_intInf
-        | word => div_word
-        | real => div_real
-        | real32 => div_real32
-        | numeric => div_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op2 of
+        case 'a in 'a * 'a -> 'a of
+          int => Int.quot
+        | intInf => IntInf.quot
+        | word => Word.div
+        | real => Real./
+        | real32 => Real32./
+        | numeric => Numeric.quot
+        | 'b option =>
+          case 'b in 'b option * 'b option -> 'b option of
             int => div_intOption
           | intInf => div_intInfOption
           | word => div_wordOption
           | real => div_realOption
           | real32 => div_real32Option
-	  | numeric => mul_numericOption
+          | numeric => div_numericOption
 
     val mod =
-        case 'b in ('a -> 'b, 'w) op2 of
-          int => mod_int
-        | intInf => mod_intInf
-        | word => mod_word
+        case 'a in 'a * 'a -> 'a of
+          int => Int.rem
+        | intInf => IntInf.rem
+        | word => Word.mod
         | real => mod_real
         | real32 => mod_real32
-        | numeric => mod_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op2 of
+        | numeric => Numeric.rem
+        | 'b option =>
+          case 'b in 'b option * 'b option -> 'b option of
             int => mod_intOption
           | intInf => mod_intInfOption
           | word => mod_wordOption
           | real => mod_realOption
           | real32 => mod_real32Option
-	  | numeric => mod_numericOption
+          | numeric => mod_numericOption
 
     val % =
-        case 'b in ('a -> 'b, 'w) op2 of
-          int => infix_mod_int
-        | intInf => infix_mod_intInf
-        | word => infix_mod_word
-        | real => infix_mod_real
-        | real32 => infix_mod_real32
-        | numeric => infix_mod_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op2 of
-            int => infix_mod_intOption
-          | intInf => infix_mod_intInfOption
-          | word => infix_mod_wordOption
-          | real => infix_mod_realOption
-          | real32 => infix_mod_real32Option
-	  | numeric => infix_mod_numericOption
+        case 'a in 'a * 'a -> 'a of
+          int => Int.rem
+        | intInf => IntInf.rem
+        | word => Word.mod
+        | real => mod_real
+        | real32 => mod_real32
+        | numeric => Numeric.rem
+        | 'b option =>
+          case 'b in 'b option * 'b option -> 'b option of
+            int => mod_intOption
+          | intInf => mod_intInfOption
+          | word => mod_wordOption
+          | real => mod_realOption
+          | real32 => mod_real32Option
+          | numeric => mod_numericOption
 
     val ~ =
-        case 'b in ('a -> 'b, 'w) op1 of
-          int => neg_int
-        | intInf => neg_intInf
-        | word => neg_word
-        | real => neg_real
-        | real32 => neg_real32
-        | numeric => neg_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op1 of
+        case 'a in 'a -> 'a of
+          int => Int.~
+        | intInf => IntInf.~
+        | word => Word.~
+        | real => Real.~
+        | real32 => Real32.~
+        | numeric => Numeric.~
+        | 'b option =>
+          case 'b in 'b option -> 'b option of
             int => neg_intOption
           | intInf => neg_intInfOption
           | word => neg_wordOption
           | real => neg_realOption
           | real32 => neg_real32Option
-	  | numeric => neg_numericOption
+          | numeric => neg_numericOption
 
     val abs =
-        case 'b in ('a -> 'b, 'w) op1 of
-          int => abs_int
-        | intInf => abs_intInf
+        case 'a in 'a -> 'a of
+          int => Int.abs
+        | intInf => IntInf.abs
         | word => abs_word
-        | real => abs_real
-        | real32 => abs_real32
-        | numeric => abs_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) op1 of
+        | real => Real.abs
+        | real32 => Real32.abs
+        | numeric => Numeric.abs
+        | 'b option =>
+          case 'b in 'b option -> 'b option of
             int => abs_intOption
           | intInf => abs_intInfOption
           | word => abs_wordOption
           | real => abs_realOption
           | real32 => abs_real32Option
-	  | numeric => abs_numericOption
+          | numeric => abs_numericOption
 
     val < =
-        case 'b in ('a, 'b, 'w) cmpop of
+        case 'a in 'a * 'a -> bool3 of
           int => lt_int
         | intInf => lt_intInf
         | word => lt_word
@@ -860,8 +720,8 @@ struct
         | string => lt_string
         | timestamp => lt_timestamp
         | numeric => lt_numeric
-        | 'c option =>
-          case 'c in ('a, 'c option, 'w) cmpop of
+        | 'b option =>
+          case 'b in 'b option * 'b option -> bool3 of
             int => lt_intOption
           | intInf => lt_intInfOption
           | word => lt_wordOption
@@ -874,7 +734,7 @@ struct
           | numeric => lt_numericOption
 
     val > =
-        case 'b in ('a, 'b, 'w) cmpop of
+        case 'a in 'a * 'a -> bool3 of
           int => gt_int
         | intInf => gt_intInf
         | word => gt_word
@@ -885,8 +745,8 @@ struct
         | string => gt_string
         | timestamp => gt_timestamp
         | numeric => gt_numeric
-        | 'c option =>
-          case 'c in ('a, 'c option, 'w) cmpop of
+        | 'b option =>
+          case 'b in 'b option * 'b option -> bool3 of
             int => gt_intOption
           | intInf => gt_intInfOption
           | word => gt_wordOption
@@ -899,7 +759,7 @@ struct
           | numeric => gt_numericOption
 
     val <= =
-        case 'b in ('a, 'b, 'w) cmpop of
+        case 'a in 'a * 'a -> bool3 of
           int => le_int
         | intInf => le_intInf
         | word => le_word
@@ -910,8 +770,8 @@ struct
         | string => le_string
         | timestamp => le_timestamp
         | numeric => le_numeric
-        | 'c option =>
-          case 'c in ('a, 'c option, 'w) cmpop of
+        | 'b option =>
+          case 'b in 'b option * 'b option -> bool3 of
             int => le_intOption
           | intInf => le_intInfOption
           | word => le_wordOption
@@ -924,7 +784,7 @@ struct
           | numeric => le_numericOption
 
     val >= =
-        case 'b in ('a, 'b, 'w) cmpop of
+        case 'a in 'a * 'a -> bool3 of
           int => ge_int
         | intInf => ge_intInf
         | word => ge_word
@@ -935,8 +795,8 @@ struct
         | string => ge_string
         | timestamp => ge_timestamp
         | numeric => ge_numeric
-        | 'c option =>
-          case 'c in ('a, 'c option, 'w) cmpop of
+        | 'b option =>
+          case 'b in 'b option * 'b option -> bool3 of
             int => ge_intOption
           | intInf => ge_intInfOption
           | word => ge_wordOption
@@ -949,7 +809,7 @@ struct
           | numeric => ge_numericOption
 
     val = =
-        case 'b in ('a, 'b, 'w) cmpop of
+        case 'a in 'a * 'a -> bool3 of
           int => eq_int
         | intInf => eq_intInf
         | word => eq_word
@@ -960,8 +820,8 @@ struct
         | string => eq_string
         | timestamp => eq_timestamp
         | numeric => eq_numeric
-        | 'c option =>
-          case 'c in ('a, 'c option, 'w) cmpop of
+        | 'b option =>
+          case 'b in 'b option * 'b option -> bool3 of
             int => eq_intOption
           | intInf => eq_intInfOption
           | word => eq_wordOption
@@ -974,7 +834,7 @@ struct
           | numeric => eq_numericOption
 
     val <> =
-        case 'b in ('a, 'b, 'w) cmpop of
+        case 'a in 'a * 'a -> bool3 of
           int => neq_int
         | intInf => neq_intInf
         | word => neq_word
@@ -985,8 +845,8 @@ struct
         | string => neq_string
         | timestamp => neq_timestamp
         | numeric => neq_numeric
-        | 'c option =>
-          case 'c in ('a, 'c option, 'w) cmpop of
+        | 'b option =>
+          case 'b in 'b option * 'b option -> bool3 of
             int => neq_intOption
           | intInf => neq_intInfOption
           | word => neq_wordOption
@@ -999,42 +859,17 @@ struct
           | numeric => neq_numericOption
 
     val || =
-        case 'b in ('a -> 'b, 'w) op2 of
-          string => concat_string
+        case 'a in 'a * 'a -> 'a of
+          string => String.^
         | string option => concat_stringOption
 
     val like =
-        case 'b in ('a, 'b, 'w) cmpop of
+        case 'a in 'a * 'a -> bool3 of
           string => like_string
         | string option => like_stringOption
 
-    val Some : ('a -> 'b, 'w) exp -> ('a -> 'b option, 'w) exp
-    val Part : ('a -> 'b option list, 'w) exp -> ('a -> 'b list, 'w) exp
-
-    val Num =
-        case 'b in ('a -> 'b, 'w) exp -> ('a -> numeric option, 'w) exp of
-          int => Num_int
-        | intInf => Num_intInf
-        | word => Num_word
-        | real => Num_real
-        | real32 => Num_real32
-        | numeric => Num_numeric
-        | 'c option =>
-          case 'c in ('a -> 'c option, 'w) exp -> ('a -> numeric option, 'w) exp of
-            int => Num_intOption
-          | intInf => Num_intInfOption
-          | word => Num_wordOption
-          | real => Num_realOption
-          | real32 => Num_real32Option
-	  | numeric => Num_numericOption
-
-    val coalesce
-        : ('a -> 'b option, 'w) exp * ('a -> 'b, 'w) exp -> ('a -> 'b, 'w) exp
-    val coalesce'
-        : ('a -> 'b option, 'w) exp * ('a -> 'b option, 'w) exp -> ('a -> 'b option, 'w) exp
-
     val nullif =
-        case 'b in ('a -> 'b option, 'w) op2 of
+        case 'a in 'a option * 'a option -> 'a option of
           int => nullif_intOption
         | intInf => nullif_intInfOption
         | word => nullif_wordOption
@@ -1046,39 +881,28 @@ struct
         | timestamp => nullif_timestampOption
         | numeric => nullif_numericOption
 
+    val coalesce : 'a option * 'a -> 'a
+    val coalesce' : 'a option * 'a option -> 'a option
+
     val avg =
-        case 'b in ('a, 'b, numeric option, 'w) aggop of
+        case 'a in 'a list -> numeric option of
           int => avg_int
         | intInf => avg_intInf
         | word => avg_word
         | real => avg_real
         | real32 => avg_real32
         | numeric => avg_numeric
-        | 'c option =>
-          case 'c in ('a, 'c option, numeric option, 'w) aggop of
+        | 'b option =>
+          case 'b in 'b option list -> numeric option of
             int => avg_intOption
           | intInf => avg_intInfOption
           | word => avg_wordOption
           | real => avg_realOption
           | real32 => avg_real32Option
-	  | numeric => avg_numericOption
-
-    val count =
-        case 'b in ('a, 'b, int, 'w) aggop of
-          int => count
-        | intInf => count
-        | word => count
-        | char => count
-        | bool => count
-        | real => count
-        | real32 => count
-        | string => count
-        | timestamp => count
-        | numeric => count
-        | 'c option => count_option
+          | numeric => avg_numericOption
 
     val sum =
-        case 'b in ('a, 'b, 'b option, 'w) aggop of
+        case 'a in 'a list -> 'a option of
           int => sum_int
         | intInf => sum_intInf
         | word => sum_word
@@ -1087,7 +911,7 @@ struct
         | numeric => sum_numeric
 
     val sum' =
-        case 'b in ('a, 'b option, 'b option, 'w) aggop of
+        case 'a in 'a option list -> 'a option of
           int => sum_intOption
         | intInf => sum_intInfOption
         | word => sum_wordOption
@@ -1095,34 +919,8 @@ struct
         | real32 => sum_real32Option
         | numeric => sum_numericOption
 
-    val min =
-        case 'b in ('a, 'b, 'b option, 'w) aggop of
-          int => min_int
-        | intInf => min_intInf
-        | word => min_word
-        | char => min_char
-        | bool => min_bool
-        | real => min_real
-        | real32 => min_real32
-        | string => min_string
-        | timestamp => min_timestamp
-        | numeric => min_numeric
-
-    val min' =
-        case 'b in ('a, 'b option, 'b option, 'w) aggop of
-          int => min_intOption
-        | intInf => min_intInfOption
-        | word => min_wordOption
-        | char => min_charOption
-        | bool => min_boolOption
-        | real => min_realOption
-        | real32 => min_real32Option
-        | string => min_stringOption
-        | timestamp => min_timestampOption
-        | numeric => min_numericOption
-
     val max =
-        case 'b in ('a, 'b, 'b option, 'w) aggop of
+        case 'a in 'a list -> 'a option of
           int => max_int
         | intInf => max_intInf
         | word => max_word
@@ -1135,7 +933,7 @@ struct
         | numeric => max_numeric
 
     val max' =
-        case 'b in ('a, 'b option, 'b option, 'w) aggop of
+        case 'a in 'a option list -> 'a option of
           int => max_intOption
         | intInf => max_intInfOption
         | word => max_wordOption
@@ -1146,6 +944,66 @@ struct
         | string => max_stringOption
         | timestamp => max_timestampOption
         | numeric => max_numericOption
+
+    val min =
+        case 'a in 'a list -> 'a option of
+          int => min_int
+        | intInf => min_intInf
+        | word => min_word
+        | char => min_char
+        | bool => min_bool
+        | real => min_real
+        | real32 => min_real32
+        | string => min_string
+        | timestamp => min_timestamp
+        | numeric => min_numeric
+
+    val min' =
+        case 'a in 'a option list -> 'a option of
+          int => min_intOption
+        | intInf => min_intInfOption
+        | word => min_wordOption
+        | char => min_charOption
+        | bool => min_boolOption
+        | real => min_realOption
+        | real32 => min_real32Option
+        | string => min_stringOption
+        | timestamp => min_timestampOption
+        | numeric => min_numericOption
+
+    val count =
+        case 'a in 'a -> int of
+          int => count
+        | intInf => count
+        | word => count
+        | char => count
+        | bool => count
+        | real => count
+        | real32 => count
+        | string => count
+        | timestamp => count
+        | numeric => count
+        | 'b option => count_option
+
+    val Num =
+        case 'a in 'a -> numeric option of
+          int => Num_int
+        | intInf => Num_intInf
+        | word => Num_word
+        | real => Num_real
+        | real32 => Num_real32
+        | numeric => Num_numeric
+        | 'b option =>
+          case 'b in 'b option -> numeric option of
+            int => Num_intOption
+          | intInf => Num_intInfOption
+          | word => Num_wordOption
+          | real => Num_realOption
+          | real32 => Num_real32Option
+          | numeric => Num_numericOption
+
+    val Some : 'a -> 'a option
+    val Part : 'a option list -> 'a list
 
   end
 

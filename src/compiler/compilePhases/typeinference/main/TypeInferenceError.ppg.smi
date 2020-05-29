@@ -76,6 +76,9 @@ structure TypeInferenceError =
               of string * {annotatedTy:Types.ty,
                            path:string list,
                            ty:Types.ty}
+    exception SignatureMismatchValueRestriction
+              of string * {annotatedTy:Types.ty,
+                           path:string list}
     exception TypeAnnotationNotAgree
               of string * {annotatedTy:Types.ty, ty:Types.ty}
     exception HandlerTy of string * {expTy:Types.ty, handlerTy:Types.ty}
@@ -131,6 +134,7 @@ structure TypeInferenceError =
     exception JoinWithDummy of string * Types.ty * Types.ty * Types.ty
     exception InconsistentKind of Types.ty
     exception ForEachTypeError of string
+    exception InvalidKindForExistentialType of Types.ty
 
     val setPrintTyFun : NameEvalEnv.topEnv -> unit
 

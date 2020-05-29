@@ -205,8 +205,6 @@ struct
     | Compose               (* ('a -> 'b) * ('c -> 'a) -> ('c -> 'b) *)
     | Equal                 (* [''a.''a * ''a -> bool] *)  (* SML = operator *)
     | NotEqual              (* [''a.''a * ''a -> bool] *)
-    | Exn_name              (* exn -> string *)
-    | Exn_message           (* exn -> string * word32 * boxed *)
     | Ignore                (* 'a -> unit *)
     | Int_abs               (* intX -> intX *)
     | Int_add               (* intX * intX -> intX *)
@@ -364,8 +362,6 @@ struct
       | Compose => none
       | Equal => none
       | NotEqual => none
-      | Exn_name => none
-      | Exn_message => none
       | Ignore => none
       | Int_abs => throw (* Overflow *)
       | Int_add => throw (* Overflow *)
@@ -489,8 +485,6 @@ struct
       | "Compose" => SOME Compose
       | "Equal" => SOME Equal
       | "NotEqual" => SOME NotEqual
-      | "Exn_name" => SOME Exn_name
-      | "Exn_message" => SOME Exn_message
       | "Ignore" => SOME Ignore
       | "Int_abs" => SOME Int_abs
       | "Int_add" => SOME Int_add

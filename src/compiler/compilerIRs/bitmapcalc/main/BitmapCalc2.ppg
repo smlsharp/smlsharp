@@ -17,28 +17,28 @@ struct
       Types.ty
 
   (*%
-   * @formatter(RecordCalc.varInfo) RecordCalc.format_varInfo
+   * @formatter(TypedLambda.varInfo) TypedLambda.format_varInfo
    *)
   (*%
    * @prefix formatWithType_
-   * @formatter(RecordCalc.varInfo) RecordCalc.formatWithType_varInfo
+   * @formatter(TypedLambda.varInfo) TypedLambda.formatWithType_varInfo
    *)
   type varInfo =
       (*% *)
       (*% @prefix formatWithType_ @format(v) v *)
-      RecordCalc.varInfo
+      TypedLambda.varInfo
 
   (*%
-   * @formatter(RecordCalc.exVarInfo) RecordCalc.format_exVarInfo
+   * @formatter(Types.exVarInfo) Types.format_exVarInfo
    *)
   (*%
    * @prefix formatWithType_
-   * @formatter(RecordCalc.exVarInfo) RecordCalc.formatWithType_exVarInfo
+   * @formatter(Types.exVarInfo) Types.formatWithType_exVarInfo
    *)
   type exVarInfo =
       (*% *)
       (*% @prefix formatWithType_ @format(v) v *)
-      RecordCalc.exVarInfo
+      Types.exVarInfo
 
   (*%
    * @formatter(TypedLambda.primInfo) TypedLambda.format_primInfo
@@ -60,9 +60,31 @@ struct
       Types.btvEnv
 
   (*%
+    @formatter(TypedLambda.tlconst) TypedLambda.format_tlconst
+   *)
+  (*% @prefix formatWithType_
+    @formatter(TypedLambda.tlconst) TypedLambda.formatWithType_tlconst
+   *)
+  datatype tlconst = datatype TypedLambda.tlconst
+
+  (*%
+    @formatter(TypedLambda.tlstring) TypedLambda.format_tlstring
+   *)
+  (*% @prefix formatWithType_
+    @formatter(TypedLambda.tlstring) TypedLambda.formatWithType_tlstring
+   *)
+  datatype tlstring = datatype TypedLambda.tlstring
+
+  (*%
+    @formatter(RecordCalc.rcconst) RecordCalc.format_rcconst
+   *)
+  (*% @prefix formatWithType_
+    @formatter(RecordCalc.rcconst) RecordCalc.formatWithType_rcconst
+   *)
+  datatype rcconst = datatype RecordCalc.rcconst
+
+  (*%
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(TypedLambda.constant) TypedLambda.format_constant
-   * @formatter(TypedLambda.tlconst) TypedLambda.format_tlconst
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
    * @formatter(enclosedList) TermFormat.formatEnclosedList
    * @formatter(appList) TermFormat.formatAppList
@@ -79,8 +101,6 @@ struct
    * @formatter(ty) format_ty
    * @formatter(btvEnv) format_btvEnv
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(TypedLambda.constant) TypedLambda.format_constant
-   * @formatter(TypedLambda.tlconst) TypedLambda.format_tlconst
    * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
    * @formatter(enclosedList) TermFormat.formatEnclosedList
    * @formatter(appList) TermFormat.formatAppList
@@ -147,13 +167,21 @@ struct
         loc: loc
       } 
     | (*%
-       * @format({const, ty, loc}) const
+       * @format({const, loc}) const
        *)
       (*%
        * @prefix formatWithType_
-       * @format({const, ty, loc}) const
+       * @format({const, loc}) const
        *)
-      BCCONSTANT of {const : TypedLambda.constant, ty : ty, loc : loc}
+      BCCONSTANT of {const : rcconst, loc : loc}
+    | (*%
+       * @format({string, loc}) string
+       *)
+      (*%
+       * @prefix formatWithType_
+       * @format({string, loc}) string
+       *)
+      BCSTRING of {string : tlstring, loc : loc}
     | (*%
        * @format({name, ty, loc}) name ":" ty
        *)
@@ -542,7 +570,7 @@ struct
       {
         switchExp : bcexp,
         expTy : ty,
-        branches : {constant : TypedLambda.tlconst, branchExp : bcexp} list,
+        branches : {constant : tlconst, branchExp : bcexp} list,
         defaultExp : bcexp,
         resultTy : ty,
         loc : loc

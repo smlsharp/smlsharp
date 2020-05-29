@@ -1,3 +1,0 @@
-#!/bin/sh
-src=`dirname $0`/../../../src
-$src/compiler/smlsharp -B$src $src/compiler/matchcompilation/main/MatchCompiler.sml -c -o /dev/null

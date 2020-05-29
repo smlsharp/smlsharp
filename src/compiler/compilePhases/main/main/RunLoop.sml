@@ -25,6 +25,7 @@ struct
               val _ = if isTTY
                       then (TextIO.output (TextIO.stdOut, prompt);
                             TextIO.flushOut TextIO.stdOut)
+                           handle IO.Io _ => ()  (* user may close stdOut *)
                       else ()
               val line = TextIO.inputLine TextIO.stdIn
               val _ = lineCount := !lineCount + 1
@@ -42,7 +43,9 @@ struct
 
   fun handleError ({errorOutput, ...}:options) e =
       let
-        fun puts s = TextIO.output (errorOutput, s ^ "\n")
+        fun puts s =
+            TextIO.output (errorOutput, s ^ "\n")
+            handle IO.Io _ => ()  (* user may close errorOutput *)
         fun isSIGINT e =
             case e of
               IO.Io {cause, ...} => isSIGINT cause

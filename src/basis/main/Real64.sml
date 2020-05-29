@@ -286,8 +286,7 @@ struct
         let
           val decpt = ref 0
           val sign = ref 0
-          val s = sml_dtoa (value, mode, ndigit, decpt, sign,
-                            Pointer.null ())
+          val s = sml_dtoa (value, mode, ndigit, decpt, sign, Pointer.null ())
           val digits = str_new s
           val _ = sml_freedtoa s
         in

@@ -18,7 +18,7 @@ struct
 
   datatype exp =
       Exp of TypedLambda.tlexp * Types.ty
-    | Const of TypedLambda.tlconst * Types.ty
+    | Const of TypedLambda.tlconst
     | Int8 of int
     | Int16 of int
     | Int32 of int
@@ -38,14 +38,14 @@ struct
     | False
     | SizeOf of Types.ty
     | IndexOf of Types.ty * RecordLabel.label
-    | ExVar of RecordCalc.exVarInfo
+    | ExVar of TypedLambda.exVarInfo
     | Cast of exp * Types.ty
     | BitCast of exp * Types.ty
     | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
     | If of exp * exp * exp
     | Andalso of exp list
     | Switch of exp * (TypedLambda.tlconst * exp) list * exp
-    | Raise of RecordCalc.exExnInfo * Types.ty
+    | Raise of Types.exExnInfo * Types.ty
     | Fn of vid * Types.ty * exp
     | App of exp * exp
     | Let of (vid * exp) list * exp
@@ -58,18 +58,20 @@ struct
       Decl of TypedLambda.tldecl * TypedLambda.loc
     | Bind of TypedLambda.varInfo * exp
 
-  fun isAtomic exp =
+  fun isAtom exp =
       case exp of
         L.TLFOREIGNAPPLY _ => false
       | L.TLCALLBACKFN _ => false
       | L.TLSIZEOF _ => true
-      | L.TLTAGOF _ => true
       | L.TLINDEXOF _ => true
+      | L.TLREIFYTY _ => true
       | L.TLCONSTANT _ => true
+      | L.TLSTRING _ => true
       | L.TLFOREIGNSYMBOL _ => true
       | L.TLVAR _ => true
       | L.TLEXVAR _ => false
       | L.TLPRIMAPPLY _ => false
+      | L.TLOPRIMAPPLY _ => false
       | L.TLAPPM _ => false
       | L.TLLET _ => false
       | L.TLRECORD _ => false
@@ -83,7 +85,8 @@ struct
       | L.TLFNM _ => false
       | L.TLPOLY _ => false
       | L.TLTAPP _ => false
-      | L.TLCAST {exp, expTy, targetTy, cast, loc} => isAtomic exp
+      | L.TLDYNAMICEXISTTAPP _ => false
+      | L.TLCAST {exp, expTy, targetTy, cast, loc} => isAtom exp
 
   fun Tuple exps =
       Record (ListPair.unzip (RecordLabel.tupleList exps))
@@ -355,9 +358,6 @@ struct
   fun extractExnTag exnExp =
       SelectN (1, Cast (exnExp, tupleTy [B.exntagTy]))
 
-  fun extractExnLoc exnExp =
-      SelectN (2, Cast (exnExp, tupleTy [B.exntagTy, B.stringTy]))
-
   fun extractExnArg (exnExp, argTy) =
       SelectN (3, Cast (exnExp, tupleTy [B.exntagTy, B.stringTy, argTy]))
 
@@ -389,32 +389,6 @@ struct
                                      exnMessageIndex ty]]),
             B.exntagTy)
 
-  fun extractExnTagName tagExp =
-      SelectN (1, Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
-
-  fun extractExnMsgIndex tagExp =
-      SelectN (2, Ref_deref (exnTagImplTy, Cast (tagExp, refTy exnTagImplTy)))
-
-  fun Exn_Message exnExp =
-      let
-        val vid1 = newId ()
-        val vid2 = newId ()
-      in
-        Let
-          ([(vid1, exnExp),
-            (vid2, extractExnMsgIndex (extractExnTag (Var vid1)))],
-           Tuple
-             [extractExnLoc (Var vid1),
-              Word_andb B.word32Ty (Var vid2, Word32 ~2),
-              Switch
-                (Var vid2,
-                 [(L.WORD32 0w0, Null)],
-                 Switch
-                   (Word_andb B.word32Ty (Var vid2, Word32 1),
-                    [(L.WORD32 0w0, Cast (Var vid1, B.boxedTy))],
-                    extractExnArg (Var vid1, B.boxedTy)))])
-      end
-
   fun composeExn (tagExp, loc, NONE) =
       Cast (Tuple [tagExp, String (locToString loc)], B.exnTy)
     | composeExn (tagExp, loc, SOME argExp) =
@@ -423,83 +397,54 @@ struct
   fun emitExp loc env exp =
       case exp of
         Exp x => x
-      | Const (const, ty) =>
-        (L.TLCONSTANT {const = L.C const, ty = ty, loc = loc}, ty)
+      | Const const =>
+        (L.TLCONSTANT (const, loc),
+         case const of
+           L.INT8 _ => B.int8Ty
+         | L.INT16 _ => B.int16Ty
+         | L.INT32 _ => B.int32Ty
+         | L.INT64 _ => B.int64Ty
+         | L.WORD8 _ => B.word8Ty
+         | L.WORD16 _ => B.word16Ty
+         | L.WORD32 _ => B.word32Ty
+         | L.WORD64 _ => B.word64Ty
+         | L.CONTAG _ => B.contagTy
+         | L.REAL64 _ => B.real64Ty
+         | L.REAL32 _ => B.real32Ty
+         | L.CHAR _ => B.charTy
+         | L.UNIT => B.unitTy
+         | L.NULLPOINTER => T.CONSTRUCTty {tyCon = B.ptrTyCon, args= [B.unitTy]}
+         | L.NULLBOXED => B.boxedTy)
       | Int8 n =>
-        (L.TLCONSTANT {const = L.C (L.INT8 (Int8.fromInt n)),
-                       ty = B.int8Ty,
-                       loc = loc},
-         B.int8Ty)
+        (L.TLCONSTANT (L.INT8 (Int8.fromInt n), loc), B.int8Ty)
       | Int16 n =>
-        (L.TLCONSTANT {const = L.C (L.INT16 (Int16.fromInt n)),
-                       ty = B.int16Ty,
-                       loc = loc},
-         B.int16Ty)
+        (L.TLCONSTANT (L.INT16 (Int16.fromInt n), loc), B.int16Ty)
       | Int32 n =>
-        (L.TLCONSTANT {const = L.C (L.INT32 (Int32.fromInt n)),
-                       ty = B.int32Ty,
-                       loc = loc},
-         B.int32Ty)
+        (L.TLCONSTANT (L.INT32 (Int32.fromInt n), loc), B.int32Ty)
       | Int64 n =>
-        (L.TLCONSTANT {const = L.C (L.INT64 (Int64.fromInt n)),
-                       ty = B.int64Ty,
-                       loc = loc},
-         B.int64Ty)
+        (L.TLCONSTANT (L.INT64 (Int64.fromInt n), loc), B.int64Ty)
       | Word8 n =>
-        (L.TLCONSTANT {const = L.C (L.WORD8 (Word8.fromInt n)),
-                       ty = B.word8Ty,
-                       loc = loc},
-         B.word32Ty)
+        (L.TLCONSTANT (L.WORD8 (Word8.fromInt n), loc), B.word8Ty)
       | Word16 n =>
-        (L.TLCONSTANT {const = L.C (L.WORD16 (Word16.fromInt n)),
-                       ty = B.word16Ty,
-                       loc = loc},
-         B.word32Ty)
+        (L.TLCONSTANT (L.WORD16 (Word16.fromInt n), loc), B.word16Ty)
       | Word32 n =>
-        (L.TLCONSTANT {const = L.C (L.WORD32 (Word32.fromInt n)),
-                       ty = B.word32Ty,
-                       loc = loc},
-         B.word32Ty)
+        (L.TLCONSTANT (L.WORD32 (Word32.fromInt n), loc), B.word32Ty)
       | Word64 n =>
-        (L.TLCONSTANT {const = L.C (L.WORD64 (Word64.fromInt n)),
-                       ty = B.word64Ty,
-                       loc = loc},
-         B.word64Ty)
+        (L.TLCONSTANT (L.WORD64 (Word64.fromInt n), loc), B.word64Ty)
       | Char n =>
-        (L.TLCONSTANT {const = L.C (L.CHAR (chr n)),
-                       ty = B.charTy,
-                       loc = loc},
-         B.charTy)
+        (L.TLCONSTANT (L.CHAR (chr n), loc), B.charTy)
       | ConTag n =>
-        (L.TLCONSTANT {const = L.C (L.CONTAG (Word32.fromInt n)),
-                       ty = B.contagTy,
-                       loc = loc},
-         B.contagTy)
+        (L.TLCONSTANT (L.CONTAG (Word32.fromInt n), loc), B.contagTy)
       | Real64 n =>
-        (L.TLCONSTANT {const = L.C (L.REAL64 n),
-                       ty = B.real64Ty,
-                       loc = loc},
-         B.real64Ty)
+        (L.TLCONSTANT (L.REAL64 n, loc), B.real64Ty)
       | Real32 n =>
-        (L.TLCONSTANT {const = L.C (L.REAL32 n),
-                       ty = B.real32Ty,
-                       loc = loc},
-         B.real32Ty)
+        (L.TLCONSTANT (L.REAL32 n, loc), B.real32Ty)
       | String x =>
-        (L.TLCONSTANT {const = L.S (L.STRING x),
-                       ty = B.stringTy,
-                       loc = loc},
-         B.stringTy)
+        (L.TLSTRING (L.STRING x, loc), B.stringTy)
       | Unit =>
-        (L.TLCONSTANT {const = L.C L.UNIT,
-                       ty = B.unitTy,
-                       loc = loc},
-         B.unitTy)
+        (L.TLCONSTANT (L.UNIT, loc), B.unitTy)
       | Null =>
-        (L.TLCONSTANT {const = L.C L.NULLBOXED,
-                       ty = B.boxedTy,
-                       loc = loc},
-         B.boxedTy)
+        (L.TLCONSTANT (L.NULLBOXED, loc), B.boxedTy)
       | False => emitExp loc env (Cast (ConTag 0, B.boolTy))
       | True => emitExp loc env (Cast (ConTag 1, B.boolTy))
       | SizeOf ty =>
@@ -508,8 +453,7 @@ struct
         (L.TLINDEXOF {recordTy = ty, label = label, loc = loc},
          T.SINGLETONty (T.INDEXty (label, ty)))
       | ExVar v =>
-        (L.TLEXVAR {exVarInfo = v, loc = loc},
-         #ty v)
+        (L.TLEXVAR (v, loc), #ty v)
       | Cast (exp, ty) =>
         let
           val (exp, expTy) = emitExp loc env exp
@@ -526,11 +470,11 @@ struct
                      cast = P.BitCast, loc = loc},
            ty)
         end
-      | PrimApply (primInfo, instTyList, retTy, argExpList) =>
+      | PrimApply (primOp, instTyList, retTy, argExpList) =>
         let
           val argExpList = map (fn e => #1 (emitExp loc env e)) argExpList
         in
-          (L.TLPRIMAPPLY {primInfo = primInfo,
+          (L.TLPRIMAPPLY {primOp = primOp,
                           instTyList = instTyList,
                           argExpList = argExpList,
                           loc = loc},
@@ -543,13 +487,13 @@ struct
           val (exp3, ty3) = emitExp loc env exp3
         in
           (L.TLSWITCH
-             {switchExp = L.TLCAST {exp = exp1,
-                                    expTy = ty1,
-                                    targetTy = B.contagTy,
-                                    cast = P.TypeCast,
-                                    loc = loc},
+             {exp = L.TLCAST {exp = exp1,
+                              expTy = ty1,
+                              targetTy = B.contagTy,
+                              cast = P.TypeCast,
+                              loc = loc},
               expTy = B.contagTy,
-              branches = [{constant = L.CONTAG 0w0, exp = exp3}],
+              branches = [{const = L.CONTAG 0w0, body = exp3}],
               defaultExp = exp2,
               resultTy = ty2,
               loc = loc},
@@ -563,11 +507,11 @@ struct
         let
           val (switchExp, expTy) = emitExp loc env switchExp
           val branches =
-              map (fn (c,e) => {constant = c, exp = #1 (emitExp loc env e)})
+              map (fn (c,e) => {const = c, body = #1 (emitExp loc env e)})
                   branches
           val (defaultExp, resultTy) = emitExp loc env defaultExp
         in
-          (L.TLSWITCH {switchExp = switchExp,
+          (L.TLSWITCH {exp = switchExp,
                        expTy = expTy,
                        branches = branches,
                        defaultExp = defaultExp,
@@ -580,13 +524,13 @@ struct
           val tagExp = ExVar {path = path, ty = B.exntagTy}
           val (argExp, _) = emitExp loc env (composeExn (tagExp, loc, NONE))
         in
-          (L.TLRAISE {argExp = argExp, resultTy = ty, loc = loc},
+          (L.TLRAISE {exp = argExp, resultTy = ty, loc = loc},
            ty)
         end
       | Fn (vid, argTy, exp) =>
         let
           val argVar = {id = vid, ty = argTy, path = [Symbol.generate ()]}
-          val argExp = L.TLVAR {varInfo = argVar, loc = loc}
+          val argExp = L.TLVAR (argVar, loc)
           val env = VarID.Map.insert (env, vid, (argExp, argTy))
           val (exp, bodyTy) = emitExp loc env exp
         in
@@ -617,20 +561,18 @@ struct
           val (exp1, ty1) = emitExp loc env exp1
           val exp2 = Let (t, exp2)
         in
-          if isAtomic exp1
+          if isAtom exp1
           then emitExp loc (VarID.Map.insert (env, vid, (exp1, ty1))) exp2
           else
             let
               val varInfo =
                   {id = vid, ty = ty1, path = [Symbol.generate ()]}
-              val varExp = L.TLVAR {varInfo = varInfo, loc = loc}
+              val varExp = L.TLVAR (varInfo, loc)
               val env = VarID.Map.insert (env, vid, (varExp, ty1))
               val (exp2, ty2) = emitExp loc env exp2
             in
-              (L.TLLET {localDecl = L.TLVAL {boundVar = varInfo,
-                                             boundExp = exp1,
-                                             loc = loc},
-                        mainExp = exp2,
+              (L.TLLET {decl = L.TLVAL {var = varInfo, exp = exp1, loc = loc},
+                        body = exp2,
                         loc = loc},
                ty2)
             end
@@ -646,16 +588,14 @@ struct
               case decl of
                 Decl x => x
               | Bind (var, exp) =>
-                (L.TLVAL {boundVar = var,
-                          boundExp = #1 (emitExp loc env exp),
-                          loc = loc},
+                (L.TLVAL {var = var, exp = #1 (emitExp loc env exp), loc = loc},
                  loc)
           val (exp, ty) = emitExp loc env (TLLet (decls, exp))
         in
-          (L.TLLET {localDecl = decl, mainExp = exp, loc = loc2}, ty)
+          (L.TLLET {decl = decl, body = exp, loc = loc2}, ty)
         end
       | TLVar varInfo =>
-        (L.TLVAR {varInfo = varInfo, loc = loc}, #ty varInfo)
+        (L.TLVAR (varInfo, loc), #ty varInfo)
       | Record (labels, exps) =>
         let
           val exps = map (emitExp loc env) exps
@@ -665,8 +605,7 @@ struct
                          (labels, exps)
           val recordTy = T.RECORDty (RecordLabel.Map.map #2 fields)
         in
-          (L.TLRECORD {isMutable = false,
-                       fields = RecordLabel.Map.map #1 fields,
+          (L.TLRECORD {fields = RecordLabel.Map.map #1 fields,
                        recordTy = recordTy,
                        loc = loc},
            recordTy)
@@ -683,11 +622,8 @@ struct
               | _ => raise Bug.Bug "emitExp: Select"
         in
           (L.TLSELECT {recordExp = recordExp,
-                       indexExp = L.TLINDEXOF {label = label,
-                                               recordTy = recordTy,
-                                               loc = loc},
-                       label = label,
                        recordTy = recordTy,
+                       label = label,
                        resultTy = resultTy,
                        loc = loc},
            resultTy)

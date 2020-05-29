@@ -30,8 +30,6 @@ struct
         NONE => raise Bug.Bug "SizeKind.generateInstance"
       | SOME {size = R.ANYSIZE, ...} => NONE
       | SOME {size = R.SIZE s, ...} =>
-        SOME (RC.RCCONSTANT {const = RC.SIZE (s, ty),
-                             ty = T.SINGLETONty (singletonTy ty),
-                             loc = loc})
+        SOME (RC.RCCONSTANT (RC.SIZE (s, ty), loc))
 
 end

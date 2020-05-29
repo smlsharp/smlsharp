@@ -1,7 +1,21 @@
 _require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require "../../../data/symbols/main/Loc.smi"
 
 structure Fixity =
 struct
   datatype fixity = INFIX of int | INFIXR of int | NONFIX
   val fixityToString : fixity -> string
+
+  datatype 'a exp =
+      APP of 'a exp * 'a exp * Loc.loc
+    | OP2 of 'a exp * ('a exp * 'a exp) * Loc.loc
+    | TERM of 'a * Loc.loc
+  datatype error =
+      Conflict
+    | BeginWithInfix
+    | EndWithInfix
+  val parse : (error * 'a * Loc.loc -> unit)
+              -> (fixity * 'a * Loc.loc) list
+              -> 'a exp
 end

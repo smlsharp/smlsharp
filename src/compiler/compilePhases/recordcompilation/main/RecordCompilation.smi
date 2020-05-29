@@ -13,14 +13,18 @@ _require local "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/DynamicKindUtils.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
 (* _require local "../../../extensions/reflection/main/ReifyTy.smi" *)
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 _require local "./OverloadKind.smi"
 _require local "./RecordKind.smi"
 _require local "./ReifyKind.smi"
 _require local "./TagKind.smi"
 _require local "./SizeKind.smi"
+_require local "./DynamicExistInstance.smi"
 
 structure RecordCompilation =
 struct
-  val compile : RecordCalc.rcdecl list -> RecordCalc.rcdecl list
+  val compile : TypedLambda.tldecl list -> RecordCalc.rcdecl list
 end

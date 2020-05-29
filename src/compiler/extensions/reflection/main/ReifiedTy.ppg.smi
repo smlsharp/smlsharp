@@ -10,6 +10,7 @@ _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/SEnv.smi"
+_require "../../../libs/env/main/IEnv.smi"
 _require local "../../../libs/util/main/TermFormat.smi"
 _require local "../../../libs/toolchain/main/Filename.smi"
 
@@ -53,6 +54,7 @@ struct
     | DATATYPEty of
       {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, layout:layout, size:int}
     | DUMMYty of {boxed : bool, size : word}
+    | EXISTty of {boxed : bool, size : word, id : int}
     | DYNAMICty of reifiedTy
     | ERRORty
     | EXNTAGty
@@ -93,6 +95,7 @@ struct
   val reifiedTyToString : reifiedTy -> string
   val printTy : reifiedTy -> unit
   val reifiedTyEq : reifiedTy * reifiedTy -> bool
+  val reifiedTyEq' : reifiedTy * reifiedTy -> reifiedTy IEnv.map option
 
   val emptyConSet : conSet
 
@@ -134,6 +137,7 @@ struct
   val btvIdBtvIdListToBoundenv : (btvId * btvId) list -> btvId BoundTypeVarID.Map.map
   val boundenvReifiedTyToPolyTy : btvId BoundTypeVarID.Map.map -> reifiedTy -> reifiedTy
   val makeDummyTy : bool -> word -> reifiedTy
+  val makeExistTy : bool -> word -> int -> reifiedTy
   val makeFUNMty : reifiedTy list -> reifiedTy -> reifiedTy
   val boolToWrapRecord : bool -> {wrap:bool}
   val stringToFalseNameRecord : string -> {falseName:string}

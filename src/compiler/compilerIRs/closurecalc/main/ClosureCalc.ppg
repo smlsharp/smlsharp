@@ -17,28 +17,28 @@ struct
       Types.ty
 
   (*%
-   * @formatter(RecordCalc.varInfo) RecordCalc.format_varInfo
+   * @formatter(TypedLambda.varInfo) TypedLambda.format_varInfo
    *)
   (*%
    * @prefix formatWithType_
-   * @formatter(RecordCalc.varInfo) RecordCalc.formatWithType_varInfo
+   * @formatter(TypedLambda.varInfo) TypedLambda.formatWithType_varInfo
    *)
   type varInfo =
       (*% *)
       (*% @prefix formatWithType_ @format(v) v *)
-      RecordCalc.varInfo
+      TypedLambda.varInfo
 
   (*%
-   * @formatter(RecordCalc.exVarInfo) RecordCalc.format_exVarInfo
+   * @formatter(Types.exVarInfo) Types.format_exVarInfo
    *)
   (*%
    * @prefix formatWithType_
-   * @formatter(RecordCalc.exVarInfo) RecordCalc.formatWithType_exVarInfo
+   * @formatter(Types.exVarInfo) Types.formatWithType_exVarInfo
    *)
   type exVarInfo =
       (*% *)
       (*% @prefix formatWithType_ @format(v) v *)
-      RecordCalc.exVarInfo
+      Types.exVarInfo
 
   (*%
    * @formatter(TypedLambda.primInfo) TypedLambda.format_primInfo
@@ -53,17 +53,17 @@ struct
       TypedLambda.primInfo
 
   (*%
-   * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
-   * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
-   * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
-   * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
-   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
-   * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
-   * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
-   * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
-   * @formatter(Real64.real) TermFormat.format_Real64_ML
-   * @formatter(Real32.real) TermFormat.format_Real32_ML
-   * @formatter(char) TermFormat.format_char_ML
+   * @formatter(Int8.int) ConstFormat.format_int8_dec_ML
+   * @formatter(Int16.int) ConstFormat.format_int16_dec_ML
+   * @formatter(Int32.int) ConstFormat.format_int32_dec_ML
+   * @formatter(Int64.int) ConstFormat.format_int64_dec_ML
+   * @formatter(Word8.word) ConstFormat.format_word8_hex_ML
+   * @formatter(Word16.word) ConstFormat.format_word16_hex_ML
+   * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
+   * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
+   * @formatter(Real64.real) ConstFormat.format_real64_ML
+   * @formatter(Real32.real) ConstFormat.format_real32_ML
+   * @formatter(char) ConstFormat.format_char_ML
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
@@ -76,17 +76,17 @@ struct
    *)
   (*%
    * @prefix formatWithType_
-   * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
-   * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
-   * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
-   * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
-   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
-   * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
-   * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
-   * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
-   * @formatter(Real64.real) TermFormat.format_Real64_ML
-   * @formatter(Real32.real) TermFormat.format_Real32_ML
-   * @formatter(char) TermFormat.format_char_ML
+   * @formatter(Int8.int) ConstFormat.format_int8_dec_ML
+   * @formatter(Int16.int) ConstFormat.format_int16_dec_ML
+   * @formatter(Int32.int) ConstFormat.format_int32_dec_ML
+   * @formatter(Int64.int) ConstFormat.format_int64_dec_ML
+   * @formatter(Word8.word) ConstFormat.format_word8_hex_ML
+   * @formatter(Word16.word) ConstFormat.format_word16_hex_ML
+   * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
+   * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
+   * @formatter(Real64.real) ConstFormat.format_real64_ML
+   * @formatter(Real32.real) ConstFormat.format_real32_ML
+   * @formatter(char) ConstFormat.format_char_ML
    * @formatter(DataLabel.id) DataLabel.format_id
    * @formatter(ExtraDataLabel.id) ExtraDataLabel.format_id
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
@@ -992,7 +992,7 @@ struct
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
-   * @formatter(string) TermFormat.format_string_ML
+   * @formatter(string) ConstFormat.format_string_ML
    * @formatter(RecordLabel.label) RecordLabel.format_label
    *)
   (*% @prefix formatWithType_
@@ -1004,7 +1004,7 @@ struct
    * @formatter(ExternSymbol.id) ExternSymbol.format_id
    * @formatter(ExternFunSymbol.id) ExternFunSymbol.format_id
    * @formatter(FunEntryLabel.id) FunEntryLabel.format_id
-   * @formatter(string) TermFormat.format_string_ML
+   * @formatter(string) ConstFormat.format_string_ML
    * @formatter(ty) format_ty
    * @formatter(RecordLabel.label) RecordLabel.format_label
    * @formatter(Types.btvEnv) Types.format_btvEnv

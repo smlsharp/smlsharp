@@ -181,7 +181,7 @@ done
 
 LLVM_PATH=$PATH
 AC_ARG_WITH(llvm,
-AS_HELP_STRING([--with-llvm],
+AS_HELP_STRING([--with-llvm=DIR],
                [specify where LLVM has installed in]),
 [
   case "x$withval" in
@@ -218,7 +218,7 @@ AC_MSG_CHECKING([for LLVM compatibility])
 LLVM_VERSION=`echo "$LLVM_VERSION" | sed 's/\.[[0-9]]*$//'`
 AC_SUBST(LLVM_VERSION)
 case "$LLVM_VERSION" in
-  3.9|[[4-9]].0)
+  3.9|[[4-9]].0|10.0)
     AC_MSG_RESULT(yes)
     ;;
   *)
@@ -244,7 +244,7 @@ AC_SUBST(MINISMLSHARP_LLVM_PLUGIN)
 AC_SUBST(MINISMLSHARP)
 
 AC_ARG_WITH(smlsharp,
-AS_HELP_STRING([--with-smlsharp],
+AS_HELP_STRING([--with-smlsharp=DIR],
                [specify smlsharp directory (required for cross compile)]),
 [
   if test "x$withval" = "xno"; then
@@ -358,20 +358,12 @@ AS_HELP_STRING([--enable-extra-options=OPTIONS],
 
 # -------- Checks for multithread support --------
 
-AC_ARG_WITH(pthread,
-AS_HELP_STRING([--without-pthread],
-               [disable pthread support (experimental)]),
-[], [ with_pthread=yes ])
-if test "x$with_pthread" = "xno"; then
-  RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_MULTITHREAD"
-else
-  AC_CHECK_LIB(pthread, pthread_create,
-    [], [ AC_MSG_ERROR([pthread library is not found]) ])
-fi
+AC_CHECK_LIB(pthread, pthread_create,
+  [], [ AC_MSG_ERROR([pthread library is not found]) ])
 
 AC_ARG_WITH(massivethreads,
-AS_HELP_STRING([--without-massivethreads],
-               [disable massivethread support (experimental)]),
+AS_HELP_STRING([--with-massivethreads=DIR],
+               [specify where MassiveThreads has installed in]),
 [
   case "$withval" in
     yes|no) ;;
@@ -388,9 +380,6 @@ AS_HELP_STRING([--without-massivethreads],
   esac
 ], [ with_massivethreads=yes ])
 if test "x$with_massivethreads" = "xyes"; then
-  if test "x$with_pthread" = "xno"; then
-    AC_MSG_ERROR([the massivethreads library requires pthread.])
-  fi
   AC_CHECK_LIB(myth, myth_is_myth_worker,
     [], [
       AC_CHECK_LIB(myth, myth_create,
@@ -400,17 +389,6 @@ if test "x$with_massivethreads" = "xyes"; then
 else
   RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_MASSIVETHREADS"
 fi
-
-AC_ARG_ENABLE(concurrentgc,
-AS_HELP_STRING([--disable-concurrentgc],[disable concurrent GC (experimental)]),
-[
-  if test "x$enableval" = "xno"; then
-    if test "x$with_massivethreads" = "xyes"; then
-      AC_MSG_ERROR([massivethreads support requires concurrent GC.])
-    fi
-    RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_CONCURRENCY"
-  fi
-])
 
 # -------- Check for required libraries --------
 

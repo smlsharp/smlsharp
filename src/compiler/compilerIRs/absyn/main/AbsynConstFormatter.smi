@@ -1,6 +1,6 @@
 _require local "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require local "../../../libs/util/main/TermFormat.smi"
+_require local "./ConstFormat.smi"
 _require "./AbsynConst.smi"
 
 structure AbsynConstFormatter =

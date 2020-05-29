@@ -451,8 +451,11 @@ struct
 
   structure General =
   struct
-    val exnMessage = _builtin val Exn_message : exn -> string * word32 * boxed
-    val exnName = _builtin val Exn_name : exn -> string
+    datatype exntag = _builtin datatype exntag
+    (* see also EmitTypedLambda.sml *)
+    val exnImpl = _builtin val TypeCast : exn -> exntag * string
+    val exntagImpl = _builtin val TypeCast : exntag -> (string * word32) vector
+    val exnToBoxed = _builtin val TypeCast : exn -> boxed
     val := = _builtin val Ref_assign : 'a ref * 'a -> unit
     val ! = _builtin val Ref_deref : 'a ref -> 'a
     val o = _builtin val Compose : ('a -> 'b) * ('c -> 'a) -> ('c -> 'b)

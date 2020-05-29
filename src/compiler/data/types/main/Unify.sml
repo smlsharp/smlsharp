@@ -18,6 +18,7 @@ in
   exception Unify
   exception EqRawTy
 
+  fun printTy ty = TyPrinters.printTy ty
   fun raiseUnify id =
       (Bug.printError ("UnifyFail: " ^ Int.toString id ^ "\n");
        raise Unify)
@@ -51,6 +52,7 @@ in
       | T.BACKENDty _ => ()
       | T.ERRORty => ()
       | T.DUMMYty _ => ()
+      | T.EXISTty _ => ()
       | T.TYVARty 
           (r as 
              ref 
@@ -59,6 +61,7 @@ in
                    as 
                    {kind = T.KIND (kindRecord
                                      as {properties,...}),
+                    utvarOpt = NONE,
                     ...}
                 )
              )
@@ -71,6 +74,20 @@ in
         in
           r := T.TVAR tvarRecord
         end
+      | T.TYVARty 
+          (r as 
+             ref 
+             (T.TVAR 
+                (tvarRecord 
+                   as 
+                   {kind = T.KIND (kindRecord
+                                     as {properties,...}),
+                    utvarOpt = SOME x,
+                    ...}
+                )
+             )
+          )
+        => raiseUnify 9999
       | T.TYVARty _ => ()
       | T.BOUNDVARty _ => ()
       | T.FUNMty (tyList,ty) =>
@@ -167,6 +184,12 @@ in
                 (NONE, NONE) => ()
               | _ => raise Bug.Bug "coerceKind: dynanicKind must not be set"
 
+(*
+      (* experimental for ICFP 2020 *)
+      val properties2 = if T.isProperties T.REIFY properties1 then
+                          T.addProperties T.REIFY properties2
+                        else properties2
+*)
       val properties = if T.isSubProperties properties1 properties2 then properties2 
                        else raiseUnify 181 
       val lambdaDepth = 
@@ -419,6 +442,10 @@ in
             (* these cases for BOUNDVARty are added for EXPORTFUNCTOR check;
                this should not cause any problems in the
                standard monotype unify *)
+            (* 2020-5-20 362_functor.sml対応で、以下のケースを追加; 明らかな抜け？ *)
+            | (T.BOUNDVARty btv1, T.BOUNDVARty btv2) => 
+              if  BoundTypeVarID.eq(btv1, btv2) then unifyTy tail
+              else raiseUnify 60
             | (T.TYVARty (tvState as ref (T.TVAR tvKind)), T.BOUNDVARty _) =>
               unifyTy ((ty2, ty1) :: tail)
             | (T.BOUNDVARty _, T.TYVARty (tvState as ref (T.TVAR tvKind))) =>
@@ -534,6 +561,8 @@ in
               raise bug "unifyTy: SINGLETONty occurs"
             | (T.DUMMYty (n1,k1), T.DUMMYty (n2,k2)) => 
               if n1 = n2 then unifyTy tail else raiseUnify 54 
+            | (T.EXISTty (n1,k1), T.EXISTty (n2,k2)) =>
+              if n1 = n2 then unifyTy tail else raiseUnify 54
             | (ty1, ty2) => raiseUnify 55
       in
         unifyTy L
@@ -674,6 +703,9 @@ in
         | (T.DUMMYty (id1, _), T.DUMMYty (id2, _)) => id1 = id2
         | (T.DUMMYty _, _) => (unify [(ty1, ty2)]; true)
         | (_, T.DUMMYty _) => (unify [(ty1, ty2)]; true)
+        | (T.EXISTty (id1, _), T.EXISTty (id2, _)) => id1 = id2
+        | (T.EXISTty _, _) => (unify [(ty1, ty2)]; true)
+        | (_, T.EXISTty _) => (unify [(ty1, ty2)]; true)
         | (T.TYVARty tv1, _) => (unify [(ty1, ty2)]; true)
         | (_, T.TYVARty tv1) => (unify [(ty1, ty2)]; true)
         | _ => false
@@ -707,6 +739,10 @@ in
         )
         handle NONEQ => false
       end
+  and eqTyListOpt btvEquiv (NONE, NONE) = true
+    | eqTyListOpt btvEquiv (NONE, SOME _) = false
+    | eqTyListOpt btvEquiv (SOME _, NONE) = false
+    | eqTyListOpt btvEquiv (SOME l1, SOME l2) = eqTyList btvEquiv (l1, l2)
   and eqSTy btvEquiv (sty1, sty2) =
       case (sty1, sty2) of
       (T.INSTCODEty oprimSelector11,T.INSTCODEty oprimSelector2) =>
@@ -746,11 +782,11 @@ in
       | (T.OVERLOAD_CASE _, _) => false
       | (T.OVERLOAD_EXVAR {exVarInfo={path=path1,...}, instTyList=i1},
          T.OVERLOAD_EXVAR {exVarInfo={path=path2,...}, instTyList=i2}) =>
-        Symbol.eqLongsymbol (path1, path2) andalso eqTyList btvEquiv (i1, i2)
+        Symbol.eqLongsymbol (path1, path2) andalso eqTyListOpt btvEquiv (i1, i2)
       | (T.OVERLOAD_EXVAR _, _) => false
       | (T.OVERLOAD_PRIM {primInfo={primitive=p1,...}, instTyList=i1},
          T.OVERLOAD_PRIM {primInfo={primitive=p2,...}, instTyList=i2}) =>
-        p1 = p2 andalso eqTyList btvEquiv (i1, i2)
+        p1 = p2 andalso eqTyListOpt btvEquiv (i1, i2)
       | (T.OVERLOAD_PRIM _, _) => false
   and eqOprimSelectorList btvEquiv (opList1, opList2) =
       length opList1 = length opList2 andalso
@@ -805,6 +841,7 @@ in
       | T.BACKENDty _ => raise bug "BACKENDty in revealTy"
       | T.ERRORty => ty
       | T.DUMMYty _ => ty
+      | T.EXISTty _ => ty
       | T.TYVARty _ => ty
       | T.BOUNDVARty _ => ty
       | T.FUNMty (tyList,ty) =>

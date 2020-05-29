@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE
 #include "config.h"
 #include <time.h>
 

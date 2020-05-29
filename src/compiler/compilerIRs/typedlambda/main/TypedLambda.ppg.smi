@@ -1,158 +1,251 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../libs/ids/main/LocalID.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-(* _require "../../../libs/ids/main/LocalID.smi" *)
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../data/name/main/CodeLabel.smi"
+_require "../../../data/types/main/Types.ppg.smi"
 _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
-_require "../../../data/types/main/Types.ppg.smi"
-_require "../../../data/types/main/DynamicKind.ppg.smi"
-_require "../../../data/name/main/CodeLabel.smi"
-_require "../../../libs/util/main/TermFormat.smi"
+_require local "../../../compilerIRs/absyn/main/ConstFormat.smi"
 
 structure TypedLambda =
-  struct
-    type loc = Loc.loc
-    type ty = Types.ty
-    val format_ty
-        : ty
-          -> SMLFormat.FormatExpression.expression list
-    type varInfo = RecordCalc.varInfo
-    val format_varInfo
-        : varInfo
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_varInfo
-        : varInfo
-          -> SMLFormat.FormatExpression.expression list
-    type exVarInfo = RecordCalc.exVarInfo
-    val format_exVarInfo
-        : exVarInfo
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_exVarInfo
-        : exVarInfo
-          -> SMLFormat.FormatExpression.expression list
-    type primTy =
-         {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}
-    val format_primTy
-        : primTy
-          -> SMLFormat.FormatExpression.expression list
-    type primInfo =
-        {primitive : BuiltinPrimitive.primitiveTypedLambda,
-         ty : {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}}
-    val format_primInfo : primInfo
-                          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_primInfo
-        : primInfo
-          -> SMLFormat.FormatExpression.expression list
-    type btvEnv = Types.btvEnv
-    val format_btvEnv
-        : btvEnv
-          -> SMLFormat.FormatExpression.expression list
-    datatype tlconst =
-        INT8 of Int8.int
-      | INT16 of Int16.int
-      | INT32 of Int32.int
-      | INT64 of Int64.int
-      | WORD8 of Word8.word
-      | WORD16 of Word16.word
-      | WORD32 of Word32.word
-      | WORD64 of Word64.word
-      | CONTAG of Word32.word
-      | REAL64 of Real64.real
-      | REAL32 of Real32.real
-      | CHAR of Char.char
-      | UNIT
-      | NULLPOINTER
-      | NULLBOXED
-      | SIZE of DynamicKind.size' * ty
-      | TAG of DynamicKind.tag' * ty
-      | INDEX of DynamicKind.index' * RecordLabel.label * ty
-    datatype tlstring =
-        INTINF of IntInf.int
-      | STRING of string
-    datatype constant =
-        C of tlconst
-      | S of tlstring
-    val format_tlconst
-        : tlconst -> SMLFormat.FormatExpression.expression list
-    val format_constant
-        : constant -> SMLFormat.FormatExpression.expression list
-    datatype tlexp
-      = TLAPPM of {argExpList:tlexp list, funExp:tlexp, funTy:ty, loc:loc}
-      | TLCAST of
-        {
-          exp : tlexp,
-          expTy : ty,
-          targetTy : ty,
-          cast : BuiltinPrimitive.cast,
-          loc : loc
-        }
-      | TLCONSTANT of {loc:loc, ty:ty, const:constant}
-      | TLCALLBACKFN of {attributes:FFIAttributes.attributes,
-                         resultTy: ty option,
-                         argVarList:varInfo list, bodyExp:tlexp,
-                         loc:loc}
-      | TLEXVAR of {exVarInfo:exVarInfo, loc:loc}
-      | TLFNM of {argVarList:varInfo list, bodyExp:tlexp, bodyTy:ty, loc:loc}
-      | TLFOREIGNAPPLY of {argExpList:tlexp list,
-                           attributes:FFIAttributes.attributes,
-                           funExp:tlexp,
-                           resultTy:ty option,
-                           loc:loc}
-      | TLFOREIGNSYMBOL of {loc:loc, name:string, ty:ty}
-      | TLHANDLE of {exnVar:varInfo, exp:tlexp, handler:tlexp,
-                     resultTy:ty, loc:loc}
-      | TLINDEXOF of {label:RecordLabel.label, loc:loc, recordTy:ty}
-      | TLLET of {loc:loc, localDecl:tldecl, mainExp:tlexp}
-      | TLMODIFY of {indexExp:tlexp, label:RecordLabel.label, loc:loc, recordExp:tlexp,
-                     recordTy:ty, valueExp:tlexp, valueTy:ty}
-      | TLPOLY of {btvEnv:btvEnv, exp:tlexp, expTyWithoutTAbs:ty, loc:loc}
-      | TLPRIMAPPLY of {argExpList:tlexp list, instTyList:ty list, loc:loc,
-                        primInfo:primInfo}
-      | TLRAISE of {argExp:tlexp, loc:loc, resultTy:ty}
-      | TLRECORD of {fields:tlexp RecordLabel.Map.map, isMutable:bool, loc:loc,
-                     recordTy:ty}
-      | TLSELECT of {indexExp:tlexp, label:RecordLabel.label, loc:loc, recordExp:tlexp,
-                     recordTy:ty, resultTy:ty}
-      | TLSIZEOF of {loc:loc, ty:ty}
-      | TLSWITCH of {branches:{constant:tlconst, exp:tlexp} list,
-                     defaultExp:tlexp, expTy:ty, loc:loc, switchExp:tlexp,
-                     resultTy:ty}
-      | TLTAGOF of {loc:loc, ty:ty}
-      | TLTAPP of {exp:tlexp, expTy:ty, instTyList:ty list, loc:loc}
-      | TLVAR of {loc:loc, varInfo:varInfo}
-      | TLCATCH of
-        {
-          catchLabel : FunLocalLabel.id,
-          argVarList : varInfo list,
-          catchExp : tlexp,
-          tryExp : tlexp,
-          resultTy : ty,
-          loc : loc
-        }
-      | TLTHROW of
-        {
-          catchLabel : FunLocalLabel.id,
-          argExpList : tlexp list,
-          resultTy : ty,
-          loc : loc
-        }
-    and tldecl
-      = TLEXPORTVAR of {weak : bool, exVarInfo : exVarInfo, exp : tlexp,
-                        loc : loc}
-      | TLEXTERNVAR of exVarInfo * Types.provider * loc
-      | TLVAL of {boundExp:tlexp, boundVar:varInfo, loc:loc}
-      | TLVALREC of {loc:loc,
-                     recbindList:{boundExp:tlexp, boundVar:varInfo} list}
-    val format_tlexp
-        : tlexp
-          -> TermFormat.format
-    val format_tldecl
-        : tldecl TermFormat.formatter
-    val formatWithType_tlexp
-        : tlexp
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_tldecl
-        : tldecl TermFormat.formatter
-  end
+struct
+
+  type loc = Loc.loc
+  type ty = Types.ty
+  type btvEnv = Types.btvEnv
+  type varInfo = {path : Symbol.longsymbol, id : VarID.id, ty : ty}
+  type exVarInfo = Types.exVarInfo
+  datatype cast = datatype BuiltinPrimitive.cast
+
+  type primTy =
+      {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}
+  type primInfo =
+      {primitive : BuiltinPrimitive.primitiveTypedLambda, ty : primTy}
+
+  datatype tlconst =
+      INT8 of Int8.int
+    | INT16 of Int16.int
+    | INT32 of Int32.int
+    | INT64 of Int64.int
+    | WORD8 of Word8.word
+    | WORD16 of Word16.word
+    | WORD32 of Word32.word
+    | WORD64 of Word64.word
+    | CONTAG of Word32.word
+    | REAL64 of Real64.real
+    | REAL32 of Real32.real
+    | CHAR of Char.char
+    | UNIT
+    | NULLPOINTER
+    | NULLBOXED
+
+  datatype tlstring =
+      STRING of string
+    | INTINF of IntInf.int
+
+  datatype tlexp =
+      TLCONSTANT of tlconst * loc
+    | TLSTRING of tlstring * loc
+    | TLVAR of varInfo * loc
+    | TLEXVAR of exVarInfo * loc
+    | TLFNM of
+      {
+        argVarList : varInfo list,
+        bodyTy : ty,
+        bodyExp : tlexp,
+        loc : loc
+      }
+    | TLAPPM of
+      {
+        funExp : tlexp,
+        funTy : ty,
+        argExpList : tlexp list,
+        loc : loc
+      }
+    | TLSWITCH of
+      {
+        exp : tlexp,
+        expTy : ty,
+        branches : {const : tlconst, body : tlexp} list,
+        defaultExp : tlexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | TLDYNAMICEXISTTAPP of
+      {
+        existInstMap : tlexp,
+        exp : tlexp,
+        expTy : ty,
+        instTyList : ty list,
+        loc : loc
+      }
+    | TLPRIMAPPLY of
+      {
+        primOp : primInfo,
+        instTyList : ty list,
+        argExpList : tlexp list,
+        loc : loc
+      }
+    | TLOPRIMAPPLY of
+      {
+       oprimOp : Types.oprimInfo,
+       instTyList : ty list,
+       argExp : tlexp,
+       loc : loc
+      }
+    | TLRECORD of
+      {
+        fields : tlexp RecordLabel.Map.map,
+        recordTy : ty,
+        loc : loc
+      }
+    | TLSELECT of
+      {
+        label : RecordLabel.label,
+        recordExp : tlexp,
+        recordTy : ty,
+        resultTy : ty,
+        loc : loc
+      }
+    | TLMODIFY of
+      {
+        label : RecordLabel.label,
+        recordExp : tlexp,
+        recordTy : ty,
+        elementExp : tlexp,
+        elementTy : ty,
+        loc : loc
+      }
+    | TLLET of
+      {
+        decl : tldecl,
+        body : tlexp,
+        loc : loc
+      }
+    | TLRAISE of
+      {
+        exp : tlexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | TLHANDLE of
+      {
+        exp : tlexp,
+        exnVar : varInfo,
+        handler : tlexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | TLTHROW of
+      {
+        catchLabel : FunLocalLabel.id,
+        argExpList : tlexp list,
+        resultTy : ty,
+        loc : loc
+      }
+    | TLCATCH of
+      {
+        catchLabel : FunLocalLabel.id,
+        argVarList : varInfo list,
+        catchExp : tlexp,
+        tryExp : tlexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | TLPOLY of
+      {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
+        expTyWithoutTAbs : ty,
+        exp : tlexp,
+        loc : loc
+      }
+    | TLTAPP of
+      {
+        exp : tlexp,
+        expTy : ty,
+        instTyList : ty list,
+        loc : loc
+      }
+    | TLFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
+    | TLFOREIGNAPPLY of
+      {
+        funExp : tlexp,
+        argExpList : tlexp list,
+        attributes : FFIAttributes.attributes,
+        resultTy : ty option,
+        loc : loc
+      }
+    | TLCALLBACKFN of
+      {
+        attributes : FFIAttributes.attributes,
+        argVarList : varInfo list,
+        bodyExp : tlexp,
+        resultTy : ty option,
+        loc : loc
+      }
+    | TLCAST of
+      {
+        exp : tlexp,
+        expTy : ty,
+        targetTy : ty,
+        cast : cast,
+        loc : loc
+      }
+    | TLSIZEOF of
+      {
+        ty : ty,
+        loc : loc
+      }
+    | TLINDEXOF of
+      {
+        recordTy : ty,
+        label : RecordLabel.label,
+        loc : loc
+      }
+    | TLREIFYTY of
+      {
+        ty : ty,
+        loc : loc
+      }
+
+  and tldecl =
+      TLVAL of
+      {
+        var : varInfo,
+        exp : tlexp,
+        loc : loc
+      }
+    | TLVALREC of {var:varInfo, exp:tlexp} list * loc
+    | TLVALPOLYREC of
+      {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
+        recbinds : {var:varInfo, exp:tlexp} list,
+        loc : loc
+      }
+    | TLEXPORTVAR of
+      {
+        weak : bool,
+        var : exVarInfo,
+        exp : tlexp
+      }
+    | TLEXTERNVAR of exVarInfo * Types.provider
+
+  val format_varInfo : varInfo -> SMLFormat.format
+  val formatWithType_varInfo : varInfo -> SMLFormat.format
+  val format_primInfo : primInfo -> SMLFormat.format
+  val formatWithType_primInfo : primInfo -> SMLFormat.format
+  val format_tlconst : tlconst -> SMLFormat.format
+  val formatWithType_tlconst : tlconst -> SMLFormat.format
+  val format_tlstring : tlstring -> SMLFormat.format
+  val formatWithType_tlstring : tlstring -> SMLFormat.format
+  val format_tlexp : tlexp -> SMLFormat.format
+  val formatWithType_tlexp : tlexp -> SMLFormat.format
+  val format_tldecl : tldecl -> SMLFormat.format
+  val formatWithType_tldecl : tldecl -> SMLFormat.format
+
+end

@@ -76,18 +76,18 @@ struct
    * @formatter(RecordLabel.label) RecordLabel.format_label
    * @formatter(quotedLabel) quotedLabel
    * @formatter(ReifiedTy.reifiedTy) ReifiedTy.format_reifiedTy
-   * @formatter(int) TermPrintUtils.format_int
-   * @formatter(int8) TermPrintUtils.format_int8
-   * @formatter(int16) TermPrintUtils.format_int16
-   * @formatter(int64) TermPrintUtils.format_int64
+   * @formatter(int) TermPrintUtils.format_intJson
+   * @formatter(int8) TermPrintUtils.format_int8Json
+   * @formatter(int16) TermPrintUtils.format_int16Json
+   * @formatter(int64) TermPrintUtils.format_int64Json
    * @formatter(quote) TermPrintUtils.format_string
-   * @formatter(real) TermPrintUtils.format_real
+   * @formatter(real) TermPrintUtils.format_realJson
+   * @formatter(real32) TermPrintUtils.format_real32Json
    * @formatter(char) TermPrintUtils.format_char
    * @formatter(word) TermPrintUtils.format_word32
    * @formatter(word8) TermPrintUtils.format_word8
    * @formatter(word16) TermPrintUtils.format_word16
    * @formatter(word64) TermPrintUtils.format_word64
-   * @formatter(real32) TermPrintUtils.format_real32
    * @formatter(intInf) TermPrintUtils.format_IntInf
    * @formatter(iftrue) iftrue
    * @formatter(ifsome) ifsome
@@ -628,11 +628,14 @@ struct
 
   val printTopEnvOutput = ref NONE
 
+  fun defaultPrintTopEnvOutput s =
+      print s handle IO.Io _ => () (* user may close stdOut *)
+
   fun printTopEnv topEnv =
       (case !printTopEnvOutput of SOME f => f | NONE => fn _ => ())
         (SMLFormat.prettyPrint
            (case !printTopEnvOutput of
-              NONE => [SMLFormat.OutputFunction print]
+              NONE => [SMLFormat.OutputFunction defaultPrintTopEnvOutput]
             | SOME _ => nil)
            (format_topEnv topEnv))
 
@@ -640,7 +643,7 @@ struct
       (case !printTopEnvOutput of SOME f => f | NONE => fn _ => ())
         (SMLFormat.prettyPrint
            (case !printTopEnvOutput of
-              NONE => [SMLFormat.OutputFunction print]
+              NONE => [SMLFormat.OutputFunction defaultPrintTopEnvOutput]
             | SOME _ => nil)
            (structure_topEnv topEnv))
 

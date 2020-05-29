@@ -141,7 +141,6 @@ in
         val newTy = T.FUNMty(argTyList, bodyTy)
       in
         ({path=funLongsymbol, id=funId, ty =newTy, opaque=false},
-         newTy,
          TC.TPFNM {argVarList = newVars,
                    bodyTy = bodyTy,
                    loc = loc,
@@ -284,35 +283,32 @@ in
                    spine,
                    loc)
       end
-    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = SOME exp, argTyOpt, loc} =>
+    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = SOME exp, loc} =>
       let
         val newTpexp = TC.TPDATACONSTRUCT
                          {con=con, 
                           instTyList=instTyList, 
                           argExpOpt = SOME (uncurryExp nil exp), 
-                          argTyOpt = argTyOpt,
                           loc = loc}
       in
         makeApply (newTpexp, spine, loc)
       end
-    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = NONE, argTyOpt, loc} =>
+    | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt = NONE, loc} =>
       makeApply (tpexp, spine, loc)
-    | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt = SOME exp, argTyOpt, loc} =>
+    | TC.TPEXNCONSTRUCT {exn, argExpOpt = SOME exp, loc} =>
       let
         val newTpexp = TC.TPEXNCONSTRUCT
                          {exn=exn, 
-                          instTyList=instTyList, 
                           argExpOpt = SOME (uncurryExp nil exp), 
-                          argTyOpt=argTyOpt,
                           loc = loc}
       in
          makeApply (newTpexp, spine, loc)
       end
-    | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt = NONE, argTyOpt, loc} =>
+    | TC.TPEXNCONSTRUCT {exn, argExpOpt = NONE, loc} =>
       makeApply (tpexp, spine, loc)
-    | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} =>
+    | TC.TPEXNTAG {exnInfo, loc} =>
       makeApply (tpexp, spine, loc)
-    | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
+    | TC.TPEXEXNTAG {exExnInfo, loc} =>
       makeApply (tpexp, spine, loc)
     | TC.TPCASEM {expList, expTyList, ruleList, ruleBodyTy, caseKind, loc} =>
       let
@@ -331,23 +327,56 @@ in
                   spine,
                   loc)
       end
-    | TC.TPPRIMAPPLY {primOp, instTyList, argExp = exp, argTy, loc} => 
+    | TC.TPSWITCH {exp, expTy, ruleList, defaultExp, ruleBodyTy, loc} =>
+      let
+        fun uncurryBody (r as {body, ...}) = r # {body = uncurryExp nil body}
+      in
+        makeApply
+          (TC.TPSWITCH
+             {exp = uncurryExp nil exp,
+              expTy = expTy,
+              ruleList =
+                case ruleList of
+                  TC.CONSTCASE rules => TC.CONSTCASE (map uncurryBody rules)
+                | TC.CONCASE rules => TC.CONCASE (map uncurryBody rules)
+                | TC.EXNCASE rules => TC.EXNCASE (map uncurryBody rules),
+              defaultExp = uncurryExp nil defaultExp,
+              ruleBodyTy = ruleBodyTy,
+              loc = loc},
+           spine, loc)
+      end
+    | TC.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+      makeApply
+        (TC.TPCATCH
+           {catchLabel = catchLabel,
+            tryExp = uncurryExp nil tryExp,
+            argVarList = argVarList,
+            catchExp = uncurryExp nil catchExp,
+            resultTy = resultTy,
+            loc = loc},
+         spine, loc)
+    | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+      makeApply
+        (TC.TPTHROW
+           {catchLabel = catchLabel,
+            argExpList = map (uncurryExp nil) argExpList,
+            resultTy = resultTy,
+            loc = loc},
+         spine, loc)
+    | TC.TPPRIMAPPLY {primOp, instTyList, argExp = exp, loc} =>
       let
         val newTpexp = TC.TPPRIMAPPLY {primOp=primOp, 
                                        instTyList=instTyList, 
                                        argExp = uncurryExp nil exp, 
-                                       argTy = argTy,
                                        loc = loc}
        in
         makeApply (newTpexp, spine, loc)
       end
-    | TC.TPOPRIMAPPLY
-        {oprimOp, instTyList, argExp = exp, argTy, loc} => 
+    | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp = exp, loc} =>
       let
         val newTpexp = TC.TPOPRIMAPPLY {oprimOp = oprimOp,
                                         instTyList = instTyList, 
                                         argExp = uncurryExp nil exp, 
-                                        argTy=argTy,
                                         loc = loc}
       in
         makeApply (newTpexp, spine, loc)
@@ -387,16 +416,6 @@ in
                   spine,
                   loc)
       end
-    | TC.TPSEQ {expList, expTyList, loc} =>
-      let
-        val newExpList = map (uncurryExp nil) expList
-      in
-        makeApply(TC.TPSEQ {expList=newExpList, 
-                            expTyList = expTyList, 
-                            loc = loc},
-                  spine,
-                  loc)
-      end
     | TC.TPMONOLET {binds, bodyExp, loc} =>
       let
         val newBinds = map (fn (v,exp) => (v, uncurryExp  nil exp))binds
@@ -406,12 +425,12 @@ in
                   spine,
                   loc)
       end
-    | TC.TPLET {decls, body, tys, loc} =>
+    | TC.TPLET {decls, body, loc} =>
       let
         val decls = uncurryDeclList decls
-        val body = map (uncurryExp  nil) body
+        val body = uncurryExp  nil body
       in
-        makeApply(TC.TPLET {decls=decls, body=body, tys=tys, loc=loc},
+        makeApply(TC.TPLET {decls=decls, body=body, loc=loc},
                   spine,
                   loc)
       end
@@ -432,31 +451,6 @@ in
                   spine,
                   loc)
       end
-    | TC.TPPOLYFNM
-        {
-         btvEnv,
-         constraints,
-         argVarList,
-         bodyTy,
-         bodyExp,
-         loc
-        }
-      =>
-      let
-        val newBodyExp = uncurryExp  nil bodyExp
-      in
-        makeApply(TC.TPPOLYFNM
-                    {
-                     btvEnv = btvEnv,
-                     constraints = constraints,
-                     argVarList = argVarList,
-                     bodyTy = bodyTy,
-                     bodyExp = newBodyExp,
-                     loc = loc
-                    },
-                  spine,
-                  loc)
-        end
     | TC.TPPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
       let
         val newExp = uncurryExp  nil exp
@@ -521,6 +515,25 @@ in
             stubTy = stubTy,
             loc = loc},
          spine, loc)
+    | TC.TPFOREIGNSYMBOL {name, ty, loc} => makeApply (tpexp, spine, loc)
+    | TC.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+      makeApply
+        (TC.TPFOREIGNAPPLY
+           {funExp = uncurryExp nil funExp,
+            argExpList = map (uncurryExp nil) argExpList,
+            attributes = attributes,
+            resultTy = resultTy,
+            loc = loc},
+         spine, loc)
+    | TC.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+      makeApply
+        (TC.TPCALLBACKFN
+           {attributes = attributes,
+            argVarList = argVarList,
+            bodyExp = uncurryExp nil bodyExp,
+            resultTy = resultTy,
+            loc = loc},
+         spine, loc)
     | TC.TPCAST ((tpexp, expTy), ty, loc) =>
       makeApply(TC.TPCAST((uncurryExp nil tpexp, expTy), ty, loc),
                 spine,
@@ -575,16 +588,25 @@ in
                    loc = loc},
                   spine,
                   loc)
+    | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+      makeApply
+        (TC.TPDYNAMICEXISTTAPP
+           {existInstMap = uncurryExp nil existInstMap,
+            exp = uncurryExp nil exp,
+            expTy = expTy,
+            instTyList = instTyList,
+            loc = loc},
+         spine,
+         loc)
 
   and uncurryDecl tpdecl = 
       case tpdecl of
-        TC.TPVAL (valIdTpexpList, loc) => 
-        [TC.TPVAL(map (fn (id,exp) => (id, uncurryExp  nil exp))
-                      valIdTpexpList,
+        TC.TPVAL ((id, exp), loc) =>
+        [TC.TPVAL((id, uncurryExp  nil exp),
                   loc)]
       | TC.TPFUNDECL (fundecls, loc) =>
         [TC.TPVALREC
-           (map (fn (var, ty, exp) => {var=var,exp=exp, expTy = ty}) 
+           (map (fn (var, exp) => {var=var,exp=exp})
                 (map (matchToFnCaseTerm  loc) fundecls),
             loc)]
       | TC.TPPOLYFUNDECL {btvEnv, constraints, recbinds=fundecls, loc} =>
@@ -592,13 +614,13 @@ in
            {btvEnv=btvEnv, 
             constraints=constraints,
             recbinds=
-            map (fn (v,ty,exp) => {var =v, exp = exp, expTy = ty})
+            map (fn (var, exp) => {var=var,exp=exp})
                 (map (matchToFnCaseTerm  loc) fundecls),
             loc=loc}]
       | TC.TPVALREC (bindList, loc) =>
         [TC.TPVALREC
-           (map (fn {var, expTy, exp} =>
-                    {var=var, expTy=expTy, exp=uncurryExp  nil exp})
+           (map (fn {var, exp} =>
+                    {var=var, exp=uncurryExp nil exp})
                 bindList, loc)
         ]
       | TC.TPVALPOLYREC {btvEnv, constraints, recbinds=recBinds, loc} =>
@@ -608,8 +630,8 @@ in
             constraints=constraints,
             recbinds=
             map
-              (fn {var, expTy, exp}
-                  => {var=var, expTy = expTy, exp = uncurryExp  nil exp})
+              (fn {var, exp} =>
+                  {var=var, exp = uncurryExp nil exp})
               recBinds, 
             loc=loc}
         ]
@@ -619,18 +641,8 @@ in
       | TC.TPEXTERNEXN  _ => [tpdecl]
       | TC.TPBUILTINEXN  _ => [tpdecl]
       | TC.TPEXPORTEXN  _ => [tpdecl]
-      | TC.TPEXPORTVAR _ => [tpdecl]
-      | TC.TPEXPORTRECFUNVAR {var=var as {ty, path,...}, arity} => 
-        let
-          val loc = Symbol.longsymbolToLoc path
-          val tpexp =
-              uncurryExp nil (TC.TPRECFUNVAR{var=var,arity=arity})
-          val newVar = {path=path,id=VarID.generate(), ty=ty, opaque=false}
-          val decl = TC.TPVAL([(newVar,tpexp)], loc)
-          val newExport = TC.TPEXPORTVAR newVar
-        in
-          [decl, newExport]
-        end
+      | TC.TPEXPORTVAR {var, exp} =>
+        [TC.TPEXPORTVAR {var = var, exp = uncurryExp nil exp}]
 
   and uncurryDeclList pldeclList = 
       foldr (fn (decl, declList) => (uncurryDecl decl) @ declList)

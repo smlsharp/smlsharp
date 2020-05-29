@@ -5,7 +5,7 @@
  *)
 structure OverloadKind : KIND_INSTANCE =
 struct
-  structure RC = RecordCalc
+  structure L = TypedLambda
   structure T = Types
 
   type singleton_ty_body = Types.oprimSelector
@@ -13,10 +13,28 @@ struct
   val singletonTy = T.INSTCODEty
 
   datatype instance =
-      APP of {appExp: RecordCalc.rcexp -> RecordCalc.rcexp,
+      APP of {appExp: TypedLambda.tlexp -> TypedLambda.tlexp,
               argTy: Types.ty, bodyTy: Types.ty,
               singletonTy: Types.singletonTy, loc: RecordCalc.loc}
-    | EXP of RecordCalc.rcexp
+    | EXP of TypedLambda.tlexp
+
+  fun TLEXVAR (var, loc) =
+      (L.TLEXVAR (var, loc), #ty var)
+
+  fun TLTAPP {exp = (exp, expTy), instTyList, loc} =
+      (L.TLTAPP {exp = exp,
+                 expTy = expTy,
+                 instTyList = instTyList,
+                 loc = loc},
+       TypesBasics.tpappTy (expTy, instTyList))
+
+  fun TLCAST {exp = (exp, expTy), targetTy, loc} =
+      (L.TLCAST {exp = exp,
+                 expTy = expTy,
+                 targetTy = targetTy,
+                 cast = L.TypeCast,
+                 loc = loc},
+       targetTy)
 
   fun matchToKeyList match =
       case match of
@@ -53,30 +71,34 @@ struct
 
   fun evalMatch (match, sty, loc) =
       case match of
-        T.OVERLOAD_EXVAR {exVarInfo as {ty,...}, instTyList} =>
+        T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
         let
-          val varExp = RC.RCEXVAR exVarInfo
-          val (retExp, retTy) =
+          val varExp = TLEXVAR (exVarInfo, loc)
+          val retExp =
               case instTyList of
-                nil => (varExp, ty)
-              | _::_ => (RC.RCTAPP {exp = varExp, expTy = ty,
-                                    instTyList = instTyList, loc = loc},
-                         TypesBasics.tpappTy (ty, instTyList))
+                NONE => varExp
+              | SOME instTyList =>
+                TLTAPP {exp = varExp, instTyList = instTyList, loc = loc}
         in
-          SOME (EXP (RC.RCCAST ((retExp, retTy), T.SINGLETONty sty, loc)))
+          SOME (EXP (#1 (TLCAST {exp = retExp,
+                                 targetTy = T.SINGLETONty sty,
+                                 loc = loc})))
         end
       | T.OVERLOAD_PRIM {primInfo, instTyList} =>
         let
           val (argTy, retTy) =
-              case TypesBasics.tpappTy (#ty primInfo, instTyList) of
+              case (case instTyList of
+                      NONE => #ty primInfo
+                    | SOME tys => TypesBasics.tpappTy (#ty primInfo, tys)) of
                 T.FUNMty ([argTy], retTy) => (argTy, retTy)
               | _ => raise Bug.Bug "evalMatch: OVERLOAD_PRIM"
         in
           SOME (APP {appExp = fn argExp =>
-                                 RC.RCPRIMAPPLY {primOp = primInfo,
-                                                 instTyList = instTyList,
-                                                 argExp = argExp,
-                                                 loc = loc},
+                                 PrimitiveTypedLambda.compile
+                                   {primOp = primInfo,
+                                    instTyList = instTyList,
+                                    argExp = argExp,
+                                    loc = loc},
                      argTy = argTy,
                      bodyTy = retTy,
                      singletonTy = sty,

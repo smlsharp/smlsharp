@@ -13,6 +13,7 @@ _require local "../../../data/builtin/main/ConstantError.ppg.smi"
 (* _require local "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi" *)
 _require local "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/TyRevealTy.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"
 (* _require local "../../../data/runtimetypes/main/TypeLayout2.smi" *)
 _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
@@ -20,10 +21,13 @@ _require local "./EmitTypedLambda.smi"
 _require local "./SwitchCompile.smi"
 _require local "./PrimitiveTypedLambda.smi"
 
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 
 structure DatatypeCompilation =
 struct
-  val compile : RecordCalc.rcdecl list -> TypedLambda.tldecl list
+  type env (= {})
+  val emptyEnv : env
+  val compileExp : env -> TypedCalc.tpexp -> TypedLambda.tlexp
+  val compile : TypedCalc.tpdecl list -> TypedLambda.tldecl list
 end

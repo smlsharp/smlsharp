@@ -1,31 +1,28 @@
 #include <signal.h>
+#include <limits.h>
 #include "smlsharp.h"
 
-static _Atomic(unsigned int) signaled;
-
-#define FLAG_SIGINT   0x1
-#define FLAG_SIGHUP   0x2
-#define FLAG_SIGPIPE  0x4
-#define FLAG_SIGALRM  0x8
-#define FLAG_SIGTERM  0x16
-
-static void
-signal_handler(int signum)
-{
-	switch (signum) {
-	case SIGINT: fetch_or(relaxed, &signaled, FLAG_SIGINT); break;
-	case SIGHUP: fetch_or(relaxed, &signaled, FLAG_SIGHUP); break;
-	case SIGPIPE: fetch_or(relaxed, &signaled, FLAG_SIGPIPE); break;
-	case SIGALRM: fetch_or(relaxed, &signaled, FLAG_SIGALRM); break;
-	case SIGTERM: fetch_or(relaxed, &signaled, FLAG_SIGTERM); break;
-	}
-	sml_send_signal();
-}
+static _Atomic(unsigned int) signals;
+static _Atomic(sml_check_hook_fn) signal_hook;
 
 unsigned int
 sml_signal_check()
 {
-	return swap(relaxed, &signaled, 0);
+	unsigned int r;
+	r = load_relaxed(&signals);
+	if (r)
+		r = swap(relaxed, &signals, 0);
+	return r;
+}
+
+static void
+signal_handler(int signum)
+{
+	if (signum < sizeof(signals) * CHAR_BIT && signal_hook) {
+		fetch_or(relaxed, &signals, 1U << signum);
+		sml_set_check_hook(signal_hook);
+		sml_gc(0);
+	}
 }
 
 static int
@@ -41,10 +38,12 @@ do_sigaction(int signum, const char *signame, const struct sigaction *sa)
 }
 
 int
-sml_signal_sigaction()
+sml_signal_sigaction(sml_check_hook_fn hook)
 {
 	struct sigaction sa;
 	int r;
+
+	store_relaxed(&signal_hook, hook);
 
 	sa.sa_handler = signal_handler;
 	sa.sa_flags = 0;

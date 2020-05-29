@@ -20,6 +20,7 @@ structure E = ElaborateError
 structure N = NameEvalError
 structure T = TypeInferenceError
 structure M = MatchError
+structure D = PartialDynamic
 open SMLUnit.Test SMLUnit.Assert Compiler
 
 val tests = TestList [
@@ -100,7 +101,11 @@ val tests = TestList [
      fn () => ignore (compile ["regression/023_exn.sml"])),
   Test
     ("024_polyraise",
-     fn () => ignore (compile ["regression/024_polyraise.sml"])),
+     fn () => (compile ["regression/024_polyraise.sml"];
+               fail "must cause a warning")
+              handle CompileError
+                       (_, [(_,_,M.MatchError ("match nonexhaustive", [_]))])
+                     => ()),
   Test
     ("025_equal",
      fn () => ignore (compile ["regression/025_equal.sml"])),
@@ -620,7 +625,11 @@ val tests = TestList [
                      => ()),
   Test
     ("155_match",
-     fn () => ignore (compile ["regression/155_match.sml"])),
+     fn () => (compile ["regression/155_match.sml"];
+               fail "must cause a warning")
+              handle CompileError
+                       (_, [(_,_,M.MatchError ("match nonexhaustive", [_]))])
+                     => ()),
   Test
     ("156_sig",
      fn () => (compile ["regression/156_sig.sml"];
@@ -1656,7 +1665,153 @@ val tests = TestList [
      (* ToDo: this uses old JSON functions and so does not work *)
      fn () => ignore (interactiveFile' "regression/335_dynamic.sml")),
 *)
+  Test
+    ("337_overload",
+     fn () => ignore (compile ["regression/337_overload.sml",
+                               "regression/337_overload2.sml"])),
+  Test
+    ("157_polyValBind",
+     fn () => (compile ["regression/338_dummytype.sml"];
+               fail "must cause a warning")
+              handle CompileError
+                       (_, [(_,_,T.ValueRestriction _)]) => ()),
+  Test
+    ("339_rebindId",
+     fn () => ignore (interactiveFile "regression/339_rebindId.sml")),
+  Test
+    ("341_phantom",
+     fn () =>
+        execute
+          (link "regression/341_phantom.smi"
+                (compile ["regression/341_phantom.sml",
+                          "regression/341_phantom2.sml"]))),
+  Test
+    ("342_findConset",
+     fn () => ignore (interactiveFile "regression/342_findConset.sml")),
+  Test
+    ("343_phantom",
+     fn () =>
+        execute
+          (link "regression/343_phantom.smi"
+                (compile ["regression/343_phantom.sml",
+                          "regression/343_phantom2.sml"]))),
+  Test
+    ("344_functor",
+     fn () => ignore (compile ["regression/344_functor.sml",
+                               "regression/344_functor2.sml"])),
+  Test
+    ("345_exnrep",
+     fn () => ignore
+                (link "regression/345_exnrep.smi"
+                      (compile ["regression/345_exnrep.sml",
+                                "regression/345_exnrep2.sml"]))),
+  Test
+    ("347_reifyKind",
+     fn () => (compile ["regression/347_reifyKind2.sml"];
+               fail "must cause a compile error")
+              handle CompileError
+                       (_, [(_,_,T.SignatureMismatch _)]) => ()),
+  Test
+    ("348_functor",
+     fn () => ignore (compile ["regression/348_functor.sml"])),
+  Test
+    ("349_functor",
+     fn () => ignore (compile ["regression/349_functor.sml"])),
+  Test
+    ("350_functor",
+     fn () => ignore (compile ["regression/350_functor.sml"])),
+  Test
+    ("351_open",
+     fn () =>
+        assertEqualStringList
+          ["structure A =\n\
+           \  struct\n\
+           \    type foo = int32\n\
+           \    exception A\n\
+           \    exception B\n\
+           \    val x = 1 : foo\n\
+           \    val y = 2 : foo\n\
+           \  end\n",
+           "type foo = int32\n\
+           \exception A = A.A\n\
+           \exception B = A.B\n\
+           \val x = 1 : foo\n\
+           \val y = 2 : foo\n"]
+          (#prints (interactiveFile "regression/351_open.sml"))),
+  Test
+    ("352_SQLCloseConn",
+     fn () =>
+        (interactiveFile "regression/352_SQLCloseConn.sml";
+         fail "must raise a SQL.Connect")
+        handle CompileError
+                 (_, [(_,_,UncaughtException (_, SQL.Connect _))]) => ()),
+  Test
+    ("353_join",
+     fn () =>
+        ignore (evalFile "regression/353_join.sml")),
+  Test
+    ("355_opaqueSig",
+     fn () =>
+        ignore (interactiveFile "regression/355_opaqueSig.sml")),
+  Test
+    ("356_eqkind",
+     fn () => ignore (compile ["regression/356_eqkind.sml"])),
+  Test
+    ("359_dynamic",
+     fn () =>
+        ignore (evalFile "regression/359_dynamic.sml")),
+  Test
+    ("360_dynamic",
+     fn () =>
+        (evalFile "regression/360_dynamic.sml";
+         fail "must raise RuntimeTypeError")
+        handle CompileError
+                 (_, [(_,_,UncaughtException (_, D.RuntimeTypeError))]) => ()),
+  Test
+    ("362_functor",
+     fn () => ignore (compile ["regression/362_functor.sml"])),
+  Test
+    ("363_functor",
+     fn () => (compile ["regression/363_functor.sml"];
+               fail "must cause a compile error")
+              handle CompileError
+                       (_, [(_,_,N.LIFTEDPropNotAllowedInOpaqueInterface _),
+                            (_,_,N.ProvideUndefinedTypeName _)]) => ()),
+  Test
+    ("364_signature",
+     fn () =>
+        (compile ["regression/364_signature.sml"];
+         fail "must cause a compile error")
+        handle CompileError
+                 (_, [(_,_,T.SignatureMismatchValueRestriction _)]) => ()),
+  Test
+    ("365_nameeval",
+     fn () =>
+        (compile ["regression/365_nameeval.sml"];
+         fail "must cause a compile error")
+        handle CompileError
+                 (_, [(_,_,N.DuplicateStrName _)]) => ()),
+  Test
+    ("367_interface",
+     fn () =>
+        (compile ["regression/367_interface.sml"];
+         fail "must cause a compile error")
+        handle CompileError (_, [(_,_,T.UserTvarNotGeneralized _)]) => ()),
+  Test
+    ("368_interface",
+     fn () =>
+        (compile ["regression/368_interface.sml"];
+         fail "must cause a compile error")
+        handle CompileError (_, [(_,_,T.UserTvarNotGeneralized _)]) => ()),
+  Test
+    ("369_duplicateInterface",
+     fn () =>
+        (compile ["regression/369_duplicateInterface.sml"];
+         fail "must cause a compile error")
+        handle CompileError
+                 (_, [(_,_,N.DuplicateVar _),
+                      (_,_,N.DuplicateStrName _)]) => ()),
 
-  TestList nil
+  TestList nil (* placeholder *)
 ]
 end

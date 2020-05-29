@@ -38,7 +38,7 @@ _require local "../../../compilePhases/valrecoptimization/main/VALREC_Optimizer.
 _require local "../../../compilePhases/valrecoptimization/main/TransFundecl.smi"
 _require local "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require local "../../../compilePhases/typedcalcoptimization/main/TCOptimize.smi"
-_require local "../../../compilePhases/recordcalcoptimization/main/RCOptimize.smi"
+(* _require local "../../../compilePhases/recordcalcoptimization/main/RCOptimize.smi" *)
 _require local "../../../compilePhases/typeinference/main/InferTypes2.smi"
 _require local "../../../compilePhases/polytyelimination/main/PolyTyElimination.smi"
 _require local "../../../compilePhases/typeinference/main/UncurryFundecl_ng.smi"

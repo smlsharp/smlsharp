@@ -2,6 +2,7 @@ _require local "../../../../basis.smi"
 (* _require local "../../../libs/env/main/SEnv.smi" *)
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 
@@ -15,10 +16,10 @@ _require local "./RecordLayoutCalc.ppg.smi"
 _require local "./RecordLayout.smi"
 _require local "./SingletonTyEnv.smi"
 
-_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 _require "../../../compilerIRs/bitmapcalc/main/BitmapCalc2.ppg.smi"
 
 structure BitmapCompilation2 =
 struct
-  val compile : TypedLambda.tldecl list -> BitmapCalc2.bcdecl list
+  val compile : RecordCalc.rcdecl list -> BitmapCalc2.bcdecl list
 end

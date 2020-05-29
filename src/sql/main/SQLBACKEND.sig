@@ -17,6 +17,7 @@ sig
   val closeConn : conn -> unit
   val closeRes : res -> unit
   val getDatabaseSchema : conn -> SMLSharp_SQL_BackendTy.schema
+  val columnTypeName : SMLSharp_SQL_BackendTy.ty -> string
   val connect : server_desc -> conn
   val fetch : res -> bool  (* return false if it reaches the end *)
   val getValue : res * int -> value option

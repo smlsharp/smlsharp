@@ -1,6 +1,5 @@
 (* init for interactive mode *)
-_require "../../src/basis.smi" init
-_require "../../src/compiler/extensions/reflection/main/ReifyTerm.smi" init
+_require "../../src/basis.smi"
 _require "../../src/smlformat-lib.smi"
 _require local "../../src/basis/main/SMLSharp_Runtime.smi"
 _require local "../../src/compiler/libs/config/main/Config.smi"
@@ -20,7 +19,7 @@ _require local "../../src/compiler/compilePhases/main/main/UserFileMap.smi"
 _require local "../../src/compiler/extensions/reflection/main/ReifiedTerm.ppg.smi"
 
 (* needed to make the prelude library available *)
-_require "../../src/prelude.smi"
+_require "../../src/prelude.smi" init
 
 structure Compiler =
 struct

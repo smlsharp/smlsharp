@@ -93,19 +93,61 @@ local
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
          T.OVERLOAD_EXVAR
            {exVarInfo = copyExVarInfo btvMap exVarInfo,
-            instTyList = map (copyTy btvMap) instTyList
+            instTyList = Option.map (map (copyTy btvMap)) instTyList
            }
        | T.OVERLOAD_PRIM {primInfo, instTyList} =>
          T.OVERLOAD_PRIM
            {
             primInfo = copyPrimInfo btvMap primInfo,
-            instTyList = map (copyTy btvMap) instTyList
+            instTyList = Option.map (map (copyTy btvMap)) instTyList
            }
        | T.OVERLOAD_CASE (ty, map:T.overloadMatch TypID.Map.map) =>
          T.OVERLOAD_CASE
          (copyTy btvMap ty,
          TypID.Map.map (copyOverloadMatch btvMap) map
          )
+  and copyBackendTy btvMap backendTy =
+      case backendTy of
+        T.RECORDSIZEty ty =>
+        T.RECORDSIZEty (copyTy btvMap ty)
+      | T.RECORDBITMAPINDEXty (i, ty) =>
+        T.RECORDBITMAPINDEXty (i, copyTy btvMap ty)
+      | T.RECORDBITMAPty (i, ty) =>
+        T.RECORDBITMAPty (i, copyTy btvMap ty)
+      | T.CCONVTAGty codeEntryTy =>
+        T.CCONVTAGty (copyCodeEntryTy btvMap codeEntryTy)
+      | T.FUNENTRYty codeEntryTy =>
+        T.FUNENTRYty (copyCodeEntryTy btvMap codeEntryTy)
+      | T.CALLBACKENTRYty {tyvars, haveClsEnv, argTyList, retTy, attributes} =>
+        let
+          val (btvMap, tyvars) = newBtvEnv btvMap tyvars
+        in
+          T.CALLBACKENTRYty
+            {tyvars = tyvars,
+             haveClsEnv = haveClsEnv,
+             argTyList = map (copyTy btvMap) argTyList,
+             retTy = Option.map (copyTy btvMap) retTy,
+             attributes = attributes}
+        end
+      | T.SOME_FUNENTRYty => T.SOME_FUNENTRYty
+      | T.SOME_FUNWRAPPERty => T.SOME_FUNWRAPPERty
+      | T.SOME_CLOSUREENVty => T.SOME_CLOSUREENVty
+      | T.SOME_CCONVTAGty => T.SOME_CCONVTAGty
+      | T.FOREIGNFUNPTRty {argTyList, varArgTyList, resultTy, attributes} =>
+        T.FOREIGNFUNPTRty
+          {argTyList = map (copyTy btvMap) argTyList,
+           varArgTyList = Option.map (map (copyTy btvMap)) varArgTyList,
+           resultTy = Option.map (copyTy btvMap) resultTy,
+           attributes = attributes}
+  and copyCodeEntryTy btvMap {tyvars, haveClsEnv, argTyList, retTy} =
+      let
+        val (btvMap, tyvars) = newBtvEnv btvMap tyvars
+      in
+        {tyvars = tyvars,
+         haveClsEnv = haveClsEnv,
+         argTyList = map (copyTy btvMap) argTyList,
+         retTy = copyTy btvMap retTy}
+      end
   and copyExVarInfo btvMap {path:longsymbol, ty:ty} =
       {path=path, ty=copyTy btvMap ty}
   and copyPrimInfo btvMap {primitive : BuiltinPrimitive.primitive, ty : ty} =
@@ -123,11 +165,13 @@ local
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (copySingletonTy btvMap singletonTy)
       | T.BACKENDty backendTy =>
-        raise Bug.Bug "copyTy: BACKENDty"
+        T.BACKENDty (copyBackendTy btvMap backendTy)
       | T.ERRORty => 
          ty
       | T.DUMMYty (dummyTyID, kind) => 
         T.DUMMYty (dummyTyID, copyKind btvMap kind)
+      | T.EXISTty (existTyID, kind) =>
+        T.EXISTty (existTyID, copyKind btvMap kind)
       | T.TYVARty _ => raise bug "TYVARty in AlphaRename"
       | T.BOUNDVARty btv => 
         T.BOUNDVARty (evalBtv btvMap btv)

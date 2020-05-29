@@ -18,13 +18,14 @@ struct
       | BACKENDty _ => 1
       | ERRORty => 2
       | DUMMYty  _ => 3
+      | EXISTty  _ => 4
       | TYVARty (ref (SUBSTITUTED ty)) => tyTag ty
-      | TYVARty  _ => 4
-      | BOUNDVARty  _ => 5
-      | FUNMty  _ => 6
-      | RECORDty  _ => 7
-      | CONSTRUCTty  _ => 8
-      | POLYty  _ => 9 
+      | TYVARty  _ => 5
+      | BOUNDVARty  _ => 6
+      | FUNMty  _ => 7
+      | RECORDty  _ => 8
+      | CONSTRUCTty  _ => 9
+      | POLYty  _ => 10
   fun singletonTyTag sty =
       case sty of
       INSTCODEty _ => 0
@@ -67,5 +68,7 @@ struct
         | (CONSTRUCTty {tyCon={id=id1,...}, args=args1,...},
            CONSTRUCTty {tyCon={id=id2,...}, args=args2,...}) =>
           comparePair TypID.Map.Key.compare (compareList compareTy) ((id1,args1), (id2,args2))
+        | (EXISTty (id1, _), EXISTty (id2, _)) =>
+          ExistTyID.compare (id1, id2)
         | _ => raise Bug.Bug "impossible"
 end

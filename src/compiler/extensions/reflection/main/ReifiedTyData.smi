@@ -1,31 +1,36 @@
 _require local "../../../../basis.smi"
-(* _require local "../../../libs/env/main/SEnv.smi" *)
-
-_require "../../../data/symbols/main/Loc.smi"
-_require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.smi"
-_require "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../libs/toolchain/main/Filename.smi"
-
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
-
 _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"
-_require local "./ReifyUtils.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
 
 structure ReifiedTyData =
 struct
-  type loc = Loc.loc
   type ty = Types.ty
-  type btvId = BoundTypeVarID.id
-  type typId = TypID.id
-  type varInfo = RecordCalc.varInfo
-  type exVarInfo = RecordCalc.exVarInfo
-  type conInfo = RecordCalc.conInfo
-  type exnCon = RecordCalc.exnCon
-  type exp = RecordCalc.rcexp
-  type label = RecordLabel.label
-  type expTy = {exp:exp, ty:ty}
+
+  val Int32Ty : ty
+  val Int64Ty : ty
+  val IntInfTy : ty
+  val Word32Ty : ty
+  val Word64Ty : ty
+  val Word8Ty : ty
+  val CharTy : ty
+  val StringTy : ty
+  val Real64Ty : ty
+  val Real32Ty : ty
+  val UnitTy : ty
+  val PtrTy : ty
+  val CodeptrTy : ty
+  val ExnTy : ty
+  val BoolTy : ty
+  val BoxedTy : ty
+  val RefTy : ty -> ty
+  val ListTy : ty -> ty
+  val ArrayTy : ty -> ty
+  val VectorTy : ty -> ty
+  val OptionTy : ty -> ty
+  val RecordTy : (string * ty) list -> ty
+  val TupleTy :  ty list -> ty
 
   val BtvIdTy : unit -> ty
   val TypIdTy : unit -> ty
@@ -46,17 +51,5 @@ struct
   val TypIDMapMapTy : ty -> ty
   val BounTypeVarIDMapMapTy : ty -> ty
   val RecordLabelMapMapTy : ty -> ty
-
-
-  val LabelAsString : loc -> RecordLabel.label -> expTy
-  val SymbolAsString : loc -> Symbol.symbol -> expTy
-
-(*
-  val Loc : loc -> expTy
-*)
-  val BtvId : loc -> btvId -> expTy
-  val TypId : loc -> typId -> expTy
-  val Longsymbol : loc -> Symbol.longsymbol -> expTy
-  val RecordLabelFromString : loc -> string -> expTy
 
 end

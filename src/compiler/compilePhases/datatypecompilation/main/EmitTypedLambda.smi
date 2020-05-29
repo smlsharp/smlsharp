@@ -7,11 +7,11 @@ _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
 
 _require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 
 structure EmitTypedLambda =
 struct
@@ -21,7 +21,7 @@ struct
 
   datatype exp =
       Exp of TypedLambda.tlexp * Types.ty
-    | Const of TypedLambda.tlconst * Types.ty
+    | Const of TypedLambda.tlconst
     | Int8 of int
     | Int16 of int
     | Int32 of int
@@ -41,14 +41,14 @@ struct
     | False
     | SizeOf of Types.ty
     | IndexOf of Types.ty * RecordLabel.label
-    | ExVar of RecordCalc.exVarInfo
+    | ExVar of TypedLambda.exVarInfo
     | Cast of exp * Types.ty
     | BitCast of exp * Types.ty
     | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
     | If of exp * exp * exp
     | Andalso of exp list
     | Switch of exp * (TypedLambda.tlconst * exp) list * exp
-    | Raise of RecordCalc.exExnInfo * Types.ty
+    | Raise of Types.exExnInfo * Types.ty
     | Fn of vid * Types.ty * exp
     | App of exp * exp
     | Let of (vid * exp) list * exp
@@ -119,12 +119,9 @@ struct
   val Real_gteq : Types.ty -> exp * exp -> exp
   val Real_lteq : Types.ty -> exp * exp -> exp
   val Real_sub : Types.ty -> exp * exp -> exp
-  val allocExnTag : {builtin:bool, path:RecordCalc.path, ty:Types.ty} -> exp
-  val extractExnTagName : exp -> exp
+  val allocExnTag : {builtin:bool, path:Symbol.longsymbol, ty:Types.ty} -> exp
   val extractExnTag : exp -> exp
-  val extractExnLoc : exp -> exp
   val extractExnArg : exp * Types.ty -> exp
-  val Exn_Message : exp -> exp
   val composeExn : exp * Loc.loc * exp option -> exp
   val emit : TypedLambda.loc -> exp -> TypedLambda.tlexp
 

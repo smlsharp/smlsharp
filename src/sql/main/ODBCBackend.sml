@@ -177,6 +177,20 @@ struct
   fun closeRes res =
       SQLFreeHandle (U.SQL_HANDLE_STMT, res)
 
+  fun columnTypeName ty =
+      case ty of
+        SMLSharp_SQL_BackendTy.INT => "INT"
+      | SMLSharp_SQL_BackendTy.INTINF => ""
+      | SMLSharp_SQL_BackendTy.WORD => ""
+      | SMLSharp_SQL_BackendTy.CHAR => ""
+      | SMLSharp_SQL_BackendTy.STRING => "TEXT"
+      | SMLSharp_SQL_BackendTy.REAL => "FLOAT"
+      | SMLSharp_SQL_BackendTy.REAL32 => "DOUBLE PRECISION"
+      | SMLSharp_SQL_BackendTy.BOOL => ""
+      | SMLSharp_SQL_BackendTy.TIMESTAMP => ""
+      | SMLSharp_SQL_BackendTy.NUMERIC => "NUMERIC"
+      | SMLSharp_SQL_BackendTy.UNSUPPORTED s => s
+
   fun translateType dbTypeName =
       case dbTypeName of
         "0" => SMLSharp_SQL_BackendTy.UNSUPPORTED "SQL_UNKNOWN_TYPE"

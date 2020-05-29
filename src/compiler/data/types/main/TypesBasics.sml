@@ -43,6 +43,8 @@ local
       | T.ERRORty => ty
       | T.DUMMYty (dummyTyID, kind) =>
         T.DUMMYty (dummyTyID, substBTvarKind tyidEnv subst kind)
+      | T.EXISTty (existTyID, kind) =>
+        T.EXISTty (existTyID, substBTvarKind tyidEnv subst kind)
       | T.TYVARty (r as ref (T.SUBSTITUTED ty)) => raise Bug.Bug "SUBSTITUTED in substBTvar" 
       | T.TYVARty (ref (T.TVAR _)) => ty
 (*
@@ -172,10 +174,10 @@ local
       case match of
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
         T.OVERLOAD_EXVAR {exVarInfo = exVarInfo,
-                          instTyList = map (substBTvar tyidEnv subst) instTyList}
+                          instTyList = Option.map (map (substBTvar tyidEnv subst)) instTyList}
       | T.OVERLOAD_PRIM {primInfo, instTyList} =>
         T.OVERLOAD_PRIM {primInfo = primInfo,
-                         instTyList = map (substBTvar tyidEnv subst) instTyList}
+                         instTyList = Option.map (map (substBTvar tyidEnv subst)) instTyList}
       | T.OVERLOAD_CASE (ty, matches) =>
         T.OVERLOAD_CASE (substBTvar tyidEnv subst ty,
                          TypID.Map.map (substBTvarOverloadMatch tyidEnv subst) matches)
@@ -279,6 +281,7 @@ end
             | T.BACKENDty backendTy => raise Bug.Bug "monoTy: BACKENDty"
             | T.ERRORty => ()
             | T.DUMMYty _ => ()
+            | T.EXISTty _ => ()
             | T.TYVARty _ => ()
             | T.BOUNDVARty _ => (* raise PolyTy *) ()  (* this should be ok *)
             | T.FUNMty (_, ty) => visit ty
@@ -290,9 +293,10 @@ end
         handle PolyTy => false
       end
 
+  val emptyBTVSubst = BoundTypeVarID.Map.empty
   fun makeFreshInstTy makeSubst ty =
       (* 2016-06-16 sasaki: constraitsを返すように変更 *)
-      if monoTy ty then (ty, nil)
+      if monoTy ty then (ty, nil, emptyBTVSubst)
       else
         case ty of
           T.POLYty{boundtvars,body,constraints} =>
@@ -308,23 +312,23 @@ end
                                             substBTvar subst arg2),
                                     loc = loc})
                          constraints
-            val (freshty, freshconstraints) =
+            val (freshty, freshconstraints, _) =
                 makeFreshInstTy makeSubst bty
           in  
-            (freshty, freshconstraints @ bconstraints)
+            (freshty, freshconstraints @ bconstraints, subst)
           end
         | T.FUNMty (tyList,ty) =>
           let
-            val (freshty, constraints) = makeFreshInstTy makeSubst ty
+            val (freshty, constraints, _) = makeFreshInstTy makeSubst ty
           in
-            (T.FUNMty(tyList, freshty), constraints)
+            (T.FUNMty(tyList, freshty), constraints, emptyBTVSubst)
           end
         | T.RECORDty fl => 
           let
             val (fl, constraints) =
                 RecordLabel.Map.foldli
                     (fn (key, ty, (map, constraints)) =>
-                        let val (freshty, freshconstraints) =
+                        let val (freshty, freshconstraints, _) =
                                 makeFreshInstTy makeSubst ty
                         in (RecordLabel.Map.insert (map, key, freshty),
                             freshconstraints @ constraints)
@@ -332,12 +336,38 @@ end
                     (RecordLabel.Map.empty, nil)
                     fl
           in 
-            (T.RECORDty fl, constraints)
+            (T.RECORDty fl, constraints, emptyBTVSubst)
           end
-        | ty => (ty, nil)
+        | ty => (ty, nil, emptyBTVSubst)
 
-  fun freshInstTy ty = makeFreshInstTy freshSubst ty
-  fun freshRigidInstTy ty = makeFreshInstTy freshRigidSubst ty
+  fun freshInstTy ty = 
+      let
+        val (ty, constraints, subst) = makeFreshInstTy freshSubst ty
+      in
+        (ty, constraints)
+      end
+  fun freshRigidInstTy ty = 
+      let
+        val (ty, constraints, subst) = makeFreshInstTy freshRigidSubst ty
+        val addedUtvars = 
+            BoundTypeVarID.Map.foldl
+              (fn (ty, addedUtvars) =>
+                  let
+                    val ty = derefTy ty
+                  in
+                    case ty of
+                      T.TYVARty (r as ref (tvState as  (T.TVAR  {id, utvarOpt = SOME utvar,...})))
+                      => TvarMap.insert(addedUtvars, utvar, r)
+                    | _ => addedUtvars
+                  end
+              )
+            TvarMap.empty
+            subst
+      in
+        (ty, constraints, addedUtvars)
+      end
+
+
 
   exception ExSpecTyCon of string
   exception ExIllegalTyFunToTyCon of string
@@ -358,6 +388,7 @@ end
        | T.BACKENDty bty => raise Bug.Bug "BACKENDty to EFTV"
        | T.ERRORty => env
        | T.DUMMYty (id, kind) => traverseKind (kind, env)
+       | T.EXISTty (id, kind) => traverseKind (kind, env)
        | T.TYVARty (ref(T.SUBSTITUTED ty)) => traverseTy (ty,env)
        | T.TYVARty (ref(T.TVAR {kind = T.KIND {tvarKind=T.OCONSTkind _,...},...})) => env
        | T.TYVARty (tyvarRef as (ref(T.TVAR tvKind))) =>
@@ -402,23 +433,25 @@ end
        | T.OCONSTkind _ =>
          raise Bug.Bug "OCONSTkind to travseTvKind"
        | T.OPRIMkind {instances, operators} =>
-         foldl traverseTy env instances
-   (* 2013-7-26 ohori bug 264_invalidDbi
-                foldl traverseOprimSelector
-                (foldl traverseTy env instances)
-                operators
-   and traverseOprimSelector ({oprimId, path, match}
+(* 2013-7-26 ohori bug 264_invalidDbi *)
+(* 2020-1-21 以下を復活 *)
+         foldl traverseOprimSelector
+               (foldl traverseTy env instances)
+               operators
+   and traverseOprimSelector ({oprimId, longsymbol, match}
                               : T.oprimSelector, env) =
        traverseOverloadMatch (match, env)
    and traverseOverloadMatch (match, env) =
        case match of
-         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
+         T.OVERLOAD_EXVAR {exVarInfo, instTyList = NONE} => env
+       | T.OVERLOAD_EXVAR {exVarInfo, instTyList = SOME instTyList} =>
          foldl traverseTy env instTyList
-       | T.OVERLOAD_PRIM {primInfo, instTyList} =>
+       | T.OVERLOAD_PRIM {primInfo, instTyList = NONE} => env
+       | T.OVERLOAD_PRIM {primInfo, instTyList = SOME instTyList} =>
          foldl traverseTy env instTyList
        | T.OVERLOAD_CASE (ty, map) =>
          TypID.Map.foldl traverseOverloadMatch (traverseTy (ty, env)) map
-    *)
+
    (* traverseはstableになるまで実行する必要がある．*)
      fun traverseConstraints (env as (_, tyset, _)) constraints = 
          let
@@ -614,14 +647,14 @@ end
             val _ = adjustDepthInTy (ref false) lambdaDepth resTy
             val _ = performSubst (oldTy, resTy)
           in
-            (tyList, ty2, nil, nil)
+            (tyList, ty2, NONE, nil)
           end
         | T.TYVARty (ref (T.TVAR {utvarOpt = SOME _,...})) => 
            raise CoerceFun
         | T.TYVARty (ref(T.SUBSTITUTED ty)) => 
           coerceFunM (ty, tyList)
         | T.FUNMty (tyList, ty2) => 
-          (tyList, ty2, nil, nil)
+          (tyList, ty2, NONE, nil)
         | T.POLYty {boundtvars, constraints, body} =>
           (case derefTy body of
              T.FUNMty(tyList,ty2) =>
@@ -641,12 +674,12 @@ end
                                        loc = loc})
                             constraints
              in
-               (argTyList,ranTy,instTyList,constraints)
+               (argTyList,ranTy,SOME instTyList,constraints)
              end
-           | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil, nil)
+           | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, NONE, nil)
            | _ => raise CoerceFun
           )
-        | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil, nil)
+        | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, NONE, nil)
         | _ => raise CoerceFun
 
 

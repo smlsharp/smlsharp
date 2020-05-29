@@ -167,4 +167,18 @@ struct
   fun getDatabaseSchema conn =
         map (fn x => (x, getTableInfo conn x)) (getTableNames conn)
 
+  fun columnTypeName ty =
+      case ty of
+        SMLSharp_SQL_BackendTy.INT => "INT"
+      | SMLSharp_SQL_BackendTy.INTINF => "INT"
+      | SMLSharp_SQL_BackendTy.WORD => "INT"
+      | SMLSharp_SQL_BackendTy.CHAR => "TEXT"
+      | SMLSharp_SQL_BackendTy.STRING => "TEXT"
+      | SMLSharp_SQL_BackendTy.REAL => "DOUBLE"
+      | SMLSharp_SQL_BackendTy.REAL32 => "FLOAT"
+      | SMLSharp_SQL_BackendTy.BOOL => "BOOLEAN"
+      | SMLSharp_SQL_BackendTy.TIMESTAMP => "DATETIME"
+      | SMLSharp_SQL_BackendTy.NUMERIC => "NUMERIC"
+      | SMLSharp_SQL_BackendTy.UNSUPPORTED s => s
+
 end

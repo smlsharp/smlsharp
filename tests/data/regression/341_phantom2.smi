@@ -1,0 +1,4 @@
+type 'a mem (= unit)
+val x : unit mem
+val f : 'a mem * 'a mem -> 'a mem
+val g : 'a mem * 'b mem -> 'c mem

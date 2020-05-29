@@ -105,7 +105,7 @@ precompiled/$(ARCH).ll.xz: src/llvm/main/anonymize precompiled/$(ARCH)_opt.bc
 	       s/^ +//;s/ +$$//;print if /\S/' \
 	| $(XZ) -c > $@
 # Workaround for LLVM 6 or prior: from LLVM 7, the signature of memset,
-# memcpy, and memmove intrinsics has been changed.  LLVM 7, 8, and 9 seems
+# memcpy, and memmove intrinsics has been changed.  LLVM 7-10 seems
 # to accept old signatures and convert it into new ones.  This sed script
 # reverts this conversion.
 # Workaround for LLVM 8 or prior: from LLVM 9, numeric basic block labels

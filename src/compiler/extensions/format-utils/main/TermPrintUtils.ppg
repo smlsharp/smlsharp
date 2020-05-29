@@ -34,7 +34,7 @@ in
         termList
       end
 
-  fun format_int int =
+  fun formati_nt int =
       let 
         val text = Int.toString int
       in
@@ -49,20 +49,28 @@ in
         makeToken text 
       end
 
-  fun format_int_json int =
-      let 
+  (* ?? *)
+  fun format_realJson real =
+      let
         val text = String.translate (fn #"~" => "-" | x => str x)
-                                    (Int.toString int)
+                                    (Real.fmt (StringCvt.GEN NONE) real)
+      in 
+        makeToken text 
+      end
+
+  (* ?? *)
+  fun format_real32 int =
+      let
+        val text = Real32.toString int
       in
         makeToken text 
       end
 
   (* ?? *)
-  fun format_real_json real =
+  fun format_real32Json int =
       let
-        val text = String.translate (fn #"~" => "-" | x => str x)
-                                    (Real.fmt (StringCvt.GEN NONE) real)
-      in 
+        val text = String.translate (fn #"~" => "-" | x => str x) (Real32.toString int)
+      in
         makeToken text 
       end
 
@@ -81,6 +89,13 @@ in
       let
         val text = "#" ^ "\"" ^ Char.toString char ^ "\""
       in 
+        makeToken text 
+      end
+
+  fun format_int int =
+      let 
+        val text = Int.toString int
+      in
         makeToken text 
       end
 
@@ -105,12 +120,6 @@ in
         makeToken text 
       end
 
-  fun format_int32_c int =
-      let
-        val text = Int32.toString int
-      in
-        makeToken text 
-      end
 
   fun format_int64 int =
       let
@@ -119,10 +128,46 @@ in
         makeToken text 
       end
 
-  (* ?? *)
-  fun format_real32 int =
+  fun format_intJson int =
+      let 
+        val text = String.translate (fn #"~" => "-" | x => str x)
+                                    (Int.toString int)
+      in
+        makeToken text 
+      end
+
+  fun format_int8Json int =
       let
-        val text = Real32.toString int
+        val text = String.translate (fn #"~" => "-" | x => str x) (Int8.toString int)
+      in
+        makeToken text 
+      end
+
+  fun format_int16Json int =
+      let
+        val text = String.translate (fn #"~" => "-" | x => str x) (Int16.toString int)
+      in
+        makeToken text 
+      end
+
+  fun format_int32Json int =
+      let
+        val text = String.translate (fn #"~" => "-" | x => str x) (Int32.toString int)
+      in
+        makeToken text 
+      end
+
+
+  fun format_int64Json int =
+      let
+        val text = String.translate (fn #"~" => "-" | x => str x) (Int64.toString int)
+      in
+        makeToken text 
+      end
+
+  fun format_int32_c int =
+      let
+        val text = Int32.toString int
       in
         makeToken text 
       end
@@ -163,6 +208,12 @@ in
   fun format_IntInf int =
       let
         val text = IntInf.toString int
+      in
+        makeToken text 
+      end
+  fun format_IntInfJson int =
+      let
+        val text = String.translate (fn #"~" => "-" | x => str x) (IntInf.toString int)
       in
         makeToken text 
       end

@@ -8,7 +8,9 @@
 infix 6 + -
 infix 4 = <> > >= < <=
 val op + = SMLSharp_Builtin.Int32.add_unsafe
+val op - = SMLSharp_Builtin.Word32.sub
 structure Int32 = SMLSharp_Builtin.Int32
+structure Word32 = SMLSharp_Builtin.Word32
 structure Array = SMLSharp_Builtin.Array
 structure String = SMLSharp_Builtin.String
 
@@ -25,21 +27,40 @@ struct
   exception Size = Size
   exception Span
   exception Subscript = Subscript
-  val exnName = SMLSharp_Builtin.General.exnName
   val ! = SMLSharp_Builtin.General.!
   val op := = SMLSharp_Builtin.General.:=
   val op o = SMLSharp_Builtin.General.o
   val op before = SMLSharp_Builtin.General.before
   val ignore = SMLSharp_Builtin.General.ignore
 
+  fun exnName e =
+      let
+        val (tag, _) = SMLSharp_Builtin.General.exnImpl e
+        val vec = SMLSharp_Builtin.General.exntagImpl tag
+        val ary = SMLSharp_Builtin.Vector.castToArray vec
+        val (name, _) = SMLSharp_Builtin.Array.sub_unsafe (ary, 0)
+      in
+        name
+      end
+
   fun exnMessage e =
       let
-        val name = exnName e
-        val (loc, index, boxed) = SMLSharp_Builtin.General.exnMessage e
-        val msg = if SMLSharp_Builtin.Pointer.identityEqual
-                       (boxed, SMLSharp_Builtin.Pointer.nullBoxed ())
-                  then ""
-                  else SMLSharp_Builtin.Dynamic.readString (boxed, index)
+        val (tag, loc) = SMLSharp_Builtin.General.exnImpl e
+        val vec = SMLSharp_Builtin.General.exntagImpl tag
+        val ary = SMLSharp_Builtin.Vector.castToArray vec
+        val (name, index) = SMLSharp_Builtin.Array.sub_unsafe (ary, 0)
+        val box = SMLSharp_Builtin.General.exnToBoxed e
+        val msg =
+            if index = 0w0
+            then ""
+            else if Word32.andb (index, 0w1) = 0w0
+            then SMLSharp_Builtin.Dynamic.readString (box, index)
+            else SMLSharp_Builtin.Dynamic.readString
+                   (SMLSharp_Builtin.Dynamic.readBoxed
+                      (box,
+                       SMLSharp_Builtin.Dynamic.objectSize box
+                       - SMLSharp_Builtin.Dynamic.sizeToWord _sizeof(boxed)),
+                    Word32.andb (index, Word32.notb 0w1))
         val len1 = String.size name
         val len2 = String.size msg
         val len3 = String.size loc

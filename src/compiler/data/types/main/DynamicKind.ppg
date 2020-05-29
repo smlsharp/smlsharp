@@ -31,7 +31,11 @@ struct
 
   (*% *)
   type dynamicKind 
-    = {
+    = (*%
+       * @format({tag, size, record})
+       * tag size record
+       *)
+      {
        tag: tag,
        size: size,
        record: record

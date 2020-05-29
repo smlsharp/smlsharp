@@ -3,10 +3,11 @@ _require local "../../../../basis.smi"
 
 _require "../../../libs/ids/main/LocalID.smi"
 _require local "../../../libs/env/main/SEnv.smi"
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/symbols/main/Symbol.smi"
 
 _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"
 _require local "../../debug/main/Bug.smi"
@@ -19,11 +20,11 @@ _require "./ReifiedTy.ppg.smi"
 
 structure ReifyTy =
 struct
-  val ReifiedTy : Loc.loc -> ReifiedTy.reifiedTy -> {exp:RecordCalc.rcexp, ty:Types.ty}
+  val ReifiedTy : Loc.loc -> ReifiedTy.reifiedTy -> {exp:TypedCalc.tpexp, ty:Types.ty}
   val ReifiedTyWithLookUp 
-      : (BoundTypeVarID.id -> RecordCalc.varInfo option) -> Loc.loc -> ReifiedTy.reifiedTy -> {exp:RecordCalc.rcexp, ty:Types.ty}
-  val TyRep  : Loc.loc -> ReifiedTy.tyRep -> {exp:RecordCalc.rcexp, ty:Types.ty}
+      : (BoundTypeVarID.id -> {id:VarID.id, path:Symbol.longsymbol, ty:Types.ty} option) -> Loc.loc -> ReifiedTy.reifiedTy -> {exp:TypedCalc.tpexp, ty:Types.ty}
+  val TyRep  : Loc.loc -> ReifiedTy.tyRep -> {exp:TypedCalc.tpexp, ty:Types.ty}
   val TyRepWithLookUp
-      : (BoundTypeVarID.id -> RecordCalc.varInfo option) -> Loc.loc -> ReifiedTy.tyRep -> {exp:RecordCalc.rcexp, ty:Types.ty}
-  val RecordTy : Loc.loc -> ReifiedTy.reifiedTy RecordLabel.Map.map -> {exp:RecordCalc.rcexp, ty:Types.ty} 
+      : (BoundTypeVarID.id -> {id:VarID.id, path:Symbol.longsymbol, ty:Types.ty} option) -> Loc.loc -> ReifiedTy.tyRep -> {exp:TypedCalc.tpexp, ty:Types.ty}
+  val RecordTy : Loc.loc -> ReifiedTy.reifiedTy RecordLabel.Map.map -> {exp:TypedCalc.tpexp, ty:Types.ty}
 end

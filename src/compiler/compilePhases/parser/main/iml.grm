@@ -267,6 +267,8 @@ structure S = AbsynSQL
                   recordKind : (RecordLabel.label * A.ty) list option}
     | match of (A.pat * A.exp) list
     | mrule of A.pat * A.exp
+    | dynmatch of (A.kindedTvar list * A.pat * A.exp) list
+    | exist_quantifier of A.kindedTvar list
     | optaspat of A.pat option
     | optop of bool
     | optty of A.ty option
@@ -412,7 +414,7 @@ structure S = AbsynSQL
     | sqlsetseq of (RecordLabel.label * A.exp S.exp) list
     | sqlDeleteCommand of A.exp S.sql
     | sqlexpseq of A.exp S.exp list
-    | sqltopexpseq of (A.exp S.exp * S.loc) list
+    | sqltopexpseq of A.exp S.exp list
     | sqltopexp of A.exp S.exp
     | sqlandexp of A.exp S.exp
     | sqlnotexp of A.exp S.exp
@@ -606,6 +608,10 @@ id_noSQL
           (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
         | SYMBOLICID
           (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
+        | EQ
+          (Symbol.mkSymbol "=" (EQleft, EQright))
+        | ASTERISK
+          (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
 
 longid
         : id
@@ -824,8 +830,8 @@ exp
           (A.EXPDYNAMICNULL (ty, (DYNAMICNULLleft, tyright)))
         | DYNAMICTOP AS ty
           (A.EXPDYNAMICTOP (ty, (DYNAMICTOPleft, tyright)))
-        | DYNAMICCASE exp OF match
-          (A.EXPDYNAMICCASE (exp, match, (DYNAMICCASEleft, matchright)))
+        | DYNAMICCASE exp OF dynmatch
+          (A.EXPDYNAMICCASE (exp, dynmatch, (DYNAMICCASEleft, dynmatchright)))
 
 expOrSQL
         : exp
@@ -854,6 +860,22 @@ match
         | pat DARROW exp BAR match
           ((pat, exp) :: match)
 
+dynmatch
+        : exist_quantifier pat DARROW exp
+          ([(exist_quantifier, pat, exp)])
+        | exist_quantifier pat DARROW exp BAR dynmatch
+          ((exist_quantifier, pat, exp) :: dynmatch)
+        | pat DARROW exp
+          ([(nil, pat, exp)])
+        | pat DARROW exp BAR dynmatch
+          ((nil, pat, exp) :: dynmatch)
+
+exist_quantifier
+        : LBRACE kinded_tyvar RBRACE
+          ([kinded_tyvar])
+        | LBRACE kinded_tyvarseq_comma RBRACE
+          (kinded_tyvarseq_comma)
+
 (* end of expression *)
 
 (*************************** sql ********************************)
@@ -861,12 +883,12 @@ match
 sql
         : SQL sqlpat DARROW sqlcon
           (A.EXPSQL (S.SQLFN (sqlpat, sqlcon), (SQLleft, sqlconright)))
-        | SQL sqlpat DARROW sqlexp
-          (A.EXPSQL (S.SQLFNEXP (sqlpat, sqlexp), (SQLleft, sqlexpright)))
+        | SQL sqlpat DARROW PERIODS LPAREN expOrSQL RPAREN
+          (A.EXPSQL (S.SQLFN_EMBED (sqlpat, expOrSQL), (SQLleft, RPARENright)))
         | SQL sqlcon
           (A.EXPSQL (S.SQL sqlcon, (SQLleft, sqlconright)))
         | SQL sqlkwexp
-          (A.EXPSQL (S.SQL (S.E sqlkwexp), (SQLleft, sqlkwexpright)))
+          (A.EXPSQL (S.SQL (S.EXP sqlkwexp), (SQLleft, sqlkwexpright)))
         | FN pat DARROW sql
           (A.EXPFN ([(pat, sql)], (FNleft, sqlright)))
 
@@ -985,32 +1007,39 @@ sqlOrderbyClauseOpt
 sqlLimitClause
         : LIMIT sqlexp
           (S.LIMIT {limit = (SOME sqlexp, (LIMITleft, sqlexpright)),
-                    offset = NONE})
+                    offset = NONE,
+                    loc = (LIMITleft, sqlexpright)})
         | LIMIT ALL
           (S.LIMIT {limit = (NONE, (LIMITleft, ALLright)),
-                    offset = NONE})
+                    offset = NONE,
+                    loc = (LIMITleft, ALLright)})
         | LIMIT sqlexp OFFSET sqlexp
           (S.LIMIT {limit = (SOME sqlexp1, (LIMITleft, sqlexp1right)),
-                    offset = SOME (sqlexp2, (OFFSETleft, sqlexp2right))})
+                    offset = SOME (sqlexp2, (OFFSETleft, sqlexp2right)),
+                    loc = (LIMITleft, sqlexpright)})
         | LIMIT ALL OFFSET sqlexp
           (S.LIMIT {limit = (NONE, (LIMITleft, ALLright)),
-                    offset = SOME (sqlexp, (OFFSETleft, sqlexpright))})
+                    offset = SOME (sqlexp, (OFFSETleft, sqlexpright)),
+                    loc = (LIMITleft, sqlexpright)})
 
 sqlOffsetClause
         : OFFSET sqlatexp sqlRowRows
           (S.OFFSET
              {offset = (sqlatexp, sqlRowRows, (OFFSETleft, sqlRowRowsright)),
-              fetch = NONE})
+              fetch = NONE,
+              loc = (OFFSETleft, sqlRowRowsright)})
         | OFFSET sqlatexp sqlRowRows FETCH sqlFirstNext sqlatexp sqlRowRows ONLY
           (S.OFFSET
              {offset = (sqlatexp1, sqlRowRows, (OFFSETleft, sqlRowRowsright)),
               fetch = SOME (sqlFirstNext, SOME sqlatexp2, sqlRowRows,
-                            (OFFSETleft, ONLYright))})
+                            (OFFSETleft, ONLYright)),
+              loc = (OFFSETleft, ONLYright)})
         | OFFSET sqlatexp sqlRowRows FETCH sqlFirstNext sqlRowRows ONLY
           (S.OFFSET
              {offset = (sqlatexp, sqlRowRows, (OFFSETleft, sqlRowRowsright)),
               fetch = SOME (sqlFirstNext, NONE, sqlRowRows,
-                            (OFFSETleft, ONLYright))})
+                            (OFFSETleft, ONLYright)),
+              loc = (OFFSETleft, ONLYright)})
 
 sqlLimitOrOffsetClauseOpt
         : (* none *)
@@ -1133,6 +1162,10 @@ labelseq
 sqlInsertValues
         : VALUES sqlvalues
           (S.INSERT_VALUES sqlvalues)
+        | VALUES OP longid
+          (S.INSERT_VAR (longid, (OPleft, longidright)))
+        | VALUES id_noSQL
+          (S.INSERT_VAR ([id_noSQL], (id_noSQLleft, id_noSQLright)))
         | sqlSelectQuery
           (S.INSERT_SELECT sqlSelectQuery)
 
@@ -1178,9 +1211,9 @@ sqlexpseq
 
 sqltopexpseq
         : sqltopexp
-          ((sqltopexp, (sqltopexpleft, sqltopexpright)) :: nil)
+          (sqltopexp :: nil)
         | sqltopexp COMMA sqltopexpseq
-          ((sqltopexp, (sqltopexpleft, sqltopexpright)) :: sqltopexpseq)
+          (sqltopexp :: sqltopexpseq)
 
 sqltopexp
         : sqlandexp
@@ -1220,23 +1253,10 @@ sqlappexp
         | sqlappexp IS NOT UNKNOWN
           (S.OP1 (S.IS_NOT_UNKNOWN, sqlappexp, (sqlappexpleft, UNKNOWNright)))
         | sqlappexp sqlatexp
-          (let
-             val exp2 =
-                 case sqlatexp of
-                   S.EXP (e, _) => e
-                 | _ => A.EXPSQL (S.SQL (S.E sqlatexp),
-                                      (sqlatexpleft, sqlatexpright))
-             val exps =
-                 case sqlappexp of
-                   S.EXP (A.EXPAPP (l, _), _) => l @ [exp2]
-                 | S.EXP (e, _) => [e, exp2]
-                 | _ => [A.EXPSQL (S.SQL (S.E sqlappexp),
-                                       (sqlappexpleft, sqlappexpright)),
-                         exp2]
-             val loc = (sqlappexpleft, sqlatexpright)
-          in
-            S.EXP (A.EXPAPP (exps, loc), loc)
-          end)
+          (case sqlappexp of
+             S.APP (exps, loc) =>
+             S.APP (exps @ [sqlatexp], (sqlappexpleft, sqlatexpright))
+           | _ => S.APP ([sqlappexp, sqlatexp], (sqlappexpleft, sqlatexpright)))
 
 sqlatexp
         : constant
@@ -1250,10 +1270,9 @@ sqlatexp
         | LPAREN RPAREN
           (S.CONST (A.UNITCONST, (LPARENleft, RPARENright)))
         | OP longid
-          (S.EXP (A.EXPOPID (longid, (OPleft,longidright)),
-                  (OPleft,longidright)))
+          (S.OPID (longid, (OPleft, longidright)))
         | id_noSQL
-          (S.EXP (A.EXPID [id_noSQL], (id_noSQLleft, id_noSQLright)))
+          (S.ID id_noSQL)
         | HASH label PERIOD label
           (S.COLUMN2 ((label1, label2), (HASHleft, label2right)))
         | HASH PERIOD label
@@ -1261,23 +1280,15 @@ sqlatexp
         | sqlopt sqlkwexp
           (sqlkwexp)
         | LPAREN sqltopexp RPAREN
-          (sqltopexp)
-        | LPAREN sqlopt sqlcon RPAREN
-          (S.EXP (A.EXPSQL (S.SQL sqlcon, (sqloptleft, sqlconright)),
-                  (sqloptleft, sqlconright)))
+          (case sqltopexp of
+             S.ID x => S.PARENID x
+           | x => S.APP ([sqltopexp], (sqltopexpleft, sqltopexpright)))
+        | LPAREN sqlopt sqlSelectQuery RPAREN
+          (S.EXP_SUBQUERY (sqlSelectQuery, (sqloptleft, sqlSelectQueryright)))
+        | LPAREN PERIODS expOrSQL RPAREN
+          (S.EXP_EMBED (expOrSQL, (LPARENleft, RPARENright)))
         | LPAREN sqltopexp COMMA sqltopexpseq RPAREN
-          (S.EXP
-             (A.EXPTUPLE
-                (map (fn (S.EXP (e, _), l) => e
-                       | (x, l) => A.EXPSQL (S.SQL (S.E x), l))
-                     ((sqltopexp, (sqltopexpleft, sqltopexpright))
-                      :: sqltopexpseq),
-                 (LPARENleft, RPARENright)),
-              (LPARENleft, RPARENright)))
-        | LET decseq_semicolon IN expseq_semicolon END
-          (S.EXP (A.EXPLET (decseq_semicolon, expseq_semicolon,
-                                (LETleft, ENDright)),
-                  (LETleft, ENDright)))
+          (S.TUPLE ((sqltopexp :: sqltopexpseq, (LPARENleft, RPARENright))))
 
 sqlkwexp
         : EXISTS LPAREN sqlopt sqlSelectQuery RPAREN
@@ -1293,7 +1304,7 @@ sqlparen
         : sqlopt sqlcon
           (sqlcon)
         | sqltopexp
-          (S.E sqltopexp)
+          (S.EXP sqltopexp)
 
 sqlpat
         : sqlatpat
