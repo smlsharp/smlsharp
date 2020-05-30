@@ -306,15 +306,64 @@ struct
         topdecsInclude : PatternCalc.pltopdec list
       }
 
+  (*%
+   * @formatter(PatternCalc.plstrdec) PatternCalc.format_plstrdec
+   * @formatter(PatternCalc.plsigexp) PatternCalc.format_plsigexp
+   * @formatter(PatternCalc.plstrexp) PatternCalc.format_plstrexp
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(funbind) format_funbind
+   * @formatter(declist) TermFormat.formatDeclList
+   *)
   datatype topdec
-    = TOPDECSTR of PatternCalc.plstrdec * loc
-    | TOPDECSIG of (symbol * PatternCalc.plsigexp ) list * loc 
-    | TOPDECFUN of
-      {pltopdec: {name:symbol, argStrName:symbol, argSig:PatternCalc.plsigexp, body:PatternCalc.plstrexp, loc:loc},
-       pitopdec: funbind option}
-        list * loc 
+    = (*%
+       * @format(plstrdec * loc) 
+       *   "TOPDECSTR(" plstrdec ")"
+      *)
+      TOPDECSTR of PatternCalc.plstrdec * loc
+    | (*%
+       * @format(sigbind sigbinds * loc) "TOPDECSIG"
+      *)
+      TOPDECSIG of (symbol * PatternCalc.plsigexp ) list * loc 
+    | (*%
+       * @format(decfun decfuns * loc)
+       *  "TOPDECFUN:" \n
+       *  decfuns:declist(decfun:decfun)(+1 ",", +d)
+       *
+       * @format:decfun({pltopdec:pltop, pitopdec:funbind funbindOpt})
+       *  "pltopdec" \n
+       *   pltop:pltop \n
+       *  "pitopdec" \n
+       *   funbindOpt(funbind)(,) \n
+       *
+       * @format:pltop({name, argStrName, argSig, body, loc})
+       *  "functor" + name + "(" argStrName ":" argSig ") =" +d
+       *  body
+      *)
+       TOPDECFUN of
+         {pltopdec: {name:symbol, 
+                     argStrName:symbol, 
+                     argSig:PatternCalc.plsigexp, 
+                     body:PatternCalc.plstrexp, 
+                     loc:loc},
+          pitopdec: funbind option} list * loc 
 
-  type compile_unit_spliced =
+  (*%
+   * @formatter(option) TermFormat.formatOptionalOption
+   * @formatter(declist) TermFormat.formatDeclList
+   *)
+  type compile_unit_spliced
+    = (*%
+       * @format({interface:interface interfaceOpt,
+       *          topdecsInclude:inctopdec inctopdecs,
+       *          topdecsSource:srctopdec srctopdecs})
+       * "interface" \n
+       * interfaceOpt(interface)(,)
+       * \n
+       * "topdecsInclude" \n
+         inctopdecs:declist(inctopdec)(+1, +1)
+       * "topdecsSource" \n
+         srctopdecs:declist(srctopdec)(+1, +1)
+      *)
       {
         interface : interface option,
         topdecsInclude : topdec list,

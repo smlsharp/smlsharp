@@ -12,6 +12,7 @@ end =
 struct
 
   structure L = TypedLambda
+  structure R = RecordCalc
   structure B = BitmapCalc2
   structure C = ClosureCalc
   structure T = Types
@@ -1034,7 +1035,7 @@ struct
       {
         varEnv: varEnv,
         styEnv: SingletonTyEnv2.env,
-        path: RecordCalc.path,
+        path: Symbol.longsymbol,
         toplevel: bool
       }
 
@@ -1070,7 +1071,29 @@ struct
   fun enterFunction ({varEnv, styEnv, path, toplevel}:env) : env =
       {varEnv = varEnv, styEnv = styEnv, path = path, toplevel = false}
 
-  fun compileConst const =
+  fun constTy const =
+      case const of
+        R.CONST (L.INT8 n) => BuiltinTypes.int8Ty
+      | R.CONST (L.INT16 n) => BuiltinTypes.int16Ty
+      | R.CONST (L.INT32 n) => BuiltinTypes.int32Ty
+      | R.CONST (L.INT64 n) => BuiltinTypes.int64Ty
+      | R.CONST (L.WORD8 n) => BuiltinTypes.word8Ty
+      | R.CONST (L.WORD16 n) => BuiltinTypes.word16Ty
+      | R.CONST (L.WORD32 n) => BuiltinTypes.word32Ty
+      | R.CONST (L.WORD64 n) => BuiltinTypes.word64Ty
+      | R.CONST (L.CONTAG n) => BuiltinTypes.contagTy
+      | R.CONST (L.REAL64 n) => BuiltinTypes.real64Ty
+      | R.CONST (L.REAL32 n) => BuiltinTypes.real32Ty
+      | R.CONST (L.CHAR c) => BuiltinTypes.charTy
+      | R.CONST L.UNIT => BuiltinTypes.unitTy
+      | R.CONST L.NULLPOINTER => T.CONSTRUCTty {tyCon = BuiltinTypes.ptrTyCon,
+                                                args = [BuiltinTypes.unitTy]}
+      | R.CONST L.NULLBOXED => BuiltinTypes.boxedTy
+      | R.TAG (n, ty) => T.SINGLETONty (T.TAGty ty)
+      | R.SIZE (n, ty) => T.SINGLETONty (T.SIZEty ty)
+      | R.INDEX (n, l, ty) => T.SINGLETONty (T.INDEXty (l, ty))
+
+  fun compileTlconst const =
       case const of
         L.INT8 n => C.CVINT8 n
       | L.INT16 n => C.CVINT16 n
@@ -1087,9 +1110,13 @@ struct
       | L.UNIT => C.CVUNIT
       | L.NULLPOINTER => C.CVNULLPOINTER
       | L.NULLBOXED => C.CVNULLBOXED
-      | L.TAG (n, ty) => C.CVTAG {tag = n, ty = ty}
-      | L.SIZE (n, ty) => C.CVSIZE {size = n, ty = ty}
-      | L.INDEX (n, l, ty) => C.CVINDEX {index = n, label = l, ty = ty}
+
+  fun compileConst const =
+      case const of
+        R.CONST c => compileTlconst c
+      | R.TAG (n, ty) => C.CVTAG {tag = n, ty = ty}
+      | R.SIZE (n, ty) => C.CVSIZE {size = n, ty = ty}
+      | R.INDEX (n, l, ty) => C.CVINDEX {index = n, label = l, ty = ty}
 
   fun getFunTy ty =
       case TypesBasics.derefTy ty of
@@ -1217,12 +1244,11 @@ struct
                          attributes = attributes}
           val callbackEntryTy = T.BACKENDty (T.CALLBACKENTRYty entryTy)
           val funPtrTy =
-                T.BACKENDty (T.FOREIGNFUNPTRty
-                               {tyvars = SingletonTyEnv2.btvEnv (#styEnv env),
-                                argTyList = #argTyList entryTy,
-                                varArgTyList = NONE,
-                                resultTy = #retTy entryTy,
-                                attributes = #attributes entryTy})
+              T.BACKENDty (T.FOREIGNFUNPTRty
+                             {argTyList = #argTyList entryTy,
+                              varArgTyList = NONE,
+                              resultTy = #retTy entryTy,
+                              attributes = #attributes entryTy})
           val codeExp =
               C.CCCONST {const = C.CVCALLBACKENTRY
                                    {id = id, callbackEntryTy = entryTy},
@@ -1246,7 +1272,7 @@ struct
                                  resultTy = funPtrTy,
                                  loc = loc})
         end
-      | B.BCCONSTANT {const = L.S (L.STRING s), ty, loc} =>
+      | B.BCSTRING {string = L.STRING s, loc} =>
         let
           val id = DataLabel.generate (#path env)
         in
@@ -1256,7 +1282,7 @@ struct
                       ty = BuiltinTypes.stringTy,
                       loc = loc})
         end
-      | B.BCCONSTANT {const = L.S (L.INTINF n), ty, loc} =>
+      | B.BCSTRING {string = L.INTINF n, loc} =>
         let
           val id = ExtraDataLabel.generate (#path env)
         in
@@ -1264,8 +1290,9 @@ struct
            VALUE,
            C.CCINTINF {srcLabel = id, loc = loc})
         end
-      | B.BCCONSTANT {const = L.C const, ty, loc} =>
+      | B.BCCONSTANT {const = const, loc} =>
         let
+          val ty = constTy const
           val const = compileConst const
         in
           (nil, VALUE, C.CCCONST {const = const, ty = ty, loc = loc})
@@ -1572,7 +1599,7 @@ struct
   and compileBranches accum env nil loc = (nil, nil)
     | compileBranches accum env ({constant,branchExp}::branches) loc =
       let
-        val const = compileConst constant
+        val const = compileTlconst constant
         val (top1, _, branchExp) = compileExp accum env branchExp
         val (top2, branches) = compileBranches accum env branches loc
       in

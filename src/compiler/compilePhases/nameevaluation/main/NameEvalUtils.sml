@@ -55,6 +55,10 @@ in
       if !Bug.debugPrint then 
         print (Bug.prettyPrint (I.formatWithType_ty ty))
       else ()
+  fun printProp prop =
+      if !Bug.debugPrint then 
+        print (Bug.prettyPrint (I.format_property prop))
+      else ()
   fun printPITy ty =
       if !Bug.debugPrint then 
         print (Bug.prettyPrint (AbsynTyFormatter.format_ty ty))
@@ -266,6 +270,13 @@ in
         print
           (Bug.prettyPrint
              (PatternCalcInterface.format_compile_unit compileUnit) ^ "\n")
+      else ()
+  fun printCompileUnitSpliced compileUnitSpliced =
+      if !Bug.debugPrint then 
+        print
+          (Bug.prettyPrint
+             (PatternCalcInterface.format_compile_unit_spliced 
+                compileUnitSpliced) ^ "\n")
       else ()
 
   fun printPltopdec dec =

@@ -420,11 +420,38 @@ in
                       )
                    )
                | I.LIFTED tvar =>
+                 (EU.enqueueError
+                    (loc, E.LIFTEDPropNotAllowedInOpaqueInterface("EI-201", {symbol = tycon}));
+                  let
+                   val tfun = 
+                       I.TFUN_DEF
+                         {admitsEq = eq,
+                          formals = tvarList,
+                          realizerTy = I.TYVAR tvar,
+                          longsymbol = longsymbol}
+                 in
+                   I.TFUN_VAR
+                     (I.mkTfv
+                        (I.TFUN_DTY {id=id,
+                                     admitsEq=eq,
+                                     formals=tvarList,
+                                     conSpec=SymbolEnv.empty,
+                                     conIDSet=ConID.Set.empty,
+                                     longsymbol=longsymbol,
+                                     liftedTys=I.emptyLiftedTys,
+                                     dtyKind= I.INTERFACE tfun
+                                    }
+                        )
+                     )
+                  end
+                 )
+(*
                  I.TFUN_DEF
                    {admitsEq = eq,
                     formals = tvarList,
                     realizerTy = I.TYVAR tvar,
                     longsymbol = longsymbol}
+*)
          in
            (renameEnv, externSet, VP.rebindTstr (V.emptyEnv, tycon, V.TSTR absTfun), nil)
          end

@@ -53,25 +53,6 @@ struct
         B.word32Ty
         (E.Word32 maxObjectSize, E.Cast (E.SizeOf elemTy, B.word32Ty))
 
-  fun primFunTy boundtvars ty =
-      case TypesBasics.derefTy ty of
-        T.FUNMty ([argTy], retTy) =>
-        (case TypesBasics.derefTy argTy of
-           T.RECORDty tys =>
-           {boundtvars = boundtvars,
-            argTyList = RecordLabel.Map.listItems tys,
-            resultTy = retTy}
-         | argTy =>
-           {boundtvars = boundtvars,
-            argTyList = [argTy],
-            resultTy = retTy})
-      | _ => raise Bug.Bug "decomposeFunTy"
-
-  fun toPrimTy ty =
-      case TypesBasics.derefTy ty of
-        T.POLYty {boundtvars, constraints, body} => primFunTy boundtvars body
-      | ty => primFunTy BoundTypeVarID.Map.empty ty
-
   datatype int_ty =
       INT8ty
     | INT16ty
@@ -156,7 +137,7 @@ struct
       | INT64ty => L.INT64 (Int64.fromInt n)
 
   fun int_constExp ty n =
-      E.Const (int_const ty n, ty)
+      E.Const (int_const ty n)
 
   fun int_min ty =
       case intTy ty of
@@ -166,7 +147,7 @@ struct
       | INT64ty => L.INT64 int64min
 
   fun int_minExp ty =
-      E.Const (int_min ty, ty)
+      E.Const (int_min ty)
 
   fun int_numBits ty =
       case intTy ty of
@@ -222,16 +203,6 @@ struct
         E.BitCast (arg, retTy)
       | (P.Cast P.BitCast, _, _, _) =>
         raise Bug.Bug "compilePrim: BitCast"
-
-      | (P.Exn_name, [arg], _, []) =>
-        E.extractExnTagName (E.extractExnTag arg)
-      | (P.Exn_name, _, _, _) =>
-        raise Bug.Bug "compilePrim: Exn_Name"
-
-      | (P.Exn_message, [arg], _, []) =>
-        E.Exn_Message arg
-      | (P.Exn_message, _, _, _) =>
-        raise Bug.Bug "compilePrim: Exn_Message"
 
       | (P.Equal, [arg1, arg2], _, [_]) =>
         E.PrimApply ({primitive = P.R (P.M P.RuntimePolyEqual),
@@ -743,16 +714,16 @@ struct
       | (P.Before, _, _, _) =>
         raise Bug.Bug "compilePrim: Before"
 
-      | (P.Ptr_null, [_], _, [ty]) =>
+      | (P.Ptr_null, nil, _, [ty]) =>
         let
           fun ptrTy ty = T.CONSTRUCTty {tyCon = B.ptrTyCon, args= [ty]}
         in
-          E.Cast (E.Const (L.NULLPOINTER, ptrTy B.unitTy), ptrTy ty)
+          E.Cast (E.Const L.NULLPOINTER, ptrTy ty)
         end
       | (P.Ptr_null, _, _, _) =>
         raise Bug.Bug "compilePrim: Ptr_null"
 
-      | (P.Boxed_null, [_], _, _) =>
+      | (P.Boxed_null, nil, _, _) =>
         E.Null
       | (P.Boxed_null, _, _, _) =>
         raise Bug.Bug "compilePrim: Boxed_null"
@@ -761,13 +732,103 @@ struct
         E.PrimApply ({primitive = prim, ty = primTy},
                      instTyList, retTy, args)
 
-  fun compile {primitive, primTy, instTyList, argExpList, resultTy, loc} =
+  (*
+   * - primTy's argTyList is empty only when the argument type is unit.
+   * - argument record is exploded when it must have at least two fields.
+   * - argument record must not be exploded for polymorphic primitives.
+   *
+   * types in builtin.smi      TypedLambda.primTy
+   * unit -> ty                [] -> ty
+   * int -> ty                 [int] -> ty
+   * {} -> ty                  [{}] -> ty
+   * {1: int} -> ty            [{1: int}] -> ty
+   * int * real -> ty          [int, real] -> ty
+   * {a: int, b: real} -> ty   [int, real] -> ty
+   * 'a -> ty                  ['a] -> ty
+   * 'a * 'b -> ty             ['a, 'b] -> ty
+   *)
+  fun primFunTy boundtvars ty =
+      case TypesBasics.derefTy ty of
+        T.FUNMty ([argTy], retTy) =>
+        (case TypesBasics.derefTy argTy of
+           ty as T.RECORDty tys =>
+           {boundtvars = boundtvars,
+            argTyList = if RecordLabel.Map.numItems tys <= 1
+                        then [ty]
+                        else RecordLabel.Map.listItems tys,
+            resultTy = retTy}
+         | ty as T.CONSTRUCTty {tyCon, args = []} =>
+           {boundtvars = boundtvars,
+            argTyList = if TypID.eq (#id tyCon, #id B.unitTyCon)
+                        then nil
+                        else [ty],
+            resultTy = retTy}
+         | argTy =>
+           {boundtvars = boundtvars,
+            argTyList = [argTy],
+            resultTy = retTy})
+      | _ => raise Bug.Bug "decomposeFunTy"
+
+  fun toPrimTy ty =
+      case TypesBasics.derefTy ty of
+        T.POLYty {boundtvars, constraints, body} => primFunTy boundtvars body
+      | ty => primFunTy BoundTypeVarID.Map.empty ty
+
+  fun explodeRecord (L.TLRECORD {fields, ...}, T.RECORDty tys) =
+      (nil,
+       RecordLabel.Map.listItems
+         (RecordLabel.Map.mergeWith
+            (fn (SOME exp, SOME ty) => SOME (E.Exp (exp, ty))
+              | _ => raise Bug.Bug "explodeRecord")
+            (fields, tys)))
+    | explodeRecord (exp, expTy as T.RECORDty tys) =
       let
-        val binds = map (fn x => (EmitTypedLambda.newId (), x)) argExpList
-        val args = map (fn (id, _) => E.Var id) binds
-        val exp1 = elabPrim (primitive, primTy, instTyList, resultTy, args, loc)
+        val vid = EmitTypedLambda.newId ()
       in
-        E.Let (binds, exp1)
+        ([(vid, E.Exp (exp, expTy))],
+         map (fn label => E.Select (label, E.Var vid))
+             (RecordLabel.Map.listKeys tys))
+      end
+    | explodeRecord (exp, expTy as T.CONSTRUCTty {tyCon, args = []}) =
+      if TypID.eq (#id B.unitTyCon, #id tyCon)
+      then (nil, nil)
+      else (nil, [E.Exp (exp, expTy)])
+    | explodeRecord (exp, expTy) =
+      (nil, [E.Exp (exp, expTy)])
+
+  fun unwrapLet (L.TLLET {decl, body, loc}) =
+      let
+        val (decls, body) = unwrapLet body
+      in
+        (E.Decl (decl, loc) :: decls, body)
+      end
+    | unwrapLet mainExp = (nil, mainExp)
+
+  fun compile {primOp={primitive, ty}, instTyList, argExp, loc} =
+      let
+        val (primInstTy, instTyList) =
+            case instTyList of
+              NONE => (TypesBasics.derefTy ty, nil)
+            | SOME tys => (TypesBasics.tpappTy (ty, tys), tys)
+        val (argTy, retTy) =
+            case primInstTy of
+              T.FUNMty ([argTy], retTy) => (TypesBasics.derefTy argTy, retTy)
+            | _ => raise Bug.Bug "compile: not a function type"
+        val (decls, argExp) = unwrapLet argExp
+        val primTy = toPrimTy ty
+        val (binds1, argExps) =
+            case #argTyList primTy of
+              [_] => (nil, [E.Exp (argExp, argTy)])
+            | _ => explodeRecord (argExp, argTy)
+        val _ = if length argExps = length (#argTyList primTy) then ()
+                else raise Bug.Bug "compile: arity mismatch"
+        val binds2 = map (fn x => (EmitTypedLambda.newId (), x)) argExps
+        val args = map (fn (id, _) => E.Var id) binds2
+        val exp1 = elabPrim (primitive, primTy, instTyList, retTy, args, loc)
+      in
+        EmitTypedLambda.emit
+          loc
+          (E.TLLet (decls, E.Let (binds1 @ binds2, exp1)))
       end
 
 end

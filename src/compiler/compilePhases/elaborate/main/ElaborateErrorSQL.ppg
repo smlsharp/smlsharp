@@ -14,17 +14,6 @@ struct
    * @formatter(Symbol.symbol) Symbol.format_symbol
    *)
   exception
-
-  (*
-   *)
-  (*%
-   * @format(label)
-   *    "duplicate" +d "label" +d "of" +d "SQL" +d "server"
-   *    +d "description:" label
-   *)
-  DuplicateSQLRecordLabel of RecordLabel.label
-
-  and
   (*
    *)
   (*%
@@ -71,26 +60,6 @@ struct
   NumberOfSQLInsertLabel
 
   and
-  (*
-   *)
-  (*%
-   * @format
-   *    "different" +d "number" +d "of" +d "labels" +d "in" +d "set"
-   *    +d "clause"
-   *)
-  NumberOfSQLSetLabel
-
-  and
-  (*
-   *)
-  (*%
-   * @format(label)
-   *    "not" +d "available" +d "label" +d "of" +d "SQL" +d "server"
-   *    +d "description:" label
-   *)
-  NotAvailableSQLKeyword of string
-
-  and
   (*%
    * @format(name)
    *    "cross" +d "join" +d "cannot" +d "be" +d "named:" +d name
@@ -104,5 +73,27 @@ struct
    *	+d "allowed"
    *)
   UnnaturalNaturalJoin
+
+  and
+  (*%
+   * @format
+   *    "ML" +d "function" +d "application" +d "found" +d "in" +d "SQL"
+   *    +d "query"
+   *)
+  AppInSQLQuery
+
+  and
+  (*%
+   * @format
+   *    "ML" +d "tuple" +d "found" +d "in" +d "SQL" +d "query"
+   *)
+  TupleInSQLQuery
+
+  and
+  (*%
+   * @format
+   *    "~" +d "must" +d "be" +d "unary" +d "in" +d "SQL" +d "query"
+   *)
+  NegNotUnary
 
 end

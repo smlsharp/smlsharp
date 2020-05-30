@@ -8,7 +8,7 @@ _require local "../../../libs/ids/main/LocalID.smi"
 (* _require local "../../../libs/util/main/TermFormat.smi" *)
 (* _require local "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi" *)
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
-(* _require local "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi" *)
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 
 _require "../../../../basis.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
@@ -17,15 +17,14 @@ _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../data/types/main/VarInfoEnv.smi"
 _require "../../../compilerIRs/absyn/main/AbsynConst.smi"
 _require "../../../data/types/main/Types.ppg.smi"
-_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 
 structure MatchData = 
 struct
-  datatype kind = Bind | Match | Handle of RecordCalc.varInfo
+  datatype kind = Bind | Match | Handle of Types.varInfo
     
   type const = AbsynConst.constant
-  type conInfo = RecordCalc.conInfo
-  type exnCon = RecordCalc.exnCon
+  type conInfo = Types.conInfo
+  type exnCon = TypedCalc.exnCon
 
   structure ConstOrd = 
   struct
@@ -35,7 +34,7 @@ struct
 
   structure DataConOrd = 
   struct
-    type ord_key = conInfo * bool
+    type ord_key = conInfo * Types.ty list option * bool
     val compare : ord_key * ord_key -> order
   end
 
@@ -60,9 +59,9 @@ struct
 
   datatype pat
   = WildPat of Types.ty
-  | VarPat of RecordCalc.varInfo
+  | VarPat of Types.varInfo
   | ConstPat of const * Types.ty
-  | DataConPat of conInfo * bool * pat * Types.ty
+  | DataConPat of conInfo * Types.ty list option * bool * pat * Types.ty
   | ExnConPat of exnCon * bool * pat * Types.ty
   | RecPat of (RecordLabel.label * pat) list * Types.ty
   | LayerPat of pat * pat
@@ -74,18 +73,18 @@ struct
     = End of exp
     | ++ of pat * rule
 
-  type env = RecordCalc.varInfo VarInfoEnv.map
+  type env = Types.varInfo VarInfoEnv.map
 
   datatype tree
     = EmptyNode
     | LeafNode of exp * env
-    | EqNode of RecordCalc.varInfo * tree ConstMap.map * tree
-    | DataConNode of RecordCalc.varInfo * tree DataConMap.map * tree
-    | ExnConNode of RecordCalc.varInfo * tree ExnConMap.map * tree
-    | RecNode of RecordCalc.varInfo * RecordLabel.label * tree
-    | UnivNode of RecordCalc.varInfo * tree
+    | EqNode of Types.varInfo * tree ConstMap.map * tree
+    | DataConNode of Types.varInfo * tree DataConMap.map * tree
+    | ExnConNode of Types.varInfo * tree ExnConMap.map * tree
+    | RecNode of Types.varInfo * RecordLabel.label * tree
+    | UnivNode of Types.varInfo * tree
 
-  val unitExp : RecordCalc.rcexp
-  val expDummy : RecordCalc.rcexp
+  val unitExp : TypedCalc.tpexp
+  val expDummy : TypedCalc.tpexp
     
 end

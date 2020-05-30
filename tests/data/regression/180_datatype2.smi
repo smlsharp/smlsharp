@@ -1,1 +1,4 @@
-datatype t2 = T
+structure S =
+struct
+  datatype t2 = T
+end

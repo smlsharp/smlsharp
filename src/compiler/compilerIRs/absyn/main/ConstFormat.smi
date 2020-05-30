@@ -1,0 +1,38 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+
+structure ConstFormat =
+struct
+
+  val format_intInf_dec_ML : intInf -> SMLFormat.format
+  val format_intInf_word_ML : intInf -> SMLFormat.format
+  val format_int64_dec_ML : int64 -> SMLFormat.format
+  val format_int32_dec_ML : int32 -> SMLFormat.format
+  val format_int16_dec_ML : int16 -> SMLFormat.format
+  val format_int8_dec_ML : int8 -> SMLFormat.format
+  val format_int_dec_ML : int -> SMLFormat.format
+  val format_word64_hex_ML : word64 -> SMLFormat.format
+  val format_word32_hex_ML : word32 -> SMLFormat.format
+  val format_word16_hex_ML : word16 -> SMLFormat.format
+  val format_word8_hex_ML : word8 -> SMLFormat.format
+  val format_word_hex_ML : word -> SMLFormat.format
+  val format_real64_ML : real64 -> SMLFormat.format
+  val format_real32_ML : real32 -> SMLFormat.format
+  val format_string_ML : string -> SMLFormat.format
+  val format_char_ML : char -> SMLFormat.format
+  val format_int64_dec_C : int64 -> SMLFormat.format
+  val format_int32_dec_C : int32 -> SMLFormat.format
+  val format_int16_dec_C : int16 -> SMLFormat.format
+  val format_int8_dec_C : int8 -> SMLFormat.format
+  val format_int_dec_C : int -> SMLFormat.format
+  val format_word64_hex_C : word64 -> SMLFormat.format
+  val format_word32_hex_C : word32 -> SMLFormat.format
+  val format_word16_hex_C : word16 -> SMLFormat.format
+  val format_word8_hex_C : word8 -> SMLFormat.format
+  val format_word_hex_C : word -> SMLFormat.format
+  val format_real64_C : real64 -> SMLFormat.format
+  val format_real32_C : real32 -> SMLFormat.format
+  val format_string_C : string -> SMLFormat.format
+  val format_char_C : char -> SMLFormat.format
+
+end

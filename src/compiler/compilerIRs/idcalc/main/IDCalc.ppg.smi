@@ -134,11 +134,13 @@ struct
     | ICEXEXN_CONSTRUCTOR of {longsymbol: longsymbol, exInfo:{used:bool ref, longsymbol: longsymbol, version:version, ty:ty}}
     | ICOPRIM of oprimInfo
     | ICTYPED of icexp * ty * loc
+(*
     | ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
+*)
     | ICINTERFACETYPED of {icexp:icexp,ty:ty,loc:loc}
     | ICAPPM of icexp * icexp list * loc
     | ICAPPM_NOUNIFY of icexp * icexp list * loc
-    | ICLET of icdecl list * icexp list * loc
+    | ICLET of icdecl list * icexp * loc
     | ICTYCAST of {from:tfun, to:tfun} list * icexp * loc
     | ICRECORD of (RecordLabel.label * icexp) list * loc
     | ICRAISE of icexp * loc
@@ -152,8 +154,8 @@ struct
                * loc  (* primitive; caseKind added *)
     | ICDYNAMICCASE of
       icexp
-      * {arg:icpat, body:icexp} list 
-      * loc  (* primitive; caseKind added *)
+      * {tyvars: (tvar * tvarKind) list, arg:icpat, body:icexp} list 
+      * loc
     | ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
     | ICRECORD_SELECTOR of RecordLabel.label * loc 
     | ICSELECT of RecordLabel.label * icexp * loc
@@ -188,6 +190,8 @@ struct
   
   and icdecl
     = ICVAL of (tvar * tvarKind) list * (icpat * icexp) list * loc
+    | ICVAL_TRANS_SIG of {var:varInfo, exp:icexp, ty:ty, loc:loc}
+    | ICVAL_OPAQUE_SIG of {var:varInfo, revealKey:revealKey, exp:icexp, ty:ty, loc:loc}
     | ICDECFUN of
          {
           guard: (tvar * tvarKind) list,
@@ -336,6 +340,7 @@ struct
   val format_overloadCase : overloadCase -> TermFormat.format
   val format_overloadInstance : overloadInstance -> TermFormat.format
   val format_longsymbol : longsymbol -> TermFormat.format
+  val format_property : property -> TermFormat.format
   val format_revealKey : revealKey -> TermFormat.format
   val format_scopedTvars : scopedTvars -> TermFormat.format
   val format_tfun : tfun -> TermFormat.format

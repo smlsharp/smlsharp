@@ -95,11 +95,6 @@ in
       | ICEXEXN_CONSTRUCTOR exnInfo => icexp
       | ICOPRIM oprimInfo => icexp
       | ICTYPED (icexp, ty, loc) => ICTYPED (transExp icexp, ty, loc)
-      | ICSIGTYPED {icexp,ty,loc, revealKey} =>
-        ICSIGTYPED {icexp=transExp icexp,
-                    ty=ty,
-                    revealKey=revealKey,
-                    loc=loc}
       | ICINTERFACETYPED {icexp,ty,loc} =>
         ICINTERFACETYPED {icexp=transExp icexp,
                           ty=ty,
@@ -108,8 +103,8 @@ in
         ICAPPM (transExp icexp, map transExp icexplist, loc)
       | ICAPPM_NOUNIFY (icexp, icexplist, loc) =>
         ICAPPM_NOUNIFY (transExp icexp, map transExp icexplist, loc)
-      | ICLET (icdecList, icexpList, loc) =>
-        ICLET (map transDecl icdecList, map transExp icexpList, loc)
+      | ICLET (icdecList, icexp, loc) =>
+        ICLET (map transDecl icdecList, transExp icexp, loc)
       | ICTYCAST (tycastList, icexp, loc) =>
         ICTYCAST (tycastList, transExp icexp, loc)
       | ICRECORD (stringIcexpList, loc) =>
@@ -136,10 +131,12 @@ in
                      icpatListIcexpList,
                  caseKind,
                  loc)
-      | ICDYNAMICCASE (icexp, icpatIcexpList, loc) =>
+      | ICDYNAMICCASE (icexp, matchList, loc) =>
         ICDYNAMICCASE (transExp icexp,
-                       map (fn {arg, body} => {arg = arg, body = transExp body})
-                           icpatIcexpList,
+                       map (fn {tyvars, arg, body} =>
+                               {tyvars = tyvars, arg = arg,
+                                body = transExp body})
+                           matchList,
                        loc)
       | ICRECORD_UPDATE (icexp, stringIcexpList, loc) =>
         ICRECORD_UPDATE (transExp icexp,
@@ -170,6 +167,11 @@ in
         ICVAL (tvarList, icpatIcexpList, loc) =>
         ICVAL (tvarList,
                map (fn (pat,exp) => (pat, transExp exp)) icpatIcexpList, loc)
+      | ICVAL_TRANS_SIG {var, exp, ty, loc} =>
+        ICVAL_TRANS_SIG {var = var, exp = transExp exp, ty = ty, loc = loc}
+      | ICVAL_OPAQUE_SIG {var, revealKey, exp, ty, loc} =>
+        ICVAL_OPAQUE_SIG {var = var, exp = transExp exp, 
+                          revealKey = revealKey, ty = ty, loc = loc}
       | ICDECFUN {guard, funbinds, loc} =>
         ICVALREC {guard = guard,
                   recbinds = map (transFunDeclVarInfo loc) funbinds,

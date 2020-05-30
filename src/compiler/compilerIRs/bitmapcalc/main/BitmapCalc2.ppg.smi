@@ -17,10 +17,13 @@ structure BitmapCalc2 =
 struct
   type loc = Loc.loc
   type ty = Types.ty
-  type varInfo = RecordCalc.varInfo
-  type exVarInfo = RecordCalc.exVarInfo
+  type varInfo = TypedLambda.varInfo
+  type exVarInfo = Types.exVarInfo
   type primInfo = TypedLambda.primInfo
   type btvEnv = Types.btvEnv
+  datatype tlconst = datatype TypedLambda.tlconst
+  datatype tlstring = datatype TypedLambda.tlstring
+  datatype rcconst = datatype RecordCalc.rcconst
 
   datatype bcexp =
       BCFOREIGNAPPLY of
@@ -39,7 +42,8 @@ struct
         bodyExp : bcexp,
         loc: loc
       }
-    | BCCONSTANT of {const : TypedLambda.constant, ty : ty, loc : loc}
+    | BCCONSTANT of {const : rcconst, loc : loc}
+    | BCSTRING of {string : tlstring, loc : loc}
     | BCFOREIGNSYMBOL of
       {
         name : string,

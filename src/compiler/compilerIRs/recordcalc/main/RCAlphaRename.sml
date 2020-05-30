@@ -197,12 +197,11 @@ local
           RC.RCCAST ((copy tpexp, copyT expTy), copyT ty, loc)
         | RC.RCCONSTANT {const, loc, ty} =>
           RC.RCCONSTANT {const=const, loc = loc, ty=copyT ty}
-        | RC.RCDATACONSTRUCT {argExpOpt, argTyOpt, con:RC.conInfo, instTyList, loc} =>
+        | RC.RCDATACONSTRUCT {argExpOpt, con:RC.conInfo, instTyList, loc} =>
           RC.RCDATACONSTRUCT
             {argExpOpt = Option.map copy argExpOpt,
-             argTyOpt = Option.map copyT argTyOpt, 
              con = copyConInfo context con,
-             instTyList = map copyT instTyList,
+             instTyList = Option.map (map copyT) instTyList,
              loc = loc
             }
         | RC.RCEXNCASE {defaultExp:rcexp, exp:rcexp, expTy:ty, loc:Loc.loc,
@@ -220,17 +219,16 @@ local
                             ) ruleList,
                         resultTy=resultTy
                        }
-        | RC.RCEXNCONSTRUCT {argExpOpt, exn:RC.exnCon, instTyList, loc} =>
+        | RC.RCEXNCONSTRUCT {argExpOpt, exn:RC.exnCon, loc} =>
           RC.RCEXNCONSTRUCT
             {argExpOpt = Option.map copy argExpOpt,
              exn = copyExnCon context exn,
-             instTyList = map copyT instTyList,
              loc = loc
             }
-        | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} =>
-          RC.RCEXN_CONSTRUCTOR {exnInfo=copyExnInfo context exnInfo , loc=loc}
-        | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
-          RC.RCEXEXN_CONSTRUCTOR
+        | RC.RCEXNTAG {exnInfo, loc} =>
+          RC.RCEXNTAG {exnInfo=copyExnInfo context exnInfo , loc=loc}
+        | RC.RCEXEXNTAG {exExnInfo, loc} =>
+          RC.RCEXEXNTAG
             {exExnInfo=copyExExnInfo context exExnInfo,
              loc= loc}
         | RC.RCCALLBACKFN {attributes, resultTy, argVarList, bodyExp:rcexp,
@@ -312,14 +310,13 @@ local
              loc = loc}
         | RC.RCINDEXOF (string, ty, loc) =>
           RC.RCINDEXOF (string, copyT ty, loc)
-        | RC.RCLET {body:rcexp list, decls, loc, tys} =>
+        | RC.RCLET {body, decls, loc} =>
           let
             val (context, decls) = copyDeclList context decls
           in
-            RC.RCLET {body=map (copyExp context) body,
+            RC.RCLET {body=copyExp context body,
                       decls=decls,
-                      loc=loc,
-                      tys=map copyT tys}
+                      loc=loc}
           end
         | RC.RCMODIFY {elementExp, elementTy, indexExp, label, loc, recordExp, recordTy} =>
           RC.RCMODIFY
@@ -330,12 +327,6 @@ local
              loc = loc,
              recordExp = copy recordExp,
              recordTy = copyT recordTy}
-        | RC.RCMONOLET {binds:(varInfo * rcexp) list, bodyExp, loc} =>
-          let
-            val (context, binds) = copyBinds context binds
-          in
-            RC.RCMONOLET {binds=binds, bodyExp=copyExp context bodyExp, loc=loc}
-          end
         | RC.RCOPRIMAPPLY {argExp, instTyList, loc, oprimOp:RC.oprimInfo} =>
           RC.RCOPRIMAPPLY
             {argExp = copy argExp,
@@ -359,27 +350,10 @@ local
                 raise DuplicateBtv
           )
 
-        | RC.RCPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
-          (
-          let
-            val (context, btvEnv) = newBtvEnv context btvEnv
-            val (context, argVarList) = newVars context argVarList
-          in
-            RC.RCPOLYFNM
-              {argVarList=argVarList,
-               bodyExp=copyExp context bodyExp,
-               bodyTy=copyTy context bodyTy,
-               btvEnv=btvEnv,
-               loc=loc
-              }
-          end
-          handle DuplicateBtv =>
-                raise DuplicateBtv
-          )
         | RC.RCPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
           RC.RCPRIMAPPLY
             {argExp = copy argExp,
-             instTyList = map copyT instTyList,
+             instTyList = Option.map (map copyT) instTyList,
              loc = loc,
              primOp = copyPrimInfo context primOp
             }
@@ -398,12 +372,6 @@ local
              label=label,
              loc=loc,
              resultTy=copyT resultTy
-            }
-        | RC.RCSEQ {expList, expTyList, loc} =>
-          RC.RCSEQ
-            {expList = map copy expList,
-             expTyList = map copyT expTyList,
-             loc = loc
             }
         | RC.RCSIZEOF (ty, loc) =>
           RC.RCSIZEOF (copyT ty, loc)
@@ -480,6 +448,13 @@ local
              ruleBodyTy = copyT ruleBodyTy, 
              loc=loc
             }
+        | RC.RCDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+          RC.RCDYNAMICEXISTTAPP
+            {existInstMap = copy existInstMap,
+             exp = copy exp,
+             expTy = copyT expTy,
+             instTyList = map copyT instTyList,
+             loc = loc}
         )
           handle DuplicateBtv =>
                  raise bug "DuplicateBtv in copyExp copyExp"
@@ -495,12 +470,10 @@ local
                  | RC.RCFFIEXTERN _ => funExp}
   and copyDecl context tpdecl =
       case tpdecl of
-        RC.RCEXD (exbinds:{exnInfo:RC.exnInfo, loc:Loc.loc} list, loc) =>
+        RC.RCEXD (exnInfo, loc) =>
         (context,
          RC.RCEXD
-           (map (fn {exnInfo, loc} =>
-                    {exnInfo=copyExnInfo context exnInfo, loc=loc})
-                exbinds,
+           (copyExnInfo context exnInfo,
             loc)
         )
       | RC.RCEXNTAGD ({exnInfo, varInfo}, loc) =>
@@ -513,9 +486,10 @@ local
         (context,
          RC.RCEXPORTEXN (copyExnInfo context exnInfo)
         )
-      | RC.RCEXPORTVAR varInfo =>
+      | RC.RCEXPORTVAR {var={path,ty}, exp} =>
         (context,
-         RC.RCEXPORTVAR (evalVar context varInfo)
+         RC.RCEXPORTVAR {var = {path = path, ty = copyTy context ty},
+                         exp = copyExp context exp}
         )
       | RC.RCEXTERNEXN ({path, ty}, provider) =>
         (context,
@@ -529,15 +503,15 @@ local
         (context,
          RC.RCEXTERNVAR ({path=path, ty=copyTy context ty}, provider)
         )
-      | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>
+      | RC.RCVAL (bind:(varInfo * rcexp), loc) =>
         let
-          val (context, binds) = copyBinds context binds
+          val (context, bind) = copyBind (context, context) bind
         in
-          (context, RC.RCVAL (binds, loc))
+          (context, RC.RCVAL (bind, loc))
         end
       | RC.RCVALPOLYREC
           (btvEnv,
-           recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,
+           recbinds:{exp:rcexp, var:varInfo} list,
            loc) =>
         (
         let
@@ -547,9 +521,8 @@ local
           val varRecbindList = ListPair.zip (vars, recbinds)
           val recbinds =
               map
-                (fn (var, {exp, expTy, var=_}) =>
+                (fn (var, {exp, var=_}) =>
                     {var=var,
-                     expTy=copyTy newContext expTy,
                      exp=copyExp newContext exp}
                 )
                 varRecbindList
@@ -560,16 +533,15 @@ local
           handle DuplicateBtv =>
                 raise bug "TPVALPOLYREC"
         )
-      | RC.RCVALREC (recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,loc) =>
+      | RC.RCVALREC (recbinds:{exp:rcexp, var:varInfo} list,loc) =>
         let
           val vars = map #var recbinds
           val (context, vars) = newVars context vars
           val varRecbindList = ListPair.zip (vars, recbinds)
           val recbinds =
               map
-                (fn (var, {exp, expTy, var=_}) =>
+                (fn (var, {exp, var=_}) =>
                     {var=var,
-                     expTy=copyTy context expTy,
                      exp=copyExp context exp}
                 )
                 varRecbindList

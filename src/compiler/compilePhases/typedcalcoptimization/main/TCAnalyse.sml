@@ -42,12 +42,27 @@ local
            ruleList} =>
          (visitExpList expList;
           visitExpList (map #body ruleList))
+      | TC.TPSWITCH {exp, expTy, ruleList, defaultExp, ruleBodyTy, loc} =>
+        let
+          fun visitBody {body, ...} = visitExp body
+          fun visitRules (TC.CONSTCASE rules) = app visitBody rules
+            | visitRules (TC.CONCASE rules) = app visitBody rules
+            | visitRules (TC.EXNCASE rules) = app visitBody rules
+        in
+          visitExp exp;
+          visitRules ruleList;
+          visitExp defaultExp
+        end
+      | TC.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+        (visitExp tryExp;
+         visitExp catchExp)
+      | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+        visitExpList argExpList
        | TC.TPCAST ((tpexp, expTy), ty, loc) =>
          visitExp tpexp
        | TC.TPCONSTANT {const, loc, ty} => ()
        | TC.TPDATACONSTRUCT
            {argExpOpt = NONE,
-            argTyOpt,
             con:T.conInfo, 
             instTyList, 
             loc
@@ -55,7 +70,6 @@ local
          ()
        | TC.TPDATACONSTRUCT
            {argExpOpt = SOME exp,
-            argTyOpt,
             con:T.conInfo, 
             instTyList, 
             loc
@@ -63,37 +77,41 @@ local
          visitExp exp
       | TC.TPDYNAMICCASE {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} => 
         (visitExp groupListTerm; visitExp dynamicTerm)
+      | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+        (visitExp existInstMap; visitExp exp)
       | TC.TPERROR => ()
       | TC.TPEXNCONSTRUCT
           {argExpOpt = NONE,
-           argTyOpt,
            exn:TC.exnCon,
-           instTyList,
            loc
           } =>
         ()
       | TC.TPEXNCONSTRUCT
           {argExpOpt = SOME exp,
-           argTyOpt,
            exn:TC.exnCon,
-           instTyList,
            loc
           } =>
         visitExp exp
-      | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} => 
+      | TC.TPEXNTAG {exnInfo, loc} => 
         ()
-      | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} => 
+      | TC.TPEXEXNTAG {exExnInfo, loc} => 
         ()
       | TC.TPEXVAR exVarInfo => ()
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, _), stubTy} => 
         visitExp ptrExp
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIEXTERN _, stubTy} => ()
+      | TC.TPFOREIGNSYMBOL _ => ()
+      | TC.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+        (visitExp funExp;
+         visitExpList argExpList)
+      | TC.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+        visitExp bodyExp
       | TC.TPFNM {argVarList, bodyExp, bodyTy, loc} =>
         visitExp bodyExp
       | TC.TPHANDLE {exnVar, exp, handler, resultTy, loc} =>
         (visitExp exp; visitExp handler)
-      | TC.TPLET {body:TC.tpexp list, decls, loc, tys} =>
-        (visitExpList body;
+      | TC.TPLET {body, decls, loc} =>
+        (visitExp body;
          visitDeclList decls)
       | TC.TPMODIFY
           {elementExp, 
@@ -108,13 +126,11 @@ local
       | TC.TPMONOLET {binds:(T.varInfo * TC.tpexp) list, bodyExp, loc} =>
         (visitExpList (map #2 binds);
          visitExp bodyExp)
-      | TC.TPOPRIMAPPLY {argExp, argTy, instTyList, loc, oprimOp} =>
+      | TC.TPOPRIMAPPLY {argExp, instTyList, loc, oprimOp} =>
         visitExp argExp
       | TC.TPPOLY {btvEnv, constraints, exp, expTyWithoutTAbs, loc} =>
         visitExp exp
-      | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, constraints, loc} =>
-        visitExp bodyExp
-      | TC.TPPRIMAPPLY {argExp, argTy, instTyList, loc, primOp} =>
+      | TC.TPPRIMAPPLY {argExp, instTyList, loc, primOp} =>
         visitExp argExp
       | TC.TPRAISE {exp, loc, ty} =>
         visitExp exp
@@ -122,8 +138,6 @@ local
         RecordLabel.Map.app visitRecordField fields
       | TC.TPSELECT {exp, expTy, label, loc, resultTy} =>
         visitExp exp
-      | TC.TPSEQ {expList, expTyList, loc} =>
-        visitExpList expList
       | TC.TPSIZEOF (ty, loc) => ()
       | TC.TPTAPP {exp, expTy, instTyList, loc} =>
         visitExp exp
@@ -152,30 +166,28 @@ local
   and visitExpList expList = List.app visitExp expList
   and visitDecl tpdecl =
       case tpdecl of
-         TC.TPEXD (exbinds:{exnInfo:Types.exnInfo, loc:Loc.loc} list, loc) =>
+         TC.TPEXD (exnInfo, loc) =>
          ()
        | TC.TPEXNTAGD ({exnInfo, varInfo}, loc) =>
          ()
        | TC.TPEXPORTEXN exnInfo =>
          ()
-       | TC.TPEXPORTVAR varInfo =>
-        incInf (#id varInfo)
-       | TC.TPEXPORTRECFUNVAR _ =>
-         raise bug "TPEXPORTRECFUNVAR to Analyse"
+       | TC.TPEXPORTVAR {var, exp} =>
+         visitExp exp
        | TC.TPEXTERNEXN ({path, ty}, provider) =>
          ()
        | TC.TPBUILTINEXN {path, ty} =>
          ()
        | TC.TPEXTERNVAR ({path, ty}, provider) =>
          ()
-       | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
-         visitExpList (map #2 binds)
+       | TC.TPVAL (bind:(T.varInfo * TC.tpexp), loc) =>
+         visitExp (#2 bind)
        | TC.TPVALPOLYREC {btvEnv,
                           constraints,
-                          recbinds:{exp:TC.tpexp, expTy:T.ty, var:T.varInfo} list,
+                          recbinds:{exp:TC.tpexp, var:T.varInfo} list,
                           loc} =>
          visitExpList (map #exp recbinds)
-       | TC.TPVALREC (recbinds:{exp:TC.tpexp, expTy:T.ty, var:T.varInfo} list,loc) =>
+       | TC.TPVALREC (recbinds:{exp:TC.tpexp, var:T.varInfo} list,loc) =>
          visitExpList (map #exp recbinds)
        (* the following should have been eliminate *)
        | TC.TPFUNDECL _ => raise bug "TPFUNDECL not eliminated"

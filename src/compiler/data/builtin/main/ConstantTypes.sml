@@ -185,44 +185,44 @@ struct
         fun scanWord32 x = scanWord Word32.fromLargeInt Word32.toLargeInt x
         fun scanWord64 x = scanWord Word64.fromLargeInt Word64.toLargeInt x
 
-        fun constTerm const =
-            TL.TLCONSTANT {const = const, ty = ty, loc = loc}
+        fun constTerm const = TL.TLCONSTANT (const, loc)
+        fun stringTerm string = TL.TLSTRING (string, loc)
       in
         case (const, constTy ty) of
           (A.INT x, INT8ty) =>
-          constTerm (TL.C (TL.INT8 (scanInt Int8.fromLarge x)))
+          constTerm (TL.INT8 (scanInt Int8.fromLarge x))
         | (A.INT x, INT16ty) =>
-          constTerm (TL.C (TL.INT16 (scanInt Int16.fromLarge x)))
+          constTerm (TL.INT16 (scanInt Int16.fromLarge x))
         | (A.INT x, INT32ty) =>
-          constTerm (TL.C (TL.INT32 (scanInt Int32.fromLarge x)))
+          constTerm (TL.INT32 (scanInt Int32.fromLarge x))
         | (A.INT x, INT64ty) =>
-          constTerm (TL.C (TL.INT64 (scanInt Int64.fromLarge x)))
+          constTerm (TL.INT64 (scanInt Int64.fromLarge x))
         | (A.INT x, INTINFty) =>
-          constTerm (TL.S (TL.INTINF (scanInt IntInf.fromLarge x)))
+          stringTerm (TL.INTINF (scanInt IntInf.fromLarge x))
         | (A.INT _, _) => raise Bug.Bug "fixConst: INT"
         | (A.WORD x, WORD8ty) =>
-          constTerm (TL.C (TL.WORD8 (scanWord8 x)))
+          constTerm (TL.WORD8 (scanWord8 x))
         | (A.WORD x, WORD16ty) =>
-          constTerm (TL.C (TL.WORD16 (scanWord16 x)))
+          constTerm (TL.WORD16 (scanWord16 x))
         | (A.WORD x, WORD32ty) =>
-          constTerm (TL.C (TL.WORD32 (scanWord32 x)))
+          constTerm (TL.WORD32 (scanWord32 x))
         | (A.WORD x, WORD64ty) =>
-          constTerm (TL.C (TL.WORD64 (scanWord64 x)))
+          constTerm (TL.WORD64 (scanWord64 x))
         | (A.WORD _, _) => raise Bug.Bug "fixConst: WORD"
-        | (A.STRING x, STRINGty) => constTerm (TL.S (TL.STRING x))
+        | (A.STRING x, STRINGty) => stringTerm (TL.STRING x)
         | (A.STRING _, _) => raise Bug.Bug "fixConst: STRING"
         | (A.REAL x, REAL64ty) =>
           (case Real64.fromString x of
              NONE => raise Bug.Bug "fixConst: Real64"
-           | SOME x => constTerm (TL.C (TL.REAL64 x)))
+           | SOME x => constTerm (TL.REAL64 x))
         | (A.REAL x, REAL32ty) =>
           (case Real32.fromString x of
              NONE => raise Bug.Bug "fixConst: Real32"
-           | SOME x => constTerm (TL.C (TL.REAL32 x)))
+           | SOME x => constTerm (TL.REAL32 x))
         | (A.REAL _, _) => raise Bug.Bug "fixConst: REAL"
-        | (A.CHAR x, CHARty) => constTerm (TL.C (TL.CHAR x))
+        | (A.CHAR x, CHARty) => constTerm (TL.CHAR x)
         | (A.CHAR _, _) => raise Bug.Bug "fixConst: CHAR"
-        | (A.UNITCONST, UNITty) => constTerm (TL.C TL.UNIT)
+        | (A.UNITCONST, UNITty) => constTerm TL.UNIT
         | (A.UNITCONST, _) => raise Bug.Bug "fixConst: UNITCONST"
       end
 

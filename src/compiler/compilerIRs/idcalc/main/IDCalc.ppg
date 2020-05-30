@@ -271,7 +271,7 @@ in
   type tvar =
      (*%
         @format({symbol, id, isEq, lifted})
-          symbol
+          symbol "(" id ")"
        *)
      (*% @prefix formatWithType_
         @format({symbol, id, isEq, lifted})
@@ -710,7 +710,7 @@ in
        *)
       (*% @prefix formatWithType_
          @format(tfunkind tfunref)
-           "TFUN_VAR" +
+           "**TFUN_VAR**" +
            tfunref(tfunkind)
        *)
       (*% @prefix print_
@@ -1275,6 +1275,7 @@ in
          @format(exp * ty * loc)
        *)
       ICTYPED of icexp * ty * loc
+(*
     | (*%
          @format({icexp, ty, loc,revealKey:key opt})
           1[icexp +1 ":>" ty "("opt(key)(,)")" ]
@@ -1287,6 +1288,7 @@ in
          @format({icexp, ty, loc,revealKey:key opt})
        *)
       ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
+*)
     | (*%
          @format({icexp, ty, loc})
           1[icexp +1 "::" ty ]
@@ -1339,23 +1341,23 @@ in
        *)
       ICAPPM_NOUNIFY of icexp * icexp list * loc
     | (*%
-         @format(dec decs * exp exps * Loc)
+         @format(dec decs * exp * Loc)
             "let" 
                1[ decs:declList(dec)(+1,+1) ]
-         +1 "in" 1[ +1 exps(exp)(";" +1) ]
+         +1 "in" 1[ +1 exp ]
          +1 "end"
        *)
       (*% @prefix formatWithType_
-         @format(dec decs * exp exps * Loc)
+         @format(dec decs * exp * Loc)
             "let" 
                1[ decs:declList(dec)(+1,+1) ]
-         +1 "in" 1[ +1 exps(exp)(";" +1) ]
+         +1 "in" 1[ +1 exp ]
          +1 "end"
        *)
       (*% @prefix print_
-         @format(dec decs * exp exps * Loc)
+         @format(dec decs * exp * Loc)
        *)
-      ICLET of icdecl list * icexp list * loc
+      ICLET of icdecl list * icexp * loc
     | (*%
          @format(cast casts * exp * Loc)
            "cast"
@@ -1506,7 +1508,7 @@ in
             1[+1 exp]
           +1 "of" +
           rules(rule)(+1 " |" +)
-        @format:rule({arg:pat, body:exp})
+        @format:rule({tyvars, arg:pat, body:exp})
            1[pat +d "=>" +1 exp]
        *)
       (*% @prefix formatWithType_
@@ -1515,7 +1517,7 @@ in
             1[+1 exp]
           +1 "of" +
           rules(rule)(+1 " |" +)
-        @format:rule({arg:pat, body:exp})
+        @format:rule({tyvars, arg:pat, body:exp})
            1[pat +d "=>" +1 exp]
        *)
       (*% @prefix print_
@@ -1523,7 +1525,7 @@ in
        *)
       ICDYNAMICCASE of 
                icexp 
-               * {arg:icpat, body:icexp} list 
+               * {tyvars:scopedTvars, arg:icpat, body:icexp} list 
                * loc
     | (*%
          @format(exp exps * rule rules * caseKind *loc)
@@ -1864,6 +1866,38 @@ in
          @format(scope * valbind valbinds * loc)
        *)
       ICVAL of scopedTvars * (icpat * icexp) list * loc
+    | (*%
+         @format({var, exp, ty, loc})
+           1[
+             "val" + var + "=" + exp + "::" + ty
+            ]
+       *)
+      (*% @prefix formatWithType_
+         @format({var, exp, ty, loc})
+           1[
+             "val" + var + "=" + exp + "::" + ty
+            ]
+       *)
+      (*% @prefix print_
+         @format({var, exp, ty, loc})
+       *)
+      ICVAL_TRANS_SIG of {var:varInfo, exp:icexp, ty:ty, loc:loc}
+    | (*%
+         @format({var, exp, revealKey, ty, loc})
+           1[
+             "val" + var + "=" + exp + ":>" + ty
+            ]
+       *)
+      (*% @prefix formatWithType_
+         @format({var, exp, revealKey, ty, loc})
+           1[
+             "val" + var + "=" + exp + ":>" + ty
+            ]
+       *)
+      (*% @prefix print_
+         @format({var, exp, revealKey, ty, loc})
+       *)
+      ICVAL_OPAQUE_SIG of {var:varInfo, revealKey:revealKey, exp:icexp, ty:ty, loc:loc}
     | (*%
          @format({guard:scope, funbinds:fundecl fundecls, loc})
            1[
@@ -2564,7 +2598,9 @@ in
     | ICEXEXN {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
     | ICOPRIM {longsymbol,...} => Symbol.longsymbolToLoc longsymbol
     | ICTYPED (icexp, ty, loc) => loc
+(*
     | ICSIGTYPED {icexp, ty, loc, revealKey} => loc
+*)
     | ICINTERFACETYPED {icexp, ty, loc} => loc
     | ICAPPM (icexp, icexpList, loc) => loc
     | ICAPPM_NOUNIFY (icexp, icexpList, loc) => loc
@@ -2634,6 +2670,8 @@ in
   fun getLocDec dec =
       case dec of
         ICVAL (scopedTvars, icpatIcexpList, loc) => loc
+      | ICVAL_OPAQUE_SIG {loc,...} => loc
+      | ICVAL_TRANS_SIG {loc,...} => loc
       | ICDECFUN {guard,funbinds,loc} => loc
       | ICNONRECFUN {loc,...} => loc
       | ICVALREC {guard, recbinds,loc} => loc

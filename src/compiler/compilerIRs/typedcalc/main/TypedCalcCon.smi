@@ -1,13 +1,15 @@
 _require local "../../../../basis.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/name/main/CodeLabel.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/control/main/Control.smi"
-_require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require "../../../compilerIRs/absyn/main/AbsynConst.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require local "../../../data/types/main/Unify.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
@@ -22,7 +24,7 @@ struct
 
   val TPERROR : exp
   val TPCONSTANT
-      : {const:Absyn.constant,
+      : {const:AbsynConst.constant,
          ty:Types.ty,
          loc:Loc.loc}
         -> exp
@@ -34,10 +36,10 @@ struct
       : Types.ty
         * Loc.loc
         -> exp
-  val TPEXN_CONSTRUCTOR
+  val TPEXNTAG
       : {exnInfo : Types.exnInfo, loc : Loc.loc}
         -> exp
-  val TPEXEXN_CONSTRUCTOR
+  val TPEXEXNTAG
       : {exExnInfo : Types.exExnInfo, loc : Loc.loc}
         -> exp
   val TPEXVAR
@@ -57,13 +59,12 @@ struct
         -> exp
   val TPDATACONSTRUCT
       : {con : Types.conInfo,
-         instTyList : Types.ty list,
+         instTyList : Types.ty list option,
          argExpOpt : exp option,
          loc : Loc.loc}
         -> exp
   val TPEXNCONSTRUCT
       : {exn : TypedCalc.exnCon,
-         instTyList : Types.ty list,
          argExpOpt : exp option,
          loc : Loc.loc}
         -> exp
@@ -77,6 +78,23 @@ struct
          ffiTy : TypedCalc.ffiTy,
          loc : Loc.loc}
         -> exp
+  val TPFOREIGNSYMBOL
+      : {name : string,
+         ty : Types.ty,
+         loc : Loc.loc}
+        -> exp
+  val TPFOREIGNAPPLY
+      : {funExp : exp,
+         argExpList : exp list,
+         loc : Loc.loc}
+        -> exp
+  val TPCALLBACKFN
+      : {attributes : FFIAttributes.attributes,
+         argVarList : Types.varInfo list,
+         bodyExp : exp,
+         isVoid : bool,
+         loc : Loc.loc}
+        -> exp
   val TPTAPP
       : {exp : exp,
          instTyList : Types.ty list,
@@ -86,13 +104,6 @@ struct
       : {btvEnv : Types.btvEnv,
          constraints : Types.constraint list,
          exp : exp,
-         loc : Loc.loc}
-        -> exp
-  val TPPOLYFNM
-      : {btvEnv : Types.btvEnv,
-         constraints : Types.constraint list,
-         argVarList : Types.varInfo list,
-         bodyExp : exp,
          loc : Loc.loc}
         -> exp
   val TPFNM
@@ -111,19 +122,53 @@ struct
          ruleList : {args : pat list, body : exp} list,
          loc : Loc.loc}
         -> exp
+  val TPSWITCH_CONSTCASE
+      : {exp : exp,
+         ruleList : {const : AbsynConst.constant,
+                     ty : Types.ty,
+                     body : exp} list,
+         defaultExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPSWITCH_CONCASE
+      : {exp : exp,
+         ruleList : {con : Types.conInfo,
+                     instTyList : Types.ty list option,
+                     argVarOpt : Types.varInfo option,
+                     body : exp} list,
+         defaultExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPSWITCH_EXNCASE
+      : {exp : exp,
+         ruleList : {exn : TypedCalc.exnCon,
+                     argVarOpt : Types.varInfo option,
+                     body : exp} list,
+         defaultExp : exp,
+         loc : Loc.loc}
+        -> exp
+  val TPTHROW
+      : {catchLabel : FunLocalLabel.id,
+         argExpList : exp list,
+	 resultTy : Types.ty,
+	 loc : Loc.loc}
+	-> exp
+  val TPCATCH
+      : {catchLabel : FunLocalLabel.id,
+         argVarList : Types.varInfo list,
+         tryExp : exp,
+         catchExp : exp,
+	 loc : Loc.loc}
+        -> exp
   val TPLET
       : {decls : TypedCalc.tpdecl list,
-         body : exp list,
+         body : exp,
          loc : Loc.loc}
         -> exp
   val TPMONOLET
       : {binds : (Types.varInfo * exp) list,
          bodyExp : exp,
          loc : Loc.loc}
-        -> exp
-  val TPSEQ
-      : {expList : exp list,
-         loc: Loc.loc}
         -> exp
   val TPRAISE
       : {exp : exp,
@@ -155,7 +200,7 @@ struct
         -> exp
   val TPPRIMAPPLY
       : {primOp : Types.primInfo,
-         instTyList : Types.ty list,
+         instTyList : Types.ty list option,
          argExp : exp,
          loc : Loc.loc}
         -> exp
@@ -208,9 +253,15 @@ struct
          ruleBodyTy : Types.ty,
          loc : Loc.loc}
         -> exp
+  val TPDYNAMICEXISTTAPP
+      : {existInstMap : exp,
+         exp : exp,
+         instTyList : Types.ty list,
+         loc : Loc.loc}
+        -> exp
   val TPPATERROR : pat
   val TPPATCONSTANT
-      : Absyn.constant
+      : AbsynConst.constant
         * Types.ty
         * Loc.loc
         -> pat
@@ -223,13 +274,12 @@ struct
         -> pat
   val TPPATDATACONSTRUCT
       : {conPat : Types.conInfo,
-         instTyList : Types.ty list,
+         instTyList : Types.ty list option,
          argPatOpt : pat option,
          loc : Loc.loc}
         -> pat
   val TPPATEXNCONSTRUCT
       : {exnPat : TypedCalc.exnCon,
-         instTyList : Types.ty list,
          argPatOpt : pat option,
          loc : Loc.loc}
         -> pat
@@ -273,7 +323,7 @@ struct
                   -> env
 
   val TPEXD
-      : {exnInfo : Types.exnInfo, loc : Loc.loc} list
+      : Types.exnInfo
         * Loc.loc
         -> TypedCalc.tpdecl * env
   val TPEXNTAGD
@@ -284,12 +334,9 @@ struct
   val TPEXPORTEXN
       : Types.exnInfo
         -> TypedCalc.tpdecl * env
-  val TPEXPORTRECFUNVAR
-      : {var : Types.varInfo,
-         arity : int}
-        -> TypedCalc.tpdecl * env
   val TPEXPORTVAR
-      : Types.varInfo
+      : {var : Types.exVarInfo,
+         exp : exp}
         -> TypedCalc.tpdecl * env
   val TPEXTERNEXN
       : Types.exExnInfo * Types.provider
@@ -313,7 +360,7 @@ struct
          loc : Loc.loc}
         -> TypedCalc.tpdecl * env
   val TPVAL
-      : (Types.varInfo * exp) list
+      : (Types.varInfo * exp)
         * Loc.loc
         -> TypedCalc.tpdecl * env
   val TPVALREC

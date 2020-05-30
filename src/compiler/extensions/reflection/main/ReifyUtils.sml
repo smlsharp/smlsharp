@@ -1,21 +1,21 @@
 structure ReifyUtils =
 struct
-  structure RC = RecordCalc
+  structure TC = TypedCalc
   structure BT = BuiltinTypes
   structure A = Absyn
   structure T = Types
   structure TB = TypesBasics
   structure U = UserLevelPrimitive
+  open ReifiedTyData
 
   type loc = Loc.loc
   type ty = Types.ty
-  type varInfo = RecordCalc.varInfo
-  type exVarInfo = RecordCalc.exVarInfo
-  type exExnInfo = RecordCalc.exExnInfo
-  type conInfo = RecordCalc.conInfo
-  type exnCon = RC.exnCon
-  type exp = RC.rcexp
-  type decl = RC.rcdecl
+  type varInfo = Types.varInfo
+  type exVarInfo = Types.exVarInfo
+  type conInfo = Types.conInfo
+  type exnCon = TC.exnCon
+  type exp = TC.tpexp
+  type decl = TC.tpdecl
   type label = RecordLabel.label
 
   exception TyConNotDefined of string
@@ -23,32 +23,13 @@ struct
 
   fun eqTy arg = Unify.eqTy BoundTypeVarID.Map.empty arg
   fun printTy ty = Bug.printError (Bug.prettyPrint (T.format_ty ty))
-  fun printRcexp rcexp = Bug.printError (RC.rcexpToString rcexp ^ "\n")
+  fun printTpexp tpexp = Bug.printError (Bug.prettyPrint (TC.format_tpexp tpexp) ^ "\n")
 
   fun --> (argTy, retTy) = T.FUNMty ([argTy], retTy)
   fun ** (ty1, ty2) = T.RECORDty (RecordLabel.tupleMap [ty1, ty2])
   infixr 4 -->
   infix 5 **
 
-  val Int32Ty = T.CONSTRUCTty {tyCon = BT.int32TyCon, args = []}
-  val Int64Ty = T.CONSTRUCTty {tyCon = BT.int64TyCon, args = []}
-  val IntInfTy = T.CONSTRUCTty {tyCon = BT.intInfTyCon, args = []}
-  val Word32Ty = T.CONSTRUCTty {tyCon = BT.word32TyCon, args = []}
-  val Word64Ty = T.CONSTRUCTty {tyCon = BT.word64TyCon, args = []}
-  val Word8Ty = T.CONSTRUCTty {tyCon = BT.word8TyCon, args = []}
-  val CharTy = T.CONSTRUCTty {tyCon = BT.charTyCon, args = []}
-  val StringTy = T.CONSTRUCTty {tyCon = BT.stringTyCon, args = []}
-  val Real64Ty = T.CONSTRUCTty {tyCon = BT.real64TyCon, args = []}
-  val Real32Ty = T.CONSTRUCTty {tyCon = BT.real32TyCon, args = []}
-  val UnitTy = T.CONSTRUCTty {tyCon = BT.unitTyCon, args = []}
-  val PtrTy = T.CONSTRUCTty {tyCon = BT.ptrTyCon, args = []}
-  val CodeptrTy = T.CONSTRUCTty {tyCon = BT.codeptrTyCon, args = []}
-  val ExnTy = T.CONSTRUCTty {tyCon = BT.exnTyCon, args = []}
-  val BoolTy = T.CONSTRUCTty {tyCon = BT.boolTyCon, args = []}
-  val BoxedTy = T.CONSTRUCTty {tyCon = BT.boxedTyCon, args = []}
-  fun RefTy ty = T.CONSTRUCTty {tyCon = BT.refTyCon, args = [ty]}
-  fun ListTy ty = T.CONSTRUCTty {tyCon = BT.listTyCon, args = [ty]}
-  fun ArrayTy ty = T.CONSTRUCTty {tyCon = BT.arrayTyCon, args = [ty]}
   fun isArrayTy ty =
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args = [ty]} =>TypID.eq (#id tyCon, #id BT.arrayTyCon)
@@ -105,46 +86,36 @@ struct
         (Bug.printError "RecordTyFileds\n";
          printTy ty;
          raise TypeMismatch)
-  fun VectorTy ty = T.CONSTRUCTty {tyCon = BT.vectorTyCon, args = [ty]}
-  fun OptionTy ty = T.CONSTRUCTty {tyCon = BT.optionTyCon, args = [ty]}
-  fun TupleTy tyList = T.RECORDty (RecordLabel.tupleMap tyList)
-  fun RecordTy stringTyList =
-      T.RECORDty
-        (foldr 
-          (fn ((s,v),map) => 
-              RecordLabel.Map.insert(map, RecordLabel.fromString s,v))
-          RecordLabel.Map.empty
-          stringTyList)
 
   fun newVar ty =
-      {path = [Symbol.generate ()], ty = ty, id = VarID.generate ()} : RC.varInfo
+      {path = [Symbol.generate ()], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
 
   fun newVarWithString loc string ty =
-      {path = [Symbol.mkSymbol string loc], ty = ty, id = VarID.generate ()} : RC.varInfo
+      {path = [Symbol.mkSymbol string loc], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
 
   fun newVarWithSymbol symbol ty =
-      {path = [symbol], ty = ty, id = VarID.generate ()} : RC.varInfo
+      {path = [symbol], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
 
   fun Int loc int =
-      {exp = RC.RCCONSTANT
-               {const = RC.CONST (A.INT (Int.toLarge int)),
+      {exp = TC.TPCONSTANT
+               {const = A.INT (Int.toLarge int),
                 loc = loc,
                 ty = BT.int32Ty},
        ty = Int32Ty}
   fun Word loc word =
-      {exp = RC.RCCONSTANT
-               {const = RC.CONST (A.WORD (Word.toLargeInt word)),
+      {exp = TC.TPCONSTANT
+               {const = A.WORD (Word.toLargeInt word),
                 loc = loc,
                 ty = BT.word32Ty},
        ty = Word32Ty}
   fun String loc str =
-      {exp = RC.RCCONSTANT {const = RC.CONST (A.STRING (str)),
+      {exp = TC.TPCONSTANT {const = A.STRING (str),
                             loc = loc,
                             ty = BT.stringTy},
        ty = StringTy}
   fun Real loc real =
-      {exp = RC.RCCONSTANT
-               {const = RC.CONST (A.REAL (Real.toString real)),
+      {exp = TC.TPCONSTANT
+               {const = A.REAL (Real.toString real),
                 loc = loc,
                 ty = BT.real64Ty},
        ty = Real64Ty}
@@ -152,87 +123,64 @@ struct
       let
         val conInfo = if bool then BT.trueTPConInfo else BT.falseTPConInfo
         val boolExp = 
-            RC.RCDATACONSTRUCT
+            TC.TPDATACONSTRUCT
               {con = conInfo,
-               instTyList = nil,
+               instTyList = NONE,
                argExpOpt = NONE,
-               argTyOpt = NONE,
                loc = loc}
       in              
         {exp = boolExp, ty = BoolTy}
       end
-  fun Exn loc exExnInfo =
-      {exp = RC.RCEXNCONSTRUCT 
-               {exn = RC.EXEXN exExnInfo,
-                instTyList = nil,
-                argExpOpt = NONE,
-                loc = loc},
-       ty = ExnTy}
 
   fun Option loc ty NONE = 
-      {exp = RC.RCDATACONSTRUCT
+      {exp = TC.TPDATACONSTRUCT
                {con = BT.NONETPConInfo,
-                instTyList = [ty],
+                instTyList = SOME [ty],
                 argExpOpt = NONE,
-                argTyOpt = NONE,
                 loc = loc},
        ty = OptionTy ty}
     | Option loc ty (SOME {exp=argExp, ty=_}) = 
-      {exp = RC.RCDATACONSTRUCT
+      {exp = TC.TPDATACONSTRUCT
                {con = BT.SOMETPConInfo,
-                instTyList = [ty],
+                instTyList = SOME [ty],
                 argExpOpt = SOME argExp,
-                argTyOpt = SOME ty,
                 loc = loc},
        ty = OptionTy ty}
 
-  fun Raise loc {exp, ty} newTy =
-      if eqTy (ty, ExnTy) then 
-        {exp = RC.RCRAISE {exp = exp, ty = ty, loc=loc},
-         ty = newTy}
-      else raise TypeMismatch
-
   fun MonoVar (exVarInfo as {path:Symbol.longsymbol, ty:T.ty}) =
-      {ty = ty, exp = RC.RCEXVAR exVarInfo}
+      {ty = ty, exp = TC.TPEXVAR exVarInfo}
 
-  fun Var (varInfo as {ty,path,id}) =
-      {exp = RC.RCVAR varInfo, ty = ty}
+  fun Var (varInfo as {ty,path,id,opaque}) =
+      {exp = TC.TPVAR varInfo, ty = ty}
 
   fun InstVar {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTy} =
-      RecordCalcUtils.toplevelInstWithInstTy
-        {ty = ty, exp = RC.RCEXVAR exVarInfo, instTy = instTy}
+      TypedCalcUtils.toplevelInstWithInstTy
+        {ty = ty, exp = TC.TPEXVAR exVarInfo, instTy = instTy}
 
   fun InstListVar {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTyList} =
-      RecordCalcUtils.toplevelInstWithInstTyList
-        {ty = ty, exp = RC.RCEXVAR exVarInfo, instTyList = instTyList}
+      TypedCalcUtils.toplevelInstWithInstTyList
+        {ty = ty, exp = TC.TPEXVAR exVarInfo, instTyList = instTyList}
 
   fun Pair loc {exp=exp1, ty=ty1} {exp=exp2, ty=ty2} =
-      {exp = RC.RCRECORD
+      {exp = TC.TPRECORD
                {fields = RecordLabel.tupleMap [exp1, exp2],
                 loc = loc,
                 recordTy = ty1 ** ty2},
        ty = ty1 ** ty2}
 
-  fun Seq loc expList = 
-      {exp = RC.RCSEQ
-               {expList = map #exp expList,
-                expTyList = map #ty expList,
-                loc = loc},
-       ty = #ty (List.last expList)}
-
   fun Fn loc {expFn, argTy, bodyTy} =
       let
         val v = newVar argTy
       in
-        {exp = RC.RCFNM ({argVarList = [v], bodyExp = expFn v, bodyTy = bodyTy, loc = loc}),
+        {exp = TC.TPFNM ({argVarList = [v], bodyExp = expFn v, bodyTy = bodyTy, loc = loc}),
          ty = argTy --> bodyTy}
       end
   fun FunExp loc expFn argTy =
       let
         val v = newVar argTy
-        val Body = expFn {exp = RC.RCVAR v, ty = argTy}
+        val Body = expFn {exp = TC.TPVAR v, ty = argTy}
       in
-        {exp = RC.RCFNM {argVarList = [v], bodyExp = #exp Body, bodyTy = #ty Body, loc = loc},
+        {exp = TC.TPFNM {argVarList = [v], bodyExp = #exp Body, bodyTy = #ty Body, loc = loc},
          ty = argTy --> #ty Body}
       end
 
@@ -245,9 +193,9 @@ struct
                          (
                           Bug.printError "ApplyFail\n";
                           Bug.printError "funExp:\n";
-                          printRcexp funExp;
+                          printTpexp funExp;
                           Bug.printError "argExp:\n";
-                          printRcexp argExp;
+                          printTpexp argExp;
                           Bug.printError "funTy:\n";
                           printTy funTy;
                           Bug.printError "domTy:\n";
@@ -263,7 +211,7 @@ struct
                         printTy argTy;
                         raise TypeMismatch)
       in
-        {exp = RC.RCAPPM {funExp=funExp, funTy=funTy, argExpList=[argExp], loc = loc},
+        {exp = TC.TPAPPM {funExp=funExp, funTy=funTy, argExpList=[argExp], loc = loc},
          ty = bodyTy} 
       end
 
@@ -271,29 +219,25 @@ struct
     | ApplyList loc funexp (h::t) = ApplyList loc (Apply loc funexp h) t
 
   fun Val loc varInfo {exp,ty}  = 
-      RC.RCVAL ([(varInfo, exp)], loc)
-
-  fun Let loc Decls ExpList = 
-      RC.RCLET {decls=Decls, body = map #exp ExpList, tys = map #ty ExpList, loc =loc}
+      TC.TPVAL ((varInfo, exp), loc)
 
   fun Con loc conInfo argOpt = 
       let
-        val (resultTy, argExpOpt, argTyOpt) = 
+        val (resultTy, argExpOpt) =
             case (TB.derefTy (#ty conInfo), argOpt) of
               (T.FUNMty ([domTy], bodyTy), SOME {exp,ty}) =>
-              if eqTy (domTy, ty) then (bodyTy, SOME exp, SOME ty)
+              if eqTy (domTy, ty) then (bodyTy, SOME exp)
               else raise TypeMismatch
             | (T.POLYty _, _) => raise TypeMismatch
             | (T.TYVARty _, _) => raise TypeMismatch
             | (T.BOUNDVARty _, _) => raise TypeMismatch
             | (ty, SOME _) => raise TypeMismatch
-            | (ty, NONE) => (ty, NONE, NONE)
+            | (ty, NONE) => (ty, NONE)
       in
-        {exp = RC.RCDATACONSTRUCT
+        {exp = TC.TPDATACONSTRUCT
                  {con = conInfo,
-                  instTyList = nil,
+                  instTyList = NONE,
                   argExpOpt = argExpOpt,
-                  argTyOpt = argTyOpt,
                   loc = loc},
          ty =resultTy}
       end
@@ -305,21 +249,19 @@ struct
                      else raise TypeMismatch
         val {exp,ty} = Pair loc hd tl
       in
-        {exp=RC.RCDATACONSTRUCT
+        {exp=TC.TPDATACONSTRUCT
                {con = BT.consTPConInfo,
                 argExpOpt = SOME exp,
-                argTyOpt = SOME ty,
-                instTyList = [#ty hd],
+                instTyList = SOME [#ty hd],
                 loc = loc},
          ty = listTy}
       end
 
   fun Nil loc instTy = 
-      {exp=RC.RCDATACONSTRUCT 
+      {exp=TC.TPDATACONSTRUCT
              {argExpOpt = NONE,
               con = BT.nilTPConInfo,
-              argTyOpt = NONE,
-              instTyList = [instTy],
+              instTyList = SOME [instTy],
               loc = loc},
        ty=ListTy instTy}
 
@@ -331,32 +273,65 @@ struct
 
   fun TypeCast loc {ty, exp} ty2 =
       {ty = ty2,
-       exp = RC.RCPRIMAPPLY
+       exp = TC.TPPRIMAPPLY
                {primOp = {primitive = BuiltinPrimitive.Cast
                                         BuiltinPrimitive.TypeCast,
                           ty = ty --> ty2},
-                instTyList = nil,
+                instTyList = NONE,
                 argExp = exp,
                 loc = loc}}
-  fun HandleAndReRaise loc exExnInfo {exp, ty} =
+
+  fun LabelAsString loc label =
+      String loc (RecordLabel.toString label)
+
+  fun SymbolAsString loc symbol =
+      String loc (Symbol.symbolToString symbol)
+
+  fun Pos loc pos =
       let
-        val exnVar = newVar ExnTy
-        val {exp=raiseExp, ty} = Raise loc (Exn loc exExnInfo)  ty
-        val exnCaseExp =
-            RC.RCEXNCASE
-              {exp = RC.RCVAR exnVar,
-               defaultExp = #exp (Raise loc (Var exnVar) ty),
-               expTy = ExnTy, 
-               loc = loc,
-               ruleList = [(RC.EXEXN exExnInfo, NONE, raiseExp)],
-               resultTy = ty}
+        val (isNoPos, isStdPath, name, line, col, pos, gap) =
+            case pos of
+              Loc.POS {source = Loc.FILE (Loc.STDPATH,name), line, col,
+                       pos, gap} =>
+              (false, true, SOME (Filename.toString name), line, col, pos, gap)
+            | Loc.POS {source = Loc.FILE (Loc.USERPATH,name), line, col,
+                       pos, gap} =>
+              (false, false, SOME (Filename.toString name), line, col, pos, gap)
+            | Loc.POS {source = Loc.INTERACTIVE, line, col, pos, gap} =>
+              (false, false, NONE, line, col, pos, gap)
+            | Loc.NOPOS =>
+              (true, false, NONE, 0, 0, 0, 0)
+        val IsNoPos = Bool loc isNoPos
+        val IsStdPath = Bool loc isStdPath
+        val Name = Option loc StringTy (Option.map (String loc) name)
+        val Line = Int loc line
+        val Col = Int loc col
+        val Pos = Int loc pos
+        val Gap = Int loc gap
+        val MakePos = MonoVar (U.REIFY_exInfo_makePos ())
       in
-        RC.RCHANDLE
-          {exp = exp,
-           exnVar = exnVar,
-           handler = exnCaseExp,
-           resultTy = ty,
-           loc = loc}
+        ApplyList loc MakePos [IsNoPos, IsStdPath, Name, Line, Col, Pos, Gap]
       end
+
+  fun Loc (loc as (pos1, pos2)) =
+      Pair loc (Pos loc pos1) (Pos loc pos2)
+
+  fun BtvId loc btvid =
+      TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy())
+  fun TypId loc typid =
+      TypeCast loc (Int loc (TypID.toInt typid)) (TypIdTy())
+  fun Longsymbol loc longsymbol =
+      let
+        val stringList = Symbol.longsymbolToLongid longsymbol
+        val stringListExp = List loc StringTy (map (String loc) stringList)
+        val mkLongsymbolExp = MonoVar (U.REIFY_exInfo_SymbolMkLongSymbol())
+      in
+        ApplyList loc mkLongsymbolExp [stringListExp, Loc loc]
+      end
+  fun RecordLabelFromString loc string =
+      Apply
+        loc
+        (MonoVar (U.REIFY_exInfo_RecordLabelFromString()))
+        (String loc string)
 
 end

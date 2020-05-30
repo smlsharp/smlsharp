@@ -1,2 +1,6 @@
 include "./sql/main/SQLPrim.smi"  (* for internal usage *)
 include "./sql/main/SQL.smi"      (* for user *)
+
+(* OPrim id から参照されるので、compareが定義されている以下のものもTopEnvに必要 *)
+include "./sql/main/builtintypes/timestamp/TimeStamp.smi"
+include "./sql/main/Numeric.smi"

@@ -659,10 +659,11 @@ val _ = U.print "\n"
       end
 
   exception Fail
+  fun raiseFail i = (U.print ( "FuntorUtils Fait exception at " ^ (Int.toString i) ^ "\n"); raise Fail)
   fun makeEqEnv (formals1, formals2) =
       let
         val _ = if length formals1 = length formals2 then ()
-                else raise Fail
+                else raiseFail 1
         val tvarPairs = ListPair.zip (formals1, formals2)
       in
         foldl
@@ -723,14 +724,14 @@ val _ = U.print "\n"
       (SymbolEnv.appi
          (fn (name, tstr1) =>
              case SymbolEnv.find(tyE2, name) of
-               NONE => raise Fail
+               NONE => raiseFail 2
              | SOME tstr2 => visitTstr {specTstr=tstr1, implTstr=tstr2}
          )
          tyE1;
        SymbolEnv.appi
          (fn (name, {env=env1, strKind}) =>
              case SymbolEnv.find(envMap2, name) of
-               NONE => raise Fail
+               NONE => raiseFail 3
              | SOME {env=env2, strKind} => visitEnv {specEnv=env1, implEnv=env2}
             )
          envMap1
@@ -751,29 +752,29 @@ val _ = U.print "\n"
           val _ = if length (SymbolEnv.listItems conSpec1) = 
                      length (SymbolEnv.listItems conSpec2)
                   then ()
-                  else raise Fail
+                  else raiseFail 4
         in
           SymbolEnv.appi
             (fn (name, tyOpt1) =>
                 case SymbolEnv.find(conSpec2, name) of
-                  NONE => raise Fail
+                  NONE => raiseFail 5
                 | SOME tyOpt2 => 
                   (case (tyOpt1, tyOpt2) of
                      (NONE, NONE) => ()
                    | (SOME ty1, SOME ty2) =>
                      if N.equalTy (N.emptyTypIdEquiv, eqEnv) (ty1,ty2) then ()
-                     else raise Fail
-                   | _ => raise Fail
+                     else raiseFail 6
+                   | _ => raiseFail 7
                   )
             )
             conSpec2
         end 
-      else raise Fail
+      else raiseFail 8
 
   fun eqTfunkind {specTfunkind=tfunkind1, implTfunkind=tfunkind2} =
       case (tfunkind1, tfunkind2) of
         (I.TFUN_DTY {id=id1,...}, I.TFUN_DTY {id=id2,...}) 
-        => if TypID.eq(id1, id2) then () else raise Fail
+        => if TypID.eq(id1, id2) then () else raiseFail 9
 (*
         if TypID.eq(id1, id2) andalso iseq1 = iseq2 then
           eqConSpec ((formals1,conSpec1),(formals2,conSpec2)) 
@@ -784,7 +785,7 @@ val _ = U.print "\n"
       | (I.FUN_DTY _, _) => raise bug "FUN_DTY in spec"
       | (_, I.FUN_DTY _) => raise bug "FUN_DTY in spec"
       | (I.TFV_SPEC{id=id1,...}, I.TFV_SPEC{id=id2,...})
-        => if TypID.eq(id1, id2) then () else raise Fail
+        => if TypID.eq(id1, id2) then () else raiseFail 10
 (*
         if TypID.eq(id1, id2) andalso
               iseq1 = iseq2 andalso
@@ -793,23 +794,32 @@ val _ = U.print "\n"
            else raise Fail
 *)
       | (I.TFV_DTY {id=id1,...}, I.TFV_DTY {id=id2,...}
-        ) => if TypID.eq(id1, id2) then () else raise Fail
+        ) => if TypID.eq(id1, id2) then () else raiseFail 11
 (*
         if TypID.eq(id1, id2) andalso iseq1 = iseq2 then
           eqConSpec ((formals1,conSpec1),(formals2,conSpec2)) 
         else raise Fail
 *)
-      | _ => raise Fail
+      | _ => 
+        (
+         U.print "** eqTfunkind 12\n";
+         U.print "tfunkind1\n";
+         U.printTfunkind tfunkind1;
+         U.print "\ntfunkind2\n";
+         U.printTfunkind tfunkind2;
+         U.print "\n";
+         raiseFail 12
+        )
                    
   and eqTfun {specTfun=tfun1, implTfun=tfun2} =
       case (I.derefTfun tfun1, I.derefTfun tfun2) of
       (I.TFUN_DEF {admitsEq=admitsEq1, formals=formals1, realizerTy=ty1,...},
        I.TFUN_DEF {admitsEq=admitsEq2, formals=formals2, realizerTy=ty2,...}) =>
       let
-        val _ = if admitsEq1 = admitsEq2 then () else raise Fail
+        val _ = if admitsEq1 = admitsEq2 then () else raiseFail 13
         val tvarPairs = if length formals1 = length formals2 then 
                           ListPair.zip (formals1, formals2)
-                        else raise Fail
+                        else raiseFail 14
         val eqEnv = foldl
                       (fn (({id=tv1,symbol=_,isEq=_,lifted=_},
                             {id=tv2,symbol=_,isEq=_,lifted=_}),
@@ -820,7 +830,7 @@ val _ = U.print "\n"
                       tvarPairs
       in
         if N.equalTy (N.emptyTypIdEquiv, eqEnv) (ty1, ty2) then ()
-        else raise Fail
+        else raiseFail 15
       end
     (* 167_functor.sml: without the following check, ChackProvide may loop *)
     | (I.TFUN_VAR(tfv as ref(I.TFUN_DTY{id=id1,admitsEq=eq1,formals=formals1,
@@ -833,18 +843,18 @@ val _ = U.print "\n"
            andalso List.length formals1 = List.length formals2
            andalso (not eq1 orelse eq2)
         then tfv := I.REALIZED {id=id1, tfun=tfun2}
-        else raise Fail
+        else raiseFail 16
     | (I.TFUN_VAR(tfv as ref(I.TFUN_DTY{id,admitsEq,formals,dtyKind=I.DTY_INTERFACE property,...})),
        _) =>
       let
         val implProperty = case I.tfunProperty tfun2 of 
-                             SOME ty => ty | NONE => raise Fail
+                             SOME ty => ty | NONE => raiseFail 17
         val implAdmitsEq = I.tfunAdmitsEq tfun2
         val _ = if Ty.compatProperty {abs=I.PROP property, impl=implProperty}
                    andalso List.length formals = I.tfunArity tfun2
                    andalso (not admitsEq orelse implAdmitsEq)
                 then () 
-                else raise Fail
+                else raiseFail 18
       in
         tfv := I.REALIZED {id=id, tfun=tfun2}
       end
@@ -856,7 +866,15 @@ val _ = U.print "\n"
       eqTfun {specTfun=specTfun, implTfun=implTfun}
     | (I.TFUN_VAR(ref(tfunKind1)),I.TFUN_VAR(ref(tfunKind2))) => 
       eqTfunkind {specTfunkind=tfunKind1, implTfunkind=tfunKind2}
-    | _ => raise Fail
+    | _ => 
+      (U.print "** eqTfun **\n";
+       U.print "specTfun\n";
+       U.printTfun tfun1;
+       U.print "\n";
+       U.print "inplTfun\n";
+       U.printTfun tfun2;
+       U.print "\n";
+       raiseFail 19)
 
   fun eqTstr {specTstr=tstr1, implTstr=tstr2} =
       case (tstr1, tstr2) of
@@ -864,7 +882,7 @@ val _ = U.print "\n"
       | (V.TSTR tfun1, V.TSTR_DTY {tfun=tfun2,...}) =>
         (eqTfun {specTfun=tfun1, implTfun=tfun2}
         handle exn =>
-               (U.print "eqTfun failed\n";
+               (U.print "eqTfun failed 1 \n";
                 U.print "tfun1\n";
                 U.printTfun tfun1;
                 U.print "\ntfun2\n";
@@ -876,7 +894,7 @@ val _ = U.print "\n"
       | (V.TSTR_DTY {tfun=tfun1,...}, V.TSTR_DTY {tfun=tfun2,...}) =>
         (eqTfun {specTfun=tfun1, implTfun=tfun2}
          handle exn =>
-               (U.print "eqTfun failed\n";
+               (U.print "eqTfun failed 2\n";
                 U.print "tfun1\n";
                 U.printTfun tfun1;
                 U.print "\ntfun2\n";
@@ -885,7 +903,9 @@ val _ = U.print "\n"
                 raise exn
                )
         )
-      | _ => raise Fail
+      | _ => 
+        (U.print "eqTstr Fail in other cases\n";
+         raiseFail 20)
 
   fun eqTyE {specTyE=tyE1, implTyE=tyE2} =
       SymbolEnv.appi
@@ -896,7 +916,7 @@ val _ = U.print "\n"
                U.print "eqTyE fail missing name\n";
                U.printSymbol name;
                U.print "\n";
-               raise Fail
+               raiseFail 21
               )
             | SOME tstr2 => 
               eqTstr {specTstr=tstr1, implTstr=tstr2}
@@ -916,35 +936,35 @@ val _ = U.print "\n"
       case (st1, st2) of
       (I.IDSPECVAR {ty=ty1,...},I.IDSPECVAR {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 22
     | (I.IDSPECEXN {ty=ty1, ...}, I.IDSPECEXN {ty=ty2, ...}) => 
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 23
     | (I.IDSPECCON _, I.IDSPECCON _) => ()
     | (I.IDCON {ty=ty1,...}, I.IDCON {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 24
     | (I.IDEXN {ty=ty1,...}, I.IDEXN {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 25
     | (I.IDEXNREP {ty=ty1,...}, I.IDEXNREP {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 26
     | (I.IDEXEXN {ty=ty1,...}, I.IDEXN {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 27
     | (I.IDEXEXN {ty=ty1,...}, I.IDEXEXN {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 28
     | (I.IDEXEXNREP {ty=ty1,...}, I.IDEXEXNREP {ty=ty2,...}) =>
       if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1,ty2) then () 
-      else raise Fail
+      else raiseFail 29
     | (I.IDEXVAR _, I.IDVAR _) => ()
     | (I.IDEXVAR _, I.IDEXVAR _) => ()
     | (I.IDEXVAR _, I.IDVAR_TYPED _) => ()
     | (I.IDBUILTINVAR {primitive=prim1,...}, I.IDBUILTINVAR {primitive=prim2,...}) =>
-      if prim1 = prim2 then () else raise Fail
-    | _ => raise Fail
+      if prim1 = prim2 then () else raiseFail 30
+    | _ => raiseFail 31
 
   fun eqVarE {specVarE=varE1, implVarE=varE2} =
       SymbolEnv.appi
@@ -954,7 +974,7 @@ val _ = U.print "\n"
               (U.print "name not found in varE2\n";
                U.printSymbol name;
                U.print "\n";
-               raise Fail)
+               raiseFail 32)
             | SOME st2 => 
               eqIdstatus (st1, st2)
               handle exn =>
@@ -980,15 +1000,15 @@ val _ = U.print "\n"
               val _ = eqTyE {specTyE=tyE1, implTyE=tyE2}
                       handle Fail => 
                              (U.print "eqEnv; eqTyE; \n";
-                              raise Fail)
+                              raiseFail 33)
               val _ = eqVarE {specVarE=varE1, implVarE=varE2}
                       handle Fail => 
                              (U.print "eqEnv; eqVarE; \n";
-                              raise Fail)
+                              raiseFail 34)
               val _ = eqStrE {specStrE=strE1, implStrE=strE2}
                       handle Fail => 
                              (U.print "eqEnv; eqStrE; \n";
-                              raise Fail)
+                              raiseFail 35)
             in
               true
             end
@@ -998,9 +1018,9 @@ val _ = U.print "\n"
                   case SymbolEnv.find(map2, name) of
                     NONE => 
                     (
-                    raise Fail
+                    raiseFail 36
                     )
-                  | SOME {env=env2, strKind} => if eqEnv' {specEnv=env1, implEnv=env2} then () else raise Fail
+                  | SOME {env=env2, strKind} => if eqEnv' {specEnv=env1, implEnv=env2} then () else raiseFail 37
               )
               map1
         val _ = visitEnv {specEnv=env1, implEnv=env2}
@@ -1021,9 +1041,9 @@ val _ = U.print "\n"
        (SymbolEnv.appi
           (fn (name, {env=env1, strKind}) =>
               case SymbolEnv.find(strE2, name) of
-                NONE => raise Fail
+                NONE => raiseFail 38
               | SOME {env=env2, strKind} => 
-                if eqSize (env1, env2) then () else raise Fail)
+                if eqSize (env1, env2) then () else raiseFail 39)
         strE1;
         true
         )
@@ -1035,12 +1055,12 @@ val _ = U.print "\n"
         val typIdMap1 = 
             case TypID.Map.find(typIdMap1,id1) of
               SOME id3 => if TypID.eq(id2,id3) then typIdMap1
-                          else raise Fail
+                          else raiseFail 40
             | NONE => TypID.Map.insert(typIdMap1, id1, id2)
         val typIdMap2 = 
             case TypID.Map.find(typIdMap2,id2) of
               SOME id3 => if TypID.eq(id1,id3) then typIdMap2
-                          else raise Fail
+                          else raiseFail 41
             | NONE => TypID.Map.insert(typIdMap2, id2, id1)
       in
         (typIdMap1, typIdMap2)
@@ -1052,14 +1072,14 @@ val _ = U.print "\n"
     | (I.TFV_SPEC {id=id1,...}, I.TFV_SPEC {id=id2,...}) =>setEquiv(typEquiv, id1,id2)
     | (I.TFV_DTY {id=id1,...}, I.TFV_DTY {id=id2,...})=> setEquiv(typEquiv, id1,id2)
     | (I.FUN_DTY {tfun=tfun1, ...}, I.FUN_DTY{tfun=tfun2,...}) => eqShapeTfun (tfun2, tfun2) typEquiv
-    | _ => raise Fail
+    | _ => raiseFail 42
 
   and eqShapeTfun (tfun1, tfun2) typEquiv =
       case (I.derefTfun tfun1, I.derefTfun tfun2) of
         (I.TFUN_DEF _,I.TFUN_DEF _) => typEquiv
       | (I.TFUN_VAR (ref tfunkind1), I.TFUN_VAR (ref tfunkind2)) =>
         eqShapeTfunkind (tfunkind1, tfunkind2) typEquiv
-      | _ => raise Fail
+      | _ => raiseFail 43
 
   fun eqShapeTstr (tstr1, tstr2) typEquiv =
       case (tstr1, tstr2) of
@@ -1068,13 +1088,13 @@ val _ = U.print "\n"
       | (V.TSTR_DTY {tfun=tfun1,...}, 
          V.TSTR_DTY {tfun=tfun2,...}) => 
         eqShapeTfun (tfun1, tfun2) typEquiv
-      | _ => raise Fail
+      | _ => raiseFail 44
 
   fun eqShapeTyE (tyE1, tyE2) typEquiv = 
       SymbolEnv.foldli
       (fn (name, tstr1, typEquiv) =>
           case SymbolEnv.find(tyE2, name) of
-            NONE => raise Fail
+            NONE => raiseFail 45
           | SOME tstr2 => eqShapeTstr (tstr1,tstr2) typEquiv
       )
       typEquiv
@@ -1096,14 +1116,14 @@ val _ = U.print "\n"
     | (I.IDEXEXN _,I.IDEXEXN _) => ()
     | (I.IDEXEXNREP _,I.IDEXEXNREP _) => ()
     | (I.IDOPRIM _,I.IDOPRIM _) => ()
-    | _ => raise Fail
+    | _ => raiseFail 46
         
   fun eqShapeVarE (varE1, varE2) =
       SymbolEnv.appi
       (fn (name, idstatus1) =>
           case SymbolEnv.find(varE2, name) of
             SOME idstatus2 => eqShapeIdstatus (idstatus1, idstatus2) 
-          | NONE => raise Fail
+          | NONE => raiseFail 47
       )
       varE1
 
@@ -1121,7 +1141,7 @@ val _ = U.print "\n"
       (fn (name, {env=env1, strKind}, typEquiv) =>
           case SymbolEnv.find(strE2, name) of
             SOME {env=env2, strKind=_} => eqShapeEnv(env1,env2) typEquiv
-          | NONE => raise Fail
+          | NONE => raiseFail 48
       )
       typEquiv
       strE1

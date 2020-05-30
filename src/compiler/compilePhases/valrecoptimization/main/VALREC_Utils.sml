@@ -31,7 +31,6 @@ in
       | ICEXEXN_CONSTRUCTOR _ => VarID.Set.empty
       | ICOPRIM _ => VarID.Set.empty
       | ICTYPED (exp,ty,loc) => getFreeIdsInExp exp
-      | ICSIGTYPED {icexp,ty,loc, revealKey} => getFreeIdsInExp icexp
       | ICINTERFACETYPED {icexp,ty,loc} => getFreeIdsInExp icexp
       | ICAPPM (funExp,argExpList,loc) =>
         VarID.Set.union(getFreeIdsInExp funExp, 
@@ -39,10 +38,10 @@ in
       | ICAPPM_NOUNIFY (funExp,argExpList,loc) =>
         VarID.Set.union(getFreeIdsInExp funExp, 
 			getFreeIdsInExpList argExpList)
-      | ICLET (localDeclList,mainExpList,loc) =>
+      | ICLET (localDeclList,mainExp,loc) =>
         VarID.Set.union(getFreeIdsInDeclList localDeclList,
 			VarID.Set.difference
-			    (getFreeIdsInExpList mainExpList,
+			    (getFreeIdsInExp mainExp,
 			     getBoundIdsInDeclList localDeclList))
       | ICTYCAST (tycast, exp, loc) => getFreeIdsInExp exp
       | ICRECORD (elementList,loc) =>
@@ -100,7 +99,7 @@ in
             matchList
       | ICDYNAMICCASE (selector, matchList, loc) =>
         foldl 
-            (fn ({arg,body},S) =>
+            (fn ({tyvars,arg,body},S) =>
                 VarID.Set.union
                     (S,
                      VarID.Set.difference
@@ -201,6 +200,8 @@ in
   and getFreeIdsInDecl icdecl =
       case icdecl of 
         ICVAL (tvarList, bindList, loc) => getFreeIdsInBindList bindList
+      | ICVAL_OPAQUE_SIG {var, exp, ty, revealKey, loc} => getFreeIdsInExp exp
+      | ICVAL_TRANS_SIG {var, exp, ty, loc} => getFreeIdsInExp exp
       | ICDECFUN  {guard, funbinds, loc} => getFreeIdsInFundeclList funbinds
       | ICNONRECFUN  _ => raise Bug.Bug "invalid declaration"
       | ICVALREC {guard, recbinds, loc} =>
@@ -237,6 +238,8 @@ in
   and getBoundIdsInDecl icdecl = 
       case icdecl of
         ICVAL (tvarList, bindList, loc) => getBoundIdsInBindList bindList 
+      | ICVAL_OPAQUE_SIG {var, exp,...} => VarID.Set.singleton (#id var) 
+      | ICVAL_TRANS_SIG {var, exp,...} => VarID.Set.singleton (#id var) 
       | ICDECFUN {guard, funbinds, loc} => getBoundIdsInFundeclList funbinds
       | ICNONRECFUN _ => raise Bug.Bug "invalid declaration"
       | ICVALREC {guard, recbinds, loc} => getBoundIdsInRecBinds recbinds

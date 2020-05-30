@@ -13,6 +13,7 @@ _require "../../../data/name/main/CodeLabel.smi"
 _require "../../../data/name/main/ExternSymbol.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../../compilerIRs/absyn/main/ConstFormat.smi"
 
 
 structure RuntimeCalc =

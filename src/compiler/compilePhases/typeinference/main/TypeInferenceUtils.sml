@@ -23,9 +23,6 @@ in
   fun boxedTy () = T.CONSTRUCTty {tyCon=BT.boxedTyCon, args = []}
 
 
-  fun nextDummyTy kind =
-      T.DUMMYty (DummyTyID.generate (), kind)
-
   (*
    * make a fresh instance of ty by instantiating the top-level type
    * abstractions (only)
@@ -45,9 +42,9 @@ in
                                           TB.substBTvar subst arg2), loc=loc})
                        constraints
         in  
-          (bty, BoundTypeVarID.Map.listItems subst, constraints)
+          (bty, SOME (BoundTypeVarID.Map.listItems subst), constraints)
         end
-      | _ => (ty, nil, nil)
+      | _ => (ty, NONE, nil)
              
   fun instantiateOConstTy ty = 
       case TB.derefTy ty of
@@ -65,6 +62,7 @@ in
       | T.BACKENDty backendTy => ()
       | T.ERRORty => ()
       | T.DUMMYty (dummyTyID, kind) => ()
+      | T.EXISTty (dummyTyID, kind) => ()
       | T.BOUNDVARty BoundTypeVarID =>  ()
 
   fun instantiateOConstAndRecordTy ty = 
@@ -94,22 +92,11 @@ in
             | T.BACKENDty backendTy => ()
             | T.ERRORty => ()
             | T.DUMMYty (dummyTyID, kind) => ()
+            | T.EXISTty (dummyTyID, kind) => ()
             | T.BOUNDVARty BoundTypeVarID =>  ()
       in                                              
         (hasFlex := false; instantiate ty; !hasFlex)
       end
-  fun instantiateTv tv =
-      case tv of
-        ref (T.TVAR {kind as T.KIND {tvarKind, ...}, ...}) =>
-        (case tvarKind of
-           T.OCONSTkind (h::_) => tv := T.SUBSTITUTED h
-         | T.OCONSTkind nil => raise Bug.Bug "instantiateTv OCONSTkind"
-         | T.OPRIMkind {instances = (h::_),...} => tv := T.SUBSTITUTED h
-         | T.OPRIMkind {instances = nil,...} =>
-           raise Bug.Bug "instantiateTv OPRIMkind"
-         | T.REC tyFields => tv := T.SUBSTITUTED (nextDummyTy kind)
-         | T.UNIV => tv := T.SUBSTITUTED (nextDummyTy kind))
-      | ref(T.SUBSTITUTED _) => ()
 
 (*
   fun eliminateVacuousTyvars () =
@@ -122,7 +109,7 @@ in
   fun coerceTy (tpexp, fromTy, toTy, loc) =
       if TB.monoTy (TB.derefTy toTy) then 
         let
-          val (fromTy, constraints, tpexp) = TCU.freshInst(fromTy, tpexp)
+          val (fromTy, _, constraints, tpexp) = TCU.freshInst(fromTy, tpexp)
         in
           (
            U.unify [(fromTy, toTy)] 
@@ -141,7 +128,7 @@ in
                re-generalize in the original order to obtain the same type.
                bug fixed. 257_recordPolyAnnotation.sml
              *)
-            val (fromBody, fromConstraints, tpexp) = TCU.freshToplevelInst(fromTy, tpexp)
+            val (fromBody, _, fromConstraints, tpexp) = TCU.freshToplevelInst(fromTy, tpexp)
             (* FIXME: fromConstraintsを捨てている問題の確認 *)
             val subst = TB.freshRigidSubst boundtvars
             val body = TB.substBTvar subst body

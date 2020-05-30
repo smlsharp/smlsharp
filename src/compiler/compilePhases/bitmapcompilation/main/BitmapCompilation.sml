@@ -6,14 +6,10 @@
  * @author Huu-Duc Nguyen
  * @author Atsushi Ohori
  *)
-structure BitmapCompilation2 : sig
-
-  val compile : TypedLambda.tldecl list -> BitmapCalc2.bcdecl list
-
-end =
+structure BitmapCompilation2 =
 struct
 
-  structure L = TypedLambda
+  structure R = RecordCalc
   structure B = BitmapCalc2
   structure T = Types
   structure P = BuiltinPrimitive
@@ -44,20 +40,17 @@ struct
   fun valueToBcexp (value, loc) =
       case value of
         RecordLayoutCalc.CONST n =>
-        (B.BCCONSTANT {const = L.C (L.WORD32 n),
-                       ty = BuiltinTypes.word32Ty,
+        (B.BCCONSTANT {const = R.CONST (R.WORD32 n),
                        loc = loc},
          BuiltinTypes.word32Ty)
       | RecordLayoutCalc.VAR v =>
         (B.BCVAR {varInfo = v, loc = loc}, #ty v)
       | RecordLayoutCalc.TAG (ty, n) =>
-        (B.BCCONSTANT {const = L.C (L.TAG (n, ty)),
-                       ty = T.SINGLETONty (T.TAGty ty),
+        (B.BCCONSTANT {const = R.TAG (n, ty),
                        loc = loc},
          T.SINGLETONty (T.TAGty ty))
       | RecordLayoutCalc.SIZE (ty, n) =>
-        (B.BCCONSTANT {const = L.C (L.SIZE (n, ty)),
-                       ty = T.SINGLETONty (T.SIZEty ty),
+        (B.BCCONSTANT {const = R.SIZE (n, ty),
                        loc = loc},
          T.SINGLETONty (T.SIZEty ty))
       | RecordLayoutCalc.CAST (v, ty2) =>
@@ -129,7 +122,7 @@ struct
 
   fun compileExp env comp tlexp =
       case tlexp of
-        L.TLFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
+        R.RCFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
         let
           val funExp = compileExp env comp funExp
           val argExpList = map (compileExp env comp) argExpList
@@ -140,7 +133,7 @@ struct
                             argExpList = argExpList,
                             loc = loc}
         end
-      | L.TLCALLBACKFN {attributes, resultTy, argVarList, bodyExp, loc} =>
+      | R.RCCALLBACKFN {attributes, resultTy, argVarList, bodyExp, loc} =>
         let
           val bodyExp = compileExp env comp bodyExp
         in
@@ -150,17 +143,12 @@ struct
                           bodyExp = bodyExp,
                           loc = loc}
         end
-      | L.TLTAGOF {ty, loc} =>
-        findTagExp (env, ty, loc)
-      | L.TLSIZEOF {ty, loc} =>
-        (findSizeExp (env, ty, loc)
-        handle e as Bug.Bug _ => (print "findSize 2\n";raise e))
-      | L.TLINDEXOF {label, recordTy, loc} =>
+      | R.RCINDEXOF {label, recordTy, loc} =>
         let
           val fields = recordFieldTys env recordTy
               handle e as Bug.Bug _ => 
                      (print "INDEXOF 1\n";
-                      print (Bug.prettyPrint (L.format_tlexp tlexp));
+                      print (Bug.prettyPrint (R.format_rcexp tlexp));
                       raise e)
 
           fun find (fields, nil) = raise Bug.Bug "compileExp: MVINDEXOF"
@@ -174,15 +162,17 @@ struct
                 T.SINGLETONty (T.INDEXty (label, recordTy)),
                 loc)
         end
-      | L.TLCONSTANT {const, ty, loc} =>
-        B.BCCONSTANT {const = const, ty = ty, loc = loc}
-      | L.TLFOREIGNSYMBOL {name, ty, loc} =>
+      | R.RCCONSTANT (const, loc) =>
+        B.BCCONSTANT {const = const, loc = loc}
+      | R.RCSTRING (string, loc) =>
+        B.BCSTRING {string = string, loc = loc}
+      | R.RCFOREIGNSYMBOL {name, ty, loc} =>
         B.BCFOREIGNSYMBOL {name = name, ty = ty, loc = loc}
-      | L.TLVAR {varInfo, loc} =>
+      | R.RCVAR (varInfo, loc) =>
         B.BCVAR {varInfo = varInfo, loc = loc}
-      | L.TLEXVAR {exVarInfo, loc} =>
+      | R.RCEXVAR (exVarInfo, loc) =>
         B.BCEXVAR {exVarInfo = exVarInfo, loc=loc}
-      | L.TLPRIMAPPLY {primInfo, argExpList, instTyList, loc} =>
+      | R.RCPRIMAPPLY {primOp, argExpList, instTyList, loc} =>
         let
           val argExpList = map (compileExp env comp) argExpList
           val instTagList =
@@ -191,14 +181,14 @@ struct
               map (fn ty => findSizeExp (env, ty, loc)) instTyList
               handle e as Bug.Bug _ => (print "findSize 3\n";raise e)
         in
-          B.BCPRIMAPPLY {primInfo = primInfo,
+          B.BCPRIMAPPLY {primInfo = primOp,
                          argExpList = argExpList,
                          instTyList = instTyList,
                          instTagList = instTagList,
                          instSizeList = instSizeList,
                          loc = loc}
         end
-      | L.TLAPPM {funExp, argExpList, funTy, loc} =>
+      | R.RCAPPM {funExp, argExpList, funTy, loc} =>
         let
           val funExp = compileExp env comp funExp
           val argExpList = map (compileExp env comp) argExpList
@@ -208,14 +198,14 @@ struct
                     funTy = funTy,
                     loc = loc}
         end
-      | L.TLLET {localDecl, mainExp, loc} =>
+      | R.RCLET {decl, body, loc} =>
         let
-          val (env, localDeclList) = compileDecl env comp localDecl
-          val mainExp = compileExp env comp mainExp
+          val (env, localDeclList) = compileDecl env comp decl
+          val mainExp = compileExp env comp body
         in
           Let (localDeclList, mainExp, loc)
         end
-      | L.TLRECORD {fields, recordTy, isMutable, loc} =>
+      | R.RCRECORD {fields, recordTy, loc} =>
         let
           val fields =
               ListPair.mapEq
@@ -228,7 +218,7 @@ struct
                  RecordLabel.Map.listItemsi fields)
               handle e as Bug.Bug _ => 
                      (print "RECORD 1\n";
-                      print (Bug.prettyPrint (L.format_tlexp tlexp));
+                      print (Bug.prettyPrint (R.format_rcexp tlexp));
                       raise e)
 
           val {allocSize, fieldIndexes, bitmaps, padding} =
@@ -268,13 +258,13 @@ struct
         in
           B.BCRECORD {fieldList = fieldList,
                       recordTy = recordTy,
-                      isMutable = isMutable,
+                      isMutable = false,
                       clearPad = padding,
                       allocSizeExp = allocSize,
                       bitmaps = bitmaps,
                       loc = loc}
         end
-      | L.TLSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
+      | R.RCSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
         let
           val recordExp = compileExp env comp recordExp
           val indexExp = compileExp env comp indexExp
@@ -291,14 +281,14 @@ struct
                       resultTag = resultTag,
                       loc = loc}
         end
-      | L.TLMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy,
+      | R.RCMODIFY {recordExp, recordTy, indexExp, label, elementExp, elementTy,
                     loc} =>
         let
           val recordExp = compileExp env comp recordExp
           val indexExp = compileExp env comp indexExp
-          val valueExp = compileExp env comp valueExp
-          val valueTag = findTagExp (env, valueTy, loc)
-          val valueSize = findSizeExp (env, valueTy, loc)
+          val valueExp = compileExp env comp elementExp
+          val valueTag = findTagExp (env, elementTy, loc)
+          val valueSize = findSizeExp (env, elementTy, loc)
               handle e as Bug.Bug _ => (print "findSize 5\n";raise e)
         in
           B.BCMODIFY {recordExp = recordExp,
@@ -306,20 +296,20 @@ struct
                       indexExp = indexExp,
                       label = label,
                       valueExp = valueExp,
-                      valueTy = valueTy,
+                      valueTy = elementTy,
                       valueTag = valueTag,
                       valueSize = valueSize,
                       loc = loc}
         end
-      | L.TLRAISE {argExp, resultTy, loc} =>
+      | R.RCRAISE {exp, resultTy, loc} =>
         let
-          val argExp = compileExp env comp argExp
+          val argExp = compileExp env comp exp
         in
           B.BCRAISE {argExp = argExp,
                      resultTy = resultTy,
                      loc = loc}
         end
-      | L.TLHANDLE {exp, exnVar, handler, resultTy, loc} =>
+      | R.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         let
           val exp = compileExp env comp exp
           val env = SingletonTyEnv2.bindVar (env, exnVar)
@@ -331,7 +321,7 @@ struct
                       resultTy = resultTy,
                       loc = loc}
         end
-      | L.TLPOLY {btvEnv, expTyWithoutTAbs, exp, loc} =>
+      | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
         let
           val env = SingletonTyEnv2.bindTyvars (env, btvEnv)
           val exp = compileExp env comp exp
@@ -341,7 +331,7 @@ struct
                     exp = exp,
                     loc = loc}
         end
-      | L.TLTAPP {exp, expTy, instTyList, loc} =>
+      | R.RCTAPP {exp, expTy, instTyList, loc} =>
         let
           val exp = compileExp env comp exp
         in
@@ -350,12 +340,12 @@ struct
                     instTyList = instTyList,
                     loc = loc}
         end
-      | L.TLSWITCH {switchExp, expTy, branches, defaultExp, resultTy, loc} =>
+      | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
         let
-          val switchExp = compileExp env comp switchExp
-          val branches = map (fn {constant, exp} =>
-                                 {constant = constant,
-                                  branchExp = compileExp env comp exp})
+          val switchExp = compileExp env comp exp
+          val branches = map (fn {const, body} =>
+                                 {constant = const,
+                                  branchExp = compileExp env comp body})
                          branches
           val defaultExp = compileExp env comp defaultExp
         in
@@ -366,7 +356,7 @@ struct
                       resultTy = resultTy,
                       loc = loc}
         end
-      | L.TLCAST {exp, expTy, targetTy, cast, loc} =>
+      | R.RCCAST {exp, expTy, targetTy, cast, loc} =>
         let
           val exp = compileExp env comp exp
         in
@@ -376,7 +366,7 @@ struct
                     cast = cast,
                     loc = loc}
         end
-      | L.TLFNM {argVarList, bodyExp, bodyTy, loc} =>
+      | R.RCFNM {argVarList, bodyExp, bodyTy, loc} =>
         let
           val env = SingletonTyEnv2.bindVars (env, argVarList)
           val comp2 = RecordLayout2.newComputationAccum ()
@@ -388,7 +378,7 @@ struct
                    bodyExp = Let (map (toBcdecl loc) decls, bodyExp, loc),
                    loc = loc}
         end
-      | L.TLCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+      | R.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         let
           val env2 = SingletonTyEnv2.bindVars (env, argVarList)
           val catchExp = compileExp env2 comp catchExp
@@ -401,7 +391,7 @@ struct
                      resultTy = resultTy,
                      loc = loc}
         end
-      | L.TLTHROW {catchLabel, argExpList, resultTy, loc} =>
+      | R.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
         let
           val argExpList = map (compileExp env comp) argExpList
         in
@@ -413,41 +403,41 @@ struct
 
   and compileDecl env comp tldecl =
       case tldecl of
-        L.TLVAL {boundVar, boundExp, loc} =>
+        R.RCVAL {var, exp, loc} =>
         let
-          val boundExp = compileExp env comp boundExp
+          val boundExp = compileExp env comp exp
         in
-          (SingletonTyEnv2.bindVars (env, [boundVar]),
-           [B.BCVAL {boundVar = boundVar,
+          (SingletonTyEnv2.bindVars (env, [var]),
+           [B.BCVAL {boundVar = var,
                      boundExp = boundExp,
                      loc = loc}])
         end
-      | L.TLVALREC {recbindList, loc} =>
+      | R.RCVALREC (recbindList, loc) =>
         let
-          val env = SingletonTyEnv2.bindVars (env, map #boundVar recbindList)
+          val env = SingletonTyEnv2.bindVars (env, map #var recbindList)
           val recbindList =
-              map (fn {boundVar, boundExp} =>
-                      {boundVar = boundVar,
-                       boundExp = compileExp env comp boundExp})
+              map (fn {var, exp} =>
+                      {boundVar = var,
+                       boundExp = compileExp env comp exp})
                   recbindList
         in
           (env, [B.BCVALREC {recbindList = recbindList, loc = loc}])
         end
-    | L.TLEXPORTVAR {weak, exVarInfo, exp, loc} =>
+    | R.RCEXPORTVAR {weak, var, exp} =>
       (env, [B.BCEXPORTVAR {weak = weak,
-                            exVarInfo = exVarInfo,
+                            exVarInfo = var,
                             exp = compileExp env comp exp,
-                            loc = loc}])
-    | L.TLEXTERNVAR (exVarInfo, provider, loc) =>
+                            loc = Loc.noloc}])
+    | R.RCEXTERNVAR (exVarInfo, provider) =>
       (env, [B.BCEXTERNVAR {exVarInfo = exVarInfo, provider = provider,
-                            loc = loc}])
+                            loc = Loc.noloc}])
 
   fun compileDeclList env comp (decl::decls) =
       let
         val (env, decls1) = compileDecl env comp decl
             handle e as Bug.Bug _ => 
                    (print "compileDecl\n";
-                    print (Bug.prettyPrint (L.format_tldecl decl));
+                    print (Bug.prettyPrint (R.format_rcdecl decl));
                     print "\n";
                     raise e)
                             

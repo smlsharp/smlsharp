@@ -22,6 +22,10 @@ struct
         (case dynamicKind of
            SOME {record, ...} => record
          | NONE => #record D.topKind)
+      | T.EXISTty (_, T.KIND {dynamicKind, ...}) =>
+        (case dynamicKind of
+           SOME {record, ...} => record
+         | NONE => #record D.topKind)
       | T.FUNMty _ => #record D.topKind
       | T.CONSTRUCTty {tyCon = {dtyKind, ...}, args} => #record D.topKind
         (*

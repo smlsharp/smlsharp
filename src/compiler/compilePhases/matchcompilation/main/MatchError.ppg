@@ -7,7 +7,6 @@ structure MatchError =
 struct
 local
   structure TC = TypedCalc
-  structure RC = RecordCalc
   (* structure BF = SMLFormat.BasicFormatters *)
   structure A = AbsynConst
   structure MD = MatchData
@@ -53,58 +52,59 @@ in
   val matchBothMessage = "match redundant and nonexhaustive"
 
   fun raiseBindFailExp resultTy loc = 
-      RC.RCRAISE
-        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN BT.BindExExn,
-                               instTyList=nil, 
+      TC.TPRAISE
+        {exp=TC.TPEXNCONSTRUCT{exn=TC.EXEXN BT.BindExExn,
                                argExpOpt=NONE, 
                                loc=loc}, 
          ty=resultTy,
          loc=loc}
 
   fun raiseMatchFailExp resultTy loc = 
-      RC.RCRAISE
-        {exp=RC.RCEXNCONSTRUCT{exn=RC.EXEXN BT.MatchExExn,
-                               instTyList=nil, 
+      TC.TPRAISE
+        {exp=TC.TPEXNCONSTRUCT{exn=TC.EXEXN BT.MatchExExn,
                                argExpOpt=NONE, 
                                loc=loc}, 
          ty=resultTy, 
          loc=loc}
 
   fun handleFail v resultTy loc =
-      RC.RCRAISE {exp=RC.RCVAR v, ty=resultTy, loc=loc}
+      TC.TPRAISE {exp=TC.TPVAR v, ty=resultTy, loc=loc}
 
   fun raiseMatchCompBugExp resultTy loc =
-      RC.RCSEQ
-        {expList =
-           [RC.RCAPPM
-              {funExp =
-                 RC.RCFFI
-                   (RC.RCFFIIMPORT
-                      {funExp = RC.RCFFIEXTERN "sml_matchcomp_bug",
-                       ffiTy = TC.FFIFUNTY
-                                 (SOME {isPure = false,
-                                        fast = true,
-                                        unsafe = false,
-                                        causeGC = false,
-                                        callingConvention = NONE},
-                                  nil, NONE, nil, loc)},
-                    T.FUNMty ([BT.unitTy], BT.unitTy),
-                    loc),
-               funTy = T.FUNMty ([BT.unitTy], BT.unitTy),
-               argExpList = [RC.RCCONSTANT {const = RC.CONST A.UNITCONST,
-                                            ty = BT.unitTy,
-                                            loc = loc}],
-               loc = loc},
-            RC.RCRAISE
-              {exp = RC.RCEXNCONSTRUCT
-                       {exn = RC.EXEXN BT.MatchExExn,
-                        instTyList = nil, 
-                        argExpOpt = NONE,
-                        loc = loc},
-               ty = resultTy,
-               loc = loc}],
-         expTyList = [BT.unitTy, resultTy],
-         loc = loc}
+      let
+        val attributes = {isPure = false, fast = true, unsafe = false,
+                          causeGC = false, callingConvention = NONE}
+      in
+        TC.TPLET
+          {decls =
+             [TC.TPVAL
+                ((TypedCalcUtils.newTCVarInfo loc BT.unitTy,
+                  TC.TPFOREIGNAPPLY
+                    {funExp =
+                       TC.TPFOREIGNSYMBOL
+                         {name = "sml_matchcomp_bug",
+                          ty = T.BACKENDty
+                                 (T.FOREIGNFUNPTRty
+                                    {attributes = attributes,
+                                     argTyList = nil,
+                                     varArgTyList = NONE,
+                                     resultTy = NONE}),
+                          loc = loc},
+                     argExpList = nil,
+                     attributes = attributes,
+                     resultTy = NONE,
+                     loc = loc}),
+                 loc)],
+           body =
+             TC.TPRAISE
+               {exp = TC.TPEXNCONSTRUCT
+                        {exn = TC.EXEXN BT.MatchExExn,
+                         argExpOpt = NONE,
+                         loc = loc},
+                ty = resultTy,
+                loc = loc},
+           loc = loc}
+      end
 
   datatype flagKind = Redundant | NotExhaustive
   local

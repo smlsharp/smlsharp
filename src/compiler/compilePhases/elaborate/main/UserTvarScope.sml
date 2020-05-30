@@ -41,6 +41,14 @@ struct
         tvs1
         tvs2
 
+  fun setminus (tvs1:tvset, tvs2) =
+      List.filter
+        (fn (elem as (tv, loc)) =>
+            not (List.exists
+                   (fn ({symbol=s1,...},_) => eqSymbol (s1, #symbol tv))
+                   tvs2))
+        tvs1
+
   fun toTvarList (tvset:tvset) =
       map (fn (tv, _) => (tv, A.UNIV (nil,noloc))) (rev tvset)
 
@@ -158,8 +166,8 @@ struct
   fun tyvarsMatch btvEnv (pats, exp) =
       union (tyvarsList (tyvarsPat btvEnv) pats, tyvarsExp btvEnv exp)
 
-  and tyvarsMatch1 btvEnv (pat, exp) =
-      union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
+  and tyvarsDynMatch btvEnv (tyvars, pat, exp) =
+      setminus (union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp), tyvars)
 
   and tyvarsBind btvEnv (pat, exp) =
       union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
@@ -176,9 +184,9 @@ struct
         union (tyvarsExp btvEnv exp, tyvarsTy btvEnv ty)
       | P.PLAPPM (exp, exps, loc) =>
         union (tyvarsExp btvEnv exp, tyvarsList (tyvarsExp btvEnv) exps)
-      | P.PLLET (decls, exps, loc) =>
+      | P.PLLET (decls, exp, loc) =>
         union (tyvarsList (tyvarsDecl btvEnv) decls,
-               tyvarsList (tyvarsExp btvEnv) exps)
+               tyvarsExp btvEnv exp)
       | P.PLRECORD (rows, loc) =>
         (* we don't sort rows here *)
         tyvarsList (tyvarsRow btvEnv) rows
@@ -216,7 +224,7 @@ struct
       | P.PLDYNAMICTOP (ty, loc) => tyvarsTy btvEnv ty
       | P.PLDYNAMICCASE (exp, rules, loc) =>
         union (tyvarsExp btvEnv exp,
-               tyvarsList (tyvarsMatch1 btvEnv) rules)
+               tyvarsList (tyvarsDynMatch btvEnv) rules)
       | P.PLREIFYTY (ty, loc) =>
         tyvarsTy btvEnv ty
 
@@ -294,8 +302,8 @@ struct
   and decideMatch btvEnv (pat:P.plpat list, exp) =
       (pat, decideExp btvEnv exp)
 
-  and decideMatch1 btvEnv (pat:P.plpat, exp) =
-      (pat, decideExp btvEnv exp)
+  and decideDynMatch btvEnv (tyvars, pat:P.plpat, exp) =
+      (tyvars, pat, decideExp btvEnv exp)
 
   and decideExp btvEnv exp =
       case exp of
@@ -306,8 +314,8 @@ struct
         P.PLTYPED (decideExp btvEnv exp, ty, loc)
       | P.PLAPPM (exp, exps, loc) =>
         P.PLAPPM (decideExp btvEnv exp, map (decideExp btvEnv) exps, loc)
-      | P.PLLET (decls, exps, loc) =>
-        P.PLLET (map (decideDecl btvEnv) decls, map (decideExp btvEnv) exps,
+      | P.PLLET (decls, exp, loc) =>
+        P.PLLET (map (decideDecl btvEnv) decls, decideExp btvEnv exp,
                  loc)
       | P.PLRECORD (rows, loc) =>
         P.PLRECORD (map (decideRow btvEnv) rows, loc)
@@ -335,8 +343,8 @@ struct
       | P.PLDYNAMICVIEW (exp, ty, loc) => P.PLDYNAMICVIEW (decideExp btvEnv exp, ty, loc)
       | P.PLDYNAMICCASE (exp, matches, loc) =>
         P.PLDYNAMICCASE (decideExp btvEnv exp,
-                          map (decideMatch1 btvEnv) matches,
-                          loc)
+                         map (decideDynMatch btvEnv) matches,
+                         loc)
       | P.PLRECORD_SELECTOR _ => exp
       | P.PLSELECT (label, exp, loc) =>
         P.PLSELECT (label, decideExp btvEnv exp, loc)

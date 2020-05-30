@@ -39,11 +39,6 @@ in
       | ICOPRIM _ => icexp
       | ICTYPED (icexp,ty,loc) =>
         ICTYPED (optimizeExp icexp, ty, loc)
-      | ICSIGTYPED {icexp,ty,loc,revealKey} =>
-        ICSIGTYPED {icexp=optimizeExp icexp,
-                    ty=ty,
-                    revealKey=revealKey,
-                    loc=loc}
       | ICINTERFACETYPED {icexp,ty,loc} =>
         ICINTERFACETYPED {icexp=optimizeExp icexp,
                           ty=ty,
@@ -56,13 +51,13 @@ in
 	ICAPPM_NOUNIFY (optimizeExp funExp,
 		        map optimizeExp argExpList,
 		        loc)
-      | ICLET (localDeclList, mainExpList, loc) =>
+      | ICLET (localDeclList, mainExp, loc) =>
         let
           val newLocalDeclList = 
 	      optimizeDeclList localDeclList
         in
           ICLET (newLocalDeclList,
-                 map optimizeExp mainExpList,
+                 optimizeExp mainExp,
                  loc)
         end
       | ICTYCAST (tycastList, icexp, loc) =>
@@ -106,8 +101,8 @@ in
         ICDYNAMICCASE
             (optimizeExp selector,
              map
-		 (fn ({arg:icpat, body:icexp}) =>
-                     {arg=arg, body=optimizeExp body})
+		 (fn ({tyvars, arg:icpat, body:icexp}) =>
+                     {tyvars=tyvars, arg=arg, body=optimizeExp body})
 		 matchList,
              loc)
       | ICRECORD_UPDATE (icexp, elementList, loc) =>
@@ -154,6 +149,17 @@ in
 	[ICVAL (tvarList, (map (fn (icpat,icexp) => 
 				   (icpat, optimizeExp icexp))) declList,
 		loc)]
+      | ICVAL_OPAQUE_SIG {var, exp, ty, revealKey, loc} =>  
+        [ICVAL_OPAQUE_SIG {var = var, 
+                           exp = optimizeExp exp, 
+                           ty = ty, 
+                           revealKey = revealKey, 
+                           loc = loc}]
+      | ICVAL_TRANS_SIG {var, exp, ty, loc} => 
+        [ICVAL_TRANS_SIG {var = var, 
+                           exp = optimizeExp exp, 
+                           ty = ty, 
+                           loc = loc}]
       | ICDECFUN {guard, funbinds, loc} =>
         let
           val boundIDList = 

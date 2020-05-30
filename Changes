@@ -1,4 +1,44 @@
 -----------------------------------------------------------------------------
+SML# version 3.6.0 (released on 2020-05-29)
+
+.* SML#'s garbage collector is replaced with a novel concurrent and
+  parallel one.  In the new garbage collection algorithm, no thread is
+  dedicated for garbage collection.  Instead, each worker thread (Pthread)
+  sometime acts as an collector running concurrently with other threads.
+  This organization eliminates sequentialities due to memory management
+  and achieves parallelism competitive with other parallel languages.
+  Our benchmark programs (benchmark/benchmarks_parallel) shows good
+  scalability: x50.7, x52.7, x44.6, and x37.0 speedup of the fib,
+  mandelbrot, nqueens, and cilksort benchmark with 64 CPU cores of
+  AMD EPYC 7501 2.0GHz.
+
+* The SQL integration is refined so that SQL is integrated with SML#
+  more seamlessly.  One of major changes is the new semantics of SQL
+  value expressions.  Each subexpression that can be evaluated by SML#
+  in an SQL query is evaluated by SML# and its value is automatically
+  embedded in the SQL query.  SQL.Op.toSQL is no longer needed to embed
+  a value.  For example, the function
+
+    fn x => _sql db => select #e.salary from #db.employee where #e.age >= x
+
+  now takes an integer (int), not an SQL expression fragment of type int
+  ((int, 'w) exp).  Another change is the SQLite3 in-memory database
+  support.  SQL.connectAndCreate allows us to use an in-memory database
+  as a record storage.  For example:
+
+    val d = _sqlserver SQL.sqlite3 ":memory:" : {foo:{a:int, b:string} list}
+    val c = SQL.connectAndCreate d
+    val l = List.tabulate (100000, fn x => {a = x, b = Int.toString x})
+    val _ = (_sql db => insert into #db.foo (a, b) values l) c
+    val r = (_sql db => select #foo.b from #db.foo limit 10) c
+    val a = SQL.fetchAll r
+    val _ = SQL.closeConn c
+
+* SML# now supports LLVM 10.
+
+* A lot of bugs has been fixed.
+
+-----------------------------------------------------------------------------
 SML# version 3.5.0 (released on 2019-12-24)
 
 New features:

@@ -18,18 +18,21 @@ local
   val emptyBtvMap = BoundTypeVarID.Map.empty
   type varMap = VarID.id VarID.Map.map
   val emptyVarMap = VarID.Map.empty
-  type context = {varMap:varMap, btvMap:btvMap}
-  val emptyContext = {varMap=emptyVarMap, btvMap=emptyBtvMap}
+  type catchMap = FunLocalLabel.id FunLocalLabel.Map.map
+  val emptyCatchMap = FunLocalLabel.Map.empty
+  type context = {varMap:varMap, btvMap:btvMap, catchMap:catchMap}
+  val emptyContext = {varMap=emptyVarMap, btvMap=emptyBtvMap,
+                      catchMap=emptyCatchMap}
 
   fun copyTy (context:context) (ty:ty) = TyAlphaRename.copyTy (#btvMap context) ty
   fun copyConstraintList (context:context) constraints =
       map (TyAlphaRename.copyConstraint (#btvMap context)) constraints
-  fun newBtvEnv ({varMap, btvMap}:context) (btvEnv:btvEnv) = 
+  fun newBtvEnv ({varMap, btvMap, catchMap}:context) (btvEnv:btvEnv) =
       let
         val (btvMap, btvEnv) = 
             TyAlphaRename.newBtvEnv btvMap btvEnv
       in
-        ({btvMap=btvMap, varMap=varMap}, btvEnv)
+        ({btvMap=btvMap, varMap=varMap, catchMap=catchMap}, btvEnv)
       end
   fun copyExVarInfo context {path:longsymbol, ty:ty} =
       {path=path, ty=copyTy context ty}
@@ -66,9 +69,21 @@ local
 
   val emptyVarIdMap = VarID.Map.empty : VarID.id VarID.Map.map
   val varIdMapRef = ref emptyVarIdMap : (VarID.id VarID.Map.map) ref
+  val labelSetRef = ref FunLocalLabel.Set.empty
+  fun newLabel ({varMap, btvMap, catchMap}:context) id =
+      let
+        val newId =
+            if FunLocalLabel.Set.member (!labelSetRef, id)
+            then FunLocalLabel.generate nil
+            else (labelSetRef := FunLocalLabel.Set.add (!labelSetRef, id); id)
+      in
+        ({varMap = varMap, btvMap = btvMap,
+          catchMap = FunLocalLabel.Map.insert (catchMap, id, newId)},
+         newId)
+      end
   fun addSubst (oldId, newId) = varIdMapRef := VarID.Map.insert(!varIdMapRef, oldId, newId)
   (* alpha-rename terms *)
-  fun newId ({varMap, btvMap}:context) id =
+  fun newId ({varMap, btvMap, catchMap}:context) id =
       let
         val newId = VarID.generate()
         val _ = addSubst (id, newId)
@@ -77,7 +92,7 @@ local
               (fn _ => raise DuplicateVar)
               (varMap, id, newId)
       in
-        ({varMap=varMap, btvMap=btvMap}, newId)
+        ({varMap=varMap, btvMap=btvMap, catchMap=catchMap}, newId)
       end
   fun newVar (context:context) ({path, id, ty, opaque}:varInfo) =
       let
@@ -116,7 +131,7 @@ local
            patTy} =>
         let
           val conPat = copyConInfo context conPat
-          val instTyList = map (copyTy context) instTyList
+          val instTyList = Option.map (map (copyTy context)) instTyList
           val patTy = copyTy context patTy
           val (context, argPatOpt) =
               case argPatOpt of
@@ -141,9 +156,8 @@ local
       | TC.TPPATERROR (ty, loc) =>
         (context, TC.TPPATERROR (copyTy context ty, loc))
       | TC.TPPATEXNCONSTRUCT
-          {argPatOpt, exnPat:TC.exnCon, instTyList, loc, patTy} =>
+          {argPatOpt, exnPat:TC.exnCon, loc, patTy} =>
         let
-          val instTyList = map (copyTy context) instTyList
           val patTy = copyTy context patTy
           val exnPat = copyExnCon context exnPat
           val (context, argPatOpt) =
@@ -160,7 +174,6 @@ local
            TC.TPPATEXNCONSTRUCT
              {argPatOpt = argPatOpt,
               exnPat = exnPat,
-              instTyList = instTyList,
               loc = loc,
               patTy = patTy
              }
@@ -215,7 +228,8 @@ local
       in
         (context, List.rev patsRev)
       end
-  fun evalVar (context as {varMap, btvMap}:context) ({path, id, ty, opaque}:varInfo) =
+  fun evalVar (context as {varMap, btvMap, catchMap}:context)
+              ({path, id, ty, opaque}:varInfo) =
       let
         val ty = copyTy context ty
         val id =
@@ -253,16 +267,82 @@ local
              ruleBodyTy = copyT ruleBodyTy,
              ruleList = map (copyRule context) ruleList
             }
+        | TC.TPSWITCH {exp, expTy, ruleList, ruleBodyTy, defaultExp, loc} =>
+          let
+            fun newVarOpt context NONE = (context, NONE)
+              | newVarOpt context (SOME var) =
+                let
+                  val (context, var) = newVar context var
+                in
+                  (context, SOME var)
+                end
+            fun copyConst context {const, ty, body} =
+                {const = const,
+                 ty = copyTy context ty,
+                 body = copyExp context body}
+            fun copyCon context {con, instTyList, argVarOpt, body} =
+                let
+                  val (context', argVarOpt) = newVarOpt context argVarOpt
+                in
+                  {con = copyConInfo context con,
+                   instTyList = Option.map (map (copyTy context)) instTyList,
+                   argVarOpt = argVarOpt,
+                   body = copyExp context' body}
+                end
+            fun copyExn context {exn, argVarOpt, body} =
+                let
+                  val (context', argVarOpt) = newVarOpt context argVarOpt
+                in
+                  {exn = copyExnCon context exn,
+                   argVarOpt = argVarOpt,
+                   body = copyExp context' body}
+                end
+            fun copyRules context (TC.CONSTCASE rules) =
+                TC.CONSTCASE (map (copyConst context) rules)
+              | copyRules context (TC.CONCASE rules) =
+                TC.CONCASE (map (copyCon context) rules)
+              | copyRules context (TC.EXNCASE rules) =
+                TC.EXNCASE (map (copyExn context) rules)
+          in
+            TC.TPSWITCH
+              {exp = copy exp,
+               expTy = copyT expTy,
+               ruleList = copyRules context ruleList,
+               ruleBodyTy = copyT ruleBodyTy,
+               defaultExp = copy defaultExp,
+               loc = loc}
+          end
+        | TC.TPCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+          let
+            val (context1, catchLabel) = newLabel context catchLabel
+            val (context2, argVarList) = newVars context argVarList
+          in
+            TC.TPCATCH
+              {catchLabel = catchLabel,
+               tryExp = copyExp context1 tryExp,
+               argVarList = argVarList,
+               catchExp = copyExp context2 catchExp,
+               resultTy = copyT resultTy,
+               loc = loc}
+          end
+        | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+          TC.TPTHROW
+            {catchLabel =
+               case FunLocalLabel.Map.find (#catchMap context, catchLabel) of
+                 SOME id => id
+               | NONE => raise Bug.Bug "TPTHROW",
+             argExpList = map copy argExpList,
+             resultTy = copyT resultTy,
+             loc = loc}
         | TC.TPCAST ((tpexp, expTy), ty, loc) =>
           TC.TPCAST ((copy tpexp, copyT expTy), copyT ty, loc)
         | TC.TPCONSTANT {const, loc, ty} =>
           TC.TPCONSTANT {const=const, loc = loc, ty=copyT ty}
-        | TC.TPDATACONSTRUCT {argExpOpt, argTyOpt, con:T.conInfo, instTyList, loc} =>
+        | TC.TPDATACONSTRUCT {argExpOpt, con:T.conInfo, instTyList, loc} =>
           TC.TPDATACONSTRUCT
             {argExpOpt = Option.map copy argExpOpt,
-             argTyOpt = Option.map copyT argTyOpt,
              con = copyConInfo context con,
-             instTyList = map copyT instTyList,
+             instTyList = Option.map (map copyT) instTyList,
              loc = loc
             }
         | TC.TPDYNAMICCASE {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} =>
@@ -275,19 +355,24 @@ local
              ruleBodyTy = copyT ruleBodyTy,
              loc = loc
             }
+        | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+          TC.TPDYNAMICEXISTTAPP
+            {existInstMap = copy exp,
+             exp = copy exp,
+             expTy = copyT expTy,
+             instTyList = map copyT instTyList,
+             loc = loc}
         | TC.TPERROR => exp
-        | TC.TPEXNCONSTRUCT {argExpOpt, argTyOpt, exn:TC.exnCon, instTyList, loc} =>
+        | TC.TPEXNCONSTRUCT {argExpOpt, exn:TC.exnCon, loc} =>
           TC.TPEXNCONSTRUCT
             {argExpOpt = Option.map copy argExpOpt,
-             argTyOpt = Option.map copyT argTyOpt,
              exn = copyExnCon context exn,
-             instTyList = map copyT instTyList,
              loc = loc
             }
-        | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} =>
-          TC.TPEXN_CONSTRUCTOR {exnInfo=copyExnInfo context exnInfo , loc=loc}
-        | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
-          TC.TPEXEXN_CONSTRUCTOR
+        | TC.TPEXNTAG {exnInfo, loc} =>
+          TC.TPEXNTAG {exnInfo=copyExnInfo context exnInfo , loc=loc}
+        | TC.TPEXEXNTAG {exExnInfo, loc} =>
+          TC.TPEXEXNTAG
             {exExnInfo=copyExExnInfo context exExnInfo,
              loc= loc}
         | TC.TPEXVAR {path, ty} =>
@@ -306,10 +391,33 @@ local
              funExp = funExp,
              stubTy = copyT stubTy
             }
+        | TC.TPFOREIGNSYMBOL {name, ty, loc} =>
+          TC.TPFOREIGNSYMBOL {name = name, ty = copyT ty, loc = loc}
+        | TC.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+          TC.TPFOREIGNAPPLY
+            {funExp = copy funExp,
+             argExpList = map copy argExpList,
+             attributes = attributes,
+             resultTy = Option.map copyT resultTy,
+             loc = loc}
+        | TC.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+          let
+            val resultTy = Option.map copyT resultTy
+            val (context, argVarList) = newVars context argVarList
+            val bodyExp = copyExp context bodyExp
+          in
+            TC.TPCALLBACKFN
+              {attributes = attributes,
+               argVarList = argVarList,
+               bodyExp = bodyExp,
+               resultTy = resultTy,
+               loc = loc}
+          end
         | TC.TPFNM {argVarList, bodyExp, bodyTy, loc} =>
           let
             val bodyTy = copyT bodyTy
             val (context, argVarList) = newVars context argVarList
+            val context = context # {catchMap = FunLocalLabel.Map.empty}
             val bodyExp = copyExp context bodyExp
           in
             TC.TPFNM
@@ -330,14 +438,13 @@ local
                resultTy = copyT resultTy,
                loc=loc}
           end
-        | TC.TPLET {body:TC.tpexp list, decls, loc, tys} =>
+        | TC.TPLET {body, decls, loc} =>
           let
             val (context, decls) = copyDeclList context decls
           in
-            TC.TPLET {body=map (copyExp context) body,
+            TC.TPLET {body=copyExp context body,
                       decls=decls,
-                      loc=loc,
-                      tys=map copyT tys}
+                      loc=loc}
           end
         | TC.TPMODIFY {elementExp, elementTy, label, loc, recordExp, recordTy} =>
           TC.TPMODIFY
@@ -360,10 +467,9 @@ local
           in
             TC.TPMONOLET {binds=binds, bodyExp=copyExp context bodyExp, loc=loc}
           end
-        | TC.TPOPRIMAPPLY {argExp, argTy, instTyList, loc, oprimOp:T.oprimInfo} =>
+        | TC.TPOPRIMAPPLY {argExp, instTyList, loc, oprimOp:T.oprimInfo} =>
           TC.TPOPRIMAPPLY
             {argExp = copy argExp,
-             argTy = copyT argTy,
              instTyList = map copyT instTyList,
              loc = loc,
              oprimOp = copyOprimInfo context oprimOp
@@ -388,32 +494,10 @@ local
                 raise DuplicateBtv)
           )
 
-        | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, constraints, loc} =>
-          (
-          let
-            val (context, btvEnv) = newBtvEnv context btvEnv
-            val (context, argVarList) = newVars context argVarList
-          in
-            TC.TPPOLYFNM
-              {argVarList=argVarList,
-               bodyExp=copyExp context bodyExp,
-               bodyTy=copyTy context bodyTy,
-               btvEnv=btvEnv,
-               constraints=copyConstraintList context constraints,
-               loc=loc
-              }
-          end
-          handle DuplicateBtv =>
-                 (P.print "DuplicateBtv in TPPOLYFNM\n";
-                  P.printTpexp exp;
-                  P.print "\n";
-                raise DuplicateBtv)
-          )
-        | TC.TPPRIMAPPLY {argExp, argTy, instTyList, loc, primOp:T.primInfo} =>
+        | TC.TPPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
           TC.TPPRIMAPPLY
             {argExp = copy argExp,
-             argTy = copyT argTy,
-             instTyList = map copyT instTyList,
+             instTyList = Option.map (map copyT) instTyList,
              loc = loc,
              primOp = copyPrimInfo context primOp
             }
@@ -431,12 +515,6 @@ local
              label=label,
              loc=loc,
              resultTy=copyT resultTy
-            }
-        | TC.TPSEQ {expList, expTyList, loc} =>
-          TC.TPSEQ
-            {expList = map copy expList,
-             expTyList = map copyT expTyList,
-             loc = loc
             }
         | TC.TPSIZEOF (ty, loc) =>
           TC.TPSIZEOF (copyT ty, loc)
@@ -502,12 +580,10 @@ local
       end
   and copyDecl context tpdecl =
       case tpdecl of
-        TC.TPEXD (exbinds:{exnInfo:Types.exnInfo, loc:Loc.loc} list, loc) =>
+        TC.TPEXD (exnInfo, loc) =>
         (context,
          TC.TPEXD
-           (map (fn {exnInfo, loc} =>
-                    {exnInfo=copyExnInfo context exnInfo, loc=loc})
-                exbinds,
+           (copyExnInfo context exnInfo,
             loc)
         )
       | TC.TPEXNTAGD ({exnInfo, varInfo}, loc) =>
@@ -520,12 +596,11 @@ local
         (context,
          TC.TPEXPORTEXN (copyExnInfo context exnInfo)
         )
-      | TC.TPEXPORTVAR varInfo =>
+      | TC.TPEXPORTVAR {var={path, ty}, exp} =>
         (context,
-         TC.TPEXPORTVAR (evalVar context varInfo)
+         TC.TPEXPORTVAR {var = {path = path, ty = copyTy context ty},
+                         exp = copyExp context exp}
         )
-      | TC.TPEXPORTRECFUNVAR _ =>
-        raise bug "TPEXPORTRECFUNVAR to AlphaRename"
       | TC.TPEXTERNEXN ({path, ty}, provider) =>
         (context,
          TC.TPEXTERNEXN ({path=path, ty=copyTy context ty}, provider)
@@ -538,33 +613,31 @@ local
         (context,
          TC.TPEXTERNVAR ({path=path, ty=copyTy context ty}, provider)
         )
-      | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
+      | TC.TPVAL (bind:(T.varInfo * TC.tpexp), loc) =>
         let
-          val (context, binds) = copyBinds context binds
+          val (context, bind) = copyBind (context, context) bind
         in
-          (context, TC.TPVAL (binds, loc))
+          (context, TC.TPVAL (bind, loc))
         end
       | TC.TPVALPOLYREC
           {btvEnv,
            constraints,
-           recbinds:{exp:TC.tpexp, expTy:ty, var:T.varInfo} list,
+           recbinds:{exp:TC.tpexp, var:T.varInfo} list,
            loc} =>
         (
         let
-          val (newContext as {varMap, btvMap}, btvEnv) = newBtvEnv context btvEnv
+          val (newContext, btvEnv) = newBtvEnv context btvEnv
           val vars = map #var recbinds
-          val (newContext as {varMap, btvMap}, vars) = newVars newContext vars
+          val (newContext as {varMap, btvMap, catchMap}, vars) = newVars newContext vars
           val varRecbindList = ListPair.zip (vars, recbinds)
           val recbinds =
               map
-                (fn (var, {exp, expTy, var=_}) =>
-                    {var=var,
-                     expTy=copyTy newContext expTy,
-                     exp=copyExp newContext exp}
+                (fn (var, {exp, var=_}) =>
+                    {var=var, exp=copyExp newContext exp}
                 )
                 varRecbindList
         in
-          ({varMap=varMap, btvMap = #btvMap context},
+          ({varMap=varMap, btvMap = #btvMap context, catchMap = catchMap},
            TC.TPVALPOLYREC
              {btvEnv = btvEnv,
               constraints = copyConstraintList context constraints,
@@ -577,17 +650,15 @@ local
                   P.print "\n";
                 raise bug "TPVALPOLYREC")
         )
-      | TC.TPVALREC (recbinds:{exp:TC.tpexp, expTy:ty, var:T.varInfo} list,loc) =>
+      | TC.TPVALREC (recbinds:{exp:TC.tpexp, var:T.varInfo} list,loc) =>
         let
           val vars = map #var recbinds
           val (context, vars) = newVars context vars
           val varRecbindList = ListPair.zip (vars, recbinds)
           val recbinds =
               map
-                (fn (var, {exp, expTy, var=_}) =>
-                    {var=var,
-                     expTy=copyTy context expTy,
-                     exp=copyExp context exp}
+                (fn (var, {exp, var=_}) =>
+                    {var=var, exp=copyExp context exp}
                 )
                 varRecbindList
         in
@@ -636,6 +707,7 @@ in
    fn exp => 
       let
         val _ = varIdMapRef := emptyVarIdMap
+        val _ = labelSetRef := FunLocalLabel.Set.empty
         val exp = copyExp emptyContext exp
       in
         (!varIdMapRef, exp)

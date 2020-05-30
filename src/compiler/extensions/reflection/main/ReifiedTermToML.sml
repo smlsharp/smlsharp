@@ -53,6 +53,7 @@ struct
         | RTy.CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => layoutTag layout
         | RTy.DATATYPEty {longsymbol, id, args, layout, size} => layoutTag layout
         | RTy.DUMMYty {boxed, size} => if boxed then BOXED else UNBOXED
+        | RTy.EXISTty {boxed, size, id} => if boxed then BOXED else UNBOXED
         | RTy.DYNAMICty _ => BOXED
         | RTy.ERRORty => raise Undetermined
         | RTy.EXNTAGty => BOXED

@@ -68,6 +68,20 @@ struct
   fun timestampValue x = SOME (SMLSharp_SQL_TimeStamp.fromString x)
   fun numericValue x = SMLSharp_SQL_Numeric.fromString x
 
+  fun columnTypeName ty =
+      case ty of
+        SMLSharp_SQL_BackendTy.INT => "INT"
+      | SMLSharp_SQL_BackendTy.INTINF => ""
+      | SMLSharp_SQL_BackendTy.WORD => ""
+      | SMLSharp_SQL_BackendTy.CHAR => ""
+      | SMLSharp_SQL_BackendTy.STRING => "TEXT"
+      | SMLSharp_SQL_BackendTy.REAL => "FLOAT"
+      | SMLSharp_SQL_BackendTy.REAL32 => "DOUBLE PRECISION"
+      | SMLSharp_SQL_BackendTy.BOOL => ""
+      | SMLSharp_SQL_BackendTy.TIMESTAMP => ""
+      | SMLSharp_SQL_BackendTy.NUMERIC => "NUMERIC"
+      | SMLSharp_SQL_BackendTy.UNSUPPORTED s => s
+
   local
 
     fun valof (SOME x) = x
@@ -206,7 +220,7 @@ struct
           val unix_socket =
               case KeyValuePair.find (pairs, "unix_socket") of
                 SOME x => raise Connect "unix_socket is not supported"
-              | NONE => SMLSharp_Builtin.Pointer.null ()
+              | NONE => SMLSharp_Builtin.Pointer.null () : unit ptr
           val flags = findInt (pairs, "flags", 0)
         in
           MySQL.mysql_real_connect

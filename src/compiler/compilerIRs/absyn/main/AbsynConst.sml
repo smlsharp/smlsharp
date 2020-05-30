@@ -10,26 +10,31 @@
 structure AbsynConst =
 struct
 
-  (*% @formatter(IntInf.int) TermFormat.format_IntInf_dec_ML *)
+  (*%
+    @formatter(intinf_int) ConstFormat.format_intInf_dec_ML
+    @formatter(intinf_word) ConstFormat.format_intInf_word_ML
+    @formatter(string_ML) ConstFormat.format_string_ML
+    @formatter(char_ML) ConstFormat.format_char_ML
+  *)
   datatype constant
     = (*%
-         @format(n) n
+         @format(n) n:intinf_int
        *)
       INT of IntInf.int
     | (*%
-         @format(n) n
+         @format(n) n:intinf_word
        *)
       WORD of IntInf.int
     | (*%
-         @format(value) "\"" value "\""
+         @format(x) x:string_ML
        *)
       STRING of string
     | (*%
-         @format(value) value
+         @format(x) x
        *)
       REAL of string
     | (*%
-         @format(value) "#\"" value "\""
+         @format(x) x:char_ML
        *)
       CHAR of char
     | (*%

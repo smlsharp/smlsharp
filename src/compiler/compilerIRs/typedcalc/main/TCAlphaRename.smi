@@ -2,6 +2,7 @@ _require local "../../../../basis.smi"
 _require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 
 _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"

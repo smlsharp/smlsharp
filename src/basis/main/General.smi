@@ -10,7 +10,7 @@ struct
   exception Size = Size
   exception Span
   exception Subscript = Subscript
-  val exnName = SMLSharp_Builtin.General.exnName
+  val exnName : exn -> string
   val exnMessage : exn -> string
   datatype order = EQUAL | GREATER | LESS
   val ! = SMLSharp_Builtin.General.!

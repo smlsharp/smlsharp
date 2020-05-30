@@ -204,6 +204,8 @@ simple/main.o: simple/main.sml simple/array2.smi simple/control.smi \
   simple/simple.smi simple/main.smi
 simple/simple.o: simple/simple.sml simple/array2.smi simple/control.smi \
   simple/simple.smi
+smlsharp/doit.o: smlsharp/doit.sml smlsharp/main.smi smlsharp/doit.smi
+smlsharp/main.o: smlsharp/main.sml smlsharp/main.smi
 smlyacc/doit.o: smlyacc/doit.sml smlyacc/main.smi smlyacc/doit.smi
 smlyacc/main.o: smlyacc/main.sml smlyacc/main.smi
 tsp/build.o: tsp/build.sml tsp/lib-base-sig.sml tsp/lib-base.smi \

@@ -11,8 +11,10 @@ struct
   (*% @formatter(Symbol.symbol) Symbol.format_symbol *)
   type symbol = Symbol.symbol
 
-  (*% @formatter(RecordLabel.label) RecordLabel.format_label *)
+  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol *)
+  type longsymbol = Symbol.longsymbol
 
+  (*% @formatter(RecordLabel.label) RecordLabel.format_label *)
   type label = RecordLabel.label
 
   (*% @formatter(Loc.loc) Loc.format_loc *)
@@ -73,11 +75,12 @@ struct
       OR
 
   (*% @formatter(option) TermFormat.formatOptionalOption
-   *  @formatter(withDefault) SmlppgUtil.formatOptWithDefault *)
+   *  @formatter(withDefault) SmlppgUtil.formatOptWithDefault
+   *  @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant *)
   datatype 'exp exp =
-      (*% @format(exp * loc) exp *)
-      EXP of 'exp * loc
-    | (*% @format(c) *)
+      (*% @format(exp * loc) "(" !N0{ "..."  exp ")" } *)
+      EXP_EMBED of 'exp * loc
+    | (*% @format(c * l) c *)
       CONST of AbsynConst.constant * loc
     | (*% @format "NULL" *)
       NULL of loc
@@ -91,10 +94,22 @@ struct
       COLUMN2 of (label * label) * loc
     | (*% @format(e q * loc) "EXISTS" "(" q(e) ")" *)
       EXISTS of 'exp query * loc
+    | (*% @format(e q * loc) "(" q(e) ")" *)
+      EXP_SUBQUERY of 'exp query * loc
     | (*% @format(op1 * e exp * Loc) op1()(exp(e)) *)
       OP1 of op1 * 'exp exp * loc
     | (*% @format(op2 * e1 exp1 * e2 exp2 * loc) op2()(exp1(e1),exp2(e2)) *)
       OP2 of op2 * 'exp exp * 'exp exp * loc
+    | (*% @format(id) id *)
+      ID of symbol
+    | (*% @format(id * loc) id *)
+      OPID of longsymbol * loc
+    | (*% @format(id) "(" id ")" *)
+      PARENID of symbol
+    | (*% @format(e exp exps * loc) N8{ 2[ exps(exp(e))(+1) ] } *)
+      APP of 'exp exp list * loc
+    | (*% @format(e exp exps * loc) "(" !N0{ exps(exp(e))("," +1) ")" } *)
+      TUPLE of 'exp exp list * loc
 
   and 'exp join =
       (*%
@@ -150,18 +165,20 @@ struct
 
   and 'exp limit =
       (*%
-       * @format({limit, offset : offset opt})
+       * @format({limit, offset : offset opt, loc})
        * limit opt(offset)(+1,)
        * @format:limit(e exp opt * loc)
        * !N0{ "limit" +d opt:withDefault(exp(e))("all") }
        * @format:offset(e exp * loc)
        * !N0{ "offset" +d exp(e) }
        *)
-      LIMIT of {limit : 'exp exp option * loc, offset : ('exp exp * loc) option}
+      LIMIT of {limit : 'exp exp option * loc,
+                offset : ('exp exp * loc) option,
+                loc : loc}
 
   and 'exp offset =
       (*%
-       * @format({offset, fetch : fetch opt})
+       * @format({offset, fetch : fetch opt, loc})
        * offset opt(fetch)(+1,)
        * @format:offset(e exp * rows * loc)
        * !N0{ "offset" +d exp(e) +d rows }
@@ -169,7 +186,8 @@ struct
        * !N0{ "fetch" +d first 2[ +1 opt(exp(e))(,+1) ] rows +d "only" }
        *)
       OFFSET of {offset : 'exp exp * string * loc,
-                 fetch : (string * 'exp exp option * string * loc) option}
+                 fetch : (string * 'exp exp option * string * loc) option,
+                 loc : loc}
 
   and 'exp limit_or_offset =
       (*% @format((e,e t) c) c(e,t(e))("limit") *)
@@ -220,13 +238,15 @@ struct
        * @format:value(e exp opt * loc) opt:default(exp(e))("default")
        *)
       INSERT_VALUES of (('exp exp option * loc) list * loc) list
+    | (*% @format(id * loc) { "values" 2[ id ] } *)
+      INSERT_VAR of longsymbol * loc
     | (*% @format(e q) q(e) *)
       INSERT_SELECT of 'exp query
 
   (*% @formatter(option) TermFormat.formatOptionalOption *)
   datatype 'exp sql =
       (*% @format(e exp) exp(e) *)
-      E of 'exp exp
+      EXP of 'exp exp
     | (*% @format(e f) f(e) *)
       QRY of 'exp query
     | (*% @format(e f) f(e) *)
@@ -284,9 +304,9 @@ struct
        *)
       SQLFN of 'pat * 'exp sql
     | (*%
-       * @format(pat * e exp)
-       * R8{ "_sql" +d pat +d "=>" 2[ +1 exp(e) ] }
+       * @format(pat * exp)
+       * R8{ "_sql" +d pat +d "=>" 2[ +1 "...(" !N0{ exp } ")" ] }
        *)
-      SQLFNEXP of 'pat * 'exp exp
+      SQLFN_EMBED of 'pat * 'exp
 
 end

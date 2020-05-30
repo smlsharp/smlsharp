@@ -142,6 +142,8 @@ struct
       : interfaceDec -> SMLFormat.FormatExpression.expression list
   val format_compile_unit
       : compile_unit -> SMLFormat.FormatExpression.expression list
+  val format_compile_unit_spliced
+      : compile_unit_spliced -> SMLFormat.FormatExpression.expression list
   val format_interface_unit
       : interface_unit -> SMLFormat.FormatExpression.expression list
   val pitopdecLoc : pitopdec -> loc

@@ -251,12 +251,10 @@ struct
            {tyvars=tyvars, symbol = symbol, conbind = map expandInDataCon conbind}
       end
 
-  type env = {fixEnv : fixity SymbolEnv.map,
-              sqlEnv : ElaborateSQL.context option}
+  type env = fixity SymbolEnv.map
 
-  fun extendFixEnv (newFixEnv, {fixEnv, sqlEnv}:env) : env =
-      {fixEnv = SymbolEnv.unionWith #1 (newFixEnv, fixEnv),
-       sqlEnv = sqlEnv}
+  fun extendFixEnv (newFixEnv, fixEnv:env) : env =
+      SymbolEnv.unionWith #1 (newFixEnv, fixEnv)
 
   (**************************************************************)
   (* utility functions for infix resolution. *)
@@ -270,7 +268,7 @@ struct
     | stronger (INFIXR n, INFIXR m) = n >= m  
     | stronger (NONFIX, _) = raise Bug.Bug "NONFIX in Elab.stronger"
     | stronger (_, NONFIX) = raise Bug.Bug "NONFIX in Elab.stronger"
-  fun findFixity ({fixEnv, ...}:env) longsymbol =
+  fun findFixity (fixEnv:env) longsymbol =
       case longsymbol of
         [symbol] =>
         (case SymbolEnv.find (fixEnv, symbol) of
@@ -278,142 +276,12 @@ struct
          | _ => NONFIX)
       | _ => NONFIX
 
-  (**
-   * operator information
-   *)
-  type 'a operator =
-       {
-         combiner : 'a * 'a -> 'a,
-         left : Loc.pos,
-         right : Loc.pos,
-         status : fixity
-       }
-
-  (*
-   translates a list of expressions or patterns into a nested application.
-
-   Occurrences of infix identifiers in it are associated with arguments of
-   its both sides, according to operator's strength of associativity.
-   To share the code between translation of expressions and of patterns,
-   this function takes some operators in parameter.
-
-   And this function also asserts that every infix identifier occurs only
-   at infix position. 
-   *)
-  fun 'a resolveInfix
-         {makeApp, makeUserOp, elab, findFixity, getLongsymbol}
-         env
-         elist =
-      let
-        (*  assert infix id does not occur at the first position or at the
-         * last position in the list. *)
-        (* ToDo : getLongsymbol and findFixity should be merged ?
-         * Both operates on ID term (EXPID/PATID). *)
-        val (first, last) = (hd elist, List.last elist)
-        val validFirst = 
-            case findFixity env first of
-              NONFIX => true
-            | _ => let val longsymbol = getLongsymbol first
-                   in enqueueError (Symbol.longsymbolToLoc longsymbol, 
-                                    E.BeginWithInfixID longsymbol);
-                      false
-                   end
-        val validLast =
-            case elist of
-              [_] => true (* first and last is the same element. *)
-            | _ =>
-              case findFixity env last of
-                NONFIX => true
-              | _ => let val longsymbol = getLongsymbol last
-                     in enqueueError (Symbol.longsymbolToLoc longsymbol, 
-                                      E.EndWithInfixID longsymbol); 
-                        false
-                     end
-
-        fun getLastArg x =
-            case findFixity env x of
-              NONFIX => elab env x
-            | _ => 
-              let val longsymbol = getLongsymbol x
-              in 
-                enqueueError (Symbol.longsymbolToLoc longsymbol, E.EndWithInfixID longsymbol); 
-                 elab env x
-              end
-
-        fun getNextArg x =
-            case findFixity env x of
-              NONFIX => elab env x
-            | _ => 
-              let val longsymbol = getLongsymbol x
-              in 
-                enqueueError (Symbol.longsymbolToLoc longsymbol, E.ArgWithInfixID longsymbol); 
-                 elab env x
-              end
-
-        fun errorCheck (INFIX n, INFIXR m) = n = m
-          | errorCheck (INFIXR n, INFIX m) = n = m
-          | errorCheck (_, _) = false
-
-        (* An infix ID used may not be a data constructor.
-         * We do not reject at this point, since it will be rejected by 
-         * the type checker later. 
-         *)
-        fun resolve [x] nil nil = x
-          | resolve (h1 :: h2 :: args) ((op1 : 'a operator) :: ops) nil = 
-            resolve (#combiner op1 (h2, h1) :: args) ops nil
-          | resolve (h1 :: h2 :: args) (op1 :: ops) [lexp] = 
-            resolve
-              (makeApp (h1, getLastArg lexp) :: h2 :: args) (op1 :: ops) nil
-          | resolve (h1 :: h2 :: args) (op1 :: ops) (lexp :: next :: tail) = 
-            (case findFixity env lexp of
-               NONFIX =>
-               resolve
-                 (makeApp (h1, elab env lexp) :: h2 :: args)
-                 (op1 :: ops)
-                 (next::tail)
-             | x =>
-              (if errorCheck (x, #status op1)
-                then
-                  let
-                    val longsymbol = getLongsymbol lexp
-                  in
-                    enqueueError (Symbol.longsymbolToLoc longsymbol, 
-                                  E.InvalidOpAssociativity longsymbol)
-                  end
-                else ();
-                if stronger(x, #status op1)
-                then
-                  resolve
-                     (getNextArg next :: h1 :: h2 :: args)
-                     (makeUserOp (elab env lexp) x :: op1 :: ops)
-                     tail
-                else
-                  resolve
-                      (#combiner op1 (h2, h1) :: args) ops (lexp :: next :: tail))
-            )
-          | resolve (h1 :: args) nil (lexp :: next :: tail) = 
-            (case findFixity env lexp of
-               NONFIX =>
-               resolve (makeApp (h1, getLastArg lexp) :: args) nil (next::tail)
-             | x =>
-               resolve
-                 (getNextArg next :: h1 :: args)
-                 [makeUserOp (elab env lexp) x]
-                 tail
-            )
-          | resolve (h1 :: args) nil [lexp] = 
-               resolve (makeApp (h1, getLastArg lexp) :: args) nil nil
-          | resolve _ _ _ = raise Bug.Bug "Elab.resolveInfix"
-      in
-        if validFirst andalso validLast
-        then
-          resolve [elab env (hd elist)] nil (tl elist)
-        else
-          (* elist contains invalid infix occurrence, which aborts resolve.
-           * So, after checking each element, it returns temporary result.
-           *)
-          hd (map (elab env) elist)
-      end
+  fun resolveInfixError getLongsymbol (Fixity.Conflict, _, loc) =
+      EU.enqueueError (loc, E.InvalidFixityPrecedence)
+    | resolveInfixError getLongsymbol (Fixity.BeginWithInfix, exp, loc) =
+      enqueueError (loc, E.BeginWithInfixID (getLongsymbol exp))
+    | resolveInfixError getLongsymbol (Fixity.EndWithInfix, exp, loc) =
+      enqueueError (loc, E.EndWithInfixID (getLongsymbol exp))
 
     fun elabSequence elabolator env elements =
       let
@@ -490,38 +358,25 @@ struct
    *)
   fun resolveInfixExp env elist =
       let
-        fun makeApp (x, y) =
-            PC.PLAPPM(x, [y], (PC.getLeftPosExp x, PC.getRightPosExp y))
-        fun makeUserOp lexp fixity =
-            {
-              status = fixity, 
-              left = PC.getLeftPosExp lexp,
-              right = PC.getRightPosExp lexp,
-              combiner =
-              fn (x, y) => 
-                 let val loc = (PC.getLeftPosExp x, PC.getRightPosExp y)
-                 in PC.PLAPPM(
-                    lexp,
-                    [PC.PLRECORD(RecordLabel.tupleList [x, y], loc)], loc)
-                 end
-            }
-        fun findFixity' env (A.EXPID id) = findFixity env id
-          | findFixity' env _ = NONFIX
         fun getLongsymbol (A.EXPID longsymbol) = longsymbol
           | getLongsymbol exp = raise Bug.Bug "getLongsymbol expects EXPID."
-
+        fun elab (Fixity.APP (x, y, loc)) =
+            PC.PLAPPM (elab x, [elab y], loc)
+          | elab (Fixity.OP2 (f, (x, y), loc)) =
+            PC.PLAPPM
+              (elab f,
+               [PC.PLRECORD (RecordLabel.tupleList [elab x, elab y], loc)],
+               loc)
+          | elab (Fixity.TERM (x, _)) =
+            elabExp env x
+        val src =
+            map (fn exp as A.EXPID longsymbol =>
+                    (findFixity env longsymbol, exp, A.getLocExp exp)
+                  | exp => (NONFIX, exp, A.getLocExp exp))
+                elist
       in
-        resolveInfix
-        {
-          makeApp = makeApp,
-          makeUserOp = makeUserOp,
-          elab = elabExp,
-          findFixity = findFixity',
-          getLongsymbol = getLongsymbol
-         }
-        env
-        elist
-       end
+        elab (Fixity.parse (resolveInfixError getLongsymbol) src)
+      end
 
   (**
    *  transforms infix constructor application pattern into non-infix
@@ -530,38 +385,25 @@ struct
    *)
   and resolveInfixPat env elist =
       let
-        fun makeApp (x, y) =
-            PC.PLPATCONSTRUCT(x, y, (PC.getLeftPosPat x, PC.getRightPosPat y))
-        fun makeUserOp lexp fixity =
-            {
-              status = fixity, 
-              left = PC.getLeftPosPat lexp,
-              right = PC.getRightPosPat lexp,
-              combiner =
-              fn (x, y) => 
-                 let val loc = (PC.getLeftPosPat x, PC.getRightPosPat y)
-                 in
-                   PC.PLPATCONSTRUCT
-                   (lexp, PC.PLPATRECORD(false, RecordLabel.tupleList [x, y], loc), loc)
-                 end
-            }
-        fun findFixity' env (A.PATID {opPrefix=false, longsymbol, loc}) =
-            findFixity env longsymbol
-          | findFixity' env _ = NONFIX
-        fun getLongsymbol (A.PATID {opPrefix, longsymbol, loc=loc}) = longsymbol
+        fun getLongsymbol (A.PATID {longsymbol, ...}) = longsymbol
           | getLongsymbol pat = raise Bug.Bug "getLongsymbol expects PATID"
-
+        fun elab (Fixity.APP (x, y, loc)) =
+            PC.PLPATCONSTRUCT (elab x, elab y, loc)
+          | elab (Fixity.OP2 (f, (x, y), loc)) =
+            PC.PLPATCONSTRUCT
+              (elab f,
+               PC.PLPATRECORD
+                 (false, RecordLabel.tupleList [elab x, elab y], loc),
+               loc)
+          | elab (Fixity.TERM (x, _)) =
+            elabPat env x
+        val src =
+            map (fn pat as A.PATID {opPrefix=false, longsymbol, loc} =>
+                    (findFixity env longsymbol, pat, loc)
+                  | pat => (NONFIX, pat, A.getLocPat pat))
+                elist
       in
-        resolveInfix
-        {
-          makeApp = makeApp,
-          makeUserOp = makeUserOp,
-          elab = elabPat,
-          findFixity = findFixity',
-          getLongsymbol = getLongsymbol
-         }
-        env
-        elist
+        elab (Fixity.parse (resolveInfixError getLongsymbol) src)
       end
 
   (**
@@ -951,7 +793,7 @@ struct
           PC.PLLET
           (
             [PC.PDVALREC(emptyTvars, [(PC.PLPATID [newid], body)], loc)],
-            [PC.PLAPPM(PC.PLVAR [newid], [unitExp loc], loc)],
+            PC.PLAPPM(PC.PLVAR [newid], [unitExp loc], loc),
             loc
           )
         end
@@ -970,16 +812,20 @@ struct
         let
           val (pdecs, env') = elabDecs env decs
           val newEnv = extendFixEnv (env',env)
+          val body =
+              case map (elabExp newEnv) elist of
+                [exp] => exp
+              | expList => PC.PLSEQ (expList, loc)
         in
-          PC.PLLET (pdecs, map (elabExp newEnv) elist, loc)
+          PC.PLLET (pdecs, body, loc)
         end
       | A.EXPFFIIMPORT (exp, ty, loc) =>
         PC.PLFFIIMPORT (elabFFIFun env exp, elabFFITy ty, loc)
       | A.EXPSQL (sqlexp, loc) =>
         ElaborateSQL.elaborateExp
-          {elabExp = fn c => elabExp (env # {sqlEnv = c}),
-           elabPat = fn c => elabPat (env # {sqlEnv = c})}
-          (#sqlEnv env)
+          {elabExp = elabExp env,
+           elabPat = elabPat env}
+          env
           (sqlexp, loc)
       | A.EXPFOREACH (foreach, loc) =>
         ElaborateForeach.elaborateExp
@@ -994,7 +840,8 @@ struct
       | A.EXPDYNAMICCASE (exp, matches, loc) =>
         PC.PLDYNAMICCASE 
           (elabExp env exp, 
-           map (fn (x, y) => (elabPat env x, elabExp env y)) matches,
+           map (fn (tyvars, x, y) => (tyvars, elabPat env x, elabExp env y))
+               matches,
            loc)
       | A.EXPREIFYTY (ty, loc) => PC.PLREIFYTY (ty, loc)
 
@@ -1324,7 +1171,7 @@ struct
 
 
     fun elabDec' env dec =
-        elabDec {fixEnv = env, sqlEnv = NONE} dec
+        elabDec env dec
 
     val elabDec = elabDec'
 

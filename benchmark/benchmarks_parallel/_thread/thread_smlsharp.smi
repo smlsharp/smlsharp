@@ -1,0 +1,9 @@
+_require "basis.smi"
+
+structure Thread =
+struct
+  val threadtype : string
+  type thread (= {})
+  val create : (unit -> int) -> thread
+  val join : thread -> int
+end

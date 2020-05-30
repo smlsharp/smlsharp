@@ -1,0 +1,5 @@
+= _thread/thread_smlsharp.o _thread/thread_smlsharp_myth.o
+= fib/fib_smlsharp_thread.o fib/fib_smlsharp_thread.o
+= nqueen/nqueen_smlsharp_thread.o nqueen/nqueen_smlsharp_thread.o
+= mandelbrot/mandelbrot_smlsharp_thread.o mandelbrot/mandelbrot_smlsharp_thread.o
+= cilksort/cilksort_smlsharp_thread.o cilksort/cilksort_smlsharp_thread.o

@@ -90,7 +90,7 @@ typedef struct sml_time sml_time_t;
 	if ((time).usec > 1000000) (time).usec -= 1000000, (time).sec++; \
 } while (0)
 
-#elif defined HAVE_GETRUSAGE
+#elif 0 && defined HAVE_GETRUSAGE
 
 #include <sys/resource.h>
 typedef struct rusage sml_timer_t;
@@ -121,7 +121,7 @@ typedef struct sml_time sml_time_t;
 	if ((time).usec > 1000000) (time).usec -= 1000000, (time).sec++; \
 } while (0)
 
-#elif defined HAVE_TIMES
+#elif 0 && defined HAVE_TIMES
 
 #include <sys/times.h>
 #include <unistd.h>

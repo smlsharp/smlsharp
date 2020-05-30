@@ -14,7 +14,6 @@ _require local "../../../data/types/main/DynamicKind.ppg.smi"
 _require local "../../../data/types/main/DynamicKindUtils.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/types/main/TyAlphaRename.smi"
-_require local "../../../data/types/main/TyRevealTy.smi"
 (* _require local "../../../data/runtimetypes/main/TypeLayout2.smi" *)
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
 (* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)

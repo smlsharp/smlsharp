@@ -24,6 +24,7 @@ struct
   type conn_impl =
        {closeConn : unit -> unit,
         getDatabaseSchema : unit -> SMLSharp_SQL_BackendTy.schema,
+        columnTypeName : SMLSharp_SQL_BackendTy.ty -> string,
         execQuery : string -> res_impl}
 
   type server_impl =
@@ -71,6 +72,7 @@ struct
           {
             closeConn = fn () => B.closeConn conn,
             getDatabaseSchema = fn () => B.getDatabaseSchema conn,
+            columnTypeName = B.columnTypeName,
             execQuery = execQuery conn
           }
         end

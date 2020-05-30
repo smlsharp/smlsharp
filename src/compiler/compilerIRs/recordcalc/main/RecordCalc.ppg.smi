@@ -1,202 +1,195 @@
-_require local "../../../../basis.smi"
-
-(* _require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi" *)
-_require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
-
+_require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/Symbol.smi"
-_require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/name/main/CodeLabel.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
-_require "../../../compilerIRs/absyn/main/AbsynConst.smi"
-_require local "../../../compilerIRs/absyn/main/AbsynConstFormatter.smi"
-_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
-_require "../../../libs/util/main/TermFormat.smi"
+_require "../../../data/name/main/CodeLabel.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../data/types/main/DynamicKind.ppg.smi"
+_require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
+_require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require local "../../../compilerIRs/absyn/main/ConstFormat.smi"
 
 structure RecordCalc =
-  struct
-    type loc = Loc.loc
-    type path = Symbol.longsymbol
-    val format_path : path -> TermFormat.format
-    type varInfo = {path:path, id:VarID.id, ty:Types.ty}
-    val format_varInfo
-        : varInfo -> SMLFormat.FormatExpression.expression list
-    val formatWithType_varInfo
-        : varInfo
-          -> SMLFormat.FormatExpression.expression list
-    type exVarInfo = {path:path, ty:Types.ty}
-    val format_exVarInfo
-        : exVarInfo
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_exVarInfo
-        : exVarInfo
-          -> SMLFormat.FormatExpression.expression list
-    type conInfo = {path: path, ty:Types.ty, id: ConID.id}
-    val format_conInfo
-        : conInfo
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_conInfo
-        : conInfo
-          -> SMLFormat.FormatExpression.expression list
-    type exnInfo = {path: path, ty:Types.ty, id: ExnID.id}
-    val format_exnInfo
-        : exnInfo
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_exnInfo
-        : exnInfo
-          -> SMLFormat.FormatExpression.expression list
+struct
 
-    type exExnInfo = {path: path, ty:Types.ty}
-    val format_exExnInfo
-        : exExnInfo
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_exExnInfo
-        : exExnInfo
-          -> SMLFormat.FormatExpression.expression list
+  type loc = Loc.loc
+  type ty = Types.ty
+  type btvEnv = Types.btvEnv
+  type varInfo = TypedLambda.varInfo
+  type exVarInfo = Types.exVarInfo
+  datatype cast = datatype BuiltinPrimitive.cast
+  datatype tlconst = datatype TypedLambda.tlconst
+  datatype rcconst =
+      CONST of tlconst
+    | SIZE of DynamicKind.size' * ty
+    | TAG of DynamicKind.tag' * ty
+    | INDEX of DynamicKind.index' * RecordLabel.label * ty
+  datatype tlstring = datatype TypedLambda.tlstring
+  datatype rcexp =
+      RCCONSTANT of rcconst * loc
+    | RCSTRING of tlstring * loc
+    | RCVAR of varInfo * loc
+    | RCEXVAR of exVarInfo * loc
+    | RCFNM of
+      {
+        argVarList : varInfo list,
+        bodyTy : ty,
+        bodyExp : rcexp,
+        loc : loc
+      }
+    | RCAPPM of
+      {
+        funExp : rcexp,
+        funTy : ty,
+        argExpList : rcexp list,
+        loc : loc
+      }
+    | RCSWITCH of
+      {
+        exp : rcexp,
+        expTy : ty,
+        branches : {const : tlconst, body : rcexp} list,
+        defaultExp : rcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | RCPRIMAPPLY of
+      {
+        primOp : TypedLambda.primInfo,
+        instTyList : ty list,
+        argExpList : rcexp list,
+        loc : loc
+      }
+    | RCRECORD of
+      {
+        fields : rcexp RecordLabel.Map.map,
+        recordTy : ty,
+        loc : loc
+      }
+    | RCSELECT of
+      {
+        label : RecordLabel.label,
+        indexExp : rcexp,
+        recordExp : rcexp,
+        recordTy : ty,
+        resultTy : ty,
+        loc : loc
+      }
+    | RCMODIFY of
+      {
+        label : RecordLabel.label,
+        indexExp : rcexp,
+        recordExp : rcexp,
+        recordTy : ty,
+        elementExp : rcexp,
+        elementTy : ty,
+        loc : loc
+      }
+    | RCLET of
+      {
+        decl : rcdecl,
+        body : rcexp,
+        loc : loc
+      }
+    | RCRAISE of
+      {
+        exp : rcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | RCHANDLE of
+      {
+        exp : rcexp,
+        exnVar : varInfo,
+        handler : rcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | RCTHROW of
+      {
+        catchLabel : FunLocalLabel.id,
+        argExpList : rcexp list,
+        resultTy : ty,
+        loc : loc
+      }
+    | RCCATCH of
+      {
+        catchLabel : FunLocalLabel.id,
+        argVarList : varInfo list,
+        catchExp : rcexp,
+        tryExp : rcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | RCPOLY of
+      {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
+        expTyWithoutTAbs : ty,
+        exp : rcexp,
+        loc : loc
+      }
+    | RCTAPP of
+      {
+        exp : rcexp,
+        expTy : ty,
+        instTyList : ty list,
+        loc : loc
+      }
+    | RCFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
+    | RCFOREIGNAPPLY of
+      {
+        funExp : rcexp,
+        argExpList : rcexp list,
+        attributes : FFIAttributes.attributes,
+        resultTy : ty option,
+        loc : loc
+      }
+    | RCCALLBACKFN of
+      {
+        attributes : FFIAttributes.attributes,
+        argVarList : varInfo list,
+        bodyExp : rcexp,
+        resultTy : ty option,
+        loc : loc
+      }
+    | RCCAST of
+      {
+        exp : rcexp,
+        expTy : ty,
+        targetTy : ty,
+        cast : cast,
+        loc : loc
+      }
+    | RCINDEXOF of
+      {
+        recordTy : ty,
+        label : RecordLabel.label,
+        loc : loc
+      }
+  and rcdecl =
+      RCVAL of
+      {
+        var : varInfo,
+        exp : rcexp,
+        loc : loc
+      }
+    | RCVALREC of {var : varInfo, exp : rcexp} list * loc
+    | RCEXPORTVAR of
+      {
+        weak : bool,
+        var : exVarInfo,
+        exp : rcexp
+      }
+    | RCEXTERNVAR of exVarInfo * Types.provider
 
-    type oprimInfo = {ty : Types.ty, path: path, id : OPrimID.id}
-    val format_oprimInfo
-        : oprimInfo
-          -> SMLFormat.FormatExpression.expression list
-    val formatWithType_oprimInfo
-        : oprimInfo
-          -> SMLFormat.FormatExpression.expression list
+  val format_rcconst : rcconst -> SMLFormat.format
+  val formatWithType_rcconst : rcconst -> SMLFormat.format
+  val format_rcexp : rcexp -> SMLFormat.format
+  val formatWithType_rcexp : rcexp -> SMLFormat.format
+  val format_rcdecl : rcdecl -> SMLFormat.format
+  val formatWithType_rcdecl : rcdecl -> SMLFormat.format
 
-    datatype exnCon = datatype TypedCalc.exnCon
-    val format_exnCon
-        : exnCon -> SMLFormat.FormatExpression.expression list
-    val formatWithType_exnCon
-        : exnCon -> SMLFormat.FormatExpression.expression list
-
-    datatype constant =
-        CONST of AbsynConst.constant
-      | SIZE of DynamicKind.size' * Types.ty
-      | TAG of DynamicKind.tag' * Types.ty
-      | INDEX of DynamicKind.index' * RecordLabel.label * Types.ty
-
-    datatype rcexp
-      = RCAPPM of {argExpList:rcexp list, funExp:rcexp, funTy:Types.ty, loc:Loc.loc}
-      | RCCASE of {defaultExp:rcexp, exp:rcexp, expTy:Types.ty, loc:Loc.loc,
-                   ruleList:(conInfo * varInfo option * rcexp) list,
-                   resultTy:Types.ty}
-      | RCCAST of (rcexp * Types.ty) * Types.ty * Loc.loc
-      | RCCONSTANT of {const:constant, loc:Loc.loc, ty:Types.ty}
-      | RCDATACONSTRUCT of {argExpOpt:rcexp option, con:conInfo,
-                            argTyOpt:Types.ty option,
-                            instTyList:Types.ty list, loc:Loc.loc}
-      | RCEXNCASE of {defaultExp:rcexp, exp:rcexp, expTy:Types.ty, loc:Loc.loc,
-                      ruleList:(exnCon * varInfo option * rcexp) list,
-                      resultTy:Types.ty}
-      | RCEXNCONSTRUCT of {argExpOpt:rcexp option, exn:exnCon,
-                           instTyList:Types.ty list, loc:Loc.loc}
-      | RCEXN_CONSTRUCTOR of {exnInfo:exnInfo, loc:Loc.loc}
-      | RCEXEXN_CONSTRUCTOR of {exExnInfo:exExnInfo, loc:Loc.loc}
-      | RCCALLBACKFN of {attributes : FFIAttributes.attributes,
-                         resultTy : Types.ty option,
-                         argVarList : varInfo list,
-                         bodyExp : rcexp, loc : Loc.loc}
-      | RCEXVAR of exVarInfo
-      | RCFFI of rcffiexp * Types.ty * Loc.loc
-      | RCFNM of {argVarList:varInfo list, bodyExp:rcexp, bodyTy:Types.ty, loc:Loc.loc}
-      | RCFOREIGNAPPLY of {argExpList:rcexp list,
-                           attributes:FFIAttributes.attributes, funExp:rcexp,
-                           resultTy:Types.ty option,
-                           loc:Loc.loc}
-      | RCFOREIGNSYMBOL of {loc:Loc.loc, name:string, ty:Types.ty}
-      | RCHANDLE of {exnVar:varInfo, exp:rcexp, handler:rcexp, resultTy:Types.ty, loc:Loc.loc}
-      | RCINDEXOF of RecordLabel.label * Types.ty * Loc.loc
-      | RCLET of {body:rcexp list, decls:rcdecl list, loc:Loc.loc, tys:Types.ty list}
-      | RCMODIFY of {elementExp:rcexp, elementTy:Types.ty, indexExp:rcexp,
-                     label:RecordLabel.label, loc:Loc.loc, recordExp:rcexp, recordTy:Types.ty}
-      | RCMONOLET of {binds:(varInfo * rcexp) list, bodyExp:rcexp, loc:Loc.loc}
-      | RCOPRIMAPPLY of {argExp:rcexp, instTyList:Types.ty list, loc:Loc.loc,
-                         oprimOp:oprimInfo}
-      | RCPOLY of {btvEnv:Types.btvEnv, exp:rcexp, expTyWithoutTAbs:Types.ty, loc:Loc.loc}
-      | RCPOLYFNM of {argVarList:varInfo list, bodyExp:rcexp, bodyTy:Types.ty,
-                      btvEnv:Types.btvEnv, loc:Loc.loc}
-      | RCPRIMAPPLY of {argExp:rcexp, instTyList:Types.ty list, loc:Loc.loc,
-                        primOp:Types.primInfo}
-      | RCRAISE of {exp:rcexp, loc:Loc.loc, ty:Types.ty}
-      | RCRECORD of {fields:rcexp RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty}
-      | RCSELECT of {exp:rcexp, expTy:Types.ty, indexExp:rcexp, label:RecordLabel.label,
-                     loc:Loc.loc, resultTy:Types.ty}
-      | RCSEQ of {expList:rcexp list, expTyList:Types.ty list, loc:Loc.loc}
-      | RCSIZEOF of Types.ty * Loc.loc
-      | RCREIFYTY of Types.ty * Loc.loc
-      | RCSWITCH of {branches:(constant * rcexp) list, defaultExp:rcexp,
-                     expTy:Types.ty, loc:Loc.loc, switchExp:rcexp,
-                     resultTy:Types.ty}
-      | RCTAGOF of Types.ty * Loc.loc
-      | RCTAPP of {exp:rcexp, expTy:Types.ty, instTyList:Types.ty list, loc:Loc.loc}
-      | RCVAR of varInfo
-      | RCCATCH of
-        {
-          catchLabel : FunLocalLabel.id,
-          argVarList : varInfo list,
-          catchExp : rcexp,
-          tryExp : rcexp,
-          resultTy : Types.ty,
-          loc : loc
-        }
-      | RCTHROW of
-        {
-          catchLabel : FunLocalLabel.id,
-          argExpList : rcexp list,
-          resultTy : Types.ty,
-          loc : loc
-        }
-      | RCJOIN of {isJoin:bool, ty:Types.ty, args:rcexp*rcexp, argTys:Types.ty*Types.ty, loc:Loc.loc}
-      | RCDYNAMIC of {exp:rcexp, ty:Types.ty, elemTy: Types.ty, coerceTy:Types.ty, loc:loc}
-      | RCDYNAMICIS of {exp:rcexp, ty:Types.ty, elemTy: Types.ty, coerceTy:Types.ty, loc:loc}
-      | RCDYNAMICNULL of {ty:Types.ty, coerceTy:Types.ty, loc:loc}
-      | RCDYNAMICTOP of {ty:Types.ty, coerceTy:Types.ty, loc:loc}
-      | RCDYNAMICVIEW of {exp:rcexp, ty:Types.ty, elemTy: Types.ty, coerceTy:Types.ty, loc:loc}
-      | RCDYNAMICCASE of
-         {
-          groupListTerm:rcexp, 
-          groupListTy:Types.ty, 
-          dynamicTerm:rcexp, 
-          dynamicTy:Types.ty, 
-          elemTy:Types.ty, 
-          ruleBodyTy:Types.ty, 
-          loc:loc}
-    and rcffiexp
-      = RCFFIIMPORT of {ffiTy:TypedCalc.ffiTy, funExp:rcffifun}
-    and rcffifun
-      = RCFFIFUN of rcexp * Types.ty
-      | RCFFIEXTERN of string
-    and rcdecl
-      = RCEXD of {exnInfo:exnInfo, loc:Loc.loc} list * Loc.loc
-      | RCEXNTAGD of {exnInfo:exnInfo, varInfo:varInfo} * Loc.loc
-      | RCEXPORTEXN of exnInfo
-      | RCEXPORTVAR of varInfo
-      | RCEXTERNEXN of exExnInfo * Types.provider
-      | RCBUILTINEXN of exExnInfo
-      | RCEXTERNVAR of exVarInfo * Types.provider
-      | RCVAL of (varInfo * rcexp) list * Loc.loc
-      | RCVALPOLYREC of Types.btvEnv * {exp:rcexp, expTy:Types.ty, var:varInfo} list * Loc.loc
-      | RCVALREC of {exp:rcexp, expTy:Types.ty, var:varInfo} list * Loc.loc
-
-   val getLocExp : rcexp -> Loc.loc
-
-    val format_rcexp
-        : rcexp
-	  -> SMLFormat.FormatExpression.expression list
-    val rcexpToString : rcexp -> string
-    val format_rcffiexp
-        : rcffiexp
-	  -> SMLFormat.FormatExpression.expression list
-    val format_rcdecl
-        : rcdecl TermFormat.formatter
-    val formatWithoutType_rcexp
-        : rcexp TermFormat.formatter
-    val formatWithoutType_rcffiexp
-        : rcffiexp
-	  -> SMLFormat.FormatExpression.expression list
-    val formatWithoutType_rcdecl
-        : rcdecl TermFormat.formatter
-  end
+end

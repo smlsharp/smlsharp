@@ -36,7 +36,9 @@ struct
   val verbosePolyTyElim : int ref
   val printUncurryOpt : bool ref
   val printTCOpt : bool ref
+(*
   val printRCOpt : bool ref
+*)
   val printVALRECOpt : bool ref
   val printFundeclElab : bool ref
   val printMatchCompile : bool ref
@@ -77,7 +79,9 @@ struct
   val doUncurryOptimization : bool ref
   val doPolyTyElimination : bool ref
   val doTCOptimization : bool ref
+(*
   val doRCOptimization : bool ref
+*)
   val skipPrinter : bool ref
   val doListExpressionOptimization : bool ref
   val doUncurryingOptimizeInMatchCompile : bool ref

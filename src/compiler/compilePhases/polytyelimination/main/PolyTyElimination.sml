@@ -16,6 +16,9 @@ struct
 
   fun bug s = Bug.Bug ("PolyTyElimination: " ^ s)
 
+  fun optionToList NONE = nil
+    | optionToList (SOME x) = [x]
+
   open PolyTyInstance
 
   (* just for benchmark *)
@@ -243,13 +246,41 @@ struct
           (xs, ys)
         handle ListPair.UnequalLengths => raise NotEqual
 
+    fun equalListOpt f r (NONE, NONE) = BoundTypeVarID.Map.empty
+      | equalListOpt f r (NONE, SOME _) = raise NotEqual
+      | equalListOpt f r (SOME _, NONE) = raise NotEqual
+      | equalListOpt f r (SOME l1, SOME l2) = equalList f r (l1, l2)
+
+    fun revealOpaqueRep (T.TYCON tyCon, args) =
+        T.CONSTRUCTty {tyCon = tyCon, args = args}
+      | revealOpaqueRep (T.TFUNDEF {admitsEq, arity, polyTy}, args) =
+        TypesBasics.tpappTy (polyTy, args)
+
+    fun revealTyCon {tyCon as {dtyKind, ...}, args} =
+        case dtyKind of
+          T.OPAQUE {opaqueRep, revealKey} => revealOpaqueRep (opaqueRep, args)
+        | T.INTERFACE opaqueRep => revealOpaqueRep (opaqueRep, args)
+        | T.DTY _ => T.CONSTRUCTty {tyCon = tyCon, args = args}
+
     fun equalTy r (ty1, ty2) =
         case (ty1, ty2) of
           (T.TYVARty (ref (T.SUBSTITUTED ty1)), ty2) => equalTy r (ty1, ty2)
         | (ty1, T.TYVARty (ref (T.SUBSTITUTED ty2))) => equalTy r (ty1, ty2)
+        | (T.CONSTRUCTty (a as {tyCon={dtyKind=T.OPAQUE _,...},...}), ty2) =>
+          equalTy r (revealTyCon a, ty2)
+        | (T.CONSTRUCTty (a as {tyCon={dtyKind=T.INTERFACE _,...},...}), ty2) =>
+          equalTy r (revealTyCon a, ty2)
+        | (ty1, T.CONSTRUCTty (a as {tyCon={dtyKind=T.OPAQUE _,...},...})) =>
+          equalTy r (ty1, revealTyCon a)
+        | (ty1, T.CONSTRUCTty (a as {tyCon={dtyKind=T.INTERFACE _,...},...})) =>
+          equalTy r (ty1, revealTyCon a)
         | (T.SINGLETONty sty1, T.SINGLETONty sty2) =>
           equalSingletonTy r (sty1, sty2)
         | (T.DUMMYty (id1, kind1), T.DUMMYty (id2, kind2)) =>
+          if id1 = id2
+          then equalKind r (kind1, kind2)
+          else raise NotEqual
+        | (T.EXISTty (id1, kind1), T.EXISTty (id2, kind2)) =>
           if id1 = id2
           then equalKind r (kind1, kind2)
           else raise NotEqual
@@ -267,10 +298,21 @@ struct
           else raise NotEqual
         | (T.POLYty {boundtvars=btv1, constraints=c1, body=ty1},
            T.POLYty {boundtvars=btv2, constraints=c2, body=ty2}) =>
+          (*
+           * Note that the following:
+           * - The order of bound type variables in boundtvars is significant;
+           *   record compilation generates extra arguments with respect to
+           *   their order.
+           * - Unused bound type variables, say ['a. unit], may appear due to
+           *   opaque phantom type.  The meaning of ['a. unit] is different
+           *   from that of unit because of type-directed compilation.
+           *   See the test case 341_phantom for example.
+           *)
           let
             val subst1 = equalList equalConstraint r (c1, c2)
             val subst2 = equalTy r (ty1, ty2)
-            val subst = equalBtvEnv r (equalUnion (subst1, subst2)) (btv1, btv2)
+            val subst3 = equalBtvEnv r (btv1, btv2)
+            val subst = equalUnion (equalUnion (subst1, subst2), subst3)
           in
             BoundTypeVarID.Map.appi
               (fn (tid1, tid2) =>
@@ -284,6 +326,7 @@ struct
           end
         | (T.SINGLETONty _, _) => raise NotEqual
         | (T.DUMMYty _, _) => raise NotEqual
+        | (T.EXISTty _, _) => raise NotEqual
         | (T.BOUNDVARty _, _) => raise NotEqual
         | (T.FUNMty _, _) => raise NotEqual
         | (T.RECORDty _, _) => raise NotEqual
@@ -332,13 +375,13 @@ struct
         | (T.OVERLOAD_EXVAR {exVarInfo={path=path1,...}, instTyList=i1},
            T.OVERLOAD_EXVAR {exVarInfo={path=path2,...}, instTyList=i2}) =>
           if Symbol.eqLongsymbol (path1, path2)
-          then equalList equalTy r (i1, i2)
+          then equalListOpt equalTy r (i1, i2)
           else raise NotEqual
         | (T.OVERLOAD_EXVAR _, _) => raise NotEqual
         | (T.OVERLOAD_PRIM {primInfo={primitive=p1,...}, instTyList=i1},
            T.OVERLOAD_PRIM {primInfo={primitive=p2,...}, instTyList=i2}) =>
           if p1 = p2
-          then equalList equalTy r (i1, i2)
+          then equalListOpt equalTy r (i1, i2)
           else raise NotEqual
         | (T.OVERLOAD_PRIM _, _) => raise NotEqual
 
@@ -373,34 +416,19 @@ struct
         | (T.UNIV, _) => raise NotEqual
         | (T.REC _, _) => raise NotEqual
 
-    and equalBtvEnv r subst (boundtvars1, boundtvars2) =
-        let
-          fun loop subst rest =
-              if BoundTypeVarID.Map.isEmpty rest then subst else
+    and equalBtvEnv r (boundtvars1, boundtvars2) =
+        ListPair.foldlEq
+          (fn ((tid1, kind1), (tid2, kind2), subst) =>
               let
-                val newSubst =
-                    BoundTypeVarID.Map.foldli
-                      (fn (tid1, tid2, newSubst) =>
-                          case (BoundTypeVarID.Map.find (boundtvars1, tid1),
-                                BoundTypeVarID.Map.find (boundtvars2, tid2)) of
-                            (SOME k1, SOME k2) =>
-                            equalUnion (newSubst, equalKind r (k1, k2))
-                          | (NONE, NONE) =>
-                            newSubst
-                          | _ => raise NotEqual)
-                      BoundTypeVarID.Map.empty
-                      rest
-                val next =
-                    BoundTypeVarID.Map.filteri
-                      (fn (i, _) =>
-                          not (BoundTypeVarID.Map.inDomain (subst, i)))
-                      newSubst
+                val subst1 = BoundTypeVarID.Map.singleton (tid1, tid2)
+                val subst2 = equalKind r (kind1, kind2)
               in
-                loop (equalUnion (subst, newSubst)) next
-              end
-        in
-          loop subst subst
-        end
+                equalUnion (equalUnion (subst1, subst2), subst)
+              end)
+          BoundTypeVarID.Map.empty
+          (BoundTypeVarID.Map.listItemsi boundtvars1,
+           BoundTypeVarID.Map.listItemsi boundtvars2)
+          handle ListPair.UnequalLengths => raise NotEqual
   in
 
   fun equal r (ty1, ty2) =
@@ -422,21 +450,6 @@ struct
            (equalTy (ref MetaID.Map.empty) x)
          handle NotEqual => false
 
-  val equalBtvEnv =
-      fn (btvs1, btvs2) =>
-         let
-           fun makeTy btvEnv =
-               T.POLYty
-                 {boundtvars = btvs1,
-                  constraints = nil,
-                  body =
-                    T.FUNMty
-                      (map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv),
-                       T.RECORDty RecordLabel.Map.empty)}
-         in
-           equalTy (makeTy btvs1, makeTy btvs2)
-         end
-
   end (* local *)
 
   local
@@ -448,11 +461,15 @@ struct
     fun getIdsList f xs =
         foldl (fn (x, z) => getIdsUnion (f x, z)) MetaID.Map.empty xs
 
+    fun getIdsListOpt f NONE = MetaID.Map.empty
+      | getIdsListOpt f (SOME l) = getIdsList f l
+
     fun getIdsTy ty =
         case ty of
           T.TYVARty (ref (T.SUBSTITUTED ty)) => getIdsTy ty
         | T.SINGLETONty sty => getIdsSingletonTy sty
         | T.DUMMYty (id, kind) => getIdsKind kind
+        | T.EXISTty (id, kind) => getIdsKind kind
         | T.BOUNDVARty t => MetaID.Map.empty
         | T.FUNMty (argTys, retTy) => getIdsList getIdsTy (retTy :: argTys)
         | T.RECORDty fields =>
@@ -464,13 +481,41 @@ struct
                (getIdsList getIdsConstraint constraints,
                 getIdsTy body),
              getIdsBtvEnv boundtvars)
-        | T.BACKENDty _ =>
-          raise bug "getIdsTy: BACKENDty never occur"
+        | T.BACKENDty bty => getIdsBackendTy bty
         | T.ERRORty =>
           raise bug "getIdsTy: ERRORty never occur"
         | T.TYVARty (ref (T.TVAR _)) =>
           raise bug "getIdsTy: TVAR never occur"
 
+    and getIdsBackendTy bty =
+        case bty of
+          T.RECORDSIZEty ty => getIdsTy ty
+        | T.RECORDBITMAPINDEXty (i, ty) => getIdsTy ty
+        | T.RECORDBITMAPty (i, ty) => getIdsTy ty
+        | T.CCONVTAGty codeEntryTy => getIdsCodeEntryTy codeEntryTy
+        | T.FUNENTRYty codeEntryTy => getIdsCodeEntryTy codeEntryTy
+        | T.CALLBACKENTRYty {tyvars, haveClsEnv, argTyList, retTy,
+                             attributes} =>
+          getIdsUnion
+            (getIdsUnion (getIdsBtvEnv tyvars, getIdsList getIdsTy argTyList),
+             case retTy of NONE => MetaID.Map.empty | SOME ty => getIdsTy ty)
+        | T.SOME_FUNENTRYty => MetaID.Map.empty
+        | T.SOME_FUNWRAPPERty => MetaID.Map.empty
+        | T.SOME_CLOSUREENVty => MetaID.Map.empty
+        | T.SOME_CCONVTAGty => MetaID.Map.empty
+        | T.FOREIGNFUNPTRty {argTyList, varArgTyList, resultTy, attributes} =>
+          getIdsList
+            getIdsTy
+            ((case resultTy of
+                NONE => nil
+              | SOME ty => [ty])
+             @ (case varArgTyList of
+                  NONE => argTyList
+                | SOME l => argTyList @ l))
+    and getIdsCodeEntryTy {tyvars, haveClsEnv, argTyList, retTy} =
+        getIdsUnion
+          (getIdsUnion (getIdsBtvEnv tyvars, getIdsList getIdsTy argTyList),
+           getIdsTy retTy)
     and getIdsSingletonTy sty =
         case sty of
           T.INSTCODEty s => getIdsOprimSelector s
@@ -490,9 +535,9 @@ struct
             (getIdsTy ty)
             matches
         | T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
-          getIdsList getIdsTy instTyList
+          getIdsListOpt getIdsTy instTyList
         | T.OVERLOAD_PRIM {primInfo, instTyList} =>
-          getIdsList getIdsTy instTyList
+          getIdsListOpt getIdsTy instTyList
 
     and getIdsConstraint (T.JOIN {res, args=(ty1, ty2), loc}) =
         getIdsList getIdsTy [res, ty1, ty2]
@@ -565,7 +610,6 @@ struct
 
   fun analyzeTy r (env:a_env) ty =
       let
-        val ty = TyRevealTy.revealTy ty
         val ty = TyAlphaRename.copyTy (#subst env) ty
       in
         touch r (getIds ty);
@@ -626,7 +670,6 @@ struct
 
   fun analyzeConstraints r (env:a_env) cs =
       let
-        val cs = map TyRevealTy.revealConstraint cs
         val cs = map (TyAlphaRename.copyConstraint (#subst env)) cs
       in
         touch r (getIdsConstraints cs);
@@ -635,7 +678,6 @@ struct
 
   fun analyzeBtvEnv r (env:a_env) btvEnv =
       let
-        val btvEnv = TyRevealTy.revealBtvEnv btvEnv
         val (subst, btvEnv) = TyAlphaRename.newBtvEnv (#subst env) btvEnv
       in
         touch r (getIdsBtvEnv btvEnv);
@@ -654,19 +696,16 @@ struct
           export r (#ty conPat);
           D.TPPATDATACONSTRUCT
             {conPat = conPat,
-             instTyList = map (analyzeTy r env) instTyList,
+             instTyList = Option.map (map (analyzeTy r env)) instTyList,
              argPatOpt = Option.map (analyzePat r env) argPatOpt,
              loc = loc}
         end
-      | C.TPPATEXNCONSTRUCT {exnPat, instTyList, argPatOpt, patTy, loc} =>
+      | C.TPPATEXNCONSTRUCT {exnPat, argPatOpt, patTy, loc} =>
         let
           val (exnPat, exnTy) = analyzeExnCon env exnPat
-          val instTyList = map (analyzeTy r env) instTyList
         in
-          instantiate r (#btvEnv (#env env)) (exnTy, instTyList);
           D.TPPATEXNCONSTRUCT
             {exnPat = exnPat,
-             instTyList = map (analyzeTy r env) instTyList,
              argPatOpt = Option.map (analyzePat r env) argPatOpt,
              loc = loc}
         end
@@ -694,6 +733,7 @@ struct
                  | _ => raise bug "analyzePat: TPPATRECORD (btv)")
               | T.DUMMYty (id, T.KIND {tvarKind = T.REC fields, ...}) => fields
                 (* 338_dummytypeの対応 *)
+              | T.EXISTty (id, T.KIND {tvarKind = T.REC fields, ...}) => fields
               | _ => raise bug "analyzePat: TPPATRECORD (tvar?)"
         in
           RecordLabel.Map.intersectWith
@@ -722,16 +762,16 @@ struct
         D.TPSIZEOF (analyzeTy r env ty, loc)
       | C.TPREIFYTY (ty, loc) =>
         D.TPREIFYTY (analyzeTy r env ty, loc)
-      | C.TPEXN_CONSTRUCTOR {exnInfo, loc} =>
+      | C.TPEXNTAG {exnInfo, loc} =>
         (case ExnID.Map.find (#exnEnv (#env env), #id exnInfo) of
-           NONE => raise bug "analyzeExp: TPEXN_CONSTRUCTOR"
+           NONE => raise bug "analyzeExp: TPEXNTAG"
          | SOME {ty,...} =>
-           D.TPEXN_CONSTRUCTOR {exnInfo = exnInfo # {ty = ty}, loc = loc})
-      | C.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
+           D.TPEXNTAG {exnInfo = exnInfo # {ty = ty}, loc = loc})
+      | C.TPEXEXNTAG {exExnInfo, loc} =>
         (case LongsymbolEnv.find (#exExnEnv (#env env), #path exExnInfo) of
-           NONE => raise bug "analyzeExp: TPEXEXN_CONSTRUCTOR"
+           NONE => raise bug "analyzeExp: TPEXEXNTAG"
          | SOME {ty,...} =>
-           D.TPEXEXN_CONSTRUCTOR {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
+           D.TPEXEXNTAG {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
       | C.TPEXVAR var =>
         (case LongsymbolEnv.find (#exVarEnv (#env env), #path var) of
            NONE => 
@@ -761,27 +801,24 @@ struct
           export r ty2;
           D.TPCAST ((exp, ty1), ty2, loc)
         end
-      | C.TPDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt=_, loc} =>
+      | C.TPDATACONSTRUCT {con, instTyList, argExpOpt, loc} =>
         let
           val con = analyzeConInfo r env con
-          val instTyList = map (analyzeTy r env) instTyList
+          val instTyList = Option.map (map (analyzeTy r env)) instTyList
         in
-          instantiate r (#btvEnv (#env env)) (#ty con, instTyList);
+          export r (#ty con);
           D.TPDATACONSTRUCT
             {con = con,
              instTyList = instTyList,
              argExpOpt = Option.map (analyzeExp r env) argExpOpt,
              loc = loc}
         end
-      | C.TPEXNCONSTRUCT {exn, instTyList, argExpOpt, argTyOpt=_, loc} =>
+      | C.TPEXNCONSTRUCT {exn, argExpOpt, loc} =>
         let
           val (exn, exnTy) = analyzeExnCon env exn
-          val instTyList = map (analyzeTy r env) instTyList
         in
-          instantiate r (#btvEnv (#env env)) (exnTy, instTyList);
           D.TPEXNCONSTRUCT
             {exn = exn,
-             instTyList = instTyList,
              argExpOpt = Option.map (analyzeExp r env) argExpOpt,
              loc = loc}
         end
@@ -795,6 +832,27 @@ struct
           {funExp = symbol,
            ffiTy = analyzeFFIty r env ffiTy,
            loc = loc}
+      | C.TPFOREIGNSYMBOL {name, ty, loc} =>
+        D.TPFOREIGNSYMBOL
+          {name = name,
+           ty = analyzeTy r env ty,
+           loc = loc}
+      | C.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+        D.TPFOREIGNAPPLY
+          {funExp = analyzeExp r env funExp,
+           argExpList = map (analyzeExp r env) argExpList,
+           loc = loc}
+      | C.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+        let
+          val argVarList = map (analyzeVarInfo r env) argVarList
+        in
+          D.TPCALLBACKFN
+            {attributes = attributes,
+             argVarList = argVarList,
+             bodyExp = analyzeExp r (addVars env argVarList) bodyExp,
+             isVoid = not (isSome resultTy),
+             loc = loc}
+        end
       | C.TPTAPP {exp, expTy=_, instTyList, loc} =>
         let
           val exp as (_, expTy) = analyzeExp r env exp
@@ -814,19 +872,6 @@ struct
             {btvEnv = btvEnv,
              constraints = analyzeConstraints r env constraints,
              exp = analyzeExp r env exp,
-             loc = loc}
-        end
-      | C.TPPOLYFNM {argVarList, bodyExp, bodyTy=_, btvEnv, constraints,
-                     loc} =>
-        let
-          val (btvEnv, env) = analyzeBtvEnv r env btvEnv
-          val argVarList = map (analyzeVarInfo r env) argVarList
-        in
-          D.TPPOLYFNM
-            {btvEnv = btvEnv,
-             constraints = analyzeConstraints r env constraints,
-             argVarList = argVarList,
-             bodyExp = analyzeExp r (addVars env argVarList) bodyExp,
              loc = loc}
         end
       | C.TPFNM {argVarList, bodyExp, bodyTy=_, loc} =>
@@ -865,13 +910,115 @@ struct
              ruleList = ruleList,
              loc = loc}
         end
-      | C.TPLET {body, decls, loc, tys=_} =>
+      | C.TPSWITCH {exp, expTy, ruleList = C.CONSTCASE rules,
+                    defaultExp, ruleBodyTy, loc} =>
+        let
+          val exp = analyzeExp r env exp
+          val defaultExp = analyzeExp r env defaultExp
+          fun analyzeRule {const, ty, body} =
+              {const = const,
+               ty = analyzeTy r env ty,
+               body = analyzeExp r env body}
+          val rules = map analyzeRule rules
+        in
+          equalAll r (#2 defaultExp :: map (#2 o #body) rules);
+          D.TPSWITCH_CONSTCASE
+            {exp = exp,
+             ruleList = rules,
+             defaultExp = defaultExp,
+             loc = loc}
+        end
+      | C.TPSWITCH {exp, expTy, ruleList = C.CONCASE rules,
+                    defaultExp, ruleBodyTy, loc} =>
+        let
+          val exp = analyzeExp r env exp
+          val defaultExp = analyzeExp r env defaultExp
+          fun analyzeRule {con, instTyList, argVarOpt, body} =
+              let
+                val con = analyzeConInfo r env con
+                val instTyList = Option.map (map (analyzeTy r env)) instTyList
+                val argVarOpt = Option.map (analyzeVarInfo r env) argVarOpt
+                val (_, patTy, varEnv) =
+                    D.TPPATDATACONSTRUCT
+                      {conPat = con,
+                       instTyList = instTyList,
+                       argPatOpt = Option.map D.TPPATVAR argVarOpt,
+                       loc = loc}
+                val body = analyzeExp r (extendVarEnv env varEnv) body
+              in
+                export r (#ty con);
+                ({con = con,
+                  instTyList = instTyList,
+                  argVarOpt = argVarOpt,
+                  body = body},
+                 T.FUNMty ([patTy], #2 body))
+              end
+          val rules = map analyzeRule rules
+        in
+          equalAll r (T.FUNMty ([#2 exp], #2 defaultExp) :: map #2 rules);
+          D.TPSWITCH_CONCASE
+            {exp = exp,
+             ruleList = map #1 rules,
+             defaultExp = defaultExp,
+             loc = loc}
+        end
+      | C.TPSWITCH {exp, expTy, ruleList = C.EXNCASE rules,
+                    defaultExp, ruleBodyTy, loc} =>
+        let
+          val exp = analyzeExp r env exp
+          val defaultExp = analyzeExp r env defaultExp
+          fun analyzeRule {exn, argVarOpt, body} =
+              let
+                val (exn, exnTy) = analyzeExnCon env exn
+                val argVarOpt = Option.map (analyzeVarInfo r env) argVarOpt
+                val (_, patTy, varEnv) =
+                    D.TPPATEXNCONSTRUCT
+                      {exnPat = exn,
+                       argPatOpt = Option.map D.TPPATVAR argVarOpt,
+                       loc = loc}
+                val body = analyzeExp r (extendVarEnv env varEnv) body
+              in
+                ({exn = exn,
+                  argVarOpt = argVarOpt,
+                  body = body},
+                 T.FUNMty ([patTy], #2 body))
+              end
+          val rules = map analyzeRule rules
+        in
+          equalAll r (T.FUNMty ([#2 exp], #2 defaultExp) :: map #2 rules);
+          D.TPSWITCH_EXNCASE
+            {exp = exp,
+             ruleList = map #1 rules,
+             defaultExp = defaultExp,
+             loc = loc}
+        end
+      | C.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+        D.TPTHROW
+          {catchLabel = catchLabel,
+           argExpList = map (analyzeExp r env) argExpList,
+           resultTy = analyzeTy r env resultTy,
+           loc = loc}
+      | C.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+        let
+          val argVarList = map (analyzeVarInfo r env) argVarList
+          val tryExp = analyzeExp r env tryExp
+          val catchExp = analyzeExp r (addVars env argVarList) catchExp
+        in
+          equal r (#2 tryExp, #2 catchExp);
+          D.TPCATCH
+            {catchLabel = catchLabel,
+             tryExp = tryExp,
+             argVarList = argVarList,
+             catchExp = catchExp,
+             loc = loc}
+        end
+      | C.TPLET {body, decls, loc} =>
         let
           val (decls, env) = analyzeDeclList r env decls
         in
           D.TPLET
             {decls = decls,
-             body = map (analyzeExp r env) body,
+             body = analyzeExp r env body,
              loc = loc}
         end
       | C.TPMONOLET {binds, bodyExp, loc} =>
@@ -883,10 +1030,6 @@ struct
              bodyExp = analyzeExp r env bodyExp,
              loc = loc}
         end
-      | C.TPSEQ {expList, expTyList=_, loc} =>
-        D.TPSEQ
-          {expList = map (analyzeExp r env) expList,
-           loc = loc}
       | C.TPRAISE {exp, loc, ty} =>
         D.TPRAISE
           {exp = analyzeExp r env exp,
@@ -920,13 +1063,13 @@ struct
            label = label,
            elementExp = analyzeExp r env elementExp,
            loc = loc}
-      | C.TPPRIMAPPLY {argExp, instTyList, loc, argTy=_, primOp} =>
+      | C.TPPRIMAPPLY {argExp, instTyList, loc, primOp} =>
         D.TPPRIMAPPLY
           {primOp = analyzePrimInfo r env primOp,
-           instTyList = map (analyzeTy r env) instTyList,
+           instTyList = Option.map (map (analyzeTy r env)) instTyList,
            argExp = analyzeExp r env argExp,
            loc = loc}
-      | C.TPOPRIMAPPLY {argExp, instTyList, loc, argTy=_, oprimOp} =>
+      | C.TPOPRIMAPPLY {argExp, instTyList, loc, oprimOp} =>
         D.TPOPRIMAPPLY
           {oprimOp = analyzeOPrimInfo r env oprimOp,
            instTyList = map (analyzeTy r env) instTyList,
@@ -975,6 +1118,19 @@ struct
            elemTy = analyzeTy r env elemTy,
            ruleBodyTy = analyzeTy r env ruleBodyTy,
            loc = loc}
+      | C.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy=_, instTyList, loc} =>
+        let
+          val existInstMap = analyzeExp r env existInstMap
+          val exp as (_, expTy) = analyzeExp r env exp
+          val instTyList = map (analyzeTy r env) instTyList
+        in
+          export r expTy;
+          D.TPDYNAMICEXISTTAPP
+            {existInstMap = existInstMap,
+             exp = exp,
+             instTyList = instTyList,
+             loc = loc}
+        end
 
   and analyzeMatch r env {args, body} =
       let
@@ -1018,11 +1174,9 @@ struct
 
   and analyzeDecl r env tpdecl =
       case tpdecl of
-        C.TPEXD (binds, loc) =>
+        C.TPEXD (exnInfo, loc) =>
         D.TPEXD
-          (map (fn {exnInfo, loc} =>
-                   {exnInfo = analyzeExnInfo r env exnInfo, loc = loc})
-               binds,
+          (analyzeExnInfo r env exnInfo,
            loc)
       | C.TPEXNTAGD ({exnInfo, varInfo}, loc) =>
         let
@@ -1056,23 +1210,26 @@ struct
           D.TPEXTERNVAR ({path = path, ty = ty}, provider)
         end
       | C.TPEXPORTEXN exn =>
-        (case ExnID.Map.find (#exnEnv (#env env), #id exn) of
-           NONE => raise bug "analyzeDecl: TPEXPORTEXN"
-         | SOME {ty,...} => export r ty;
-         D.TPEXPORTEXN exn)
-      | C.TPEXPORTVAR var =>
-        (case VarID.Map.find (#varEnv (#env env), #id var) of
-           NONE => raise bug "analyzeDecl: TPEXPORTVAR"
-         | SOME {ty,...} => export r ty;
-         D.TPEXPORTVAR var)
-      | C.TPEXPORTRECFUNVAR (x as {var, arity}) =>
-        (case VarID.Map.find (#varEnv (#env env), #id var) of
-           NONE => raise bug "analyzeDecl: TPEXPORTRECFUNVAR"
-         | SOME {ty,...} => export r ty;
-         D.TPEXPORTRECFUNVAR x)
-      | C.TPVAL (binds, loc) =>
+        let
+          val ty =
+              case ExnID.Map.find (#exnEnv (#env env), #id exn) of
+                NONE => raise bug "analyzeDecl: TPEXPORTEXN"
+              | SOME (exn as {ty,...}) => (export r ty; ty)
+        in
+          D.TPEXPORTEXN (exn # {ty = ty})
+        end
+      | C.TPEXPORTVAR {var={path, ty}, exp} =>
+        let
+          val ty = analyzeTy r env ty
+          val exp = analyzeExp r env exp
+        in
+          export r ty;
+          equal r (ty, #2 exp);
+          D.TPEXPORTVAR {var = {path = path, ty = ty}, exp = exp}
+        end
+      | C.TPVAL ((var, exp), loc) =>
         D.TPVAL
-          (map (fn (var, exp) => (var, analyzeExp r env exp)) binds,
+          ((var, analyzeExp r env exp),
            loc)
       | C.TPVALREC (recbinds, loc) =>
         D.TPVALREC (analyzeRecbinds r env recbinds, loc)
@@ -1102,7 +1259,7 @@ struct
   and analyzeRecbinds r env recbinds =
       let
         val recbinds =
-            map (fn {var, exp, expTy=_} =>
+            map (fn {var, exp} =>
                     {var = analyzeVarInfo r env var, exp = exp})
                 recbinds
         val env = addVars env (map #var recbinds)
@@ -1319,6 +1476,8 @@ struct
         T.SINGLETONty (compileSingletonTy env sty)
       | T.DUMMYty (id, kind) =>
         T.DUMMYty (id, compileKind env kind)
+      | T.EXISTty (id, kind) =>
+        T.EXISTty (id, compileKind env kind)
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => compileTy env ty
       | T.BOUNDVARty id =>
         (case BoundTypeVarID.Map.find (#subst env, id) of
@@ -1345,8 +1504,8 @@ struct
         end
       | T.ERRORty =>
         raise bug "compileTy: ERRORty never occur"
-      | T.BACKENDty _ =>
-        raise bug "compileTy: BACKENDty never occur"
+      | T.BACKENDty bty =>
+        T.BACKENDty (compileBackendTy env bty)
       | T.TYVARty (ref (T.TVAR _)) =>
         raise bug "compileTy: TVAR never occur"
 
@@ -1396,6 +1555,58 @@ struct
               args = (compileTy env ty1, compileTy env ty2),
               loc = loc}
 
+  and compileBackendTy env backendTy =
+      case backendTy of
+        T.RECORDSIZEty ty =>
+        T.RECORDSIZEty (compileTy env ty)
+      | T.RECORDBITMAPINDEXty (i, ty) =>
+        T.RECORDBITMAPINDEXty (i, compileTy env ty)
+      | T.RECORDBITMAPty (i, ty) =>
+        T.RECORDBITMAPty (i, compileTy env ty)
+      | T.CCONVTAGty codeEntryTy =>
+        T.CCONVTAGty (compileCodeEntryTy env codeEntryTy)
+      | T.FUNENTRYty codeEntryTy =>
+        T.FUNENTRYty (compileCodeEntryTy env codeEntryTy)
+      | T.CALLBACKENTRYty {tyvars, haveClsEnv, argTyList, retTy, attributes} =>
+        let
+          val (env, btv) = compileBtvEnv env (tyvars, nil)
+          val btvEnv =
+              case btv of
+                NONE => BoundTypeVarID.Map.empty
+              | SOME {btvEnv, ...} => btvEnv
+        in
+          T.CALLBACKENTRYty
+            {tyvars = btvEnv,
+             haveClsEnv = haveClsEnv,
+             argTyList = map (compileTy env) argTyList,
+             retTy = Option.map (compileTy env) retTy,
+             attributes = attributes}
+        end
+      | T.SOME_FUNENTRYty => T.SOME_FUNENTRYty
+      | T.SOME_FUNWRAPPERty => T.SOME_FUNWRAPPERty
+      | T.SOME_CLOSUREENVty => T.SOME_CLOSUREENVty
+      | T.SOME_CCONVTAGty => T.SOME_CCONVTAGty
+      | T.FOREIGNFUNPTRty {argTyList, varArgTyList, resultTy, attributes} =>
+        T.FOREIGNFUNPTRty
+          {argTyList = map (compileTy env) argTyList,
+           varArgTyList = Option.map (map (compileTy env)) varArgTyList,
+           resultTy = Option.map (compileTy env) resultTy,
+           attributes = attributes}
+
+  and compileCodeEntryTy env {tyvars, haveClsEnv, argTyList, retTy} =
+        let
+          val (env, btv) = compileBtvEnv env (tyvars, nil)
+          val btvEnv =
+              case btv of
+                NONE => BoundTypeVarID.Map.empty
+              | SOME {btvEnv, ...} => btvEnv
+        in
+          {tyvars = btvEnv,
+           haveClsEnv = haveClsEnv,
+           argTyList = map (compileTy env) argTyList,
+           retTy = compileTy env retTy}
+        end
+
   and compileSingletonTy env sty =
       case sty of
         T.INSTCODEty selector =>
@@ -1416,11 +1627,11 @@ struct
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
         T.OVERLOAD_EXVAR
           {exVarInfo = exVarInfo,
-           instTyList = map (compileTy env) instTyList}
+           instTyList = Option.map (map (compileTy env)) instTyList}
       | T.OVERLOAD_PRIM {primInfo, instTyList} =>
         T.OVERLOAD_PRIM
           {primInfo = primInfo,
-           instTyList = map (compileTy env) instTyList}
+           instTyList = Option.map (map (compileTy env)) instTyList}
       | T.OVERLOAD_CASE (ty, matches) =>
         T.OVERLOAD_CASE
           (compileTy env ty,
@@ -1485,6 +1696,11 @@ struct
         ()
       end
 
+  fun single (x:C.tpdecl, y:D.env) = ([x], y)
+  fun multi decs : C.tpdecl list * D.env =
+      (map #1 decs,
+       foldl (fn ((_, x), z) => D.extendEnv (z, x)) D.emptyEnv decs)
+
   fun compileFFIty env ffity =
       case ffity of
         C.FFIBASETY (ty, loc) =>
@@ -1529,13 +1745,12 @@ struct
       | C.TPPATDATACONSTRUCT {argPatOpt, conPat, instTyList, loc, patTy} =>
         D.TPPATDATACONSTRUCT
           {conPat = conPat,
-           instTyList = map (compileTy env) instTyList,
+           instTyList = Option.map (map (compileTy env)) instTyList,
            argPatOpt = Option.map (compilePat env) argPatOpt,
            loc = loc}
-      | C.TPPATEXNCONSTRUCT {argPatOpt, exnPat, instTyList, loc, patTy} =>
+      | C.TPPATEXNCONSTRUCT {argPatOpt, exnPat, loc, patTy} =>
         D.TPPATEXNCONSTRUCT
           {exnPat = compileExnCon env exnPat,
-           instTyList = map (compileTy env) instTyList,
            argPatOpt = Option.map (compilePat env) argPatOpt,
            loc = loc}
       | C.TPPATLAYERED {asPat, loc, varPat} =>
@@ -1568,16 +1783,16 @@ struct
         D.TPSIZEOF (compileTy env ty, loc)
       | C.TPREIFYTY (ty, loc) =>
         D.TPREIFYTY (compileTy env ty, loc)
-      | C.TPEXN_CONSTRUCTOR {exnInfo, loc} =>
+      | C.TPEXNTAG {exnInfo, loc} =>
         (case ExnID.Map.find (#exnEnv (#env env), #id exnInfo) of
-           NONE => raise bug "compileExp: TPEXN_CONSTRUCTOR"
+           NONE => raise bug "compileExp: TPEXNTAG"
          | SOME {ty,...} =>
-           D.TPEXN_CONSTRUCTOR {exnInfo = exnInfo # {ty = ty}, loc = loc})
-      | C.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
+           D.TPEXNTAG {exnInfo = exnInfo # {ty = ty}, loc = loc})
+      | C.TPEXEXNTAG {exExnInfo, loc} =>
         (case LongsymbolEnv.find (#exExnEnv (#env env), #path exExnInfo) of
-           NONE => raise bug "compileExp: TPEXN_CONSTRUCTOR"
+           NONE => raise bug "compileExp: TPEXNTAG"
          | SOME {ty,...} =>
-           D.TPEXEXN_CONSTRUCTOR {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
+           D.TPEXEXNTAG {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
       | C.TPEXVAR var =>
         (case LongsymbolEnv.find (#exVarEnv (#env env), #path var) of
            NONE => 
@@ -1594,56 +1809,18 @@ struct
         D.TPRECFUNVAR {arity = arity, var = compileVar env var}
       | C.TPCAST ((exp, ty1), ty2, loc) =>
         D.TPCAST
-          ((compileExp env exp, ty1),
-           ty2,
+          ((compileExp env exp, compileTy env ty1),
+           compileTy env ty2,
            loc)
-      | C.TPDATACONSTRUCT {argExpOpt, con, argTyOpt, instTyList, loc} =>
-        let
-          val instTyList = map (compileTy env) instTyList
-          val argExpOpt = Option.map (compileExp env) argExpOpt
-        in
-          case (TypesBasics.derefTy (#ty con), instTyList) of
-            (T.POLYty {boundtvars, constraints, ...}, nil) =>
-            let
-              val (env, btv) = compileBtvEnv env (boundtvars, constraints)
-              val _ =
-                  if !Control.verbosePolyTyElim > 0
-                  then benchmark (boundtvars, btv)
-                  else ()
-            in
-              case btv of
-                NONE => dummyExp env loc
-              | SOME {btvEnv, constraints, subst, ...} =>
-                if equalBtvEnv (boundtvars, btvEnv)
-                then
-                  D.TPDATACONSTRUCT
-                    {con = con,
-                     instTyList = instTyList,
-                     argExpOpt = argExpOpt,
-                     loc = loc}
-                else
-                  D.TPPOLY
-                    {btvEnv = btvEnv,
-                     constraints = constraints,
-                     exp =
-                       D.TPDATACONSTRUCT
-                         {con = con,
-                          instTyList = BoundTypeVarID.Map.listItems subst,
-                          argExpOpt = argExpOpt,
-                          loc = loc},
-                     loc = loc}
-            end
-          | _ =>
-            D.TPDATACONSTRUCT
-              {con = con,
-               instTyList = instTyList,
-               argExpOpt = argExpOpt,
-               loc = loc}
-        end
-      | C.TPEXNCONSTRUCT {argExpOpt, exn, argTyOpt, instTyList, loc} =>
+      | C.TPDATACONSTRUCT {argExpOpt, con, instTyList, loc} =>
+        D.TPDATACONSTRUCT
+          {con = con,
+           instTyList = Option.map (map (compileTy env)) instTyList,
+           argExpOpt = Option.map (compileExp env) argExpOpt,
+           loc = loc}
+      | C.TPEXNCONSTRUCT {argExpOpt, exn, loc} =>
         D.TPEXNCONSTRUCT
           {exn = compileExnCon env exn,
-           instTyList = map (compileTy env) instTyList,
            argExpOpt = Option.map (compileExp env) argExpOpt,
            loc = loc}
       | C.TPFFIIMPORT {funExp = C.TPFFIFUN (funExp, _), ffiTy, stubTy, loc} =>
@@ -1656,6 +1833,27 @@ struct
           {funExp = symbol,
            ffiTy = compileFFIty env ffiTy,
            loc = loc}
+      | C.TPFOREIGNSYMBOL {name, ty, loc} =>
+        D.TPFOREIGNSYMBOL
+          {name = name,
+           ty = compileTy env ty,
+           loc = loc}
+      | C.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+        D.TPFOREIGNAPPLY
+          {funExp = compileExp env funExp,
+           argExpList = map (compileExp env) argExpList,
+           loc = loc}
+      | C.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+        let
+          val argVarList = map (compileVarInfo env) argVarList
+        in
+          D.TPCALLBACKFN
+            {attributes = attributes,
+             argVarList = argVarList,
+             bodyExp = compileExp (addVars env argVarList) bodyExp,
+             isVoid = not (isSome resultTy),
+             loc = loc}
+        end
       | C.TPTAPP {exp, expTy, instTyList, loc} =>
         let
           val {boundtvars = oldbtv, ...} =
@@ -1706,34 +1904,6 @@ struct
                     exp = compileExp env exp,
                     loc = loc}
         end
-      | C.TPPOLYFNM {btvEnv, constraints, argVarList, bodyExp, bodyTy, loc} =>
-        let
-          val (env, btv) = compileBtvEnv env (btvEnv, constraints)
-          val _ =
-              if !Control.verbosePolyTyElim > 0
-              then benchmark (btvEnv, btv)
-              else ()
-        in
-          case btv of
-            NONE => dummyExp env loc
-          | SOME {btvEnv=newBtvEnv, constraints, ...} =>
-            let
-              val argVarList = map (compileVarInfo env) argVarList
-              val bodyExp = compileExp (addVars env argVarList) bodyExp
-            in
-              if BoundTypeVarID.Map.isEmpty newBtvEnv
-              then D.TPFNM
-                     {argVarList = argVarList,
-                      bodyExp = bodyExp,
-                      loc = loc}
-              else D.TPPOLYFNM
-                     {btvEnv = newBtvEnv,
-                      constraints = constraints,
-                      argVarList = argVarList,
-                      bodyExp = bodyExp,
-                      loc = loc}
-            end
-        end
       | C.TPFNM {argVarList, bodyExp, bodyTy, loc} =>
         let
           val argVarList = map (compileVarInfo env) argVarList
@@ -1754,13 +1924,77 @@ struct
            expList = map (compileExp env) expList,
            ruleList = map (compileMatch env) ruleList,
            loc = loc}
-      | C.TPLET {decls, body, tys, loc} =>
+      | C.TPSWITCH {exp, expTy, ruleList = C.CONSTCASE rules,
+                    defaultExp, ruleBodyTy, loc} =>
+        D.TPSWITCH_CONSTCASE
+          {exp = compileExp env exp,
+           ruleList = map (fn {const, ty, body} =>
+                              {const = const,
+                               ty = compileTy env ty,
+                               body = compileExp env body})
+                          rules,
+           defaultExp = compileExp env defaultExp,
+           loc = loc}
+      | C.TPSWITCH {exp, expTy, ruleList = C.CONCASE rules,
+                    defaultExp, ruleBodyTy, loc} =>
+        D.TPSWITCH_CONCASE
+          {exp = compileExp env exp,
+           ruleList =
+             map (fn {con, instTyList, argVarOpt, body} =>
+                     let
+                       val argVarOpt = Option.map (compileVarInfo env) argVarOpt
+                       val env2 = addVars env (optionToList argVarOpt)
+                     in
+                       {con = con,
+                        instTyList =
+                          Option.map (map (compileTy env)) instTyList,
+                        argVarOpt = argVarOpt,
+                        body = compileExp env2 body}
+                     end)
+                 rules,
+           defaultExp = compileExp env defaultExp,
+           loc = loc}
+      | C.TPSWITCH {exp, expTy, ruleList = C.EXNCASE rules,
+                    defaultExp, ruleBodyTy, loc} =>
+        D.TPSWITCH_EXNCASE
+          {exp = compileExp env exp,
+           ruleList =
+             map (fn {exn, argVarOpt, body} =>
+                     let
+                       val argVarOpt = Option.map (compileVarInfo env) argVarOpt
+                       val env2 = addVars env (optionToList argVarOpt)
+                     in
+                       {exn = compileExnCon env exn,
+                        argVarOpt = argVarOpt,
+                        body = compileExp env2 body}
+                     end)
+                 rules,
+           defaultExp = compileExp env defaultExp,
+           loc = loc}
+      | C.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+        D.TPTHROW
+          {catchLabel = catchLabel,
+           argExpList = map (compileExp env) argExpList,
+           resultTy = compileTy env resultTy,
+           loc = loc}
+      | C.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+        let
+          val argVarList = map (compileVarInfo env) argVarList
+        in
+          D.TPCATCH
+            {catchLabel = catchLabel,
+             tryExp = compileExp env tryExp,
+             argVarList = argVarList,
+             catchExp = compileExp (addVars env argVarList) catchExp,
+             loc = loc}
+        end
+      | C.TPLET {decls, body, loc} =>
         let
           val (decls, env) = compileDeclList env decls
         in
           D.TPLET
             {decls = decls,
-             body = map (compileExp env) body,
+             body = compileExp env body,
              loc = loc}
         end
       | C.TPMONOLET {binds, bodyExp, loc} =>
@@ -1772,10 +2006,6 @@ struct
              bodyExp = compileExp env bodyExp,
              loc = loc}
         end
-      | C.TPSEQ {expList, expTyList, loc} =>
-        D.TPSEQ
-          {expList = map (compileExp env) expList,
-           loc = loc}
       | C.TPRAISE {exp, ty, loc} =>
         D.TPRAISE
           {exp = compileExp env exp,
@@ -1808,13 +2038,13 @@ struct
            label = label,
            elementExp = compileExp env elementExp,
            loc = loc}
-      | C.TPPRIMAPPLY {argExp, instTyList, loc, argTy, primOp} =>
+      | C.TPPRIMAPPLY {argExp, instTyList, loc, primOp} =>
         D.TPPRIMAPPLY
           {primOp = primOp,
-           instTyList = map (compileTy env) instTyList,
+           instTyList = Option.map (map (compileTy env)) instTyList,
            argExp = compileExp env argExp,
            loc = loc}
-      | C.TPOPRIMAPPLY {argExp, instTyList, loc, argTy, oprimOp} =>
+      | C.TPOPRIMAPPLY {argExp, instTyList, loc, oprimOp} =>
         D.TPOPRIMAPPLY
           {oprimOp = oprimOp,
            instTyList = map (compileTy env) instTyList,
@@ -1865,6 +2095,12 @@ struct
            elemTy = compileTy env elemTy,
            ruleBodyTy = compileTy env ruleBodyTy,
            loc = loc}
+      | C.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy=_, instTyList, loc} =>
+        D.TPDYNAMICEXISTTAPP
+          {existInstMap = compileExp env existInstMap,
+           exp = compileExp env exp,
+           instTyList = map (compileTy env) instTyList,
+           loc = loc}
 
   and compileMatch env {args, body} =
       let
@@ -1888,20 +2124,19 @@ struct
   and compileDeclList env nil = (nil, env)
     | compileDeclList env (dec::decs) =
       let
-        val (dec, env1) = compileDecl env dec
-        val (decs, env) = compileDeclList (extendEnv env env1) decs
+        val (decs1, env1) = compileDecl env dec
+        val (decs2, env) = compileDeclList (extendEnv env env1) decs
       in
-        (dec::decs, env)
+        (decs1 @ decs2, env)
       end
 
   and compileDecl env tpdecl =
       case tpdecl of
-        C.TPEXD (binds, loc) =>
-        D.TPEXD
-          (map (fn {exnInfo, loc} =>
-                   {exnInfo = compileExnInfo env exnInfo, loc = loc})
-               binds,
-           loc)
+        C.TPEXD (exnInfo, loc) =>
+        single
+          (D.TPEXD
+             (compileExnInfo env exnInfo,
+              loc))
       | C.TPEXNTAGD ({exnInfo, varInfo}, loc) =>
         let
           val exnInfo = compileExnInfo env exnInfo
@@ -1910,30 +2145,29 @@ struct
                 NONE => raise bug "compileDecl: TPEXNTAGD"
               | SOME {ty,...} => varInfo # {ty = ty}
         in
-          D.TPEXNTAGD ({exnInfo = exnInfo, varInfo = varInfo}, loc)
+          single (D.TPEXNTAGD ({exnInfo = exnInfo, varInfo = varInfo}, loc))
         end
       | C.TPEXPORTEXN x =>
-        D.TPEXPORTEXN x
+        single (D.TPEXPORTEXN x)
       | C.TPBUILTINEXN x =>
-        D.TPBUILTINEXN x
-      | C.TPEXPORTVAR var =>
+        single (D.TPBUILTINEXN x)
+      | C.TPEXPORTVAR {var, exp} =>
         (* The type of var may not be changed. *)
-        D.TPEXPORTVAR (compileVar env var)
-      | C.TPEXPORTRECFUNVAR {arity, var} =>
-        (* The type of var may not be changed. *)
-        D.TPEXPORTRECFUNVAR {arity = arity, var = compileVar env var}
+        single (D.TPEXPORTVAR {var = var, exp = compileExp env exp})
       | C.TPEXTERNEXN x =>
-        D.TPEXTERNEXN x
+        single (D.TPEXTERNEXN x)
       | C.TPEXTERNVAR x =>
-        D.TPEXTERNVAR x
-      | C.TPVAL (binds, loc) =>
-        D.TPVAL
-          (map (fn (var, exp) => (var, compileExp env exp)) binds,
-           loc)
+        single (D.TPEXTERNVAR x)
+      | C.TPVAL ((var, exp), loc) =>
+        single
+          (D.TPVAL
+             ((var, compileExp env exp),
+              loc))
       | C.TPVALREC (recbinds, loc) =>
-        D.TPVALREC
-          (compileRecbinds env recbinds,
-           loc)
+        single
+          (D.TPVALREC
+             (compileRecbinds env recbinds,
+              loc))
       | C.TPVALPOLYREC {btvEnv, constraints, recbinds, loc} =>
         let
           val (env, btv) = compileBtvEnv env (btvEnv, constraints)
@@ -1944,22 +2178,23 @@ struct
         in
           case btv of
             NONE =>
-            D.TPVAL
+            multi
               (map (fn {var, ...} =>
-                       (var # {ty = dummyTy env}, dummyExp env loc))
-                   recbinds,
-               loc)
+                       D.TPVAL ((var # {ty = dummyTy env}, dummyExp env loc),
+                                loc))
+                   recbinds)
           | SOME {btvEnv=newBtvEnv, constraints, ...} =>
             if BoundTypeVarID.Map.isEmpty newBtvEnv
-            then D.TPVALREC (compileRecbinds env recbinds, loc)
-            else D.TPVALPOLYREC
-                   {btvEnv = newBtvEnv,
-                    constraints = constraints,
-                    recbinds = compileRecbinds env recbinds,
-                    loc = loc}
+            then single (D.TPVALREC (compileRecbinds env recbinds, loc))
+            else single
+                   (D.TPVALPOLYREC
+                      {btvEnv = newBtvEnv,
+                       constraints = constraints,
+                       recbinds = compileRecbinds env recbinds,
+                       loc = loc})
         end
       | C.TPFUNDECL (recbinds, loc) =>
-        D.TPFUNDECL (compileFunRecbinds env recbinds, loc)
+        single (D.TPFUNDECL (compileFunRecbinds env recbinds, loc))
       | C.TPPOLYFUNDECL {btvEnv, constraints, recbinds, loc} =>
         let
           val (env, btv) = compileBtvEnv env (btvEnv, constraints)
@@ -1970,25 +2205,26 @@ struct
         in
           case btv of
             NONE =>
-            D.TPVAL
-              (map (fn {funVarInfo, ...} =>
-                       (funVarInfo # {ty = dummyTy env}, dummyExp env loc))
-                   recbinds,
-               loc)
+            multi
+              (map (fn {funVarInfo = var, ...} =>
+                       D.TPVAL ((var # {ty = dummyTy env}, dummyExp env loc),
+                                loc))
+                   recbinds)
           | SOME {btvEnv=newBtvEnv, constraints, ...} =>
             if BoundTypeVarID.Map.isEmpty newBtvEnv
-            then D.TPFUNDECL (compileFunRecbinds env recbinds, loc)
-            else D.TPPOLYFUNDECL
-                   {btvEnv = newBtvEnv,
-                    constraints = constraints,
-                    recbinds = compileFunRecbinds env recbinds,
-                    loc = loc}
+            then single (D.TPFUNDECL (compileFunRecbinds env recbinds, loc))
+            else single
+                   (D.TPPOLYFUNDECL
+                      {btvEnv = newBtvEnv,
+                       constraints = constraints,
+                       recbinds = compileFunRecbinds env recbinds,
+                       loc = loc})
         end
 
   and compileRecbinds env recbinds =
       let
         val recbinds =
-            map (fn {var, exp, expTy=_} =>
+            map (fn {var, exp} =>
                     {var = compileVarInfo env var, exp = exp})
                 recbinds
         val env = addVars env (map #var recbinds)

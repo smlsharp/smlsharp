@@ -75,33 +75,6 @@ struct
                      'k BoundTypeVarID.Map.map formatter
   val formatFreeTyvar : FreeTypeVarID.id formatter
   val ftvName : int -> string
-  val format_IntInf_dec_ML : IntInf.int -> format
-  val format_Int64_dec_ML : Int64.int -> format
-  val format_Int32_dec_ML : Int32.int -> format
-  val format_Int16_dec_ML : Int16.int -> format
-  val format_Int8_dec_ML : Int8.int -> format
-  val format_int_dec_ML : int -> format
-  val format_Word64_hex_ML : Word64.word -> format
-  val format_Word32_hex_ML : Word32.word -> format
-  val format_Word16_hex_ML : Word16.word -> format
-  val format_Word8_hex_ML : Word8.word -> format
-  val format_word_hex_ML : word -> format
-  val format_Real64_ML : Real64.real -> format
-  val format_Real32_ML : Real32.real -> format
-  val format_string_ML : string -> format
-  val format_char_ML : char -> format
-  val format_Int64_dec_C : Int64.int -> format
-  val format_Int32_dec_C : Int32.int -> format
-  val format_Int16_dec_C : Int16.int -> format
-  val format_Int8_dec_C : Int8.int -> format
-  val format_int_dec_C : int -> format
-  val format_Word64_hex_C : Word64.word -> format
-  val format_Word32_hex_C : Word32.word -> format
-  val format_Word16_hex_C : Word16.word -> format
-  val format_Word8_hex_C : Word8.word -> format
-  val format_word_hex_C : word -> format
-  val format_string_C : string -> format
-  val format_char_C : char -> format
   structure FormatComb =
   struct
     type 'a fmt (= boxed)
@@ -117,9 +90,6 @@ struct
                       -> (('r,'c) comb -> 'c, 'n) comb -> 'n) comb
     val nest_ : ('r, int -> (('r,'c) comb -> 'c, 'n) comb -> 'n) comb
     val puts : (format, (unit, 'n) comb -> 'n) comb
-    val int : int formatter
-    val word : word formatter
-    val string : string formatter
     val term : string -> format
     val list : 'a formatter -> 'a list formatter
     val assocList : 'k formatter * 'v formatter -> ('k * 'v) list formatter

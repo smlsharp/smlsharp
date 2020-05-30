@@ -126,36 +126,6 @@ structure TermFormat :> sig
   val formatFreeTyvar : FreeTypeVarID.id formatter
   val ftvName : int -> string
 
-  (* formatting constant literals *)
-  val format_IntInf_dec_ML : IntInf.int -> format
-  val format_Int64_dec_ML : Int64.int -> format
-  val format_Int32_dec_ML : Int32.int -> format
-  val format_Int16_dec_ML : Int16.int -> format
-  val format_Int8_dec_ML : Int8.int -> format
-  val format_int_dec_ML : int -> format
-  val format_Word64_hex_ML : Word64.word -> format
-  val format_Word32_hex_ML : Word32.word -> format
-  val format_Word16_hex_ML : Word16.word -> format
-  val format_Word8_hex_ML : Word8.word -> format
-  val format_word_hex_ML : word -> format
-  val format_string_ML : string -> format
-  val format_char_ML : char -> format
-  val format_Real64_ML : Real64.real -> format
-  val format_Real32_ML : Real32.real -> format
-
-  val format_Int64_dec_C : Int64.int -> format
-  val format_Int32_dec_C : Int32.int -> format
-  val format_Int16_dec_C : Int16.int -> format
-  val format_Int8_dec_C : Int8.int -> format
-  val format_int_dec_C : int -> format
-  val format_Word64_hex_C : Word64.word -> format
-  val format_Word32_hex_C : Word32.word -> format
-  val format_Word16_hex_C : Word16.word -> format
-  val format_Word8_hex_C : Word8.word -> format
-  val format_word_hex_C : word -> format
-  val format_string_C : string -> format
-  val format_char_C : char -> format
-
   (* combinators for writing formatters by hand *)
   structure FormatComb : sig
     type 'a fmt
@@ -172,9 +142,6 @@ structure TermFormat :> sig
     val nest_ : ('r, int -> (('r,'c) comb -> 'c, 'n) comb -> 'n) comb
 
     val puts : (format, (unit, 'n) comb -> 'n) comb
-    val int : int formatter
-    val word : word formatter
-    val string : string formatter
     val term : string -> format
     val list : 'a formatter -> 'a list formatter
     val assocList : 'k formatter * 'v formatter -> ('k * 'v) list formatter
@@ -641,102 +608,9 @@ struct
 *)
       end
 
-  (**** formatters for constant literals ****)
-
-  fun cminus str =
-      String.map (fn #"~" => #"-" | x => x) str
-  fun prepend prefix str =
-      if String.isPrefix "~" str
-      then "~" ^ prefix ^ String.extract (str, 1, NONE)
-      else prefix ^ str
-  fun toLower str =
-      String.map Char.toLower str
-
-  fun format_dec_MLi fmt x =
-      [term (fmt StringCvt.DEC x)]
-  fun format_dec_MLw fmt x =
-      [term (prepend "0w" (fmt StringCvt.DEC x))]
-  fun format_dec_C fmt x =
-      [term (cminus (fmt StringCvt.DEC x))]
-  fun format_hex_MLi fmt x =
-      [term (prepend "0x" (toLower (fmt StringCvt.HEX x)))]
-  fun format_hex_MLw fmt x =
-      [term (prepend "0wx" (toLower (fmt StringCvt.HEX x)))]
-  fun format_hex_C fmt x =
-      [term (cminus (prepend "0x" (toLower (fmt StringCvt.HEX x))))]
-
-  fun format_IntInf_dec_ML x = format_dec_MLi IntInf.fmt x
-  fun format_Int64_dec_ML x = format_dec_MLi Int64.fmt x
-  fun format_Int32_dec_ML x = format_dec_MLi Int32.fmt x
-  fun format_Int16_dec_ML x = format_dec_MLi Int16.fmt x
-  fun format_Int8_dec_ML x = format_dec_MLi Int8.fmt x
-  fun format_int_dec_ML x = format_dec_MLi Int.fmt x
-  fun format_Word64_hex_ML x = format_hex_MLw Word64.fmt x
-  fun format_Word32_hex_ML x = format_hex_MLw Word32.fmt x
-  fun format_Word16_hex_ML x = format_hex_MLw Word16.fmt x
-  fun format_Word8_hex_ML x = format_hex_MLw Word8.fmt x
-  fun format_word_hex_ML x = format_hex_MLw Word.fmt x
-  fun format_Real64_ML x = [term (Real64.fmt StringCvt.EXACT x)]
-  fun format_Real32_ML x = [term (Real32.fmt StringCvt.EXACT x)]
-  fun format_Int64_dec_C x = format_dec_C Int64.fmt x
-  fun format_Int32_dec_C x = format_dec_C Int32.fmt x
-  fun format_Int16_dec_C x = format_dec_C Int16.fmt x
-  fun format_Int8_dec_C x = format_dec_C Int8.fmt x
-  fun format_int_dec_C x = format_dec_C Int.fmt x
-  fun format_Word64_hex_C x = format_hex_C Word64.fmt x
-  fun format_Word32_hex_C x = format_hex_C Word32.fmt x
-  fun format_Word16_hex_C x = format_hex_C Word16.fmt x
-  fun format_Word8_hex_C x = format_hex_C Word8.fmt x
-  fun format_word_hex_C x = format_hex_C Word.fmt x
-
-  fun right (s, n) = String.extract (s, size s - n, NONE)
-  fun pad0 (s, n) = if size s > n then s else right ("0000" ^ s, n)
-  fun oct3 i = pad0 (Int.fmt StringCvt.OCT i, 3)
-  fun dec3 i = pad0 (Int.fmt StringCvt.DEC i, 3)
-  fun hex4 i = pad0 (Int.fmt StringCvt.HEX i, 4)
-
-  fun escapeML s =
-      String.translate
-        (fn #"\007" => "\\a"
-          | #"\008" => "\\b"
-          | #"\009" => "\\t"
-          | #"\010" => "\\n"
-          | #"\011" => "\\v"
-          | #"\012" => "\\f"
-          | #"\013" => "\\r"
-          | #"\092" => "\\\\"
-          | #"\034" => "\\\""
-          | c => if ord c < 128 andalso Char.isPrint c then str c
-                 else if ord c <= 999 then "\\" ^ dec3 (ord c)
-                 else "\\u" ^ hex4 (ord c))
-        s
-
-  fun escapeC s =
-      String.translate
-        (fn #"\008" => "\\b"
-          | #"\012" => "\\f"
-          | #"\010" => "\\n"
-          | #"\013" => "\\r"
-          | #"\009" => "\\t"
-          | #"\092" => "\\\\"
-          | #"\034" => "\\\""
-          | c => if ord c < 128 andalso Char.isPrint c then str c
-                 else if ord c < 256 then "\\" ^ oct3 (ord c)
-                 else "\\u" ^ hex4 (ord c))
-        s
-
-  fun format_string_ML s = [term ("\"" ^ escapeML s ^ "\"")]
-  fun format_string_C s = [term ("\"" ^ escapeC s ^ "\"")]
-  fun format_char_ML c = [term ("#\"" ^ escapeML (str c) ^ "\"")]
-  fun format_char_C #"\034" = [term "'\"'"]
-    | format_char_C c = [term ("'" ^ escapeC (str c) ^ "'")]
-
   structure FormatComb =
   struct
     open FormatComb
-    val int = format_int_dec_ML
-    val word = format_word_hex_ML
-    val string = format_string_ML
     fun list f l = formatEnclosedList (f, [term "["], [term ","], [term "]"]) l
     fun tuple f l = formatEnclosedList (f, [term "("], [term ","], [term ")"]) l
     fun tuple2 (f1, f2) (x1, x2) =
@@ -755,7 +629,7 @@ struct
   fun formatFormatExp exp =
       case exp of
         Term (n, s) =>
-        dsp :: Sequence (format_string_ML s)
+        dsp :: Sequence [term ("\"" ^ String.toString s ^ "\"")]
         :: (if size s = n then nil else [term ("(" ^ Int.toString n ^ ")")])
       | Newline => [dsp, term "\\n"]
       | Guard (assoc, exps) =>

@@ -43,19 +43,53 @@ in
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
         T.OVERLOAD_EXVAR
           {exVarInfo = evalExVarInfo btvMap exVarInfo,
-           instTyList = map (evalTy btvMap) instTyList
+           instTyList = Option.map (map (evalTy btvMap)) instTyList
           }
        | T.OVERLOAD_PRIM {primInfo, instTyList} =>
          T.OVERLOAD_PRIM
            {
             primInfo = evalPrimInfo btvMap primInfo,
-            instTyList = map (evalTy btvMap) instTyList
+            instTyList = Option.map (map (evalTy btvMap)) instTyList
            }
        | T.OVERLOAD_CASE (ty, map:T.overloadMatch TypID.Map.map) =>
          T.OVERLOAD_CASE
            (evalTy btvMap ty,
             TypID.Map.map (evalOverloadMatch btvMap) map
            )
+  and evalBackendTy btvMap backendTy =
+      case backendTy of
+        T.RECORDSIZEty ty =>
+        T.RECORDSIZEty (evalTy btvMap ty)
+      | T.RECORDBITMAPINDEXty (i, ty) =>
+        T.RECORDBITMAPINDEXty (i, evalTy btvMap ty)
+      | T.RECORDBITMAPty (i, ty) =>
+        T.RECORDBITMAPty (i, evalTy btvMap ty)
+      | T.CCONVTAGty codeEntryTy =>
+        T.CCONVTAGty (evalCodeEntryTy btvMap codeEntryTy)
+      | T.FUNENTRYty codeEntryTy =>
+        T.FUNENTRYty (evalCodeEntryTy btvMap codeEntryTy)
+      | T.CALLBACKENTRYty {tyvars, haveClsEnv, argTyList, retTy, attributes} =>
+        T.CALLBACKENTRYty
+          {tyvars = evalBtvEnv btvMap tyvars,
+           haveClsEnv = haveClsEnv,
+           argTyList = map (evalTy btvMap) argTyList,
+           retTy = Option.map (evalTy btvMap) retTy,
+           attributes = attributes}
+      | T.SOME_FUNENTRYty => T.SOME_FUNENTRYty
+      | T.SOME_FUNWRAPPERty => T.SOME_FUNWRAPPERty
+      | T.SOME_CLOSUREENVty => T.SOME_CLOSUREENVty
+      | T.SOME_CCONVTAGty => T.SOME_CCONVTAGty
+      | T.FOREIGNFUNPTRty {argTyList, varArgTyList, resultTy, attributes} =>
+        T.FOREIGNFUNPTRty
+          {argTyList = map (evalTy btvMap) argTyList,
+           varArgTyList = Option.map (map (evalTy btvMap)) varArgTyList,
+           resultTy = Option.map (evalTy btvMap) resultTy,
+           attributes = attributes}
+  and evalCodeEntryTy btvMap {tyvars, haveClsEnv, argTyList, retTy} =
+      {tyvars = evalBtvEnv btvMap tyvars,
+       haveClsEnv = haveClsEnv,
+       argTyList = map (evalTy btvMap) argTyList,
+       retTy = evalTy btvMap retTy}
   and evalExVarInfo (btvMap:btvMap) {path:longsymbol,ty:ty} : T.exVarInfo =
       {path=path, ty=evalTy btvMap ty}
   and evalPrimInfo (btvMap:btvMap) ({primitive, ty}:T.primInfo) : T.primInfo =
@@ -73,11 +107,13 @@ in
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (evalSingletonTy btvMap singletonTy)
       | T.BACKENDty backendTy =>
-        raise Bug.Bug "evalTy: BACKENDty"
+        T.BACKENDty (evalBackendTy btvMap backendTy)
       | T.ERRORty => 
         ty
       | T.DUMMYty (id, kind) =>
         T.DUMMYty (id, evalKind btvMap kind)
+      | T.EXISTty (id, kind) =>
+        T.EXISTty (id, evalKind btvMap kind)
       | T.TYVARty _ => raise bug "TYVARty in Optimize"
       | T.BOUNDVARty btv => 
         evalBtv btvMap btv

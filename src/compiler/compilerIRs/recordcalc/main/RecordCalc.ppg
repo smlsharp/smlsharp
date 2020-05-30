@@ -1,563 +1,236 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
- * @version $Id: RecordCalc.ppg,v 1.35 2008/08/06 17:23:40 ohori Exp $
+ * @author Katsuhiro Ueno
  *)
 structure RecordCalc =
 struct
 
+  local
+    open SMLFormat.FormatExpression
+    fun N0 x = [Guard (SOME {cut = true, strength = 0, direction = Neutral}, x)]
+  in
+  fun iftrue (x, y) true = x
+    | iftrue (x, y) false = y
+  fun ifsome (x, y) (SOME _) = x
+    | ifsome (x, y) NONE = y
+  fun ifcons (x, y) (_::_) = x
+    | ifcons (x, y) nil = y
+  fun ifsingle (x, y) [_] = x
+    | ifsingle (x, y) _ = y
+  fun N0ifnotsingle x [_] = x
+    | N0ifnotsingle x _ = N0 x
+  fun N0ifcons x (_::_) = N0 x
+    | N0ifcons x _ = x
+  end
+
+  (*%
+    @prefix helper_
+    @formatter(RecordLabel.label) RecordLabel.format_label
+   *)
+  type 'value RecordLabelMap =
+      (*%
+        @prefix helper_
+        @format(field fields)
+        fields(field)("," +1)
+        @format:field(label * value)
+        { label +d "=" 2[ +1 value ] }
+       *)
+      (RecordLabel.label * 'value) list
+
+  val helper_RecordLabelMap =
+      fn formatter => fn map =>
+         helper_RecordLabelMap formatter (RecordLabel.Map.listItemsi map)
+
   type loc = Loc.loc
 
-  (*% @formatter(Symbol.longsymbol) Symbol.format_longsymbol *)
   (*%
-   * @prefix formatWithoutType_
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+    @formatter(Types.ty) Types.format_ty
    *)
   (*% @prefix formatWithType_
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
-   *)
-  type path =
-      Symbol.longsymbol
-
-  (*%
-     @formatter(Types.ty) Types.format_ty
-   *)
-  (*%
-     @formatter(Types.ty) Types.format_ty
-     @prefix formatWithoutType_
-   *)
-  (*%
-     @prefix formatWithType_
-     @formatter(Types.ty) Types.format_ty
+    @formatter(Types.ty) Types.format_ty
    *)
   type ty =
-      (*% @format(ty) ty *)
-      (*% 
-          @prefix formatWithoutType_
-          @format(ty)
-       *)
-      (*% 
-          @prefix formatWithType_
-          @format(ty) ty
-       *)
       Types.ty
 
   (*%
-   * @formatter(VarID.id)  VarID.format_id
-   *)
-  (*%
-   * @prefix formatWithoutType_
-   * @formatter(VarID.id)  VarID.format_id
-   *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(VarID.id)  VarID.format_id
-   *)
-  type varInfo
-    = (*%
-       * @format({path, id, ty})  path"(" id ")"
-       *)
-      (*%
-       * @prefix formatWithoutType_
-       * @format({path, id, ty})  path"(" id ")"
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({path, id, ty})
-       * L2{ path "(" id ")" +1 ":" +d ty }
-       *)
-      {path:path, id:VarID.id, ty:ty}
-
-  (*% *)
-  (*%
-   * @prefix formatWithoutType_
-   *)
-  (*%
-   * @prefix formatWithType_
-   *)
-  type exVarInfo
-    = (*%
-       * @format({path, ty}) path
-       *)
-      (*%
-       * @prefix formatWithoutType_
-       * @format({path, ty}) path
-      *)
-      (*%
-       * @prefix formatWithType_
-       * @format({path, ty})
-       * L2{ path +1 ":" +d ty }
-       *)
-      {path:path, ty:ty}
-
-  (*%
-     @formatter(ConID.id)  ConID.format_id
-   *)
-  (*%
-     @prefix formatWithType_
-     @formatter(ConID.id)  ConID.format_id
-   *)
-  (*%
-     @prefix formatWithoutType_
-     @formatter(ConID.id)  ConID.format_id
-   *)
-  type conInfo
-    = (*% 
-          @prefix formatWithoutType_
-          @format({path, ty, id}) path 
-       *)
-      (*% 
-          @format({path, ty, id}) 
-          path "(" id ")" + ":" + ty
-       *)
-      (*% 
-          @prefix formatWithType_
-          @format({path, ty, id}) 
-          path "(" id ")" + ":" + ty
-       *)
-      (* ty is the type as a function *)
-      {path: path, ty: ty, id: ConID.id}
-
-  (*% 
-     @formatter(ExnID.id)  ExnID.format_id
-   *)
-  (*% 
-     @prefix formatWithType_
-     @formatter(ExnID.id)  ExnID.format_id
-   *)
-  (*% 
-      @prefix formatWithoutType_
-      @formatter(ExnID.id)  ExnID.format_id
-   *)
-  type exnInfo
-    = (*% 
-         @format({path, ty, id})
-           path "(" id ")" +d ":" +d ty
-       *)
-      (*% 
-         @prefix formatWithType_
-         @format({path, ty, id})
-           path "(" id ")" +d ":" +d ty
-       *)
-      (*% 
-         @prefix formatWithoutType_
-         @format({path, ty, id})
-           path "(" id ")"
-       *)
-      (* ty is the type as a function *)
-      {path: path, ty: ty, id: ExnID.id}
-
-  (*% 
-   *)
-  (*% 
-     @prefix formatWithType_
-   *)
-  (*% 
-      @prefix formatWithoutType_
-   *)
-  type exExnInfo
-    = (*% 
-          @format({path, ty})
-            path +d ":" +d ty
-       *)
-      (*% 
-          @prefix formatWithType_
-          @format({path, ty})
-            path +d ":" +d ty
-       *)
-      (*% 
-          @prefix formatWithoutType_
-          @format({path, ty})
-            path
-       *)
-      (* ty is the type as a function *)
-      {path: path, ty: ty}
-
-  (*% 
-     @formatter(TypedCalc.exnCon) TypedCalc.format_exnCon
+    @formatter(Types.btvEnv) Types.format_btvEnv
    *)
   (*% @prefix formatWithType_
-     @formatter(TypedCalc.exnCon) TypedCalc.formatWithType_exnCon
-   *)
-  (*% @prefix formatWithoutType_
-     @formatter(TypedCalc.exnCon) TypedCalc.format_exnCon
-   *)
-  datatype exnCon = datatype TypedCalc.exnCon
-
-  (*%
-   * @formatter(Types.primInfo) Types.format_primInfo
-   *)
-  (*% 
-     @prefix formatWithoutType_
-   * @formatter(Types.primInfo) Types.format_primInfo
-   *)
-  type primInfo =
-      Types.primInfo
-
-  (*% 
-      @formatter(OPrimID.id)  OPrimID.format_id 
-   *)
-  (*% 
-      @prefix formatWithType_
-      @formatter(OPrimID.id)  OPrimID.format_id 
-   *)
-  (*% 
-      @prefix formatWithoutType_
-      @formatter(OPrimID.id)  OPrimID.format_id 
-   *)
-  type oprimInfo
-    = (*% 
-         @format({path, id, ty}) 
-           path
-       *)
-      (*% 
-         @prefix formatWithType_
-         @format({path, id, ty}) 
-           path +d ":" +d ty
-       *)
-      (*% 
-         @prefix formatWithoutType_
-         @format({path, id, ty}) 
-           path
-       *)
-      (* ty is the polytype as a function *)
-      {ty : ty, path: path, id : OPrimID.id}
-
-  (*%
-   * @formatter(Types.btvEnv) Types.format_btvEnv
+    @formatter(Types.btvEnv) Types.format_btvEnv
    *)
   type btvEnv =
-      (*% @format(btv) btv *)
+      (*%
+        @format(btv)
+       *)
+      (*% @prefix formatWithType_
+        @format(btv) btv
+       *)
       Types.btvEnv
 
   (*%
-   * @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant
-   * @formatter(DynamicKind.size') DynamicKind.format_size'
-   * @formatter(DynamicKind.tag') DynamicKind.format_tag'
-   * @formatter(DynamicKind.index') DynamicKind.format_index'
+    @formatter(TypedLabmda.varInfo) TypedLambda.format_varInfo
    *)
-  datatype constant =
-      (*% @format(x) x *)
-      CONST of AbsynConst.constant
+  (*% @prefix formatWithType_
+    @formatter(TypedLabmda.varInfo) TypedLambda.formatWithType_varInfo
+   *)
+  type varInfo =
+      TypedLambda.varInfo
+
+  (*%
+    @formatter(Types.exVarInfo) Types.format_exVarInfo
+   *)
+  (*% @prefix formatWithType_
+    @formatter(Types.exVarInfo) Types.formatWithType_exVarInfo
+   *)
+  type exVarInfo =
+      Types.exVarInfo
+
+  (*%
+    @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   *)
+  datatype cast = datatype BuiltinPrimitive.cast
+
+  (*%
+    @formatter(TypedLambda.tlconst) TypedLambda.format_tlconst
+   *)
+  (*% @prefix formatWithType_
+    @formatter(TypedLambda.tlconst) TypedLambda.formatWithType_tlconst
+   *)
+  datatype tlconst = datatype TypedLambda.tlconst
+
+  (*%
+    @formatter(DynamicKind.size') DynamicKind.format_size'
+    @formatter(DynamicKind.tag') DynamicKind.format_tag'
+    @formatter(DynamicKind.index') DynamicKind.format_index'
+   *)
+  (*% @prefix formatWithType_
+    @formatter(DynamicKind.size') DynamicKind.format_size'
+    @formatter(DynamicKind.tag') DynamicKind.format_tag'
+    @formatter(DynamicKind.index') DynamicKind.format_index'
+   *)
+  datatype rcconst =
+      CONST of tlconst
     | (*% @format(x * ty) x *)
+      (*% @format(x * ty) { "size" +d ty } *)
       SIZE of DynamicKind.size' * ty
     | (*% @format(x * ty) x *)
+      (*% @format(x * ty) { "tag" +d ty } *)
       TAG of DynamicKind.tag' * ty
     | (*% @format(x * lab * ty) x *)
+      (*% @format(x * ty) { "index" +d ty } *)
       INDEX of DynamicKind.index' * RecordLabel.label * ty
 
   (*%
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(varInfo) formatWithType_varInfo
-   * @formatter(exVarInfo) formatWithType_exVarInfo
-   * @formatter(enclosedList) TermFormat.formatEnclosedList
-   * @formatter(appList) TermFormat.formatAppList
-   * @formatter(optionalList) TermFormat.formatOptionalList
-   * @formatter(declList) TermFormat.formatDeclList
-   * @formatter(recordExp) TermFormat.formatRecordExp
-   * @formatter(enclosedLabelEnv) TermFormat.formatEnclosedLabelEnv
-   * @formatter(option) TermFormat.formatOptionalOption
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(TypedCalc.ffiTy) TypedCalc.format_ffiTy
-   * @formatter(RecordLabel.label) RecordLabel.format_label
-   * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+    @formatter(TypedLambda.tlstring) TypedLambda.format_tlstring
    *)
-  (*% @prefix formatWithoutType_
-   * @formatter(bool) SmlppgUtil.formatBinaryChoice
-   * @formatter(ty) format_ty
-   * @formatter(constant) format_constant
-   * @formatter(btvEnv) format_btvEnv
-   * @formatter(enclosedList) TermFormat.formatEnclosedList
-   * @formatter(appList) TermFormat.formatAppList
-   * @formatter(optionalList) TermFormat.formatOptionalList
-   * @formatter(declList) TermFormat.formatDeclList
-   * @formatter(recordExp) TermFormat.formatRecordExp
-   * @formatter(enclosedLabelEnv) TermFormat.formatEnclosedLabelEnv
-   * @formatter(option) TermFormat.formatOptionalOption
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(TypedCalc.ffiTy) TypedCalc.format_ffiTy
-   * @formatter(RecordLabel.label) RecordLabel.format_label
-   * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+  (*% @prefix formatWithType_
+    @formatter(TypedLambda.tlstring) TypedLambda.formatWithType_tlstring
+   *)
+  datatype tlstring = datatype TypedLambda.tlstring
+
+  (*%
+    @formatter(iftrue) iftrue
+    @formatter(ifsome) ifsome
+    @formatter(ifcons) ifcons
+    @formatter(ifsingle) ifsingle
+    @formatter(N0ifnotsingle) N0ifnotsingle
+    @formatter(N0ifcons) N0ifcons
+    @formatter(RecordLabel.Map.map) helper_RecordLabelMap
+    @formatter(RecordLabel.label) RecordLabel.format_label
+    @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+    @formatter(Types.constraint) Types.format_constraint
+    @formatter(Types.oprimInfo) Types.format_oprimInfo
+    @formatter(TypedLambda.primInfo) TypedLambda.format_primInfo
+  *)
+  (*% @prefix formatWithType_
+    @formatter(iftrue) iftrue
+    @formatter(ifsome) ifsome
+    @formatter(ifcons) ifcons
+    @formatter(ifsingle) ifsingle
+    @formatter(N0ifnotsingle) N0ifnotsingle
+    @formatter(N0ifcons) N0ifcons
+    @formatter(RecordLabel.Map.map) helper_RecordLabelMap
+    @formatter(RecordLabel.label) RecordLabel.format_label
+    @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+    @formatter(Types.constraint) Types.format_constraint
+    @formatter(format_varInfo) format_varInfo
+    @formatter(format_exVarInfo) format_exVarInfo
+    @formatter(Types.oprimInfo) Types.format_oprimInfo
+    @formatter(cast) format_cast
+    @formatter(TypedLambda.primInfo) TypedLambda.formatWithType_primInfo
    *)
   datatype rcexp =
       (*%
-       * @format({funExp,
-       *          argExpList: argExp argExps,
-       *          attributes, resultTy,
-       *          loc})
-       * L8{ 1[
-       *   "_ffiapply"
-       *   +1 funExp
-       *   +1 argExps:appList(argExp)("(",",",")") ] }
+        @format(const * loc)
+        const
        *)
-      (*% @prefix formatWithoutType_
-       * @format({funExp,
-       *          argExpList: argExp argExps,
-       *          attributes, resultTy,
-       *          loc})
-       * L8{ 1[
-       *   "_ffiapply"
-       *   +1 funExp
-       *   +1 argExps:appList(argExp)("(",",",")") ] }
+      (*% @prefix formatWithType_
+        @format(const * loc)
+        const
        *)
-      RCFOREIGNAPPLY of
-      {
-        funExp : rcexp,
-        argExpList : rcexp list,
-        attributes : FFIAttributes.attributes,
-        resultTy : ty option,
-        loc : loc
-      }
+      RCCONSTANT of rcconst * loc
     | (*%
-       * @format({attributes, resultTy, argVarList: arg args, bodyExp, loc})
-       * L8{ 1[
-       *   "_callback"
-       *   +1
-       *    R1{ 1[
-       *     "fn" +d args:enclosedList(arg)("{",",","}")
-       *          +d "=>" +1 bodyExp ] }
-       * ] }
+        @format(string * loc)
+        string
        *)
-      (*% @prefix formatWithoutType_
-       * @format({attributes, resultTy, argVarList: arg args, bodyExp, loc})
-       * L8{ 1[
-       *   "_callback"
-       *   +1 
-       *    R1{ 1[
-       *     "fn" +d args:enclosedList(arg)
-       *                              ("{",",","}")
-       *          +d "=>" +1 bodyExp ] }
-       * ] }
+      (*% @prefix formatWithType_
+        @format(string * loc)
+        string
        *)
-      RCCALLBACKFN of
+      RCSTRING of tlstring * loc
+    | (*%
+        @format(var * loc) var
+       *)
+      (*% @prefix formatWithType_
+        @format(var * loc) var:format_varInfo
+       *)
+      RCVAR of varInfo * loc
+    | (*%
+        @format(var * loc) var
+       *)
+      (*% @prefix formatWithType_
+        @format(var * loc) var:format_exVarInfo
+       *)
+      (* extnernal variable imported through _require *)
+      RCEXVAR of exVarInfo * loc
+    | (*%
+        @format({argVarList:arg args, bodyTy, bodyExp, loc})
+        R1{
+          "fn" +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" +1 bodyExp
+        }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      (* ty is the type of rcexp  *)
+      RCFNM of
       {
-        attributes : FFIAttributes.attributes,
-        resultTy : ty option,
         argVarList : varInfo list,
+        bodyTy : ty,
         bodyExp : rcexp,
         loc : loc
       }
     | (*%
-       * @format(ty * loc)
-       * "_sizeof(" !N0{ ty ")" }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(ty * loc)
-          "_size"
-       *)
-      RCSIZEOF of ty * loc
-    | (*%
-       * @format(ty * loc)
-       * "_reifyty(" !N0{ ty ")" }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(ty * loc)
-          "_reifyty"
-       *)
-      RCREIFYTY of ty * loc
-    | (*%
-       * @format(ty * loc)
-       * "_tagof(" !N0{ ty ")" }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(ty * loc)
-          "_tag"
-       *)
-      RCTAGOF of ty * loc
-    | (*%
-       * @format(label * ty * loc)
-       * "_indexof(" !N0{ label "," +1 ty ")" }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(label * ty * loc)
-       * "_indexof(" label ")"
-       *)
-      RCINDEXOF of RecordLabel.label * ty * loc
-    | (*%
-       * @format({const, ty, loc}) const
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({const, ty, loc}) const
-       *)
-      RCCONSTANT of {const:constant, ty:ty, loc:loc}
-    | (*%
-       * @format({name,ty,loc})
-       * L2{ name +1 ":" +d ty }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({name,ty,loc})
-       * name
-       *)
-      RCFOREIGNSYMBOL of {name:string,ty:ty,loc:loc}
-    | (*%
-       * @format(var) var
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(var) var
-       *)
-      RCVAR of varInfo
-    | (*%
-       * @format(var) var
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(var) var
-       *)
-      RCEXVAR of exVarInfo
-    | (*%
-       * @format({primOp,
-       *          instTyList: instTy instTys,
-       *          argExp,
-       *          loc})
-       * L8{ 1[
-       *   "_prim(" !N0{ primOp ")" }
-       *   instTys:optionalList(instTy)(+1 "{",",","}")
-       *   +1 argExp ] }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({primOp,
-       *          instTyList: instTy instTys,
-       *          argExp,
-       *          loc})
-       * L8{ 1[
-       *   "_prim(" !N0{ primOp ")" }
-       *   instTys:optionalList(instTy)(+1 "{",",","}")
-       *   +1 argExp ] }
-       *)
-      RCPRIMAPPLY of
-      {
-        primOp : primInfo,
-        instTyList : ty list,
-        argExp : rcexp,
-        loc : loc
-      }
-    | (*%
-       * @format({oprimOp,
-       *          instTyList: instTy instTys,
-       *          argExp,
-       *          loc})
-       * L8{ 1[
-       *   "_oprim("
-       *   oprimOp
-       *   instTys:optionalList(instTy)(+1 "{",",","}")
-       *   +1 argExp ] }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({oprimOp,
-       *          instTyList: instTy instTys,
-       *          argExp,
-       *          loc})
-       * L8{ 1[
-       *   "_oprim("
-       *   oprimOp
-       *   instTys:optionalList(instTy)(+1 "{",",","}")
-       *   +1 argExp ] }
-       *)
-      RCOPRIMAPPLY of
-      {
-        oprimOp : oprimInfo,
-        instTyList : ty list,
-        argExp : rcexp,
-        loc : loc
-      }
-    | (*%
-       * @format({con,
-       *          instTyList: instTy instTys,
-       *          argExpOpt: arg argOpt,
-                  argTyOpt,
-       *          loc})
+        @format({funExp, funTy, argExpList:arg args, loc})
         L8{
-           1[
-             con
-             instTys:optionalList(instTy)(+1 "{",",","}")
-             argOpt(arg)(+1,)
-           ]
-         }
+          funExp
+          2[
+            +1
+            args:ifsingle()(,"{")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,"}")
+          ]
+        }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({con,
-       *          instTyList: instTy instTys,
-       *          argExpOpt: arg argOpt,
-                  argTyOpt,
-       *          loc})
-        L8{ 1[
-          con
-          argOpt(arg)(+1,) ]
-         }
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      RCDATACONSTRUCT of
-      {
-        con : conInfo,
-        instTyList : ty list,
-        argExpOpt : rcexp option,
-        argTyOpt: ty option,
-        loc : loc
-      }
-    | (*%
-       * @format({exn,
-       *          instTyList: instTy instTys,
-       *          argExpOpt: arg argOpt,
-       *          loc})
-       * L8{ 1[
-       *   exn
-       *   instTys:optionalList(instTy)(+1 "{",",","}")
-       *   argOpt(arg)(+1,) ] }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({exn,
-       *          instTyList: instTy instTys,
-       *          argExpOpt: arg argOpt,
-       *          loc})
-       * L8{ 1[
-       *   exn
-       *   argOpt(arg)(+1,) ] }
-       *)
-      RCEXNCONSTRUCT of
-      {
-        exn : exnCon,
-        instTyList : ty list,
-        argExpOpt : rcexp option,
-        loc : loc
-      }
-    | (*%
-         @format({exnInfo, loc}) 
-            "EXNCONSTRUCTOR(" exnInfo ")"
-      *)
-      (*%
-         @prefix formatWithoutType_
-         @format({exnInfo, loc}) 
-            "EXNCONSTRUCTOR(" exnInfo ")"
-      *)
-      RCEXN_CONSTRUCTOR of 
-      {
-       exnInfo: exnInfo,
-       loc: loc
-      }
-    | (*%
-         @format({exExnInfo, loc}) 
-            "External EXNCONSTRUCTOR(" exExnInfo ")"
-      *)
-      (*%
-         @prefix formatWithoutType_
-         @format({exExnInfo, loc}) 
-            "External EXNCONSTRUCTOR(" exExnInfo ")"
-      *)
-      RCEXEXN_CONSTRUCTOR of 
-      {
-       exExnInfo: exExnInfo,
-       loc: loc
-      }
-    | (*%
-       * @format({funExp, funTy, argExpList: argExp argExps, loc})
-       * L8{ 1[
-       *   L2{ funExp +1 ":" +d funTy }
-       *   +1 argExps:appList(argExp)("{",",","}") ] }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({funExp, funTy, argExpList: argExp argExps, loc})
-       * L8{ 1[
-       *   funExp
-       *   +1 argExps:appList(argExp)("{",",","}") ] }
-       *)
+      (* ty is the type of the function *)
       RCAPPM of
       {
         funExp : rcexp,
@@ -566,58 +239,70 @@ struct
         loc : loc
       }
     | (*%
-       * @format({binds: bind binds, bodyExp, loc})
-       * R1{
-       *   "let" 1[ +1 binds(bind)(+1) ]
-       *   +1 "in" 1[ +1 bodyExp ]
-       *   +1 "end"
-       * }
-       * @format:bind(var * exp)
-       * !R1{ 1[ "bind" +d var +d "="
-       *         +1 exp ] }
+        @format({exp, expTy, branches: rule rules, resultTy, defaultExp, loc})
+        R1{
+          { "switch" 2[ +1 exp +1 "of" ] }
+          +1
+          rules(rule)(+1 "|" +d)
+          rules:ifcons()(+1 "|" +d,)
+          { "_" +d "=>" +1 defaultExp }
+        }
+        @format:rule({const, body})
+        { const +d "=>" +1 body }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({binds: bind binds, bodyExp, loc})
-       * R1{
-       *   "let" 1[ +1 binds(bind)(+1) ]
-       *   +1 "in" 1[ +1 bodyExp ]
-       *   +1 "end"
-       * }
-       * @format:bind(var * exp)
-       * !R1{ 1[ "bind" +d var +d "="
-       *         +1 exp ] }
+      (*% @prefix formatWithType_
+        @ditto
        *)
-    RCMONOLET of
+      RCSWITCH of
       {
-        binds : (varInfo * rcexp) list,
-        bodyExp : rcexp,
+        exp : rcexp,
+        expTy : ty,
+        branches : {const : tlconst, body : rcexp} list,
+        defaultExp : rcexp,
+        resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({decls:dec decs, body:exp exps, tys:ty tys, loc:Loc})
-       * R1{
-       *   "let" 1[ decs:declList(dec)(+1,+1) ]
-       *   +1 "in" 1[ +1 exps(exp)(";" +1) ]
-       *   +1 "end"
-       * }
+        @format({primOp, instTyList:ty tys, argExpList: arg args, loc})
+        L8{
+          primOp
+          2[
+            +1
+            args:ifsingle()(,"{")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,"}")
+          ]
+        }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({decls:dec decs, body:exp exps, tys:ty tys, loc:Loc})
-       * R1{
-       *   "let" 1[ decs:declList(dec)(+1,+1) ]
-       *   +1 "in" 1[ +1 exps(exp)(";" +1) ]
-       *   +1 "end"
-       * }
+      (*% @prefix formatWithType_
+        @format({primOp, instTyList:ty tys, argExpList: arg args, loc})
+        L8{
+          primOp
+          2[
+            +1
+            tys:ifcons()("{",)
+            tys:N0ifcons()(tys(ty)("," +1))
+            tys:ifcons()("}",)
+            +1
+            args:ifsingle()(,"{")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,"}")
+          ]
+        }
        *)
-      RCLET of {decls:rcdecl list, body:rcexp list, tys:ty list, loc:loc}
+      RCPRIMAPPLY of
+      {
+        primOp : TypedLambda.primInfo,
+        instTyList : ty list,
+        argExpList : rcexp list,
+        loc : loc
+      }
     | (*%
-       * @format({fields: field fields, recordTy, loc})
-       * L2{ fields:recordExp(field)
-       *     +1 ":" +d recordTy }
+        @format({fields: field fields, recordTy, loc})
+        "{" !N0{ fields(field) } "}"
        *)
-      (*% @prefix formatWithoutType_
-       * @format({fields: field fields, recordTy, loc})
-       * fields:recordExp(field)
+      (*% @prefix formatWithType_
+        @ditto
        *)
       RCRECORD of
       {
@@ -626,52 +311,51 @@ struct
         loc : loc
       }
     | (*%
-       * @format({indexExp, label, exp, expTy, resultTy, loc})
-       * L2{ L8{ 1[
-       *   "#" "[" !N0{ indexExp "]" }
-       *   +1 L2{ exp +1 ":" +d expTy }
-       * ] } +1 ":" +d resultTy }
+        @format({label, indexExp, recordExp, recordTy, resultTy, loc})
+        L8{
+          "#" label
+          2[
+            1 "[" !N0{ indexExp } "]"
+            +1 recordExp
+          ]
+        }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({indexExp, label, exp, expTy, resultTy, loc})
-       * L8{ 1[
-       *   "#" indexExp
-       *   +1 exp
-       * ] }
+      (*% @prefix formatWithType_
+        @ditto
        *)
       RCSELECT of
       {
-        indexExp : rcexp,
         label : RecordLabel.label,
-        exp : rcexp,
-        expTy : ty,
+        indexExp : rcexp,
+        recordExp : rcexp,
+        recordTy : ty,
         resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({indexExp, label, recordExp, recordTy, elementExp, elementTy,
-       *          loc})
-       * L8{ 1[
-       *   L2{ recordExp +1 ":" +d recordTy }
-       *   +1 "#" +d "{"
-       *   !N0{ "[" !N0{ indexExp "]"} +d "=" 1[ +1
-       *     L2{ elementExp +1 ":" +d elementTy } ] "}" }
-       * ] }
+        @format({label, indexExp, recordExp, recordTy, elementExp, elementTy,
+                 loc})
+        L8{
+          recordExp
+          2[
+            +1 "#" +d "{"
+            !N0{
+              label
+              2[ 1 "[" !N0{ indexExp } "]" ]
+              +d "="
+              2[ +1 elementExp ]
+            }
+            "}"
+          ]
+        }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({indexExp, label, recordExp, recordTy, elementExp, elementTy,
-       *          loc})
-       * L8{ 1[
-       *   recordExp
-       *   +1 "#" +d "{"
-       *   !N0{ indexExp +d "=" 1[ +1
-       *     elementExp ] "}" }
-       * ] }
+      (*% @prefix formatWithType_
+        @ditto
        *)
       RCMODIFY of
       {
-        indexExp : rcexp,
         label : RecordLabel.label,
+        indexExp : rcexp,
         recordExp : rcexp,
         recordTy : ty,
         elementExp : rcexp,
@@ -679,32 +363,45 @@ struct
         loc : loc
       }
     | (*%
-       * @format({exp, ty, loc})
-       * L2{ R1{ 1[ "raise" +1 exp ] } +1 ":" +d ty }
+        @format({decl, body, loc})
+        N4{!N0{
+          { "let" 2[ +1 decl ] +1 "in" } +1 body
+        }}
        *)
-      (*% @prefix formatWithoutType_
-       * @format({exp, ty, loc})
-       * R1{ 1[ "raise" +1 exp ] }
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      RCRAISE of {exp:rcexp, ty:ty, loc:loc}
+      RCLET of
+      {
+        decl : rcdecl,
+        body : rcexp,
+        loc : loc
+      }
     | (*%
-       * @format({exp, exnVar, handler, resultTy, loc})
-       * R1{
-       *   exp
-       *   +1 1[ "handle" +d exnVar +d "=>" +1 handler ]
-       * }
+        @format({exp, resultTy, loc})
+        L7{ "raise" 2[ +1 exp ] }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({exp, exnVar, handler, resultTy, loc})
-       * R1{
-       *   exp
-       *   +1 1[ "handle" +d exnVar +d "=>" +1 handler ]
-       * }
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      (* handle (exp1, x, exp2)
-       *   exp1 the expression to be evaluated normally
-       *   x variable to received exception value
-       *   exp2 the handler body using x
+      RCRAISE of
+      {
+        exp : rcexp,
+        resultTy : ty,
+        loc : loc
+      }
+    | (*%
+        @format({exp, exnVar, handler, resultTy, loc})
+        R1{ exp +1 "handle" +d exnVar +d "=>" 2[ +1 handler ] }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      (*
+        handle (exp1, x, exp2)
+         exp1 the expression to be evaluated normally
+            x variable to received exception value
+         exp2 the handler body using x
        *)
       RCHANDLE of
       {
@@ -715,133 +412,45 @@ struct
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
-       * R1{
-       *   1[ { "case" +1 exp +1 "of" } ]
-       *   1[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp ]
-       * }
-       * @format:rule(con * var varOpt * exp)
-       * 1[ con varOpt(var)(+d,) +d "=>" +1 exp ]
+        @format({catchLabel, argExpList: arg args, resultTy, loc})
+        L8{
+          "RCTHROW"
+          +1 catchLabel
+          +1
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+        }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
-       * R1{
-       *   1[ { "case" +1 exp +1 "of" } ]
-       *   1[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp ]
-       * }
-       * @format:rule(con * var varOpt * exp)
-       * 1[ con varOpt(var)(+d,) +d "=>" +1 exp ]
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      RCCASE of
+      (* lightweight exception that never unwind call stack *)
+      RCTHROW of
       {
-        exp : rcexp,
-        expTy : ty,
-        ruleList : (conInfo * varInfo option * rcexp) list,
-        defaultExp : rcexp,
+        catchLabel : FunLocalLabel.id,
+        argExpList : rcexp list,
         resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
-       * R1{
-       *   1[ { "caseExn" +1 exp +1 "of" } ]
-       *   1[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp ]
-       * }
-       * @format:rule(exn * var varOpt * exp)
-       * 1[ exn varOpt(var)(+d,) +d "=>" +1 exp ]
+        @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
+                 loc})
+        R1{
+          tryExp
+          +1
+          "RCCATCH"
+          +d catchLabel +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" 2[ +1 catchExp ]
+        }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({exp, expTy, ruleList: rule rules, defaultExp, resultTy, loc})
-       * R1{
-       *   1[ { "caseExn" +1 exp +1 "of" } ]
-       *   1[ +1 ] rules(rule)( +1 "|" +d)
-       *   rules:ifCons()(+1 "|" +d) 1[ "_" +d "=>" +1 defaultExp ]
-       * }
-       * @format:rule(exn * var varOpt * exp)
-       * 1[ exn varOpt(var)(+d,) +d "=>" +1 exp ]
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      RCEXNCASE of
-      {
-        exp : rcexp,
-        expTy : ty,
-        ruleList : (exnCon * varInfo option * rcexp) list,
-        defaultExp : rcexp,
-        resultTy : ty,
-        loc : loc
-      }
-    | (*%
-       * @format({switchExp,
-       *          expTy,
-       *          branches: branch branches,
-       *          defaultExp,
-       *          resultTy,
-       *          loc})
-       * R1{
-       *   1[ { "switch"
-       *        +1 L2{ switchExp +1 ":" +d expTy }
-       *        +1 "of" } ]
-       *   1[ +1 ] branches(branch)( +1 "|" +d)
-       *   branches:ifCons()(+1 "|" +d)
-       *   1[ "_" +d "=>" +1 defaultExp ]
-       * }
-       * @format:branch(const * exp)
-       * 1[ const +d "=>" +1 exp ]
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({switchExp,
-       *          expTy,
-       *          branches: branch branches,
-       *          defaultExp,
-       *          resultTy,
-       *          loc})
-       * R1{
-       *   1[ { "switch"
-       *        +1 switchExp
-       *        +1 "of" } ]
-       *   1[ +1 ] branches(branch)( +1 "|" +d)
-       *   branches:ifCons()(+1 "|" +d)
-       *   1[ "_" +d "=>" +1 defaultExp ]
-       * }
-       * @format:branch(const * exp)
-       * 1[ const +d "=>" +1 exp ]
-       *)
-      (* switch e of ... | c => e ... | _ => e *)
-      RCSWITCH of
-      {
-        switchExp : rcexp,
-        expTy : ty,
-        branches : (constant * rcexp) list,
-        defaultExp : rcexp,
-        resultTy : ty,
-        loc : loc
-      }
-    | (*%
-       * @prefix formatWithoutType_
-       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
-       *          loc})
-       * R0{ tryExp
-       *     +1
-       *     !R0{ "_catch" +d
-       *          L8{ catchLabel
-       *              +1 1[ args:appList(arg)("{",",","}") ] }
-       *          +d "=>" 1[ +1 catchExp ] } }
-       *)
-      (*%
-       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
-       *          loc})
-       * L2{
-       *   R0{ tryExp
-       *     +1
-       *     !R0{ "_catch" +d
-       *          L8{ catchLabel
-       *              +1 1[ args:appList(arg)("{",",","}") ] }
-       *          +d "=>" 1[ +1 catchExp ] } }
-       *   +1 ":" +d resultTy }
-       *)
-      (* lightweight exception that unwind call stack *)
+      (* lightweight exception that never unwind call stack *)
       RCCATCH of
       {
         catchLabel : FunLocalLabel.id,
@@ -851,120 +460,32 @@ struct
         resultTy : ty,
         loc : loc
       }
-    | (*% @prefix formatWithoutType_
-       * @format({catchLabel, argExpList: arg args, resultTy, loc})
-       * R0{ "_throw"
-       *     1[ +1 L8{ catchLabel
-       *               +1 1[ args:appList(arg)("{",",","}") ] } ] }
-       *)
-      (*%
-       * @format({catchLabel, argExpList: arg args, resultTy, loc})
-       * L2{
-       *   R0{ "_throw"
-       *     1[ +1 L8{ catchLabel
-       *               +1 1[ args:appList(arg)("{",",","}") ] } ] }
-       *   +1 ":" +d resultTy }
-       *)
-      (* lightweight exception that does not unwind call stack *)
-      RCTHROW of
-      {
-        catchLabel : FunLocalLabel.id,
-        argExpList : rcexp list,
-        resultTy : ty,
-        loc : loc
-      }
     | (*%
-       * @format({argVarList: arg args, bodyTy, bodyExp, loc})
-       * R1{ 1[
-       *   "fn"
-       *   +d args:enclosedList(arg)("{",",","}")
-       *   1[ +1 ":" +d bodyTy ] +d "=>"
-       *   +1 bodyExp ] }
+        @format({btvEnv, constraints, expTyWithoutTAbs, exp, loc})
+        exp
        *)
-      (*% @prefix formatWithoutType_
-       * @format({argVarList: arg args, bodyTy, bodyExp, loc})
-       * R1{ 1[
-       *   "fn"
-       *   +d args:enclosedList(arg)("{",",","}")
-       *   +d "=>"
-       *   +1 bodyExp ] }
+      (*% @prefix formatWithType_
+        @format({btvEnv, constraints, expTyWithoutTAbs, exp, loc})
+        "[" !N0{ { btvEnv } "." +1 exp } "]"
        *)
-      (** \lambda(x1,....,xn).e *)
-      RCFNM of
-      {
-        argVarList : varInfo list,
-        bodyTy : ty,
-        bodyExp : rcexp,
-        loc : loc
-      }
-    | (*%
-       * @format({btvEnv: btv, argVarList: arg args, bodyTy, bodyExp, loc})
-       * !R1{ "[" 1[
-       * btv "." +1
-       * 1[
-       *   "fn"
-       *   +d args:enclosedList(arg)("{",",","}")
-       *   1[ +1 ":" +d bodyTy ] +d "=>"
-       *   +1 bodyExp ]
-       * "]" ] }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({btvEnv: btv, argVarList: arg args, bodyTy, bodyExp, loc})
-       * !R1{ "[" 1[
-       * btv "." +1
-       * 1[
-       *   "fn"
-       *   +d args:enclosedList(arg)("{",",","}")
-       *   +d "=>"
-       *   +1 bodyExp ]
-       * "]" ] }
-       *)
-       (* \forall t.\fn x => e
-        * ty is the type of rcexp without type abstraction
-        *)
-      RCPOLYFNM of
-      {
-        btvEnv : btvEnv,
-        argVarList : varInfo list,
-        bodyTy : ty,
-        bodyExp : rcexp,
-        loc : loc
-      }
-    | (*%
-       * @format({btvEnv: btv, expTyWithoutTAbs, exp, loc})
-       * !R1{ "[" 1[
-       *   btv "." +1
-       *   L2{ exp
-       *       +1 ":" +d expTyWithoutTAbs }
-       * "]" ] }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({btvEnv: btv, expTyWithoutTAbs, exp, loc})
-       * !R1{ "[" 1[
-       *   btv "." +1
-       *   exp
-       * "]" ] }
-       *)
-       (* \forall t.e
-        * ty is the type of tpexp without type abstraction
-        *)
+      (* \forall t.e;  ty is the type of rcexp without type abstraction *)
       RCPOLY of
       {
         btvEnv : btvEnv,
+        constraints : Types.constraint list,
         expTyWithoutTAbs : ty,
         exp : rcexp,
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, instTyList: instTy instTys, loc})
-       * L8{ 1[
-       *   L2{ exp +1 ":" +d expTy }
-       *   instTys:optionalList(instTy)(+1 "{",",","}") ] }
+        @format({exp, expTy, instTyList:ty tys, loc})
+        exp
        *)
-      (*% @prefix formatWithoutType_
-       * @format({exp, expTy, instTyList: instTy instTys, loc})
-          exp
+      (*% @prefix formatWithType_
+        @format({exp, expTy, instTyList:ty tys, loc})
+        L8{ exp 2[ +1 "{" !N0{ tys(ty)("," +1) } "}" ] }
        *)
+      (* RCTAPP(ex,ty1,tyl) : ty1 is the polytype, tyl are type args *)
       RCTAPP of
       {
         exp : rcexp,
@@ -973,291 +494,167 @@ struct
         loc : loc
       }
     | (*%
-       * @format({expList: exp exps, expTyList: ty tys, loc})
-       * exps:enclosedList(exp)("(",";",")")
+        @format({name, ty, loc})
+        L8{ "RCFOREIGNSYMBOL" 2[ +1 "(" name ")" ] }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({expList: exp exps, expTyList: ty tys, loc})
-       * exps:enclosedList(exp)("(",";",")")
+      (*% @prefix formatWithType_
+        @format({name, ty, loc})
+        L2{ L8{ "RCFOREIGNSYMBOL" 2[ +1 "(" name ")" ] } +1 ":" +d ty }
        *)
-      RCSEQ of
+      RCFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
+    | (*%
+        @format({funExp, argExpList: arg args, attributes,
+                 resultTy: retTy retTyOpt, loc})
+        L8{
+          "RCFOREIGNAPPLY"
+          2[
+            +1 funExp
+            +1 "{" !N0{ args(arg)("," +1) } "}"
+          ]
+        }
+       *)
+      (*%
+        @prefix formatWithType_
+        @format({funExp, argExpList: arg args, attributes,
+                 resultTy: retTy retTyOpt, loc})
+        L2{
+          L8{
+            "RCFOREIGNAPPLY"
+            2[
+              +1 funExp
+              +1 "{" !N0{ args(arg)("," +1) } "}"
+            ]
+          }
+          +1 ":" +d retTyOpt:ifsome()(retTyOpt(retTy), "()")
+        }
+       *)
+      RCFOREIGNAPPLY of
       {
-        expList : rcexp list,
-        expTyList : ty list,
+        funExp : rcexp,
+        argExpList : rcexp list,
+        attributes : FFIAttributes.attributes,
+        resultTy : ty option,
         loc : loc
       }
     | (*%
-       * @format((exp * ty1) * ty * loc)
-       * L2{ "_cast(" !N0{ exp +1 ":" +d ty1 ")" } +1 ":" +d ty }
+        @format({attributes, argVarList:arg args, resultTy, bodyExp, loc})
+        R1{
+          "RCCALLBACKFN" +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" +1 bodyExp
+        }
        *)
-      (*% @prefix formatWithoutType_
-       * @format((exp * ty1) * ty * loc)
-          "_cast(" exp ")"
+      (*% @prefix formatWithType_
+        @format({attributes, argVarList:arg args, resultTy: retTy retTyOpt,
+                 bodyExp, loc})
+        R1{
+          "RCCALLBACKFN" +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" +1
+          L2{ bodyExp +1 ":" +d retTyOpt:ifsome()(retTyOpt(retTy),"()") }
+        }
        *)
-      (* cast e to some type ty
-       * this is used to coerce constructor type to a record type
-       *)
-      RCCAST of (rcexp * ty) * ty * loc
+      RCCALLBACKFN of
+      {
+        attributes : FFIAttributes.attributes,
+        argVarList : varInfo list,
+        bodyExp : rcexp,
+        resultTy : ty option,
+        loc : loc
+      }
     | (*%
-       * @format(exp * ty * loc)
-       * L2 { exp +1 ":" +d ty }
+        @format({exp, expTy, targetTy, cast, loc})
+        L8{ cast 2[ 1 "(" !N0{ exp } ")" ] }
        *)
-      (*% @prefix formatWithoutType_
-       * @format(exp * ty * loc)
-       * exp
+      (*% @prefix formatWithType_
+        @format({exp, expTy, targetTy, cast, loc})
+        L2{
+          L8{ cast 2[ 1 "(" !N0{ exp } ")" ] }
+          +1 ":" +d targetTy
+        }
        *)
-      RCFFI of rcffiexp * ty * loc
-    | (*% 
-       * @format({isJoin, ty, args:(arg1 * arg2),argTys:(argTy1 * argTy2),loc})
-       * isJoin()("_join(","_extend(") arg1 ":"  argTy1 "," arg2 ":" argTy2 ") :" ty
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({isJoin, ty, args:(arg1 * arg2),argTys,loc})
-       * isJoin()("_join(","_extend(") arg1 "," arg2")"
-       *)
-      RCJOIN of {isJoin:bool, ty : ty, args : rcexp * rcexp, argTys : ty * ty, loc : loc}
+      (* cast e to some type ty; used to coerce con type to a record type *)
+      RCCAST of
+      {
+        exp : rcexp,
+        expTy : ty,
+        targetTy : ty,
+        cast : cast,
+        loc : loc
+      }
     | (*%
-       * @format({exp,ty,elemTy, coerceTy,loc})
-       * "_dynamic " exp ":" ty " as " coerceTy
+        @format({recordTy, label, loc})
+        L8{ "RCINDEXOF" 2[ +1 "(" !N0{ recordTy "," +1 label } ")" ] }
        *)
-      (*% @prefix formatWithoutType_
-       * @format({exp,ty,elemTy, coerceTy,loc})
-       * "_dynamic " exp " as " coerceTy
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      RCDYNAMIC of {exp:rcexp, ty:ty, elemTy: ty, coerceTy:ty, loc:loc}
-    | (*%
-       * @format({exp,ty,elemTy, coerceTy,loc})
-       * "_dynamic " exp ":" ty " is " coerceTy
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({exp,ty,elemTy, coerceTy,loc})
-       * "_dynamic " exp " is " coerceTy
-       *)
-      RCDYNAMICIS of {exp:rcexp, ty:ty, elemTy: ty, coerceTy:ty, loc:loc}
-    | (*%
-       * @format({ty, coerceTy,loc})
-       * "_dynamicnull as " ty
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({ty, coerceTy,loc})
-       * "_dynamicnull as " ty + ":" + coerceTy
-       *)
-      RCDYNAMICNULL of {ty:ty, coerceTy:ty, loc:loc}
-    | (*%
-       * @format({ty, coerceTy,loc})
-       * "_dynamictop as " ty
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({ty, coerceTy,loc})
-       * "_dynamictop as " ty + ":" + coerceTy
-       *)
-      RCDYNAMICTOP of {ty:ty, coerceTy:ty, loc:loc}
-    | (*%
-       * @format({exp,ty,elemTy, coerceTy,loc})
-       * "_dynamicview " exp ":" ty " as " coerceTy
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({exp,ty,elemTy, coerceTy,loc})
-       * "_dynamicview " exp " as " coerceTy
-       *)
-      RCDYNAMICVIEW of {exp:rcexp, ty:ty, elemTy: ty, coerceTy:ty, loc:loc}
-    | (*%
-       * @format({groupListTerm,groupListTy,dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc})
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({groupListTerm,groupListTy,dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc})
-       *)
-      RCDYNAMICCASE of
-         {
-          groupListTerm:rcexp, 
-          groupListTy:Types.ty, 
-          dynamicTerm:rcexp, 
-          dynamicTy:Types.ty, 
-          elemTy:Types.ty, 
-          ruleBodyTy:Types.ty, 
-          loc:loc}
-
-  and rcffiexp =
-      (*%
-       * @format({funExp, ffiTy})
-       * "_ffi(" !N0{ L2 { funExp +1 ":" +d ffiTy } ")" }
-       *)
-      (*% @prefix formatWithoutType_
-       * @format({funExp, ffiTy})
-       * "_ffi(" !N0{ L2 { funExp +1 ":" +d ffiTy } ")" }
-       *)
-      RCFFIIMPORT of {funExp : rcffifun, ffiTy: TypedCalc.ffiTy}
-
-  and rcffifun =
-      (*% @format(x * ty) x *)
-      (*% @prefix formatWithoutType_ @format(x * ty) x *)
-      RCFFIFUN of rcexp * Types.ty
-    | (*% @format(x) x *)
-      (*% @prefix formatWithoutType_ @format(x) x *)
-      RCFFIEXTERN of string
+      RCINDEXOF of
+      {
+        recordTy : ty,  (* must be RECORDty or DUMMYty of record kind *)
+        label : RecordLabel.label,
+        loc : loc
+      }
 
   and rcdecl =
       (*%
-       * @format(bind binds * loc)
-       * "val" +d binds(bind)(+1 "and" +d)
-       * @format:bind(var * exp)
-       * !R1{ var +d "=" +1 exp }
+        @format({var, exp, loc})
+        { "val" +d var +d "=" 2[ +1 exp ] }
        *)
-      (*% @prefix formatWithoutType_
-       * @format(bind binds * loc)
-       * "val" +d binds(bind)(+1 "and" +d)
-       * @format:bind(var * exp)
-       * !R1{ var +d "=" +1 exp }
+      (*% @prefix formatWithType_
+        @format({var, exp, loc})
+        { "val" +d var:format_varInfo +d "=" 2[ +1 exp ] }
        *)
-      RCVAL of (varInfo * rcexp) list * loc
+      RCVAL of
+      {
+        var : varInfo,
+        exp : rcexp,
+        loc : loc
+      }
     | (*%
-       * @format(bind binds * loc)
-       * "val" +d 4[ "rec" +d binds(bind)(+1 "and" +d) ]
-       * @format:bind({var, expTy, exp})
-       * !R1{ L2{ var +1 ":" +d expTy } +d "="
-       *      +1 exp }
+        @format(bind binds * loc)
+        {
+          "val" +d "rec"
+          binds(bind)(+1 "and")
+        }
+        @format:bind({var, exp})
+        2[ +1 !R1{ var +d "=" 2[ +1 exp ] } ]
        *)
-      (*% @prefix formatWithoutType_
-       * @format(bind binds * loc)
-       * "val" +d 4[ "rec" +d binds(bind)(+1 "and" +d) ]
-       * @format:bind({var, expTy, exp})
-       * !R1{ var +d "=" +1 exp }
+      (*% @prefix formatWithType_
+        @format(bind binds * loc)
+        {
+          "val" +d "rec"
+          binds(bind)(+1 "and")
+        }
+        @format:bind({var, exp})
+        2[ +1 !R1{ var +1 +d "=" 2[ +1 exp ] } ]
        *)
-      RCVALREC of {var: varInfo, expTy: ty, exp: rcexp} list * loc
+      RCVALREC of {var : varInfo, exp : rcexp} list * loc
     | (*%
-       * @format(btv * bind binds * loc)
-       * !R1{ "[" 1[
-       *   btv "." +1
-       *   "val" +d 4[ "rec" +d binds(bind)(+1 "and" +d) ]
-       * ] 1 "]" }
-       * @format:bind({var, expTy, exp})
-       * !R1{ L2{ var
-       *          +1 ":" +d expTy } +d "="
-       *      +1 exp }
+        @format({weak, var, exp})
+        { "export" weak:iftrue()(+d "weak",) +d var +d "=" 2[ +1 exp ] }
        *)
-      (*% @prefix formatWithoutType_
-       * @format(btv * bind binds * loc)
-       * !R1{ "[" 1[
-       *   btv "." +1
-       *   "val" +d 4[ "rec" +d binds(bind)(+1 "and" +d) ]
-       * ] 1 "]" }
-       * @format:bind({var, expTy, exp})
-       * !R1{ var +d "=" +1 exp }
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      RCVALPOLYREC of
-      btvEnv * {var: varInfo, expTy: ty, exp: rcexp} list * loc
+      RCEXPORTVAR of
+      {
+        weak : bool,
+        var : exVarInfo,
+        exp : rcexp
+      }
     | (*%
-       * @format(bind binds * loc)
-       * "exception" +d binds(bind)(+1 "and" +d)
-       * @format:bind({exnInfo, loc}) exnInfo
+        @format(var * provider)
+        "extern" +d var
        *)
-      (*% @prefix formatWithoutType_
-       * @format(bind binds * loc)
-       * "exception" +d binds(bind)(+1 "and" +d)
-       * @format:bind({exnInfo, loc}) exnInfo
-       *)
-      RCEXD of {exnInfo: exnInfo, loc: loc} list * loc
-    | (*%
-         @format({exnInfo, varInfo} * loc)
-            "exception tag" +d exnInfo +d "=" +d varInfo
-       *)
-      RCEXNTAGD of {exnInfo: exnInfo, varInfo:varInfo} * loc
-    | (*%
-         @format(var)
-         "export" + var
-       *)
-      (*% @prefix formatWithoutType_
-         @format(var)
-         "export" + var
-       *)
-      RCEXPORTVAR of varInfo
-    | (*%
-       * @format (exn) "export" +d "exception" +d exn
-       *)
-      (*% @prefix formatWithoutType_
-       * @format (exn) "export" +d "exception" +d exn
-       *)
-      RCEXPORTEXN of exnInfo
-    | (*%
-       * @format(var * provider)
-          "extern" +d "val" +d var
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(var * provider)
-          "extern" +d "val" +d var
-       *)
-      (* temporary disable EXTERN printing
-          "extern" +d "val" +d var
-        formatWithoutType_
-          "extern" +d "val" +d var
+      (*% @prefix formatWithType_
+        @format(var * provider)
+        "extern" +d var
        *)
       RCEXTERNVAR of exVarInfo * Types.provider
-    | (*%
-       * @format(exn * provider)
-       * "extern" +d "exception" +d exn
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(exn * provider)
-       * "extern" +d "exception" +d exn
-       *)
-      RCEXTERNEXN of exExnInfo * Types.provider
-    | (*%
-       * @format(exn)
-       * "builtin" +d "exception" +d exn
-       *)
-      (*% @prefix formatWithoutType_
-       * @format(exn)
-       * "builtin" +d "exception" +d exn
-       *)
-      RCBUILTINEXN of exExnInfo
-
-  fun rcexpToString rcexp =
-      SMLFormat.prettyPrint nil (format_rcexp rcexp)
-
-  fun getLocExp rcexp =
-      case rcexp of
-        RCFOREIGNAPPLY {loc,...} => loc
-      | RCCALLBACKFN {loc,...} => loc
-      | RCTAGOF (_,loc) => loc
-      | RCSIZEOF (_,loc) => loc
-      | RCREIFYTY (_,loc) => loc
-      | RCINDEXOF (_,_,loc) => loc
-      | RCCONSTANT {loc,...} => loc
-      | RCFOREIGNSYMBOL {loc,...} => loc
-      | RCVAR _ => Loc.noloc
-      | RCEXVAR _ => Loc.noloc
-      | RCPRIMAPPLY {loc,...} => loc
-      | RCOPRIMAPPLY {loc,...} => loc
-      | RCDATACONSTRUCT {loc,...} => loc
-      | RCEXNCONSTRUCT {loc,...} => loc
-      | RCEXN_CONSTRUCTOR {loc,...} => loc
-      | RCEXEXN_CONSTRUCTOR {loc,...} => loc
-      | RCAPPM {loc,...} => loc
-      | RCMONOLET {loc,...} => loc
-      | RCLET {loc,...} => loc
-      | RCRECORD {loc,...} => loc
-      | RCSELECT {loc,...} => loc
-      | RCMODIFY {loc,...} => loc
-      | RCRAISE {loc,...} => loc
-      | RCHANDLE {loc,...} => loc
-      | RCCASE {loc,...} => loc
-      | RCEXNCASE {loc,...} => loc
-      | RCSWITCH {loc,...} => loc
-      | RCCATCH {loc,...} => loc
-      | RCTHROW {loc,...} => loc
-      | RCFNM {loc,...} => loc
-      | RCPOLYFNM {loc,...} => loc
-      | RCPOLY {loc,...} => loc
-      | RCTAPP {loc,...} => loc
-      | RCSEQ {loc,...} => loc
-      | RCCAST (_,_,loc) => loc
-      | RCFFI (_,_,loc) => loc
-      | RCJOIN {loc,...} => loc
-      | RCDYNAMIC {loc,...} => loc
-      | RCDYNAMICIS {loc,...} => loc
-      | RCDYNAMICNULL {loc,...} => loc
-      | RCDYNAMICTOP {loc,...} => loc
-      | RCDYNAMICVIEW {loc,...} => loc
-      | RCDYNAMICCASE {loc,...} => loc
 
 end

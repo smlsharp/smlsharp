@@ -1,0 +1,2 @@
+val f_int : int -> 'b -> 'b * int
+val overloaded = case 'a in 'a -> 'b -> 'b * 'a of int => f_int

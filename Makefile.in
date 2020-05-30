@@ -25,10 +25,12 @@ RUNTIME_OBJECTS = \
   src/runtime/prim.$(OBJEXT) \
   src/runtime/splay.$(OBJEXT) \
   src/runtime/top.$(OBJEXT) \
-  src/runtime/livecheck.$(OBJEXT) \
   src/runtime/heap_concurrent.$(OBJEXT) \
   src/sql/main/builtintypes/timestamp/string_to_time_t.$(OBJEXT) \
   src/sql/main/builtintypes/timestamp/timeval_to_string.$(OBJEXT)
+RUNTIME_DEBUG_OBJECTS = \
+  src/runtime/livecheck.$(OBJEXT) \
+  src/runtime/dbglog.$(OBJEXT)
 LIBSMLSHARP_OBJECTS = \
   $(RUNTIME_OBJECTS) \
   src/runtime/call_with_cleanup.$(OBJEXT) \
@@ -156,6 +158,9 @@ src/runtime/exn.$(OBJEXT): $(srcdir)/src/runtime/exn.c
 
 src/runtime/control.$(OBJEXT): $(srcdir)/src/runtime/control.c
 	$(CC) $(CFLAGS) -fexceptions $(DEFS) $(CPPFLAGS) -c -o $@ $(srcdir)/src/runtime/control.c
+
+src/runtime/dbglog.$(OBJEXT): $(srcdir)/src/runtime/dbglog.c
+	$(CC) -Wformat=0 $(CFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $(srcdir)/src/runtime/dbglog.c
 
 src/runtime/call_with_cleanup.o: $(srcdir)/src/runtime/call_with_cleanup.ll
 	$(LLC) -mtriple=$(target) -O2 $(LLCFLAGS) -filetype=obj -o $@ $(srcdir)/src/runtime/call_with_cleanup.ll
@@ -397,6 +402,7 @@ depend: PHONY minismlsharp
 	  TEST           tests/driver/dotest.smi
 	@set -e; \
 	for i in $(RUNTIME_OBJECTS:.$(OBJEXT)=.c) \
+	         $(RUNTIME_DEBUG_OBJECTS:.$(OBJEXT)=.c) \
 	         $(COMPILER_SUPPORT_OBJECTS:.$(OBJEXT)=.c) \
 	         $(TEST_SUPPORT_OBJECTS:.$(OBJEXT)=.c) \
 	         src/runtime/main.c; do \

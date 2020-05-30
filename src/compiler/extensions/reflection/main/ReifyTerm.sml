@@ -482,6 +482,7 @@ struct
           | RTy.TYVARty => R.UNPRINTABLE
           | RTy.ERRORty => R.UNPRINTABLE
           | RTy.DUMMYty _ => R.UNPRINTABLE
+          | RTy.EXISTty _ => R.UNPRINTABLE
           | RTy.REAL32ty  => R.REAL32 (getReal32 obj)
           | RTy.REAL64ty => R.REAL64 (getReal64 obj)
           | RTy.RECORDLABELty => R.RECORDLABEL (getLabel obj)

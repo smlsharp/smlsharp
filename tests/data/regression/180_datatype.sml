@@ -1,4 +1,4 @@
-datatype t1 = datatype t2
+datatype t1 = datatype S.t2
 
 (*
 2011-12-05 katsu

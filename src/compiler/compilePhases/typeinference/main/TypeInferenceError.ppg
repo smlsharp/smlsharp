@@ -422,6 +422,16 @@ struct
                                  annotatedTy : Types.ty}
 
   and
+  (*%
+   * @format(code * {path: id ids,annotatedTy})
+   * "(type inference" +d code ")" +d  
+   *    "signature" +d "mismatch" +d "due" +d "to" +d "value" +d "restriction" +d "at" +d ids(id)(".")
+   *        +1  "type annotation:" + {annotatedTy}
+   *)
+  SignatureMismatchValueRestriction of 
+     string * {path : string list, annotatedTy : Types.ty}
+
+  and
   (**
    * <pre>
    *  fn x => case x of NONE as y => y
@@ -1132,6 +1142,14 @@ struct
    *)
   ForEachTypeError of string
     
+  and
+  (*%
+    @format(ty)
+    "(type inferene)" +d
+    "invalid" +d "kind" +d "for" +d "existential" +d "type:" +d ty
+   *)
+  InvalidKindForExistentialType of Types.ty
+
   val isAnyError = ref false
 
   fun initializeTypeinfError () = 

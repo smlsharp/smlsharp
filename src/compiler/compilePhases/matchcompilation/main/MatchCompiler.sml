@@ -45,7 +45,7 @@
 structure MatchCompiler : sig
 
   val compile : TypedCalc.tpdecl list
-                -> RecordCalc.rcdecl list * UserError.errorInfo list
+                -> TypedCalc.tpdecl list * UserError.errorInfo list
 
 end =
 struct
@@ -57,7 +57,6 @@ local
   structure TC = TypedCalc
   structure TB = TypesBasics
   structure TCU = TypedCalcUtils
-  structure RC = RecordCalc
   structure UE = UserError
   structure BT = BuiltinTypes
   structure ME = MatchError
@@ -84,19 +83,14 @@ local
   fun newVarName s = Symbol.generateWithPrefix (s ^ "_T_")
   fun newVarPath () = [TCU.newTCVarName()]
   fun freshVarWithName (ty,name) =
-      {path = [name],ty=ty,id=newLocalId()} : RC.varInfo
+      {path = [name],ty=ty,id=newLocalId(),opaque=false} : T.varInfo
   fun freshVarWithPath (ty,path) =
-      {path= path,ty=ty,id=newLocalId()} : RC.varInfo
-  fun makeVar (id, path, ty) = {path = path,ty=ty,id=id} : RC.varInfo
+      {path= path,ty=ty,id=newLocalId(),opaque=false} : T.varInfo
+  fun makeVar (id, path, ty) = {path = path,ty=ty,id=id,opaque=false} : T.varInfo
   fun printVarInfo var =
-      print (Bug.prettyPrint (RC.format_varInfo var))
+      print (Bug.prettyPrint (T.format_varInfo var))
 
   open MatchData
-
-  fun toRC {path, id, ty, opaque} =
-      {path = path,
-       id = id,
-       ty = ty}
 
   (* this function collects all the variables free or bound.
      This is used to optimize variable pattern to wild pattern
@@ -107,16 +101,26 @@ local
         fun get (tpexp, set) =
             case tpexp  of
               TC.TPERROR => set
-            | TC.TPDYNAMICCASE _ => set
-            | TC.TPDYNAMIC _ => set
-            | TC.TPDYNAMICIS _ => set
-            | TC.TPDYNAMICNULL _ => set
-            | TC.TPDYNAMICTOP _ => set
-            | TC.TPDYNAMICVIEW _ => set
+            | TC.TPDYNAMICCASE
+                {
+                 groupListTerm : TC.tpexp, 
+                 groupListTy, 
+                 dynamicTerm : TC.tpexp,
+                 dynamicTy, 
+                 elemTy, 
+                 ruleBodyTy, 
+                 loc} => get (groupListTerm, get (dynamicTerm, set))
+            | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+              get (exp, get (existInstMap, set))
+            | TC.TPDYNAMIC {exp, ty, elemTy, coerceTy, loc} => get (exp, set)
+            | TC.TPDYNAMICIS {exp, ty, elemTy, coerceTy, loc} => get (exp, set)
+            | TC.TPDYNAMICNULL {ty, coerceTy, loc} => set
+            | TC.TPDYNAMICTOP {ty, coerceTy, loc} => set
+            | TC.TPDYNAMICVIEW {exp, ty, elemTy, coerceTy, loc} => get (exp, set)
             | TC.TPCONSTANT {const,ty,loc} => set
-            | TC.TPVAR varInfo => VarInfoSet.add(set, toRC varInfo)
+            | TC.TPVAR varInfo => VarInfoSet.add(set, varInfo)
             | TC.TPEXVAR exVarInfo => set
-            | TC.TPRECFUNVAR {var, arity} => VarInfoSet.add(set, toRC var)
+            | TC.TPRECFUNVAR {var, arity} => VarInfoSet.add(set, var)
             | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} => get (bodyExp,set)
             | TC.TPAPPM {funExp, funTy, argExpList, loc} =>
               foldl get (get (funExp, set)) argExpList
@@ -124,13 +128,26 @@ local
             | TC.TPDATACONSTRUCT {argExpOpt=SOME exp,...} => get (exp,set)
             | TC.TPEXNCONSTRUCT {argExpOpt=NONE,...} => set
             | TC.TPEXNCONSTRUCT {argExpOpt=SOME exp,...} => get (exp, set)
-            | TC.TPEXN_CONSTRUCTOR _ => set
-            | TC.TPEXEXN_CONSTRUCTOR _ => set
+            | TC.TPEXNTAG _ => set
+            | TC.TPEXEXNTAG _ => set
             | TC.TPCASEM {expList,ruleList,...} =>
               foldl
                 (fn ({args, body},set) => get(body, set))
                 (foldl get set expList)
                 ruleList
+            | TC.TPSWITCH {exp, ruleList, defaultExp, expTy, ruleBodyTy, loc} =>
+              foldl
+                get
+                set
+                (exp :: defaultExp ::
+                 (case ruleList of
+                    TC.CONSTCASE rules => map #body rules
+                  | TC.CONCASE rules => map #body rules
+                  | TC.EXNCASE rules => map #body rules))
+            | TC.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+              get (tryExp, get (catchExp, set))
+            | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+              foldl get set argExpList
             | TC.TPPRIMAPPLY {argExp=exp,...} => get (exp, set)
             | TC.TPOPRIMAPPLY {argExp=exp,...} => get (exp, set)
             | TC.TPRECORD {fields, recordTy, loc} =>
@@ -138,20 +155,22 @@ local
             | TC.TPSELECT {label, exp, expTy, resultTy, loc} => get (exp,set)
             | TC.TPMODIFY {recordExp,elementExp,...} =>
               get(elementExp, get(recordExp, set))
-            | TC.TPSEQ {expList, expTyList, loc} => foldl get set expList 
             | TC.TPMONOLET {binds, bodyExp, loc} =>
               get(bodyExp,foldl(fn ((var,exp),set) => get(exp,set)) set binds)
-            | TC.TPLET {decls, body, tys, loc} =>
-              foldl get (foldl getDecl set decls) body
+            | TC.TPLET {decls, body, loc} =>
+              get (body, foldl getDecl set decls)
             | TC.TPRAISE {exp, ty, loc} => get(exp, set)
             | TC.TPHANDLE {exp, exnVar, handler, resultTy, loc} =>
               get(handler, get(exp, set))
-            | TC.TPPOLYFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
-              get(bodyExp, set)
             | TC.TPPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} => get(exp, set)
             | TC.TPTAPP {exp, expTy, instTyList, loc} => get(exp, set)
             | TC.TPFFIIMPORT {funExp=TC.TPFFIFUN (ptrExp, _), ffiTy, stubTy, loc} => get(ptrExp, set)
             | TC.TPFFIIMPORT {funExp=TC.TPFFIEXTERN _, ffiTy, stubTy, loc} => set
+            | TC.TPFOREIGNSYMBOL _ => set
+            | TC.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+              foldl get (get (funExp, set)) argExpList
+            | TC.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+              get (bodyExp, set)
             | TC.TPCAST ((tpexp, expTy), ty, loc) => get(tpexp, set)
             | TC.TPSIZEOF (ty, loc) => set
             | TC.TPJOIN {isJoin, ty, args = (arg1, arg2), argtys, loc} =>
@@ -159,8 +178,8 @@ local
             | TC.TPREIFYTY (ty, loc) => set
         and getDecl (decl, set) =
             case decl of
-              TC.TPVAL (valIdTpexpList, loc) =>
-              foldl (fn ((var,exp), set) => get (exp, set)) set valIdTpexpList
+              TC.TPVAL ((var, exp), loc) =>
+              get (exp, set)
             | TC.TPFUNDECL (funBindlist, loc) =>
               foldl
                 (fn ({ruleList,...}, set) =>
@@ -173,24 +192,20 @@ local
                     foldl (fn({args,body},set)=>get(body,set)) set ruleList)
                 set
                 funBindList
-            | TC.TPVALREC (varExpTyEexpList, loc) =>
+            | TC.TPVALREC (varExpList, loc) =>
               foldl 
                 (fn ({exp,...},set) => get(exp, set))
                 set
-                varExpTyEexpList
-            | TC.TPVALPOLYREC {btvEnv, constraints, recbinds=varExpTyEexpList, loc} =>
+                varExpList
+            | TC.TPVALPOLYREC {btvEnv, constraints, recbinds=varExpList, loc} =>
               foldl 
                 (fn ({exp,...},set) => get(exp, set))
                 set
-                varExpTyEexpList 
+                varExpList
             | TC.TPEXD (exnconLocList, loc) => set
-            | TC.TPEXNTAGD ({varInfo,...},loc) => VarInfoSet.add(set, toRC varInfo)
-            | TC.TPEXPORTVAR varInfo => 
-              VarInfoSet.add(set, toRC varInfo) 
-              (* this case never happen; but this is more correct *)
-            | TC.TPEXPORTRECFUNVAR {var, arity} => 
-              VarInfoSet.add(set, toRC var) 
-              (* this case never happen; but this is more correct *)
+            | TC.TPEXNTAGD ({varInfo,...},loc) => VarInfoSet.add(set, varInfo)
+            | TC.TPEXPORTVAR {var, exp} =>
+              get (exp, set)
             | TC.TPEXPORTEXN exnInfo => set
             | TC.TPEXTERNVAR exVarInfo => set
             | TC.TPEXTERNEXN exExnInfo => set
@@ -246,6 +261,8 @@ in
         | TC.TPDYNAMICCASE 
             {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} =>
           limitCheck (Exp groupListTerm :: itemList) (n + 1)
+        | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+          limitCheck (Exp existInstMap :: Exp exp :: itemList) (n + 1)
         | TC.TPDYNAMIC {exp, ty, elemTy, coerceTy, loc} =>
           limitCheck (Exp exp::itemList) (n + 1)
         | TC.TPDYNAMICIS {exp, ty, elemTy, coerceTy, loc} =>
@@ -266,27 +283,23 @@ in
             {con=conIdInfo,
              instTyList=tyList,
              argExpOpt=NONE, 
-             argTyOpt,
              loc} => limitCheck itemList (n + 1)
         | TC.TPDATACONSTRUCT
             {con=conIdInfo,
              instTyList=tyList,
              argExpOpt=SOME tpexp1,
-             argTyOpt,
              loc} => 
             limitCheck (Exp tpexp1 :: itemList) (n + 1)
         | TC.TPEXNCONSTRUCT
-            {exn=conIdInfo, instTyList=tyList, argExpOpt=NONE, argTyOpt, loc} =>
+            {exn=conIdInfo, argExpOpt=NONE, loc} =>
           limitCheck itemList (n + 1)
         | TC.TPEXNCONSTRUCT
             {exn=conIdInfo,
-             instTyList=tyList,
              argExpOpt=SOME tpexp1,
-             argTyOpt,
              loc} => 
             limitCheck (Exp tpexp1 :: itemList) (n + 1)
-        | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} => limitCheck itemList (n + 1)
-        | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} => limitCheck itemList (n + 1)
+        | TC.TPEXNTAG {exnInfo, loc} => limitCheck itemList (n + 1)
+        | TC.TPEXEXNTAG {exExnInfo, loc} => limitCheck itemList (n + 1)
         | TC.TPCASEM {expList,expTyList,ruleList,ruleBodyTy,caseKind,loc} =>
             limitCheck
               (map Exp expList
@@ -296,7 +309,21 @@ in
                itemList
               ) 
             (n + 1)
-        | TC.TPPRIMAPPLY {primOp,instTyList,argExp=tpexp1,argTy,loc} => 
+        | TC.TPSWITCH {exp, expTy, ruleList, defaultExp, ruleBodyTy, loc} =>
+          limitCheck
+            (Exp exp
+             :: Exp defaultExp
+             :: (case ruleList of
+                   TC.CONSTCASE rules => map (Exp o #body) rules
+                 | TC.CONCASE rules => map (Exp o #body) rules
+                 | TC.EXNCASE rules => map (Exp o #body) rules)
+             @ itemList)
+            (n + 1)
+        | TC.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+          limitCheck (Exp tryExp :: Exp catchExp :: itemList) (n + 1)
+        | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+          limitCheck (map Exp argExpList @ itemList) (n + 1)
+        | TC.TPPRIMAPPLY {primOp,instTyList,argExp=tpexp1,loc} =>
           limitCheck (Exp tpexp1::itemList) (n + 1)
         | TC.TPOPRIMAPPLY {argExp=tpexp1,...} =>
           limitCheck (Exp tpexp1::itemList) (n + 1)
@@ -313,8 +340,6 @@ in
                      elementTy=ty2,  
                      loc} =>
             limitCheck (Exp tpexp1 :: Exp tpexp2 :: itemList) (n + 1)
-        | TC.TPSEQ {expList, ...} =>
-            limitCheck (map Exp expList @ itemList) (n + 1)
         | TC.TPMONOLET {binds=(varIdInfo,tpexp1)::varIdInfotpexpList, 
                       bodyExp=tpexp2, 
                       loc} =>
@@ -327,20 +352,13 @@ in
             (n + 1)
         | TC.TPMONOLET {binds=nil, bodyExp=tpexp1, loc} =>
           limitCheck (Exp tpexp1 :: itemList) (n + 1)
-        | TC.TPLET {decls, body, tys, loc} =>
-          limitCheck ((map Decl decls) @ (map Exp body) @ itemList) (n + 1)
+        | TC.TPLET {decls, body, loc} =>
+          limitCheck ((map Decl decls) @ [Exp body] @ itemList) (n + 1)
         | TC.TPRAISE {exp, ty, loc} =>
           limitCheck (Exp exp :: itemList) (n + 1)
         | TC.TPHANDLE {exp=tpexp1,  exnVar=varIdInfo, handler=tpexp2,
                        resultTy, loc} =>
             limitCheck (Exp tpexp1 :: Exp tpexp2 :: itemList) (n + 1)
-        | TC.TPPOLYFNM {btvEnv=btvKindIEnvMap, 
-                        constraints,
-                      argVarList=varIdInfoList, 
-                      bodyTy=ty, 
-                      bodyExp=tpexp, 
-                      loc} =>
-            limitCheck (Exp tpexp :: itemList) (n + 1)
         | TC.TPPOLY
             {btvEnv=btvKindIEnvMap,
              constraints,
@@ -358,6 +376,11 @@ in
             limitCheck (Exp tpexp1 :: itemList) (n + 1)
         | TC.TPFFIIMPORT {funExp=TC.TPFFIEXTERN _, ...} =>
           limitCheck itemList (n + 1)
+        | TC.TPFOREIGNSYMBOL _ => limitCheck itemList (n + 1)
+        | TC.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+          limitCheck (Exp funExp :: map Exp argExpList @ itemList) (n + 1)
+        | TC.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+          limitCheck (Exp bodyExp :: itemList) (n + 1)
         | TC.TPSIZEOF _ => limitCheck itemList (n + 1)
         | TC.TPREIFYTY _ => limitCheck itemList (n + 1)
         | TC.TPCAST ((tpexp, expTy), ty, loc) =>
@@ -367,24 +390,22 @@ in
 
       and limitCheckDecl tfpdecl itemList n = 
         case tfpdecl of
-          TC.TPVAL (valIdtpexpList, loc) => 
+          TC.TPVAL ((var, exp), loc) =>
             limitCheck
-              ((map (fn (varId, tpexp) => Exp tpexp) valIdtpexpList)
-               @ itemList) (n + 1)
+              ([Exp exp] @ itemList) (n + 1)
         | TC.TPFUNDECL _ => raise bug "TC.TPFUNDECL in MatchCompiler"
         | TC.TPPOLYFUNDECL  _ => raise bug "TC.TPPOLYFUNDECL in MatchCompiler"
-        | TC.TPVALREC (varTyExpList,loc) =>
+        | TC.TPVALREC (varExpList,loc) =>
           limitCheck
-            ((map (fn {var, expTy, exp} => Exp exp) varTyExpList)
+            ((map (fn {var, exp} => Exp exp) varExpList)
              @ itemList) (n + 1)
-        | TC.TPVALPOLYREC {btvEnv=btvKindIEnvMap, constraints, recbinds=varTyExpList, loc} =>
+        | TC.TPVALPOLYREC {btvEnv=btvKindIEnvMap, constraints, recbinds=varExpList, loc} =>
           limitCheck
-            ((map (fn {var,expTy,exp} => Exp exp) varTyExpList)
+            ((map (fn {var, exp} => Exp exp) varExpList)
              @ itemList) (n + 1)
         | TC.TPEXD (exnconLocList, loc) => limitCheck itemList (n + 1)
         | TC.TPEXNTAGD (bind, loc) => limitCheck itemList (n + 1)
-        | TC.TPEXPORTVAR varInfo => limitCheck itemList (n + 1)
-        | TC.TPEXPORTRECFUNVAR {var, arity} => limitCheck itemList (n + 1)
+        | TC.TPEXPORTVAR {var, exp} => limitCheck (Exp exp :: itemList) (n + 1)
         | TC.TPEXPORTEXN exnInfo => limitCheck itemList (n + 1)
         | TC.TPEXTERNVAR exVarInfo => limitCheck itemList (n + 1)
         | TC.TPEXTERNEXN exExnInfo => limitCheck itemList (n + 1)
@@ -499,7 +520,7 @@ in
         (WildPat ty) => ty
       | (VarPat ({ ty, ... })) => ty
       | (ConstPat (_, ty)) => ty
-      | (DataConPat (_, _, _, ty)) => ty
+      | (DataConPat (_, _, _, _, ty)) => ty
       | (ExnConPat (_, _, _, ty)) => ty
       | (RecPat (_, ty)) => ty
       | (LayerPat (pat, _)) => getTyInPat pat
@@ -531,7 +552,7 @@ in
       case argList of
         [] =>
         (
-         RC.RCFNM
+         TC.TPFNM
            {
             argVarList =
             [freshVarWithName (BT.unitTy, newVarName "unitExp")],
@@ -544,7 +565,7 @@ in
       | argList =>
         foldr 
           (fn (arg, (body, bodyTy)) => 
-              (RC.RCFNM {argVarList=[arg],
+              (TC.TPFNM {argVarList=[arg],
                          bodyTy=bodyTy,
                          bodyExp=body,
                          loc=loc},
@@ -556,7 +577,7 @@ in
       case argList of
        [] =>
        (
-        RC.RCFNM 
+        TC.TPFNM
           {
            argVarList=[freshVarWithName
                          (BT.unitTy,newVarName "unitExp")], 
@@ -568,7 +589,7 @@ in
        )
      | argList =>
        (
-        RC.RCFNM 
+        TC.TPFNM
           {
            argVarList=argList, 
            bodyTy=bodyTy, 
@@ -584,7 +605,7 @@ in
   fun makeRules branchTy tfpruleIntRefList loc =
       let
         fun getVars (VarPat x) = VarInfoSet.singleton x
-          | getVars (DataConPat (_, _, argPat, _)) = getVars argPat
+          | getVars (DataConPat (_, _, _, argPat, _)) = getVars argPat
           | getVars (ExnConPat (_, _, argPat, _)) = getVars argPat
           | getVars (RecPat (fields, _)) =
               foldl 
@@ -636,16 +657,16 @@ in
         TC.TPPATERROR (ty, loc) => WildPat ty
       | TC.TPPATWILD (ty, _) => WildPat ty
       | TC.TPPATVAR x =>
-        if VarInfoSet.member (FV, toRC x) then VarPat (toRC x) else WildPat (#ty x)
+        if VarInfoSet.member (FV, x) then VarPat x else WildPat (#ty x)
       | TC.TPPATCONSTANT (A.UNITCONST, ty, _) => WildPat ty
       | TC.TPPATCONSTANT (con, ty, _) => ConstPat (con, ty)
-      | TC.TPPATDATACONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, ...} =>
-        DataConPat (conPat, false, WildPat BT.unitTy, ty)
-      | TC.TPPATDATACONSTRUCT{conPat,argPatOpt = SOME argPat,patTy=ty,...}=>
-        DataConPat (conPat, true, tppatToPat btvEnv FV argPat, ty)
-      | TC.TPPATEXNCONSTRUCT {exnPat, argPatOpt=NONE, patTy=ty, ...} =>
+      | TC.TPPATDATACONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, instTyList, loc} =>
+        DataConPat (conPat, instTyList, false, WildPat BT.unitTy, ty)
+      | TC.TPPATDATACONSTRUCT{conPat,argPatOpt = SOME argPat,patTy=ty,instTyList, loc}=>
+        DataConPat (conPat, instTyList, true, tppatToPat btvEnv FV argPat, ty)
+      | TC.TPPATEXNCONSTRUCT {exnPat, argPatOpt=NONE, patTy=ty, loc} =>
         ExnConPat (exnPat, false, WildPat BT.unitTy, ty)
-      | TC.TPPATEXNCONSTRUCT {exnPat,argPatOpt = SOME argPat,patTy=ty,...} =>
+      | TC.TPPATEXNCONSTRUCT {exnPat,argPatOpt = SOME argPat,patTy=ty, loc} =>
         ExnConPat (exnPat, true, tppatToPat btvEnv FV argPat, ty)
       | TC.TPPATRECORD {fields=patRows, recordTy=ty,...} =>
         let
@@ -744,11 +765,11 @@ in
               foldr 
   	        (fn
                  (
-  		  (DataConPat (tag, hasArg, argPat, ty) ++ rule, env), 
+                  (DataConPat (tag, instTyList, hasArg, argPat, ty) ++ rule, env),
   		  (branches, defBranch)
   		 ) =>
   	         let
-  		   val key = (tag, hasArg)
+                   val key = (tag, instTyList, hasArg)
   		   val REs = 
   		       case DataConMap.find (branches, key)
   			of SOME REs => REs
@@ -784,7 +805,7 @@ in
             (
   	     path,
   	     DataConMap.mapi
-  	       (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
+               (fn ((tag, _, _), REs as ((pat ++ _, _) :: _)) =>
   		   matchToTree
                      branchEnv
   		     (freshVarWithPath
@@ -805,11 +826,11 @@ in
               foldr 
   	        (fn
                  (
-  		  (ExnConPat (tag, hasArg, argPat, ty) ++ rule, env), 
+                  (ExnConPat (tag, hasArg, argPat, ty) ++ rule, env),
   		  (branches, defBranch)
   		 ) =>
   	         let
-  		   val key = (tag, hasArg)
+                   val key = (tag, hasArg)
   		   val REs = 
   		       case ExnConMap.find (branches, key)
   			of SOME REs => REs
@@ -845,7 +866,7 @@ in
             (
   	     path,
   	     ExnConMap.mapi
-  	       (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
+               (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
   		   matchToTree
                      branchEnv
   		     (freshVarWithPath
@@ -930,7 +951,7 @@ in
           decideRootNode branchEnv REs
         | ((ConstPat _ ++ _, _) :: _) =>
           makeEqTree branchEnv
-        | ((DataConPat (tag, _, _, _) ++ _, _) :: _) =>
+        | ((DataConPat (tag, _, _, _, _) ++ _, _) :: _) =>
           makeDataConTree branchEnv (getTagNums tag)
         | ((ExnConPat (tag, _, _, _) ++ _, _) :: _) =>
           makeExnConTree branchEnv 
@@ -998,24 +1019,28 @@ in
               (
 		VarInfoEnv.foldl VarInfoSet.add' VarInfoSet.empty env,
                 if !C.doLocalizeCaseBranch
-                then RC.RCTHROW
-                       {catchLabel = funLabel,
-                        argExpList =
-                          map (fn v => case VarInfoEnv.find (env, v) of
-                                         SOME v => RC.RCVAR v
-                                       | _ => raise Bug.Bug "RCTHROW")
-                              funArgs,
-                        resultTy = funBodyTy,
-                        loc = loc}
+                then
+                  if !useCount = 1
+                  then compileExp (unionVarInfoEnv(varEnv, env)) btvEnv tpexp
+                  else
+                    TC.TPTHROW
+                      {catchLabel = funLabel,
+                       argExpList =
+                         map (fn v => case VarInfoEnv.find (env, v) of
+                                        SOME v => TC.TPVAR v
+                                      | _ => raise Bug.Bug "TPTHROW")
+                             funArgs,
+                       resultTy = funBodyTy,
+                       loc = loc}
                 else
                 if canInlineBranch branchData
-                then tpexpToRcexp (unionVarInfoEnv(varEnv, env)) btvEnv tpexp
+                then compileExp (unionVarInfoEnv(varEnv, env)) btvEnv tpexp
                 else
                   case funArgs of 
-                    [] => RC.RCAPPM
+                    [] => TC.TPAPPM
                            {
                             funExp=
-                              RC.RCVAR
+                              TC.TPVAR
                               (makeVar(funVarId, funVarPath, valOf (!funTy))),
                             funTy=valOf (!funTy), 
                             argExpList=[unitExp], 
@@ -1029,7 +1054,7 @@ in
                             map
                               (fn x => 
                                   case VarInfoEnv.find (env, x) of
-                                    SOME v => RC.RCVAR v
+                                    SOME v => TC.TPVAR v
                                   | _ =>
                                     raise
                                       Bug.Bug
@@ -1037,10 +1062,10 @@ in
                                         \leaf node for fun")
                               funArgs
                       in
-                        RC.RCAPPM
+                        TC.TPAPPM
                           {
                            funExp =
-                           RC.RCVAR
+                           TC.TPVAR
                              (makeVar(funVarId, funVarPath, valOf (!funTy))),
                            funTy = valOf(!funTy), 
                            argExpList = funArgs,
@@ -1052,13 +1077,13 @@ in
                        (foldl 
                           (fn (arg, (T.FUNMty([ty1],ty2), func)) => 
                               (ty2,
-                               RC.RCAPPM 
+                               TC.TPAPPM
                                  { 
                                   funExp = func,
                                   funTy = T.FUNMty([ty1], ty2),
                                   argExpList =
                                   case VarInfoEnv.find (env, arg) of
-                                    SOME v => [RC.RCVAR v]
+                                    SOME v => [TC.TPVAR v]
                                   | _ =>
                                     raise
                                       Bug.Bug
@@ -1073,7 +1098,7 @@ in
                                       \ leaf node for fun"
                            )
                           (valOf (!funTy),
-                           RC.RCVAR
+                           TC.TPVAR
                              (makeVar(funVarId, funVarPath, valOf (!funTy))))
                            funArgs
                           )
@@ -1087,7 +1112,8 @@ in
 		        let
 			  val (vars', exp) = toExp T
 			in
-			  (VarInfoSet.union (vars', vars), (RC.CONST c, exp) :: branches)
+			  (VarInfoSet.union (vars', vars),
+                           {const = c, ty = pty, body = exp} :: branches)
 			end)
 		    (VarInfoSet.empty, [])
 		    branches
@@ -1095,13 +1121,13 @@ in
 	    in
 	      ( 
 	        VarInfoSet.add (VarInfoSet.union (vars, defVars), path), 
-		RC.RCSWITCH 
+		TC.TPSWITCH
                  {
-                  switchExp = RC.RCVAR path, 
+                  exp = TC.TPVAR path,
                   expTy = pty, 
-                  branches = branches, 
+                  ruleList = TC.CONSTCASE branches,
                   defaultExp = defBranch, 
-                  resultTy = resultTy,
+                  ruleBodyTy = resultTy,
                   loc=loc
                   }
 	      )
@@ -1122,7 +1148,7 @@ in
 	      val branchNums = DataConMap.numItems branches
 	      val (vars, branches) = 
 		    DataConMap.foldri
-		    (fn ((i, hasArg), Ti, (vars, branches)) =>
+		    (fn ((i, instTyList, hasArg), Ti, (vars, branches)) =>
 		      let
 			val (vars', exp) = toExp Ti
 			val (argOpt, newExp) = 
@@ -1137,7 +1163,7 @@ in
 		      in
 			(
                           VarInfoSet.union (vars', vars),
-                          ( i, argOpt, newExp) :: branches
+                          {con=i, instTyList=instTyList, argVarOpt=argOpt, body=newExp} :: branches
                         )
 		      end)
 		    (VarInfoSet.empty, [])
@@ -1153,12 +1179,12 @@ in
 	    in
 	      ( 
 	        VarInfoSet.add (VarInfoSet.union (vars, defVars), varInfo), 
-		RC.RCCASE
-                  {exp = RC.RCVAR varInfo, 
+                TC.TPSWITCH
+                  {exp = TC.TPVAR varInfo,
                    expTy = pty, 
-                   ruleList=branches, 
+                   ruleList=TC.CONCASE branches,
                    defaultExp = defBranch, 
-                   resultTy = resultTy,
+                   ruleBodyTy = resultTy,
                    loc= loc
                    }
 	      )
@@ -1191,7 +1217,7 @@ in
 		      in
 			(
                           VarInfoSet.union (vars', vars),
-                          ( i, argOpt, newExp) :: branches
+                          {exn=i, argVarOpt=argOpt, body=newExp} :: branches
                         )
 		      end)
 		    (VarInfoSet.empty, [])
@@ -1202,12 +1228,12 @@ in
 	    in
 	      ( 
 	        VarInfoSet.add (VarInfoSet.union (vars, defVars), var), 
-		RC.RCEXNCASE
-                  {exp = RC.RCVAR var, 
+                TC.TPSWITCH
+                  {exp = TC.TPVAR var,
                    expTy = ty, 
-                   ruleList=branches, 
+                   ruleList=TC.EXNCASE branches,
                    defaultExp = defBranch, 
-                   resultTy = resultTy,
+                   ruleBodyTy = resultTy,
                    loc= loc
                    }
 	      )
@@ -1222,18 +1248,19 @@ in
 	      else
 		( 
 		  VarInfoSet.add (vars, path),
-		  RC.RCMONOLET 
+		  TC.TPLET
 		  { 
-		    binds = [(pi, 
-                              RC.RCSELECT 
-                              {exp = RC.RCVAR path, 
-                               indexExp = RC.RCINDEXOF (label, #ty path, loc),
-                               label = label,
-                               expTy = #ty path, 
-                               resultTy = #ty pi,
-                               loc=loc
-                               })],
-		    bodyExp = exp,
+		    decls = [TC.TPVAL
+                               ((pi,
+                                 TC.TPSELECT
+                                 {exp = TC.TPVAR path,
+                                  label = label,
+                                  expTy = #ty path,
+                                  resultTy = #ty pi,
+                                  loc=loc
+                                  }),
+                                loc)],
+		    body = exp,
                     loc=loc
 		  }
 		)
@@ -1247,100 +1274,105 @@ in
 	result
       end
 
-  and tpexpToRcexp varEnv btvEnv tpexp = 
+  and compileExp varEnv btvEnv tpexp =
       case tpexp of
         TC.TPERROR => raise bug "TPERROR"
       | TC.TPDYNAMIC {exp, ty, elemTy, coerceTy, loc} =>
-        RC.RCDYNAMIC {exp=tpexpToRcexp varEnv btvEnv exp, 
+        TC.TPDYNAMIC {exp=compileExp varEnv btvEnv exp,
                       ty=ty, 
                       elemTy=elemTy, 
                       coerceTy = coerceTy, 
                       loc=loc}
       | TC.TPDYNAMICIS {exp, ty, elemTy, coerceTy, loc} =>
-        RC.RCDYNAMICIS {exp=tpexpToRcexp varEnv btvEnv exp, 
+        TC.TPDYNAMICIS {exp=compileExp varEnv btvEnv exp,
                         ty=ty, 
                         elemTy=elemTy, 
                         coerceTy = coerceTy, 
                         loc=loc}
       | TC.TPDYNAMICNULL {ty, coerceTy, loc} =>
-        RC.RCDYNAMICNULL {ty=ty, 
+        TC.TPDYNAMICNULL {ty=ty,
                           coerceTy = coerceTy, 
                           loc=loc}
       | TC.TPDYNAMICTOP {ty, coerceTy, loc} =>
-        RC.RCDYNAMICTOP {ty=ty, 
+        TC.TPDYNAMICTOP {ty=ty,
                          coerceTy = coerceTy, 
                          loc=loc}
       | TC.TPDYNAMICVIEW {exp, ty, elemTy, coerceTy, loc} =>
-        RC.RCDYNAMICVIEW {exp=tpexpToRcexp varEnv btvEnv exp, 
+        TC.TPDYNAMICVIEW {exp=compileExp varEnv btvEnv exp,
                           ty=ty, 
                           elemTy=elemTy, 
                           coerceTy = coerceTy, 
                           loc=loc}
       | TC.TPDYNAMICCASE 
           {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} =>
-        RC.RCDYNAMICCASE
+        TC.TPDYNAMICCASE
           {
-           groupListTerm = tpexpToRcexp varEnv btvEnv groupListTerm, 
+           groupListTerm = compileExp varEnv btvEnv groupListTerm,
            groupListTy = groupListTy,
 
-           dynamicTerm = tpexpToRcexp varEnv btvEnv dynamicTerm, 
+           dynamicTerm = compileExp varEnv btvEnv dynamicTerm,
            dynamicTy = dynamicTy,
            elemTy = elemTy,
            ruleBodyTy = ruleBodyTy,
            loc=loc}
+      | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+        TC.TPDYNAMICEXISTTAPP
+          {existInstMap = compileExp varEnv btvEnv existInstMap,
+           exp = compileExp varEnv btvEnv exp,
+           expTy = expTy,
+           instTyList = instTyList,
+           loc = loc}
       | TC.TPCONSTANT {const,ty,loc} =>
-        RC.RCCONSTANT {const = RC.CONST const, ty = ty, loc = loc}
+        TC.TPCONSTANT {const = const, ty = ty, loc = loc}
       | TC.TPVAR var => 
-        (case (VarInfoEnv.find (varEnv, toRC var)) of
-           SOME v => RC.RCVAR v
-         | NONE => RC.RCVAR (toRC var)
+        (case (VarInfoEnv.find (varEnv, var)) of
+           SOME v => TC.TPVAR v
+         | NONE => TC.TPVAR (var)
         )
-      | TC.TPEXVAR exVarInfo => RC.RCEXVAR exVarInfo
+      | TC.TPEXVAR exVarInfo => TC.TPEXVAR exVarInfo
       | TC.TPRECFUNVAR {var, arity} =>
         raise bug "RECFUNVAR should be eliminated"
       | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} =>
-        RC.RCFNM 
+        TC.TPFNM
           {
-           argVarList= map toRC argVarList,
+           argVarList= argVarList,
            bodyTy=bodyTy,
-           bodyExp=tpexpToRcexp varEnv btvEnv bodyExp, 
+           bodyExp=compileExp varEnv btvEnv bodyExp,
            loc=loc
           }
       | TC.TPAPPM {funExp, funTy, argExpList, loc} =>
-	RC.RCAPPM
+	TC.TPAPPM
           {
-           funExp=tpexpToRcexp varEnv btvEnv funExp,
+           funExp=compileExp varEnv btvEnv funExp,
            funTy=funTy,
-           argExpList=map (tpexpToRcexp varEnv btvEnv) argExpList,
+           argExpList=map (compileExp varEnv btvEnv) argExpList,
            loc=loc
           }
-      | TC.TPDATACONSTRUCT {con, instTyList=tys, argExpOpt, argTyOpt, loc} => 
-        RC.RCDATACONSTRUCT
+      | TC.TPDATACONSTRUCT {con, instTyList=tys, argExpOpt, loc} =>
+        TC.TPDATACONSTRUCT
           {
            con=con, 
            instTyList=tys, 
            argExpOpt =
            case argExpOpt of
              NONE => NONE 
-           | SOME tpexp => SOME (tpexpToRcexp varEnv btvEnv tpexp),
-           argTyOpt = argTyOpt,
+           | SOME tpexp => SOME (compileExp varEnv btvEnv tpexp),
            loc=loc
           }
-      | TC.TPEXNCONSTRUCT {exn, instTyList, argExpOpt, argTyOpt, loc} =>
-        RC.RCEXNCONSTRUCT
+      | TC.TPEXNCONSTRUCT {exn, argExpOpt, loc} =>
+        TC.TPEXNCONSTRUCT
           {
            exn=exn, 
-           instTyList=instTyList,
            argExpOpt =
            case argExpOpt of
              NONE => NONE 
-           | SOME tpexp => SOME (tpexpToRcexp varEnv btvEnv tpexp),
+           | SOME tpexp => SOME (compileExp varEnv btvEnv tpexp),
            loc=loc
           }
-      | TC.TPEXN_CONSTRUCTOR {exnInfo,loc} =>
-        RC.RCEXN_CONSTRUCTOR {exnInfo=exnInfo,loc=loc}
-      | TC.TPEXEXN_CONSTRUCTOR {exExnInfo,loc} =>
-        RC.RCEXEXN_CONSTRUCTOR {exExnInfo=exExnInfo,loc=loc}
+      | TC.TPEXNTAG {exnInfo,loc} =>
+        TC.TPEXNTAG {exnInfo=exnInfo,loc=loc}
+      | TC.TPEXEXNTAG {exExnInfo,loc} =>
+        TC.TPEXEXNTAG {exExnInfo=exExnInfo,loc=loc}
       | TC.TPCASEM {expList, expTyList, ruleList, ruleBodyTy, caseKind, loc} =>
 	 let
 (* 徳永君，systemModeError関数を，locとruleListを引数として呼び出すと，
@@ -1355,16 +1387,16 @@ in
                  (fn ((exp, ty1), (topVarList, topBinds))
                      => case exp of 
                           TC.TPVAR var => 
-                          (case (VarInfoEnv.find (varEnv, toRC var)) of
+                          (case (VarInfoEnv.find (varEnv, var)) of
                              SOME v => (v::topVarList, topBinds)
-                           | NONE => (toRC var::topVarList, topBinds)
+                           | NONE => (var::topVarList, topBinds)
                           )
                         | _ => 
                           let
                             val newVar =
                                 freshVarWithName 
                                   (ty1, newVarName "caseExp")
-                            val rcexp = tpexpToRcexp varEnv btvEnv exp
+                            val rcexp = compileExp varEnv btvEnv exp
                           in
                             (newVar::topVarList, (newVar, rcexp)::topBinds)
                           end
@@ -1412,18 +1444,21 @@ in
                then
                  SOME
                    (IEnv.foldl
-                      (fn ({funLabel, funBodyTy, funArgs, tpexp, ...}, z) =>
-                          let
-                            val catchExp = tpexpToRcexp varEnv btvEnv tpexp
-                          in
-                            (fn k => RC.RCCATCH {catchLabel = funLabel,
-                                                 argVarList = funArgs,
-                                                 catchExp = catchExp,
-                                                 tryExp = k,
-                                                 resultTy = funBodyTy,
-                                                 loc = loc})
-                            o z
-                          end)
+                      (fn ({funLabel, funBodyTy, funArgs, tpexp, useCount, ...}, z) =>
+                          if !useCount = 1
+                          then z
+                          else
+                            let
+                              val catchExp = compileExp varEnv btvEnv tpexp
+                            in
+                              (fn k => TC.TPCATCH {catchLabel = funLabel,
+                                                   argVarList = funArgs,
+                                                   catchExp = catchExp,
+                                                   tryExp = k,
+                                                   resultTy = funBodyTy,
+                                                   loc = loc})
+                              o z
+                            end)
                       (fn x => x)
                       branchEnv)
                else NONE
@@ -1454,13 +1489,13 @@ in
                          then
                            makeUncurriedFun
                              funArgs
-                             (tpexpToRcexp varEnv btvEnv tpexp)
+                             (compileExp varEnv btvEnv tpexp)
                              funBodyTy
                              funLoc
                          else
                            makeNestedFun
                              funArgs
-                             (tpexpToRcexp varEnv btvEnv tpexp)
+                             (compileExp varEnv btvEnv tpexp)
                              funBodyTy
                              funLoc
                        val _ = funTyRef := (SOME funTy)
@@ -1479,10 +1514,10 @@ in
                treeToRcexp
                  varEnv btvEnv branchEnv caseKind tree ruleBodyTy loc
              | (topBinds, funDecs, NONE) =>
-               RC.RCMONOLET
+               TC.TPLET
                  {
-                  binds= topBinds @ funDecs, 
-                  bodyExp=
+                  decls= map (fn x => TC.TPVAL (x, loc)) (topBinds @ funDecs),
+                  body=
                     treeToRcexp
                     varEnv btvEnv branchEnv caseKind tree ruleBodyTy loc,
                   loc=loc
@@ -1490,42 +1525,73 @@ in
              | (topBinds, _, SOME catchExp) =>
                (case topBinds of
                   nil => (fn x => x)
-                | _::_ => (fn k => RC.RCMONOLET {binds = topBinds,
-                                                 bodyExp = k,
-                                                 loc = loc}))
+                | _::_ =>
+                  (fn k => TC.TPLET
+                             {decls = map (fn x => TC.TPVAL (x, loc)) topBinds,
+                              body = k,
+                              loc = loc}))
                  (catchExp
                     (treeToRcexp
                        varEnv btvEnv branchEnv caseKind tree ruleBodyTy loc))
          end
-      | TC.TPPRIMAPPLY {primOp, instTyList, argExp, argTy,loc} =>
-        RC.RCPRIMAPPLY 
+      | TC.TPSWITCH {exp, expTy, ruleList, defaultExp, ruleBodyTy, loc} =>
+        let
+          fun compileRule r = r # {body = compileExp varEnv btvEnv (#body r)}
+        in
+          TC.TPSWITCH
+            {exp = compileExp varEnv btvEnv exp,
+             expTy = expTy,
+             ruleList =
+               case ruleList of
+                 TC.CONSTCASE rules => TC.CONSTCASE (map compileRule rules)
+               | TC.CONCASE rules => TC.CONCASE (map compileRule rules)
+               | TC.EXNCASE rules => TC.EXNCASE (map compileRule rules),
+             defaultExp = compileExp varEnv btvEnv defaultExp,
+             ruleBodyTy = ruleBodyTy,
+             loc = loc}
+        end
+      | TC.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+        TC.TPCATCH
+          {catchLabel = catchLabel,
+           argVarList = argVarList,
+           catchExp = compileExp varEnv btvEnv catchExp,
+           tryExp = compileExp varEnv btvEnv tryExp,
+           resultTy = resultTy,
+           loc = loc}
+      | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+        TC.TPTHROW
+          {catchLabel = catchLabel,
+           argExpList = map (compileExp varEnv btvEnv) argExpList,
+           resultTy = resultTy,
+           loc = loc}
+      | TC.TPPRIMAPPLY {primOp, instTyList, argExp, loc} =>
+        TC.TPPRIMAPPLY
           {
             primOp=primOp,
             instTyList=instTyList,
-            argExp=tpexpToRcexp varEnv btvEnv argExp,
+            argExp=compileExp varEnv btvEnv argExp,
             loc=loc
            }
-      | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, argTy, loc} =>
-        RC.RCOPRIMAPPLY 
+      | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, loc} =>
+        TC.TPOPRIMAPPLY
           {
            oprimOp=oprimOp,
            instTyList=instTyList,
-           argExp=tpexpToRcexp varEnv btvEnv argExp,
+           argExp=compileExp varEnv btvEnv argExp,
            loc=loc
           }
       | TC.TPRECORD {fields, recordTy=ty, loc} =>
-        RC.RCRECORD 
+        TC.TPRECORD
           {
-           fields=RecordLabel.Map.map (tpexpToRcexp varEnv btvEnv) fields, 
+           fields=RecordLabel.Map.map (compileExp varEnv btvEnv) fields,
            recordTy=ty, 
            loc=loc
           }
        | TC.TPSELECT {label, exp, expTy=ty, resultTy, loc} => 
-	 RC.RCSELECT 
+	 TC.TPSELECT
            {
-            indexExp = RC.RCINDEXOF (label, ty, loc),
             label = label,
-            exp=tpexpToRcexp varEnv btvEnv exp, 
+            exp=compileExp varEnv btvEnv exp,
             expTy=ty, 
             resultTy = resultTy,
             loc=loc
@@ -1537,155 +1603,142 @@ in
             elementExp=exp2,
             elementTy=ty2,
             loc} =>
-	 RC.RCMODIFY
+	 TC.TPMODIFY
            {
-            indexExp = RC.RCINDEXOF (label, ty1, loc),
             label = label,
-            recordExp=tpexpToRcexp varEnv btvEnv exp1,
+            recordExp=compileExp varEnv btvEnv exp1,
             recordTy=ty1,
-            elementExp=tpexpToRcexp varEnv btvEnv exp2,
+            elementExp=compileExp varEnv btvEnv exp2,
             elementTy=ty2,
             loc=loc
            }
-       | TC.TPSEQ {expList, expTyList, loc} =>
-         RC.RCSEQ
-           {
-            expList=map (tpexpToRcexp varEnv btvEnv) expList, 
-            expTyList=expTyList, 
-            loc=loc
-           }
       | TC.TPMONOLET {binds, bodyExp, loc} => 
-	RC.RCMONOLET
+        TC.TPLET
           {
-           binds=
-             map (fn (v, e) =>(toRC v, tpexpToRcexp varEnv btvEnv e)) binds,
-	   bodyExp=tpexpToRcexp varEnv btvEnv bodyExp,
+           decls=
+             map (fn (v, e) =>
+                     TC.TPVAL ((v, compileExp varEnv btvEnv e), loc))
+                 binds,
+           body = compileExp varEnv btvEnv bodyExp,
            loc=loc
           }
-      | TC.TPLET {decls, body, tys, loc} => 
-	RC.RCLET
+      | TC.TPLET {decls, body, loc} =>
+	TC.TPLET
           {decls= map (tpdecToRcdec varEnv btvEnv) decls,
-           body=map (tpexpToRcexp varEnv btvEnv) body,
-           tys=tys,
+           body= compileExp varEnv btvEnv body,
            loc=loc
           }
 
       | TC.TPRAISE {exp, ty, loc} =>
-        RC.RCRAISE {exp=tpexpToRcexp varEnv btvEnv exp, ty=ty, loc=loc}
+        TC.TPRAISE {exp=compileExp varEnv btvEnv exp, ty=ty, loc=loc}
       | TC.TPHANDLE {exp=exp1, exnVar, handler=exp2, resultTy, loc} => 
-	RC.RCHANDLE
+	TC.TPHANDLE
           {
-           exp=tpexpToRcexp varEnv btvEnv exp1, 
-           exnVar= toRC exnVar, 
-           handler=tpexpToRcexp varEnv btvEnv exp2, 
+           exp=compileExp varEnv btvEnv exp1,
+           exnVar= exnVar,
+           handler=compileExp varEnv btvEnv exp2,
            resultTy = resultTy,
            loc=loc
           }
-      | TC.TPPOLYFNM
-          {btvEnv=localBtvEnv,
-           constraints,
-           argVarList=varList,
-           bodyTy=ty,
-           bodyExp=exp,
-           loc} =>
-        RC.RCPOLYFNM
-          {
-           btvEnv=localBtvEnv, 
-           argVarList= map toRC varList, 
-           bodyTy=ty, 
-           bodyExp=
-             tpexpToRcexp varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp, 
-           loc=loc
-          }
        | TC.TPPOLY {btvEnv=localBtvEnv, constraints, expTyWithoutTAbs=ty, exp=exp, loc} =>
-         RC.RCPOLY 
+         TC.TPPOLY
            {
             btvEnv=localBtvEnv, 
+            constraints = constraints,
             expTyWithoutTAbs=ty, 
-            exp=tpexpToRcexp varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp, 
+            exp=compileExp varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp,
             loc=loc
             }
        | TC.TPTAPP {exp, expTy=ty1, instTyList=tys, loc} =>
-         RC.RCTAPP 
+         TC.TPTAPP
            {
-            exp=tpexpToRcexp varEnv btvEnv exp, 
+            exp=compileExp varEnv btvEnv exp,
             expTy=ty1, 
             instTyList=tys, 
             loc=loc
            }
       | TC.TPFFIIMPORT {funExp, ffiTy, stubTy, loc} =>
-        let
-          val funExp =
-              case funExp of
-                TC.TPFFIFUN (tpexp1, ty1) =>
-                RC.RCFFIFUN (tpexpToRcexp varEnv btvEnv tpexp1, ty1)
-              | TC.TPFFIEXTERN s => RC.RCFFIEXTERN s
-        in
-          RC.RCFFI (RC.RCFFIIMPORT {funExp=funExp, ffiTy=ffiTy}, stubTy, loc)
-        end
-      | TC.TPSIZEOF (ty, loc) => RC.RCSIZEOF (ty, loc)
-      | TC.TPREIFYTY (ty, loc) => RC.RCREIFYTY (ty, loc)
+        TC.TPFFIIMPORT
+          {funExp =
+             case funExp of
+               TC.TPFFIFUN (tpexp1, ty1) =>
+               TC.TPFFIFUN (compileExp varEnv btvEnv tpexp1, ty1)
+             | TC.TPFFIEXTERN s => TC.TPFFIEXTERN s,
+           ffiTy = ffiTy,
+           stubTy = stubTy,
+           loc = loc}
+      | TC.TPFOREIGNSYMBOL {name, ty, loc} =>
+        TC.TPFOREIGNSYMBOL {name = name, ty = ty, loc = loc}
+      | TC.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+        TC.TPFOREIGNAPPLY
+          {funExp = compileExp varEnv btvEnv funExp,
+           argExpList = map (compileExp varEnv btvEnv) argExpList,
+           attributes = attributes,
+           resultTy = resultTy,
+           loc = loc}
+      | TC.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+        TC.TPCALLBACKFN
+          {attributes = attributes,
+           argVarList = argVarList,
+           bodyExp = compileExp varEnv btvEnv bodyExp,
+           resultTy = resultTy,
+           loc = loc}
+      | TC.TPSIZEOF (ty, loc) => TC.TPSIZEOF (ty, loc)
+      | TC.TPREIFYTY (ty, loc) => TC.TPREIFYTY (ty, loc)
       | TC.TPCAST ((exp, expTy), ty, loc) =>
-        RC.RCCAST((tpexpToRcexp varEnv btvEnv exp, expTy), ty, loc)
+        TC.TPCAST((compileExp varEnv btvEnv exp, expTy), ty, loc)
       | TC.TPJOIN {isJoin, ty, args = (arg1, arg2), argtys = (argty1, argty2), loc} =>
-        RC.RCJOIN 
+        TC.TPJOIN
           {
            ty=ty,
-           args=(tpexpToRcexp varEnv btvEnv arg1, tpexpToRcexp varEnv btvEnv arg2),
-           argTys=(argty1,argty2),
+           args=(compileExp varEnv btvEnv arg1, compileExp varEnv btvEnv arg2),
+           argtys=(argty1,argty2),
            isJoin = isJoin,
            loc=loc
           }
 
   and tpdecToRcdec varEnv btvEnv tpdec = 
       case tpdec of
-        TC.TPVAL (binds, loc) =>
+        TC.TPVAL (bind, loc) =>
         let
           fun toRcbind (var, exp) = 
-              (toRC var, tpexpToRcexp varEnv btvEnv exp)
+              (var, compileExp varEnv btvEnv exp)
         in
-	  RC.RCVAL (map toRcbind binds, loc)
+	  TC.TPVAL (toRcbind bind, loc)
         end
        | TC.TPVALREC (binds, loc) =>
          let
-           fun toRcbind {var, expTy, exp} = 
-             {var=toRC var, expTy=expTy, exp = tpexpToRcexp varEnv btvEnv exp}
+           fun toRcbind {var, exp} = 
+             {var=var, exp = compileExp varEnv btvEnv exp}
          in
-	   RC.RCVALREC (map toRcbind binds, loc)
+	   TC.TPVALREC (map toRcbind binds, loc)
          end
        | TC.TPVALPOLYREC {btvEnv=localBtvEnv, constraints, recbinds=binds, loc} =>
          let
-           fun toRcbind {var, expTy, exp} =
-               {var=toRC var,
-                expTy = expTy,
-                exp = tpexpToRcexp
+           fun toRcbind {var, exp} =
+               {var=var,
+                exp = compileExp
                         varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp}
          in
-	   RC.RCVALPOLYREC (localBtvEnv, map toRcbind binds, loc)
+	   TC.TPVALPOLYREC {btvEnv = localBtvEnv,
+                            constraints = constraints,
+                            recbinds = map toRcbind binds,
+                            loc = loc}
          end
        | TC.TPFUNDECL (funbinds, loc) =>
          raise bug "TPFUNDECL should be eliminated"
        | TC.TPPOLYFUNDECL {btvEnv, constraints, recbinds, loc} =>
          raise bug "TPPOLYFUNDECL: FIXME: not yet"
-       | TC.TPEXD (binds, loc) => 
-         RC.RCEXD (map 
-                     (fn {exnInfo, loc} => 
-                         {exnInfo = exnInfo, loc = loc}
-                     )
-                     binds, 
-                   loc)
+       | TC.TPEXD (exnInfo, loc) =>
+         TC.TPEXD (exnInfo, loc)
        | TC.TPEXNTAGD ({exnInfo, varInfo}, loc) => 
-         RC.RCEXNTAGD ({exnInfo=exnInfo, varInfo = toRC varInfo}, loc)
-       | TC.TPEXPORTVAR varInfo =>
-(*
-         RC.RCEXPORTVAR ({id=id, path=path, ty=ty}, loc)
-*)
-         RC.RCEXPORTVAR (toRC varInfo)
-       | TC.TPEXPORTRECFUNVAR _ => raise bug "TPEXPORTRECFUNVAR to matchcompiler"
-       | TC.TPEXPORTEXN exnInfo => RC.RCEXPORTEXN exnInfo
-       | TC.TPEXTERNVAR exVarInfo => RC.RCEXTERNVAR exVarInfo
-       | TC.TPEXTERNEXN exExnInfo => RC.RCEXTERNEXN exExnInfo
-       | TC.TPBUILTINEXN exExnInfo => RC.RCBUILTINEXN exExnInfo
+         TC.TPEXNTAGD ({exnInfo=exnInfo, varInfo = varInfo}, loc)
+       | TC.TPEXPORTVAR {var, exp} =>
+         TC.TPEXPORTVAR {var = var, exp = compileExp varEnv btvEnv exp}
+       | TC.TPEXPORTEXN exnInfo => TC.TPEXPORTEXN exnInfo
+       | TC.TPEXTERNVAR exVarInfo => TC.TPEXTERNVAR exVarInfo
+       | TC.TPEXTERNEXN exExnInfo => TC.TPEXTERNEXN exExnInfo
+       | TC.TPBUILTINEXN exExnInfo => TC.TPBUILTINEXN exExnInfo
 
   fun compile tpdecls =
       let

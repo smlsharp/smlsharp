@@ -716,6 +716,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -742,9 +743,7 @@ with_llvm
 with_incompatible_llvm
 with_smlsharp
 enable_extra_options
-with_pthread
 with_massivethreads
-enable_concurrentgc
 '
       ac_precious_vars='build_alias
 host_alias
@@ -796,6 +795,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1048,6 +1048,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1185,7 +1194,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1338,6 +1347,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1377,19 +1387,17 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-extra-options=OPTIONS
                           set default extra options (for developers only)
-  --disable-concurrentgc  disable concurrent GC (experimental)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-llvm             specify where LLVM has installed in
+  --with-llvm=DIR         specify where LLVM has installed in
   --with-incompatible-llvm
                           skip LLVM compatibility check
-  --with-smlsharp         specify smlsharp directory (required for cross
+  --with-smlsharp=DIR     specify smlsharp directory (required for cross
                           compile)
-  --without-pthread       disable pthread support (experimental)
-  --without-massivethreads
-                          disable massivethread support (experimental)
+  --with-massivethreads=DIR
+                          specify where MassiveThreads has installed in
 
 Some influential environment variables:
   CC          C compiler command
@@ -5289,7 +5297,7 @@ $as_echo_n "checking for LLVM compatibility... " >&6; }
 LLVM_VERSION=`echo "$LLVM_VERSION" | sed 's/\.[0-9]*$//'`
 
 case "$LLVM_VERSION" in
-  3.9|[4-9].0)
+  3.9|[4-9].0|10.0)
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     ;;
@@ -5705,18 +5713,7 @@ fi
 
 # -------- Checks for multithread support --------
 
-
-# Check whether --with-pthread was given.
-if test "${with_pthread+set}" = set; then :
-  withval=$with_pthread;
-else
-   with_pthread=yes
-fi
-
-if test "x$with_pthread" = "xno"; then
-  RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_MULTITHREAD"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
 $as_echo_n "checking for pthread_create in -lpthread... " >&6; }
 if ${ac_cv_lib_pthread_pthread_create+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5763,7 +5760,6 @@ else
    as_fn_error $? "pthread library is not found" "$LINENO" 5
 fi
 
-fi
 
 
 # Check whether --with-massivethreads was given.
@@ -5788,9 +5784,6 @@ else
 fi
 
 if test "x$with_massivethreads" = "xyes"; then
-  if test "x$with_pthread" = "xno"; then
-    as_fn_error $? "the massivethreads library requires pthread." "$LINENO" 5
-  fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for myth_is_myth_worker in -lmyth" >&5
 $as_echo_n "checking for myth_is_myth_worker in -lmyth... " >&6; }
 if ${ac_cv_lib_myth_myth_is_myth_worker+:} false; then :
@@ -5884,19 +5877,6 @@ fi
 else
   RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_MASSIVETHREADS"
 fi
-
-# Check whether --enable-concurrentgc was given.
-if test "${enable_concurrentgc+set}" = set; then :
-  enableval=$enable_concurrentgc;
-  if test "x$enableval" = "xno"; then
-    if test "x$with_massivethreads" = "xyes"; then
-      as_fn_error $? "massivethreads support requires concurrent GC." "$LINENO" 5
-    fi
-    RUNTIME_DEFS="$RUNTIME_DEFS -DWITHOUT_CONCURRENCY"
-  fi
-
-fi
-
 
 # -------- Check for required libraries --------
 

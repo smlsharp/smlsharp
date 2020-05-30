@@ -118,22 +118,24 @@ struct
                        retTy = Option.map (runtimeArgTy tyvars) retTy,
                        attributes = attributes})})
          handle PropOf => NONE)
-      | T.BACKENDty (T.FOREIGNFUNPTRty {tyvars, argTyList, varArgTyList,
+      | T.BACKENDty (T.FOREIGNFUNPTRty {argTyList, varArgTyList,
                                         resultTy, attributes}) =>
         (SOME
            (R.codeptrProp
             # {rep =
                  R.CODEPTR
                    (R.FOREIGN
-                      {argTys = map (runtimeArgTy tyvars) argTyList,
-                       varArgTys = Option.map (map (runtimeArgTy tyvars))
+                      {argTys = map (runtimeArgTy btvEnv) argTyList,
+                       varArgTys = Option.map (map (runtimeArgTy btvEnv))
                                               varArgTyList,
-                       retTy = Option.map (runtimeArgTy tyvars) resultTy,
+                       retTy = Option.map (runtimeArgTy btvEnv) resultTy,
                        attributes = attributes})})
          handle PropOf => NONE)
       | T.ERRORty => NONE
       | T.DUMMYty (_, kind) =>
         Option.map dummyTy (propertyOfKind btvEnv kind)
+      | T.EXISTty (_, kind) =>
+        propertyOfKind btvEnv kind
       | T.TYVARty (ref (T.TVAR {kind, ...})) =>
         propertyOfKind btvEnv kind
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => propertyOf btvEnv ty

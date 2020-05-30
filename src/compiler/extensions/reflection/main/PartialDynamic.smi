@@ -4,10 +4,12 @@ _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 (* _require local "../../../data/symbols/main/Symbol.smi" *)
 _require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/env/main/IEnv.smi"
 _require local "../../debug/main/Bug.smi"
 _require "./ReifiedTerm.ppg.smi"
 _require "./ReifiedTy.ppg.smi"
 _require local "./ReifiedTermToML.smi"
+
 (* _require "./ReifyUtils.smi" *)
 (* _require "./ReifiedUtils.smi" *)
 
@@ -26,9 +28,11 @@ struct
   val null : ['a#reify. ReifiedTy.tyRep -> 'a ReifiedTerm.dyn]
   val void : ['a#reify. ReifiedTy.tyRep -> 'a ReifiedTerm.dyn]
   val viewTermGeneric : ['a, 'b#reify. 'a ReifiedTerm.dyn * ReifiedTy.tyRep -> 'b]
+  type existInstMap (= {})
+  val dynamicExistInstance : existInstMap -> int -> ReifiedTy.tyRep
   val dynamicTypeCase : ['a,'b. 
                               'a ReifiedTerm.dyn
-                            -> (ReifiedTy.tyRep * ('a ReifiedTerm.dyn -> 'b)) list
+                            -> (ReifiedTy.tyRep * (existInstMap -> 'a ReifiedTerm.dyn -> 'b)) list
                             -> 'b
                         ]
   val genNull : ReifiedTy.reifiedTy -> ReifiedTerm.reifiedTerm

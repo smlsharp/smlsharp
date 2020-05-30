@@ -1,7 +1,7 @@
 structure ReifyTy =
 struct
   structure UP = UserLevelPrimitive
-  structure RC = RecordCalc
+  structure TC = TypedCalc
   (* structure T = Types *)
   
   open ReifiedTy ReifyUtils ReifiedTyData
@@ -11,8 +11,8 @@ struct
   infixr 4 -->
   infix 5 **
 
-  fun printExp (exp:RC.rcexp) = 
-      print (Bug.prettyPrint (RC.formatWithoutType_rcexp exp))
+  fun printExp (exp:TC.tpexp) =
+      print (Bug.prettyPrint (TC.format_tpexp exp))
 
   fun Boundenv loc btvIdtypIdMap =
       let
@@ -125,7 +125,16 @@ struct
            Layout loc layout,
            Int loc size
           ]
-      | DUMMYty {boxed, size} => ApplyList loc (MonoVar (UP.REIFY_exInfo_makeDummyTy ())) [Bool loc boxed, Word loc size]
+      | DUMMYty {boxed, size} =>
+        ApplyList 
+          loc 
+          (MonoVar (UP.REIFY_exInfo_makeDummyTy ())) 
+          [Bool loc boxed, Word loc size]
+      | EXISTty {boxed, size, id} =>
+        ApplyList
+          loc
+          (MonoVar (UP.REIFY_exInfo_makeExistTy ()))
+          [Bool loc boxed, Word loc size, Int loc id]
       | DYNAMICty reifiedTy => Con loc (UP.REIFY_conInfo_DYNAMICty()) (SOME (ReifiedTy loc reifiedTy))
       | ERRORty => Con loc (UP.REIFY_conInfo_ERRORty()) NONE
       | EXNTAGty => Con loc (UP.REIFY_conInfo_EXNTAGty()) NONE
@@ -195,8 +204,8 @@ struct
       case reifeidTy of
         BOUNDVARty btvId => 
         (case lookup btvId of
-           SOME {path,id,ty} => 
-           BoundTypeVarID.Map.insert(btvMap, btvId, Var {path=path, id = id, ty = TyRepTy()})
+           SOME {path,id,ty} =>
+           BoundTypeVarID.Map.insert(btvMap, btvId, Var {path=path, id = id, ty = TyRepTy(), opaque = false})
          | NONE =>  btvMap)
       | ARRAYty ty => tyExpList visited lookup (ty,btvMap)
       | IENVMAPty ty => tyExpList visited lookup (ty,btvMap)
@@ -227,11 +236,11 @@ struct
       | BOXEDty =>  Con loc (UP.REIFY_conInfo_BOXEDty()) NONE
       | BOUNDVARty btvId => 
         (case lookup btvId of
-           SOME {path,id,ty} => 
+           SOME {path,id,ty} =>
            ApplyList 
              loc
              (MonoVar (UP.REIFY_exInfo_TyRepToReifiedTy()))
-             [Var {path=path, id = id, ty = TyRepTy()}]
+             [Var {path=path, id = id, ty = TyRepTy(), opaque = false}]
          | NONE =>  Con loc (UP.REIFY_conInfo_BOUNDVARty()) (SOME (BtvId loc btvId)))
       | CHARty => Con loc (UP.REIFY_conInfo_CHARty()) NONE
       | CODEPTRty => Con loc (UP.REIFY_conInfo_CODEPTRty()) NONE
@@ -246,8 +255,16 @@ struct
            Layout loc layout,
            Int loc size
           ]
-      | DUMMYty {boxed, size} => 
-        ApplyList loc (MonoVar (UP.REIFY_exInfo_makeDummyTy ())) [Bool loc boxed, Word loc size]
+      | DUMMYty {boxed, size} =>
+        ApplyList 
+          loc
+          (MonoVar (UP.REIFY_exInfo_makeDummyTy ())) 
+          [Bool loc boxed, Word loc size]
+      | EXISTty {boxed, size, id} =>
+        ApplyList
+          loc
+          (MonoVar (UP.REIFY_exInfo_makeExistTy ()))
+          [Bool loc boxed, Word loc size, Int loc id]
       | DYNAMICty reifiedTy => 
         Con loc (UP.REIFY_conInfo_DYNAMICty()) (SOME (ReifiedTyWithLookUp lookup loc reifiedTy))
       | ERRORty => Con loc (UP.REIFY_conInfo_ERRORty()) NONE

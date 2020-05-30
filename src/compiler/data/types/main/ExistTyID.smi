@@ -1,0 +1,12 @@
+_require "../../../../basis.smi"
+_require "../../../../smlformat-lib.smi"
+
+structure ExistTyID =
+struct
+  eqtype id (= int)
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+  val compare : id * id -> order
+end

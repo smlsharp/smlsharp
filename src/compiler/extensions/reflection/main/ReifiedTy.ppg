@@ -123,6 +123,16 @@ struct
           @format  "LAYOUT_SINGLE"
        *)
       LAYOUT_SINGLE
+
+  (* check this *)
+  fun isBoxedLayout layout =
+      case layout of
+      LAYOUT_TAGGED _ => true
+    | LAYOUT_ARG_OR_NULL  _ => true
+    | LAYOUT_SINGLE_ARG _ => true
+    | LAYOUT_CHOICE  _ => false
+    | LAYOUT_SINGLE => false
+
   fun layoutToString reifiedTy =
       SMLFormat.prettyPrint nil (format_layout reifiedTy)
   fun layoutEq (LAYOUT_TAGGED taggedLayout1, LAYOUT_TAGGED taggedLayout2) = 
@@ -186,8 +196,10 @@ struct
                      layout: layout,
                      size : int
                     }
-    | (*% @format "?DummyTy" *)
+    | (*% @format({boxed,size}) "?DummyTy"*)
       DUMMYty of {boxed : bool, size : word}
+    | (*% @format({boxed,size,id}) "EXISTty(" id ")" *)
+      EXISTty of {boxed : bool, size : word, id : int}
     | (*% @format(ty) ty + "dyn" *)
       DYNAMICty of reifiedTy
     | (*% @format "?ERRORty" *)
@@ -301,9 +313,168 @@ struct
 
   fun printTy ty = print (reifiedTyToString ty)
 
-  fun reifiedTyEq (ty1, ty2) =
+  (* offsets *)
+  val charSize = 0w1
+  val int16Size = 0w2
+  val int64Size = 0w8
+  val int8Size = 0w1
+  val intSize = 0w4
+  val ptrSize = SMLSharp_Builtin.Dynamic.sizeToWord _sizeof(boxed)
+  val real32Size = 0w4
+  val realSize = 0w8
+  val tagSize = 0w4
+  val word16Size = 0w2
+  val word32Size = 0w4
+  val word64Size = 0w8
+  val word8Size = 0w1
+  val wordSize = 0w4
+  fun sizeOf reifiedTy = 
+      case reifiedTy of
+        ARRAYty reifiedTy => ptrSize
+      | BOOLty => intSize
+      | BOTTOMty => intSize
+      | BOXEDty => ptrSize
+      | BOUNDVARty BoundTypeVarIDid => Undetermined "BOUNDVARty"
+      | CHARty => charSize
+      | CODEPTRty => ptrSize
+      | CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => Word.fromInt size
+      | DATATYPEty {longsymbol, id, args, layout, size} => Word.fromInt size
+      | DUMMYty {boxed, size} => size
+      | EXISTty {boxed, size, id} => size
+      | DYNAMICty _ => ptrSize
+      | ERRORty =>  Undetermined "ERRORty"
+      | EXNTAGty => ptrSize
+      | EXNty  => ptrSize
+      | FUNMty _  => ptrSize
+      | IENVMAPty _ => ptrSize
+      | INT16ty => int16Size
+      | INT64ty => int64Size
+      | INT8ty => int8Size
+      | INTERNALty => Undetermined "INTERNALty"
+      | INTINFty => ptrSize
+      | INT32ty => intSize
+      | LISTty reifiedTy => ptrSize
+      | OPAQUEty {size,...} => Word.fromInt size
+      | OPTIONty reifiedTy => ptrSize
+      | POLYty {boundenv, body} => sizeOf body
+      | PTRty reifiedTy  => ptrSize
+      | REAL32ty  => real32Size
+      | REAL64ty => realSize
+      | RECORDLABELty => ptrSize
+      | RECORDLABELMAPty _ => ptrSize
+      | RECORDty reifiedTyLabelMap => ptrSize
+      | REFty reifiedTy => ptrSize
+      | SENVMAPty _ => ptrSize
+      | STRINGty => ptrSize
+      | VOIDty => intSize
+      | TYVARty => Undetermined "TYVARty"
+      | UNITty => intSize
+      | VECTORty reifiedTy => ptrSize
+      | WORD16ty => word16Size
+      | WORD64ty => word64Size
+      | WORD8ty => word8Size
+      | WORD32ty => word32Size
+
+  fun isGroundTy reifiedTy =
+      case reifiedTy of
+      ARRAYty reifiedTy => isGroundTy reifiedTy
+    | LISTty reifiedTy => isGroundTy reifiedTy
+    | OPTIONty reifiedTy => isGroundTy reifiedTy
+    | REFty reifiedTy => isGroundTy reifiedTy
+    | RECORDty reifiedTyRecordLabelMapmap => 
+      List.all isGroundTy (RecordLabel.Map.listItems reifiedTyRecordLabelMapmap)
+    | BOOLty => true
+    | CHARty => true
+    | INT16ty => true
+    | INT64ty => true
+    | INT8ty => true
+    | INTINFty => true
+    | INT32ty => true
+    | REAL32ty => true
+    | REAL64ty => true
+    | RECORDLABELty  => true
+    | STRINGty => true
+    | UNITty  => true
+    | WORD16ty => true
+    | WORD64ty => true
+    | WORD8ty => true
+    | WORD32ty => true
+    | BOTTOMty => false
+    | BOXEDty => false
+    | BOUNDVARty _  => false
+    | CODEPTRty => false
+    | CONSTRUCTty _ => false
+    | DATATYPEty _ => false
+    | DUMMYty _ => false
+    | EXISTty _ => false
+    | DYNAMICty _ => false
+    | ERRORty => false
+    | EXNTAGty => false
+    | EXNty => false
+    | FUNMty _ => false
+    | IENVMAPty _ => false
+    | INTERNALty => false
+    | OPAQUEty _ => false
+    | POLYty _ => false
+    | PTRty _ => false
+    | RECORDLABELMAPty _ => false
+    | SENVMAPty _ => false
+    | TYVARty => false
+    | VECTORty _ => false
+    | VOIDty => false
+
+  fun isBoxed reifiedTy = 
+      case reifiedTy of
+        ARRAYty reifiedTy => true
+      | BOOLty => false
+      | BOTTOMty => false
+      | BOXEDty => true
+      | BOUNDVARty BoundTypeVarIDid => true
+      | CHARty => false
+      | CODEPTRty => false
+      | CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => isBoxedLayout layout
+      | DATATYPEty {longsymbol, id, args, layout, size} => isBoxedLayout layout
+      | DUMMYty {boxed, size} => boxed
+      | EXISTty {boxed, size, id} => boxed
+      | DYNAMICty _ => true
+      | ERRORty =>  false
+      | EXNTAGty => true
+      | EXNty  => true
+      | FUNMty _  => true
+      | IENVMAPty _ => true
+      | INT16ty => false
+      | INT64ty => false
+      | INT8ty => false
+      | INTERNALty => Undetermined "INTERNALty"
+      | INTINFty => true
+      | INT32ty => false
+      | LISTty reifiedTy => true
+      | OPAQUEty {size,...} => true
+      | OPTIONty reifiedTy => true
+      | POLYty {boundenv, body} => true
+      | PTRty reifiedTy  => false
+      | REAL32ty  => false
+      | REAL64ty => false
+      | RECORDLABELty => false
+      | RECORDLABELMAPty _ => true
+      | RECORDty reifiedTyLabelMap => true
+      | REFty reifiedTy => true
+      | SENVMAPty _ => true
+      | STRINGty => true
+      | VOIDty => false
+      | TYVARty => Undetermined "TYVARty"
+      | UNITty => false
+      | VECTORty reifiedTy => true
+      | WORD16ty => false
+      | WORD64ty =>  false
+      | WORD8ty =>  false
+      | WORD32ty =>  false
+
+  fun reifiedTyEq' (ty1, ty2) =
       let
+        exception NotEQ
         val emptyEquivEnv = BoundTypeVarID.Map.empty
+        val emptyIdEnv = IEnv.empty
         fun extendEquivEnv (btvenv1, btvenv2) equivEnv =
             ListPair.foldlEq 
               (fn (i, j, map) => BoundTypeVarID.Map.insert(map, i, j))
@@ -320,65 +491,93 @@ struct
               (case BoundTypeVarID.Map.find(equivEnv, id2) of
                  SOME id4 => BoundTypeVarID.eq(id1, id4) 
                | NONE => false)
-        fun eqList equivEnv (nil, nil) = true
-          | eqList equivEnv (h::_, nil) = false
-          | eqList equivEnv (nil, h::_) = false
-          | eqList equivEnv (h1::tl1, h2::tl2) =
-            eq equivEnv (h1, h2) andalso eqList equivEnv (tl1, tl2)
-        and eq equivEnv (ty1,ty2) =
+        fun eqList equivEnv idEnv (L1,L2) =
+            foldl 
+            (fn ((ty1,ty2), idEnv) => eq equivEnv idEnv (ty1,ty2))
+            idEnv
+            (ListPair.zip (L1,L2))
+        and eq equivEnv idEnv (ty1,ty2) =
             case (ty1,ty2) of
-              (ARRAYty ty1, ARRAYty ty2) => eq equivEnv (ty1, ty2)
-            | (BOOLty, BOOLty) => true
-            | (BOTTOMty, BOTTOMty) => true
-            | (BOXEDty, BOXEDty) => true
-            | (BOUNDVARty id1, BOUNDVARty id2) => btvIdEq equivEnv (id1, id2)
-            | (CHARty, CHARty) => true
-            | (CODEPTRty, CODEPTRty) => true
+              (EXISTty {id=id1,...}, EXISTty{id=id2, ...}) =>
+              if id1 <> id2 then raise NotEQ else idEnv 
+            | (EXISTty {id=id1,boxed, size}, _) =>
+              (case IEnv.find(idEnv, id1) of
+                 NONE =>
+                 if (boxed andalso isBoxed ty2) orelse
+                    (not boxed andalso size = sizeOf ty2)
+                 then IEnv.insert(idEnv, id1, ty2)
+                 else raise NotEQ
+               | SOME ty => eq equivEnv idEnv (ty, ty2))
+            | (_, EXISTty {id=id2,boxed, size}) =>
+              (case IEnv.find(idEnv, id2) of
+                 NONE => 
+                 if (boxed andalso isBoxed ty1) orelse
+                    (not boxed andalso size = sizeOf ty1)
+                 then IEnv.insert(idEnv, id2, ty1)
+                 else raise NotEQ
+               | SOME ty => eq equivEnv idEnv (ty1, ty))
+            | (ARRAYty ty1, ARRAYty ty2) => eq equivEnv idEnv (ty1, ty2)
+            | (BOOLty, BOOLty) => idEnv
+            | (BOTTOMty, BOTTOMty) => idEnv
+            | (BOXEDty, BOXEDty) => idEnv
+            | (BOUNDVARty id1, BOUNDVARty id2) => 
+              if btvIdEq equivEnv (id1, id2) then idEnv
+              else raise NotEQ
+            | (CHARty, CHARty) => idEnv
+            | (CODEPTRty, CODEPTRty) => idEnv
             | (CONSTRUCTty {id=id1, args=args1,...}, CONSTRUCTty {id=id2, args=args2,...})
-              => TypID.eq (id1, id2) andalso eqList equivEnv (args1, args2)
+              => if TypID.eq (id1, id2) then eqList equivEnv idEnv (args1, args2)
+                 else raise NotEQ
             | (DATATYPEty  {id=id1, args=args1,...}, DATATYPEty {id=id2, args=args2,...}) 
-              => TypID.eq (id1, id2) andalso eqList equivEnv (args1, args2)
-            | (DUMMYty {boxed=b1, size=s1}, DUMMYty {boxed=b2, size=s2}) =>
-              b1 = b2 andalso s1 = s2
-            | (DYNAMICty ty1, DYNAMICty ty2)  => eq equivEnv (ty1, ty2)
-            | (ERRORty, ERRORty)  => true
-            | (EXNTAGty, EXNTAGty) => true
-            | (EXNty, EXNty) => true
+              => if TypID.eq (id1, id2) then eqList equivEnv idEnv (args1, args2)
+                 else raise NotEQ
+            | (DYNAMICty ty1, DYNAMICty ty2)  => eq equivEnv idEnv (ty1, ty2)
+            | (ERRORty, ERRORty)  => idEnv
+            | (EXNTAGty, EXNTAGty) => idEnv
+            | (EXNty, EXNty) => idEnv
             | (FUNMty ([arg1], ty1), FUNMty ([arg2], ty2)) => 
-              eq equivEnv (arg1, arg2) andalso eq equivEnv (ty1, ty2)
-            | (IENVMAPty ty1, IENVMAPty ty2) => eq equivEnv (ty1, ty2)
-            | (INT32ty, INT32ty) => true
-            | (INT16ty, INT16ty) => true
-            | (INT64ty, INT64ty) => true
-            | (INT8ty, INT8ty) => true
-            | (INTERNALty, INTERNALty) => true
-            | (INTINFty, INTINFty) => true
-            | (LISTty  ty1, LISTty  ty2) => eq equivEnv (ty1, ty2)
+              eqList equivEnv idEnv ([arg1,ty1], [arg2,ty2])
+            | (IENVMAPty ty1, IENVMAPty ty2) => eq equivEnv idEnv (ty1, ty2)
+            | (INT32ty, INT32ty) => idEnv
+            | (INT16ty, INT16ty) => idEnv
+            | (INT64ty, INT64ty) => idEnv
+            | (INT8ty, INT8ty) => idEnv
+            | (INTERNALty, INTERNALty) => idEnv
+            | (INTINFty, INTINFty) => idEnv
+            | (LISTty  ty1, LISTty  ty2) => eq equivEnv idEnv (ty1, ty2)
             | (OPAQUEty {id=id1, args=args1,...}, OPAQUEty {id=id2, args=args2,...})
-              => TypID.eq (id1, id2) andalso eqList equivEnv (args1, args2)
-            | (OPTIONty ty1, OPTIONty ty2) => eq equivEnv (ty1, ty2)
+              => if TypID.eq (id1, id2) then eqList equivEnv idEnv (args1, args2)
+                 else raise NotEQ
+            | (OPTIONty ty1, OPTIONty ty2) => eq equivEnv idEnv (ty1, ty2)
             | (POLYty {boundenv=benv1, body=ty1}, POLYty {boundenv=benv2, body=ty2})
-              => eq (extendEquivEnv (benv1, benv2) equivEnv) (ty1, ty2)
-            | (PTRty ty1, PTRty ty2) => eq equivEnv (ty1, ty2)
-            | (REAL64ty, REAL64ty) => true
-            | (REAL32ty, REAL32ty) => true
+              => eq (extendEquivEnv (benv1, benv2) equivEnv) idEnv (ty1, ty2)
+            | (PTRty ty1, PTRty ty2) => eq equivEnv idEnv (ty1, ty2)
+            | (REAL64ty, REAL64ty) => idEnv
+            | (REAL32ty, REAL32ty) => idEnv
             | (RECORDty map1, RECORDty map2) => 
-              RecordLabel.Map.eq (eq equivEnv) (map1, map2)
-            | (REFty ty1, REFty ty2)  => eq equivEnv (ty1, ty2)
-            | (SENVMAPty ty1, SENVMAPty ty2) => eq equivEnv (ty1, ty2)
-            | (STRINGty, STRINGty) => true
-            | (VOIDty, VOIDty) => true
-            | (TYVARty, TYVARty) => false
-            | (UNITty , UNITty) => true
-            | (VECTORty ty1, VECTORty ty2)  => eq equivEnv (ty1, ty2)
-            | (WORD32ty, WORD32ty) => true
-            | (WORD16ty, WORD16ty) => true
-            | (WORD64ty, WORD64ty) => true
-            | (WORD8ty, WORD8ty) => true
-            | _ => false
+              RecordLabel.Map.foldl
+                (fn ((SOME ty1, SOME ty2), idEnv) => eq equivEnv idEnv (ty1,ty2)
+                  | _ => raise NotEQ
+                )
+                idEnv
+                (RecordLabel.Map.mergeWith SOME (map1, map2))
+            | (REFty ty1, REFty ty2)  => eq equivEnv idEnv (ty1, ty2)
+            | (SENVMAPty ty1, SENVMAPty ty2) => eq equivEnv idEnv (ty1, ty2)
+            | (STRINGty, STRINGty) => idEnv
+            | (VOIDty, VOIDty) => idEnv
+            | (TYVARty, TYVARty) => idEnv
+            | (UNITty , UNITty) => idEnv
+            | (VECTORty ty1, VECTORty ty2)  => eq equivEnv idEnv (ty1, ty2)
+            | (WORD32ty, WORD32ty) => idEnv
+            | (WORD16ty, WORD16ty) => idEnv
+            | (WORD64ty, WORD64ty) => idEnv
+            | (WORD8ty, WORD8ty) => idEnv
+            | _ => raise NotEQ
       in
-        eq emptyEquivEnv (ty1, ty2)
+        SOME (eq emptyEquivEnv emptyIdEnv (ty1, ty2))
+        handle NotEQ => NONE
       end
+  fun reifiedTyEq tys = isSome (reifiedTyEq' tys)
 
   val emptyConSet = SEnv.empty : conSet
   fun conSetToString conSet =
@@ -479,10 +678,10 @@ struct
              NONE => ty | SOME newTy => newTy)
         | IENVMAPty reifiedTy => IENVMAPty (apply reifiedTy)
         | LISTty reifiedTy => LISTty (apply reifiedTy)
-        | ARRAYty reifiedTy => LISTty (apply reifiedTy)
-        | VECTORty reifiedTy => LISTty (apply reifiedTy)
-        | OPTIONty reifiedTy => LISTty (apply reifiedTy)
-        | REFty reifiedTy => LISTty (apply reifiedTy)
+        | ARRAYty reifiedTy => ARRAYty (apply reifiedTy)
+        | VECTORty reifiedTy => VECTORty (apply reifiedTy)
+        | OPTIONty reifiedTy => OPTIONty (apply reifiedTy)
+        | REFty reifiedTy => REFty (apply reifiedTy)
         | RECORDty reifiedTyMap =>
           RECORDty (RecordLabel.Map.map apply reifiedTyMap)
         | DATATYPEty {longsymbol, id, args, layout, size} =>
@@ -576,6 +775,9 @@ struct
 
   fun makeDummyTy boxed size =
       DUMMYty {boxed = boxed, size = size}
+
+  fun makeExistTy boxed size id =
+      EXISTty {boxed = boxed, size = size, id = id}
       
   fun makeFUNMty reifiedTyList reifiedTy =
       FUNMty (reifiedTyList, reifiedTy)
@@ -639,111 +841,4 @@ struct
          pos = pos,
          gap = gap}
 
-  (* offsets *)
-  val charSize = 0w1
-  val int16Size = 0w2
-  val int64Size = 0w8
-  val int8Size = 0w1
-  val intSize = 0w4
-  val ptrSize = SMLSharp_Builtin.Dynamic.sizeToWord _sizeof(boxed)
-  val real32Size = 0w4
-  val realSize = 0w8
-  val tagSize = 0w4
-  val word16Size = 0w2
-  val word32Size = 0w4
-  val word64Size = 0w8
-  val word8Size = 0w1
-  val wordSize = 0w4
-  fun sizeOf reifiedTy = 
-      case reifiedTy of
-        ARRAYty reifiedTy => ptrSize
-      | BOOLty => intSize
-      | BOTTOMty => intSize
-      | BOXEDty => ptrSize
-      | BOUNDVARty BoundTypeVarIDid => Undetermined "BOUNDVARty"
-      | CHARty => charSize
-      | CODEPTRty => ptrSize
-      | CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => Word.fromInt size
-      | DATATYPEty {longsymbol, id, args, layout, size} => Word.fromInt size
-      | DUMMYty {boxed, size} => size
-      | DYNAMICty _ => ptrSize
-      | ERRORty =>  Undetermined "ERRORty"
-      | EXNTAGty => ptrSize
-      | EXNty  => ptrSize
-      | FUNMty _  => ptrSize
-      | IENVMAPty _ => ptrSize
-      | INT16ty => int16Size
-      | INT64ty => int64Size
-      | INT8ty => int8Size
-      | INTERNALty => Undetermined "INTERNALty"
-      | INTINFty => ptrSize
-      | INT32ty => intSize
-      | LISTty reifiedTy => ptrSize
-      | OPAQUEty {size,...} => Word.fromInt size
-      | OPTIONty reifiedTy => ptrSize
-      | POLYty {boundenv, body} => sizeOf body
-      | PTRty reifiedTy  => ptrSize
-      | REAL32ty  => real32Size
-      | REAL64ty => realSize
-      | RECORDLABELty => ptrSize
-      | RECORDLABELMAPty _ => ptrSize
-      | RECORDty reifiedTyLabelMap => ptrSize
-      | REFty reifiedTy => ptrSize
-      | SENVMAPty _ => ptrSize
-      | STRINGty => ptrSize
-      | VOIDty => intSize
-      | TYVARty => Undetermined "TYVARty"
-      | UNITty => intSize
-      | VECTORty reifiedTy => ptrSize
-      | WORD16ty => word16Size
-      | WORD64ty => word64Size
-      | WORD8ty => word8Size
-      | WORD32ty => word32Size
-
-  fun isGroundTy reifiedTy =
-      case reifiedTy of
-      ARRAYty reifiedTy => isGroundTy reifiedTy
-    | LISTty reifiedTy => isGroundTy reifiedTy
-    | OPTIONty reifiedTy => isGroundTy reifiedTy
-    | REFty reifiedTy => isGroundTy reifiedTy
-    | RECORDty reifiedTyRecordLabelMapmap => 
-      List.all isGroundTy (RecordLabel.Map.listItems reifiedTyRecordLabelMapmap)
-    | BOOLty => true
-    | CHARty => true
-    | INT16ty => true
-    | INT64ty => true
-    | INT8ty => true
-    | INTINFty => true
-    | INT32ty => true
-    | REAL32ty => true
-    | REAL64ty => true
-    | RECORDLABELty  => true
-    | STRINGty => true
-    | UNITty  => true
-    | WORD16ty => true
-    | WORD64ty => true
-    | WORD8ty => true
-    | WORD32ty => true
-    | BOTTOMty => false
-    | BOXEDty => false
-    | BOUNDVARty _  => false
-    | CODEPTRty => false
-    | CONSTRUCTty _ => false
-    | DATATYPEty _ => false
-    | DUMMYty _ => false
-    | DYNAMICty _ => false
-    | ERRORty => false
-    | EXNTAGty => false
-    | EXNty => false
-    | FUNMty _ => false
-    | IENVMAPty _ => false
-    | INTERNALty => false
-    | OPAQUEty _ => false
-    | POLYty _ => false
-    | PTRty _ => false
-    | RECORDLABELMAPty _ => false
-    | SENVMAPty _ => false
-    | TYVARty => false
-    | VECTORty _ => false
-    | VOIDty => false
 end

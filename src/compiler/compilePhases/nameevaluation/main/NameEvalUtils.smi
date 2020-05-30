@@ -25,6 +25,7 @@ _require "./NameEvalEnv.ppg.smi"
 structure NameEvalUtils =
   struct
     val print : string -> unit
+    val printProp : IDCalc.property -> unit
     val printSymbol : Symbol.symbol -> unit
     val printLongsymbol : Symbol.longsymbol -> unit
     val printPath : string list -> unit
@@ -90,6 +91,7 @@ structure NameEvalUtils =
     val printTfvList : (IDCalc.tfunkind ref * string list) list -> unit
     val printTfvMap : string list TfvMap.map -> unit
     val printCompileUnit : PatternCalcInterface.compile_unit -> unit
+    val printCompileUnitSpliced : PatternCalcInterface.compile_unit_spliced -> unit
     val evalList : {emptyEnv:'a, eval:'b -> 'a * 'c, unionEnv:'a * 'a -> 'a}
                    -> 'b list -> 'a * 'c list
     val evalTailList : {env:'a, eval:'a -> 'b -> 'a * 'c}

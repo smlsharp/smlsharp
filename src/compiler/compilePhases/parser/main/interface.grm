@@ -113,19 +113,23 @@ structure Interface
     | WITHTYPE
 
 %nonterm
-      id_noEQSTAR of string
+      id of Symbol.symbol
+    | id_noEQ of Symbol.symbol
+    | id_noEQSTAR of Symbol.symbol
+    | longId of Symbol.longsymbol
+(*
+      id of string
     | id_noEQ of string
-    | id of string
+    | id_noEQSTAR of string
     | longId of string list
-    | longsymbol of Symbol.longsymbol
     | longtyconid of string list
-    | vid of Symbol.symbol
+*)
     | tycon of Symbol.symbol
     | strid of Symbol.symbol
     | funid of Symbol.symbol
     | tyvar of A.tvar
-    | longvid of Symbol.longsymbol
     | longtycon of Symbol.longsymbol
+
     | tyvarCommaList of A.tvar list
     | tyvarseq_noNIL of A.tvar list
     | tyvarseq of A.tvar list
@@ -189,7 +193,10 @@ structure Interface
 
     | lab of RecordLabel.label
     | sigid of Symbol.symbol
+(*
     | longstrid of string list
+*)
+    | longstrid of Symbol.longsymbol
     | longstrsymbol of Symbol.longsymbol
 (*
     | constraint of I.constraint
@@ -268,29 +275,25 @@ structure Interface
 
 id_noEQSTAR
         : SYMBOLICID
-          (SYMBOLICID)
+          (Symbol.mkSymbol SYMBOLICID (SYMBOLICIDleft, SYMBOLICIDright))
         | ALPHABETICID
-          (ALPHABETICID)
+          (Symbol.mkSymbol ALPHABETICID (ALPHABETICIDleft, ALPHABETICIDright))
 
 id_noEQ
         : id_noEQSTAR
           (id_noEQSTAR)
         | ASTERISK
-          ("*")
+          (Symbol.mkSymbol "*" (ASTERISKleft, ASTERISKright))
 
 id
         : id_noEQ
           (id_noEQ)
         | EQ
-          ("=")
-
-vid
-        : id
-          (Symbol.mkSymbol id (idleft, idright))
+          (Symbol.mkSymbol "=" (EQleft, EQright))
 
 tycon
         : id
-          (Symbol.mkSymbol id (idleft, idright))
+          (id)
 
 strid
         : ALPHABETICID
@@ -316,35 +319,30 @@ longId
         : id
           ([id])
         | ALPHABETICID PERIOD longId
-          (ALPHABETICID :: longId)
+          (Symbol.mkSymbol 
+	      ALPHABETICID 
+              (ALPHABETICIDleft, ALPHABETICIDright) :: longId)
 
-longsymbol
-        : longId
-          (Symbol.mkLongsymbol longId (longIdleft, longIdright))
-
-longtyconid
+longtycon
         : id_noEQSTAR
           ([id_noEQSTAR])
         | ALPHABETICID PERIOD longId
-          (ALPHABETICID :: longId)
-
-longtycon
-        : longtyconid
-          (Symbol.mkLongsymbol longtyconid (longtyconidleft, longtyconidright))
-
+          (Symbol.mkSymbol 
+	      ALPHABETICID 
+              (ALPHABETICIDleft, ALPHABETICIDright) :: longId)
 longstrid
         : ALPHABETICID
-          ([ALPHABETICID])
+          ([Symbol.mkSymbol 
+	      ALPHABETICID 
+              (ALPHABETICIDleft, ALPHABETICIDright)])
         | ALPHABETICID PERIOD longstrid
-          (ALPHABETICID :: longstrid)
+          (Symbol.mkSymbol 
+	      ALPHABETICID 
+              (ALPHABETICIDleft, ALPHABETICIDright) :: longstrid)
 
 longstrsymbol
         : longstrid
-          (Symbol.mkLongsymbol longstrid (longstridleft, longstridright))
-
-longvid
-        : longId
-          (Symbol.mkLongsymbol longId (longIdleft, longIdright))
+          (longstrid)
 
 sigidlist
         : sigid sigid
@@ -402,31 +400,31 @@ valbind         : valbind_1
                     (valbind_1 :: valbind)
 *)
 valbind
-        : vid COLON ty
-          ({symbol = vid,
+        : id COLON ty
+          ({symbol = id,
             body = I.VAL_EXTERN {ty = ty},
-            loc = (vidleft, tyright)})
-        | vid COLON poly_ty
-          ({symbol = vid,
+            loc = (idleft, tyright)})
+        | id COLON poly_ty
+          ({symbol = id,
             body = I.VAL_EXTERN {ty = poly_ty},
-            loc = (vidleft, poly_tyright)})
-        | vid EQ longsymbol
+            loc = (idleft, poly_tyright)})
+        | id EQ longId
           (* 2012-1-4 ohori: variable alias in interface added *)
-          ({symbol = vid,
-            body = I.VALALIAS_EXTERN longsymbol,
-            loc = (vidleft, longsymbolright)})
-        | vid EQ BUILTIN VAL vid COLON ty
-          ({symbol = vid1,
-            body = I.VAL_BUILTIN {builtinSymbol = vid2, ty = ty},
-            loc = (vidleft, tyright)})
-        | vid EQ BUILTIN VAL vid COLON poly_ty
-          ({symbol = vid1,
-            body = I.VAL_BUILTIN {builtinSymbol = vid2, ty = poly_ty},
-            loc = (vidleft, poly_tyright)})
-        | vid EQ overloadExp
-          ({symbol = vid,
+          ({symbol = id,
+            body = I.VALALIAS_EXTERN longId,
+            loc = (idleft, longIdright)})
+        | id EQ BUILTIN VAL id COLON ty
+          ({symbol = id1,
+            body = I.VAL_BUILTIN {builtinSymbol = id2, ty = ty},
+            loc = (id1left, tyright)})
+        | id EQ BUILTIN VAL id COLON poly_ty
+          ({symbol = id1,
+            body = I.VAL_BUILTIN {builtinSymbol = id2, ty = poly_ty},
+            loc = (id1left, poly_tyright)})
+        | id EQ overloadExp
+          ({symbol = id,
             body = I.VAL_OVERLOAD overloadExp,
-            loc = (vidleft, overloadExpright)})
+            loc = (idleft, overloadExpright)})
 
 typbind_trans_1
         : tyvarseq tycon EQ ty
@@ -442,10 +440,10 @@ typbind_trans
           (typbind_trans_1 :: typbind_trans)
 
 opaque_impl
-        : longsymbol
-          (case Symbol.longsymbolToString longsymbol of
+        : longId
+          (case Symbol.longsymbolToString longId of
              "*" => I.IMPL_TUPLE
-           | _ => I.IMPL_TY longsymbol)
+           | _ => I.IMPL_TY longId)
         | ARROW
           (I.IMPL_FUNC)
         | LBRACE RBRACE
@@ -538,10 +536,10 @@ datbind
 *)
 
 conname
-        : vid
-          (vid)
-        | OP vid
-          (vid)
+        : id
+          (id)
+        | OP id
+          (id)
 
 conbind_1
         : conname
@@ -562,10 +560,10 @@ exbind_1
         | conname OF ty
           (I.EXNDEF
              {symbol = conname, ty = SOME ty, loc = (connameleft, tyright)})
-        | conname EQ longvid
+        | conname EQ longId
           (I.EXNREP {symbol = conname,
-                     longsymbol = longvid,
-                     loc = (connameleft, longvidright)})
+                     longsymbol = longId,
+                     loc = (connameleft, longIdright)})
 
 exbind
         : exbind_1
@@ -619,13 +617,13 @@ dec
 strexp
         : STRUCT strdecs END
           (I.ISTRUCT {decs = strdecs, loc = (STRUCTleft, ENDright)})
-        | longsymbol
-          (I.ISTRUCTREP {longsymbol = longsymbol,
-                         loc = (longsymbolleft, longsymbolright)})
-        | funid LPAREN longsymbol RPAREN
+        | longId
+          (I.ISTRUCTREP {longsymbol = longId,
+                         loc = (longIdleft, longIdright)})
+        | funid LPAREN longId RPAREN
           (I.IFUNCTORAPP {functorSymbol = funid,
-                          argument = longsymbol,
-                          loc = (longsymbolleft, RPARENright)})
+                          argument = longId,
+                          loc = (longIdleft, RPARENright)})
 
 strbind
         : strid EQ strexp
@@ -679,10 +677,10 @@ precLevel
           (NONE)
 
 vidList
-        : vid
-          ([vid])
-        | vid vidList
-          (vid :: vidList)
+        : id
+          ([id])
+        | id vidList
+          (id :: vidList)
 
 infixDec
         : INFIX precLevel vidList
@@ -731,8 +729,8 @@ sigdecs
 require_options
         : (* none *)
           (nil)
-        | vid require_options
-          (vid :: require_options)
+        | id require_options
+          (id :: require_options)
 
 requires
         : (* none *)
@@ -786,8 +784,8 @@ overloadExp
 overloadInst
         : overloadExp
           (I.INST_OVERLOAD overloadExp)
-        | longvid
-          (I.INST_LONGVID {longsymbol = longvid})
+        | longId
+          (I.INST_LONGVID {longsymbol = longId})
         | LPAREN overloadInst RPAREN
           (overloadInst)
 
@@ -801,7 +799,7 @@ overloadMatch
 
 lab
         : id
-          (RecordLabel.fromString id)
+          (RecordLabel.fromString (Symbol.symbolToString id))
         | INTLAB
           (RecordLabel.fromString INTLAB)
         | PREFIXEDLABEL
@@ -818,15 +816,15 @@ constraint      : COLON
 
 
 valdesc
-        : vid COLON ty
-          ([(vid, ty)])
-        | vid COLON ty AND valdesc
-          ((vid, ty) :: valdesc)
+        : id COLON ty
+          ([(id, ty)])
+        | id COLON ty AND valdesc
+          ((id, ty) :: valdesc)
 (* 2013-1-19 ohori *)
-        | vid COLON poly_ty
-          ([(vid, poly_ty)])
-        | vid COLON poly_ty AND valdesc
-          ((vid, poly_ty) :: valdesc)
+        | id COLON poly_ty
+          ([(id, poly_ty)])
+        | id COLON poly_ty AND valdesc
+          ((id, poly_ty) :: valdesc)
 
 typdesc
         : tyvarseq tycon
@@ -853,10 +851,10 @@ datdesc
           (datdesc_1 :: datdesc)
 
 condesc_1
-        : vid
-          ((vid, NONE))
-        | vid OF ty
-          ((vid, SOME ty))
+        : id
+          ((id, NONE))
+        | id OF ty
+          ((id, SOME ty))
 
 condesc
         : condesc_1

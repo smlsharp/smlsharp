@@ -1,0 +1,7 @@
+_require "basis.smi"
+
+structure AOBench =
+struct
+  val doit : unit -> unit
+  val testit : unit -> unit
+end

@@ -56,8 +56,7 @@ struct
         {exp=TC.TPDATACONSTRUCT
                {con = BT.consTPConInfo,
                 argExpOpt = SOME exp,
-                argTyOpt = SOME ty,
-                instTyList = [#ty hd],
+                instTyList = SOME [#ty hd],
                 loc = loc},
          ty = listTy}
       end
@@ -65,8 +64,7 @@ struct
       {exp=TC.TPDATACONSTRUCT 
              {argExpOpt = NONE,
               con = BT.nilTPConInfo,
-              argTyOpt = NONE,
-              instTyList = [instTy],
+              instTyList = SOME [instTy],
               loc = loc},
        ty=ListTy instTy}
   fun List loc instTy expTyList =
@@ -142,10 +140,10 @@ struct
         ()
       end
 
-  fun sortRules ruleList =  
+  fun sortRules ruleList =
       let
         fun compareRule (r1,r2) =
-            case CompareTy.compareTy (#ty r1, #ty r2) of
+            case CompareTy.compareTy (#keyTy r1, #keyTy r2) of
               EQUAL => Loc.compareLoc
                          (TypedCalc.tppatToLoc (#arg r1), 
                           TypedCalc.tppatToLoc (#arg r2))
@@ -168,53 +166,103 @@ struct
       end
 
   fun partitionRules nil = nil
-    | partitionRules (L as ({ty,...}::rules)) = 
+    | partitionRules (L as ({keyTy,patTy,existTyvars,existInstTys,...}::rules)) =
       let
-        val (firstGroup, restList) = List.partition (fn x => eqTy(#ty x, ty)) L
+(*
+        val (firstGroup, restList) = 
+            List.partition (fn x => eqTy(#ty x, ty)) L
+*)
+        val (firstGroup, restList) = 
+            List.partition 
+              (fn x => case CompareTy.compareTy(#keyTy x, keyTy) of
+                         EQUAL => true | _ => false) 
+              L
       in
-        (ty, firstGroup) :: partitionRules restList
+        {keyTy = keyTy,
+         patTy = patTy,
+         existTyvars = existTyvars,
+         existInstTys = existInstTys,
+         ruleList = firstGroup}
+        :: partitionRules restList
       end
 
   fun compile {exp = dynamicTerm, ty=dynamicTy, elemTy, ruleList, ruleBodyTy,loc} =
       let
+(*
         val _ = 
             List.app (fn r => if (isGroundTy (#ty r)) then ()
                               else raise DynamicCasePatsMustBeGround (#arg r)
                      )
                      ruleList
+*)
         val ruleList = sortRules ruleList
         val caseGroups = partitionRules ruleList
-        fun compileGroup (patTy, ruleList) =
+        val existInstTy =
+            T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_existInstMap (), args = []}
+        fun compileGroup {keyTy, patTy, existTyvars, existInstTys, ruleList} =
             let
-              val FnExp =
-                  fn argVar => 
-                     let
-                       val VarExp = 
-                           DynamicView
-                             loc
-                             {exp= TC.TPVAR argVar, ty = dynamicTy, elemTy=elemTy, coerceTy=patTy} 
-                     in
-                       TC.TPCASEM
-                         {caseKind = PC.MATCH,
-                          expList = [#exp VarExp],
-                          expTyList = [patTy],
-                          loc = loc,
-                          ruleBodyTy = ruleBodyTy,
-                          ruleList = 
-                          map
-                            (fn {arg, ty, body} => {args = [arg], body = body})
-                            ruleList
-                         }
-                     end
-              val FunTerm = 
-                  Fn 
-                    loc
-                    {expFn = FnExp, argTy = dynamicTy, bodyTy = ruleBodyTy}
-              val TyRepTerm = {exp = TC.TPREIFYTY(patTy, loc), ty = RTD.TyRepTy()}
+              val instVar = newVar existInstTy
+              val argVar = newVar dynamicTy
+              val dynamicExp =
+                  TC.TPDYNAMIC
+                    {exp = TC.TPVAR argVar,
+                     ty = dynamicTy,
+                     elemTy = elemTy,
+                     coerceTy = patTy,
+                     loc = loc}
+              val caseExp =
+                  TC.TPCASEM
+                    {caseKind = PC.MATCH,
+                     expList = [dynamicExp],
+                     expTyList = [patTy],
+                     loc = loc,
+                     ruleBodyTy = ruleBodyTy,
+                     ruleList = map (fn {arg, body, ...} =>
+                                        {args = [arg], body = body})
+                                    ruleList}
+              val polyExp =
+                  if BoundTypeVarID.Map.isEmpty existTyvars
+                  then caseExp
+                  else TC.TPPOLY
+                         {btvEnv = existTyvars,
+                          constraints = nil,
+                          expTyWithoutTAbs = ruleBodyTy,
+                          exp = caseExp,
+                          loc = loc}
+              val instExp =
+                  case existInstTys of
+                    nil => polyExp
+                  | _::_ =>
+                    TC.TPDYNAMICEXISTTAPP
+                      {existInstMap = TC.TPVAR instVar,
+                       exp = polyExp,
+                       expTy = T.POLYty {boundtvars = existTyvars,
+                                         constraints = nil,
+                                         body = ruleBodyTy},
+                       instTyList = existInstTys,
+                       loc = loc}
+              val funTerm =
+                  {exp =
+                     TC.TPFNM
+                       {argVarList = [argVar],
+                        bodyExp = instExp,
+                        bodyTy = ruleBodyTy,
+                        loc = loc},
+                   ty = T.FUNMty ([dynamicTy], ruleBodyTy)}
+              val funTerm =
+                  {exp =
+                     TC.TPFNM
+                       {argVarList = [instVar],
+                        bodyExp = #exp funTerm,
+                        bodyTy = #ty funTerm,
+                        loc = loc},
+                   ty = T.FUNMty ([existInstTy], #ty funTerm)}
+              val tyRepTerm =
+                  {exp = TC.TPREIFYTY (keyTy, loc), ty = RTD.TyRepTy ()}
             in
-              Pair loc TyRepTerm FunTerm
+              Pair loc tyRepTerm funTerm
             end
-        val RuleTy = RTD.TyRepTy() ** (dynamicTy --> ruleBodyTy)
+        val RuleTy = RTD.TyRepTy() ** (existInstTy --> (dynamicTy --> ruleBodyTy))
         val {exp, ty} = List loc RuleTy (map compileGroup caseGroups)
         val term = TC.TPDYNAMICCASE 
                      {

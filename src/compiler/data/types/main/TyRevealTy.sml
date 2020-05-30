@@ -31,17 +31,51 @@ in
         T.OVERLOAD_EXVAR {exVarInfo, instTyList} =>
         T.OVERLOAD_EXVAR
           {exVarInfo = revealExVarInfo exVarInfo,
-           instTyList = map revealTy instTyList
+           instTyList = Option.map (map revealTy) instTyList
           }
        | T.OVERLOAD_PRIM {primInfo, instTyList} =>
          T.OVERLOAD_PRIM
            {
             primInfo = revealPrimInfo primInfo,
-            instTyList = map revealTy instTyList
+            instTyList = Option.map (map revealTy) instTyList
            }
        | T.OVERLOAD_CASE (ty, map:T.overloadMatch TypID.Map.map) =>
          T.OVERLOAD_CASE
            (revealTy ty, TypID.Map.map revealOverloadMatch map)
+  and revealBackendTy backendTy =
+      case backendTy of
+        T.RECORDSIZEty ty =>
+        T.RECORDSIZEty (revealTy ty)
+      | T.RECORDBITMAPINDEXty (i, ty) =>
+        T.RECORDBITMAPINDEXty (i, revealTy ty)
+      | T.RECORDBITMAPty (i, ty) =>
+        T.RECORDBITMAPty (i, revealTy ty)
+      | T.CCONVTAGty codeEntryTy =>
+        T.CCONVTAGty (revealCodeEntryTy codeEntryTy)
+      | T.FUNENTRYty codeEntryTy =>
+        T.FUNENTRYty (revealCodeEntryTy codeEntryTy)
+      | T.CALLBACKENTRYty {tyvars, haveClsEnv, argTyList, retTy, attributes} =>
+        T.CALLBACKENTRYty
+          {tyvars = revealBtvEnv tyvars,
+           haveClsEnv = haveClsEnv,
+           argTyList = map revealTy argTyList,
+           retTy = Option.map revealTy retTy,
+           attributes = attributes}
+      | T.SOME_FUNENTRYty => T.SOME_FUNENTRYty
+      | T.SOME_FUNWRAPPERty => T.SOME_FUNWRAPPERty
+      | T.SOME_CLOSUREENVty => T.SOME_CLOSUREENVty
+      | T.SOME_CCONVTAGty => T.SOME_CCONVTAGty
+      | T.FOREIGNFUNPTRty {argTyList, varArgTyList, resultTy, attributes} =>
+        T.FOREIGNFUNPTRty
+          {argTyList = map revealTy argTyList,
+           varArgTyList = Option.map (map revealTy) varArgTyList,
+           resultTy = Option.map revealTy resultTy,
+           attributes = attributes}
+  and revealCodeEntryTy {tyvars, haveClsEnv, argTyList, retTy} =
+      {tyvars = revealBtvEnv tyvars,
+       haveClsEnv = haveClsEnv,
+       argTyList = map revealTy argTyList,
+       retTy = revealTy retTy}
   and revealExVarInfo {path:longsymbol,ty:ty} : T.exVarInfo =
       {path=path, ty=revealTy ty}
   and revealPrimInfo ({primitive, ty}:T.primInfo) : T.primInfo =
@@ -93,9 +127,10 @@ in
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (revealSingletonTy singletonTy)
       | T.BACKENDty backendTy =>
-        raise Bug.Bug "revealTy: BACKENDty"
+        T.BACKENDty (revealBackendTy backendTy)
       | T.ERRORty => ty
       | T.DUMMYty (id, kind) => T.DUMMYty (id, revealKind kind)
+      | T.EXISTty (id, kind) => T.EXISTty (id, revealKind kind)
       | T.TYVARty _ => raise bug "TYVARty in Optimize"
       | T.BOUNDVARty btv => ty
       | T.FUNMty (tyList, ty) =>
@@ -121,16 +156,16 @@ in
             T.OPAQUE{opaqueRep,revealKey} =>
             (case opaqueRep of
                T.TYCON tyCon =>
-               T.CONSTRUCTty{tyCon=tyCon, args= args}
+               revealTy (T.CONSTRUCTty{tyCon=tyCon, args= args})
              | T.TFUNDEF {admitsEq, arity, polyTy} =>
-               TU.tpappTy (polyTy, args)
+               revealTy (TU.tpappTy (polyTy, args))
             )
           | T.INTERFACE opaqueRep =>
             (case opaqueRep of
                T.TYCON tyCon =>
-               T.CONSTRUCTty{tyCon=tyCon, args= args}
+               revealTy (T.CONSTRUCTty{tyCon=tyCon, args= args})
              | T.TFUNDEF {admitsEq, arity, polyTy} =>
-               TU.tpappTy (polyTy, args)
+               revealTy (TU.tpappTy (polyTy, args))
             )
           | T.DTY _ => T.CONSTRUCTty{tyCon=tyCon, args= args}
         end

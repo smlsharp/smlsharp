@@ -17,8 +17,8 @@ struct
   type exp = TypedCalc.tpexp * Types.ty
   type pat = TypedCalc.tppat * Types.ty * Types.varInfo VarID.Map.map
 
-  fun instantiateCon (ty, nil) = ty
-    | instantiateCon (ty, args) = TypesBasics.tpappTy (ty, args)
+  fun instantiate (ty, NONE) = TypesBasics.derefTy ty
+    | instantiate (ty, SOME args) = TypesBasics.tpappTy (ty, args)
 
   fun arrayTy elemTy =
       T.CONSTRUCTty {tyCon=BuiltinTypes.arrayTyCon, args = [elemTy]}
@@ -76,7 +76,6 @@ struct
                        (ty1, ty2))
              errors
 
-
   fun check (f : unit -> unit) =
       if !Control.checkType then f () else ()
 
@@ -93,11 +92,11 @@ struct
   fun TPREIFYTY (ty, loc) =
       (C.TPREIFYTY (ty, loc), ReifiedTyData.TyRepTy ())
 
-  fun TPEXN_CONSTRUCTOR (x as {exnInfo, loc}) =
-      (C.TPEXN_CONSTRUCTOR x, BuiltinTypes.exntagTy)
+  fun TPEXNTAG (x as {exnInfo, loc}) =
+      (C.TPEXNTAG x, BuiltinTypes.exntagTy)
 
-  fun TPEXEXN_CONSTRUCTOR (x as {exExnInfo, loc}) =
-      (C.TPEXEXN_CONSTRUCTOR x, BuiltinTypes.exntagTy)
+  fun TPEXEXNTAG (x as {exExnInfo, loc}) =
+      (C.TPEXEXNTAG x, BuiltinTypes.exntagTy)
 
   fun TPEXVAR (x as {path, ty}) =
       (C.TPEXVAR x, ty)
@@ -117,11 +116,10 @@ struct
   fun TPDATACONSTRUCT {argExpOpt = NONE, con, instTyList, loc} =
       (C.TPDATACONSTRUCT
          {argExpOpt = NONE,
-          argTyOpt = NONE,
           con = con,
           instTyList = instTyList,
           loc = loc},
-       case instantiateCon (#ty con, instTyList) of
+       case instantiate (#ty con, instTyList) of
          ty =>
          (check
             (fn () =>
@@ -131,11 +129,10 @@ struct
                        loc} =
       (C.TPDATACONSTRUCT
          {argExpOpt = SOME argExp,
-          argTyOpt = SOME argExpTy,
           con = con,
           instTyList = instTyList,
           loc = loc},
-       case instantiateCon (#ty con, instTyList) of
+       case instantiate (#ty con, instTyList) of
          T.FUNMty ([argTy], retTy) =>
          (check
             (fn () =>
@@ -148,26 +145,21 @@ struct
   fun exnConTy (C.EXN exn) = #ty exn
     | exnConTy (C.EXEXN exexn) = #ty exexn
 
-  fun TPEXNCONSTRUCT {argExpOpt = NONE, exn, instTyList, loc} =
+  fun TPEXNCONSTRUCT {argExpOpt = NONE, exn, loc} =
       (C.TPEXNCONSTRUCT {argExpOpt = NONE,
-                         argTyOpt = NONE,
                          exn = exn,
-                         instTyList = instTyList,
                          loc = loc},
-       case instantiateCon (exnConTy exn, instTyList) of
+       case TypesBasics.derefTy (exnConTy exn) of
          ty =>
          (check
             (fn () =>
                 eqTy "TPEXNCONSTRUCT" loc [(ty, BuiltinTypes.exnTy)]);
           ty))
-    | TPEXNCONSTRUCT {argExpOpt = SOME (argExp, argExpTy), exn, instTyList,
-                      loc} =
+    | TPEXNCONSTRUCT {argExpOpt = SOME (argExp, argExpTy), exn, loc} =
       (C.TPEXNCONSTRUCT {argExpOpt = SOME argExp,
-                         argTyOpt = SOME argExpTy,
                          exn = exn,
-                         instTyList = instTyList,
                          loc = loc},
-       case TypesBasics.derefTy (instantiateCon (exnConTy exn, instTyList)) of
+       case TypesBasics.derefTy (exnConTy exn) of
          T.FUNMty ([argTy], retTy) =>
          (check
             (fn () =>
@@ -220,6 +212,61 @@ struct
          stubTy)
       end
 
+  fun TPFOREIGNSYMBOL {name, ty, loc} =
+      (C.TPFOREIGNSYMBOL {name = name, ty = ty, loc = loc}, ty)
+
+  fun TPFOREIGNAPPLY {funExp = (funExp, funTy), argExpList, loc} =
+      let
+        val (argExpList, argExpTyList) = ListPair.unzip argExpList
+      in
+        case TypesBasics.derefTy funTy of
+          T.BACKENDty (T.FOREIGNFUNPTRty {argTyList, varArgTyList,
+                                          resultTy, attributes}) =>
+          let
+            val varArgTyList =
+                case varArgTyList of
+                  NONE => nil
+                | SOME tys => tys
+            val argTyEqs =
+                ListPair.zipEq (argTyList @ varArgTyList, argExpTyList)
+                handle ListPair.UnequalLengths =>
+                       raise Bug.Bug "TPFOREIGNAPPLY: arity mismatch"
+            val _ = check (fn () => eqTy "TPFOREIGNAPPLY" loc argTyEqs)
+          in
+            (C.TPFOREIGNAPPLY
+               {funExp = funExp,
+                argExpList = argExpList,
+                attributes = attributes,
+                resultTy = resultTy,
+                loc = loc},
+             case resultTy of
+               SOME ty => ty
+             | NONE => BuiltinTypes.unitTy)
+          end
+        | _ =>
+          (fail1 "not a foreign function" loc funTy;
+           raise Bug.Bug "TPFOREIGNAPPLY")
+      end
+
+  fun TPCALLBACKFN {attributes, argVarList, bodyExp=(bodyExp, bodyTy),
+                    isVoid, loc} =
+      let
+        val resultTy = if isVoid then NONE else SOME bodyTy
+      in
+        (C.TPCALLBACKFN
+           {attributes = attributes,
+            argVarList = argVarList,
+            bodyExp = bodyExp,
+            resultTy = resultTy,
+            loc = loc},
+         T.BACKENDty
+           (T.FOREIGNFUNPTRty
+              {argTyList = map #ty argVarList,
+               varArgTyList = NONE,
+               resultTy = resultTy,
+               attributes = attributes}))
+      end
+
   fun TPTAPP {exp, instTyList = nil, loc} = exp
     | TPTAPP {exp = (exp, expTy), instTyList as _::_, loc} =
       (C.TPTAPP
@@ -244,6 +291,20 @@ struct
             constraints = constraints,
             body = ty})
 
+  fun TPLET {decls=nil, body, loc} = body
+    | TPLET {decls, body = (C.TPLET {decls=decls2, body, loc=_}, bodyTy), loc} =
+      (C.TPLET
+         {decls = decls @ decls2,
+          body = body,
+          loc = loc},
+       bodyTy)
+    | TPLET {decls, body = (bodyExp, bodyTy), loc} =
+      (C.TPLET
+         {decls = decls,
+          body = bodyExp,
+          loc = loc},
+       bodyTy)
+
   fun TPFNM {argVarList, bodyExp = (bodyExp, bodyTy), loc} =
       (C.TPFNM
          {argVarList = argVarList,
@@ -252,35 +313,26 @@ struct
           loc = loc},
        T.FUNMty (map #ty argVarList, bodyTy))
 
-  fun TPPOLYFNM {btvEnv, constraints, argVarList,
-                 bodyExp = (bodyExp, bodyTy), loc} =
-      case BoundTypeVarID.Map.isEmpty btvEnv of
-        true =>
-        TPFNM {argVarList = argVarList,
-               bodyExp = (bodyExp, bodyTy),
-               loc = loc}
-      | false =>
-        (C.TPPOLYFNM
-           {btvEnv = btvEnv,
-            constraints = constraints,
-            argVarList = argVarList,
-            bodyExp = bodyExp,
-            bodyTy = bodyTy,
-            loc = loc},
-         T.POLYty
-           {boundtvars = btvEnv,
-            constraints = constraints,
-            body = T.FUNMty (map #ty argVarList, bodyTy)})
-
   fun TPAPPM {funExp = (funExp, funTy), argExpList, loc} =
       let
         val (argExpList, argTyList) = ListPair.unzip argExpList
       in
-        (C.TPAPPM
-           {funExp = funExp,
-            funTy = funTy,
-            argExpList = argExpList,
-            loc = loc},
+        (case funExp of
+           C.TPFNM {argVarList, bodyExp, bodyTy, loc = _} =>
+           C.TPLET
+             {decls = ListPair.mapEq
+                        (fn x => C.TPVAL (x, loc))
+                        (argVarList, argExpList)
+                      handle ListPair.UnequalLengths =>
+                             raise Bug.Bug "TPAPPM: arity mismatch",
+              body = bodyExp,
+              loc = loc}
+         | _ =>
+           C.TPAPPM
+             {funExp = funExp,
+              funTy = funTy,
+              argExpList = argExpList,
+              loc = loc},
          case TypesBasics.derefTy funTy of
            ty as T.FUNMty (_, retTy) =>
            (check
@@ -334,36 +386,113 @@ struct
          bodyTy)
       end
 
-  fun TPSEQ {expList = nil, loc} =
-      raise Bug.Bug "TPSEQ"
-    | TPSEQ {expList = [exp], loc} = exp
-    | TPSEQ {expList as _::_, loc} =
+  fun TPSWITCH_CONSTCASE {exp = (exp, expTy), ruleList,
+                          defaultExp = (defaultExp, defaultTy), loc} =
       let
-        val (expList, expTyList) = ListPair.unzip expList
+        fun checkRule {const, ty, body=(_, bodyTy)} =
+            eqTy "TPSWITCH_CONSTCASE" loc
+                 [(T.FUNMty ([ty], bodyTy), T.FUNMty ([expTy], defaultTy))]
       in
-        (C.TPSEQ
-           {expList = expList,
-            expTyList = expTyList,
+        check (fn () => app checkRule ruleList);
+        (C.TPSWITCH
+           {exp = exp,
+            expTy = expTy,
+            ruleList = C.CONSTCASE
+                         (map (fn {const, ty, body = (body, _)} =>
+                                  {const = const, ty = ty, body = body})
+                              ruleList),
+            defaultExp = defaultExp,
+            ruleBodyTy = defaultTy,
             loc = loc},
-         List.last expTyList)
+         defaultTy)
       end
 
-  fun TPLET {decls, body = nil, loc} =
-      raise Bug.Bug "TPLET"
-    | TPLET {decls=nil, body=[exp], loc} = exp
-    | TPLET {decls=nil, body as _::_, loc} =
-      TPSEQ {expList = body, loc = loc}
-    | TPLET {decls, body as _::_, loc} =
+  fun TPSWITCH_CONCASE {exp = (exp, expTy), ruleList,
+                        defaultExp = (defaultExp, defaultTy), loc} =
       let
-        val (body, tys) = ListPair.unzip body
+        fun checkRule {con, instTyList, argVarOpt, body = (_, bodyTy)} =
+            case (instantiate (#ty con, instTyList), argVarOpt) of
+              (T.FUNMty ([argTy], retTy), SOME var) =>
+              (mustBeCONSTRUCTty "TPSWITCH_CONCASE" loc retTy;
+               eqTy "TPSWITCH_CONCASE" loc
+                    [(argTy, #ty var),
+                     (T.FUNMty ([retTy], bodyTy),
+                      T.FUNMty ([expTy], defaultTy))])
+            | (ty, NONE) =>
+              (mustBeCONSTRUCTty "TPSWITCH_CONCASE" loc ty;
+               eqTy "TPSWITCH_CONCASE" loc
+                    [(T.FUNMty ([ty], bodyTy), T.FUNMty ([expTy], defaultTy))])
+            | _ =>
+              raise Bug.Bug "TPSWITCH_CONCASE"
       in
-        (C.TPLET
-           {decls = decls,
-            body = body,
-            tys = tys,
+        check (fn () => app checkRule ruleList);
+        (C.TPSWITCH
+           {exp = exp,
+            expTy = expTy,
+            ruleList = C.CONCASE
+                         (map (fn {con, instTyList, argVarOpt, body=(body,_)} =>
+                                  {con = con,
+                                   instTyList = instTyList,
+                                   argVarOpt = argVarOpt,
+                                   body = body})
+                              ruleList),
+            defaultExp = defaultExp,
+            ruleBodyTy = defaultTy,
             loc = loc},
-         List.last tys)
+         defaultTy)
       end
+
+  fun TPSWITCH_EXNCASE {exp = (exp, expTy), ruleList,
+                        defaultExp = (defaultExp, defaultTy), loc} =
+      let
+        fun checkRule {exn, argVarOpt, body = (_, bodyTy)} =
+            case (TypesBasics.derefTy (exnConTy exn), argVarOpt) of
+              (T.FUNMty ([argTy], retTy), SOME var) =>
+              eqTy "TPSWITCH_EXNCASE" loc
+                   [(argTy, #ty var),
+                    (retTy, BuiltinTypes.exnTy),
+                    (T.FUNMty ([retTy], bodyTy), T.FUNMty ([expTy], defaultTy))]
+            | (ty, NONE) =>
+              eqTy "TPSWITCH_EXNCASE" loc
+                   [(ty, BuiltinTypes.exnTy),
+                    (T.FUNMty ([ty], bodyTy), T.FUNMty ([expTy], defaultTy))]
+            | _ =>
+              raise Bug.Bug "TPSWITCH_EXNCASE"
+      in
+        check (fn () => app checkRule ruleList);
+        (C.TPSWITCH
+           {exp = exp,
+            expTy = expTy,
+            ruleList = C.EXNCASE
+                         (map (fn {exn, argVarOpt, body=(body,_)} =>
+                                  {exn = exn,
+                                   argVarOpt = argVarOpt,
+                                   body = body})
+                              ruleList),
+            defaultExp = defaultExp,
+            ruleBodyTy = defaultTy,
+            loc = loc},
+         defaultTy)
+      end
+
+  fun TPTHROW {catchLabel, argExpList : exp list, resultTy, loc} =
+      (C.TPTHROW {catchLabel = catchLabel,
+                  argExpList = map #1 argExpList,
+                  resultTy = resultTy,
+                  loc = loc},
+       resultTy)
+
+  fun TPCATCH {catchLabel, tryExp = (tryExp, tryTy), argVarList,
+               catchExp = (catchExp, catchTy), loc} =
+      (check (fn () => (eqTy "TPCATCH" loc [(tryTy, catchTy)]));
+       (C.TPCATCH
+          {catchLabel = catchLabel,
+           tryExp = tryExp,
+           argVarList = argVarList,
+           catchExp = catchExp,
+           resultTy = tryTy,
+           loc = loc},
+        tryTy))
 
   fun TPMONOLET {binds=nil, bodyExp, loc} = bodyExp
     | TPMONOLET {binds, bodyExp = (bodyExp, bodyTy), loc} =
@@ -468,10 +597,8 @@ struct
          {primOp = primOp,
           instTyList = instTyList,
           argExp = argExp,
-          argTy = argExpTy,
           loc = loc},
-       case TypesBasics.derefTy
-              (TypesBasics.tpappTy (#ty primOp, instTyList)) of
+       case instantiate (#ty primOp, instTyList) of
          T.FUNMty ([argTy], retTy) =>
          (check
             (fn () =>
@@ -484,10 +611,8 @@ struct
          {oprimOp = oprimOp,
           instTyList = instTyList,
           argExp = argExp,
-          argTy = argExpTy,
           loc = loc},
-       case TypesBasics.derefTy
-              (TypesBasics.tpappTy (#ty oprimOp, instTyList)) of
+       case TypesBasics.tpappTy (#ty oprimOp, instTyList) of
          T.FUNMty ([argTy], retTy) =>
          (check
             (fn () =>
@@ -551,6 +676,16 @@ struct
            loc = loc},
         ruleBodyTy)
 
+  fun TPDYNAMICEXISTTAPP {existInstMap = (exp1, _), exp = (exp2, expTy2),
+                          instTyList, loc} =
+      (C.TPDYNAMICEXISTTAPP
+         {existInstMap = exp1,
+          exp = exp2,
+          expTy = expTy2,
+          instTyList = instTyList,
+          loc = loc},
+       TypesBasics.tpappTy (expTy2, instTyList))
+
   val TPPATERROR =
       (C.TPPATERROR (T.ERRORty, Loc.noloc), T.ERRORty, VarID.Map.empty)
 
@@ -565,7 +700,7 @@ struct
 
   fun TPPATDATACONSTRUCT {conPat, instTyList, argPatOpt = NONE, loc} =
       let
-        val patTy = TypesBasics.tpappTy (#ty conPat, instTyList)
+        val patTy = instantiate (#ty conPat, instTyList)
       in
         check
           (fn () =>
@@ -584,7 +719,7 @@ struct
                           loc} =
       let
         val patTy =
-            case TypesBasics.tpappTy (#ty conPat, instTyList) of
+            case instantiate (#ty conPat, instTyList) of
               T.FUNMty ([argTy], retTy) =>
               (check
                  (fn () =>
@@ -603,28 +738,27 @@ struct
          argPatVars)
       end
 
-  fun TPPATEXNCONSTRUCT {exnPat, instTyList, argPatOpt = NONE, loc} =
+  fun TPPATEXNCONSTRUCT {exnPat, argPatOpt = NONE, loc} =
       let
-        val patTy = TypesBasics.tpappTy (exnConTy exnPat, instTyList)
+        val patTy = exnConTy exnPat
       in
         check
           (fn () =>
               mustBeCONSTRUCTty "TPPATEXNCONSTRUCT" loc patTy);
         (C.TPPATEXNCONSTRUCT
            {exnPat = exnPat,
-            instTyList = instTyList,
             argPatOpt = NONE,
             patTy = patTy,
             loc = loc},
          patTy,
          VarID.Map.empty)
       end
-    | TPPATEXNCONSTRUCT {exnPat, instTyList,
+    | TPPATEXNCONSTRUCT {exnPat,
                          argPatOpt = SOME (argPat, argPatTy, argPatVars),
                          loc} =
       let
         val patTy =
-            case TypesBasics.tpappTy (exnConTy exnPat, instTyList) of
+            case TypesBasics.derefTy (exnConTy exnPat) of
               T.FUNMty ([argTy], retTy) =>
               (check
                  (fn () =>
@@ -635,7 +769,6 @@ struct
       in
         (C.TPPATEXNCONSTRUCT
            {exnPat = exnPat,
-            instTyList = instTyList,
             argPatOpt = SOME argPat,
             patTy = patTy,
             loc = loc},
@@ -764,8 +897,8 @@ struct
   fun clsVarEnv abs vars =
       makeVarEnv (map (clsVar abs) vars)
 
-  fun TPEXD (x as (binds, loc)) =
-      (C.TPEXD x, makeExnEnv (map #exnInfo binds))
+  fun TPEXD (x as (exnInfo, loc)) =
+      (C.TPEXD x, makeExnEnv [exnInfo])
 
   fun TPEXNTAGD (x as ({exnInfo, varInfo}, loc)) =
       (check
@@ -773,14 +906,12 @@ struct
              eqTy "TPEXNTAGD" loc [(#ty varInfo, BuiltinTypes.exntagTy)]);
        (C.TPEXNTAGD x, makeExnEnv [exnInfo]))
 
-  fun TPEXPORTEXN x =
-      (C.TPEXPORTEXN x, emptyEnv)
+  fun TPEXPORTEXN (x as {path, ty, ...}) =
+      (C.TPEXPORTEXN x, makeExExnEnv [{path = path, ty = ty}])
 
-  fun TPEXPORTRECFUNVAR x =
-      (C.TPEXPORTRECFUNVAR x, emptyEnv)
-
-  fun TPEXPORTVAR x =
-      (C.TPEXPORTVAR x, emptyEnv)
+  fun TPEXPORTVAR {var as {path, ty}, exp = (exp, expTy)} =
+      (check (fn () => eqTy "TPEXPORTVAR" Loc.noloc [(ty, expTy)]);
+       (C.TPEXPORTVAR {var = var, exp = exp}, makeExVarEnv [var]))
 
   fun TPEXTERNEXN (x, provider) =
       (C.TPEXTERNEXN (x, provider), makeExExnEnv [x])
@@ -830,45 +961,47 @@ struct
          clsVarEnv (btvEnv, constraints) (map #funVarInfo recbinds))
       end
 
-  fun TPVAL (binds, loc) =
+  fun TPVAL ((var, (exp, expTy)), loc) =
       let
-        val newBinds =
-            map (fn (var, (exp, ty)) => (var # {ty = ty}, exp)) binds
+        val newVar = var # {ty = expTy}
       in
-        (C.TPVAL (newBinds, loc),
-         makeVarEnv (map #1 newBinds))
+        check (fn () => eqTy "TPVAL" loc [(#ty var, expTy)]);
+        (C.TPVAL ((newVar, exp), loc),
+         makeVarEnv [newVar])
       end
 
   fun TPVALREC (recbinds, loc) =
       let
-        val recbinds =
+        val newRecbinds =
             map (fn {var, exp = (exp, expTy)} =>
-                    {var = var, exp = exp, expTy = expTy})
+                    {var = var # {ty = expTy}, exp = exp})
                 recbinds
       in
         check
           (fn () =>
               eqTy "TPVALREC" loc
-                   (map (fn {var, exp, expTy} => (#ty var, expTy)) recbinds));
-        (C.TPVALREC (recbinds, loc),
+                   (map (fn {var, exp = (_, expTy)} => (#ty var, expTy))
+                        recbinds));
+        (C.TPVALREC (newRecbinds, loc),
          makeVarEnv (map #var recbinds))
       end
 
   fun TPVALPOLYREC {btvEnv, constraints, recbinds, loc} =
       let
-        val recbinds =
+        val newRecbinds =
             map (fn {var, exp = (exp, expTy)} =>
-                    {var = var, exp = exp, expTy = expTy})
+                    {var = var # {ty = expTy}, exp = exp})
                 recbinds
       in
         check
           (fn () =>
               eqTy "TPVALPOLYREC" loc
-                   (map (fn {var, exp, expTy} => (#ty var, expTy)) recbinds));
+                   (map (fn {var, exp = (_, expTy)} => (#ty var, expTy))
+                        recbinds));
         (C.TPVALPOLYREC
            {btvEnv = btvEnv,
             constraints = constraints,
-            recbinds = recbinds,
+            recbinds = newRecbinds,
             loc = loc},
          clsVarEnv (btvEnv, constraints) (map #var recbinds))
       end

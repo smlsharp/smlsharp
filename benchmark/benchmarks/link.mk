@@ -65,6 +65,8 @@ ray/doit$(DOIT_SUFFIX): ray/doit.o ray/main.o ray/interface.o ray/interp.o \
 simple/doit$(DOIT_SUFFIX): simple/doit.o simple/main.o simple/simple.o \
   simple/control.o simple/array2.o
 	$(SMLSHARP) -o $@ simple/doit.smi $(LIBS)
+smlsharp/doit$(DOIT_SUFFIX): smlsharp/doit.o smlsharp/main.o
+	$(SMLSHARP) -o $@ smlsharp/doit.smi ../../src/runtime/signal.o $(LIBS)
 smlyacc/doit$(DOIT_SUFFIX): smlyacc/doit.o smlyacc/main.o
 	$(SMLSHARP) -o $@ smlyacc/doit.smi $(LIBS)
 tsp/doit$(DOIT_SUFFIX): tsp/doit.o tsp/main.o tsp/tsp.o tsp/build.o tsp/rand.o \

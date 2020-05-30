@@ -226,8 +226,11 @@ struct
       | (T.BACKENDty _, _) => raise Unify
       | (T.ERRORty, _) => raise Unify  (* never appear *)
       | (T.DUMMYty (id1, kind1), T.DUMMYty (id2, kind2)) =>
-        if id1 = id2 then unifyKind inst (kind1, kind1) else raise Unify
+        if id1 = id2 then unifyKind inst (kind1, kind2) else raise Unify
       | (T.DUMMYty _, _) => raise Unify
+      | (T.EXISTty (id1, kind1), T.EXISTty (id2, kind2)) =>
+        if id1 = id2 then unifyKind inst (kind1, kind2) else raise Unify
+      | (T.EXISTty _, _) => raise Unify
       | (T.BOUNDVARty t1, T.BOUNDVARty t2) =>
         (case (BoundTypeVarID.Map.find (#1 inst, t1),
                BoundTypeVarID.Map.find (#2 inst, t2)) of
@@ -324,15 +327,13 @@ struct
       | (T.SOME_CLOSUREENVty, _) => raise Unify
       | (T.SOME_CCONVTAGty, T.SOME_CCONVTAGty) => ()
       | (T.SOME_CCONVTAGty, _) => raise Unify
-      | (T.FOREIGNFUNPTRty {tyvars=tyvars1, argTyList=argTyList1,
+      | (T.FOREIGNFUNPTRty {argTyList=argTyList1,
                             varArgTyList=varArgTyList1, resultTy=resultTy1,
                             attributes=attributes1},
-         T.FOREIGNFUNPTRty {tyvars=tyvars2, argTyList=argTyList2,
+         T.FOREIGNFUNPTRty {argTyList=argTyList2,
                             varArgTyList=varArgTyList2, resultTy=resultTy2,
                             attributes=attributes2}) =>
-        let
-          val inst = unifyBtvEnv inst (tyvars1, tyvars2)
-        in
+        (
           unifyTyList inst (argTyList1, argTyList2);
           case (varArgTyList1, varArgTyList2) of
             (NONE, NONE) => ()
@@ -343,7 +344,7 @@ struct
           | (SOME ty1, SOME ty2) => unifyTy inst (ty1, ty2)
           | _ => raise Unify;
           if attributes1 = attributes2 then () else raise Unify
-        end
+        )
       | (T.FOREIGNFUNPTRty _, _) => raise Unify
 
   and unifyTyList inst (tys1, tys2) =
@@ -666,7 +667,7 @@ struct
           val (funArgTys, varArgTys, funRetTy, funAttributes) =
               case derefTy funTy of
                 (T.BACKENDty
-                   (T.FOREIGNFUNPTRty {tyvars, argTyList, varArgTyList,
+                   (T.FOREIGNFUNPTRty {argTyList, varArgTyList,
                                        resultTy, attributes=a1}),
                  {rep = R.CODEPTR
                           (R.FOREIGN {argTys,varArgTys,retTy,attributes=a2}),
@@ -701,7 +702,7 @@ struct
               case derefTy (#ty resultVar) of
                 (T.BACKENDty
                    (T.FOREIGNFUNPTRty
-                      {tyvars, argTyList, varArgTyList=NONE, resultTy,
+                      {argTyList, varArgTyList=NONE, resultTy,
                        attributes=a1}),
                  {rep = R.CODEPTR
                           (R.FOREIGN

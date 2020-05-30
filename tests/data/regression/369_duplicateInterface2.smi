@@ -1,0 +1,5 @@
+val y : int
+structure A = 
+struct 
+ val x : int
+end

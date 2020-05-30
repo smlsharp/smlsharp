@@ -34,7 +34,9 @@ structure ElaborateError =
     exception InfixUsedWithoutOP of Symbol.longsymbol
     exception IllegalFunctionSymbol
     exception FunctionParameterNotFound
+(*
     exception ArgWithInfixID of Symbol.longsymbol
+*)
     exception EndWithInfixID of Symbol.longsymbol
     exception DuplicateVarNameInValRec of Symbol.symbol
     exception DuplicateValDesc of Symbol.symbol

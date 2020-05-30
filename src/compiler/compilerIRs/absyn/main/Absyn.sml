@@ -414,9 +414,10 @@ struct
             +1
             1[rules(rule)(~1[+1 "|"] +) ]
           ]
-         @format:rule(pat * exp) {{pat} + "=>" +1 {exp}}
+         @format:rule(tv tvs * pat * exp)
+          {"{"tvs(tv)(",")"}" +d {pat} + "=>" +1 {exp}}
        *)
-      EXPDYNAMICCASE of exp * (pat * exp) list * loc
+      EXPDYNAMICCASE of exp * (kindedTvar list * pat * exp) list * loc
     | (*% 
           @format(ty * loc) "_reifyTy(" +  ty + ")"
        *)
@@ -940,6 +941,41 @@ struct
     | (*%
        *)
       EOF
+
+  fun getLocExp exp =
+      case exp of
+        EXPCONSTANT (_, loc) => loc
+      | EXPSIZEOF (_, loc) => loc
+      | EXPID longsymbol => Symbol.longsymbolToLoc longsymbol
+      | EXPOPID (_, loc) => loc
+      | EXPRECORD (_, loc) => loc
+      | EXPRECORD_UPDATE (_, _, loc) => loc
+      | EXPRECORD_SELECTOR (_, loc) => loc
+      | EXPTUPLE (_, loc) => loc
+      | EXPLIST (_, loc) => loc
+      | EXPSEQ (_, loc) => loc
+      | EXPAPP (_, loc) => loc
+      | EXPTYPED (_, _, loc) => loc
+      | EXPCONJUNCTION (_, _, loc) => loc
+      | EXPDISJUNCTION (_, _, loc) => loc
+      | EXPHANDLE (_, _, loc) => loc
+      | EXPRAISE (_, loc) => loc
+      | EXPIF (_, _, _, loc) => loc
+      | EXPWHILE (_, _, loc) => loc
+      | EXPCASE (_, _, loc) => loc
+      | EXPFN (_, loc) => loc
+      | EXPLET (_, _, loc) => loc
+      | EXPFFIIMPORT (_, _, loc) => loc
+      | EXPSQL (_, loc) => loc
+      | EXPFOREACH (_, loc) => loc
+      | EXPJOIN (_, _, _, loc) => loc
+      | EXPDYNAMIC (_, _, loc) => loc
+      | EXPDYNAMICIS (_, _, loc) => loc
+      | EXPDYNAMICNULL (_, loc) => loc
+      | EXPDYNAMICTOP (_, loc) => loc
+      | EXPDYNAMICVIEW (_, _, loc) => loc
+      | EXPDYNAMICCASE (_, _, loc) => loc
+      | EXPREIFYTY (_, loc) => loc
 
   fun getLocPat pat =
       case pat of 

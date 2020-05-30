@@ -5,15 +5,10 @@
  * @author UENO Katsuhiro
  * @author Atsushi Ohori
  *)
-structure DatatypeCompilation : sig
-
-  val compile : RecordCalc.rcdecl list -> TypedLambda.tldecl list
-
-end =
+structure DatatypeCompilation =
 struct
 
-  structure RC = RecordCalc
-  (* structure TC = TypedCalc *)
+  structure TC = TypedCalc
   structure TL = TypedLambda
   structure BT = BuiltinTypes
   structure T = Types
@@ -41,74 +36,22 @@ struct
 
   fun exnConTy exnCon =
       case exnCon of
-        RC.EXN {ty,...} => ty
-      | RC.EXEXN {ty,...} => ty
+        TC.EXN {ty,...} => ty
+      | TC.EXEXN {ty,...} => ty
 
   fun extractLayout ty =
-      case TypesBasics.derefTy ty of
+      case TyRevealTy.revealTy ty of
         T.CONSTRUCTty
           {tyCon = {dtyKind = T.DTY {rep = RuntimeTypes.DATA layout, ...}, ...},
            ...} =>
         layout
       | _ => raise Bug.Bug "extractLayout"
 
-  fun unwrapLet (TL.TLLET {localDecl, mainExp, loc}) =
-      let
-        val (decls, mainExp) = unwrapLet mainExp
-      in
-        (E.Decl (localDecl, loc) :: decls, mainExp)
-      end
-    | unwrapLet mainExp = (nil, mainExp)
-
-  fun explodeRecordExp exp =
-      let
-        val expTy =
-            case exp of
-              E.Exp (_, ty) => ty
-            | E.Cast (_, ty) => ty
-            | _ => raise Bug.Bug "explodeRecordExp"
-        val fieldTys =
-            case TypesBasics.derefTy expTy of
-              T.RECORDty fieldTys => fieldTys
-            | _ => raise Bug.Bug "explodeRecordExp: not a record"
-      in
-        case exp of
-          E.Exp (TL.TLRECORD {isMutable = false, fields, recordTy, ...}, _) =>
-          (nil,
-           map (fn (label, exp) =>
-                   E.Exp (exp, case RecordLabel.Map.find (fieldTys, label) of
-                                 SOME ty => ty
-                               | NONE => raise Bug.Bug "explodeRecordExp"))
-               (RecordLabel.Map.listItemsi fields))
-        | _ =>
-          let
-            val vid = EmitTypedLambda.newId ()
-          in
-            ([(vid, exp)],
-             map (fn (label, ty) => E.Select (label, E.Var vid))
-                 (RecordLabel.Map.listItemsi fieldTys))
-          end
-      end
-
-  fun explodeRecordTy recordTy =
-      case TypesBasics.derefTy recordTy of
-        T.RECORDty fields => ListPair.unzip (RecordLabel.Map.listItemsi fields)
-      | ty => raise Bug.Bug "explodeRecordTy"
-
   fun decomposeDataconTy ty =
       case TypesBasics.derefTy ty of
         T.FUNMty ([argTy], retTy) => (SOME argTy, retTy)
       | T.CONSTRUCTty _ => (NONE, ty)
       | _ => raise Bug.Bug "decomposeDataconTy"
-
-  fun dataconArgTy ({ty, ...}:RecordCalc.conInfo) =
-      case TypesBasics.derefTy ty of
-        T.POLYty {boundtvars, constraints, body} =>
-        (case TypesBasics.derefTy body of
-           T.FUNMty ([argTy], retTy) => argTy
-         | _ => raise Bug.Bug "dataconArgTy")
-      | T.FUNMty ([argTy], retTy) => argTy
-      | _ => raise Bug.Bug "dataconArgTy"
 
   fun lookupConTag (taggedLayout, path) =
       let
@@ -149,12 +92,15 @@ struct
         | SOME argExp => E.Cast (E.Tuple [tagExp, argExp], retTy)
       end
 
-  fun extractTaggedConArg (conInfo:RecordCalc.conInfo, dataExp) argTy =
+  fun extractTaggedConArg (conInfo:Types.conInfo, dataExp) argTy =
       E.SelectN (2, E.Cast (dataExp, E.tupleTy [BT.contagTy, argTy]))
 
-  fun composeCon (conInfo:RC.conInfo, instTyList, argExpOpt) =
+  fun composeCon (conInfo:Types.conInfo, instTyList, argExpOpt) =
       let
-        val conInstTy = TypesBasics.tpappTy (#ty conInfo, instTyList)
+        val conInstTy =
+            case instTyList of
+              NONE => TypesBasics.derefTy (#ty conInfo)
+            | SOME tys => TypesBasics.tpappTy (#ty conInfo, tys)
         val (argTy, retTy) = decomposeDataconTy conInstTy
         val argExpOpt =
             case (argExpOpt, argTy) of
@@ -320,7 +266,7 @@ struct
                 ([E.Bind (argVar,
                           E.Ref_deref (#ty argVar, dataExp))],
                  E.Exp (branchExp, resultTy))
-            | _ => raise Bug.Bug "compileExp: RCCASE: LAYOUT_ARGONLY"
+            | _ => raise Bug.Bug "compileExp: TPCASE: LAYOUT_ARGONLY"
           )
       end
 
@@ -333,7 +279,7 @@ struct
   val emptyEnv =
       {exnMap = ExnID.Map.empty, exExnMap = LongsymbolEnv.empty} : env
 
-  fun newLocalExn (env:env, {path, ty, id}:RC.exnInfo) =
+  fun newLocalExn (env:env, {path, ty, id}:Types.exnInfo) =
       let
         val vid = VarID.generate ()
         val varInfo = {path = path, ty = BT.exntagTy, id = vid} : TL.varInfo
@@ -343,29 +289,30 @@ struct
          varInfo)
       end
 
-  fun addExternExn (env:env, {path, ty}:RC.exExnInfo) =
+  fun addExternExn (env:env, {path, ty}:Types.exExnInfo) =
       let
         val exVarInfo = {path = path, ty = BT.exntagTy} : TL.exVarInfo
       in
         ({exnMap = #exnMap env,
-          exExnMap = LongsymbolEnv.insert (#exExnMap env, path, exVarInfo)} : env,
+          exExnMap = LongsymbolEnv.insert (#exExnMap env, path, exVarInfo)}
+         : env,
          exVarInfo)
       end
 
-  fun findLocalExnTag ({exnMap, ...}:env, {id, ...}:RC.exnInfo) =
+  fun findLocalExnTag ({exnMap, ...}:env, {id, ...}:Types.exnInfo) =
       ExnID.Map.find (exnMap, id)
 
-  fun findExternExnTag ({exExnMap, ...}:env, {path,...}:RC.exExnInfo) =
+  fun findExternExnTag ({exExnMap, ...}:env, {path,...}:Types.exExnInfo) =
       LongsymbolEnv.find (exExnMap, path)
 
   fun findExnTag (env, exnCon) =
       case exnCon of
-        RC.EXN e =>
+        TC.EXN e =>
         (case findLocalExnTag (env, e) of
            SOME v => SOME (E.TLVar v)
          | NONE => NONE
         )
-      | RC.EXEXN e =>
+      | TC.EXEXN e =>
         (case findExternExnTag (env, e) of
            SOME v => SOME (E.ExVar v)
          | NONE => NONE
@@ -418,103 +365,82 @@ struct
              ruleList)
       end
 
-  fun fixConst (RC.SIZE n, ty, loc) =
-      TL.TLCONSTANT {const = TL.C (TL.SIZE n), ty = ty, loc = loc}
-    | fixConst (RC.TAG n, ty, loc) =
-      TL.TLCONSTANT {const = TL.C (TL.TAG n), ty = ty, loc = loc}
-    | fixConst (RC.INDEX n, ty, loc) =
-      TL.TLCONSTANT {const = TL.C (TL.INDEX n), ty = ty, loc = loc}
-    | fixConst (RC.CONST const, ty, loc) =
+  fun fixConst (const, ty, loc) =
       ConstantTypes.fixConst (const, ty, loc)
       handle e as ConstantError.TooLargeConstant =>
              (UserError.enqueueError errors (loc, e);
-              TL.TLCONSTANT {const=TL.C TL.UNIT, ty=ty, loc=loc}) (*dummy*)
+              TL.TLCONSTANT (TL.UNIT, loc)) (*dummy*)
+
+  fun compileVarInfo ({id, path, ty, ...}:Types.varInfo) : TypedLambda.varInfo =
+      {id = id, path = path, ty = ty}
 
   fun compileExp (env:env) rcexp =
       case rcexp of
-        RC.RCFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
+        TC.TPFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
         TL.TLFOREIGNAPPLY
           {funExp = compileExp env funExp,
            argExpList = map (compileExp env) argExpList,
            attributes = attributes,
            resultTy = resultTy,
            loc = loc}
-      | RC.RCCALLBACKFN {attributes, resultTy, argVarList, bodyExp, loc} =>
+      | TC.TPCALLBACKFN {attributes, resultTy, argVarList, bodyExp, loc} =>
         TL.TLCALLBACKFN
           {attributes = attributes,
            resultTy = resultTy,
-           argVarList = argVarList,
+           argVarList = map compileVarInfo argVarList,
            bodyExp = compileExp env bodyExp,
            loc = loc}
-      | RC.RCSIZEOF (ty, loc) =>
-        TL.TLSIZEOF {ty=ty, loc=loc}
-      | RC.RCREIFYTY (ty, loc) => raise Bug.Bug "RCREIFYTY in DatatypeCompilation"
-      | RC.RCTAGOF (ty, loc) =>
-        TL.TLTAGOF {ty=ty, loc=loc}
-      | RC.RCINDEXOF (label, recordTy, loc) =>
-        TL.TLINDEXOF {label=label, recordTy=recordTy, loc=loc}
-      | RC.RCCONSTANT {const, loc, ty} =>
+      | TC.TPSIZEOF (ty, loc) =>
+        TL.TLSIZEOF {ty = ty, loc = loc}
+      | TC.TPREIFYTY (ty, loc) =>
+        TL.TLREIFYTY {ty = ty, loc = loc}
+      | TC.TPCONSTANT {const, loc, ty} =>
         fixConst (const, ty, loc)
-      | RC.RCFOREIGNSYMBOL {name, ty, loc} =>
+      | TC.TPFOREIGNSYMBOL {name, ty, loc} =>
         TL.TLFOREIGNSYMBOL {name=name, ty=ty, loc=loc}
-      | RC.RCVAR varInfo =>
-        TL.TLVAR {varInfo = varInfo, loc = Loc.noloc}
-      | RC.RCEXVAR exVarInfo =>
-        TL.TLEXVAR {exVarInfo = exVarInfo, loc = Loc.noloc}
-      | RC.RCPRIMAPPLY {primOp={primitive, ty}, instTyList, argExp, loc} =>
-        let
-          val argExp = compileExp env argExp
-          val (argTy, retTy) =
-              case TypesBasics.tpappTy (ty, instTyList) of
-                T.FUNMty ([argTy], retTy) => (argTy, retTy)
-              | _ => raise Bug.Bug "RCPRIMAPPLY: not a function"
-          val (decls, argExp) = unwrapLet argExp
-          val argExp = E.Exp (argExp, argTy)
-          val primTy = PrimitiveTypedLambda.toPrimTy ty
-          val (binds, argExps) =
-              case #argTyList primTy of
-                nil => (nil, nil)
-              | _::nil => (nil, [argExp])
-              | _::_::_ => explodeRecordExp argExp
-          val exp =
-              E.Let (binds,
-                     PrimitiveTypedLambda.compile
-                       {primitive = primitive,
-                        primTy = primTy,
-                        instTyList = instTyList,
-                        resultTy = retTy,
-                        argExpList = argExps,
-                        loc = loc})
-        in
-          EmitTypedLambda.emit loc (E.TLLet (decls, exp))
-        end
-      | RC.RCDATACONSTRUCT {con, instTyList, argExpOpt, argTyOpt, loc} =>
+      | TC.TPVAR varInfo =>
+        TL.TLVAR (compileVarInfo varInfo, Loc.noloc)
+      | TC.TPRECFUNVAR {var, arity} =>
+        TL.TLVAR (compileVarInfo var, Loc.noloc)
+      | TC.TPEXVAR exVarInfo =>
+        TL.TLEXVAR (exVarInfo, Loc.noloc)
+      | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, loc} =>
+        TL.TLOPRIMAPPLY
+          {oprimOp = oprimOp,
+           instTyList = instTyList,
+           argExp = compileExp env argExp,
+           loc = loc}
+      | TC.TPPRIMAPPLY {primOp, instTyList, argExp, loc} =>
+        PrimitiveTypedLambda.compile
+          {primOp = primOp,
+           instTyList = instTyList,
+           argExp = compileExp env argExp,
+           loc = loc}
+      | TC.TPDATACONSTRUCT {con, instTyList, argExpOpt, loc} =>
         let
           val argExpOpt = Option.map (compileExp env) argExpOpt
         in
           EmitTypedLambda.emit loc (composeCon (con, instTyList, argExpOpt))
         end
-      | RC.RCEXNCONSTRUCT {exn, instTyList=nil, argExpOpt, loc} =>
+      | TC.TPEXNCONSTRUCT {exn, argExpOpt, loc} =>
         let
           val argExpOpt = Option.map (compileExp env) argExpOpt
         in
           EmitTypedLambda.emit loc (composeExn env (exn, argExpOpt, loc))
         end
-      | RC.RCEXNCONSTRUCT {exn, instTyList=_::_, argExpOpt, loc} =>
-        raise Bug.Bug "compileExp: RCEXNCONSTRUCT"
-      | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} =>
+      | TC.TPEXNTAG {exnInfo, loc} =>
         (
           case findLocalExnTag (env, exnInfo) of
-            NONE => raise Bug.Bug "compileExp: RCEXN_CONSTRUCTOR"
-          | SOME var => TL.TLVAR {varInfo = var, loc = loc}
+            NONE => raise Bug.Bug "compileExp: TPEXNTAG"
+          | SOME var => TL.TLVAR (var, loc)
         )
-      | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
+      | TC.TPEXEXNTAG {exExnInfo, loc} =>
         (
           case findExternExnTag (env, exExnInfo) of
-            NONE => raise Bug.Bug "compileExp: RCEXEXN_CONSTRUCTOR"
-          | SOME var => TL.TLEXVAR {exVarInfo = var, loc = loc}
+            NONE => raise Bug.Bug "compileExp: TPEXEXNTAG"
+          | SOME var => TL.TLEXVAR (var, loc)
         )
-      | RC.RCAPPM {funExp, funTy, argExpList, loc} =>
+      | TC.TPAPPM {funExp, funTy, argExpList, loc} =>
         let
           val argExpList = map (compileExp env) argExpList
         in
@@ -523,53 +449,42 @@ struct
                      argExpList = argExpList,
                      loc = loc}
         end
-      | RC.RCMONOLET {binds, bodyExp, loc} =>
-        foldr
-          (fn ((var, exp), mainExp) =>
-              TL.TLLET
-                {localDecl = TL.TLVAL {boundVar = var,
-                                       boundExp = compileExp env exp,
-                                       loc = loc},
-                 mainExp = mainExp,
-                 loc = loc})
-          (compileExp env bodyExp)
-          binds
-      | RC.RCLET {decls, body=[rcexp], tys, loc} =>
+      | TC.TPLET {decls, body, loc} =>
         let
           val (env, decls) = compileDeclList env decls
-          val mainExp = compileExp env rcexp
+          val mainExp = compileExp env body
         in
           foldr
             (fn (dec, mainExp) =>
-                TL.TLLET {localDecl = dec, mainExp = mainExp, loc = loc})
+                TL.TLLET {decl = dec, body = mainExp, loc = loc})
             mainExp
             decls
         end
-      | RC.RCLET {decls, body, tys, loc} =>
-        compileExp env (RC.RCLET {decls = decls,
-                                  body = [RC.RCSEQ {expList = body,
-                                                    expTyList = tys,
-                                                    loc = loc}],
-                                  tys = [List.last tys],
-                                  loc = loc})
-      | RC.RCRECORD {fields, recordTy, loc} =>
+      | TC.TPMONOLET {binds, bodyExp, loc} =>
+        foldr
+          (fn ((var, exp), body) =>
+              TL.TLLET {decl = TL.TLVAL {var = compileVarInfo var,
+                                         exp = compileExp env exp,
+                                         loc = loc},
+                        body = body,
+                        loc = loc})
+          (compileExp env bodyExp)
+          binds
+      | TC.TPRECORD {fields, recordTy, loc} =>
         if RecordLabel.Map.isEmpty fields
         then EmitTypedLambda.emit loc (E.Cast (E.Null, recordTy))
         else TL.TLRECORD
-               {isMutable = false,
-                fields = RecordLabel.Map.map (compileExp env) fields,
+               {fields = RecordLabel.Map.map (compileExp env) fields,
                 recordTy = recordTy,
                 loc = loc}
-      | RC.RCSELECT {indexExp, label, exp, expTy, resultTy, loc} =>
+      | TC.TPSELECT {label, exp, expTy, resultTy, loc} =>
         TL.TLSELECT
           {recordExp = compileExp env exp,
-           indexExp = compileExp env indexExp,
            label = label,
            recordTy = expTy,
            resultTy = resultTy,
            loc = loc}
-      | RC.RCMODIFY {indexExp, label, recordExp, recordTy, elementExp,
-                     elementTy, loc} =>
+      | TC.TPMODIFY {label, recordExp, recordTy, elementExp, elementTy, loc} =>
         (
           case TypesBasics.derefTy recordTy of
             T.RECORDty fieldTys =>
@@ -579,10 +494,7 @@ struct
                   RecordLabel.Map.mapi
                     (fn (label, ty) =>
                         TL.TLSELECT
-                          {recordExp = TL.TLVAR {varInfo = v, loc = loc},
-                           indexExp = TL.TLINDEXOF {label = label,
-                                                    recordTy = recordTy,
-                                                    loc = loc},
+                          {recordExp = TL.TLVAR (v, loc),
                            label = label,
                            recordTy = recordTy,
                            resultTy = ty,
@@ -592,277 +504,265 @@ struct
               val fields = RecordLabel.Map.insert (fields, label, elementExp)
             in
               TL.TLLET
-                {localDecl = TL.TLVAL {boundVar = v,
-                                       boundExp = compileExp env recordExp,
-                                       loc = loc},
-                 mainExp = TL.TLRECORD {isMutable = false,
-                                        fields = fields,
-                                        recordTy = recordTy,
-                                        loc = loc},
+                {decl = TL.TLVAL {var = v,
+                                  exp = compileExp env recordExp,
+                                  loc = loc},
+                 body = TL.TLRECORD {fields = fields,
+                                     recordTy = recordTy,
+                                     loc = loc},
                  loc = loc}
             end
           | _ =>
             TL.TLMODIFY
-              {indexExp = compileExp env indexExp,
-               label = label,
+              {label = label,
                recordExp = compileExp env recordExp,
                recordTy = recordTy,
-               valueExp = compileExp env elementExp,
-               valueTy = elementTy,
+               elementExp = compileExp env elementExp,
+               elementTy = elementTy,
                loc = loc}
         )
-      | RC.RCRAISE {exp, ty, loc} =>
+      | TC.TPRAISE {exp, ty, loc} =>
         TL.TLRAISE
-          {argExp = compileExp env exp,
+          {exp = compileExp env exp,
            resultTy = ty,
            loc = loc}
-      | RC.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
+      | TC.TPHANDLE {exp, exnVar, handler, resultTy, loc} =>
         TL.TLHANDLE
           {exp = compileExp env exp,
-           exnVar = exnVar,
+           exnVar = compileVarInfo exnVar,
            handler = compileExp env handler,
            resultTy = resultTy,
            loc = loc}
-      | RC.RCCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
+      | TC.TPSWITCH {exp, expTy, ruleList = TC.CONCASE ruleList,
+                     defaultExp, ruleBodyTy, loc} =>
         let
           val exp = compileExp env exp
-          val ruleList = map (fn (conInfo, argVar, exp) =>
-                                 (conInfo, argVar, compileExp env exp))
-                             ruleList
+          val ruleList =
+              map (fn {con, instTyList, argVarOpt, body} =>
+                      (con,
+                       Option.map compileVarInfo argVarOpt,
+                       compileExp env body))
+                  ruleList
           val defaultExp = compileExp env defaultExp
         in
           EmitTypedLambda.emit
             loc
-            (switchCon (exp, expTy, ruleList, defaultExp, resultTy))
+            (switchCon (exp, expTy, ruleList, defaultExp, ruleBodyTy))
         end
-      | RC.RCEXNCASE {exp, expTy, ruleList, defaultExp, resultTy, loc} =>
+      | TC.TPSWITCH {exp, expTy, ruleList = TC.EXNCASE ruleList,
+                     defaultExp, ruleBodyTy, loc} =>
         let
           val exp = compileExp env exp
-          val ruleList = map (fn (exnCon, argVar, exp) =>
-                                 (exnCon, argVar, compileExp env exp))
-                             ruleList
+          val ruleList =
+              map (fn {exn, argVarOpt, body} =>
+                      (exn,
+                       Option.map compileVarInfo argVarOpt,
+                       compileExp env body))
+                  ruleList
           val defaultExp = compileExp env defaultExp
         in
           EmitTypedLambda.emit
             loc
-            (switchExn env (exp, expTy, ruleList, defaultExp, resultTy))
+            (switchExn env (exp, expTy, ruleList, defaultExp, ruleBodyTy))
         end
-      | RC.RCSWITCH {switchExp, expTy, branches, defaultExp, resultTy, loc} =>
+      | TC.TPSWITCH {exp, expTy, ruleList = TC.CONSTCASE ruleList,
+                     defaultExp, ruleBodyTy, loc} =>
         let
-          val switchExp = compileExp env switchExp
+          val switchExp = compileExp env exp
+          datatype t = S of TypedLambda.tlstring | C of TypedLambda.tlconst
           val branches =
-              map (fn (c, e) =>
-                      case fixConst (c, expTy, loc) of
-                        TL.TLCONSTANT {const, ...} =>
-                        {constant = const, exp = compileExp env e}
-                      | _ => raise Bug.Bug "compileExp: RCSWITCH")
-                  branches
+              map (fn {const, ty, body} =>
+                      {constant =
+                         case fixConst (const, ty, loc) of
+                           TL.TLCONSTANT (const, _) => C const
+                         | TL.TLSTRING (string, _) => S string
+                         | _ => raise Bug.Bug "compileExp: TPSWITCH",
+                       exp = compileExp env body})
+                  ruleList
           val defaultExp = compileExp env defaultExp
         in
           case branches of
-            {constant = TL.S (TL.INTINF _), exp = _}::_ =>
+            {constant = S (TL.INTINF _), exp = _}::_ =>
             SwitchCompile.compileIntInfSwitch
               {switchExp = switchExp,
                expTy = expTy,
                branches =
-                  map (fn {constant = TL.S (TL.INTINF s), exp} =>
+                  map (fn {constant = S (TL.INTINF s), exp} =>
                           {constant = s, exp = exp}
-                        | _ => raise Bug.Bug "compileExp: RCSWITCH: INTINF")
+                        | _ => raise Bug.Bug "compileExp: TPSWITCH: INTINF")
                       branches,
                defaultExp = defaultExp,
-               resultTy = resultTy,
+               resultTy = ruleBodyTy,
                loc = loc}
-          | {constant = TL.S (TL.STRING _), exp = _}::_ =>
+          | {constant = S (TL.STRING _), exp = _}::_ =>
             SwitchCompile.compileStringSwitch
               {switchExp = switchExp,
                expTy = expTy,
                branches =
-                  map (fn {constant = TL.S (TL.STRING s), exp} =>
+                  map (fn {constant = S (TL.STRING s), exp} =>
                           {constant = s, exp = exp}
-                        | _ => raise Bug.Bug "compileExp: RCSWITCH: STRING")
+                        | _ => raise Bug.Bug "compileExp: TPSWITCH: STRING")
                       branches,
                defaultExp = defaultExp,
-               resultTy = resultTy,
+               resultTy = ruleBodyTy,
                loc = loc}
-          | {constant = TL.C _, exp = _}::_ =>
+          | {constant = C _, exp = _}::_ =>
             TL.TLSWITCH
-              {switchExp = switchExp,
+              {exp = switchExp,
                expTy = expTy,
                branches = 
-                  map (fn {constant = TL.C const, exp} =>
-                          {constant = const, exp = exp}
-                        | _ => raise Bug.Bug "compileExp: RCSWITCH: C")
+                  map (fn {constant = C const, exp} =>
+                          {const = const, body = exp}
+                        | _ => raise Bug.Bug "compileExp: TPSWITCH: C")
                       branches,
                defaultExp = defaultExp,
-               resultTy = resultTy,
+               resultTy = ruleBodyTy,
                loc = loc}
           | nil =>
             TL.TLSWITCH
-              {switchExp = switchExp,
+              {exp = switchExp,
                expTy = expTy,
                branches = nil,
                defaultExp = defaultExp,
-               resultTy = resultTy,
+               resultTy = ruleBodyTy,
                loc = loc}
         end
-      | RC.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+      | TC.TPCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         TL.TLCATCH
           {catchLabel = catchLabel,
-           argVarList = argVarList,
+           argVarList = map compileVarInfo argVarList,
            catchExp = compileExp env catchExp,
            tryExp = compileExp env tryExp,
            resultTy = resultTy,
            loc = loc}
-      | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+      | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
         TL.TLTHROW
           {catchLabel = catchLabel,
            argExpList = map (compileExp env) argExpList,
            resultTy = resultTy,
            loc = loc}
-      | RC.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
+      | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} =>
         TL.TLFNM
-          {argVarList = argVarList,
+          {argVarList = map compileVarInfo argVarList,
            bodyTy = bodyTy,
            bodyExp = compileExp env bodyExp,
            loc = loc}
-      | RC.RCPOLYFNM {btvEnv, argVarList, bodyTy, bodyExp, loc} =>
+      | TC.TPPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
         TL.TLPOLY
           {btvEnv = btvEnv,
-           expTyWithoutTAbs = T.FUNMty (map #ty argVarList, bodyTy),
-           exp = TL.TLFNM {argVarList = argVarList,
-                           bodyTy = bodyTy,
-                           bodyExp = compileExp env bodyExp,
-                           loc = loc},
-           loc = loc}
-      | RC.RCPOLY {btvEnv, expTyWithoutTAbs, exp, loc} =>
-        TL.TLPOLY
-          {btvEnv = btvEnv,
+           constraints = constraints,
            expTyWithoutTAbs = expTyWithoutTAbs,
            exp = compileExp env exp,
            loc = loc}
-      | RC.RCTAPP {exp, expTy, instTyList, loc} =>
+      | TC.TPTAPP {exp, expTy, instTyList, loc} =>
         TL.TLTAPP
           {exp = compileExp env exp,
            expTy = expTy,
            instTyList = instTyList,
            loc = loc}
-      | RC.RCSEQ {expList, expTyList, loc} =>
-        let
-          val exps = ListPair.zipEq (map (compileExp env) expList, expTyList)
-        in
-          case rev exps of
-            nil => raise Bug.Bug "compileExp: RCLET"
-          | [exp] => #1 exp
-          | lastExp::exps =>
-            foldl
-              (fn ((exp, ty), mainExp) =>
-                   TL.TLLET {localDecl = TL.TLVAL {boundVar = newVar ty,
-                                                   boundExp = exp,
-                                                   loc = loc},
-                             mainExp = mainExp,
-                             loc = loc})
-              (#1 lastExp)
-              exps
-        end
-      | RC.RCCAST ((rcexp, expTy), ty, loc) =>
+      | TC.TPCAST ((rcexp, expTy), ty, loc) =>
         TL.TLCAST {exp = compileExp env rcexp, expTy = expTy, targetTy = ty,
                    cast = BuiltinPrimitive.TypeCast, loc = loc}
-      | RC.RCOPRIMAPPLY _ =>
-        raise Bug.Bug "compileExp: RCOPRIMAPPLY"
-      | RC.RCFFI exp =>
-        raise Bug.Bug "RCFFI"
-      | RC.RCJOIN _ =>
-        raise Bug.Bug "compileExp: RCJOIN"
-      | RC.RCDYNAMIC _ =>
-        raise Bug.Bug "compileExp: RCDYNAMIC"
-      | RC.RCDYNAMICIS _ =>
-        raise Bug.Bug "compileExp: RCDYNAMICIS"
-      | RC.RCDYNAMICNULL _ =>
-        raise Bug.Bug "compileExp: RCDYNAMICNULL"
-      | RC.RCDYNAMICTOP _ =>
-        raise Bug.Bug "compileExp: RCDYNAMICTOP"
-      | RC.RCDYNAMICVIEW _ =>
-        raise Bug.Bug "compileExp: RCDYNAMICVIEW"
-      | RC.RCDYNAMICCASE _ =>
-        raise Bug.Bug "compileExp: RCDYNAMICCASE"
+      | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+        TL.TLDYNAMICEXISTTAPP
+          {existInstMap = compileExp env existInstMap,
+           exp = compileExp env exp,
+           expTy = expTy,
+           instTyList = instTyList,
+           loc = loc}
+      | TC.TPFFIIMPORT _ =>
+        raise Bug.Bug "compileExp: TPFFIIMPORT"
+      | TC.TPJOIN _ =>
+        raise Bug.Bug "compileExp: TPJOIN"
+      | TC.TPDYNAMIC _ =>
+        raise Bug.Bug "compileExp: TPDYNAMIC"
+      | TC.TPDYNAMICIS _ =>
+        raise Bug.Bug "compileExp: TPDYNAMICIS"
+      | TC.TPDYNAMICNULL _ =>
+        raise Bug.Bug "compileExp: TPDYNAMICNULL"
+      | TC.TPDYNAMICTOP _ =>
+        raise Bug.Bug "compileExp: TPDYNAMICTOP"
+      | TC.TPDYNAMICVIEW _ =>
+        raise Bug.Bug "compileExp: TPDYNAMICVIEW"
+      | TC.TPDYNAMICCASE _ =>
+        raise Bug.Bug "compileExp: TPDYNAMICCASE"
+      | TC.TPCASEM _ =>
+        raise Bug.Bug "compileExp: TPCASEM"
+      | TC.TPERROR =>
+        raise Bug.Bug "compileExp: TPERROR"
 
   and compileDecl env rcdecl =
       case rcdecl of
-        RC.RCVAL (bindList, loc) =>
+        TC.TPVAL ((var, exp), loc) =>
         (env,
-         map (fn (v, e) =>
-                 TL.TLVAL {boundVar = v,
-                           boundExp = compileExp env e,
-                           loc = loc})
-             bindList)
-      | RC.RCVALREC (bindList, loc) =>
+         [TL.TLVAL {var = compileVarInfo var,
+                    exp = compileExp env exp,
+                    loc = loc}])
+      | TC.TPVALREC (bindList, loc) =>
         (env,
          [TL.TLVALREC
-            {recbindList = map (fn {var, expTy, exp} =>
-                                   {boundVar = var,
-                                    boundExp = compileExp env exp})
-                               bindList,
+            (map (fn {var, exp} =>
+                     {var = compileVarInfo var,
+                      exp = compileExp env exp})
+                 bindList,
+             loc)])
+      | TC.TPVALPOLYREC {btvEnv, constraints, recbinds, loc} =>
+        (env,
+         [TL.TLVALPOLYREC
+            {btvEnv = btvEnv,
+             constraints = constraints,
+             recbinds = map (fn {var, exp} =>
+                                {var = compileVarInfo var,
+                                 exp = compileExp env exp})
+                            recbinds,
              loc = loc}])
-      | RC.RCVALPOLYREC (btvEnv, bindList, loc) =>
-        raise Bug.Bug "compileExp: RCVALPOLYREC"
-      | RC.RCEXPORTVAR {path, id, ty} =>
+      | TC.TPEXPORTVAR {var, exp} =>
         (env, [TL.TLEXPORTVAR
                  {weak = false,
-                  exVarInfo = {path=path, ty=ty},
-                  exp = TL.TLVAR {varInfo = {path=path, ty=ty, id=id},
-                                  loc = Loc.noloc},
-                  loc = Loc.noloc}])
-      | RC.RCEXTERNVAR (exVarInfo, provider) =>
-        (env, [TL.TLEXTERNVAR (exVarInfo, provider, Loc.noloc)])
-      | RC.RCEXD (exnBinds, loc) =>
+                  var = var,
+                  exp = compileExp env exp}])
+      | TC.TPEXTERNVAR (exVarInfo, provider) =>
+        (env, [TL.TLEXTERNVAR (exVarInfo, provider)])
+      | TC.TPEXD (exnInfo as {path, ty, ...}, loc) =>
         let
-          fun compileExBind env nil = (env, nil)
-            | compileExBind env ({exnInfo as {path, ty, ...}, loc}::binds) =
-              let
-                val (env, tagVar) = newLocalExn (env, exnInfo)
-                val (env, decls) = compileExBind env binds
-                val tagExp = EmitTypedLambda.allocExnTag
-                               {builtin=false, path=path, ty=ty}
-              in
-                (env,
-                 TL.TLVAL
-                   {boundVar = tagVar,
-                    boundExp = EmitTypedLambda.emit loc tagExp,
-                    loc = loc}
-                 :: decls)
-              end
+          val (env, tagVar) = newLocalExn (env, exnInfo)
+          val tagExp = EmitTypedLambda.allocExnTag
+                         {builtin=false, path=path, ty=ty}
         in
-          compileExBind env exnBinds
+          (env,
+           [TL.TLVAL
+              {var = tagVar,
+               exp = EmitTypedLambda.emit loc tagExp,
+               loc = loc}])
         end
-      | RC.RCEXNTAGD ({exnInfo, varInfo}, loc) =>
+      | TC.TPEXNTAGD ({exnInfo, varInfo}, loc) =>
         let
           val (env, tagVar) = newLocalExn (env, exnInfo)
         in
           (env,
-           [TL.TLVAL {boundVar = tagVar,
-                      boundExp = TL.TLVAR {varInfo = varInfo, loc = loc},
+           [TL.TLVAL {var = tagVar,
+                      exp = TL.TLVAR (compileVarInfo varInfo, loc),
                       loc = loc}])
         end
-      | RC.RCEXPORTEXN (exnInfo as {path, ...}) =>
+      | TC.TPEXPORTEXN (exnInfo as {path, ...}) =>
         (
           case findLocalExnTag (env, exnInfo) of
-            NONE => raise Bug.Bug "compileDecl: RCEXPORTEXN"
+            NONE => raise Bug.Bug "compileDecl: TPEXPORTEXN"
           | SOME (var as {id, ty,...}) =>
             (* ohori: bug 184. the external name is "path" in exnInfo,
                which must be kept. *)
             (env, [TL.TLEXPORTVAR
                      {weak = false,
-                      exVarInfo = {path=path, ty=ty},
-                      exp = TL.TLVAR {varInfo = var, loc = Loc.noloc},
-                      loc = Loc.noloc}])
+                      var = {path=path, ty=ty},
+                      exp = TL.TLVAR (var, Loc.noloc)}])
         )
-      | RC.RCEXTERNEXN (exExnInfo, provider) =>
+      | TC.TPEXTERNEXN (exExnInfo, provider) =>
         let
           val (env, tagVar) = addExternExn (env, exExnInfo)
         in
-          (env, [TL.TLEXTERNVAR (tagVar, provider, Loc.noloc)])
+          (env, [TL.TLEXTERNVAR (tagVar, provider)])
         end
-      | RC.RCBUILTINEXN (exExnInfo as {path, ty}) =>
+      | TC.TPBUILTINEXN (exExnInfo as {path, ty}) =>
         let
           val tagExp = EmitTypedLambda.allocExnTag
                          {builtin=true, path=path, ty=ty}
@@ -871,10 +771,13 @@ struct
           (env,
            [TL.TLEXPORTVAR
               {weak = true,
-               exVarInfo = {path = path, ty = BT.exntagTy},
-               exp = EmitTypedLambda.emit Loc.noloc tagExp,
-               loc = Loc.noloc}])
+               var = {path = path, ty = BT.exntagTy},
+               exp = EmitTypedLambda.emit Loc.noloc tagExp}])
         end
+      | TC.TPFUNDECL _ =>
+        raise Bug.Bug "compileDecl: TPFUNDECL"
+      | TC.TPPOLYFUNDECL _ =>
+        raise Bug.Bug "compileDecl: TPPOLYFUNDECL"
 
   and compileDeclList env nil = (env, nil)
     | compileDeclList env (decl::decls) =

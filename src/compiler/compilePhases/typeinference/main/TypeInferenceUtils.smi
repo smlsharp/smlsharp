@@ -10,16 +10,16 @@ _require local "../../../data/builtin/main/BuiltinTypes.smi"
 _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
 _require "../../../data/types/main/Types.ppg.smi"
-_require local "../../../data/types/main/DummyTyID.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/types/main/Unify.smi"
 _require local "./Printers.smi"
 
 structure TypeInferenceUtils =
   struct
+(*
     val nextDummyTy : Types.kind -> Types.ty
-    val freshTopLevelInstTy : Types.ty -> Types.ty * Types.ty list * Types.constraint list
-    val instantiateTv : Types.tvState ref -> unit
+*)
+    val freshTopLevelInstTy : Types.ty -> Types.ty * Types.ty list option * Types.constraint list
     val instantiateOConstTy : Types.ty -> unit
     val instantiateOConstAndRecordTy : Types.ty -> bool
 

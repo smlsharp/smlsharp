@@ -62,17 +62,16 @@ in
               TC.TPPATDATACONSTRUCT
                 {argPatOpt = Option.map evalPat argPatOpt,
                  conPat = evalConInfo btvMap conPat,
-                 instTyList = map evalT instTyList,
+                 instTyList = Option.map (map evalT) instTyList,
                  loc = loc,
                  patTy = evalT patTy
                 }
             | TC.TPPATERROR (ty, loc) =>  TC.TPPATERROR (evalT ty, loc)
             | TC.TPPATEXNCONSTRUCT
-                {argPatOpt, exnPat:TC.exnCon, instTyList, loc, patTy} =>
+                {argPatOpt, exnPat:TC.exnCon, loc, patTy} =>
               TC.TPPATEXNCONSTRUCT
                 {argPatOpt = Option.map evalPat argPatOpt,
                  exnPat = evalExnCon btvMap exnPat,
-                 instTyList = map evalT instTyList,
                  loc = loc,
                  patTy = evalT patTy
                 }
@@ -99,16 +98,59 @@ in
                  ruleBodyTy = evalT ruleBodyTy,
                  ruleList = map evalRule ruleList
                 }
+            | TC.TPSWITCH {exp, expTy, ruleList, defaultExp, ruleBodyTy, loc} =>
+              let
+                fun evalConst {const, ty, body} =
+                    {const = const,
+                     ty = evalT ty,
+                     body = eval body}
+                fun evalCon {con, instTyList, argVarOpt, body} =
+                    {con = evalConInfo btvMap con,
+                     instTyList = Option.map (map evalT) instTyList,
+                     argVarOpt = Option.map (evalTyVar btvMap) argVarOpt,
+                     body = eval body}
+                fun evalExn {exn, argVarOpt, body} =
+                    {exn = evalExnCon btvMap exn,
+                     argVarOpt = Option.map (evalTyVar btvMap) argVarOpt,
+                     body = eval body}
+                fun evalRules (TC.CONSTCASE rules) =
+                    TC.CONSTCASE (map evalConst rules)
+                  | evalRules (TC.CONCASE rules) =
+                    TC.CONCASE (map evalCon rules)
+                  | evalRules (TC.EXNCASE rules) =
+                    TC.EXNCASE (map evalExn rules)
+              in
+                TC.TPSWITCH
+                  {exp = eval exp,
+                   expTy = evalT expTy,
+                   ruleList = evalRules ruleList,
+                   defaultExp = eval defaultExp,
+                   ruleBodyTy = evalT ruleBodyTy,
+                   loc = loc}
+              end
+            | TC.TPCATCH {catchLabel, tryExp, argVarList, catchExp, resultTy, loc} =>
+              TC.TPCATCH
+                {catchLabel = catchLabel,
+                 tryExp = eval tryExp,
+                 argVarList = map (evalTyVar btvMap) argVarList,
+                 catchExp = eval catchExp,
+                 resultTy = evalT resultTy,
+                 loc = loc}
+            | TC.TPTHROW {catchLabel, argExpList, resultTy, loc} =>
+              TC.TPTHROW
+                {catchLabel = catchLabel,
+                 argExpList = map eval argExpList,
+                 resultTy = evalT resultTy,
+                 loc = loc}
             | TC.TPCAST ((tpexp, expTy), ty, loc) =>
               TC.TPCAST ((eval tpexp, evalT expTy), evalT ty, loc)
             | TC.TPCONSTANT {const, loc, ty} =>
               TC.TPCONSTANT {const=const, loc = loc, ty=evalT ty}
-            | TC.TPDATACONSTRUCT {argExpOpt, argTyOpt, con:T.conInfo, instTyList, loc} =>
+            | TC.TPDATACONSTRUCT {argExpOpt, con:T.conInfo, instTyList, loc} =>
               TC.TPDATACONSTRUCT
                 {argExpOpt = Option.map eval argExpOpt,
-                 argTyOpt = Option.map evalT argTyOpt,
                  con = evalConInfo btvMap con,
-                 instTyList = map evalT instTyList,
+                 instTyList = Option.map (map evalT) instTyList,
                  loc = loc
                 }
             | TC.TPDYNAMICCASE {groupListTerm, groupListTy, dynamicTerm, dynamicTy, elemTy, ruleBodyTy, loc} => 
@@ -119,19 +161,24 @@ in
                                 elemTy = evalT elemTy,
                                 ruleBodyTy = evalT ruleBodyTy,
                                 loc = loc}
+            | TC.TPDYNAMICEXISTTAPP {existInstMap, exp, expTy, instTyList, loc} =>
+              TC.TPDYNAMICEXISTTAPP
+                {existInstMap = existInstMap,
+                 exp = eval exp,
+                 expTy = evalT expTy,
+                 instTyList = map evalT instTyList,
+                 loc = loc}
             | TC.TPERROR => exp
-            | TC.TPEXNCONSTRUCT {argExpOpt, argTyOpt, exn:TC.exnCon, instTyList, loc} =>
+            | TC.TPEXNCONSTRUCT {argExpOpt, exn:TC.exnCon, loc} =>
               TC.TPEXNCONSTRUCT
                 {argExpOpt = Option.map eval argExpOpt,
-                 argTyOpt = Option.map evalT argTyOpt,
                  exn = evalExnCon btvMap exn,
-                 instTyList = map evalT instTyList,
                  loc = loc
                 }
-            | TC.TPEXN_CONSTRUCTOR {exnInfo, loc} =>
-              TC.TPEXN_CONSTRUCTOR {exnInfo=evalExnInfo btvMap exnInfo , loc=loc}
-            | TC.TPEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
-              TC.TPEXEXN_CONSTRUCTOR
+            | TC.TPEXNTAG {exnInfo, loc} =>
+              TC.TPEXNTAG {exnInfo=evalExnInfo btvMap exnInfo , loc=loc}
+            | TC.TPEXEXNTAG {exExnInfo, loc} =>
+              TC.TPEXEXNTAG
                 {exExnInfo=evalExExnInfo btvMap exExnInfo,
                  loc= loc}
             | TC.TPEXVAR {path, ty} =>
@@ -150,6 +197,23 @@ in
                  funExp = funExp,
                  stubTy = evalT stubTy
                 }
+            | TC.TPFOREIGNSYMBOL {name, ty, loc} =>
+              TC.TPFOREIGNSYMBOL {name = name, ty = evalT ty, loc = loc}
+            | TC.TPFOREIGNAPPLY {funExp, argExpList, attributes, resultTy,
+                                 loc} =>
+              TC.TPFOREIGNAPPLY
+                {funExp = eval funExp,
+                 argExpList = map eval argExpList,
+                 attributes = attributes,
+                 resultTy = Option.map evalT resultTy,
+                 loc = loc}
+            | TC.TPCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+              TC.TPCALLBACKFN
+                {attributes = attributes,
+                 argVarList = map (evalTyVar btvMap) argVarList,
+                 bodyExp = eval bodyExp,
+                 resultTy = Option.map evalT resultTy,
+                 loc = loc}
             | TC.TPFNM {argVarList, bodyExp, bodyTy, loc} =>
               TC.TPFNM
                 {argVarList = map (evalTyVar btvMap) argVarList,
@@ -164,11 +228,10 @@ in
                  handler=eval handler, 
                  resultTy = evalT resultTy,
                  loc=loc}
-            | TC.TPLET {body:TC.tpexp list, decls, loc, tys} =>
-              TC.TPLET {body=map eval body,
+            | TC.TPLET {body, decls, loc} =>
+              TC.TPLET {body=eval body,
                         decls=map evalDecl decls,
-                        loc=loc,
-                        tys=map evalT tys}
+                        loc=loc}
             | TC.TPMODIFY {elementExp, elementTy, label, loc, recordExp, recordTy} =>
               TC.TPMODIFY
                 {elementExp = eval elementExp,
@@ -179,10 +242,9 @@ in
                  recordTy = evalT recordTy}
             | TC.TPMONOLET {binds:(T.varInfo * TC.tpexp) list, bodyExp, loc} =>
               TC.TPMONOLET {binds=map evalBind binds, bodyExp=eval bodyExp, loc=loc}
-            | TC.TPOPRIMAPPLY {argExp, argTy, instTyList, loc, oprimOp:T.oprimInfo} =>
+            | TC.TPOPRIMAPPLY {argExp, instTyList, loc, oprimOp:T.oprimInfo} =>
               TC.TPOPRIMAPPLY
                 {argExp = eval argExp,
-                 argTy = evalT argTy,
                  instTyList = map evalT instTyList,
                  loc = loc,
                  oprimOp = evalOprimInfo btvMap oprimOp
@@ -195,20 +257,10 @@ in
                  expTyWithoutTAbs = evalT expTyWithoutTAbs,
                  loc = loc
                 }
-            | TC.TPPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, constraints, loc} =>
-              TC.TPPOLYFNM
-                {argVarList= map (evalTyVar btvMap) argVarList,
-                 bodyExp= eval bodyExp,
-                 bodyTy=evalT bodyTy,
-                 btvEnv=evalBtvEnv btvMap btvEnv,
-                 constraints=map (TyReduce.evalConstraint btvMap) constraints,
-                 loc=loc
-                }
-            | TC.TPPRIMAPPLY {argExp, argTy, instTyList, loc, primOp:T.primInfo} =>
+            | TC.TPPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
               TC.TPPRIMAPPLY
                 {argExp = eval argExp,
-                 argTy = evalT argTy,
-                 instTyList = map evalT instTyList,
+                 instTyList = Option.map (map evalT) instTyList,
                  loc = loc,
                  primOp = evalPrimInfo btvMap primOp
                 }
@@ -226,12 +278,6 @@ in
                  label=label,
                  loc=loc,
                  resultTy=evalT resultTy
-                }
-            | TC.TPSEQ {expList, expTyList, loc} =>
-              TC.TPSEQ
-                {expList = map eval expList,
-                 expTyList = map evalT expTyList,
-                 loc = loc
                 }
             | TC.TPSIZEOF (ty, loc) =>
               TC.TPSIZEOF (evalT ty, loc)
@@ -284,11 +330,9 @@ in
             {args=map evalPat args, body=eval body}
         and evalDecl tpdecl =
             case tpdecl of
-              TC.TPEXD (exbinds:{exnInfo:Types.exnInfo, loc:Loc.loc} list, loc) =>
+              TC.TPEXD (exnInfo, loc) =>
               TC.TPEXD
-                (map (fn {exnInfo, loc} =>
-                         {exnInfo=evalExnInfo btvMap exnInfo, loc=loc})
-                     exbinds,
+                (evalExnInfo btvMap exnInfo,
                  loc)
             | TC.TPEXNTAGD ({exnInfo, varInfo}, loc) =>
               TC.TPEXNTAGD ({exnInfo=evalExnInfo btvMap exnInfo,
@@ -296,37 +340,36 @@ in
                             loc)
             | TC.TPEXPORTEXN exnInfo =>
               TC.TPEXPORTEXN (evalExnInfo btvMap exnInfo)
-            | TC.TPEXPORTVAR varInfo =>
-              TC.TPEXPORTVAR (evalTyVar btvMap varInfo)
-            | TC.TPEXPORTRECFUNVAR _ =>
-              raise bug "TPEXPORTRECFUNVAR to AlphaRename"
+            | TC.TPEXPORTVAR {var={path,ty}, exp} =>
+              TC.TPEXPORTVAR {var = {path = path, ty = evalT ty},
+                              exp = eval exp}
             | TC.TPEXTERNEXN ({path, ty}, provider) =>
               TC.TPEXTERNEXN ({path=path, ty=evalT ty}, provider)
             | TC.TPBUILTINEXN {path, ty} =>
               TC.TPBUILTINEXN {path=path, ty=evalT ty}
             | TC.TPEXTERNVAR ({path, ty}, provider) =>
               TC.TPEXTERNVAR ({path=path, ty=evalT ty}, provider)
-            | TC.TPVAL (binds:(T.varInfo * TC.tpexp) list, loc) =>
-              TC.TPVAL (map evalBind binds, loc)
+            | TC.TPVAL (bind:(T.varInfo * TC.tpexp), loc) =>
+              TC.TPVAL (evalBind bind, loc)
             | TC.TPVALPOLYREC
                 {btvEnv,
                  constraints,
-                 recbinds:{exp:TC.tpexp, expTy:ty, var:T.varInfo} list,
+                 recbinds:{exp:TC.tpexp, var:T.varInfo} list,
                  loc} =>
               TC.TPVALPOLYREC 
                 {btvEnv = evalBtvEnv btvMap btvEnv, 
                  constraints = map (TyReduce.evalConstraint btvMap) constraints,
                  recbinds =
                  map
-                   (fn {exp,expTy,var} =>
-                       {exp=eval exp, expTy=evalT expTy, var=evalTyVar btvMap var}) 
+                   (fn {exp,var} =>
+                       {exp=eval exp, var=evalTyVar btvMap var})
                    recbinds,
                  loc = loc}
-            | TC.TPVALREC (recbinds:{exp:TC.tpexp, expTy:ty, var:T.varInfo} list,loc) =>
+            | TC.TPVALREC (recbinds:{exp:TC.tpexp, var:T.varInfo} list,loc) =>
               TC.TPVALREC
                 (map
-                   (fn {exp,expTy,var} =>
-                       {exp=eval exp, expTy=evalT expTy, var=evalTyVar btvMap var})
+                   (fn {exp,var} =>
+                       {exp=eval exp, var=evalTyVar btvMap var})
                    recbinds, 
                  loc)
             (* the following should have been eliminate *)

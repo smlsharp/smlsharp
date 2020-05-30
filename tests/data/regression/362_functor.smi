@@ -1,0 +1,5 @@
+functor F (P : sig type t end) =
+struct
+  type u = {y : int}
+  val f : int -> u
+end

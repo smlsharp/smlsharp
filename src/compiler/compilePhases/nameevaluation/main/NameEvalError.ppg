@@ -407,7 +407,7 @@ in
   (*%
      @format((code * {longsymbol}))
      "(name evaluation" +d code ")" +d
-     "replicating" +d "structure" +d "in" +d "functor" +d "argument" +d "not" +d "allowed" +d "in" +d "intercace:" 
+     "replicating" +d "structure" +d "in" +d "functor" +d "argument" +d "not" +d "allowed" +d "in" +d "interface:" 
      +d longsymbol
    *)
     StructureRepOfFuncrorArgInInterface of (code * {longsymbol : longsymbol})
@@ -1313,6 +1313,18 @@ in
      +d ty
    *)
   FlexRecordNotAllowed of code * Absyn.ty
+
+  and
+  (**
+   *)
+  (*%
+     @format(code * {symbol})
+     "(name evaluation" +d code ")" +d
+     "type" +d "constructors" +d "in" +d "the" +d "functor" +d "argument"
+     +d "not" +d "allowed" +d "as" +d "opaque" +d "implementations:"
+     +d symbol
+   *)
+  LIFTEDPropNotAllowedInOpaqueInterface of code * {symbol:symbol}
 
 end
 end

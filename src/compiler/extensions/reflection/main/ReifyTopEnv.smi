@@ -11,7 +11,7 @@ _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../compilePhases/nameevaluation/main/NormalizeTy.smi"
 _require local "../../../compilePhases/nameevaluation/main/NameEvalUtils.smi"
-_require local "../../../compilerIRs/recordcalc/main/RecordCalcUtils.smi"
+_require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
 (* _require local "../../../data/types/main/TypesBasics.smi" *)
 _require local "../../../data/types/main/Types.ppg.smi"
 _require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
@@ -29,14 +29,14 @@ _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 
 _require "../../../../compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
 _require local "../../../../compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi"
-_require "../../../../compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require "../../../../compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 
 structure ReifyTopEnv =
 struct
   val topEnvBind 
       : {sessionTopEnv:NameEvalEnv.topEnv,
          requireTopEnv:NameEvalEnv.topEnv}
-         -> IDCalc.version -> {env:NameEvalEnv.topEnv, decls:RecordCalc.rcdecl list}
+         -> IDCalc.version -> {env:NameEvalEnv.topEnv, decls:TypedCalc.tpdecl list}
 (*
   val topEnvToReifiedTopEnv
       : NameEvalEnv.topEnv -> ReifiedTerm.topEnv

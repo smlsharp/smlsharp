@@ -67,7 +67,6 @@ local
        | RC.RCCONSTANT {const, loc, ty} => size (incConst(n, const)) items
        | RC.RCDATACONSTRUCT
            {argExpOpt = NONE,
-            argTyOpt,
             con:RC.conInfo, 
             instTyList, 
             loc
@@ -75,7 +74,6 @@ local
          size (inc n) items
        | RC.RCDATACONSTRUCT
            {argExpOpt = SOME exp,
-            argTyOpt,
             con:RC.conInfo, 
             instTyList, 
             loc
@@ -88,20 +86,18 @@ local
       | RC.RCEXNCONSTRUCT
           {argExpOpt = NONE,
            exn:RC.exnCon,
-           instTyList,
            loc
           } =>
         size (inc n) items
       | RC.RCEXNCONSTRUCT
           {argExpOpt = SOME exp,
            exn:RC.exnCon,
-           instTyList,
            loc
           } =>
         sizeExp (inc n) exp items
-      | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} => 
+      | RC.RCEXNTAG {exnInfo, loc} => 
         size (inc n) items
-      | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
+      | RC.RCEXEXNTAG {exExnInfo, loc} =>
         size (inc n) items
       | RC.RCEXVAR {path, ty} => size (inc n) items
       | RC.RCFNM {argVarList, bodyExp, bodyTy, loc} =>
@@ -114,18 +110,14 @@ local
         size (incVar (inc n, argVarList)) (EXP [catchExp, tryExp] :: items)
       | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
         size (inc n) (EXP argExpList :: items)
-      | RC.RCLET {body:rcexp list, decls, loc, tys} =>
-        size (inc n) (EXP body :: DECL decls :: items)
+      | RC.RCLET {body, decls, loc} =>
+        size (inc n) (EXP [body] :: DECL decls :: items)
       | RC.RCMODIFY {elementExp, elementTy, indexExp, label, loc, recordExp, recordTy} =>
         size (inc n) (EXP [elementExp, indexExp, recordExp] :: items)
-      | RC.RCMONOLET {binds:(RC.varInfo * rcexp) list, bodyExp, loc} =>
-        size (inc n) (BIND binds :: EXP [bodyExp] :: items)
       | RC.RCOPRIMAPPLY {argExp, instTyList, loc, oprimOp:RC.oprimInfo} =>
         sizeExp (inc n) argExp items
       | RC.RCPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
         sizeExp (incBtvEnv (inc n, btvEnv)) exp items
-      | RC.RCPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
-        sizeExp (incBtvEnv(incVar(inc n,argVarList),btvEnv)) bodyExp items
       | RC.RCPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
         sizeExp (inc n) argExp items
       | RC.RCRAISE {exp, loc, ty} =>sizeExp (inc n) exp items
@@ -133,8 +125,6 @@ local
         size (inc n) (EXP (RecordLabel.Map.listItems fields) :: items)
       | RC.RCSELECT {exp, expTy, indexExp, label, loc, resultTy} =>
         size (inc n) (EXP [exp, indexExp]::items)
-      | RC.RCSEQ {expList, expTyList, loc} =>
-        size (inc n) (EXP expList :: items)
       | RC.RCSIZEOF (ty, loc) => size (inc n) items
       | RC.RCREIFYTY (ty, loc) => size (inc n) items
       | RC.RCTAPP {exp, expTy, instTyList, loc} =>
@@ -165,37 +155,38 @@ local
       | RC.RCDYNAMICTOP _ => raise bug "RCDYNAMICNULL to RCSize"
       | RC.RCDYNAMICVIEW _ => raise bug "RCDYNAMICVIEW to RCSize"
       | RC.RCDYNAMICCASE _ => raise bug "RCDYNAMICCASE to RCSize"
+      | RC.RCDYNAMICEXISTTAPP _ => raise bug "RCDYNAMICEXISTTAPP to RCSize"
       )
   and sizeDecl n tpdecl items =
       (checkLimit n;
        case tpdecl of
-         RC.RCEXD (exbinds:{exnInfo:RC.exnInfo, loc:Loc.loc} list, loc) =>
-         size (incN (n, length exbinds)) items 
+         RC.RCEXD (exnInfo, loc) =>
+         size (incN (n, 1)) items
        | RC.RCEXNTAGD ({exnInfo, varInfo}, loc) =>
          size (inc n) items 
        | RC.RCEXPORTEXN exnInfo =>
          size (inc n) items 
-       | RC.RCEXPORTVAR varInfo =>
-         size (inc n) items 
+       | RC.RCEXPORTVAR {var, exp} =>
+         size (inc n) (EXP [exp] :: items)
        | RC.RCEXTERNEXN ({path, ty}, provider) =>
          size (inc n) items 
        | RC.RCBUILTINEXN {path, ty} =>
          size (inc n) items 
        | RC.RCEXTERNVAR ({path, ty}, provider) =>
          size (inc n) items 
-       | RC.RCVAL (binds:(RC.varInfo * rcexp) list, loc) =>
-         size (inc n) (BIND binds :: items)
+       | RC.RCVAL (bind:(RC.varInfo * rcexp), loc) =>
+         size (inc n) (BIND [bind] :: items)
        | RC.RCVALPOLYREC
            (btvEnv,
-            recbinds:{exp:rcexp, expTy:ty, var:RC.varInfo} list,
+            recbinds:{exp:rcexp, var:RC.varInfo} list,
             loc) =>
          size
            (incBtvEnv (inc n, btvEnv))
-           (BIND (map (fn {exp,expTy,var} => (var, exp)) recbinds) :: items)
-       | RC.RCVALREC (recbinds:{exp:rcexp, expTy:ty, var:RC.varInfo} list,loc) =>
+           (BIND (map (fn {exp,var} => (var, exp)) recbinds) :: items)
+       | RC.RCVALREC (recbinds:{exp:rcexp, var:RC.varInfo} list,loc) =>
          size
            (inc n) 
-           (BIND (map (fn {exp,expTy,var} => (var, exp)) recbinds) :: items)
+           (BIND (map (fn {exp,var} => (var, exp)) recbinds) :: items)
       )
 in
   val sizeExp = fn exp => sizeExp 0 exp nil

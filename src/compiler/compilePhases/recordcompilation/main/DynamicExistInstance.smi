@@ -1,0 +1,17 @@
+_require "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
+_require local "../../../data/types/main/ExistTyID.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require "../../../data/types/main/TypesBasics.smi"
+_require "../../../data/builtin/main/BuiltinTypes.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+
+structure DynamicExistInstance =
+struct
+  val generateExtraArgs
+      : TypedLambda.loc
+        -> TypedLambda.tlexp
+        -> Types.ty list
+        -> TypedLambda.tlexp list
+end

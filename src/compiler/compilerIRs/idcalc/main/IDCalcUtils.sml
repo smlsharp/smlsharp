@@ -148,11 +148,6 @@ local
         | IC.ICEXEXN_CONSTRUCTOR _ => exp
         | IC.ICOPRIM  _ => exp
         | IC.ICTYPED (icexp, ty, loc) => IC.ICTYPED (copy icexp, ty,loc)
-        | IC.ICSIGTYPED {icexp,ty,loc,revealKey} =>
-          IC.ICSIGTYPED {icexp=copy icexp,
-                         ty=ty,
-                         loc=loc,
-                         revealKey=revealKey}
         | IC.ICINTERFACETYPED {icexp,ty,loc} =>
           IC.ICINTERFACETYPED {icexp=copy icexp,
                                ty=ty,
@@ -161,12 +156,12 @@ local
           IC.ICAPPM (copy icexp, map copy icexpList, loc)
         | IC.ICAPPM_NOUNIFY (icexp, icexpList,loc) =>
           IC.ICAPPM_NOUNIFY (copy icexp, map copy icexpList,loc)
-        | IC.ICLET (icdeclList, icexpList, loc) =>
+        | IC.ICLET (icdeclList, icexp, loc) =>
           let
             val (varMap, icdeclListRev) = copyDeclList varMap icdeclList
-            val icexpList = map (copyExp varMap) icexpList
+            val icexp = copyExp varMap icexp
           in
-            IC.ICLET (List.rev icdeclListRev, icexpList, loc)
+            IC.ICLET (List.rev icdeclListRev, icexp, loc)
           end
         | IC.ICTYCAST (castList, icexp,loc) =>
           IC.ICTYCAST (castList, copy icexp, loc)
@@ -215,7 +210,7 @@ local
                       loc)
         | IC.ICDYNAMICCASE (icexp, rules, loc) =>
           IC.ICDYNAMICCASE (copy icexp,
-                      map (copyRule1 varMap) rules,
+                      map (copyDynRule varMap) rules,
                       loc)
         | IC.ICRECORD_UPDATE (icexp, stringIcexpList, loc) =>
           IC.ICRECORD_UPDATE (copy icexp,
@@ -255,12 +250,12 @@ local
       in
         {args=args, body=body}
       end
-  and copyRule1 varMap {arg, body} =
+  and copyDynRule varMap {tyvars, arg, body} =
       let
         val (varMap, arg) = copyPat varMap arg
         val body = copyExp varMap body
       in
-        {arg=arg, body=body}
+        {tyvars=tyvars, arg=arg, body=body}
       end
   and copyBind (newVarMap, varMap) (pat, exp) = 
       let
@@ -293,6 +288,13 @@ local
       in
         (varMap, IC.ICVAL (guard, binds, loc))
       end
+    | IC.ICVAL_OPAQUE_SIG {var, exp, ty, revealKey, loc} =>
+      (varMap, 
+       IC.ICVAL_OPAQUE_SIG 
+         {var = var, exp= copyExp varMap exp, ty=ty, revealKey=revealKey, loc=loc})
+    | IC.ICVAL_TRANS_SIG {var, exp, ty, loc} =>
+      (varMap, 
+       IC.ICVAL_TRANS_SIG {var = var, exp = copyExp varMap exp, ty=ty, loc=loc})
     | IC.ICDECFUN
         {
           guard,

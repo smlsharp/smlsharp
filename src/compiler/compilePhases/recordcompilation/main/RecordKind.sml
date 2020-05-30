@@ -41,16 +41,13 @@ struct
               NONE => raise Bug.Bug "RecordKind.generateInstance"
             | SOME {record, ...} =>
               case RecordLabel.Map.find (record, label) of
-                SOME n => SOME (RC.RCCONSTANT
-                                  {const = RC.INDEX (n, label, ty),
-                                   ty = T.SINGLETONty (singletonTy arg),
-                                   loc = loc})
+                SOME n => SOME (RC.RCCONSTANT (RC.INDEX (n, label, ty), loc))
               | NONE => NONE)
          | NONE => raise Bug.Bug "generateInstance")
       | ty as T.RECORDty _ =>
-        SOME (RC.RCINDEXOF (label, ty, loc))
+        SOME (RC.RCINDEXOF {label = label, recordTy = ty, loc = loc})
       | ty as T.DUMMYty (id, T.KIND {tvarKind = T.REC _, ...}) =>
-        SOME (RC.RCINDEXOF (label, ty, loc))
+        SOME (RC.RCINDEXOF {label = label, recordTy = ty, loc = loc})
       | _ => NONE
 
 end

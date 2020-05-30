@@ -14,6 +14,7 @@ _require "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
 (* _require local "../../../compilerIRs/absyn/main/AbsynTy.smi" *)
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "./DummyTyID.smi"
+_require "./ExistTyID.smi"
 _require "./DynamicKind.ppg.smi"
 
 structure Types =
@@ -42,6 +43,7 @@ struct
     | BACKENDty of backendTy
     | ERRORty
     | DUMMYty of DummyTyID.id * kind
+    | EXISTty of ExistTyID.id * kind
     | TYVARty of tvState ref
     | BOUNDVARty of BoundTypeVarID.id
     | FUNMty of ty list * ty
@@ -167,7 +169,6 @@ struct
     | SOME_CCONVTAGty
     | FOREIGNFUNPTRty of
       {
-        tyvars : kind BoundTypeVarID.Map.map,
         argTyList : ty list,
         varArgTyList : ty list option,
         resultTy : ty option,
@@ -178,12 +179,12 @@ struct
       OVERLOAD_EXVAR of
       {
         exVarInfo: {path: Symbol.longsymbol, ty: ty},
-        instTyList: ty list
+        instTyList: ty list option
       }
     | OVERLOAD_PRIM of
       {
         primInfo: {primitive: BuiltinPrimitive.primitive, ty: ty},
-        instTyList: ty list
+        instTyList: ty list option
       }
     | OVERLOAD_CASE of ty * overloadMatch TypID.Map.map
 

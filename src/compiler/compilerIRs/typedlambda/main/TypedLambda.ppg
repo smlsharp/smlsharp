@@ -1,80 +1,146 @@
 (**
+ * The typed lambda calculus
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
- * @author Duc-Huu NGUYEN
- * @version $Id: TypedLambda.ppg,v 1.50 2008/08/06 17:23:41 ohori Exp $
+ * @author Liu Bochao
+ * @author Katsuhiro Ueno
  *)
 structure TypedLambda =
 struct
 
+  local
+    open SMLFormat.FormatExpression
+    fun N0 x = [Guard (SOME {cut = true, strength = 0, direction = Neutral}, x)]
+  in
+  fun iftrue (x, y) true = x
+    | iftrue (x, y) false = y
+  fun ifsome (x, y) (SOME _) = x
+    | ifsome (x, y) NONE = y
+  fun ifcons (x, y) (_::_) = x
+    | ifcons (x, y) nil = y
+  fun ifsingle (x, y) [_] = x
+    | ifsingle (x, y) _ = y
+  fun N0ifnotsingle x [_] = x
+    | N0ifnotsingle x _ = N0 x
+  fun N0ifcons x (_::_) = N0 x
+    | N0ifcons x _ = x
+  end
+
+  (*%
+    @prefix helper_
+    @formatter(RecordLabel.label) RecordLabel.format_label
+   *)
+  type 'value RecordLabelMap =
+      (*%
+        @prefix helper_
+        @format(field fields)
+        fields(field)("," +1)
+        @format:field(label * value)
+        { label +d "=" 2[ +1 value ] }
+       *)
+      (RecordLabel.label * 'value) list
+
+  val helper_RecordLabelMap =
+      fn formatter => fn map =>
+         helper_RecordLabelMap formatter (RecordLabel.Map.listItemsi map)
+
   type loc = Loc.loc
 
   (*%
-   * @formatter(Types.ty) Types.format_ty
+    @formatter(Types.ty) Types.format_ty
    *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(Types.ty) Types.format_ty
+  (*% @prefix formatWithType_
+    @formatter(Types.ty) Types.format_ty
    *)
   type ty =
-      (*% @format(ty) ty *)
-      (*% 
-        * @prefix formatWithType_
-          @format(ty) ty
+      (*%
+        @format(ty) ty
+       *)
+      (*% @prefix formatWithType_
+        @format(ty) ty
        *)
       Types.ty
 
   (*%
-   * @formatter(RecordCalc.varInfo) RecordCalc.format_varInfo
+    @formatter(Types.btvEnv) Types.format_btvEnv
+   *)
+  (*% @prefix formatWithType_
+    @formatter(Types.btvEnv) Types.format_btvEnv
+   *)
+  type btvEnv =
+      (*%
+        @format(btv)
+       *)
+      (*% @prefix formatWithType_
+        @format(btv) btv
+       *)
+      Types.btvEnv
+
+  (*%
+    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    *)
   (*%
-   * @prefix formatWithType_
-   * @formatter(RecordCalc.varInfo) RecordCalc.formatWithType_varInfo
+    @prefix formatWithType_
+    @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+    @formatter(VarID.id) VarID.format_id
    *)
   type varInfo =
-      (*% *)
-      (*% @prefix formatWithType_ @format(v) v *)
-      RecordCalc.varInfo
+      (*%
+        @format({path, id, ty})
+        path
+       *)
+      (*%
+        @prefix formatWithType_
+        @format({path, id, ty})
+        L2{ path "(" id ")" +1 ":" +d ty }
+       *)
+      {path : Symbol.longsymbol, id : VarID.id, ty : ty}
 
   (*%
-   * @formatter(RecordCalc.exVarInfo) RecordCalc.format_exVarInfo
+    @formatter(Types.exVarInfo) Types.format_exVarInfo
    *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(RecordCalc.exVarInfo) RecordCalc.formatWithType_exVarInfo
+  (*% @prefix formatWithType_
+    @formatter(Types.exVarInfo) Types.formatWithType_exVarInfo
    *)
   type exVarInfo =
-      (*% *)
-      (*% @prefix formatWithType_ @format(v) v *)
-      RecordCalc.exVarInfo
+      (*%
+        @format(x) x
+       *)
+      (*% @prefix formatWithType_
+        @format(x) x
+       *)
+      Types.exVarInfo
 
   (*%
-   * @formatter(Types.btvEnv) Types.format_btvEnv
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
-   * @formatter(appList) TermFormat.formatAppList
+    @formatter(Types.btvEnv) Types.format_btvEnv
+    @formatter(ifsingle) ifsingle
+    @formatter(N0ifnotsingle) N0ifnotsingle
    *)
   type primTy =
       (*%
        * @format({boundtvars, argTyList: argTy argTys, resultTy})
-       * "[" !N0{ 2[
-       *   {boundtvars "."}
-       *   +1
-       *   argTys:appList
-       *     (argTy)("{",",","}")
-       *   +1 "->" +d resultTy
-       * ] "]" }
+       * "[" !N0{
+       *   { boundtvars } "." +1
+       *   R4{
+       *     argTys:ifsingle()(,"{")
+       *     argTys:N0ifnotsingle()(argTys(argTy)("," +1))
+       *     argTys:ifsingle()(,"}")
+       *     +1 "->" +d
+       *     resultTy
+       *   }
+       * } "]"
        *)
-       {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}
+      {boundtvars : Types.btvEnv, argTyList : ty list, resultTy : ty}
 
   (*%
-   * @formatter(BuiltinPrimitive.primitiveTypedLambda)
-   * BuiltinPrimitive.format_primitiveTypedLambda
+    @formatter(BuiltinPrimitive.primitiveTypedLambda)
+    BuiltinPrimitive.format_primitiveTypedLambda
    *)
   (*%
-   * @prefix formatWithType_
-   * @formatter(BuiltinPrimitive.primitiveTypedLambda)
-   * BuiltinPrimitive.format_primitiveTypedLambda
-   * @formatter(primTy) format_primTy
+    @prefix formatWithType_
+    @formatter(BuiltinPrimitive.primitiveTypedLambda)
+    BuiltinPrimitive.format_primitiveTypedLambda
+    @formatter(primTy) format_primTy
    *)
   type primInfo =
       (*%
@@ -86,59 +152,40 @@ struct
        * @format({primitive, ty})
        * L2{ primitive +1 ":" +d ty }
        *)
-      {
-        primitive : BuiltinPrimitive.primitiveTypedLambda,
-        ty : primTy
-      }
+      {primitive : BuiltinPrimitive.primitiveTypedLambda, ty : primTy}
 
   (*%
-   * @formatter(Types.btvEnv) Types.format_btvEnv
+    @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
+   *)
+  datatype cast = datatype BuiltinPrimitive.cast
+
+  (*%
+   * @formatter(Int8.int) ConstFormat.format_int8_dec_ML
+   * @formatter(Int16.int) ConstFormat.format_int16_dec_ML
+   * @formatter(Int32.int) ConstFormat.format_int32_dec_ML
+   * @formatter(Int64.int) ConstFormat.format_int64_dec_ML
+   * @formatter(Word8.word) ConstFormat.format_word8_hex_ML
+   * @formatter(Word16.word) ConstFormat.format_word16_hex_ML
+   * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
+   * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
+   * @formatter(Word8.word) ConstFormat.format_word8_hex_ML
+   * @formatter(Real64.real) ConstFormat.format_real64_ML
+   * @formatter(Real32.real) ConstFormat.format_real32_ML
+   * @formatter(char) ConstFormat.format_char_ML
    *)
   (*%
    * @prefix formatWithType_
-   * @formatter(Types.btvEnv) Types.format_btvEnv
-   *)
-  type btvEnv =
-      (*% @format(btv) btv *)
-      (*% 
-          @prefix formatWithType_
-          @format(btv) btv
-       *)
-      Types.btvEnv
-
-  (*%
-   * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
-   * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
-   * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
-   * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
-   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
-   * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
-   * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
-   * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
-   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
-   * @formatter(Real64.real) TermFormat.format_Real64_ML
-   * @formatter(Real32.real) TermFormat.format_Real32_ML
-   * @formatter(char) TermFormat.format_char_ML
-   * @formatter(DynamicKind.size') DynamicKind.format_size'
-   * @formatter(DynamicKind.tag') DynamicKind.format_tag'
-   * @formatter(DynamicKind.index') DynamicKind.format_index'
-   *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(Int8.int) TermFormat.format_Int8_dec_ML
-   * @formatter(Int16.int) TermFormat.format_Int16_dec_ML
-   * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
-   * @formatter(Int64.int) TermFormat.format_Int64_dec_ML
-   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
-   * @formatter(Word16.word) TermFormat.format_Word16_hex_ML
-   * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
-   * @formatter(Word64.word) TermFormat.format_Word64_hex_ML
-   * @formatter(Real64.real) TermFormat.format_Real64_ML
-   * @formatter(Real32.real) TermFormat.format_Real32_ML
-   * @formatter(char) TermFormat.format_char_ML
-   * @formatter(DynamicKind.size') DynamicKind.format_size'
-   * @formatter(DynamicKind.tag') DynamicKind.format_tag'
-   * @formatter(DynamicKind.index') DynamicKind.format_index'
+   * @formatter(Int8.int) ConstFormat.format_int8_dec_ML
+   * @formatter(Int16.int) ConstFormat.format_int16_dec_ML
+   * @formatter(Int32.int) ConstFormat.format_int32_dec_ML
+   * @formatter(Int64.int) ConstFormat.format_int64_dec_ML
+   * @formatter(Word8.word) ConstFormat.format_word8_hex_ML
+   * @formatter(Word16.word) ConstFormat.format_word16_hex_ML
+   * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
+   * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
+   * @formatter(Real64.real) ConstFormat.format_real64_ML
+   * @formatter(Real32.real) ConstFormat.format_real32_ML
+   * @formatter(char) ConstFormat.format_char_ML
    *)
   datatype tlconst =
       (*%
@@ -246,243 +293,131 @@ struct
        * @format "NULLBOXED"
        *)
       NULLBOXED
-    | (*%
-       * @format(x * ty) x
-       *)
-      (*% @prefix formatWithType_
-       * @format(x * ty) x
-       *)
-      SIZE of DynamicKind.size' * ty
-    | (*%
-       * @format(x * ty) x
-       *)
-      (*% @prefix formatWithType_
-       * @format(x * ty) x
-       *)
-      TAG of DynamicKind.tag' * ty
-    | (*%
-       * @format(x * lab * ty) x
-       *)
-      (*% @prefix formatWithType_
-       * @format(x * lab * ty) x
-       *)
-      INDEX of DynamicKind.index' * RecordLabel.label * ty
 
   (*%
-   * @formatter(IntInf.int) TermFormat.format_IntInf_dec_ML
-   * @formatter(string) TermFormat.format_string_ML
+    @formatter(string) ConstFormat.format_string_ML
+    @formatter(IntInf.int) ConstFormat.format_intInf_dec_ML
    *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(IntInf.int) TermFormat.format_IntInf_dec_ML
-   * @formatter(string) TermFormat.format_string_ML
+  (*% @prefix formatWithType_
+    @formatter(string) ConstFormat.format_string_ML
+    @formatter(IntInf.int) ConstFormat.format_intInf_dec_ML
    *)
   datatype tlstring =
-      (*% @format(x) x *)
-      (*% @prefix formatWithType_ @format(x) x *)
-      INTINF of IntInf.int
-    | (*% @format(x) x *)
-      (*% @prefix formatWithType_ @format(x) x *)
+      (*%
+        @format(x) x
+       *)
+      (*% @prefix formatWithType_
+        @format(x) { "string" +d x }
+       *)
       STRING of string
-
-  (*% *)
-  (*% @prefix formatWithType_ *)
-  datatype constant =
-      (*% @format(x) x *)
-      (*% @prefix formatWithType_ @format(x) x *)
-      C of tlconst
-    | (*% @format(x) x *)
-      (*% @prefix formatWithType_ @format(x) x *)
-      S of tlstring
+    | (*%
+        @format(x) x
+       *)
+      (*% @prefix formatWithType_
+        @format(x) { "intinf" +d x }
+       *)
+      INTINF of IntInf.int
 
   (*%
-   * @formatter(optionalList) TermFormat.formatOptionalList
-   * @formatter(appList) TermFormat.formatAppList
-   * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(caseList) TermFormat.formatCaseList
-   * @formatter(enclosedList) TermFormat.formatEnclosedList
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(formatRecordExp) TermFormat.formatRecordExp
-   * @formatter(withType) formatWithType_varInfo
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
-   * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
-   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
-   * @formatter(RecordLabel.label) RecordLabel.format_label
-   *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(appList) TermFormat.formatAppList
-   * @formatter(optionalList) TermFormat.formatOptionalList
-   * @formatter(decList) TermFormat.formatDeclList
-   * @formatter(caseList) TermFormat.formatCaseList
-   * @formatter(enclosedList) TermFormat.formatEnclosedList
-   * @formatter(ifCons) TermFormat.formatIfCons
-   * @formatter(formatRecordExp) TermFormat.formatRecordExp
-   * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
-   * @formatter(btvEnv) format_btvEnv
-   * @formatter(FunLocalLabel.id) FunLocalLabel.format_id
-   * @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
-   * @formatter(RecordLabel.label) RecordLabel.format_label
+    @formatter(iftrue) iftrue
+    @formatter(ifsome) ifsome
+    @formatter(ifcons) ifcons
+    @formatter(ifsingle) ifsingle
+    @formatter(N0ifnotsingle) N0ifnotsingle
+    @formatter(N0ifcons) N0ifcons
+    @formatter(RecordLabel.Map.map) helper_RecordLabelMap
+    @formatter(RecordLabel.label) RecordLabel.format_label
+    @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+    @formatter(Types.constraint) Types.format_constraint
+    @formatter(Types.oprimInfo) Types.format_oprimInfo
+  *)
+  (*% @prefix formatWithType_
+    @formatter(iftrue) iftrue
+    @formatter(ifsome) ifsome
+    @formatter(ifcons) ifcons
+    @formatter(ifsingle) ifsingle
+    @formatter(N0ifnotsingle) N0ifnotsingle
+    @formatter(N0ifcons) N0ifcons
+    @formatter(RecordLabel.Map.map) helper_RecordLabelMap
+    @formatter(RecordLabel.label) RecordLabel.format_label
+    @formatter(FunLocalLabel.id) FunLocalLabel.format_id
+    @formatter(Types.constraint) Types.format_constraint
+    @formatter(format_varInfo) format_varInfo
+    @formatter(format_exVarInfo) format_exVarInfo
+    @formatter(Types.oprimInfo) Types.format_oprimInfo
+    @formatter(cast) format_cast
    *)
   datatype tlexp =
       (*%
-       * @format({funExp, attributes, argExpList: arg args, resultTy, loc})
-       * L8{ 1[
-       *   "_FFIAPPLY"
-       *   +1 funExp
-       *   +1 args:appList(arg)("(",",",")")
-       * ] }
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({funExp, attributes, argExpList: arg args, resultTy, loc})
-       * L8{ 2[
-       *   "_FFIAPPLY"
-       *   +1 funExp
-      *    +1 args:appList(arg)("(",",",")")
-       * ] }
-       *)
-      TLFOREIGNAPPLY of
-      {
-        funExp : tlexp,
-        attributes : FFIAttributes.attributes,
-        argExpList : tlexp list,
-        resultTy : ty option,
-        loc : loc
-      }
-    | (*%
-       * @format({attributes, resultTy, argVarList: arg args, bodyExp, loc})
-       * L8{ 2[
-       *   "_callback"
-       *   +1 
-       *    R1{ 2[
-       *     "fn" +d args:enclosedList(arg:withType)
-       *                              ("{",",","}")
-       *          +d "=>" +1 bodyExp ] }
-       * ] }
+        @format(const * loc)
+        const
        *)
       (*% @prefix formatWithType_
-       * @format({attributes, resultTy, argVarList: arg args, bodyExp, loc})
-       * L8{ 2[
-       *   "_callback"
-       *   +1
-       *    R1{ 2[
-       *     "fn" +d args:enclosedList(arg)("{",",","}")
-       *          +d "=>" +1 bodyExp ] }
-       * ] }
+        @format(const * loc)
+        const
        *)
-      TLCALLBACKFN of
+      TLCONSTANT of tlconst * loc
+    | (*%
+        @format(string * loc)
+        string
+       *)
+      (*% @prefix formatWithType_
+        @format(string * loc)
+        string
+       *)
+      TLSTRING of tlstring * loc
+    | (*%
+        @format(var * loc) var
+       *)
+      (*% @prefix formatWithType_
+        @format(var * loc) var:format_varInfo
+       *)
+      TLVAR of varInfo * loc
+    | (*%
+        @format(var * loc) var
+       *)
+      (*% @prefix formatWithType_
+        @format(var * loc) var:format_exVarInfo
+       *)
+      (* extnernal variable imported through _require *)
+      TLEXVAR of exVarInfo * loc
+    | (*%
+        @format({argVarList:arg args, bodyTy, bodyExp, loc})
+        R1{
+          "fn" +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" +1 bodyExp
+        }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      (* ty is the type of tlexp  *)
+      TLFNM of
       {
-        attributes : FFIAttributes.attributes,
-        resultTy : ty option,
         argVarList : varInfo list,
+        bodyTy : ty,
         bodyExp : tlexp,
         loc : loc
       }
     | (*%
-       * @format({ty, loc})
-       * "_sizeof(" ty ")"
+        @format({funExp, funTy, argExpList:arg args, loc})
+        L8{
+          funExp
+          2[
+            +1
+            args:ifsingle()(,"{")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,"}")
+          ]
+        }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({ty, loc})
-       * "_sizeof(" ty ")"
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      TLSIZEOF of {ty : ty, loc : loc}
-    | (*%
-       * @format({ty, loc})
-       * "_tagof(" ty ")"
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({ty, loc})
-       * "_tagof(" ty ")"
-       *)
-      TLTAGOF of {ty : ty, loc : loc}
-    | (*%
-       * @format({label, recordTy, loc})
-       * "_indexof(" !N0{ label "," +1 recordTy ")" }
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({label, recordTy, loc})
-       * "_indexof(" !N0{ label "," +1 recordTy ")" }
-       *)
-      TLINDEXOF of {label : RecordLabel.label, recordTy : ty, loc : loc}
-    | (*%
-       * @format({const, ty, loc}) const
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({const, ty, loc}) const
-       *)
-      TLCONSTANT of {const : constant, ty : ty, loc : loc}
-    | (*%
-       * @format({name, ty, loc})
-       * "_FOREIGNSYMBOL(" name ")"
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({name, ty, loc})
-       * "_FOREIGNSYMBOL(" !N0{ name +1 ":" +d ty } ")"
-       *)
-      TLFOREIGNSYMBOL of
-      {name : string, ty : ty, loc : loc}
-    | (*%
-       * @format({varInfo, loc}) varInfo
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({varInfo, loc}) varInfo
-       *)
-      TLVAR of {varInfo : varInfo, loc : loc}
-    | (*%
-       * @format({exVarInfo, loc}) "EXVAR(" !N0{ exVarInfo } ")"
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({exVarInfo, loc}) "EXVAR(" !N0{ exVarInfo } ")"
-       *)
-      TLEXVAR of {exVarInfo : exVarInfo, loc : loc}
-    | (*%
-         @format({primInfo, argExpList: arg args, instTyList: ty tys, loc})
-         !N0{ 1[ "_PRIM(" primInfo
-               tys:ifCons()(tys:optionalList(ty)("{",",","}") )
-              ")"
-               +1
-               {args:appList(arg)("(",","1,")")}
-              ]
-           }
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({primInfo, argExpList: arg args, instTyList: ty tys, loc})
-       * L8{ 2[ "_PRIMAPPLY(" primInfo ")"
-       *        tys:ifCons()( +1 tys:appList(ty)("(",",",")") )
-       *        +1 args:appList(arg)("(",",",")") ] }
-       *)
-      TLPRIMAPPLY of
-      {
-        primInfo : primInfo,
-        argExpList : tlexp list,
-        instTyList : ty list,
-        loc : loc
-      }
-    | (*%
-       * @format({funExp, funTy, argExpList: arg args, loc})
-       * L8{ 1[
-       *   funExp
-       *   +1 args:appList(arg)("{",",","}")
-       * ] }
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({funExp, funTy, argExpList: arg args, loc})
-       * L8{ 2[
-       *   L2{ funExp +1 ":" +d funTy }
-       *   +1 args:appList(arg)("{",",","}")
-       * ] }
-       *)
+      (* ty is the type of the function *)
       TLAPPM of
       {
         funExp : tlexp,
@@ -491,129 +426,210 @@ struct
         loc : loc
       }
     | (*%
-       * @format({localDecl, mainExp, loc})
-          "let"
-               1[ +1 localDecl ]
-          +1 "in" 
-               1[ +1 mainExp]
-          +1 "end"
+        @format({exp, expTy, branches: rule rules, resultTy, defaultExp, loc})
+        R1{
+          { "switch" 2[ +1 exp +1 "of" ] }
+          +1
+          rules(rule)(+1 "|" +d)
+          rules:ifcons()(+1 "|" +d,)
+          { "_" +d "=>" +1 defaultExp }
+        }
+        @format:rule({const, body})
+        { const +d "=>" +1 body }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({localDecl, mainExp, loc})
-       * L2{ !N0{
-       *   "let" 2[ +1 localDecl ]
-       *   +1 "in" 2[ +1 !N0{ mainExp } ]
-       *   +1 "end"
-       * } }
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      TLLET of
+      TLSWITCH of
       {
-        localDecl : tldecl,
-        mainExp : tlexp,
+        exp : tlexp,
+        expTy : ty,
+        branches : {const : tlconst, body : tlexp} list,
+        defaultExp : tlexp,
+        resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({fields:field fields, recordTy, isMutable, loc})
-       * fields:formatRecordExp(field)
+        @format({existInstMap, exp, expTy, instTyList:ty tys, loc})
+        L8{
+          exp
+          2[
+            +1
+            "{" L8{ "TLDYNAMICEXISTTAPP" +1 "(" !N0{ existInstMap } ")" } "}"
+          ]
+        }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({fields:field fields, recordTy, isMutable, loc})
-       * L2{ fields:formatRecordExp(field)
-       *     +1 ":" +d recordTy }
+      (*% @prefix formatWithType_
+        @format({existInstMap, exp, expTy, instTyList:ty tys, loc})
+        L8{
+          exp
+          2[
+            +1
+            "{"
+            !N0{
+              L8{ "TLDYNAMICEXISTAPP" +1 "(" !N0{ existInstMap } ")" }
+              tys:ifcons()("," +1,)
+              tys(ty)("," +1)
+            }
+            "}"
+          ]
+        }
+       *)
+      TLDYNAMICEXISTTAPP of
+      {
+        existInstMap : tlexp,
+        exp : tlexp,
+        expTy : ty,
+        instTyList : ty list,
+        loc : loc
+      }
+    | (*%
+        @format({primOp, instTyList:ty tys, argExpList: arg args, loc})
+        L8{
+          primOp
+          2[
+            +1
+            args:ifsingle()(,"{")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,"}")
+          ]
+        }
+       *)
+      (*% @prefix formatWithType_
+        @format({primOp, instTyList:ty tys, argExpList: arg args, loc})
+        L8{
+          primOp
+          2[
+            +1
+            tys:ifcons()("{",)
+            tys:N0ifcons()(tys(ty)("," +1))
+            tys:ifcons()("}",)
+            +1
+            args:ifsingle()(,"{")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,"}")
+          ]
+        }
+       *)
+      TLPRIMAPPLY of
+      {
+        primOp : primInfo,
+        instTyList : ty list,
+        argExpList : tlexp list,
+        loc : loc
+      }
+    | (*%
+        @format({oprimOp, instTyList:ty tys, argExp, loc})
+        L8{ oprimOp 2[ +1 argExp ] }
+       *)
+      (*% @prefix formatWithType_
+        @format({oprimOp, instTyList:ty tys, argExp, loc})
+        L8{
+          oprimOp
+          2[
+            +1 "{" !N0{ tys(ty)("," +1) } "}"
+            +1 argExp
+          ]
+        }
+       *)
+      TLOPRIMAPPLY of
+      {
+       oprimOp : Types.oprimInfo,
+       instTyList : ty list,
+       argExp : tlexp,
+       loc : loc
+      }
+    | (*%
+        @format({fields: field fields, recordTy, loc})
+        "{" !N0{ fields(field) } "}"
+       *)
+      (*% @prefix formatWithType_
+        @ditto
        *)
       TLRECORD of
       {
-        isMutable : bool,
         fields : tlexp RecordLabel.Map.map,
         recordTy : ty,
         loc : loc
       }
     | (*%
-       * @format({recordExp, indexExp, label, recordTy, resultTy, loc})
-       * L8{ 1[ "#" label
-       *       +1 indexExp
-       *       +1 recordExp ] }
+        @format({label, recordExp, recordTy, resultTy, loc})
+        L8{ "#" label 2[ +1 recordExp ] }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({recordExp, indexExp, label, recordTy, resultTy, loc})
-       * L2{
-       * L8{ 2[ "#" label
-       *        +1 indexExp
-       *        +1 L2{ recordExp
-       *               +1 ":" +d recordTy } ] }
-       * +1 ":" +d resultTy }
+      (*% @prefix formatWithType_
+        @ditto
        *)
       TLSELECT of
       {
-        recordExp : tlexp,
-        indexExp : tlexp,
         label : RecordLabel.label,
+        recordExp : tlexp,
         recordTy : ty,
         resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({recordExp, recordTy, indexExp, label, valueExp, valueTy, loc})
-       * L8{ 1[ recordExp
-       *       +1 "#" +d "{"
-       *         !N0{ L2{ label +1 "/" +d indexExp } +d "="
-       *              1[ +1 valueExp ] } "}" ] }
+        @format({label, recordExp, recordTy, elementExp, elementTy, loc})
+        L8{
+          recordExp
+          2[
+            +1 "#" +d "{"
+            !N0{ label +d "=" 2[ +1 elementExp ] }
+            "}"
+          ]
+        }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({recordExp, recordTy, indexExp, label, valueExp, valueTy, loc})
-       * L8{ 2[ L2{ recordExp +1 ":" +d recordTy }
-       *        +1 "#" +d "{"
-       *          !N0{ L2{ label +1 "/" +d indexExp } +d "="
-       *               2[ +1 valueExp ] } "}" ] }
+      (*% @prefix formatWithType_
+        @ditto
        *)
       TLMODIFY of
       {
+        label : RecordLabel.label,
         recordExp : tlexp,
         recordTy : ty,
-        indexExp : tlexp,
-        label : RecordLabel.label,
-        valueExp : tlexp,
-        valueTy : ty,
+        elementExp : tlexp,
+        elementTy : ty,
         loc : loc
       }
     | (*%
-       * @format({argExp, resultTy, loc})
-       * R1{ 1[ "raise" +1 argExp ] }
+        @format({decl, body, loc})
+        N4{!N0{
+          { "let" 2[ +1 decl ] +1 "in" } +1 body
+        }}
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({argExp, resultTy, loc})
-       * L2{ R1{ 2[ "raise" +1 argExp ] }
-       *     +1 ":" +d resultTy }
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      TLLET of
+      {
+        decl : tldecl,
+        body : tlexp,
+        loc : loc
+      }
+    | (*%
+        @format({exp, resultTy, loc})
+        L7{ "raise" 2[ +1 exp ] }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
        *)
       TLRAISE of
       {
-        argExp : tlexp,
+        exp : tlexp,
         resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({exp, exnVar, handler, resultTy, loc})
-       * R1{ "_try"
-       *     1[ +1 exp ]
-       *     +1 "handle" +d { exnVar +1 "=>" }
-       *     1[ +1 handler ]
-       *     +1 "end" }
+        @format({exp, exnVar, handler, resultTy, loc})
+        R1{ exp +1 "handle" +d exnVar +d "=>" 2[ +1 handler ] }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({exp, exnVar, handler, resultTy, loc})
-       * L2{
-       * R1{ "_try"
-       *     2[ +1 exp ]
-       *     +1 "handle" +d { exnVar +1 "=>" }
-       *     2[ +1 handler ]
-       *     +1 "end" }
-       * +1 ":" +d resultTy }
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      (*
+        handle (exp1, x, exp2)
+         exp1 the expression to be evaluated normally
+            x variable to received exception value
+         exp2 the handler body using x
        *)
       TLHANDLE of
       {
@@ -624,65 +640,45 @@ struct
         loc : loc
       }
     | (*%
-        @format({switchExp, expTy, branches: branch branches, defaultExp,
-                 resultTy, loc})
-        R1{
-            { 1[ "case" +1 switchExp +1 "of" ] }
-            branches:caseList(branch)
-              (1[+1], +1 "|" +d, !N0{ 1[ "_" +d "=>" +1 defaultExp ] })
-          }
-         @format:branch({constant, exp})
-           !N0{ 1[ constant +d "=>" +1 exp ]
-              }
+        @format({catchLabel, argExpList: arg args, resultTy, loc})
+        L8{
+          "TLTHROW"
+          +1 catchLabel
+          +1
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+        }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({switchExp, expTy, branches: branch branches, defaultExp,
-       *          resultTy, loc})
-       * L2{
-       * R1{
-       *   { 2[ "case" +1 L2{ switchExp +1 ":" +d expTy }
-       *        +1 "of" ] }
-       *   branches:caseList(branch)
-       *     (2[+1], +1 "|" +d, 2[ "_" +d "=>" +1 defaultExp ])
-       * }
-       * +1 ":" +d resultTy }
-       * @format:branch({constant, exp})
-       * 2[ constant +d "=>" +1 exp ]
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      TLSWITCH of
+      (* lightweight exception that never unwind call stack *)
+      TLTHROW of
       {
-        switchExp : tlexp,
-        expTy : ty,
-        branches : {constant : tlconst, exp : tlexp} list,
-        defaultExp : tlexp,
+        catchLabel : FunLocalLabel.id,
+        argExpList : tlexp list,
         resultTy : ty,
         loc : loc
       }
     | (*%
-       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
-       *          loc})
-       * R0{ tryExp
-       *     +1 
-       *     !R0{ "_catch" +d
-       *          L8{ catchLabel
-       *              +1 1[ args:appList(arg)("{",",","}") ] }
-       *          +d "=>" 1[ +1 catchExp ] } }
+        @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
+                 loc})
+        R1{
+          tryExp
+          +1
+          "TLCATCH"
+          +d catchLabel +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" 2[ +1 catchExp ]
+        }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
-       *          loc})
-       * L2{
-       *   R0{ tryExp
-       *     +1 
-       *     !R0{ "_catch" +d
-       *          L8{ catchLabel
-       *              +1 1[ args:appList(arg)("{",",","}") ] }
-       *          +d "=>" 1[ +1 catchExp ] } }
-       *   +1 ":" +d resultTy }
+      (*% @prefix formatWithType_
+        @ditto
        *)
-      (* lightweight exception that unwind call stack *)
+      (* lightweight exception that never unwind call stack *)
       TLCATCH of
       {
         catchLabel : FunLocalLabel.id,
@@ -693,77 +689,31 @@ struct
         loc : loc
       }
     | (*%
-       * @format({catchLabel, argExpList: arg args, resultTy, loc})
-       * R0{ "_throw"
-       *     1[ +1 L8{ catchLabel
-       *               +1 1[ args:appList(arg)("{",",","}") ] } ] }
+        @format({btvEnv, constraints, expTyWithoutTAbs, exp, loc})
+        exp
        *)
       (*% @prefix formatWithType_
-       * @format({catchLabel, argExpList: arg args, resultTy, loc})
-       * L2{
-       *   R0{ "_throw"
-       *     1[ +1 L8{ catchLabel
-       *               +1 1[ args:appList(arg)("{",",","}") ] } ] }
-       *   +1 ":" +d resultTy }
+        @format({btvEnv, constraints, expTyWithoutTAbs, exp, loc})
+        "[" !N0{ { btvEnv } "." +1 exp } "]"
        *)
-      (* lightweight exception that does not unwind call stack *)
-      TLTHROW of
-      {
-        catchLabel : FunLocalLabel.id,
-        argExpList : tlexp list,
-        resultTy : ty,
-        loc : loc
-      }
-    | (*%
-       * @format({argVarList: arg args, bodyTy, bodyExp, loc})
-       * R1{ "fn" +d {args:appList(arg)("{",",","}")} +d "=>"
-       *     1[ +1 bodyExp ] }
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({argVarList: arg args, bodyTy, bodyExp, loc})
-       * R1{ "fn" +d args:appList(arg)("{",",","}") +d "=>"
-       *     3[ +1 L2{ bodyExp +1 ":" +d bodyTy } ] }
-       *)
-      TLFNM of
-      {
-        argVarList : varInfo list,
-        bodyTy : ty,
-        bodyExp : tlexp,
-        loc : loc
-      }
-    | (*%
-       * @format({btvEnv:btv, expTyWithoutTAbs, exp, loc})
-       * "[" !N0{ btv "."
-       *          +1 exp } "]"
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({btvEnv:btv, expTyWithoutTAbs, exp, loc})
-       * "[" !N0{
-       *   btv "."
-       *   +1 L2{ exp
-       *          +1 ":" +d expTyWithoutTAbs }
-       * } "]"
-       *)
+      (* \forall t.e;  ty is the type of tlexp without type abstraction *)
       TLPOLY of
       {
         btvEnv : btvEnv,
+        constraints : Types.constraint list,
         expTyWithoutTAbs : ty,
         exp : tlexp,
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, instTyList: ty tys, loc})
-       * L8{ 1[ exp
-       *        +1 tys:enclosedList(ty)("{",",","}") ] }
+        @format({exp, expTy, instTyList:ty tys, loc})
+        exp
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({exp, expTy, instTyList: ty tys, loc})
-       * L8{ 2[ L2{ exp +1 ":" +d expTy }
-       *        +1 tys:enclosedList(ty)("{",",","}") ] }
+      (*% @prefix formatWithType_
+        @format({exp, expTy, instTyList:ty tys, loc})
+        L8{ exp 2[ +1 "{" !N0{ tys(ty)("," +1) } "}" ] }
        *)
+      (* TLTAPP(ex,ty1,tyl) : ty1 is the polytype, tyl are type args *)
       TLTAPP of
       {
         exp : tlexp,
@@ -772,87 +722,216 @@ struct
         loc : loc
       }
     | (*%
-       * @format({exp, expTy, targetTy, cast, loc})
-       * cast "(" !N0{ exp } ")"
+        @format({name, ty, loc})
+        L8{ "TLFOREIGNSYMBOL" 2[ +1 "(" name ")" ] }
+       *)
+      (*% @prefix formatWithType_
+        @format({name, ty, loc})
+        L2{ L8{ "TLFOREIGNSYMBOL" 2[ +1 "(" name ")" ] } +1 ":" +d ty }
+       *)
+      TLFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
+    | (*%
+        @format({funExp, argExpList: arg args, attributes,
+                 resultTy: retTy retTyOpt, loc})
+        L8{
+          "TLFOREIGNAPPLY"
+          2[
+            +1 funExp
+            +1 "{" !N0{ args(arg)("," +1) } "}"
+          ]
+        }
        *)
       (*%
-       * @prefix formatWithType_
-       * @format({exp, expTy, targetTy, cast, loc})
-       * cast "(" !N0{ exp +1 ":" +d expTy +1 ":" +d targetTy } ")"
+        @prefix formatWithType_
+        @format({funExp, argExpList: arg args, attributes,
+                 resultTy: retTy retTyOpt, loc})
+        L2{
+          L8{
+            "TLFOREIGNAPPLY"
+            2[
+              +1 funExp
+              +1 "{" !N0{ args(arg)("," +1) } "}"
+            ]
+          }
+          +1 ":" +d retTyOpt:ifsome()(retTyOpt(retTy), "()")
+        }
        *)
+      TLFOREIGNAPPLY of
+      {
+        funExp : tlexp,
+        argExpList : tlexp list,
+        attributes : FFIAttributes.attributes,
+        resultTy : ty option,
+        loc : loc
+      }
+    | (*%
+        @format({attributes, argVarList:arg args, resultTy, bodyExp, loc})
+        R1{
+          "TLCALLBACKFN" +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" +1 bodyExp
+        }
+       *)
+      (*% @prefix formatWithType_
+        @format({attributes, argVarList:arg args, resultTy: retTy retTyOpt,
+                 bodyExp, loc})
+        R1{
+          "TLCALLBACKFN" +d
+          args:ifsingle()(,"{")
+          args:N0ifnotsingle()(args(arg)("," +1))
+          args:ifsingle()(,"}")
+          +d "=>" +1
+          L2{ bodyExp +1 ":" +d retTyOpt:ifsome()(retTyOpt(retTy),"()") }
+        }
+       *)
+      TLCALLBACKFN of
+      {
+        attributes : FFIAttributes.attributes,
+        argVarList : varInfo list,
+        bodyExp : tlexp,
+        resultTy : ty option,
+        loc : loc
+      }
+    | (*%
+        @format({exp, expTy, targetTy, cast, loc})
+        L8{ cast 2[ 1 "(" !N0{ exp } ")" ] }
+       *)
+      (*% @prefix formatWithType_
+        @format({exp, expTy, targetTy, cast, loc})
+        L2{
+          L8{ cast 2[ 1 "(" !N0{ exp } ")" ] }
+          +1 ":" +d targetTy
+        }
+       *)
+      (* cast e to some type ty; used to coerce con type to a record type *)
       TLCAST of
       {
         exp : tlexp,
         expTy : ty,
         targetTy : ty,
-        cast : BuiltinPrimitive.cast,
+        cast : cast,
+        loc : loc
+      }
+    | (*%
+        @format({ty, loc})
+        L8{ "TLSIZEOF" 2[ +1 "(" !N0{ ty } ")" ] }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      TLSIZEOF of
+      {
+        ty : ty,
+        loc : loc
+      }
+    | (*%
+        @format({recordTy, label, loc})
+        L8{ "TLINDEXOF" 2[ +1 "(" !N0{ recordTy "," +1 label } ")" ] }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      TLINDEXOF of
+      {
+        recordTy : ty,
+        label : RecordLabel.label,
+        loc : loc
+      }
+    | (*%
+        @format({ty, loc})
+        L2{ "_reifyTy" +1 "(" !N0{ ty } ")" }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      TLREIFYTY of
+      {
+        ty : ty,
         loc : loc
       }
 
   and tldecl =
       (*%
-        @format({boundVar, boundExp, loc})
-         !N0{"val" +d boundVar +d "="
-              1[ +1 boundExp ]
-            }
+        @format({var, exp, loc})
+        { "val" +d var +d "=" 2[ +1 exp ] }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format({boundVar, boundExp, loc})
-       * "val" +d boundVar +d "="
-       *   4[ +1 boundExp ]
+      (*% @prefix formatWithType_
+        @format({var, exp, loc})
+        { "val" +d var:format_varInfo +d "=" 2[ +1 exp ] }
        *)
       TLVAL of
       {
-        boundVar : varInfo,
-        boundExp : tlexp,
-        loc : loc
-      }
-    | (*%
-       * @format({recbindList: bind binds, loc})
-       * binds:decList(bind)("val" +d "rec" +d, +1 "and" +d)
-       * @format:bind({boundVar, boundExp})
-       * boundVar +d "=" 1[ +1 boundExp ]
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({recbindList: bind binds, loc})
-       * binds:decList(bind)("val" +d "rec" +d, +1 "and" +d)
-       * @format:bind({boundVar, boundExp})
-       * boundVar +d "=" 4[ +1 boundExp ]
-       *)
-      TLVALREC of
-      {
-        recbindList : {boundVar : varInfo, boundExp : tlexp} list,
-        loc : loc
-      }
-    | (*%
-       * @format({weak, exVarInfo, exp, loc})
-       * !R1{ "export" +d "val" +d exVarInfo
-       *      2[ +d "=" +1 exp ] }
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({weak, exVarInfo, exp, loc})
-       * !R1{ "export" +d "val" +d exVarInfo
-       *      2[ +d "=" +1 exp ] }
-       *)
-      TLEXPORTVAR of
-      {
-        weak : bool,
-        exVarInfo : exVarInfo,
+        var : varInfo,
         exp : tlexp,
         loc : loc
       }
     | (*%
-       * @format(exVarInfo * provider * loc)
-       * "extern" +d "val" +d exVarInfo
+        @format(bind binds * loc)
+        {
+          "val" +d "rec"
+          binds(bind)(+1 "and")
+        }
+        @format:bind({var, exp})
+        2[ +1 !R1{ var +d "=" 2[ +1 exp ] } ]
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format(exVarInfo * provider * loc)
-       * "extern" +d "val" +d exVarInfo
+      (*% @prefix formatWithType_
+        @format(bind binds * loc)
+        {
+          "val" +d "rec"
+          binds(bind)(+1 "and")
+        }
+        @format:bind({var, exp})
+        2[ +1 !R1{ var +1 +d "=" 2[ +1 exp ] } ]
        *)
-      TLEXTERNVAR of exVarInfo * Types.provider * loc
+      TLVALREC of {var : varInfo, exp : tlexp} list * loc
+    | (*%
+        @format({btvEnv, constraints, recbinds: bind binds, loc})
+        {
+          "val" +d "rec"
+          binds(bind)(+1 "and")
+        }
+        @format:bind({var, exp})
+        2[ +1 !R1{ var +d "=" 2[ +1 exp ] } ]
+       *)
+      (*% @prefix formatWithType_
+        @format({btvEnv, constraints, recbinds: bind binds, loc})
+        {
+          "val" +d "rec" +d "[" !N0{ btvEnv } "]"
+          binds(bind)(+1 "and")
+        }
+        @format:bind({var, exp})
+        2[ +1 !R1{ var +d "=" 2[ +1 exp ] } ]
+       *)
+      TLVALPOLYREC of
+      {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
+        recbinds : {var:varInfo, exp:tlexp} list,
+        loc : loc
+      }
+    | (*%
+        @format({weak, var, exp})
+        { "export" weak:iftrue()(+d "weak",) +d var +d "=" 2[ +1 exp ] }
+       *)
+      (*% @prefix formatWithType_
+        @ditto
+       *)
+      TLEXPORTVAR of
+      {
+        weak : bool,
+        var : exVarInfo,
+        exp : tlexp
+      }
+    | (*%
+        @format(var * provider)
+        "extern" +d var
+       *)
+      (*% @prefix formatWithType_
+        @format(var * provider)
+        "extern" +d var
+       *)
+      TLEXTERNVAR of exVarInfo * Types.provider
 
 end

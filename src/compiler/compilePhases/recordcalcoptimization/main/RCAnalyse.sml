@@ -54,7 +54,6 @@ local
       | RC.RCCONSTANT {const, loc, ty} => ()
       | RC.RCDATACONSTRUCT
           {argExpOpt = NONE,
-           argTyOpt,
            con:RC.conInfo, 
            instTyList, 
            loc
@@ -62,7 +61,6 @@ local
         ()
       | RC.RCDATACONSTRUCT
           {argExpOpt = SOME exp,
-           argTyOpt,
            con:RC.conInfo, 
            instTyList, 
            loc
@@ -77,20 +75,18 @@ local
       | RC.RCEXNCONSTRUCT
           {argExpOpt = NONE,
            exn:RC.exnCon,
-           instTyList,
            loc
           } =>
         ()
       | RC.RCEXNCONSTRUCT
           {argExpOpt = SOME exp,
            exn:RC.exnCon,
-           instTyList,
            loc
           } =>
         visitExp exp
-      | RC.RCEXN_CONSTRUCTOR {exnInfo, loc} => 
+      | RC.RCEXNTAG {exnInfo, loc} => 
         ()
-      | RC.RCEXEXN_CONSTRUCTOR {exExnInfo, loc} =>
+      | RC.RCEXEXNTAG {exExnInfo, loc} =>
         ()
       | RC.RCEXVAR {path, ty} => ()
       | RC.RCFFI (RC.RCFFIIMPORT {ffiTy:TypedCalc.ffiTy, funExp=RC.RCFFIFUN (ptrExp, _)}, ty, loc) =>
@@ -107,22 +103,17 @@ local
         (visitExp catchExp; visitExp tryExp)
       | RC.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
         visitExpList argExpList
-      | RC.RCLET {body:rcexp list, decls, loc, tys} =>
-        (visitExpList body;
+      | RC.RCLET {body, decls, loc} =>
+        (visitExp body;
          visitDeclList decls)
       | RC.RCMODIFY {elementExp, elementTy, indexExp, label, loc, recordExp, recordTy} =>
         (visitExp elementExp;
          visitExp indexExp;
          visitExp recordExp)
-      | RC.RCMONOLET {binds:(varInfo * rcexp) list, bodyExp, loc} =>
-        (visitExpList (map #2 binds);
-         visitExp bodyExp)
       | RC.RCOPRIMAPPLY {argExp, instTyList, loc, oprimOp:RC.oprimInfo} =>
         visitExp argExp
       | RC.RCPOLY {btvEnv, exp, expTyWithoutTAbs, loc} =>
         visitExp exp
-      | RC.RCPOLYFNM {argVarList, bodyExp, bodyTy, btvEnv, loc} =>
-        visitExp bodyExp
       | RC.RCPRIMAPPLY {argExp, instTyList, loc, primOp:T.primInfo} =>
         visitExp argExp
       | RC.RCRAISE {exp, loc, ty} =>
@@ -131,8 +122,6 @@ local
         RecordLabel.Map.app visitRecordField fields
       | RC.RCSELECT {exp, expTy, indexExp, label, loc, resultTy} =>
         (visitExp exp; visitExp indexExp)
-      | RC.RCSEQ {expList, expTyList, loc} =>
-        visitExpList expList
       | RC.RCSIZEOF (ty, loc) => ()
       | RC.RCREIFYTY (ty, loc) => ()
       | RC.RCTAPP {exp, expTy, instTyList, loc} =>
@@ -163,6 +152,7 @@ local
       | RC.RCDYNAMICTOP _ => raise bug "RCDYNAMICTOP to RCAnalye"
       | RC.RCDYNAMICVIEW _ => raise bug "RCDYNAMICVIEW to RCAnalye"
       | RC.RCDYNAMICCASE _ => raise bug "RCDYNAMICCASE to RCAnalye"
+      | RC.RCDYNAMICEXISTTAPP _ => raise bug "RCDYNAMICEXISTTAPP to RCAnalye"
 
   and visitRecordField exp =
       case exp of
@@ -174,28 +164,28 @@ local
   and visitExpList expList = List.app visitExp expList
   and visitDecl tpdecl =
       case tpdecl of
-         RC.RCEXD (exbinds:{exnInfo:RC.exnInfo, loc:Loc.loc} list, loc) =>
+         RC.RCEXD (exnInfo, loc) =>
          ()
        | RC.RCEXNTAGD ({exnInfo, varInfo}, loc) =>
          ()
        | RC.RCEXPORTEXN exnInfo =>
          ()
-       | RC.RCEXPORTVAR varInfo =>
-         incInf (#id varInfo)
+       | RC.RCEXPORTVAR {var, exp} =>
+         visitExp exp
        | RC.RCEXTERNEXN ({path, ty}, provider) =>
          ()
        | RC.RCBUILTINEXN {path, ty} =>
          ()
        | RC.RCEXTERNVAR ({path, ty}, provider) =>
          ()
-       | RC.RCVAL (binds:(varInfo * rcexp) list, loc) =>
-         visitExpList (map #2 binds)
+       | RC.RCVAL (bind:(varInfo * rcexp), loc) =>
+         visitExp (#2 bind)
        | RC.RCVALPOLYREC
            (btvEnv,
-            recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,
+            recbinds:{exp:rcexp, var:varInfo} list,
             loc) =>
          visitExpList (map #exp recbinds)
-       | RC.RCVALREC (recbinds:{exp:rcexp, expTy:ty, var:varInfo} list,loc) =>
+       | RC.RCVALREC (recbinds:{exp:rcexp, var:varInfo} list,loc) =>
          visitExpList (map #exp recbinds)
   and visitDeclList declList = List.app visitDecl declList
 in

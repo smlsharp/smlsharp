@@ -5,6 +5,7 @@ _require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../data/symbols/main/Loc.smi"
+_require local "./AbsynConstFormatter.smi"
 _require "./AbsynSQL.smi"
 
 structure AbsynSQLFormatter =

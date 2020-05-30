@@ -8,6 +8,7 @@ _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/IEnv.smi"
 _require "./Types.ppg.smi"
 _require "./VarInfoEnv.smi"
+_require "./TvarMap.smi"
 
 structure TypesBasics =
 struct
@@ -18,7 +19,7 @@ struct
   val freshSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
   val freshRigidSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
   val monoTy : Types.ty -> bool
-  val freshRigidInstTy : Types.ty -> Types.ty * Types.constraint list
+  val freshRigidInstTy : Types.ty -> Types.ty * Types.constraint list * Types.tvState ref TvarMap.map
   val EFTV : Types.ty * Types.constraint list
              -> int * OTSet.set * (Types.tvState ref) IEnv.map
   val EFBTV : Types.ty -> BoundTypeVarID.Set.set
@@ -31,7 +32,7 @@ struct
       : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map * Types.btvEnv
   val coerceFunM
       : Types.ty * Types.ty list 
-        -> Types.ty list * Types.ty * Types.ty list *
+        -> Types.ty list * Types.ty * Types.ty list option *
            Types.constraint list
   val tpappTy : Types.ty * Types.ty list -> Types.ty
   val tyConFromConTy : Types.ty -> Types.tyCon

@@ -226,7 +226,7 @@ struct
           r <> 0
         end
 
-    fun create_main (f : unit -> int) =
+    fun create_main (f : unit -> int) : unit ptr =
         SMLSharp_Builtin.Pointer.fromWord64
           (SMLSharp_Builtin.Word32.toWord64X
              (SMLSharp_Builtin.Word32.fromInt32

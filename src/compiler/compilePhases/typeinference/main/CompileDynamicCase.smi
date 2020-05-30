@@ -31,7 +31,12 @@ structure CompileDynamicCase =
 struct
   exception DynamicCasePatsMustBeGround of TypedCalc.tppat
   val compile : {exp:TypedCalc.tpexp, ty:Types.ty, elemTy:Types.ty, 
-                            ruleList:{arg:TypedCalc.tppat, ty:Types.ty, body:TypedCalc.tpexp} list,
+                            ruleList:{keyTy : Types.ty,
+                                      existTyvars : Types.btvEnv,
+                                      existInstTys : Types.ty list,
+                                      patTy : Types.ty,
+                                      arg : TypedCalc.tppat,
+                                      body : TypedCalc.tpexp} list,
                             ruleBodyTy:Types.ty, loc:Loc.loc} 
                            -> Types.ty * TypedCalc.tpexp
 end

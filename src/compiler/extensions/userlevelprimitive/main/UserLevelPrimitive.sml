@@ -226,9 +226,11 @@ struct
     val REIFY_exInfo_null = ref NONE : I.exInfo option ref 
     val REIFY_exInfo_void = ref NONE : I.exInfo option ref 
     val REIFY_exInfo_dynamicTypeCase = ref NONE : I.exInfo option ref 
+    val REIFY_exInfo_dynamicExistInstance = ref NONE : I.exInfo option ref
     val REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy = ref NONE : I.exInfo option ref 
     val REIFY_exInfo_longsymbolIdArgsToOpaqueTy = ref NONE : I.exInfo option ref 
     val REIFY_exInfo_makeDummyTy = ref NONE : I.exInfo option ref 
+    val REIFY_exInfo_makeExistTy = ref NONE : I.exInfo option ref
     val REIFY_exInfo_makeFUNMty = ref NONE : I.exInfo option ref 
     val REIFY_exInfo_makePos = ref NONE : I.exInfo option ref 
     val REIFY_exInfo_mkENVenv = ref NONE : I.exInfo option ref 
@@ -265,6 +267,7 @@ struct
     val REIFY_tyCon_reifiedTerm = ref NONE : T.tyCon option ref
     val REIFY_tyCon_reifiedTy = ref NONE : T.tyCon option ref
     val REIFY_tyCon_typId = ref NONE : T.tyCon option ref
+    val REIFY_tyCon_existInstMap = ref NONE : T.tyCon option ref
  (* REIFY data end *)
 
 
@@ -354,9 +357,11 @@ struct
      REIFY_exInfo_null := findVar env                              ["PartialDynamic", "null"];
      REIFY_exInfo_void := findVar env                              ["PartialDynamic", "void"];
      REIFY_exInfo_dynamicTypeCase := findVar env                   ["PartialDynamic", "dynamicTypeCase"];
+     REIFY_exInfo_dynamicExistInstance := findVar env              ["PartialDynamic", "dynamicExistInstance"];
      REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy := findVar env  ["ReifiedTy", "longsymbolIdArgsLayoutListToDatatypeTy"];
      REIFY_exInfo_longsymbolIdArgsToOpaqueTy := findVar env        ["ReifiedTy", "longsymbolIdArgsToOpaqueTy"];
      REIFY_exInfo_makeDummyTy := findVar env                       ["ReifiedTy", "makeDummyTy"];
+     REIFY_exInfo_makeExistTy := findVar env                       ["ReifiedTy", "makeExistTy"];
      REIFY_exInfo_makeFUNMty := findVar env                        ["ReifiedTy", "makeFUNMty"];
      REIFY_exInfo_makePos := findVar env                           ["ReifiedTy", "makePos"];
      REIFY_exInfo_mkENVenv := findVar env                          ["ReifiedTerm", "mkENVenv"];
@@ -393,6 +398,7 @@ struct
      REIFY_tyCon_reifiedTerm := findTy env                         ["ReifiedTerm", "reifiedTerm"];
      REIFY_tyCon_reifiedTy := findTy env                           ["ReifiedTy", "reifiedTy"];
      REIFY_tyCon_typId := findTy env                               ["TypID", "id"];
+     REIFY_tyCon_existInstMap := findTy env                        ["PartialDynamic", "existInstMap"];
  (* REIFY data end *)
   
      getExternDecls ()
@@ -473,9 +479,11 @@ struct
     val REIFY_exInfo_null = fn () => getVarInfo "REIFY_exInfo_null" REIFY_exInfo_null
     val REIFY_exInfo_void = fn () => getVarInfo "REIFY_exInfo_void" REIFY_exInfo_void
     val REIFY_exInfo_dynamicTypeCase = fn () => getVarInfo "REIFY_exInfo_dynamicTypeCase" REIFY_exInfo_dynamicTypeCase
+    val REIFY_exInfo_dynamicExistInstance = fn () => getVarInfo "REIFY_exInfo_dynamicExistInstance" REIFY_exInfo_dynamicExistInstance
     val REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy = fn () => getVarInfo "REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy" REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy
     val REIFY_exInfo_longsymbolIdArgsToOpaqueTy = fn () => getVarInfo "REIFY_exInfo_longsymbolIdArgsToOpaqueTy" REIFY_exInfo_longsymbolIdArgsToOpaqueTy
     val REIFY_exInfo_makeDummyTy = fn () => getVarInfo "REIFY_exInfo_makeDummyTy" REIFY_exInfo_makeDummyTy
+    val REIFY_exInfo_makeExistTy = fn () => getVarInfo "REIFY_exInfo_makeExistTy" REIFY_exInfo_makeExistTy
     val REIFY_exInfo_makeFUNMty = fn () => getVarInfo "REIFY_exInfo_makeFUNMty" REIFY_exInfo_makeFUNMty
     val REIFY_exInfo_makePos = fn () => getVarInfo "REIFY_exInfo_makePos" REIFY_exInfo_makePos
     val REIFY_exInfo_mkENVenv = fn () => getVarInfo "REIFY_exInfo_mkENVenv" REIFY_exInfo_mkENVenv
@@ -512,6 +520,7 @@ struct
     val REIFY_tyCon_reifiedTerm = fn () => get "REIFY_tyCon_reifiedTerm" REIFY_tyCon_reifiedTerm
     val REIFY_tyCon_reifiedTy = fn () => get "REIFY_tyCon_reifiedTy" REIFY_tyCon_reifiedTy
     val REIFY_tyCon_typId = fn () => get "REIFY_tyCon_typId" REIFY_tyCon_typId
+    val REIFY_tyCon_existInstMap = fn () => get "REIFY_tyCon_existInstMap" REIFY_tyCon_existInstMap
 
   end
 end

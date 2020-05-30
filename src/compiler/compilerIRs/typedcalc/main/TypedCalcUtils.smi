@@ -2,6 +2,7 @@ _require local "../../../../basis.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/types/main/DummyTyID.smi"
 
 _require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../data/builtin/main/BuiltinTypes.smi"
@@ -17,11 +18,24 @@ structure TypedCalcUtils =
     val newTCVarInfo : Loc.loc -> Types.ty -> Types.varInfo
     val newTCVarInfoWithLongsymbol : Symbol.longsymbol * Types.ty -> Types.varInfo
     val getLocOfExp : TypedCalc.tpexp -> Loc.loc
+    val instantiateTv : Types.tvState ref -> unit
     val freshInst : Types.ty * TypedCalc.tpexp 
-                    -> Types.ty * Types.constraint list * TypedCalc.tpexp
+                    -> Types.ty
+                       * Types.ty list
+                       * Types.constraint list
+                       * TypedCalc.tpexp
+    val groundInst : {exp : TypedCalc.tpexp, ty : Types.ty}
+                     -> {exp : TypedCalc.tpexp, ty : Types.ty}
     val freshToplevelInst
         : Types.ty * TypedCalc.tpexp 
-          -> Types.ty * Types.constraint list * TypedCalc.tpexp
+          -> Types.ty * Types.ty list * Types.constraint list * TypedCalc.tpexp
+    val toplevelInstWithInstTy
+        : {exp : TypedCalc.tpexp, ty : Types.ty, instTy : Types.ty}
+          -> {exp : TypedCalc.tpexp, ty : Types.ty}
+    exception ToplevelInstWithInstTyList
+    val toplevelInstWithInstTyList
+        : {exp : TypedCalc.tpexp, ty : Types.ty, instTyList : Types.ty list}
+          -> {exp : TypedCalc.tpexp, ty : Types.ty}
     val expansive : TypedCalc.tpexp  -> bool
     val isAtom : TypedCalc.tpexp  -> bool
   end

@@ -1,0 +1,4 @@
+functor F(A : sig type t end) =
+struct
+  type v (= A.t)
+end
