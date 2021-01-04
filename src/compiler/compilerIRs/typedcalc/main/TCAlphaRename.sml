@@ -375,8 +375,8 @@ local
           TC.TPEXEXNTAG
             {exExnInfo=copyExExnInfo context exExnInfo,
              loc= loc}
-        | TC.TPEXVAR {path, ty} =>
-          TC.TPEXVAR {path=path, ty=copyT ty}
+        | TC.TPEXVAR ({path, ty}, loc) =>
+          TC.TPEXVAR ({path=path, ty=copyT ty}, loc)
         | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, ty), stubTy} =>
           TC.TPFFIIMPORT
             {ffiTy = copyFfiTy context ffiTy,
@@ -507,7 +507,7 @@ local
           TC.TPRECORD
             {fields=RecordLabel.Map.map copy fields,
              loc=loc,
-             recordTy=copyT recordTy}
+             recordTy=RecordLabel.Map.map copyT recordTy}
         | TC.TPSELECT {exp, expTy, label, loc, resultTy} =>
           TC.TPSELECT
             {exp=copy exp,

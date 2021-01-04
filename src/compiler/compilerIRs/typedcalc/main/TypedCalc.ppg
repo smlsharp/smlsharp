@@ -394,13 +394,13 @@ structure TypedCalc = struct
        *)
       TPVAR of varInfo
     | (*%
-        @format(var) var
+        @format(var * loc) var
        *)
       (*% @prefix formatWithType_
-        @format(var) var:format_exVarInfo
+        @format(var * loc) var:format_exVarInfo
        *)
       (* extnernal variable imported through _require *)
-      TPEXVAR of exVarInfo
+      TPEXVAR of (exVarInfo * loc)
     | (*%
         @format({var, arity}) var
        *)
@@ -697,7 +697,7 @@ structure TypedCalc = struct
       TPRECORD of
       {
         fields : tpexp RecordLabel.Map.map,
-        recordTy : ty,
+        recordTy : ty RecordLabel.Map.map,
         loc : loc
       }
     | (*%

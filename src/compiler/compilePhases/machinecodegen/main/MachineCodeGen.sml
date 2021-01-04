@@ -369,7 +369,7 @@ struct
           (If {condExp = tag,
                condTy = word32Ty (),
                const = M.NVWORD32 (Word.fromInt
-                                     (TypeLayout2.tagValue
+                                     (RuntimeTypes.tagValue
                                         RuntimeTypes.UNBOXED)),
                thenExp = mid (M.MCMEMCPY_FIELD {dstAddr = dstAddr,
                                                 srcAddr = srcAddr,

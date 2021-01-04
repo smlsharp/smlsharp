@@ -14,6 +14,7 @@ struct
                  initialLineno : int}
   type input (= {})
   exception Error of (Loc.loc * string) list
+  val sourceOfInput : input -> Loc.source
   val setup : source -> input
   val parse : input -> Absyn.unitparseresult
   val isEOF : input -> bool

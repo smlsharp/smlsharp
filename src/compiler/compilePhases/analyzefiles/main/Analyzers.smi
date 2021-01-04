@@ -1,0 +1,72 @@
+_require local "../../../../basis.smi"
+_require local "../../../../reify.smi"
+_require       "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require       "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/control/main/Control.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require       "../../../data/symbols/main/Symbol.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require       "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require       "./DBSchema.smi"
+_require local "./AnalyzerTy.smi"
+_require local "./InfoMaps.smi"
+_require local "./PrintUtils.smi"
+_require local "./AnalyzerUtils.smi"
+
+
+structure Analyzers =
+struct
+  type analyzers =
+    {
+     idstatus: int -> Symbol.symbol * IDCalc.idstatus -> unit,
+     tstr : int -> Symbol.symbol * NameEvalEnv.tstr -> unit,
+     strEntry: int -> Symbol.symbol * NameEvalEnv.strEntry -> unit,
+     funEEntry: int -> Symbol.symbol * NameEvalEnv.funEEntry -> unit,
+     sigEntry: int -> Symbol.symbol * NameEvalEnv.sigEntry -> unit
+    }
+
+  type symbol = Symbol.symbol
+  type longsymbol = Symbol.longsymbol
+  type idstatus = IDCalc.idstatus
+
+  val startNameRefTracing : unit -> unit
+  val stopNameRefTracing : unit -> unit
+
+  val pushInterfaceTracer : InterfaceName.source -> unit
+  val popInterfaceTracer : InterfaceName.source -> unit
+  val popSourceFileId : unit -> unit
+  val pushSourceFileId : int -> unit
+
+  val nameTracing : unit -> bool
+
+  val analyzeFunRef : symbol * (symbol * NameEvalEnv.funEEntry)-> unit
+  val analyzeIdRef : longsymbol * (symbol * idstatus) -> unit
+  val analyzeIdRefForUP : longsymbol * (symbol * idstatus) -> unit
+(*
+  val analyzeIdstatus : int -> symbol *  idstatus -> unit
+  val analyzeSig : int -> symbol * NameEvalEnv.sigEntry -> unit
+  val analyzeStr : int -> symbol * NameEvalEnv.strEntry -> unit
+  val analyzeTstr : int -> symbol * NameEvalEnv.tstr -> unit
+  val provideSig  : symbol * (symbol * NameEvalEnv.sigEntry) -> unit
+*)
+  val analyzeSigRef : symbol * (symbol * NameEvalEnv.sigEntry) -> unit
+  val analyzeStrRef : longsymbol * (symbol * NameEvalEnv.strEntry) -> unit
+  val analyzeTstrRef : longsymbol * (symbol * NameEvalEnv.tstr) -> unit
+  val analyzeTstrRefForUP : longsymbol * (symbol * NameEvalEnv.tstr) -> unit
+  val insertUPRefMap : symbol * symbol -> unit
+  val provideCon : symbol * symbol * longsymbol -> unit
+  val provideFun : symbol * (symbol * NameEvalEnv.funEEntry) -> unit
+  val provideId : symbol * (symbol * idstatus) -> unit
+  val provideStr : symbol * (symbol * NameEvalEnv.strEntry) -> unit
+  val provideTstr : symbol * (symbol * NameEvalEnv.tstr) -> unit
+  val rebindFun : DBSchema.category -> symbol * NameEvalEnv.funEEntry -> unit
+  val rebindId : DBSchema.category -> symbol *  idstatus -> unit
+  val rebindSig : DBSchema.category -> symbol * NameEvalEnv.sigEntry -> unit
+  val rebindStr : DBSchema.category -> symbol * NameEvalEnv.strEntry -> unit
+  val rebindTstr : DBSchema.category -> symbol * NameEvalEnv.tstr -> unit
+
+  val emptyAnalyzers : analyzers
+  val analyzers : analyzers
+
+end

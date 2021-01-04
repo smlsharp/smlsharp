@@ -1,0 +1,14 @@
+_require "../../../../basis.smi"
+_require "../../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+
+structure FileSymbolOrd =
+struct
+  type ord_key = FileID.id * Symbol.symbol
+  val compare : ord_key * ord_key -> order
+end
+
+structure FileSymbolMap = BinaryMapFn(FileSymbolOrd)
+
+

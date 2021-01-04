@@ -17,8 +17,8 @@ if test "x$ac_cv_prog_cc_c99" = "xno"; then
 fi
 AC_PROG_CXX
 
-AC_LANG(C++)
 AC_LANG(C)
+AC_USE_SYSTEM_EXTENSIONS
 
 AC_CHECK_HEADERS(stdatomic.h, [], [
   AC_MSG_CHECKING([for __atomic builtins])
@@ -218,7 +218,7 @@ AC_MSG_CHECKING([for LLVM compatibility])
 LLVM_VERSION=`echo "$LLVM_VERSION" | sed 's/\.[[0-9]]*$//'`
 AC_SUBST(LLVM_VERSION)
 case "$LLVM_VERSION" in
-  3.9|[[4-9]].0|10.0)
+  3.9|[[4-9]].0|1[[01]].0)
     AC_MSG_RESULT(yes)
     ;;
   *)
@@ -394,8 +394,6 @@ fi
 
 AC_CHECK_LIB(gmp, __gmpz_init,
   [], [ AC_MSG_ERROR([GMP library is not found]) ])
-AC_CHECK_LIB(yajl, yajl_complete_parse,
-  [], [ AC_MSG_ERROR([YAJL library is not found]) ])
 
 AC_CHECK_LIB(m, sqrt)
 AC_CHECK_LIB(socket, socket)
@@ -471,7 +469,6 @@ fi
 
 # others
 REQUIRED_HEADER(gmp.h)
-REQUIRED_HEADER(yajl/yajl_parse.h)
 case "$target_os" in
   *mingw*)
     REQUIRED_HEADER(windows.h)

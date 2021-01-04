@@ -1,7 +1,7 @@
-_require "./General.smi"
-_require "./StringCvt.smi"
+_require       "./General.smi"
 _require local "./SMLSharp_ScanChar.smi"
 _require local "./String.smi"
+_require       "./StringCvt.smi"
 
 structure IntInf =
 struct

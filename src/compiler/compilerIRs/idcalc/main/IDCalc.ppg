@@ -43,7 +43,6 @@ structure IDCalc =
 struct
 local
   fun bug s = Bug.Bug ("IDCalc: " ^ s)
-  val tempVarNamePrefix = "T_"
 in
   
   (*%
@@ -95,7 +94,7 @@ in
   type symbol = Symbol.symbol
 
   (*% 
-      @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+      @formatter(Symbol.longsymbol) Symbol.formatWithLoc_longsymbol
    *)
   (*% @prefix formatWithType_
       @formatter(Symbol.longsymbol) Symbol.format_longsymbol
@@ -379,7 +378,6 @@ in
             longsymbol
        *)
       {longsymbol: longsymbol, id: varId}
-
   (*%
    *)
   (*% @prefix formatWithType_
@@ -398,6 +396,7 @@ in
          @format({longsymbol, id})  longsymbol
        *)
       {longsymbol: longsymbol, id: oprimId}
+
 
   (*% 
      @formatter(AbsynConst.constant) AbsynConstFormatter.format_constant
@@ -928,37 +927,37 @@ in
 
    and idstatus
     = (*%
-         @format({id, longsymbol})  "var" + id
+         @format({id, longsymbol, defRange})  "var" + id
        *)
       (*% @prefix formatWithType_
-         @format({id, longsymbol})  "var" + id
+         @format({id, longsymbol, defRange})  "var" + id
        *)
       (*% @prefix print_
-         @format({id, longsymbol})
+         @format({id, longsymbol, defRange})
            "val" + name
        *)
-      IDVAR of {id:varId, longsymbol:longsymbol}
+      IDVAR of {id:varId, longsymbol:longsymbol, defRange:loc}
     | (*%
-         @format({id, ty, longsymbol})  "typed var" + id + ":" + ty
+         @format({id, ty, longsymbol, defRange})  "typed var" + id + ":" + ty
        *)
       (*% @prefix formatWithType_
-         @format({id, ty, longsymbol})  "typed var" + id + ":" + ty
+         @format({id, ty, longsymbol, defRange})  "typed var" + id + ":" + ty
        *)
       (*% @prefix print_
-         @format({id, ty, longsymbol}) 
+         @format({id, ty, longsymbol, defRange}) 
             "val" + name + ":" + ty()(sname,,)
        *)
-      IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol}
+      IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol, defRange:loc}
     | (*%
-         @format({exInfo, internalId})
+         @format({exInfo, internalId, defRange})
             "external var" + exInfo
        *)
       (*% @prefix formatWithType_
-         @format({exInfo, internalId})  
+         @format({exInfo, internalId, defRange})  
             "external var" + exInfo
        *)
       (*% @prefix print_
-         @format({exInfo, internalId})
+         @format({exInfo, internalId, defRange})
            "val" + exInfo()(sname,,)
        *)
       (* 2012-1-30 used flag indicate that it is referenced and 
@@ -970,151 +969,151 @@ in
          This id is only set by genExtern in NameEval.
        *)
       (* external variable name *)
-      IDEXVAR of {exInfo:exInfo, internalId:varId option}
+      IDEXVAR of {exInfo:exInfo, internalId:varId option, defRange:loc}
     | (*%
-         @format({longsymbol, id, version})  "external var to be typed" + longsymbol 
+         @format({longsymbol, id, version, defRange})  "external var to be typed" + longsymbol 
        *)
       (*% @prefix formatWithType_
-         @format({longsymbol, id, version})  "external var to be typed" + longsymbol 
+         @format({longsymbol, id, version, defRange})  "external var to be typed" + longsymbol 
        *)
       (*% @prefix print_
-         @format({longsymbol, id, version})
+         @format({longsymbol, id, version, defRange})
           "val" + name
        *)
       (* 2012-1-30 used flag indicate that it is referenced and 
          therefore extern declaration needs to be generated.
        *)
       (* external variable name *)
-      IDEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId,  version:version}
+      IDEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId,  version:version, defRange:loc}
     | (*%
-         @format({primitive, ty})  "primitive" + primitive
+         @format({primitive, ty, defRange})  "primitive" + primitive
        *)
       (*% @prefix formatWithType_
-         @format({primitive, ty})  "primitive" + primitive
+         @format({primitive, ty, defRange})  "primitive" + primitive
        *)
       (*% @prefix print_
-         @format({primitive, ty})
+         @format({primitive, ty, defRange})
            "val" + name + ":" + ty()(sname,,)
        *)
       (* external variable name *)
-      IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty}
+      IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty, defRange:loc}
     | (*%
-         @format({id, ty, longsymbol})
+         @format({id, ty, longsymbol, defRange})
            1["con" + id +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({id, ty, longsymbol})
+         @format({id, ty, longsymbol, defRange})
            1["con" + id +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({id, ty, longsymbol})
+         @format({id, ty, longsymbol, defRange})
            "val" + name + ":" + ty()(sname,,)
        *)
      (* constructor name *)
-      IDCON of {id:conId, ty:ty, longsymbol:longsymbol}
+      IDCON of {id:conId, ty:ty, longsymbol:longsymbol, defRange:loc}
     | (*%
-         @format({id, ty:ty, longsymbol})
+         @format({id, ty:ty, longsymbol, defRange})
            1[ "exn" + id +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({id, ty:ty, longsymbol})
+         @format({id, ty:ty, longsymbol, defRange})
            1[ "exn" + id +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({id, ty:ty, longsymbol})
+         @format({id, ty:ty, longsymbol, defRange})
             "exception" + name + ":" + ty()(sname,,)
        *)
      (* exception name *)
-      IDEXN of {id:exnId, ty:ty, longsymbol:longsymbol}
+      IDEXN of {id:exnId, ty:ty, longsymbol:longsymbol, defRange:loc}
     | (*%
-         @format({id, ty:ty, longsymbol})
+         @format({id, ty:ty, longsymbol, defRange})
            1["exn rep" + id +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({id, ty:ty, longsymbol})
+         @format({id, ty:ty, longsymbol, defRange})
            1["exn rep" + id +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({id, ty:ty, longsymbol})
+         @format({id, ty:ty, longsymbol, defRange})
             "exception" + name + ":" + ty()(sname,,)
        *)
      (* exception name *)
-      IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol}
+      IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol, defRange:loc}
     | (*%
-         @format({used, longsymbol, ty:ty, version})
+         @format({used, longsymbol, ty:ty, version, defRange})
           1["external exn" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({used, longsymbol, ty:ty, version})
+         @format({used, longsymbol, ty:ty, version, defRange})
           1["external exn" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({used, longsymbol, ty:ty, version})
+         @format({used, longsymbol, ty:ty, version, defRange})
             "exception" + name + ":" + ty()(sname,,)
        *)
       (* external exception name *)
-      IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty}
+      IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty, defRange:loc}
     | (*%
-         @format({used, longsymbol, ty:ty, version})
+         @format({used, longsymbol, ty:ty, version, defRange})
           1["external exn rep" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({used, longsymbol, ty:ty, version})
+         @format({used, longsymbol, ty:ty, version, defRange})
           1["external exn rep" + longsymbol +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({used, longsymbol, ty:ty, version})
+         @format({used, longsymbol, ty:ty, version, defRange})
             "exception" + name + "=" + longsymbol
        *)
       (* external exception name *)
-      IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol}
+      IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol, defRange:loc}
     | (*%
-         @format({id, overloadDef, used, longsymbol})  "oprim" "(" id ")"
+         @format({id, overloadDef, used, longsymbol, defRange})  "oprim" "(" id ")"
        *)
       (*% @prefix formatWithType_
-         @format({id, overloadDef, used, longsymbol})  "oprim" "(" id ")"
+         @format({id, overloadDef, used, longsymbol, defRange})  "oprim" "(" id ")"
        *)
       (*% @prefix print_
-         @format({id, overloadDef, used, longsymbol})
+         @format({id, overloadDef, used, longsymbol, defRange})
        *)
       (* overloaded primitive name *)
-      IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol}
+      IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol, defRange:loc}
     | (*%
-         @format({ty, symbol}) 1["SPECVAR" +1 ":" + ty]
+         @format({ty, symbol, defRange}) 1["SPECVAR" +1 ":" + ty]
        *)
       (*% @prefix formatWithType_
-         @format({ty, symbol}) 1["SPECVAR" +1 ":" + ty]
+         @format({ty, symbol, defRange}) 1["SPECVAR" +1 ":" + ty]
        *)
       (*% @prefix print_
-         @format({ty, symbol})
+         @format({ty, symbol, defRange})
             "val" + name + ":" + ty()(sname,,)
        *)
       (* variable name in spec *)
-      IDSPECVAR of {ty:ty, symbol:symbol}
+      IDSPECVAR of {ty:ty, symbol:symbol, defRange:loc}
     | (*%
-         @format({ty, symbol}) "SPECEXN" + ty
+         @format({ty, symbol, defRange}) "SPECEXN" + ty
        *)
       (*% @prefix formatWithType_
-         @format({ty, symbol}) "SPECEXN" + ty
+         @format({ty, symbol, defRange}) "SPECEXN" + ty
        *)
       (*% @prefix print_
-         @format({ty, symbol})
+         @format({ty, symbol, defRange})
             "exception" + name + ":" + ty()(sname,,)
        *)
       (* TODO: exception name of ty *)
       (* exception name in a functor argument *)
-      IDSPECEXN of {ty:ty, symbol:symbol}
+      IDSPECEXN of {ty:ty, symbol:symbol, defRange:loc}
     | (*%
-         @format({symbol}) "SPECCON"
+         @format({symbol, defRange}) "SPECCON"
        *)
       (*% @prefix formatWithType_
-         @format({symbol}) "SPECCON"
+         @format({symbol, defRange}) "SPECCON"
        *)
       (*% @prefix print_
-         @format({symbol})
+         @format({symbol, defRange})
        *)
       (* constructor name in a functor argument *)
-      IDSPECCON of {symbol:symbol}
+      IDSPECCON of {symbol:symbol, defRange:loc}
 
    and icexp 
     = (*%  
@@ -1576,6 +1575,26 @@ in
          @format(exp * field fields * loc)
        *)
       ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
+    | (*%
+         @format(exp * exp2 * loc)
+          1[ 
+             "modify" 
+          +1 exp 
+          +1 1["#" + exp2]
+          ]
+       *)
+      (*% @prefix formatWithType_
+         @format(exp * exp2 * loc)
+          1[ 
+             "modify" 
+          +1 exp 
+          +1 1["#" + exp2]
+          ]
+       *)
+      (*% @prefix print_
+         @format(exp * exp2 * loc)
+       *)
+      ICRECORD_UPDATE2 of icexp * icexp * loc
     | (*%
          @format(label * loc) "#" label
        *)
@@ -2274,7 +2293,7 @@ in
   and exInfo
     = (*% 
          @format({used, longsymbol, version, ty})  
-           longsymbol version 
+           longsymbol + "(" version ")"
        *)
       (*% @prefix formatWithType_
          @format({used, longsymbol, version, ty})  
@@ -2414,6 +2433,7 @@ in
        @format(ev evs:enclosedList)
      *)
       (tvar * tvarKind) list
+
 
   (*%
    *)
@@ -2620,6 +2640,7 @@ in
     | ICDYNAMICVIEW (icexp, ty, loc) => loc
     | ICDYNAMICCASE (icexp, rules, loc) => loc
     | ICRECORD_UPDATE (icexp, fieds, loc) => loc
+    | ICRECORD_UPDATE2 (icexp, icexp2, loc) => loc
     | ICRECORD_SELECTOR (string, loc) => loc
     | ICSELECT (string, icexp, loc) => loc
     | ICSEQ (icexpList, loc) => loc
@@ -2690,11 +2711,28 @@ in
 
   fun newICVar() =
       let
-        val longsymbol = [Symbol.generateWithPrefix tempVarNamePrefix]
+        val longsymbol = []
         val newVarId = VarID.generate()
       in
         {longsymbol=longsymbol, id=newVarId}
       end
+
+  fun varInfoToIdInfo ({longsymbol, id}:varInfo) loc =
+      {longsymbol =longsymbol, id = id, defRange = loc}
+  fun oprimInfoToIdInfo ({longsymbol, id}:oprimInfo) loc =
+      {longsymbol =longsymbol, id = id, defRange = loc}
+  fun exInfoToIdInfo ({used, longsymbol, version, ty}:exInfo) loc =
+      {used = used, longsymbol = longsymbol, 
+       version = version, ty = ty, defRange = loc}
+  fun conInfoToIdInfo ({longsymbol, ty, id}:conInfo) loc =
+      {longsymbol = longsymbol, ty = ty, id = id, defRange = loc}
+  fun exnInfoToIdInfo ({longsymbol, id, ty}:exnInfo) loc =
+      {longsymbol = longsymbol, id = id, ty = ty, defRange = loc}
+  fun idInfoToExnInfo ({longsymbol, id, ty, defRange}) =
+      {longsymbol = longsymbol, id = id, ty = ty}
+  fun idInfoToExExnInfo {used:bool ref, longsymbol:longsymbol, version:version, ty:ty, 
+                         defRange:loc} =
+      {used = used, longsymbol = longsymbol, version =version, ty =ty}
 
 end
 end

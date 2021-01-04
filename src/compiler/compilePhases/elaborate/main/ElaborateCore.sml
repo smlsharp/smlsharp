@@ -241,17 +241,18 @@ struct
               A.TYFUN(expandInTy rangeTy, expandInTy domainTy, loc)
             | A.TYPOLY(tvarList, ty, loc) => 
               A.TYPOLY(tvarList, expandInTy ty, loc)
-        fun expandInDataCon {symbol, ty} =
+        fun expandInDataCon {symbol, ty, loc} =
             let
               val newTyOpt =
                   case ty of NONE => NONE | SOME ty => SOME(expandInTy ty)
-            in {symbol = symbol, ty = newTyOpt} end
+            in {symbol = symbol, ty = newTyOpt, loc = loc} end
       in
-        fn {tyvars, symbol, conbind} =>
-           {tyvars=tyvars, symbol = symbol, conbind = map expandInDataCon conbind}
+        fn {tyvars, symbol, conbind, loc} =>
+           {tyvars=tyvars, symbol = symbol, loc = loc,
+            conbind = map expandInDataCon conbind}
       end
 
-  type env = fixity SymbolEnv.map
+  type env = (fixity * loc) SymbolEnv.map
 
   fun extendFixEnv (newFixEnv, fixEnv:env) : env =
       SymbolEnv.unionWith #1 (newFixEnv, fixEnv)
@@ -272,7 +273,15 @@ struct
       case longsymbol of
         [symbol] =>
         (case SymbolEnv.find (fixEnv, symbol) of
-           SOME v => v
+           SOME (v,loc) => 
+           let
+             val defSym = 
+                 Symbol.mkSymbol (Symbol.symbolToString symbol) loc
+             val _ = 
+                 Analyzers.insertUPRefMap (symbol, defSym)
+           in
+             v
+           end
          | _ => NONFIX)
       | _ => NONFIX
 
@@ -611,9 +620,9 @@ struct
 
   and elabDataBindsWithTypeBinds env (dataBinds, withTypeBinds, loc) =
       let
-        fun elabDataCon {conSymbol, tyOpt,...} = {symbol=conSymbol, ty=tyOpt}
-        fun elabDataBind {tyvars=tvars, tyConSymbol=name, rhs=dataCons,...} =
-            {tyvars=tvars, symbol=name, conbind = map elabDataCon dataCons}
+        fun elabDataCon {conSymbol, tyOpt, loc, ...} = {symbol=conSymbol, ty=tyOpt, loc = loc}
+        fun elabDataBind {tyvars=tvars, tyConSymbol=name, loc, rhs=dataCons,...} =
+            {tyvars=tvars, symbol=name, conbind = map elabDataCon dataCons, loc=loc}
         val dataCons =
             List.concat (map (fn {rhs,...} => rhs) dataBinds)
         val boundTypeNames = 
@@ -643,7 +652,7 @@ struct
         val expandedDataBinds =
             map (expandWithTypesInDataBind withTypeBinds) newDataBinds
         val withTypeBinds =
-            map (fn {tyvars, tyConSymbol, ty=(ty,_),...} => (tyvars, tyConSymbol, ty)) withTypeBinds
+            map (fn {tyvars, tyConSymbol, ty=(ty,_), loc,...} => (tyvars, tyConSymbol, ty, loc)) withTypeBinds
       in
         (expandedDataBinds, withTypeBinds)
       end
@@ -671,6 +680,13 @@ struct
             loc
           )
         )
+      | A.EXPRECORD_UPDATE2 (exp, exp2, loc) =>
+        PC.PLRECORD_UPDATE2
+          (
+            elabExp env exp,
+            elabExp env exp2,
+            loc
+          )
       | A.EXPRECORD_SELECTOR (x, loc) => PC.PLRECORD_SELECTOR(x, loc)
       | A.EXPTUPLE (elist, loc) =>
         PC.PLRECORD(RecordLabel.tupleList(map (elabExp env) elist), loc)
@@ -792,7 +808,7 @@ struct
         in
           PC.PLLET
           (
-            [PC.PDVALREC(emptyTvars, [(PC.PLPATID [newid], body)], loc)],
+            [PC.PDVALREC(emptyTvars, [(PC.PLPATID [newid], body, Loc.noloc)], loc)],
             PC.PLAPPM(PC.PLVAR [newid], [unitExp loc], loc),
             loc
           )
@@ -961,7 +977,7 @@ struct
           A.DECVAL (tyvs, decls, loc) =>
           let
             val newDecls =
-                map (fn (pat, e) => (elabPat env pat, elabExp env e)) decls
+                map (fn (pat, e, loc) => (elabPat env pat, elabExp env e, loc)) decls
           in
             ([PC.PDVAL (tyvs, newDecls, loc)],
              SymbolEnv.empty)
@@ -984,20 +1000,20 @@ struct
                   enqueueError(loc, E.NonVariablePatternInValRec)
                 | PC.PLPATTYPED(innerPat, _, _) => assertPattern innerPat
                 | _ => enqueueError(loc, E.NonVariablePatternInValRec)
-            fun elabBind (pat, exp) =
+            fun elabBind (pat, exp, loc) =
                 let
                   val elabedPat = elabPat env pat
                   val elabedExp = elabExp env exp
                 in
                   assertPattern elabedPat; (* after elab *)
                   assertExp exp; (* before elab *)
-                  (elabedPat, elabedExp)
+                  (elabedPat, elabedExp, loc)
                 end
-            fun getNameOfBound (PC.PLPATID [symbol], _) =
+            fun getNameOfBound (PC.PLPATID [symbol], _, _) =
                 SOME symbol
-              | getNameOfBound (PC.PLPATTYPED (pat, _, _), exp) =
-                getNameOfBound (pat, exp)
-              | getNameOfBound (pat, _) =
+              | getNameOfBound (PC.PLPATTYPED (pat, _, _), exp, loc) =
+                getNameOfBound (pat, exp, loc)
+              | getNameOfBound (pat, _, _) =
                 (* this case will be rejected by the above assertPat. *)
                 NONE
             val elabedBinds = map elabBind decls
@@ -1018,17 +1034,17 @@ struct
               (* fix attempt for val rec x = (fn x =>x) is rejected  ??? *)
               | assertExp (A.EXPAPP ([exp],_)) = assertExp exp
               | assertExp exp = enqueueError (loc, E.NotFnBoundInValRec)
-            fun elabBind (symbol, ty, exp) =
+            fun elabBind (symbol, ty, exp, loc) =
                 let
                   val elabedExp = elabExp env exp
                 in
                   assertExp exp; (* before elab *)
-                  (symbol, ty, elabedExp)
+                  (symbol, ty, elabedExp, loc)
                 end
             val elabedBinds = map elabBind decls
             val _ =
                 checkSymbolDuplication
-                    (fn (f, ty, e) => f)
+                    (fn (f, ty, e, loc) => f)
                     elabedBinds
                     E.DuplicateVarNameInValRec
           in
@@ -1055,7 +1071,7 @@ struct
           end
         | A.DECTYPE {tbs=tyBinds, loc,...} =>
           let
-            fun elabTyBind {tyvars=tvars, tyConSymbol=symbol, ty=(ty,_), ...} =
+            fun elabTyBind {tyvars=tvars, tyConSymbol=symbol, ty=(ty,_), loc} =
                 let
                   val newTVars =
                       map
@@ -1067,7 +1083,7 @@ struct
                               A.TYID({symbol=symbol, isEq=false}, loc))
                           ty
                 in
-                  (newTVars, symbol, newTy)
+                  (newTVars, symbol, newTy, loc)
                 end
             val newTyBinds = map elabTyBind tyBinds
           in
@@ -1141,7 +1157,7 @@ struct
             (
               [PC.PDINFIXDEC(n, idlist, loc)],
               foldr
-                (fn (x, env) => SymbolEnv.insert (env, x, INFIX n))
+                (fn (x, env) => SymbolEnv.insert (env, x, (INFIX n, loc)))
                 SymbolEnv.empty
                 idlist
             )
@@ -1153,7 +1169,7 @@ struct
             (
               [PC.PDINFIXRDEC(n, idlist, loc)],
               foldr
-                (fn (x, env) => SymbolEnv.insert (env, x, INFIXR n))
+                (fn (x, env) => SymbolEnv.insert (env, x, (INFIXR n, loc)))
                 SymbolEnv.empty
                 idlist
             )
@@ -1162,7 +1178,7 @@ struct
           (
             [PC.PDNONFIXDEC(idlist, loc)],
             foldr
-                (fn (x, env) => SymbolEnv.insert (env, x, NONFIX))
+                (fn (x, env) => SymbolEnv.insert (env, x, (NONFIX, loc)))
                 SymbolEnv.empty
                 idlist
           )

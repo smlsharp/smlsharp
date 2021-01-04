@@ -1,5 +1,12 @@
-_require "./General.smi"
-_use local "./Slice_common.sml"
+(*
+_require local "./src/basis/main/CharVectorSlice.smi"
+*)
+_require       "./General.smi"
+(*
+_require local "./src/basis/main/VectorSlice.smi"
+_require local "./src/basis/main/Word8VectorSlice.smi"
+*)
+_use local     "./Slice_common.sml"
 
 structure VectorSlice =
 struct

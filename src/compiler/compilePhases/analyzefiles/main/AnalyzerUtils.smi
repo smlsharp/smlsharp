@@ -1,0 +1,14 @@
+_require       "../../../../basis.smi"
+_require       "../../../data/symbols/main/Loc.smi"
+_require       "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+
+structure AnalyzerUtils =
+struct
+  exception OnStdPath
+  val analyzerOn : unit -> unit
+  val analyzerOff : unit -> unit
+  val onStdpath : InterfaceName.source -> bool
+  val onUserpath : InterfaceName.source -> bool
+  val locToStartPos : Loc.loc -> int
+  val locToEndPos : Loc.loc -> int
+end

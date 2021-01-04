@@ -6,7 +6,6 @@ _require local "../../../libs/env/main/SEnv.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../compilePhases/bitmapcompilation/main/RecordLayout.smi"
 _require local "../../../compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi"
-_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
 _require local "../../../data/runtimetypes/main//RuntimeTypes.ppg.smi"
 
 _require local "../../debug/main/Bug.smi"
@@ -18,10 +17,16 @@ _require "./ReifiedTy.ppg.smi"
 
 structure ReifiedTermToML =
 struct
-  exception Undetermined
+  datatype tag = UNBOXED | BOXED
+  val tagToWord : tag -> word
+  val constTag : ReifiedTy.reifiedTy -> tag
+
+  val reifiedTermToMLWithTy : ['a#reify. ReifiedTerm.reifiedTerm -> ReifiedTy.tyRep -> 'a]
+  val reifiedTermToML : ['a#reify. ReifiedTerm.reifiedTerm -> 'a]
+  val isBoxed : ReifiedTy.reifiedTy -> bool
+(*
   exception AttemptToConvertNullValue
   exception AttemptToConvertVoidValue
-  val reifiedTermToML : ['a#reify. ReifiedTerm.reifiedTerm -> 'a]
-  val reifiedTermToMLWithTy : ['a#reify. ReifiedTerm.reifiedTerm -> ReifiedTy.tyRep -> 'a]
-  val isBoxed : ReifiedTy.reifiedTy -> bool
+  exception Undetermined
+*)
 end

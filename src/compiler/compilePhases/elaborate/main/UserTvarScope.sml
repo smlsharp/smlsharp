@@ -134,13 +134,13 @@ struct
       | P.FFICONTY (tys, tycon, loc) =>
         tyvarsList (tyvarsFFIty btvEnv) tys
 
-  fun tyvarsTypbind btvEnv loc (tvars, tycon, ty) =
+  fun tyvarsTypbind btvEnv loc (tvars, tycon, ty, defLoc) =
       tyvarsTy (bindTvars btvEnv loc tvars) ty
 
-  fun tyvarsConbind btvEnv ({symbol, ty}:P.conbind) =
+  fun tyvarsConbind btvEnv ({symbol, ty, loc}:P.conbind) =
       tyvarsOpt (tyvarsTy btvEnv) ty
 
-  fun tyvarsDatbind btvEnv loc ({tyvars, symbol, conbind}:P.datbind) =
+  fun tyvarsDatbind btvEnv loc ({tyvars, symbol, conbind, loc=datLoc}:P.datbind) =
       tyvarsList (tyvarsConbind (bindTvars btvEnv loc tyvars)) conbind
 
   fun tyvarsExbind btvEnv exbind =
@@ -166,11 +166,15 @@ struct
   fun tyvarsMatch btvEnv (pats, exp) =
       union (tyvarsList (tyvarsPat btvEnv) pats, tyvarsExp btvEnv exp)
 
+  and tyvarsMatch1 btvEnv (pat, exp) =
+      union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
+
   and tyvarsDynMatch btvEnv (tyvars, pat, exp) =
       setminus (union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp), tyvars)
 
-  and tyvarsBind btvEnv (pat, exp) =
+  and tyvarsBind btvEnv (pat, exp, loc) =
       union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
+
 
   and tyvarsRow btvEnv (label, exp) =
       tyvarsExp btvEnv exp
@@ -193,12 +197,14 @@ struct
       | P.PLRECORD_UPDATE (exp, rows, loc) =>
         (* we don't sort rows here *)
         union (tyvarsExp btvEnv exp, tyvarsList (tyvarsRow btvEnv) rows)
+      | P.PLRECORD_UPDATE2 (exp, exp2, loc) =>
+        union (tyvarsExp btvEnv exp, tyvarsExp btvEnv exp2)
 (*
       | P.PLLIST (exps, loc) => tyvarsList (tyvarsExp btvEnv) exps
 *)
       | P.PLRAISE (exp, loc) => tyvarsExp btvEnv exp
       | P.PLHANDLE (exp, matches, loc) =>
-        union (tyvarsExp btvEnv exp, tyvarsList (tyvarsBind btvEnv) matches)
+        union (tyvarsExp btvEnv exp, tyvarsList (tyvarsMatch1 btvEnv) matches)
       | P.PLFNM (matches, loc) =>
         tyvarsList (tyvarsMatch btvEnv) matches
       | P.PLCASEM (exps, matches, caseKind, loc) =>
@@ -322,6 +328,8 @@ struct
       | P.PLRECORD_UPDATE (exp, rows, loc) =>
         P.PLRECORD_UPDATE (decideExp btvEnv exp, map (decideRow btvEnv) rows,
                            loc)
+      | P.PLRECORD_UPDATE2 (exp, exp2, loc) =>
+        P.PLRECORD_UPDATE2 (decideExp btvEnv exp, decideExp btvEnv exp2, loc)
 (*
       | P.PLLIST (exps, loc) =>
         P.PLLIST (map (decideExp btvEnv) exps, loc)
@@ -365,14 +373,14 @@ struct
         P.PLFFIFUN exp => P.PLFFIFUN (decideExp btvEnv exp)
       | P.PLFFIEXTERN s => ffiFun
 
-  and decideValbind btvEnv (pat:P.plpat, exp) =
-      (pat, decideExp btvEnv exp)
+  and decideValbind btvEnv (pat:P.plpat, exp, loc) =
+      (pat, decideExp btvEnv exp, loc)
 
   and decideFvalbind btvEnv {fdecl=(pat:P.plpat, fvalclauses), loc} =
       {fdecl=(pat, map (decideMatch btvEnv) fvalclauses), loc=loc}
 
-  and decidePolyRecBind btvEnv (id, ty, exp) =
-      (id, ty, decideExp btvEnv exp)
+  and decidePolyRecBind btvEnv (id, ty, exp, loc) =
+      (id, ty, decideExp btvEnv exp, loc)
 
   and decideValDec btvEnv (dec as (scoped, valbinds, loc)) =
       let
@@ -472,7 +480,8 @@ struct
         P.PLCOREDEC (decideDecl emptyEnv pdecl, loc)
       | P.PLSTRUCTBIND (strbinds, loc) =>
         P.PLSTRUCTBIND
-          (map (fn (strid, strexp) => (strid, decideStrexp strexp)) strbinds,
+          (map (fn (strid, strexp,loc) => 
+                   (strid, decideStrexp strexp, loc)) strbinds,
            loc)
       | P.PLSTRUCTLOCAL (strdecs1, strdecs2, loc) =>
         P.PLSTRUCTLOCAL

@@ -2,6 +2,7 @@ _require local "../../../../basis.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"
 (* _require "../../../data/symbols/main/Loc.smi" *)
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require local "./ParserError.ppg.smi"
 _require "./SMLSharpParser.smi"
 
@@ -12,4 +13,5 @@ struct
   val setup : source -> input
   val parse : input -> Absyn.unitparseresult
   val isEOF : input -> bool
+  val sourceOfInput : input -> Loc.source
 end

@@ -1,0 +1,128 @@
+structure DBSchema =
+struct
+  datatype category
+    = TOPENV
+    | PROVIDE
+    | INTERFACE
+    | FIND
+    | CHECKPROVIDE
+    | BIND_TSTR
+    | BIND_VAL
+    | BIND_FUNCTION
+    | BIND_PAT_FN
+    | BIND_PAT_CASE
+    | BIND_SIG
+    | BIND_STR
+    | BIND_FUNCTOR
+    | SIGCHECK
+    | FUNCTOR_ARG
+    | SYSTEMUSE
+  datatype idKind
+    = VAR
+    | CON
+    | EXN
+    | TYCON
+    | STR
+    | SIG
+    | FUNCTOR
+
+  val fileTypeSMLSource : string
+  val fileTypeSMLUse : string
+  val fileTypeINTERFACE : string
+  val fileTypeOBJECT : string
+
+  val OK  : string
+  val NG  : string
+  type configTuple = 
+    {
+     systemName : string, 
+     version : string,
+     baseDir : string,
+     rootFile : string
+    }
+  type sourceTuple = 
+    {
+     filePlace : string, 
+     fileName : string,
+     fileId : int, 
+     fileType : string
+    }
+  val sourceTupleTemplate : sourceTuple
+  type fileMapTuple = 
+    {
+     fileId : int,
+     interfaceHash : string, 
+     smlFileId : int, 
+     objFileId : int
+    }
+  val fileMapTupleTemplate : fileMapTuple
+  type fileDependTuple = 
+    {
+     fileId : int, 
+     startPos : int, 
+     endPos : int, 
+     dependFileId : int, 
+     dependType : string
+    }
+  val fileDependTupleTemplate : fileDependTuple
+  type defTuple = 
+    {
+     kind : string,
+     sourceFileId : int,
+     category : string,
+     defSymbol : string,
+     defSymbolFileId : int,
+     defSymbolStartPos : int,
+     defSymbolEndPos : int,
+     defRangeFileId : int,
+     defRangeStartPos : int,
+     defRangeEndPos : int,
+     definedSymbol : string,
+     internalId : int,
+     tfunKind : string
+    }
+  val defTupleTemplate : defTuple
+  type refTuple = 
+    {
+     category : string,
+     kind : string,
+     sourceFileId : int,
+     refSymbol : string,
+     refSymbolFileId : int,
+     refSymbolStartPos : int,
+     refSymbolEndPos : int,
+     defRangeFileId : int,
+     defRangeStartPos : int,
+     defRangeEndPos : int,
+     internalId : int,
+     tfunKind : string,
+     defSymbol : string,
+     defSymbolFileId : int,
+     defSymbolStartPos : int,
+     defSymbolEndPos : int,
+     definedSymbol : string
+    }
+  val refTupleTemplate : refTuple
+  type UPRefTuple = 
+    {
+     refSymbol : string,
+     refSymbolFileId : int,
+     refSymbolStartPos : int,
+     refSymbolEndPos : int,
+     defSymbol : string,
+     defSymbolFileId : int,
+     defSymbolStartPos : int,
+     defSymbolEndPos : int
+    }
+  val UPRefTupleTemplate : UPRefTuple
+  type dbSchema =
+    {
+     configTable : configTuple list,
+     sourceTable: sourceTuple list,
+     fileMapTable : fileMapTuple list,
+     fileDependTable : fileDependTuple list,
+     defTable : defTuple list,
+     refTable : refTuple list,
+     UPRefTable : UPRefTuple list
+    }
+end

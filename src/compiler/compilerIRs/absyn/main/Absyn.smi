@@ -72,6 +72,7 @@ struct
     | EXPOPID of longsymbol * loc
     | EXPRECORD of (RecordLabel.label * exp) list * loc
     | EXPRECORD_UPDATE of exp * (RecordLabel.label * exp) list * loc
+    | EXPRECORD_UPDATE2 of exp * exp * loc
     | EXPRECORD_SELECTOR of RecordLabel.label * loc
     | EXPTUPLE of exp list * loc
     | EXPLIST of exp list * loc
@@ -108,9 +109,9 @@ struct
     | FOREACHDATA of {id:symbol, pat:pat, whereParam:exp, data:exp, iterate:exp, pred:exp}
 
   and dec 
-    = DECVAL of kindedTvar list * (pat * exp) list * loc
-    | DECREC of kindedTvar list * (pat * exp) list * loc
-    | DECPOLYREC of (symbol * ty * exp) list * loc
+    = DECVAL of kindedTvar list * (pat * exp * loc) list * loc
+    | DECREC of kindedTvar list * (pat * exp * loc) list * loc
+    | DECPOLYREC of (symbol * ty * exp * loc) list * loc
     | DECFUN of kindedTvar list * {fdecl:(pat list * ty option * exp) list, loc:loc} list * loc 
     | DECTYPE of {tbs : typbind list, loc:loc}
     | DECDATATYPE of {datatys: datbind list,
@@ -157,9 +158,9 @@ struct
     | SPECTYPE of (tvar list * symbol) list * loc
     | SPECDERIVEDTYPE of (tvar list * symbol * ty) list  * loc
     | SPECEQTYPE of (tvar list * symbol) list * loc
-    | SPECDATATYPE of (tvar list * symbol * (symbol * ty option) list ) list * loc
+    | SPECDATATYPE of (tvar list * symbol * (symbol * ty option * loc) list * loc) list * loc
     | SPECREPLIC of symbol * longsymbol * loc
-    | SPECEXCEPTION of (symbol * ty option) list * loc
+    | SPECEXCEPTION of (symbol * ty option * loc) list * loc
     | SPECSTRUCT of (symbol * sigexp) list * loc
     | SPECINCLUDE of sigexp * loc
     | SPECDERIVEDINCLUDE of symbol list * loc

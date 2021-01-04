@@ -164,7 +164,7 @@ in
       TC.TPERROR => tpexp
     | TC.TPCONSTANT {const, ty, loc} => makeApply(tpexp, spine, loc)
     | TC.TPVAR {path,...} => makeApply (tpexp, spine, Symbol.longsymbolToLoc path)
-    | TC.TPEXVAR {path,...} => makeApply (tpexp, spine, Symbol.longsymbolToLoc path)
+    | TC.TPEXVAR ({path,...},loc) => makeApply (tpexp, spine, Symbol.longsymbolToLoc path)
     | 
       (*
        * grab the arity amount of argument from the spine stack and make 

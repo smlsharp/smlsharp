@@ -22,6 +22,7 @@ _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../compilePhases/analyzefiles/main/Analyzers.smi"
 _require "./NameEvalEnv.ppg.smi"
 _require local "./NameEvalEnvPrims.smi"
 structure CheckProvide =

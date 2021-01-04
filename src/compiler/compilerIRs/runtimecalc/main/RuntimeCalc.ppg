@@ -252,13 +252,6 @@ struct
        *)
       NVSIZE of {size : RuntimeTypes.size, ty : Types.ty}
     | (*%
-       * @format({index, ty, label}) index
-       *)
-      (*% @prefix formatWithType_
-       * @format({index, ty, label}) index
-       *)
-      NVINDEX of {index : word, ty : Types.ty, label : RecordLabel.label}
-    | (*%
        * @format({name, ty}) "@globl:" name
        *)
       (*% @prefix formatWithType_

@@ -32,6 +32,7 @@ struct
         fixEnv = SymbolEnv.empty
       } : newContext
 
+  fun printDebug msg = Bug.printError msg
   val errorOutput = TextIO.stdErr
   fun printError msg = TextIO.output (errorOutput, msg)
   fun flushError () = TextIO.flushOut errorOutput
@@ -265,13 +266,15 @@ struct
         (newFixEnv, plunit)
       end
 
-  fun doNameEvaluation outputWarnings
+  fun doNameEvaluation source 
+                       outputWarnings
                        ({topEnv, version, builtinDecls, ...}:toplevelContext)
                        plunit =
       let
         val _ = #start Counter.nameEvaluationTimeCounter()
         val {requireTopEnv, returnTopEnv, icdecls, warnings} =
-            NameEval.nameEval {topEnv=topEnv, version=version,
+            NameEval.nameEval source
+                              {topEnv=topEnv, version=version,
                                systemDecls=builtinDecls} plunit
         val _ =  #stop Counter.nameEvaluationTimeCounter()
         val _ = outputWarnings warnings
@@ -433,10 +436,10 @@ struct
         tldecs
       end
 
-  fun doBitmapCompilation2 rcdecs =
+  fun doBitmapCompilation rcdecs =
       let
         val _ = #start Counter.bitmapCompilationTimeCounter()
-        val bcdecs = BitmapCompilation2.compile rcdecs
+        val bcdecs = BitmapCompilation.compile rcdecs
         val _ =  #stop Counter.bitmapCompilationTimeCounter()
         val _ = printBitmapCalc2 Control.printBitmapCompile
                                  "Bitmap Compiled" bcdecs
@@ -597,6 +600,11 @@ struct
 
         val _ = #start Counter.compilationTimeCounter()
 
+        val _ = UserLevelPrimitive.initAnalyze
+                  {analyzeIdRef = Analyzers.analyzeIdRefForUP,
+                   analyzeTstrRef = Analyzers.analyzeTstrRefForUP
+                  }
+
         val _ = initPointerSize llvmOptions
 
         val parsed = doParse input
@@ -608,11 +616,20 @@ struct
                 then raise Return (dependency, STOPPED)
                 else ()
 
+        val source = Parser.sourceOfInput input 
         val (requireTopEnv, nameevalTopEnv, icdecls) =
-            doNameEvaluation outputWarnings context plunit
-        val externDecls = UserLevelPrimitive.init requireTopEnv
-        val icdecls = externDecls @ icdecls 
+            doNameEvaluation source outputWarnings context plunit
+
+(*
+        val _ = if stopAt = NameRef
+                then raise Return (dependency, STOPPED)
+                else ()
+*)
+        val _ = UserLevelPrimitive.init {env = requireTopEnv}
+
+                                                   
         val icdecls = doTypedElaboration icdecls
+
         val icdecls = doVALRECOptimization icdecls
 
         val icdecls = if !Control.doUncurryOptimization
@@ -648,7 +665,15 @@ struct
             else (nameevalTopEnv, tpdecs)
         val newContext = {topEnv=nameevalTopEnv, fixEnv=newFixEnv}
 
+
+
         val tpdecs = doFFICompilation tpdecs
+
+        val externalDecls = 
+            map TypedCalc.TPEXTERNVAR
+                (UserLevelPrimitive.getExternDecls())
+        val tpdecs = externalDecls @ tpdecs
+
         val tpdecs = doMatchCompilation outputWarnings tpdecs
 
         val tpdecs =
@@ -669,13 +694,23 @@ struct
 
         val rcdecs = doRecordCompilation tldecs
 
+        val _ = if stopAt = NameRef
+                then raise Return (dependency, STOPPED)
+                else ()
+
+        val externalDecls = 
+            RecordCompilation.makeUerlelvelPrimitiveExternDecls
+              (UserLevelPrimitive.getExternDecls())
+        val rcdecs = externalDecls @ rcdecs
+
 (*
         val rcdecs = if !Control.doRCOptimization
                      then doRecordCalcOptimization rcdecs
                      else rcdecs
 *)
 
-        val bcdecs = doBitmapCompilation2 rcdecs
+        val bcdecs = doBitmapCompilation rcdecs
+
         val cccalc = doClosureConversion2 bcdecs
         val nccalc = doCallingConventionCompile cccalc
         val ancalc = doANormalize nccalc

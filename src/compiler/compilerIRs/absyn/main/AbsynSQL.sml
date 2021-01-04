@@ -291,6 +291,12 @@ struct
       COMMIT
     | (*% @format "rollback" *)
       ROLLBACK
+    | (*%
+       * @format((e1, e2) c l)
+       * "(" !N0{ l(c(e1,e2)())(";" +1) } ")"
+       * @format:e2(e s * l) s(e)
+       *)
+      SEQ of ('exp, 'exp sql * loc) clause list
 
   (*% @formatter(option) TermFormat.formatOptionalOption *)
   datatype ('exp, 'pat, 'ty) sqlexp =
@@ -303,10 +309,5 @@ struct
        * R8{ "_sql" +d pat +d "=>" 2[ +1 q(e) ] }
        *)
       SQLFN of 'pat * 'exp sql
-    | (*%
-       * @format(pat * exp)
-       * R8{ "_sql" +d pat +d "=>" 2[ +1 "...(" !N0{ exp } ")" ] }
-       *)
-      SQLFN_EMBED of 'pat * 'exp
 
 end

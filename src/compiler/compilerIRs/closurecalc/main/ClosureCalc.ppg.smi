@@ -65,7 +65,6 @@ struct
       }
     | CVTAG of {tag : RuntimeTypes.tag, ty : ty}
     | CVSIZE of {size : RuntimeTypes.size, ty : ty}
-    | CVINDEX of {index : word, ty : ty, label : RecordLabel.label}
     | CVCCONVTAG of Types.codeEntryTy
     | CVWORD32_ORB of ccconst * ccconst
 

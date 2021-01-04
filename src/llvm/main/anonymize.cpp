@@ -2,7 +2,7 @@
  * anonymize.cpp
  * @copyright (c) 2019, Tohoku University.
  * @author UENO Katsuhiro
- * for LLVM 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.0
+ * for LLVM 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.0, 10.0.0, 11.0.0
  */
 
 #include <llvm/Support/raw_ostream.h>
@@ -14,7 +14,7 @@
 using namespace llvm;
 
 static AttributeList
-minimizeAttr(AttributeList s)
+minimizeAttr(LLVMContext &c, AttributeList s)
 {
 	AttributeList ret;
 	for (unsigned i = s.index_begin(), e = s.index_end(); i != e; ++i) {
@@ -24,7 +24,7 @@ minimizeAttr(AttributeList s)
 			    || a.hasAttribute(Attribute::NoReturn)
 			    || a.hasAttribute(Attribute::NoInline)
 			    || a.hasAttribute(Attribute::InReg)) {
-				ret = ret.addAttribute(s.getContext(), i, a);
+				ret = ret.addAttribute(c, i, a);
 			}
 		}
 	}
@@ -34,9 +34,9 @@ minimizeAttr(AttributeList s)
 int
 main(int argc, char **argv)
 {
-	LLVMContext context;
+	LLVMContext ctxt;
 	SMDiagnostic err;
-	auto m = parseIRFile("-", err, context);
+	auto m = parseIRFile("-", err, ctxt);
 	if (!m) {
 		err.print(argv[0], errs());
 		return 1;
@@ -47,7 +47,7 @@ main(int argc, char **argv)
 			v.setName("");
 	}
 	for (auto &f : m->getFunctionList()) {
-		f.setAttributes(minimizeAttr(f.getAttributes()));
+		f.setAttributes(minimizeAttr(ctxt, f.getAttributes()));
 		for (auto &v : f.args())
 			v.setName("");
 		for (auto &b : f) {
@@ -56,7 +56,7 @@ main(int argc, char **argv)
 				i.setName("");
 				if (CallInst *c = dyn_cast<CallInst>(&i)) {
 					auto s = c->getAttributes();
-					c->setAttributes(minimizeAttr(s));
+					c->setAttributes(minimizeAttr(ctxt, s));
 				}
 			}
 		}

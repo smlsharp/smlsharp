@@ -9,6 +9,7 @@ struct
   type result = unit ptr
   eqtype status (= int)
   eqtype resultStatus (= int)
+
   val CONNECTION_OK : status
   val CONNECTION_BAD : status
   val PGRES_EMPTY_QUERY : resultStatus

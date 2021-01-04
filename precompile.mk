@@ -100,17 +100,22 @@ precompiled/$(ARCH).ll.xz: src/llvm/main/anonymize precompiled/$(ARCH)_opt.bc
 	  -e 's/(^ *(tail )?call void @llvm\.mem(set|cpy|move)[.pi0-9]*)\(([^,]+,[^,]+,[^,]+),([^,]+)\)/\1(\4,i32 1,\5)/' \
 	  -e 's/(^declare void @llvm\.mem(set|cpy|move)[.pi0-9]*)\(([^,]+,[^,]+,[^,]+),([^,]+)\)/\1(\3,i32,\4)/' \
 	  -e '/^[0-9]*:/d' \
+	  -e '/^define/s/%[0-9][0-9]*//g' \
 	| perl \
-	  -ne 's/(".*?")|;.*$$| *([*=,()<>{}\[\]@%]) *|(\d) +(?=x )/$$+/eg; \
+	  -ne 's/(".*?")|;.*$$| *(["#*=,()<>{}\[\]@%]) *|(\d) +(?=x )/$$+/eg; \
 	       s/^ +//;s/ +$$//;print if /\S/' \
 	| $(XZ) -c > $@
 # Workaround for LLVM 6 or prior: from LLVM 7, the signature of memset,
-# memcpy, and memmove intrinsics has been changed.  LLVM 7-10 seems
+# memcpy, and memmove intrinsics has been changed.  LLVM 7-11 seems
 # to accept old signatures and convert it into new ones.  This sed script
 # reverts this conversion.
 # Workaround for LLVM 8 or prior: from LLVM 9, numeric basic block labels
 # are made explicit, but old LLVMs does not accept such explicit numeric
 # labels.  This sed script removes the numeric labels.
+# Workaround for LLVM 10 or prior: from LLVM 11, numeric variable names in
+# function arguments are made explicit, but old LLVMs does not accept such
+# explict numeric names.  This sed script removes the numeric names from
+# function arguments.
 
 include ./precompile.dep
 

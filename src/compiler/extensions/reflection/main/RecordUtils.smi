@@ -1,0 +1,16 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../libs/env/main/SEnv.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "./ReifyTerm.smi"
+_require local "./ReifiedTerm.ppg.smi"
+_require local "./ReifiedTy.ppg.smi"
+_require local "./PartialDynamic.smi"
+_require local "./ReifiedTermToML.smi"
+
+structure RecordUtils =
+  struct
+    val project : ['a#reify#{}, 'b#reify#{}. 'a -> 'b]
+    val nest : ['a#reify, 'b#reify. 'a -> 'b]
+  end
+

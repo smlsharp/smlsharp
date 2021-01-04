@@ -38,21 +38,21 @@ struct
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args = [ty]} =>TypID.eq (#id tyCon, #id BT.listTyCon)
       | _ => false
-  fun isPartialDynTy ty =
+  fun isPartialDynTy loc ty =
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args = [ty]} =>
-        TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn()))
+        TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn loc))
       | _ => false
-  fun partialDynElemTy ty =
+  fun partialDynElemTy loc ty =
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args = [ty]} =>
-        if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn())) then SOME ty 
+        if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn loc)) then SOME ty 
         else NONE
       | _ => NONE
-  fun isBottomTy ty =
+  fun isBottomTy loc ty =
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args = [ty]} =>
-        TypID.eq (#id tyCon, #id (U.REIFY_tyCon_void()))
+        TypID.eq (#id tyCon, #id (U.REIFY_tyCon_void loc))
       | _ => false
   fun ArrayElemTy ty = 
       case TB.derefTy ty of 
@@ -88,13 +88,7 @@ struct
          raise TypeMismatch)
 
   fun newVar ty =
-      {path = [Symbol.generate ()], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
-
-  fun newVarWithString loc string ty =
-      {path = [Symbol.mkSymbol string loc], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
-
-  fun newVarWithSymbol symbol ty =
-      {path = [symbol], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
+      {path = [], ty = ty, id = VarID.generate (), opaque = false} : Types.varInfo
 
   fun Int loc int =
       {exp = TC.TPCONSTANT
@@ -147,25 +141,25 @@ struct
                 loc = loc},
        ty = OptionTy ty}
 
-  fun MonoVar (exVarInfo as {path:Symbol.longsymbol, ty:T.ty}) =
-      {ty = ty, exp = TC.TPEXVAR exVarInfo}
+  fun MonoVar loc (exVarInfo as {path:Symbol.longsymbol, ty:T.ty}) =
+      {ty = ty, exp = TC.TPEXVAR (exVarInfo,loc)}
 
   fun Var (varInfo as {ty,path,id,opaque}) =
       {exp = TC.TPVAR varInfo, ty = ty}
 
-  fun InstVar {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTy} =
+  fun InstVar loc {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTy} =
       TypedCalcUtils.toplevelInstWithInstTy
-        {ty = ty, exp = TC.TPEXVAR exVarInfo, instTy = instTy}
+        {ty = ty, exp = TC.TPEXVAR (exVarInfo,loc), instTy = instTy}
 
-  fun InstListVar {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTyList} =
+  fun InstListVar loc {exVarInfo as {path:Symbol.longsymbol, ty:T.ty}, instTyList} =
       TypedCalcUtils.toplevelInstWithInstTyList
-        {ty = ty, exp = TC.TPEXVAR exVarInfo, instTyList = instTyList}
+        {ty = ty, exp = TC.TPEXVAR (exVarInfo,loc), instTyList = instTyList}
 
   fun Pair loc {exp=exp1, ty=ty1} {exp=exp2, ty=ty2} =
       {exp = TC.TPRECORD
                {fields = RecordLabel.tupleMap [exp1, exp2],
                 loc = loc,
-                recordTy = ty1 ** ty2},
+                recordTy = RecordLabel.tupleMap [ty1, ty2]},
        ty = ty1 ** ty2}
 
   fun Fn loc {expFn, argTy, bodyTy} =
@@ -272,14 +266,7 @@ struct
             expTyList
 
   fun TypeCast loc {ty, exp} ty2 =
-      {ty = ty2,
-       exp = TC.TPPRIMAPPLY
-               {primOp = {primitive = BuiltinPrimitive.Cast
-                                        BuiltinPrimitive.TypeCast,
-                          ty = ty --> ty2},
-                instTyList = NONE,
-                argExp = exp,
-                loc = loc}}
+      {ty = ty2, exp = TC.TPCAST ((exp, ty), ty2, loc)}
 
   fun LabelAsString loc label =
       String loc (RecordLabel.toString label)
@@ -308,7 +295,7 @@ struct
         val Col = Int loc col
         val Pos = Int loc pos
         val Gap = Int loc gap
-        val MakePos = MonoVar (U.REIFY_exInfo_makePos ())
+        val MakePos = MonoVar loc (U.REIFY_exInfo_makePos loc)
       in
         ApplyList loc MakePos [IsNoPos, IsStdPath, Name, Line, Col, Pos, Gap]
       end
@@ -317,21 +304,21 @@ struct
       Pair loc (Pos loc pos1) (Pos loc pos2)
 
   fun BtvId loc btvid =
-      TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy())
+      TypeCast loc (Int loc (BoundTypeVarID.toInt btvid)) (BtvIdTy loc)
   fun TypId loc typid =
-      TypeCast loc (Int loc (TypID.toInt typid)) (TypIdTy())
+      TypeCast loc (Int loc (TypID.toInt typid)) (TypIdTy loc)
   fun Longsymbol loc longsymbol =
       let
         val stringList = Symbol.longsymbolToLongid longsymbol
         val stringListExp = List loc StringTy (map (String loc) stringList)
-        val mkLongsymbolExp = MonoVar (U.REIFY_exInfo_SymbolMkLongSymbol())
+        val mkLongsymbolExp = MonoVar loc (U.REIFY_exInfo_SymbolMkLongSymbol loc)
       in
         ApplyList loc mkLongsymbolExp [stringListExp, Loc loc]
       end
   fun RecordLabelFromString loc string =
       Apply
         loc
-        (MonoVar (U.REIFY_exInfo_RecordLabelFromString()))
+        (MonoVar loc (U.REIFY_exInfo_RecordLabelFromString loc))
         (String loc string)
 
 end

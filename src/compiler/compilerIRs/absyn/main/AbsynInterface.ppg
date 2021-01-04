@@ -117,10 +117,10 @@ struct
    *)
   type conbind 
     = (*%
-       * @format({symbol, ty: ty tyopt})
+       * @format({symbol, ty: ty tyopt, loc})
        * R1{ symbol +d 2[ tyopt(ty)("of" +1,) ] }
        *)
-      {symbol: symbol, ty: ty option}
+      {symbol: symbol, ty: ty option, loc:loc}
 
   (*%
    * @formatter(seq) TermFormat.formatSeqList
@@ -129,7 +129,7 @@ struct
    *)
   type datbind 
     = (*%
-         @format({tyvars: tv tvs, symbol, conbind: bind binds})
+         @format({tyvars: tv tvs, symbol, conbind: bind binds, loc})
          1[
            tvs:seq(tv)("(",",",")") 
            tvs:ifCons()(+)
@@ -138,7 +138,7 @@ struct
            binds(bind)(+1 "|" +d)
          ]
        *)
-      {tyvars: Absyn.tvar list, symbol: symbol, conbind: conbind list}
+      {tyvars: Absyn.tvar list, symbol: symbol, conbind: conbind list, loc:loc}
 
   (*%
    * @formatter(option) TermFormat.formatOptionalOption

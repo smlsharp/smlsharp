@@ -1,0 +1,11 @@
+_require       "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require local "../../nameevaluation/main/NameEvalUtils.smi"
+_require       "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require       "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+
+structure PrintUtils =
+struct
+  val primitiveToString : BuiltinPrimitive.primitive -> string
+  val tyToString : NameEvalEnv.env list -> IDCalc.ty -> string
+end

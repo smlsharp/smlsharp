@@ -43,7 +43,7 @@ local
   fun listTy elemTy = T.CONSTRUCTty {tyCon=BT.listTyCon, args = [elemTy]}
   val int32Ty = T.CONSTRUCTty {tyCon=BT.int32TyCon, args = nil}
   val boolTy = T.CONSTRUCTty {tyCon=BT.boolTyCon, args = nil}
-  fun voidTy () = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_void(), args = nil}
+  fun voidTy loc = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_void loc, args = nil}
 
   val maxDepth = ref 0
   fun incDepth () = (maxDepth := !maxDepth + 1; !maxDepth)
@@ -97,12 +97,12 @@ local
         val resultTy = T.RECORDty tySmap
         val recordExp = 
             case tpbinds of
-              nil => TC.TPRECORD {fields=tpexpSmap,recordTy=resultTy,loc=loc}
+              nil => TC.TPRECORD {fields=tpexpSmap,recordTy=tySmap,loc=loc}
             | _ =>
               TC.TPMONOLET
                 {binds=tpbinds,
                  bodyExp=
-                 TC.TPRECORD {fields=tpexpSmap,recordTy=resultTy,loc=loc},
+                 TC.TPRECORD {fields=tpexpSmap,recordTy=tySmap,loc=loc},
                  loc=loc}
       in
         (resultTy, recordExp)
@@ -290,8 +290,8 @@ local
             | TC.TPCONSTANT {const, ty, loc} => tpexp
             | TC.TPVAR var =>
               TC.TPVAR (varSubst var) 
-            | TC.TPEXVAR {path,ty} =>
-              TC.TPEXVAR {path=path, ty=tySubst ty}
+            | TC.TPEXVAR ({path,ty},loc) =>
+              TC.TPEXVAR ({path=path, ty=tySubst ty}, loc)
             | TC.TPRECFUNVAR {var={path,id,ty,opaque}, arity} =>
               TC.TPRECFUNVAR
                 {
@@ -437,7 +437,7 @@ local
             | TC.TPRECORD {fields, recordTy, loc} =>
               TC.TPRECORD
                 {fields = RecordLabel.Map.map expSubst fields,
-                 recordTy = tySubst recordTy,
+                 recordTy = RecordLabel.Map.map tySubst recordTy,
                  loc = loc
                 }
             | TC.TPSELECT {label, exp, expTy, resultTy, loc} =>
@@ -2235,7 +2235,7 @@ in
           val ty = ITy.evalIty context ty
               handle e => (P.print "ity4\n"; raise e)
         in
-          (ty, TC.TPEXVAR {path=externalLongsymbol, ty=ty})
+          (ty, TC.TPEXVAR ({path=externalLongsymbol, ty=ty}, loc))
         end
       | IC.ICEXVAR_TOBETYPED _ => raise bug "ICEXVAR_TOBETYPED"
       | IC.ICBUILTINVAR {primitive, ty, loc} =>
@@ -2912,7 +2912,7 @@ in
               val externalLongsymbol = exInfoToLongsymbol exInfo
               val ty = ITy.evalIty context ty
                   handle e => (P.print "ity17\n"; raise e)
-	      val funExp = TC.TPEXVAR {path=externalLongsymbol, ty=ty}
+	      val funExp = TC.TPEXVAR ({path=externalLongsymbol, ty=ty}, loc)
             in
               processVar (ty, funExp, loc)
             end
@@ -3046,7 +3046,8 @@ in
                     SOME oprimInfo => oprimInfo
                   | NONE => raise bug "OPrim not found"
               fun makeNewTermBody (_, _, _, NONE) =
-                  raise Bug.Bug "ICOPRIM: makeNewTermBody"
+                  (* control may reach here when a type error occurs *)
+                  TC.TPERROR
                 | makeNewTermBody (argExp, argTy, funTy, SOME instTyList) =
                   TC.TPOPRIMAPPLY
                     {oprimOp=oprimInfo,
@@ -3151,6 +3152,7 @@ in
               (fn (tycast as {from, to}, typIdMap) =>
                   let
                     val fromId = IC.tfunId from
+                                 handle e => (print "tfunId 1\n"; raise e)
                     val to = ITy.evalTfun context to
                              handle e => 
                                     (
@@ -3521,10 +3523,10 @@ in
           )
         end
       | IC.ICDYNAMICCASE (icexp, argBodyList, loc) =>
-        let
+        (let
           val (ty,tpexp) = typeinfExp lambdaDepth inf context icexp
           val elementTy = newUnivTvarTy()
-          val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn(), args = [elementTy]}
+          val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn loc, args = [elementTy]}
           val _ = U.unify [(ty, newTy1)]
               handle U.Unify => 
                      (
@@ -3558,7 +3560,97 @@ in
 		    );
 		  (T.ERRORty, TC.TPERROR)
 		 )
+        end
+         handle UP.UserLevelPrimError(loc, exn) => 
+                 (
+                  E.enqueueError 
+                    "Typeinf 0xx"
+	            (
+		     loc,
+		     exn
+		    );
+		  (T.ERRORty, TC.TPERROR)
+		 )
+        )
+      | IC.ICRECORD_UPDATE2 (icexp, icexp2, loc) =>
+        let
+          val (ty1, _, instConstraints, tpexp1) =
+              TCU.freshInst (typeinfExp lambdaDepth applyDepth context icexp)
+          val _ = addConstraints instConstraints
+          val (ty2, _, instConstraints2, tpexp2) =
+              TCU.freshInst (typeinfExp lambdaDepth applyDepth context icexp2)
+          val _ = addConstraints instConstraints2
+          val (binds, bodyExp) =
+              if not (TCU.expansive tpexp2) then
+                (nil, tpexp2)
+              else
+                let
+                  val newVarInfo = TCU.newTCVarInfo Loc.noloc ty2
+                in
+                  ([(newVarInfo, tpexp2)], TC.TPVAR newVarInfo)
+                end
+          val tySmap = case TB.derefTy ty2 of
+                         T.RECORDty tySmap => tySmap
+                       | _ => 
+                         (E.enqueueError 
+                            "Typeinf 001"
+                            (loc, E.RecordUpdateMustHaveGroundRecordType ("006",ty2));
+                          raise Fail)
+          val modifyTpexp =
+              (* this inside-out term is correct under the call-by-value
+                 semantics *)
+              RecordLabel.Map.foldli
+	        (fn (label, ty, modifyTpexp) =>
+                    TC.TPMODIFY {label=label,
+                                 recordExp=modifyTpexp,
+                                 recordTy=ty1,
+                                 elementExp= 
+                                   TC.TPSELECT 
+                                     {label = label,
+                                      exp = bodyExp,
+                                      expTy = ty2,
+                                      resultTy = ty,
+                                      loc = Loc.noloc},
+                                 elementTy=ty,
+                                 loc=loc}
+                )
+                tpexp1
+                tySmap
+          val modifyTpexp =
+              case binds of 
+                nil => modifyTpexp
+              | _ =>               
+                TC.TPMONOLET
+                {binds = binds,
+                 bodyExp = modifyTpexp,
+                 loc = Loc.noloc}
 
+          val modifierTy =
+              T.newtyRaw
+                {
+                 lambdaDepth = lambdaDepth,
+                 kind = T.KIND {tvarKind = T.REC tySmap,
+                                properties = T.emptyProperties,
+                                dynamicKind = NONE
+                               },
+                 utvarOpt = NONE
+                }
+        in
+          (
+           U.unify [(ty1, modifierTy)];
+           (ty1, modifyTpexp)
+          )
+          handle U.Unify =>
+                 (
+                  unifFail 22;
+                  E.enqueueError "Typeinf 032"
+	            (
+		     loc,
+		     E.TyConMismatch("032",{argTy = ty1, domTy = modifierTy})
+		    );
+		  (T.ERRORty, TC.TPERROR)
+		 )
+               | Fail => (T.ERRORty, TC.TPERROR)
         end
       | IC.ICRECORD_UPDATE (icexp, stringIcexpList, loc) =>
         let
@@ -3783,10 +3875,10 @@ in
       | IC.ICSQLSCHEMA {tyFnExp, ty, loc} =>
         raise bug "typeinfExp: ICSQLSCHEMA"
       | IC.ICDYNAMIC (exp, ty, loc) => 
-        let
+        (let
            val (ty1, tpexp) = typeinfExp lambdaDepth applyDepth context exp
            val elementTy = newUnivTvarTy()
-           val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn(), args = [elementTy]}
+           val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn loc, args = [elementTy]}
            val _ = U.unify [(ty1, newTy1)]
                    handle U.Unify => 
                         (
@@ -3815,13 +3907,24 @@ in
                                elemTy = elementTy, 
                                coerceTy = ty2, loc = loc}) 
         end
+         handle UP.UserLevelPrimError(loc, exn) => 
+                 (
+                  E.enqueueError 
+                    "Typeinf U001"
+	            (
+		     loc,
+		     exn
+		    );
+		  (T.ERRORty, TC.TPERROR)
+		 )
+        )
       | IC.ICDYNAMICIS (exp, ty, loc) => 
-        let
+        (let
            val (ty1, tpexp) = typeinfExp lambdaDepth applyDepth context exp
            val elementTy = newUnivTvarTy()
-           val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn(), args = [elementTy]}
+           val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn loc, args = [elementTy]}
            val _ = U.unify [(ty1, newTy1)]
-                   handle U.Unify => 
+               handle U.Unify => 
                           (
                            unifFail 27;
                            E.enqueueError "Typeinf 053"
@@ -3838,11 +3941,22 @@ in
                                  elemTy = elementTy, 
                                  coerceTy = ty2, loc = loc}) 
         end
+         handle UP.UserLevelPrimError(loc, exn) => 
+                 (
+                  E.enqueueError 
+                    "Typeinf U001"
+	            (
+		     loc,
+		     exn
+		    );
+		  (T.ERRORty, TC.TPERROR)
+		 )
+        )
       | IC.ICDYNAMICVIEW (exp, ty, loc) => 
-        let
+        (let
            val (ty1, tpexp) = typeinfExp lambdaDepth applyDepth context exp
            val elementTy = newUnivTvarTyWithLambdaDepth lambdaDepth
-           val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn(), args = [elementTy]}
+           val newTy1 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn loc, args = [elementTy]}
            val _ = U.unify [(newTy1,ty1)]
                    handle U.Unify =>
                           (
@@ -3856,7 +3970,7 @@ in
            val ty2 = ITy.evalIty context ty
                handle e => (P.print "ity43\n"; raise e)
            val elementTy2 = newReifyTvarTyWithLambdaDepth lambdaDepth
-           val newTy2 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn(), args = [elementTy2]}
+           val newTy2 = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn loc, args = [elementTy2]}
            val _ = U.unify [(ty2, newTy2)]
                    handle U.Unify =>
                           (
@@ -3873,24 +3987,57 @@ in
                                       elemTy = elementTy, 
                                       coerceTy = ty2, loc = loc}) 
         end
+         handle UP.UserLevelPrimError(loc, exn) => 
+                 (
+                  E.enqueueError 
+                    "Typeinf U001"
+	            (
+		     loc,
+		     exn
+		    );
+		  (T.ERRORty, TC.TPERROR)
+		 )
+        )
       | IC.ICDYNAMICNULL (ty, loc) => 
-        let
+        (let
            val elemTy = ITy.evalIty context ty
                handle e => (P.print "ity43\n"; raise e)
-           val ty = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn(), 
-                                   args = [voidTy()]}
+           val ty = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn loc, 
+                                   args = [voidTy loc]}
         in
            (ty, TC.TPDYNAMICNULL {ty = elemTy, coerceTy = ty, loc = loc}) 
         end
+         handle UP.UserLevelPrimError(loc, exn) => 
+                 (
+                  E.enqueueError 
+                    "Typeinf U001"
+	            (
+		     loc,
+		     exn
+		    );
+		  (T.ERRORty, TC.TPERROR)
+		 )
+        )
       | IC.ICDYNAMICTOP (ty, loc) => 
-        let
+        (let
            val elemTy = ITy.evalIty context ty
                handle e => (P.print "ity43\n"; raise e)
-           val ty = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn(), 
-                                   args = [voidTy()]}
+           val ty = T.CONSTRUCTty {tyCon=UP.REIFY_tyCon_dyn loc, 
+                                   args = [voidTy loc]}
         in
            (ty, TC.TPDYNAMICTOP {ty = elemTy, coerceTy = ty, loc = loc}) 
         end
+         handle UP.UserLevelPrimError(loc, exn) => 
+                 (
+                  E.enqueueError 
+                    "Typeinf U001"
+	            (
+		     loc,
+		     exn
+		    );
+		  (T.ERRORty, TC.TPERROR)
+		 )
+        )
       | IC.ICREIFYTY(ty, loc) => 
         let
            val ty = ITy.evalIty context ty 
@@ -3903,8 +4050,11 @@ in
                                       (loc, E.JoinTypeExpected ("040",ty));
                        ()
                       )
+           val resultTy = ReifiedTyData.TyRepTy loc
         in
-          (ReifiedTyData.TyRepTy(), TC.TPREIFYTY(ty, loc))
+          (resultTy,
+           TC.TPCAST ((TC.TPREIFYTY(ty, loc), T.SINGLETONty (T.REIFYty ty)),
+                      resultTy, loc))
         end
       | IC.ICJOIN(isJoin, exp1, exp2, loc) =>
         (let
@@ -4308,7 +4458,7 @@ in
                             )
                          )
                 end
-          val varInfo = TCU.newTCVarInfoWithLongsymbol (longsymbol, ty1)
+          val varInfo = {id = id, path = longsymbol, ty = ty1, opaque = false} 
         in
           (
            VarMap.insert (varEnv1, patVar, TC.VARID varInfo),
@@ -4472,7 +4622,7 @@ in
       end
     | monoTypeInfDynMatch lambdaDepth context nil =
       raise bug "monoTypeinfDynMatch, empty rule"
-          
+
   and monoTypeInfDynRule lambdaDepth context
                          (rule as {tyvars,arg=pat,body=exp}) =
       let
@@ -4483,10 +4633,9 @@ in
 
         fun defaultKind (r as ref (T.TVAR (tvKind as {kind, ...}))) =
             let
-              (* give #reify and #boxed by default *)
+              (* give #reify by default *)
               val T.KIND {tvarKind, properties, dynamicKind} = kind
               val properties = T.addProperties T.REIFY properties
-              val properties = T.addProperties T.BOXED properties
               val kind = T.KIND {tvarKind = tvarKind,
                                  properties = properties,
                                  dynamicKind = dynamicKind}
@@ -4533,54 +4682,53 @@ in
             else ()
         val _ = TvarMap.appi checkEscape addedUtvars
 
-        (* substitute utvars to fresh BOUNDVARty *)
-        fun bindTyvars (utvar, ref (T.SUBSTITUTED (T.TYVARty tvState)), tvars) =
-            bindTyvars (utvar, tvState, tvars)
-          | bindTyvars (utvar, ref (T.SUBSTITUTED _), tvars) =
+        (* check that addedUtvars have appropriate kinds *)
+        fun checkKind (utvar, ref (T.SUBSTITUTED (T.TYVARty tvState))) =
+            checkKind (utvar, tvState)
+          | checkKind (utvar, ref (T.SUBSTITUTED _)) =
             raise bug "monoTypeInfDynRule: userTvar substituted"
-          | bindTyvars (utvar, r as ref (T.TVAR {kind, utvarOpt, ...}), tvars) =
+          | checkKind (utvar, r as ref (T.TVAR {kind, utvarOpt, ...})) =
+            case kind of
+              T.KIND {tvarKind = T.UNIV, properties, ...} =>
+              if T.isProperties T.EQ properties
+              then E.enqueueError
+                     "Kind 003"
+                     (loc,
+                      E.InvalidKindForExistentialType
+                        (T.newty {kind = kind, utvarOpt = SOME utvar}))
+              else ()
+            | T.KIND _ =>
+              E.enqueueError
+                "Kind 006"
+                (loc,
+                 E.InvalidKindForExistentialType
+                   (T.newty {kind = kind, utvarOpt = SOME utvar}))
+        val _ = TvarMap.appi checkKind addedUtvars
+
+        (* filter out utvars that does not occur in patTy *)
+        fun occursInPatTy (ref (T.SUBSTITUTED (T.TYVARty tvState))) =
+            occursInPatTy tvState
+          | occursInPatTy (ref (T.SUBSTITUTED _)) =
+            raise bug "monoTypeInfDynRule: userTvar substituted"
+          | occursInPatTy (r as ref (T.TVAR _)) =
+            OTSet.member (patFtv, r)
+        val addedUtvars = TvarMap.filter occursInPatTy addedUtvars
+
+        (* substitute utvars to fresh BOUNDVARty *)
+        fun bindTyvars (ref (T.SUBSTITUTED (T.TYVARty tvState)), tvars) =
+            bindTyvars (tvState, tvars)
+          | bindTyvars (ref (T.SUBSTITUTED _), tvars) =
+            raise bug "monoTypeInfDynRule: userTvar substituted"
+          | bindTyvars (r as ref (T.TVAR {kind, utvarOpt, ...}), tvars) =
             let
               val btvid = BoundTypeVarID.generate ()
               val existid = ExistTyID.generate ()
-              val significant = OTSet.member (patFtv, r)
             in
-              case kind of
-                T.KIND {tvarKind = T.UNIV, properties, ...} =>
-                if T.isProperties T.EQ properties
-                then E.enqueueError
-                       "Kind 003"
-                       (loc,
-                        E.InvalidKindForExistentialType
-                          (T.newty {kind = kind, utvarOpt = SOME utvar}))
-                else
-                  (case DynamicKindUtils.kindOfStaticKind kind of
-                     SOME {tag = DynamicKind.TAG _, size = DynamicKind.SIZE _,
-                           ...} => ()
-                   | SOME _ =>
-                     E.enqueueError
-                       "Kind 004"
-                       (loc,
-                        E.InvalidKindForExistentialType
-                          (T.newty {kind = kind, utvarOpt = SOME utvar}))
-                   | NONE =>
-                     E.enqueueError
-                       "Kind 005"
-                       (loc,
-                        E.InconsistentKind
-                          (T.newty {kind = kind, utvarOpt = SOME utvar})))
-              | T.KIND _ =>
-                E.enqueueError
-                  "Kind 006"
-                  (loc,
-                   E.InvalidKindForExistentialType
-                     (T.newty {kind = kind, utvarOpt = SOME utvar}));
               r := T.SUBSTITUTED (T.BOUNDVARty btvid);
-              if significant
-              then BoundTypeVarID.Map.insert (tvars, btvid, (existid, kind))
-              else tvars
+              BoundTypeVarID.Map.insert (tvars, btvid, (existid, kind))
             end
         val tvars =
-            TvarMap.foldli bindTyvars BoundTypeVarID.Map.empty addedUtvars
+            TvarMap.foldl bindTyvars BoundTypeVarID.Map.empty addedUtvars
         val btvEnv = BoundTypeVarID.Map.map #2 tvars
         val existSubst = BoundTypeVarID.Map.map T.EXISTty tvars
 
@@ -5955,6 +6103,7 @@ in
               (fn (tycast as {from, to}, typIdMap) =>
                   let
                     val fromId = IC.tfunId from
+                                 handle e => (print "tfunId 2\n"; raise e)
                     val to = ITy.evalTfun context to
                              handle e => 
                                     (

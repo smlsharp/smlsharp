@@ -4,6 +4,10 @@
  * @author UENO Katsuhiro
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,10 +23,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fenv.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #ifdef HAVE_CONFIG_H
 #if !HAVE_DECL_FPCLASSIFY && !HAVE_DECL_ISINF
@@ -875,22 +875,16 @@ PRIM_CONST_FUNC(int, RTLD_LAZY)
 PRIM_CONST_FUNC(int, RTLD_NOW)
 PRIM_CONST_FUNC(int, RTLD_LOCAL)
 PRIM_CONST_FUNC(int, RTLD_GLOBAL)
+PRIM_CONST_FUNC(void *, RTLD_DEFAULT)
+PRIM_CONST_FUNC(void *, RTLD_NEXT)
 #else
 PRIM_CONST_FUNC_DUMMY(int, RTLD_LAZY)
 PRIM_CONST_FUNC_DUMMY(int, RTLD_NOW)
 PRIM_CONST_FUNC_DUMMY(int, RTLD_LOCAL)
 PRIM_CONST_FUNC_DUMMY(int, RTLD_GLOBAL)
-#endif /* HAVE_DLOPEN */
-#if HAVE_DECL_RTLD_DEFAULT
-PRIM_CONST_FUNC(void *, RTLD_DEFAULT)
-#else
 PRIM_CONST_FUNC_DUMMY(void *, RTLD_DEFAULT)
-#endif /* RTLD_DEFAULT */
-#if HAVE_DECL_RTLD_NEXT
-PRIM_CONST_FUNC(void *, RTLD_NEXT)
-#else
 PRIM_CONST_FUNC_DUMMY(void *, RTLD_NEXT)
-#endif /* RTLD_NEXT */
+#endif /* HAVE_DLOPEN */
 
 PRIM_CONST_FUNC(int, SEEK_SET)
 PRIM_CONST_FUNC(int, SEEK_CUR)

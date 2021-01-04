@@ -131,7 +131,7 @@ in
           fun instantiateTstr name (specTstr, strTstr) =
               let
                 val tfun = case specTstr of
-                             V.TSTR tfun => tfun
+                             V.TSTR {tfun,...} => tfun
                            | V.TSTR_DTY {tfun, ...} => tfun
               in
                 case I.derefTfun tfun of
@@ -147,7 +147,7 @@ in
                    *)
                   let
                     val tstrTfun =  case strTstr of
-                                      V.TSTR tfun => tfun
+                                      V.TSTR {tfun,...} => tfun
                                     | V.TSTR_DTY {tfun, ...} => tfun
                     val _ = if I.tfunAdmitsEq tfun andalso not (I.tfunAdmitsEq tstrTfun) then
                               EU.enqueueError
@@ -166,7 +166,7 @@ in
                   let
                     val tstrTfun = 
                         case strTstr of
-                          V.TSTR tfun => tfun
+                          V.TSTR {tfun,...} => tfun
                         | V.TSTR_DTY {tfun, ...} => tfun
                     val _ = if I.tfunAdmitsEq tfun andalso not (I.tfunAdmitsEq tstrTfun) then
                               EU.enqueueError
@@ -193,10 +193,10 @@ in
                 specTyE
           fun instantiateStrE (V.STR specEnvMap, V.STR strEnvMap) =
               SymbolEnv.appi
-              (fn (specSymbol, {env=specEnv, strKind=_}) =>
+              (fn (specSymbol, {env=specEnv, strKind=_, loc, definedSymbol}) =>
                   case SymbolEnv.find(strEnvMap, specSymbol) of
                     NONE => () (* error will be checked in checkStrE *)
-                  | SOME {env=strEnv, strKind=_} =>
+                  | SOME {env=strEnv, strKind=_, loc, definedSymbol} =>
                     instantiateEnv (path@[specSymbol]) (specEnv, strEnv)
               )
               specEnvMap
@@ -332,15 +332,16 @@ in
                     varE
             in
               case specTstr of
-                V.TSTR specTfun =>
+                V.TSTR {tfun = specTfun,...} =>
                 (case strTstr of
-                   V.TSTR strTfun => (checkTfun (specSymbol, strSymbol) (specTfun, strTfun) ; specTstr)
+                   V.TSTR {tfun = strTfun,...} => 
+                   (checkTfun (specSymbol, strSymbol) (specTfun, strTfun) ; specTstr)
                  | V.TSTR_DTY {tfun=strTfun, ...} =>
                    (checkTfun (specSymbol, strSymbol) (specTfun, strTfun); specTstr)
                 )
-              | V.TSTR_DTY {tfun=specTfun,formals, conSpec,...} =>
+              | V.TSTR_DTY {tfun=specTfun,formals, defRange = defRangeStr, conSpec,...} =>
                 (case strTstr of
-                   V.TSTR strTfun =>
+                   V.TSTR _ =>
                    (EU.enqueueError 
                       (Symbol.symbolToLoc strSymbol,
                        E.SIGDtyRequired("360",{longsymbol=path@[strSymbol]}));
@@ -356,7 +357,8 @@ in
                       N.emptyTypIdEquiv
                       ((formals, conSpec), (strFormals, strConSpec));
                     checkVarE strVarE;
-                    V.TSTR_DTY{tfun=specTfun, formals=formals, conSpec=conSpec, varE=strVarE}
+                    V.TSTR_DTY{tfun=specTfun, formals=formals, conSpec=conSpec, 
+                               defRange = defRangeStr, varE=strVarE}
                    )
                 )
             end
@@ -381,23 +383,23 @@ in
                 specTyE
 
                 
-      fun isTrans ty = 
-          let
-            exception OPAQUE 
-            fun trace ty =
-                case ty of
-                  I.TYWILD => ()
-                | I.TYERROR => ()
-                | I.TYVAR _  => ()
-                | I.TYFREE_TYVAR _  => ()
-                | I.TYRECORD {ifFlex, fields=tyLabelenvMap} =>
-                  RecordLabel.Map.app trace tyLabelenvMap
-                | I.TYCONSTRUCT {tfun, args} =>
-                  (traceTfun tfun; List.app trace args)
-                | I.TYFUNM (tyList, ty) =>
-                  (List.app trace tyList; trace ty)
-                | I.TYPOLY (kindedTvarList, ty) => trace ty
-                | I.INFERREDTY ty => ()
+          fun isTrans ty = 
+              let
+                exception OPAQUE 
+                fun trace ty =
+                    case ty of
+                      I.TYWILD => ()
+                    | I.TYERROR => ()
+                    | I.TYVAR _  => ()
+                    | I.TYFREE_TYVAR _  => ()
+                    | I.TYRECORD {ifFlex, fields=tyLabelenvMap} =>
+                      RecordLabel.Map.app trace tyLabelenvMap
+                    | I.TYCONSTRUCT {tfun, args} =>
+                      (traceTfun tfun; List.app trace args)
+                    | I.TYFUNM (tyList, ty) =>
+                      (List.app trace tyList; trace ty)
+                    | I.TYPOLY (kindedTvarList, ty) => trace ty
+                    | I.INFERREDTY ty => ()
             and traceTfun tfun = 
                 case tfun of
                   I.TFUN_DEF {realizerTy,...} => trace realizerTy
@@ -420,9 +422,9 @@ in
               SymbolEnv.foldri
                 (fn (name, specIdStatus, (varE, icdeclList)) =>
                     case specIdStatus of
-                      I.IDSPECVAR {ty=specTy, symbol} =>
+                      I.IDSPECVAR {ty=specTy, symbol, defRange} =>
                       let
-                        fun makeDecl icexp =
+                        fun makeDecl strName icexp =
                             let
                               val newId = VarID.generate()
                               val longsymbol = path@[name]
@@ -438,101 +440,111 @@ in
                                                     ty = specTy, 
                                                     loc = loc}
                             in
-                              (SymbolEnv.insert
-                                 (varE, name, 
-                                  I.IDVAR_TYPED {id=newId, ty=specTy, longsymbol=longsymbol}),
+                              (SymbolEnv.insert(varE, strName, 
+                                                I.IDVAR_TYPED {id=newId, ty=specTy,
+                                                               defRange = defRange,
+                                                               longsymbol=longsymbol}),
                                icdecl :: icdeclList)
                             end
-                        fun makeTypdecl (icexp, idstatusActualTyOpt) =
+                        fun makeTypdecl strName (icexp, idstatusActualTyOpt) =
                             case idstatusActualTyOpt of
                               SOME (actualTy, idstatus) =>
                               if isTrans specTy andalso
                                  N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (specTy, actualTy) 
-                              then (SymbolEnv.insert(varE, name, idstatus), icdeclList)
-                              else makeDecl icexp
-                            | NONE => makeDecl icexp
+                              then (SymbolEnv.insert(varE, strName, idstatus), icdeclList)
+                              else makeDecl strName icexp
+                            | NONE => makeDecl strName icexp
                       in
-                        case SymbolEnv.find(strVarE, name) of
+                        case SymbolEnv.findi(strVarE, name) of
                           NONE =>
                           (EU.enqueueError
                              (Symbol.symbolToLoc name, 
                               E.SIGVarUndefined ("390",{longsymbol = path@[name]}));
                            (varE, icdeclList)
                           )
-                        | SOME (I.IDVAR {id,longsymbol}) => 
+                        | SOME (strName, I.IDVAR {id,longsymbol,defRange}) => 
                           let
-                            val longsymbol = path@[name]
+                            val longsymbol = path@[strName]
                           in
-                            makeTypdecl (I.ICVAR {longsymbol=longsymbol,id=id}, NONE)
+                            makeTypdecl strName (I.ICVAR {longsymbol=longsymbol,id=id}, NONE)
                           end
-                        | SOME (idstatus as I.IDVAR_TYPED {id, ty, longsymbol}) => 
+                        | SOME (strName, 
+                                idstatus as I.IDVAR_TYPED {id, ty, longsymbol,defRange}) => 
                           let
-                            val longsymbol = path@[name]
+                            val longsymbol = path@[strName]
                           in
-                            makeTypdecl (I.ICVAR {longsymbol=longsymbol,id=id}, 
+                            makeTypdecl strName
+                                        (I.ICVAR {longsymbol=longsymbol,id=id}, 
                                          SOME (ty, idstatus))
                           end
-                        | SOME (idstatus as I.IDEXVAR {exInfo, internalId}) => 
+                        | SOME (strName, idstatus as I.IDEXVAR {exInfo, internalId,defRange}) => 
                           (#used exInfo := true;
-                           makeTypdecl (I.ICEXVAR {longsymbol=path@[name],exInfo=exInfo}, SOME (#ty exInfo, idstatus))
+                           makeTypdecl strName
+                                       (I.ICEXVAR {longsymbol=path@[strName],exInfo=exInfo}, 
+                                        SOME (#ty exInfo, idstatus))
                           )
-                        | SOME (I.IDEXVAR_TOBETYPED _) =>  raise bug "IDEXVAR_TOBETYPED"
-                        | SOME (idstatus as I.IDBUILTINVAR {primitive, ty}) => 
-                          makeTypdecl
+                        | SOME (strName, I.IDEXVAR_TOBETYPED _) =>  raise bug "IDEXVAR_TOBETYPED"
+                        | SOME (strName, idstatus as I.IDBUILTINVAR {primitive, ty, defRange}) => 
+                          makeTypdecl strName
                             (I.ICBUILTINVAR {primitive=primitive,ty=ty,loc=loc}, 
                              SOME (ty, idstatus))
-                        | SOME (I.IDCON {id, longsymbol, ty}) =>
+                        | SOME (strName, I.IDCON {id, longsymbol, ty, defRange}) =>
                           let
-                            val longsymbol = path@[name]
+                            val longsymbol = path@[strName]
                           in
-                            makeTypdecl
+                            makeTypdecl strName
                               (I.ICCON {longsymbol=longsymbol,ty=ty, id=id}, NONE)
                           end
-                        | SOME (I.IDEXN {id, longsymbol, ty}) => 
+                        | SOME (strName, I.IDEXN {id, longsymbol, ty, defRange}) => 
                           let
-                            val longsymbol = path@[name]
+                            val longsymbol = path@[strName]
                           in
-                            makeTypdecl
+                            makeTypdecl strName
                               (I.ICEXN {longsymbol=longsymbol,ty=ty, id=id}, NONE)
                           end
-                        | SOME (I.IDEXNREP {id, longsymbol, ty}) => 
+                        | SOME (strName, I.IDEXNREP {id, longsymbol, ty, defRange}) => 
                           let
-                            val longsymbol = path@[name]
+                            val longsymbol = path@[strName]
                           in
-                            makeTypdecl
+                            makeTypdecl strName
                               (I.ICEXN {longsymbol=longsymbol,ty=ty, id=id}, NONE)
                           end
-                        | SOME (I.IDEXEXN exExnInfo) => 
+                        | SOME (strName, I.IDEXEXN exExnInfo) => 
                           (#used exExnInfo := true;
-                           makeTypdecl (I.ICEXEXN {exInfo=exExnInfo,
-                                                   longsymbol=path@[name]},
-                                                   NONE)
+                           makeTypdecl strName
+                             (I.ICEXEXN {exInfo= I.idInfoToExExnInfo exExnInfo,
+                                         longsymbol=path@[strName]},
+                              NONE)
                           )
-                        | SOME (I.IDEXEXNREP exExnInfo) => 
+                        | SOME (strName, I.IDEXEXNREP exExnInfo) => 
                           (#used exExnInfo := true;
-                           makeTypdecl (I.ICEXEXN {longsymbol=path@[name],exInfo=exExnInfo}, NONE)
+                           makeTypdecl strName
+                                       (I.ICEXEXN {longsymbol=path@[strName],
+                                                   exInfo=I.idInfoToExExnInfo exExnInfo}, NONE)
                           )
-                        | SOME (I.IDOPRIM {id, overloadDef, used, longsymbol}) => 
+                        | SOME (strName, 
+                                I.IDOPRIM {id, overloadDef, used, longsymbol, defRange}) => 
                           let
-                            val longsymbol = path@[name]
+                            val longsymbol = path@[strName]
                           in
                             (used := true;
-                             makeTypdecl (I.ICOPRIM {longsymbol=longsymbol,id=id}, NONE)
+                             makeTypdecl strName (I.ICOPRIM {longsymbol=longsymbol,id=id}, NONE)
                             )
                           end
-                        | SOME (I.IDSPECVAR _) => raise bug "IDSPECVAR"
-                        | SOME (I.IDSPECEXN _) => raise bug "IDSPECEXN"
-                        | SOME (I.IDSPECCON _) => raise bug "IDSPECCON"
+                        | SOME (strName, I.IDSPECVAR _) => raise bug "IDSPECVAR"
+                        | SOME (strName, I.IDSPECEXN _) => raise bug "IDSPECEXN"
+                        | SOME (strName, I.IDSPECCON _) => raise bug "IDSPECCON"
                       end
-                    | I.IDSPECEXN {ty=ty1, symbol} => 
-                      (case SymbolEnv.find(strVarE, name) of
+                    | I.IDSPECEXN {ty=ty1, symbol, defRange=dr1} => 
+                      (case SymbolEnv.findi(strVarE, name) of
                          NONE =>
                          (EU.enqueueError
                             (Symbol.symbolToLoc name,
                              E.SIGVarUndefined("400",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
-                       | SOME (idstatus as I.IDEXN {id, ty=ty2, longsymbol}) =>
+                       | SOME (strName, 
+                               idstatus as I.IDEXN {id, ty=ty2, longsymbol, defRange=df2}) =>
                          let
                            val ty1 = N.reduceTy TvarMap.empty ty1
                            val ty2 = N.reduceTy TvarMap.empty ty2
@@ -540,9 +552,11 @@ in
                            (* we must return ty1 instead of ty2 here,
                               since ty1 may be abstracted *)
                            if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1, ty2) then
-                             (SymbolEnv.insert(varE,
-                                          name,
-                                          I.IDEXN {id=id, longsymbol=longsymbol, ty=ty1}),
+                             (SymbolEnv.insert
+                                (varE,
+                                 strName,
+                                 I.IDEXN {id=id, longsymbol=longsymbol, ty=ty1, 
+                                          defRange = df2}),
                               icdeclList)
                            else 
                              (EU.enqueueError 
@@ -551,85 +565,87 @@ in
                               (varE, icdeclList)
                              )
                          end
-                       | SOME (idstatus as I.IDEXNREP {id, longsymbol, ty=ty2}) =>
+                       | SOME (strName, 
+                               idstatus as I.IDEXNREP {id, longsymbol, ty=ty2, defRange}) =>
                          let
                            val ty1 = N.reduceTy TvarMap.empty ty1
                            val ty2 = N.reduceTy TvarMap.empty ty2
                          in
                            if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1, ty2) then
-                             (SymbolEnv.insert(varE, name, idstatus), icdeclList)
+                             (SymbolEnv.insert(varE, strName, idstatus), icdeclList)
                            else 
                              (EU.enqueueError
-                                (Symbol.symbolToLoc name,
-                                 E.SIGExnType("420",{longsymbol = path@[name]}));
+                                (Symbol.symbolToLoc strName,
+                                 E.SIGExnType("420",{longsymbol = path@[strName]}));
                               (varE, icdeclList)
                              )
                          end
-                       | SOME (idstatus as I.IDEXEXN {used, longsymbol, ty=ty2, version}) => 
+                       | SOME (strName, idstatus as I.IDEXEXN {used, longsymbol, ty=ty2, version, 
+                                                               defRange}) => 
                          let
                            val _ = used := true
                            val ty1 = N.reduceTy TvarMap.empty ty1
                            val ty2 = N.reduceTy TvarMap.empty ty2
                          in
                            if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1, ty2) then
-                             (SymbolEnv.insert(varE, name, idstatus), icdeclList)
+                             (SymbolEnv.insert(varE, strName, idstatus), icdeclList)
                            else 
                              (EU.enqueueError
-                                (Symbol.symbolToLoc name,
-                                 E.SIGExnType ("430",{longsymbol = path@[name]}));
+                                (Symbol.symbolToLoc strName,
+                                 E.SIGExnType ("430",{longsymbol = path@[strName]}));
                               (varE, icdeclList)
                              )
                          end
-                       | SOME (idstatus as I.IDEXEXNREP {used, ty=ty2,...}) => 
+                       | SOME (strName, idstatus as I.IDEXEXNREP {used, ty=ty2,...}) => 
                          let
                            val _ = used := true
                            val ty1 = N.reduceTy TvarMap.empty ty1
                            val ty2 = N.reduceTy TvarMap.empty ty2
                          in
                            if N.equalTy (N.emptyTypIdEquiv, TvarID.Map.empty) (ty1, ty2) then
-                             (SymbolEnv.insert(varE, name, idstatus), icdeclList)
+                             (SymbolEnv.insert(varE, strName, idstatus), icdeclList)
                            else 
                              (EU.enqueueError 
-                                (Symbol.symbolToLoc name, 
+                                (Symbol.symbolToLoc strName, 
                                  E.SIGExnType ("440",{longsymbol = path@[name]}));
                               (varE, icdeclList)
                              )
                          end
-                       | _ =>
+                       | SOME (strName, _) =>
                          (EU.enqueueError
-                            (Symbol.symbolToLoc name, 
-                             E.SIGExnExpected ("450",{longsymbol = path@[name]}));
+                            (Symbol.symbolToLoc strName, 
+                             E.SIGExnExpected ("450",{longsymbol = path@[strName]}));
                           (varE, icdeclList)
                          )
                       )
-                    | I.IDSPECCON {symbol} =>
-                      (case SymbolEnv.find(strVarE, name) of
+                    | I.IDSPECCON {symbol, defRange} =>
+                      (case SymbolEnv.findi(strVarE, name) of
                          NONE =>
                          (EU.enqueueError
                             (Symbol.symbolToLoc name, 
                              E.SIGVarUndefined("460",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
-                       | SOME (idstatus as I.IDCON {id,ty,...}) => 
-                         (SymbolEnv.insert(varE, name, idstatus), icdeclList)
-                       | SOME _ => 
+                       | SOME (strName, idstatus as I.IDCON {id,ty,...}) => 
+                         (SymbolEnv.insert(varE, strName, idstatus), icdeclList)
+                       | SOME (strName, _) => 
                          (EU.enqueueError
-                            (Symbol.symbolToLoc name,
-                             E.SIGConNotFound ("470",{longsymbol = path@[name]}));
+                            (Symbol.symbolToLoc strName,
+                             E.SIGConNotFound ("470",{longsymbol = path@[strName]}));
                           (varE, icdeclList)
                          )
                       )
-                    | I.IDCON {id, longsymbol, ty} =>
-                      (case SymbolEnv.find(strVarE, name) of
+                    | I.IDCON {id, longsymbol, ty, defRange} =>
+                      (case SymbolEnv.findi(strVarE, name) of
                          NONE =>
                          (EU.enqueueError
                             (Symbol.symbolToLoc name, 
                              E.SIGVarUndefined ("480",{longsymbol = path@[name]}));
                           (varE, icdeclList)
                          )
-                       | SOME (idstatus as I.IDCON {id=id2, ty=ty2,...}) => 
+                       | SOME (strName, idstatus as I.IDCON {id=id2, ty=ty2,...}) => 
                          if ConID.eq(id, id2) then 
-                           (SymbolEnv.insert(varE, name, idstatus), icdeclList)
+                           (SymbolEnv.insert(varE, strName, idstatus), icdeclList)
                          else 
                            (EU.enqueueError
                               (Symbol.symbolToLoc name, 
@@ -655,18 +671,22 @@ in
 
           fun checkStrE (V.STR specEnvMap, V.STR strEnvMap) =
               SymbolEnv.foldri
-                (fn (name, {env=specEnv, strKind=specStrKind}, (strE, icdeclList)) =>
-                    case SymbolEnv.find(strEnvMap, name) of
+                (fn (name, {env=specEnv, strKind=specStrKind, loc, definedSymbol}, 
+                     (strE, icdeclList)) =>
+                    case SymbolEnv.findi(strEnvMap, name) of
                       NONE => 
                       (EU.enqueueError
                          (Symbol.symbolToLoc name,
                           E.SIGStrUndefined("510",{longsymbol=path@[name]}));
                        (strE, icdeclList))
-                    | SOME {env=strEnv, strKind=strStrKind} =>
+                    | SOME (strName, {env=strEnv, strKind=strStrKind, loc, definedSymbol}) =>
                       let
-                        val (env, icdeclList1) = checkEnv (path@[name]) (specEnv, strEnv)
+                        val (env, icdeclList1) = checkEnv (path@[strName]) (specEnv, strEnv)
                       in
-                        (SymbolEnv.insert(strE, name, {env=env, strKind=strStrKind}), icdeclList@icdeclList1)
+                        (SymbolEnv.insert
+                           (strE, strName, {env=env, strKind=strStrKind, loc = loc, 
+                                            definedSymbol = definedSymbol}), 
+                         icdeclList@icdeclList1)
                       end
                 )
                 (SymbolEnv.empty, nil)
@@ -685,7 +705,7 @@ in
         let
           fun makeOpaqueInstanceTstr name (tstr, env) =
               case tstr of 
-                V.TSTR tfun =>
+                V.TSTR {tfun,defRange} =>
                 (case I.derefTfun tfun of
                    I.TFUN_VAR(tfv as ref (I.INSTANTIATED {tfunkind,tfun})) =>
                    (case tfunkind of (* creating a return env *)
@@ -708,7 +728,10 @@ in
                                                    revealKey=revealKey}
                                        }
                         val _ = tfv := newTfunkind
-                        val env = VP.reinsertTstr(env,name,V.TSTR (I.TFUN_VAR tfv))
+                        val tsr = {tfun = I.TFUN_VAR tfv, 
+                                   defRange=defRange}
+                        val env = 
+                            VP.rebindTstr VP.SIGCHECK (env,name, V.TSTR tsr)
                       in
                         env
                       end
@@ -717,35 +740,38 @@ in
                         val formals = I.tfunFormals tfun
                         val liftedTys = I.tfunLiftedTys tfun
                         val newTfunkind =
-                            I.TFUN_DTY {id=id,
-                                        admitsEq=admitsEq,
-                                        formals=formals,
-                                        conSpec=SymbolEnv.empty,
-                                        conIDSet=ConID.Set.empty,
-                                        (* 2012-7-14: ohori [name] is added. *)
-                                        longsymbol= path @ [name], 
-                                        liftedTys=liftedTys,
-                                        dtyKind=
-                                        I.OPAQUE
-                                          {tfun=tfun, revealKey=revealKey}
-                                       }
+                            I.TFUN_DTY 
+                              {id=id,
+                               admitsEq=admitsEq,
+                               formals=formals,
+                               conSpec=SymbolEnv.empty,
+                               conIDSet=ConID.Set.empty,
+                               (* 2012-7-14: ohori [name] is added. *)
+                               longsymbol= path @ [name], 
+                               liftedTys=liftedTys,
+                               dtyKind=
+                               I.OPAQUE
+                                 {tfun=tfun, revealKey=revealKey}
+                              }
                         val _ = tfv := newTfunkind
                         val newTfun = I.TFUN_VAR tfv
-                        val env = VP.reinsertTstr(env, name,V.TSTR newTfun)
+                        val tsr = {tfun = newTfun, defRange = defRange}
+                        val env = VP.rebindTstr VP.SIGCHECK (env, name,V.TSTR tsr)
                       in
                         env
                       end
                     | _ => raise bug "non tfv (5)"
                    )
-                 | I.TFUN_VAR _ => VP.reinsertTstr(env, name, tstr)
-                 | I.TFUN_DEF _ => VP.reinsertTstr(env, name, tstr)
+                 | I.TFUN_VAR _ => VP.rebindTstr VP.SIGCHECK(env, name, tstr)
+                 | I.TFUN_DEF _ => VP.rebindTstr VP.SIGCHECK(env, name, tstr)
                 )
-              | V.TSTR_DTY {tfun, varE, ...} =>
+              | V.TSTR_DTY {tfun, varE, defRange, ...} =>
                 (case I.derefTfun tfun of
                    I.TFUN_VAR
                      (tfv as ref (I.INSTANTIATED{tfunkind,tfun=strTfun})) =>
                       (case tfunkind of
-                         I.TFV_DTY {longsymbol=_, id, admitsEq, formals, conSpec, liftedTys} =>
+                         I.TFV_DTY {longsymbol=_, id, admitsEq, 
+                                    formals, conSpec, liftedTys} =>
                          let
                            val (conspecConId, conIDSet) =
                                SymbolEnv.foldri
@@ -753,25 +779,27 @@ in
                                   let
                                     val conId = ConID.generate()
                                   in
-                                    (SymbolEnv.insert(conspecConId, name, (tyOpt, conId)),
+                                    (SymbolEnv.insert
+                                       (conspecConId, name, (tyOpt, conId)),
                                      ConID.Set.add(conIDSet, conId))
                                   end
                               )
                                (SymbolEnv.empty, ConID.Set.empty)
                                conSpec
                            val newTfunkind =
-                               I.TFUN_DTY {id=id,
-                                           admitsEq=admitsEq,
-                                           formals=formals,
-                                           conSpec=conSpec,
-                                           conIDSet=conIDSet,
-                                           (* 2012-7-14: ohori [name] is added. *)
-                                           longsymbol= path @ [name],
-                                           liftedTys=liftedTys,
-                                           dtyKind=
-                                           I.OPAQUE
-                                             {tfun=strTfun,revealKey=revealKey}
-                                          }
+                               I.TFUN_DTY
+                                 {id=id,
+                                  admitsEq=admitsEq,
+                                  formals=formals,
+                                  conSpec=conSpec,
+                                  conIDSet=conIDSet,
+                                  (* 2012-7-14: ohori [name] is added. *)
+                                  longsymbol= path @ [name],
+                                  liftedTys=liftedTys,
+                                  dtyKind=
+                                  I.OPAQUE
+                                    {tfun=strTfun,revealKey=revealKey}
+                                 }
                            val _ = tfv := newTfunkind
                            val returnTy =
                                I.TYCONSTRUCT
@@ -808,8 +836,11 @@ in
                                                   I.TYFUNM([ty], returnTy)
                                                  )
                                        val longsymbol = path@[name]
+                                       (* defRangeに設定する値? *)
                                        val conInfo =
-                                           {longsymbol=longsymbol, ty=conTy, id=conId}
+                                           {longsymbol=longsymbol, ty=conTy, 
+                                            defRange = Loc.noloc,
+                                            id=conId}
 (*
                                        val _ = V.conEnvAdd(conId, conInfo)
 *)
@@ -824,15 +855,16 @@ in
                                            {tfun=I.TFUN_VAR tfv,
                                             varE=varE,
                                             formals=formals,
+                                            defRange = defRange,
                                             conSpec=conSpec}
-                           val env = VP.reinsertTstr(env, name, newTstr)
+                           val env = VP.rebindTstr VP.SIGCHECK(env, name, newTstr)
                            val env = VP.envWithVarE(env, varE)
                          in
                            env
                          end
                        | _ => raise bug "non dty tfv (1)"
                       )
-                 | _ => VP.reinsertTstr(env, name, tstr)
+                 | _ => VP.rebindTstr VP.SIGCHECK(env, name, tstr)
                 )
 
           fun makeOpaqueInstanceTyE tyE env =
@@ -845,12 +877,15 @@ in
               let
                 val env =
                     SymbolEnv.foldri
-                      (fn (name, {env=strEnv, strKind}, env) =>
+                      (fn (name, {env=strEnv, strKind, loc, definedSymbol}, env) =>
                           let
                             val strEnv = makeOpaqueInstanceEnv (path@[name]) strEnv
                             val strKind = V.STRENV (StructureID.generate())
                           in
-                            VP.reinsertStr(env, name, {env=strEnv, strKind=strKind}) 
+                            VP.rebindStr VP.SIGCHECK
+                              (env, name, {env=strEnv, strKind=strKind, 
+                                           definedSymbol = definedSymbol,
+                                           loc=loc}) 
                           end
                       )
                       env
@@ -871,13 +906,16 @@ in
           val V.ENV {varE, tyE, strE} = env
           fun makeTransInstanceTstr name (tstr, tyE) =
               case tstr of 
-                V.TSTR tfun =>
+                V.TSTR {tfun,defRange} =>
                 (case I.derefTfun tfun of
                    I.TFUN_VAR (tfv as ref tfunkind) =>
                    (case tfunkind of
                       I.INSTANTIATED {tfunkind, tfun} =>
                       (tfv := I.REALIZED{tfun=tfun,id=I.tfunkindId tfunkind};
-                       SymbolEnv.insert(tyE, name, V.TSTR tfun)
+                       SymbolEnv.insert
+                         (tyE, 
+                          name, 
+                          V.TSTR {tfun = tfun, defRange = defRange})
                       )
                     | I.TFV_SPEC _ => raise bug "non instantiated tfv (3-1)"
                     | I.TFV_DTY _ => raise bug "non instantiated tfv (3-2)"
@@ -887,7 +925,7 @@ in
                    )
                  | _ => SymbolEnv.insert(tyE, name, tstr)
                 )
-              | V.TSTR_DTY {tfun=specTfun, varE=tstrVarE, ...} =>
+              | V.TSTR_DTY {tfun=specTfun, defRange, varE=tstrVarE, ...} =>
                 (case I.derefTfun specTfun of
                    I.TFUN_VAR (tfv as ref tfunkind) =>
                    (case tfunkind of
@@ -913,6 +951,7 @@ in
                              name,
                              V.TSTR_DTY {tfun=tfun,
                                          varE=varE,
+                                         defRange = defRange,
                                          formals=formals,
                                          conSpec=conSpec}
                             )
@@ -938,14 +977,15 @@ in
               let
                 val strEnvMap =
                     SymbolEnv.foldri
-                      (fn (name, {env, strKind}, strEnvMap) =>
+                      (fn (name, strEntry as {env,...}, strEnvMap) =>
                           let
                             val env = makeTransInstanceEnv (path@[name]) env
 (*  structure id is refreshed if necessary in NameEval
                             val strKind = V.STRENV (StructureID.generate())
 *)
                           in
-                            SymbolEnv.insert(strEnvMap, name, {env=env, strKind=strKind})
+                            SymbolEnv.insert
+                              (strEnvMap, name, strEntry # {env=env})
                           end
                       )
                       SymbolEnv.empty
@@ -1043,10 +1083,11 @@ in
                       SymbolEnv.foldri
                       (fn (name, _, (conIdSubst, conIDSet)) =>
                           case VP.checkSigId(specEnv, path@[name]) of
-                            SOME (I.IDCON {id, longsymbol, ty}) =>
+                            SOME (I.IDCON {id, longsymbol, ty, defRange}) =>
                             let
                               val newId = ConID.generate()
-                              val newConInfo = {id=newId, longsymbol=longsymbol, ty=ty}
+                              val newConInfo = {id=newId, longsymbol=longsymbol, defRange=defRange,
+                                                ty=ty}
 (*
                               val _ = V.conEnvAdd (newId, newConInfo)
 *)

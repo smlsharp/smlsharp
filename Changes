@@ -1,7 +1,43 @@
 -----------------------------------------------------------------------------
+SML# version 3.7.0 (released on 2021-01-04)
+
+* Experimental feature: existential type variable declararion has been
+  added in the _dynamiccase expression.  Now we can write
+
+    fun apply x = _dynamiccase x of {'a} (f:'a -> int, x:'a) => f x;
+
+  where {'a} is an existential type variable declaration local to the
+  rule with the restriction that 'a must not escape from the scope.
+  The type instance of 'a is dynamically computed every time the
+  matching is performed.  The following expressions are correct and
+  evaluate to 2.
+
+    apply (Dynamic.dynamic (foldl (op +) 0, [1, 1]));
+    apply (Dynamic.dynamic (trunc, 2.34));
+
+* Bugs found in the concurrent and parallel garbage collector were fixed.
+* Bugs found in the DynamicLink structure were fixed.
+* Bugs found in the SQL integration were fixed.
+* Bugs found in the value printer of the interactive mode were fixed.
+* The SML/NJ Library has been updated to 110.99.
+* Several modules in the SML/NJ Library has been ported to SML#.
+* The JSON parser has been replaced with the one provided in the SML/NJ
+  Library.  The YAJL library is no longer needed.
+* SML# now supports LLVM 11.
+
+SEQURITY ALERT: A potential code injection vulnerability was found in
+the built-in JSON parser of SML# 3.6.0 and earlier.  This is due to
+inappropriate interaction between FFI and GC.  Any SML# program that is
+compiled by the SML# compiler version from 3.1.0 to 3.6.0 and using
+SML#'s JSON feature (JSON.import, Dynamic.fromJSON, and/or
+Dynamic.fromJSONFile) is affected.  It is recommended for SML# users
+to upgrade your SML# installation and recompile programs that use the
+JSON or Dynamic feature.
+
+-----------------------------------------------------------------------------
 SML# version 3.6.0 (released on 2020-05-29)
 
-.* SML#'s garbage collector is replaced with a novel concurrent and
+* SML#'s garbage collector is replaced with a novel concurrent and
   parallel one.  In the new garbage collection algorithm, no thread is
   dedicated for garbage collection.  Instead, each worker thread (Pthread)
   sometime acts as an collector running concurrently with other threads.

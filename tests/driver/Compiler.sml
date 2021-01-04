@@ -232,8 +232,10 @@ struct
               NONE => NONE
             | SOME {root = {edges, ...}, ...} =>
               case edges of
-                (I.PROVIDE, I.FILE {source = (_, file),
-                                    fileType = I.INTERFACE _, ...}) :: _ =>
+                (I.PROVIDE, 
+                 I.FILE {source = (_, file),
+                         fileType = I.INTERFACE _, ...},
+                loc) :: _ =>
                 SOME file
               | _ => NONE
       in

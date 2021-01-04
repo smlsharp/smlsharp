@@ -1,0 +1,16 @@
+_require "../../basis.smi"
+_require "./json-source.smi"
+_require "./json.smi"
+_require local "./json.lex.smi"
+_require local "./json-tokens.smi"
+
+structure JSONParser =
+struct
+  type source = JSONSource.source
+  val openStream : TextIO.instream -> source
+  val openFile : string -> source
+  val openString : string -> source
+  val close : source -> unit
+  val parse : source -> JSON.value
+  val parseFile : string -> JSON.value
+end

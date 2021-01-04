@@ -41,6 +41,7 @@ _require local "../../../data/types/main/DynamicKindUtils.smi"
 (* _require local "../../../data/types/main/TyAlphaRename.smi" *)
 (* _require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi" *)
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
+_require "../../analyzefiles/main/Analyzers.smi"
 _require "./TypeInferenceContext.ppg.smi"
 _require local "./TypeInferenceError.ppg.smi"
 _require local "./TypeInferenceUtils.smi"

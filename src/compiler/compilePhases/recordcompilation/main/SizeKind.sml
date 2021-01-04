@@ -11,7 +11,7 @@ struct
 
   type singleton_ty_body = Types.ty
   type kind = RuntimeTypes.size_prop
-  type instance = RecordCalc.rcexp
+  type instance = RecordCalc.rcvalue * RecordCalc.loc
   val singletonTy = T.SIZEty
 
   fun compare (ty1, ty2) =
@@ -30,6 +30,6 @@ struct
         NONE => raise Bug.Bug "SizeKind.generateInstance"
       | SOME {size = R.ANYSIZE, ...} => NONE
       | SOME {size = R.SIZE s, ...} =>
-        SOME (RC.RCCONSTANT (RC.SIZE (s, ty), loc))
+        SOME (RC.RCCONSTANT (RC.SIZE (s, ty)), loc)
 
 end

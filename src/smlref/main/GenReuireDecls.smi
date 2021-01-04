@@ -1,0 +1,17 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "sql.smi"
+_require "smlnj-lib.smi"
+_require "compiler/libs/env/main/SEnv.smi"
+_require "compiler/libs/env/main/SSet.smi"
+_require "compiler/libs/env/main/IEnv.smi"
+_require "compiler/libs/env/main/ISet.smi"
+_require "./DBSchema.smi"
+_require "./Config.smi"
+_require "./ProcessRequireFile.smi"
+
+
+structure GenReuireDecls =
+struct
+  val genRequireDecls : unit -> unit
+end

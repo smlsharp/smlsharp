@@ -5,14 +5,12 @@ local
   structure BT = BuiltinTypes
   structure TB = TypesBasics
   structure T = Types
-  val tempVarNamePrefix = "R_"
 in
-  fun newRCVarName () = Symbol.generateWithPrefix tempVarNamePrefix
   fun newRCVarInfo (ty:Types.ty) =
       let
         val newVarId = VarID.generate()
       in
-        {path=[newRCVarName()], id=newVarId, ty = ty}
+        {path=[], id=newVarId, ty = ty}
       end
 
   fun expansive tpexp =
@@ -92,10 +90,8 @@ in
   fun newVarInfo loc (ty:T.ty) =
       let
         val newVarId = VarID.generate()
-        val IdString =  VarID.toString newVarId
-        val longsymbol = Symbol.mkLongsymbol ["_reify" ^ IdString] loc
       in
-        {path=longsymbol, id=newVarId, ty = ty}
+        {path=[], id=newVarId, ty = ty}
       end
 
 end

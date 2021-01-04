@@ -51,7 +51,18 @@ struct
         SOME {size = BN.SIZE n, ...} => RuntimeTypes.getSize n
       | _ => 0 (* error value *)
 
-  fun traverseTy ty =
+  fun tagOf ty = 
+      case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
+        SOME {tag = BN.TAG tag, ...} =>
+        (case tag of
+           RuntimeTypes.BOXED => true
+         | RuntimeTypes.UNBOXED => false)
+      | _ => raise Bug.Bug "toReifiedTy: tagOf"
+
+  fun traverseTy loc ty =
+      let
+        val traverseTy = traverseTy loc
+      in
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon = {dtyKind = T.DTY _, id, conSet, longsymbol,...}, args} =>
         (case R.findConSet id of
@@ -75,7 +86,7 @@ struct
                      rigidConSet
              val reifiedConSet =
                  SEnv.map (fn NONE => NONE
-                                 | SOME ty => SOME (toReifiedTy ty))
+                                 | SOME ty => SOME (toReifiedTy loc ty))
                                rigidConSet
            in
              R.setConSet(id, reifiedConSet)
@@ -93,11 +104,11 @@ struct
       | T.RECORDty tyMap => RecordLabel.Map.app traverseTy tyMap
       | T.POLYty {boundtvars, constraints, body} =>
         (map traverseConstraint constraints; traverseTy body)
-
+      end
   and traverseConstraint (T.JOIN {res, args=(ty1,ty2), loc}) =
-      (traverseTy res; traverseTy ty1; traverseTy ty2)
+      (traverseTy loc res; traverseTy loc ty1; traverseTy loc ty2)
 
-  and toReifiedTy ty =
+  and toReifiedTy loc ty =
 (*
       case TB.derefTy (Unify.forceRevealTy (TB.derefTy ty)) of
 *)
@@ -124,34 +135,34 @@ struct
         else if eqTyCon (tyCon, BT.exnTyCon) then R.EXNty
         else if eqTyCon (tyCon, BT.exntagTyCon) then R.EXNTAGty
         else if eqTyCon (tyCon, BT.ptrTyCon) then 
-          R.PTRty  (toReifiedTy (oneArg args))
+          R.PTRty  (toReifiedTy loc (oneArg args))
         else if eqTyCon (tyCon, BT.arrayTyCon) then 
-          R.ARRAYty (toReifiedTy (oneArg args))
+          R.ARRAYty (toReifiedTy loc (oneArg args))
         else if eqTyCon (tyCon, BT.vectorTyCon) then 
-          R.VECTORty (toReifiedTy (oneArg args))
+          R.VECTORty (toReifiedTy loc (oneArg args))
         else if eqTyCon (tyCon, BT.refTyCon) then 
-          R.REFty (toReifiedTy (oneArg args))
+          R.REFty (toReifiedTy loc (oneArg args))
         else if eqTyCon (tyCon, BT.listTyCon) then 
-          R.LISTty (toReifiedTy (oneArg args))
+          R.LISTty (toReifiedTy loc (oneArg args))
         else if eqTyCon (tyCon, BT.optionTyCon) then 
-          R.OPTIONty (toReifiedTy (oneArg args))
+          R.OPTIONty (toReifiedTy loc (oneArg args))
         else if eqTyCon (tyCon, BT.ptrTyCon) then 
-          R.PTRty (toReifiedTy (oneArg args))
-        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_SENVMAPty())) 
-                 handle U.IDNotFound _ => false) then 
-          R.SENVMAPty (toReifiedTy (oneArg args))
-        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_RECORDLABELty())) 
-                 handle U.IDNotFound _ => false) then 
+          R.PTRty (toReifiedTy loc (oneArg args))
+        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_SENVMAPty loc)) 
+                 handle U.UserLevelPrimError _ => false) then 
+          R.SENVMAPty (toReifiedTy loc (oneArg args))
+        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_RECORDLABELty loc)) 
+                 handle U.UserLevelPrimError _ => false) then 
           R.RECORDLABELty
-        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_RecordLabelMapMap())) 
-                 handle U.IDNotFound _ => false) then 
-          R.RECORDLABELMAPty (toReifiedTy (oneArg args))
-        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_IENVMAPty())) 
-                 handle U.IDNotFound _ => false) then 
-          R.IENVMAPty (toReifiedTy (oneArg args))
-        else if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_void())) then R.VOIDty 
-        else if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn())) then
-          R.DYNAMICty (toReifiedTy (oneArg args))
+        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_RecordLabelMapMap loc)) 
+                 handle U.UserLevelPrimError _ => false) then 
+          R.RECORDLABELMAPty (toReifiedTy loc (oneArg args))
+        else if (TypID.eq (#id tyCon, #id (U.REIFY_tyCon_IENVMAPty loc)) 
+                 handle U.UserLevelPrimError _ => false) then 
+          R.IENVMAPty (toReifiedTy loc (oneArg args))
+        else if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_void loc)) then R.VOIDty 
+        else if TypID.eq (#id tyCon, #id (U.REIFY_tyCon_dyn loc)) then
+          R.DYNAMICty (toReifiedTy loc (oneArg args))
         else if not (isOpaqueTycon tyCon) andalso 
                 not (SymbolEnv.isEmpty (#conSet tyCon)) then
           R.DATATYPEty 
@@ -162,22 +173,23 @@ struct
                            {dtyKind = T.DTY {rep = BN.DATA layout, ...}, ...} =>
                            layout
                          | _ => raise Bug.Bug "toReifiedTy: CONSTRUCTty"),
-             args = map toReifiedTy args,
+             args = map (toReifiedTy loc) args,
              size = sizeOf ty
             }
         else
           R.OPAQUEty
               {longsymbol = #longsymbol tyCon, 
                id = #id tyCon, 
-               args = map toReifiedTy args,
+               args = map (toReifiedTy loc) args,
+               boxed = tagOf ty,
                size = sizeOf ty}
       | T.RECORDty tyFields =>
-        R.RECORDty (RecordLabel.Map.map toReifiedTy tyFields)
+        R.RECORDty (RecordLabel.Map.map (toReifiedTy loc) tyFields)
       | T.POLYty {boundtvars, constraints, body} =>
         R.POLYty {boundenv = BoundTypeVarID.Map.mapi (fn (i,_) => i) boundtvars,
-                  body = toReifiedTy body}
+                  body = toReifiedTy loc body}
       | T.FUNMty (argTyList, resultTy) => 
-        R.FUNMty (map toReifiedTy argTyList, toReifiedTy resultTy)
+        R.FUNMty (map (toReifiedTy loc) argTyList, toReifiedTy loc resultTy)
       | T.TYVARty _ => R.TYVARty
       | T.DUMMYty _ =>
         (case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
@@ -188,13 +200,25 @@ struct
                               | RuntimeTypes.UNBOXED => false}
          | _ => raise Bug.Bug "toReifiedTy: DUMMYty")
       | T.EXISTty (id, kind) =>
-        (case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
-           SOME {size = BN.SIZE size, tag = BN.TAG tag, ...} =>
-           R.EXISTty {size = Word.fromInt (RuntimeTypes.getSize size),
-                      id = ExistTyID.toInt id,
-                      boxed = case tag of
-                                RuntimeTypes.BOXED => true
-                              | RuntimeTypes.UNBOXED => false}
+        (* See InferTypes2.sml. EXISTty must be universal, non-eq and reify. *)
+        (case kind of
+           T.KIND {tvarKind = T.UNIV, properties, ...} =>
+           if not (T.isProperties T.EQ properties) andalso
+              T.isProperties T.REIFY properties
+           then
+             case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
+               SOME {size, tag, ...} =>
+               R.EXISTty
+                 {size = case size of
+                           BN.SIZE s => SOME (Word.fromInt (BN.getSize s))
+                         | BN.ANYSIZE => NONE,
+                  boxed = case tag of
+                            BN.TAG BN.BOXED => SOME true
+                          | BN.TAG BN.UNBOXED => SOME false
+                          | BN.ANYTAG => NONE,
+                  id = ExistTyID.toInt id}
+             | NONE => raise Bug.Bug "toReifiedTy: EXISTty"
+           else raise Bug.Bug "toReifiedTy: EXISTty"
          | _ => raise Bug.Bug "toReifiedTy: EXISTty")
       | T.ERRORty => R.ERRORty
       | _ => R.INTERNALty
@@ -266,10 +290,10 @@ struct
         (globalConSetEnv, templateConSetEnv)
       end
 
-  fun toTy ty = 
+  fun toTy loc ty = 
       let
-        val _ = traverseTy ty
-        val reifiedTy = toReifiedTy ty
+        val _ = traverseTy loc ty
+        val reifiedTy = toReifiedTy loc ty
         val conSetEnv = getConSetEnv reifiedTy
       in
         {conSetEnv = conSetEnv, reifiedTy = reifiedTy}

@@ -47,31 +47,29 @@ struct
       | T.POLYty _ => raise bug "POLYty to kindOfInstanceTy"
       | T.RECORDty record =>
         let
-          fun align (index, size) =
-              Word.andb (index + size - 0w1, 0w0 - size)
-          val recordKind =
-              (* ToDo: integrate with RecordLayout *)
-              RecordLabel.Map.foldli
-                (fn (label, ty, NONE) => NONE
-                  | (label, ty, SOME (index, indexMap)) =>
+          val fields =
+              map
+                (fn ty =>
                     case TypeLayout2.propertyOf BoundTypeVarID.Map.empty ty of
-                      NONE => NONE
-                    | SOME {size = D.ANYSIZE, ...} => NONE
-                    | SOME {size = D.SIZE size, ...} =>
-                      let
-                        val size = Word.fromInt (D.getSize size)
-                        val nextIndex = align (index, size)
-                      in
-                        SOME (nextIndex + size,
-                              RecordLabel.Map.insert
-                                (indexMap, label, nextIndex))
-                      end)
-                (SOME (0w0, RecordLabel.Map.empty))
-                record
+                      SOME {size = D.SIZE size, ...} =>
+                      {size = RecordLayoutCalc.WORD
+                                (Word.fromInt (RuntimeTypes.getSize size)),
+                       tag = RecordLayoutCalc.WORD 0w0}
+                    | _ =>
+                      {size = RecordLayoutCalc.VAR
+                                {id = VarID.generate (), path = nil},
+                       tag = RecordLayoutCalc.WORD 0w0})
+                (RecordLabel.Map.listItems record)
+          val accum = RecordLayout.newComputationAccum ()
+          val {fieldIndexes, ...} = RecordLayout.computeRecord accum fields
         in
-          case recordKind of
-            NONE => #record D.topKind
-          | SOME (_, fields) => fields
+          ListPair.foldlEq
+            (fn (label, RecordLayoutCalc.VAR _, z) => z
+              | (label, RecordLayoutCalc.WORD n, z) =>
+                RecordLabel.Map.insert (z, label, n))
+            RecordLabel.Map.empty
+            (RecordLabel.Map.listKeys record, fieldIndexes)
+          handle ListPair.UnequalLengths => raise Bug.Bug "recordKindOfTy"
         end
 
   fun kindOfTy ty =

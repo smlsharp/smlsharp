@@ -30,9 +30,9 @@ struct
 	  A.TRANSPARENT t => listNamesTypbindTrans prefix t
 	| A.OPAQUE {eq, tyvars, symbol, runtimeTy, loc} => [prefix ^ ".T" ^ symbolToString symbol]
 
-  fun listNamesDatbind prefix ({tyvars, symbol, conbind}:A.datbind) =
+  fun listNamesDatbind prefix ({tyvars, symbol, conbind, loc}:A.datbind) =
       prefix ^ ".T" ^ symbolToString symbol ::
-      map (fn {symbol, ty} => prefix ^ ".C" ^ symbolToString symbol) conbind
+      map (fn {symbol, ty, loc} => prefix ^ ".C" ^ symbolToString symbol) conbind
 
   fun listNamesExbind prefix exbind =
       case exbind of

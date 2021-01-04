@@ -30,8 +30,6 @@ structure TermFormat :> sig
    *)
   val formatEnclosedList
       : 'a formatter * format * format * format -> 'a list formatter
-  val formatEnclosedListWithBound
-      : 'a formatter * format * format * format -> 'a list formatter
   val formatAppList
       : 'a formatter * format * format * format -> 'a list formatter
   val formatSeqList
@@ -257,36 +255,6 @@ struct
         $rparen
       end_
 *)
-
-  (* list format with bound and ellipsis *)
-  val ellipsis = [Term (4, ",...")]
-  fun formatEnclosedListWithBound (formatter, lparen, comma, rparen) elems =
-    let
-      val count = List.length elems
-      val (elems, hasEllipsis) =
-          if count > (!Control.printMaxOverloadInstances)
-          then (List.take(elems, !Control.printMaxOverloadInstances), true)
-          else (elems, false)
-    in
-      if hasEllipsis then 
-        begin_
-          $lparen
-          guard_ cutAssoc
-            $(intersperse [Sequence comma, sp] (map formatter elems))
-            $ellipsis
-            $rparen
-          end_
-        end_
-      else
-        begin_
-          $lparen
-          guard_ cutAssoc
-            $(intersperse [Sequence comma, sp] (map formatter elems))
-            $rparen
-          end_
-        end_
-    end
-
 
   fun formatAppList (formatter, lparen, comma, rparen) nil =
       Sequence lparen :: rparen

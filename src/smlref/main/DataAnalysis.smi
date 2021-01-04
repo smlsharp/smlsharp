@@ -1,0 +1,11 @@
+_require "basis.smi"
+_require "sql.smi"
+_require "reify.smi"
+_require "./DBSchema.smi"
+_require "./BasicData.smi"
+_require "./nestedMap.ppg.smi"
+
+structure DataAnalysis =
+struct
+  val listFiles : unit -> NestedMap.nest * string
+end

@@ -12,6 +12,9 @@ struct
   exception InstantiateFail
   exception GetConSetFail
 
+  fun eqOpt (SOME x) y = x = y
+    | eqOpt NONE y = true
+
   fun Undetermined string = raise Bug.Bug (string ^ " size undetremnined")
 
   (*%
@@ -199,7 +202,7 @@ struct
     | (*% @format({boxed,size}) "?DummyTy"*)
       DUMMYty of {boxed : bool, size : word}
     | (*% @format({boxed,size,id}) "EXISTty(" id ")" *)
-      EXISTty of {boxed : bool, size : word, id : int}
+      EXISTty of {boxed : bool option, size : word option, id : int}
     | (*% @format(ty) ty + "dyn" *)
       DYNAMICty of reifiedTy
     | (*% @format "?ERRORty" *)
@@ -229,12 +232,13 @@ struct
     | (*% @format(arg) arg + "list" *)
       LISTty of reifiedTy
     | (*% 
-         @format({longsymbol, id, args:ty tys, size}) 
+         @format({longsymbol, id, args:ty tys, boxed, size}) 
            tys(ty)(",") + longsymbol "(" id ")" 
        *)
       OPAQUEty of {longsymbol: Symbol.longsymbol, 
                    id:TypID.id, 
                    size : int,
+                   boxed : bool,
                    args: reifiedTy list
                   }
     | (*% @format(arg) arg + "option" *)
@@ -340,7 +344,8 @@ struct
       | CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => Word.fromInt size
       | DATATYPEty {longsymbol, id, args, layout, size} => Word.fromInt size
       | DUMMYty {boxed, size} => size
-      | EXISTty {boxed, size, id} => size
+      | EXISTty {boxed, size = SOME size, id} => size
+      | EXISTty {boxed, size = NONE, id} => Undetermined "EXISTty"
       | DYNAMICty _ => ptrSize
       | ERRORty =>  Undetermined "ERRORty"
       | EXNTAGty => ptrSize
@@ -366,10 +371,10 @@ struct
       | REFty reifiedTy => ptrSize
       | SENVMAPty _ => ptrSize
       | STRINGty => ptrSize
-      | VOIDty => intSize
       | TYVARty => Undetermined "TYVARty"
       | UNITty => intSize
       | VECTORty reifiedTy => ptrSize
+      | VOIDty => intSize
       | WORD16ty => word16Size
       | WORD64ty => word64Size
       | WORD8ty => word8Size
@@ -378,76 +383,76 @@ struct
   fun isGroundTy reifiedTy =
       case reifiedTy of
       ARRAYty reifiedTy => isGroundTy reifiedTy
-    | LISTty reifiedTy => isGroundTy reifiedTy
-    | OPTIONty reifiedTy => isGroundTy reifiedTy
-    | REFty reifiedTy => isGroundTy reifiedTy
-    | RECORDty reifiedTyRecordLabelMapmap => 
-      List.all isGroundTy (RecordLabel.Map.listItems reifiedTyRecordLabelMapmap)
     | BOOLty => true
-    | CHARty => true
-    | INT16ty => true
-    | INT64ty => true
-    | INT8ty => true
-    | INTINFty => true
-    | INT32ty => true
-    | REAL32ty => true
-    | REAL64ty => true
-    | RECORDLABELty  => true
-    | STRINGty => true
-    | UNITty  => true
-    | WORD16ty => true
-    | WORD64ty => true
-    | WORD8ty => true
-    | WORD32ty => true
     | BOTTOMty => false
-    | BOXEDty => false
     | BOUNDVARty _  => false
+    | BOXEDty => false
+    | CHARty => true
     | CODEPTRty => false
     | CONSTRUCTty _ => false
     | DATATYPEty _ => false
     | DUMMYty _ => false
-    | EXISTty _ => false
     | DYNAMICty _ => false
     | ERRORty => false
+    | EXISTty _ => false
     | EXNTAGty => false
     | EXNty => false
     | FUNMty _ => false
     | IENVMAPty _ => false
+    | INT16ty => true
+    | INT32ty => true
+    | INT64ty => true
+    | INT8ty => true
     | INTERNALty => false
+    | INTINFty => true
+    | LISTty reifiedTy => isGroundTy reifiedTy
     | OPAQUEty _ => false
+    | OPTIONty reifiedTy => isGroundTy reifiedTy
     | POLYty _ => false
     | PTRty _ => false
+    | REAL32ty => true
+    | REAL64ty => true
     | RECORDLABELMAPty _ => false
+    | RECORDLABELty  => true
+    | RECORDty reifiedTyRecordLabelMapmap => List.all isGroundTy (RecordLabel.Map.listItems reifiedTyRecordLabelMapmap)
+    | REFty reifiedTy => isGroundTy reifiedTy
     | SENVMAPty _ => false
+    | STRINGty => true
     | TYVARty => false
+    | UNITty  => true
     | VECTORty _ => false
     | VOIDty => false
+    | WORD16ty => true
+    | WORD32ty => true
+    | WORD64ty => true
+    | WORD8ty => true
 
   fun isBoxed reifiedTy = 
       case reifiedTy of
         ARRAYty reifiedTy => true
       | BOOLty => false
       | BOTTOMty => false
-      | BOXEDty => true
       | BOUNDVARty BoundTypeVarIDid => true
+      | BOXEDty => true
       | CHARty => false
       | CODEPTRty => false
       | CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => isBoxedLayout layout
       | DATATYPEty {longsymbol, id, args, layout, size} => isBoxedLayout layout
       | DUMMYty {boxed, size} => boxed
-      | EXISTty {boxed, size, id} => boxed
       | DYNAMICty _ => true
       | ERRORty =>  false
+      | EXISTty {boxed = SOME boxed, size, id} => boxed
+      | EXISTty {boxed = NONE, size, id} => Undetermined "EXISTty"
       | EXNTAGty => true
       | EXNty  => true
       | FUNMty _  => true
       | IENVMAPty _ => true
       | INT16ty => false
+      | INT32ty => false
       | INT64ty => false
       | INT8ty => false
       | INTERNALty => Undetermined "INTERNALty"
       | INTINFty => true
-      | INT32ty => false
       | LISTty reifiedTy => true
       | OPAQUEty {size,...} => true
       | OPTIONty reifiedTy => true
@@ -455,20 +460,20 @@ struct
       | PTRty reifiedTy  => false
       | REAL32ty  => false
       | REAL64ty => false
-      | RECORDLABELty => false
       | RECORDLABELMAPty _ => true
+      | RECORDLABELty => false
       | RECORDty reifiedTyLabelMap => true
       | REFty reifiedTy => true
       | SENVMAPty _ => true
       | STRINGty => true
-      | VOIDty => false
       | TYVARty => Undetermined "TYVARty"
       | UNITty => false
       | VECTORty reifiedTy => true
+      | VOIDty => false
       | WORD16ty => false
+      | WORD32ty =>  false
       | WORD64ty =>  false
       | WORD8ty =>  false
-      | WORD32ty =>  false
 
   fun reifiedTyEq' (ty1, ty2) =
       let
@@ -503,16 +508,14 @@ struct
             | (EXISTty {id=id1,boxed, size}, _) =>
               (case IEnv.find(idEnv, id1) of
                  NONE =>
-                 if (boxed andalso isBoxed ty2) orelse
-                    (not boxed andalso size = sizeOf ty2)
+                 if eqOpt boxed (isBoxed ty2) andalso eqOpt size (sizeOf ty2)
                  then IEnv.insert(idEnv, id1, ty2)
                  else raise NotEQ
                | SOME ty => eq equivEnv idEnv (ty, ty2))
             | (_, EXISTty {id=id2,boxed, size}) =>
               (case IEnv.find(idEnv, id2) of
                  NONE => 
-                 if (boxed andalso isBoxed ty1) orelse
-                    (not boxed andalso size = sizeOf ty1)
+                 if eqOpt boxed (isBoxed ty1) andalso eqOpt size (sizeOf ty1)
                  then IEnv.insert(idEnv, id2, ty1)
                  else raise NotEQ
                | SOME ty => eq equivEnv idEnv (ty1, ty))
@@ -825,8 +828,8 @@ struct
   fun longsymbolIdArgsLayoutListToDatatypeTy longsymbol id args layout size =
       DATATYPEty {longsymbol=longsymbol, id = id, args = args, layout=layout, size = size}
 
-  fun longsymbolIdArgsToOpaqueTy longsymbol id args size =
-      OPAQUEty {longsymbol=longsymbol, id = id, args = args, size = size}
+  fun longsymbolIdArgsToOpaqueTy longsymbol id args size boxed =
+      OPAQUEty {longsymbol=longsymbol, id = id, args = args, size = size, boxed=boxed}
 
   fun makePos true _ _ _ _ _ _ = Loc.NOPOS
     | makePos false isStdPath NONE line col pos gap =
@@ -840,5 +843,52 @@ struct
          col = col,
          pos = pos,
          gap = gap}
+
+  fun isBaseTy reifiedTy =
+      case reifiedTy of
+      ARRAYty reifiedTy => false
+    | BOOLty => true
+    | BOTTOMty => false
+    | BOUNDVARty _  => false
+    | BOXEDty => false
+    | CHARty => true
+    | CODEPTRty => false
+    | CONSTRUCTty _ => false
+    | DATATYPEty _ => false
+    | DUMMYty _ => false
+    | DYNAMICty _ => false
+    | ERRORty => false
+    | EXISTty _ => false
+    | EXNTAGty => false
+    | EXNty => false
+    | FUNMty _ => false
+    | IENVMAPty _ => false
+    | INT16ty => true
+    | INT32ty => true
+    | INT64ty => true
+    | INT8ty => true
+    | INTERNALty => false
+    | INTINFty => true
+    | LISTty reifiedTy =>  false
+    | OPAQUEty _ => false
+    | OPTIONty reifiedTy =>  false
+    | POLYty _ => false
+    | PTRty _ => false
+    | REAL32ty => true
+    | REAL64ty => true
+    | RECORDLABELMAPty _ => false
+    | RECORDLABELty  => true
+    | RECORDty reifiedTyRecordLabelMapmap =>  false
+    | REFty reifiedTy =>  false
+    | SENVMAPty _ => false
+    | STRINGty => true
+    | TYVARty => false
+    | UNITty  => true
+    | VECTORty _ => false
+    | VOIDty => false
+    | WORD16ty => true
+    | WORD32ty => true
+    | WORD64ty => true
+    | WORD8ty => true
 
 end

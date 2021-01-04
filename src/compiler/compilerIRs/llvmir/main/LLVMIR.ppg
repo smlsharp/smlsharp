@@ -643,7 +643,7 @@ struct
        * arg " = landingpad " argTy
        * cleanup:iftrue()(" cleanup",)
        * catches:ifcons()(" catch ",)
-       * catches(catch)(" catch ")
+       * catches(catch)(" catch ") \n
        * body
        *)
       LANDINGPAD of
@@ -694,8 +694,8 @@ struct
        * "("
        * args(arg)(", ")
        * ")"
-       * fnAttrs(fnAttr)(" ")
        * fnAttrs:ifcons()(" ",)
+       * fnAttrs(fnAttr)(" ")
        * " to label %" to
        * " unwind label %" unwind
        * resultOpt:ifsome()(\n "; (phi) " to ": " resultOpt(result),)

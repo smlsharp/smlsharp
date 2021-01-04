@@ -1,11 +1,15 @@
-_require local "./SMLSharp_Runtime.smi"
-_require "./General.smi"
-_require "./Time.smi"
+_require       "./General.smi"
+_require       "./Int32.smi"
 _require local "./IntInf.smi"
-_require "./Int32.smi"
-_require "./SMLSharp_OSIO.smi"
-_require local "../../smlnj/Basis/Unix/os-path.smi"
 _require local "./List.smi"
+_require       "./SMLSharp_OSIO.smi"
+_require local "./SMLSharp_Runtime.smi"
+_require       "./Time.smi"
+(*
+_require local "../../smlnj/Basis/OS/os-path-fn.smi"
+*)
+_require local "../../smlnj/Basis/Unix/os-path.smi"
+
 
 structure SMLSharp_OSFileSys =
 struct

@@ -1,5 +1,8 @@
 (* parser-comb-sig.sml
  *
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
+ *
  * COPYRIGHT (c) 1996 AT&T Research.
  *
  * Parser combinators over readers.  These are modeled after the Haskell

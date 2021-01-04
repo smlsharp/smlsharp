@@ -88,7 +88,7 @@ struct
     val compare = compare
   end
 
-  structure Map = BinaryMapFn(Ord)
+  structure Map = BinaryMapFn2(Ord)
   structure Set = BinarySetFn(Ord)
 
   fun check f n nil = true

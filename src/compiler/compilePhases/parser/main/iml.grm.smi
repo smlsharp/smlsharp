@@ -67,7 +67,7 @@ val THEN:  pos * pos -> token
 val SYMBOLICID: (string) *  pos * pos -> token
 val STRUCTURE:  pos * pos -> token
 val STRUCT:  pos * pos -> token
-val STRING: (string) *  pos * pos -> token
+val STRING: (string) * pos * pos -> token
 val SQLSERVER:  pos * pos -> token
 val SQLEXEC:  pos * pos -> token
 val SQLEVAL:  pos * pos -> token
@@ -81,6 +81,7 @@ val SHARING:  pos * pos -> token
 val SET:  pos * pos -> token
 val SEMICOLON:  pos * pos -> token
 val SELECT:  pos * pos -> token
+val SELECTOR: (string) * pos * pos -> token
 val RPAREN:  pos * pos -> token
 val ROWS:  pos * pos -> token
 val ROW:  pos * pos -> token
@@ -124,6 +125,7 @@ val DYNAMICTOP:  pos * pos -> token
 val DYNAMICNULL:  pos * pos -> token
 val DYNAMIC:  pos * pos -> token
 val EXTENDOP:  pos * pos -> token
+val UPDATEOP:  pos * pos -> token
 val JOINOP:  pos * pos -> token
 val JOIN:  pos * pos -> token
 val IS:  pos * pos -> token

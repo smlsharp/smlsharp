@@ -18,4 +18,6 @@ include "./thread.smi"
 include "./foreach.smi"
 include "./reify.smi"
 include "./compiler/extensions/reflection/main/TopEnvUtils.ppg.smi"
-include "./compiler/libs/list-utils/main/ListSorter.smi"
+(* 一時的に追加 *)
+include "./sql/main/PGSQLDynamic.smi"
+include "./compiler/compilePhases/toplevel/main/Top.smi"

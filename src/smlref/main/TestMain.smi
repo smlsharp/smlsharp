@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "compiler/compilePhases/analyzefiles/main/FileIDMap.smi"
+_require "./Config.smi"
+_require "./BasicData.smi"
+_require "./IntStringMap.smi"
+_require "./IntIntStringMap.smi"
+_require "./IntIntIntStringMap.smi"
+_require "./nestedMap.ppg.smi"
+_require "./BasicData.smi"
+
+

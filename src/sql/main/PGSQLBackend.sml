@@ -29,7 +29,8 @@ struct
       in
         if s = PGSQL.PGRES_COMMAND_OK orelse s = PGSQL.PGRES_TUPLES_OK
         then ()
-        else raise Exec (if r = SMLSharp_Builtin.Pointer.null () then "NULL"
+        else 
+          raise Exec (if r = SMLSharp_Builtin.Pointer.null () then "NULL"
                          else (PGSQL.PQclear () r;
                                PGSQL.getErrorMessage conn));
         {result = r, rowIndex = ref ~1, numRows = PGSQL.PQntuples () r}
@@ -161,8 +162,8 @@ struct
       | SMLSharp_SQL_BackendTy.WORD => ""
       | SMLSharp_SQL_BackendTy.CHAR => ""
       | SMLSharp_SQL_BackendTy.STRING => "TEXT"
-      | SMLSharp_SQL_BackendTy.REAL => "FLOAT4"
-      | SMLSharp_SQL_BackendTy.REAL32 => "FLOAT8"
+      | SMLSharp_SQL_BackendTy.REAL32 => "FLOAT4"
+      | SMLSharp_SQL_BackendTy.REAL => "FLOAT8"
       | SMLSharp_SQL_BackendTy.BOOL => "BOOLEAN"
       | SMLSharp_SQL_BackendTy.TIMESTAMP => "TIMESTAMP"
       | SMLSharp_SQL_BackendTy.NUMERIC => "NUMERIC"

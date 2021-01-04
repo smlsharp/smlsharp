@@ -19,6 +19,7 @@ struct
   datatype exp =
       Exp of TypedLambda.tlexp * Types.ty
     | Const of TypedLambda.tlconst
+    | Int of TypedLambda.tlint
     | Int8 of int
     | Int16 of int
     | Int32 of int
@@ -44,7 +45,7 @@ struct
     | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
     | If of exp * exp * exp
     | Andalso of exp list
-    | Switch of exp * (TypedLambda.tlconst * exp) list * exp
+    | Switch of exp * (TypedLambda.tlint * exp) list * exp
     | Raise of Types.exExnInfo * Types.ty
     | Fn of vid * Types.ty * exp
     | App of exp * exp
@@ -66,8 +67,8 @@ struct
       | L.TLINDEXOF _ => true
       | L.TLREIFYTY _ => true
       | L.TLCONSTANT _ => true
+      | L.TLINT _ => true
       | L.TLSTRING _ => true
-      | L.TLFOREIGNSYMBOL _ => true
       | L.TLVAR _ => true
       | L.TLEXVAR _ => false
       | L.TLPRIMAPPLY _ => false
@@ -268,7 +269,7 @@ struct
 
   fun Vector_alloc_unsafe (elemTy, lenExp) =
       polyPrimApp (P.R P.Vector_alloc_unsafe,
-                   fn t => [B.int32Ty], fn t => arrayTy t,
+                   fn t => [B.int32Ty], fn t => vectorTy t,
                    elemTy,
                    [lenExp])
 
@@ -400,6 +401,15 @@ struct
       | Const const =>
         (L.TLCONSTANT (const, loc),
          case const of
+           L.REAL64 _ => B.real64Ty
+         | L.REAL32 _ => B.real32Ty
+         | L.UNIT => B.unitTy
+         | L.NULLPOINTER => T.CONSTRUCTty {tyCon = B.ptrTyCon, args= [B.unitTy]}
+         | L.NULLBOXED => B.boxedTy
+         | L.FOREIGNSYMBOL {name, ty} => ty)
+      | Int const =>
+        (L.TLINT (const, loc),
+         case const of
            L.INT8 _ => B.int8Ty
          | L.INT16 _ => B.int16Ty
          | L.INT32 _ => B.int32Ty
@@ -409,32 +419,27 @@ struct
          | L.WORD32 _ => B.word32Ty
          | L.WORD64 _ => B.word64Ty
          | L.CONTAG _ => B.contagTy
-         | L.REAL64 _ => B.real64Ty
-         | L.REAL32 _ => B.real32Ty
-         | L.CHAR _ => B.charTy
-         | L.UNIT => B.unitTy
-         | L.NULLPOINTER => T.CONSTRUCTty {tyCon = B.ptrTyCon, args= [B.unitTy]}
-         | L.NULLBOXED => B.boxedTy)
+         | L.CHAR _ => B.charTy)
       | Int8 n =>
-        (L.TLCONSTANT (L.INT8 (Int8.fromInt n), loc), B.int8Ty)
+        (L.TLINT (L.INT8 (Int8.fromInt n), loc), B.int8Ty)
       | Int16 n =>
-        (L.TLCONSTANT (L.INT16 (Int16.fromInt n), loc), B.int16Ty)
+        (L.TLINT (L.INT16 (Int16.fromInt n), loc), B.int16Ty)
       | Int32 n =>
-        (L.TLCONSTANT (L.INT32 (Int32.fromInt n), loc), B.int32Ty)
+        (L.TLINT (L.INT32 (Int32.fromInt n), loc), B.int32Ty)
       | Int64 n =>
-        (L.TLCONSTANT (L.INT64 (Int64.fromInt n), loc), B.int64Ty)
+        (L.TLINT (L.INT64 (Int64.fromInt n), loc), B.int64Ty)
       | Word8 n =>
-        (L.TLCONSTANT (L.WORD8 (Word8.fromInt n), loc), B.word8Ty)
+        (L.TLINT (L.WORD8 (Word8.fromInt n), loc), B.word8Ty)
       | Word16 n =>
-        (L.TLCONSTANT (L.WORD16 (Word16.fromInt n), loc), B.word16Ty)
+        (L.TLINT (L.WORD16 (Word16.fromInt n), loc), B.word16Ty)
       | Word32 n =>
-        (L.TLCONSTANT (L.WORD32 (Word32.fromInt n), loc), B.word32Ty)
+        (L.TLINT (L.WORD32 (Word32.fromInt n), loc), B.word32Ty)
       | Word64 n =>
-        (L.TLCONSTANT (L.WORD64 (Word64.fromInt n), loc), B.word64Ty)
+        (L.TLINT (L.WORD64 (Word64.fromInt n), loc), B.word64Ty)
       | Char n =>
-        (L.TLCONSTANT (L.CHAR (chr n), loc), B.charTy)
+        (L.TLINT (L.CHAR (chr n), loc), B.charTy)
       | ConTag n =>
-        (L.TLCONSTANT (L.CONTAG (Word32.fromInt n), loc), B.contagTy)
+        (L.TLINT (L.CONTAG (Word32.fromInt n), loc), B.contagTy)
       | Real64 n =>
         (L.TLCONSTANT (L.REAL64 n, loc), B.real64Ty)
       | Real32 n =>
@@ -529,7 +534,7 @@ struct
         end
       | Fn (vid, argTy, exp) =>
         let
-          val argVar = {id = vid, ty = argTy, path = [Symbol.generate ()]}
+          val argVar = {id = vid, ty = argTy, path = nil}
           val argExp = L.TLVAR (argVar, loc)
           val env = VarID.Map.insert (env, vid, (argExp, argTy))
           val (exp, bodyTy) = emitExp loc env exp
@@ -566,7 +571,7 @@ struct
           else
             let
               val varInfo =
-                  {id = vid, ty = ty1, path = [Symbol.generate ()]}
+                  {id = vid, ty = ty1, path = nil}
               val varExp = L.TLVAR (varInfo, loc)
               val env = VarID.Map.insert (env, vid, (varExp, ty1))
               val (exp2, ty2) = emitExp loc env exp2
@@ -603,12 +608,12 @@ struct
                          (fn (label, x, z) => RecordLabel.Map.insert (z, label, x))
                          RecordLabel.Map.empty
                          (labels, exps)
-          val recordTy = T.RECORDty (RecordLabel.Map.map #2 fields)
+          val recordTy = RecordLabel.Map.map #2 fields
         in
           (L.TLRECORD {fields = RecordLabel.Map.map #1 fields,
                        recordTy = recordTy,
                        loc = loc},
-           recordTy)
+           T.RECORDty recordTy)
         end
       | Select (label, exp) =>
         let

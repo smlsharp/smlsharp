@@ -60,10 +60,12 @@ struct
   fun closeCommand (r as Backend.R res) =
       if #fetch res () then closeCommand r else #closeRes res ()
 
+  fun dummyCursor _ = CURSOR (ref NONE)
+
+  fun newCursor readFn res = CURSOR (ref (SOME (res, SOME readFn)))
+
   fun queryCommand (QUERYty (ast, toy, readFn)) =
-      COMMANDty (Ast.QUERY_COMMAND ast,
-                 fn {} => CURSOR (ref NONE),
-                 fn res => CURSOR (ref (SOME (res, SOME readFn))))
+      COMMANDty (Ast.QUERY_COMMAND ast, dummyCursor, newCursor readFn)
 
   fun sqlserver_string (desc, (schema, toy)) =
       SERVER (schema, toy, Backend.default desc)
@@ -309,7 +311,10 @@ struct
   val compare_string = String.compare
   val compare_real = Real.compare
   val compare_real32 = Real32.compare
+  val compare_timestamp = SMLSharp_SQL_TimeStamp.compare
+(*
   val compare_timestamp = TimeStamp.compare
+*)
   val compare_numeric = Numeric.compare
   fun compare_intOption x = cmpOpt Int.compare x
   fun compare_intInfOption x = cmpOpt IntInf.compare x

@@ -25,7 +25,7 @@ struct
   type primInfo =
       {primitive : BuiltinPrimitive.primitiveTypedLambda, ty : primTy}
 
-  datatype tlconst =
+  datatype tlint =
       INT8 of Int8.int
     | INT16 of Int16.int
     | INT32 of Int32.int
@@ -35,12 +35,15 @@ struct
     | WORD32 of Word32.word
     | WORD64 of Word64.word
     | CONTAG of Word32.word
-    | REAL64 of Real64.real
-    | REAL32 of Real32.real
     | CHAR of Char.char
+
+  datatype tlconst =
+      REAL64 of Real64.real
+    | REAL32 of Real32.real
     | UNIT
     | NULLPOINTER
     | NULLBOXED
+    | FOREIGNSYMBOL of {name : string, ty : ty}
 
   datatype tlstring =
       STRING of string
@@ -48,6 +51,7 @@ struct
 
   datatype tlexp =
       TLCONSTANT of tlconst * loc
+    | TLINT of tlint * loc
     | TLSTRING of tlstring * loc
     | TLVAR of varInfo * loc
     | TLEXVAR of exVarInfo * loc
@@ -69,7 +73,7 @@ struct
       {
         exp : tlexp,
         expTy : ty,
-        branches : {const : tlconst, body : tlexp} list,
+        branches : {const : tlint, body : tlexp} list,
         defaultExp : tlexp,
         resultTy : ty,
         loc : loc
@@ -99,7 +103,7 @@ struct
     | TLRECORD of
       {
         fields : tlexp RecordLabel.Map.map,
-        recordTy : ty,
+        recordTy : ty RecordLabel.Map.map,
         loc : loc
       }
     | TLSELECT of
@@ -170,7 +174,6 @@ struct
         instTyList : ty list,
         loc : loc
       }
-    | TLFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
     | TLFOREIGNAPPLY of
       {
         funExp : tlexp,
@@ -239,6 +242,8 @@ struct
   val formatWithType_varInfo : varInfo -> SMLFormat.format
   val format_primInfo : primInfo -> SMLFormat.format
   val formatWithType_primInfo : primInfo -> SMLFormat.format
+  val format_tlint : tlint -> SMLFormat.format
+  val formatWithType_tlint : tlint -> SMLFormat.format
   val format_tlconst : tlconst -> SMLFormat.format
   val formatWithType_tlconst : tlconst -> SMLFormat.format
   val format_tlstring : tlstring -> SMLFormat.format

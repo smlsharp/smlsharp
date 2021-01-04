@@ -1,9 +1,9 @@
-_require local "./SMLSharp_Runtime.smi"
-_require "./General.smi"
+_require       "./General.smi"
 _require local "./IntInf.smi"
-_require "./Time.smi"
-_require "./Word8ArraySlice.smi"
-_require "./Word8VectorSlice.smi"
+_require local "./SMLSharp_Runtime.smi"
+_require       "./Time.smi"
+_require       "./Word8ArraySlice.smi"
+_require       "./Word8VectorSlice.smi"
 
 structure SMLSharp_OSIO =
 struct

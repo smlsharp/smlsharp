@@ -1144,6 +1144,14 @@ struct
     
   and
   (*%
+    @format(code * ty)
+     "(type inference" + code ")" +d
+     "record" + "update" + "operand" + "must" + "have" + "a ground" + "record" + "type:" +d ty
+   *)
+  RecordUpdateMustHaveGroundRecordType of string * Types.ty
+
+  and
+  (*%
     @format(ty)
     "(type inferene)" +d
     "invalid" +d "kind" +d "for" +d "existential" +d "type:" +d ty

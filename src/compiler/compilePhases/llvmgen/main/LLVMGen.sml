@@ -80,7 +80,7 @@ print
         end
 
   val maxSize =
-      RuntimeTypes.getSize TypeLayout2.maxSize
+      RuntimeTypes.getSize RuntimeTypes.maxSize
 
   fun pointerSize () =
       RuntimeTypes.getSize (#size RuntimeTypes.recordTy)
@@ -847,11 +847,9 @@ print
       | M.NVNULLPOINTER => L.NULL
       | M.NVNULLBOXED => L.NULL
       | M.NVTAG {tag, ty} =>
-        L.INTCONST (Word64.fromInt (TypeLayout2.tagValue tag))
+        L.INTCONST (Word64.fromInt (RuntimeTypes.tagValue tag))
       | M.NVSIZE {size, ty} =>
-        L.INTCONST (Word64.fromInt (TypeLayout2.sizeValue size))
-      | M.NVINDEX {index, label, ty} =>
-        L.INTCONST (Word64.fromInt (Word.toInt index))
+        L.INTCONST (Word64.fromInt (RuntimeTypes.getSize size))
       | M.NVFOREIGNSYMBOL {name, ty} =>
         let
           val cconv =

@@ -20,11 +20,17 @@ _require "./ReifiedTy.ppg.smi"
 
 structure ReifyTy =
 struct
+(*
   val ReifiedTy : Loc.loc -> ReifiedTy.reifiedTy -> {exp:TypedCalc.tpexp, ty:Types.ty}
   val ReifiedTyWithLookUp 
-      : (BoundTypeVarID.id -> {id:VarID.id, path:Symbol.longsymbol, ty:Types.ty} option) -> Loc.loc -> ReifiedTy.reifiedTy -> {exp:TypedCalc.tpexp, ty:Types.ty}
+      : (BoundTypeVarID.id -> {id:VarID.id, path:Symbol.longsymbol, ty:Types.ty} option)
+        -> Loc.loc -> ReifiedTy.reifiedTy -> {exp:TypedCalc.tpexp, ty:Types.ty}
+  val RecordTy : Loc.loc
+                 -> ReifiedTy.reifiedTy RecordLabel.Map.map
+                 -> {exp:TypedCalc.tpexp, ty:Types.ty}
+*)
   val TyRep  : Loc.loc -> ReifiedTy.tyRep -> {exp:TypedCalc.tpexp, ty:Types.ty}
   val TyRepWithLookUp
-      : (BoundTypeVarID.id -> {id:VarID.id, path:Symbol.longsymbol, ty:Types.ty} option) -> Loc.loc -> ReifiedTy.tyRep -> {exp:TypedCalc.tpexp, ty:Types.ty}
-  val RecordTy : Loc.loc -> ReifiedTy.reifiedTy RecordLabel.Map.map -> {exp:TypedCalc.tpexp, ty:Types.ty}
+      : (BoundTypeVarID.id -> {id:VarID.id, path:Symbol.longsymbol, ty:Types.ty} option)
+        -> Loc.loc -> ReifiedTy.tyRep -> {exp:TypedCalc.tpexp, ty:Types.ty}
 end

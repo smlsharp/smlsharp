@@ -1,0 +1,25 @@
+_require "../../basis.smi"
+
+structure HashTableRep =
+struct
+  datatype ('a, 'b) bucket = NIL | B of word * 'a * 'b * ('a, 'b) bucket
+  type ('a, 'b) table = ('a, 'b) bucket array
+  val alloc : int -> ('a, 'b) table
+  val growTable : ('a, 'b) table * int -> ('a, 'b) table
+  val growTableIfNeeded : ('a, 'b) table ref * int -> bool
+  val clear : ('a, 'b) table -> unit
+  val listItems  : ('a, 'b) table * int ref -> 'b list
+  val listItemsi : ('a, 'b) table * int ref -> ('a * 'b) list
+  val appi : ('a * 'b -> 'c) -> ('a, 'b) table -> unit
+  val app : ('a -> 'b) -> ('c, 'a) table -> unit
+  val mapi : ('a * 'b -> 'c) -> ('a, 'b) table -> ('a, 'c) table
+  val map : ('a -> 'b) -> ('c, 'a) table -> ('c, 'b) table
+  val foldi : ('a * 'b * 'c -> 'c) -> 'c -> ('a, 'b) table -> 'c
+  val fold : ('a * 'b -> 'b) -> 'b -> ('c, 'a) table -> 'b
+  val modify  : ('b -> 'b) -> ('a, 'b) table -> unit
+  val modifyi : ('a * 'b -> 'b) -> ('a, 'b) table -> unit
+  val filteri : ('a * 'b -> bool) -> ('a, 'b) table -> int
+  val filter : ('a -> bool) -> ('b,'a) table -> int
+  val copy : ('a, 'b) table -> ('a, 'b) table
+  val bucketSizes : ('a, 'b) table -> int list
+end

@@ -16,6 +16,7 @@ struct
   datatype stopAt =
       SyntaxCheck                   (* run until syntax check is completed. *)
     | ErrorCheck                    (* run until error check is completed. *)
+    | NameRef                       (* run until name reference is completed. *)
     | NoStop
 
   type options =

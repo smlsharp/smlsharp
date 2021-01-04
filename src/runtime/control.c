@@ -114,6 +114,9 @@ struct sml_worker {
 	 *   PTHREAD_FLAG  - このスレッドはMassiveThreadのワーカーではない
 	 *   CANCELED_FLAG - このスレッドはキャンセルされた（終了された）
 	 *   DEAD_FLAG - このスレッドの全ての資源は解放された（削除できる）
+	 *   GLOBALENUM_FLAG - グローバル変数の列挙をする責任を持っている
+	 *                     worker_sync1でセットされworker_sync2でリセット
+	 *                     される
 	 */
 	_Atomic(unsigned int) flags;
 	/* このワーカーコンテキストに属するユーザーコンテキストのリスト．
@@ -179,6 +182,7 @@ struct sml_worker {
 #define BUSY_FLAG        0x01U
 #define CANCELED_FLAG    0x02U
 #define DEAD_FLAG        0x04U
+#define GLOBALENUM_FLAG  0x08U
 #define PTHREAD_FLAG     0x10U
 #define IS_PTHREAD(worker) (load_relaxed(&(worker)->flags) & PTHREAD_FLAG)
 
@@ -610,7 +614,8 @@ leave_worker(struct sml_worker *worker)
 	old = fetch_or(release, &worker->state, INACTIVE_STATE | 1);
 
 	/* アンロックと同時にSYNC1およびSYNC2フェーズに進んだ場合は
-	 * アクションを実行する．*/
+	 * アクションを実行する．ヘルパが入る可能性があるためgreedyには
+	 * できない */
 	switch(old) {
 	case ACTIVE(PREASYNC):
 		worker_async(worker);
@@ -1215,8 +1220,10 @@ change_phase(struct sml_worker *workers,
 			if (i != &workers) {
 //DBG("change_phase dead2 %p", worker);
 				*i = worker->next;
-				continue;
+			} else {
+				i = &worker->next;
 			}
+			continue;
 		}
 
 		/* フェーズ部分にXORをかけることで，INACTIVE_STATEに影響を
@@ -1269,13 +1276,16 @@ help_inactive(struct sml_worker *helper)
 
 	for (worker = workers; worker; worker = worker->next) {
 //DBG("help_inactive check worker=%p", worker);
-		old_state = load_relaxed(&worker->state);
+		/* 死んでいるワーカーの手伝いをしない */
+		if (load_relaxed(&worker->flags) & DEAD_FLAG)
+			continue;
 		/* 1と論理和を取るとPRE付きフェーズがPREなしフェーズに進む．
 		 * 逆に~1と論理積を取るとPREなしフェーズがPRE付きフェーズに
 		 * 戻る．PREなしフェーズの場合は何も起こらない．
 		 * そうなるようにフェーズ定数が定義されている．
 		 * この性質を利用して，PRE付きフェーズでINACTIVEなステートを
 		 * 持つワーカーのみをworkers_handshakeに残す．*/
+		old_state = load_relaxed(&worker->state);
 		if (old_state != INACTIVE(old_state & ~1)) {
 //DBG("help_inactive worker=%p old_state %02x != %02x", worker, old_state, INACTIVE(old_state & ~1));
 			continue;
@@ -1449,21 +1459,24 @@ worker_sync1(struct sml_worker *worker, int greedy)
 	if (fetch_sub(acq_rel, &sml_check_flag, 1) == 1) {
 		/* 全てのワーカーが応答したとき，最後に応答したワーカーが
 		 * 全体を次のフェーズに進める．*/
+		/* 最後にSYNC1に応答したワーカーがSYNC2でグローバル変数を
+		 * 列挙する */
+		fetch_or(relaxed, &worker->flags, GLOBALENUM_FLAG);
 #ifdef GCTIME
 		sml_timer_now(gctime.sync2_start);
 #endif
 //DBG("SYNC2");
 		workers = global_phase(SYNC2);
 		count = change_phase(workers, SYNC1, PRESYNC2);
+		/* この関数がleave_workerから呼ばれていてかつここに到達した
+		 * とき，他のスレッドがヘルパとしてworkerにアクセスしている
+		 * 可能性がある．greedyが0ならばここ以降workerにアクセスしては
+		 * ならない */
 		/* countをsml_check_flagに加える．コピーではないことに注意．
 		 * すでにワーカーのフェーズはPRESYNC2になっているので，
 		 * ここでsml_check_flagを増やす前にsml_check_flagが
 		 * 負になっている可能性がある．*/
 		fetch_add(relaxed, &sml_check_flag, count);
-		/* グローバル変数の列挙を行う．この分だけこのワーカースレッドの
-		 * 負担が増えてしまうが仕方がない */
-//DBG("sml_heap_global_sync2 worker=%p", worker);
-		sml_heap_global_sync2(worker->allocator);
 
 		if (greedy) {
 			/* 自分のsync2アクションはここでやってしまう */
@@ -1561,6 +1574,14 @@ worker_sync2(struct sml_worker *worker, int greedy)
 //DBG("sml_heap_worker_sync2 worker=%p alloc=%p", worker, worker->allocator);
 	sml_heap_worker_sync2(worker, worker->allocator);
 
+	/* グローバル変数を列挙する責任を持っているならば，
+	 * グローバル変数の列挙を行う．この分だけこのワーカースレッドの
+	 * 負担が増えてしまうが仕方がない */
+	if (load_relaxed(&worker->flags) & GLOBALENUM_FLAG) {
+		sml_heap_global_sync2(worker->allocator);
+		fetch_and(relaxed, &worker->flags, ~GLOBALENUM_FLAG);
+	}
+
 #ifdef GCHIST
 	sml_timer_now(t2);
 	sml_timer_dif(t1, t2, t);
@@ -1588,6 +1609,10 @@ worker_sync2(struct sml_worker *worker, int greedy)
 //DBG("MARK");
 		workers = global_phase(MARK);
 		count = change_phase(workers, SYNC2, PREMARK);
+		/* この関数がleave_workerから呼ばれていてかつここに到達した
+		 * とき，他のスレッドがヘルパとしてworkerにアクセスしている
+		 * 可能性がある．greedyが0ならばここ以降workerにアクセスしては
+		 * ならない */
 		/* countをsml_check_flagに加える．コピーではないことに注意．
 		 * すでにワーカーのフェーズはPREMARKになっているので，
 		 * ここでsml_check_flagを増やす前にsml_check_flagが
@@ -1652,6 +1677,10 @@ worker_mark(struct sml_worker *worker, int greedy)
 //DBG("ASYNC");
 			workers = global_phase(ASYNC);
 			count = change_phase(workers, MARK, PREASYNC);
+			/* この関数がleave_workerから呼ばれていてかつここに
+			 * 到達したとき，他のスレッドがヘルパとしてworkerに
+			 * アクセスしている可能性がある．greedyが0ならばここ
+			 * 以降workerにアクセスしてはならない */
 			/* countをsml_check_flagに加える．コピーではないことに
 			 * 注意．すでにワーカーのフェーズはPREASYNCになっている
 			 * ので，ここでsml_check_flagを増やす前にsml_check_flag
@@ -1676,6 +1705,10 @@ worker_mark(struct sml_worker *worker, int greedy)
 #endif
 			workers = global_phase(MARK);
 			count = change_phase(workers, MARK, PREMARK);
+			/* この関数がleave_workerから呼ばれていてかつここに
+			 * 到達したとき，他のスレッドがヘルパとしてworkerに
+			 * アクセスしている可能性がある．greedyが0ならばここ
+			 * 以降workerにアクセスしてはならない */
 			/* countをsml_check_flagに加える．
 			 * コピーではないことに注意．
 			 * すでにワーカーのフェーズはPREMARKになっているので，

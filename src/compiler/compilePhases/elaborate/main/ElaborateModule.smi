@@ -6,6 +6,7 @@ _require local "./ElaborateCore.smi"
 _require local "./ElaborateError.ppg.smi"
 
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
@@ -14,7 +15,7 @@ structure ElaborateModule =
   struct
     val elabSigExp : Absyn.sigexp -> PatternCalc.plsigexp
     val elabTopDecs
-        : Fixity.fixity SymbolEnv.map
+        : (Fixity.fixity * Loc.loc) SymbolEnv.map
           -> Absyn.topdec list
-          -> PatternCalc.pltopdec list * Fixity.fixity SymbolEnv.map
+          -> PatternCalc.pltopdec list * (Fixity.fixity * Loc.loc) SymbolEnv.map
   end

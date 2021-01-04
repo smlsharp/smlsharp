@@ -7,16 +7,12 @@ _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/SEnv.smi"
 _require local "../../../libs/list-utils/main/ListSorter.smi"
 
-_require local "../../../data/control/main/Control.smi"
-
 structure TermFormat =
 struct
   type format = SMLFormat.FormatExpression.expression list
   type 'a formatter = 'a -> format
   type 'a formatParam = 'a list
   val formatEnclosedList
-      : 'a formatter * format * format * format -> 'a list formatter
-  val formatEnclosedListWithBound
       : 'a formatter * format * format * format -> 'a list formatter
   val formatAppList
       : 'a formatter * format * format * format -> 'a list formatter

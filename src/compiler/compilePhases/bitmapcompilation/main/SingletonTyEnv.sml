@@ -6,35 +6,20 @@
  * @author Huu-Duc Nguyen
  * @author Atsushi Ohori
  *)
-structure SingletonTyEnv2 :> sig
-
-  type env
-
-  val emptyEnv : env
-  val bindTyvar : env * BoundTypeVarID.id * Types.kind -> env
-  val bindTyvars : env * Types.btvEnv -> env
-  val bindVar : env * RecordLayoutCalc.varInfo -> env
-  val bindVars : env * RecordLayoutCalc.varInfo list -> env
-
-  val btvEnv : env -> Types.btvEnv
-  val constTag : env -> Types.ty -> RuntimeTypes.tag option
-  val constSize : env -> Types.ty -> RuntimeTypes.size option
-  val unalignedSize : env -> Types.ty -> RuntimeTypes.size
-  val findTag : env -> Types.ty -> RecordLayoutCalc.value
-  val findSize : env -> Types.ty -> RecordLayoutCalc.value
-
-end =
+structure SingletonTyEnv2 =
 struct
 
   structure T = Types
   structure R = RuntimeTypes
-  type varInfo = RecordLayoutCalc.varInfo
+  type varInfo = RecordCalc.varInfo
 
   datatype entry =
       SIZEty of BoundTypeVarID.id
     | TAGty of BoundTypeVarID.id
 
-  datatype value = datatype RecordLayoutCalc.value
+  datatype 'a value =
+      VAR of RecordCalc.varInfo
+    | VAL of 'a
 
   type env =
       {
@@ -124,12 +109,12 @@ struct
 
   fun unalignedSize env ty =
       case constSize env ty of
-        NONE => TypeLayout2.maxSize
+        NONE => RuntimeTypes.maxSize
       | SOME n => n
 
   fun findTag (env as {tagEnv, ...}) ty =
       case constTag env ty of
-        SOME tag => TAG (ty, tag)
+        SOME tag => VAL tag
       | NONE =>
         case TypesBasics.derefTy ty of
           T.BOUNDVARty tid =>
@@ -142,7 +127,7 @@ struct
 
   fun findSize (env as {sizeEnv,...}) ty =
       case constSize env ty of
-        SOME size => SIZE (ty, size)
+        SOME size => VAL size
       | NONE =>
         case TypesBasics.derefTy ty of
           T.BOUNDVARty tid =>

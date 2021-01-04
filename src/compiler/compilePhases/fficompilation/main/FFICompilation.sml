@@ -319,10 +319,10 @@ struct
        *)
       let
         val NaturalJoin =
-            if isJoin then RyU.MonoVar (U.REIFY_exInfo_naturalJoin ())
-            else RyU.MonoVar (U.REIFY_exInfo_extend ())
+            if isJoin then RyU.MonoVar loc (U.REIFY_exInfo_naturalJoin loc)
+            else RyU.MonoVar loc (U.REIFY_exInfo_extend loc)
         fun ToReifiedTerm instTy =
-            RyU.InstVar {exVarInfo = U.REIFY_exInfo_toReifiedTerm (),
+            RyU.InstVar loc {exVarInfo = U.REIFY_exInfo_toReifiedTerm loc,
                          instTy = instTy}
         val Arg1 = {exp = compileExp arg1, ty= argTy1}
         val Arg2 = {exp = compileExp arg2, ty= argTy2}
@@ -330,7 +330,7 @@ struct
         val Term2 = RyU.Apply loc (ToReifiedTerm argTy2) Arg2
         val JoinedTerm = RyU.Apply loc NaturalJoin (RyU.Pair loc Term1 Term2)
         val ReifiedTermToML =
-            RyU.InstVar {exVarInfo = U.REIFY_exInfo_reifiedTermToML (),
+            RyU.InstVar loc {exVarInfo = U.REIFY_exInfo_reifiedTermToML loc,
                          instTy = resultTy}
       in
         #exp (RyU.Apply loc ReifiedTermToML JoinedTerm)
@@ -503,7 +503,7 @@ struct
                                 loc
                                 {resultTy=ty, args=args, argTys=argtys},
                         ty = ty}
-            val exnCon = C.EXEXN (U.REIFY_exExnInfo_NaturalJoin ())
+            val exnCon = C.EXEXN (U.REIFY_exExnInfo_NaturalJoin loc)
           in
             HandleAndReRaise loc exnCon Body
           end
@@ -513,14 +513,21 @@ struct
                          {resultTy=ty, args=args, argTys=argtys}
       | C.TPDYNAMIC {exp, ty, elemTy, coerceTy, loc} =>
         let
-          fun TypeOf loc ty = {exp = C.TPREIFYTY (ty, loc),
-                               ty = RyD.TyRepTy()}
-          val exnCon = C.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError ())
+          fun TypeOf loc ty =
+              let
+                val tyRepTy = RyD.TyRepTy loc
+              in
+                {exp = C.TPCAST ((C.TPREIFYTY (ty, loc),
+                                  T.SINGLETONty (T.REIFYty ty)),
+                                 tyRepTy, loc),
+                 ty = tyRepTy}
+              end
+          val exnCon = C.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError loc)
           val Body =
               RyU.Apply
                 loc
-                (RyU.InstListVar
-                   {exVarInfo = U.REIFY_exInfo_coerceTermGeneric (),
+                (RyU.InstListVar loc
+                   {exVarInfo = U.REIFY_exInfo_coerceTermGeneric loc,
                     instTyList = [elemTy, coerceTy]})
                 (RyU.Pair loc {exp=exp,ty=ty} (TypeOf loc coerceTy))
         in
@@ -528,14 +535,21 @@ struct
         end
       | C.TPDYNAMICIS {exp, ty, elemTy, coerceTy, loc} =>
         let
-          fun TypeOf loc ty = {exp = C.TPREIFYTY (ty, loc),
-                               ty = RyD.TyRepTy()}
-          val exnCon = C.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError ())
+          fun TypeOf loc ty =
+              let
+                val tyRepTy = RyD.TyRepTy loc
+              in
+                {exp = C.TPCAST ((C.TPREIFYTY (ty, loc),
+                                  T.SINGLETONty (T.REIFYty ty)),
+                                 tyRepTy, loc),
+                 ty = tyRepTy}
+              end
+          val exnCon = C.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError loc)
           val Body =
               RyU.Apply
                 loc
-                (RyU.InstListVar
-                   {exVarInfo = U.REIFY_exInfo_checkTermGeneric (),
+                (RyU.InstListVar loc
+                   {exVarInfo = U.REIFY_exInfo_checkTermGeneric loc,
                     instTyList = [elemTy]})
                 (RyU.Pair loc {exp=exp,ty=ty} (TypeOf loc coerceTy))
         in
@@ -543,13 +557,20 @@ struct
         end
       | C.TPDYNAMICVIEW {exp, ty, elemTy, coerceTy, loc} =>
         let
-          fun TypeOf loc ty = {exp = C.TPREIFYTY (ty, loc),
-                               ty = RyD.TyRepTy()}
-          val exnCon = C.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError ())
+          fun TypeOf loc ty =
+              let
+                val tyRepTy = RyD.TyRepTy loc
+              in
+                {exp = C.TPCAST ((C.TPREIFYTY (ty, loc),
+                                  T.SINGLETONty (T.REIFYty ty)),
+                                 tyRepTy, loc),
+                 ty = tyRepTy}
+              end
+          val exnCon = C.EXEXN (U.REIFY_exExnInfo_RuntimeTypeError loc)
           val Body =
               RyU.Apply
                 loc
-                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_viewTermGeneric (),
+                (RyU.InstListVar loc {exVarInfo = U.REIFY_exInfo_viewTermGeneric loc,
                                   instTyList = [elemTy, coerceTy]})
                 (RyU.Pair loc {exp=exp,ty=ty} (TypeOf loc coerceTy))
         in
@@ -557,12 +578,19 @@ struct
         end
       | C.TPDYNAMICNULL {ty, coerceTy, loc} =>
         let
-          fun TypeOf loc ty = {exp = C.TPREIFYTY (ty, loc),
-                               ty = RyD.TyRepTy()}
+          fun TypeOf loc ty =
+              let
+                val tyRepTy = RyD.TyRepTy loc
+              in
+                {exp = C.TPCAST ((C.TPREIFYTY (ty, loc),
+                                  T.SINGLETONty (T.REIFYty ty)),
+                                 tyRepTy, loc),
+                 ty = tyRepTy}
+              end
           val {exp,...} =
               RyU.Apply
                 loc
-                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_null (),
+                (RyU.InstListVar loc {exVarInfo = U.REIFY_exInfo_null loc,
                                   instTyList = [ty]})
                 (TypeOf loc ty)
         in
@@ -570,12 +598,19 @@ struct
         end
       | C.TPDYNAMICTOP {ty, coerceTy, loc} =>
         let
-          fun TypeOf loc ty = {exp = C.TPREIFYTY (ty, loc),
-                               ty = RyD.TyRepTy()}
+          fun TypeOf loc ty =
+              let
+                val tyRepTy = RyD.TyRepTy loc
+              in
+                {exp = C.TPCAST ((C.TPREIFYTY (ty, loc),
+                                  T.SINGLETONty (T.REIFYty ty)),
+                                 tyRepTy, loc),
+                 ty = tyRepTy}
+              end
           val {exp,...} =
               RyU.Apply
                 loc
-                (RyU.InstListVar {exVarInfo = U.REIFY_exInfo_void (),
+                (RyU.InstListVar loc {exVarInfo = U.REIFY_exInfo_void loc,
                                   instTyList = [ty]})
                 (TypeOf loc ty)
         in
@@ -590,8 +625,8 @@ struct
           #exp
             (RyU.ApplyList
                loc
-               (RyU.InstListVar
-                  {exVarInfo = U.REIFY_exInfo_dynamicTypeCase (),
+               (RyU.InstListVar loc
+                  {exVarInfo = U.REIFY_exInfo_dynamicTypeCase loc,
                    instTyList = [elemTy, ruleBodyTy]})
                [{exp=dynamicTerm, ty = dynamicTy},
                 {exp=groupListTerm, ty=groupListTy}]

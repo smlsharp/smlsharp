@@ -4,11 +4,11 @@ _require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.s
 _require local "../../../libs/ids/main/LocalID.smi"
 (* _require  "../../../data/symbols/main/Symbol.smi" *)
 (* _require  "../../../data/symbols/main/RecordLabel.smi" *)
-(* _require  "../../../data/symbols/main/Loc.smi" *)
+_require  "../../../data/symbols/main/Loc.smi"
 _require  "./ReifiedTy.ppg.smi"
 structure ReifiedUtils =
 struct
-  val isBottomTy : ReifiedTy.reifiedTy -> bool
-  val isPartialDynTy : ReifiedTy.reifiedTy -> bool
-  val partialDynElemTy : ReifiedTy.reifiedTy -> ReifiedTy.reifiedTy option
+  val isBottomTy : Loc.loc -> ReifiedTy.reifiedTy -> bool
+  val isPartialDynTy : Loc.loc -> ReifiedTy.reifiedTy -> bool
+  val partialDynElemTy : Loc.loc -> ReifiedTy.reifiedTy -> ReifiedTy.reifiedTy option
 end

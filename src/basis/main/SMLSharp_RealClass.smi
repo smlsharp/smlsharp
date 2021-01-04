@@ -1,5 +1,5 @@
+_require       "./IEEEReal.smi"
 _require local "./SMLSharp_Runtime.smi"
-_require "./IEEEReal.smi"
 
 structure SMLSharp_RealClass =
 struct

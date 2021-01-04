@@ -1,5 +1,5 @@
-_require "./StringCvt.smi"
 _require local "./List.smi"
+_require       "./StringCvt.smi"
 
 structure SMLSharp_ScanChar =
 struct

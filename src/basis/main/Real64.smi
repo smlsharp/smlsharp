@@ -1,10 +1,8 @@
-(* _require local "./SMLSharp_Runtime.smi" *)
+_require       "./General.smi"
+_require       "./IEEEReal.smi"
 _require local "./SMLSharp_RealClass.smi"
-_require "./General.smi"
-_require "./StringCvt.smi"
 _require local "./String.smi"
-(* _require local "./Int32.smi" *)
-_require "./IEEEReal.smi"
+_require       "./StringCvt.smi"
 
 structure Real64 =
 struct

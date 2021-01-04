@@ -1,0 +1,5 @@
+structure PrintControl =
+struct
+  val printWidth : int ref
+  val printMaxDepth : int ref
+end

@@ -1,6 +1,6 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "./Symbol.smi"
 
@@ -25,7 +25,7 @@ struct
     val compare : label * label -> order
   end
 
-  structure Map = BinaryMapFn(Ord)
+  structure Map = BinaryMapFn2(Ord)
   structure Set = BinarySetFn(Ord)
 
   val isTupleList : (label * 'a) list -> bool

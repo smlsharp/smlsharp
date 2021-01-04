@@ -1,0 +1,15 @@
+_require "../../basis.smi"
+_require "./antlr-stream-pos.smi"
+
+structure ULexBuffer =
+struct
+  type stream (= boxed)
+  exception Incomplete
+  val mkStream : (AntlrStreamPos.pos * (unit -> string)) -> stream
+  val getc : stream -> (char * stream) option
+  val getu : stream -> (word * stream) option
+  val getpos : stream -> AntlrStreamPos.pos
+  val subtract : stream * stream -> Substring.substring
+  val eof : stream -> bool
+  val lastWasNL : stream -> bool
+end

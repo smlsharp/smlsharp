@@ -142,6 +142,8 @@ in
         ICRECORD_UPDATE (transExp icexp,
                          map (fn (l, exp) => (l, transExp exp)) stringIcexpList,
                          loc)
+      | ICRECORD_UPDATE2 (icexp, icexp2, loc) =>
+        ICRECORD_UPDATE2 (transExp icexp, transExp icexp2, loc)
       | ICRECORD_SELECTOR (string, loc) => icexp
       | ICSELECT (string, icexp, loc) =>
         ICSELECT (string, transExp icexp, loc)

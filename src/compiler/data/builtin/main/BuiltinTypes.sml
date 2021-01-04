@@ -13,6 +13,7 @@ struct
   type tstrInfo =
       {tfun : I.tfun,
        varE : I.varE,
+       defRange : Loc.loc,
        formals : I.formals,
        conSpec : I.conSpec}
 
@@ -140,7 +141,10 @@ struct
                     end)
                 conList
         val varE =
-            foldl (fn ((k,v),z) => SymbolEnv.insert (z, k, I.IDCON v))
+            foldl (fn ((k,v),z) => 
+                      SymbolEnv.insert 
+                        (z, k, 
+                         I.IDCON (I.conInfoToIdInfo v Loc.noloc)))
                   SymbolEnv.empty
                   conInfoList
         val tyCon =
@@ -158,7 +162,8 @@ struct
                                path = longsymbol}))
                 conInfoList
         val tstrInfo =
-            {tfun=tfun, varE=varE, formals=formalTvars, conSpec=conSpec}
+            {tfun=tfun, defRange = Loc.noloc,
+             varE=varE, formals=formalTvars, conSpec=conSpec}
       in
         tstrinfoMap := SymbolEnv.insert (!tstrinfoMap, symbol, tstrInfo);
         (tstrInfo, tyCon, ity, ty, conList)
@@ -266,7 +271,7 @@ struct
       makeTfun NONE
         {printName = "ptr",
          admitsEq = true,
-         formals = ["a"],
+         formals = ["'a"],
          dtyKind = BUILTIN R.ptrProp}
 
   val unitPtr = CON (ptrTstrInfo, [CON (unitTstrInfo, nil)])
@@ -282,14 +287,14 @@ struct
       makeTfun (SOME T.arrayTypId)
         {printName = "array",
          admitsEq = true,
-         formals = ["a"],
+         formals = ["'a"],
          dtyKind = BUILTIN R.recordProp}
 
   val (vectorTstrInfo, vectorTyCon, _, _, _) =
       makeTfun NONE
         {printName = "vector",
          admitsEq = true,
-         formals = ["a"],
+         formals = ["'a"],
          dtyKind = BUILTIN R.recordProp}
 
   val (exnTstrInfo, exnTyCon, exnITy, exnTy, _) =
@@ -331,15 +336,15 @@ struct
       makeTfun NONE
         {printName = "size",
          admitsEq = true,
-         formals = ["a"],
+         formals = ["'a"],
          dtyKind = BUILTIN R.uintptrProp}
 
   val (refTstrInfo, refTyCon, _, _, conList) =
       makeTfun (SOME T.refTypId)
         {printName = "ref",
          admitsEq = true,
-         formals = ["a"],
-         dtyKind = REF ("ref", SOME (TVAR "a"))}
+         formals = ["'a"],
+         dtyKind = REF ("ref", SOME (TVAR "'a"))}
 
   val (refICConInfo, refTPConInfo) =
       case conList of [x] => x | _ => raise bug "conList ref"
@@ -361,8 +366,8 @@ struct
       makeTfun NONE
         {printName = "list",
          admitsEq = true,
-         formals = ["a"],
-         dtyKind = DTY [("::", SOME(TUPLE [TVAR "a", SELF [TVAR "a"]])),
+         formals = ["'a"],
+         dtyKind = DTY [("::", SOME(TUPLE [TVAR "'a", SELF [TVAR "'a"]])),
                         ("nil", NONE)]}
 
   val ((consICConInfo, consTPConInfo),
@@ -374,9 +379,9 @@ struct
       makeTfun NONE
         {printName = "option",
          admitsEq = true,
-         formals = ["a"],
+         formals = ["'a"],
          dtyKind = DTY [("NONE", NONE),
-                        ("SOME", SOME (TVAR "a"))]}
+                        ("SOME", SOME (TVAR "'a"))]}
 
   val ((NONEICConInfo, NONETPConInfo),
        (SOMEICConInfo, SOMETPConInfo)) =

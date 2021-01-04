@@ -111,6 +111,11 @@ in
              map (fn (label, icexp) => (label, optimizeExp icexp))
 		 elementList,
              loc)
+      | ICRECORD_UPDATE2 (icexp, icexp2, loc) =>
+        ICRECORD_UPDATE2
+          (optimizeExp icexp,
+           optimizeExp icexp2,
+           loc)
       | ICRECORD_SELECTOR (str, loc) => icexp
       | ICSELECT (label,icexp,loc) =>
         ICSELECT (label, optimizeExp icexp, loc)

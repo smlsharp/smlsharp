@@ -27,6 +27,15 @@ struct
   (*% @formatter(Loc.file_place) Loc.format_file_place *)
   datatype file_place = datatype Loc.file_place
 
+ (*% 
+    @formatter(Loc.loc) Loc.format_loc
+  *)
+ type loc =
+    (*% @format(loc) loc
+     *)
+      Loc.loc
+
+
   (*% @formatter(Filename.filename) Filename.format_filename *)
   (*%
    * @prefix format_short_
@@ -35,7 +44,7 @@ struct
   type source =
       (*%
        * @format(place * name)
-       * place +d name
+       * place + name
        *)
       (*%
        * @prefix format_short_
@@ -63,6 +72,11 @@ struct
         hash: hash,
         source: source
       }
+
+  fun sourceToString x =
+      Bug.prettyPrint (format_source x)
+  fun interface_nameToString x =
+      Bug.prettyPrint (format_interface_name x)
 
   (*% *)
   datatype provider =
@@ -181,7 +195,9 @@ struct
     | INCLUDE         (* include "file" *)
     | PROVIDE         (* _interface "file" *)
 
-  (*% *)
+  (*%
+
+  *)
   (*%
    * @prefix format_short_
    *)
@@ -202,9 +218,14 @@ struct
         edges : file_dependency_edge list
       }
 
+(*
   withtype file_dependency_edge =
-      (*% @format(t * n) t +d n *)
-      file_dependency_edge_type * file_dependency_node
+      (*% @format(t * n * l) t +d n +d l *)
+      file_dependency_edge_type * file_dependency_node * loc
+*)
+  withtype file_dependency_edge =
+      (*% @format(t * n * l) t +d n *)
+      file_dependency_edge_type * file_dependency_node * loc
 
   (*%
    * @formatter(ifsome) ifsome

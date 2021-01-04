@@ -20,17 +20,20 @@ struct
   type varInfo = TypedLambda.varInfo
   type exVarInfo = Types.exVarInfo
   datatype cast = datatype BuiltinPrimitive.cast
+  datatype tlint = datatype TypedLambda.tlint
   datatype tlconst = datatype TypedLambda.tlconst
   datatype rcconst =
-      CONST of tlconst
+      INT of tlint
+    | CONST of tlconst
     | SIZE of DynamicKind.size' * ty
     | TAG of DynamicKind.tag' * ty
-    | INDEX of DynamicKind.index' * RecordLabel.label * ty
   datatype tlstring = datatype TypedLambda.tlstring
+  datatype rcvalue =
+      RCCONSTANT of rcconst
+    | RCVAR of varInfo
   datatype rcexp =
-      RCCONSTANT of rcconst * loc
+      RCVALUE of rcvalue * loc
     | RCSTRING of tlstring * loc
-    | RCVAR of varInfo * loc
     | RCEXVAR of exVarInfo * loc
     | RCFNM of
       {
@@ -50,7 +53,7 @@ struct
       {
         exp : rcexp,
         expTy : ty,
-        branches : {const : tlconst, body : rcexp} list,
+        branches : {const : tlint, body : rcexp} list,
         defaultExp : rcexp,
         resultTy : ty,
         loc : loc
@@ -59,13 +62,15 @@ struct
       {
         primOp : TypedLambda.primInfo,
         instTyList : ty list,
+        instSizeList : rcvalue list,
+        instTagList : rcvalue list,
         argExpList : rcexp list,
         loc : loc
       }
     | RCRECORD of
       {
-        fields : rcexp RecordLabel.Map.map,
-        recordTy : ty,
+        fields : {exp : rcexp, ty : ty, size : rcvalue, tag : rcvalue}
+                   RecordLabel.Map.map,
         loc : loc
       }
     | RCSELECT of
@@ -75,6 +80,8 @@ struct
         recordExp : rcexp,
         recordTy : ty,
         resultTy : ty,
+        resultSize : rcvalue,
+        resultTag : rcvalue,
         loc : loc
       }
     | RCMODIFY of
@@ -85,6 +92,8 @@ struct
         recordTy : ty,
         elementExp : rcexp,
         elementTy : ty,
+        elementSize : rcvalue,
+        elementTag : rcvalue,
         loc : loc
       }
     | RCLET of
@@ -138,7 +147,6 @@ struct
         instTyList : ty list,
         loc : loc
       }
-    | RCFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
     | RCFOREIGNAPPLY of
       {
         funExp : rcexp,
@@ -165,7 +173,7 @@ struct
       }
     | RCINDEXOF of
       {
-        recordTy : ty,
+        fields : {ty : ty, size : rcvalue} RecordLabel.Map.map,
         label : RecordLabel.label,
         loc : loc
       }

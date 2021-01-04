@@ -47,6 +47,7 @@ struct
     | VOID_WITHTy of ReifiedTy.reifiedTy
     | UNIT
     | UNPRINTABLE
+    | ELLIPSIS
     | VECTOR of ReifiedTy.reifiedTy * boxed
     | VECTOR_PRINT of reifiedTerm vector
     | WORD32 of word
@@ -96,11 +97,9 @@ struct
   val format_env : env -> SMLFormat.format
   val format_strentry : strentry -> SMLFormat.format
   val format_topEnv : topEnv -> SMLFormat.format
-  val structure_topEnv : topEnv -> SMLFormat.format
   val format_funE : string list -> SMLFormat.format
 
-  val printStructureTopEnv : topEnv -> unit
   val printTopEnvOutput : (string -> unit) option ref
-  val printTopEnv : topEnv -> unit
+  val printTopEnv : int -> topEnv -> unit
 
 end

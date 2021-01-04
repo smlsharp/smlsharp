@@ -52,11 +52,11 @@ struct
   val ArrayTy = ReifiedTyData.ArrayTy
   val isArrayTy : ty -> bool
   val isListTy : ty -> bool
-  val isPartialDynTy : ty -> bool
+  val isPartialDynTy : Loc.loc -> ty -> bool
 (*
   val isBottomTy : ty -> bool
 *)
-  val partialDynElemTy : ty -> ty option
+  val partialDynElemTy : Loc.loc -> ty -> ty option
   val ArrayElemTy : ty -> ty
   val ListElemTy : ty -> ty
   val RecordTyFields : ty -> (string * ty) list
@@ -67,8 +67,6 @@ struct
   val TupleTy = ReifiedTyData.TupleTy
 
   val newVar : ty -> varInfo
-  val newVarWithString : loc -> string -> ty -> varInfo
-  val newVarWithSymbol : Symbol.symbol -> ty -> varInfo
 
   val Int : loc -> int  -> {exp:exp, ty:ty}
   val Word : loc -> word -> {exp:exp, ty:ty}
@@ -79,9 +77,9 @@ struct
   val Option : loc -> ty -> {exp:exp, ty:ty} option -> {exp:exp, ty:ty}
 
   val Var : varInfo -> {ty:ty, exp:exp}
-  val MonoVar : exVarInfo -> {ty:ty, exp:exp}
-  val InstVar : {exVarInfo:exVarInfo, instTy:ty} -> {ty:ty, exp:exp}
-  val InstListVar : {exVarInfo:exVarInfo, instTyList:ty list} -> {ty:ty, exp:exp}
+  val MonoVar : loc -> exVarInfo -> {ty:ty, exp:exp}
+  val InstVar : loc -> {exVarInfo:exVarInfo, instTy:ty} -> {ty:ty, exp:exp}
+  val InstListVar : loc -> {exVarInfo:exVarInfo, instTyList:ty list} -> {ty:ty, exp:exp}
   val Pair : loc -> {exp:exp,ty:ty} -> {exp:exp, ty:ty} -> {exp:exp, ty:ty}
   val Fn : loc -> {expFn : varInfo -> exp, argTy:ty, bodyTy:ty} -> {exp:exp, ty:ty}
   val FunExp : loc -> ({exp:exp,ty:ty} -> {exp:exp, ty:ty}) -> ty -> {exp:exp, ty:ty}

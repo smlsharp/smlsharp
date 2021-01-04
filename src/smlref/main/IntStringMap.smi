@@ -1,0 +1,11 @@
+_require       "basis.smi"
+_require       "smlnj-lib/Util/binary-map-fn.smi"
+_require       "smlnj-lib/Util/binary-set-fn.smi"
+
+structure IntStringOrd =
+struct
+  type ord_key = int * string
+  val compare : ord_key * ord_key -> order
+end
+structure IntStringMap = BinaryMapFn(IntStringOrd)
+structure IntStringSet = BinarySetFn(IntStringOrd)

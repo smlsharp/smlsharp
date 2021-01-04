@@ -1,0 +1,9 @@
+_require "../../basis.smi"
+_require "./json.smi"
+_require local "./json-stream-printer.smi"
+
+structure JSONPrinter =
+struct
+  val print : TextIO.outstream * JSON.value -> unit
+  val print' : {strm : TextIO.outstream, pretty : bool} -> JSON.value -> unit
+end

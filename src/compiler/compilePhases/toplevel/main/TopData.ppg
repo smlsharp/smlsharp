@@ -7,6 +7,7 @@ in
   datatype stopAt 
     = (*% @format "SyntaxCheck" *) SyntaxCheck
     | (*% @format "ErrorCheck" *)  ErrorCheck
+    | (*% @format "NameRef" *) NameRef
     | (*% @format "NoStop" *) NoStop
 
   (*%  @formatter(Filename.filename) Filename.format_filename *)

@@ -1,104 +1,112 @@
-The SML# compiler with natural join
+SML# - a new language in the ML family
+======================================
 
-This is a trial version provided for interested readers of
-the paper "SML# with Natural Join."
-This version is not intended for a public release of SML# distribution;
-as such, please do not redistribute this package.
+Overview
+--------
 
-== Quick Start
+SML# is a new generation of the Standard ML family of programming
+languages being developed at Research Institute of Electrical
+Communication, Tohoku University. Its design goal is to provide a
+moderate but practically important extensions based on recent advance
+in type theory for ML-style languages while maintaining the
+compatibility of the Definition of Standard ML.
 
-This version of SML# is available on the following platform.
+The main features of SML# include the following.
 
-  - x86_64 Linux
-  - Mac OS X 10.6 or later (64 bit)
+* record polymorphism
 
-The following libraries are required.
-Install them before building SML#.
+  The type system of SML# fully supports record polymorphism.
+  Moreover, its type directed compiler generates efficient code for
+  polymorphic record operations.
 
-  - GNU MP library
-  - LLVM 3.7.1
-  - YAJL library
+* integration with SQL
 
-To build SML#, change directory to "smlsharp" directory, and invoke the
-following commands.
+  SQL expressions themselves are integrated as polymorphically-typed
+  first-class citizens. This allows the programmer to construct SQL
+  queries through ML's higher-order functions and access directly to
+  database management systems with enjoying type safety.
 
-  $ ./configure
-  $ make
+* interoperability with C
 
-After "make" is successfully finished, you can try SML# interactive mode
-by typing the following command.
+  SML# program is highly interoperable with C. For example, SML#
+  program can directly link with C libraires and call C functions
+  without any data conversion.
 
-  $ src/compiler/smlsharp -Bsrc
+* Separate compilation and linking
 
-To SML# compiler, do "make install".
+  By writing an interface file, each source file is compiled separately
+  into an object file in the standard format. The separately compiled
+  object files are then linked together into an executable program.
 
-  $ make install
+* Multithread support
 
-Then the SML# compiler will be installed to /usr/local directory.
+  The non-moving GC and direct C interface allow SML# program to
+  directly call the Pthread and MassiveThreads library. As far as the
+  thread libraries support multicore CPUs, SML# program automatically
+  obtains multithread capability on multicore CPUs.
 
-If you would not like to install SML# to /usr/local, specify --prefix=<dir>
-option to ./configure like the following:
+SML# is an extension of the Definition of Standard ML. It supports
+the full set of the language and the required set of the Standard ML
+Basis Library. The programmer can enjoy the new features with a rich
+collection of existing library for Standard ML.
 
-  $ ./configure --prefix=/where/to/install/smlsharp
+How to build
+------------
 
-== Natural join
+SML# works on x86_64 (amd64) Linux and macOS.
 
-This extended SML# provides a new form of expressions
+The following libraries are required:
 
-  _join( <exp>, <exp> )
+* GMP
+* MassiveThreads 1.00
+* LLVM 3.9.1 or above
 
-and a "natural join" syntax in FROM clauses of SQL SELECT queries.
+After setting up the above libraries, you can build and install the
+SML# compiler and tools in the following popular three steps:
 
-You can check the polymorphic typing of _join in an interactive session
-as follows:
+    ./configure && make && make install
 
-  # fn (x,y) => _join(x, y);
-  val it = fn : ['a#{}, 'b#{}, 'c#{}. ('c = 'a join 'b) => 'a * 'b -> 'c]
-  # fn x => it ({a=1, b=true}, x);
-  val it = fn : ['a#{}, 'b#{}. ('b = {a: int, b: bool} join 'a) => 'a -> 'b]
-  # fn () => it {b=false, c="foo"};
-  val it = fn : unit -> {a: int, b: bool, c: string}
+See the SML# document for details.
 
-If _join is executed, an exception will be raised:
+License
+-------
 
-  # it ();
-  uncaught exception Fail: Natural Join Executed at none:~1
+The SML# Compiler and its supporting tools are open source software
+being distributed under a (revised) BSD-style license, as described
+in the file "LICENSE" included in this distribution package.
 
-To test "natural join" in SQL queries, start a PostgreSQL server, create a
-database of your name, and create at least two tables in that database.
-The following is an example of command sequences:
+Third-party source code used and/or included
+--------------------------------------------
 
-  $ mkdir testdb
-  $ initdb -D $PWD/testdb
-  $ pg_ctl -D $PWD/testdb start
-  $ createdb <YOUR_NAME>
-  $ psql
-  > create table "Employees" (id int not null, name text not null);
-  > create table "Salary" (id int not null, salary int not null);
+SML# contains the following third-party's source code:
 
-Then, start SML# interactive session and connect to the database.
+* ML-yacc, derived from Standard ML of New Jersey (SML/NJ) 110.73
+* ML-lex, derived from SML/NJ 110.73
+* Some of the Basis Library structures, derived from SML/NJ 110.73
+* The SML/NJ Library, derived from SML/NJ 110.99
+* dtoa.c imported from the NetLib
+* benchmark progarms, derived from SML/NJ and the Larceny project.
 
-  $ smlsharp
-  # val db = _sqlserver "" : {Employees: {id:int, name:string},
-                              Salary: {id:int, salary:int}};
-  # val c = SQL.connect db;
+All of them are software distributed under open-source licenses
+compatible with the SML# license.  The SML# source code distribution
+includes the license of each of them.
 
-To initialize the tables, execute the following SQL commands:
+Documentation
+-------------
 
-  # _sqlexec (_sql db => delete from #db.Employees) c;
-  # _sqlexec (_sql db => delete from #db.Salary) c;
-  # _sqlexec (_sql db => insert into #db.Employees (id,name)
-                         values (1,"Amy"),(7,"Dr.C"),(9,"Togetoge")) c;
-  # _sqlexec (_sql db => insert into #db.Salary (id,salary)
-                         values (5,50),(7,100),(9,300)) c;
+The SML# document is available from the [SML# website].
+It contains the tutorial on Standard ML, the tour on the SML#'s new
+features, and the reference manual of the compiler and its supporing
+tools.
 
-We are now ready for testing natural join.  Create a query including
-natural join as follows:
+[SML# website]: http://www.pllab.riec.tohoku.ac.jp/smlsharp/
 
-  # val q = _sql db => select #t.name, #t.salary
-                       from (#db.Employees natural join #db.Salary) as t;
+Contact information
+-------------------
 
-To execute the query, do the following:
+The contact mail address of the SML# development team is
 
-  # val r = _sqleval q c;
-  # SQL.fetchAll r;
+    smlsharp-dev @ pllab . riec . tohoku . ac . jp
+
+For more detail, see the "Contact Information" section of the SML#
+document.

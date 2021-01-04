@@ -20,8 +20,8 @@ struct
   (* switches *)
 
   (* switches for interactive printing *)
-  val printWidth = ref 80
-  val printMaxDepth = ref 200
+  val printWidth = PrintControl.printWidth
+  val printMaxDepth = PrintControl.printMaxDepth
   val printMaxOverloadInstances = ref 4
 
   val printMaxNestLevel = ref 5
@@ -100,6 +100,7 @@ struct
   val printDiagnosis = ref true
 
   (* control toplevel *)
+  val doNameAnalysis = ref false
   val checkType = ref false
   val doBitmapANormalReorder = ref true
   val doRecordUnboxing = ref true
@@ -144,10 +145,16 @@ struct
   val branchByCConvRigidity = ref false
 
   (****************************************)
+  (* switches for compiler information logging *)
+  val dbparam = ref ""
+
+  (****************************************)
   (* switch table for -x options *)
 
   val switchTable : switchTable =
       [
+        ("dbparam", "PGSQL database parameter for compiler log; internal use only (default \"\")",
+         StringSwitch dbparam),
         ("profileMaxPhases", "number of phases to be displayed (default 5)",
          IntSwitch profileMaxPhases),
         ("printWidth", "print width (default 80)",

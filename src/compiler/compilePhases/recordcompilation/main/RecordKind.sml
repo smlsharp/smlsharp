@@ -5,13 +5,13 @@
  *)
 structure RecordKind : KIND_INSTANCE =
 struct
-  structure RC = RecordCalc
+  structure TL = TypedLambda
   structure D = DynamicKind
   structure T = Types
 
   type singleton_ty_body = RecordLabel.label * Types.ty
   type kind = DynamicKind.record * Types.ty RecordLabel.Map.map
-  type instance = RecordCalc.rcexp
+  type instance = TypedLambda.tlexp
   val singletonTy = T.INDEXty
 
   fun compare ((l1, t1), (l2, t2)) =
@@ -41,13 +41,19 @@ struct
               NONE => raise Bug.Bug "RecordKind.generateInstance"
             | SOME {record, ...} =>
               case RecordLabel.Map.find (record, label) of
-                SOME n => SOME (RC.RCCONSTANT (RC.INDEX (n, label, ty), loc))
+                SOME n =>
+                SOME (TL.TLCAST
+                        {exp = TL.TLINT (TL.WORD32 n, loc),
+                         expTy = BuiltinTypes.word32Ty,
+                         targetTy = T.SINGLETONty (T.INDEXty (label, ty)),
+                         cast = TL.TypeCast,
+                         loc = loc})
               | NONE => NONE)
          | NONE => raise Bug.Bug "generateInstance")
       | ty as T.RECORDty _ =>
-        SOME (RC.RCINDEXOF {label = label, recordTy = ty, loc = loc})
+        SOME (TL.TLINDEXOF {label = label, recordTy = ty, loc = loc})
       | ty as T.DUMMYty (id, T.KIND {tvarKind = T.REC _, ...}) =>
-        SOME (RC.RCINDEXOF {label = label, recordTy = ty, loc = loc})
+        SOME (TL.TLINDEXOF {label = label, recordTy = ty, loc = loc})
       | _ => NONE
 
 end

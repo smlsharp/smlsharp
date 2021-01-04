@@ -1,138 +1,146 @@
 _require local "../../../../basis.smi"
-_require local "../../../data/symbols/main/Symbol.smi"
-_require local "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
 _require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
 
 _require local "../../debug/main/Bug.smi"
+_require local "./UserLevelPrimitiveError.ppg.smi"
 
 structure UserLevelPrimitive =
 struct
 
-  exception IDNotFound of string
+  exception UserLevelPrimError of Loc.loc * exn
 
-  val SQL_icexp_toyServer : unit -> IDCalc.icexp
-  val SQL_tyCon_exp : unit -> Types.tyCon
-  val SQL_tyCon_whr : unit -> Types.tyCon
-  val SQL_tyCon_from : unit -> Types.tyCon
-  val SQL_tyCon_orderby : unit -> Types.tyCon
-  val SQL_tyCon_offset : unit -> Types.tyCon
-  val SQL_tyCon_limit : unit -> Types.tyCon
-  val SQL_tyCon_select : unit -> Types.tyCon
-  val SQL_tyCon_query : unit -> Types.tyCon
-  val SQL_tyCon_command : unit -> Types.tyCon
-  val SQL_tyCon_db : unit -> Types.tyCon
+  val SQL_icexp_toyServer : Loc.loc -> IDCalc.icexp
 
-  val REIFY_tyCon_BoundTypeVarIDMapMap : unit -> Types.tyCon
-  val REIFY_tyCon_RecordLabelMapMap : unit -> Types.tyCon
-  val REIFY_tyCon_RECORDLABELty : unit -> Types.tyCon
-  val REIFY_tyCon_SENVMAPty : unit -> Types.tyCon
-  val REIFY_tyCon_IENVMAPty : unit -> Types.tyCon
-  val REIFY_tyCon_TypIDMapMap : unit -> Types.tyCon
-  val REIFY_tyCon_void : unit -> Types.tyCon
-  val REIFY_tyCon_btvId : unit -> Types.tyCon
-  val REIFY_tyCon_dyn : unit -> Types.tyCon
-  val REIFY_tyCon_env : unit -> Types.tyCon
-  val REIFY_tyCon_idstatus : unit -> Types.tyCon
-  val REIFY_tyCon_label : unit -> Types.tyCon
-  val REIFY_tyCon_reifiedTerm : unit -> Types.tyCon
-  val REIFY_tyCon_reifiedTy : unit -> Types.tyCon
-  val REIFY_tyCon_typId : unit -> Types.tyCon
-  val REIFY_tyCon_existInstMap : unit -> Types.tyCon
+  val SQL_tyCon_exp : Loc.loc -> Types.tyCon
+  val SQL_tyCon_whr : Loc.loc -> Types.tyCon
+  val SQL_tyCon_from : Loc.loc -> Types.tyCon
+  val SQL_tyCon_orderby : Loc.loc -> Types.tyCon
+  val SQL_tyCon_offset : Loc.loc -> Types.tyCon
+  val SQL_tyCon_limit : Loc.loc -> Types.tyCon
+  val SQL_tyCon_select : Loc.loc -> Types.tyCon
+  val SQL_tyCon_query : Loc.loc -> Types.tyCon
+  val SQL_tyCon_command : Loc.loc -> Types.tyCon
+  val SQL_tyCon_db : Loc.loc -> Types.tyCon
 
-  val REIFY_conInfo_ARRAYty : unit -> Types.conInfo
-  val REIFY_conInfo_BOOLty : unit -> Types.conInfo
-  val REIFY_conInfo_BOTTOMty : unit -> Types.conInfo
-  val REIFY_conInfo_BOXEDty : unit -> Types.conInfo
-  val REIFY_conInfo_BOUNDVARty : unit -> Types.conInfo
-  val REIFY_conInfo_BUILTIN : unit -> Types.conInfo
-  val REIFY_conInfo_CHARty : unit -> Types.conInfo
-  val REIFY_conInfo_CODEPTRty : unit -> Types.conInfo
-  val REIFY_conInfo_DYNAMICty : unit -> Types.conInfo
-  val REIFY_conInfo_ERRORty : unit -> Types.conInfo
-  val REIFY_conInfo_EXNTAGty : unit -> Types.conInfo
-  val REIFY_conInfo_EXNty : unit -> Types.conInfo
-  val REIFY_conInfo_IENVMAPty : unit -> Types.conInfo
-  val REIFY_conInfo_INT16ty : unit -> Types.conInfo
-  val REIFY_conInfo_INT64ty : unit -> Types.conInfo
-  val REIFY_conInfo_INT8ty : unit -> Types.conInfo
-  val REIFY_conInfo_INTERNALty : unit -> Types.conInfo
-  val REIFY_conInfo_INTINFty : unit -> Types.conInfo
-  val REIFY_conInfo_INT32ty : unit -> Types.conInfo
-  val REIFY_conInfo_LAYOUT_ARG_OR_NULL : unit -> Types.conInfo
-  val REIFY_conInfo_LAYOUT_CHOICE : unit -> Types.conInfo
-  val REIFY_conInfo_LAYOUT_SINGLE : unit -> Types.conInfo
-  val REIFY_conInfo_LAYOUT_SINGLE_ARG : unit -> Types.conInfo
-  val REIFY_conInfo_LAYOUT_TAGGED : unit -> Types.conInfo
-  val REIFY_conInfo_LISTty : unit -> Types.conInfo
-  val REIFY_conInfo_OPTIONty : unit -> Types.conInfo
-  val REIFY_conInfo_PTRty : unit -> Types.conInfo
-  val REIFY_conInfo_RECORDLABELty : unit -> Types.conInfo
-  val REIFY_conInfo_RECORDLABELMAPty : unit -> Types.conInfo
-  val REIFY_conInfo_REAL32ty : unit -> Types.conInfo
-  val REIFY_conInfo_REAL64ty : unit -> Types.conInfo
-  val REIFY_conInfo_REFty : unit -> Types.conInfo
-  val REIFY_conInfo_SENVMAPty : unit -> Types.conInfo
-  val REIFY_conInfo_STRINGty : unit -> Types.conInfo
-  val REIFY_conInfo_TAGGED_OR_NULL : unit -> Types.conInfo
-  val REIFY_conInfo_TAGGED_RECORD : unit -> Types.conInfo
-  val REIFY_conInfo_TAGGED_TAGONLY : unit -> Types.conInfo
-  val REIFY_conInfo_VOIDty : unit -> Types.conInfo
-  val REIFY_conInfo_TYVARty : unit -> Types.conInfo
-  val REIFY_conInfo_UNITty : unit -> Types.conInfo
-  val REIFY_conInfo_VECTORty : unit -> Types.conInfo
-  val REIFY_conInfo_WORD16ty : unit -> Types.conInfo
-  val REIFY_conInfo_WORD64ty : unit -> Types.conInfo
-  val REIFY_conInfo_WORD8ty : unit -> Types.conInfo
-  val REIFY_conInfo_WORD32ty : unit -> Types.conInfo
+  val REIFY_tyCon_BoundTypeVarIDMapMap : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_RecordLabelMapMap : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_RECORDLABELty : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_SENVMAPty : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_IENVMAPty : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_TypIDMapMap : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_void : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_btvId : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_dyn : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_env : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_idstatus : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_label : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_reifiedTerm : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_reifiedTy : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_typId : Loc.loc -> Types.tyCon
+  val REIFY_tyCon_existInstMap : Loc.loc -> Types.tyCon
 
-  val REIFY_exExnInfo_NaturalJoin : unit -> Types.exExnInfo
-  val REIFY_exExnInfo_RuntimeTypeError : unit -> Types.exExnInfo
+  val REIFY_conInfo_ARRAYty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_BOOLty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_BOTTOMty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_BOXEDty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_BOUNDVARty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_BUILTIN : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_CHARty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_CODEPTRty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_DYNAMICty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_ERRORty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_EXNTAGty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_EXNty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_IENVMAPty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_INT16ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_INT64ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_INT8ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_INTERNALty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_INTINFty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_INT32ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_ARG_OR_NULL : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_CHOICE : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_SINGLE : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_SINGLE_ARG : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_LAYOUT_TAGGED : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_LISTty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_OPTIONty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_PTRty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_RECORDLABELty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_RECORDLABELMAPty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_REAL32ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_REAL64ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_REFty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_SENVMAPty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_STRINGty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_TAGGED_OR_NULL : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_TAGGED_RECORD : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_TAGGED_TAGONLY : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_VOIDty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_TYVARty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_UNITty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_VECTORty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_WORD16ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_WORD64ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_WORD8ty : Loc.loc -> Types.conInfo
+  val REIFY_conInfo_WORD32ty : Loc.loc -> Types.conInfo
 
-  val REIFY_exInfo_RecordLabelFromString : unit -> Types.exVarInfo
-  val REIFY_exInfo_SymbolMkLongSymbol : unit -> Types.exVarInfo
-  val REIFY_exInfo_TyRep : unit -> Types.exVarInfo
-  val REIFY_exInfo_TyRepToReifiedTy : unit -> Types.exVarInfo
-  val REIFY_exInfo_MergeConSetEnvWithTyRepList : unit -> Types.exVarInfo
-  val REIFY_exInfo_boolToWrapRecord : unit -> Types.exVarInfo
-  val REIFY_exInfo_boundenvReifiedTyToPolyTy : unit -> Types.exVarInfo
-  val REIFY_exInfo_btvIdBtvIdListToBoundenv : unit -> Types.exVarInfo
-  val REIFY_exInfo_coerceTermGeneric : unit -> Types.exVarInfo
-  val REIFY_exInfo_checkTermGeneric : unit -> Types.exVarInfo
-  val REIFY_exInfo_viewTermGeneric : unit -> Types.exVarInfo
-  val REIFY_exInfo_null : unit -> Types.exVarInfo
-  val REIFY_exInfo_void : unit -> Types.exVarInfo
-  val REIFY_exInfo_dynamicTypeCase : unit -> Types.exVarInfo
-  val REIFY_exInfo_dynamicExistInstance : unit -> Types.exVarInfo
-  val REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy : unit -> Types.exVarInfo
-  val REIFY_exInfo_longsymbolIdArgsToOpaqueTy : unit -> Types.exVarInfo
-  val REIFY_exInfo_makeDummyTy : unit -> Types.exVarInfo
-  val REIFY_exInfo_makeExistTy : unit -> Types.exVarInfo
-  val REIFY_exInfo_makeFUNMty : unit -> Types.exVarInfo
-  val REIFY_exInfo_makePos : unit -> Types.exVarInfo
-  val REIFY_exInfo_mkENVenv : unit -> Types.exVarInfo
-  val REIFY_exInfo_mkEXEXNIdstatus : unit -> Types.exVarInfo
-  val REIFY_exInfo_mkEXEXNREPIdstatus : unit -> Types.exVarInfo
-  val REIFY_exInfo_mkEXVarIdstatus : unit -> Types.exVarInfo
-  val REIFY_exInfo_mkTopEnv : unit -> Types.exVarInfo
-  val REIFY_exInfo_naturalJoin : unit -> Types.exVarInfo
-  val REIFY_exInfo_extend : unit -> Types.exVarInfo
-  val REIFY_exInfo_printTopEnv : unit -> Types.exVarInfo
-  val REIFY_exInfo_reifiedTermToML : unit -> Types.exVarInfo
-  val REIFY_exInfo_stringIntListToTagMap : unit -> Types.exVarInfo
-  val REIFY_exInfo_stringReifiedTyListToRecordTy : unit -> Types.exVarInfo
-  val REIFY_exInfo_stringReifiedTyOptionListToConSet : unit -> Types.exVarInfo
-  val REIFY_exInfo_stringToFalseNameRecord : unit -> Types.exVarInfo
-  val REIFY_exInfo_tagMapStringToTagMapNullNameRecord : unit -> Types.exVarInfo
-  val REIFY_exInfo_tagMapToTagMapRecord : unit -> Types.exVarInfo
-  val REIFY_exInfo_toReifiedTerm : unit -> Types.exVarInfo
-  val REIFY_exInfo_toReifiedTermPrint : unit -> Types.exVarInfo
-  val REIFY_exInfo_typIdConSetListToConSetEnv : unit -> Types.exVarInfo
+  val REIFY_exExnInfo_NaturalJoin : Loc.loc -> Types.exExnInfo
+  val REIFY_exExnInfo_RuntimeTypeError : Loc.loc -> Types.exExnInfo
 
-  val init : NameEvalEnv.topEnv -> IDCalc.icdecl list
+  val REIFY_exInfo_RecordLabelFromString : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_SymbolMkLongSymbol : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_TyRep : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_TyRepToReifiedTy : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_MergeConSetEnvWithTyRepList : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_boolToWrapRecord : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_boundenvReifiedTyToPolyTy : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_btvIdBtvIdListToBoundenv : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_coerceTermGeneric : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_checkTermGeneric : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_viewTermGeneric : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_null : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_void : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_dynamicTypeCase : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_dynamicExistInstance : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_longsymbolIdArgsLayoutListToDatatypeTy : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_longsymbolIdArgsToOpaqueTy : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_makeDummyTy : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_makeExistTy : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_makeFUNMty : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_makePos : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_mkENVenv : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_mkEXEXNIdstatus : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_mkEXEXNREPIdstatus : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_mkEXVarIdstatus : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_mkTopEnv : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_naturalJoin : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_extend : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_printTopEnv : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_reifiedTermToML : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_stringIntListToTagMap : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_stringReifiedTyListToRecordTy : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_stringReifiedTyOptionListToConSet : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_stringToFalseNameRecord : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_tagMapStringToTagMapNullNameRecord : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_tagMapToTagMapRecord : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_toReifiedTerm : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_toReifiedTermPrint : Loc.loc -> Types.exVarInfo
+  val REIFY_exInfo_typIdConSetListToConSetEnv : Loc.loc -> Types.exVarInfo
+
+  val initAnalyze : 
+      {
+       analyzeIdRef : Symbol.longsymbol * (Symbol.symbol * IDCalc.idstatus) -> unit,
+       analyzeTstrRef : Symbol.longsymbol * (Symbol.symbol * NameEvalEnv.tstr) -> unit
+      } -> unit
+
+  val init : {env : NameEvalEnv.topEnv} -> unit
   val initExternalDecls : unit -> unit 
-  val getExternDecls : unit -> IDCalc.icdecl list
+  val getExternDecls : unit -> (Types.exVarInfo * Types.provider) list
 
 end

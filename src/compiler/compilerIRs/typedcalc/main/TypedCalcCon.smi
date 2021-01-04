@@ -43,7 +43,7 @@ struct
       : {exExnInfo : Types.exExnInfo, loc : Loc.loc}
         -> exp
   val TPEXVAR
-      : Types.exVarInfo
+      : (Types.exVarInfo  * Loc.loc)
         -> exp
   val TPVAR
       : Types.varInfo

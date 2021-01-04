@@ -1,6 +1,7 @@
 (* lib-base-sig.sml
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.  See COPYRIGHT file for details.
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
 
 signature LIB_BASE =
@@ -17,8 +18,4 @@ signature LIB_BASE =
     val failure : {module : string, func : string, msg : string} -> 'a
 	(* raise the exception Fail with a standard format message. *)
 
-    val version : {date : string, system : string, version_id : int list}
-    val banner : string
-
   end (* LIB_BASE *)
-

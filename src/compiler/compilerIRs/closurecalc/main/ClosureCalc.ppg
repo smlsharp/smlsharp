@@ -312,13 +312,6 @@ struct
        *)
       CVSIZE of {size : RuntimeTypes.size, ty : ty}
     | (*%
-       * @format({index, ty, label}) index
-       *)
-      (*% @prefix formatWithType_
-       * @format({index, ty, label}) index
-       *)
-      CVINDEX of {index : word, ty : ty, label : RecordLabel.label}
-    | (*%
        * @format(ty) "_cconvtag(" ty ")"
        *)
       (*% @prefix formatWithType_

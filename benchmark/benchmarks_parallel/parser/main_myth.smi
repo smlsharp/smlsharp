@@ -1,0 +1,4 @@
+_require local "../../../src/basis.smi"
+_require local "../../../src/thread/main/Myth.smi"
+_require local "./files.smi"
+_require local "./parse.smi"

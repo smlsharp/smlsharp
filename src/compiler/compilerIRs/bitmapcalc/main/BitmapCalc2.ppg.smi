@@ -21,6 +21,7 @@ struct
   type exVarInfo = Types.exVarInfo
   type primInfo = TypedLambda.primInfo
   type btvEnv = Types.btvEnv
+  datatype tlint = datatype TypedLambda.tlint
   datatype tlconst = datatype TypedLambda.tlconst
   datatype tlstring = datatype TypedLambda.tlstring
   datatype rcconst = datatype RecordCalc.rcconst
@@ -44,12 +45,6 @@ struct
       }
     | BCCONSTANT of {const : rcconst, loc : loc}
     | BCSTRING of {string : tlstring, loc : loc}
-    | BCFOREIGNSYMBOL of
-      {
-        name : string,
-        ty : ty,
-        loc : loc
-      }
     | BCVAR of {varInfo : varInfo, loc : loc}
     | BCEXVAR of {exVarInfo : exVarInfo, loc : loc}
     | BCPRIMAPPLY of
@@ -168,7 +163,7 @@ struct
       {
         switchExp : bcexp,
         expTy : ty,
-        branches : {constant : TypedLambda.tlconst, branchExp : bcexp} list,
+        branches : {constant : tlint, branchExp : bcexp} list,
         defaultExp : bcexp,
         resultTy : ty,
         loc : loc

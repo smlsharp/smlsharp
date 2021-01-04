@@ -1,68 +1,101 @@
-(* listsort.sml
+(* list-mergesort.sml
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.  See COPYRIGHT file for details.
- *
- * List sorting routines using a smooth applicative merge sort
- * Taken from, ML for the Working Programmer, LCPaulson. pg 99-100
+ * COPYRIGHT (c) 2014 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *)
 
 structure ListMergeSort : LIST_SORT = 
   struct
 
-    fun sort (op > : 'a * 'a -> bool) ls = let 
-          fun merge([],ys) = ys
-            | merge(xs,[]) = xs
-            | merge(x::xs,y::ys) =
-                if x > y then y::merge(x::xs,ys) else x::merge(xs,y::ys)
-          fun mergepairs(ls as [l], k) = ls
-            | mergepairs(l1::l2::ls,k) =
-                if k mod 2 = 1 then l1::l2::ls
-                else mergepairs(merge(l1,l2)::ls, k div 2)
-            | mergepairs _ = raise LibBase.Impossible "ListSort.sort"
-          fun nextrun(run,[])    = (rev run,[])
-            | nextrun(run,x::xs) = if x > hd run then nextrun(x::run,xs)
-                                   else (rev run,x::xs)
-          fun samsorting([], ls, k)    = hd(mergepairs(ls,0))
-            | samsorting(x::xs, ls, k) = let 
-                val (run,tail) = nextrun([x],xs)
-                in samsorting(tail, mergepairs(run::ls,k+1), k+1)
-                end
-          in 
-            case ls of [] => [] | _ => samsorting(ls, [], 0)
-          end
+  (* Given a ">" relation, sort the list into increasing order.  This sort
+   * detects initial increasing and decreasing runs and thus is linear
+   * time on ordered input.
+   *)
+    fun sort gt = let
+	  fun revAppend ([], ys) = ys
+	    | revAppend (x::xs, ys) = revAppend(xs, x::ys)
+	  fun merge ([], ys, acc) = revAppend(acc, ys)
+	    | merge (xs, [], acc) = revAppend(acc, xs)
+	    | merge (xs as (x::xr), ys as (y::yr), acc) =
+		if gt(x, y)
+		  then merge (xs, yr, y::acc)
+		  else merge (xr, ys, x::acc)
+	  fun mergeNeighbors ([], yss) = finishPass yss
+	    | mergeNeighbors ([xs], yss) = finishPass (xs::yss)
+	    | mergeNeighbors (xs1::xs2::xss, yss) =
+		mergeNeighbors (xss, merge(xs1, xs2, [])::yss)
+	  and finishPass [] = []
+	    | finishPass [xs] = xs
+	    | finishPass xss = mergeNeighbors (xss, [])
+	  fun init (prev, [], yss) = mergeNeighbors ([prev]::yss, [])
+	    | init (prev, x::xs, yss) = if gt(prev, x)
+		then runDn (x, xs, [prev], yss)
+		else runUp (x, xs, [prev], yss)
+	  and runUp (prev, [], run, yss) = mergeNeighbors (revAppend(prev::run, [])::yss, [])
+	    | runUp (prev, x::xr, run, yss) =
+		if gt(prev, x)
+		  then init (x, xr, revAppend(prev::run, [])::yss)
+		  else runUp (x, xr, prev::run, yss)
+	  and runDn (prev, [], run, yss) = mergeNeighbors ((prev::run)::yss, [])
+	    | runDn (prev, x::xr, run, yss) =
+		if gt(x, prev)
+		  then init (x, xr, (prev::run)::yss)
+		  else runDn (x, xr, prev::run, yss)
+	  in
+	    fn [] => [] | (x::xs) => init(x, xs, [])
+	  end
 
-    fun uniqueSort cmpfn ls = let 
-          open LibBase
-          fun merge([],ys) = ys
-            | merge(xs,[]) = xs
-            | merge(x::xs,y::ys) =
-                case cmpfn (x,y) of
-                  GREATER => y::merge(x::xs,ys)
-                | EQUAL   => merge(x::xs,ys)
-                | _       => x::merge(xs,y::ys)
-          fun mergepairs(ls as [l], k) = ls
-            | mergepairs(l1::l2::ls,k) =
-                if k mod 2 = 1 then l1::l2::ls
-                else mergepairs(merge(l1,l2)::ls, k div 2)
-            | mergepairs _ = raise LibBase.Impossible "ListSort.uniqueSort"
-          fun nextrun(run,[])    = (rev run,[])
-            | nextrun(run,x::xs) = 
-                case cmpfn(x, hd run) of
-                  GREATER => nextrun(x::run,xs)
-                | EQUAL   => nextrun(run,xs)
-                | _       => (rev run,x::xs)
-          fun samsorting([], ls, k)    = hd(mergepairs(ls,0))
-            | samsorting(x::xs, ls, k) = let 
-                val (run,tail) = nextrun([x],xs)
-                in samsorting(tail, mergepairs(run::ls,k+1), k+1)
-                end
-          in 
-            case ls of [] => [] | _ => samsorting(ls, [], 0)
-          end
+  (* Given a comparison function, sort the sequence in ascending order while eliminating
+   * duplicates.  This sort detects initial increasing and decreasing runs and thus is linear
+   * time on ordered input.
+   *)
+    fun uniqueSort cmp = let
+	  fun revAppend ([], ys) = ys
+	    | revAppend (x::xs, ys) = revAppend(xs, x::ys)
+	  fun merge ([], ys, acc) = revAppend(acc, ys)
+	    | merge (xs, [], acc) = revAppend(acc, xs)
+	    | merge (xs as (x::xr), ys as (y::yr), acc) = (
+		case cmp (x, y)
+		 of LESS => merge (xr, ys, x::acc)
+		  | EQUAL => merge (xr, yr, x::acc)  (* discard duplicate *)
+		  | GREATER => merge (xs, yr, y::acc)
+		(* end case *))
+	  fun mergeNeighbors ([], yss) = finishPass yss
+	    | mergeNeighbors ([xs], yss) = finishPass (xs::yss)
+	    | mergeNeighbors (xs1::xs2::xss, yss) =
+		mergeNeighbors (xss, merge(xs1, xs2, [])::yss)
+	  and finishPass [] = []
+	    | finishPass [xs] = xs
+	    | finishPass xss = mergeNeighbors (xss, [])
+	  fun init (prev, [], yss) = mergeNeighbors ([prev]::yss, [])
+	    | init (prev, x::xs, yss) = (case cmp(prev, x)
+		 of LESS => runUp (x, xs, [prev], yss)
+		  | EQUAL => init (prev, xs, yss) (* discard duplicate *)
+		  | GREATER => runDn (x, xs, [prev], yss)
+		(* end case *))
+	  and runUp (prev, [], run, yss) = mergeNeighbors (revAppend(prev::run, [])::yss, [])
+	    | runUp (prev, x::xr, run, yss) = (case cmp (prev, x)
+		 of LESS => runUp (x, xr, prev::run, yss)
+		  | EQUAL => runUp (prev, xr, run, yss) (* discard duplicate *)
+		  | GREATER => init (x, xr, revAppend(prev::run, [])::yss)
+		(* end case *))
+	  and runDn (prev, [], run, yss) = mergeNeighbors ((prev::run)::yss, [])
+	    | runDn (prev, x::xr, run, yss) = (case cmp (prev, x)
+		 of LESS => init (x, xr, (prev::run)::yss)
+		  | EQUAL => runDn (prev, xr, run, yss) (* discard duplicate *)
+		  | GREATER => runDn (x, xr, prev::run, yss)
+		(* end case *))
+	  in
+	    fn [] => [] | (x::xs) => init(x, xs, [])
+	  end
 
-    fun sorted (op >) = let 
-          fun s (x::(rest as (y::_))) = not(x>y) andalso s rest
-            | s l = true
-          in s end
+  (* is the list sorted in ascending order according to the given ">" relation? *)
+    fun sorted (op >) = let
+	  fun chk (_, []) = true
+	    | chk (x1, x2::xs) = not(x1>x2) andalso chk(x2, xs)
+	  in
+	    fn [] => true
+	     | (x::xs) => chk(x, xs)
+	  end
 
   end (* ListMergeSort *)

@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "./DBSchema.smi"
+_require "./Config.smi"
+_require "./RefDBAccess.smi"
+_require "./Log.smi"
+
+structure SMLRef =
+struct
+  val smlRef : unit -> unit
+end
+

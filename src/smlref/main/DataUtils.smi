@@ -1,0 +1,18 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "./DBSchema.smi"
+
+structure DataUtils =
+struct
+  val listToTuple
+      : string list 
+        -> {1:string, 2:string, 3:string, 4:string, 5:string, 6:string}
+  val mkNest 
+      : {1:string, 2:string, 3:string, 4:string, 5:string, 6:string} list
+        -> {1:string, 
+            L:{2:string, 
+               L:{3:string, 
+                  L:{4:string, 
+                     L:{5:string, 
+                        L:{6:string} list} list} list} list} list} list
+end

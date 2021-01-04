@@ -27,7 +27,7 @@ in
         fun materializeTstr path (name:Symbol.symbol, tstr, icdecls) =
             (
             case tstr of
-              V.TSTR tfun =>
+              V.TSTR {tfun,...} =>
               (case I.derefTfun tfun of
                  tfun as (I.TFUN_VAR (tfv as ref tfunkind)) =>
                  (case tfunkind of
@@ -83,7 +83,7 @@ in
 
         fun materializeStrE path (V.STR envMap) =
             SymbolEnv.foldri
-            (fn (name, {env,strKind}, icdecls) =>
+            (fn (name, {env,...}, icdecls) =>
                 let
                   val icdecls1 = materializeEnv (path@[name]) env
                 in
@@ -103,21 +103,23 @@ in
 
         fun genArgTstr path (name, tstr, env) =
             case tstr of
-              V.TSTR tfun =>
+              V.TSTR {tfun,...} =>
               (case I.derefTfun tfun of
-                 I.TFUN_DEF _ => VP.reinsertTstr(env, name, tstr)
+                 I.TFUN_DEF _ => 
+                 VP.rebindTstr VP.FUNCTOR_ARG (env, name, tstr)
                | I.TFUN_VAR (ref tfunkind) =>
                  (case tfunkind of
                     I.TFV_SPEC _ => raise bug "unmaterialized (1)"
                   | I.TFV_DTY _ =>  raise bug "unmaterialized (2)"
-                  | I.TFUN_DTY _ => VP.reinsertTstr(env, name, tstr)
+                  | I.TFUN_DTY _ => 
+                    VP.rebindTstr VP.FUNCTOR_ARG (env, name, tstr)
                   | I.REALIZED _ => raise bug "REALIZED"
-                  | I.INSTANTIATED {tfunkind, tfun} => raise bug "INSTANTIATED"
-                  | I.FUN_DTY _ =>
-                    VP.reinsertTstr(env, name, V.TSTR tfun)
+                  | I.INSTANTIATED _ => raise bug "INSTANTIATED"
+                  | I.FUN_DTY _ => 
+                    VP.rebindTstr VP.FUNCTOR_ARG (env, name, tstr)
                  )
               )
-            | V.TSTR_DTY {tfun, varE=_, formals=_, conSpec=_} =>
+            | V.TSTR_DTY {tfun, defRange, ...} =>
               (case I.derefTfun tfun of
                  I.TFUN_DEF _ => raise bug "DEF in TSTR_DTY"
                | I.TFUN_VAR (ref tfunkind) =>
@@ -130,17 +132,20 @@ in
                      U.printTstr tstr;
                      raise bug "unmaterialized (4)"
                     )
-                  | I.TFUN_DTY _ => VP.reinsertTstr(env, name, tstr)
+                  | I.TFUN_DTY _ => VP.rebindTstr VP.FUNCTOR_ARG (env, name, tstr)
                   | I.REALIZED _ => raise bug "REALIZED"
                   | I.INSTANTIATED _ => raise bug "INSTANTIATED"
                   | I.FUN_DTY {longsymbol, tfun,varE,formals,liftedTys,conSpec} =>
                     let
                       val envTstr = V.TSTR_DTY {tfun=tfun,
                                                 varE=varE,
+                                                defRange = defRange,
                                                 formals=formals,
                                                 conSpec=conSpec}
                     in
-                      VP.envWithVarE(VP.reinsertTstr(env, name, envTstr), varE)
+                      VP.envWithVarE
+                        (VP.rebindTstr 
+                           VP.FUNCTOR_ARG (env, name, envTstr), varE)
                     end
                  )
               )
@@ -151,55 +156,59 @@ in
             SymbolEnv.foldri
             (fn (name, idstatus, {varPats, exnPats, env, exnTagDecls}) =>
                 case idstatus of
-                  I.IDSPECVAR {ty, symbol} =>
+                  I.IDSPECVAR {ty, symbol, defRange} =>
                   let
                     val varId = VarID.generate()
                     val longsymbol = path@[name]
-                    val idstatus = I.IDVAR {id=varId, longsymbol=longsymbol}
+                    (** 以下のderRangeは妥当か ? *)
+                    val idstatus = I.IDVAR {id=varId, longsymbol=longsymbol, defRange = defRange}
                     val pat = ({longsymbol=longsymbol,id=varId},ty)
                   in
                     {varPats=pat::varPats,
                      exnPats=exnPats,
-                     env=VP.reinsertId(env, name, idstatus),
+                     env=VP.rebindId VP.BIND_FUNCTOR (env, name, idstatus),
                      exnTagDecls=exnTagDecls
                     }
                   end
-                | I.IDSPECEXN {ty, symbol} => 
+                | I.IDSPECEXN {ty, symbol, defRange} => 
                   let
                     val varId = VarID.generate()
                     val longsymbol = path@[name]
-                    val idstatus = I.IDVAR {id=varId, longsymbol=longsymbol}
+                    val idstatus = I.IDVAR {id=varId, longsymbol=longsymbol, defRange=defRange}
                     val varInfo = {longsymbol= longsymbol, id=varId}
                     val pat = (varInfo, BT.exntagITy)
                     val exnId = ExnID.generate()
                     val exnInfo = {longsymbol=longsymbol, id=exnId, ty=ty}
-                    val idstatus = I.IDEXN {id=exnId, longsymbol=longsymbol, ty=ty}
+                    val idstatus = I.IDEXN {id=exnId, longsymbol=longsymbol, ty=ty, 
+                                            defRange=defRange}
                     val exnTagDecl =
                         I.ICEXNTAGD ({exnInfo=exnInfo, varInfo=varInfo}, loc)
                   in
                     {varPats=varPats,
                      exnPats=pat::exnPats,
-                     env=VP.reinsertId(env, name, idstatus),
+                     env=VP.rebindId VP.BIND_FUNCTOR (env, name, idstatus),
                      exnTagDecls=exnTagDecl::exnTagDecls
                     }
                   end
-                | I.IDSPECCON {symbol} => 
+                | I.IDSPECCON {symbol, defRange} => 
                   {varPats=varPats, exnPats=exnPats, env=env, exnTagDecls=exnTagDecls}
                 | idstatus => {varPats=varPats, exnPats=exnPats, 
-                               env=VP.reinsertId(env, name, idstatus), exnTagDecls=exnTagDecls}
+                               env=VP.rebindId VP.BIND_FUNCTOR 
+                                     (env, name, idstatus), 
+                               exnTagDecls=exnTagDecls}
             )
             {varPats=nil, exnPats=nil, env=env, exnTagDecls=nil}
             varE
         fun genArgStrE path (V.STR envMap) returnEnv =
             SymbolEnv.foldri
-              (fn (name, {env=specEnv, strKind}, {varPats, exnPats, env, exnTagDecls}) =>
+              (fn (name, {env=specEnv, ...}, {varPats, exnPats, env, exnTagDecls}) =>
                   let
                     val {varPats=newPats, exnPats=newExnPats, strEntry=newStrEntry, exnTagDecls=newExnTagDecls} =
                         genArgStrEntry (path@[name]) specEnv
                   in
                     {varPats=newPats@varPats,
                      exnPats=newExnPats@exnPats,
-                     env=VP.reinsertStr(env, name, newStrEntry),
+                     env=VP.rebindStr VP.FUNCTOR_ARG (env, name, newStrEntry),
                      exnTagDecls=newExnTagDecls @ exnTagDecls
                     }
                   end
@@ -221,14 +230,17 @@ in
               val strKind = V.STRENV (StructureID.generate())
 *)
               val strKind = V.FUNARG (StructureID.generate())
+              val loc = Loc.noloc
             in
               {varPats=pats1@pats2,
                exnPats=exnPats@exnPats2, 
-               strEntry={env=env, strKind=strKind},
+               strEntry={env=env, strKind=strKind, loc=loc,
+                         definedSymbol = path
+                        },
                exnTagDecls=exnTagDecls1@exnTagDecls2}
             end
 
-        val argSigEnv = Sig.evalPlsig topEnv argSig
+        val {env=argSigEnv,...} = Sig.evalPlsig topEnv argSig
         val (_,argSpecEnv) = Sig.refreshSpecEnv argSigEnv
         val specTfvs =
             TfvMap.listItemsi
@@ -316,7 +328,8 @@ val _ = U.print "\n"
                                           formals,
                                         conTy
                                        )
-                               val conInfo = {id=conId, longsymbol=longsymbol, ty=conTy}
+                               val conInfo = {id=conId, longsymbol=longsymbol, defRange=loc,
+                                              ty=conTy}
 (*
                                val _ = V.conEnvAdd(conId, conInfo)
 *)
@@ -437,11 +450,11 @@ val _ = U.print "\n"
               end
         and genActualVarE path vars varE : I.icexp list =
             SymbolEnv.foldri
-              (fn (name, I.IDVAR {id, longsymbol}, vars) => 
+              (fn (name, I.IDVAR {id, longsymbol, defRange}, vars) => 
                   I.ICVAR {id=id, longsymbol=path@[name]} :: vars
-                | (name, I.IDVAR_TYPED {id, longsymbol, ty}, vars) => 
+                | (name, I.IDVAR_TYPED {id, longsymbol, ty, defRange=defRange}, vars) => 
                   I.ICVAR {id=id, longsymbol= path@[name]} :: vars
-                | (name, I.IDEXVAR {exInfo, internalId}, vars) =>
+                | (name, I.IDEXVAR {exInfo, internalId, defRange}, vars) =>
                   I.ICEXVAR {exInfo=exInfo, longsymbol=path@[name]} :: vars
 (*
                 | (name, I.IDEXVAR {longsymbol, ty, used, version, internalId}, vars) =>
@@ -466,7 +479,7 @@ val _ = U.print "\n"
                   end
 *)
                 | (name, I.IDEXVAR_TOBETYPED _, vars) => raise bug "IDEXVAR_TOBETYPED"
-                | (name, I.IDBUILTINVAR {primitive, ty}, vars) => 
+                | (name, I.IDBUILTINVAR {primitive, ty, defRange}, vars) => 
                   (* bug 193_primitiveArg *)
                   I.ICBUILTINVAR {primitive=primitive, ty=ty, loc=loc}
                   ::
@@ -495,27 +508,26 @@ val _ = U.print "\n"
               varE
         and genActualStrE path vars envMap : I.icexp list =
             SymbolEnv.foldri
-              (fn (strName, {env, strKind}, vars) => genActualEnv (path@[strName]) vars env
+              (fn (strName, {env, strKind, loc, definedSymbol}, vars) => 
+                  genActualEnv (path@[strName]) vars env
               )
               vars
               envMap
         fun genActualTag (pathList, env) = 
             foldr
               (fn (path, exnCons) => 
-(*
-                  case V.checkId(env, path) of
-*)
-                  case VP.findId(env, path) of
-                    SOME (I.IDEXN {id, longsymbol, ty}) => 
+                 case VP.findId (env, path) of
+                    SOME (sym, I.IDEXN {id, longsymbol, ty, defRange}) => 
                     I.ICEXN_CONSTRUCTOR
                       {id=id, ty=ty, longsymbol = path}
                     ::exnCons
-                  | SOME (I.IDEXNREP {id, longsymbol, ty}) =>
+                  | SOME(sym, I.IDEXNREP {id, longsymbol, ty, defRange}) =>
                     I.ICEXN_CONSTRUCTOR({id=id,ty=ty,
                                          longsymbol = path}) 
                     ::exnCons
-                  | SOME (I.IDEXEXN exExnInfo) =>
-                    I.ICEXEXN_CONSTRUCTOR {longsymbol=path, exInfo=exExnInfo} ::exnCons
+                  | SOME(sym, I.IDEXEXN exExnInfo) =>
+                    I.ICEXEXN_CONSTRUCTOR {longsymbol=path, 
+                                           exInfo=(I.idInfoToExExnInfo exExnInfo)} ::exnCons
 (*
                   | SOME (I.IDEXEXN {exExnInfo, used}) => 
                     let
@@ -532,11 +544,11 @@ val _ = U.print "\n"
                       I.ICEXEXN_CONSTRUCTOR({ty=ty,longsymbol=longsymbol},loc) ::exnCons
                     end
 *)
-                  | SOME (I.IDEXEXNREP exExnInfo) => 
+                  | SOME(sum, I.IDEXEXNREP exExnInfo) => 
                     I.ICEXEXN_CONSTRUCTOR 
-                      {exInfo=exExnInfo, longsymbol=path}
+                      {exInfo=I.idInfoToExExnInfo exExnInfo, longsymbol=path}
                     :: exnCons
-                  | SOME idstatus => raise bug "non exn idstatus"
+                  | SOME (sym, idstatus) => raise bug "non exn idstatus"
                   | NONE => raise bug "exn not found"
               )
               nil
@@ -563,13 +575,13 @@ val _ = U.print "\n"
     and varsInVarE set loc path vars varE
         : ((Symbol.longsymbol * I.icexp) list * ExnID.Set.set) =
         SymbolEnv.foldri
-          (fn (name, I.IDVAR {id, longsymbol}, (vars, set)) =>
+          (fn (name, I.IDVAR {id, longsymbol, defRange}, (vars, set)) =>
               ((path@[name], I.ICVAR {id=id, longsymbol=longsymbol}) :: vars, 
                set)
-            | (name, I.IDVAR_TYPED {id, longsymbol, ty}, (vars, set)) => 
+            | (name, I.IDVAR_TYPED {id, longsymbol, ty, defRange}, (vars, set)) => 
               ((path@[name], I.ICVAR {id=id, longsymbol=longsymbol}) :: vars, 
                set)
-            | (name, I.IDEXVAR {exInfo, internalId},  (vars, set)) =>
+            | (name, I.IDEXVAR {exInfo, internalId, defRange},  (vars, set)) =>
               (* 2013-7-26 ohori. 061_functor but *)
               (#used exInfo := true;
                ((path@[name], I.ICEXVAR {longsymbol=path@[name], exInfo=exInfo}) :: vars, set)
@@ -592,13 +604,12 @@ val _ = U.print "\n"
             | (name, I.IDEXN (exnInfo as {id,...}), (vars, set)) =>
               if ExnID.Set.member(set, id) then (vars, set)
               else
-                ((path@[name], I.ICEXN_CONSTRUCTOR exnInfo) ::vars,
-                 ExnID.Set.add(set,id)
-                )
+                ((path@[name], I.ICEXN_CONSTRUCTOR (I.idInfoToExnInfo exnInfo)) ::vars,
+                 ExnID.Set.add(set,id))
             | (name, I.IDEXNREP (exnInfo as {id, ...}), (vars, set)) =>
               if ExnID.Set.member(set, id) then (vars, set)
               else
-                ((path@[name], I.ICEXN_CONSTRUCTOR exnInfo) ::vars,
+                ((path@[name], I.ICEXN_CONSTRUCTOR (I.idInfoToExnInfo exnInfo)) ::vars,
                  ExnID.Set.add(set,id)
                 )
 (*
@@ -621,7 +632,7 @@ val _ = U.print "\n"
     and varsInStrE set loc path vars envMap
         : ((Symbol.longsymbol * I.icexp) list * ExnID.Set.set) =
         SymbolEnv.foldri
-          (fn (strName, {env,strKind}, (vars, set)) =>
+          (fn (strName, {env,strKind,loc = _, definedSymbol}, (vars, set)) =>
               varsInEnv set loc (path@[strName]) vars env
           )
           (vars, set)
@@ -636,13 +647,15 @@ val _ = U.print "\n"
             let
               val typidSet = typidSetTyE (tyE,typidSet)
             in
-              SymbolEnv.foldl (fn ({env, strKind},typidSet)  => typidSetEnv (env, typidSet)) typidSet envMap
+              SymbolEnv.foldl
+                (fn ({env, strKind, loc, definedSymbol},typidSet)
+                    => typidSetEnv (env, typidSet)) typidSet envMap
             end
         and typidSetTyE (tyE,typidSet) =
             SymbolEnv.foldl typidSetTstr typidSet tyE
         and typidSetTstr (tstr, typidSet) =
             case tstr of
-              V.TSTR tfun => typidSetTfun (tfun, typidSet)
+              V.TSTR {tfun,...} => typidSetTfun (tfun, typidSet)
             | V.TSTR_DTY {tfun,...} => typidSetTfun (tfun, typidSet)
         and typidSetTfun (tfun, typidSet) =
             case I.derefTfun tfun of
@@ -713,7 +726,8 @@ val _ = U.print "\n"
 
   fun visitTstr {specTstr=tstr1, implTstr=tstr2} =
       case (tstr1, tstr2) of
-        (V.TSTR tfun1, V.TSTR tfun2) => visitTfun {specTfun=tfun1, implTfun=tfun2}
+        (V.TSTR {tfun=tfun1,...}, V.TSTR {tfun = tfun2,...}) =>
+        visitTfun {specTfun=tfun1, implTfun=tfun2}
       | (V.TSTR_DTY {tfun=tfun1,...}, V.TSTR_DTY {tfun=tfun2,...}) => 
         visitTfun {specTfun=tfun1, implTfun=tfun2}
       | _ => ()
@@ -729,10 +743,11 @@ val _ = U.print "\n"
          )
          tyE1;
        SymbolEnv.appi
-         (fn (name, {env=env1, strKind}) =>
+         (fn (name, {env=env1, strKind, loc, definedSymbol}) =>
              case SymbolEnv.find(envMap2, name) of
                NONE => raiseFail 3
-             | SOME {env=env2, strKind} => visitEnv {specEnv=env1, implEnv=env2}
+             | SOME {env=env2, strKind, loc, definedSymbol} => 
+               visitEnv {specEnv=env1, implEnv=env2}
             )
          envMap1
       )
@@ -878,8 +893,9 @@ val _ = U.print "\n"
 
   fun eqTstr {specTstr=tstr1, implTstr=tstr2} =
       case (tstr1, tstr2) of
-        (V.TSTR tfun1, V.TSTR tfun2) => eqTfun {specTfun=tfun1, implTfun=tfun2}
-      | (V.TSTR tfun1, V.TSTR_DTY {tfun=tfun2,...}) =>
+        (V.TSTR {tfun=tfun1,...}, V.TSTR {tfun = tfun2,...}) => 
+        eqTfun {specTfun=tfun1, implTfun=tfun2}
+      | (V.TSTR {tfun = tfun1,...}, V.TSTR_DTY {tfun=tfun2,...}) =>
         (eqTfun {specTfun=tfun1, implTfun=tfun2}
         handle exn =>
                (U.print "eqTfun failed 1 \n";
@@ -1014,13 +1030,14 @@ val _ = U.print "\n"
             end
         and eqStrE {specStrE=V.STR map1, implStrE=V.STR map2} =
             SymbolEnv.appi
-              (fn (name, {env=env1, strKind}) =>
+              (fn (name, {env=env1, strKind, loc, definedSymbol}) =>
                   case SymbolEnv.find(map2, name) of
                     NONE => 
                     (
                     raiseFail 36
                     )
-                  | SOME {env=env2, strKind} => if eqEnv' {specEnv=env1, implEnv=env2} then () else raiseFail 37
+                  | SOME {env=env2, strKind, loc, definedSymbol} => 
+                    if eqEnv' {specEnv=env1, implEnv=env2} then () else raiseFail 37
               )
               map1
         val _ = visitEnv {specEnv=env1, implEnv=env2}
@@ -1039,11 +1056,11 @@ val _ = U.print "\n"
        SymbolEnv.numItems strE1 = SymbolEnv.numItems strE2
        andalso
        (SymbolEnv.appi
-          (fn (name, {env=env1, strKind}) =>
+          (fn (name, {env=env1, strKind, loc, definedSymbol}) =>
               case SymbolEnv.find(strE2, name) of
                 NONE => raiseFail 38
-              | SOME {env=env2, strKind} => 
-                if eqSize (env1, env2) then () else raiseFail 39)
+              | SOME {env=env2, strKind, loc, definedSymbol} => 
+                if eqSize (env1, env2) then () else raise Fail)
         strE1;
         true
         )
@@ -1083,7 +1100,7 @@ val _ = U.print "\n"
 
   fun eqShapeTstr (tstr1, tstr2) typEquiv =
       case (tstr1, tstr2) of
-        (V.TSTR tfun1, V.TSTR tfun2) => 
+        (V.TSTR {tfun = tfun1,...}, V.TSTR {tfun = tfun2,...}) => 
         eqShapeTfun (tfun1, tfun2) typEquiv
       | (V.TSTR_DTY {tfun=tfun1,...}, 
          V.TSTR_DTY {tfun=tfun2,...}) => 
@@ -1138,9 +1155,10 @@ val _ = U.print "\n"
       end
   and eqShapeStrE (strE1, strE2) typEquiv =
       SymbolEnv.foldli
-      (fn (name, {env=env1, strKind}, typEquiv) =>
+      (fn (name, {env=env1, strKind, loc, definedSymbol}, typEquiv) =>
           case SymbolEnv.find(strE2, name) of
-            SOME {env=env2, strKind=_} => eqShapeEnv(env1,env2) typEquiv
+            SOME {env=env2, strKind=_, loc, definedSymbol} =>
+            eqShapeEnv(env1,env2) typEquiv
           | NONE => raiseFail 48
       )
       typEquiv

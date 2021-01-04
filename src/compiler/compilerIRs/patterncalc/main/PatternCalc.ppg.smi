@@ -49,6 +49,7 @@ struct
     | PLLET of pdecl list * plexp * loc
     | PLRECORD of (RecordLabel.label * plexp) list * loc
     | PLRECORD_UPDATE of plexp * (RecordLabel.label * plexp) list * loc
+    | PLRECORD_UPDATE2 of plexp * plexp * loc
     | PLRAISE of plexp * loc
     | PLHANDLE of plexp * (plpat * plexp) list * loc
     | PLFNM of (plpat list * plexp) list * loc 
@@ -72,16 +73,20 @@ struct
     | PLFFIEXTERN of string
 
   and pdecl 
-    = PDVAL of scopedTvars * (plpat * plexp ) list * loc 
+    = PDVAL of scopedTvars * (plpat * plexp * loc) list * loc 
     | PDDECFUN of scopedTvars * {fdecl:(plpat * (plpat list * plexp) list), loc:loc} list*loc 
-    | PDVALREC of scopedTvars * (plpat * plexp ) list * loc
-    | PDVALPOLYREC of (symbol * ty * plexp ) list * loc
-    | PDTYPE of (tvar list * symbol * ty) list * loc
-    | PDDATATYPE of {tyvars: tvar list, symbol: symbol,
-                     conbind: {symbol: symbol, ty: ty option} list} list * loc
+    | PDVALREC of scopedTvars * (plpat * plexp * loc) list * loc
+    | PDVALPOLYREC of (symbol * ty * plexp * loc) list * loc
+    | PDTYPE of (tvar list * symbol * ty * loc) list * loc
+    | PDDATATYPE of {tyvars: tvar list, 
+                     symbol: symbol,
+                     loc:loc,
+                     conbind: {symbol: symbol, ty: ty option, loc:loc} list} 
+                      list * loc
     | PDREPLICATEDAT of symbol * longsymbol * loc (* replication *)
     | PDABSTYPE of {tyvars: tvar list, symbol: symbol,
-                    conbind: {symbol: symbol, ty: ty option} list} list
+                    loc:loc,
+                    conbind: {symbol: symbol, ty: ty option, loc:loc} list} list
                    * pdecl list * loc
     | PDEXD of plexbind list * loc
     | PDLOCALDEC of pdecl list * pdecl list * loc
@@ -102,7 +107,7 @@ struct
  
   and plstrdec 
     = PLCOREDEC of pdecl * loc
-    | PLSTRUCTBIND of (symbol * plstrexp) list * loc
+    | PLSTRUCTBIND of (symbol * plstrexp * loc) list * loc
     | PLSTRUCTLOCAL of plstrdec list * plstrdec list * loc
 
   and plstrexp 
@@ -123,10 +128,10 @@ struct
     | PLSPECTYPE of {tydecls:(tvar list * symbol) list, eq:bool, loc:loc}
     | PLSPECTYPEEQUATION of (tvar list * symbol * ty) * loc
     | PLSPECDATATYPE of
-      {tyvars: tvar list, symbol: symbol,
-       conbind: {symbol: symbol, ty: ty option} list} list * loc
+      {tyvars: tvar list, symbol: symbol, loc:loc,
+       conbind: {symbol: symbol, ty: ty option, loc:loc} list} list * loc
     | PLSPECREPLIC of symbol * longsymbol * loc (* replication *)
-    | PLSPECEXCEPTION of (symbol * ty option) list * loc (* exception *)
+    | PLSPECEXCEPTION of (symbol * ty option * loc) list * loc (* exception *)
     | PLSPECSTRUCT of (symbol * plsigexp) list * loc (* structure *)
     | PLSPECINCLUDE of plsigexp * loc (* include *)
     | PLSPECSEQ of plspec * plspec * loc 
@@ -142,10 +147,11 @@ struct
         list * loc 
 
   type conbind
-    = {symbol: symbol, ty: ty option}
+    = {symbol: symbol, ty: ty option, loc:loc}
   type datbind 
     = {tyvars: tvar list, symbol: symbol,
-       conbind: {symbol: symbol, ty: ty option} list}
+       loc:loc,
+       conbind: {symbol: symbol, ty: ty option, loc:loc} list}
 
   val format_caseKind
       : caseKind -> SMLFormat.format
@@ -169,5 +175,15 @@ struct
       : plspec -> SMLFormat.format
   val format_pltopdec
       : pltopdec -> SMLFormat.format
+
+  val getLeftPosExp : plexp -> Loc.pos
+  val getRightPosExp : plexp -> Loc.pos
+  val getLocExp : plexp -> Loc.pos * Loc.pos
+  val getLeftPosPat : plpat -> Loc.pos
+  val getRightPosPat : plpat -> Loc.pos
+  val getLocPat : plpat -> Loc.pos * Loc.pos
+  val getLocDec : pdecl -> Loc.loc
+  val getLocTopDec : pltopdec -> Loc.loc
+  val getLocSigexp : plsigexp -> Loc.loc
 
 end

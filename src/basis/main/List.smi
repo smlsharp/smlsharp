@@ -1,4 +1,4 @@
-_require "./General.smi"
+_require       "./General.smi"
 
 structure List =
 struct

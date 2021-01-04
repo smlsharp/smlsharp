@@ -9,7 +9,6 @@ _require "../../../compilerIRs/machinecode/main/MachineCode.ppg.smi"
 _require "../../../compilerIRs/llvmir/main/LLVMIR.ppg.smi"
 _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require local "../../../data/runtimetypes/main/FFIAttributes.ppg.smi"
-_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
 _require local "../../../data/name/main/CodeLabel.smi"
 _require local "../../../data/name/main/ExternSymbol.smi"
 (* _require local "../../../libs/toolchain/main/Filename.smi" *)

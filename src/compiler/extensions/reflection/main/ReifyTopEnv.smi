@@ -26,6 +26,7 @@ _require local "./ReifyUtils.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 (* _require "./ReifiedTerm.ppg.smi" *)
 (* _require "./TopEnvUtils.ppg.smi" *)
+_require local "../../../data/control/main/PrintControl.smi"
 
 _require "../../../../compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.smi"
 _require local "../../../../compiler/compilePhases/nameevaluation/main/NameEvalEnvPrims.smi"

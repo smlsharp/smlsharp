@@ -133,12 +133,22 @@ in
       A.TYWILD loc => I.TYWILD
     | A.TYID (tvar, loc) => I.TYVAR (evalTvar tvarEnv tvar)
     | A.FREE_TYID {freeTvar = {symbol, isEq}, tvarKind, loc} => 
-      let
-        val id = findFreeTvarId symbol
-        val tvarKind = evalTvarKindAux allowFlex tvarEnv env tvarKind
-      in
-        I.TYFREE_TYVAR {symbol=symbol, isEq=isEq, id=id, tvarKind=tvarKind}
-      end
+      (case Symbol.symbolToString symbol of 
+         "'_" =>
+         let
+           val id = TvarID.generate()
+           val tvarKind = evalTvarKindAux allowFlex tvarEnv env tvarKind
+         in
+           I.TYFREE_TYVAR {symbol=symbol, isEq=isEq, id=id, tvarKind=tvarKind}
+         end
+       | _ => 
+         let
+           val id = findFreeTvarId symbol
+           val tvarKind = evalTvarKindAux allowFlex tvarEnv env tvarKind
+         in
+           I.TYFREE_TYVAR {symbol=symbol, isEq=isEq, id=id, tvarKind=tvarKind}
+         end
+      )
     | A.TYRECORD {ifFlex, fields=tyFields, loc} =>
       (EU.checkRecordLabelDuplication
          #1 tyFields loc 
@@ -185,20 +195,18 @@ in
                   I.TYCONSTRUCT {tfun=tfun, args=tyList}
               end
         in
-          case VP.lookupTstr env path handle e => raise e
-           of
-            V.TSTR tfun => makeTy tfun
-          | V.TSTR_DTY {tfun, varE, formals, conSpec} => makeTy tfun
+          case VP.findTstr(env, path) of
+            SOME (sym, V.TSTR {tfun,...}) => makeTy tfun
+          | SOME (sym, V.TSTR_DTY {tfun, ...}) => makeTy tfun
+          | NONE => 
+            (EU.enqueueError (loc, E.TypNotFound("Ty-040",{longsymbol = path}));
+             I.TYERROR
+            )
         end
         handle Arity =>
                (EU.enqueueError (loc, E.TypArity("Ty-030",{longsymbol =  path}));
                 I.TYERROR
                )
-             | VP.LookupTstr =>
-               (EU.enqueueError (loc, E.TypNotFound("Ty-040",{longsymbol = path}));
-                I.TYERROR
-               )
-
       end
     | A.TYTUPLE(nil, loc) => BT.unitITy
     | A.TYTUPLE(tyList, loc) =>
@@ -351,15 +359,16 @@ in
       let
         val loc = Symbol.longsymbolToLoc runtimeTyLongsymbol
         val tstr =
-            SOME (VP.lookupTstr evalEnv runtimeTyLongsymbol)
-            handle VP.LookupTstr =>
-                   (EU.enqueueError
-                      (loc, E.TypNotFound("Ty-090", {longsymbol = runtimeTyLongsymbol}));
-                    NONE)
+            case VP.findTstr(evalEnv, runtimeTyLongsymbol) of
+              NONE =>
+              (EU.enqueueError
+                 (loc, E.TypNotFound("Ty-090", {longsymbol = runtimeTyLongsymbol}));
+               NONE)
+            | x => x
         val prop =
             case tstr of
-              SOME (V.TSTR tfun) => I.tfunProperty tfun
-            | SOME (V.TSTR_DTY {tfun, ...}) => I.tfunProperty tfun
+              SOME (sym, V.TSTR {tfun,...}) => I.tfunProperty tfun
+            | SOME (sym, V.TSTR_DTY {tfun, ...}) => I.tfunProperty tfun
             | NONE => NONE
       in
         case prop of
@@ -422,6 +431,7 @@ in
   and evalFfity (tvarEnv:tvarEnv) (env:V.env) ffiTy =
       let
         val evalFfity = evalFfity tvarEnv env
+        exception LookupTstr
       in
         case ffiTy of
           P.FFIFUNTY (ffiAttributesOption, argTys, varTys, retTys, loc) =>
@@ -439,9 +449,10 @@ in
         | P.FFICONTY (argTyList, typath, loc) =>
           let
             val tfun =
-                case VP.lookupTstr env typath of
-                  V.TSTR tfun => tfun
-                | V.TSTR_DTY {tfun, varE, formals, conSpec} => tfun
+                case VP.findTstr(env, typath) of
+                  SOME (sym, V.TSTR {tfun,...}) => tfun
+                | SOME (sym, V.TSTR_DTY {tfun,...}) => tfun
+                | NONE => raise LookupTstr
           in
             case I.pruneTfun tfun of
                I.TFUN_DEF {longsymbol, admitsEq, formals, realizerTy} =>
@@ -456,7 +467,7 @@ in
                end
             | _ => I.FFIBASETY (evalTy tvarEnv env (ffiTyToAbsynTy ffiTy), loc)
           end
-          handle VP.LookupTstr =>
+          handle LookupTstr => 
                  (EU.enqueueError
                     (loc, E.TypNotFound("Ty-100",{longsymbol = typath}));
                   I.FFIBASETY (I.TYERROR, loc))
@@ -478,20 +489,20 @@ in
        =
       let
         val _ = EU.checkSymbolDuplication
-                  (fn {tyvars, symbol, conbind} => symbol)
+                  (fn {tyvars, symbol, conbind, loc} => symbol)
                   datbindList
                   (fn s => E.DuplicateTypInDty("Ty-120",s))
         val _ = EU.checkSymbolDuplication
-                  (fn {symbol, ty=tyOption} => symbol)
+                  (fn {symbol, ty=tyOption, loc} => symbol)
                   (foldl
-                     (fn ({tyvars, symbol, conbind}, allCons) =>
+                     (fn ({tyvars, symbol, conbind, loc}, allCons) =>
                          allCons@conbind)
                      nil
                      datbindList)
                   (fn s => E.DuplicateConNameInDty("Ty-130",s))
         val (newEnv, datbindListRev) =
             foldl
-              (fn ({tyvars=tvarList,symbol,conbind},
+              (fn ({tyvars=tvarList,symbol,conbind, loc=datBindLoc},
                    (newEnv, datbindListRev)) =>
                   let
                     val _ = EU.checkSymbolDuplication
@@ -507,9 +518,16 @@ in
 *)
                     val longsymbol = [symbol]
                     val tfv =
-                        I.mkTfv(I.TFV_SPEC{longsymbol= longsymbol, id=id,admitsEq=true,formals=tvarList})
+                        I.mkTfv(I.TFV_SPEC{longsymbol= longsymbol, 
+                                           id=id,admitsEq=true,
+                                           formals=tvarList})
                     val tfun = I.TFUN_VAR tfv
-                    val newEnv =VP.insertTstr(newEnv, symbol, V.TSTR tfun)
+                    val newEnv = 
+                        VP.rebindTstr 
+                          VP.BIND_TSTR 
+                          (newEnv, 
+                           symbol, 
+                           V.TSTR {tfun = tfun, defRange=datBindLoc})
                     val datbindListRev =
                         {name= symbol,
                          id=id,
@@ -518,6 +536,7 @@ in
                          admitsEqRef=admitsEqRef,
                          args=tvarList,
                          tvarEnv=tvarEnv,
+                         defRange = datBindLoc,
                          conbind=conbind}
                         :: datbindListRev
                   in
@@ -529,63 +548,73 @@ in
         val evalEnv = VP.envWithEnv (env, newEnv)
         val datbindList =
             foldl
-              (fn ({name, id, tfv, tfun, admitsEqRef, args, tvarEnv, conbind},
-                   datbindList) =>
-                  let
-                    val returnTy =
-                        I.TYCONSTRUCT
-                          {tfun=tfun,
-                           args= map (fn tv=>I.TYVAR tv) args
-                          }
-                    val (conVarE, conSpec, conIDSet) =
-                        foldl
-                          (fn ({symbol,ty=tyOption},
-                               (conVarE,conSpec, conIDSet)) =>
+            (fn ({name,id,tfv,tfun, admitsEqRef, args, tvarEnv, defRange, conbind},
+                 datbindList) =>
+              let
+                val returnTy =
+                    I.TYCONSTRUCT
+                      {tfun=tfun,
+                       args= map (fn tv=>I.TYVAR tv) args
+                      }
+                val (conVarE, conSpec, conIDSet) =
+                    foldl
+                    (fn ({symbol,ty=tyOption, loc},
+                         (conVarE,conSpec, conIDSet)) =>
+                      let
+(*
+                        val longsymbol = 
+                            Symbol.prefixPath(path, symbol)
+*)
+                        val longsymbol = [symbol]
+                        val conId = ConID.generate()
+                        val conIDSet = 
+                            ConID.Set.add (conIDSet, conId)
+                        val (tyOption, conTy) =
+                            case tyOption of
+                              NONE => 
+                              (NONE, 
+                               case args of
+                                 nil => returnTy
+                               | _ => 
+                                 I.TYPOLY
+                                   (
+                                    map (fn tv =>
+                                            (tv, 
+                                             I.UNIV I.emptyProperties)) 
+                                        args,
+                                    returnTy
+                                   )
+                              )
+                            | SOME ty =>
                               let
-(*
-                                val longsymbol = Symbol.prefixPath(path, symbol)
-*)
-                                val longsymbol = [symbol]
-                                val conId = ConID.generate()
-                                val conIDSet = ConID.Set.add (conIDSet, conId)
-                                val (tyOption, conTy) =
-                                    case tyOption of
-                                      NONE => 
-                                      (NONE, 
-                                       case args of
-                                         nil => returnTy
-                                       | _ => I.TYPOLY
-                                              (
-                                               map (fn tv =>(tv, I.UNIV I.emptyProperties)) args,
-                                               returnTy
-                                              )
-                                      )
-                                    | SOME ty =>
-                                      let
-                                        val ty = evalTy tvarEnv evalEnv ty
-                                      in
-                                        (SOME ty,
-                                         case args of
-                                           nil => I.TYFUNM([ty], returnTy)
-                                         | _ => 
-                                           I.TYPOLY
-                                             (
-                                              map (fn tv =>(tv, I.UNIV I.emptyProperties)) args,
-                                              I.TYFUNM([ty], returnTy)
-                                             )
-                                        )
-                                      end
-                                val conInfo = {id=conId, longsymbol=longsymbol, ty=conTy}
-(*
-                                val _ = V.conEnvAdd (conId, conInfo)
-*)
-                                val idstatus = I.IDCON conInfo
+                                val ty = evalTy tvarEnv evalEnv ty
                               in
-                                (SymbolEnv.insert(conVarE, symbol, idstatus),
-                                 SymbolEnv.insert(conSpec, symbol, tyOption),
-                                 conIDSet
+                                (SOME ty,
+                                 case args of
+                                   nil => I.TYFUNM([ty], returnTy)
+                                 | _ => 
+                                   I.TYPOLY
+                                     (
+                                      map (fn tv =>
+                                              (tv, 
+                                               I.UNIV I.emptyProperties)) args,
+                                      I.TYFUNM([ty], returnTy)
+                                     )
                                 )
                               end
+                        val conInfo = {id=conId, longsymbol=longsymbol, 
+                                       defRange = loc,
+                                       ty=conTy}
+(*
+                        val _ = V.conEnvAdd (conId, conInfo)
+*)
+                        val idstatus = I.IDCON conInfo
+                      in
+                        (SymbolEnv.insert(conVarE, symbol, idstatus),
+                         SymbolEnv.insert(conSpec, symbol, tyOption),
+                         conIDSet
+                        )
+                      end
                           )
                           (SymbolEnv.empty,SymbolEnv.empty,ConID.Set.empty)
                           conbind
@@ -596,6 +625,7 @@ in
                      conVarE=conVarE,
                      conSpec=conSpec,
                      conIDSet=conIDSet,
+                     defRange = defRange,
                      admitsEqRef=admitsEqRef,
                      args=args}
                     :: datbindList
@@ -610,7 +640,7 @@ in
                   )
         val newEnv =
             foldr
-              (fn ({name,id,tfv,conVarE,conSpec,conIDSet,admitsEqRef,args},
+              (fn ({name,id,tfv,conVarE,conSpec,conIDSet,admitsEqRef,defRange, args},
                    newEnv) =>
                   let
                     val property = DatatypeLayout.datatypeLayout conSpec
@@ -639,14 +669,17 @@ in
 *)
                     val _ = tfv := tfunkind
                     val newEnv = 
-                        VP.rebindTstr(newEnv,
-                                     name,
-                                     V.TSTR_DTY {tfun=I.TFUN_VAR tfv,
-                                                 varE=conVarE,
-                                                 formals=args,
-                                                 conSpec=conSpec
-                                                }
-                                    )
+                        VP.rebindTstr 
+                          VP.BIND_TSTR 
+                          (newEnv,
+                           name,
+                           V.TSTR_DTY {tfun=I.TFUN_VAR tfv,
+                                       varE=conVarE,
+                                       formals=args,
+                                       defRange = defRange,
+                                       conSpec=conSpec
+                                      }
+                          )
                     val newEnv = VP.bindEnvWithVarE(newEnv, conVarE)
                   in
                     newEnv

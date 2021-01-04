@@ -71,7 +71,7 @@ structure TypedCalc =
       | TPEXNCONSTRUCT of {argExpOpt:tpexp option, exn:exnCon, loc:Loc.loc}
       | TPEXNTAG of {exnInfo:Types.exnInfo, loc:Loc.loc}
       | TPEXEXNTAG of {exExnInfo:Types.exExnInfo, loc:Loc.loc}
-      | TPEXVAR of Types.exVarInfo
+      | TPEXVAR of (Types.exVarInfo * Loc.loc)
       | TPFFIIMPORT of {ffiTy:ffiTy, loc:Loc.loc, funExp:tpffifun,
                         stubTy:Types.ty}
       | TPFOREIGNSYMBOL of {name:string, ty:Types.ty, loc:Loc.loc}
@@ -124,7 +124,7 @@ structure TypedCalc =
                         loc:Loc.loc, primOp:Types.primInfo}
       | TPRAISE of {exp:tpexp, loc:Loc.loc, ty:Types.ty}
       | TPRECFUNVAR of {arity:int, var:Types.varInfo}
-      | TPRECORD of {fields:tpexp RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty}
+      | TPRECORD of {fields:tpexp RecordLabel.Map.map, loc:Loc.loc, recordTy:Types.ty RecordLabel.Map.map}
       | TPSELECT of {exp:tpexp, expTy:Types.ty, label:RecordLabel.label, loc:Loc.loc,
                      resultTy:Types.ty}
       | TPSIZEOF of Types.ty * Loc.loc

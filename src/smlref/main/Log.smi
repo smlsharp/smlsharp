@@ -1,0 +1,10 @@
+_require "basis.smi"
+_require "./Config.smi"
+
+structure Log = 
+struct
+  val startLogging : unit -> unit
+  val stopLogging : unit -> unit
+  val log : string -> unit
+end
+

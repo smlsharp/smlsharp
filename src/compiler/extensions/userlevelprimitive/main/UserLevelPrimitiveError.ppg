@@ -1,0 +1,62 @@
+structure UserLevelPrimitiveError =
+struct
+local
+  (* structure UE = UserError *)
+
+  (*%
+     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+   *)
+  type longsymbol = Symbol.longsymbol
+  (*%
+     @formatter(Symbol.symbol) Symbol.format_symbol
+   *)
+  type symbol = Symbol.symbol
+in
+
+  (*%  *)
+  type code = string
+
+  (*%
+   *)
+  exception
+  (*%
+     @format((code * {longsymbol}))
+     "(user-level primitive" +d code ")" +d
+     "unbound" +d "type" +d "constructor:" +d longsymbol
+     +1 
+     "try" +d "_requre" +d "\"reify.smi\""
+   *)
+  TyConNotFound of (code * {longsymbol: longsymbol})
+
+  and
+  (*%
+     @format((code * {longsymbol}))
+     "(user-level primitive" +d code ")" +d
+     "unbound" +d +d "constructor:" +d longsymbol
+     +1 
+     "try" +d "_requre" +d "\"reify.smi\""
+   *)
+  ConNotFound of (code * {longsymbol: longsymbol})
+
+  and
+  (*%
+     @format((code * {longsymbol}))
+     "(user-level primitive" +d code ")" +d
+     "unbound" +d +d "identifier:" +d longsymbol
+     +1 
+     "try" +d "_requre" +d "\"reify.smi\""
+   *)
+  IdNotFound of (code * {longsymbol: longsymbol})
+
+  and
+  (*%
+     @format((code * {longsymbol}))
+     "(user-level primitive" +d code ")" +d
+     "unbound" +d +d "exception:" +d longsymbol
+     +1 
+     "try" +d "_requre" +d "\"reify.smi\""
+   *)
+  ExnNotFound of (code * {longsymbol: longsymbol})
+
+end
+end

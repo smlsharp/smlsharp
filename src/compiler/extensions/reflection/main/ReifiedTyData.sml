@@ -9,6 +9,7 @@ struct
   structure T = Types
 
   type ty = Types.ty
+  type loc = Loc.loc
 
   val Int32Ty = T.CONSTRUCTty {tyCon = BT.int32TyCon, args = []}
   val Int64Ty = T.CONSTRUCTty {tyCon = BT.int64TyCon, args = []}
@@ -40,37 +41,24 @@ struct
           RecordLabel.Map.empty
           stringTyList)
 
-  fun BtvIdTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_btvId(), args = []}
-  fun TypIdTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_typId(), args = []}
+  fun BtvIdTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_btvId loc, args = []}
+  fun TypIdTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_typId loc, args = []}
 
-(*
-  fun PosTy () = 
-      RecordTy [("fileName", StringTy), ("line", IntTy), ("col", IntTy)]
-  fun LocTy () = 
-      RecordTy [("1", PosTy()), ("2", PosTy())]
-  fun SymbolTy () =
-      RecordTy [("string", StringTy), ("loc", LocTy())]
-  fun LongsymbolTy () = ListTy (SymbolTy())
+  fun SENVMAPTY loc ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_SENVMAPty loc, args=[ty]}
+  fun TypIDMapMapTy loc ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_TypIDMapMap loc, args = [ty]}
+  fun BounTypeVarIDMapMapTy loc ty =
+      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_BoundTypeVarIDMapMap loc, args = [ty]}
+  fun RecordLabelMapMapTy loc ty = 
+      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_RecordLabelMapMap loc, args = [ty]}
+  fun LabelTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_label loc, args = []}
+  fun IdstatusTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_idstatus loc, args = []}
+  fun EnvTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_env loc, args = []}
 
-  fun SymbolTy () = 
-      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_symbol(), args = []}
-  fun PosTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_pos(), args = []}
-*)
-  fun SENVMAPTY ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_SENVMAPty(), args=[ty]}
-  fun TypIDMapMapTy ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_TypIDMapMap(), args = [ty]}
-  fun BounTypeVarIDMapMapTy ty =
-      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_BoundTypeVarIDMapMap(), args = [ty]}
-  fun RecordLabelMapMapTy ty = 
-      T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_RecordLabelMapMap(), args = [ty]}
-  fun LabelTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_label(), args = []}
-  fun IdstatusTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_idstatus(), args = []}
-  fun EnvTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_env(), args = []}
-
-  fun ReifiedTermTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTerm(), args = []}
-  fun ReifiedTyTy () = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTy(), args = []}
-  fun ReifiedTyLabelMapTy () = RecordLabelMapMapTy (ReifiedTyTy())
-  fun ConSetTy () =  SENVMAPTY (OptionTy (ReifiedTyTy()))
-  fun ConSetEnvTy () = TypIDMapMapTy (ConSetTy())
-  fun TyRepTy () = RecordTy [("conSetEnv", ConSetEnvTy()), ("reifiedTy", ReifiedTyTy())]
+  fun ReifiedTermTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTerm loc, args = []}
+  fun ReifiedTyTy loc = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_reifiedTy loc, args = []}
+  fun ReifiedTyLabelMapTy loc = RecordLabelMapMapTy loc (ReifiedTyTy loc)
+  fun ConSetTy loc =  SENVMAPTY loc (OptionTy (ReifiedTyTy loc))
+  fun ConSetEnvTy loc = TypIDMapMapTy loc (ConSetTy loc)
+  fun TyRepTy loc = RecordTy [("conSetEnv", ConSetEnvTy loc), ("reifiedTy", ReifiedTyTy loc)]
 
 end

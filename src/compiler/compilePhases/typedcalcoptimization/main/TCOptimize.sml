@@ -204,7 +204,7 @@ local
         | TC.TPEXEXNTAG {exExnInfo, loc} =>
           TC.TPEXEXNTAG
             {exExnInfo= exExnInfo, loc= loc}
-        | TC.TPEXVAR {path, ty} => exp
+        | TC.TPEXVAR ({path, ty},loc) => exp
         | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, ty), stubTy} =>
           TC.TPFFIIMPORT
             {ffiTy = ffiTy,

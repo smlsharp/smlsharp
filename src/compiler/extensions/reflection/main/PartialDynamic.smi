@@ -29,7 +29,7 @@ struct
   val void : ['a#reify. ReifiedTy.tyRep -> 'a ReifiedTerm.dyn]
   val viewTermGeneric : ['a, 'b#reify. 'a ReifiedTerm.dyn * ReifiedTy.tyRep -> 'b]
   type existInstMap (= {})
-  val dynamicExistInstance : existInstMap -> int -> ReifiedTy.tyRep
+  val dynamicExistInstance : existInstMap -> int -> {reify:ReifiedTy.tyRep, tag:word, size:word}
   val dynamicTypeCase : ['a,'b. 
                               'a ReifiedTerm.dyn
                             -> (ReifiedTy.tyRep * (existInstMap -> 'a ReifiedTerm.dyn -> 'b)) list

@@ -1,8 +1,421 @@
 This is a list of changes to the SML/NJ Library; the version numbers
 correspond to SML/NJ releases.
---------------------------------------------------------------------------------
 
-[2011-04-12]
+--------------------------------------------------------------------------------
+SML/NJ 110.99
+-------------------
+
+[2020-12-23]
+	Split out the `CharBufferDev` structure from the `CharBufferPP`
+	structure.
+
+[2020-12-21]
+	Significant improvements to the pretty printing library.
+	Added a number of device "properties" to the `PP_DEVICE`
+	signature (max indentation, max depth, ellipses, ...)
+	with functions to set the properties.  Also updated the
+	pretty printing engine to use the max depth and max
+	indentation properties when rendering.  Restructured
+	and cleaned up a bunch of code in the process.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.98
+-------------------
+
+[2020-07-08]
+	Fixed bug #263 (JSON parser ignores suffixes).  To fix this
+	bug required changing the interface to the `JSONParser`
+	structure, including the type of the `parse` function.
+	The `JSONParser` structure now exports a `source` type,
+	which is an abstraction of a JSON input source.  Several
+	functions are included for creating sources from strings,
+	input streams, etc.
+	This mechanism has also been added to the JSONStreamParser
+	structure's interface too.
+
+[2020-07-07]
+	Fixed bug #262, which was that the JSON parser didn't
+	handle empty objects correctly.
+
+[2020-07-02]
+	Renamed the `HTMLDev` structure to `HTML3Dev`.  At some
+	point, the `HTML` library will also be renamed, since
+	"HTML" implies HTML5 these days.
+
+[2020-07-01]
+	Updated the `ANSITermDev` structure in the pretty-printing
+	library to use the new control modes that were introduced
+	in 110.97.  Also moved the `HTMLDev` structure into a new
+	`pp-extras-lib.cm` library.  Doing so eliminates a dependency
+	from the compiler to the HTML library.
+
+[2020-06-08]
+	Added several functions to the `MONO_HASH_SET` signature
+	(and `HashSetFn` functor) to make its interface closer
+	to that of the `ORD_SET` signature.  The new functions are
+	`subtractc`, `subtractList`, `mapPartial`, `partition`,
+	`filter`, `exists`, `all`, and `find`.
+	In addition, also added the `copy` function.
+
+[2020-06-03]
+	Added the functions `delete` and `findAndRemove` to the
+	`MONO_PRIORITYQ` signature.
+
+[2020-05-25]
+	Some cleanup and additions to the `RegExpSyntax` structure in
+	the *RegExp Library*.  Instead of having constructors for
+	the optional, closure, and positive-closure operators, we
+	now support them via functions.  This change is because the
+	constructors were redundant with the more general `Interval`
+	constructor.
+	We also added more support for character ranges.  The new
+	function `fromRange` constructs a character set for a range,
+	and pre-defined character sets are provided for the POSIX
+	character classes (plus ``[:ascii:]`` and ``[:word:]``.
+
+[2020-05-20]
+	Fixed bug in printing JSON strings that include characters
+	that need to be escaped.
+
+[2020-05-15]
+	Renamed `without` as `subtract` and `listItems` as `toList`
+	in the `MONO_HASH_SET` signature.  The old names are still
+	present, but are marked as deprecated.
+
+[2020-05-14]
+	Add `toList` function to `MONO_DYNAMIC_ARRAY` signature.
+
+[2020-05-12]
+	Changed the `ListXProd` interface to follow the Basis Library
+	conventions (this module was written in the early 1990's
+	before the conventions had been established).  The function
+	names are now `app`, `map`, and `fold` and the types follow
+	the Basis Library conventions (`app` expects a `unit` return
+	type for its first argument and the initial value for `fold`
+	is the second argument, instead of the third).  The old
+	`appX`, `mapX`, and `foldX` functions are deprecated, but
+	remain for backward compatibility.
+
+[2020-05-11]
+	Added `mapPartial` function to `ORD_SET` interface.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.97
+-------------------
+
+[2020-04-21]
+	Removed the `version` and `banner` components from the `LibBase`
+	structure, since the library has been tracking SML/NJ release
+	versions for a very long time.
+
+[2020-04-19]
+	Added `implode`, `map`, `app`, `all`, and `exists` functions to
+	the `UTF8` signature. Also implemented the handling of 4-byte
+	encodings, which were previously not supported.
+
+[2020-04-16]
+	Renamed the `HASH_SET` signature to `MONO_HASH_SET`, which is
+	the correct name given the naming conventions.
+
+[2020-04-14]
+	Added the `fromVector`, `toList`, and `toVector` functions to
+	the `DynamicArray:DYNAMIC_ARRAY` interface.
+
+[2020-04-14]
+	Updated the `BitArray:BIT_ARRAY` interface to follow standard patterns
+	(this interfaces was originally designed before the SML Basis Library,
+	so it did not follow the conventions).
+	The changes are to have the `fromString` function return `NONE`,
+	instead of raising an exception on bad input, and to use deprecate
+	the `lshift` and `rshift` operations in favor of `>>` and `<<` (which
+	use `word` for the shift amount).
+
+[2020-04-13]
+	Added more modes to the `ANSITerm` command set.  Specifically, we added
+	the `Default` color specifier and the styles `DIM`, `NORMAL`, `UL_OFF`,
+	`BLINK_OFF`, `REV_OFF`, and `INVIS_OFF`.
+
+[2020-04-13]
+	Made the `ControlUtil.Cvt.bool` converter case insensitive.  Also,
+	it now allows "yes"/"no" as values.
+
+[2020-04-11]
+	Replaced the "directional" fold functions (_e.g._, `foldl`, `foldri`)
+	with non-directional functions (_e.g., `fold`, `foldi`) in the
+	`HashConsSet` and `HashConsMap` structures.  The reason for this
+	change is that the order of objects is pretty arbitrary, so there
+	is not any usefulness to processing elements in increasing or
+	decreasing order.
+	For backward compatibility, the old names will continue to work,
+	but they are deprecated amd will be removed in some future release.
+
+[2020-04-10]
+	Added `insertWith` and `insertWithi` functions to the `ORD_MAP`
+	signature.
+
+[2020-04-10]
+	Added operations to the `HashConsSet` and `HashConsMap` structures
+	(and corresponding signatures) to bring them inline with the
+	`ORD_SET` and `ORD_MAP` interfaces.  Also reimplemented these
+
+[2020-04-10]
+	Added a `QUOTE` constructor to the `SExp.value` datatype and
+	cleaned up the details of the syntax of identifiers.  Also
+	added a `compare` function for the `SExp.value` datatype.
+
+[2020-04-09]
+	Reimplemented the `find` functions in `UnixPath` to use the
+	`PathUtil` implementation, rather than reimplementing it.
+	Also changed the result types of `findFile` and `findFileOfType`
+	to return `string option`, instead of raising an exception.
+
+[2020-04-08]
+	The `JSONStreamPrinter` implementation now raises the `Fail`
+	exception when printing is attempted on a closed printer.
+
+[2020-04-08]
+	Changed the return type of the `error` call-back function in
+	the `JSONStreamParser.callbacks` type to `unit`.
+
+[2020-04-01]
+	Added a new library for generating and manipulating "Universally
+	Unique Identifiers" (UUID/uuid-lib.cm).
+
+[2020-04-01]
+	Added structure `FNVHash`, which implements the Fowler-Noll-Vo
+	hashing algorithm
+
+[2020-02-27]
+	Added `RESET` as a command to the `ANSITerm` structure.
+
+[2020-01-02]
+	Added the `disjoint` function to the `ORD_SET` signature.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.94-96
+-------------------
+
+	No changes
+
+--------------------------------------------------------------------------------
+SML/NJ 110.93
+-------------------
+
+[2019-09-04]
+	Modified the `Rand` and `Random` structures to use the default `Word`
+	structure, instead of `Word31`.  This change should make no difference
+	on 32-bit targets, but we hopefully allow these modules to continue
+	working on 64-bit targets (once we have 64-bit support working).  In
+	the long run, we will want 64-bit specific implementations of these
+	modules.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.86-92
+-------------------
+
+	No changes
+
+--------------------------------------------------------------------------------
+SML/NJ 110.86
+-------------------
+
+[2019-01-07]
+	Renamed the function `CharBufferPP.openOut` to `openBuf`, and added the
+	`TextPP` structure that supports pretty printing to either an output
+	stream (like `TextIOPP`) or a character buffer (like `CharBufferPP`)
+
+--------------------------------------------------------------------------------
+SML/NJ 110.85
+-------------------
+
+	No changes
+
+--------------------------------------------------------------------------------
+SML/NJ 110.84
+-------------------
+
+[2018-12-12]
+	Added CharBufferPP to pretty-printing library.  This module can be used
+	to generate strings from a pretty-printer.
+
+[2018-09-26]
+	Minor cleanup in the way that hash-table sizes are determined.  We now
+ 	place an upper bound on table size that is derived from Array.maxLen.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.83
+-------------------
+
+[2018-08-20]
+	Added a pretty printer (SExpPP) to the SExp library.  The SExpPrinter
+	module does not layout the text with line breaks, which makes it hard
+	to read.
+	Also fixed a bug in the SExp.same function (lists of different lengths
+	would compare equal if the shorter list was a prefix of the longer list)
+
+[2018-08-20]
+	Added some documentation to the PP_STREAM signature.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.82
+-------------------
+
+[2017-05-17]
+	Fixed a bug in the way that JSON string values were being printed.
+	The code previously assumed that C-style esaping will work, but
+	that is not true for "\'" (as well as for control and non-ASCII
+	characters).  The new implementation assumes that the string value
+	is UTF-8 and uses the "\\u" escape sequences for characters outside
+	the JSON escapes and printable ASCII characters.
+
+	NOTE: we should make sure that the input side of the JSON library
+	has the same semantics.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.81
+-------------------
+
+[2017-04-12]
+	Added JSONUtil structure to JSON library.  This module supports processing
+	the in-memory representation of JSON values.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.80
+-------------------
+
+[2016-08-03]
+	Fixed bug #167 (Bug in handling of long options in GetOpt).  The new behavior
+	is to allow long-option prefixes to overlap with other long options, but to
+	favor an exact match over prefix matches.  For example, if the long options
+	are "--foo", "--foobar", and "--foobaz", then "--foo" will match the first,
+	but "--foob" will be flagged as ambiguous.
+
+[2016-01-12]
+	Added minItem and maxItem to ORD_SET signature.
+
+[2016-01-12]
+	Added toList to ORD_SET signature and marked listItems as
+	deprecated.
+
+[2015-12-07]
+	Fixed bug #144 (Splay sets are broken).
+
+[2015-10-28]
+	Added the function `help` to the Controls module that returns a
+	control's help string.
+
+[2015-10-28]
+	Added the functions mkOptionFlag, mkOptionReqArg, and mkOption
+	to the Controls module to make it easier to package controls
+	as command-line options. These functions provide an alternative
+	to the usual approach of using a "--C<ctl>=<value> form for
+	all of the controls.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.79
+-------------------
+
+[2015-09-21]
+	Added additional array operations toList, fromVector, and toVector to
+	BitArray module so that it matches the new proposed Basis Library
+	specification (Proposal 2015-003).
+
+--------------------------------------------------------------------------------
+SML/NJ 110.78
+-------------------
+
+[2014-12-07]
+	Added HTML4Entities structure to HTML4 library.  various
+	performance improvements to HTML4 parsing (but the code still
+	needs work).  Also rewrote the HTML4 pretty printer.
+
+[2014-12-07]
+	New implementation of ListMergeSort.  This implementation is
+	better on sorted data (both ascending and descending) and
+	faster on smaller lists.  It is slower than the previous
+	implementation on very large lists (e.g., 10^6 elements
+	or more).
+
+[2014-11-17]
+	Added HTML4Attrs module to HTML4 library.  This module provides
+	utility functions for building attribute-value pairs.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.77
+-------------------
+
+[2014-07-15]
+	Reimplementation of delete/remove operations in red-black-tree
+	versions of sets and maps.  The previous implementation could
+	result in violations of the data-structure invariants, which
+	was leading to unbalanced trees and loss of performance.  Note
+	that the order invariants were correctly maintained, so correctness
+	of the operations was not an issue.
+
+[2014-03-27]
+	Added XML library, which is a lightweight library for parsing XML
+	files.  The library does not support validation and will immediatly
+	raise an exception on syntax errors.  Its purpose is to ease the
+	writing of applications that must process data files that are
+	in XML syntax.
+
+[2013-11-20]
+	Changes to S-expression parsing library.  Allow multiple top-level
+	values in a file (parsing now returns a list).  Handle LISP/Scheme-style
+	comments ("; ...").
+
+--------------------------------------------------------------------------------
+SML/NJ 110.76
+-------------------
+
+[2012-10-30]
+	Fixed bug in DynamicArray iterators because of bad slice dimensions
+	(bug #108).  Also switched to using Array.fromList to implement fromList
+	function.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.75
+-------------------
+
+[2012-09-24]
+	Added Base64 module to support encoding and decoding Word8 vectors as
+	base64 strings.
+
+[2012-09-23]
+	Added exists, existsi, all, and alli functions to ORD_MAP signature and
+	implementations.
+
+[2012-09-23]
+	Added all function to ORD_SET signature and implementations.
+
+[2012-03-26]
+	Added subtract, subtract', and subtractList functions to ORD_SET
+	interface and implementations.
+
+[2012-03-09]
+	Modified PathUtil module to handle the case where the filename is an
+	absolute path.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.74
+-------------------
+
+[2011-11-25]
+	Added hash-table-based implementation of sets (HASH_SET signature and
+	HashSetFn functor).
+
+[2011-05-23]
+	Added new S-expression library (contributed by Damon Wang)
+
+[2011-05-17]
+	Fixed bug in JSON scanner.  It didn't handle escaped backslash or double
+	quote correctly.
+
+--------------------------------------------------------------------------------
+SML/NJ 110.73
+-------------------
+
+[2011-05-12]
 	Modified the implementation of GetOpt.usageInfo so that if the help
 	string has embedded newlines, then the extra lines are properly
 	indented.
@@ -14,8 +427,15 @@ correspond to SML/NJ releases.
 [2011-03-16]
 	Added findExe function to PathUtil module.
 
+[2010-06-30]
+	Added HTML4 library.
+
 [2010-03-09]
 	Fixed bug in hashed cons library (bug #55).
+
+--------------------------------------------------------------------------------
+SML/NJ 110.72
+-------------------
 
 [2009-05-13]
 	Added array iterators to DynamicArray module.

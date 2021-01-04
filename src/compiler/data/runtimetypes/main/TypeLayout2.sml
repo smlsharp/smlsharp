@@ -171,39 +171,4 @@ struct
       | SOME _ => R.boxedTy (* packed *)
       | NONE => raise PropOf
 
-  fun tagValue R.UNBOXED = 0
-    | tagValue R.BOXED = 1
-
-  val sizeValue = RuntimeTypes.getSize
-
-  datatype size_assumption =
-      (* every type has power-of-2 size *)
-      ALL_SIZES_ARE_POWER_OF_2
-(*
-    | (* every type except long double has power-of-2 size *)
-      ALL_SIZES_ARE_POWER_OF_2_EXCEPT_LONG_DOUBLE
-*)
-  datatype align_computation =
-      (* For every type, its alignment is equal to its size *)
-      ALIGN_EQUAL_SIZE
-(*
-    | (* For every type except double, its alignment is equal to its size.
-       * The size of double is 8 and its alignment is 4. *)
-      ALIGN_EQUAL_SIZE_EXECPT_DOUBLE
-    | (* For each type whose size is larger than 8, its alignment is 4.
-       * For any other types, their alignments are equal to their sizes *)
-      ALIGN_UPTO_4
-*)
-
-  val charBits = 8
-
-  (* maximum size that sizeOf returns.
-   * It is also the maximum alignment constraint *)
-  val maxSize = #size RuntimeTypes.word64Ty
-
-  (* NOTE: On x86 Linux (and any other long-lived operating systems on x86),
-   * sizeof(long double) is 12. So ALL_SIZES_ARE_POWER_OF_2_EXCEPT_LONG_DOUBLE
-   * is more appropriate for those platforms. *)
-  val sizeAssumption = ALL_SIZES_ARE_POWER_OF_2
-  val alignComputation = ALIGN_EQUAL_SIZE
 end

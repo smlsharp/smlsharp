@@ -1,0 +1,16 @@
+_require "../../basis.smi"
+_require local "./fnv-hash.smi"
+_require local "./atom-sig.sml"
+
+structure Atom =
+struct
+  type atom (= boxed)
+  val atom : string -> atom
+  val atom' : substring -> atom
+  val toString : atom -> string
+  val same : atom * atom -> bool
+  val sameAtom : atom * atom -> bool
+  val compare : atom * atom -> order
+  val lexCompare : atom * atom -> order
+  val hash : atom -> word
+end

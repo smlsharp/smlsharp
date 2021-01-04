@@ -99,6 +99,8 @@ struct
         (putsErr ("command failed at status " ^ Int.toString status
                   ^ ": " ^ command);
          CoreUtils.cat [stderr] TextIO.stdErr)
+      | UserLevelPrimitive.UserLevelPrimError (loc, exn) =>
+        putsErr (userErrorToString (loc, UserError.Error, exn))
       | _ =>
         putsErr ("uncaught exception: " ^ exnMessage e)
 
@@ -125,7 +127,7 @@ struct
     | MakeDependCompile of file_place_limit
     | MakeDependLink of file_place_limit
     | MakeMakefile of file_place_limit
-    | AnalyzeFiles
+    | AnalyzeFiles of string option
     | Help
 
   datatype command_line_args =
@@ -158,7 +160,7 @@ struct
   val optionDesc =
       let
         fun splitComma s = map S.ARG (String.fields (fn c => #"," = c) s)
-        open GetOpt
+        open GetOptLong
       in
         [
           SHORT (#"o", REQUIRED OutputFile),
@@ -168,7 +170,7 @@ struct
           SHORT (#"L", REQUIRED LibraryPath),
           SHORT (#"l", REQUIRED Library),
           SHORT (#"v", NOARG Verbose),
-          SHORT (#"A", NOARG (Mode AnalyzeFiles)),
+          SHORT (#"A", OPTIONAL (Mode o AnalyzeFiles)),
           SHORT (#"B", REQUIRED (SystemBaseDir o Filename.fromString)),
           SLONG ("BX", REQUIRED (SystemBaseExecDir o Filename.fromString)),
           SHORT (#"M", NOARG (Mode (MakeDependCompile ALL_PLACE))),
@@ -222,7 +224,7 @@ struct
       | MakeDependLink USERPATH_ONLY => "-MMl"
       | MakeMakefile ALL_PLACE => "-Mm"
       | MakeMakefile USERPATH_ONLY => "-MMm"
-      | AnalyzeFiles => "-A"
+      | AnalyzeFiles _ => "-A"
       | Help => "--help"
 
   fun usageMessage progname =
@@ -292,22 +294,29 @@ struct
 
   fun parseArgs args =
       let
-        val args = GetOpt.getopt optionDesc args
-            handle GetOpt.NoArg name =>
+        val args = GetOptLong.getopt optionDesc args
+            handle GetOptLong.NoArg name =>
                    raise Error ["option `" ^ name ^ "' requires an argument"]
-                 | GetOpt.HasArg name =>
+                 | GetOptLong.HasArg name =>
                    raise Error ["option `" ^ name ^ "' requires no argment"]
-                 | GetOpt.Unknown name =>
+                 | GetOptLong.Unknown name =>
                    raise Error ["invalid option `" ^ name ^ "'"]
       in
-        map (fn GetOpt.ARG x => SourceFile x | GetOpt.OPTION x => x) args
+        map (fn GetOptLong.ARG x => SourceFile x | GetOptLong.OPTION x => x)
+            args
       end
 
+
   fun loadBuiltin {systemBaseDir, ...} =
-      Top.loadBuiltin
-        (Loc.STDPATH,
-         Filename.concatPath
-           (systemBaseDir, Filename.fromString "builtin.smi"))
+      let
+        val filePlace = if Filename.isAbsolute systemBaseDir 
+                        then Loc.STDPATH else Loc.USERPATH
+      in
+        Top.loadBuiltin
+          (filePlace,
+           Filename.concatPath
+             (systemBaseDir, Filename.fromString "builtin.smi"))
+      end
 
   fun loadPrelude {linkOptions = {systemBaseDir, ...},
                    topContext,
@@ -367,6 +376,11 @@ struct
               {source = Loc.FILE (Loc.USERPATH, filename),
                read = fn (_, n) => TextIO.inputN (io, n),
                initialLineno = 1}
+(*
+       val _ = UserLevelPrimitive.initFind
+                 {findId = NameEvalEnvPrims.findId,
+                  findTstr = NameEvalEnvPrims.findTstr}
+*)
         val r =
             RET (Top.compile llvmOptions topOptions context input)
             handle e => ERR e
@@ -376,6 +390,13 @@ struct
               ERR e => raise e
             | RET (dep, Top.RETURN (_, bcfile)) => (dep, SOME bcfile)
             | RET (dep, Top.STOPPED) => (dep, NONE)
+        val {root, ...} = dependency
+(*
+        val _ = 
+            print
+            (Bug.prettyPrint
+               (InterfaceName.format_file_dependency_root root))
+*)
       in
         {dependency = dependency, bcfile = bcfile}
       end
@@ -391,7 +412,7 @@ struct
                 SOME filename => filename
               | NONE =>
                 case #edges (#root dependency) of
-                  (I.PROVIDE, I.FILE {source, ...}) :: _ =>
+                  (I.PROVIDE, I.FILE {source, ...},_) :: _ =>
                   Filename.replaceSuffix suffix (sourceToObjFile options source)
                 | _ => Filename.replaceSuffix suffix srcfile
         in
@@ -463,8 +484,8 @@ struct
         val {bcfile, dependency as {allNodes, root}, ...} = compileResult
         val provides =
             List.mapPartial
-              (fn (I.PROVIDE, I.FILE node) => SOME (#source node)
-                | (I.INCLUDE, I.FILE node) => SOME (#source node)
+              (fn (I.PROVIDE, I.FILE node, _) => SOME (#source node)
+                | (I.INCLUDE, I.FILE node, _) => SOME (#source node)
                 | _ => NONE)
               (#edges root)
         val mainObjectFiles =
@@ -634,7 +655,7 @@ struct
               (map (fn x => (Loc.USERPATH, x)) smifiles)
         val targets =
             List.mapPartial
-              (fn edge as (I.INCLUDE, I.FILE {source, ...}) =>
+              (fn edge as (I.INCLUDE, I.FILE {source, ...}, _) =>
                   SOME {target = Filename.removeSuffix (#2 source),
                         smifile = #2 source,
                         root = {fileType = I.ROOT_INCLUDES,
@@ -670,7 +691,7 @@ struct
                 let
                   val root = {fileType = I.ROOT_SML NONE,
                               mode = I.COMPILE,
-                              edges = [(I.PROVIDE, node)]}
+                              edges = [(I.PROVIDE, node, Loc.noloc)]}
                   val {allNodes, ...} = LoadFile.revisit root
                   val sources = listCompileSources limit allNodes
                   val target = sourceToObjFile options source
@@ -868,7 +889,7 @@ struct
             | SOME (MakeDependCompile _) => Top.SyntaxCheck
             | SOME (MakeDependLink _) => Top.SyntaxCheck
             | SOME (MakeMakefile _) => Top.SyntaxCheck
-            | SOME AnalyzeFiles => Top.ErrorCheck
+            | SOME (AnalyzeFiles _) => Top.NameRef
             | SOME Help => Top.SyntaxCheck
             | NONE => Top.NoStop
         val loadMode =
@@ -878,7 +899,7 @@ struct
             | SOME (MakeDependCompile _) => I.COMPILE
             | SOME (MakeDependLink _) => I.COMPILE_AND_LINK
             | SOME (MakeMakefile _) => I.ALL
-            | SOME AnalyzeFiles => I.COMPILE_AND_LINK
+            | SOME (AnalyzeFiles _) => I.COMPILE_AND_LINK
             | SOME Help => I.COMPILE
             | NONE => I.COMPILE_AND_LINK
         val fileMap =
@@ -950,9 +971,7 @@ struct
                          options
                          {limit = limit, out = out}
                          srcfiles)
-        | {mode = SOME AnalyzeFiles, srcfiles, ...} =>
-          raise Error ["analyze mode is currently disabled"]
-(*
+        | {mode = SOME (AnalyzeFiles dbparam), srcfiles, ...} =>
           let
             val sourceFile =
                 case srcfiles
@@ -962,11 +981,23 @@ struct
                                            \files in analyze mode"]
             val _ = case Filename.suffix sourceFile of
                              SOME "smi" => ()
-                           | _ => raise Error ["root .smi file must be specified in analyze mode"]
-          in
-            AnalyzeFiles.analyzeFiles options (I.USERPATH,sourceFile)
-          end
+                           | _ => raise
+                               Error ["root .smi file must be specified in analyze mode"]
+            val refdbName = 
+                case OS.Process.getEnv "SMLSHARP_SMLREFDB" of
+                  SOME name => name
+                | NONE => "smlsharp"
+            val defaultDbparam = "dbname=" ^ refdbName
+            val dbparam = case dbparam of NONE => defaultDbparam
+                                        | SOME s => s
+(*
+            val _ = UserLevelPrimitive.initFind
+                        {findId = NameEvalEnvPrims.findId,
+                         findTstr = NameEvalEnvPrims.findTstr}
 *)
+          in
+            AnalyzeFiles.analyzeFiles options dbparam (Loc.USERPATH, sourceFile)
+          end
         | {mode = SOME (m as Check _), outputFilename = SOME _, ...} =>
           raise Error ["cannot specify -o with " ^ modeToOption m]
         | {mode = SOME (Check _), outputFilename = NONE, srcfiles, ...} =>

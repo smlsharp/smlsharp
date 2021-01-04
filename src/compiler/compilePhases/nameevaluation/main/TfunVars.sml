@@ -92,14 +92,14 @@ in
 
   fun tfvsTstr tfvKind path (name, tstr, set) =
       case tstr of
-        IV.TSTR tfun => tfvsTfun tfvKind path (name, tfun, set)
+        IV.TSTR {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
       | IV.TSTR_DTY {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
 
   fun tfvsTyE tfvKind path (tyE, set) =
       SymbolEnv.foldri (tfvsTstr tfvKind path) set tyE
   fun tfvsStrE tfvKind path (IV.STR envMap, set) = 
       SymbolEnv.foldri
-        (fn (name, {env, strKind}, set) => 
+        (fn (name, {env, strKind, loc, definedSymbol}, set) => 
             tfvsEnv tfvKind (path@[name]) (env, set))
         set
         envMap 
@@ -160,13 +160,14 @@ in
         else set
   fun tfvsTstr tfvKind path (name, tstr, set) =
       case tstr of
-        IV.TSTR tfun => tfvsTfun tfvKind path (name, tfun, set)
+        IV.TSTR {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
       | IV.TSTR_DTY {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
   fun tfvsTyE tfvKind path (tyE, set) =
       SymbolEnv.foldri (tfvsTstr tfvKind path) set tyE
   fun tfvsStrE tfvKind path (IV.STR envMap, set) = 
       SymbolEnv.foldri
-        (fn (name, {env, strKind}, set) => tfvsEnv tfvKind (path@[name]) (env, set))
+        (fn (name, {env, strKind, loc, definedSymbol}, set) => 
+            tfvsEnv tfvKind (path@[name]) (env, set))
         set
         envMap
   and tfvsEnv tfvKind path (IV.ENV {tyE, strE, varE}, set) =

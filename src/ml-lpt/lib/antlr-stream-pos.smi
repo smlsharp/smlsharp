@@ -1,0 +1,23 @@
+_require "../../basis.smi"
+
+structure AntlrStreamPos =
+struct
+  structure FilePos = Int
+  type pos = FilePos.int
+  type span = pos * pos
+  type sourceloc = { fileName : string option, lineNo : int, colNo : int }
+  type sourcemap (= ref)
+  exception PosMustIncrease
+  val forward : pos * int -> pos
+  val mkSourcemap : unit -> sourcemap
+  val mkSourcemap' : string -> sourcemap
+  val same : sourcemap * sourcemap -> bool
+  val markNewLine : sourcemap -> pos -> unit
+  val resynch : sourcemap -> pos * sourceloc -> unit
+  val sourceLoc : sourcemap -> pos -> sourceloc
+  val fileName : sourcemap -> pos -> string option
+  val lineNo : sourcemap -> pos -> int
+  val colNo : sourcemap -> pos -> int
+  val toString : sourcemap -> pos -> string
+  val spanToString : sourcemap -> span -> string
+end

@@ -1,10 +1,10 @@
-_require "./Char.smi"
-_require "./String.smi"
-_require "./Substring.smi"
-_require "./CharVector.smi"
-_require "./CharArray.smi"
-_require "./CharVectorSlice.smi"
-_require "./CharArraySlice.smi"
+_require       "./Char.smi"
+_require       "./CharArray.smi"
+_require       "./CharArraySlice.smi"
+_require       "./CharVector.smi"
+_require       "./CharVectorSlice.smi"
+_require       "./String.smi"
+_require       "./Substring.smi"
 
 structure Text =
 struct

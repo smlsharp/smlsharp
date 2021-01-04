@@ -22,6 +22,10 @@ struct
   val freshRigidInstTy : Types.ty -> Types.ty * Types.constraint list * Types.tvState ref TvarMap.map
   val EFTV : Types.ty * Types.constraint list
              -> int * OTSet.set * (Types.tvState ref) IEnv.map
+(*
+  val OEFTV : Types.ty * Types.constraint list
+             -> int * OTSet.set * (Types.tvState ref) IEnv.map
+*)
   val EFBTV : Types.ty -> BoundTypeVarID.Set.set
   val adjustDepthInTy : bool ref -> Types.lambdaDepth -> Types.ty -> unit
   val adjustDepthInTvarKind : bool ref -> Types.lambdaDepth -> Types.tvarKind -> unit

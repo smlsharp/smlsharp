@@ -1,0 +1,11 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+
+structure UserLevelPrimitiveError =
+struct
+  exception TyConNotFound of (string * {longsymbol: Symbol.longsymbol})
+  exception ConNotFound of (string * {longsymbol: Symbol.longsymbol})
+  exception IdNotFound of (string * {longsymbol: Symbol.longsymbol})
+  exception ExnNotFound of (string * {longsymbol: Symbol.longsymbol})
+end

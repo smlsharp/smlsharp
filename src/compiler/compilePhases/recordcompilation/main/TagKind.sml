@@ -11,7 +11,7 @@ struct
 
   type singleton_ty_body = Types.ty
   type kind = RuntimeTypes.tag_prop
-  type instance = RecordCalc.rcexp
+  type instance = RecordCalc.rcvalue * RecordCalc.loc
   val singletonTy = T.TAGty
 
   fun compare (ty1, ty2) =
@@ -30,6 +30,6 @@ struct
         NONE => raise Bug.Bug "TagKind.generateInstance"
       | SOME {tag = R.ANYTAG, ...} => NONE
       | SOME {tag = R.TAG t, ...} =>
-        SOME (RC.RCCONSTANT (RC.TAG (t, ty), loc))
+        SOME (RC.RCCONSTANT (RC.TAG (t, ty)), loc)
 
 end

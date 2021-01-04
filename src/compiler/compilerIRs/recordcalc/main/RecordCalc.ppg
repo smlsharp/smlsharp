@@ -34,7 +34,7 @@ struct
         @format(field fields)
         fields(field)("," +1)
         @format:field(label * value)
-        { label +d "=" 2[ +1 value ] }
+        { label value }
        *)
       (RecordLabel.label * 'value) list
 
@@ -69,10 +69,10 @@ struct
       Types.btvEnv
 
   (*%
-    @formatter(TypedLabmda.varInfo) TypedLambda.format_varInfo
+    @formatter(TypedLambda.varInfo) TypedLambda.format_varInfo
    *)
   (*% @prefix formatWithType_
-    @formatter(TypedLabmda.varInfo) TypedLambda.formatWithType_varInfo
+    @formatter(TypedLambda.varInfo) TypedLambda.formatWithType_varInfo
    *)
   type varInfo =
       TypedLambda.varInfo
@@ -90,6 +90,14 @@ struct
     @formatter(BuiltinPrimitive.cast) BuiltinPrimitive.format_cast
    *)
   datatype cast = datatype BuiltinPrimitive.cast
+
+  (*%
+    @formatter(TypedLambda.tlint) TypedLambda.format_tlint
+   *)
+  (*% @prefix formatWithType_
+    @formatter(TypedLambda.tlint) TypedLambda.formatWithType_tlint
+   *)
+  datatype tlint = datatype TypedLambda.tlint
 
   (*%
     @formatter(TypedLambda.tlconst) TypedLambda.format_tlconst
@@ -110,16 +118,18 @@ struct
     @formatter(DynamicKind.index') DynamicKind.format_index'
    *)
   datatype rcconst =
+      (*% @format(x) x *)
+      (*% @prefix formatWithType_ @format(x) x *)
+      INT of tlint
+    | (*% @format(x) x *)
+      (*% @prefix formatWithType_ @format(x) x *)
       CONST of tlconst
     | (*% @format(x * ty) x *)
-      (*% @format(x * ty) { "size" +d ty } *)
+      (*% @prefix formatWithType_ @format(x * ty) x *)
       SIZE of DynamicKind.size' * ty
     | (*% @format(x * ty) x *)
-      (*% @format(x * ty) { "tag" +d ty } *)
+      (*% @prefix formatWithType_ @format(x * ty) x *)
       TAG of DynamicKind.tag' * ty
-    | (*% @format(x * lab * ty) x *)
-      (*% @format(x * ty) { "index" +d ty } *)
-      INDEX of DynamicKind.index' * RecordLabel.label * ty
 
   (*%
     @formatter(TypedLambda.tlstring) TypedLambda.format_tlstring
@@ -128,6 +138,29 @@ struct
     @formatter(TypedLambda.tlstring) TypedLambda.formatWithType_tlstring
    *)
   datatype tlstring = datatype TypedLambda.tlstring
+
+  (*%
+  *)
+  (*% @prefix formatWithType_
+    @formatter(format_varInfo) format_varInfo
+   *)
+  datatype rcvalue =
+      (*%
+        @format(const)
+        const
+       *)
+      (*% @prefix formatWithType_
+        @format(const)
+        const
+       *)
+      RCCONSTANT of rcconst
+    | (*%
+        @format(var) var
+       *)
+      (*% @prefix formatWithType_
+        @format(var) var:format_varInfo
+       *)
+      RCVAR of varInfo
 
   (*%
     @formatter(iftrue) iftrue
@@ -162,14 +195,13 @@ struct
    *)
   datatype rcexp =
       (*%
-        @format(const * loc)
-        const
+        @format(v * loc)
+        v
        *)
       (*% @prefix formatWithType_
-        @format(const * loc)
-        const
+        @ditto
        *)
-      RCCONSTANT of rcconst * loc
+      RCVALUE of rcvalue * loc
     | (*%
         @format(string * loc)
         string
@@ -179,13 +211,6 @@ struct
         string
        *)
       RCSTRING of tlstring * loc
-    | (*%
-        @format(var * loc) var
-       *)
-      (*% @prefix formatWithType_
-        @format(var * loc) var:format_varInfo
-       *)
-      RCVAR of varInfo * loc
     | (*%
         @format(var * loc) var
        *)
@@ -257,16 +282,23 @@ struct
       {
         exp : rcexp,
         expTy : ty,
-        branches : {const : tlconst, body : rcexp} list,
+        branches : {const : tlint, body : rcexp} list,
         defaultExp : rcexp,
         resultTy : ty,
         loc : loc
       }
     | (*%
-        @format({primOp, instTyList:ty tys, argExpList: arg args, loc})
+        @format({primOp, instTyList:ty tys, instSizeList:size sizes,
+                 instTagList:tag tags, argExpList: arg args, loc})
         L8{
           primOp
           2[
+            sizes:ifcons()(+1 "[",)
+            sizes:N0ifcons()(sizes(size)("/s," +1))
+            sizes:ifcons()("/s]",)
+            tags:ifcons()(+1 "[",)
+            tags:N0ifcons()(tags(tag)("/t," +1))
+            tags:ifcons()("/t]",)
             +1
             args:ifsingle()(,"{")
             args:N0ifnotsingle()(args(arg)("," +1))
@@ -275,14 +307,22 @@ struct
         }
        *)
       (*% @prefix formatWithType_
-        @format({primOp, instTyList:ty tys, argExpList: arg args, loc})
+        @format({primOp, instTyList:ty tys, instSizeList:size sizes,
+                 instTagList:tag tags, argExpList: arg args, loc})
         L8{
-          primOp
+          "RCPRIMAPPLY"
           2[
             +1
-            tys:ifcons()("{",)
+            primOp
+            tys:ifcons()(+1 "{",)
             tys:N0ifcons()(tys(ty)("," +1))
             tys:ifcons()("}",)
+            sizes:ifcons()(+1 "[",)
+            sizes:N0ifcons()(sizes(size)("/s," +1))
+            sizes:ifcons()("/s]",)
+            tags:ifcons()(+1 "[",)
+            tags:N0ifcons()(tags(tag)("/t," +1))
+            tags:ifcons()("/t]",)
             +1
             args:ifsingle()(,"{")
             args:N0ifnotsingle()(args(arg)("," +1))
@@ -294,28 +334,34 @@ struct
       {
         primOp : TypedLambda.primInfo,
         instTyList : ty list,
+        instSizeList : rcvalue list,
+        instTagList : rcvalue list,
         argExpList : rcexp list,
         loc : loc
       }
     | (*%
-        @format({fields: field fields, recordTy, loc})
+        @format({fields: field fields, loc})
         "{" !N0{ fields(field) } "}"
+        @format:field({exp, ty, size, tag})
+        1 "[" !N0{ size "/s," +1 tag "/t" } "]" +d "=" 2[ +1 exp ]
        *)
       (*% @prefix formatWithType_
         @ditto
        *)
       RCRECORD of
       {
-        fields : rcexp RecordLabel.Map.map,
-        recordTy : ty,
+        fields : {exp : rcexp, ty : ty, size : rcvalue, tag : rcvalue}
+                   RecordLabel.Map.map,
         loc : loc
       }
     | (*%
-        @format({label, indexExp, recordExp, recordTy, resultTy, loc})
+        @format({label, indexExp, recordExp, recordTy, resultTy,
+                 resultSize, resultTag, loc})
         L8{
           "#" label
+          1 "[" !N0{ resultSize "/s," +1 resultTag "/t" } "]"
           2[
-            1 "[" !N0{ indexExp } "]"
+            +1 indexExp
             +1 recordExp
           ]
         }
@@ -330,18 +376,21 @@ struct
         recordExp : rcexp,
         recordTy : ty,
         resultTy : ty,
+        resultSize : rcvalue,
+        resultTag : rcvalue,
         loc : loc
       }
     | (*%
         @format({label, indexExp, recordExp, recordTy, elementExp, elementTy,
-                 loc})
+                 elementSize, elementTag, loc})
         L8{
           recordExp
           2[
             +1 "#" +d "{"
             !N0{
               label
-              2[ 1 "[" !N0{ indexExp } "]" ]
+              1 "[" !N0{ elementSize "/s," +1 elementTag "/t" } "}" "]"
+              2[ +1 indexExp ]
               +d "="
               2[ +1 elementExp ]
             }
@@ -360,6 +409,8 @@ struct
         recordTy : ty,
         elementExp : rcexp,
         elementTy : ty,
+        elementSize : rcvalue,
+        elementTag : rcvalue,
         loc : loc
       }
     | (*%
@@ -494,15 +545,6 @@ struct
         loc : loc
       }
     | (*%
-        @format({name, ty, loc})
-        L8{ "RCFOREIGNSYMBOL" 2[ +1 "(" name ")" ] }
-       *)
-      (*% @prefix formatWithType_
-        @format({name, ty, loc})
-        L2{ L8{ "RCFOREIGNSYMBOL" 2[ +1 "(" name ")" ] } +1 ":" +d ty }
-       *)
-      RCFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
-    | (*%
         @format({funExp, argExpList: arg args, attributes,
                  resultTy: retTy retTyOpt, loc})
         L8{
@@ -587,15 +629,19 @@ struct
         loc : loc
       }
     | (*%
-        @format({recordTy, label, loc})
-        L8{ "RCINDEXOF" 2[ +1 "(" !N0{ recordTy "," +1 label } ")" ] }
+        @format({fields:field fields, label, loc})
+        L8{ "RCINDEXOF"
+          2[ +1 "(" !N0{ "{" !N0{ fields(field) } "}" "," +1 label } ")" ]
+        }
+        @format:field({ty, size})
+        1 "[" !N0{ size } "/s]" +d ":" 2[ +1 ty ]
        *)
       (*% @prefix formatWithType_
         @ditto
        *)
       RCINDEXOF of
       {
-        recordTy : ty,  (* must be RECORDty or DUMMYty of record kind *)
+        fields : {ty : ty, size : rcvalue} RecordLabel.Map.map,
         label : RecordLabel.label,
         loc : loc
       }

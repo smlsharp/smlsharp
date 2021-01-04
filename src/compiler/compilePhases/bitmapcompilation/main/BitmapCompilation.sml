@@ -6,7 +6,7 @@
  * @author Huu-Duc Nguyen
  * @author Atsushi Ohori
  *)
-structure BitmapCompilation2 =
+structure BitmapCompilation =
 struct
 
   structure R = RecordCalc
@@ -33,30 +33,14 @@ struct
         mainExp
         decls
 
-  fun Cast ((exp, ty), targetTy, loc) =
-      B.BCCAST {exp = exp, expTy = ty, targetTy = targetTy,
-                cast = P.TypeCast, loc = loc}
+  fun Cast (exp, targetTy, loc) =
+      B.BCCAST {exp = exp,
+                expTy = BuiltinTypes.word32Ty,
+                targetTy = targetTy,
+                cast = P.TypeCast,
+                loc = loc}
 
-  fun valueToBcexp (value, loc) =
-      case value of
-        RecordLayoutCalc.CONST n =>
-        (B.BCCONSTANT {const = R.CONST (R.WORD32 n),
-                       loc = loc},
-         BuiltinTypes.word32Ty)
-      | RecordLayoutCalc.VAR v =>
-        (B.BCVAR {varInfo = v, loc = loc}, #ty v)
-      | RecordLayoutCalc.TAG (ty, n) =>
-        (B.BCCONSTANT {const = R.TAG (n, ty),
-                       loc = loc},
-         T.SINGLETONty (T.TAGty ty))
-      | RecordLayoutCalc.SIZE (ty, n) =>
-        (B.BCCONSTANT {const = R.SIZE (n, ty),
-                       loc = loc},
-         T.SINGLETONty (T.SIZEty ty))
-      | RecordLayoutCalc.CAST (v, ty2) =>
-        (Cast (valueToBcexp (v, loc), ty2, loc), ty2)
-
-  fun primInfo op2 =
+  fun toPrimInfo op2 =
       {primitive =
          case op2 of
            RecordLayoutCalc.ADD => P.R (P.M P.Word_add)
@@ -70,62 +54,77 @@ struct
              argTyList = [BuiltinTypes.word32Ty, BuiltinTypes.word32Ty],
              resultTy = BuiltinTypes.word32Ty}}
 
-  fun toBcdecl loc decl =
+  type accum =
+      {comp : RecordLayout.computation_accum,
+       subst : (BitmapCalc2.loc -> BitmapCalc2.bcexp) VarID.Map.map ref}
+
+  fun newAccum () : accum =
+      {comp = RecordLayout.newComputationAccum (),
+       subst = ref VarID.Map.empty}
+
+  fun toVarInfo {id, path} : BitmapCalc2.varInfo =
+      {id = id, path = path, ty = BuiltinTypes.word32Ty}
+
+  fun toBcexp ({subst, ...}:accum) loc value =
+      case value of
+        RecordLayoutCalc.WORD n =>
+        B.BCCONSTANT {const = R.INT (R.WORD32 n), loc = loc}
+      | RecordLayoutCalc.VAR v =>
+        case VarID.Map.find (!subst, #id v) of
+          NONE => B.BCVAR {varInfo = toVarInfo v, loc = loc}
+        | SOME exp => exp loc
+
+  fun toBcdecl accum loc decl =
       case decl of
-        RecordLayoutCalc.VAL (boundVar, RecordLayoutCalc.VALUE value) =>
-        B.BCVAL {boundVar = boundVar,
-                 boundExp = #1 (valueToBcexp (value, loc)),
+        RecordLayoutCalc.VAL (v, RecordLayoutCalc.VALUE value) =>
+        B.BCVAL {boundVar = toVarInfo v,
+                 boundExp = toBcexp accum loc value,
                  loc = loc}
-      | RecordLayoutCalc.VAL (boundVar, RecordLayoutCalc.OP (op2, (v1, v2))) =>
-        B.BCVAL {boundVar = boundVar,
+      | RecordLayoutCalc.VAL (v, RecordLayoutCalc.OP (op2, (v1, v2))) =>
+        B.BCVAL {boundVar = toVarInfo v,
                  boundExp = B.BCPRIMAPPLY
-                              {primInfo = primInfo op2,
-                               argExpList = [#1 (valueToBcexp (v1, loc)),
-                                             #1 (valueToBcexp (v2, loc))],
+                              {primInfo = toPrimInfo op2,
+                               argExpList = [toBcexp accum loc v1,
+                                             toBcexp accum loc v2],
                                instTyList = nil,
                                instTagList = nil,
                                instSizeList = nil,
                                loc = loc},
                  loc = loc}
 
-  fun findTag (env, ty) =
-      SingletonTyEnv2.findTag env ty
+  fun extractDecls (accum as {comp, ...}) loc =
+      map (toBcdecl accum loc) (RecordLayout.extractDecls comp)
 
-  fun findSize (env, ty) =
-      SingletonTyEnv2.findSize env ty
+  fun toValue ({subst, ...}:accum) bcexp =
+      case bcexp of
+        B.BCCONSTANT {const = B.SIZE (size, ty), loc} =>
+        RecordLayoutCalc.WORD (Word32.fromInt (RuntimeTypes.getSize size))
+      | B.BCCONSTANT {const = B.TAG (tag, ty), loc} =>
+        RecordLayoutCalc.WORD (Word32.fromInt (RuntimeTypes.tagValue tag))
+      | B.BCVAR {varInfo = {id, path, ty}, loc} =>
+        let
+          val e = fn loc => B.BCCAST {exp = bcexp,
+                                      expTy = ty,
+                                      targetTy = BuiltinTypes.word32Ty,
+                                      cast = P.TypeCast,
+                                      loc = loc}
+        in
+          subst := VarID.Map.insert (!subst, id, e);
+          RecordLayoutCalc.VAR {id = id, path = path}
+        end
+      | _ => raise Bug.Bug "toValue"
 
-  fun findTagExp (env, ty, loc) =
-      #1 (valueToBcexp (findTag (env, ty), loc))
+  fun compileValue loc rcvalue =
+      case rcvalue of
+        R.RCCONSTANT const => B.BCCONSTANT {const = const, loc = loc}
+      | R.RCVAR var => B.BCVAR {varInfo = var, loc = loc}
 
-  fun findSizeExp (env, ty, loc) =
-      #1 (valueToBcexp (findSize (env, ty), loc))
-
-  fun recordFieldTys env recordTy =
-      let
-        val fields =
-            case TypesBasics.derefTy recordTy of
-              T.RECORDty fieldTypes => fieldTypes
-            | T.DUMMYty (_, T.KIND {tvarKind = T.REC fields, ...}) => fields
-            | _ => raise Bug.Bug "recordFieldTys"
-      in
-        map (fn (label, ty) =>
-                {label = label,
-                 ty = ty,
-                 size = findSize (env, ty),
-                 tag = findTag (env, ty)})
-            (RecordLabel.Map.listItemsi fields)
-        handle e as Bug.Bug _ => 
-               (print "findSize 1\n";
-                print (Bug.prettyPrint (Types.format_ty recordTy));
-                raise e)
-      end
-
-  fun compileExp env comp tlexp =
+  fun compileExp accum tlexp =
       case tlexp of
         R.RCFOREIGNAPPLY {funExp, attributes, resultTy, argExpList, loc} =>
         let
-          val funExp = compileExp env comp funExp
-          val argExpList = map (compileExp env comp) argExpList
+          val funExp = compileExp accum funExp
+          val argExpList = map (compileExp accum) argExpList
         in
           B.BCFOREIGNAPPLY {funExp = funExp,
                             attributes = attributes,
@@ -135,7 +134,7 @@ struct
         end
       | R.RCCALLBACKFN {attributes, resultTy, argVarList, bodyExp, loc} =>
         let
-          val bodyExp = compileExp env comp bodyExp
+          val bodyExp = compileExp accum bodyExp
         in
           B.BCCALLBACKFN {attributes = attributes,
                           resultTy = resultTy,
@@ -143,43 +142,38 @@ struct
                           bodyExp = bodyExp,
                           loc = loc}
         end
-      | R.RCINDEXOF {label, recordTy, loc} =>
+      | R.RCINDEXOF {label, fields, loc} =>
         let
-          val fields = recordFieldTys env recordTy
-              handle e as Bug.Bug _ => 
-                     (print "INDEXOF 1\n";
-                      print (Bug.prettyPrint (R.format_rcexp tlexp));
-                      raise e)
-
-          fun find (fields, nil) = raise Bug.Bug "compileExp: MVINDEXOF"
-            | find (fields, {label=l,size,tag,ty}::t) =
+          val recordTy = T.RECORDty (RecordLabel.Map.map #ty fields)
+          val fields =
+              map (fn (label, {ty, size}) =>
+                      {label = label,
+                       size = toValue accum (compileValue loc size)})
+              (RecordLabel.Map.listItemsi fields)
+          fun find (fields, nil) = raise Bug.Bug "compileExp: RCINDEXOF"
+            | find (fields, {label=l,size}::t) =
               if l = label then (rev fields, {size=size})
               else find ({size=size}::fields, t)
           val (fields, lastField) = find (nil, fields)
-          val index = RecordLayout2.computeIndex comp (fields, lastField)
+          val index = RecordLayout.computeIndex (#comp accum)
+                                                (fields, lastField)
         in
-          Cast (valueToBcexp (index, loc),
+          Cast (toBcexp accum loc index,
                 T.SINGLETONty (T.INDEXty (label, recordTy)),
                 loc)
         end
-      | R.RCCONSTANT (const, loc) =>
-        B.BCCONSTANT {const = const, loc = loc}
+      | R.RCVALUE (value, loc) =>
+        compileValue loc value
       | R.RCSTRING (string, loc) =>
         B.BCSTRING {string = string, loc = loc}
-      | R.RCFOREIGNSYMBOL {name, ty, loc} =>
-        B.BCFOREIGNSYMBOL {name = name, ty = ty, loc = loc}
-      | R.RCVAR (varInfo, loc) =>
-        B.BCVAR {varInfo = varInfo, loc = loc}
       | R.RCEXVAR (exVarInfo, loc) =>
         B.BCEXVAR {exVarInfo = exVarInfo, loc=loc}
-      | R.RCPRIMAPPLY {primOp, argExpList, instTyList, loc} =>
+      | R.RCPRIMAPPLY {primOp, argExpList, instTyList, instSizeList,
+                       instTagList, loc} =>
         let
-          val argExpList = map (compileExp env comp) argExpList
-          val instTagList =
-              map (fn ty => findTagExp (env, ty, loc)) instTyList
-          val instSizeList =
-              map (fn ty => findSizeExp (env, ty, loc)) instTyList
-              handle e as Bug.Bug _ => (print "findSize 3\n";raise e)
+          val argExpList = map (compileExp accum) argExpList
+          val instTagList = map (compileValue loc) instTagList
+          val instSizeList = map (compileValue loc) instSizeList
         in
           B.BCPRIMAPPLY {primInfo = primOp,
                          argExpList = argExpList,
@@ -190,8 +184,8 @@ struct
         end
       | R.RCAPPM {funExp, argExpList, funTy, loc} =>
         let
-          val funExp = compileExp env comp funExp
-          val argExpList = map (compileExp env comp) argExpList
+          val funExp = compileExp accum funExp
+          val argExpList = map (compileExp accum) argExpList
         in
           B.BCAPPM {funExp = funExp,
                     argExpList = argExpList,
@@ -200,33 +194,31 @@ struct
         end
       | R.RCLET {decl, body, loc} =>
         let
-          val (env, localDeclList) = compileDecl env comp decl
-          val mainExp = compileExp env comp body
+          val localDecl = compileDecl accum decl
+          val mainExp = compileExp accum body
         in
-          Let (localDeclList, mainExp, loc)
+          B.BCLET {localDecl = localDecl, mainExp = mainExp, loc = loc}
         end
-      | R.RCRECORD {fields, recordTy, loc} =>
+      | R.RCRECORD {fields, loc} =>
         let
+          val recordTy =
+              T.RECORDty (RecordLabel.Map.map #ty fields)
           val fields =
-              ListPair.mapEq
-                (fn ({label, ty, tag, size}, (l2, exp)) =>
-                    if label = l2
-                    then {label=label, ty=ty, tag=tag, size=size,
-                          exp = compileExp env comp exp}
-                    else raise Bug.Bug "MVRECORD: label mismatch")
-                (recordFieldTys env recordTy,
-                 RecordLabel.Map.listItemsi fields)
-              handle e as Bug.Bug _ => 
-                     (print "RECORD 1\n";
-                      print (Bug.prettyPrint (R.format_rcexp tlexp));
-                      raise e)
-
+              map (fn (label, {exp, ty, tag, size}) =>
+                      {label = label,
+                       ty = ty,
+                       tag = compileValue loc tag,
+                       size = compileValue loc size,
+                       exp = compileExp accum exp})
+                  (RecordLabel.Map.listItemsi fields)
           val {allocSize, fieldIndexes, bitmaps, padding} =
-              RecordLayout2.computeRecord
-                comp
-                (map (fn {tag, size, ...} => {tag = tag, size = size}) fields)
+              RecordLayout.computeRecord
+                (#comp accum)
+                (map (fn {tag, size, ...} =>
+                         {tag = toValue accum tag, size = toValue accum size})
+                     fields)
           val allocSize =
-              Cast (valueToBcexp (allocSize, loc),
+              Cast (toBcexp accum loc allocSize,
                     T.BACKENDty (T.RECORDSIZEty recordTy),
                     loc)
           val fieldList =
@@ -236,22 +228,22 @@ struct
                      fieldLabel = label,
                      fieldTy = ty,
                      fieldIndex =
-                       Cast (valueToBcexp (index, loc),
+                       Cast (toBcexp accum loc index,
                              T.SINGLETONty (T.INDEXty (label, recordTy)),
                              loc),
-                     fieldSize = #1 (valueToBcexp (size, loc)),
-                     fieldTag = #1 (valueToBcexp (tag, loc))})
+                     fieldSize = size,
+                     fieldTag = tag})
                 (fields, fieldIndexes)
           val bitmaps =
               mapi (fn (i, {index, bitmap}) =>
                        {bitmapIndex =
                           Cast
-                            (valueToBcexp (index, loc),
+                            (toBcexp accum loc index,
                              T.BACKENDty (T.RECORDBITMAPINDEXty (i, recordTy)),
                              loc),
                         bitmapExp =
                           Cast
-                            (valueToBcexp (bitmap, loc),
+                            (toBcexp accum loc bitmap,
                              T.BACKENDty (T.RECORDBITMAPty (i, recordTy)),
                              loc)})
                    bitmaps
@@ -264,13 +256,13 @@ struct
                       bitmaps = bitmaps,
                       loc = loc}
         end
-      | R.RCSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
+      | R.RCSELECT {recordExp, indexExp, label, recordTy, resultTy,
+                    resultSize, resultTag, loc} =>
         let
-          val recordExp = compileExp env comp recordExp
-          val indexExp = compileExp env comp indexExp
-          val resultSize = findSizeExp (env, resultTy, loc)
-              handle e as Bug.Bug _ => (print "findSize 4\n";raise e)
-          val resultTag = findTagExp (env, resultTy, loc)
+          val recordExp = compileExp accum recordExp
+          val indexExp = compileExp accum indexExp
+          val resultSize = compileValue loc resultSize
+          val resultTag = compileValue loc resultTag
         in
           B.BCSELECT {recordExp = recordExp,
                       indexExp = indexExp,
@@ -282,14 +274,13 @@ struct
                       loc = loc}
         end
       | R.RCMODIFY {recordExp, recordTy, indexExp, label, elementExp, elementTy,
-                    loc} =>
+                    elementSize, elementTag, loc} =>
         let
-          val recordExp = compileExp env comp recordExp
-          val indexExp = compileExp env comp indexExp
-          val valueExp = compileExp env comp elementExp
-          val valueTag = findTagExp (env, elementTy, loc)
-          val valueSize = findSizeExp (env, elementTy, loc)
-              handle e as Bug.Bug _ => (print "findSize 5\n";raise e)
+          val recordExp = compileExp accum recordExp
+          val indexExp = compileExp accum indexExp
+          val valueExp = compileExp accum elementExp
+          val valueTag = compileValue loc elementSize
+          val valueSize = compileValue loc elementTag
         in
           B.BCMODIFY {recordExp = recordExp,
                       recordTy = recordTy,
@@ -303,7 +294,7 @@ struct
         end
       | R.RCRAISE {exp, resultTy, loc} =>
         let
-          val argExp = compileExp env comp exp
+          val argExp = compileExp accum exp
         in
           B.BCRAISE {argExp = argExp,
                      resultTy = resultTy,
@@ -311,9 +302,8 @@ struct
         end
       | R.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         let
-          val exp = compileExp env comp exp
-          val env = SingletonTyEnv2.bindVar (env, exnVar)
-          val handler = compileExp env comp handler
+          val exp = compileExp accum exp
+          val handler = compileExp accum handler
         in
           B.BCHANDLE {tryExp = exp,
                       exnVar = exnVar,
@@ -323,8 +313,7 @@ struct
         end
       | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
         let
-          val env = SingletonTyEnv2.bindTyvars (env, btvEnv)
-          val exp = compileExp env comp exp
+          val exp = compileExp accum exp
         in
           B.BCPOLY {btvEnv = btvEnv,
                     expTyWithoutTAbs = expTyWithoutTAbs,
@@ -333,7 +322,7 @@ struct
         end
       | R.RCTAPP {exp, expTy, instTyList, loc} =>
         let
-          val exp = compileExp env comp exp
+          val exp = compileExp accum exp
         in
           B.BCTAPP {exp = exp,
                     expTy = expTy,
@@ -342,12 +331,12 @@ struct
         end
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
         let
-          val switchExp = compileExp env comp exp
+          val switchExp = compileExp accum exp
           val branches = map (fn {const, body} =>
                                  {constant = const,
-                                  branchExp = compileExp env comp body})
+                                  branchExp = compileExp accum body})
                          branches
-          val defaultExp = compileExp env comp defaultExp
+          val defaultExp = compileExp accum defaultExp
         in
           B.BCSWITCH {switchExp = switchExp,
                       expTy = expTy,
@@ -358,7 +347,7 @@ struct
         end
       | R.RCCAST {exp, expTy, targetTy, cast, loc} =>
         let
-          val exp = compileExp env comp exp
+          val exp = compileExp accum exp
         in
           B.BCCAST {exp = exp,
                     expTy = expTy,
@@ -368,21 +357,19 @@ struct
         end
       | R.RCFNM {argVarList, bodyExp, bodyTy, loc} =>
         let
-          val env = SingletonTyEnv2.bindVars (env, argVarList)
-          val comp2 = RecordLayout2.newComputationAccum ()
-          val bodyExp = compileExp env comp2 bodyExp
-          val decls = RecordLayout2.extractDecls comp2
+          val accum2 = newAccum ()
+          val bodyExp = compileExp accum2 bodyExp
+          val decls = extractDecls accum2 loc
         in
           B.BCFNM {argVarList = argVarList,
                    retTy = bodyTy,
-                   bodyExp = Let (map (toBcdecl loc) decls, bodyExp, loc),
+                   bodyExp = Let (decls, bodyExp, loc),
                    loc = loc}
         end
       | R.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         let
-          val env2 = SingletonTyEnv2.bindVars (env, argVarList)
-          val catchExp = compileExp env2 comp catchExp
-          val tryExp = compileExp env comp tryExp
+          val catchExp = compileExp accum catchExp
+          val tryExp = compileExp accum tryExp
         in
           B.BCCATCH {catchLabel = catchLabel,
                      argVarList = argVarList,
@@ -393,7 +380,7 @@ struct
         end
       | R.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
         let
-          val argExpList = map (compileExp env comp) argExpList
+          val argExpList = map (compileExp accum) argExpList
         in
           B.BCTHROW {catchLabel = catchLabel,
                      argExpList = argExpList,
@@ -401,58 +388,41 @@ struct
                      loc = loc}
         end
 
-  and compileDecl env comp tldecl =
+  and compileDecl accum tldecl =
       case tldecl of
         R.RCVAL {var, exp, loc} =>
         let
-          val boundExp = compileExp env comp exp
+          val boundExp = compileExp accum exp
         in
-          (SingletonTyEnv2.bindVars (env, [var]),
-           [B.BCVAL {boundVar = var,
-                     boundExp = boundExp,
-                     loc = loc}])
+          B.BCVAL {boundVar = var,
+                   boundExp = boundExp,
+                   loc = loc}
         end
       | R.RCVALREC (recbindList, loc) =>
         let
-          val env = SingletonTyEnv2.bindVars (env, map #var recbindList)
           val recbindList =
               map (fn {var, exp} =>
                       {boundVar = var,
-                       boundExp = compileExp env comp exp})
+                       boundExp = compileExp accum exp})
                   recbindList
         in
-          (env, [B.BCVALREC {recbindList = recbindList, loc = loc}])
+          B.BCVALREC {recbindList = recbindList, loc = loc}
         end
     | R.RCEXPORTVAR {weak, var, exp} =>
-      (env, [B.BCEXPORTVAR {weak = weak,
-                            exVarInfo = var,
-                            exp = compileExp env comp exp,
-                            loc = Loc.noloc}])
+      B.BCEXPORTVAR {weak = weak,
+                     exVarInfo = var,
+                     exp = compileExp accum exp,
+                     loc = Loc.noloc}
     | R.RCEXTERNVAR (exVarInfo, provider) =>
-      (env, [B.BCEXTERNVAR {exVarInfo = exVarInfo, provider = provider,
-                            loc = Loc.noloc}])
-
-  fun compileDeclList env comp (decl::decls) =
-      let
-        val (env, decls1) = compileDecl env comp decl
-            handle e as Bug.Bug _ => 
-                   (print "compileDecl\n";
-                    print (Bug.prettyPrint (R.format_rcdecl decl));
-                    print "\n";
-                    raise e)
-                            
-        val (env, decls2) = compileDeclList env comp decls
-      in
-        (env, decls1 @ decls2)
-      end
-    | compileDeclList env comp nil = (env, nil)
+      B.BCEXTERNVAR {exVarInfo = exVarInfo, provider = provider,
+                     loc = Loc.noloc}
 
   fun compile decls =
       let
-        val comp = RecordLayout2.newComputationAccum ()
-        val (env, decls) = compileDeclList SingletonTyEnv2.emptyEnv comp decls
+        val accum = newAccum ()
+        val decls = map (compileDecl accum) decls
       in
-        case RecordLayout2.extractDecls comp of
+        case extractDecls accum Loc.noloc of
           nil => ()
         | _ => raise Bug.Bug "compile: extra computation at toplevel";
         decls

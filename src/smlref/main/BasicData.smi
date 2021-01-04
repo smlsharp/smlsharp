@@ -1,0 +1,55 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "sql.smi"
+_require "compiler/libs/env/main/IEnv.smi"
+_require "compiler/libs/env/main/SEnv.smi"
+_require "compiler/compilePhases/analyzefiles/main/FileIDMap.smi"
+_require "./Config.smi"
+_require "./DBSchema.smi"
+_require "./IntStringMap.smi"
+_require "./IntIntStringMap.smi"
+_require "./IntIntIntStringMap.smi"
+
+structure BasicData =
+struct
+  exception InvalidFileId of int
+  exception InvalidFilePath of string
+  type fileInfo = 
+       {fileType:string, 
+        fileName:string,
+        fileId:int,
+        filePlace:string}
+  type defInfo = 
+    {
+     kind : string,
+     sourceFileId : int,
+     category : string,
+     defSymbol : string,
+     defSymbolFileId : int,
+     defSymbolStartPos : int,
+     defSymbolEndPos : int,
+     defRangeFileId : int,
+     defRangeStartPos : int,
+     defRangeEndPos : int,
+     definedSymbol: string
+    }
+  val findFileByFileId : int -> fileInfo
+  val findFileByFileName : string -> fileInfo
+  val defRefRel : unit -> {defFileId:int, refFileId:int} list
+  val UPDefRefRel : unit -> {defFileId:int, refFileId:int} list
+  val fileNameToFileId : string -> int
+  val fileIdToFileName :  int -> string
+  val fileSymDefRef : unit -> IntIntIntStringSet.set IntStringMap.map IEnv.map 
+                              * IntIntIntStringSet.set IntStringMap.map IEnv.map 
+  val defIMap : IntIntIntStringSet.set IntStringMap.map IEnv.map 
+  val refIMap : IntIntIntStringSet.set IntStringMap.map IEnv.map 
+  val findRefsByFileName : string -> IntIntIntStringSet.set IntStringMap.map
+  val findDefsByFileName : string -> IntIntIntStringSet.set IntStringMap.map
+  val findRefsByFileId : int -> IntIntIntStringSet.set IntStringMap.map
+  val findDefsByFileId : int -> IntIntIntStringSet.set IntStringMap.map
+  val refsByfileNameSymbol : string * string -> (string * int * string) list IEnv.map
+  val findParents : int * int * int * string -> {kind:string, category:string,
+                                                 defSymbol:string,
+                                                 defSymbolStartPos:int,
+                                                 defSymbolEndPos:int} list
+end

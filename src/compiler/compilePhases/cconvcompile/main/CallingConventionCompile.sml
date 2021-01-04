@@ -414,7 +414,6 @@ print "\n==\n"
       | C.CVNULLBOXED => N.NVNULLBOXED
       | C.CVTAG x => N.NVTAG x
       | C.CVSIZE x => N.NVSIZE x
-      | C.CVINDEX x => N.NVINDEX x
       | C.CVFOREIGNSYMBOL {name, ty} =>
         N.NVFOREIGNSYMBOL {name = name, ty = compileTy btvEnv ty}
       | C.CVFUNENTRY {id, codeEntryTy} =>

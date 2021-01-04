@@ -31,7 +31,8 @@ struct
         streamRef : Parser.stream ref,
         first : bool ref,
         errors : (Loc.loc * string) list ref,
-        errorFn : string * Loc.pos * Loc.pos -> unit
+        errorFn : string * Loc.pos * Loc.pos -> unit,
+        source : Loc.source
       }
 
   exception Error of (Loc.loc * string) list
@@ -64,10 +65,12 @@ struct
           streamRef = ref stream,
           first = first,
           errors = errors,
-          errorFn = errorFn
+          errorFn = errorFn,
+          source = source
         } : input
       end
 
+  fun sourceOfInput ({source, ...}:input) = source
   fun parseWhole errorFn parseStep lex =
       case parseStep lex of
         (Absyn.EOF, lex) => (Absyn.EOF, lex)
@@ -91,7 +94,7 @@ struct
              lex)
           end
 
-  fun parse ({lookahead, atOnce, streamRef, first, errors, errorFn}:input) =
+  fun parse ({lookahead, atOnce, streamRef, first, errors, errorFn, source}:input) =
       let
         (* prevent reading this source after parse error occurred. *)
         val _ = case !errors of
@@ -123,7 +126,7 @@ struct
         result
       end
 
-  fun isEOF ({lookahead, atOnce, streamRef, first, errors, errorFn}:input) =
+  fun isEOF ({lookahead, atOnce, streamRef, first, errors, errorFn, source}:input) =
       let
         (* prevent reading this source after parse error occurred. *)
         val _ = case !errors of

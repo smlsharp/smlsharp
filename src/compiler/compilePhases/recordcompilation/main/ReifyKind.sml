@@ -33,7 +33,7 @@ struct
               T.BOUNDVARty tid => NONE
             | _ =>
               let
-                val tyRep = TyToReifiedTy.toTy ty
+                val tyRep = TyToReifiedTy.toTy loc ty
               in
                 SOME (#exp (ReifyTy.TyRep loc tyRep))
               end
@@ -44,12 +44,17 @@ struct
   fun generateInstance {btvEnv, lookup} ty loc =
       let
         fun lookUp btv = lookup (T.REIFYty (T.BOUNDVARty btv))
-        val tyRep = TyToReifiedTy.toTy ty
+        val tyRep = TyToReifiedTy.toTy loc ty
         val tyRepExp = ReifyTy.TyRepWithLookUp lookUp loc tyRep
         val retExp = DatatypeCompilation.compileExp
                        DatatypeCompilation.emptyEnv
                        (#exp tyRepExp)
       in
-        SOME retExp
+        SOME (TypedLambda.TLCAST
+                {exp = retExp,
+                 expTy = #ty tyRepExp,
+                 targetTy = T.SINGLETONty (T.REIFYty ty),
+                 cast = TypedLambda.TypeCast,
+                 loc = loc})
       end
 end

@@ -206,12 +206,12 @@ structure Interface
     | typdesc of (A.tvar list * Symbol.symbol) list
     | typdescAlias of (A.tvar list * Symbol.symbol * A.ty) list
     | datdesc_1 of
-        A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option) list
+        A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option * A.loc) list * A.loc
     | datdesc of
-        (A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option) list) list
-    | condesc_1 of Symbol.symbol * A.ty option
-    | condesc of (Symbol.symbol * A.ty option) list
-    | exdesc of (Symbol.symbol * A.ty option) list
+        (A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option * A.loc) list * A.loc) list
+    | condesc_1 of Symbol.symbol * A.ty option * A.loc
+    | condesc of (Symbol.symbol * A.ty option * A.loc) list
+    | exdesc of (Symbol.symbol * A.ty option * A.loc) list
     | strdesc of (Symbol.symbol * A.sigexp) list
     | spec_1 of A.spec
     | spec of A.spec
@@ -481,9 +481,9 @@ eqtypbind
 
 datbind_t
         : tycon EQ conbind
-          ({tyvars = nil, symbol = tycon, conbind = conbind})
+          ({tyvars = nil, symbol = tycon, conbind = conbind, loc=(tyconleft,conbindright)})
         | tyvarseq_noNIL tycon EQ conbind
-          ({tyvars = tyvarseq_noNIL, symbol = tycon, conbind = conbind})
+          ({tyvars = tyvarseq_noNIL, symbol = tycon, conbind = conbind, loc = (tyvarseq_noNILleft,conbindright)})
 
 (*
 datbind_opq     : tycon LPAREN EQ conbind RPAREN
@@ -543,9 +543,9 @@ conname
 
 conbind_1
         : conname
-          ({symbol = conname, ty = NONE})
+          ({symbol = conname, ty = NONE, loc=(connameleft,connameright)})
         | conname OF ty
-          ({symbol = conname, ty = SOME ty})
+          ({symbol = conname, ty = SOME ty, loc=(connameleft,tyright)})
 
 conbind
         : conbind_1
@@ -840,9 +840,9 @@ typdescAlias
 
 datdesc_1
         : tycon EQ condesc
-          ((nil, tycon, condesc))
+          ((nil, tycon, condesc, (tyconleft, condescright)))
         | tyvarseq_noNIL tycon EQ condesc
-          ((tyvarseq_noNIL, tycon, condesc))
+          ((tyvarseq_noNIL, tycon, condesc, (tyvarseq_noNILleft, condescright)))
 
 datdesc
         : datdesc_1
@@ -852,9 +852,9 @@ datdesc
 
 condesc_1
         : id
-          ((id, NONE))
+          ((id, NONE, (idleft, idright)))
         | id OF ty
-          ((id, SOME ty))
+          ((id, SOME ty, (idleft, tyright)))
 
 condesc
         : condesc_1
