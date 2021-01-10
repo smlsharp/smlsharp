@@ -1,4 +1,4 @@
-_require "../../../../smlnj-lib/Util/binary-map-fn.smi"
+_require "../../../../smlnj-lib/Util2/binary-map-fn2.smi"
 _require "./IOrd.smi"
 
-structure IEnv = BinaryMapFn(IOrd)
+structure IEnv = BinaryMapFn2(IOrd)

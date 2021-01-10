@@ -1,0 +1,53 @@
+structure NestedMap =
+struct
+
+  (*% 
+   * @formatter(list)  SMLFormat.BasicFormatters.format_list
+  *)
+  type 'a nested 
+   = (*%
+      * @format (elem elems) 
+           elems(elem)(\n)
+      * @format:elem(item * elem)
+       {item 2[elem]}
+     *)
+     (string * 'a) list 
+
+  fun formatSEnv formatter env = format_nested formatter (SEnv.listItemsi env)
+
+  (*% 
+   * @formatter(SEnv.map) formatSEnv
+   *)
+  datatype nest 
+  = (*%
+     * @format
+     *)
+    EMPTY 
+  | (*%
+     * @format(nest map) 
+        \n map(nest)
+     *)
+    NEST of nest SEnv.map
+
+
+  fun nestToString nest = 
+      SMLFormat.prettyPrint nil (format_nest nest)
+
+  fun singleton nil = EMPTY
+    | singleton (h::t) = 
+      NEST (SEnv.singleton(h, singleton t))
+  
+  fun merge (nest1, nest2) =
+      case (nest1, nest2) of
+        (EMPTY, EMPTY) => nest1
+      | (NEST _, EMPTY) => nest1
+      | (EMPTY, NEST _) => nest2
+      | (NEST nest1, NEST nest2) => 
+        NEST (SEnv.unionWith merge (nest1, nest2))
+  
+  fun mkNest L =
+      foldl
+      (fn (h, nest) => merge (nest, singleton h))
+      EMPTY
+      L
+end

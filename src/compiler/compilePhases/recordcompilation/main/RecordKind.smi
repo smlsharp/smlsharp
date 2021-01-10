@@ -3,17 +3,16 @@ _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../data/types/main/TypesBasics.smi"
 _require "../../../data/types/main/DynamicKind.ppg.smi"
 _require local "../../../data/types/main/DynamicKindUtils.smi"
-(* _require local "../../../data/symbols/main/Loc.smi" *)
-(* _require local "../../../data/builtin/main/BuiltinTypes.smi" *)
 _require "../../../data/symbols/main/RecordLabel.smi"
-(* _require local "../../../compilerIRs/absyn/main/AbsynConst.smi" *)
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
 _require "./KIND_INSTANCE.sig"
 
 structure RecordKind =
 struct
   type singleton_ty_body = RecordLabel.label * Types.ty
   type kind = DynamicKind.record * Types.ty RecordLabel.Map.map
-  type instance = RecordCalc.rcexp
+  type instance = TypedLambda.tlexp
   val singletonTy
       : singleton_ty_body -> Types.singletonTy
 

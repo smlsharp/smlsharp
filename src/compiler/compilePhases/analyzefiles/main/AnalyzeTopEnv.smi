@@ -1,0 +1,16 @@
+_require local "../../../../basis.smi"
+_require local "./AnalyzerDB.smi"
+_require local "./AnalyzerTy.smi"
+_require       "./Analyzers.smi"
+_require local "./InfoMaps.smi"
+_require       "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+
+structure AnalyzeTopEnv =
+struct
+  type analyzers = Analyzers.analyzers
+  val analyzeTopEnv 
+      : analyzers -> NameEvalEnv.topEnv 
+        -> {fileId:int, fileType:string} * NameEvalEnv.topEnv -> unit
+end
+

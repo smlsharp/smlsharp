@@ -90,7 +90,7 @@ struct
       (C.TPSIZEOF (ty, loc), T.SINGLETONty (T.SIZEty ty))
 
   fun TPREIFYTY (ty, loc) =
-      (C.TPREIFYTY (ty, loc), ReifiedTyData.TyRepTy ())
+      (C.TPREIFYTY (ty, loc), ReifiedTyData.TyRepTy loc)
 
   fun TPEXNTAG (x as {exnInfo, loc}) =
       (C.TPEXNTAG x, BuiltinTypes.exntagTy)
@@ -98,8 +98,8 @@ struct
   fun TPEXEXNTAG (x as {exExnInfo, loc}) =
       (C.TPEXEXNTAG x, BuiltinTypes.exntagTy)
 
-  fun TPEXVAR (x as {path, ty}) =
-      (C.TPEXVAR x, ty)
+  fun TPEXVAR (x as {path, ty}, loc) =
+      (C.TPEXVAR (x,loc), ty)
 
   fun TPVAR (x as {id, path, ty, opaque}) =
       (C.TPVAR x, ty)
@@ -531,13 +531,12 @@ struct
       let
         val exps = RecordLabel.Map.map (fn (e,_) => e) fields
         val tys = RecordLabel.Map.map (fn (_,t) => t) fields
-        val recordTy = T.RECORDty tys
       in
         (C.TPRECORD
            {fields = exps,
-            recordTy = recordTy,
+            recordTy = tys,
             loc = loc},
-         recordTy)
+         T.RECORDty tys)
       end
 
   fun selectTy btvEnv (label, ty) =

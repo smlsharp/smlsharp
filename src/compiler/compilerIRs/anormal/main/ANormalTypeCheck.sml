@@ -491,8 +491,6 @@ struct
       | A.NVNULLBOXED => tyOf B.boxedTy
       | A.NVTAG {tag, ty} => tyOf (T.SINGLETONty (T.TAGty ty))
       | A.NVSIZE {size, ty} => tyOf (T.SINGLETONty (T.SIZEty ty))
-      | A.NVINDEX {index, label, ty} =>
-        tyOf (T.SINGLETONty (T.INDEXty (label, ty)))
       | A.NVFOREIGNSYMBOL {name, ty} => ty
       | A.NVFUNENTRY id =>
         (case FunEntryLabel.Map.find (#funEntryEnv env, id) of

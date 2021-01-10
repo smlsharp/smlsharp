@@ -1,0 +1,15 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "compiler/libs/env/main/SEnv.smi"
+_require "compiler/libs/util/main/TermFormat.smi"
+
+structure NestedMap =
+struct
+  datatype nest 
+    = EMPTY
+    | NEST of nest SEnv.map
+
+  val format_nest : nest -> SMLFormat.BasicFormatters.format
+  val nestToString : nest -> string
+  val mkNest : string list list -> nest
+end

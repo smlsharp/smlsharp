@@ -132,6 +132,23 @@ local
       StructureID.id
 
   (*%
+      @formatter(SignatureID.id) SignatureID.format_id
+   *)
+  (*% @prefix printTy_
+      @formatter(SignatureID.id) SignatureID.format_id
+   *)
+  (* signature name *)
+  type signatureId 
+    = 
+      (*%
+          @format(id) "s" id
+       *)
+      (*% @prefix printTy_
+          @format(id) "s" id
+       *)
+      SignatureID.id
+
+  (*%
      @formatter(FunctorID.id) FunctorID.format_id
    *)
   (*% @prefix printTy_
@@ -233,37 +250,39 @@ in
   datatype tstr
     = 
       (*%
-        @format(tfun) 
-          1["tystr" +1 tfun]
+        @format({tfun, defRange}) 
+          1["tystr" +1 tfun] 
        *)
       (*% @prefix printTy_
-        @format(tfun) {tfun()(sname,,name)}
+        @format({tfun, defRange}) {tfun()(sname,,name)}
        *)
-       TSTR of tfun
+       TSTR of {tfun:tfun, defRange:Loc.loc}
     | 
       (*%
-        @format({tfun, varE, formals, conSpec})
+        @format({tfun, varE, formals, conSpec, defRange})
           "dtystr"
             +
           "{" 
              1[ 
                +1
                 1["tfun:"+1 tfun]
+(*
                +1             
                 1["varE:"+1 varE]
                +1
                 1["formals:"+1 formals]
                +1
                 1["conSpec:"+1 conSpec]
+*)
               ]
              1
            "}"
        *)
       (*% @prefix printTy_
-        @format({tfun, varE, formals, conSpec})
+        @format({tfun, varE, formals, conSpec, defRange})
            {tfun()(sname,"dty",name)}
        *)
-       TSTR_DTY of {tfun:tfun, varE:varE, formals:formals, conSpec:conSpec}
+       TSTR_DTY of {tfun:tfun, varE:varE, formals:formals, conSpec:conSpec, defRange:Loc.loc}
 
   (*%
      @formatter(SymbolEnv.map) TermFormat.formatEnclosedSymbolEnvPlain
@@ -301,12 +320,12 @@ in
   datatype strKind 
     = 
       (*%
-        @format "sig"
+        @format(id) "signature(" id ")"
        *)
       (*% @prefix printTy_
-        @format "sig"
+        @format(id) "signature(" id ")"
        *)
-      SIGENV 
+      SIGENV of signatureId
     | 
       (*%
         @format(id) "structure(" id ")" 
@@ -389,17 +408,28 @@ in
   withtype strEntry 
     = 
       (*%
-        @format({env, strKind}) "("strKind")" + env
+        @format({env, strKind, loc, definedSymbol}) "("strKind")" + env
        *)
       (*% @prefix printTy_
-        @format({env:Env, strKind}) 
+        @format({env:Env, strKind, loc, definedSymbol}) 
           Env()(sname,mode,name)
        *)
-      {env:env, strKind:strKind}
+      {env:env, strKind:strKind, loc:Loc.loc, 
+       definedSymbol:Symbol.longsymbol}
+  and sigEntry 
+    = 
+      (*%
+        @format({env, sigId, loc}) "(" sigId ")" + env
+       *)
+      (*% @prefix printTy_
+        @format({env:Env, sigId, loc}) 
+          Env()(sname,mode,name)
+       *)
+      {env:env, sigId:signatureId, loc:Loc.loc}
 
   fun extendEnv sname env =
       sname # {env = env :: #env sname}
-  fun extendEnvWithStrEntry sname {env, strKind} =
+  fun extendEnvWithStrEntry sname {env, strKind, loc, definedSymbol} =
       sname # {env = env :: #env sname}
 
   (*%
@@ -421,6 +451,7 @@ in
     = 
       (*%
         @format({id,
+                 loc,
                  version,
                  argSigEnv,
                  argStrEntry,
@@ -455,6 +486,7 @@ in
          *)
       (*% @prefix printTy_
         @format({id,
+                 loc,
                  version,
                  argSigEnv,
                  argStrEntry,
@@ -474,6 +506,7 @@ in
               ]
          *)
        {id: functorId,
+        loc:Loc.loc,
         version: IDCalc.version,
         argSigEnv: env,
         argStrEntry: strEntry,
@@ -534,7 +567,7 @@ in
             senv(env()(sname,mode,name))("signature" + ,+"="+,~2[+1 "and"+],)
           ]
        *)
-      env SymbolEnv.map
+      sigEntry SymbolEnv.map
 
   (*%
      @formatter(Symbol.symbol) Symbol.format_symbol
@@ -582,12 +615,12 @@ in
 
   fun tstrFormals tstr =
       case tstr of 
-       TSTR tfun => I.tfunFormals tfun
+       TSTR {tfun, ...} => I.tfunFormals tfun
      | TSTR_DTY {tfun,...} => I.tfunFormals tfun
 
   fun tstrLiftedTys tstr =
       case tstr of 
-       TSTR tfun => I.tfunLiftedTys tfun
+       TSTR {tfun,...} => I.tfunLiftedTys tfun
      | TSTR_DTY {tfun,...} => I.tfunLiftedTys tfun
 
   fun tstrArity tstr = List.length (tstrFormals tstr)
@@ -605,8 +638,10 @@ in
 
   val emptyVarE = SymbolEnv.empty : varE
   val emptyTyE = SymbolEnv.empty : tyE
-  val emptyEnv = ENV{varE=emptyVarE, tyE = emptyTyE, strE=STR SymbolEnv.empty}
-  val emptyTopEnv = {Env=emptyEnv, FunE=SymbolEnv.empty, SigE=SymbolEnv.empty} : topEnv
+  val emptyEnv = 
+      ENV{varE=emptyVarE, tyE = emptyTyE, strE=STR SymbolEnv.empty}
+  val emptyTopEnv = 
+      {Env=emptyEnv, FunE=SymbolEnv.empty, SigE=SymbolEnv.empty} : topEnv
 
   fun replaceLocTyE loc tyE =
       SymbolEnv.mapi2 
@@ -620,8 +655,9 @@ in
           (Symbol.replaceLocSymbol loc symbol, idstatus))
       varE
           
-  fun replaceLocStrEntry loc {env, strKind} =
-      {env = replaceLocEnv loc env, strKind = strKind}
+  fun replaceLocStrEntry newLoc {env, strKind, loc, definedSymbol} =
+      {env = replaceLocEnv newLoc env, strKind = strKind, loc=loc, 
+       definedSymbol = definedSymbol}
 
   and replaceLocEnv loc (ENV {varE, tyE, strE}) =
       ENV {varE = replaceLocVarE loc varE,
@@ -750,11 +786,11 @@ in
   fun findId (ENV {varE, tyE, strE = STR envSymbolEnvMap}, longsymbol) =
       case longsymbol of 
         nil => raise bug "nil to findId"
-      | symbol :: nil => SymbolEnv.find(varE, symbol)
+      | symbol :: nil => SymbolEnv.findi(varE, symbol)
       | strsymbol :: path =>
-        (case SymbolEnv.find(envSymbolEnvMap, strsymbol) of
+        (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of
            NONE => NONE
-         | SOME {env,...} => findId (env, path)
+         | SOME (syn, {env,...}) => findId (env, path)
         )
 
   (* find function *)
@@ -764,7 +800,7 @@ in
       | symbol :: nil => 
         (case SymbolEnv.findi(tyE, symbol) of
            NONE => NONE
-         | SOME (key, tstr) => SOME tstr
+         | SOME (key, tstr) => SOME (key, tstr)
         )
       | strsymbol :: path =>
         (case SymbolEnv.findi(envSymbolEnvMap, strsymbol) of

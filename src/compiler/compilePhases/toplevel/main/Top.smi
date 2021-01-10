@@ -69,6 +69,7 @@ _require local "../../../compilePhases/stackallocation/main/StackAllocation.smi"
 _require local "../../../compilerIRs/llvmir/main/LLVMIR.ppg.smi"
 _require local "../../../compilePhases/llvmgen/main/LLVMGen.smi"
 _require local "../../../compilePhases/llvmemit/main/LLVMEmit.smi"
+_require local "../../../compilePhases/analyzefiles/main/Analyzers.smi"
 _require "./TopData.ppg.smi"
 _require local "./NameEvalEnvUtils.smi"
 

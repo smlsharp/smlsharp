@@ -1,5 +1,13 @@
 _require local "../../../../basis.smi"
+_require       "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require       "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require       "../../../data/symbols/main/Loc.smi"
+_require       "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
+_require       "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 
 _require local "../../../data/types/main/TypesBasics.smi"
@@ -22,6 +30,7 @@ struct
   datatype exp =
       Exp of TypedLambda.tlexp * Types.ty
     | Const of TypedLambda.tlconst
+    | Int of TypedLambda.tlint
     | Int8 of int
     | Int16 of int
     | Int32 of int
@@ -47,7 +56,7 @@ struct
     | PrimApply of TypedLambda.primInfo * Types.ty list * Types.ty * exp list
     | If of exp * exp * exp
     | Andalso of exp list
-    | Switch of exp * (TypedLambda.tlconst * exp) list * exp
+    | Switch of exp * (TypedLambda.tlint * exp) list * exp
     | Raise of Types.exExnInfo * Types.ty
     | Fn of vid * Types.ty * exp
     | App of exp * exp

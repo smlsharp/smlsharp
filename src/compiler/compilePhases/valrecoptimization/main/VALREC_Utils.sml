@@ -113,6 +113,8 @@ in
                 VarID.Set.union(S,getFreeIdsInExp exp))
             (getFreeIdsInExp exp)
             elementList
+      | ICRECORD_UPDATE2 (exp1, exp2,loc) =>
+        VarID.Set.union(getFreeIdsInExp exp1, getFreeIdsInExp exp2)
       | ICRECORD_SELECTOR _ => VarID.Set.empty
       | ICSELECT (label,exp, loc) => getFreeIdsInExp exp
       | ICSEQ (expList,loc) => getFreeIdsInExpList expList

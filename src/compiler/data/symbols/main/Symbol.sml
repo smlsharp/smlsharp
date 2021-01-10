@@ -48,12 +48,19 @@ in
         (formatWithLoc_symbol, [SMLFormat.FormatExpression.Term (1, ".")])
         symbols
 
+  fun formatWithLoc_longsymbol symbols =
+      SMLFormat.BasicFormatters.format_list
+        (formatWithLoc_symbol, [SMLFormat.FormatExpression.Term (1, ".")])
+        symbols
+
   fun compare ({string=s1, loc=l1}, {string=s2, loc=l2}) =
       Loc.compareLoc (l1,l2)
 
   fun lastSymbol longsymbol = List.last longsymbol
   fun symbolToString (s:symbol) = #string s
   fun symbolToLoc (s:symbol) = #loc s
+  fun symbolToStringWithLoc (s:symbol) = 
+      #string s ^ "(" ^ Loc.locToString (symbolToLoc s) ^ ")"
   fun longsymbolToString (s:longsymbol) = String.concatWith "." (map symbolToString s)
   fun longsymbolToLoc (s:longsymbol) =
       let
@@ -134,10 +141,6 @@ in
       end
 
   (* FIXME: how to ensure the generated symbol is fresh? *)
-  fun generateWithPrefix prefix =
-      {string = "$" ^ prefix ^ gensym (), loc = Loc.noloc}
-
-  (* FIXME: how to ensure the generated symbol is fresh? *)
   fun generate () =
       {string = "$" ^ gensym (), loc = Loc.noloc}
 
@@ -149,7 +152,7 @@ struct
   type ord_key = Symbol.symbol
   val compare = Symbol.symbolCompare
 end
-structure SymbolEnv = BinaryMapFn(SymbolOrd)
+structure SymbolEnv = BinaryMapFn2(SymbolOrd)
 structure SymbolSet = BinarySetFn(SymbolOrd)
 
 structure LongsymbolOrd = 
@@ -166,5 +169,5 @@ struct
          | x => x)
 end
 
-structure LongsymbolEnv = BinaryMapFn(LongsymbolOrd)
+structure LongsymbolEnv = BinaryMapFn2(LongsymbolOrd)
 structure LongsymbolSet = BinarySetFn(LongsymbolOrd)

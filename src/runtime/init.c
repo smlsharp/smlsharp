@@ -16,7 +16,7 @@ extern char **environ;
 int sml_argc;
 char **sml_argv;
 
-#define DEFAULT_HEAPSIZE_MIN  (4 * 1024 * 1024UL)
+#define DEFAULT_HEAPSIZE_MIN  (1 * 1024 * 1024UL)
 #define DEFAULT_HEAPSIZE_MAX  (2 * 1024 * 1024 * 1024UL)
 
 static size_t

@@ -433,6 +433,13 @@ struct
        *)
       UNPRINTABLE 
     | (*%
+       * @format "..."
+       *)
+      (*% @prefix toJSON_
+       * @format "..."
+       *)
+      ELLIPSIS
+    | (*%
        * @format "<builtin>"
        *)
       (*% @prefix toJSON_
@@ -466,6 +473,7 @@ struct
   fun toDynamic term = DYN term
   fun toReifiedTerm (DYN term) = term
 
+  (* general-purpose toString functions; width should not be changed *)
   fun reifiedTermToString term =
       SMLFormat.prettyPrint nil (format_reifiedTerm term)
   fun reifiedTermToJSON term =
@@ -548,11 +556,6 @@ struct
    * @extern(u) u
    * @formatter(join) join
    *)
-  (*%
-   * @prefix structure_
-   * @extern(u) u
-   * @formatter(join) join
-   *)
   datatype env
     = (*%
        * @format({varE, tyE, strE : str strs})
@@ -570,11 +573,6 @@ struct
        * "structure" +d name +d "=" 2[ \n
        * "struct" 2[ u:join()("", \n, env) ] \n
        * "end" ]
-       *)
-      (*%
-       * @prefix structure_
-       * @format(name * env)
-       * name 2[ u:join()("", \n, env) ]
        *)
      string * env
 
@@ -606,20 +604,10 @@ struct
    * @extern(u) u
    * @formatter(join) join
    *)
-  (*%
-   * @prefix structure_
-   * @extern(u) u
-   * @formatter(join) join
-   *)
   type topEnv
     = (*%
        * @format({Env, FunE, SigE})
        * u:join()( u:join()( u:join()( FunE, \n, SigE ), \n, Env ), \n, "" )
-       *)
-      (*%
-       * @prefix structure_
-       * @format({Env, FunE, SigE})
-       * Env \n
        *)
        {Env:env, FunE:funE, SigE:sigE}
 
@@ -631,20 +619,13 @@ struct
   fun defaultPrintTopEnvOutput s =
       print s handle IO.Io _ => () (* user may close stdOut *)
 
-  fun printTopEnv topEnv =
+  fun printTopEnv width topEnv =
       (case !printTopEnvOutput of SOME f => f | NONE => fn _ => ())
         (SMLFormat.prettyPrint
            (case !printTopEnvOutput of
-              NONE => [SMLFormat.OutputFunction defaultPrintTopEnvOutput]
-            | SOME _ => nil)
+              NONE => [SMLFormat.OutputFunction defaultPrintTopEnvOutput,
+                       SMLFormat.Columns width]
+            | SOME _ => [SMLFormat.Columns width])
            (format_topEnv topEnv))
-
-  fun printStructureTopEnv topEnv =
-      (case !printTopEnvOutput of SOME f => f | NONE => fn _ => ())
-        (SMLFormat.prettyPrint
-           (case !printTopEnvOutput of
-              NONE => [SMLFormat.OutputFunction defaultPrintTopEnvOutput]
-            | SOME _ => nil)
-           (structure_topEnv topEnv))
 
 end

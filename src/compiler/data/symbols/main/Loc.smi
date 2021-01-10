@@ -1,7 +1,6 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../libs/toolchain/main/Filename.smi"
-
 (*
 _require local "./LOC.sig"
 *)
@@ -18,6 +17,8 @@ struct
   val comparePos : pos * pos -> order
   val noloc : loc
   val nopos : pos
+  val isNopos : pos -> bool
+  val isNoloc : loc -> bool
   val mergeLocs : loc * loc -> loc
   val format_file_place
       : file_place -> SMLFormat.FormatExpression.expression list

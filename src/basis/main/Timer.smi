@@ -1,7 +1,6 @@
-_require "./Time.smi"
 _require local "./IntInf.smi"
 _require local "./SMLSharp_Runtime.smi"
-
+_require       "./Time.smi"
 structure Timer =
 struct
   type cpu_timer (= {})

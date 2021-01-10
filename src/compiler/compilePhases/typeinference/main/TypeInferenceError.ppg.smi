@@ -134,6 +134,7 @@ structure TypeInferenceError =
     exception JoinWithDummy of string * Types.ty * Types.ty * Types.ty
     exception InconsistentKind of Types.ty
     exception ForEachTypeError of string
+    exception RecordUpdateMustHaveGroundRecordType of string * Types.ty
     exception InvalidKindForExistentialType of Types.ty
 
     val setPrintTyFun : NameEvalEnv.topEnv -> unit

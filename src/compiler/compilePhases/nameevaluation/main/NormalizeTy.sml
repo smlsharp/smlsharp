@@ -238,44 +238,49 @@ in
     val redTfun = fn x => redTfunWithInterface false x
     fun redTstr tstr =
          case tstr of
-           V.TSTR tfun => V.TSTR (redTfun TvarMap.empty tfun)
-         | V.TSTR_DTY {tfun, varE, formals, conSpec} =>
+           V.TSTR (tstrInfo as {tfun,...}) =>
+           V.TSTR (tstrInfo # {tfun = redTfun TvarMap.empty tfun})
+         | V.TSTR_DTY (tstrInfo as {tfun, conSpec,...}) =>
            let
              val tfun = redTfun TvarMap.empty tfun
              val conSpec = redConSpec TvarMap.empty conSpec
            in
-             V.TSTR_DTY {tfun=tfun,
-                         varE=varE,
-                         formals=formals,
-                         conSpec=conSpec}
+             V.TSTR_DTY (tstrInfo # {tfun=tfun,  conSpec=conSpec})
            end
     val redTy = fn x => redTyWithInterface false x
     fun redIdstatus idstatus =
         case idstatus of
           I.IDVAR _ => idstatus
-        | I.IDVAR_TYPED {id, longsymbol, ty} => 
-          I.IDVAR_TYPED {id=id, longsymbol=longsymbol, ty= redTy TvarMap.empty ty}
-        | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId} =>
-          I.IDEXVAR {exInfo={used=used, longsymbol=longsymbol, version=version, ty=redTy TvarMap.empty ty},
-                     internalId = internalId
+        | I.IDVAR_TYPED {id, longsymbol, ty, defRange} => 
+          I.IDVAR_TYPED {id=id, longsymbol=longsymbol, 
+                         ty= redTy TvarMap.empty ty, defRange=defRange}
+        | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId, defRange} =>
+          I.IDEXVAR {exInfo={used=used, longsymbol=longsymbol, 
+                             version=version, ty=redTy TvarMap.empty ty},
+                     internalId = internalId,
+                     defRange = defRange
                     }
-        | I.IDEXVAR_TOBETYPED {longsymbol, id, version} => idstatus
-        | I.IDBUILTINVAR {primitive, ty} =>
-          I.IDBUILTINVAR {primitive=primitive, ty=redTy TvarMap.empty ty}
-        | I.IDCON {id, longsymbol, ty} =>
-          I.IDCON {id=id, longsymbol=longsymbol, ty=redTy TvarMap.empty ty}
-        | I.IDEXN {id, longsymbol, ty} =>
-          I.IDEXN {id=id, longsymbol=longsymbol,ty=redTy TvarMap.empty ty}
-        | I.IDEXNREP {id, longsymbol, ty} =>
-          I.IDEXNREP {id=id, longsymbol=longsymbol, ty=redTy TvarMap.empty ty}
-        | I.IDEXEXN {used, longsymbol, ty, version} =>
-          I.IDEXEXN {used = used, longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}
-        | I.IDEXEXNREP {used, longsymbol, ty, version} =>
-          I.IDEXEXNREP {used = used, longsymbol=longsymbol, ty=redTy TvarMap.empty ty, version=version}
+        | I.IDEXVAR_TOBETYPED {longsymbol, id, version, defRange} => idstatus
+        | I.IDBUILTINVAR {primitive, ty, defRange} =>
+          I.IDBUILTINVAR {primitive=primitive, ty=redTy TvarMap.empty ty, defRange = defRange}
+        | I.IDCON {id, longsymbol, ty, defRange} =>
+          I.IDCON {id=id, longsymbol=longsymbol, ty=redTy TvarMap.empty ty, defRange = defRange}
+        | I.IDEXN {id, longsymbol, ty, defRange} =>
+          I.IDEXN {id=id, longsymbol=longsymbol,ty=redTy TvarMap.empty ty, defRange = defRange}
+        | I.IDEXNREP {id, longsymbol, ty, defRange} =>
+          I.IDEXNREP {id=id, longsymbol=longsymbol, ty=redTy TvarMap.empty ty, defRange= defRange}
+        | I.IDEXEXN {used, longsymbol, ty, version, defRange} =>
+          I.IDEXEXN {used = used, longsymbol=longsymbol, 
+                     ty=redTy TvarMap.empty ty, version=version, defRange= defRange}
+        | I.IDEXEXNREP {used, longsymbol, ty, version, defRange} =>
+          I.IDEXEXNREP {used = used, longsymbol=longsymbol, 
+                        ty=redTy TvarMap.empty ty, version=version, defRange = defRange}
         | I.IDOPRIM _ => idstatus
-        | I.IDSPECVAR {ty, symbol} => I.IDSPECVAR {ty=redTy TvarMap.empty ty, symbol=symbol}
-        | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=redTy TvarMap.empty ty, symbol=symbol}
-        | I.IDSPECCON {symbol} => I.IDSPECCON {symbol=symbol}
+        | I.IDSPECVAR {ty, symbol, defRange} => 
+          I.IDSPECVAR {ty=redTy TvarMap.empty ty, symbol=symbol, defRange=defRange}
+        | I.IDSPECEXN {ty, symbol, defRange} => 
+          I.IDSPECEXN {ty=redTy TvarMap.empty ty, symbol=symbol, defRange = defRange}
+        | I.IDSPECCON {symbol, defRange} => I.IDSPECCON {symbol=symbol, defRange=defRange}
 
     fun redEnv env =
         let
@@ -283,17 +288,20 @@ in
           val tyE = SymbolEnv.map redTstr tyE
           val envMap = 
               SymbolEnv.map
-                (fn {env, strKind} => 
-                    {env=redEnv env, strKind=strKind}) envMap
+                (fn (strEntry as {env,...}) => 
+                    strEntry # {env=redEnv env}) 
+                envMap
           val varE = SymbolEnv.map redIdstatus varE
         in
           V.ENV{tyE=tyE, varE=varE, strE=V.STR envMap} 
         end
   in
-    fun reduceTyWithInterface ifInterface tvarEnv ty = (resetSet(); redTyWithInterface ifInterface tvarEnv ty)
+    fun reduceTyWithInterface ifInterface tvarEnv ty =
+        (resetSet(); redTyWithInterface ifInterface tvarEnv ty)
     val reduceTy = fn x => reduceTyWithInterface false x
     fun reduceEnv env = (resetSet(); redEnv env)
-    fun reduceTfunWithInterface ifInterface tfun = (resetSet(); redTfunWithInterface ifInterface TvarMap.empty tfun)
+    fun reduceTfunWithInterface ifInterface tfun = 
+        (resetSet(); redTfunWithInterface ifInterface TvarMap.empty tfun)
     val reduceTfun = fn x => reduceTfunWithInterface false x
   end
 
@@ -310,10 +318,14 @@ in
 
   fun equalTfunWithInterface ifInterface typIdEquiv (tfun1, tfun2) =
       case (tfun1, tfun2) of
-        (I.TFUN_VAR(ref(I.REALIZED{tfun,...})),_) => equalTfunWithInterface ifInterface typIdEquiv (tfun, tfun2)
-      | (_, I.TFUN_VAR(ref(I.REALIZED{tfun,...}))) => equalTfunWithInterface ifInterface typIdEquiv (tfun1, tfun) 
-      | (I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...})),_) => equalTfunWithInterface ifInterface typIdEquiv (tfun, tfun2)
-      | (_,I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...}))) => equalTfunWithInterface ifInterface typIdEquiv (tfun1,tfun) 
+        (I.TFUN_VAR(ref(I.REALIZED{tfun,...})),_) => 
+        equalTfunWithInterface ifInterface typIdEquiv (tfun, tfun2)
+      | (_, I.TFUN_VAR(ref(I.REALIZED{tfun,...}))) => 
+        equalTfunWithInterface ifInterface typIdEquiv (tfun1, tfun) 
+      | (I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...})),_) => 
+        equalTfunWithInterface ifInterface typIdEquiv (tfun, tfun2)
+      | (_,I.TFUN_VAR(ref(I.INSTANTIATED{tfun,...}))) => 
+        equalTfunWithInterface ifInterface typIdEquiv (tfun1,tfun) 
       | (I.TFUN_DEF {formals=formals1,realizerTy=ty1,...},
          I.TFUN_DEF {formals=formals2,realizerTy=ty2,...}) =>
         eqTydefWithInterface ifInterface typIdEquiv ((formals1, ty1),(formals2, ty2))
@@ -353,8 +365,10 @@ in
       | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun1,...})),
          I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun2,...}))) => equalTfun typIdEquiv (tfun1,tfun2) 
 *)
-      | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun,...})), _) => equalTfunWithInterface ifInterface typIdEquiv (tfun,tfun2) 
-      | (_, I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun,...}))) => equalTfunWithInterface ifInterface typIdEquiv (tfun1,tfun) 
+      | (I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun,...})), _) => 
+        equalTfunWithInterface ifInterface typIdEquiv (tfun,tfun2) 
+      | (_, I.TFUN_VAR (ref (I.FUN_DTY {tfun=tfun,...}))) => 
+        equalTfunWithInterface ifInterface typIdEquiv (tfun1,tfun) 
       | _ => false
 
   and eqTydefWithInterface ifInterface typIdEquiv ((formals1, ty1), (formals2, ty2)) =
@@ -389,7 +403,9 @@ in
         | (I.TYFUNM (tyList1,ty12),I.TYFUNM(tyList2,ty22)) =>
           (equalTyWithInterface ifInterface (typIdEquiv, tvarIdEquiv) (ty12, ty22)
            andalso List.length tyList1 = List.length tyList2
-           andalso List.all (equalTyWithInterface ifInterface (typIdEquiv, tvarIdEquiv)) (ListPair.zip (tyList1, tyList2))
+           andalso List.all (equalTyWithInterface 
+                               ifInterface (typIdEquiv, tvarIdEquiv)) 
+                            (ListPair.zip (tyList1, tyList2))
            handle exn => raise exn)
         | (I.TYPOLY(kindedTvars1, bodyTy1),I.TYPOLY(kindedTvars2, bodyTy2)) =>
           List.length kindedTvars1 = List.length kindedTvars2 andalso
@@ -414,7 +430,9 @@ in
            I.TYCONSTRUCT{tfun=tfun2, args=args2}) =>
           (equalTfunWithInterface ifInterface typIdEquiv (tfun1, tfun2)
             andalso List.length args1 = List.length args2
-            andalso List.all (equalTyWithInterface ifInterface (typIdEquiv, tvarIdEquiv)) (ListPair.zip (args1, args2))
+            andalso List.all
+                      (equalTyWithInterface ifInterface (typIdEquiv, tvarIdEquiv)) 
+                      (ListPair.zip (args1, args2))
            handle exn => raise exn)
       | _ => false
       end
@@ -434,9 +452,10 @@ in
                 (fn (name, ty1, F2) =>
                     case RecordLabel.Map.find(fields2, name) of
                       NONE => raise FALSE
-                    | SOME ty2 => if equalTyWithInterface ifInterface (typIdEquiv,tvarIdEquiv) (ty1,ty2) then 
-                                    (#1 (RecordLabel.Map.remove(F2, name)))
-                                  else raise FALSE
+                    | SOME ty2 => 
+                      if equalTyWithInterface ifInterface (typIdEquiv,tvarIdEquiv) (ty1,ty2) then 
+                        (#1 (RecordLabel.Map.remove(F2, name)))
+                      else raise FALSE
                 )
                 fields2
                 fields1

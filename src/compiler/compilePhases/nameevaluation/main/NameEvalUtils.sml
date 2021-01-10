@@ -27,6 +27,11 @@ in
           fixEnv
       else ()
 *)
+  fun printLoc loc = 
+      if !Bug.debugPrint then 
+        print (Loc.locToString loc)
+      else ()
+      
   fun printPath path =
       if !Bug.debugPrint then 
         print (String.concatWith "." path)
@@ -53,7 +58,10 @@ in
       else ()
   fun printTy ty =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (I.formatWithType_ty ty))
+        if !Control.printWithType then
+          print (Bug.prettyPrint (I.formatWithType_ty ty))
+        else
+          print (Bug.prettyPrint (I.format_ty ty))
       else ()
   fun printProp prop =
       if !Bug.debugPrint then 
@@ -67,6 +75,11 @@ in
       if !Bug.debugPrint then 
         print (Bug.prettyPrint (V.format_tstr tstr))
       else ()
+  fun tstrToString tstr =
+      if !Control.printWithType then
+          Bug.prettyPrint (V.format_tstr tstr)
+      else 
+          Bug.prettyPrint (V.format_tstr tstr)
   fun printTyE tyE =
       if !Bug.debugPrint then 
         print (Bug.prettyPrint (V.format_tyE tyE))
@@ -85,8 +98,16 @@ in
       else ()
   fun printIdstatus idstatus =
       if !Bug.debugPrint then 
-        print (Bug.prettyPrint (I.formatWithType_idstatus idstatus) ^ "\n")
+        if !Control.printWithType then
+          print (Bug.prettyPrint (I.formatWithType_idstatus idstatus) ^ "\n")
+        else
+          print (Bug.prettyPrint (I.format_idstatus idstatus) ^ "\n")
       else ()
+  fun idstatusToString idstatus =
+      if !Control.printWithType then
+        Bug.prettyPrint (I.formatWithType_idstatus idstatus) 
+      else 
+        Bug.prettyPrint (I.format_idstatus idstatus)
   fun printTypId typId =
       if !Bug.debugPrint then 
         print (Bug.prettyPrint (I.format_typId typId))
@@ -291,6 +312,12 @@ in
           (Bug.prettyPrint
              (PatternCalcInterface.format_pidec dec) ^ "\n")
       else ()
+  fun printPiinterfacedec dec =
+      if !Bug.debugPrint then 
+        print
+          (Bug.prettyPrint
+             (PatternCalcInterface.format_interfaceDec dec) ^ "\n")
+      else ()
   fun printCastEnv {tvarEnv, tfunEnv, conIdEnv} =
       if !Bug.debugPrint then 
         (print "tvarEnv :\n";
@@ -464,33 +491,39 @@ in
 
   fun staticTyName (typId, envList) =
       let
-        exception FoundInTyE of Symbol.symbol option
         exception FoundInEnv of Symbol.symbol list option
-        fun tstrId (V.TSTR tfun) = I.tfunId tfun
-          | tstrId (V.TSTR_DTY{tfun,...}) = I.tfunId tfun
+        fun sortBySymbol env =
+            ListSorter.sort
+              (fn ((x, _), (y, _)) =>
+                  let
+                    val x = Symbol.symbolToString x
+                    val y = Symbol.symbolToString y
+                  in
+                    case Int.compare (size x, size y) of
+                      EQUAL => String.compare (x, y)
+                    | order => order
+                  end)
+            (SymbolEnv.listItemsi env)
+        fun tstrId (V.TSTR {tfun,...}) = 
+            (I.tfunId tfun 
+             handle e => (print "staticTyName1\n"; raise e))
+          | tstrId (V.TSTR_DTY{tfun,...}) = 
+            (I.tfunId tfun 
+             handle e => (print "staticTyName2\n"; raise e))
         fun findIdTyE (tyE, typId) =
-            (SymbolEnv.appi
-               (fn (symbol, tstr) => 
-                   (if TypID.eq(tstrId tstr, typId) 
-                    then raise FoundInTyE (SOME symbol)
-                    else ()) handle Bug.Bug _ => ()
-               )
-               tyE;
-             NONE
-            )
-            handle FoundInTyE symbolOpt => symbolOpt
-          
+            List.find
+              (fn (symbol, tstr) =>
+                  TypID.eq (tstrId tstr, typId) handle Bug.Bug _ => false)
+              (sortBySymbol tyE)
         fun findIdEnv (symbolList, V.ENV{tyE, strE=V.STR strentryMap, ...}, typId) =
             case findIdTyE (tyE, typId) of
-              SOME symbol => raise (FoundInEnv (SOME (symbolList @ [symbol])))
+              SOME (symbol, _) =>
+              raise FoundInEnv (SOME (symbolList @ [symbol]))
             | NONE => 
-              (SymbolEnv.appi
-                 (fn (symbol, {env, strKind}) =>
-                     (findIdEnv (symbolList @ [symbol], env, typId);
-                      ())
-                 )
-                 strentryMap;
-               ())
+              app
+                (fn (symbol, {env, strKind, loc, definedSymbol}) =>
+                    findIdEnv (symbolList @ [symbol], env, typId))
+                (sortBySymbol strentryMap)
         fun findIdEnvList (envList, typId) =
             List.app (fn env => (findIdEnv (nil, env, typId))) envList
       in
@@ -500,7 +533,10 @@ in
             
   fun staticTfunName (envList, tfun) =
       let
-        val typId = I.tfunId tfun
+        val typId = 
+            (I.tfunId tfun 
+             handle e => (print "staticTfunName1\n"; raise e))
+
         val staticLongsymbolOpt = staticTyName (typId, envList)
       in
         case staticLongsymbolOpt of
@@ -508,6 +544,7 @@ in
         | NONE => "?." ^ Symbol.longsymbolToString (I.tfunLongsymbol tfun)
           handle Bug.Bug _ => "?"
       end
+          handle Bug.Bug _ => "??"
 
   fun staticTyConName (envList, {id, longsymbol,...}) =
       let
@@ -518,6 +555,7 @@ in
         | NONE => "?." ^ Symbol.longsymbolToString longsymbol
           handle Bug.Bug _ => "?"
       end
+          handle Bug.Bug _ => "??"
 
 
 end

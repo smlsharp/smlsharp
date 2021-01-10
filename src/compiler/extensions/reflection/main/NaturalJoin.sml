@@ -12,9 +12,10 @@ struct
   structure RTy = ReifiedTy
   structure PD = PartialDynamic
   exception NaturalJoin
+  exception Extend
   exception GreaterEq
   exception UnsupportedTerm of RTm.reifiedTerm * RTm.reifiedTerm
-  datatype joinKind = JOIN | EXTEND
+  datatype joinKind = JOIN | EXTEND 
 
   fun joinBoxed joinKind (b1,b2) = 
       case joinKind of 
@@ -189,7 +190,6 @@ struct
       | _ => raise NaturalJoin
 
   val naturalJoin = fn x => naturalJoin JOIN x
-  and extend  = fn x => naturalJoin EXTEND x
 
   fun overrideNull (term, ty) = 
       if RTy.reifiedTyEq (PD.inferTy term, ty) then RTm.NULL_WITHTy ty
@@ -228,6 +228,17 @@ struct
       | (RTm.NULL_WITHTy ty1, _) => overrideValue (ty1, y)
       | (_, RTm.NULL_WITHTy ty2) => overrideNull (x, ty2)
       | _ => y
+  and extendFields (map1, map2) =
+      RecordLabel.Map.mergeWith
+      (fn (SOME v1, SOME v2) => SOME (extend (v1, v2))
+        | (NONE, SOME v) => SOME v
+        | (SOME v, NONE) => SOME v
+        | _ => raise Extend)
+      (map1, map2)
+  and extend (x,y) = 
+      case (x, y) of
+        (RTm.RECORD r1, RTm.RECORD r2) => RTm.RECORD (extendFields (r1, r2))
+      | _ => raise Extend
 
   fun greaterEqData ((con1, termOpt1, ty1), (con2, termOpt2, ty2)) =
       con1 = con2 

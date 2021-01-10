@@ -20,6 +20,7 @@ struct
     structure S = SMLSharp_Builtin.String
     structure V = SMLSharp_Builtin.Vector
     fun bug s = Bug.Bug s
+    fun printRty reifiedTy = print (RTy.reifiedTyToString reifiedTy ^ "\n")
   in
     exception UnsupportedTerm of R.reifiedTerm
     exception Undetermined
@@ -53,7 +54,9 @@ struct
         | RTy.CONSTRUCTty {longsymbol, id, args, conSet, layout, size} => layoutTag layout
         | RTy.DATATYPEty {longsymbol, id, args, layout, size} => layoutTag layout
         | RTy.DUMMYty {boxed, size} => if boxed then BOXED else UNBOXED
-        | RTy.EXISTty {boxed, size, id} => if boxed then BOXED else UNBOXED
+        | RTy.EXISTty {boxed = SOME true, size, id} => BOXED
+        | RTy.EXISTty {boxed = SOME false, size, id} => UNBOXED
+        | RTy.EXISTty {boxed = NONE, size, id} => raise Undetermined
         | RTy.DYNAMICty _ => BOXED
         | RTy.ERRORty => raise Undetermined
         | RTy.EXNTAGty => BOXED
@@ -67,7 +70,7 @@ struct
         | RTy.INTINFty => BOXED
         | RTy.INT32ty => UNBOXED
         | RTy.LISTty reifiedTy => BOXED
-        | RTy.OPAQUEty {size,id, ...} => raise Undetermined
+        | RTy.OPAQUEty {size,id, boxed, ...} => if boxed then BOXED else UNBOXED
         | RTy.OPTIONty reifiedTy => BOXED
         | RTy.POLYty {boundenv, body} => raise Undetermined
         | RTy.PTRty reifiedTy => BOXED
@@ -91,15 +94,11 @@ struct
     fun isBoxed ty = case constTag ty of BOXED => true | _ => false 
 
     fun constSize reifiedTy =
-        RecordLayoutCalc.CONST (RTy.sizeOf reifiedTy)
+        RecordLayoutCalc.WORD (RTy.sizeOf reifiedTy)
 
     (* copied from Dynamic.sml *)
-    fun toWord (RecordLayoutCalc.CONST w) = w
-      | toWord (RecordLayoutCalc.TAG (_, tag)) =
-        Word.fromInt (TypeLayout2.tagValue tag)
-      | toWord (RecordLayoutCalc.SIZE (_, n)) =
-        Word.fromInt (TypeLayout2.sizeValue n)
-      | toWord _ = raise Undetermined
+    fun toWord (RecordLayoutCalc.WORD w) = w
+      | toWord (RecordLayoutCalc.VAR _) = raise Undetermined
     (* copy end *)
 
     fun toBoxed x = BP.refToBoxed (ref x)
@@ -110,22 +109,23 @@ struct
 
     (* copied from Dynamic.sml *)
     fun checkNoExtraComputation accum =
-        case RecordLayout2.extractDecls accum of
+        case RecordLayout.extractDecls accum of
           nil => ()
         | _::_ => raise Undetermined
 
     fun computeRecordLayout tyList =
         let
           val fieldSizes =
-              map (fn ty => {tag = RecordLayoutCalc.CONST (tagToWord (constTag ty)),
+              map (fn ty => {tag = RecordLayoutCalc.WORD (tagToWord (constTag ty)),
                              size = constSize ty}) 
                   tyList
-          val accum = RecordLayout2.newComputationAccum ()
-          val ret = RecordLayout2.computeRecord accum fieldSizes
+          val accum = RecordLayout.newComputationAccum ()
+          val ret = RecordLayout.computeRecord accum fieldSizes
           val _ = checkNoExtraComputation accum
         in
           (fieldSizes, ret)
         end
+        handle Undetermined => (print "computeRecordLayout\n"; raise Undetermined)
 
     fun toML (reifiedTerm, {conSetEnv, reifiedTy}) = 
         let

@@ -14,9 +14,7 @@ _require "./TypedCalc.ppg.smi"
 
 structure TypedCalcUtils =
   struct
-    val newTCVarName : unit -> Symbol.symbol
     val newTCVarInfo : Loc.loc -> Types.ty -> Types.varInfo
-    val newTCVarInfoWithLongsymbol : Symbol.longsymbol * Types.ty -> Types.varInfo
     val getLocOfExp : TypedCalc.tpexp -> Loc.loc
     val instantiateTv : Types.tvState ref -> unit
     val freshInst : Types.ty * TypedCalc.tpexp 

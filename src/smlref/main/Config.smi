@@ -1,0 +1,21 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "sql.smi"
+_require "./DBSchema.smi"
+
+structure Config =
+struct
+  exception ConfigInfoNotFound
+  val doLogging : bool ref
+  val systemName : string ref
+  val version : string ref
+  val baseDir : string ref
+  val rootFile : string ref
+  val getConn : unit -> DBSchema.dbSchema SQL.conn
+  val config : unit 
+               -> {baseDir : string,
+                   version : string,
+                   systemName : string,
+                   rootFile :string}
+                        
+end

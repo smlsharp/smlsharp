@@ -1,0 +1,18 @@
+_require "../../basis.smi"
+_require "../../ml-lpt/lib/antlr-stream-pos.smi"
+_require "./json.lex.smi"
+_require "./json-tokens.smi"
+
+structure JSONSource =
+struct
+  datatype source =
+      Src of {srcMap : AntlrStreamPos.sourcemap,
+              strm : JSONLexer.strm ref,
+              closeFn : unit -> unit,
+              closed : bool ref}
+  val openStream : TextIO.instream -> source
+  val openFile : string -> source
+  val openString : string -> source
+  val close : source -> unit
+  val errorMsg : source -> AntlrStreamPos.span * string * JSONTokens.token -> string
+end

@@ -11,29 +11,19 @@ local
   structure TB = TypesBasics
   structure BT = BuiltinTypes
   fun bug s = Bug.Bug ("TypedCalcUtil: " ^ s)
-  val tempVarNamePrefix = "T_"
 in
-  fun newTCVarName loc = Symbol.generateWithPrefix tempVarNamePrefix
   fun newTCVarInfo loc (ty:T.ty) =
       let
         val newVarId = VarID.generate()
-        val IdString =  VarID.toString newVarId
-        val longsymbol = Symbol.mkLongsymbol [tempVarNamePrefix ^ IdString] loc
       in
-        {path=longsymbol, id=newVarId, ty = ty, opaque=false}
-      end
-  fun newTCVarInfoWithLongsymbol (longsymbol:Symbol.longsymbol,ty:T.ty) =
-      let
-        val newVarId = VarID.generate()
-      in
-        {path=longsymbol, id=newVarId, ty = ty, opaque=false}
+        {path=[], id=newVarId, ty = ty, opaque=false}
       end
   fun getLocOfExp exp =
       case exp of
         TC.TPERROR => Loc.noloc
       | TC.TPCONSTANT {const, ty, loc} => loc
       | TC.TPVAR {path,...} => Symbol.longsymbolToLoc path
-      | TC.TPEXVAR {path,...} => Symbol.longsymbolToLoc path
+      | TC.TPEXVAR ({path,...}, loc) => loc
       | TC.TPRECFUNVAR {var={path,...},...} => Symbol.longsymbolToLoc path
       | TC.TPFNM  {loc,...} => loc
       | TC.TPAPPM {loc,...} => loc
@@ -76,7 +66,7 @@ in
       case tpexp of
         TC.TPCONSTANT {const, loc, ty} => true
       | TC.TPVAR var => true
-      | TC.TPEXVAR exVarInfo => true
+      | TC.TPEXVAR (exVarInfo, loc) => true
       | TC.TPRECFUNVAR {arity, var} => true
       | TC.TPFOREIGNSYMBOL _ => true
       | _ => false
@@ -85,7 +75,7 @@ in
       case tpexp of
         TC.TPCONSTANT _ => false
       | TC.TPVAR _ => false
-      | TC.TPEXVAR exVarInfo => false
+      | TC.TPEXVAR (exVarInfo, loc) => false
       | TC.TPRECFUNVAR _ => false
       | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} => false
       | TC.TPEXNTAG {exnInfo, loc} => false
@@ -236,7 +226,7 @@ in
                 val (exp, mkNewExp) = 
                     if expansive exp then 
                       let
-                        val newVar = newTCVarInfo expLoc bodyTy
+                        val newVar = newTCVarInfo expLoc ty
                       in
                         (TC.TPVAR newVar,
                          fn x => TC.TPMONOLET {binds = [(newVar, exp)],
@@ -302,7 +292,7 @@ in
                    val binds = List.rev bindsRev
                    val recordExp =
                        TC.TPRECORD{fields=newFields,
-                                   recordTy=T.RECORDty newTyFields,
+                                   recordTy=newTyFields,
                                    loc=loc}
                    val returnExp =
                        case binds of
@@ -343,7 +333,7 @@ in
                      val binds = List.rev bindsRev
                      val recordExp =
                          TC.TPRECORD{fields=flexp,
-                                     recordTy=T.RECORDty flty,
+                                     recordTy=flty,
                                      loc=expLoc}
                      val returnExp =
                          case binds of
@@ -395,7 +385,7 @@ in
                          bodyExp =
                          TC.TPRECORD
                            {fields=flexp,
-                            recordTy=T.RECORDty flty,
+                            recordTy=flty,
                             loc=expLoc},
                          loc = expLoc
                         }

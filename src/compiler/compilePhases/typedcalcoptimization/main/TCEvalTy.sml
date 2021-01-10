@@ -181,8 +181,8 @@ in
               TC.TPEXEXNTAG
                 {exExnInfo=evalExExnInfo btvMap exExnInfo,
                  loc= loc}
-            | TC.TPEXVAR {path, ty} =>
-              TC.TPEXVAR {path=path, ty=evalT ty}
+            | TC.TPEXVAR ({path, ty}, loc) =>
+              TC.TPEXVAR ({path=path, ty=evalT ty}, loc)
             | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, ty), stubTy} =>
               TC.TPFFIIMPORT
                 {ffiTy = evalFfiTy btvMap ffiTy,
@@ -270,7 +270,7 @@ in
               TC.TPRECORD
                 {fields=RecordLabel.Map.map eval fields,
                  loc=loc,
-                 recordTy=evalT recordTy}
+                 recordTy=RecordLabel.Map.map evalT recordTy}
             | TC.TPSELECT {exp, expTy, label, loc, resultTy} =>
               TC.TPSELECT
                 {exp=eval exp,

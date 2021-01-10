@@ -1,6 +1,6 @@
-_require "./General.smi"
-_require "./VectorSlice.smi"
-_use local "./Slice_common.sml"
+_require       "./General.smi"
+_require       "./VectorSlice.smi"
+_use local     "./Slice_common.sml"
 
 structure ArraySlice =
 struct

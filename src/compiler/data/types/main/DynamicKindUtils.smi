@@ -1,11 +1,11 @@
 _require local "../../../../basis.smi"
-(* _require local "../../../../config/main/PointerSize.smi" *)
 _require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
-(* _require local "../../../data/types/main/TypesBasics.smi" *)
 _require local "../../../data/runtimetypes/main/TypeLayout2.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../compilePhases/bitmapcompilation/main/RecordLayout.smi"
+_require local "../../../compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.smi"
 _require "./Types.ppg.smi"
 _require "./DynamicKind.ppg.smi"
 

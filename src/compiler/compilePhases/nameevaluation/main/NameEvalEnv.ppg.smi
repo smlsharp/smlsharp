@@ -19,15 +19,16 @@ structure NameEvalEnv =
 struct
   type varE = IDCalc.varE
   datatype tstr
-    =  TSTR of IDCalc.tfun
+    =  TSTR of {tfun : IDCalc.tfun, defRange:Loc.loc}
     |  TSTR_DTY of {tfun:IDCalc.tfun,
                     varE:varE,
+                    defRange:Loc.loc,
                     formals:IDCalc.formals, conSpec:IDCalc.conSpec}
   type tyE = tstr SymbolEnv.map
   datatype strKind =
-      SIGENV 
+      SIGENV of SignatureID.id
     | STRENV of StructureID.id
-    | FUNAPP of {id:StructureID.id, funId:FunctorID.id, argId:StructureID.id}
+    | FUNAPP of {id:StructureID.id,funId:FunctorID.id,argId:StructureID.id}
 (* 2016-11-06 ohori: interfaceでのfunctor argumentをfunctor replicationに
   使用禁止するための暫定措置
   参照：bug 331_functorSmi-a
@@ -36,12 +37,16 @@ struct
  *)
     | FUNARG of StructureID.id
   datatype strE
-    = STR of {env:env, strKind:strKind} SymbolEnv.map
+    = STR of {env:env, strKind:strKind, loc:Loc.loc, 
+              definedSymbol:Symbol.longsymbol} SymbolEnv.map
   and env
     = ENV of {varE: varE, tyE: tyE, strE: strE}
-  type strEntry = {env:env, strKind:strKind}
+  type strEntry = {env:env, strKind:strKind, loc:Loc.loc, 
+                   definedSymbol:Symbol.longsymbol}
+  type sigEntry = {env:env, sigId:SignatureID.id, loc:Loc.loc}
   type funEEntry = 
        {id: FunctorID.id,
+        loc: Loc.loc,
         version:IDCalc.version,
         argSigEnv: env,
         argStrEntry: strEntry,
@@ -53,20 +58,39 @@ struct
         bodyEnv: env,
         bodyVarExp: IDCalc.icexp}
   type funE = funEEntry SymbolEnv.map
-  type sigE = env SymbolEnv.map
+  type sigE = sigEntry SymbolEnv.map
   type topEnv = {Env:env, FunE:funE, SigE: sigE}
   type sigEList = (Symbol.symbol * env) list
   val format_tstr : tstr -> SMLFormat.FormatExpression.expression list
   val format_tyE : tyE -> SMLFormat.FormatExpression.expression list
   val format_strE : strE -> SMLFormat.FormatExpression.expression list
-  val format_strEntry : strEntry -> SMLFormat.FormatExpression.expression list
+  val format_strEntry
+      : strEntry -> SMLFormat.FormatExpression.expression list
   val format_env : env -> TermFormat.format
-  val format_funEEntry : funEEntry -> SMLFormat.FormatExpression.expression list
-
-  val printTy_env : {env: 'a, tfunName: 'a * IDCalc.tfun -> string, tyConName: 'a * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> env -> TermFormat.format
-  val printTy_sigE : {env: 'a, tfunName: 'a * IDCalc.tfun -> string, tyConName: 'a * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> sigE -> TermFormat.format
-  val printTy_sigEList : {env: env list, tfunName: env list * IDCalc.tfun -> string, tyConName: env list * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> sigEList -> TermFormat.format
-  val printTy_funEEntry : {env: env list, tfunName: env list * IDCalc.tfun -> string, tyConName: env list * Types.tyCon -> string} * TermFormat.format * TermFormat.format -> funEEntry -> SMLFormat.FormatExpression.expression list
+  val format_funEEntry
+      : funEEntry -> SMLFormat.FormatExpression.expression list
+  val printTy_env
+      : {env: 'a, 
+         tfunName: 'a * IDCalc.tfun -> string, 
+         tyConName: 'a * Types.tyCon -> string} 
+        * TermFormat.format * TermFormat.format -> env -> TermFormat.format
+  val printTy_sigE
+      : {env: 'a, 
+         tfunName: 'a * IDCalc.tfun -> string, 
+         tyConName: 'a * Types.tyCon -> string} 
+        * TermFormat.format * TermFormat.format -> sigE -> TermFormat.format
+  val printTy_sigEList
+      : {env: env list, 
+         tfunName: env list * IDCalc.tfun -> string, 
+         tyConName: env list * Types.tyCon -> string} 
+        * TermFormat.format * TermFormat.format
+        -> sigEList -> TermFormat.format
+  val printTy_funEEntry
+      : {env: env list, 
+         tfunName: env list * IDCalc.tfun -> string, 
+         tyConName: env list * Types.tyCon -> string} 
+        * TermFormat.format * TermFormat.format
+        -> funEEntry -> SMLFormat.FormatExpression.expression list
 
   val format_funE : funE -> SMLFormat.FormatExpression.expression list
   val format_sigE : sigE -> SMLFormat.FormatExpression.expression list
@@ -83,93 +107,8 @@ struct
   val emptyTyE : tyE
   val emptyEnv : env
   val emptyTopEnv : topEnv
-
-(*
-  exception LookupTstr
-  exception LookupId
-  exception LookupStr
-
-  val findTstr : env * Symbol.longsymbol -> tstr option
-  val lookupTstr : env -> Symbol.longsymbol -> tstr
-  val checkTstr : env * Symbol.longsymbol -> tstr option
-  val rebindTstr : env * Symbol.symbol * tstr -> env
-  val bindTstr : env * Symbol.symbol * tstr -> env
-  val reinsertTstr : env * Symbol.symbol * tstr -> env
-  val insertTstr : env * Symbol.symbol * tstr -> env
-  val rebindTstrLongsymbol : env * Symbol.longsymbol * tstr -> env
-  val reinsertTstrLongsymbol : env * Symbol.longsymbol * tstr -> env
-
-  val findId : env * Symbol.longsymbol -> IDCalc.idstatus option
-  val findCon : env * Symbol.longsymbol -> IDCalc.idstatus option
-  val lookupId : env -> Symbol.longsymbol -> IDCalc.idstatus
-  val checkSigId : env * Symbol.longsymbol -> IDCalc.idstatus option
-  val checkProvideId : env * Symbol.symbol -> IDCalc.idstatus option
-  val checkProvideAlias : Symbol.symbol * env * Symbol.longsymbol -> IDCalc.idstatus option
-  val rebindId : env * Symbol.symbol * IDCalc.idstatus -> env
-  val bindId : env * Symbol.symbol * IDCalc.idstatus -> env
-  val reinsertId : env * Symbol.symbol * IDCalc.idstatus -> env
-  val insertId : env * Symbol.symbol * IDCalc.idstatus -> env
-  val rebindIdLongsymbol : env * Symbol.longsymbol * IDCalc.idstatus -> env
-  val reinsertIdLongsymbol : env * Symbol.longsymbol * IDCalc.idstatus -> env
-
-  val findStr : env * Symbol.longsymbol -> strEntry option
-  val lookupStr : env -> Symbol.longsymbol -> strEntry
-  val checkStr : env * Symbol.longsymbol -> strEntry option
-  val bindStr : env * Symbol.symbol * strEntry -> env
-  val rebindStr : env * Symbol.symbol * strEntry -> env
-  val insertStr : env * Symbol.symbol * strEntry -> env
-  val reinsertStr : env * Symbol.symbol * strEntry -> env
-  val singletonStr : Symbol.symbol * strEntry -> env
-
-  val varEWithVarE : varE * varE -> varE
-  val bindVarEWithVarE : varE * varE -> varE
-  val tyEWithTyE : tyE * tyE -> tyE
-  val bindTyEWithTyE : tyE * tyE -> tyE
-  val strEWithStrE : strE * strE -> strE
-  val bindStrEWithStrE : strE * strE -> strE
-
-  val envWithVarE : env * varE -> env
-  val bindEnvWithVarE : env * varE -> env
-  val envWithEnv : env * env -> env
-  val bindEnvWithEnv : env * env -> env
-
-  val updateStrE : strE * strE -> strE
-  val updateEnv : env * env -> env
-
-  val findFunETopEnv : topEnv * Symbol.symbol -> funEEntry option
-  val checkFunETopEnv : topEnv * Symbol.symbol -> funEEntry option
-  val rebindFunE : funE * Symbol.symbol * funEEntry -> funE
-  val reinsertFunE : funE * Symbol.symbol * funEEntry -> funE
-  val funEWithFunE : funE * funE -> funE
-  val bindFunEWithFunE : funE * funE -> funE
-  val topEnvWithFunE : topEnv * funE -> topEnv
-  val bindTopEnvWithFunE : topEnv * funE -> topEnv
-
-  val findSigETopEnv : topEnv * Symbol.symbol -> env option
-  val checkSigETopEnv : topEnv * Symbol.symbol -> env option
-  val rebindSigE : sigE * Symbol.symbol * env -> sigE
-  val reinsertSigE : sigE * Symbol.symbol * env -> sigE
-  val sigEWithSigE : sigE * sigE -> sigE
-  val bindSigEWithSigE : sigE * sigE -> sigE
-  val topEnvWithSigE : topEnv * sigE -> topEnv
-  val bindTopEnvWithSigE : topEnv * sigE -> topEnv
-
-  val topEnvWithEnv : topEnv * env -> topEnv
-  val bindTopEnvWithEnv : topEnv * env -> topEnv
-  val topEnvWithTopEnv : topEnv * topEnv -> topEnv
-  val bindTopEnvWithTopEnv : topEnv * topEnv -> topEnv
-
-  val unionVarE : string -> varE * varE -> varE
-  val unionTyE : string -> tyE * tyE -> tyE
-  val unionStrE : string -> strE * strE -> strE
-  val unionEnv : string -> env * env -> env
-  val unionSigE : string -> sigE * sigE -> sigE
-  val unionFunE : string -> funE * funE -> funE
-  val unionTopEnv : string -> topEnv * topEnv -> topEnv
-*)
-
-  val findTstr : env * Symbol.longsymbol -> tstr option
-  val findId : env * Symbol.longsymbol -> IDCalc.idstatus option
+  val findTstr : env * Symbol.longsymbol -> (Symbol.symbol * tstr) option
+  val findId : env * Symbol.longsymbol -> (Symbol.symbol * IDCalc.idstatus) option
 
 
   val replaceLocTyE : Loc.loc -> tyE -> tyE

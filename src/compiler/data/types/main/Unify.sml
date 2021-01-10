@@ -25,6 +25,15 @@ in
 
   fun bug s = Bug.Bug ("Unify:" ^ s)
 
+(*
+  fun occurres tvarRef ty = 
+      let
+        val (_, set, _) = TB.EFTV (ty, nil)
+      in
+        OTSet.member (set, tvarRef)
+      end
+以下、暫定措置
+*)
   fun occurres tvarRef ty = 
       let
         val (_, set, _) = TB.EFTV (ty, nil)
@@ -82,12 +91,14 @@ in
                    as 
                    {kind = T.KIND (kindRecord
                                      as {properties,...}),
-                    utvarOpt = SOME x,
+                    utvarOpt = SOME _,
                     ...}
                 )
              )
           )
-        => raiseUnify 9999
+        =>
+        if T.isProperties T.REIFY properties then ()
+        else raiseUnify 9999
       | T.TYVARty _ => ()
       | T.BOUNDVARty _ => ()
       | T.FUNMty (tyList,ty) =>
@@ -661,6 +672,8 @@ in
           (T.BOUNDVARty bid1, T.BOUNDVARty bid2) => btvEq(bid1, bid2)
         | (T.SINGLETONty sty1, T.SINGLETONty sty2) =>
           eqSTy btvEquiv (sty1, sty2)
+        | (T.BACKENDty bty1, T.BACKENDty bty2) =>
+          eqBTy btvEquiv (bty1, bty2)
         | (T.POLYty {boundtvars=btv1, constraints = constraints1, body=body1},
            T.POLYty {boundtvars=btv2, constraints = constraints2, body=body2}) =>
           (let
@@ -751,6 +764,7 @@ in
       label1 = label2 andalso eqTy btvEquiv (ty1, ty2)
     | (T.TAGty ty1, T.TAGty ty2) => eqTy btvEquiv (ty1, ty2)
     | (T.SIZEty ty1, T.SIZEty ty2) => eqTy btvEquiv (ty1, ty2)
+    | (T.REIFYty ty1, T.REIFYty ty2) => eqTy btvEquiv (ty1, ty2)
     | _ => false
   and eqOprimSelector
         btvEquiv 
@@ -815,6 +829,36 @@ in
     | (T.UNIV, T.UNIV) => true
     | (T.REC smap1, T.REC smap2) => eqSMap btvEquiv (smap1, smap2)
     | _ => false
+  and eqTyOpt btvEquiv (NONE, NONE) = true
+    | eqTyOpt btvEquiv (SOME _, NONE) = false
+    | eqTyOpt btvEquiv (NONE, SOME _) = false
+    | eqTyOpt btvEquiv (SOME ty1, SOME ty2) = eqTy btvEquiv (ty1, ty2)
+  and eqBTy btvEquiv (bty1, bty2) =
+      case (bty1, bty2) of
+        (T.RECORDSIZEty ty1, T.RECORDSIZEty ty2) => eqTy btvEquiv (ty1, ty2)
+      | (T.RECORDSIZEty _, _) => false
+      | (T.RECORDBITMAPty (n1, ty1), T.RECORDBITMAPty (n2, ty2)) =>
+        n1 = n2 andalso eqTy btvEquiv (ty1, ty2)
+      | (T.RECORDBITMAPty _, _) => false
+      | (T.RECORDBITMAPINDEXty (n1, ty1), T.RECORDBITMAPINDEXty (n2, ty2)) =>
+        n1 = n2 andalso eqTy btvEquiv (ty1, ty2)
+      | (T.RECORDBITMAPINDEXty _, _) => false
+      | (T.FOREIGNFUNPTRty
+           {argTyList=a1, varArgTyList=v1, resultTy=r1, attributes=t1},
+         T.FOREIGNFUNPTRty
+           {argTyList=a2, varArgTyList=v2, resultTy=r2, attributes=t2}) =>
+        eqTyList btvEquiv (a1, a2)
+        andalso eqTyListOpt btvEquiv (v1, v2)
+        andalso eqTyOpt btvEquiv (r1, r2)
+        andalso t1 = t2
+      | (T.FOREIGNFUNPTRty _, _) => false
+      | (T.CCONVTAGty _, _) => raise Bug.Bug "eqBTy: CCONVTAGty"
+      | (T.FUNENTRYty _, _) => raise Bug.Bug "eqBTy: FUNENTRYty"
+      | (T.CALLBACKENTRYty _, _) => raise Bug.Bug "eqBTy: CALLBACKENTRYty"
+      | (T.SOME_FUNENTRYty, _) => raise Bug.Bug "eqBTy: SOME_FUNENTRYty"
+      | (T.SOME_FUNWRAPPERty, _) => raise Bug.Bug "eqBTy: SOME_FUNWRAPPERty"
+      | (T.SOME_CLOSUREENVty, _) => raise Bug.Bug "eqBTy: SOME_CLOSUREENVty"
+      | (T.SOME_CCONVTAGty, _) => raise Bug.Bug "eqBTy: SOME_CCONVTAGty"
 
   fun instOfPolyTy (polyTy, tyList) =
       case TB.derefTy polyTy of

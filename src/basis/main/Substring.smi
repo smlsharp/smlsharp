@@ -1,5 +1,12 @@
-_require "./General.smi"
-_use local "./Slice_common.sml"
+(*
+_require local "./CharVectorSlice.smi"
+*)
+_require       "./General.smi"
+(*
+_require local "./VectorSlice.smi"
+_require local "./Word8VectorSlice.smi"
+*)
+_use local     "./Slice_common.sml"
 
 structure Substring =
 struct

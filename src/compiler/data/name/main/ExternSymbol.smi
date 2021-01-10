@@ -60,7 +60,6 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
-    val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
   end
 
   structure Set =
@@ -150,7 +149,6 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
-    val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
   end
 
   structure Set =

@@ -9,20 +9,22 @@ _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../data/control/main/Control.smi"
 _require local "../../../libs/util/main/Counter.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"
+_require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
 _require "../../../libs/toolchain/main/Filename.smi"
 _require local "../../../libs/toolchain/main/CoreUtils.smi"
 _require "../../../libs/toolchain/main/ShellUtils.smi"
 _require local "../../../libs/toolchain/main/TempFile.smi"
 _require local "../../../libs/toolchain/main/BinUtils.smi"
 _require local "../../../compilePhases/parser/main/Parser.smi"
-_require local "./GetOpt.smi"
+_require local "./GetOptLong.smi"
 _require local "./RunLoop.smi"
 _require local "./ExecutablePath.smi"
 _require "../../../libs/toolchain/main/LLVMUtils.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../compilePhases/toplevel/main/Top.smi"
 _require local "../../../compilePhases/loadfile/main/LoadFile.smi"
-(* _require local "../../../compilePhases/analyzefiles/main/AnalyzeFiles.smi" *)
+_require local "../../../compilePhases/analyzefiles/main/AnalyzeFiles.smi"
+_require local "../../../compilePhases/nameevaluation/main/NameEvalEnvPrims.smi"
 _require local "./SignalHandler.smi"
 _require "./UserFileMap.smi"
 (* _require local "./MainUtils.smi" *)
@@ -30,14 +32,17 @@ _require "./UserFileMap.smi"
 structure Main =
 struct
 
+(* 以下は、make testで使用 *)
   datatype file_place_limit =
       ALL_PLACE
     | USERPATH_ONLY
 
   val loadConfig
       : ['a#{systemBaseDir : Filename.filename}. 'a -> unit]
+
   val loadBuiltin
       : ['a#{systemBaseDir : Filename.filename}. 'a -> Top.toplevelContext]
+
   val loadPrelude
       : ['a#{linkOptions : 'b,
              topContext : unit -> Top.toplevelContext,
@@ -125,8 +130,10 @@ struct
 
   val command : string * string list -> unit
 
+  val printExn : string -> exn -> unit
+(* 以上は、make testで使用 *)
+
   val main : string * string list -> OS.Process.status
 
-  val printExn : string -> exn -> unit
 
 end

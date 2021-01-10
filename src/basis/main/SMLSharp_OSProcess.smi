@@ -1,6 +1,6 @@
-_require local "./SMLSharp_Runtime.smi"
-_require "./Time.smi"
 _require local "./IntInf.smi"
+_require local "./SMLSharp_Runtime.smi"
+_require       "./Time.smi"
 _require local "./Word32.smi"
 
 structure SMLSharp_OSProcess =

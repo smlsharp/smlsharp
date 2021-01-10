@@ -78,21 +78,24 @@ struct
 
   (*%
     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
+    @formatter(VarID.id) VarID.format_id
+    @formatter(ifcons) ifcons
    *)
   (*%
     @prefix formatWithType_
     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
     @formatter(VarID.id) VarID.format_id
+    @formatter(ifcons) ifcons
    *)
   type varInfo =
       (*%
         @format({path, id, ty})
-        path
+        path:ifcons()(path "($" id ")", "$" id)
        *)
       (*%
         @prefix formatWithType_
         @format({path, id, ty})
-        L2{ path "(" id ")" +1 ":" +d ty }
+        L2{ path:ifcons()(path "($" id ")", "$" id) +1 ":" +d ty }
        *)
       {path : Symbol.longsymbol, id : VarID.id, ty : ty}
 
@@ -169,8 +172,6 @@ struct
    * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
    * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
    * @formatter(Word8.word) ConstFormat.format_word8_hex_ML
-   * @formatter(Real64.real) ConstFormat.format_real64_ML
-   * @formatter(Real32.real) ConstFormat.format_real32_ML
    * @formatter(char) ConstFormat.format_char_ML
    *)
   (*%
@@ -183,11 +184,9 @@ struct
    * @formatter(Word16.word) ConstFormat.format_word16_hex_ML
    * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
    * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
-   * @formatter(Real64.real) ConstFormat.format_real64_ML
-   * @formatter(Real32.real) ConstFormat.format_real32_ML
    * @formatter(char) ConstFormat.format_char_ML
    *)
-  datatype tlconst =
+  datatype tlint =
       (*%
        * @format(x) x
        *)
@@ -255,6 +254,24 @@ struct
        * @format(x) x
        *)
       (*% @prefix formatWithType_
+       * @format(x) { "char" +d x }
+       *)
+      CHAR of Char.char
+
+  (*%
+   * @formatter(Real64.real) ConstFormat.format_real64_ML
+   * @formatter(Real32.real) ConstFormat.format_real32_ML
+   *)
+  (*%
+   * @prefix formatWithType_
+   * @formatter(Real64.real) ConstFormat.format_real64_ML
+   * @formatter(Real32.real) ConstFormat.format_real32_ML
+   *)
+  datatype tlconst =
+      (*%
+       * @format(x) x
+       *)
+      (*% @prefix formatWithType_
        * @format(x) { "r64" +d x }
        *)
       REAL64 of Real64.real
@@ -265,13 +282,6 @@ struct
        * @format(x) { "r32" +d x }
        *)
       REAL32 of Real32.real
-    | (*%
-       * @format(x) x
-       *)
-      (*% @prefix formatWithType_
-       * @format(x) { "char" +d x }
-       *)
-      CHAR of Char.char
     | (*%
        * @format "()"
        *)
@@ -293,6 +303,15 @@ struct
        * @format "NULLBOXED"
        *)
       NULLBOXED
+    | (*%
+        @format({name, ty})
+        L8{ "FOREIGNSYMBOL" 2[ +1 "(" name ")" ] }
+       *)
+      (*% @prefix formatWithType_
+        @format({name, ty})
+        L2{ L8{ "FOREIGNSYMBOL" 2[ +1 "(" name ")" ] } +1 ":" +d ty }
+       *)
+      FOREIGNSYMBOL of {name : string, ty : ty}
 
   (*%
     @formatter(string) ConstFormat.format_string_ML
@@ -357,6 +376,15 @@ struct
         const
        *)
       TLCONSTANT of tlconst * loc
+    | (*%
+        @format(int * loc)
+        int
+       *)
+      (*% @prefix formatWithType_
+        @format(int * loc)
+        int
+       *)
+      TLINT of tlint * loc
     | (*%
         @format(string * loc)
         string
@@ -444,7 +472,7 @@ struct
       {
         exp : tlexp,
         expTy : ty,
-        branches : {const : tlconst, body : tlexp} list,
+        branches : {const : tlint, body : tlexp} list,
         defaultExp : tlexp,
         resultTy : ty,
         loc : loc
@@ -549,7 +577,7 @@ struct
       TLRECORD of
       {
         fields : tlexp RecordLabel.Map.map,
-        recordTy : ty,
+        recordTy : ty RecordLabel.Map.map,
         loc : loc
       }
     | (*%
@@ -721,15 +749,6 @@ struct
         instTyList : ty list,
         loc : loc
       }
-    | (*%
-        @format({name, ty, loc})
-        L8{ "TLFOREIGNSYMBOL" 2[ +1 "(" name ")" ] }
-       *)
-      (*% @prefix formatWithType_
-        @format({name, ty, loc})
-        L2{ L8{ "TLFOREIGNSYMBOL" 2[ +1 "(" name ")" ] } +1 ":" +d ty }
-       *)
-      TLFOREIGNSYMBOL of {name:string, ty:ty, loc:loc}
     | (*%
         @format({funExp, argExpList: arg args, attributes,
                  resultTy: retTy retTyOpt, loc})

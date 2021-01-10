@@ -1,0 +1,46 @@
+_require "../../basis.smi"
+_require "./atom.smi"
+
+structure FmtFields =
+struct
+  datatype sign = DfltSign | AlwaysSign | BlankSign
+  datatype neg_sign = MinusSign | TildeSign
+  type field_flags =
+      {sign : sign,
+       neg_char : neg_sign,
+       zero_pad : bool,
+       base : bool,
+       large : bool}
+  datatype field_wid = NoPad | Wid of int
+  datatype real_format = F_Format | E_Format of bool | G_Format of bool
+  datatype field_type =
+      OctalField
+    | IntField
+    | HexField
+    | CapHexField
+    | CharField
+    | BoolField
+    | StrField of int option
+    | RealField of {prec : int, format : real_format}
+  datatype fmt_spec =
+      Raw of substring
+    | CharSet of char -> bool
+    | Field of field_flags * field_wid * field_type
+  datatype fmt_item =
+      ATOM of Atom.atom
+    | LINT of LargeInt.int
+    | INT of Int.int
+    | LWORD of LargeWord.word
+    | WORD of Word.word
+    | WORD8 of Word8.word
+    | BOOL of bool
+    | CHR of char
+    | STR of string
+    | REAL of Real.real
+    | LREAL of LargeReal.real
+    | LEFT of int * fmt_item
+    | RIGHT of int * fmt_item
+  exception BadFormat
+  val scanFieldSpec : substring -> fmt_spec * substring
+  val scanField : substring -> fmt_spec * substring
+end

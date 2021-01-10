@@ -108,6 +108,7 @@ structure S = AbsynSQL
     | JOIN
     | JOINOP
     | EXTENDOP
+    | UPDATEOP
     | DYNAMIC
     | DYNAMICNULL
     | DYNAMICTOP
@@ -151,6 +152,7 @@ structure S = AbsynSQL
     | ROWS
     | RPAREN
     | SELECT
+    | SELECTOR of string
     | SEMICOLON
     | SET
     | SHARING
@@ -236,13 +238,13 @@ structure S = AbsynSQL
         conSymbol:Symbol.symbol,
         tyOpt:A.ty option,
         loc:A.loc} list
-    | condesc of (Symbol.symbol * A.ty option) list
+    | condesc of (Symbol.symbol * A.ty option * A.loc) list
     | dec of A.dec
     | decs of A.dec list
     | decseq_semicolon of A.dec list
     | datbind of A.datbind list
     | datdesc of
-      (A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option) list) list
+      (A.tvar list * Symbol.symbol * (Symbol.symbol * A.ty option * A.loc) list * A.loc) list
     | exprow of (RecordLabel.label * A.exp) list
     | expseq_comma of A.exp list
     | expseq_semicolon of A.exp list
@@ -251,7 +253,7 @@ structure S = AbsynSQL
     | export of Symbol.longsymbol
     | exbinds of A.exbind list
     | exbind of A.exbind
-    | exdesc of (Symbol.symbol * A.ty option) list
+    | exdesc of (Symbol.symbol * A.ty option * A.loc) list
     | fields of bool * (A.patrow list)
     | followpatrow of A.patrow list
     | fvalbind of
@@ -367,15 +369,16 @@ structure S = AbsynSQL
     | interface of A.interface
     | unit of A.unit
     | valdesc of (Symbol.symbol * A.ty) list
-    | valbind of (A.pat * A.exp) list
+    | valbind of (A.pat * A.exp * A.loc) list
 
 (* polymorphic recursion *)
-    | pvalbind of (Symbol.symbol * A.ty * A.exp) list
+    | pvalbind of (Symbol.symbol * A.ty * A.exp * A.loc) list
 
 (* sql *)
     | sqlserver of (string * A.exp) list
     | sql of A.exp
     | sqlcon of A.exp S.sql
+    | sqlconseq of (A.exp, A.exp S.sql * S.loc) S.clause list
     | sqlopt of unit
     | sqlSelectClause of A.exp S.select
     | sqlSelectClauseExp of (A.exp, A.exp S.select) S.clause
@@ -431,9 +434,10 @@ structure S = AbsynSQL
 %footer ()
 %right ARROW
 %right AND
-%rightDARROW
+%right DARROW
 %nonassoc BAR
 %left DO
+%left HASH
 %left ELSE
 %left RAISE
 %right HANDLE
@@ -464,7 +468,8 @@ start
                                       ["it"]
                                       (Loc.nopos, Loc.nopos),
                                   loc = (Loc.nopos, Loc.nopos)},
-                               expOrSQL)],
+                               expOrSQL,
+                               Loc.noloc)],
                              (expOrSQLleft, expOrSQLright)),
                           (Loc.nopos, Loc.nopos)),
                        (Loc.nopos, Loc.nopos))]],
@@ -685,6 +690,8 @@ atexp_noVAR
           (A.EXPJOIN (true, exp1, exp2, (JOINOPleft, RPARENright)))
         | EXTENDOP LPAREN exp COMMA exp RPAREN
           (A.EXPJOIN (false, exp1, exp2, (EXTENDOPleft, RPARENright)))
+        | UPDATEOP LPAREN exp COMMA exp RPAREN
+          (A.EXPRECORD_UPDATE2 (exp1, exp2, (UPDATEOPleft, RPARENright)))
         | OP longid
           (A.EXPOPID (longid, (OPleft, longidright)))
         | SIZEOF LPAREN ty RPAREN
@@ -695,6 +702,8 @@ atexp_noVAR
           (A.EXPRECORD (nil, (LBRACEleft, RBRACEright)))
         | LPAREN RPAREN
           (A.EXPCONSTANT (A.UNITCONST, (LPARENleft, RPARENright)))
+        | SELECTOR
+          (A.EXPRECORD_SELECTOR (RecordLabel.fromString SELECTOR, (SELECTORleft, SELECTORright)))
         | HASH label
           (A.EXPRECORD_SELECTOR (label, (HASHleft, labelright)))
         | LBRACKET RBRACKET
@@ -780,6 +789,12 @@ appexp
              A.EXPAPP (l, _) =>
              A.EXPAPP (l @ [atexp], (appexpleft, atexpright))
            | _ => A.EXPAPP ([appexp, atexp], (appexpleft, atexpright)))
+(*
+        | appexp HASH atexp
+          (A.EXPRECORD_UPDATE2 (appexp, atexp, (appexpleft, atexpright)))
+*)
+        | appexp HASH LBRACE atexp RBRACE
+          (A.EXPRECORD_UPDATE2 (appexp, atexp, (appexpleft, RBRACEright)))
         | appexp HASH LBRACE exprow RBRACE
           (A.EXPRECORD_UPDATE (appexp, exprow, (appexpleft, RBRACEright)))
         | appexp HASH LBRACE RBRACE
@@ -788,7 +803,6 @@ appexp
           (A.EXPRECORD_UPDATE
              (appexp, RecordLabel.tupleList expseq_comma,
               (appexpleft, RPARENright)))
-
 exp
         : appexp
           (appexp)
@@ -884,7 +898,12 @@ sql
         : SQL sqlpat DARROW sqlcon
           (A.EXPSQL (S.SQLFN (sqlpat, sqlcon), (SQLleft, sqlconright)))
         | SQL sqlpat DARROW PERIODS LPAREN expOrSQL RPAREN
-          (A.EXPSQL (S.SQLFN_EMBED (sqlpat, expOrSQL), (SQLleft, RPARENright)))
+          (A.EXPSQL
+             (S.SQLFN (sqlpat,
+                       S.SEQ [S.EMBED (expOrSQL, (PERIODSleft, RPARENright))]),
+              (SQLleft, RPARENright)))
+        | SQL sqlpat DARROW LPAREN sqlconseq RPAREN
+          (A.EXPSQL (S.SQLFN (sqlpat, S.SEQ sqlconseq), (SQLleft, RPARENright)))
         | SQL sqlcon
           (A.EXPSQL (S.SQL sqlcon, (SQLleft, sqlconright)))
         | SQL sqlkwexp
@@ -925,6 +944,16 @@ sqlcon
           (S.COMMIT)
         | ROLLBACK
           (S.ROLLBACK)
+
+sqlconseq
+        : sqlcon
+          ([S.CLAUSE (sqlcon, (sqlconleft, sqlconright))])
+        | PERIODS LPAREN expOrSQL RPAREN
+          ([S.EMBED (expOrSQL, (PERIODSleft, RPARENright))])
+        | sqlcon SEMICOLON sqlconseq
+          (S.CLAUSE (sqlcon, (sqlconleft, sqlconright)) :: sqlconseq)
+        | PERIODS LPAREN expOrSQL RPAREN SEMICOLON sqlconseq
+          (S.EMBED (expOrSQL, (PERIODSleft, RPARENright)) :: sqlconseq)
 
 sqlSelectClause
         : SELECT sqlDistinct sqlSelectList
@@ -1141,9 +1170,15 @@ sqltable
           (S.TABLE_SUBQUERY
              (sqlSelectQuery, (sqlSelectQueryleft, sqlSelectQueryright)))
 
+(*
 sqltableid
         : HASH id PERIOD label
           ({db = id, label = label, loc = (HASHleft, labelright)})
+*)
+sqltableid
+        : SELECTOR PERIOD label
+          ({db = {string = SELECTOR, loc=(SELECTORleft, SELECTORright)}, 
+            label = label, loc = (SELECTORleft, labelright)})
 
 sqlInsertCommand
         : INSERT INTO sqltableid LPAREN labelseq RPAREN sqlInsertValues
@@ -1273,8 +1308,12 @@ sqlatexp
           (S.OPID (longid, (OPleft, longidright)))
         | id_noSQL
           (S.ID id_noSQL)
+        | SELECTOR PERIOD label
+          (S.COLUMN2 ((RecordLabel.fromString SELECTOR, label), (SELECTORleft, labelright)))
+(*
         | HASH label PERIOD label
-          (S.COLUMN2 ((label1, label2), (HASHleft, label2right)))
+          (S.COLUMN2 ((label1, label2), (label1left, label2right)))
+*)
         | HASH PERIOD label
           (S.COLUMN1 (label1, (HASHleft, labelright)))
         | sqlopt sqlkwexp
@@ -1301,8 +1340,14 @@ sqlexp
           (S.OP2 (S.OR, sqlexp, sqlnotexp, (sqlexpleft, sqlnotexpright)))
 
 sqlparen
-        : sqlopt sqlcon
+        : sqlcon
           (sqlcon)
+        | SQL sqlcon
+          (sqlcon)
+        | sqlcon SEMICOLON sqlconseq
+          (S.SEQ (S.CLAUSE (sqlcon, (sqlconleft, sqlconright)) :: sqlconseq))
+        | PERIODS LPAREN expOrSQL RPAREN SEMICOLON sqlconseq
+          (S.SEQ (S.EMBED (expOrSQL, (PERIODSleft, RPARENright)) :: sqlconseq))
         | sqltopexp
           (S.EXP sqltopexp)
 
@@ -1596,15 +1641,15 @@ tyvarseq_comma
 
 valbind
         : pat EQ expOrSQL
-          ([(pat, expOrSQL)])
+          ([(pat, expOrSQL, (patleft, expOrSQLright))])
         | pat EQ expOrSQL AND valbind
-          ((pat, expOrSQL) :: valbind)
+          ((pat, expOrSQL, (patleft, expOrSQLright)) :: valbind)
 
 pvalbind
         : id COLON poly_ty EQ expOrSQL
-          ([(id, poly_ty, expOrSQL)])
+          ([(id, poly_ty, expOrSQL, (idleft, expOrSQLright))])
         | id COLON poly_ty EQ expOrSQL AND pvalbind
-          ((id, poly_ty, expOrSQL) :: pvalbind)
+          ((id, poly_ty, expOrSQL, (idleft, expOrSQLright)) :: pvalbind)
 
 fvalbind
         : frules
@@ -1858,12 +1903,18 @@ kindSeq
           ({properties = nil, recordKind = SOME nil})
         | HASH LBRACE tyrow RBRACE
           ({properties = nil, recordKind = SOME tyrow})
+        | SELECTOR
+          ({properties = [SELECTOR], recordKind = NONE})
+        | SELECTOR kindSeq
+          ({properties = SELECTOR :: #properties kindSeq,
+            recordKind = #recordKind kindSeq})
+(*
         | HASH ALPHABETICID
           ({properties = [ALPHABETICID], recordKind = NONE})
         | HASH ALPHABETICID kindSeq
           ({properties = ALPHABETICID :: #properties kindSeq,
             recordKind = #recordKind kindSeq})
-
+*)
 kinded_tyvar
         : tyvar
           (tyvar, A.UNIV (nil, (tyvarleft, tyvarright)))
@@ -2277,33 +2328,33 @@ typdesc
 
 datdesc
         : tycon EQ condesc
-          ([(nil, tycon, condesc)])
+          ([(nil, tycon, condesc, (tyconleft, condescright))])
         | tyvarseq tycon EQ condesc
-          ([(tyvarseq, tycon, condesc)])
+          ([(tyvarseq, tycon, condesc, (tyvarseqleft, condescright))])
         | tycon EQ condesc AND datdesc
-          ((nil, tycon, condesc) :: datdesc)
+          ((nil, tycon, condesc, (tyconleft, condescright)) :: datdesc)
         | tyvarseq tycon EQ condesc AND datdesc
-          ((tyvarseq, tycon, condesc) :: datdesc)
+          ((tyvarseq, tycon, condesc, (tyvarseqleft, condescright)) :: datdesc)
 
 condesc
         : id
-          ([(id, NONE)])
+          ([(id, NONE, (idleft, idright))])
         | id OF ty
-          ([(id, SOME ty)])
+          ([(id, SOME ty, (idleft, tyright))])
         | id BAR condesc
-          ((id, NONE) :: condesc)
+          ((id, NONE, (idleft, idright)) :: condesc)
         | id OF ty BAR condesc
-          ((id, SOME ty) :: condesc)
+          ((id, SOME ty, (idleft, tyright)) :: condesc)
 
 exdesc
         : id
-          ([(id, NONE)])
+          ([(id, NONE, (idleft, idright))])
         | id OF ty
-          ([(id, SOME ty)])
+          ([(id, SOME ty, (idleft, tyright))])
         | id AND exdesc
-          ((id, NONE) :: exdesc)
+          ((id, NONE, (idleft, idright)) :: exdesc)
         | id OF ty AND exdesc
-          ((id, SOME ty) :: exdesc)
+          ((id, SOME ty, (idleft, tyright)) :: exdesc)
 
 strdesc
         : id COLON sigexp

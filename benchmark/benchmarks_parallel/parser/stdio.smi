@@ -1,0 +1,6 @@
+_require local "../../../src/basis.smi"
+
+type instream (= *)
+val openIn : string -> instream
+val input : instream -> string
+val closeIn : instream -> unit

@@ -16,7 +16,7 @@ struct
   structure A = AbsynInterface
   structure E = ElaborateError
 
-  type fixEnv = Fixity.fixity SymbolEnv.map
+  type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map
 
   fun extendFixEnv (env1:fixEnv, env2:fixEnv) : fixEnv =
       SymbolEnv.unionWith #2 (env1, env2)

@@ -6,6 +6,6 @@ struct
   exception Load of {msg : string, lineno : int}
   type map (= boxed)
   val load : Filename.filename -> map
-  val fromList : (Filename.filename * Filename.filename) list -> map
   val find : map * Filename.filename -> Filename.filename option
+  val fromList : (Filename.filename * Filename.filename) list -> map
 end

@@ -216,6 +216,8 @@ local
           IC.ICRECORD_UPDATE (copy icexp,
                               map (fn (l,e) => (l, copy e)) stringIcexpList,
                               loc)
+        | IC.ICRECORD_UPDATE2 (icexp, icexp2, loc) =>
+          IC.ICRECORD_UPDATE2 (copy icexp, copy icexp2, loc)
         | IC.ICRECORD_SELECTOR (string, loc) => exp
         | IC.ICSELECT (string, icexp, loc) =>
           IC.ICSELECT (string, copy icexp, loc)

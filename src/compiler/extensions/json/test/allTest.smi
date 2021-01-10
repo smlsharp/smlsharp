@@ -1,7 +1,0 @@
-_require "../../../basis.smi"
-_require "../../../smlunit-lib.smi"
-_require "../../debug/main/Bug.ppg.smi"
-_require "../../../compiler/data/control/main/Control.ppg.smi"
-_require "./TestJSONTypes.smi"
-_require "./TestJSON.smi"
-_require "./TestJSONImpl.smi"

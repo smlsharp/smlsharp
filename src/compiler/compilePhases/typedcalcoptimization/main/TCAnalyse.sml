@@ -96,7 +96,7 @@ local
         ()
       | TC.TPEXEXNTAG {exExnInfo, loc} => 
         ()
-      | TC.TPEXVAR exVarInfo => ()
+      | TC.TPEXVAR (exVarInfo,loc) => ()
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, _), stubTy} => 
         visitExp ptrExp
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIEXTERN _, stubTy} => ()

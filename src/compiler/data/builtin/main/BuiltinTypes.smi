@@ -1,6 +1,6 @@
 _require local "../../../../basis.smi"
 (* _require local "../../../../smlformat-lib.smi" *)
-_require local "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../compilerIRs/idcalc/main/EvalIty.smi"
@@ -15,7 +15,8 @@ _require "../../types/main/Types.ppg.smi"
 structure BuiltinTypes =
 struct
 
-  type tstrInfo =  {tfun:IDCalc.tfun, varE:IDCalc.varE, formals:IDCalc.formals, conSpec:IDCalc.conSpec}
+  type tstrInfo =  {tfun:IDCalc.tfun, varE:IDCalc.varE, defRange:Loc.loc,
+                    formals:IDCalc.formals, conSpec:IDCalc.conSpec}
 
   val findTstrInfo : Symbol.symbol -> tstrInfo option
 

@@ -3,7 +3,6 @@ _require local "./array-sort-sig.sml"
 
 structure ArrayQSort =
 struct
-  type 'a array = 'a array
   val sort   : ('a * 'a -> order) -> 'a array -> unit
   val sorted : ('a * 'a -> order) -> 'a array -> bool
 end

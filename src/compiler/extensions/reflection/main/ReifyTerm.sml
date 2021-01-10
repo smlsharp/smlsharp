@@ -78,16 +78,6 @@ struct
     fun car obj = obj
     fun cdr (ty, obj) = align (offset(obj, RTy.sizeOf ty), RTy.RECORDty RecordLabel.Map.empty)
 
-    fun writeBoxed ((boxed,word), arg) = D.writeBoxed(boxed, word, arg)
-    fun ('a#reify) setCdr (cons : 'a list, arg : 'a list) = 
-      let
-        val ty = #reifiedTy _reifyTy('a)
-        val cdrPart = cdr(ty, (BP.castToBoxed cons, 0w0))
-        val argBoxed = BP.castToBoxed arg
-      in
-        writeBoxed(cdrPart, argBoxed)
-      end
-
     fun getExn exnObj =
         let
           val p = D.readBoxed exnObj
@@ -153,14 +143,19 @@ struct
     val recordMapb = 
      fn x => BP.refToBoxed (ref (RecordMapListItemsBoxed (BP.castFromBoxed x : boxed RecordLabel.Map.map)))
 
+    fun decDepth NONE = NONE
+      | decDepth (SOME x) = SOME (x - 1)
+
     val unprintableDatatypeTyConList = SQLtyConList
     fun dynamicToReifiedTerm toPrint (dynamic as {tyRep, obj}) = 
+        if (case toPrint of NONE => false | SOME x => x <= 0) then R.ELLIPSIS
+        else
         let
           val {reifiedTy, conSetEnv} = RTy.getConstructTy tyRep
         in
           case reifiedTy of 
             RTy.ARRAYty elemTy =>
-            if toPrint then
+            if isSome toPrint then
               let
                 val obj = deref obj
                 val objSize = size obj
@@ -171,7 +166,7 @@ struct
                       val obj = offset(obj, Word.fromInt i * elemSize)
                     in
                       dynamicToReifiedTerm 
-                        toPrint
+                        (decDepth toPrint)
                         {tyRep={reifiedTy=elemTy, conSetEnv = conSetEnv}, 
                          obj = obj}
                     end
@@ -186,8 +181,8 @@ struct
           | RTy.CHARty => R.CHAR (getChar obj)
           | RTy.CODEPTRty => R.CODEPTR (getWord64 obj)
           | RTy.CONSTRUCTty {longsymbol, id, args, layout, conSet, size} =>
-            if (List.exists (fn x => TypID.eq(#id (x()),id)) unprintableDatatypeTyConList 
-                handle UserLevelPrimitive.IDNotFound _ => false)
+            if (List.exists (fn x => TypID.eq(#id (x Loc.noloc),id)) unprintableDatatypeTyConList 
+                handle U.UserLevelPrimError _ => false | Bug.Bug _ => false)
             then R.UNPRINTABLE
             else
             (case layout of
@@ -214,7 +209,9 @@ struct
                      val tyRep = {reifiedTy = ty, conSetEnv = conSetEnv}
                    in
                      R.DATATYPE (conName, 
-                                 SOME (dynamicToReifiedTerm toPrint ({tyRep=tyRep, obj = obj})),
+                                 SOME (dynamicToReifiedTerm
+                                         (decDepth toPrint)
+                                         {tyRep=tyRep, obj = obj}),
                                 reifiedTy)
                    end
                end
@@ -239,7 +236,9 @@ struct
                      let
                        val obj = offset (obj, tagSize)
                        val tyRep = {reifiedTy = ty, conSetEnv = conSetEnv}
-                       val term = dynamicToReifiedTerm toPrint {tyRep=tyRep, obj = obj}
+                       val term = dynamicToReifiedTerm
+                                    (decDepth toPrint)
+                                    {tyRep=tyRep, obj = obj}
                      in
                        R.DATATYPE (conName, SOME term, reifiedTy)
                      end
@@ -276,10 +275,10 @@ struct
                  if isNull obj then R.DATATYPE(nullName, NONE, reifiedTy)
                  else R.DATATYPE
                         (nonNullName, 
-                         SOME (dynamicToReifiedTerm toPrint 
-                                 ({tyRep=tyRep, 
+                         SOME (dynamicToReifiedTerm
+                                 (decDepth toPrint)
+                                 {tyRep=tyRep,
                                    obj = if wrap then deref obj else obj}
-                                 )
                               ),
                          reifiedTy
                         )
@@ -298,7 +297,9 @@ struct
                     let
                       val obj = if wrap then deref obj else obj
                       val tyRep = {reifiedTy = ty, conSetEnv = conSetEnv}
-                      val term = dynamicToReifiedTerm toPrint {tyRep=tyRep, obj = obj}
+                      val term = dynamicToReifiedTerm
+                                   (decDepth toPrint)
+                                   {tyRep=tyRep, obj = obj}
                     in
                       R.DATATYPE (name, SOME term, reifiedTy)
                     end
@@ -352,7 +353,8 @@ struct
                     let
                       val obj = deref obj
                       val firstJson = 
-                          dynamicToReifiedTerm toPrint 
+                          dynamicToReifiedTerm
+                            (decDepth toPrint)
                             {tyRep = tyRep, obj = car obj}
                     in
                       getTail (cdr (reifiedTy, obj), firstJson::listRev)
@@ -376,7 +378,7 @@ struct
                       val obj = deref obj
                       val keyValue =
                           dynamicToReifiedTerm 
-                            toPrint 
+                            (decDepth toPrint)
                             {tyRep = tyRep, obj = car obj}
                       val (label, term) =
                           case keyValue of
@@ -409,7 +411,7 @@ struct
                         val obj = deref obj
                         val keyValue =
                             dynamicToReifiedTerm 
-                              toPrint 
+                              (decDepth toPrint)
                               {tyRep = tyRep, obj = car obj}
                         val (label, term) =
                             case keyValue of
@@ -443,7 +445,7 @@ struct
                       val obj = deref obj
                       val keyValue =
                           dynamicToReifiedTerm 
-                            toPrint 
+                            (decDepth toPrint)
                             {tyRep = tyRep, obj = car obj}
                       val (key, term) =
                           case keyValue of
@@ -464,7 +466,8 @@ struct
           | RTy.OPTIONty elemTy => 
             if isNull obj then R.OPTION (NONE, elemTy)
             else R.OPTION
-                   (SOME (dynamicToReifiedTerm toPrint 
+                   (SOME (dynamicToReifiedTerm
+                            (decDepth toPrint)
                             {tyRep = {reifiedTy = elemTy, conSetEnv=conSetEnv}, 
                              obj = deref obj}),
                     elemTy)
@@ -475,7 +478,7 @@ struct
               val instBodyTy = RTy.instantiate (reifiedTy, instTyList)
               val tyRep = {reifiedTy = instBodyTy, conSetEnv = conSetEnv}
             in
-              dynamicToReifiedTerm toPrint {tyRep = tyRep, obj = obj}
+              dynamicToReifiedTerm (decDepth toPrint) {tyRep = tyRep, obj = obj}
             end
           | RTy.PTRty _ => R.PTR (getWord64 obj)
           | (ty as RTy.FUNMty _) => R.FUN {closure=(#1 (deref obj)), ty=ty}
@@ -494,7 +497,7 @@ struct
                         let
                           val obj = align(obj, ty)
                           val term = dynamicToReifiedTerm 
-                                       toPrint 
+                                       (decDepth toPrint)
                                        {tyRep = {reifiedTy = ty, conSetEnv = conSetEnv},
                                         obj = obj}
                           val obj = offset(obj, RTy.sizeOf ty)
@@ -508,19 +511,21 @@ struct
               R.RECORD fields
             end
           | RTy.REFty elemTy => 
-            if toPrint then
+            if isSome toPrint then
               let
                 val obj = deref obj
                 val tyRep = {reifiedTy = elemTy, conSetEnv = conSetEnv}
               in
-                R.REF_PRINT (dynamicToReifiedTerm toPrint {tyRep = tyRep, obj = obj})
+                R.REF_PRINT (dynamicToReifiedTerm
+                               (decDepth toPrint)
+                               {tyRep = tyRep, obj = obj})
               end
             else R.REF (elemTy, getRef obj)
           | RTy.STRINGty => R.STRING (getString obj)
           | RTy.VOIDty => R.UNPRINTABLE
           | RTy.UNITty  => R.UNIT
           | RTy.VECTORty elemTy => 
-            if toPrint then
+            if isSome toPrint then
               let
                 val obj = deref obj
                 val objSize = size obj
@@ -531,7 +536,7 @@ struct
                       val obj = offset(obj, Word.fromInt i * elemSize)
                     in
                       dynamicToReifiedTerm 
-                        toPrint
+                        (decDepth toPrint)
                         {tyRep={reifiedTy=elemTy, conSetEnv = conSetEnv}, 
                          obj = obj}
                     end
@@ -550,16 +555,10 @@ struct
          obj = (BP.refToBoxed (ref x) : boxed, 0w0)}
 
     fun ('a#reify) toReifiedTerm (x:'a) = 
-        dynamicToReifiedTerm false (dynamic x)
+        dynamicToReifiedTerm NONE (dynamic x)
 
-    fun ('a#reify) toReifiedTermPrint (x:'a) = 
-        dynamicToReifiedTerm true (dynamic x)
-
-    fun ('a#reify) pp (x:'a) = 
-        (TextIO.print (R.reifiedTermToString (toReifiedTerm x));
-         TextIO.print  "\n")
-
-    fun ('a#reify) typeOf (x:'a) = _reifyTy('a)
+    fun ('a#reify) toReifiedTermPrint depth (x:'a) =
+        dynamicToReifiedTerm (SOME depth) (dynamic x)
 
 end
 end

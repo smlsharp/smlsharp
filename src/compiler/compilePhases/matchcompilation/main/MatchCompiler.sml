@@ -80,13 +80,10 @@ local
         ]
 
   fun newLocalId () = VarID.generate ()
-  fun newVarName s = Symbol.generateWithPrefix (s ^ "_T_")
-  fun newVarPath () = [TCU.newTCVarName()]
-  fun freshVarWithName (ty,name) =
-      {path = [name],ty=ty,id=newLocalId(),opaque=false} : T.varInfo
-  fun freshVarWithPath (ty,path) =
-      {path= path,ty=ty,id=newLocalId(),opaque=false} : T.varInfo
-  fun makeVar (id, path, ty) = {path = path,ty=ty,id=id,opaque=false} : T.varInfo
+  fun freshVar ty =
+      {path=nil,ty=ty,id=newLocalId(),opaque=false} : T.varInfo
+  fun makeVar (id, ty) =
+      {path=nil,ty=ty,id=id,opaque=false} : T.varInfo
   fun printVarInfo var =
       print (Bug.prettyPrint (T.format_varInfo var))
 
@@ -119,7 +116,7 @@ local
             | TC.TPDYNAMICVIEW {exp, ty, elemTy, coerceTy, loc} => get (exp, set)
             | TC.TPCONSTANT {const,ty,loc} => set
             | TC.TPVAR varInfo => VarInfoSet.add(set, varInfo)
-            | TC.TPEXVAR exVarInfo => set
+            | TC.TPEXVAR (exVarInfo,loc) => set
             | TC.TPRECFUNVAR {var, arity} => VarInfoSet.add(set, var)
             | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} => get (bodyExp,set)
             | TC.TPAPPM {funExp, funTy, argExpList, loc} =>
@@ -230,7 +227,6 @@ in
                      funLoc : Loc.loc,
                      funTy : (T.ty option) ref,
                      funVarId : VarID.id,
-                     funVarPath : path,
                      funLabel : FunLocalLabel.id,
                      isSmall : bool,
                      tpexp: TC.tpexp, 
@@ -273,7 +269,7 @@ in
           limitCheck (Exp exp::itemList) (n + 1)
         | TC.TPCONSTANT {const, ty, loc} => limitCheck itemList (n + 1)
         | TC.TPVAR varIdInfo => limitCheck itemList (n + 1)
-        | TC.TPEXVAR exVarInfo => limitCheck itemList (n + 1)
+        | TC.TPEXVAR (exVarInfo,loc) => limitCheck itemList (n + 1)
         | TC.TPRECFUNVAR {var, arity} => limitCheck itemList (n + 1)
         | TC.TPFNM {argVarList=varIdInfoList, bodyTy, bodyExp, loc} => 
             limitCheck (Exp tpexp :: itemList) (n + 1)
@@ -526,18 +522,6 @@ in
       | (LayerPat (pat, _)) => getTyInPat pat
       | (OrPat (pat, _)) => getTyInPat pat
 
-  (* ADDED for type preservation *)
-  fun getPathInPat pat =
-      case pat of
-        (WildPat _) => newVarPath ()
-      | (VarPat ({path, ... })) => path
-      | (ConstPat _) => newVarPath ()
-      | (DataConPat _) => newVarPath ()
-      | (ExnConPat _) => newVarPath ()
-      | (RecPat _) => newVarPath ()
-      | (LayerPat (pat, _)) => getPathInPat pat
-      | (OrPat (pat, _)) => getPathInPat pat
-
   fun incrementUseCount (branchEnv:branchEnv, branchId) =
       case IEnv.find(branchEnv, branchId) of
         SOME {useCount, ...} => useCount := !useCount + 1
@@ -555,7 +539,7 @@ in
          TC.TPFNM
            {
             argVarList =
-            [freshVarWithName (BT.unitTy, newVarName "unitExp")],
+            [freshVar BT.unitTy],
             bodyTy=bodyTy, 
             bodyExp=body, 
             loc=loc
@@ -579,8 +563,7 @@ in
        (
         TC.TPFNM
           {
-           argVarList=[freshVarWithName
-                         (BT.unitTy,newVarName "unitExp")], 
+           argVarList=[freshVar BT.unitTy], 
            bodyTy=bodyTy, 
            bodyExp=body, 
            loc=loc
@@ -632,7 +615,6 @@ in
                   tpexp = tpexp,
                   isSmall = isSmall tpexp,
                   useCount = useCounter,
-                  funVarPath = newVarPath (),
                   funVarId = newLocalId(),
                   funLabel = FunLocalLabel.generate nil,
                   funBodyTy = branchTy,
@@ -808,8 +790,7 @@ in
                (fn ((tag, _, _), REs as ((pat ++ _, _) :: _)) =>
   		   matchToTree
                      branchEnv
-  		     (freshVarWithPath
-                        (getTyInPat pat, getPathInPat pat) :: paths)
+  		     (freshVar (getTyInPat pat) :: paths)
   		     REs
   		 | _ => raise Bug.Bug "match comp, in makeTagTree")
   	       branches,
@@ -869,8 +850,7 @@ in
                (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
   		   matchToTree
                      branchEnv
-  		     (freshVarWithPath
-                        (getTyInPat pat, getPathInPat pat) :: paths)
+  		     (freshVar (getTyInPat pat) :: paths)
   		     REs
   		 | _ => raise Bug.Bug "match comp, in makeTagTree")
   	       branches,
@@ -893,14 +873,14 @@ in
   
     and makeNRecTree
           branchEnv
-          (label, fieldTy, fieldPath) (path :: paths) REs =
+          (label, fieldTy) (path :: paths) REs =
         RecNode	
   	  (
   	   path, 
   	   label,
   	   matchToTree
              branchEnv
-  	     (freshVarWithPath (fieldTy,fieldPath) :: paths)
+  	     (freshVar fieldTy :: paths)
   	     (map
   	        (fn (RecPat ([(_, pat)], _) ++ rule, env) => (pat ++ rule, env)
   	          | (WildPat _ ++ rule, env) => (WildPat fieldTy ++ rule, env)
@@ -911,7 +891,7 @@ in
   
     and makeIRecTree
           branchEnv
-          (recordTy, label, fieldTy, fieldPath)
+          (recordTy, label, fieldTy)
           (paths as (path :: _))
           REs =
         RecNode
@@ -920,7 +900,7 @@ in
   	   label, 
   	   matchToTree
              branchEnv
-  	     (freshVarWithPath (fieldTy,fieldPath) :: paths)
+  	     (freshVar fieldTy :: paths)
   	     (map
   		(fn (RecPat ((_, pat) :: fields, ty) ++ rule, env) =>
   		    (pat ++ RecPat (fields, ty) ++ rule, env)
@@ -960,11 +940,11 @@ in
         | ((RecPat ([(label, pat)], _) ++ _, _) :: _) =>
           makeNRecTree
             branchEnv
-            (label, getTyInPat pat, getPathInPat pat)
+            (label, getTyInPat pat)
         | ((RecPat ((label, pat) :: _, recTy) ++ _, _) :: _) =>
           makeIRecTree
             branchEnv
-            (recTy, label, getTyInPat pat, getPathInPat pat)
+            (recTy, label, getTyInPat pat)
         | _ => raise Bug.Bug "match comp, decideRootNode"
 
     and matchToTree branchEnv _ [] =
@@ -1003,7 +983,6 @@ in
                        tpexp, 
                        isSmall,
                        useCount,
-                       funVarPath,
                        funVarId,
                        funLabel,
                        funBodyTy,
@@ -1041,7 +1020,7 @@ in
                            {
                             funExp=
                               TC.TPVAR
-                              (makeVar(funVarId, funVarPath, valOf (!funTy))),
+                              (makeVar(funVarId, valOf (!funTy))),
                             funTy=valOf (!funTy), 
                             argExpList=[unitExp], 
                             loc=loc
@@ -1066,7 +1045,7 @@ in
                           {
                            funExp =
                            TC.TPVAR
-                             (makeVar(funVarId, funVarPath, valOf (!funTy))),
+                             (makeVar(funVarId, valOf (!funTy))),
                            funTy = valOf(!funTy), 
                            argExpList = funArgs,
                            loc=funLoc
@@ -1099,7 +1078,7 @@ in
                            )
                           (valOf (!funTy),
                            TC.TPVAR
-                             (makeVar(funVarId, funVarPath, valOf (!funTy))))
+                             (makeVar(funVarId, valOf (!funTy))))
                            funArgs
                           )
               )
@@ -1329,7 +1308,7 @@ in
            SOME v => TC.TPVAR v
          | NONE => TC.TPVAR (var)
         )
-      | TC.TPEXVAR exVarInfo => TC.TPEXVAR exVarInfo
+      | TC.TPEXVAR (exVarInfo,loc) => TC.TPEXVAR (exVarInfo, loc)
       | TC.TPRECFUNVAR {var, arity} =>
         raise bug "RECFUNVAR should be eliminated"
       | TC.TPFNM {argVarList, bodyTy, bodyExp, loc} =>
@@ -1394,8 +1373,7 @@ in
                         | _ => 
                           let
                             val newVar =
-                                freshVarWithName 
-                                  (ty1, newVarName "caseExp")
+                                freshVar ty1
                             val rcexp = compileExp varEnv btvEnv exp
                           in
                             (newVar::topVarList, (newVar, rcexp)::topBinds)
@@ -1471,7 +1449,6 @@ in
                          tpexp, 
                          isSmall,
                          useCount,
-                         funVarPath,
                          funVarId,
                          funLabel,
                          funBodyTy,
@@ -1500,7 +1477,7 @@ in
                              funLoc
                        val _ = funTyRef := (SOME funTy)
                      in
-                       (makeVar(funVarId, funVarPath, funTy), funTerm)::funDecs
+                       (makeVar(funVarId, funTy), funTerm)::funDecs
                      end
               )
                nil

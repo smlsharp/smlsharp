@@ -1,0 +1,30 @@
+_require local "../../../../basis.smi"
+_require local "../../../../reify.smi"
+
+_require local "../../parser/main/Parser.smi"
+_require       "../../toplevel/main/Top.smi"
+_require local "../../toplevel/main/TopData.ppg.smi"
+_require local "../../loadfile/main/LoadFile.smi"
+_require       "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../extensions/reflection/main/Dynamic.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/toolchain/main/Filename.smi"
+_require       "../../../libs/toolchain/main/LLVMUtils.smi"
+_require local "../../../../config/main/Version.smi"
+_require local "../../../../unix-utils/main/UnixUtils.smi"
+_require local "./AnalyzerDB.smi"
+_require local "./AnalyzerTy.smi"
+_require local "./DBSchema.smi"
+_require local "./InfoMaps.smi"
+_require local "./AnalyzerUtils.smi"
+
+structure SetupFiles =
+struct
+  val setUp : 
+      ['a#{llvmOptions : LLVMUtils.compile_options,
+           topOptions : Top.options,
+           topContext : unit -> Top.toplevelContext}.
+          'a -> InterfaceName.source -> unit]
+end

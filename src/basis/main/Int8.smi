@@ -1,9 +1,10 @@
-_require "./General.smi"
-_require "./StringCvt.smi"
-_require local "./SMLSharp_ScanChar.smi"
+_require       "./General.smi"
 _require local "./IntInf.smi"
+_require local "./SMLSharp_ScanChar.smi"
 _require local "./String.smi"
-_use local "./Int_common.sml"
+_require       "./StringCvt.smi"
+
+_use local     "./Int_common.sml"
 
 structure Int8 =
 struct

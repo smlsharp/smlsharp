@@ -46,7 +46,6 @@ struct
     | NVNULLBOXED
     | NVTAG of {tag : RuntimeTypes.tag, ty : Types.ty}
     | NVSIZE of {size : RuntimeTypes.size, ty : Types.ty}
-    | NVINDEX of {index : word, ty : Types.ty, label : RecordLabel.label}
     | NVFOREIGNSYMBOL of
       {
         name : string,

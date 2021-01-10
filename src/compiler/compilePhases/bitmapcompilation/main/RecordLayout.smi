@@ -1,29 +1,25 @@
 _require local "../../../../basis.smi"
-_require local "../../../../smlnj-lib/Util/binary-map-fn.smi"
+
+_require       "./RecordLayoutCalc.ppg.smi"
+_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require local "../../../data/symbols/main/Symbol.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../../smlnj-lib/Util/binary-map-fn.smi"
 
-_require local "../../../data/types/main/Types.ppg.smi"
-_require local "../../../data/types/main/TypesBasics.smi"
-_require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
-_require local "../../../data/runtimetypes/main/TypeLayout2.smi"
-_require local "../../../data/builtin/main/BuiltinTypes.smi"
-_require "./RecordLayoutCalc.ppg.smi"
-
-structure RecordLayout2 =
+structure RecordLayout =
 struct
 
-  type computationAccum (= ref)
-  val newComputationAccum : unit -> computationAccum
-  val extractDecls : computationAccum -> RecordLayoutCalc.dec list
+  type computation_accum (= ref)
+  val newComputationAccum : unit -> computation_accum
+  val extractDecls : computation_accum -> RecordLayoutCalc.dec list
 
   val computeIndex
-      : computationAccum
+      : computation_accum
         -> {size: RecordLayoutCalc.value} list * {size: RecordLayoutCalc.value}
         -> RecordLayoutCalc.value
   val computeRecord
-      : computationAccum
+      : computation_accum
         -> {tag: RecordLayoutCalc.value, size: RecordLayoutCalc.value} list
         -> {allocSize: RecordLayoutCalc.value,
             fieldIndexes: RecordLayoutCalc.value list,

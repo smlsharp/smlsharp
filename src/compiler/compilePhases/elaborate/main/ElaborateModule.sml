@@ -139,12 +139,12 @@ struct
               checkSymbolDuplication
                   #2
                   dataDescs E.DuplicateTypDesc
-            fun check (tvar, name, conDescs) = 
+            fun check (tvar, name, conDescs, loc) = 
                 (
                  UserErrorUtils.checkSymbolDuplication
-                   (fn (con, ty) => con)
+                   (fn (con, ty, loc) => con)
                    conDescs E.DuplicateConstructorNameInDatatype;
-                 app (fn (con, ty) =>
+                 app (fn (con, ty, loc) =>
                          ElaborateCore.checkReservedNameForConstructorBind
                            con)
                    conDescs;
@@ -153,10 +153,9 @@ struct
             val _ = map check dataDescs
           in
             PC.PLSPECDATATYPE
-              (map (fn (tyvars, symbol, con) =>
-                       {tyvars = tyvars,
-                        symbol = symbol,
-                        conbind = map (fn (id,ty) => {symbol=id, ty=ty}) con})
+              (map (fn (tyvars, symbol, con, loc) =>
+                       {tyvars = tyvars, loc = loc, symbol = symbol,
+                        conbind = map (fn (id,ty, loc) => {symbol=id, ty=ty, loc=loc}) con})
                    dataDescs,
                loc)
           end
@@ -169,12 +168,12 @@ struct
                   #1
                   exnDescs E.DuplicateConstructorNameInException
             val _ =
-              app (fn (con, ty) =>
+              app (fn (con, ty, loc) =>
                       ElaborateCore.checkReservedNameForConstructorBind
                         con)
                   exnDescs;
             val exnDescs =
-                map (fn (symbol, tyOpt) => (symbol, tyOpt)) exnDescs
+                map (fn (symbol, tyOpt, loc) => (symbol, tyOpt, loc)) exnDescs
           in
             PC.PLSPECEXCEPTION(exnDescs, loc)
           end
@@ -230,7 +229,7 @@ struct
               val newStrSymbol = Symbol.mkSymbol newStrid loc
               val plstrexp = elabStrExp env strexp
               val plstrbody = PC.PLFUNCTORAPP(funid, newStrLong, loc)
-              val plstrDecs =[PC.PLSTRUCTBIND([(newStrSymbol,plstrexp)],loc)]
+              val plstrDecs =[PC.PLSTRUCTBIND([(newStrSymbol,plstrexp, loc)],loc)]
             in
               PC.PLSTRUCTLET(plstrDecs, plstrbody, loc)
             end
@@ -252,16 +251,18 @@ struct
           (
            strid,
            PC.PLSTRTRANCONSTRAINT
-           (elabStrExp env strexp, elabSigExp sigexp, loc)
+           (elabStrExp env strexp, elabSigExp sigexp, loc),
+           loc
            )
       | A.STRBINDOPAQUE(strid, sigexp, strexp, loc) =>
           (
            strid,
            PC.PLSTROPAQCONSTRAINT
-           (elabStrExp env strexp, elabSigExp sigexp, loc)
+           (elabStrExp env strexp, elabSigExp sigexp, loc),
+           loc
            )
       | A.STRBINDNONOBSERV(strid, strexp, loc) =>
-          (strid, elabStrExp env strexp)
+          (strid, elabStrExp env strexp, loc)
 
     and elabStrDec env strdec =
       case strdec of 

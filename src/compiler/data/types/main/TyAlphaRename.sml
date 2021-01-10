@@ -48,11 +48,6 @@ local
       end
   fun newBtvEnv (btvMap:btvMap) btvEnv =
       let
-        val _ = P.print "newBtvEnv\n"
-        val _ = printBtvMap emptyBtvMap
-        val _ = P.print "print emptyBtvMap\n"
-        val _ = printBtvMap btvMap
-        val _ = P.print "print newBtvMap\n"
         val (btvMap, btvEnv) =
             BoundTypeVarID.Map.foldli  
             (* we cannot use foldri here; we must preserve the order of btv *)
@@ -157,10 +152,6 @@ local
               args = (copyTy btvMap ty1, copyTy btvMap ty2),
               loc = loc}
   and copyTy (btvMap:btvMap) ty =
-      let
-        val _ = P.print "*** copyTy ***"
-        val _ = P.printTy ty
-      in
       case TU.derefTy ty of
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (copySingletonTy btvMap singletonTy)
@@ -214,10 +205,8 @@ local
            body : ty
           } =>
         let
-          val _ = P.print "polyTy\n"
           val (btvMap, boundtvars) = newBtvEnv btvMap boundtvars
           val constraints = List.map (copyConstraint btvMap) constraints
-          val _ = P.print "newBtvEnv\n"
         in
           T.POLYty
             {
@@ -226,7 +215,6 @@ local
              body =  copyTy btvMap body
             }
         end
-      end
   and copyKind btvMap (T.KIND {tvarKind, properties, dynamicKind}) =
       let
         val tvarKind = copyTvarKind btvMap tvarKind

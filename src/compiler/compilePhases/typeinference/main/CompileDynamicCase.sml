@@ -23,22 +23,22 @@ struct
 
   fun eqTy arg = Unify.eqTy BoundTypeVarID.Map.empty arg
 
-  fun isDynamicTy ty =
+  fun isDynamicTy loc ty =
       case TB.derefTy ty of
-        T.CONSTRUCTty {tyCon, args = [ty]} =>TypID.eq (#id tyCon, #id (UP.REIFY_tyCon_dyn()))
+        T.CONSTRUCTty {tyCon, args = [ty]} =>TypID.eq (#id tyCon, #id (UP.REIFY_tyCon_dyn loc))
       | _ => false
-  fun dynamicElemTy ty =
+  fun dynamicElemTy loc ty =
       case TB.derefTy ty of
         T.CONSTRUCTty {tyCon, args = [ty]} =>
-        if TypID.eq (#id tyCon, #id (UP.REIFY_tyCon_dyn())) then SOME ty else NONE
+        if TypID.eq (#id tyCon, #id (UP.REIFY_tyCon_dyn loc)) then SOME ty else NONE
       | _ => NONE
   fun Pair loc {exp=exp1, ty=ty1} {exp=exp2, ty=ty2} =
       {exp = TC.TPRECORD
                {fields = RecordLabel.tupleMap [exp1, exp2],
                 loc = loc,
-                recordTy = ty1 ** ty2},
+                recordTy = RecordLabel.tupleMap [ty1, ty2]},
        ty = ty1 ** ty2}
-  fun DynTy ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_dyn(), args = [ty]}
+  fun DynTy loc ty = T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_dyn loc, args = [ty]}
   fun ListTy ty = T.CONSTRUCTty {tyCon = BT.listTyCon, args = [ty]}
   fun Cons loc {hd, tl} =
       let
@@ -74,10 +74,10 @@ struct
             expTyList
 
   fun newVar ty =
-      {path = [Symbol.generate ()], ty = ty, id = VarID.generate (), opaque = false} : T.varInfo
+      {path = [], ty = ty, id = VarID.generate (), opaque = false} : T.varInfo
 
   fun NewVar ty =
-      {exp = TC.TPVAR {path = [Symbol.generate ()], 
+      {exp = TC.TPVAR {path = [], 
                        ty = ty, 
                        id = VarID.generate (), 
                        opaque = false},
@@ -198,7 +198,7 @@ struct
         val ruleList = sortRules ruleList
         val caseGroups = partitionRules ruleList
         val existInstTy =
-            T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_existInstMap (), args = []}
+            T.CONSTRUCTty {tyCon = UP.REIFY_tyCon_existInstMap loc, args = []}
         fun compileGroup {keyTy, patTy, existTyvars, existInstTys, ruleList} =
             let
               val instVar = newVar existInstTy
@@ -258,11 +258,11 @@ struct
                         loc = loc},
                    ty = T.FUNMty ([existInstTy], #ty funTerm)}
               val tyRepTerm =
-                  {exp = TC.TPREIFYTY (keyTy, loc), ty = RTD.TyRepTy ()}
+                  {exp = TC.TPREIFYTY (keyTy, loc), ty = RTD.TyRepTy loc}
             in
               Pair loc tyRepTerm funTerm
             end
-        val RuleTy = RTD.TyRepTy() ** (existInstTy --> (dynamicTy --> ruleBodyTy))
+        val RuleTy = RTD.TyRepTy loc ** (existInstTy --> (dynamicTy --> ruleBodyTy))
         val {exp, ty} = List loc RuleTy (map compileGroup caseGroups)
         val term = TC.TPDYNAMICCASE 
                      {

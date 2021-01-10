@@ -173,7 +173,7 @@ struct
     | Array_update_unsafe   (* 'a array * int32 * 'a -> unit *)
     | Ptr_deref             (* 'a ptr -> 'a *)
     | Ptr_store             (* 'a ptr * 'a -> unit *)
-    | Vector_alloc_init     (* 'a * ... * 'a -> 'a array; internal use *)
+    | Vector_alloc_init     (* 'a * ... * 'a -> 'a vector; internal use *)
     | Vector_alloc_init_fresh (* same as Vector_alloc_init except that
                                  always allocate a fresh object. *)
     | (*% @format(x) x *)

@@ -41,9 +41,9 @@ struct
   fun List exps =
       foldr (fn (exp, z) => Cons (exp, z)) Nil exps
 
-  fun Fun_toy ty =
+  fun Fun_toy loc ty =
       Typed 
-        (Exp (UserLevelPrimitive.SQL_icexp_toyServer ()),
+        (Exp (UserLevelPrimitive.SQL_icexp_toyServer loc),
          I.TYFUNM ([BuiltinTypes.unitITy], ty))
 
   fun eqTy (ty1, ty2) =
@@ -90,13 +90,13 @@ struct
             RecordLabel.Map.listItemsi
               (RecordLabel.Map.map RecordLabel.Map.listItemsi tableMap)
         fun reifyColumn (colName, ty) =
-            Tuple [LabelString colName, App (Exp tyFnExp) (Fun_toy ty)]
+            Tuple [LabelString colName, App (Exp tyFnExp) (Fun_toy loc ty)]
         fun reifyTable (tableName, columns) =
             Tuple [LabelString tableName, List (map reifyColumn columns)]
         fun reifySchema tables =
             List (map reifyTable tables)
       in
-        Tuple [reifySchema tableList, Fun_toy ty] loc
+        Tuple [reifySchema tableList, Fun_toy loc ty] loc
       end
 
   fun compileExp icexp =
@@ -155,6 +155,8 @@ struct
         I.ICRECORD_UPDATE (compileExp icexp,
                            map (fn (l, exp) => (l, compileExp exp)) fields,
                            loc)
+      | I.ICRECORD_UPDATE2 (icexp, icexp2, loc) =>
+        I.ICRECORD_UPDATE2 (compileExp icexp, compileExp icexp2, loc)
       | I.ICRECORD_SELECTOR _ => icexp
       | I.ICSELECT (label, icexp, loc) =>
         I.ICSELECT (label, compileExp icexp, loc)

@@ -1,4 +1,4 @@
-_require "./General.smi"
+_require       "./General.smi"
 _use local "./Array_common.sml"
 
 structure Word8Vector =

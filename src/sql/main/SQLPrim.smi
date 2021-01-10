@@ -53,6 +53,8 @@ struct
   val closeRes : res -> unit
   val closeCommand : res -> unit
 
+  val dummyCursor : 'a list -> 'a cursor
+  val newCursor : (res -> 'a list) -> res -> 'a cursor
   val queryCommand : ('a list,'w) query -> ('a cursor,'w) command
 
   val sqlserver_string : string * (Ty.schema * (unit -> 'a)) -> 'a server
@@ -972,7 +974,7 @@ struct
         | numeric => min_numericOption
 
     val count =
-        case 'a in 'a -> int of
+        case 'a in 'a list -> int of
           int => count
         | intInf => count
         | word => count
@@ -983,7 +985,18 @@ struct
         | string => count
         | timestamp => count
         | numeric => count
-        | 'b option => count_option
+        | 'b option =>
+          case 'b in 'b option list -> int of
+            int => count_option
+          | intInf => count_option
+          | word => count_option
+          | char => count_option
+          | bool => count_option
+          | real => count_option
+          | real32 => count_option
+          | string => count_option
+          | timestamp => count_option
+          | numeric => count_option
 
     val Num =
         case 'a in 'a -> numeric option of

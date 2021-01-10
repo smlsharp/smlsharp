@@ -1,0 +1,22 @@
+_require "../../basis.smi"
+_require "../Util/utf8.smi"
+
+structure JSONTokens =
+struct
+  datatype token =
+       EOF
+     | LB
+     | RB
+     | LCB
+     | RCB
+     | COMMA
+     | COLON
+     | KW_null
+     | KW_true
+     | KW_false
+     | INT of IntInf.int
+     | FLOAT of real
+     | STRING of string
+     | ERROR of string list
+  val toString : token -> string
+end

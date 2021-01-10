@@ -49,9 +49,11 @@ struct
   val maxStringSize = maxObjectSize - 1
 
   fun maxArraySize elemTy =
-      E.Word_div_unsafe
-        B.word32Ty
-        (E.Word32 maxObjectSize, E.Cast (E.SizeOf elemTy, B.word32Ty))
+      E.Cast
+        (E.Word_div_unsafe
+           B.word32Ty
+           (E.Word32 maxObjectSize, E.Cast (E.SizeOf elemTy, B.word32Ty)),
+         B.int32Ty)
 
   datatype int_ty =
       INT8ty
@@ -137,7 +139,7 @@ struct
       | INT64ty => L.INT64 (Int64.fromInt n)
 
   fun int_constExp ty n =
-      E.Const (int_const ty n)
+      E.Int (int_const ty n)
 
   fun int_min ty =
       case intTy ty of
@@ -147,7 +149,7 @@ struct
       | INT64ty => L.INT64 int64min
 
   fun int_minExp ty =
-      E.Const (int_min ty)
+      E.Int (int_min ty)
 
   fun int_numBits ty =
       case intTy ty of
@@ -443,24 +445,24 @@ struct
 
       | (P.Int_add, [arg1, arg2], _, []) =>
         E.Switch
-          (E.Int_add_overflowCheck retTy (arg1, arg2),
-           [(int_const retTy 0, E.Int_add_unsafe retTy (arg1, arg2))],
+          (E.Cast (E.Int_add_overflowCheck retTy (arg1, arg2), B.int32Ty),
+           [(L.INT32 0, E.Int_add_unsafe retTy (arg1, arg2))],
            E.Raise (B.OverflowExExn, retTy))
       | (P.Int_add, _, _, _) =>
         raise Bug.Bug "compilePrim: Int_add"
 
       | (P.Int_mul, [arg1, arg2], _, []) =>
         E.Switch
-          (E.Int_mul_overflowCheck retTy (arg1, arg2),
-           [(int_const retTy 0, E.Int_mul_unsafe retTy (arg1, arg2))],
+          (E.Cast (E.Int_mul_overflowCheck retTy (arg1, arg2), B.int32Ty),
+           [(L.INT32 0, E.Int_mul_unsafe retTy (arg1, arg2))],
            E.Raise (B.OverflowExExn, retTy))
       | (P.Int_mul, _, _, _) =>
         raise Bug.Bug "compilePrim: Int_mul"
 
       | (P.Int_sub, [arg1, arg2], _, []) =>
         E.Switch
-          (E.Int_sub_overflowCheck retTy (arg1, arg2),
-           [(int_const retTy 0, E.Int_sub_unsafe retTy (arg1, arg2))],
+          (E.Cast (E.Int_sub_overflowCheck retTy (arg1, arg2), B.int32Ty),
+           [(L.INT32 0, E.Int_sub_unsafe retTy (arg1, arg2))],
            E.Raise (B.OverflowExExn, retTy))
       | (P.Int_sub, _, _, _) =>
         raise Bug.Bug "compilePrim: Int_sub"
@@ -488,8 +490,10 @@ struct
               * = ((x ^ minInt) | (y + 1)) == 0
               *)
              E.Switch
-               (Word_orb (Word_xorb (Word_fromInt arg1, int_minExp retTy),
-                          Word_add (Word_fromInt arg2, int_constExp retTy 1)),
+               (Word_orb (Word_xorb (Word_fromInt arg1,
+                                     E.Cast (int_minExp retTy, wordTy)),
+                          Word_add (Word_fromInt arg2,
+                                    E.Cast (int_constExp retTy 1, wordTy))),
                 [(word_const wordTy 0, E.Raise (B.OverflowExExn, retTy))],
                 (*
                  * div rounds the quotient towards negative infinity.
@@ -586,8 +590,10 @@ struct
               * = ((x ^ minInt) | (y + 1)) == 0
               *)
              E.Switch
-               (Word_orb (Word_xorb (Word_fromInt arg1, int_minExp retTy),
-                          Word_add (Word_fromInt arg2, int_constExp retTy 1)),
+               (Word_orb (Word_xorb (Word_fromInt arg1,
+                                     E.Cast (int_minExp retTy, wordTy)),
+                          Word_add (Word_fromInt arg2,
+                                    E.Cast (int_constExp retTy 1, wordTy))),
                 [(word_const wordTy 0, E.Raise (B.OverflowExExn, retTy))],
                 E.Int_quot_unsafe retTy (arg1, arg2)))
         end

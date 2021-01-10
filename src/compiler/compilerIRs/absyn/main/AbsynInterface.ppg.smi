@@ -56,10 +56,10 @@ struct
                  runtimeTy: opaque_impl, loc: loc}
 
   type conbind =
-      {symbol: symbol, ty: ty option}
+      {symbol: symbol, ty: ty option, loc:loc}
 
   type datbind =
-      {tyvars: Absyn.tvar list, symbol: symbol, conbind: conbind list}
+      {tyvars: Absyn.tvar list, symbol: symbol, conbind: conbind list, loc:loc}
 
   datatype exbind =
       EXNDEF of {symbol: symbol, ty: ty option, loc: loc}

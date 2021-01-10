@@ -1,15 +1,17 @@
 _require local "../../../../basis.smi"
 (* _require local "../../../../smlformat-lib.smi" *)
 _require local "../../../extensions/debug/main/Bug.smi"
+_require "./PrintControl.smi"
 
 structure Control =
 struct
   type switch (= boxed)
   type switchTable = (string * string * switch) list
+  val dbparam : string ref
   val profileMaxPhases : int ref
-  val printWidth : int ref
+  val printWidth = PrintControl.printWidth
   val printEnvs : bool ref
-  val printMaxDepth : int ref
+  val printMaxDepth = PrintControl.printMaxDepth
   val printMaxOverloadInstances : int ref
   val printMaxNestLevel : int ref
   val printMaxExnNestLevel : int ref
@@ -73,6 +75,7 @@ struct
   val printGenerateMain : bool ref
   val printWithType : bool ref
   val allow8bitId : bool ref
+  val doNameAnalysis : bool ref
   val checkType : bool ref
   val doBitmapANormalReorder : bool ref
   val doRecordUnboxing : bool ref

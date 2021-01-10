@@ -35,15 +35,15 @@ struct
         [SMLFormat.FormatExpression.Term (13, "(interactive)")]
 
     fun posToString NOPOS = "(none)"
-      | posToString (POS {source = INTERACTIVE, line, col, pos, ...}) =
+      | posToString (POS {source = INTERACTIVE, line, col, ...}) =
         "(interactive):" ^ Int.toString line ^ "." ^ Int.toString col
       | posToString (POS {source = FILE (_, filename), line, col, pos, ...}) =
         Filename.toString filename ^ ":"
-        ^ Int.toString line ^ "." ^ Int.toString col
+        ^ Int.toString line ^ "." ^ Int.toString col ^ "(" ^ Int.toString pos ^ ")"
 
     fun posToStringShort NOPOS = "(none)"
-      | posToStringShort (POS {line, col, ...}) =
-        Int.toString line ^ "." ^ Int.toString col
+      | posToStringShort (POS {line, col, pos,...}) =
+        Int.toString line ^ "." ^ Int.toString col ^ "(" ^ Int.toString pos ^ ")"
 
     fun locToString (pos1, pos2) =
         posToString pos1 ^ "-" ^ posToStringShort pos2
@@ -67,8 +67,8 @@ struct
         | x => x
 
     fun comparePos (NOPOS, NOPOS) = EQUAL
+      | comparePos (NOPOS, _) = LESS
       | comparePos (POS _, NOPOS) = GREATER
-      | comparePos (NOPOS, POS _) = LESS
       | comparePos (POS {line=l1, col=c1, source=s1, pos=pos1, gap=gap1},
                     POS {line=l2, col=c2, source=s2, pos=pos2, gap=gap2}) =
         case compareSource (s1, s2) of
@@ -79,8 +79,14 @@ struct
 
     val nopos = NOPOS
     val noloc = (nopos, nopos)
+    fun isNopos x = x = NOPOS
+    fun isNoloc (p1, p2) = isNopos p1 andalso isNopos p2
+(*
     fun isNopos NOPOS = true
       | isNopos (POS _) = false
+*)
+    fun isNopos (POS _) = false
+      | isNopos _ = true
     val makePos = POS
 
     fun mergeLocs ((pos11, pos12), (pos21, pos22)) = 

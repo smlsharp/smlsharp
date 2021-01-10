@@ -58,7 +58,8 @@ ALL_TARGETS = \
   $(SMLYACC) \
   $(SMLFORMAT) \
   $(SMLSHARP) \
-  $(INSTALL_FILES)
+  $(INSTALL_FILES_SRC) \
+  $(INSTALL_FILES_OBJ)
 LINK_DEP = \
   filemap \
   $(LIBSMLSHARP_TARGETS) \
@@ -399,6 +400,8 @@ depend: PHONY minismlsharp
 	  COMPILER_LIB   src/compiler/smlsharp.smi \
 	  PRELUDE_LIB    src/prelude.smi \
 	  THREAD_LIB     src/thread.smi \
+          SMLNJ_LIB      src/smlnj-lib/Util/smlnj-lib.smi \
+          SMLNJ_JSON_LIB src/smlnj-lib/JSON/json-lib.smi \
 	  TEST           tests/driver/dotest.smi
 	@set -e; \
 	for i in $(RUNTIME_OBJECTS:.$(OBJEXT)=.c) \

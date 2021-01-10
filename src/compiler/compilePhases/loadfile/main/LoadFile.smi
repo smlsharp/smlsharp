@@ -14,7 +14,6 @@ _require local "../../../compilePhases/parser/main/Parser.smi"
 _require local "../../../compilePhases/parser/main/InterfaceParser.smi"
 _require local "./InterfaceHash.smi"
 _require local "./LoadFileError.ppg.smi"
-
 _require "../../../compilerIRs/absyn/main/AbsynInterface.ppg.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../compilerIRs/absyn/main/Absyn.smi"

@@ -27,7 +27,7 @@ struct
       end
 
   fun newVar ty =
-      {path = [Symbol.generate ()],
+      {path = [],
        ty = ty,
        id = VarID.generate ()} : TL.varInfo
 
@@ -282,7 +282,7 @@ struct
   fun newLocalExn (env:env, {path, ty, id}:Types.exnInfo) =
       let
         val vid = VarID.generate ()
-        val varInfo = {path = path, ty = BT.exntagTy, id = vid} : TL.varInfo
+        val varInfo = {path = nil, ty = BT.exntagTy, id = vid} : TL.varInfo
       in
         ({exnMap = ExnID.Map.insert (#exnMap env, id, varInfo),
           exExnMap = #exExnMap env} : env,
@@ -397,13 +397,13 @@ struct
       | TC.TPCONSTANT {const, loc, ty} =>
         fixConst (const, ty, loc)
       | TC.TPFOREIGNSYMBOL {name, ty, loc} =>
-        TL.TLFOREIGNSYMBOL {name=name, ty=ty, loc=loc}
+        TL.TLCONSTANT (TL.FOREIGNSYMBOL {name=name, ty=ty}, loc)
       | TC.TPVAR varInfo =>
         TL.TLVAR (compileVarInfo varInfo, Loc.noloc)
       | TC.TPRECFUNVAR {var, arity} =>
         TL.TLVAR (compileVarInfo var, Loc.noloc)
-      | TC.TPEXVAR exVarInfo =>
-        TL.TLEXVAR (exVarInfo, Loc.noloc)
+      | TC.TPEXVAR (exVarInfo, loc) =>
+        TL.TLEXVAR (exVarInfo, loc)
       | TC.TPOPRIMAPPLY {oprimOp, instTyList, argExp, loc} =>
         TL.TLOPRIMAPPLY
           {oprimOp = oprimOp,
@@ -472,7 +472,7 @@ struct
           binds
       | TC.TPRECORD {fields, recordTy, loc} =>
         if RecordLabel.Map.isEmpty fields
-        then EmitTypedLambda.emit loc (E.Cast (E.Null, recordTy))
+        then EmitTypedLambda.emit loc (E.Cast (E.Null, T.RECORDty recordTy))
         else TL.TLRECORD
                {fields = RecordLabel.Map.map (compileExp env) fields,
                 recordTy = recordTy,
@@ -508,7 +508,7 @@ struct
                                   exp = compileExp env recordExp,
                                   loc = loc},
                  body = TL.TLRECORD {fields = fields,
-                                     recordTy = recordTy,
+                                     recordTy = fieldTys,
                                      loc = loc},
                  loc = loc}
             end
@@ -569,12 +569,12 @@ struct
                      defaultExp, ruleBodyTy, loc} =>
         let
           val switchExp = compileExp env exp
-          datatype t = S of TypedLambda.tlstring | C of TypedLambda.tlconst
+          datatype t = S of TypedLambda.tlstring | C of TypedLambda.tlint
           val branches =
               map (fn {const, ty, body} =>
                       {constant =
                          case fixConst (const, ty, loc) of
-                           TL.TLCONSTANT (const, _) => C const
+                           TL.TLINT (const, _) => C const
                          | TL.TLSTRING (string, _) => S string
                          | _ => raise Bug.Bug "compileExp: TPSWITCH",
                        exp = compileExp env body})

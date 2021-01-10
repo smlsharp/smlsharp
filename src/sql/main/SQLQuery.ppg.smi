@@ -111,6 +111,7 @@ struct
     | COMMIT
     | ROLLBACK
     | CREATE_TABLE of id * (id * {ty : string, nullable : bool}) list
+    | SEQ of 'w command_ast * 'w command_ast
 
   val format_command_ast
       : unit -> 'w command_ast -> SMLFormat.FormatExpression.expression list

@@ -1,5 +1,5 @@
-_require "./StringCvt.smi"
 _require local "./SMLSharp_ScanChar.smi"
+_require       "./StringCvt.smi"
 
 structure Bool =
 struct

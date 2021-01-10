@@ -113,7 +113,7 @@ local
         size (inc n) items
       | TC.TPEXEXNTAG {exExnInfo, loc} => 
         size (inc n) items
-      | TC.TPEXVAR exVarInfo => size (inc n) items
+      | TC.TPEXVAR (exVarInfo,loc) => size (inc n) items
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIFUN (ptrExp, _), stubTy} => 
         sizeExp (inc n) ptrExp items
       | TC.TPFFIIMPORT {ffiTy, loc, funExp=TC.TPFFIEXTERN _, stubTy} => 

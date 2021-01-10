@@ -1,6 +1,6 @@
-_require "./Word8VectorSlice.smi"
-_require "./Word8ArraySlice.smi"
-_require "./Substring.smi"
+_require       "./Substring.smi"
+_require       "./Word8ArraySlice.smi"
+_require       "./Word8VectorSlice.smi"
 
 structure Byte =
 struct

@@ -1,0 +1,18 @@
+_require "../../../../basis.smi"
+_require local "../../../../reify.smi"
+_require local "./AnalyzeTopEnv.smi"
+_require local "./AnalyzerTy.smi"
+_require local "./Analyzers.smi"
+_require local "./InfoMaps.smi"
+_require       "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require       "../../../data/symbols/main/Loc.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../libs/toolchain/main/Filename.smi"
+
+structure AnalyzeSource =
+struct
+  val analyzeSouce 
+      : Loc.source -> NameEvalEnv.topEnv -> NameEvalEnv.topEnv -> unit
+  val analyzeInterface
+      : Loc.source -> NameEvalEnv.topEnv -> NameEvalEnv.topEnv -> unit
+end

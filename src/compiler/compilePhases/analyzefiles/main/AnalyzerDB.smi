@@ -1,0 +1,12 @@
+_require local "../../../../reify.smi"
+_require local "../../../../basis.smi"
+_require local "../../../../sql/main/PGSQLDynamic.smi"
+_require local "./AnalyzerTy.smi"
+_require local "./DBSchema.smi"
+
+structure AnalyzerDB =
+struct
+  val initDB : string ->  unit
+  val insert : ['a#reify. 'a -> unit]
+  val closeDB : unit -> unit
+end

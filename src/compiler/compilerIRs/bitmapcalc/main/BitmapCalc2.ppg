@@ -60,6 +60,14 @@ struct
       Types.btvEnv
 
   (*%
+    @formatter(TypedLambda.tlint) TypedLambda.format_tlint
+   *)
+  (*% @prefix formatWithType_
+    @formatter(TypedLambda.tlint) TypedLambda.formatWithType_tlint
+   *)
+  datatype tlint = datatype TypedLambda.tlint
+
+  (*%
     @formatter(TypedLambda.tlconst) TypedLambda.format_tlconst
    *)
   (*% @prefix formatWithType_
@@ -182,19 +190,6 @@ struct
        * @format({string, loc}) string
        *)
       BCSTRING of {string : tlstring, loc : loc}
-    | (*%
-       * @format({name, ty, loc}) name ":" ty
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({name, ty, loc}) name ":" ty
-       *)
-      BCFOREIGNSYMBOL of
-      {
-        name : string,
-        ty : ty,
-        loc : loc
-      }
     | (*%
        * @format({varInfo, loc}) varInfo
        *)
@@ -570,7 +565,7 @@ struct
       {
         switchExp : bcexp,
         expTy : ty,
-        branches : {constant : tlconst, branchExp : bcexp} list,
+        branches : {constant : tlint, branchExp : bcexp} list,
         defaultExp : bcexp,
         resultTy : ty,
         loc : loc

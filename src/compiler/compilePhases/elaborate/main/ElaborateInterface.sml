@@ -24,7 +24,7 @@ struct
   val symbolToLoc = Symbol.symbolToLoc
   val mkSymbol = Symbol.mkSymbol
 
-  type fixEnv = Fixity.fixity SymbolEnv.map
+  type fixEnv = (Fixity.fixity * Loc.loc) SymbolEnv.map
   val emptyFixEnv = SymbolEnv.empty : fixEnv
 
   fun unionFixEnv (env1, env2) =
@@ -120,14 +120,15 @@ struct
                 recordKind = substRecordTy subst recordKind},
                loc)
 
-  fun substConbind subst (conbind as {symbol, ty}:I.conbind) =
+  fun substConbind subst (conbind as {symbol, ty, loc}:I.conbind) =
       case ty of
         NONE => conbind
-      | SOME ty => {symbol = symbol, ty = SOME (substTy subst ty)}
+      | SOME ty => {symbol = symbol, ty = SOME (substTy subst ty), loc = loc}
 
-  fun substDatbind subst ({tyvars, symbol, conbind}:I.datbind) =
+  fun substDatbind subst ({tyvars, symbol, conbind, loc}:I.datbind) =
       {tyvars = tyvars,
        symbol = symbol,
+       loc = loc,
        conbind = map (substConbind subst) conbind}
 
   fun checkSigexp sigexp =
@@ -327,7 +328,7 @@ struct
             | I.INFIXR (SOME n) =>
               Fixity.INFIXR (ElaborateCore.elabInfixPrec (n, loc))
             | I.NONFIX => Fixity.NONFIX
-        val fixEnvs = map (fn k => SymbolEnv.singleton (k, fixity)) symbols
+        val fixEnvs = map (fn k => SymbolEnv.singleton (k, (fixity,loc))) symbols
         val fixEnv = foldl unionFixEnv emptyFixEnv fixEnvs
       in
         (fixEnv, nil)

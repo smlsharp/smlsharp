@@ -1,6 +1,7 @@
-(* parser-comb-sig.sml
+(* parser-comb.sml
  *
- * COPYRIGHT (c) 1996 AT&T Research.
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * Parser combinators over readers.  These are modeled after the Haskell
  * combinators of Hutton and Meijer.  The main difference is that they
@@ -8,7 +9,7 @@
  * "or" is a committed choice; once one branch succeeds, the others will not
  * be enabled.  While this is somewhat limiting, for many applications it
  * will not be a problem.  For more substantial parsing problems, one should
- * use ML-Yacc and/or ML-Lex.
+ * use a parser generator like ML-Antlr, ML-Yacc and/or ML-Lex.
  *)
 
 structure ParserComb : PARSER_COMB =

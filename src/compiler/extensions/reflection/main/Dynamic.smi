@@ -1,19 +1,25 @@
 _require local "../../../../basis.smi"
+_require local "../../../../smlformat-lib.smi"
 _require local "../../../libs/env/main/SEnv.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-(* _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi" *)
+_require local "../../debug/main/Bug.smi"
 _require local "./ReifyTerm.smi"
-_require local "../../json/main/JSON.smi"
 _require "./ReifiedTy.ppg.smi"
 _require "./ReifiedTerm.ppg.smi"
 _require "./PartialDynamic.smi"
 _require local "./NaturalJoin.smi"
 _require local "./ReifiedTermToML.smi"
+_require local "./RecordUtils.smi"
+_require local "../../../../smlnj-lib/JSON/json.smi"
+_require local "../../../../smlnj-lib/JSON/json-parser.smi"
+_require "../../../data/control/main/PrintControl.smi"
 
 structure Dynamic = 
 struct
   exception RuntimeTypeError = PartialDynamic.RuntimeTypeError
+  exception Format
+  exception JSONError of string
   type 'a dyn = 'a ReifiedTerm.dyn
   type void = ReifiedTy.void
   type dynamic = void dyn
@@ -35,6 +41,7 @@ struct
   val voidWithTy : ty -> dynamic
   val Record : (string * term) list -> term
   val RecordTermToKeyListValueList : term -> (string list * string list)
+  val RecordTermToSQLValueList  : term -> string list
   val RecordTy : (string * ty) list -> ty
   val dynamic : ['a#reify.'a -> dynamic]
   val view : ['a#reify.'a dyn -> 'a]
@@ -45,8 +52,13 @@ struct
 
   val valueToJson : ['a#reify. 'a -> string]
 
+  val printMaxDepth = PrintControl.printMaxDepth
+  val printWidth = PrintControl.printWidth
   val pp : ['a#reify. 'a -> unit]
+  val debugPrint : ['a#reify. 'a -> unit]
   val format : ['a#reify. 'a -> string]
+  val tagOf : ['a#reify. 'a -> string]
+  val tagAndValue : ['a#reify. 'a -> string * string]
   val greaterEq : 'a dyn * 'b dyn -> bool
   val ## : string -> 'a dyn -> dynamic
   val ### : ['a#reify#{}, 'b#reify. string -> 'a -> 'b]
@@ -57,6 +69,7 @@ struct
   val join : dynamic * dynamic -> dynamic
   val extend : dynamic * dynamic -> dynamic
   val override : dynamic * dynamic -> dynamic
-
+  val project : ['a#reify#{}, 'b#reify#{}. 'a -> 'b]
+  val nest : ['a#reify, 'b#reify. 'a -> 'b]
 end
 

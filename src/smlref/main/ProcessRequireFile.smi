@@ -1,0 +1,6 @@
+_require "basis.smi"
+_require "./Config.smi"
+structure ProcessRequireFile =
+struct
+  val replaceInteraceFile : string * string -> unit
+end

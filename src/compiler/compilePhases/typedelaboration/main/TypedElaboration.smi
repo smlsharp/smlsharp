@@ -9,7 +9,7 @@ _require local "../../../extensions/usererror/main/UserError.ppg.smi"
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
 _require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.smi"
 _require local "./TypedElaborationError.ppg.smi"
-
+_require "../../analyzefiles/main/Analyzers.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 
 structure TypedElaboration =

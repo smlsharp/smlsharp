@@ -1,0 +1,24 @@
+_require "../../basis.smi"
+_require "./json-tokens.smi"
+_require "../Util/utf8.smi"
+_require "../../ml-lpt/lib/ulex-buffer.smi"
+_require "../../ml-lpt/lib/antlr-stream-pos.smi"
+
+structure JSONLexer =
+struct
+  datatype yystart_state = INITIAL | S
+  type pos = AntlrStreamPos.pos
+  type span = AntlrStreamPos.span
+  type tok = JSONTokens.token
+  datatype prestrm =
+      STRM of ULexBuffer.stream * 
+              (yystart_state * tok * span * prestrm * yystart_state) option ref
+  type strm = prestrm * yystart_state
+  val lex : AntlrStreamPos.sourcemap
+            -> prestrm * yystart_state
+            -> JSONTokens.token * (pos * pos) * (prestrm * yystart_state)
+  val streamify : (unit -> string) -> prestrm * yystart_state
+  val streamifyReader : ('a -> (char * 'a) option) -> 'a -> prestrm * yystart_state
+  val streamifyInstream : TextIO.instream -> prestrm * yystart_state
+  val getPos : prestrm * 'a -> pos
+end

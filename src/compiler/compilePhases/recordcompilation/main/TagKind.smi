@@ -9,7 +9,7 @@ structure TagKind =
 struct
   type singleton_ty_body = Types.ty
   type kind = RuntimeTypes.tag_prop
-  type instance = RecordCalc.rcexp
+  type instance = RecordCalc.rcvalue * RecordCalc.loc
   val singletonTy
       : singleton_ty_body -> Types.singletonTy
   val generateArgs

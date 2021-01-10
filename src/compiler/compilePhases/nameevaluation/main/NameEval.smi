@@ -30,22 +30,28 @@ _require local "./SpliceFunProvide.smi"
 _require local "./RenameLongsymbol.smi"
 
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+
 _require local "../../../extensions/usererror/main/UserErrorUtils.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require "../../../extensions/usererror/main/UserError.ppg.smi"
+_require "../../analyzefiles/main/AnalyzeSource.smi"
+_require "../../analyzefiles/main/Analyzers.smi"
 _require "./NameEvalEnv.ppg.smi"
 _require local "./NameEvalEnvPrims.smi"
 
 structure NameEval =
   struct
-    val nameEval : {topEnv: NameEvalEnv.topEnv, 
-                    version: IDCalc.version,
-                    systemDecls: IDCalc.icdecl list}
-                    -> PatternCalcInterface.compile_unit
-                    -> {requireTopEnv : NameEvalEnv.topEnv,
-                        returnTopEnv : NameEvalEnv.topEnv,
-                        icdecls : IDCalc.topdecl,
-                        warnings : UserError.errorInfo list}
+    val nameEval : Loc.source
+                   -> {topEnv: NameEvalEnv.topEnv, 
+                      version: IDCalc.version,
+                      systemDecls: IDCalc.icdecl list}
+                   -> PatternCalcInterface.compile_unit
+                   -> {requireTopEnv : NameEvalEnv.topEnv,
+                       returnTopEnv : NameEvalEnv.topEnv,
+                       icdecls : IDCalc.topdecl,
+                       warnings : UserError.errorInfo list}
 
     val evalBuiltin
         : PatternCalcInterface.pitopdec list

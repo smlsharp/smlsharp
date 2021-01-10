@@ -120,14 +120,15 @@ struct
                callingConvention = NONE}
         in
           L.TLFOREIGNAPPLY
-            {funExp = L.TLFOREIGNSYMBOL
-                        {name = "sml_intinf_hex",
-                         ty = T.BACKENDty (T.FOREIGNFUNPTRty
-                                             {argTyList = [B.intInfTy],
-                                              varArgTyList = NONE,
-                                              resultTy = SOME B.stringTy,
-                                              attributes = attributes}),
-                         loc = loc},
+            {funExp = L.TLCONSTANT
+                        (L.FOREIGNSYMBOL
+                           {name = "sml_intinf_hex",
+                            ty = T.BACKENDty (T.FOREIGNFUNPTRty
+                                                {argTyList = [B.intInfTy],
+                                                 varArgTyList = NONE,
+                                                 resultTy = SOME B.stringTy,
+                                                 attributes = attributes})},
+                         loc),
              attributes = attributes,
              resultTy = SOME B.stringTy,
              argExpList = [exp],

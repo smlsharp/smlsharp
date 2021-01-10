@@ -35,6 +35,8 @@ struct
     | iftrue (x,y) false = y
   fun ifnone (x,y) NONE = x
     | ifnone (x,y) (SOME _) = y
+  fun ifcons (x,y) (_ :: _) = x
+    | ifcons (x,y) nil = y
 
   (*% @formatter(string) formatSQLID *)
   type id =
@@ -123,6 +125,7 @@ struct
    *)
   (*% @prefix format_
    * @formatter(ifnone) ifnone
+   * @formatter(ifcons) ifcons
    * @formatter(ifInt) ifInt_exp_ast
    *)
   datatype 'w exp_ast =
@@ -285,7 +288,7 @@ struct
   and 'w groupby_ast =
       (*% @prefix format_
        * @format(w key keys * w having opt)
-       * !N0{ "GROUP" +d "BY" 2[ +1 keys(key(w))("," +1) ] }
+       * !N0{ "GROUP" +d "BY" 2[ +1 keys:ifcons()(keys(key(w))("," +1),"()") ] }
        * opt:ifnone()(, +1 opt(having(w)))
        *)
       (*% @prefix ifInt_ @format *)
@@ -416,6 +419,11 @@ struct
        * id +d ty nullable:iftrue()(, +d "NOT" +d "NULL")
        *)
       CREATE_TABLE of id * (id * {ty : string, nullable : bool}) list
+    | (*%
+       * @format(w1 c1 * w2 c2)
+       * c1(w1) ";" \n c2(w2)
+       *)
+      SEQ of 'w command_ast * 'w command_ast
 
   val format_command_ast = fn () => format_command_ast (fn _ => nil)
   val format_query_ast = fn () => format_query_ast (fn _ => nil)

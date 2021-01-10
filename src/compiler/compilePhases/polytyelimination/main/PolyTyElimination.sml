@@ -289,8 +289,13 @@ struct
         | (T.FUNMty (argTys1, retTy1), T.FUNMty (argTys2, retTy2)) =>
           equalList equalTy r (retTy1 :: argTys1, retTy2 :: argTys2)
         | (T.RECORDty fields1, T.RECORDty fields2) =>
-          equalList equalTy r (RecordLabel.Map.listItems fields1,
-                               RecordLabel.Map.listItems fields2)
+          RecordLabel.Map.foldl
+            equalUnion
+            BoundTypeVarID.Map.empty
+            (RecordLabel.Map.mergeWith
+               (fn (SOME ty1, SOME ty2) => SOME (equalTy r (ty1, ty2))
+                 | _ => raise NotEqual)
+               (fields1, fields2))
         | (T.CONSTRUCTty {tyCon=c1, args=args1},
            T.CONSTRUCTty {tyCon=c2, args=args2}) =>
           if #id c1 = #id c2
@@ -772,7 +777,7 @@ struct
            NONE => raise bug "analyzeExp: TPEXEXNTAG"
          | SOME {ty,...} =>
            D.TPEXEXNTAG {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
-      | C.TPEXVAR var =>
+      | C.TPEXVAR (var, loc) =>
         (case LongsymbolEnv.find (#exVarEnv (#env env), #path var) of
            NONE => 
            (
@@ -781,7 +786,7 @@ struct
             print "\n";
             raise bug "analyzeExp: TPEXVAR"
            )
-         | SOME {ty,...} => D.TPEXVAR (var # {ty = ty}))
+         | SOME {ty,...} => D.TPEXVAR (var # {ty = ty}, loc))
       | C.TPVAR var =>
         (case VarID.Map.find (#varEnv (#env env), #id var) of
            NONE => raise bug "analyzeExp: TPVAR"
@@ -1793,7 +1798,7 @@ struct
            NONE => raise bug "compileExp: TPEXNTAG"
          | SOME {ty,...} =>
            D.TPEXEXNTAG {exExnInfo = exExnInfo # {ty = ty}, loc = loc})
-      | C.TPEXVAR var =>
+      | C.TPEXVAR (var, loc) =>
         (case LongsymbolEnv.find (#exVarEnv (#env env), #path var) of
            NONE => 
            (
@@ -1802,7 +1807,7 @@ struct
             print "\n";
             raise bug "compileExp: TPEXVAR"
            )
-         | SOME {ty,...} => D.TPEXVAR (var # {ty = ty}))
+         | SOME {ty,...} => D.TPEXVAR (var # {ty = ty}, loc))
       | C.TPVAR var =>
         D.TPVAR (compileVar env var)
       | C.TPRECFUNVAR {arity, var} =>
@@ -2161,7 +2166,7 @@ struct
       | C.TPVAL ((var, exp), loc) =>
         single
           (D.TPVAL
-             ((var, compileExp env exp),
+             ((compileVarInfo env var, compileExp env exp),
               loc))
       | C.TPVALREC (recbinds, loc) =>
         single

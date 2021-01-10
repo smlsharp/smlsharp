@@ -2,17 +2,31 @@ _require local "../../basis.smi"
 _require local "../../ffi.smi"
 _require local "../../reify.smi"
 _require local "./PGSQL.smi"
+_require "./PGSQLBackend.smi"
+_require "./SQLErrors.smi"
+_require "./SQLPrim.smi"
+_require "./../../compiler/extensions/reflection/main/ReifiedTy.ppg.smi"
+_require local "../../compiler/extensions/debug/main/Bug.smi"
 
 structure PGSQLDynamic =
 struct
-  type 'a server (= boxed)
-  type 'a con (= ptr)
   exception DynamicTypeMismatch
-  exception Runtime
-
-  val makeServer : ['a#{}. string -> 'a server]
-  val connect : ['a#reify, 'b#reify. 'a server -> 'a con] 
-  val insert : ['a#reify, 'b#reify. 'a con * 'b -> unit]
-  val finish : ['a. 'a con -> unit]
-
+  exception IlleagalSqlty
+  exception IlleagalColumTy
+  exception IlleagalTableTy
+  exception DropTable
+  type conn = SMLSharp_SQL_PGSQLBackend.conn
+  datatype 'a con = CONN of conn
+  datatype 'a table = TABLE of {keys :string list}
+  datatype 'a server = SERVER of string
+  val getServerTy : conn -> ReifiedTy.reifiedTy
+  val printServerTy  : conn -> unit
+  val createTables  : ['a#reify. conn -> ('a table) -> unit]
+  val dropTable : conn -> string -> unit
+  val clearTables : conn -> unit
+  val closeConn : conn -> unit
+  val conAsTy: ['a#reify. conn -> 'a con]
+  val initDb : ['a#reify. 'a server -> conn]
+  val connect : string -> conn
+  val insert : ['a#reify. conn -> 'a -> unit]
 end

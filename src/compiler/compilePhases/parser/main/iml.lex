@@ -80,6 +80,7 @@ fun closeComment ({comment,...}:arg) =
 fun startString (yypos, strTy, arg as {string = {buf, startPos, ty}, ...}) =
     (buf := nil; startPos := SOME (pos (yypos, arg)); ty := strTy)
 
+(*
 fun closeString (yypos, arg as {string = {buf, startPos, ty}, ...} : arg) =
     case !startPos of
       NONE => raise Bug.Bug "closeString"
@@ -96,6 +97,23 @@ fun closeString (yypos, arg as {string = {buf, startPos, ty}, ...} : arg) =
         | CHAR => (if size s = 1 then ()
                    else #error arg ("character constant not length 1", l, r);
                    (T.CHAR (s, l, r), l, r))
+      end
+*)
+fun closeString (yypos, arg as {string = {buf, startPos, ty}, ...} : arg) =
+    case !startPos of
+      NONE => raise Bug.Bug "closeString"
+    | SOME l =>
+      let
+        val r = pos (yypos, arg)
+        val s = String.concat (rev (!buf))
+      in
+        buf := nil;
+        startPos := NONE;
+        #prevPos arg := yypos + 1;
+        case !ty of
+          STRING => (T.STRING (s, l, r), l, r)
+                | CHAR => (if size s = 1 then (T.CHAR (s, l, r), l, r)
+                           else (T.SELECTOR (s, l, r), l, r))
       end
 
 fun addString (s, {string = {buf, startPos, ...}, ...}:arg) =
@@ -164,6 +182,7 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 <INITIAL>"_interface" => (T.INTERFACE (keyword (yytext, yypos, arg)));
 <INITIAL>"_join" => (T.JOINOP (keyword (yytext, yypos, arg)));
 <INITIAL>"_extend" => (T.EXTENDOP (keyword (yytext, yypos, arg)));
+<INITIAL>"_update" => (T.UPDATEOP (keyword (yytext, yypos, arg)));
 <INITIAL>"_dynamic" => (T.DYNAMIC (keyword (yytext, yypos, arg)));
 <INITIAL>"_dynamiccase" => (T.DYNAMICCASE (keyword (yytext, yypos, arg)));
 <INITIAL>"_dynamicnull" => (T.DYNAMICNULL (keyword (yytext, yypos, arg)));
@@ -293,6 +312,21 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 <INITIAL>{id} => (T.ALPHABETICID (string (yytext, yypos, arg)));
 <INITIAL>{symid} => (T.SYMBOLICID (string (yytext, yypos, arg)));
 <INITIAL>{prefixedlabel} => (T.PREFIXEDLABEL (string (yytext, yypos, arg)));
+<INITIAL>"#"({id}) => 
+         (let val (s, l, r) = string (yytext, yypos, arg)
+          in T.SELECTOR (String.extract(s, 1, NONE), l, r)
+          end
+          );
+<INITIAL>"#"({int}) => 
+         (let val (s, l, r) = string (yytext, yypos, arg)
+          in T.SELECTOR (String.extract(s, 1, NONE), l, r)
+          end
+          );
+<INITIAL>"#"({prefixedlabel}) => 
+         (let val (s, l, r) = string (yytext, yypos, arg)
+          in T.SELECTOR (String.extract(s, 1, NONE), l, r)
+          end
+          );
 <INITIAL>"0w"{num} =>
          (let val (s, l, r) = string (yytext, yypos, arg)
           in T.WORD ({radix = StringCvt.DEC,

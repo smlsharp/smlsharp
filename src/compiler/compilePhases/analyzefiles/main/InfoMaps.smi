@@ -1,0 +1,52 @@
+_require "../../../../basis.smi"
+_require "../../../../reify.smi"
+
+_require       "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/toolchain/main/Filename.smi"
+_require local "./AnalyzerDB.smi"
+_require       "./AnalyzerTy.smi"
+_require       "./DBSchema.smi"
+_require local "./FileIDIntMap.smi"
+_require local "./FileIDFileIDMap.smi"
+_require local "./FileIDMap.smi"
+_require local "./SourceMap.smi"
+_require local "./AnalyzerUtils.smi"
+
+structure InfoMaps =
+struct
+  exception SourceMap
+
+  val initMaps : unit -> unit
+
+  val insertProcessedFiles : ['a#{fileId:int}. 'a -> unit]
+  val memberProcessedFiles : ['a#{fileId:int}. 'a -> bool]
+
+  val insertSourceMap : InterfaceName.source * AnalyzerTy.sourceInfo -> unit
+  val currentSourceMap : unit -> AnalyzerTy.sourceMap
+  val findSourceMap : InterfaceName.source -> AnalyzerTy.sourceInfo
+  val checkSourceMap : InterfaceName.source -> AnalyzerTy.sourceInfo option
+  val addSourceTable : unit -> unit
+
+  val insertFileMapMap
+      : AnalyzerTy.fileIDKey * AnalyzerTy.fileMapInfo -> unit
+  val addFileMapTable : unit -> unit
+  val insertFileDependMap 
+      : AnalyzerTy.fileIDIntKey * AnalyzerTy.fileDependInfo -> unit
+  val addFileDependTable : unit -> unit
+
+  val initDefMap : unit -> unit
+  val insertDefMap
+      : AnalyzerTy.fileIDIntKey * DBSchema.defTuple -> unit
+  val addDefTable : unit -> unit
+  val initRefMap : unit -> unit
+  val insertRefMap
+      : {fileId:int, startPos:int} * DBSchema.refTuple -> unit
+  val addRefTable : unit -> unit
+  val initUPRefMap : unit -> unit
+  val insertUPRefMap
+      : {refFileId:int, defFileId:int} * DBSchema.UPRefTuple -> unit
+  val addUPRefTable : unit -> unit
+
+end

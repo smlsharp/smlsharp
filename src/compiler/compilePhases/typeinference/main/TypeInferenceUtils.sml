@@ -276,7 +276,7 @@ in
                      {binds = List.rev extraBindsRev,
                       bodyExp = TPC.TPRECORD
                                {fields=newExpFields,
-                                recordTy=toTy,
+                                recordTy=tyFields,
                                 loc=loc},
                       loc = loc
                      }

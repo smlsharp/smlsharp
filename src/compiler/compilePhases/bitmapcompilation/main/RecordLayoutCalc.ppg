@@ -12,75 +12,24 @@ struct
    * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
    * @formatter(VarID.id) VarID.format_id
    *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(Symbol.longsymbol) Symbol.format_longsymbol
-   * @formatter(VarID.id) VarID.format_id
-   * @formatter(Types.ty) Types.format_ty
-   *)
-  type varInfo
-    = (*%
-       * @format({path, id, ty}) path "(" id ")"
-       *)
+  type var =
       (*%
-       * @prefix formatWithType_
-       * @format({path, id, ty}) L2 { path "(" id ")" +1 ":" +d ty }
+       * @format({path, id}) path "(" id ")"
        *)
-      {path : Symbol.longsymbol, id : VarID.id, ty : Types.ty}
+      {path : Symbol.longsymbol, id : VarID.id} (* word32 *)
 
   (*%
-   * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
-   * @formatter(RuntimeTypes.size) RuntimeTypes.format_size
    * @formatter(Word32.word) SMLFormat.BasicFormatters.format_word
-   *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(RuntimeTypes.tag) RuntimeTypes.format_tag
-   * @formatter(RuntimeTypes.size) RuntimeTypes.format_size
-   * @formatter(Word32.word) SMLFormat.BasicFormatters.format_word
-   * @formatter(Types.ty) Types.format_ty
    *)
   datatype value =
       (*%
-       * @format(v) v
+       * @format(x) x
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format(v) v
-       *)
-      VAR of varInfo
-    | (*%
-       * @format(ty * tag) tag
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format(ty * tag) L2{ tag +1 ":" +d "_tagOf(" !N0{ ty ")" } }
-       *)
-      TAG of Types.ty * RuntimeTypes.tag
-    | (*%
-       * @format(ty * sz) sz
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format(ty * sz) L2{ sz +1 ":" +d "_sizeOf(" !N0{ ty ")" } }
-       *)
-      SIZE of Types.ty * RuntimeTypes.size
+      VAR of var
     | (*%
        * @format(x) x
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format(x) x
-       *)
-      CONST of Word32.word
-    | (*%
-       * @format(v * ty) "CAST(" !N0{ v ")"}
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format(v * ty) "CAST(" !N0{ v +1 ":" +d ty ")" }
-       *)
-      CAST of value * Types.ty
+      WORD of Word32.word
 
   (*% *)
   datatype op2 =
@@ -100,38 +49,21 @@ struct
       RSHIFT
 
   (*% *)
-  (*%
-   * @prefix formatWithType_
-   * @formatter(op2) format_op2
-   *)
   datatype exp =
       (*%
-       * @format(v) v
-       *)
-      (*%
-       * @prefix formatWithType_
        * @format(v) v
        *)
       VALUE of value
     | (*%
        * @format(op2 * (v1 * v2)) L0{ v1 +1 op2 +d v2 }
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format(op2 * (v1 * v2)) L0{ v1 +1 op2 +d v2 }
-       *)
       OP of op2 * (value * value)
 
   (*% *)
-  (*% @prefix formatWithType_ *)
   datatype dec =
       (*%
        * @format(var * exp) "val" +d var 1[ +1 "=" +d exp ]
        *)
-      (*%
-       * @prefix formatWithType_
-       * @format(var * exp) "val" +d var 1[ +1 "=" +d exp ]
-       *)
-      VAL of varInfo * exp
+      VAL of var * exp
 
 end

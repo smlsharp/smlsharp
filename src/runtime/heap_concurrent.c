@@ -277,17 +277,25 @@ static void
 init_segment(struct segment *seg, unsigned int subheap_index)
 {
 	const struct segment_layout *new_layout;
-	unsigned int blocksize_log2, i;
+	unsigned int i;
 	char *old_limit, *new_limit;
 
-	blocksize_log2 = subheap_index + BLOCKSIZE_MIN_LOG2;
-	assert(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
-	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
+	assert(BLOCKSIZE_MIN_LOG2 <= subheap_index + BLOCKSIZE_MIN_LOG2
+	       && subheap_index + BLOCKSIZE_MIN_LOG2 <= BLOCKSIZE_MAX_LOG2);
 	new_layout = &segment_layout[subheap_index];
 
 	/* if seg is already initialized for new_layout, do nothing. */
-	if (seg->layout == new_layout)
+	if (seg->layout == new_layout) {
+		assert(seg->allocptr_snapshot == BLOCK_BASE(seg));
+		assert(seg->free_count == new_layout->num_blocks);
+		DEBUG(memset
+		      (STACK_BASE(seg), 0,
+		       new_layout->num_blocks * sizeof(struct stack_slot)));
+		DEBUG(check_filled
+		      (BLOCK_BASE(seg) - OBJ_HEADER_SIZE, 0x55,
+		       new_layout->block_limit - new_layout->block_offset));
 		return;
+	}
 
 	if (seg->layout) {
 		/* assumption: seg is initialized for some block size with its
@@ -321,6 +329,8 @@ init_segment(struct segment *seg, unsigned int subheap_index)
 	for (i = 0; i < SEG_RANK; i++)
 		BITMAP_LIMIT(seg, i)[-1] = new_layout->bitmap_sentinel[i];
 
+	DEBUG(memset(STACK_BASE(seg), 0,
+		     new_layout->num_blocks * sizeof(struct stack_slot)));
 	DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
 }
 
@@ -330,7 +340,7 @@ clear_collect_bitmap(struct segment *seg)
 	memset(COLLECT_BITMAP_BASE(seg), 0, seg->layout->bitmap0_length);
 }
 
-static sml_bmword_t
+static void
 copy_collect_bitmap(struct segment *seg)
 {
 	/* copy collect_bitmap to bitmap[0] with adding sentinel */
@@ -341,7 +351,6 @@ copy_collect_bitmap(struct segment *seg)
 	/* construct bitmap[1] or upper */
 	sml_bmword_t *lower = BITMAP0_BASE(seg);
 	sml_bmword_t *upper = BITMAP_LIMIT(seg, 0);
-	sml_bmword_t orb = 0, andb = -1;
 	unsigned int i;
 	for (i = 1; i < SEG_RANK; i++) {
 		sml_bmword_t *limit = upper;
@@ -350,7 +359,6 @@ copy_collect_bitmap(struct segment *seg)
 		assert(upper == BITMAP_BASE(seg, i));
 		assert(limit == BITMAP_LIMIT(seg, i - 1));
 		while (lower < limit) {
-			orb |= *lower, andb &= *lower;
 			if (*lower == -1U)
 				word |= bit;
 			lower++;
@@ -363,9 +371,6 @@ copy_collect_bitmap(struct segment *seg)
 		}
 		*(upper++) = word | seg->layout->bitmap_sentinel[i];
 	}
-
-	/* -1 : filled, 0 : empty, 1 : partial */
-	return andb == orb ? andb : 1;
 }
 
 struct stat_segment {
@@ -432,6 +437,22 @@ struct segment_list {
 	} \
 } while (0)
 
+static struct segment *
+segment_list_pop(struct segment_list *list)
+{
+	struct segment *seg;
+	if (list->last == &list->head)
+		return NULL;
+	seg = list->head;
+	if (list->last == &seg->next) {
+		list->head = NULL;
+		list->last = &list->head;
+	} else {
+		list->head = list->head->next;
+	}
+	return seg;
+}
+
 static void
 segment_push_list(_Atomic(struct segment *) *stack, struct segment_list *list)
 {
@@ -490,11 +511,13 @@ static struct malloc_segment *
 malloc_segment(unsigned int alloc_size)
 {
 	struct malloc_segment *mseg;
+	enum sml_sync_phase phase;
 
 	mseg = xmalloc(MALLOC_OBJECT_OFFSET + alloc_size);
 	DEBUG(memset(mseg, 0x55, MALLOC_OBJECT_OFFSET + alloc_size));
 	mseg->stack.next = NULL;
-	mseg->bit = (sml_current_phase() <= PRESYNC2);
+	phase = sml_current_phase();
+	mseg->bit = (ASYNC <= phase && phase <= PRESYNC2);
 	mseg->collect_bit = 0;
 	return mseg;
 }
@@ -528,7 +551,7 @@ init_memory(struct memory *memory, size_t max_size)
 		sml_fatal(0, "SEGMENT_SIZE is not aligned in page size.");
 
 	size_t bytes = CEILING(max_size, SEGMENT_SIZE);
-	void *p = AllocPage((void*)0x400000000, bytes + SEGMENT_SIZE);
+	void *p = AllocPage(NULL, bytes + SEGMENT_SIZE);
 	if (p == AllocPageError)
 		sml_sysfatal("failed to allocate memory");
 	size_t gap = (uintptr_t)p & (SEGMENT_SIZE - 1);
@@ -621,7 +644,7 @@ get_segment_from_pool(struct segment_pool *pool, unsigned int subheap_index,
 	if (seg) {
 //DBG("get_segment_from_pool %u partial seg=%p", subheap_index, seg);
 		return seg;
-}
+	}
 	if (phase == MARK || phase == ASYNC || phase == PREASYNC) {
 		seg = segment_pop(&subpool->partial_marked);
 		if (seg) {
@@ -693,8 +716,8 @@ set_alloc_ptr(struct alloc_ptr *ptr, struct segment *seg,
 	ptr->b = BITPTR(BITMAP0_BASE(seg), 0);
 	ptr->p = BLOCK_BASE(seg);
 	assert(ptr->blocksize_bytes == seg->layout->blocksize_bytes);
-	DEBUG(seg->next = (void*)-1);
 	assert(seg->allocptr_snapshot == BLOCK_BASE(seg));
+	DEBUG(seg->next = (void*)-1);
 	if (ASYNC <= phase && phase <= PRESYNC2) {
 		/* まだsync2アクション（アロケーションポインタのスナップ
 		 * ショットを取る）を行っていない．スナップショットが取られる
@@ -751,9 +774,12 @@ struct subheap_count {
 	unsigned int extension_room;
 	double threshold_ratio;
 	double allocspeed_ratio;
-#if 0
-	unsigned int num_unmarked_before_allocptr;
-#endif
+};
+
+struct heap_count {
+	double alloc_accum;
+	double gc_accum;
+	double num_distrib;
 };
 
 struct heap {
@@ -761,14 +787,21 @@ struct heap {
 	struct subheap subheap[NUM_SUBHEAPS];
 	struct subheap_count count[NUM_SUBHEAPS];
 	struct malloc_segment *malloc_subheap;
+	struct segment_list freelist;
+	struct heap_count heap_count;
 };
 
-struct subheap_count subheap_count_init[NUM_SUBHEAPS];
+static struct subheap_count subheap_count_init[NUM_SUBHEAPS];
+static struct heap_count heap_count_init;
 
 static void
 init_subheap_count_init()
 {
 	unsigned int i, num_blocks_total = 0;
+
+	heap_count_init.alloc_accum = 0;
+	heap_count_init.gc_accum = 0;
+	heap_count_init.num_distrib = 0;
 
 	for (i = 0; i < NUM_SUBHEAPS; i++)
 		num_blocks_total += segment_layout[i].num_blocks;
@@ -786,6 +819,8 @@ init_subheap_count_init()
 #if 0
 		count->num_unmarked_before_allocptr = 0;
 #endif
+		heap_count_init.num_distrib +=
+			count->extension_room * segment_layout[i].num_blocks;
 	}
 }
 
@@ -801,6 +836,8 @@ init_heap(struct heap *heap)
 		heap->count[i] = subheap_count_init[i];
 	}
 	heap->malloc_subheap = NULL;
+	LIST_INIT(&heap->freelist);
+	heap->heap_count = heap_count_init;
 }
 
 static void
@@ -1005,6 +1042,8 @@ sml_heap_worker_kill(struct sml_alloc *alloc)
 
 	LIST_INIT_WITH(&m, alloc->heap.malloc_subheap);
 	pool->malloc_subpool = LIST_FINISH(&m, pool->malloc_subpool);
+
+	segment_push_list(&pool->freelist, &alloc->heap.freelist);
 }
 
 /******** tracing ********/
@@ -1054,15 +1093,15 @@ visit(void *obj)
 		index = object_index(seg, obj);
 		r = BITPTR(BITMAP0_BASE(seg), index);
 		if (!BITPTR_TEST(r)
-		    && (char*)obj >= (char*)seg->allocptr_snapshot)
-//{DBG("visit not gc target %p", obj);
+		    && (char*)obj >= (char*)seg->allocptr_snapshot) {
+//DBG("visit not gc target %p", obj);
 			return NULL;
-//}
+		}
 		b = BITPTRA(COLLECT_BITMAP_BASE(seg), index);
-		if (BITPTRA_TEST_AND_SET(b))
-//{DBG("visit already visited %p", obj);
+		if (BITPTRA_TEST_AND_SET(b)) {
+//DBG("visit already visited %p", obj);
 			return NULL;
-//}
+		}
 //DBG("visit %p 0x%016x", obj, *(void**)obj);
 		return &STACK_BASE(seg)[index];
 	}
@@ -1127,6 +1166,7 @@ remember(struct sml_alloc *alloc, void *obj)
 {
 	struct stack_slot *slot = visit(obj);
 	if (slot) {
+		assert(slot->next == NULL);
 		slot->next = load_relaxed(&alloc->remembered_set);
 		store_relaxed(&alloc->remembered_set, obj);
 	}
@@ -1280,15 +1320,15 @@ free_count(struct segment *seg, void *allocptr)
 }
 
 struct stat_reclaim {
-	/* GC後のpartialの長さ */
+	/* reclaim後のpartialの長さ */
 	unsigned int num_partial;
-	/* GC後の全ブロック数 */
+	/* reclaim後の全ブロック数 */
 	unsigned int num_blocks;
-	/* GC後のフリーなブロックの数 */
+	/* reclaim後の未使用ブロックの数 */
 	unsigned int num_blocks_free;
 	/* 前回のGCから今回のGCまでの間にアロケートされたブロック数 */
 	unsigned int num_blocks_alloced;
-	/* 今回のGCでの余剰ブロック数 */
+	/* reclaim前の未使用ブロックの数 */
 	unsigned int num_blocks_room;
 	/* num_blocks_freeに新規割り当て可能数を加えた余剰ブロック数 */
 	unsigned int num_free_total;
@@ -1311,18 +1351,20 @@ reclaim_subheap(struct heap *heap, unsigned int subheap_index,
 	LIST_INIT(&filled);
 
 	for (seg = subheap->partial; seg; seg = seg->next) {
-		sml_bmword_t summary = copy_collect_bitmap(seg);
-		if (summary == 0) {
+		copy_collect_bitmap(seg);
+		assert(seg->allocptr_snapshot == BLOCK_BASE(seg));
+		DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
+		unsigned int count = free_count(seg, NULL);
+		if (count == seg->layout->num_blocks) {
+			seg->free_count = count;
 			LIST_APPEND(free, seg);
 		} else {
-			clear_collect_bitmap(seg);
-			seg->allocptr_snapshot = BLOCK_BASE(seg);
-			DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
-			LIST_APPEND(&partial, seg);
 			num_partial++;
-			seg->free_count = free_count(seg, NULL);
-			num_blocks_free += seg->free_count;
+			num_blocks_free += count;
 			num_blocks_room += seg->free_count;
+			seg->free_count = count;
+			clear_collect_bitmap(seg);
+			LIST_APPEND(&partial, seg);
 		}
 	}
 
@@ -1332,39 +1374,39 @@ reclaim_subheap(struct heap *heap, unsigned int subheap_index,
 		clear_collect_bitmap(seg);
 		DEBUG(scribble_segment(seg, ptr->p));
 		seg->allocptr_snapshot = BLOCK_LIMIT(seg);
-		seg->free_count = free_count(seg, ptr->p);
+		seg->free_count = free_count(seg, ptr->p); /* estimation */
 		num_blocks_free += seg->free_count;
-		num_blocks_alloced += object_index(seg, ptr->p);//rough estimation
+		num_blocks_room += seg->free_count;
+		num_blocks_alloced += object_index(seg, ptr->p); /* rough */
 		num_filled++;
 	}
 
 	for (seg = subheap->filled; seg; seg = seg->next) {
 		num_blocks_alloced += seg->free_count;
-		sml_bmword_t summary = copy_collect_bitmap(seg);
-		if (summary == 0) {
-			LIST_APPEND(free, seg);
-		} else if (summary == -1U
-			   || ((char*)seg->allocptr_snapshot
-			       < (char*)BLOCK_LIMIT(seg))) {
+		copy_collect_bitmap(seg);
+		seg->free_count = free_count(seg, NULL);
+		if ((char*)seg->allocptr_snapshot < (char*)BLOCK_LIMIT(seg)
+		    || seg->free_count == 0) {
+			num_filled++;
 			clear_collect_bitmap(seg);
 			seg->allocptr_snapshot = BLOCK_LIMIT(seg);
-			seg->free_count = 0;
 			LIST_APPEND(&filled, seg);
-			num_filled++;
+		} else if (seg->free_count == seg->layout->num_blocks) {
+			seg->allocptr_snapshot = BLOCK_BASE(seg);
+			DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
+			LIST_APPEND(free, seg);
 		} else {
+			num_partial++;
+			num_blocks_free += seg->free_count;
 			clear_collect_bitmap(seg);
 			seg->allocptr_snapshot = BLOCK_BASE(seg);
 			DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
 			LIST_APPEND(&partial, seg);
-			num_partial++;
-			seg->free_count = free_count(seg, NULL);
-			num_blocks_free += seg->free_count;
 		}
 	}
 
 	subheap->partial = LIST_FINISH(&partial, NULL);
 	subheap->filled = LIST_FINISH(&filled, NULL);
-
 
 	stat->num_blocks =
 		(num_filled + num_partial)
@@ -1378,116 +1420,102 @@ reclaim_subheap(struct heap *heap, unsigned int subheap_index,
 static void
 reclaim_heap(struct heap *heap)
 {
-	struct segment_list free;
 	unsigned int i;
 	struct stat_reclaim stat[NUM_SUBHEAPS];
 
-//sml_notice("before reclamation");
-//print_heap_summary(heap);
-
-
 #if 0
-	struct stat_subheap before[NUM_SUBHEAPS];
-	for (i = 0; i < NUM_SUBHEAPS; i++)
-		before[i] = stat_subheap(&heap->subheap[i], &heap->ptr[i]);
+static pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
+mutex_lock(&m);
+sml_notice("heap %p reclaim start", heap);
+print_heap_summary(heap);
 #endif
 
+	/* reclaim前からfreelistに残っているセグメントはグローバルなfreelistに
+	 * 持っていく */
+	segment_push_list(&segment_pool.freelist, &heap->freelist);
+	LIST_INIT(&heap->freelist);
 
-
-	LIST_INIT(&free);
-	unsigned int num_alloc_total = 0, num_live_total = 0, num_free_total = 0;
+	unsigned int num_alloc_total = 0, num_live_total = 0;
+	unsigned int num_free_total = 0;
 	for (i = 0; i < NUM_SUBHEAPS; i++) {
-		reclaim_subheap(heap, i, &free, &stat[i]);
+		reclaim_subheap(heap, i, &heap->freelist, &stat[i]);
 		num_alloc_total += stat[i].num_blocks_alloced;
 		num_live_total += stat[i].num_blocks - stat[i].num_blocks_free;
-		stat[i].num_free_total = stat[i].num_blocks_free + heap->count[i].extension_room * segment_layout[i].num_blocks;
+		stat[i].num_free_total =
+			stat[i].num_blocks_free
+			+ heap->count[i].extension_room
+			* segment_layout[i].num_blocks;
 		num_free_total += stat[i].num_free_total;
+
+//sml_notice("%2u : %7u alloc %7u room %7u free/%7u blocks (%4u partial)",
+//	   i + BLOCKSIZE_MIN_LOG2,
+//	   stat[i].num_blocks_alloced,
+//	   stat[i].num_blocks_room,
+//	   stat[i].num_blocks_free,
+//	   stat[i].num_blocks,
+//	   stat[i].num_partial);
 	}
-	segment_push_list(&segment_pool.freelist, &free);
+
+//sml_notice("   : %7u alloc              %7u live  %7u free total",
+//	   num_alloc_total, num_live_total, num_free_total);
+
+	heap->heap_count.alloc_accum += num_alloc_total;
+	heap->heap_count.gc_accum += num_live_total;
+
 	heap->malloc_subheap = reclaim_malloc_segments(heap->malloc_subheap);
 
-
-
 #if 0
-	struct stat_subheap after[NUM_SUBHEAPS];
-	for (i = 0; i < NUM_SUBHEAPS; i++)
-		after[i] = stat_subheap(&heap->subheap[i], &heap->ptr[i]);
-
-	unsigned int num_alloc_total_s = 0;
-	unsigned int num_alloc_s[NUM_SUBHEAPS];
-	for (i = 0; i < NUM_SUBHEAPS; i++) {
-		num_alloc_s[i] = before[i].total.num_unmarked_before_allocptr - heap->count[i].num_unmarked_before_allocptr;
-		num_alloc_total_s += num_alloc_s[i];
-	}
-	sml_notice("total alloc = %u", num_alloc_total_s);
-
-	unsigned int num_live_total_s = 0;
-	for (i = 0; i < NUM_SUBHEAPS; i++)
-		num_live_total_s += after[i].total.num_marked + after[i].total.num_unmarked_before_allocptr;
-	sml_notice("total live = %u", num_live_total_s);
+{unsigned int n_ = 0;
+ struct segment *s;
+ for (s = load_relaxed(&segment_pool.freelist); s; s = s->next) n_++;
+ sml_notice("global freelist length %u", n_);}
 #endif
-
-
-
-
-
-
 #if 0
-	for (i = 0; i < NUM_SUBHEAPS; i++) {
-		struct subheap_count *count = &heap->count[i];
-		double allocspeed =
-			(double)num_alloc_s[i] / num_alloc_total_s;
-		double allocspeed_ratio =
-			count->allocspeed_ratio +
-			0.2 * (allocspeed - count->allocspeed_ratio);
-//		count->allocspeed_ratio = allocspeed_ratio;
-		unsigned int want_block =
-			num_live_total_s * allocspeed_ratio;
-		unsigned int num_blocks_free =
-			after[i].total.num_unmarked
-			- after[i].total.num_unmarked_before_allocptr;
-		unsigned int shortage_block =
-			want_block > num_blocks_free
-			? want_block - num_blocks_free
-			: 0;
-		unsigned int shortage_segment =
-			ceil(shortage_block / segment_layout[i].num_blocks);
-//		count->limit =
-//			after[i].num_partial + shortage_segment;
-//		if (count->limit <= 0)
-//			count->limit++;
-//		double room =
-//			before[i].total.num_unmarked
-//			- before[i].total.num_unmarked_before_allocptr > 0
-//			? 1.0 : 0.5;
-//		count->threshold_ratio +=
-//			0.2 * (room - count->threshold_ratio);
-//		count->threshold =
-//			ceil(count->limit * count->threshold_ratio);
-//		if (count->threshold <= 0)
-//			count->threshold++;
-		count->num_unmarked_before_allocptr =
-			after[i].total.num_unmarked_before_allocptr;
-
-sml_notice("%2u : %7u alloc (%4.2f -> %4.2f) %7u want %7u free %4u add",
-	   i + BLOCKSIZE_MIN_LOG2,
-	   num_alloc_s[i], allocspeed, allocspeed_ratio,
-	   want_block,
-	   num_blocks_free,
-	   shortage_segment
-	   );
-	}
+{*heap->freelist.last = NULL;
+ unsigned int n_ = 0;
+ struct segment *s;
+ for (s = heap->freelist.head; s; s = s->next) n_++;
+ sml_notice("local freelist length %u", n_);}
 #endif
-
 
 	/* 残りブロックの総数を各サブヒープにアロケーションの速さ
 	 * （の割合の重み付き平均）で比例配分する．ただし，残りブロック数は
 	 * 少なくともライブオブジェクト数の2倍を用意する．
 	 * アロケーションの速さは，前回GCからのサブヒープごとのアロケーション
 	 * 回数を総アロケーション回数で割って算出する．*/
+
+/*
+gc / (accum + gc) = R
+gc / (accum + X + gc) = T
+
+(R - T) / T (accum + gc) = X
+*/
+
+	double alloc_gc_sum =
+		heap->heap_count.alloc_accum + heap->heap_count.gc_accum;
+	double gc_ratio =
+		(double)heap->heap_count.gc_accum / alloc_gc_sum;
+
+	double num_distrib = (gc_ratio - 0.2) / 0.2 * alloc_gc_sum;
+/*
+	num_distrib = num_distrib > num_live_total ? num_distrib : num_live_total;
+*/
+	num_distrib = num_distrib > heap->heap_count.num_distrib ? num_distrib : heap->heap_count.num_distrib;
+	heap->heap_count.num_distrib +=
+		0.1 * (num_distrib - heap->heap_count.num_distrib);
+	num_distrib = heap->heap_count.num_distrib;
+
+/*
+	double num_distrib =
+		heap->heap_count.num_distrib - num_live_total;
+*/
+
+/*
 	unsigned int num_distrib =
 		num_free_total > num_live_total
 		? num_free_total : num_live_total;
+*/
+
 	for (i = 0; i < NUM_SUBHEAPS; i++) {
 		struct subheap_count *count = &heap->count[i];
 		double allocspeed =
@@ -1498,7 +1526,7 @@ sml_notice("%2u : %7u alloc (%4.2f -> %4.2f) %7u want %7u free %4u add",
 		count->allocspeed_ratio = allocspeed_ratio;
 		unsigned int want_block =
 			num_distrib * allocspeed_ratio;
-		unsigned int shortage_block =
+		double shortage_block =
 			want_block > stat[i].num_blocks_free
 			? want_block - stat[i].num_blocks_free
 			: 0;
@@ -1519,8 +1547,9 @@ sml_notice("%2u : %7u alloc (%4.2f -> %4.2f) %7u want %7u free %4u add",
 			ceil(num_room * count->threshold_ratio);
 		if (count->threshold <= 0)
 			count->threshold++;
+
 #if 0
-sml_notice("%2u : %7u alloc (%4.2f) %7u live %7u want %7u free %4u add %.1f",
+sml_notice("%2u : %7u (%4.2f) alloc %7u live %7u want %7u free %4u req %.1f",
 	   i + BLOCKSIZE_MIN_LOG2,
 	   stat[i].num_blocks_alloced,
 	   allocspeed,
@@ -1532,11 +1561,27 @@ sml_notice("%2u : %7u alloc (%4.2f) %7u live %7u want %7u free %4u add %.1f",
 	   );
 #endif
 	}
+
 #if 0
-sml_notice("   : %7u alloc        %7u live              %7u free total",
-	   num_alloc_total, num_live_total, num_free_total);
+sml_notice("   : %7u alloc        %7u live %7u dist %7u free total",
+	   num_alloc_total, num_live_total, (unsigned int)num_distrib, num_free_total);
+sml_notice("Acc: %7llu alloc        %7llu gc (%.3f%%)",
+	   (unsigned long long)heap->heap_count.alloc_accum,
+	   (unsigned long long)heap->heap_count.gc_accum,
+	   gc_ratio * 100);
 #endif
 
+#if 0
+unsigned int n_ = 0;
+{struct segment *s;
+ for (s = load_relaxed(&segment_pool.freelist); s; s = s->next) n_++;}
+#endif
+
+#if 0
+sml_notice("heap %p reclaim end", heap);
+print_heap_summary(heap);
+mutex_unlock(&m);
+#endif
 }
 
 static void
@@ -1544,20 +1589,20 @@ reclaim_subpool(struct subpool *subpool, struct segment_list *free)
 {
 	struct segment_list partial, filled;
 	struct segment *seg;
-	sml_bmword_t summary;
 
 	/* partial_markedから1つずつセグメントを取り出して，
 	 * コレクトビットマップのクリアを行う．コレクトビットマップを
 	 * クリアしたセグメントは，ブロックの使用状況に応じて
 	 * partialかfreelistに戻される．*/
 	while ((seg = segment_pop(&subpool->partial_marked))) {
-		sml_bmword_t summary = copy_collect_bitmap(seg);
-		if (summary == 0) {
+		copy_collect_bitmap(seg);
+		seg->allocptr_snapshot = BLOCK_BASE(seg);
+		DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
+		seg->free_count = free_count(seg, NULL);
+		if (seg->free_count == seg->layout->num_blocks) {
 			LIST_APPEND(free, seg);
 		} else {
 			clear_collect_bitmap(seg);
-			seg->allocptr_snapshot = BLOCK_BASE(seg);
-			DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
 			segment_push(&subpool->partial, seg);
 		}
 	}
@@ -1565,17 +1610,17 @@ reclaim_subpool(struct subpool *subpool, struct segment_list *free)
 	LIST_INIT(&partial);
 	LIST_INIT(&filled);
 	for (seg = subpool->filled; seg; seg = seg->next) {
-		summary = copy_collect_bitmap(seg);
-		if (summary == 0) {
-			LIST_APPEND(free, seg);
-		} else if (summary == -1U) {
+		copy_collect_bitmap(seg);
+		seg->allocptr_snapshot = BLOCK_BASE(seg);
+		DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
+		seg->free_count = free_count(seg, NULL);
+		if (seg->free_count == 0) {
 			clear_collect_bitmap(seg);
-			seg->allocptr_snapshot = BLOCK_BASE(seg);
 			LIST_APPEND(&filled, seg);
+		} else if (seg->free_count == seg->layout->num_blocks) {
+			LIST_APPEND(free, seg);
 		} else {
 			clear_collect_bitmap(seg);
-			seg->allocptr_snapshot = BLOCK_BASE(seg);
-			DEBUG(scribble_segment(seg, BLOCK_BASE(seg)));
 			LIST_APPEND(&partial, seg);
 		}
 	}
@@ -1622,18 +1667,7 @@ sml_heap_worker_async(struct sml_alloc *alloc)
 	 * 働く可能性があるので，remembered_setをNULLクリアする．*/
 	store_relaxed(&alloc->remembered_set, NULL);
 
-
-//static pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-
-//mutex_lock(&m);
-//sml_notice("allocator %p reclaim start", alloc);
-//print_heap_summary(&alloc->heap);
-
 	reclaim_heap(&alloc->heap);
-
-//sml_notice("allocator %p reclaim end", alloc);
-//print_heap_summary(&alloc->heap);
-//mutex_unlock(&m);
 }
 
 void
@@ -1705,16 +1739,24 @@ try_find_segment(struct sml_alloc *alloc, unsigned int subheap_index,
 		seg = subheap->partial;
 		subheap->partial = subheap->partial->next;
 	} else {
-#if 0
+#if 1
 		if (count->extension_room == 0)
 			return NULL;
 #endif
-		seg = get_segment_from_pool(&segment_pool, subheap_index,
-					    phase);
-		if (!seg)
-			return NULL;
+		seg = segment_list_pop(&alloc->heap.freelist);
+		if (seg) {
+			init_segment(seg, subheap_index);
+		} else {
+			seg = get_segment_from_pool(&segment_pool,
+						    subheap_index,
+						    phase);
+			if (!seg)
+				return NULL;
+		}
 //DBG("try_find_segment alloc=%p seg=%p", alloc, seg);
-	count->extension_room--;
+
+		if (count->extension_room > 0)
+			count->extension_room--;
 	}
 
 	set_alloc_ptr(ptr, seg, phase);
@@ -1939,6 +1981,7 @@ sml_alloc_important(struct sml_alloc *alloc, unsigned int objsize,
 	obj = try_find_segment(alloc, subheap_index, phase);
 	if (obj) goto alloced;
 
+#if 0
 	/* count->extension_roomにひっかかっただけなら，
 	 * 無理やりextension_roomを上げてセグメントをアロケートする */
 	struct subheap_count *count = &alloc->heap.count[subheap_index];
@@ -1947,6 +1990,7 @@ sml_alloc_important(struct sml_alloc *alloc, unsigned int objsize,
 		obj = try_find_segment(alloc, subheap_index, phase);
 		if (obj) goto alloced;
 	}
+#endif
 
 	/* それでもだめなら他のサイズのセグメントを転用する */
 	if (subheap_index < NUM_SUBHEAPS - 1) {
@@ -1976,6 +2020,9 @@ sml_heap_destroy()
 {
 	/* ToDo */
 #ifdef GCTIME
-	sml_notice(" alloced: %u", load_relaxed(&segment_pool.memory.alloced));
+	sml_notice(" alloced: %u # (%.3f MB)",
+		   (unsigned int)load_relaxed(&segment_pool.memory.alloced),
+		   (double)load_relaxed(&segment_pool.memory.alloced)
+		   * SEGMENT_SIZE / 1024 / 1024);
 #endif
 }

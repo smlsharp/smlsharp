@@ -1,0 +1,9 @@
+_require       "../../../../basis.smi"
+_require       "../../../../smlnj-lib/Util/binary-map-fn.smi"
+
+structure FileIDStringOrd =
+struct
+  type ord_key = {fileId:int, string:string}
+  val compare : ord_key * ord_key -> order
+end
+structure FileIDStringMap = BinaryMapFn(FileIDStringOrd)

@@ -103,21 +103,21 @@ struct
     | INTERFACE of tfun
 
    and idstatus
-    = IDVAR of {id:varId, longsymbol:longsymbol}
-    | IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol}
-    | IDEXVAR of {exInfo:{longsymbol: longsymbol, version:version, used:bool ref, ty:ty}, 
-                  internalId:varId option}
-    | IDEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId,  version:version}
-    | IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty}
-    | IDCON of {id:conId, ty:ty, longsymbol:longsymbol}
-    | IDEXN of {id:exnId, ty:ty, longsymbol:longsymbol}
-    | IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol}
-    | IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty}
-    | IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol}
-    | IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol}
-    | IDSPECVAR of {ty:ty, symbol:symbol}
-    | IDSPECEXN of {ty:ty, symbol:symbol}
-    | IDSPECCON of {symbol:symbol}
+    = IDVAR of {id:varId, longsymbol:longsymbol, defRange:loc}
+    | IDVAR_TYPED of {id:varId, ty:ty, longsymbol:longsymbol, defRange:loc}
+    | IDEXVAR of {exInfo:{longsymbol: longsymbol, version:version, used:bool ref, ty:ty},
+                  internalId:varId option, defRange:loc}
+    | IDEXVAR_TOBETYPED of {longsymbol:longsymbol, id:varId,  version:version, defRange:loc}
+    | IDBUILTINVAR of {primitive: BuiltinPrimitive.primitive, ty:ty, defRange:loc}
+    | IDCON of {id:conId, ty:ty, longsymbol:longsymbol, defRange:loc}
+    | IDEXN of {id:exnId, ty:ty, longsymbol:longsymbol, defRange:loc}
+    | IDEXNREP of {id:exnId, ty:ty, longsymbol:longsymbol, defRange:loc}
+    | IDEXEXN of {used:bool ref, longsymbol:longsymbol, version:version, ty:ty, defRange:loc}
+    | IDEXEXNREP of {used:bool ref, ty:ty, version:version, longsymbol:longsymbol, defRange:loc}
+    | IDOPRIM of {id:oprimId, overloadDef:icdecl, used:bool ref, longsymbol:longsymbol, defRange:loc}
+    | IDSPECVAR of {ty:ty, symbol:symbol, defRange:loc}
+    | IDSPECEXN of {ty:ty, symbol:symbol, defRange:loc}
+    | IDSPECCON of {symbol:symbol, defRange:loc}
 
    and icexp 
     = ICERROR
@@ -157,6 +157,7 @@ struct
       * {tyvars: (tvar * tvarKind) list, arg:icpat, body:icexp} list 
       * loc
     | ICRECORD_UPDATE of icexp * (RecordLabel.label * icexp) list * loc
+    | ICRECORD_UPDATE2 of icexp * icexp * loc
     | ICRECORD_SELECTOR of RecordLabel.label * loc 
     | ICSELECT of RecordLabel.label * icexp * loc
     | ICSEQ of icexp list * loc
@@ -419,4 +420,19 @@ struct
   val tfunProperty : tfun -> property option
   val tfunkindId : tfunkind -> typId
   val tfvId : tfunkind ref -> typId
+  val varInfoToIdInfo : 
+      varInfo -> Loc.loc -> {longsymbol: longsymbol, id: varId, defRange:Loc.loc}
+  val oprimInfoToIdInfo : 
+      oprimInfo -> Loc.loc -> {longsymbol: longsymbol, id: oprimId, defRange:Loc.loc}
+  val exInfoToIdInfo : 
+      exInfo -> Loc.loc -> {used:bool ref, longsymbol: longsymbol, version:version, ty:ty, defRange:Loc.loc}
+  val conInfoToIdInfo : 
+      conInfo -> Loc.loc -> {longsymbol: longsymbol, ty:ty, id: conId, defRange:Loc.loc}
+  val exnInfoToIdInfo : 
+      exnInfo -> Loc.loc -> {longsymbol: longsymbol, id: exnId, ty:ty, defRange:Loc.loc}
+  val idInfoToExnInfo : 
+      {longsymbol: longsymbol, id: exnId, ty:ty, defRange:Loc.loc} -> exnInfo
+  val idInfoToExExnInfo :
+      {used:bool ref, longsymbol:longsymbol, version:version, ty:ty, defRange:loc} ->
+      {used:bool ref, longsymbol:longsymbol, version:version, ty:ty}
 end

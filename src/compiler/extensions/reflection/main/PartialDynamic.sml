@@ -145,6 +145,7 @@ struct
     | RTm.VOID_WITHTy ty => ty
     | RTm.UNIT => RTy.UNITty
     | RTm.UNPRINTABLE => RTy.VOIDty
+    | RTm.ELLIPSIS => raise Bug.Bug "ELLIPSIS to inferTy"
     | RTm.VECTOR (elemTy, boxed) => RTy.VECTORty elemTy
     | RTm.VECTOR_PRINT _ => raise Bug.Bug "VECTOR_PRINT to inferTy"
     | RTm.WORD32 word => RTy.WORD32ty
@@ -153,23 +154,25 @@ struct
     | RTm.WORD8 word8 => RTy.WORD8ty
 
   fun projectTerm (term, ty) =
-      if subsumeTy (inferTy term, ty) then term
-      else
-        case (term, ty) of
-          (RTm.RECORD fields, RTy.RECORDty tyFields) =>
-          RTm.RECORD
-            (RecordLabel.Map.mergeWith
-               (fn (SOME term, SOME ty) => SOME (projectTerm (term, ty))
-                 | (SOME term, NONE) => NONE
-                 | (NONE, SOME _) =>  raise Bug.Bug "projectTerm impossible (1)"
-                 | (NONE, NONE) =>  NONE)
-               (fields, tyFields)
-            )
+      case (term, ty) of
+        (RTm.RECORD fields, RTy.RECORDty tyFields) =>
+        RTm.RECORD
+          (RecordLabel.Map.mergeWith
+             (fn (SOME term, SOME ty) => SOME (projectTerm (term, ty))
+               | (SOME term, NONE) => NONE
+               | (NONE, SOME _) =>  raise Bug.Bug "projectTerm impossible (1)"
+               | (NONE, NONE) =>  NONE)
+             (fields, tyFields)
+          )
+        | (RTm.RECORD fields, _) => raise RuntimeTypeError
         | (RTm.LIST termList, RTy.LISTty elemTy) => 
           RTm.LIST (map (fn term => projectTerm(term, elemTy)) termList)
-        | (_, RTy.VOIDty) => raise RuntimeTypeError
+        | (RTm.LIST termList, _) => raise RuntimeTypeError
         | (RTm.NULL, _) => term
-        | _ => raise Bug.Bug "projectTerm impossible (2)"
+        | (_, RTy.VOIDty) => raise RuntimeTypeError
+        | _ =>
+          if subsumeTy (inferTy term, ty) then term
+          else raise RuntimeTypeError
 
   fun coerceTermGeneric (dynamic, tyRep:ReifiedTy.tyRep) =
       let
@@ -234,7 +237,10 @@ struct
   fun dynamicExistInstance {conSetEnv, instances} id =
       case IEnv.find (instances, id) of
         NONE => raise Bug.Bug "dynamicExistInstance"
-      | SOME ty => {conSetEnv = conSetEnv, reifiedTy = ty}
+      | SOME ty =>
+        {reify = {conSetEnv = conSetEnv, reifiedTy = ty},
+         size = RTy.sizeOf ty,
+         tag = ReifiedTermToML.tagToWord (ReifiedTermToML.constTag ty)}
 
   fun ('a, 'b) dynamicTypeCase
                (dynamic: 'a RTm.dyn) 

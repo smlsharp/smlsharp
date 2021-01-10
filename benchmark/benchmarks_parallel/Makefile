@@ -4,12 +4,13 @@ CPPFLAGS = -I_thread -Imassivethreads/include
 LDFLAGS = -Lmassivethreads/lib
 SMLSHARP = ../../src/compiler/smlsharp -B../../src
 SMLFLAGS = -O2
-GHC = ghc
+GHC = ~/work/ghc-8.10.2/o/bin/ghc
 GHCFLAGS = -O2
-GO = go
+GO = ~/work/go/bin/go
 JAVAC = javac
-PMLC = pmlc
-MPL = mpl
+PMLC = ~/work/manticore/o/bin/pmlc
+MPL = ~/work/mpl/build/bin/mpl
+OCAMLFIND = ocamlfind
 
 all: \
 fib/fib_c_myth \
@@ -24,6 +25,7 @@ fib/FibJavaForkJoin.class \
 fib/FibJavaSeq.class \
 fib/fib_manticore_ptuple \
 fib/fib_maple_par \
+fib/fib_ocaml_domainslib \
 nqueen/nqueen_c_myth \
 nqueen/nqueen_c_pthread \
 nqueen/nqueen_c_seq \
@@ -37,6 +39,7 @@ nqueen/NqueenJavaForkJoin.class \
 nqueen/NqueenJavaSeq.class \
 nqueen/nqueen_manticore_ptuple \
 nqueen/nqueen_maple_par \
+nqueen/nqueen_ocaml_domainslib \
 mandelbrot/mandelbrot_c_myth \
 mandelbrot/mandelbrot_c_pthread \
 mandelbrot/mandelbrot_c_seq \
@@ -50,6 +53,7 @@ mandelbrot/MandelbrotJavaForkJoin.class \
 mandelbrot/MandelbrotJavaSeq.class \
 mandelbrot/mandelbrot_manticore_ptuple \
 mandelbrot/mandelbrot_maple_par \
+mandelbrot/mandelbrot_ocaml_domainslib \
 cilksort/cilksort_c_myth \
 cilksort/cilksort_c_pthread \
 cilksort/cilksort_c_seq \
@@ -62,7 +66,8 @@ cilksort/cilksort_ghc_par \
 cilksort/cilksort_ghc_forkIO \
 cilksort/cilksort_go_value \
 cilksort/CilksortJavaForkJoin.class \
-cilksort/CilksortJavaSeq.class
+cilksort/CilksortJavaSeq.class \
+cilksort/cilksort_ocaml_domainslib
 
 clean:
 	rm -f _thread/thread_c_myth.o
@@ -88,6 +93,10 @@ clean:
 	rm -f fib/fib_manticore_ptuple.s
 	rm -f fib/fib_manticore_ptuple
 	rm -f fib/fib_maple_par
+	rm -f fib/fib_ocaml_domainslib
+	rm -f fib/fib_ocaml_domainslib.cmi
+	rm -f fib/fib_ocaml_domainslib.cmx
+	rm -f fib/fib_ocaml_domainslib.o
 	rm -f nqueen/nqueen_c_thread.o
 	rm -f nqueen/nqueen_c_myth
 	rm -f nqueen/nqueen_c_pthread
@@ -108,6 +117,10 @@ clean:
 	rm -f nqueen/nqueen_manticore_ptuple.s
 	rm -f nqueen/nqueen_manticore_ptuple
 	rm -f nqueen/nqueen_maple_par
+	rm -f nqueen/nqueen_ocaml_domainslib
+	rm -f nqueen/nqueen_ocaml_domainslib.cmi
+	rm -f nqueen/nqueen_ocaml_domainslib.cmx
+	rm -f nqueen/nqueen_ocaml_domainslib.o
 	rm -f mandelbrot/mandelbrot_c_thread.o
 	rm -f mandelbrot/mandelbrot_c_myth
 	rm -f mandelbrot/mandelbrot_c_pthread
@@ -128,6 +141,10 @@ clean:
 	rm -f mandelbrot/mandelbrot_maple_par
 	rm -f mandelbrot/MandelbrotJavaForkJoin.class
 	rm -f mandelbrot/MandelbrotJavaSeq.class
+	rm -f mandelbrot/mandelbrot_ocaml_domainslib
+	rm -f mandelbrot/mandelbrot_ocaml_domainslib.cmi
+	rm -f mandelbrot/mandelbrot_ocaml_domainslib.cmx
+	rm -f mandelbrot/mandelbrot_ocaml_domainslib.o
 	rm -f cilksort/cilksort_c_thread.o
 	rm -f cilksort/cilksort_c_myth
 	rm -f cilksort/cilksort_c_pthread
@@ -150,6 +167,10 @@ clean:
 	rm -f cilksort/CilksortJavaForkJoin\$$Merge.class
 	rm -f cilksort/CilksortJavaForkJoin\$$SortMerge.class
 	rm -f cilksort/CilksortJavaSeq.class
+	rm -f cilksort/cilksort_ocaml_domainslib
+	rm -f cilksort/cilksort_ocaml_domainslib.cmi
+	rm -f cilksort/cilksort_ocaml_domainslib.cmx
+	rm -f cilksort/cilksort_ocaml_domainslib.o
 
 bench: all bench.sh
 	sh bench.sh
@@ -195,6 +216,8 @@ fib/fib_manticore_ptuple: fib/fib_manticore_ptuple.pml
 	$(PMLC) -o $@ fib/fib_manticore_ptuple.pml
 fib/fib_maple_par: fib/fib_maple_par.sml fib/fib_maple_par.mlb
 	$(MPL) fib/fib_maple_par.mlb
+fib/fib_ocaml_domainslib: fib/fib_ocaml_domainslib.ml
+	$(OCAMLFIND) ocamlopt -linkpkg -package domainslib,unix -o $@ -O2 fib/fib_ocaml_domainslib.ml
 
 nqueen/nqueen_c_thread.o: nqueen/nqueen_c_thread.c _thread/thread_c.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ nqueen/nqueen_c_thread.c
@@ -226,6 +249,8 @@ nqueen/nqueen_manticore_ptuple: nqueen/nqueen_manticore_ptuple.pml
 	$(PMLC) -o $@ nqueen/nqueen_manticore_ptuple.pml
 nqueen/nqueen_maple_par: nqueen/nqueen_maple_par.sml nqueen/nqueen_maple_par.mlb
 	$(MPL) nqueen/nqueen_maple_par.mlb
+nqueen/nqueen_ocaml_domainslib: nqueen/nqueen_ocaml_domainslib.ml
+	$(OCAMLFIND) ocamlopt -linkpkg -package domainslib,unix -o $@ -O2 nqueen/nqueen_ocaml_domainslib.ml
 
 mandelbrot/mandelbrot_c_thread.o: mandelbrot/mandelbrot_c_thread.c _thread/thread_c.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ mandelbrot/mandelbrot_c_thread.c
@@ -257,6 +282,8 @@ mandelbrot/mandelbrot_manticore_ptuple: mandelbrot/mandelbrot_manticore_ptuple.p
 	$(PMLC) -o $@ mandelbrot/mandelbrot_manticore_ptuple.pml
 mandelbrot/mandelbrot_maple_par: mandelbrot/mandelbrot_maple_par.sml mandelbrot/mandelbrot_maple_par.mlb
 	$(MPL) mandelbrot/mandelbrot_maple_par.mlb
+mandelbrot/mandelbrot_ocaml_domainslib: mandelbrot/mandelbrot_ocaml_domainslib.ml
+	$(OCAMLFIND) ocamlopt -linkpkg -package domainslib,unix -o $@ -O2 mandelbrot/mandelbrot_ocaml_domainslib.ml
 
 cilksort/cilksort_c_thread.o: cilksort/cilksort_c_thread.c _thread/thread_c.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ cilksort/cilksort_c_thread.c
@@ -288,3 +315,49 @@ cilksort/cilksort_manticore_ptuple: cilksort/cilksort_manticore_ptuple.pml
 	$(PMLC) -o $@ cilksort/cilksort_manticore_ptuple.pml
 cilksort/cilksort_maple_par: cilksort/cilksort_maple_par.sml cilksort/cilksort_maple_par.mlb
 	$(MPL) cilksort/cilksort_maple_par.mlb
+cilksort/cilksort_ocaml_domainslib: cilksort/cilksort_ocaml_domainslib.ml
+	$(OCAMLFIND) ocamlopt -linkpkg -package domainslib,unix -o $@ -O2 cilksort/cilksort_ocaml_domainslib.ml
+
+
+
+
+
+
+
+smlsharp-3.5.0.tar.gz:
+	curl -O https://www.pllab.riec.tohoku.ac.jp/smlsharp/download/$@
+
+smlsharp-3.5.0/src/runtime/libsmlsharp.a: smlsharp-3.5.0.tar.gz
+	-rm -rf smlsharp-3.5.0
+	tar -xzf smlsharp-3.5.0.tar.gz
+	cp ../../config.status smlsharp-3.5.0/
+	(cd smlsharp-3.5.0 && ./config.status --recheck && ./config.status)
+	sed -i.orig -e '/^DEFS =/s/$$/ -DGCTIME/' smlsharp-3.5.0/config.mk
+	(cd smlsharp-3.5.0 && make runtime)
+
+smlsharp35: \
+ fib/fib_smlsharp35_seq \
+ fib/fib_smlsharp35_myth \
+ nqueen/nqueen_smlsharp35_seq \
+ nqueen/nqueen_smlsharp35_myth \
+ mandelbrot/mandelbrot_smlsharp35_seq \
+ mandelbrot/mandelbrot_smlsharp35_myth \
+ cilksort/cilksort_smlsharp35_seq \
+ cilksort/cilksort_smlsharp35_myth
+
+fib/fib_smlsharp35_seq: fib/fib_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_seq.o fib/fib_smlsharp_thread.o smlsharp_seq.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_seq.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o fib/fib_smlsharp_thread.smi smlsharp-3.5.0/src/runtime/libsmlsharp.a
+fib/fib_smlsharp35_myth: fib/fib_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_myth.o fib/fib_smlsharp_thread.o smlsharp_myth.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_myth.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o fib/fib_smlsharp_thread.smi smlsharp-3.5.0/src/runtime/libsmlsharp.a -lmyth
+nqueen/nqueen_smlsharp35_seq: nqueen/nqueen_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_seq.o nqueen/nqueen_smlsharp_thread.o smlsharp_seq.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_seq.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o nqueen/nqueen_smlsharp_thread.smi smlsharp-3.5.0/src/runtime/libsmlsharp.a
+nqueen/nqueen_smlsharp35_myth: nqueen/nqueen_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_myth.o nqueen/nqueen_smlsharp_thread.o smlsharp_myth.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_myth.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o nqueen/nqueen_smlsharp_thread.smi -lmyth smlsharp-3.5.0/src/runtime/libsmlsharp.a
+mandelbrot/mandelbrot_smlsharp35_seq: mandelbrot/mandelbrot_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_seq.o mandelbrot/mandelbrot_smlsharp_thread.o smlsharp_seq.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_seq.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o mandelbrot/mandelbrot_smlsharp_thread.smi smlsharp-3.5.0/src/runtime/libsmlsharp.a
+mandelbrot/mandelbrot_smlsharp35_myth: mandelbrot/mandelbrot_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_myth.o mandelbrot/mandelbrot_smlsharp_thread.o smlsharp_myth.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_myth.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o mandelbrot/mandelbrot_smlsharp_thread.smi smlsharp-3.5.0/src/runtime/libsmlsharp.a -lmyth
+cilksort/cilksort_smlsharp35_seq: cilksort/cilksort_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_seq.o cilksort/cilksort_smlsharp_thread.o smlsharp_seq.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_seq.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o cilksort/cilksort_smlsharp_thread.smi smlsharp-3.5.0/src/runtime/libsmlsharp.a
+cilksort/cilksort_smlsharp35_myth: cilksort/cilksort_smlsharp_thread.smi _thread/thread_smlsharp.smi _thread/thread_smlsharp_myth.o cilksort/cilksort_smlsharp_thread.o smlsharp_myth.filemap smlsharp-3.5.0/src/runtime/libsmlsharp.a
+	$(SMLSHARP) $(LDFLAGS) -filemap=smlsharp_myth.filemap -o $@ -nostdlib smlsharp-3.5.0/src/runtime/main.o cilksort/cilksort_smlsharp_thread.smi -lmyth smlsharp-3.5.0/src/runtime/libsmlsharp.a

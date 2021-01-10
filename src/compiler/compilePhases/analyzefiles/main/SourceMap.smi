@@ -1,0 +1,14 @@
+_require "../../../../basis.smi"
+_require local "../../../../reify.smi"
+
+_require        "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require local "../../../libs/toolchain/main/Filename.smi"
+_require        "../../../../smlnj-lib/Util/binary-map-fn.smi"
+
+structure SourceOrd =
+struct
+  type ord_key = InterfaceName.source
+  val compare : ord_key * ord_key -> order
+end
+structure SourceMap = BinaryMapFn(SourceOrd)
+

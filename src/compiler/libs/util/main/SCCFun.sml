@@ -13,6 +13,17 @@ sig
   val scc : graph -> elem list list
 end
 
+signature ORD_MAP =
+sig
+  structure Key : sig
+    type ord_key
+  end
+  type 'a map
+  val empty : 'a map
+  val insert : 'a map * Key.ord_key * 'a -> 'a map
+  val find : 'a map * Key.ord_key -> 'a option
+end
+
 functor SCCFun (IMap:ORD_MAP) :> SCC where type elem = IMap.Key.ord_key =
 struct
   type elem = IMap.Key.ord_key

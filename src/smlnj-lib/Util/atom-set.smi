@@ -1,0 +1,3 @@
+_require "./atom-redblack-set.smi"
+
+structure AtomSet = AtomRedBlackSet

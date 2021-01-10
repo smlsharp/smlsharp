@@ -1,8 +1,11 @@
-_require "./SMLSharp_OSFileSys.smi"
-_require "../../smlnj/Basis/Unix/os-path.smi"
-_require "./SMLSharp_OSIO.smi"
-_require "./SMLSharp_OSProcess.smi"
-_require "./SMLSharp_Runtime.smi"
+_require       "./SMLSharp_OSFileSys.smi"
+_require       "./SMLSharp_OSIO.smi"
+_require       "./SMLSharp_OSProcess.smi"
+_require       "./SMLSharp_Runtime.smi"
+(*
+_require       "../../smlnj/Basis/OS/os-path-fn.smi"
+*)
+_require       "../../smlnj/Basis/Unix/os-path.smi"
 
 structure OS =
 struct

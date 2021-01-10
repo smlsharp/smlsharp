@@ -1,28 +1,27 @@
+_require "../../../../basis.smi"
+_require local "../../../../reify.smi"
+_require local "./AnalyzerDB.smi"
+_require local "./AnalyzerTy.smi"
+_require local "./Analyzers.smi"
+_require local "./DBSchema.smi"
+_require local "./InfoMaps.smi"
+_require local "./SetupFiles.smi"
+_require local "./SourceMap.smi"
+_require local "../../parser/main/Parser.smi"
+_require       "../../toplevel/main/Top.smi"
+_require       "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
+_require local "../../../data/control/main/Control.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/toolchain/main/Filename.smi"
-_require local "../../../../smlnj-lib/Util/binary-map-fn.smi"
-_require local "../../../../smlnj-lib/Util/binary-set-fn.smi"
-_require local "../../../../basis.smi"
-(* _require local "../../../data/symbols/main/Loc.smi" *)
-(* _require local "../../../extensions/debug/main/Bug.smi" *)
-_require local "../../../compilePhases/loadfile/main/LoadFile.smi"
-_require local "../../../compilePhases/parser/main/Parser.smi"
-_require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
-_require "../../../compilePhases/toplevel/main/Top.smi"
-_require "../../../compilePhases/main/main/FilenameMap.smi"
-_require local "../../../compilePhases/main/main/MainUtils.smi"
-_require local "../../../../reifyTy.smi"
-(* _require local "../../../../sql.smi" *)
-_require "../../../libs/toolchain/main/LLVMUtils.smi"
+_require       "../../../libs/toolchain/main/LLVMUtils.smi"
 
 structure AnalyzeFiles =
 struct
-  val analyzeFiles
-      : ['a#{topOptions : Top.options,
-             topContext: unit -> Top.toplevelContext,
-             llvmOptions: LLVMUtils.compile_options,
-             fileMap : (unit -> FilenameMap.map) option}.
-         'a
-         -> InterfaceName.source
-         -> unit]
 
+  val analyzeFiles : 
+      ['a#{llvmOptions : LLVMUtils.compile_options,
+           topOptions : Top.options,
+           topContext : unit -> Top.toplevelContext}.
+          'a -> string -> InterfaceName.source -> unit]
 end

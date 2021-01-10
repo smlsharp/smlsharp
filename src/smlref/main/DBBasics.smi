@@ -1,0 +1,34 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "sql.smi"
+_require "./Config.smi"
+_require "./DBSchema.smi"
+
+structure DBBasics =
+struct
+ val fileIdToFileName : int -> string
+ val fileNameToFileId : string -> int
+ val findSymInFile :
+     {fileName:string, symbol:string} -> 
+     (string *
+      {kind:string, 
+      category:string, 
+      sourceFileId:int, 
+      fileId:int, 
+      startPos:int, 
+      endPos:int, 
+      symbol:string}) list
+ val findParents :
+     {fileId:int, startPos:int, endPos:int, symbol:string}
+     -> {kind:string, 
+         category:string, 
+         defRangeEndPos:int, 
+         defRangeFileId:int, 
+         defRangeStartPos:int, 
+         defSymbol:string,
+         defSymbolFileId:int,
+         defSymbolEndPos:int, 
+         defSymbolStartPos:int, 
+         definedSymbol:string
+        } list
+end

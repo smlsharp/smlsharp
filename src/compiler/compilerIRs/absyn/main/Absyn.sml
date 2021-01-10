@@ -250,6 +250,11 @@ struct
        *)
       EXPRECORD_UPDATE of exp * (RecordLabel.label * exp) list * loc
     | (*%
+         @format(exp * updateExp * loc)
+          exp + "#" + updateExp
+       *)
+      EXPRECORD_UPDATE2 of exp * exp * loc
+    | (*%
          @format(selector * loc) "#"selector
        *)
       EXPRECORD_SELECTOR of RecordLabel.label * loc
@@ -463,12 +468,12 @@ struct
              vars:ifCons()(+)
              binds(bind)(~1[ +1 "and"] +)
            ]
-         @format:bind(pat * exp) 
+         @format:bind(pat * exp * loc) 
            1[
               pat + "="  +1 exp
             ]
        *)
-      DECVAL of kindedTvar list * (pat * exp) list * loc
+      DECVAL of kindedTvar list * (pat * exp * loc) list * loc
     | (*%
          @format(var vars * bind binds * loc)
           1[
@@ -478,12 +483,12 @@ struct
              "rec" +d 
              binds(bind)(~1[+1 "and" +])
              ]
-          @format:bind(pat * exp) 
+          @format:bind(pat * exp * loc) 
            1[
              pat +d "=" +1 exp
             ]
        *)
-      DECREC of kindedTvar list * (pat * exp) list * loc
+      DECREC of kindedTvar list * (pat * exp * loc) list * loc
     | (*%
          @format(bind binds * loc)
           1[
@@ -491,12 +496,12 @@ struct
              "_polyRec" +d 
              binds(bind)(~1[+1 "and" +])
              ]
-          @format:bind(fid * ty * exp) 
+          @format:bind(fid * ty * exp * loc) 
            1[
              fid + ty + "=" +1 exp
             ]
        *)
-      DECPOLYREC of (symbol * ty * exp) list * loc
+      DECPOLYREC of (symbol * ty * exp * loc) list * loc
     | (*%
          @format(var vars * rules binds * loc)
            1[
@@ -684,7 +689,7 @@ struct
        *)
       SIGEXPBASIC of spec * loc (*basic*)
     | (*%
-       * @format(sigid * loc) {sigid} 
+       * @format(sigid * loc) {sigid "(" loc ")"} 
        *)
       SIGID of symbol * loc (*signature identifier*)
     | (*%
@@ -754,7 +759,7 @@ struct
          @format(datdesc datdescs * loc)
            1[ "datatype" + datdescs(datdesc)(~1[ +1 "and"] +)
             ]
-         @format:datdesc(tyvar tyvars * tyCon * condesc condescs) 
+         @format:datdesc(tyvar tyvars * tyCon * condesc condescs * loc) 
            1[
               tyvars:seqList(tyvar)("(", ",", ")")
               tyvars:ifCons()(+)
@@ -762,10 +767,11 @@ struct
               +1
               condescs(condesc)(~1[ +1 "|" ] +)
            ]
-         @format:condesc(vid * ty option:prependedOpt)
+         @format:condesc(vid * ty option:prependedOpt * loc)
             vid option(ty)(+d "of" +)
        *)
-      SPECDATATYPE of (tvar list * symbol * (symbol * ty option) list ) list * loc (* datatype*)
+      SPECDATATYPE of (tvar list * symbol * (symbol * ty option * loc) list * loc) list * loc
+    (* datatype*)
     | (*%
          @format(tyCon * longsymbol * loc)
            "datatype" + tyCon + "=" + "datatype" + longsymbol
@@ -776,10 +782,10 @@ struct
            1[ 
               "exception" + exdescs(exdesc)(~1[ +1 "and" ]+)
             ]
-          @format:exdesc(vid * ty option:prependedOpt)
+          @format:exdesc(vid * ty option:prependedOpt * loc)
              vid option(ty)(+d "of" +)
        *)     
-      SPECEXCEPTION of (symbol * ty option) list * loc (* exception *)
+      SPECEXCEPTION of (symbol * ty option * loc) list * loc (* exception *)
     | (*%
          @format(strdesc strdescs * loc)
            1[
@@ -876,7 +882,7 @@ struct
     | (*%
          @format(sigdec sigdecs * loc)
            1[
-              "signature" + 
+              "signature" + "(" loc ")" +
                  sigdecs(sigdec)(~1[+1 "and"] +)
             ]
          @format:sigdec(sigid * sigexp) 
@@ -950,6 +956,7 @@ struct
       | EXPOPID (_, loc) => loc
       | EXPRECORD (_, loc) => loc
       | EXPRECORD_UPDATE (_, _, loc) => loc
+      | EXPRECORD_UPDATE2 (_, _, loc) => loc
       | EXPRECORD_SELECTOR (_, loc) => loc
       | EXPTUPLE (_, loc) => loc
       | EXPLIST (_, loc) => loc

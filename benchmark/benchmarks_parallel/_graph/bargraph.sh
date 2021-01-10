@@ -8,10 +8,11 @@
 : ${linecolor8:=khaki}
 : ${xtics:=xtics}
 : ${setkey:=key}
+: ${xrange:=14.8}
 : ${yrange:=3}
 : ${xlabel='the number of workers'}
 : ${ylabel='Execution time (sec.)'}
-: ${bbox:='64 51 297 160'}
+: ${bbox:='61 51 297 160'}
 (
   cat <<-END
 	set term postscript eps enhanced color font "Helvetica";
@@ -22,7 +23,7 @@
 	set xlabel "$xlabel";
 	set ylabel "$ylabel";
 	set yrange [0.0:$yrange];
-	set xrange [-1.5:14.8];
+	set xrange [-1.5:$xrange];
 	set xlabel font "Helvetica,14";
 	set ylabel font "Helvetica,14";
 	set tics font "Helvetica,14";

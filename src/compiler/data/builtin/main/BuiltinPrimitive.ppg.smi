@@ -1,5 +1,6 @@
 (* _require local "../../../../basis.smi" *)
 _require "../../../../smlformat-lib.smi"
+_require "../../symbols/main/Loc.smi"
 
 structure BuiltinPrimitive =
 struct

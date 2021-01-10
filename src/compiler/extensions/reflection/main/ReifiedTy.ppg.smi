@@ -42,40 +42,35 @@ struct
     = ARRAYty of reifiedTy
     | BOOLty
     | BOTTOMty
-    | BOXEDty
     | BOUNDVARty of BoundTypeVarID.id
+    | BOXEDty
     | CHARty
     | CODEPTRty
-    | CONSTRUCTty of
-      {longsymbol: Symbol.longsymbol, 
-       id:TypID.id, 
-       args:reifiedTy list,
-       conSet:reifiedTy option SEnv.map, layout:layout, size:int}
-    | DATATYPEty of
-      {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, layout:layout, size:int}
+    | CONSTRUCTty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, conSet:reifiedTy option SEnv.map, layout:layout, size:int}
+    | DATATYPEty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, layout:layout, size:int}
     | DUMMYty of {boxed : bool, size : word}
-    | EXISTty of {boxed : bool, size : word, id : int}
     | DYNAMICty of reifiedTy
     | ERRORty
+    | EXISTty of {boxed : bool option, size : word option, id : int}
     | EXNTAGty
     | EXNty
     | FUNMty of reifiedTy list * reifiedTy
     | IENVMAPty of reifiedTy
     | INT16ty
+    | INT32ty
     | INT64ty
     | INT8ty
     | INTERNALty
     | INTINFty
-    | INT32ty
     | LISTty of reifiedTy
-    | OPAQUEty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, size:int}
+    | OPAQUEty of {longsymbol: Symbol.longsymbol, id:TypID.id, args:reifiedTy list, boxed:bool, size:int}
     | OPTIONty of reifiedTy
     | POLYty of {boundenv: btvId BoundTypeVarID.Map.map, body:reifiedTy}
     | PTRty of reifiedTy
     | REAL32ty
     | REAL64ty
-    | RECORDLABELty 
     | RECORDLABELMAPty of reifiedTy
+    | RECORDLABELty 
     | RECORDty of reifiedTy RecordLabel.Map.map
     | REFty of reifiedTy
     | SENVMAPty of reifiedTy
@@ -85,9 +80,9 @@ struct
     | VECTORty of reifiedTy
     | VOIDty
     | WORD16ty
+    | WORD32ty
     | WORD64ty
     | WORD8ty
-    | WORD32ty
 
   type conSet = reifiedTy option SEnv.map
   datatype void = void
@@ -137,7 +132,7 @@ struct
   val btvIdBtvIdListToBoundenv : (btvId * btvId) list -> btvId BoundTypeVarID.Map.map
   val boundenvReifiedTyToPolyTy : btvId BoundTypeVarID.Map.map -> reifiedTy -> reifiedTy
   val makeDummyTy : bool -> word -> reifiedTy
-  val makeExistTy : bool -> word -> int -> reifiedTy
+  val makeExistTy : bool option -> word option -> int -> reifiedTy
   val makeFUNMty : reifiedTy list -> reifiedTy -> reifiedTy
   val boolToWrapRecord : bool -> {wrap:bool}
   val stringToFalseNameRecord : string -> {falseName:string}
@@ -145,9 +140,10 @@ struct
   val tagMapStringToTagMapNullNameRecord : (int SEnv.map) -> string -> {tagMap:int SEnv.map, nullName:string}
   val tagMapToTagMapRecord : (int SEnv.map) -> {tagMap:int SEnv.map}
   val longsymbolIdArgsLayoutListToDatatypeTy : Symbol.longsymbol -> TypID.id -> reifiedTy list -> layout -> int -> reifiedTy
-  val longsymbolIdArgsToOpaqueTy : Symbol.longsymbol -> TypID.id -> reifiedTy list -> int -> reifiedTy
+  val longsymbolIdArgsToOpaqueTy : Symbol.longsymbol -> TypID.id -> reifiedTy list -> int -> bool -> reifiedTy
 
   val sizeOf : reifiedTy -> word
   val isGroundTy : reifiedTy -> bool
+  val isBaseTy : reifiedTy -> bool
 
 end

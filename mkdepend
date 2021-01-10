@@ -81,6 +81,7 @@ for i in `echo "$ALL_OBJECTS" | sed 's/\.o$//'`; do
   case "$i" in
     src/ml-yacc/src/yacc.lex) ;;
     src/ml-yacc/src/yacc.grm) ;;
+    src/smlnj-lib/JSON/json.lex) ;;
     *.ppg)
       GEN_SOURCES="$GEN_SOURCES$LF$i.sml"
       echo "$i.sml: \\" >> "$depend_mk"

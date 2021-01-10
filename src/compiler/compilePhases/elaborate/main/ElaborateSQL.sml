@@ -54,7 +54,8 @@ struct
     val fun_reverseOrder = [SQLPrim, "General2", "reverseOrder"]
     val fun_fromSQL = [SQLPrim, "fromSQL"]
     val fun_toSQL = [SQLPrim, "toSQL"]
-    val fun_queryCommand = [SQLPrim, "queryCommand"]
+    val fun_dummyCursor = [SQLPrim, "dummyCursor"]
+    val fun_newCursor = [SQLPrim, "newCursor"]
     val fun_sqlserver = [SQLPrim, "sqlserver"]
     val fun_sqleval = [SQLPrim, "sqleval"]
     val fun_closeCommand = [SQLPrim, "closeCommand"]
@@ -100,6 +101,7 @@ struct
     val con_DISTINCT = [SQLPrim, "Ast", "DISTINCT"]
     val con_SELECT = [SQLPrim, "Ast", "SELECT"]
     val con_QUERY = [SQLPrim, "Ast", "QUERY"]
+    val con_QUERY_COMMAND = [SQLPrim, "Ast", "QUERY_COMMAND"]
     val con_DEFAULT = [SQLPrim, "Ast", "DEFAULT"]
     val con_VALUE = [SQLPrim, "Ast", "VALUE"]
     val con_INSERT = [SQLPrim, "Ast", "INSERT"]
@@ -110,6 +112,7 @@ struct
     val con_BEGIN = [SQLPrim, "Ast", "BEGIN"]
     val con_COMMIT = [SQLPrim, "Ast", "COMMIT"]
     val con_ROLLBACK = [SQLPrim, "Ast", "ROLLBACK"]
+    val con_SEQ = [SQLPrim, "Ast", "SEQ"]
     val con_EXPty = [SQLPrim, "EXPty"]
     val con_WHRty = [SQLPrim, "WHRty"]
     val con_FROMty = [SQLPrim, "FROMty"]
@@ -214,10 +217,9 @@ struct
       end
 
   fun Let tyvars (pat, exp) exp2 loc =
-      P.PLLET ([P.PDVAL (map (fn x => (x, A.UNIV (nil, loc))) tyvars,
-                         [(pat loc, exp loc)], loc)],
+      P.PLLET ([P.PDVAL (map (fn x => (x, A.UNIV(nil,loc))) tyvars,
+                         [(pat loc, exp loc, Loc.noloc)], loc)],
                exp2 loc, loc)
-
   fun Unit loc =
       P.PLCONSTANT (A.UNITCONST, loc)
 
@@ -265,6 +267,9 @@ struct
 
   fun Ignore exp loc =
       P.PLSEQ ([exp loc, Unit loc], loc)
+
+  fun Seq (exp1, exp2) loc =
+      P.PLSEQ ([exp1 loc, exp2 loc], loc)
 
   fun Join (exp1, exp2) loc =
       P.PLJOIN (true, exp1 loc, exp2 loc, loc)
@@ -391,8 +396,11 @@ struct
   fun Fun_toSQL x =
       App (ExVar Name.fun_toSQL) x
 
-  fun Fun_queryCommand select =
-      App (ExVar Name.fun_queryCommand) select
+  fun Fun_dummyCursor x =
+      App (ExVar Name.fun_dummyCursor) x
+
+  fun Fun_newCursor readFn res =
+      App (App (ExVar Name.fun_newCursor) readFn) res
 
   fun Fun_sqlserver (serv, schema) =
       App (ExVar Name.fun_sqlserver) (Tuple [serv, schema])
@@ -540,6 +548,9 @@ struct
                           Option whr, Option groupby,
                           Option orderby, Option limit]
 
+  fun Con_QUERY_COMMAND query =
+      Con Name.con_QUERY_COMMAND [query]
+
   fun Con_DEFAULT loc =
       Con Name.con_DEFAULT [] loc
 
@@ -575,6 +586,9 @@ struct
 
   fun Con_ROLLBACK loc =
       Con Name.con_ROLLBACK [] loc
+
+  fun Con_SEQ (c1, c2) =
+      Con Name.con_SEQ [c1, c2]
 
   fun Con_EXPty (term, toy) =
       Con Name.con_EXPty [term, toy]
@@ -729,6 +743,7 @@ struct
                 orderBy : query option,
                 limit : query option,
                 loc : S.loc}
+    | QUERY_COMMAND of query
     | INSERT_VALUES of {table : table_selector,
                         labels : S.label list,
                         values : ((query option * S.loc) list * S.loc) list,
@@ -749,6 +764,7 @@ struct
     | BEGIN of S.loc
     | COMMIT of S.loc
     | ROLLBACK of S.loc
+    | SEQ of query * query * S.loc
 
   (* table expressions *)
   and table =
@@ -796,6 +812,7 @@ struct
     | getLoc (LIMIT {loc, ...}) = loc
     | getLoc (SELECT (_, _, loc)) = loc
     | getLoc (QUERY {loc, ...}) = loc
+    | getLoc (QUERY_COMMAND q) = getLoc q
     | getLoc (INSERT_VALUES {loc, ...}) = loc
     | getLoc (INSERT_SELECT {loc, ...}) = loc
     | getLoc (INSERT_VAR {loc, ...}) = loc
@@ -804,6 +821,7 @@ struct
     | getLoc (BEGIN loc) = loc
     | getLoc (COMMIT loc) = loc
     | getLoc (ROLLBACK loc) = loc
+    | getLoc (SEQ (_, _, loc)) = loc
 
   fun tableNames table =
       case table of
@@ -987,6 +1005,8 @@ struct
   and queryToToy query =
       case query of
         MLEXP (id, loc) => (fn _ => LongVar id)
+      | EMBED (id, QUERYty, loc) =>
+        (fn c => Loc loc (App (Snd (Var id)) UnitTuple))
       | EMBED (id, _, loc) => (fn c => Loc loc (App (Snd (Var id)) c))
       | CONST (INT n, loc) => (fn _ => Exp (P.PLCONSTANT (A.INT n, loc)))
       | CONST (WORD n, loc) => (fn _ => Exp (P.PLCONSTANT (A.WORD n, loc)))
@@ -1092,6 +1112,7 @@ struct
              o correlateJoin correlate c
              o queryToToy from)
               UnitTuple)
+      | QUERY_COMMAND q => queryToToy q
       | INSERT_VAR {table, labels, values=(id, loc1), loc} =>
         let
           val table = tableIdToToy table
@@ -1153,6 +1174,8 @@ struct
         (fn c => Loc loc Unit)
       | ROLLBACK loc =>
         (fn c => Loc loc Unit)
+      | SEQ (c1, c2, loc) =>
+        (fn c => (Loc loc) (Seq (queryToToy c1 c, queryToToy c2 c)))
 
   fun ascdescToTerm NONE = None
     | ascdescToTerm (SOME S.ASC) = Some Con_ASC
@@ -1303,6 +1326,8 @@ struct
               Option.map groupByToTerm groupBy,
               Option.map queryToTerm orderBy,
               Option.map queryToTerm limit))
+      | QUERY_COMMAND q =>
+        Con_QUERY_COMMAND (queryToTerm q)
       | INSERT_VAR {table, labels, values=(id, loc1), loc} =>
         let
           val pat = PatRecord (map (fn l => (l, PatVarLabel l)) labels)
@@ -1346,12 +1371,16 @@ struct
         Loc loc Con_COMMIT
       | ROLLBACK loc =>
         Loc loc Con_ROLLBACK
+      | SEQ (c1, c2, loc) =>
+        (Loc loc) (Con_SEQ (queryToTerm c1, queryToTerm c2))
 
   fun readResult select =
       case select of
         EMBED (x, ty, loc) =>
         Loc loc (Select (RecordLabel.fromString "3") (Var x))
       | QUERY {select, ...} => readResult select
+      | QUERY_COMMAND query => readResult query
+      | SEQ (x, y, _) => readResult y
       | SELECT (_, (l, loc), _) =>
         let
           fun fields c = mapi (fn (i, (l, _)) => (l, Fun_fromSQL (c, i))) l
@@ -1359,6 +1388,9 @@ struct
           Loc loc (Fn1 (fn c => List [Record (fields c)]))
         end
       | _ => raise Bug.Bug "readResult"
+
+  fun lastCommand (SEQ (x, y, _)) = lastCommand y
+    | lastCommand x = x
 
   fun queryToExp query =
       let
@@ -1387,6 +1419,10 @@ struct
         | LIMIT _ => Con_LIMITty (term, Fn1 toy)
         | SELECT _ => Con_SELECTty (term, Fn1 toy, readResult query)
         | QUERY _ => Con_QUERYty (term, Fn1 toy, readResult query)
+        | QUERY_COMMAND _ =>
+          Con_COMMANDty (term,
+                         Fn1 (Fun_dummyCursor o toy),
+                         Fn1 (Fun_newCursor (readResult query)))
         | INSERT_VALUES _ => Con_COMMANDty (term, Fn1 toy, Var_closeCommand)
         | INSERT_SELECT _ => Con_COMMANDty (term, Fn1 toy, Var_closeCommand)
         | INSERT_VAR _ => Con_COMMANDty (term, Fn1 toy, Var_closeCommand)
@@ -1395,6 +1431,20 @@ struct
         | BEGIN _ => Con_COMMANDty (term, Fn1 toy, Var_closeCommand)
         | COMMIT _ => Con_COMMANDty (term, Fn1 toy, Var_closeCommand)
         | ROLLBACK _ => Con_COMMANDty (term, Fn1 toy, Var_closeCommand)
+        | SEQ _ =>
+          case lastCommand query of
+            EMBED (x, COMMANDty, loc) =>
+            Con_COMMANDty
+              (term,
+               Fn1 toy,
+               Loc loc (Select (RecordLabel.fromString "3") (Var x)))
+          | q as QUERY_COMMAND _ =>
+            Con_COMMANDty
+              (term,
+               Fn1 (Fun_dummyCursor o toy),
+               Fn1 (Fun_newCursor (readResult q)))
+          | _ =>
+            Con_COMMANDty (term, Fn1 toy, Var_closeCommand)
       end
 
   type elab_ret =
@@ -1424,7 +1474,7 @@ struct
         elabAbsynExp : A.exp -> P.plexp,
         (* if SOME, we are in a query with concrete FROMs in the context *)
         fromLabels : RecordLabel.Set.set option,
-        fixEnv : Fixity.fixity SymbolEnv.map
+        fixEnv : (Fixity.fixity * Loc.loc) SymbolEnv.map
       }
 
   fun elabOpt f NONE = (emptyRet, NONE)
@@ -1633,7 +1683,7 @@ struct
           val src =
               map (fn exp as S.ID id =>
                       (case SymbolEnv.find (#fixEnv env, id) of
-                         SOME x => (x, exp, expLoc exp)
+                         SOME (x,loc) => (x, exp, expLoc exp)
                        | NONE => (Fixity.NONFIX, exp, expLoc exp))
                     | exp => (Fixity.NONFIX, exp, expLoc exp))
                   exps
@@ -2029,6 +2079,33 @@ struct
       | S.COMMIT => (COMMANDty, (emptyRet, COMMIT loc))
       | S.ROLLBACK => (COMMANDty, (emptyRet, ROLLBACK loc))
       | S.EXP exp => (EXPty, elabExpToQuery env exp)
+      | S.SEQ [S.CLAUSE (sql, loc)] => elabSQL env (sql, loc)
+      | S.SEQ seq => (COMMANDty, elabSeq env seq)
+
+  and elabSeq env nil = raise Bug.Bug "elabSeq: nil"
+    | elabSeq env [S.CLAUSE sqlloc] =
+      (case elabSQL env sqlloc of
+         (QUERYty, (ret, query)) => (ret, QUERY_COMMAND query)
+       | (_, (ret, query)) => (ret, query))
+    | elabSeq env [S.EMBED exploc] = elabEmbed env COMMANDty exploc
+    | elabSeq env (S.CLAUSE sqlloc :: seq) =
+      let
+        val (ty, (ret1, query1)) = elabSQL env sqlloc
+        val query1 =
+            case ty of
+              QUERYty => QUERY_COMMAND query1
+            | _ => query1
+        val (ret2, query2) = elabSeq env seq
+      in
+        (merge [ret1, ret2], SEQ (query1, query2, #2 sqlloc))
+      end
+    | elabSeq env (S.EMBED exploc :: seq) =
+      let
+        val (ret1, query1) = elabEmbed env COMMANDty exploc
+        val (ret2, query2) = elabSeq env seq
+      in
+        (merge [ret1, ret2], SEQ (query1, query2, #2 exploc))
+      end
 
   fun sqlFn (pat, exp) =
       let
@@ -2056,18 +2133,10 @@ struct
         let
           val pat = elabPat pat
           val (ty, (ret, query)) = elabSQL env (sql, loc)
-          val bodyExp = queryToExp query
-          val bodyExp =
+          val query =
               case ty of
-                QUERYty => Fun_queryCommand bodyExp
-              | _ => bodyExp
-        in
-          sqlFn (pat, makeBind ret bodyExp) loc
-        end
-      | S.SQLFN_EMBED (pat, exp) =>
-        let
-          val pat = elabPat pat
-          val (ret, query) = elabEmbed env COMMANDty (exp, loc)
+                QUERYty => QUERY_COMMAND query
+              | _ => query
           val bodyExp = queryToExp query
         in
           sqlFn (pat, makeBind ret bodyExp) loc
@@ -2086,16 +2155,16 @@ struct
       let
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "like" Loc.noloc, Fixity.INFIX 5)
+              (fixEnv, Symbol.mkSymbol "like" Loc.noloc, (Fixity.INFIX 5, Loc.noloc))
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "||" Loc.noloc, Fixity.INFIX 5)
+              (fixEnv, Symbol.mkSymbol "||" Loc.noloc, (Fixity.INFIX 5, Loc.noloc))
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "%" Loc.noloc, Fixity.INFIX 7)
+              (fixEnv, Symbol.mkSymbol "%" Loc.noloc, (Fixity.INFIX 7, Loc.noloc))
         val fixEnv =
             SymbolEnv.insert
-              (fixEnv, Symbol.mkSymbol "mod" Loc.noloc, Fixity.NONFIX)
+              (fixEnv, Symbol.mkSymbol "mod" Loc.noloc, (Fixity.NONFIX, Loc.noloc))
         val env = {elabAbsynExp = elabExp, fromLabels = NONE, fixEnv = fixEnv}
       in
         elabSqlexp {elabPat = elabPat, env = env} (sqlexp, loc)

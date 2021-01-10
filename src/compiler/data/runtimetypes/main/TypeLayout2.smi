@@ -17,16 +17,4 @@ struct
       : Types.btvEnv
         -> Types.kind
         -> RuntimeTypes.property option
-
-  datatype size_assumption =
-      ALL_SIZES_ARE_POWER_OF_2
-  datatype align_computation =
-      ALIGN_EQUAL_SIZE
-
-  val tagValue : RuntimeTypes.tag -> int
-  val sizeValue = RuntimeTypes.getSize
-  val maxSize : RuntimeTypes.size
-  val sizeAssumption : size_assumption
-  val alignComputation : align_computation
-  val charBits : int
 end

@@ -1,0 +1,19 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "sql.smi"
+_require "./Config.smi"
+_require "./DBSchema.smi"
+_require "./Log.smi"
+
+structure RefDBAccess =
+struct
+  val findDefEcho : {path:string, pos:int} 
+                    -> {path:string, pos:int}
+  val findRef : {path:string, pos:int}
+                -> {status :string, defSym:string, files: {pos: int, defSym:string, path: string} list}
+  val findDef : {path:string, pos:int}
+                -> {status : string, pos: int, refSym:string, path : string}
+  val sample1 : {path:string, pos:int}
+  val sample2 : {path:string, pos:int}
+end
+

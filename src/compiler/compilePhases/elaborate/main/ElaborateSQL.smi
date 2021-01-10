@@ -1,5 +1,6 @@
 _require local "../../../../basis.smi"
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/Loc.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 
@@ -18,7 +19,7 @@ structure ElaborateSQL =
      val elaborateExp
          : {elabExp : Absyn.exp -> PatternCalc.plexp,
             elabPat : Absyn.pat -> PatternCalc.plpat}
-           -> Fixity.fixity SymbolEnv.map
+           -> (Fixity.fixity * Loc.loc) SymbolEnv.map
            -> (Absyn.exp, Absyn.pat, Absyn.ty) AbsynSQL.sqlexp * Loc.loc
            -> PatternCalc.plexp
   end

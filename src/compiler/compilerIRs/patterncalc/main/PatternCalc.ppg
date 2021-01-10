@@ -215,33 +215,34 @@ struct
   (*% *)
   type typbind =
       (*%
-       * @format(tvars * name * ty)
+       * @format(tvars * name * ty * loc)
        * !R0{ tvars name +d "=" 1[ +1 ty ] }
        *)
-      tvars * symbol * ty
+      tvars * symbol * ty * loc
 
   (*%
    * @formatter(ifnone) format_ifnone
    *)
   type conbind =
       (*%
-       * @format({symbol:name, ty: ty tyopt})
+       * @format({symbol:name, ty: ty tyopt, loc})
        * !R0{ name tyopt:ifnone()(, +d "of" 1[ +1 tyopt(ty) ]) }
        *)
-      {symbol: symbol, ty: ty option}
+      {symbol: symbol, ty: ty option, loc:Loc.loc}
 
   (*%
    * @formatter(prepend) format_prepend
    *)
   type datbind =
       (*%
-       * @format({tyvars, symbol:name, conbind: bind binds})
+       * @format({tyvars, symbol:name, conbind: bind binds, loc})
        * !R0{ tyvars name 1[ binds:prepend(bind)(+1, "=" +d, +1, "|" +d) ] }
        *)
       {
         tyvars: tvars,
         symbol: symbol,
-        conbind: conbind list
+        conbind: conbind list,
+        loc:loc
       }
 
   (*%
@@ -295,6 +296,11 @@ struct
        *     1[ +1 "#" +d fields:enclosed(field)("{",",","}") ] }
        *)
       PLRECORD_UPDATE of plexp * expfield list * loc
+    | (*%
+       * @format(plexp * plexp2 * loc)
+       * L8{ plexp 1[ +1 "#" +d plexp2 ] }
+       *)
+      PLRECORD_UPDATE2 of plexp * plexp * loc
     | (*%
        * @format(exp * loc)
        * R0{ "raise" 1[ +1 exp ] }
@@ -403,10 +409,10 @@ struct
       (*%
        * @format(tyvars * bind binds * loc)
        * !R0{ binds:prepend(bind)(, "val" +d tyvars, +1, "and" +d) }
-       * @format:bind(pat * exp)
+       * @format:bind(pat * exp * loc)
        * !R0{ pat +d "=" 1[ +1 exp ] }
        *)
-      PDVAL of scopedTvars * (plpat * plexp) list * loc
+      PDVAL of scopedTvars * (plpat * plexp * loc) list * loc
     | (*%
        * @format(tyvars * bind binds * loc)
        * !R0{ binds:prepend(bind)(, "fun" +d tyvars, +1, "and" +d) }
@@ -421,17 +427,17 @@ struct
     | (*%
        * @format(tyvars * bind binds * loc)
        * !R0{ binds:prepend(bind)(, "val" +d "rec" +d tyvars, +1, "and" +d) }
-       * @format:bind(pat * exp)
+       * @format:bind(pat * exp * loc)
        * !R0{ pat +d "=" 1[ +1 exp ] }
        *)
-      PDVALREC of scopedTvars * (plpat * plexp) list * loc
+      PDVALREC of scopedTvars * (plpat * plexp * loc) list * loc
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "val" +d "_polyrec" +d, +1, "and" +d) }
-       * @format:bind(name * ty * exp)
+       * @format:bind(name * ty * exp * loc)
        * !R0{ L4{ name +d ":" +1 ty } +d "=" 1[ +1 exp ] }
        *)
-      PDVALPOLYREC of (symbol * ty * plexp) list * loc
+      PDVALPOLYREC of (symbol * ty * plexp * loc) list * loc
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "type" +d, +1, "and" +d) }
@@ -499,10 +505,10 @@ struct
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "structure" +d, +1, "and" +d) }
-       * @format:bind(id * exp)
+       * @format:bind(id * exp * loc)
        * id +d "=" 1[ +1 exp ]
        *)
-      PLSTRUCTBIND of (symbol * plstrexp) list * loc
+      PLSTRUCTBIND of (symbol * plstrexp * loc) list * loc
     | (*%
        * @format(ldec ldecs * dec decs * loc)
        * !R0{ "local" 1[ ldecs:decl(ldec)(+1,+1) ]
@@ -576,10 +582,10 @@ struct
        *)
       PLSPECTYPE of {tydecls:(tvars * symbol) list, eq:bool, loc:loc}
     | (*%
-       * @format(bind * loc)
-       * !R0{ "type" +d bind }    (* FIXME *)
+       * @format((tvars * name * ty) * loc)
+       * !R0{ "type" +d  tvars name +d "=" 1[ +1 ty ] }
        *)
-      PLSPECTYPEEQUATION of typbind * loc
+      PLSPECTYPEEQUATION of (tvars * symbol * ty) * loc
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "datatype" +d, +1, "and" +d) }
@@ -593,10 +599,10 @@ struct
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "exception" +d, +1, "and" +d) }
-       * @format:bind(id * ty tyopt)
+       * @format:bind(id * ty tyopt * loc)
        * tyopt:ifnone()(id, !R0{ id +d "of" 1[ +1 tyopt(ty) ] })
        *)
-      PLSPECEXCEPTION of (symbol * ty option) list * loc
+      PLSPECEXCEPTION of (symbol * ty option * loc) list * loc
     | (*%
        * @format(bind binds * loc)
        * !R0{ binds:prepend(bind)(, "structure" +d, +1, "and" +d) }
@@ -684,5 +690,75 @@ struct
        * !R0{ pat +d "=>" 1[ +1 !R0{ exp } ] }
        *)
       plpat * plexp
+
+  fun getLocExp plexp =
+      case plexp of
+        PLCONSTANT x => #2 x
+      | PLSIZEOF x => #2 x
+      | PLVAR x => Symbol.longsymbolToLoc x
+      | PLTYPED x => #3 x
+      | PLAPPM x => #3 x
+      | PLLET x => #3 x
+      | PLRECORD x => #2 x
+      | PLRECORD_UPDATE x => #3 x
+      | PLRECORD_UPDATE2 x => #3 x
+      | PLRAISE x => #2 x
+      | PLHANDLE x => #3 x
+      | PLFNM x => #2 x
+      | PLCASEM x => #4 x
+      | PLRECORD_SELECTOR x => #2 x
+      | PLSELECT x => #3 x
+      | PLSEQ x => #2 x
+      | PLFFIIMPORT x => #3 x
+      | PLSQLSCHEMA {loc,...} => loc
+      | PLJOIN (_, _,_,loc) => loc
+      | PLDYNAMIC (_,_,loc) => loc
+      | PLDYNAMICIS (_,_,loc) => loc
+      | PLDYNAMICNULL (_,loc) => loc
+      | PLDYNAMICTOP (_,loc) => loc
+      | PLDYNAMICVIEW (_,_,loc) => loc
+      | PLDYNAMICCASE (_,_,loc) => loc
+      | PLREIFYTY (_,loc) => loc
+  fun getLeftPosExp plexp = #1 (getLocExp plexp)
+  fun getRightPosExp plexp = #2 (getLocExp plexp)
+
+  fun getLocPat pat =
+      case pat of
+        PLPATWILD x => x
+      | PLPATID x => Symbol.longsymbolToLoc x
+      | PLPATCONSTANT x => #2 x
+      | PLPATCONSTRUCT x => #3 x
+      | PLPATRECORD x => #3 x
+      | PLPATLAYERED x => #4 x
+      | PLPATTYPED x => #3 x
+  fun getLeftPosPat pat = #1 (getLocPat pat)
+  fun getRightPosPat pat = #2 (getLocPat pat)
+  fun getLocDec dec =
+      case dec of
+        PDVAL (_, _, loc) => loc
+      | PDDECFUN (_, _, loc) => loc
+      | PDVALREC (_, _, loc) => loc
+      | PDVALPOLYREC ( _, loc) => loc
+      | PDTYPE (_, loc) => loc
+      | PDABSTYPE (_, _, loc) => loc
+      | PDDATATYPE (_, loc) => loc
+      | PDREPLICATEDAT (_, _, loc) => loc
+      | PDEXD (_, loc) => loc
+      | PDLOCALDEC (_, _, loc) => loc
+      | PDOPEN (_, loc) => loc
+      | PDINFIXDEC (_, _, loc) => loc
+      | PDINFIXRDEC (_, _, loc) => loc
+      | PDNONFIXDEC (_, loc) => loc
+      | PDEMPTY => Loc.noloc
+  fun getLocSigexp sigexp =
+      case sigexp of
+        PLSIGEXPBASIC (plspec, loc) => loc
+      | PLSIGID symbol => Symbol.symbolToLoc symbol
+      | PLSIGWHERE (plsigexp, tybind, loc) => loc
+  fun getLocTopDec topdec =
+      case topdec of
+        PLTOPDECSTR (plstrdec, loc) => loc
+      | PLTOPDECSIG (sigdecList, loc) => loc
+      | PLTOPDECFUN (fundeclList, loc) => loc
 
 end

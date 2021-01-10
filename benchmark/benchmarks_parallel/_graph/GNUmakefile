@@ -318,3 +318,176 @@ rss-cilksort_4194304_32.eps: \
 	 'Manticore' rss-cilksort_manticore_ptuple_4194304_32.txt rss-cilksort_manticore_ptuple_4194304_4194304.txt \
 	 'MaPLe' rss-cilksort_maple_par_4194304_32.txt rss-cilksort_maple_par_4194304_4194304.txt \
 	 'SML#' rss-cilksort_smlsharp_myth_4194304_32.txt rss-cilksort_smlsharp_seq_4194304_4194304.txt
+
+
+
+
+
+
+
+
+smlsharp35: \
+ scale35-fib_40_10.pdf \
+ time35-fib_40_10.pdf \
+ rss35-fib_40_10.pdf \
+ scale35-nqueen_14_7.pdf \
+ time35-nqueen_14_7.pdf \
+ rss35-nqueen_14_7.pdf \
+ scale35-mandelbrot_2048_16.pdf \
+ time35-mandelbrot_2048_16.pdf \
+ rss35-mandelbrot_2048_16.pdf \
+ scale35-cilksort_4194304_32.pdf \
+ time35-cilksort_4194304_32.pdf \
+ rss35-cilksort_4194304_32.pdf
+
+scale35-fib_40_10.eps: \
+ scalegraph.sh \
+ scale-fib_c_myth_40_10.txt \
+ scale-fib_smlsharp_myth_40_10.txt \
+ scale-fib_smlsharp35_myth_40_10.txt
+	sh scalegraph.sh $@ \
+	 'C' scale-fib_c_myth_40_10.txt \
+	 'SML#-3.5' scale-fib_smlsharp35_myth_40_10.txt \
+	 'SML#' scale-fib_smlsharp_myth_40_10.txt
+
+time35-fib_40_10.eps: \
+ bargraph.sh \
+ time-fib_c_myth_40_10.txt \
+ time-fib_c_seq_40_40.txt \
+ time-fib_smlsharp_myth_40_10.txt \
+ time-fib_smlsharp_seq_40_40.txt \
+ time-fib_smlsharp35_myth_40_10.txt \
+ time-fib_smlsharp35_seq_40_40.txt
+	ylabel='average task time (sec.)' xrange=9 yrange=2 \
+	sh bargraph.sh $@ \
+	 'C' time-fib_c_myth_40_10.txt time-fib_c_seq_40_40.txt \
+	 'SML#-3.5' time-fib_smlsharp35_myth_40_10.txt time-fib_smlsharp35_seq_40_40.txt \
+	 'SML#' time-fib_smlsharp_myth_40_10.txt time-fib_smlsharp_seq_40_40.txt
+
+rss35-fib_40_10.eps: \
+ bargraph.sh \
+ rss-fib_c_myth_40_10.txt \
+ rss-fib_c_seq_40_40.txt \
+ rss-fib_smlsharp_myth_40_10.txt \
+ rss-fib_smlsharp_seq_40_40.txt \
+ rss-fib_smlsharp35_myth_40_10.txt \
+ rss-fib_smlsharp35_seq_40_40.txt
+	ylabel='MaxRSS (GB)' xrange=9 yrange=0.6 setkey=key \
+	sh bargraph.sh $@ \
+	 'C' rss-fib_c_myth_40_10.txt rss-fib_c_seq_40_40.txt \
+	 'SML#-3.5' rss-fib_smlsharp35_myth_40_10.txt rss-fib_smlsharp35_seq_40_40.txt \
+	 'SML#' rss-fib_smlsharp_myth_40_10.txt rss-fib_smlsharp_seq_40_40.txt
+
+scale35-nqueen_14_7.eps: \
+ scalegraph.sh \
+ scale-nqueen_c_myth_14_7.txt \
+ scale-nqueen_smlsharp_myth_14_7.txt \
+ scale-nqueen_smlsharp35_myth_14_7.txt
+	sh scalegraph.sh $@ \
+	 'C' scale-nqueen_c_myth_14_7.txt \
+	 'SML#-3.5' scale-nqueen_smlsharp35_myth_14_7.txt \
+	 'SML#' scale-nqueen_smlsharp_myth_14_7.txt
+
+time35-nqueen_14_7.eps: \
+ bargraph.sh \
+ time-nqueen_c_myth_14_7.txt \
+ time-nqueen_c_seq_14_14.txt \
+ time-nqueen_smlsharp_myth_14_7.txt \
+ time-nqueen_smlsharp_seq_14_14.txt \
+ time-nqueen_smlsharp35_myth_14_7.txt \
+ time-nqueen_smlsharp35_seq_14_14.txt
+	ylabel='average task time (sec.)' xrange=9 yrange=2.5 \
+	sh bargraph.sh $@ \
+	 'C' time-nqueen_c_myth_14_7.txt time-nqueen_c_seq_14_14.txt \
+	 'SML#-3.5' time-nqueen_smlsharp35_myth_14_7.txt time-nqueen_smlsharp35_seq_14_14.txt \
+	 'SML#' time-nqueen_smlsharp_myth_14_7.txt time-nqueen_smlsharp_seq_14_14.txt
+
+rss35-nqueen_14_7.eps: \
+ bargraph.sh \
+ rss-nqueen_c_myth_14_7.txt \
+ rss-nqueen_c_seq_14_14.txt \
+ rss-nqueen_smlsharp_myth_14_7.txt \
+ rss-nqueen_smlsharp_seq_14_14.txt \
+ rss-nqueen_smlsharp35_myth_14_7.txt \
+ rss-nqueen_smlsharp35_seq_14_14.txt
+	ylabel='MaxRSS (GB)' xrange=9 yrange=0.6 setkey=key \
+	sh bargraph.sh $@ \
+	 'C' rss-nqueen_c_myth_14_7.txt rss-nqueen_c_seq_14_14.txt \
+	 'SML#-3.5' rss-nqueen_smlsharp35_myth_14_7.txt rss-nqueen_smlsharp35_seq_14_14.txt \
+	 'SML#' rss-nqueen_smlsharp_myth_14_7.txt rss-nqueen_smlsharp_seq_14_14.txt
+
+scale35-mandelbrot_2048_16.eps: \
+ scalegraph.sh \
+ scale-mandelbrot_c_myth_2048_16.txt \
+ scale-mandelbrot_smlsharp_myth_2048_16.txt \
+ scale-mandelbrot_smlsharp35_myth_2048_16.txt
+	sh scalegraph.sh $@ \
+	 'C' scale-mandelbrot_c_myth_2048_16.txt \
+	 'SML#-3.5' scale-mandelbrot_smlsharp35_myth_2048_16.txt \
+	 'SML#' scale-mandelbrot_smlsharp_myth_2048_16.txt
+
+time35-mandelbrot_2048_16.eps: \
+ bargraph.sh \
+ time-mandelbrot_c_myth_2048_16.txt \
+ time-mandelbrot_c_seq_2048_2048.txt \
+ time-mandelbrot_smlsharp_myth_2048_16.txt \
+ time-mandelbrot_smlsharp_seq_2048_2048.txt \
+ time-mandelbrot_smlsharp35_myth_2048_16.txt \
+ time-mandelbrot_smlsharp35_seq_2048_2048.txt
+	ylabel='average task time (sec.)' xrange=9 yrange=8 \
+	sh bargraph.sh $@ \
+	 'C' time-mandelbrot_c_myth_2048_16.txt time-mandelbrot_c_seq_2048_2048.txt \
+	 'SML#-3.5' time-mandelbrot_smlsharp35_myth_2048_16.txt time-mandelbrot_smlsharp35_seq_2048_2048.txt \
+	 'SML#' time-mandelbrot_smlsharp_myth_2048_16.txt time-mandelbrot_smlsharp_seq_2048_2048.txt
+
+rss35-mandelbrot_2048_16.eps: \
+ bargraph.sh \
+ rss-mandelbrot_c_myth_2048_16.txt \
+ rss-mandelbrot_c_seq_2048_2048.txt \
+ rss-mandelbrot_smlsharp_myth_2048_16.txt \
+ rss-mandelbrot_smlsharp_seq_2048_2048.txt \
+ rss-mandelbrot_smlsharp35_myth_2048_16.txt \
+ rss-mandelbrot_smlsharp35_seq_2048_2048.txt
+	ylabel='MaxRSS (GB)' xrange=9 yrange=0.6 setkey=key \
+	sh bargraph.sh $@ \
+	 'C' rss-mandelbrot_c_myth_2048_16.txt rss-mandelbrot_c_seq_2048_2048.txt \
+	 'SML#-3.5' rss-mandelbrot_smlsharp35_myth_2048_16.txt rss-mandelbrot_smlsharp35_seq_2048_2048.txt \
+	 'SML#' rss-mandelbrot_smlsharp_myth_2048_16.txt rss-mandelbrot_smlsharp_seq_2048_2048.txt
+
+scale35-cilksort_4194304_32.eps: \
+ scalegraph.sh \
+ scale-cilksort_c_myth_4194304_32.txt \
+ scale-cilksort_smlsharp_myth_4194304_32.txt \
+ scale-cilksort_smlsharp35_myth_4194304_32.txt
+	sh scalegraph.sh $@ \
+	 'C' scale-cilksort_c_myth_4194304_32.txt \
+	 'SML#-3.5' scale-cilksort_smlsharp35_myth_4194304_32.txt \
+	 'SML#' scale-cilksort_smlsharp_myth_4194304_32.txt
+
+time35-cilksort_4194304_32.eps: \
+ bargraph.sh \
+ time-cilksort_c_myth_4194304_32.txt \
+ time-cilksort_c_seq_4194304_4194304.txt \
+ time-cilksort_smlsharp_myth_4194304_32.txt \
+ time-cilksort_smlsharp_seq_4194304_4194304.txt \
+ time-cilksort_smlsharp35_myth_4194304_32.txt \
+ time-cilksort_smlsharp35_seq_4194304_4194304.txt
+	ylabel='average task time (sec.)' xrange=9 yrange=4 \
+	sh bargraph.sh $@ \
+	 'C' time-cilksort_c_myth_4194304_32.txt time-cilksort_c_seq_4194304_4194304.txt \
+	 'SML#-3.5' time-cilksort_smlsharp35_myth_4194304_32.txt time-cilksort_smlsharp35_seq_4194304_4194304.txt \
+	 'SML#' time-cilksort_smlsharp_myth_4194304_32.txt time-cilksort_smlsharp_seq_4194304_4194304.txt
+
+rss35-cilksort_4194304_32.eps: \
+ bargraph.sh \
+ rss-cilksort_c_myth_4194304_32.txt \
+ rss-cilksort_c_seq_4194304_4194304.txt \
+ rss-cilksort_smlsharp_myth_4194304_32.txt \
+ rss-cilksort_smlsharp_seq_4194304_4194304.txt \
+ rss-cilksort_smlsharp35_myth_4194304_32.txt \
+ rss-cilksort_smlsharp35_seq_4194304_4194304.txt
+	ylabel='MaxRSS (GB)' xrange=9 yrange=0.6 setkey=key \
+	sh bargraph.sh $@ \
+	 'C' rss-cilksort_c_myth_4194304_32.txt rss-cilksort_c_seq_4194304_4194304.txt \
+	 'SML#-3.5' rss-cilksort_smlsharp35_myth_4194304_32.txt rss-cilksort_smlsharp35_seq_4194304_4194304.txt \
+	 'SML#' rss-cilksort_smlsharp_myth_4194304_32.txt rss-cilksort_smlsharp_seq_4194304_4194304.txt

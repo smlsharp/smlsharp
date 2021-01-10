@@ -235,49 +235,61 @@ in
         case idstatus of
           I.IDVAR _ => idstatus
         | I.IDVAR_TYPED _ => idstatus
-        | I.IDEXVAR {exInfo, internalId} => 
-          I.IDEXVAR {exInfo=substExInfo subst exInfo, internalId=internalId}
-        | I.IDEXVAR_TOBETYPED {longsymbol, id, version} =>
+        | I.IDEXVAR {exInfo, internalId, defRange} => 
+          I.IDEXVAR {exInfo=substExInfo subst exInfo, 
+                     defRange = defRange,
+                     internalId=internalId}
+        | I.IDEXVAR_TOBETYPED {longsymbol, id, version, defRange} =>
           I.IDEXVAR_TOBETYPED
             {longsymbol = longsymbol,
              id = id,
+             defRange = defRange,
              version = substVersion subst version}
-        | I.IDBUILTINVAR {primitive, ty} =>
-          I.IDBUILTINVAR {primitive=primitive, ty=substTy subst ty}
-        | I.IDCON {id, longsymbol, ty} => 
-          I.IDCON {id=substConId subst id, longsymbol=longsymbol, ty=substTy subst ty}
-        | I.IDEXN {id, longsymbol, ty} =>
+        | I.IDBUILTINVAR {primitive, ty, defRange} =>
+          I.IDBUILTINVAR {primitive=primitive, defRange = defRange, ty=substTy subst ty}
+        | I.IDCON {id, longsymbol, ty, defRange} => 
+          I.IDCON {id=substConId subst id, 
+                   defRange = defRange, longsymbol=longsymbol, ty=substTy subst ty}
+        | I.IDEXN {id, longsymbol, ty, defRange} =>
           let
-            val exnInfo = {id=substExnId subst id, longsymbol=longsymbol, ty=substTy subst ty}
+            val exnInfo = {id=substExnId subst id, longsymbol=longsymbol, 
+                           defRange = defRange,
+                           ty=substTy subst ty}
 (*
             val _ = IV.exnConAdd (IV.EXN exnInfo)
 *)
           in
             I.IDEXN exnInfo
           end
-        | I.IDEXNREP {id, longsymbol, ty} =>
-          I.IDEXNREP {id=substExnId subst id, longsymbol=longsymbol,ty=substTy subst ty}
-        | I.IDEXEXN {used, longsymbol, ty, version} => 
-          I.IDEXEXN {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=substVersion subst version}
-        | I.IDEXEXNREP {used, longsymbol, ty, version} => 
-          I.IDEXEXNREP {used = ref (!used), longsymbol=longsymbol, ty=substTy subst ty, version=substVersion subst version}
-        | I.IDOPRIM {id, overloadDef, used, longsymbol} =>
-          I.IDOPRIM {id=id, overloadDef=overloadDef, used = ref (!used),
+        | I.IDEXNREP {id, longsymbol, ty, defRange} =>
+          I.IDEXNREP {id=substExnId subst id, longsymbol=longsymbol, defRange = defRange,
+                      ty=substTy subst ty}
+        | I.IDEXEXN {used, longsymbol, ty, version, defRange} => 
+          I.IDEXEXN {used = ref (!used), longsymbol=longsymbol, defRange = defRange,
+                     ty=substTy subst ty, version=substVersion subst version}
+        | I.IDEXEXNREP {used, longsymbol, ty, version, defRange} => 
+          I.IDEXEXNREP {used = ref (!used), longsymbol=longsymbol, defRange = defRange,
+                        ty=substTy subst ty, version=substVersion subst version}
+        | I.IDOPRIM {id, overloadDef, used, longsymbol, defRange} =>
+          I.IDOPRIM {id=id, overloadDef=overloadDef, used = ref (!used), defRange = defRange,
                      longsymbol=longsymbol}
-        | I.IDSPECVAR {ty, symbol} => I.IDSPECVAR {ty=substTy subst ty, symbol=symbol}
-        | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=substTy subst ty, symbol=symbol}
-        | I.IDSPECCON {symbol} => I.IDSPECCON {symbol=symbol} 
+        | I.IDSPECVAR {ty, symbol, defRange} => 
+          I.IDSPECVAR {ty=substTy subst ty, symbol=symbol, defRange=defRange}
+        | I.IDSPECEXN {ty, symbol, defRange} => 
+          I.IDSPECEXN {ty=substTy subst ty, symbol=symbol, defRange=defRange}
+        | I.IDSPECCON {symbol, defRange} => I.IDSPECCON {symbol=symbol, defRange = defRange} 
     and substVarE subst varE = SymbolEnv.map (substIdstatus subst) varE
     fun substTstr subst tstr =
         let
           val {tvarS,...} = subst
         in
           case tstr of 
-            IV.TSTR tfun => IV.TSTR (substTfun subst tfun)
-          | IV.TSTR_DTY {tfun, varE, formals, conSpec} =>
+            IV.TSTR (tsr as {tfun, ...}) => IV.TSTR (tsr # {tfun = substTfun subst tfun})
+          | IV.TSTR_DTY {tfun, varE, formals, defRange, conSpec} =>
             IV.TSTR_DTY {tfun=substTfun subst tfun,
                          varE=substVarE subst varE,
                          formals=formals,
+                         defRange = defRange,
                          conSpec= SymbolEnv.map (Option.map (substTy subst)) conSpec
                         }
         end
@@ -289,9 +301,10 @@ in
            strE = substStrE subst strE
           }
     and substStrE subst (IV.STR specEnvMap) =
-        IV.STR (SymbolEnv.map
-                  (fn {env, strKind} => 
-                      {env=substEnv subst env, strKind=strKind}) specEnvMap)
+        IV.STR 
+          (SymbolEnv.map
+             (fn strEntry as {env, ...} => strEntry # {env=substEnv subst env})
+             specEnvMap)
   
   in
     val substEnv = fn subst => fn env => (resetSet(); substEnv subst env)
@@ -384,36 +397,45 @@ in
   and substTfvIdstatus tfvSubst idstatus = 
       case idstatus of
         I.IDVAR varId => idstatus
-      | I.IDVAR_TYPED {id, longsymbol, ty} => 
-        I.IDVAR_TYPED {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
-      | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId} => 
-        I.IDEXVAR {exInfo = {used = used, longsymbol=longsymbol, version=version, ty = substTfvTy tfvSubst ty},
+      | I.IDVAR_TYPED {id, longsymbol, ty, defRange} => 
+        I.IDVAR_TYPED {id=id, longsymbol=longsymbol, defRange = defRange, ty=substTfvTy tfvSubst ty}
+      | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId, defRange} => 
+        I.IDEXVAR {exInfo = {used = used, longsymbol=longsymbol, 
+                             version=version, ty = substTfvTy tfvSubst ty},
+                   defRange = defRange,
                    internalId=internalId}
       | I.IDEXVAR_TOBETYPED _ => idstatus
-      | I.IDBUILTINVAR {primitive, ty} =>
-        I.IDBUILTINVAR {primitive=primitive, ty=substTfvTy tfvSubst ty}
-      | I.IDCON {id, longsymbol, ty} => I.IDCON {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
-      | I.IDEXN {id, longsymbol, ty} => I.IDEXN {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
-      | I.IDEXNREP {id, longsymbol, ty} => I.IDEXNREP {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty}
-      | I.IDEXEXN {used, longsymbol, ty, version} => 
-        I.IDEXEXN {used = used, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, version=version}
-      | I.IDEXEXNREP {used, longsymbol, ty, version} => 
-        I.IDEXEXNREP {used = used, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, version=version}
+      | I.IDBUILTINVAR {primitive, ty, defRange} =>
+        I.IDBUILTINVAR {primitive=primitive, ty=substTfvTy tfvSubst ty, defRange = defRange}
+      | I.IDCON {id, longsymbol, ty, defRange} =>
+        I.IDCON {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, defRange = defRange}
+      | I.IDEXN {id, longsymbol, ty, defRange} => 
+        I.IDEXN {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, defRange = defRange}
+      | I.IDEXNREP {id, longsymbol, ty, defRange} => 
+        I.IDEXNREP {id=id, longsymbol=longsymbol, ty=substTfvTy tfvSubst ty, defRange = defRange}
+      | I.IDEXEXN {used, longsymbol, ty, version, defRange} => 
+        I.IDEXEXN {used = used, longsymbol=longsymbol, defRange = defRange,
+                   ty=substTfvTy tfvSubst ty, version=version}
+      | I.IDEXEXNREP {used, longsymbol, ty, version, defRange} => 
+        I.IDEXEXNREP {used = used, longsymbol=longsymbol, defRange = defRange,
+                      ty=substTfvTy tfvSubst ty, version=version}
       | I.IDOPRIM _ => idstatus
-      | I.IDSPECVAR {ty, symbol} => I.IDSPECVAR {ty=substTfvTy tfvSubst ty, symbol=symbol}
-      | I.IDSPECEXN {ty, symbol} => I.IDSPECEXN {ty=substTfvTy tfvSubst ty, symbol=symbol}
-      | I.IDSPECCON {symbol} => I.IDSPECCON {symbol=symbol}
+      | I.IDSPECVAR {ty, symbol, defRange} => 
+        I.IDSPECVAR {ty=substTfvTy tfvSubst ty, symbol=symbol, defRange = defRange}
+      | I.IDSPECEXN {ty, symbol, defRange} => 
+        I.IDSPECEXN {ty=substTfvTy tfvSubst ty, symbol=symbol, defRange = defRange}
+      | I.IDSPECCON {symbol, defRange} => I.IDSPECCON {symbol=symbol, defRange = defRange}
 
   and substTfvVarE tfvSubst varE = SymbolEnv.map (substTfvIdstatus tfvSubst) varE
 
   fun substTfvTstr tfvSubst tstr = 
       case tstr of 
-        IV.TSTR tfun => 
-        IV.TSTR (substTfvTfun tfvSubst tfun)
-      | IV.TSTR_DTY {tfun, varE, formals, conSpec} =>
+        IV.TSTR (tsr as {tfun, ...}) => 
+        IV.TSTR (tsr # {tfun = substTfvTfun tfvSubst tfun})
+      | IV.TSTR_DTY {tfun, varE, formals, defRange,conSpec} =>
         IV.TSTR_DTY {tfun=substTfvTfun tfvSubst tfun,
                      varE=substTfvVarE tfvSubst varE,
-                     formals=formals,
+                     defRange = defRange,formals=formals,
                      conSpec=SymbolEnv.map (Option.map (substTfvTy tfvSubst)) conSpec
                    }
 
@@ -428,9 +450,8 @@ in
   and substTfvStrE tfvSubst (IV.STR specEnvMap) =
       IV.STR
         (SymbolEnv.map
-           (fn {env, strKind} => 
-               {env=substTfvEnv tfvSubst env, strKind=strKind}) specEnvMap)
-
-
+           (fn strEntry as {env, ...} => 
+               strEntry # {env=substTfvEnv tfvSubst env}) 
+           specEnvMap)
 end
 end

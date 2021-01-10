@@ -4,6 +4,7 @@ _require local "../../../libs/digest/main/SHA3.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../../basis.smi"
 _require "../../../libs/toolchain/main/Filename.smi"
+_require "../../../extensions/debug/main/Bug.smi"
 _require "../../../data/symbols/main/Loc.smi"
 
 structure InterfaceName =
@@ -58,7 +59,7 @@ struct
       }
 
   withtype file_dependency_edge =
-      file_dependency_edge_type * file_dependency_node
+      file_dependency_edge_type * file_dependency_node * Loc.loc
 
   datatype file_dependency_root_file_type =
       ROOT_SML of source option
@@ -91,10 +92,18 @@ struct
       : hash -> SMLFormat.FormatExpression.expression list
   val format_file_type
       : file_type -> SMLFormat.FormatExpression.expression list
+
+  val format_file_dependency_root_file_type
+      : file_dependency_root_file_type -> SMLFormat.FormatExpression.expression list
+
   val format_source
       : source -> SMLFormat.FormatExpression.expression list
+  val sourceToString
+      : source -> string
   val format_interface_name
       : interface_name -> SMLFormat.FormatExpression.expression list
+  val interface_nameToString
+      : interface_name -> string
   val format_short_interface_name
       : interface_name -> SMLFormat.FormatExpression.expression list
   val format_provider

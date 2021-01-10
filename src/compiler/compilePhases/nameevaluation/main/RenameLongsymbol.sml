@@ -135,12 +135,13 @@ struct
         val (tyE, renameEnv) = replacePathTyE renameEnv path tyE
         val (newenvStrkindSymbolMap, renameEnv) = 
             SymbolEnv.foldri
-            (fn (symbol, {env, strKind}, (envStrkindSymbolMap,renameEnv)) =>
+            (fn (symbol, strEntry as {env,...}, (envStrkindSymbolMap,renameEnv)) =>
                 let
                   val newPath = Symbol.prefixPath (path, symbol)
                   val (newEnv, renameEnv) = replacePathEnv renameEnv newPath env
                   val envStrkinSymbolMap =
-                      SymbolEnv.insert(envStrkindSymbolMap, symbol, {env=newEnv, strKind=strKind})
+                      SymbolEnv.insert
+                        (envStrkindSymbolMap, symbol, strEntry # {env=newEnv})
                 in
                   (envStrkindSymbolMap, renameEnv)
                 end
@@ -163,21 +164,17 @@ struct
 
   and replacePathTstr renameEnv path tstr = 
       case tstr of
-        V.TSTR tfun => 
+        V.TSTR (tsr as {tfun,...}) => 
         let
           val (tfun, renameEnv) = replacePathTfun renameEnv path tfun
         in
-          (V.TSTR tfun, renameEnv)
+          (V.TSTR (tsr # {tfun = tfun}), renameEnv)
         end
-      | V.TSTR_DTY {tfun, varE, formals, conSpec} =>
+      | V.TSTR_DTY (tsr as {tfun, ...}) =>
         let
           val (tfun , renameEnv) = replacePathTfun renameEnv path tfun
         in
-          (V.TSTR_DTY {tfun = tfun,
-                       varE = varE,
-                       formals = formals,
-                       conSpec = conSpec},
-           renameEnv)
+          (V.TSTR_DTY (tsr # {tfun = tfun}), renameEnv)
         end
 
   fun renameLongsymbolTfunSelf renameEnv tfun =
@@ -251,29 +248,34 @@ struct
 
   fun renameLongsymbolIdstatus renameEnv idstatus =
       case idstatus of
-        I.IDVAR  {id, longsymbol} => idstatus
-      | I.IDVAR_TYPED {id, ty, longsymbol} => idstatus
-      | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId} => 
+        I.IDVAR  {id, longsymbol,defRange} => idstatus
+      | I.IDVAR_TYPED {id, ty, longsymbol,defRange} => idstatus
+      | I.IDEXVAR {exInfo={used, longsymbol, version, ty}, internalId,defRange} => 
         I.IDEXVAR {exInfo={longsymbol=longsymbol, 
                            used = used,
                            version=version, 
                            ty=renameLongsymbolTy renameEnv ty}, 
+                   defRange = defRange,
                    internalId=internalId}
-      | I.IDEXVAR_TOBETYPED {longsymbol, id,  version} => idstatus
-      | I.IDBUILTINVAR {primitive, ty} => 
-        I.IDBUILTINVAR {primitive=primitive, ty=renameLongsymbolTy renameEnv ty}
-      | I.IDCON {id, ty, longsymbol} =>
-        I.IDCON {id=id, ty=renameLongsymbolTy renameEnv ty, longsymbol=longsymbol}
-      | I.IDEXN {id, ty, longsymbol} =>
-        I.IDEXN {id=id, ty=renameLongsymbolTy renameEnv ty, longsymbol=longsymbol}
-      | I.IDEXNREP {id, ty, longsymbol} =>
-        I.IDEXNREP {id=id, ty=renameLongsymbolTy renameEnv ty, longsymbol=longsymbol}
-      | I.IDEXEXN {used, longsymbol, version, ty}  => idstatus
-      | I.IDEXEXNREP {used, ty, version, longsymbol} => idstatus
-      | I.IDOPRIM {id, overloadDef, used, longsymbol} => idstatus
-      | I.IDSPECVAR {ty, symbol} => idstatus
-      | I.IDSPECEXN {ty, symbol} => idstatus
-      | I.IDSPECCON {symbol} => idstatus
+      | I.IDEXVAR_TOBETYPED {longsymbol, id,  version, defRange} => idstatus
+      | I.IDBUILTINVAR {primitive, ty, defRange} => 
+        I.IDBUILTINVAR {primitive=primitive, defRange = defRange,
+                        ty=renameLongsymbolTy renameEnv ty}
+      | I.IDCON {id, ty, longsymbol, defRange} =>
+        I.IDCON {id=id, ty=renameLongsymbolTy renameEnv ty, defRange = defRange,
+                 longsymbol=longsymbol}
+      | I.IDEXN {id, ty, longsymbol, defRange} =>
+        I.IDEXN {id=id, ty=renameLongsymbolTy renameEnv ty, defRange = defRange,
+                 longsymbol=longsymbol}
+      | I.IDEXNREP {id, ty, longsymbol, defRange} =>
+        I.IDEXNREP {id=id, ty=renameLongsymbolTy renameEnv ty, defRange = defRange,
+                    longsymbol=longsymbol}
+      | I.IDEXEXN {used, longsymbol, version, ty, defRange}  => idstatus
+      | I.IDEXEXNREP {used, ty, version, longsymbol, defRange} => idstatus
+      | I.IDOPRIM {id, overloadDef, used, longsymbol, defRange} => idstatus
+      | I.IDSPECVAR {ty, symbol, defRange} => idstatus
+      | I.IDSPECEXN {ty, symbol, defRange} => idstatus
+      | I.IDSPECCON {symbol, defRange} => idstatus
 
   fun renameLongsymbolVarE renameEnv varE =
       SymbolEnv.map (renameLongsymbolIdstatus renameEnv) varE
@@ -283,11 +285,13 @@ struct
 
   fun renameLongsymbolTstr renameEnv tstr =
       case tstr of
-        V.TSTR tfun => V.TSTR (renameLongsymbolTfunSelf renameEnv tfun)
-      | V.TSTR_DTY {tfun, varE, formals, conSpec} =>
+        V.TSTR (tsr as {tfun,...}) => 
+        V.TSTR (tsr # {tfun = renameLongsymbolTfunSelf renameEnv tfun})
+      | V.TSTR_DTY {tfun, defRange, varE, formals, conSpec} =>
         V.TSTR_DTY {tfun =  (renameLongsymbolTfunSelf renameEnv tfun),
                     varE = renameLongsymbolVarE renameEnv varE,
                     formals = formals,
+                    defRange = defRange,
                     conSpec = renameLongsymbolConSpec renameEnv conSpec}
 
   fun renameLongsymbolTyE renameEnv tyE =
@@ -299,8 +303,8 @@ struct
              strE = 
              V.STR
                (SymbolEnv.map
-                  (fn {env, strKind} => 
-                      {env=renameLomgsymbolEnv renameEnv env, strKind=strKind})
+                  (fn strEntry as {env,...} => 
+                      strEntry # {env=renameLomgsymbolEnv renameEnv env})
                   envSymbolMap)
             }
 

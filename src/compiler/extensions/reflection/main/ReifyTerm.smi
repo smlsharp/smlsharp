@@ -5,6 +5,7 @@ _require local "../../../libs/env/main/SEnv.smi"
 _require local "../../../libs/env/main/IEnv.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/symbols/main/Loc.smi"
 (* _require local "../../../data/control/main/Control.smi" *)
 
 _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"
@@ -19,8 +20,5 @@ _require local "./ReifiedTermToML.smi"
 structure ReifyTerm =
 struct
   val toReifiedTerm : ['a#reify.'a -> ReifiedTerm.reifiedTerm]
-  val toReifiedTermPrint : ['a#reify.'a -> ReifiedTerm.reifiedTerm]
-  val setCdr : ['a#reify. 'a list * 'a list -> unit]
-  val pp : ['a#reify. 'a -> unit]
-  val typeOf : ['a#reify. 'a -> ReifiedTy.tyRep]
+  val toReifiedTermPrint : ['a#reify.int -> 'a -> ReifiedTerm.reifiedTerm]
 end

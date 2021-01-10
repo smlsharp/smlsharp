@@ -18,3 +18,10 @@ structure FunctorID = GenID
 structure FunctionAnnotationID = GenID
 structure AnnotationLabelID = GenID
 structure RevealID = GenID
+structure FileID = GenID
+structure SignatureID = GenID
+structure ExternalSymbolID = GenID
+
+
+
+

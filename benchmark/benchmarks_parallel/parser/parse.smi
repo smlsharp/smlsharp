@@ -1,0 +1,7 @@
+_require local "../../../src/basis.smi"
+_require local "../../../src/compiler/compilePhases/parser/main/Parser.smi"
+_require local "../../../src/compiler/data/symbols/main/Loc.smi"
+_require local "../../../src/compiler/libs/toolchain/main/Filename.smi"
+_require local "./stdio.smi"
+
+val parse : string -> unit

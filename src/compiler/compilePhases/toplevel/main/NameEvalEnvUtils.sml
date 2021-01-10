@@ -23,7 +23,7 @@ struct
       case idstatus of
       I.IDVAR _ => raise bug "IDVAR not found"
     | I.IDVAR_TYPED _ => raise bug "IDVAR not found"
-    | I.IDEXVAR_TOBETYPED {longsymbol, id, version} =>
+    | I.IDEXVAR_TOBETYPED {longsymbol, id, version, defRange} =>
       (case VarMap.find(tyVarE, {id=id, longsymbol=longsymbol}) of
          NONE => raise bug "varId not found"
        | SOME (TypedCalc.VARID {ty,...})  => 
@@ -31,12 +31,14 @@ struct
                             used = ref false,
                             version=version,
                             ty=I.INFERREDTY ty},
+                    defRange = defRange,
                     internalId= SOME id}
        | SOME (TypedCalc.RECFUNID ({ty,...},_))  => 
          I.IDEXVAR {exInfo={longsymbol=longsymbol, 
                             version=version,
                             used = ref false, 
                             ty=I.INFERREDTY ty},
+                    defRange = defRange,
                     internalId= SOME id}
       )
     | I.IDEXVAR _ => idstatus
@@ -68,12 +70,12 @@ struct
   and setTyStrE tyVarE (NameEvalEnv.STR envMap) =
       NameEvalEnv.STR
         (SymbolEnv.map
-           (fn {env, strKind} => {env= setTyEnv tyVarE env, strKind=strKind})
+           (fn strEntry as {env,...} => strEntry # {env= setTyEnv tyVarE env})
            envMap)
 
   fun setTyFunE tyVarE funE =
       SymbolEnv.map
-      (fn {id, version, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy,
+      (fn {id, loc, version, argSigEnv, argStrEntry, argStrName, dummyIdfunArgTy,
                       polyArgTys, typidSet, exnIdSet, bodyEnv, bodyVarExp}
           =>
           let
@@ -96,6 +98,7 @@ struct
                 | _ => bodyVarExp
           in
             {id=id,
+             loc = loc,
              version = version,
              argSigEnv = argSigEnv,
              argStrEntry = argStrEntry,
@@ -127,8 +130,8 @@ struct
 
   fun resetInternalIdIdstatus idstatus =
       case idstatus of
-      I.IDEXVAR {exInfo, internalId} =>
-      I.IDEXVAR {exInfo=exInfo, internalId=NONE}
+      I.IDEXVAR {exInfo, internalId, defRange} =>
+      I.IDEXVAR {exInfo=exInfo, internalId=NONE, defRange=defRange}
     | idstatus => idstatus
 
   fun resetInternalIdEnv (V.ENV{varE, strE, tyE}) =
@@ -143,8 +146,8 @@ struct
       let
         val strEmap = 
             SymbolEnv.map 
-            (fn {env, strKind} =>
-                {env=resetInternalIdEnv env, strKind=strKind}
+            (fn (strEntry as {env, ...}) =>
+                strEntry # {env=resetInternalIdEnv env}
             )
             strEmap
       in

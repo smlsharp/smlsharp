@@ -135,11 +135,11 @@ struct
     | BEGIN
     | COMMIT
     | ROLLBACK
+    | SEQ of ('exp, 'exp sql * loc) clause list
 
   datatype ('exp, 'pat, 'ty) sqlexp =
       SQLSERVER of 'exp option * 'ty
     | SQL of 'exp sql
     | SQLFN of 'pat * 'exp sql
-    | SQLFN_EMBED of 'pat * 'exp
 
 end

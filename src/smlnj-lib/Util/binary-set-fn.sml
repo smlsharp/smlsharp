@@ -1,6 +1,7 @@
 (* binary-set-fn.sml
  *
- * COPYRIGHT (c) 1993 by AT&T Bell Laboratories.  See COPYRIGHT file for details.
+ * COPYRIGHT (c) 2020 The Fellowship of SML/NJ (http://www.smlnj.org)
+ * All rights reserved.
  *
  * This code was adapted from Stephen Adams' binary tree implementation
  * of applicative integer sets.
@@ -60,7 +61,7 @@
  *   Modified to functor to support general ordered values
  *)
 
-functor BinarySetFn (K : ORD_KEY) : ORD_SET =
+functor BinarySetFn (K : ORD_KEY) :> ORD_SET where type Key.ord_key = K.ord_key =
   struct
 
     structure Key = K
@@ -68,19 +69,27 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
     type item = K.ord_key
 
     datatype set
-      = E 
+      = E
       | T of {
-	  elt : item, 
-          cnt : int, 
+	  elt : item,
+          cnt : int,
           left : set,
           right : set
 	}
 
     fun numItems E = 0
       | numItems (T{cnt,...}) = cnt
-        
+
     fun isEmpty E = true
       | isEmpty _ = false
+
+    fun minItem E = raise Empty
+      | minItem (T{elt, left=E, ...}) = elt
+      | minItem (T{left, ...}) = minItem left
+
+    fun maxItem E = raise Empty
+      | maxItem (T{elt, right=E, ...}) = elt
+      | maxItem (T{right, ...}) = maxItem right
 
     fun mkT(v,n,l,r) = T{elt=v,cnt=n,left=l,right=r}
 
@@ -151,7 +160,7 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 
     fun concat3 (E,v,r) = add(r,v)
       | concat3 (l,v,E) = add(l,v)
-      | concat3 (l as T{elt=v1,cnt=n1,left=l1,right=r1}, v, 
+      | concat3 (l as T{elt=v1,cnt=n1,left=l1,right=r1}, v,
                   r as T{elt=v2,cnt=n2,left=l2,right=r2}) =
         if wt n1 < n2 then T'(v2,concat3(l,v,l2),r2)
         else if wt n2 < n1 then T'(v1,l1,concat3(r1,v,r))
@@ -174,7 +183,7 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
     fun min (T{elt=v,left=E,...}) = v
       | min (T{left=l,...}) = min l
       | min _ = raise Match
-        
+
     fun delmin (T{left=E,right=r,...}) = r
       | delmin (T{elt=v,left=l,right=r,...}) = T'(v,delmin l,r)
       | delmin _ = raise Match
@@ -185,7 +194,7 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 
     fun concat (E, s) = s
       | concat (s, E) = s
-      | concat (t1 as T{elt=v1,cnt=n1,left=l1,right=r1}, 
+      | concat (t1 as T{elt=v1,cnt=n1,left=l1,right=r1},
                   t2 as T{elt=v2,cnt=n2,left=l2,right=r2}) =
           if wt n1 < n2 then T'(v2,concat(t1,l2),r2)
           else if wt n2 < n1 then T'(v1,l1,concat(r1,t2))
@@ -198,20 +207,20 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
             if K.compare(v,lo) = GREATER
               then if K.compare(v,hi) = LESS then s else trim(lo,hi,l)
               else trim(lo,hi,r)
-                
+
       fun uni_bd (s,E,_,_) = s
-        | uni_bd (E,T{elt=v,left=l,right=r,...},lo,hi) = 
+        | uni_bd (E,T{elt=v,left=l,right=r,...},lo,hi) =
              concat3(split_gt(l,lo),v,split_lt(r,hi))
-        | uni_bd (T{elt=v,left=l1,right=r1,...}, 
+        | uni_bd (T{elt=v,left=l1,right=r1,...},
                    s2 as T{elt=v2,left=l2,right=r2,...},lo,hi) =
             concat3(uni_bd(l1,trim(lo,v,s2),lo,v),
-                v, 
+                v,
                 uni_bd(r1,trim(v,hi,s2),v,hi))
               (* inv:  lo < v < hi *)
 
         (* all the other versions of uni and trim are
          * specializations of the above two functions with
-         *     lo=-infinity and/or hi=+infinity 
+         *     lo=-infinity and/or hi=+infinity
          *)
 
       fun trim_lo (_, E) = E
@@ -225,24 +234,24 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
             case K.compare(v,hi) of
               LESS => s
             | _ => trim_hi(hi,l)
-                
+
       fun uni_hi (s,E,_) = s
-        | uni_hi (E,T{elt=v,left=l,right=r,...},hi) = 
+        | uni_hi (E,T{elt=v,left=l,right=r,...},hi) =
              concat3(l,v,split_lt(r,hi))
-        | uni_hi (T{elt=v,left=l1,right=r1,...}, 
+        | uni_hi (T{elt=v,left=l1,right=r1,...},
                    s2 as T{elt=v2,left=l2,right=r2,...},hi) =
             concat3(uni_hi(l1,trim_hi(v,s2),v),v,uni_bd(r1,trim(v,hi,s2),v,hi))
 
       fun uni_lo (s,E,_) = s
-        | uni_lo (E,T{elt=v,left=l,right=r,...},lo) = 
+        | uni_lo (E,T{elt=v,left=l,right=r,...},lo) =
              concat3(split_gt(l,lo),v,r)
-        | uni_lo (T{elt=v,left=l1,right=r1,...}, 
+        | uni_lo (T{elt=v,left=l1,right=r1,...},
                    s2 as T{elt=v2,left=l2,right=r2,...},lo) =
             concat3(uni_bd(l1,trim(lo,v,s2),lo,v),v,uni_lo(r1,trim_lo(v,s2),v))
 
       fun uni (s,E) = s
         | uni (E,s) = s
-        | uni (T{elt=v,left=l1,right=r1,...}, 
+        | uni (T{elt=v,left=l1,right=r1,...},
                 s2 as T{elt=v2,left=l2,right=r2,...}) =
             concat3(uni_hi(l1,trim_hi(v,s2),v), v, uni_lo(r1,trim_lo(v,s2),v))
 
@@ -251,11 +260,11 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
     end
 
       (* The old_union version is about 20% slower than
-       *  hedge_union in most cases 
+       *  hedge_union in most cases
        *)
     fun old_union (E,s2)  = s2
       | old_union (s1,E)  = s1
-      | old_union (T{elt=v,left=l,right=r,...},s2) = 
+      | old_union (T{elt=v,left=l,right=r,...},s2) =
           let val l2 = split_lt(s2,v)
               val r2 = split_gt(s2,v)
           in
@@ -288,11 +297,11 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
       fun treeIn (t,t') = let
             fun isIn E = true
               | isIn (T{elt,left=E,right=E,...}) = member(t',elt)
-              | isIn (T{elt,left,right=E,...}) = 
+              | isIn (T{elt,left,right=E,...}) =
                   member(t',elt) andalso isIn left
-              | isIn (T{elt,left=E,right,...}) = 
+              | isIn (T{elt,left=E,right,...}) =
                   member(t',elt) andalso isIn right
-              | isIn (T{elt,left,right,...}) = 
+              | isIn (T{elt,left,right,...}) =
                   member(t',elt) andalso isIn left andalso isIn right
             in
               isIn t
@@ -329,6 +338,21 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 	  in
 	    cmp (left(s1, []), left(s2, []))
 	  end
+
+    fun disjoint (s1, s2) = let
+	  fun walk (t1, t2) = (case (next t1, next t2)
+		 of ((E, _), _) => true
+		  | (_, (E, _)) => true
+		  | ((T{elt=e1, ...}, r1), (T{elt=e2, ...}, r2)) => (
+		      case Key.compare(e1, e2)
+		       of LESS => walk (r1, t2)
+			| EQUAL => false
+			| GREATER => walk (t1, r2)
+		      (* end case *))
+		(* end case *))
+	  in
+	    walk (left(s1, []), left(s2, []))
+	  end
     end
 
     fun delete (E,x) = raise LibBase.NotFound
@@ -360,17 +384,40 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
             concat(difference(l2,l),difference(r2,r))
           end
 
+    fun subtract (s, item) = difference (s, singleton item)
+    fun subtract' (item, s) = subtract (s, item)
+
+    fun subtractList (l, items) = let
+	  val items' = List.foldl (fn (x, set) => add(set, x)) E items
+	  in
+	    difference (l, items')
+	  end
+
     fun map f set = let
 	  fun map'(acc, E) = acc
 	    | map'(acc, T{elt,left,right,...}) =
 		map' (add (map' (acc, left), f elt), right)
-	  in 
+	  in
 	    map' (E, set)
 	  end
 
-    fun app (apf:item -> unit) =
+    fun mapPartial f set = let
+	  fun map' (acc, E) = acc
+	    | map' (acc, T{elt, left, right, ...}) = let
+		val acc = map' (acc, left)
+		in
+		  case f elt
+		   of NONE => map' (acc, right)
+		    | SOME elt' => map' (add (acc, elt'), right)
+		  (* end case *)
+		end
+	  in
+	    map' (E, set)
+	  end
+
+    fun app apf =
          let fun apply E = ()
-               | apply (T{elt,left,right,...}) = 
+               | apply (T{elt,left,right,...}) =
                    (apply left;apf elt; apply right)
          in
            apply
@@ -378,7 +425,7 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 
     fun foldl f b set = let
 	  fun foldf (E, b) = b
-	    | foldf (T{elt,left,right,...}, b) = 
+	    | foldf (T{elt,left,right,...}, b) =
 		foldf (right, f(elt, foldf (left, b)))
           in
             foldf (set, b)
@@ -386,13 +433,13 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 
     fun foldr f b set = let
 	  fun foldf (E, b) = b
-	    | foldf (T{elt,left,right,...}, b) = 
+	    | foldf (T{elt,left,right,...}, b) =
 		foldf (left, f(elt, foldf (right, b)))
           in
             foldf (set, b)
           end
 
-    fun listItems set = foldr (op::) [] set
+    fun toList set = foldr (op::) [] set
 
     fun filter pred set =
 	  foldl (fn (item, s) => if (pred item) then add(s, item) else s)
@@ -405,6 +452,14 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 	    )
 	      (empty, empty) set
 
+    fun exists p E = false
+      | exists p (T{elt, left, right,...}) =
+	  (exists p left) orelse (p elt) orelse (exists p right)
+
+    fun all p E = true
+      | all p (T{elt, left, right,...}) =
+	  (all p left) andalso (p elt) andalso (all p right)
+
     fun find p E = NONE
       | find p (T{elt,left,right,...}) = (case find p left
 	   of NONE => if (p elt)
@@ -413,8 +468,7 @@ functor BinarySetFn (K : ORD_KEY) : ORD_SET =
 	    | a => a
 	  (* end case *))
 
-    fun exists p E = false
-      | exists p (T{elt, left, right,...}) =
-	  (exists p left) orelse (p elt) orelse (exists p right)
+  (* deprecated *)
+    val listItems = toList
 
   end (* BinarySetFn *)

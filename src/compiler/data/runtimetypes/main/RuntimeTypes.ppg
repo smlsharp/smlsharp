@@ -46,6 +46,9 @@ struct
     | (*% @format "U" *)
       UNBOXED
 
+  fun tagValue BOXED = 1
+    | tagValue UNBOXED = 0
+
   (*% *)
   datatype tag_prop =
       (*% @format(x) x *)
@@ -316,5 +319,32 @@ struct
        * Otherwise, two representations must be equal.
        *)
       | (_, r1, r2) => r1 = r2
+
+  datatype size_assumption =
+      (* every type has power-of-2 size *)
+      ALL_SIZES_ARE_POWER_OF_2
+(*
+    | (* every type except long double has power-of-2 size *)
+      ALL_SIZES_ARE_POWER_OF_2_EXCEPT_LONG_DOUBLE
+*)
+  datatype align_computation =
+      (* For every type, its alignment is equal to its size *)
+      ALIGN_EQUAL_SIZE
+(*
+    | (* For every type except double, its alignment is equal to its size.
+       * The size of double is 8 and its alignment is 4. *)
+      ALIGN_EQUAL_SIZE_EXECPT_DOUBLE
+    | (* For each type whose size is larger than 8, its alignment is 4.
+       * For any other types, their alignments are equal to their sizes *)
+      ALIGN_UPTO_4
+*)
+
+  val charBits = 8
+
+  (* NOTE: On x86 Linux (and any other long-lived operating systems on x86),
+   * sizeof(long double) is 12. So ALL_SIZES_ARE_POWER_OF_2_EXCEPT_LONG_DOUBLE
+   * is more appropriate for those platforms. *)
+  val sizeAssumption = ALL_SIZES_ARE_POWER_OF_2
+  val alignComputation = ALIGN_EQUAL_SIZE
 
 end
