@@ -12,8 +12,7 @@ local
   val sourceMap = ref SourceMap.empty : sourceMap ref
   val fileMapMap = ref FileIDMap.empty : fileMap ref
   val fileDependMap = ref FileIDIntMap.empty : fileDependMap ref
-  val defMap = ref FileIDIntMap.empty : defMap ref
-  val bindMap = ref FileIDIntMap.empty : defMap ref
+  val defMap = ref FileIDIntStringMap.empty : defMap ref
   val refMap = ref FileIDIntMap.empty : refMap ref
   val UPRefMap = ref FileIDFileIDMap.empty : UPRefMap ref
 in
@@ -104,26 +103,23 @@ in
 
   type key = {fileId:int, startPos:int}
   fun initDefMap () =
-      defMap := FileIDIntMap.empty
-  fun insertDefMap (key, defInfo) =
-      defMap := FileIDIntMap.insert(!defMap, key, defInfo)
+      defMap := FileIDIntStringMap.empty
+  fun insertDefMap (defInfo as {category, 
+                                defSymbolFileId, 
+                                defSymbolStartPos,...}) =
+      let
+        val key  = {fileId = defSymbolFileId,
+                    startPos = defSymbolStartPos,
+                    category = category}
+      in
+        defMap := FileIDIntStringMap.insert(!defMap, key, defInfo)
+      end
   fun addDefTable () =
       let
-        val defTable =  FileIDIntMap.listItems (!defMap)
+        val defTable =  FileIDIntStringMap.listItems (!defMap)
       in
         if null defTable then () else 
         DB.insert {defTable = defTable}
-      end
-  fun initBindMap () =
-      bindMap := FileIDIntMap.empty
-  fun insertBindMap (key, bindInfo) =
-      bindMap := FileIDIntMap.insert(!bindMap, key, bindInfo)
-  fun addBindTable () =
-      let
-        val bindTable =  FileIDIntMap.listItems (!bindMap)
-      in
-        if null bindTable then () else 
-        DB.insert {bindTable = bindTable}
       end
   fun initRefMap () =
       refMap := FileIDIntMap.empty

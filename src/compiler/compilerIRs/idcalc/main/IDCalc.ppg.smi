@@ -137,7 +137,7 @@ struct
 (*
     | ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
 *)
-    | ICINTERFACETYPED of {icexp:icexp,ty:ty,loc:loc}
+    | ICINTERFACETYPED of {icexp:icexp,path:longsymbol,ty:ty,loc:loc}
     | ICAPPM of icexp * icexp list * loc
     | ICAPPM_NOUNIFY of icexp * icexp list * loc
     | ICLET of icdecl list * icexp * loc

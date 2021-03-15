@@ -48,6 +48,7 @@ _require local "./TypeInferenceUtils.smi"
 _require local "./Printers.smi"
 (* _require local "./CompareTy.smi" *)
 _require local "./CompileDynamicCase.smi"
+_require local "./CoerceRank1.smi"
 
 structure InferTypes =
 struct

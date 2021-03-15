@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "reify.smi"
+val f1 : ['a. 'a -> ['b. 'a * 'b -> 'a * 'b]]
+val f2 : ['a, 'b. 'a -> 'a * 'b -> 'a * 'b]
+val f3 : 'a -> 'a * 'b -> 'a * 'b
+type 'a foo (= {})
+val reveal : 'a foo -> int * 'a list
+val x : 'a foo
+val y : int foo
+val z : bool foo
+val w : int * int list
+val v : int * bool list

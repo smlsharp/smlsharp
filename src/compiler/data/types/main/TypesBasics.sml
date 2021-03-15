@@ -209,14 +209,15 @@ end
    * @param subst bound type variable substitution
    * @return
    *)
-  fun makeFreshSubst utvarOpt boundEnv = 
+  fun makeFreshSubst lambdaDepth utvarOpt boundEnv =
       let
         val subst =
             BoundTypeVarID.Map.map
               (fn k => 
                   let
                     val newTy = 
-                        T.newty {
+                        T.newtyRaw {
+                        lambdaDepth = lambdaDepth,
                         kind = #kind T.univKind,
                         utvarOpt = utvarOpt
                         }
@@ -257,7 +258,7 @@ end
       in
         subst
       end
-  fun freshSubst boundEnv = makeFreshSubst NONE boundEnv
+  fun freshSubst boundEnv = makeFreshSubst T.infiniteDepth NONE boundEnv
 
   fun freshRigidSubst boundEnv = 
       let
@@ -266,7 +267,19 @@ end
         val tvar = {symbol=symbol, isEq=false, id=id, lifted=false}
         val utvarOpt = SOME tvar
       in
-        makeFreshSubst utvarOpt boundEnv
+        makeFreshSubst T.infiniteDepth utvarOpt boundEnv
+      end
+
+  fun freshSubstWithLambdaDepth lambdaDepth boundEnv = makeFreshSubst lambdaDepth NONE boundEnv
+
+  fun freshRigidSubstWithLambdaDepth lambdaDepth boundEnv =
+      let
+        val id = TvarID.generate()
+        val symbol = Symbol.mkSymbol "RIGID" Loc.noloc
+        val tvar = {symbol=symbol, isEq=false, id=id, lifted=false}
+        val utvarOpt = SOME tvar
+      in
+        makeFreshSubst lambdaDepth utvarOpt boundEnv
       end
 
   (**
@@ -294,6 +307,30 @@ end
       end
 
   val emptyBTVSubst = BoundTypeVarID.Map.empty
+
+  fun makeTopLevelFreshInstTy makeSubst ty =
+      (* 2016-06-16 sasaki: constraitsを返すように変更 *)
+      if monoTy ty then (ty, nil, emptyBTVSubst)
+      else
+        case ty of
+          T.POLYty{boundtvars,body,constraints} =>
+          let
+            val subst = makeSubst boundtvars
+            val bty = substBTvar subst body
+            val constraints =
+                List.map (fn c =>
+                             case c of T.JOIN {res, args = (arg1, arg2), loc} =>
+                               T.JOIN
+                                   {res = substBTvar subst res,
+                                    args = (substBTvar subst arg1,
+                                            substBTvar subst arg2),
+                                    loc = loc})
+                         constraints
+          in
+            (bty, constraints, subst)
+          end
+        | ty => (ty, nil, emptyBTVSubst)
+
   fun makeFreshInstTy makeSubst ty =
       (* 2016-06-16 sasaki: constraitsを返すように変更 *)
       if monoTy ty then (ty, nil, emptyBTVSubst)
@@ -367,7 +404,12 @@ end
         (ty, constraints, addedUtvars)
       end
 
-
+  fun freshTopLevelRigidInstTy ty =
+      let
+        val (ty, const, subst) = makeTopLevelFreshInstTy freshRigidSubst ty
+      in
+        (ty, const, BoundTypeVarID.Map.listItems subst)
+      end
 
   exception ExSpecTyCon of string
   exception ExIllegalTyFunToTyCon of string

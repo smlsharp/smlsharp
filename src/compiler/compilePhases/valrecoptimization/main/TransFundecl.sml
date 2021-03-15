@@ -95,8 +95,9 @@ in
       | ICEXEXN_CONSTRUCTOR exnInfo => icexp
       | ICOPRIM oprimInfo => icexp
       | ICTYPED (icexp, ty, loc) => ICTYPED (transExp icexp, ty, loc)
-      | ICINTERFACETYPED {icexp,ty,loc} =>
+      | ICINTERFACETYPED {icexp,path,ty,loc} =>
         ICINTERFACETYPED {icexp=transExp icexp,
+                          path=path,
                           ty=ty,
                           loc=loc}
       | ICAPPM (icexp, icexplist, loc) =>

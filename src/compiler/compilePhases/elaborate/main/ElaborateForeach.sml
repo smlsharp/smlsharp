@@ -33,7 +33,7 @@ struct
       PatRecord (RecordLabel.tupleList pats)
 
   fun Fn (pat, exp) loc =
-      P.PLFNM ([([pat loc], exp loc)], loc)
+      P.PLFNM ([([pat loc], exp loc, loc)], loc)
 
   fun App exp1 exp2 loc =
       P.PLAPPM (exp1 loc, [exp2 loc], loc)

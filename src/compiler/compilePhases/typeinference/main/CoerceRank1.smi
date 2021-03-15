@@ -1,0 +1,27 @@
+_require local "../../../../basis.smi"
+_require "../../../data/symbols/main/Loc.smi"
+_require "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../data/types/main/Unify.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../compilerIRs/typedcalc/main/TypedCalcUtils.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "./Printers.smi"
+_require local "./TypeInferenceError.ppg.smi"
+_require local "../../../extensions/usererror/main/UserError.ppg.smi"
+_require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+
+structure CoerceRank1 =
+struct
+  val coerce : 
+      {revealTyFrom:Types.ty -> Types.ty,
+       revealTyTo:Types.ty -> Types.ty,
+       loc:Loc.loc,
+       path:string list,
+       tpexp:TypedCalc.tpexp,
+       tpexpTy:Types.ty,
+       toTy:Types.ty}
+        -> Types.ty * TypedCalc.tpexp
+end

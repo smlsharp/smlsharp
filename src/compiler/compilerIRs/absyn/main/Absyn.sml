@@ -320,10 +320,10 @@ struct
              +1 "handle" 
              +d rules(rule)(~1[ +1 "|"] +)
            ]
-         @format:rule(pat * exp) 
+         @format:rule(pat * exp * loc)
            1[ pat + "=>" +1 exp ]
        *)
-      EXPHANDLE of exp * (pat * exp) list * loc
+      EXPHANDLE of exp * (pat * exp * loc) list * loc
     | (*%
          @format(exp * loc) 
            1[ "raise" +d exp ]
@@ -352,18 +352,18 @@ struct
             +1
             1[rules(rule)(~1[+1 "|"] +) ]
           ]
-         @format:rule(pat * exp) {{pat} + "=>" +1 {exp}}
+         @format:rule(pat * exp * loc) {{pat} + "=>" +1 {exp}}
        *)
-      EXPCASE of exp * (pat * exp) list * loc
+      EXPCASE of exp * (pat * exp * loc) list * loc
     | (*%
          @format(rule rules * loc) 
            1[
               "fn" + rules(rule)(~1[ +1 "|"] +) 
             ]
-         @format:rule(pat * exp) 
+         @format:rule(pat * exp * loc)
            1[ pat + "=>" +1 exp]
        *)
-      EXPFN of (pat * exp) list * loc
+      EXPFN of (pat * exp * loc) list * loc
     | (*%
          @format(dec decs * exp exps * loc)
            "let" 1[ +1 decs(dec)( +1) ]
@@ -419,10 +419,10 @@ struct
             +1
             1[rules(rule)(~1[+1 "|"] +) ]
           ]
-         @format:rule(tv tvs * pat * exp)
+         @format:rule(tv tvs * pat * exp * loc)
           {"{"tvs(tv)(",")"}" +d {pat} + "=>" +1 {exp}}
        *)
-      EXPDYNAMICCASE of exp * (kindedTvar list * pat * exp) list * loc
+      EXPDYNAMICCASE of exp * (kindedTvar list * pat * exp * loc) list * loc
     | (*% 
           @format(ty * loc) "_reifyTy(" +  ty + ")"
        *)
@@ -513,14 +513,14 @@ struct
             ]
         @format:rules({fdecl:rule rules, loc}) 
             rules(rule)(+1 "|" +)
-        @format:rule(pat pats * ty opt:prependedOpt * exp)
+        @format:rule(pat pats * ty opt:prependedOpt * exp * loc)
          1[
             pats(pat)(+d) 
             opt(ty)(+d ":" +) + "=" 
             +1 exp
           ]
        *)
-      DECFUN of kindedTvar list * {fdecl:(pat list * ty option * exp) list, loc:loc} list * loc 
+      DECFUN of kindedTvar list * {fdecl:(pat list * ty option * exp * loc) list, loc:loc} list * loc
     | (*%
          @format({tbs:bind binds,loc:loc})
            1[ "type" + binds(bind)(~1[ +1 "and"] +) ]

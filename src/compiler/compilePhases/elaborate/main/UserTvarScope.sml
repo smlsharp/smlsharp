@@ -163,13 +163,13 @@ struct
       | P.PLPATTYPED (pat, ty, loc) =>
         union (tyvarsPat btvEnv pat, tyvarsTy btvEnv ty)
 
-  fun tyvarsMatch btvEnv (pats, exp) =
+  fun tyvarsMatch btvEnv (pats, exp, loc) =
       union (tyvarsList (tyvarsPat btvEnv) pats, tyvarsExp btvEnv exp)
 
-  and tyvarsMatch1 btvEnv (pat, exp) =
+  and tyvarsMatch1 btvEnv (pat, exp, loc) =
       union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
 
-  and tyvarsDynMatch btvEnv (tyvars, pat, exp) =
+  and tyvarsDynMatch btvEnv (tyvars, pat, exp, loc) =
       setminus (union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp), tyvars)
 
   and tyvarsBind btvEnv (pat, exp, loc) =
@@ -302,14 +302,14 @@ struct
   fun decideRow btvEnv (label, exp) =
       (label, decideExp btvEnv exp)
 
-  and decideBind btvEnv (pat:P.plpat, exp) =
-      (pat, decideExp btvEnv exp)
+  and decideBind btvEnv (pat:P.plpat, exp, loc) =
+      (pat, decideExp btvEnv exp, loc)
 
-  and decideMatch btvEnv (pat:P.plpat list, exp) =
-      (pat, decideExp btvEnv exp)
+  and decideMatch btvEnv (pat:P.plpat list, exp, loc) =
+      (pat, decideExp btvEnv exp, loc)
 
-  and decideDynMatch btvEnv (tyvars, pat:P.plpat, exp) =
-      (tyvars, pat, decideExp btvEnv exp)
+  and decideDynMatch btvEnv (tyvars, pat:P.plpat, exp, loc) =
+      (tyvars, pat, decideExp btvEnv exp, loc)
 
   and decideExp btvEnv exp =
       case exp of

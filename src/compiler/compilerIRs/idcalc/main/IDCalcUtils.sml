@@ -148,8 +148,9 @@ local
         | IC.ICEXEXN_CONSTRUCTOR _ => exp
         | IC.ICOPRIM  _ => exp
         | IC.ICTYPED (icexp, ty, loc) => IC.ICTYPED (copy icexp, ty,loc)
-        | IC.ICINTERFACETYPED {icexp,ty,loc} =>
+        | IC.ICINTERFACETYPED {icexp,path,ty,loc} =>
           IC.ICINTERFACETYPED {icexp=copy icexp,
+                               path=path,
                                ty=ty,
                                loc=loc}
         | IC.ICAPPM (icexp, icexpList, loc) =>

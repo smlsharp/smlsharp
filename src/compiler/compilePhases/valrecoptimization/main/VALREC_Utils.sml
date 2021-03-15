@@ -31,7 +31,7 @@ in
       | ICEXEXN_CONSTRUCTOR _ => VarID.Set.empty
       | ICOPRIM _ => VarID.Set.empty
       | ICTYPED (exp,ty,loc) => getFreeIdsInExp exp
-      | ICINTERFACETYPED {icexp,ty,loc} => getFreeIdsInExp icexp
+      | ICINTERFACETYPED {icexp,path,ty,loc} => getFreeIdsInExp icexp
       | ICAPPM (funExp,argExpList,loc) =>
         VarID.Set.union(getFreeIdsInExp funExp, 
 			getFreeIdsInExpList argExpList)

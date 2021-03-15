@@ -32,6 +32,7 @@ struct
 
   val startNameRefTracing : unit -> unit
   val stopNameRefTracing : unit -> unit
+  val stopBindTracing : unit -> unit
 
   val pushInterfaceTracer : InterfaceName.source -> unit
   val popInterfaceTracer : InterfaceName.source -> unit

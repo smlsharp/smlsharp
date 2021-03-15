@@ -39,8 +39,9 @@ in
       | ICOPRIM _ => icexp
       | ICTYPED (icexp,ty,loc) =>
         ICTYPED (optimizeExp icexp, ty, loc)
-      | ICINTERFACETYPED {icexp,ty,loc} =>
+      | ICINTERFACETYPED {icexp,path,ty,loc} =>
         ICINTERFACETYPED {icexp=optimizeExp icexp,
+                          path=path,
                           ty=ty,
                           loc=loc}
       | ICAPPM (funExp, argExpList, loc) => 

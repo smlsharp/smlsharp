@@ -497,7 +497,7 @@ struct
           For other arguments, the resolveInfixPat will check that no infix
           ID is used without "op".
          *)
-        fun transNonfixForm (pats, tyOpt, exp) =
+        fun transNonfixForm (pats, tyOpt, exp, loc) =
             case pats of
               pat :: argPats =>
               let
@@ -509,12 +509,12 @@ struct
                 if
                   (case findFixity env longsymbol of
                      NONFIX => true | _ => opf)
-                then (opf, pat, map getArg argPats, tyOpt, exp)
+                then (opf, pat, map getArg argPats, tyOpt, exp, loc)
                 else
                   (
                    enqueueError
                      (loc, E.InfixUsedWithoutOP longsymbol);
-                   (opf, pat, argPats, tyOpt, exp)
+                   (opf, pat, argPats, tyOpt, exp, loc)
                   )
               end
             | nil => raise bug "impossible nil args in transnonfix"
@@ -522,43 +522,43 @@ struct
         (**
          * infix function header is converted to nonfix function header.
          *)
-        fun resolveCase2 (args, tyOpt, exp) =
+        fun resolveCase2 (args, tyOpt, exp, loc) =
              case args of
                A.PATAPPLY([leftArg,
                            pat as A.PATID {opPrefix=false, longsymbol=id, loc},
                            rightArg], _)
                :: otherArgs =>
                (case findFixity env id of
-                  NONFIX => transNonfixForm (args, tyOpt, exp)
+                  NONFIX => transNonfixForm (args, tyOpt, exp, loc)
                 | _ =>
                   let val newArg = make2TuplePat(getArg leftArg, getArg rightArg)
-                  in (true, pat, newArg :: otherArgs, tyOpt, exp)
+                  in (true, pat, newArg :: otherArgs, tyOpt, exp, loc)
                   end)
-             | _ => transNonfixForm (args, tyOpt, exp)
+             | _ => transNonfixForm (args, tyOpt, exp, loc)
 
         (**
          * infix function header is converted to nonfix function header.
          *)
-        fun resolveCase1 (args, tyOpt, exp) =
+        fun resolveCase1 (args, tyOpt, exp, loc) =
              case args of
                [leftArg, pat as A.PATID {opPrefix=false, longsymbol=id, loc}, rightArg]
                =>
                (case findFixity env id of
-                  NONFIX => resolveCase2 (args, tyOpt, exp)
+                  NONFIX => resolveCase2 (args, tyOpt, exp, loc)
                 | _ =>
                   let val newArg = make2TuplePat(getArg leftArg, getArg rightArg)
-                  in (true, pat, [newArg], tyOpt, exp)
+                  in (true, pat, [newArg], tyOpt, exp, loc)
                   end)
-             | _ => resolveCase2 (args, tyOpt, exp)
+             | _ => resolveCase2 (args, tyOpt, exp, loc)
       in
         {fdecl=map resolveCase1 fdecls, loc=loc}
       end
 
   and elabFunDecls env {fdecl=fdecls, loc=loc} =
       let
-        val (opfs, funPats, args, exps) =
+        val (opfs, funPats, args, exps, locs) =
             foldr
-                (fn ((opf, funPat, arg, optTy, exp), (opfs, funPats, args, exps)) =>
+                (fn ((opf, funPat, arg, optTy, exp, loc), (opfs, funPats, args, exps, locs)) =>
                     let
                       (* fun id pat .. pat : ty = exp
                        * is a derived form equivalent to
@@ -575,10 +575,11 @@ struct
                        opf :: opfs,
                        funPat :: funPats, 
                        newArg :: args,
-                       newExp :: exps
+                       newExp :: exps,
+                       loc :: locs
                       )
                     end)
-                (nil, nil, nil, nil)
+                (nil, nil, nil, nil, nil)
                 fdecls
         fun longsymbolInPattern (pat, (ids,tyLocList)) =
             case pat of
@@ -613,7 +614,8 @@ struct
             (fn ((ty,loc), fpat) => PC.PLPATTYPED(fpat, ty, loc))
             (PC.PLPATID [fid])
             tyLocList
-        val fdecl = (fpat, ListPair.zip (args,exps))
+        val fdecl = (fpat, map (fn ((x,y),z) => (x,y,z))
+                               (ListPair.zip (ListPair.zip (args, exps), locs)))
       in
         {fdecl=fdecl, loc=loc}
       end
@@ -718,8 +720,8 @@ struct
             (
              [ple1],
              [
-              ([falsePat loc], falseExp loc),
-              ([truePat loc], ple2)
+              ([falsePat loc], falseExp loc, loc),
+              ([truePat loc], ple2, loc)
              ],
              PC.MATCH,
              loc
@@ -734,8 +736,8 @@ struct
             (
              [ple1],
              [
-              ([truePat loc], trueExp loc),
-              ([falsePat loc], ple2)
+              ([truePat loc], trueExp loc, loc),
+              ([falsePat loc], ple2, loc)
              ],
              PC.MATCH,
              loc
@@ -746,7 +748,7 @@ struct
         PC.PLHANDLE
             (
               elabExp env e1,
-              map (fn (x, y) => (elabPat env x, elabExp env y)) match,
+              map (fn (x, y, loc) => (elabPat env x, elabExp env y, loc)) match,
               loc
             )
       | A.EXPRAISE (e, loc) => PC.PLRAISE(elabExp env e, loc)
@@ -758,7 +760,10 @@ struct
         in
           PC.PLCASEM
           ([ple1],
-           [([truePat loc], ple2), ([falsePat loc], ple3)], PC.MATCH, loc)
+           [([truePat loc], ple2, loc),
+            ([falsePat loc], ple3, loc)],
+           PC.MATCH,
+           loc)
         end
       | A.EXPWHILE (condExp, bodyExp, loc) =>
         let
@@ -775,7 +780,8 @@ struct
                     (
                      [PC.PLPATWILD loc],
                      PC.PLAPPM(PC.PLVAR [newid],
-                               [unitExp loc], loc)
+                               [unitExp loc], loc),
+                     loc
                     )
                   ],
                   loc
@@ -794,13 +800,14 @@ struct
                    (
                     PC.PLFNM
                       (
-                       [([truePat loc], whbody),
-                        ([falsePat loc], unitExp loc)],
+                       [([truePat loc], whbody, loc),
+                        ([falsePat loc], unitExp loc, loc)],
                        loc
                       ),
                     [condPl],
                     loc
-                   )
+                   ),
+                 loc
                 )
                ],
                loc
@@ -817,12 +824,12 @@ struct
         PC.PLCASEM
         (
           [elabExp env objectExp],
-          map (fn (x, y) => ([elabPat env x], elabExp env y)) match,
+          map (fn (x, y, loc) => ([elabPat env x], elabExp env y, loc)) match,
           PC.MATCH,
           loc
         )
       | A.EXPFN (match, loc) =>
-        PC.PLFNM(map (fn (x, y) => ([elabPat env x], elabExp env y)) match,
+        PC.PLFNM(map (fn (x, y, loc) => ([elabPat env x], elabExp env y, loc)) match,
                  loc)
       | A.EXPLET (decs, elist, loc) => 
         let
@@ -856,7 +863,7 @@ struct
       | A.EXPDYNAMICCASE (exp, matches, loc) =>
         PC.PLDYNAMICCASE 
           (elabExp env exp, 
-           map (fn (tyvars, x, y) => (tyvars, elabPat env x, elabExp env y))
+           map (fn (tyvars, x, y, loc) => (tyvars, elabPat env x, elabExp env y, loc))
                matches,
            loc)
       | A.EXPREIFYTY (ty, loc) => PC.PLREIFYTY (ty, loc)

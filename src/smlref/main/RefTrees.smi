@@ -1,0 +1,17 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "sql.smi"
+_require "smlformat-lib.smi"
+_require "compiler/libs/util/main/TermFormat.smi"
+_require "./Config.smi"
+_require "./DBSchema.smi"
+_require "./DBBasics.smi"
+_require "./IntIntIntStringMap.smi"
+_require "./RefTypes.ppg.smi"
+_require "./RefUtiles.smi"
+
+structure RefTrees =
+struct
+  val makeTree : RefTypes.sym -> RefTypes.refTree
+  val makeUseTree : RefTypes.sym -> RefTypes.useTree
+end

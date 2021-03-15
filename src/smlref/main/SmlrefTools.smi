@@ -1,0 +1,33 @@
+_require "basis.smi"
+_require "smlformat-lib.smi"
+_require "reify.smi"
+_require "sql.smi"
+_require "./Config.smi"
+_require "./DBSchema.smi"
+_require "./DBBasics.smi"
+_require "./RefTrees.smi"
+_require "./RefTypes.ppg.smi"
+_require "./RefUtiles.smi"
+
+structure SMLRefTools =
+struct
+  type sym = {fileId:int, startPos:int, endPos:int, symbol:string}
+  type refTree = RefTypes.refTree
+  type useTree = RefTypes.useTree
+  datatype category = datatype DBSchema.category
+  datatype idKind = datatype DBSchema.idKind
+  datatype defInfo = datatype RefTypes.defInfo
+  val fileIdToFileName : int -> string
+  val fileNameToFileId : string -> int
+  val listDefSymsInFile : string ->  sym list
+  val listDefSymsReferencedInFile : string ->  sym list
+  val listDefSymsReferencedInDefSymLocal : sym -> sym list
+  val listDefSymsReferencedInDefSymExternal : sym -> sym list
+  val makeTree : sym -> refTree
+  val makeUseTree : sym -> useTree
+  val symToString : sym -> string
+  val reftreeToString : refTree -> string
+  val printSym :  sym -> unit
+  val printRefTree : refTree -> unit
+  val findDefInfo : sym -> defInfo
+end

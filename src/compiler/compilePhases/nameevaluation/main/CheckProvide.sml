@@ -361,7 +361,7 @@ local
                         | _ => I.TYPOLY(scopedTvars, bodyTy)
                fun makeDecl icexp defRange = 
                    let
-                     val icexp =  I.ICINTERFACETYPED {icexp=icexp, ty=bodyTy, loc=loc}
+                     val icexp =  I.ICINTERFACETYPED {icexp=icexp, path=path@[name], ty=bodyTy, loc=loc}
                      val newId = VarID.generate()
                      val icpat = 
                          if isOpaque ty 

@@ -16,15 +16,7 @@ in
       val _ = Log.log (Int.toString pos)
       val _ = Log.log "\n"
       val r = 
-          (_sql db :
-           ({refTable:{kind:string, 
-                       defSymbolStartPos:int,
-                       defSymbolFileId:int,
-                       defSymbol:string,
-                       refSymbolStartPos:int,
-                       refSymbolFileId:int,...} list,
-             sourceTable:{fileName:string, fileId:int,...} list,...},
-            '_) SQL.db =>
+          (_sql db : (dbSchema, _) SQL.db =>
              select distinct
                #r.defSymbolStartPos as pos,
                #r.refSymbol as refSym,
@@ -43,19 +35,11 @@ in
       SQL.fetchAll r
     end
 
-  fun findRefInRefTable (pos:int, path:string) = 
+  fun findRefInRefTable (pos, path) = 
     let
       val _ = Log.log "findRefInRefTable\n"
       val r = 
-          (_sql db :
-           ({refTable:{kind:string, 
-                       defSymbol:string,
-                       defSymbolStartPos:int,
-                       defSymbolFileId:int,
-                       refSymbolStartPos:int,
-                       refSymbolFileId:int,...} list,
-             sourceTable:{fileName:string, fileId:int,...} list,...},
-            '_) SQL.db =>
+          (_sql db : (dbSchema, _) SQL.db =>
              select distinct
                #d.refSymbolStartPos as pos,
                #d.defSymbol as defSym,

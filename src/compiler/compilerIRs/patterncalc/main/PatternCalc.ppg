@@ -309,10 +309,10 @@ struct
     | (*%
        * @format(exp * rule rules * loc)
        * R0{ exp +1 rules:prepend(rule)(, "handle" +d, +1, "|" +d) }
-       * @format:rule(pat * exp)
+       * @format:rule(pat * exp * loc)
        * !R0{ pat +d "=>" 1[ +1 exp ] }
        *)
-      PLHANDLE of plexp * (plpat * plexp) list * loc
+      PLHANDLE of plexp * (plpat * plexp * loc) list * loc
     | (*%
        * @format(rule rules * loc)
        * R0{ rules:prepend(rule)(, "fn" +d, +1, "|" +d) }
@@ -389,10 +389,10 @@ struct
        * @format(exp * rule rules * loc)
        * R0{ !R0{ "dynamiccase" 1[ +1 exp ] }
        *     +1 rules:prepend(rule)(, "of" +d, +1, "|" +d) }
-       * @format:rule(tyvars * pat * exp)
+       * @format:rule(tyvars * pat * exp * loc)
        * !R0{ tyvars +d pat +d "=>" 1[ +1 !R0{ exp } ] }
        *)
-      PLDYNAMICCASE of plexp * (scopedTvars * plpat * plexp) list * loc
+      PLDYNAMICCASE of plexp * (scopedTvars * plpat * plexp * loc) list * loc
     | (*%
        * @format(ty * loc)
        * R0{ "_reifyTy" 1 "(" !N0{ ty ")" } }
@@ -418,11 +418,11 @@ struct
        * !R0{ binds:prepend(bind)(, "fun" +d tyvars, +1, "and" +d) }
        * @format:bind({fdecl: funname * func funcs, loc})
        * funcs:prepend(func)(, funname +d, +1, "|" +d funname +d)
-       * @format:func(pat pats * exp)
+       * @format:func(pat pats * exp * loc)
        * !R0{ { pats(pat)(+1) } +d "=" 1[ +1 exp ] }
        *)
       PDDECFUN of scopedTvars
-                  * {fdecl: plpat * (plpat list * plexp) list, loc: loc} list
+                  * {fdecl: plpat * (plpat list * plexp * loc) list, loc: loc} list
                   * loc
     | (*%
        * @format(tyvars * bind binds * loc)
@@ -679,17 +679,17 @@ struct
 
   and rule =
       (*%
-       * @format(pat * exp)
+       * @format(pat * exp * loc)
        * !R0{ pat +d "=>" 1[ +1 !R0{ exp } ] }
        *)
-      plpatm * plexp
+      plpatm * plexp * loc
 
   and rule1 =
       (*%
-       * @format(pat * exp)
+       * @format(pat * exp * loc)
        * !R0{ pat +d "=>" 1[ +1 !R0{ exp } ] }
        *)
-      plpat * plexp
+      plpat * plexp * loc
 
   fun getLocExp plexp =
       case plexp of

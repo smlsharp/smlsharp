@@ -1,0 +1,11 @@
+fun id x = x
+fun f1 x y = y
+fun f2 x y = y
+fun f3 x y = y
+type 'a foo =  int * 'a list
+fun reveal x = x
+val x = (1, nil);
+val y = (2, [1]);
+val z = (2, [true]);
+val w = reveal y;
+val v = reveal z;

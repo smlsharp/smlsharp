@@ -1,0 +1,4 @@
+type t (= contag)
+type u = t
+val x : t
+val y : u

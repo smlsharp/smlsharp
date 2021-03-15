@@ -1,7 +1,8 @@
 (require 'json)
-
 (defvar smlref-command
-  "/home/ohori/share/HG/smlsharp/smlsharp/src/smlref/main/SMLRef")
+  "/home/ohori/share/HG/smlsharp_ref/smlsharp/src/smlref/main/SMLRef")
+(defvar smlinfo-command
+  "/home/ohori/share/HG/smlsharp_ref/smlsharp/src/smlref/main/SMLRefInfo")
 (defvar smlref-word-char "a-zA-Z_'0-9")
 (defvar smlref-window-fraction 0.3)
 (defconst smlref-config-cmd (cons 'cmd "config"))

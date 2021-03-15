@@ -6,6 +6,7 @@ struct
         Loc.FILE source => 
         (let
            val fileId = InfoMaps.findSourceMap source
+               handle x => (print "b2\n";raise x)
            val fileInfo = Dynamic.format fileId
            val _ = Bug.printMessage 
                      ("Analyzing source file: " ^ fileInfo ^ "\n")
@@ -25,6 +26,7 @@ struct
       Loc.FILE (source as (p,f)) => 
       (let
         val fileId = InfoMaps.findSourceMap source
+            handle x => (print "b1\n";raise x)
         val _ = if InfoMaps.memberProcessedFiles fileId then raise Skip
                 else ()
         val fileInfo = Dynamic.format fileId

@@ -1289,17 +1289,17 @@ in
       ICSIGTYPED of {icexp:icexp,ty:ty,loc:loc,revealKey:revealKey option}
 *)
     | (*%
-         @format({icexp, ty, loc})
+         @format({icexp, path, ty, loc})
           1[icexp +1 "::" ty ]
        *)
       (*% @prefix formatWithType_
-         @format({icexp, ty, loc})
+         @format({icexp, path, ty, loc})
           1[icexp +1 "::" ty  ]
        *)
       (*% @prefix print_
-         @format({icexp, ty, loc})
+         @format({icexp, path, ty, loc})
        *)
-      ICINTERFACETYPED of {icexp:icexp,ty:ty,loc:loc}
+      ICINTERFACETYPED of {icexp:icexp,path:longsymbol,ty:ty,loc:loc}
     | (*%
          @format(funExp * argExp list * loc)
            1[
@@ -2621,7 +2621,7 @@ in
 (*
     | ICSIGTYPED {icexp, ty, loc, revealKey} => loc
 *)
-    | ICINTERFACETYPED {icexp, ty, loc} => loc
+    | ICINTERFACETYPED {icexp, path, ty, loc} => loc
     | ICAPPM (icexp, icexpList, loc) => loc
     | ICAPPM_NOUNIFY (icexp, icexpList, loc) => loc
     | ICLET (icdeclList, icexpList, loc) => loc

@@ -257,9 +257,9 @@ structure S = AbsynSQL
     | fields of bool * (A.patrow list)
     | followpatrow of A.patrow list
     | fvalbind of
-        {fdecl:(A.pat list * A.ty option * A.exp) list, loc:Loc.loc} list
-    | frule of A.pat list * A.ty option * A.exp
-    | frules of (A.pat list * A.ty option * A.exp) list
+        {fdecl:(A.pat list * A.ty option * A.exp * A.loc) list, loc:Loc.loc} list
+    | frule of A.pat list * A.ty option * A.exp * A.loc
+    | frules of (A.pat list * A.ty option * A.exp * A.loc) list
     | funbind of A.funbind
     | funbindand of A.funbind
     | funbindseq of A.funbind list
@@ -267,9 +267,9 @@ structure S = AbsynSQL
     | longtyconeqrow of Symbol.longsymbol list
     | kindSeq of {properties : string list,
                   recordKind : (RecordLabel.label * A.ty) list option}
-    | match of (A.pat * A.exp) list
+    | match of (A.pat * A.exp * A.loc) list
     | mrule of A.pat * A.exp
-    | dynmatch of (A.kindedTvar list * A.pat * A.exp) list
+    | dynmatch of (A.kindedTvar list * A.pat * A.exp * A.loc) list
     | exist_quantifier of A.kindedTvar list
     | optaspat of A.pat option
     | optop of bool
@@ -870,19 +870,19 @@ with  case, fn, and  handle.
 
 match
         : pat DARROW exp
-          ([(pat, exp)])
+          ([(pat, exp, (patleft, expright))])
         | pat DARROW exp BAR match
-          ((pat, exp) :: match)
+          ((pat, exp, (patleft, expright)) :: match)
 
 dynmatch
         : exist_quantifier pat DARROW exp
-          ([(exist_quantifier, pat, exp)])
+          ([(exist_quantifier, pat, exp, (patleft, expright))])
         | exist_quantifier pat DARROW exp BAR dynmatch
-          ((exist_quantifier, pat, exp) :: dynmatch)
+          ((exist_quantifier, pat, exp, (patleft, expright)) :: dynmatch)
         | pat DARROW exp
-          ([(nil, pat, exp)])
+          ([(nil, pat, exp, (patleft, expright))])
         | pat DARROW exp BAR dynmatch
-          ((nil, pat, exp) :: dynmatch)
+          ((nil, pat, exp, (patleft, expright)) :: dynmatch)
 
 exist_quantifier
         : LBRACE kinded_tyvar RBRACE
@@ -909,7 +909,7 @@ sql
         | SQL sqlkwexp
           (A.EXPSQL (S.SQL (S.EXP sqlkwexp), (SQLleft, sqlkwexpright)))
         | FN pat DARROW sql
-          (A.EXPFN ([(pat, sql)], (FNleft, sqlright)))
+          (A.EXPFN ([(pat, sql, (patleft, sqlright))], (FNleft, sqlright)))
 
 sqlopt
         : (* none *)
@@ -1665,9 +1665,9 @@ frules
 
 frule
         : apppat EQ expOrSQL
-          (apppat, NONE, expOrSQL)
+          (apppat, NONE, expOrSQL, (apppatleft, expOrSQLright))
         | apppat COLON ty EQ expOrSQL
-          (apppat, SOME ty, expOrSQL)
+          (apppat, SOME ty, expOrSQL, (apppatleft, expOrSQLright))
 
 (*****************  pattern ***********************)
 

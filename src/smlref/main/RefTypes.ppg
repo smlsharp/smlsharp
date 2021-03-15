@@ -1,0 +1,198 @@
+structure RefTypes =
+struct
+  type defTuple = DBSchema.defTuple
+  type refTuple = DBSchema.refTuple
+
+  fun term s = [SMLFormat.FormatExpression.Term(String.size s, s)]
+  fun defTupleFormatter ({defSymbolFileId, ...}:defTuple) =
+      term ("(in " ^ DBBasics.fileIdToFileName defSymbolFileId ^ ")")
+  fun refTupleFormatter ({refSymbolFileId, ...}:refTuple) =
+      term ("(in " ^ DBBasics.fileIdToFileName refSymbolFileId ^ ")")
+
+  (*%  @formatter(defTuple) defTupleFormatter *)
+  datatype defKind
+   = (*%  @format(defTuple) "var" + defTuple *)       VAR of defTuple
+   | (*%  @format(defTuple) "local var" + defTuple *) LOCAL_VAR of defTuple
+   | (*%  @format(defTuple) "function" + defTuple *)  FUNCTION of defTuple
+   | (*%  @format(defTuple) "primitive" + defTuple *) PRIM of defTuple
+   | (*%  @format(defTuple) "con" + defTuple *)       CON of defTuple
+   | (*%  @format(defTuple) "exn" + defTuple *)       EXN of defTuple
+   | (*%  @format(defTuple) "tyCon" + defTuple *)     TYCON of defTuple
+   | (*%  @format(defTuple) "structure" + defTuple *) STR of defTuple
+   | (*%  @format(defTuple) "signature" + defTuple *) SIG of defTuple
+   | (*%  @format(defTuple) "functor" + defTuple *)   FUNCTOR of defTuple
+   | (*%  @format(defTuple) "var spec" + defTuple *)  SIG_VAR of defTuple
+   | (*%  @format(defTuple) "exn spec" + defTuple *)  SIG_EXN of defTuple
+   | (*%  @format(defTuple) "tycon spec" + defTuple *)SIG_TYCON of defTuple
+   | (*%  @format(defTuple) "str spec" + defTuple *)  SIG_STR of defTuple
+   | (*%  @format(defTuple) "id" + defTuple *)        ID of defTuple
+    
+  (*%  @formatter(refTuple) refTupleFormatter *)
+  datatype refKind
+   = (*%  @format(refTuple) "provide var" + refTuple *)         PROVIDE_VAR of refTuple
+   | (*%  @format(refTuple) "provide con" + refTuple *)         PROVIDE_CON of refTuple
+   | (*%  @format(refTuple) "provide exn" + refTuple *)         PROVIDE_EXN of refTuple
+   | (*%  @format(refTuple) "provide tyCon" + refTuple *)       PROVIDE_TYCON of refTuple
+   | (*%  @format(refTuple) "provide structure" + refTuple *)   PROVIDE_STR of refTuple
+   | (*%  @format(refTuple) "reference var" + refTuple *)       REFERENCE_VAR of refTuple
+   | (*%  @format(refTuple) "reference con" + refTuple *)       REFERENCE_CON of refTuple
+   | (*%  @format(refTuple) "reference exn" + refTuple *)       REFERENCE_EXN of refTuple
+   | (*%  @format(refTuple) "reference tyCon" + refTuple *)     REFERENCE_TYCON of refTuple
+   | (*%  @format(refTuple) "reference structure" + refTuple *) REFERENCE_STR of refTuple
+   | (*%  @format(refTuple) "reference id" + refTuple *)        REFERENCE_ID of refTuple
+    
+  (*%  *)
+  type sym 
+   = (*%
+      * @format({fileId, startPos, endPos, symbol})
+      *  symbol
+      *)
+     {fileId:int, startPos:int, endPos:int, symbol:string}
+
+  (*%  *)
+  datatype node
+    = (*%
+      * @format({sym, kind, range})
+      *  sym + ":" + "def" + kind 
+      *)
+      DEF of {sym:sym, kind:defKind, range:{startPos:int, endPos:int}}
+    | (*%
+      * @format({sym, def, kind})
+      *  sym + ":" + kind + "defined at" + def
+      *)
+      REF of {sym:sym, def:sym, kind:refKind}
+    | (*%
+      * @format({sym, kind, range})
+      *  sym + ":" + "interface" + kind 
+      *)
+      INT of {sym:sym, kind:defKind, range:{startPos:int, endPos:int}}
+
+  (*%  @formatter(ifCons) TermFormat.formatIfCons *)
+  datatype nodeTree
+    = (*%
+       * @format(sym) sym "!"
+       *)
+      VISITED of sym
+    | (*%
+       * @format({node,
+                  parents:ptree ptrees,
+                  containRefs:ctree ctrees,
+                  refs:rtree rtrees
+                 })
+       *  node
+          ptrees:ifCons()(+1"in ")
+          3[{ptrees(ptree)(~3[+1"in "])}]
+          ctrees:ifCons()(+1"<==")
+          4[{ctrees(ctree)(~4[+1"<=="])}]
+          rtrees:ifCons()(+1"==>")
+          4[{rtrees(rtree)(~4[+1"==>"])}]
+       *)
+      DEF_NODE of {node:node, 
+                   parents : node list,
+                   containRefs: nodeTree list,
+                   refs : nodeTree list
+                  }
+    | (*%
+       * @format({node, def, refs:rtree rtrees}) 
+         node
+         +1"of" + def 
+         rtrees:ifCons()(+1"==>")
+         4[{rtrees(rtree)(~4[+1"==>"])}]
+       *)
+      INT_NODE of {node : node, 
+                   def : node,
+                   refs : nodeTree list
+                  }
+    | (*%
+       * @format({node, def, parentNodes:pnode pnodes, parentTrees:ptree ptrees})
+           node
+           +1"of" + def 
+           pnodes:ifCons()(+1"in ")
+           3[{pnodes(pnode)(~3[+1"in "])}]
+           ptrees:ifCons()(+1"in ")
+           3[{ptrees(ptree)(~3[+1"in "])}]
+       *)
+      REF_NODE of {node : node, 
+                   def : node,
+                   parentNodes : node list,
+                   parentTrees : nodeTree list
+                  }
+end
+
+(*
+
+  (*%  @formatter(ifCons) TermFormat.formatIfCons  *)
+  datatype useTree
+   = (*%
+      * @format(sym) sym + "!"
+      *)
+     USE_VISITED of sym
+   | (*%
+      * @format({sym, defInfo, localTree:ltree ltrees, externalTree:etree etrees})
+      *  sym + "(" defInfo ")"
+         ltrees:ifCons()(+1"-->")
+         3[{ltrees(ltree)(~3[+1"-->"])}]
+         etrees:ifCons()(+1"==>")
+         4[{etrees(etree)(~4[+1"==>"])}]
+      *)
+     USE_NODE of 
+     {
+      sym: sym, 
+      defInfo:defInfo,
+      localTree: useTree list,
+      externalTree: useTree list
+     }
+
+  (*%  @formatter(ifCons) TermFormat.formatIfCons *)
+  datatype refTree
+   = (*%
+      * @format(sym) sym "*"
+      *)
+     VISITED_DEF of sym
+   | (*%
+      * @format(sym) sym + "!"
+      *)
+     VISITED_REF of sym
+   | (*%
+      * @format({sym, defInfo, parents:ptree ptrees, refs:rtree rtrees})
+      *  sym + "(" defInfo ")"
+         ptrees:ifCons()(+1"in ")
+         3[{ptrees(ptree)(~3[+1"in "])}]
+         rtrees:ifCons()(+1"<== ")
+         4[{rtrees(rtree)(~4[+1"<== "])}]
+      *)
+     DEF_ID of 
+     {
+      sym: sym, 
+      defInfo:defInfo,
+      parents: refTree list,
+      refs: refTree list
+     }
+   | (*%
+      * @format({sym, defInfo, parents:ptree ptrees})
+      *  sym + "(" defInfo ")"
+         ptrees:ifCons()(+1"in ")
+         3[{ptrees(ptree)(~3[+1"in "])}]
+      *)
+     DEF_STR of 
+     {
+      sym: sym, 
+      defInfo:defInfo,
+      parents: refTree list
+     }
+   | (*%
+      * @format({sym, 
+                 refInfo,
+                 parents:ptree ptrees})
+      *  sym + "(" refInfo ")"
+         ptrees:ifCons()(+1"in ")
+         3[{ptrees(ptree)(~3[+1"in "])}]
+      *)
+     REF of 
+     {
+      sym: sym, 
+      refInfo:refInfo,
+      parents: refTree list
+     }
+
+*)

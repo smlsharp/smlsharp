@@ -1095,7 +1095,7 @@ in
       | IC.ICEXEXN _ => true
       | IC.ICOPRIM _ => true
       | IC.ICTYPED  (icexp, ty, loc) => isVar icexp
-      | IC.ICINTERFACETYPED  {icexp, ty, loc} => isVar icexp
+      | IC.ICINTERFACETYPED  {icexp, path, ty, loc} => isVar icexp
       | _ => false
 
   fun stripIty icexp =
@@ -2634,7 +2634,7 @@ in
              end
          end
 *)
-      | IC.ICINTERFACETYPED {icexp=exp, ty, loc} =>
+      | IC.ICINTERFACETYPED {icexp=exp, path, ty, loc} =>
          let
            val (ty1, tpexp) = typeinfExp lambdaDepth inf context exp
            val ty2 = ITy.evalIty context ty handle e => (P.print "ity12\n"; raise e)
@@ -2642,33 +2642,14 @@ in
            if U.eqTy BoundTypeVarID.Map.empty (ty1, ty2) then
              (ty1, tpexp)
            else
-             let
-               val (instTy, _, instConstraints, tpexp) = TCU.freshInst (ty1, tpexp)
-               val _ = addConstraints instConstraints
-               val (ty22, constraints22, _) = TB.freshRigidInstTy ty2
-               val _ = addConstraints constraints22
-               val instTy = revealTyInterface instTy
-               val ty222 = revealTyInterface ty22
-               val (ty22, tpexp) = 
-                   (U.unify [(instTy, ty222)];
-                    (ty22, tpexp)
-                   )
-               handle
-               U.Unify =>
-               (
-                unifFail 12;
-                E.enqueueError
-                  "Typeinf 019"
-                  (
-                   loc,
-                   E.SignatureMismatch ("019",{path=[], ty=instTy,
-                                               annotatedTy=ty22})
-                  );
-                (T.ERRORty, TC.TPERROR)
-               )
-             in
-               (ty22, tpexp)
-             end
+             CoerceRank1.coerce
+               {revealTyTo = revealTyInterface,
+                revealTyFrom = revealTyInterface,
+                loc = loc,
+                path = map Symbol.symbolToString path,
+                tpexp = tpexp,
+                tpexpTy = ty1,
+                toTy = ty2}
          end
       | IC.ICAPPM(IC.ICRECORD_SELECTOR(l, loc1), [icexp], loc2) =>
          typeinfExp lambdaDepth applyDepth context (IC.ICSELECT(l,icexp,loc2))
@@ -4983,6 +4964,19 @@ in
            val lambdaDepth = incDepth ()
            val (ty1, tpexp) = typeinfExp lambdaDepth inf context exp
            val ty2 = ITy.evalIty context ty handle e => (P.print "ity12\n"; raise e)
+           val (ty, tpexp) =
+               if U.eqTy BoundTypeVarID.Map.empty (ty1, ty2) then
+                 (ty1, tpexp)
+               else
+                 CoerceRank1.coerce
+                   {revealTyTo = fn x => revealTy revealKey x,
+                    revealTyFrom = fn x => x,
+                    loc = icexploc,
+                    path = map Symbol.symbolToString longsymbol,
+                    tpexp = tpexp,
+                    tpexpTy = ty1,
+                    toTy = ty2}
+(*
            val (ty, tpexp, addedUtvars) = 
                if U.eqTy BoundTypeVarID.Map.empty (ty1, ty2) then
                  (ty1, tpexp, TvarMap.empty)
@@ -5056,6 +5050,7 @@ in
                   addedUtvars
                )
                handle x => raise x
+*)
            val varInfo  = {path = longsymbol, id = id, ty = ty, opaque=true}
            val var = {longsymbol = longsymbol, id = id}
            val newVarEnv = bindVar (lambdaDepth, VarMap.empty, var, varInfo)
@@ -5075,6 +5070,19 @@ in
            val lambdaDepth = incDepth ()
            val (ty1, tpexp) = typeinfExp lambdaDepth inf context exp
            val ty2 = ITy.evalIty context ty handle e => (P.print "ity12\n"; raise e)
+           val (ty, tpexp) =
+               if U.eqTy BoundTypeVarID.Map.empty (ty1, ty2) then
+                 (ty1, tpexp)
+               else
+                 CoerceRank1.coerce
+                   {revealTyTo = fn x => x,
+                    revealTyFrom = fn x => x,
+                    loc = icexploc,
+                    path = map Symbol.symbolToString longsymbol,
+                    tpexp = tpexp,
+                    tpexpTy = ty1,
+                    toTy = ty2}
+(*
            val (ty, tpexp, addedUtvars) = 
                if U.eqTy BoundTypeVarID.Map.empty (ty1, ty2) then
                  (ty1, tpexp, TvarMap.empty)
@@ -5147,6 +5155,7 @@ in
                   addedUtvars
                )
                handle x => raise x
+*)
            val varInfo  = {path = longsymbol, id = id, ty = ty, opaque=false}
            val var = {longsymbol = longsymbol, id = id}
            val newVarEnv = bindVar (lambdaDepth, VarMap.empty, var, varInfo)
@@ -6011,9 +6020,11 @@ in
             let
               val (ty11, constraints11, _) = TB.freshRigidInstTy ty1
               val _ = addConstraints constraints11
+              val tempTy11 = revealTyInterface ty11
+              val tempTy2 = revealTyInterface ty2
             in
               if TB.monoTy ty2 then
-                (U.unify [(ty11, ty2)];
+                (U.unify [(tempTy11, tempTy2)];
                  (TIC.emptyContext, [tpdecl])
                 )
                 handle U.Unify =>

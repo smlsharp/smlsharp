@@ -9,6 +9,7 @@ _require local "./AnalyzerDB.smi"
 _require       "./AnalyzerTy.smi"
 _require       "./DBSchema.smi"
 _require local "./FileIDIntMap.smi"
+_require local "./FileIDIntStringMap.smi"
 _require local "./FileIDFileIDMap.smi"
 _require local "./FileIDMap.smi"
 _require local "./SourceMap.smi"
@@ -37,8 +38,7 @@ struct
   val addFileDependTable : unit -> unit
 
   val initDefMap : unit -> unit
-  val insertDefMap
-      : AnalyzerTy.fileIDIntKey * DBSchema.defTuple -> unit
+  val insertDefMap : DBSchema.defTuple -> unit
   val addDefTable : unit -> unit
   val initRefMap : unit -> unit
   val insertRefMap

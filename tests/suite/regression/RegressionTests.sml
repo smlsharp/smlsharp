@@ -1783,7 +1783,7 @@ val tests = TestList [
         (compile ["regression/364_signature.sml"];
          fail "must cause a compile error")
         handle CompileError
-                 (_, [(_,_,T.SignatureMismatchValueRestriction _)]) => ()),
+                 (_, [(_,_,T.SignatureMismatch _)]) => ()),
   Test
     ("365_nameeval",
      fn () =>
@@ -1811,6 +1811,33 @@ val tests = TestList [
         handle CompileError
                  (_, [(_,_,N.DuplicateVar _),
                       (_,_,N.DuplicateStrName _)]) => ()),
+  Test
+    ("370_datatype",
+     fn () =>
+        (compile ["regression/370_datatype.sml"];
+         fail "must cause a compile error")
+        handle CompileError
+                 (_, [(_,_,N.DuplicateTypName _)]) => ()),
+  Test
+    ("371_opaquetype",
+     fn () => ignore (compile ["regression/371_opaquetype.sml"])),
+  Test
+    ("372_rank1_sig",
+     fn () => ignore (compile ["regression/372_rank1_sig.sml"])),
+  Test
+    ("373_rank1_interface",
+     fn () =>
+        execute
+          (link "regression/373_rank1_interface.smi"
+                (compile ["regression/373_rank1_interface.sml",
+                          "regression/373_rank1_interface2.sml"]))),
+  Test
+    ("374_rank1tests",
+     fn () =>
+        execute
+          (link "regression/374_rank1tests.smi"
+                (compile ["regression/374_rank1tests.sml",
+                          "regression/374_rank1tests2.sml"]))),
 
   TestList nil (* placeholder *)
 ]

@@ -1,0 +1,3 @@
+_require "370_datatype2.smi"
+datatype t1 = T   (* <- This should be datatype t1 = datatype t2 *)
+datatype t1 = datatype t2

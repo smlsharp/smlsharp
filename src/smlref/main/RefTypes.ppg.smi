@@ -1,0 +1,67 @@
+_require "basis.smi"
+_require "reify.smi"
+_require "smlformat-lib.smi"
+_require "compiler/libs/util/main/TermFormat.smi"
+_require "./DBSchema.smi"
+_require "./DBBasics.smi"
+
+structure RefTypes =
+struct
+  type defTuple = DBSchema.defTuple
+  type refTuple = DBSchema.refTuple
+  datatype defKind
+   = VAR of defTuple
+   | LOCAL_VAR of defTuple
+   | FUNCTION of defTuple
+   | PRIM of defTuple
+   | CON of defTuple
+   | EXN of defTuple
+   | TYCON of defTuple
+   | STR of defTuple
+   | SIG of defTuple
+   | FUNCTOR of defTuple
+   | SIG_VAR of defTuple
+   | SIG_EXN of defTuple
+   | SIG_TYCON of defTuple
+   | SIG_STR of defTuple
+   | ID of defTuple
+    
+  datatype refKind
+   = PROVIDE_VAR of refTuple
+   | PROVIDE_CON of refTuple
+   | PROVIDE_EXN of refTuple
+   | PROVIDE_TYCON of refTuple
+   | PROVIDE_STR of refTuple
+   | REFERENCE_VAR of refTuple
+   | REFERENCE_CON of refTuple
+   | REFERENCE_EXN of refTuple
+   | REFERENCE_TYCON of refTuple
+   | REFERENCE_STR of refTuple
+   | REFERENCE_ID of refTuple
+  type sym = {fileId:int, startPos:int, endPos:int, symbol:string}
+  datatype node
+    = DEF of {sym:sym, kind:defKind, range:{startPos:int, endPos:int}}
+    | REF of {sym:sym, def:sym, kind:refKind}
+    | INT of {sym:sym, kind:defKind, range:{startPos:int, endPos:int}}
+  datatype nodeTree
+    = VISITED of sym
+    | DEF_NODE of {node:node, 
+                   parents : node list,
+                   containRefs: nodeTree list,
+                   refs : nodeTree list
+                  }
+    | INT_NODE of {node : node, 
+                   def : node,
+                   refs : nodeTree list
+                  }
+    | REF_NODE of {node : node, 
+                   def : node,
+                   parentNodes : node list,
+                   parentTrees : nodeTree list
+                  }
+  val format_sym : sym -> SMLFormat.FormatExpression.expression list
+  val format_defKind : defKind -> SMLFormat.FormatExpression.expression list
+  val format_refKind : refKind -> SMLFormat.FormatExpression.expression list
+  val format_node : node -> SMLFormat.FormatExpression.expression list
+  val format_nodeTree : nodeTree -> SMLFormat.FormatExpression.expression list
+end

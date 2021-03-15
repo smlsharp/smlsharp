@@ -81,12 +81,12 @@ struct
     | EXPTYPED of exp * ty * loc
     | EXPCONJUNCTION of exp * exp * loc
     | EXPDISJUNCTION of exp * exp * loc
-    | EXPHANDLE of exp * (pat * exp) list * loc
+    | EXPHANDLE of exp * (pat * exp * loc) list * loc
     | EXPRAISE of exp * loc
     | EXPIF of exp * exp * exp * loc
     | EXPWHILE of exp * exp * loc
-    | EXPCASE of exp * (pat * exp) list * loc
-    | EXPFN of (pat * exp) list * loc
+    | EXPCASE of exp * (pat * exp * loc) list * loc
+    | EXPFN of (pat * exp * loc) list * loc
     | EXPLET of dec list * exp list * loc
     | EXPFFIIMPORT of ffiFun * ffiTy * loc
     | EXPSQL of (exp, pat, ty) AbsynSQL.sqlexp * loc
@@ -97,7 +97,7 @@ struct
     | EXPDYNAMICNULL of ty * loc
     | EXPDYNAMICTOP of ty * loc
     | EXPDYNAMICVIEW of exp * ty * loc
-    | EXPDYNAMICCASE of exp * (kindedTvar list * pat * exp) list * loc
+    | EXPDYNAMICCASE of exp * (kindedTvar list * pat * exp * loc) list * loc
     | EXPREIFYTY of ty * loc
 
   and ffiFun
@@ -112,7 +112,7 @@ struct
     = DECVAL of kindedTvar list * (pat * exp * loc) list * loc
     | DECREC of kindedTvar list * (pat * exp * loc) list * loc
     | DECPOLYREC of (symbol * ty * exp * loc) list * loc
-    | DECFUN of kindedTvar list * {fdecl:(pat list * ty option * exp) list, loc:loc} list * loc 
+    | DECFUN of kindedTvar list * {fdecl:(pat list * ty option * exp * loc) list, loc:loc} list * loc
     | DECTYPE of {tbs : typbind list, loc:loc}
     | DECDATATYPE of {datatys: datbind list,
                       withtys: typbind list,

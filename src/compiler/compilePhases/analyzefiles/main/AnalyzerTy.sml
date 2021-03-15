@@ -34,7 +34,7 @@ struct
      dependType : string
     }
   type fileDependMap = fileDependInfo FileIDIntMap.map
-  type defMap = DBSchema.defTuple FileIDIntMap.map
+  type defMap = DBSchema.defTuple FileIDIntStringMap.map
   type refMap = DBSchema.refTuple FileIDIntMap.map
   type UPRefMap = DBSchema.UPRefTuple FileIDFileIDMap.map
 end

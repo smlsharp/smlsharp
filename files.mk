@@ -568,6 +568,8 @@ src/compiler/data/types/main/TypesUtils.o \
 src/compiler/data/types/main/CheckEq.o \
 src/compiler/data/types/main/TyPrinters.o \
 src/compiler/data/runtimetypes/main/TypeLayout2.o \
+src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
+src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/data/types/main/DynamicKindUtils.o \
 src/compiler/data/types/main/Unify.o \
 src/compiler/data/types/main/VarMap.o \
@@ -605,8 +607,6 @@ src/compiler/extensions/reflection/main/ReifyUtils.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
-src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
-src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
 src/compiler/extensions/reflection/main/PartialDynamic.o \
 src/compiler/extensions/reflection/main/NaturalJoin.o \
@@ -624,6 +624,7 @@ src/smlnj-lib/JSON/json-parser.o \
 src/compiler/extensions/reflection/main/Dynamic.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
+src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/SourceMap.o \
@@ -704,6 +705,7 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.o \
 src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.o \
 src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
+src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
@@ -982,6 +984,7 @@ src/compiler/extensions/reflection/main/ReifiedTyData.o \
 src/compiler/extensions/reflection/main/ReifyUtils.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
+src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/SourceMap.o \
@@ -1054,6 +1057,7 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.o \
 src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.o \
 src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
+src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
@@ -1338,6 +1342,7 @@ src/compiler/extensions/reflection/main/ReifiedTyData.o \
 src/compiler/extensions/reflection/main/ReifyUtils.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
+src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/SourceMap.o \
@@ -1410,6 +1415,7 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.o \
 src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.o \
 src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
+src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
@@ -1810,6 +1816,8 @@ src/compiler/data/types/main/TypesUtils.o \
 src/compiler/data/types/main/CheckEq.o \
 src/compiler/data/types/main/TyPrinters.o \
 src/compiler/data/runtimetypes/main/TypeLayout2.o \
+src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
+src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/data/types/main/DynamicKindUtils.o \
 src/compiler/data/types/main/Unify.o \
 src/compiler/data/types/main/VarMap.o \
@@ -1844,8 +1852,6 @@ src/compiler/extensions/reflection/main/ReifyUtils.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
-src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
-src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
 src/compiler/extensions/reflection/main/PartialDynamic.o \
 src/compiler/extensions/reflection/main/NaturalJoin.o \
@@ -1863,6 +1869,7 @@ src/smlnj-lib/JSON/json-parser.o \
 src/compiler/extensions/reflection/main/Dynamic.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
+src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/SourceMap.o \
@@ -1944,6 +1951,7 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.o \
 src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.o \
 src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
+src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
@@ -2173,6 +2181,7 @@ src/compiler/compilePhases/analyzefiles/main/Analyzers.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
+src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.o \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.o \
@@ -2260,6 +2269,7 @@ src/compiler/compilePhases/typedcalcoptimization/main/TCOptimize.o \
 src/compiler/compilePhases/typedcalcoptimization/main/TCSize.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
+src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
@@ -2575,6 +2585,7 @@ src/compiler/compilePhases/analyzefiles/main/Analyzers.smi \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.smi \
+src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.smi \
 src/compiler/compilePhases/analyzefiles/main/FileIDMap.smi \
 src/compiler/compilePhases/analyzefiles/main/InfoMaps.smi \
 src/compiler/compilePhases/analyzefiles/main/PrintUtils.smi \
@@ -2663,6 +2674,7 @@ src/compiler/compilePhases/typedcalcoptimization/main/TCOptimize.smi \
 src/compiler/compilePhases/typedcalcoptimization/main/TCSize.smi \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.smi \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.smi \
+src/compiler/compilePhases/typeinference/main/CoerceRank1.smi \
 src/compiler/compilePhases/typeinference/main/CompareTy.smi \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.smi \
 src/compiler/compilePhases/typeinference/main/InferTypes2.smi \
@@ -3090,6 +3102,8 @@ src/compiler/data/types/main/TypesUtils.o \
 src/compiler/data/types/main/CheckEq.o \
 src/compiler/data/types/main/TyPrinters.o \
 src/compiler/data/runtimetypes/main/TypeLayout2.o \
+src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
+src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/data/types/main/DynamicKindUtils.o \
 src/compiler/data/types/main/Unify.o \
 src/compiler/data/types/main/VarMap.o \
@@ -3121,8 +3135,6 @@ src/compiler/extensions/reflection/main/ReifyUtils.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.o \
-src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.o \
-src/compiler/compilePhases/bitmapcompilation/main/RecordLayout.o \
 src/compiler/extensions/reflection/main/ReifiedTermToML.o \
 src/compiler/extensions/reflection/main/PartialDynamic.o \
 src/compiler/extensions/reflection/main/NaturalJoin.o \
@@ -3140,6 +3152,7 @@ src/smlnj-lib/JSON/json-parser.o \
 src/compiler/extensions/reflection/main/Dynamic.o \
 src/compiler/compilePhases/analyzefiles/main/DBSchema.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDIntMap.o \
+src/compiler/compilePhases/analyzefiles/main/FileIDIntStringMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDFileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/FileIDMap.o \
 src/compiler/compilePhases/analyzefiles/main/SourceMap.o \
@@ -3220,6 +3233,7 @@ src/compiler/compilePhases/typeinference/main/TypeInferenceError.ppg.o \
 src/compiler/compilePhases/typeinference/main/TypeInferenceUtils.o \
 src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
+src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
@@ -3416,6 +3430,7 @@ src/compiler/data/types/main/Types.ppg.sml \
 src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.sml \
 src/compiler/compilePhases/nameevaluation/main/NameEvalError.ppg.sml \
 src/compiler/compilePhases/nameevaluation/main/NameEvalEnv.ppg.sml \
+src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.sml \
 src/compiler/extensions/userlevelprimitive/main/UserLevelPrimitiveError.ppg.sml \
 src/compiler/compilePhases/parser/main/ParserError.ppg.sml \
 src/compiler/compilerIRs/absyn/main/AbsynInterface.ppg.sml \
@@ -3424,7 +3439,6 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.sml \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.sml \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.sml \
 src/compiler/extensions/reflection/main/ReifiedTerm.ppg.sml \
-src/compiler/compilePhases/bitmapcompilation/main/RecordLayoutCalc.ppg.sml \
 src/sql/main/SQLQuery.ppg.sml \
 src/compiler/extensions/reflection/main/TopEnvUtils.ppg.sml \
 src/compiler/compilePhases/parser/main/interface.grm.sml \

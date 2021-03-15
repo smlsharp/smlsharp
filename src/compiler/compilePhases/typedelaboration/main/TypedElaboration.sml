@@ -116,8 +116,9 @@ struct
       | I.ICOPRIM oprimInfo => icexp
       | I.ICTYPED (icexp, ty, loc) =>
         I.ICTYPED (compileExp icexp, ty, loc)
-      | I.ICINTERFACETYPED {icexp, ty, loc} =>
+      | I.ICINTERFACETYPED {icexp, path, ty, loc} =>
         I.ICINTERFACETYPED {icexp = compileExp icexp,
+                            path = path,
                             ty = ty,
                             loc = loc}
       | I.ICAPPM (icexp, icexplist, loc) =>

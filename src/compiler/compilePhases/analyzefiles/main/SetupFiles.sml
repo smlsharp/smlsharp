@@ -59,6 +59,7 @@ struct
 	    handle IM.SourceMap 
 		   => (print "nodeToFileId\n";
 		       raise IM.SourceMap)
+                 | x => (print "s2\n";raise x)
         fun regDepend (source, edges) =
 	    if U.onStdpath source then ()
 	    else
@@ -67,6 +68,8 @@ struct
 				 handle IM.SourceMap 
 					=> (print "regdepend\n";
 					    raise IM.SourceMap)
+                                      | x => (print "s1\n";raise x)
+
             in
               app
               (fn (kind, node, loc) => 

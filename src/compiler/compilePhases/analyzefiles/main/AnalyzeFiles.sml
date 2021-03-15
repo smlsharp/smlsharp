@@ -12,6 +12,7 @@ in
   fun compileSML {llvmOptions, topOptions, topContext, ...} (source as (p,filename)) =
     let
       val fileId = InfoMaps.findSourceMap source
+                   handle x => (print "c1\n";raise x)
       val fileInfo = Dynamic.format fileId
 
       val _ = Bug.printMessage

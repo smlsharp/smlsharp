@@ -17,9 +17,14 @@ struct
   val derefTy : Types.ty -> Types.ty
   val substBTvar : Types.ty BoundTypeVarID.Map.map -> Types.ty -> Types.ty
   val freshSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
+  val freshSubstWithLambdaDepth
+      : Types.lambdaDepth -> Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
   val freshRigidSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
+  val freshRigidSubstWithLambdaDepth
+      : Types.lambdaDepth ->  Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
   val monoTy : Types.ty -> bool
   val freshRigidInstTy : Types.ty -> Types.ty * Types.constraint list * Types.tvState ref TvarMap.map
+  val freshTopLevelRigidInstTy : Types.ty -> Types.ty * Types.constraint list * Types.ty list
   val EFTV : Types.ty * Types.constraint list
              -> int * OTSet.set * (Types.tvState ref) IEnv.map
 (*

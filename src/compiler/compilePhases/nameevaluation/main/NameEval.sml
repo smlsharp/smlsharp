@@ -153,9 +153,9 @@ local
   (* type function variable substitution *)
   type tfvSubst = (I.tfunkind ref) TfvMap.map
 
-  fun evalPlpat context path (tvarEnv:Ty.tvarEnv) (env:V.env) plpat : V.env * I.icpat =
+  fun evalPlpat (defRange, context) path (tvarEnv:Ty.tvarEnv) (env:V.env) plpat : V.env * I.icpat =
       let
-        val evalPat = evalPlpat context path tvarEnv env
+        val evalPat = evalPlpat (defRange, context) path tvarEnv env
         fun evalTy' ty = Ty.evalTyWithFlex tvarEnv env ty
       in
         case plpat of
@@ -170,8 +170,11 @@ local
                   val varId = VarID.generate()
                   val newLongsymbol = Symbol.concatPath(path, refLongsymbol)
                   val varInfo = {longsymbol=newLongsymbol, id=varId}
+                  val rangeLoc = case defRange of
+                                   NONE => Symbol.longsymbolToLastLoc refLongsymbol
+                                 | SOME loc => loc
                   val idstatus = I.IDVAR{longsymbol=newLongsymbol, id=varId, 
-                                         defRange = Symbol.longsymbolToLastLoc refLongsymbol}
+                                         defRange = rangeLoc}
                   val env = VP.rebindId context (V.emptyEnv, symbol, idstatus)
                 in
                   (env, I.ICPATVAR_TRANS varInfo)
@@ -328,7 +331,10 @@ local
                       E.VarPatExpected("090", {longsymbol = [symbol]}));
                    VarID.generate())
             val longsymbol =  Symbol.prefixPath (path, symbol)
-            val idInfo = {longsymbol = longsymbol, id = varId, defRange = loc}
+            val rangeLoc = case defRange of
+                             NONE => loc
+                           | SOME loc => loc
+            val idInfo = {longsymbol = longsymbol, id = varId, defRange = rangeLoc}
             val varInfo = {longsymbol = longsymbol, id = varId}
             val idstatus = I.IDVAR idInfo
             val returnEnv = VP.rebindId context (V.emptyEnv, symbol, idstatus)
@@ -372,7 +378,7 @@ local
         V.STR envMap
       end
 
-  fun optimizeValBind (icpat, icexp, loc) (icpatIcexpListRev, env) = 
+  fun optimizeValBind (icpat, icexp, defRange) (icpatIcexpListRev, env) =
       case icpat of 
         I.ICPATVAR_TRANS (varInfo as {longsymbol=defLongsymbol,...}) => 
         let
@@ -386,7 +392,7 @@ local
               VP.rebindId VP.BIND_VAL
                           (env, symbol, 
                            I.IDVAR {longsymbol=defLongsymbol, 
-                                    defRange = loc,
+                                    defRange = defRange,
                                     id=id}))
              (* 2013-07-02 ohori
                 Here we use the def longsymbol for the env entry.
@@ -402,13 +408,13 @@ local
               VP.rebindId VP.BIND_VAL 
                           (env,
                          symbol, 
-                         I.IDEXVAR {exInfo=exInfo, internalId=NONE, defRange = loc} 
+                         I.IDEXVAR {exInfo=exInfo, internalId=NONE, defRange = defRange}
              ))
            | I.ICBUILTINVAR {primitive, ty, loc} =>
              (icpatIcexpListRev, 
               VP.rebindId 
                 VP.BIND_VAL 
-                (env, symbol, I.IDBUILTINVAR {primitive=primitive, ty=ty, defRange=loc}))
+                (env, symbol, I.IDBUILTINVAR {primitive=primitive, ty=ty, defRange=defRange}))
            | _ => ((icpat, icexp)::icpatIcexpListRev, env)
           )
         end
@@ -458,7 +464,7 @@ local
                     let
                       val icexp = evalPlexp tvarEnv env plexp
                       val (newEnv, icpat) =
-                          evalPlpat VP.BIND_VAL path tvarEnv env plpat
+                          evalPlpat (SOME loc, VP.BIND_VAL) path tvarEnv env plpat
                       val (icpatIcexpListRev, newEnv) =
                           optimizeValBind (icpat, icexp, loc) (icpatIcexpListRev, newEnv)
                       val returnEnv = VP.unionEnv "203" (returnEnv, newEnv)
@@ -490,7 +496,9 @@ local
           val returnEnv =
               foldl
                 (fn ({fdecl=({symbol, varInfo, ...}, _), loc}, returnEnv) =>
-                    VP.rebindId VP.BIND_FUNCTION (returnEnv, symbol, I.IDVAR (I.varInfoToIdInfo varInfo loc))
+                    VP.rebindId
+                      VP.BIND_FUNCTION
+                      (returnEnv, symbol, I.IDVAR (I.varInfoToIdInfo varInfo loc))
                 )
                 V.emptyEnv
                 declList
@@ -614,7 +622,7 @@ local
                             end
                       val tstr = V.TSTR {tfun = tfun, defRange = defRange}
                     in
-                      (VP.rebindTstr VP.BIND_VAL (returnEnv,  symbol, tstr), renameEnv)
+                      (VP.rebindTstr VP.BIND_TSTR (returnEnv,  symbol, tstr), renameEnv)
                     end
                 )
                 (V.emptyEnv, renameEnv)
@@ -667,7 +675,7 @@ local
                       renameEnv
                      )
                    end
-             val returnEnv = VP.rebindTstr VP.BIND_VAL (V.emptyEnv, symbol, tstr)
+             val returnEnv = VP.rebindTstr VP.BIND_TSTR (V.emptyEnv, symbol, tstr)
              val varE = 
                  case tstr of
                    V.TSTR tfun => SymbolEnv.empty
@@ -779,10 +787,10 @@ local
                     | P.PLEXBINDREP (symbol, longsymbol, loc) =>
                       (case VP.findId(env, longsymbol) of
                          SOME(sym, I.IDEXN exnInfo) =>
-                         (VP.rebindId VP.BIND_VAL (exEnv, symbol, I.IDEXNREP exnInfo),
+                         (VP.rebindId VP.BIND_VAL (exEnv, symbol, I.IDEXNREP (exnInfo # {defRange = loc})),
                           exdeclList)
-                       | SOME(sym, idstatus as I.IDEXNREP _) =>
-                         (VP.rebindId VP.BIND_VAL (exEnv, symbol, idstatus), exdeclList)
+                       | SOME(sym, I.IDEXNREP exnInfo) =>
+                         (VP.rebindId VP.BIND_VAL (exEnv, symbol, I.IDEXNREP (exnInfo # {defRange = loc})), exdeclList)
                        | SOME(sym, idstatus as I.IDEXEXN exInfo) =>
   (* 2012-9-25 ohori bug 237_functorExn:
                           (used := true;
@@ -790,13 +798,13 @@ local
                           )
   *)
                          (#used exInfo := true;
-                          (VP.rebindId VP.BIND_VAL (exEnv, symbol, I.IDEXEXNREP exInfo), exdeclList)
+                          (VP.rebindId VP.BIND_VAL (exEnv, symbol, I.IDEXEXNREP (exInfo # {defRange = loc})), exdeclList)
                          )
-                       | SOME (sym, idstatus as I.IDEXEXNREP exInfo) =>
+                       | SOME (sym, I.IDEXEXNREP exInfo) =>
                           (* FIXME 2012-1-31; This case was missing. 
                              Is this an error *)
                          (#used exInfo := true;
-                          (VP.rebindId VP.BIND_VAL (exEnv, symbol, idstatus), exdeclList)
+                          (VP.rebindId VP.BIND_VAL (exEnv, symbol, I.IDEXEXNREP (exInfo # {defRange = loc})), exdeclList)
                          )
                        | SOME _ =>
                          (EU.enqueueError
@@ -883,7 +891,7 @@ local
       let
         val renameEnv = emptyRenameEnv
         val evalExp = evalPlexp tvarEnv env
-        val evalPat = fn context => evalPlpat context nilPath tvarEnv env
+        val evalPat = fn (defRange, context) => evalPlpat (defRange, context) nilPath tvarEnv env
         fun evalTy' ty = Ty.evalTyWithFlex tvarEnv env ty
         fun evalTyWithoutFlex' ty = Ty.evalTy tvarEnv env ty
       in
@@ -1029,9 +1037,9 @@ local
             (
              evalExp plexp,
              map
-               (fn (plpat, plexp) =>
+               (fn (plpat, plexp, loc) =>
                    let
-                     val (newEnv, icpat) = evalPat VP.BIND_PAT_CASE plpat
+                     val (newEnv, icpat) = evalPat (SOME loc, VP.BIND_PAT_CASE) plpat
                    in
                      (
                       icpat,
@@ -1096,23 +1104,25 @@ local
       | P.PLFFIEXTERN s => I.ICFFIEXTERN s
 
   and evalRule (cnx:VP.category)
-               (tvarEnv:Ty.tvarEnv) {bodyEnv:V.env, argEnv:V.env} loc (plpatList, plexp) =
+               (tvarEnv:Ty.tvarEnv) {bodyEnv:V.env, argEnv:V.env} loc
+               (plpatList, plexp, defRange) =
       let
         val (newEnv, icpatList) =
             U.evalList
             {emptyEnv=V.emptyEnv,
-             eval=evalPlpat cnx nilPath tvarEnv argEnv,
+             eval=evalPlpat (SOME defRange, cnx) nilPath tvarEnv argEnv,
              unionEnv=VP.unionEnv "204"}
             plpatList
         val evalEnv = VP.envWithEnv (bodyEnv, newEnv)
       in
         {args=icpatList, body=evalPlexp tvarEnv evalEnv plexp}
       end
-  and evalDynRule (cnx:VP.category) (tvarEnv:Ty.tvarEnv) (env: V.env) loc (tyvars, plpat, plexp) =
+  and evalDynRule (cnx:VP.category) (tvarEnv:Ty.tvarEnv) (env: V.env) loc
+                  (tyvars, plpat, plexp, defRange) =
       let
 
         val (tvarEnv, scopedTvars) = Ty.evalScopedTvars tvarEnv env tyvars
-        val (newEnv, icpat) = evalPlpat cnx nilPath tvarEnv env plpat
+        val (newEnv, icpat) = evalPlpat (SOME defRange, cnx) nilPath tvarEnv env plpat
         val evalEnv = VP.envWithEnv (env, newEnv)
       in
         {tyvars=scopedTvars, arg=icpat, body=evalPlexp tvarEnv evalEnv plexp}
@@ -2137,7 +2147,7 @@ val _ = U.print "\n"
              bodyEnv = returnEnv,
              bodyVarExp = functorExpVarExp
             }
-        val funE =  VP.rebindFunE VP.BIND_VAL (SymbolEnv.empty, nameSymbol, funEEntry)
+        val funE = VP.rebindFunE VP.BIND_FUNCTOR (SymbolEnv.empty, nameSymbol, funEEntry)
         val returnTopEnv = VP.topEnvWithFunE(V.emptyTopEnv, funE)
 (*
 val _ = U.print "eval functor returnTopEnv\n"
@@ -2169,7 +2179,7 @@ val _ = U.print "\n"
                     let
                       val sigEEntry = Sig.evalPlsig topEnv plsig
                     in
-                      VP.rebindSigE VP.BIND_VAL (sigE, symbol, sigEEntry)
+                      VP.rebindSigE VP.BIND_SIG (sigE, symbol, sigEEntry)
                     end
                 )
                 SymbolEnv.empty
@@ -2840,13 +2850,14 @@ val _ = U.print "\n"
             if !Control.doNameAnalysis  then
               AnalyzeSource.analyzeSouce source evalTopEnv returnTopEnvSource
             else ()
-        val _ = Analyzers.stopNameRefTracing ()
 *)
         val returnTopEnv = VP.topEnvWithTopEnv(returnTopEnvInclude, returnTopEnvSource)
 
 (*
 val _ = U.print "*** before checkPitopdecList\n"
 *)
+
+        val _ = Analyzers.stopBindTracing ()
 
         val (exnInfoList, returnTopEnv, exportList) =
           if !Control.interactiveMode

@@ -1,0 +1,13 @@
+_require "basis.smi"
+_require "smlnj-lib/Util/binary-map-fn.smi"
+_require "smlnj-lib/Util/binary-set-fn.smi"
+
+structure SymOrg =
+struct
+  type ord_key = {fileId:int, startPos:int, endPos:int, symbol:string}
+  val compare : ord_key * ord_key -> order
+end
+
+structure SymMap = BinaryMapFn(SymOrg)
+structure SymSet = BinarySetFn(SymOrg)
+

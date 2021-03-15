@@ -1,4 +1,12 @@
 -----------------------------------------------------------------------------
+SML# version 3.7.1 (released on 2021-03-15)
+
+* Fixed segmentation fault occurred when rank-1 polymorphic functions
+  are exported and called from different modules.
+
+* SML# now supports LLVM 12.
+
+-----------------------------------------------------------------------------
 SML# version 3.7.0 (released on 2021-01-04)
 
 * Experimental feature: existential type variable declararion has been

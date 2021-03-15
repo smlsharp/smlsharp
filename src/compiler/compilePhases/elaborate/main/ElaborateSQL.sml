@@ -204,10 +204,10 @@ struct
       P.PLVAR (Symbol.mkLongsymbol name loc)
 
   fun Case1 exp1 (pat, exp2) loc =
-      P.PLCASEM ([exp1 loc], [([pat loc], exp2 loc)], P.MATCH, loc)
+      P.PLCASEM ([exp1 loc], [([pat loc], exp2 loc, loc)], P.MATCH, loc)
 
   fun Fn (pat, exp) loc =
-      P.PLFNM ([([pat loc], exp loc)], loc)
+      P.PLFNM ([([pat loc], exp loc, loc)], loc)
 
   fun Fn1 f =
       let

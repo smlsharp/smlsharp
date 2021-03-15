@@ -17,14 +17,15 @@ local
   exception SYSTEMPATH
 
   fun locToKey (L.POS{source = L.FILE s, pos,...},_) = 
-      {fileId = #fileId (IM.findSourceMap s), startPos = pos}
+      ({fileId = #fileId (IM.findSourceMap s), startPos = pos}
+       handle x => raise x)
     | locToKey _ = {fileId = ~1, startPos = ~1}
   fun locRange loc = 
       case loc of 
         (L.POS{source = L.FILE s, pos=startPos, ...}, 
          L.POS{pos=endPos, ...}) => 
         (startPos, endPos, #fileId (IM.findSourceMap s))
-      |  _ => (~1, ~1, ~1)
+  |  _ => (~1, ~1, ~1)
   fun defRangeInfo loc =
       let
         val (s,e, f) = locRange loc
@@ -97,6 +98,7 @@ local
   val nameRefTracingSave = ref false
   val sourceFileIdStack = ref nil
   val provideTracing = ref false
+  val provideTracingSave = ref false
   val bindTracing = ref false
   val bindTracingSave = ref false
 
@@ -115,9 +117,18 @@ in
     }
 
   fun startNameRefTracing () = 
-      (nameRefTracing := true; bindTracing := true)
+      (nameRefTracing := true; 
+       bindTracing := true;
+       provideTracing := true
+      )
   fun stopNameRefTracing () = 
-      (nameRefTracing := false; bindTracing := false)
+      (nameRefTracing := false; 
+       bindTracing := false;
+       provideTracing := false
+      )
+
+  fun stopBindTracing () = 
+       bindTracing := false
 
   fun pushSourceFileId id =
       sourceFileIdStack := (id :: !sourceFileIdStack)
@@ -134,12 +145,15 @@ in
     if !Control.doNameAnalysis then
       let
         val fileId = IM.findSourceMap source
+               handle x => (print "a2\n";raise x)
         val _ = if InfoMaps.memberProcessedFiles fileId then 
                   (nameRefTracingSave := !nameRefTracing;
                    bindTracingSave := !bindTracing;
+                   provideTracingSave := !provideTracing;
                    stopNameRefTracing ())
                 else 
                   (nameRefTracingSave := !nameRefTracing;
+                   provideTracing := !provideTracingSave;
                    bindTracingSave := !bindTracing;
                    startNameRefTracing ())
       in
@@ -151,12 +165,16 @@ in
     if !Control.doNameAnalysis then
       let
         val fileId = IM.findSourceMap source
+               handle x => (print "a3\n";raise x)
         val _ = if InfoMaps.memberProcessedFiles fileId then 
                   (nameRefTracing := !nameRefTracingSave;
-                   bindTracingSave := !bindTracing)
+                   bindTracingSave := !bindTracing;
+                   provideTracingSave := !provideTracing
+                  )
                 else 
                   (InfoMaps.insertProcessedFiles fileId;
                    bindTracing := !bindTracingSave;
+                   provideTracing := !provideTracingSave;
                    nameRefTracing := !nameRefTracingSave
                   )
       in
@@ -285,7 +303,7 @@ in
      NameEvalEnvPrim.{rebindId,rebindIdLongsymbol}
    *)
   fun rebindId cat (sym, idstatus) =
-   (if !Control.doNameAnalysis andalso !bindTracing then
+   (if !Control.doNameAnalysis andalso !bindTracing andalso cat <> PROVIDE then
        let
          val {locKey, defSymInfo} = defSymLocInfo sym
          val defInfo : defTuple = 
@@ -294,7 +312,7 @@ in
               # {(idstatusInfo idstatus)}
               # {defSymInfo}
               # {{sourceFileId = topSourceFileId()}}
-        val _ = IM.insertDefMap (locKey, defInfo)
+        val _ = IM.insertDefMap defInfo
       in
         ()
       end
@@ -305,7 +323,7 @@ in
       NameEvalEnvPrims.{rebindTstr, rebindTstrLongsymbol}
   *)
   fun rebindTstr cat (symbol, tstr) =
-    if !Control.doNameAnalysis andalso !bindTracing then
+    if !Control.doNameAnalysis andalso !bindTracing andalso cat <> PROVIDE then
     let
       val {locKey, defSymInfo} = defSymLocInfo symbol
       val {tstrInfo, tfun,...} = tstrInfo tstr
@@ -327,7 +345,7 @@ in
             # {{sourceFileId = topSourceFileId()}}
             # {{tfunKind = tfunKind,
                 internalId = internalId}}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -338,7 +356,7 @@ in
      NameEvalEnvPrims.rebindStr
   *)
   fun rebindStr cat (sym, {loc=defRange, definedSymbol, ...}) =
-    if !Control.doNameAnalysis andalso !bindTracing then
+    if !Control.doNameAnalysis andalso !bindTracing andalso cat <> PROVIDE then
     let
       val {locKey, defSymInfo} = defSymLocInfo sym
       val definedSymbol = Symbol.longsymbolToString definedSymbol
@@ -350,7 +368,7 @@ in
             # {definedSymbol = definedSymbol}
             # {{sourceFileId = topSourceFileId()}}
             # {(defRangeInfo defRange)}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -371,7 +389,7 @@ in
             # {{kind = "SIG"}}
             # {{sourceFileId = topSourceFileId()}}
             # {(defRangeInfo defRange)}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -382,7 +400,7 @@ in
      NameEvalEnvPrims.rebindFunE
   *)
   fun rebindFun cat (sym, {loc=defRange,...}) =
-    if !Control.doNameAnalysis andalso !bindTracing then
+    if !Control.doNameAnalysis andalso !bindTracing andalso cat <> PROVIDE then
     let
       val {locKey, defSymInfo} = defSymLocInfo sym
       val defInfo : defTuple = 
@@ -392,7 +410,7 @@ in
             # {{kind = "FUN"}}
             # {{sourceFileId = topSourceFileId()}}
             # {(defRangeInfo defRange)}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -412,7 +430,7 @@ in
             # {(idstatusInfo idstatus)}
             # {defSymInfo}
             # {{sourceFileId = topSourceFileId()}}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -444,7 +462,7 @@ in
             # {{sourceFileId = topSourceFileId()}}
             # {{tfunKind = tfunKind,
                 internalId = internalId}}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -466,7 +484,7 @@ in
             # {{kind = "STR"}}
             # {(defRangeInfo defRange)}
             # {{sourceFileId = topSourceFileId()}}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -486,7 +504,7 @@ in
             # {{kind = "SIG"}}
             # {(defRangeInfo defRange)}
             # {{sourceFileId = topSourceFileId()}}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -506,7 +524,7 @@ in
             # {{kind = "FUN"}}
             # {(defRangeInfo defRange)}
             # {{sourceFileId = topSourceFileId()}}
-      val _ = IM.insertDefMap (locKey, defInfo)
+      val _ = IM.insertDefMap defInfo
     in
       ()
     end
@@ -533,6 +551,7 @@ in
       in
         ()
       end
+      handle U.OnStdPath => ()
     else ()
 
   (* called from
@@ -622,7 +641,7 @@ in
         in
         ()
       end
-       handle U.OnStdPath => ()
+      handle U.OnStdPath => ()
     else ()
 
   (* call from
@@ -643,6 +662,7 @@ in
       in
         ()
       end
+      handle U.OnStdPath => ()
     else ()
 
   (* call from
@@ -664,6 +684,7 @@ in
       in
         ()
       end
+      handle U.OnStdPath => ()
     else ()
 
   (* called from
@@ -789,6 +810,7 @@ in
               ()
             end
         end
+        handle U.OnStdPath => ()
       else ()
 
   (*
@@ -832,6 +854,7 @@ in
             ()
           end
       end
+      handle U.OnStdPath => ()
     else ()
 
 
@@ -874,8 +897,8 @@ in
           in
             ()
           end
-          handle U.OnStdPath => ()
       end
+      handle U.OnStdPath => ()
     else ()
 
 

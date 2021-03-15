@@ -51,9 +51,9 @@ struct
     | PLRECORD_UPDATE of plexp * (RecordLabel.label * plexp) list * loc
     | PLRECORD_UPDATE2 of plexp * plexp * loc
     | PLRAISE of plexp * loc
-    | PLHANDLE of plexp * (plpat * plexp) list * loc
-    | PLFNM of (plpat list * plexp) list * loc 
-    | PLCASEM of plexp list * (plpat list * plexp) list * caseKind * loc
+    | PLHANDLE of plexp * (plpat * plexp * loc) list * loc
+    | PLFNM of (plpat list * plexp * loc) list * loc
+    | PLCASEM of plexp list * (plpat list * plexp * loc) list * caseKind * loc
     | PLRECORD_SELECTOR of RecordLabel.label * loc 
     | PLSELECT of RecordLabel.label * plexp * loc  (* this must be kept as a primitive *)
     | PLSEQ of plexp list * loc
@@ -65,7 +65,7 @@ struct
     | PLDYNAMICNULL of ty * loc
     | PLDYNAMICTOP of ty * loc
     | PLDYNAMICVIEW of plexp * ty * loc
-    | PLDYNAMICCASE of plexp * (scopedTvars * plpat * plexp) list * loc
+    | PLDYNAMICCASE of plexp * (scopedTvars * plpat * plexp * loc) list * loc
     | PLREIFYTY of ty * loc
 
   and ffiFun
@@ -74,7 +74,7 @@ struct
 
   and pdecl 
     = PDVAL of scopedTvars * (plpat * plexp * loc) list * loc 
-    | PDDECFUN of scopedTvars * {fdecl:(plpat * (plpat list * plexp) list), loc:loc} list*loc 
+    | PDDECFUN of scopedTvars * {fdecl:(plpat * (plpat list * plexp * loc) list), loc:loc} list*loc
     | PDVALREC of scopedTvars * (plpat * plexp * loc) list * loc
     | PDVALPOLYREC of (symbol * ty * plexp * loc) list * loc
     | PDTYPE of (tvar list * symbol * ty * loc) list * loc
