@@ -156,7 +156,7 @@ echo $RUNLOOP_DLDFLAGS
    AC_MSG_ERROR([configure cannot guess HOST_OS_TYPE, CMDLINE_MAXLEN, RDYNAMIC_LDFLAGS, and RUNLOOP_DLDFLAGS for $target_os.  You need to speficy them by the configure command line.])
 fi
 
-AC_DEFUN(CHECK_LDFLAGS, [
+AC_DEFUN([CHECK_LDFLAGS], [
   orig_LDFLAGS=$LDFLAGS
   LDFLAGS="$orig_LDFLAGS $[]$1"
   AC_MSG_CHECKING([that $1 works])
@@ -190,13 +190,13 @@ AS_HELP_STRING([--with-llvm=DIR],
   esac
 ])
 
-AC_DEFUN(LLVM_CHECK_PROG, [
+AC_DEFUN([LLVM_CHECK_PROG], [
   AC_PATH_PROG($1, $2, [], $3)
   if test -z "$[]$1"; then
     AC_MSG_ERROR([$2 is not found.])
   fi
 ])
-AC_DEFUN(LLVM_CHECK_CONFIG, [
+AC_DEFUN([LLVM_CHECK_CONFIG], [
   AC_MSG_CHECKING([for LLVM $2])
   $1=`$[]LLVM_CONFIG --$2` || AC_MSG_ERROR([failed])
   AC_MSG_RESULT($[]$1)
@@ -434,7 +434,7 @@ AC_LANG_POP(C++)
 
 # -------- Check for C header files --------
 
-AC_DEFUN(REQUIRED_HEADER, [
+AC_DEFUN([REQUIRED_HEADER], [
 AC_CHECK_HEADER($1, [], [
   AC_MSG_ERROR([required header file <$1> is not found.])
 ])])
@@ -540,7 +540,7 @@ AC_CHECK_TYPES([max_align_t])
 
 # -------- check for C/POSIX features that the compiler implies --------
 
-AC_DEFUN(REQUIRED_TYPE, [
+AC_DEFUN([REQUIRED_TYPE], [
   AC_CHECK_SIZEOF($1, [], [
     AC_INCLUDES_DEFAULT
     $3
