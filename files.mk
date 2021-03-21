@@ -3414,6 +3414,10 @@ tests/driver/dotest.o
 GEN_SOURCES = \
 src/config/main/Version.sml \
 src/config/main/SQLConfig.sml \
+src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.sml \
+src/compiler/compilerIRs/absyn/main/AbsynFormatter.sml \
+src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.sml \
+src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.sml \
 src/compiler/compilePhases/parser/main/iml.grm.sml \
 src/compiler/compilePhases/parser/main/iml.lex.sml \
 src/smlformat/generator/main/FormatComment.grm.sml \

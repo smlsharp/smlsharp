@@ -72,7 +72,11 @@ awk -v depend_mk="$depend_mk" \
 
 GEN_SOURCES='
 src/config/main/Version.sml
-src/config/main/SQLConfig.sml'
+src/config/main/SQLConfig.sml
+src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.sml
+src/compiler/compilerIRs/absyn/main/AbsynFormatter.sml
+src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.sml
+src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.sml'
 GEN_MISC_FILES=
 ALL_OBJECTS=`sed '/:/!d;s/:.*$//' "$depend_mk"`
 IFS=$LF
