@@ -635,6 +635,7 @@ SIZEOF_float
 BITSOF_int
 SIZEOF_int
 EXTRA_OPTIONS
+MKDST
 MKREL
 RELEASE
 BYTE_ORDER
@@ -5735,9 +5736,12 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 
 RELEASE='$(srcdir)/RELEASE'
 MKREL='#'
+MKDST='#'
+
 
 
 if test -d "$srcdir/.git" || test -f "$srcdir/.git"; then
+  MKDST=
   x=`cd "$srcdir" && git ls-files RELEASE 2>/dev/null || :`
   if test -z "$x"; then
     RELEASE=RELEASE

@@ -384,6 +384,36 @@ src/config/main/C_type.sml: \
   $(srcdir)/src/config/main/C_type.sml.in config.status
 	./config.status $@
 
+# -------- packaging --------
+
+dist: PHONY @RELEASE@
+@MKDST@	set -ex; \
+@MKDST@	rel=`head -n1 @RELEASE@`; \
+@MKDST@	ver=`echo "$$rel" | cut -d\  -f1`; \
+@MKDST@	date=`echo "$$rel" | sed 's/^.*(//;s/).*$$//' | cut -d\  -f1-2`; \
+@MKDST@	tar=tar; \
+@MKDST@	$$tar --version | grep 'GNU tar' >/dev/null 2>&1 || tar=gtar; \
+@MKDST@	tmp=`mktemp -d`; \
+@MKDST@	trap 'rm -rf "$$tmp"' EXIT; \
+@MKDST@	trap 'exit 127' INT QUIT STOP; \
+@MKDST@	root="$$tmp/smlsharp-$$ver"; \
+@MKDST@	mkdir "$$root"; \
+@MKDST@	(cd $(srcdir) && git archive -o "$$tmp/a.tar" HEAD); \
+@MKDST@	$$tar -C "$$root" -xf "$$tmp/a.tar"; \
+@MKDST@	autoreconf "$$root"; \
+@MKDST@	rm -rf "$$root/autom4te.cache"; \
+@MKDST@	echo "$$rel" > "$$root/RELEASE"; \
+@MKDST@	$$tar -cf "smlsharp-$$ver.tar.gz" -C "$$tmp" --sort=name \
+@MKDST@	  --format=ustar --use-compress-program='gzip -c -n -9' \
+@MKDST@	  --owner=root:0 --group=root:0 --mtime="$$date" "smlsharp-$$ver"; \
+@MKDST@	echo "$$rel" > "$$tmp/history"; \
+@MKDST@	git tag -l 'v[0-9]*' --merged=HEAD --sort=-creatordate \
+@MKDST@	  --format='%(objecttype) %(refname) (%(creatordate:iso))' \
+@MKDST@	  > "$$tmp/tags"; \
+@MKDST@	sed '/^tag/!d;s!^tag refs/tags/v!!;s/+0900/JST/' "$$tmp/tags" \
+@MKDST@	  >> "$$tmp/history"; \
+@MKDST@	uniq "$$tmp/history" > "smlsharp-$$ver.history"
+
 # -------- dependencies --------
 
 depend: PHONY minismlsharp
