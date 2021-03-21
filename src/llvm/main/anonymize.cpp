@@ -2,7 +2,7 @@
  * anonymize.cpp
  * @copyright (c) 2019, Tohoku University.
  * @author UENO Katsuhiro
- * for LLVM 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.0, 10.0.0, 11.0.0, 12.0.0
+ * for LLVM 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.0, 10.0.0, 11.0.0, 11.1.0, 12.0.0
  */
 
 #include <llvm/Support/raw_ostream.h>

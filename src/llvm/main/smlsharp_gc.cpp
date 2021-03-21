@@ -3,7 +3,7 @@
  * @copyright (c) 2019, Tohoku University.
  * @author UENO Katsuhiro
  * for LLVM 3.9.1, 4.0.1, 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.1, 10.0.0, 11.0.0,
- *          12.0.0
+ *          11.1.0, 12.0.0
  */
 
 #include <llvm/Config/llvm-config.h>
