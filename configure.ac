@@ -335,13 +335,20 @@ AC_SUBST(BYTE_ORDER)
 
 # -------- Extra options for developers --------
 
-IFDEV='#'
-AC_SUBST(IFDEV)
-if test -d "$srcdir/../.hg"; then
-  x=`cd "$srcdir" && LC_ALL=C HGPLAIN=1 hg status -A RELEASE 2>/dev/null || :`
-  if test -z "$x" || test "x$x" = "x? RELEASE"; then
-    IFDEV=
+RELEASE='$(srcdir)/RELEASE'
+MKREL='#'
+AC_SUBST(RELEASE)
+AC_SUBST(MKREL)
+if test -d "$srcdir/.git" || test -f "$srcdir/.git"; then
+  x=`cd "$srcdir" && git ls-files RELEASE 2>/dev/null || :`
+  if test -z "$x"; then
+    RELEASE=RELEASE
+    MKREL=
   fi
+fi
+if test -n "$MKREL" && test ! -f "$srcdir/RELEASE"; then
+  AC_MSG_WARN([SML[#] version is unknown because of lack of RELEASE file])
+  RELEASE=
 fi
 
 EXTRA_OPTIONS=
