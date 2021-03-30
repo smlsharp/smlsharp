@@ -1,7 +1,7 @@
 (**
  * A test runner which makes report about result of test in plain text format.
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: TextUITestRunner.sml,v 1.4 2005/04/09 14:44:32 kiyoshiy Exp $
  *)
 structure TextUITestRunner : TESTRUNNER =

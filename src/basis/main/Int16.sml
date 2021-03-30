@@ -1,7 +1,7 @@
 (**
  * Int16
  * @author UENO Katsuhiro
- * @copyright 2016, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure Int =

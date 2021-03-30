@@ -1,7 +1,7 @@
 (**
  * config file parser
  *
- * @copyright (c) 2012, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

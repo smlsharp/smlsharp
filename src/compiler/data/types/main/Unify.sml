@@ -1,6 +1,6 @@
 (**
  * a kinded unification for ML, an imperative version.
- * @copyright (c) 2006-2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @author Liu Bochao
  *)

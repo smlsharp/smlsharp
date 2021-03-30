@@ -2,7 +2,7 @@
 (**
  * SQL Query
  * @author UENO Katsuhiro
- * @copuyright (c) 2016 Tohoku University
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SMLSharp_SQL_Query =

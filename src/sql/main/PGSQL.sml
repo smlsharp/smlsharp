@@ -2,7 +2,7 @@
  * PostgreSQL support for SML#
  * @author UENO Katsuhiro
  * @author ENDO hiroki
- * @copyright (c) 2009, 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SMLSharp_SQL_PGSQL :> sig

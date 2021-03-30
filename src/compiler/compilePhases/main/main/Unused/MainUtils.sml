@@ -2,7 +2,7 @@
  * utility functions for file manipulation
  * factored out from Main.sml for using AnalyzeFile (Atsushi Ohori)
  *
- * @copyright (c) 2011, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *
  *)

@@ -2,7 +2,7 @@
  *  Utility functions independent of the specific applications.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: Utility.sml,v 1.2 2004/10/20 02:50:57 kiyoshiy Exp $
  *)
 structure Utility =

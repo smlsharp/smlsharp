@@ -37,7 +37,7 @@
              | ... => exp
   is generated.
  *
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Satoshi Osaka 
  * @author Atsushi Ohori
  * @version $Id: MatchCompiler.sml,v 1.70 2008/08/06 17:23:40 ohori Exp $

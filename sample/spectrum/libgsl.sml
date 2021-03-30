@@ -1,7 +1,7 @@
 (**
  * libgsl.sml
  *
- * @copyright (c) 2006-2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: libgsl.sml,v 1.4 2007/06/18 08:42:07 katsu Exp $
  *)

@@ -2,7 +2,7 @@
  * Test case of RealVector structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure RealVector001 = 
 ImmutableSequence001(struct

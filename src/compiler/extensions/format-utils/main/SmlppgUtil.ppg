@@ -1,6 +1,6 @@
 (**
  * Utility functions for formatting using SMLFormat.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @version $Id: SmlppgUtil.ppg,v 1.1 2008/06/13 04:14:10 ohori Exp $
  *)

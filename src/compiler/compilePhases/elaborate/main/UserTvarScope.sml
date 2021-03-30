@@ -1,6 +1,6 @@
 (**
  * determine the scope of user type variables.
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
    @author Atsushi Ohori (refactored UserTvarScoped and ElaborateInterface)
  *)

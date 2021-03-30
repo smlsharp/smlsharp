@@ -2,7 +2,7 @@
  * common interface of the polymorphic Array and mono-Arrays.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 signature MUTABLE_SEQUENCE =
 sig

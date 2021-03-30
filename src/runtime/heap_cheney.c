@@ -1,6 +1,6 @@
 /*
  * heap_cheney.c
- * @copyright (c) 2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: heap.c,v 1.10 2008/12/10 03:23:23 katsu Exp $
  */

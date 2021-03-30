@@ -1,6 +1,6 @@
 /*
  * splay.h - splay tree implementation
- * @copyright (c) 2009-2015, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  */
 

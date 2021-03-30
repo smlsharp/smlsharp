@@ -2,7 +2,7 @@
  * test case for General structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure General001 =
 struct

@@ -2,7 +2,7 @@
  * Test case of Word8Vector structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure Word8Vector101 = 
 Sequence101(struct

@@ -1,6 +1,6 @@
 /*
  * heap_boehm.c - use BDW GC (for test use)
- * @copyright (c) 2015, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  */
 

@@ -1,6 +1,6 @@
 /*
  * livecheck.c - naive object tracer for GC debug
- * @copyright (c) 2015, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  */
 

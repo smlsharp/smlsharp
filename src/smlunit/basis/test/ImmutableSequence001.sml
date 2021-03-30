@@ -4,7 +4,7 @@
  * structures do not.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 functor ImmutableSequence001(V : IMMUTABLE_SEQUENCE) : sig
   val suite : unit -> SMLUnit.Test.test

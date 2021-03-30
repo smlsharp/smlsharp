@@ -1,7 +1,7 @@
 (**
  * MySQL support for SML#
  * @author SATO Hiroyuki
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SMLSharp_SQL_MySQLBackend : SMLSharp_SQL_SQLBACKEND =

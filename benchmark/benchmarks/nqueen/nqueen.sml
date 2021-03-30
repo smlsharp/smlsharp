@@ -1,6 +1,6 @@
 (**
  * nqueen.sml - a parallel N-queen solver
- * @copyright (C) 2013, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

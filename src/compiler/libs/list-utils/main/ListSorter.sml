@@ -1,6 +1,6 @@
 (**
  * sort a list.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author YAMATODANI Kiyoshi
  * @version $Id: ListSorter.sml,v 1.5 2006/02/28 16:11:11 kiyoshiy Exp $
  *)

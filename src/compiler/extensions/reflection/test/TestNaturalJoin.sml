@@ -1,7 +1,7 @@
 (**
  * TestNaturalJoin
  * @author Tomohiro Sasaki
- * @copyright 2017-, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure TestNaturalJoin =

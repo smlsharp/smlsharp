@@ -2,7 +2,7 @@
  * SQLite support for SML#
  * @author UENO Katsuhiro
  * @author Rodolphe Bertolini
- * @copyright (c) 2017, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure SMLSharp_SQL_SQLite3Backend : SMLSharp_SQL_SQLBACKEND =
 struct

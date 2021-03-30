@@ -1,6 +1,6 @@
 (**
  * compiler toplevel
- * @copyright (c) 2010, 2011, 2012, 2013, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @author Atsushi Ohori
  * @author YAMATODANI Kiyoshi

@@ -1,6 +1,6 @@
 /**
  * smlsharp.h - SML# runtime implemenatation
- * @copyright (c) 2007-2019, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  */
 #ifndef SMLSHARP__SMLSHARP_H__

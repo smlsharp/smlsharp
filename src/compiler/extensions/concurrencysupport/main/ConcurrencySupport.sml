@@ -1,7 +1,7 @@
 (**
  * concurrency support code generation
  *
- * @copyright (c) 2014 Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 structure ConcurrencySupport : sig

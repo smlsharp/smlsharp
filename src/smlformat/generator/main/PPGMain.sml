@@ -9,7 +9,7 @@
  * </ul>
  * </p>
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: PPGMain.sml,v 1.14 2008/08/10 13:44:01 kiyoshiy Exp $
  *)
 structure PPGMain :

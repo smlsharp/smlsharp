@@ -11,7 +11,7 @@
  * variables which are passed in functor parameters.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 functor SignedInteger001
             (I

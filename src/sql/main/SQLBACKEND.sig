@@ -2,7 +2,7 @@
  * common interface for database backends.
  * @author SATO Hiroyuki
  * @author UENO Katsuhiro
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 signature SMLSharp_SQL_SQLBACKEND =

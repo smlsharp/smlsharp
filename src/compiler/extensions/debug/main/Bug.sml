@@ -1,6 +1,6 @@
 (**
  * bug exception
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  *)
 

@@ -2,7 +2,7 @@
  * Test case of Array2 structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure Array2001 = 
 Mutable2DSequence001(struct

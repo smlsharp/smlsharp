@@ -2,7 +2,7 @@
  * Test case of CharVectorSlice structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure CharVectorSlice001 = 
 ImmutableSequenceSlice001(struct

@@ -1,6 +1,6 @@
 (**
  * UserLevelPrimitive
- * @copyright (c) 2016 - 2020 Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  * @author YAMATODANI Kiyoshi
  * @author Tomohiro Sasaki

@@ -1,6 +1,6 @@
 (**
  * filename type - a way for describing what you are thinking by types.
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 structure Filename =

@@ -2,7 +2,7 @@
  *  This module translates FormatExpression.expression into
  * PreProcessedExpression.expression.
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: PreProcessor.sml,v 1.7 2010/02/09 07:53:18 katsu Exp $
  *)
 structure PreProcessor =

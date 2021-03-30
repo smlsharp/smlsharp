@@ -4,7 +4,7 @@
  *  natural data representation, and
  *  type-reification/dynamic typing.
  *
- * @copyright (c) 2011-2016, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @author Atsushi Ohori
  *

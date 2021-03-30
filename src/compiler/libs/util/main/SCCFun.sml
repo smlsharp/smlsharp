@@ -1,5 +1,5 @@
 (**
- * @copyright (c) 2004-2012 Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Duc-Huu Nguyen 
  * @author Atsushi Ohori
  *)

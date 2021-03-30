@@ -2,7 +2,7 @@
  * Test case of CharVector structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure CharVector001 = 
 ImmutableSequence001(struct

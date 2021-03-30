@@ -1,7 +1,7 @@
 (**
  * parameter for pretty-printer.
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: PrinterParameter.sml,v 1.4 2007/06/18 13:30:43 kiyoshiy Exp $
  *)
 structure PrinterParameter =

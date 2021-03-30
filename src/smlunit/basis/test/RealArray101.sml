@@ -2,7 +2,7 @@
  * Test case of RealArray structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure RealArray101 = 
 Sequence101(struct

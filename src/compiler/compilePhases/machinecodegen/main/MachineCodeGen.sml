@@ -1,7 +1,7 @@
 (**
  * generate machine code
  *
- * @copyright (c) 2013 Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 structure MachineCodeGen : sig

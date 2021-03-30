@@ -4,7 +4,7 @@
  * provide.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 functor Sequence101(S : SEQUENCE) : sig
   val suite : unit -> SMLUnit.Test.test

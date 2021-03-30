@@ -1,7 +1,7 @@
 Standard ML Basis library test suite.
 
 @author YAMATODANI Kiyoshi
-@copyright 2010, Tohoku University.
+@copyright (C) 2021 SML# Development Team.
 
 One of advantages of Standard ML is that implementations share the specification of the language and Basis library.
 It encourages portability and stable long life of softwares written in Standard ML.

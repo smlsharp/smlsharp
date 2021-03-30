@@ -1,7 +1,7 @@
 (**
  * Pretty-printer library for Standard ML.
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: SMLFormat.sml,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 (*

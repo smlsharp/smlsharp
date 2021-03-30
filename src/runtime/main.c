@@ -1,6 +1,6 @@
 /**
  * main.c
- * @copyright (c) 2007-2009, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  */
 

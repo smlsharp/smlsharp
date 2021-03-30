@@ -1,7 +1,7 @@
 (**
  * pointer operations
  * @author UENO Katsuhiro
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 infix 4 = <> > >= < <=

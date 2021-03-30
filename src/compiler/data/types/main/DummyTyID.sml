@@ -1,7 +1,7 @@
 (**
  * dummy type id
  *
- * @copyright (c) 2017, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

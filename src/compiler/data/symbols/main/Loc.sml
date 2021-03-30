@@ -1,7 +1,7 @@
 (**
  *
  * location in the source code.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author YAMATODANI Kiyoshi
  * @version $Id: Loc.ppg,v 1.1 2007/08/12 06:32:55 ohori Exp $
  *)

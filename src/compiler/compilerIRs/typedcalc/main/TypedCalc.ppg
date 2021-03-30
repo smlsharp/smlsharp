@@ -1,6 +1,6 @@
 (**
  * The typed pattern calculus for the IML.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  * @author Liu Bochao
  * @version $Id: TypedCalc.ppg,v 1.36.6.7 2010/02/10 05:17:29 hiro-en Exp $

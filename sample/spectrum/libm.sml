@@ -1,7 +1,7 @@
 (**
  * libm.sml
  *
- * @copyright (c) 2006-2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: libm.sml,v 1.2 2007/03/29 17:00:08 katsu Exp $
  *)

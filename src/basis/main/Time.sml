@@ -2,7 +2,7 @@
  * Time
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
- * @copyright 2010, 2013, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 infix 7 * / quot

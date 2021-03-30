@@ -2,7 +2,7 @@
  * Test case of Array structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure Array001 = 
 MutableSequence001(struct

@@ -2,7 +2,7 @@
  * test case for Position structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure Position001 =
 SignedInteger001(struct

@@ -2,7 +2,7 @@
  * This module generates formatter code for types.
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori (refactored)
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: FormatterGenerator.sml,v 1.17 2007/06/30 11:04:42 kiyoshiy Exp $
  *)
 structure FormatterGenerator : FORMATTER_GENERATOR =

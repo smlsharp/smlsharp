@@ -1,7 +1,7 @@
 (**
  * ODBC support for SML#
  * @author ENDO Masanori
- * @copyright (c) 2013, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SMLSharp_SQL_ODBCBackend : SMLSharp_SQL_SQLBACKEND =

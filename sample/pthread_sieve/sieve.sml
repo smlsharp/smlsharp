@@ -1,7 +1,7 @@
 (**
  * sieve.sml
  *
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

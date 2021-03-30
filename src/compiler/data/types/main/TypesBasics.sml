@@ -1,6 +1,6 @@
 (**
  * utility functions for manupilating types (needs re-writing).
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @version $Id: TypesUtils.sml,v 1.35.6.3 2009/10/10 07:05:41 katsu Exp $
  *)

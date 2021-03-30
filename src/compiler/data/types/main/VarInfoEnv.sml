@@ -1,6 +1,6 @@
 (**
  * utilities for variables.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @version $Id: vars.sml,v 1.35 2008/08/06 17:23:41 ohori Exp $
  *)

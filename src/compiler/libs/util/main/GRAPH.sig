@@ -1,7 +1,7 @@
 (**
  * Graph signature with strong connected component computation.
  * 
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author NGUYEN Huu-Duc
  * @version $Id: GRAPH.sig,v 1.4 2006/02/28 16:11:11 kiyoshiy Exp $
  *)

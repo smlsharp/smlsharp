@@ -2,7 +2,7 @@
  * lexical structures of the SML# interface language.
  *   the part of constant specifications is based on
  *   that of the SML New Jersey implementation
- * @copyright (c) 2015, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  *)
 

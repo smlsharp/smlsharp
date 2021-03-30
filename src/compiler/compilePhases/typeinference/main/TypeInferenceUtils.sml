@@ -1,6 +1,6 @@
 (**
  * utility functions for manupilating types (needs re-writing).
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @version $Id: TypeInferenceUtils.sml,v 1.58 2008/08/05 14:44:00 bochao Exp $

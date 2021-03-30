@@ -1,6 +1,6 @@
 (**
  * NaturalJoin
- * @copyright (c) 2017-2018 Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Tomohiro Sasaki
  * @author Atsushi Ohori
  *)

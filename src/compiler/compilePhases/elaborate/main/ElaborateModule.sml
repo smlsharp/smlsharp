@@ -1,7 +1,7 @@
 (*
  * Elaborator.
  *
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori 
  * @author Liu Bochao

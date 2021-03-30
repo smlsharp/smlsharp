@@ -3,7 +3,7 @@
  * basic types.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: BasicFormattersEnv.sml,v 1.3 2006/02/07 12:49:33 kiyoshiy Exp $
  *)
 structure BasicFormattersEnv =

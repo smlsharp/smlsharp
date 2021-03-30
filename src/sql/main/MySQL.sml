@@ -2,7 +2,7 @@
  * importing MySQL C API
  * @author SATO Hiroyuki
  * @author UENO Katsuhiro
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SMLSharp_SQL_MySQL :> sig

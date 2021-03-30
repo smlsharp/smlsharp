@@ -2,7 +2,7 @@
  * Implementation of assert functions.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: Assert.sml,v 1.4 2007/05/20 05:45:07 kiyoshiy Exp $
  *)
 structure Assert =

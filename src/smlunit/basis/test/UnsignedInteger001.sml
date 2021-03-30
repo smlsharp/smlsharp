@@ -2,7 +2,7 @@
  * test cases for WORD structures.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 functor UnsignedInteger001
             (W

@@ -10,7 +10,7 @@
  * </table>
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure PrinterParameterTest0002 =
 struct

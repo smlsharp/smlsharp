@@ -1,7 +1,7 @@
 (**
  * callback.sml - An example of passing complex callbacks between ML and C.
  *
- * @copyright (c) 2006-2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: callback.sml,v 1.4 2007/04/02 09:42:29 katsu Exp $
  *)

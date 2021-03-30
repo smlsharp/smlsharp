@@ -2,7 +2,7 @@
  * A set of assert functions.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: ASSERT.sig,v 1.5 2007/05/20 05:45:07 kiyoshiy Exp $
  *)
 signature ASSERT =

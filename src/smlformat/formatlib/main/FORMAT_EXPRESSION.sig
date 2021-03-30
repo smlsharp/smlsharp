@@ -1,7 +1,7 @@
 (**
  *  Types and operations of represents format expressions.
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: FORMAT_EXPRESSION.sig,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 signature FORMAT_EXPRESSION =

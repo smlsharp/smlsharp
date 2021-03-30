@@ -1,6 +1,6 @@
 (**
  * default file name substitution specified by user
- * @copyright (c) 2019, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

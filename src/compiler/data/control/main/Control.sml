@@ -1,6 +1,6 @@
 (**
  * switches to control compiler's behavior.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  * @version $Id: Control.ppg,v 1.28 2008/03/11 08:53:54 katsu Exp $
  *)

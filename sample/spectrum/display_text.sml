@@ -1,7 +1,7 @@
 (**
  * display_text.sml
  *
- * @copyright (c) 2006-2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: display_text.sml,v 1.3 2007/04/02 09:42:29 katsu Exp $
  *)

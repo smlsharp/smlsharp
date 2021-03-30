@@ -1,7 +1,7 @@
 (**
  * closure conversion with static allocation
  *
- * @copyright (c) 2011, 2012, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 structure ClosureConversion2 : sig

@@ -1,6 +1,6 @@
 (**
  * parser for interface file.
- * @copyright (c) 2011 - 2015, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @author Atsushi Ohori
  *)

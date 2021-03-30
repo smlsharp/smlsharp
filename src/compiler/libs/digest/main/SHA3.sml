@@ -1,6 +1,6 @@
 (*
  * SHA-3 hashing algorithm
- * @copyright (c) 2015, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *
  * See the following for details of the algorithm:

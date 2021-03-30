@@ -1,6 +1,6 @@
 (**
  * Module compiler flattens structure.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Liu Bochao
  * @version $Id: utils.sml,v 1.16.6.6 2010/01/29 06:41:35 hiro-en Exp $
  *)

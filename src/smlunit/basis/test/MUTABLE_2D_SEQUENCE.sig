@@ -2,7 +2,7 @@
  * common interface of the polymorphic Array2 and mono-2D-Arrays.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 signature MUTABLE_2D_SEQUENCE =
 sig

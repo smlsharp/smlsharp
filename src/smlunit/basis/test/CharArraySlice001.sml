@@ -2,7 +2,7 @@
  * Test case of CharArraySlice structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure CharArraySlice001 = 
 MutableSequenceSlice001(struct

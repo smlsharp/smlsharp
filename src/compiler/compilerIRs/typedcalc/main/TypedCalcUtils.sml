@@ -1,6 +1,6 @@
 (**
  * Utility functions to manipulate the typed pattern calculus.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @version $Id: TypedCalcUtils.sml,v 1.20.6.5 2010/01/29 06:41:34 hiro-en Exp $
  *)

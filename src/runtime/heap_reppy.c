@@ -1,6 +1,6 @@
 /*
  * heap_reppy.c
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author OTOMO Toshiaki
  * @author UENO Katsuhiro
  *

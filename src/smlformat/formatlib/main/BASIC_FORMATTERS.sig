@@ -7,7 +7,7 @@
  * formatter to the formatters environment.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: BASIC_FORMATTERS.sig,v 1.1 2006/02/07 12:51:51 kiyoshiy Exp $
  *)
 signature BASIC_FORMATTERS =

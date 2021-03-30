@@ -1,5 +1,5 @@
 (**
- * @copyright (c) 2018, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  *)
 structure SetupFiles =

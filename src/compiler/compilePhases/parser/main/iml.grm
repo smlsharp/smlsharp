@@ -1,5 +1,5 @@
 (* a grammar for the raw symtax of IML.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori, Kiyoshi Yamatodani, Liu Bochao
  * @version $Id: iml.grm,v 1.69.6.8 2010/02/10 05:17:29 hiro-en Exp $
 

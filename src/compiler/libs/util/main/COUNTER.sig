@@ -1,6 +1,6 @@
 (**
  * counter module.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author YAMATODANI Kiyoshi
  * @version $Id: COUNTER.sig,v 1.9 2007/08/14 04:07:15 ohori Exp $
  *)

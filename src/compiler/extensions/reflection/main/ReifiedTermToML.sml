@@ -1,6 +1,6 @@
 (**
  * ReifiedTermToML
- * @copyright (c) 2017- Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsuhi Ohori
  * @author Katsuhiro Ueno
  * @author Tomohiro Sasaki

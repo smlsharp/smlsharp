@@ -1,7 +1,7 @@
 (**
  * stdio.sml - sample program using standard I/O of C
  *
- * @copyright (c) 2006-2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: stdio.sml,v 1.7 2007/04/02 09:42:29 katsu Exp $
  *)

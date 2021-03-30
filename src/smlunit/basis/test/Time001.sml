@@ -2,7 +2,7 @@
  * test cases for Time structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure Time001 =
 struct

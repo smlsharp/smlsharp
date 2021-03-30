@@ -1,7 +1,7 @@
 (**
  * qsort.sml - sample program using FFI
  *
- * @copyright (c) 2006-2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: qsort.sml,v 1.9 2007/09/20 09:02:53 matsu Exp $
  *)

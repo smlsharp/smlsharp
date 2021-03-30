@@ -2,7 +2,7 @@
  * Char structure.
  * @author UENO Katsuhiro
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, 2011, 2012, 2013, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 infix 7 * / div mod

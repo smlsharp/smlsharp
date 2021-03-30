@@ -2,7 +2,7 @@
  * Timer
  * @author UENO Katsuhiro
  * @author YAMATODANI Kiyoshi
- * @copyright 2013, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 infix 6 + - ^

@@ -1,6 +1,6 @@
 /*
  * object.h - SML# heap object format
- * @copyright (c) 2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  */
 #ifndef SMLSHARP__OBJECT_H__

@@ -1,6 +1,6 @@
 (**
  * User errors detected in FFICompilation phase.
- * @copyright (c) 2016-, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Tomohiro Sasaki
   
   2016 ohori 以下は，暫定版．他のフェーズに合わせて

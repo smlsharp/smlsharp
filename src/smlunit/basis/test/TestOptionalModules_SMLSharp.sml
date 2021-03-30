@@ -1,7 +1,7 @@
 (**
  * test set for Basis modules which are classified into 'optional'. 
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: TestMain.sml,v 1.1.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure TestOptionalModules =

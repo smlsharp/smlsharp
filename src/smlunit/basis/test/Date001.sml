@@ -2,7 +2,7 @@
  * test cases for Date.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure Date001 =
 struct

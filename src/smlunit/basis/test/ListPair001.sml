@@ -2,7 +2,7 @@
  * test cases for ListPair structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure ListPair001 =
 struct

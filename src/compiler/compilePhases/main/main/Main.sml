@@ -1,7 +1,7 @@
 (**
  * simple main entry for separate compilation
  *
- * @copyright (c) 2011, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

@@ -1,6 +1,6 @@
 (**
  * fixity of operator.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @version $Id: Fixity.sml,v 1.1 2008/08/06 07:37:49 ohori Exp $
  *)

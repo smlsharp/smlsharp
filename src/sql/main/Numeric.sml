@@ -1,7 +1,7 @@
 (**
  * SQL numeric type: arbitrary precision decimal number
  * @author UENO Katsuhiro
- * @copyright (c) 2017, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SMLSharp_SQL_Numeric =

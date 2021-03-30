@@ -1,5 +1,5 @@
 (**
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author YAMATODANI Kiyoshi
  * @version $Id: USER_ERROR.sig,v 1.2 2008/02/06 06:11:42 bochao Exp $
  *)

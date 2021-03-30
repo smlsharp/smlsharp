@@ -1,6 +1,6 @@
 (**
  * ElaborateForeach.sml
- * @copyright (c) 2009-2016, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @author Atsushi Ohori
  *)

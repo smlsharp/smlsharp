@@ -2,7 +2,7 @@
  * Test case of CharArray2 structure.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 structure CharArray2001 = 
 Mutable2DSequence001(struct

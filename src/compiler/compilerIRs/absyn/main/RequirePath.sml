@@ -1,6 +1,6 @@
 (*
  * interpret file paths that are used in _require and _use
- * @copyright (c) 2019, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

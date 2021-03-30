@@ -1,7 +1,7 @@
 (**
  * record layout and bitmap compilation
  *
- * @copyright (c) 2011, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @author Huu-Duc Nguyen
  * @author Atsushi Ohori

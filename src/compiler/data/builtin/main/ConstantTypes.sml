@@ -1,5 +1,5 @@
 (** * constant terms.
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  * @author YAMATODANI Kiyoshi
  * @version $Id: ConstantTerm.ppg,v 1.1 2008/11/19 19:57:44 ohori Exp $

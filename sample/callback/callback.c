@@ -1,7 +1,7 @@
 /*
  * callback.c
  *
- * @copyright (c) 2006-2007, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * @version $Id: callback.c,v 1.2 2007/04/02 09:42:29 katsu Exp $
  */

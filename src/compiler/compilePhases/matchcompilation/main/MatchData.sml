@@ -1,5 +1,5 @@
 (**
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author OSAKA Satoshi
  * @version $Id: MatchData.sml,v 1.17 2008/02/21 02:58:41 bochao Exp $
  *)

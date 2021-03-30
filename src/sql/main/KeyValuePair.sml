@@ -1,7 +1,7 @@
 (**
  * Key-value pair parser
  * @author UENO Katsuhiro
- * @copyright (c) 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SMLSharp_SQL_KeyValuePair : sig

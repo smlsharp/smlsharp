@@ -1,5 +1,5 @@
 (**
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori 
  * @version $Id: checkeq.sml,v 1.30 2008/08/06 12:59:09 ohori Exp $
  *)

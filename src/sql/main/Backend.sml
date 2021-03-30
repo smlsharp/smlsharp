@@ -1,7 +1,7 @@
 (**
  * SQL backends
  * @author UENO Katsuhiro
- * @copyright (c) 2013, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure SQLBackendTypes =

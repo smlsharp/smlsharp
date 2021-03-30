@@ -2,7 +2,7 @@
  * test cases for immutable sequence slice structures.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 functor ImmutableSequenceSlice001(V : IMMUTABLE_SEQUENCE_SLICE) : sig
   val suite : unit -> SMLUnit.Test.test

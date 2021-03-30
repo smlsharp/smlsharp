@@ -1,7 +1,7 @@
 (**
  * Graph structure with strong connected component computation.
  *
- * @copyright (c) 2006, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author NGUYEN Huu-Duc
  * @version $Id: Graph.sml,v 1.6 2007/08/12 23:11:19 ohori Exp $
  *)

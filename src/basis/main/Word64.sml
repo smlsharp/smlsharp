@@ -4,7 +4,7 @@
  * @author UENO Katsuhiro
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori
- * @copyright 2014, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 
 structure Word =

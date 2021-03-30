@@ -2,7 +2,7 @@
  * common functions which array_slices and vector_slices provide.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 signature SEQUENCE_SLICE =
 sig

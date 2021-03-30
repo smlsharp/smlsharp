@@ -1,7 +1,7 @@
 (**
  * Specfication of modules which generate formatters for type declarations.
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @version $Id: FORMATTER_GENERATOR.sig,v 1.5 2004/10/20 02:50:56 kiyoshiy Exp $
  *)
 signature FORMATTER_GENERATOR =

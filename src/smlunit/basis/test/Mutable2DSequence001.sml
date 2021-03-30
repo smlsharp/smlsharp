@@ -2,7 +2,7 @@
  * test cases for mutable 2-dimension sequence structures.
  *
  * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  *)
 functor Mutable2DSequence001(A : MUTABLE_2D_SEQUENCE) =
 struct

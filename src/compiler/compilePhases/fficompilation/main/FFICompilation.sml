@@ -1,7 +1,7 @@
 (**
  * FFI compilation.
  *
- * @copyright (c) 2016, Tohoku University.
+ * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
  * @author Tomohiro Sasaki
  * @author UENO Katsuhiro
