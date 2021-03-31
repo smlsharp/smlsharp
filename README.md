@@ -72,7 +72,7 @@ License
 -------
 
 The SML# Compiler and its supporting tools are open source software
-being distributed under a (revised) BSD-style license, as described
+being distributed under the MIT license, as described
 in the file "LICENSE" included in this distribution package.
 
 Third-party source code used and/or included

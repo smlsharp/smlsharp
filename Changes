@@ -1,4 +1,15 @@
 -----------------------------------------------------------------------------
+SML# version 4.0.0 (released on 2021-04-XX)
+
+* In agreement with Tohoku University, we (the SML# development team) have
+  relicensed the SML# software.  It is now distributed under the MIT license
+  copyrighted by the SML# development team.  See LICENSE file for the
+  current license.
+
+* We have relocated the SML# website at https://smlsharp.github.io/ and
+  its distrution site at https://github.com/smlsharp/smlsharp .
+
+-----------------------------------------------------------------------------
 SML# version 3.7.1 (released on 2021-03-15)
 
 * Fixed segmentation fault occurred when rank-1 polymorphic functions
