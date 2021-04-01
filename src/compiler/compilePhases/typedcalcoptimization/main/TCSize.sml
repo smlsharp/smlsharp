@@ -1,3 +1,7 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
+ *)
 (* Efficient and accurate size calculation. *)
 structure TCSize =
 struct

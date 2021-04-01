@@ -1,3 +1,8 @@
+(*
+ * @copyright (C) 2021 SML# Development Team.
+ * @author UENO Katsuhiro
+ * @author Atsushi Ohori
+ *)
 (* 2015-09-26. Ad-hoc fix to seepd up compilation
 *)
 

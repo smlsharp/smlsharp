@@ -3,6 +3,7 @@
  *   the part of constant specifications is based on
  *   that of the SML New Jersey implementation
  * @copyright (C) 2021 SML# Development Team.
+ * @author UENO Katsuhiro
  * @author Atsushi Ohori
  *)
 

@@ -1,3 +1,9 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author UENO Katsuhiro
+ * @author Atsushi Ohori
+ * @author YAMATODANI Kiyoshi
+ *)
 (*
  Elaborator.
  In this pahse, we do the following:

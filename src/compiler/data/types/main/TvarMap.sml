@@ -1,3 +1,7 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori 
+ *)
 structure TvarOrd =
 struct
  type ord_key = {symbol:Symbol.symbol,id:TvarID.id,isEq:bool,lifted:bool}

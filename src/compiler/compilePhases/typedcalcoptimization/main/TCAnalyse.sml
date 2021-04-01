@@ -1,3 +1,7 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
+ *)
 structure TCAnalyse =
 struct
 datatype count = INF | FIN of int

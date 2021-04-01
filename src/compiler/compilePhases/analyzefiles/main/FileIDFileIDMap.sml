@@ -1,3 +1,7 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
+ *)
 structure FileIDFileIDOrd =
 struct
   type ord_key = {refFileId:int, defFileId:int}

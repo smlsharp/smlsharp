@@ -1,3 +1,7 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori 
+ *)
 structure OPrimOrd =
   struct
     type ord_key = {longsymbol:Symbol.longsymbol, id:OPrimID.id}

@@ -1,8 +1,8 @@
 (**
  * determine the scope of user type variables.
  * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
  * @author UENO Katsuhiro
-   @author Atsushi Ohori (refactored UserTvarScoped and ElaborateInterface)
  *)
 structure UserTvarScope =
 struct

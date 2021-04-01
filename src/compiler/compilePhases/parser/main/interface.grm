@@ -1,3 +1,9 @@
+(**
+ * grammar for the interface langauge.
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
+ * @author UENO Katsuhiro
+ *)
 structure A = Absyn
 structure I = AbsynInterface
 %%
@@ -6,12 +12,6 @@ structure I = AbsynInterface
 
 %blocksize (40)
 
-
-(*
- * grammar for the interface langauge.
- * @copyright (C) 2021 SML# Development Team.
- * @author UENO Katsuhiro
- *)
 
 (*
   2011-12-12 Ohori

@@ -1,3 +1,7 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
+ *)
 (* Efficient size calculation throug depth-first travasal.
 *)
 structure RCAnalyse =

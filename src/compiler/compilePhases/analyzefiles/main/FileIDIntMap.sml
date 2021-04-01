@@ -1,3 +1,7 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
+ *)
 structure FileIDIntOrd =
 struct
   type ord_key = {fileId:int, startPos:int}

@@ -1,3 +1,7 @@
+(** * constant terms.
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Atsushi Ohori
+ *)
 (*  built-in types. *)
 structure BuiltinTypes =
 struct

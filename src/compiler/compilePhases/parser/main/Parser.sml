@@ -1,5 +1,6 @@
 (**
  * ML parser
+ * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  *)
 

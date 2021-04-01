@@ -2,7 +2,6 @@
  * UserLevelPrimitive
  * @copyright (C) 2021 SML# Development Team.
  * @author Atsushi Ohori
- * @author YAMATODANI Kiyoshi
  * @author Tomohiro Sasaki
  *)
 

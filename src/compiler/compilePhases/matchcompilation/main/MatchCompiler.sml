@@ -1,3 +1,9 @@
+(**
+ * @copyright (C) 2021 SML# Development Team.
+ * @author Satoshi Osaka 
+ * @author Atsushi Ohori
+ * @version $Id: MatchCompiler.sml,v 1.70 2008/08/06 17:23:40 ohori Exp $
+ *)
  (**
  * SML# match compiler.
  This code is based on the following works.
@@ -37,10 +43,6 @@
              | ... => exp
   is generated.
  *
- * @copyright (C) 2021 SML# Development Team.
- * @author Satoshi Osaka 
- * @author Atsushi Ohori
- * @version $Id: MatchCompiler.sml,v 1.70 2008/08/06 17:23:40 ohori Exp $
  *)
 structure MatchCompiler : sig
 
