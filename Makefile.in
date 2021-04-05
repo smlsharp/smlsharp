@@ -400,7 +400,6 @@ dist: PHONY @RELEASE@
 @MKDST@	mkdir "$$root"; \
 @MKDST@	(cd $(srcdir) && git archive -o "$$tmp/a.tar" HEAD); \
 @MKDST@	$$tar -C "$$root" -xf "$$tmp/a.tar"; \
-@MKDST@	autoreconf "$$root"; \
 @MKDST@	rm -rf "$$root/autom4te.cache"; \
 @MKDST@	echo "$$rel" > "$$root/RELEASE"; \
 @MKDST@	$$tar -cf "smlsharp-$$ver.tar.gz" -C "$$tmp" --sort=name \
