@@ -99,14 +99,19 @@ It contains the tutorial on Standard ML, the tour on the SML#'s new
 features, and the reference manual of the compiler and its supporing
 tools.
 
-[SML# website]: http://www.pllab.riec.tohoku.ac.jp/smlsharp/
+[SML# website]: https://smlsharp.github.io/
 
 Contact information
 -------------------
 
-The contact mail address of the SML# development team is
+There are places for developers and users to have talks about SML#.
+* [smlsharp/forum/discussions] (English)
+* [smlsharp/forum_ja/discussions] (Japanese)
 
-    smlsharp-dev @ ml . riec . tohoku . ac . jp
+Issues and Pull requests are always welcome on GitHub.
+See the ["Development" page] of the SML# website for details.
 
-For more detail, see the "Contact Information" section of the SML#
-document.
+
+[smlsharp/forum/discussions]: https://github.com/smlsharp/forum/discussions
+[smlsharp/forum_ja/discussions]: https://github.com/smlsharp/forum_ja/discussions
+["Development" page]: https://smlsharp.github.io/en/development/
