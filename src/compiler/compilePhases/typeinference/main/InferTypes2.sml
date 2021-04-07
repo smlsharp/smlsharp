@@ -5426,7 +5426,7 @@ in
                     let
                       val ty = T.newtyWithLambdaDepth (lambdaDepth, T.univKind)
                       val varInfo = {path=longsymbol, id=id, ty=ty, opaque=false}
-                      val tyList = map (ITy.evalIty context) tyList
+                      val tyList = map (ITy.evalIty newContext) tyList
                       (* ty should be all mono,
                          so the following should not be needed *)
                       val tyConstraintsList = map (fn ty => 
