@@ -2810,7 +2810,7 @@ val _ = U.print "\n"
         val interfaceEnv = EI.evalInterfaces topEnv interfaceDecs
 
         (* for error checking *)
-        val _ = 
+        val totalTopEnv =
             InterfaceID.Map.foldl
             (fn ({topEnv,...}, totalEnv) => 
                 VP.unionTopEnv "206" (totalEnv, topEnv)
@@ -2826,7 +2826,7 @@ val _ = U.print "\n"
         (* for error checking *)
         val (_, topEnv, _) =
             EI.evalPitopdecList I.SELF evalTopEnvProvide (LongsymbolSet.empty, provideTopdecs)
-        val _ = VP.unionTopEnv "210" (evalTopEnv, topEnv)
+        val _ = VP.unionTopEnv "210" (totalTopEnv, topEnv)
 
         val _ = clearUsedflag evalTopEnv
         val (renameEnv, returnTopEnvInclude, topdecListInclude) =
