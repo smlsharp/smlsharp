@@ -1838,6 +1838,9 @@ val tests = TestList [
           (link "regression/374_rank1tests.smi"
                 (compile ["regression/374_rank1tests.sml",
                           "regression/374_rank1tests2.sml"]))),
+  Test
+    ("375_valrec",
+     fn () => ignore (compile ["regression/375_valrec.sml"])),
 
   TestList nil (* placeholder *)
 ]
