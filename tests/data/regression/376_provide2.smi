@@ -1,0 +1,2 @@
+_require "./376_provide3.smi"
+val y : int

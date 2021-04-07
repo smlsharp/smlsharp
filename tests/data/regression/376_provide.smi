@@ -1,0 +1,2 @@
+_require "./376_provide2.smi"
+val x : int

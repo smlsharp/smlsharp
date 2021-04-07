@@ -1841,6 +1841,13 @@ val tests = TestList [
   Test
     ("375_valrec",
      fn () => ignore (compile ["regression/375_valrec.sml"])),
+  Test
+    ("376_provide",
+     fn () =>
+        (compile ["regression/376_provide.sml"];
+         fail "must cause a compile error")
+        handle CompileError
+                 (_, [(_,_,N.DuplicateVar _)]) => ()),
 
   TestList nil (* placeholder *)
 ]
