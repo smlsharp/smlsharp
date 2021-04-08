@@ -54,12 +54,16 @@ structure SMLSharp_SMLNJ_PathBase =
       | classify a = Arc a
     val parentArc = ".."
     val currentArc = "."
+  (* any character other than "/" and "\000" is allowed by the POSIX spec.  Strictly
+   * speaking, we should also check that the length is less than NAME_MAX characters.
+   *)
     fun validArc arc = let
-	  fun ok #"/" = false
-	    | ok c = Char.isPrint c
-	  in
-	    CharVector.all ok arc
-	  end
+          fun ok #"/" = false
+            | ok #"\000" = false
+            | ok c = true
+          in
+            CharVector.all ok arc
+          end
     fun validVolume (_:bool, vol:substring)= Substring.isEmpty vol
     val volSS = Substring.full ""
   (* Note: we are guaranteed that this is never called with "" *)
