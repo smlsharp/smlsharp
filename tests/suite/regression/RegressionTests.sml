@@ -1848,6 +1848,9 @@ val tests = TestList [
          fail "must cause a compile error")
         handle CompileError
                  (_, [(_,_,N.DuplicateVar _)]) => ()),
+  Test
+    ("377_ospath",
+     fn () => ignore (interactiveFile "regression/377_ospath.sml")),
 
   TestList nil (* placeholder *)
 ]
