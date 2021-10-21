@@ -40,9 +40,9 @@ struct
           val command = [EXPAND (Config.LLC ()), ARG "-version"]
           val output = ShellUtils.system command
           val v = searchLine
-                    (fn ["LLVM", "version", ""] => NONE
-                      | ["LLVM", "version", version] => SOME version
-                      | _ => NONE)
+                    (fn tokens => case rev tokens of
+                                    version :: "version" :: "LLVM" :: _ => SOME version
+                                  | _ => NONE)
                     (#stdout output)
           val t = searchLine
                     (fn ["Default", "target:", ""] => NONE
