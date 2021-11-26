@@ -3,12 +3,16 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * for LLVM 3.9.1, 4.0.1, 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.1, 10.0.0, 11.0.0,
- *          11.1.0, 12.0.0
+ *          11.1.0, 12.0.0, 13.0.0
  */
 
 #include <llvm/Config/llvm-config.h>
 #include <llvm/CodeGen/AsmPrinter.h>
+#if LLVM_VERSION_MAJOR >= 13
+#include <llvm/IR/GCStrategy.h>
+#else
 #include <llvm/CodeGen/GCStrategy.h>
+#endif
 #include <llvm/CodeGen/GCMetadata.h>
 #include <llvm/CodeGen/GCMetadataPrinter.h>
 #include <llvm/MC/MCStreamer.h>
