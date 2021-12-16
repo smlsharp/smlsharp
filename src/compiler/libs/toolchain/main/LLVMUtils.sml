@@ -18,13 +18,18 @@ struct
 
   fun searchLine match file =
       let
+        fun searchWords nil = NONE
+          | searchWords (l as _ :: t) =
+            case match l of
+              NONE => searchWords t
+            | SOME x => SOME x
         fun search input =
             case TextIO.inputLine input of
               NONE => NONE
             | SOME line =>
-              case match (String.tokens Char.isSpace line) of
+              case searchWords (String.tokens Char.isSpace line) of
                 SOME x => SOME x
-              | _ => search input
+              | NONE => search input
         val input = Filename.TextIO.openIn file
         val result = search input handle e => (TextIO.closeIn input; raise e)
       in
@@ -40,13 +45,11 @@ struct
           val command = [EXPAND (Config.LLC ()), ARG "-version"]
           val output = ShellUtils.system command
           val v = searchLine
-                    (fn ["LLVM", "version", ""] => NONE
-                      | ["LLVM", "version", version] => SOME version
+                    (fn ("LLVM" :: "version" :: version :: _) => SOME version
                       | _ => NONE)
                     (#stdout output)
           val t = searchLine
-                    (fn ["Default", "target:", ""] => NONE
-                      | ["Default", "target:", target] => SOME target
+                    (fn ("Default" :: "target:" :: target :: _) => SOME target
                       | _ => NONE)
                     (#stdout output)
        in
@@ -375,7 +378,7 @@ struct
         val output = ShellUtils.system command
         val layout =
             searchLine
-              (fn ["target", "datalayout", "=", s] =>
+              (fn ("target" :: "datalayout" :: "=" :: s :: _) =>
                   if size s >= 2
                      andalso String.isPrefix "\"" s
                      andalso String.isSuffix "\"" s
