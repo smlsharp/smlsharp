@@ -191,6 +191,13 @@ in
             val loc = Symbol.longsymbolToLoc path
             val (subst, boundtvars) = 
                 TB.copyBoundEnv boundtvars
+            val constraints =
+                map (fn T.JOIN {res, args=(ty1, ty2), loc} =>
+                        T.JOIN {res = TB.substBTvar subst res,
+                                args = (TB.substBTvar subst ty1,
+                                        TB.substBTvar subst ty2),
+                                loc = loc})
+                    constraints
             val body = TB.substBTvar subst body
             val (argTyList, newBodyTy) = grabTy (body, arity)
             val uncurriedTy =
