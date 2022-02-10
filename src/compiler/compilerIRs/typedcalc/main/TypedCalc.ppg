@@ -879,8 +879,10 @@ structure TypedCalc = struct
         exp
        *)
       (*% @prefix formatWithType_
-        @format({btvEnv, constraints, expTyWithoutTAbs, exp, loc})
-        "[" !N0{ { btvEnv } "." +1 exp } "]"
+        @format({btvEnv, constraints: con cons, expTyWithoutTAbs, exp, loc})
+        "[" !N0{ { btvEnv } "." +1
+            cons:ifcons()("(" !N0{ cons(con)("," +1) } ")" +d "=>" +1,)
+            exp } "]"
        *)
       (* \forall t.e;  ty is the type of tpexp without type abstraction *)
       TPPOLY of
