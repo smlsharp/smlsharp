@@ -1851,6 +1851,9 @@ val tests = TestList [
   Test
     ("377_ospath",
      fn () => ignore (interactiveFile "regression/377_ospath.sml")),
+  Test
+    ("378_join",
+     fn () => ignore (compile ["regression/378_join.sml"])),
 
   TestList nil (* placeholder *)
 ]
