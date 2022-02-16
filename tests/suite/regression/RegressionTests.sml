@@ -1854,6 +1854,9 @@ val tests = TestList [
   Test
     ("378_join",
      fn () => ignore (compile ["regression/378_join.sml"])),
+  Test
+    ("379_polyRecordUpdate",
+     fn () => ignore (compile ["regression/379_polyRecordUpdate.sml"])),
 
   TestList nil (* placeholder *)
 ]
