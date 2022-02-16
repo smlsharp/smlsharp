@@ -1,6 +1,5 @@
 fun f x y =  x # {a = y};
 val r = f {a = 1} 2;
-
 (*
 This yields an incorrect result:
   # fun f x y =  x # {a = y};
