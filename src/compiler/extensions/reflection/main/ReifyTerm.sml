@@ -12,6 +12,7 @@ struct
     structure R = ReifiedTerm
     structure RTy = ReifiedTy 
     structure U = UserLevelPrimitive
+    exception ELLIP
   in
     fun bug s = raise Bug.Bug ("ReifyTerm: " ^ s)
     val ptrSize = RTy.ptrSize
@@ -386,7 +387,10 @@ struct
                             (case RecordLabel.Map.listItemsi map of
                                [(l1,R.STRING key), (l2, value)] =>
                                (key, value)
+                             | [(l1, R.ELLIPSIS), _] => raise ELLIP
+                             | [_, (_, R.ELLIPSIS)] => raise ELLIP
                              | _ => raise bug "illegal SEnv entry")
+                          | R.ELLIPSIS =>  raise ELLIP
                           | _ =>  raise bug "illegal SEnv entry"
                     in
                       getTail (cdr (reifiedTy, obj), 
@@ -396,40 +400,44 @@ struct
               R.SENVMAP (List.rev (getTail (obj, nil)))
             end
           | RTy.RECORDLABELMAPty elementTy =>
-            let
+           (let
               val tyRep = {reifiedTy = RTy.RECORDLABELty ** elementTy, conSetEnv = conSetEnv}
               val converter = if ReifiedTermToML.isBoxed elementTy then recordMapb
                               else case RTy.sizeOf elementTy of
                                      0w8 => recordMapr
                                    | _ => recordMapi
-                val (boxed,word) = deref obj
-                val obj = (converter boxed, 0w0)
-                fun getTail (obj, listRev) = 
-                    if isNull obj then listRev
-                    else 
-                      let
-                        val obj = deref obj
-                        val keyValue =
-                            dynamicToReifiedTerm 
-                              (decDepth toPrint)
-                              {tyRep = tyRep, obj = car obj}
-                        val (label, term) =
-                            case keyValue of
-                              R.RECORD map => 
-                              (case RecordLabel.Map.listItemsi map of
-                                 [(l1,R.RECORDLABEL key), (l2, value)] =>
-                                 (key, value)
-                               | _ => raise bug "illegal RecordLabel.Map entry")
-                            | _ =>  raise bug "illegal RecordLabel.Map entry"
-                      in
-                        getTail (cdr (reifiedTy, obj), 
-                                 (label, term)::listRev)
-                      end
-              in
-                R.RECORDLABELMAP (List.rev (getTail (obj, nil)))
-              end
+              val (boxed,word) = deref obj
+              val obj = (converter boxed, 0w0)
+              fun getTail (obj, listRev) = 
+                  if isNull obj then listRev
+                  else 
+                    let
+                      val obj = deref obj
+                      val keyValue =
+                          dynamicToReifiedTerm 
+                            (decDepth toPrint)
+                            {tyRep = tyRep, obj = car obj}
+                      val (label, term) =
+                          case keyValue of
+                            R.RECORD map => 
+                            (case RecordLabel.Map.listItemsi map of
+                               [(l1,R.RECORDLABEL key), (l2, value)] =>
+                               (key, value)
+                             | [(l1, R.ELLIPSIS), _] => raise ELLIP
+                             | [_, (_, R.ELLIPSIS)] => raise ELLIP
+                             | _ => raise bug "illegal RecordLabel.Map entry (1)")
+                          | R.ELLIPSIS =>  raise ELLIP
+                          | _ => raise bug "illegal RecordLabel.Map entry (2)"
+                    in
+                      getTail (cdr (reifiedTy, obj), 
+                               (label, term)::listRev)
+                    end
+            in
+              R.RECORDLABELMAP (List.rev (getTail (obj, nil)))
+            end
+            handle ELLIP => R.ELLIPSIS)
           | RTy.IENVMAPty elementTy =>
-            let
+           (let
               val tyRep = {reifiedTy = RTy.INT32ty ** elementTy, conSetEnv = conSetEnv}
               val converter = if ReifiedTermToML.isBoxed elementTy then ienvb
                               else case RTy.sizeOf elementTy of
@@ -453,7 +461,10 @@ struct
                             (case RecordLabel.Map.listItemsi map of
                                [(l1,R.INT32 key), (l2, value)] =>
                                (key, value)
-                             | _ => raise bug "illegal SEnv entry")
+                             | [(l1, R.ELLIPSIS), _] => raise ELLIP
+                             | [_, (_, R.ELLIPSIS)] => raise ELLIP
+                             | _ => raise bug "illegal SEnv entry"
+                            )
                           | _ => raise bug "illegal SEnv entry"
                     in
                       getTail (cdr (reifiedTy, obj), 
@@ -462,6 +473,7 @@ struct
             in
               R.IENVMAP (List.rev (getTail (obj, nil)))
             end
+            handle ELLIP => R.ELLIPSIS)
           | RTy.OPAQUEty _ => R.UNPRINTABLE
           | RTy.OPTIONty elemTy => 
             if isNull obj then R.OPTION (NONE, elemTy)
@@ -559,6 +571,10 @@ struct
 
     fun ('a#reify) toReifiedTermPrint depth (x:'a) =
         dynamicToReifiedTerm (SOME depth) (dynamic x)
+(*
+    fun ('a#reify) toReifiedTermPrint depth (x:'a) =
+        dynamicToReifiedTerm NONE (dynamic x)
+*)
 
 end
 end
