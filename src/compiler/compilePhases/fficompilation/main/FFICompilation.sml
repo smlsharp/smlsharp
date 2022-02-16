@@ -513,6 +513,7 @@ struct
                          {resultTy=ty, args=args, argTys=argtys}
       | C.TPDYNAMIC {exp, ty, elemTy, coerceTy, loc} =>
         let
+          val exp = compileExp exp
           fun TypeOf loc ty =
               let
                 val tyRepTy = RyD.TyRepTy loc
@@ -535,6 +536,7 @@ struct
         end
       | C.TPDYNAMICIS {exp, ty, elemTy, coerceTy, loc} =>
         let
+          val exp = compileExp exp
           fun TypeOf loc ty =
               let
                 val tyRepTy = RyD.TyRepTy loc
@@ -557,6 +559,7 @@ struct
         end
       | C.TPDYNAMICVIEW {exp, ty, elemTy, coerceTy, loc} =>
         let
+          val exp = compileExp exp
           fun TypeOf loc ty =
               let
                 val tyRepTy = RyD.TyRepTy loc
