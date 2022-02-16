@@ -279,8 +279,12 @@ struct
           val recordExp = compileExp accum recordExp
           val indexExp = compileExp accum indexExp
           val valueExp = compileExp accum elementExp
+(* 379_polyRecordUpdate.sml 
           val valueTag = compileValue loc elementSize
           val valueSize = compileValue loc elementTag
+*)
+          val valueTag = compileValue loc elementTag
+          val valueSize = compileValue loc elementSize
         in
           B.BCMODIFY {recordExp = recordExp,
                       recordTy = recordTy,
