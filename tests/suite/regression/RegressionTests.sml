@@ -23,6 +23,26 @@ structure M = MatchError
 structure D = PartialDynamic
 open SMLUnit.Test SMLUnit.Assert Compiler
 
+fun inputAll path =
+    let
+      val io = TextIO.openIn path
+    in
+      (TextIO.inputAll io handle e => (TextIO.closeIn io; raise e))
+      before TextIO.closeIn io
+    end
+
+fun assertFile name =
+    let
+      val output = interactiveFile' ("regression/" ^ name ^ ".sml")
+      val actual = String.concatWith "\n" (#prints output)
+      val expected = inputAll ("./tests/data/regression/" ^ name ^ ".out")
+    in
+      assertEqualString expected actual
+    end
+
+fun testFile name =
+     Test (name, fn () => assertFile name)
+
 val tests = TestList [
 
   Test
@@ -1851,12 +1871,18 @@ val tests = TestList [
   Test
     ("377_ospath",
      fn () => ignore (interactiveFile "regression/377_ospath.sml")),
+
   Test
     ("378_join",
-     fn () => ignore (compile ["regression/378_join.sml"])),
+     fn () => ignore (interactiveFile' "regression/378_join.sml")),
+
   Test
     ("379_polyRecordUpdate",
-     fn () => ignore (compile ["regression/379_polyRecordUpdate.sml"])),
+     fn () => assertFile "379_polyRecordUpdate"),
+
+  Test
+    ("380_nestedDynamic",
+     fn () => assertFile  "380_nestedDynamic"),
 
   TestList nil (* placeholder *)
 ]
