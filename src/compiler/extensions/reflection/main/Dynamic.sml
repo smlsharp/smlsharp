@@ -86,11 +86,12 @@ struct
             | NONE => NULL)
          | _ => NULL)
 
-  fun #> (string,value) dynamic = 
+  fun #> (string, elem) dynamic = 
       termToDynamic
         (case dynamicToTerm dynamic of
            RECORD termMap => 
-           RECORD (RecordLabel.Map.insert(termMap, RecordLabel.fromString string, value))
+           RECORD (RecordLabel.Map.insert
+                     (termMap, RecordLabel.fromString string, dynamicToTerm elem))
          | _ => VOID)
 
   fun join (d1, d2) = 

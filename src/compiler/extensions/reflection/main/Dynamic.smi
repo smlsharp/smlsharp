@@ -60,6 +60,7 @@ struct
   val tagOf : ['a#reify. 'a -> string]
   val tagAndValue : ['a#reify. 'a -> string * string]
   val greaterEq : 'a dyn * 'b dyn -> bool
+  val #> : (string * 'a dyn) -> 'a dyn -> dynamic
   val ## : string -> 'a dyn -> dynamic
   val ### : ['a#reify#{}, 'b#reify. string -> 'a -> 'b]
   val Hd : 'a dyn -> dynamic
