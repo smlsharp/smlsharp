@@ -74,6 +74,7 @@ struct
   val printLLVMEmit : bool ref
   val printGenerateMain : bool ref
   val printWithType : bool ref
+  val printVacuousBoundTvars : bool ref
   val allow8bitId : bool ref
   val doNameAnalysis : bool ref
   val checkType : bool ref

@@ -94,7 +94,7 @@ struct
 
   (** true if detailed type information should be printed. *)
   val printWithType = ref false
-  val printVacuousVoundTvars = ref false
+  val printVacuousBoundTvars = ref false
   val printEnvs = ref true
 
   val printWarning = ref true
@@ -318,8 +318,8 @@ struct
          BoolSwitch printWithType),
         ("printEnvs", "print SEnv.map and IEnv.map)",
          BoolSwitch printEnvs),
-        ("printVacuousVoundTvars", "print vacuous bound type variables)",
-         BoolSwitch printVacuousVoundTvars),
+        ("printVacuousBoundTvars", "print vacuous bound type variables)",
+         BoolSwitch printVacuousBoundTvars),
         ("skipPrinter", "skip value printer generation",
          BoolSwitch skipPrinter),
         ("traceFileLoad", "print filenames loaded by compiler",
