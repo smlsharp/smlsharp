@@ -1878,11 +1878,18 @@ val tests = TestList [
 
   Test
     ("379_polyRecordUpdate",
-     fn () => assertFile "379_polyRecordUpdate"),
+     fn () =>
+        assertEqualStringList
+          ["val f = fn : ['a#{a: 'b}, 'b. 'a -> 'b -> 'a]\n",
+           "val r = {a = 2} : {a: int}\n"]
+          (#prints (interactiveFile "regression/379_polyRecordUpdate.sml"))),
 
   Test
     ("380_nestedDynamic",
-     fn () => assertFile  "380_nestedDynamic"),
+     fn () =>
+        assertEqualStringList
+        ["val r = _ : {x: int} Dynamic.dyn\n"]
+        (#prints (interactiveFile "regression/380_nestedDynamic.sml"))),
 
   TestList nil (* placeholder *)
 ]
