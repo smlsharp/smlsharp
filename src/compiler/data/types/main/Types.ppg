@@ -380,7 +380,14 @@ struct
                        SOME x => x | NONE => BoundTypeVarID.toInt x,
                      case BoundTypeVarID.Map.find (btvOrder, y) of
                        SOME y => y | NONE => BoundTypeVarID.toInt y))
+(* 2023-03-26 : to supress vacuous bound tvar printing (see 381_vacuousBoundTvarPrinting)
               (BoundTypeVarID.Map.listItemsi map))
+*)
+              (BoundTypeVarID.Map.listItemsi
+                 (if !Control.printVacuousBoundTvars then map
+                  else BoundTypeVarID.Map.intersectWith #1 (map, btvOrder))
+              )
+           )
 
   (*%
    * @prefix helper_
