@@ -1891,6 +1891,14 @@ val tests = TestList [
         ["val r = _ : {x: int} Dynamic.dyn\n"]
         (#prints (interactiveFile "regression/380_nestedDynamic.sml"))),
 
+  Test
+    ("381_vacuousBoundTvarPrinting",
+     fn () =>
+        assertEqualStringList
+        ["val f = fn : ['a. int -> ('a -> 'a) -> 'a -> 'a]\n\
+         \val g = fn : ['a. int -> ('a -> 'a) -> 'a -> 'a]\n"]
+        (#prints (interactiveFile "regression/381_vacuousBoundTvarPrinting.sml"))),
+
   TestList nil (* placeholder *)
 ]
 end
