@@ -366,6 +366,12 @@ struct
        *)
       (boundTypeVarID * 'kind) list
 
+  val ifNotNull_btvOrder = 
+      fn ({btvOrder, ...}, elem) => fn x => 
+       if BoundTypeVarID.Map.isEmpty btvOrder then
+         []
+       else elem
+
   val helper_format_boundTvars =
       fn formatter => fn map =>
          helper_format_boundTvars formatter (BoundTypeVarID.Map.listItemsi map)
@@ -450,6 +456,7 @@ struct
    * @formatter(helper_print_boundTvars) helper_print_boundTvars
    * @formatter(helper_tyCon) helper_tyCon
    * @formatter(helper_extendEnv) helper_extendEnv
+   * @formatter(ifNotNull_btvOrder) ifNotNull_btvOrder
    * @formatter(ExistTyID.id) ExistTyID.format_id
    *)
   datatype ty =
@@ -582,11 +589,15 @@ struct
        * x()(x:helper_extendEnv(env))
        * @format:x({boundtvars: kind kinds, constraints:con cons, body})
        * @params(newenv)
-       * "[" !N0{
-       *   { kinds:helper_print_boundTvars(kind()(newenv))(newenv) } "." +1
-       *   cons:ifcons()("(" !N0{ cons(con()(newenv))("," +1) } ")" +d "=>" +1,)
-       *   body()(newenv)
-       * } "]"
+       *  dummy:ifNotNull_btvOrder()(newenv, "[")
+       *  !N0{
+       *  { kinds:helper_print_boundTvars(kind()(newenv))(newenv) }
+       *  dummy:ifNotNull_btvOrder()(newenv, "." +1)
+       *  dummy:ifNotNull_btvOrder()
+           (newenv, 
+            cons:ifcons()("(" !N0{ cons(con()(newenv))("," +1) } ")" +d "=>" +1,))
+       *  body()(newenv)}
+       * dummy:ifNotNull_btvOrder()(newenv, "]") 
        *)
       POLYty of
       {
