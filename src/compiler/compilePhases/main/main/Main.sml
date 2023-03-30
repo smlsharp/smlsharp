@@ -182,7 +182,7 @@ struct
           SLONG ("O3", NOARG (OptLevel LLVMUtils.O3)),
           SLONG ("Os", NOARG (OptLevel LLVMUtils.Os)),
           SLONG ("Oz", NOARG (OptLevel LLVMUtils.Oz)),
-          SLONG ("target", REQUIRED TargetTriple),
+          DLONG ("target", REQUIRED TargetTriple),
           SLONG ("march", REQUIRED TargetArch),
           SLONG ("mcpu", REQUIRED TargetCPU),
           SLONG ("mattr", REQUIRED TargetAttrs),

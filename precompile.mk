@@ -54,7 +54,7 @@ clean:
 .SUFFIXES: .sml .smi .sig .bc .ppg .lex .grm
 
 %.$(ARCH).bc: %.sml
-	$(SMLSHARP_ENV) $(MINISMLSHARP) -Bsrc -target $(TRIPLE) -emit-llvm -c -o $@ $<
+	$(SMLSHARP_ENV) $(MINISMLSHARP) -Bsrc --target $(TRIPLE) -emit-llvm -c -o $@ $<
 
 $(MINISOURCES:.sml=_mini.sml): %_mini.sml: %.sml.in precompile.mk
 	sed '1s!^!_interface "./$(notdir $(<:.sml.in=.smi))" !;s!%[^%]*%!!g' \
