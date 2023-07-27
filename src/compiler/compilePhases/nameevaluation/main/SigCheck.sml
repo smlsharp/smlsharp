@@ -663,7 +663,7 @@ in
                       (U.print "\ncheckVarE\n";
                        U.printIdstatus specIdStatus;
                        U.print "\n";
-                       raise bug "illeagal idstatus"
+                       raise bug "illegal idstatus"
                       )
                 )
                 (SymbolEnv.empty, nil)

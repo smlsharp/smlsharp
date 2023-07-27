@@ -1562,7 +1562,7 @@ struct
                 ))
       )
     | generateForDataTypeDec _ _ =
-      raise Fail "Bug: illeagal param to generateForDataTypeDec"
+      raise Fail "Bug: illegal param to generateForDataTypeDec"
 
   (**
    * generates SML code of the formatter for a type declaration.
@@ -1658,7 +1658,7 @@ struct
                   region
                 ))
      )
-    | generateForTypeDec _ _ = raise Fail "Bug: illeagal param to generateForTypeDec"
+    | generateForTypeDec _ _ = raise Fail "Bug: illegal param to generateForTypeDec"
   (**
    * generates SML code of the formatter for a exception declaration.
    *
@@ -1743,7 +1743,7 @@ struct
                  translateError(error, region)
      )
     | generateForExceptionDec _ _ = 
-      raise Fail "Bug: illeagal param to generateForExceptionDec"
+      raise Fail "Bug: illegal param to generateForExceptionDec"
 
   (***************************************************************************)
 
