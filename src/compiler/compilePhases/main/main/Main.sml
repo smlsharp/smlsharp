@@ -666,7 +666,7 @@ struct
       in
         out "SMLSHARP ="; printMakeLine out 10 command;
         out "SMLFLAGS ="; printMakeLine out 10 ["-O2"];
-        out "LIBS =\n";
+        out "LIBS ?=\n";
         printMakeRule out (Filename.fromString "all", map #target targets);
         (* print link rules *)
         app
