@@ -3,7 +3,7 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * for LLVM 3.9.1, 4.0.1, 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.1, 10.0.0, 11.0.0,
- *          11.1.0, 12.0.0, 13.0.0
+ *          11.1.0, 12.0.0, 13.0.0, 14.0.x, 15.0.x, 16.0.x, 17.0.x, 18.1.x
  */
 
 #include <llvm/Config/llvm-config.h>
@@ -103,7 +103,7 @@ EmitFunctionInfo(AsmPrinter &ap, GCFunctionInfo &fi, MCSymbol *base)
 #if LLVM_VERSION_MAJOR <= 10
 	ap.OutStreamer->EmitValueToAlignment(ptrsize);
 #else
-	ap.OutStreamer->emitValueToAlignment(ptrsize);
+	ap.OutStreamer->emitValueToAlignment(Align(ptrsize));
 #endif
 	for (auto &p : fi)
 		ap.OutStreamer->emitAbsoluteSymbolDiff(p.Label, base, ptrsize);
@@ -127,15 +127,20 @@ SMLSharpGCPrinter::finishAssembly(Module &m, GCModuleInfo &info, AsmPrinter &ap)
 #else
 	Align align(ap.getPointerSize());
 #endif
+
+#if LLVM_VERSION_MAJOR <= 14
 	ap.OutStreamer->SwitchSection
+#else
+    ap.OutStreamer->switchSection
+#endif
 		(ap.getObjFileLowering().getSectionForConstant
 		 (ap.getDataLayout(), SectionKind::getReadOnly(),
 		  nullptr, align));
 #if LLVM_VERSION_MAJOR <= 10
-	ap.OutStreamer->EmitValueToAlignment(ap.getPointerSize());
+	ap.OutStreamer->EmitValueToAlignment(align);
 	ap.OutStreamer->EmitLabel(sml_ftab);
 #else
-	ap.OutStreamer->emitValueToAlignment(ap.getPointerSize());
+	ap.OutStreamer->emitValueToAlignment(align);
 	ap.OutStreamer->emitLabel(sml_ftab);
 #endif
 
@@ -143,9 +148,9 @@ SMLSharpGCPrinter::finishAssembly(Module &m, GCModuleInfo &info, AsmPrinter &ap)
 		if ((*i)->getStrategy().getName() == getStrategy().getName())
 			EmitFunctionInfo(ap, **i, sml_tabb);
 #if LLVM_VERSION_MAJOR <= 10
-		ap.OutStreamer->EmitValueToAlignment(ap.getPointerSize());
+		ap.OutStreamer->EmitValueToAlignment(align);
 #else
-		ap.OutStreamer->emitValueToAlignment(ap.getPointerSize());
+		ap.OutStreamer->emitValueToAlignment(align);
 #endif
 	}
 	EmitUInt16(ap, 0);
