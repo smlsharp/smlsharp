@@ -102,7 +102,9 @@ EmitFunctionInfo(AsmPrinter &ap, GCFunctionInfo &fi, MCSymbol *base)
 
 #if LLVM_VERSION_MAJOR <= 10
 	ap.OutStreamer->EmitValueToAlignment(ptrsize);
-#else
+#elif LLVM_VERSION_MAJOR <= 15 // LLVM11+: member name de-capitalized
+	ap.OutStreamer->emitValueToAlignment(ptrsize);
+#else // LLVM16+: member now requires Align parameter, not unsigned
 	ap.OutStreamer->emitValueToAlignment(Align(ptrsize));
 #endif
 	for (auto &p : fi)
@@ -129,18 +131,28 @@ SMLSharpGCPrinter::finishAssembly(Module &m, GCModuleInfo &info, AsmPrinter &ap)
 #endif
 
 #if LLVM_VERSION_MAJOR <= 14
-	ap.OutStreamer->SwitchSection
-#else
-    ap.OutStreamer->switchSection
+	ap.OutStreamer->SwitchSection(
+#else // LLVM15+: member name de-capitalized
+	ap.OutStreamer->switchSection(
 #endif
-		(ap.getObjFileLowering().getSectionForConstant
-		 (ap.getDataLayout(), SectionKind::getReadOnly(),
-		  nullptr, align));
+		ap.getObjFileLowering().getSectionForConstant(
+			ap.getDataLayout(),
+			SectionKind::getReadOnly(),
+			nullptr,
+			align
+		)
+	);
 #if LLVM_VERSION_MAJOR <= 10
 	ap.OutStreamer->EmitValueToAlignment(align);
-	ap.OutStreamer->EmitLabel(sml_ftab);
+#elif LLVM_VERSION_MAJOR <= 15
+	ap.OutStreamer->emitValueToAlignment(align.value());
 #else
 	ap.OutStreamer->emitValueToAlignment(align);
+#endif
+
+#if LLVM_VERSION_MAJOR <= 10
+	ap.OutStreamer->EmitLabel(sml_ftab);
+#else
 	ap.OutStreamer->emitLabel(sml_ftab);
 #endif
 
@@ -149,6 +161,8 @@ SMLSharpGCPrinter::finishAssembly(Module &m, GCModuleInfo &info, AsmPrinter &ap)
 			EmitFunctionInfo(ap, **i, sml_tabb);
 #if LLVM_VERSION_MAJOR <= 10
 		ap.OutStreamer->EmitValueToAlignment(align);
+#elif LLVM_VERSION_MAJOR <= 15
+		ap.OutStreamer->emitValueToAlignment(align.value());
 #else
 		ap.OutStreamer->emitValueToAlignment(align);
 #endif
