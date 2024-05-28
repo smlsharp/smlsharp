@@ -216,7 +216,7 @@ struct
       I32
     | (*% @format "i64" *)
       I64
-    | (*% @format(ty) version_of_ir:versioned_fmt()("*" ty,"ptr","ptr") *)
+    | (*% @format(ty) version_of_ir:versioned_fmt()(ty "*","ptr","ptr") *)
       PTR of ty 
     | (*% @format "float" *)
       FLOAT
