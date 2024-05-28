@@ -6,6 +6,20 @@
 structure LLVMIR =
 struct
 
+  (* switch for LLVM IR dumper.*)
+  datatype ir_version =
+      IR14Early (* LLVM 14 or earlier *)
+    | IR15 (* LLVM 15 opaque pointer.*)
+    | IR16_17_18_19 (* function attribute change. let see LLVM 16 manual *)
+
+  val version_of_ir = ref IR14Early
+
+  fun versioned_fmt (ir14,ir15,ir19) version_of_ir =
+    case !version_of_ir of
+      IR14Early => ir14
+    | IR15 => ir15
+    | IR16_17_18_19 => ir19
+
   fun ifcons (x,y) (_::_) = x
     | ifcons (x,y) nil = y
   fun ifsome (x,y) (SOME _) = x
@@ -98,7 +112,9 @@ struct
     | (*% @format "nest" *)
       NEST
 
-  (*% *)
+  (*%
+   * @formatter(versioned_fmt) versioned_fmt
+  *)
   datatype function_attribute =
 (*
       (*% @format(n) "alignstack(" n ")" *)
@@ -135,9 +151,9 @@ struct
       NOUNWIND
     | (*% @format "optsize" *)
       OPTSIZE
-    | (*% @format "readnone" *)
+    | (*% @format version_of_ir:versioned_fmt()("readnone","readnone","memory(none)") *)
       READNONE
-    | (*% @format "readonly" *)
+    | (*% @format version_of_ir:versioned_fmt()("readonly","readonly","memory(read)") *)
       READONLY
     | (*% @format "returns_twice" *)
       RETURNS_TWICE
@@ -187,6 +203,7 @@ struct
    * @formatter(Word32.word) word32Dec
    * @formatter(ifcons) ifcons
    * @formatter(iftrue) iftrue
+   * @formatter(versioned_fmt) versioned_fmt
    *)
   datatype ty =
       (*% @format "i1" *)
@@ -199,7 +216,7 @@ struct
       I32
     | (*% @format "i64" *)
       I64
-    | (*% @format(ty) ty "*" *)
+    | (*% @format(ty) version_of_ir:versioned_fmt()("*" ty,"ptr","ptr") *)
       PTR of ty 
     | (*% @format "float" *)
       FLOAT

@@ -13,6 +13,14 @@ struct
   type var = VarID.id
   type symbol = string
 
+
+  datatype ir_version =
+      IR14Early (* LLVM 14 or earlier *)
+    | IR15 (* LLVM 15 opaque pointer.*)
+    | IR16_17_18_19 (* function attribute change. let see LLVM 16 manual *)
+
+  val version_of_ir : ir_version ref
+
   datatype calling_convention =
       CCC
     | FASTCC
