@@ -1,0 +1,6 @@
+_require "basis.smi"
+_require "reify.smi"
+type t (= unit)
+val count : int ref
+val c : t
+val bar : unit -> t -> unit
