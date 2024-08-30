@@ -1899,6 +1899,14 @@ val tests = TestList [
          \val g = fn : ['a. int -> ('a -> 'a) -> 'a -> 'a]\n"]
         (#prints (interactiveFile "regression/381_vacuousBoundTvarPrinting.sml"))),
 
+  Test
+    ("382_provideEvalOrder",
+     fn () =>
+        execute
+          (link "regression/382_provideEvalOrder.smi"
+                (compile ["regression/382_provideEvalOrder.sml",
+                          "regression/382_provideEvalOrder2.sml"]))),
+
   TestList nil (* placeholder *)
 ]
 end
