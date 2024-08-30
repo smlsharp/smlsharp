@@ -23,14 +23,15 @@ in
 
   datatype rank1Term
     = MONO of {exp : tpexp, ty : ty}
-    | FN of {var : varInfo, domTy:ty,  body : rank1Term}
+    | FN of {var : varInfo, domTy:ty,  body : rank1Term, bodyVar : varInfo, bind:tpexp}
+      (* varInfo and bind are added to fix the bug 382_provideEvalOrder *)
     | RECORD of {record:rank1Term RecordLabel.Map.map, var : varInfo, bind:tpexp}
     | DATA of {exp : tpexp, ty: ty}
 
   fun printTerm term =
       case term of
         MONO {exp, ty} => (P.print "MONO:"; P.printTpexp exp; P.print "\n")
-      | FN {var, domTy,  body} => (P.print "FN\n")
+      | FN {var, domTy,  body, bodyVar, bind} => (P.print "FN\n")
       | RECORD _ => (P.print "RECORD\n")
       | DATA _ => (P.print "POLYDATA\n")
 
@@ -38,14 +39,20 @@ in
   fun toMonoTerm term =
       case term of
         MONO mono => mono
-      | FN {var, domTy,  body} =>
+      | FN {var, domTy,  body, bodyVar, bind} =>
         let
           val {exp, ty = bodyTy} = toMonoTerm body
-        in
-          {exp = TC.TPFNM {argVarList = [var],
+          val bindExp = 
+              TC.TPMONOLET
+                {binds = [(bodyVar, bind)],
+                 bodyExp = exp,
+                 loc = loc}
+          val fnExp = TC.TPFNM {argVarList = [var],
                            bodyTy = bodyTy,
-                           bodyExp = exp,
-                           loc = loc},
+                           bodyExp = bindExp,
+                           loc = loc}
+        in
+          {exp = fnExp,
            ty = T.FUNMty ([domTy], bodyTy)}
         end
       | RECORD {record = fields, var, bind} =>
@@ -81,14 +88,15 @@ in
           case ty of
             T.FUNMty ([domTy], ranTy) =>
             let
+              val bodyVar = TCU.newTCVarInfo loc ranTy
               val var = TCU.newTCVarInfo loc domTy
               val body = TC.TPAPPM {funExp = exp,
                                     funTy = ty,
                                     argExpList = [TC.TPVAR var],
                                     loc = loc}
-              val rank1Term = instExp {exp = body, ty = ranTy}
+              val rank1Term = instExp {exp = TC.TPVAR bodyVar, ty = ranTy}
             in
-              FN {var = var, domTy = domTy, body = rank1Term}
+              FN {var = var, domTy = domTy, body = rank1Term, bodyVar=bodyVar, bind = body}
             end
           | T.RECORDty tyRecordLabelMapMap =>
             let
@@ -121,14 +129,15 @@ in
                  let
                    val newExp = 
                        TC.TPTAPP {exp = exp, expTy = ty, instTyList = freeTyvars, loc = loc}
+                   val bodyVar = TCU.newTCVarInfo loc ranTy
                    val var = TCU.newTCVarInfo loc domTy
                    val body = TC.TPAPPM {funExp = newExp,
                                          funTy = newBodyTy,
                                          argExpList = [TC.TPVAR var],
                                          loc = loc}
-                   val rank1Term = instExp {exp = body, ty = ranTy}
+                   val rank1Term = instExp {exp = TC.TPVAR bodyVar, ty = ranTy}
                  in
-                   FN {domTy = domTy, var = var, body = rank1Term}
+                   FN {domTy = domTy, var = var, body = rank1Term, bodyVar = bodyVar, bind = body}
                  end
                | T.RECORDty tyRecordLabelMapMap =>
                  let
@@ -213,7 +222,7 @@ in
           (T.POLYty {boundtvars, constraints = nil, body}, MONO _) =>
           raise NotFree
         | (T.POLYty {boundtvars, constraints = nil, body = T.FUNMty([argTy], toTyBody)},
-           FN {domTy, var, body}) =>
+           FN {domTy, var, body, bodyVar, bind}) =>
           let
             val depth = depth + 1
             val subst =  TB.freshRigidSubstWithLambdaDepth depth boundtvars
@@ -239,9 +248,14 @@ in
                       | _ => raise Bug.Bug "generalizeTy")
                   BoundTypeVarID.Map.empty
                   freeTyvars
-            val tpexp = TC.TPFNM {argVarList = [var],
+            val bindExp = 
+                TC.TPMONOLET
+                  {binds = [(bodyVar, bind)],
+                   bodyExp = newExp,
+                   loc = loc}
+            val fnExp = TC.TPFNM {argVarList = [var],
                                   bodyTy = newToTyBody,
-                                  bodyExp = newExp,
+                                  bodyExp = bindExp,
                                   loc = loc}
           in
             {ty = T.POLYty {boundtvars = btvs, constraints = nil, 
@@ -250,7 +264,7 @@ in
                      {btvEnv=btvs, 
                       constraints=nil, 
                       expTyWithoutTAbs = T.FUNMty([argTy], newToTyBody),
-                      exp = tpexp,
+                      exp = fnExp,
                       loc = loc}}
           end
         | (T.POLYty {boundtvars, constraints = nil, body = T.RECORDty tyFields},
@@ -358,18 +372,23 @@ in
                       loc = loc}
             }
           end
-        | (T.FUNMty([argTy], bodyTy), FN {var, domTy, body}) =>
+        | (T.FUNMty([argTy], bodyTy), FN {var, domTy, body, bodyVar, bind}) =>
           let
             val tempArgTy = revealTy argTy
             val _ = Unify.unify([(tempArgTy, domTy)])
             val {exp = newBodyExp, ty = newBodyTy} = 
                 coerce {depth=depth, term = body, toTy = bodyTy}
-            val tpexp = TC.TPFNM {argVarList = [var],
+          val bindExp = 
+              TC.TPMONOLET
+                {binds = [(bodyVar, bind)],
+                 bodyExp = newBodyExp,
+                 loc = loc}
+            val fnExp = TC.TPFNM {argVarList = [var],
                                    bodyTy = newBodyTy,
-                                   bodyExp = newBodyExp,
+                                   bodyExp = bindExp,
                                    loc = loc}
           in
-            {exp = tpexp, ty = T.FUNMty([argTy], newBodyTy)}
+            {exp = fnExp, ty = T.FUNMty([argTy], newBodyTy)}
           end
         | (toTy, MONO {exp, ty}) =>
           let
