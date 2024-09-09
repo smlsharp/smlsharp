@@ -5,7 +5,7 @@
  *)
 structure LLVMUtils =
 struct
-
+  exception UnsupportedVersion of string
   datatype arg = datatype ShellUtils.arg
 
   val ASMEXT = "ll"
@@ -65,10 +65,49 @@ struct
                     output = output}
        end
   in
+
+
   fun getVersion () =
       case !version of
         SOME x => x
       | NONE => #version (get ())
+
+  fun textToIRVersion versionText =
+    let
+      val version_numbers = String.tokens (fn #"."=> true
+      | _ =>false ) versionText
+      val major = List.nth (version_numbers,0)
+      val minor =  List.nth (version_numbers,1)
+    in
+      case (major,minor)  of
+        ("3","9") => LLVMIR.IR14Early
+      | ("4",_) => LLVMIR.IR14Early
+      | ("5",_) => LLVMIR.IR14Early
+      | ("6",_) => LLVMIR.IR14Early
+      | ("7",_) => LLVMIR.IR14Early
+      | ("8",_) => LLVMIR.IR14Early
+      | ("9",_) => LLVMIR.IR14Early
+      | ("10",_) => LLVMIR.IR14Early
+      | ("11",_) => LLVMIR.IR14Early
+      | ("12",_) => LLVMIR.IR14Early
+      | ("13",_ )=> LLVMIR.IR14Early
+      | ("14",_) => LLVMIR.IR14Early
+      | ("15",_) => LLVMIR.IR15
+      | ("16",_) => LLVMIR.IR16_17_18_19
+      | ("17",_) => LLVMIR.IR16_17_18_19
+      | ("18",_) => LLVMIR.IR16_17_18_19
+      | ("19",_) => LLVMIR.IR16_17_18_19
+      | (_,_)  => raise UnsupportedVersion versionText
+    end
+
+  fun getIRVersion () =
+     let val versionText = case !version of
+        SOME x => x
+        |None => #version (get ())
+      in
+        textToIRVersion versionText handle UnsupportedVersion _ => LLVMIR.IR14Early
+      end
+
   fun getDefaultTarget () =
       case !defaultTarget of
         "" => #target (get ())

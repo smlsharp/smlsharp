@@ -719,6 +719,11 @@ struct
                      then doInsertCheckGC mccalc
                      else mccalc
         val mccalc = doStackAllocation mccalc
+
+        (*get LLVM version from commands and set version to IR Dumper *)
+        val ir_version = LLVMUtils.getIRVersion ()
+        val _ = LLVMIR.version_of_ir := ir_version
+
         val llvmir = doLLVMGen llvmOptions (prelude, mccalc)
         val llfile = doLLVMEmit llvmir
         val bcfile = doAssemble llfile

@@ -48,7 +48,7 @@ generate()
 	}
 	return s;
 }
-
+#if LLVM_VERSION_MAJOR <= 13
 static AttributeList
 minimizeAttr(LLVMContext &c, AttributeList s)
 {
@@ -66,7 +66,27 @@ minimizeAttr(LLVMContext &c, AttributeList s)
 	}
 	return ret;
 }
-
+#else
+static AttributeList
+minimizeAttr(LLVMContext &c, AttributeList s)
+{
+	AttributeList ret;
+	// AttributeList::index_begin and AttributeList::index_end was removed since LLVM 14
+	auto indexes = s.indexes();
+	for (auto i = indexes.begin(),e=indexes.end(); i != e; ++i) {
+		for (Attribute a : s.getAttributes(*i)) {
+			if (a.hasAttribute(Attribute::UWTable)
+			    || a.hasAttribute(Attribute::NoUnwind)
+			    || a.hasAttribute(Attribute::NoReturn)
+			    || a.hasAttribute(Attribute::NoInline)
+			    || a.hasAttribute(Attribute::InReg)) {
+				ret = ret.addAttributeAtIndex(c,*i, a);// addAttributeAtIndex was removed from AttributeList since LLVM 14
+			}
+		}
+	}
+	return ret;
+}
+#endif
 static void
 setNameIncomingBlocks(const PHINode *p)
 {
@@ -88,8 +108,11 @@ main(int argc, char **argv)
 		err.print(argv[0], errs());
 		return 1;
 	}
-
+#if LLVM_VERSION_MAJOR <=16
 	for (auto &g : m->getGlobalList()) {
+#else
+	for (auto &g : m->globals()) {
+#endif
 		if (g.hasLocalLinkage() && g.hasAtLeastLocalUnnamedAddr())
 			g.setName(generate());
 	}

@@ -3,7 +3,7 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * for LLVM 3.9.1, 4.0.1, 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.1, 10.0.0, 11.0.0,
- *          11.1.0, 12.0.0, 13.0.0
+ *          11.1.0, 12.0.0, 13.0.0 14.0.x 15.0.x 16.0.x 17.0.x 18.0.x
  */
 
 #include <llvm/Config/llvm-config.h>
@@ -66,7 +66,11 @@ static const Function *
 FindFunction(const Module &m, StringRef prefix)
 {
 	for (auto &f : m.getFunctionList()) {
+#if LLVM_VERSION_MAJOR  <= 17
 		if (!f.hasExternalLinkage() && f.getName().startswith(prefix))
+#else
+		if (!f.hasExternalLinkage() && f.getName().starts_with(prefix))
+#endif
 			return &f;
 	}
 	return nullptr;
@@ -102,8 +106,10 @@ EmitFunctionInfo(AsmPrinter &ap, GCFunctionInfo &fi, MCSymbol *base)
 
 #if LLVM_VERSION_MAJOR <= 10
 	ap.OutStreamer->EmitValueToAlignment(ptrsize);
-#else
+#elif LLVM_VERSION_MAJOR <= 15
 	ap.OutStreamer->emitValueToAlignment(ptrsize);
+#else
+	ap.OutStreamer->emitValueToAlignment(Align(ptrsize));
 #endif
 	for (auto &p : fi)
 		ap.OutStreamer->emitAbsoluteSymbolDiff(p.Label, base, ptrsize);
@@ -127,15 +133,25 @@ SMLSharpGCPrinter::finishAssembly(Module &m, GCModuleInfo &info, AsmPrinter &ap)
 #else
 	Align align(ap.getPointerSize());
 #endif
+#if LLVM_VERSION_MAJOR <= 14
 	ap.OutStreamer->SwitchSection
 		(ap.getObjFileLowering().getSectionForConstant
 		 (ap.getDataLayout(), SectionKind::getReadOnly(),
 		  nullptr, align));
+#else
+		ap.OutStreamer->switchSection
+			(ap.getObjFileLowering().getSectionForConstant
+		 (ap.getDataLayout(), SectionKind::getReadOnly(),
+		  nullptr, align));
+#endif
 #if LLVM_VERSION_MAJOR <= 10
 	ap.OutStreamer->EmitValueToAlignment(ap.getPointerSize());
 	ap.OutStreamer->EmitLabel(sml_ftab);
-#else
+#elif LLVM_VERSION_MAJOR <= 15
 	ap.OutStreamer->emitValueToAlignment(ap.getPointerSize());
+	ap.OutStreamer->emitLabel(sml_ftab);
+#else
+	ap.OutStreamer->emitValueToAlignment(Align(ap.getPointerSize()));
 	ap.OutStreamer->emitLabel(sml_ftab);
 #endif
 
@@ -144,8 +160,10 @@ SMLSharpGCPrinter::finishAssembly(Module &m, GCModuleInfo &info, AsmPrinter &ap)
 			EmitFunctionInfo(ap, **i, sml_tabb);
 #if LLVM_VERSION_MAJOR <= 10
 		ap.OutStreamer->EmitValueToAlignment(ap.getPointerSize());
-#else
+#elif LLVM_VERSION_MAJOR <= 15
 		ap.OutStreamer->emitValueToAlignment(ap.getPointerSize());
+#else
+		ap.OutStreamer->emitValueToAlignment(Align(ap.getPointerSize()));
 #endif
 	}
 	EmitUInt16(ap, 0);
