@@ -3,7 +3,7 @@
  * @copyright (C) 2021 SML# Development Team.
  * @author UENO Katsuhiro
  * for LLVM 5.0.2, 6.0.1, 7.0.1, 8.0.1, 9.0.0, 10.0.0, 11.0.0, 11.1.0, 12.0.0,
- *          13.0.0
+ *          13.0.1, 14.0.6, 15.0.7, 16.0.6, 17.0.6, 18.1.8
  */
 
 #include <llvm/Support/raw_ostream.h>
@@ -53,14 +53,23 @@ static AttributeList
 minimizeAttr(LLVMContext &c, AttributeList s)
 {
 	AttributeList ret;
+
+#if LLVM_VERSION_MAJOR <= 13
 	for (unsigned i = s.index_begin(), e = s.index_end(); i != e; ++i) {
+#else
+	for (unsigned i : s.indexes()) {
+#endif
 		for (Attribute a : s.getAttributes(i)) {
 			if (a.hasAttribute(Attribute::UWTable)
 			    || a.hasAttribute(Attribute::NoUnwind)
 			    || a.hasAttribute(Attribute::NoReturn)
 			    || a.hasAttribute(Attribute::NoInline)
 			    || a.hasAttribute(Attribute::InReg)) {
+#if LLVM_VERSION_MAJOR <= 13
 				ret = ret.addAttribute(c, i, a);
+#else
+				ret = ret.addAttributeAtIndex(c, i, a);
+#endif
 			}
 		}
 	}
@@ -89,7 +98,11 @@ main(int argc, char **argv)
 		return 1;
 	}
 
+#if LLVM_VERSION_MAJOR <= 16
 	for (auto &g : m->getGlobalList()) {
+#else
+	for (auto &g : m->globals()) {
+#endif
 		if (g.hasLocalLinkage() && g.hasAtLeastLocalUnnamedAddr())
 			g.setName(generate());
 	}
