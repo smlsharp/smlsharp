@@ -533,6 +533,9 @@ struct
         val _ = #stop Counter.llvmEmitTimeCounter()
         val _ = printFile Control.printLLVMEmit "LLVM emit" llfile
       in
+        if !Control.dumpLLVMEmit = ""
+        then ()
+        else CoreUtils.cp llfile (Filename.fromString (!Control.dumpLLVMEmit));
         llfile
       end
 

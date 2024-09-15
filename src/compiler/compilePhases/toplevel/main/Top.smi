@@ -13,7 +13,7 @@ _require local "../../../extensions/userlevelprimitive/main/UserLevelPrimitive.s
 _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi"
 _require local "../../../data/control/main/Control.smi"
 _require local "../../../libs/util/main/Counter.smi"
-(* _require "../../../libs/toolchain/main/Filename.smi" *)
+_require local "../../../libs/toolchain/main/Filename.smi"
 (* _require local "../../../libs/toolchain/main/TempFile.smi" *)
 (* _require local "../../../libs/toolchain/main/BinUtils.smi" *)
 _require local "../../../libs/toolchain/main/CoreUtils.smi"

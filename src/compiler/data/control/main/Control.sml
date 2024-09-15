@@ -91,6 +91,7 @@ struct
   val printLLVMGen = ref false
   val printLLVMEmit = ref false
   val printGenerateMain = ref false
+  val dumpLLVMEmit = ref ""
 
   (** true if detailed type information should be printed. *)
   val printWithType = ref false
@@ -208,6 +209,8 @@ struct
          BoolSwitch doUncurryOptimization),
         ("doUncurryingOptimizeInMatchCompile", "switch for match compilation",
          BoolSwitch doUncurryingOptimizeInMatchCompile),
+        ("dumpLLVMEmit", "dump result of LLVMEmit to file",
+         StringSwitch dumpLLVMEmit),
         ("enableUnboxedFloat", "enable unboxed floats",
          BoolSwitch enableUnboxedFloat),
         ("insertCheckGC", "switch for backend",
