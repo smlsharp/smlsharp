@@ -1,9 +1,9 @@
 # -*- Autoconf -*-
 
-AC_PREREQ(2.69)
-AC_INIT(smlsharp)
+AC_PREREQ([2.72])
+AC_INIT
 AC_CONFIG_SRCDIR([src/compiler/compilePhases/toplevel/main/Top.sml])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AC_CANONICAL_TARGET
 AC_ARG_PROGRAM
@@ -11,7 +11,6 @@ AC_ARG_PROGRAM
 # -------- Checks for C/C++ compiler capability --------
 
 AC_PROG_CC
-AC_PROG_CC_C99
 if test "x$ac_cv_prog_cc_c99" = "xno"; then
   AC_MSG_ERROR([C99 compiler is required])
 fi
@@ -249,7 +248,7 @@ AS_HELP_STRING([--with-smlsharp=DIR],
 [
   if test "x$withval" = "xno"; then
     if test "x$build" != "x$target"; then
-      AC_ERROR([--with-smlsharp is required for cross-compiling the compiler])
+      AC_MSG_ERROR(--with-smlsharp is required for cross-compiling the compiler)
     fi
   elif test -f "$withval/src/compiler/smlsharp"; then
     MINISMLLEX="$withval/src/ml-lex/smllex"
@@ -259,12 +258,12 @@ AS_HELP_STRING([--with-smlsharp=DIR],
     MINISMLSHARP="$withval/src/compiler/smlsharp"
     SMLFLAGS="-BX $withval/src $SMLFLAGS"
   else
-    AC_ERROR([Specify a complete build tree to --with-smlsharp])
+    AC_MSG_ERROR(Specify a complete build tree to --with-smlsharp)
   fi
 ],
 [
   if test "x$build" != "x$target"; then
-    AC_ERROR([--with-smlsharp is required for cross-compiling the compiler])
+    AC_MSG_ERROR(--with-smlsharp is required for cross-compiling the compiler)
   fi
 ])
 
