@@ -5929,7 +5929,7 @@ printf %s "checking for LLVM compatibility... " >&6; }
 LLVM_VERSION=`echo "$LLVM_VERSION" | sed 's/\.[0-9]*$//'`
 
 case "$LLVM_VERSION" in
-  3.9|[4-9].0|7.1|1[0-7].0|11.1|18.1)
+  [7-9].0|7.1|1[0-7].0|11.1|18.1)
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf "%s\n" "yes" >&6; }
     ;;
