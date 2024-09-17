@@ -297,12 +297,6 @@ AS_HELP_STRING([--with-smlsharp=DIR],
 
 AC_SUBST(PRECOMPILED_ARCH)
 if test "x$build" = "x$target"; then
-  if test "x$MINISMLSHARP" = "x./minismlsharp"; then
-    AC_PATH_PROG(XZ, xz)
-    if test "x$XZ" = "x"; then
-      AC_MSG_ERROR([xz is required to build smlsharp.])
-    fi
-  fi
   case "$target_cpu" in
     x86_64|amd64)
       PRECOMPILED_ARCH=x86_64

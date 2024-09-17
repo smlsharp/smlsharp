@@ -51,7 +51,6 @@ INSTALL_DATA = @INSTALL_DATA@
 #CYGPATH = @CYGPATH@
 #DOXYGEN = @DOXYGEN@
 #EGREP = @EGREP@
-XZ = @XZ@
 LLVM7_CONFIG = @LLVM7_CONFIG@
 
 # comment out the following lines in config.mk (not in config.mk.in!),
