@@ -294,22 +294,22 @@ src/config/main/SQLConfig.sml: \
 src/compiler/compilerIRs/absyn/main/AbsynFormatter.sml: \
   src/compiler/compilerIRs/absyn/main/Absyn.sml \
   $(SMLFORMAT_DEP)
-	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynFormatter src/compiler/compilerIRs/absyn/main/Absyn.sml
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynFormatter $(srcdir)/src/compiler/compilerIRs/absyn/main/Absyn.sml
 
 src/compiler/compilerIRs/absyn/main/AbsynTyFormatter.sml: \
   src/compiler/compilerIRs/absyn/main/AbsynTy.sml \
   $(SMLFORMAT_DEP)
-	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynTyFormatter src/compiler/compilerIRs/absyn/main/AbsynTy.sml
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynTyFormatter $(srcdir)/src/compiler/compilerIRs/absyn/main/AbsynTy.sml
 
 src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.sml: \
   src/compiler/compilerIRs/absyn/main/AbsynConst.sml \
   $(SMLFORMAT_DEP)
-	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynConstFormatter src/compiler/compilerIRs/absyn/main/AbsynConst.sml
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynConstFormatter $(srcdir)/src/compiler/compilerIRs/absyn/main/AbsynConst.sml
 
 src/compiler/compilerIRs/absyn/main/AbsynSQLFormatter.sml: \
   src/compiler/compilerIRs/absyn/main/AbsynSQL.sml \
   $(SMLFORMAT_DEP)
-	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynSQLFormatter src/compiler/compilerIRs/absyn/main/AbsynSQL.sml
+	$(SMLSHARP_ENV) $(MINISMLFORMAT) --output=$@ --separate=AbsynSQLFormatter $(srcdir)/src/compiler/compilerIRs/absyn/main/AbsynSQL.sml
 
 # ---- autoconf ----
 
