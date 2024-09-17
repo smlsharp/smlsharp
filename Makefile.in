@@ -48,8 +48,7 @@ ALL_GEN_FILES = \
   $(GEN_SOURCES) \
   $(GEN_MISC_FILES) \
   filemap \
-  precompiled/$(PRECOMPILED_ARCH).bc \
-  precompiled/$(PRECOMPILED_ARCH).$(OBJEXT) \
+  $(PRECOMPILED_OBJECTS) \
   minismlsharp
 ALL_GEN_TARGETS = \
   $(LIBSMLSHARP_TARGETS) \
@@ -207,6 +206,20 @@ filemap: Makefile $(srcdir)/files.mk
 	sed -e "s/$(OBJEXT)\$$/smi/;s'.*'= & $${srcdir}&'" \
 	    "$$gen" >> $@
 
+# -------- minismlsharp --------
+
+PRECOMPILE_LLC = \
+  $(LLC) -load=$(LLVM_PLUGIN) -mtriple=$(target) -O2 $(LLCFLAGS) \
+  -tailcallopt -filetype=obj
+
+include @srcdir@/precompiled/Makefile
+
+./minismlsharp: $(LIBSMLSHARP_TARGETS) $(COMPILER_SUPPORT_OBJECTS) \
+                $(PRECOMPILED_OBJECTS)
+	$(CC) $(LDFLAGS) src/runtime/main.$(OBJEXT) \
+	$(PRECOMPILED_OBJECTS) $(COMPILER_SUPPORT_OBJECTS) \
+	src/runtime/libsmlsharp.$(LIBEXT) $(LIBS) -o $@
+
 # -------- executables --------
 
 $(SMLLEX): $(LINK_DEP) $(SMLLEX_OBJECTS)
@@ -234,22 +247,6 @@ src/compiler/minismlsharp: \
 	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFLAGS) \
 	-filemap=filemap $(srcdir)/src/compiler/minismlsharp.smi \
 	$(COMPILER_SUPPORT_OBJECTS) -o $@
-
-precompiled/$(PRECOMPILED_ARCH).bc: \
-  $(srcdir)/precompiled/$(PRECOMPILED_ARCH).ll.xz
-	$(XZ) -c -d $(srcdir)/precompiled/$(PRECOMPILED_ARCH).ll.xz \
-	| $(LLVM_AS) -o $@
-
-precompiled/$(PRECOMPILED_ARCH).$(OBJEXT): \
-  $(LLVM_PLUGIN) precompiled/$(PRECOMPILED_ARCH).bc
-	$(LLC) -load=$(LLVM_PLUGIN) -mtriple=$(target) -O2 $(LLCFLAGS) \
-	-tailcallopt -filetype=obj -o $@ precompiled/$(PRECOMPILED_ARCH).bc
-
-./minismlsharp: $(LIBSMLSHARP_TARGETS) $(COMPILER_SUPPORT_OBJECTS) \
-                precompiled/$(PRECOMPILED_ARCH).$(OBJEXT)
-	$(CC) $(LDFLAGS) src/runtime/main.$(OBJEXT) \
-	precompiled/$(PRECOMPILED_ARCH).$(OBJEXT) $(COMPILER_SUPPORT_OBJECTS) \
-	src/runtime/libsmlsharp.$(LIBEXT) $(LIBS) -o $@
 
 tests/driver/dotest: $(LINK_DEP) $(TEST_OBJECTS) tests/driver/process.$(OBJEXT)
 	$(SMLSHARP_ENV) $(MINISMLSHARP) -B src -nostdpath $(SMLFILE) \
