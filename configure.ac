@@ -229,6 +229,34 @@ case "$LLVM_VERSION" in
     ;;
 esac
 
+LLVM7_CONFIG=
+AC_SUBST(LLVM7_CONFIG)
+
+AC_ARG_WITH(llvm7,
+AS_HELP_STRING([--with-llvm7=DIR],
+               [specify where LLVM 7 has installed in (for developers only)]),
+[
+  case "$withval" in
+    no) ;;
+    yes) AC_PATH_PROG(LLVM7_CONFIG, llvm-config, [], $PATH) ;;
+    *) AC_PATH_PROG(LLVM7_CONFIG, llvm-config, [], $withval/bin:$PATH) ;;
+  esac
+],
+[
+  case "$LLVM_VERSION" in
+    7.[01]) LLVM7_CONFIG=LLVM_CONFIG ;;
+  esac
+])
+
+if test -n "$LLVM7_CONFIG"; then
+  AC_MSG_CHECKING([for LLVM 7 version])
+  LLVM7_VERSION=`$LLVM7_CONFIG --version` || AC_MSG_ERROR([failed])
+  AC_MSG_RESULT($LLVM7_VERSION)
+  if test "_$LLVM7_VERSION" != "_7.1.0"; then
+    AC_MSG_ERROR([Specify LLVM 7.1.0 to --with-llvm7.])
+  fi
+fi
+
 # -------- Check for self- and cross-compilation ---------
 
 MINISMLLEX='$(SMLLEX)'

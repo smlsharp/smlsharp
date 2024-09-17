@@ -52,7 +52,7 @@ INSTALL_DATA = @INSTALL_DATA@
 #DOXYGEN = @DOXYGEN@
 #EGREP = @EGREP@
 XZ = @XZ@
-LLVM_AS = @LLVM_AS@
+LLVM7_CONFIG = @LLVM7_CONFIG@
 
 # comment out the following lines in config.mk (not in config.mk.in!),
 # and avoid rebuilding minismlsharp, smllex, smlyacc and smlformat.
