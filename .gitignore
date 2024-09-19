@@ -1,6 +1,7 @@
 *.a
 *.dylib
 *.o
+*.so
 *.x86_64.ll
 *.x86_64.opt.ll
 *.ppg.sml
@@ -10,11 +11,15 @@
 *.grm.sml
 *~
 /Makefile
+/RELEASE
+/autom4te.cache
 /config.h
 /config.log
 /config.mk
 /config.status
+/filemap
 /minismlsharp
+/precompile.dep
 /src/config.mk
 /src/config/main/Version.sml
 /src/config/main/SQLConfig.sml
