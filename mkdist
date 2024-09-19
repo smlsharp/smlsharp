@@ -1,0 +1,80 @@
+#!/bin/sh
+
+set -e
+cd $(dirname "$0")
+
+get_version () {
+  date=$(git log -1 --format='%ai')
+  desc=$(git describe --match='v[0-9]*' --tags --long)
+  args=$(echo "$desc" | sed -E 's/^v(.*)-([0-9]+)-g([a-f0-9]+)$/\1 \2 \3/')
+  set -- $args
+  case "$2" in
+    "")
+      exit 1
+      ;;
+    0)
+      version="$1"
+      ref="refs/tags/v$1"
+      date=$(git for-each-ref --format='%(creatordate:iso)' "$ref")
+      ;;
+    *)
+      case "$1" in
+        *-*)
+          version="$1.$2.g$3"
+          ;;
+        *)
+          version=$(echo "$1" | awk -v FS=. -v OFS=. '{$3+=1;print}')
+          version="$version-$2.g$3"
+          ;;
+      esac
+      ;;
+  esac
+  release="$version ($(echo "$date" | sed 's/+0900/JST/'))"
+}
+
+get_version
+
+case "$1" in
+  version)
+    echo "$version"
+    ;;
+
+  release)
+    echo "$release"
+    ;;
+
+  package)
+    TAR=tar
+    $TAR --version | grep 'GNU tar' > /dev/null 2>&1 || TAR=gtar
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    trap 'exit 127' INT QUIT STOP
+    root="$tmp/smlsharp-$version"
+    mkdir "$root"
+    git archive -o "$tmp/archive.tar" HEAD
+    $TAR -C "$root" -xf "$tmp/archive.tar"
+    echo "$release" > "$root/RELEASE"
+    $TAR -cf "smlsharp-$version.tar.gz" -C "$tmp" --sort=name \
+         --format=ustar --use-compress-program='gzip -c -n -9' \
+         --owner=root:0 --group=root:0 --mtime="$date" \
+         "smlsharp-$version"
+    ;;
+
+  history)
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    trap 'exit 127' INT QUIT STOP
+    dst="smlsharp-$version.history"
+    git tag -l 'v[0-9]*' --merged=HEAD --sort=-creatordate \
+            --format='%(objecttype) %(refname) %(creatordate:iso)' \
+            >> "$tmp/tags"
+    sed -i~ -E 's|^[a-z]+ refs/tags/v||' "$tmp/tags"
+    echo "$version $date" > "$tmp/history"
+    cat "$tmp/tags" >> "$tmp/history"
+    uniq "$tmp/history" > "smlsharp-$version.history"
+    ;;
+
+  *)
+    exit 1
+    ;;
+esac

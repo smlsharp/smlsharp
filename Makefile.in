@@ -256,33 +256,15 @@ tests/driver/dotest: $(LINK_DEP) $(TEST_OBJECTS) tests/driver/process.$(OBJEXT)
 
 # -------- source code generation --------
 
-@MKREL@RELEASE: \
-@MKREL@  $(shell x=`cd $(srcdir) && git describe --match='v[0-9]*' --long`; \
-@MKREL@          y=`test -r RELEASE && tail -n1 RELEASE`; \
+@MKREL@RELEASE: mkdist \
+@MKREL@  $(shell x=`sh $(srcdir)/mkdist release`; \
+@MKREL@          y=`cat RELEASE 2>/dev/null`; \
 @MKREL@          test "_$$x" != "_$$y" && echo PHONY)
-@MKREL@	set -e; \
-@MKREL@	exec 1> $@; \
-@MKREL@	cd $(srcdir); \
-@MKREL@	d=`git describe --match='v[0-9]*' --long`; \
-@MKREL@	a=`echo "$$d" | sed 's/^v\(.*\)-\([0-9]*\)-g\([^-]*\)$$/\1 \2 \3/'`; \
-@MKREL@	set -- $$a; \
-@MKREL@	case "$$2" in \
-@MKREL@	0) ver="$$1"; r="refs/tags/v$$1"; \
-@MKREL@	   date=`git for-each-ref --format='%(creatordate:iso)' "$$r"` ;; \
-@MKREL@	*) date=`git log -1 --format='%ai'`; \
-@MKREL@	   case "$$1" in \
-@MKREL@	   *-*) ver="$$1.$$2.g$$3" ;; \
-@MKREL@	   *) ver=`echo "$$1" | awk -v FS=. -v OFS=. '{$$3+=1;print}'`; \
-@MKREL@	      ver="$$ver-$$2.g$$3" ;; \
-@MKREL@	   esac; \
-@MKREL@	esac; \
-@MKREL@	date=`echo "$$date" | sed 's/+0900/JST/'`; \
-@MKREL@	echo "$$ver ($$date)"; \
-@MKREL@	echo "$$d"
+@MKREL@	sh $(srcdir)/mkdist release > $@
 
 src/config/main/Version.sml: \
-  $(srcdir)/src/config/main/Version.sml.in @RELEASE@
-	sed -e 's"%RELEASE%"'"`echo unknown | head -n1 @RELEASE@`"'"' \
+  $(srcdir)/src/config/main/Version.sml.in RELEASE
+	sed -e 's"%RELEASE%"'"`cat @RELEASE@`"'"' \
 	    -e 's"%LIBDIR_SMLSHARP%"$(libdir_smlsharp)"' \
 	$(srcdir)/src/config/main/Version.sml.in > $@
 
@@ -380,35 +362,6 @@ src/config/main/C_type.smi: \
 src/config/main/C_type.sml: \
   $(srcdir)/src/config/main/C_type.sml.in config.status
 	./config.status $@
-
-# -------- packaging --------
-
-dist: PHONY @RELEASE@
-@MKDST@	set -ex; \
-@MKDST@	rel=`head -n1 @RELEASE@`; \
-@MKDST@	ver=`echo "$$rel" | cut -d\  -f1`; \
-@MKDST@	date=`echo "$$rel" | sed 's/^.*(//;s/).*$$//' | cut -d\  -f1-2`; \
-@MKDST@	tar=tar; \
-@MKDST@	$$tar --version | grep 'GNU tar' >/dev/null 2>&1 || tar=gtar; \
-@MKDST@	tmp=`mktemp -d`; \
-@MKDST@	trap 'rm -rf "$$tmp"' EXIT; \
-@MKDST@	trap 'exit 127' INT QUIT STOP; \
-@MKDST@	root="$$tmp/smlsharp-$$ver"; \
-@MKDST@	mkdir "$$root"; \
-@MKDST@	(cd $(srcdir) && git archive -o "$$tmp/a.tar" HEAD); \
-@MKDST@	$$tar -C "$$root" -xf "$$tmp/a.tar"; \
-@MKDST@	rm -rf "$$root/autom4te.cache"; \
-@MKDST@	echo "$$rel" > "$$root/RELEASE"; \
-@MKDST@	$$tar -cf "smlsharp-$$ver.tar.gz" -C "$$tmp" --sort=name \
-@MKDST@	  --format=ustar --use-compress-program='gzip -c -n -9' \
-@MKDST@	  --owner=root:0 --group=root:0 --mtime="$$date" "smlsharp-$$ver"; \
-@MKDST@	echo "$$rel" > "$$tmp/history"; \
-@MKDST@	git tag -l 'v[0-9]*' --merged=HEAD --sort=-creatordate \
-@MKDST@	  --format='%(objecttype) %(refname) (%(creatordate:iso))' \
-@MKDST@	  > "$$tmp/tags"; \
-@MKDST@	sed '/^tag/!d;s!^tag refs/tags/v!!;s/+0900/JST/' "$$tmp/tags" \
-@MKDST@	  >> "$$tmp/history"; \
-@MKDST@	uniq "$$tmp/history" > "smlsharp-$$ver.history"
 
 # -------- dependencies --------
 

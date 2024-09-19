@@ -358,12 +358,9 @@ AC_SUBST(BYTE_ORDER)
 
 RELEASE='$(srcdir)/RELEASE'
 MKREL='#'
-MKDST='#'
 AC_SUBST(RELEASE)
 AC_SUBST(MKREL)
-AC_SUBST(MKDST)
 if test -d "$srcdir/.git" || test -f "$srcdir/.git"; then
-  MKDST=
   x=`cd "$srcdir" && git ls-files RELEASE 2>/dev/null || :`
   if test -z "$x"; then
     RELEASE=RELEASE
@@ -371,8 +368,7 @@ if test -d "$srcdir/.git" || test -f "$srcdir/.git"; then
   fi
 fi
 if test -n "$MKREL" && test ! -f "$srcdir/RELEASE"; then
-  AC_MSG_WARN([SML[#] version is unknown because of lack of RELEASE file])
-  RELEASE=
+  AC_MSG_ERROR([file not found: RELEASE])
 fi
 
 EXTRA_OPTIONS=
