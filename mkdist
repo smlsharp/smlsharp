@@ -54,10 +54,16 @@ case "$1" in
     git archive -o "$tmp/archive.tar" HEAD
     $TAR -C "$root" -xf "$tmp/archive.tar"
     echo "$release" > "$root/RELEASE"
+    rm -r "$root/.github"
     $TAR -cf "smlsharp-$version.tar.gz" -C "$tmp" --sort=name \
          --format=ustar --use-compress-program='gzip -c -n -9' \
          --owner=root:0 --group=root:0 --mtime="$date" \
          "smlsharp-$version"
+    hash=$(openssl dgst -sha256 < "smlsharp-$version.tar.gz")
+    echo "version=$version"
+    echo "date=$date"
+    echo "filename=smlsharp-$version.tar.gz"
+    echo "hash=${hash#*= }"
     ;;
 
   history)

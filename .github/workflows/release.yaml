@@ -1,0 +1,81 @@
+on:
+  push:
+    tags:
+      - v[0-9]*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TZ: 'Asia/Tokyo'
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-tags: true
+      - name: Create a source package
+        id: source
+        run: sh mkdist package >> "$GITHUB_OUTPUT"
+      - name: Create a release
+        run: |
+          case '${{ steps.source.outputs.version }}' in
+            *-*) PRE=-p ;;
+            *) PRE= ;;
+          esac
+          gh release create $PRE --verify-tag ${{ github.ref_name }} \
+             ${{ steps.source.outputs.filename }}
+    outputs:
+      filename: ${{ steps.source.outputs.filename }}
+      version: ${{ steps.source.outputs.version }}
+      date: ${{ steps.source.outputs.date }}
+      hash: ${{ steps.source.outputs.hash }}
+
+  propagate:
+    needs: release
+    runs-on: ubuntu-latest
+    env:
+      TZ: 'Asia/Tokyo'
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app.outputs.token }}
+          repository: ${{ github.repository_owner }}/smlsharp-package
+          submodules: true
+      - name: Configure git
+        run: |
+          git config --global user.email action@github.com
+          git config --global user.name actions-user
+          url=$(git remote get-url origin)
+          cd homebrew-smlsharp
+          git checkout master
+          git checkout -b ${{ github.ref_name }}
+          git remote set-url origin ${url/smlsharp-package/homebrew-smlsharp}
+      - name: Update files with new source package
+        run: sh scripts/new_release.sh
+        env:
+          RELEASE_OWNER: ${{ github.repository_owner }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_FILENAME: ${{ needs.release.outputs.filename }}
+          RELEASE_VERSION: ${{ needs.release.outputs.version }}
+          RELEASE_DATE: ${{ needs.release.outputs.date }}
+          RELEASE_SHA256: ${{ needs.release.outputs.hash }}
+      - name: Commit and push the changes in homebrew-smlsharp
+        working-directory: ./homebrew-smlsharp
+        run: |
+          git add -u
+          git commit -m 'smlsharp ${{ needs.release.outputs.version }} release'
+          git push origin ${{ github.ref_name }}
+      - name: Commit and push the changes in smlsharp-package
+        run: |
+          git add -u
+          git commit -m 'smlsharp ${{ needs.release.outputs.version }} release'
+          git push origin main
