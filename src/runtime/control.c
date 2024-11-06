@@ -488,6 +488,19 @@ struct enter_worker {
 	struct sml_worker *worker;
 };
 
+/* 一部の最新のCコンパイラでは，関数の途中でスレッドが切り替わらないことを
+ * 前提に，スレッドローカル変数のアドレス計算を最適化して一箇所に集約し，
+ * 関数内で一度しかアドレス計算しないようなコードを生成する．
+ * しかし，関数内でMassiveThreadsのコンテキストスイッチが発生する可能性が
+ * ある場合，この最適化のせいで，現在のワーカスレッドではないスレッドの
+ * スレッドローカル変数を参照してしまう恐れがある．この問題を起こす最適化を
+ * 回避するため，worker_tlv_getをインライン展開されない独立した関数にする．
+ */
+static NOINLINE struct sml_worker *get_current_worker_noinline()
+{
+	return worker_tlv_get(current_worker);
+}
+
 static struct enter_worker
 enter_worker()
 {
@@ -497,7 +510,7 @@ enter_worker()
 	enum sml_sync_phase phase;
 
 retry:
-	worker = worker_tlv_get(current_worker);
+	worker = get_current_worker_noinline();
 
 	if (worker) {
 		/* workerをACTIVEにして排他ロックを獲得する．
