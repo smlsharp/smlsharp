@@ -1,4 +1,15 @@
 -----------------------------------------------------------------------------
+SML# version 4.1.0 (released on 2024-11-xx)
+
+* Changed and improved LLVM support. 
+  SML# now supports from LLVM 7.1 to LLVM 18.1. 
+  For the developers to precompile SML#, LLVM 7.1.0 is required. 
+  To precompile, set the "--with-llvm7" configure switch.
+
+* Fixed a number of bugs including the issues #10, #39, #67, #68
+  and added some test cases in ~/tests/data/regression.
+  
+-----------------------------------------------------------------------------
 SML# version 4.0.0 (released on 2021-04-06)
 
 * In agreement with Tohoku University, we (the SML# development team) have
