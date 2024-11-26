@@ -6117,7 +6117,7 @@ fi
 
 if test "x$build" = "x$target"; then
   case "$target_cpu" in
-    x86_64|amd64)
+    x86_64|amd64|aarch64)
       PRECOMPILED_ARCH=generic
       ;;
     *)
@@ -6145,6 +6145,11 @@ printf "%s\n" "yes" >&6; }
 printf "%s\n" "yes" >&6; }
     RUNTIME_DEFS="$RUNTIME_DEFS -DHOST_CPU_i386"
     LLCFLAGS="$LLCFLAGS -no-x86-call-frame-opt"
+    ;;
+  aarch64)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+    RUNTIME_DEFS="$RUNTIME_DEFS -DHOST_CPU_ARM"
     ;;
   *)
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5

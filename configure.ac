@@ -298,7 +298,7 @@ AS_HELP_STRING([--with-smlsharp=DIR],
 AC_SUBST(PRECOMPILED_ARCH)
 if test "x$build" = "x$target"; then
   case "$target_cpu" in
-    x86_64|amd64)
+    x86_64|amd64|aarch64)
       PRECOMPILED_ARCH=generic
       ;;
     *)
@@ -323,6 +323,10 @@ case "$target_cpu" in
     AC_MSG_RESULT([yes])
     RUNTIME_DEFS="$RUNTIME_DEFS -DHOST_CPU_i386"
     LLCFLAGS="$LLCFLAGS -no-x86-call-frame-opt"
+    ;;
+  aarch64)
+    AC_MSG_RESULT([yes])
+    RUNTIME_DEFS="$RUNTIME_DEFS -DHOST_CPU_ARM"
     ;;
   *)
     AC_MSG_RESULT([no])

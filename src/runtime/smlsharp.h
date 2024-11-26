@@ -248,7 +248,11 @@
  */
 #ifdef __GNUC__
 /* first three arguments are passed by machine registers */
-# define SML_PRIMITIVE __attribute__((regparm(3))) NOINLINE
+# ifdef HOST_CPU_i386
+#  define SML_PRIMITIVE __attribute__((regparm(3),nothrow)) NOINLINE
+# elif HOST_CPU_ARM
+#  define SML_PRIMITIVE __attribute__((nothrow)) NOINLINE
+# endif
 #else
 # error regparm(3) calling convention is not supported
 #endif
@@ -316,7 +320,11 @@ void sml_msg_init(void);
 	((uint64_t)d__ << 32) | a__; \
 })
 
+#ifdef HOST_CPU_i386
 #define asm_pause() do { __asm__ volatile ("pause" ::: "memory"); } while(0)
+#elif HOST_CPU_ARM
+#define asm_pause() do { __asm__ volatile ("wfe" ::: "memory"); } while(0)
+#endif
 
 /*
  * malloc with error checking
@@ -426,8 +434,12 @@ SML_PRIMITIVE void *sml_unsave_exn(void *);
 	((void**)__builtin_frame_address(0) + 2)
 #define FRAME_CODE_ADDRESS(frame_end) \
 	(*((void**)(frame_end) - 1))
+#ifdef HOST_CPU_i386
 #define NEXT_FRAME(frame_begin) \
 	((void**)frame_begin + 1)
+#elif HOST_CPU_ARM
+#define NEXT_FRAME(frame_begin) ((void**)frame_begin)
+#endif
 
 /*
  * SML# heap object management
