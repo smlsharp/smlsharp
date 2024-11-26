@@ -169,8 +169,8 @@ struct
     fun create (f : unit -> int) =
         let
           val p = SMLSharp_Builtin.Array.alloc_unsafe 1
-          val r = pthread_create (p, SMLSharp_Builtin.Pointer.null (),
-                                  create_main, f)
+          val null = SMLSharp_Builtin.Pointer.null ()
+          val r = pthread_create (p, null, create_main, f)
           val t = SMLSharp_Builtin.Array.sub_unsafe (p, 0)
         in
           err r;
