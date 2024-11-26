@@ -6118,7 +6118,7 @@ fi
 if test "x$build" = "x$target"; then
   case "$target_cpu" in
     x86_64|amd64)
-      PRECOMPILED_ARCH=x86_64
+      PRECOMPILED_ARCH=generic
       ;;
     *)
       as_fn_error $? "the compiler is not precompiled for target_cpu $target_cpu." "$LINENO" 5

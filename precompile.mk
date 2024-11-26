@@ -14,9 +14,9 @@ override SMLYACC_DEP = src/ml-yacc/smlyacc
 override SMLFORMAT_DEP = src/smlformat/smlformat
 override SMLSHARP_DEP = $(MINISMLSHARP)
 
-ifeq ($(ARCH),x86)
+ifeq ($(ARCH),generic32)
 override TRIPLE = i686-apple-darwin
-else ifeq ($(ARCH),x86_64)
+else ifeq ($(ARCH),generic)
 override TRIPLE = x86_64-apple-darwin
 else ifdef ARCH
 $(error ARCH must be either x86 or x86_64)
@@ -55,7 +55,7 @@ override rev = \
 ifndef ARCH
 
 all: precompiled/Makefile
-	$(MAKE) -f precompile.mk all ARCH=x86_64
+	$(MAKE) -f precompile.mk all ARCH=generic
 
 .PHONY: all
 

@@ -299,7 +299,7 @@ AC_SUBST(PRECOMPILED_ARCH)
 if test "x$build" = "x$target"; then
   case "$target_cpu" in
     x86_64|amd64)
-      PRECOMPILED_ARCH=x86_64
+      PRECOMPILED_ARCH=generic
       ;;
     *)
       AC_MSG_ERROR([the compiler is not precompiled for target_cpu $target_cpu.])
