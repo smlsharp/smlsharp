@@ -762,6 +762,7 @@ with_llvm7
 with_smlsharp
 enable_extra_options
 with_massivethreads
+with_gmp
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1415,6 +1416,7 @@ Optional Packages:
                           compile)
   --with-massivethreads=DIR
                           specify where MassiveThreads has installed in
+  --with-gmp=DIR          specify where GMP has installed in
 
 Some influential environment variables:
   CC          C compiler command
@@ -6641,6 +6643,27 @@ else
 fi
 
 # -------- Check for required libraries --------
+
+
+# Check whether --with-gmp was given.
+if test ${with_gmp+y}
+then :
+  withval=$with_gmp;
+  case "$withval" in
+    yes|no) ;;
+    *) if test -d "$withval/include"; then
+         CPPFLAGS="$CPPFLAGS -I$withval/include"
+       fi
+       if test -d "$withval/lib"; then
+         LDFLAGS="$LDFLAGS -L$withval/lib"
+       elif test -d "$withval/lib64"; then
+         LDFLAGS="$LDFLAGS -L$withval/lib64"
+       fi
+       ;;
+  esac
+
+fi
+
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for __gmpz_init in -lgmp" >&5
 printf %s "checking for __gmpz_init in -lgmp... " >&6; }

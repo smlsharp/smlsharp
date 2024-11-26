@@ -419,6 +419,24 @@ fi
 
 # -------- Check for required libraries --------
 
+AC_ARG_WITH(gmp,
+AS_HELP_STRING([--with-gmp=DIR],
+               [specify where GMP has installed in]),
+[
+  case "$withval" in
+    yes|no) ;;
+    *) if test -d "$withval/include"; then
+         CPPFLAGS="$CPPFLAGS -I$withval/include"
+       fi
+       if test -d "$withval/lib"; then
+         LDFLAGS="$LDFLAGS -L$withval/lib"
+       elif test -d "$withval/lib64"; then
+         LDFLAGS="$LDFLAGS -L$withval/lib64"
+       fi
+       ;;
+  esac
+])
+
 AC_CHECK_LIB(gmp, __gmpz_init,
   [], [ AC_MSG_ERROR([GMP library is not found]) ])
 
