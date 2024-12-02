@@ -1,0 +1,16 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../libs/env/main/IEnv.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../compilerIRs/recordcalc/main/RecordCalcRename.smi"
+_require local "./CallAnalysis.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure TailCallCompile =
+struct
+  val compile : RecordCalc.rcdecl list -> RecordCalc.rcdecl list
+end

@@ -289,6 +289,7 @@ in
   type btvMap = btvMap
   val emptyBtvMap = emptyBtvMap
   val copyTy = copyTy
+  val copyKind = copyKind
   val copyConstraint = copyConstraint
   val newBtvEnv = newBtvEnv
 end

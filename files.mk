@@ -717,6 +717,9 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
+src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
+src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -1069,6 +1072,9 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
+src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
+src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -1427,6 +1433,9 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
+src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
+src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -1963,6 +1972,9 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
+src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
+src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -2260,6 +2272,8 @@ src/compiler/compilePhases/recordcompilation/main/ReifyKind.o \
 src/compiler/compilePhases/recordcompilation/main/SizeKind.o \
 src/compiler/compilePhases/recordcompilation/main/TagKind.o \
 src/compiler/compilePhases/stackallocation/main/StackAllocation.o \
+src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
+src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
 src/compiler/compilePhases/toplevel/main/NameEvalEnvUtils.o \
 src/compiler/compilePhases/toplevel/main/Top.o \
 src/compiler/compilePhases/toplevel/main/TopData.ppg.o \
@@ -2307,6 +2321,7 @@ src/compiler/compilerIRs/machinecode/main/MachineCodeRename.o \
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/runtimecalc/main/RuntimeCalc.ppg.o \
 src/compiler/compilerIRs/typedcalc/main/TCAlphaRename.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.o \
@@ -2665,6 +2680,8 @@ src/compiler/compilePhases/recordcompilation/main/ReifyKind.smi \
 src/compiler/compilePhases/recordcompilation/main/SizeKind.smi \
 src/compiler/compilePhases/recordcompilation/main/TagKind.smi \
 src/compiler/compilePhases/stackallocation/main/StackAllocation.smi \
+src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.smi \
+src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.smi \
 src/compiler/compilePhases/toplevel/main/NameEvalEnvUtils.smi \
 src/compiler/compilePhases/toplevel/main/Top.smi \
 src/compiler/compilePhases/toplevel/main/TopData.ppg.smi \
@@ -2715,6 +2732,7 @@ src/compiler/compilerIRs/machinecode/main/MachineCodeRename.smi \
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
 src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.smi \
 src/compiler/compilerIRs/runtimecalc/main/RuntimeCalc.ppg.smi \
 src/compiler/compilerIRs/typedcalc/main/TCAlphaRename.smi \
 src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
@@ -3245,6 +3263,9 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
+src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
+src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \

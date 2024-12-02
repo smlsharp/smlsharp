@@ -436,6 +436,17 @@ struct
         tldecs
       end
 
+  fun doTailCallCompile rcdecs =
+      let
+        val _ = #start Counter.tailCallCompileTimeCounter()
+        val rcdecs = TailCallCompile.compile rcdecs
+        val _ =  #stop Counter.tailCallCompileTimeCounter()
+        val _ = printRecordCalc [Control.printTailCallCompile]
+                                "Tail-call Compiled" rcdecs
+      in
+        rcdecs
+      end
+
   fun doBitmapCompilation rcdecs =
       let
         val _ = #start Counter.bitmapCompilationTimeCounter()
@@ -696,6 +707,10 @@ struct
                 else ()
 
         val rcdecs = doRecordCompilation tldecs
+
+        val rcdecs = if !Control.doTailCallCompile
+                     then doTailCallCompile rcdecs
+                     else rcdecs
 
         val _ = if stopAt = NameRef
                 then raise Return (dependency, STOPPED)

@@ -67,6 +67,7 @@ struct
   val printFFICompile = ref false
   val printRecordCompile = ref false
   val printDatatypeCompile = ref false
+  val printTailCallCompile = ref false
   val printStaticAnalysis = ref false
   val printSystemDecls = ref false
   val printRecordUnboxing = ref false
@@ -112,6 +113,7 @@ struct
 (*
   val doRCOptimization = ref false
 *)
+  val doTailCallCompile = ref true
   (** true if no formatter is generated and no binding information is printed *)
   val skipPrinter = ref false
 
@@ -205,6 +207,8 @@ struct
          BoolSwitch doRegisterCoalescing),
         ("doTCOptimization", "turn on TC optimization",
          BoolSwitch doTCOptimization),
+        ("doTailCallCompile", "turn on TailCallCompile",
+         BoolSwitch doTailCallCompile),
         ("doUncurryOptimization", "turn on uncurry optimization",
          BoolSwitch doUncurryOptimization),
         ("doUncurryingOptimizeInMatchCompile", "switch for match compilation",
@@ -259,6 +263,8 @@ struct
          BoolSwitch printRecordCompile),
         ("printDatatypeCompile", "print result of DatatypeCompilation",
          BoolSwitch printDatatypeCompile),
+        ("printTailCallCompile", "print result of TailCallCompile",
+         BoolSwitch printTailCallCompile),
         ("printStaticAnalysis", "print result of StaticAnalysis",
          BoolSwitch printStaticAnalysis),
         ("printSystemDecls", "print system declarations ",

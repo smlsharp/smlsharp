@@ -18,6 +18,7 @@ structure TyAlphaRename =
 struct
   type btvMap = BoundTypeVarID.id BoundTypeVarID.Map.map
   val copyTy : btvMap -> Types.ty -> Types.ty
+  val copyKind : btvMap -> Types.kind -> Types.kind
   val copyConstraint : btvMap -> Types.constraint -> Types.constraint
   val newBtvEnv : btvMap -> Types.btvEnv -> btvMap * Types.btvEnv
   val emptyBtvMap : BoundTypeVarID.id BoundTypeVarID.Map.map
