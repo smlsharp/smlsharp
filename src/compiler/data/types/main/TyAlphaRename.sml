@@ -11,8 +11,6 @@ local
 
   fun bug s = Bug.Bug ("AlphaRename: " ^ s)
 
-  exception DuplicateBtv
-
   type ty = T.ty
   type longsymbol = Symbol.longsymbol
   type btvEnv = T.kind BoundTypeVarID.Map.map
@@ -43,10 +41,7 @@ local
   fun newBtv (btvMap:btvMap) btv =
       let
         val newBtv = BoundTypeVarID.generate()
-        val btvMap =
-            BoundTypeVarID.Map.insertWith
-              (fn _ => raise DuplicateBtv)
-              (btvMap, btv, newBtv)
+        val btvMap = BoundTypeVarID.Map.insert (btvMap, btv, newBtv)
       in
         (btvMap, newBtv)
       end
