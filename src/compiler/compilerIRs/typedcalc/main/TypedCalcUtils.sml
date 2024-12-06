@@ -181,7 +181,10 @@ in
         let
           val expLoc = getLocOfExp exp
         in
+(* 2024-12-06 Ohori: Obviously, we need to derefTy here.
           case ty of
+*)
+          case TB.derefTy ty of
             T.POLYty{boundtvars,body,constraints} =>
             let 
               val subst = TB.freshSubst boundtvars

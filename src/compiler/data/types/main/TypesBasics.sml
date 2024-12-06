@@ -289,7 +289,10 @@ end
       let
         exception PolyTy
         fun visit ty =
-            case ty of
+(* 2024-12-06 Ohori: Obviously, we need to derefTy here.
+            case ty of  
+*)
+            case derefTy ty of
               T.SINGLETONty _ => raise Bug.Bug "monoTy: SINGLETONty"
             | T.BACKENDty backendTy => raise Bug.Bug "monoTy: BACKENDty"
             | T.ERRORty => ()
