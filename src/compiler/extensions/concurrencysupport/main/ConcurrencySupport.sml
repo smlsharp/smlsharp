@@ -32,22 +32,25 @@ struct
                             handlerExp = insertCheckAtLoop handler handlerExp,
                             cleanup = cleanup,
                             loc = loc})
-      | M.MCLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
-        (mids, M.MCLOCALCODE
-                 {id = id,
-                  recursive = recursive,
-                  argVarList = argVarList,
-                  bodyExp =
-                    case insertCheckAtLoop handler bodyExp of
-                      (mids, last) =>
-                      if recursive
-                      then (M.MCCHECK {handler = handler} :: mids, last)
-                      else (mids, last),
-                  nextExp = insertCheckAtLoop handler nextExp,
-                  loc = loc})
+      | M.MCLOCALCODE {recursive, binds, nextExp, loc} =>
+        (mids,
+         M.MCLOCALCODE
+           {recursive = recursive,
+            binds =
+              map (fn {id, argVarList, bodyExp} =>
+                      {id = id,
+                       argVarList = argVarList,
+                       bodyExp =
+                         case insertCheckAtLoop handler bodyExp of
+                           (mids, last) =>
+                           if recursive
+                           then (M.MCCHECK {handler = handler} :: mids, last)
+                           else (mids, last)})
+                  binds,
+            nextExp = insertCheckAtLoop handler nextExp,
+            loc = loc})
 
-  datatype reach =
-      R of (bool * reach * M.mcexp) FunLocalLabel.Map.map
+  datatype reach = RECURSIVE | BLOCK of (reach * M.mcexp) FunLocalLabel.Map.map
 
   (* whether or not the expression dominates a recursive label *)
   fun reachableToLoop blocks (_, last) =
@@ -58,16 +61,22 @@ struct
       | M.MCGOTO {id, argList, loc} =>
         (case FunLocalLabel.Map.find (blocks, id) of
            NONE => raise Bug.Bug "reachableToLoop"
-         | SOME (true, _, _) => true
-         | SOME (false, R blocks, exp) => reachableToLoop blocks exp)
+         | SOME (RECURSIVE, _) => true
+         | SOME (BLOCK blocks, exp) => reachableToLoop blocks exp)
       | M.MCSWITCH {switchExp, expTy, branches, default, loc} => false
       | M.MCHANDLER {nextExp, id, exnVar, handlerExp, cleanup, loc} =>
         reachableToLoop blocks nextExp
-      | M.MCLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
-        reachableToLoop
-          (FunLocalLabel.Map.insert
-             (blocks, id, (recursive, R blocks, bodyExp)))
-          nextExp
+      | M.MCLOCALCODE {recursive, binds, nextExp, loc} =>
+        let
+          val reach = if recursive then RECURSIVE else BLOCK blocks
+          val blocks2 =
+              foldl (fn ({id, argVarList, bodyExp}, z) =>
+                        FunLocalLabel.Map.insert (z, id, (reach, bodyExp)))
+                    blocks
+                    binds
+        in
+          reachableToLoop blocks2 nextExp
+        end
   val reachableToLoop =
       fn exp => reachableToLoop FunLocalLabel.Map.empty exp
 
@@ -105,8 +114,9 @@ struct
       | M.MCSWITCH _ => false
       | M.MCHANDLER {nextExp, id, exnVar, handlerExp, cleanup, loc} =>
         hasCall nextExp orelse hasCall handlerExp
-      | M.MCLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
-        hasCall nextExp orelse hasCall bodyExp
+      | M.MCLOCALCODE {recursive, binds, nextExp, loc} =>
+        hasCall nextExp
+        orelse foldl (fn (x, z) => z orelse hasCall (#bodyExp x)) false binds
 
   and hasCall (nil, last) = hasCall_last last
     | hasCall (mid::mids, last) =

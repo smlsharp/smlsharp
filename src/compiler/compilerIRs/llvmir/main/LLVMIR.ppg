@@ -620,7 +620,6 @@ struct
   datatype last =
       (*%
        * @format({label, phis: phi phis, body, next})
-       * "; available " label \n
        * next \n
        * label ":" \n
        * phis(phi)(\n)

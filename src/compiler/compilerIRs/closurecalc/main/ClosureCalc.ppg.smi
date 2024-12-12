@@ -191,9 +191,13 @@ struct
       }
     | CCCATCH of
       {
-        catchLabel : FunLocalLabel.id,
-        argVarList : varInfo list,
-        catchExp : ccexp,
+        recursive : bool,
+        rules :
+        {
+          catchLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          catchExp : ccexp
+        } list,
         tryExp : ccexp,
         resultTy : ty,
         loc : loc

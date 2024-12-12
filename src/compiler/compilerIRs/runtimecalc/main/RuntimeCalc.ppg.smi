@@ -201,9 +201,13 @@ struct
       }
     | NCCATCH of
       {
-        catchLabel : FunLocalLabel.id,
-        argVarList : varInfo list,
-        catchExp : ncexp,
+        recursive : bool,
+        rules :
+        {
+          catchLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          catchExp : ncexp
+        } list,
         tryExp : ncexp,
         resultTy : ty,
         loc : loc

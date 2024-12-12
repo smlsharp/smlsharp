@@ -870,13 +870,17 @@ print "\n==\n"
                     defaultExp = compileExp env defaultExp,
                     resultTy = compileTy btvEnv resultTy,
                     loc = loc}
-      | C.CCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
-        N.NCCATCH {catchLabel = catchLabel,
-                   argVarList = map (compileVarInfo btvEnv) argVarList,
-                   catchExp = compileExp env catchExp,
-                   tryExp = compileExp env tryExp,
-                   resultTy = compileTy btvEnv resultTy,
-                   loc = loc}
+      | C.CCCATCH {recursive, rules, tryExp, resultTy, loc} =>
+        N.NCCATCH
+          {recursive = recursive,
+           rules = map (fn {catchLabel, argVarList, catchExp} =>
+                           {catchLabel = catchLabel,
+                            argVarList = map (compileVarInfo btvEnv) argVarList,
+                            catchExp = compileExp env catchExp})
+                       rules,
+           tryExp = compileExp env tryExp,
+           resultTy = compileTy btvEnv resultTy,
+           loc = loc}
       | C.CCTHROW {catchLabel, argExpList, resultTy, loc} =>
         N.NCTHROW {catchLabel = catchLabel,
                    argExpList = map (compileExp env) argExpList,

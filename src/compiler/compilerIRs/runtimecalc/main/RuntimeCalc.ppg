@@ -843,34 +843,40 @@ struct
         loc : loc
       }
     | (*%
-       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
-       *          loc})
+       * @format({recursive, rules: rule rules, tryExp, resultTy, loc})
        * R0{ tryExp
-       *     +1 
+       *     +1
        *     !R0{ "_catch" +d
-       *          L8{ catchLabel
-       *              +1 1[ args:appList(arg)("{",",","}") ] }
-       *          +d "=>" 1[ +1 catchExp ] } }
+       *          rules:caseList(rule)(2[+1], +1 "|" +d,) } }
+       * @format:rule({catchLabel, argVarList: arg args, catchExp})
+       * L8{ catchLabel
+       *     +1 1[ args:appList(arg)("{",",","}") ] }
+       *     +d "=>" 1[ +1 catchExp ]
        *)
       (*%
        * @prefix formatWithType_
-       * @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
-       *          loc})
+       * @format({recursive, rules: rule rules, tryExp, resultTy, loc})
        * L2{
        *   R0{ tryExp
-       *     +1 
-       *     !R0{ "_catch" +d
-       *          L8{ catchLabel
-       *              +1 1[ args:appList(arg)("{",",","}") ] }
-       *          +d "=>" 1[ +1 catchExp ] } }
+       *     +1
+       *     !R0{ "_catch"
+       *          rules:caseList(rule)(2[+1], +1 "|" +d,) } }
        *   +1 ":" +d resultTy }
+       * @format:rule({catchLabel, argVarList: arg args, catchExp})
+       * L8{ catchLabel
+       *     +1 1[ args:appList(arg)("{",",","}") ] }
+       *     +d "=>" 1[ +1 catchExp ]
        *)
       (* lightweight exception that unwind call stack *)
       NCCATCH of
       {
-        catchLabel : FunLocalLabel.id,
-        argVarList : varInfo list,
-        catchExp : ncexp,
+        recursive : bool,
+        rules :
+        {
+          catchLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          catchExp : ncexp
+        } list,
         tryExp : ncexp,
         resultTy : ty,
         loc : loc

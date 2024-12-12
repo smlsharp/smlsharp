@@ -44,7 +44,7 @@ local
     fun toString (n, name) =
         case name of
             "" => "L" ^ Int.toString n
-          | s => s ^ "_" ^ Int.toString n
+          | s => "L" ^ s ^ "_" ^ Int.toString n
                                         
     fun format_id id =
         let

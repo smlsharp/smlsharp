@@ -241,10 +241,12 @@ struct
       }
     | ANLOCALCODE of
       {
-        id : FunLocalLabel.id,
         recursive : bool,
-        argVarList : varInfo list,
-        bodyExp : anexp,
+        binds : {
+          id : FunLocalLabel.id,
+          argVarList : varInfo list,
+          bodyExp : anexp
+        } list,
         nextExp : anexp,
         loc : loc
       }

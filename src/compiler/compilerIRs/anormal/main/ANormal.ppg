@@ -861,14 +861,11 @@ struct
         loc : loc
       }
     | (*%
-       * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
-       * L8{ 1[
-       *   "available"
-       *   +1 "@L:" id
-       *   ";"
-       * ] }
-       * +1 nextExp
+       * @format({recursive, binds: bind binds, nextExp, loc})
+       * nextExp
        * +1
+       * binds:appList(bind)(+1,+1,)
+       * @format:bind({id, argVarList: arg args, bodyExp})
        * L8{ 1[
        *   recursive()("rec" +d,)
        *   "@L:" id
@@ -878,14 +875,11 @@ struct
        * +1 bodyExp
        *)
       (*% @prefix formatWithType_
-       * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
-       * L8{ 1[
-       *   "available"
-       *   +1 "@L:" id
-       *   ";"
-       * ] }
-       * +1 nextExp
+       * @format({recursive, binds: bind binds, nextExp, loc})
+       * nextExp
        * +1
+       * binds:appList(bind)(+1,+1,)
+       * @format:bind({id, argVarList: arg args, bodyExp})
        * L8{ 1[
        *   recursive()("rec" +d,)
        *   "@L:" id
@@ -896,10 +890,13 @@ struct
        *)
       ANLOCALCODE of
       {
-        id : FunLocalLabel.id,
         recursive : bool,
-        argVarList : varInfo list,
-        bodyExp : anexp,
+        binds :
+        {
+          id : FunLocalLabel.id,
+          argVarList : varInfo list,
+          bodyExp : anexp
+        } list,
         nextExp : anexp,
         loc : loc
       }

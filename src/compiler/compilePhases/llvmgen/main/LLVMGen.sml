@@ -2167,10 +2167,14 @@ print
                           default = (default, nil),
                           branches = branches})
         end
-      | M.MCLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
-        scope (compileExp env nextExp)
-        o label (id, map compileVarInfo argVarList)
-        o compileExp env bodyExp
+      | M.MCLOCALCODE {recursive, binds, nextExp, loc} =>
+        foldl
+          (fn ({id, argVarList, bodyExp}, z) =>
+              scope z
+              o label (id, map compileVarInfo argVarList)
+              o compileExp env bodyExp)
+          (compileExp env nextExp)
+          binds
       | M.MCGOTO {id, argList, loc} =>
         last (L.BR (id, map (compileValue env) argList))
       | M.MCUNREACHABLE =>

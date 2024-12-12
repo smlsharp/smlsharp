@@ -916,9 +916,11 @@ struct
         loc : loc
       }
     | (*%
-       * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
-       * L8{ 1[ "available" +1 id ";" ] }
-       * \n nextExp
+       * @format({recursive, binds: bind binds, nextExp, loc})
+       * nextExp
+       * binds:ifcons()(\n,)
+       * binds(bind)(\n)
+       * @format:bind({id, argVarList: arg args, bodyExp})
        * L8{ 1[
        *   "localcode"
        *   recursive:iftrue()(+1 "rec",)
@@ -929,24 +931,17 @@ struct
        * 1[ \n bodyExp ]
        *)
       (*% @prefix formatWithType_
-       * @format({id, recursive, argVarList : arg args, bodyExp, nextExp, loc})
-       * L8{ 1[ "available" +1 id ";" ] }
-       * \n nextExp
-       * L8{ 1[
-       *   "localcode"
-       *   recursive:iftrue()(+1 "rec",)
-       *   +1 id
-       *   +1 "(" !N0{ args(arg)("," +1) ")" }
-       *   ":"
-       * ] }
-       * 1[ \n bodyExp ]
+       * @ditto
        *)
       MCLOCALCODE of
       {
-        id : FunLocalLabel.id,
         recursive : bool,
-        argVarList : varInfo list,
-        bodyExp : mcexp,
+        binds :
+        {
+          id : FunLocalLabel.id,
+          argVarList : varInfo list,
+          bodyExp : mcexp
+        } list,
         nextExp : mcexp,
         loc : loc
       }

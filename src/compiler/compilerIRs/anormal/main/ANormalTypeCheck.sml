@@ -995,14 +995,23 @@ struct
                 | SOME argTyList => unifyList "ANSWITCH3" (nil, argTyList))
             (map #2 branches @ [default])
         end
-      | A.ANLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
+      | A.ANLOCALCODE {recursive, binds, nextExp, loc} =>
         let
-          val env2 = bindLocalCode (env, id, map #ty argVarList)
-          val bodyEnv = if recursive then env2 else env
-          val varEnv = varListToVarEnv "ANLOCALCODE" argVarList
-          val bodyEnv = extendVarEnv (env2, varEnv)
+          val env2 =
+              foldl (fn ({id, argVarList, bodyExp}, env) =>
+                        bindLocalCode (env, id, map #ty argVarList))
+                    env
+                    binds
+          val env3 = if recursive then env2 else env
         in
-          checkExp bodyEnv bodyExp;
+          app (fn {id, argVarList, bodyExp} =>
+                  let
+                    val varEnv = varListToVarEnv "ANLOCALCODE" argVarList
+                    val env4 = extendVarEnv (env3, varEnv)
+                  in
+                    checkExp env4 bodyExp
+                  end)
+              binds;
           checkExp env2 nextExp
         end
       | A.ANGOTO {id, argList, loc} =>

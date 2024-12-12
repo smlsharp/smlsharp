@@ -125,9 +125,13 @@ struct
       }
     | RCCATCH of
       {
-        catchLabel : FunLocalLabel.id,
-        argVarList : varInfo list,
-        catchExp : rcexp,
+        recursive: bool,
+        rules:
+        {
+          catchLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          catchExp : rcexp
+        } list,
         tryExp : rcexp,
         resultTy : ty,
         loc : loc

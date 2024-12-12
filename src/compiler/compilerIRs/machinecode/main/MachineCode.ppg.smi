@@ -243,10 +243,13 @@ struct
       }
     | MCLOCALCODE of
       {
-        id : FunLocalLabel.id,
         recursive : bool,
-        argVarList : varInfo list,
-        bodyExp : mcexp_mid list * mcexp_last,
+        binds :
+        {
+          id : FunLocalLabel.id,
+          argVarList : varInfo list,
+          bodyExp : mcexp_mid list * mcexp_last
+        } list,
         nextExp : mcexp_mid list * mcexp_last,
         loc : loc
       }

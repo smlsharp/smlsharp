@@ -141,14 +141,8 @@ struct
                     unionSet (fv, fvExp bv branchExp))
                 (fvExpList bv [switchExp, defaultExp])
                 branches
-        | C.CCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
-          let
-            val bv2 = foldl (fn ({id,...},z) => VarID.Set.add (z,id))
-                            bv
-                            argVarList
-          in
-            unionSet (fvExp bv2 catchExp, fvExp bv tryExp)
-          end
+        | C.CCCATCH {recursive, rules, tryExp, resultTy, loc} =>
+          unionSetList (fvExp bv tryExp :: map (fvCatchRule bv) rules)
         | C.CCTHROW {catchLabel, argExpList, resultTy, loc} =>
           fvExpList bv argExpList
         | C.CCCAST {exp, expTy, targetTy, cast, loc} =>
@@ -158,6 +152,15 @@ struct
 
     and fvExpList bv exps =
         foldl (fn (x,z) => unionSet (fvExp bv x, z)) emptySet exps
+
+    and fvCatchRule bv {catchLabel, argVarList, catchExp} =
+        let
+          val bv2 = foldl (fn ({id, ...}, z) => VarID.Set.add (z, id))
+                          bv
+                          argVarList
+        in
+          fvExp bv2 catchExp
+        end
 
     and fvCconv bv cconv =
         case cconv of
@@ -299,18 +302,13 @@ struct
            defaultExp = substExp subst defaultExp,
            resultTy = resultTy,
            loc = loc}
-      | C.CCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
-        let
-          val subst2 = foldl (fn (x,z) => remove (z, #id x)) subst argVarList
-        in
-          C.CCCATCH
-            {catchLabel = catchLabel,
-             argVarList = argVarList,
-             catchExp = substExp subst2 catchExp,
-             tryExp = substExp subst tryExp,
-             resultTy = resultTy,
-             loc = loc}
-        end
+      | C.CCCATCH {recursive, rules, tryExp, resultTy, loc} =>
+        C.CCCATCH
+          {recursive = recursive,
+           rules = map (substCatchRule subst) rules,
+           tryExp = substExp subst tryExp,
+           resultTy = resultTy,
+           loc = loc}
       | C.CCTHROW {catchLabel, argExpList, resultTy, loc} =>
         C.CCTHROW
           {catchLabel = catchLabel,
@@ -330,6 +328,15 @@ struct
            ty = ty,
            valueExp = substExp subst valueExp,
            loc = loc}
+
+  and substCatchRule subst {catchLabel, argVarList, catchExp} =
+      let
+        val subst2 = foldl (fn (x,z) => remove (z, #id x)) subst argVarList
+      in
+        {catchLabel = catchLabel,
+         argVarList = argVarList,
+         catchExp = substExp subst2 catchExp}
+      end
 
   and substCconv subst cconv =
       case cconv of
@@ -1522,17 +1529,15 @@ struct
                        resultTy = resultTy,
                        loc = loc})
         end
-      | B.BCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+      | B.BCCATCH {recursive, rules, tryExp, resultTy, loc} =>
         let
-          val env2 = addBoundVars (env, argVarList)
-          val (top1, _, catchExp) = compileExp accum env2 catchExp
+          val (top1, rules) = compileCatchRules accum env rules
           val (top2, _, tryExp) = compileExp accum env tryExp
         in
           (top1 @ top2,
            VALUE,
-           C.CCCATCH {catchLabel = catchLabel,
-                      argVarList = argVarList,
-                      catchExp = catchExp,
+           C.CCCATCH {recursive = recursive,
+                      rules = rules,
                       tryExp = tryExp,
                       resultTy = resultTy,
                       loc = loc})
@@ -1660,6 +1665,19 @@ struct
         (top1 @ top2 @ top3,
          {bitmapIndex = bitmapIndex,
           bitmapExp = bitmapExp} :: bitmaps)
+      end
+
+  and compileCatchRules accum env nil = (nil, nil)
+    | compileCatchRules accum env ({catchLabel, argVarList, catchExp}::rules) =
+      let
+          val env2 = addBoundVars (env, argVarList)
+          val (top1, _, catchExp) = compileExp accum env2 catchExp
+          val (top2, rules) = compileCatchRules accum env rules
+      in
+        (top1 @ top2,
+         {catchLabel = catchLabel,
+          argVarList = argVarList,
+          catchExp = catchExp} :: rules)
       end
 
   and compileFuncBody env bodyExp loc =

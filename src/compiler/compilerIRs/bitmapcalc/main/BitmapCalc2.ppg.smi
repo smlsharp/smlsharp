@@ -124,9 +124,13 @@ struct
       }
     | BCCATCH of
       {
-        catchLabel : FunLocalLabel.id,
-        argVarList : varInfo list,
-        catchExp : bcexp,
+        recursive : bool,
+        rules :
+        {
+          catchLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          catchExp : bcexp
+        } list,
         tryExp : bcexp,
         resultTy : ty,
         loc : loc

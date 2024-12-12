@@ -387,9 +387,10 @@ struct
            loc = loc}
       | TL.TLCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
         RC.RCCATCH
-          {catchLabel = catchLabel,
-           argVarList = map compileVarInfo argVarList,
-           catchExp = compileExp context catchExp,
+          {recursive = false,
+           rules = [{catchLabel = catchLabel,
+                     argVarList = map compileVarInfo argVarList,
+                     catchExp = compileExp context catchExp}],
            tryExp = compileExp context tryExp,
            resultTy = compileTy resultTy,
            loc = loc}

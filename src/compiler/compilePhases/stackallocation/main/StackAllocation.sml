@@ -245,9 +245,12 @@ struct
       }
     | LOCALCODE of
       {
-        id : FunLocalLabel.id,
         recursive : bool,
-        body : block,
+        binds :
+        {
+          id : FunLocalLabel.id,
+          body : block
+        } list,
         next : exp,
         loc : M.loc
       }
@@ -324,7 +327,7 @@ struct
          gc = updateGC (causeGC, def) NOGC}
       | LAST {def, use, args, orig} =>
         {defs = def, uses = use, gc = NOGC}
-      | LOCALCODE {id, recursive, body, next, loc} => defuseExp next
+      | LOCALCODE {recursive, binds, next, loc} => defuseExp next
       | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         defuseExp nextExp
 
@@ -388,18 +391,35 @@ struct
                    cleanup = cleanup,
                    loc = loc}
         end
-      | M.MCLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
+      | M.MCLOCALCODE {recursive, binds, nextExp, loc} =>
         let
-          val block = newBlock id argVarList
-          val env = env # {blockEnv = FunLocalLabel.Map.insert
-                                        (#blockEnv env, id, block)}
-          val bodyExp = prepareExp (env # {currentBlock = block}) bodyExp
-          val _ = setBody (block, bodyExp)
-          val nextExp = prepareExp env nextExp
+          val binds =
+              map (fn {id, argVarList, bodyExp} =>
+                      {id = id,
+                       argVarList = argVarList,
+                       bodyExp = bodyExp,
+                       block = newBlock id argVarList})
+                  binds
+          val blockEnv =
+              foldl (fn ({id, block, ...}, blockEnv) =>
+                        FunLocalLabel.Map.insert (blockEnv, id, block))
+                    (#blockEnv env)
+                    binds
+          val env2 = env # {blockEnv = blockEnv}
+          val env3 = if recursive then env2 else env
+          val binds =
+              map (fn {id, argVarList, bodyExp, block} =>
+                      let
+                        val env4 = env3 # {currentBlock = block}
+                      in
+                        setBody (block, prepareExp env4 bodyExp);
+                        {id = id, body = block}
+                      end)
+                  binds
+          val nextExp = prepareExp env2 nextExp
         in
-          LOCALCODE {id = id,
-                     recursive = recursive,
-                     body = block,
+          LOCALCODE {recursive = recursive,
+                     binds = binds,
                      next = nextExp,
                      loc = loc}
         end
@@ -732,17 +752,24 @@ struct
            o saveArgs alloc args
            o last orig)
         end
-      | LOCALCODE {id, recursive, body, next, loc} =>
+      | LOCALCODE {recursive, binds, next, loc} =>
         let
           val (input, nextExp) = reconstructExp alloc (next, out)
-          val (argVarList, bodyExp) = reconstructBlock alloc body
+          val binds =
+              map (fn {id, body} =>
+                      let
+                        val (argVarList, bodyExp) = reconstructBlock alloc body
+                      in
+                        {id = id,
+                         argVarList = argVarList,
+                         bodyExp = bodyExp ()}
+                      end)
+                  binds
         in
           (input,
            last (M.MCLOCALCODE {nextExp = nextExp (),
-                                id = id,
+                                binds = binds,
                                 recursive = recursive,
-                                argVarList = argVarList,
-                                bodyExp = bodyExp (),
                                 loc = loc}))
         end
       | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
@@ -782,8 +809,9 @@ struct
       | CALL {def, use, returnTo, causeGC, orig} =>
         blocks returnTo
       | LAST {def, use, args, orig} => nil
-      | LOCALCODE {id, recursive, body, next, loc} =>
-        blocksInExp next @ blocks body
+      | LOCALCODE {recursive, binds, next, loc} =>
+        blocksInExp next @
+        foldl (op @) nil (map (blocks o #body) binds)
       | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         blocksInExp nextExp @ blocks handler
 
@@ -850,7 +878,7 @@ struct
         interferenceStep z (def, use, causeGC)
       | LAST {def, use, args, orig} =>
         interferenceStep z (def, use, false)
-      | LOCALCODE {id, recursive, body, next, loc} =>
+      | LOCALCODE {recursive, binds, next, loc} =>
         interferenceExp z next
       | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
         interferenceExp z nextExp

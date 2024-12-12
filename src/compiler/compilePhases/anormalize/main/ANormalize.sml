@@ -519,16 +519,16 @@ struct
                  (* NOTE: this local code may be dead code if all branches are
                   * terminated by RAISE  *)
                  A.ANLOCALCODE
-                   {id = mergeLabel,
-                    recursive = false,
-                    argVarList = [resultVar],
-                    bodyExp = nextExp,
+                   {recursive = false,
+                    binds = [{id = mergeLabel,
+                              argVarList = [resultVar],
+                              bodyExp = nextExp}],
                     nextExp =
                       A.ANLOCALCODE
-                        {id = localHandlerLabel,
-                         recursive = false,
-                         argVarList = [exnVar],
-                         bodyExp = handlerExp,
+                        {recursive = false,
+                         binds = [{id = localHandlerLabel,
+                                   argVarList = [exnVar],
+                                   bodyExp = handlerExp}],
                          nextExp =
                            A.ANHANDLER
                              {nextExp = tryExp,
@@ -565,21 +565,21 @@ struct
               (FunLocalLabel.generate nil,
                compileBranchExp env context mergeLabel defaultExp)
           val switchProc =
-              foldl (fn ((id, exp), K) =>
-                        A.ANLOCALCODE {id = id,
-                                       recursive = false,
-                                       argVarList = nil,
-                                       bodyExp = exp,
-                                       nextExp = K,
-                                       loc = loc})
-                    (proc1
-                       (A.ANSWITCH
-                          {switchExp = switchExp,
-                           expTy = expTy,
-                           branches = map (fn (c,(l,_)) => (c,l)) branches,
-                           default = #1 defaultBranch,
-                           loc = loc}))
-                    (defaultBranch :: rev (map #2 branches))
+              A.ANLOCALCODE
+                {recursive = false,
+                 binds =
+                   map (fn (id, exp) =>
+                           {id = id, argVarList = nil, bodyExp = exp})
+                       (defaultBranch :: rev (map #2 branches)),
+                 loc = loc,
+                 nextExp =
+                   proc1
+                     (A.ANSWITCH
+                        {switchExp = switchExp,
+                         expTy = expTy,
+                         branches = map (fn (c, (l, _)) => (c, l)) branches,
+                         default = #1 defaultBranch,
+                         loc = loc})}
         in
           case mergeVar of
               NONE => (fn _ => switchProc, A.ANBOTTOM)
@@ -588,10 +588,10 @@ struct
                 val proc1 =
                     fn nextExp =>
                        A.ANLOCALCODE
-                         {id = mergeLabel,
-                          recursive = false,
-                          argVarList = [var],
-                          bodyExp = nextExp,
+                         {recursive = false,
+                          binds = [{id = mergeLabel,
+                                    argVarList = [var],
+                                    bodyExp = nextExp}],
                           nextExp = switchProc,
                           loc = loc}
                 val (proc2, ret) = return context (A.ANVAR var, resultTy, loc)
@@ -599,7 +599,7 @@ struct
                 (proc1 o proc2, ret)
               end
         end
-      | N.NCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+      | N.NCCATCH {recursive, rules, tryExp, resultTy, loc} =>
         let
           val mergeVar =
               case context of
@@ -607,14 +607,21 @@ struct
               | NONTAIL => SOME (newVar resultTy)
               | BIND var => SOME (refreshVar var)
           val mergeLabel = FunLocalLabel.generate nil
-          val (env2, argVarList) = addBoundVars (env, argVarList)
-          val codeBodyExp = compileBranchExp env2 context mergeLabel catchExp
           val mainExp = compileBranchExp env context mergeLabel tryExp
+          val binds =
+              map (fn {catchLabel, argVarList, catchExp} =>
+                      let
+                        val (env2, argVarList) = addBoundVars (env, argVarList)
+                      in
+                        {id = catchLabel,
+                         argVarList = argVarList,
+                         bodyExp =
+                           compileBranchExp env2 context mergeLabel catchExp}
+                      end)
+                  rules
           val localCodeExp =
-              A.ANLOCALCODE {id = catchLabel,
-                             recursive = false,
-                             argVarList = argVarList,
-                             bodyExp = codeBodyExp,
+              A.ANLOCALCODE {recursive = recursive,
+                             binds = binds,
                              nextExp = mainExp,
                              loc = loc}
         in
@@ -626,10 +633,10 @@ struct
                   fn nextExp =>
                      (* NOTE: this local code may be dead code if all branches
                       * are terminated by RAISE  *)
-                     A.ANLOCALCODE {id = mergeLabel,
-                                    recursive = false,
-                                    argVarList = [var],
-                                    bodyExp = nextExp,
+                     A.ANLOCALCODE {recursive = false,
+                                    binds = [{id = mergeLabel,
+                                              argVarList = [var],
+                                              bodyExp = nextExp}],
                                     nextExp = localCodeExp,
                                     loc = loc}
               val (proc2, ret) = return context (A.ANVAR var, resultTy, loc)
@@ -759,10 +766,10 @@ struct
           (closureEnvVar,
            argVarList,
            A.ANLOCALCODE
-             {id = label,
-              recursive = true,
-              argVarList = argVarList,
-              bodyExp = bodyExp,
+             {recursive = true,
+              binds = [{id = label,
+                        argVarList = argVarList,
+                        bodyExp = bodyExp}],
               nextExp = A.ANGOTO {id = label,
                                   argList = map A.ANVAR argVarList,
                                   loc = loc},

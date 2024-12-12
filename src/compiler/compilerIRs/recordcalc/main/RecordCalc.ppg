@@ -485,13 +485,15 @@ struct
         loc : loc
       }
     | (*%
-        @format({catchLabel, argVarList: arg args, catchExp, tryExp, resultTy,
-                 loc})
+        @format({recursive, rules: rule rules, tryExp, resultTy, loc})
         R1{
           tryExp
-          +1
-          "RCCATCH"
-          +d catchLabel +d
+          +1 "RCCATCH" recursive:iftrue()(+d "rec",)
+          +d rules(rule)(+1 "|" +d)
+        }
+        @format:rule({catchLabel, argVarList: arg args, catchExp})
+        {
+          catchLabel +d
           args:ifsingle()(,"{")
           args:N0ifnotsingle()(args(arg)("," +1))
           args:ifsingle()(,"}")
@@ -504,9 +506,13 @@ struct
       (* lightweight exception that never unwind call stack *)
       RCCATCH of
       {
-        catchLabel : FunLocalLabel.id,
-        argVarList : varInfo list,
-        catchExp : rcexp,
+        recursive : bool,
+        rules :
+        {
+          catchLabel : FunLocalLabel.id,
+          argVarList : varInfo list,
+          catchExp : rcexp
+        } list,
         tryExp : rcexp,
         resultTy : ty,
         loc : loc

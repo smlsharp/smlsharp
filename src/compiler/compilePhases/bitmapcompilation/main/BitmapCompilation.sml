@@ -370,14 +370,17 @@ struct
                    bodyExp = Let (decls, bodyExp, loc),
                    loc = loc}
         end
-      | R.RCCATCH {catchLabel, argVarList, catchExp, tryExp, resultTy, loc} =>
+      | R.RCCATCH {recursive, rules, tryExp, resultTy, loc} =>
         let
-          val catchExp = compileExp accum catchExp
+          val rules = map (fn {catchLabel, argVarList, catchExp} =>
+                              {catchLabel = catchLabel,
+                               argVarList = argVarList,
+                               catchExp = compileExp accum catchExp})
+                          rules
           val tryExp = compileExp accum tryExp
         in
-          B.BCCATCH {catchLabel = catchLabel,
-                     argVarList = argVarList,
-                     catchExp = catchExp,
+          B.BCCATCH {recursive = recursive,
+                     rules = rules,
                      tryExp = tryExp,
                      resultTy = resultTy,
                      loc = loc}

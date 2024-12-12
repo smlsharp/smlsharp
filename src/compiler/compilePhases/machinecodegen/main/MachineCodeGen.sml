@@ -86,40 +86,34 @@ struct
         val elseLabel = FunLocalLabel.generate nil
         val goto : M.mcexp =
             (nil, M.MCGOTO {id = nextLabel, argList = nil, loc = loc})
-        val thenBlock =
-            fn K => (nil, M.MCLOCALCODE
-                            {id = thenLabel,
-                             recursive = false,
-                             argVarList = nil,
-                             bodyExp = thenExp goto,
-                             nextExp = K,
-                             loc = loc}) : M.mcexp
-        val elseBlock =
-            fn K => (nil, M.MCLOCALCODE
-                            {id = elseLabel,
-                             recursive = false,
-                             argVarList = nil,
-                             bodyExp = elseExp goto,
-                             nextExp = K,
-                             loc = loc}) : M.mcexp
       in
         fn K =>
            (nil,
             M.MCLOCALCODE
-              {id = nextLabel,
-               recursive = false,
-               argVarList = nil,
-               bodyExp = K,
+              {recursive = false,
+               binds = [{id = nextLabel,
+                         argVarList = nil,
+                         bodyExp = K}],
                loc = loc,
                nextExp =
-                 (thenBlock o elseBlock)
-                   (nil,
-                    M.MCSWITCH
-                      {switchExp = condExp,
-                       expTy = condTy,
-                       branches = [(const, thenLabel)],
-                       default = elseLabel,
-                       loc = loc})})
+                 (nil,
+                  M.MCLOCALCODE
+                    {recursive = false,
+                     binds = [{id = thenLabel,
+                               argVarList = nil,
+                               bodyExp = thenExp goto},
+                              {id = elseLabel,
+                               argVarList = nil,
+                               bodyExp = elseExp goto}],
+                     loc = loc,
+                     nextExp =
+                       (nil,
+                        M.MCSWITCH
+                          {switchExp = condExp,
+                           expTy = condTy,
+                           branches = [(const, thenLabel)],
+                           default = elseLabel,
+                           loc = loc})})})
       end
 
   fun switchByTag {tagExp, tagOfTy, ifBoxed, ifUnboxed, loc} =
@@ -718,16 +712,19 @@ struct
                 {id = id,
                  argList = map (compileValue subst) argList,
                  loc = loc})
-      | A.ANLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
+      | A.ANLOCALCODE {recursive, binds, nextExp, loc} =>
         last (M.MCLOCALCODE
-                {id = id,
-                 recursive = recursive,
-                 argVarList = argVarList,
-                 bodyExp = compileExp (mask (subst, argVarList)) bodyExp (),
+                {recursive = recursive,
+                 binds = map (compileLocalCode subst) binds,
                  nextExp = compileExp subst nextExp (),
                  loc = loc})
       | A.ANUNREACHABLE =>
         last M.MCUNREACHABLE
+
+  and compileLocalCode subst {id, argVarList, bodyExp} =
+      {id = id,
+       argVarList = argVarList,
+       bodyExp = compileExp (mask (subst, argVarList)) bodyExp ()}
 
   fun compileTopdec topdec =
       case topdec of

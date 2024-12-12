@@ -102,6 +102,15 @@ struct
         (var::vars, subst)
       end
 
+  fun bindLabelList subst nil = (nil, subst)
+    | bindLabelList subst (label::labels) =
+      let
+        val (label, subst) = bindLabel subst label
+        val (labels, subst) = bindLabelList subst labels
+      in
+        (label::labels, subst)
+      end
+
   fun renameLabel ({labelSubst,...}:subst) label =
       case FunLocalLabel.Map.find (labelSubst, label) of
         NONE => raise Bug.Bug "renameLabel"
@@ -412,18 +421,26 @@ struct
         M.MCGOTO {id = renameLabel subst id,
                   argList = map (renameValue subst) argList,
                   loc = loc}
-      | M.MCLOCALCODE {id, recursive, argVarList, bodyExp, nextExp, loc} =>
+      | M.MCLOCALCODE {recursive, binds, nextExp, loc} =>
         let
-          val (id, subst2) = bindLabel subst id
+          val labels = map #id binds
+          val (labels, subst2) = bindLabelList subst labels
           val nextExp = renameExp subst2 nextExp
-          val bodySubst = if recursive then subst2 else subst
-          val (argVarList, bodySubst) = bindVarList bodySubst argVarList
-          val bodyExp = renameExp bodySubst bodyExp
+          val subst3 = if recursive then subst2 else subst
+          val binds =
+              ListPair.mapEq
+                (fn (id, {id = _, argVarList, bodyExp}) =>
+                    let
+                      val (argVarList, subst4) = bindVarList subst3 argVarList
+                    in
+                      {id = id,
+                       argVarList = argVarList,
+                       bodyExp = renameExp subst4 bodyExp}
+                    end)
+                (labels, binds)
         in
-          M.MCLOCALCODE {id = id,
-                         recursive = recursive,
-                         argVarList = argVarList,
-                         bodyExp = bodyExp,
+          M.MCLOCALCODE {recursive = recursive,
+                         binds = binds,
                          nextExp = nextExp,
                          loc = loc}
         end
