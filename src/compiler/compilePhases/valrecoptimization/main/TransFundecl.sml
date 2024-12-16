@@ -46,33 +46,20 @@ in
       let
         val funBody =
             let
-              val newIds = map (fn x => newVarId()) args
-              val newVars =
-                  map (fn id=>ICVAR {longsymbol=Symbol.mkLongsymbol nil loc,id=id}) newIds
-              val newVarPats =
-                  map (fn id => ICPATVAR_TRANS {longsymbol=Symbol.mkLongsymbol nil loc,id=id}) newIds
-              val argRecord = ICRECORD (RecordLabel.tupleList newVars, loc)
-              val funRules =
-                  map
-                  (fn {args, body} =>
-                      {args = [ICPATRECORD {flex = false,
-                                            fields = RecordLabel.tupleList args,
-                                            loc = loc}],
-                       body = transExp body}
-                  )
-                  rules
+              val argVarList =
+                  map (fn _ => {longsymbol = Symbol.mkLongsymbol nil loc,
+                                id = newVarId ()})
+                      args
+              val rules =
+                  map (fn {args, body} =>
+                          {args = args, body = transExp body})
+                      rules
             in
               foldr
-                (fn (x, y) =>
-                    ICFNM([{args = [x], body = y}],
-                          loc))
-                (ICAPPM
-                   (
-                    ICFNM(funRules, loc),
-                    [argRecord],
-                    loc
-                ))
-                newVarPats
+                (fn (argVar, body) =>
+                    ICFNM([{args = [ICPATVAR_TRANS argVar], body = body}], loc))
+                (ICCASEM (map ICVAR argVarList, rules, PatternCalc.MATCH, loc))
+                argVarList
             end
       in
         (funVarInfo, tyList, funBody)

@@ -4,7 +4,7 @@ _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "./TRANS_FUNDECL.sig"
-
+_require local "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 
 structure TransFundecl =
