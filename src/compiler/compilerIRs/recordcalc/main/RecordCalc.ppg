@@ -207,8 +207,7 @@ struct
         string
        *)
       (*% @prefix formatWithType_
-        @format(string * loc)
-        string
+        @ditto
        *)
       RCSTRING of tlstring * loc
     | (*%
@@ -223,9 +222,9 @@ struct
         @format({argVarList:arg args, bodyTy, bodyExp, loc})
         R1{
           "fn" +d
-          args:ifsingle()(,"{")
+          args:ifsingle()(,"(")
           args:N0ifnotsingle()(args(arg)("," +1))
-          args:ifsingle()(,"}")
+          args:ifsingle()(,")")
           +d "=>" +1 bodyExp
         }
        *)
@@ -246,16 +245,15 @@ struct
           funExp
           2[
             +1
-            args:ifsingle()(,"{")
+            args:ifsingle()(,"(")
             args:N0ifnotsingle()(args(arg)("," +1))
-            args:ifsingle()(,"}")
+            args:ifsingle()(,")")
           ]
         }
        *)
       (*% @prefix formatWithType_
         @ditto
        *)
-      (* ty is the type of the function *)
       RCAPPM of
       {
         funExp : rcexp,
@@ -266,11 +264,10 @@ struct
     | (*%
         @format({exp, expTy, branches: rule rules, resultTy, defaultExp, loc})
         R1{
-          { "switch" 2[ +1 exp +1 "of" ] }
-          +1
-          rules(rule)(+1 "|" +d)
-          rules:ifcons()(+1 "|" +d,)
-          { "_" +d "=>" +1 defaultExp }
+          { "switch" 2[ +1 exp ] +1 "of" }
+          2[+1] rules(rule)(+1 "|" +)
+          rules:ifcons()(+1 "|" +,)
+          { "_" +d "=>" +1 !R1{ defaultExp } }
         }
         @format:rule({const, body})
         { const +d "=>" +1 body }
@@ -300,9 +297,9 @@ struct
             tags:N0ifcons()(tags(tag)("/t," +1))
             tags:ifcons()("/t]",)
             +1
-            args:ifsingle()(,"{")
+            args:ifsingle()(,"(")
             args:N0ifnotsingle()(args(arg)("," +1))
-            args:ifsingle()(,"}")
+            args:ifsingle()(,")")
           ]
         }
        *)
@@ -324,9 +321,9 @@ struct
             tags:N0ifcons()(tags(tag)("/t," +1))
             tags:ifcons()("/t]",)
             +1
-            args:ifsingle()(,"{")
+            args:ifsingle()(,"(")
             args:N0ifnotsingle()(args(arg)("," +1))
-            args:ifsingle()(,"}")
+            args:ifsingle()(,")")
           ]
         }
        *)
@@ -343,7 +340,7 @@ struct
         @format({fields: field fields, loc})
         "{" !N0{ fields(field) } "}"
         @format:field({exp, ty, size, tag})
-        1 "[" !N0{ size "/s," +1 tag "/t" } "]" +d "=" 2[ +1 exp ]
+        d "[" !N0{ size "/s," d tag "/t" } "]" +d "=" 2[ +1 exp ]
        *)
       (*% @prefix formatWithType_
         @ditto
@@ -359,7 +356,7 @@ struct
                  resultSize, resultTag, loc})
         L8{
           "#" label
-          1 "[" !N0{ resultSize "/s," +1 resultTag "/t" } "]"
+          d "[" !N0{ resultSize "/s," +1 resultTag "/t" } "]"
           2[
             +1 indexExp
             +1 recordExp
@@ -386,10 +383,10 @@ struct
         L8{
           recordExp
           2[
-            +1 "#" +d "{"
+            +1 "#" d "{"
             !N0{
               label
-              1 "[" !N0{ elementSize "/s," +1 elementTag "/t" } "}" "]"
+              d "[" !N0{ elementSize "/s," d elementTag "/t" } "]"
               2[ +1 indexExp ]
               +d "="
               2[ +1 elementExp ]
@@ -416,7 +413,8 @@ struct
     | (*%
         @format({decl, body, loc})
         N4{!N0{
-          { "let" 2[ +1 decl ] +1 "in" } +1 body
+          { "let" +d decl +1 "in" }
+          +1 body
         }}
        *)
       (*% @prefix formatWithType_
@@ -465,12 +463,14 @@ struct
     | (*%
         @format({catchLabel, argExpList: arg args, resultTy, loc})
         L8{
-          "RCTHROW"
-          +1 catchLabel
-          +1
-          args:ifsingle()(,"{")
-          args:N0ifnotsingle()(args(arg)("," +1))
-          args:ifsingle()(,"}")
+          "THROW"
+          2[
+            +1 catchLabel
+            +1
+            args:ifsingle()(,"(")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,")")
+          ]
         }
        *)
       (*% @prefix formatWithType_
@@ -486,19 +486,18 @@ struct
       }
     | (*%
         @format({recursive, rules: rule rules, tryExp, resultTy, loc})
-        R1{
-          tryExp
-          +1 "RCCATCH" recursive:iftrue()(+d "rec",)
-          +d rules(rule)(+1 "|" +d)
-        }
+        N4{!N0{
+          { "CATCH" recursive:iftrue()(+d "rec",)
+            rules(rule)(+1 "and")
+            +1 "in" }
+          +1 tryExp
+        }}
         @format:rule({catchLabel, argVarList: arg args, catchExp})
-        {
-          catchLabel +d
-          args:ifsingle()(,"{")
-          args:N0ifnotsingle()(args(arg)("," +1))
-          args:ifsingle()(,"}")
-          +d "=>" 2[ +1 catchExp ]
-        }
+        +d catchLabel +d
+        args:ifsingle()(,"(")
+        args:N0ifnotsingle()(args(arg)("," +1))
+        args:ifsingle()(,")")
+        +d "=" 2[ +1 !R1{ catchExp } ]
        *)
       (*% @prefix formatWithType_
         @ditto
@@ -588,9 +587,9 @@ struct
         @format({attributes, argVarList:arg args, resultTy, bodyExp, loc})
         R1{
           "RCCALLBACKFN" +d
-          args:ifsingle()(,"{")
+          args:ifsingle()(,"(")
           args:N0ifnotsingle()(args(arg)("," +1))
-          args:ifsingle()(,"}")
+          args:ifsingle()(,")")
           +d "=>" +1 bodyExp
         }
        *)
@@ -599,9 +598,9 @@ struct
                  bodyExp, loc})
         R1{
           "RCCALLBACKFN" +d
-          args:ifsingle()(,"{")
+          args:ifsingle()(,"(")
           args:N0ifnotsingle()(args(arg)("," +1))
-          args:ifsingle()(,"}")
+          args:ifsingle()(,")")
           +d "=>" +1
           L2{ bodyExp +1 ":" +d retTyOpt:ifsome()(retTyOpt(retTy),"()") }
         }
@@ -616,12 +615,12 @@ struct
       }
     | (*%
         @format({exp, expTy, targetTy, cast, loc})
-        L8{ cast 2[ 1 "(" !N0{ exp } ")" ] }
+        L8{ cast 2[ +1 exp ] }
        *)
       (*% @prefix formatWithType_
         @format({exp, expTy, targetTy, cast, loc})
         L2{
-          L8{ cast 2[ 1 "(" !N0{ exp } ")" ] }
+          L8{ cast 2[ +1 exp ] }
           +1 ":" +d targetTy
         }
        *)
@@ -636,14 +635,27 @@ struct
       }
     | (*%
         @format({fields:field fields, label, loc})
-        L8{ "RCINDEXOF"
-          2[ +1 "(" !N0{ "{" !N0{ fields(field) } "}" "," +1 label } ")" ]
+        L8{
+          "INDEXOF"
+          2[
+            +1 label
+            +1 "{" !N0{ fields(field) } "}"
+          ]
+        }
+        @format:field({ty, size})
+        1 "[" !N0{ size } "/s]"
+       *)
+      (*% @prefix formatWithType_
+        @format({fields:field fields, label, loc})
+       L8{
+          "INDEXOF"
+          2[
+            +1 "{" !N0{ fields(field) } "}"
+            +1 label
+          ]
         }
         @format:field({ty, size})
         1 "[" !N0{ size } "/s]" +d ":" 2[ +1 ty ]
-       *)
-      (*% @prefix formatWithType_
-        @ditto
        *)
       RCINDEXOF of
       {
@@ -655,11 +667,10 @@ struct
   and rcdecl =
       (*%
         @format({var, exp, loc})
-        { "val" +d var +d "=" 2[ +1 exp ] }
+        "val" +d var +d "=" 2[ +1 !R1{ exp } ]
        *)
       (*% @prefix formatWithType_
-        @format({var, exp, loc})
-        { "val" +d var:format_varInfo +d "=" 2[ +1 exp ] }
+        @ditto
        *)
       RCVAL of
       {
@@ -669,26 +680,17 @@ struct
       }
     | (*%
         @format(bind binds * loc)
-        {
-          "val" +d "rec"
-          binds(bind)(+1 "and")
-        }
+        "val" +d "rec" +d binds(bind)(+1 "and" +d)
         @format:bind({var, exp})
-        2[ +1 !R1{ var +d "=" 2[ +1 exp ] } ]
+        var +d "=" 2[ +1 !R1{ exp } ]
        *)
       (*% @prefix formatWithType_
-        @format(bind binds * loc)
-        {
-          "val" +d "rec"
-          binds(bind)(+1 "and")
-        }
-        @format:bind({var, exp})
-        2[ +1 !R1{ var +1 +d "=" 2[ +1 exp ] } ]
+        @ditto
        *)
       RCVALREC of {var : varInfo, exp : rcexp} list * loc
     | (*%
         @format({weak, var, exp})
-        { "export" weak:iftrue()(+d "weak",) +d var +d "=" 2[ +1 exp ] }
+        "export" weak:iftrue()(+d "weak",) +d var +d "=" 2[ +1 !R1{ exp } ]
        *)
       (*% @prefix formatWithType_
         @ditto
