@@ -1,0 +1,6 @@
+_require "./RecordCalc.ppg.smi"
+
+structure RecordCalcLoc =
+struct
+  val locExp : RecordCalc.rcexp -> RecordCalc.loc
+end

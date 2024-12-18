@@ -67,30 +67,6 @@ struct
               etaBinds)
         eta
 
-  fun getLoc exp =
-      case exp of
-        R.RCVALUE (_, loc) => loc
-      | R.RCSTRING (_, loc) => loc
-      | R.RCEXVAR (_, loc) => loc
-      | R.RCFNM {loc, ...} => loc
-      | R.RCAPPM {loc, ...} => loc
-      | R.RCSWITCH {loc, ...} => loc
-      | R.RCPRIMAPPLY {loc, ...} => loc
-      | R.RCRECORD {loc, ...} => loc
-      | R.RCSELECT {loc, ...} => loc
-      | R.RCMODIFY {loc, ...} => loc
-      | R.RCLET {loc, ...} => loc
-      | R.RCRAISE {loc, ...} => loc
-      | R.RCHANDLE {loc, ...} => loc
-      | R.RCTHROW {loc, ...} => loc
-      | R.RCCATCH {loc, ...} => loc
-      | R.RCPOLY {loc, ...} => loc
-      | R.RCTAPP {loc, ...} => loc
-      | R.RCFOREIGNAPPLY {loc, ...} => loc
-      | R.RCCALLBACKFN {loc, ...} => loc
-      | R.RCCAST {loc, ...} => loc
-      | R.RCINDEXOF {loc, ...} => loc
-
   fun Catch {recursive, rules = nil, tryExp, resultTy, loc} = tryExp
     | Catch arg = R.RCCATCH arg
 
@@ -174,7 +150,7 @@ struct
   fun putFnSpine funTy absList loc bodyExp =
       let
         fun expand (ABS argVarList :: argList)
-                 (T.FUNMty (_, retTy)) =
+                   (T.FUNMty (_, retTy)) =
             R.RCFNM {argVarList = argVarList,
                      bodyTy = retTy,
                      bodyExp = expand argList (TypesBasics.derefTy retTy),
@@ -199,7 +175,7 @@ struct
 
   fun uncurryFn absList exp expTy =
       let
-        val fnLoc = getLoc exp
+        val fnLoc = RecordCalcLoc.locExp exp
         fun loop (ABS _ :: absList)
                  (R.RCFNM {argVarList, bodyTy, bodyExp, loc})
                  {tabs, abs, bodyTy = _} =
@@ -474,7 +450,7 @@ struct
 
   fun emitFunctionBody (context : context) id argVarList bodyExp bodyTy =
       let
-        val loc = getLoc bodyExp
+        val loc = RecordCalcLoc.locExp bodyExp
         val (rules, bodyExp) =
             case VarID.Map.find (#labels context, id) of
               NONE => (nil, bodyExp)
