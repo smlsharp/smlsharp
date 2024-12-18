@@ -1563,7 +1563,7 @@ struct
                                mainExp = B.BCVAR {varInfo=var, loc=loc},
                                loc = loc})
         end
-      | B.BCPOLY {btvEnv, expTyWithoutTAbs, exp, loc} =>
+      | B.BCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
         let
           val env = addBoundTyvars (env, btvEnv)
           val (top1, c, exp) = compileExp accum env exp
@@ -1572,7 +1572,7 @@ struct
            C.CCCAST {exp = exp,
                      expTy = expTyWithoutTAbs,
                      targetTy = T.POLYty {boundtvars=btvEnv,
-                                          constraints = nil,
+                                          constraints = constraints,
                                           body=expTyWithoutTAbs},
                      cast = BuiltinPrimitive.TypeCast,
                      loc = loc})
@@ -1799,8 +1799,12 @@ struct
         end
       | B.BCVAL {boundVar, boundExp = B.BCFNM func, loc} =>
         compileFunc accum env (boundVar, func)
-      | B.BCVAL {boundVar, boundExp = B.BCPOLY {btvEnv, exp=B.BCFNM func,
-                                                expTyWithoutTAbs, loc=_},
+      | B.BCVAL {boundVar,
+                 boundExp = B.BCPOLY {btvEnv,
+                                      constraints,
+                                      exp=B.BCFNM func,
+                                      expTyWithoutTAbs,
+                                      loc=_},
                  loc} =>
         compileFunc accum (addBoundTyvars (env, btvEnv)) (boundVar, func)
       | B.BCVAL {boundVar, boundExp, loc} =>

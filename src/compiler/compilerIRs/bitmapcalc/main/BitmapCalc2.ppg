@@ -513,17 +513,18 @@ struct
         loc : loc
       }
     | (*%
-       * @format({btvEnv:btv, expTyWithoutTAbs, exp, loc})
+       * @format({btvEnv:btv, constraints, expTyWithoutTAbs, exp, loc})
        * "[" !R1{ btv "." +1 exp } "]"
        *)
       (*%
        * @prefix formatWithType_
-       * @format({btvEnv:btv, expTyWithoutTAbs, exp, loc})
+       * @format({btvEnv:btv, constraints, expTyWithoutTAbs, exp, loc})
        * "[" !R1{ btv "." +1 L2{ exp +1 ":" +d expTyWithoutTAbs } } "]"
        *)
       BCPOLY of
       {
         btvEnv : btvEnv,
+        constraints : Types.constraint list,
         expTyWithoutTAbs : ty,
         exp : bcexp,
         loc : loc

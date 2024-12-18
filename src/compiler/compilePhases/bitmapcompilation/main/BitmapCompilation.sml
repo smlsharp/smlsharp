@@ -320,6 +320,7 @@ struct
           val exp = compileExp accum exp
         in
           B.BCPOLY {btvEnv = btvEnv,
+                    constraints = constraints,
                     expTyWithoutTAbs = expTyWithoutTAbs,
                     exp = exp,
                     loc = loc}
