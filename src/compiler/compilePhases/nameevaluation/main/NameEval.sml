@@ -317,7 +317,7 @@ local
                   | (SOME (I.IDEXNREP _)) => false
                   | (SOME (I.IDEXEXN _)) => false
                   | (SOME (I.IDEXEXNREP _)) => false
-                  | (SOME (I.IDOPRIM {used,...})) => false
+                  | (SOME (I.IDOPRIM {used,...})) => true
                   | (SOME (I.IDEXVAR_TOBETYPED _)) => raise bug "IDEXVAR_TOBETYPED to findCon"
                   | (SOME (I.IDSPECVAR _)) => raise bug "IDSPECVAR to findCon"
                   | (SOME (I.IDSPECEXN _)) => raise bug "IDSPECEXN to findCon"
