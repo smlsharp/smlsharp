@@ -156,15 +156,15 @@ struct
         ListSorter.sort compareRule ruleList
       end
 
-  fun isGroundTy ty =
+  fun coerceGroundTy ty =
       let
         val _ = TIU.instantiateOConstAndRecordTy ty
       in
         case TB.derefTy ty of
-          T.FUNMty (tyList,ty) => 
-          List.all (fn x => isGroundTy x) (ty::tyList)
-        | T.RECORDty tyMap =>  mapAll isGroundTy tyMap
-        | T.CONSTRUCTty {args, ...} => List.all (fn x => isGroundTy x) args
+          T.FUNMty (tyList, ty) =>
+          List.all (fn x => coerceGroundTy x) (ty::tyList)
+        | T.RECORDty tyMap => mapAll coerceGroundTy tyMap
+        | T.CONSTRUCTty {args, ...} => List.all (fn x => coerceGroundTy x) args
         | T.TYVARty (ref (T.TVAR {utvarOpt = SOME _,...})) => true
         | _ => false
       end
@@ -192,13 +192,11 @@ struct
 
   fun compile {exp = dynamicTerm, ty=dynamicTy, elemTy, ruleList, ruleBodyTy,loc} =
       let
-(*
-        val _ = 
-            List.app (fn r => if (isGroundTy (#ty r)) then ()
-                              else raise DynamicCasePatsMustBeGround (#arg r)
-                     )
-                     ruleList
-*)
+        val _ =
+            app (fn r => if coerceGroundTy (#patTy r)
+                         then ()
+                         else raise DynamicCasePatsMustBeGround (#arg r))
+                ruleList
         val ruleList = sortRules ruleList
         val caseGroups = partitionRules ruleList
         val existInstTy =
