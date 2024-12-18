@@ -86,6 +86,11 @@ local
                        args = map (substBTvar tyidEnv subst) args}
       | T.POLYty {boundtvars, constraints, body} =>
         let
+          val subst =
+              BoundTypeVarID.Map.filteri
+                (fn (id, _) =>
+                    not (BoundTypeVarID.Map.inDomain (boundtvars, id)))
+                subst
           val boundtvars =
               BoundTypeVarID.Map.map
                 (substBTvarKind tyidEnv subst)
