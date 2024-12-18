@@ -1,0 +1,17 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure RecordCalcType =
+struct
+  val typeOfInt : RecordCalc.tlint -> Types.ty
+  val typeOfTlconst : RecordCalc.tlconst -> Types.ty
+  val typeOfConst : RecordCalc.rcconst -> Types.ty
+  val typeOfValue : RecordCalc.rcvalue -> Types.ty
+  val typeOfExp : RecordCalc.rcexp -> Types.ty
+end

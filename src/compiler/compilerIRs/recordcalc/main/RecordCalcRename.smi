@@ -2,7 +2,9 @@ _require local "../../../../basis.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
-_require local "../../../data/types/main/TyAlphaRename.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "./RecordCalcType.smi"
 _require "./RecordCalc.ppg.smi"
 
 structure RecordCalcRename =

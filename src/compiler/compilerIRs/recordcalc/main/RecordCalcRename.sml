@@ -6,12 +6,13 @@ structure RecordCalcRename =
 struct
 
   structure R = RecordCalc
+  structure T = Types
 
   type subst =
       {usedVarIds : VarID.Set.set ref,
        usedBtvIds : BoundTypeVarID.Set.set ref,
-       substVar : VarID.id VarID.Map.map,
-       substBtv : BoundTypeVarID.id BoundTypeVarID.Map.map}
+       substVar : (VarID.id * Types.ty) VarID.Map.map,
+       substBtv : Types.ty BoundTypeVarID.Map.map}
 
   fun freshVarId ({usedVarIds, ...} : subst) id =
       if VarID.Set.member (!usedVarIds, id)
@@ -26,39 +27,20 @@ struct
   fun renameTy ({substBtv, ...} : subst) ty =
       if BoundTypeVarID.Map.isEmpty substBtv
       then ty
-      else TyAlphaRename.copyTy substBtv ty
+      else TypesBasics.substBTvar substBtv ty
 
-  fun renameConstraints ({substBtv, ...} : subst) constraints =
-      if BoundTypeVarID.Map.isEmpty substBtv
-      then constraints
-      else map (TyAlphaRename.copyConstraint substBtv) constraints
-
-  fun renameVar subst ({path, id, ty} : RecordCalc.varInfo) =
+  fun renameVar subst (var as {id, ...} : RecordCalc.varInfo) =
       case VarID.Map.find (#substVar subst, id) of
         NONE => raise Bug.Bug ("RCVAR " ^ VarID.toString id)
-      | SOME id => {path = path, id = id, ty = renameTy subst ty}
+      | SOME (id, ty) => var # {id = id, ty = ty}
 
-  fun renameExVar subst ({path, ty} : RecordCalc.exVarInfo) =
-      {path = path, ty = renameTy subst ty}
-
-  fun bindVar subst ({path, id, ty} : RecordCalc.varInfo) =
+  fun bindVar subst (var as {id, ty, ...} : RecordCalc.varInfo) =
       let
         val newId = freshVarId subst id
+        val ty = renameTy subst ty
+        val substVar = VarID.Map.insert (#substVar subst, id, (newId, ty))
       in
-        (subst # {substVar = VarID.Map.insert (#substVar subst, id, newId)},
-         {path = path, id = newId, ty = renameTy subst ty})
-      end
-
-  fun bindBtv subst tid =
-      let
-        val newId = freshBtvId subst tid
-      in
-        if tid = newId then (subst, newId) else
-        let
-          val substBtv = BoundTypeVarID.Map.insert (#substBtv subst, tid, newId)
-        in
-          (subst # {substBtv = substBtv}, newId)
-        end
+        (subst # {substVar = substVar}, var # {id = newId, ty = ty})
       end
 
   fun bindVarList subst nil = (subst, nil)
@@ -70,6 +52,19 @@ struct
         (subst, var :: vars)
       end
 
+  fun bindBtv subst tid =
+      let
+        val newId = freshBtvId subst tid
+      in
+        if tid = newId then (subst, newId) else
+        let
+          val substBtv = BoundTypeVarID.Map.insert
+                           (#substBtv subst, tid, T.BOUNDVARty newId)
+        in
+          (subst # {substBtv = substBtv}, newId)
+        end
+      end
+
   fun bindBtvList subst nil = (subst, nil)
     | bindBtvList subst (tid :: tids) =
       let
@@ -79,23 +74,42 @@ struct
         (subst, tid :: tids)
       end
 
-  fun renameBtvEnv subst btvEnv =
+  fun renameBtvEnv subst btvEnv constraints =
       let
         val tids = BoundTypeVarID.Map.listKeys btvEnv
         val (subst as {substBtv, ...}, tids) = bindBtvList subst tids
       in
-        if BoundTypeVarID.Map.isEmpty substBtv then (subst, btvEnv) else
-        let
-          val kinds = BoundTypeVarID.Map.listItems btvEnv
-          val kinds = map (TyAlphaRename.copyKind (#substBtv subst)) kinds
-        in
-          (subst,
-           ListPair.foldlEq
-             (fn (tid, kind, z) => BoundTypeVarID.Map.insert (z, tid, kind))
-             BoundTypeVarID.Map.empty
-             (tids, kinds))
-        end
+        if BoundTypeVarID.Map.isEmpty substBtv
+        then (subst, btvEnv, constraints)
+        else
+          let
+            val newBtvEnv =
+                ListPair.foldlEq
+                  (fn (id, kind, z) => BoundTypeVarID.Map.insert (z, id, kind))
+                  BoundTypeVarID.Map.empty
+                  (tids, BoundTypeVarID.Map.listItems btvEnv)
+            val polyTy = T.POLYty {boundtvars = newBtvEnv,
+                                   constraints = constraints,
+                                   body = T.ERRORty}
+            val polyTy = TypesBasics.substBTvar substBtv polyTy
+            val {boundtvars = newBtvEnv, constraints, ...} =
+                case TypesBasics.derefTy polyTy of
+                  T.POLYty poly => poly
+                | _ => raise Bug.Bug "renameBtvEnv"
+          in
+            (subst, newBtvEnv, constraints)
+          end
       end
+
+  fun renameTlconst subst const =
+      case const of
+        R.REAL64 _ => const
+      | R.REAL32 _ => const
+      | R.UNIT => const
+      | R.NULLPOINTER => const
+      | R.NULLBOXED => const
+      | R.FOREIGNSYMBOL {name, ty} =>
+        R.FOREIGNSYMBOL {name = name, ty = renameTy subst ty}
 
   fun renameConst subst const =
       case const of
@@ -120,48 +134,63 @@ struct
         R.RCVALUE (value, loc) =>
         R.RCVALUE (renameValue subst value, loc)
       | R.RCSTRING _ => exp
-      | R.RCEXVAR (var, loc) =>
-        R.RCEXVAR (renameExVar subst var, loc)
+      | R.RCEXVAR _ => exp
       | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
         let
           val (subst, argVarList) = bindVarList subst argVarList
+          val bodyExp = renameExp subst bodyExp
         in
           R.RCFNM {argVarList = argVarList,
-                   bodyTy = renameTy subst bodyTy,
-                   bodyExp = renameExp subst bodyExp,
+                   bodyExp = bodyExp,
+                   bodyTy = RecordCalcType.typeOfExp bodyExp,
                    loc = loc}
         end
       | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
         let
-          val (subst, btvEnv) = renameBtvEnv subst btvEnv
+          val (subst, btvEnv, constraints) =
+              renameBtvEnv subst btvEnv constraints
+          val exp = renameExp subst exp
         in
           R.RCPOLY {btvEnv = btvEnv,
-                    constraints = renameConstraints subst constraints,
-                    expTyWithoutTAbs = renameTy subst expTyWithoutTAbs,
-                    exp = renameExp subst exp,
+                    constraints = constraints,
+                    exp = exp,
+                    expTyWithoutTAbs = RecordCalcType.typeOfExp exp,
                     loc = loc}
         end
       | R.RCAPPM {funExp, funTy, argExpList, loc} =>
-        R.RCAPPM {funExp = renameExp subst funExp,
-                  funTy = renameTy subst funTy,
-                  argExpList = map (renameExp subst) argExpList,
-                  loc = loc}
+        let
+          val funExp = renameExp subst funExp
+        in
+          R.RCAPPM {funExp = funExp,
+                    funTy = RecordCalcType.typeOfExp funExp,
+                    argExpList = map (renameExp subst) argExpList,
+                    loc = loc}
+        end
       | R.RCTAPP {exp, expTy, instTyList, loc} =>
-        R.RCTAPP {exp = renameExp subst exp,
-                  expTy = renameTy subst expTy,
-                  instTyList = map (renameTy subst) instTyList,
-                  loc = loc}
+        let
+          val exp = renameExp subst exp
+        in
+          R.RCTAPP {exp = exp,
+                    expTy = RecordCalcType.typeOfExp exp,
+                    instTyList = map (renameTy subst) instTyList,
+                    loc = loc}
+        end
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
-        R.RCSWITCH
-          {exp = renameExp subst exp,
-           expTy = renameTy subst expTy,
-           branches = map (fn {const, body} =>
-                              {const = const,
-                               body = renameExp subst body})
-                          branches,
-           defaultExp = renameExp subst defaultExp,
-           resultTy = renameTy subst resultTy,
-           loc = loc}
+        let
+          val exp = renameExp subst exp
+          val defaultExp = renameExp subst defaultExp
+        in
+          R.RCSWITCH
+            {exp = exp,
+             expTy = RecordCalcType.typeOfExp exp,
+             branches = map (fn {const, body} =>
+                                {const = const,
+                                 body = renameExp subst body})
+                            branches,
+             defaultExp = defaultExp,
+             resultTy = RecordCalcType.typeOfExp defaultExp,
+             loc = loc}
+        end
       | R.RCPRIMAPPLY {primOp, instTyList, instSizeList, instTagList,
                        argExpList, loc} =>
         R.RCPRIMAPPLY {primOp = primOp,
@@ -174,33 +203,46 @@ struct
         R.RCRECORD
           {fields = RecordLabel.Map.map
                       (fn {exp, ty, size, tag} =>
-                          {exp = renameExp subst exp,
-                           ty = renameTy subst ty,
-                           size = renameValue subst size,
-                           tag = renameValue subst tag})
+                          let
+                            val exp = renameExp subst exp
+                          in
+                            {exp = exp,
+                             ty = RecordCalcType.typeOfExp exp,
+                             size = renameValue subst size,
+                             tag = renameValue subst tag}
+                          end)
                       fields,
            loc = loc}
       | R.RCSELECT {label, indexExp, recordExp, recordTy, resultTy, resultSize,
                     resultTag, loc} =>
-        R.RCSELECT {label = label,
-                    indexExp = renameExp subst indexExp,
-                    recordExp = renameExp subst recordExp,
-                    recordTy = renameTy subst recordTy,
-                    resultTy = renameTy subst resultTy,
-                    resultSize = renameValue subst resultSize,
-                    resultTag = renameValue subst resultTag,
-                    loc = loc}
+        let
+          val recordExp = renameExp subst recordExp
+        in
+          R.RCSELECT {label = label,
+                      indexExp = renameExp subst indexExp,
+                      recordExp = recordExp,
+                      recordTy = RecordCalcType.typeOfExp recordExp,
+                      resultTy = renameTy subst resultTy,
+                      resultSize = renameValue subst resultSize,
+                      resultTag = renameValue subst resultTag,
+                      loc = loc}
+        end
       | R.RCMODIFY {label, indexExp, recordExp, recordTy, elementExp, elementTy,
                     elementSize, elementTag, loc} =>
-        R.RCMODIFY {label = label,
-                    indexExp = renameExp subst indexExp,
-                    recordExp = renameExp subst recordExp,
-                    recordTy = renameTy subst recordTy,
-                    elementExp = renameExp subst elementExp,
-                    elementSize = renameValue subst elementSize,
-                    elementTag = renameValue subst elementTag,
-                    elementTy = renameTy subst elementTy,
-                    loc = loc}
+        let
+          val recordExp = renameExp subst recordExp
+          val elementExp = renameExp subst elementExp
+        in
+          R.RCMODIFY {label = label,
+                      indexExp = renameExp subst indexExp,
+                      recordExp = recordExp,
+                      recordTy = RecordCalcType.typeOfExp recordExp,
+                      elementExp = elementExp,
+                      elementSize = renameValue subst elementSize,
+                      elementTag = renameValue subst elementTag,
+                      elementTy = RecordCalcType.typeOfExp elementExp,
+                      loc = loc}
+        end
       | R.RCLET {decl, body, loc} =>
         let
           val (subst, decl) = renameDecl subst decl
@@ -216,11 +258,12 @@ struct
       | R.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         let
           val (subst2, exnVar) = bindVar subst exnVar
+          val exp = renameExp subst exp
         in
-          R.RCHANDLE {exp = renameExp subst exp,
+          R.RCHANDLE {exp = exp,
                       exnVar = exnVar,
                       handler = renameExp subst2 handler,
-                      resultTy = renameTy subst resultTy,
+                      resultTy = RecordCalcType.typeOfExp exp,
                       loc = loc}
         end
       | R.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
@@ -229,21 +272,25 @@ struct
                    resultTy = renameTy subst resultTy,
                    loc = loc}
       | R.RCCATCH {recursive, rules, tryExp, resultTy, loc} =>
-        R.RCCATCH
-          {recursive = recursive,
-           rules = map (fn {catchLabel, argVarList, catchExp} =>
-                           let
-                             val (subst2, argVarList) =
-                                 bindVarList subst argVarList
-                           in
-                             {catchLabel = catchLabel,
-                              argVarList = argVarList,
-                              catchExp = renameExp subst2 catchExp}
-                           end)
-                       rules,
-           tryExp = renameExp subst tryExp,
-           resultTy = renameTy subst resultTy,
-           loc = loc}
+        let
+          val tryExp = renameExp subst tryExp
+        in
+          R.RCCATCH
+            {recursive = recursive,
+             rules = map (fn {catchLabel, argVarList, catchExp} =>
+                             let
+                               val (subst2, argVarList) =
+                                   bindVarList subst argVarList
+                             in
+                               {catchLabel = catchLabel,
+                                argVarList = argVarList,
+                                catchExp = renameExp subst2 catchExp}
+                             end)
+                         rules,
+             tryExp = tryExp,
+             resultTy = RecordCalcType.typeOfExp tryExp,
+             loc = loc}
+        end
       | R.RCFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
         R.RCFOREIGNAPPLY {funExp = renameExp subst funExp,
                           argExpList = map (renameExp subst) argExpList,
@@ -253,19 +300,27 @@ struct
       | R.RCCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
         let
           val (subst, argVarList) = bindVarList subst argVarList
+          val bodyExp = renameExp subst bodyExp
+          val resultTy = case resultTy of
+                           NONE => NONE
+                         | SOME _ => SOME (RecordCalcType.typeOfExp bodyExp)
         in
           R.RCCALLBACKFN {attributes = attributes,
                           argVarList = argVarList,
-                          bodyExp = renameExp subst bodyExp,
-                          resultTy = Option.map (renameTy subst) resultTy,
+                          bodyExp = bodyExp,
+                          resultTy = resultTy,
                           loc = loc}
         end
       | R.RCCAST {exp, expTy, targetTy, cast, loc} =>
-        R.RCCAST {exp = renameExp subst exp,
-                  expTy = renameTy subst expTy,
-                  targetTy = renameTy subst targetTy,
-                  cast = cast,
-                  loc = loc}
+        let
+          val exp = renameExp subst exp
+        in
+          R.RCCAST {exp = exp,
+                    expTy = RecordCalcType.typeOfExp exp,
+                    targetTy = renameTy subst targetTy,
+                    cast = cast,
+                    loc = loc}
+        end
       | R.RCINDEXOF {fields, label, loc} =>
         R.RCINDEXOF
           {fields = RecordLabel.Map.map
@@ -278,13 +333,16 @@ struct
 
   and renameDecl subst decl =
       case decl of
-        R.RCVAL {var, exp, loc} =>
+        R.RCVAL {var as {id, ...}, exp, loc} =>
         let
-          val (subst2, var) = bindVar subst var
+          val exp = renameExp subst exp
+          val newId = freshVarId subst id
+          val ty = RecordCalcType.typeOfExp exp
+          val substVar = VarID.Map.insert (#substVar subst, id, (newId, ty))
         in
-          (subst2,
-           R.RCVAL {var = var,
-                    exp = renameExp subst exp,
+          (subst # {substVar = substVar},
+           R.RCVAL {var = var # {id = newId, ty = ty},
+                    exp = exp,
                     loc = loc})
         end
       | R.RCVALREC (binds, loc) =>
@@ -298,13 +356,15 @@ struct
           (subst, R.RCVALREC (binds, loc))
         end
       | R.RCEXPORTVAR {weak, var, exp} =>
-        (subst,
-         R.RCEXPORTVAR {weak = weak,
-                        var = renameExVar subst var,
-                        exp = renameExp subst exp})
-      | R.RCEXTERNVAR (var, provider) =>
-        (subst,
-         R.RCEXTERNVAR (renameExVar subst var, provider))
+        let
+          val exp = renameExp subst exp
+        in
+          (subst,
+           R.RCEXPORTVAR {weak = weak,
+                          var = var # {ty = RecordCalcType.typeOfExp exp},
+                          exp = exp})
+        end
+      | R.RCEXTERNVAR _ => (subst, decl)
 
   fun renameDeclList subst nil = nil
     | renameDeclList subst (decl :: decls) =

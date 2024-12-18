@@ -717,6 +717,7 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
@@ -1073,6 +1074,7 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
@@ -1435,6 +1437,7 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
@@ -1975,6 +1978,7 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
@@ -2327,6 +2331,7 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o \
 src/compiler/compilerIRs/runtimecalc/main/RuntimeCalc.ppg.o \
 src/compiler/compilerIRs/typedcalc/main/TCAlphaRename.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.o \
@@ -2739,6 +2744,7 @@ src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.smi \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcType.smi \
 src/compiler/compilerIRs/runtimecalc/main/RuntimeCalc.ppg.smi \
 src/compiler/compilerIRs/typedcalc/main/TCAlphaRename.smi \
 src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
@@ -3269,6 +3275,7 @@ src/compiler/compilePhases/matchcompilation/main/MatchError.ppg.o \
 src/compiler/compilePhases/matchcompilation/main/MatchCompiler.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaborationError.ppg.o \
 src/compiler/compilePhases/typedelaboration/main/TypedElaboration.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
