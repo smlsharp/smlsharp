@@ -90,7 +90,7 @@ struct
       (C.TPSIZEOF (ty, loc), T.SINGLETONty (T.SIZEty ty))
 
   fun TPREIFYTY (ty, loc) =
-      (C.TPREIFYTY (ty, loc), ReifiedTyData.TyRepTy loc)
+      (C.TPREIFYTY (ty, loc), T.SINGLETONty (T.REIFYty ty))
 
   fun TPEXNTAG (x as {exnInfo, loc}) =
       (C.TPEXNTAG x, BuiltinTypes.exntagTy)
