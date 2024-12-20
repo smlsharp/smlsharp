@@ -1069,17 +1069,40 @@ struct
            elementExp = analyzeExp r env elementExp,
            loc = loc}
       | C.TPPRIMAPPLY {argExp, instTyList, loc, primOp} =>
-        D.TPPRIMAPPLY
-          {primOp = analyzePrimInfo r env primOp,
-           instTyList = Option.map (map (analyzeTy r env)) instTyList,
-           argExp = analyzeExp r env argExp,
-           loc = loc}
+        let
+          val argExp = analyzeExp r env argExp
+          val primOp as {ty = primTy, ...} = analyzePrimInfo r env primOp
+          val instTyList = Option.map (map (analyzeTy r env)) instTyList
+          val monoPrimTy =
+              case instTyList of
+                NONE => primTy
+              | SOME instTyList => TypesBasics.tpappTy (primTy, instTyList)
+        in
+          case TypesBasics.derefTy monoPrimTy of
+            T.FUNMty (argTys, bodyTy) => equalList r (argTys, [#2 argExp])
+          | _ => raise bug "analyzeExp: TPPRIMAPPLY";
+          D.TPPRIMAPPLY
+            {primOp = primOp,
+             instTyList = instTyList,
+             argExp = argExp,
+             loc = loc}
+        end
       | C.TPOPRIMAPPLY {argExp, instTyList, loc, oprimOp} =>
-        D.TPOPRIMAPPLY
-          {oprimOp = analyzeOPrimInfo r env oprimOp,
-           instTyList = map (analyzeTy r env) instTyList,
-           argExp = analyzeExp r env argExp,
-           loc = loc}
+        let
+          val argExp = analyzeExp r env argExp
+          val oprimOp as {ty = primTy, ...} = analyzeOPrimInfo r env oprimOp
+          val instTyList = map (analyzeTy r env) instTyList
+          val monoPrimTy = TypesBasics.tpappTy (primTy, instTyList)
+        in
+          case TypesBasics.derefTy monoPrimTy of
+            T.FUNMty (argTys, bodyTy) => equalList r (argTys, [#2 argExp])
+          | _ => raise bug "analyzeExp: TPOPRIMAPPLY";
+          D.TPOPRIMAPPLY
+            {oprimOp = oprimOp,
+             instTyList = instTyList,
+             argExp = argExp,
+             loc = loc}
+        end
       | C.TPJOIN {isJoin, ty, args=(exp1, exp2), argtys=_, loc} =>
         D.TPJOIN
           {args = (analyzeExp r env exp1, analyzeExp r env exp2),
