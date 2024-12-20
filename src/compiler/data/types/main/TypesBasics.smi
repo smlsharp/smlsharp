@@ -44,6 +44,7 @@ struct
         -> Types.ty list * Types.ty * Types.ty list option *
            Types.constraint list
   val tpappTy : Types.ty * Types.ty list -> Types.ty
+  val revealTy : Types.ty -> Types.ty
   val tyConFromConTy : Types.ty -> Types.tyCon
   val tpappPrimTy :
       {boundtvars: Types.btvEnv, argTyList: Types.ty list, resultTy: Types.ty}
