@@ -1,0 +1,19 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../data/symbols/main/Loc.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/name/main/CodeLabel.smi"
+_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/types/main/TyRevealTy.smi"
+_require local "../../../data/types/main/Unify.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require local "./RecordCalcType.smi"
+_require "./RecordCalc.ppg.smi"
+
+structure RecordCalcTypeCheck =
+struct
+  val check : RecordCalc.rcdecl list -> unit
+end

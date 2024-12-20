@@ -12,6 +12,7 @@ struct
   val typeOfInt : RecordCalc.tlint -> Types.ty
   val typeOfTlconst : RecordCalc.tlconst -> Types.ty
   val typeOfConst : RecordCalc.rcconst -> Types.ty
+  val typeOfString : RecordCalc.tlstring -> Types.ty
   val typeOfValue : RecordCalc.rcvalue -> Types.ty
   val typeOfExp : RecordCalc.rcexp -> Types.ty
 end

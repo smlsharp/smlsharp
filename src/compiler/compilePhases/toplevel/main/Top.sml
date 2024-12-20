@@ -721,6 +721,10 @@ struct
               (UserLevelPrimitive.getExternDecls())
         val rcdecs = externalDecls @ rcdecs
 
+        val _ = if !Control.checkType
+                then RecordCalcTypeCheck.check rcdecs
+                else ()
+
 (*
         val rcdecs = if !Control.doRCOptimization
                      then doRecordCalcOptimization rcdecs

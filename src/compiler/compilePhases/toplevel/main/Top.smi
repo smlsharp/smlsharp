@@ -47,6 +47,7 @@ _require local "../../../compilePhases/typeinference/main/UncurryFundecl_ng.smi"
 _require local "../../../libs/interactivePrinter/main/Reify.smi"
 *)
 _require local "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+_require local "../../../compilerIRs/recordcalc/main/RecordCalcTypeCheck.smi"
 _require local "../../../compilePhases/matchcompilation/main/MatchCompiler.smi"
 _require local "../../../compilePhases/typedelaboration/main/TypedElaboration.smi"
 _require local "../../../compilePhases/tailcallcompile/main/TailCallCompile.smi"
