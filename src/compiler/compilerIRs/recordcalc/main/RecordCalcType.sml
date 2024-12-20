@@ -60,7 +60,7 @@ struct
                   constraints = constraints,
                   body = expTyWithoutTAbs}
       | R.RCAPPM {funTy, ...} =>
-        (case TypesBasics.derefTy funTy of
+        (case TypesBasics.revealTy funTy of
            T.FUNMty (_, retTy) => retTy
          | _ => raise Bug.Bug "typeOfExp: RCAPPM")
       | R.RCTAPP {expTy, instTyList, ...} =>

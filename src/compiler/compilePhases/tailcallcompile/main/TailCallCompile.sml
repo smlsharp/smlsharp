@@ -100,7 +100,7 @@ struct
                             funTy = funTy,
                             argExpList = argExpList,
                             loc = loc})
-                 (TypesBasics.derefTy retTy)
+                 (TypesBasics.revealTy retTy)
                  argList
           | loop funExp
                  (funTy as T.POLYty _)
@@ -109,13 +109,13 @@ struct
                             expTy = funTy,
                             instTyList = instTyList,
                             loc = loc})
-                 (TypesBasics.derefTy
+                 (TypesBasics.revealTy
                     (TypesBasics.tpappTy (funTy, instTyList)))
                  argList
           | loop _ ty (h :: _) = raise Bug.Bug "putAppSpine"
           | loop funExp _ nil = funExp
       in
-        loop funExp (TypesBasics.derefTy funTy) argList
+        loop funExp (TypesBasics.revealTy funTy) argList
       end
 
   fun bindAppSpine funTy absList argList =
@@ -126,7 +126,7 @@ struct
                  decls =
             loop absList
                  argList
-                 (TypesBasics.derefTy retTy)
+                 (TypesBasics.revealTy retTy)
                  (ListPair.mapEq
                     (fn (var, exp) => R.RCVAL {var = var, exp = exp, loc = loc})
                     (vars, args)
@@ -153,19 +153,19 @@ struct
                    (T.FUNMty (_, retTy)) =
             R.RCFNM {argVarList = argVarList,
                      bodyTy = retTy,
-                     bodyExp = expand argList (TypesBasics.derefTy retTy),
+                     bodyExp = expand argList (TypesBasics.revealTy retTy),
                      loc = loc}
           | expand (TABS _ :: argList)
                    (T.POLYty {boundtvars, constraints, body}) =
             R.RCPOLY {btvEnv = boundtvars,
                       constraints = constraints,
                       expTyWithoutTAbs = body,
-                      exp = expand argList (TypesBasics.derefTy body),
+                      exp = expand argList (TypesBasics.revealTy body),
                       loc = loc}
           | expand (_ :: _) _ = raise Bug.Bug "putFnSpine"
           | expand nil _ = bodyExp
       in
-        expand absList (TypesBasics.derefTy funTy)
+        expand absList (TypesBasics.revealTy funTy)
       end
 
   fun absToArg loc (ABS argVarList) =
@@ -269,7 +269,7 @@ struct
                  {tapp, app, loc = _} =
             loop absList
                  argList
-                 (TypesBasics.derefTy retTy)
+                 (TypesBasics.revealTy retTy)
                  {tapp = tapp,
                   app = (argTyList, argExpList) :: app,
                   loc = loc}
@@ -279,7 +279,7 @@ struct
                  {tapp, app, loc = _} =
             loop absList
                  argList
-                 (TypesBasics.derefTy body)
+                 (TypesBasics.revealTy body)
                  {tapp = (btvs, constraints, instMap btvs instTyList) :: tapp,
                   app = app,
                   loc = loc}
@@ -343,7 +343,7 @@ struct
                                      constraints = constraints,
                                      body = T.FUNMty (argTyList, retTy)}
               val funTy = TypesBasics.tpappTy (polyTy, instTyList)
-              val retTy = case TypesBasics.derefTy funTy of
+              val retTy = case TypesBasics.revealTy funTy of
                             T.FUNMty (_, retTy) => retTy
                           | _ => raise Bug.Bug "uncurryApp"
             in
@@ -364,7 +364,7 @@ struct
       in
         loop absList
              argList
-             (TypesBasics.derefTy funTy)
+             (TypesBasics.revealTy funTy)
              {tapp = nil, app = nil, loc = funLoc}
       end
 
