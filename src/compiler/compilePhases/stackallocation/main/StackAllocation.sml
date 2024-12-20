@@ -268,6 +268,7 @@ struct
       BLOCK of
       {
         id : FunLocalLabel.id,
+        done : bool ref,
         successors : block list,
         predecessors : block list,
         argVarList : M.varInfo list,
@@ -287,6 +288,7 @@ struct
 
   fun newBlock id argVarList =
       BLOCK (ref {id = id,
+                  done = ref false,
                   successors = nil,
                   predecessors = nil,
                   argVarList = argVarList,
@@ -817,9 +819,10 @@ struct
 
   fun liveness nil = ()
     | liveness (BLOCK (r as ref {successors, predecessors, liveIn, gcIn,
-                                 defuse = {defs, uses, gc}, ...})
+                                 defuse = {defs, uses, gc}, done, ...})
                 :: blocks) =
       let
+        val _ = done := true
         val liveOut =
             Set.merge (map (fn BLOCK (ref {liveIn,...}) => liveIn) successors)
         val newLiveIn = Set.union (Set.setMinus (liveOut, defs), uses)
@@ -844,7 +847,11 @@ struct
             if Set.isSubsetOf (newLiveIn, liveIn)
                andalso isSmallerThanOrEqualToGC (newGcIn, gcIn)
             then blocks
-            else predecessors @ blocks
+            else foldl
+                   (fn (block as BLOCK (ref {done, ...}), z) =>
+                       if !done then (done := false; block :: z) else z)
+                   blocks
+                   predecessors
       in
         liveness blocks
       end
