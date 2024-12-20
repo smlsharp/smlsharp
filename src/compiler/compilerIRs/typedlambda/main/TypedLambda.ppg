@@ -172,7 +172,7 @@ struct
    * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
    * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
    * @formatter(Word8.word) ConstFormat.format_word8_hex_ML
-   * @formatter(char) ConstFormat.format_char_ML
+   * @formatter(Char.char) ConstFormat.format_char_ML
    *)
   (*%
    * @prefix formatWithType_
@@ -184,7 +184,7 @@ struct
    * @formatter(Word16.word) ConstFormat.format_word16_hex_ML
    * @formatter(Word32.word) ConstFormat.format_word32_hex_ML
    * @formatter(Word64.word) ConstFormat.format_word64_hex_ML
-   * @formatter(char) ConstFormat.format_char_ML
+   * @formatter(Char.char) ConstFormat.format_char_ML
    *)
   datatype tlint =
       (*%
