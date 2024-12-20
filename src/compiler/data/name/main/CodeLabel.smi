@@ -78,6 +78,8 @@ struct
     val add : set * item -> set
     val add' : item * set -> set
     val addList : set * item list -> set
+    val subtract : set * item -> set
+    val subtract' : item * set -> set
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
@@ -169,6 +171,8 @@ struct
     val add : set * item -> set
     val add' : item * set -> set
     val addList : set * item list -> set
+    val subtract : set * item -> set
+    val subtract' : item * set -> set
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
@@ -260,6 +264,8 @@ struct
     val add : set * item -> set
     val add' : item * set -> set
     val addList : set * item list -> set
+    val subtract : set * item -> set
+    val subtract' : item * set -> set
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
@@ -353,6 +359,8 @@ struct
     val add : set * item -> set
     val add' : item * set -> set
     val addList : set * item list -> set
+    val subtract : set * item -> set
+    val subtract' : item * set -> set
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
@@ -444,6 +452,8 @@ struct
     val add : set * item -> set
     val add' : item * set -> set
     val addList : set * item list -> set
+    val subtract : set * item -> set
+    val subtract' : item * set -> set
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
@@ -535,6 +545,8 @@ struct
     val add : set * item -> set
     val add' : item * set -> set
     val addList : set * item list -> set
+    val subtract : set * item -> set
+    val subtract' : item * set -> set
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
