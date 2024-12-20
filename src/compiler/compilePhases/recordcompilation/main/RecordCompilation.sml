@@ -137,7 +137,8 @@ struct
       | T.ERRORty => ty
       | T.DUMMYty _ => ty
       | T.EXISTty _ => ty
-      | T.TYVARty tv => ty  (* what used to be tyvar contains no POLYty. *)
+      | T.TYVARty (ref (T.SUBSTITUTED ty)) => compileTy ty
+      | T.TYVARty (ref (T.TVAR _)) => raise Bug.Bug "compileTy"
       | T.BOUNDVARty tid => ty
       | T.FUNMty (argTys, retTy) =>
         (* argTys may contain polyTy due to functor. *)
@@ -419,7 +420,7 @@ struct
             nil =>
             RC.RCPOLY {btvEnv = btvEnv,
                        constraints = nil,
-                       expTyWithoutTAbs = expTyWithoutTAbs,
+                       expTyWithoutTAbs = newExpTyWithoutTAbs,
                        exp = newExp,
                        loc = loc}
           | _::_ =>
