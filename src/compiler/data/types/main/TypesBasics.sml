@@ -39,7 +39,7 @@ local
         T.SINGLETONty singletonTy =>
         T.SINGLETONty (substBTvarSingletonTy tyidEnv subst singletonTy)
       | T.BACKENDty backendTy =>
-        raise Bug.Bug "substBTvar: BACKENDty"
+        T.BACKENDty (substBTvarBackendTy tyidEnv subst backendTy)
       | T.ERRORty => ty
       | T.DUMMYty (dummyTyID, kind) =>
         T.DUMMYty (dummyTyID, substBTvarKind tyidEnv subst kind)
@@ -86,15 +86,7 @@ local
                        args = map (substBTvar tyidEnv subst) args}
       | T.POLYty {boundtvars, constraints, body} =>
         let
-          val subst =
-              BoundTypeVarID.Map.filteri
-                (fn (id, _) =>
-                    not (BoundTypeVarID.Map.inDomain (boundtvars, id)))
-                subst
-          val boundtvars =
-              BoundTypeVarID.Map.map
-                (substBTvarKind tyidEnv subst)
-                boundtvars
+          val (subst, boundtvars) = substBTvarBtvEnv tyidEnv subst boundtvars
           val constraints = 
               List.map
                   (fn c =>
@@ -111,6 +103,20 @@ local
         in
           newTy
         end
+  and substBTvarBtvEnv tyidEnv subst btvEnv =
+      let
+        val subst =
+            BoundTypeVarID.Map.filteri
+              (fn (id, _) =>
+                  not (BoundTypeVarID.Map.inDomain (btvEnv, id)))
+              subst
+        val btvEnv =
+            BoundTypeVarID.Map.map
+              (substBTvarKind tyidEnv subst)
+              btvEnv
+      in
+        (subst, btvEnv)
+      end
   and substBTvarSingletonTy tyidEnv subst singletonTy =
       case singletonTy of
         T.INSTCODEty {oprimId, longsymbol, match} =>
@@ -125,6 +131,56 @@ local
         T.SIZEty (substBTvar tyidEnv subst ty)
       | T.REIFYty ty =>
         T.REIFYty (substBTvar tyidEnv subst ty)
+  and substBTvarBackendTy tyidEnv subst backendTy =
+      case backendTy of
+        T.RECORDSIZEty ty =>
+        T.RECORDSIZEty (substBTvar tyidEnv subst ty)
+      | T.RECORDBITMAPty (i, ty) =>
+        T.RECORDBITMAPty (i, substBTvar tyidEnv subst ty)
+      | T.RECORDBITMAPINDEXty (i, ty) =>
+        T.RECORDBITMAPINDEXty (i, substBTvar tyidEnv subst ty)
+      | T.CCONVTAGty {tyvars, haveClsEnv, argTyList, retTy} =>
+        let
+          val (subst, tyvars) = substBTvarBtvEnv tyidEnv subst tyvars
+        in
+          T.CCONVTAGty
+            {tyvars = tyvars,
+             haveClsEnv = haveClsEnv,
+             argTyList = map (substBTvar tyidEnv subst) argTyList,
+             retTy = substBTvar tyidEnv subst retTy}
+        end
+      | T.FUNENTRYty {tyvars, haveClsEnv, argTyList, retTy} =>
+        let
+          val (subst, tyvars) = substBTvarBtvEnv tyidEnv subst tyvars
+        in
+          T.FUNENTRYty
+            {tyvars = tyvars,
+             haveClsEnv = haveClsEnv,
+             argTyList = map (substBTvar tyidEnv subst) argTyList,
+             retTy = substBTvar tyidEnv subst retTy}
+        end
+      | T.CALLBACKENTRYty {tyvars, haveClsEnv, argTyList, retTy, attributes} =>
+        let
+          val (subst, tyvars) = substBTvarBtvEnv tyidEnv subst tyvars
+        in
+          T.CALLBACKENTRYty
+            {tyvars = tyvars,
+             haveClsEnv = haveClsEnv,
+             argTyList = map (substBTvar tyidEnv subst) argTyList,
+             retTy = Option.map (substBTvar tyidEnv subst) retTy,
+             attributes = attributes}
+        end
+      | T.SOME_FUNENTRYty => T.SOME_FUNENTRYty
+      | T.SOME_FUNWRAPPERty => T.SOME_FUNWRAPPERty
+      | T.SOME_CLOSUREENVty => T.SOME_CLOSUREENVty
+      | T.SOME_CCONVTAGty => T.SOME_CCONVTAGty
+      | T.FOREIGNFUNPTRty {argTyList, varArgTyList, resultTy, attributes} =>
+        T.FOREIGNFUNPTRty
+          {argTyList = map (substBTvar tyidEnv subst) argTyList,
+           varArgTyList =
+             Option.map (map (substBTvar tyidEnv subst)) varArgTyList,
+           resultTy = Option.map (substBTvar tyidEnv subst) resultTy,
+           attributes = attributes}
   and substBTvarTyCon tyidEnv subst ({id, longsymbol,admitsEq,arity,conSet, conIDSet, extraArgs,dtyKind}) =
       {id=id, longsymbol=longsymbol, admitsEq=admitsEq, arity=arity, conSet=conSet,
        conIDSet=conIDSet,
