@@ -206,9 +206,9 @@ struct
   fun Real_lteq realTy x = cmp2 P.Real_lteq realTy x
   fun Real_sub realTy x = op2 P.Real_sub realTy x
 
-  fun ObjectSize (ty, exp) =
+  fun ObjectSize exp =
       monoPrimApp (P.R (P.M P.ObjectSize),
-                   [ty], B.word32Ty,
+                   [B.boxedTy], B.word32Ty,
                    [exp])
 
   fun Array_alloc_unsafe (elemTy, lenExp) =
@@ -239,8 +239,10 @@ struct
                    elems)
 
   fun Array_length (elemTy, exp1) =
-      Cast (Word_div_unsafe B.word32Ty (ObjectSize (arrayTy elemTy, exp1),
-                                        Cast (SizeOf elemTy, B.word32Ty)),
+      Cast (Word_div_unsafe
+              B.word32Ty
+              (ObjectSize (Cast (exp1, B.boxedTy)),
+               Cast (SizeOf elemTy, B.word32Ty)),
             B.int32Ty)
 
   fun Array_sub_unsafe (elemTy, arrayExp, indexExp) =
@@ -310,7 +312,9 @@ struct
       end
 
   fun String_size exp1 =
-      Cast (Word_sub B.word32Ty (ObjectSize (B.stringTy, exp1), Word32 1),
+      Cast (Word_sub
+              B.word32Ty
+              (ObjectSize (Cast (exp1, B.boxedTy)), Word32 1),
             B.int32Ty)
 
   fun String_sub_unsafe (strExp, indexExp) =
