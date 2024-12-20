@@ -431,7 +431,8 @@ struct
         L7{ "raise" 2[ +1 exp ] }
        *)
       (*% @prefix formatWithType_
-        @ditto
+        @format({exp, resultTy, loc})
+        L2{ L7{ "raise" 2[ +1 exp ] } +1 ":" +d resultTy }
        *)
       RCRAISE of
       {
@@ -474,7 +475,20 @@ struct
         }
        *)
       (*% @prefix formatWithType_
-        @ditto
+        @format({catchLabel, argExpList: arg args, resultTy, loc})
+        L2{
+          L8{
+            "THROW"
+            2[
+              +1 catchLabel
+              +1
+              args:ifsingle()(,"(")
+              args:N0ifnotsingle()(args(arg)("," +1))
+              args:ifsingle()(,")")
+            ]
+          }
+          +1 ":" +d resultTy
+        }
        *)
       (* lightweight exception that never unwind call stack *)
       RCTHROW of
