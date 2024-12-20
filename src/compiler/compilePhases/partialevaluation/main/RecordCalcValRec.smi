@@ -1,0 +1,12 @@
+_require local "../../../../basis.smi"
+_require local "../../../../smlnj-lib/Util/lib-base.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../compilerIRs/recordcalc/main/RecordCalcFv.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure RecordCalcValRec =
+struct
+  type bind = {var : RecordCalc.varInfo, exp : RecordCalc.rcexp}
+  val decompose : bind list * RecordCalc.loc -> RecordCalc.rcdecl list
+end

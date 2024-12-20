@@ -93,4 +93,251 @@ struct
         T.SINGLETONty
           (T.INDEXty (label, T.RECORDty (RecordLabel.Map.map #ty fields)))
 
+  fun instantiateVar subst (var as {ty, ...} : R.varInfo) =
+      var # {ty = TypesBasics.substBTvar subst ty}
+
+  fun instantiateTlconst subst const =
+      case const of
+        R.REAL64 _ => const
+      | R.REAL32 _ => const
+      | R.UNIT => const
+      | R.NULLPOINTER => const
+      | R.NULLBOXED => const
+      | R.FOREIGNSYMBOL {name, ty} =>
+        R.FOREIGNSYMBOL {name = name, ty = TypesBasics.substBTvar subst ty}
+
+  fun instantiateConst subst const =
+      case const of
+        R.INT _ => const
+      | R.CONST const => R.CONST (instantiateTlconst subst const)
+      | R.SIZE (size, ty) => R.SIZE (size, TypesBasics.substBTvar subst ty)
+      | R.TAG (tag, ty) => R.TAG (tag, TypesBasics.substBTvar subst ty)
+
+  fun instantiateValue subst value =
+      case value of
+        R.RCCONSTANT const =>
+        R.RCCONSTANT (instantiateConst subst const)
+      | R.RCVAR var =>
+        R.RCVAR (instantiateVar subst var)
+
+  fun instantiateExp subst exp =
+      case exp of
+        R.RCVALUE (value, loc) =>
+        R.RCVALUE (instantiateValue subst value, loc)
+      | R.RCSTRING (string, loc) => exp
+      | R.RCEXVAR (var, loc) => exp
+      | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
+        let
+          val polyTy = T.POLYty {boundtvars = btvEnv,
+                                 constraints = constraints,
+                                 body = T.ERRORty (* dummy *)}
+          val {boundtvars = btvEnv, constraints, ...} =
+              case TypesBasics.revealTy (TypesBasics.substBTvar subst polyTy) of
+                T.POLYty x => x
+              | _ => raise Bug.Bug "RCFNM"
+          val subst =
+              BoundTypeVarID.Map.filteri
+                (fn (id, _) => not (BoundTypeVarID.Map.inDomain (btvEnv, id)))
+                subst
+          val bodyExp = instantiateExp subst bodyExp
+        in
+          R.RCFNM {btvEnv = btvEnv,
+                   constraints = constraints,
+                   argVarList = map (instantiateVar subst) argVarList,
+                   bodyTy = typeOfExp bodyExp,
+                   bodyExp = bodyExp,
+                   loc = loc}
+        end
+      | R.RCAPPM {funExp, funTy, instTyList, argExpList, loc} =>
+        let
+          val funExp = instantiateExp subst funExp
+        in
+          R.RCAPPM {funExp = funExp,
+                    funTy = typeOfExp funExp,
+                    instTyList = map (TypesBasics.substBTvar subst) instTyList,
+                    argExpList = map (instantiateExp subst) argExpList,
+                    loc = loc}
+        end
+      | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
+        let
+          val exp = instantiateExp subst exp
+          val defaultExp = instantiateExp subst defaultExp
+        in
+          R.RCSWITCH {exp = exp,
+                      expTy = typeOfExp exp,
+                      branches = map (fn {const, body} =>
+                                         {const = const,
+                                          body = instantiateExp subst body})
+                                     branches,
+                      defaultExp = defaultExp,
+                      resultTy = typeOfExp defaultExp,
+                      loc = loc}
+        end
+      | R.RCPRIMAPPLY {primOp, instTyList, instSizeList, instTagList,
+                       argExpList, loc} =>
+        R.RCPRIMAPPLY
+          {primOp = primOp,
+           instTyList = map (TypesBasics.substBTvar subst) instTyList,
+           instSizeList = map (instantiateValue subst) instSizeList,
+           instTagList = map (instantiateValue subst) instTagList,
+           argExpList = map (instantiateExp subst) argExpList,
+           loc = loc}
+      | R.RCRECORD {fields, loc} =>
+        R.RCRECORD
+          {fields = RecordLabel.Map.map
+                      (fn {exp, ty, size, tag} =>
+                          let
+                            val exp = instantiateExp subst exp
+                          in
+                            {exp = exp,
+                             ty = typeOfExp exp,
+                             size = instantiateValue subst size,
+                             tag = instantiateValue subst tag}
+                          end)
+                      fields,
+           loc = loc}
+      | R.RCSELECT {label, indexExp, recordExp, recordTy, resultTy, resultSize,
+                    resultTag, loc} =>
+        let
+          val recordExp = instantiateExp subst recordExp
+        in
+          R.RCSELECT
+            {label = label,
+             indexExp = instantiateExp subst indexExp,
+             recordExp = instantiateExp subst recordExp,
+             recordTy = typeOfExp recordExp,
+             resultTy = TypesBasics.substBTvar subst resultTy,
+             resultSize = instantiateValue subst resultSize,
+             resultTag = instantiateValue subst resultTag,
+             loc = loc}
+        end
+      | R.RCMODIFY {label, indexExp, recordExp, recordTy, elementExp, elementTy,
+                    elementSize, elementTag, loc} =>
+        let
+          val recordExp = instantiateExp subst recordExp
+          val elementExp = instantiateExp subst elementExp
+        in
+          R.RCMODIFY
+            {label = label,
+             indexExp = instantiateExp subst indexExp,
+             recordExp = recordExp,
+             recordTy = typeOfExp recordExp,
+             elementExp = elementExp,
+             elementTy = typeOfExp elementExp,
+             elementSize = instantiateValue subst elementSize,
+             elementTag = instantiateValue subst elementTag,
+             loc = loc}
+        end
+      | R.RCLET {decl, body, loc} =>
+        R.RCLET {decl = instantiateDecl subst decl,
+                 body = instantiateExp subst body,
+                 loc = loc}
+      | R.RCRAISE {exp, resultTy, loc} =>
+        R.RCRAISE {exp = instantiateExp subst exp,
+                   resultTy = TypesBasics.substBTvar subst resultTy,
+                   loc = loc}
+      | R.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
+        let
+          val exp = instantiateExp subst exp
+        in
+          R.RCHANDLE {exp = exp,
+                      exnVar = instantiateVar subst exnVar,
+                      handler = instantiateExp subst handler,
+                      resultTy = typeOfExp exp,
+                      loc = loc}
+        end
+      | R.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
+        R.RCTHROW {catchLabel = catchLabel,
+                   argExpList = map (instantiateExp subst) argExpList,
+                   resultTy = TypesBasics.substBTvar subst resultTy,
+                   loc = loc}
+      | R.RCCATCH {recursive, rules, tryExp, resultTy, loc} =>
+        let
+          val tryExp = instantiateExp subst tryExp
+        in
+          R.RCCATCH
+            {recursive = recursive,
+             rules =
+               map (fn {catchLabel, argVarList, catchExp} =>
+                       {catchLabel = catchLabel,
+                        argVarList = map (instantiateVar subst) argVarList,
+                        catchExp = instantiateExp subst catchExp})
+                   rules,
+             tryExp = tryExp,
+             resultTy = typeOfExp tryExp,
+             loc = loc}
+        end
+      | R.RCFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
+        R.RCFOREIGNAPPLY
+          {funExp = instantiateExp subst funExp,
+           argExpList = map (instantiateExp subst) argExpList,
+           attributes = attributes,
+           resultTy = Option.map (TypesBasics.substBTvar subst) resultTy,
+           loc = loc}
+      | R.RCCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
+        let
+          val bodyExp = instantiateExp subst bodyExp
+        in
+          R.RCCALLBACKFN
+            {attributes = attributes,
+             argVarList = map (instantiateVar subst) argVarList,
+             bodyExp = bodyExp,
+             resultTy = case resultTy of NONE => NONE
+                                       | SOME _ => SOME (typeOfExp bodyExp),
+             loc = loc}
+        end
+      | R.RCCAST {exp, expTy, targetTy, cast, loc} =>
+        let
+          val exp = instantiateExp subst exp
+        in
+          R.RCCAST {exp = exp,
+                    expTy = typeOfExp exp,
+                    targetTy = TypesBasics.substBTvar subst targetTy,
+                    cast = cast,
+                    loc = loc}
+        end
+      | R.RCINDEXOF {fields, label, loc} =>
+        R.RCINDEXOF
+          {fields = RecordLabel.Map.map
+                      (fn {ty, size} =>
+                          {ty = TypesBasics.substBTvar subst ty,
+                           size = instantiateValue subst size})
+                      fields,
+           label = label,
+           loc = loc}
+
+  and instantiateDecl subst decl =
+      case decl of
+        R.RCVAL {var, exp, loc} =>
+        let
+          val exp = instantiateExp subst exp
+        in
+          R.RCVAL {var = var # {ty = typeOfExp exp},
+                   exp = exp,
+                   loc = loc}
+        end
+      | R.RCVALREC (recbinds, loc) =>
+        let
+          val recbinds =
+              map (fn {var, exp} =>
+                      let
+                        val exp = instantiateExp subst exp
+                      in
+                        {var = var # {ty = typeOfExp exp}, exp = exp}
+                      end)
+                  recbinds
+        in
+          R.RCVALREC (recbinds, loc)
+        end
+      | R.RCEXPORTVAR {weak, var, exp = SOME exp} =>
+        let
+          val exp = instantiateExp subst exp
+        in
+          R.RCEXPORTVAR {weak = weak,
+                         var = var # {ty = typeOfExp exp},
+                         exp = SOME exp}
+        end
+      | R.RCEXPORTVAR {weak, var, exp = NONE} => decl
+      | R.RCEXTERNVAR _ => decl
+
 end

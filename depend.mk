@@ -28720,6 +28720,7 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
@@ -28727,7 +28728,6 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/name/main/CodeLabel.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -30057,12 +30057,12 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o: \
  src/smlformat-lib.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/name/main/CodeLabel.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -30330,6 +30330,536 @@ src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o: \
  src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.smi \
  src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.smi \
  src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o: \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/data/name/main/CodeLabel.smi \
+ src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
+ src/compiler/data/types/main/DummyTyID.smi \
+ src/compiler/data/types/main/ExistTyID.smi \
+ src/compiler/data/types/main/DynamicKind.ppg.smi \
+ src/compiler/data/types/main/Types.ppg.smi \
+ src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o: \
+ src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
+ src/compiler/data/types/main/DummyTyID.smi \
+ src/compiler/data/types/main/ExistTyID.smi \
+ src/compiler/data/types/main/DynamicKind.ppg.smi \
+ src/compiler/data/types/main/Types.ppg.smi \
+ src/compiler/libs/env/main/IOrd.smi \
+ src/compiler/libs/env/main/IEnv.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/data/types/main/VarInfoEnv.smi \
+ src/compiler/data/types/main/TvarMap.smi \
+ src/compiler/data/types/main/TypesBasics.smi \
+ src/compiler/libs/env/main/SOrd.smi \
+ src/compiler/libs/env/main/SEnv.smi \
+ src/compiler/libs/util/main/TermFormat.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
+ src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
+ src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
+ src/compiler/data/builtin/main/BuiltinTypes.smi \
+ src/compiler/data/name/main/CodeLabel.smi \
+ src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
+ src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o: \
+ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlnj-lib/Util/lib-base.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/name/main/CodeLabel.smi \
+ src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
+ src/compiler/data/types/main/DummyTyID.smi \
+ src/compiler/data/types/main/ExistTyID.smi \
+ src/compiler/data/types/main/DynamicKind.ppg.smi \
+ src/compiler/data/types/main/Types.ppg.smi \
+ src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.smi \
+ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.smi \
+ $(SMLSHARP_DEP)
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o: \
+ src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.sml \
+ src/basis/main/General.smi \
+ src/basis/main/StringCvt.smi \
+ src/basis/main/IEEEReal.smi \
+ src/basis/main/Real64.smi \
+ src/basis/main/IntInf.smi \
+ src/basis/main/Time.smi \
+ src/basis/main/Int8.smi \
+ src/basis/main/Int16.smi \
+ src/basis/main/Int32.smi \
+ src/basis/main/Word8VectorSlice.smi \
+ src/basis/main/Word8ArraySlice.smi \
+ src/basis/main/Substring.smi \
+ src/basis/main/Array.smi \
+ src/basis/main/VectorSlice.smi \
+ src/basis/main/ArraySlice.smi \
+ src/basis/main/Word8Vector.smi \
+ src/basis/main/IO.smi \
+ src/basis/main/Word8Array.smi \
+ src/basis/main/SMLSharp_OSIO.smi \
+ src/basis/main/SMLSharp_OSFileSys.smi \
+ src/basis/main/SMLSharp_OSProcess.smi \
+ src/basis/main/SMLSharp_Runtime.smi \
+ src/smlnj/Basis/OS/os-path-fn.smi \
+ src/smlnj/Basis/Unix/os-path.smi \
+ src/basis/main/OS.smi \
+ src/smlnj/Basis/IO/prim-io-bin.smi \
+ src/smlnj/Basis/IO/bin-io.smi \
+ src/basis/main/Bool.smi \
+ src/basis/main/Byte.smi \
+ src/basis/main/CharArray.smi \
+ src/basis/main/CharVectorSlice.smi \
+ src/basis/main/CharArraySlice.smi \
+ src/basis/main/SMLSharp_ScanChar.smi \
+ src/basis/main/Char.smi \
+ src/basis/main/CharVector.smi \
+ src/basis/main/CommandLine.smi \
+ src/smlnj/Basis/date.smi \
+ src/basis/main/List.smi \
+ src/basis/main/ListPair.smi \
+ src/basis/main/Option.smi \
+ src/basis/main/Real32.smi \
+ src/basis/main/Int64.smi \
+ src/basis/main/String.smi \
+ src/smlnj/Basis/IO/prim-io-text.smi \
+ src/smlnj/Basis/IO/text-io.smi \
+ src/basis/main/Text.smi \
+ src/basis/main/Timer.smi \
+ src/basis/main/Vector.smi \
+ src/basis/main/Word8.smi \
+ src/basis/main/Word16.smi \
+ src/basis/main/Word32.smi \
+ src/basis/main/Word64.smi \
+ src/basis/main/toplevel.smi \
+ src/basis/main/ARRAY.sig \
+ src/basis/main/ARRAY_SLICE.sig \
+ src/basis/main/STREAM_IO.sig \
+ src/basis/main/IMPERATIVE_IO.sig \
+ src/basis/main/BIN_IO.sig \
+ src/basis/main/BOOL.sig \
+ src/basis/main/BYTE.sig \
+ src/basis/main/CHAR.sig \
+ src/basis/main/COMMAND_LINE.sig \
+ src/basis/main/DATE.sig \
+ src/basis/main/GENERAL.sig \
+ src/basis/main/IEEE_REAL.sig \
+ src/basis/main/INTEGER.sig \
+ src/basis/main/INT_INF.sig \
+ src/basis/main/IO.sig \
+ src/basis/main/LIST.sig \
+ src/basis/main/LIST_PAIR.sig \
+ src/basis/main/MATH.sig \
+ src/basis/main/MONO_ARRAY.sig \
+ src/basis/main/MONO_ARRAY_SLICE.sig \
+ src/basis/main/MONO_VECTOR.sig \
+ src/basis/main/MONO_VECTOR_SLICE.sig \
+ src/basis/main/OPTION.sig \
+ src/basis/main/OS_FILE_SYS.sig \
+ src/basis/main/OS_IO.sig \
+ src/basis/main/OS_PATH.sig \
+ src/basis/main/OS_PROCESS.sig \
+ src/basis/main/OS.sig \
+ src/basis/main/PRIM_IO.sig \
+ src/basis/main/REAL.sig \
+ src/basis/main/STRING.sig \
+ src/basis/main/STRING_CVT.sig \
+ src/basis/main/SUBSTRING.sig \
+ src/basis/main/TEXT_STREAM_IO.sig \
+ src/basis/main/TEXT_IO.sig \
+ src/basis/main/TEXT.sig \
+ src/basis/main/TIME.sig \
+ src/basis/main/TIMER.sig \
+ src/basis/main/VECTOR.sig \
+ src/basis/main/VECTOR_SLICE.sig \
+ src/basis/main/WORD.sig \
+ src/basis.smi \
+ src/smlformat/formatlib/main/FormatExpression.smi \
+ src/smlformat/formatlib/main/PrinterParameter.smi \
+ src/smlformat/formatlib/main/BasicFormatters.smi \
+ src/smlformat/formatlib/main/SMLFormat.smi \
+ src/smlformat-lib.smi \
+ src/compiler/extensions/debug/main/Bug.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
+ src/smlnj-lib/Util2/binary-map-fn2.smi \
+ src/smlnj-lib/Util/binary-set-fn.smi \
+ src/compiler/libs/toolchain/main/Filename.smi \
+ src/compiler/data/symbols/main/Loc.smi \
+ src/compiler/data/symbols/main/Symbol.smi \
+ src/compiler/data/symbols/main/RecordLabel.smi \
+ src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
+ src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
+ src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
+ src/compiler/compilerIRs/absyn/main/InterfaceName.ppg.smi \
+ src/compiler/data/types/main/DummyTyID.smi \
+ src/compiler/data/types/main/ExistTyID.smi \
+ src/compiler/data/types/main/DynamicKind.ppg.smi \
+ src/compiler/data/types/main/Types.ppg.smi \
+ src/compiler/libs/env/main/IOrd.smi \
+ src/compiler/libs/env/main/IEnv.smi \
+ src/smlnj-lib/Util/binary-map-fn.smi \
+ src/compiler/data/types/main/VarInfoEnv.smi \
+ src/compiler/data/types/main/TvarMap.smi \
+ src/compiler/data/types/main/TypesBasics.smi \
+ src/compiler/data/types/main/TyRevealTy.smi \
+ src/compiler/data/types/main/Unify.smi \
+ src/compiler/data/runtimetypes/main/TypeLayout2.smi \
+ src/compiler/libs/env/main/SOrd.smi \
+ src/compiler/libs/env/main/SEnv.smi \
+ src/compiler/libs/util/main/TermFormat.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynConst.smi \
+ src/compiler/compilerIRs/absyn/main/AbsynTy.smi \
+ src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
+ src/compiler/compilerIRs/idcalc/main/IDCalc.ppg.smi \
+ src/compiler/data/builtin/main/BuiltinTypes.smi \
+ src/compiler/data/name/main/CodeLabel.smi \
+ src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalcType.smi \
+ src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.smi \
+ src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.smi \
+ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.smi \
+ src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.smi \
  $(SMLSHARP_DEP)
 src/compiler/libs/list-utils/main/utils.o: \
  src/compiler/libs/list-utils/main/utils.sml \
@@ -30671,6 +31201,7 @@ src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
@@ -30678,7 +31209,6 @@ src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/name/main/CodeLabel.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -31629,6 +32159,7 @@ src/compiler/compilePhases/datatypecompilation/main/DatatypeCompilation.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
@@ -31636,7 +32167,6 @@ src/compiler/compilePhases/datatypecompilation/main/DatatypeCompilation.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/name/main/CodeLabel.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -32990,6 +33520,7 @@ src/compiler/compilePhases/bitmapcompilation/main/SingletonTyEnv.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
@@ -32997,7 +33528,6 @@ src/compiler/compilePhases/bitmapcompilation/main/SingletonTyEnv.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
  src/compiler/data/name/main/CodeLabel.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
  src/compiler/data/runtimetypes/main/FFIAttributes.ppg.smi \
  src/compiler/data/runtimetypes/main/RuntimeTypes.ppg.smi \
@@ -33537,6 +34067,7 @@ src/compiler/compilerIRs/anormal/main/ANormal.ppg.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
@@ -33544,7 +34075,6 @@ src/compiler/compilerIRs/anormal/main/ANormal.ppg.o: \
  src/compiler/data/symbols/main/Symbol.smi \
  src/compiler/extensions/format-utils/main/SmlppgUtil.ppg.smi \
  src/compiler/data/symbols/main/RecordLabel.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util/binary-map-fn.smi \
  src/compiler/libs/env/main/SOrd.smi \
  src/compiler/libs/env/main/SEnv.smi \
@@ -33806,9 +34336,9 @@ src/compiler/compilePhases/anormalize/main/ANormalize.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/ids/main/LocalID.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
- src/compiler/libs/ids/main/LocalID.smi \
  src/smlnj-lib/Util2/binary-map-fn2.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/data/symbols/main/Symbol.smi \
@@ -35396,6 +35926,7 @@ src/compiler/compilePhases/toplevel/main/Top.o: \
  src/compiler/compilePhases/matchcompilation/main/MatchCompiler.smi \
  src/compiler/compilePhases/typedelaboration/main/TypedElaboration.smi \
  src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.smi \
+ src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.smi \
  src/compiler/compilePhases/fficompilation/main/FFICompilation.smi \
  src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.smi \
  src/compiler/compilePhases/recordcompilation/main/RecordCompilation.smi \

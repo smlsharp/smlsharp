@@ -45,6 +45,7 @@ struct
   val printFundeclElab : bool ref
   val printMatchCompile : bool ref
   val printTailCallCompile : bool ref
+  val printPartialEvaluation : bool ref
   val printTypedElaboration : bool ref
   val printReifyTopEnv : bool ref
   val printFFICompile : bool ref
@@ -89,6 +90,7 @@ struct
   val doRCOptimization : bool ref
 *)
   val doTailCallCompile : bool ref
+  val doPartialEvaluation : bool ref
   val skipPrinter : bool ref
   val doListExpressionOptimization : bool ref
   val doUncurryingOptimizeInMatchCompile : bool ref

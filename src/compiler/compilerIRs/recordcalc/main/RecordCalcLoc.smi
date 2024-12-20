@@ -1,6 +1,8 @@
+_require local "../../../data/symbols/main/Loc.smi"
 _require "./RecordCalc.ppg.smi"
 
 structure RecordCalcLoc =
 struct
   val locExp : RecordCalc.rcexp -> RecordCalc.loc
+  val locDecl : RecordCalc.rcdecl -> RecordCalc.loc
 end

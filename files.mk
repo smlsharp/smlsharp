@@ -724,6 +724,10 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
 src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o \
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -1082,6 +1086,10 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
 src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o \
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -1446,6 +1454,10 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
 src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o \
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -1988,6 +2000,10 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
 src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o \
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
@@ -2274,6 +2290,9 @@ src/compiler/compilePhases/parser/main/iml.grm.o \
 src/compiler/compilePhases/parser/main/iml.lex.o \
 src/compiler/compilePhases/parser/main/interface.grm.o \
 src/compiler/compilePhases/parser/main/interface.lex.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
 src/compiler/compilePhases/recordcompilation/main/DynamicExistInstance.o \
@@ -2333,6 +2352,7 @@ src/compiler/compilerIRs/machinecode/main/MachineCodeRename.o \
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.o \
 src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcType.o \
@@ -2684,6 +2704,9 @@ src/compiler/compilePhases/parser/main/iml.grm.smi \
 src/compiler/compilePhases/parser/main/iml.lex.smi \
 src/compiler/compilePhases/parser/main/interface.grm.smi \
 src/compiler/compilePhases/parser/main/interface.lex.smi \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.smi \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.smi \
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.smi \
 src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.smi \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.smi \
 src/compiler/compilePhases/recordcompilation/main/DynamicExistInstance.smi \
@@ -2747,6 +2770,7 @@ src/compiler/compilerIRs/machinecode/main/MachineCodeRename.smi \
 src/compiler/compilerIRs/patterncalc/main/PatternCalc.ppg.smi \
 src/compiler/compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.smi \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcType.smi \
@@ -3288,6 +3312,10 @@ src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.o \
 src/compiler/compilerIRs/recordcalc/main/RecordCalcLoc.o \
 src/compiler/compilePhases/tailcallcompile/main/CallAnalysis.o \
 src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o \
+src/compiler/compilerIRs/recordcalc/main/RecordCalcFv.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluatePrimitive.o \
+src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
+src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \

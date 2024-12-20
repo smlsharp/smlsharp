@@ -447,6 +447,17 @@ struct
         rcdecs
       end
 
+  fun doPartialEvaluation rcdecs =
+      let
+        val _ = #start Counter.partialEvaluationTimeCounter()
+        val rcdecs = PartialEvaluation.compile rcdecs
+        val _ =  #stop Counter.partialEvaluationTimeCounter()
+        val _ = printRecordCalc [Control.printPartialEvaluation]
+                                "Partially Evaluated" rcdecs
+      in
+        rcdecs
+      end
+
   fun doBitmapCompilation rcdecs =
       let
         val _ = #start Counter.bitmapCompilationTimeCounter()
@@ -708,18 +719,22 @@ struct
 
         val rcdecs = doRecordCompilation tldecs
 
-        val rcdecs = if !Control.doTailCallCompile
-                     then doTailCallCompile rcdecs
-                     else rcdecs
+        val externalDecls =
+            RecordCompilation.makeUerlelvelPrimitiveExternDecls
+              (UserLevelPrimitive.getExternDecls())
+        val rcdecs = externalDecls @ rcdecs
 
         val _ = if stopAt = NameRef
                 then raise Return (dependency, STOPPED)
                 else ()
 
-        val externalDecls = 
-            RecordCompilation.makeUerlelvelPrimitiveExternDecls
-              (UserLevelPrimitive.getExternDecls())
-        val rcdecs = externalDecls @ rcdecs
+        val rcdecs = if !Control.doTailCallCompile
+                     then doTailCallCompile rcdecs
+                     else rcdecs
+
+        val rcdecs = if !Control.doPartialEvaluation
+                     then doPartialEvaluation rcdecs
+                     else rcdecs
 
         val _ = if !Control.checkType
                 then RecordCalcTypeCheck.check rcdecs

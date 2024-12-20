@@ -80,9 +80,9 @@ struct
     | RCSELECT of
       {
         label : RecordLabel.label,
-        indexExp : rcexp,
         recordExp : rcexp,
         recordTy : ty,
+        indexExp : rcexp,
         resultTy : ty,
         resultSize : rcvalue,
         resultTag : rcvalue,
@@ -91,9 +91,9 @@ struct
     | RCMODIFY of
       {
         label : RecordLabel.label,
-        indexExp : rcexp,
         recordExp : rcexp,
         recordTy : ty,
+        indexExp : rcexp,
         elementExp : rcexp,
         elementTy : ty,
         elementSize : rcvalue,

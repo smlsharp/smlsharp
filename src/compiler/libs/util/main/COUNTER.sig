@@ -62,6 +62,7 @@ sig
   val recordCompilationTimeCounter : elapsedTimeCounter
   val datatypeCompilationTimeCounter : elapsedTimeCounter
   val tailCallCompileTimeCounter : elapsedTimeCounter
+  val partialEvaluationTimeCounter : elapsedTimeCounter
   val staticAnalysisTimeCounter : elapsedTimeCounter
   val recordUnboxingTimeCounter : elapsedTimeCounter
   val bitmapCompilationTimeCounter : elapsedTimeCounter

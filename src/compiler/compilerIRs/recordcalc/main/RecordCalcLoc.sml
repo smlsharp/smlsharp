@@ -29,4 +29,12 @@ struct
       | R.RCCAST {loc, ...} => loc
       | R.RCINDEXOF {loc, ...} => loc
 
+  fun locDecl decl =
+      case decl of
+        R.RCVAL {loc, ...} => loc
+      | R.RCVALREC (_, loc) => loc
+      | R.RCEXPORTVAR {exp = SOME exp, ...} => locExp exp
+      | R.RCEXPORTVAR {exp = NONE, ...} => Loc.noloc
+      | R.RCEXTERNVAR _ => Loc.noloc
+
 end

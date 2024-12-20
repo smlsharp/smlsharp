@@ -1,0 +1,17 @@
+_require local "../../../../basis.smi"
+_require local "../../../extensions/debug/main/Bug.smi"
+_require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../data/types/main/Types.ppg.smi"
+_require local "../../../data/types/main/TypesBasics.smi"
+_require local "../../../data/builtin/main/BuiltinTypes.smi"
+_require "../../../data/builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../../compilerIRs/typedlambda/main/TypedLambda.ppg.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure PartialEvaluatePrimitive =
+struct
+  val eval : TypedLambda.primInfo
+             -> RecordCalc.rcexp list
+             -> RecordCalc.loc
+             -> RecordCalc.rcexp option
+end

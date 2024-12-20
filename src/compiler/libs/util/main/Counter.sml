@@ -447,6 +447,8 @@ struct
       #addElapsedTime ElapsedCounterSet "datatype compilation"
   val tailCallCompileTimeCounter =
       #addElapsedTime ElapsedCounterSet "tail-call compile"
+  val partialEvaluationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "partial evaluation"
   val staticAnalysisTimeCounter =
       #addElapsedTime ElapsedCounterSet "static annalysis"
   val recordUnboxingTimeCounter =

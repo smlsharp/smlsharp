@@ -1,0 +1,12 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
+
+structure RecordCalcFv =
+struct
+  val fvValue : RecordCalc.rcvalue -> int VarID.Map.map
+  val fvExp : RecordCalc.rcexp -> int VarID.Map.map
+  val fvDecl : RecordCalc.rcdecl -> int VarID.Map.map * RecordCalc.varInfo list
+  val fvExpList : RecordCalc.rcexp list -> int VarID.Map.map
+end
