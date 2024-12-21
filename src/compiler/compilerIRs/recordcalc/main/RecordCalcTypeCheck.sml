@@ -103,7 +103,8 @@ struct
               T.FUNMty (argTys, retTy) =>
               (ListPair.appEq
                  (fn (ty1, ty2) => eqTy B ty1 ty2)
-                 (argTys, argTyList);
+                 (argTys, argTyList)
+               handle ListPair.UnequalLengths => raise B "RCAPPM";
                retTy)
             | _ => raise Bug.Bug "RCAPPM"
           end
@@ -131,13 +132,16 @@ struct
           in
             ListPair.appEq
               (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.SIZEty ty2)))
-              (instSizeTyList, instTyList);
+              (instSizeTyList, instTyList)
+            handle ListPair.UnequalLengths => raise B "RCPRIMAPPLY";
             ListPair.appEq
               (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.TAGty ty2)))
-              (instTagTyList, instTyList);
+              (instTagTyList, instTyList)
+            handle ListPair.UnequalLengths => raise B "RCPRIMAPPLY";
             ListPair.appEq
               (fn (ty1, ty2) => eqTy B ty1 ty2)
-              (argTyList, #argTyList primTy);
+              (argTyList, #argTyList primTy)
+            handle ListPair.UnequalLengths => raise B "RCPRIMAPPLY";
             #resultTy primTy
           end
         | R.RCRECORD {fields, loc} =>
@@ -149,13 +153,16 @@ struct
           in
             ListPair.appEq
               (fn (ty1, (_, {ty, ...})) => eqTy B ty ty1)
-              (expTyList, fields);
+              (expTyList, fields)
+            handle ListPair.UnequalLengths => raise B "RCRECORD";
             ListPair.appEq
               (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.SIZEty ty2)))
-              (sizeTyList, expTyList);
+              (sizeTyList, expTyList)
+            handle ListPair.UnequalLengths => raise B "RCRECORD";
             ListPair.appEq
               (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.TAGty ty2)))
-              (tagTyList, expTyList);
+              (tagTyList, expTyList)
+            handle ListPair.UnequalLengths => raise B "RCRECORD";
             T.RECORDty
               (ListPair.foldlEq
                  (fn ((label, _), ty, z) =>
@@ -247,7 +254,8 @@ struct
             | SOME argTys =>
               (ListPair.appEq
                  (fn (ty1, ty2) => eqTy B ty1 ty2)
-                 (argTys, argTyList);
+                 (argTys, argTyList)
+               handle ListPair.UnequalLengths => raise B "RCTHROW";
                resultTy)
           end
         | R.RCCATCH {recursive, rules, tryExp, resultTy, loc} =>
@@ -290,14 +298,14 @@ struct
             case TypesBasics.revealTy funTy of
               T.BACKENDty (T.FOREIGNFUNPTRty arg) =>
               let
-                val {argTyList, varArgTyList, ...} = arg
-                val argTys = case varArgTyList of
-                               NONE => argTyList
-                             | SOME tys => argTyList @ tys
+                val argTys = case #varArgTyList arg of
+                               NONE => #argTyList arg
+                             | SOME tys => #argTyList arg @ tys
               in
                 ListPair.appEq
                   (fn (ty1, ty2) => eqTy B ty1 ty2)
-                  (argTys, argTyList);
+                  (argTys, argTyList)
+                handle ListPair.UnequalLengths => raise B "RCFOREIGNAPPLY";
                 case (resultTy, #resultTy arg) of
                   (NONE, NONE) => BuiltinTypes.unitTy
                 | (SOME ty1, SOME ty2) => (eqTy B ty1 ty2; ty2)
@@ -369,7 +377,8 @@ struct
           in
             ListPair.appEq
               (fn ({var = {ty, ...}, ...}, ty2) => eqTy B ty ty2)
-              (binds, expTys);
+              (binds, expTys)
+            handle ListPair.UnequalLengths => raise B "RCVALREC";
             env # {varEnv = varEnv}
           end
         | R.RCEXPORTVAR {weak, var, exp} =>
