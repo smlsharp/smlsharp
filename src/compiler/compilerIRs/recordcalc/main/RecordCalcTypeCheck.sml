@@ -177,6 +177,7 @@ struct
                   (case BoundTypeVarID.Map.find (#btvEnv env, tid) of
                      SOME (T.KIND {tvarKind = T.REC fields, ...}) => fields
                    | _ => RecordLabel.Map.empty)
+                | T.DUMMYty (_, T.KIND {tvarKind = T.REC fields, ...}) => fields
                 | _ => RecordLabel.Map.empty
             val resultTy2 =
                 case RecordLabel.Map.find (fields, label) of
