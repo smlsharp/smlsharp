@@ -163,8 +163,9 @@ struct
         analyzeBind context loc {var = var, exp = exp}
       | R.RCVALREC (binds, loc) =>
         merge (map (analyzeBind context loc) binds)
-      | R.RCEXPORTVAR {weak, var, exp} =>
+      | R.RCEXPORTVAR {weak, var, exp = SOME exp} =>
         analyzeExp (nontail context) exp
+      | R.RCEXPORTVAR {weak, var, exp = NONE} => VarID.Map.empty
       | R.RCEXTERNVAR _ => VarID.Map.empty
 
   fun eliminateDeadCode (calls : call_graph) =

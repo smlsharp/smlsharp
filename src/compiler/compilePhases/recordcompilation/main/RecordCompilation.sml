@@ -537,7 +537,7 @@ struct
         TL.TLEXPORTVAR {weak, var, exp} =>
         [RC.RCEXPORTVAR {weak = weak,
                          var = compileExVarInfo var,
-                         exp = compileExp context exp}]
+                         exp = SOME (compileExp context exp)}]
       | TL.TLEXTERNVAR (exVarInfo, provider) =>
         [RC.RCEXTERNVAR (compileExVarInfo exVarInfo, provider)]
       | TL.TLVAL {var, exp, loc} =>

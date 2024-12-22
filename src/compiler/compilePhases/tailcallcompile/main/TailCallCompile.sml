@@ -705,9 +705,10 @@ struct
            env = env}
         end
       | R.RCEXPORTVAR {weak, var, exp} =>
-        {decls = [R.RCEXPORTVAR {weak = weak,
-                                 var = var,
-                                 exp = compileExp (nontail context) exp}],
+        {decls = [R.RCEXPORTVAR
+                    {weak = weak,
+                     var = var,
+                     exp = Option.map (compileExp (nontail context)) exp}],
          catch = NONE,
          env = #env context}
       | R.RCEXTERNVAR _ =>

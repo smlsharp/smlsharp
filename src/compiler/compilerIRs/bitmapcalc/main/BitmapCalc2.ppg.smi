@@ -192,7 +192,7 @@ struct
       {
         weak : bool,
         exVarInfo : exVarInfo,
-        exp : bcexp,
+        exp : bcexp option,
         loc : loc
       }
 

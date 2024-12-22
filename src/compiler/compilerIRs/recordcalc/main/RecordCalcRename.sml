@@ -339,15 +339,16 @@ struct
         in
           (subst, R.RCVALREC (binds, loc))
         end
-      | R.RCEXPORTVAR {weak, var, exp} =>
+      | R.RCEXPORTVAR {weak, var, exp = SOME exp} =>
         let
           val exp = renameExp subst exp
         in
           (subst,
            R.RCEXPORTVAR {weak = weak,
                           var = var # {ty = RecordCalcType.typeOfExp exp},
-                          exp = exp})
+                          exp = SOME exp})
         end
+      | R.RCEXPORTVAR {weak, var, exp} => (subst, decl)
       | R.RCEXTERNVAR _ => (subst, decl)
 
   fun renameDeclList subst nil = nil

@@ -403,7 +403,7 @@ struct
     | R.RCEXPORTVAR {weak, var, exp} =>
       B.BCEXPORTVAR {weak = weak,
                      exVarInfo = var,
-                     exp = compileExp accum exp,
+                     exp = Option.map (compileExp accum) exp,
                      loc = Loc.noloc}
     | R.RCEXTERNVAR (exVarInfo, provider) =>
       B.BCEXTERNVAR {exVarInfo = exVarInfo, provider = provider,

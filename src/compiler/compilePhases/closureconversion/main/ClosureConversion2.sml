@@ -1762,7 +1762,7 @@ struct
                                      loc = loc})]),
          emptyVarEnv,
          nil)
-      | B.BCEXPORTVAR {weak, exVarInfo={path,ty}, exp, loc} =>
+      | B.BCEXPORTVAR {weak, exVarInfo={path,ty}, exp = SOME exp, loc} =>
         let
           val env = setPath (env, path)
           val (top1, c, exp) = compileExp accum env exp
@@ -1786,6 +1786,15 @@ struct
                                     loc=loc})]
         in
           (top1 @ top2 @ top3, emptyVarEnv, binds)
+        end
+      | B.BCEXPORTVAR {weak, exVarInfo={path, ty}, exp = NONE, loc} =>
+        let
+          val id = ExternSymbol.touch path
+          val top1 =
+              [DATA (C.CTEXPORTVAR {id=id, weak=weak, ty=ty, value=NONE,
+                                    loc=loc})]
+        in
+          (top1, emptyVarEnv, nil)
         end
       | B.BCVAL {boundVar, boundExp = B.BCFNM func, loc} =>
         compileFunc accum env (boundVar, func)

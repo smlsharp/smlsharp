@@ -182,7 +182,7 @@ struct
       {
         weak : bool,
         var : exVarInfo,
-        exp : rcexp
+        exp : rcexp option
       }
     | RCEXTERNVAR of exVarInfo * Types.provider
 

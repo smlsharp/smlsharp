@@ -370,7 +370,9 @@ struct
             eqTyList B (map (#ty o #var) binds) expTys;
             env # {varEnv = varEnv}
           end
-        | R.RCEXPORTVAR {weak, var, exp} =>
+        | R.RCEXPORTVAR {weak, var, exp = NONE} =>
+          addExVar env var
+        | R.RCEXPORTVAR {weak, var, exp = SOME exp} =>
           let
             val expTy = checkExp env exp
           in

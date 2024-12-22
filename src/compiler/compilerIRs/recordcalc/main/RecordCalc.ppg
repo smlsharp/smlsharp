@@ -687,8 +687,9 @@ struct
        *)
       RCVALREC of {var : varInfo, exp : rcexp} list * loc
     | (*%
-        @format({weak, var, exp})
-        "export" weak:iftrue()(+d "weak",) +d var +d "=" 2[ +1 !R1{ exp } ]
+        @format({weak, var, exp: exp exps})
+        "export" weak:iftrue()(+d "weak",)
+        +d var exps:ifsome()(+d "=" 2[ +1 !R1{ exps(exp) } ],)
        *)
       (*% @prefix formatWithType_
         @ditto
@@ -697,7 +698,7 @@ struct
       {
         weak : bool,
         var : exVarInfo,
-        exp : rcexp
+        exp : rcexp option
       }
     | (*%
         @format(var * provider)

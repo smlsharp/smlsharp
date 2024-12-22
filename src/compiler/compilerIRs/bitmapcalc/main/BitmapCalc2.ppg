@@ -617,21 +617,21 @@ struct
         loc: loc
       }
     | (*%
-       * @format({weak, exVarInfo, exp, loc})
+       * @format({weak, exVarInfo, exp: exp exps, loc})
        * !R1{ "export" +d "val" +d exVarInfo
-       *      2[ +d "=" +1 exp ] }
+       *      2[ +d "=" +1 exps(exp) ] }
        *)
       (*%
        * @prefix formatWithType_
-       * @format({weak, exVarInfo, exp, loc})
+       * @format({weak, exVarInfo, exp: exp exps, loc})
        * !R1{ "export" +d "val" +d exVarInfo
-       *      2[ +d "=" +1 exp ] }
+       *      2[ +d "=" +1 exps(exp) ] }
        *)
       BCEXPORTVAR of
       {
         weak : bool,
         exVarInfo : exVarInfo,
-        exp : bcexp,
+        exp : bcexp option,
         loc : loc
       }
 
