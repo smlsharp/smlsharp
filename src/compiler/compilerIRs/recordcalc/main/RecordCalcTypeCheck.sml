@@ -54,6 +54,24 @@ struct
             print "\n----\n";
             raise bug "eqTy")
 
+  fun eqTyList format exp bug tys1 tys2 =
+      ListPair.appEq
+        (fn (ty1, ty2) => eqTy format exp bug ty1 ty2)
+        (tys1, tys2)
+      handle ListPair.UnequalLengths =>
+             (print "----\n";
+              print (Bug.prettyPrint (format exp));
+              print "\n----\n";
+              print (String.concatWith
+                       ",\n"
+                       (map (Bug.prettyPrint o Types.format_ty) tys1));
+              print "\n----\n";
+              print (String.concatWith
+                       ",\n"
+                       (map (Bug.prettyPrint o Types.format_ty) tys2));
+              print "\n----\n";
+              raise bug "eqTyList")
+
   fun checkValue env value =
       let
         fun format v = R.format_rcexp (R.RCVALUE (v, Loc.noloc))
@@ -64,13 +82,14 @@ struct
           RecordCalcType.typeOfConst const
         | R.RCVAR {id, ty, ...} =>
           case VarID.Map.find (#varEnv env, id) of
-            NONE => raise Bug.Bug "RCVAR"
+            NONE => raise B ("RCVAR: " ^ VarID.toString id)
           | SOME ty2 => (eqTy B ty ty2; ty2)
       end
 
   fun checkExp env exp =
       let
         val eqTy = eqTy R.formatWithType_rcexp exp
+        val eqTyList = eqTyList R.formatWithType_rcexp exp
       in
         case exp of
           R.RCVALUE (value, loc) =>
@@ -81,7 +100,7 @@ struct
           (
             case LongsymbolEnv.find (#exVarEnv env, path) of
               NONE =>
-              raise Bug.Bug ("RCEXVAR " ^ Symbol.longsymbolToString path)
+              raise B ("RCEXVAR: " ^ Symbol.longsymbolToString path)
             | SOME ty2 => (eqTy B ty ty2; ty2)
           )
         | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
@@ -101,10 +120,7 @@ struct
             eqTy B funTy funExpTy;
             case TypesBasics.revealTy funExpTy of
               T.FUNMty (argTys, retTy) =>
-              (ListPair.appEq
-                 (fn (ty1, ty2) => eqTy B ty1 ty2)
-                 (argTys, argTyList)
-               handle ListPair.UnequalLengths => raise B "RCAPPM";
+              (eqTyList B argTys argTyList;
                retTy)
             | _ => raise Bug.Bug "RCAPPM"
           end
@@ -130,18 +146,13 @@ struct
             val argTyList = map (checkExp env) argExpList
             val primTy = TypesBasics.tpappPrimTy (#ty primOp, instTyList)
           in
-            ListPair.appEq
-              (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.SIZEty ty2)))
-              (instSizeTyList, instTyList)
-            handle ListPair.UnequalLengths => raise B "RCPRIMAPPLY";
-            ListPair.appEq
-              (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.TAGty ty2)))
-              (instTagTyList, instTyList)
-            handle ListPair.UnequalLengths => raise B "RCPRIMAPPLY";
-            ListPair.appEq
-              (fn (ty1, ty2) => eqTy B ty1 ty2)
-              (argTyList, #argTyList primTy)
-            handle ListPair.UnequalLengths => raise B "RCPRIMAPPLY";
+            eqTyList B argTyList (#argTyList primTy);
+            eqTyList B
+                     instSizeTyList
+                     (map (fn ty => T.SINGLETONty (T.SIZEty ty)) instTyList);
+            eqTyList B
+                     instTagTyList
+                     (map (fn ty => T.SINGLETONty (T.TAGty ty)) instTyList);
             #resultTy primTy
           end
         | R.RCRECORD {fields, loc} =>
@@ -151,18 +162,13 @@ struct
             val sizeTyList = map (checkValue env o #size o #2) fields
             val tagTyList = map (checkValue env o #tag o #2) fields
           in
-            ListPair.appEq
-              (fn (ty1, (_, {ty, ...})) => eqTy B ty ty1)
-              (expTyList, fields)
-            handle ListPair.UnequalLengths => raise B "RCRECORD";
-            ListPair.appEq
-              (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.SIZEty ty2)))
-              (sizeTyList, expTyList)
-            handle ListPair.UnequalLengths => raise B "RCRECORD";
-            ListPair.appEq
-              (fn (ty1, ty2) => eqTy B ty1 (T.SINGLETONty (T.TAGty ty2)))
-              (tagTyList, expTyList)
-            handle ListPair.UnequalLengths => raise B "RCRECORD";
+            eqTyList B expTyList (map (#ty o #2) fields);
+            eqTyList B
+                     sizeTyList
+                     (map (fn ty => T.SINGLETONty (T.SIZEty ty)) expTyList);
+            eqTyList B
+                     tagTyList
+                     (map (fn ty => T.SINGLETONty (T.TAGty ty)) expTyList);
             T.RECORDty
               (ListPair.foldlEq
                  (fn ((label, _), ty, z) =>
@@ -188,7 +194,7 @@ struct
                 | _ => RecordLabel.Map.empty
             val resultTy2 =
                 case RecordLabel.Map.find (fields, label) of
-                  NONE => raise Bug.Bug "RCSELECT"
+                  NONE => (print (Bug.prettyPrint (R.format_rcexp exp) ^ "\n"); raise B ("RCSELECT " ^ RecordLabel.toString label))
                 | SOME ty => ty
           in
             eqTy B recordTy recordTy2;
@@ -216,7 +222,7 @@ struct
                 | _ => RecordLabel.Map.empty
             val elementTy3 =
                 case RecordLabel.Map.find (fields, label) of
-                  NONE => raise Bug.Bug "RCMODIFY"
+                  NONE => raise B ("RCMODIFY " ^ RecordLabel.toString label)
                 | SOME ty => ty
           in
             eqTy B recordTy recordTy2;
@@ -250,12 +256,9 @@ struct
             val argTyList = map (checkExp env) argExpList
           in
             case FunLocalLabel.Map.find (#catchEnv env, catchLabel) of
-              NONE => raise Bug.Bug "RCTHROW"
+              NONE => raise B ("RCTHROW " ^ FunLocalLabel.toString catchLabel)
             | SOME argTys =>
-              (ListPair.appEq
-                 (fn (ty1, ty2) => eqTy B ty1 ty2)
-                 (argTys, argTyList)
-               handle ListPair.UnequalLengths => raise B "RCTHROW";
+              (eqTyList B argTys argTyList;
                resultTy)
           end
         | R.RCCATCH {recursive, rules, tryExp, resultTy, loc} =>
@@ -302,10 +305,7 @@ struct
                                NONE => #argTyList arg
                              | SOME tys => #argTyList arg @ tys
               in
-                ListPair.appEq
-                  (fn (ty1, ty2) => eqTy B ty1 ty2)
-                  (argTys, argTyList)
-                handle ListPair.UnequalLengths => raise B "RCFOREIGNAPPLY";
+                eqTyList B argTys argTyList;
                 case (resultTy, #resultTy arg) of
                   (NONE, NONE) => BuiltinTypes.unitTy
                 | (SOME ty1, SOME ty2) => (eqTy B ty1 ty2; ty2)
@@ -356,6 +356,7 @@ struct
   and checkDecl env decl =
       let
         val eqTy = eqTy R.formatWithType_rcdecl decl
+        val eqTyList = eqTyList R.formatWithType_rcdecl decl
       in
         case decl of
           R.RCVAL {var, exp, loc} =>
@@ -375,10 +376,7 @@ struct
                       (#varEnv env)
                       binds
           in
-            ListPair.appEq
-              (fn ({var = {ty, ...}, ...}, ty2) => eqTy B ty ty2)
-              (binds, expTys)
-            handle ListPair.UnequalLengths => raise B "RCVALREC";
+            eqTyList B (map (#ty o #var) binds) expTys;
             env # {varEnv = varEnv}
           end
         | R.RCEXPORTVAR {weak, var, exp} =>
