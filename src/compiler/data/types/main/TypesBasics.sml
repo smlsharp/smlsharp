@@ -875,13 +875,13 @@ end
         (case #dtyKind tyCon of
            T.DTY _ => ty
          | T.OPAQUE {opaqueRep = T.TYCON tyCon, ...} =>
-           derefTy (T.CONSTRUCTty {tyCon = tyCon, args = args})
+           revealTy (T.CONSTRUCTty {tyCon = tyCon, args = args})
          | T.OPAQUE {opaqueRep = T.TFUNDEF {polyTy, ...}, ...} =>
-           derefTy (tpappTy (polyTy, args))
+           revealTy (tpappTy (polyTy, args))
          | T.INTERFACE (T.TYCON tyCon) =>
-           derefTy (T.CONSTRUCTty {tyCon = tyCon, args = args})
+           revealTy (T.CONSTRUCTty {tyCon = tyCon, args = args})
          | T.INTERFACE (T.TFUNDEF {polyTy, ...}) =>
-           derefTy (tpappTy (polyTy, args)))
+           revealTy (tpappTy (polyTy, args)))
       | ty => ty
 
   fun tyConFromConTy ty =
