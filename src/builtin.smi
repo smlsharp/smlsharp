@@ -152,6 +152,7 @@ struct
     val toWord16_unsafe = _builtin val Real_fptoui : real64 -> word16
     val toWord32_unsafe = _builtin val Real_fptoui : real64 -> word32
     val toWord64_unsafe = _builtin val Real_fptoui : real64 -> word64
+    val castToWord64 = _builtin val BitCast : real64 -> word64
   end
 
   structure Real32 =
