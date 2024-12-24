@@ -89,8 +89,9 @@ in
            varArgTyList = Option.map (map (evalTy btvMap)) varArgTyList,
            resultTy = Option.map (evalTy btvMap) resultTy,
            attributes = attributes}
-  and evalCodeEntryTy btvMap {tyvars, haveClsEnv, argTyList, retTy} =
+  and evalCodeEntryTy btvMap {tyvars, tyArgs, haveClsEnv, argTyList, retTy} =
       {tyvars = evalBtvEnv btvMap tyvars,
+       tyArgs = tyArgs,
        haveClsEnv = haveClsEnv,
        argTyList = map (evalTy btvMap) argTyList,
        retTy = evalTy btvMap retTy}

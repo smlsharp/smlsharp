@@ -1995,8 +1995,8 @@ print
           | _ =>
             insn1 (L.CONV (#id resultVar, L.BITCAST, exp, targetTy))
         end
-      | M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, argExpList, tail,
-                  handler, loc} =>
+      | M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, instTyList,
+                  argExpList, tail, handler, loc} =>
         let
           val codePtr = compileValue env codeExp
           val clsEnv = Option.map (compileValue env) closureEnvExp
@@ -2289,8 +2289,8 @@ print
 
   fun compileTopdec env topdec =
       case topdec of
-        M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, frameSlots,
-                      bodyExp, retTy, gcCheck, loc} =>
+        M.MTFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
+                      frameSlots, bodyExp, retTy, gcCheck, loc} =>
         let
           val closureEnvArg =
               case closureEnvVar of

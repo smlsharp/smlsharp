@@ -16,7 +16,6 @@ struct
   structure TL = TypedLambda
   structure RC = RecordCalc
   structure T = Types
-  structure TB = TypesBasics
 
   fun newVar ty =
       {path = [],
@@ -148,15 +147,12 @@ struct
       | T.CONSTRUCTty {tyCon, args} =>
         T.CONSTRUCTty {tyCon = tyCon, args = map compileTy args}
       | T.POLYty {boundtvars, constraints, body} =>
-        case generateExtraArgs boundtvars of
-          nil =>
-          T.POLYty {boundtvars = boundtvars,
-                    constraints = constraints,
-                    body = compileTy body}
-        | extraTys =>
-          T.POLYty {boundtvars = boundtvars,
-                    constraints = constraints, 
-                    body = T.FUNMty (extraTys, compileTy body)}
+        if BoundTypeVarID.Map.isEmpty boundtvars andalso null constraints
+        then T.FUNMty (generateExtraArgs boundtvars, compileTy body)
+        else T.POLYty {boundtvars = boundtvars,
+                       constraints = constraints,
+                       body = T.FUNMty (generateExtraArgs boundtvars,
+                                        compileTy body)}
 
   fun compileVarInfo ({path, ty, id} : TL.varInfo) =
       {path = path, ty = compileTy ty, id = id} : RC.varInfo
@@ -298,6 +294,7 @@ struct
         RC.RCAPPM
           {funExp = compileExp context funExp,
            funTy = compileTy funTy,
+           instTyList = nil,
            argExpList = map (compileExp context) argExpList,
            loc = loc}
       | TL.TLLET {decl, body, loc} =>
@@ -404,7 +401,9 @@ struct
       | TL.TLFNM {argVarList, bodyTy, bodyExp, loc} =>
         (* argVarList may contain POLYty due to functor *)
         RC.RCFNM
-          {argVarList = map compileVarInfo argVarList,
+          {btvEnv = BoundTypeVarID.Map.empty,
+           constraints = nil,
+           argVarList = map compileVarInfo argVarList,
            bodyTy = compileTy bodyTy,
            bodyExp = compileExp context bodyExp,
            loc = loc}
@@ -416,25 +415,12 @@ struct
           val newExpTyWithoutTAbs = compileTy expTyWithoutTAbs
           val newExp = compileExp newContext exp
         in
-          case extraArgs of
-            nil =>
-            RC.RCPOLY {btvEnv = btvEnv,
-                       constraints = nil,
-                       expTyWithoutTAbs = newExpTyWithoutTAbs,
-                       exp = newExp,
-                       loc = loc}
-          | _::_ =>
-            RC.RCPOLY {btvEnv = btvEnv,
-                       constraints = nil,
-                       expTyWithoutTAbs =
-                         T.FUNMty (map #ty extraArgs, newExpTyWithoutTAbs),
-                       exp =
-                         RC.RCFNM
-                           {argVarList = extraArgs,
-                            bodyTy = newExpTyWithoutTAbs,
-                            bodyExp = newExp,
-                            loc = loc},
-                       loc = loc}
+          RC.RCFNM {btvEnv = btvEnv,
+                    constraints = constraints,
+                    argVarList = extraArgs,
+                    bodyTy = newExpTyWithoutTAbs,
+                    bodyExp = newExp,
+                    loc = loc}
         end
       | TL.TLPRIMAPPLY {primOp, instTyList, argExpList, loc} =>
         RC.RCPRIMAPPLY
@@ -489,6 +475,7 @@ struct
                                    cast = RC.TypeCast,
                                    loc = loc},
                funTy = funTy,
+               instTyList = nil,
                argExpList = [compileExp context argExp],
                loc = loc}
         end
@@ -496,30 +483,21 @@ struct
         let
           val newExp = compileExp context exp
           val newExpTy = compileTy expTy
-          val newInstTyList = instTyList (* contains no POLYty *)
+          val newInstTyList = map compileTy instTyList
           val funTy = TypesBasics.tpappTy (newExpTy, newInstTyList)
           val extraArgs =
-              case funTy of
+              case TypesBasics.derefTy funTy of
                 T.FUNMty (argTys, retTy) =>
                 if List.exists (fn T.SINGLETONty _ => true | _ => false) argTys
                 then map (toExp context) (generateInstances context argTys loc)
                 else nil
               | _ => nil
         in
-          case extraArgs of
-            nil =>
-            RC.RCTAPP {exp = newExp,
-                       expTy = newExpTy,
-                       instTyList = newInstTyList,
-                       loc = loc}
-          | _::_ =>
-            RC.RCAPPM {funExp = RC.RCTAPP {exp = newExp,
-                                           expTy = newExpTy,
-                                           instTyList = newInstTyList,
-                                           loc = loc},
-                       funTy = funTy,
-                       argExpList = extraArgs,
-                       loc = loc}
+          RC.RCAPPM {funExp = newExp,
+                     funTy = newExpTy,
+                     instTyList = newInstTyList,
+                     argExpList = extraArgs,
+                     loc = loc}
         end
       | TL.TLCAST {exp, expTy, targetTy, cast, loc} =>
         RC.RCCAST {exp = compileExp context exp,
@@ -531,8 +509,8 @@ struct
         let
           val newExp = compileExp context exp
           val newExpTy = compileTy expTy
-          val newInstTyList = instTyList (* contains no POLYty *)
-          val funTy = TB.tpappTy (newExpTy, newInstTyList)
+          val newInstTyList = map compileTy instTyList
+          val funTy = TypesBasics.tpappTy (newExpTy, newInstTyList)
           val extraArgTys =
               case funTy of
                 T.FUNMty (argTys, retTy) =>
@@ -547,11 +525,9 @@ struct
               DynamicExistInstance.generateExtraArgs
                 loc existInstMap extraArgTys
         in
-          RC.RCAPPM {funExp = RC.RCTAPP {exp = newExp,
-                                         expTy = newExpTy,
-                                         instTyList = newInstTyList,
-                                         loc = loc},
-                     funTy = funTy,
+          RC.RCAPPM {funExp = newExp,
+                     funTy = newExpTy,
+                     instTyList = newInstTyList,
                      argExpList = map (compileExp context) extraArgs,
                      loc = loc}
         end

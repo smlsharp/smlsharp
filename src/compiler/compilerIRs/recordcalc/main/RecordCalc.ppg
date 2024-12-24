@@ -22,6 +22,7 @@ struct
     | N0ifnotsingle x _ = N0 x
   fun N0ifcons x (_::_) = N0 x
     | N0ifcons x _ = x
+  fun ifempty (x, y) btvs = if BoundTypeVarID.Map.isEmpty btvs then x else y
   end
 
   (*%
@@ -61,7 +62,7 @@ struct
    *)
   type btvEnv =
       (*%
-        @format(btv)
+        @format(btv) "..."
        *)
       (*% @prefix formatWithType_
         @format(btv) btv
@@ -169,6 +170,7 @@ struct
     @formatter(ifsingle) ifsingle
     @formatter(N0ifnotsingle) N0ifnotsingle
     @formatter(N0ifcons) N0ifcons
+    @formatter(ifempty) ifempty
     @formatter(RecordLabel.Map.map) helper_RecordLabelMap
     @formatter(RecordLabel.label) RecordLabel.format_label
     @formatter(FunLocalLabel.id) FunLocalLabel.format_id
@@ -183,6 +185,7 @@ struct
     @formatter(ifsingle) ifsingle
     @formatter(N0ifnotsingle) N0ifnotsingle
     @formatter(N0ifcons) N0ifcons
+    @formatter(ifempty) ifempty
     @formatter(RecordLabel.Map.map) helper_RecordLabelMap
     @formatter(RecordLabel.label) RecordLabel.format_label
     @formatter(FunLocalLabel.id) FunLocalLabel.format_id
@@ -219,12 +222,16 @@ struct
       (* extnernal variable imported through _require *)
       RCEXVAR of exVarInfo * loc
     | (*%
-        @format({argVarList:arg args, bodyTy, bodyExp, loc})
+        @format({btvEnv, constraints, argVarList:arg args,
+                 bodyTy, bodyExp, loc})
         R1{
           "fn" +d
-          args:ifsingle()(,"(")
-          args:N0ifnotsingle()(args(arg)("," +1))
-          args:ifsingle()(,")")
+          {
+            btvEnv:ifempty()(,"[" !N0{ btvEnv } "]" +1)
+            args:ifsingle()(,"(")
+            args:N0ifnotsingle()(args(arg)("," +1))
+            args:ifsingle()(,")")
+          }
           +d "=>" +1 bodyExp
         }
        *)
@@ -234,16 +241,25 @@ struct
       (* ty is the type of rcexp  *)
       RCFNM of
       {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
         argVarList : varInfo list,
         bodyTy : ty,
         bodyExp : rcexp,
         loc : loc
       }
     | (*%
-        @format({funExp, funTy, argExpList:arg args, loc})
+        @format({funExp, funTy, instTyList: inst insts, argExpList:arg args,
+                 loc})
         L8{
           funExp
           2[
+            insts:ifcons()(
+              +1
+              insts:ifsingle()(,"(")
+              insts:N0ifnotsingle()(insts(inst)("," +1))
+              insts:ifsingle()(,")"),
+            )
             +1
             args:ifsingle()(,"(")
             args:N0ifnotsingle()(args(arg)("," +1))
@@ -258,6 +274,7 @@ struct
       {
         funExp : rcexp,
         funTy : ty,
+        instTyList : ty list,
         argExpList : rcexp list,
         loc : loc
       }
@@ -528,39 +545,6 @@ struct
         } list,
         tryExp : rcexp,
         resultTy : ty,
-        loc : loc
-      }
-    | (*%
-        @format({btvEnv, constraints, expTyWithoutTAbs, exp, loc})
-        exp
-       *)
-      (*% @prefix formatWithType_
-        @format({btvEnv, constraints, expTyWithoutTAbs, exp, loc})
-        "[" !N0{ { btvEnv } "." +1 exp } "]"
-       *)
-      (* \forall t.e;  ty is the type of rcexp without type abstraction *)
-      RCPOLY of
-      {
-        btvEnv : btvEnv,
-        constraints : Types.constraint list,
-        expTyWithoutTAbs : ty,
-        exp : rcexp,
-        loc : loc
-      }
-    | (*%
-        @format({exp, expTy, instTyList:ty tys, loc})
-        exp
-       *)
-      (*% @prefix formatWithType_
-        @format({exp, expTy, instTyList:ty tys, loc})
-        L8{ exp 2[ +1 "{" !N0{ tys(ty)("," +1) } "}" ] }
-       *)
-      (* RCTAPP(ex,ty1,tyl) : ty1 is the polytype, tyl are type args *)
-      RCTAPP of
-      {
-        exp : rcexp,
-        expTy : ty,
-        instTyList : ty list,
         loc : loc
       }
     | (*%

@@ -75,8 +75,9 @@ in
            varArgTyList = Option.map (map revealTy) varArgTyList,
            resultTy = Option.map revealTy resultTy,
            attributes = attributes}
-  and revealCodeEntryTy {tyvars, haveClsEnv, argTyList, retTy} =
+  and revealCodeEntryTy {tyvars, tyArgs, haveClsEnv, argTyList, retTy} =
       {tyvars = revealBtvEnv tyvars,
+       tyArgs = tyArgs,
        haveClsEnv = haveClsEnv,
        argTyList = map revealTy argTyList,
        retTy = revealTy retTy}

@@ -439,6 +439,7 @@ struct
    * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
    * @formatter(OPrimID.id) OPrimID.format_id
    * @formatter(ExistTyID.id) ExistTyID.format_id
+   * @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id
    *)
   (*%
    * @prefix print_
@@ -1019,10 +1020,13 @@ struct
 
   and codeEntryTy =
       (*%
-       * @format({tyvars: kind kinds, haveClsEnv,
+       * @format({tyvars: kind kinds, tyArgs: btv btvs, haveClsEnv,
        *          argTyList: arg args, retTy})
        * "[" !N0{
-       *   kinds:helper_format_boundTvars(kind) "." +1
+       *   kinds:helper_format_boundTvars(kind)
+       *   +1
+       *   "{" !N0{ btvs(btv)("," +d) } "}"
+       *   "." +1
        *   "{" !N0{
        *     dummy:sep()(haveClsEnv:iftrue()("*",), ",", args(arg)("," +1))
        *   } "}"
@@ -1036,6 +1040,7 @@ struct
       (* argTyList and retTy must be closed by tyvars *)
       {
         tyvars : kind BoundTypeVarID.Map.map,
+        tyArgs : BoundTypeVarID.id list,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty

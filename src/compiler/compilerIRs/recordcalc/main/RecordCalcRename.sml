@@ -135,44 +135,28 @@ struct
         R.RCVALUE (renameValue subst value, loc)
       | R.RCSTRING _ => exp
       | R.RCEXVAR _ => exp
-      | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
+      | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
         let
+          val (subst, btvEnv, constraints) =
+              renameBtvEnv subst btvEnv constraints
           val (subst, argVarList) = bindVarList subst argVarList
           val bodyExp = renameExp subst bodyExp
         in
-          R.RCFNM {argVarList = argVarList,
+          R.RCFNM {btvEnv = btvEnv,
+                   constraints = constraints,
+                   argVarList = argVarList,
                    bodyExp = bodyExp,
                    bodyTy = RecordCalcType.typeOfExp bodyExp,
                    loc = loc}
         end
-      | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
-        let
-          val (subst, btvEnv, constraints) =
-              renameBtvEnv subst btvEnv constraints
-          val exp = renameExp subst exp
-        in
-          R.RCPOLY {btvEnv = btvEnv,
-                    constraints = constraints,
-                    exp = exp,
-                    expTyWithoutTAbs = RecordCalcType.typeOfExp exp,
-                    loc = loc}
-        end
-      | R.RCAPPM {funExp, funTy, argExpList, loc} =>
+      | R.RCAPPM {funExp, funTy, instTyList, argExpList, loc} =>
         let
           val funExp = renameExp subst funExp
         in
           R.RCAPPM {funExp = funExp,
                     funTy = RecordCalcType.typeOfExp funExp,
-                    argExpList = map (renameExp subst) argExpList,
-                    loc = loc}
-        end
-      | R.RCTAPP {exp, expTy, instTyList, loc} =>
-        let
-          val exp = renameExp subst exp
-        in
-          R.RCTAPP {exp = exp,
-                    expTy = RecordCalcType.typeOfExp exp,
                     instTyList = map (renameTy subst) instTyList,
+                    argExpList = map (renameExp subst) argExpList,
                     loc = loc}
         end
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>

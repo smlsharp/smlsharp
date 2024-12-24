@@ -506,8 +506,8 @@ struct
         loc : loc
       }
     | (*%
-       * @format({codeExp, closureEnvExp, argExpList: arg args, cconv, funTy,
-       *          loc})
+       * @format({codeExp, closureEnvExp, instTyList,
+       *          argExpList: arg args, cconv, funTy, loc})
        * L8{ 1[
        *   "_call"
        *   +d "{" !N0{ cconv "}" }
@@ -518,8 +518,8 @@ struct
        *)
       (*%
        * @prefix formatWithType_
-       * @format({codeExp, closureEnvExp, argExpList: arg args, cconv, funTy,
-       *          loc})
+       * @format({codeExp, closureEnvExp, instTyList,
+       *          argExpList: arg args, cconv, funTy, loc})
        * L8{ 1[
        *   "_call"
        *   +d "{" !N0{ cconv "}" }
@@ -532,6 +532,7 @@ struct
       {
         codeExp : ccexp,        (* FUNENTRYty *)
         closureEnvExp : ccexp,  (* EXISTS_CLOSUREENVty *)
+        instTyList : ty list,
         argExpList : ccexp list,
         cconv : cconv,
         funTy : ty,
@@ -923,7 +924,7 @@ struct
    *)
   datatype topdec =
       (*%
-       * @format({id, tyvarKindEnv, argVarList: arg args,
+       * @format({id, tyvarKindEnv, tyArgs, argVarList: arg args,
        *          closureEnvVar: env envOpt, bodyExp, retTy, loc})
        * "@fun:" id
        * + envOpt(env)("_")
@@ -932,7 +933,7 @@ struct
        * 1[ +1 bodyExp ]
        *)
       (*% @prefix formatWithType_
-       * @format({id, tyvarKindEnv, argVarList: arg args,
+       * @format({id, tyvarKindEnv, tyArgs, argVarList: arg args,
        *          closureEnvVar: env envOpt, bodyExp, retTy, loc})
        * "@fun:" id
        * + envOpt(env)("_")
@@ -944,6 +945,7 @@ struct
       {
         id : FunEntryLabel.id,
         tyvarKindEnv : Types.btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         argVarList : varInfo list,
         closureEnvVar : varInfo option,
         bodyExp : ccexp,

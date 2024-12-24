@@ -3,7 +3,7 @@ _require "../../../../smlformat-lib.smi"
 (* _require "../../../libs/env/main/SEnv.smi" *)
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-(* _require "../../../libs/ids/main/LocalID.smi" *)
+_require "../../../libs/ids/main/LocalID.smi"
 
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../compilerIRs/absyn/main/ConstFormat.smi"
@@ -114,10 +114,11 @@ struct
     | CCCALL of
       {
         codeExp : ccexp,
-	closureEnvExp : ccexp,
-	argExpList : ccexp list,
-	cconv : cconv,
-	funTy : ty,
+        closureEnvExp : ccexp,
+        instTyList : ty list,
+        argExpList : ccexp list,
+        cconv : cconv,
+        funTy : ty,
         loc : loc
       }
     | CCLET of
@@ -232,6 +233,7 @@ struct
       {
         id : FunEntryLabel.id,
         tyvarKindEnv : Types.btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         argVarList : varInfo list,
         closureEnvVar : varInfo option,
         bodyExp : ccexp,

@@ -239,7 +239,7 @@ struct
         loc : loc
       }
     | (*%
-       * @format({funExp, argExpList: arg args, funTy, loc})
+       * @format({funExp, instTyList, argExpList: arg args, funTy, loc})
        * L8{ 2[
        *   funExp
        *   +1 args:appList(arg)("(",",",")")
@@ -247,7 +247,7 @@ struct
        *)
       (*%
        * @prefix formatWithType_
-       * @format({funExp, argExpList: arg args, funTy, loc})
+       * @format({funExp, instTyList, argExpList: arg args, funTy, loc})
        * L8{ 2[
        *   L2{ funExp +1 ":" +d funTy }
        *   +1 args:appList(arg)("(",",",")")
@@ -257,6 +257,7 @@ struct
       {
         funExp : bcexp,
         argExpList : bcexp list,
+        instTyList : ty list,
         funTy : ty,
         loc : loc
       }
@@ -494,57 +495,26 @@ struct
         loc : loc
       }
     | (*%
-       * @format({argVarList: arg args, retTy, bodyExp, loc})
+       * @format({btvEnv, constraints,
+       *          argVarList: arg args, retTy, bodyExp, loc})
        * R1{ "fn" +d args:appList(arg)("(",",",")") +d "=>"
        *     3[ +1 bodyExp ] }
        *)
       (*%
        * @prefix formatWithType_
-       * @format({argVarList: arg args, retTy, bodyExp, loc})
+       * @format({btvEnv, constraints,
+       *          argVarList: arg args, retTy, bodyExp, loc})
        * L2{ R1{ "fn" +d args:appList(arg)("(",",",")") +d "=>"
        *        3[ +1 bodyExp ] }
        *     +1 ":" +d retTy }
        *)
       BCFNM of
       {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
         argVarList : varInfo list,
         bodyExp : bcexp,
         retTy : ty,
-        loc : loc
-      }
-    | (*%
-       * @format({btvEnv:btv, constraints, expTyWithoutTAbs, exp, loc})
-       * "[" !R1{ btv "." +1 exp } "]"
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({btvEnv:btv, constraints, expTyWithoutTAbs, exp, loc})
-       * "[" !R1{ btv "." +1 L2{ exp +1 ":" +d expTyWithoutTAbs } } "]"
-       *)
-      BCPOLY of
-      {
-        btvEnv : btvEnv,
-        constraints : Types.constraint list,
-        expTyWithoutTAbs : ty,
-        exp : bcexp,
-        loc : loc
-      }
-    | (*%
-       * @format({exp, expTy, instTyList: ty tys, loc})
-       * L8{ 2[ exp
-       *        +1 tys:enclosedList(ty)("(",",",")") ] }
-       *)
-      (*%
-       * @prefix formatWithType_
-       * @format({exp, expTy, instTyList: ty tys, loc})
-       * L8{ 2[ L2{ exp +1 ":" +d expTy }
-       *        +1 tys:enclosedList(ty)("(",",",")") ] }
-       *)
-      BCTAPP of
-      {
-        exp : bcexp,
-        expTy : ty,
-        instTyList : ty list,
         loc : loc
       }
     | (*%

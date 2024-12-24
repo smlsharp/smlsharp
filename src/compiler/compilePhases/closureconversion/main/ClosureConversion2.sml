@@ -99,7 +99,8 @@ struct
         | C.CCPRIMAPPLY {primInfo, argExpList, instTyList, instTagList,
                          instSizeList, loc} =>
           fvExpList bv (argExpList @ instTagList @ instSizeList)
-        | C.CCCALL {codeExp, closureEnvExp, argExpList, cconv, funTy, loc} =>
+        | C.CCCALL {codeExp, closureEnvExp, instTyList, argExpList, cconv,
+                    funTy, loc} =>
           unionSet (fvExpList bv (codeExp :: closureEnvExp :: argExpList),
                     fvCconv bv cconv)
         | C.CCLET {boundVar, boundExp, mainExp, loc} =>
@@ -214,10 +215,12 @@ struct
            instTagList = map (substExp subst) instTagList,
            instSizeList = map (substExp subst) instSizeList,
            loc = loc}
-      | C.CCCALL {codeExp, closureEnvExp, argExpList, cconv, funTy, loc} =>
+      | C.CCCALL {codeExp, closureEnvExp, instTyList, argExpList, cconv,
+                  funTy, loc} =>
         C.CCCALL
           {codeExp = substExp subst codeExp,
            closureEnvExp = substExp subst closureEnvExp,
+           instTyList = instTyList,
            argExpList = map (substExp subst) argExpList,
            cconv = substCconv subst cconv,
            funTy = funTy,
@@ -1158,23 +1161,24 @@ struct
       | R.SIZE (n, ty) => C.CVSIZE {size = n, ty = ty}
 
   fun getFunTy ty =
-      case TypesBasics.derefTy ty of
+      case TypesBasics.revealTy ty of
         T.FUNMty (argTys, retTy) =>
         SOME {tyvars = BoundTypeVarID.Map.empty,
               argTyList = argTys,
               retTy = retTy}
       | T.POLYty {boundtvars, constraints, body} =>
-        (case getFunTy body of
-           NONE => NONE
-         | SOME {tyvars, argTyList, retTy} =>
-           SOME {tyvars = BoundTypeVarID.Map.unionWith #2 (boundtvars, tyvars),
-                 argTyList =argTyList,
-                 retTy = retTy})
+        (case TypesBasics.revealTy body of
+           T.FUNMty (argTys, retTy) =>
+           SOME {tyvars = boundtvars,
+                 argTyList = argTys,
+                 retTy = retTy}
+         | _ => NONE)
       | _ => NONE
 
   fun exFunCodeEntryTy styEnv {tyvars, argTyList, retTy} : T.codeEntryTy =
       {tyvars = BoundTypeVarID.Map.unionWith
                   #2 (SingletonTyEnv2.btvEnv styEnv, tyvars),
+       tyArgs = BoundTypeVarID.Map.listKeys tyvars,
        haveClsEnv = false,
        argTyList = argTyList,
        retTy = retTy}
@@ -1182,15 +1186,9 @@ struct
   fun exportFunEntry (styEnv, path) (exvar as {ty, loc, ...}, value) =
       case getFunTy ty of
         NONE => nil
-      | SOME (fty as {argTyList, retTy, ...}) =>
+      | SOME fty =>
         let
           val codeEntryTy = exFunCodeEntryTy styEnv fty
-          val funTy = T.FUNMty (argTyList, retTy)
-          val funExp = C.CCCAST {exp = C.CCEXVAR exvar,
-                                 expTy = ty,
-                                 targetTy = funTy,
-                                 cast = BuiltinPrimitive.TypeCast,
-                                 loc = loc}
           val staticCls =
               case value of
                 CLOSURE x => SOME x
@@ -1200,14 +1198,14 @@ struct
           val (call, funId) =
               case staticCls of
                 NONE =>
-                (SOME (decomposeClosureRecord (funExp, funTy) loc),
+                (SOME (decomposeClosureRecord (C.CCEXVAR exvar, ty) loc),
                  FunEntryLabel.generate path)
               | SOME {id, closureEnvVar = NONE, ...} => (NONE, id)
               | SOME cls =>
                 let
                   val {codeExp, cconv, ...} = decomposeStaticClosure cls loc
                   val {closureEnvExp, ...} =
-                      decomposeClosureRecord (funExp, funTy) loc
+                      decomposeClosureRecord (C.CCEXVAR exvar, ty) loc
                 in
                   (SOME {codeExp=codeExp, cconv=cconv,
                          closureEnvExp=closureEnvExp},
@@ -1222,25 +1220,27 @@ struct
             NONE => [top]
           | SOME {codeExp, cconv, closureEnvExp} =>
             let
-              val argVarList = map newVar argTyList
+              val argVarList = map newVar (#argTyList codeEntryTy)
             in
               [top,
                DEC (C.CTFUNCTION
                       {id = funId,
                        tyvarKindEnv = #tyvars codeEntryTy,
+                       tyArgs = #tyArgs codeEntryTy,
                        argVarList = argVarList,
                        closureEnvVar = NONE,
                        bodyExp =
                          C.CCCALL
                            {codeExp = codeExp,
                             closureEnvExp = closureEnvExp,
+                            instTyList = map T.BOUNDVARty (#tyArgs codeEntryTy),
                             argExpList =
                               map (fn v => C.CCVAR {varInfo=v, loc=loc})
                                   argVarList,
                             cconv = cconv,
-                            funTy = funTy,
+                            funTy = ty,
                             loc = loc},
-                       retTy = retTy,
+                       retTy = #retTy codeEntryTy,
                        loc = loc})]
             end
         end
@@ -1409,7 +1409,7 @@ struct
           | _ =>
             (top, VALUE, origResultExp)
         end
-      | B.BCAPPM {funExp, argExpList, funTy, loc} =>
+      | B.BCAPPM {funExp, instTyList, argExpList, funTy, loc} =>
         let
           val (top1, c, funExp) = compileExp accum env funExp
           val (top2, argExpList) = compileExpList accum env argExpList
@@ -1429,6 +1429,7 @@ struct
            VALUE,
            letFn (C.CCCALL {codeExp = codeExp,
                             closureEnvExp = closureEnvExp,
+                            instTyList = instTyList,
                             argExpList = argExpList,
                             cconv = cconv,
                             funTy = funTy,
@@ -1553,40 +1554,21 @@ struct
                       resultTy = resultTy,
                       loc = loc})
         end
-      | B.BCFNM {argVarList, bodyExp, retTy, loc} =>
+      | B.BCFNM {btvEnv, constraints, argVarList, bodyExp, retTy, loc} =>
         let
-          val var = newVar (T.FUNMty (map #ty argVarList, retTy))
+          val funTy =
+              if BoundTypeVarID.Map.isEmpty btvEnv andalso null constraints
+              then T.POLYty {boundtvars = btvEnv,
+                             constraints = constraints,
+                             body = T.FUNMty (map #ty argVarList, retTy)}
+              else T.FUNMty (map #ty argVarList, retTy)
+          val var = newVar funTy
           val decl = B.BCVAL {boundVar = var, boundExp = bcexp, loc = loc}
         in
           compileExp accum env
                      (B.BCLET {localDecl = decl,
                                mainExp = B.BCVAR {varInfo=var, loc=loc},
                                loc = loc})
-        end
-      | B.BCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
-        let
-          val env = addBoundTyvars (env, btvEnv)
-          val (top1, c, exp) = compileExp accum env exp
-        in
-          (top1, c,
-           C.CCCAST {exp = exp,
-                     expTy = expTyWithoutTAbs,
-                     targetTy = T.POLYty {boundtvars=btvEnv,
-                                          constraints = constraints,
-                                          body=expTyWithoutTAbs},
-                     cast = BuiltinPrimitive.TypeCast,
-                     loc = loc})
-        end
-      | B.BCTAPP {exp, expTy, instTyList, loc} =>
-        let
-          val (top1, c, exp) = compileExp accum env exp
-        in
-          (top1, c,
-           C.CCCAST {exp = exp,
-                     expTy = expTy,
-                     targetTy = TypesBasics.tpappTy (expTy, instTyList),
-                     cast = BuiltinPrimitive.TypeCast,
-                     loc = loc})
         end
       | B.BCSWITCH {switchExp, expTy, branches, defaultExp, resultTy, loc} =>
         let
@@ -1688,8 +1670,12 @@ struct
         (top, extractDecls (accum, bodyExp, loc))
       end
 
-  and compileFunc accum env (boundVar, {argVarList, bodyExp, retTy, loc}) =
+  and compileFunc accum env
+                  (boundVar, {btvEnv, constraints, argVarList, bodyExp,
+                              retTy, loc}) =
       let
+        val tyArgs = BoundTypeVarID.Map.listKeys btvEnv
+        val env = addBoundTyvars (env, btvEnv)
         val env = addBoundVars (env, argVarList)
         val env = setPath (env, #path boundVar)
         val (top1, bodyExp) = compileFuncBody (enterFunction env) bodyExp loc
@@ -1703,6 +1689,7 @@ struct
         val id = FunEntryLabel.generate (#path env)
         val func = {id = id,
                     tyvarKindEnv = tyvarKindEnv,
+                    tyArgs = tyArgs,
                     argVarList = argVarList,
                     closureEnvVar = closureEnvVar,
                     bodyExp = substExp subst bodyExp,
@@ -1714,6 +1701,7 @@ struct
             {id = id,
              closureEnvVar = Option.map #1 closureEnv,
              codeEntryTy = {tyvars = tyvarKindEnv,
+                            tyArgs = tyArgs,
                             haveClsEnv = isSome closureEnvVar,
                             argTyList = map #ty argVarList,
                             retTy = retTy}}
@@ -1734,10 +1722,10 @@ struct
       end
 
   and compileRecfunBinds env nil = (nil, nil)
-    | compileRecfunBinds env ({boundVar, boundtvars, closure, func}::recfuns) =
+    | compileRecfunBinds env ({boundVar, closure, func}::recfuns) =
       let
-        val {argVarList, bodyExp, retTy : T.ty, loc} = func
-        val env = addBoundTyvars (env, boundtvars)
+        val {btvEnv, constraints, argVarList, bodyExp, retTy : T.ty, loc} = func
+        val env = addBoundTyvars (env, btvEnv)
         val env = addBoundVars (env, argVarList)
         val env = setPath (env, #path boundVar)
         val (top1, bodyExp) = compileFuncBody (enterFunction env) bodyExp loc
@@ -1746,7 +1734,9 @@ struct
         (top1 @ top2,
          {boundVar = boundVar : C.varInfo,
           closure = closure : static_closure,
-          func = {argVarList = argVarList,
+          func = {btvEnv = btvEnv,
+                  constraints = constraints,
+                  argVarList = argVarList,
                   bodyExp = bodyExp,
                   retTy = retTy,
                   loc = loc}}
@@ -1799,14 +1789,6 @@ struct
         end
       | B.BCVAL {boundVar, boundExp = B.BCFNM func, loc} =>
         compileFunc accum env (boundVar, func)
-      | B.BCVAL {boundVar,
-                 boundExp = B.BCPOLY {btvEnv,
-                                      constraints,
-                                      exp=B.BCFNM func,
-                                      expTyWithoutTAbs,
-                                      loc=_},
-                 loc} =>
-        compileFunc accum (addBoundTyvars (env, btvEnv)) (boundVar, func)
       | B.BCVAL {boundVar, boundExp, loc} =>
         let
           val env = setPath (env, #path boundVar)
@@ -1824,20 +1806,19 @@ struct
               map
                 (fn {boundVar : B.varInfo, boundExp} =>
                     let
-                      val (boundtvars, func as {argVarList, retTy, ...}) =
+                      val func as {btvEnv, argVarList, retTy, ...} =
                           case boundExp of
-                            B.BCFNM f => (BoundTypeVarID.Map.empty, f)
-                          | B.BCPOLY {btvEnv, exp=B.BCFNM f, ...} => (btvEnv, f)
+                            B.BCFNM f => f
                           | _ => raise Bug.Bug "prepareRecfunBinds"
                       val codeEntryTy =
                           {tyvars = BoundTypeVarID.Map.unionWith
-                                      #2 (tyvarKindEnv, boundtvars),
+                                      #2 (tyvarKindEnv, btvEnv),
+                           tyArgs = BoundTypeVarID.Map.listKeys btvEnv,
                            haveClsEnv = true,
                            argTyList = map #ty argVarList,
                            retTy = retTy}
                     in
                       {boundVar = boundVar,
-                       boundtvars = boundtvars,
                        closure = {id = FunEntryLabel.generate (#path boundVar),
                                   closureEnvVar = SOME tmpEnvVar,
                                   codeEntryTy = codeEntryTy} : static_closure,
@@ -1872,10 +1853,12 @@ struct
               map
                 (fn {boundVar : C.varInfo,
                      closure={id, closureEnvVar, codeEntryTy} : static_closure,
-                     func={argVarList, bodyExp, retTy, loc}} =>
+                     func={btvEnv, constraints, argVarList, bodyExp, retTy,
+                           loc}} =>
                     DEC (C.CTFUNCTION
                            {id = id,
                             tyvarKindEnv = #tyvars codeEntryTy,
+                            tyArgs = #tyArgs codeEntryTy,
                             argVarList = argVarList,
                             closureEnvVar = closureEnvVar,
                             bodyExp = substExp subst bodyExp,
@@ -1920,7 +1903,7 @@ struct
           | NONE =>
             let
               val recfunBinds =
-                  map (fn x as {boundVar, boundtvars, closure, func} =>
+                  map (fn x as {boundVar, closure, func} =>
                           x # {closure = replaceClosureEnvVar (closure, NONE)})
                       recfunBinds
               (* these closures can be allocated statically *)

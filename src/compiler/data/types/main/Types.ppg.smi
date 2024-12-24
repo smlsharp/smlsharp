@@ -144,6 +144,7 @@ struct
     | CCONVTAGty of
       {
         tyvars : kind BoundTypeVarID.Map.map,
+        tyArgs : BoundTypeVarID.id list,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty
@@ -151,6 +152,7 @@ struct
     | FUNENTRYty of
       {
         tyvars : kind BoundTypeVarID.Map.map,
+        tyArgs : BoundTypeVarID.id list,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty
@@ -227,6 +229,7 @@ struct
   type codeEntryTy =
       {
         tyvars : btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         haveClsEnv : bool,
         argTyList : ty list,
         retTy : ty

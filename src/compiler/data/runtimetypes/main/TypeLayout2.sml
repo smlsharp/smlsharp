@@ -96,7 +96,8 @@ struct
       | T.BACKENDty T.SOME_CCONVTAGty => SOME R.word32Prop
       | T.BACKENDty T.SOME_FUNENTRYty => SOME R.codeptrProp
       | T.BACKENDty T.SOME_FUNWRAPPERty => SOME R.codeptrProp
-      | T.BACKENDty (T.FUNENTRYty {tyvars, haveClsEnv, argTyList, retTy}) =>
+      | T.BACKENDty (T.FUNENTRYty {tyvars, tyArgs, haveClsEnv,
+                                   argTyList, retTy}) =>
         (SOME
            (R.codeptrProp
             # {rep =

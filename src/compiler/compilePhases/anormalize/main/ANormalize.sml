@@ -352,7 +352,8 @@ struct
         in
           (proc1 o proc2 o proc3 o proc4, ret)
         end
-      | N.NCCALL {codeExp, closureEnvExp, argExpList, resultTy, loc} =>
+      | N.NCCALL {codeExp, closureEnvExp, instTyList, argExpList, resultTy,
+                  loc} =>
         let
           val (proc1, codeExp) = compileExp env NONTAIL codeExp
           val (proc2, closureEnvExp) = compileExpOption env closureEnvExp
@@ -368,6 +369,7 @@ struct
                   last (A.ANTAILCALL {resultTy = resultTy,
                                       codeExp = codeExp,
                                       closureEnvExp = closureEnvExp,
+                                      instTyList = instTyList,
                                       argExpList = argExpList,
                                       loc = loc})
                 | _ =>
@@ -376,6 +378,7 @@ struct
                            A.ANCALL {resultVar = v,
                                      codeExp = codeExp,
                                      closureEnvExp = closureEnvExp,
+                                     instTyList = instTyList,
                                      argExpList = argExpList,
                                      handler = getHandlerLabel env,
                                      nextExp = K,
@@ -778,8 +781,8 @@ struct
 
   fun compileTopdec topdec =
       case topdec of
-        N.NTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, gcCheck, loc} =>
+        N.NTFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
+                      bodyExp, retTy, gcCheck, loc} =>
         let
           val (closureEnvVar, argVarList, bodyExp) =
               compileFunBody (SOME id, closureEnvVar, argVarList, bodyExp,
@@ -788,6 +791,7 @@ struct
           A.ATFUNCTION
             {id = id,
              tyvarKindEnv = tyvarKindEnv,
+             tyArgs = tyArgs,
              argVarList = argVarList,
              closureEnvVar = closureEnvVar,
              bodyExp = bodyExp,

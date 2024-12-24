@@ -464,8 +464,8 @@ struct
       prepareLast env last
     | prepareExp env (mid::mids, last) =
       case mid of
-        M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, argExpList, tail,
-                  handler, loc} =>
+        M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, instTyList,
+                  argExpList, tail, handler, loc} =>
         let
           val returnTo = prepareCont env (optionToList resultVar, (mids, last))
         in
@@ -1004,7 +1004,7 @@ val _ =
 
   fun compileTopdec topdec =
       case topdec of
-        M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
+        M.MTFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
                       frameSlots, bodyExp, retTy, gcCheck, loc} =>
         let
           val params = optionToList closureEnvVar @ argVarList
@@ -1015,6 +1015,7 @@ val _ = print (FunEntryLabel.toString id ^ ":\n")
         in
           M.MTFUNCTION {id = id,
                         tyvarKindEnv = tyvarKindEnv,
+                        tyArgs = tyArgs,
                         argVarList = argVarList,
                         closureEnvVar = closureEnvVar,
                         frameSlots = unionSlotMap (frameSlots, slots),

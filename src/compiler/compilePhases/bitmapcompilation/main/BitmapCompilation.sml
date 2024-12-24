@@ -182,12 +182,13 @@ struct
                          instSizeList = instSizeList,
                          loc = loc}
         end
-      | R.RCAPPM {funExp, argExpList, funTy, loc} =>
+      | R.RCAPPM {funExp, instTyList, argExpList, funTy, loc} =>
         let
           val funExp = compileExp accum funExp
           val argExpList = map (compileExp accum) argExpList
         in
           B.BCAPPM {funExp = funExp,
+                    instTyList = instTyList,
                     argExpList = argExpList,
                     funTy = funTy,
                     loc = loc}
@@ -315,25 +316,6 @@ struct
                       resultTy = resultTy,
                       loc = loc}
         end
-      | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
-        let
-          val exp = compileExp accum exp
-        in
-          B.BCPOLY {btvEnv = btvEnv,
-                    constraints = constraints,
-                    expTyWithoutTAbs = expTyWithoutTAbs,
-                    exp = exp,
-                    loc = loc}
-        end
-      | R.RCTAPP {exp, expTy, instTyList, loc} =>
-        let
-          val exp = compileExp accum exp
-        in
-          B.BCTAPP {exp = exp,
-                    expTy = expTy,
-                    instTyList = instTyList,
-                    loc = loc}
-        end
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
         let
           val switchExp = compileExp accum exp
@@ -360,13 +342,15 @@ struct
                     cast = cast,
                     loc = loc}
         end
-      | R.RCFNM {argVarList, bodyExp, bodyTy, loc} =>
+      | R.RCFNM {btvEnv, constraints, argVarList, bodyExp, bodyTy, loc} =>
         let
           val accum2 = newAccum ()
           val bodyExp = compileExp accum2 bodyExp
           val decls = extractDecls accum2 loc
         in
-          B.BCFNM {argVarList = argVarList,
+          B.BCFNM {btvEnv = btvEnv,
+                   constraints = constraints,
+                   argVarList = argVarList,
                    retTy = bodyTy,
                    bodyExp = Let (decls, bodyExp, loc),
                    loc = loc}

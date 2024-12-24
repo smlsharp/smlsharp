@@ -59,6 +59,7 @@ struct
     | BCAPPM of
       {
         funExp : bcexp,
+        instTyList : ty list,
         argExpList : bcexp list,
         funTy : ty,
         loc : loc
@@ -144,24 +145,11 @@ struct
       }
     | BCFNM of
       {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
         argVarList : varInfo list,
         bodyExp : bcexp,
         retTy : ty,
-        loc : loc
-      }
-    | BCPOLY of
-      {
-        btvEnv : btvEnv,
-        constraints : Types.constraint list,
-        expTyWithoutTAbs : ty,
-        exp : bcexp,
-        loc : loc
-      }
-    | BCTAPP of
-      {
-        exp : bcexp,
-        expTy : ty,
-        instTyList : ty list,
         loc : loc
       }
     | BCSWITCH of

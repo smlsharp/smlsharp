@@ -139,22 +139,24 @@ local
         T.RECORDBITMAPty (i, substBTvar tyidEnv subst ty)
       | T.RECORDBITMAPINDEXty (i, ty) =>
         T.RECORDBITMAPINDEXty (i, substBTvar tyidEnv subst ty)
-      | T.CCONVTAGty {tyvars, haveClsEnv, argTyList, retTy} =>
+      | T.CCONVTAGty {tyvars, tyArgs, haveClsEnv, argTyList, retTy} =>
         let
           val (subst, tyvars) = substBTvarBtvEnv tyidEnv subst tyvars
         in
           T.CCONVTAGty
             {tyvars = tyvars,
+             tyArgs = tyArgs,
              haveClsEnv = haveClsEnv,
              argTyList = map (substBTvar tyidEnv subst) argTyList,
              retTy = substBTvar tyidEnv subst retTy}
         end
-      | T.FUNENTRYty {tyvars, haveClsEnv, argTyList, retTy} =>
+      | T.FUNENTRYty {tyvars, tyArgs, haveClsEnv, argTyList, retTy} =>
         let
           val (subst, tyvars) = substBTvarBtvEnv tyidEnv subst tyvars
         in
           T.FUNENTRYty
             {tyvars = tyvars,
+             tyArgs = tyArgs,
              haveClsEnv = haveClsEnv,
              argTyList = map (substBTvar tyidEnv subst) argTyList,
              retTy = substBTvar tyidEnv subst retTy}

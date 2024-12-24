@@ -24,8 +24,6 @@ struct
       | R.RCHANDLE {loc, ...} => loc
       | R.RCTHROW {loc, ...} => loc
       | R.RCCATCH {loc, ...} => loc
-      | R.RCPOLY {loc, ...} => loc
-      | R.RCTAPP {loc, ...} => loc
       | R.RCFOREIGNAPPLY {loc, ...} => loc
       | R.RCCALLBACKFN {loc, ...} => loc
       | R.RCCAST {loc, ...} => loc

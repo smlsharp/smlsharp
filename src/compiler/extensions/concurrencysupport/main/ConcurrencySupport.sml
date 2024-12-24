@@ -134,11 +134,12 @@ struct
 
   fun compileTopdec topdec =
       case topdec of
-        M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
+        M.MTFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
                       frameSlots, bodyExp, retTy, gcCheck, loc} =>
         M.MTFUNCTION
           {id = id,
            tyvarKindEnv = tyvarKindEnv,
+           tyArgs = tyArgs,
            argVarList = argVarList,
            closureEnvVar = closureEnvVar,
            frameSlots = frameSlots,

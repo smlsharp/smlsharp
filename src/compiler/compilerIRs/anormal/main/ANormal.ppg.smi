@@ -1,5 +1,5 @@
 _require local "../../../../basis.smi"
-(* _require local "../../../libs/ids/main/LocalID.smi" *)
+_require "../../../libs/ids/main/LocalID.smi"
 _require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 (* _require local "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi" *)
 (* _require local "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)
@@ -149,6 +149,7 @@ struct
         resultVar : varInfo,
         codeExp : anvalue,
         closureEnvExp : anvalue option,
+        instTyList : Types.ty list,
         argExpList : anvalue list,
         handler : HandlerLabel.id option,
         nextExp : anexp,
@@ -159,6 +160,7 @@ struct
         resultTy : ty,
         codeExp : anvalue,
         closureEnvExp : anvalue option,
+        instTyList : Types.ty list,
         argExpList : anvalue list,
         loc : loc
       }
@@ -265,6 +267,7 @@ struct
       {
         id : FunEntryLabel.id,
         tyvarKindEnv : Types.btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         argVarList : varInfo list,
         closureEnvVar : varInfo option,
         bodyExp : anexp,

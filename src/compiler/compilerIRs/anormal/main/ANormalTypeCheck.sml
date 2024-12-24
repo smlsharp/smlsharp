@@ -355,14 +355,17 @@ struct
     | unifyTyOption inst (SOME ty1, SOME ty2) = unifyTy inst (ty1, ty2)
     | unifyTyOption inst _ = raise Unify
 
-  and unifyCodeEntryTy inst ({tyvars=tyvars1, haveClsEnv=haveClsEnv1,
-                               argTyList=argTyList1, retTy=retTy1},
-                              {tyvars=tyvars2, haveClsEnv=haveClsEnv2,
-                               argTyList=argTyList2, retTy=retTy2}) =
+  and unifyCodeEntryTy inst ({tyvars=tyvars1, tyArgs=tyArgs1,
+                              haveClsEnv=haveClsEnv1,
+                              argTyList=argTyList1, retTy=retTy1},
+                             {tyvars=tyvars2, tyArgs=tyArgs2,
+                              haveClsEnv=haveClsEnv2,
+                              argTyList=argTyList2, retTy=retTy2}) =
       let
         val _ = if haveClsEnv1 = haveClsEnv2 then () else raise Unify
         val inst = unifyBtvEnv inst (tyvars1, tyvars2)
       in
+        unifyTyList inst (map T.BOUNDVARty tyArgs1, map T.BOUNDVARty tyArgs2);
         unifyTyList inst (argTyList1, argTyList2);
         unifyTy inst (retTy1, retTy2)
       end
@@ -805,8 +808,8 @@ struct
           unify "ANBITCAST2" (#ty resultVar, targetTy);
           checkExp (bindVar (env, resultVar)) nextExp
         end
-      | A.ANCALL {resultVar, codeExp, closureEnvExp, argExpList, nextExp,
-                  handler, loc} =>
+      | A.ANCALL {resultVar, codeExp, closureEnvExp, instTyList,
+                  argExpList, nextExp, handler, loc} =>
         let
           val codeTy = checkValue env codeExp
           val closureEnvTy = Option.map (checkValue env) closureEnvExp
@@ -834,7 +837,8 @@ struct
           checkHandler "ANCALL4" env handler;
           checkExp (bindVar (env, resultVar)) nextExp
         end
-      | A.ANTAILCALL {resultTy, codeExp, closureEnvExp, argExpList, loc} =>
+      | A.ANTAILCALL {resultTy, codeExp, closureEnvExp, instTyList,
+                      argExpList, loc} =>
         let
           val codeTy = checkValue env codeExp
           val closureEnvTy = Option.map (checkValue env) closureEnvExp
@@ -1044,10 +1048,12 @@ struct
         then (printDoubledExternFun "NTEXTERNFUN" id; env)
         else let
           val ty =
-              (T.BACKENDty (T.FUNENTRYty {tyvars = tyvars,
-                                          haveClsEnv = false,
-                                          argTyList = map #1 argTyList,
-                                          retTy = #1 retTy}),
+              (T.BACKENDty (T.FUNENTRYty
+                              {tyvars = tyvars,
+                               tyArgs = BoundTypeVarID.Map.listKeys tyvars,
+                               haveClsEnv = false,
+                               argTyList = map #1 argTyList,
+                               retTy = #1 retTy}),
                R.codeptrTy
                # {rep = R.CODEPTR
                           (R.FN {haveClsEnv = false,
@@ -1170,11 +1176,12 @@ struct
 
   fun makeTopdecEnv (topdec, env:env) =
       case topdec of
-        A.ATFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, gcCheck, loc} =>
+        A.ATFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
+                      bodyExp, retTy, gcCheck, loc} =>
         let
           val ty =
               (T.BACKENDty (T.FUNENTRYty {tyvars = tyvarKindEnv,
+                                          tyArgs = tyArgs,
                                           argTyList = map (#1 o #ty) argVarList,
                                           haveClsEnv = isSome closureEnvVar,
                                           retTy = #1 retTy}),
@@ -1225,8 +1232,8 @@ struct
 
   fun checkTopdec env topdec =
       case topdec of
-        A.ATFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, gcCheck, loc} =>
+        A.ATFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
+                      bodyExp, retTy, gcCheck, loc} =>
         checkFunctionBody
           "ATFUNCTION"
           env

@@ -53,18 +53,20 @@ struct
         R.RCVALUE (value, _) => typeOfValue value
       | R.RCSTRING (string, _) => typeOfString string
       | R.RCEXVAR (var, _) => #ty var
-      | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
-        T.FUNMty (map #ty argVarList, bodyTy)
-      | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
-        T.POLYty {boundtvars = btvEnv,
-                  constraints = constraints,
-                  body = expTyWithoutTAbs}
-      | R.RCAPPM {funTy, ...} =>
+      | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
+        if BoundTypeVarID.Map.isEmpty btvEnv andalso null constraints
+        then T.FUNMty (map #ty argVarList, bodyTy)
+        else T.POLYty {boundtvars = btvEnv,
+                       constraints = constraints,
+                       body = T.FUNMty (map #ty argVarList, bodyTy)}
+      | R.RCAPPM {funTy, instTyList = nil, ...} =>
         (case TypesBasics.revealTy funTy of
            T.FUNMty (_, retTy) => retTy
          | _ => raise Bug.Bug "typeOfExp: RCAPPM")
-      | R.RCTAPP {expTy, instTyList, ...} =>
-        TypesBasics.tpappTy (expTy, instTyList)
+      | R.RCAPPM {funTy, instTyList as _ :: _, ...} =>
+        (case TypesBasics.revealTy (TypesBasics.tpappTy (funTy, instTyList)) of
+           T.FUNMty (_, retTy) => retTy
+         | _ => raise Bug.Bug "typeOfExp: RCAPPM")
       | R.RCSWITCH {resultTy, ...} => resultTy
       | R.RCPRIMAPPLY {primOp = {ty, ...}, instTyList, ...} =>
         #resultTy (TypesBasics.tpappPrimTy (ty, instTyList))

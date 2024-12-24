@@ -7,13 +7,8 @@ _require "../../../compilerIRs/recordcalc/main/RecordCalc.ppg.smi"
 
 structure CallAnalysis =
 struct
-  datatype arg =
-      APP of RecordCalc.rcexp list * RecordCalc.loc
-    | TAPP of Types.ty list * RecordCalc.loc
-
-  datatype abs =
-      ABS of RecordCalc.varInfo list
-    | TABS of Types.btvEnv * Types.constraint list
+  type arg = Types.ty list * RecordCalc.rcexp list * RecordCalc.loc
+  type abs = Types.btvEnv * Types.constraint list * RecordCalc.varInfo list
 
   val getAppSpine
       : RecordCalc.rcexp

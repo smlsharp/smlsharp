@@ -517,7 +517,7 @@ struct
              @ (case varArgTyList of
                   NONE => argTyList
                 | SOME l => argTyList @ l))
-    and getIdsCodeEntryTy {tyvars, haveClsEnv, argTyList, retTy} =
+    and getIdsCodeEntryTy {tyvars, tyArgs, haveClsEnv, argTyList, retTy} =
         getIdsUnion
           (getIdsUnion (getIdsBtvEnv tyvars, getIdsList getIdsTy argTyList),
            getIdsTy retTy)
@@ -1621,15 +1621,22 @@ struct
            resultTy = Option.map (compileTy env) resultTy,
            attributes = attributes}
 
-  and compileCodeEntryTy env {tyvars, haveClsEnv, argTyList, retTy} =
+  and compileCodeEntryTy env {tyvars, tyArgs, haveClsEnv, argTyList, retTy} =
         let
-          val (env, btv) = compileBtvEnv env (tyvars, nil)
-          val btvEnv =
-              case btv of
-                NONE => BoundTypeVarID.Map.empty
-              | SOME {btvEnv, ...} => btvEnv
+          val (env, tyvars) = compileBtvEnv env (tyvars, nil)
+          val (tyvars, tyArgs) =
+              case tyvars of
+                NONE => (BoundTypeVarID.Map.empty, nil)
+              | SOME {btvEnv, subst, ...} =>
+                (btvEnv,
+                 List.mapPartial
+                   (fn id => case BoundTypeVarID.Map.find (subst, id) of
+                               SOME (T.BOUNDVARty id) => SOME id
+                             | _ => NONE)
+                   tyArgs)
         in
-          {tyvars = btvEnv,
+          {tyvars = tyvars,
+           tyArgs = tyArgs,
            haveClsEnv = haveClsEnv,
            argTyList = map (compileTy env) argTyList,
            retTy = compileTy env retTy}

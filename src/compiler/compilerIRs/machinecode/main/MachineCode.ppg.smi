@@ -186,6 +186,7 @@ struct
         resultTy : ty,
         codeExp : mcvalue,
         closureEnvExp : mcvalue option,
+        instTyList : Types.ty list,
         argExpList : mcvalue list,
         tail : bool,
         handler : HandlerLabel.id option,
@@ -271,6 +272,7 @@ struct
       {
         id : FunEntryLabel.id,
         tyvarKindEnv : Types.btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         argVarList : varInfo list,
         closureEnvVar : varInfo option,
         frameSlots : RuntimeTypes.ty SlotID.Map.map,

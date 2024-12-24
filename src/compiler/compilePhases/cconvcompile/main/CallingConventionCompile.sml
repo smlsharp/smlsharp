@@ -71,6 +71,7 @@ struct
 
   type cconv =
        {tyvars : T.btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         haveClsEnv : bool,
         argTyList : N.ty list,
         retTy : N.ty,
@@ -84,7 +85,8 @@ struct
       {path = path, id = id, ty = compileTy btvEnv ty} : N.varInfo
 *)
 
-  fun compileConvention ({tyvars, haveClsEnv, argTyList, retTy}:T.codeEntryTy) =
+  fun compileConvention ({tyvars, tyArgs, haveClsEnv,
+                          argTyList, retTy}:T.codeEntryTy) =
       let
         val isRigid =
             List.all (fn ty => isSome (runtimeTy tyvars ty)) argTyList
@@ -95,6 +97,7 @@ struct
         val retTy = actualRetTy
       in
         {tyvars = tyvars,
+         tyArgs = tyArgs,
          haveClsEnv = haveClsEnv,
          argTyList = argTyList,
          retTy = retTy,
@@ -103,23 +106,30 @@ struct
          actualRetTy = actualRetTy} : cconv
       end
 
-  fun funTyToConvention btvEnv funTy =
-      case TypesBasics.derefTy funTy of
-        T.FUNMty (argTys, retTy) =>
+  fun funTyToConvention btvEnv funTy instTyList =
+      let
+        val (argTys, retTy) =
+            case TypesBasics.revealTy
+                   (TypesBasics.tpappTy (funTy, instTyList)) of
+              T.FUNMty funTy => funTy
+            | _ => raise Bug.Bug "funTyToConvention"
+      in
         compileConvention {tyvars = btvEnv,
+                           tyArgs = nil,  (* dummy *)
                            haveClsEnv = true,  (* dummy *)
                            argTyList = argTys,
                            retTy = retTy}
-      | _ => raise Bug.Bug "funTyToConvention"
+      end
 
   fun isWrapperConvention ({argTyList, retTy, haveClsEnv, ...}:cconv) =
       haveClsEnv andalso
       List.all (fn (_, {tag=R.BOXED,...}) => true | (_, _) => false)
                (retTy :: argTyList)
 
-  fun toWrapperConvention ({tyvars, argTyList, retTy, haveClsEnv,
+  fun toWrapperConvention ({tyvars, tyArgs, argTyList, retTy, haveClsEnv,
                             isRigid, actualArgTyList, actualRetTy}:cconv) =
       {tyvars = tyvars,
+       tyArgs = tyArgs,
        haveClsEnv = true,
        argTyList = map (fn (ty, _) => (ty, genericTy)) argTyList,
        retTy = (#1 retTy, genericTy),
@@ -128,8 +138,9 @@ struct
        actualRetTy = (#1 actualRetTy, genericTy)}
       : cconv
 
-  fun funEntryTy ({tyvars, argTyList, retTy, haveClsEnv, ...}:cconv) =
+  fun funEntryTy ({tyvars, tyArgs, argTyList, retTy, haveClsEnv, ...}:cconv) =
       (T.BACKENDty (T.FUNENTRYty {tyvars = tyvars,
+                                  tyArgs = tyArgs,
                                   haveClsEnv = haveClsEnv,
                                   argTyList = map #1 argTyList,
                                   retTy = #1 retTy}),
@@ -282,7 +293,7 @@ struct
          loc = loc}
 
   fun staticCall {calleeConv : cconv, callerConv : cconv,
-                  codeExp, closureEnvExp, argExpList, loc} =
+                  codeExp, closureEnvExp, instTyList, argExpList, loc} =
       let
 (*
 val _ = (
@@ -331,6 +342,7 @@ print "\n==\n"
         val callExp =
             N.NCCALL {codeExp = codeExp,
                       closureEnvExp = closureEnvExp,
+                      instTyList = instTyList,
                       argExpList = argExpList,
                       resultTy = #retTy calleeConv,
                       loc = loc}
@@ -343,7 +355,7 @@ print "\n==\n"
       end
 
   fun dynamicCall {cconvTag, wrapper, codeExp, closureEnvExp,
-                   argExpList, callerConv, loc} =
+                   instTyList, argExpList, callerConv, loc} =
       let
         val (letFn1, codeExp) = makeBind (codeExp, someFunEntryTy (), loc)
         val (letFn2, wrapperExp) = makeBind (wrapper, someFunWrapperTy (), loc)
@@ -364,6 +376,7 @@ print "\n==\n"
                             cast = BuiltinPrimitive.BitCast,
                             loc = loc},
                closureEnvExp = closureEnvExp,
+               instTyList = instTyList,
                argExpList = argExpList,
                loc = loc}
         fun callBranch (calleeConv, codeEntry) =
@@ -727,37 +740,40 @@ print "\n==\n"
           compilePrim (primitive, ty, instTyList, instTagList, instSizeList,
                        argTyList, resultTy, argExpList, loc)
         end
-      | C.CCCALL {codeExp, closureEnvExp, argExpList,
+      | C.CCCALL {codeExp, closureEnvExp, instTyList, argExpList,
                   cconv = C.STATICCALL cconv, funTy, loc} =>
         let
           val codeExp = compileExp env codeExp
           val closureEnvExp = compileExp env closureEnvExp
           val argExpList = map (compileExp env) argExpList
           val calleeConv = compileConvention cconv
-          val callerConv = funTyToConvention btvEnv funTy
+          val callerConv = funTyToConvention btvEnv funTy instTyList
         in
           staticCall {calleeConv = calleeConv,
                       callerConv = callerConv,
                       codeExp = codeExp,
                       closureEnvExp = closureEnvExp,
+                      instTyList = instTyList,
                       argExpList = argExpList,
                       loc = loc}
         end
-      | C.CCCALL {codeExp, closureEnvExp, argExpList,
-                  cconv = C.DYNAMICCALL {cconvTag, wrapper}, funTy, loc} =>
+      | C.CCCALL {codeExp, closureEnvExp, instTyList, argExpList,
+                  cconv = C.DYNAMICCALL {cconvTag, wrapper},
+                  funTy, loc} =>
         let
           val codeExp = compileExp env codeExp
           val closureEnvExp = compileExp env closureEnvExp
           val argExpList = map (compileExp env) argExpList
           val cconvTag = compileExp env cconvTag
           val wrapper = compileExp env wrapper
-          val callerConv = funTyToConvention btvEnv funTy
+          val callerConv = funTyToConvention btvEnv funTy instTyList
         in
           dynamicCall {callerConv = callerConv,
                        cconvTag = cconvTag,
                        wrapper = wrapper,
                        codeExp = codeExp,
                        closureEnvExp = closureEnvExp,
+                       instTyList = instTyList,
                        argExpList = argExpList,
                        loc = loc}
         end
@@ -937,11 +953,12 @@ print "\n==\n"
         C.CTCALLBACKFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar,
                               bodyExp, attributes, retTy, loc} =>
         (nil, FunEntryLabel.Map.empty)
-      | C.CTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, loc} =>
+      | C.CTFUNCTION {id, tyvarKindEnv, tyArgs,
+                      argVarList, closureEnvVar, bodyExp, retTy, loc} =>
         let
           val cconv =
               compileConvention {tyvars = tyvarKindEnv,
+                                 tyArgs = tyArgs,
                                  haveClsEnv = isSome closureEnvVar,
                                  argTyList = map #ty argVarList,
                                  retTy = retTy}
@@ -964,12 +981,14 @@ print "\n==\n"
                      codeExp = funEntryExp (id, cconv, loc),
                      closureEnvExp =
                        N.NCVAR {varInfo=wrapperClsEnvVar, loc=loc},
+                     instTyList = map T.BOUNDVARty tyArgs,
                      argExpList =
                        map (fn v => N.NCVAR {varInfo=v, loc=loc}) argVars,
                      loc = loc}
             in
               ([N.NTFUNCTION {id = wrapperId,
                               tyvarKindEnv = tyvarKindEnv,
+                              tyArgs = tyArgs,
                               argVarList = argVars,
                               closureEnvVar = SOME wrapperClsEnvVar,
                               bodyExp = bodyExp,
@@ -994,8 +1013,8 @@ print "\n==\n"
 
   fun compileTopdec wrapperMap topdec =
       case topdec of
-        C.CTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, loc} =>
+        C.CTFUNCTION {id, tyvarKindEnv, tyArgs,
+                      argVarList, closureEnvVar, bodyExp, retTy, loc} =>
         let
           val env = {btvEnv = tyvarKindEnv, wrapperMap = wrapperMap} : env
           val actualArgVars = map (compileVarInfo tyvarKindEnv) argVarList
@@ -1023,6 +1042,7 @@ print "\n==\n"
           N.NTFUNCTION
             {id = id,
              tyvarKindEnv = tyvarKindEnv,
+             tyArgs = tyArgs,
              argVarList = argVars,
              closureEnvVar =
                Option.map (compileVarInfo tyvarKindEnv) closureEnvVar,

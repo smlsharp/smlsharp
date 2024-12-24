@@ -91,272 +91,153 @@ struct
         (BoundTypeVarID.Map.listKeys btvEnv, instTyList)
       handle ListPair.UnequalLengths => raise Bug.Bug "instMap"
 
-  fun putAppSpine funExp funTy argList =
-      let
-        fun loop funExp
-                 (funTy as T.FUNMty (_, retTy))
-                 (APP (argExpList, loc) :: argList) =
-            loop (R.RCAPPM {funExp = funExp,
-                            funTy = funTy,
-                            argExpList = argExpList,
-                            loc = loc})
-                 (TypesBasics.revealTy retTy)
-                 argList
-          | loop funExp
-                 (funTy as T.POLYty _)
-                 (TAPP (instTyList, loc) :: argList) =
-            loop (R.RCTAPP {exp = funExp,
-                            expTy = funTy,
-                            instTyList = instTyList,
-                            loc = loc})
-                 (TypesBasics.revealTy
-                    (TypesBasics.tpappTy (funTy, instTyList)))
-                 argList
-          | loop _ ty (h :: _) = raise Bug.Bug "putAppSpine"
-          | loop funExp _ nil = funExp
-      in
-        loop funExp (TypesBasics.revealTy funTy) argList
-      end
+  fun isMono btvEnv constraints =
+      BoundTypeVarID.Map.isEmpty btvEnv andalso null constraints
 
-  fun bindAppSpine funTy absList argList =
-      let
-        fun loop (ABS vars :: absList)
-                 (APP (args, loc) :: argList)
-                 (T.FUNMty (_, retTy))
-                 decls =
-            loop absList
-                 argList
-                 (TypesBasics.revealTy retTy)
-                 (ListPair.mapEq
-                    (fn (var, exp) => R.RCVAL {var = var, exp = exp, loc = loc})
-                    (vars, args)
-                    :: decls
-                  handle ListPair.UnequalLengths =>
-                         raise Bug.Bug "bindAppSpine")
-          | loop (TABS _ :: _)
-                 (TAPP _ :: _)
-                 (T.POLYty _)
-                 _ =
-            raise Bug.Bug "bindAppSpine: instantiate"
-          | loop (_ :: _) _ _ _ = raise Bug.Bug "bindAppSpine"
-          | loop nil argList bodyTy decls =
-            {restArgs = argList,
-             decls = decls,
-             bodyTy = bodyTy}
-      in
-        loop absList argList funTy nil
-      end
+  fun makeFunTy {btvEnv, constraints, argTyList, bodyTy} =
+      if isMono btvEnv constraints
+      then T.FUNMty (argTyList, bodyTy)
+      else T.POLYty {boundtvars = btvEnv,
+                     constraints = constraints,
+                     body = T.FUNMty (argTyList, bodyTy)}
+
+  fun funBodyTy ty =
+      case TypesBasics.revealTy ty of
+        T.FUNMty (_, retTy) => retTy
+      | T.POLYty {boundtvars, constraints, body} =>
+        (case TypesBasics.revealTy body of
+           T.FUNMty (_, retTy) => retTy
+         | _ => raise Bug.Bug "funBodyTy")
+      | _ => raise Bug.Bug "funBodyTy"
+
+  fun funApplyTy funTy instTyList =
+      case TypesBasics.revealTy (TypesBasics.tpappTy (funTy, instTyList)) of
+        T.FUNMty (_, retTy) => retTy
+       | _ => raise Bug.Bug "funApplyTy"
+
+  fun putAppSpine funExp funTy ((instTyList, argExpList, loc) :: argList) =
+      putAppSpine (R.RCAPPM {funExp = funExp,
+                             funTy = funTy,
+                             instTyList = instTyList,
+                             argExpList = argExpList,
+                             loc = loc})
+                  (funApplyTy funTy instTyList)
+                  argList
+    | putAppSpine funExp _ nil = funExp
 
   fun putFnSpine funTy absList loc bodyExp =
       let
-        fun expand (ABS argVarList :: argList)
-                   (T.FUNMty (_, retTy)) =
-            R.RCFNM {argVarList = argVarList,
-                     bodyTy = retTy,
-                     bodyExp = expand argList (TypesBasics.revealTy retTy),
-                     loc = loc}
-          | expand (TABS _ :: argList)
-                   (T.POLYty {boundtvars, constraints, body}) =
-            R.RCPOLY {btvEnv = boundtvars,
-                      constraints = constraints,
-                      expTyWithoutTAbs = body,
-                      exp = expand argList (TypesBasics.revealTy body),
-                      loc = loc}
-          | expand (_ :: _) _ = raise Bug.Bug "putFnSpine"
-          | expand nil _ = bodyExp
+        fun expand funTy ((btvEnv, constraints, argVarList) :: absList) =
+            let
+              val bodyTy = funBodyTy funTy
+            in
+              R.RCFNM {btvEnv = btvEnv,
+                       constraints = constraints,
+                       argVarList = argVarList,
+                       bodyExp = expand bodyTy absList,
+                       bodyTy = bodyTy,
+                       loc = loc}
+            end
+          | expand _ nil = bodyExp
       in
-        expand absList (TypesBasics.revealTy funTy)
+        expand funTy absList
       end
 
-  fun absToArg loc (ABS argVarList) =
-      APP (map (varToExp loc) argVarList, loc)
-    | absToArg loc (TABS (btvEnv, constraints)) =
-      TAPP (map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv), loc)
+  fun absToArg loc ((btvEnv, constraints, argVarList) : abs) : arg =
+      (map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv),
+       map (varToExp loc) argVarList,
+       loc)
 
-  fun uncurryFn absList exp expTy =
+  fun uncurryFn (absList : abs list) exp expTy =
       let
         val fnLoc = RecordCalcLoc.locExp exp
-        fun loop (ABS _ :: absList)
-                 (R.RCFNM {argVarList, bodyTy, bodyExp, loc})
-                 {tabs, abs, bodyTy = _} =
+        fun loop (_ :: absList)
+                 (R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp,
+                           loc})
+                 {tabs, args, bodyTy = _} =
             loop absList
                  bodyExp
-                 {tabs = tabs,
-                  abs = argVarList :: abs,
-                  bodyTy = bodyTy}
-          | loop (TABS _ :: absList)
-                 (R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc})
-                 {tabs, abs, bodyTy = _} =
-            loop absList
-                 exp
                  {tabs = (btvEnv, constraints) :: tabs,
-                  abs = abs,
-                  bodyTy = expTyWithoutTAbs}
+                  args = argVarList :: args,
+                  bodyTy = bodyTy}
           | loop (_ :: _) _ _ = raise Bug.Bug "uncurryFn"
-          | loop nil bodyExp {tabs = nil, abs = nil, bodyTy, ...} =
+          | loop nil bodyExp {args = nil, bodyTy, ...} =
             {Fn = fn bodyExp => bodyExp,
              fnTy = bodyTy,
              mono = true,
              argVarList = nil,
              bodyExp = bodyExp,
              bodyTy = bodyTy}
-          | loop nil bodyExp {tabs = nil, abs, bodyTy} =
-            let
-              val argVarList = List.concat (rev abs)
-            in
-              {Fn = fn bodyExp => R.RCFNM {argVarList = argVarList,
-                                           bodyTy = bodyTy,
-                                           bodyExp = bodyExp,
-                                           loc = fnLoc},
-               fnTy = T.FUNMty (map #ty argVarList, bodyTy),
-               mono = true,
-               argVarList = argVarList,
-               bodyExp = bodyExp,
-               bodyTy = bodyTy}
-            end
-          | loop nil bodyExp {tabs, abs = nil, bodyTy} =
+          | loop nil bodyExp {tabs, args as _ :: _, bodyTy} =
             let
               val (btvs, cons) = ListPair.unzip (rev tabs)
               val btvEnv = unionBtvMap btvs
               val constraints = List.concat cons
+              val argVarList = List.concat (rev args)
             in
-              {Fn = fn x => R.RCPOLY {btvEnv = btvEnv,
-                                      constraints = constraints,
-                                      expTyWithoutTAbs = bodyTy,
-                                      exp = x,
-                                      loc = fnLoc},
-               fnTy = T.POLYty {boundtvars = btvEnv,
-                                constraints = constraints,
-                                body = bodyTy},
-               mono = false,
-               argVarList = nil,
-               bodyExp = bodyExp,
-               bodyTy = bodyTy}
-            end
-          | loop nil bodyExp {tabs, abs, bodyTy} =
-            let
-              val argVarList = List.concat (rev abs)
-              val funTy = T.FUNMty (map #ty argVarList, bodyTy)
-              val (btvs, cons) = ListPair.unzip (rev tabs)
-              val btvEnv = unionBtvMap btvs
-              val constraints = List.concat cons
-            in
-              {Fn = fn x => R.RCPOLY {btvEnv = btvEnv,
-                                      constraints = constraints,
-                                      expTyWithoutTAbs = funTy,
-                                      exp = R.RCFNM {argVarList = argVarList,
-                                                     bodyTy = bodyTy,
-                                                     bodyExp = x,
-                                                     loc = fnLoc},
-                                      loc = fnLoc},
-               fnTy = T.POLYty {boundtvars = btvEnv,
-                                constraints = constraints,
-                                body = funTy},
-               mono = false,
+              {Fn = fn x => R.RCFNM {btvEnv = btvEnv,
+                                     constraints = constraints,
+                                     argVarList = argVarList,
+                                     bodyTy = bodyTy,
+                                     bodyExp = x,
+                                     loc = fnLoc},
+               fnTy = makeFunTy {btvEnv = btvEnv,
+                                 constraints = constraints,
+                                 argTyList = map #ty argVarList,
+                                 bodyTy = bodyTy},
+               mono = isMono btvEnv constraints,
                argVarList = argVarList,
                bodyExp = bodyExp,
                bodyTy = bodyTy}
             end
       in
-        loop absList exp {tabs = nil, abs = nil, bodyTy = expTy}
+        loop absList exp {tabs = nil, args = nil, bodyTy = expTy}
       end
 
-  fun uncurryApp funTy funLoc absList argList =
+  fun uncurryApp funTy funLoc (absList : abs list) argList =
       let
-        fun loop (ABS _ :: absList)
-                 (APP (argExpList, loc) :: argList)
-                 (T.FUNMty (argTyList, retTy))
-                 {tapp, app, loc = _} =
+        fun loop ((btvEnv, constraints, argVarList) :: absList)
+                 ((instTyList, argExpList, loc) :: argList)
+                 funTy
+                 {tabs, insts, args, loc = _} =
             loop absList
                  argList
-                 (TypesBasics.revealTy retTy)
-                 {tapp = tapp,
-                  app = (argTyList, argExpList) :: app,
-                  loc = loc}
-          | loop (TABS _ :: absList)
-                 (TAPP (instTyList, loc) :: argList)
-                 (T.POLYty {boundtvars = btvs, constraints, body})
-                 {tapp, app, loc = _} =
-            loop absList
-                 argList
-                 (TypesBasics.revealTy body)
-                 {tapp = (btvs, constraints, instMap btvs instTyList) :: tapp,
-                  app = app,
+                 (funBodyTy funTy)
+                 {tabs = (btvEnv, constraints) :: tabs,
+                  insts = instMap btvEnv instTyList :: insts,
+                  args = (map #ty argVarList, argExpList) :: args,
                   loc = loc}
           | loop (_ :: _) _ _ _ = raise Bug.Bug "uncurryApp"
-          | loop nil argList retTy {tapp = nil, app = nil, loc} =
+          | loop nil argList retTy {args = nil, loc, ...} =
             {App = fn funExp => funExp,
              funTy = retTy,
              appTy = retTy,
              argExpList = nil,
              loc = loc,
              restArgs = argList}
-          | loop nil argList retTy {tapp = nil, app, loc} =
+          | loop nil argList retTy {tabs, insts, args, loc} =
             let
-              val (argTys, argExps) = ListPair.unzip (rev app)
-              val argExpList = List.concat argExps
-              val funTy = T.FUNMty (List.concat argTys, retTy)
-            in
-              {App = fn funExp => R.RCAPPM {funExp = funExp,
-                                            funTy = funTy,
-                                            argExpList = argExpList,
-                                            loc = loc},
-               funTy = funTy,
-               appTy = retTy,
-               argExpList = argExpList,
-               loc = loc,
-               restArgs = argList}
-            end
-          | loop nil argList retTy {tapp, app = nil, loc} =
-            let
-              val tapp = rev tapp
-              val btvEnv = unionBtvMap (map #1 tapp)
-              val constraints = List.concat (map #2 tapp)
-              val instTys = unionBtvMap (map #3 tapp)
+              val (btvs, cons) = ListPair.unzip (rev tabs)
+              val btvEnv = unionBtvMap btvs
+              val constraints = List.concat cons
+              val instTys = unionBtvMap insts
               val instTyList = BoundTypeVarID.Map.listItems instTys
-              val polyTy = T.POLYty {boundtvars = btvEnv,
-                                     constraints = constraints,
-                                     body = retTy}
-              val retTy = TypesBasics.tpappTy (polyTy, instTyList)
-            in
-              {App = fn funExp => R.RCTAPP {exp = funExp,
-                                            expTy = polyTy,
-                                            instTyList = instTyList,
-                                            loc = loc},
-               funTy = polyTy,
-               appTy = retTy,
-               argExpList = nil,
-               loc = loc,
-               restArgs = argList}
-            end
-          | loop nil argList retTy {tapp, app, loc} =
-            let
-              val (argTys, argExps) = ListPair.unzip (rev app)
+              val (argTys, argExps) = ListPair.unzip (rev args)
               val argTyList = List.concat argTys
               val argExpList = List.concat argExps
-              val tapp = rev tapp
-              val btvEnv = unionBtvMap (map #1 tapp)
-              val constraints = List.concat (map #2 tapp)
-              val instTys = unionBtvMap (map #3 tapp)
-              val instTyList = BoundTypeVarID.Map.listItems instTys
-              val polyTy = T.POLYty {boundtvars = btvEnv,
+              val funTy = makeFunTy {btvEnv = btvEnv,
                                      constraints = constraints,
-                                     body = T.FUNMty (argTyList, retTy)}
-              val funTy = TypesBasics.tpappTy (polyTy, instTyList)
-              val retTy = case TypesBasics.revealTy funTy of
-                            T.FUNMty (_, retTy) => retTy
-                          | _ => raise Bug.Bug "uncurryApp"
+                                     argTyList = argTyList,
+                                     bodyTy = retTy}
             in
               {App = fn funExp =>
-                        R.RCAPPM {funExp = R.RCTAPP {exp = funExp,
-                                                     expTy = polyTy,
-                                                     instTyList = instTyList,
-                                                     loc = loc},
+                        R.RCAPPM {funExp = funExp,
                                   funTy = funTy,
+                                  instTyList = instTyList,
                                   argExpList = argExpList,
                                   loc = loc},
-               funTy = polyTy,
-               appTy = retTy,
+               funTy = funTy,
+               appTy = funApplyTy funTy instTyList,
                argExpList = argExpList,
                loc = loc,
                restArgs = argList}
@@ -364,8 +245,8 @@ struct
       in
         loop absList
              argList
-             (TypesBasics.revealTy funTy)
-             {tapp = nil, app = nil, loc = funLoc}
+             funTy
+             {tabs = nil, insts = nil, args = nil, loc = funLoc}
       end
 
   type catch_rule =
@@ -582,21 +463,8 @@ struct
           end
       end
 
-  and compileApp (context : context) exp =
-      case CallAnalysis.getAppSpine exp of
-        (_, NONE, _) => raise Bug.Bug "compileApp"
-      | (R.RCVALUE (R.RCVAR var, varLoc), SOME funTy, argList) =>
-        transformApp context var varLoc (map (compileArg context) argList)
-      | (funExp, SOME funTy, argList) =>
-        putAppSpine (compileExp (nontail context) funExp)
-                    funTy
-                    (map (compileArg context) argList)
-
-  and compileArg context arg =
-      case arg of
-        TAPP _ => arg
-      | APP (argExpList, loc) =>
-        APP (map (compileExp (nontail context)) argExpList, loc)
+  and compileArg context ((instTyList, argExpList, loc): arg) : arg =
+      (instTyList, map (compileExp (nontail context)) argExpList, loc)
 
   and compileValue context value =
       case value of
@@ -621,19 +489,24 @@ struct
                         bodyExp = compileExp (anonFn context) bodyExp,
                         resultTy = resultTy,
                         loc = loc}
-      | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
-        R.RCFNM {argVarList = argVarList,
+      | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
+        R.RCFNM {btvEnv = btvEnv,
+                 constraints = constraints,
+                 argVarList = argVarList,
                  bodyTy = bodyTy,
                  bodyExp = compileExp (anonFn context) bodyExp,
                  loc = loc}
-      | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
-        R.RCPOLY {btvEnv = btvEnv,
-                  constraints = constraints,
-                  expTyWithoutTAbs = expTyWithoutTAbs,
-                  exp = compileExp (anonFn context) exp,
-                  loc = loc}
-      | R.RCAPPM _ => compileApp context exp
-      | R.RCTAPP _ => compileApp context exp
+      | R.RCAPPM _ =>
+        (
+          case CallAnalysis.getAppSpine exp of
+            (_, NONE, _) => raise Bug.Bug "RCAPPM"
+          | (R.RCVALUE (R.RCVAR var, varLoc), SOME funTy, argList) =>
+            transformApp context var varLoc (map (compileArg context) argList)
+          | (funExp, SOME funTy, argList) =>
+            putAppSpine (compileExp (nontail context) funExp)
+                        funTy
+                        (map (compileArg context) argList)
+        )
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
         R.RCSWITCH
           {exp = compileExp (nontail context) exp,
@@ -847,8 +720,9 @@ struct
         decls @ compileDecls (context # {env = env}) rcdecls
       | _ => raise Bug.Bug "compileDecls"
 
-  fun isMonoFn absList =
-      List.all (fn ABS _ => true | TABS _ => false) absList
+  fun isMonoFn (absList : abs list) =
+      List.all (fn (btvEnv, constraints, _) => isMono btvEnv constraints)
+               absList
 
   fun hasCall calls =
       List.exists (fn (FN _, TAIL, _ :: _) => false | _ => true) calls

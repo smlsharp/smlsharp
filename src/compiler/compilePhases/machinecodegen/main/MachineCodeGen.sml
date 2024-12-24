@@ -529,8 +529,8 @@ struct
                 targetTy = targetTy,
                 loc = loc})
         o compileExp (mask (subst, [resultVar])) nextExp
-      | A.ANCALL {resultVar, codeExp, closureEnvExp, argExpList, nextExp,
-                  handler, loc} =>
+      | A.ANCALL {resultVar, codeExp, closureEnvExp, instTyList, argExpList,
+                  nextExp, handler, loc} =>
         let
           val resultTy = #ty resultVar
           val (resultVar, subst) =
@@ -546,13 +546,15 @@ struct
                   resultTy = resultTy,
                   codeExp = compileValue subst codeExp,
                   closureEnvExp = Option.map (compileValue subst) closureEnvExp,
+                  instTyList = instTyList,
                   argExpList = map (compileValue subst) argExpList,
                   tail = false,
                   handler = handler,
                   loc = loc})
           o compileExp subst nextExp
         end
-      | A.ANTAILCALL {resultTy, codeExp, closureEnvExp, argExpList, loc} =>
+      | A.ANTAILCALL {resultTy, codeExp, closureEnvExp, instTyList,
+                      argExpList, loc} =>
         let
           val (resultVar, retValue) =
               case #rep (#2 resultTy) of
@@ -570,6 +572,7 @@ struct
                   resultTy = resultTy,
                   codeExp = compileValue subst codeExp,
                   closureEnvExp = Option.map (compileValue subst) closureEnvExp,
+                  instTyList = instTyList,
                   argExpList = map (compileValue subst) argExpList,
                   tail = true,
                   handler = NONE,
@@ -728,11 +731,12 @@ struct
 
   fun compileTopdec topdec =
       case topdec of
-        A.ATFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, bodyExp,
-                      retTy, gcCheck, loc} =>
+        A.ATFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
+                      bodyExp, retTy, gcCheck, loc} =>
         M.MTFUNCTION
           {id = id,
            tyvarKindEnv = tyvarKindEnv,
+           tyArgs = tyArgs,
            argVarList = argVarList,
            closureEnvVar = closureEnvVar,
            frameSlots = SlotID.Map.empty,

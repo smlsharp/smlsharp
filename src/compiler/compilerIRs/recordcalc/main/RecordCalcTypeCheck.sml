@@ -103,26 +103,36 @@ struct
               raise B ("RCEXVAR: " ^ Symbol.longsymbolToString path)
             | SOME ty2 => (eqTy B ty ty2; ty2)
           )
-        | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
+        | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
           let
+            val env = addBtvEnv env btvEnv
             val env = addBoundVars env argVarList
             val env = env # {catchEnv = FunLocalLabel.Map.empty}
             val bodyExpTy = checkExp env bodyExp
           in
             eqTy B bodyTy bodyExpTy;
-            T.FUNMty (map #ty argVarList, bodyExpTy)
+            if BoundTypeVarID.Map.isEmpty btvEnv andalso null constraints
+            then T.FUNMty (map #ty argVarList, bodyExpTy)
+            else T.POLYty {boundtvars = btvEnv,
+                           constraints = constraints,
+                           body = T.FUNMty (map #ty argVarList, bodyExpTy)}
           end
-        | R.RCAPPM {funExp, funTy, argExpList, loc} =>
+        | R.RCAPPM {funExp, funTy, instTyList, argExpList, loc} =>
           let
             val funExpTy = checkExp env funExp
             val argTyList = map (checkExp env) argExpList
+            val monoFunTy =
+                TypesBasics.revealTy
+                  (TypesBasics.tpappTy (funExpTy, instTyList))
+                handle Bug.Bug _ => raise B "RCAPPM"
+            val (argTyList2, retTy) =
+                case TypesBasics.revealTy monoFunTy of
+                  T.FUNMty funTy => funTy
+                | _ => raise B "RCAPPM"
           in
             eqTy B funTy funExpTy;
-            case TypesBasics.revealTy funExpTy of
-              T.FUNMty (argTys, retTy) =>
-              (eqTyList B argTys argTyList;
-               retTy)
-            | _ => raise Bug.Bug "RCAPPM"
+            eqTyList B argTyList argTyList2;
+            retTy
           end
         | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
           let
@@ -194,7 +204,7 @@ struct
                 | _ => RecordLabel.Map.empty
             val resultTy2 =
                 case RecordLabel.Map.find (fields, label) of
-                  NONE => (print (Bug.prettyPrint (R.format_rcexp exp) ^ "\n"); raise B ("RCSELECT " ^ RecordLabel.toString label))
+                  NONE => raise B ("RCSELECT " ^ RecordLabel.toString label)
                 | SOME ty => ty
           in
             eqTy B recordTy recordTy2;
@@ -273,25 +283,6 @@ struct
             eqTy B resultTy tryTy;
             app (fn ty => eqTy B ty tryTy) ruleTys;
             tryTy
-          end
-        | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
-          let
-            val env = addBtvEnv env btvEnv
-            val env = env # {catchEnv = FunLocalLabel.Map.empty}
-            val expTy = checkExp env exp
-          in
-            eqTy B expTy expTyWithoutTAbs;
-            T.POLYty {boundtvars = btvEnv,
-                      constraints = constraints,
-                      body = expTy}
-          end
-        | R.RCTAPP {exp, expTy, instTyList, loc} =>
-          let
-            val expTy2 = checkExp env exp
-            val resultTy = TypesBasics.tpappTy (expTy2, instTyList)
-          in
-            eqTy B expTy expTy2;
-            resultTy
           end
         | R.RCFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
           let

@@ -7,33 +7,25 @@ struct
 
   structure R = RecordCalc
 
-  datatype arg =
-      APP of RecordCalc.rcexp list * RecordCalc.loc
-    | TAPP of Types.ty list * RecordCalc.loc
+  type arg = Types.ty list * RecordCalc.rcexp list * RecordCalc.loc
+  type abs = Types.btvEnv * Types.constraint list * RecordCalc.varInfo list
 
   fun getAppSpine exp =
       let
-        fun loop (R.RCAPPM {funExp, funTy, argExpList, loc}) _ spine =
-            loop funExp (SOME funTy) (APP (argExpList, loc) :: spine)
-          | loop (R.RCTAPP {exp, expTy, instTyList, loc}) _ spine =
-            loop exp (SOME expTy) (TAPP (instTyList, loc) :: spine)
+        fun loop (R.RCAPPM {funExp, funTy, instTyList, argExpList, loc}) _ t =
+            loop funExp (SOME funTy) ((instTyList, argExpList, loc) :: t)
           | loop exp expTy spine =
             (exp, expTy, spine)
       in
         loop exp NONE nil
       end
 
-  datatype abs =
-      ABS of RecordCalc.varInfo list
-    | TABS of Types.btvEnv * Types.constraint list
-
   fun getFnSpine exp =
       let
-        fun loop (R.RCFNM {argVarList, bodyTy, bodyExp, loc}) spine =
-            loop bodyExp (ABS argVarList :: spine)
-          | loop (R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc})
+        fun loop (R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp,
+                           loc})
                  spine =
-            loop exp (TABS (btvEnv, constraints) :: spine)
+            loop bodyExp ((btvEnv, constraints, argVarList) :: spine)
           | loop exp spine =
             (rev spine, exp)
       in
@@ -73,19 +65,8 @@ struct
   fun analyzeValueList context values =
       merge (map (analyzeValue context) values)
 
-  fun analyzeApp context exp =
-      case getAppSpine exp of
-        (R.RCVALUE (R.RCVAR var, _), _, args) =>
-        merge [VarID.Map.singleton (#id var, [call context args]),
-               analyzeArgList (nontail context) args]
-      | (exp, _, args) =>
-        merge [analyzeExp (nontail context) exp,
-               analyzeArgList (nontail context) args]
-
-  and analyzeArg context arg =
-      case arg of
-        APP (argExpList, _) => analyzeExpList (nontail context) argExpList
-      | TAPP _ => VarID.Map.empty
+  and analyzeArg context ((instTyList, argExpList, loc) : arg) =
+      analyzeExpList (nontail context) argExpList
 
   and analyzeArgList context args =
       merge (map (analyzeArg context) args)
@@ -97,12 +78,18 @@ struct
       | R.RCEXVAR _ => VarID.Map.empty
       | R.RCCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
         analyzeExp (context # {caller = ANON, isTail = true}) bodyExp
-      | R.RCFNM {argVarList, bodyTy, bodyExp, loc} =>
+      | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
         analyzeExp (context # {caller = ANON, isTail = true}) bodyExp
-      | R.RCPOLY {btvEnv, constraints, expTyWithoutTAbs, exp, loc} =>
-        analyzeExp (context # {caller = ANON, isTail = true}) exp
-      | R.RCAPPM _ => analyzeApp context exp
-      | R.RCTAPP _ => analyzeApp context exp
+      | R.RCAPPM _ =>
+        (
+          case getAppSpine exp of
+            (R.RCVALUE (R.RCVAR var, _), _, args) =>
+            merge [VarID.Map.singleton (#id var, [call context args]),
+                   analyzeArgList (nontail context) args]
+          | (exp, _, args) =>
+            merge [analyzeExp (nontail context) exp,
+                   analyzeArgList (nontail context) args]
+        )
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
         merge [analyzeExp (nontail context) exp,
                analyzeExpList context (map #body branches),

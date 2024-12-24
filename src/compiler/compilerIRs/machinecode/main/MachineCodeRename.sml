@@ -343,8 +343,8 @@ struct
                         loc = loc},
            subst)
         end
-      | M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, argExpList, tail,
-                  handler, loc} =>
+      | M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, instTyList,
+                  argExpList, tail, handler, loc} =>
         let
           val codeExp = renameValue subst codeExp
           val closureEnvExp = Option.map (renameValue subst) closureEnvExp
@@ -353,9 +353,10 @@ struct
         in
           (M.MCCALL {codeExp = codeExp,
                      closureEnvExp = closureEnvExp,
+                     instTyList = instTyList,
                      argExpList = argExpList,
                      resultVar = resultVar,
-                     resultTy = resultTy, 
+                     resultTy = resultTy,
                      tail = tail,
                      handler = renameHandler subst handler,
                      loc = loc},
@@ -457,8 +458,8 @@ struct
 
   fun renameTopdec topdec =
       case topdec of
-        M.MTFUNCTION {id, tyvarKindEnv, argVarList, closureEnvVar, frameSlots,
-                      bodyExp, retTy, gcCheck, loc} =>
+        M.MTFUNCTION {id, tyvarKindEnv, tyArgs, argVarList, closureEnvVar,
+                      frameSlots, bodyExp, retTy, gcCheck, loc} =>
         let
           val (argVarList, subst) = bindVarList emptySubst argVarList
           val (closureEnvVar, subst) = bindVarOption subst closureEnvVar
@@ -467,6 +468,7 @@ struct
           M.MTFUNCTION
             {id = id,
              tyvarKindEnv = tyvarKindEnv,
+             tyArgs = tyArgs,
              argVarList = argVarList,
              closureEnvVar = closureEnvVar,
              frameSlots = frameSlots,

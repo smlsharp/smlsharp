@@ -143,6 +143,7 @@ struct
       {
         codeExp : ncexp,
         closureEnvExp : ncexp option,
+        instTyList : Types.ty list,
         argExpList : ncexp list,
         resultTy : ty,
         loc : loc
@@ -331,6 +332,7 @@ struct
       {
         id : FunEntryLabel.id,
         tyvarKindEnv : Types.btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         argVarList : varInfo list,
         closureEnvVar : varInfo option,
         bodyExp : ncexp,

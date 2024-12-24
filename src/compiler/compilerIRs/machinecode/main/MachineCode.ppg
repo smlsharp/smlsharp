@@ -672,7 +672,7 @@ struct
       }
     | (*%
        * @format({resultVar: resultVar resultVarOpt, resultTy, codeExp,
-       *          closureEnvExp: clsEnv clsEnvOpt,
+       *          closureEnvExp: clsEnv clsEnvOpt, instTyList,
        *          argExpList: arg args, tail, handler: handler handlerOpt, loc})
        * L8{ 1[
        *   resultVarOpt:ifsome()(resultVarOpt(resultVar) +d "=" +1,)
@@ -687,7 +687,7 @@ struct
        *)
       (*% @prefix formatWithType_
        * @format({resultVar: resultVar resultVarOpt, resultTy, codeExp,
-       *          closureEnvExp: clsEnv clsEnvOpt,
+       *          closureEnvExp: clsEnv clsEnvOpt, instTyList,
        *          argExpList: arg args, tail, handler: handler handlerOpt, loc})
        * L8{ 1[
        *   resultVarOpt:ifsome()(resultVarOpt(resultVar) +d "=" +1,)
@@ -706,6 +706,7 @@ struct
         resultTy : ty,
         codeExp : mcvalue,
         closureEnvExp : mcvalue option,
+        instTyList : Types.ty list,
         argExpList : mcvalue list,
         handler : HandlerLabel.id option,
         tail : bool,
@@ -1047,7 +1048,7 @@ struct
    *)
   datatype topdec =
       (*%
-       * @format({id, tyvarKindEnv, argVarList: arg args,
+       * @format({id, tyvarKindEnv, tyArgs, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
        *          retTy, gcCheck, loc})
        * L8{ 2[
@@ -1070,7 +1071,7 @@ struct
        * ]
        *)
       (*% @prefix formatWithType_
-       * @format({id, tyvarKindEnv, argVarList: arg args,
+       * @format({id, tyvarKindEnv, tyArgs, argVarList: arg args,
        *          closureEnvVar: env envOpt, frameSlots: slot slots, bodyExp,
        *          retTy, gcCheck, loc})
        * L8{ 2[
@@ -1096,6 +1097,7 @@ struct
       {
         id : FunEntryLabel.id,
         tyvarKindEnv : Types.btvEnv,
+        tyArgs : BoundTypeVarID.id list,
         argVarList : varInfo list,
         closureEnvVar : varInfo option,
         frameSlots : RuntimeTypes.ty SlotID.Map.map,

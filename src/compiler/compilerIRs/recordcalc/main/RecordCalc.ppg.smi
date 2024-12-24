@@ -1,5 +1,6 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
+_require "../../../libs/ids/main/LocalID.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/Symbol.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
@@ -37,6 +38,8 @@ struct
     | RCEXVAR of exVarInfo * loc
     | RCFNM of
       {
+        btvEnv : btvEnv,
+        constraints : Types.constraint list,
         argVarList : varInfo list,
         bodyTy : ty,
         bodyExp : rcexp,
@@ -46,6 +49,7 @@ struct
       {
         funExp : rcexp,
         funTy : ty,
+        instTyList : ty list,
         argExpList : rcexp list,
         loc : loc
       }
@@ -134,21 +138,6 @@ struct
         } list,
         tryExp : rcexp,
         resultTy : ty,
-        loc : loc
-      }
-    | RCPOLY of
-      {
-        btvEnv : btvEnv,
-        constraints : Types.constraint list,
-        expTyWithoutTAbs : ty,
-        exp : rcexp,
-        loc : loc
-      }
-    | RCTAPP of
-      {
-        exp : rcexp,
-        expTy : ty,
-        instTyList : ty list,
         loc : loc
       }
     | RCFOREIGNAPPLY of

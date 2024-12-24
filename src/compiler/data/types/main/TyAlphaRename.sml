@@ -133,11 +133,13 @@ local
            varArgTyList = Option.map (map (copyTy btvMap)) varArgTyList,
            resultTy = Option.map (copyTy btvMap) resultTy,
            attributes = attributes}
-  and copyCodeEntryTy btvMap {tyvars, haveClsEnv, argTyList, retTy} =
+  and copyCodeEntryTy btvMap {tyvars, tyArgs, haveClsEnv, argTyList, retTy} =
       let
         val (btvMap, tyvars) = newBtvEnv btvMap tyvars
+        val tyArgs = map (evalBtv btvMap) tyArgs
       in
         {tyvars = tyvars,
+         tyArgs = tyArgs,
          haveClsEnv = haveClsEnv,
          argTyList = map (copyTy btvMap) argTyList,
          retTy = copyTy btvMap retTy}
