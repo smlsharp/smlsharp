@@ -110,7 +110,7 @@ struct
   val doRecordUnboxing = ref true
   val doUncurryOptimization = ref false
   val doPolyTyElimination = ref true
-  val doTCOptimization = ref true
+  val doTCOptimization = ref false
 (*
   val doRCOptimization = ref false
 *)
