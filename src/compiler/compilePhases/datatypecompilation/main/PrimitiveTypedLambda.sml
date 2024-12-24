@@ -444,26 +444,23 @@ struct
         raise Bug.Bug "compilePrim: Int_neg"
 
       | (P.Int_add, [arg1, arg2], _, []) =>
-        E.Switch
-          (E.Cast (E.Int_add_overflowCheck retTy (arg1, arg2), B.int32Ty),
-           [(L.INT32 0, E.Int_add_unsafe retTy (arg1, arg2))],
-           E.Raise (B.OverflowExExn, retTy))
+        E.If (E.Int_add_overflowCheck retTy (arg1, arg2),
+              E.Raise (B.OverflowExExn, retTy),
+              E.Int_add_unsafe retTy (arg1, arg2))
       | (P.Int_add, _, _, _) =>
         raise Bug.Bug "compilePrim: Int_add"
 
       | (P.Int_mul, [arg1, arg2], _, []) =>
-        E.Switch
-          (E.Cast (E.Int_mul_overflowCheck retTy (arg1, arg2), B.int32Ty),
-           [(L.INT32 0, E.Int_mul_unsafe retTy (arg1, arg2))],
-           E.Raise (B.OverflowExExn, retTy))
+        E.If (E.Int_mul_overflowCheck retTy (arg1, arg2),
+              E.Raise (B.OverflowExExn, retTy),
+              E.Int_mul_unsafe retTy (arg1, arg2))
       | (P.Int_mul, _, _, _) =>
         raise Bug.Bug "compilePrim: Int_mul"
 
       | (P.Int_sub, [arg1, arg2], _, []) =>
-        E.Switch
-          (E.Cast (E.Int_sub_overflowCheck retTy (arg1, arg2), B.int32Ty),
-           [(L.INT32 0, E.Int_sub_unsafe retTy (arg1, arg2))],
-           E.Raise (B.OverflowExExn, retTy))
+        E.If (E.Int_sub_overflowCheck retTy (arg1, arg2),
+              E.Raise (B.OverflowExExn, retTy),
+              E.Int_sub_unsafe retTy (arg1, arg2))
       | (P.Int_sub, _, _, _) =>
         raise Bug.Bug "compilePrim: Int_sub"
 
