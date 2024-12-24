@@ -160,15 +160,19 @@ struct
     | (*% @format "uwtable" *)
       UWTABLE
 
+  fun real64ToWord64 (x : Real64.real) =
+      SMLSharp_Builtin.Dynamic.readWord64
+        (SMLSharp_Builtin.Pointer.castToBoxed (ref x), 0w0)
+
   fun word32Dec x =
       term (Word32.fmt StringCvt.DEC x)
   fun word64Dec x =
       term (Word64.fmt StringCvt.DEC x)
   fun hex8 x =
       term (StringCvt.padLeft #"0" 8 (Word32.fmt StringCvt.HEX x))
-  fun realExact x =
-      term (CharVector.map (fn #"~" => #"-" | c => c)
-                           (Real.fmt StringCvt.EXACT x))
+  fun real64Hex x =
+      term ("0x" ^ Word64.fmt StringCvt.HEX
+                              (SMLSharp_Builtin.Real64.castToWord64 x))
 
   (*% *)
   datatype noWrap =
@@ -227,7 +231,7 @@ struct
 
   (*%
    * @formatter(Word64.word) word64Dec
-   * @formatter(real) realExact
+   * @formatter(real) real64Hex
    * @formatter(iftrue) iftrue
    * @formatter(ifcons) ifcons
    *)
