@@ -731,6 +731,7 @@ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
+src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
 src/compiler/compilePhases/datatypecompilation/main/PrimitiveTypedLambda.o \
 src/compiler/compilePhases/recordcompilation/main/OverloadKind.o \
@@ -1094,6 +1095,7 @@ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
+src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
 src/compiler/compilePhases/datatypecompilation/main/PrimitiveTypedLambda.o \
 src/compiler/compilePhases/recordcompilation/main/OverloadKind.o \
@@ -1463,6 +1465,7 @@ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
+src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
 src/compiler/compilePhases/datatypecompilation/main/PrimitiveTypedLambda.o \
 src/compiler/compilePhases/recordcompilation/main/OverloadKind.o \
@@ -2010,6 +2013,7 @@ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
+src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
 src/compiler/compilePhases/datatypecompilation/main/PrimitiveTypedLambda.o \
 src/compiler/compilePhases/recordcompilation/main/OverloadKind.o \
@@ -2367,6 +2371,7 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.o \
 src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.o \
+src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.o \
 src/compiler/data/builtin/main/BuiltinPrimitive.ppg.o \
 src/compiler/data/builtin/main/BuiltinTypes.o \
 src/compiler/data/builtin/main/ConstantError.ppg.o \
@@ -2786,6 +2791,7 @@ src/compiler/compilerIRs/typedcalc/main/TypedCalc.ppg.smi \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.smi \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcUtils.smi \
 src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.smi \
+src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.smi \
 src/compiler/data/builtin/main/BuiltinPrimitive.ppg.smi \
 src/compiler/data/builtin/main/BuiltinTypes.smi \
 src/compiler/data/builtin/main/ConstantError.ppg.smi \
@@ -3325,6 +3331,7 @@ src/compiler/compilePhases/partialevaluation/main/RecordCalcValRec.o \
 src/compiler/compilePhases/partialevaluation/main/PartialEvaluation.o \
 src/compiler/libs/list-utils/main/utils.o \
 src/compiler/compilePhases/fficompilation/main/FFICompilation.o \
+src/compiler/compilerIRs/typedlambda/main/TypedLambdaSubst.o \
 src/compiler/compilePhases/datatypecompilation/main/EmitTypedLambda.o \
 src/compiler/compilePhases/datatypecompilation/main/PrimitiveTypedLambda.o \
 src/compiler/compilePhases/recordcompilation/main/OverloadKind.o \

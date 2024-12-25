@@ -1,0 +1,11 @@
+_require local "../../../../basis.smi"
+_require local "../../../data/symbols/main/RecordLabel.smi"
+_require "../../../libs/ids/main/LocalID.smi"
+_require "./TypedLambda.ppg.smi"
+
+structure TypedLambdaSubst =
+struct
+  val substExp : TypedLambda.tlexp VarID.Map.map
+                 -> TypedLambda.tlexp
+                 -> TypedLambda.tlexp
+end

@@ -550,111 +550,57 @@ struct
                                exp = compileExp context exp})
                           bindList,
                       loc)]
-      | TL.TLVALPOLYREC {btvEnv, constraints, recbinds as [{var, exp}], loc} =>
-        let
-          (*
-           * ['a. val rec f = exp]
-           *        ||
-           *        vv
-           * val f = ['a. let val rec f = exp in f end]
-           *)
-          val polyTy = T.POLYty {boundtvars = btvEnv,
-                                 constraints = nil,
-                                 body = #ty var}
-        in
-          compileDecl
-            context
-            (TL.TLVAL
-               {var = var # {ty = polyTy},
-                exp =
-                  TL.TLPOLY
-                    {btvEnv = btvEnv,
-                     constraints = nil,
-                     expTyWithoutTAbs = #ty var,
-                     exp =
-                       TL.TLLET
-                         {decl = TL.TLVALREC (recbinds, loc),
-                          body = TL.TLVAR (var, loc),
-                          loc = loc},
-                     loc = loc},
-                loc = loc})
-        end
       | TL.TLVALPOLYREC {btvEnv, constraints, recbinds, loc} =>
         let
           (*
            * ['a. val rec f = exp1 and g = exp2]
            *        ||
            *        vv
-           * val x = ['a. let val rec f = exp1 and g = exp2 in (f, g) end]
-           * val f = ['a. #1 (x {'a})]
-           * val g = ['a. #2 (x {'a})]
+           * val rec f = ['a. [f 'a/f, g 'a/b]exp1]
+           *     and g = ['a. [f 'a/f, g 'a/b]exp2]
            *)
-          val recbindMap = RecordLabel.tupleMap recbinds
-          val tupleTyMap = RecordLabel.Map.map (#ty o #var) recbindMap
-          val tupleTy = T.RECORDty tupleTyMap
-          val tupleVar =
-              newVar (T.POLYty {boundtvars = btvEnv,
-                                constraints = constraints,
-                                body = tupleTy})
-          val dec =
-              TL.TLVAL
-                {var = tupleVar,
-                 exp =
-                   TL.TLPOLY
-                     {btvEnv = btvEnv,
-                      constraints = constraints,
-                      expTyWithoutTAbs = tupleTy,
-                      exp =
-                        TL.TLLET
-                          {decl = TL.TLVALREC (recbinds, loc),
-                           body =
-                             TL.TLRECORD
-                               {fields = RecordLabel.Map.map
-                                           (fn {var, ...} =>
-                                               TL.TLVAR (var, loc))
-                                           recbindMap,
-                                recordTy = tupleTyMap,
-                                loc = loc},
-                           loc = loc},
-                      loc = loc},
-                 loc = loc}
-          val instTyList =
-              map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv)
-          val decs =
-              RecordLabel.Map.foldri
-                (fn (label, {var, exp}, decs) =>
-                    let
-                      val polyTy = T.POLYty {boundtvars = btvEnv,
+          val instTyList = map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv)
+          val recbinds =
+              map
+                (fn {var as {ty, ...}, exp} =>
+                     let
+                       val varTy = T.POLYty {boundtvars = btvEnv,
                                              constraints = constraints,
-                                             body = #ty var}
+                                             body = ty}
+                       val exp = TL.TLPOLY {btvEnv = btvEnv,
+                                            constraints = constraints,
+                                            expTyWithoutTAbs = ty,
+                                            exp = exp,
+                                            loc = loc}
+                     in
+                       {var = var # {ty = varTy}, exp = exp}
+                     end)
+                recbinds
+          val subst =
+              foldl
+                (fn ({var, ...}, subst) =>
+                    let
+                      val exp = TL.TLTAPP {exp = TL.TLVAR (var, loc),
+                                           expTy = #ty var,
+                                           instTyList = instTyList,
+                                           loc = loc}
                     in
-                      TL.TLVAL
-                        {var = var # {ty = polyTy},
-                         exp =
-                           TL.TLPOLY
-                             {btvEnv = btvEnv,
-                              constraints = constraints,
-                              expTyWithoutTAbs = #ty var,
-                              exp =
-                                TL.TLSELECT
-                                  {label = label,
-                                   recordExp =
-                                     TL.TLTAPP
-                                       {exp = TL.TLVAR (tupleVar, loc),
-                                        expTy = #ty tupleVar,
-                                        instTyList = instTyList,
-                                        loc = loc},
-                                   recordTy = tupleTy,
-                                   resultTy = #ty var,
-                                   loc = loc},
-                              loc = loc},
-                         loc = loc}
-                      :: decs
+                      VarID.Map.insert (subst, #id var, exp)
                     end)
-                nil
-                recbindMap
+                VarID.Map.empty
+                recbinds
+          val recbinds =
+              map
+                (fn {var as {ty, ...}, exp} =>
+                    let
+                      val exp = TypedLambdaSubst.substExp subst exp
+                    in
+                      {var = compileVarInfo var,
+                       exp = compileExp context exp}
+                    end)
+                recbinds
         in
-          List.concat (map (compileDecl context) (dec :: decs))
+          [RC.RCVALREC (recbinds, loc)]
         end
 
   fun makeUerlelvelPrimitiveExternDecls externList =
