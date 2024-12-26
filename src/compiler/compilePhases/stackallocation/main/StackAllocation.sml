@@ -22,9 +22,8 @@ struct
     val empty : set
     val generate : int -> set
     val fromList : SlotID.id list -> set
-    val setMinus : set * set -> set
     val union : set * set -> set
-    val choose : set -> SlotID.id
+    val first : (SlotID.id -> bool) -> set -> SlotID.id
     val member : set * SlotID.id -> bool
   end =
   struct
@@ -36,36 +35,49 @@ struct
         (* assume that SlotID.generate generates sequential numbers *)
         List.tabulate (numItems, fn _ => SlotID.generate ())
 
-    fun union (nil, set) = set
-      | union (set, nil) = set
-      | union (l1 as h1::t1, l2 as h2::t2) =
-        case SlotID.compare (h1, h2) of
-          EQUAL => h1 :: union (t1, t2)
-        | GREATER => h2 :: union (l1, t2)
-        | LESS => h1 :: union (t1, l2)
-    fun mergeStep z nil = z
-      | mergeStep z [x] = x::z
-      | mergeStep z (h1::h2::t) = mergeStep (union (h1, h2) :: z) t
+    fun revAppend nil r = r : set
+      | revAppend (h :: t) r = revAppend t (h :: r)
+
+    fun union (set1, set2) =
+        let
+          fun loop nil set r = revAppend r set
+            | loop set nil r = revAppend r set
+            | loop (l1 as (h1 :: t1)) (l2 as (h2 :: t2)) r =
+              case SlotID.compare (h1, h2) of
+                EQUAL => loop t1 t2 (h1 :: r)
+              | GREATER => loop l1 t2 (h2 :: r)
+              | LESS => loop t1 l2 (h1 :: r)
+        in
+          loop set1 set2 nil
+        end
+
+    fun mergeStep nil r = r
+      | mergeStep [x] r = x :: r
+      | mergeStep (h1 :: h2 :: t) r = mergeStep t (union (h1, h2) :: r)
+
     fun merge nil = nil
       | merge [x] = x
-      | merge l = merge (mergeStep nil l)
-    fun sort' z nil = merge z
-      | sort' z (h::t) = sort' ([h]::z) t
-    fun fromList l = sort' nil l
+      | merge l = merge (mergeStep l nil)
 
-    fun setMinus (nil, set) = nil
-      | setMinus (set, nil) = set
-      | setMinus (l1 as h1::t1, l2 as h2::t2) =
-        case SlotID.compare (h1, h2) of
-          EQUAL => setMinus (t1, t2)
-        | GREATER => setMinus (l1, t2)
-        | LESS => h1 :: setMinus (t1, l2)
+    fun fromList vars =
+        let
+          fun loop nil r = merge r
+            | loop (id :: ids) r = loop ids ([id] :: r)
+        in
+          loop vars nil
+        end
 
-    fun choose nil = raise Bug.Bug "SlotSet.choose"
-      | choose (h::_) = h : SlotID.id
+    fun first f (nil : set) = raise Bug.Bug "SlotSet.first"
+      | first f (id :: ids) =
+        if f id then id else first f ids
 
-    fun member (nil, _) = false
-      | member (h::t, id:SlotID.id) = h = id orelse member (t, id)
+    fun member (set : set, id) =
+        let
+          fun loop nil _ = false
+            | loop (h :: t) id = h = id orelse loop t id
+        in
+          loop set id
+        end
   end
 
   structure Set :> sig
@@ -77,9 +89,10 @@ struct
     val fromList : M.varInfo list -> set
     val listItems : set -> M.varInfo list
     val numItems : set -> int
-    val intersect : set * set -> set
     val setMinus : set * set -> set
     val isSubsetOf : set * set -> bool
+    val toIdSet : set -> VarID.Set.set
+    val intersect : set * VarID.Set.set -> set
   end =
   struct
     type set = M.varInfo list  (* sorted by id *)
@@ -90,47 +103,56 @@ struct
 
     fun listItems (l:set) = l
 
+    fun revAppend nil r = r : set
+      | revAppend (h :: t) r = revAppend t (h :: r)
+
     fun singleton (v as {id, ty=(_, {tag = R.BOXED, ...})}) = [v]
       | singleton (_:M.varInfo) = empty
 
-    fun union (nil, set) = set
-      | union (set, nil) = set
-      | union (l1 as (h1::t1) : set, l2 as (h2::t2) : set) =
-        case VarID.compare (#id h1, #id h2) of
-          EQUAL => h1 :: union (t1, t2)
-        | GREATER => h2 :: union (l1, t2)
-        | LESS => h1 :: union (t1, l2)
+    fun union (set1, set2) =
+        let
+          fun loop nil set r = revAppend r set
+            | loop set nil r = revAppend r set
+            | loop (l1 as (h1 :: t1)) (l2 as (h2 :: t2)) r =
+              case VarID.compare (#id h1, #id h2) of
+                EQUAL => loop t1 t2 (h1 :: r)
+              | GREATER => loop l1 t2 (h2 :: r)
+              | LESS => loop t1 l2 (h1 :: r)
+        in
+          loop set1 set2 nil
+        end
 
-    fun mergeStep z nil = z
-      | mergeStep z [x] = x::z
-      | mergeStep z (h1::h2::t) = mergeStep (union (h1, h2) :: z) t
+    fun mergeStep nil r = r
+      | mergeStep [x] r = x :: r
+      | mergeStep (h1 :: h2 :: t) r = mergeStep t (union (h1, h2) :: r)
 
     fun merge nil = nil
       | merge [x] = x
-      | merge l = merge (mergeStep nil l)
+      | merge l = merge (mergeStep l nil)
 
-    fun fromList' z nil = merge z
-      | fromList' z ((v as {id, ty=(_,{tag=R.BOXED, ...})})::t) =
-        fromList' ([v]::z) t
-      | fromList' z (_::t) = fromList' z t
+    fun fromList vars =
+        let
+          fun loop nil r = merge r
+            | loop (var :: vars) r =
+              case singleton var of
+                nil => loop vars r
+              | set => loop vars (set :: r)
+        in
+          loop vars nil
+        end
 
-    fun fromList l = fromList' nil l
-
-    fun intersect (nil, set) = nil
-      | intersect (set, nil) = nil
-      | intersect (l1 as (h1::t1) : set, l2 as (h2::t2) : set) =
-        case VarID.compare (#id h1, #id h2) of
-          EQUAL => h1 :: intersect (t1, t2)
-        | GREATER => intersect (l1, t2)
-        | LESS => intersect (t1, l2)
-
-    fun setMinus (nil:set, set:set) = nil
-      | setMinus (set, nil) = set
-      | setMinus (l1 as (h1::t1) : set, l2 as (h2::t2) : set) =
-        case VarID.compare (#id h1, #id h2) of
-          EQUAL => setMinus (t1, t2)
-        | GREATER => setMinus (l1, t2)
-        | LESS => h1 :: setMinus (t1, l2)
+    fun setMinus (set1, set2) =
+        let
+          fun loop nil (set : set) r = revAppend r nil
+            | loop set nil r = revAppend r set
+            | loop (l1 as (h1::t1)) (l2 as (h2::t2)) r =
+              case VarID.compare (#id h1, #id h2) of
+                EQUAL => loop t1 t2 r
+              | GREATER => loop l1 t2 r
+              | LESS => loop t1 l2 (h1 :: r)
+        in
+          loop set1 set2 nil
+        end
 
     fun isSubsetOf (nil, set) = true
       | isSubsetOf (set, nil) = false
@@ -139,6 +161,26 @@ struct
           EQUAL => isSubsetOf (t1, t2)
         | GREATER => isSubsetOf (l1, t2)
         | LESS => false
+
+    fun toIdSet set =
+        let
+          fun loop (nil : set) r = r
+            | loop (var :: vars) r =
+              loop vars (VarID.Set.add (r, #id var))
+        in
+          loop set VarID.Set.empty
+        end
+
+    fun intersect (set : set, idset) =
+        let
+          fun loop nil r = revAppend r nil
+            | loop (var :: vars) r =
+              if VarID.Set.member (idset, #id var)
+              then loop vars (var :: r)
+              else loop vars r
+        in
+          loop set nil
+        end
   end
 
   fun nullValue ty =
@@ -206,19 +248,20 @@ struct
     | isSmallerThanOrEqualToGC (NOGC, CAUSEGC _) = true
     | isSmallerThanOrEqualToGC (CAUSEGC _, NOGC) = false
     | isSmallerThanOrEqualToGC (CAUSEGC {defsBeforeGC=s1},
-                              CAUSEGC {defsBeforeGC=s2}) =
+                                CAUSEGC {defsBeforeGC=s2}) =
       Set.isSubsetOf (s1, s2)
 
   fun toGC_slot alloc NOGC = NOGC_SLOT
     | toGC_slot alloc (CAUSEGC {defsBeforeGC}) =
       CAUSEGC_SLOT {saveBeforeGC = varsToSlots alloc defsBeforeGC}
 
-  datatype exp =
-      DEF of
+  datatype exp_mid =
+      START
+    | DEF of
       {
         def : Set.set,
         causeGC : bool,
-        next : exp
+        prev : exp_mid
       }
     | MID of
       {
@@ -226,42 +269,42 @@ struct
         use : Set.set,
         orig : M.mcexp_mid,
         causeGC : bool,
-        next : exp
+        prev : exp_mid
       }
-    | CALL of
+    | LOCALCODE of
+      {
+        recursive : bool,
+        binds : {id : FunLocalLabel.id, body : block} list,
+        prev : exp_mid,
+        loc : M.loc
+      }
+    | HANDLER of
+      {
+        exnVar : M.varInfo,
+        id : HandlerLabel.id,
+        handler : block,
+        cleanup : HandlerLabel.id option,
+        prev : exp_mid,
+        loc : M.loc
+      }
+
+  and exp =
+      CALL of
       {
         def : Set.set,
         use : Set.set,
         returnTo : block,
         causeGC : bool,
-        orig : M.mcexp_mid
+        orig : M.mcexp_mid,
+        prev : exp_mid
       }
     | LAST of
       {
         def : Set.set,
         use : Set.set,
         args : (M.varInfo * M.mcvalue) list,
-        orig : M.mcexp_last
-      }
-    | LOCALCODE of
-      {
-        recursive : bool,
-        binds :
-        {
-          id : FunLocalLabel.id,
-          body : block
-        } list,
-        next : exp,
-        loc : M.loc
-      }
-    | HANDLER of
-      {
-        nextExp : exp,
-        exnVar : M.varInfo,
-        id : HandlerLabel.id,
-        handler : block,
-        cleanup : HandlerLabel.id option,
-        loc : M.loc
+        orig : M.mcexp_last,
+        prev : exp_mid
       }
 
   and block =
@@ -284,7 +327,8 @@ struct
       LAST {def = Set.empty,
             use = Set.empty,
             args = nil,
-            orig = M.MCUNREACHABLE}
+            orig = M.MCUNREACHABLE,
+            prev = START}
 
   fun newBlock id argVarList =
       BLOCK (ref {id = id,
@@ -305,33 +349,37 @@ struct
        r2 := (!r2 # {predecessors = fromBlock :: #predecessors (!r2)});
        argVarList)
 
-  fun defuseExp exp =
-      case exp of
-        DEF {def, causeGC, next} =>
-        let
-          val {defs, uses, gc} = defuseExp next
-        in
+  fun defuseMid (defuse as {defs, uses, gc}) mid =
+      case mid of
+        START => defuse
+      | DEF {def, causeGC, prev} =>
+        defuseMid
           {defs = Set.union (defs, def),
            uses = Set.setMinus (uses, def),
            gc = updateGC (causeGC, def) gc}
-        end
-      | MID {def, use, orig, causeGC, next} =>
-        let
-          val {defs, uses, gc} = defuseExp next
-        in
+          prev
+      | MID {def, use, orig, causeGC, prev} =>
+        defuseMid
           {defs = Set.union (defs, def),
            uses = Set.union (Set.setMinus (uses, def), use),
            gc = updateGC (causeGC, def) gc}
-        end
-      | CALL {def, use, returnTo, causeGC, orig} =>
-        {defs = def,
-         uses = use,
-         gc = updateGC (causeGC, def) NOGC}
-      | LAST {def, use, args, orig} =>
-        {defs = def, uses = use, gc = NOGC}
-      | LOCALCODE {recursive, binds, next, loc} => defuseExp next
-      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
-        defuseExp nextExp
+          prev
+      | LOCALCODE {recursive, binds, prev, loc} => defuseMid defuse prev
+      | HANDLER {id, exnVar, handler, cleanup, prev, loc} =>
+        defuseMid defuse prev
+
+  fun defuseExp exp =
+      case exp of
+        CALL {def, use, returnTo, causeGC, orig, prev} =>
+        defuseMid
+          {defs = def,
+           uses = use,
+           gc = updateGC (causeGC, def) NOGC}
+          prev
+      | LAST {def, use, args, orig, prev} =>
+        defuseMid
+          {defs = def, uses = use, gc = NOGC}
+          prev
 
   fun setBody (BLOCK r, bodyExp) =
       r := (!r # {bodyExp = bodyExp, defuse = defuseExp bodyExp})
@@ -356,12 +404,16 @@ struct
         NONE => raise Bug.Bug "addHandlerEdge"
       | SOME block => addEdge (currentBlock, block)
 
-  fun prepareLast (env:prepareEnv) last =
+  fun prepareLast prev (env:prepareEnv) last =
       case last of
         M.MCRETURN {value, loc} =>
         (
           addEdge (#currentBlock env, #exitBlock env);
-          LAST {def = Set.empty, use = useValue value, args = nil, orig = last}
+          LAST {def = Set.empty,
+                use = useValue value,
+                args = nil,
+                orig = last,
+                prev = prev}
         )
       | M.MCRAISE {argExp, cleanup, loc} =>
         (
@@ -370,7 +422,8 @@ struct
           LAST {def = Set.empty,
                 use = useValues [argExp],
                 args = nil,
-                orig = last}
+                orig = last,
+                prev = prev}
         )
       | M.MCHANDLER {nextExp, id, exnVar, handlerExp, cleanup, loc} =>
         let
@@ -378,20 +431,22 @@ struct
           val nextEnv =
               env # {handlerEnv = HandlerLabel.Map.insert
                                     (#handlerEnv env, id, handlerBlock)}
-          val nextExp = prepareExp nextEnv nextExp
           val handlerEnv = env # {currentBlock = handlerBlock}
-          val handlerExp = DEF {def = Set.singleton exnVar,
-                                causeGC = true,
-                                next = prepareExp handlerEnv handlerExp}
+          val handlerPrev = DEF {def = Set.singleton exnVar,
+                                 causeGC = true,
+                                 prev = START}
+          val handlerExp = prepareExp handlerPrev handlerEnv handlerExp
           val _ = setBody (handlerBlock, handlerExp)
         in
-          addHandlerEdge env cleanup;
-          HANDLER {nextExp = nextExp,
-                   id = id,
-                   exnVar = exnVar,
-                   handler = handlerBlock,
-                   cleanup = cleanup,
-                   loc = loc}
+          prepareExp
+            (HANDLER {id = id,
+                      exnVar = exnVar,
+                      handler = handlerBlock,
+                      cleanup = cleanup,
+                      loc = loc,
+                      prev = prev})
+            nextEnv
+            nextExp
         end
       | M.MCLOCALCODE {recursive, binds, nextExp, loc} =>
         let
@@ -414,16 +469,18 @@ struct
                       let
                         val env4 = env3 # {currentBlock = block}
                       in
-                        setBody (block, prepareExp env4 bodyExp);
+                        setBody (block, prepareExp START env4 bodyExp);
                         {id = id, body = block}
                       end)
                   binds
-          val nextExp = prepareExp env2 nextExp
         in
-          LOCALCODE {recursive = recursive,
-                     binds = binds,
-                     next = nextExp,
-                     loc = loc}
+          prepareExp
+            (LOCALCODE {recursive = recursive,
+                        binds = binds,
+                        prev = prev,
+                        loc = loc})
+            env2
+            nextExp
         end
       | M.MCGOTO {id, argList, loc} =>
         let
@@ -432,7 +489,8 @@ struct
           LAST {def = Set.fromList argVarList,
                 use = useValues argList,
                 args = ListPair.zipEq (argVarList, argList),
-                orig = last}
+                orig = last,
+                prev = prev}
         end
       | M.MCSWITCH {switchExp, expTy, branches, default, loc} =>
         (
@@ -441,28 +499,33 @@ struct
           LAST {def = Set.empty,
                 use = useValue switchExp,
                 args = nil,
-                orig = last}
+                orig = last,
+                prev = prev}
         )
       | M.MCUNREACHABLE =>
         (
           addEdge (#currentBlock env, #exitBlock env);
-          LAST {def = Set.empty, use = Set.empty, args = nil, orig = last}
+          LAST {def = Set.empty,
+                use = Set.empty,
+                args = nil,
+                orig = last,
+                prev = prev}
         )
 
   and prepareCont (env as {currentBlock, ...}) (argVarList, nextExp) =
       let
         val nextBlock = newBlock (FunLocalLabel.generate nil) argVarList
         val nextEnv = env # {currentBlock = nextBlock}
-        val nextExp = prepareExp nextEnv nextExp
+        val nextExp = prepareExp START nextEnv nextExp
         val _ = setBody (nextBlock, nextExp)
         val _ = addEdge (currentBlock, nextBlock)
       in
         nextBlock
       end
 
-  and prepareExp (env:prepareEnv) (nil, last) =
-      prepareLast env last
-    | prepareExp env (mid::mids, last) =
+  and prepareExp prev (env:prepareEnv) (nil, last) =
+      prepareLast prev env last
+    | prepareExp prev env (mid :: mids, last) =
       case mid of
         M.MCCALL {resultVar, resultTy, codeExp, closureEnvExp, instTyList,
                   argExpList, tail, handler, loc} =>
@@ -475,14 +538,18 @@ struct
                                  @ argExpList),
                 returnTo = returnTo,
                 causeGC = not tail,
-                orig = mid}
+                orig = mid,
+                prev = prev}
         end
       | M.MCINTINF {resultVar, dataLabel, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = Set.empty,
-             orig = mid,
-             causeGC = true,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = Set.empty,
+                orig = mid,
+                causeGC = true,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCFOREIGNAPPLY {resultVar, funExp, attributes, argExpList,
                           handler, loc} =>
         let
@@ -495,55 +562,78 @@ struct
                 use = useValues (funExp :: argExpList),
                 returnTo = returnTo,
                 causeGC = causeGC,
-                orig = mid}
+                orig = mid,
+                prev = prev}
         end
       | M.MCEXPORTCALLBACK {resultVar, codeExp, closureEnvExp, instTyvars,
                             loc} =>
-        MID {def = Set.singleton resultVar,
-             use = useValues [codeExp, closureEnvExp],
-             orig = mid,
-             causeGC = true,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = useValues [codeExp, closureEnvExp],
+                orig = mid,
+                causeGC = true,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCEXVAR {resultVar, id, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = Set.empty,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = Set.empty,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCMEMCPY_FIELD {dstAddr, srcAddr, copySize, loc} =>
-        MID {def = Set.empty,
-             use = Set.union (useAddrs [dstAddr, srcAddr], useValue copySize),
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = Set.union (useAddrs [dstAddr, srcAddr],
+                                 useValue copySize),
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCMEMMOVE_UNBOXED_ARRAY {dstAddr, srcAddr, numElems, elemSize, loc} =>
-        MID {def = Set.empty,
-             use = Set.union (useAddrs [dstAddr, srcAddr],
-                           useValues [numElems, elemSize]),
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = Set.union (useAddrs [dstAddr, srcAddr],
+                                 useValues [numElems, elemSize]),
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCMEMMOVE_BOXED_ARRAY {srcArray, dstArray, srcIndex, dstIndex,
                                  numElems, loc} =>
-        MID {def = Set.empty,
-             use = useValues [srcArray, dstArray, srcIndex, dstIndex,
-                               numElems],
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = useValues [srcArray, dstArray, srcIndex, dstIndex,
+                                 numElems],
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCALLOC {resultVar, objType, payloadSize, allocSize, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = Set.union (useObjtype objType,
-                           useValues [payloadSize, allocSize]),
-             orig = mid,
-             causeGC = true,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = Set.union (useObjtype objType,
+                                 useValues [payloadSize, allocSize]),
+                orig = mid,
+                causeGC = true,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCALLOC_COMPLETED =>
-        MID {def = Set.empty,
-             use = Set.empty,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = Set.empty,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCCHECK {handler} =>
         let
           val returnTo = prepareCont env (nil, (mids, last))
@@ -553,75 +643,109 @@ struct
                 use = Set.empty,
                 returnTo = returnTo,
                 causeGC = true,
-                orig = mid}
+                orig = mid,
+                prev = prev}
         end
       | M.MCRECORDDUP_ALLOC {resultVar, copySizeVar, recordExp, loc} =>
-        MID {def = Set.fromList [resultVar, copySizeVar],
-             use = useValue recordExp,
-             orig = mid,
-             causeGC = true,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.fromList [resultVar, copySizeVar],
+                use = useValue recordExp,
+                orig = mid,
+                causeGC = true,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCRECORDDUP_COPY {dstRecord, srcRecord, copySize, loc} =>
-        MID {def = Set.empty,
-             use = useValues [dstRecord, srcRecord, copySize],
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = useValues [dstRecord, srcRecord, copySize],
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCBZERO {recordExp, recordSize, loc} =>
-        MID {def = Set.empty,
-             use = useValues [recordExp, recordSize],
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = useValues [recordExp, recordSize],
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCSAVESLOT {slotId, value, loc} =>
-        MID {def = Set.empty,
-             use = useValue value,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = useValue value,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCLOADSLOT {resultVar, slotId, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = Set.empty,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = Set.empty,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCLOAD {resultVar, srcAddr, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = useAddr srcAddr,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = useAddr srcAddr,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCPRIMAPPLY {resultVar, primInfo, argExpList, argTyList, resultTy,
                        instTyList, instTagList, instSizeList, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = useValues (argExpList @ instTagList @ instSizeList),
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = useValues (argExpList @ instTagList @ instSizeList),
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCBITCAST {resultVar, exp, expTy, targetTy, loc} =>
-        MID {def = Set.singleton resultVar,
-             use = useValue exp,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.singleton resultVar,
+                use = useValue exp,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCSTORE {srcExp, srcTy, dstAddr, barrier, loc} =>
-        MID {def = Set.empty,
-             use = Set.union (useValue srcExp, useAddr dstAddr),
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = Set.union (useValue srcExp, useAddr dstAddr),
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCEXPORTVAR {id, ty, valueExp, loc} =>
-        MID {def = Set.empty,
-             use = useValue valueExp,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = useValue valueExp,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
       | M.MCKEEPALIVE {value, loc} =>
-        MID {def = Set.empty,
-             use = useValue value,
-             orig = mid,
-             causeGC = false,
-             next = prepareExp env (mids, last)}
+        prepareExp
+          (MID {def = Set.empty,
+                use = useValue value,
+                orig = mid,
+                causeGC = false,
+                prev = prev})
+          env
+          (mids, last)
 
   fun prepare (argVarList, mcexp, cleanupHandler) =
       let
@@ -635,9 +759,10 @@ struct
                    exitBlock = exitBlock,
                    handlerEnv = handlerEnv,
                    blockEnv = FunLocalLabel.Map.empty} : prepareEnv
-        val exp = DEF {def = Set.fromList argVarList,
-                       causeGC = false,
-                       next = prepareExp env mcexp}
+        val prev = DEF {def = Set.fromList argVarList,
+                        causeGC = false,
+                        prev = START}
+        val exp = prepareExp prev env mcexp
         val _ = setBody (startBlock, exp)
       in
         (startBlock, exitBlock)
@@ -697,66 +822,42 @@ struct
                          loc = Loc.noloc}))
         alloc
         (Set.listItems vars)
-          
+
   end (* local *)
 
-  fun reconstructExp alloc (exp, out as {liveOut, gcOut}) =
+  fun reconstructMid alloc {liveOut, gcOut} next exp =
       case exp of
-        DEF {def, causeGC, next} =>
+        START =>
+        ({liveIn = liveOut, gcIn = gcOut}, next)
+      | DEF {def, causeGC, prev} =>
         let
-          val ({liveIn=liveOut, gcIn=gcOut}, exp) =
-              reconstructExp alloc (next, out)
+          val gcIn = updateGC_slot alloc (causeGC, def) gcOut
           val liveIn = Set.setMinus (liveOut, def)
-          val gcIn = updateGC_slot alloc (causeGC, def) gcOut
         in
-          ({liveIn = liveIn, gcIn = gcIn},
-           save alloc def
-           o exp)
+          reconstructMid
+            alloc
+            {liveOut = liveIn, gcOut = gcIn}
+            (save alloc def o next)
+            prev
         end
-      | MID {def, use, orig, causeGC, next} =>
+      | MID {def, use, orig, causeGC, prev} =>
         let
-          val ({liveIn=liveOut, gcIn=gcOut}, exp) =
-              reconstructExp alloc (next, out)
-          val liveIn = Set.union (Set.setMinus (liveOut, def), use)
           val gcIn = updateGC_slot alloc (causeGC, def) gcOut
           val dead = Set.setMinus (use, liveOut)
-        in
-          ({liveIn = liveIn, gcIn = gcIn},
-           load alloc use
-           o kill alloc gcIn dead
-           o mid orig
-           o save alloc def
-           o exp)
-        end
-      | CALL {def, use, returnTo, causeGC, orig} =>
-        let
-          val (_, exp) = reconstructBlock alloc returnTo
           val liveIn = Set.union (Set.setMinus (liveOut, def), use)
-          val gcIn = updateGC_slot alloc (causeGC, def) gcOut
-          val dead = Set.setMinus (use, liveOut)
         in
-          ({liveIn = liveIn, gcIn = gcIn},
-           load alloc use
-           o kill alloc gcIn dead
-           o mid orig
-           o save alloc def
-           o exp)
+          reconstructMid
+            alloc
+            {liveOut = liveIn, gcOut = gcIn}
+            (load alloc use
+             o kill alloc gcIn dead
+             o mid orig
+             o save alloc def
+             o next)
+            prev
         end
-      | LAST {def, use, args, orig} =>
+      | LOCALCODE {recursive, binds, prev, loc} =>
         let
-          val liveIn = Set.union (Set.setMinus (liveOut, def), use)
-          val gcIn = gcOut
-          val dead = Set.setMinus (use, liveOut)
-        in
-          ({liveIn = liveIn, gcIn = gcIn},
-           load alloc use
-           o kill alloc gcOut dead
-           o saveArgs alloc args
-           o last orig)
-        end
-      | LOCALCODE {recursive, binds, next, loc} =>
-        let
-          val (input, nextExp) = reconstructExp alloc (next, out)
           val binds =
               map (fn {id, body} =>
                       let
@@ -768,31 +869,71 @@ struct
                       end)
                   binds
         in
-          (input,
-           last (M.MCLOCALCODE {nextExp = nextExp (),
-                                binds = binds,
-                                recursive = recursive,
-                                loc = loc}))
+          reconstructMid
+            alloc
+            {liveOut = liveOut, gcOut = gcOut}
+            (last (M.MCLOCALCODE {nextExp = next (),
+                                  binds = binds,
+                                  recursive = recursive,
+                                  loc = loc}))
+            prev
         end
-      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
+      | HANDLER {id, exnVar, handler, cleanup, prev, loc} =>
         let
-          val (input, nextExp) = reconstructExp alloc (nextExp, out)
           val (_, handlerExp) = reconstructBlock alloc handler
         in
-          (input,
-           last (M.MCHANDLER {nextExp = nextExp (),
-                              id = id,
-                              exnVar = exnVar,
-                              handlerExp = handlerExp (),
-                              cleanup = cleanup,
-                              loc = loc}))
+          reconstructMid
+            alloc
+            {liveOut = liveOut, gcOut = gcOut}
+            (last (M.MCHANDLER {nextExp = next (),
+                                id = id,
+                                exnVar = exnVar,
+                                handlerExp = handlerExp (),
+                                cleanup = cleanup,
+                                loc = loc}))
+            prev
+        end
+
+  and reconstructExp alloc (out as {liveOut, gcOut}) exp =
+      case exp of
+        CALL {def, use, returnTo, causeGC, orig, prev} =>
+        let
+          val (_, exp) = reconstructBlock alloc returnTo
+          val gcIn = updateGC_slot alloc (causeGC, def) gcOut
+          val dead = Set.setMinus (use, liveOut)
+          val liveIn = Set.union (Set.setMinus (liveOut, def), use)
+        in
+          reconstructMid
+            alloc
+            {liveOut = liveIn, gcOut = gcIn}
+            (load alloc use
+             o kill alloc gcIn dead
+             o mid orig
+             o save alloc def
+             o exp)
+            prev
+        end
+      | LAST {def, use, args, orig, prev} =>
+        let
+          val gcIn = gcOut
+          val dead = Set.setMinus (use, liveOut)
+          val liveIn = Set.union (Set.setMinus (liveOut, def), use)
+        in
+          reconstructMid
+            alloc
+            {liveOut = liveIn, gcOut = gcIn}
+            (load alloc use
+             o kill alloc gcOut dead
+             o saveArgs alloc args
+             o last orig)
+            prev
         end
 
   and reconstructBlock alloc (BLOCK (ref {argVarList, bodyExp, predecessors,
                                           liveOut, gcOut, ...})) =
       let
         val output = {liveOut = liveOut, gcOut = toGC_slot alloc gcOut}
-        val ({liveIn, gcIn}, body) = reconstructExp alloc (bodyExp, output)
+        val ({liveIn, gcIn}, body) = reconstructExp alloc output bodyExp
         val actualLiveIn =
             Set.merge
               (map (fn BLOCK (ref {liveOut, ...}) => liveOut) predecessors)
@@ -801,21 +942,25 @@ struct
         (argVarList, kill alloc gcIn dead o body)
       end
 
-  fun blocks (b as (BLOCK (ref {bodyExp, ...}))) =
-      b :: blocksInExp bodyExp
+  fun blocks (b as (BLOCK (ref {bodyExp, ...}))) r =
+      blocksInExp bodyExp (b :: r)
 
-  and blocksInExp exp =
+  and blocksInMid exp r =
       case exp of
-        DEF {def, causeGC, next} => blocksInExp next
-      | MID {def, use, orig, causeGC, next} => blocksInExp next
-      | CALL {def, use, returnTo, causeGC, orig} =>
-        blocks returnTo
-      | LAST {def, use, args, orig} => nil
-      | LOCALCODE {recursive, binds, next, loc} =>
-        blocksInExp next @
-        foldl (op @) nil (map (blocks o #body) binds)
-      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
-        blocksInExp nextExp @ blocks handler
+        START => r
+      | DEF {def, causeGC, prev} => blocksInMid prev r
+      | MID {def, use, orig, causeGC, prev} => blocksInMid prev r
+      | LOCALCODE {recursive, binds, prev, loc} =>
+        blocksInMid prev (foldl (fn (x, r) => blocks (#body x) r) r binds)
+      | HANDLER {id, exnVar, handler, cleanup, prev, loc} =>
+        blocksInMid prev (blocks handler r)
+
+  and blocksInExp exp r =
+      case exp of
+        CALL {def, use, returnTo, causeGC, prev, orig} =>
+        blocksInMid prev (blocks returnTo r)
+      | LAST {def, use, args, orig, prev} =>
+        blocksInMid prev r
 
   fun liveness nil = ()
     | liveness (BLOCK (r as ref {successors, predecessors, liveIn, gcIn,
@@ -837,10 +982,14 @@ struct
             | defsBeforeGCs => CAUSEGC {defsBeforeGC = Set.merge defsBeforeGCs}
         val newGcIn =
             case (gc, gcOut) of
-              (CAUSEGC _, _) => gc
+              (CAUSEGC {defsBeforeGC}, _) =>
+              CAUSEGC {defsBeforeGC = Set.intersect (defsBeforeGC,
+                                                     Set.toIdSet newLiveIn)}
             | (NOGC, NOGC) => NOGC
             | (NOGC, CAUSEGC {defsBeforeGC}) =>
-              CAUSEGC {defsBeforeGC = Set.union (defs, defsBeforeGC)}
+              CAUSEGC {defsBeforeGC = Set.intersect
+                                        (Set.union (defs, defsBeforeGC),
+                                         Set.toIdSet newLiveIn)}
         val _ = r := (!r # {liveOut = liveOut, liveIn = newLiveIn,
                             gcOut = gcOut, gcIn = newGcIn})
         val blocks =
@@ -875,20 +1024,24 @@ struct
         (liveIn, {interferences = interfere::interferences, gc = gc})
       end
 
+  fun interferenceMid z exp =
+      case exp of
+        START => z
+      | DEF {def, causeGC, prev} =>
+        interferenceMid (interferenceStep z (def, Set.empty, causeGC)) prev
+      | MID {def, use, orig, causeGC, prev} =>
+        interferenceMid (interferenceStep z (def, use, causeGC)) prev
+      | LOCALCODE {recursive, binds, prev, loc} =>
+        interferenceMid z prev
+      | HANDLER {id, exnVar, handler, cleanup, prev, loc} =>
+        interferenceMid z prev
+
   fun interferenceExp z exp =
       case exp of
-        DEF {def, causeGC, next} =>
-        interferenceStep (interferenceExp z next) (def, Set.empty, causeGC)
-      | MID {def, use, orig, causeGC, next} =>
-        interferenceStep (interferenceExp z next) (def, use, causeGC)
-      | CALL {def, use, returnTo, causeGC, orig} =>
-        interferenceStep z (def, use, causeGC)
-      | LAST {def, use, args, orig} =>
-        interferenceStep z (def, use, false)
-      | LOCALCODE {recursive, binds, next, loc} =>
-        interferenceExp z next
-      | HANDLER {nextExp, id, exnVar, handler, cleanup, loc} =>
-        interferenceExp z nextExp
+        CALL {def, use, returnTo, causeGC, orig, prev} =>
+        interferenceMid (interferenceStep z (def, use, causeGC)) prev
+      | LAST {def, use, args, orig, prev} =>
+        interferenceMid (interferenceStep z (def, use, false)) prev
 
   fun interferenceBlock i (BLOCK (ref (r as {bodyExp, liveOut, ...}))) =
       #2 (interferenceExp (liveOut, i) bodyExp)
@@ -906,19 +1059,18 @@ struct
       then shrinkInterference (vars1::t2)
       else vars1 :: shrinkInterference t
 
-  (* assume that both list is sorted by VarID.id *)
-  fun varsToSlots (nil, nil) = nil
-    | varsToSlots (nil, _::_) = raise Bug.Bug "varsToSlots"
-    | varsToSlots (alloc, nil) = nil : SlotID.id option ref list
-    | varsToSlots ((id1,r)::alloc, (h as {id,...}:M.varInfo)::slots) =
-      case VarID.compare (id1, id) of
-        EQUAL => r :: varsToSlots (alloc, slots)
-      | GREATER => raise Bug.Bug "varsToSlots"
-      | LESS => varsToSlots (alloc, h::slots)
+  fun varsToSlots alloc nil t = t : SlotID.Set.set
+    | varsToSlots alloc ((h as {id, ...} : M.varInfo) :: slots) t =
+      case VarID.Map.find (alloc, id) of
+        SOME (ref (SOME id), _ : Set.set) =>
+        varsToSlots alloc slots (SlotID.Set.add (t, id))
+      | SOME (ref NONE, _) => varsToSlots alloc slots t
+      | NONE => raise Bug.Bug "varsToSlots"
 
   fun allocSlot {interferences, gc} =
       let
-        val interferences = map (fn x => Set.intersect (x, gc)) interferences
+        val gcset = Set.toIdSet gc
+        val interferences = map (fn x => Set.intersect (x, gcset)) interferences
         val interferences = shrinkInterference interferences
         val interferences = foldl (fn (vars, z) => addInterferences z vars)
                                   VarID.Map.empty
@@ -928,15 +1080,15 @@ struct
                             0 interferences
         val candidates = SlotSet.generate numSlots
         val alloc = VarID.Map.map (fn x => (ref NONE, x)) interferences
-        val refs = VarID.Map.foldri (fn (i,(s,_),z) => (i,s)::z) nil alloc
       in
         VarID.Map.map
           (fn (slot, adjVars) =>
               let
-                val adj = varsToSlots (refs, Set.listItems adjVars)
-                val adjset = SlotSet.fromList (List.mapPartial (op !) adj)
-                val unalloced = SlotSet.setMinus (candidates, adjset)
-                val id = SlotSet.choose unalloced
+                val adjset = SlotID.Set.empty
+                val adjset = varsToSlots alloc (Set.listItems adjVars) adjset
+                val id = SlotSet.first
+                           (fn id => not (SlotID.Set.member (adjset, id)))
+                           candidates
               in
                 slot := SOME id;
                 id
@@ -948,14 +1100,15 @@ struct
       let
         val (startBlock, exitBlock) =
             prepare (argVarList, mcexp, cleanupHandler)
-        val blocks = rev (blocks startBlock)
+        val blocks = blocks startBlock nil
         val () = liveness (exitBlock :: blocks)
       in
         case startBlock of
           BLOCK (ref {gcIn = NOGC, ...}) => (mcexp, SlotID.Map.empty)
         | BLOCK (ref {gcIn = CAUSEGC _, ...}) =>
           let
-            val alloc = allocSlot (interference blocks)
+            val interference = interference blocks
+            val alloc = allocSlot interference
 (*
 val _ =
 (case startBlock of
