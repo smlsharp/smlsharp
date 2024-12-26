@@ -115,7 +115,7 @@ struct
         T.FUNMty (_, retTy) => retTy
        | _ => raise Bug.Bug "funApplyTy"
 
-  fun putAppSpine funExp funTy ((instTyList, argExpList, loc) :: argList) =
+  fun putAppSpine funExp funTy ({instTyList, argExpList, loc} :: argList) =
       putAppSpine (R.RCAPPM {funExp = funExp,
                              funTy = funTy,
                              instTyList = instTyList,
@@ -127,7 +127,7 @@ struct
 
   fun putFnSpine funTy absList loc bodyExp =
       let
-        fun expand funTy ((btvEnv, constraints, argVarList) :: absList) =
+        fun expand funTy ({btvEnv, constraints, argVarList} :: absList) =
             let
               val bodyTy = funBodyTy funTy
             in
@@ -143,10 +143,10 @@ struct
         expand funTy absList
       end
 
-  fun absToArg loc ((btvEnv, constraints, argVarList) : abs) : arg =
-      (map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv),
-       map (varToExp loc) argVarList,
-       loc)
+  fun absToArg loc ({btvEnv, constraints, argVarList} : abs) : arg =
+      {instTyList = map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv),
+       argExpList = map (varToExp loc) argVarList,
+       loc = loc}
 
   fun uncurryFn (absList : abs list) exp expTy =
       let
@@ -196,8 +196,8 @@ struct
 
   fun uncurryApp funTy funLoc (absList : abs list) argList =
       let
-        fun loop ((btvEnv, constraints, argVarList) :: absList)
-                 ((instTyList, argExpList, loc) :: argList)
+        fun loop ({btvEnv, constraints, argVarList} :: absList)
+                 ({instTyList, argExpList, loc} :: argList)
                  funTy
                  {tabs, insts, args, loc = _} =
             loop absList
@@ -463,8 +463,10 @@ struct
           end
       end
 
-  and compileArg context ((instTyList, argExpList, loc): arg) : arg =
-      (instTyList, map (compileExp (nontail context)) argExpList, loc)
+  and compileArg context ({instTyList, argExpList, loc}: arg) : arg =
+      {instTyList = instTyList,
+       argExpList = map (compileExp (nontail context)) argExpList,
+       loc = loc}
 
   and compileValue context value =
       case value of
@@ -722,7 +724,7 @@ struct
       | _ => raise Bug.Bug "compileDecls"
 
   fun isMonoFn (absList : abs list) =
-      List.all (fn (btvEnv, constraints, _) => isMono btvEnv constraints)
+      List.all (fn {btvEnv, constraints, ...} => isMono btvEnv constraints)
                absList
 
   fun hasCall calls =

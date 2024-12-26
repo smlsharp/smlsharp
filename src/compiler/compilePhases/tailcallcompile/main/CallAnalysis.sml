@@ -7,15 +7,26 @@ struct
 
   structure R = RecordCalc
 
-  type arg = Types.ty list * RecordCalc.rcexp list * RecordCalc.loc
-  type abs = Types.btvEnv * Types.constraint list * RecordCalc.varInfo list
+  type arg =
+      {instTyList : Types.ty list,
+       argExpList : RecordCalc.rcexp list,
+       loc : RecordCalc.loc}
+  type abs =
+      {btvEnv : Types.btvEnv,
+       constraints : Types.constraint list,
+       argVarList : RecordCalc.varInfo list}
 
   fun getAppSpine exp =
       let
         fun loop (R.RCAPPM {funExp, funTy, instTyList, argExpList, loc}) _ t =
-            loop funExp (SOME funTy) ((instTyList, argExpList, loc) :: t)
-          | loop exp expTy spine =
-            (exp, expTy, spine)
+            let
+              val arg = {instTyList = instTyList,
+                         argExpList = argExpList,
+                         loc = loc}
+            in
+              loop funExp (SOME funTy) (arg :: t)
+            end
+          | loop exp expTy spine = (exp, expTy, spine)
       in
         loop exp NONE nil
       end
@@ -25,9 +36,14 @@ struct
         fun loop (R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp,
                            loc})
                  spine =
-            loop bodyExp ((btvEnv, constraints, argVarList) :: spine)
-          | loop exp spine =
-            (rev spine, exp)
+            let
+              val abs = {btvEnv = btvEnv,
+                         constraints = constraints,
+                         argVarList = argVarList}
+            in
+              loop bodyExp (abs :: spine)
+            end
+          | loop exp spine = (rev spine, exp)
       in
         loop exp nil
       end
@@ -65,7 +81,7 @@ struct
   fun analyzeValueList context values =
       merge (map (analyzeValue context) values)
 
-  and analyzeArg context ((instTyList, argExpList, loc) : arg) =
+  and analyzeArg context ({instTyList, argExpList, loc} : arg) =
       analyzeExpList (nontail context) argExpList
 
   and analyzeArgList context args =
