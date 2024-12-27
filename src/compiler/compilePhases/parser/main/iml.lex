@@ -198,7 +198,7 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 <INITIAL>"_sizeof" => (T.SIZEOF (keyword (yytext, yypos, arg)));
 <INITIAL>"_reifyTy" => (T.REIFYTY (keyword (yytext, yypos, arg)));
 <INITIAL>"_"{id}+ => (let val (l, r) = keyword (yytext, yypos, arg)
-                      in #error arg ("illeagal _ keyword", l, r);
+                      in #error arg ("illegal _ keyword", l, r);
                          continue ()
                       end);
 <INITIAL>"abstype" => (T.ABSTYPE (keyword (yytext, yypos, arg)));

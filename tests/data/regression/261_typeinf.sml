@@ -7,7 +7,7 @@ fun f (nil:'a list) = ()
 
 This causes BUG when -ddoUncurryOptimization=no is specified.
 
-[BUG] InferType: illeagal utvar instance in UserTvarNotGeneralized  check
+[BUG] InferType: illegal utvar instance in UserTvarNotGeneralized  check
 *)
 (*
 2013-08-07 ohori
