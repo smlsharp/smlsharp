@@ -204,7 +204,7 @@ struct
           R.RCSELECT
             {label = label,
              indexExp = instantiateExp subst indexExp,
-             recordExp = instantiateExp subst recordExp,
+             recordExp = recordExp,
              recordTy = typeOfExp recordExp,
              resultTy = TypesBasics.substBTvar subst resultTy,
              resultSize = instantiateValue subst resultSize,
