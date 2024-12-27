@@ -43,6 +43,23 @@ struct
       fn formatter => fn map =>
          helper_RecordLabelMap formatter (RecordLabel.Map.listItemsi map)
 
+  (*%
+    @prefix helper_
+    @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id
+   *)
+  type BoundTypeVarIDMapKeys =
+      (*%
+        @prefix helper_
+        @format(id ids)
+        ids(id)("," + 1)
+        @format:id(i)
+        "'bt" i
+       *)
+      BoundTypeVarID.id list
+
+  val helper_BoundTypeVarIDMapKeys =
+      fn map => helper_BoundTypeVarIDMapKeys (BoundTypeVarID.Map.listKeys map)
+
   type loc = Loc.loc
 
   (*%
@@ -55,14 +72,14 @@ struct
       Types.ty
 
   (*%
-    @formatter(Types.btvEnv) Types.format_btvEnv
+    @formatter(Types.btvEnv) helper_BoundTypeVarIDMapKeys
    *)
   (*% @prefix formatWithType_
     @formatter(Types.btvEnv) Types.format_btvEnv
    *)
   type btvEnv =
       (*%
-        @format(btv) "..."
+        @format(btv) btv
        *)
       (*% @prefix formatWithType_
         @format(btv) btv
