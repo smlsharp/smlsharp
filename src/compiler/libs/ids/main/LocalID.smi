@@ -47,6 +47,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -146,6 +150,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -246,6 +254,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -346,6 +358,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -446,6 +462,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -546,6 +566,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -646,6 +670,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -746,6 +774,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -846,6 +878,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -946,6 +982,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1047,6 +1087,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1146,6 +1190,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1246,6 +1294,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1346,6 +1398,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1446,6 +1502,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1546,6 +1606,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1646,6 +1710,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1746,6 +1814,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1846,6 +1918,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map
@@ -1946,6 +2022,10 @@ struct
     val filteri : (Key.ord_key * 'a -> bool) -> 'a map -> 'a map
     val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
     val mapPartiali : (Key.ord_key * 'a -> 'b option) -> 'a map -> 'b map
+    val exists : ('a -> bool) -> 'a map -> bool
+    val existsi : (Key.ord_key * 'a -> bool) -> 'a map -> bool
+    val all : ('a -> bool) -> 'a map -> bool
+    val alli : (Key.ord_key * 'a -> bool) -> 'a map -> bool
     val insertWith : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
 
     val difference : ('a * 'a -> bool) -> ('a map * 'a map) -> ('a option * 'a option) map

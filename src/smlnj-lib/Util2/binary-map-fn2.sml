@@ -623,6 +623,44 @@ in
 	    foldli g empty m
 	  end
 
+  (* check the elements of a map with a predicate and return true if
+   * any element satisfies the predicate. Return false otherwise.
+   * Elements are checked in key order.
+   *)
+    fun exists pred = let
+          fun exists' E = false
+            | exists' (T{value, left, right, ...}) =
+                exists' left orelse pred value orelse exists' right
+          in
+            exists'
+          end
+    fun existsi pred = let
+          fun exists' E = false
+            | exists' (T{key, value, left, right, ...}) =
+                exists' left orelse pred(key, value) orelse exists' right
+          in
+            exists'
+          end
+
+  (* check the elements of a map with a predicate and return true if
+   * they all satisfy the predicate. Return false otherwise.  Elements
+   * are checked in key order.
+   *)
+    fun all pred = let
+          fun all' E = true
+            | all' (T{value, left, right, ...}) =
+                all' left andalso pred value andalso all' right
+          in
+            all'
+          end
+    fun alli pred = let
+          fun all' E = true
+            | all' (T{key, value, left, right, ...}) =
+                all' left andalso pred(key, value) andalso all' right
+          in
+            all'
+          end
+
 (* 2016-12-05 ohori: the following is added *)
     fun 'a difference (elemEq: 'a * 'a -> bool) (a:'a map,b:'a map) : ('a option * 'a option) map = 
         mergeWith 
