@@ -63,6 +63,7 @@ struct
 
   type env =
        {funId : FunEntryLabel.id option,
+        tyArgs : BoundTypeVarID.id list,
         loopLabel : FunLocalLabel.id option ref,
         handler : handler,
         varEnv : A.anvalue VarID.Map.map}
@@ -118,12 +119,17 @@ struct
           id
         end
 
-  fun isSelfRecTailCall ({funId,...}:env) context anconst =
+  fun isSelfRecTailCall ({funId, tyArgs, ...}:env) context anconst instTyList =
       case (funId, context, anconst) of
         (SOME funId,
          TAIL,
          A.ANCONST {ty = _, const = A.NVFUNENTRY id}) =>
         FunEntryLabel.eq (funId, id)
+        andalso
+        (ListPair.allEq
+           (fn (id, Types.BOUNDVARty id2) => id = id2 | _ => false)
+           (tyArgs, instTyList)
+         handle ListPair.UnequalLengths => raise Bug.Bug "isIdenticalSubst")
       | _ => false
 
   fun last anexp =
@@ -359,7 +365,7 @@ struct
           val (proc2, closureEnvExp) = compileExpOption env closureEnvExp
           val (proc3, argExpList) = compileExpList env argExpList
           val (proc4, ret) =
-              if isSelfRecTailCall env context codeExp
+              if isSelfRecTailCall env context codeExp instTyList
               then last (A.ANGOTO {id = touchLoopLabel env,
                                    argList = argExpList,
                                    loc = loc})
@@ -750,11 +756,12 @@ struct
         proc (A.ANGOTO {id=mergeLabel, argList=[ret], loc=Loc.noloc})
       end
 
-  fun compileFunBody (funId, closureEnvVar, argVarList, bodyExp,
+  fun compileFunBody (funId, tyArgs, closureEnvVar, argVarList, bodyExp,
                       handler, loc) =
       let
         val loopLabel = ref NONE
         val env = {funId = funId,
+                   tyArgs = tyArgs,
                    loopLabel = loopLabel,
                    handler = handler,
                    varEnv = VarID.Map.empty} : env
@@ -785,8 +792,8 @@ struct
                       bodyExp, retTy, gcCheck, loc} =>
         let
           val (closureEnvVar, argVarList, bodyExp) =
-              compileFunBody (SOME id, closureEnvVar, argVarList, bodyExp,
-                              NO_HANDLER, loc)
+              compileFunBody (SOME id, tyArgs, closureEnvVar, argVarList,
+                              bodyExp, NO_HANDLER, loc)
         in
           A.ATFUNCTION
             {id = id,
@@ -804,7 +811,7 @@ struct
         let
           val cleanupHandler = ref NONE
           val (closureEnvVar, argVarList, bodyExp) =
-              compileFunBody (NONE, closureEnvVar, argVarList, bodyExp,
+              compileFunBody (NONE, nil, closureEnvVar, argVarList, bodyExp,
                               CLEANUP cleanupHandler, loc)
         in
           A.ATCALLBACKFUNCTION
@@ -825,6 +832,7 @@ struct
         val topdecs = map compileTopdec topdecs
         val cleanupHandler = ref NONE
         val topEnv = {funId = NONE,
+                      tyArgs = nil,
                       loopLabel = ref NONE,
                       handler = CLEANUP cleanupHandler,
                       varEnv = VarID.Map.empty} : env
