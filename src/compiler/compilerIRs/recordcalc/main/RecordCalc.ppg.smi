@@ -188,6 +188,7 @@ struct
 
   val format_rcconst : rcconst -> SMLFormat.format
   val formatWithType_rcconst : rcconst -> SMLFormat.format
+  val format_rcvalue : rcvalue -> SMLFormat.format
   val format_rcexp : rcexp -> SMLFormat.format
   val formatWithType_rcexp : rcexp -> SMLFormat.format
   val format_rcdecl : rcdecl -> SMLFormat.format
