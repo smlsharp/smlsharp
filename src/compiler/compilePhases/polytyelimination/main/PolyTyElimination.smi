@@ -1,6 +1,7 @@
 _require local "../../../../basis.smi"
 (* _require local "../../../../config/main/PointerSize.smi" *)
 _require local "../../../libs/ids/main/LocalID.smi"
+_require local "../../../libs/util/main/UnionFind.smi"
 _require local "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../data/control/main/Control.smi"
 _require local "../../../extensions/debug/main/Bug.smi"

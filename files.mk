@@ -707,6 +707,7 @@ src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
 src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
+src/compiler/libs/util/main/UnionFind.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o \
@@ -1069,6 +1070,7 @@ src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
 src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
+src/compiler/libs/util/main/UnionFind.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o \
@@ -1437,6 +1439,7 @@ src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
 src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
+src/compiler/libs/util/main/UnionFind.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o \
@@ -1983,6 +1986,7 @@ src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
 src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
+src/compiler/libs/util/main/UnionFind.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o \
@@ -2440,6 +2444,7 @@ src/compiler/libs/util/main/Counter.o \
 src/compiler/libs/util/main/Graph.o \
 src/compiler/libs/util/main/SCCFun.o \
 src/compiler/libs/util/main/TermFormat.o \
+src/compiler/libs/util/main/UnionFind.o \
 src/compiler/smlsharp.o \
 src/config/main/SQLConfig.o \
 src/config/main/Version.o \
@@ -2861,6 +2866,7 @@ src/compiler/libs/util/main/GRAPH.sig \
 src/compiler/libs/util/main/Graph.smi \
 src/compiler/libs/util/main/SCCFun.smi \
 src/compiler/libs/util/main/TermFormat.smi \
+src/compiler/libs/util/main/UnionFind.smi \
 src/compiler/smlsharp.smi \
 src/config/main/SQLConfig.smi \
 src/config/main/Version.smi \
@@ -3295,6 +3301,7 @@ src/compiler/compilePhases/typeinference/main/CompareTy.o \
 src/compiler/compilePhases/typeinference/main/CompileDynamicCase.o \
 src/compiler/compilePhases/typeinference/main/CoerceRank1.o \
 src/compiler/compilePhases/typeinference/main/InferTypes2.o \
+src/compiler/libs/util/main/UnionFind.o \
 src/compiler/compilerIRs/typedcalc/main/TypedCalcCon.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyInstance.ppg.o \
 src/compiler/compilePhases/polytyelimination/main/PolyTyElimination.o \

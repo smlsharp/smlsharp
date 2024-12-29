@@ -1,0 +1,13 @@
+_require "../../../../basis.smi"
+
+structure UnionFind =
+struct
+  type 'a node (= ref)
+  val new : 'a -> 'a node
+  val find : 'a node -> 'a
+  val size : 'a node -> int
+  val same : 'a node * 'a node -> bool
+  val equal : 'a node * 'a node -> bool
+  val union : ('a * 'a -> 'a) -> 'a node * 'a node -> bool
+  val update : ('a * 'a -> 'a) -> 'a node * 'a -> unit
+end

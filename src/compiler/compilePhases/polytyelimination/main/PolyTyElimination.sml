@@ -129,44 +129,6 @@ struct
 *)
 
 
-  (* imperative union-find algorithm *)
-  structure UnionFind :> sig
-    type 'a node
-    val new : 'a -> 'a node
-    val find : 'a node -> 'a
-    val union : ({root:'a, child:'a} -> 'a) -> 'a node * 'a node -> unit
-  end =
-  struct
-    datatype 'a node' = R of word * 'a | F of 'a node
-    withtype 'a node = 'a node' ref
-
-    fun new x = ref (R (0w0, x))
-
-    fun find' (r as ref (R x)) = (r, x)
-      | find' (ref (F (r as ref (R x)))) = (r, x)
-      | find' (r as ref (F x)) =
-        let val ret as (root, _) = find' x in r := F root; ret end
-
-    fun find node =
-        case find' node of (_, (_, x)) => x
-
-    fun union merge (node1, node2) =
-        let
-          val (node1, (rank1, x1)) = find' node1
-          val (node2, (rank2, x2)) = find' node2
-        in
-          if node1 = node2 then ()
-          else if rank1 > rank2
-          then (node1 := R (rank1, merge {root=x1, child=x2});
-                node2 := F node1)
-          else if rank1 < rank2
-          then (node1 := F node2;
-                node2 := R (rank2, merge {root=x2, child=x1}))
-          else (node1 := R (rank1 + 0w1, merge {root=x1, child=x2});
-                node2 := F node1)
-      end
-  end
-
   type meta =
       {id : MetaID.id, instances : instance list ref}
 
@@ -194,10 +156,11 @@ struct
   fun equalId nodes (id1, id2) =
       if id1 = id2
       then ()
-      else UnionFind.union
-             (fn {root as {instances=i1, ...}, child={instances=i2, ...}} =>
-                 root # {instances = ref (!i2 @ !i1)} : meta)
-             (findNode nodes id1, findNode nodes id2)
+      else ignore
+             (UnionFind.union
+               (fn (root as {instances=i1, ...}, {instances=i2, ...}) =>
+                   root # {instances = ref (!i2 @ !i1)} : meta)
+               (findNode nodes id1, findNode nodes id2))
 
   fun instanceOf nodes (inst, id) =
       let
