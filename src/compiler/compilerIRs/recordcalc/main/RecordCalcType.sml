@@ -93,10 +93,22 @@ struct
         T.SINGLETONty
           (T.INDEXty (label, T.RECORDty (RecordLabel.Map.map #ty fields)))
 
-  fun instantiateVar subst (var as {ty, ...} : R.varInfo) =
-      var # {ty = TypesBasics.substBTvar subst ty}
+  type ty_subst = Types.ty BoundTypeVarID.Map.map
+  type var_subst = RecordCalc.rcvalue VarID.Map.map
+  type subst = {tySubst : ty_subst, varSubst : var_subst}
 
-  fun instantiateTlconst subst const =
+  fun addBoundVar (subst as {varSubst, ...} : subst) ({id, ...} : R.varInfo) =
+      if VarID.Map.inDomain (varSubst, id)
+      then subst # {varSubst = #1 (VarID.Map.remove (varSubst, id))}
+      else subst
+
+  fun addBoundVars subst vars =
+      foldl (fn (v, z) => addBoundVar z v) subst vars
+
+  fun instantiateVar tySubst (var as {id, ty, ...} : R.varInfo) =
+      var # {ty = TypesBasics.substBTvar tySubst ty}
+
+  fun instantiateTlconst tySubst const =
       case const of
         R.REAL64 _ => const
       | R.REAL32 _ => const
@@ -104,26 +116,31 @@ struct
       | R.NULLPOINTER => const
       | R.NULLBOXED => const
       | R.FOREIGNSYMBOL {name, ty} =>
-        R.FOREIGNSYMBOL {name = name, ty = TypesBasics.substBTvar subst ty}
+        R.FOREIGNSYMBOL {name = name, ty = TypesBasics.substBTvar tySubst ty}
 
-  fun instantiateConst subst const =
+  fun instantiateConst tySubst const =
       case const of
         R.INT _ => const
-      | R.CONST const => R.CONST (instantiateTlconst subst const)
-      | R.SIZE (size, ty) => R.SIZE (size, TypesBasics.substBTvar subst ty)
-      | R.TAG (tag, ty) => R.TAG (tag, TypesBasics.substBTvar subst ty)
+      | R.CONST const => R.CONST (instantiateTlconst tySubst const)
+      | R.SIZE (size, ty) => R.SIZE (size, TypesBasics.substBTvar tySubst ty)
+      | R.TAG (tag, ty) => R.TAG (tag, TypesBasics.substBTvar tySubst ty)
 
-  fun instantiateValue subst value =
+  fun substValue {tySubst, varSubst} value =
       case value of
         R.RCCONSTANT const =>
-        R.RCCONSTANT (instantiateConst subst const)
+        R.RCCONSTANT (instantiateConst tySubst const)
       | R.RCVAR var =>
-        R.RCVAR (instantiateVar subst var)
+        case VarID.Map.find (varSubst, #id var) of
+          SOME value => value
+        | NONE => R.RCVAR (instantiateVar tySubst var)
 
-  fun instantiateExp subst exp =
+  fun substTy ({tySubst, ...} : subst) ty =
+      TypesBasics.substBTvar tySubst ty
+
+  fun substExp subst exp =
       case exp of
         R.RCVALUE (value, loc) =>
-        R.RCVALUE (instantiateValue subst value, loc)
+        R.RCVALUE (substValue subst value, loc)
       | R.RCSTRING (string, loc) => exp
       | R.RCEXVAR (var, loc) => exp
       | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
@@ -132,42 +149,44 @@ struct
                                  constraints = constraints,
                                  body = T.ERRORty (* dummy *)}
           val {boundtvars = btvEnv, constraints, ...} =
-              case TypesBasics.revealTy (TypesBasics.substBTvar subst polyTy) of
+              case TypesBasics.revealTy (substTy subst polyTy) of
                 T.POLYty x => x
               | _ => raise Bug.Bug "RCFNM"
-          val subst =
+          val tySubst =
               BoundTypeVarID.Map.filteri
                 (fn (id, _) => not (BoundTypeVarID.Map.inDomain (btvEnv, id)))
-                subst
-          val bodyExp = instantiateExp subst bodyExp
+                (#tySubst subst)
+          val subst = subst # {tySubst = tySubst}
+          val subst = addBoundVars subst argVarList
+          val bodyExp = substExp subst bodyExp
         in
           R.RCFNM {btvEnv = btvEnv,
                    constraints = constraints,
-                   argVarList = map (instantiateVar subst) argVarList,
+                   argVarList = map (instantiateVar tySubst) argVarList,
                    bodyTy = typeOfExp bodyExp,
                    bodyExp = bodyExp,
                    loc = loc}
         end
       | R.RCAPPM {funExp, funTy, instTyList, argExpList, loc} =>
         let
-          val funExp = instantiateExp subst funExp
+          val funExp = substExp subst funExp
         in
           R.RCAPPM {funExp = funExp,
                     funTy = typeOfExp funExp,
-                    instTyList = map (TypesBasics.substBTvar subst) instTyList,
-                    argExpList = map (instantiateExp subst) argExpList,
+                    instTyList = map (substTy subst) instTyList,
+                    argExpList = map (substExp subst) argExpList,
                     loc = loc}
         end
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
         let
-          val exp = instantiateExp subst exp
-          val defaultExp = instantiateExp subst defaultExp
+          val exp = substExp subst exp
+          val defaultExp = substExp subst defaultExp
         in
           R.RCSWITCH {exp = exp,
                       expTy = typeOfExp exp,
                       branches = map (fn {const, body} =>
                                          {const = const,
-                                          body = instantiateExp subst body})
+                                          body = substExp subst body})
                                      branches,
                       defaultExp = defaultExp,
                       resultTy = typeOfExp defaultExp,
@@ -177,91 +196,93 @@ struct
                        argExpList, loc} =>
         R.RCPRIMAPPLY
           {primOp = primOp,
-           instTyList = map (TypesBasics.substBTvar subst) instTyList,
-           instSizeList = map (instantiateValue subst) instSizeList,
-           instTagList = map (instantiateValue subst) instTagList,
-           argExpList = map (instantiateExp subst) argExpList,
+           instTyList = map (substTy subst) instTyList,
+           instSizeList = map (substValue subst) instSizeList,
+           instTagList = map (substValue subst) instTagList,
+           argExpList = map (substExp subst) argExpList,
            loc = loc}
       | R.RCRECORD {fields, loc} =>
         R.RCRECORD
           {fields = RecordLabel.Map.map
                       (fn {exp, ty, size, tag} =>
                           let
-                            val exp = instantiateExp subst exp
+                            val exp = substExp subst exp
                           in
                             {exp = exp,
                              ty = typeOfExp exp,
-                             size = instantiateValue subst size,
-                             tag = instantiateValue subst tag}
+                             size = substValue subst size,
+                             tag = substValue subst tag}
                           end)
                       fields,
            loc = loc}
       | R.RCSELECT {label, indexExp, recordExp, recordTy, resultTy, resultSize,
                     resultTag, loc} =>
         let
-          val recordExp = instantiateExp subst recordExp
+          val recordExp = substExp subst recordExp
         in
           R.RCSELECT
             {label = label,
-             indexExp = instantiateExp subst indexExp,
+             indexExp = substExp subst indexExp,
              recordExp = recordExp,
              recordTy = typeOfExp recordExp,
-             resultTy = TypesBasics.substBTvar subst resultTy,
-             resultSize = instantiateValue subst resultSize,
-             resultTag = instantiateValue subst resultTag,
+             resultTy = substTy subst resultTy,
+             resultSize = substValue subst resultSize,
+             resultTag = substValue subst resultTag,
              loc = loc}
         end
       | R.RCMODIFY {label, indexExp, recordExp, recordTy, elementExp, elementTy,
                     elementSize, elementTag, loc} =>
         let
-          val recordExp = instantiateExp subst recordExp
-          val elementExp = instantiateExp subst elementExp
+          val recordExp = substExp subst recordExp
+          val elementExp = substExp subst elementExp
         in
           R.RCMODIFY
             {label = label,
-             indexExp = instantiateExp subst indexExp,
+             indexExp = substExp subst indexExp,
              recordExp = recordExp,
              recordTy = typeOfExp recordExp,
              elementExp = elementExp,
              elementTy = typeOfExp elementExp,
-             elementSize = instantiateValue subst elementSize,
-             elementTag = instantiateValue subst elementTag,
+             elementSize = substValue subst elementSize,
+             elementTag = substValue subst elementTag,
              loc = loc}
         end
       | R.RCLET {decl, body, loc} =>
-        R.RCLET {decl = instantiateDecl subst decl,
-                 body = instantiateExp subst body,
+        R.RCLET {decl = substDecl subst decl,
+                 body = substExp subst body,
                  loc = loc}
       | R.RCRAISE {exp, resultTy, loc} =>
-        R.RCRAISE {exp = instantiateExp subst exp,
-                   resultTy = TypesBasics.substBTvar subst resultTy,
+        R.RCRAISE {exp = substExp subst exp,
+                   resultTy = substTy subst resultTy,
                    loc = loc}
       | R.RCHANDLE {exp, exnVar, handler, resultTy, loc} =>
         let
-          val exp = instantiateExp subst exp
+          val exp = substExp subst exp
         in
           R.RCHANDLE {exp = exp,
-                      exnVar = instantiateVar subst exnVar,
-                      handler = instantiateExp subst handler,
+                      exnVar = instantiateVar (#tySubst subst) exnVar,
+                      handler = substExp (addBoundVar subst exnVar) handler,
                       resultTy = typeOfExp exp,
                       loc = loc}
         end
       | R.RCTHROW {catchLabel, argExpList, resultTy, loc} =>
         R.RCTHROW {catchLabel = catchLabel,
-                   argExpList = map (instantiateExp subst) argExpList,
-                   resultTy = TypesBasics.substBTvar subst resultTy,
+                   argExpList = map (substExp subst) argExpList,
+                   resultTy = substTy subst resultTy,
                    loc = loc}
       | R.RCCATCH {recursive, rules, tryExp, resultTy, loc} =>
         let
-          val tryExp = instantiateExp subst tryExp
+          val {tySubst, ...} = subst
+          val tryExp = substExp subst tryExp
         in
           R.RCCATCH
             {recursive = recursive,
              rules =
                map (fn {catchLabel, argVarList, catchExp} =>
                        {catchLabel = catchLabel,
-                        argVarList = map (instantiateVar subst) argVarList,
-                        catchExp = instantiateExp subst catchExp})
+                        argVarList = map (instantiateVar tySubst) argVarList,
+                        catchExp = substExp (addBoundVars subst argVarList)
+                                            catchExp})
                    rules,
              tryExp = tryExp,
              resultTy = typeOfExp tryExp,
@@ -269,18 +290,18 @@ struct
         end
       | R.RCFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
         R.RCFOREIGNAPPLY
-          {funExp = instantiateExp subst funExp,
-           argExpList = map (instantiateExp subst) argExpList,
+          {funExp = substExp subst funExp,
+           argExpList = map (substExp subst) argExpList,
            attributes = attributes,
-           resultTy = Option.map (TypesBasics.substBTvar subst) resultTy,
+           resultTy = Option.map (substTy subst) resultTy,
            loc = loc}
       | R.RCCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
         let
-          val bodyExp = instantiateExp subst bodyExp
+          val bodyExp = substExp (addBoundVars subst argVarList) bodyExp
         in
           R.RCCALLBACKFN
             {attributes = attributes,
-             argVarList = map (instantiateVar subst) argVarList,
+             argVarList = map (instantiateVar (#tySubst subst)) argVarList,
              bodyExp = bodyExp,
              resultTy = case resultTy of NONE => NONE
                                        | SOME _ => SOME (typeOfExp bodyExp),
@@ -288,11 +309,11 @@ struct
         end
       | R.RCCAST {exp, expTy, targetTy, cast, loc} =>
         let
-          val exp = instantiateExp subst exp
+          val exp = substExp subst exp
         in
           R.RCCAST {exp = exp,
                     expTy = typeOfExp exp,
-                    targetTy = TypesBasics.substBTvar subst targetTy,
+                    targetTy = substTy subst targetTy,
                     cast = cast,
                     loc = loc}
         end
@@ -300,17 +321,17 @@ struct
         R.RCINDEXOF
           {fields = RecordLabel.Map.map
                       (fn {ty, size} =>
-                          {ty = TypesBasics.substBTvar subst ty,
-                           size = instantiateValue subst size})
+                          {ty = substTy subst ty,
+                           size = substValue subst size})
                       fields,
            label = label,
            loc = loc}
 
-  and instantiateDecl subst decl =
+  and substDecl subst decl =
       case decl of
         R.RCVAL {var, exp, loc} =>
         let
-          val exp = instantiateExp subst exp
+          val exp = substExp subst exp
         in
           R.RCVAL {var = var # {ty = typeOfExp exp},
                    exp = exp,
@@ -321,7 +342,7 @@ struct
           val recbinds =
               map (fn {var, exp} =>
                       let
-                        val exp = instantiateExp subst exp
+                        val exp = substExp subst exp
                       in
                         {var = var # {ty = typeOfExp exp}, exp = exp}
                       end)
@@ -331,7 +352,7 @@ struct
         end
       | R.RCEXPORTVAR {weak, var, exp = SOME exp} =>
         let
-          val exp = instantiateExp subst exp
+          val exp = substExp subst exp
         in
           R.RCEXPORTVAR {weak = weak,
                          var = var # {ty = typeOfExp exp},
@@ -339,5 +360,11 @@ struct
         end
       | R.RCEXPORTVAR {weak, var, exp = NONE} => decl
       | R.RCEXTERNVAR _ => decl
+
+  fun instantiateValue tySubst value =
+      substValue {tySubst = tySubst, varSubst = VarID.Map.empty} value
+
+  fun instantiateExp tySubst exp =
+      substExp {tySubst = tySubst, varSubst = VarID.Map.empty} exp
 
 end

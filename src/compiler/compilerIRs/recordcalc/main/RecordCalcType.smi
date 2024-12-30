@@ -15,13 +15,11 @@ struct
   val typeOfString : RecordCalc.tlstring -> Types.ty
   val typeOfValue : RecordCalc.rcvalue -> Types.ty
   val typeOfExp : RecordCalc.rcexp -> Types.ty
-  val instantiateVar : Types.ty BoundTypeVarID.Map.map
-                       -> RecordCalc.varInfo
-                       -> RecordCalc.varInfo
-  val instantiateExp : Types.ty BoundTypeVarID.Map.map
-                       -> RecordCalc.rcexp
-                       -> RecordCalc.rcexp
-  val instantiateDecl : Types.ty BoundTypeVarID.Map.map
-                        -> RecordCalc.rcdecl
-                        -> RecordCalc.rcdecl
+  type ty_subst = Types.ty BoundTypeVarID.Map.map
+  type var_subst = RecordCalc.rcvalue VarID.Map.map
+  type subst = {tySubst : ty_subst, varSubst : var_subst}
+  val substExp : subst -> RecordCalc.rcexp -> RecordCalc.rcexp
+  val instantiateVar : ty_subst -> RecordCalc.varInfo -> RecordCalc.varInfo
+  val instantiateValue : ty_subst -> RecordCalc.rcvalue -> RecordCalc.rcvalue
+  val instantiateExp : ty_subst -> RecordCalc.rcexp -> RecordCalc.rcexp
 end
