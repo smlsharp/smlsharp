@@ -24,6 +24,7 @@ struct
       then BoundTypeVarID.generate ()
       else (usedBtvIds := BoundTypeVarID.Set.add (!usedBtvIds, id); id)
 
+  (* NOTE: polymorphic type annotation may have unrenamed bound type variable *)
   fun renameTy ({substBtv, ...} : subst) ty =
       if BoundTypeVarID.Map.isEmpty substBtv
       then ty
@@ -331,13 +332,29 @@ struct
         end
       | R.RCVALREC (binds, loc) =>
         let
+          (* NOTE: recursive variable occurrences have unrenamed polymorphic
+           * type annotations and therefore any expressions including variables
+           * introduced by VALREC may have such poly type annotations. *)
           val (subst, vars) = bindVarList subst (map #var binds)
           val exps = map (renameExp subst o #exp) binds
-          val binds = ListPair.mapEq
-                        (fn (var, exp) => {var = var, exp = exp})
-                        (vars, exps)
+          (* anyway, update type annotations as much as possible *)
+          val newBinds =
+              ListPair.mapEq
+                (fn (var, exp) =>
+                    let
+                      val ty = RecordCalcType.typeOfExp exp
+                    in
+                      {var = var # {ty = ty}, exp = exp}
+                    end)
+                (vars, exps)
+          val substVar =
+              ListPair.foldlEq
+                (fn ({var = oldVar, ...}, {var = {id, ty, ...}, ...}, z) =>
+                    VarID.Map.insert (z, #id oldVar, (id, ty)))
+                (#substVar subst)
+                (binds, newBinds)
         in
-          (subst, R.RCVALREC (binds, loc))
+          (subst # {substVar = substVar}, R.RCVALREC (newBinds, loc))
         end
       | R.RCEXPORTVAR {weak, var, exp = SOME exp} =>
         let
