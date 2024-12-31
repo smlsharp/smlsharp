@@ -17,93 +17,6 @@ struct
   fun optionToList NONE = nil
     | optionToList (SOME x) = [x]
 
-  structure SlotSet :> sig
-    type set
-    val empty : set
-    val generate : int -> set
-    val fromList : SlotID.id list -> set
-    val intersect : set * set -> set
-    val union : set * set -> set
-    val first : (SlotID.id -> bool) -> set -> SlotID.id
-    val member : set * SlotID.id -> bool
-    val equal : set * set -> bool
-  end =
-  struct
-    type set = SlotID.id list
-
-    val empty = nil : set
-
-    fun generate numItems =
-        (* assume that SlotID.generate generates sequential numbers *)
-        List.tabulate (numItems, fn _ => SlotID.generate ())
-
-    fun revAppend nil r = r : set
-      | revAppend (h :: t) r = revAppend t (h :: r)
-
-    fun intersect (set1, set2) =
-        let
-          fun loop nil set r = revAppend r nil
-            | loop set nil r = revAppend r nil
-            | loop (l1 as (h1 :: t1)) (l2 as (h2 :: t2)) r =
-              case SlotID.compare (h1, h2) of
-                EQUAL => loop t1 t2 (h1 :: r)
-              | GREATER => loop l1 t2 r
-              | LESS => loop t1 l2 r
-        in
-          loop set1 set2 nil
-        end
-
-    fun union (set1, set2) =
-        let
-          fun loop nil set r = revAppend r set
-            | loop set nil r = revAppend r set
-            | loop (l1 as (h1 :: t1)) (l2 as (h2 :: t2)) r =
-              case SlotID.compare (h1, h2) of
-                EQUAL => loop t1 t2 (h1 :: r)
-              | GREATER => loop l1 t2 (h2 :: r)
-              | LESS => loop t1 l2 (h1 :: r)
-        in
-          loop set1 set2 nil
-        end
-
-    fun mergeStep nil r = r
-      | mergeStep [x] r = x :: r
-      | mergeStep (h1 :: h2 :: t) r = mergeStep t (union (h1, h2) :: r)
-
-    fun merge nil = nil
-      | merge [x] = x
-      | merge l = merge (mergeStep l nil)
-
-    fun fromList vars =
-        let
-          fun loop nil r = merge r
-            | loop (id :: ids) r = loop ids ([id] :: r)
-        in
-          loop vars nil
-        end
-
-    fun first f (nil : set) = raise Bug.Bug "SlotSet.first"
-      | first f (id :: ids) =
-        if f id then id else first f ids
-
-    fun member (set : set, id) =
-        let
-          fun loop nil _ = false
-            | loop (h :: t) id = h = id orelse loop t id
-        in
-          loop set id
-        end
-
-    fun equal (set1, set2) =
-        let
-          fun loop (nil : set) (nil : set) = true
-            | loop (h1 :: t1) (h2 :: t2) = h1 = h2 andalso loop t1 t2
-            | loop _ _ = false
-        in
-          loop set1 set2
-        end
-  end
-
   structure Set :> sig
     type set
     val empty : set
@@ -245,29 +158,29 @@ struct
 
   datatype gc =
       NOGC
-    | CAUSEGC of {saveBeforeGC : SlotSet.set}
+    | CAUSEGC of {saveBeforeGC : SlotID.Set.set}
 
   fun intersectGC (NOGC, gc) = gc
     | intersectGC (gc, NOGC) = gc
     | intersectGC (CAUSEGC {saveBeforeGC = s1}, CAUSEGC {saveBeforeGC = s2}) =
-      CAUSEGC {saveBeforeGC = SlotSet.intersect (s1, s2)}
+      CAUSEGC {saveBeforeGC = SlotID.Set.intersection (s1, s2)}
 
   fun equalGC (NOGC, NOGC) = true
     | equalGC (NOGC, CAUSEGC _) = false
     | equalGC (CAUSEGC _, NOGC) = false
     | equalGC (CAUSEGC {saveBeforeGC = s1}, CAUSEGC {saveBeforeGC = s2}) =
-      SlotSet.equal (s1, s2)
+      SlotID.Set.equal (s1, s2)
 
   fun varsToSlots alloc vars =
-      SlotSet.fromList
+      SlotID.Set.fromList
         (List.mapPartial
            (fn var => VarID.Map.find (alloc, #id var))
            (Set.listItems vars))
 
-  fun updateGC alloc _ def true = CAUSEGC {saveBeforeGC = SlotSet.empty}
+  fun updateGC alloc _ def true = CAUSEGC {saveBeforeGC = SlotID.Set.empty}
     | updateGC alloc NOGC def false = NOGC
     | updateGC alloc (CAUSEGC {saveBeforeGC = slots}) def false =
-      CAUSEGC {saveBeforeGC = SlotSet.union (varsToSlots alloc def, slots)}
+      CAUSEGC {saveBeforeGC = SlotID.Set.union (varsToSlots alloc def, slots)}
 
   datatype exp_mid =
       START
@@ -820,7 +733,7 @@ struct
     | kill alloc (CAUSEGC {saveBeforeGC}) vars =
       insert
         (fn (var, slot) =>
-            if SlotSet.member (saveBeforeGC, slot)
+            if SlotID.Set.member (saveBeforeGC, slot)
             then empty
             else mid (M.MCSAVESLOT
                         {slotId = slot,
@@ -1004,9 +917,17 @@ struct
         val interfere = Set.union (def, liveOut)
         val alive = Set.setMinus (liveOut, def)
         val liveIn = Set.union (alive, use)
-        val gc = if causeGC then Set.union (gc, alive) else gc
+        val gc = if causeGC then VarID.Set.union (gc, Set.toIdSet alive) else gc
+        val interferences =
+            case interferences of
+              h :: t => if Set.isSubsetOf (interfere, h)
+                        then interferences
+                        else if Set.isSubsetOf (h, interfere)
+                        then interfere :: t
+                        else interfere :: interferences
+            | nil => interfere :: interferences
       in
-        (liveIn, {interferences = interfere::interferences, gc = gc})
+        (liveIn, {interferences = interferences, gc = gc})
       end
 
   fun interferenceMid z exp =
@@ -1031,49 +952,41 @@ struct
   fun interferenceBlock i (BLOCK (ref (r as {bodyExp, liveOut, ...}))) =
       #2 (interferenceExp (liveOut, i) bodyExp)
 
-  fun interference nil = {interferences = nil, gc = Set.empty}
-    | interference (block::blocks) =
-      interferenceBlock (interference blocks) block
+  fun interference nil i = i
+    | interference (block::blocks) i =
+      interference blocks (interferenceBlock i block)
 
-  fun shrinkInterference nil = nil
-    | shrinkInterference [x] = [x]
-    | shrinkInterference (vars1::(t as vars2::t2)) =
-      if Set.isSubsetOf (vars1, vars2)
-      then shrinkInterference t
-      else if Set.isSubsetOf (vars2, vars1)
-      then shrinkInterference (vars1::t2)
-      else vars1 :: shrinkInterference t
-
-  fun varsToSlots alloc nil t = t : SlotID.Set.set
-    | varsToSlots alloc ((h as {id, ...} : M.varInfo) :: slots) t =
-      case VarID.Map.find (alloc, id) of
-        SOME (ref (SOME id), _ : Set.set) =>
-        varsToSlots alloc slots (SlotID.Set.add (t, id))
-      | SOME (ref NONE, _) => varsToSlots alloc slots t
-      | NONE => raise Bug.Bug "varsToSlots"
+  val interference =
+      fn blocks =>
+         interference blocks {interferences = nil, gc = VarID.Set.empty}
 
   fun allocSlot {interferences, gc} =
       let
-        val gcset = Set.toIdSet gc
-        val interferences = map (fn x => Set.intersect (x, gcset)) interferences
-        val interferences = shrinkInterference interferences
-        val interferences = foldl (fn (vars, z) => addInterferences z vars)
-                                  VarID.Map.empty
-                                  interferences
+        val interferences =
+            foldl
+              (fn (vars, z) => addInterferences z (Set.intersect (vars, gc)))
+              VarID.Map.empty
+              interferences
         val numSlots =
             VarID.Map.foldl (fn (x,z) => Int.max (Set.numItems x, z))
                             0 interferences
-        val candidates = SlotSet.generate numSlots
+        val candidates =
+            SlotID.Set.fromList
+              (List.tabulate (numSlots, fn _ => SlotID.generate ()))
         val alloc = VarID.Map.map (fn x => (ref NONE, x)) interferences
+        fun getSlot ({id, ...} : M.varInfo) =
+            case VarID.Map.find (alloc, id) of
+              SOME (ref id, _) => id
+            | NONE => raise Bug.Bug "getSlot"
       in
         VarID.Map.map
           (fn (slot, adjVars) =>
               let
-                val adjset = SlotID.Set.empty
-                val adjset = varsToSlots alloc (Set.listItems adjVars) adjset
-                val id = SlotSet.first
-                           (fn id => not (SlotID.Set.member (adjset, id)))
-                           candidates
+                val adjSlots = List.mapPartial getSlot (Set.listItems adjVars)
+                val adjSet = SlotID.Set.fromList adjSlots
+                val candidates = SlotID.Set.difference (candidates, adjSet)
+                val id = SlotID.Set.minItem candidates
+                         handle _ => raise Bug.Bug "allocSlot"
               in
                 slot := SOME id;
                 id
@@ -1146,14 +1059,14 @@ val _ =
           | CAUSEGC {saveBeforeGC} =>
             (print "in:CAUSEGC ";
              app (fn id => print (SlotID.toString id ^ ","))
-                 (SlotSet.listItems saveBeforeGC)));
+                 (SlotID.Set.listItems saveBeforeGC));
           print " ";
           case gcOut of
             NOGC => print "out:NOGC"
           | CAUSEGC {saveBeforeGC} =>
             (print "out:CAUSEGC ";
              app (fn id => print (SlotID.toString id ^ ","))
-                 (SlotSet.listItems saveBeforeGC)));
+                 (SlotID.Set.listItems saveBeforeGC));
           print "\n"))
      blocks)
 *)
