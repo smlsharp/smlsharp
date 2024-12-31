@@ -190,30 +190,27 @@ struct
       let
         fun isAlive alive ((TOPLEVEL, _, _) : call) = true
           | isAlive alive (ANON, _, _) = true
-          | isAlive alive (FN from, _, _) = VarID.Set.member (alive, from)
-        fun loop alive =
+          | isAlive alive (FN id, _, _) = VarID.Set.member (alive, id)
+        fun loop dead alive =
             let
-              val newAlive =
+              val (dead, newAlive) =
                   VarID.Map.foldli
-                    (fn (id, calls, newAlive) =>
+                    (fn (id, calls, (dead, alive)) =>
                         if List.exists (isAlive alive) calls
-                        then VarID.Set.add (newAlive, id)
-                        else newAlive)
-                    VarID.Set.empty
-                    calls
+                        then (dead, VarID.Set.add (alive, id))
+                        else (VarID.Map.insert (dead, id, calls), alive))
+                    (VarID.Map.empty, alive)
+                    dead
             in
-              if VarID.Set.isSubset (newAlive, alive)
-              then alive
-              else loop (VarID.Set.union (newAlive, alive))
+              if VarID.Set.numItems alive < VarID.Set.numItems newAlive
+              then loop dead newAlive
+              else newAlive
             end
-        val alive = loop VarID.Set.empty
+        val alive = loop calls VarID.Set.empty
       in
-        VarID.Map.mapPartiali
-          (fn (id, calls) =>
-              if VarID.Set.member (alive, id)
-              then SOME (List.filter (isAlive alive) calls)
-              else NONE)
-          calls
+        if VarID.Set.numItems alive < VarID.Map.numItems calls
+        then VarID.Map.map (List.filter (isAlive alive)) calls
+        else calls
       end
 
   fun computeMaxArgs (calls : call list) =

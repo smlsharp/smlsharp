@@ -550,7 +550,11 @@ struct
               val argVarList = map (Subst.applyToVar subst) argVarList
               val (varSubst, decls) = makeVarSubst argVarList argExpList loc
               val subst = {tySubst = Subst.toTyMap subst, varSubst = varSubst}
-              val bodyExp = RecordCalcType.substExp subst bodyExp
+              val bodyExp =
+                  if BoundTypeVarID.Map.isEmpty (#tySubst subst)
+                     andalso VarID.Map.isEmpty (#varSubst subst)
+                  then bodyExp
+                  else RecordCalcType.substExp subst bodyExp
             in
               Let {decls = decls, body = bodyExp, loc = loc}
             end
