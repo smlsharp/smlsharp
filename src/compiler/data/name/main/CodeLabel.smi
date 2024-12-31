@@ -87,6 +87,8 @@ struct
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
+    val minItem : set -> item
+    val maxItem : set -> item
     val equal : set * set -> bool
     val compare : set * set -> order
     val isSubset : set * set -> bool
@@ -184,6 +186,8 @@ struct
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
+    val minItem : set -> item
+    val maxItem : set -> item
     val equal : set * set -> bool
     val compare : set * set -> order
     val isSubset : set * set -> bool
@@ -281,6 +285,8 @@ struct
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
+    val minItem : set -> item
+    val maxItem : set -> item
     val equal : set * set -> bool
     val compare : set * set -> order
     val isSubset : set * set -> bool
@@ -380,6 +386,8 @@ struct
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
+    val minItem : set -> item
+    val maxItem : set -> item
     val equal : set * set -> bool
     val compare : set * set -> order
     val isSubset : set * set -> bool
@@ -477,6 +485,8 @@ struct
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
+    val minItem : set -> item
+    val maxItem : set -> item
     val equal : set * set -> bool
     val compare : set * set -> order
     val isSubset : set * set -> bool
@@ -574,6 +584,8 @@ struct
     val delete : set * item -> set
     val member : set * item -> bool
     val isEmpty : set -> bool
+    val minItem : set -> item
+    val maxItem : set -> item
     val equal : set * set -> bool
     val compare : set * set -> order
     val isSubset : set * set -> bool
