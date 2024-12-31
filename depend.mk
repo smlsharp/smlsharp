@@ -30406,6 +30406,7 @@ src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o: \
  src/compiler/libs/env/main/IOrd.smi \
  src/compiler/libs/env/main/IEnv.smi \
  src/compiler/libs/ids/main/LocalID.smi \
+ src/compiler/libs/util/main/UnionFind.smi \
  src/smlnj-lib/Util/binary-set-fn.smi \
  src/compiler/libs/toolchain/main/Filename.smi \
  src/compiler/data/symbols/main/Loc.smi \
@@ -30424,6 +30425,9 @@ src/compiler/compilePhases/tailcallcompile/main/TailCallCompile.o: \
  src/compiler/data/types/main/VarInfoEnv.smi \
  src/compiler/data/types/main/TvarMap.smi \
  src/compiler/data/types/main/TypesBasics.smi \
+ src/compiler/data/types/main/TyAlphaRename.smi \
+ src/compiler/data/types/main/TyRevealTy.smi \
+ src/compiler/data/types/main/Unify.smi \
  src/compiler/compilerIRs/typedlambda/main/TypedLambda.ppg.smi \
  src/compiler/compilerIRs/recordcalc/main/RecordCalc.ppg.smi \
  src/compiler/compilerIRs/recordcalc/main/RecordCalcRename.smi \

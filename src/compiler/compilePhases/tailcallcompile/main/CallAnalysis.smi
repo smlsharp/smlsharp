@@ -14,7 +14,8 @@ struct
   type abs =
       {btvEnv : Types.btvEnv,
        constraints : Types.constraint list,
-       argVarList : RecordCalc.varInfo list}
+       argVarList : RecordCalc.varInfo list,
+       bodyTy : Types.ty}
 
   val getAppSpine
       : RecordCalc.rcexp

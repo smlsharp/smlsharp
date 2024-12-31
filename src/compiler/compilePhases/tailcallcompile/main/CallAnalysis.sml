@@ -14,7 +14,8 @@ struct
   type abs =
       {btvEnv : Types.btvEnv,
        constraints : Types.constraint list,
-       argVarList : RecordCalc.varInfo list}
+       argVarList : RecordCalc.varInfo list,
+       bodyTy : Types.ty}
 
   fun getAppSpine exp =
       let
@@ -39,7 +40,8 @@ struct
             let
               val abs = {btvEnv = btvEnv,
                          constraints = constraints,
-                         argVarList = argVarList}
+                         argVarList = argVarList,
+                         bodyTy = bodyTy}
             in
               loop bodyExp (abs :: spine)
             end
