@@ -2,14 +2,14 @@
 @_SMLZ9Subscript=external unnamed_addr constant i8*
 @_SMLZ4Size=external unnamed_addr constant i8*
 @a=private unnamed_addr constant<{[4x i8],i32,[35x i8]}><{[4x i8]zeroinitializer,i32 -2147483613,[35x i8]c"src/basis/main/Byte.sml:32.18(805)\00"}>,align 8
-@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte13bytesToStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN4Byte13bytesToStringE_48 to void(...)*),i32 -2147483647}>,align 8
-@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte13stringToBytesE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN4Byte13stringToBytesE_49 to void(...)*),i32 -2147483647}>,align 8
+@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte13bytesToStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN4Byte13bytesToStringE_48 to void(...)*),i32 -2147483647}>,align 8
+@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte13stringToBytesE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN4Byte13stringToBytesE_49 to void(...)*),i32 -2147483647}>,align 8
 @d=private unnamed_addr constant<{[4x i8],i32,[36x i8]}><{[4x i8]zeroinitializer,i32 -2147483612,[36x i8]c"src/basis/main/Byte.sml:52.18(1357)\00"}>,align 8
-@e=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte15unpackStringVecE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN4Byte15unpackStringVecE_50 to void(...)*),i32 -2147483647}>,align 8
+@e=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte15unpackStringVecE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN4Byte15unpackStringVecE_50 to void(...)*),i32 -2147483647}>,align 8
 @f=private unnamed_addr constant<{[4x i8],i32,[36x i8]}><{[4x i8]zeroinitializer,i32 -2147483612,[36x i8]c"src/basis/main/Byte.sml:62.18(1652)\00"}>,align 8
-@g=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte12unpackStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN4Byte12unpackStringE_51 to void(...)*),i32 -2147483647}>,align 8
+@g=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN4Byte12unpackStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN4Byte12unpackStringE_51 to void(...)*),i32 -2147483647}>,align 8
 @h=private unnamed_addr constant<{[4x i8],i32,[36x i8]}><{[4x i8]zeroinitializer,i32 -2147483612,[36x i8]c"src/basis/main/Byte.sml:76.19(2129)\00"}>,align 8
-@i=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN4Byte10packStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN4Byte10packStringE_52 to void(...)*),i32 -2147483647}>,align 8
+@i=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN4Byte10packStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN4Byte10packStringE_52 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN4Byte13bytesToStringE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
 @_SMLZN4Byte13stringToBytesE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c,i64 0,i32 2)to i8*)
 @_SMLZN4Byte15unpackStringVecE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@e,i64 0,i32 2)to i8*)
@@ -152,31 +152,31 @@ h:
 %i=phi i8*[%g,%f],[%a,%j]
 store i8*null,i8**%b,align 8
 %k=call fastcc i8*@_SMLFN16Word8VectorSlice4baseE(i8*inreg%i)
-store i8*%k,i8**%b,align 8
-%l=getelementptr inbounds i8,i8*%k,i64 12
-%m=bitcast i8*%l to i32*
-%n=load i32,i32*%m,align 4
-%o=icmp ugt i32%n,268435454
-br i1%o,label%E,label%p
-p:
-%q=getelementptr inbounds i8,i8*%k,i64 8
-%r=bitcast i8*%q to i32*
-%s=load i32,i32*%r,align 4
-%t=add nsw i32%n,1
-%u=call i8*@sml_alloc(i32 inreg%t)#0
-%v=getelementptr inbounds i8,i8*%u,i64 -4
-%w=bitcast i8*%v to i32*
-store i32%t,i32*%w,align 4
-%x=sext i32%n to i64
-%y=getelementptr inbounds i8,i8*%u,i64%x
-store i8 0,i8*%y,align 1
-%z=bitcast i8**%b to i8***
-%A=load i8**,i8***%z,align 8
-%B=load i8*,i8**%A,align 8
-%C=sext i32%s to i64
+%l=bitcast i8*%k to i8**
+%m=load i8*,i8**%l,align 8
+store i8*%m,i8**%b,align 8
+%n=getelementptr inbounds i8,i8*%k,i64 12
+%o=bitcast i8*%n to i32*
+%p=load i32,i32*%o,align 4
+%q=icmp ugt i32%p,268435454
+br i1%q,label%E,label%r
+r:
+%s=getelementptr inbounds i8,i8*%k,i64 8
+%t=bitcast i8*%s to i32*
+%u=load i32,i32*%t,align 4
+%v=add nsw i32%p,1
+%w=call i8*@sml_alloc(i32 inreg%v)#0
+%x=getelementptr inbounds i8,i8*%w,i64 -4
+%y=bitcast i8*%x to i32*
+store i32%v,i32*%y,align 4
+%z=sext i32%p to i64
+%A=getelementptr inbounds i8,i8*%w,i64%z
+store i8 0,i8*%A,align 1
+%B=load i8*,i8**%b,align 8
+%C=sext i32%u to i64
 %D=getelementptr inbounds i8,i8*%B,i64%C
-call void@llvm.memcpy.p0i8.p0i8.i32(i8*%u,i8*%D,i32%n,i1 false)
-ret i8*%u
+call void@llvm.memcpy.p0i8.p0i8.i32(i8*%w,i8*%D,i32%p,i1 false)
+ret i8*%w
 E:
 %F=load i8*,i8**@_SMLZ4Size,align 8
 store i8*%F,i8**%b,align 8
@@ -364,23 +364,23 @@ store i8*%af,i8**%ag,align 8
 call void@sml_raise(i8*inreg%aa)#1
 unreachable
 }
-define internal fastcc i8*@_SMLLN4Byte13bytesToStringE_48(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN4Byte13bytesToStringE_48(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN4Byte13bytesToStringE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN4Byte13stringToBytesE_49(i8*inreg%a,i8*inreg%b)#4 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN4Byte13stringToBytesE_49(i8*inreg%a,i8*inreg%b)#4 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN4Byte13stringToBytesE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN4Byte15unpackStringVecE_50(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN4Byte15unpackStringVecE_50(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN4Byte15unpackStringVecE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN4Byte12unpackStringE_51(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN4Byte12unpackStringE_51(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN4Byte12unpackStringE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN4Byte10packStringE_52(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN4Byte10packStringE_52(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 tail call fastcc void@_SMLFN4Byte10packStringE(i8*inreg%b)
 %c=tail call i8*@sml_alloc(i32 inreg 4)#0
 %d=bitcast i8*%c to i32*

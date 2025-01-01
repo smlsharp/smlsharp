@@ -1,13 +1,13 @@
 @sml_check_flag=external local_unnamed_addr global i32
 @_SMLZN15BasicFormatters10format__intE=external local_unnamed_addr global i8*
 @_SMLZN5Int328toStringE=external local_unnamed_addr global i8*
-@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9DummyTyID8generateE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN9DummyTyID8generateE_43 to void(...)*),i32 -2147483647}>,align 8
+@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9DummyTyID8generateE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN9DummyTyID8generateE_43 to void(...)*),i32 -2147483647}>,align 8
+@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9DummyTyID4peekE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN9DummyTyID4peekE_44 to void(...)*),i32 -2147483647}>,align 8
+@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9DummyTyID4succE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN9DummyTyID4succE_45 to void(...)*),i32 -2147483647}>,align 8
+@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i8*)*@_SMLFN9DummyTyID11isNewerThanE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN9DummyTyID11isNewerThanE_46 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN9DummyTyID8generateE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*)
-@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9DummyTyID4peekE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN9DummyTyID4peekE_44 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN9DummyTyID4peekE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
-@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9DummyTyID4succE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN9DummyTyID4succE_45 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN9DummyTyID4succE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c,i64 0,i32 2)to i8*)
-@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i8*)*@_SMLFN9DummyTyID11isNewerThanE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN9DummyTyID11isNewerThanE_46 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN9DummyTyID11isNewerThanE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@d,i64 0,i32 2)to i8*)
 @_SML_gvarf05fe994141c896f_DummyTyID=private global<{[4x i8],i32,[4x i8*]}><{[4x i8]zeroinitializer,i32 -1342177248,[4x i8*]zeroinitializer}>,align 8
 @e=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[4x i8*]}>,<{[4x i8],i32,[4x i8*]}>*@_SML_gvarf05fe994141c896f_DummyTyID,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@e to i64))]
@@ -202,7 +202,7 @@ store i32%a,i32*%n,align 4
 %r=tail call fastcc i8*%j(i8*inreg%q,i8*inreg%m)
 ret i8*%r
 }
-define internal fastcc i8*@_SMLLN9DummyTyID8generateE_43(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN9DummyTyID8generateE_43(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=load i32,i32*@g,align 8
 %d=add nsw i32%c,1
 store i32%d,i32*@g,align 8
@@ -214,7 +214,7 @@ store i32 4,i32*%h,align 4
 store i32%c,i32*%f,align 4
 ret i8*%e
 }
-define internal fastcc i8*@_SMLLN9DummyTyID4peekE_44(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN9DummyTyID4peekE_44(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=load i32,i32*@g,align 8
 %d=tail call i8*@sml_alloc(i32 inreg 4)#0
 %e=bitcast i8*%d to i32*
@@ -224,7 +224,7 @@ store i32 4,i32*%g,align 4
 store i32%c,i32*%e,align 4
 ret i8*%d
 }
-define internal fastcc i8*@_SMLLN9DummyTyID4succE_45(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN9DummyTyID4succE_45(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=bitcast i8*%b to i32*
 %d=load i32,i32*%c,align 4
 %e=add nsw i32%d,1
@@ -236,7 +236,7 @@ store i32 4,i32*%i,align 4
 store i32%e,i32*%g,align 4
 ret i8*%f
 }
-define internal fastcc i8*@_SMLLN9DummyTyID11isNewerThanE_46(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN9DummyTyID11isNewerThanE_46(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=bitcast i8*%b to i32*
 %d=load i32,i32*%c,align 4
 %e=getelementptr inbounds i8,i8*%b,i64 4

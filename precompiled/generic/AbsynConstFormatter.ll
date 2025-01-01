@@ -5,7 +5,7 @@
 @c=private unnamed_addr constant<{[4x i8],i32,i32,[4x i8],i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i32 6,[4x i8]zeroinitializer,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i32,[4x i8],i8*,i32}>,<{[4x i8],i32,i32,[4x i8],i8*,i32}>*@b,i32 0,i32 0,i32 0),i32 8),i32 2}>,align 8
 @d=private unnamed_addr constant<{[4x i8],i32,i8*,i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i32,[4x i8],i8*,i32}>,<{[4x i8],i32,i32,[4x i8],i8*,i32}>*@c,i32 0,i32 0,i32 0),i32 8),i8*null,i32 3}>,align 8
 @e=private unnamed_addr constant<{[4x i8],i32,[69x i8]}><{[4x i8]zeroinitializer,i32 -2147483579,[69x i8]c"src/compiler/compilerIRs/absyn/main/AbsynConstFormatter.sml:3.26(90)\00"}>,align 8
-@f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN19AbsynConstFormatter15format__constantE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN19AbsynConstFormatter15format__constantE_45 to void(...)*),i32 -2147483647}>,align 8
+@f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN19AbsynConstFormatter15format__constantE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN19AbsynConstFormatter15format__constantE_45 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN19AbsynConstFormatter15format__constantE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@f,i64 0,i32 2)to i8*)
 @_SML_ftabb8a7401e9be5ceb0_AbsynConstFormatter=external global i8
 @g=private unnamed_addr global i8 0
@@ -145,7 +145,7 @@ aa:
 %ae=tail call fastcc i8*@_SMLFN11ConstFormat20format__intInf__dec__MLE(i8*inreg%ad)
 ret i8*%ae
 }
-define internal fastcc i8*@_SMLLN19AbsynConstFormatter15format__constantE_45(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN19AbsynConstFormatter15format__constantE_45(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN19AbsynConstFormatter15format__constantE(i8*inreg%b)
 ret i8*%c
 }

@@ -2,9 +2,9 @@
 @_SMLZN15BasicFormatters10format__intE=external local_unnamed_addr global i8*
 @_SMLZN5Int327compareE=external local_unnamed_addr global i8*
 @_SMLZN5Int328toStringE=external local_unnamed_addr global i8*
-@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9ExistTyID8generateE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN9ExistTyID8generateE_36 to void(...)*),i32 -2147483647}>,align 8
+@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9ExistTyID8generateE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN9ExistTyID8generateE_36 to void(...)*),i32 -2147483647}>,align 8
+@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9ExistTyID5toIntE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN9ExistTyID5toIntE_37 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN9ExistTyID8generateE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*)
-@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i32)*@_SMLFN9ExistTyID5toIntE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN9ExistTyID5toIntE_39 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN9ExistTyID5toIntE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
 @_SML_gvarcf2656e90c9ab770_ExistTyID=private global<{[4x i8],i32,[3x i8*]}><{[4x i8]zeroinitializer,i32 -1342177256,[3x i8*]zeroinitializer}>,align 8
 @c=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[3x i8*]}>,<{[4x i8],i32,[3x i8*]}>*@_SML_gvarcf2656e90c9ab770_ExistTyID,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@c to i64))]
@@ -70,6 +70,9 @@ define fastcc i32@_SMLFN9ExistTyID8generateE(i32 inreg%a)#3 gc"smlsharp"{
 store i32%c,i32*@e,align 8
 ret i32%b
 }
+define fastcc i32@_SMLFN9ExistTyID5toIntE(i32 inreg%a)#3 gc"smlsharp"{
+ret i32%a
+}
 define fastcc i8*@_SMLFN9ExistTyID9format__idE(i32 inreg%a)local_unnamed_addr#1 gc"smlsharp"{
 %b=alloca i8*,align 8
 call void@llvm.gcroot(i8**%b,i8*null)#0
@@ -124,9 +127,6 @@ store i32%a,i32*%n,align 4
 %r=tail call fastcc i8*%j(i8*inreg%q,i8*inreg%m)
 ret i8*%r
 }
-define fastcc i32@_SMLFN9ExistTyID5toIntE(i32 inreg%a)#3 gc"smlsharp"{
-ret i32%a
-}
 define fastcc i32@_SMLFN9ExistTyID7compareE(i8*inreg%a)local_unnamed_addr#1 gc"smlsharp"{
 i:
 %b=alloca i8*,align 8
@@ -153,7 +153,7 @@ store i8*null,i8**%b,align 8
 %r=load i32,i32*%q,align 4
 ret i32%r
 }
-define internal fastcc i8*@_SMLLN9ExistTyID8generateE_36(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN9ExistTyID8generateE_36(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=load i32,i32*@e,align 8
 %d=add nsw i32%c,1
 store i32%d,i32*@e,align 8
@@ -165,7 +165,7 @@ store i32 4,i32*%h,align 4
 store i32%c,i32*%f,align 4
 ret i8*%e
 }
-define internal fastcc i8*@_SMLLN9ExistTyID5toIntE_39(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN9ExistTyID5toIntE_37(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=bitcast i8*%b to i32*
 %d=load i32,i32*%c,align 4
 %e=tail call i8*@sml_alloc(i32 inreg 4)#0
