@@ -96,7 +96,8 @@ struct
   fun posToString CALL = "CALL"
     | posToString TAIL = "TAIL"
   fun callerToString TOPLEVEL = "TOP"
-    | callerToString ANON = "ANON"
+    | callerToString ANONTOP = "ANON"
+    | callerToString (ANON id) = "ANON" ^ VarID.toString id
     | callerToString (FN id) = VarID.toString id
   fun callToString (caller, pos, args) =
       callerToString caller ^ ":" ^ posToString pos
@@ -354,7 +355,7 @@ struct
        catchExp : RecordCalc.rcexp}
 
   type function =
-      {context : {scope : caller, tySubst : Subst.subst},
+      {context : {scope : VarID.id option, tySubst : Subst.subst},
        subst : Subst.subst,
        loopLabel : FunLocalLabel.id option,
        argVarList : RecordCalc.varInfo list,
@@ -405,7 +406,7 @@ struct
        eta : bind IEnv.map VarID.Map.map,
        argSubst : RecordCalc.rcvalue option VarID.Map.map,
        tySubst : Subst.subst,
-       scope : caller,
+       scope : VarID.id option,
        isTail : bool,
        env : env}
 
@@ -460,7 +461,7 @@ struct
 
   fun nontail (context : context) = context # {isTail = false}
 
-  fun anonFn (context : context) = context # {scope = ANON, isTail = true}
+  fun anonFn (context : context) = context # {scope = NONE, isTail = true}
 
   fun makeFunction (context : context)
                    id
@@ -496,7 +497,7 @@ struct
             ENV (addInline id (makeFunction context id info result))
         fun emitFunction (result as {Fn, fnTy, ...}) =
             let
-              val info = {subst = Subst.identity, scope = FN id}
+              val info = {subst = Subst.identity, scope = SOME id}
               val function = makeFunction context id info result
             in
               FUN {var = var # {ty = fnTy}, Fn = Fn, function = function}
@@ -513,12 +514,14 @@ struct
             if owner = id
             then case VarID.Map.find (#numCalls context, id) of
                    SOME {vars = 0, calls = 1, ...} =>
-                   emitInlineFunction {subst = Subst.identity, scope = FN owner}
-                                      result
+                   emitInlineFunction
+                     {subst = Subst.identity, scope = SOME owner}
+                     result
                  | _ => emitFunction result
             else case VarID.Map.find (#labels context, id) of
-                   NONE => emitInlineFunction {subst = subst, scope = FN owner}
-                                              result
+                   NONE => emitInlineFunction
+                             {subst = subst, scope = SOME owner}
+                             result
                  | SOME label =>
                    let
                      val {argVarList, bodyExp, bodyTy, ...} = result
@@ -527,7 +530,7 @@ struct
                                  argVarList = dropArgVarList context argVarList,
                                  catchExp = bodyExp}
                    in
-                     if FN owner = #scope context
+                     if SOME owner = #scope context
                      then CATCH (rule, bodyTy)
                      else ENV (addCatch owner rule)
                    end
@@ -587,7 +590,7 @@ struct
                     NONE => emitApp id result
                   | SOME label =>
                     if #isTail context
-                       andalso FN owner = #scope context
+                       andalso SOME owner = #scope context
                        andalso Subst.equal
                                  (subst,
                                   Subst.applyToSubst (#tySubst context)
@@ -922,8 +925,9 @@ struct
       map
         (fn (_, _, nil) => ENTRY false
           | (_, CALL, _ :: _) => ENTRY true
-          | (ANON, TAIL, _ :: _) => ENTRY true
           | (TOPLEVEL, TAIL, _ :: _) => raise Bug.Bug "callsToCallerEdges"
+          | (ANONTOP, TAIL, _ :: _) => ENTRY true
+          | (ANON _, TAIL, _ :: _) => ENTRY true
           | (FN from, TAIL, argList as _ :: _) =>
             JUMP (from, argListToSubst btvEnvList argList, argList))
         calls
@@ -1278,7 +1282,9 @@ struct
           (* separate smaller calls into calls to eta-expanded functions *)
           val etaCalls =
               IEnv.listItems
-                (IEnv.map (fn {argList, ...} => (ANON, TAIL, argList)) etaMap)
+                (IEnv.map
+                   (fn {var, argList, ...} => (ANON (#id var), TAIL, argList))
+                   etaMap)
           val func = func # {calls = filterByNumArgs absLen calls @ etaCalls}
           val funcs =
               IEnv.foldli
@@ -1342,7 +1348,7 @@ struct
                        eta = eta,
                        argSubst = argSubst,
                        tySubst = Subst.identity,
-                       scope = TOPLEVEL,
+                       scope = NONE,
                        isTail = false,
                        env = {inlines = VarID.Map.empty,
                               catches = VarID.Map.empty}} : context

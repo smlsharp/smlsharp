@@ -50,7 +50,7 @@ struct
         loop exp nil
       end
 
-  datatype caller = FN of VarID.id | ANON | TOPLEVEL
+  datatype caller = FN of VarID.id | ANON of VarID.id | ANONTOP | TOPLEVEL
   datatype pos = CALL | TAIL
   type call = caller * pos * arg list
   type call_graph = call list VarID.Map.map
@@ -65,6 +65,17 @@ struct
       (caller, if isTail then TAIL else CALL, args)
 
   fun nontail (context : context) = context # {isTail = false}
+
+  fun anonFn (context : context) =
+      let
+        val caller = case #caller context of
+                       FN id => ANON id
+                     | ANON id => ANON id
+                     | ANONTOP => ANONTOP
+                     | TOPLEVEL => ANONTOP
+      in
+        context # {caller = caller, isTail = true}
+      end
 
   fun merge nil = VarID.Map.empty
     | merge (h :: t) =
@@ -95,9 +106,9 @@ struct
       | R.RCSTRING _ => VarID.Map.empty
       | R.RCEXVAR _ => VarID.Map.empty
       | R.RCCALLBACKFN {attributes, argVarList, bodyExp, resultTy, loc} =>
-        analyzeExp (context # {caller = ANON, isTail = true}) bodyExp
+        analyzeExp (anonFn context) bodyExp
       | R.RCFNM {btvEnv, constraints, argVarList, bodyTy, bodyExp, loc} =>
-        analyzeExp (context # {caller = ANON, isTail = true}) bodyExp
+        analyzeExp (anonFn context) bodyExp
       | R.RCAPPM _ =>
         (
           case getAppSpine exp of
@@ -186,31 +197,35 @@ struct
       | R.RCEXPORTVAR {weak, var, exp = NONE} => VarID.Map.empty
       | R.RCEXTERNVAR _ => VarID.Map.empty
 
-  fun eliminateDeadCode (calls : call_graph) =
+  fun eliminateDeadCode (calls : result VarID.Map.map) =
       let
-        fun isAlive alive ((TOPLEVEL, _, _) : call) = true
-          | isAlive alive (ANON, _, _) = true
-          | isAlive alive (FN id, _, _) = VarID.Set.member (alive, id)
-        fun loop dead alive =
+        fun isAlive dead (TOPLEVEL, _, _) = true
+          | isAlive dead (ANONTOP, _, _) = true
+          | isAlive dead (ANON id, _, _) = not (VarID.Map.inDomain (dead, id))
+          | isAlive dead (FN id, _, _) = not (VarID.Map.inDomain (dead, id))
+        fun loop dead =
             let
-              val (dead, newAlive) =
+              val newDead =
                   VarID.Map.foldli
-                    (fn (id, calls, (dead, alive)) =>
-                        if List.exists (isAlive alive) calls
-                        then (dead, VarID.Set.add (alive, id))
-                        else (VarID.Map.insert (dead, id, calls), alive))
-                    (VarID.Map.empty, alive)
+                    (fn (id, {calls, ...}, dead) =>
+                        if List.exists (isAlive dead) calls
+                        then #1 (VarID.Map.remove (dead, id))
+                        else dead)
+                    dead
                     dead
             in
-              if VarID.Set.numItems alive < VarID.Set.numItems newAlive
-              then loop dead newAlive
-              else newAlive
+              if VarID.Map.numItems newDead < VarID.Map.numItems dead
+              then loop newDead
+              else newDead
             end
-        val alive = loop calls VarID.Set.empty
+        val dead = loop calls
       in
-        if VarID.Set.numItems alive < VarID.Map.numItems calls
-        then VarID.Map.map (List.filter (isAlive alive)) calls
-        else calls
+        if VarID.Map.isEmpty dead
+        then calls
+        else VarID.Map.map
+               (fn r as {calls, ...} =>
+                   r # {calls = List.filter (isAlive dead) calls})
+               calls
       end
 
   fun computeMaxArgs (calls : call list) =
@@ -231,41 +246,40 @@ struct
   fun anonymizeCaller callers (call : call) =
       case call of
         (TOPLEVEL, _, _) => call
-      | (ANON, _, _) => call
+      | (ANONTOP, _, _) => call
+      | (ANON _, _, _) => call
       | (FN id, pos, args) =>
-        if VarID.Set.member (callers, id) then (ANON, pos, args) else call
+        if VarID.Set.member (callers, id) then (ANON id, pos, args) else call
 
   fun analyze decls =
       let
         val funcs = ref VarID.Map.empty
         val context = {funcs = funcs, caller = TOPLEVEL, isTail = false}
         val calls = merge (map (analyzeDecl context) decls)
-        val calls = eliminateDeadCode calls
 
         val funcs =
             VarID.Map.mergeWith
               (fn (NONE, NONE) => NONE
                 | (SOME _, NONE) => NONE
                 | (NONE, SOME (var, loc, absList)) =>
-                  SOME (var, loc, absList, nil)
+                  SOME {var = var, loc = loc, absList = absList, calls = nil}
                 | (SOME calls, SOME (var, loc, absList)) =>
-                  SOME (var, loc, absList, calls))
+                  SOME {var = var, loc = loc, absList = absList, calls = calls})
               (calls, !funcs)
+
+       val funcs = eliminateDeadCode funcs
 
         (* adjustment for uncurrying *)
         val (results, anon) =
             VarID.Map.foldli
-              (fn (id, (var, loc, absList, calls), (results, anon)) =>
+              (fn (id, (r as {var, loc, absList, calls}), (results, anon)) =>
                   let
                     val numArgs = Int.min (length absList, computeMaxArgs calls)
                     val newAbsList = List.take (absList, numArgs)
                     val restAbsList = List.drop (absList, numArgs)
                     val calls = map (limitArgs numArgs) calls
-                    val results =
-                        VarID.Map.insert (results, id, {var = var,
-                                                        loc = loc,
-                                                        absList = newAbsList,
-                                                        calls = calls})
+                    val result = r # {absList = newAbsList, calls = calls}
+                    val results = VarID.Map.insert (results, id, result)
                   in
                     case restAbsList of
                       nil => (results, anon)

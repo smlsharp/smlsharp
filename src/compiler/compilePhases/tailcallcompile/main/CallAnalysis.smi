@@ -22,7 +22,7 @@ struct
         -> RecordCalc.rcexp * Types.ty option * arg list
   val getFnSpine : RecordCalc.rcexp -> abs list * RecordCalc.rcexp
 
-  datatype caller = FN of VarID.id | ANON | TOPLEVEL
+  datatype caller = FN of VarID.id | ANON of VarID.id | ANONTOP | TOPLEVEL
   datatype pos = CALL | TAIL
   type call = caller * pos * arg list
   type result = {var : RecordCalc.varInfo,
