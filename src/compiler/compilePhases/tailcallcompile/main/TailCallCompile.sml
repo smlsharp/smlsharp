@@ -414,11 +414,6 @@ struct
         NONE => {owner = id, subst = Subst.identity}
       | SOME color => color
 
-  fun instantiateBind subst ({var, exp, loc} : bind) =
-      {var = Subst.applyToVar subst var,
-       exp = Subst.applyToExp subst exp,
-       loc = loc}
-
   fun findEta ({eta, ...} : context) ({id, ...} : RecordCalc.varInfo) =
       case VarID.Map.find (eta, id) of
         NONE => IEnv.empty
