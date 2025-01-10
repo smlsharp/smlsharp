@@ -1,5 +1,6 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
+_require local "../../../libs/ids/main/GenIDFun.smi"
 
 structure ExistTyID =
 struct
