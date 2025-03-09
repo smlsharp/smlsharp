@@ -1,12 +1,12 @@
 @sml_check_flag=external local_unnamed_addr global i32
 @_SMLZ5Match=external unnamed_addr constant i8*
 @a=private unnamed_addr constant<{[4x i8],i32,[59x i8]}><{[4x i8]zeroinitializer,i32 -2147483589,[59x i8]c"src/compiler/compilerIRs/absyn/main/Absyn.sml:952.6(26711)\00"}>,align 8
-@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN5Absyn9getLocExpE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN5Absyn9getLocExpE_75 to void(...)*),i32 -2147483647}>,align 8
+@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN5Absyn9getLocExpE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN5Absyn9getLocExpE_75 to void(...)*),i32 -2147483647}>,align 8
 @c=private unnamed_addr constant<{[4x i8],i32,[59x i8]}><{[4x i8]zeroinitializer,i32 -2147483589,[59x i8]c"src/compiler/compilerIRs/absyn/main/Absyn.sml:988.6(27988)\00"}>,align 8
-@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN5Absyn9getLocPatE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN5Absyn9getLocPatE_76 to void(...)*),i32 -2147483647}>,align 8
+@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN5Absyn9getLocPatE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN5Absyn9getLocPatE_76 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN5Absyn9getLocExpE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
 @_SMLZN5Absyn9getLocPatE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@d,i64 0,i32 2)to i8*)
-@_SML_ftab041042724cd69fea_Absyn=external global i8
+@_SML_ftab08894693f6dddcef_Absyn=external global i8
 @e=internal unnamed_addr global i1 false
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -15,24 +15,24 @@ declare void@sml_gcroot(i8*,void()*,i8*,i8*)local_unnamed_addr#0
 declare void@sml_matchcomp_bug()local_unnamed_addr
 declare void@sml_raise(i8*inreg)local_unnamed_addr#1
 declare i8*@_SMLFN6Symbol15longsymbolToLocE(i8*inreg)local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_main44ca35c4c731682b_Symbol()local_unnamed_addr#2 gc"smlsharp"
-declare void@_SML_load44ca35c4c731682b_Symbol(i8*)local_unnamed_addr
-define private void@_SML_tabb041042724cd69fea_Absyn()#3{
+declare void@_SML_main89b8631430c545af_Symbol()local_unnamed_addr#2 gc"smlsharp"
+declare void@_SML_load89b8631430c545af_Symbol(i8*)local_unnamed_addr
+define private void@_SML_tabb08894693f6dddcef_Absyn()#3{
 unreachable
 }
-define void@_SML_load041042724cd69fea_Absyn(i8*%a)local_unnamed_addr#0{
+define void@_SML_load08894693f6dddcef_Absyn(i8*%a)local_unnamed_addr#0{
 %b=load i1,i1*@e,align 1
 br i1%b,label%c,label%d
 c:
 ret void
 d:
 store i1 true,i1*@e,align 1
-tail call void@_SML_load44ca35c4c731682b_Symbol(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb041042724cd69fea_Absyn,i8*@_SML_ftab041042724cd69fea_Absyn,i8*null)#0
+tail call void@_SML_load89b8631430c545af_Symbol(i8*%a)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb08894693f6dddcef_Absyn,i8*@_SML_ftab08894693f6dddcef_Absyn,i8*null)#0
 ret void
 }
-define void@_SML_main041042724cd69fea_Absyn()local_unnamed_addr#2 gc"smlsharp"{
-tail call void@_SML_main44ca35c4c731682b_Symbol()#2
+define void@_SML_main08894693f6dddcef_Absyn()local_unnamed_addr#2 gc"smlsharp"{
+tail call void@_SML_main89b8631430c545af_Symbol()#2
 ret void
 }
 define fastcc i8*@_SMLFN5Absyn9getLocExpE(i8*inreg%a)#2 gc"smlsharp"{
@@ -510,11 +510,11 @@ aG:
 %aJ=load i8*,i8**%aI,align 8
 ret i8*%aJ
 }
-define internal fastcc i8*@_SMLLN5Absyn9getLocExpE_75(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN5Absyn9getLocExpE_75(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN5Absyn9getLocExpE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN5Absyn9getLocPatE_76(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN5Absyn9getLocPatE_76(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN5Absyn9getLocPatE(i8*inreg%b)
 ret i8*%c
 }

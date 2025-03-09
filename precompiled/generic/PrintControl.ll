@@ -1,7 +1,7 @@
-@_SMLDN12PrintControl10printWidthE_27=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 80}>,align 8
-@_SMLDN12PrintControl13printMaxDepthE_28=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 20}>,align 8
-@_SMLZN12PrintControl10printWidthE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDN12PrintControl10printWidthE_27,i64 0,i32 2)to i8*)
-@_SMLZN12PrintControl13printMaxDepthE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDN12PrintControl13printMaxDepthE_28,i64 0,i32 2)to i8*)
+@_SMLDL27=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 80}>,align 8
+@_SMLDL28=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 20}>,align 8
+@_SMLZN12PrintControl10printWidthE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDL27,i64 0,i32 2)to i8*)
+@_SMLZN12PrintControl13printMaxDepthE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDL28,i64 0,i32 2)to i8*)
 @_SML_ftab3acd53cad8d59eda_PrintControl=external global i8
 @a=internal unnamed_addr global i1 false
 declare void@sml_gcroot(i8*,void()*,i8*,i8*)local_unnamed_addr#0

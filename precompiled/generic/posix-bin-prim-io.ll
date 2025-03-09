@@ -8,13 +8,13 @@
 @_SMLZN9BinPrimIO6nullWrE=external local_unnamed_addr global i8*
 @_SMLZN9BinPrimIO7compareE=external local_unnamed_addr global i8*
 @a=private unnamed_addr constant<{[4x i8],i32,[3x i8]}><{[4x i8]zeroinitializer,i32 -2147483645,[3x i8]c"rb\00"}>,align 8
-@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE_51 to void(...)*),i32 -2147483647}>,align 8
-@_SMLZN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
+@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE_44 to void(...)*),i32 -2147483647}>,align 8
 @c=private unnamed_addr constant<{[4x i8],i32,[3x i8]}><{[4x i8]zeroinitializer,i32 -2147483645,[3x i8]c"wb\00"}>,align 8
-@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE_52 to void(...)*),i32 -2147483647}>,align 8
-@_SMLZN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@d,i64 0,i32 2)to i8*)
+@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE_45 to void(...)*),i32 -2147483647}>,align 8
 @e=private unnamed_addr constant<{[4x i8],i32,[3x i8]}><{[4x i8]zeroinitializer,i32 -2147483645,[3x i8]c"ab\00"}>,align 8
-@f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE_53 to void(...)*),i32 -2147483647}>,align 8
+@f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE_46 to void(...)*),i32 -2147483647}>,align 8
+@_SMLZN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*)
+@_SMLZN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@d,i64 0,i32 2)to i8*)
 @_SMLZN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@f,i64 0,i32 2)to i8*)
 @_SML_gvard7bed40ec7aa770a_posix_bin_prim_io=private global<{[4x i8],i32,[8x i8*]}><{[4x i8]zeroinitializer,i32 -1342177216,[8x i8*]zeroinitializer}>,align 8
 @g=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[8x i8*]}>,<{[4x i8],i32,[8x i8*]}>*@_SML_gvard7bed40ec7aa770a_posix_bin_prim_io,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@g to i64))]
@@ -90,6 +90,150 @@ call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[8
 call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[8x i8*]}>,<{[4x i8],i32,[8x i8*]}>*@_SML_gvard7bed40ec7aa770a_posix_bin_prim_io,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[8x i8*]}>,<{[4x i8],i32,[8x i8*]}>*@_SML_gvard7bed40ec7aa770a_posix_bin_prim_io,i64 0,i32 2,i64 7),i8*inreg%o)#0
 call void@sml_end()#0
 ret void
+}
+define fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE(i8*inreg%a)#1 gc"smlsharp"{
+%b=alloca i8*,align 8
+call void@llvm.gcroot(i8**%b,i8*null)#0
+store i8*%a,i8**%b,align 8
+%c=load atomic i32,i32*@sml_check_flag unordered,align 4
+%d=icmp eq i32%c,0
+br i1%d,label%f,label%e
+e:
+call void@sml_check(i32 inreg%c)
+br label%f
+f:
+%g=call i8*@sml_alloc(i32 inreg 20)#0
+%h=getelementptr inbounds i8,i8*%g,i64 -4
+%i=bitcast i8*%h to i32*
+store i32 1342177296,i32*%i,align 4
+%j=load i8*,i8**%b,align 8
+%k=bitcast i8*%g to i8**
+store i8*%j,i8**%k,align 8
+%l=getelementptr inbounds i8,i8*%g,i64 8
+%m=bitcast i8*%l to i8**
+store i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@a,i64 0,i32 2,i64 0),i8**%m,align 8
+%n=getelementptr inbounds i8,i8*%g,i64 16
+%o=bitcast i8*%n to i32*
+store i32 3,i32*%o,align 4
+%p=call fastcc i32@_SMLFN23SMLSharp__SMLNJ__POSIX__IO5openfE(i8*inreg%g)
+%q=call i8*@sml_alloc(i32 inreg 20)#0
+%r=bitcast i8*%q to i32*
+%s=getelementptr inbounds i8,i8*%q,i64 -4
+%t=bitcast i8*%s to i32*
+store i32 1342177296,i32*%t,align 4
+store i32%p,i32*%r,align 4
+%u=getelementptr inbounds i8,i8*%q,i64 4
+%v=bitcast i8*%u to i32*
+store i32 1,i32*%v,align 4
+%w=load i8*,i8**%b,align 8
+%x=getelementptr inbounds i8,i8*%q,i64 8
+%y=bitcast i8*%x to i8**
+store i8*%w,i8**%y,align 8
+%z=getelementptr inbounds i8,i8*%q,i64 16
+%A=bitcast i8*%z to i32*
+store i32 2,i32*%A,align 4
+%B=tail call fastcc i8*@_SMLFN23SMLSharp__SMLNJ__POSIX__IO11mkBinReaderE(i8*inreg%q)
+ret i8*%B
+}
+define fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE(i8*inreg%a)#1 gc"smlsharp"{
+%b=alloca i8*,align 8
+call void@llvm.gcroot(i8**%b,i8*null)#0
+store i8*%a,i8**%b,align 8
+%c=load atomic i32,i32*@sml_check_flag unordered,align 4
+%d=icmp eq i32%c,0
+br i1%d,label%f,label%e
+e:
+call void@sml_check(i32 inreg%c)
+br label%f
+f:
+%g=call i8*@sml_alloc(i32 inreg 20)#0
+%h=getelementptr inbounds i8,i8*%g,i64 -4
+%i=bitcast i8*%h to i32*
+store i32 1342177296,i32*%i,align 4
+%j=load i8*,i8**%b,align 8
+%k=bitcast i8*%g to i8**
+store i8*%j,i8**%k,align 8
+%l=getelementptr inbounds i8,i8*%g,i64 8
+%m=bitcast i8*%l to i8**
+store i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@c,i64 0,i32 2,i64 0),i8**%m,align 8
+%n=getelementptr inbounds i8,i8*%g,i64 16
+%o=bitcast i8*%n to i32*
+store i32 3,i32*%o,align 4
+%p=call fastcc i32@_SMLFN23SMLSharp__SMLNJ__POSIX__IO5openfE(i8*inreg%g)
+%q=call i8*@sml_alloc(i32 inreg 28)#0
+%r=bitcast i8*%q to i32*
+%s=getelementptr inbounds i8,i8*%q,i64 -4
+%t=bitcast i8*%s to i32*
+store i32 1342177304,i32*%t,align 4
+store i32 0,i32*%r,align 4
+%u=getelementptr inbounds i8,i8*%q,i64 4
+%v=bitcast i8*%u to i32*
+store i32 4096,i32*%v,align 4
+%w=getelementptr inbounds i8,i8*%q,i64 8
+%x=bitcast i8*%w to i32*
+store i32%p,i32*%x,align 4
+%y=getelementptr inbounds i8,i8*%q,i64 12
+%z=bitcast i8*%y to i32*
+store i32 1,i32*%z,align 4
+%A=load i8*,i8**%b,align 8
+%B=getelementptr inbounds i8,i8*%q,i64 16
+%C=bitcast i8*%B to i8**
+store i8*%A,i8**%C,align 8
+%D=getelementptr inbounds i8,i8*%q,i64 24
+%E=bitcast i8*%D to i32*
+store i32 4,i32*%E,align 4
+%F=tail call fastcc i8*@_SMLFN23SMLSharp__SMLNJ__POSIX__IO11mkBinWriterE(i8*inreg%q)
+ret i8*%F
+}
+define fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE(i8*inreg%a)#1 gc"smlsharp"{
+%b=alloca i8*,align 8
+call void@llvm.gcroot(i8**%b,i8*null)#0
+store i8*%a,i8**%b,align 8
+%c=load atomic i32,i32*@sml_check_flag unordered,align 4
+%d=icmp eq i32%c,0
+br i1%d,label%f,label%e
+e:
+call void@sml_check(i32 inreg%c)
+br label%f
+f:
+%g=call i8*@sml_alloc(i32 inreg 20)#0
+%h=getelementptr inbounds i8,i8*%g,i64 -4
+%i=bitcast i8*%h to i32*
+store i32 1342177296,i32*%i,align 4
+%j=load i8*,i8**%b,align 8
+%k=bitcast i8*%g to i8**
+store i8*%j,i8**%k,align 8
+%l=getelementptr inbounds i8,i8*%g,i64 8
+%m=bitcast i8*%l to i8**
+store i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@e,i64 0,i32 2,i64 0),i8**%m,align 8
+%n=getelementptr inbounds i8,i8*%g,i64 16
+%o=bitcast i8*%n to i32*
+store i32 3,i32*%o,align 4
+%p=call fastcc i32@_SMLFN23SMLSharp__SMLNJ__POSIX__IO5openfE(i8*inreg%g)
+%q=call i8*@sml_alloc(i32 inreg 28)#0
+%r=bitcast i8*%q to i32*
+%s=getelementptr inbounds i8,i8*%q,i64 -4
+%t=bitcast i8*%s to i32*
+store i32 1342177304,i32*%t,align 4
+store i32 1,i32*%r,align 4
+%u=getelementptr inbounds i8,i8*%q,i64 4
+%v=bitcast i8*%u to i32*
+store i32 4096,i32*%v,align 4
+%w=getelementptr inbounds i8,i8*%q,i64 8
+%x=bitcast i8*%w to i32*
+store i32%p,i32*%x,align 4
+%y=getelementptr inbounds i8,i8*%q,i64 12
+%z=bitcast i8*%y to i32*
+store i32 1,i32*%z,align 4
+%A=load i8*,i8**%b,align 8
+%B=getelementptr inbounds i8,i8*%q,i64 16
+%C=bitcast i8*%B to i8**
+store i8*%A,i8**%C,align 8
+%D=getelementptr inbounds i8,i8*%q,i64 24
+%E=bitcast i8*%D to i32*
+store i32 4,i32*%E,align 4
+%F=tail call fastcc i8*@_SMLFN23SMLSharp__SMLNJ__POSIX__IO11mkBinWriterE(i8*inreg%q)
+ret i8*%F
 }
 define fastcc i32@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6PrimIO7compareE(i8*inreg%a)local_unnamed_addr#1 gc"smlsharp"{
 i:
@@ -240,150 +384,6 @@ g:
 %p=tail call fastcc i8*%m(i8*inreg%o,i8*inreg%h)
 ret i8*%p
 }
-define fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE(i8*inreg%a)#1 gc"smlsharp"{
-%b=alloca i8*,align 8
-call void@llvm.gcroot(i8**%b,i8*null)#0
-store i8*%a,i8**%b,align 8
-%c=load atomic i32,i32*@sml_check_flag unordered,align 4
-%d=icmp eq i32%c,0
-br i1%d,label%f,label%e
-e:
-call void@sml_check(i32 inreg%c)
-br label%f
-f:
-%g=call i8*@sml_alloc(i32 inreg 20)#0
-%h=getelementptr inbounds i8,i8*%g,i64 -4
-%i=bitcast i8*%h to i32*
-store i32 1342177296,i32*%i,align 4
-%j=load i8*,i8**%b,align 8
-%k=bitcast i8*%g to i8**
-store i8*%j,i8**%k,align 8
-%l=getelementptr inbounds i8,i8*%g,i64 8
-%m=bitcast i8*%l to i8**
-store i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@a,i64 0,i32 2,i64 0),i8**%m,align 8
-%n=getelementptr inbounds i8,i8*%g,i64 16
-%o=bitcast i8*%n to i32*
-store i32 3,i32*%o,align 4
-%p=call fastcc i32@_SMLFN23SMLSharp__SMLNJ__POSIX__IO5openfE(i8*inreg%g)
-%q=call i8*@sml_alloc(i32 inreg 20)#0
-%r=bitcast i8*%q to i32*
-%s=getelementptr inbounds i8,i8*%q,i64 -4
-%t=bitcast i8*%s to i32*
-store i32 1342177296,i32*%t,align 4
-store i32%p,i32*%r,align 4
-%u=getelementptr inbounds i8,i8*%q,i64 4
-%v=bitcast i8*%u to i32*
-store i32 1,i32*%v,align 4
-%w=load i8*,i8**%b,align 8
-%x=getelementptr inbounds i8,i8*%q,i64 8
-%y=bitcast i8*%x to i8**
-store i8*%w,i8**%y,align 8
-%z=getelementptr inbounds i8,i8*%q,i64 16
-%A=bitcast i8*%z to i32*
-store i32 2,i32*%A,align 4
-%B=tail call fastcc i8*@_SMLFN23SMLSharp__SMLNJ__POSIX__IO11mkBinReaderE(i8*inreg%q)
-ret i8*%B
-}
-define fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE(i8*inreg%a)#1 gc"smlsharp"{
-%b=alloca i8*,align 8
-call void@llvm.gcroot(i8**%b,i8*null)#0
-store i8*%a,i8**%b,align 8
-%c=load atomic i32,i32*@sml_check_flag unordered,align 4
-%d=icmp eq i32%c,0
-br i1%d,label%f,label%e
-e:
-call void@sml_check(i32 inreg%c)
-br label%f
-f:
-%g=call i8*@sml_alloc(i32 inreg 20)#0
-%h=getelementptr inbounds i8,i8*%g,i64 -4
-%i=bitcast i8*%h to i32*
-store i32 1342177296,i32*%i,align 4
-%j=load i8*,i8**%b,align 8
-%k=bitcast i8*%g to i8**
-store i8*%j,i8**%k,align 8
-%l=getelementptr inbounds i8,i8*%g,i64 8
-%m=bitcast i8*%l to i8**
-store i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@c,i64 0,i32 2,i64 0),i8**%m,align 8
-%n=getelementptr inbounds i8,i8*%g,i64 16
-%o=bitcast i8*%n to i32*
-store i32 3,i32*%o,align 4
-%p=call fastcc i32@_SMLFN23SMLSharp__SMLNJ__POSIX__IO5openfE(i8*inreg%g)
-%q=call i8*@sml_alloc(i32 inreg 28)#0
-%r=bitcast i8*%q to i32*
-%s=getelementptr inbounds i8,i8*%q,i64 -4
-%t=bitcast i8*%s to i32*
-store i32 1342177304,i32*%t,align 4
-store i32 0,i32*%r,align 4
-%u=getelementptr inbounds i8,i8*%q,i64 4
-%v=bitcast i8*%u to i32*
-store i32 4096,i32*%v,align 4
-%w=getelementptr inbounds i8,i8*%q,i64 8
-%x=bitcast i8*%w to i32*
-store i32%p,i32*%x,align 4
-%y=getelementptr inbounds i8,i8*%q,i64 12
-%z=bitcast i8*%y to i32*
-store i32 1,i32*%z,align 4
-%A=load i8*,i8**%b,align 8
-%B=getelementptr inbounds i8,i8*%q,i64 16
-%C=bitcast i8*%B to i8**
-store i8*%A,i8**%C,align 8
-%D=getelementptr inbounds i8,i8*%q,i64 24
-%E=bitcast i8*%D to i32*
-store i32 4,i32*%E,align 4
-%F=tail call fastcc i8*@_SMLFN23SMLSharp__SMLNJ__POSIX__IO11mkBinWriterE(i8*inreg%q)
-ret i8*%F
-}
-define fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE(i8*inreg%a)#1 gc"smlsharp"{
-%b=alloca i8*,align 8
-call void@llvm.gcroot(i8**%b,i8*null)#0
-store i8*%a,i8**%b,align 8
-%c=load atomic i32,i32*@sml_check_flag unordered,align 4
-%d=icmp eq i32%c,0
-br i1%d,label%f,label%e
-e:
-call void@sml_check(i32 inreg%c)
-br label%f
-f:
-%g=call i8*@sml_alloc(i32 inreg 20)#0
-%h=getelementptr inbounds i8,i8*%g,i64 -4
-%i=bitcast i8*%h to i32*
-store i32 1342177296,i32*%i,align 4
-%j=load i8*,i8**%b,align 8
-%k=bitcast i8*%g to i8**
-store i8*%j,i8**%k,align 8
-%l=getelementptr inbounds i8,i8*%g,i64 8
-%m=bitcast i8*%l to i8**
-store i8*getelementptr inbounds(<{[4x i8],i32,[3x i8]}>,<{[4x i8],i32,[3x i8]}>*@e,i64 0,i32 2,i64 0),i8**%m,align 8
-%n=getelementptr inbounds i8,i8*%g,i64 16
-%o=bitcast i8*%n to i32*
-store i32 3,i32*%o,align 4
-%p=call fastcc i32@_SMLFN23SMLSharp__SMLNJ__POSIX__IO5openfE(i8*inreg%g)
-%q=call i8*@sml_alloc(i32 inreg 28)#0
-%r=bitcast i8*%q to i32*
-%s=getelementptr inbounds i8,i8*%q,i64 -4
-%t=bitcast i8*%s to i32*
-store i32 1342177304,i32*%t,align 4
-store i32 1,i32*%r,align 4
-%u=getelementptr inbounds i8,i8*%q,i64 4
-%v=bitcast i8*%u to i32*
-store i32 4096,i32*%v,align 4
-%w=getelementptr inbounds i8,i8*%q,i64 8
-%x=bitcast i8*%w to i32*
-store i32%p,i32*%x,align 4
-%y=getelementptr inbounds i8,i8*%q,i64 12
-%z=bitcast i8*%y to i32*
-store i32 1,i32*%z,align 4
-%A=load i8*,i8**%b,align 8
-%B=getelementptr inbounds i8,i8*%q,i64 16
-%C=bitcast i8*%B to i8**
-store i8*%A,i8**%C,align 8
-%D=getelementptr inbounds i8,i8*%q,i64 24
-%E=bitcast i8*%D to i32*
-store i32 4,i32*%E,align 4
-%F=tail call fastcc i8*@_SMLFN23SMLSharp__SMLNJ__POSIX__IO11mkBinWriterE(i8*inreg%q)
-ret i8*%F
-}
 define fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO8mkReaderE(i8*inreg%a)local_unnamed_addr#1 gc"smlsharp"{
 i:
 %b=alloca i8*,align 8
@@ -430,15 +430,15 @@ g:
 %p=tail call fastcc i8*%m(i8*inreg%o,i8*inreg%h)
 ret i8*%p
 }
-define internal fastcc i8*@_SMLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE_51(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE_44(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openRdE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE_52(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE_45(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO6openWrE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE_53(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE_46(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN29SMLSharp__SMLNJ__PosixBinPrimIO7openAppE(i8*inreg%b)
 ret i8*%c
 }

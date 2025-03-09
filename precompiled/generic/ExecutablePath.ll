@@ -1,5 +1,5 @@
 @sml_check_flag=external local_unnamed_addr global i32
-@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32)*@_SMLFN14ExecutablePath7getPathE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN14ExecutablePath7getPathE_33 to void(...)*),i32 -2147483647}>,align 8
+@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i32)*@_SMLFN14ExecutablePath7getPathE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN14ExecutablePath7getPathE_33 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN14ExecutablePath7getPathE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*)
 @_SML_ftab79d121494e8ef456_ExecutablePath=external global i8
 @b=internal unnamed_addr global i1 false
@@ -72,7 +72,7 @@ call void@sml_unsave()#0
 %A=call i8*@sml_unsave_exn(i8*inreg%z)#0
 resume{i8*,i8*}%y
 }
-define internal fastcc i8*@_SMLLN14ExecutablePath7getPathE_33(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN14ExecutablePath7getPathE_33(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN14ExecutablePath7getPathE(i32 inreg undef)
 ret i8*%c
 }

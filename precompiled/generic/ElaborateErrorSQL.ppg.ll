@@ -195,7 +195,7 @@
 @_SMLZN17ElaborateErrorSQL13AppInSQLQueryE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL75,i64 0,i32 2)to i8*)
 @_SMLZN17ElaborateErrorSQL15TupleInSQLQueryE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL78,i64 0,i32 2)to i8*)
 @_SMLZN17ElaborateErrorSQL11NegNotUnaryE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL81,i64 0,i32 2)to i8*)
-@_SML_ftab0438e3dcc01b41bd_ElaborateErrorSQL_ppg=external global i8
+@_SML_ftabdb294f1d9e8d1d62_ElaborateErrorSQL_ppg=external global i8
 @b9=private unnamed_addr global i8 0
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
@@ -206,13 +206,13 @@ declare void@sml_start(i8*inreg)local_unnamed_addr#0
 declare void@sml_write(i8*inreg,i8**inreg,i8*inreg)local_unnamed_addr#0
 declare i8*@_SMLFN11RecordLabel12format__labelE(i8*inreg)local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_main6ad4d8e473c26a9c_BasicFormatters()local_unnamed_addr#1 gc"smlsharp"
-declare void@_SML_main60e750412e2bb4fe_RecordLabel()local_unnamed_addr#1 gc"smlsharp"
+declare void@_SML_maina142c315f12317c0_RecordLabel()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*)local_unnamed_addr
-declare void@_SML_load60e750412e2bb4fe_RecordLabel(i8*)local_unnamed_addr
-define private void@_SML_tabb0438e3dcc01b41bd_ElaborateErrorSQL_ppg()#2{
+declare void@_SML_loada142c315f12317c0_RecordLabel(i8*)local_unnamed_addr
+define private void@_SML_tabbdb294f1d9e8d1d62_ElaborateErrorSQL_ppg()#2{
 unreachable
 }
-define void@_SML_load0438e3dcc01b41bd_ElaborateErrorSQL_ppg(i8*%a)local_unnamed_addr#0{
+define void@_SML_loaddb294f1d9e8d1d62_ElaborateErrorSQL_ppg(i8*%a)local_unnamed_addr#0{
 %b=load i8,i8*@b9,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
@@ -221,11 +221,11 @@ ret void
 e:
 store i8 1,i8*@b9,align 1
 tail call void@_SML_load6ad4d8e473c26a9c_BasicFormatters(i8*%a)#0
-tail call void@_SML_load60e750412e2bb4fe_RecordLabel(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb0438e3dcc01b41bd_ElaborateErrorSQL_ppg,i8*@_SML_ftab0438e3dcc01b41bd_ElaborateErrorSQL_ppg,i8*null)#0
+tail call void@_SML_loada142c315f12317c0_RecordLabel(i8*%a)#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabbdb294f1d9e8d1d62_ElaborateErrorSQL_ppg,i8*@_SML_ftabdb294f1d9e8d1d62_ElaborateErrorSQL_ppg,i8*null)#0
 ret void
 }
-define void@_SML_main0438e3dcc01b41bd_ElaborateErrorSQL_ppg()local_unnamed_addr#1 gc"smlsharp"{
+define void@_SML_maindb294f1d9e8d1d62_ElaborateErrorSQL_ppg()local_unnamed_addr#1 gc"smlsharp"{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -238,7 +238,7 @@ ret void
 h:
 store i8 3,i8*@b9,align 1
 tail call void@_SML_main6ad4d8e473c26a9c_BasicFormatters()#1
-tail call void@_SML_main60e750412e2bb4fe_RecordLabel()#1
+tail call void@_SML_maina142c315f12317c0_RecordLabel()#1
 call void@llvm.gcroot(i8**%b,i8*null)#0
 call void@llvm.gcroot(i8**%c,i8*null)#0
 %i=bitcast[3x i8*]*%a to i8*
@@ -268,10 +268,10 @@ store i8*null,i8**%c,align 8
 store i8*%v,i8**%w,align 8
 %x=getelementptr inbounds i8,i8*%s,i64 8
 %y=bitcast i8*%x to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_117 to void(...)*),void(...)**%y,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_117 to void(...)*),void(...)**%y,align 8
 %z=getelementptr inbounds i8,i8*%s,i64 16
 %A=bitcast i8*%z to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_117 to void(...)*),void(...)**%A,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_117 to void(...)*),void(...)**%A,align 8
 %B=getelementptr inbounds i8,i8*%s,i64 24
 %C=bitcast i8*%B to i32*
 store i32 -2147483647,i32*%C,align 4
@@ -303,10 +303,10 @@ store i8*null,i8**%c,align 8
 store i8*%R,i8**%S,align 8
 %T=getelementptr inbounds i8,i8*%O,i64 8
 %U=bitcast i8*%T to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_153 to void(...)*),void(...)**%U,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_153 to void(...)*),void(...)**%U,align 8
 %V=getelementptr inbounds i8,i8*%O,i64 16
 %W=bitcast i8*%V to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_153 to void(...)*),void(...)**%W,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_153 to void(...)*),void(...)**%W,align 8
 %X=getelementptr inbounds i8,i8*%O,i64 24
 %Y=bitcast i8*%X to i32*
 store i32 -2147483647,i32*%Y,align 4
@@ -338,10 +338,10 @@ store i8*null,i8**%c,align 8
 store i8*%an,i8**%ao,align 8
 %ap=getelementptr inbounds i8,i8*%ak,i64 8
 %aq=bitcast i8*%ap to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_189 to void(...)*),void(...)**%aq,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_189 to void(...)*),void(...)**%aq,align 8
 %ar=getelementptr inbounds i8,i8*%ak,i64 16
 %as=bitcast i8*%ar to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_189 to void(...)*),void(...)**%as,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_189 to void(...)*),void(...)**%as,align 8
 %at=getelementptr inbounds i8,i8*%ak,i64 24
 %au=bitcast i8*%at to i32*
 store i32 -2147483647,i32*%au,align 4
@@ -373,10 +373,10 @@ store i8*null,i8**%c,align 8
 store i8*%aJ,i8**%aK,align 8
 %aL=getelementptr inbounds i8,i8*%aG,i64 8
 %aM=bitcast i8*%aL to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_225 to void(...)*),void(...)**%aM,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_225 to void(...)*),void(...)**%aM,align 8
 %aN=getelementptr inbounds i8,i8*%aG,i64 16
 %aO=bitcast i8*%aN to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_225 to void(...)*),void(...)**%aO,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_225 to void(...)*),void(...)**%aO,align 8
 %aP=getelementptr inbounds i8,i8*%aG,i64 24
 %aQ=bitcast i8*%aP to i32*
 store i32 -2147483647,i32*%aQ,align 4
@@ -408,10 +408,10 @@ store i8*null,i8**%c,align 8
 store i8*%a5,i8**%a6,align 8
 %a7=getelementptr inbounds i8,i8*%a2,i64 8
 %a8=bitcast i8*%a7 to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_284 to void(...)*),void(...)**%a8,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_284 to void(...)*),void(...)**%a8,align 8
 %a9=getelementptr inbounds i8,i8*%a2,i64 16
 %ba=bitcast i8*%a9 to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_284 to void(...)*),void(...)**%ba,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_284 to void(...)*),void(...)**%ba,align 8
 %bb=getelementptr inbounds i8,i8*%a2,i64 24
 %bc=bitcast i8*%bb to i32*
 store i32 -2147483647,i32*%bc,align 4
@@ -443,10 +443,10 @@ store i8*null,i8**%c,align 8
 store i8*%br,i8**%bs,align 8
 %bt=getelementptr inbounds i8,i8*%bo,i64 8
 %bu=bitcast i8*%bt to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_320 to void(...)*),void(...)**%bu,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_320 to void(...)*),void(...)**%bu,align 8
 %bv=getelementptr inbounds i8,i8*%bo,i64 16
 %bw=bitcast i8*%bv to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_320 to void(...)*),void(...)**%bw,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_320 to void(...)*),void(...)**%bw,align 8
 %bx=getelementptr inbounds i8,i8*%bo,i64 24
 %by=bitcast i8*%bx to i32*
 store i32 -2147483647,i32*%by,align 4
@@ -478,10 +478,10 @@ store i8*null,i8**%c,align 8
 store i8*%bN,i8**%bO,align 8
 %bP=getelementptr inbounds i8,i8*%bK,i64 8
 %bQ=bitcast i8*%bP to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_379 to void(...)*),void(...)**%bQ,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_379 to void(...)*),void(...)**%bQ,align 8
 %bR=getelementptr inbounds i8,i8*%bK,i64 16
 %bS=bitcast i8*%bR to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_379 to void(...)*),void(...)**%bS,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_379 to void(...)*),void(...)**%bS,align 8
 %bT=getelementptr inbounds i8,i8*%bK,i64 24
 %bU=bitcast i8*%bT to i32*
 store i32 -2147483647,i32*%bU,align 4
@@ -513,10 +513,10 @@ store i8*null,i8**%c,align 8
 store i8*%b9,i8**%ca,align 8
 %cb=getelementptr inbounds i8,i8*%b6,i64 8
 %cc=bitcast i8*%cb to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_438 to void(...)*),void(...)**%cc,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_438 to void(...)*),void(...)**%cc,align 8
 %cd=getelementptr inbounds i8,i8*%b6,i64 16
 %ce=bitcast i8*%cd to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_438 to void(...)*),void(...)**%ce,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_438 to void(...)*),void(...)**%ce,align 8
 %cf=getelementptr inbounds i8,i8*%b6,i64 24
 %cg=bitcast i8*%cf to i32*
 store i32 -2147483647,i32*%cg,align 4
@@ -548,10 +548,10 @@ store i8*null,i8**%c,align 8
 store i8*%cv,i8**%cw,align 8
 %cx=getelementptr inbounds i8,i8*%cs,i64 8
 %cy=bitcast i8*%cx to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_488 to void(...)*),void(...)**%cy,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_488 to void(...)*),void(...)**%cy,align 8
 %cz=getelementptr inbounds i8,i8*%cs,i64 16
 %cA=bitcast i8*%cz to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_488 to void(...)*),void(...)**%cA,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_488 to void(...)*),void(...)**%cA,align 8
 %cB=getelementptr inbounds i8,i8*%cs,i64 24
 %cC=bitcast i8*%cB to i32*
 store i32 -2147483647,i32*%cC,align 4
@@ -582,10 +582,10 @@ store i32 1342177304,i32*%cQ,align 4
 store i8*%cR,i8**%cS,align 8
 %cT=getelementptr inbounds i8,i8*%cO,i64 8
 %cU=bitcast i8*%cT to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_547 to void(...)*),void(...)**%cU,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_547 to void(...)*),void(...)**%cU,align 8
 %cV=getelementptr inbounds i8,i8*%cO,i64 16
 %cW=bitcast i8*%cV to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN17ElaborateErrorSQL6formatE_547 to void(...)*),void(...)**%cW,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN17ElaborateErrorSQL6formatE_547 to void(...)*),void(...)**%cW,align 8
 %cX=getelementptr inbounds i8,i8*%cO,i64 24
 %cY=bitcast i8*%cX to i32*
 store i32 -2147483647,i32*%cY,align 4
@@ -595,7 +595,7 @@ call void@sml_write(i8*inreg%cZ,i8**inreg%c0,i8*inreg%cO)#0
 call void@sml_end()#0
 ret void
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_117(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_117(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -785,7 +785,7 @@ a5:
 %be=tail call fastcc i8*%bb(i8*inreg%bd,i8*inreg%j)
 ret i8*%be
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_153(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_153(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -975,7 +975,7 @@ a5:
 %be=tail call fastcc i8*%bb(i8*inreg%bd,i8*inreg%j)
 ret i8*%be
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_189(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_189(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -1165,7 +1165,7 @@ a5:
 %be=tail call fastcc i8*%bb(i8*inreg%bd,i8*inreg%j)
 ret i8*%be
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_225(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_225(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -1355,7 +1355,7 @@ a5:
 %be=tail call fastcc i8*%bb(i8*inreg%bd,i8*inreg%j)
 ret i8*%be
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_284(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_284(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -1390,7 +1390,7 @@ p:
 %y=tail call fastcc i8*%v(i8*inreg%x,i8*inreg%j)
 ret i8*%y
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_320(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_320(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -1580,7 +1580,7 @@ a5:
 %be=tail call fastcc i8*%bb(i8*inreg%bd,i8*inreg%j)
 ret i8*%be
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_379(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_379(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -1615,7 +1615,7 @@ p:
 %y=tail call fastcc i8*%v(i8*inreg%x,i8*inreg%j)
 ret i8*%y
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_438(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_438(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -1650,7 +1650,7 @@ p:
 %y=tail call fastcc i8*%v(i8*inreg%x,i8*inreg%j)
 ret i8*%y
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_488(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_488(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -1685,7 +1685,7 @@ p:
 %y=tail call fastcc i8*%v(i8*inreg%x,i8*inreg%j)
 ret i8*%y
 }
-define internal fastcc i8*@_SMLLN17ElaborateErrorSQL6formatE_547(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN17ElaborateErrorSQL6formatE_547(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8

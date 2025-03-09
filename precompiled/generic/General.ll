@@ -2,10 +2,10 @@
 @a=private unnamed_addr constant<{[4x i8],i32,[13x i8]}><{[4x i8]zeroinitializer,i32 -2147483635,[13x i8]c"General.Span\00"}>,align 8
 @b=private unnamed_addr constant<{[4x i8],i32,i8*,i32,[4x i8],i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,[13x i8]}>,<{[4x i8],i32,[13x i8]}>*@a,i32 0,i32 0,i32 0),i32 8),i32 0,[4x i8]zeroinitializer,i32 1}>,align 8
 @_SMLDL38=private constant<{[4x i8],i32,i8*}><{[4x i8]zeroinitializer,i32 -1879048184,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*,i32,[4x i8],i32}>,<{[4x i8],i32,i8*,i32,[4x i8],i32}>*@b,i32 0,i32 0,i32 0),i32 8)}>,align 8
-@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN7General7exnNameE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN7General7exnNameE_49 to void(...)*),i32 -2147483647}>,align 8
+@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN7General7exnNameE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN7General7exnNameE_49 to void(...)*),i32 -2147483647}>,align 8
 @d=private unnamed_addr constant<{[4x i8],i32,[1x i8]}><{[4x i8]zeroinitializer,i32 -2147483647,[1x i8]zeroinitializer}>,align 8
 @e=private unnamed_addr constant<{[4x i8],i32,[39x i8]}><{[4x i8]zeroinitializer,i32 -2147483609,[39x i8]c"src/basis/main/General.sml:71.18(2421)\00"}>,align 8
-@f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN7General10exnMessageE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN7General10exnMessageE_50 to void(...)*),i32 -2147483647}>,align 8
+@f=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN7General10exnMessageE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN7General10exnMessageE_50 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN7General4SpanE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL38,i64 0,i32 2)to i8*)
 @_SMLZN7General7exnNameE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c,i64 0,i32 2)to i8*)
 @_SMLZN7General10exnMessageE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@f,i64 0,i32 2)to i8*)
@@ -40,89 +40,89 @@ define fastcc i8*@_SMLFN7General7exnNameE(i8*inreg%a)#3 gc"smlsharp"{
 ret i8*%e
 }
 define fastcc i8*@_SMLFN7General10exnMessageE(i8*inreg%a)#4 gc"smlsharp"personality i32(...)*@sml_personality{
-J:
+N:
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
 call void@llvm.gcroot(i8**%b,i8*null)#0
 call void@llvm.gcroot(i8**%c,i8*null)#0
 call void@llvm.gcroot(i8**%d,i8*null)#0
-store i8*%a,i8**%b,align 8
 %e=bitcast i8*%a to i8***
 %f=load i8**,i8***%e,align 8
-%g=load i8*,i8**%f,align 8
-store i8*%g,i8**%d,align 8
-%h=getelementptr inbounds i8,i8*%g,i64 8
-%i=bitcast i8*%h to i32*
-%j=load i32,i32*%i,align 4
-%k=icmp eq i32%j,0
-%l=bitcast i8*%g to i32**
-br i1%k,label%H,label%m
-m:
-%n=and i32%j,1
-%o=icmp eq i32%n,0
-br i1%o,label%A,label%p
-p:
-%q=getelementptr inbounds i8,i8*%a,i64 -4
-%r=bitcast i8*%q to i32*
-%s=load i32,i32*%r,align 4
-%t=and i32%s,268435455
-%u=add nsw i32%t,-8
-%v=sext i32%u to i64
-%w=getelementptr inbounds i8,i8*%a,i64%v
-%x=bitcast i8*%w to i8**
-%y=load i8*,i8**%x,align 8
-%z=and i32%j,-2
-br label%A
-A:
-%B=phi i32[%z,%p],[%j,%m]
-%C=phi i8*[%y,%p],[%a,%m]
-%D=sext i32%B to i64
-%E=getelementptr inbounds i8,i8*%C,i64%D
-%F=bitcast i8*%E to i32**
-%G=load i32*,i32**%F,align 8
-br label%H
-H:
-%I=phi i32*[%G,%A],[bitcast(i8*getelementptr inbounds(<{[4x i8],i32,[1x i8]}>,<{[4x i8],i32,[1x i8]}>*@d,i64 0,i32 2,i64 0)to i32*),%J]
-%K=bitcast i8**%c to i32**
-store i32*%I,i32**%K,align 8
-%L=load i32*,i32**%l,align 8
-%M=getelementptr inbounds i32,i32*%L,i64 -1
-%N=load i32,i32*%M,align 4
-%O=and i32%N,268435455
-%P=add nsw i32%O,-1
-%Q=getelementptr inbounds i32,i32*%I,i64 -1
+%g=getelementptr inbounds i8,i8*%a,i64 8
+%h=bitcast i8*%g to i8**
+%i=load i8*,i8**%h,align 8
+store i8*%i,i8**%b,align 8
+%j=load i8*,i8**%f,align 8
+%k=bitcast i8*%j to i8**
+%l=load i8*,i8**%k,align 8
+store i8*%l,i8**%c,align 8
+%m=getelementptr inbounds i8,i8*%j,i64 8
+%n=bitcast i8*%m to i32*
+%o=load i32,i32*%n,align 4
+%p=icmp eq i32%o,0
+br i1%p,label%L,label%q
+q:
+%r=and i32%o,1
+%s=icmp eq i32%r,0
+br i1%s,label%E,label%t
+t:
+%u=getelementptr inbounds i8,i8*%a,i64 -4
+%v=bitcast i8*%u to i32*
+%w=load i32,i32*%v,align 4
+%x=and i32%w,268435455
+%y=add nsw i32%x,-8
+%z=sext i32%y to i64
+%A=getelementptr inbounds i8,i8*%a,i64%z
+%B=bitcast i8*%A to i8**
+%C=load i8*,i8**%B,align 8
+%D=and i32%o,-2
+br label%E
+E:
+%F=phi i32[%D,%t],[%o,%q]
+%G=phi i8*[%C,%t],[%a,%q]
+%H=sext i32%F to i64
+%I=getelementptr inbounds i8,i8*%G,i64%H
+%J=bitcast i8*%I to i32**
+%K=load i32*,i32**%J,align 8
+br label%L
+L:
+%M=phi i32*[%K,%E],[bitcast(i8*getelementptr inbounds(<{[4x i8],i32,[1x i8]}>,<{[4x i8],i32,[1x i8]}>*@d,i64 0,i32 2,i64 0)to i32*),%N]
+%O=bitcast i8**%d to i32**
+store i32*%M,i32**%O,align 8
+%P=getelementptr inbounds i8,i8*%l,i64 -4
+%Q=bitcast i8*%P to i32*
 %R=load i32,i32*%Q,align 4
 %S=and i32%R,268435455
 %T=add nsw i32%S,-1
-%U=getelementptr inbounds i8,i8*%a,i64 8
-%V=bitcast i8*%U to i32**
-%W=load i32*,i32**%V,align 8
-%X=getelementptr inbounds i32,i32*%W,i64 -1
-%Y=load i32,i32*%X,align 4
-%Z=and i32%Y,268435455
-%aa=add nsw i32%Z,-1
-%ab=icmp ne i32%T,0
-%ac=select i1%ab,i32 6,i32 4
-%ad=add nsw i32%T,%P
-%ae=add nsw i32%ad,%aa
-%af=add nsw i32%ae,%ac
-%ag=icmp ugt i32%af,268435454
-br i1%ag,label%ar,label%ah
-ah:
-%ai=add nsw i32%af,1
-%aj=call i8*@sml_alloc(i32 inreg%ai)#0
-%ak=getelementptr inbounds i8,i8*%aj,i64 -4
-%al=bitcast i8*%ak to i32*
-store i32%ai,i32*%al,align 4
-%am=sext i32%af to i64
-%an=getelementptr inbounds i8,i8*%aj,i64%am
-store i8 0,i8*%an,align 1
-%ao=bitcast i8**%d to i8***
-%ap=load i8**,i8***%ao,align 8
-%aq=load i8*,i8**%ap,align 8
-call void@llvm.memcpy.p0i8.p0i8.i32(i8*%aj,i8*%aq,i32%P,i1 false)
-br i1%ab,label%aJ,label%aT
+%U=getelementptr inbounds i32,i32*%M,i64 -1
+%V=load i32,i32*%U,align 4
+%W=and i32%V,268435455
+%X=add nsw i32%W,-1
+%Y=getelementptr inbounds i8,i8*%i,i64 -4
+%Z=bitcast i8*%Y to i32*
+%aa=load i32,i32*%Z,align 4
+%ab=and i32%aa,268435455
+%ac=add nsw i32%ab,-1
+%ad=icmp ne i32%X,0
+%ae=select i1%ad,i32 6,i32 4
+%af=add nsw i32%X,%T
+%ag=add nsw i32%af,%ac
+%ah=add nsw i32%ag,%ae
+%ai=icmp ugt i32%ah,268435454
+br i1%ai,label%ar,label%aj
+aj:
+%ak=add nsw i32%ah,1
+%al=call i8*@sml_alloc(i32 inreg%ak)#0
+%am=getelementptr inbounds i8,i8*%al,i64 -4
+%an=bitcast i8*%am to i32*
+store i32%ak,i32*%an,align 4
+%ao=sext i32%ah to i64
+%ap=getelementptr inbounds i8,i8*%al,i64%ao
+store i8 0,i8*%ap,align 1
+%aq=load i8*,i8**%c,align 8
+call void@llvm.memcpy.p0i8.p0i8.i32(i8*%al,i8*%aq,i32%T,i1 false)
+br i1%ad,label%aJ,label%aT
 ar:
 store i8*null,i8**%c,align 8
 store i8*null,i8**%d,align 8
@@ -156,54 +156,51 @@ store i8*%aH,i8**%aI,align 8
 call void@sml_raise(i8*inreg%aC)#1
 unreachable
 aJ:
-%aK=sext i32%P to i64
-%aL=getelementptr inbounds i8,i8*%aj,i64%aK
+%aK=sext i32%T to i64
+%aL=getelementptr inbounds i8,i8*%al,i64%aK
 store i8 58,i8*%aL,align 1
-%aM=zext i32%O to i64
-%aN=getelementptr inbounds i8,i8*%aj,i64%aM
+%aM=zext i32%S to i64
+%aN=getelementptr inbounds i8,i8*%al,i64%aM
 store i8 32,i8*%aN,align 1
-%aO=add nuw nsw i32%O,1
-%aP=load i8*,i8**%c,align 8
+%aO=add nuw nsw i32%S,1
+%aP=load i8*,i8**%d,align 8
 %aQ=zext i32%aO to i64
-%aR=getelementptr inbounds i8,i8*%aj,i64%aQ
-call void@llvm.memcpy.p0i8.p0i8.i32(i8*%aR,i8*%aP,i32%T,i1 false)
-%aS=add nuw nsw i32%S,%O
+%aR=getelementptr inbounds i8,i8*%al,i64%aQ
+call void@llvm.memcpy.p0i8.p0i8.i32(i8*%aR,i8*%aP,i32%X,i1 false)
+%aS=add nuw nsw i32%W,%S
 br label%aT
 aT:
-%aU=phi i32[%aS,%aJ],[%P,%ah]
+%aU=phi i32[%aS,%aJ],[%T,%aj]
 %aV=sext i32%aU to i64
-%aW=getelementptr inbounds i8,i8*%aj,i64%aV
+%aW=getelementptr inbounds i8,i8*%al,i64%aV
 store i8 32,i8*%aW,align 1
 %aX=add nsw i32%aU,1
 %aY=sext i32%aX to i64
-%aZ=getelementptr inbounds i8,i8*%aj,i64%aY
+%aZ=getelementptr inbounds i8,i8*%al,i64%aY
 store i8 97,i8*%aZ,align 1
 %a0=add nsw i32%aU,2
 %a1=sext i32%a0 to i64
-%a2=getelementptr inbounds i8,i8*%aj,i64%a1
+%a2=getelementptr inbounds i8,i8*%al,i64%a1
 store i8 116,i8*%a2,align 1
 %a3=add nsw i32%aU,3
 %a4=sext i32%a3 to i64
-%a5=getelementptr inbounds i8,i8*%aj,i64%a4
+%a5=getelementptr inbounds i8,i8*%al,i64%a4
 store i8 32,i8*%a5,align 1
 %a6=add nsw i32%aU,4
 %a7=load i8*,i8**%b,align 8
-%a8=getelementptr inbounds i8,i8*%a7,i64 8
-%a9=bitcast i8*%a8 to i8**
-%ba=load i8*,i8**%a9,align 8
-%bb=sext i32%a6 to i64
-%bc=getelementptr inbounds i8,i8*%aj,i64%bb
-call void@llvm.memcpy.p0i8.p0i8.i32(i8*%bc,i8*%ba,i32%aa,i1 false)
-ret i8*%aj
+%a8=sext i32%a6 to i64
+%a9=getelementptr inbounds i8,i8*%al,i64%a8
+call void@llvm.memcpy.p0i8.p0i8.i32(i8*%a9,i8*%a7,i32%ac,i1 false)
+ret i8*%al
 }
-define internal fastcc i8*@_SMLLN7General7exnNameE_49(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN7General7exnNameE_49(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
 %c=bitcast i8*%b to i8****
 %d=load i8***,i8****%c,align 8
 %e=load i8**,i8***%d,align 8
 %f=load i8*,i8**%e,align 8
 ret i8*%f
 }
-define internal fastcc i8*@_SMLLN7General10exnMessageE_50(i8*inreg%a,i8*inreg%b)#4 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN7General10exnMessageE_50(i8*inreg%a,i8*inreg%b)#4 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN7General10exnMessageE(i8*inreg%b)
 ret i8*%c
 }

@@ -1,54 +1,53 @@
 @sml_check_flag=external local_unnamed_addr global i32
 @_SMLZN1__11BinaryMapFnE=external local_unnamed_addr global i8*
-@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL28 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL75 to void(...)*),i32 -2147483647}>,align 8
-@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i8*)*@_SMLLL30 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL76 to void(...)*),i32 -2147483647}>,align 8
-@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i8*)*@_SMLFN8OPrimOrd7compareE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN8OPrimOrd7compareE_77 to void(...)*),i32 -2147483647}>,align 8
-@_SMLZN8OPrimOrd7compareE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c,i64 0,i32 2)to i8*)
-@_SML_gvar7348eea1b328a903_OPrimMap=private global<{[4x i8],i32,[41x i8*]}><{[4x i8]zeroinitializer,i32 -1342176952,[41x i8*]zeroinitializer}>,align 8
-@d=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@d to i64))]
-@_SML_ftab7348eea1b328a903_OPrimMap=external global i8
-@e=private unnamed_addr global i8 0
-@_SMLZN8OPrimMap3allE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 0)
-@_SMLZN8OPrimMap4alliE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 1)
-@_SMLZN8OPrimMap3appE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 2)
-@_SMLZN8OPrimMap4appiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 3)
-@_SMLZN8OPrimMap7collateE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 4)
-@_SMLZN8OPrimMap5emptyE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 5)
-@_SMLZN8OPrimMap6existsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 6)
-@_SMLZN8OPrimMap7existsiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 7)
-@_SMLZN8OPrimMap6filterE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 8)
-@_SMLZN8OPrimMap7filteriE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 9)
-@_SMLZN8OPrimMap4findE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 10)
-@_SMLZN8OPrimMap5firstE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 11)
-@_SMLZN8OPrimMap6firstiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 12)
-@_SMLZN8OPrimMap5foldlE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 13)
-@_SMLZN8OPrimMap6foldliE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 14)
-@_SMLZN8OPrimMap5foldrE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 15)
-@_SMLZN8OPrimMap6foldriE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 16)
-@_SMLZN8OPrimMap8inDomainE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 17)
-@_SMLZN8OPrimMap6insertE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 18)
-@_SMLZN8OPrimMap7insert_GE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 19)
-@_SMLZN8OPrimMap10insertWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 20)
-@_SMLZN8OPrimMap11insertWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 21)
-@_SMLZN8OPrimMap13intersectWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 22)
-@_SMLZN8OPrimMap14intersectWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 23)
-@_SMLZN8OPrimMap7isEmptyE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 24)
-@_SMLZN8OPrimMap9listItemsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 25)
-@_SMLZN8OPrimMap10listItemsiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 26)
-@_SMLZN8OPrimMap8listKeysE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 27)
-@_SMLZN8OPrimMap6lookupE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 28)
-@_SMLZN8OPrimMap3mapE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 29)
-@_SMLZN8OPrimMap10mapPartialE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 30)
-@_SMLZN8OPrimMap11mapPartialiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 31)
-@_SMLZN8OPrimMap4mapiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 32)
-@_SMLZN8OPrimMap9mergeWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 33)
-@_SMLZN8OPrimMap10mergeWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 34)
-@_SMLZN8OPrimMap8numItemsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 35)
-@_SMLZN8OPrimMap6removeE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 36)
-@_SMLZN8OPrimMap9singletonE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 37)
-@_SMLZN8OPrimMap9unionWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 38)
-@_SMLZN8OPrimMap10unionWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 39)
-@_SMLZN8OPrimMap3Key7compareE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i32 0,i32 2,i32 40)
+@a=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i32(i8*)*@_SMLFN8OPrimOrd7compareE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN8OPrimOrd7compareE_73 to void(...)*),i32 -2147483647}>,align 8
+@b=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL30 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL74 to void(...)*),i32 -2147483647}>,align 8
+@_SMLZN8OPrimOrd7compareE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*)
+@_SML_gvar6045ad4d264a7590_OPrimMap=private global<{[4x i8],i32,[41x i8*]}><{[4x i8]zeroinitializer,i32 -1342176952,[41x i8*]zeroinitializer}>,align 8
+@c=private unnamed_addr global[2x i64][i64 1,i64 sub(i64 ptrtoint(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 0)to i64),i64 ptrtoint([2x i64]*@c to i64))]
+@_SML_ftab6045ad4d264a7590_OPrimMap=external global i8
+@d=private unnamed_addr global i8 0
+@_SMLZN8OPrimMap3allE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 0)
+@_SMLZN8OPrimMap4alliE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 1)
+@_SMLZN8OPrimMap3appE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 2)
+@_SMLZN8OPrimMap4appiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 3)
+@_SMLZN8OPrimMap7collateE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 4)
+@_SMLZN8OPrimMap5emptyE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 5)
+@_SMLZN8OPrimMap6existsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 6)
+@_SMLZN8OPrimMap7existsiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 7)
+@_SMLZN8OPrimMap6filterE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 8)
+@_SMLZN8OPrimMap7filteriE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 9)
+@_SMLZN8OPrimMap4findE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 10)
+@_SMLZN8OPrimMap5firstE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 11)
+@_SMLZN8OPrimMap6firstiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 12)
+@_SMLZN8OPrimMap5foldlE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 13)
+@_SMLZN8OPrimMap6foldliE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 14)
+@_SMLZN8OPrimMap5foldrE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 15)
+@_SMLZN8OPrimMap6foldriE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 16)
+@_SMLZN8OPrimMap8inDomainE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 17)
+@_SMLZN8OPrimMap6insertE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 18)
+@_SMLZN8OPrimMap7insert_GE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 19)
+@_SMLZN8OPrimMap10insertWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 20)
+@_SMLZN8OPrimMap11insertWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 21)
+@_SMLZN8OPrimMap13intersectWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 22)
+@_SMLZN8OPrimMap14intersectWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 23)
+@_SMLZN8OPrimMap7isEmptyE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 24)
+@_SMLZN8OPrimMap9listItemsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 25)
+@_SMLZN8OPrimMap10listItemsiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 26)
+@_SMLZN8OPrimMap8listKeysE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 27)
+@_SMLZN8OPrimMap6lookupE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 28)
+@_SMLZN8OPrimMap3mapE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 29)
+@_SMLZN8OPrimMap10mapPartialE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 30)
+@_SMLZN8OPrimMap11mapPartialiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 31)
+@_SMLZN8OPrimMap4mapiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 32)
+@_SMLZN8OPrimMap9mergeWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 33)
+@_SMLZN8OPrimMap10mergeWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 34)
+@_SMLZN8OPrimMap8numItemsE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 35)
+@_SMLZN8OPrimMap6removeE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 36)
+@_SMLZN8OPrimMap9singletonE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 37)
+@_SMLZN8OPrimMap9unionWithE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 38)
+@_SMLZN8OPrimMap10unionWithiE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 39)
+@_SMLZN8OPrimMap3Key7compareE=alias i8*,getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i32 0,i32 2,i32 40)
 declare void@llvm.gcroot(i8**,i8*)#0
 declare i8*@sml_alloc(i32 inreg)local_unnamed_addr#0
 declare void@sml_check(i32 inreg)local_unnamed_addr
@@ -59,39 +58,39 @@ declare void@sml_save_exn(i8*inreg)local_unnamed_addr#0
 declare void@sml_start(i8*inreg)local_unnamed_addr#0
 declare void@sml_write(i8*inreg,i8**inreg,i8*inreg)local_unnamed_addr#0
 declare i32@_SMLFN7OPrimID7compareE(i8*inreg)local_unnamed_addr#1 gc"smlsharp"
-declare void@_SML_main7374574ddb619c6a_LocalID()local_unnamed_addr#1 gc"smlsharp"
+declare void@_SML_main22c101bff228a4a9_LocalID()local_unnamed_addr#1 gc"smlsharp"
 declare void@_SML_main5bfd1d1579faec9b_binary_map_fn()local_unnamed_addr#1 gc"smlsharp"
-declare void@_SML_load7374574ddb619c6a_LocalID(i8*)local_unnamed_addr
+declare void@_SML_load22c101bff228a4a9_LocalID(i8*)local_unnamed_addr
 declare void@_SML_load5bfd1d1579faec9b_binary_map_fn(i8*)local_unnamed_addr
-define private void@_SML_tabb7348eea1b328a903_OPrimMap()#2{
+define private void@_SML_tabb6045ad4d264a7590_OPrimMap()#2{
 unreachable
 }
-define void@_SML_load7348eea1b328a903_OPrimMap(i8*%a)local_unnamed_addr#0{
-%b=load i8,i8*@e,align 1
+define void@_SML_load6045ad4d264a7590_OPrimMap(i8*%a)local_unnamed_addr#0{
+%b=load i8,i8*@d,align 1
 %c=icmp eq i8%b,0
 br i1%c,label%e,label%d
 d:
 ret void
 e:
-store i8 1,i8*@e,align 1
-tail call void@_SML_load7374574ddb619c6a_LocalID(i8*%a)#0
+store i8 1,i8*@d,align 1
+tail call void@_SML_load22c101bff228a4a9_LocalID(i8*%a)#0
 tail call void@_SML_load5bfd1d1579faec9b_binary_map_fn(i8*%a)#0
-tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb7348eea1b328a903_OPrimMap,i8*@_SML_ftab7348eea1b328a903_OPrimMap,i8*bitcast([2x i64]*@d to i8*))#0
+tail call void@sml_gcroot(i8*%a,void()*@_SML_tabb6045ad4d264a7590_OPrimMap,i8*@_SML_ftab6045ad4d264a7590_OPrimMap,i8*bitcast([2x i64]*@c to i8*))#0
 ret void
 }
-define void@_SML_main7348eea1b328a903_OPrimMap()local_unnamed_addr#1 gc"smlsharp"personality i32(...)*@sml_personality{
+define void@_SML_main6045ad4d264a7590_OPrimMap()local_unnamed_addr#1 gc"smlsharp"personality i32(...)*@sml_personality{
 %a=alloca[3x i8*],align 8
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
-%d=load i8,i8*@e,align 1
+%d=load i8,i8*@d,align 1
 %e=and i8%d,2
 %f=icmp eq i8%e,0
 br i1%f,label%h,label%g
 g:
 ret void
 h:
-store i8 3,i8*@e,align 1
-tail call void@_SML_main7374574ddb619c6a_LocalID()#1
+store i8 3,i8*@d,align 1
+tail call void@_SML_main22c101bff228a4a9_LocalID()#1
 tail call void@_SML_main5bfd1d1579faec9b_binary_map_fn()#1
 call void@llvm.gcroot(i8**%b,i8*null)#0
 call void@llvm.gcroot(i8**%c,i8*null)#0
@@ -136,7 +135,7 @@ E:
 %H=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%G,align 8
 %I=bitcast i8*%D to i8**
 %J=load i8*,i8**%I,align 8
-%K=invoke fastcc i8*%H(i8*inreg%J,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*))
+%K=invoke fastcc i8*%H(i8*inreg%J,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*))
 to label%L unwind label%b1
 L:
 %M=getelementptr inbounds i8,i8*%K,i64 16
@@ -144,172 +143,172 @@ L:
 %O=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%N,align 8
 %P=bitcast i8*%K to i8**
 %Q=load i8*,i8**%P,align 8
-%R=invoke fastcc i8*%O(i8*inreg%Q,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@b,i64 0,i32 2)to i8*))
+%R=invoke fastcc i8*%O(i8*inreg%Q,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@a,i64 0,i32 2)to i8*))
 to label%S unwind label%b1
 S:
-%T=getelementptr inbounds i8,i8*%R,i64 8
-%U=bitcast i8*%T to i8**
-%V=load i8*,i8**%U,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0),i8*inreg%V)#0
-%W=getelementptr inbounds i8,i8*%R,i64 16
-%X=bitcast i8*%W to i8**
-%Y=load i8*,i8**%X,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 1),i8*inreg%Y)#0
-%Z=getelementptr inbounds i8,i8*%R,i64 24
-%aa=bitcast i8*%Z to i8**
-%ab=load i8*,i8**%aa,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 2),i8*inreg%ab)#0
-%ac=getelementptr inbounds i8,i8*%R,i64 32
-%ad=bitcast i8*%ac to i8**
-%ae=load i8*,i8**%ad,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 3),i8*inreg%ae)#0
-%af=getelementptr inbounds i8,i8*%R,i64 40
-%ag=bitcast i8*%af to i8**
-%ah=load i8*,i8**%ag,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 4),i8*inreg%ah)#0
-%ai=getelementptr inbounds i8,i8*%R,i64 48
-%aj=bitcast i8*%ai to i8**
-%ak=load i8*,i8**%aj,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 5),i8*inreg%ak)#0
-%al=getelementptr inbounds i8,i8*%R,i64 56
-%am=bitcast i8*%al to i8**
-%an=load i8*,i8**%am,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 6),i8*inreg%an)#0
-%ao=getelementptr inbounds i8,i8*%R,i64 64
-%ap=bitcast i8*%ao to i8**
-%aq=load i8*,i8**%ap,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 7),i8*inreg%aq)#0
-%ar=getelementptr inbounds i8,i8*%R,i64 72
-%as=bitcast i8*%ar to i8**
-%at=load i8*,i8**%as,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 8),i8*inreg%at)#0
-%au=getelementptr inbounds i8,i8*%R,i64 80
-%av=bitcast i8*%au to i8**
-%aw=load i8*,i8**%av,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 9),i8*inreg%aw)#0
-%ax=getelementptr inbounds i8,i8*%R,i64 88
-%ay=bitcast i8*%ax to i8**
-%az=load i8*,i8**%ay,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 10),i8*inreg%az)#0
-%aA=getelementptr inbounds i8,i8*%R,i64 96
-%aB=bitcast i8*%aA to i8**
-%aC=load i8*,i8**%aB,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 11),i8*inreg%aC)#0
-%aD=getelementptr inbounds i8,i8*%R,i64 104
-%aE=bitcast i8*%aD to i8**
-%aF=load i8*,i8**%aE,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 12),i8*inreg%aF)#0
-%aG=getelementptr inbounds i8,i8*%R,i64 112
-%aH=bitcast i8*%aG to i8**
-%aI=load i8*,i8**%aH,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 13),i8*inreg%aI)#0
-%aJ=getelementptr inbounds i8,i8*%R,i64 120
-%aK=bitcast i8*%aJ to i8**
-%aL=load i8*,i8**%aK,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 14),i8*inreg%aL)#0
-%aM=getelementptr inbounds i8,i8*%R,i64 128
-%aN=bitcast i8*%aM to i8**
-%aO=load i8*,i8**%aN,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 15),i8*inreg%aO)#0
-%aP=getelementptr inbounds i8,i8*%R,i64 136
-%aQ=bitcast i8*%aP to i8**
-%aR=load i8*,i8**%aQ,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 16),i8*inreg%aR)#0
-%aS=getelementptr inbounds i8,i8*%R,i64 144
-%aT=bitcast i8*%aS to i8**
-%aU=load i8*,i8**%aT,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 17),i8*inreg%aU)#0
-%aV=getelementptr inbounds i8,i8*%R,i64 152
-%aW=bitcast i8*%aV to i8**
-%aX=load i8*,i8**%aW,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 18),i8*inreg%aX)#0
-%aY=getelementptr inbounds i8,i8*%R,i64 160
-%aZ=bitcast i8*%aY to i8**
-%a0=load i8*,i8**%aZ,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 19),i8*inreg%a0)#0
-%a1=getelementptr inbounds i8,i8*%R,i64 168
-%a2=bitcast i8*%a1 to i8**
-%a3=load i8*,i8**%a2,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 20),i8*inreg%a3)#0
-%a4=getelementptr inbounds i8,i8*%R,i64 176
-%a5=bitcast i8*%a4 to i8**
-%a6=load i8*,i8**%a5,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 21),i8*inreg%a6)#0
-%a7=getelementptr inbounds i8,i8*%R,i64 184
-%a8=bitcast i8*%a7 to i8**
-%a9=load i8*,i8**%a8,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 22),i8*inreg%a9)#0
-%ba=getelementptr inbounds i8,i8*%R,i64 192
-%bb=bitcast i8*%ba to i8**
-%bc=load i8*,i8**%bb,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 23),i8*inreg%bc)#0
-%bd=getelementptr inbounds i8,i8*%R,i64 200
-%be=bitcast i8*%bd to i8**
-%bf=load i8*,i8**%be,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 24),i8*inreg%bf)#0
-%bg=getelementptr inbounds i8,i8*%R,i64 208
-%bh=bitcast i8*%bg to i8**
-%bi=load i8*,i8**%bh,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 25),i8*inreg%bi)#0
-%bj=getelementptr inbounds i8,i8*%R,i64 216
-%bk=bitcast i8*%bj to i8**
-%bl=load i8*,i8**%bk,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 26),i8*inreg%bl)#0
-%bm=getelementptr inbounds i8,i8*%R,i64 224
-%bn=bitcast i8*%bm to i8**
-%bo=load i8*,i8**%bn,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 27),i8*inreg%bo)#0
-%bp=getelementptr inbounds i8,i8*%R,i64 232
-%bq=bitcast i8*%bp to i8**
-%br=load i8*,i8**%bq,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 28),i8*inreg%br)#0
-%bs=getelementptr inbounds i8,i8*%R,i64 240
-%bt=bitcast i8*%bs to i8**
-%bu=load i8*,i8**%bt,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 29),i8*inreg%bu)#0
-%bv=getelementptr inbounds i8,i8*%R,i64 248
-%bw=bitcast i8*%bv to i8**
-%bx=load i8*,i8**%bw,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 30),i8*inreg%bx)#0
-%by=getelementptr inbounds i8,i8*%R,i64 256
-%bz=bitcast i8*%by to i8**
-%bA=load i8*,i8**%bz,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 31),i8*inreg%bA)#0
-%bB=getelementptr inbounds i8,i8*%R,i64 264
-%bC=bitcast i8*%bB to i8**
-%bD=load i8*,i8**%bC,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 32),i8*inreg%bD)#0
-%bE=getelementptr inbounds i8,i8*%R,i64 272
-%bF=bitcast i8*%bE to i8**
-%bG=load i8*,i8**%bF,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 33),i8*inreg%bG)#0
-%bH=getelementptr inbounds i8,i8*%R,i64 280
-%bI=bitcast i8*%bH to i8**
-%bJ=load i8*,i8**%bI,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 34),i8*inreg%bJ)#0
-%bK=getelementptr inbounds i8,i8*%R,i64 288
-%bL=bitcast i8*%bK to i8**
-%bM=load i8*,i8**%bL,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 35),i8*inreg%bM)#0
-%bN=getelementptr inbounds i8,i8*%R,i64 296
-%bO=bitcast i8*%bN to i8**
-%bP=load i8*,i8**%bO,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 36),i8*inreg%bP)#0
-%bQ=getelementptr inbounds i8,i8*%R,i64 304
-%bR=bitcast i8*%bQ to i8**
-%bS=load i8*,i8**%bR,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 37),i8*inreg%bS)#0
-%bT=getelementptr inbounds i8,i8*%R,i64 312
-%bU=bitcast i8*%bT to i8**
-%bV=load i8*,i8**%bU,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 38),i8*inreg%bV)#0
-%bW=getelementptr inbounds i8,i8*%R,i64 320
-%bX=bitcast i8*%bW to i8**
-%bY=load i8*,i8**%bX,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 39),i8*inreg%bY)#0
-%bZ=bitcast i8*%R to i8**
+%T=bitcast i8*%R to i8**
+%U=load i8*,i8**%T,align 8
+%V=getelementptr inbounds i8,i8*%R,i64 8
+%W=bitcast i8*%V to i8**
+%X=load i8*,i8**%W,align 8
+%Y=getelementptr inbounds i8,i8*%R,i64 16
+%Z=bitcast i8*%Y to i8**
+%aa=load i8*,i8**%Z,align 8
+%ab=getelementptr inbounds i8,i8*%R,i64 24
+%ac=bitcast i8*%ab to i8**
+%ad=load i8*,i8**%ac,align 8
+%ae=getelementptr inbounds i8,i8*%R,i64 32
+%af=bitcast i8*%ae to i8**
+%ag=load i8*,i8**%af,align 8
+%ah=getelementptr inbounds i8,i8*%R,i64 40
+%ai=bitcast i8*%ah to i8**
+%aj=load i8*,i8**%ai,align 8
+%ak=getelementptr inbounds i8,i8*%R,i64 48
+%al=bitcast i8*%ak to i8**
+%am=load i8*,i8**%al,align 8
+%an=getelementptr inbounds i8,i8*%R,i64 56
+%ao=bitcast i8*%an to i8**
+%ap=load i8*,i8**%ao,align 8
+%aq=getelementptr inbounds i8,i8*%R,i64 64
+%ar=bitcast i8*%aq to i8**
+%as=load i8*,i8**%ar,align 8
+%at=getelementptr inbounds i8,i8*%R,i64 72
+%au=bitcast i8*%at to i8**
+%av=load i8*,i8**%au,align 8
+%aw=getelementptr inbounds i8,i8*%R,i64 80
+%ax=bitcast i8*%aw to i8**
+%ay=load i8*,i8**%ax,align 8
+%az=getelementptr inbounds i8,i8*%R,i64 88
+%aA=bitcast i8*%az to i8**
+%aB=load i8*,i8**%aA,align 8
+%aC=getelementptr inbounds i8,i8*%R,i64 96
+%aD=bitcast i8*%aC to i8**
+%aE=load i8*,i8**%aD,align 8
+%aF=getelementptr inbounds i8,i8*%R,i64 104
+%aG=bitcast i8*%aF to i8**
+%aH=load i8*,i8**%aG,align 8
+%aI=getelementptr inbounds i8,i8*%R,i64 112
+%aJ=bitcast i8*%aI to i8**
+%aK=load i8*,i8**%aJ,align 8
+%aL=getelementptr inbounds i8,i8*%R,i64 120
+%aM=bitcast i8*%aL to i8**
+%aN=load i8*,i8**%aM,align 8
+%aO=getelementptr inbounds i8,i8*%R,i64 128
+%aP=bitcast i8*%aO to i8**
+%aQ=load i8*,i8**%aP,align 8
+%aR=getelementptr inbounds i8,i8*%R,i64 136
+%aS=bitcast i8*%aR to i8**
+%aT=load i8*,i8**%aS,align 8
+%aU=getelementptr inbounds i8,i8*%R,i64 144
+%aV=bitcast i8*%aU to i8**
+%aW=load i8*,i8**%aV,align 8
+%aX=getelementptr inbounds i8,i8*%R,i64 152
+%aY=bitcast i8*%aX to i8**
+%aZ=load i8*,i8**%aY,align 8
+%a0=getelementptr inbounds i8,i8*%R,i64 160
+%a1=bitcast i8*%a0 to i8**
+%a2=load i8*,i8**%a1,align 8
+%a3=getelementptr inbounds i8,i8*%R,i64 168
+%a4=bitcast i8*%a3 to i8**
+%a5=load i8*,i8**%a4,align 8
+%a6=getelementptr inbounds i8,i8*%R,i64 176
+%a7=bitcast i8*%a6 to i8**
+%a8=load i8*,i8**%a7,align 8
+%a9=getelementptr inbounds i8,i8*%R,i64 184
+%ba=bitcast i8*%a9 to i8**
+%bb=load i8*,i8**%ba,align 8
+%bc=getelementptr inbounds i8,i8*%R,i64 192
+%bd=bitcast i8*%bc to i8**
+%be=load i8*,i8**%bd,align 8
+%bf=getelementptr inbounds i8,i8*%R,i64 200
+%bg=bitcast i8*%bf to i8**
+%bh=load i8*,i8**%bg,align 8
+%bi=getelementptr inbounds i8,i8*%R,i64 208
+%bj=bitcast i8*%bi to i8**
+%bk=load i8*,i8**%bj,align 8
+%bl=getelementptr inbounds i8,i8*%R,i64 216
+%bm=bitcast i8*%bl to i8**
+%bn=load i8*,i8**%bm,align 8
+%bo=getelementptr inbounds i8,i8*%R,i64 224
+%bp=bitcast i8*%bo to i8**
+%bq=load i8*,i8**%bp,align 8
+%br=getelementptr inbounds i8,i8*%R,i64 232
+%bs=bitcast i8*%br to i8**
+%bt=load i8*,i8**%bs,align 8
+%bu=getelementptr inbounds i8,i8*%R,i64 240
+%bv=bitcast i8*%bu to i8**
+%bw=load i8*,i8**%bv,align 8
+%bx=getelementptr inbounds i8,i8*%R,i64 248
+%by=bitcast i8*%bx to i8**
+%bz=load i8*,i8**%by,align 8
+%bA=getelementptr inbounds i8,i8*%R,i64 256
+%bB=bitcast i8*%bA to i8**
+%bC=load i8*,i8**%bB,align 8
+%bD=getelementptr inbounds i8,i8*%R,i64 264
+%bE=bitcast i8*%bD to i8**
+%bF=load i8*,i8**%bE,align 8
+%bG=getelementptr inbounds i8,i8*%R,i64 272
+%bH=bitcast i8*%bG to i8**
+%bI=load i8*,i8**%bH,align 8
+%bJ=getelementptr inbounds i8,i8*%R,i64 280
+%bK=bitcast i8*%bJ to i8**
+%bL=load i8*,i8**%bK,align 8
+%bM=getelementptr inbounds i8,i8*%R,i64 288
+%bN=bitcast i8*%bM to i8**
+%bO=load i8*,i8**%bN,align 8
+%bP=getelementptr inbounds i8,i8*%R,i64 296
+%bQ=bitcast i8*%bP to i8**
+%bR=load i8*,i8**%bQ,align 8
+%bS=getelementptr inbounds i8,i8*%R,i64 304
+%bT=bitcast i8*%bS to i8**
+%bU=load i8*,i8**%bT,align 8
+%bV=getelementptr inbounds i8,i8*%R,i64 312
+%bW=bitcast i8*%bV to i8**
+%bX=load i8*,i8**%bW,align 8
+%bY=getelementptr inbounds i8,i8*%R,i64 320
+%bZ=bitcast i8*%bY to i8**
 %b0=load i8*,i8**%bZ,align 8
-call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 40),i8*inreg%b0)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0),i8*inreg%X)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 1),i8*inreg%aa)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 2),i8*inreg%ad)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 3),i8*inreg%ag)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 4),i8*inreg%aj)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 5),i8*inreg%am)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 6),i8*inreg%ap)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 7),i8*inreg%as)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 8),i8*inreg%av)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 9),i8*inreg%ay)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 10),i8*inreg%aB)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 11),i8*inreg%aE)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 12),i8*inreg%aH)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 13),i8*inreg%aK)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 14),i8*inreg%aN)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 15),i8*inreg%aQ)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 16),i8*inreg%aT)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 17),i8*inreg%aW)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 18),i8*inreg%aZ)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 19),i8*inreg%a2)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 20),i8*inreg%a5)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 21),i8*inreg%a8)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 22),i8*inreg%bb)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 23),i8*inreg%be)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 24),i8*inreg%bh)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 25),i8*inreg%bk)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 26),i8*inreg%bn)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 27),i8*inreg%bq)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 28),i8*inreg%bt)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 29),i8*inreg%bw)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 30),i8*inreg%bz)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 31),i8*inreg%bC)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 32),i8*inreg%bF)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 33),i8*inreg%bI)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 34),i8*inreg%bL)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 35),i8*inreg%bO)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 36),i8*inreg%bR)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 37),i8*inreg%bU)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 38),i8*inreg%bX)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 39),i8*inreg%b0)#0
+call void@sml_write(i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0)to i8*),i8**inreg getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 40),i8*inreg%U)#0
 call void@sml_end()#0
 ret void
 b1:
@@ -319,46 +318,6 @@ cleanup
 call void@sml_save_exn(i8*inreg%b3)#0
 call void@sml_end()#0
 resume{i8*,i8*}%b2
-}
-define internal fastcc i8*@_SMLLL28(i8*inreg%a)#3 gc"smlsharp"{
-ret i8*%a
-}
-define internal fastcc i32@_SMLLL30(i8*inreg%a)#1 gc"smlsharp"{
-i:
-%b=alloca i8*,align 8
-call void@llvm.gcroot(i8**%b,i8*null)#0
-store i8*%a,i8**%b,align 8
-%c=load atomic i32,i32*@sml_check_flag unordered,align 4
-%d=icmp eq i32%c,0
-br i1%d,label%g,label%e
-e:
-call void@sml_check(i32 inreg%c)
-%f=load i8*,i8**%b,align 8
-br label%g
-g:
-%h=phi i8*[%f,%e],[%a,%i]
-store i8*null,i8**%b,align 8
-%j=bitcast i8*%h to i32**
-%k=load i32*,i32**%j,align 8
-%l=load i32,i32*%k,align 4
-%m=getelementptr inbounds i8,i8*%h,i64 8
-%n=bitcast i8*%m to i32**
-%o=load i32*,i32**%n,align 8
-%p=load i32,i32*%o,align 4
-%q=call i8*@sml_alloc(i32 inreg 12)#0
-%r=bitcast i8*%q to i32*
-%s=getelementptr inbounds i8,i8*%q,i64 -4
-%t=bitcast i8*%s to i32*
-store i32 1342177288,i32*%t,align 4
-store i32%l,i32*%r,align 4
-%u=getelementptr inbounds i8,i8*%q,i64 4
-%v=bitcast i8*%u to i32*
-store i32%p,i32*%v,align 4
-%w=getelementptr inbounds i8,i8*%q,i64 8
-%x=bitcast i8*%w to i32*
-store i32 0,i32*%x,align 4
-%y=tail call fastcc i32@_SMLFN7OPrimID7compareE(i8*inreg%q)
-ret i32%y
 }
 define fastcc i32@_SMLFN8OPrimOrd7compareE(i8*inreg%a)#1 gc"smlsharp"{
 i:
@@ -397,6 +356,9 @@ store i32 0,i32*%x,align 4
 %y=tail call fastcc i32@_SMLFN7OPrimID7compareE(i8*inreg%q)
 ret i32%y
 }
+define internal fastcc i8*@_SMLLL30(i8*inreg%a)#3 gc"smlsharp"{
+ret i8*%a
+}
 define fastcc i8*@_SMLFN8OPrimMap3allE(i32 inreg%a,i32 inreg%b)local_unnamed_addr#1 gc"smlsharp"{
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8
@@ -409,7 +371,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 0),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 0),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -446,7 +408,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 1),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 1),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -483,7 +445,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 2),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 2),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -520,7 +482,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 3),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 3),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -557,7 +519,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 4),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 4),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -594,7 +556,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 5),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 5),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -631,7 +593,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 6),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 6),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -668,7 +630,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 7),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 7),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -705,7 +667,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 8),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 8),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -742,7 +704,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 9),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 9),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -779,7 +741,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 10),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 10),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -816,7 +778,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 11),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 11),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -853,7 +815,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 12),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 12),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -894,7 +856,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 13),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 13),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -951,7 +913,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 14),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 14),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -1008,7 +970,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 15),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 15),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -1065,7 +1027,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 16),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 16),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -1118,7 +1080,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 17),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 17),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1155,7 +1117,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 18),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 18),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1192,7 +1154,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 19),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 19),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1229,7 +1191,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 20),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 20),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1266,7 +1228,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 21),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 21),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1311,7 +1273,7 @@ o:
 call void@sml_check(i32 inreg%m)
 br label%p
 p:
-%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 22),align 8
+%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 22),align 8
 %r=getelementptr inbounds i8,i8*%q,i64 16
 %s=bitcast i8*%r to i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**
 %t=load i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**%s,align 8
@@ -1388,7 +1350,7 @@ o:
 call void@sml_check(i32 inreg%m)
 br label%p
 p:
-%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 23),align 8
+%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 23),align 8
 %r=getelementptr inbounds i8,i8*%q,i64 16
 %s=bitcast i8*%r to i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**
 %t=load i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**%s,align 8
@@ -1457,7 +1419,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 24),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 24),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1494,7 +1456,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 25),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 25),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1531,7 +1493,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 26),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 26),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1568,7 +1530,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 27),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 27),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1605,7 +1567,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 28),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 28),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -1646,7 +1608,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 29),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 29),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -1703,7 +1665,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 30),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 30),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -1760,7 +1722,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 31),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 31),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -1817,7 +1779,7 @@ k:
 call void@sml_check(i32 inreg%i)
 br label%l
 l:
-%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 32),align 8
+%m=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 32),align 8
 %n=getelementptr inbounds i8,i8*%m,i64 16
 %o=bitcast i8*%n to i8*(i8*,i8*,i8*,i8*,i8*)**
 %p=load i8*(i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*)**%o,align 8
@@ -1878,7 +1840,7 @@ o:
 call void@sml_check(i32 inreg%m)
 br label%p
 p:
-%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 33),align 8
+%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 33),align 8
 %r=getelementptr inbounds i8,i8*%q,i64 16
 %s=bitcast i8*%r to i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**
 %t=load i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**%s,align 8
@@ -1955,7 +1917,7 @@ o:
 call void@sml_check(i32 inreg%m)
 br label%p
 p:
-%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 34),align 8
+%q=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 34),align 8
 %r=getelementptr inbounds i8,i8*%q,i64 16
 %s=bitcast i8*%r to i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**
 %t=load i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)*,i8*(i8*,i8*,i8*,i8*,i8*,i8*,i8*)**%s,align 8
@@ -2024,7 +1986,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 35),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 35),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -2061,7 +2023,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 36),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 36),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -2098,7 +2060,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 37),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 37),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -2135,7 +2097,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 38),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 38),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -2172,7 +2134,7 @@ g:
 call void@sml_check(i32 inreg%e)
 br label%h
 h:
-%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 39),align 8
+%i=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 39),align 8
 %j=getelementptr inbounds i8,i8*%i,i64 16
 %k=bitcast i8*%j to i8*(i8*,i8*,i8*)**
 %l=load i8*(i8*,i8*,i8*)*,i8*(i8*,i8*,i8*)**%k,align 8
@@ -2212,7 +2174,7 @@ br label%g
 g:
 %h=phi i8*[%f,%e],[%a,%i]
 store i8*null,i8**%b,align 8
-%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar7348eea1b328a903_OPrimMap,i64 0,i32 2,i64 40),align 8
+%j=load i8*,i8**getelementptr inbounds(<{[4x i8],i32,[41x i8*]}>,<{[4x i8],i32,[41x i8*]}>*@_SML_gvar6045ad4d264a7590_OPrimMap,i64 0,i32 2,i64 40),align 8
 %k=getelementptr inbounds i8,i8*%j,i64 16
 %l=bitcast i8*%k to i8*(i8*,i8*)**
 %m=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%l,align 8
@@ -2223,20 +2185,7 @@ store i8*null,i8**%b,align 8
 %r=load i32,i32*%q,align 4
 ret i32%r
 }
-define internal fastcc i8*@_SMLLL75(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
-ret i8*%b
-}
-define internal fastcc i8*@_SMLLL76(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
-%c=tail call fastcc i32@_SMLLL30(i8*inreg%b)
-%d=tail call i8*@sml_alloc(i32 inreg 4)#0
-%e=bitcast i8*%d to i32*
-%f=getelementptr inbounds i8,i8*%d,i64 -4
-%g=bitcast i8*%f to i32*
-store i32 4,i32*%g,align 4
-store i32%c,i32*%e,align 4
-ret i8*%d
-}
-define internal fastcc i8*@_SMLLN8OPrimOrd7compareE_77(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN8OPrimOrd7compareE_73(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 %c=tail call fastcc i32@_SMLFN8OPrimOrd7compareE(i8*inreg%b)
 %d=tail call i8*@sml_alloc(i32 inreg 4)#0
 %e=bitcast i8*%d to i32*
@@ -2245,6 +2194,9 @@ define internal fastcc i8*@_SMLLN8OPrimOrd7compareE_77(i8*inreg%a,i8*inreg%b)#1 
 store i32 4,i32*%g,align 4
 store i32%c,i32*%e,align 4
 ret i8*%d
+}
+define internal fastcc i8*@_SMLLL74(i8*inreg%a,i8*inreg%b)#3 gc"smlsharp"{
+ret i8*%b
 }
 attributes#0={nounwind}
 attributes#1={uwtable}
