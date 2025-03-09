@@ -217,7 +217,7 @@ AC_MSG_CHECKING([for LLVM compatibility])
 LLVM_VERSION=`echo "$LLVM_VERSION" | sed 's/\.[[0-9]]*$//'`
 AC_SUBST(LLVM_VERSION)
 case "$LLVM_VERSION" in
-  [[7-9]].0|7.1|1[[0-7]].0|11.1|1[[89]].1)
+  [[7-9]].0|7.1|1[[0-7]].0|11.1|1[[89]].1|20.1)
     AC_MSG_RESULT(yes)
     ;;
   *)
