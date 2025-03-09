@@ -2,16 +2,16 @@
 @a=private unnamed_addr constant<{[4x i8],i32,[8x i8]}><{[4x i8]zeroinitializer,i32 -2147483640,[8x i8]c"Bug.Bug\00"}>,align 8
 @b=private unnamed_addr constant<{[4x i8],i32,i8*,i32,[4x i8],i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@a,i32 0,i32 0,i32 0),i32 8),i32 16,[4x i8]zeroinitializer,i32 1}>,align 8
 @_SMLDL33=private constant<{[4x i8],i32,i8*}><{[4x i8]zeroinitializer,i32 -1879048184,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,i8*,i32,[4x i8],i32}>,<{[4x i8],i32,i8*,i32,[4x i8],i32}>*@b,i32 0,i32 0,i32 0),i32 8)}>,align 8
-@_SMLDN3Bug10debugPrintE_34=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 0}>,align 8
-@_SMLDN3Bug9printInfoE_35=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 0}>,align 8
+@_SMLDL34=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 0}>,align 8
+@_SMLDL35=private global<{[4x i8],i32,i32}><{[4x i8]zeroinitializer,i32 -1610612732,i32 0}>,align 8
+@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN3Bug11prettyPrintE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN3Bug11prettyPrintE_42 to void(...)*),i32 -2147483647}>,align 8
+@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN3Bug10printErrorE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN3Bug10printErrorE_43 to void(...)*),i32 -2147483647}>,align 8
+@e=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN3Bug12printMessageE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN3Bug12printMessageE_44 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN3Bug3BugE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*}>,<{[4x i8],i32,i8*}>*@_SMLDL33,i64 0,i32 2)to i8*)
-@_SMLZN3Bug10debugPrintE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDN3Bug10debugPrintE_34,i64 0,i32 2)to i8*)
-@_SMLZN3Bug9printInfoE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDN3Bug9printInfoE_35,i64 0,i32 2)to i8*)
-@c=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN3Bug11prettyPrintE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN3Bug11prettyPrintE_42 to void(...)*),i32 -2147483647}>,align 8
+@_SMLZN3Bug10debugPrintE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDL34,i64 0,i32 2)to i8*)
+@_SMLZN3Bug9printInfoE=local_unnamed_addr constant i8*bitcast(i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDL35,i64 0,i32 2)to i8*)
 @_SMLZN3Bug11prettyPrintE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@c,i64 0,i32 2)to i8*)
-@d=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN3Bug10printErrorE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN3Bug10printErrorE_43 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN3Bug10printErrorE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@d,i64 0,i32 2)to i8*)
-@e=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(void(i8*)*@_SMLFN3Bug12printMessageE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN3Bug12printMessageE_44 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN3Bug12printMessageE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@e,i64 0,i32 2)to i8*)
 @_SML_ftabeaa0aca8fbe4101a_Bug=external global i8
 @f=private unnamed_addr global i8 0
@@ -86,7 +86,7 @@ e:
 call void@sml_check(i32 inreg%c)
 br label%f
 f:
-%g=load i32,i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDN3Bug10debugPrintE_34,i64 0,i32 2),align 8
+%g=load i32,i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDL34,i64 0,i32 2),align 8
 %h=icmp eq i32%g,0
 br i1%h,label%k,label%i
 i:
@@ -107,7 +107,7 @@ e:
 call void@sml_check(i32 inreg%c)
 br label%f
 f:
-%g=load i32,i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDN3Bug9printInfoE_35,i64 0,i32 2),align 8
+%g=load i32,i32*getelementptr inbounds(<{[4x i8],i32,i32}>,<{[4x i8],i32,i32}>*@_SMLDL35,i64 0,i32 2),align 8
 %h=icmp eq i32%g,0
 br i1%h,label%k,label%i
 i:
@@ -117,11 +117,11 @@ ret void
 k:
 ret void
 }
-define internal fastcc i8*@_SMLLN3Bug11prettyPrintE_42(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN3Bug11prettyPrintE_42(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN3Bug11prettyPrintE(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN3Bug10printErrorE_43(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN3Bug10printErrorE_43(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 tail call fastcc void@_SMLFN3Bug10printErrorE(i8*inreg%b)
 %c=tail call i8*@sml_alloc(i32 inreg 4)#0
 %d=bitcast i8*%c to i32*
@@ -131,7 +131,7 @@ store i32 4,i32*%f,align 4
 store i32 0,i32*%d,align 4
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN3Bug12printMessageE_44(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN3Bug12printMessageE_44(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 tail call fastcc void@_SMLFN3Bug12printMessageE(i8*inreg%b)
 %c=tail call i8*@sml_alloc(i32 inreg 4)#0
 %d=bitcast i8*%c to i32*

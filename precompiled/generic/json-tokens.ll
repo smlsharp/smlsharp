@@ -14,12 +14,12 @@
 @j=private unnamed_addr constant<{[4x i8],i32,[6x i8]}><{[4x i8]zeroinitializer,i32 -2147483642,[6x i8]c"false\00"}>,align 8
 @k=private unnamed_addr constant[2x i8]c"0\00"
 @l=private unnamed_addr constant<{[4x i8],i32,[2x i8]}><{[4x i8]zeroinitializer,i32 -2147483646,[2x i8]c"-\00"}>,align 8
-@m=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLN10JSONTokens8toStringE_59 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN10JSONTokens8toStringE_68 to void(...)*),i32 -2147483647}>,align 8
-@n=private unnamed_addr constant<{[4x i8],i32,i8*,i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@o,i32 0,i32 0,i32 0),i32 8),i8*null,i32 3}>,align 8
-@o=private unnamed_addr constant<{[4x i8],i32,[2x i8]}><{[4x i8]zeroinitializer,i32 -2147483646,[2x i8]c"\22\00"}>,align 8
+@m=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLLL1f_59 to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLL1f_68 to void(...)*),i32 -2147483647}>,align 8
+@n=private unnamed_addr constant<{[4x i8],i32,[2x i8]}><{[4x i8]zeroinitializer,i32 -2147483646,[2x i8]c"\22\00"}>,align 8
+@o=private unnamed_addr constant<{[4x i8],i32,i8*,i8*,i32}><{[4x i8]zeroinitializer,i32 -805306352,i8*getelementptr inbounds(i8,i8*getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@n,i32 0,i32 0,i32 0),i32 8),i8*null,i32 3}>,align 8
 @p=private unnamed_addr constant<{[4x i8],i32,[8x i8]}><{[4x i8]zeroinitializer,i32 -2147483640,[8x i8]c"<error>\00"}>,align 8
 @q=private unnamed_addr constant<{[4x i8],i32,[45x i8]}><{[4x i8]zeroinitializer,i32 -2147483603,[45x i8]c"src/smlnj-lib/JSON/json-tokens.sml:26.4(560)\00"}>,align 8
-@r=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN10JSONTokens8toStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN10JSONTokens8toStringE_69 to void(...)*),i32 -2147483647}>,align 8
+@r=private unnamed_addr constant<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}><{[4x i8]zeroinitializer,i32 -805306344,i8*null,void(...)*bitcast(i8*(i8*)*@_SMLFN10JSONTokens8toStringE to void(...)*),void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN10JSONTokens8toStringE_69 to void(...)*),i32 -2147483647}>,align 8
 @_SMLZN10JSONTokens8toStringE=local_unnamed_addr constant i8*bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>,<{[4x i8],i32,i8*,void(...)*,void(...)*,i32}>*@r,i64 0,i32 2)to i8*)
 @_SML_ftab1b21066d594226d8_json_tokens=external global i8
 @s=private unnamed_addr global i8 0
@@ -88,7 +88,7 @@ tail call void@_SML_main1ef93e13728790b1_String()#2
 tail call void@_SML_maindc75c24a45712161_utf8()#2
 br label%d
 }
-define internal fastcc i8*@_SMLLN10JSONTokens8toStringE_59(i8*inreg%a)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLL1f_59(i8*inreg%a)#2 gc"smlsharp"{
 j:
 %b=alloca i8*,align 8
 %c=alloca i8*,align 8
@@ -104,13 +104,13 @@ call void@sml_check(i32 inreg%d)
 br label%h
 h:
 %i=phi i8*[%g,%f],[%a,%j]
-%k=getelementptr inbounds i8,i8*%i,i64 8
-%l=bitcast i8*%k to i8**
-%m=load i8*,i8**%l,align 8
-store i8*%m,i8**%b,align 8
-%n=bitcast i8*%i to i32*
-%o=load i32,i32*%n,align 4
-%p=call fastcc i8*@_SMLFN4UTF88toStringE(i32 inreg%o)
+%k=bitcast i8*%i to i32*
+%l=load i32,i32*%k,align 4
+%m=getelementptr inbounds i8,i8*%i,i64 8
+%n=bitcast i8*%m to i8**
+%o=load i8*,i8**%n,align 8
+store i8*%o,i8**%b,align 8
+%p=call fastcc i8*@_SMLFN4UTF88toStringE(i32 inreg%l)
 store i8*%p,i8**%c,align 8
 %q=call i8*@sml_alloc(i32 inreg 20)#0
 %r=getelementptr inbounds i8,i8*%q,i64 -4
@@ -146,18 +146,19 @@ call void@sml_check(i32 inreg%e)
 br label%i
 i:
 %j=phi i8*[%h,%g],[%a,%k]
+store i8*null,i8**%b,align 8
 %l=bitcast i8*%j to i32*
 %m=load i32,i32*%l,align 4
 switch i32%m,label%n[
-i32 2,label%bL
-i32 9,label%bK
-i32 11,label%bJ
-i32 10,label%bI
-i32 12,label%bH
-i32 1,label%bG
-i32 0,label%bF
-i32 7,label%bE
-i32 8,label%bD
+i32 2,label%bK
+i32 9,label%bJ
+i32 11,label%bI
+i32 10,label%bH
+i32 12,label%bG
+i32 1,label%bF
+i32 0,label%bE
+i32 7,label%bD
+i32 8,label%bC
 i32 6,label%bB
 i32 5,label%aN
 i32 4,label%ar
@@ -196,7 +197,7 @@ store i8*%D,i8**%E,align 8
 call void@sml_raise(i8*inreg%y)#1
 unreachable
 F:
-%G=phi i8*[getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@p,i64 0,i32 2,i64 0),%i],[%bC,%bB]
+%G=phi i8*[getelementptr inbounds(<{[4x i8],i32,[8x i8]}>,<{[4x i8],i32,[8x i8]}>*@p,i64 0,i32 2,i64 0),%i],[getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@j,i64 0,i32 2,i64 0),%bB],[getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@i,i64 0,i32 2,i64 0),%bC],[getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@h,i64 0,i32 2,i64 0),%bD],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@g,i64 0,i32 2,i64 0),%bE],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@f,i64 0,i32 2,i64 0),%bF],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@e,i64 0,i32 2,i64 0),%bG],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@d,i64 0,i32 2,i64 0),%bH],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@c,i64 0,i32 2,i64 0),%bI],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@b,i64 0,i32 2,i64 0),%bJ],[getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@a,i64 0,i32 2,i64 0),%bK]
 ret i8*%G
 H:
 %I=getelementptr inbounds i8,i8*%j,i64 8
@@ -215,7 +216,7 @@ store i8*%K,i8**%b,align 8
 %U=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%T,align 8
 %V=bitcast i8*%R to i8**
 %W=load i8*,i8**%V,align 8
-%X=call fastcc i8*%U(i8*inreg%W,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,i8*,i32}>,<{[4x i8],i32,i8*,i8*,i32}>*@n,i64 0,i32 2)to i8*))
+%X=call fastcc i8*%U(i8*inreg%W,i8*inreg bitcast(i8**getelementptr inbounds(<{[4x i8],i32,i8*,i8*,i32}>,<{[4x i8],i32,i8*,i8*,i32}>*@o,i64 0,i32 2)to i8*))
 %Y=getelementptr inbounds i8,i8*%X,i64 16
 %Z=bitcast i8*%Y to i8*(i8*,i8*)**
 %aa=load i8*(i8*,i8*)*,i8*(i8*,i8*)**%Z,align 8
@@ -234,7 +235,7 @@ store i8*%ag,i8**%b,align 8
 %aj=bitcast i8*%ai to i32*
 store i32 1342177296,i32*%aj,align 4
 %ak=bitcast i8*%ah to i8**
-store i8*getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@o,i64 0,i32 2,i64 0),i8**%ak,align 8
+store i8*getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@n,i64 0,i32 2,i64 0),i8**%ak,align 8
 %al=load i8*,i8**%b,align 8
 %am=getelementptr inbounds i8,i8*%ah,i64 8
 %an=bitcast i8*%am to i8**
@@ -344,32 +345,31 @@ by:
 %bA=tail call fastcc i8*@_SMLFN6IntInf8toStringE(i8*inreg%bz)
 ret i8*%bA
 bB:
-%bC=phi i8*[getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@j,i64 0,i32 2,i64 0),%i],[getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@i,i64 0,i32 2,i64 0),%bD],[getelementptr inbounds(<{[4x i8],i32,[5x i8]}>,<{[4x i8],i32,[5x i8]}>*@h,i64 0,i32 2,i64 0),%bE],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@g,i64 0,i32 2,i64 0),%bF],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@f,i64 0,i32 2,i64 0),%bG],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@e,i64 0,i32 2,i64 0),%bH],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@d,i64 0,i32 2,i64 0),%bI],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@c,i64 0,i32 2,i64 0),%bJ],[getelementptr inbounds(<{[4x i8],i32,[2x i8]}>,<{[4x i8],i32,[2x i8]}>*@b,i64 0,i32 2,i64 0),%bK],[getelementptr inbounds(<{[4x i8],i32,[6x i8]}>,<{[4x i8],i32,[6x i8]}>*@a,i64 0,i32 2,i64 0),%bL]
+br label%F
+bC:
 br label%F
 bD:
-br label%bB
+br label%F
 bE:
-br label%bB
+br label%F
 bF:
-br label%bB
+br label%F
 bG:
-br label%bB
+br label%F
 bH:
-br label%bB
+br label%F
 bI:
-br label%bB
+br label%F
 bJ:
-br label%bB
+br label%F
 bK:
-br label%bB
-bL:
-br label%bB
+br label%F
 }
-define internal fastcc i8*@_SMLLN10JSONTokens8toStringE_68(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
-%c=tail call fastcc i8*@_SMLLN10JSONTokens8toStringE_59(i8*inreg%b)
+define internal fastcc i8*@_SMLLL1f_68(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+%c=tail call fastcc i8*@_SMLLL1f_59(i8*inreg%b)
 ret i8*%c
 }
-define internal fastcc i8*@_SMLLN10JSONTokens8toStringE_69(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN10JSONTokens8toStringE_69(i8*inreg%a,i8*inreg%b)#2 gc"smlsharp"{
 %c=tail call fastcc i8*@_SMLFN10JSONTokens8toStringE(i8*inreg%b)
 ret i8*%c
 }

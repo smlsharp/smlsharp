@@ -72,10 +72,10 @@ store i32 1342177304,i32*%u,align 4
 store i8*%v,i8**%w,align 8
 %x=getelementptr inbounds i8,i8*%s,i64 8
 %y=bitcast i8*%x to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN11ParserError6formatE_33 to void(...)*),void(...)**%y,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN11ParserError6formatE_33 to void(...)*),void(...)**%y,align 8
 %z=getelementptr inbounds i8,i8*%s,i64 16
 %A=bitcast i8*%z to void(...)**
-store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLN11ParserError6formatE_33 to void(...)*),void(...)**%A,align 8
+store void(...)*bitcast(i8*(i8*,i8*)*@_SMLLLN11ParserError6formatE_33 to void(...)*),void(...)**%A,align 8
 %B=getelementptr inbounds i8,i8*%s,i64 24
 %C=bitcast i8*%B to i32*
 store i32 -2147483647,i32*%C,align 4
@@ -85,7 +85,7 @@ call void@sml_write(i8*inreg%D,i8**inreg%E,i8*inreg%s)#0
 call void@sml_end()#0
 ret void
 }
-define internal fastcc i8*@_SMLLN11ParserError6formatE_33(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
+define internal fastcc i8*@_SMLLLN11ParserError6formatE_33(i8*inreg%a,i8*inreg%b)#1 gc"smlsharp"{
 k:
 %c=alloca i8*,align 8
 %d=alloca i8*,align 8

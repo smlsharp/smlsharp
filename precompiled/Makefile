@@ -530,6 +530,8 @@ $(PRECOMPILED_DIR)/CoerceRank1.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/CoerceRank1.
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/CoerceRank1.ll
 $(PRECOMPILED_DIR)/InferTypes2.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/InferTypes2.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/InferTypes2.ll
+$(PRECOMPILED_DIR)/UnionFind.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/UnionFind.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/UnionFind.ll
 $(PRECOMPILED_DIR)/TypedCalcCon.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TypedCalcCon.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TypedCalcCon.ll
 $(PRECOMPILED_DIR)/PolyTyInstance.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PolyTyInstance.ppg.ll
@@ -540,6 +542,12 @@ $(PRECOMPILED_DIR)/UncurryFundecl_ng.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/Uncurr
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/UncurryFundecl_ng.ll
 $(PRECOMPILED_DIR)/RecordCalc.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordCalc.ppg.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordCalc.ppg.ll
+$(PRECOMPILED_DIR)/TyRevealTy.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TyRevealTy.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TyRevealTy.ll
+$(PRECOMPILED_DIR)/RecordCalcType.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordCalcType.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordCalcType.ll
+$(PRECOMPILED_DIR)/RecordCalcTypeCheck.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordCalcTypeCheck.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordCalcTypeCheck.ll
 $(PRECOMPILED_DIR)/MatchData.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/MatchData.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/MatchData.ll
 $(PRECOMPILED_DIR)/MatchError.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/MatchError.ppg.ll
@@ -550,10 +558,28 @@ $(PRECOMPILED_DIR)/TypedElaborationError.ppg.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TypedElaborationError.ppg.ll
 $(PRECOMPILED_DIR)/TypedElaboration.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TypedElaboration.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TypedElaboration.ll
+$(PRECOMPILED_DIR)/RecordCalcRename.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordCalcRename.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordCalcRename.ll
+$(PRECOMPILED_DIR)/RecordCalcLoc.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordCalcLoc.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordCalcLoc.ll
+$(PRECOMPILED_DIR)/CallAnalysis.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/CallAnalysis.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/CallAnalysis.ll
+$(PRECOMPILED_DIR)/TailCallCompile.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TailCallCompile.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TailCallCompile.ll
+$(PRECOMPILED_DIR)/RecordCalcFv.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordCalcFv.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordCalcFv.ll
+$(PRECOMPILED_DIR)/PartialEvaluatePrimitive.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PartialEvaluatePrimitive.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PartialEvaluatePrimitive.ll
+$(PRECOMPILED_DIR)/RecordCalcValRec.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/RecordCalcValRec.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/RecordCalcValRec.ll
+$(PRECOMPILED_DIR)/PartialEvaluation.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PartialEvaluation.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/PartialEvaluation.ll
 $(PRECOMPILED_DIR)/utils.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/utils.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/utils.ll
 $(PRECOMPILED_DIR)/FFICompilation.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/FFICompilation.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/FFICompilation.ll
+$(PRECOMPILED_DIR)/TypedLambdaSubst.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TypedLambdaSubst.ll
+	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TypedLambdaSubst.ll
 $(PRECOMPILED_DIR)/EmitTypedLambda.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/EmitTypedLambda.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/EmitTypedLambda.ll
 $(PRECOMPILED_DIR)/PrimitiveTypedLambda.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/PrimitiveTypedLambda.ll
@@ -566,8 +592,6 @@ $(PRECOMPILED_DIR)/TyToReifiedTy.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TyToReifie
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TyToReifiedTy.ll
 $(PRECOMPILED_DIR)/ReifyTy.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/ReifyTy.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/ReifyTy.ll
-$(PRECOMPILED_DIR)/TyRevealTy.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/TyRevealTy.ll
-	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/TyRevealTy.ll
 $(PRECOMPILED_DIR)/SwitchCompile.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/SwitchCompile.ll
 	$(PRECOMPILE_LLC) -o $@ $(srcdir)/$(PRECOMPILED_DIR)/SwitchCompile.ll
 $(PRECOMPILED_DIR)/DatatypeCompilation.o: $(LLVM_PLUGIN) $(PRECOMPILED_DIR)/DatatypeCompilation.ll
@@ -677,25 +701,37 @@ $(PRECOMPILED_DIR)/TagKind.o \
 $(PRECOMPILED_DIR)/ReifyKind.o \
 $(PRECOMPILED_DIR)/DatatypeCompilation.o \
 $(PRECOMPILED_DIR)/SwitchCompile.o \
-$(PRECOMPILED_DIR)/TyRevealTy.o \
 $(PRECOMPILED_DIR)/ReifyTy.o \
 $(PRECOMPILED_DIR)/TyToReifiedTy.o \
 $(PRECOMPILED_DIR)/RecordKind.o \
 $(PRECOMPILED_DIR)/OverloadKind.o \
 $(PRECOMPILED_DIR)/PrimitiveTypedLambda.o \
 $(PRECOMPILED_DIR)/EmitTypedLambda.o \
+$(PRECOMPILED_DIR)/TypedLambdaSubst.o \
 $(PRECOMPILED_DIR)/FFICompilation.o \
 $(PRECOMPILED_DIR)/utils.o \
+$(PRECOMPILED_DIR)/PartialEvaluation.o \
+$(PRECOMPILED_DIR)/RecordCalcValRec.o \
+$(PRECOMPILED_DIR)/PartialEvaluatePrimitive.o \
+$(PRECOMPILED_DIR)/RecordCalcFv.o \
+$(PRECOMPILED_DIR)/TailCallCompile.o \
+$(PRECOMPILED_DIR)/CallAnalysis.o \
+$(PRECOMPILED_DIR)/RecordCalcLoc.o \
+$(PRECOMPILED_DIR)/RecordCalcRename.o \
 $(PRECOMPILED_DIR)/TypedElaboration.o \
 $(PRECOMPILED_DIR)/TypedElaborationError.ppg.o \
 $(PRECOMPILED_DIR)/MatchCompiler.o \
 $(PRECOMPILED_DIR)/MatchError.ppg.o \
 $(PRECOMPILED_DIR)/MatchData.o \
+$(PRECOMPILED_DIR)/RecordCalcTypeCheck.o \
+$(PRECOMPILED_DIR)/RecordCalcType.o \
+$(PRECOMPILED_DIR)/TyRevealTy.o \
 $(PRECOMPILED_DIR)/RecordCalc.ppg.o \
 $(PRECOMPILED_DIR)/UncurryFundecl_ng.o \
 $(PRECOMPILED_DIR)/PolyTyElimination.o \
 $(PRECOMPILED_DIR)/PolyTyInstance.ppg.o \
 $(PRECOMPILED_DIR)/TypedCalcCon.o \
+$(PRECOMPILED_DIR)/UnionFind.o \
 $(PRECOMPILED_DIR)/InferTypes2.o \
 $(PRECOMPILED_DIR)/CoerceRank1.o \
 $(PRECOMPILED_DIR)/CompileDynamicCase.o \

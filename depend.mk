@@ -10557,6 +10557,7 @@ src/compiler/data/types/main/ExistTyID.o: \
  src/smlformat/formatlib/main/BasicFormatters.smi \
  src/smlformat/formatlib/main/SMLFormat.smi \
  src/smlformat-lib.smi \
+ src/compiler/libs/ids/main/GenIDFun.smi \
  src/compiler/data/types/main/ExistTyID.smi \
  $(SMLSHARP_DEP)
 src/compiler/data/types/main/DynamicKind.ppg.o: \
