@@ -36,7 +36,7 @@ struct
 
     fun boolRep 0 = false 
       | boolRep 1 = true 
-      | boolRep _ = raise bug "illeagal boolean representation"
+      | boolRep _ = raise bug "illegal boolean representation"
     fun align (obj, ty) = 
         let
           val align = alignOf ty

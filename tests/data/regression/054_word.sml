@@ -26,7 +26,7 @@ two same instances, namely "t1" of different names.
                        ....
                       }
 
-If these the same type then the declaration is illeagal, 
+If these the same type then the declaration is illegal, 
 otherwise something wong with builtin declaration.
 
 2011-08-23 ohori
