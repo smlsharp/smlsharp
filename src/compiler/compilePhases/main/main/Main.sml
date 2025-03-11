@@ -256,7 +256,7 @@ struct
       \  -fsyntax-only      check for syntax errors, and exit\n\
       \  -ftypecheck-only   check for type errors, and exit\n\
       \  -filemap=<file>    specify a map from interface files to object files\n\
-      \  -r <file>          add a library preloaded in interactive mode\
+      \  -r <file>          add a library preloaded in interactive mode\n\
       \  -I <dir>           add <dir> to file search path\n\
       \  -L <dir>           add <dir> to library path of the linker\n\
       \  -l <libname>       link with <libname> to create an executable file\n\
