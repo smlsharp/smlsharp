@@ -1,4 +1,26 @@
 -----------------------------------------------------------------------------
+SML# version 4.2.0 (released on 2025-03-24)
+
+* Experimental aarch64 support has been added.
+  SML# now works on Linux and macOS with ARM 64-bit processors.
+  This is still experimental, and some features do not work similarly to
+  amd64. For example, exporting an ML function to C sometimes causes an
+  LLVM error, such as "LLVM ERROR: INIT_TRAMPOLINE operation is only
+  supported on Linux".
+
+* Uncurrying, tail call transformation, and code optimization has been
+  improved by introducing new compilation phases. SML# compiler now
+  generates much better code than the previous version.
+
+* SML# compiler has been made faster by analyzing and optimizing its hot
+  spots.
+
+* Bugfix: Overloaded variable names were not allowed to occur in layered
+  patterns.
+
+* LLVM 20.1 support has been added.
+
+-----------------------------------------------------------------------------
 SML# version 4.1.0 (released on 2024-11-08)
 
 * Changed and improved LLVM support.
