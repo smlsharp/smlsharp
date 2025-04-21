@@ -1351,6 +1351,14 @@ prim_GenericOS_closedir(/*DIR**/ void *dirhandle)
 	return closedir(dirhandle);
 }
 
+int
+prim_GenericOS_system(const char *command)
+{
+	int ret;
+	ret = system(command);
+	return ret < 0 ? ret : WEXITSTATUS(ret);
+}
+
 #define SML_POLLIN   1U
 #define SML_POLLOUT  2U
 #define SML_POLLPRI  4U

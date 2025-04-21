@@ -26,7 +26,7 @@ struct
       _import "sleep"
       : word -> word
   val prim_system =
-      _import "system"
+      _import "prim_GenericOS_system"
       : string -> int
 
   type status = int
