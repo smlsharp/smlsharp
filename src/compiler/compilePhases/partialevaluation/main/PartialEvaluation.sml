@@ -325,7 +325,7 @@ struct
     | ABORT of RecordCalc.rcexp
 
   datatype object =
-      OBJ of RecordCalc.rcexp
+      OBJ of VarID.Set.set * RecordCalc.rcexp
     | ANY
 
   type trace =
@@ -339,6 +339,9 @@ struct
 
   fun mask (env as {derefMask, ...} : env) ({id, ...} : RecordCalc.varInfo) =
       env # {derefMask = VarID.Set.add (derefMask, id)}
+
+  fun mergeMask (env as {derefMask, ...} : env) set =
+      env # {derefMask = VarID.Set.union (derefMask, set)}
 
   fun bindVar (env as {varEnv, ...} : env) (var : RecordCalc.varInfo) valueExp =
       env # {varEnv = VarID.Map.insert (varEnv, #id var, valueExp)}
@@ -396,15 +399,15 @@ struct
       | R.RCVALUE (R.RCVAR var, _) =>
         (case VarID.Map.find (#heap trace, #id var) of
            NONE => raise Bug.Bug ("deref " ^ VarID.toString (#id var))
-         | SOME ANY => (env, ANY)
-         | SOME (OBJ objExp) =>
+         | SOME ANY => (env, NONE)
+         | SOME (OBJ (mask, objExp)) =>
            if eqTy valueTy (RecordCalcType.typeOfExp objExp)
-           then (mask env var,
+           then (mergeMask env (VarID.Set.add (mask, #id var)),
                  if VarID.Set.member (#derefMask env, #id var)
-                 then ANY
-                 else OBJ objExp)
-           else (env, ANY))
-      | _ => (env, ANY)
+                 then NONE
+                 else SOME objExp)
+           else (env, NONE))
+      | _ => (env, NONE)
 
   fun addBoundVar loc (trace : trace) (env as {varEnv, ...}) var =
       let
@@ -476,7 +479,7 @@ struct
   fun emitModify t env path {label, indexExp, recordExp, recordTy, elementExp,
                              elementTy, elementSize, elementTag, loc} =
       case deref t env recordExp recordTy of
-        (env, OBJ (R.RCRECORD {fields, loc = _})) =>
+        (env, SOME (R.RCRECORD {fields, loc = _})) =>
         let
           val field = {exp = elementExp,
                        ty = elementTy,
@@ -484,7 +487,8 @@ struct
                        tag = elementTag}
           val fields = RecordLabel.Map.insert (fields, label, field)
           val resultExp = R.RCRECORD {fields = fields, loc = loc}
-          val (t, valueExp) = emitExp t path resultExp (OBJ resultExp)
+          val object = OBJ (#derefMask env, resultExp)
+          val (t, valueExp) = emitExp t path resultExp object
         in
           (t, RET (copyCast recordExp valueExp))
         end
@@ -543,7 +547,7 @@ struct
                   fields
             val resultExp = R.RCRECORD {fields = recordFields, loc = loc}
           in
-            emitResult t path resultExp (OBJ resultExp)
+            emitResult t path resultExp (OBJ (#derefMask env, resultExp))
           end
 
   fun evalBody t env exp expTy =
@@ -586,7 +590,7 @@ struct
                                    loc = loc}
           val object =
               if sizeExp bodyExp <= INLINE_THRESHOLD
-              then OBJ resultExp
+              then OBJ (#derefMask env, resultExp)
               else ANY
         in
           emitResult t path resultExp object
@@ -616,7 +620,7 @@ struct
               (t, ABORT a) => (t, ABORT a)
             | (t, RET argExpList) =>
               case deref t env funExp funTy of
-                (env, OBJ (R.RCFNM {btvEnv, argVarList, bodyExp, ...})) =>
+                (env, SOME (R.RCFNM {btvEnv, argVarList, bodyExp, ...})) =>
                 let
                   val subst = instMap btvEnv instTyList
                   val bodyExp = if BoundTypeVarID.Map.isEmpty subst
@@ -698,7 +702,7 @@ struct
             let
               val resultExp = R.RCRECORD {fields = fields, loc = loc}
             in
-              emitResult t path resultExp (OBJ resultExp)
+              emitResult t path resultExp (OBJ (#derefMask env, resultExp))
             end
         )
       | R.RCSELECT {label, indexExp, recordExp, recordTy, resultTy, resultSize,
@@ -715,7 +719,7 @@ struct
                 val (t, resultTag) = evalValue t env resultTag
               in
                 case deref t env recordExp recordTy of
-                  (env, OBJ (objExp as R.RCRECORD {fields, loc})) =>
+                  (env, SOME (objExp as R.RCRECORD {fields, loc})) =>
                   (
                     case RecordLabel.Map.find (fields, label) of
                       NONE => raise Bug.Bug "evalExp: RCSELECT"
@@ -951,7 +955,7 @@ struct
                     R.RCFNM {bodyExp, ...} =>
                     sizeExp bodyExp <= INLINE_THRESHOLD
                   | _ => false)
-              then VarID.Map.insert (heap, #id var, OBJ exp)
+              then VarID.Map.insert (heap, #id var, OBJ (#derefMask env, exp))
               else heap
 
           (* evaluate each expressions at first *)
