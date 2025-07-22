@@ -7,7 +7,7 @@ _require       "./Word8VectorSlice.smi"
 
 structure SMLSharp_OSIO =
 struct
-  type iodesc (= int)
+  eqtype iodesc (= int)
   val hash : iodesc -> word
   val compare : iodesc * iodesc -> General.order
   eqtype iodesc_kind (= word)
