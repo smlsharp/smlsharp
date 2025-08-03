@@ -92,7 +92,7 @@ in
           end
         | _ =>
           let
-            val _ = print "illeagal command"
+            val _ = print "illegal command"
           in
             ()
           end

@@ -5302,7 +5302,7 @@ in
                        (
                         raise
                           bug
-                            "illeagal utvar instance in\
+                            "illegal utvar instance in\
                             \ UserTvarNotGeneralized check"
                        )
                     )
@@ -5502,7 +5502,7 @@ in
                        (
                         raise
                           bug
-                            "illeagal utvar instance in\
+                            "illegal utvar instance in\
                             \ UserTvarNotGeneralized check"
                        )
                     )
@@ -5609,7 +5609,7 @@ in
                                    (
                                     raise
                                       bug
-                                        "illeagal utvar instance in\
+                                        "illegal utvar instance in\
                                         \ UserTvarNotGeneralized  check"
                                    )
                                 )
@@ -5969,7 +5969,7 @@ in
                   | _ =>
                     (
 
-                     raise bug "illeagal functor annotation type"
+                     raise bug "illegal functor annotation type"
                     )
             in
               (context, decls)
