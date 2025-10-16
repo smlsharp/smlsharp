@@ -110,7 +110,6 @@ val NULL:  pos * pos -> token
 val NOT:  pos * pos -> token
 val NONFIX:  pos * pos -> token
 val NEXT:  pos * pos -> token
-val NEWLINE:  pos * pos -> token
 val NATURAL:  pos * pos -> token
 val LPAREN:  pos * pos -> token
 val LOCAL:  pos * pos -> token
@@ -179,7 +178,6 @@ val BUILTIN:  pos * pos -> token
 val BEGIN:  pos * pos -> token
 val BAR:  pos * pos -> token
 val ATTRIBUTE:  pos * pos -> token
-val AT:  pos * pos -> token
 val ASTERISK:  pos * pos -> token
 val ASC:  pos * pos -> token
 val AS:  pos * pos -> token
