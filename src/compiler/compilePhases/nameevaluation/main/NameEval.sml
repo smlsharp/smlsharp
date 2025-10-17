@@ -2860,17 +2860,18 @@ val _ = U.print "*** before checkPitopdecList\n"
         val _ = Analyzers.stopBindTracing ()
 
         val (exnInfoList, returnTopEnv, exportList) =
-          if !Control.interactiveMode
-          then genExport (version, returnTopEnv)
-          else if EU.isAnyError () then (nil, returnTopEnv, nil)
-          else 
-            let
-              val {exportDecls, bindDecls} = 
-                  CP.checkPitopdecList evalTopEnvProvide (returnTopEnv, provideTopdecs)
-            in
-              (nil, returnTopEnv, bindDecls@exportDecls)
-            end
-               handle e => raise e
+            case source of
+              Loc.INTERACTIVE => genExport (version, returnTopEnv)
+            | Loc.FILE _ =>
+              if EU.isAnyError () then (nil, returnTopEnv, nil) else
+              let
+                val {exportDecls, bindDecls} =
+                    CP.checkPitopdecList evalTopEnvProvide
+                                         (returnTopEnv, provideTopdecs)
+              in
+                (nil, returnTopEnv, bindDecls@exportDecls)
+              end
+              handle e => raise e
 
         val _ = Analyzers.stopNameRefTracing ()
 

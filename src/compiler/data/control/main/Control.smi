@@ -18,7 +18,6 @@ struct
   val importAllExceptions : bool ref
   val generateExnMessage : bool ref
 
-  val interactiveMode : bool ref
   val doProfile : bool ref
   val printTimer : bool ref
   val printCommand : bool ref

@@ -123,12 +123,11 @@ struct
             case result of
               Top.RETURN x => x
             | Top.STOPPED => raise Bug.Bug "run"
-        (* If Control.interactiveMode is false, NameEval does not generate
-         * EXPORT declarations.  To avoid inconsistency between the
-         * toplevel context and exported symbol set, make newContext empty
-         * if Control.interactiveMode is false. *)
+        (* Only in interactive mode, NameEval generate EXPORT declarations.
+         * To avoid inconsistency between the toplevel context and exported
+         * symbol set, make newContext empty if not in interactive mode *)
         val newContext =
-            if !Control.interactiveMode
+            if Parser.isInteractive input
             then newContext else Top.emptyNewContext
         val main = load session bcfile handle e => raise LinkError e
       in

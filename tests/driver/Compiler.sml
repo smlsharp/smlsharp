@@ -179,17 +179,14 @@ struct
 
   fun interactiveInput input =
       let
-        val orig_interactiveMode = !Control.interactiveMode
         val orig_skipPrinter = !Control.skipPrinter
         val orig_printer = !ReifiedTerm.printTopEnvOutput
         fun reset () =
-            (Control.interactiveMode := orig_interactiveMode;
-             Control.skipPrinter := orig_skipPrinter;
+            (Control.skipPrinter := orig_skipPrinter;
              ReifiedTerm.printTopEnvOutput := orig_printer)
         val buf = ref nil
         fun printer s = buf := !buf @ [s]
       in
-        Control.interactiveMode := true;
         Control.skipPrinter := false;
         ReifiedTerm.printTopEnvOutput := SOME printer;
         ({errors = #errors (evalInput input), prints = !buf}

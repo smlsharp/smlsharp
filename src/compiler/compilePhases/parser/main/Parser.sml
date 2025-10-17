@@ -27,4 +27,9 @@ struct
       SMLSharpParser.isEOF input
       handle SMLSharpParser.Error errors => raiseUserErrors errors
 
+  fun isInteractive input =
+      case sourceOfInput input of
+        Loc.INTERACTIVE => true
+      | Loc.FILE _ => false
+
 end

@@ -671,7 +671,7 @@ struct
             handle exn => raise exn
 
         val nameevalTopEnv =
-            if !Control.interactiveMode
+            if Parser.isInteractive input
             then NameEvalEnvUtils.mergeTypeEnv (nameevalTopEnv, typeinfVarEnv)
             else nameevalTopEnv
 
@@ -682,7 +682,7 @@ struct
                      else tpdecs
 
         val (nameevalTopEnv, tpdecs) =
-            if !Control.interactiveMode andalso not (!Control.skipPrinter)
+            if Parser.isInteractive input andalso not (!Control.skipPrinter)
             then doReifyTopEnv {sessionTopEnv=nameevalTopEnv,
                                 requireTopEnv=topEnv}
                                version

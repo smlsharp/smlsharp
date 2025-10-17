@@ -30,11 +30,6 @@ struct
   val generateExnMessage = ref false
 
   (****************************************)
-  (* internal compiler mode (user cannot specify them by -x option) *)
-
-  val interactiveMode = ref false
-
-  (****************************************)
   (* switches to control informations reported to user *)
 
   (* print what compiler does *)

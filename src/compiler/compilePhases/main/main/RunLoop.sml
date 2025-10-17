@@ -84,7 +84,6 @@ struct
 
   fun interactive options context preload =
       let
-        val _ = Control.interactiveMode := true
         val session = Interactive.start (#options options)
         val _ = Interactive.loadObjectFiles session preload
         val state = initInteractive ()
