@@ -22,7 +22,7 @@ enum sml_msg_level {
 #ifndef NDEBUG
 #define DEFAULT_VERBOSE_LEVEL  MSG_DEBUG
 #else
-#define DEFAULT_VERBOSE_LEVEL  MSG_NOTICE
+#define DEFAULT_VERBOSE_LEVEL  MSG_WARN
 #endif /* NDEBUG */
 
 static enum sml_msg_level verbose_level = DEFAULT_VERBOSE_LEVEL;
