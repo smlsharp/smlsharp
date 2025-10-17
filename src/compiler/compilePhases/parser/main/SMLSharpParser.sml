@@ -150,4 +150,24 @@ struct
         Parser.sameToken (tok, EOF)
       end
 
+  fun lex ({streamRef, first, errors, ...} : input) =
+      let
+        (* prevent reading this source after parse error occurred. *)
+        val _ = case !errors of
+                  nil => () | _::_ => raise Bug.Bug "parse: aborted stream"
+
+        val _ = first := true
+        fun loop stream r =
+            let
+              val (tok, stream) = Parser.getStream stream
+              val _ = first := false
+            in
+              if Parser.sameToken (tok, EOF) then rev (tok :: r)
+              else loop stream (tok :: r)
+            end
+        val tokens = loop (!streamRef) nil
+      in
+        case !errors of nil => tokens | errors => raise Error (rev errors)
+      end
+
 end
