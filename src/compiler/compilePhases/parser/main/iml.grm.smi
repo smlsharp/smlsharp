@@ -81,7 +81,6 @@ val SHARING:  pos * pos -> token
 val SET:  pos * pos -> token
 val SEMICOLON:  pos * pos -> token
 val SELECT:  pos * pos -> token
-val SELECTOR: (string) * pos * pos -> token
 val RPAREN:  pos * pos -> token
 val ROWS:  pos * pos -> token
 val ROW:  pos * pos -> token
@@ -142,6 +141,7 @@ val IMPORT:  pos * pos -> token
 val IF:  pos * pos -> token
 val HAVING:  pos * pos -> token
 val HASH:  pos * pos -> token
+val HASH_STRING:  string * pos * pos -> token
 val HANDLE:  pos * pos -> token
 val GROUP:  pos * pos -> token
 val FUNCTOR:  pos * pos -> token

@@ -112,8 +112,8 @@ fun closeString (yypos, arg as {string = {buf, startPos, ty}, ...} : arg) =
         #prevPos arg := yypos + 1;
         case !ty of
           STRING => (T.STRING (s, l, r), l, r)
-                | CHAR => (if size s = 1 then (T.CHAR (s, l, r), l, r)
-                           else (T.SELECTOR (s, l, r), l, r))
+        | CHAR => if size s = 1 then (T.CHAR (s, l, r), l, r)
+                  else (T.HASH_STRING (s, l, r), l, r)
       end
 
 fun addString (s, {string = {buf, startPos, ...}, ...}:arg) =
@@ -312,21 +312,6 @@ real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
 <INITIAL>{id} => (T.ALPHABETICID (string (yytext, yypos, arg)));
 <INITIAL>{symid} => (T.SYMBOLICID (string (yytext, yypos, arg)));
 <INITIAL>{prefixedlabel} => (T.PREFIXEDLABEL (string (yytext, yypos, arg)));
-<INITIAL>"#"({id}) => 
-         (let val (s, l, r) = string (yytext, yypos, arg)
-          in T.SELECTOR (String.extract(s, 1, NONE), l, r)
-          end
-          );
-<INITIAL>"#"({int}) => 
-         (let val (s, l, r) = string (yytext, yypos, arg)
-          in T.SELECTOR (String.extract(s, 1, NONE), l, r)
-          end
-          );
-<INITIAL>"#"({prefixedlabel}) => 
-         (let val (s, l, r) = string (yytext, yypos, arg)
-          in T.SELECTOR (String.extract(s, 1, NONE), l, r)
-          end
-          );
 <INITIAL>"0w"{num} =>
          (let val (s, l, r) = string (yytext, yypos, arg)
           in T.WORD ({radix = StringCvt.DEC,

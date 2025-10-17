@@ -90,6 +90,7 @@ structure S = AbsynSQL
     | GROUP
     | HANDLE
     | HASH
+    | HASH_STRING of string
     | HAVING
     | IF
     | IMPORT
@@ -150,7 +151,6 @@ structure S = AbsynSQL
     | ROWS
     | RPAREN
     | SELECT
-    | SELECTOR of string
     | SEMICOLON
     | SET
     | SHARING
@@ -700,10 +700,11 @@ atexp_noVAR
           (A.EXPRECORD (nil, (LBRACEleft, RBRACEright)))
         | LPAREN RPAREN
           (A.EXPCONSTANT (A.UNITCONST, (LPARENleft, RPARENright)))
-        | SELECTOR
-          (A.EXPRECORD_SELECTOR (RecordLabel.fromString SELECTOR, (SELECTORleft, SELECTORright)))
         | HASH label
           (A.EXPRECORD_SELECTOR (label, (HASHleft, labelright)))
+        | HASH_STRING
+          (A.EXPRECORD_SELECTOR (RecordLabel.fromString HASH_STRING,
+                                 (HASH_STRINGleft, HASH_STRINGright)))
         | LBRACKET RBRACKET
           (A.EXPLIST ([], (LBRACKETleft, RBRACKETright)))
         | LBRACKET expOrSQL RBRACKET
@@ -1168,15 +1169,10 @@ sqltable
           (S.TABLE_SUBQUERY
              (sqlSelectQuery, (sqlSelectQueryleft, sqlSelectQueryright)))
 
-(*
 sqltableid
         : HASH id PERIOD label
-          ({db = id, label = label, loc = (HASHleft, labelright)})
-*)
-sqltableid
-        : SELECTOR PERIOD label
-          ({db = {string = SELECTOR, loc=(SELECTORleft, SELECTORright)}, 
-            label = label, loc = (SELECTORleft, labelright)})
+          ({db = {string = Symbol.symbolToString id, loc = (HASHleft, idright)},
+            label = label, loc = (HASHleft, labelright)})
 
 sqlInsertCommand
         : INSERT INTO sqltableid LPAREN labelseq RPAREN sqlInsertValues
@@ -1306,12 +1302,11 @@ sqlatexp
           (S.OPID (longid, (OPleft, longidright)))
         | id_noSQL
           (S.ID id_noSQL)
-        | SELECTOR PERIOD label
-          (S.COLUMN2 ((RecordLabel.fromString SELECTOR, label), (SELECTORleft, labelright)))
-(*
         | HASH label PERIOD label
-          (S.COLUMN2 ((label1, label2), (label1left, label2right)))
-*)
+          (S.COLUMN2 ((label1, label2), (HASHleft, label2right)))
+        | HASH_STRING PERIOD label
+          (S.COLUMN2 ((RecordLabel.fromString HASH_STRING, label),
+                      (HASH_STRINGleft, labelright)))
         | HASH PERIOD label
           (S.COLUMN1 (label1, (HASHleft, labelright)))
         | sqlopt sqlkwexp
@@ -1901,18 +1896,14 @@ kindSeq
           ({properties = nil, recordKind = SOME nil})
         | HASH LBRACE tyrow RBRACE
           ({properties = nil, recordKind = SOME tyrow})
-        | SELECTOR
-          ({properties = [SELECTOR], recordKind = NONE})
-        | SELECTOR kindSeq
-          ({properties = SELECTOR :: #properties kindSeq,
+        | HASH alphabetic_id
+          ({properties = [Symbol.symbolToString alphabetic_id],
+            recordKind = NONE})
+        | HASH alphabetic_id kindSeq
+          ({properties = Symbol.symbolToString alphabetic_id
+                         :: #properties kindSeq,
             recordKind = #recordKind kindSeq})
-(*
-        | HASH ALPHABETICID
-          ({properties = [ALPHABETICID], recordKind = NONE})
-        | HASH ALPHABETICID kindSeq
-          ({properties = ALPHABETICID :: #properties kindSeq,
-            recordKind = #recordKind kindSeq})
-*)
+
 kinded_tyvar
         : tyvar
           (tyvar, A.UNIV (nil, (tyvarleft, tyvarright)))
