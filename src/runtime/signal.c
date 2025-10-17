@@ -31,7 +31,7 @@ do_sigaction(int signum, const char *signame, const struct sigaction *sa)
 	struct sigaction old;
 	int r = sigaction(signum, sa, &old);
 	if (r == 0 && old.sa_handler != SIG_DFL) {
-		sml_warn(0, "%s handler is already set", signame);
+		sml_notice("%s handler is already set", signame);
 		r = sigaction(signum, &old, NULL);
 	}
 	return r;
