@@ -649,7 +649,7 @@ val _ = print "\n"
         loaded
 
   fun load {baseFilename, loadPath, loadMode, defaultInterface}
-           ({interface, tops, loc}:A.unit) =
+           ({interface, tops, loc} : A.compile_unit) =
       let
         (* "_interface" may appear only in batch compile mode.
          * file path of "_interface" is relative to the sml file. *)

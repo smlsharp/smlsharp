@@ -42,8 +42,8 @@ struct
       : Absyn.spec -> SMLFormat.FormatExpression.expression list
   val format_topdec
       : Absyn.topdec -> SMLFormat.FormatExpression.expression list
-  val format_unit
-      : Absyn.unit -> SMLFormat.FormatExpression.expression list
+  val format_compile_unit
+      : Absyn.compile_unit -> SMLFormat.FormatExpression.expression list
   val format_unitparseresult
       : Absyn.unitparseresult -> SMLFormat.FormatExpression.expression list
 

@@ -28,7 +28,7 @@ struct
          loadPath : InterfaceName.source list,
          loadMode : InterfaceName.file_load_mode,
          defaultInterface : Filename.filename -> Filename.filename}
-        -> Absyn.unit
+        -> Absyn.compile_unit
         -> InterfaceName.file_dependency
            * InterfaceName.toplevel_prelude
            * AbsynInterface.compile_unit

@@ -922,8 +922,8 @@ struct
 
   (*%
    *)
-  type unit 
-    = (*%
+  type compile_unit =
+      (*%
        * @format({interface,
        *          tops : top tops,
        *          loc : loc})
@@ -943,7 +943,7 @@ struct
        * @format(unit) 
        *  unit
        *)
-      UNIT of unit
+      UNIT of compile_unit
     | (*%
        *)
       EOF

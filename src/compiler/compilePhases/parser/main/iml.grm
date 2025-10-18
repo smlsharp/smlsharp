@@ -365,7 +365,7 @@ structure S = AbsynSQL
     | topdecs of A.topdec list
     | topdec of A.topdec
     | interface of A.interface
-    | unit of A.unit
+    | unit of A.compile_unit
     | valdesc of (Symbol.symbol * A.ty) list
     | valbind of (A.pat * A.exp * A.loc) list
 

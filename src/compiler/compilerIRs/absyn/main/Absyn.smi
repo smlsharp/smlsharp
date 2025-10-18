@@ -188,15 +188,15 @@ struct
     = INTERFACE of RequirePath.path * loc
     | NOINTERFACE
 
-  type unit = 
-    {
-     interface : interface,
-     tops : top list,
-     loc : loc
-    }
+  type compile_unit =
+      {
+        interface : interface,
+        tops : top list,
+        loc : loc
+      }
 
   datatype unitparseresult
-    = UNIT of unit
+    = UNIT of compile_unit
     | EOF
 
   val getLocExp : exp -> Loc.loc
