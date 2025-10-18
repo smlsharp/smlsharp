@@ -395,6 +395,19 @@ struct
           in ([PC.PLTOPDECFUN(plfunbinds, loc)], SEnv.empty)
           end
 *)
+      | A.TOPDECEXP (exp, loc) =>
+        ([PC.PLTOPDECSTR
+            (PC.PLCOREDEC
+               (PC.PDVAL
+                  (nil,
+                   [(PC.PLPATID (Symbol.mkLongsymbol ["it"] Loc.noloc),
+                     ElaborateCore.elabExp env exp,
+                     Loc.noloc)],
+                   loc),
+                loc),
+             loc)],
+         SymbolEnv.empty)
+
     and elabTopDecs env topdecs = elabSequence elabTopDec env topdecs
       
 end

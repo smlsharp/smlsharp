@@ -291,13 +291,14 @@ struct
 
   and scanTopdec c topdec =
       case topdec of
-        A.TOPDECSTR (strdec, loc) => scanStrdec c strdec
-      | A.TOPDECSIG (sigbind, loc) => S.SigDec
-      | A.TOPDECFUN (funbinds, loc) => S.FctDec (map (scanFunbind c) funbinds)
+        A.TOPDECSTR (strdec, loc) => [scanStrdec c strdec]
+      | A.TOPDECSIG (sigbind, loc) => [S.SigDec]
+      | A.TOPDECFUN (funbinds, loc) => [S.FctDec (map (scanFunbind c) funbinds)]
+      | A.TOPDECEXP exp => nil
 
   and scanTop c top =
       case top of
-        A.TOPDEC topdecs => map (scanTopdec c) topdecs
+        A.TOPDEC topdecs => List.concat (map (scanTopdec c) topdecs)
       | A.USE (path, loc) => nil
 
   and scanUnitparseresult c result =

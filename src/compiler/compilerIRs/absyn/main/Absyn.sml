@@ -896,6 +896,8 @@ struct
            ]
        *) 
       TOPDECFUN of funbind list * loc (* functor binding *)
+    | (*% @format(exp * loc) exp *)
+      TOPDECEXP of exp * loc
 
   (*%
    * @formatter(RequirePath.path) RequirePath.format_path

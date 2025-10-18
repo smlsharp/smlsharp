@@ -179,6 +179,7 @@ struct
     = TOPDECSTR of strdec * loc
     | TOPDECSIG of ( symbol * sigexp ) list * loc 
     | TOPDECFUN of funbind list * loc
+    | TOPDECEXP of exp * loc
 
   datatype top 
     = TOPDEC of topdec list

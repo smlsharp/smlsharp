@@ -19,6 +19,9 @@ structure ElaborateCore =
     val checkReservedNameForConstructorBind : Symbol.symbol -> unit
     val checkReservedNameForValBind : Symbol.symbol -> unit
     val elabFFITy : Absyn.ffiTy -> PatternCalc.ffiTy
+    val elabExp : (Fixity.fixity * Loc.loc) SymbolEnv.map
+                  -> Absyn.exp
+                  -> PatternCalc.plexp
     val elabDec : (Fixity.fixity * Loc.loc) SymbolEnv.map
                   -> Absyn.dec
                   -> PatternCalc.pdecl list * (Fixity.fixity * Loc.loc) SymbolEnv.map

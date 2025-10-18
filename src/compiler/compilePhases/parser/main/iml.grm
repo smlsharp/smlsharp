@@ -453,26 +453,11 @@ start
           (A.UNIT unit)
         | expOrSQL
           (A.UNIT
-             {tops =
-                [A.TOPDEC
-                   [A.TOPDECSTR
-                      (A.COREDEC
-                         (A.DECVAL
-                            (nil,
-                             [(A.PATID
-                                 {opPrefix = false,
-                                  longsymbol =
-                                    Symbol.mkLongsymbol
-                                      ["it"]
-                                      (Loc.nopos, Loc.nopos),
-                                  loc = (Loc.nopos, Loc.nopos)},
-                               expOrSQL,
-                               Loc.noloc)],
-                             (expOrSQLleft, expOrSQLright)),
-                          (Loc.nopos, Loc.nopos)),
-                       (Loc.nopos, Loc.nopos))]],
-              interface = A.NOINTERFACE,
-              loc = (Loc.nopos, Loc.nopos)})
+             {interface = A.NOINTERFACE,
+              tops = [A.TOPDEC
+                        [A.TOPDECEXP
+                           (expOrSQL, (expOrSQLleft, expOrSQLright))]],
+              loc = (expOrSQLleft, expOrSQLright)})
 
 (****************** constant ***************************)
 int
