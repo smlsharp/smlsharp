@@ -11,7 +11,7 @@ struct
   type source = SMLSharpParser.source
   type input (= SMLSharpParser.input)
   val setup : source -> input
-  val parse : input -> Absyn.unitparseresult
+  val parse : input -> Absyn.absyn
   val isEOF : input -> bool
   val sourceOfInput : input -> Loc.source
   val isInteractive : input -> bool

@@ -228,7 +228,7 @@ struct
     | ALLOW_ONLY of Filename.Set.set
 
   datatype parse_result =
-      L of A.unitparseresult
+      L of A.absyn
     | I of I.itop
 
   type toplevel_additionals =

@@ -70,7 +70,7 @@ struct
       else ()
 
   fun printParseResult flag title code =
-      printCode [flag] (Bug.prettyPrint o AbsynFormatter.format_unitparseresult)
+      printCode [flag] (Bug.prettyPrint o AbsynFormatter.format_absyn)
                 title [code]
 
   fun printAbsyn flag title code =

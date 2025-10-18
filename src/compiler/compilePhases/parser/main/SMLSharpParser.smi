@@ -16,7 +16,7 @@ struct
   exception Error of (Loc.loc * string) list
   val sourceOfInput : input -> Loc.source
   val setup : source -> input
-  val parse : input -> Absyn.unitparseresult
+  val parse : input -> Absyn.absyn
   val isEOF : input -> bool
   val lex : input -> ML.Parser.token list
 end

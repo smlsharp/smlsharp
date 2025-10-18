@@ -276,7 +276,7 @@ structure S = AbsynSQL
     | patlongid of A.longsymbol
     | patlongsymbol of Symbol.longsymbol
     | pat of A.pat
-    | start of A.unitparseresult
+    | start of A.absyn
     | strexpbasic of A.strexp
     | strexp of A.strexp
     | strexpcomb of A.strexp

@@ -29,7 +29,7 @@ struct
   struct
     type token = ParserData.Token.token
     type stream (= ref)
-    type result = Absyn.unitparseresult
+    type result = Absyn.absyn
     type pos = Loc.pos
     type arg = unit
     exception ParseError

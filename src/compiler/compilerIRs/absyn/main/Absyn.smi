@@ -195,7 +195,7 @@ struct
         loc : loc
       }
 
-  datatype unitparseresult
+  datatype absyn
     = UNIT of compile_unit
     | EOF
 

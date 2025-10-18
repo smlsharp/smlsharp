@@ -938,9 +938,9 @@ struct
 
   (*%
    *)
-  datatype unitparseresult
+  datatype absyn
     = (*%
-       * @format(unit) 
+       * @format(unit)
        *  unit
        *)
       UNIT of compile_unit
