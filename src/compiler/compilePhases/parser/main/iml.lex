@@ -55,7 +55,7 @@ fun newline (pos, yytext, {line as ref {count, begin}, ...} : arg) =
     line := {count = count + 1, begin = pos + size yytext}
 
 fun pos (yypos, {source, line = ref {count, begin}, prevPos, ...}:arg) =
-    Loc.POS {source = source, line = count, col = yypos - begin,
+    Loc.POS {source = source, line = count, col = yypos - begin + 1,
              pos = yypos - INITIAL_POS_OF_LEXER, gap = yypos - !prevPos}
 
 val left = pos
