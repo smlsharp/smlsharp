@@ -6436,9 +6436,9 @@ if test -d "$srcdir/.git" || test -f "$srcdir/.git"; then
     RELEASE=RELEASE
     MKREL=
   fi
-fi
-if test -n "$MKREL" && test ! -f "$srcdir/RELEASE"; then
-  as_fn_error $? "file not found: RELEASE" "$LINENO" 5
+elif test ! -f "$srcdir/RELEASE"; then
+  RELEASE=RELEASE
+  MKREL=
 fi
 
 EXTRA_OPTIONS=

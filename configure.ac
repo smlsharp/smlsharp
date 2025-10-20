@@ -370,9 +370,9 @@ if test -d "$srcdir/.git" || test -f "$srcdir/.git"; then
     RELEASE=RELEASE
     MKREL=
   fi
-fi
-if test -n "$MKREL" && test ! -f "$srcdir/RELEASE"; then
-  AC_MSG_ERROR([file not found: RELEASE])
+elif test ! -f "$srcdir/RELEASE"; then
+  RELEASE=RELEASE
+  MKREL=
 fi
 
 EXTRA_OPTIONS=
