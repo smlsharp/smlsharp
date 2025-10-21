@@ -421,6 +421,7 @@ src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -530,6 +531,7 @@ src/compiler/libs/env/main/IEnv.o \
 src/compiler/libs/util/main/Counter.o \
 src/compiler/extensions/usererror/main/UserError.ppg.o \
 src/compiler/data/symbols/main/Symbol.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/libs/env/main/ISet.o \
 src/compiler/libs/ids/main/GenIDFun.o \
@@ -889,6 +891,7 @@ src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/libs/util/main/TermFormat.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
@@ -1258,6 +1261,7 @@ src/foreach/main/Foreach.o \
 src/foreach/main/ForeachArray.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/extensions/format-utils/main/TermPrintUtils.ppg.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/libs/list-utils/main/ListSorter.o \
 src/compiler/libs/util/main/TermFormat.o \
 src/compiler/extensions/reflection/main/ReifiedTy.ppg.o \
@@ -1773,6 +1777,7 @@ src/compiler/libs/toolchain/main/ShellUtils.o \
 src/compiler/libs/toolchain/main/LLVMUtils.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \
@@ -2343,6 +2348,7 @@ src/compiler/data/runtimetypes/main/TypeLayout2.o \
 src/compiler/data/symbols/main/Loc.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/data/symbols/main/Symbol.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/types/main/CheckEq.o \
 src/compiler/data/types/main/DummyTyID.o \
 src/compiler/data/types/main/DynamicKind.ppg.o \
@@ -2762,6 +2768,7 @@ src/compiler/data/runtimetypes/main/TypeLayout2.smi \
 src/compiler/data/symbols/main/Loc.smi \
 src/compiler/data/symbols/main/RecordLabel.smi \
 src/compiler/data/symbols/main/Symbol.smi \
+src/compiler/data/symbols/main/SymbolWithLoc.smi \
 src/compiler/data/types/main/CheckEq.smi \
 src/compiler/data/types/main/DummyTyID.smi \
 src/compiler/data/types/main/DynamicKind.ppg.smi \
@@ -3073,6 +3080,7 @@ src/compiler/data/control/main/PrintControl.o \
 src/compiler/data/control/main/Control.o \
 src/smlnj-lib/Util2/binary-map-fn2.o \
 src/compiler/data/symbols/main/Symbol.o \
+src/compiler/data/symbols/main/SymbolWithLoc.o \
 src/compiler/data/symbols/main/RecordLabel.o \
 src/compiler/compilerIRs/absyn/main/RequirePath.o \
 src/compiler/compilerIRs/absyn/main/AbsynTy.o \

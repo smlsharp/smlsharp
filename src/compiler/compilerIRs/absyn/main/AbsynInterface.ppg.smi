@@ -2,7 +2,7 @@ _require local "../../../../basis.smi"
 _require local "../../../libs/util/main/TermFormat.smi"
 _require local "../../../extensions/format-utils/main/SmlppgUtil.ppg.smi"
 
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../../smlformat-lib.smi"

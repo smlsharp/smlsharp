@@ -1,7 +1,7 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../libs/env/main/SEnv.smi"
@@ -52,8 +52,6 @@ struct
   val formatIfList : format -> 'a list formatter
   val formatIfNonEmpty : format -> 'a SEnv.map formatter
   val formatIfEmpty : format -> 'a SEnv.map formatter
-  val formatIfNonEmptySymbolMap : format -> 'a SymbolEnv.map formatter
-  val formatIfEmptySymbolMap : format -> 'a SymbolEnv.map formatter
   val formatIfEmptyFormat : (format * format) -> format -> format
   type 'kind btvEnv (= {})
   val emptyBtvEnv : 'k btvEnv

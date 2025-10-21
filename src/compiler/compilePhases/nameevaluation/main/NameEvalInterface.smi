@@ -27,6 +27,7 @@ _require local "./RenameLongsymbol.smi"
 
 _require local "../../../data/control/main/Control.smi"
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "../../../libs/ids/main/LocalID.smi"

@@ -97,12 +97,6 @@ structure TermFormat :> sig
   (* for fine-tuning *)
   val formatIfEmpty : format -> 'a SEnv.map formatter
 
-  (* for fine-tuning *)
-  val formatIfNonEmptySymbolMap : format -> 'a SymbolEnv.map formatter
-
-  (* for fine-tuning *)
-  val formatIfEmptySymbolMap : format -> 'a SymbolEnv.map formatter
-
   val formatIfEmptyFormat : (format * format) -> format -> format
 
   (* formatting bound type variables *)
@@ -430,14 +424,6 @@ struct
   (**** for fine-tuning ****)
   fun formatIfEmpty exp smap = 
       if SEnv.isEmpty(smap) then exp else nil
-
-  (**** for fine-tuning ****)
-  fun formatIfNonEmptySymbolMap exp smap = 
-      if SymbolEnv.isEmpty(smap) then nil else exp
-
-  (**** for fine-tuning ****)
-  fun formatIfEmptySymbolMap exp smap = 
-      if SymbolEnv.isEmpty(smap) then exp else nil
 
   fun formatIfEmptyFormat (emptyFormat, nonEmptyFormat) exp =
       if null(exp) then emptyFormat else nonEmptyFormat

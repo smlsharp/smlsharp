@@ -9,6 +9,7 @@ _require "./TfunVars.smi"
 _require local "../../../libs/list-utils/main/ListSorter.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/control/main/Control.smi"
 (* _require "../../../data/symbols/main/RecordLabel.smi" *)
 (* _require "../../../data/runtimetypes/main/RuntimeTypes.ppg.smi" *)

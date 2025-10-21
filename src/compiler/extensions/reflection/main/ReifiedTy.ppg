@@ -831,19 +831,6 @@ struct
   fun longsymbolIdArgsToOpaqueTy longsymbol id args size boxed =
       OPAQUEty {longsymbol=longsymbol, id = id, args = args, size = size, boxed=boxed}
 
-  fun makePos true _ _ _ _ _ _ = Loc.NOPOS
-    | makePos false isStdPath NONE line col pos gap =
-      Loc.POS {source = Loc.INTERACTIVE, line = line, col = col,
-               pos = pos, gap = gap}
-    | makePos false isStdPath (SOME name) line col pos gap =
-      Loc.POS
-        {source = Loc.FILE (if isStdPath then Loc.STDPATH else Loc.USERPATH,
-                            Filename.fromString name),
-         line = line,
-         col = col,
-         pos = pos,
-         gap = gap}
-
   fun isBaseTy reifiedTy =
       case reifiedTy of
       ARRAYty reifiedTy => false

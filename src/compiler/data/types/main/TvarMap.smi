@@ -2,7 +2,7 @@ _require "../../../../basis.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../libs/ids/main/LocalID.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 
 structure TvarOrd =
 struct

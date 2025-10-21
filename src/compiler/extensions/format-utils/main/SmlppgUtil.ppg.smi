@@ -1,6 +1,6 @@
 _require "../../../../basis.smi"
 _require "../../../../smlformat-lib.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require local "../../../libs/list-utils/main/ListSorter.smi"
 
 structure SmlppgUtil =

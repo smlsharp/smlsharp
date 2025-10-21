@@ -6,6 +6,7 @@ _require "../../../../basis.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "./NameEvalEnv.ppg.smi"
 

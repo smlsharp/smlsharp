@@ -1,7 +1,7 @@
 _require local "../../../../basis.smi"
 _require local "../../../../smlformat-lib.smi"
 _require "../../../data/symbols/main/Loc.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../libs/ids/main/LocalID.smi"

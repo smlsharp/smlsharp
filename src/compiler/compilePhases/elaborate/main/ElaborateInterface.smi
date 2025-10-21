@@ -10,6 +10,7 @@ _require local "./ElaborateCore.smi"
 _require local "./ElaborateModule.smi"
 
 _require "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../compilerIRs/absyn/main/Fixity.smi"
 _require local "../../../compilerIRs/absyn/main/AbsynTy.smi"

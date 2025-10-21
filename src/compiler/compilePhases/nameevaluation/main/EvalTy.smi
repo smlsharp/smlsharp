@@ -18,6 +18,7 @@ _require local "./SetLiftedTys.smi"
 
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../compilerIRs/absyn/main/AbsynTy.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
 _require "../../../compilerIRs/patterncalc/main/PatternCalc.ppg.smi"

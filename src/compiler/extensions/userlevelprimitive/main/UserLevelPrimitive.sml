@@ -409,8 +409,6 @@ struct
       getExVar ["ReifiedTy", "makeExistTy"]
   val REIFY_exInfo_makeFUNMty =
       getExVar ["ReifiedTy", "makeFUNMty"]
-  val REIFY_exInfo_makePos =
-      getExVar ["ReifiedTy", "makePos"]
   val REIFY_exInfo_mkENVenv =
       getExVar ["ReifiedTerm", "mkENVenv"]
   val REIFY_exInfo_mkEXEXNIdstatus =

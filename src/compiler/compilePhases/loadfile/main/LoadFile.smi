@@ -5,7 +5,7 @@ _require local "../../../data/symbols/main/Loc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require local "../../../libs/ids/main/LocalID.smi"
 _require local "../../../libs/env/main/SEnv.smi"
-_require local "../../../data/symbols/main/Symbol.smi"
+_require local "../../../data/symbols/main/SymbolWithLoc.smi"
 
 _require local "../../../libs/toolchain/main/CoreUtils.smi"
 _require local "../../../extensions/usererror/main/UserError.ppg.smi"

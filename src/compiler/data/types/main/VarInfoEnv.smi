@@ -2,7 +2,7 @@ _require "../../../../basis.smi"
 _require local "../../../../smlnj-lib/Util/ord-key-sig.sml"
 _require "../../../../smlnj-lib/Util/binary-set-fn.smi"
 _require "../../../../smlnj-lib/Util/binary-map-fn.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require local "../../../extensions/debug/main/Bug.smi"
 _require "../../../libs/ids/main/LocalID.smi"
 

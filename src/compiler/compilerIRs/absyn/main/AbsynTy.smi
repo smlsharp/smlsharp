@@ -1,6 +1,6 @@
 (* _require local "../../../../basis.smi" *)
 _require "../../../data/symbols/main/Loc.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
 
 structure AbsynTy =

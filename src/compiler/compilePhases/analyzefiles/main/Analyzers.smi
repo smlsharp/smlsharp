@@ -1,7 +1,7 @@
 _require local "../../../../basis.smi"
 _require "../../../compilerIRs/absyn/main/InterfaceName.ppg.smi"
 _require "../../../compilerIRs/idcalc/main/IDCalc.ppg.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 _require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
 _require "./DBSchema.smi"
 

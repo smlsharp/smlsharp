@@ -124,7 +124,6 @@ struct
 
   val stringReifiedTyListToRecordTy : (string * reifiedTy) list -> reifiedTy
   val stringReifiedTyOptionListToConSet : (string * reifiedTy option) list -> conSet
-  val makePos : bool -> bool -> string option -> int -> int -> int -> int ->  Loc.pos
   val typIdConSetListToConSetEnv : (TypID.id * conSet) list -> conSetEnv
   val TyRep : conSetEnv -> reifiedTy -> tyRep
   val TyRepToReifiedTy : tyRep -> reifiedTy 

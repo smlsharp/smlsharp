@@ -7,7 +7,7 @@ _require "../../../compilerIRs/typedcalc/main/TypedCalc.ppg.smi"
 _require "../../../data/types/main/Types.ppg.smi"
 _require "../../../data/symbols/main/Loc.smi"
 _require "../../../data/symbols/main/RecordLabel.smi"
-_require "../../../data/symbols/main/Symbol.smi"
+_require "../../../data/symbols/main/SymbolWithLoc.smi"
 
 _require local "../../userlevelprimitive/main/UserLevelPrimitive.smi"
 _require local "../../debug/main/Bug.smi"
