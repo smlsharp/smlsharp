@@ -618,7 +618,7 @@ in
                   isSmall = isSmall tpexp,
                   useCount = useCounter,
                   funVarId = newLocalId(),
-                  funLabel = FunLocalLabel.generate nil,
+                  funLabel = FunLocalLabel.generate NONE,
                   funBodyTy = branchTy,
                   funTy = ref NONE,
                   funLoc = loc,

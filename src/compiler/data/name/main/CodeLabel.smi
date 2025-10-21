@@ -12,7 +12,7 @@ _require local "./NameMangle.smi"
 structure FunEntryLabel =
 struct
   type id (= *)
-  val generate : Symbol.longsymbol -> id
+  val generate : Symbol.longsymbol option -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order
@@ -111,7 +111,7 @@ end
 structure CallbackEntryLabel =
 struct
   type id (= *)
-  val generate : Symbol.longsymbol -> id
+  val generate : Symbol.longsymbol option -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order
@@ -210,7 +210,7 @@ end
 structure FunLocalLabel =
 struct
   type id (= *)
-  val generate : Symbol.longsymbol -> id
+  val generate : Symbol.longsymbol option -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order
@@ -309,7 +309,7 @@ end
 structure HandlerLabel =
 struct
   type id (= *)
-  val generate : Symbol.longsymbol -> id
+  val generate : Symbol.longsymbol option -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order
@@ -410,7 +410,7 @@ end
 structure DataLabel =
 struct
   type id (= *)
-  val generate : Symbol.longsymbol -> id
+  val generate : Symbol.longsymbol option -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order
@@ -509,7 +509,7 @@ end
 structure ExtraDataLabel =
 struct
   type id (= *)
-  val generate : Symbol.longsymbol -> id
+  val generate : Symbol.longsymbol option -> id
   val derive : id -> id
   val eq : id * id -> bool
   val compare : id * id -> order

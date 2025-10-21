@@ -81,9 +81,9 @@ struct
 
   fun If {condExp, condTy, const, thenExp, elseExp, loc} =
       let
-        val nextLabel = FunLocalLabel.generate nil
-        val thenLabel = FunLocalLabel.generate nil
-        val elseLabel = FunLocalLabel.generate nil
+        val nextLabel = FunLocalLabel.generate NONE
+        val thenLabel = FunLocalLabel.generate NONE
+        val elseLabel = FunLocalLabel.generate NONE
         val goto : M.mcexp =
             (nil, M.MCGOTO {id = nextLabel, argList = nil, loc = loc})
       in

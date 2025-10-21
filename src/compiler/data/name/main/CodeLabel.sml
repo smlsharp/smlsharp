@@ -27,11 +27,14 @@ local
                     
     val counter = ref 0
                       
-    fun generate longsymbol =
+    fun generate longsymbol : id =
         (!counter before counter := !counter + 1,
          case longsymbol of
-           nil => ""
-         | _ => NameMangle.mangle (map Symbol.toString longsymbol)) : id
+           NONE => ""
+         | SOME s =>
+           case Symbol.toStringList s of
+             nil => ""
+           | l => NameMangle.mangle l)
 
     fun derive ((_, name):id) =
         (!counter before counter := !counter + 1, name) : id

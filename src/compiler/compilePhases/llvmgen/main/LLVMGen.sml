@@ -1095,7 +1095,7 @@ print
 
   fun jumpIfZero value (thenLabel, args) =
       let
-        val elseLabel = FunLocalLabel.generate nil
+        val elseLabel = FunLocalLabel.generate NONE
       in
         scope (last (L.SWITCH {value = value,
                                default = (elseLabel, []),
@@ -1107,7 +1107,7 @@ print
   fun jumpIfNull value (thenLabel, args) =
       let
         val b = VarID.generate ()
-        val elseLabel = FunLocalLabel.generate nil
+        val elseLabel = FunLocalLabel.generate NONE
       in
         scope (insn1 (L.ICMP (b, L.EQ, value, nullOperand))
                o last (L.SWITCH {value = (L.I1, L.VAR b),
@@ -1188,7 +1188,7 @@ print
                        fnAttrs = fnAttrs})
       | SOME handlerLabel =>
         let
-          val toLabel = FunLocalLabel.generate nil
+          val toLabel = FunLocalLabel.generate NONE
           val tmp = Option.map (fn _ => VarID.generate ()) result
         in
           scope (last (L.INVOKE {result = tmp,
@@ -1685,7 +1685,7 @@ print
               | (NONE, SOME handlerLabel) => (SOME handlerLabel, empty)
               | (SOME enterInsn, _) =>
                 let
-                  val lpadLabel = HandlerLabel.generate nil
+                  val lpadLabel = HandlerLabel.generate NONE
                   val ueVar = VarID.generate ()
                   val argVar = VarID.generate ()
                   val arg2Var = VarID.generate ()
@@ -1738,8 +1738,8 @@ print
           val nestArg1 = VarID.generate ()
           val nestArg2 = VarID.generate ()
           val resultVar2 = VarID.generate ()
-          val isNullLabel = FunLocalLabel.generate nil
-          val contLabel = FunLocalLabel.generate nil
+          val isNullLabel = FunLocalLabel.generate NONE
+          val contLabel = FunLocalLabel.generate NONE
         in
           scope
             (insn1 (L.CONV (funPtr, L.BITCAST, code, L.PTR L.I8))
@@ -1865,8 +1865,8 @@ print
       | M.MCCHECK {handler} =>
         let
           val check_flag = referIntrinsicVar sml_check_flag
-          val onLabel = FunLocalLabel.generate nil
-          val offLabel = FunLocalLabel.generate nil
+          val onLabel = FunLocalLabel.generate NONE
+          val offLabel = FunLocalLabel.generate NONE
           val flag = VarID.generate ()
           val cmpResult = VarID.generate ()
           val flagValue = (L.I32, L.VAR flag)
@@ -2214,7 +2214,7 @@ print
                  {frameSlots, bodyExp, cleanupHandler,
                   argTys, varArg, cconv, retTy} =
       let
-        val retLabel = FunLocalLabel.generate nil
+        val retLabel = FunLocalLabel.generate NONE
         val (retTy, goto, retArgs, return) =
             case retTy of
               NONE =>
@@ -2511,7 +2511,7 @@ print
              body = (nil, L.UNREACHABLE)},
           let
             val v1 = VarID.generate ()
-            val thenLabel = FunLocalLabel.generate nil
+            val thenLabel = FunLocalLabel.generate NONE
           in
             L.DEFINE
               {linkage = NONE,
@@ -2572,7 +2572,7 @@ print
            let
              val v1 = VarID.generate ()
              val v2 = VarID.generate ()
-             val thenLabel = FunLocalLabel.generate nil
+             val thenLabel = FunLocalLabel.generate NONE
            in
              scope
                (insns [L.LOAD (v1, L.I8, sml_done),

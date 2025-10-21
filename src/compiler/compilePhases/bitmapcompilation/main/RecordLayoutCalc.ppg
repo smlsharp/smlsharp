@@ -14,9 +14,9 @@ struct
    *)
   type var =
       (*%
-       * @format({path, id}) path "(" id ")"
+       * @format({path: path pathOpt, id}) pathOpt(path) "(" id ")"
        *)
-      {path : Symbol.longsymbol, id : VarID.id} (* word32 *)
+      {path : Symbol.longsymbol option, id : VarID.id} (* word32 *)
 
   (*%
    * @formatter(Word32.word) SMLFormat.BasicFormatters.format_word

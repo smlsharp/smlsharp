@@ -27,7 +27,7 @@ struct
       end
 
   fun newVar ty =
-      {path = [],
+      {path = NONE,
        ty = ty,
        id = VarID.generate ()} : TL.varInfo
 
@@ -282,7 +282,7 @@ struct
   fun newLocalExn (env:env, {path, ty, id}:Types.exnInfo) =
       let
         val vid = VarID.generate ()
-        val varInfo = {path = nil, ty = BT.exntagTy, id = vid} : TL.varInfo
+        val varInfo = {path = NONE, ty = BT.exntagTy, id = vid} : TL.varInfo
       in
         ({exnMap = ExnID.Map.insert (#exnMap env, id, varInfo),
           exExnMap = #exExnMap env} : env,
@@ -372,7 +372,9 @@ struct
               TL.TLCONSTANT (TL.UNIT, loc)) (*dummy*)
 
   fun compileVarInfo ({id, path, ty, ...}:Types.varInfo) : TypedLambda.varInfo =
-      {id = id, path = map #symbol path, ty = ty}
+      {id = id,
+       path = case path of nil => NONE | _ => SOME (map #symbol path),
+       ty = ty}
 
   fun compileExp (env:env) rcexp =
       case rcexp of

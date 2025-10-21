@@ -225,7 +225,7 @@ struct
         val next = ref trace
         fun fill ({id, ...} : RecordCalc.varInfo) =
             case !next of
-              R.RCVAL {var = {id = id2, path = nil, ...}, exp, ...} :: t =>
+              R.RCVAL {var = {id = id2, path = NONE, ...}, exp, ...} :: t =>
               if id = id2
               then case VarID.Map.find (counts, id2) of
                      SOME 1 => (next := t; SOME exp)
@@ -442,7 +442,7 @@ struct
           else raise Bug.Bug "evalValue"
         | SOME (R.RCVALUE (value, _)) => (t, value)
         | SOME exp =>
-          case emitExp t nil exp ANY of
+          case emitExp t NONE exp ANY of
             (t, R.RCVALUE (value, _)) => (t, value)
           | _ => raise Bug.Bug "evalValue"
 
@@ -538,7 +538,7 @@ struct
                       else
                         let
                           val exp = selectExp label2 field
-                          val (t, v) = emitExp t nil exp ANY
+                          val (t, v) = emitExp t NONE exp ANY
                           val field = {ty = ty, size = size, tag = tag, exp = v}
                         in
                           (t, RecordLabel.Map.insert (z, label2, field))
@@ -552,7 +552,7 @@ struct
 
   fun evalBody t env exp expTy =
       let
-        val (t, exp) = evalExp (t # {trace = nil}) env nil exp
+        val (t, exp) = evalExp (t # {trace = nil}) env NONE exp
         val exp =
             case exp of
               RET exp => exp
@@ -613,7 +613,7 @@ struct
         )
       | R.RCAPPM {funExp, funTy, instTyList, argExpList, loc} =>
         (
-          case evalExp t env nil funExp of
+          case evalExp t env NONE funExp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET funExp) =>
             case evalExpList t env argExpList of
@@ -644,7 +644,7 @@ struct
         )
       | R.RCSWITCH {exp, expTy, branches, defaultExp, resultTy, loc} =>
         (
-          case evalExp t env nil exp of
+          case evalExp t env NONE exp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET exp) =>
             case removeCast exp of
@@ -708,10 +708,10 @@ struct
       | R.RCSELECT {label, indexExp, recordExp, recordTy, resultTy, resultSize,
                     resultTag, loc} =>
         (
-          case evalExp t env nil recordExp of
+          case evalExp t env NONE recordExp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET recordExp) =>
-            case evalExp t env nil indexExp of
+            case evalExp t env NONE indexExp of
               (t, ABORT a) => (t, ABORT a)
             | (t, RET indexExp) =>
               let
@@ -743,13 +743,13 @@ struct
       | R.RCMODIFY {label, indexExp, recordExp, recordTy, elementExp, elementTy,
                     elementSize, elementTag, loc} =>
         (
-          case evalExp t env nil recordExp of
+          case evalExp t env NONE recordExp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET recordExp) =>
-            case evalExp t env nil indexExp of
+            case evalExp t env NONE indexExp of
               (t, ABORT a) => (t, ABORT a)
             | (t, RET indexExp) =>
-              case evalExp t env nil elementExp of
+              case evalExp t env NONE elementExp of
                 (t, ABORT a) => (t, ABORT a)
               | (t, RET elementExp) =>
                 let
@@ -775,7 +775,7 @@ struct
         )
       | R.RCRAISE {exp, resultTy, loc} =>
         (
-          case evalExp t env nil exp of
+          case evalExp t env NONE exp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET exp) =>
             (t, ABORT (R.RCRAISE {exp = exp,
@@ -829,7 +829,7 @@ struct
         end
       | R.RCFOREIGNAPPLY {funExp, argExpList, attributes, resultTy, loc} =>
         (
-          case evalExp t env nil funExp of
+          case evalExp t env NONE funExp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET funExp) =>
             case evalExpList t env argExpList of
@@ -862,7 +862,7 @@ struct
         end
       | R.RCCAST {exp, expTy, targetTy, cast, loc} =>
         (
-          case evalExp t env nil exp of
+          case evalExp t env NONE exp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET (R.RCCAST c)) =>
             (t, RET (R.RCCAST {exp = #exp c,
@@ -889,7 +889,7 @@ struct
 
   and evalExpList t env nil = (t, RET nil)
     | evalExpList t env (exp :: exps) =
-      case evalExp t env nil exp of
+      case evalExp t env NONE exp of
         (t, ABORT a) => (t, ABORT a)
       | (t, RET exp) =>
         case evalExpList t env exps of
@@ -900,7 +900,7 @@ struct
       let
         fun eval t env nil = (t, RET RecordLabel.Map.empty)
           | eval t env ((label, {exp, ty, size, tag}) :: fields) =
-            case evalExp t env nil exp of
+            case evalExp t env NONE exp of
               (t, ABORT a) => (t, ABORT a)
             | (t, RET exp) =>
               let
@@ -987,7 +987,7 @@ struct
         end
       | R.RCEXPORTVAR {weak, var, exp = SOME exp} =>
         (
-          case evalExp t env nil exp of
+          case evalExp t env NONE exp of
             (t, ABORT a) => (t, ABORT a)
           | (t, RET exp) =>
             let
@@ -1007,7 +1007,7 @@ struct
         (t, RET env) => evalDecls t env decls
       | (t, ABORT a) =>
         let
-          val (t, _) = emitExp t nil a ANY
+          val (t, _) = emitExp t NONE a ANY
           val exports =
               List.mapPartial
                 (fn R.RCEXPORTVAR {weak, var, exp} =>

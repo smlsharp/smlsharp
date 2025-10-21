@@ -19,7 +19,7 @@ struct
   structure P = BuiltinPrimitive
 
   fun newVar ty =
-      {id = VarID.generate (), path = [], ty = ty} : C.varInfo
+      {id = VarID.generate (), path = NONE, ty = ty} : C.varInfo
 
   fun mapi f l =
       let
@@ -1070,7 +1070,7 @@ struct
       {
         varEnv: varEnv,
         styEnv: SingletonTyEnv2.env,
-        path: Symbol.longsymbol,
+        path: Symbol.longsymbol option,
         toplevel: bool
       }
 
@@ -1102,8 +1102,8 @@ struct
 
   fun setPath (env as {varEnv, styEnv, path, toplevel}:env, newPath) : env =
       case newPath of
-        nil => env
-      | _::_ =>
+        NONE => env
+      | SOME _ =>
         {varEnv = varEnv, styEnv = styEnv, path = newPath, toplevel = toplevel}
 
   fun enterFunction ({varEnv, styEnv, path, toplevel}:env) : env =
@@ -1183,7 +1183,7 @@ struct
        argTyList = argTyList,
        retTy = retTy}
 
-  fun exportFunEntry (styEnv, path) (exvar as {ty, loc, ...}, value) =
+  fun exportFunEntry (styEnv, path : Symbol.longsymbol) (exvar as {ty, loc, ...}, value) =
       case getFunTy ty of
         NONE => nil
       | SOME fty =>
@@ -1199,7 +1199,7 @@ struct
               case staticCls of
                 NONE =>
                 (SOME (decomposeClosureRecord (C.CCEXVAR exvar, ty) loc),
-                 FunEntryLabel.generate path)
+                 FunEntryLabel.generate (SOME path))
               | SOME {id, closureEnvVar = NONE, ...} => (NONE, id)
               | SOME cls =>
                 let
@@ -1209,7 +1209,7 @@ struct
                 in
                   (SOME {codeExp=codeExp, cconv=cconv,
                          closureEnvExp=closureEnvExp},
-                   FunEntryLabel.generate path)
+                   FunEntryLabel.generate (SOME path))
                 end
           val top =
               DATA (C.CTEXPORTFUN {id = ExternFunSymbol.touch path,
@@ -1764,7 +1764,7 @@ struct
          nil)
       | B.BCEXPORTVAR {weak, exVarInfo={path,ty}, exp = SOME exp, loc} =>
         let
-          val env = setPath (env, path)
+          val env = setPath (env, SOME path)
           val (top1, c, exp) = compileExp accum env exp
           val value = SOME (expToConst exp) handle ExpToConst => NONE
           val id = ExternSymbol.touch path
@@ -1957,7 +1957,7 @@ struct
       let
         val env = {varEnv = emptyVarEnv,
                    styEnv = SingletonTyEnv2.emptyEnv,
-                   path = nil,
+                   path = NONE,
                    toplevel = true} : env
         val accum = newAccum ()
         val (top, _, binds) = compileDeclList accum env bcdecls

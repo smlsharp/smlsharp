@@ -16,7 +16,7 @@ struct
   type varInfo = RecordCalc.varInfo
 
   fun newVar ty =
-      {id = VarID.generate (), path = [], ty = ty} : B.varInfo
+      {id = VarID.generate (), path = NONE, ty = ty} : B.varInfo
 
   fun mapi f l =
       let

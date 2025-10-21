@@ -152,7 +152,7 @@ struct
     | emit (TREES trees, keyExp, keyTy, defaultExp, resultTy, loc) =
       let
         val vid = EmitTypedLambda.newId ()
-        val defaultLabel = FunLocalLabel.generate nil
+        val defaultLabel = FunLocalLabel.generate NONE
         val jumpExp = E.Exp (L.TLTHROW {catchLabel = defaultLabel,
                                         argExpList = nil,
                                         resultTy = resultTy,

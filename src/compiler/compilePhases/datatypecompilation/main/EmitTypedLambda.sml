@@ -538,7 +538,7 @@ struct
         end
       | Fn (vid, argTy, exp) =>
         let
-          val argVar = {id = vid, ty = argTy, path = nil}
+          val argVar = {id = vid, ty = argTy, path = NONE}
           val argExp = L.TLVAR (argVar, loc)
           val env = VarID.Map.insert (env, vid, (argExp, argTy))
           val (exp, bodyTy) = emitExp loc env exp
@@ -575,7 +575,7 @@ struct
           else
             let
               val varInfo =
-                  {id = vid, ty = ty1, path = nil}
+                  {id = vid, ty = ty1, path = NONE}
               val varExp = L.TLVAR (varInfo, loc)
               val env = VarID.Map.insert (env, vid, (varExp, ty1))
               val (exp2, ty2) = emitExp loc env exp2

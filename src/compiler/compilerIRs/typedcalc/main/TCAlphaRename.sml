@@ -78,7 +78,7 @@ local
       let
         val newId =
             if FunLocalLabel.Set.member (!labelSetRef, id)
-            then FunLocalLabel.generate nil
+            then FunLocalLabel.generate NONE
             else (labelSetRef := FunLocalLabel.Set.add (!labelSetRef, id); id)
       in
         ({varMap = varMap, btvMap = btvMap,

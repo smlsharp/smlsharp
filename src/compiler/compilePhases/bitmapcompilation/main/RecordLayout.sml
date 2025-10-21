@@ -35,7 +35,7 @@ struct
       let
         val id = VarID.generate ()
       in
-        {id = id, path = []} : var
+        {id = id, path = NONE} : var
       end
 
   datatype value = datatype RecordLayoutCalc.value

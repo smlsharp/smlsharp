@@ -79,25 +79,25 @@ struct
   (*%
     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
     @formatter(VarID.id) VarID.format_id
-    @formatter(ifcons) ifcons
+    @formatter(ifsome) ifsome
    *)
   (*%
     @prefix formatWithType_
     @formatter(Symbol.longsymbol) Symbol.format_longsymbol
     @formatter(VarID.id) VarID.format_id
-    @formatter(ifcons) ifcons
+    @formatter(ifsome) ifsome
    *)
   type varInfo =
       (*%
-        @format({path, id, ty})
-        path:ifcons()(path "($" id ")", "$" id)
+        @format({path: path pathOpt, id, ty})
+        pathOpt:ifsome()(pathOpt(path) "($" id ")", "$" id)
        *)
       (*%
         @prefix formatWithType_
-        @format({path, id, ty})
-        L2{ path:ifcons()(path "($" id ")", "$" id) +1 ":" +d ty }
+        @format({path: path pathOpt, id, ty})
+        L2{ pathOpt:ifsome()(pathOpt(path) "($" id ")", "$" id) +1 ":" +d ty }
        *)
-      {path : Symbol.longsymbol, id : VarID.id, ty : ty}
+      {path : Symbol.longsymbol option, id : VarID.id, ty : ty}
 
   (*%
     @formatter(Types.exVarInfo) Types.format_exVarInfo

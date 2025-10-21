@@ -46,7 +46,9 @@ struct
         fun lookUp btv =
             case lookup (T.REIFYty (T.BOUNDVARty btv)) of
               NONE => NONE
-            | SOME {path, id, ty} =>
+            | SOME {path = NONE, id, ty} =>
+              SOME {path = nil, id = id, ty = ty}
+            | SOME {path = SOME path, id, ty} =>
               SOME {path = map (fn x => {symbol = x, loc = loc}) path,
                     id = id,
                     ty = ty}

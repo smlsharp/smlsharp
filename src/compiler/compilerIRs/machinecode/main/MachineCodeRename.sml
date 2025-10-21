@@ -21,12 +21,12 @@ struct
 
   fun freshLabel id =
       if FunLocalLabel.Set.member (!usedLabels, id)
-      then FunLocalLabel.generate nil
+      then FunLocalLabel.generate NONE
       else (usedLabels := FunLocalLabel.Set.add (!usedLabels, id); id)
 
   fun freshHandler id =
       if HandlerLabel.Set.member (!usedHandlers, id)
-      then HandlerLabel.generate nil
+      then HandlerLabel.generate NONE
       else (usedHandlers := HandlerLabel.Set.add (!usedHandlers, id); id)
 
   fun initUsedIds () =

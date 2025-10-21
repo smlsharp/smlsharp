@@ -74,7 +74,7 @@ struct
       | HANDLER {handlerLabel, ...} => SOME handlerLabel
       | CLEANUP (ref (x as SOME _)) => x
       | CLEANUP (r as ref NONE) =>
-        let val x = SOME (HandlerLabel.generate nil) in r := x; x end
+        let val x = SOME (HandlerLabel.generate NONE) in r := x; x end
 
   fun getCleanupLabel env =
       case #handler env of
@@ -113,7 +113,7 @@ struct
         SOME id => id
       | NONE =>
         let
-          val id = FunLocalLabel.generate nil
+          val id = FunLocalLabel.generate NONE
         in
           loopLabel := SOME id;
           id
@@ -515,9 +515,9 @@ struct
       | N.NCHANDLE {tryExp, exnVar, handlerExp, resultTy, loc} =>
         let
           val resultVar = newVar resultTy
-          val mergeLabel = FunLocalLabel.generate nil
-          val handlerLabel = HandlerLabel.generate nil
-          val localHandlerLabel = FunLocalLabel.generate nil
+          val mergeLabel = FunLocalLabel.generate NONE
+          val handlerLabel = HandlerLabel.generate NONE
+          val localHandlerLabel = FunLocalLabel.generate NONE
           val tryEnv = env # {handler = HANDLER {handlerLabel = handlerLabel,
                                                  localLabel = localHandlerLabel}}
           val tryExp = compileBranchExp tryEnv NONTAIL mergeLabel tryExp
@@ -563,15 +563,15 @@ struct
                 TAIL => NONE
               | NONTAIL => SOME (newVar resultTy)
               | BIND var => SOME (refreshVar var)
-          val mergeLabel = FunLocalLabel.generate nil
+          val mergeLabel = FunLocalLabel.generate NONE
           val branches =
               map (fn {constant, branchExp} =>
                       (constant,
-                       (FunLocalLabel.generate nil,
+                       (FunLocalLabel.generate NONE,
                         compileBranchExp env context mergeLabel branchExp)))
                   branches
           val defaultBranch =
-              (FunLocalLabel.generate nil,
+              (FunLocalLabel.generate NONE,
                compileBranchExp env context mergeLabel defaultExp)
           val switchProc =
               A.ANLOCALCODE
@@ -615,7 +615,7 @@ struct
                 TAIL => NONE
               | NONTAIL => SOME (newVar resultTy)
               | BIND var => SOME (refreshVar var)
-          val mergeLabel = FunLocalLabel.generate nil
+          val mergeLabel = FunLocalLabel.generate NONE
           val mainExp = compileBranchExp env context mergeLabel tryExp
           val binds =
               map (fn {catchLabel, argVarList, catchExp} =>

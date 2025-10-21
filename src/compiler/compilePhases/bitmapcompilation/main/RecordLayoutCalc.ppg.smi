@@ -8,7 +8,7 @@ structure RecordLayoutCalc =
 struct
 
   type var =
-      {path : Symbol.longsymbol, id : VarID.id}
+      {path : Symbol.longsymbol option, id : VarID.id}
 
   datatype value =
       VAR of var

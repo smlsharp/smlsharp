@@ -346,7 +346,7 @@ struct
         )
       | M.MCHANDLER {nextExp, id, exnVar, handlerExp, cleanup, loc} =>
         let
-          val handlerBlock = newBlock (FunLocalLabel.generate nil) nil
+          val handlerBlock = newBlock (FunLocalLabel.generate NONE) nil
           val nextEnv =
               env # {handlerEnv = HandlerLabel.Map.insert
                                     (#handlerEnv env, id, handlerBlock)}
@@ -433,7 +433,7 @@ struct
 
   and prepareCont (env as {currentBlock, ...}) (argVarList, nextExp) =
       let
-        val nextBlock = newBlock (FunLocalLabel.generate nil) argVarList
+        val nextBlock = newBlock (FunLocalLabel.generate NONE) argVarList
         val nextEnv = env # {currentBlock = nextBlock}
         val nextExp = prepareExp START nextEnv nextExp
         val _ = setBody (nextBlock, nextExp)
@@ -668,8 +668,8 @@ struct
 
   fun prepare (argVarList, mcexp, cleanupHandler) =
       let
-        val startBlock = newBlock (FunLocalLabel.generate nil) nil
-        val exitBlock = newBlock (FunLocalLabel.generate nil) nil
+        val startBlock = newBlock (FunLocalLabel.generate NONE) nil
+        val exitBlock = newBlock (FunLocalLabel.generate NONE) nil
         val handlerEnv =
             case cleanupHandler of
               NONE => HandlerLabel.Map.empty

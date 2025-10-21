@@ -18,7 +18,7 @@ struct
   structure T = Types
 
   fun newVar ty =
-      {path = [],
+      {path = NONE,
        ty = ty,
        id = VarID.generate ()} : RC.varInfo
 
